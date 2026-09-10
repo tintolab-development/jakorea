@@ -186,6 +186,23 @@
   width: 100%;
 }
 
+.auth-card.auth-card--find-email-result:has(.find-email-not-found) {
+  min-height: 0;
+  padding: 60px;
+}
+
+.find-email-not-found .find-email-result__body {
+  padding: 0;
+}
+
+.find-email-not-found .find-email-result__title {
+  margin-top: 40px;
+}
+
+.find-email-not-found .find-email-result__actions {
+  margin-top: 40px;
+}
+
 .find-email-result__actions .auth-submit-btn,
 .find-email-result__actions .auth-secondary-btn {
   display: flex;

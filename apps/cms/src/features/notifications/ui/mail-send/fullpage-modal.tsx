@@ -5,9 +5,15 @@ import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import {
   CmsButton,
   CmsInput,
+  CmsSelect,
   ConfirmModal,
   useCmsAlert,
 } from '@/shared/ui'
+import {
+  findHarvestedMailSenderKey,
+  MAIL_SENDER_DISPLAY_NAME_READONLY_HINT,
+  MAIL_TEMPLATE_DEFAULT_SENDER_EMAIL,
+} from '@/features/notifications/model/mail-template/sender-email'
 import { ComposeFields } from '@/features/notifications/ui/mail-template/compose-fields'
 import { PreviewModal } from '@/features/notifications/ui/mail-template/preview-modal'
 import type {
@@ -26,7 +32,11 @@ import {
   isNotificationSendProgramUnset,
   parseNotificationSendProgramId,
 } from '@/features/notifications/model/send-program-id'
-import { canUseNotificationSendTemplateForProgram } from '@/features/notifications/model/shared/template-usable-for-program'
+import {
+  canUseNotificationSendTemplateForProgram,
+  formatNotificationSendTemplateDisabledKeysWarning,
+  listNotificationSendTemplateDisabledKeysForProgram,
+} from '@/features/notifications/model/shared/template-usable-for-program'
 import { MAIL_SEND_ALL_PROGRAM_ID } from '@/features/notifications/model/mail-send/types'
 import {
   inferUniqueRecipientTypeValue,
@@ -74,9 +84,10 @@ type SenderNameFieldProps = {
   seed: string
   epoch: number
   onChange: (value: string) => void
+  readOnly?: boolean
 }
 
-function SenderNameField({ seed, epoch, onChange }: SenderNameFieldProps) {
+function SenderNameField({ seed, epoch, onChange, readOnly = false }: SenderNameFieldProps) {
   const [value, setValue] = useState(seed)
   useEffect(() => {
     setValue(seed)
@@ -86,9 +97,11 @@ function SenderNameField({ seed, epoch, onChange }: SenderNameFieldProps) {
       inputSize="large"
       width="100%"
       allowClear={false}
-      placeholder="발신자명을 입력하세요"
+      readOnly={readOnly}
+      placeholder={readOnly ? MAIL_SENDER_DISPLAY_NAME_READONLY_HINT : '발신자명을 입력하세요'}
       value={value}
       onChange={event => {
+        if (readOnly) return
         const next = event.target.value
         setValue(next)
         onChange(next)
@@ -135,22 +148,89 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   const senderProfilesQuery = useMailSenderProfilesQuery(open && remote)
   const programsQuery = useNotificationSendProgramsQuery(open && remote)
   const programs = programsQuery.data ?? []
-  /** 모달 open당 1회만 시드. 비어 있을 때마다 채우면 사용자가 지운 값이 다시 들어온다. */
+  /** 모달 open당 harvest 기본 From·표시명 시드 1회 */
   const didSeedSenderRef = useRef(false)
+
+  const resolveHarvestDisplayName = useCallback(
+    (email: string) => {
+      const key = email.trim().toLowerCase()
+      if (!key) return ''
+      const matched = (senderProfilesQuery.data ?? []).find(
+        profile => profile.senderKey.trim().toLowerCase() === key
+      )
+      return matched?.displayName.trim() ?? ''
+    },
+    [senderProfilesQuery.data]
+  )
+
+  const harvestedSenderKeys = useMemo(
+    () => (senderProfilesQuery.data ?? []).map(profile => profile.senderKey.trim()).filter(Boolean),
+    [senderProfilesQuery.data]
+  )
+  const defaultHarvestKey = useMemo(
+    () => findHarvestedMailSenderKey(MAIL_TEMPLATE_DEFAULT_SENDER_EMAIL, harvestedSenderKeys),
+    [harvestedSenderKeys]
+  )
+  const senderEmailOptions = useMemo(
+    () =>
+      (senderProfilesQuery.data ?? []).map(profile => {
+        const email = profile.senderKey.trim()
+        return { label: email, value: email }
+      }),
+    [senderProfilesQuery.data]
+  )
+
+  const senderProfilesReady =
+    remote &&
+    !senderProfilesQuery.isFetching &&
+    !senderProfilesQuery.isLoading &&
+    senderProfilesQuery.isFetched
 
   useEffect(() => {
     if (!open) {
       didSeedSenderRef.current = false
       return
     }
-    if (didSeedSenderRef.current) return
-    const first = senderProfilesQuery.data?.[0]
-    if (!first) return
+    if (!remote || !senderProfilesReady || didSeedSenderRef.current) return
     didSeedSenderRef.current = true
-    if (!form.senderEmail.trim()) form.setSenderEmail(first.senderKey)
-    if (!form.senderNameSeed.trim()) form.replaceSenderName(first.displayName)
+
+    if (defaultHarvestKey) {
+      form.setSenderEmail(defaultHarvestKey)
+      form.replaceSenderName(resolveHarvestDisplayName(defaultHarvestKey))
+      return
+    }
+    // harvest 0건이거나 기본 From 없음: 비움 (템플릿 등록과 동일)
+    form.setSenderEmail('')
+    form.replaceSenderName('')
     // eslint-disable-next-line react-hooks/exhaustive-deps -- open당 1회 시드; sender 입력 deps 금지
-  }, [open, senderProfilesQuery.data, form.replaceSenderName, form.setSenderEmail])
+  }, [
+    defaultHarvestKey,
+    open,
+    remote,
+    resolveHarvestDisplayName,
+    senderProfilesReady,
+    form.replaceSenderName,
+    form.setSenderEmail,
+  ])
+
+  /** Hub: 선택 From의 harvest displayName을 발신자명 SSOT로 유지 */
+  useEffect(() => {
+    if (!open || !remote || !senderProfilesReady) return
+    const email = form.senderEmail.trim()
+    if (!email) return
+    const displayName = resolveHarvestDisplayName(email)
+    if (!displayName) return
+    if (form.senderNameSeed.trim() === displayName) return
+    form.replaceSenderName(displayName)
+  }, [
+    form.replaceSenderName,
+    form.senderEmail,
+    form.senderNameSeed,
+    open,
+    remote,
+    resolveHarvestDisplayName,
+    senderProfilesReady,
+  ])
   const programNumericId = useMemo(
     () => parseNotificationSendProgramId(form.programId),
     [form.programId]
@@ -175,15 +255,15 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   }, [open, programsQuery.error, programsQuery.isError, remote, showAlert])
 
   const variablesTypeValue = useMemo(() => {
-    const fromFilter = recipientSearch.typeValue.trim()
-    if (fromFilter) return fromFilter
+    // 후보 모달 검색 필터(recipientSearch)는 목록에만 사용.
+    // 여기 넣으면 필터만 바꿔도 catalog가 바뀌고 선택 템플릿이 clear되는 회귀가 난다.
     if (recipientTypeMode === 'participation') {
       return inferUniqueRecipientTypeValue(
         form.recipients.map(item => item.participationType)
       )
     }
     return inferUniqueRecipientTypeValue(form.recipients.map(item => item.memberType))
-  }, [form.recipients, recipientSearch.typeValue, recipientTypeMode])
+  }, [form.recipients, recipientTypeMode])
 
   const templateVariablesQuery = useMemo(
     () =>
@@ -258,14 +338,20 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     [programNumericId, variablesQuery.data]
   )
 
-  useEffect(() => {
-    if (!open || !form.templateId) return
-    const selected = templates.find(item => item.id === form.templateId)
-    if (!selected) return
-    if (!isTemplateUsable(selected)) {
-      form.clearTemplate()
-    }
-  }, [form.clearTemplate, form.templateId, isTemplateUsable, open, templates])
+  const getTemplateUnusableMessage = useCallback(
+    (template: (typeof templates)[number]) =>
+      formatNotificationSendTemplateDisabledKeysWarning(
+        listNotificationSendTemplateDisabledKeysForProgram({
+          texts: [template.subject, template.bodyHtml],
+          catalog: variablesQuery.data,
+          programNumericId,
+        })
+      ),
+    [programNumericId, variablesQuery.data]
+  )
+
+  // 선택 완료된 템플릿은 수신자 추가·유형 문맥 변경으로 자동 clear 하지 않음.
+  // (피커「사용하기」비활성 + 발송 시점 fail-closed로 처리)
 
   const resolvedSenderProfileId = useMemo(() => {
     const email = form.senderEmail.trim().toLowerCase()
@@ -493,7 +579,15 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                             templates={templates}
                             disabled={!canPickTemplate}
                             isTemplateUsable={isTemplateUsable}
-                            onSelect={form.applyTemplate}
+                            getTemplateUnusableMessage={getTemplateUnusableMessage}
+                            onSelect={template => {
+                              form.applyTemplate(template)
+                              // 템플릿 senderName이 비면 harvest displayName으로 보강 (빈 문자열로 덮지 않음)
+                              if (template.senderName.trim()) return
+                              const email = template.senderEmail.trim()
+                              const displayName = resolveHarvestDisplayName(email)
+                              if (displayName) form.replaceSenderName(displayName)
+                            }}
                           />
                         }
                       />
@@ -521,6 +615,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                             seed={form.senderNameSeed}
                             epoch={form.senderNameEpoch}
                             onChange={form.setSenderName}
+                            readOnly={remote && Boolean(senderProfilesQuery.data?.length)}
                           />
                         }
                       />
@@ -529,14 +624,30 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                         required
                         view={form.senderEmail}
                         edit={
-                          <CmsInput
-                            inputSize="large"
-                            width="100%"
-                            allowClear={false}
-                            placeholder="발신 메일을 입력하세요"
-                            value={form.senderEmail}
-                            onChange={event => form.setSenderEmail(event.target.value)}
-                          />
+                          remote && senderEmailOptions.length > 0 ? (
+                            <CmsSelect
+                              inputSize="large"
+                              width="100%"
+                              withAllOption={false}
+                              placeholder="발신 메일을 선택하세요"
+                              value={form.senderEmail || undefined}
+                              options={senderEmailOptions}
+                              onChange={value => {
+                                const email = typeof value === 'string' ? value : ''
+                                form.setSenderEmail(email)
+                                form.replaceSenderName(resolveHarvestDisplayName(email))
+                              }}
+                            />
+                          ) : (
+                            <CmsInput
+                              inputSize="large"
+                              width="100%"
+                              allowClear={false}
+                              placeholder="발신 메일을 입력하세요"
+                              value={form.senderEmail}
+                              onChange={event => form.setSenderEmail(event.target.value)}
+                            />
+                          )
                         }
                       />
                     </DetailInfoForm.Row>

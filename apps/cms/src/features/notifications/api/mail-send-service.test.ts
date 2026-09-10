@@ -116,7 +116,7 @@ describe('submitMailSend', () => {
     })
   })
 
-  it('attaches recipient variables for DIRECT contacts', async () => {
+  it('maps DIRECT recipients with contact and without reserved variables', async () => {
     await submitMailSend({
       draft: draft({
         bodyHtml: '<p>#{회원명}#{사용자 아이디(이메일)}</p>',
@@ -133,19 +133,16 @@ describe('submitMailSend', () => {
         {
           actorType: 'DIRECT',
           recipientContact: 'a@example.com',
-          variables: {
-            회원명: '수신자',
-            수신자명: '수신자',
-            '사용자 아이디(이메일)': 'a@example.com',
-            이메일: 'a@example.com',
-            email: 'a@example.com',
-          },
+          recipientName: '수신자',
         },
       ],
     })
+    expect(vi.mocked(createSendBatchRemote).mock.calls[0]?.[0].recipients[0]).not.toHaveProperty(
+      'variables'
+    )
   })
 
-  it('forwards non-empty create.variables for context keys', async () => {
+  it('substitutes context keys into contentTemplate (not create.variables)', async () => {
     await submitMailSend({
       draft: draft({
         bodyHtml: '<p>#{동의 항목}#{만료일시}</p>',
@@ -161,11 +158,10 @@ describe('submitMailSend', () => {
       idempotencyKey: 'idem-context',
       senderProfileId: 7,
     })
-    expect(vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]).toMatchObject({
-      variables: {
-        '동의 항목': '개인정보 수집·이용 동의',
-        만료일시: '2026-09-30',
-      },
+    const body = vi.mocked(createSendBatchRemote).mock.calls[0]?.[0]
+    expect(body).not.toHaveProperty('variables')
+    expect(body).toMatchObject({
+      contentTemplate: '<p>개인정보 수집·이용 동의2026-09-30</p>',
     })
   })
 
@@ -229,29 +225,10 @@ describe('buildMailSendRecipients', () => {
         actorType: 'DIRECT',
         recipientContact: 'direct@example.com',
         recipientName: '직접',
-        variables: buildMailRecipientVariables({
-          id: 'manual-a@jakorea.org',
-          participationType: '',
-          name: '직접',
-          email: 'direct@example.com',
-          source: 'manual',
-          actorType: 'DIRECT',
-        }),
       },
       {
         actorType: 'MEMBER',
         actorId: 12,
-        recipientName: '회원',
-        recipientContact: 'member@example.com',
-        variables: buildMailRecipientVariables({
-          id: 'actor-MEMBER-12',
-          participationType: 'participant',
-          name: '회원',
-          email: 'member@example.com',
-          source: 'program',
-          actorType: 'MEMBER',
-          actorId: 12,
-        }),
       },
     ])
   })

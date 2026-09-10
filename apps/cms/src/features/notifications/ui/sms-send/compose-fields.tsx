@@ -16,6 +16,8 @@ type SmsSendComposeFieldsProps = {
   bodyTextRef: MutableRefObject<string>
   /** 본문 변경 시 바이트 기준 메시지 유형 동기화 */
   onBodyTextChange?: (bodyText: string) => void
+  onRememberSubjectRange?: (el: HTMLInputElement | null) => void
+  onRememberBodyRange?: (el: HTMLTextAreaElement | null) => void
 }
 
 /**
@@ -31,6 +33,8 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
   subjectRef,
   bodyTextRef,
   onBodyTextChange,
+  onRememberSubjectRange,
+  onRememberBodyRange,
 }: SmsSendComposeFieldsProps) {
   const [subject, setSubject] = useState(initialSubject)
   const [bodyText, setBodyText] = useState(initialBodyText)
@@ -72,19 +76,33 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
             fullRow
             view={subject}
             edit={
-              <CmsInput
-                inputSize="large"
-                width="100%"
-                allowClear={false}
-                maxLength={1000}
-                placeholder="제목을 작성하세요"
+              <SmsVariableTextField
                 value={subject}
-                onChange={event => {
-                  const next = event.target.value
+                onValueChange={next => {
                   setSubject(next)
                   subjectRef.current = next
                 }}
-              />
+              >
+                <CmsInput
+                  className="sms-send-fullpage__subject-field"
+                  inputSize="large"
+                  width="100%"
+                  allowClear={false}
+                  maxLength={1000}
+                  placeholder="제목을 작성하세요"
+                  value={subject}
+                  onChange={event => {
+                    const next = event.target.value
+                    setSubject(next)
+                    subjectRef.current = next
+                  }}
+                  onFocus={event => onRememberSubjectRange?.(event.currentTarget)}
+                  onBlur={event => onRememberSubjectRange?.(event.currentTarget)}
+                  onSelect={event => onRememberSubjectRange?.(event.currentTarget)}
+                  onClick={event => onRememberSubjectRange?.(event.currentTarget)}
+                  onKeyUp={event => onRememberSubjectRange?.(event.currentTarget)}
+                />
+              </SmsVariableTextField>
             }
           />
         </DetailInfoForm.Row>
@@ -105,6 +123,11 @@ export const SmsSendComposeFields = memo(function SmsSendComposeFields({
                   placeholder="내용을 작성하세요"
                   value={bodyText}
                   onChange={event => commitBody(event.target.value)}
+                  onFocus={event => onRememberBodyRange?.(event.currentTarget)}
+                  onBlur={event => onRememberBodyRange?.(event.currentTarget)}
+                  onSelect={event => onRememberBodyRange?.(event.currentTarget)}
+                  onClick={event => onRememberBodyRange?.(event.currentTarget)}
+                  onKeyUp={event => onRememberBodyRange?.(event.currentTarget)}
                 />
               </SmsVariableTextField>
               <div className="sms-send-fullpage__byte-row">

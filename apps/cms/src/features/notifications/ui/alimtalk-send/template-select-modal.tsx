@@ -5,6 +5,7 @@ import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, useCmsAlert } from '@/shared/ui'
 import { isAlimtalkTemplateApproved } from '@/features/notifications/api/adapters/alimtalk-template-adapters'
 import type { AlimtalkTemplateItem } from '@/features/notifications/model/alimtalk-template/types'
+import { NOTIFICATION_SEND_SELECTABLE_NOT_SUCCESS_HINT } from '@/features/notifications/model/shared/send-ux-copy'
 import './template-select-modal.css'
 
 const PAGE_SIZE = 5
@@ -18,6 +19,7 @@ type TemplateSelectModalProps = {
   onPreview: (template: AlimtalkTemplateItem) => void
   onUse: (template: AlimtalkTemplateItem) => void
   isTemplateUsable?: (template: AlimtalkTemplateItem) => boolean
+  getTemplateUnusableMessage?: (template: AlimtalkTemplateItem) => string | null
   zIndex?: number
 }
 
@@ -37,6 +39,7 @@ export function TemplateSelectModal({
   onPreview,
   onUse,
   isTemplateUsable,
+  getTemplateUnusableMessage,
   zIndex,
 }: TemplateSelectModalProps) {
   const { showAlert } = useCmsAlert()
@@ -70,7 +73,9 @@ export function TemplateSelectModal({
     if (isTemplateUsable?.(template) === false) {
       showAlert({
         title: '안내',
-        content: '현재 프로그램에서는 사용할 수 없는 변수가 포함된 템플릿입니다.',
+        content:
+          getTemplateUnusableMessage?.(template) ||
+          '현재 프로그램에서는 사용할 수 없는 변수가 포함된 템플릿입니다.',
       })
       return
     }
@@ -155,6 +160,9 @@ export function TemplateSelectModal({
       }
     >
       <div className="template-select-modal__body">
+        <p className="template-select-modal__hint" role="note">
+          {NOTIFICATION_SEND_SELECTABLE_NOT_SUCCESS_HINT}
+        </p>
         <div className="template-select-modal__search">
           <span className="template-select-modal__search-input">
             <CmsInput

@@ -347,21 +347,27 @@ export function FormModal({
                             view={form.subject}
                             edit={
                               <div className="sms-template-form-modal__subject-field">
-                                <CmsInput
-                                  ref={form.subjectInputRef}
-                                  inputSize="large"
-                                  width="100%"
-                                  allowClear={false}
-                                  maxLength={form.subjectMaxLength}
-                                  placeholder="제목을 작성하세요"
+                                <SmsVariableTextField
                                   value={form.subject}
-                                  onChange={event => form.setSubject(event.target.value)}
-                                  onFocus={event => form.rememberSubjectRange(event.currentTarget)}
-                                  onBlur={event => form.rememberSubjectRange(event.currentTarget)}
-                                  onSelect={event => form.rememberSubjectRange(event.currentTarget)}
-                                  onClick={event => form.rememberSubjectRange(event.currentTarget)}
-                                  onKeyUp={event => form.rememberSubjectRange(event.currentTarget)}
-                                />
+                                  maxLength={form.subjectMaxLength}
+                                  onValueChange={form.setSubject}
+                                >
+                                  <CmsInput
+                                    ref={form.subjectInputRef}
+                                    inputSize="large"
+                                    width="100%"
+                                    allowClear={false}
+                                    maxLength={form.subjectMaxLength}
+                                    placeholder="제목을 작성하세요"
+                                    value={form.subject}
+                                    onChange={event => form.setSubject(event.target.value)}
+                                    onFocus={event => form.rememberSubjectRange(event.currentTarget)}
+                                    onBlur={event => form.rememberSubjectRange(event.currentTarget)}
+                                    onSelect={event => form.rememberSubjectRange(event.currentTarget)}
+                                    onClick={event => form.rememberSubjectRange(event.currentTarget)}
+                                    onKeyUp={event => form.rememberSubjectRange(event.currentTarget)}
+                                  />
+                                </SmsVariableTextField>
                                 <span className="sms-template-form-modal__subject-count">
                                   {form.subject.length}/{form.subjectMaxLength}
                                 </span>

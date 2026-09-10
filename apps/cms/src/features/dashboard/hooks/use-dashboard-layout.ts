@@ -84,7 +84,10 @@ export function useDashboardLayout({
   )
   const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
   const hasVisibleMenuShortcuts = useMemo(
-    () => SHORTCUT_ITEMS.some(item => isShortcutItemEnabled(shortcutEnabled, item.id)),
+    () =>
+      SHORTCUT_ITEMS.some(
+        item => !item.settingsDisabled && isShortcutItemEnabled(shortcutEnabled, item.id)
+      ),
     [shortcutEnabled]
   )
   const roleWidths = (widthByRole[userRole ?? ''] ?? {}) as Record<string, 12 | 24>

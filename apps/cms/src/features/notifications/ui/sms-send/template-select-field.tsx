@@ -15,6 +15,7 @@ type TemplateSelectFieldProps = {
   disabled?: boolean
   onSelect: (template: SmsTemplateItem) => void
   isTemplateUsable?: (template: SmsTemplateItem) => boolean
+  getTemplateUnusableMessage?: (template: SmsTemplateItem) => string | null
 }
 
 export function TemplateSelectField({
@@ -23,6 +24,7 @@ export function TemplateSelectField({
   disabled,
   onSelect,
   isTemplateUsable,
+  getTemplateUnusableMessage,
 }: TemplateSelectFieldProps) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [previewTemplate, setPreviewTemplate] = useState<SmsTemplateItem | null>(null)
@@ -86,6 +88,7 @@ export function TemplateSelectField({
           onPreview={setPreviewTemplate}
           onUse={handleUse}
           isTemplateUsable={isTemplateUsable}
+          getTemplateUnusableMessage={getTemplateUnusableMessage}
           zIndex={PICKER_Z_INDEX}
         />
       ) : null}

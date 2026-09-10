@@ -24,6 +24,8 @@ export interface ParagraphCardEditableHeading {
   onDescriptionChange: (next: string) => void
   descriptionPlaceholder?: string
   descriptionClassName?: string
+  /** view 모드에서 `descriptionValue` 대신 렌더(부분 bold 등) */
+  descriptionViewContent?: ReactNode
   /** false면 카드 헤더에 설명란을 렌더하지 않음(제목만) */
   showDescription?: boolean
   /**
@@ -107,16 +109,37 @@ export function ParagraphCard({
           className={h.titleClassName}
         />
       ) : null
-      const descriptionInput = (
-        <ParagraphInput
-          type="description"
-          isEditMode={descriptionEditMode}
-          value={h.descriptionValue}
-          onChange={h.onDescriptionChange}
-          placeholder={h.descriptionPlaceholder ?? '설명 입력'}
-          className={h.descriptionClassName}
-        />
-      )
+      const descriptionInput =
+        !descriptionEditMode && h.descriptionViewContent != null ? (
+          <div
+            className={[
+              'paragraph-input',
+              'paragraph-input--description',
+              'paragraph-input--view',
+              h.descriptionValue.trim() ? 'paragraph-input--filled' : '',
+              h.descriptionClassName,
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <div className="paragraph-input__row">
+              <span className="paragraph-input__main">
+                <span className="paragraph-input__view-text paragraph-input__view-text--rich">
+                  {h.descriptionViewContent}
+                </span>
+              </span>
+            </div>
+          </div>
+        ) : (
+          <ParagraphInput
+            type="description"
+            isEditMode={descriptionEditMode}
+            value={h.descriptionValue}
+            onChange={h.onDescriptionChange}
+            placeholder={h.descriptionPlaceholder ?? '설명 입력'}
+            className={h.descriptionClassName}
+          />
+        )
 
       const showDescription = h.showDescription !== false
 

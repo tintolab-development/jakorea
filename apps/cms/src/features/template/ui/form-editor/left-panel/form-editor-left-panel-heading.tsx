@@ -1,5 +1,5 @@
 import { ClockCircleOutlined, PlusOutlined } from '@ant-design/icons'
-import type { ReactNode } from 'react'
+import { createElement, type ReactNode } from 'react'
 import type { ParagraphCardEditableHeading } from '@/features/template/ui/template-management/template-fullpage-modal'
 import {
   getFormParagraphTitleNumberPrefix,
@@ -20,6 +20,8 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { isPlaceholderParagraphDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
+import { JA_GRADE_PARAGRAPH_IDS } from '@/features/user/detail/lib/ja-grade-evaluation-constants'
+import { JA_GRADE_INTRO_GRADE_RANGE_BOLD } from '@/features/user/detail/lib/ja-grade-evaluation-draft'
 import {
   UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS,
   UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
@@ -685,6 +687,24 @@ export function titleWithPeriodPlaceholder(editorKind: FormEditorKind): string {
   return editorKind === 'agreement' ? '동의서 제목 입력' : '타이틀을 입력해 주세요'
 }
 
+/** JA 등급 평가지 제목 설명 — 등급 구간 문구만 weight 700 */
+function renderJaGradeIntroDescription(description: string): ReactNode {
+  const bold = JA_GRADE_INTRO_GRADE_RANGE_BOLD
+  const index = description.indexOf(bold)
+  if (index < 0) return description
+  return createElement(
+    'span',
+    { className: 'paragraph-input__view-text-inner' },
+    description.slice(0, index),
+    createElement(
+      'strong',
+      { className: 'ja-grade-evaluation-intro__grade-range' },
+      bold
+    ),
+    description.slice(index + bold.length)
+  )
+}
+
 function agreementExplanationTextEditableHeading(
   p: Extract<WritingFormParagraph, { variant: 'agreement_explanation_text' }>,
   paragraph: WritingFormParagraph,
@@ -761,6 +781,9 @@ function buildEducatorFacilitatorPledgeLockedHeading(
       titleLeading: prefix,
       descriptionValue: p.surveyDescription,
       descriptionClassName: descCls('paragraph-input-explanation-title'),
+      ...(p.id === JA_GRADE_PARAGRAPH_IDS.intro
+        ? { descriptionViewContent: renderJaGradeIntroDescription(p.surveyDescription) }
+        : {}),
     }
   }
 

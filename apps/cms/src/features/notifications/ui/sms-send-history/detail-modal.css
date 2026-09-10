@@ -29,6 +29,15 @@
   white-space: nowrap;
 }
 
+.sms-send-history-detail-modal__snapshot-hint {
+  color: rgba(61, 61, 61, 0.65);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 140%;
+  max-width: 320px;
+  white-space: normal;
+}
+
 .sms-send-history-detail-modal__message {
   display: flex;
   flex-direction: column;

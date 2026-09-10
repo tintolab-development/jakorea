@@ -110,18 +110,13 @@ describe('buildSmsSendCreateRequest', () => {
     expect(request).not.toHaveProperty('smsMessageType')
     expect(request).not.toHaveProperty('titleTemplate')
     expect(request).not.toHaveProperty('contentTemplate')
-    expect(request.recipients[0]).toMatchObject({
+    expect(request.recipients[0]).toEqual({
       actorType: 'MEMBER',
       actorId: 1,
-      recipientContact: '01011112222',
-      variables: {
-        회원명: '홍길동',
-        수신자명: '홍길동',
-        '휴대폰 번호': '01011112222',
-        전화번호: '01011112222',
-        phone: '01011112222',
-      },
     })
+    expect(request.recipients[0]).not.toHaveProperty('recipientContact')
+    expect(request.recipients[0]).not.toHaveProperty('recipientName')
+    expect(request.recipients[0]).not.toHaveProperty('variables')
   })
 
   it('omits programId for all-program send', () => {
@@ -176,15 +171,9 @@ describe('buildSmsSendCreateRequest', () => {
       actorType: 'DIRECT',
       recipientContact: '01033334444',
       recipientName: '직접',
-      variables: {
-        회원명: '직접',
-        수신자명: '직접',
-        '휴대폰 번호': '01033334444',
-        전화번호: '01033334444',
-        phone: '01033334444',
-      },
     })
     expect(request.recipients[0]).not.toHaveProperty('actorId')
+    expect(request.recipients[0]).not.toHaveProperty('variables')
   })
 })
 

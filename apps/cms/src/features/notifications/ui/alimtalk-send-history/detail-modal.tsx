@@ -3,6 +3,7 @@ import { AlimtalkPhonePreview, CmsButton, ContentModal } from '@/shared/ui'
 import { ALIMTALK_CHANNEL_ADD_GUIDE } from '@/features/notifications/model/alimtalk-template/types'
 import { formatDeliveryDateTimeSeoul } from '@/features/notifications/model/alimtalk-send-history/format-datetime'
 import type { AlimtalkSendHistoryRow } from '@/features/notifications/model/alimtalk-send-history/types'
+import { NOTIFICATION_SEND_FAILURE_SNAPSHOT_HINT } from '@/features/notifications/model/shared/send-ux-copy'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import './detail-modal.css'
 
@@ -22,6 +23,9 @@ function sendStatusView(row: AlimtalkSendHistoryRow) {
           title={row.failedReason}
         >
           {row.failedReason}
+        </span>
+        <span className="alimtalk-send-history-detail-modal__snapshot-hint">
+          {NOTIFICATION_SEND_FAILURE_SNAPSHOT_HINT}
         </span>
       </span>
     )

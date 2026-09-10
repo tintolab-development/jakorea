@@ -29,28 +29,31 @@
     "shortcutVisibility": {
       "programs-general-education": true,
       "programs-economy": true,
-      "programs-ujat": true,
-      "programs-gemini": true,
+      "programs-ujat": false,
+      "programs-gemini": false,
       "users-all": true,
       "users-school": true,
       "users-instructor": true,
-      "users-admin": true,
-      "permission-requests": true,
-      "admin-permission-settings": true,
+      "users-admin": false,
+      "permission-requests": false,
+      "admin-permission-settings": false,
+      "program-permission-settings": false,
       "settlement-payment-orders": true,
-      "settlement-account-payments": true,
-      "settlement-item-settings": true,
+      "settlement-account-payments": false,
+      "settlement-item-settings": false,
       "template-management": true,
       "notices": true,
       "faq": true,
       "inquiries": true,
       "sponsors": true,
-      "textbooks": true,
-      "programs-detail": true,
+      "textbooks": false,
+      "programs-detail": false,
+      "notification-messages": true,
       "performance": true,
-      "file-download-history": true,
-      "privacy-query-history": true,
-      "bug-issue-history": true
+      "member-login-history": false,
+      "file-download-history": false,
+      "privacy-query-history": false,
+      "bug-issue-history": false
     },
     "widgetProgramFilters": {},
     "inquiryRowRead": {}
@@ -94,7 +97,7 @@
     {
       "id": 162906,
       "shortcutKey": "users-school",
-      "shortcutName": "학교(교사) 회원 관리",
+      "shortcutName": "학교(교사) 회원",
       "targetUrl": "/users/list?kind=institutions",
       "useYn": true
     },
@@ -127,6 +130,13 @@
       "useYn": true
     },
     {
+      "id": 162927,
+      "shortcutKey": "program-permission-settings",
+      "shortcutName": "프로그램 권한 설정",
+      "targetUrl": "/admin/settings/program-permissions",
+      "useYn": true
+    },
+    {
       "id": 162910,
       "shortcutKey": "settlement-payment-orders",
       "shortcutName": "지급조서 확인",
@@ -150,7 +160,7 @@
     {
       "id": 162916,
       "shortcutKey": "template-management",
-      "shortcutName": "폼 양식 관리",
+      "shortcutName": "템플릿 관리",
       "targetUrl": "/templates/form-management",
       "useYn": true
     },
@@ -171,7 +181,7 @@
     {
       "id": 162915,
       "shortcutKey": "inquiries",
-      "shortcutName": "문의내역",
+      "shortcutName": "문의사항",
       "targetUrl": "/admin/posts/inquiries",
       "useYn": true
     },
@@ -197,10 +207,24 @@
       "useYn": true
     },
     {
+      "id": 162928,
+      "shortcutKey": "notification-messages",
+      "shortcutName": "알림 메시지 관리",
+      "targetUrl": "/admin/notifications/kakao-alimtalk",
+      "useYn": true
+    },
+    {
       "id": 162920,
       "shortcutKey": "performance",
       "shortcutName": "실적 관리",
       "targetUrl": "/education-records",
+      "useYn": true
+    },
+    {
+      "id": 162921,
+      "shortcutKey": "member-login-history",
+      "shortcutName": "회원 로그인 이력",
+      "targetUrl": "/logs/member-login-history",
       "useYn": true
     },
     {
@@ -224,5 +248,13 @@
       "targetUrl": "/logs/bug-issue-history",
       "useYn": true
     }
+  ],
+  "settingsDisabledShortcutKeys": [
+    "admin-permission-settings",
+    "program-permission-settings",
+    "member-login-history",
+    "file-download-history",
+    "privacy-query-history",
+    "bug-issue-history"
   ]
 }

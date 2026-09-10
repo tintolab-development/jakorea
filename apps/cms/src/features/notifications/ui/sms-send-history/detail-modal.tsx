@@ -3,6 +3,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, ContentModal, useCmsAlert } from '@/shared/ui'
 import { downloadSmsSendHistoryAttachment } from '@/features/notifications/model/sms-send-history/download-attachment'
 import type { SmsSendHistoryRow } from '@/features/notifications/model/sms-send-history/types'
+import { NOTIFICATION_SEND_FAILURE_SNAPSHOT_HINT } from '@/features/notifications/model/shared/send-ux-copy'
 import './detail-modal.css'
 
 type DetailModalProps = {
@@ -38,6 +39,9 @@ function sendStatusView(row: SmsSendHistoryRow) {
           title={row.failedReason}
         >
           {row.failedReason}
+        </span>
+        <span className="sms-send-history-detail-modal__snapshot-hint">
+          {NOTIFICATION_SEND_FAILURE_SNAPSHOT_HINT}
         </span>
       </span>
     )

@@ -49,50 +49,75 @@ function HistoryPeriodNav({
   const activePeriod =
     HISTORY_PERIODS.find(period => period.id === activePeriodId) ?? HISTORY_PERIODS[0]!
 
+  const renderYearItems = (years: readonly number[]) =>
+    years.map(year => {
+      const isYearActive = year === activeYear
+      return (
+        <li key={year} className={styles.yearItem}>
+          <button
+            type="button"
+            className={[styles.yearButton, isYearActive ? styles.yearButtonActive : undefined]
+              .filter(Boolean)
+              .join(' ')}
+            aria-current={isYearActive ? 'true' : undefined}
+            onClick={() => onYearSelect(year)}
+          >
+            {year}
+          </button>
+        </li>
+      )
+    })
+
   return (
-    <div className={styles.historyNav}>
-      <nav className={styles.periodNav} aria-label="연혁 기간">
+    <nav className={styles.historyNav} aria-label="연혁 기간">
+      <div className={styles.periodNav}>
         {HISTORY_PERIODS.map(period => {
           const isPeriodActive = period.id === activePeriodId
           return (
-            <button
+            <div
               key={period.id}
-              type="button"
               className={[
-                styles.periodButton,
-                isPeriodActive ? styles.periodButtonActive : undefined,
+                styles.periodGroup,
+                isPeriodActive ? styles.periodGroupActive : undefined,
               ]
                 .filter(Boolean)
                 .join(' ')}
-              aria-pressed={isPeriodActive}
-              onClick={() => onPeriodSelect(period.id)}
             >
-              {period.label}
-            </button>
-          )
-        })}
-      </nav>
-
-      <ul className={styles.yearList} aria-label={`${activePeriod.label} 연도`}>
-        {activePeriod.years.map(year => {
-          const isYearActive = year === activeYear
-          return (
-            <li key={year} className={styles.yearItem}>
               <button
                 type="button"
-                className={[styles.yearButton, isYearActive ? styles.yearButtonActive : undefined]
+                className={[
+                  styles.periodButton,
+                  isPeriodActive ? styles.periodButtonActive : undefined,
+                ]
                   .filter(Boolean)
                   .join(' ')}
-                aria-current={isYearActive ? 'true' : undefined}
-                onClick={() => onYearSelect(year)}
+                aria-pressed={isPeriodActive}
+                onClick={() => onPeriodSelect(period.id)}
               >
-                {year}
+                {period.label}
               </button>
-            </li>
+
+              {isPeriodActive ? (
+                <ul
+                  className={styles.yearList}
+                  aria-label={`${period.label} 연도`}
+                >
+                  {renderYearItems(period.years)}
+                </ul>
+              ) : null}
+            </div>
           )
         })}
+      </div>
+
+      {/* Mobile 전용: periodNav와 독립된 가로 스크롤 yearList */}
+      <ul
+        className={styles.yearListMobile}
+        aria-label={`${activePeriod.label} 연도`}
+      >
+        {renderYearItems(activePeriod.years)}
       </ul>
-    </div>
+    </nav>
   )
 }
 
