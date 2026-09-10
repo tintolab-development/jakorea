@@ -52,9 +52,10 @@ export function smsSendHistoryParamsFromFilters(
   rangeToParams(params, 'scheduledFrom', 'scheduledTo', filters.reserveDateRange)
 
   if (filters.content.trim()) {
-    params.templateName = filters.content.trim()
-    params.templateCode = filters.content.trim()
-    params.content = filters.content.trim()
+    // BE 2026-09-10: content|renderedContentPreview (문자 내용). templateName 위장 금지.
+    const q = filters.content.trim()
+    params.content = q
+    params.renderedContentPreview = q
   }
   if (filters.senderInfo.trim()) {
     params.sender = filters.senderInfo.trim()

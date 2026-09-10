@@ -54,9 +54,11 @@ export function mailSendHistoryParamsFromFilters(
   rangeToParams(params, 'scheduledFrom', 'scheduledTo', filters.reserveDateRange)
 
   if (filters.subject.trim()) {
-    // BE: template_code_snapshot 기준 검색 (메일 제목 ILIKE 아님)
-    params.templateName = filters.subject.trim()
-    params.templateCode = filters.subject.trim()
+    // BE 2026-09-10: title|subject|renderedTitle (메일 제목 ILIKE). templateName 위장 금지.
+    const q = filters.subject.trim()
+    params.title = q
+    params.subject = q
+    params.renderedTitle = q
   }
   if (filters.senderInfo.trim()) {
     params.sender = filters.senderInfo.trim()

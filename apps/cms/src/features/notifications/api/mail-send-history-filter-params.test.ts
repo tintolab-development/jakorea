@@ -43,4 +43,15 @@ describe('mail send-history 4-1 filters', () => {
     expect(params2.sendStatus).toBe('IN_PROGRESS')
     expect(params2.receiptStatus).toBe('DELIVERY_FAILED')
   })
+
+  it('메일 제목 검색은 title|subject|renderedTitle (templateName 위장 금지)', () => {
+    const filters = readMailSendHistoryFiltersFromParams(new URLSearchParams())
+    filters.subject = '워크숍 안내'
+    const params = mailSendHistoryParamsFromFilters(filters)
+    expect(params.title).toBe('워크숍 안내')
+    expect(params.subject).toBe('워크숍 안내')
+    expect(params.renderedTitle).toBe('워크숍 안내')
+    expect(params.templateName).toBeUndefined()
+    expect(params.templateCode).toBeUndefined()
+  })
 })
