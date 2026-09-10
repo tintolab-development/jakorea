@@ -514,7 +514,7 @@ export function UserDetailFullpageBasicTabContent({
           onConfirm={handleAffiliatedTeacherWithdrawConfirm}
           title="회원 탈퇴 처리 안내"
           lines={affiliatedTeacherWithdrawGuideLines}
-          confirmText="탈퇴"
+          confirmText="회원 탈퇴"
           confirmVariant="delete"
           requiredConfirmInput={WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE}
           confirmInputPlaceholder={WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
