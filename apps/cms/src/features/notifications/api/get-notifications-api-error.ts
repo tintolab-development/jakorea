@@ -17,6 +17,7 @@ import {
 } from '@/features/notifications/model/mail-template/template-name'
 import { SCHEDULED_AT_MUST_BE_FUTURE_MESSAGE } from '@/features/notifications/model/send-scheduled-at'
 import { formatNotificationFailedReason } from '@/features/notifications/model/shared/format-notification-failed-reason'
+import { NOTIFICATION_REQUIRED_VARIABLE_MISSING_HINT } from '@/features/notifications/model/shared/send-ux-copy'
 
 const ERROR_CODE_MESSAGES: Record<string, string> = {
   CATEGORY_HAS_CHILDREN: '하위 카테고리 또는 템플릿이 있어 삭제할 수 없습니다.',
@@ -26,6 +27,8 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   ALIMTALK_TEMPLATE_NOT_APPROVED: '카카오 승인이 완료되지 않은 템플릿은 발송할 수 없습니다.',
   ALIMTALK_SENDER_PROFILE_MISMATCH: '선택한 발신 프로필이 템플릿과 일치하지 않습니다.',
   NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING: '템플릿 필수 변수가 없습니다.',
+  NOTIFICATION_SERVER_RESERVED_VARIABLE:
+    '서버가 채우는 예약 변수는 발송 요청에 넣을 수 없습니다.',
   ALIMTALK_TEMPLATE_MANAGED_BY_NHN:
     '알림톡 템플릿 본문은 NHN Cloud에서 관리됩니다. CMS에서는 수정할 수 없습니다.',
   ALIMTALK_TEMPLATE_DELETE_REJECTED_BY_NHN:
@@ -263,7 +266,13 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
   }
   if (code === 'NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING') {
     const formatted = formatNotificationFailedReason(serverMessage || code)
-    return formatted || ERROR_CODE_MESSAGES.NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING
+    const main =
+      formatted || ERROR_CODE_MESSAGES.NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING
+    return `${main}\n${NOTIFICATION_REQUIRED_VARIABLE_MISSING_HINT}`
+  }
+  if (code === 'NOTIFICATION_SERVER_RESERVED_VARIABLE') {
+    const formatted = formatNotificationFailedReason(serverMessage || code)
+    return formatted || ERROR_CODE_MESSAGES.NOTIFICATION_SERVER_RESERVED_VARIABLE
   }
   if (
     code === 'EMAIL_ATTACHMENT_LIMIT_EXCEEDED' ||
