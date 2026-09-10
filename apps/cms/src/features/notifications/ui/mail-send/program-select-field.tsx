@@ -6,12 +6,15 @@ import { MAIL_SEND_ALL_PROGRAM_ID } from '@/features/notifications/model/mail-se
 import { findMailSendProgram } from '@/features/notifications/model/mail-send/programs'
 import {
   isNotificationSendAllProgram,
+  isNotificationSendProgramUnset,
   notificationSendProgramFieldLabel,
 } from '@/features/notifications/model/send-program-id'
 import { ProgramSelectModal } from './program-select-modal'
 import './program-select-modal.css'
 
 const PICKER_Z_INDEX = 1100
+/** 미선택(빈 값·`all`) 표시용 select value — form state와 무관한 표시 sentinel */
+const UNSELECTED_DISPLAY_VALUE = MAIL_SEND_ALL_PROGRAM_ID
 
 type ProgramSelectFieldProps = {
   value?: string
@@ -31,9 +34,21 @@ export function ProgramSelectField({
   const [pickerOpen, setPickerOpen] = useState(false)
   const selected = findMailSendProgram(programs, value)
   const isAll = isNotificationSendAllProgram(value)
+  const isUnset = isNotificationSendProgramUnset(value)
   const displayLabel = notificationSendProgramFieldLabel(value, selected?.name)
+  const selectValue =
+    isAll || isUnset
+      ? UNSELECTED_DISPLAY_VALUE
+      : selected
+        ? value!
+        : undefined
   const selectOptions = displayLabel
-    ? [{ label: displayLabel, value: isAll ? MAIL_SEND_ALL_PROGRAM_ID : (selected?.id ?? value!) }]
+    ? [
+        {
+          label: displayLabel,
+          value: selectValue ?? UNSELECTED_DISPLAY_VALUE,
+        },
+      ]
     : []
 
   const handleUse = (program: MailSendProgram) => {
@@ -60,8 +75,8 @@ export function ProgramSelectField({
         <CmsSelect
           inputSize="large"
           withAllOption={false}
-          placeholder="대상 프로그램을 선택하세요"
-          value={isAll || selected ? value : undefined}
+          placeholder="미선택"
+          value={selectValue}
           options={selectOptions}
           open={false}
           showSearch={false}
@@ -74,7 +89,7 @@ export function ProgramSelectField({
         <ProgramSelectModal
           open
           programs={programs}
-          selectedId={isAll ? undefined : value}
+          selectedId={isAll || isUnset ? undefined : value}
           onClose={() => setPickerOpen(false)}
           onSelect={handleUse}
           onClearProgram={

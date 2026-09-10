@@ -38,12 +38,14 @@ export function parseNotificationSendProgramId(
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
-/** 대상 프로그램 필드 표시 라벨. 지정 해제(`all`)는 「미선택」. */
+/** 대상 프로그램 필드 표시 라벨. 진입 기본·지정 해제 모두 「미선택」(placeholder 문구 금지). */
 export function notificationSendProgramFieldLabel(
   programId: string | undefined | null,
   programName?: string | null
 ): string | undefined {
-  if (isNotificationSendAllProgram(programId)) return '미선택'
+  if (isNotificationSendProgramUnset(programId) || isNotificationSendAllProgram(programId)) {
+    return '미선택'
+  }
   const name = programName?.trim()
   return name || undefined
 }
