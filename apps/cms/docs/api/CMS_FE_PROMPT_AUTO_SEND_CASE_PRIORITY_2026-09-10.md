@@ -56,5 +56,6 @@
 ## Done (FE)
 
 - [x] handoff 수신 · Wave 1–4 완료분 문서 동기화
-- [x] FE 코드 변경 불필요 재확인
+- [x] FE 코드 변경 불필요 재확인 (Wave1–4 시점)
 - [x] Option A(수동 피커)와 자동발송 축 분리 정합
+- [x] **Wave1–13 FE 적용:** [`CMS_FE_PROMPT_AUTO_SEND_WAVES_1_13_2026-09-10.md`](./CMS_FE_PROMPT_AUTO_SEND_WAVES_1_13_2026-09-10.md) (Orval·라벨·UJAT 피드백)
