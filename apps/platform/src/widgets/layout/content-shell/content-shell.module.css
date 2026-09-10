@@ -7,7 +7,8 @@
   flex-direction: column;
   align-items: center;
   margin-inline: auto;
-  padding-block: var(--content-padding-block);
+  padding:  var(--spacing-40) 0 var(--content-padding-block);
+
 }
 
 .inner {
@@ -16,4 +17,10 @@
   min-width: 0;
   flex-direction: column;
   align-items: stretch;
+}
+
+@media (--bp-pc-up) {
+  .shell {
+    padding-block: var(--content-padding-block);
+  }
 }
