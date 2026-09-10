@@ -35,7 +35,11 @@ import {
   isNotificationSendProgramUnset,
   parseNotificationSendProgramId,
 } from '@/features/notifications/model/send-program-id'
-import { canUseNotificationSendTemplateForProgram } from '@/features/notifications/model/shared/template-usable-for-program'
+import {
+  canUseNotificationSendTemplateForProgram,
+  formatNotificationSendTemplateDisabledKeysWarning,
+  listNotificationSendTemplateDisabledKeysForProgram,
+} from '@/features/notifications/model/shared/template-usable-for-program'
 import {
   buildNotificationTemplateVariablesQuery,
   inferUniqueRecipientTypeValue,
@@ -194,13 +198,12 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const typeColumnTitle = alimtalkSendRecipientTypeColumnTitle(recipientTypeMode)
 
   const variablesTypeValue = useMemo(() => {
-    const fromFilter = recipientSearch.typeValue.trim()
-    if (fromFilter) return fromFilter
+    // 후보 모달 검색 필터는 목록에만 사용 — 확정 수신자만 변수 카탈로그 문맥에 반영
     if (recipientTypeMode === 'participation') {
       return inferUniqueRecipientTypeValue(recipients.map(item => item.participationType))
     }
     return inferUniqueRecipientTypeValue(recipients.map(item => item.memberType))
-  }, [recipientSearch.typeValue, recipientTypeMode, recipients])
+  }, [recipientTypeMode, recipients])
 
   const templateVariablesQuery = useMemo(
     () =>
@@ -232,6 +235,24 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         catalog: variablesQuery.data,
         programNumericId,
       }),
+    [programNumericId, variablesQuery.data]
+  )
+
+  const getTemplateUnusableMessage = useCallback(
+    (template: AlimtalkTemplateItem) =>
+      formatNotificationSendTemplateDisabledKeysWarning(
+        listNotificationSendTemplateDisabledKeysForProgram({
+          texts: [
+            template.content,
+            template.titleTemplate,
+            template.extraInfo,
+            template.emphasisTitle,
+            template.emphasisSubtitle,
+          ],
+          catalog: variablesQuery.data,
+          programNumericId,
+        })
+      ),
     [programNumericId, variablesQuery.data]
   )
 
@@ -633,6 +654,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         templates={pickerTemplates}
                         disabled={!canPickTemplate}
                         isTemplateUsable={isTemplateUsable}
+                        getTemplateUnusableMessage={getTemplateUnusableMessage}
                         onSelect={handleSelectTemplate}
                       />
                     }
