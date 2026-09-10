@@ -111,6 +111,7 @@ export function UjatAssignmentFeedbackModal({
                 placeholder="피드백을 작성해 주세요"
                 rows={4}
                 maxLength={4000}
+                showCount
                 autoFocus
                 className="ujat-assignment-feedback-modal__textarea"
               />

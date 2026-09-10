@@ -27,6 +27,7 @@ import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { handleError } from '@/shared/utils/error-handler'
 import { shouldUseFormsSurveysRemoteApi } from '@/features/template/api/admin-form-templates-service'
 import { useCreateFormResponseFeedbackMutation } from '@/features/template/hooks/use-create-form-response-feedback-mutation'
+import { getFormResponseFeedbackErrorMessage } from '@/features/template/lib/form-response-feedback-error'
 import {
   UjatAssignmentFeedbackModal,
   type UjatFeedbackModalMode,
@@ -176,7 +177,7 @@ export function AssignmentSubmissionModal({
         handleError(error, { context: 'assignmentSubmissionModal.createFeedback' })
         showAlert({
           title: '등록 실패',
-          content: '피드백 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          content: getFormResponseFeedbackErrorMessage(error),
         })
       }
     },
