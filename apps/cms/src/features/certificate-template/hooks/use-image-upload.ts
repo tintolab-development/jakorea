@@ -5,6 +5,13 @@
 
 import { useState, useCallback } from 'react'
 import type { UploadProps } from 'antd'
+import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  contentUrlForFileObjectId,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 
 export interface UseImageUploadOptions {
   /** 허용되는 MIME 타입 목록 */
@@ -93,16 +100,17 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
           return
         }
 
-        // 임시: 로컬 URL 생성 (실제 구현 시 서버 URL 사용)
-        // TODO: 실제 서버 업로드 로직으로 교체 필요
-        const url = URL.createObjectURL(fileObj)
-        console.log('이미지 업로드 완료, URL:', url)
+        const owner = buildAdminFileOwner(
+          ADMIN_FILE_OWNER.CERTIFICATE_TEMPLATE,
+          1,
+          ADMIN_FILE_PURPOSE.CERTIFICATE_ASSET
+        )
+        const uploaded = await uploadAdminFileMaybeMock({ file: fileObj, owner })
+        const url = contentUrlForFileObjectId(uploaded.fileObjectId)
 
-        // 로컬 state 업데이트
         setPreviewUrl(url)
         setFileName(fileObj.name)
 
-        // 성공 콜백 호출
         onSuccess?.(url)
 
         // Ant Design Upload의 onSuccess 호출

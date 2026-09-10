@@ -71,7 +71,14 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0 8px;
+  gap: 0 16px;
+}
+
+.user-consent-agreement-section__document-edit-status {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
 }
 
 .user-consent-agreement-section__value-sep {

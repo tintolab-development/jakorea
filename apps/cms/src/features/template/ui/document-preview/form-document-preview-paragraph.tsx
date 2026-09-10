@@ -461,7 +461,7 @@ function renderBody(
           >
             {display}
           </div>
-          {p.showBottomConsent === true || p.id === 'agreement-portrait-intro' ? (
+          {p.showBottomConsent === true ? (
             <CmsRadioGroup
               className="form-editor-table-bottom-consent"
               size="large"

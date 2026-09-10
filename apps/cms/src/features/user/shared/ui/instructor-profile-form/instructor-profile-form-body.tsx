@@ -143,37 +143,17 @@ function InstructorCareerRowEdit({
 /** Form.Item 자식 — value/onChange로 미동의 시 draft·onValuesChange까지 동기화 */
 function ConsentDocumentFieldEdit({
   value,
-  onChange,
   onWrite,
-  showRadios = false,
 }: {
   value?: ConsentValue
   onChange?: (value: ConsentValue) => void
   onWrite: () => void
-  /** 강사 상세 수정만 라디오. 신규 등록은 상태 문구 + 작성 버튼 */
-  showRadios?: boolean
 }) {
   return (
     <span className="instructor-register-modal__consent-document">
-      {showRadios ? (
-        <CmsRadioGroup
-          options={CONSENT_RADIO_OPTIONS}
-          size="large"
-          value={value}
-          onChange={event => {
-            const next = event.target.value as ConsentValue
-            if (next === 'disagree') {
-              onChange?.('disagree')
-              return
-            }
-            onWrite()
-          }}
-        />
-      ) : (
-        <span className="instructor-register-modal__consent-status">
-          {value === 'agree' ? '동의' : '미동의'}
-        </span>
-      )}
+      <span className="instructor-register-modal__consent-status">
+        {value === 'agree' ? '동의' : '미동의'}
+      </span>
       <span className="instructor-register-modal__consent-sep" aria-hidden>
         |
       </span>
@@ -714,6 +694,7 @@ export function InstructorProfileFormBody({
               <DetailInfoForm.Row type="double">
                 <DetailInfoForm.Field
                   label="서비스 이용약관"
+                  required={!isDetailEdit}
                   labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                   view="-"
                   edit={
@@ -729,6 +710,7 @@ export function InstructorProfileFormBody({
                 />
                 <DetailInfoForm.Field
                   label="개인정보 수집·이용 동의"
+                  required={!isDetailEdit}
                   labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                   view="-"
                   edit={
@@ -749,7 +731,8 @@ export function InstructorProfileFormBody({
                   view="-"
                   edit={
                     <Form.Item name="consentMarketing" noStyle>
-                      <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="large" />
+                      {/* CMS 강사 등록·상세 — 마케팅 미동의 고정 */}
+                      <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="large" disabled />
                     </Form.Item>
                   }
                 />
@@ -760,7 +743,6 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentPortrait" noStyle>
                       <ConsentDocumentFieldEdit
-                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentPortrait')}
                       />
                     </Form.Item>
@@ -784,7 +766,6 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentPaymentStatement" noStyle>
                       <ConsentDocumentFieldEdit
-                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentPaymentStatement')}
                       />
                     </Form.Item>
@@ -797,7 +778,6 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentEducatorPledge" noStyle>
                       <ConsentDocumentFieldEdit
-                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentEducatorPledge')}
                       />
                     </Form.Item>
@@ -812,7 +792,6 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentAdministrativeJoint" noStyle>
                       <ConsentDocumentFieldEdit
-                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
                       />
                     </Form.Item>
@@ -825,7 +804,6 @@ export function InstructorProfileFormBody({
                   edit={
                     <Form.Item name="consentSexOffenseCheck" noStyle>
                       <ConsentDocumentFieldEdit
-                        showRadios={isDetailEdit}
                         onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
                       />
                     </Form.Item>
@@ -1087,7 +1065,6 @@ export function InstructorProfileFormBody({
         </DetailInfoForm>
 
         <FreeWriteItemsSection
-          required
           description={INSTRUCTOR_FORM_SECTION_DESCRIPTIONS.freeWrite}
           items={INSTRUCTOR_FREE_WRITE_ITEMS}
           rows={3}

@@ -6,6 +6,12 @@
 
 import ExcelJS from '@zurmokeeper/exceljs'
 import { unknownErrorText } from '@/shared/utils/error-handler'
+import {
+  ADMIN_FILE_PURPOSE,
+  contentUrlForFileObjectId,
+  programApplicationFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 
 /**
  * 파일 업로드 결과
@@ -31,39 +37,49 @@ export interface StudentListParseResult {
   errors: string[]
 }
 
+const DEPRECATED_UPLOAD_MESSAGE =
+  'fileUploadService.upload is deprecated. Use uploadAdminFileMaybeMock from @/shared/lib/admin-file-upload.'
+
 /**
- * 파일 업로드 Mock 서비스
- * 실제 환경에서는 서버로 파일을 전송하고 URL을 받아옴
+ * @deprecated Use `uploadAdminFileMaybeMock` with an allowlisted `filePurpose` instead.
  */
 export const fileUploadService = {
   /**
-   * 파일 업로드 (Mock)
-   * 실제로는 서버로 파일을 전송하고 저장된 URL을 반환
+   * @deprecated Prefer `uploadAdminFileMaybeMock` at the call site.
+   * `studentList` only — thin wrapper for legacy callers.
    */
-  upload: async (file: File, type: 'studentList' | 'document' | 'image'): Promise<FileUploadResult> => {
-    // Mock: 비동기 시뮬레이션
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    // Mock URL 생성 (실제로는 서버에서 반환)
-    const fileId = `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-    const extension = file.name.substring(file.name.lastIndexOf('.'))
-    const url = `/uploads/${type}/${fileId}${extension}`
-
+  upload: async (
+    file: File,
+    type: 'studentList' | 'document' | 'image',
+    applicationOwnerId = 1
+  ): Promise<FileUploadResult> => {
+    if (type !== 'studentList') {
+      throw new Error(DEPRECATED_UPLOAD_MESSAGE)
+    }
+    const uploaded = await uploadAdminFileMaybeMock({
+      file,
+      owner: programApplicationFileOwner(applicationOwnerId, ADMIN_FILE_PURPOSE.STUDENT_ROSTER),
+    })
     return {
-      url,
+      url: contentUrlForFileObjectId(uploaded.fileObjectId),
       fileName: file.name,
       fileSize: file.size,
-      uploadedAt: new Date().toISOString() }
+      uploadedAt: new Date().toISOString(),
+    }
   },
 
   /**
-   * 여러 파일 업로드
+   * @deprecated Prefer `uploadAdminFileMaybeMock` at the call site.
    */
   uploadMultiple: async (
     files: File[],
-    type: 'studentList' | 'document' | 'image'
+    type: 'studentList' | 'document' | 'image',
+    applicationOwnerId = 1
   ): Promise<FileUploadResult[]> => {
-    return Promise.all(files.map(file => fileUploadService.upload(file, type)))
+    if (type !== 'studentList') {
+      throw new Error(DEPRECATED_UPLOAD_MESSAGE)
+    }
+    return Promise.all(files.map(file => fileUploadService.upload(file, type, applicationOwnerId)))
   },
 
   /**
@@ -88,7 +104,7 @@ export const fileUploadService = {
       // 헤더 행 찾기 (첫 번째 행이 헤더일 것으로 가정)
       const headerRow = worksheet.getRow(1)
       const headerMap: Record<string, number> = {}
-      
+
       headerRow.eachCell((cell, colNumber) => {
         const headerText = cell.text?.toLowerCase().trim() || ''
         if (headerText.includes('이름') || headerText.includes('name')) {
@@ -118,7 +134,10 @@ export const fileUploadService = {
           name,
           grade: headerMap.grade ? row.getCell(headerMap.grade).text?.trim() : undefined,
           class: headerMap.class ? row.getCell(headerMap.class).text?.trim() : undefined,
-          studentNumber: headerMap.studentNumber ? row.getCell(headerMap.studentNumber).text?.trim() : undefined }
+          studentNumber: headerMap.studentNumber
+            ? row.getCell(headerMap.studentNumber).text?.trim()
+            : undefined,
+        }
 
         students.push(student)
       })
@@ -126,10 +145,10 @@ export const fileUploadService = {
       return {
         students,
         totalCount: students.length,
-        errors: errors.length > 0 ? errors : [] }
+        errors: errors.length > 0 ? errors : [],
+      }
     } catch (error) {
-      const errorMessage =
-        unknownErrorText(error, '엑셀 파일 파싱에 실패했습니다.')
+      const errorMessage = unknownErrorText(error, '엑셀 파일 파싱에 실패했습니다.')
       throw new Error(errorMessage)
     }
   },
@@ -151,5 +170,7 @@ export const fileUploadService = {
 
     const buffer = await workbook.xlsx.writeBuffer()
     return new Blob([buffer], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
-  } }
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+  },
+}

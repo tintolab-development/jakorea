@@ -13,8 +13,15 @@ export interface AccountPaymentListItemResponse {
   accountPaymentId?: number;
   batchId?: number;
   settlementId?: number;
-  /** Canonical WAITING_PAYMENT | PAID | FAILED. 응답을 REQUESTED로 위장하지 않습니다. */
+  /** CMS 업무 상태는 WAITING_PAYMENT | PAID만 노출합니다. 내부 FAILED는 WAITING_PAYMENT로 정규화됩니다. */
   paymentStatus?: string;
+  /** 내부 계좌 지급 처리 실패 여부. true여도 paymentStatus는 WAITING_PAYMENT입니다. */
+  paymentFailureYn?: boolean;
+  /**
+     * 내부 계좌 지급 실패 사유. paymentFailureYn=true일 때만 노출합니다.
+     * @nullable
+     */
+  paymentFailureReason?: string | null;
   /** 신청자 실명. 서버에서 마스킹하지 않습니다. */
   instructorName?: string;
   bankName?: string;

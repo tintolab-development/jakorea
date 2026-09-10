@@ -9,8 +9,9 @@ import {
 } from '@/features/template/lib/writing-form-template-local-save'
 import { usePaymentStatementIssuanceMiddleActions } from '@/features/template/hooks/use-payment-statement-issuance-middle-actions'
 import {
+  buildSettlementApplicationDocumentPreviewDraft,
   getSettlementApplicationA4ParagraphGap,
-  SETTLEMENT_APPLICATION_A4_HIDDEN_PARAGRAPH_IDS,
+  SETTLEMENT_APPLICATION_DOCUMENT_PREVIEW_A4_HIDDEN_PARAGRAPH_IDS,
 } from '@/features/template/model/settlement-application-issuance-a4-preview'
 import {
   createSettlementApplicationIssuanceDraft,
@@ -25,7 +26,7 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
-import { SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/settlement-application-issuance/paragraph-config'
+import { SETTLEMENT_APPLICATION_DOCUMENT_PREVIEW_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/settlement-application-issuance/paragraph-config'
 
 export function useSettlementApplicationIssuanceEditor(
   active: boolean,
@@ -167,20 +168,25 @@ export function useSettlementApplicationIssuanceEditor(
     }
   }, [draft])
 
+  const documentPreviewDraft = useMemo(
+    () => buildSettlementApplicationDocumentPreviewDraft(),
+    []
+  )
+
   const writingPreviewSession = useMemo(
     () => ({
-      draft,
+      draft: documentPreviewDraft,
       updateParagraph,
       headerTitle: previewHeaderTitle,
       editorKind: 'horizontal_table' as const,
       previewLayout: 'a4-document' as const,
-      paragraphBodyOptions: SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS,
+      paragraphBodyOptions: SETTLEMENT_APPLICATION_DOCUMENT_PREVIEW_PARAGRAPH_BODY_OPTIONS,
       hideParagraphRequiredChrome: true as const,
-      a4HiddenParagraphIds: SETTLEMENT_APPLICATION_A4_HIDDEN_PARAGRAPH_IDS,
+      a4HiddenParagraphIds: SETTLEMENT_APPLICATION_DOCUMENT_PREVIEW_A4_HIDDEN_PARAGRAPH_IDS,
       a4RenderMode: 'contentOnly' as const,
       a4ParagraphGapPx: getSettlementApplicationA4ParagraphGap,
     }),
-    [draft, previewHeaderTitle, updateParagraph]
+    [documentPreviewDraft, previewHeaderTitle, updateParagraph]
   )
 
   useEffect(() => {

@@ -2,6 +2,19 @@
   width: 100%;
 }
 
+/* 상세 수정: 등록 모달과 공유하는 섹션 제목 필수 `*` 숨김 */
+.instructor-detail-edit-form .instructor-register-modal__basic-info .detail-info-form__title::after,
+.instructor-detail-edit-form
+  .instructor-register-modal__consent-heading
+  > .detail-info-form__header
+  .detail-info-form__title::after,
+.instructor-detail-edit-form
+  .instructor-register-career
+  > .detail-info-form__header
+  .detail-info-form__title::after {
+  content: none;
+}
+
 .instructor-detail-edit-form__ja-grade {
   display: inline-flex;
   align-items: center;

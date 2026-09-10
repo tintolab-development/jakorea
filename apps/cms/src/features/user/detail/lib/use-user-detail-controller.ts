@@ -1,4 +1,13 @@
-import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef, createElement, type MutableRefObject } from 'react'
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  createElement,
+  type MutableRefObject,
+} from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
@@ -103,11 +112,20 @@ import {
   mergeListUserWithFetchedDetail,
 } from '@/features/user/api/merge-list-user-with-detail'
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
-import { upsertMember1365ExternalIdentifierRemote, upsertMemberAdminCommentRemote, deleteMemberApplicationHistoryRemote, bulkDeleteProgramHistoryRemote, bulkDeleteSchoolOrganizationProgramEnrollmentHistoryRemote } from '@/features/user/api/members-api-client'
+import {
+  upsertMember1365ExternalIdentifierRemote,
+  upsertMemberAdminCommentRemote,
+  deleteMemberApplicationHistoryRemote,
+  bulkDeleteProgramHistoryRemote,
+  bulkDeleteSchoolOrganizationProgramEnrollmentHistoryRemote,
+} from '@/features/user/api/members-api-client'
 import { parseSchoolOrganizationEnrollmentRowId } from '@/features/user/api/map-school-organization-program-enrollment-history'
 import { parseOrganizationIdFromUserId } from '@/features/user/api/map-school-organization-to-user'
 import { resolveAdminCommentResource } from '@/features/user/api/resolve-admin-comment-resource'
-import { bulkIssueCertificatesRemote, bulkDownloadCertificatesRemote } from '@/features/user/api/certificates-api-client'
+import {
+  bulkIssueCertificatesRemote,
+  bulkDownloadCertificatesRemote,
+} from '@/features/user/api/certificates-api-client'
 import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
 import {
   collectParticipantIdsFromHistoryRowIds,
@@ -130,7 +148,7 @@ const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
 const BASIC_INFO_EDIT_UNMASK_REASON = '정보 수정'
 
 const BASIC_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
-  "관리자에 의해 등록된 회원은 정보 수정 시 개인정보 마스킹이 해제되며, 개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다. 해당 회원의 개인정보 열람 및 정보를 수정하시겠습니까?"
+  "관리자에 의해 등록된 회원은 정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 회원의 개인정보 열람 및 정보를 수정하시겠습니까?"
 
 export type BasicInfoEditScope = 'none' | 'profile' | 'comment' | 'instructor_fee_ja'
 
@@ -186,16 +204,15 @@ export function useUserDetailController({
   const loadProgramHistoryResources = open && mode !== 'permission'
   /** 기본정보 등 다른 LNB — 프로그램 이력·수강 API는 history 탭 진입 시에만 */
   const shouldLoadProgramHistoryTab = loadProgramHistoryResources && tabState.lnb === 'history'
-  /** 회원 상세 정보 탭 — consent-records 등 기본정보 전용 API */
-  const shouldLoadDetailInfoTab = open && mode !== 'permission' && tabState.lnb === 'detail-info'
+  /** 회원 상세 정보 탭 — consent-records·comments 등 기본정보 전용 API (권한 승인 상세도 comments 포함) */
+  const shouldLoadDetailInfoTab = open && tabState.lnb === 'detail-info'
   /** 정산 현황 탭 — 강사·교사 겸 강사 settlement API */
   const shouldLoadPaymentStatusTab =
     open && mode !== 'permission' && tabState.lnb === 'payment-status'
   const isSchoolDetail = displayUser?.role === 'SCHOOL'
   const hasProgramsChildMenu = Boolean(displayUser && programsHistoryHasChildMenu(displayUser))
   const resolvedProgramsChild = useMemo(
-    () =>
-      resolveProgramsChildForMemberDetail(displayUser, tabState.lnb, tabState.child),
+    () => resolveProgramsChildForMemberDetail(displayUser, tabState.lnb, tabState.child),
     [displayUser, tabState.lnb, tabState.child]
   )
 
@@ -203,9 +220,7 @@ export function useUserDetailController({
 
   const schoolOrganizationId = useMemo(() => {
     if (!isSchoolDetail || !displayUser) return undefined
-    return (
-      displayUser.organizationId ?? parseOrganizationIdFromUserId(displayUser.id) ?? undefined
-    )
+    return displayUser.organizationId ?? parseOrganizationIdFromUserId(displayUser.id) ?? undefined
   }, [displayUser, isSchoolDetail])
 
   const basicTabSections = useMemo(() => {
@@ -367,13 +382,7 @@ export function useUserDetailController({
       schoolOrganizationId,
       displayUser.id
     )
-  }, [
-    membersRemote,
-    schoolTabResourceFetchKey,
-    schoolOrganizationId,
-    displayUser?.id,
-    queryClient,
-  ])
+  }, [membersRemote, schoolTabResourceFetchKey, schoolOrganizationId, displayUser?.id, queryClient])
 
   const applications = isSchoolDetail ? schoolEnrollmentApplications : memberApplications
   const applicationsLoading = isSchoolDetail
@@ -459,8 +468,7 @@ export function useUserDetailController({
   })
 
   const resolvePersonalInfoAccessItem = useCallback(
-    () =>
-      displayUser?.schoolInfo?.schoolName?.trim() || displayUser?.name || '회원 상세 정보',
+    () => displayUser?.schoolInfo?.schoolName?.trim() || displayUser?.name || '회원 상세 정보',
     [displayUser?.name, displayUser?.schoolInfo?.schoolName]
   )
 
@@ -468,11 +476,7 @@ export function useUserDetailController({
     (payload: unknown, role: User['role'] | undefined) => {
       if (!displayUser) return
       const merged = stripRestrictedPiiForSessionUser(
-        applyPrivacyUnmaskResponseToUser(
-          displayUser,
-          payload,
-          role ?? displayUser.role
-        ),
+        applyPrivacyUnmaskResponseToUser(displayUser, payload, role ?? displayUser.role),
         displayUser,
         useAuthStore.getState().user
       )
@@ -699,7 +703,12 @@ export function useUserDetailController({
   )
 
   const handleCertificateBulkIssue = useCallback(
-    async (rowIds: readonly string[], _reason: CertificateIssueReasonValue, reasonLabel: string, certificateType: 'COMPLETION' | 'ACTIVITY') => {
+    async (
+      rowIds: readonly string[],
+      _reason: CertificateIssueReasonValue,
+      reasonLabel: string,
+      certificateType: 'COMPLETION' | 'ACTIVITY'
+    ) => {
       if (!membersRemote) return
       const participantIds = collectParticipantIdsFromHistoryRowIds(rowIds)
       if (participantIds.length === 0) {
@@ -778,10 +787,7 @@ export function useUserDetailController({
   )
 
   const openWithdrawConfirm = useCallback(() => {
-    if (
-      displayUser?.role === 'SCHOOL' &&
-      institutionHasRegisteredTeachers(displayUser)
-    ) {
+    if (displayUser?.role === 'SCHOOL' && institutionHasRegisteredTeachers(displayUser)) {
       setInstitutionDeleteBlockedOpen(true)
       return
     }
@@ -947,6 +953,13 @@ export function useUserDetailController({
   const startAdminCommentEdit = useCallback(() => {
     if (!displayUser) return
     if (!shouldShowAdminCommentSectionForViewer(currentUser, displayUser)) return
+    // 권한 승인 상세 · 승인 대기: 코멘트 영역은 열람만, 작성 진입 불가
+    if (
+      mode === 'permission' &&
+      (displayUser.permissionApprovalStatus === 'PENDING' || !displayUser.permissionApprovalStatus)
+    ) {
+      return
+    }
 
     const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
     const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, displayUser.role)
@@ -985,6 +998,7 @@ export function useUserDetailController({
     focusDetailInfoTab()
   }, [
     displayUser,
+    mode,
     basicInfoEntrySource,
     searchParams,
     currentUser,
@@ -1164,11 +1178,15 @@ export function useUserDetailController({
               MEMBER_DETAIL_SCREEN_CODE,
               commentResource.target
             ),
-            (prev: {
-              comments?: unknown[]
-              latestComment?: string
-              latestCommentDetail?: { comment: string; commentId?: number }
-            } | undefined) => ({
+            (
+              prev:
+                | {
+                    comments?: unknown[]
+                    latestComment?: string
+                    latestCommentDetail?: { comment: string; commentId?: number }
+                  }
+                | undefined
+            ) => ({
               comments: prev?.comments ?? [],
               latestComment: savedComment,
               latestCommentDetail: {
@@ -1199,7 +1217,10 @@ export function useUserDetailController({
       const skipListInvalidate =
         membersRemote &&
         (basicInfoEditScope === 'profile' || basicInfoEditScope === 'instructor_fee_ja')
-      onMemberBasicInfoSaved?.(merged, skipListInvalidate ? { skipListInvalidate: true } : undefined)
+      onMemberBasicInfoSaved?.(
+        merged,
+        skipListInvalidate ? { skipListInvalidate: true } : undefined
+      )
     } catch (error) {
       handleError(error, {
         defaultMessage: getMemberApiErrorMessage(error, '회원 정보 저장에 실패했습니다.'),
@@ -1218,9 +1239,12 @@ export function useUserDetailController({
     queryClient,
   ])
 
-  const updateBasicInfoDraft = useCallback((partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => {
-    setBasicInfoDraft(prev => (prev ? { ...prev, ...partial } : prev))
-  }, [])
+  const updateBasicInfoDraft = useCallback(
+    (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => {
+      setBasicInfoDraft(prev => (prev ? { ...prev, ...partial } : prev))
+    },
+    []
+  )
 
   const patchAdminPermissionVariantFromDetailView = useCallback(
     async (nextPermission: AdminPermissionTagVariant) => {
@@ -1539,8 +1563,8 @@ export function useUserDetailController({
     () =>
       Boolean(
         patchMemberBasicInfo &&
-          displayUser?.role === 'ADMIN' &&
-          canAccessAdminCommentInAdminDetail(currentUser)
+        displayUser?.role === 'ADMIN' &&
+        canAccessAdminCommentInAdminDetail(currentUser)
       ),
     [patchMemberBasicInfo, displayUser?.role, currentUser]
   )
@@ -1551,9 +1575,7 @@ export function useUserDetailController({
     // 권한 승인(강사): getDetail → instructorCmsProfile 이 있으면 이력서 카드에 반영
     if (mode === 'permission') {
       if (!displayUser.instructorCmsProfile) return null
-      const src = personalInfoRevealed
-        ? displayUser
-        : maskedUserForInstructorDetail(displayUser)
+      const src = personalInfoRevealed ? displayUser : maskedUserForInstructorDetail(displayUser)
       return userToApplicantInstructorRow(src)
     }
 

@@ -1,4 +1,9 @@
-import { uploadAdminFile } from '@/shared/lib/admin-file-upload'
+import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  uploadAdminFile,
+} from '@/shared/lib/admin-file-upload'
 import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload/types'
 import {
   bindEmailAttachmentRemote,
@@ -8,15 +13,10 @@ import {
 /** 메일 템플릿 첨부 files-domain owner. CMS `/api/admin/files/attachments` 바인딩은 사용하지 않는다. */
 export const MAIL_TEMPLATE_FILE_OWNER_DOMAIN = 'NOTIFICATION'
 export const MAIL_TEMPLATE_FILE_OWNER_TYPE = 'EMAIL_TEMPLATE'
-export const MAIL_TEMPLATE_FILE_PURPOSE = 'EMAIL_TEMPLATE_ATTACHMENT'
+export const MAIL_TEMPLATE_FILE_PURPOSE = ADMIN_FILE_PURPOSE.MAIL_TEMPLATE_ATTACHMENT
 
 export function mailTemplateFileOwner(templateId: number): AdminFileUploadOwner {
-  return {
-    ownerDomain: MAIL_TEMPLATE_FILE_OWNER_DOMAIN,
-    ownerType: MAIL_TEMPLATE_FILE_OWNER_TYPE,
-    ownerId: templateId,
-    filePurpose: MAIL_TEMPLATE_FILE_PURPOSE,
-  }
+  return buildAdminFileOwner(ADMIN_FILE_OWNER.MAIL_TEMPLATE, templateId, MAIL_TEMPLATE_FILE_PURPOSE)
 }
 
 /** upload-requests → confirm → CLEAN 후 template attachments bind */

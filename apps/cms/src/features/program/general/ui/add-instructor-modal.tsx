@@ -5,104 +5,20 @@
  * 섹션: 기본 정보(프로필 사진 + 2열 필드), 최종 학력, 경력 상세, 자격 및 면허, 수상 및 수료 내역
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Form, Input, DatePicker, Modal, Pagination } from 'antd' // TODO(custom-ui): 주소검색 nested Modal → ContentModal (커스텀 크롬)
-import type { ChangeEvent, InputHTMLAttributes } from 'react'
+import { useEffect, useRef } from 'react'
+import { Form, DatePicker } from 'antd'
+import type { InputRef } from 'antd'
 import { useForm, type Path } from 'react-hook-form'
-import {
-  applyKoreanPhoneInputChange,
-  formatKoreanPhoneNumber,
-} from '@jakorea/domain/shared/korean-phone'
-import {
-  getCmsJusoMissingKeyMessage,
-  readJusoApiUrlFromEnv,
-  readJusoConfmKeyFromEnv,
-  useJusoAddressSearch,
-  type JusoAddressItem,
-} from '@/shared/hooks'
-
-function NativePhoneTableInput({
-  value,
-  defaultValue,
-  onChange,
-  ...rest
-}: InputHTMLAttributes<HTMLInputElement>) {
-  const innerRef = useRef<HTMLInputElement>(null)
-  const pendingCaret = useRef<number | null>(null)
-  const previousRef = useRef(formatKoreanPhoneNumber(String(value ?? defaultValue ?? '')))
-  const formatted =
-    value === undefined || value === null ? '' : formatKoreanPhoneNumber(String(value))
-  previousRef.current = formatted
-
-  useLayoutEffect(() => {
-    const caret = pendingCaret.current
-    if (caret == null) return
-    pendingCaret.current = null
-    innerRef.current?.setSelectionRange(caret, caret)
-  })
-
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const result = applyKoreanPhoneInputChange(
-      previousRef.current,
-      event.target.value,
-      event.target.selectionStart
-    )
-    previousRef.current = result.formatted
-    pendingCaret.current = result.caret
-    event.target.value = result.formatted
-    onChange?.(event)
-  }
-
-  return (
-    <input
-      {...rest}
-      ref={innerRef}
-      type="tel"
-      inputMode="numeric"
-      autoComplete="tel"
-      value={formatted}
-      onChange={handleChange}
-    />
-  )
-}
-
-/** 주소 검색용: 아이콘 + 네이티브 input 한 묶음 220×40, Form.Item value/onChange는 input에 전달 */
-interface AddressSearchInputProps extends InputHTMLAttributes<HTMLInputElement> {
-  onSearchClick: () => void
-}
-
-function AddressSearchInput({ onSearchClick, ...props }: AddressSearchInputProps) {
-  return (
-    <div className="add-instructor-modal__table-input-wrap add-instructor-modal__table-input-wrap--with-prefix">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="18"
-        height="18"
-        viewBox="0 0 18 18"
-        fill="none"
-        className="add-instructor-modal__table-input-prefix"
-        aria-hidden
-      >
-        <path
-          fillRule="evenodd"
-          clipRule="evenodd"
-          d="M8.15625 1.6875C11.7288 1.6875 14.625 4.58366 14.625 8.15625C14.625 9.73996 14.0538 11.189 13.1089 12.3135L16.1477 15.3523C16.3673 15.572 16.3673 15.9281 16.1477 16.1477C15.9281 16.3674 15.572 16.3673 15.3523 16.1477L12.3135 13.11C11.1891 14.0546 9.73971 14.625 8.15625 14.625C4.58366 14.625 1.6875 11.7288 1.6875 8.15625C1.6875 4.58366 4.58366 1.6875 8.15625 1.6875ZM8.15625 2.8125C5.20498 2.8125 2.8125 5.20498 2.8125 8.15625C2.8125 11.1075 5.20498 13.5 8.15625 13.5C11.1075 13.5 13.5 11.1075 13.5 8.15625C13.5 5.20498 11.1075 2.8125 8.15625 2.8125Z"
-          fill="#85969D"
-        />
-      </svg>
-      <input className="add-instructor-modal__table-input" {...props} />
-      <button
-        type="button"
-        className="add-instructor-modal__address-search-btn"
-        onClick={onSearchClick}
-      >
-        주소검색
-      </button>
-    </div>
-  )
-}
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, CmsNumericInput, CmsRadio } from '@/shared/ui'
+import {
+  AddressSearch,
+  CmsButton,
+  CmsInput,
+  CmsNumericInput,
+  CmsPhoneInput,
+  CmsRadio,
+  CmsTextArea,
+} from '@/shared/ui'
 import type {
   ParticipatingInstructorRow,
   SettlementStatusKey } from '@/data/mock/participating-instructors'
@@ -296,29 +212,15 @@ const INITIAL_FORM_VALUES: AddInstructorFormValues = {
   consentAdministrativeInfo: 'agree',
   consentEducationFacilitatorPledge: 'agree' }
 
-const ADDRESS_SEARCH_COUNT_PER_PAGE = 10
+const ADDRESS_SEARCH_MODAL_Z_INDEX = 1100
 
 export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModalProps) {
   const [form] = Form.useForm<AddInstructorFormValues>()
-  const [isAddressPopupOpen, setIsAddressPopupOpen] = useState(false)
-  const [addressKeyword, setAddressKeyword] = useState('')
-  const [addressPage, setAddressPage] = useState(1)
-  const detailAddressInputRef = useRef<HTMLInputElement | null>(null)
+  const detailAddressInputRef = useRef<InputRef>(null)
   const rhfForm = useForm<AddInstructorFormValues>({
     defaultValues: INITIAL_FORM_VALUES,
     mode: 'onChange' })
-  const {
-    addresses,
-    totalCount,
-    loading: addressLoading,
-    error: addressError,
-    search: searchAddress,
-    reset: resetAddressSearch } = useJusoAddressSearch({
-    confmKey: readJusoConfmKeyFromEnv(),
-    countPerPage: ADDRESS_SEARCH_COUNT_PER_PAGE,
-    apiUrl: readJusoApiUrlFromEnv(),
-    missingKeyMessage: getCmsJusoMissingKeyMessage(),
-  })
+  const address = Form.useWatch('address', form) ?? ''
   const jaKoreaExperiences = Form.useWatch('jaKoreaExperiences', form) ?? []
   const qualifications = Form.useWatch('qualifications', form) ?? []
   const awards = Form.useWatch('awards', form) ?? []
@@ -366,36 +268,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
     }
   }, [open, form, rhfForm])
 
-  const openAddressPopup = () => {
-    setAddressKeyword((form.getFieldValue('address') ?? '').trim())
-    setAddressPage(1)
-    setIsAddressPopupOpen(true)
-  }
-
-  const closeAddressPopup = () => {
-    setIsAddressPopupOpen(false)
-    setAddressKeyword('')
-    setAddressPage(1)
-    resetAddressSearch()
-  }
-
-  const handleAddressSearch = async () => {
-    setAddressPage(1)
-    await searchAddress(addressKeyword, 1)
-  }
-
-  const handleAddressPageChange = async (nextPage: number) => {
-    setAddressPage(nextPage)
-    await searchAddress(addressKeyword, nextPage)
-  }
-
-  const handleAddressSelect = (addressItem: JusoAddressItem) => {
-    const selectedAddress = addressItem.roadAddr || addressItem.jibunAddr
-    form.setFieldValue('address', selectedAddress)
-    rhfForm.setValue('address', selectedAddress)
-    closeAddressPopup()
-    window.setTimeout(() => detailAddressInputRef.current?.focus(), 0)
-  }
 
   const handleSubmit = (values: AddInstructorFormValues) => {
     syncToReactHookForm(values)
@@ -475,8 +347,9 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         name="nameKorean"
                         noStyle
                       >
-                        <input
-                          className="add-instructor-modal__table-input"
+                        <CmsInput
+                          inputSize="medium"
+                          width={220}
                           placeholder="한글 성명"
                         />
                       </Form.Item>
@@ -489,8 +362,9 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         name="nameEnglish"
                         noStyle
                       >
-                        <input
-                          className="add-instructor-modal__table-input"
+                        <CmsInput
+                          inputSize="medium"
+                          width={220}
                           placeholder="영문 성명"
                         />
                       </Form.Item>
@@ -560,8 +434,9 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         name="contact"
                         noStyle
                       >
-                        <NativePhoneTableInput
-                          className="add-instructor-modal__table-input"
+                        <CmsPhoneInput
+                          inputSize="medium"
+                          width={220}
                           placeholder="연락처"
                         />
                       </Form.Item>
@@ -574,9 +449,10 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         name="email"
                         noStyle
                       >
-                        <input
+                        <CmsInput
                           type="email"
-                          className="add-instructor-modal__table-input"
+                          inputSize="medium"
+                          width={220}
                           placeholder="이메일"
                         />
                       </Form.Item>
@@ -595,18 +471,27 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                           name="address"
                           noStyle
                         >
-                          <AddressSearchInput
+                          <AddressSearch
+                            value={address}
+                            onChange={next => {
+                              form.setFieldValue('address', next)
+                              rhfForm.setValue('address', next)
+                            }}
                             placeholder="건물명, 도로명 또는 지번"
-                            readOnly
-                            onSearchClick={openAddressPopup}
-                            onClick={openAddressPopup}
+                            inputSize="medium"
+                            width={396}
+                            modalZIndex={ADDRESS_SEARCH_MODAL_Z_INDEX}
+                            onSelect={() => {
+                              window.setTimeout(() => detailAddressInputRef.current?.focus(), 0)
+                            }}
                           />
                         </Form.Item>
                         <span className="add-instructor-modal__address-divider" aria-hidden />
                         <Form.Item name="detailAddress" noStyle>
-                          <input
+                          <CmsInput
                             ref={detailAddressInputRef}
-                            className="add-instructor-modal__table-input"
+                            inputSize="medium"
+                            width="100%"
                             placeholder="상세 주소"
                           />
                         </Form.Item>
@@ -645,8 +530,9 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         </Form.Item>
                         <div className="add-instructor-modal__bank-account-divider" aria-hidden />
                         <Form.Item name="accountHolder" noStyle>
-                          <input
-                            className="add-instructor-modal__table-input add-instructor-modal__bank-account-input--holder"
+                          <CmsInput
+                            inputSize="medium"
+                            width={120}
                             placeholder="예금주명"
                           />
                         </Form.Item>
@@ -662,8 +548,9 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       colSpan={3}
                     >
                       <Form.Item name="oneLineIntro" noStyle>
-                        <input
-                          className="add-instructor-modal__table-input add-instructor-modal__table-input--wide"
+                        <CmsInput
+                          inputSize="medium"
+                          width="100%"
                           placeholder="자유롭게 작성해주세요"
                         />
                       </Form.Item>
@@ -883,11 +770,11 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                                   noStyle
                                   className="add-instructor-modal__ja-activity-input-wrap"
                                 >
-                                  <Input
+                                  <CmsInput
                                     placeholder="프로그램명"
-                                    size="large"
-                                    allowClear
-                                    className="add-instructor-modal__table-input add-instructor-modal__ja-activity-input"
+                                    inputSize="medium"
+                                    width={220}
+                                    className="add-instructor-modal__ja-activity-input"
                                   />
                                 </Form.Item>
                                 <div
@@ -931,11 +818,11 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                                   noStyle
                                   className="add-instructor-modal__ja-activity-input-wrap"
                                 >
-                                  <Input
+                                  <CmsInput
                                     placeholder="비고"
-                                    size="large"
-                                    allowClear
-                                    className="add-instructor-modal__table-input add-instructor-modal__ja-activity-input"
+                                    inputSize="medium"
+                                    width={220}
+                                    className="add-instructor-modal__ja-activity-input"
                                   />
                                 </Form.Item>
                                 {showDelete && (
@@ -1007,11 +894,11 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                                   noStyle
                                   className="add-instructor-modal__qualification-input-wrap"
                                 >
-                                  <Input
+                                  <CmsInput
                                     placeholder="자격증/면허"
-                                    size="large"
-                                    allowClear
-                                    className="add-instructor-modal__table-input add-instructor-modal__qualification-input"
+                                    inputSize="medium"
+                                    width={220}
+                                    className="add-instructor-modal__qualification-input"
                                   />
                                 </Form.Item>
                                 <div
@@ -1023,11 +910,11 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                                   noStyle
                                   className="add-instructor-modal__qualification-input-wrap"
                                 >
-                                  <Input
+                                  <CmsInput
                                     placeholder="발행처"
-                                    size="large"
-                                    allowClear
-                                    className="add-instructor-modal__table-input add-instructor-modal__qualification-input"
+                                    inputSize="medium"
+                                    width={220}
+                                    className="add-instructor-modal__qualification-input"
                                   />
                                 </Form.Item>
                                 <div
@@ -1115,11 +1002,11 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                                   noStyle
                                   className="add-instructor-modal__award-input-wrap"
                                 >
-                                  <Input
+                                  <CmsInput
                                     placeholder="수상/수료"
-                                    size="large"
-                                    allowClear
-                                    className="add-instructor-modal__table-input add-instructor-modal__award-input"
+                                    inputSize="medium"
+                                    width={220}
+                                    className="add-instructor-modal__award-input"
                                   />
                                 </Form.Item>
                                 <div className="add-instructor-modal__award-divider" aria-hidden />
@@ -1128,11 +1015,11 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                                   noStyle
                                   className="add-instructor-modal__award-input-wrap"
                                 >
-                                  <Input
+                                  <CmsInput
                                     placeholder="발행처"
-                                    size="large"
-                                    allowClear
-                                    className="add-instructor-modal__table-input add-instructor-modal__award-input"
+                                    inputSize="medium"
+                                    width={220}
+                                    className="add-instructor-modal__award-input"
                                   />
                                 </Form.Item>
                                 <div className="add-instructor-modal__award-divider" aria-hidden />
@@ -1186,9 +1073,11 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                 1. 자기소개 및 지원동기
               </div>
               <Form.Item name="freeWriting1" noStyle>
-                <Input.TextArea
+                <CmsTextArea
                   placeholder="자유롭게 작성해주세요"
                   rows={5}
+                  inputSize="medium"
+                  width="100%"
                   className="add-instructor-modal__free-writing-textarea"
                 />
               </Form.Item>
@@ -1198,9 +1087,11 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                 2. 청소년 경제 교육의 중요성에 대해 본인의 생각을 구체적으로 작성해주세요.
               </div>
               <Form.Item name="freeWriting2" noStyle>
-                <Input.TextArea
+                <CmsTextArea
                   placeholder="자유롭게 작성해주세요"
                   rows={5}
+                  inputSize="medium"
+                  width="100%"
                   className="add-instructor-modal__free-writing-textarea"
                 />
               </Form.Item>
@@ -1210,9 +1101,11 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                 3. 청소년과 소통할 때 가장 중요하다고 생각하는 점은 무엇이며, 이를 실천하기 위해 어떤 노력을 하는지 작성해주세요.
               </div>
               <Form.Item name="freeWriting3" noStyle>
-                <Input.TextArea
+                <CmsTextArea
                   placeholder="자유롭게 작성해주세요"
                   rows={5}
+                  inputSize="medium"
+                  width="100%"
                   className="add-instructor-modal__free-writing-textarea"
                 />
               </Form.Item>
@@ -1222,9 +1115,11 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                 4. 교육 중 예기치 않은 상황(예: 수업 분위기 저하, 참여도 부족 등)이 발생했을 때 대처한 사례가 있다면 공유해주세요.
               </div>
               <Form.Item name="freeWriting4" noStyle>
-                <Input.TextArea
+                <CmsTextArea
                   placeholder="자유롭게 작성해주세요"
                   rows={5}
+                  inputSize="medium"
+                  width="100%"
                   className="add-instructor-modal__free-writing-textarea"
                 />
               </Form.Item>
@@ -1232,98 +1127,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
           </div>
         </section>
       </Form>
-      <Modal
-        open={isAddressPopupOpen}
-        onCancel={closeAddressPopup}
-        footer={null}
-        title={null}
-        width={800}
-        className="add-instructor-modal__address-popup-modal"
-        destroyOnHidden
-      >
-        <div className="add-instructor-modal__address-popup pop-address-search">
-          <div className="add-instructor-modal__address-popup-inner pop-address-search-inner">
-            <div className="add-instructor-modal__address-popup-head">
-              <strong className="add-instructor-modal__address-popup-title">주소검색</strong>
-              <span className="add-instructor-modal__address-popup-logo logo" aria-hidden>
-                JA Korea
-              </span>
-            </div>
-            <div className="add-instructor-modal__address-popup-search wrap">
-              <input
-                value={addressKeyword}
-                onChange={(event) => setAddressKeyword(event.target.value)}
-                placeholder="건물명, 도로명 또는 지번을 입력하세요"
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault()
-                    void handleAddressSearch()
-                  }
-                }}
-              />
-              <CmsButton
-                type="button"
-                variant="primary"
-                size="medium"
-                className="add-instructor-modal__address-popup-search-btn"
-                onClick={() => void handleAddressSearch()}
-              >
-                검색
-              </CmsButton>
-            </div>
-            <div className="add-instructor-modal__address-popup-result result">
-              <div className="add-instructor-modal__address-popup-result-count">
-                검색 결과 {totalCount.toLocaleString()}건
-              </div>
-              {addressError ? (
-                <div className="add-instructor-modal__address-popup-empty">
-                  {'주소를 확인해주세요.'}
-                </div>
-              ) : addressLoading ? (
-                <div className="add-instructor-modal__address-popup-empty">검색 중...</div>
-              ) : addresses.length === 0 ? (
-                <div className="add-instructor-modal__address-popup-empty">
-                  검색어를 입력하고 주소를 조회해주세요.
-                </div>
-              ) : (
-                <table className="add-instructor-modal__address-popup-table data-col">
-                  <thead>
-                    <tr>
-                      <th>도로명주소</th>
-                      <th>지번주소</th>
-                      <th>우편번호</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {addresses.map(addressItem => (
-                      <tr
-                        key={`${addressItem.roadAddr}-${addressItem.zipNo}`}
-                        onClick={() => handleAddressSelect(addressItem)}
-                      >
-                        <td className="subj">{addressItem.roadAddr || '-'}</td>
-                        <td>{addressItem.jibunAddr || '-'}</td>
-                        <td>{addressItem.zipNo || '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-              {totalCount > ADDRESS_SEARCH_COUNT_PER_PAGE && addresses.length > 0 ? (
-                <div className="add-instructor-modal__address-popup-pagination">
-                  <Pagination
-                    size="small"
-                    current={addressPage}
-                    total={totalCount}
-                    pageSize={ADDRESS_SEARCH_COUNT_PER_PAGE}
-                    onChange={p => void handleAddressPageChange(p)}
-                    showSizeChanger={false}
-                  />
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      </Modal>
     </ContentModal>
   )
 }

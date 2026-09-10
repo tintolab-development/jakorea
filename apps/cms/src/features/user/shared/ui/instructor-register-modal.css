@@ -19,12 +19,13 @@
 }
 
 .instructor-register-modal__basic-info .detail-info-form__title::after,
-.instructor-register-modal__consent-heading > .detail-info-form__header .detail-info-form__title::after,
 .instructor-register-career > .detail-info-form__header .detail-info-form__title::after {
   content: '*';
   margin-left: 2px;
   color: var(--color-error, #ff4d4f);
 }
+
+/* 약관 및 동의 — 섹션 제목 `*` 없음. 필수 항목(이용약관·개인정보)만 Field `required` */
 
 .instructor-register-modal__affiliation-row {
   display: flex;

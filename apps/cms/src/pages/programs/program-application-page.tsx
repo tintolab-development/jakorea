@@ -89,9 +89,21 @@ export function ProgramApplicationPage() {
       }
       // Phase 0.2.2: 학교 신청 시 엑셀 파일 업로드 처리 (FR-C03)
       if (data.subjectType === 'school' && 'studentListFile' in data && data.studentListFile) {
-        const { fileUploadService } = await import('@/entities/application/api/file-upload-service')
-        const uploadResult = await fileUploadService.upload(data.studentListFile, 'studentList')
-        applicationData.studentListFileUrl = uploadResult.url
+        const {
+          ADMIN_FILE_PURPOSE,
+          contentUrlForFileObjectId,
+          programApplicationFileOwner,
+          uploadAdminFileMaybeMock,
+        } = await import('@/shared/lib/admin-file-upload')
+        const applicationOwnerId = Number(programId) || 1
+        const uploaded = await uploadAdminFileMaybeMock({
+          file: data.studentListFile,
+          owner: programApplicationFileOwner(
+            applicationOwnerId,
+            ADMIN_FILE_PURPOSE.STUDENT_ROSTER
+          ),
+        })
+        applicationData.studentListFileUrl = contentUrlForFileObjectId(uploaded.fileObjectId)
       }
       await createApplication(applicationData)
       // Phase 0.2.3: 신청 완료 페이지로 이동

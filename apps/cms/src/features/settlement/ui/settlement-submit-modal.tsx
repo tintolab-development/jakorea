@@ -18,6 +18,12 @@ import dayjs, { type Dayjs } from 'dayjs'
 import locale from 'antd/es/date-picker/locale/ko_KR'
 import { useSettlementCalculation } from '@/features/settlement/hooks/use-settlement-calculation'
 import { SettlementCalculationSummary } from '@/features/settlement/ui/settlement-calculation-summary'
+import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 import './settlement-submit-modal.css'
 
 const { Text } = Typography
@@ -300,15 +306,31 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
         ? rawAttachments
         : rawAttachments?.fileList || []
 
+      const attachmentFiles = uploadFileList
+        .map((f: { originFileObj?: File } | File) =>
+          f instanceof File ? f : f.originFileObj
+        )
+        .filter((f: File | undefined): f is File => f instanceof File)
+
+      if (attachmentFiles.length > 0) {
+        const owner = buildAdminFileOwner(
+          ADMIN_FILE_OWNER.SETTLEMENT,
+          1,
+          ADMIN_FILE_PURPOSE.EXPENSE_RECEIPT
+        )
+        for (const file of attachmentFiles) {
+          await uploadAdminFileMaybeMock({ file, owner })
+        }
+      }
+
       const formData: SettlementSubmitFormData = {
         programId: selectedProgram.programId,
         matchingId: selectedProgram.matchingId,
         period: periodString,
         items,
         notes: values.notes,
-        attachments: uploadFileList
-          .map((f: any) => f.originFileObj || f)
-          .filter((f: any) => !!f && typeof f.name === 'string') }
+        attachments: attachmentFiles,
+      }
 
       await submitSettlement(user.instructorId, formData)
       // 제출 성공 후 모든 상태 초기화

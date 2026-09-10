@@ -26,7 +26,7 @@ CMS 화면별 preset·필드 매핑은 [`apps/cms/.cursor/rules/process/member-d
 | **교사회원 가입 및 학교/기관 정보 수집·이용 동의** | **교사회원** 회원가입 | — | **필수** | 가입 불가 | 서비스 탈퇴 시까지 |
 | **2단계 인증(MFA) 설정 동의** | **관리자** 회원가입 | — | **필수** | 가입 불가 | 서비스 탈퇴 시까지 |
 | **마케팅 제공 동의** | 회원가입 | — | 선택 | **알람 수신 불가** | 탈퇴 또는 동의 해제 시까지 |
-| **초상권 수집·이용 동의** | 회원가입 | **필요** | 선택 | **프로그램 참여 불가** | 동의일로부터 **1년** (만료 시 재동의) |
+| **초상권 수집·이용 동의** | 회원가입 | **필요** | 선택 | **프로그램 참여**는 항목 1·2 동의 시에만 가능(전체 동의 또는 부분 동의·참여 가능). 1·2 중 비동의·미동의 시 참여 불가. 가입·등록은 미동의·부분 동의여도 가능. 상태: `FULL` / `PARTIAL` / `DISAGREED` — [member-portrait-partial-consent-backend-handoff-2026-09-10.md](apps/cms/docs/api/members/member-portrait-partial-consent-backend-handoff-2026-09-10.md) | 동의일로부터 **1년** (만료 시 재동의) |
 | **지급조서 작성 동의** | 해당 회원 | **필요** (작성 완료 시 동의 표시) | 선택 | **급여 항목 지급 불가** · 정산 신청 시 **최초 1회** 작성 필수 · 개인정보 만료 후 **최초 1회** 재작성 | 동의일로부터 **10년** (만료 시 재동의) |
 | **교육진행자 동의 서약** | **강사 & UJAT 봉사자** | **필요** (작성 완료 시 동의 표시) | 선택 | **UJAT·프로그램 강의 참여 불가** | 동의일로부터 **1년** (만료 시 재동의) |
 | **행정정보 공동이용 사전 동의** | **강사 & UJAT 봉사자** | **필요** (작성 완료 시 동의 표시) | 선택 | **UJAT·프로그램 강의 참여 불가** | 동의일로부터 **1년** (만료 시 재동의) |
@@ -52,4 +52,4 @@ CMS 화면별 preset·필드 매핑은 [`apps/cms/.cursor/rules/process/member-d
 - 동의 템플릿 매핑: `apps/cms/src/features/user/shared/lib/member-consent-template-map.ts`
 - Platform 가입 약관: `apps/platform/src/pages/auth/sign-up/steps/agreement.tsx`
 
-**Last updated:** 2026-08-27
+**Last updated:** 2026-09-10

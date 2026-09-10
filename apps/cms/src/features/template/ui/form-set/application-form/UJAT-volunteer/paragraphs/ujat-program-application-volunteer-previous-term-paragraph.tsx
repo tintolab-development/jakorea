@@ -3,6 +3,12 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
+import {
   UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS,
   useUjatApplicationVolunteerOverlayKv,
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
@@ -69,9 +75,19 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
               multiple
               guideLines={CERTIFICATE_GUIDE_LINES}
               fileNames={fileNames}
-              onFilesChange={files =>
+              onFilesChange={files => {
                 setFileNames([...fileNames, ...files.map(file => file.name)])
-              }
+                const owner = buildAdminFileOwner(
+                  ADMIN_FILE_OWNER.CERTIFICATE_TEMPLATE,
+                  1,
+                  ADMIN_FILE_PURPOSE.CERTIFICATE_ASSET
+                )
+                void (async () => {
+                  for (const file of files) {
+                    await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
+                  }
+                })()
+              }}
               onRemoveFile={index => setFileNames(fileNames.filter((_, i) => i !== index))}
             />
           }
