@@ -8,6 +8,11 @@ import { formatOptionalText } from '../../lib/recruitment/format-recruitment-fie
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { RichTextEditor } from '@/shared/rich-text'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
+import {
+  ADMIN_FILE_PURPOSE,
+  programFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 
@@ -52,6 +57,10 @@ export function GeminiRecruitmentDetailFields({
         revokeThumb(prev)
         return URL.createObjectURL(image)
       })
+      void uploadAdminFileMaybeMock({
+        file: image,
+        owner: programFileOwner(1, ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL),
+      }).catch(() => undefined)
     },
     [onChange, revokeThumb]
   )
@@ -196,14 +205,20 @@ export function GeminiRecruitmentDetailFields({
                 disabled={readOnlyUpload}
                 guideLines={ATTACHMENT_GUIDE_LINES}
                 fileNames={values.attachmentFileNames}
-                onFilesChange={files =>
+                onFilesChange={files => {
                   onChange({
                     attachmentFileNames: [
                       ...values.attachmentFileNames,
                       ...files.map(file => file.name),
                     ],
                   })
-                }
+                  const owner = programFileOwner(1, ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT)
+                  void (async () => {
+                    for (const file of files) {
+                      await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
+                    }
+                  })()
+                }}
                 onRemoveFile={index =>
                   onChange({
                     attachmentFileNames: values.attachmentFileNames.filter((_, i) => i !== index),

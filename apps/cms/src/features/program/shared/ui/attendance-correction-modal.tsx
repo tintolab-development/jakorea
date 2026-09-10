@@ -16,6 +16,12 @@ import {
   type ProgramAttendanceCorrectionStatus,
   type ProgramAttendanceCorrectionStatusOption,
 } from '@/features/program/shared/lib/attendance-correction-types'
+import {
+  ADMIN_FILE_OWNER,
+  ADMIN_FILE_PURPOSE,
+  buildAdminFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 import './attendance-correction-modal.css'
 
 function toStatus(
@@ -60,14 +66,15 @@ export function ProgramAttendanceCorrectionModal({
   const [status, setStatus] = useState<ProgramAttendanceCorrectionStatus>('present')
   const [attendanceTime, setAttendanceTime] = useState<Dayjs | null>(dayjs('8:30', 'H:mm'))
   const [reason, setReason] = useState('')
-  const [evidenceFileNames, setEvidenceFileNames] = useState<string[]>([])
+  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([])
+  const [uploadingEvidence, setUploadingEvidence] = useState(false)
 
   useEffect(() => {
     if (!open) return
     setStatus(toStatus(initialAttendance))
     setAttendanceTime(toInitialTime(initialAttendance))
     setReason('')
-    setEvidenceFileNames([])
+    setEvidenceFiles([])
   }, [initialAttendance, open])
 
   const isTimeEnabled = status === 'present' || status === 'late'
@@ -86,13 +93,16 @@ export function ProgramAttendanceCorrectionModal({
   useEffect(() => {
     if (showReasonTable) return
     setReason('')
-    setEvidenceFileNames([])
+    setEvidenceFiles([])
   }, [showReasonTable])
 
+  const evidenceFileNames = evidenceFiles.map(f => f.name)
+
   const canConfirm = useMemo(() => {
+    if (uploadingEvidence) return false
     if (isTimeEnabled && attendanceTime == null) return false
     return true
-  }, [attendanceTime, isTimeEnabled])
+  }, [attendanceTime, isTimeEnabled, uploadingEvidence])
 
   return (
     <ContentModal
@@ -121,12 +131,40 @@ export function ProgramAttendanceCorrectionModal({
                 return
               }
 
-              onConfirm({
-                status,
-                attendanceTime: attendanceTime ? attendanceTime.format('H:mm') : null,
-                reason: reason.trim(),
-                evidenceFileName: evidenceFileNames[0] ?? null,
-              })
+              void (async () => {
+                let evidenceFileObjectIds: number[] | undefined
+                if (showReasonTable && evidenceFiles.length > 0) {
+                  setUploadingEvidence(true)
+                  try {
+                    const owner = buildAdminFileOwner(
+                      ADMIN_FILE_OWNER.ATTENDANCE,
+                      1,
+                      ADMIN_FILE_PURPOSE.ABSENCE_EVIDENCE
+                    )
+                    evidenceFileObjectIds = []
+                    for (const file of evidenceFiles) {
+                      const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+                      evidenceFileObjectIds.push(uploaded.fileObjectId)
+                    }
+                  } catch {
+                    showAlert({
+                      title: '안내',
+                      content: '증빙 서류 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+                    })
+                    return
+                  } finally {
+                    setUploadingEvidence(false)
+                  }
+                }
+
+                onConfirm({
+                  status,
+                  attendanceTime: attendanceTime ? attendanceTime.format('H:mm') : null,
+                  reason: reason.trim(),
+                  evidenceFileName: evidenceFiles[0]?.name ?? null,
+                  evidenceFileObjectIds,
+                })
+              })()
             }}
           >
             출결 정정
@@ -189,14 +227,9 @@ export function ProgramAttendanceCorrectionModal({
                     <FileSelectField
                       accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                       fileNames={evidenceFileNames}
-                      onFilesChange={files =>
-                        setEvidenceFileNames(prev => [
-                          ...prev,
-                          ...files.map(file => file.name),
-                        ])
-                      }
+                      onFilesChange={files => setEvidenceFiles(prev => [...prev, ...files])}
                       onRemoveFile={index =>
-                        setEvidenceFileNames(prev =>
+                        setEvidenceFiles(prev =>
                           prev.filter((_, currentIndex) => currentIndex !== index)
                         )
                       }

@@ -28,6 +28,12 @@ import { programService } from '@/entities/program/api/program-service'
 import { mockFileTemplates } from '@/data/mock/templates'
 import { getFormTemplateByProgramId, formTemplatesByProgramId } from '@/data/mock/form-templates'
 import type { FormFieldDef } from '@/types/form-template'
+import {
+  ADMIN_FILE_PURPOSE,
+  contentUrlForFileObjectId,
+  programFileOwner,
+  uploadAdminFileMaybeMock,
+} from '@/shared/lib/admin-file-upload'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { FormFieldEditor } from './form-field-editor'
@@ -466,11 +472,23 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
               maxCount={1}
               beforeUpload={() => false}
               onChange={info => {
-                if (info.file.originFileObj) {
-                  // 실제 구현 시 파일 업로드 서비스 호출
-                  const url = URL.createObjectURL(info.file.originFileObj)
-                  setValue('keyVisualImage', url)
-                }
+                const file = info.file.originFileObj
+                if (!file) return
+                void (async () => {
+                  try {
+                    const uploaded = await uploadAdminFileMaybeMock({
+                      file,
+                      owner: programFileOwner(1, ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL),
+                    })
+                    setValue(
+                      'keyVisualImage',
+                      contentUrlForFileObjectId(uploaded.fileObjectId),
+                      { shouldValidate: true }
+                    )
+                  } catch {
+                    setValue('keyVisualImage', URL.createObjectURL(file), { shouldValidate: true })
+                  }
+                })()
               }}
             >
               <Button icon={<UploadOutlined />}>이미지 업로드</Button>
