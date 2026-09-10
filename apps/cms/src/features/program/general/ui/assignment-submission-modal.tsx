@@ -24,6 +24,13 @@ import {
 import { downloadFormSubmissionFileRemote } from '@/features/user/api/member-program-history-api-client'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { handleError } from '@/shared/utils/error-handler'
+import { shouldUseFormsSurveysRemoteApi } from '@/features/template/api/admin-form-templates-service'
+import { useCreateFormResponseFeedbackMutation } from '@/features/template/hooks/use-create-form-response-feedback-mutation'
+import {
+  UjatAssignmentFeedbackModal,
+  type UjatFeedbackModalMode,
+} from '@/features/program/ujat/ui/detail-modal/progress/assignments/document-viewer/ujat-assignment-feedback-modal'
 import {
   AssignmentSubmissionHistoryTable,
   mapAssignmentSubmissionRowsWithNo,
@@ -62,6 +69,7 @@ export function AssignmentSubmissionModal({
   bulkDownloadLoading = false,
 }: AssignmentSubmissionModalProps) {
   const { showAlert } = useCmsAlert()
+  const createFeedbackMutation = useCreateFormResponseFeedbackMutation()
   const isRemoteDetail = remoteDetail !== undefined
   const [assignmentRoleRevision, setAssignmentRoleRevision] = useState(0)
   const detail: AssignmentSubmissionDetail | null = useMemo(() => {
@@ -83,9 +91,13 @@ export function AssignmentSubmissionModal({
   const [previewFileIds, setPreviewFileIds] = useState<number[]>([])
   const [previewDownloading, setPreviewDownloading] = useState(false)
   const [openTeamRoleDropdownRowId, setOpenTeamRoleDropdownRowId] = useState<string | null>(null)
+  const [feedbackMode, setFeedbackMode] = useState<UjatFeedbackModalMode | null>(null)
+  const [feedbackTarget, setFeedbackTarget] = useState<AssignmentSubmissionTableRow | null>(null)
 
   const handleModalCancel = useCallback(() => {
     setOpenTeamRoleDropdownRowId(null)
+    setFeedbackMode(null)
+    setFeedbackTarget(null)
     onCancel()
   }, [onCancel])
 
@@ -93,6 +105,11 @@ export function AssignmentSubmissionModal({
     setPreviewRound(record.roundNumber)
     setPreviewFileIds(record.submissionFileIds ?? [])
     setPreviewOpen(true)
+  }, [])
+
+  const openFeedback = useCallback((record: AssignmentSubmissionTableRow) => {
+    setFeedbackTarget(record)
+    setFeedbackMode('write')
   }, [])
 
   const handlePreviewDownload = useCallback(async () => {
@@ -129,12 +146,50 @@ export function AssignmentSubmissionModal({
     setOpenTeamRoleDropdownRowId(openDropdown ? rowId : null)
   }, [])
 
+  const handleFeedbackSubmit = useCallback(
+    async (feedback: string) => {
+      const responseId = feedbackTarget?.formResponseId
+      if (
+        responseId == null ||
+        !Number.isFinite(responseId) ||
+        !shouldUseFormsSurveysRemoteApi()
+      ) {
+        showAlert({
+          title: '안내',
+          content: '피드백을 등록할 과제 응답 정보가 없습니다.',
+        })
+        return
+      }
+      if (createFeedbackMutation.isPending) return
+      try {
+        await createFeedbackMutation.mutateAsync({
+          responseId,
+          body: { content: feedback },
+        })
+        setFeedbackMode(null)
+        setFeedbackTarget(null)
+        showAlert({
+          title: '안내',
+          content: '피드백을 등록했습니다. 회원에게 확인 요청 알림이 발송됩니다.',
+        })
+      } catch (error) {
+        handleError(error, { context: 'assignmentSubmissionModal.createFeedback' })
+        showAlert({
+          title: '등록 실패',
+          content: '피드백 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      }
+    },
+    [createFeedbackMutation, feedbackTarget?.formResponseId, showAlert]
+  )
+
   const columns = useAssignmentSubmissionHistoryColumns({
     isRemoteDetail,
     openTeamRoleDropdownRowId,
     onTeamRoleDropdownOpenChange: handleTeamRoleDropdownOpenChange,
     onTeamRoleChange: handleAssignmentTeamRoleChange,
     onOpenPreview: openPreview,
+    onOpenFeedback: openFeedback,
   })
 
   const tableRows = useMemo(
@@ -174,6 +229,8 @@ export function AssignmentSubmissionModal({
     detail != null
       ? `**[${detail.programTitle}]** 프로그램의 과제 및 설문 제출 내역입니다.`
       : undefined
+
+  const feedbackStudentName = detail?.studentName?.trim() || '회원'
 
   return (
     <>
@@ -223,6 +280,21 @@ export function AssignmentSubmissionModal({
           downloadLoading={previewDownloading}
         />
       )}
+      <UjatAssignmentFeedbackModal
+        open={feedbackMode != null}
+        onCancel={() => {
+          setFeedbackMode(null)
+          setFeedbackTarget(null)
+        }}
+        mode={feedbackMode ?? 'write'}
+        volunteerName={feedbackStudentName}
+        subjectLabel="회원"
+        docTypeLabel={
+          feedbackTarget != null ? `${feedbackTarget.roundNumber}회차 과제` : '과제'
+        }
+        submitting={createFeedbackMutation.isPending}
+        onSubmit={handleFeedbackSubmit}
+      />
     </>
   )
 }
