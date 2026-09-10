@@ -1065,7 +1065,6 @@ export function InstructorProfileFormBody({
         </DetailInfoForm>
 
         <FreeWriteItemsSection
-          required={!isDetailEdit}
           description={INSTRUCTOR_FORM_SECTION_DESCRIPTIONS.freeWrite}
           items={INSTRUCTOR_FREE_WRITE_ITEMS}
           rows={3}
