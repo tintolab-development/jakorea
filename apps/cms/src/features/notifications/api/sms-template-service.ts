@@ -6,6 +6,7 @@ import {
   SMS_API_CHANNEL_TYPE,
   type SmsCategoryTreeMapped,
 } from '@/features/notifications/api/adapters/sms-template-adapters'
+import { normalizeNotificationPlaceholderMarkup } from '@/features/notifications/model/shared/notification-placeholder-markup'
 import {
   createCategoryRemote,
   createNotificationTemplateRemote,
@@ -240,8 +241,11 @@ function buildSmsTemplateUpsertBody(input: {
     displayName: input.templateName.trim(),
     providerSenderPhoneNumber: input.senderPhone.trim(),
     smsMessageType: messageType,
-    titleTemplate: messageType === 'SMS' ? '' : input.subject.trim().slice(0, 1000),
-    contentTemplate: input.bodyText,
+    titleTemplate:
+      messageType === 'SMS'
+        ? ''
+        : normalizeNotificationPlaceholderMarkup(input.subject.trim().slice(0, 1000)),
+    contentTemplate: normalizeNotificationPlaceholderMarkup(input.bodyText),
     useYn: true,
     categoryId: categoryId ?? undefined,
   }
