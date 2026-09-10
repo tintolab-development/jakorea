@@ -12,8 +12,11 @@ interface UjatAssignmentFeedbackModalProps {
   mode: UjatFeedbackModalMode
   volunteerName: string
   docTypeLabel: string
+  /** 대상 호칭 — 기본 봉사자 (일반 과제는 학생 등) */
+  subjectLabel?: string
   existingFeedback?: string
-  onSubmit: (feedback: string) => void
+  submitting?: boolean
+  onSubmit: (feedback: string) => void | Promise<void>
 }
 
 export function UjatAssignmentFeedbackModal({
@@ -22,7 +25,9 @@ export function UjatAssignmentFeedbackModal({
   mode,
   volunteerName,
   docTypeLabel,
+  subjectLabel = '봉사자',
   existingFeedback = '',
+  submitting = false,
   onSubmit,
 }: UjatAssignmentFeedbackModalProps) {
   const [text, setText] = useState('')
@@ -35,15 +40,15 @@ export function UjatAssignmentFeedbackModal({
 
   const handleSubmit = useCallback(() => {
     const trimmed = text.trim()
-    if (!trimmed) return
-    onSubmit(trimmed)
-  }, [text, onSubmit])
+    if (!trimmed || submitting) return
+    void onSubmit(trimmed)
+  }, [text, onSubmit, submitting])
 
   const isWrite = mode === 'write'
   const title = isWrite ? `피드백 작성` : `피드백 보기`
   const description = isWrite
-    ? `**[${volunteerName}]** 봉사자에게 전달할 피드백을 작성해 주세요.`
-    : `**[${volunteerName}]** 봉사자에게 전달된 피드백입니다.`
+    ? `**[${volunteerName}]** ${subjectLabel}에게 전달할 피드백을 작성해 주세요.`
+    : `**[${volunteerName}]** ${subjectLabel}에게 전달된 피드백입니다.`
   const formClassName = [
     'ujat-assignment-feedback-modal__form',
     !isWrite && 'ujat-assignment-feedback-modal__form--view',
@@ -70,10 +75,10 @@ export function UjatAssignmentFeedbackModal({
               variant="primary"
               size="medium"
               width={120}
-              disabled={!text.trim()}
+              disabled={!text.trim() || submitting}
               onClick={handleSubmit}
             >
-              피드백 전달
+              {submitting ? '등록 중…' : '피드백 전달'}
             </CmsButton>
           </>
         ) : (
@@ -105,7 +110,7 @@ export function UjatAssignmentFeedbackModal({
                 onChange={e => setText(e.target.value)}
                 placeholder="피드백을 작성해 주세요"
                 rows={4}
-                maxLength={1000}
+                maxLength={4000}
                 autoFocus
                 className="ujat-assignment-feedback-modal__textarea"
               />

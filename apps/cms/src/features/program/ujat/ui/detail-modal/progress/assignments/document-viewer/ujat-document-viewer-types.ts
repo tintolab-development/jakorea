@@ -8,6 +8,8 @@ export type UjatDocumentViewerTarget = {
   assignedClass: string
   /** 표시용 제출일 (예: '260403') */
   submittedDateLabel: string
+  /** BE form_response id — 있으면 피드백 POST 연동 */
+  formResponseId?: number
 }
 
 /** 파일명 포맷: UJAT 교육계획서_서울_김범수_260403 */
