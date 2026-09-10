@@ -243,6 +243,7 @@
 .address-search__search-hint-line1 {
   margin: 0;
   font-size: 14px;
+  font-weight: 500;
   line-height: 150%;
   color: var(--main-BK, #3d3d3d);
 }
@@ -410,8 +411,10 @@
   gap: 12px;
 }
 
+.address-search-modal .address-search__results--queried .address-search__search-hint-notice,
 .address-search-modal .address-search__results--queried .address-search__many-results-notice {
   flex-shrink: 0;
+  margin: 16px 0 0;
 }
 
 .address-search-modal .address-search__results--queried .address-search__result-card-list {
