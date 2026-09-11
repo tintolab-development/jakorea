@@ -685,8 +685,9 @@ export function MemberProgramLectureHistory({
               {mode === 'instructorLecture' && memberId != null && isMembersRemoteEnabled() && (
                 <CmsButton
                   variant="secondary"
-                  width={220}
+                  size="large"
                   icon={<DownloadOutlined />}
+                  className="member-program-lecture-history__bulk-lecture-report-download cms-button--no-label-ellipsis"
                   loading={allLectureReportsDownloading}
                   disabled={allLectureReportsDownloading}
                   onClick={() => {

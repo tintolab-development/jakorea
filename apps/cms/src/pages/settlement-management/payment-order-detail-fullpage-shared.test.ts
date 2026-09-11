@@ -42,6 +42,11 @@ describe('deriveAggregateFromLines', () => {
     expect(deriveAggregateFromLines(s)).toBe('confirmed')
   })
 
+  it('전부 awaiting_payment면 confirmed 집계', () => {
+    const s: PaymentOrderAdminLineProcessingStatus[] = ['awaiting_payment', 'confirmed']
+    expect(deriveAggregateFromLines(s)).toBe('confirmed')
+  })
+
   it('재신청과 확인 완료가 혼재면 partial', () => {
     const s: PaymentOrderAdminLineProcessingStatus[] = ['confirmed', 'reapplication']
     expect(deriveAggregateFromLines(s)).toBe('partial')

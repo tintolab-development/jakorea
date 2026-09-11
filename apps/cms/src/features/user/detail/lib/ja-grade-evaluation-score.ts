@@ -31,6 +31,7 @@ export function resolveScaleTypeScore(paragraph: ScaleTypeParagraph): number | n
   return (index + 1) * 5
 }
 
+/** 행정 감점 반영 후 totalScore 밴드: A 85~100 / B 60~84 / C 50~59 / D 0~49 (localOnly 미리보기용. remote는 서버 SSOT) */
 export function resolveJaEvaluationLetterGrade(totalScore: number): JaEvaluationLetterGrade {
   if (totalScore >= 85) return 'A'
   if (totalScore >= 60) return 'B'

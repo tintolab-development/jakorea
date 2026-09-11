@@ -32,6 +32,8 @@ export function useConfirmPaymentStatementMutation() {
       await bulkConfirmPaymentStatementsRemote({
         statementIds,
         reason: BULK_CONFIRM_REASON,
+        // BE: scheduledPaymentDate 우선, 없으면 lectureFeePaymentScheduledDate — 동일 값 dual 전송
+        // 날짜 없으면 400 SCHEDULED_PAYMENT_DATE_REQUIRED. 트랜잭션 all-or-nothing.
         ...(lectureFeePaymentScheduledDate
           ? {
               lectureFeePaymentScheduledDate,

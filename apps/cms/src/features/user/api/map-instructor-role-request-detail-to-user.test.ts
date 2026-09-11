@@ -71,6 +71,20 @@ describe('mapInstructorRoleRequestDetailToUser', () => {
     ])
   })
 
+  it('unmask 원문 phone/email을 User에 반영한다', () => {
+    const user = mapInstructorRoleRequestDetailToUser({
+      requestId: 163243,
+      memberId: 163243,
+      status: 'PENDING',
+      name: '강사',
+      phone: '01082168216',
+      email: 'instructor02.dev@jakorea.org',
+      privacyMaskingLevel: 'UNMASKED',
+    })
+    expect(user.phone).toBe('01082168216')
+    expect(user.email).toBe('instructor02.dev@jakorea.org')
+  })
+
   it('등급·신청일·승인일을 매핑한다', () => {
     const user = mapInstructorRoleRequestDetailToUser({
       requestId: 172002,
@@ -97,7 +111,7 @@ describe('mapInstructorRoleRequestDetailToUser', () => {
     expect(user.createdAt).toBe('2026-03-01T00:00:00Z')
     expect(user.updatedAt).toBe('2026-08-10T09:00:00Z')
     expect(user.permissionApprovalHandledAt).toBe('2026-08-10T09:00:00Z')
-    expect(user.listMetrics?.instructorFeeGradeLabel).toBeTruthy()
+    expect(user.listMetrics?.instructorFeeGradeLabel).toBe('2급 강사비')
     expect(user.listMetrics?.jaEvaluationGrade).toBe('JA_A')
     expect(user.termsAgreements?.[0]).toEqual({
       termsType: 'FACILITATOR_PLEDGE',

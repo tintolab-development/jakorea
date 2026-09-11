@@ -121,15 +121,19 @@ export function applyJaEvaluationResponseToDraft(
   })
 }
 
+/**
+ * 서버 `currentGrade` → A|B|C|D. wire는 접두사 없음(A~D). `JA_` strip은 방어용.
+ * fallback 없으면 null (remote는 서버 값만 신뢰).
+ */
 export function resolveJaEvaluationDisplayGrade(
   response: InstructorJaEvaluationResponse | null | undefined,
-  fallbackGrade: JaEvaluationLetterGrade
-): JaEvaluationLetterGrade {
+  fallbackGrade?: JaEvaluationLetterGrade
+): JaEvaluationLetterGrade | null {
   const current = response?.currentGrade?.trim()
-  if (!current) return fallbackGrade
+  if (!current) return fallbackGrade ?? null
   const normalized = current.replace(/^JA_/i, '').toUpperCase()
   if (normalized === 'A' || normalized === 'B' || normalized === 'C' || normalized === 'D') {
     return normalized
   }
-  return fallbackGrade
+  return fallbackGrade ?? null
 }

@@ -68,5 +68,9 @@ describe('ja-grade-evaluation-api', () => {
       q4?.kind === 'single_item' && q4.variant === 'scale_type' ? q4.selectedPreviewItemId : null
     ).toBe('ja-scale-2')
     expect(resolveJaEvaluationDisplayGrade({ currentGrade: 'JA_A' }, 'B')).toBe('A')
+    expect(resolveJaEvaluationDisplayGrade({ currentGrade: 'A' })).toBe('A')
+    expect(resolveJaEvaluationDisplayGrade({ currentGrade: 'D' })).toBe('D')
+    expect(resolveJaEvaluationDisplayGrade({})).toBeNull()
+    expect(resolveJaEvaluationDisplayGrade({}, 'C')).toBe('C')
   })
 })

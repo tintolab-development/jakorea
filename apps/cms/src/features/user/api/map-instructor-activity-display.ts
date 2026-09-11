@@ -139,6 +139,9 @@ const FEE_GRADE_LEVEL_LABELS: Record<string, string> = {
   '1급': '1급 강사비',
   '2급': '2급 강사비',
   '3급': '3급 강사비',
+  GRADE_1: '1급 강사비',
+  GRADE_2: '2급 강사비',
+  GRADE_3: '3급 강사비',
 }
 
 /**
@@ -154,6 +157,8 @@ export function toInstructorFeeGradeDisplayLabel(
   const upper = trimmed.toUpperCase()
   if (INSTRUCTOR_STATUS_CODES.has(upper)) return undefined
   if (/승인|반려|대기/.test(trimmed)) return undefined
+
+  if (upper in FEE_GRADE_LEVEL_LABELS) return FEE_GRADE_LEVEL_LABELS[upper]
 
   const levelKey = trimmed.replace(/\s*강사비\s*$/u, '').trim()
   if (levelKey in FEE_GRADE_LEVEL_LABELS) return FEE_GRADE_LEVEL_LABELS[levelKey]
@@ -177,6 +182,9 @@ export function toInstructorFeeGradeApiValue(
   if (!trimmed) return undefined
   if (/^[123]$/.test(trimmed)) return trimmed
 
+  const fromApprovalCode = /^GRADE_([123])$/i.exec(trimmed)
+  if (fromApprovalCode) return fromApprovalCode[1]
+
   const levelKey = trimmed.replace(/\s*강사비\s*$/u, '').trim()
   if (/^[123]급$/.test(levelKey)) return levelKey.replace('급', '')
 
@@ -184,4 +192,19 @@ export function toInstructorFeeGradeApiValue(
   if (fromLabel) return fromLabel[1]
 
   return trimmed
+}
+
+/**
+ * 강사 권한 승인 API `feeGrade` wire 값.
+ * OpenAPI/handoff: `GRADE_1` · `GRADE_2` · `GRADE_3` (UI `1급 강사비` 등 → 변환)
+ */
+export function toInstructorRoleApprovalFeeGradeApiValue(
+  raw: string | undefined | null
+): string | undefined {
+  const level = toInstructorFeeGradeApiValue(raw)
+  if (!level) return undefined
+  if (/^[123]$/.test(level)) return `GRADE_${level}`
+  const upper = level.toUpperCase()
+  if (/^GRADE_[123]$/.test(upper)) return upper
+  return undefined
 }

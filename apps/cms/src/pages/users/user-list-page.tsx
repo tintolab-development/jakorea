@@ -5,7 +5,6 @@
  */
 
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
-import { Alert } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
@@ -53,6 +52,7 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+  WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
 import { useUserStore, selectSelectedUser } from '@/features/user/shared/model/user-store'
 import type { User, AffiliatedTeacherLinkTarget } from '@/types/user'
@@ -90,10 +90,7 @@ import {
   type UserListQueryParams,
 } from './user-list-table.config'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
-import {
-  getUnsupportedMemberListFilterLabels,
-  isMembersRemoteEnabled,
-} from '@/features/user/api/member-remote-capabilities'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { memberQueryKeys, serializeMemberListFilters } from '@/features/user/api/member-query-keys'
 import { resolveDeleteUserOptions } from '@/features/user/api/resolve-delete-user-options'
 import {
@@ -168,11 +165,6 @@ export function UserListPage() {
   const listQueryFilters = useMemo(() => buildListQueryApiFilters(params), [params])
   const listQueryFiltersKey = useMemo(
     () => serializeMemberListFilters(listQueryFilters),
-    [listQueryFilters]
-  )
-
-  const unsupportedRemoteFilterLabels = useMemo(
-    () => (isMembersRemoteEnabled() ? getUnsupportedMemberListFilterLabels(listQueryFilters) : []),
     [listQueryFilters]
   )
 
@@ -1097,7 +1089,11 @@ export function UserListPage() {
       if (!guardAdminAction({ roleCode, action: 'delete' })) return
       setDeleteLoading(true)
       try {
-        await deleteUser(u.id, resolveDeleteUserOptions(u))
+        await deleteUser(u.id, {
+          ...resolveDeleteUserOptions(u),
+          reason: 'CMS 관리자 회원 탈퇴',
+          confirmationText: WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
+        })
         setSelectedRowKeys(prev => prev.filter(key => key !== u.id))
         invalidateList()
         flushUserDetailModal()
@@ -1184,15 +1180,6 @@ export function UserListPage() {
 
   return (
     <div>
-      {unsupportedRemoteFilterLabels.length > 0 ? (
-        <Alert
-          type="warning"
-          showIcon
-          style={{ marginBottom: 12 }}
-          message="실 API 모드에서는 일부 필터가 적용되지 않습니다"
-          description={`다음 필터는 백엔드 API 미지원으로 무시됩니다: ${unsupportedRemoteFilterLabels.join(', ')}`}
-        />
-      ) : null}
       <FilterTableLayout
         bordered={false}
         fields={userListFilterFields}
