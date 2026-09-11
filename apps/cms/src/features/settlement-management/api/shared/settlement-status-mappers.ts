@@ -21,6 +21,8 @@ export function mapStatementStatusToProcessingStatus(
     case 'PARTIAL':
     case 'PARTIAL_CONFIRMED':
       return 'partial'
+    case 'WAITING_CONFIRM':
+    case 'ISSUED':
     case 'REQUESTED':
     default:
       return 'pending'
@@ -43,6 +45,8 @@ export function mapStatementStatusToLineStatus(
     case 'REAPPLICATION':
     case 'RESUBMITTED':
       return 'reapplication'
+    case 'WAITING_CONFIRM':
+    case 'ISSUED':
     case 'REQUESTED':
     default:
       return 'pending'
@@ -75,7 +79,25 @@ export function isPendingStatementStatus(status: string | undefined): boolean {
     upper === 'REQUESTED' ||
     upper === 'REAPPLICATION' ||
     upper === 'RESUBMITTED' ||
+    upper === 'WAITING_CONFIRM' ||
+    upper === 'ISSUED' ||
     upper === undefined ||
     upper === ''
+  )
+}
+
+/**
+ * BE bulk-confirm 확인 가능 상태 (2026-09-11 회신).
+ * `WAITING_CONFIRM` | `REQUESTED` | `REAPPLICATION` | `ISSUED`
+ * (`RESUBMITTED`는 REAPPLICATION alias로 허용)
+ */
+export function isConfirmableStatementStatus(status: string | undefined): boolean {
+  const upper = status?.toUpperCase()
+  return (
+    upper === 'WAITING_CONFIRM' ||
+    upper === 'REQUESTED' ||
+    upper === 'REAPPLICATION' ||
+    upper === 'RESUBMITTED' ||
+    upper === 'ISSUED'
   )
 }

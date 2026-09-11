@@ -71,6 +71,20 @@ describe('mapInstructorRoleRequestDetailToUser', () => {
     ])
   })
 
+  it('unmask 원문 phone/email을 User에 반영한다', () => {
+    const user = mapInstructorRoleRequestDetailToUser({
+      requestId: 163243,
+      memberId: 163243,
+      status: 'PENDING',
+      name: '강사',
+      phone: '01082168216',
+      email: 'instructor02.dev@jakorea.org',
+      privacyMaskingLevel: 'UNMASKED',
+    })
+    expect(user.phone).toBe('01082168216')
+    expect(user.email).toBe('instructor02.dev@jakorea.org')
+  })
+
   it('등급·신청일·승인일을 매핑한다', () => {
     const user = mapInstructorRoleRequestDetailToUser({
       requestId: 172002,

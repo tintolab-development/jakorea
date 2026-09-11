@@ -402,6 +402,8 @@ export function socialView(user: Omit<User, 'password'>): ReactNode {
 export function detailPhoneDisplay(user: Omit<User, 'password'>, revealed: boolean): string {
   const t = user.phone?.trim()
   if (!t) return '-'
+  // BE 마스킹(`010-****-8216`)은 그대로 표시. formatKoreanPhoneNumber는 *를 제거해 010-8216이 된다.
+  if (t.includes('*')) return t
   if (revealed) return formatKoreanPhoneNumber(t) || '-'
   return MASKING_POLICY.phone(t)
 }
@@ -409,6 +411,8 @@ export function detailPhoneDisplay(user: Omit<User, 'password'>, revealed: boole
 export function detailEmailDisplay(user: Omit<User, 'password'>, revealed: boolean): string {
   const t = user.email?.trim()
   if (!t) return '-'
+  // BE 마스킹(`local***@domain`) 유지 — FE 재마스킹·UNMASKED 세션에서 별표 제거 금지
+  if (t.includes('*')) return t
   if (revealed) return t
   return MASKING_POLICY.email(t)
 }

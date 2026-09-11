@@ -1,4 +1,5 @@
 import type { User, UserRole } from '@/types/user'
+import type { AdminAccountApprovalDetailResponse } from '@/shared/api/generated/members/schemas/adminAccountApprovalDetailResponse'
 import type { AdminAccountPrivacyResponse } from '@/shared/api/generated/members/schemas/adminAccountPrivacyResponse'
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import type { IndividualMemberDetailResponse } from '@/shared/api/generated/members/schemas/individualMemberDetailResponse'
@@ -16,6 +17,32 @@ import {
 } from '@/features/user/api/map-member-detail-to-user'
 import { mapInstructorRoleRequestDetailToUser } from '@/features/user/api/map-instructor-role-request-detail-to-user'
 import { mergeListUserWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
+
+/**
+ * 관리자 권한 승인 상세 GET 캐시에 privacy unmask 원문 필드를 병합한다.
+ * unmask 응답 shape(`AdminAccountPrivacyResponse`) ≠ 상세 GET shape이므로 필드만 patch.
+ */
+export function mergeAdminApprovalDetailWithPrivacyUnmask(
+  prev: AdminAccountApprovalDetailResponse | undefined,
+  privacy: AdminAccountPrivacyResponse,
+  adminAccountId: number
+): AdminAccountApprovalDetailResponse {
+  const base: AdminAccountApprovalDetailResponse = prev ?? {
+    adminAccountId: privacy.adminAccountId ?? adminAccountId,
+  }
+  return {
+    ...base,
+    adminAccountId: privacy.adminAccountId ?? base.adminAccountId ?? adminAccountId,
+    ...(privacy.uuid != null ? { uuid: privacy.uuid } : {}),
+    ...(privacy.email != null ? { email: privacy.email } : {}),
+    ...(privacy.name != null ? { name: privacy.name } : {}),
+    ...(privacy.phone != null ? { phone: privacy.phone } : {}),
+    ...(privacy.gender != null ? { gender: privacy.gender } : {}),
+    ...(privacy.birthDate != null ? { birthDate: privacy.birthDate } : {}),
+    ...(privacy.status != null ? { status: privacy.status } : {}),
+    ...(privacy.roleCode != null ? { roleCode: privacy.roleCode } : {}),
+  }
+}
 
 function withPreferred1365Id(
   merged: Omit<User, 'password'>,

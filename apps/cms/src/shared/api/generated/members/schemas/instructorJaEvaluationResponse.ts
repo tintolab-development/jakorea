@@ -19,10 +19,17 @@ export interface InstructorJaEvaluationResponse {
   cancellationAdjustmentScore?: number;
   lateReportAdjustmentScore?: number;
   totalScore?: number;
+  /**
+   * 서버 산정 등급 wire 값: A | B | C | D (JA_ prefix 없음)
+   */
   currentGrade?: string;
   evaluatedAt?: string;
   calculatedAt?: string;
   gradeChangedAt?: string;
   policyVersion?: string;
+  /**
+   * false면 전역 JA 등급 정책 미초기화. 평가지는 열 수 있으나 POST 평가 완료 불가
+   * (INSTRUCTOR_JA_GRADE_POLICY_NOT_INITIALIZED). true면 정책 준비됨(시드 policyVersion 예: FE_UI_2026-09-11).
+   */
   policyReady?: boolean;
 }

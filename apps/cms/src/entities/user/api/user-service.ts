@@ -307,6 +307,8 @@ export async function getUsersPage(
           roleCode: apiFilters.adminPermissionVariant
             ? adminPermissionFeeGradeToRoleCode(apiFilters.adminPermissionVariant)
             : undefined,
+          createdAtFrom: apiFilters.createdAtFrom || undefined,
+          createdAtTo: apiFilters.createdAtTo || undefined,
           page,
           size: PAGE_SIZE,
         })

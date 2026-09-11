@@ -4,6 +4,14 @@ const PAYMENT_STATEMENT_STATUS_CONFLICT = 'PAYMENT_STATEMENT_STATUS_CONFLICT'
 const PAYMENT_STATEMENT_CONFLICT_FALLBACK =
   '지급조서 확인 완료 후 계좌 지급을 처리할 수 있습니다.'
 
+/** BE 2026-09-11 bulk-confirm 계약 — 공통 메시지 없을 때 FE fallback */
+const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
+  SCHEDULED_PAYMENT_DATE_REQUIRED: '강의비 지급 예정일을 입력해 주세요.',
+  PAYMENT_STATEMENT_IDS_REQUIRED: '확인할 지급조서를 선택해 주세요.',
+  PAYMENT_STATEMENT_NOT_FOUND: '지급조서를 찾을 수 없습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+  [PAYMENT_STATEMENT_STATUS_CONFLICT]: PAYMENT_STATEMENT_CONFLICT_FALLBACK,
+}
+
 function readAxiosResponse(error: unknown): { status?: number; data?: unknown } | null {
   if (!error || typeof error !== 'object' || !('response' in error)) return null
   return (error as { response?: { status?: number; data?: unknown } }).response ?? null
@@ -25,15 +33,14 @@ export function getSettlementApiErrorMessage(error: unknown, fallback: string): 
     }
 
     const code = readErrorCode(response.data)
-    if (response.status === 409 && code === PAYMENT_STATEMENT_STATUS_CONFLICT) {
+    const mapped = code ? SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES[code] : undefined
+    if (mapped) {
       const msg = extractApiErrorMessage(response.data, {
-        httpStatus: 409,
-        fallback: PAYMENT_STATEMENT_CONFLICT_FALLBACK,
-      })
-      // extract가 code만 반환한 경우에도 사용자 문구를 보여준다
-      if (msg === PAYMENT_STATEMENT_STATUS_CONFLICT) {
-        return PAYMENT_STATEMENT_CONFLICT_FALLBACK
-      }
+        httpStatus: response.status,
+        fallback: mapped,
+      }).trim()
+      // 서버가 code만 주거나 공통 문구만 주면 FE 매핑 우선
+      if (!msg || msg === code) return mapped
       return msg
     }
 

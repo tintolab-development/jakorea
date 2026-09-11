@@ -100,7 +100,12 @@ import { useQueryClient } from '@tanstack/react-query'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
-import { applyPrivacyUnmaskResponseToUser } from '@/features/user/api/apply-privacy-unmask-to-user'
+import {
+  applyPrivacyUnmaskResponseToUser,
+  mergeAdminApprovalDetailWithPrivacyUnmask,
+} from '@/features/user/api/apply-privacy-unmask-to-user'
+import type { AdminAccountApprovalDetailResponse } from '@/shared/api/generated/members/schemas/adminAccountApprovalDetailResponse'
+import type { AdminAccountPrivacyResponse } from '@/shared/api/generated/members/schemas/adminAccountPrivacyResponse'
 import {
   extract1365IdFromMemberPrivacyPayload,
   preferUnmasked1365Id,
@@ -475,6 +480,42 @@ export function useUserDetailController({
   const handlePrivacyUnmasked = useCallback(
     (payload: unknown, role: User['role'] | undefined) => {
       if (!displayUser) return
+
+      // 권한 승인 상세는 detailUser가 GET 캐시에서만 파생된다.
+      // unmask 응답으로 해당 캐시를 덮어쓰지 않으면 화면이 MASKED GET을 계속 본다.
+      const requestId = displayUser.instructorRoleRequestId
+      if (
+        requestId != null &&
+        payload != null &&
+        typeof payload === 'object' &&
+        ('requestId' in payload || 'phone' in payload || 'email' in payload)
+      ) {
+        queryClient.setQueryData(
+          memberQueryKeys.instructorRoleRequests.detail(requestId),
+          payload
+        )
+      }
+
+      const adminAccountId =
+        displayUser.adminAccountId ??
+        (displayUser.id ? parseAdminAccountIdFromUserId(displayUser.id) : undefined)
+      if (
+        adminAccountId != null &&
+        (role === 'ADMIN' || displayUser.role === 'ADMIN') &&
+        payload != null &&
+        typeof payload === 'object'
+      ) {
+        queryClient.setQueryData(
+          memberQueryKeys.adminApprovalRequests.detail(adminAccountId),
+          (prev: unknown) =>
+            mergeAdminApprovalDetailWithPrivacyUnmask(
+              prev as AdminAccountApprovalDetailResponse | undefined,
+              payload as AdminAccountPrivacyResponse,
+              adminAccountId
+            )
+        )
+      }
+
       const merged = stripRestrictedPiiForSessionUser(
         applyPrivacyUnmaskResponseToUser(displayUser, payload, role ?? displayUser.role),
         displayUser,
@@ -520,6 +561,7 @@ export function useUserDetailController({
       displayUser?.memberId,
       displayUser?.role,
       displayUser?.instructorRoleRequestId,
+      displayUser?.adminAccountId,
     ],
     controlMode: 'hideWhenRevealed',
     modalZIndex: PERSONAL_INFO_REVEAL_MODAL_Z_INDEX,

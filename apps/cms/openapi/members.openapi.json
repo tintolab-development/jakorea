@@ -2261,7 +2261,7 @@
           "마스터 데이터"
         ],
         "summary": "강사 JA 평가 현재값 조회",
-        "description": "### 이 API가 하는 일\n- 강사 JA 평가 현재값 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 회원 관리 (`SCR_MEMBER`)\n- 프론트 담당 영역: members (`members`)\n- 호출 방식: `GET /api/admin/instructors/{instructorMemberId}/ja-evaluation`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: instructor detail popup open\n- 응답 사용 위치: render four criteria, deductions, total and current grade\n- 프론트 조회 키: `get_admin_instructors_instructorMemberId_ja-evaluation`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: JA 평가 등급/총점은 서버 projection을 SSOT로 사용합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: INSTRUCTOR_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Notion JA 등급 평가 팝업 2026-09-03 authoritative member-scoped contract",
+        "description": "### 이 API가 하는 일\n- 강사 JA 평가 현재값 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 회원 관리 (`SCR_MEMBER`)\n- 프론트 담당 영역: members (`members`)\n- 호출 방식: `GET /api/admin/instructors/{instructorMemberId}/ja-evaluation`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: instructor detail popup open\n- 응답 사용 위치: render four criteria, deductions, total and current grade\n- 프론트 조회 키: `get_admin_instructors_instructorMemberId_ja-evaluation`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: JA 평가 등급/총점은 서버 projection을 SSOT로 사용합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: INSTRUCTOR_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Notion JA 등급 평가 팝업 2026-09-03 authoritative member-scoped contract\n\n### policyReady (2026-09-11)\n- 강사 프로필 있으면 항상 200\n- 정책 없음: policyReady=false (에러 아님)\n- 정책 있음: policyReady=true, policyVersion=FE_UI_2026-09-11 (시드)\n",
         "operationId": "currentJaEvaluation",
         "parameters": [
           {
@@ -2350,7 +2350,7 @@
             "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
           },
           "409": {
-            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+            "description": "상태 전이·중복·동시성 위반 또는 JA 등급 정책 미초기화(error.code=INSTRUCTOR_JA_GRADE_POLICY_NOT_INITIALIZED). 화면 상태 재조회 후 안내."
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
@@ -5010,7 +5010,7 @@
           {
             "name": "historyType",
             "in": "query",
-            "description": "조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.",
+            "description": "이력 유형 필터. COURSE | VOLUNTEER | ALL(또는 생략=전체). 잘못된 값 → PROGRAM_HISTORY_TYPE_INVALID (field=historyType). role query 없음(보내도 무시).",
             "required": false,
             "schema": {
               "type": "string"
@@ -5067,7 +5067,7 @@
           {
             "name": "size",
             "in": "query",
-            "description": "페이지 크기입니다. 화면별 기본 목록 개수와 일치시켜 호출합니다.",
+            "description": "페이지 크기. default 20, max clamp 100(초과 시 clamp·400 아님).",
             "required": false,
             "schema": {
               "type": "integer",
@@ -21768,7 +21768,8 @@
             "type": "number"
           },
           "currentGrade": {
-            "type": "string"
+            "type": "string",
+            "description": "서버 산정 등급 wire 값: A | B | C | D (JA_ prefix 없음)"
           },
           "evaluatedAt": {
             "type": "string",
@@ -21786,7 +21787,8 @@
             "type": "string"
           },
           "policyReady": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "false면 전역 JA 등급 정책 미초기화. 평가지는 열 수 있으나 POST 평가 완료 불가 (INSTRUCTOR_JA_GRADE_POLICY_NOT_INITIALIZED). true면 정책 준비됨(시드 policyVersion 예: FE_UI_2026-09-11)."
           }
         }
       },
@@ -21880,6 +21882,14 @@
             "items": {
               "$ref": "#/components/schemas/MemberLinkedSocialAccountResponse"
             }
+          },
+          "privacyMaskingLevel": {
+            "type": "string",
+            "enum": [
+              "MASKED",
+              "UNMASKED"
+            ],
+            "description": "MASKED=마스킹 GET. UNMASKED=privacy/unmask 원문 응답. UNMASKED일 때 FE 재마스킹 금지."
           }
         }
       },
