@@ -5,7 +5,7 @@
 .applicant-instructor-resume {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }
 
 .instructor-resume-section {

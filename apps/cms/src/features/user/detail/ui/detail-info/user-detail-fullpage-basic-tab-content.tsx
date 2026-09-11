@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState, type MutableRefObject } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { Space } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import type { User, AffiliatedTeacherLinkTarget, SchoolTeacherEmploymentStatus } from '@/types/user'
@@ -15,10 +15,6 @@ import {
   CONSENT_ROWS_PERMISSION_INSTRUCTOR,
 } from '@/features/user/detail/ui/user-consent-agreement-section'
 import { InstructorResumeDetailForms } from '@/features/user/detail/ui/instructor-resume-detail-forms'
-import {
-  InstructorDetailEditForm,
-  resolveInstructorRegisterLikeEdit,
-} from '@/features/user/detail/ui/instructor-detail-edit/instructor-detail-edit-form'
 import { SchoolAffiliatedTeachersSection } from '@/features/user/detail/ui/school-affiliated-teachers-section'
 import { UserDetailAdminCommentSection } from './user-detail-admin-comment-section'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
@@ -79,13 +75,10 @@ export interface UserDetailFullpageBasicTabContentProps {
   instructorResumeApplicantRow: ApplicantInstructorRow | null
   onNavigateToLinkedUser?: (target: AffiliatedTeacherLinkTarget) => void
   memberInfoEditing?: boolean
-  /** profile = 전체 기본정보, instructor_fee_ja = 강사비·JA 등급만 */
+  /** profile = 전체 기본정보, instructor_fee_ja = 강사비 등급만 */
   memberInfoEditScope?: 'profile' | 'instructor_fee_ja'
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
-  instructorEditDraftFlushRef?: MutableRefObject<
-    (() => Partial<AdminProvisionedMemberBasicInfoDraft>) | null
-  >
   adminPermissionVariantPatching?: boolean
   onPatchAdminPermissionVariantFromDetailView?: (
     nextPermission: AdminPermissionTagVariant
@@ -114,7 +107,6 @@ export function UserDetailFullpageBasicTabContent({
   memberInfoEditScope = 'profile',
   memberInfoDraft,
   onMemberInfoDraftChange,
-  instructorEditDraftFlushRef,
   adminPermissionVariantPatching = false,
   onPatchAdminPermissionVariantFromDetailView,
   onEmploymentStatusChange,
@@ -341,21 +333,12 @@ export function UserDetailFullpageBasicTabContent({
   ])
 
   const isInstructorPermissionDetail = mode === 'permission' && permissionRole === 'instructor'
-  // 전체 프로필 수정만 등록 폼 재사용. 강사비·JA 제한 수정은 조회 레이아웃 + 해당 필드만 인라인 편집.
-  const instructorRegisterLikeEdit =
-    memberInfoEditScope === 'instructor_fee_ja'
-      ? null
-      : resolveInstructorRegisterLikeEdit({
-          user,
-          memberInfoEditing,
-          memberInfoDraft,
-          onMemberInfoDraftChange,
-        })
 
-  /** 개인·관리자 상세 — 선택 동의 편집 / 필수 동의는 라디오 disabled */
+  /** 개인·관리자·강사/교사 상세 — 프로필 수정 시 선택 동의 편집 (필수 항목은 라디오 disabled) */
   const memberConsentEditing = Boolean(
     memberInfoEditing &&
-    (user.role === 'INDIVIDUAL' || user.role === 'ADMIN') &&
+    memberInfoEditScope === 'profile' &&
+    (user.role === 'INDIVIDUAL' || user.role === 'ADMIN' || user.role === 'INSTRUCTOR') &&
     shouldShowCmsMemberInfoEditButton(user) &&
     (user.role !== 'ADMIN' || adminMemberProfileFieldsEditableWhenEditing) &&
     memberInfoDraft != null &&
@@ -415,74 +398,60 @@ export function UserDetailFullpageBasicTabContent({
   )
 
   return (
-    <Space direction="vertical" size={24} style={{ width: '100%' }}>
+    <Space direction="vertical" size={32} style={{ width: '100%' }}>
       {canShowAdminCommentForTarget ? (
         <UserDetailAdminCommentSection user={userForAdminComment} />
       ) : null}
-      {instructorRegisterLikeEdit ? (
-        <InstructorDetailEditForm
-          user={user}
-          instructorResumeApplicantRow={instructorResumeApplicantRow}
-          memberInfoDraft={instructorRegisterLikeEdit.memberInfoDraft}
-          onMemberInfoDraftChange={instructorRegisterLikeEdit.onMemberInfoDraftChange}
-          instructorEditDraftFlushRef={instructorEditDraftFlushRef}
-          onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
-          isInstructorPermissionDetail={isInstructorPermissionDetail}
+      <UserBasicInfoSection
+        user={user}
+        entrySource={basicInfoEntrySource}
+        isInstructorPermissionDetail={isInstructorPermissionDetail}
+        isAdminPermissionDetail={mode === 'permission' && permissionRole === 'admin'}
+        caption={basicTab.caption}
+        externalId1365={basicTab.externalId1365}
+        personalInfoRevealed={personalInfoRevealed}
+        memberInfoEditing={memberInfoEditing}
+        memberInfoEditScope={memberInfoEditScope}
+        memberInfoDraft={memberInfoDraft}
+        onMemberInfoDraftChange={onMemberInfoDraftChange}
+        adminPermissionVariantPatching={adminPermissionVariantPatching}
+        onPatchAdminPermissionVariantFromDetailView={
+          onPatchAdminPermissionVariantFromDetailView
+        }
+        adminMemberProfileFieldsEditableWhenEditing={
+          adminMemberProfileFieldsEditableWhenEditing
+        }
+        onPermissionResendNotification={onPermissionResendNotification}
+        onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
+        scheduleChangeCount={scheduleChangeCount}
+        onEmploymentStatusChange={membersRemote ? onEmploymentStatusChange : undefined}
+      />
+      {basicTab.showConsentAgreement ? (
+        <UserConsentAgreementSection
+          preset={consentPreset}
+          viewVariant={consentViewVariant}
+          remoteConsentRows={remoteConsentRows}
+          remoteConsentLoading={membersRemote && consentLoading}
+          editing={memberConsentEditing}
+          draftTermsAgreements={memberInfoDraft?.termsAgreements}
+          consentWriteSnapshots={memberInfoDraft?.consentWriteSnapshots}
+          onEditableConsentChange={
+            memberConsentEditing ? handleEditableConsentChange : undefined
+          }
+          onConsentAgreementSnapshotSave={
+            memberConsentEditing ? handleConsentAgreementSnapshotSave : undefined
+          }
+          onConsentCrimeSnapshotSave={
+            memberConsentEditing ? handleConsentCrimeSnapshotSave : undefined
+          }
+          memberId={user.memberId}
+          membersRemote={membersRemote}
+          memberUser={user}
         />
-      ) : (
-        <>
-          <UserBasicInfoSection
-            user={user}
-            entrySource={basicInfoEntrySource}
-            isInstructorPermissionDetail={isInstructorPermissionDetail}
-            isAdminPermissionDetail={mode === 'permission' && permissionRole === 'admin'}
-            caption={basicTab.caption}
-            externalId1365={basicTab.externalId1365}
-            personalInfoRevealed={personalInfoRevealed}
-            memberInfoEditing={memberInfoEditing}
-            memberInfoEditScope={memberInfoEditScope}
-            memberInfoDraft={memberInfoDraft}
-            onMemberInfoDraftChange={onMemberInfoDraftChange}
-            adminPermissionVariantPatching={adminPermissionVariantPatching}
-            onPatchAdminPermissionVariantFromDetailView={
-              onPatchAdminPermissionVariantFromDetailView
-            }
-            adminMemberProfileFieldsEditableWhenEditing={
-              adminMemberProfileFieldsEditableWhenEditing
-            }
-            onPermissionResendNotification={onPermissionResendNotification}
-            onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
-            scheduleChangeCount={scheduleChangeCount}
-            onEmploymentStatusChange={membersRemote ? onEmploymentStatusChange : undefined}
-          />
-          {basicTab.showConsentAgreement ? (
-            <UserConsentAgreementSection
-              preset={consentPreset}
-              viewVariant={consentViewVariant}
-              remoteConsentRows={remoteConsentRows}
-              remoteConsentLoading={membersRemote && consentLoading}
-              editing={memberConsentEditing}
-              draftTermsAgreements={memberInfoDraft?.termsAgreements}
-              consentWriteSnapshots={memberInfoDraft?.consentWriteSnapshots}
-              onEditableConsentChange={
-                memberConsentEditing ? handleEditableConsentChange : undefined
-              }
-              onConsentAgreementSnapshotSave={
-                memberConsentEditing ? handleConsentAgreementSnapshotSave : undefined
-              }
-              onConsentCrimeSnapshotSave={
-                memberConsentEditing ? handleConsentCrimeSnapshotSave : undefined
-              }
-              memberId={user.memberId}
-              membersRemote={membersRemote}
-              memberUser={user}
-            />
-          ) : null}
-          {instructorResumeApplicantRow ? (
-            <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />
-          ) : null}
-        </>
-      )}
+      ) : null}
+      {instructorResumeApplicantRow ? (
+        <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />
+      ) : null}
       {basicTab.showSchoolAffiliatedTeachers ? (
         <>
           {membersRemote && teachersError ? (

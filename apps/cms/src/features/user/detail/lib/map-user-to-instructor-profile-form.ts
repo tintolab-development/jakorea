@@ -146,8 +146,8 @@ function mapAwardsToRows(instructor: ApplicantInstructorRow | null): LicenseOrAw
 
 function resolveMemberType(user: Omit<User, 'password'>): 'general' | 'school_teacher' {
   const profile = resolveInstructorMemberProfile(user)
+  // 순수 교사만 교사회원 폼(소속 학교·재직). 교사 겸 강사(instructor_dual)는 강사 상세 행 구성 유지.
   if (profile === 'school_teacher' || isInstructorSchoolTeacherProfile(user)) return 'school_teacher'
-  if (profile === 'instructor_dual') return 'school_teacher'
   return 'general'
 }
 

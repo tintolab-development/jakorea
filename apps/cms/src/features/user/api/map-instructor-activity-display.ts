@@ -141,6 +141,25 @@ const FEE_GRADE_LEVEL_LABELS: Record<string, string> = {
   '3급': '3급 강사비',
 }
 
+/** BE wire `GRADE_1` · `1` · `1급` · `1급 강사비` → 표시 레벨 키 `1`|`2`|`3` */
+function resolveInstructorFeeGradeLevelKey(raw: string): '1' | '2' | '3' | undefined {
+  const trimmed = raw.trim()
+  if (!trimmed) return undefined
+
+  const gradeEnum = /^GRADE_([123])$/i.exec(trimmed)
+  if (gradeEnum) return gradeEnum[1] as '1' | '2' | '3'
+
+  const levelKey = trimmed.replace(/\s*강사비\s*$/u, '').trim()
+  if (levelKey === '1' || levelKey === '1급') return '1'
+  if (levelKey === '2' || levelKey === '2급') return '2'
+  if (levelKey === '3' || levelKey === '3급') return '3'
+
+  const fromLabel = /^([123])급\s*강사비$/u.exec(trimmed)
+  if (fromLabel) return fromLabel[1] as '1' | '2' | '3'
+
+  return undefined
+}
+
 /**
  * 강사비 등급 표시용.
  * `instructorProfile.defaultFeeGrade`만 사용한다.
@@ -155,14 +174,15 @@ export function toInstructorFeeGradeDisplayLabel(
   if (INSTRUCTOR_STATUS_CODES.has(upper)) return undefined
   if (/승인|반려|대기/.test(trimmed)) return undefined
 
-  const levelKey = trimmed.replace(/\s*강사비\s*$/u, '').trim()
-  if (levelKey in FEE_GRADE_LEVEL_LABELS) return FEE_GRADE_LEVEL_LABELS[levelKey]
+  const level = resolveInstructorFeeGradeLevelKey(trimmed)
+  if (level) return FEE_GRADE_LEVEL_LABELS[level]
+
   if (/^\d급\s*강사비$/.test(trimmed)) return trimmed
 
   return trimmed
 }
 
-/** CmsSelect value — wire(`1`)·부분(`1급`)·라벨(`1급 강사비`)을 옵션 value와 맞춘다. */
+/** CmsSelect value — wire(`1`/`GRADE_1`)·부분(`1급`)·라벨(`1급 강사비`)을 옵션 value와 맞춘다. */
 export function normalizeInstructorFeeGradeSelectValue(
   raw: string | undefined | null
 ): string {
@@ -175,13 +195,9 @@ export function toInstructorFeeGradeApiValue(
 ): string | undefined {
   const trimmed = raw?.trim()
   if (!trimmed) return undefined
-  if (/^[123]$/.test(trimmed)) return trimmed
 
-  const levelKey = trimmed.replace(/\s*강사비\s*$/u, '').trim()
-  if (/^[123]급$/.test(levelKey)) return levelKey.replace('급', '')
-
-  const fromLabel = /^([123])급\s*강사비$/.exec(trimmed)
-  if (fromLabel) return fromLabel[1]
+  const level = resolveInstructorFeeGradeLevelKey(trimmed)
+  if (level) return level
 
   return trimmed
 }

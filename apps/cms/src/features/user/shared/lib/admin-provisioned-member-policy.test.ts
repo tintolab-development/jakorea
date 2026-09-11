@@ -51,7 +51,7 @@ describe('isCmsInstructorFeeJaRestrictedEditTarget', () => {
     ).toBe(true)
   })
 
-  it('excludes school_teacher (basic + consent only on teacher detail)', () => {
+  it('excludes school_teacher (fee-grade edit N/A on teacher detail)', () => {
     expect(
       isCmsInstructorFeeJaRestrictedEditTarget({
         role: 'INSTRUCTOR',
@@ -62,7 +62,7 @@ describe('isCmsInstructorFeeJaRestrictedEditTarget', () => {
     ).toBe(false)
   })
 
-  it('is false before identity completion (full edit applies instead)', () => {
+  it('allows before identity completion (fee-grade-only edit still applies)', () => {
     expect(
       isCmsInstructorFeeJaRestrictedEditTarget({
         role: 'INSTRUCTOR',
@@ -70,7 +70,7 @@ describe('isCmsInstructorFeeJaRestrictedEditTarget', () => {
         registeredByAdmin: true,
         identitySelfSignupCompletedAfterAdminRegistration: false,
       })
-    ).toBe(false)
+    ).toBe(true)
   })
 
   it('is false for non-instructor roles', () => {
@@ -116,7 +116,7 @@ describe('shouldShowCmsMemberInfoEditButtonOrInstructorRestricted', () => {
     ).toBe(true)
   })
 
-  it('hides restricted edit for verified admin-provisioned school teacher', () => {
+  it('hides edit for admin-provisioned school teacher (before or after identity)', () => {
     expect(
       shouldShowCmsMemberInfoEditButtonOrInstructorRestricted({
         role: 'INSTRUCTOR',
@@ -125,9 +125,6 @@ describe('shouldShowCmsMemberInfoEditButtonOrInstructorRestricted', () => {
         identitySelfSignupCompletedAfterAdminRegistration: true,
       })
     ).toBe(false)
-  })
-
-  it('hides edit for admin-provisioned school teacher before identity completion', () => {
     expect(
       shouldShowCmsMemberInfoEditButtonOrInstructorRestricted({
         role: 'INSTRUCTOR',
@@ -209,6 +206,16 @@ describe('shouldShowCmsBasicProfileFieldsEdit', () => {
         schoolInfo: { affiliatedTeachers: [] },
       })
     ).toBe(true)
+  })
+
+  it('is false for INSTRUCTOR (fee-grade-only via restricted scope)', () => {
+    expect(
+      shouldShowCmsBasicProfileFieldsEdit({
+        role: 'INSTRUCTOR',
+        registeredByAdmin: true,
+        identitySelfSignupCompletedAfterAdminRegistration: false,
+      })
+    ).toBe(false)
   })
 })
 

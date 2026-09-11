@@ -9,6 +9,7 @@ import {
   formatInstructorEducationLevelDisplay,
   isInstructorMaskedPlaceholder,
   resolveInstructorPublicTextField,
+  toInstructorFeeGradeDisplayLabel,
 } from '@/features/user/api/map-instructor-activity-display'
 import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
 import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
@@ -348,18 +349,8 @@ export function jaEvaluationGradeLine(user: Omit<User, 'password'>): string {
 
 export function instructorFeeGradeLine(user: Omit<User, 'password'>): string {
   // instructorTypeLabel(강사 유형)과 혼동하지 않음 — 승인 status가 type에 섞인 사례 방지
-  const grade = user.listMetrics?.instructorFeeGradeLabel?.trim()
+  const grade = toInstructorFeeGradeDisplayLabel(user.listMetrics?.instructorFeeGradeLabel)
   if (!grade || grade === '-') return '-'
-  const upper = grade.toUpperCase()
-  if (
-    upper === 'APPROVED' ||
-    upper === 'PENDING' ||
-    upper === 'REJECTED' ||
-    upper === 'ACTIVE' ||
-    upper === 'REVOKED'
-  ) {
-    return '-'
-  }
   return grade
 }
 

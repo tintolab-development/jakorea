@@ -78,9 +78,7 @@ function InstructorCareerRowEdit({
     Form.useWatch(['careers', field.name, 'currentlyEmployed'], form) === true
 
   return (
-    <div
-      className="detail-info-form-inputs-wrapper-no-gap instructor-register-modal__field-stack-row"
-    >
+    <div className="detail-info-form-inputs-wrapper-no-gap instructor-register-modal__field-stack-row">
       <div className="instructor-register-modal__period">
         <Form.Item name={[field.name, 'periodStart']} noStyle>
           <CmsDatePicker
@@ -108,10 +106,18 @@ function InstructorCareerRowEdit({
       <DetailInfoForm.InputsSeparator />
       <div className="instructor-register-modal__inline-group">
         <Form.Item name={[field.name, 'companyName']} noStyle>
-          <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.companyName} inputSize="medium" width={220} />
+          <CmsInput
+            placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.companyName}
+            inputSize="medium"
+            width={220}
+          />
         </Form.Item>
         <Form.Item name={[field.name, 'roleName']} noStyle>
-          <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.roleName} inputSize="medium" width={160} />
+          <CmsInput
+            placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.roleName}
+            inputSize="medium"
+            width={160}
+          />
         </Form.Item>
         <Form.Item
           name={[field.name, 'currentlyEmployed']}
@@ -172,7 +178,7 @@ export interface InstructorProfileFormBodyProps {
   layoutVariant?: InstructorProfileFormLayoutVariant
   /** Extra rows injected at top of 기본 정보 DetailInfoForm (before 성명) — e.g. 정산현황/JA등급 for detail edit */
   basicInfoPrefix?: ReactNode
-  /** Extra rows before 사업소득자 (e.g. 강사비 등급) */
+  /** Extra field(s) before 사업소득자 — detail edit에서는 Field만 넘기고 Row는 본문에서 조립 */
   basicInfoExtraBeforeBusinessIncome?: ReactNode
   /**
    * 신규 등록 — JA 등급 평가 모달 열기
@@ -311,6 +317,7 @@ export function InstructorProfileFormBody({
         inputSize="medium"
         width="100%"
         options={EMPLOYMENT_STATUS_OPTIONS}
+        withAllOption={false}
         allowClear
       />
     </Form.Item>
@@ -348,6 +355,7 @@ export function InstructorProfileFormBody({
           inputSize="medium"
           width={FORM_INPUTS_2_WIDTHS[1]}
           options={EMPLOYMENT_STATUS_OPTIONS}
+          withAllOption={false}
           allowClear
         />
       </Form.Item>
@@ -381,8 +389,94 @@ export function InstructorProfileFormBody({
 
   const instructorCareerFieldEdit = (
     <Form.Item name="instructorCareer" style={FORM_ITEM_STYLE}>
-      <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.instructorCareer} inputSize="medium" width="100%" />
+      <CmsInput
+        placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.instructorCareer}
+        inputSize="medium"
+        width="100%"
+      />
     </Form.Item>
+  )
+
+  const homeAddressFieldEdit = (
+    <Space.Compact style={{ width: '100%' }}>
+      <Form.Item name="homeAddress" noStyle>
+        <AddressSearch
+          value={homeAddress}
+          onChange={next => {
+            form.setFieldValue('homeAddress', next)
+            onConsentValuesCommit?.()
+          }}
+          placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.homeAddress}
+          inputSize="medium"
+          width="100%"
+        />
+      </Form.Item>
+      <DetailInfoForm.InputsSeparator />
+      <Form.Item name="homeAddressDetail" noStyle>
+        <CmsInput
+          placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.homeAddressDetail}
+          inputSize="medium"
+          width="100%"
+        />
+      </Form.Item>
+    </Space.Compact>
+  )
+
+  const settlementAccountFieldEdit = (
+    <div className="instructor-register-modal__settlement-account">
+      <div className="instructor-register-modal__bank-account-pair">
+        <Form.Item name="bankName" noStyle>
+          <CmsInput
+            placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.bankName}
+            inputSize="medium"
+            width={120}
+          />
+        </Form.Item>
+        <Form.Item name="accountNumber" trigger="onValueChange" noStyle>
+          <CmsNumericInput
+            mode="numericText"
+            placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountNumber}
+            inputSize="medium"
+            width={isDetailEdit ? 160 : 240}
+          />
+        </Form.Item>
+      </div>
+      <DetailInfoForm.InputsSeparator />
+      <Form.Item name="accountHolder" noStyle>
+        <CmsInput
+          placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountHolder}
+          inputSize="medium"
+          width={isDetailEdit ? 120 : 240}
+        />
+      </Form.Item>
+    </div>
+  )
+
+  const businessIncomeFieldEdit = (
+    <Form.Item name="isBusinessIncome" noStyle>
+      <CmsRadioGroup options={BUSINESS_INCOME_OPTIONS} size="large" />
+    </Form.Item>
+  )
+
+  const oneLineIntroRow = (
+    <DetailInfoForm.Row type="single">
+      <DetailInfoForm.Field
+        label="한 줄 소개"
+        fullRow
+        view="-"
+        edit={
+          <div className="instructor-register-modal__full-width-input">
+            <Form.Item name="oneLineIntro" noStyle>
+              <CmsInput
+                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.oneLineIntro}
+                inputSize="medium"
+                width="100%"
+              />
+            </Form.Item>
+          </div>
+        }
+      />
+    </DetailInfoForm.Row>
   )
 
   const gradeEvaluateButton = (
@@ -411,197 +505,181 @@ export function InstructorProfileFormBody({
 
   const basicInfoProfileFields = (
     <>
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field
-              label="성명"
-              view="-"
-              edit={
-                <Form.Item name="name" style={FORM_ITEM_STYLE}>
-                  <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.name} inputSize="medium" width="100%" />
-                </Form.Item>
-              }
-            />
-            <DetailInfoForm.Field
-              label="성별 및 생년월일"
-              view="-"
-              edit={
-                <span className="detail-info-form-inputs-wrapper-no-gap">
-                  <Form.Item name="gender" noStyle>
-                    <CmsRadioGroup options={[...GENDER_OPTIONS]} size="large" />
-                  </Form.Item>
-                  <DetailInfoForm.InputsSeparator />
-                  <Form.Item
-                    name="birthDate"
-                    style={{ ...FORM_ITEM_STYLE, flex: '1 1 0', minWidth: 0 }}
-                    trigger="onValueChange"
-                    getValueFromEvent={(value: string) => value}
-                  >
-                    <CmsDateTextInput
-                      placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.birthDate}
-                      maxLength={10}
-                      inputSize="medium"
-                      width="100%"
-                    />
-                  </Form.Item>
-                </span>
-              }
-            />
-          </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field
-              label="연락처"
-              view="-"
-              edit={
-                <Form.Item name="contact" style={FORM_ITEM_STYLE}>
-                  <CmsPhoneInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.contact} inputSize="medium" width="100%" />
-                </Form.Item>
-              }
-            />
-            <DetailInfoForm.Field
-              label="이메일"
-              view="-"
-              edit={
-                <Form.Item name="email" style={FORM_ITEM_STYLE}>
-                  <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.email} inputSize="medium" width="100%" />
-                </Form.Item>
-              }
-            />
-          </DetailInfoForm.Row>
-          {isDetailEdit ? (
-            isTeacherMember ? (
-              <>
-                <Form.Item name="memberType" hidden preserve />
-                <DetailInfoForm.Row type="double">
-                  <DetailInfoForm.Field
-                    label="소속"
-                    view="-"
-                    edit={schoolTeacherSchoolFieldEdit}
-                  />
-                  <DetailInfoForm.Field
-                    label="재직 현황"
-                    view="-"
-                    edit={schoolTeacherEmploymentFieldEdit}
-                  />
-                </DetailInfoForm.Row>
-              </>
-            ) : (
-              <>
-                <Form.Item name="memberType" hidden preserve />
-                <DetailInfoForm.Row type="double">
-                  <DetailInfoForm.Field label="소속" view="-" edit={affiliationFieldEdit} />
-                  <DetailInfoForm.Field label="강사 경력" view="-" edit={instructorCareerFieldEdit} />
-                </DetailInfoForm.Row>
-              </>
-            )
-          ) : (
-            <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field
-                label="회원 유형"
-                view="-"
-                edit={
-                  <Form.Item name="memberType" noStyle>
-                    <CmsRadioGroup options={[...MEMBER_TYPE_OPTIONS]} size="large" />
-                  </Form.Item>
-                }
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="성명"
+          view="-"
+          edit={
+            <Form.Item name="name" style={FORM_ITEM_STYLE}>
+              <CmsInput
+                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.name}
+                inputSize="medium"
+                width="100%"
               />
+            </Form.Item>
+          }
+        />
+        <DetailInfoForm.Field
+          label="성별 및 생년월일"
+          view="-"
+          edit={
+            <span className="detail-info-form-inputs-wrapper-no-gap">
+              <Form.Item name="gender" noStyle>
+                <CmsRadioGroup options={[...GENDER_OPTIONS]} size="large" />
+              </Form.Item>
+              <DetailInfoForm.InputsSeparator />
+              <Form.Item
+                name="birthDate"
+                style={{ ...FORM_ITEM_STYLE, flex: '1 1 0', minWidth: 0 }}
+                trigger="onValueChange"
+                getValueFromEvent={(value: string) => value}
+              >
+                <CmsDateTextInput
+                  placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.birthDate}
+                  maxLength={10}
+                  inputSize="medium"
+                  width="100%"
+                />
+              </Form.Item>
+            </span>
+          }
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="연락처"
+          view="-"
+          edit={
+            <Form.Item name="contact" style={FORM_ITEM_STYLE}>
+              <CmsPhoneInput
+                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.contact}
+                inputSize="medium"
+                width="100%"
+              />
+            </Form.Item>
+          }
+        />
+        <DetailInfoForm.Field
+          label="이메일"
+          view="-"
+          edit={
+            <Form.Item name="email" style={FORM_ITEM_STYLE}>
+              <CmsInput
+                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.email}
+                inputSize="medium"
+                width="100%"
+              />
+            </Form.Item>
+          }
+        />
+      </DetailInfoForm.Row>
+      {isDetailEdit ? (
+        isTeacherMember ? (
+          <>
+            <Form.Item name="memberType" hidden preserve />
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field label="소속" view="-" edit={schoolTeacherSchoolFieldEdit} />
+              <DetailInfoForm.Field
+                label="재직 현황"
+                view="-"
+                edit={schoolTeacherEmploymentFieldEdit}
+              />
+            </DetailInfoForm.Row>
+          </>
+        ) : (
+          <>
+            <Form.Item name="memberType" hidden preserve />
+            <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field label="소속" view="-" edit={affiliationFieldEdit} />
+              <DetailInfoForm.Field label="강사 경력" view="-" edit={instructorCareerFieldEdit} />
             </DetailInfoForm.Row>
-          )}
-          {!(isDetailEdit && isTeacherMember) ? (
-            <>
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="자택 주소지"
-              fullRow
-              view="-"
-              edit={
-                <Space.Compact style={{ width: '100%' }}>
-                  <Form.Item name="homeAddress" noStyle>
-                    <AddressSearch
-                      value={homeAddress}
-                      onChange={next => {
-                        form.setFieldValue('homeAddress', next)
-                        onConsentValuesCommit?.()
-                      }}
-                      placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.homeAddress}
-                      inputSize="medium"
-                      width="100%"
-                    />
-                  </Form.Item>
-                  <DetailInfoForm.InputsSeparator />
-                  <Form.Item name="homeAddressDetail" noStyle>
-                    <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.homeAddressDetail} inputSize="medium" width="100%" />
-                  </Form.Item>
-                </Space.Compact>
-              }
-            />
-          </DetailInfoForm.Row>
-          {!isDetailEdit ? (
+          </>
+        )
+      ) : (
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="회원 유형"
+            view="-"
+            edit={
+              <Form.Item name="memberType" noStyle>
+                <CmsRadioGroup options={[...MEMBER_TYPE_OPTIONS]} size="large" />
+              </Form.Item>
+            }
+          />
+          <DetailInfoForm.Field label="소속" view="-" edit={affiliationFieldEdit} />
+        </DetailInfoForm.Row>
+      )}
+      {!(isDetailEdit && isTeacherMember) ? (
+        isDetailEdit ? (
+          <>
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field label="자택 주소지" view="-" edit={homeAddressFieldEdit} />
+              <DetailInfoForm.Field
+                label="정산 계좌 정보"
+                view="-"
+                edit={settlementAccountFieldEdit}
+              />
+            </DetailInfoForm.Row>
+            {basicInfoExtraBeforeBusinessIncome ? (
+              <DetailInfoForm.Row type="double">
+                {basicInfoExtraBeforeBusinessIncome}
+                <DetailInfoForm.Field
+                  label="사업소득자 여부"
+                  view="-"
+                  edit={businessIncomeFieldEdit}
+                />
+              </DetailInfoForm.Row>
+            ) : (
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="사업소득자 여부"
+                  fullRow
+                  view="-"
+                  edit={businessIncomeFieldEdit}
+                />
+              </DetailInfoForm.Row>
+            )}
+            {oneLineIntroRow}
+          </>
+        ) : (
+          <>
             <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field label="강사 경력" fullRow view="-" edit={instructorCareerFieldEdit} />
+              <DetailInfoForm.Field
+                label="자택 주소지"
+                fullRow
+                view="-"
+                edit={homeAddressFieldEdit}
+              />
             </DetailInfoForm.Row>
-          ) : null}
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="정산 계좌 정보"
-              fullRow
-              view="-"
-              edit={
-                <div className="instructor-register-modal__settlement-account">
-                  <div className="instructor-register-modal__bank-account-pair">
-                    <Form.Item name="bankName" noStyle>
-                      <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.bankName} inputSize="medium" width={120} />
-                    </Form.Item>
-                    <Form.Item name="accountNumber" trigger="onValueChange" noStyle>
-                      <CmsNumericInput
-                        mode="numericText"
-                        placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountNumber}
-                        inputSize="medium"
-                        width={240}
-                      />
-                    </Form.Item>
-                  </div>
-                  <DetailInfoForm.InputsSeparator />
-                  <Form.Item name="accountHolder" noStyle>
-                    <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountHolder} inputSize="medium" width={240} />
-                  </Form.Item>
-                </div>
-              }
-            />
-          </DetailInfoForm.Row>
-          {basicInfoExtraBeforeBusinessIncome}
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="사업소득자 여부"
-              fullRow
-              view="-"
-              edit={
-                <Form.Item name="isBusinessIncome" noStyle>
-                  <CmsRadioGroup options={BUSINESS_INCOME_OPTIONS} size="large" />
-                </Form.Item>
-              }
-            />
-          </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="한 줄 소개"
-              fullRow
-              view="-"
-              edit={
-                <div className="instructor-register-modal__full-width-input">
-                  <Form.Item name="oneLineIntro" noStyle>
-                    <CmsInput
-                      placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.oneLineIntro}
-                      inputSize="medium"
-                      width="100%"
-                    />
-                  </Form.Item>
-                </div>
-              }
-            />
-          </DetailInfoForm.Row>
-            </>
-          ) : null}
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="강사 경력"
+                fullRow
+                view="-"
+                edit={instructorCareerFieldEdit}
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="정산 계좌 정보"
+                fullRow
+                view="-"
+                edit={settlementAccountFieldEdit}
+              />
+            </DetailInfoForm.Row>
+            {basicInfoExtraBeforeBusinessIncome}
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="사업소득자 여부"
+                fullRow
+                view="-"
+                edit={businessIncomeFieldEdit}
+              />
+            </DetailInfoForm.Row>
+            {oneLineIntroRow}
+          </>
+        )
+      ) : null}
     </>
   )
 
@@ -642,8 +720,14 @@ export function InstructorProfileFormBody({
           </DetailInfoForm>
         )}
 
-        {formLayout.showInstructorGradeSection && showInstructorApplicationSections ? (
-          <DetailInfoForm title="강사 등급" mode="edit" className="instructor-register-modal__grade-section">
+        {formLayout.showInstructorGradeSection &&
+        showInstructorApplicationSections &&
+        !isDetailEdit ? (
+          <DetailInfoForm
+            title="강사 등급"
+            mode="edit"
+            className="instructor-register-modal__grade-section"
+          >
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="강사비 등급"
@@ -678,6 +762,7 @@ export function InstructorProfileFormBody({
           </DetailInfoForm>
         ) : null}
 
+        {!isDetailEdit ? (
         <DetailInfoForm
           title={formLayout.consent.title}
           mode="edit"
@@ -752,325 +837,346 @@ export function InstructorProfileFormBody({
             </DetailInfoForm>
 
             {showInstructorConsentDocuments ? (
-            <DetailInfoForm
-              title="약관 및 동의"
-              hideHeader
-              mode="edit"
-              className="instructor-register-modal__consent-block"
-            >
-              <DetailInfoForm.Row type="double">
+              <DetailInfoForm
+                title="약관 및 동의"
+                hideHeader
+                mode="edit"
+                className="instructor-register-modal__consent-block"
+              >
+                <DetailInfoForm.Row type="double">
+                  <DetailInfoForm.Field
+                    label="지급조서 사전 동의서"
+                    labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                    view="-"
+                    edit={
+                      <Form.Item name="consentPaymentStatement" noStyle>
+                        <ConsentDocumentFieldEdit
+                          onWrite={() => handleConsentWrite('consentPaymentStatement')}
+                        />
+                      </Form.Item>
+                    }
+                  />
+                  <DetailInfoForm.Field
+                    label="교육진행자 서약서"
+                    labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                    view="-"
+                    edit={
+                      <Form.Item name="consentEducatorPledge" noStyle>
+                        <ConsentDocumentFieldEdit
+                          onWrite={() => handleConsentWrite('consentEducatorPledge')}
+                        />
+                      </Form.Item>
+                    }
+                  />
+                </DetailInfoForm.Row>
+                <DetailInfoForm.Row type="double">
+                  <DetailInfoForm.Field
+                    label="행정정보 공동이용 사전동의서"
+                    labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                    view="-"
+                    edit={
+                      <Form.Item name="consentAdministrativeJoint" noStyle>
+                        <ConsentDocumentFieldEdit
+                          onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
+                        />
+                      </Form.Item>
+                    }
+                  />
+                  <DetailInfoForm.Field
+                    label="성범죄 경력 조회 동의서"
+                    labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                    view="-"
+                    edit={
+                      <Form.Item name="consentSexOffenseCheck" noStyle>
+                        <ConsentDocumentFieldEdit
+                          onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
+                        />
+                      </Form.Item>
+                    }
+                  />
+                </DetailInfoForm.Row>
+              </DetailInfoForm>
+            ) : null}
+          </div>
+        </DetailInfoForm>
+        ) : null}
+
+        {!isDetailEdit && showInstructorApplicationSections ? (
+          <>
+            <InstructorRegisterEducationSection />
+
+            <DetailInfoForm title="경력사항" mode="edit" className="instructor-register-career">
+              <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
-                  label="지급조서 사전 동의서"
-                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                  label="경력 구분"
+                  labelWidth={200}
+                  fullRow
                   view="-"
                   edit={
-                    <Form.Item name="consentPaymentStatement" noStyle>
-                      <ConsentDocumentFieldEdit
-                        onWrite={() => handleConsentWrite('consentPaymentStatement')}
-                      />
-                    </Form.Item>
-                  }
-                />
-                <DetailInfoForm.Field
-                  label="교육진행자 서약서"
-                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
-                  view="-"
-                  edit={
-                    <Form.Item name="consentEducatorPledge" noStyle>
-                      <ConsentDocumentFieldEdit
-                        onWrite={() => handleConsentWrite('consentEducatorPledge')}
-                      />
+                    <Form.Item name="careerLevel" noStyle>
+                      <CmsRadioGroup options={CAREER_LEVEL_OPTIONS} size="large" />
                     </Form.Item>
                   }
                 />
               </DetailInfoForm.Row>
-              <DetailInfoForm.Row type="double">
+              {careerLevel === 'experienced' ? (
+                <DetailInfoForm.Row type="single" className="instructor-register-modal__multi-row">
+                  <DetailInfoForm.Field
+                    label="경력 사항"
+                    labelWidth={200}
+                    fullRow
+                    view="-"
+                    edit={
+                      <div className="instructor-register-modal__field-stack">
+                        <Form.List name="careers">
+                          {(fields, { add, remove }) => (
+                            <>
+                              {fields.map((field, index) => (
+                                <InstructorCareerRowEdit
+                                  key={field.key}
+                                  form={form}
+                                  field={field}
+                                  index={index}
+                                  onAdd={() => add({ ...EMPTY_CAREER })}
+                                  onRemove={() => remove(field.name)}
+                                />
+                              ))}
+                            </>
+                          )}
+                        </Form.List>
+                      </div>
+                    }
+                  />
+                </DetailInfoForm.Row>
+              ) : null}
+            </DetailInfoForm>
+
+            <DetailInfoForm
+              title="JA Korea 활동 경험"
+              mode="edit"
+              className="instructor-register-list-section"
+            >
+              <DetailInfoForm.Row type="single" className="instructor-register-modal__multi-row">
                 <DetailInfoForm.Field
-                  label="행정정보 공동이용 사전동의서"
-                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                  label="활동 이력"
+                  labelWidth={200}
+                  fullRow
                   view="-"
                   edit={
-                    <Form.Item name="consentAdministrativeJoint" noStyle>
-                      <ConsentDocumentFieldEdit
-                        onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
-                      />
-                    </Form.Item>
-                  }
-                />
-                <DetailInfoForm.Field
-                  label="성범죄 경력 조회 동의서"
-                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
-                  view="-"
-                  edit={
-                    <Form.Item name="consentSexOffenseCheck" noStyle>
-                      <ConsentDocumentFieldEdit
-                        onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
-                      />
-                    </Form.Item>
+                    <div className="instructor-register-modal__field-stack">
+                      <Form.List name="jaKoreaRows">
+                        {(fields, { add, remove }) => (
+                          <>
+                            {fields.map((field, index) => (
+                              <div
+                                key={field.key}
+                                className="detail-info-form-inputs-wrapper-no-gap instructor-register-modal__field-stack-row"
+                              >
+                                <div className="instructor-register-modal__period">
+                                  <Form.Item name={[field.name, 'periodStart']} noStyle>
+                                    <CmsDatePicker
+                                      inputSize="medium"
+                                      placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaPeriodStart}
+                                      format="YYYY.MM.DD"
+                                      width={140}
+                                    />
+                                  </Form.Item>
+                                  <span className="instructor-register-modal__tilde" aria-hidden>
+                                    ~
+                                  </span>
+                                  <Form.Item name={[field.name, 'periodEnd']} noStyle>
+                                    <CmsDatePicker
+                                      inputSize="medium"
+                                      placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaPeriodEnd}
+                                      format="YYYY.MM.DD"
+                                      width={140}
+                                    />
+                                  </Form.Item>
+                                </div>
+                                <DetailInfoForm.InputsSeparator />
+                                <div className="instructor-register-modal__inline-group">
+                                  <Form.Item name={[field.name, 'title']} noStyle>
+                                    <CmsInput
+                                      placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaProgramName}
+                                      inputSize="medium"
+                                      width={220}
+                                    />
+                                  </Form.Item>
+                                  <Form.Item name={[field.name, 'note']} noStyle>
+                                    <CmsInput
+                                      placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaNote}
+                                      inputSize="medium"
+                                      width={160}
+                                    />
+                                  </Form.Item>
+                                  {index === 0 ? (
+                                    <CmsCircleAddButton
+                                      onClick={() => add({ ...EMPTY_JA_KOREA_ROW })}
+                                    />
+                                  ) : (
+                                    <ItemDeleteButton
+                                      className="item-delete-button"
+                                      aria-label="항목 삭제"
+                                      onClick={() => remove(field.name)}
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </Form.List>
+                    </div>
                   }
                 />
               </DetailInfoForm.Row>
             </DetailInfoForm>
-            ) : null}
-          </div>
-        </DetailInfoForm>
 
-        {showInstructorApplicationSections ? (
-          <>
-        <InstructorRegisterEducationSection />
+            <DetailInfoForm
+              title="자격 및 면허"
+              mode="edit"
+              className="instructor-register-list-section"
+            >
+              <DetailInfoForm.Row type="single" className="instructor-register-modal__multi-row">
+                <DetailInfoForm.Field
+                  label="자격 및 면허 내역"
+                  labelWidth={200}
+                  fullRow
+                  view="-"
+                  edit={
+                    <div className="instructor-register-modal__field-stack">
+                      <Form.List name="licenseRows">
+                        {(fields, { add, remove }) => (
+                          <>
+                            {fields.map((field, index) => (
+                              <div
+                                key={field.key}
+                                className="detail-info-form-inputs-wrapper-no-gap instructor-register-modal__field-stack-row"
+                              >
+                                <Form.Item name={[field.name, 'acquiredYear']} noStyle>
+                                  <CmsDatePicker
+                                    picker="year"
+                                    inputSize="medium"
+                                    placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseYear}
+                                    format="YYYY"
+                                    width={140}
+                                  />
+                                </Form.Item>
+                                <DetailInfoForm.InputsSeparator />
+                                <div className="instructor-register-modal__inline-group">
+                                  <Form.Item name={[field.name, 'title']} noStyle>
+                                    <CmsInput
+                                      placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseTitle}
+                                      inputSize="medium"
+                                      width={220}
+                                    />
+                                  </Form.Item>
+                                  <Form.Item name={[field.name, 'issuer']} noStyle>
+                                    <CmsInput
+                                      placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseIssuer}
+                                      inputSize="medium"
+                                      width={160}
+                                    />
+                                  </Form.Item>
+                                  {index === 0 ? (
+                                    <CmsCircleAddButton
+                                      onClick={() => add({ ...EMPTY_LICENSE_OR_AWARD_ROW })}
+                                    />
+                                  ) : (
+                                    <ItemDeleteButton
+                                      className="item-delete-button"
+                                      aria-label="항목 삭제"
+                                      onClick={() => remove(field.name)}
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </Form.List>
+                    </div>
+                  }
+                />
+              </DetailInfoForm.Row>
+            </DetailInfoForm>
 
-        <DetailInfoForm title="경력사항" mode="edit" className="instructor-register-career">
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="경력 구분"
-              labelWidth={200}
-              fullRow
-              view="-"
-              edit={
-                <Form.Item name="careerLevel" noStyle>
-                  <CmsRadioGroup options={CAREER_LEVEL_OPTIONS} size="large" />
-                </Form.Item>
-              }
+            <DetailInfoForm
+              title="수상 및 수료"
+              mode="edit"
+              className="instructor-register-list-section"
+            >
+              <DetailInfoForm.Row type="single" className="instructor-register-modal__multi-row">
+                <DetailInfoForm.Field
+                  label="수상 및 수료 내역"
+                  labelWidth={200}
+                  fullRow
+                  view="-"
+                  edit={
+                    <div className="instructor-register-modal__field-stack">
+                      <Form.List name="awardRows">
+                        {(fields, { add, remove }) => (
+                          <>
+                            {fields.map((field, index) => (
+                              <div
+                                key={field.key}
+                                className="detail-info-form-inputs-wrapper-no-gap instructor-register-modal__field-stack-row"
+                              >
+                                <Form.Item name={[field.name, 'acquiredYear']} noStyle>
+                                  <CmsDatePicker
+                                    picker="year"
+                                    inputSize="medium"
+                                    placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.awardYear}
+                                    format="YYYY"
+                                    width={140}
+                                  />
+                                </Form.Item>
+                                <DetailInfoForm.InputsSeparator />
+                                <div className="instructor-register-modal__inline-group">
+                                  <Form.Item name={[field.name, 'title']} noStyle>
+                                    <CmsInput
+                                      placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.awardTitle}
+                                      inputSize="medium"
+                                      width={220}
+                                    />
+                                  </Form.Item>
+                                  <Form.Item name={[field.name, 'issuer']} noStyle>
+                                    <CmsInput
+                                      placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseIssuer}
+                                      inputSize="medium"
+                                      width={160}
+                                    />
+                                  </Form.Item>
+                                  {index === 0 ? (
+                                    <CmsCircleAddButton
+                                      onClick={() => add({ ...EMPTY_LICENSE_OR_AWARD_ROW })}
+                                    />
+                                  ) : (
+                                    <ItemDeleteButton
+                                      className="item-delete-button"
+                                      aria-label="항목 삭제"
+                                      onClick={() => remove(field.name)}
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </Form.List>
+                    </div>
+                  }
+                />
+              </DetailInfoForm.Row>
+            </DetailInfoForm>
+
+            <FreeWriteItemsSection
+              description={INSTRUCTOR_FORM_SECTION_DESCRIPTIONS.freeWrite}
+              items={INSTRUCTOR_FREE_WRITE_ITEMS}
+              rows={3}
+              placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.freeWrite}
+              className={isDetailEdit ? 'detail-info-form--gap-bottom' : undefined}
             />
-          </DetailInfoForm.Row>
-          {careerLevel === 'experienced' ? (
-            <DetailInfoForm.Row type="single" className="instructor-register-modal__multi-row">
-              <DetailInfoForm.Field
-                label="경력 사항"
-                labelWidth={200}
-                fullRow
-                view="-"
-                edit={
-                  <div className="instructor-register-modal__field-stack">
-                    <Form.List name="careers">
-                      {(fields, { add, remove }) => (
-                        <>
-                          {fields.map((field, index) => (
-                            <InstructorCareerRowEdit
-                              key={field.key}
-                              form={form}
-                              field={field}
-                              index={index}
-                              onAdd={() => add({ ...EMPTY_CAREER })}
-                              onRemove={() => remove(field.name)}
-                            />
-                          ))}
-                        </>
-                      )}
-                    </Form.List>
-                  </div>
-                }
-              />
-            </DetailInfoForm.Row>
-          ) : null}
-        </DetailInfoForm>
-
-        <DetailInfoForm
-          title="JA Korea 활동 경험"
-          mode="edit"
-          className="instructor-register-list-section"
-        >
-          <DetailInfoForm.Row type="single" className="instructor-register-modal__multi-row">
-            <DetailInfoForm.Field
-              label="활동 이력"
-              labelWidth={200}
-              fullRow
-              view="-"
-              edit={
-                <div className="instructor-register-modal__field-stack">
-                  <Form.List name="jaKoreaRows">
-                    {(fields, { add, remove }) => (
-                      <>
-                        {fields.map((field, index) => (
-                          <div
-                            key={field.key}
-                            className="detail-info-form-inputs-wrapper-no-gap instructor-register-modal__field-stack-row"
-                          >
-                            <div className="instructor-register-modal__period">
-                              <Form.Item name={[field.name, 'periodStart']} noStyle>
-                                <CmsDatePicker
-                                  inputSize="medium"
-                                  placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaPeriodStart}
-                                  format="YYYY.MM.DD"
-                                  width={140}
-                                />
-                              </Form.Item>
-                              <span className="instructor-register-modal__tilde" aria-hidden>
-                                ~
-                              </span>
-                              <Form.Item name={[field.name, 'periodEnd']} noStyle>
-                                <CmsDatePicker
-                                  inputSize="medium"
-                                  placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaPeriodEnd}
-                                  format="YYYY.MM.DD"
-                                  width={140}
-                                />
-                              </Form.Item>
-                            </div>
-                            <DetailInfoForm.InputsSeparator />
-                            <div className="instructor-register-modal__inline-group">
-                              <Form.Item name={[field.name, 'title']} noStyle>
-                                <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaProgramName} inputSize="medium" width={220} />
-                              </Form.Item>
-                              <Form.Item name={[field.name, 'note']} noStyle>
-                                <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaNote} inputSize="medium" width={160} />
-                              </Form.Item>
-                              {index === 0 ? (
-                                <CmsCircleAddButton
-                                  onClick={() => add({ ...EMPTY_JA_KOREA_ROW })}
-                                />
-                              ) : (
-                                <ItemDeleteButton
-                                  className="item-delete-button"
-                                  aria-label="항목 삭제"
-                                  onClick={() => remove(field.name)}
-                                />
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  </Form.List>
-                </div>
-              }
-            />
-          </DetailInfoForm.Row>
-        </DetailInfoForm>
-
-        <DetailInfoForm
-          title="자격 및 면허"
-          mode="edit"
-          className="instructor-register-list-section"
-        >
-          <DetailInfoForm.Row type="single" className="instructor-register-modal__multi-row">
-            <DetailInfoForm.Field
-              label="자격 및 면허 내역"
-              labelWidth={200}
-              fullRow
-              view="-"
-              edit={
-                <div className="instructor-register-modal__field-stack">
-                  <Form.List name="licenseRows">
-                    {(fields, { add, remove }) => (
-                      <>
-                        {fields.map((field, index) => (
-                          <div
-                            key={field.key}
-                            className="detail-info-form-inputs-wrapper-no-gap instructor-register-modal__field-stack-row"
-                          >
-                            <Form.Item name={[field.name, 'acquiredYear']} noStyle>
-                              <CmsDatePicker
-                                picker="year"
-                                inputSize="medium"
-                                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseYear}
-                                format="YYYY"
-                                width={140}
-                              />
-                            </Form.Item>
-                            <DetailInfoForm.InputsSeparator />
-                            <div className="instructor-register-modal__inline-group">
-                              <Form.Item name={[field.name, 'title']} noStyle>
-                                <CmsInput
-                                  placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseTitle}
-                                  inputSize="medium"
-                                  width={220}
-                                />
-                              </Form.Item>
-                              <Form.Item name={[field.name, 'issuer']} noStyle>
-                                <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseIssuer} inputSize="medium" width={160} />
-                              </Form.Item>
-                              {index === 0 ? (
-                                <CmsCircleAddButton
-                                  onClick={() => add({ ...EMPTY_LICENSE_OR_AWARD_ROW })}
-                                />
-                              ) : (
-                                <ItemDeleteButton
-                                  className="item-delete-button"
-                                  aria-label="항목 삭제"
-                                  onClick={() => remove(field.name)}
-                                />
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  </Form.List>
-                </div>
-              }
-            />
-          </DetailInfoForm.Row>
-        </DetailInfoForm>
-
-        <DetailInfoForm
-          title="수상 및 수료"
-          mode="edit"
-          className="instructor-register-list-section"
-        >
-          <DetailInfoForm.Row type="single" className="instructor-register-modal__multi-row">
-            <DetailInfoForm.Field
-              label="수상 및 수료 내역"
-              labelWidth={200}
-              fullRow
-              view="-"
-              edit={
-                <div className="instructor-register-modal__field-stack">
-                  <Form.List name="awardRows">
-                    {(fields, { add, remove }) => (
-                      <>
-                        {fields.map((field, index) => (
-                          <div
-                            key={field.key}
-                            className="detail-info-form-inputs-wrapper-no-gap instructor-register-modal__field-stack-row"
-                          >
-                            <Form.Item name={[field.name, 'acquiredYear']} noStyle>
-                              <CmsDatePicker
-                                picker="year"
-                                inputSize="medium"
-                                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.awardYear}
-                                format="YYYY"
-                                width={140}
-                              />
-                            </Form.Item>
-                            <DetailInfoForm.InputsSeparator />
-                            <div className="instructor-register-modal__inline-group">
-                              <Form.Item name={[field.name, 'title']} noStyle>
-                                <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.awardTitle} inputSize="medium" width={220} />
-                              </Form.Item>
-                              <Form.Item name={[field.name, 'issuer']} noStyle>
-                                <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseIssuer} inputSize="medium" width={160} />
-                              </Form.Item>
-                              {index === 0 ? (
-                                <CmsCircleAddButton
-                                  onClick={() => add({ ...EMPTY_LICENSE_OR_AWARD_ROW })}
-                                />
-                              ) : (
-                                <ItemDeleteButton
-                                  className="item-delete-button"
-                                  aria-label="항목 삭제"
-                                  onClick={() => remove(field.name)}
-                                />
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  </Form.List>
-                </div>
-              }
-            />
-          </DetailInfoForm.Row>
-        </DetailInfoForm>
-
-        <FreeWriteItemsSection
-          description={INSTRUCTOR_FORM_SECTION_DESCRIPTIONS.freeWrite}
-          items={INSTRUCTOR_FREE_WRITE_ITEMS}
-          rows={3}
-          placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.freeWrite}
-          className={isDetailEdit ? 'detail-info-form--gap-bottom' : undefined}
-        />
           </>
         ) : null}
       </div>

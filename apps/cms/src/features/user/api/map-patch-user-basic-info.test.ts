@@ -407,7 +407,7 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     expect(body.feeGrade).toBe('1')
   })
 
-  it('강사비·JA 제한 수정도 profile.defaultFeeGrade와 feeGrade를 보낸다', () => {
+  it('강사비 제한 수정도 profile.defaultFeeGrade와 feeGrade를 보낸다', () => {
     const patch = draftToInstructorFeeAndJaGradePatch(
       instructorDraft({
         instructorFeeGrade: '3급 강사비',
@@ -429,6 +429,7 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     const body = mapPatchUserBasicInfoToApiRequest(patch)
 
     expect(body.listMetrics?.instructorFeeGradeLabel).toBe('3급 강사비')
+    expect(body.listMetrics?.jaEvaluationGrade).toBeUndefined()
     expect(body.profile?.defaultFeeGrade).toBe('3')
     expect(body.feeGrade).toBe('3')
   })

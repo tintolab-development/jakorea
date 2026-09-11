@@ -36,14 +36,8 @@
   padding-bottom: 0 !important;
 }
 
-.cms-data-table
-  .ant-table-tbody
-  > tr:hover
-  > td.status-dropdown-cell__cell-status--tag-100,
-.cms-data-table
-  .ant-table-tbody
-  > tr:hover
-  > td.status-dropdown-cell__cell-status--tag-160,
+.cms-data-table .ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status--tag-100,
+.cms-data-table .ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status--tag-160,
 .cms-data-table
   .ant-table-tbody
   > tr:hover
@@ -136,7 +130,9 @@
 }
 
 /* tag-160: 행 hover 시 트리거 외곽선도 동일 박스 유지 (배지 우측 밀림 방지) */
-.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger--tag-160:not(.status-dropdown-cell__status-trigger--open) {
+.ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-160:not(.status-dropdown-cell__status-trigger--open) {
   border: 1px solid transparent !important;
   box-shadow: none !important;
   background: transparent !important;
@@ -309,8 +305,12 @@
   max-width: 116px !important;
 }
 
-.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover,
-.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):focus-visible {
+.status-dropdown-cell__status-trigger--tag-100:not(
+    .status-dropdown-cell__status-trigger--open
+  ):hover,
+.status-dropdown-cell__status-trigger--tag-100:not(
+    .status-dropdown-cell__status-trigger--open
+  ):focus-visible {
   border-width: 1px !important;
   border-style: solid !important;
   border-color: transparent !important;
@@ -346,7 +346,9 @@
   > tr:hover
   .status-dropdown-cell__status-trigger--tag-100
   .editable-status-badge.editable-status-badge--blue,
-.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+.status-dropdown-cell__status-trigger--tag-100:not(
+    .status-dropdown-cell__status-trigger--open
+  ):hover
   .editable-status-badge.editable-status-badge--blue {
   border-color: var(--editable-badge-blue-border) !important;
 }
@@ -356,7 +358,9 @@
   > tr:hover
   .status-dropdown-cell__status-trigger--tag-100
   .editable-status-badge.editable-status-badge--gray,
-.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+.status-dropdown-cell__status-trigger--tag-100:not(
+    .status-dropdown-cell__status-trigger--open
+  ):hover
   .editable-status-badge.editable-status-badge--gray {
   border-color: var(--editable-badge-gray-border) !important;
 }
@@ -366,17 +370,22 @@
   > tr:hover
   .status-dropdown-cell__status-trigger--tag-100
   .editable-status-badge.editable-status-badge--green,
-.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+.status-dropdown-cell__status-trigger--tag-100:not(
+    .status-dropdown-cell__status-trigger--open
+  ):hover
   .editable-status-badge.editable-status-badge--green {
   border-color: var(--editable-badge-green-border) !important;
 }
 
-.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge.editable-status-badge--green-overlay,
+.status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--green-overlay,
 .ant-table-tbody
   > tr:hover
   .status-dropdown-cell__status-trigger--tag-100
   .editable-status-badge.editable-status-badge--green-overlay,
-.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+.status-dropdown-cell__status-trigger--tag-100:not(
+    .status-dropdown-cell__status-trigger--open
+  ):hover
   .editable-status-badge.editable-status-badge--green-overlay {
   border-color: var(--editable-badge-green-border) !important;
 }
@@ -386,7 +395,9 @@
   > tr:hover
   .status-dropdown-cell__status-trigger--tag-100
   .editable-status-badge.editable-status-badge--red,
-.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+.status-dropdown-cell__status-trigger--tag-100:not(
+    .status-dropdown-cell__status-trigger--open
+  ):hover
   .editable-status-badge.editable-status-badge--red {
   border-color: var(--editable-badge-red-border) !important;
 }
@@ -411,7 +422,6 @@
   border: 1px solid #d4d4d4;
   background: #fff;
   box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1);
-  padding: 7px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -436,7 +446,9 @@
   justify-content: center;
 }
 
-.status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu-item .ant-dropdown-menu-title-content {
+.status-dropdown-cell__dropdown-overlay--tag-100
+  .ant-dropdown-menu-item
+  .ant-dropdown-menu-title-content {
   display: flex !important;
   width: 100%;
   justify-content: center;
@@ -459,21 +471,13 @@
 }
 
 /* 현재 선택(활성) — 트리거 open과 동일 민트 링. disabled 흐림 방지 */
-.status-dropdown-cell__dropdown-overlay .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active,
+.status-dropdown-cell__dropdown-overlay
+  .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active,
 .status-dropdown-cell__dropdown-overlay
   .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active.ant-dropdown-menu-item-disabled {
   opacity: 1 !important;
   cursor: default;
   background: transparent !important;
-}
-
-.status-dropdown-cell__dropdown-overlay
-  .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active
-  .status-dropdown-cell__dropdown-item--active {
-  display: inline-flex;
-  box-sizing: border-box;
-  border-radius: 6px;
-  box-shadow: 0 0 0 1px var(--color-brand-primary, var(--JA-mint-01, #01a1af));
 }
 
 .status-dropdown-cell__dropdown-overlay
@@ -487,7 +491,6 @@
   .status-badge {
   opacity: 1 !important;
 }
-
 
 /* 편집 가능 상태 배지 — 고정 레이아웃·style 지정 시 톤 보더 유지 */
 .ant-table-tbody
@@ -507,7 +510,9 @@
   box-sizing: border-box !important;
 }
 
-.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open) {
+.ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open) {
   border: 1px solid transparent !important;
   box-shadow: none !important;
   background: transparent !important;
@@ -593,8 +598,12 @@
   align-items: center !important;
 }
 
-.status-dropdown-cell__status-trigger--tag-160:not(.status-dropdown-cell__status-trigger--open):hover,
-.status-dropdown-cell__status-trigger--tag-160:not(.status-dropdown-cell__status-trigger--open):focus-visible {
+.status-dropdown-cell__status-trigger--tag-160:not(
+    .status-dropdown-cell__status-trigger--open
+  ):hover,
+.status-dropdown-cell__status-trigger--tag-160:not(
+    .status-dropdown-cell__status-trigger--open
+  ):focus-visible {
   border: 1px solid transparent;
   box-shadow: none;
   background: transparent;
@@ -686,7 +695,10 @@
   padding-right: 0 !important;
 }
 
-.cms-data-table .ant-table-thead > tr > th.ant-table-cell.status-dropdown-cell__header--payment-order-line {
+.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.status-dropdown-cell__header--payment-order-line {
   width: 176px !important;
   min-width: 176px !important;
   max-width: 176px !important;
@@ -720,8 +732,12 @@
   gap: 8px !important;
 }
 
-.status-dropdown-cell__status-trigger--payment-order-line:not(.status-dropdown-cell__status-trigger--open):hover,
-.status-dropdown-cell__status-trigger--payment-order-line:not(.status-dropdown-cell__status-trigger--open):focus-visible {
+.status-dropdown-cell__status-trigger--payment-order-line:not(
+    .status-dropdown-cell__status-trigger--open
+  ):hover,
+.status-dropdown-cell__status-trigger--payment-order-line:not(
+    .status-dropdown-cell__status-trigger--open
+  ):focus-visible {
   border: 1px solid transparent;
   box-shadow: none;
   background: transparent;
@@ -793,20 +809,23 @@
   color: var(--color-red, #c32f4a) !important;
 }
 
-.status-dropdown-cell__status-trigger--open .app-status-badge.textbook-status-badge--confirmed:not(
+.status-dropdown-cell__status-trigger--open
+  .app-status-badge.textbook-status-badge--confirmed:not(
     .textbook-status-badge--payment-order-line
   ) {
   border-radius: 4px !important;
 }
 
-.status-dropdown-cell__status-trigger--open .app-status-badge.textbook-status-badge--correction:not(
+.status-dropdown-cell__status-trigger--open
+  .app-status-badge.textbook-status-badge--correction:not(
     .textbook-status-badge--payment-order-line
   ) {
   border-radius: 4px !important;
 }
 
 /* 지급 조서 라인: 열림 시에도 시안 테두리·상태 배경 유지 */
-.status-dropdown-cell__status-trigger--open .app-status-badge.textbook-status-badge--payment-order-line {
+.status-dropdown-cell__status-trigger--open
+  .app-status-badge.textbook-status-badge--payment-order-line {
   border-radius: 4px !important;
   border: 1px solid rgba(70, 70, 70, 0.06) !important;
 }

@@ -17,6 +17,7 @@ import {
   termsAgreementRowsToRequests,
 } from '@/features/user/api/member-basic-info-terms-patch'
 import { normalizeInstructorFeeGradeSelectValue } from '@/features/user/api/map-instructor-activity-display'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 
 /** `user.affiliation` 저장 시 기관·학년 구분에 사용 (목·API와 동일) */
 export const USER_AFFILIATION_PIPE_SEP = ' | ' as const
@@ -244,7 +245,19 @@ export function userToAdminCommentOnlyDraft(user: Omit<User, 'password'>): Admin
 export function userToAdminProvisionedBasicDraft(
   user: Omit<User, 'password'>
 ): AdminProvisionedMemberBasicInfoDraft {
-  const { affiliationInstitution, affiliationGrade } = splitUserAffiliationForDraft(user.affiliation)
+  let { affiliationInstitution, affiliationGrade } = splitUserAffiliationForDraft(user.affiliation)
+  // 순수 교사: 소속은 affiliation pipe보다 학교명(CMS·기관)을 draft에 우선
+  if (user.role === 'INSTRUCTOR' && resolveInstructorMemberProfile(user) === 'school_teacher') {
+    const schoolName =
+      user.affiliatedSchoolName?.trim() ||
+      user.instructorCmsProfile?.affiliation?.schoolName?.trim() ||
+      user.schoolInfo?.schoolName?.trim() ||
+      affiliationInstitution
+    affiliationInstitution = schoolName
+    if (!affiliationGrade.trim()) {
+      affiliationGrade = user.listMetrics?.instructorAssignedGrade?.trim() || ''
+    }
+  }
   const { detailAddressSearch, detailAddressDetail } = splitAddressForDraft(
     user.detailAddress,
     user.detailAddressDetail
@@ -586,23 +599,20 @@ export function mergeInstructorDetailEditFlushIntoDraft(
   }
 }
 
-/** 어드민 등록 강사 — 본인인증 완료 후 제한 수정: 강사비 등급·JA 평가 등급만 */
+/** 어드민 등록 강사·교사겸강사 — 제한 수정: 강사비 등급만 (JA는 평가 모달 경로) */
 export function draftToInstructorFeeAndJaGradePatch(
   draft: AdminProvisionedMemberBasicInfoDraft
 ): PatchUserBasicInfoInput {
   const feeGrade = (draft.instructorFeeGrade ?? '').trim()
-  const jaGrade = (draft.jaEvaluationGrade ?? '').trim()
   return {
     listMetrics: {
       ...(feeGrade ? { instructorFeeGradeLabel: feeGrade } : {}),
-      ...(jaGrade ? { jaEvaluationGrade: jaGrade } : {}),
     },
     ...(draft.instructorCmsProfile
       ? {
           instructorCmsProfile: {
             ...draft.instructorCmsProfile,
             ...(feeGrade ? { defaultFeeGrade: feeGrade } : {}),
-            ...(jaGrade ? { defaultJaGrade: jaGrade } : {}),
           },
         }
       : {}),

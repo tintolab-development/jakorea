@@ -29,15 +29,14 @@ export function shouldShowCmsMemberInfoEditButton(user: UserLike): boolean {
 }
 
 /**
- * 어드민 등록 강사·교사겸강사(`instructor_only` / `instructor_dual`)가 본인인증 완료 후 —
- * [정보 수정]은 노출하되 강사비 등급·JA 평가 등급만 수정 가능한 대상인지.
- * 순수 교사(`school_teacher`)는 기본 정보·약관만 노출하므로 제외.
+ * 어드민 등록 강사·교사겸강사(`instructor_only` / `instructor_dual`) —
+ * [정보 수정]은 노출하되 **강사비 등급만** 수정 가능한 대상인지.
+ * (본인인증 완료 후에도 동일. 순수 교사 `school_teacher`는 대상 아님.)
  */
 export function isCmsInstructorFeeJaRestrictedEditTarget(
   user: InstructorRestrictedEditUserLike
 ): boolean {
   if (!user.registeredByAdmin) return false
-  if (!user.identitySelfSignupCompletedAfterAdminRegistration) return false
   if (user.role !== 'INSTRUCTOR') return false
   return resolveInstructorMemberProfile(user) !== 'school_teacher'
 }
@@ -54,24 +53,30 @@ export function shouldShowCmsSchoolInfoEditButton(user: SchoolUserLike): boolean
   )
 }
 
-/** 전체 기본정보 수정 또는 강사·교사 등급 제한 수정 — 헤더 [정보 수정] 노출 */
+/** 전체 기본정보 수정 또는 강사·교사겸강사 강사비 등급 제한 수정 — 헤더 [정보 수정] 노출 */
 export function shouldShowCmsMemberInfoEditButtonOrInstructorRestricted(
   user: InstructorRestrictedEditUserLike & SchoolUserLike
 ): boolean {
   if (user.role === 'SCHOOL') {
     return shouldShowCmsSchoolInfoEditButton(user)
   }
-  /** 순수 교사 상세 — 기본정보·약관 조회 전용, [정보 수정] 미노출 */
-  if (user.role === 'INSTRUCTOR' && resolveInstructorMemberProfile(user) === 'school_teacher') {
-    return false
+  // 순수 교사: 기본정보·강사비 수정 없음. 강사·겸직만 강사비 등급 제한 수정.
+  if (user.role === 'INSTRUCTOR') {
+    if (resolveInstructorMemberProfile(user) === 'school_teacher') return false
+    return (
+      shouldShowCmsMemberInfoEditButton(user) || isCmsInstructorFeeJaRestrictedEditTarget(user)
+    )
   }
-  return shouldShowCmsMemberInfoEditButton(user) || isCmsInstructorFeeJaRestrictedEditTarget(user)
+  return shouldShowCmsMemberInfoEditButton(user)
 }
 
-/** 기본 정보 폼 — 역할별 CMS 편집 가능 여부 */
+/** 기본 정보 폼 — 역할별 CMS 편집 가능 여부 (강사·교사는 강사비 등급만 → 여기선 false) */
 export function shouldShowCmsBasicProfileFieldsEdit(user: SchoolUserLike & UserLike): boolean {
   if (user.role === 'SCHOOL') {
     return shouldShowCmsSchoolInfoEditButton(user)
+  }
+  if (user.role === 'INSTRUCTOR') {
+    return false
   }
   return shouldShowCmsMemberInfoEditButton(user)
 }

@@ -601,6 +601,18 @@ describe('mapInstructorMemberDetailToUser', () => {
     expect(user.listMetrics?.instructorFeeGradeLabel).toBe('1급 강사비')
   })
 
+  it('강사비 등급 GRADE_N enum을 N급 강사비로 정규화한다', () => {
+    const user = mapInstructorMemberDetailToUser(
+      baseInstructorDetail({
+        instructorProfile: {
+          memberId: 101,
+          defaultFeeGrade: 'GRADE_3',
+        },
+      })
+    )
+    expect(user.listMetrics?.instructorFeeGradeLabel).toBe('3급 강사비')
+  })
+
   it('instructorProfile 없이 루트 homeAddress도 detailAddress로 매핑한다', () => {
     const user = mapInstructorMemberDetailToUser(
       baseInstructorDetail({

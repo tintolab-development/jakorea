@@ -26,7 +26,7 @@
 }
 
 .ja-grade-evaluation-modal__form-panel {
-  width: min(920px, 100%);
+  width: 1400px;
   margin: 0 auto;
   padding-bottom: 24px;
 }
@@ -46,7 +46,7 @@
 }
 
 .ja-grade-evaluation-modal__footer-inner {
-  width: min(920px, 100%);
+  width: 1400px;
 }
 
 .ja-grade-evaluation-modal__submit {

@@ -3,7 +3,7 @@ import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
 import { normalizeInstructorFeeGradeSelectValue } from '@/features/user/api/map-instructor-activity-display'
 import type { BasicInfoSectionContext } from './types'
 
-/** 본인인증 완료 후 강사·교사 제한 수정 — 강사비·JA 인라인 편집 가능 여부 */
+/** 강사·교사겸강사 제한 수정 — 강사비 등급만 인라인 편집 가능 여부 */
 export function canEditInstructorFeeJaFields(ctx: BasicInfoSectionContext): boolean {
   return Boolean(
     ctx.feeJaRestrictedEdit &&
