@@ -76,7 +76,7 @@ interface AppliedFilters {
   instructorName: string
   programName: string
   accountStatus: AppliedAccountStatus
-  transferDateRange: [Dayjs, Dayjs] | null
+  transferDateRange: [Dayjs | null, Dayjs | null] | null
 }
 
 const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토']
@@ -92,8 +92,13 @@ function formatYyMmDd(d: Dayjs): string {
   return d.format('YY. MM. DD')
 }
 
-function formatSettlementPendingDateRangeOnly(range: [Dayjs, Dayjs]): string {
-  return `${formatYyMmDd(range[0])} ~ ${formatYyMmDd(range[1])}`
+function formatSettlementPendingDateRangeOnly(range: [Dayjs | null, Dayjs | null]): string {
+  const from = range[0] ? formatYyMmDd(range[0]) : ''
+  const to = range[1] ? formatYyMmDd(range[1]) : ''
+  if (from && to) return `${from} ~ ${to}`
+  if (from) return `${from} ~`
+  if (to) return `~ ${to}`
+  return ''
 }
 
 function formatTransferCell(iso: string): string {
@@ -101,10 +106,13 @@ function formatTransferCell(iso: string): string {
   return `${d.format('YYYY. MM. DD')}(${KO_WEEKDAY[d.day()]})`
 }
 
-function matchesDateRange(iso: string, range: [Dayjs, Dayjs] | null): boolean {
-  if (!range?.[0] || !range?.[1]) return true
+function matchesDateRange(iso: string, range: [Dayjs | null, Dayjs | null] | null): boolean {
+  if (!range?.[0] && !range?.[1]) return true
   const d = dayjs(iso)
-  return !d.isBefore(range[0], 'day') && !d.isAfter(range[1], 'day')
+  if (!d.isValid()) return false
+  if (range[0] && d.isBefore(range[0], 'day')) return false
+  if (range[1] && d.isAfter(range[1], 'day')) return false
+  return true
 }
 
 function filterRows(rows: AccountPaymentRow[], applied: AppliedFilters): AccountPaymentRow[] {
@@ -188,7 +196,7 @@ export default function AccountPaymentsPage() {
   const [draftInstructor, setDraftInstructor] = useState('')
   const [draftProgram, setDraftProgram] = useState('')
   const [draftAccountStatus, setDraftAccountStatus] = useState<AppliedAccountStatus>('all')
-  const [draftDateRange, setDraftDateRange] = useState<[Dayjs, Dayjs] | null>(() =>
+  const [draftDateRange, setDraftDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(() =>
     getPaymentOrdersDefaultDateRange()
   )
   const [applied, setApplied] = useState<AppliedFilters>(() => ({
@@ -284,9 +292,9 @@ export default function AccountPaymentsPage() {
     }
     if (key === 'transferDateRange') {
       const range = Array.isArray(value) ? value : null
-      setDraftDateRange(
-        (range?.[0] && range?.[1] ? [range[0], range[1]] : null) as [Dayjs, Dayjs] | null
-      )
+      const start = (range?.[0] ?? null) as Dayjs | null
+      const end = (range?.[1] ?? null) as Dayjs | null
+      setDraftDateRange(start == null && end == null ? null : [start, end])
     }
   }, [])
 
@@ -374,7 +382,7 @@ export default function AccountPaymentsPage() {
   /** 기간 내 정산 예정금 = 이체 기간 ∩ CONFIRMED ∩ WAITING_PAYMENT (API expectedSettlementAmount) */
   const card3Meta = useMemo(() => {
     const range = applied.transferDateRange
-    if (!range?.[0] || !range?.[1]) {
+    if (!range?.[0] && !range?.[1]) {
       return { labelDateRange: null as string | null, amount: null as number | null }
     }
     const labelDateRange = formatSettlementPendingDateRangeOnly([range[0], range[1]])

@@ -49,7 +49,7 @@ export type PaymentOrderCalculationStatementLineRow =
 type PaymentOrderDetailViewShared = {
   isOpen: boolean
   /** 목록 페이지에 조회 적용된 기간 — 상세 기간 필터와 동기화 */
-  listPageDateRange: [Dayjs, Dayjs] | null
+  listPageDateRange: [Dayjs | null, Dayjs | null] | null
   lineAggregateStatus: PaymentOrderDetailAggregateStatus
   handleAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
   /** rowsState 기준 반려·정정 제외 합산. null이면 detail.totalEstimatedAmount 사용 */

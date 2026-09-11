@@ -57,19 +57,22 @@ export type PaymentOrdersPendingFilters = {
   instructorName: string
   processingStatus: PaymentOrderProcessingStatusFilter
   pendingItemBucket: PaymentOrderPendingItemBucketFilter
-  dateRange: [Dayjs, Dayjs] | null
+  dateRange: [Dayjs | null, Dayjs | null] | null
 }
 
 function hasSettlementAttendanceInRange(
   referenceDate: string,
   settlementDates: string[],
-  range: [Dayjs, Dayjs] | null
+  range: [Dayjs | null, Dayjs | null] | null
 ): boolean {
-  if (!range?.[0] || !range[1]) return true
+  if (!range?.[0] && !range?.[1]) return true
   const dates = settlementDates.length > 0 ? settlementDates : [referenceDate]
   return dates.some(iso => {
     const d = dayjs(iso)
-    return d.isValid() && !d.isBefore(range[0], 'day') && !d.isAfter(range[1], 'day')
+    if (!d.isValid()) return false
+    if (range[0] && d.isBefore(range[0], 'day')) return false
+    if (range[1] && d.isAfter(range[1], 'day')) return false
+    return true
   })
 }
 
@@ -110,11 +113,13 @@ export function parsePaymentOrdersFiltersFromUrl(
       : 'all'
   const fromStr = searchParams.get(`${P}_from`)
   const toStr = searchParams.get(`${P}_to`)
-  let dateRange: [Dayjs, Dayjs] | null = null
-  if (fromStr && toStr) {
-    const a = dayjs(fromStr)
-    const b = dayjs(toStr)
-    if (a.isValid() && b.isValid()) dateRange = [a, b]
+  let dateRange: [Dayjs | null, Dayjs | null] | null = null
+  if (fromStr || toStr) {
+    const a = fromStr ? dayjs(fromStr) : null
+    const b = toStr ? dayjs(toStr) : null
+    if ((a == null || a.isValid()) && (b == null || b.isValid())) {
+      dateRange = [a, b]
+    }
   }
   return {
     exposureMode,
@@ -241,13 +246,13 @@ function searchSyncRules(): readonly TableSearchParamRule<PaymentOrdersPendingFi
     {
       kind: 'apply',
       apply: (nextParams, filters) => {
-        nextParams.delete(`${P}_from`)
-        nextParams.delete(`${P}_to`)
         const range = filters.dateRange
-        if (range?.[0] && range[1]) {
-          nextParams.set(`${P}_from`, range[0].format('YYYY-MM-DD'))
-          nextParams.set(`${P}_to`, range[1].format('YYYY-MM-DD'))
-        }
+        const from = range?.[0]
+        const to = range?.[1]
+        if (from) nextParams.set(`${P}_from`, from.format('YYYY-MM-DD'))
+        else nextParams.delete(`${P}_from`)
+        if (to) nextParams.set(`${P}_to`, to.format('YYYY-MM-DD'))
+        else nextParams.delete(`${P}_to`)
       },
     },
   ]
@@ -294,7 +299,7 @@ export function createPaymentOrdersTablePageConfig(
             (searchParams.get(`${P}_inst`) ?? '').trim() ||
             (searchParams.get(`${P}_status`) && searchParams.get(`${P}_status`) !== 'all') ||
             (searchParams.get(`${P}_bucket`) && searchParams.get(`${P}_bucket`) !== 'all') ||
-            (searchParams.get(`${P}_from`) && searchParams.get(`${P}_to`))
+            (searchParams.get(`${P}_from`) || searchParams.get(`${P}_to`))
         ),
       getBaseCount: ({ filteredData }) => filteredData.length,
       onFilterChange: ({ prev, key, value }) => {
@@ -327,7 +332,7 @@ export function createPaymentOrdersTablePageConfig(
           }
         }
         if (key === 'dateRange') {
-          return { ...prev, dateRange: value as [Dayjs, Dayjs] | null }
+          return { ...prev, dateRange: value as [Dayjs | null, Dayjs | null] | null }
         }
         return { ...prev, [key]: value }
       },

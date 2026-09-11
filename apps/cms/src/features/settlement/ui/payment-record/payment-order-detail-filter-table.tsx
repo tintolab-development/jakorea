@@ -36,7 +36,7 @@ export type PaymentOrderDetailFilterTableProps = {
       mode: 'program'
       programRow: PaymentOrderAdminProgramRow
       isOpen: boolean
-      listPageDateRange: [Dayjs, Dayjs] | null
+      listPageDateRange: [Dayjs | null, Dayjs | null] | null
       onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
       onCountableAmountChange?: (amount: number) => void
       onOpenCalculationStatement: (row: PaymentOrderAdminProgramDetailInstructorRow) => void
@@ -48,7 +48,7 @@ export type PaymentOrderDetailFilterTableProps = {
       mode: 'instructor'
       instructorRow: PaymentOrderAdminInstructorRow
       isOpen: boolean
-      listPageDateRange: [Dayjs, Dayjs] | null
+      listPageDateRange: [Dayjs | null, Dayjs | null] | null
       onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
       onCountableAmountChange?: (amount: number) => void
       onOpenCalculationStatement: (row: PaymentOrderAdminInstructorDetailProgramRow) => void

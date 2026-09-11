@@ -139,7 +139,7 @@ export type UsePaymentOrderDetailLinesControllerArgs = RemoteDetailProps &
         mode: 'program'
         programRow: PaymentOrderAdminProgramRow
         isOpen: boolean
-        listPageDateRange: [Dayjs, Dayjs] | null
+        listPageDateRange: [Dayjs | null, Dayjs | null] | null
         onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
         /** 라인 상태 변경 시 반려·정정 제외 합산액 (신청자 상세 헤더용) */
         onCountableAmountChange?: (amount: number) => void
@@ -152,7 +152,7 @@ export type UsePaymentOrderDetailLinesControllerArgs = RemoteDetailProps &
         mode: 'instructor'
         instructorRow: PaymentOrderAdminInstructorRow
         isOpen: boolean
-        listPageDateRange: [Dayjs, Dayjs] | null
+        listPageDateRange: [Dayjs | null, Dayjs | null] | null
         onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
         onCountableAmountChange?: (amount: number) => void
         onOpenCalculationStatement: (row: PaymentOrderAdminInstructorDetailProgramRow) => void

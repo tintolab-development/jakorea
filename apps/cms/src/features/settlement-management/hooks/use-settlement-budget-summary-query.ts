@@ -16,14 +16,14 @@ export function useSettlementBudgetSummaryQuery(
 ) {
   const { year, fromDate, toDate } = params
   const remoteEnabled = useSettlementRemoteEnabled('accountPayments', enabled)
-  const hasDateRange = Boolean(fromDate && toDate)
 
   return useQuery({
     queryKey: settlementQueryKeys.accountPayments.budgetSummary(year, fromDate, toDate),
     queryFn: () =>
       fetchSettlementBudgetSummaryRemote({
         year,
-        ...(hasDateRange ? { fromDate, toDate } : {}),
+        ...(fromDate ? { fromDate } : {}),
+        ...(toDate ? { toDate } : {}),
       }),
     enabled: remoteEnabled,
     staleTime: 60_000,

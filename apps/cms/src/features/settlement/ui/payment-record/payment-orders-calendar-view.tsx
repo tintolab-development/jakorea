@@ -340,7 +340,7 @@ export interface PaymentOrdersCalendarViewProps {
   /** API 캘린더 이벤트 — 있으면 mock 집계 대신 사용 */
   eventsOverride?: PaymentOrderCalendarEvent[]
   /** URL·조회에 적용된 기간(실제 출강일). 없으면 데이터 앵커 월을 표시 */
-  filterDateRange: [Dayjs, Dayjs] | null
+  filterDateRange: [Dayjs | null, Dayjs | null] | null
   /** 캘린더 헤더 네비·날짜 선택 시 기간 필터·URL과 동일하게 맞출 때 호출 */
   onFilterDateRangeApply?: (range: [Dayjs, Dayjs]) => void
   /** 우측 목록 카드 클릭 시 지급 현황 상세(풀페이지 모달) */
@@ -348,31 +348,38 @@ export interface PaymentOrdersCalendarViewProps {
 }
 
 function resolveSelectedDateWithRange(
-  range: [Dayjs, Dayjs] | null | undefined,
+  range: [Dayjs | null, Dayjs | null] | null | undefined,
   anchor: Dayjs,
   fallback?: Dayjs
 ): Dayjs {
   const from = range?.[0]
   const to = range?.[1]
-  if (!from || !to) return fallback ?? anchor
+  if (!from && !to) return fallback ?? anchor
+  if (from && !to) return fallback ?? from
+  if (!from && to) return fallback ?? to
 
   const today = dayjs()
-  if (!today.isBefore(from, 'day') && !today.isAfter(to, 'day')) {
+  if (!today.isBefore(from!, 'day') && !today.isAfter(to!, 'day')) {
     return today
   }
-  if (fallback && !fallback.isBefore(from, 'day') && !fallback.isAfter(to, 'day')) {
+  if (fallback && !fallback.isBefore(from!, 'day') && !fallback.isAfter(to!, 'day')) {
     return fallback
   }
-  return from
+  return from ?? anchor
 }
 
 function filterEventsByDateRange<T extends { date: Dayjs }>(
   items: T[],
-  range: [Dayjs, Dayjs] | null | undefined
+  range: [Dayjs | null, Dayjs | null] | null | undefined
 ): T[] {
-  if (!range?.[0] || !range[1]) return items
-  const [from, to] = range
-  return items.filter(ev => !ev.date.isBefore(from, 'day') && !ev.date.isAfter(to, 'day'))
+  if (!range?.[0] && !range?.[1]) return items
+  const from = range?.[0] ?? null
+  const to = range?.[1] ?? null
+  return items.filter(ev => {
+    if (from && ev.date.isBefore(from, 'day')) return false
+    if (to && ev.date.isAfter(to, 'day')) return false
+    return true
+  })
 }
 
 type CalendarMainEventRow = {

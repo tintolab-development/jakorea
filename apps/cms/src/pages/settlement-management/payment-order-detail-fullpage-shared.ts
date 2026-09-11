@@ -23,9 +23,9 @@ export type AppliedLineStatus = 'all' | PaymentOrderAdminLineProcessingStatus
 
 export const defaultDateRange: [Dayjs, Dayjs] = [dayjs('2025-08-01'), dayjs('2026-06-30')]
 
-/** 목록(지급조서 확인)에 조회 적용된 기간 → 상세 모달 기간 필터 초기값 */
+/** 목록(지급조서 확인)에 조회 적용된 기간 → 상세 모달 기간 필터 초기값 (양쪽 모두 있을 때만) */
 export function resolveDetailInitialDateRange(
-  listPageRange: [Dayjs, Dayjs] | null | undefined
+  listPageRange: [Dayjs | null, Dayjs | null] | null | undefined
 ): [Dayjs, Dayjs] | null {
   const a = listPageRange?.[0]
   const b = listPageRange?.[1]
@@ -46,10 +46,13 @@ export function formatKoreanDateWithWeekday(iso: string): string {
   return `${x.format('YYYY. MM. DD')}(${KO_DOW[x.day()]})`
 }
 
-export function matchesDateRange(iso: string, range: [Dayjs, Dayjs] | null): boolean {
-  if (!range?.[0] || !range?.[1]) return true
+export function matchesDateRange(iso: string, range: [Dayjs | null, Dayjs | null] | null): boolean {
+  if (!range?.[0] && !range?.[1]) return true
   const d = dayjs(iso)
-  return !d.isBefore(range[0], 'day') && !d.isAfter(range[1], 'day')
+  if (!d.isValid()) return false
+  if (range[0] && d.isBefore(range[0], 'day')) return false
+  if (range[1] && d.isAfter(range[1], 'day')) return false
+  return true
 }
 
 /**
