@@ -73,13 +73,12 @@ const searchSyncRules: readonly TableSearchParamRule<AdminNoticePendingFilters>[
   {
     kind: 'apply',
     apply: (nextParams, f) => {
-      if (f.dateRange?.[0] && f.dateRange?.[1]) {
-        nextParams.set('an_from', f.dateRange[0].format('YYYY-MM-DD'))
-        nextParams.set('an_to', f.dateRange[1].format('YYYY-MM-DD'))
-      } else {
-        nextParams.delete('an_from')
-        nextParams.delete('an_to')
-      }
+      const from = f.dateRange?.[0]
+      const to = f.dateRange?.[1]
+      if (from) nextParams.set('an_from', from.format('YYYY-MM-DD'))
+      else nextParams.delete('an_from')
+      if (to) nextParams.set('an_to', to.format('YYYY-MM-DD'))
+      else nextParams.delete('an_to')
     },
   },
 ]
@@ -146,7 +145,7 @@ export const adminNoticeManagementTablePageConfig: TablePageConfig<
       if (parseVisibility(searchParams.get('an_vis')) !== 'public') return true
       if (parseCategory(searchParams.get('an_cat'), context.allowedCategoryLabels) !== 'ALL')
         return true
-      if (searchParams.get('an_from') && searchParams.get('an_to')) return true
+      if (searchParams.get('an_from') || searchParams.get('an_to')) return true
       return false
     },
 
