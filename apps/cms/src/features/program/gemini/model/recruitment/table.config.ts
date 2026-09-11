@@ -44,20 +44,24 @@ function parseStatus(raw: string | null): StatusFilter {
 function resolveTrainingRequestPeriodBounds(
   searchParams: URLSearchParams,
   todayKey: string
-): { from: Dayjs; to: Dayjs } {
+): { from: Dayjs | null; to: Dayjs | null; usedDefault: boolean } {
   const fromStr = searchParams.get(`${URL_PREFIX}_from`)
   const toStr = searchParams.get(`${URL_PREFIX}_to`)
 
-  if (fromStr && toStr) {
-    const from = dayjs(fromStr).startOf('day')
-    const to = dayjs(toStr).endOf('day')
-    if (from.isValid() && to.isValid()) {
-      return { from, to }
+  if (fromStr || toStr) {
+    const from = fromStr ? dayjs(fromStr).startOf('day') : null
+    const to = toStr ? dayjs(toStr).endOf('day') : null
+    if ((from == null || from.isValid()) && (to == null || to.isValid())) {
+      return { from, to, usedDefault: false }
     }
   }
 
   const [defaultFrom, defaultTo] = getDefaultTrainingRequestPeriodRange(todayKey)
-  return { from: defaultFrom.startOf('day'), to: defaultTo.endOf('day') }
+  return {
+    from: defaultFrom.startOf('day'),
+    to: defaultTo.endOf('day'),
+    usedDefault: true,
+  }
 }
 
 function filterRowsBySearchParams(
@@ -88,10 +92,9 @@ function filterRowsBySearchParams(
     const start = dayjs(r.trainingRequestPeriodStart)
     const end = dayjs(r.trainingRequestPeriodEnd)
     if (!start.isValid() || !end.isValid()) return false
-    return (
-      (end.isAfter(from) || end.isSame(from, 'day')) &&
-      (start.isBefore(to) || start.isSame(to, 'day'))
-    )
+    if (from && end.isBefore(from, 'day')) return false
+    if (to && start.isAfter(to, 'day')) return false
+    return true
   })
 
   return list.sort((a, b) => b.displayNo - a.displayNo)
@@ -117,13 +120,13 @@ const searchSyncRules: readonly TableSearchParamRule<GeminiRecruitmentPendingFil
   {
     kind: 'apply',
     apply: (nextParams, filters) => {
-      nextParams.delete(`${URL_PREFIX}_from`)
-      nextParams.delete(`${URL_PREFIX}_to`)
       const range = filters.trainingRequestPeriodRange
-      if (range?.[0] && range[1]) {
-        nextParams.set(`${URL_PREFIX}_from`, range[0].format('YYYY-MM-DD'))
-        nextParams.set(`${URL_PREFIX}_to`, range[1].format('YYYY-MM-DD'))
-      }
+      const from = range?.[0]
+      const to = range?.[1]
+      if (from) nextParams.set(`${URL_PREFIX}_from`, from.format('YYYY-MM-DD'))
+      else nextParams.delete(`${URL_PREFIX}_from`)
+      if (to) nextParams.set(`${URL_PREFIX}_to`, to.format('YYYY-MM-DD'))
+      else nextParams.delete(`${URL_PREFIX}_to`)
     },
   },
 ]
@@ -157,10 +160,10 @@ export const geminiRecruitmentTablePageConfig: TablePageConfig<
         defaultFrom,
         defaultTo,
       ]
-      if (fromStr && toStr) {
-        const a = dayjs(fromStr)
-        const b = dayjs(toStr)
-        if (a.isValid() && b.isValid()) {
+      if (fromStr || toStr) {
+        const a = fromStr ? dayjs(fromStr) : null
+        const b = toStr ? dayjs(toStr) : null
+        if ((a == null || a.isValid()) && (b == null || b.isValid())) {
           trainingRequestPeriodRange = [a, b]
         }
       }
@@ -184,7 +187,7 @@ export const geminiRecruitmentTablePageConfig: TablePageConfig<
       if ((searchParams.get(`${URL_PREFIX}_title`) ?? '').trim()) return true
       const s = searchParams.get(`${URL_PREFIX}_status`)
       if (s && s !== 'ALL') return true
-      if (searchParams.get(`${URL_PREFIX}_from`) && searchParams.get(`${URL_PREFIX}_to`)) {
+      if (searchParams.get(`${URL_PREFIX}_from`) || searchParams.get(`${URL_PREFIX}_to`)) {
         return true
       }
       return false

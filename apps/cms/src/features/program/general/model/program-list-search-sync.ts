@@ -25,11 +25,14 @@ export interface ProgramListPendingFilters extends Record<string, unknown> {
 const operationPeriodRule: TableSearchParamRule<ProgramListPendingFilters> = {
   kind: 'apply',
   apply: (nextParams, f) => {
-    if (f.operationStartDate && f.operationEndDate) {
+    if (f.operationStartDate) {
       nextParams.set('operationStartDate', f.operationStartDate.format('YYYY-MM-DD'))
-      nextParams.set('operationEndDate', f.operationEndDate.format('YYYY-MM-DD'))
     } else {
       nextParams.delete('operationStartDate')
+    }
+    if (f.operationEndDate) {
+      nextParams.set('operationEndDate', f.operationEndDate.format('YYYY-MM-DD'))
+    } else {
       nextParams.delete('operationEndDate')
     }
   },
