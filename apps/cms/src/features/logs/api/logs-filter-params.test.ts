@@ -20,6 +20,21 @@ describe('logs-filter-params', () => {
     })
   })
 
+  it('maps one-sided date filters independently', () => {
+    expect(memberLoginLogsParamsFromSearchParams(new URLSearchParams('mlh_from=2026-01-01'))).toEqual({
+      from: '2026-01-01',
+    })
+    expect(fileDownloadLogsParamsFromSearchParams(new URLSearchParams('fdl_to=2026-01-31'))).toEqual({
+      to: '2026-01-31',
+    })
+    expect(
+      personalInfoAccessLogsParamsFromSearchParams(new URLSearchParams('pia_from=2026-02-01'))
+    ).toEqual({ from: '2026-02-01' })
+    expect(bugIssueLogsParamsFromSearchParams(new URLSearchParams('bil_to=2026-03-31'))).toEqual({
+      to: '2026-03-31',
+    })
+  })
+
   it('maps file download URL params to API params', () => {
     const params = fileDownloadLogsParamsFromSearchParams(
       new URLSearchParams('fdl_file=report.pdf&fdl_user=홍길동&fdl_from=2026-01-01&fdl_to=2026-01-31')

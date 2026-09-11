@@ -43,9 +43,9 @@ function resolvePendingDateRangeFromUrl(args: {
   prev: PersonalInfoAccessHistoryPendingDateRange
 }): PersonalInfoAccessHistoryPendingDateRange {
   const { from, to, prev } = args
-  if (from && to) {
+  if (from || to) {
     urlDateRangeSyncState.hadCompleteInUrl = true
-    return [dayjs(from), dayjs(to)]
+    return [from ? dayjs(from) : null, to ? dayjs(to) : null]
   }
   if (urlDateRangeSyncState.hadCompleteInUrl) {
     urlDateRangeSyncState.hadCompleteInUrl = false
@@ -81,13 +81,12 @@ const searchSyncRules: readonly TableSearchParamRule<PersonalInfoAccessHistoryPe
   {
     kind: 'apply',
     apply: (nextParams, filters) => {
-      if (filters.dateRange?.[0] && filters.dateRange?.[1]) {
-        nextParams.set('pia_from', filters.dateRange[0].format('YYYY-MM-DD'))
-        nextParams.set('pia_to', filters.dateRange[1].format('YYYY-MM-DD'))
-      } else {
-        nextParams.delete('pia_from')
-        nextParams.delete('pia_to')
-      }
+      const from = filters.dateRange?.[0]
+      const to = filters.dateRange?.[1]
+      if (from) nextParams.set('pia_from', from.format('YYYY-MM-DD'))
+      else nextParams.delete('pia_from')
+      if (to) nextParams.set('pia_to', to.format('YYYY-MM-DD'))
+      else nextParams.delete('pia_to')
     },
   },
 ]
@@ -138,7 +137,7 @@ export const personalInfoAccessHistoryTablePageConfig: TablePageConfig<
     hasActiveFilters: ({ searchParams }) => {
       if ((searchParams.get('pia_purpose') ?? '').trim()) return true
       if ((searchParams.get('pia_accessor') ?? '').trim()) return true
-      if (searchParams.get('pia_from') && searchParams.get('pia_to')) return true
+      if (searchParams.get('pia_from') || searchParams.get('pia_to')) return true
       return false
     },
     getBaseCount: ({ filteredData }) => filteredData.length,

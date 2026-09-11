@@ -43,9 +43,9 @@ function resolvePendingDateRangeFromUrl(args: {
   prev: FileDownloadHistoryPendingDateRange
 }): FileDownloadHistoryPendingDateRange {
   const { from, to, prev } = args
-  if (from && to) {
+  if (from || to) {
     urlDateRangeSyncState.hadCompleteInUrl = true
-    return [dayjs(from), dayjs(to)]
+    return [from ? dayjs(from) : null, to ? dayjs(to) : null]
   }
   if (urlDateRangeSyncState.hadCompleteInUrl) {
     urlDateRangeSyncState.hadCompleteInUrl = false
@@ -81,13 +81,12 @@ const searchSyncRules: readonly TableSearchParamRule<FileDownloadHistoryPendingF
   {
     kind: 'apply',
     apply: (nextParams, filters) => {
-      if (filters.dateRange?.[0] && filters.dateRange?.[1]) {
-        nextParams.set('fdl_from', filters.dateRange[0].format('YYYY-MM-DD'))
-        nextParams.set('fdl_to', filters.dateRange[1].format('YYYY-MM-DD'))
-      } else {
-        nextParams.delete('fdl_from')
-        nextParams.delete('fdl_to')
-      }
+      const from = filters.dateRange?.[0]
+      const to = filters.dateRange?.[1]
+      if (from) nextParams.set('fdl_from', from.format('YYYY-MM-DD'))
+      else nextParams.delete('fdl_from')
+      if (to) nextParams.set('fdl_to', to.format('YYYY-MM-DD'))
+      else nextParams.delete('fdl_to')
     },
   },
 ]
@@ -138,7 +137,7 @@ export const fileDownloadHistoryTablePageConfig: TablePageConfig<
     hasActiveFilters: ({ searchParams }) => {
       if ((searchParams.get('fdl_file') ?? '').trim()) return true
       if ((searchParams.get('fdl_user') ?? '').trim()) return true
-      if (searchParams.get('fdl_from') && searchParams.get('fdl_to')) return true
+      if (searchParams.get('fdl_from') || searchParams.get('fdl_to')) return true
       return false
     },
     getBaseCount: ({ filteredData }) => filteredData.length,
