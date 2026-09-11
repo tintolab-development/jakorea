@@ -67,15 +67,16 @@ function filterRowsBySearchParams(
   if (!remoteEnabled && approvalStatus !== 'ALL') {
     list = list.filter(r => r.approvalStatus === approvalStatus)
   }
-  if (fromStr && toStr) {
-    const from = dayjs(fromStr).startOf('day')
-    const to = dayjs(toStr).endOf('day')
-    if (from.isValid() && to.isValid()) {
-      list = list.filter(r => {
-        const d = dayjs(r.appliedAt)
-        return (d.isAfter(from) || d.isSame(from, 'day')) && (d.isBefore(to) || d.isSame(to, 'day'))
-      })
-    }
+  if (fromStr || toStr) {
+    const from = fromStr ? dayjs(fromStr).startOf('day') : null
+    const to = toStr ? dayjs(toStr).endOf('day') : null
+    list = list.filter(r => {
+      const d = dayjs(r.appliedAt)
+      if (!d.isValid()) return false
+      if (from?.isValid() && d.isBefore(from, 'day')) return false
+      if (to?.isValid() && d.isAfter(to, 'day')) return false
+      return true
+    })
   }
   return list
 }
@@ -114,13 +115,13 @@ const searchSyncRules = (
         if (memberType === 'admin') {
           nextParams.delete(`${prefix}_role`)
         }
-        nextParams.delete(`${prefix}_from`)
-        nextParams.delete(`${prefix}_to`)
         const range = filters.createdAtRange
-        if (range?.[0] && range[1]) {
-          nextParams.set(`${prefix}_from`, range[0].format('YYYY-MM-DD'))
-          nextParams.set(`${prefix}_to`, range[1].format('YYYY-MM-DD'))
-        }
+        const from = range?.[0]
+        const to = range?.[1]
+        if (from) nextParams.set(`${prefix}_from`, from.format('YYYY-MM-DD'))
+        else nextParams.delete(`${prefix}_from`)
+        if (to) nextParams.set(`${prefix}_to`, to.format('YYYY-MM-DD'))
+        else nextParams.delete(`${prefix}_to`)
       },
     },
   ]
@@ -156,10 +157,10 @@ export const membersPermissionTablePageConfig: TablePageConfig<
       const fromStr = searchParams.get(`${p}_from`)
       const toStr = searchParams.get(`${p}_to`)
       let createdAtRange: [Dayjs | null, Dayjs | null] | null = null
-      if (fromStr && toStr) {
-        const a = dayjs(fromStr)
-        const b = dayjs(toStr)
-        if (a.isValid() && b.isValid()) {
+      if (fromStr || toStr) {
+        const a = fromStr ? dayjs(fromStr) : null
+        const b = toStr ? dayjs(toStr) : null
+        if ((a == null || a.isValid()) && (b == null || b.isValid())) {
           createdAtRange = [a, b]
         }
       }
@@ -188,7 +189,7 @@ export const membersPermissionTablePageConfig: TablePageConfig<
       }
       const a = searchParams.get(`${p}_approval`)
       if (a && a !== 'ALL') return true
-      if (searchParams.get(`${p}_from`) && searchParams.get(`${p}_to`)) return true
+      if (searchParams.get(`${p}_from`) || searchParams.get(`${p}_to`)) return true
       return false
     },
 
