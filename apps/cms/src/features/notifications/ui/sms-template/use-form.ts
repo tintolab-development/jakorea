@@ -11,6 +11,10 @@ import {
   validateSmsTemplateName,
 } from '@/features/notifications/model/sms-template/template-name'
 import {
+  validateSmsSenderPhone,
+  type ValidateSmsSenderPhoneOptions,
+} from '@/features/notifications/model/sms-template/sender-phone'
+import {
   SMS_ROOT_CATEGORY_ID,
   type SmsTemplateAttachment,
   type SmsTemplateFormMode,
@@ -315,18 +319,22 @@ export function useSmsTemplateForm(
     [attachmentFileNames, messageType]
   )
 
-  const validateRequired = useCallback((): string | null => {
-    const draft = getDraft()
-    const nameError = validateSmsTemplateName(draft.templateName)
-    if (nameError) return nameError
-    if (!draft.senderPhone) return '발신 번호를 선택하세요.'
-    if (!draft.bodyText.trim()) return '내용을 작성하세요.'
-    if (draft.messageType !== 'SMS' && !draft.subject) return '제목을 작성하세요.'
-    if (estimateSmsBodyBytes(draft.bodyText) > bodyByteLimit) {
-      return `내용은 ${bodyByteLimit.toLocaleString()}byte 이하로 입력하세요.`
-    }
-    return null
-  }, [bodyByteLimit, getDraft])
+  const validateRequired = useCallback(
+    (senderOptions?: ValidateSmsSenderPhoneOptions): string | null => {
+      const draft = getDraft()
+      const nameError = validateSmsTemplateName(draft.templateName)
+      if (nameError) return nameError
+      const senderError = validateSmsSenderPhone(draft.senderPhone, senderOptions)
+      if (senderError) return senderError
+      if (!draft.bodyText.trim()) return '내용을 작성하세요.'
+      if (draft.messageType !== 'SMS' && !draft.subject) return '제목을 작성하세요.'
+      if (estimateSmsBodyBytes(draft.bodyText) > bodyByteLimit) {
+        return `내용은 ${bodyByteLimit.toLocaleString()}byte 이하로 입력하세요.`
+      }
+      return null
+    },
+    [bodyByteLimit, getDraft]
+  )
 
   return {
     categoryId,

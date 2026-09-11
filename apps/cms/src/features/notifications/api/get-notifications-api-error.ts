@@ -12,6 +12,11 @@ import {
   MAIL_SENDER_PROFILES_EMPTY_MESSAGE,
 } from '@/features/notifications/model/mail-template/sender-email'
 import {
+  SMS_CATEGORY_PARENT_NOT_LINKED_MESSAGE,
+  SMS_SENDER_PHONE_REQUIRED_MESSAGE,
+  SMS_TEMPLATE_DELETE_REJECTED_BY_NHN_MESSAGE,
+} from '@/features/notifications/model/sms-template/sender-phone'
+import {
   MAIL_TEMPLATE_NAME_INVALID_MESSAGE,
   MAIL_TEMPLATE_NAME_REQUIRED_MESSAGE,
 } from '@/features/notifications/model/mail-template/template-name'
@@ -35,6 +40,7 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
     'NHN Console에서 템플릿 삭제가 거절되었습니다. 승인·공용 템플릿은 Console에서 확인해 주세요.',
   EMAIL_TEMPLATE_DELETE_REJECTED_BY_NHN:
     'NHN에서 메일 템플릿 삭제가 거절되었습니다. 잠시 후 다시 시도하거나 발신 프로필을 확인해 주세요.',
+  SMS_TEMPLATE_DELETE_REJECTED_BY_NHN: SMS_TEMPLATE_DELETE_REJECTED_BY_NHN_MESSAGE,
   DIRECT_RECIPIENT_AD_CONSENT_UNSUPPORTED:
     '직접 입력 수신자로는 광고성 템플릿을 발송할 수 없습니다.',
   NOTIFICATION_PROGRAM_REQUIRED_FOR_RECIPIENTS: '프로그램을 먼저 선택하세요.',
@@ -51,6 +57,7 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   DATABASE_ERROR: '데이터베이스 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
   PROVIDER_CATEGORY_REQUIRED:
     '부모 카테고리가 NHN과 연결되어 있지 않습니다. 「동기화」를 먼저 실행한 뒤 다시 시도해 주세요.',
+  NOTIFICATION_CATEGORY_PARENT_NOT_LINKED_TO_NHN: SMS_CATEGORY_PARENT_NOT_LINKED_MESSAGE,
   EMAIL_ATTACHMENT_LIMIT_EXCEEDED: '파일은 최대 10개까지 첨부할 수 있습니다.',
   EMAIL_ATTACHMENT_TOTAL_SIZE_EXCEEDED: '파일은 총 최대 30MB까지 업로드할 수 있습니다.',
   EMAIL_ATTACHMENT_FORBIDDEN_EXTENSION: 'js, exe, bat 등 실행 파일은 첨부할 수 없습니다.',
@@ -131,6 +138,8 @@ function looksLikeNeedsSyncMessage(message: string): boolean {
   return (
     text.includes('provider_category') ||
     text.includes('providercategory') ||
+    text.includes('parent_not_linked') ||
+    text.includes('not_linked_to_nhn') ||
     text.includes('동기화') ||
     text.includes('provider category')
   )
@@ -158,6 +167,21 @@ function looksLikeSenderEmailRequired(message: string, field?: string): boolean 
   return (
     text.includes('providersenderemailaddress') ||
     (text.includes('email template requires') && text.includes('sender'))
+  )
+}
+
+/** BE: SMS template requires providerSenderPhoneNumber when NHN catalog is enabled */
+function looksLikeSenderPhoneRequired(message: string, field?: string): boolean {
+  if (
+    field === 'providerSenderPhoneNumber' ||
+    field === 'provider_sender_phone_number'
+  ) {
+    return true
+  }
+  const text = message.toLowerCase()
+  return (
+    text.includes('providersenderphonenumber') ||
+    (text.includes('sms template requires') && text.includes('sender'))
   )
 }
 
@@ -193,6 +217,10 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
     return MAIL_SENDER_EMAIL_REQUIRED_MESSAGE
   }
 
+  if (looksLikeSenderPhoneRequired(serverMessage, field)) {
+    return SMS_SENDER_PHONE_REQUIRED_MESSAGE
+  }
+
   if (code === 'EMAIL_SENDER_PROFILE_MISMATCH') {
     return MAIL_SENDER_PROFILE_MISMATCH_MESSAGE
   }
@@ -207,8 +235,17 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
     return ERROR_CODE_MESSAGES.NOTIFICATION_SENDER_PROFILE_NOT_FOUND
   }
 
-  if (code === 'EMAIL_CATEGORY_NOT_LINKED_TO_NHN') {
-    return appendTraceId(ERROR_CODE_MESSAGES.EMAIL_CATEGORY_NOT_LINKED_TO_NHN, error, true)
+  if (
+    code === 'EMAIL_CATEGORY_NOT_LINKED_TO_NHN' ||
+    code === 'NOTIFICATION_CATEGORY_PARENT_NOT_LINKED_TO_NHN'
+  ) {
+    return appendTraceId(
+      code === 'NOTIFICATION_CATEGORY_PARENT_NOT_LINKED_TO_NHN'
+        ? ERROR_CODE_MESSAGES.NOTIFICATION_CATEGORY_PARENT_NOT_LINKED_TO_NHN
+        : ERROR_CODE_MESSAGES.EMAIL_CATEGORY_NOT_LINKED_TO_NHN,
+      error,
+      true
+    )
   }
 
   if (status === 503 || code === 'PROVIDER_UNAVAILABLE') {
@@ -233,6 +270,10 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
   if (code === 'EMAIL_TEMPLATE_DELETE_REJECTED_BY_NHN') {
     if (serverMessage && serverMessage !== code) return serverMessage
     return ERROR_CODE_MESSAGES.EMAIL_TEMPLATE_DELETE_REJECTED_BY_NHN
+  }
+  if (code === 'SMS_TEMPLATE_DELETE_REJECTED_BY_NHN') {
+    if (serverMessage && serverMessage !== code) return serverMessage
+    return ERROR_CODE_MESSAGES.SMS_TEMPLATE_DELETE_REJECTED_BY_NHN
   }
   if (code === 'PROGRAM_NOT_FOUND') {
     // BE "프로그램을 찾을 수 없습니다."는 권한/장애로 오해되기 쉬움 → FE 고정 문구
@@ -293,10 +334,14 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
   if (
     code === 'PROVIDER_CATEGORY_REQUIRED' ||
     code === 'CATEGORY_PROVIDER_REQUIRED' ||
+    code === 'NOTIFICATION_CATEGORY_PARENT_NOT_LINKED_TO_NHN' ||
     (status === 400 && looksLikeNeedsSyncMessage(serverMessage))
   ) {
     const base =
-      serverMessage || ERROR_CODE_MESSAGES.PROVIDER_CATEGORY_REQUIRED
+      serverMessage ||
+      (code === 'NOTIFICATION_CATEGORY_PARENT_NOT_LINKED_TO_NHN'
+        ? ERROR_CODE_MESSAGES.NOTIFICATION_CATEGORY_PARENT_NOT_LINKED_TO_NHN
+        : ERROR_CODE_MESSAGES.PROVIDER_CATEGORY_REQUIRED)
     const withHint = base.includes('동기화') ? base : `${base}\n\n${SYNC_FIRST_HINT}`
     return appendTraceId(withHint, error, true)
   }
@@ -340,6 +385,7 @@ export function isCategoryNeedsSyncError(error: unknown): boolean {
     code === 'PROVIDER_CATEGORY_REQUIRED' ||
     code === 'CATEGORY_PROVIDER_REQUIRED' ||
     code === 'EMAIL_CATEGORY_NOT_LINKED_TO_NHN' ||
+    code === 'NOTIFICATION_CATEGORY_PARENT_NOT_LINKED_TO_NHN' ||
     code === 'EMAIL_SENDER_PROFILES_EMPTY'
   ) {
     return true
