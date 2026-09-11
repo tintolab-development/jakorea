@@ -30,6 +30,7 @@ import {
 } from '@/features/notifications/api/adapters/alimtalk-sync-adapters'
 import { pendingFiltersFromSearchParams } from '@/features/notifications/model/sms-template/filter-url'
 import { validateSmsTemplateName } from '@/features/notifications/model/sms-template/template-name'
+import { SMS_SENDER_PHONE_REQUIRED_MESSAGE } from '@/features/notifications/model/sms-template/sender-phone'
 import { SMS_ROOT_CATEGORY_ID, type SmsTemplateItem } from '@/features/notifications/model/sms-template/types'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
@@ -238,12 +239,16 @@ function buildSmsTemplateUpsertBody(input: {
 }): NotificationTemplateUpsertRequest {
   const nameError = validateSmsTemplateName(input.templateName)
   if (nameError) throw new Error(nameError)
+  const senderPhone = input.senderPhone.trim()
+  if (!senderPhone) {
+    throw new Error(SMS_SENDER_PHONE_REQUIRED_MESSAGE)
+  }
   const categoryId = input.categoryId ? resolveNullableCategoryId(input.categoryId) : null
   const messageType = input.messageType.trim().toUpperCase()
   return {
     channelType: SMS_API_CHANNEL_TYPE,
     displayName: input.templateName.trim(),
-    providerSenderPhoneNumber: input.senderPhone.trim(),
+    providerSenderPhoneNumber: senderPhone,
     smsMessageType: messageType,
     titleTemplate:
       messageType === 'SMS'

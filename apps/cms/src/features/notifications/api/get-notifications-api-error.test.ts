@@ -129,13 +129,47 @@ describe('get-notifications-api-error', () => {
     )
   })
 
-  it('EMAIL_TEMPLATE_DELETE_REJECTED_BY_NHN과 NOTIFICATION_DELIVERY_NOT_FOUND를 매핑한다', () => {
+  it('SMS_TEMPLATE_DELETE_REJECTED_BY_NHN과 발신번호·부모 미연결을 매핑한다', () => {
     expect(
-      getNotificationsApiErrorMessage(apiError(409, 'EMAIL_TEMPLATE_DELETE_REJECTED_BY_NHN'), 'fallback')
-    ).toContain('메일 템플릿 삭제')
+      getNotificationsApiErrorMessage(apiError(409, 'SMS_TEMPLATE_DELETE_REJECTED_BY_NHN'), 'fallback')
+    ).toContain('문자 템플릿 삭제')
     expect(
-      getNotificationsApiErrorMessage(apiError(404, 'NOTIFICATION_DELIVERY_NOT_FOUND'), 'fallback')
-    ).toBe('발송 내역을 찾을 수 없습니다.')
+      getNotificationsApiErrorMessage(
+        apiError(
+          409,
+          'SMS_TEMPLATE_DELETE_REJECTED_BY_NHN',
+          'Hub에서 삭제가 거절되었습니다.'
+        ),
+        'fallback'
+      )
+    ).toBe('Hub에서 삭제가 거절되었습니다.')
+    expect(
+      getNotificationsApiErrorMessage(
+        apiError(400, 'NOTIFICATION_CATEGORY_PARENT_NOT_LINKED_TO_NHN'),
+        'fallback'
+      )
+    ).toContain('부모 카테고리')
+    expect(isCategoryNeedsSyncError(apiError(400, 'NOTIFICATION_CATEGORY_PARENT_NOT_LINKED_TO_NHN'))).toBe(
+      true
+    )
+    expect(
+      getNotificationsApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: {
+              success: false,
+              error: {
+                code: 'MISSING_PARAMETER',
+                message: 'SMS template requires providerSenderPhoneNumber when NHN catalog is enabled',
+                field: 'providerSenderPhoneNumber',
+              },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toBe('발신 번호를 선택하세요.')
   })
 
   it('PROVIDER_UNAVAILABLE은 code·traceId를 함께 노출한다', () => {
