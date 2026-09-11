@@ -102,46 +102,43 @@ type CreatedAtPendingRange = [Dayjs | null, Dayjs | null] | null | undefined
 
 /**
  * pending 가입/등록 시기 → YYYY-MM-DD from/to.
- * 시작·종료 중 한쪽만 있으면 그날 하루로 미러 (조회 시 URL·API가 안 나가는 것 방지).
+ * 시작·종료 중 있는 쪽만 반환 (열린 구간; 미러하지 않음).
  */
 export function createdAtBoundsFromPendingRange(
   range: CreatedAtPendingRange
 ): { from?: string; to?: string } {
   const start = range?.[0] ?? null
   const end = range?.[1] ?? null
-  if (start == null && end == null) return {}
-  const fromDay = start ?? end
-  const toDay = end ?? start
-  return {
-    from: fromDay!.format('YYYY-MM-DD'),
-    to: toDay!.format('YYYY-MM-DD'),
-  }
+  const out: { from?: string; to?: string } = {}
+  if (start != null) out.from = start.format('YYYY-MM-DD')
+  if (end != null) out.to = end.format('YYYY-MM-DD')
+  return out
 }
 
-/** URL `createdAtFrom`/`createdAtTo` → API bounds (한쪽만 있으면 미러). */
+/** URL `createdAtFrom`/`createdAtTo` → API bounds (있는 쪽만). */
 export function createdAtBoundsFromUrlParams(
   from: string | undefined,
   to: string | undefined
 ): { from?: string; to?: string } {
   const fromKey = from?.trim() || undefined
   const toKey = to?.trim() || undefined
-  if (!fromKey && !toKey) return {}
-  return {
-    from: fromKey ?? toKey,
-    to: toKey ?? fromKey,
-  }
+  const out: { from?: string; to?: string } = {}
+  if (fromKey) out.from = fromKey
+  if (toKey) out.to = toKey
+  return out
 }
 
-/** URL → dateRange 피커 pending (한쪽만 있어도 `[day, day]`). */
+/** URL → dateRange 피커 pending (한쪽만 있어도 `[day, null]` / `[null, day]`). */
 export function createdAtRangeFromUrlParams(
   from: string | undefined,
   to: string | undefined
 ): [Dayjs | null, Dayjs | null] | null {
   const bounds = createdAtBoundsFromUrlParams(from, to)
-  if (!bounds.from || !bounds.to) return null
-  const start = dayjs(bounds.from)
-  const end = dayjs(bounds.to)
-  if (!start.isValid() || !end.isValid()) return null
+  if (!bounds.from && !bounds.to) return null
+  const start = bounds.from ? dayjs(bounds.from) : null
+  const end = bounds.to ? dayjs(bounds.to) : null
+  if (start && !start.isValid()) return null
+  if (end && !end.isValid()) return null
   return [start, end]
 }
 
@@ -375,13 +372,10 @@ export function applyUserListSearchToParams(
   }
 
   const createdAt = createdAtBoundsFromPendingRange(filters.createdAtRange)
-  if (createdAt.from && createdAt.to) {
-    nextParams.set('createdAtFrom', createdAt.from)
-    nextParams.set('createdAtTo', createdAt.to)
-  } else {
-    nextParams.delete('createdAtFrom')
-    nextParams.delete('createdAtTo')
-  }
+  if (createdAt.from) nextParams.set('createdAtFrom', createdAt.from)
+  else nextParams.delete('createdAtFrom')
+  if (createdAt.to) nextParams.set('createdAtTo', createdAt.to)
+  else nextParams.delete('createdAtTo')
 }
 
 const userListTanstackColumns: ColumnDef<UserListRow>[] = [
