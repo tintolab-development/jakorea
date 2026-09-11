@@ -25,6 +25,21 @@
   box-sizing: border-box;
 }
 
+.ja-grade-evaluation-modal__policy-banner {
+  width: min(920px, 100%);
+  margin: 0 auto 16px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid rgba(195, 47, 74, 0.35);
+  background: rgba(195, 47, 74, 0.06);
+  color: var(--color-red, #c32f4a);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
 .ja-grade-evaluation-modal__form-panel {
   width: 1400px;
   margin: 0 auto;

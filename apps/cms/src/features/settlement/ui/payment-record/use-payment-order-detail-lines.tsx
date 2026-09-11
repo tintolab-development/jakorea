@@ -12,7 +12,8 @@ import {
 } from '@/features/settlement-management/api/payment-orders/map-settlement-detail-to-calculation-statement'
 import { getPaymentOrdersDetailContextRemote } from '@/features/settlement-management/api/payment-orders/admin-payment-orders-service'
 import { fetchSettlementDetailRemote } from '@/features/settlement-management/api/settlement-api-client'
-import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
+import { getSettlementApiErrorMessage, isPaymentStatementStatusConflictError } from '@/features/settlement-management/api/get-settlement-api-error'
+import { canConfirmPaymentStatement } from '@/features/settlement-management/api/shared/settlement-status-mappers'
 import { useConfirmPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
@@ -118,6 +119,8 @@ function mapLineStatusToStatementStatus(
     case 'reapplication':
       return 'REAPPLICATION'
     case 'confirmed':
+      return 'CONFIRMED'
+    case 'awaiting_payment':
       return 'CONFIRMED'
     case 'correction':
       return 'CORRECTION_REQUESTED'
@@ -284,9 +287,15 @@ export function usePaymentOrderDetailLinesController(
           if (payload.status === 'confirmed') {
             return {
               ...row,
-              processingStatus: 'confirmed',
+              processingStatus: 'awaiting_payment',
+              statementStatus: 'CONFIRMED',
+              paymentStatus: 'WAITING_PAYMENT',
               lectureFeePaymentScheduledDate: payload.lectureFeePaymentScheduledDate,
               processingRejectionReason: undefined,
+              canConfirmPaymentStatement: false,
+              availableActions: (row.availableActions ?? []).filter(
+                action => action !== 'CONFIRM_PAYMENT_STATEMENT'
+              ),
             }
           }
           if (payload.status === 'application_rejected') {
@@ -385,6 +394,13 @@ export function usePaymentOrderDetailLinesController(
 
       if (paymentOrdersRemote) {
         const selected = rowsState.filter(r => selectedRowKeys.includes(r.id))
+        if (
+          selected.length === 0 ||
+          selected.some(row => !canConfirmPaymentStatement(row))
+        ) {
+          window.alert('확인할 수 없는 지급조서가 포함되어 있습니다. 목록을 새로고침해 주세요.')
+          return
+        }
         const statementIds = selected
           .map(r => r.statementId)
           .filter((id): id is number => id != null)
@@ -399,23 +415,35 @@ export function usePaymentOrderDetailLinesController(
             statementIds,
             lectureFeePaymentScheduledDate: iso,
           })
-          .then(() => {
+          .then(async () => {
             setRowsState(prev =>
               prev.map(row =>
                 selectedRowKeys.includes(row.id)
                   ? {
                       ...row,
-                      processingStatus: 'confirmed' as const,
+                      processingStatus: 'awaiting_payment' as const,
+                      statementStatus: 'CONFIRMED',
+                      paymentStatus: 'WAITING_PAYMENT',
                       lectureFeePaymentScheduledDate: iso,
+                      canConfirmPaymentStatement: false,
+                      availableActions: (row.availableActions ?? []).filter(
+                        action => action !== 'CONFIRM_PAYMENT_STATEMENT'
+                      ),
                     }
                   : row
               )
             )
             setBatchConfirmOpen(false)
             setSelectedRowKeys([])
+            await detailContextQuery?.refetch()
           })
-          .catch(error => {
+          .catch(async error => {
             window.alert(getSettlementApiErrorMessage(error, '지급조서 일괄 확인에 실패했습니다.'))
+            if (isPaymentStatementStatusConflictError(error)) {
+              setBatchConfirmOpen(false)
+              setSelectedRowKeys([])
+              await detailContextQuery?.refetch()
+            }
           })
         return
       }
@@ -425,8 +453,11 @@ export function usePaymentOrderDetailLinesController(
           selectedRowKeys.includes(row.id)
             ? {
                 ...row,
-                processingStatus: 'confirmed' as const,
+                processingStatus: 'awaiting_payment' as const,
+                statementStatus: 'CONFIRMED',
+                paymentStatus: 'WAITING_PAYMENT',
                 lectureFeePaymentScheduledDate: iso,
+                canConfirmPaymentStatement: false,
               }
             : row
         )
@@ -434,8 +465,22 @@ export function usePaymentOrderDetailLinesController(
       setBatchConfirmOpen(false)
       setSelectedRowKeys([])
     },
-    [selectedRowKeys, paymentOrdersRemote, rowsState, confirmMutation]
+    [selectedRowKeys, paymentOrdersRemote, rowsState, confirmMutation, detailContextQuery]
   )
+
+  const selectedConfirmableRows = useMemo(() => {
+    const selected = rowsState.filter(r => selectedRowKeys.includes(r.id))
+    return selected
+  }, [rowsState, selectedRowKeys])
+
+  const canBatchConfirm = useMemo(() => {
+    if (selectedConfirmableRows.length === 0) return false
+    return selectedConfirmableRows.every(row => canConfirmPaymentStatement(row))
+  }, [selectedConfirmableRows])
+
+  const isLineCheckboxDisabled = useCallback((row: PaymentOrderDetailLineRow) => {
+    return !canConfirmPaymentStatement(row)
+  }, [])
 
   const filteredRows = useMemo(
     () => filterDetailRows(rowsState, mode, applied, remoteServerFiltered && paymentOrdersRemote),
@@ -810,6 +855,8 @@ export function usePaymentOrderDetailLinesController(
     paymentStatementIssueBlocked,
     setPaymentStatementIssueBlocked,
     handleBatchConfirm,
+    canBatchConfirm,
+    isLineCheckboxDisabled,
     handlePaymentStatementIssue,
     closeIssuanceView,
     issuanceViewOpen,

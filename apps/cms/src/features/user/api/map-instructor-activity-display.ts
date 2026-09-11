@@ -43,7 +43,10 @@ export function toInstructorActivityTypeLabel(raw: string | undefined | null): s
 export function looksLikeInstructorActivityEnumCode(value: string | undefined | null): boolean {
   const trimmed = value?.trim()
   if (!trimmed) return false
-  const parts = trimmed.split(/\s*,\s*/).map(part => part.trim()).filter(Boolean)
+  const parts = trimmed
+    .split(/\s*,\s*/)
+    .map(part => part.trim())
+    .filter(Boolean)
   if (parts.length === 0) return false
   return parts.every(part => {
     if (/[가-힣]/.test(part)) return false
@@ -69,9 +72,7 @@ export function mapInstructorActivityTypesToLabels(
   return labels
 }
 
-export function toEmploymentStatusDisplayLabel(
-  raw: string | undefined | null
-): string | undefined {
+export function toEmploymentStatusDisplayLabel(raw: string | undefined | null): string | undefined {
   const trimmed = raw?.trim()
   if (!trimmed || isInstructorMaskedPlaceholder(trimmed)) return undefined
   const upper = trimmed.toUpperCase()
@@ -139,6 +140,9 @@ const FEE_GRADE_LEVEL_LABELS: Record<string, string> = {
   '1급': '1급 강사비',
   '2급': '2급 강사비',
   '3급': '3급 강사비',
+  GRADE_1: '1급 강사비',
+  GRADE_2: '2급 강사비',
+  GRADE_3: '3급 강사비',
 }
 
 /** BE wire `GRADE_1` · `1` · `1급` · `1급 강사비` → 표시 레벨 키 `1`|`2`|`3` */
@@ -174,30 +178,48 @@ export function toInstructorFeeGradeDisplayLabel(
   if (INSTRUCTOR_STATUS_CODES.has(upper)) return undefined
   if (/승인|반려|대기/.test(trimmed)) return undefined
 
-  const level = resolveInstructorFeeGradeLevelKey(trimmed)
-  if (level) return FEE_GRADE_LEVEL_LABELS[level]
+  if (upper in FEE_GRADE_LEVEL_LABELS) return FEE_GRADE_LEVEL_LABELS[upper]
 
+  const levelKey = trimmed.replace(/\s*강사비\s*$/u, '').trim()
+  if (levelKey in FEE_GRADE_LEVEL_LABELS) return FEE_GRADE_LEVEL_LABELS[levelKey]
   if (/^\d급\s*강사비$/.test(trimmed)) return trimmed
 
   return trimmed
 }
 
 /** CmsSelect value — wire(`1`/`GRADE_1`)·부분(`1급`)·라벨(`1급 강사비`)을 옵션 value와 맞춘다. */
-export function normalizeInstructorFeeGradeSelectValue(
-  raw: string | undefined | null
-): string {
+export function normalizeInstructorFeeGradeSelectValue(raw: string | undefined | null): string {
   return toInstructorFeeGradeDisplayLabel(raw) ?? ''
 }
 
 /** CMS 폼·표시 라벨 → BE `defaultFeeGrade` / `feeGrade` wire 값 (예: `2급 강사비` → `2`) */
-export function toInstructorFeeGradeApiValue(
-  raw: string | undefined | null
-): string | undefined {
+export function toInstructorFeeGradeApiValue(raw: string | undefined | null): string | undefined {
   const trimmed = raw?.trim()
   if (!trimmed) return undefined
 
-  const level = resolveInstructorFeeGradeLevelKey(trimmed)
-  if (level) return level
+  const fromApprovalCode = /^GRADE_([123])$/i.exec(trimmed)
+  if (fromApprovalCode) return fromApprovalCode[1]
+
+  const levelKey = trimmed.replace(/\s*강사비\s*$/u, '').trim()
+  if (/^[123]급$/.test(levelKey)) return levelKey.replace('급', '')
+
+  const fromLabel = /^([123])급\s*강사비$/.exec(trimmed)
+  if (fromLabel) return fromLabel[1]
 
   return trimmed
+}
+
+/**
+ * 강사 권한 승인 API `feeGrade` wire 값.
+ * OpenAPI/handoff: `GRADE_1` · `GRADE_2` · `GRADE_3` (UI `1급 강사비` 등 → 변환)
+ */
+export function toInstructorRoleApprovalFeeGradeApiValue(
+  raw: string | undefined | null
+): string | undefined {
+  const level = toInstructorFeeGradeApiValue(raw)
+  if (!level) return undefined
+  if (/^[123]$/.test(level)) return `GRADE_${level}`
+  const upper = level.toUpperCase()
+  if (/^GRADE_[123]$/.test(upper)) return upper
+  return undefined
 }

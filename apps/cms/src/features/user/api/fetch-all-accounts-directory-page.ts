@@ -34,8 +34,8 @@ function directoryExhausted(
 }
 
 /**
- * `GET /api/admin/members/all` — OpenAPI에 회원 유형(role) 필터가 없어
- * 개인·강사·학교(교사) 등은 accountType 후 목록 유형 열과 같은 기준으로 클라이언트 매칭한다.
+ * `GET /api/admin/members/all` — 가입일은 서버 필터.
+ * 개인·강사·학교(교사) 등 복합 유형은 accountType 후 목록 유형 열과 같은 기준으로 클라이언트 매칭한다.
  */
 export async function fetchAllAccountsDirectoryPage(
   params: {
@@ -52,6 +52,8 @@ export async function fetchAllAccountsDirectoryPage(
   const baseParams: FetchAllCmsMembersAndAdminsParams = {
     keyword: params.search?.trim() || undefined,
     accountType: params.accountType,
+    createdAtFrom: params.createdAtFrom || undefined,
+    createdAtTo: params.createdAtTo || undefined,
   }
 
   const needsClientRoleScan = roleFilter !== 'ALL' && roleFilter !== 'ADMIN'

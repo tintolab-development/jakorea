@@ -243,6 +243,7 @@ export function UserDetailFullpageBasicTabContent({
         if (!userId) continue
         await deleteUser(userId, 'CMS 관리자 회원 탈퇴', {
           memberId: row.teacherMemberId,
+          confirmationText: WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
         })
       }
       if (user.memberId != null) {

@@ -8,7 +8,8 @@
 
 export type ListMemberProgramHistoryParams = {
 /**
- * 조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ * 이력 유형 필터. `COURSE` | `VOLUNTEER` | `ALL`(또는 생략=전체).
+ * 봉사만: `VOLUNTEER`. `role` query는 없음(보내도 무시).
  */
 historyType?: string;
 /**

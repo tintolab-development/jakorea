@@ -1,5 +1,4 @@
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
-import type { GetUsersPageParams } from '@/entities/user/api/user-service'
 
 export function isMembersRemoteEnabled(): boolean {
   return isRealApiModuleEnabled('members')
@@ -39,18 +38,4 @@ export function isMemberInstructorSettlementsRemoteEnabled(): boolean {
     isMembersRemoteEnabled() &&
     (isRealApiModuleEnabled('paymentOrders') || isRealApiModuleEnabled('accountPayments'))
   )
-}
-
-/**
- * remote에서 아직 서버 미지원인 목록 필터 라벨.
- * 회원/학교 목록 필터는 서버 전송으로 전환됨. 관리자 목록의 가입일만 미지원.
- */
-export function getUnsupportedMemberListFilterLabels(
-  filters: GetUsersPageParams | undefined
-): string[] {
-  if (!isMembersRemoteEnabled() || !filters) return []
-  if (filters.role === 'ADMIN' && (filters.createdAtFrom || filters.createdAtTo)) {
-    return ['가입일']
-  }
-  return []
 }

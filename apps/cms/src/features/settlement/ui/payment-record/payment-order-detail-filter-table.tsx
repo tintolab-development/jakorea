@@ -66,6 +66,8 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
     paymentStatementIssueBlocked,
     setPaymentStatementIssueBlocked,
     handleBatchConfirm,
+    canBatchConfirm,
+    isLineCheckboxDisabled,
     handlePaymentStatementIssue,
     closeIssuanceView,
     issuanceViewOpen,
@@ -123,9 +125,9 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
               variant="secondary"
               size="large"
               width={160}
-              disabled={selectedRowKeys.length === 0}
+              disabled={!canBatchConfirm}
               onClick={() => {
-                if (selectedRowKeys.length === 0) return
+                if (!canBatchConfirm) return
                 setBatchConfirmOpen(true)
               }}
             >
@@ -154,6 +156,9 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
             columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             selectedRowKeys,
             onChange: keys => setSelectedRowKeys(keys),
+            getCheckboxProps: record => ({
+              disabled: isLineCheckboxDisabled(record),
+            }),
           }}
         />
       </FilterTableLayout>

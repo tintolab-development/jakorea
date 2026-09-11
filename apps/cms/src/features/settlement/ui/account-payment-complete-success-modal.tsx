@@ -54,7 +54,10 @@ export function AccountPaymentCompleteSuccessModal({
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large" style={{ minWidth: 180 }}
+            size="large"
+            width="auto"
+            className="cms-button--footer-auto cms-button--no-label-ellipsis"
+            style={{ minWidth: 180 }}
             icon={<DownloadOutlined />}
             onClick={onIssueBulkTransfer}
           >

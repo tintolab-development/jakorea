@@ -90,6 +90,8 @@ interface UserStore {
       organizationId?: number
       role?: UserRole
       email?: string
+      reason?: string
+      confirmationText?: string
     }
   ) => Promise<void>
   changeUserRole: (
@@ -295,7 +297,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
   deleteUser: async (userId, options) => {
     set({ loading: true, error: null })
     try {
-      await deleteUser(userId, 'CMS 관리자 회원 삭제', options)
+      await deleteUser(userId, options?.reason ?? 'CMS 관리자 회원 삭제', options)
       const state = get()
 
       // usersById에서 제거

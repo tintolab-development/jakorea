@@ -178,6 +178,15 @@
   border: 1px solid rgba(70, 70, 70, 0.06);
 }
 
+.app-status-badge.textbook-status-badge--awaiting_payment.textbook-status-badge--payment-order-line {
+  color: var(--color-payment-order-line-awaiting-payment-text, #f07917);
+  background: var(
+    --color-payment-order-line-awaiting-payment-bg,
+    rgba(240, 121, 23, 0.06)
+  );
+  border: 1px solid rgba(70, 70, 70, 0.06);
+}
+
 .app-status-badge.textbook-status-badge--correction.textbook-status-badge--payment-order-line {
   color: var(--color-payment-order-line-correction-text, #c32f4a);
   background: var(--color-payment-order-line-correction-bg, #f9eaed);

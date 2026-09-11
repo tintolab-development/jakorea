@@ -15,6 +15,7 @@ export const LINE_STATUS_OPTIONS: readonly PaymentOrderAdminLineProcessingStatus
   'pending',
   'reapplication',
   'confirmed',
+  'awaiting_payment',
   'correction',
   'application_rejected',
 ]
@@ -66,7 +67,7 @@ export function deriveAggregateFromLines(
   if (statuses.some(s => s === 'correction')) return 'correction'
 
   if (statuses.every(s => s === 'application_rejected')) return 'application_rejected'
-  if (statuses.every(s => s === 'confirmed')) return 'confirmed'
+  if (statuses.every(s => s === 'confirmed' || s === 'awaiting_payment')) return 'confirmed'
   if (statuses.every(s => s === 'pending' || s === 'reapplication')) return 'pending'
   return 'partial'
 }

@@ -36,7 +36,41 @@ describe('getSettlementApiErrorMessage', () => {
     }
 
     expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
-      '지급조서 확인 완료 후 계좌 지급을 처리할 수 있습니다.'
+      '이미 확인된 지급조서가 포함되어 있습니다. 목록을 새로고침한 뒤 다시 확인해 주세요.'
     )
+  })
+
+  it('400 SCHEDULED_PAYMENT_DATE_REQUIRED → FE fallback', () => {
+    const error = {
+      response: {
+        status: 400,
+        data: {
+          error: { code: 'SCHEDULED_PAYMENT_DATE_REQUIRED', field: 'scheduledPaymentDate' },
+        },
+      },
+    }
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toContain('지급 예정일')
+  })
+
+  it('404 PAYMENT_STATEMENT_NOT_FOUND → FE fallback', () => {
+    const error = {
+      response: {
+        status: 404,
+        data: {
+          error: { code: 'PAYMENT_STATEMENT_NOT_FOUND', details: { statementId: 169754 } },
+        },
+      },
+    }
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toContain('찾을 수 없습니다')
+  })
+
+  it('400 PAYMENT_STATEMENT_IDS_REQUIRED → FE fallback', () => {
+    const error = {
+      response: {
+        status: 400,
+        data: { error: { code: 'PAYMENT_STATEMENT_IDS_REQUIRED', field: 'statementIds' } },
+      },
+    }
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toContain('선택')
   })
 })

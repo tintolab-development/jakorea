@@ -37,6 +37,8 @@ import type { Program } from '@/types/domain'
 import type { SchoolAffiliatedTeacherRow } from '@/types/user'
 
 const MEMBER_DETAIL_LIST_SIZE = 50
+/** program-history size max clamp 100 (BE 2026-09-11). default 20과 동일 계열 */
+const MEMBER_PROGRAM_HISTORY_LIST_SIZE = 50
 /** history LNB 탭 전환 시 동일 memberId 재GET 방지 (전역 30s와 동일) */
 const MEMBER_DETAIL_SUBRESOURCE_STALE_MS = 30_000
 
@@ -72,9 +74,13 @@ export function memberProgramHistoryQueryOptions(memberId: number, userId: strin
       volunteerHistories: UserHistory[]
       enrollmentFromHistory: Application[]
     }> => {
+      // BE 2026-09-11: BAD_REQUEST 원인은 SQL `.formatted` 버그(LIKE '%ASSIGNMENT%').
+      // historyType=VOLUNTEER|COURSE|ALL 허용·role 무시·size max 100(clamp).
+      // 이 쿼리는 봉사 탭 + enrollmentFromHistory를 함께 쓰므로 historyType 없이 전체 조회 후
+      // FE에서 participantType으로 분리(mapMemberProgramHistory*).
       const res = await fetchMemberProgramHistoryRemote(memberId, {
         page: 0,
-        size: MEMBER_DETAIL_LIST_SIZE,
+        size: MEMBER_PROGRAM_HISTORY_LIST_SIZE,
       })
       const items = res.items ?? []
       return {

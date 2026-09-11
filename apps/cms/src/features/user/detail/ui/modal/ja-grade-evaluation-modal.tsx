@@ -15,6 +15,7 @@ import {
 } from '@/features/user/api/members-api-client'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
+import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { buildJaGradeEvaluationDraft } from '@/features/user/detail/lib/ja-grade-evaluation-draft'
 import {
   applyJaEvaluationResponseToDraft,
@@ -31,7 +32,10 @@ import {
   resolveJaGradeEvaluationStorageKey,
   saveJaGradeEvaluationRecord,
 } from '@/features/user/detail/lib/ja-grade-evaluation-store'
-import { JA_GRADE_SCALE_QUESTION_IDS } from '@/features/user/detail/lib/ja-grade-evaluation-constants'
+import {
+  JA_GRADE_POLICY_NOT_READY_MESSAGE,
+  JA_GRADE_SCALE_QUESTION_IDS,
+} from '@/features/user/detail/lib/ja-grade-evaluation-constants'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { handleError } from '@/shared/utils/error-handler'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -77,16 +81,25 @@ export function JaGradeEvaluationModal({
   const { showAlert } = useCmsAlert()
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  /**
+   * remote GET SSOT. `false`면 평가 완료 CTA 비활성.
+   * GET 실패·미조회는 `null`(POST 409 폴백 허용). localOnly는 항상 ready.
+   */
+  const [policyReady, setPolicyReady] = useState<boolean | null>(null)
 
   const storageKey = useMemo(
     () => resolveJaGradeEvaluationStorageKey(instructorMemberId, instructorUserId),
     [instructorMemberId, instructorUserId]
   )
 
+  const usesRemotePolicyGate =
+    persistMode === 'remote' && isMembersRemoteEnabled()
+
   useEffect(() => {
     if (!open) {
       setDraft(null)
       setSubmitting(false)
+      setPolicyReady(null)
       return
     }
     if (storageKey == null) {
@@ -97,9 +110,10 @@ export function JaGradeEvaluationModal({
     let cancelled = false
     const stored = restoreStoredDraft ? loadJaGradeEvaluationRecord(storageKey) : null
     setDraft(buildJaGradeEvaluationDraft(stored))
+    setPolicyReady(usesRemotePolicyGate ? null : true)
 
     const hydrateFromServer = async () => {
-      if (persistMode !== 'remote' || !isMembersRemoteEnabled()) return
+      if (!usesRemotePolicyGate) return
       let remoteMemberId = instructorMemberId ?? null
       if (remoteMemberId == null && instructorUserId) {
         try {
@@ -112,9 +126,10 @@ export function JaGradeEvaluationModal({
       try {
         const current = await fetchInstructorJaEvaluationRemote(remoteMemberId)
         if (cancelled) return
+        setPolicyReady(current.policyReady !== false)
         setDraft(applyJaEvaluationResponseToDraft(buildJaGradeEvaluationDraft(stored), current))
       } catch {
-        /* GET 실패 시 localStorage/빈 초안 유지 */
+        /* GET 실패 시 localStorage/빈 초안 유지 · policyReady는 null(409 폴백) */
       }
     }
 
@@ -122,7 +137,15 @@ export function JaGradeEvaluationModal({
     return () => {
       cancelled = true
     }
-  }, [instructorMemberId, instructorUserId, open, persistMode, restoreStoredDraft, storageKey])
+  }, [
+    instructorMemberId,
+    instructorUserId,
+    open,
+    persistMode,
+    restoreStoredDraft,
+    storageKey,
+    usesRemotePolicyGate,
+  ])
 
   const updateParagraph = useCallback(
     (id: string, updater: (paragraph: WritingFormParagraph) => WritingFormParagraph) => {
@@ -144,8 +167,18 @@ export function JaGradeEvaluationModal({
     []
   )
 
+  const policyBlocksSubmit = usesRemotePolicyGate && policyReady === false
+
   const handleSubmit = useCallback(async () => {
     if (draft == null || storageKey == null || submitting) return
+
+    if (policyBlocksSubmit) {
+      showAlert({
+        title: '안내',
+        content: JA_GRADE_POLICY_NOT_READY_MESSAGE,
+      })
+      return
+    }
 
     const validation = validateJaGradeEvaluationDraft(draft)
     if (!validation.valid) {
@@ -188,8 +221,12 @@ export function JaGradeEvaluationModal({
           throw new Error('강사 memberId가 없어 평가 등급을 저장할 수 없습니다.')
         }
         const response = await submitInstructorJaEvaluationRemote(remoteMemberId, jaEvaluation)
-        persistedGrade = resolveJaEvaluationDisplayGrade(response, result.grade)
-        persistedTotal = response.totalScore ?? result.totalScore
+        const serverGrade = resolveJaEvaluationDisplayGrade(response)
+        if (serverGrade == null || response.totalScore == null) {
+          throw new Error('서버 평가 결과(등급·총점)가 없습니다.')
+        }
+        persistedGrade = serverGrade
+        persistedTotal = response.totalScore
       }
 
       saveJaGradeEvaluationRecord({
@@ -214,8 +251,10 @@ export function JaGradeEvaluationModal({
       })
       onClose()
     } catch (error) {
-      const info = handleError(error, { defaultMessage: 'JA 등급 평가 저장에 실패했습니다.' })
-      showAlert({ title: '안내', content: info.detail })
+      showAlert({
+        title: '안내',
+        content: getMemberApiErrorMessage(error, 'JA 등급 평가 저장에 실패했습니다.'),
+      })
     } finally {
       setSubmitting(false)
     }
@@ -227,6 +266,7 @@ export function JaGradeEvaluationModal({
     lateReportCount,
     onClose,
     onComplete,
+    policyBlocksSubmit,
     scheduleChangeCount,
     showAlert,
     storageKey,
@@ -262,6 +302,14 @@ export function JaGradeEvaluationModal({
 
         <div className="full-page-modal__body">
           <div className="ja-grade-evaluation-modal__workspace">
+            {policyBlocksSubmit ? (
+              <div
+                className="ja-grade-evaluation-modal__policy-banner"
+                role="status"
+              >
+                {JA_GRADE_POLICY_NOT_READY_MESSAGE}
+              </div>
+            ) : null}
             {draft != null ? (
               <div className="ja-grade-evaluation-modal__form-panel">
                 <FormEditorLeftPanel
@@ -290,7 +338,12 @@ export function JaGradeEvaluationModal({
                 width="100%"
                 className="ja-grade-evaluation-modal__submit"
                 adminAction="write"
-                disabled={draft == null || submitting || storageKey == null}
+                disabled={
+                  draft == null ||
+                  submitting ||
+                  storageKey == null ||
+                  policyBlocksSubmit
+                }
                 loading={submitting}
                 onClick={() => {
                   void handleSubmit()

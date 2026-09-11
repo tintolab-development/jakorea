@@ -33,9 +33,9 @@ function presentText(value: string | undefined): string {
   return trimmed
 }
 
-/** 지급조서 확인 완료·계좌 지급 완료(라인 `rejected` 라벨) */
+/** 지급조서 확인 완료·지급 대기·계좌 지급 완료(라인 `rejected` 라벨) */
 export const PAYMENT_ORDER_LINE_STATUSES_ELIGIBLE_FOR_PAYMENT_STATEMENT_ISSUE: readonly PaymentOrderAdminLineProcessingStatus[] =
-  ['confirmed', 'rejected']
+  ['confirmed', 'awaiting_payment', 'rejected']
 
 export function isPaymentOrderLineEligibleForPaymentStatementIssue(
   status: PaymentOrderAdminLineProcessingStatus

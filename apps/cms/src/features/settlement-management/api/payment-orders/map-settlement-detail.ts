@@ -11,7 +11,8 @@ import type {
   SettlementListItemResponse,
 } from '@/shared/api/generated/settlement/schemas'
 import {
-  mapStatementStatusToLineStatus,
+  canConfirmPaymentStatement,
+  mapSettlementAxesToLineStatus,
 } from '@/features/settlement-management/api/shared/settlement-status-mappers'
 import {
   pickBusinessPeriodFromListItems,
@@ -49,6 +50,7 @@ function toProgramDetailInstructorRow(
   statementMap: Map<number, number>
 ): PaymentOrderAdminProgramDetailInstructorRow {
   const settlementId = item.settlementId
+  const availableActions = item.availableActions
   return {
     id: settlementId != null ? String(settlementId) : `line-${index}`,
     no: index + 1,
@@ -58,9 +60,16 @@ function toProgramDetailInstructorRow(
     institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName),
     lectureDate: item.lectureDate ?? '',
     sessionOrdinal: item.sessionOrdinal ?? 0,
-    processingStatus: mapStatementStatusToLineStatus(item.statementStatus),
+    processingStatus: mapSettlementAxesToLineStatus(item.statementStatus, item.paymentStatus),
     estimatedAmount: item.netPaymentAmount ?? 0,
     lectureFeePaymentScheduledDate: item.expectedTransferDate,
+    statementStatus: item.statementStatus,
+    paymentStatus: item.paymentStatus,
+    availableActions,
+    canConfirmPaymentStatement: canConfirmPaymentStatement({
+      availableActions,
+      statementStatus: item.statementStatus,
+    }),
   }
 }
 
@@ -70,6 +79,7 @@ function toInstructorDetailProgramRow(
   statementMap: Map<number, number>
 ): PaymentOrderAdminInstructorDetailProgramRow {
   const settlementId = item.settlementId
+  const availableActions = item.availableActions
   return {
     id: settlementId != null ? String(settlementId) : `line-${index}`,
     no: index + 1,
@@ -79,9 +89,16 @@ function toInstructorDetailProgramRow(
     institutionName: formatPaymentOrderInstitutionDisplay(item.institutionName),
     lectureDate: item.lectureDate ?? '',
     sessionOrdinal: item.sessionOrdinal ?? 0,
-    processingStatus: mapStatementStatusToLineStatus(item.statementStatus),
+    processingStatus: mapSettlementAxesToLineStatus(item.statementStatus, item.paymentStatus),
     estimatedAmount: item.netPaymentAmount ?? 0,
     lectureFeePaymentScheduledDate: item.expectedTransferDate,
+    statementStatus: item.statementStatus,
+    paymentStatus: item.paymentStatus,
+    availableActions,
+    canConfirmPaymentStatement: canConfirmPaymentStatement({
+      availableActions,
+      statementStatus: item.statementStatus,
+    }),
   }
 }
 
