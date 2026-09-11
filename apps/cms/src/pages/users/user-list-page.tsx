@@ -65,7 +65,7 @@ import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-p
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { handleError } from '@/shared/utils/error-handler'
-import { DeleteGuideModal, showDeleteCompletedAlert } from '@/shared/ui'
+import { DeleteGuideModal, showDeleteCompletedAlert, useCmsAlert } from '@/shared/ui'
 import '@/shared/ui/detail-fullpage-modal.css'
 import {
   memberListKindToBasicInfoEntrySource,
@@ -160,6 +160,7 @@ function displayNameForUserDelete(kind: MemberListKind, u: UserListRow): string 
 }
 
 export function UserListPage() {
+  const { showAlert } = useCmsAlert()
   const { params, setParams } = useQueryParams<UserListQueryParams>()
   const [searchParams, setSearchParams] = useSearchParams()
   const queryClient = useQueryClient()
@@ -1234,7 +1235,13 @@ export function UserListPage() {
               variant="delete"
               onClick={() => {
                 const toDelete = listUsers.filter(u => selectedRowKeys.includes(u.id))
-                if (toDelete.length === 0) return
+                if (toDelete.length === 0) {
+                  showAlert({
+                    title: '항목 선택 안내',
+                    content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+                  })
+                  return
+                }
                 if (resolvedMemberListKind === 'institutions') {
                   const blocked = toDelete.filter(institutionHasRegisteredTeachers)
                   if (blocked.length > 0) {
@@ -1252,7 +1259,6 @@ export function UserListPage() {
                 }
                 setDeleteModalOpen(true)
               }}
-              disabled={selectedRowKeys.length === 0}
             >
               {resolvedMemberListKind === 'institutions'
                 ? '학교 삭제'

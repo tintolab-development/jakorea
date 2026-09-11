@@ -43,7 +43,9 @@ import {
   buildDeleteCompletedMessageSingle,
   buildDeleteCompletedTitle,
   buildRegisterCompletedMessage,
-  buildRegisterCompletedTitle } from '@/shared/ui'
+  buildRegisterCompletedTitle,
+  useCmsAlert,
+} from '@/shared/ui'
 import { SponsorDeleteBlockedModal } from '@/features/sponsor/ui/modal/sponsor-delete-blocked-modal'
 import { SponsorRegisterModal } from '@/features/sponsor/ui/modal/sponsor-register-modal'
 import { SponsorDetailFullPageModal } from '@/features/sponsor/ui/sponsor-detail-fullpage-modal'
@@ -70,6 +72,7 @@ function formatBeneficiaryCount(count: number): string {
 export default function SponsorPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
+  const { showAlert } = useCmsAlert()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -184,9 +187,16 @@ export default function SponsorPage() {
     getDisplayName: sponsor => sponsor.name ?? '' })
 
   const handleBulkDelete = useCallback(() => {
-    if (!canWrite || selectedRowKeys.length === 0) return
+    if (!canWrite) return
+    if (selectedRowKeys.length === 0) {
+      showAlert({
+        title: '항목 선택 안내',
+        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+      })
+      return
+    }
     setBulkSponsorDeleteModalOpen(true)
-  }, [canWrite, selectedRowKeys.length])
+  }, [canWrite, selectedRowKeys.length, showAlert])
 
   const handleCancelBulkSponsorDelete = useCallback(() => {
     setBulkSponsorDeleteModalOpen(false)
@@ -395,7 +405,6 @@ export default function SponsorPage() {
             <CmsButton
               variant="delete"
               onClick={handleBulkDelete}
-              disabled={selectedRowKeys.length === 0}
             >
               후원사 삭제
             </CmsButton>

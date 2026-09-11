@@ -9,7 +9,7 @@ import {
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
 import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { CmsButton, ContentModal, DeleteGuideModal } from '@/shared/ui'
+import { CmsButton, ContentModal, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useTextbookListQuery } from '@/features/textbook/hooks/use-textbook-list-query'
@@ -65,6 +65,7 @@ const INITIAL_FILTERS: TextbookFilters = {
 }
 
 export default function TextbookPage() {
+  const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
   const tbUseParam = searchParams.get(TB_USE_PARAM)
   const initialUseStatus = parseTextbookUseStatus(tbUseParam)
@@ -239,9 +240,15 @@ export default function TextbookPage() {
   }, [pendingFilters, setSearchParams])
 
   const handleDeleteSelected = useCallback(() => {
-    if (selectedRowKeys.length === 0) return
+    if (selectedRowKeys.length === 0) {
+      showAlert({
+        title: '항목 선택 안내',
+        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+      })
+      return
+    }
     setDeleteConfirmOpen(true)
-  }, [selectedRowKeys.length])
+  }, [selectedRowKeys.length, showAlert])
 
   const handleConfirmDeleteSelected = useCallback(async () => {
     const selectedIds = new Set(selectedRowKeys.map(key => String(key)))
@@ -513,7 +520,6 @@ export default function TextbookPage() {
             <CmsButton
               variant="delete"
               onClick={handleDeleteSelected}
-              disabled={selectedRowKeys.length === 0}
             >
               교재 삭제
             </CmsButton>

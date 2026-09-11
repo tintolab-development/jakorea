@@ -23,7 +23,7 @@ import { useTablePage } from '@/shared/components/table-system/model/use-table-p
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { ActionResultModal, CmsButton } from '@/shared/ui'
+import { ActionResultModal, CmsButton, useCmsAlert } from '@/shared/ui'
 import { AdminInquiryDetailModal } from '@/features/posts/ui/admin-inquiry-detail-modal'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import { InquiryCategoryManagementModal } from '@/features/posts/ui/inquiry-category-management/inquiry-category-management-modal'
@@ -63,6 +63,7 @@ const INQUIRY_LIST_TABLE_SCROLL_X =
 export function AdminInquiryPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
+  const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const listQuery = useInquiryListQuery(searchParams, true)
@@ -138,9 +139,16 @@ export function AdminInquiryPage() {
   }, [])
 
   const handleBulkDelete = useCallback(() => {
-    if (!canWrite || selectedRowKeys.length === 0) return
+    if (!canWrite) return
+    if (selectedRowKeys.length === 0) {
+      showAlert({
+        title: '항목 선택 안내',
+        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+      })
+      return
+    }
     setBulkDeleteConfirmOpen(true)
-  }, [canWrite, selectedRowKeys.length])
+  }, [canWrite, selectedRowKeys.length, showAlert])
 
   const handleConfirmBulkDelete = useCallback(async () => {
     const ids = selectedRowKeys.map(k => String(k))
@@ -391,7 +399,6 @@ export function AdminInquiryPage() {
             <CmsButton
               variant="delete"
               onClick={handleBulkDelete}
-              disabled={selectedRowKeys.length === 0}
             >
               문의 삭제
             </CmsButton>

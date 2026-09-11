@@ -39,6 +39,7 @@ import {
   ContentModal,
   DeleteGuideModal,
   cmsAlertModal,
+  useCmsAlert,
 } from '@/shared/ui'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import '@/pages/programs/program-list-page.css'
@@ -74,6 +75,7 @@ function coerceRadioBoolean(raw: unknown): boolean {
 
 export default function DetailedProgramPage() {
   const canWrite = canPerformWriteAction(useAuthStore(s => s.user))
+  const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const dpUseParam = searchParams.get('dp_use')
@@ -183,7 +185,14 @@ export default function DetailedProgramPage() {
   }, [deleteMutation, exitEditMode, rows, stagedDeleteIds, updateMutation])
 
   const handleBulkDelete = useCallback(() => {
-    if (!canWrite || selectedRowKeys.length === 0) return
+    if (!canWrite) return
+    if (selectedRowKeys.length === 0) {
+      showAlert({
+        title: '항목 선택 안내',
+        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+      })
+      return
+    }
 
     const selectedIds = selectedRowKeys.map(String)
     const selectedRows = rows.filter(r => selectedIds.includes(r.id))
@@ -212,7 +221,7 @@ export default function DetailedProgramPage() {
     viewDeletePendingIdsRef.current = selectedRows.map(r => r.id)
     setViewDeleteModalLines(baseLines)
     setViewDeleteModalOpen(true)
-  }, [canWrite, isEditMode, rows, selectedRowKeys])
+  }, [canWrite, isEditMode, rows, selectedRowKeys, showAlert])
 
   const handleAddClick = useCallback(() => {
     if (!canWrite) return
@@ -362,7 +371,6 @@ export default function DetailedProgramPage() {
             <CmsButton
               variant="delete"
               onClick={handleBulkDelete}
-              disabled={selectedRowKeys.length === 0}
             >
               항목 삭제
             </CmsButton>
