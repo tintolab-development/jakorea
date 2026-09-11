@@ -129,6 +129,8 @@ export function useSignUp() {
   const [schoolName, setSchoolName] = useState('')
   const [schoolAddress, setSchoolAddress] = useState('')
   const [schoolNeisCode, setSchoolNeisCode] = useState<string | null>(null)
+  const [schoolEducationOfficeCode, setSchoolEducationOfficeCode] = useState<string | null>(null)
+  const [schoolSource, setSchoolSource] = useState<'neis' | 'careerNet' | null>(null)
   const [schoolOrganizationId, setSchoolOrganizationId] = useState<number | null>(null)
   const [grade, setGrade] = useState('')
   const [employmentStatus, setEmploymentStatus] = useState<EmploymentStatus | null>('employed')
@@ -497,6 +499,8 @@ export function useSignUp() {
     setSchoolName(value)
     setSchoolAddress('')
     setSchoolNeisCode(null)
+    setSchoolEducationOfficeCode(null)
+    setSchoolSource(null)
     setSchoolOrganizationId(null)
   }
 
@@ -504,6 +508,8 @@ export function useSignUp() {
     setSchoolName(school.name)
     setSchoolAddress(school.address?.trim() ?? '')
     setSchoolNeisCode(school.neisCode?.trim() || null)
+    setSchoolEducationOfficeCode(school.educationOfficeCode?.trim() || null)
+    setSchoolSource(school.source ?? (school.neisCode ? 'neis' : null))
     setSchoolOrganizationId(school.organizationId ?? null)
   }
 
@@ -596,7 +602,9 @@ export function useSignUp() {
       schoolName,
       schoolOrganizationId,
       schoolNeisCode,
+      schoolEducationOfficeCode,
       schoolAddress,
+      schoolSource: schoolSource ?? undefined,
       grade,
       employmentStatus,
       address,

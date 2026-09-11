@@ -50,6 +50,8 @@ export type HomepageMeResponse = {
 export type PortalSchoolSelectionRequest = {
   schoolOrganizationId?: number
   provider?: string
+  /** NEIS `ATPT_OFCDC_SC_CODE` */
+  educationOfficeCode?: string
   externalSchoolCode?: string
   name?: string
   schoolLevel?: string
