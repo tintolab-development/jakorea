@@ -4,4 +4,5 @@ export {
   SignUpIdentityMockNicePage,
   SignUpGuardianIdentityMockNicePage,
   FindPasswordIdentityMockNicePage,
+  FindEmailIdentityMockNicePage,
 } from './identity-mock'

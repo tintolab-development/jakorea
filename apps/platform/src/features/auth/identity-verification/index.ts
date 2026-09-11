@@ -2,6 +2,7 @@ export {
   signupIdentityVerificationClient,
   guardianIdentityVerificationClient,
   findPasswordIdentityVerificationClient,
+  findEmailIdentityVerificationClient,
   adminProvisionedIdentityVerificationClient,
 } from './api'
 export {
@@ -16,6 +17,7 @@ export {
   useSignupIdentityVerification,
   useGuardianIdentityVerification,
   useFindPasswordIdentityVerification,
+  useFindEmailIdentityVerification,
   useAdminProvisionedIdentityVerification,
   useSettingsPhoneIdentityVerification,
 } from './hooks'

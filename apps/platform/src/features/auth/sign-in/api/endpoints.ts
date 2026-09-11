@@ -6,6 +6,7 @@ export const portalAuthPaths = {
   logout: () => '/api/portal/auth/logout',
   me: () => '/api/portal/auth/me',
   emailCheck: () => '/api/portal/auth/email/check',
+  emailRecoveryLookup: () => '/api/portal/auth/email-recovery/lookup',
   passwordChange: () => '/api/portal/auth/password/change',
   passwordResetConfirm: () => '/api/portal/auth/password-reset/confirm',
   adminProvisionedProfile: () => '/api/portal/auth/admin-provisioned/profile',

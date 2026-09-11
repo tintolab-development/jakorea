@@ -61,3 +61,7 @@ export function SignUpGuardianIdentityMockNicePage() {
 export function FindPasswordIdentityMockNicePage() {
   return <IdentityMockNicePage callbackPath="/auth/find-password/identity/callback" />
 }
+
+export function FindEmailIdentityMockNicePage() {
+  return <IdentityMockNicePage callbackPath="/auth/find-email/identity/callback" />
+}
