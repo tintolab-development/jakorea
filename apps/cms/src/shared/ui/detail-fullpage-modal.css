@@ -293,6 +293,14 @@
   flex-shrink: 0;
 }
 
+/* 우측 상단 액션 — large(44px) 통일 (contentExtra · 프로그램 헤더 액션) */
+.detail-fullpage-modal__content-actions .cms-button.ant-btn,
+.detail-fullpage-modal .program-detail-fullpage-modal__header-actions .cms-button.ant-btn {
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+}
+
 /* LNB 없을 때 본문을 헤더 타이틀과 동일 좌측 기준선(60px)에 맞춤 */
 .detail-fullpage-modal--no-sidebar .detail-fullpage-modal__content {
   padding-left: 60px;

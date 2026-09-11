@@ -18,5 +18,5 @@
 .participating-volunteer-application-info.general-volunteer-applicant-detail__body {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }

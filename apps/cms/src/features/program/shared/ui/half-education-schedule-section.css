@@ -1,7 +1,7 @@
 .half-education-schedule-section {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }
 
 .half-education-schedule__subheading {
