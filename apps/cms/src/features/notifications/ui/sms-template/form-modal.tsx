@@ -150,17 +150,27 @@ export function FormModal({
       const label = profile.displayName.trim() || phone
       return { label, value: phone }
     })
-    if (form.senderPhone && !fromApi.some(option => option.value === form.senderPhone)) {
+    // edit: harvest에 없어도 표시용 orphan 유지. create: orphan 넣지 않음 (BE NOT_HARVESTED 유도)
+    if (
+      mode === 'edit' &&
+      form.senderPhone &&
+      !fromApi.some(option => option.value === form.senderPhone)
+    ) {
       return [{ label: form.senderPhone, value: form.senderPhone }, ...fromApi]
     }
     return fromApi
-  }, [form.senderPhone, senderProfilesQuery.data])
+  }, [form.senderPhone, mode, senderProfilesQuery.data])
+
+  const harvestedSenderKeys = useMemo(
+    () => (senderProfilesQuery.data ?? []).map(profile => profile.senderKey.trim()).filter(Boolean),
+    [senderProfilesQuery.data]
+  )
 
   const senderListEmpty =
     remote &&
     !senderProfilesQuery.isFetching &&
     !senderProfilesQuery.isLoading &&
-    (senderProfilesQuery.data?.length ?? 0) === 0 &&
+    harvestedSenderKeys.length === 0 &&
     !form.senderPhone
 
   useEffect(() => {
@@ -169,7 +179,9 @@ export function FormModal({
   }, [open, mode])
 
   function handleSubmit() {
-    const error = form.validateRequired()
+    const error = form.validateRequired(
+      remote && harvestedSenderKeys.length > 0 ? { harvestedSenderKeys } : undefined
+    )
     if (error) {
       showAlert({ title: '필수 입력 안내', content: error })
       return
