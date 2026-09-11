@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import type { MouseEvent } from 'react'
+import type { CSSProperties, MouseEvent } from 'react'
 import { Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
@@ -8,6 +8,11 @@ import { getDataManagementApiErrorMessage } from '@/features/data-management/api
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useSponsorListQuery } from '@/features/sponsor/hooks/use-sponsor-list-query'
 import { useSponsorMutations } from '@/features/sponsor/hooks/use-sponsor-mutations'
+import {
+  donationAmountColumnWidth,
+  formatDonationAmount,
+  sponsorListTableMinWidth,
+} from '@/features/sponsor/lib/donation-amount-column-width'
 import type { SponsorSponsorshipStatus } from '@/types/domain'
 import { sponsorManagementFilterFields } from '@/features/sponsor/model/sponsor-management-filter-fields'
 import { sponsorManagementTablePageConfig } from '@/features/sponsor/model/sponsor-management-table.config'
@@ -26,7 +31,7 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { EMPTY_TABLE_PAGE_CONTEXT } from '@/shared/components/table-system/model/use-table-page'
 import { useDeleteGuideMessages } from '@/shared/hooks'
-import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 import './sponsor-page.css'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -56,10 +61,6 @@ const DEFAULT_SPONSOR_KIND = 'corporate'
 
 function formatProgramCount(count: number): string {
   return `${count.toLocaleString('ko-KR')}건`
-}
-
-function formatDonationAmount(amount: number): string {
-  return `${amount.toLocaleString('ko-KR')}원`
 }
 
 function formatBeneficiaryCount(count: number): string {
@@ -279,6 +280,12 @@ export default function SponsorPage() {
     setActionResultModalOpen(false)
   }, [])
 
+  const donationColumnWidth = useMemo(
+    () => donationAmountColumnWidth(tableData.map(row => row.totalDonationAmount)),
+    [tableData]
+  )
+  const tableMinWidth = sponsorListTableMinWidth(donationColumnWidth)
+
   const columns: ColumnsType<SponsorManagementRow> = useMemo(
     () => [
       {
@@ -331,8 +338,11 @@ export default function SponsorPage() {
         title: '누적 후원금',
         dataIndex: 'totalDonationAmount',
         key: 'totalDonationAmount',
-        width: 160,
+        width: donationColumnWidth,
         align: 'center',
+        className: 'sponsor-page__donation-col',
+        onHeaderCell: () => ({ className: 'sponsor-page__donation-col' }),
+        onCell: () => ({ className: 'sponsor-page__donation-col' }),
         render: (value: number | undefined) =>
           value != null && Number.isFinite(value) ? formatDonationAmount(value) : '-',
       },
@@ -359,7 +369,7 @@ export default function SponsorPage() {
         render: (v: string | undefined) =>
           v ? dayjs(v).format('YYYY.MM.DD') : <Typography.Text type="secondary">-</Typography.Text> },
     ],
-    [canWrite, tableData.length, updateSponsorshipStatus]
+    [canWrite, donationColumnWidth, tableData.length, updateSponsorshipStatus]
   )
 
   return (
@@ -402,10 +412,17 @@ export default function SponsorPage() {
         <Table<SponsorManagementRow>
           rowKey="id"
           className="sponsor-page__table cms-data-table cms-data-table--hoverable"
+          style={
+            {
+              '--sponsor-donation-col-width': `${donationColumnWidth}px`,
+              '--sponsor-table-min-width': `${tableMinWidth}px`,
+            } as CSSProperties
+          }
           columns={columns}
           dataSource={tableData}
           loading={isListFetching && !isInitialListLoading}
           pagination={false}
+          scroll={{ ...TABLE_CONFIG.scroll, x: tableMinWidth }}
           onRow={record => ({
             style: { cursor: 'pointer' },
             // hover prefetch 금지: 등록 후 목록 remount 시 GET /sponsors/{id} N건 과호출.
