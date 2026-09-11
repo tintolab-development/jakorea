@@ -83,13 +83,12 @@ const searchSyncRules: readonly TableSearchParamRule<AdminInquiryPendingFilters>
   {
     kind: 'apply',
     apply: (nextParams, f) => {
-      if (f.dateRange?.[0] && f.dateRange?.[1]) {
-        nextParams.set('inq_from', f.dateRange[0].format('YYYY-MM-DD'))
-        nextParams.set('inq_to', f.dateRange[1].format('YYYY-MM-DD'))
-      } else {
-        nextParams.delete('inq_from')
-        nextParams.delete('inq_to')
-      }
+      const from = f.dateRange?.[0]
+      const to = f.dateRange?.[1]
+      if (from) nextParams.set('inq_from', from.format('YYYY-MM-DD'))
+      else nextParams.delete('inq_from')
+      if (to) nextParams.set('inq_to', to.format('YYYY-MM-DD'))
+      else nextParams.delete('inq_to')
     },
   },
 ]
@@ -166,7 +165,7 @@ export const adminInquiryManagementTablePageConfig: TablePageConfig<
       if ((searchParams.get('inq_title') ?? '').trim()) return true
       if ((searchParams.get('inq_mem') ?? '').trim()) return true
       if ((searchParams.get('inq_asg') ?? '').trim()) return true
-      if (searchParams.get('inq_from') && searchParams.get('inq_to')) return true
+      if (searchParams.get('inq_from') || searchParams.get('inq_to')) return true
       return false
     },
 
