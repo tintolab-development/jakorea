@@ -8,17 +8,17 @@ import {
 } from './sponsor-filter-params'
 
 describe('writeSponsorshipStartDateRangeToSearchParams', () => {
-  it('writes both ends when only start is selected (single-day filter)', () => {
+  it('writes only sp_from when start is selected', () => {
     const params = new URLSearchParams('sp_kind=corporate')
     writeSponsorshipStartDateRangeToSearchParams(params, [dayjs('2026-03-15'), null])
     expect(params.get('sp_from')).toBe('2026-03-15')
-    expect(params.get('sp_to')).toBe('2026-03-15')
+    expect(params.get('sp_to')).toBeNull()
   })
 
-  it('writes both ends when only end is selected', () => {
+  it('writes only sp_to when end is selected', () => {
     const params = new URLSearchParams()
     writeSponsorshipStartDateRangeToSearchParams(params, [null, dayjs('2026-04-01')])
-    expect(params.get('sp_from')).toBe('2026-04-01')
+    expect(params.get('sp_from')).toBeNull()
     expect(params.get('sp_to')).toBe('2026-04-01')
   })
 
