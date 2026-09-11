@@ -143,6 +143,15 @@ export function fromDetail(dto: ProgramResponse): Program {
   })
 }
 
+function looksMaskedPii(value: string | null | undefined): boolean {
+  if (value == null) return false
+  return value.includes('*')
+}
+
+function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
+  return Object.prototype.hasOwnProperty.call(patch, key)
+}
+
 function coreRequest(
   program: Program,
   registration?: RegistrationSnapshot
@@ -211,6 +220,100 @@ function coreRequest(
   }
 }
 
+/** patch 키만 직렬화 — rounds·마스킹 담당자 등 화면 밖 필드 미전송 */
+function patchRequest(
+  merged: Program,
+  patch: Partial<Program>,
+  registration?: RegistrationSnapshot
+): ProgramUpdateRequest {
+  const body: ProgramUpdateRequest = {}
+  const has = (key: keyof Program) => patchHasKey(patch, key)
+
+  if (has('sponsorId')) {
+    body.sponsorId = merged.sponsorId != null ? String(merged.sponsorId) : undefined
+  }
+  if (has('title')) body.title = merged.title
+  if (has('type')) body.type = merged.type
+  if (has('format')) body.format = merged.format
+  if (has('category')) body.category = merged.category
+  if (has('description')) body.description = merged.description
+  if (has('startDate')) body.startDate = dateValue(merged.startDate)
+  if (has('endDate')) body.endDate = dateValue(merged.endDate)
+  if (has('applicationStartDate')) {
+    body.applicationStartDate = dateValue(merged.applicationStartDate)
+  }
+  if (has('applicationEndDate')) {
+    body.applicationEndDate = dateValue(merged.applicationEndDate)
+  }
+  if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('titleEn')) body.titleEn = merged.titleEn
+  if (has('mainTitle')) body.mainTitle = merged.mainTitle ?? merged.title
+  if (has('textbookName')) body.textbookName = merged.textbookName
+  if (has('textbookNameEn')) body.textbookNameEn = merged.textbookNameEn
+  if (has('schoolId')) body.schoolId = merged.schoolId
+  if (has('district')) body.district = merged.district
+  if (has('targetLevel') || has('targetLevels')) {
+    body.targetLevel = merged.targetLevels?.[0] ?? merged.targetLevel
+  }
+  if (has('institutionType')) body.institutionType = merged.institutionType
+  if (has('ipOwned')) body.ipOwned = merged.ipOwned
+  if (has('courseDeliveredBy')) body.courseDeliveredBy = merged.courseDeliveredBy
+  if (has('partnerInvolvement')) body.partnerInvolvement = merged.partnerInvolvement
+  if (has('programCategory')) body.programCategory = merged.programCategory ?? undefined
+  if (has('programChannel')) body.programChannel = merged.programChannel ?? undefined
+  if (has('educationTime')) body.educationTime = merged.educationTime
+  if (has('teamDivision')) body.teamDivision = merged.teamDivision
+  if (has('educationProcess')) body.educationProcess = merged.educationProcess
+  if (has('maleParticipants')) body.maleParticipants = merged.maleParticipants
+  if (has('femaleParticipants')) body.femaleParticipants = merged.femaleParticipants
+  if (has('totalParticipants')) body.totalParticipants = merged.totalParticipants
+  if (has('generalVolunteers')) body.generalVolunteers = merged.generalVolunteers
+  if (has('staffVolunteers')) body.staffVolunteers = merged.staffVolunteers
+  if (has('returningVolunteers')) body.returningVolunteers = merged.returningVolunteers
+  if (has('generalTeachers')) body.generalTeachers = merged.generalTeachers
+  if (has('educatedTeachers')) body.educatedTeachers = merged.educatedTeachers
+  if (has('instructors')) body.instructors = merged.instructors
+  if (has('managerName') && !looksMaskedPii(merged.managerName)) {
+    body.managerName = merged.managerName
+  }
+  if (has('venue')) body.venue = merged.venue
+  if (has('curriculum')) body.curriculum = merged.curriculum
+  if (has('contactEmail') && !looksMaskedPii(merged.contactEmail)) {
+    body.contactEmail = merged.contactEmail
+  }
+  if (has('contactPhone') && !looksMaskedPii(merged.contactPhone)) {
+    body.contactPhone = merged.contactPhone
+  }
+  if (has('oneLineIntroduction')) body.oneLineIntroduction = merged.oneLineIntroduction
+  if (has('keyVisualImage') || has('posterImage')) {
+    body.keyVisualImage = merged.keyVisualImage ?? merged.posterImage
+  }
+  if (has('settlementRuleId')) body.settlementRuleId = merged.settlementRuleId
+  if (has('applicationPathId')) body.applicationPathId = merged.applicationPathId
+  if (has('additionalContentHtml')) body.additionalContentHtml = merged.additionalContentHtml
+  if (has('recruitmentGuide')) body.recruitmentGuide = merged.recruitmentGuide
+  if (has('learningSupportContent')) {
+    body.learningSupportContent = merged.learningSupportContent
+  }
+  if (has('attachmentFileNames')) body.attachmentFileNames = merged.attachmentFileNames
+  if (has('rounds')) {
+    body.rounds = merged.rounds.map(round => ({
+      roundNumber: round.roundNumber,
+      startDate: dateValue(round.startDate),
+      endDate: dateValue(round.endDate),
+      capacity: round.capacity,
+      classCount: round.classCount,
+      status: round.status,
+      curriculum: round.curriculum,
+      deliveryType: round.deliveryType,
+    }))
+  }
+
+  // UJAT registration overlay 보존을 위해 patch 저장 시 serviceDetailJson은 항상 포함
+  body.serviceDetailJson = serializeServiceDetail(merged, registration)
+  return body
+}
+
 export function toCreateRequest(
   program: Program,
   registration?: RegistrationSnapshot
@@ -230,5 +333,8 @@ export function toUpdateRequest(
   patch?: Partial<Program>,
   registration?: RegistrationSnapshot
 ): ProgramUpdateRequest {
-  return coreRequest(patch ? { ...program, ...patch } : program, registration)
+  if (patch && Object.keys(patch).length > 0) {
+    return patchRequest({ ...program, ...patch }, patch, registration)
+  }
+  return coreRequest(program, registration)
 }

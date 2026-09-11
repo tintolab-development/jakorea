@@ -480,11 +480,13 @@ export function GeneralProgramDetailFullPageModal({
   }, [detailProgram, program, programId, remoteEnabled])
 
   const persistGeneralProgramDraft = useCallback(
-    async (draft: Program) => {
+    async (draft: Program, patch?: Partial<Program>) => {
       if (remoteEnabled) {
         await updateGeneralProgramMutation.mutateAsync({
           programId: draft.id,
           program: draft,
+          // 공통·모집 정보 저장: 변경 키만 PATCH (rounds·마스킹 담당자 등 전체 덤프 방지)
+          patch,
         })
         clearGeneralProgramDetailSession(draft.id)
         setSelectedProgram(draft)
@@ -495,8 +497,13 @@ export function GeneralProgramDetailFullPageModal({
       setSelectedProgram(draft)
       saveGeneralProgramDetailSnapshot(draft)
       try {
-        const { id: _id, createdAt: _c, ...patch } = draft
-        await updateProgram(draft.id, patch)
+        const localPatch =
+          patch ??
+          (() => {
+            const { id: _id, createdAt: _c, ...rest } = draft
+            return rest
+          })()
+        await updateProgram(draft.id, localPatch)
       } catch {
         // API·mockProgramsMap 미연동 일반 프로그램 — 세션·mock 스냅샷 유지
       }
@@ -674,8 +681,8 @@ export function GeneralProgramDetailFullPageModal({
       form: infoForm,
       program: displayProgram ?? null,
       onSaveEdit: displayProgram
-        ? async draft => {
-            await persistGeneralProgramDraft(draft)
+        ? async (draft, patch) => {
+            await persistGeneralProgramDraft(draft, patch)
           }
         : undefined,
     })

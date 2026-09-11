@@ -957,9 +957,8 @@ export function UjatProgramDetailFullPageModal({
       program: displayProgram ?? ({} as Program),
       onSaveEdit:
         displayProgram && updateProgram
-          ? async draft => {
+          ? async (draft, patch) => {
               try {
-                const { id: _id, createdAt: _c, ...patch } = draft
                 if (onUpdateProgram) {
                   await onUpdateProgram(draft.id, draft, patch)
                 } else {
@@ -1042,9 +1041,8 @@ export function UjatProgramDetailFullPageModal({
     program: displayProgram ?? ({} as Program),
     onSaveEdit:
       displayProgram && updateProgram
-        ? async draft => {
+        ? async (draft, patch) => {
             try {
-              const { id: _id, createdAt: _c, ...patch } = draft
                 if (onUpdateProgram) {
                   await onUpdateProgram(draft.id, draft, patch)
                 } else {
@@ -1074,9 +1072,8 @@ export function UjatProgramDetailFullPageModal({
     program: displayProgram ?? ({} as Program),
     onSaveEdit:
       displayProgram && updateProgram
-        ? async draft => {
+        ? async (draft, patch) => {
             try {
-              const { id: _id, createdAt: _c, ...patch } = draft
                 if (onUpdateProgram) {
                   await onUpdateProgram(draft.id, draft, patch)
                 } else {

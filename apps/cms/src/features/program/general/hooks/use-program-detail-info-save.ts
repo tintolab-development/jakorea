@@ -26,7 +26,8 @@ import {
 export interface UseProgramDetailInfoSaveOptions {
   form: UseFormReturn<ProgramDetailEditFormValues>
   program: Program | null
-  onSaveEdit?: (draft: Program) => Promise<void>
+  /** draft = 화면용 병합본, patch = remote PATCH에 실을 변경 키만 */
+  onSaveEdit?: (draft: Program, patch: Partial<Program>) => Promise<void>
   /** 지정 시 해당 스키마로만 검증 — 모집 정보 탭 부분 저장용 */
   validateSchema?: z.ZodType<unknown>
 }
@@ -56,12 +57,17 @@ export function useProgramDetailInfoSave({
       const values = form.getValues()
       const patch = detailEditValuesToProgramPatch(values, program)
       const html = getAdditionalContentHtmlRef.current?.()
+      const htmlPatch =
+        typeof html === 'string' ? { additionalContentHtml: html } : undefined
+      const remotePatch: Partial<Program> = {
+        ...patch,
+        ...htmlPatch,
+      }
       const draftToSave: Program = {
         ...program,
-        ...patch,
-        ...(typeof html === 'string' ? { additionalContentHtml: html } : {}),
+        ...remotePatch,
       }
-      await onSaveEdit(draftToSave)
+      await onSaveEdit(draftToSave, remotePatch)
       return true
     } catch {
       return false

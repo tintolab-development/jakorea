@@ -163,18 +163,79 @@ describe('general-program-adapters', () => {
     expect(request).not.toHaveProperty('businessEndDate')
   })
 
-  it('maps Program patch to update request', () => {
+  it('maps Program patch to update request with only patched keys', () => {
     const request = mapGeneralProgramToUpdateRequest(sampleProgram, {
       title: '수정된 제목',
+      mainTitle: '수정된 대표명',
     })
 
     expect(request.title).toBe('수정된 제목')
-    expect(request.mainTitle).toBe('테스트 프로그램')
+    expect(request.mainTitle).toBe('수정된 대표명')
+    expect(request.rounds).toBeUndefined()
+    expect(request.managerName).toBeUndefined()
+    expect(request.contactPhone).toBeUndefined()
+    expect(request.curriculum).toBeUndefined()
+    expect(request.serviceDetailJson).toBeUndefined()
+  })
+
+  it('omits masked manager/contact from patch update request', () => {
+    const request = mapGeneralProgramToUpdateRequest(sampleProgram, {
+      managerName: '김*원',
+      contactPhone: '010-****-7253',
+      mainTitle: '제목만',
+    })
+
+    expect(request.mainTitle).toBe('제목만')
+    expect(request.managerName).toBeUndefined()
+    expect(request.contactPhone).toBeUndefined()
+  })
+
+  it('includes serviceDetailJson and applicationTargetMode when audience patch is provided', () => {
+    const request = mapGeneralProgramToUpdateRequest(sampleProgram, {
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+    })
+
+    expect(request.applicationTargetMode).toBe('INDIVIDUAL')
+    expect(request.serviceDetailJson).toBeTruthy()
+    expect(request.rounds).toBeUndefined()
+  })
+
+  it('common-info style patch does not dump rounds or masked manager fields', () => {
+    const withNoise: Program = {
+      ...sampleProgram,
+      managerName: '김*원',
+      contactPhone: '010-****-7253',
+      curriculum: 'payment-orders-catalog-v1',
+      oneLineIntroduction: 'should-not-send',
+      rounds: sampleProgram.rounds,
+    }
+    const request = mapGeneralProgramToUpdateRequest(withNoise, {
+      mainTitle: '공통정보만',
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      sponsorId: '1627251',
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution', 'teacher_instructor', 'volunteer'],
+      generalCommonInfo: {
+        announcementTitle: '공고명',
+        sponsorManagerLine: '팀장 김*원 | 010-****-7253',
+      },
+    })
+
+    expect(request.mainTitle).toBe('공통정보만')
+    expect(request.sponsorId).toBe('1627251')
+    expect(request.applicationTargetMode).toBe('ORGANIZATION')
+    expect(request.serviceDetailJson).toContain('announcementTitle')
+    expect(request.rounds).toBeUndefined()
+    expect(request.managerName).toBeUndefined()
+    expect(request.contactPhone).toBeUndefined()
+    expect(request.curriculum).toBeUndefined()
+    expect(request.oneLineIntroduction).toBeUndefined()
   })
 
   it('puts education structure fields into serviceDetailJson for update', () => {
-    const request = mapGeneralProgramToUpdateRequest({
-      ...sampleProgram,
+    const request = mapGeneralProgramToUpdateRequest(sampleProgram, {
       generalProgramEducationStructure: 'schedule',
       generalProgramSessionRound: 'single',
       generalProgramAudience: 'individual',

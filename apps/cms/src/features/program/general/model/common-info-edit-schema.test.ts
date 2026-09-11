@@ -101,6 +101,26 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     values.sponsorManagerContactId = encodeSponsorManagerContactRef('sponsor-new', 'contact-1')
     const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
     expect(patch.sponsorId).toBe('sponsor-new')
+    expect(patch.managerName).toBe('김담당')
+    expect(patch.contactPhone).toBe('010-0000-0000')
+  })
+
+  it('담당자 미해석 시 GET 마스킹 managerName/contactPhone을 patch에 넣지 않는다', () => {
+    const program = baseProgram({
+      managerName: '김*원',
+      contactPhone: '010-****-7253',
+    })
+    const values = programToGeneralCommonInfoEditValues(program, {
+      sponsors: sponsorContext.sponsors,
+      contactsBySponsorId: {},
+    })
+    values.sponsorManagerContactId = ''
+    const patch = generalCommonInfoEditValuesToProgramPatch(values, program, {
+      sponsors: sponsorContext.sponsors,
+      contactsBySponsorId: {},
+    })
+    expect(patch).not.toHaveProperty('managerName')
+    expect(patch).not.toHaveProperty('contactPhone')
   })
 
   it('교육 구조·회차·대상이 patch에 포함된다', () => {

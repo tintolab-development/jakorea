@@ -102,4 +102,94 @@ describe('company-school adapters', () => {
     )
     expect(detail.generalVolunteers).toBe(0)
   })
+
+  it('full update without patch still includes core fields', () => {
+    const withContact: Program = {
+      ...program,
+      managerName: '홍길동',
+      contactPhone: '010-1234-5678',
+      curriculum: 'company-school-curriculum',
+    }
+    const request = mapCompanySchoolToUpdateRequest(withContact)
+
+    expect(request.title).toBe(withContact.title)
+    expect(request.rounds).toEqual([
+      {
+        roundNumber: 1,
+        startDate: '2026-01-01T00:00:00.000Z',
+        endDate: '2026-12-31T23:59:59.999Z',
+        capacity: undefined,
+        classCount: undefined,
+        status: 'active',
+        curriculum: undefined,
+        deliveryType: undefined,
+      },
+    ])
+    expect(request.managerName).toBe('홍길동')
+    expect(request.contactPhone).toBe('010-1234-5678')
+    expect(request.curriculum).toBe('company-school-curriculum')
+    expect(request.serviceDetailJson).toBeTruthy()
+    expect(request.generalVolunteers).toBe(0)
+  })
+
+  it('maps Program patch to update request with only patched keys', () => {
+    const request = mapCompanySchoolToUpdateRequest(program, {
+      title: '수정된 제목',
+      mainTitle: '수정된 대표명',
+    })
+
+    expect(request.title).toBe('수정된 제목')
+    expect(request.mainTitle).toBe('수정된 대표명')
+    expect(request.rounds).toBeUndefined()
+    expect(request.managerName).toBeUndefined()
+    expect(request.contactPhone).toBeUndefined()
+    expect(request.curriculum).toBeUndefined()
+    expect(request.serviceDetailJson).toBeUndefined()
+  })
+
+  it('omits masked manager/contact from patch update request', () => {
+    const request = mapCompanySchoolToUpdateRequest(program, {
+      managerName: '김*원',
+      contactPhone: '010-****-7253',
+      contactEmail: 'ab***@example.com',
+      mainTitle: '제목만',
+    })
+
+    expect(request.mainTitle).toBe('제목만')
+    expect(request.managerName).toBeUndefined()
+    expect(request.contactPhone).toBeUndefined()
+    expect(request.contactEmail).toBeUndefined()
+  })
+
+  it('common-info style patch does not dump rounds or masked manager fields', () => {
+    const withNoise: Program = {
+      ...program,
+      managerName: '김*원',
+      contactPhone: '010-****-7253',
+      curriculum: 'payment-orders-catalog-v1',
+      oneLineIntroduction: 'should-not-send',
+      rounds: program.rounds,
+    }
+    const request = mapCompanySchoolToUpdateRequest(withNoise, {
+      mainTitle: '공통정보만',
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      sponsorId: '1627251',
+      generalCommonInfo: {
+        educationScheduleMode: 'period',
+        wageGradeRows: [{ grade: '1급 강사비', pricing: '기본 500,000원' }],
+        paymentItems: '교통비(일사일교), 숙박비(일사일교)',
+      },
+    })
+
+    expect(request.mainTitle).toBe('공통정보만')
+    expect(request.sponsorId).toBe('1627251')
+    expect(typeof request.sponsorId).toBe('string')
+    expect(request.serviceDetailJson).toContain('paymentItems')
+    expect(request.rounds).toBeUndefined()
+    expect(request.managerName).toBeUndefined()
+    expect(request.contactPhone).toBeUndefined()
+    expect(request.curriculum).toBeUndefined()
+    expect(request.oneLineIntroduction).toBeUndefined()
+  })
 })

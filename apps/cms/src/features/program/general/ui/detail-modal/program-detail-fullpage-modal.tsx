@@ -1049,9 +1049,8 @@ export function ProgramDetailFullPageModal({
       program: displayProgram ?? ({} as Program),
       onSaveEdit:
         displayProgram
-          ? async draft => {
+          ? async (draft, patch) => {
               try {
-                const { id: _id, createdAt: _c, ...patch } = draft
                 await persistProgramPatch(draft, patch)
                 setEditMode(null)
               } catch (error) {
@@ -1076,9 +1075,8 @@ export function ProgramDetailFullPageModal({
     program: displayProgram ?? ({} as Program),
     onSaveEdit:
       displayProgram
-        ? async draft => {
+        ? async (draft, patch) => {
             try {
-              const { id: _id, createdAt: _c, ...patch } = draft
               await persistProgramPatch(draft, patch)
               setEditMode(null)
             } catch (error) {
@@ -1104,9 +1102,8 @@ export function ProgramDetailFullPageModal({
     program: displayProgram ?? ({} as Program),
     onSaveEdit:
       displayProgram
-        ? async draft => {
+        ? async (draft, patch) => {
             try {
-              const { id: _id, createdAt: _c, ...patch } = draft
               await persistProgramPatch(draft, patch)
               setEditMode(null)
             } catch (error) {
@@ -1177,9 +1174,8 @@ export function ProgramDetailFullPageModal({
     program: displayProgram ?? ({} as Program),
     onSaveEdit:
       displayProgram
-        ? async draft => {
+        ? async (draft, patch) => {
             try {
-              const { id: _id, createdAt: _c, ...patch } = draft
               await persistProgramPatch(draft, patch)
               setEditMode(null)
             } catch (error) {

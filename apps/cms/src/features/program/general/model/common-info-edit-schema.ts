@@ -1022,8 +1022,9 @@ export function generalCommonInfoEditValuesToProgramPatch(
     generalProgramSessionRound: values.sessionRound,
     /** 후원사 관리 id = Program.sponsorId (목록/상세 API 탑레벨) */
     sponsorId: values.sponsorManagementIds[0] ?? existing.sponsorId,
-    managerName: manager?.name ?? existing.managerName,
-    contactPhone: manager?.phone ?? existing.contactPhone,
+    // 담당자 평문만 — GET 마스킹값(existing)으로 폴백하지 않음
+    ...(manager?.name && !manager.name.includes('*') ? { managerName: manager.name } : {}),
+    ...(manager?.phone && !manager.phone.includes('*') ? { contactPhone: manager.phone } : {}),
     generalCommonInfo: {
       ...existing.generalCommonInfo,
       announcementTitle: values.announcementTitle.trim(),

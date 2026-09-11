@@ -21,7 +21,8 @@ export type GeneralProgramCommonInfoSaveResult =
 export interface UseGeneralProgramCommonInfoSaveOptions {
   form: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
   program: Program | null
-  onSaveEdit?: (draft: Program) => Promise<void>
+  /** draft = 화면용 병합본, patch = remote PATCH에 실을 변경 키만 */
+  onSaveEdit?: (draft: Program, patch: Partial<Program>) => Promise<void>
 }
 
 export function useGeneralProgramCommonInfoSave({
@@ -54,7 +55,7 @@ export function useGeneralProgramCommonInfoSave({
           ...patch.generalCommonInfo,
         },
       }
-      await onSaveEdit(draftToSave)
+      await onSaveEdit(draftToSave, patch)
       return { ok: true }
     } catch (error) {
       return { ok: false, kind: 'api', error }

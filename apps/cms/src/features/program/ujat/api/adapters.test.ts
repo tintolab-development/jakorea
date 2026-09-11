@@ -86,6 +86,9 @@ describe('UJAT program adapters', () => {
     expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBe(
       '2026 UJAT'
     )
+    expect(updated.title).toBe('수정된 UJAT')
+    expect(updated.rounds).toBeUndefined()
+    expect(updated.managerName).toBeUndefined()
   })
 })
 
