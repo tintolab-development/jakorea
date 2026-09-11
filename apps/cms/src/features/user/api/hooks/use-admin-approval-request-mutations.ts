@@ -5,7 +5,6 @@ import {
   approveAdminApprovalRequestRemote,
   bulkApproveAdminApprovalRequestsRemote,
   bulkRejectAdminApprovalRequestsRemote,
-  changeAdminAccountRoleRemote,
   rejectAdminApprovalRequestRemote,
   cancelAdminApprovalRemote,
   resendAdminApprovalNotificationRemote,
@@ -56,8 +55,11 @@ export function useAdminApprovalRequestMutations() {
 
       if (input.adminIds.length === 1) {
         const adminId = input.adminIds[0]
-        await changeAdminAccountRoleRemote(adminId, roleBody)
-        await approveAdminApprovalRequestRemote(adminId, { reason })
+        // BE: APPROVED 시 roleCode 필수 (ADMIN_APPROVAL_ROLE_REQUIRED). 일괄 승인과 동일하게 approve body에 포함.
+        await approveAdminApprovalRequestRemote(adminId, {
+          reason,
+          roleCode: roleBody.roleCode,
+        })
         return
       }
 

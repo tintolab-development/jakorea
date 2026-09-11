@@ -57,6 +57,46 @@
   gap: 8px;
 }
 
+/*
+ * 전체 강의보고서 일괄 다운로드 — 엑셀·활동인증서와 동일 large+icon 규격.
+ * (font 16/600/150% · gap 6 · padding 6 16 6 10 · icon 16)
+ * 긴 라벨만 max-content로 확장. 패딩을 키우면 텍스트가 상대적으로 작아 보임.
+ */
+.member-program-lecture-history__bulk-lecture-report-download.cms-button.ant-btn.cms-button--no-label-ellipsis.cms-button--large.cms-button--has-icon {
+  width: max-content !important;
+  min-width: fit-content;
+  max-width: none;
+  height: 44px !important;
+  min-height: 44px !important;
+  flex-shrink: 0;
+  padding: 6px 16px 6px 10px !important;
+  padding-block: 6px !important;
+  padding-inline: 10px 16px !important;
+  gap: 6px;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  line-height: 150% !important;
+  letter-spacing: normal;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.member-program-lecture-history__bulk-lecture-report-download.cms-button .cms-button__icon,
+.member-program-lecture-history__bulk-lecture-report-download.cms-button .cms-button__icon .anticon {
+  font-size: 16px !important;
+  line-height: 0;
+}
+
+.member-program-lecture-history__bulk-lecture-report-download.cms-button .cms-button__label {
+  overflow: visible;
+  text-overflow: unset;
+  max-width: none;
+  flex-shrink: 0;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  line-height: 150% !important;
+}
+
 .member-program-lecture-history__action-cell {
   display: flex;
   align-items: center;

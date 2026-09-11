@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { toInstructorRoleApprovalFeeGradeApiValue } from '@/features/user/api/map-instructor-activity-display'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import {
   approveInstructorRoleRequestRemote,
@@ -14,11 +15,16 @@ import type { InstructorPermissionApprovePayload } from '@/features/user/permiss
 import type { InstructorPermissionRejectPayload } from '@/features/user/permission-management/instructor-permission-reject-modal'
 
 function buildApproveBody(payload: InstructorPermissionApprovePayload) {
-  const grade = payload.feeGrade.trim()
+  const feeGrade = toInstructorRoleApprovalFeeGradeApiValue(payload.feeGrade)
+  if (!feeGrade) {
+    throw new Error('지원하지 않는 강사비 등급입니다. 1~3급 강사비를 선택해 주세요.')
+  }
   return {
-    reason: `CMS 강사 권한 승인 (${grade})`,
-    feeGrade: grade,
-    activityType: grade,
+    reason: `CMS 강사 권한 승인 (${feeGrade})`,
+    // BE: GRADE_1 · GRADE_2 · GRADE_3 (UI 라벨 `1급 강사비` 등 직접 전송 시 INSTRUCTOR_APPROVAL_FEE_GRADE_UNSUPPORTED)
+    feeGrade,
+    // 승인 모달은 강사비 등급만 수집. handoff 기본 activityType.
+    activityType: 'GENERAL',
   }
 }
 

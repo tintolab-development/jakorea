@@ -23,8 +23,7 @@ const JA_GRADE_SCALE_SCORE_DESCRIPTION =
 
 /** 제목 설명 중 bold(700) 처리 구간 */
 export const JA_GRADE_INTRO_GRADE_RANGE_BOLD =
-  'A등급(85~100점), B등급(60~84점), C등급(50~59점), D등급(50점 이하) 4가지 등급으로 분류'
-
+  'A등급(85~100점), B등급(60~84점), C등급(50~59점), D등급(0~49점) 4가지 등급으로 분류'
 const JA_GRADE_INTRO_DESCRIPTION = [
   '관리자의 평가 항목은 총 4개 문항으로, 각 항목 당 25점씩 총 100점 만점으로 평가됩니다.',
   `평가등급은 행정 평가까지 반영된 최종 점수에 따라 ${JA_GRADE_INTRO_GRADE_RANGE_BOLD}됩니다.`,

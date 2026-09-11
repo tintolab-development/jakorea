@@ -111,6 +111,36 @@ describe('buildProgramDetailFromSettlements', () => {
     )
     expect(detail.instructorRows[0]?.statementId).toBe(777)
   })
+
+  it('CONFIRMED+WAITING_PAYMENT는 지급 대기·확인 CTA 비활성', () => {
+    const detail = buildProgramDetailFromSettlements(
+      programRow,
+      [
+        listItem({
+          statementStatus: 'CONFIRMED',
+          paymentStatus: 'WAITING_PAYMENT',
+          availableActions: [],
+          statementId: 170701,
+        }),
+        listItem({
+          settlementId: 1002,
+          statementStatus: 'REQUESTED',
+          paymentStatus: 'WAITING_PAYMENT',
+          availableActions: ['CONFIRM_PAYMENT_STATEMENT'],
+          statementId: 170702,
+        }),
+      ],
+      []
+    )
+    expect(detail.instructorRows[0]).toMatchObject({
+      processingStatus: 'awaiting_payment',
+      canConfirmPaymentStatement: false,
+    })
+    expect(detail.instructorRows[1]).toMatchObject({
+      processingStatus: 'pending',
+      canConfirmPaymentStatement: true,
+    })
+  })
 })
 
 describe('buildInstructorDetailFromSettlements', () => {

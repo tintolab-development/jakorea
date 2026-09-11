@@ -53,6 +53,7 @@ describe('ja-grade-evaluation-score', () => {
     expect(resolveJaEvaluationLetterGrade(59)).toBe('C')
     expect(resolveJaEvaluationLetterGrade(50)).toBe('C')
     expect(resolveJaEvaluationLetterGrade(49)).toBe('D')
+    expect(resolveJaEvaluationLetterGrade(0)).toBe('D')
   })
 
   it('Q1~Q4 미선택 시 검증에 실패한다', () => {

@@ -9,6 +9,13 @@ export type DeleteUserOptions = {
   organizationId?: number
   role?: User['role']
   email?: string
+  /** 기본: `CMS 관리자 회원 삭제` */
+  reason?: string
+  /**
+   * `POST …/users/{id}/delete` confirmationText.
+   * 목록 삭제 = `삭제`, 상세·소속교사 탈퇴 = `탈퇴` (모달 입력과 동일).
+   */
+  confirmationText?: string
 }
 
 /** 목록·상세 User → deleteUser API 옵션 (memberId·adminAccountId·organizationId 힌트 보강) */

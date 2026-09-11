@@ -8,7 +8,7 @@ import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 
 export type MembersPermissionTableContext = {
   memberType: 'instructor' | 'admin'
-  /** remote 목록 — keyword·승인현황은 서버 필터, 클라이언트 filterFn에서 제외 */
+  /** remote 목록 — keyword·승인현황·회원유형·신청시기는 서버 필터, 클라이언트 filterFn에서 제외 */
   remoteEnabled?: boolean
 }
 
@@ -58,16 +58,17 @@ function filterRowsBySearchParams(
   const toStr = searchParams.get(`${p}_to`)
 
   let list = data
+  // remote: keyword·승인현황·회원유형·신청시기는 API params로 전달 — 클라 재필터 생략
   if (!remoteEnabled && q) {
     list = list.filter(r => r.name.toLowerCase().includes(q))
   }
-  if (role !== 'ALL') {
+  if (!remoteEnabled && role !== 'ALL') {
     list = list.filter(r => r.memberCategory === role)
   }
   if (!remoteEnabled && approvalStatus !== 'ALL') {
     list = list.filter(r => r.approvalStatus === approvalStatus)
   }
-  if (fromStr && toStr) {
+  if (!remoteEnabled && fromStr && toStr) {
     const from = dayjs(fromStr).startOf('day')
     const to = dayjs(toStr).endOf('day')
     if (from.isValid() && to.isValid()) {

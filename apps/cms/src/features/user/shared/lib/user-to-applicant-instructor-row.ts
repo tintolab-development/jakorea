@@ -220,10 +220,13 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
 }
 
 export function maskedUserForInstructorDetail(user: Omit<User, 'password'>): Omit<User, 'password'> {
+  const phone = user.phone?.trim()
+  const email = user.email?.trim()
   return {
     ...user,
-    phone: user.phone ? MASKING_POLICY.phone(user.phone) : user.phone,
-    email: user.email ? MASKING_POLICY.email(user.email) : user.email,
+    // BE가 이미 마스킹한 값은 재마스킹하지 않음 (* 제거·이중 마스킹 방지)
+    phone: phone ? (phone.includes('*') ? phone : MASKING_POLICY.phone(phone)) : user.phone,
+    email: email ? (email.includes('*') ? email : MASKING_POLICY.email(email)) : user.email,
     instructorInfo: user.instructorInfo
       ? {
           ...user.instructorInfo,

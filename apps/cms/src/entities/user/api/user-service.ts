@@ -307,6 +307,8 @@ export async function getUsersPage(
           roleCode: apiFilters.adminPermissionVariant
             ? adminPermissionFeeGradeToRoleCode(apiFilters.adminPermissionVariant)
             : undefined,
+          createdAtFrom: apiFilters.createdAtFrom || undefined,
+          createdAtTo: apiFilters.createdAtTo || undefined,
           page,
           size: PAGE_SIZE,
         })
@@ -1580,6 +1582,8 @@ export async function deleteUser(
     organizationId?: number
     role?: UserRole
     email?: string
+    /** 미지정 시 목록 삭제 SSOT `삭제`. 상세 탈퇴는 `탈퇴`를 넘긴다. */
+    confirmationText?: string
   }
 ): Promise<void> {
   if (isMembersRemoteEnabled()) {
@@ -1611,7 +1615,7 @@ export async function deleteUser(
       const memberId = resolveMemberIdForApi(userId, options)
       await deleteMemberRemote(memberId, {
         reason,
-        confirmationText: DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+        confirmationText: options?.confirmationText ?? DELETE_GUIDE_TYPED_CONFIRM_VALUE,
       })
       return
     } catch (error) {
