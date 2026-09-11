@@ -54,10 +54,15 @@ export function PaymentOrderCalculationStatementProcessingStatusView({
     )
   }
 
-  if (basic.processingStatusClass === 'confirmed') {
+  if (
+    basic.processingStatusClass === 'confirmed' ||
+    basic.processingStatusClass === 'awaiting_payment'
+  ) {
     return (
       <div className="payment-order-calc-statement-modal__processing-status-row payment-order-calc-statement-modal__processing-status-row--pd-divider">
-        <span className="payment-order-admin__status-text payment-order-admin__status-text--confirmed">
+        <span
+          className={`payment-order-admin__status-text payment-order-admin__status-text--${statusMod}`}
+        >
           {basic.processingStatusDisplay}
         </span>
         <ProgramDetailTdDivider />

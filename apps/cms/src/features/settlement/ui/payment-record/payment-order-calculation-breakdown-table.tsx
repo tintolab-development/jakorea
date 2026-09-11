@@ -226,6 +226,7 @@ export function PaymentOrderCalculationBreakdownTable({
   )
   const hideHeaderActionsStatuses: PaymentOrderAdminLineProcessingStatus[] = [
     'confirmed',
+    'awaiting_payment',
     'application_rejected',
     'rejected',
   ]

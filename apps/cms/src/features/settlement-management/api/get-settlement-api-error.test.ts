@@ -36,7 +36,7 @@ describe('getSettlementApiErrorMessage', () => {
     }
 
     expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
-      '지급조서 확인 완료 후 계좌 지급을 처리할 수 있습니다.'
+      '이미 확인된 지급조서가 포함되어 있습니다. 목록을 새로고침한 뒤 다시 확인해 주세요.'
     )
   })
 

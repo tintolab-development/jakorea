@@ -2,7 +2,7 @@ import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 
 const PAYMENT_STATEMENT_STATUS_CONFLICT = 'PAYMENT_STATEMENT_STATUS_CONFLICT'
 const PAYMENT_STATEMENT_CONFLICT_FALLBACK =
-  '지급조서 확인 완료 후 계좌 지급을 처리할 수 있습니다.'
+  '이미 확인된 지급조서가 포함되어 있습니다. 목록을 새로고침한 뒤 다시 확인해 주세요.'
 
 /** BE 2026-09-11 bulk-confirm 계약 — 공통 메시지 없을 때 FE fallback */
 const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {

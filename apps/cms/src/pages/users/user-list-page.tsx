@@ -52,6 +52,7 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+  WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
 import { useUserStore, selectSelectedUser } from '@/features/user/shared/model/user-store'
 import type { User, AffiliatedTeacherLinkTarget } from '@/types/user'
@@ -1088,7 +1089,11 @@ export function UserListPage() {
       if (!guardAdminAction({ roleCode, action: 'delete' })) return
       setDeleteLoading(true)
       try {
-        await deleteUser(u.id, resolveDeleteUserOptions(u))
+        await deleteUser(u.id, {
+          ...resolveDeleteUserOptions(u),
+          reason: 'CMS 관리자 회원 탈퇴',
+          confirmationText: WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
+        })
         setSelectedRowKeys(prev => prev.filter(key => key !== u.id))
         invalidateList()
         flushUserDetailModal()

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  canConfirmPaymentStatement,
   isConfirmableStatementStatus,
   isPendingStatementStatus,
+  mapSettlementAxesToLineStatus,
   mapStatementStatusToLineStatus,
   mapStatementStatusToProcessingStatus,
 } from './settlement-status-mappers'
@@ -24,6 +26,22 @@ describe('mapStatementStatusToLineStatus', () => {
   })
 })
 
+describe('mapSettlementAxesToLineStatus', () => {
+  it('CONFIRMED + WAITING_PAYMENT → 지급 대기', () => {
+    expect(mapSettlementAxesToLineStatus('CONFIRMED', 'WAITING_PAYMENT')).toBe('awaiting_payment')
+  })
+
+  it('확인 대기 축은 pending', () => {
+    expect(mapSettlementAxesToLineStatus('WAITING_CONFIRM', undefined)).toBe('pending')
+    expect(mapSettlementAxesToLineStatus('REQUESTED', 'WAITING_PAYMENT')).toBe('pending')
+  })
+
+  it('CONFIRMED만 있으면 confirmed', () => {
+    expect(mapSettlementAxesToLineStatus('CONFIRMED', undefined)).toBe('confirmed')
+    expect(mapSettlementAxesToLineStatus('CONFIRMED', 'PAID')).toBe('confirmed')
+  })
+})
+
 describe('isPendingStatementStatus', () => {
   it('재신청·발급·확인대기를 지급 대기 건으로 본다', () => {
     expect(isPendingStatementStatus('REQUESTED')).toBe(true)
@@ -42,5 +60,33 @@ describe('isConfirmableStatementStatus', () => {
     expect(isConfirmableStatementStatus('ISSUED')).toBe(true)
     expect(isConfirmableStatementStatus('CONFIRMED')).toBe(false)
     expect(isConfirmableStatementStatus('REJECTED')).toBe(false)
+  })
+})
+
+describe('canConfirmPaymentStatement', () => {
+  it('availableActions에 CONFIRM_PAYMENT_STATEMENT가 있을 때만 true', () => {
+    expect(
+      canConfirmPaymentStatement({
+        availableActions: ['CONFIRM_PAYMENT_STATEMENT'],
+        statementStatus: 'REQUESTED',
+      })
+    ).toBe(true)
+    expect(
+      canConfirmPaymentStatement({
+        availableActions: [],
+        statementStatus: 'REQUESTED',
+      })
+    ).toBe(false)
+    expect(
+      canConfirmPaymentStatement({
+        availableActions: ['OTHER'],
+        statementStatus: 'CONFIRMED',
+      })
+    ).toBe(false)
+  })
+
+  it('축 없는 mock pending은 확인 가능', () => {
+    expect(canConfirmPaymentStatement({ processingStatus: 'pending' })).toBe(true)
+    expect(canConfirmPaymentStatement({ processingStatus: 'awaiting_payment' })).toBe(false)
   })
 })

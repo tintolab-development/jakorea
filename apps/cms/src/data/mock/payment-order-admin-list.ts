@@ -116,6 +116,8 @@ export type PaymentOrderAdminLineProcessingStatus =
   | 'pending'
   | 'reapplication'
   | 'confirmed'
+  /** 지급조서 확인 완료 후 계좌 지급 대기 (`CONFIRMED` + `WAITING_PAYMENT`) */
+  | 'awaiting_payment'
   | 'correction'
   | 'rejected'
   /** 지급 신청 반려(라인 전용; 목록 `PaymentOrderAdminProcessingStatus` 와 분리) */
@@ -128,6 +130,7 @@ export const PAYMENT_ORDER_ADMIN_LINE_STATUS_LABELS: Record<
   pending: '확인 대기 중',
   reapplication: '지급조서 재신청',
   confirmed: '지급조서 확인 완료',
+  awaiting_payment: '지급 대기',
   correction: '지급 정정 요청',
   rejected: '계좌 지급 완료',
   application_rejected: '신청 반려',
@@ -156,6 +159,11 @@ export interface PaymentOrderAdminProgramDetailInstructorRow {
   lectureFeePaymentScheduledDate?: string
   /** 신청 반려 시 산출 내역서·상세에 표시할 사유 */
   processingRejectionReason?: string
+  /** BE `availableActions`에 `CONFIRM_PAYMENT_STATEMENT` 포함 여부 */
+  canConfirmPaymentStatement?: boolean
+  statementStatus?: string
+  paymentStatus?: string
+  availableActions?: string[]
 }
 
 export interface PaymentOrderAdminProgramDetail {
@@ -185,6 +193,11 @@ export interface PaymentOrderAdminInstructorDetailProgramRow {
   lectureFeePaymentScheduledDate?: string
   /** 신청 반려 시 산출 내역서·상세에 표시할 사유 */
   processingRejectionReason?: string
+  /** BE `availableActions`에 `CONFIRM_PAYMENT_STATEMENT` 포함 여부 */
+  canConfirmPaymentStatement?: boolean
+  statementStatus?: string
+  paymentStatus?: string
+  availableActions?: string[]
 }
 
 /** 산출 내역서 모달 — 산정 행 구분(합계 수식·표시용) */

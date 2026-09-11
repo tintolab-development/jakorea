@@ -52,6 +52,7 @@ const PAYMENT_ORDER_LINE_SAMPLES: PaymentOrderAdminLineProcessingStatus[] = [
   'pending',
   'reapplication',
   'confirmed',
+  'awaiting_payment',
   'correction',
   'rejected',
   'application_rejected',
