@@ -365,11 +365,16 @@ export function renderFormParagraphBody(
       } else if (shouldRenderDisabledPlaceholder) {
         explanationBodyDisplayMode = 'disabled-placeholder'
       }
+      /** 행정정보 이용기관·이용사무 — 시드 구조 잠금이어도 authoring에서 본문 텍스트 수정 허용 */
+      const isAgreementNoticeExplanationEditMode =
+        isAgreementNoticeExplanationParagraph &&
+        !isPreviewReadonly &&
+        paragraphInteractionMode === 'authoring'
       return (
         <ExplanationText
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isBodyInteractive}
+          isEditMode={isAgreementNoticeExplanationEditMode || isBodyInteractive}
           bodyDisplayMode={explanationBodyDisplayMode}
           bottomConsentInteractive={isBodyInteractive || structureLockedConsentChoiceInteractive}
           consentFillMode={consentFillBodyReadOnly}
@@ -420,7 +425,12 @@ export function renderFormParagraphBody(
           lectureFeeCalculationValues={options?.lectureFeeCalculationValues}
           paymentStatementCalculationLines={options?.paymentStatementCalculationLines}
           paymentStatementDisplayMode={options?.paymentStatementDisplayMode}
-          agreementNoticeIdTypeInteractive={options?.agreementNoticeIdTypeInteractive}
+          agreementNoticeIdTypeInteractive={
+            options?.agreementNoticeIdTypeInteractive === true ||
+            (p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.table &&
+              paragraphInteractionMode === 'authoring' &&
+              !isPreviewReadonly)
+          }
           programRegistration={options?.programRegistration}
           ujatProgramRegistration={options?.ujatProgramRegistration}
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
@@ -493,6 +503,7 @@ export function renderFormParagraphBody(
           autofill={options?.ujatJournalEducationInfoAutofill}
           previewReadonly={isUserLikeVisible || isPreviewReadonly}
           previewSkin="surface"
+          isTemplateAuthoringMode={paragraphInteractionMode === 'authoring'}
         />
       )
     }
@@ -767,11 +778,21 @@ export function renderFormParagraphBody(
           />
         )
       }
+      /**
+       * 구조 잠금 시드(UJAT 봉사자 정보 등)도 authoring에서 노출 필드 칩 토글 허용.
+       * (카드 미선택이어도 가능 — 미리보기·저장의 selectedUserFieldKeys 연동)
+       */
+      const isUserInfoFieldSelectEditMode =
+        isPreviewReadonly
+          ? false
+          : structureLocked && paragraphInteractionMode === 'authoring'
+            ? true
+            : isBodyInteractive
       return (
         <UserInfo
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isBodyInteractive}
+          isEditMode={isUserInfoFieldSelectEditMode}
           layout={isUserLikeVisible ? 'previewTable' : 'chips'}
           previewValues={options?.userInfoPreviewValues}
           forceTwoColumnRow={p.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo}
@@ -787,11 +808,15 @@ export function renderFormParagraphBody(
       )
     case 'id_type_with_input':
       if (p.kind !== 'single_item' || p.variant !== 'id_type_with_input') return null
+      const isAgreementNoticeIdTypeAuthoringEdit =
+        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.idType &&
+        paragraphInteractionMode === 'authoring' &&
+        !isPreviewReadonly
       return (
         <IdTypeWithInput
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isBodyInteractive}
+          isEditMode={isAgreementNoticeIdTypeAuthoringEdit || isBodyInteractive}
         />
       )
   }
