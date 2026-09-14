@@ -8,6 +8,7 @@ import { Controller, useFieldArray, type UseFormReturn } from 'react-hook-form'
 import { ClockCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
+import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -294,7 +295,16 @@ function BasicInfoSection({
 }) {
   const isFormEdit = isEditMode && !!form
   const isScheduleType = isGeneralProgramScheduleType(program)
-  const detailedProgramOptions = useMemo(() => getGeneralDetailedProgramSelectOptions(), [])
+  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
+  const detailedProgramOptions = useMemo(
+    () =>
+      getGeneralDetailedProgramSelectOptions(
+        remoteDetailedProgramOptions.length > 0
+          ? remoteDetailedProgramOptions.map(o => ({ id: o.value, name: o.label }))
+          : undefined
+      ),
+    [remoteDetailedProgramOptions]
+  )
   const { options: sponsorOptions, data: sponsorRows = [] } = useSponsorSelectOptions(true)
   const viewSponsorContext = useMemo(
     () => ({

@@ -6,7 +6,7 @@ import {
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   withDetailedProgramNoneOption,
 } from '@/features/template/lib/template-form-select-options'
-import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
+import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import {
   GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
   useProgramRegistrationOverlayKv,
@@ -18,13 +18,6 @@ import {
   TRAINED_TEACHERS_REGISTRATION_REP_EN,
   TRAINED_TEACHERS_REGISTRATION_REP_KO,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
-
-const DETAILED_PROGRAM_OPTIONS = withDetailedProgramNoneOption(
-  mockDetailedProgramManagementListRows.map(row => ({
-    value: row.id,
-    label: row.name,
-  }))
-)
 
 type ControlledTitleProps = {
   programTitleKo?: string
@@ -74,19 +67,20 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
     trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE : ''
   )
 
+  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
+
   useEffect(() => {
     if (!lockDetailedProgramToNone) return
     if (detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) return
     setDetailedProgramId(TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE)
   }, [detailedProgramId, lockDetailedProgramToNone, setDetailedProgramId])
 
-  const detailedProgramOptions = useMemo(
-    () =>
-      trainedTeachersDefaults
-        ? [TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION, ...DETAILED_PROGRAM_OPTIONS]
-        : DETAILED_PROGRAM_OPTIONS,
-    [trainedTeachersDefaults]
-  )
+  const detailedProgramOptions = useMemo(() => {
+    const withNone = withDetailedProgramNoneOption(remoteDetailedProgramOptions)
+    return trainedTeachersDefaults
+      ? [TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION, ...withNone]
+      : withNone
+  }, [remoteDetailedProgramOptions, trainedTeachersDefaults])
 
   const isTitleControlled = onProgramTitleKoChange != null
   const programTitleKo = isTitleControlled ? (programTitleKoProp ?? '') : localProgramTitleKo

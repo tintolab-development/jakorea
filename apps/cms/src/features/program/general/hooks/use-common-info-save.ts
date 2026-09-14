@@ -12,6 +12,7 @@ import {
 } from '@/features/program/general/model/common-info-edit-schema'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
+import { useDetailedProgramOptionsQuery } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 
 export type GeneralProgramCommonInfoSaveResult =
   | { ok: true }
@@ -33,6 +34,8 @@ export function useGeneralProgramCommonInfoSave({
   const savingRef = useRef(false)
   const watchedSponsorIds = form.watch('sponsorManagementIds') ?? []
   const sponsorContext = useGeneralProgramSponsorEditContext(watchedSponsorIds)
+  const detailedProgramsQuery = useDetailedProgramOptionsQuery(Boolean(program))
+  const detailedProgramCatalog = detailedProgramsQuery.data
 
   const triggerSave = useCallback(async (): Promise<GeneralProgramCommonInfoSaveResult> => {
     if (savingRef.current || !onSaveEdit || !program) {
@@ -43,7 +46,12 @@ export function useGeneralProgramCommonInfoSave({
       const isValid = await form.trigger()
       if (!isValid) return { ok: false, kind: 'validation' }
       const values = form.getValues()
-      const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+      const patch = generalCommonInfoEditValuesToProgramPatch(
+        values,
+        program,
+        sponsorContext,
+        detailedProgramCatalog
+      )
       const resolvedCommon = resolveGeneralProgramCommonInfo(program)
       const draftToSave: Program = {
         ...program,
@@ -62,15 +70,18 @@ export function useGeneralProgramCommonInfoSave({
     } finally {
       savingRef.current = false
     }
-  }, [form, program, onSaveEdit, sponsorContext])
+  }, [form, program, onSaveEdit, sponsorContext, detailedProgramCatalog])
 
   const resetToProgram = useCallback(() => {
     if (program) {
-      form.reset(programToGeneralCommonInfoEditValues(program, sponsorContext), {
-        keepDefaultValues: false,
-      })
+      form.reset(
+        programToGeneralCommonInfoEditValues(program, sponsorContext, detailedProgramCatalog),
+        {
+          keepDefaultValues: false,
+        }
+      )
     }
-  }, [form, program, sponsorContext])
+  }, [form, program, sponsorContext, detailedProgramCatalog])
 
   return { triggerSave, resetToProgram }
 }

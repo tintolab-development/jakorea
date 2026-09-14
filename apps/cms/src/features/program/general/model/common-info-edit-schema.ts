@@ -362,7 +362,10 @@ export function isGeneralProgramScheduleType(program: Program): boolean {
   )
 }
 
-function resolveDetailedProgramId(program: Program): string {
+function resolveDetailedProgramId(
+  program: Program,
+  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+): string {
   if (isGeneralProgramScheduleType(program)) {
     return TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
   }
@@ -372,7 +375,7 @@ function resolveDetailedProgramId(program: Program): string {
     program.textbookName?.trim() ||
     program.teamDivision?.trim()
   if (!name) return ''
-  const matched = mockDetailedProgramManagementListRows.find(row => row.name === name)
+  const matched = catalog.find(row => row.name === name)
   return matched?.id ?? ''
 }
 
@@ -795,7 +798,8 @@ function resolveWageFromProgram(program: Program): Pick<
 
 export function programToGeneralCommonInfoEditValues(
   program: Program,
-  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
+  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT,
+  detailedProgramCatalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
 ): GeneralProgramCommonInfoEditFormValues {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
   const sponsorManagementIds = resolveSponsorManagementIds(program, context)
@@ -818,7 +822,7 @@ export function programToGeneralCommonInfoEditValues(
     mainTitle: program.mainTitle?.trim() ?? '',
     titleEn: program.titleEn?.trim() ?? '',
     announcementTitle: commonInfo.announcementTitle?.trim() || program.title?.trim() || '',
-    detailedProgramId: resolveDetailedProgramId(program),
+    detailedProgramId: resolveDetailedProgramId(program, detailedProgramCatalog),
     startDate: toIso(program.startDate),
     endDate: toIso(program.endDate),
     businessArea: resolveBusinessAreaFormValue(program.businessArea),
@@ -895,17 +899,21 @@ function institutionTypeFromVenueKind(
   return undefined
 }
 
-function resolveDetailedProgramName(detailedProgramId: string | undefined): string | undefined {
+function resolveDetailedProgramName(
+  detailedProgramId: string | undefined,
+  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+): string | undefined {
   if (!detailedProgramId || detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) {
     return undefined
   }
-  return mockDetailedProgramManagementListRows.find(row => row.id === detailedProgramId)?.name
+  return catalog.find(row => row.id === detailedProgramId)?.name
 }
 
 export function generalCommonInfoEditValuesToProgramPatch(
   values: GeneralProgramCommonInfoEditFormValues,
   existing: Program,
-  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
+  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT,
+  detailedProgramCatalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
 ): Partial<Program> {
   const sponsorRows = values.sponsorManagementIds
     .map(id => context.sponsors.find(row => row.id === id))
@@ -923,7 +931,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
     : undefined
   const detailedProgramName = isScheduleType
     ? resolveScheduleTypeDetailedProgramNameFromDetails(relabeledScheduleDetails)
-    : resolveDetailedProgramName(values.detailedProgramId)
+    : resolveDetailedProgramName(values.detailedProgramId, detailedProgramCatalog)
   const existingCommon = resolveGeneralProgramCommonInfo(existing)
 
   const managerLine = manager
@@ -1202,9 +1210,11 @@ export function generalCommonInfoEditValuesToProgramPatch(
   }
 }
 
-export function getGeneralDetailedProgramSelectOptions() {
+export function getGeneralDetailedProgramSelectOptions(
+  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+) {
   return withDetailedProgramNoneOption(
-    mockDetailedProgramManagementListRows.map(row => ({ value: row.id, label: row.name }))
+    catalog.map(row => ({ value: row.id, label: row.name }))
   )
 }
 
