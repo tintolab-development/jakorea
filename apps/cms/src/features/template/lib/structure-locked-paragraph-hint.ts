@@ -14,7 +14,7 @@ const PARTIAL_EDIT_STRUCTURE_LOCKED_PARAGRAPH_IDS = new Set<string>([
   PROGRAM_PARTICIPANT_APPLICATION_IDS.thirdPartyConsent,
 ])
 
-const STRUCTURE_LOCKED_HINT_FULL = '* 해당 단락은 삭제 및 수정이 불가합니다.'
+const STRUCTURE_LOCKED_HINT_FULL = '* 해당 단락은 수정 및 삭제가 불가합니다.'
 const STRUCTURE_LOCKED_HINT_PARTIAL_EDIT =
   '* 해당 단락은 삭제 불가하며, 일부 텍스트만 수정이 가능합니다.'
 

@@ -17,6 +17,8 @@ export type FormParagraphCardActionsProps = FormParagraphCardActionHandlers & {
   disabled?: boolean
   /** true면 「단락 추가」만 비활성 (`disabled`와 함께 적용) */
   addDisabled?: boolean
+  /** true면 「+ 항목 추가」만 비활성 (`disabled`와 함께 적용) — 단락 추가와 분리 */
+  addItemDisabled?: boolean
   /** true면 「단락 복제」만 비활성 (`disabled`와 함께 적용) — 기본 템플릿 고정 단락 등 */
   duplicateDisabled?: boolean
   /** true면 「단락 삭제」만 비활성 (`disabled`와 함께 적용) */
@@ -34,10 +36,12 @@ export function FormParagraphCardActions({
   onAddItem,
   disabled = false,
   addDisabled = false,
+  addItemDisabled = false,
   duplicateDisabled = false,
   deleteDisabled = false,
 }: FormParagraphCardActionsProps = {}) {
   const addOff = disabled || addDisabled
+  const addItemOff = disabled || addItemDisabled
   const dupOff = disabled || duplicateDisabled
   const delOff = disabled || deleteDisabled
   return (
@@ -48,7 +52,7 @@ export function FormParagraphCardActions({
           type="button"
           size="large"
           className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
-          disabled={addOff}
+          disabled={addItemOff}
           onClick={e => {
             stopCardClick(e)
             onAddItem()

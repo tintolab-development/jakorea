@@ -89,6 +89,7 @@ export interface PinnedCardProps {
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   showEditorChrome?: boolean
   structureLockedParagraphIds?: ReadonlySet<string>
+  allowAddAfterStructureLockedParagraphs?: boolean
   hideDragHandleForParagraphIds?: ReadonlySet<string>
   hideParagraphRequiredChrome?: boolean
   headingDescriptionExtraClassName?: string
@@ -114,6 +115,7 @@ function PinnedFormCardInner({
   paragraphBodyOptions,
   showEditorChrome = true,
   structureLockedParagraphIds,
+  allowAddAfterStructureLockedParagraphs = false,
   hideDragHandleForParagraphIds,
   hideParagraphRequiredChrome,
   headingDescriptionExtraClassName,
@@ -208,7 +210,8 @@ function PinnedFormCardInner({
               middleParagraphActions,
               paragraphs,
               structureLockedParagraphIds,
-              editorKind
+              editorKind,
+              allowAddAfterStructureLockedParagraphs
             )
           : undefined
       }
@@ -253,6 +256,7 @@ export interface SortableMiddleCardProps {
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   showEditorChrome?: boolean
   structureLockedParagraphIds?: ReadonlySet<string>
+  allowAddAfterStructureLockedParagraphs?: boolean
   hideDragHandleForParagraphIds?: ReadonlySet<string>
   hideParagraphRequiredChrome?: boolean
   headingDescriptionExtraClassName?: string
@@ -278,6 +282,7 @@ function SortableMiddleFormCardInner({
   paragraphBodyOptions,
   showEditorChrome = true,
   structureLockedParagraphIds,
+  allowAddAfterStructureLockedParagraphs = false,
   hideDragHandleForParagraphIds,
   hideParagraphRequiredChrome,
   headingDescriptionExtraClassName,
@@ -413,7 +418,8 @@ function SortableMiddleFormCardInner({
                 middleParagraphActions,
                 paragraphs,
                 structureLockedParagraphIds,
-                editorKind
+                editorKind,
+                allowAddAfterStructureLockedParagraphs
               )
             : undefined
         }

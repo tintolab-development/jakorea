@@ -110,6 +110,7 @@ export function ShortEssay({
   }
 
   const handleItemClick = (id: string) => {
+    if (!isBodyInteractive) return
     const nextFocused = activeItemId === id ? null : id
     onSelectItem?.(nextFocused)
   }
@@ -197,7 +198,8 @@ export function ShortEssay({
               ) : undefined
             }
           />
-          {isCardSelected &&
+          {isBodyInteractive &&
+          isCardSelected &&
           index > 0 &&
           paragraph.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.subject ? (
             <ItemDeleteButton

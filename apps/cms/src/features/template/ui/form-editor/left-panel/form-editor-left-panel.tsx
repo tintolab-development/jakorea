@@ -52,6 +52,7 @@ export function FormEditorLeftPanel({
   paragraphInteractionMode = 'authoring',
   showEditorChrome = true,
   structureLockedParagraphIds,
+  allowAddAfterStructureLockedParagraphs = false,
   hideDragHandleForParagraphIds,
   hideParagraphRequiredChrome,
   headingDescriptionExtraClassName,
@@ -149,6 +150,7 @@ export function FormEditorLeftPanel({
                     middleParagraphActions={middleParagraphActions}
                     paragraphBodyOptions={mergedParagraphBodyOptions}
                     structureLockedParagraphIds={structureLockedParagraphIds}
+                    allowAddAfterStructureLockedParagraphs={allowAddAfterStructureLockedParagraphs}
                     hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
                     hideParagraphRequiredChrome={hideParagraphRequiredChrome}
                     headingDescriptionExtraClassName={headingDescriptionExtraClassName}
@@ -180,6 +182,7 @@ export function FormEditorLeftPanel({
                 middleParagraphActions={middleParagraphActions}
                 paragraphBodyOptions={mergedParagraphBodyOptions}
                 structureLockedParagraphIds={structureLockedParagraphIds}
+                    allowAddAfterStructureLockedParagraphs={allowAddAfterStructureLockedParagraphs}
                 hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
                 hideParagraphRequiredChrome={hideParagraphRequiredChrome}
                 headingDescriptionExtraClassName={headingDescriptionExtraClassName}
@@ -228,6 +231,7 @@ export function FormEditorLeftPanel({
                   middleParagraphActions={middleParagraphActions}
                   paragraphBodyOptions={mergedParagraphBodyOptions}
                   structureLockedParagraphIds={structureLockedParagraphIds}
+                    allowAddAfterStructureLockedParagraphs={allowAddAfterStructureLockedParagraphs}
                   hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
                   hideParagraphRequiredChrome={hideParagraphRequiredChrome}
                   headingDescriptionExtraClassName={headingDescriptionExtraClassName}
@@ -257,6 +261,7 @@ export function FormEditorLeftPanel({
               middleParagraphActions={middleParagraphActions}
               paragraphBodyOptions={mergedParagraphBodyOptions}
               structureLockedParagraphIds={structureLockedParagraphIds}
+                    allowAddAfterStructureLockedParagraphs={allowAddAfterStructureLockedParagraphs}
               hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
               hideParagraphRequiredChrome={hideParagraphRequiredChrome}
               headingDescriptionExtraClassName={headingDescriptionExtraClassName}
@@ -282,6 +287,7 @@ export function FormEditorLeftPanel({
           middleParagraphActions={middleParagraphActions}
           paragraphBodyOptions={mergedParagraphBodyOptions}
           structureLockedParagraphIds={structureLockedParagraphIds}
+                    allowAddAfterStructureLockedParagraphs={allowAddAfterStructureLockedParagraphs}
           hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
           hideParagraphRequiredChrome={hideParagraphRequiredChrome}
           headingDescriptionExtraClassName={headingDescriptionExtraClassName}
@@ -322,6 +328,7 @@ export function FormEditorLeftPanel({
         middleParagraphActions,
         paragraphBodyOptions: mergedParagraphBodyOptions,
         structureLockedParagraphIds,
+        allowAddAfterStructureLockedParagraphs,
         hideDragHandleForParagraphIds,
         hideParagraphRequiredChrome,
         headingDescriptionExtraClassName,
@@ -385,6 +392,7 @@ export function FormEditorLeftPanel({
         middleParagraphActions={middleParagraphActions}
         paragraphBodyOptions={mergedParagraphBodyOptions}
         structureLockedParagraphIds={structureLockedParagraphIds}
+                    allowAddAfterStructureLockedParagraphs={allowAddAfterStructureLockedParagraphs}
         hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
         hideParagraphRequiredChrome={hideParagraphRequiredChrome}
         headingDescriptionExtraClassName={headingDescriptionExtraClassName}
@@ -420,6 +428,7 @@ export function FormEditorLeftPanel({
                 middleParagraphActions={middleParagraphActions}
                 paragraphBodyOptions={mergedParagraphBodyOptions}
                 structureLockedParagraphIds={structureLockedParagraphIds}
+                    allowAddAfterStructureLockedParagraphs={allowAddAfterStructureLockedParagraphs}
                 hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
                 hideParagraphRequiredChrome={hideParagraphRequiredChrome}
                 headingDescriptionExtraClassName={headingDescriptionExtraClassName}
@@ -449,6 +458,7 @@ export function FormEditorLeftPanel({
             middleParagraphActions={middleParagraphActions}
             paragraphBodyOptions={mergedParagraphBodyOptions}
             structureLockedParagraphIds={structureLockedParagraphIds}
+                    allowAddAfterStructureLockedParagraphs={allowAddAfterStructureLockedParagraphs}
             hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
             hideParagraphRequiredChrome={hideParagraphRequiredChrome}
             headingDescriptionExtraClassName={headingDescriptionExtraClassName}
@@ -476,6 +486,7 @@ export function FormEditorLeftPanel({
           middleParagraphActions={middleParagraphActions}
           paragraphBodyOptions={mergedParagraphBodyOptions}
           structureLockedParagraphIds={structureLockedParagraphIds}
+                    allowAddAfterStructureLockedParagraphs={allowAddAfterStructureLockedParagraphs}
           hideDragHandleForParagraphIds={hideDragHandleForParagraphIds}
           hideParagraphRequiredChrome={hideParagraphRequiredChrome}
           headingDescriptionExtraClassName={headingDescriptionExtraClassName}

@@ -63,6 +63,7 @@ export function UjatProgramApplicationFormVolunteerEditorLeftColumn({
       singleItemListActiveItemId={vm.singleItemListActiveItemId}
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
+      allowAddAfterStructureLockedParagraphs={vm.allowAddAfterStructureLockedParagraphs}
       paragraphBodyOptions={vm.leftPanelParagraphBodyOptions}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
