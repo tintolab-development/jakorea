@@ -230,14 +230,14 @@
   opacity: 0.6;
 }
 
-/* 단락 설명 — 값이 있으면 placeholder가 아니라 본문 설명 톤(미리보기 `.form-paragraph-section-description`) */
+/* 단락 설명 — 값이 있으면 본문색(검정) 풀 불투명 */
 .paragraph-input--view.paragraph-input--filled.paragraph-input--description:not(
     .paragraph-input--explanation-body
   )
   .paragraph-input__view-text {
   color: var(--paragraph-input-filled);
   -webkit-text-fill-color: var(--paragraph-input-filled);
-  opacity: 0.6;
+  opacity: 1;
 }
 
 .paragraph-input__placeholder {
@@ -354,7 +354,7 @@
   textarea.ant-input {
   color: var(--paragraph-input-filled) !important;
   -webkit-text-fill-color: var(--paragraph-input-filled);
-  opacity: 0.6 !important;
+  opacity: 1 !important;
 }
 
 /* 설명글_텍스트형 본문: edit에서 포커스 없어도 입력·placeholder 메트릭 20px/500/150% */
@@ -401,7 +401,7 @@
   textarea.ant-input {
   color: var(--paragraph-input-filled) !important;
   -webkit-text-fill-color: var(--paragraph-input-filled);
-  opacity: 0.6 !important;
+  opacity: 1 !important;
 }
 
 .paragraph-input--edit.paragraph-input--filled.paragraph-input--title .paragraph-input__leading {
@@ -413,7 +413,7 @@
   )
   .paragraph-input__leading {
   color: var(--paragraph-input-filled);
-  opacity: 0.6;
+  opacity: 1;
 }
 
 /*
@@ -466,7 +466,7 @@
   opacity: 0.6;
 }
 
-/* 입력값이 있을 때만 포커스·일반 모두 본문색(설명은 본문색 + 0.6, placeholder 회색과 구분) */
+/* 입력값이 있을 때만 포커스·일반 모두 본문색(검정, placeholder 회색과 구분) */
 .paragraph-input--edit.paragraph-input--filled.paragraph-input--title
   .paragraph-input__shell--focused
   .ant-input,
@@ -488,7 +488,7 @@
   textarea.ant-input {
   color: var(--paragraph-input-filled) !important;
   -webkit-text-fill-color: var(--paragraph-input-filled);
-  opacity: 0.6 !important;
+  opacity: 1 !important;
 }
 
 .paragraph-input--edit.paragraph-input--filled.paragraph-input--title
@@ -503,7 +503,7 @@
   .paragraph-input__row:has(.paragraph-input__shell--focused)
   .paragraph-input__leading {
   color: var(--paragraph-input-filled);
-  opacity: 0.6;
+  opacity: 1;
 }
 
 .paragraph-input:not(.paragraph-input--filled).paragraph-input--edit

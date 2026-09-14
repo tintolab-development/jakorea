@@ -19,13 +19,15 @@ export const UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS = new Set<string>(
 function createSeedHorizontalTable(
   id: string,
   paragraphTitle: string,
-  paragraphDescription: string
+  paragraphDescription: string,
+  options?: { required?: boolean }
 ): HorizontalTableParagraph {
+  const required = options?.required !== false
   return normalizeHorizontalTableParagraph({
     id,
     kind: 'single_item',
     variant: 'horizontal_table',
-    requiredMark: true,
+    requiredMark: required,
     paragraphTitle,
     paragraphDescription,
     participatesInTitleNumbering: true,
@@ -38,7 +40,7 @@ function createSeedHorizontalTable(
     showBottomText: false,
     showBottomConsent: false,
     bottomConsent: 'agree',
-    answerRequired: true,
+    answerRequired: required,
   })
 }
 
@@ -52,7 +54,8 @@ export function createUjatRecruitFormInstitutionDraft(): WritingFormDraft {
     createSeedHorizontalTable(
       UJAT_RECRUIT_FORM_INSTITUTION_IDS.detailInfo,
       '상세 정보',
-      '공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.'
+      '공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.',
+      { required: false }
     ),
   ]
   return normalizeWritingFormDraft({

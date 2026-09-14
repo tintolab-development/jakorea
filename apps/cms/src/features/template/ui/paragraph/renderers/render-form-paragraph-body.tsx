@@ -13,6 +13,11 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { AgreementAdminProxyConfirmBlock } from '@/features/template/ui/paragraph/explanation/agreement-admin-proxy-confirm-block'
 import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
+import {
+  getStructureLockedPartialLockedBodyColumnIndexes,
+  isStructureLockedPartialDisclaimerEdit,
+  isStructureLockedPartialTextParagraph,
+} from '@/features/template/lib/structure-locked-paragraph-hint'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
 import { StaticDescriptionLines } from '@/features/template/ui/paragraph/explanation/static-description-lines'
 import {
@@ -322,8 +327,8 @@ export function renderFormParagraphBody(
           isCardSelected={isCardSelected}
           isBodyInteractive={isBodyInteractive}
           paragraphInteractionMode={paragraphInteractionMode}
-          activeItemId={options?.singleItemListActiveItemId}
-          onSelectItem={options?.onSelectSingleItemListItem}
+          activeItemId={isBodyInteractive ? options?.singleItemListActiveItemId : null}
+          onSelectItem={isBodyInteractive ? options?.onSelectSingleItemListItem : undefined}
         />
       )
     }
@@ -386,7 +391,14 @@ export function renderFormParagraphBody(
         p as Extract<WritingFormParagraph, { variant: 'horizontal_table' }>
       )
       /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 동의서 fill은 양식 본문만 잠금.
-       * 텍스트형 셀 편집은 구조 미잠금(사용자 신규/복제)일 때만. 카탈로그 행정정보 구비서류 표는 고정. */
+       * 텍스트형 셀 편집은 구조 미잠금(사용자 신규/복제)일 때만. 카탈로그 행정정보 구비서류 표는 고정.
+       * 개인정보·제3자 시드: 구조 잠금이어도 일부 셀·하단 안내만 authoring 수정 허용. */
+      const structureLockedPartialTextEdit =
+        structureLocked &&
+        isStructureLockedPartialTextParagraph(hp.id) &&
+        paragraphInteractionMode === 'authoring' &&
+        !isPreviewReadonly &&
+        isParagraphSelected
       const isTextTableAuthoringEdit =
         hp.tableFlavor === 'text' &&
         paragraphInteractionMode === 'authoring' &&
@@ -394,6 +406,7 @@ export function renderFormParagraphBody(
         !structureLocked
       const isEditMode =
         isTextTableAuthoringEdit ||
+        structureLockedPartialTextEdit ||
         (!isPreviewReadonly &&
           (!structureLocked ||
             consentFillParagraphInteractive ||
@@ -408,12 +421,19 @@ export function renderFormParagraphBody(
         (hp.tableFlavor === 'field' ||
           hp.tableFlavor === 'text' ||
           isParagraphSelected)
+      const lockedBodyColumnIndexes = structureLockedPartialTextEdit
+        ? getStructureLockedPartialLockedBodyColumnIndexes(hp.id, hp.columnHeaders.length)
+        : undefined
       return (
         <HorizontalTableParagraphBody
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isEditMode}
           tableCanvasInteractive={tableCanvasInteractive}
+          lockedBodyColumnIndexes={lockedBodyColumnIndexes}
+          allowDisclaimerBottomTextEdit={
+            structureLockedPartialTextEdit && isStructureLockedPartialDisclaimerEdit(hp.id)
+          }
           bottomConsentPreviewInAuthoring={structureLockedConsentChoiceInteractive}
           consentFillMode={consentFillBodyReadOnly}
           tableRowSelection={options?.horizontalTableRowSelection}
@@ -609,7 +629,7 @@ export function renderFormParagraphBody(
           isCardSelected={isCardSelected}
           isBodyInteractive={isBodyInteractive}
           paragraphInteractionMode={paragraphInteractionMode}
-          activeItemId={options?.singleItemListActiveItemId}
+          activeItemId={isBodyInteractive ? options?.singleItemListActiveItemId : null}
           onSelectItem={isBodyInteractive ? options?.onSelectSingleItemListItem : undefined}
           readOnlyFilledItems={
             options?.agreementNoticeSubjectPrefilledReadOnly === true &&
@@ -625,7 +645,7 @@ export function renderFormParagraphBody(
           isCardSelected={isCardSelected}
           isBodyInteractive={isBodyInteractive}
           paragraphInteractionMode={paragraphInteractionMode}
-          activeItemId={options?.singleItemListActiveItemId}
+          activeItemId={isBodyInteractive ? options?.singleItemListActiveItemId : null}
           onSelectItem={isBodyInteractive ? options?.onSelectSingleItemListItem : undefined}
         />
       )
@@ -672,7 +692,8 @@ export function renderFormParagraphBody(
           : undefined
       const resolveItemDisplayLabel =
         options?.ujatProgramApplicationFormInstitution === true &&
-        isUjatProgramApplicationInstitutionSingleOptionMultipleChoiceSeed(p.id)
+        isUjatProgramApplicationInstitutionSingleOptionMultipleChoiceSeed(p.id) &&
+        paragraphInteractionMode !== 'authoring'
           ? (item: { id: string; label: string }) =>
               resolveUjatInstitutionSubmitConfirmationItemLabel(item.label)
           : ujatVolunteerRecruitCohort &&
@@ -684,9 +705,9 @@ export function renderFormParagraphBody(
                   ujatVolunteerRecruitCohort
                 )
             : undefined
-      const suppressMcItemsEditor = isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(
-        p.id
-      )
+      const suppressMcItemsEditor =
+        structureLocked ||
+        isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(p.id)
       const usesMcItemsFocus =
         !suppressMcItemsEditor && options?.onSelectSingleItemListItem != null
       const itemsEditActive = suppressMcItemsEditor

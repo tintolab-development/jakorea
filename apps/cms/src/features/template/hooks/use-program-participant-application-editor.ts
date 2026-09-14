@@ -93,6 +93,7 @@ import {
 } from '@/features/template/model/program-application-form-economy-draft'
 import {
   createProgramApplicationFormTrainedTeachersDraft,
+  migrateProgramApplicationFormTrainedTeachersParagraphs,
   PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-trained-teachers-draft'
 import {
@@ -580,6 +581,8 @@ export function useProgramParticipantApplicationEditor(
               ? migrateGeminiVisitingTrainingApplicationInstitutionParagraphs(next)
               : variant === 'economy-application-institution'
                 ? migrateProgramApplicationFormEconomyParagraphs(next)
+                : variant === 'trained-teachers-application-institution'
+                  ? migrateProgramApplicationFormTrainedTeachersParagraphs(next)
                 : variant === 'institution'
                   ? migrateProgramApplicationFormInstitutionParagraphs(next)
                   : variant === 'instructor'
@@ -947,6 +950,7 @@ export function useProgramParticipantApplicationEditor(
       variant === 'instructor'
         ? {
             enabled: true as const,
+            isTemplateAuthoringMode: !programLinkedPreview,
             ...(instructorScheduleSlots ? { scheduleSlots: instructorScheduleSlots } : {}),
             ...(instructorHideScheduleCalendar
               ? { hideScheduleCalendar: true as const }
@@ -1118,11 +1122,19 @@ export function useProgramParticipantApplicationEditor(
             isTemplateAuthoringMode: !programLinkedPreview,
           })
         }
+        if (variant === 'instructor') {
+          return resolveGeneralApplicationFormHiddenParagraphIds('instructor', {
+            program: linkedProgram,
+            paragraphs: draft.paragraphs,
+            isTemplateAuthoringMode: !programLinkedPreview,
+          })
+        }
         if (linkedProgram != null) {
           return resolveGeneralApplicationFormHiddenParagraphIds(variant, {
             program: linkedProgram,
             paragraphs: draft.paragraphs,
             institutionBridge: institutionApplicationBridge,
+            isTemplateAuthoringMode: !programLinkedPreview,
           })
         }
         if (variant === 'volunteer') return volunteerApplicationHiddenParagraphIds
@@ -1178,6 +1190,7 @@ export function useProgramParticipantApplicationEditor(
       economyApplicationHiddenParagraphIds,
       individualApplicationHiddenParagraphIds,
       institutionApplicationBridge,
+      institutionApplicationFormVisibilityVersion,
       institutionApplicationHiddenParagraphIds,
       linkedProgram,
       programApplicationFormInstructorOptions,

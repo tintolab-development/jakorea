@@ -8,7 +8,7 @@
 
 export type RecipientCandidatesParams = {
 /**
- * 대상 프로그램 id. 미전달 시 전체 활성 회원 후보.
+ * 대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.
  */
 programId?: number;
 /**

@@ -12016,10 +12016,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -15832,7 +15832,7 @@
           "programId": {
             "type": "integer",
             "format": "int64",
-            "description": "대상 프로그램. 미전달(발송 UI 미선택/지정 해제)이면 program 스코프 enrich 불가.\nrequiresProgram 변수 포함 템플릿은 NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES.\nMEMBER/ADMIN 수신자는 불가(DIRECT만). FE는 문자열 all을 보내지 않음(필드 생략).\n"
+            "description": "대상 프로그램. 미전달(발송 UI 미선택/지정 해제)이면 program 스코프 enrich 불가.\nrequiresProgram 변수 포함 템플릿은 NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES.\nMEMBER(전체회원 팝업)와 DIRECT는 허용, ADMIN 수신자는 프로그램 필수.\nFE는 문자열 all을 보내지 않음(필드 생략).\n"
           },
           "scheduledAt": {
             "type": "string",
@@ -18137,15 +18137,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessYear": {
-            "type": "integer",
-            "format": "int32"
+          "businessStartDate": {
+            "type": "string"
           },
           "businessEndDate": {
             "type": "string"
           },
-          "businessStartDate": {
-            "type": "string"
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -33456,7 +33456,7 @@
           },
           "enabled": {
             "type": "boolean",
-            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 항상 false. true여도 원천 데이터 없으면 발송 실패 가능"
+            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich)"
           },
           "programGroups": {
             "type": "array",
@@ -33500,6 +33500,10 @@
             "items": {
               "$ref": "#/components/schemas/NotificationCatalogCategory"
             }
+          },
+          "systemManualSendQaEnabled": {
+            "type": "boolean",
+            "description": "TEMP local QA: SYSTEM 자동발송 변수 수동 피커/발송 허용 여부. true일 때만 배너 표시. 되돌리기: ja.notification.qa.system-manual-send-enabled=false"
           }
         }
       },

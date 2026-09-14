@@ -95,7 +95,11 @@ export function shouldShowInstructorApplicationCrimeRecordParagraph(): boolean {
   return sexOffenseConsentSiteSubmission === 'online'
 }
 
-export function getInstructorApplicationFormHiddenParagraphIds(): ReadonlySet<string> | undefined {
+export function getInstructorApplicationFormHiddenParagraphIds(options?: {
+  /** 템플릿 작성 화면 — 성범죄 단락 기본 노출(기관 선택과 무관) */
+  isTemplateAuthoringMode?: boolean
+}): ReadonlySet<string> | undefined {
+  if (options?.isTemplateAuthoringMode === true) return undefined
   if (shouldShowInstructorApplicationCrimeRecordParagraph()) return undefined
   return new Set([PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.crimeRecord])
 }

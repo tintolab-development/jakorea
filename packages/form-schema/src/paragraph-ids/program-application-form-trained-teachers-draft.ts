@@ -71,7 +71,7 @@ function createTrainedTeachersPersonalInfoHorizontalTable(): HorizontalTablePara
 function createTrainedTeachersThirdPartyHorizontalTable(): HorizontalTableParagraph {
   const colCount = 4
   const columnFields = [
-    { kind: 'subjective' as const, placeholder: '제공받는 곳을 입력해 주세요' },
+    { kind: 'text' as const, placeholder: '제공받는 곳을 입력해 주세요' },
     { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
     { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
     { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
@@ -157,4 +157,52 @@ export function createProgramApplicationFormTrainedTeachersDraft(): WritingFormD
     formSettings: { titleNumbering: 'none' },
     paragraphs,
   })
+}
+
+/** 「제공받는 곳」 주관식→텍스트 정규화 */
+function migrateTrainedTeachersThirdPartyProviderColumn(
+  paragraph: HorizontalTableParagraph
+): HorizontalTableParagraph {
+  const columnFields = paragraph.columnFields ?? []
+  const firstField = columnFields[0]
+  const needsFieldKind = firstField != null && firstField.kind === 'subjective'
+  const fieldDataRows = (paragraph.fieldDataRows ?? []).map(cells =>
+    cells.map(cell => ({ ...cell }))
+  )
+  const firstCell = fieldDataRows[0]?.[0]
+  const needsCellKind = firstCell?.kind === 'subjective'
+  if (!needsFieldKind && !needsCellKind) return paragraph
+
+  const nextColumnFields = columnFields.map((field, idx) => {
+    if (idx !== 0 || field.kind !== 'subjective') return field
+    return {
+      kind: 'text' as const,
+      placeholder: field.placeholder || '제공받는 곳을 입력해 주세요',
+    }
+  })
+  if (needsCellKind && firstCell != null && fieldDataRows[0]) {
+    const value = 'value' in firstCell ? firstCell.value : ''
+    fieldDataRows[0][0] = { kind: 'text', value }
+  }
+  return { ...paragraph, columnFields: nextColumnFields, fieldDataRows }
+}
+
+/** 구 시드 보정 */
+export function migrateProgramApplicationFormTrainedTeachersParagraphs(
+  draft: WritingFormDraft
+): WritingFormDraft {
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (
+      paragraph.id !== PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.thirdPartyConsent ||
+      paragraph.kind !== 'single_item' ||
+      paragraph.variant !== 'horizontal_table'
+    ) {
+      return paragraph
+    }
+    const next = migrateTrainedTeachersThirdPartyProviderColumn(paragraph)
+    if (next !== paragraph) changed = true
+    return next
+  })
+  return changed ? { ...draft, paragraphs } : draft
 }

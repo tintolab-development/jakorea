@@ -2371,6 +2371,28 @@ function migratePaymentStatementPreConsentSeedRequiredMarks(
   return { ...p, requiredMark: true }
 }
 
+/** 모집 양식 공통 — 「상세 정보」시드 단락은 필수 입력 아님 */
+const RECRUIT_FORM_DETAIL_INFO_SEED_IDS = new Set<string>([
+  'recruit-form-volunteer-seed-detail-info',
+  'applicant-recruit-institution-seed-detail-info',
+  'applicant-recruit-individual-seed-detail-info',
+  'recruit-form-instructor-seed-detail-info',
+  'trained-teachers-recruit-institution-seed-detail-info',
+  'gemini-vt-recruit-seed-detail-info',
+  'economy-recruit-institution-seed-detail-info',
+  'ujat-recruit-institution-seed-detail-info',
+  'ujat-recruit-form-volunteer-seed-detail-info',
+])
+
+function migrateRecruitFormDetailInfoOptionalRequired(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (!RECRUIT_FORM_DETAIL_INFO_SEED_IDS.has(p.id)) return p
+  if (p.kind !== 'single_item') return p
+  if (p.requiredMark === false && p.answerRequired === false) return p
+  return { ...p, requiredMark: false, answerRequired: false }
+}
+
 /**
  * 행정정보 공동이용 사전동의서 — 「대상자 본인」만 필수.
  * 제목형(survey_title_with_period)은 타입상 requiredMark 고정.
@@ -2773,6 +2795,7 @@ function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormPara
   next = migrateAgreementPortraitSeedFixedCopy(next)
   next = migrateAgreementPortraitSeedRequiredMarks(next)
   next = migratePaymentStatementPreConsentSeedRequiredMarks(next)
+  next = migrateRecruitFormDetailInfoOptionalRequired(next)
   next = migrateAgreementNoticeSeedRequiredMarks(next)
   next = migrateAgreementNoticeTableSeedRows(next)
   next = migrateAgreementNoticeSeedFixedCopy(next)
@@ -3973,7 +3996,7 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         periodMode: 'immediate',
         startAt: null,
         endAt: null,
-        showWritingPeriodOnForm: false,
+        showWritingPeriodOnForm: true,
       },
       {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.user,

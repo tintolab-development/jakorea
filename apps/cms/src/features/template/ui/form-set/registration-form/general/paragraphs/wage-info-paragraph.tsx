@@ -1,8 +1,7 @@
-import { useMemo } from 'react'
 import {
-  getProgramWagePaymentItemOptions,
   normalizeProgramPaymentItemSelection,
   resolveProgramWageDeductionLabel,
+  useProgramWagePaymentItemOptions,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -34,7 +33,7 @@ export function ProgramRegistrationWageInfoParagraph() {
     null
   )
 
-  const paymentItemOptions = useMemo(() => getProgramWagePaymentItemOptions(), [])
+  const paymentItemOptions = useProgramWagePaymentItemOptions()
   const deductionLabel = resolveProgramWageDeductionLabel(paymentItemValues)
   const gradeFees = [
     { row: WAGE_GRADE_ROWS[0], value: grade1Fee, setValue: setGrade1Fee },

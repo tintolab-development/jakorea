@@ -1,15 +1,34 @@
-import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
+import { useMemo } from 'react'
+import type { SettlementItemSettingSection } from '@/data/mock/settlement-item-settings'
+import {
+  getTemplateRegistrationPaymentItemOptions,
+  useTemplateRegistrationPaymentItemOptions,
+} from '@/features/template/lib/template-registration-payment-item-options'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 
 export const PROGRAM_WAGE_PAYMENT_ITEM_NONE_VALUE = '__payment_none__' as const
 export const PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL = '해당없음' as const
 export const PROGRAM_WAGE_DEDUCTION_LABEL = '일용근로자 원천징수세액' as const
 
-export function getProgramWagePaymentItemOptions(): CmsSelectMultipleOption[] {
+export function getProgramWagePaymentItemOptions(
+  sections?: readonly SettlementItemSettingSection[]
+): CmsSelectMultipleOption[] {
   return [
-    ...getTemplateRegistrationPaymentItemOptions(),
+    ...getTemplateRegistrationPaymentItemOptions(sections),
     { value: PROGRAM_WAGE_PAYMENT_ITEM_NONE_VALUE, label: PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL },
   ]
+}
+
+/** 정산 항목 설정(지급) 목록 + 「해당없음」 — 등록·상세 편집 UI용 */
+export function useProgramWagePaymentItemOptions(): CmsSelectMultipleOption[] {
+  const paymentOptions = useTemplateRegistrationPaymentItemOptions()
+  return useMemo(
+    () => [
+      ...paymentOptions,
+      { value: PROGRAM_WAGE_PAYMENT_ITEM_NONE_VALUE, label: PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL },
+    ],
+    [paymentOptions]
+  )
 }
 
 export function isProgramPaymentNoneOnly(ids: string[] | undefined): boolean {
@@ -25,10 +44,13 @@ export function resolveProgramWageDeductionLabel(paymentItemIds: string[] | unde
   return PROGRAM_WAGE_DEDUCTION_LABEL
 }
 
-export function programPaymentItemLabelsFromIds(ids: string[] | undefined): string {
+export function programPaymentItemLabelsFromIds(
+  ids: string[] | undefined,
+  sections?: readonly SettlementItemSettingSection[]
+): string {
   if (!ids?.length) return ''
   if (isProgramPaymentNoneOnly(ids)) return PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
-  const options = getProgramWagePaymentItemOptions()
+  const options = getProgramWagePaymentItemOptions(sections)
   return ids
     .map(id => options.find(o => o.value === id)?.label)
     .filter(Boolean)
@@ -36,7 +58,8 @@ export function programPaymentItemLabelsFromIds(ids: string[] | undefined): stri
 }
 
 export function resolveProgramPaymentItemIdsFromLabels(
-  paymentItems: string | undefined
+  paymentItems: string | undefined,
+  sections?: readonly SettlementItemSettingSection[]
 ): string[] {
   if (!paymentItems?.trim()) return []
   if (
@@ -45,7 +68,7 @@ export function resolveProgramPaymentItemIdsFromLabels(
   ) {
     return [PROGRAM_WAGE_PAYMENT_ITEM_NONE_VALUE]
   }
-  const options = getProgramWagePaymentItemOptions()
+  const options = getProgramWagePaymentItemOptions(sections)
   return paymentItems
     .split(',')
     .map(s => s.trim())

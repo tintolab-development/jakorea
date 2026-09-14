@@ -50334,7 +50334,7 @@
           {
             "name": "programId",
             "in": "query",
-            "description": "대상 프로그램 id. 미전달 시 전체 활성 회원 후보(MEMBER). 전달 시 프로그램 참여 회원.",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
             "required": false,
             "schema": {
               "type": "integer",
@@ -67323,10 +67323,10 @@
             "maxLength": 120,
             "minLength": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -71139,7 +71139,7 @@
           "programId": {
             "type": "integer",
             "format": "int64",
-            "description": "대상 프로그램. 미전달(발송 UI 미선택/지정 해제)이면 program 스코프 enrich 불가.\nrequiresProgram 변수 포함 템플릿은 NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES.\nMEMBER/ADMIN 수신자는 불가(DIRECT만). FE는 문자열 all을 보내지 않음(필드 생략).\n"
+            "description": "대상 프로그램. 미전달(발송 UI 미선택/지정 해제)이면 program 스코프 enrich 불가.\nrequiresProgram 변수 포함 템플릿은 NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES.\nMEMBER(전체회원 팝업)와 DIRECT는 허용, ADMIN 수신자는 프로그램 필수.\nFE는 문자열 all을 보내지 않음(필드 생략).\n"
           },
           "scheduledAt": {
             "type": "string",
@@ -73444,15 +73444,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessYear": {
-            "type": "integer",
-            "format": "int32"
+          "businessStartDate": {
+            "type": "string"
           },
           "businessEndDate": {
             "type": "string"
           },
-          "businessStartDate": {
-            "type": "string"
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

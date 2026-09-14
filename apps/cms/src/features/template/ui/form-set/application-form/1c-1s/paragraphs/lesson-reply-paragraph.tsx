@@ -43,8 +43,7 @@ export function EconomyProgramApplicationLessonReplyParagraph({
   const resolvedSponsorId =
     resolveUsableSponsorId(sponsorId) ?? resolveUsableSponsorId(registrationSponsorId)
   const sponsorNameFromId = useSponsorNameById(resolvedSponsorId, Boolean(resolvedSponsorId))
-  const linkedSponsorName =
-    sponsorDisplayName?.trim() || sponsorNameFromId?.trim() || undefined
+  const linkedSponsorName = sponsorDisplayName?.trim() || sponsorNameFromId?.trim() || undefined
   const partnerRadioLabel = isTemplateAuthoringMode
     ? PARTNER_RADIO_FALLBACK_LABEL
     : linkedSponsorName || PARTNER_RADIO_USER_WRITE_HINT
@@ -74,20 +73,13 @@ export function EconomyProgramApplicationLessonReplyParagraph({
             <CmsRadio value="none" />
             <span className="multiple-choice-row__label">미결연</span>
           </div>
-          <div
-            className="multiple-choice-row"
-            style={{ alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
-          >
+          <div className="multiple-choice-row" style={{ alignItems: 'center' }}>
             <CmsRadio value="custom" />
-            <span className="multiple-choice-row__label" style={{ flexShrink: 0 }}>
-              기타
-            </span>
             <CmsInput
-              inputSize="small"
+              inputSize="large"
               width={200}
               placeholder="기타"
               disabled={!isCustomCompanyType}
-              style={{ flexShrink: 0, marginLeft: 4 }}
               value={customCompanyName}
               onChange={e => setCustomCompanyName(e.target.value)}
             />

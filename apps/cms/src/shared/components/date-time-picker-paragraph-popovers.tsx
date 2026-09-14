@@ -182,7 +182,13 @@ export function ParagraphDatePickerPopover({
                   tabIndex={0}
                 >
                   <span className="date-time-picker-popover__field-label">시작일</span>
-                  <div className="date-time-picker-popover__datetime-row">
+                  <div
+                    className={
+                      timeOn
+                        ? 'date-time-picker-popover__datetime-stack'
+                        : 'date-time-picker-popover__datetime-row'
+                    }
+                  >
                     <CmsInput
                       className={cn(
                         'date-time-picker-popover__input',
@@ -191,28 +197,24 @@ export function ParagraphDatePickerPopover({
                       width="100%"
                       inputSize="large"
                       readOnly
+                      allowClear={false}
                       tabIndex={-1}
                       value={formatAppDatepickerDisplay(rangeStart)}
                       aria-label="시작일"
                     />
                     {timeOn ? (
-                      <>
-                        <span className="date-time-picker-popover__date-time-sep" aria-hidden>
-                          |
-                        </span>
-                        <DateTimePickerTimeInlineSelects
-                          hour={startHour}
-                          minute={startMinute}
-                          meridiem={startMer}
-                          onHourChange={onStartHourChange}
-                          onMinuteChange={onStartMinuteChange}
-                          onMeridiemChange={onStartMerChange}
-                          getPopupContainer={() => popoverRef.current ?? document.body}
-                          disabled={disabled}
-                          hourActive={rangeFocus === 'start'}
-                          rowPhase="start"
-                        />
-                      </>
+                      <DateTimePickerTimeInlineSelects
+                        hour={startHour}
+                        minute={startMinute}
+                        meridiem={startMer}
+                        onHourChange={onStartHourChange}
+                        onMinuteChange={onStartMinuteChange}
+                        onMeridiemChange={onStartMerChange}
+                        getPopupContainer={() => popoverRef.current ?? document.body}
+                        disabled={disabled}
+                        hourActive={rangeFocus === 'start'}
+                        rowPhase="start"
+                      />
                     ) : null}
                   </div>
                 </div>
@@ -229,7 +231,13 @@ export function ParagraphDatePickerPopover({
                   tabIndex={0}
                 >
                   <span className="date-time-picker-popover__field-label">종료일</span>
-                  <div className="date-time-picker-popover__datetime-row">
+                  <div
+                    className={
+                      timeOn
+                        ? 'date-time-picker-popover__datetime-stack'
+                        : 'date-time-picker-popover__datetime-row'
+                    }
+                  >
                     <CmsInput
                       className={cn(
                         'date-time-picker-popover__input',
@@ -238,64 +246,65 @@ export function ParagraphDatePickerPopover({
                       width="100%"
                       inputSize="large"
                       readOnly
+                      allowClear={false}
                       tabIndex={-1}
                       value={formatAppDatepickerDisplay(rangeEnd)}
                       aria-label="종료일"
                     />
                     {timeOn ? (
-                      <>
-                        <span className="date-time-picker-popover__date-time-sep" aria-hidden>
-                          |
-                        </span>
-                        <DateTimePickerTimeInlineSelects
-                          hour={endHour}
-                          minute={endMinute}
-                          meridiem={endMer}
-                          onHourChange={onEndHourChange}
-                          onMinuteChange={onEndMinuteChange}
-                          onMeridiemChange={onEndMerChange}
-                          getPopupContainer={() => popoverRef.current ?? document.body}
-                          disabled={disabled}
-                          hourActive={rangeFocus === 'end'}
-                          invalid={invalidTimeRange}
-                          rowPhase="end"
-                        />
-                      </>
+                      <DateTimePickerTimeInlineSelects
+                        hour={endHour}
+                        minute={endMinute}
+                        meridiem={endMer}
+                        onHourChange={onEndHourChange}
+                        onMinuteChange={onEndMinuteChange}
+                        onMeridiemChange={onEndMerChange}
+                        getPopupContainer={() => popoverRef.current ?? document.body}
+                        disabled={disabled}
+                        hourActive={rangeFocus === 'end'}
+                        invalid={invalidTimeRange}
+                        rowPhase="end"
+                      />
                     ) : null}
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className="date-time-picker-popover__datetime-row date-time-picker-popover__datetime-row--single">
+            ) : timeOn ? (
+              <div className="date-time-picker-popover__datetime-stack">
                 <CmsInput
                   className="date-time-picker-popover__input date-time-picker-popover__input--active"
                   width="100%"
                   inputSize="large"
                   readOnly
+                  allowClear={false}
                   tabIndex={-1}
                   value={formatAppDatepickerDisplay(draft)}
                   aria-label="선택한 날짜"
                 />
-                {timeOn ? (
-                  <>
-                    <span className="date-time-picker-popover__date-time-sep" aria-hidden>
-                      |
-                    </span>
-                    <DateTimePickerTimeInlineSelects
-                      hour={singleHour}
-                      minute={singleMinute}
-                      meridiem={singleMer}
-                      onHourChange={onSingleHourChange}
-                      onMinuteChange={onSingleMinuteChange}
-                      onMeridiemChange={onSingleMerChange}
-                      getPopupContainer={() => popoverRef.current ?? document.body}
-                      disabled={disabled}
-                      hourActive
-                      rowPhase="single"
-                    />
-                  </>
-                ) : null}
+                <DateTimePickerTimeInlineSelects
+                  hour={singleHour}
+                  minute={singleMinute}
+                  meridiem={singleMer}
+                  onHourChange={onSingleHourChange}
+                  onMinuteChange={onSingleMinuteChange}
+                  onMeridiemChange={onSingleMerChange}
+                  getPopupContainer={() => popoverRef.current ?? document.body}
+                  disabled={disabled}
+                  hourActive
+                  rowPhase="single"
+                />
               </div>
+            ) : (
+              <CmsInput
+                className="date-time-picker-popover__input date-time-picker-popover__input--active"
+                width="100%"
+                inputSize="large"
+                readOnly
+                allowClear={false}
+                tabIndex={-1}
+                value={formatAppDatepickerDisplay(draft)}
+                aria-label="선택한 날짜"
+              />
             )}
             {invalidTimeRange ? (
               <div className="date-time-picker-popover__time-error" role="alert">

@@ -241,6 +241,8 @@ function FieldTableBodyCell({
   ph,
   onFieldChange,
   onSelectBodyRow,
+  /** 시스템 설정·텍스트 가로형 형태 — 파란 테두리 `TextCellInput` */
+  borderedTextCell = false,
 }: {
   field: HorizontalTableColumnField
   cell: HorizontalTableFieldCellValue
@@ -250,6 +252,7 @@ function FieldTableBodyCell({
   ph: string
   onFieldChange: (v: HorizontalTableFieldCellValue) => void
   onSelectBodyRow: () => void
+  borderedTextCell?: boolean
 }) {
   if (!isEditMode) {
     const text = fieldCellValueToPlainText(rehomeForDisplay(field, cell))
@@ -258,6 +261,17 @@ function FieldTableBodyCell({
 
   if (field.kind === 'text') {
     const textValue = cell.kind === 'text' || cell.kind === 'subjective' ? cell.value : ''
+    if (borderedTextCell) {
+      return (
+        <TextCellInput
+          variant="body"
+          value={textValue}
+          placeholder={ph}
+          onChange={value => onFieldChange({ kind: 'text', value })}
+          onFocus={onSelectBodyRow}
+        />
+      )
+    }
     return (
       <DeferredBorderlessTextArea
         className="form-editor-horizontal-table__cell-textarea"
@@ -414,6 +428,10 @@ export function HorizontalTableParagraphBody({
   isEditMode,
   /** false: 구조 잠금·작성 모드 등 — 격자 클릭·행 선택·셀 포커스·편집 비활성 */
   tableCanvasInteractive = true,
+  /** 구조 잠금 partial — 본문 열 중 수정 불가(보유기간 등) */
+  lockedBodyColumnIndexes,
+  /** 구조 잠금 partial — 개인정보 하단 안내도 ParagraphInput으로 수정 */
+  allowDisclaimerBottomTextEdit = false,
   /** 구조 잠금 작성 중에도 하단 동의 라디오만 조작 가능 */
   bottomConsentPreviewInAuthoring = false,
   /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
@@ -460,6 +478,8 @@ export function HorizontalTableParagraphBody({
   onChange: (next: HorizontalTableParagraph) => void
   isEditMode: boolean
   tableCanvasInteractive?: boolean
+  lockedBodyColumnIndexes?: ReadonlySet<number>
+  allowDisclaimerBottomTextEdit?: boolean
   bottomConsentPreviewInAuthoring?: boolean
   /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
   consentFillMode?: boolean
@@ -855,7 +875,26 @@ export function HorizontalTableParagraphBody({
   const canvasInteractive = tableCanvasInteractive
   /** 셀·하단 동의 입력은 `isEditMode`, 격자 행 선택·민트 강조는 `canvasInteractive`로 분리 */
   const effectiveEditMode = isEditMode
+  /** partial 잠금: 헤더(열 제목)는 고정, 본문만 열 단위로 열림 */
+  const headerEditMode = effectiveEditMode && lockedBodyColumnIndexes == null
+  const isBodyColumnEditable = (colIdx: number) =>
+    effectiveEditMode && !(lockedBodyColumnIndexes?.has(colIdx) ?? false)
+  /** 시스템 설정 단락 — 텍스트 가로형과 동일한 파란 테두리 셀 인풋 */
+  const useSystemSettingsTextCellInput = lockedBodyColumnIndexes != null
+  /** 시스템 설정 partial — 행 선택 없이 클릭한 셀만 테두리 인풋 활성화 (text·구시드 subjective 포함) */
+  const activateSystemSettingsBodyCell = (rowIdx: number, colIdx: number) => {
+    if (!useSystemSettingsTextCellInput || !isBodyColumnEditable(colIdx)) return
+    const field = getEffectiveHorizontalCellField(p, rowIdx, colIdx)
+    if (field.kind !== 'text' && field.kind !== 'subjective') return
+    const target = { area: 'body' as const, row: rowIdx, col: colIdx }
+    if (isTextCellEditing(target)) return
+    setTextEditCell(target)
+  }
   const bottomConsentInteractive = effectiveEditMode || bottomConsentPreviewInAuthoring
+  const bottomTextEditable =
+    (canvasInteractive || allowDisclaimerBottomTextEdit) &&
+    (allowDisclaimerBottomTextEdit ||
+      !PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS.has(p.id))
 
   const isAgreementNoticeTable = p.id === 'agreement-notice-table'
   const isAgreementPortraitTable =
@@ -882,6 +921,9 @@ export function HorizontalTableParagraphBody({
         canvasInteractive ? 'form-editor-horizontal-table-wrap--canvas-interactive' : '',
         isTextTable && effectiveEditMode
           ? 'form-editor-horizontal-table-wrap--text-canvas-edit'
+          : '',
+        useSystemSettingsTextCellInput && effectiveEditMode
+          ? 'form-editor-horizontal-table-wrap--system-settings-text-edit'
           : '',
         isPaymentStatementPreConsentP1
           ? 'form-editor-horizontal-table-wrap--payment-pre-consent-p1'
@@ -932,7 +974,7 @@ export function HorizontalTableParagraphBody({
                     : undefined
                 }
               >
-                {effectiveEditMode && !headerFieldLocked ? (
+                {headerEditMode && !headerFieldLocked ? (
                   isTextTable ? (
                     isTextCellEditing({ area: 'header', col: i }) ? (
                       <TextCellInput
@@ -990,6 +1032,7 @@ export function HorizontalTableParagraphBody({
             aria-selected={canvasInteractive && isBodyRowSelected(rowIdx)}
           >
             {Array.from({ length: colCount }, (_, colIdx) => {
+              const bodyColumnEditable = isBodyColumnEditable(colIdx)
               if (!isField) {
                 const cell = cells[colIdx] ?? ''
                 const ph = suppressPlaceholderText ? '' : tableCellPlaceholder(colIdx, rowIdx)
@@ -1012,7 +1055,7 @@ export function HorizontalTableParagraphBody({
                         : undefined
                     }
                   >
-                    {effectiveEditMode ? (
+                    {bodyColumnEditable ? (
                       isTextTable ? (
                         isTextCellEditing({ area: 'body', row: rowIdx, col: colIdx }) ? (
                           <TextCellInput
@@ -1062,17 +1105,26 @@ export function HorizontalTableParagraphBody({
                 ? ''
                 : fieldNonEditCellPlaceholder(field, colIdx, rowIdx)
               const isChoiceField = field.kind === 'single' || field.kind === 'multiple'
-              const isSubjectiveField = field.kind === 'subjective'
+              /** partial 잠금(개인정보·제3자): 구시드 주관식도 TextCellInput과 동일 경로 */
+              const usePartialLockTextCellInput =
+                useSystemSettingsTextCellInput &&
+                bodyColumnEditable &&
+                (field.kind === 'text' || field.kind === 'subjective')
+              const isSubjectiveField = field.kind === 'subjective' && !usePartialLockTextCellInput
+              const fieldPlainText = fieldCellValueToPlainText(rehomeForDisplay(field, cell))
+              const systemSettingsTextEditing =
+                usePartialLockTextCellInput &&
+                isTextCellEditing({ area: 'body', row: rowIdx, col: colIdx })
               return (
                 <div
                   key={`cf-${rowIdx}-${colIdx}`}
                   className={[
                     'form-editor-horizontal-table__td',
                     'form-editor-horizontal-table__td--field',
-                    effectiveEditMode &&
+                    bodyColumnEditable &&
                       isChoiceField &&
                       'form-editor-horizontal-table__td--field-choices',
-                    effectiveEditMode &&
+                    bodyColumnEditable &&
                       isSubjectiveField &&
                       'form-editor-horizontal-table__td--field-subjective',
                   ]
@@ -1081,15 +1133,49 @@ export function HorizontalTableParagraphBody({
                   role="gridcell"
                   aria-selected={false}
                   onClick={
-                    canvasInteractive
+                    usePartialLockTextCellInput
                       ? e => {
                           if (isEventFromTableInteractive(e.target)) return
-                          toggleBodyCellSelection(rowIdx, colIdx)
+                          activateSystemSettingsBodyCell(rowIdx, colIdx)
                         }
-                      : undefined
+                      : canvasInteractive
+                        ? e => {
+                            if (isEventFromTableInteractive(e.target)) return
+                            toggleBodyCellSelection(rowIdx, colIdx)
+                          }
+                        : undefined
                   }
                 >
-                  {effectiveEditMode ? (
+                  {bodyColumnEditable ? (
+                    usePartialLockTextCellInput ? (
+                      systemSettingsTextEditing ? (
+                        <TextCellInput
+                          variant="body"
+                          autoFocus
+                          value={
+                            cell.kind === 'text' || cell.kind === 'subjective' ? cell.value : ''
+                          }
+                          placeholder={ph}
+                          onChange={value =>
+                            onChange(
+                              horizontalTableSetFieldCellValue(p, rowIdx, colIdx, {
+                                kind: 'text',
+                                value,
+                              })
+                            )
+                          }
+                          onBlur={deactivateTextCellOnBlur}
+                        />
+                      ) : (
+                        <div className="form-editor-horizontal-table__cell-text-hit">
+                          <HorizontalTableCellText
+                            value={fieldPlainText}
+                            placeholder={ph}
+                            variant="body"
+                          />
+                        </div>
+                      )
+                    ) : (
                     <div
                       className={[
                         'form-editor-horizontal-table__cell-input-shell',
@@ -1108,7 +1194,7 @@ export function HorizontalTableParagraphBody({
                         cell={cell}
                         rowIdx={rowIdx}
                         colIdx={colIdx}
-                        isEditMode={effectiveEditMode}
+                        isEditMode={bodyColumnEditable}
                         ph={ph}
                         onFieldChange={v =>
                           onChange(horizontalTableSetFieldCellValue(p, rowIdx, colIdx, v))
@@ -1116,9 +1202,10 @@ export function HorizontalTableParagraphBody({
                         onSelectBodyRow={() => focusBodyCell(rowIdx, colIdx)}
                       />
                     </div>
+                    )
                   ) : (
                     <HorizontalTableCellText
-                      value={fieldCellValueToPlainText(rehomeForDisplay(field, cell))}
+                      value={fieldPlainText}
                       placeholder={ph}
                       variant="body"
                     />
@@ -1133,14 +1220,14 @@ export function HorizontalTableParagraphBody({
       {p.showBottomText || p.showBottomConsent || p.idTypeWithInput ? (
         <div className="form-editor-horizontal-table__bottom">
           {p.showBottomText ? (
-            /* 작성(authoring)·구조 미잠금에서만 하단 설명 편집. write/미리보기·시드 고정 단락은 검정 고정 노출 */
-            canvasInteractive &&
-            !PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS.has(p.id) ? (
+            /* 작성(authoring)·구조 미잠금에서만 하단 설명 편집. write/미리보기·시드 고정 단락은 검정 고정 노출.
+             * 개인정보·제3자 partial 잠금 본문은 단락 전용 ParagraphInput(민트 밑줄). */
+            bottomTextEditable ? (
               <ParagraphInput
                 type="description"
                 className="form-editor-horizontal-table__bottom-input"
                 value={p.bottomText}
-                isEditMode={effectiveEditMode}
+                isEditMode={effectiveEditMode || allowDisclaimerBottomTextEdit}
                 onChange={next => onChange({ ...p, bottomText: next })}
                 placeholder="설명을 입력해 주세요"
               />

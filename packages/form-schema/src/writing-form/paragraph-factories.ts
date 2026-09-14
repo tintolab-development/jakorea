@@ -187,7 +187,7 @@ export function createDescriptionTitleDefault(id: string): WritingFormParagraph 
     startAt: null,
     endAt: null,
     endPeriodPresetLabel: null,
-    showWritingPeriodOnForm: false,
+    showWritingPeriodOnForm: true,
   }
 }
 

@@ -55,13 +55,22 @@ function ShortEssayItemBody({
   return (
     <ParagraphLabelInput
       label={itemLabel}
-      className={isActive ? 'short-essay-item--active' : undefined}
+      className={
+        [
+          isActive ? 'short-essay-item--active' : '',
+          !isBodyInteractive ? 'short-essay-item--non-interactive' : '',
+        ]
+          .filter(Boolean)
+          .join(' ') || undefined
+      }
       value={editValue}
       placeholder={placeholder}
       rows={itemInputRows}
       expandableFromSingleRow={singleLineExpandable}
       maxLength={maxLength}
       showCount={maxLength != null}
+      readOnly={!isBodyInteractive}
+      tabIndex={isBodyInteractive ? undefined : -1}
       onClick={event => {
         event.stopPropagation()
         onSelectItem()
@@ -82,8 +91,10 @@ function ShortEssayItemBody({
             width="100%"
             value={editValue}
             placeholder={placeholder || '성명을 입력해 주세요'}
-            onChange={e => setEditValue(e.target.value)}
-            onBlur={flushEditValue}
+            readOnly={!isBodyInteractive}
+            tabIndex={isBodyInteractive ? undefined : -1}
+            onChange={isBodyInteractive ? e => setEditValue(e.target.value) : undefined}
+            onBlur={isBodyInteractive ? flushEditValue : undefined}
           />
         ) : isBirth ? (
           <CmsDateTextInput
@@ -93,8 +104,10 @@ function ShortEssayItemBody({
             value={editValue}
             placeholder={placeholder || '1991.01.01'}
             maxLength={10}
-            onValueChange={value => setEditValue(value)}
-            onBlur={flushEditValue}
+            readOnly={!isBodyInteractive}
+            tabIndex={isBodyInteractive ? undefined : -1}
+            onValueChange={isBodyInteractive ? value => setEditValue(value) : undefined}
+            onBlur={isBodyInteractive ? flushEditValue : undefined}
           />
         ) : isPhone ? (
           <CmsPhoneInput
@@ -103,8 +116,12 @@ function ShortEssayItemBody({
             width="100%"
             value={editValue}
             placeholder={placeholder || '010-1234-5678'}
-            onChange={event => setEditValue(event.target.value)}
-            onBlur={flushEditValue}
+            readOnly={!isBodyInteractive}
+            tabIndex={isBodyInteractive ? undefined : -1}
+            onChange={
+              isBodyInteractive ? event => setEditValue(event.target.value) : undefined
+            }
+            onBlur={isBodyInteractive ? flushEditValue : undefined}
           />
         ) : undefined
       }

@@ -142,7 +142,7 @@ function createJaVolunteerExperienceMultipleChoiceParagraph(): MultipleChoicePar
       { id: PROGRAM_VOLUNTEER_JA_EXPERIENCE_OPTION_IDS.yes, label: '있음' },
       { id: PROGRAM_VOLUNTEER_JA_EXPERIENCE_OPTION_IDS.no, label: '없음' },
     ],
-    selectedPreviewSingleId: null,
+    selectedPreviewSingleId: PROGRAM_VOLUNTEER_JA_EXPERIENCE_OPTION_IDS.yes,
     selectedPreviewMultipleIds: [],
   }
 }
@@ -259,12 +259,26 @@ function patchHorizontalTableTextCell(
   return { ...paragraph, fieldDataRows }
 }
 
-/** 구 시드 고정 문구 보정 */
+/** 구 시드 고정 문구 보정 · 경험 여부 기본값 「있음」 */
 export function migrateProgramApplicationFormVolunteerParagraphs(
   draft: WritingFormDraft
 ): WritingFormDraft {
   let changed = false
   const paragraphs = draft.paragraphs.map(paragraph => {
+    if (
+      paragraph.id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.jaVolunteerExperience &&
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'multiple_choice'
+    ) {
+      if (paragraph.selectedPreviewSingleId == null || paragraph.selectedPreviewSingleId === '') {
+        changed = true
+        return {
+          ...paragraph,
+          selectedPreviewSingleId: PROGRAM_VOLUNTEER_JA_EXPERIENCE_OPTION_IDS.yes,
+        }
+      }
+      return paragraph
+    }
     if (paragraph.kind !== 'single_item' || paragraph.variant !== 'horizontal_table') {
       return paragraph
     }

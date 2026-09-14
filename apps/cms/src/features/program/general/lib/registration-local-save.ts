@@ -6,6 +6,7 @@
 import dayjs from 'dayjs'
 import type {
   GeneralProgramParticipantType,
+  GeneralProgramScheduleDetailRow,
   Program,
   ProgramCategory,
   ProgramLifecycleStatus,
@@ -25,6 +26,11 @@ import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/ca
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { mockSponsors } from '@/data/mock/sponsors'
 import { publishRegisteredProgramToMockCatalog } from '@/features/program/shared/lib/publish-mock-program-catalog'
+import { resolveScheduleTypeDetailedProgramNameFromDetails } from '@/features/program/general/lib/detail-common-info-display'
+import {
+  getProgramRegistrationOverlayRecord,
+  readGeneralRegistrationOverlaySponsorIds,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
 export const COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'company-school-local-'
@@ -100,6 +106,29 @@ function primaryCategoryFromParticipant(
   return 'individual'
 }
 
+/** 등록 overlay 일정명 → scheduleDetails (단일·복수 공통). 실적 세부 프로그램명 반영용 */
+export function buildScheduleDetailsFromRegistrationOverlay(
+  overlay: Record<string, unknown>,
+  detailCount: number
+): GeneralProgramScheduleDetailRow[] {
+  const count = Math.max(1, detailCount)
+  const rawNames = overlay['generalRegistration.educationScheduleCurriculum.eventNameByDetail']
+  const names =
+    rawNames != null && typeof rawNames === 'object' && !Array.isArray(rawNames)
+      ? (rawNames as Record<number, unknown>)
+      : {}
+
+  return Array.from({ length: count }, (_, index) => {
+    const n = index + 1
+    const nameRaw = names[n]
+    const name = typeof nameRaw === 'string' ? nameRaw.trim() : ''
+    return {
+      scheduleLabel: `세부 일정 ${String(n).padStart(2, '0')}`,
+      name,
+    }
+  })
+}
+
 export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   id: string
   participant: ProgramRegistrationParticipantState
@@ -112,6 +141,8 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   sessionRoundType?: ProgramRegistrationSessionRoundType
   educationScheduleMode?: ProgramRegistrationEducationScheduleMode
   educationScheduleLines?: string[]
+  /** 일정형 — 세부 일정 블록 수(단일·복수). 실적 세부 프로그램명 반영 */
+  scheduleCurriculumDetailCount?: number
 }): Program {
   const now = new Date().toISOString()
   const y = dayjs().year()
@@ -145,6 +176,26 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   ]
 
   const lifecycleStatus: ProgramLifecycleStatus = 'recruiting_students'
+
+  const isGeneralSchedule =
+    !isCompanySchool && !isTrainedTeachers && args.programType === 'schedule'
+  const scheduleDetails = isGeneralSchedule
+    ? buildScheduleDetailsFromRegistrationOverlay(
+        getProgramRegistrationOverlayRecord(),
+        args.scheduleCurriculumDetailCount ?? 1
+      )
+    : undefined
+  const scheduleDetailedProgramName = isGeneralSchedule
+    ? resolveScheduleTypeDetailedProgramNameFromDetails(scheduleDetails)
+    : undefined
+  const sponsorManagementIds =
+    !isCompanySchool && !isTrainedTeachers
+      ? (() => {
+          const fromOverlay = readGeneralRegistrationOverlaySponsorIds()
+          if (fromOverlay.length > 0) return fromOverlay
+          return sponsorId ? [sponsorId] : []
+        })()
+      : undefined
 
   return {
     id: args.id,
@@ -183,6 +234,8 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     startTime: '09:00',
     endTime: '18:00',
     studentListRequired: isCompanySchool ? 'not_required' : 'required',
+    textbookName: scheduleDetailedProgramName,
+    teamDivision: scheduleDetailedProgramName,
     generalProgramAudience: isCompanySchool || isTrainedTeachers
       ? 'organization'
       : audienceFromParticipant(args.participant),
@@ -238,6 +291,18 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
       : {
           educationScheduleMode: args.educationScheduleMode ?? 'date',
           educationScheduleLines: [...(args.educationScheduleLines ?? [])],
+          ...(sponsorManagementIds && sponsorManagementIds.length > 0
+            ? {
+                sponsorManagementId: sponsorManagementIds[0],
+                sponsorManagementIds,
+              }
+            : {}),
+          ...(isGeneralSchedule
+            ? {
+                detailedProgramName: '해당없음',
+                scheduleDetails,
+              }
+            : {}),
         },
     generalParticipantTypes: participantTypes,
     generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
@@ -342,6 +407,7 @@ export function persistGeneralRegistrationFormLocal(args: {
   sessionRoundType?: ProgramRegistrationSessionRoundType
   educationScheduleMode?: ProgramRegistrationEducationScheduleMode
   educationScheduleLines?: string[]
+  scheduleCurriculumDetailCount?: number
 }): Program {
   const variant = args.variant ?? 'general'
   const id =
@@ -360,6 +426,7 @@ export function persistGeneralRegistrationFormLocal(args: {
     sessionRoundType: args.sessionRoundType,
     educationScheduleMode: args.educationScheduleMode,
     educationScheduleLines: args.educationScheduleLines,
+    scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
   })
   const record: GeneralRegistrationLocalSaveRecord = {
     version: 1,
@@ -388,6 +455,7 @@ export async function persistGeneralProgramRegistration(args: {
   sessionRoundType?: ProgramRegistrationSessionRoundType
   educationScheduleMode?: ProgramRegistrationEducationScheduleMode
   educationScheduleLines?: string[]
+  scheduleCurriculumDetailCount?: number
 }): Promise<Program> {
   const variant = args.variant ?? 'general'
   const id =
@@ -406,6 +474,7 @@ export async function persistGeneralProgramRegistration(args: {
     sessionRoundType: args.sessionRoundType,
     educationScheduleMode: args.educationScheduleMode,
     educationScheduleLines: args.educationScheduleLines,
+    scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
   })
 
   if (variant === 'economy' && shouldUseCompanySchoolRemoteApi()) {

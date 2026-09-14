@@ -61,6 +61,7 @@ import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/
 import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
   GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
   getProgramRegistrationOverlayRecord,
   patchProgramRegistrationOverlay,
@@ -68,10 +69,13 @@ import {
   readGeneralRegistrationOverlayScheduleLines,
   readGeneralRegistrationOverlaySponsorContactId,
   readGeneralRegistrationOverlaySponsorId,
+  readGeneralRegistrationOverlaySponsorIds,
   replaceProgramRegistrationOverlay,
   resetProgramRegistrationOverlay,
   subscribeProgramRegistrationOverlayKey,
+  updateProgramRegistrationOverlayKey,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { useCmsAlert } from '@/shared/ui'
 import { hasIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
 
@@ -321,11 +325,19 @@ export function useProgramRegistrationEditor(
       (state.sponsorId ?? '').trim() || readGeneralRegistrationOverlaySponsorId()
     const resolvedContactId =
       (state.sponsorContactId ?? '').trim() || readGeneralRegistrationOverlaySponsorContactId()
-    setSponsorId(resolvedSponsorId)
+    const resolvedSponsorIds = (() => {
+      const fromOverlay = readGeneralRegistrationOverlaySponsorIds()
+      if (fromOverlay.length > 0) return fromOverlay
+      return resolvedSponsorId ? [resolvedSponsorId] : []
+    })()
+    setSponsorId(resolvedSponsorId || resolvedSponsorIds[0] || '')
     setSponsorContactId(resolvedContactId)
-    if (resolvedSponsorId) {
+    if (resolvedSponsorIds.length > 0 || resolvedSponsorId) {
+      const primary = resolvedSponsorId || resolvedSponsorIds[0] || ''
       patchProgramRegistrationOverlay({
-        [GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY]: resolvedSponsorId,
+        [GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY]: primary,
+        [GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY]:
+          resolvedSponsorIds.length > 0 ? resolvedSponsorIds : primary ? [primary] : [],
         [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY]: resolvedContactId,
       })
     }
@@ -660,6 +672,12 @@ export function useProgramRegistrationEditor(
     (next: ProgramRegistrationType) => {
       if (programRegistrationFormVariant === 'economy' && next !== 'curriculum') return
       setProgramType(next)
+      if (programRegistrationFormVariant === 'general' && next === 'schedule') {
+        updateProgramRegistrationOverlayKey(
+          'generalRegistration.basicInfo.detailedProgramId',
+          () => TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+        )
+      }
       setDraft(prev =>
         patchEducationCurriculumParagraph(prev, {
           paragraphTitle:
@@ -1026,6 +1044,7 @@ export function useProgramRegistrationEditor(
             programType === 'schedule' && sessionRoundType === 'multi'
               ? []
               : readGeneralRegistrationOverlayScheduleLines(),
+          scheduleCurriculumDetailCount: scheduleCurriculumDetailCount,
         })
         resetProgramRegistrationOverlay()
         onRegistrationSaved(createdProgram)
@@ -1053,6 +1072,7 @@ export function useProgramRegistrationEditor(
     programRegistrationFormVariant,
     programType,
     resolveProgramTitleKo,
+    scheduleCurriculumDetailCount,
     sessionRoundType,
     educationScheduleMode,
     showAlert,
