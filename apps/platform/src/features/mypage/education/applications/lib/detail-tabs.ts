@@ -4,6 +4,7 @@ import type { ProgramDetailCase } from '@/features/program'
 export type EducationActivitySection =
   | 'notice'
   | 'schedule'
+  | 'students'
   | 'survey'
   | 'satisfaction'
   | 'settlement'
@@ -43,8 +44,20 @@ function isConfigured(flag: boolean | undefined): boolean {
   return flag !== false
 }
 
+function appendSurveySatisfactionTabs(
+  items: EducationDetailTabItem[],
+  options: ActivityTabOptions,
+): void {
+  if (isConfigured(options.surveyConfigured)) {
+    items.push({ key: 'survey', label: '설문조사' })
+  }
+  if (isConfigured(options.satisfactionConfigured)) {
+    items.push({ key: 'satisfaction', label: '만족도조사' })
+  }
+}
+
 /**
- * 진행 중 / 진행 완료 탭.
+ * 진행 중 / 진행 완료 탭 (일반·강사 등).
  * 설문·만족도는 진행 중 내용이 없어도 노출하되, 프로그램 미설정(`*Configured === false`)이면 비노출.
  */
 export function buildInProgressDetailTabItems(
@@ -54,13 +67,24 @@ export function buildInProgressDetailTabItems(
     { key: 'notice', label: '안내사항' },
     { key: 'schedule', label: resolveEducationScheduleTabLabel(options.detailCase) },
   ]
-  if (isConfigured(options.surveyConfigured)) {
-    items.push({ key: 'survey', label: '설문조사' })
-  }
-  if (isConfigured(options.satisfactionConfigured)) {
-    items.push({ key: 'satisfaction', label: '만족도조사' })
-  }
+  appendSurveySatisfactionTabs(items, options)
   items.push({ key: 'settlement', label: '정산현황' })
+  return items
+}
+
+/**
+ * 교사회원 — 진행 중 / 진행 완료 탭.
+ * 안내사항 / 교육 일정 / 학생 명단 / 설문·만족도. 정산 비노출.
+ */
+export function buildTeacherInProgressDetailTabItems(
+  options: ActivityTabOptions,
+): EducationDetailTabItem[] {
+  const items: EducationDetailTabItem[] = [
+    { key: 'notice', label: '안내사항' },
+    { key: 'schedule', label: resolveEducationScheduleTabLabel(options.detailCase) },
+    { key: 'students', label: '학생 명단' },
+  ]
+  appendSurveySatisfactionTabs(items, options)
   return items
 }
 
@@ -72,4 +96,14 @@ export function buildWithdrawnDuringDetailTabItems(
   options: ActivityTabOptions,
 ): EducationDetailTabItem[] {
   return buildInProgressDetailTabItems(options).filter(item => item.key !== 'notice')
+}
+
+/**
+ * 교사회원 — 교육 진행 중 포기 탭.
+ * 교육 일정 / 학생 명단 / 설문·만족도. 안내사항·정산 비노출.
+ */
+export function buildTeacherWithdrawnDuringDetailTabItems(
+  options: ActivityTabOptions,
+): EducationDetailTabItem[] {
+  return buildTeacherInProgressDetailTabItems(options).filter(item => item.key !== 'notice')
 }
