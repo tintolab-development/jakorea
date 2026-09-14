@@ -12,10 +12,7 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
-import {
-  mergePaymentStatementBasicInfo,
-  PAYMENT_STATEMENT_DEFAULT_PURPOSE,
-} from '@jakorea/form-schema/consent'
+import { mergePaymentStatementBasicInfo } from '@jakorea/form-schema/consent'
 import { RestrictedPiiClickable } from '@/features/user/detail/ui/restricted-pii-clickable'
 import './payment-statement-basic-info-detail-form.css'
 
@@ -329,7 +326,7 @@ export function PaymentStatementBasicInfoDetailForm({
                 placeholder="계좌번호(숫자만)"
                 value={v.accountNumber}
                 onValueChange={value => patch({ accountNumber: value })}
-                width="100%"
+                width={200}
                 aria-label="계좌번호 (발급 시 자동 입력)"
               />
               <DetailInfoForm.InputsSeparator />
@@ -339,7 +336,7 @@ export function PaymentStatementBasicInfoDetailForm({
                 placeholder="예금주명"
                 value={v.accountHolder}
                 onChange={e => patch({ accountHolder: e.target.value })}
-                width="100%"
+                width={200}
                 aria-label="예금주명 (발급 시 자동 입력)"
               />
             </div>
@@ -356,7 +353,7 @@ export function PaymentStatementBasicInfoDetailForm({
             <CmsInput
               disabled
               inputSize="large"
-              placeholder={PAYMENT_STATEMENT_DEFAULT_PURPOSE}
+              placeholder="강사비 지급"
               value={v.paymentPurpose}
               width="100%"
               aria-label="지급 목적 (고정 문구)"
