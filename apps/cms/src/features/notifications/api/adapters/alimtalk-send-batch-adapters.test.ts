@@ -147,6 +147,7 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
   it('enabled를 BE 값 그대로 옮기고 로컬 재계산하지 않는다', () => {
     const mapped = mapTemplateVariablesCatalog({
       totalCount: 2,
+      systemManualSendQaEnabled: false,
       categories: [
         {
           categoryCode: 'name',
@@ -178,7 +179,8 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
         },
       ],
     })
-    expect(mapped).toEqual([
+    expect(mapped.systemManualSendQaEnabled).toBe(false)
+    expect(mapped.variables).toEqual([
       expect.objectContaining({
         key: '회원명',
         enabled: true,
@@ -193,6 +195,18 @@ describe('alimtalk-send-batch-adapters placeholders', () => {
         programGroups: ['GENERAL'],
       }),
     ])
+  })
+
+  it('systemManualSendQaEnabled를 BE 값 그대로 옮긴다', () => {
+    const mapped = mapTemplateVariablesCatalog({
+      totalCount: 0,
+      categories: [],
+      systemManualSendQaEnabled: true,
+    })
+    expect(mapped).toEqual({
+      variables: [],
+      systemManualSendQaEnabled: true,
+    })
   })
 })
 

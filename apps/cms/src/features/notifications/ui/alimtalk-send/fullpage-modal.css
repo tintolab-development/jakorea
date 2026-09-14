@@ -76,12 +76,24 @@
 .alimtalk-send-fullpage-modal__notice {
   display: flex;
   flex-shrink: 0;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
   width: 100%;
   box-sizing: border-box;
   min-height: 44px;
+}
+
+.alimtalk-send-fullpage-modal__notice-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.alimtalk-send-fullpage-modal__qa-banner {
+  max-width: 720px;
 }
 
 .alimtalk-send-fullpage-modal__notice-text {
@@ -100,6 +112,7 @@
   display: flex;
   flex-shrink: 0;
   align-items: center;
+  align-self: center;
   gap: 8px;
 }
 

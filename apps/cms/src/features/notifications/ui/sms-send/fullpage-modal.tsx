@@ -192,16 +192,17 @@ export function SendFullpageModal({
     templateVariablesQuery,
     open && remote && canLoadProgramScoped
   )
+  const variablesCatalog = variablesQuery.data?.variables
   const variableGroups = useMemo(
-    () => groupMailTemplateVariablesFromCatalog(variablesQuery.data ?? []),
-    [variablesQuery.data]
+    () => groupMailTemplateVariablesFromCatalog(variablesCatalog ?? []),
+    [variablesCatalog]
   )
   const isCatalogItemDisabled = useCallback(
     (label: string) => {
-      const found = (variablesQuery.data ?? []).find(item => item.key === label)
+      const found = (variablesCatalog ?? []).find(item => item.key === label)
       return isNotificationCatalogVariableDisabled(found, programNumericId)
     },
-    [programNumericId, variablesQuery.data]
+    [programNumericId, variablesCatalog]
   )
   const hasTemplates = templates.length > 0
   const canPickTemplate = canSelectNotificationSendTemplate(form.programId) && hasTemplates
@@ -212,10 +213,10 @@ export function SendFullpageModal({
     (template: (typeof templates)[number]) =>
       canUseNotificationSendTemplateForProgram({
         texts: [template.subject, template.bodyText],
-        catalog: variablesQuery.data,
+        catalog: variablesCatalog,
         programNumericId,
       }),
-    [programNumericId, variablesQuery.data]
+    [programNumericId, variablesCatalog]
   )
 
   const getTemplateUnusableMessage = useCallback(
@@ -223,11 +224,11 @@ export function SendFullpageModal({
       formatNotificationSendTemplateDisabledKeysWarning(
         listNotificationSendTemplateDisabledKeysForProgram({
           texts: [template.subject, template.bodyText],
-          catalog: variablesQuery.data,
+          catalog: variablesCatalog,
           programNumericId,
         })
       ),
-    [programNumericId, variablesQuery.data]
+    [programNumericId, variablesCatalog]
   )
 
   // 선택 완료된 템플릿은 수신자 추가·유형 문맥 변경으로 자동 clear 하지 않음.

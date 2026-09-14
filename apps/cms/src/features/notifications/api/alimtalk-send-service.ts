@@ -3,7 +3,7 @@ import {
   mapRecipientCandidates,
   mapTemplateVariablesCatalog,
   toTemplateVariablesRequestParams,
-  type AlimtalkTemplateVariable,
+  type NotificationTemplateVariablesCatalogMapped,
   type NotificationTemplateVariablesQuery,
 } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import {
@@ -25,7 +25,7 @@ import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 function assertAlimtalkSendRemoteReady(): void {
   if (!isRealApiModuleEnabled('notifications')) {
     throw new Error(
-      '알림 API가 활성화되지 않았습니다. VITE_REAL_API_MODULES에 notifications를 추가해 주세요.'
+      '알림 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정해 주세요.'
     )
   }
   if (!hasRemoteAdminJwt()) {
@@ -93,8 +93,10 @@ export async function getAlimtalkRecipientCandidates(input: {
 
 export async function getAlimtalkTemplateVariables(
   input: NotificationTemplateVariablesQuery = {}
-): Promise<AlimtalkTemplateVariable[]> {
-  if (!shouldUseAlimtalkSendRemoteApi()) return []
+): Promise<NotificationTemplateVariablesCatalogMapped> {
+  if (!shouldUseAlimtalkSendRemoteApi()) {
+    return { variables: [], systemManualSendQaEnabled: false }
+  }
   const dto = await fetchTemplateVariablesRemote(toTemplateVariablesRequestParams(input))
   return mapTemplateVariablesCatalog(dto)
 }
