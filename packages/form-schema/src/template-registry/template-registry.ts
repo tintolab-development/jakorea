@@ -278,7 +278,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     suppressUserPreviewStrip: true,
     selfManagedPreview: true,
     previewStrategy: 'a4-content-only',
-    previewHeaderTitleFallback: '교육진행자 동의 서약서',
+    previewHeaderTitleFallback: 'JA Korea 교육진행자 서약서(안)',
   },
   'agreement-portrait': {
     id: 'agreement-portrait',

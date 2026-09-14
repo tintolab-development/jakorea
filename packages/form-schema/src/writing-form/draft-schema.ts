@@ -1,4 +1,8 @@
-import { normalizeTitleWithPeriodParagraph } from './title-with-period-normalize.js'
+import {
+  normalizeTitleWithPeriodParagraph,
+  UJAT_EDU_JOURNAL_END_ACTIVITY_PRESET_LABEL,
+  UJAT_EDU_PLAN_END_ACTIVITY_PRESET_LABEL,
+} from './title-with-period-normalize.js'
 
 /** 설문·동의·테이블 가로형 직접 등록 에디터 공통 — 에디터 문맥(직렬화 키와 무관) */
 export type FormEditorKind = 'survey' | 'agreement' | 'horizontal_table'
@@ -38,6 +42,8 @@ export interface TitleWithPeriodParagraph extends Omit<WritingFormParagraphBase,
   endPeriodMode?: FormPeriodMode
   startAt: string | null
   endAt: string | null
+  /** 시작 `직접 설정` + 상대 규칙 — `startAt` 없을 때 표시(예: 활동일 (09:00)) */
+  startPeriodPresetLabel?: string | null
   /** 종료 `직접 설정` + 상대 규칙 등 — `endAt` 없을 때 표시(예: 활동일 전주 목요일) */
   endPeriodPresetLabel?: string | null
   showWritingPeriodOnForm: boolean
@@ -320,7 +326,10 @@ export type LectureReportProgramProgressParagraph = WritingFormParagraphBase & {
   variant: 'lecture_report_program_progress'
   answerRequired?: boolean
   programName: string
-  finalInstructorCount: string
+  /** 사용교재 및 진행단원 — 교재명 */
+  textbookName: string
+  /** 사용교재 및 진행단원 — 진행 단원 */
+  progressUnit: string
   institutionName: string
   institutionLocation: string
   educationDate: string
@@ -2053,11 +2062,24 @@ export function normalizeLectureReportProgramProgressParagraph(
   p: WritingFormParagraph
 ): WritingFormParagraph {
   if (p.kind !== 'single_item' || p.variant !== 'lecture_report_program_progress') return p
-  const x = p as LectureReportProgramProgressParagraph
+  const x = p as LectureReportProgramProgressParagraph & {
+    /** @deprecated 사용교재 및 진행단원으로 교체 */
+    finalInstructorCount?: string
+  }
+  const { finalInstructorCount: legacyFinalInstructorCount, ...rest } = x
+  const legacyDescription =
+    '실제 응답 시 배정된 프로그램·기관·교육 일정 정보가 자동으로 반영됩니다.'
+  const rawDescription = x.paragraphDescription ?? ''
+  const paragraphDescription =
+    rawDescription.trim() === legacyDescription || rawDescription.trim() === '설명 입력'
+      ? ''
+      : rawDescription
   return {
-    ...x,
+    ...rest,
+    paragraphDescription,
     programName: x.programName ?? '',
-    finalInstructorCount: x.finalInstructorCount ?? '',
+    textbookName: x.textbookName ?? legacyFinalInstructorCount ?? '',
+    progressUnit: x.progressUnit ?? '',
     institutionName: x.institutionName ?? '',
     institutionLocation: x.institutionLocation ?? '',
     educationDate: x.educationDate ?? '',
@@ -2219,7 +2241,7 @@ export const EDUCATOR_FACILITATOR_PLEDGE_INTRO_TEXT =
   '본인은 JA Korea의 교육사업에 참여함에 있어, 다음 사항을 준수할 것을 서약합니다.'
 
 /** 교육진행자 동의 서약서 — 제목 단락(`survey_title_with_period`) 고정 문구 */
-export const EDUCATOR_FACILITATOR_PLEDGE_SURVEY_TITLE = '교육진행자 동의 서약서'
+export const EDUCATOR_FACILITATOR_PLEDGE_SURVEY_TITLE = 'JA Korea 교육진행자 서약서(안)'
 
 const AGREEMENT_PORTRAIT_PERSONAL_CONSENT_QUESTION =
   '위 동의를 거부할 수 있으며, 동의하지 않을 경우 수업 참여가 제한될 수 있습니다. 위 개인정보 및 초상권 수집·이용에 동의하십니까?'
@@ -2665,6 +2687,21 @@ function migrateAgreementExpensePledgeIntroParagraph(
   }
 }
 
+/** UJAT 교육계획서·교육일지 — 설명글(2번 단락) 타이틀은 비필수 */
+function migrateUjatEducationExplanationOptionalTitle(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (
+    p.id !== 'ujat-edu-plan-explanation-text' &&
+    p.id !== 'ujat-edu-journal-explanation-text'
+  ) {
+    return p
+  }
+  if (p.kind !== 'single_item' || p.variant !== 'agreement_explanation_text') return p
+  if (p.requiredMark === false && p.answerRequired === false) return p
+  return { ...p, requiredMark: false, answerRequired: false }
+}
+
 /** 정산 신청서 교통비 신청 — 설명·하단 안내 시드 보정 */
 function migrateSettlementTransportParagraphCopy(
   p: WritingFormParagraph
@@ -2733,8 +2770,11 @@ function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormPara
   next = migrateAgreementNoticeSeedFixedCopy(next)
   next = migrateAgreementNoticeInstitutionPurposeParagraph(next)
   next = migrateAgreementExpensePledgeIntroParagraph(next)
+  next = migrateEducatorFacilitatorPledgeTitleParagraph(next)
+  next = migrateEducatorFacilitatorPledgeClauseCopy(next)
   next = migrateSettlementTransportParagraphCopy(next)
   next = migrateSettlementAccommodationParagraphCopy(next)
+  next = migrateUjatEducationExplanationOptionalTitle(next)
   if (next.kind === 'description' && next.variant === 'survey_title_with_period') {
     return normalizeTitleWithPeriodParagraph(next)
   }
@@ -3092,6 +3132,18 @@ function migrateEducatorFacilitatorPledgeTitleParagraph(
   if (p.kind !== 'description' || p.variant !== 'survey_title_with_period') return p
   if (p.surveyTitle === EDUCATOR_FACILITATOR_PLEDGE_SURVEY_TITLE) return p
   return { ...p, surveyTitle: EDUCATOR_FACILITATOR_PLEDGE_SURVEY_TITLE }
+}
+
+/** 교육진행자 동의 서약서 — 조항 3 본문 시안 카피 보정 */
+function migrateEducatorFacilitatorPledgeClauseCopy(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (p.id !== 'agreement-expense-pledge-clause-3') return p
+  if (p.kind !== 'single_item' || p.variant !== 'multiple_choice') return p
+  const nextDescription =
+    '교육과정 중 알게 된 관련인의 개인정보를 외부로 유출하거나 무단으로 사용하지 않겠습니다.'
+  if (p.paragraphDescription === nextDescription) return p
+  return { ...p, paragraphDescription: nextDescription }
 }
 
 /** 구 저장본에 confirmationClosing이 없으면 systemDate 앞에 삽입. 제목형 작성 기간은 항상 off. 확인 문구는 비운다. */
@@ -3680,7 +3732,7 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
         EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause3,
         '3',
         '개인정보 보호',
-        '교육과정 중 알게 된 관련인의 개인정보를 외부에 유출하거나 무단으로 사용하지 않겠습니다.'
+        '교육과정 중 알게 된 관련인의 개인정보를 외부로 유출하거나 무단으로 사용하지 않겠습니다.'
       ),
       createPledgeClauseMultipleChoice(
         EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause4,
@@ -4065,24 +4117,22 @@ const UJAT_EDU_PLAN_USER_FIELDS: Array<{ key: string; label: string }> = [
   { key: 'birthDate', label: '생년월일' },
   { key: 'phone', label: '연락처' },
   { key: 'email', label: '이메일' },
-  { key: 'addressRegion', label: '자택 주소지' },
-  { key: 'addressDetail', label: '자택 주소(상세)' },
+  { key: 'addressRegion', label: '자택 주소지(지역)' },
+  { key: 'addressDetail', label: '자택 주소지(상세)' },
   { key: 'affiliation', label: '소속' },
   { key: 'applicantType', label: '신청자 유형' },
-  { key: 'programName', label: '프로그램' },
-  { key: 'period', label: '활동 일정' },
+  { key: 'programName', label: '프로그램명' },
+  { key: 'period', label: '교육 진행 일정(진행 기간)' },
   { key: 'institutionName', label: '기관명' },
-  { key: 'institutionRegion', label: '기관 소재지' },
-  { key: 'educationTarget', label: '교육 대상' },
-  { key: 'educationGrade', label: '교육 학년' },
+  { key: 'institutionRegion', label: '기관 소재지(시군구)' },
+  { key: 'educationTarget', label: '교육 대상(담당 대상)' },
+  { key: 'educationGrade', label: '교육 학년(담당 학년)' },
   { key: 'teamName', label: '팀 명' },
-  { key: 'teamPartnerName', label: '팀원 명' },
+  { key: 'teamPartnerName', label: '팀원/파트너 명' },
 ]
 
-const UJAT_EDU_JOURNAL_USER_FIELDS: Array<{ key: string; label: string }> = UJAT_EDU_PLAN_USER_FIELDS.map(
-  field =>
-    field.key === 'teamPartnerName' ? { ...field, label: '파트너명' } : field
-)
+const UJAT_EDU_JOURNAL_USER_FIELDS: Array<{ key: string; label: string }> =
+  UJAT_EDU_PLAN_USER_FIELDS
 
 function createUjatEducationIssuanceSessionParagraph(
   id: string,
@@ -4126,7 +4176,7 @@ function createUjatJournalEducationInfoParagraph(id: string): UjatJournalEducati
     kind: 'single_item',
     variant: 'ujat_journal_education_info',
     requiredMark: true,
-    paragraphTitle: '교육 일정',
+    paragraphTitle: '교육 정보',
     paragraphDescription: '설명 입력',
     participatesInTitleNumbering: true,
     answerRequired: true,
@@ -4173,20 +4223,20 @@ function createUjatEducationIssuanceDraft(
         endPeriodMode: 'custom',
         startAt: null,
         endAt: null,
-        endPeriodPresetLabel: '활동일 전주 목요일 (24:00)',
+        endPeriodPresetLabel: UJAT_EDU_PLAN_END_ACTIVITY_PRESET_LABEL,
         showWritingPeriodOnForm: options?.showWritingPeriodOnForm ?? false,
       },
       {
         id: ids.explanationText,
         kind: 'single_item',
         variant: 'agreement_explanation_text',
-        requiredMark: true,
+        requiredMark: false,
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
         bodyPlaceholder: '텍스트를 작성해 주세요',
         bodyText: options?.explanationBody ?? UJAT_EDU_PLAN_EXPLANATION_BODY,
-        answerRequired: true,
+        answerRequired: false,
       },
       {
         id: ids.volunteerInfo,
@@ -4195,7 +4245,7 @@ function createUjatEducationIssuanceDraft(
         answerRequired: true,
         requiredMark: true,
         paragraphTitle: '봉사자 정보',
-        paragraphDescription: '노출할 항목을 선택합니다. (실제 응답 시 자동 매핑)',
+        paragraphDescription: '선택한 항목을 자동으로 불러옵니다.',
         participatesInTitleNumbering: true,
         userFields: options?.userFields ?? UJAT_EDU_PLAN_USER_FIELDS,
         selectedUserFieldKeys: selectedKeys,
@@ -4295,10 +4345,25 @@ export function createUjatEducationJournalIssuanceDraft(): WritingFormDraft {
       userFields: UJAT_EDU_JOURNAL_USER_FIELDS,
     }
   )
+  const paragraphs = base.paragraphs.map(p => {
+    if (p.id !== UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.title) return p
+    if (p.kind !== 'description' || p.variant !== 'survey_title_with_period') return p
+    return normalizeTitleWithPeriodParagraph({
+      ...p,
+      periodMode: 'custom',
+      startPeriodMode: 'immediate',
+      endPeriodMode: 'custom',
+      startAt: null,
+      endAt: null,
+      startPeriodPresetLabel: null,
+      endPeriodPresetLabel: UJAT_EDU_JOURNAL_END_ACTIVITY_PRESET_LABEL,
+      showWritingPeriodOnForm: true,
+    })
+  })
   return {
     ...base,
     paragraphs: [
-      ...base.paragraphs,
+      ...paragraphs,
       createUjatEducationJournalContentFeedbackParagraph(
         UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.contentFeedback
       ),
@@ -4318,11 +4383,12 @@ export function createLectureReportProgramProgressParagraph(
     variant: 'lecture_report_program_progress',
     requiredMark: true,
     paragraphTitle: '프로그램 진행 정보',
-    paragraphDescription: '실제 응답 시 배정된 프로그램·기관·교육 일정 정보가 자동으로 반영됩니다.',
+    paragraphDescription: '',
     participatesInTitleNumbering: true,
     answerRequired: true,
     programName: '',
-    finalInstructorCount: '',
+    textbookName: '',
+    progressUnit: '',
     institutionName: '',
     institutionLocation: '',
     educationDate: '',
@@ -4383,9 +4449,13 @@ export function createLectureReportIssuanceDraft(): WritingFormDraft {
         participatesInTitleNumbering: false,
         surveyTitle: 'JA KOREA 「강의명」 강의보고서',
         surveyDescription: '',
-        periodMode: 'immediate',
+        periodMode: 'custom',
+        startPeriodMode: 'custom',
+        endPeriodMode: 'custom',
         startAt: null,
         endAt: null,
+        startPeriodPresetLabel: '활동일 (09:00)',
+        endPeriodPresetLabel: '활동일 익월 5일 (24:00)',
         showWritingPeriodOnForm: true,
       },
       createLectureReportProgramProgressParagraph(ids.programProgress),
