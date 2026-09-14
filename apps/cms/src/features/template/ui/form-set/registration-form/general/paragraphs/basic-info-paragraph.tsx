@@ -7,7 +7,10 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
+import type {
+  ProgramRegistrationParticipantState,
+  ProgramRegistrationType,
+} from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
@@ -76,6 +79,8 @@ type ProgramRegistrationBasicInfoParagraphProps = {
   onProgramTitleKoChange?: (title: string) => void
   /** 교육받은 교사 등록 폼 — overlay 키·기본값 분리 (일반 폼 기본값 유지) */
   trainedTeachersDefaults?: boolean
+  /** 일반 등록 — 교육 진행 구조(일정형이면 세부 프로그램명「해당없음」) */
+  programType?: ProgramRegistrationType
 }
 
 export function ProgramRegistrationBasicInfoParagraph({
@@ -94,6 +99,7 @@ export function ProgramRegistrationBasicInfoParagraph({
   programTitleKo: programTitleKoProp,
   onProgramTitleKoChange,
   trainedTeachersDefaults = false,
+  programType,
 }: ProgramRegistrationBasicInfoParagraphProps) {
   const overlayPrefix = trainedTeachersDefaults
     ? TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX
@@ -111,7 +117,7 @@ export function ProgramRegistrationBasicInfoParagraph({
     string | null
   >(
     `${overlayPrefix}.operationAnchorIso`,
-    trainedTeachersDefaults ? null : dayjs().startOf('day').toISOString()
+    null
   )
   const operationAnchorDate = operationAnchorIso ? dayjs(operationAnchorIso) : null
   const setOperationAnchorDate = (next: Dayjs | null) => {
@@ -198,6 +204,7 @@ export function ProgramRegistrationBasicInfoParagraph({
           programTitleKo={programTitleKoProp}
           onProgramTitleKoChange={onProgramTitleKoChange}
           trainedTeachersDefaults={trainedTeachersDefaults}
+          lockDetailedProgramToNone={!trainedTeachersDefaults && programType === 'schedule'}
         />
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -211,6 +218,7 @@ export function ProgramRegistrationBasicInfoParagraph({
                   width="100%"
                   placeholder="사업 운영 기간을 선택하세요"
                   preferPeriodModeInPopover
+                  suppressAutoTodayWhenEmpty
                   appliedSurfaceRange={operationRange}
                   appliedSurfaceWithTime={operationRangeWithTime}
                   onRangeChange={range => setOperationRange(range)}

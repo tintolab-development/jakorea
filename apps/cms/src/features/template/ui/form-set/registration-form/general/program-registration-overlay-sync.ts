@@ -9,6 +9,8 @@ import { useCallback, useSyncExternalStore } from 'react'
 /** 일반 등록 기본정보 — controlled editor state와 동기화하는 overlay 키 */
 export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY =
   'generalRegistration.basicInfo.localSponsorId' as const
+export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY =
+  'generalRegistration.basicInfo.localSponsorIds' as const
 export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY =
   'generalRegistration.basicInfo.localManagerContactId' as const
 export const GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY =
@@ -33,6 +35,15 @@ function readOverlayString(key: string): string {
 /** overlay에 남은 후원사 id (controlled state가 비었을 때 완료·복원 fallback) */
 export function readGeneralRegistrationOverlaySponsorId(): string {
   return readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
+}
+
+export function readGeneralRegistrationOverlaySponsorIds(): string[] {
+  const raw = overlayState[GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY]
+  if (Array.isArray(raw)) {
+    return raw.map(String).map(id => id.trim()).filter(Boolean)
+  }
+  const primary = readGeneralRegistrationOverlaySponsorId()
+  return primary ? [primary] : []
 }
 
 export function readGeneralRegistrationOverlaySponsorContactId(): string {

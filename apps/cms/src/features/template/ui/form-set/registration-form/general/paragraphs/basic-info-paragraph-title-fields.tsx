@@ -1,8 +1,11 @@
-import { memo, useMemo } from 'react'
+import { memo, useEffect, useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { withDetailedProgramNoneOption } from '@/features/template/lib/template-form-select-options'
+import {
+  TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+  withDetailedProgramNoneOption,
+} from '@/features/template/lib/template-form-select-options'
 import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
 import {
   GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
@@ -28,12 +31,18 @@ type ControlledTitleProps = {
   onProgramTitleKoChange?: (title: string) => void
   /** 교육받은 교사 등록 폼 — overlay 키·기본값 분리 */
   trainedTeachersDefaults?: boolean
+  /**
+   * 일반 일정형 — 세부 프로그램명 셀렉트를「해당없음」으로 고정.
+   * 실적·조회에서는 일정명이 세부 프로그램명으로 반영된다.
+   */
+  lockDetailedProgramToNone?: boolean
 }
 
 function ProgramRegistrationBasicInfoTitleFieldsInner({
   programTitleKo: programTitleKoProp,
   onProgramTitleKoChange,
   trainedTeachersDefaults = false,
+  lockDetailedProgramToNone = false,
 }: ControlledTitleProps) {
   const titleKoKey = trainedTeachersDefaults
     ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.programTitleKo`
@@ -65,6 +74,12 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
     trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE : ''
   )
 
+  useEffect(() => {
+    if (!lockDetailedProgramToNone) return
+    if (detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) return
+    setDetailedProgramId(TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE)
+  }, [detailedProgramId, lockDetailedProgramToNone, setDetailedProgramId])
+
   const detailedProgramOptions = useMemo(
     () =>
       trainedTeachersDefaults
@@ -82,6 +97,10 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
     }
     setLocalProgramTitleKo(next)
   }
+
+  const detailedProgramSelectValue = lockDetailedProgramToNone
+    ? TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+    : detailedProgramId
 
   return (
     <>
@@ -137,8 +156,9 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
                 placeholder="세부 프로그램명을 선택하세요"
                 width="100%"
                 options={detailedProgramOptions}
-                value={detailedProgramId}
+                value={detailedProgramSelectValue}
                 onChange={v => setDetailedProgramId(String(v ?? ''))}
+                disabled={lockDetailedProgramToNone}
               />
             </div>
           }
