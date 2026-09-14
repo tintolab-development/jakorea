@@ -8,6 +8,9 @@ import {
   TEMPLATE_FIELD_ORG_LOGO,
   TEMPLATE_FIELD_ORG_LOGO_02,
 } from '@/features/template/ui/template-management/template-custom-fields-form'
+
+/** 인증서 상세 진입 시 좌측·우측 기본 포커스 */
+const INITIAL_ACTIVE_FIELD_NAME = TEMPLATE_FIELD_CERTIFICATE_BACKGROUND
 import { useObjectUrlFromFile } from '@/shared/hooks/use-object-url-from-file'
 
 export type CertificateModalInitialHydration = {
@@ -51,6 +54,17 @@ export function useFormTemplateCertificateModalState(
   const [participantRowVisibility, setParticipantRowVisibility] = useState(() =>
     createDefaultParticipantRowVisibility()
   )
+
+  // 진입 시 수료증 배경 선택 · 닫을 때만 해제 (hydration 재실행으로 포커스 뺏지 않음)
+  useEffect(() => {
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- default focus on dialog open
+      setActiveFieldName(INITIAL_ACTIVE_FIELD_NAME)
+      return
+    }
+    setActiveFieldName(null)
+  }, [open])
+
   useEffect(() => {
     if (open) {
       // 모달이 열릴 때 행별 기본값을 좌측 미리보기 상태에도 반영
@@ -63,18 +77,15 @@ export function useFormTemplateCertificateModalState(
       return
     }
 
-    if (!open) {
-      // 모달 닫힘 시 미리보기·폼 상태 초기화
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset when dialog closes
-      setOrgLogoFile(null)
-      setOrgLogo02File(null)
-      setCertificateBackgroundFile(null)
-      setChairmanSealFile(null)
-      setLogoUploadResults({})
-      setActiveFieldName(null)
-      setStringPreviewValues({ ...resolvedInitialStringValues })
-      setParticipantRowVisibility(createDefaultParticipantRowVisibility())
-    }
+    // 모달 닫힘 시 미리보기·폼 상태 초기화
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset when dialog closes
+    setOrgLogoFile(null)
+    setOrgLogo02File(null)
+    setCertificateBackgroundFile(null)
+    setChairmanSealFile(null)
+    setLogoUploadResults({})
+    setStringPreviewValues({ ...resolvedInitialStringValues })
+    setParticipantRowVisibility(createDefaultParticipantRowVisibility())
   }, [open, resolvedInitialStringValues, initialHydration])
 
   return {

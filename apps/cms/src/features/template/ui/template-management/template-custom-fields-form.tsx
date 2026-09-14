@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Checkbox, Input } from 'antd'
 import type { FileUploadResult } from '@/entities/application/api/file-upload-service'
-import templateCertificateBg from '@/assets/images/template/templatge-background.png'
+import templateCertificateBg from '@/assets/images/template/certificate-background.png'
 import templateEducation from '@/assets/images/template/template-education.png'
 import templateLogo from '@/assets/images/template/template-logo.png'
 import templateStamp from '@/assets/images/template/template-stamp.png'
@@ -88,7 +88,24 @@ const DEFAULT_CUSTOM_FIELDS: TemplateCustomFieldDef[] = [
   { name: 'participantInfo', label: '참여자 정보' },
 ]
 
-/** 텍스트 편집 인풋 기본값 — 좌측 미리보기 예시와 동일한 카피(이미지 필드는 썸네일 기본 에셋 사용) */
+/**
+ * 발급 양식 인증서 상세 — 수정 가능 커스텀 필드만.
+ * 우측 패널·좌측 캔버스 편집 닷/프레임과 동일 범위.
+ */
+export const CERTIFICATE_EDITABLE_FIELD_NAMES = new Set([
+  'titleName',
+  'bodyContent',
+  'certificateBackground',
+])
+
+export const CERTIFICATE_EDITABLE_CUSTOM_FIELDS: TemplateCustomFieldDef[] =
+  DEFAULT_CUSTOM_FIELDS.filter(field => CERTIFICATE_EDITABLE_FIELD_NAMES.has(field.name))
+
+export function isCertificateEditableFieldName(fieldName: string): boolean {
+  return CERTIFICATE_EDITABLE_FIELD_NAMES.has(fieldName)
+}
+
+/** 텍스트 편집 인풋 기본값 — 좌측 미리보기와 동기화(이미지 필드는 썸네일 기본 에셋 사용) */
 export const DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES: Record<string, string> = {
   titleName: '봉사활동인증서',
   bodyContent: '귀하는 위의 과정에 참여하여\n교육과정을 수료하였음을 확인합니다.',
@@ -97,8 +114,8 @@ export const DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES: Record<string, string>
   orgPhone: 'Tel.02-783-2367',
   orgFax: 'Fax.070-4275-5115',
   orgWebsite: 'http://www.jakorea.org',
-  participantInfo:
-    '홍길동\n1990.01.01\nOO고등학교\nJA 직업캠프\n2025.01.01 ~ 2025.12.31\n기관 및 학교 제출용',
+  /** 기본 배경에 라벨이 포함됨 — 관리자 미리보기는 값 비움(실발급 시 런타임 주입) */
+  participantInfo: '',
 }
 
 export interface TemplateCustomFieldsFormProps {

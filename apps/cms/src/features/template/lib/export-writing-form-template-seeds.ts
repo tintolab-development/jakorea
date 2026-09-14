@@ -55,8 +55,8 @@ const DEFAULT_CERTIFICATE_STRING_FIELDS = {
   orgPhone: 'Tel.02-783-2367',
   orgFax: 'Fax.070-4275-5115',
   orgWebsite: 'http://www.jakorea.org',
-  participantInfo:
-    '홍길동\n1990.01.01\nOO고등학교\nJA 직업캠프\n2025.01.01 ~ 2025.12.31\n기관 및 학교 제출용',
+  /** 기본 합성 배경에 라벨 포함 — 값은 실발급 런타임에서만 채움 */
+  participantInfo: '',
 } as const
 
 function createCertificateSettingsJson(titleName: string): Record<string, unknown> {
