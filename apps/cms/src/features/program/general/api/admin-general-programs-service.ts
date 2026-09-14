@@ -8,6 +8,7 @@ import {
 } from '@/features/program/general/api/adapters/general-program-adapters'
 import {
   clientFilterGeneralPrograms,
+  GENERAL_PROGRAM_LIST_PAGE_SIZE,
   generalProgramListParamsFromFilters,
   type GeneralProgramListTableFilters,
 } from '@/features/program/general/api/general-program-list-filter-params'
@@ -80,19 +81,51 @@ export function getGeneralProgramMockById(programId: string): Program | null {
   return resolveGeneralProgramForDetail(programId) ?? null
 }
 
+export type GeneralProgramsRemoteListPage = {
+  programs: Program[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
+}
+
+export async function fetchGeneralProgramsRemoteListPage(
+  statusFilter: GeneralProgramOverviewStatusFilter | null,
+  tableFilters: GeneralProgramListTableFilters = {},
+  pageParam = 0
+): Promise<GeneralProgramsRemoteListPage> {
+  assertGeneralProgramsRemoteReady()
+
+  const query = generalProgramListParamsFromFilters(statusFilter, tableFilters, pageParam)
+  const page = await fetchAdminProgramsRemote(query)
+
+  const programs = clientFilterGeneralPrograms(
+    (page.items ?? []).map(mapAdminProgramListItemToProgram),
+    tableFilters
+  )
+  // periodStatus는 서버 필터 — trained-teachers/1사1교와 같이 클라이언트 overview 재필터 스킵
+  const size = page.size ?? GENERAL_PROGRAM_LIST_PAGE_SIZE
+  const currentPage = page.page ?? pageParam
+  const totalElements = page.totalElements ?? programs.length
+  const totalPages =
+    page.totalPages ?? (size > 0 ? Math.ceil(totalElements / size) : currentPage + 1)
+
+  return {
+    programs,
+    page: currentPage,
+    size,
+    totalElements,
+    hasMore: currentPage + 1 < totalPages,
+  }
+}
+
+/** @deprecated 무한 스크롤은 `fetchGeneralProgramsRemoteListPage` 사용 */
 export async function fetchGeneralProgramsRemoteList(
   statusFilter: GeneralProgramOverviewStatusFilter | null,
   tableFilters: GeneralProgramListTableFilters = {}
 ): Promise<Program[]> {
-  assertGeneralProgramsRemoteReady()
-
-  const page = await fetchAdminProgramsRemote(
-    generalProgramListParamsFromFilters(statusFilter, tableFilters)
-  )
-
-  const programs = (page.items ?? []).map(mapAdminProgramListItemToProgram)
-  // periodStatus는 서버 필터 — trained-teachers/1사1교와 같이 클라이언트 overview 재필터 스킵
-  return clientFilterGeneralPrograms(programs, tableFilters)
+  const page = await fetchGeneralProgramsRemoteListPage(statusFilter, tableFilters, 0)
+  return page.programs
 }
 
 /**
@@ -100,7 +133,7 @@ export async function fetchGeneralProgramsRemoteList(
  * remote: GET /programs?periodStatus=* 의 totalElements (목록과 동일 periodStatus 계약)
  * mock: lifecycle 버킷 집계 (목록 filterGeneralProgramsByOverviewStatus 와 동일)
  *
- * 별도 count API 불필요 — 기존 목록 API로 충분. (500건 초과 시 totalElements가 SSOT)
+ * 별도 count API 불필요 — 기존 목록 API로 충분. (목록 페이징과 무관, totalElements가 SSOT)
  */
 export async function fetchGeneralProgramOverviewStages(): Promise<GeneralProgramOverviewStageCounts> {
   if (!shouldUseGeneralProgramsRemoteApi()) {

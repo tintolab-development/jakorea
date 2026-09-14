@@ -69,7 +69,7 @@ export async function fetchGeneralOrganizationApplications(
   assertApplicationsRemoteReady()
   const page = await fetchOrganizationApplicationsRemote(programId, {
     page: 0,
-    size: 500,
+    size: 50,
     ...params,
   })
   return (page.items ?? []).map((item, index) =>
@@ -88,7 +88,7 @@ export async function fetchGeneralInstructorApplications(
   assertApplicationsRemoteReady()
   const page = await fetchInstructorApplicationsRemote(programId, {
     page: 0,
-    size: 500,
+    size: 50,
     ...params,
   })
   return (page.items ?? []).map((item, index) =>
@@ -108,7 +108,7 @@ export async function fetchGeneralIndividualApplications(
   assertApplicationsRemoteReady()
   const page = await fetchIndividualApplicationsRemote(programId, {
     page: 0,
-    size: 500,
+    size: 50,
     ...options?.query,
   })
   return (page.items ?? []).map((item, index) =>
@@ -127,7 +127,7 @@ export async function fetchGeneralVolunteerApplications(
   assertApplicationsRemoteReady()
   const page = await fetchVolunteerApplicationsRemote(programId, {
     page: 0,
-    size: 500,
+    size: 50,
     ...params,
   })
   return (page.items ?? []).map((item, index) =>
