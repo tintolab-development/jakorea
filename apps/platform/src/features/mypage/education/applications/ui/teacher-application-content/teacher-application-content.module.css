@@ -1,0 +1,77 @@
+.root {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0;
+}
+
+.section {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+}
+
+/** 신청 기관 정보 아래 / 안내사항 아래 — 60 → 민트선 → 16 → 타이틀 → 32 → 본문 */
+.sectionAfterDivider {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-32);
+  margin-top: var(--spacing-60);
+  padding-top: var(--spacing-16);
+  border-top: 2px solid var(--color-border-focus);
+}
+
+.sectionHeader {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+}
+
+.sectionTitle {
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.scheduleList {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.scheduleCard {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  justify-content: center;
+  gap: var(--spacing-8);
+  padding: var(--spacing-20);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+}
+
+.scheduleLabel,
+.scheduleValue {
+  margin: 0;
+}
+
+.fieldValue {
+  margin: 0;
+  white-space: pre-line;
+}
