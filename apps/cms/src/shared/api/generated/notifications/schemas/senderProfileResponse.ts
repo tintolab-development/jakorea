@@ -8,9 +8,12 @@
 
 export interface SenderProfileResponse {
   profileId?: number;
+  /** ALIMTALK|SMS|EMAIL */
   channelType?: string;
+  /** EMAIL=From 메일주소(소문자 비교). SMS=발신번호(Hub 문자열). ALIMTALK=발신 프로필 키. */
   senderKey?: string;
   senderProfileType?: string;
+  /** 발신자 표시명. EMAIL은 이름, SMS는 보통 번호와 동일. */
   displayName?: string;
   useYn?: boolean;
   syncedAt?: string;

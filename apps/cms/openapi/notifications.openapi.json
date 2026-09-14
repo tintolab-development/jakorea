@@ -16641,7 +16641,8 @@
             "type": "number"
           },
           "currentGrade": {
-            "type": "string"
+            "type": "string",
+            "description": "서버 산정 등급 wire 값: A | B | C | D (JA_ prefix 없음)"
           },
           "evaluatedAt": {
             "type": "string",
@@ -16659,7 +16660,8 @@
             "type": "string"
           },
           "policyReady": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "false면 전역 JA 등급 정책 미초기화. 평가지는 열 수 있으나 POST 평가 완료 불가 (INSTRUCTOR_JA_GRADE_POLICY_NOT_INITIALIZED). true면 정책 준비됨(시드 policyVersion 예: FE_UI_2026-09-11)."
           }
         }
       },
@@ -16753,6 +16755,14 @@
             "items": {
               "$ref": "#/components/schemas/MemberLinkedSocialAccountResponse"
             }
+          },
+          "privacyMaskingLevel": {
+            "type": "string",
+            "enum": [
+              "MASKED",
+              "UNMASKED"
+            ],
+            "description": "MASKED=마스킹 GET. UNMASKED=privacy/unmask 원문 응답. UNMASKED일 때 FE 재마스킹 금지."
           }
         }
       },
@@ -32678,7 +32688,8 @@
         "type": "object",
         "required": [
           "totalCount",
-          "categories"
+          "categories",
+          "systemManualSendQaEnabled"
         ],
         "properties": {
           "totalCount": {
@@ -32690,6 +32701,10 @@
             "items": {
               "$ref": "#/components/schemas/NotificationCatalogCategory"
             }
+          },
+          "systemManualSendQaEnabled": {
+            "type": "boolean",
+            "description": "TEMP local QA: SYSTEM 자동발송 변수 수동 피커/발송 허용 여부. true일 때만 배너 표시. 되돌리기: ja.notification.qa.system-manual-send-enabled=false"
           }
         }
       },

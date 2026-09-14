@@ -180,6 +180,9 @@ export function toInstructorFeeGradeDisplayLabel(
 
   if (upper in FEE_GRADE_LEVEL_LABELS) return FEE_GRADE_LEVEL_LABELS[upper]
 
+  const resolvedLevel = resolveInstructorFeeGradeLevelKey(trimmed)
+  if (resolvedLevel) return FEE_GRADE_LEVEL_LABELS[resolvedLevel]
+
   const levelKey = trimmed.replace(/\s*강사비\s*$/u, '').trim()
   if (levelKey in FEE_GRADE_LEVEL_LABELS) return FEE_GRADE_LEVEL_LABELS[levelKey]
   if (/^\d급\s*강사비$/.test(trimmed)) return trimmed

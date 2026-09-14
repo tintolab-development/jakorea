@@ -7,6 +7,7 @@
  */
 import type { InstructorCmsProfile } from './instructorCmsProfile';
 import type { InstructorCmsSettlement } from './instructorCmsSettlement';
+import type { InstructorRoleRequestDetailResponsePrivacyMaskingLevel } from './instructorRoleRequestDetailResponsePrivacyMaskingLevel';
 import type { MemberLinkedSocialAccountResponse } from './memberLinkedSocialAccountResponse';
 import type { TermsAgreement } from './termsAgreement';
 
@@ -34,4 +35,6 @@ export interface InstructorRoleRequestDetailResponse {
   settlement?: InstructorCmsSettlement;
   termsAgreements?: TermsAgreement[];
   socialAccounts?: MemberLinkedSocialAccountResponse[];
+  /** MASKED=마스킹 GET. UNMASKED=privacy/unmask 원문 응답. UNMASKED일 때 FE 재마스킹 금지. */
+  privacyMaskingLevel?: InstructorRoleRequestDetailResponsePrivacyMaskingLevel;
 }
