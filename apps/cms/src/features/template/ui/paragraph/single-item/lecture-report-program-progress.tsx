@@ -3,8 +3,10 @@ import { CalendarOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
+import { useRef } from 'react'
 import type { LectureReportProgramProgressParagraph } from '@/features/template/model/writing-form-draft.schema'
 import '@/features/template/ui/paragraph/table/vertical-table-paragraph-body.css'
+import { DeferredBorderlessInput } from '@/features/template/ui/shared/deferred-borderless-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import './lecture-report-program-progress.css'
 
@@ -52,8 +54,11 @@ export function LectureReportProgramProgress({
   /** 템플릿 편집 — 진행 단원은 시안상 항상 활성 */
   isTemplateAuthoringMode?: boolean
 }) {
+  const paragraphRef = useRef(paragraph)
+  paragraphRef.current = paragraph
+
   const patch = (partial: Partial<LectureReportProgramProgressParagraph>) => {
-    onChange({ ...paragraph, ...partial })
+    onChange({ ...paragraphRef.current, ...partial })
   }
 
   const autofillLocked = true
@@ -101,11 +106,10 @@ export function LectureReportProgramProgress({
                   </div>
                   <span className="lecture-report-prog-info__divider" role="presentation" />
                   <div className={wrapClass('lecture-report-prog-info__split-wrap', progressUnitLocked)}>
-                    <Input
+                    <DeferredBorderlessInput
                       className="lecture-report-prog-info__session-input"
-                      variant="borderless"
                       value={paragraph.progressUnit}
-                      onChange={e => patch({ progressUnit: e.target.value })}
+                      onCommit={next => patch({ progressUnit: next })}
                       disabled={progressUnitLocked}
                       placeholder="진행 단원"
                       aria-label="진행 단원"

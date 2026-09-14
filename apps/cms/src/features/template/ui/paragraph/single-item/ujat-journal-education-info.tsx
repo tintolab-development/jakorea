@@ -2,8 +2,10 @@ import { DatePicker, Input } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
+import { useRef } from 'react'
 import type { UjatJournalEducationInfoParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { UJAT_JOURNAL_EDUCATION_INFO_GRADE_OPTIONS } from '@/features/template/model/writing-form-draft.schema'
+import { DeferredBorderlessInput } from '@/features/template/ui/shared/deferred-borderless-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import {
   UserInfoPreviewTable,
@@ -90,6 +92,9 @@ export function UjatJournalEducationInfo({
   /** 템플릿 편집 — 학년/반·일자 활성 */
   isTemplateAuthoringMode?: boolean
 }) {
+  const paragraphRef = useRef(paragraph)
+  paragraphRef.current = paragraph
+
   const schoolName = (autofill?.institutionName ?? paragraph.schoolDisplayFallback ?? '').trim()
   const fieldsLocked = isTemplateAuthoringMode ? false : !isEditMode
 
@@ -121,7 +126,7 @@ export function UjatJournalEducationInfo({
   }
 
   const patch = (partial: Partial<UjatJournalEducationInfoParagraph>) => {
-    onChange({ ...paragraph, ...partial })
+    onChange({ ...paragraphRef.current, ...partial })
   }
 
   return (
@@ -168,11 +173,10 @@ export function UjatJournalEducationInfo({
                   />
                   <span className="ujat-journal-edu-info__divider" role="presentation" />
                   <div className={wrapClass('ujat-journal-edu-info__class-wrap', fieldsLocked)}>
-                    <Input
+                    <DeferredBorderlessInput
                       className="ujat-journal-edu-info__class-input"
-                      variant="borderless"
                       value={paragraph.classSection}
-                      onChange={e => patch({ classSection: e.target.value })}
+                      onCommit={next => patch({ classSection: next })}
                       disabled={fieldsLocked}
                       placeholder="반"
                       aria-label="반"
