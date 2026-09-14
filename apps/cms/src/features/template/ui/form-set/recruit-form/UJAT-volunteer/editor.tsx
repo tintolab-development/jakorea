@@ -70,6 +70,7 @@ export function UjatRecruitFormVolunteerEditorRightColumn({
         verticalTableBodyRowSelection={vm.verticalTableBodyRowSelection}
         onVerticalTableBodyRowDeleted={vm.focusVerticalTableBodyRow}
         structureLockedParagraphIds={vm.structureLockedParagraphIds}
+        structureLockedTypeSelectPreset="table_system_settings"
       />
     </FormEditorFieldNav>
   )
