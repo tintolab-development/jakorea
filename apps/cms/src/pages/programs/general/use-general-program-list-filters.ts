@@ -1,10 +1,15 @@
-import { useCallback, useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react'
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  type InfiniteData,
+} from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { invalidateGeneralProgramsCache } from '@/data/mock/general-programs'
 import {
-  fetchGeneralProgramsRemoteList,
+  fetchGeneralProgramsRemoteListPage,
   getGeneralProgramsMockList,
+  type GeneralProgramsRemoteListPage,
 } from '@/features/program/general/api/admin-general-programs-service'
 import type { GeneralProgramListTableFilters } from '@/features/program/general/api/general-program-list-filter-params'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
@@ -24,6 +29,8 @@ export interface GeneralProgramListQueryParams extends Record<string, string | u
   status?: GeneralProgramOverviewStatusFilter | 'economy_scheduled' | 'economy_in_progress' | 'economy_completed'
 }
 
+const LIST_STALE_TIME_MS = 30_000
+
 function readTableFiltersFromSearchParams(
   searchParams: URLSearchParams
 ): GeneralProgramListTableFilters {
@@ -41,11 +48,24 @@ function serializeTableFilters(filters: GeneralProgramListTableFilters): string 
   return JSON.stringify(filters)
 }
 
+/** 목록 재진입 시 캐시된 2페이지 이상을 refetch하지 않도록 첫 페이지만 남긴다. */
+function keepFirstInfiniteQueryPage<T>(
+  data: InfiniteData<T> | undefined
+): InfiniteData<T> | undefined {
+  if (!data || data.pages.length <= 1) return data
+  return {
+    ...data,
+    pages: data.pages.slice(0, 1),
+    pageParams: data.pageParams.slice(0, 1),
+  }
+}
+
 export function useGeneralProgramListFilters() {
   const { params, setParam } = useQueryParams<GeneralProgramListQueryParams>()
   const [searchParams] = useSearchParams()
   const [mockListVersion, setMockListVersion] = useState(0)
   const remoteEnabled = useGeneralProgramsRemoteEnabled()
+  const queryClient = useQueryClient()
 
   const statusFilter = useMemo<GeneralProgramOverviewStatusFilter | null>(() => {
     const value = params.status
@@ -63,22 +83,43 @@ export function useGeneralProgramListFilters() {
     [searchParams]
   )
   const tableFiltersKey = useMemo(() => serializeTableFilters(tableFilters), [tableFilters])
+  const listQueryKey = useMemo(
+    () => generalProgramQueryKeys.list(statusFilter, tableFiltersKey),
+    [statusFilter, tableFiltersKey]
+  )
 
-  const remoteListQuery = useQuery({
-    queryKey: generalProgramQueryKeys.list(statusFilter, tableFiltersKey),
-    queryFn: () => fetchGeneralProgramsRemoteList(statusFilter, tableFilters),
+  useLayoutEffect(() => {
+    if (!remoteEnabled) return
+    queryClient.setQueryData<InfiniteData<GeneralProgramsRemoteListPage>>(
+      listQueryKey,
+      keepFirstInfiniteQueryPage
+    )
+    // listQueryKey 배열 참조는 렌더마다 바뀌면 안 되므로 status/filters 식별자만 의존한다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- statusFilter + tableFiltersKey + remoteEnabled
+  }, [queryClient, statusFilter, tableFiltersKey, remoteEnabled])
+
+  const remoteListQuery = useInfiniteQuery({
+    queryKey: listQueryKey,
+    queryFn: ({ pageParam }) =>
+      fetchGeneralProgramsRemoteListPage(statusFilter, tableFilters, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled,
-    staleTime: 30_000,
+    staleTime: LIST_STALE_TIME_MS,
     retry: false,
   })
 
   const filteredPrograms = useMemo(() => {
     if (remoteEnabled) {
-      return remoteListQuery.data ?? []
+      return remoteListQuery.data?.pages.flatMap(page => page.programs) ?? []
     }
     void mockListVersion
     return getGeneralProgramsMockList(statusFilter)
   }, [remoteEnabled, remoteListQuery.data, statusFilter, mockListVersion])
+
+  const totalElements = remoteEnabled
+    ? (remoteListQuery.data?.pages[0]?.totalElements ?? filteredPrograms.length)
+    : filteredPrograms.length
 
   const refetchPrograms = useCallback(() => {
     if (remoteEnabled) {
@@ -116,12 +157,19 @@ export function useGeneralProgramListFilters() {
   return {
     statusFilter,
     filteredPrograms,
+    totalElements,
     headerTitle,
     programListConfig,
     params,
     setParam,
     refetchPrograms,
-    loading: remoteEnabled ? remoteListQuery.isFetching : false,
+    loading: remoteEnabled
+      ? remoteListQuery.isFetching && !remoteListQuery.isFetchingNextPage
+      : false,
+    isFetchingNextPage: remoteEnabled ? remoteListQuery.isFetchingNextPage : false,
+    fetchNextPage: remoteListQuery.fetchNextPage,
+    hasNextPage: remoteEnabled ? (remoteListQuery.hasNextPage ?? false) : false,
+    listQueryFiltersKey: tableFiltersKey,
     isRemoteDataSource: remoteEnabled,
   }
 }
