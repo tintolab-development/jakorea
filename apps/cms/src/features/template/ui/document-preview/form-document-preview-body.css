@@ -229,6 +229,19 @@
 }
 
 .form-document-preview-body--agreement-portrait
+  .form-editor-vertical-table__td--portrait-retention,
+.form-document-preview-body--agreement-portrait
+  .form-editor-vertical-table__td--portrait-retention
+  .form-editor-vertical-table__cell-text--body {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 30px */
+}
+
+.form-document-preview-body--agreement-portrait
   .form-document-preview-paragraph__body-text--explanation-filled,
 .form-document-preview-body--agreement-portrait
   .form-document-preview-paragraph__body-text--explanation-placeholder {
