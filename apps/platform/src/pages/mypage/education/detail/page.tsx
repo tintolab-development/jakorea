@@ -3,6 +3,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
   buildInProgressDetailTabItems,
+  buildTeacherInProgressDetailTabItems,
+  buildTeacherWithdrawnDuringDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
   canCancelEducationApplication,
   canShowEducationApplicationContent,
@@ -12,15 +14,19 @@ import {
   EducationCancelConfirm,
   EducationDetailBack,
   EducationDetailHeader,
+  EducationDetailHeaderLayout,
   EducationInProgressNoticePanel,
   EducationSchedulePanel,
   EducationSettlementPanel,
+  EducationStudentsPanel,
   EducationSurveyEmptyPanel,
   EducationSurveyFillPanel,
   DocumentPassBanner,
   getEducationSurveyMockAvailability,
   getMockEducationApplicationById,
+  hasTeacherAssignmentAsideContent,
   isGeneralVolunteerApplication,
+  isSchoolTeacherMypageProfile,
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
   MYPAGE_EDUCATION_PATH,
@@ -28,6 +34,9 @@ import {
   volunteerApplicationDetailPath,
   resolveEducationScheduleTabLabel,
   shouldShowDocumentPassBanner,
+  TeacherApplicationContent,
+  TeacherEducationAssignmentAside,
+  useMypageMember,
   type EducationActivitySection,
   type EducationDisplayStatus,
 } from '@/features/mypage'
@@ -66,6 +75,7 @@ function isActivitySection(value: string): value is EducationActivitySection {
   return (
     value === 'notice' ||
     value === 'schedule' ||
+    value === 'students' ||
     value === 'survey' ||
     value === 'satisfaction' ||
     value === 'settlement'
@@ -108,6 +118,8 @@ export function MypageEducationDetailPage() {
   const [section, setSection] = useState(readSection)
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
+  const member = useMypageMember()
+  const isTeacher = isSchoolTeacherMypageProfile(member.profile)
 
   const mockEnabled = useShouldUsePlatformMockData()
   const application = useMemo(
@@ -139,14 +151,18 @@ export function MypageEducationDetailPage() {
     [program],
   )
 
-  const inProgressTabItems = useMemo(
-    () => (activityTabOptions ? buildInProgressDetailTabItems(activityTabOptions) : []),
-    [activityTabOptions],
-  )
-  const withdrawnDuringTabItems = useMemo(
-    () => (activityTabOptions ? buildWithdrawnDuringDetailTabItems(activityTabOptions) : []),
-    [activityTabOptions],
-  )
+  const inProgressTabItems = useMemo(() => {
+    if (!activityTabOptions) return []
+    return isTeacher
+      ? buildTeacherInProgressDetailTabItems(activityTabOptions)
+      : buildInProgressDetailTabItems(activityTabOptions)
+  }, [activityTabOptions, isTeacher])
+  const withdrawnDuringTabItems = useMemo(() => {
+    if (!activityTabOptions) return []
+    return isTeacher
+      ? buildTeacherWithdrawnDuringDetailTabItems(activityTabOptions)
+      : buildWithdrawnDuringDetailTabItems(activityTabOptions)
+  }, [activityTabOptions, isTeacher])
 
   const inProgressKeys = useMemo(
     () => inProgressTabItems.map(item => item.key),
@@ -288,6 +304,8 @@ export function MypageEducationDetailPage() {
 
   const showBanner = shouldShowDocumentPassBanner(application)
   const showCancelCta = canCancelEducationApplication(application.displayStatus)
+  const showTeacherAssignment =
+    isTeacher && hasTeacherAssignmentAsideContent(application.teacherAssignment)
   const appliedSection = isAppliedSection(section) ? section : 'program'
   const activitySection = isActivitySection(section)
     ? section
@@ -297,10 +315,17 @@ export function MypageEducationDetailPage() {
 
   const renderApplicationOrPlaceholder = () =>
     canShowEducationApplicationContent(application.displayStatus) ? (
-      <EducationApplicationContent
-        selfIntroMotivation={application.selfIntroMotivation}
-        preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
-      />
+      isTeacher && application.teacherApplicationContent ? (
+        <TeacherApplicationContent
+          applicationId={application.id}
+          content={application.teacherApplicationContent}
+        />
+      ) : (
+        <EducationApplicationContent
+          selfIntroMotivation={application.selfIntroMotivation}
+          preferredEducationScheduleLabel={application.preferredEducationScheduleLabel}
+        />
+      )
     ) : (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
         신청 내용 화면은 준비 중입니다.
@@ -328,6 +353,15 @@ export function MypageEducationDetailPage() {
         />
       )
     }
+    if (active === 'students') {
+      return (
+        <EducationStudentsPanel
+          lastParticipatedSession={
+            isWithdrawnDuring ? application.lastParticipatedSession : undefined
+          }
+        />
+      )
+    }
     if (active === 'survey') {
       const surveyAvailability = getEducationSurveyMockAvailability({
         displayStatus: application.displayStatus,
@@ -343,6 +377,13 @@ export function MypageEducationDetailPage() {
       return <EducationSurveyEmptyPanel kind="satisfaction" />
     }
     if (active === 'settlement') {
+      if (isTeacher) {
+        return (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
+            준비 중입니다.
+          </PFText>
+        )
+      }
       return (
         <EducationSettlementPanel
           programId={program.id}
@@ -362,14 +403,22 @@ export function MypageEducationDetailPage() {
 
   return (
     <section className={styles.page}>
-      <EducationDetailBack onClick={handleBack} />
-
-      <EducationDetailHeader
-        title={program.title}
-        displayStatus={application.displayStatus}
-        educationTargetLabel={program.educationTargetLabel}
-        educationForm={program.educationForm}
-        educationFormLabel={program.educationFormLabel}
+      <EducationDetailHeaderLayout
+        leading={<EducationDetailBack onClick={handleBack} />}
+        header={
+          <EducationDetailHeader
+            title={program.title}
+            displayStatus={application.displayStatus}
+            educationTargetLabel={program.educationTargetLabel}
+            educationForm={program.educationForm}
+            educationFormLabel={program.educationFormLabel}
+          />
+        }
+        aside={
+          showTeacherAssignment && application.teacherAssignment ? (
+            <TeacherEducationAssignmentAside assignment={application.teacherAssignment} />
+          ) : undefined
+        }
       />
 
       {showBanner && application.interviewAtLabel ? (
