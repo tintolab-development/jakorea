@@ -600,6 +600,46 @@
   cursor: text;
 }
 
+/* 시스템 설정(partial) — 필드형 표도 텍스트 가로형과 동일 테두리 셀 인풋 레이아웃 */
+.form-editor-horizontal-table-wrap--system-settings-text-edit
+  .form-editor-horizontal-table__td--field {
+  justify-content: center;
+  align-items: center;
+}
+
+.form-editor-horizontal-table-wrap--system-settings-text-edit
+  .form-editor-horizontal-table__td--field
+  > .text-cell-input {
+  max-width: 100%;
+}
+
+.form-editor-horizontal-table-wrap--system-settings-text-edit
+  .form-editor-horizontal-table__td--field
+  > .form-editor-horizontal-table__cell-text-hit {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: text;
+}
+
+.form-editor-horizontal-table-wrap--system-settings-text-edit
+  .form-editor-horizontal-table__bottom-text-hit {
+  width: 100%;
+  cursor: text;
+}
+
+.form-editor-horizontal-table-wrap--system-settings-text-edit
+  .form-editor-horizontal-table__bottom
+  > .text-cell-input {
+  width: 100%;
+  max-width: 100%;
+  align-self: stretch;
+}
+
 .form-editor-horizontal-table__cell-text {
   flex: 1 1 auto;
   min-width: 0;
