@@ -1,0 +1,6 @@
+export { TeacherEducationAssignmentAside } from './assignment-aside'
+export type { TeacherEducationAssignmentAsideProps } from './assignment-aside'
+export { TeacherTextbookInfoCard } from './textbook-info-card'
+export type { TeacherTextbookInfoCardProps } from './textbook-info-card'
+export { TeacherAssignedInstructorCard } from './assigned-instructor-card'
+export type { TeacherAssignedInstructorCardProps } from './assigned-instructor-card'
