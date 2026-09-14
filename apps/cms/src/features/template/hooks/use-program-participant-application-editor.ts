@@ -93,6 +93,7 @@ import {
 } from '@/features/template/model/program-application-form-economy-draft'
 import {
   createProgramApplicationFormTrainedTeachersDraft,
+  migrateProgramApplicationFormTrainedTeachersParagraphs,
   PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-trained-teachers-draft'
 import {
@@ -580,6 +581,8 @@ export function useProgramParticipantApplicationEditor(
               ? migrateGeminiVisitingTrainingApplicationInstitutionParagraphs(next)
               : variant === 'economy-application-institution'
                 ? migrateProgramApplicationFormEconomyParagraphs(next)
+                : variant === 'trained-teachers-application-institution'
+                  ? migrateProgramApplicationFormTrainedTeachersParagraphs(next)
                 : variant === 'institution'
                   ? migrateProgramApplicationFormInstitutionParagraphs(next)
                   : variant === 'instructor'

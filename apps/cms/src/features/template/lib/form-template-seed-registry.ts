@@ -16,7 +16,7 @@ import {
   createProgramApplicationFormInstitutionDraft,
   migrateProgramApplicationFormInstitutionParagraphs,
 } from '@/features/template/model/program-application-form-institution-draft'
-import { createProgramApplicationFormTrainedTeachersDraft } from '@/features/template/model/program-application-form-trained-teachers-draft'
+import { createProgramApplicationFormTrainedTeachersDraft, migrateProgramApplicationFormTrainedTeachersParagraphs } from '@/features/template/model/program-application-form-trained-teachers-draft'
 import {
   createProgramApplicationFormVolunteerDraft,
   migrateProgramApplicationFormVolunteerParagraphs,
@@ -133,6 +133,9 @@ export function normalizeWritingFormDraftFromApi(
     }
     if (templateCode === 'application-volunteer') {
       return migrateProgramApplicationFormVolunteerParagraphs(draft)
+    }
+    if (templateCode === 'application-trained-teachers') {
+      return migrateProgramApplicationFormTrainedTeachersParagraphs(draft)
     }
     return draft
   }
