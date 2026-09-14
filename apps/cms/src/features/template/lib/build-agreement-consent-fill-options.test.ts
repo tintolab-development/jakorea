@@ -141,7 +141,7 @@ describe('buildAgreementConsentFillParagraphBodyOptions', () => {
   it('enables admin proxy confirm for educator facilitator pledge', () => {
     const pledgeConfig = {
       ...agreementConfig,
-      modalTitle: '교육진행자 동의 서약서',
+      modalTitle: 'JA Korea 교육진행자 서약서(안)',
       structureLockedParagraphIds: EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS,
       paragraphBodyOptions: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_BODY_OPTIONS,
     }

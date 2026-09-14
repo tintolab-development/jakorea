@@ -160,7 +160,7 @@ const agreementDefinitions: TemplateDefinition[] = [
     variant: 'default',
   },
   { id: 'agreement-notice', templateName: '행정정보 공동이용 사전 동의서', variant: 'default' },
-  { id: 'agreement-expense', templateName: '교육진행자 동의 서약서', variant: 'default' },
+  { id: 'agreement-expense', templateName: 'JA Korea 교육진행자 서약서(안)', variant: 'default' },
 ]
 
 export const writingSections: TemplateSection[] = [

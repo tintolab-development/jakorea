@@ -37,7 +37,7 @@ export const WRITING_TEMPLATE_NAMES = [
   '지급조서 사전 동의서',
   '성범죄 경력조회 동의서',
   '행정정보 공동이용 사전 동의서',
-  '교육진행자 동의 서약서',
+  'JA Korea 교육진행자 서약서(안)',
 ] as const
 
 export const ISSUANCE_TEMPLATE_NAMES = [
