@@ -192,8 +192,10 @@
 
 .paragraph-card--active {
   border-radius: var(--16, 16px);
-  border-color: var(--color-mint-01, #01a1af);
+  border: 1px solid var(--color-mint-01, #01a1af);
   background: var(--main-WT, #fff);
+  /* shadow/focus */
+  box-shadow: 0 4px 24px 0 rgba(0, 89, 97, 0.2);
 }
 
 .paragraph-card__title-wrap {

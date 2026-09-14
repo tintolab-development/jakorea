@@ -185,6 +185,14 @@ export function modalCardFooterToggles(
     return undefined
   }
 
+  /* UJAT 교육계획서·교육일지 설명글 — 타이틀 비필수, 답변 필수 토글 미노출 */
+  if (
+    paragraph.id === 'ujat-edu-plan-explanation-text' ||
+    paragraph.id === 'ujat-edu-journal-explanation-text'
+  ) {
+    return undefined
+  }
+
   if (paragraph.kind === 'single_item') {
     const answerRequired = paragraph.answerRequired ?? paragraph.requiredMark
     const toggles: ReactNode[] = [
