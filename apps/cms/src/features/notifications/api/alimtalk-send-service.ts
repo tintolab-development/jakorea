@@ -47,7 +47,8 @@ export async function getAlimtalkSenderProfiles(): Promise<AlimtalkSenderProfile
 }
 
 export async function getAlimtalkRecipientCandidates(input: {
-  programId: number
+  /** 생략 시 전체 회원 후보 (대상 프로그램 미선택) */
+  programId?: number
   keyword?: string
   participantType?: string
   memberType?: string
@@ -73,7 +74,9 @@ export async function getAlimtalkRecipientCandidates(input: {
   }
   const dto = await fetchRecipientCandidatesRemote({
     channelType: ALIMTALK_API_CHANNEL_TYPE,
-    programId: input.programId,
+    ...(input.programId != null && Number.isFinite(input.programId)
+      ? { programId: input.programId }
+      : {}),
     keyword: input.keyword,
     participantType: input.participantType,
     memberType: input.memberType,

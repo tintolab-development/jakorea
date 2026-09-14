@@ -20,6 +20,7 @@ export function useMailSenderProfilesQuery(enabled = true) {
 
 export function useMailRecipientCandidatesQuery(
   input: {
+    /** 생략 시 전체 회원 후보 */
     programId?: number
     keyword?: string
     participantType?: string
@@ -29,7 +30,9 @@ export function useMailRecipientCandidatesQuery(
   },
   enabled = true
 ) {
-  const canFetch = enabled && input.programId != null && Number.isFinite(input.programId)
+  const programOk =
+    input.programId == null || Number.isFinite(input.programId)
+  const canFetch = enabled && programOk
   const key = stableNotificationQueryKey({
     programId: input.programId,
     keyword: input.keyword,
@@ -40,11 +43,7 @@ export function useMailRecipientCandidatesQuery(
   })
   return useQuery({
     queryKey: notificationsQueryKeys.mailSend.recipients(key),
-    queryFn: () =>
-      getMailRecipientCandidates({
-        ...input,
-        programId: input.programId as number,
-      }),
+    queryFn: () => getMailRecipientCandidates(input),
     enabled: canFetch,
     staleTime: 30_000,
     placeholderData: keepPreviousData,

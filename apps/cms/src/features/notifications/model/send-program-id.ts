@@ -17,8 +17,8 @@ export function isNotificationSendAllProgram(
 
 /**
  * 템플릿 선택 가능 여부.
- * - 미선택: 불가
- * - 전체(지정 해제) 또는 특정 프로그램: 가능
+ * - 미선택(진입 빈 값): 불가
+ * - 지정 해제(`all`, UI 「미선택」= 전체 회원) 또는 특정 프로그램: 가능
  */
 export function canSelectNotificationSendTemplate(
   programId: string | undefined | null

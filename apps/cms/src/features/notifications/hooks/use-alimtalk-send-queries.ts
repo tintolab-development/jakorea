@@ -31,6 +31,7 @@ export function useAlimtalkSendTemplatePickerQuery(enabled = true) {
 
 export function useAlimtalkRecipientCandidatesQuery(
   input: {
+    /** 생략 시 전체 회원 후보 */
     programId?: number
     keyword?: string
     participantType?: string
@@ -40,7 +41,9 @@ export function useAlimtalkRecipientCandidatesQuery(
   },
   enabled = true
 ) {
-  const canFetch = enabled && input.programId != null && Number.isFinite(input.programId)
+  const programOk =
+    input.programId == null || Number.isFinite(input.programId)
+  const canFetch = enabled && programOk
   const key = stableNotificationQueryKey({
     programId: input.programId,
     keyword: input.keyword,
@@ -51,11 +54,7 @@ export function useAlimtalkRecipientCandidatesQuery(
   })
   return useQuery({
     queryKey: notificationsQueryKeys.alimtalkSend.recipients(key),
-    queryFn: () =>
-      getAlimtalkRecipientCandidates({
-        ...input,
-        programId: input.programId as number,
-      }),
+    queryFn: () => getAlimtalkRecipientCandidates(input),
     enabled: canFetch,
     staleTime: 30_000,
     placeholderData: keepPreviousData,

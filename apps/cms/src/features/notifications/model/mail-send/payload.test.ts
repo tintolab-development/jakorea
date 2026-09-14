@@ -79,7 +79,7 @@ describe('validateMailSendDraft', () => {
     ).toBe('예약 시간은 현재 이후여야 합니다.')
   })
 
-  it('allows all-program with DIRECT recipients only', () => {
+  it('allows all-program (미선택) with member recipients', () => {
     expect(
       validateMailSendDraft(
         draft({
@@ -87,7 +87,7 @@ describe('validateMailSendDraft', () => {
           subject: '[JA Korea] hello',
         })
       )
-    ).toBe('대상 프로그램이 미선택일 때는 직접 입력 수신자만 사용할 수 있습니다.')
+    ).toBeNull()
 
     expect(
       validateMailSendDraft(

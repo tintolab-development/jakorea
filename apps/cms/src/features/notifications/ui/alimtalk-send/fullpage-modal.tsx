@@ -273,7 +273,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       page: recipientSearch.page,
       size: 50,
     },
-    open && recipientSelectOpen && programNumericId != null
+    open && recipientSelectOpen && (programNumericId != null || isAllProgram)
   )
 
   const pickerTemplate = useMemo(
@@ -434,14 +434,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       })
       return
     }
-    if (isAllProgram || !programNumericId) {
-      showAlert({
-        title: '안내',
-        content:
-          '대상 프로그램이 미선택일 때는 프로그램 참여 회원 후보를 조회할 수 없습니다. 수신자 직접 입력을 이용해 주세요.',
-      })
-      return
-    }
     setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
     setRecipientSelectOpen(true)
   }
@@ -483,18 +475,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       })
       return
     }
-    if (isAllProgram) {
-      const hasProgramBound = recipients.some(
-        item => item.source !== 'manual' && item.actorType !== 'DIRECT'
-      )
-      if (hasProgramBound) {
-        showAlert({
-          title: '필수 입력 안내',
-          content: '대상 프로그램이 미선택일 때는 직접 입력 수신자만 사용할 수 있습니다.',
-        })
-        return
-      }
-    } else if (!programNumericId) {
+    if (!isAllProgram && !programNumericId) {
       showAlert({
         title: '필수 입력 안내',
         content: '대상 프로그램을 선택하세요.',
@@ -828,7 +809,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
             : 1
         }
         fetchAllCandidates={
-          remote && programNumericId != null
+          remote && (programNumericId != null || isAllProgram)
             ? async () => {
                 const total = Math.max(candidatesQuery.data?.total ?? 0, 1)
                 const result = await getAlimtalkRecipientCandidates({

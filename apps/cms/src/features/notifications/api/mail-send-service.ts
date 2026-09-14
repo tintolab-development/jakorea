@@ -103,7 +103,8 @@ export function resolveMailSenderProfileId(
 }
 
 export async function getMailRecipientCandidates(input: {
-  programId: number
+  /** 생략 시 전체 회원 후보 (대상 프로그램 미선택) */
+  programId?: number
   keyword?: string
   participantType?: string
   memberType?: string
@@ -116,7 +117,7 @@ export async function getMailRecipientCandidates(input: {
   size: number
   totalPages: number
 }> {
-  const size = input.size ?? 100
+  const size = input.size ?? 50
   const page = input.page ?? 0
   if (!shouldUseMailSendRemoteApi()) {
     return {
@@ -129,7 +130,9 @@ export async function getMailRecipientCandidates(input: {
   }
   const dto = await fetchRecipientCandidatesRemote({
     channelType: MAIL_API_CHANNEL_TYPE,
-    programId: input.programId,
+    ...(input.programId != null && Number.isFinite(input.programId)
+      ? { programId: input.programId }
+      : {}),
     keyword: input.keyword,
     participantType: input.participantType,
     memberType: input.memberType,
@@ -143,7 +146,7 @@ export async function getMailRecipientCandidates(input: {
     total,
     page: dto.page ?? page,
     size: resolvedSize,
-    totalPages: dto.totalPages ?? Math.max(Math.ceil(total / (resolvedSize || 100)), 1),
+    totalPages: dto.totalPages ?? Math.max(Math.ceil(total / (resolvedSize || 50)), 1),
   }
 }
 

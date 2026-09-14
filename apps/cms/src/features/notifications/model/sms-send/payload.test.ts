@@ -189,7 +189,7 @@ describe('validateSmsSendDraft', () => {
           programId: SMS_SEND_ALL_PROGRAM_ID,
         })
       )
-    ).toBe('대상 프로그램이 미선택일 때는 직접 입력 수신자만 사용할 수 있습니다.')
+    ).toBeNull()
     expect(
       validateSmsSendDraft(
         draft({

@@ -235,6 +235,8 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     () => parseNotificationSendProgramId(form.programId),
     [form.programId]
   )
+  const isAllProgram = isNotificationSendAllProgram(form.programId)
+  const isProgramUnset = isNotificationSendProgramUnset(form.programId)
   const recipientTypeMode = resolveMailSendRecipientTypeMode(form.programId)
   const typeColumnTitle = mailSendRecipientTypeColumnTitle(recipientTypeMode)
 
@@ -292,7 +294,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       page: recipientSearch.page,
       size: 50,
     },
-    open && recipientSelectOpen && programNumericId != null
+    open && recipientSelectOpen && (programNumericId != null || isAllProgram)
   )
   const variablesQuery = useMailTemplateVariablesQuery(
     templateVariablesQuery,
@@ -326,8 +328,6 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
 
   const hasTemplates = templates.length > 0
   const canPickTemplate = canSelectNotificationSendTemplate(form.programId) && hasTemplates
-  const isAllProgram = isNotificationSendAllProgram(form.programId)
-  const isProgramUnset = isNotificationSendProgramUnset(form.programId)
 
   const isTemplateUsable = useCallback(
     (template: (typeof templates)[number]) =>
@@ -398,14 +398,6 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   const handleOpenRecipientSelect = () => {
     if (isProgramUnset) {
       showAlert({ title: '안내', content: '대상 프로그램을 선택하세요.' })
-      return
-    }
-    if (isAllProgram || programNumericId == null) {
-      showAlert({
-        title: '안내',
-        content:
-          '대상 프로그램이 미선택일 때는 프로그램 참여 회원 후보를 조회할 수 없습니다. 수신자 직접 입력을 이용해 주세요.',
-      })
       return
     }
     setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
@@ -786,7 +778,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         totalCount={candidatesQuery.data?.total}
         totalPages={candidatesQuery.data?.totalPages}
         fetchAllCandidates={
-          remote && programNumericId != null
+          remote && (programNumericId != null || isAllProgram)
             ? async () => {
                 const total = Math.max(candidatesQuery.data?.total ?? 0, 1)
                 const result = await getMailRecipientCandidates({
