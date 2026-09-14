@@ -37,7 +37,7 @@ import {
 function assertRemoteReady(): void {
   if (shouldUseGeminiVisitingTrainingRemoteApi()) return
   throw new Error(
-    'Gemini 찾아가는 연수 API가 활성화되지 않았습니다. VITE_REAL_API_MODULES에 geminiVisitingTraining을 추가해 주세요.'
+    'Gemini 찾아가는 연수 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정해 주세요.'
   )
 }
 

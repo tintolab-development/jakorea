@@ -144,11 +144,11 @@ export function BackendDummiesPage() {
 
         <section className="bd-section bd-section--tight" aria-labelledby="bd-modules-title">
           <h2 id="bd-modules-title" className="bd-section__title bd-section__title--sm">
-            VITE_REAL_API_MODULES
+            실 API 모듈 (remote URL 기준)
           </h2>
           <div className="bd-modules">
             {envModules.length === 0 ? (
-              <span className="bd-chip bd-chip--on">미설정 → remote 시 전부 실 API</span>
+              <span className="bd-chip bd-chip--off">remote 미구성 → 실 API 게이트 OFF</span>
             ) : (
               envModules.map(m => (
                 <span key={m} className="bd-chip bd-chip--on">

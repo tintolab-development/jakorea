@@ -57,7 +57,7 @@ const GENERAL_PROGRAM_API_TYPE = 'GENERAL'
 function assertGeneralProgramsRemoteReady(): void {
   if (!shouldUseGeneralProgramsRemoteApi()) {
     throw new Error(
-      '일반 프로그램 API가 활성화되지 않았습니다. API 로그인 후 VITE_REAL_API_MODULES에 programs를 추가해 주세요.'
+      '일반 프로그램 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정하고 관리자 API로 로그인해 주세요.'
     )
   }
 }

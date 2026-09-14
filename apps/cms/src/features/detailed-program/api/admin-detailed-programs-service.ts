@@ -18,7 +18,7 @@ import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 function assertDetailedProgramsRemoteReady(): void {
   if (!isRealApiModuleEnabled('detailedPrograms')) {
     throw new Error(
-      '세부 프로그램 API가 활성화되지 않았습니다. VITE_REAL_API_MODULES에 detailedPrograms를 추가해 주세요.'
+      '세부 프로그램 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정해 주세요.'
     )
   }
   if (!hasRemoteAdminJwt()) {
