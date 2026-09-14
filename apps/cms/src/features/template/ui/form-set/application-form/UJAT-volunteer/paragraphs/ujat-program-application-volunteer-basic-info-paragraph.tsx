@@ -4,6 +4,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { UniversitySearch } from '@/shared/ui/university-search'
 import type { UjatProgramApplicationVolunteerType } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraph-body'
 import {
   UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS,
@@ -33,11 +34,14 @@ const APPLICATION_ROUTE_OPTIONS = [
 type BasicInfoFieldsProps = {
   applicationType: UjatProgramApplicationVolunteerType
   onApplicationTypeChange: (next: UjatProgramApplicationVolunteerType) => void
+  /** 템플릿 편집: 검색 팝업 없이 인풋만. 실제 작성: UniversitySearch 팝업 */
+  isTemplateAuthoringMode?: boolean
 }
 
 function UjatProgramApplicationVolunteerBasicInfoFieldRows({
   applicationType,
   onApplicationTypeChange,
+  isTemplateAuthoringMode = false,
 }: BasicInfoFieldsProps): ReactNode {
   const [universityName, setUniversityName] = useUjatApplicationVolunteerOverlayKv<string>(
     UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.universityName,
@@ -59,6 +63,25 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
   >(UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.applicationRouteOther, '')
   const isOtherApplicationRoute = applicationRoute === APPLICATION_ROUTE_OTHER_VALUE
 
+  const universityField = isTemplateAuthoringMode ? (
+    <CmsInput
+      inputSize="medium"
+      width={240}
+      placeholder="학교명을 입력해 보세요"
+      icon={<SearchOutlined aria-hidden />}
+      value={universityName}
+      onChange={e => setUniversityName(e.target.value)}
+    />
+  ) : (
+    <UniversitySearch
+      inputSize="medium"
+      width={240}
+      placeholder="학교명을 입력해 보세요"
+      value={universityName}
+      onChange={setUniversityName}
+    />
+  )
+
   return (
     <>
       <DetailInfoForm.Row type="double">
@@ -66,14 +89,7 @@ function UjatProgramApplicationVolunteerBasicInfoFieldRows({
           label="대학교 및 학년"
           edit={
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
-              <CmsInput
-                inputSize="medium"
-                width={240}
-                placeholder="학교명을 입력해 보세요"
-                icon={<SearchOutlined aria-hidden />}
-                value={universityName}
-                onChange={e => setUniversityName(e.target.value)}
-              />
+              {universityField}
               <DetailInfoForm.InputsSeparator />
               <CmsSelect
                 inputSize="medium"
@@ -185,6 +201,7 @@ export function UjatProgramApplicationVolunteer1365IdForm({ className }: { class
 export function UjatProgramApplicationVolunteerBasicInfoDetailForm({
   applicationType,
   onApplicationTypeChange,
+  isTemplateAuthoringMode,
   className,
 }: BasicInfoFieldsProps & { className?: string }) {
   return (
@@ -192,6 +209,7 @@ export function UjatProgramApplicationVolunteerBasicInfoDetailForm({
       <UjatProgramApplicationVolunteerBasicInfoFieldRows
         applicationType={applicationType}
         onApplicationTypeChange={onApplicationTypeChange}
+        isTemplateAuthoringMode={isTemplateAuthoringMode}
       />
     </DetailInfoForm>
   )
@@ -201,11 +219,13 @@ export function UjatProgramApplicationVolunteerBasicInfoDetailForm({
 export function UjatProgramApplicationVolunteerBasicInfoParagraph({
   applicationType,
   onApplicationTypeChange,
+  isTemplateAuthoringMode,
 }: BasicInfoFieldsProps) {
   return (
     <UjatProgramApplicationVolunteerBasicInfoDetailForm
       applicationType={applicationType}
       onApplicationTypeChange={onApplicationTypeChange}
+      isTemplateAuthoringMode={isTemplateAuthoringMode}
     />
   )
 }
