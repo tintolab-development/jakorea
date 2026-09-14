@@ -2444,6 +2444,25 @@ const AGREEMENT_NOTICE_TABLE_FIRST_ROW: [string, string, string, string] = [
 
 const AGREEMENT_NOTICE_TABLE_BODY_ROW_COUNT = 5
 
+/** 표 하단 식별번호 시드 — normalize 경로에서 전체 draft 재생성 없이 사용 */
+function createAgreementNoticeIdTypeWithInputSeed(): IdTypeWithInputParagraph {
+  const idTypeOpts = createDefaultIdTypeWithInputOptions()
+  return {
+    id: AGREEMENT_NOTICE_PARAGRAPH_IDS.idType,
+    kind: 'single_item',
+    variant: 'id_type_with_input',
+    requiredMark: false,
+    paragraphTitle: '',
+    paragraphDescription: '',
+    participatesInTitleNumbering: true,
+    options: idTypeOpts,
+    selectedOptionId: idTypeOpts[0]?.id ?? null,
+    inputPlaceholder: '주민등록번호를 입력해 주세요',
+    inputValue: '',
+    answerRequired: false,
+  }
+}
+
 /**
  * 행정정보 공동이용 표 — 1행 시드(연번·행정정보명) 보정 + 최소 행 수 확보.
  * (구 JSON·localStorage/API 저장본이 빈 1행만 가진 경우 복구)
@@ -2480,19 +2499,8 @@ function migrateAgreementNoticeTableSeedRows(
       dataRows.push(Array.from({ length: colCount }, () => ''))
     }
   }
-  const seedIdTypeWithInput = (() => {
-    const seedTable = createAgreementNoticeDraft().paragraphs.find(
-      sp => sp.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.table
-    )
-    if (
-      seedTable?.kind === 'single_item' &&
-      seedTable.variant === 'horizontal_table' &&
-      seedTable.idTypeWithInput != null
-    ) {
-      return seedTable.idTypeWithInput
-    }
-    return null
-  })()
+  const seedIdTypeWithInput =
+    p.idTypeWithInput == null ? createAgreementNoticeIdTypeWithInputSeed() : null
 
   return {
     ...p,
@@ -2998,7 +3006,6 @@ function createAgreementNoticeTableDataRows(): string[][] {
 
 /** 동의 양식 목록 > 행정정보 공동이용 사전동의서 — 편집 시드 초안 */
 export function createAgreementNoticeDraft(): WritingFormDraft {
-  const idTypeOpts = createDefaultIdTypeWithInputOptions()
   const tableSeed: HorizontalTableParagraph = normalizeHorizontalTableParagraph({
     id: AGREEMENT_NOTICE_PARAGRAPH_IDS.table,
     kind: 'single_item',
@@ -3016,20 +3023,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
     showBottomText: true,
     showBottomConsent: false,
     bottomConsent: 'agree',
-    idTypeWithInput: {
-      id: AGREEMENT_NOTICE_PARAGRAPH_IDS.idType,
-      kind: 'single_item',
-      variant: 'id_type_with_input',
-      requiredMark: false,
-      paragraphTitle: '',
-      paragraphDescription: '',
-      participatesInTitleNumbering: true,
-      options: idTypeOpts,
-      selectedOptionId: idTypeOpts[0]?.id ?? null,
-      inputPlaceholder: '주민등록번호를 입력해 주세요',
-      inputValue: '',
-      answerRequired: false,
-    },
+    idTypeWithInput: createAgreementNoticeIdTypeWithInputSeed(),
     answerRequired: false,
   })
 
