@@ -889,10 +889,12 @@ export function paragraphEditableHeading(
       const p = paragraph as TitleWithPeriodParagraph
       const lectureReportLockedHeaderEditable =
         isSelected && LECTURE_REPORT_SEED_PARAGRAPH_IDS.has(p.id)
+      /** 구조 잠금이어도 카드 선택 시 설명란은 공통 편집 가능(제목은 기존 예외만) */
+      const descriptionIsEditMode = isSelected
       return {
         isEditMode: lectureReportLockedHeaderEditable,
         titleIsEditMode: lectureReportLockedHeaderEditable,
-        descriptionIsEditMode: lectureReportLockedHeaderEditable,
+        descriptionIsEditMode,
         titleValue: p.surveyTitle,
         onTitleChange: lectureReportLockedHeaderEditable
           ? (next: string) =>
@@ -912,7 +914,7 @@ export function paragraphEditableHeading(
           .join(' '),
         titleLeading: prefix,
         descriptionValue: p.surveyDescription,
-        onDescriptionChange: lectureReportLockedHeaderEditable
+        onDescriptionChange: descriptionIsEditMode
           ? (next: string) =>
               updateParagraph(p.id, cur =>
                 cur.kind === 'description' && cur.variant === 'survey_title_with_period'
@@ -926,10 +928,11 @@ export function paragraphEditableHeading(
     }
     if (paragraph.kind === 'description' && paragraph.variant === 'static_description_lines') {
       const p = paragraph
+      const descriptionIsEditMode = isSelected
       return {
         isEditMode: false,
         titleIsEditMode: false,
-        descriptionIsEditMode: false,
+        descriptionIsEditMode,
         titleValue: p.paragraphTitle,
         onTitleChange: () => {},
         titlePlaceholder: '타이틀을 입력해 주세요',
@@ -939,7 +942,14 @@ export function paragraphEditableHeading(
           : undefined,
         titleLeading: prefix,
         descriptionValue: normalizeCardDescriptionValue(p.id, p.paragraphDescription),
-        onDescriptionChange: () => {},
+        onDescriptionChange: descriptionIsEditMode
+          ? (next: string) =>
+              updateParagraph(p.id, cur =>
+                cur.kind === 'description' && cur.variant === 'static_description_lines'
+                  ? { ...cur, paragraphDescription: next }
+                  : cur
+              )
+          : () => {},
         descriptionPlaceholder: '설명 입력',
         descriptionClassName: descCls(),
       }
@@ -1016,8 +1026,8 @@ export function paragraphEditableHeading(
             UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(p.id))) ||
         lectureReportLockedHeaderEditable
       const titleIsEditMode = horizontalLockedHeaderEditable || lectureReportLockedHeaderEditable
-      /* 잠금 시드: 기본은 설명 편집 불가, 일부 등록/신청·강의보고서 발급 폼 시드만 예외로 허용 */
-      const descriptionIsEditMode = lockedDescriptionEditable
+      /* 잠금 시드: 제목은 기존 예외만, 설명란은 카드 선택 시 공통 편집 가능 */
+      const descriptionIsEditMode = isSelected || lockedDescriptionEditable
       return {
         isEditMode: false,
         titleIsEditMode,
