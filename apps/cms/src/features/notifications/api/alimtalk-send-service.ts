@@ -18,7 +18,10 @@ import {
   fetchTemplateVariablesRemote,
 } from '@/features/notifications/api/notifications-api-client'
 import type { AlimtalkSendRecipient } from '@/features/notifications/model/alimtalk-send/types'
-import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
+import {
+  isNotificationSendWithoutProgram,
+  parseNotificationSendProgramId,
+} from '@/features/notifications/model/send-program-id'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
@@ -120,8 +123,7 @@ export async function createAlimtalkSendBatch(input: {
   if (!Number.isFinite(templateId)) throw new Error('템플릿 ID가 올바르지 않습니다.')
 
   const programId = parseNotificationSendProgramId(input.programId)
-  const isAllProgram = (input.programId?.trim() ?? '').toLowerCase() === 'all'
-  if (!isAllProgram && programId == null) {
+  if (!isNotificationSendWithoutProgram(input.programId) && programId == null) {
     throw new Error('대상 프로그램을 선택하세요.')
   }
 

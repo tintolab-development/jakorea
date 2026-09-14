@@ -29,9 +29,9 @@ import {
 import { useNotificationSendProgramsQuery } from '@/features/notifications/hooks/use-send-programs-query'
 import {
   canSelectNotificationSendTemplate,
-  isNotificationSendAllProgram,
-  isNotificationSendProgramUnset,
+  isNotificationSendWithoutProgram,
   parseNotificationSendProgramId,
+  NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT,
 } from '@/features/notifications/model/send-program-id'
 import {
   canUseNotificationSendTemplateForProgram,
@@ -93,7 +93,9 @@ export function SendFullpageModal({
   const invalidateHistory = useInvalidateSmsSendHistory()
   const form = useSmsSendForm(open, initialTemplateId)
   const remote = shouldUseSmsSendRemoteApi()
-  const canLoadProgramScoped = !isNotificationSendProgramUnset(form.programId)
+  const canLoadProgramScoped =
+    isNotificationSendWithoutProgram(form.programId) ||
+    parseNotificationSendProgramId(form.programId) != null
   const templatesQuery = useSmsSendTemplatePickerQuery(open && remote && canLoadProgramScoped)
   const templates = templatesQuery.data ?? []
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -148,8 +150,7 @@ export function SendFullpageModal({
     return resolveSmsSenderProfileId(senderProfilesQuery.data ?? [], form.senderPhone)
   }, [form.senderPhone, senderProfilesQuery.data])
   const programNumericId = parseNotificationSendProgramId(form.programId)
-  const isAllProgram = isNotificationSendAllProgram(form.programId)
-  const isProgramUnset = isNotificationSendProgramUnset(form.programId)
+  const isWithoutProgram = isNotificationSendWithoutProgram(form.programId)
   const recipientTypeMode = resolveSmsSendRecipientTypeMode(form.programId)
   const typeColumnTitle = smsSendRecipientTypeColumnTitle(recipientTypeMode)
 
@@ -188,7 +189,7 @@ export function SendFullpageModal({
       page: recipientSearch.page,
       size: 50,
     },
-    open && recipientSelectOpen && (programNumericId != null || isAllProgram)
+    open && recipientSelectOpen && (programNumericId != null || isWithoutProgram)
   )
   const variablesQuery = useSmsTemplateVariablesQuery(
     templateVariablesQuery,
@@ -270,19 +271,11 @@ export function SendFullpageModal({
   }
 
   function handleOpenRecipientSelect() {
-    if (isProgramUnset) {
-      showAlert({ title: '안내', content: '대상 프로그램을 선택하세요.' })
-      return
-    }
     setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
     setRecipientSelectOpen(true)
   }
 
   function handleOpenRecipientManual() {
-    if (isProgramUnset) {
-      showAlert({ title: '안내', content: '대상 프로그램을 선택하세요.' })
-      return
-    }
     setRecipientManualOpen(true)
   }
 
@@ -613,7 +606,7 @@ export function SendFullpageModal({
             : 1
         }
         fetchAllCandidates={
-          remote && (programNumericId != null || isAllProgram)
+          remote && (programNumericId != null || isWithoutProgram)
             ? async () => {
                 const total = Math.max(candidatesQuery.data?.total ?? 0, 1)
                 const result = await candidatesQuery.refetch({
@@ -633,7 +626,7 @@ export function SendFullpageModal({
                       ? toSmsSendMemberTypeApi(recipientSearch.typeValue)
                       : undefined,
                   page: 0,
-                  size: Math.min(Math.max(total, 50), 1000),
+                  size: Math.min(Math.max(total, 50), NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT),
                 })
                 return all.items
               }

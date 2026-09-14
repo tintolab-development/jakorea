@@ -6,8 +6,7 @@ import {
 } from '@/shared/utils/phone-validation'
 import type { SmsSendDraft, SmsSendRecipient } from './types'
 import {
-  isNotificationSendAllProgram,
-  isNotificationSendProgramUnset,
+  isNotificationSendWithoutProgram,
   parseNotificationSendProgramId,
 } from '@/features/notifications/model/send-program-id'
 import {
@@ -94,8 +93,7 @@ export function buildSmsSendCreateRequest(input: {
 }): CreateRequest {
   const { draft, templateId, senderKey, senderProfileId } = input
   const programId = resolveSmsSendProgramId(draft.programId)
-  const isAllProgram = isNotificationSendAllProgram(draft.programId)
-  if (!isAllProgram && programId == null) {
+  if (!isNotificationSendWithoutProgram(draft.programId) && programId == null) {
     throw new Error('대상 프로그램을 선택하세요.')
   }
 
@@ -127,9 +125,6 @@ export function buildSmsSendPayload(draft: SmsSendDraft): SmsSendDraft {
 }
 
 export function validateSmsSendDraft(draft: SmsSendDraft): string | null {
-  if (isNotificationSendProgramUnset(draft.programId)) {
-    return '대상 프로그램을 선택하세요.'
-  }
   if (!draft.templateId?.trim()) return '템플릿을 선택하세요.'
   if (!draft.senderPhone.trim()) return '발신 번호를 입력하세요.'
   if (!isValidKoreanPhoneNumber(draft.senderPhone)) {
@@ -142,7 +137,7 @@ export function validateSmsSendDraft(draft: SmsSendDraft): string | null {
   if (scheduleError) return scheduleError
   if (draft.recipients.length === 0) return '수신자를 설정하세요.'
   if (
-    !isNotificationSendAllProgram(draft.programId) &&
+    !isNotificationSendWithoutProgram(draft.programId) &&
     parseNotificationSendProgramId(draft.programId) == null
   ) {
     return '대상 프로그램을 선택하세요.'

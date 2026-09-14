@@ -178,11 +178,17 @@ describe('buildSmsSendCreateRequest', () => {
 })
 
 describe('validateSmsSendDraft', () => {
-  it('requires program, template, sender phone, schedule, recipients, subject, and body', () => {
-    expect(validateSmsSendDraft(draft({ programId: '' }))).toBe('대상 프로그램을 선택하세요.')
+  it('requires template, sender phone, schedule, recipients, subject, and body', () => {
     expect(validateSmsSendDraft(draft({ programId: 'prog-coy-2026' }))).toBe(
       '대상 프로그램을 선택하세요.'
     )
+    expect(
+      validateSmsSendDraft(
+        draft({
+          programId: '',
+        })
+      )
+    ).toBeNull()
     expect(
       validateSmsSendDraft(
         draft({

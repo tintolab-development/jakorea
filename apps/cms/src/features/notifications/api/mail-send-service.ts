@@ -25,7 +25,10 @@ import {
   pickNotificationMailContextVariables,
 } from '@/features/notifications/model/shared/mail-context-variables'
 import { applyNotificationSendBodySnapshot } from '@/features/notifications/model/shared/send-body-snapshot'
-import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
+import {
+  isNotificationSendWithoutProgram,
+  parseNotificationSendProgramId,
+} from '@/features/notifications/model/send-program-id'
 import { resolveScheduledAtForCreateRequest } from '@/features/notifications/model/send-scheduled-at'
 import type { MailSendDraft, MailSendRecipient } from '@/features/notifications/model/mail-send/types'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
@@ -196,8 +199,7 @@ export async function submitMailSend(input: {
   }
 
   const programId = parseNotificationSendProgramId(draft.programId)
-  const isAllProgram = draft.programId?.trim().toLowerCase() === 'all'
-  if (!isAllProgram && programId == null) {
+  if (!isNotificationSendWithoutProgram(draft.programId) && programId == null) {
     throw new Error('대상 프로그램을 선택하세요.')
   }
 

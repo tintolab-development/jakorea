@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  canSelectNotificationSendTemplate,
+  isNotificationSendWithoutProgram,
   notificationSendProgramFieldLabel,
   parseNotificationSendProgramId,
 } from './send-program-id'
@@ -16,6 +18,23 @@ describe('parseNotificationSendProgramId', () => {
     expect(parseNotificationSendProgramId('all')).toBeUndefined()
     expect(parseNotificationSendProgramId('ALL')).toBeUndefined()
     expect(parseNotificationSendProgramId('prog-coy-2026')).toBeUndefined()
+  })
+})
+
+describe('isNotificationSendWithoutProgram', () => {
+  it('treats empty and all as without-program (전체회원)', () => {
+    expect(isNotificationSendWithoutProgram('')).toBe(true)
+    expect(isNotificationSendWithoutProgram(undefined)).toBe(true)
+    expect(isNotificationSendWithoutProgram('all')).toBe(true)
+    expect(isNotificationSendWithoutProgram('164003')).toBe(false)
+  })
+})
+
+describe('canSelectNotificationSendTemplate', () => {
+  it('allows template pick for unset, all, and specific program', () => {
+    expect(canSelectNotificationSendTemplate('')).toBe(true)
+    expect(canSelectNotificationSendTemplate('all')).toBe(true)
+    expect(canSelectNotificationSendTemplate('164003')).toBe(true)
   })
 })
 

@@ -50,8 +50,7 @@ describe('buildMailSendPayload', () => {
 })
 
 describe('validateMailSendDraft', () => {
-  it('requires program, template, sender email, recipients, subject, and body', () => {
-    expect(validateMailSendDraft(draft({ programId: '' }))).toBe('대상 프로그램을 선택하세요.')
+  it('requires template, sender email, recipients, subject, and body', () => {
     expect(validateMailSendDraft(draft({ templateId: '' }))).toBe('템플릿을 선택하세요.')
     expect(validateMailSendDraft(draft({ templateId: undefined }))).toBe('템플릿을 선택하세요.')
     expect(validateMailSendDraft(draft({ senderEmail: '  ' }))).toBe(
@@ -63,6 +62,9 @@ describe('validateMailSendDraft', () => {
     expect(validateMailSendDraft(draft({ recipients: [] }))).toBe('수신자를 설정하세요.')
     expect(validateMailSendDraft(draft({ subject: '' }))).toBe('제목을 작성하세요.')
     expect(validateMailSendDraft(draft({ bodyHtml: '' }))).toBe('내용을 작성하세요.')
+    expect(validateMailSendDraft(draft({ programId: 'prog-coy-2026' }))).toBe(
+      '대상 프로그램을 선택하세요.'
+    )
   })
 
   it('requires a schedule datetime when scheduled', () => {
@@ -79,7 +81,16 @@ describe('validateMailSendDraft', () => {
     ).toBe('예약 시간은 현재 이후여야 합니다.')
   })
 
-  it('allows all-program (미선택) with member recipients', () => {
+  it('allows unset and all-program (미선택) with member recipients', () => {
+    expect(
+      validateMailSendDraft(
+        draft({
+          programId: '',
+          subject: '[JA Korea] hello',
+        })
+      )
+    ).toBeNull()
+
     expect(
       validateMailSendDraft(
         draft({
