@@ -4,8 +4,82 @@ import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragr
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ParagraphLabelInput } from '@/features/template/ui/shared/paragraph-label-input'
+import { useDeferredFieldCommit } from '@/features/template/ui/shared/use-deferred-field-commit'
 import { SessionPlanItemTitle } from '@/features/template/ui/paragraph/single-item/session-plan-item-title'
 import './session-plan-short-essay.css'
+
+function SessionPlanDeferredBodyField({
+  itemId,
+  bodyText,
+  placeholder,
+  className,
+  rows,
+  expandableFromSingleRow,
+  isBodyInteractive,
+  onSelectItem,
+  onCommitBody,
+  controlId,
+  labelledBy,
+  usePlainLabelInput,
+}: {
+  itemId: string
+  bodyText: string
+  placeholder: string
+  className?: string
+  rows: number
+  expandableFromSingleRow?: boolean
+  isBodyInteractive: boolean
+  onSelectItem: () => void
+  onCommitBody: (itemId: string, bodyText: string) => void
+  controlId?: string
+  labelledBy?: string
+  usePlainLabelInput: boolean
+}) {
+  const {
+    value: editValue,
+    setValue: setEditValue,
+    flush: flushEditValue,
+  } = useDeferredFieldCommit(
+    bodyText,
+    isBodyInteractive ? next => onCommitBody(itemId, next) : undefined
+  )
+
+  if (usePlainLabelInput) {
+    return (
+      <ParagraphLabelInput
+        className={className}
+        value={editValue}
+        placeholder={placeholder}
+        rows={rows}
+        expandableFromSingleRow={expandableFromSingleRow}
+        onClick={event => {
+          event.stopPropagation()
+          onSelectItem()
+        }}
+        onChange={isBodyInteractive ? e => setEditValue(e.target.value) : undefined}
+        onBlur={isBodyInteractive ? () => flushEditValue() : undefined}
+        readOnly={!isBodyInteractive}
+      />
+    )
+  }
+
+  return (
+    <CmsTextArea
+      id={controlId}
+      inputSize="medium"
+      width="100%"
+      rootClassName="session-plan-short-essay-block__textarea-root"
+      className="session-plan-short-essay-block__textarea"
+      value={editValue}
+      placeholder={placeholder}
+      onChange={isBodyInteractive ? e => setEditValue(e.target.value) : undefined}
+      onBlur={isBodyInteractive ? () => flushEditValue() : undefined}
+      readOnly={!isBodyInteractive}
+      aria-labelledby={labelledBy}
+      rows={rows}
+    />
+  )
+}
 
 /**
  * N차시 교육 계획 전용 단락 본문 — `short_essay`와 UI·성격 분리.
@@ -77,12 +151,25 @@ export function SessionPlanShortEssay({
   const showItemTitle = items.length >= 2 ? true : (paragraph.showItemTitle ?? false)
 
   const updateItemBodyText = (id: string, bodyText: string) => {
-    const nextItems = items.map(item => (item.id === id ? { ...item, bodyText } : item))
+    const p = paragraphRef.current
+    const currentItems =
+      p.items && p.items.length > 0
+        ? p.items
+        : [
+            {
+              id: 'session-plan-item-1',
+              label: 'Title 01',
+              placeholder: ph,
+              bodyText: p.bodyText,
+            },
+          ]
+    const nextItems = currentItems.map(item => (item.id === id ? { ...item, bodyText } : item))
+    const nextShowItemTitle = nextItems.length >= 2 ? true : (p.showItemTitle ?? false)
     onChange({
-      ...paragraph,
+      ...p,
       items: nextItems,
       bodyText: nextItems[0]?.bodyText ?? '',
-      showItemTitle,
+      showItemTitle: nextShowItemTitle,
     })
   }
 
@@ -115,24 +202,19 @@ export function SessionPlanShortEssay({
       <div className="session-plan-short-essay-items session-plan-short-essay-items--plain">
         {items.map((item, index) => (
           <div key={item.id} className="session-plan-short-essay-item-row">
-            <ParagraphLabelInput
+            <SessionPlanDeferredBodyField
+              itemId={item.id}
+              bodyText={item.bodyText}
+              placeholder={item.placeholder ?? ph}
               className={
                 activeItemId === item.id ? 'session-plan-short-essay-item--active' : undefined
               }
-              value={item.bodyText}
-              placeholder={item.placeholder ?? ph}
               rows={1}
               expandableFromSingleRow
-              onClick={event => {
-                event.stopPropagation()
-                handleItemClick(item.id)
-              }}
-              onChange={
-                isBodyInteractive
-                  ? e => updateItemBodyText(item.id, e.target.value)
-                  : undefined
-              }
-              readOnly={!isBodyInteractive}
+              isBodyInteractive={isBodyInteractive}
+              onSelectItem={() => handleItemClick(item.id)}
+              onCommitBody={updateItemBodyText}
+              usePlainLabelInput
             />
             {isBodyInteractive && isCardSelected && index > 0 ? (
               <ItemDeleteButton
@@ -188,20 +270,17 @@ export function SessionPlanShortEssay({
               ) : null}
             </div>
             <div className="session-plan-short-essay-block__footer">
-              <CmsTextArea
-                id={controlId}
-                inputSize="medium"
-                width="100%"
-                rootClassName="session-plan-short-essay-block__textarea-root"
-                className="session-plan-short-essay-block__textarea"
-                value={item.bodyText}
+              <SessionPlanDeferredBodyField
+                itemId={item.id}
+                bodyText={item.bodyText}
                 placeholder={item.placeholder ?? ph}
-                onChange={
-                  isBodyInteractive ? e => updateItemBodyText(item.id, e.target.value) : undefined
-                }
-                readOnly={!isBodyInteractive}
-                aria-labelledby={`${controlId}-label`}
                 rows={1}
+                isBodyInteractive={isBodyInteractive}
+                onSelectItem={() => handleItemClick(item.id)}
+                onCommitBody={updateItemBodyText}
+                controlId={controlId}
+                labelledBy={`${controlId}-label`}
+                usePlainLabelInput={false}
               />
             </div>
           </div>
