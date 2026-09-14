@@ -59,7 +59,7 @@ export async function fetchGeneralProgramParticipants(
   assertProgramProgressRemoteReady()
   const page = await fetchProgramParticipantsRemote(programId, {
     page: 0,
-    size: 500,
+    size: 50,
     participantType: 'INDIVIDUAL',
     ...params,
   })
@@ -78,7 +78,7 @@ export async function fetchGeneralParticipatingInstitutions(
   assertProgramProgressRemoteReady()
   const page = await fetchProgramParticipantsRemote(programId, {
     page: 0,
-    size: 500,
+    size: 50,
     participantType: 'ORGANIZATION',
   })
   return (page.items ?? []).map((item, index) =>
@@ -96,7 +96,7 @@ export async function fetchGeneralParticipatingInstructors(
   assertProgramProgressRemoteReady()
   const page = await fetchProgramParticipantsRemote(programId, {
     page: 0,
-    size: 500,
+    size: 50,
     participantType: 'INSTRUCTOR',
   })
   return (page.items ?? []).map((item, index) =>
@@ -114,7 +114,7 @@ export async function fetchGeneralParticipatingVolunteers(
   assertProgramProgressRemoteReady()
   const page = await fetchProgramParticipantsRemote(programId, {
     page: 0,
-    size: 500,
+    size: 50,
     participantType: 'VOLUNTEER',
   })
   return (page.items ?? []).map((item, index) =>
@@ -154,7 +154,7 @@ export async function fetchGeneralProgressAttendanceBundle(programId: string): P
   try {
     const [schedules, participantsPage] = await Promise.all([
       fetchProgramSchedulesViaDashboardRemote(programId),
-      fetchProgramParticipantsRemote(programId, { page: 0, size: 500 }),
+      fetchProgramParticipantsRemote(programId, { page: 0, size: 50 }),
     ])
     const attendancesByScheduleId: Record<
       string,
