@@ -5,6 +5,7 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ApplicationListItemResponseDisplayStatus } from './applicationListItemResponseDisplayStatus';
 import type { ProgramApplicationSupplement } from './programApplicationSupplement';
 
 export interface ApplicationListItemResponse {
@@ -22,7 +23,8 @@ export interface ApplicationListItemResponse {
   cancellable?: boolean;
   thumbnailFileObjectId?: number;
   participationStatus?: string;
-  displayStatus?: string;
+  /** 회원포탈 신청 표시상태 */
+  displayStatus?: ApplicationListItemResponseDisplayStatus;
   educationStartAt?: string;
   educationEndAt?: string;
   nextScheduleAt?: string;

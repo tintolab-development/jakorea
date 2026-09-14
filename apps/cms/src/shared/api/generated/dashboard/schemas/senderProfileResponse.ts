@@ -8,7 +8,7 @@
 
 export interface SenderProfileResponse {
   profileId?: number;
-  /** ALIMTALK|SMS|EMAIL */
+  /** 발송 채널 유형(ALIMTALK|SMS|EMAIL) */
   channelType?: string;
   /** EMAIL=From 메일주소(소문자 비교). SMS=발신번호(Hub 문자열). ALIMTALK=발신 프로필 키. */
   senderKey?: string;

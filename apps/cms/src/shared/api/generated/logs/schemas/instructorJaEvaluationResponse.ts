@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { CriteriaScore } from './criteriaScore';
+import type { InstructorJaEvaluationResponseCurrentGrade } from './instructorJaEvaluationResponseCurrentGrade';
 
 /**
  * 강사 JA 평가의 현재 서버 산정 결과
@@ -18,11 +19,16 @@ export interface InstructorJaEvaluationResponse {
   administrativeAdjustmentScore?: number;
   cancellationAdjustmentScore?: number;
   lateReportAdjustmentScore?: number;
+  /** 정산 신청 기한 미준수 자동 감점 */
+  lateSettlementAdjustmentScore?: number;
   totalScore?: number;
-  currentGrade?: string;
+  /** 서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음). */
+  currentGrade?: InstructorJaEvaluationResponseCurrentGrade;
   evaluatedAt?: string;
   calculatedAt?: string;
   gradeChangedAt?: string;
+  /** 활성 정책 버전. 정책 미초기화면 null. */
   policyVersion?: string;
+  /** false면 전역 JA 등급 정책 미초기화. POST 평가 완료 불가. GET은 200으로 이 플래그만 확인. */
   policyReady?: boolean;
 }

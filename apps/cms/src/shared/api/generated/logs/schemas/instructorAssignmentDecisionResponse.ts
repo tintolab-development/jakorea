@@ -10,6 +10,7 @@ export interface InstructorAssignmentDecisionResponse {
   assignmentId?: number;
   programId?: number;
   scheduleId?: number;
+  organizationApplicationId?: number;
   beforeStatus?: string;
   afterStatus?: string;
   representativeInstructorId?: number;

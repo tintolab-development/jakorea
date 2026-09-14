@@ -7,6 +7,9 @@
  */
 import type { EmailAttachmentItem } from './emailAttachmentItem';
 
+/**
+ * 메일 템플릿 첨부 변경 결과. attachments는 변경 후 전체 첨부 목록입니다.
+ */
 export interface EmailAttachmentMutationResponse {
   attachmentId?: number;
   templateId?: number;

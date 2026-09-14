@@ -36,7 +36,7 @@ export async function updateTextbookRemote(
   id: string,
   body: TextbookRequest
 ): Promise<TextbookResponse> {
-  return unwrapApiBody(await dmApi.update(id, body))
+  return unwrapApiBody(await dmApi.update1(id, body))
 }
 
 export async function deleteTextbookRemote(id: string): Promise<void> {

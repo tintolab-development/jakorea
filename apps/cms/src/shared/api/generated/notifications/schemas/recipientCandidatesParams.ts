@@ -10,7 +10,7 @@ export type RecipientCandidatesParams = {
 /**
  * 대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.
  */
-programId?: number;
+programId: number;
 /**
  * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
  */

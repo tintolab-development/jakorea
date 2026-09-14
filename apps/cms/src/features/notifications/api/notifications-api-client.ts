@@ -202,7 +202,7 @@ export async function createSendBatchRemote(
   idempotencyKey: string
 ): Promise<CreateResponse> {
   return unwrapApiBody(
-    await notificationsRemoteApi.create6(body, {
+    await notificationsRemoteApi.create7(body, {
       headers: { 'Idempotency-Key': idempotencyKey },
       skipGlobalErrorAlert: true,
     })

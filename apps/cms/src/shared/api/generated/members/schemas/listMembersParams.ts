@@ -44,7 +44,7 @@ createdAtTo?: string;
  */
 institutionLocation?: string;
 /**
- * 조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
  */
 instructorType?: string;
 /**
@@ -56,7 +56,7 @@ settlementStatus?: string;
  */
 adminPermissionVariant?: string;
 /**
- * 조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
  */
 instructorListPureOnly?: boolean;
 /**

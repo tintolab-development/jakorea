@@ -19,4 +19,5 @@ export interface PerformanceCorrectionDiffResponse {
   requestedAt?: string;
   decidedByAdminId?: number;
   decidedAt?: string;
+  requestedChangesJson?: string;
 }
