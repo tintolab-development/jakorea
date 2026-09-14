@@ -21,7 +21,7 @@ export interface NotificationCatalogVariableItem {
   description?: string | null;
   /** true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일 */
   requiresProgram?: boolean;
-  /** 삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 항상 false. true여도 원천 데이터 없으면 발송 실패 가능 */
+  /** 삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich) */
   enabled?: boolean;
   /** 허용 프로그램 유형 그룹. 비면 제한 없음 */
   programGroups?: string[];
