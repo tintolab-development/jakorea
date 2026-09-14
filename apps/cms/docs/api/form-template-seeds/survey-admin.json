@@ -22,7 +22,7 @@
         "periodMode": "immediate",
         "startAt": null,
         "endAt": null,
-        "showWritingPeriodOnForm": false
+        "showWritingPeriodOnForm": true
       },
       {
         "id": "survey-paragraph-user",

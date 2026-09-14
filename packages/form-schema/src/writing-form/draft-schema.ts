@@ -3950,7 +3950,7 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         periodMode: 'immediate',
         startAt: null,
         endAt: null,
-        showWritingPeriodOnForm: false,
+        showWritingPeriodOnForm: true,
       },
       {
         id: DEFAULT_SURVEY_PARAGRAPH_IDS.user,
