@@ -70,9 +70,9 @@ import { applyGeneralParticipantAudienceToEditForm } from '@/features/program/ge
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
 import { isGeneralIndividualParticipantTarget } from '@/features/program/general/lib/survey-audience'
 import {
-  getProgramWagePaymentItemOptions,
   normalizeProgramPaymentItemSelection,
   resolveProgramWageDeductionLabel,
+  useProgramWagePaymentItemOptions,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import {
   GENERAL_PROGRAM_EDUCATION_STRUCTURE_LABELS,
@@ -1189,7 +1189,7 @@ function WageSection({
   const rows = commonInfo.wageGradeRows ?? []
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
-  const paymentItemOptions = useMemo(() => getProgramWagePaymentItemOptions(), [])
+  const paymentItemOptions = useProgramWagePaymentItemOptions()
 
   const editForm =
     form ??
@@ -2896,23 +2896,12 @@ function ScheduleEventPerScheduleExtraViewRows({
   assignmentPeriod?: string
 }) {
   if (isPreEducationBlock) {
-    if (extraPlan.showIps) {
-      return (
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="교육 형태" view={educationFormLabel?.trim() || '-'} />
-          <DetailInfoForm.Field
-            label="IPS 유형"
-            view={<PipeSeparatedInlineView text={ipsTypeSummary} />}
-          />
-        </DetailInfoForm.Row>
-      )
-    }
     return (
-      <DetailInfoForm.Row type="single">
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="교육 형태" view={educationFormLabel?.trim() || '-'} />
         <DetailInfoForm.Field
-          label="교육 형태"
-          fullRow
-          view={educationFormLabel?.trim() || '-'}
+          label="IPS 유형"
+          view={<PipeSeparatedInlineView text={ipsTypeSummary || 'Prepare | 해당없음'} />}
         />
       </DetailInfoForm.Row>
     )
@@ -3145,16 +3134,11 @@ function ScheduleEventPerScheduleExtraEditRows({
   )
 
   if (isPreEducationBlock) {
-    if (extraPlan.showIps) {
-      return (
-        <DetailInfoForm.Row type="double">
-          {educationField()}
-          {ipsField({ layout: 'inline' })}
-        </DetailInfoForm.Row>
-      )
-    }
     return (
-      <DetailInfoForm.Row type="single">{educationField(true)}</DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        {educationField()}
+        {ipsField({ layout: 'inline' })}
+      </DetailInfoForm.Row>
     )
   }
 

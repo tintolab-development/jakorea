@@ -20,12 +20,12 @@ export type ScheduleDetailBlockKind = 'sub' | 'event' | 'preEducation'
 
 export const PRE_EDUCATION_SCHEDULE_LABEL = '사전 교육'
 
-/** 일반(개인) — 교육 진행 일정 유형에서 기간 지정 불가 (학교/기관만 허용) */
+/** 일반 — 단일 회차이거나 개인 대상이면 기간 지정 불가 (복수·학교/기관만 기간 허용) */
 export function shouldDisableEducationSchedulePeriodMode(input: {
   participantOrganization: boolean
-  /** 호환용. 기간 지정은 회차와 무관하게 개인 대상이면 비활성 */
   sessionRound?: 'single' | 'multi'
 }): boolean {
+  if (input.sessionRound === 'single') return true
   return !input.participantOrganization
 }
 
