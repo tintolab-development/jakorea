@@ -1,9 +1,54 @@
+import { useRef } from 'react'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { DeferredCmsInput } from '@/features/template/ui/shared/deferred-cms-input'
 import { FormEditorHorizontalTableOptionAddIcon } from '@/features/template/ui/form-editor/table-fields/form-editor-horizontal-table-option-add-icon'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 
 const OPTION_LIST_MIN_DEFAULT = 1
+
+function OptionListDeferredRow({
+  value,
+  index,
+  canRemove,
+  onCommitAt,
+  onRemove,
+}: {
+  value: string
+  index: number
+  canRemove: boolean
+  onCommitAt: (index: number, next: string) => void
+  onRemove: (index: number) => void
+}) {
+  return (
+    <li className="form-editor-horizontal-table-body-fields__option-row">
+      <div className="form-editor-horizontal-table-body-fields__option-type-row">
+        <div className="form-editor-horizontal-table-body-fields__option-input-wrap">
+          <span className="form-editor-horizontal-table-body-fields__option-index" aria-hidden>
+            {index + 1}.
+          </span>
+          <DeferredCmsInput
+            className="form-editor-horizontal-table-body-fields__option-cms-input"
+            width="100%"
+            inputSize="large"
+            value={value}
+            onCommit={next => onCommitAt(index, next)}
+            placeholder="옵션"
+          />
+        </div>
+        {canRemove ? (
+          <ItemDeleteButton
+            className="item-delete-button form-editor-horizontal-table-body-fields__cell-clear"
+            aria-label={`${index + 1}번 항목 삭제`}
+            onClick={e => {
+              e.stopPropagation()
+              onRemove(index)
+            }}
+          />
+        ) : null}
+      </div>
+    </li>
+  )
+}
 
 export function FormEditorOptionListEditor({
   values,
@@ -23,54 +68,40 @@ export function FormEditorOptionListEditor({
   /** 행 삭제로 유지할 최소 항목 수 */
   minOptions?: number
 }) {
+  const valuesRef = useRef(values)
+  valuesRef.current = values
+
   const atMax = maxOptions != null && values.length >= maxOptions
   const canRemoveRow = values.length > minOptions
   const add = () => {
     if (atMax) {
       return
     }
-    onChange([...values, ''])
+    onChange([...valuesRef.current, ''])
   }
   const remove = (i: number) => {
     if (!canRemoveRow) {
       return
     }
-    onChange(values.filter((_, j) => j !== i))
+    onChange(valuesRef.current.filter((_, j) => j !== i))
   }
+  const commitAt = (i: number, next: string) => {
+    const copy = [...valuesRef.current]
+    copy[i] = next
+    onChange(copy)
+  }
+
   return (
     <ul className="form-editor-horizontal-table-body-fields__option-list">
       {values.map((v, oi) => (
-        <li key={oi} className="form-editor-horizontal-table-body-fields__option-row">
-          <div className="form-editor-horizontal-table-body-fields__option-type-row">
-            <div className="form-editor-horizontal-table-body-fields__option-input-wrap">
-              <span className="form-editor-horizontal-table-body-fields__option-index" aria-hidden>
-                {oi + 1}.
-              </span>
-              <CmsInput
-                className="form-editor-horizontal-table-body-fields__option-cms-input"
-                width="100%"
-                inputSize="large"
-                value={v}
-                onChange={e => {
-                  const next = [...values]
-                  next[oi] = e.target.value
-                  onChange(next)
-                }}
-                placeholder="옵션"
-              />
-            </div>
-            {canRemoveRow ? (
-              <ItemDeleteButton
-                className="item-delete-button form-editor-horizontal-table-body-fields__cell-clear"
-                aria-label={`${oi + 1}번 항목 삭제`}
-                onClick={e => {
-                  e.stopPropagation()
-                  remove(oi)
-                }}
-              />
-            ) : null}
-          </div>
-        </li>
+        <OptionListDeferredRow
+          key={oi}
+          value={v}
+          index={oi}
+          canRemove={canRemoveRow}
+          onCommitAt={commitAt}
+          onRemove={remove}
+        />
       ))}
       <li>
         <CmsButton

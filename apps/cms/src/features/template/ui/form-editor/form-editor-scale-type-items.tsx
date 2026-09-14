@@ -18,7 +18,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { ItemAddButton } from '@/features/template/ui/shared/item-add-button'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { DeferredCmsInput } from '@/features/template/ui/shared/deferred-cms-input'
 import './form-editor.css'
 
 function pruneSelectedAfterRemove(
@@ -71,10 +71,10 @@ function SortableScaleRow({
       <div className="form-editor-mc-item__field-wrap">
         <span className="form-editor-mc-item__index" aria-hidden>{`${index + 1}.`}</span>
         <div className="form-editor-mc-item__field">
-          <CmsInput
+          <DeferredCmsInput
             width="100%"
             value={item.label}
-            onChange={e => onLabelChange(item.id, e.target.value)}
+            onCommit={next => onLabelChange(item.id, next)}
             placeholder="항목 문구"
           />
         </div>

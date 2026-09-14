@@ -1,7 +1,7 @@
 import { Form } from 'antd'
 import type { AgreementExplanationTextParagraph } from '@/features/template/model/writing-form-draft.schema'
-import { CmsInput } from '@/shared/ui/cms-input'
-import { CmsTextArea } from '@/shared/ui/cms-textarea'
+import { DeferredCmsInput } from '@/features/template/ui/shared/deferred-cms-input'
+import { DeferredCmsTextArea } from '@/features/template/ui/shared/deferred-cms-textarea'
 import type { FormEditorRightPanelUpdateParagraph } from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel.types'
 
 export function AgreementExplanationTextEditor({
@@ -14,13 +14,13 @@ export function AgreementExplanationTextEditor({
   return (
     <>
       <Form.Item label="입력창 안내 텍스트">
-        <CmsInput
+        <DeferredCmsInput
           width="100%"
           value={paragraph.bodyPlaceholder}
-          onChange={event =>
+          onCommit={next =>
             updateParagraph(paragraph.id, current =>
               current.kind === 'single_item' && current.variant === 'agreement_explanation_text'
-                ? { ...current, bodyPlaceholder: event.target.value }
+                ? { ...current, bodyPlaceholder: next }
                 : current
             )
           }
@@ -28,14 +28,14 @@ export function AgreementExplanationTextEditor({
         />
       </Form.Item>
       <Form.Item label="미리보기 기본 텍스트">
-        <CmsTextArea
+        <DeferredCmsTextArea
           width="100%"
           rows={3}
           value={paragraph.bodyText}
-          onChange={event =>
+          onCommit={next =>
             updateParagraph(paragraph.id, current =>
               current.kind === 'single_item' && current.variant === 'agreement_explanation_text'
-                ? { ...current, bodyText: event.target.value }
+                ? { ...current, bodyText: next }
                 : current
             )
           }
