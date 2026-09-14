@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { PFButton, PFInfoReview, PFText } from '@/shared/ui'
-import { EMPTY_SETTINGS_VALUE, VOLUNTEER_1365_URL } from '../lib/constants'
+import { PFAlertModal, PFButton, PFInfoReview, PFText } from '@/shared/ui'
+import { EMPTY_SETTINGS_VALUE, SETTINGS_WITHDRAW_GUIDE, VOLUNTEER_1365_URL } from '../lib/constants'
 import type { SettingsGuardianView, SettingsInfoRow } from '../lib/map-view'
 import { SettingsChangePasswordModal } from './change-password-modal'
 import styles from './view.module.css'
@@ -57,6 +57,7 @@ function toReviewRows(rows: SettingsInfoRow[]) {
 
 export function SettingsView({ basicRows, guardian, onEditBasic }: SettingsViewProps) {
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+  const [isWithdrawGuideOpen, setIsWithdrawGuideOpen] = useState(false)
 
   return (
     <div className={styles.page}>
@@ -100,8 +101,8 @@ export function SettingsView({ basicRows, guardian, onEditBasic }: SettingsViewP
           size="xlarge"
           variant="tertiary"
           width="100%"
-          disabled
           className={styles.withdrawAction}
+          onClick={() => setIsWithdrawGuideOpen(true)}
         >
           회원 탈퇴하기
         </PFButton>
@@ -110,6 +111,14 @@ export function SettingsView({ basicRows, guardian, onEditBasic }: SettingsViewP
       <SettingsChangePasswordModal
         open={isChangePasswordOpen}
         onClose={() => setIsChangePasswordOpen(false)}
+      />
+
+      <PFAlertModal
+        open={isWithdrawGuideOpen}
+        title={SETTINGS_WITHDRAW_GUIDE.title}
+        description={SETTINGS_WITHDRAW_GUIDE.description}
+        confirmLabel={SETTINGS_WITHDRAW_GUIDE.confirmLabel}
+        onConfirm={() => setIsWithdrawGuideOpen(false)}
       />
     </div>
   )

@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
   getSettingsLnbItems,
-  isInstructorMypageProfile,
+  isSchoolTeacherMypageProfile,
   mapPortalProfileToSettingsView,
   MYPAGE_PATH,
   MYPAGE_SETTINGS_PATH,
   SettingsConsentsView,
   SettingsEditForm,
   SettingsView,
+  showSettingsInstructorConsentDocuments,
   useMypageMember,
   useSettingsView,
   type MypageLnbItemKey,
@@ -45,7 +46,10 @@ export function MypageSettingsPage() {
   const { isRemoteSession, isLoading, isError, profile, guardian } = useSettingsView()
   const member = useMypageMember()
   const effectiveProfile = localProfile ?? profile
-  const view = mapPortalProfileToSettingsView(effectiveProfile, guardian)
+  const isTeacher = isSchoolTeacherMypageProfile(member.profile)
+  const view = mapPortalProfileToSettingsView(effectiveProfile, guardian, {
+    variant: isTeacher ? 'teacher' : 'individual',
+  })
   const lnbActiveKey = mode === 'edit-basic' || tab === 'profile' ? 'settingsProfile' : 'settingsConsents'
   const lnbItems = getSettingsLnbItems(lnbActiveKey)
   const pageTitle = resolvePageTitle(tab, mode)
@@ -124,6 +128,7 @@ export function MypageSettingsPage() {
     return wrap(
       <SettingsEditForm
         profile={effectiveProfile}
+        variant={isTeacher ? 'teacher' : 'individual'}
         onCancel={() => setMode('view')}
         onSaved={next => {
           if (!isRemoteSession) {
@@ -137,7 +142,9 @@ export function MypageSettingsPage() {
 
   if (tab === 'consents') {
     return wrap(
-      <SettingsConsentsView showInstructorDocuments={isInstructorMypageProfile(member.profile)} />,
+      <SettingsConsentsView
+        showInstructorDocuments={showSettingsInstructorConsentDocuments(member.profile)}
+      />,
     )
   }
 

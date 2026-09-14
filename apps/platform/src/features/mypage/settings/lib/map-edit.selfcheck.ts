@@ -1,13 +1,17 @@
 import assert from 'node:assert/strict'
-import { MOCK_SETTINGS_PROFILE } from './constants.ts'
+import { MOCK_SETTINGS_PROFILE, MOCK_TEACHER_SETTINGS_PROFILE } from './constants.ts'
 import {
   applySettingsEditToSnapshot,
+  applyTeacherSettingsEditToSnapshot,
   isSettingsEditValid,
+  isTeacherSettingsEditValid,
   mapProfileToSettingsEditForm,
+  mapProfileToTeacherSettingsEditForm,
   nullifyEmptyProfileUpdateFields,
   toSettingsGender,
   toSettingsGradeOption,
   toSettingsSchoolStatus,
+  toTeacherEmploymentStatus,
 } from './map-edit.ts'
 
 assert.equal(toSettingsSchoolStatus('ENROLLED'), 'enrolled')
@@ -46,5 +50,21 @@ assert.equal(nulled.external1365Id, null)
 assert.equal(nulled.grade, null)
 assert.equal(nulled.schoolName, '재희 고등학교')
 assert.equal(nulled.schoolOrganizationId, null)
+
+assert.equal(toTeacherEmploymentStatus('EMPLOYED'), 'ACTIVE')
+assert.equal(toTeacherEmploymentStatus('ON_LEAVE'), 'ON_LEAVE')
+assert.equal(toTeacherEmploymentStatus('TRANSFERRED'), '')
+
+const teacherInitial = mapProfileToTeacherSettingsEditForm(MOCK_TEACHER_SETTINGS_PROFILE)
+assert.equal(teacherInitial.schoolName, '서울초등학교')
+assert.equal(teacherInitial.employmentStatus, 'ACTIVE')
+assert.equal(isTeacherSettingsEditValid(teacherInitial), true)
+assert.equal(isTeacherSettingsEditValid({ ...teacherInitial, schoolName: '' }), false)
+
+const teacherSaved = applyTeacherSettingsEditToSnapshot(MOCK_TEACHER_SETTINGS_PROFILE, {
+  ...teacherInitial,
+  employmentStatus: 'ON_LEAVE',
+})
+assert.equal(teacherSaved.teacherEmploymentStatus, 'ON_LEAVE')
 
 console.log('map-edit.selfcheck: ok')

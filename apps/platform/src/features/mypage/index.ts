@@ -129,6 +129,7 @@ export {
   SettingsConsentsView,
   SettingsEditForm,
   SettingsView,
+  showSettingsInstructorConsentDocuments,
   useSettingsView,
 } from './settings'
 export type {
