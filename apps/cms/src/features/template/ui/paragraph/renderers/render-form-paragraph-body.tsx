@@ -15,6 +15,7 @@ import { AgreementAdminProxyConfirmBlock } from '@/features/template/ui/paragrap
 import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import {
   getStructureLockedPartialLockedBodyColumnIndexes,
+  isStructureLockedPartialDisclaimerEdit,
   isStructureLockedPartialTextParagraph,
 } from '@/features/template/lib/structure-locked-paragraph-hint'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
@@ -326,8 +327,8 @@ export function renderFormParagraphBody(
           isCardSelected={isCardSelected}
           isBodyInteractive={isBodyInteractive}
           paragraphInteractionMode={paragraphInteractionMode}
-          activeItemId={options?.singleItemListActiveItemId}
-          onSelectItem={options?.onSelectSingleItemListItem}
+          activeItemId={isBodyInteractive ? options?.singleItemListActiveItemId : null}
+          onSelectItem={isBodyInteractive ? options?.onSelectSingleItemListItem : undefined}
         />
       )
     }
@@ -416,7 +417,7 @@ export function renderFormParagraphBody(
           hp.tableFlavor === 'text' ||
           isParagraphSelected)
       const lockedBodyColumnIndexes = structureLockedPartialTextEdit
-        ? getStructureLockedPartialLockedBodyColumnIndexes(hp.columnHeaders.length)
+        ? getStructureLockedPartialLockedBodyColumnIndexes(hp.id, hp.columnHeaders.length)
         : undefined
       return (
         <HorizontalTableParagraphBody
@@ -425,7 +426,9 @@ export function renderFormParagraphBody(
           isEditMode={isEditMode}
           tableCanvasInteractive={tableCanvasInteractive}
           lockedBodyColumnIndexes={lockedBodyColumnIndexes}
-          allowDisclaimerBottomTextEdit={structureLockedPartialTextEdit}
+          allowDisclaimerBottomTextEdit={
+            structureLockedPartialTextEdit && isStructureLockedPartialDisclaimerEdit(hp.id)
+          }
           bottomConsentPreviewInAuthoring={structureLockedConsentChoiceInteractive}
           consentFillMode={consentFillBodyReadOnly}
           tableRowSelection={options?.horizontalTableRowSelection}
@@ -615,7 +618,7 @@ export function renderFormParagraphBody(
           isCardSelected={isCardSelected}
           isBodyInteractive={isBodyInteractive}
           paragraphInteractionMode={paragraphInteractionMode}
-          activeItemId={options?.singleItemListActiveItemId}
+          activeItemId={isBodyInteractive ? options?.singleItemListActiveItemId : null}
           onSelectItem={isBodyInteractive ? options?.onSelectSingleItemListItem : undefined}
           readOnlyFilledItems={
             options?.agreementNoticeSubjectPrefilledReadOnly === true &&
@@ -631,7 +634,7 @@ export function renderFormParagraphBody(
           isCardSelected={isCardSelected}
           isBodyInteractive={isBodyInteractive}
           paragraphInteractionMode={paragraphInteractionMode}
-          activeItemId={options?.singleItemListActiveItemId}
+          activeItemId={isBodyInteractive ? options?.singleItemListActiveItemId : null}
           onSelectItem={isBodyInteractive ? options?.onSelectSingleItemListItem : undefined}
         />
       )
@@ -678,7 +681,8 @@ export function renderFormParagraphBody(
           : undefined
       const resolveItemDisplayLabel =
         options?.ujatProgramApplicationFormInstitution === true &&
-        isUjatProgramApplicationInstitutionSingleOptionMultipleChoiceSeed(p.id)
+        isUjatProgramApplicationInstitutionSingleOptionMultipleChoiceSeed(p.id) &&
+        paragraphInteractionMode !== 'authoring'
           ? (item: { id: string; label: string }) =>
               resolveUjatInstitutionSubmitConfirmationItemLabel(item.label)
           : ujatVolunteerRecruitCohort &&
@@ -690,9 +694,9 @@ export function renderFormParagraphBody(
                   ujatVolunteerRecruitCohort
                 )
             : undefined
-      const suppressMcItemsEditor = isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(
-        p.id
-      )
+      const suppressMcItemsEditor =
+        structureLocked ||
+        isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(p.id)
       const usesMcItemsFocus =
         !suppressMcItemsEditor && options?.onSelectSingleItemListItem != null
       const itemsEditActive = suppressMcItemsEditor

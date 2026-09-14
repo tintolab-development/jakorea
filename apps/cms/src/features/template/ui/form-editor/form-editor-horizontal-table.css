@@ -626,20 +626,6 @@
   cursor: text;
 }
 
-.form-editor-horizontal-table-wrap--system-settings-text-edit
-  .form-editor-horizontal-table__bottom-text-hit {
-  width: 100%;
-  cursor: text;
-}
-
-.form-editor-horizontal-table-wrap--system-settings-text-edit
-  .form-editor-horizontal-table__bottom
-  > .text-cell-input {
-  width: 100%;
-  max-width: 100%;
-  align-self: stretch;
-}
-
 .form-editor-horizontal-table__cell-text {
   flex: 1 1 auto;
   min-width: 0;

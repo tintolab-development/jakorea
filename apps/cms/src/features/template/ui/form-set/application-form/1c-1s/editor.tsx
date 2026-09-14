@@ -71,6 +71,7 @@ export function EconomyProgramApplicationEditorRightColumn({
         verticalTableBodyRowSelection={vm.verticalTableBodyRowSelection}
         onVerticalTableBodyRowDeleted={vm.focusVerticalTableBodyRow}
         structureLockedParagraphIds={vm.structureLockedParagraphIds}
+        structureLockedTypeSelectPreset="paragraph_kind_system_settings"
       />
     </FormEditorFieldNav>
   )

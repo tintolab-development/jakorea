@@ -42,6 +42,17 @@
   flex: 1 1 auto;
 }
 
+/* 구조 잠금 등 — disabled 회색 없이 클릭·포커스만 차단 (단락 카드 선택으로 통과) */
+.paragraph-label-input.short-essay-item--non-interactive {
+  pointer-events: none;
+}
+
+.paragraph-label-input.short-essay-item--non-interactive:focus-within {
+  border-color: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
 .short-essay-item-delete {
   align-self: flex-start;
   margin-top: 40px;

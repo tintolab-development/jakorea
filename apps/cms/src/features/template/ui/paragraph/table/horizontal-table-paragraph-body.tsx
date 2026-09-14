@@ -562,11 +562,9 @@ export function HorizontalTableParagraphBody({
   type HorizontalTextEditTarget =
     | { area: 'header'; col: number }
     | { area: 'body'; row: number; col: number }
-    | { area: 'bottom' }
   const [textEditCell, setTextEditCell] = useState<HorizontalTextEditTarget | null>(null)
   const isTextCellEditing = (target: HorizontalTextEditTarget) => {
     if (!textEditCell) return false
-    if (target.area === 'bottom') return textEditCell.area === 'bottom'
     if (target.area === 'header') {
       return textEditCell.area === 'header' && textEditCell.col === target.col
     }
@@ -894,17 +892,14 @@ export function HorizontalTableParagraphBody({
     effectiveEditMode && !(lockedBodyColumnIndexes?.has(colIdx) ?? false)
   /** 시스템 설정 단락 — 텍스트 가로형과 동일한 파란 테두리 셀 인풋 */
   const useSystemSettingsTextCellInput = lockedBodyColumnIndexes != null
-  /** 시스템 설정 partial — 행 선택 없이 클릭한 셀만 테두리 인풋 활성화 */
+  /** 시스템 설정 partial — 행 선택 없이 클릭한 셀만 테두리 인풋 활성화 (text·구시드 subjective 포함) */
   const activateSystemSettingsBodyCell = (rowIdx: number, colIdx: number) => {
     if (!useSystemSettingsTextCellInput || !isBodyColumnEditable(colIdx)) return
+    const field = getEffectiveHorizontalCellField(p, rowIdx, colIdx)
+    if (field.kind !== 'text' && field.kind !== 'subjective') return
     const target = { area: 'body' as const, row: rowIdx, col: colIdx }
     if (isTextCellEditing(target)) return
     setTextEditCell(target)
-  }
-  const activateSystemSettingsBottomText = () => {
-    if (!allowDisclaimerBottomTextEdit) return
-    if (isTextCellEditing({ area: 'bottom' })) return
-    setTextEditCell({ area: 'bottom' })
   }
   const bottomConsentInteractive = effectiveEditMode || bottomConsentPreviewInAuthoring
   const bottomTextEditable =
@@ -1129,12 +1124,15 @@ export function HorizontalTableParagraphBody({
                 ? ''
                 : fieldNonEditCellPlaceholder(field, colIdx, rowIdx)
               const isChoiceField = field.kind === 'single' || field.kind === 'multiple'
-              const isSubjectiveField = field.kind === 'subjective'
-              const fieldPlainText = fieldCellValueToPlainText(rehomeForDisplay(field, cell))
-              const systemSettingsTextEditing =
-                field.kind === 'text' &&
+              /** partial 잠금(개인정보·제3자): 구시드 주관식도 TextCellInput과 동일 경로 */
+              const usePartialLockTextCellInput =
                 useSystemSettingsTextCellInput &&
                 bodyColumnEditable &&
+                (field.kind === 'text' || field.kind === 'subjective')
+              const isSubjectiveField = field.kind === 'subjective' && !usePartialLockTextCellInput
+              const fieldPlainText = fieldCellValueToPlainText(rehomeForDisplay(field, cell))
+              const systemSettingsTextEditing =
+                usePartialLockTextCellInput &&
                 isTextCellEditing({ area: 'body', row: rowIdx, col: colIdx })
               return (
                 <div
@@ -1154,7 +1152,7 @@ export function HorizontalTableParagraphBody({
                   role="gridcell"
                   aria-selected={false}
                   onClick={
-                    field.kind === 'text' && useSystemSettingsTextCellInput && bodyColumnEditable
+                    usePartialLockTextCellInput
                       ? e => {
                           if (isEventFromTableInteractive(e.target)) return
                           activateSystemSettingsBodyCell(rowIdx, colIdx)
@@ -1168,7 +1166,7 @@ export function HorizontalTableParagraphBody({
                   }
                 >
                   {bodyColumnEditable ? (
-                    field.kind === 'text' && useSystemSettingsTextCellInput ? (
+                    usePartialLockTextCellInput ? (
                       systemSettingsTextEditing ? (
                         <TextCellInput
                           variant="body"
@@ -1242,47 +1240,16 @@ export function HorizontalTableParagraphBody({
         <div className="form-editor-horizontal-table__bottom">
           {p.showBottomText ? (
             /* 작성(authoring)·구조 미잠금에서만 하단 설명 편집. write/미리보기·시드 고정 단락은 검정 고정 노출.
-             * 개인정보·제3자 partial 잠금은 하단 안내도 수정 가능 — 텍스트 가로형과 동일 테두리 인풋. */
+             * 개인정보·제3자 partial 잠금 본문은 단락 전용 ParagraphInput(민트 밑줄). */
             bottomTextEditable ? (
-              allowDisclaimerBottomTextEdit ? (
-                isTextCellEditing({ area: 'bottom' }) ? (
-                  <TextCellInput
-                    variant="body"
-                    align="start"
-                    autoFocus
-                    value={p.bottomText}
-                    placeholder="설명을 입력해 주세요"
-                    onChange={next => onChange({ ...p, bottomText: next })}
-                    onBlur={deactivateTextCellOnBlur}
-                  />
-                ) : (
-                  <div
-                    className="form-editor-horizontal-table__cell-text-hit form-editor-horizontal-table__bottom-text-hit"
-                    onClick={activateSystemSettingsBottomText}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        activateSystemSettingsBottomText()
-                      }
-                    }}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <div className="detail-info-form--text form-editor-horizontal-table__bottom-static">
-                      {p.bottomText}
-                    </div>
-                  </div>
-                )
-              ) : (
-                <ParagraphInput
-                  type="description"
-                  className="form-editor-horizontal-table__bottom-input"
-                  value={p.bottomText}
-                  isEditMode={effectiveEditMode}
-                  onChange={next => onChange({ ...p, bottomText: next })}
-                  placeholder="설명을 입력해 주세요"
-                />
-              )
+              <ParagraphInput
+                type="description"
+                className="form-editor-horizontal-table__bottom-input"
+                value={p.bottomText}
+                isEditMode={effectiveEditMode || allowDisclaimerBottomTextEdit}
+                onChange={next => onChange({ ...p, bottomText: next })}
+                placeholder="설명을 입력해 주세요"
+              />
             ) : (
               <div className="detail-info-form--text form-editor-horizontal-table__bottom-static">
                 {p.bottomText}

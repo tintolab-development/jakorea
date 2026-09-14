@@ -154,13 +154,20 @@ export function ShortEssay({
         <div key={item.id} className="short-essay-item-row">
           <ParagraphLabelInput
             label={itemLabel}
-            className={activeItemId === item.id ? 'short-essay-item--active' : undefined}
+            className={[
+              activeItemId === item.id ? 'short-essay-item--active' : '',
+              !isBodyInteractive ? 'short-essay-item--non-interactive' : '',
+            ]
+              .filter(Boolean)
+              .join(' ') || undefined}
             value={item.bodyText}
             placeholder={item.placeholder ?? ph}
             rows={itemInputRows}
             expandableFromSingleRow={singleLineExpandable}
             maxLength={maxLength}
             showCount={maxLength != null}
+            readOnly={!isBodyInteractive}
+            tabIndex={isBodyInteractive ? undefined : -1}
             onClick={event => {
               event.stopPropagation()
               handleItemClick(item.id)
@@ -174,7 +181,11 @@ export function ShortEssay({
                   width="100%"
                   value={item.bodyText}
                   placeholder={item.placeholder ?? '성명을 입력해 주세요'}
-                  onChange={e => updateItemBodyText(item.id, e.target.value)}
+                  readOnly={!isBodyInteractive}
+                  tabIndex={isBodyInteractive ? undefined : -1}
+                  onChange={
+                    isBodyInteractive ? e => updateItemBodyText(item.id, e.target.value) : undefined
+                  }
                 />
               ) : isBirth ? (
                 <CmsDateTextInput
@@ -184,7 +195,11 @@ export function ShortEssay({
                   value={item.bodyText}
                   placeholder={item.placeholder ?? '1991.01.01'}
                   maxLength={10}
-                  onValueChange={value => updateItemBodyText(item.id, value)}
+                  readOnly={!isBodyInteractive}
+                  tabIndex={isBodyInteractive ? undefined : -1}
+                  onValueChange={
+                    isBodyInteractive ? value => updateItemBodyText(item.id, value) : undefined
+                  }
                 />
               ) : isPhone ? (
                 <CmsPhoneInput
@@ -193,7 +208,13 @@ export function ShortEssay({
                   width="100%"
                   value={item.bodyText}
                   placeholder={item.placeholder ?? '010-1234-5678'}
-                  onChange={event => updateItemBodyText(item.id, event.target.value)}
+                  readOnly={!isBodyInteractive}
+                  tabIndex={isBodyInteractive ? undefined : -1}
+                  onChange={
+                    isBodyInteractive
+                      ? event => updateItemBodyText(item.id, event.target.value)
+                      : undefined
+                  }
                 />
               ) : undefined
             }
