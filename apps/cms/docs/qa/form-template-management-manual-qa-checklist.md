@@ -3,6 +3,7 @@
 > 경로: `/templates/form-management`  
 > 계정: DEV 임시 로그인 (admin1 / pm1 / partner1 / viewer1 @jakorea.org, `test1234!`)  
 > 마스터 MFA: `000000`  
+> **2인 분담(시드 46종):** [form-template-seed-qa-split-checklist.md](./form-template-seed-qa-split-checklist.md)  
 > Notion 인덱스: [2-0 모집](https://app.notion.com/p/tintolab/2-0-391f3e2a77d0807f9a43e3b983ffc13b) · [3-0 신청](https://app.notion.com/p/tintolab/3-0-33af3e2a77d08088bdfaf105deb2f6e5) · [4-0 설문](https://app.notion.com/p/tintolab/4-0-33af3e2a77d08070bad6dbdff5cfa26e) · [5-0 동의](https://app.notion.com/p/tintolab/5-0-33af3e2a77d0809ea5fcd0d79ef84741) · [1. 보고](https://app.notion.com/p/tintolab/1-33af3e2a77d08045b79ff6054bb94352) · [2. 발급](https://app.notion.com/p/tintolab/2-33af3e2a77d080e3a6d3c7128c9c40c3)
 
 ## 공통 절차 (양식 1건당)
