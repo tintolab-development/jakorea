@@ -50,7 +50,7 @@ describe('ja-grade-evaluation-api', () => {
 
   it('서버 응답 criteria로 draft를 hydrate한다', () => {
     const draft = applyJaEvaluationResponseToDraft(buildJaGradeEvaluationDraft(null), {
-      currentGrade: 'JA_A',
+      currentGrade: 'A',
       totalScore: 90,
       criteria: [
         { criteriaCode: 'CONTENT_EXPERTISE', score: 5 },
@@ -67,7 +67,7 @@ describe('ja-grade-evaluation-api', () => {
     expect(
       q4?.kind === 'single_item' && q4.variant === 'scale_type' ? q4.selectedPreviewItemId : null
     ).toBe('ja-scale-2')
-    expect(resolveJaEvaluationDisplayGrade({ currentGrade: 'JA_A' }, 'B')).toBe('A')
+    expect(resolveJaEvaluationDisplayGrade({ currentGrade: 'A' }, 'B')).toBe('A')
     expect(resolveJaEvaluationDisplayGrade({ currentGrade: 'A' })).toBe('A')
     expect(resolveJaEvaluationDisplayGrade({ currentGrade: 'D' })).toBe('D')
     expect(resolveJaEvaluationDisplayGrade({})).toBeNull()

@@ -33,4 +33,5 @@ export interface DashboardKpiProgressResponse {
   classApplicable?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  classCountBasis?: string;
 }

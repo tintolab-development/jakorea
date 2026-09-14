@@ -8,6 +8,7 @@ import {
   getPasswordChangeRequiredWizardState,
   updatePasswordChangeRequiredWizardState,
   usePasswordChangeRequiredGuard,
+  PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS,
 } from '@/features/auth/password-change-required'
 import { AdminRegisterStepBirthGender } from '@/features/auth/ui/admin-register/admin-register-step-birth-gender'
 import { RegisterStepProgress } from '@/features/auth/ui/admin-register/register-step-progress'
@@ -42,7 +43,7 @@ export function PasswordChangeRequiredBirthPage() {
   return (
     <AuthPageShell showLogo={false} cardClassName="register-card">
       <div className="password-change-required-birth-page">
-        <RegisterStepProgress currentStep={1} totalSteps={2} />
+        <RegisterStepProgress currentStep={1} totalSteps={PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS} />
         <AdminRegisterStepBirthGender
           initialValues={{
             birthDate: wizardState?.birthDate,

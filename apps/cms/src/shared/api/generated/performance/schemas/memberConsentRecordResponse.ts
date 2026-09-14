@@ -19,6 +19,8 @@ export interface MemberConsentRecordResponse {
   filledDocumentId?: number;
   version?: string;
   templateCode?: string;
+  consentStatus?: string;
+  programEligible?: boolean;
   filledDocumentAvailable?: boolean;
   filledDocumentRevealEndpoint?: string;
 }

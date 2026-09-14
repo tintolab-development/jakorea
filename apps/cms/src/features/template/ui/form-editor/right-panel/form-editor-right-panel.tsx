@@ -57,6 +57,7 @@ export function FormEditorRightPanel({
   onVerticalTableBodyRowDeleted,
   structureLockedParagraphIds,
   hideParagraphKindOutline: hideParagraphKindOutlineProp,
+  structureLockedTypeSelectPreset = 'default',
 }: FormEditorRightPanelProps) {
   const activeParagraph =
     activeParagraphId != null
@@ -96,7 +97,10 @@ export function FormEditorRightPanel({
         ) : null}
         {/* 시드·고정 단락: 유형 셀렉트 숨김. 명시적으로 노출할 때만 StructureLocked 안내 */}
         {hideParagraphKindOutline ? null : (
-          <StructureLockedParagraphSection paragraph={active} />
+          <StructureLockedParagraphSection
+            paragraph={active}
+            typeSelectPreset={structureLockedTypeSelectPreset}
+          />
         )}
         {titleWithPeriodLocked ? (
           <ParagraphCustomFieldsFormShell

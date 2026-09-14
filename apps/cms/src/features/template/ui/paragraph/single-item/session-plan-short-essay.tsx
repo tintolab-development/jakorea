@@ -103,6 +103,7 @@ export function SessionPlanShortEssay({
   }
 
   const handleItemClick = (id: string) => {
+    if (!isBodyInteractive) return
     const nextFocused = activeItemId === id ? null : id
     onSelectItem?.(nextFocused)
   }
@@ -133,7 +134,7 @@ export function SessionPlanShortEssay({
               }
               readOnly={!isBodyInteractive}
             />
-            {isCardSelected && index > 0 ? (
+            {isBodyInteractive && isCardSelected && index > 0 ? (
               <ItemDeleteButton
                 className="item-delete-button"
                 aria-label={`항목 ${index + 1} 삭제`}
@@ -175,7 +176,7 @@ export function SessionPlanShortEssay({
                 label={titleText}
                 titleHint={item.titleHint}
               />
-              {isCardSelected && index > 0 ? (
+              {isBodyInteractive && isCardSelected && index > 0 ? (
                 <ItemDeleteButton
                   className="item-delete-button session-plan-short-essay-block__delete"
                   aria-label={`항목 ${index + 1} 삭제`}

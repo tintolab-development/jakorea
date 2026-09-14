@@ -16,4 +16,5 @@ export interface ProgramScheduleRequest {
   address?: string;
   addressDetail?: string;
   maxParticipantCount?: number;
+  completionRequired?: boolean;
 }

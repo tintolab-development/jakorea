@@ -5,6 +5,7 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { UjatApplicationSupplementPortalBannerState } from './ujatApplicationSupplementPortalBannerState';
 
 /**
  * CMS와 동일한 program_organization_application 기반 UJAT 신청 workflow 상태
@@ -22,4 +23,6 @@ export interface UjatApplicationSupplement {
   assignmentRevision?: number;
   /** 배정 잠금 여부. assignmentLockedAt 존재 여부에서 파생 */
   assignmentLocked?: boolean;
+  /** 포털 일정협의 배너 상태 */
+  portalBannerState?: UjatApplicationSupplementPortalBannerState;
 }

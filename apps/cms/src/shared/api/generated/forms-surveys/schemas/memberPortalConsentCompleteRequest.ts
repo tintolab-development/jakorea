@@ -5,7 +5,15 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { FilledDocumentRequest } from './filledDocumentRequest';
+import type { MemberPortalConsentCompleteRequestConsentStatus } from './memberPortalConsentCompleteRequestConsentStatus';
 
 export interface MemberPortalConsentCompleteRequest {
   identityVerificationSessionId?: number;
+  /** PORTRAIT_RIGHTS 전용 부분동의 상태 힌트 */
+  consentStatus?: MemberPortalConsentCompleteRequestConsentStatus;
+  /** PORTRAIT_RIGHTS 전용 프로그램 참여 가능 여부 힌트. 서버가 filledDocument의 1·2번 항목으로 재계산합니다. */
+  programEligible?: boolean;
+  /** PORTRAIT_RIGHTS 작성 완료 WritingFormDraft 전체 객체. FULL/PARTIAL 완료 시 필수입니다. */
+  filledDocument?: FilledDocumentRequest;
 }

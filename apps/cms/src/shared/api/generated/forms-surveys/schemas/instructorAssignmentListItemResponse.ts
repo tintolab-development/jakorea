@@ -10,6 +10,7 @@ export interface InstructorAssignmentListItemResponse {
   assignmentId?: number;
   programId?: number;
   scheduleId?: number;
+  organizationApplicationId?: number;
   instructorApplicationId?: number;
   instructorMemberId?: number;
   participantId?: number;

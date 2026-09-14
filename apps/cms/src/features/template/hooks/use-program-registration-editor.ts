@@ -1123,7 +1123,7 @@ export function useProgramRegistrationEditor(
     onReorderMiddle,
     onTitleNumberingChange,
     updateParagraph,
-    middleParagraphActions: isStructureLocked ? undefined : middleParagraphActions,
+    middleParagraphActions,
     horizontalTableRowSelectionsByParagraphId,
     verticalTableBodyRowSelection,
     activeHorizontalTableRowSelection,

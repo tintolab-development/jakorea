@@ -5,8 +5,11 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { PerformanceRecordUpdateRequest } from './performanceRecordUpdateRequest';
 
 export interface PerformanceCorrectionRequest {
   reason?: string;
   requestedChangeSummary?: string;
+  changes?: PerformanceRecordUpdateRequest;
+  expectedRevisionNo?: number;
 }

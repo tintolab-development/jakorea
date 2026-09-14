@@ -145,25 +145,6 @@ const FEE_GRADE_LEVEL_LABELS: Record<string, string> = {
   GRADE_3: '3급 강사비',
 }
 
-/** BE wire `GRADE_1` · `1` · `1급` · `1급 강사비` → 표시 레벨 키 `1`|`2`|`3` */
-function resolveInstructorFeeGradeLevelKey(raw: string): '1' | '2' | '3' | undefined {
-  const trimmed = raw.trim()
-  if (!trimmed) return undefined
-
-  const gradeEnum = /^GRADE_([123])$/i.exec(trimmed)
-  if (gradeEnum) return gradeEnum[1] as '1' | '2' | '3'
-
-  const levelKey = trimmed.replace(/\s*강사비\s*$/u, '').trim()
-  if (levelKey === '1' || levelKey === '1급') return '1'
-  if (levelKey === '2' || levelKey === '2급') return '2'
-  if (levelKey === '3' || levelKey === '3급') return '3'
-
-  const fromLabel = /^([123])급\s*강사비$/u.exec(trimmed)
-  if (fromLabel) return fromLabel[1] as '1' | '2' | '3'
-
-  return undefined
-}
-
 /**
  * 강사비 등급 표시용.
  * `instructorProfile.defaultFeeGrade`만 사용한다.
@@ -179,9 +160,6 @@ export function toInstructorFeeGradeDisplayLabel(
   if (/승인|반려|대기/.test(trimmed)) return undefined
 
   if (upper in FEE_GRADE_LEVEL_LABELS) return FEE_GRADE_LEVEL_LABELS[upper]
-
-  const resolvedLevel = resolveInstructorFeeGradeLevelKey(trimmed)
-  if (resolvedLevel) return FEE_GRADE_LEVEL_LABELS[resolvedLevel]
 
   const levelKey = trimmed.replace(/\s*강사비\s*$/u, '').trim()
   if (levelKey in FEE_GRADE_LEVEL_LABELS) return FEE_GRADE_LEVEL_LABELS[levelKey]

@@ -599,7 +599,7 @@ export function renderFormParagraphBody(
           isBodyInteractive={isBodyInteractive}
           paragraphInteractionMode={paragraphInteractionMode}
           activeItemId={options?.singleItemListActiveItemId}
-          onSelectItem={options?.onSelectSingleItemListItem}
+          onSelectItem={isBodyInteractive ? options?.onSelectSingleItemListItem : undefined}
           readOnlyFilledItems={
             options?.agreementNoticeSubjectPrefilledReadOnly === true &&
             p.id === 'agreement-notice-subject'
@@ -615,7 +615,7 @@ export function renderFormParagraphBody(
           isBodyInteractive={isBodyInteractive}
           paragraphInteractionMode={paragraphInteractionMode}
           activeItemId={options?.singleItemListActiveItemId}
-          onSelectItem={options?.onSelectSingleItemListItem}
+          onSelectItem={isBodyInteractive ? options?.onSelectSingleItemListItem : undefined}
         />
       )
     case 'multiple_choice': {

@@ -53,66 +53,6 @@
   margin-top: 0;
 }
 
-.register-step-header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  width: 100%;
-}
-
-.register-step-header__title {
-  color: var(--Color-netural-black, #3d3d3d);
-  font-family: Pretendard;
-  font-size: 30px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 144%; /* 43.2px */
-}
-
-.register-step-header__description {
-  color: var(--Color-primary-boundless_blue, #285f74);
-  font-family: Pretendard;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 150%; /* 27px */
-  letter-spacing: -0.18px;
-}
-
-.register-identity-module {
-  display: flex;
-  padding: var(--Spacing-24, 24px);
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  align-self: stretch;
-  border-radius: var(--Radius-8, 8px);
-  background: var(--Color-netural-cool-50, #f5f7f7);
-}
-
-.register-identity-module__title,
-.register-identity-module__meta {
-  margin: 0;
-  color: var(--Color-netural-black, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 160%;
-}
-
-.register-identity-module--verified .register-identity-module__verified-icon {
-  color: #52c41a;
-  font-size: 32px;
-}
-
-.register-identity-module--error {
-  justify-content: flex-start;
-  padding: 16px;
-}
-
 .find-email-search-icon {
   display: flex;
   height: 84px;

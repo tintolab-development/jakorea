@@ -31,10 +31,10 @@ export interface InstructorRoleRequestDetailResponse {
   birthDate?: string;
   phone?: string;
   email?: string;
+  /** MASKED=마스킹 GET. UNMASKED=privacy/unmask 원문 응답. UNMASKED일 때 FE 재마스킹 금지. */
+  privacyMaskingLevel?: InstructorRoleRequestDetailResponsePrivacyMaskingLevel;
   profile?: InstructorCmsProfile;
   settlement?: InstructorCmsSettlement;
   termsAgreements?: TermsAgreement[];
   socialAccounts?: MemberLinkedSocialAccountResponse[];
-  /** MASKED=마스킹 GET. UNMASKED=privacy/unmask 원문 응답. UNMASKED일 때 FE 재마스킹 금지. */
-  privacyMaskingLevel?: InstructorRoleRequestDetailResponsePrivacyMaskingLevel;
 }

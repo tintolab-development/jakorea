@@ -13,6 +13,7 @@ import {
 } from '@/features/auth/sign-in'
 import {
   AddressSearchModal,
+  SchoolSearchModal,
   schoolGradeOptions,
   type SchoolStatus,
 } from '@/features/auth/sign-up'
@@ -21,11 +22,16 @@ import { PFButton, PFSelect, PFText, PFTextInput } from '@/shared/ui'
 import { EMPTY_SETTINGS_VALUE } from '../lib/constants'
 import {
   applySettingsEditToSnapshot,
+  applyTeacherSettingsEditToSnapshot,
   isSettingsEditValid,
+  isTeacherSettingsEditValid,
   mapProfileToSettingsEditForm,
+  mapProfileToTeacherSettingsEditForm,
   nullifyEmptyProfileUpdateFields,
+  SETTINGS_TEACHER_EMPLOYMENT_OPTIONS,
   toSettingsGender,
 } from '../lib/map-edit'
+import { mapTeacherSettingsEditToPortalProfileUpdate } from '../lib/map-teacher-profile-update'
 import {
   formatSettingsDateDot,
   formatSettingsPhone,
@@ -36,12 +42,20 @@ import styles from './edit-form.module.css'
 
 export type SettingsEditFormProps = {
   profile: SettingsProfileInput
+  variant?: 'individual' | 'teacher'
   onCancel: () => void
   onSaved: (next: SettingsProfileInput) => void
 }
 
-export function SettingsEditForm({ profile, onCancel, onSaved }: SettingsEditFormProps) {
+export function SettingsEditForm({
+  profile,
+  variant = 'individual',
+  onCancel,
+  onSaved,
+}: SettingsEditFormProps) {
+  const isTeacher = variant === 'teacher'
   const initial = mapProfileToSettingsEditForm(profile)
+  const teacherInitial = mapProfileToTeacherSettingsEditForm(profile)
   const [schoolStatus, setSchoolStatus] = useState<SchoolStatus>(initial.schoolStatus)
   const [schoolName, setSchoolName] = useState(initial.schoolName)
   const [schoolOrganizationId, setSchoolOrganizationId] = useState<number | null>(
@@ -54,6 +68,20 @@ export function SettingsEditForm({ profile, onCancel, onSaved }: SettingsEditFor
   const [regionSido, setRegionSido] = useState(initial.regionSido)
   const [regionSigungu, setRegionSigungu] = useState(initial.regionSigungu)
   const [volunteerId, setVolunteerId] = useState(initial.volunteerId)
+  const [teacherSchoolName, setTeacherSchoolName] = useState(teacherInitial.schoolName)
+  const [teacherSchoolOrganizationId, setTeacherSchoolOrganizationId] = useState(
+    teacherInitial.schoolOrganizationId,
+  )
+  const [teacherSchoolAddress, setTeacherSchoolAddress] = useState(teacherInitial.schoolAddress)
+  const [teacherSchoolNeisCode, setTeacherSchoolNeisCode] = useState(teacherInitial.schoolNeisCode)
+  const [teacherSchoolEducationOfficeCode, setTeacherSchoolEducationOfficeCode] = useState(
+    teacherInitial.schoolEducationOfficeCode,
+  )
+  const [teacherSchoolSource, setTeacherSchoolSource] = useState(teacherInitial.schoolSource)
+  const [teacherEmploymentStatus, setTeacherEmploymentStatus] = useState(
+    teacherInitial.employmentStatus,
+  )
+  const [isSchoolSearchOpen, setIsSchoolSearchOpen] = useState(false)
   const [phone, setPhone] = useState(profile.phone ?? '')
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [submitError, setSubmitError] = useState<string>()
@@ -129,6 +157,7 @@ export function SettingsEditForm({ profile, onCancel, onSaved }: SettingsEditFor
   const displayPhone = formatSettingsPhone(phone)
   const displayBirth = formatSettingsDateDot(profile.birthDate)
   const displayEmail = formatSettingsText(profile.email)
+  const displayGender = toSettingsGender(profile.gender)
   const identityError = phoneError ?? errorMessage ?? undefined
   const isReverifying = isVerifying || isConfirmingPhone
 
@@ -144,7 +173,18 @@ export function SettingsEditForm({ profile, onCancel, onSaved }: SettingsEditFor
     volunteerId,
     schoolOrganizationId,
   }
-  const isValid = isSettingsEditValid(form)
+  const teacherForm = {
+    schoolName: teacherSchoolName,
+    schoolOrganizationId: teacherSchoolOrganizationId,
+    schoolAddress: teacherSchoolAddress,
+    schoolNeisCode: teacherSchoolNeisCode,
+    schoolEducationOfficeCode: teacherSchoolEducationOfficeCode,
+    schoolSource: teacherSchoolSource,
+    employmentStatus: teacherEmploymentStatus,
+  }
+  const isValid = isTeacher
+    ? isTeacherSettingsEditValid(teacherForm)
+    : isSettingsEditValid(form)
 
   const handleSchoolStatusChange = (status: SchoolStatus) => {
     setSchoolStatus(status)
@@ -169,20 +209,24 @@ export function SettingsEditForm({ profile, onCancel, onSaved }: SettingsEditFor
     }
 
     setSubmitError(undefined)
-    const next = applySettingsEditToSnapshot(profile, form)
+    const next = isTeacher
+      ? applyTeacherSettingsEditToSnapshot(profile, teacherForm)
+      : applySettingsEditToSnapshot(profile, form)
 
     if (isRemoteApiConfigured()) {
       try {
         await profileUpdateMutation.mutateAsync(
           nullifyEmptyProfileUpdateFields(
-            mapAdminRegisteredEditToPortalProfileUpdate({
-              ...form,
-              schoolAddress: profile.schoolAddress,
-              portalProfile: {
-                ...profile,
-                schoolOrganizationId: profile.schoolOrganizationId ?? undefined,
-              },
-            }),
+            isTeacher
+              ? mapTeacherSettingsEditToPortalProfileUpdate(teacherForm)
+              : mapAdminRegisteredEditToPortalProfileUpdate({
+                  ...form,
+                  schoolAddress: profile.schoolAddress,
+                  portalProfile: {
+                    ...profile,
+                    schoolOrganizationId: profile.schoolOrganizationId ?? undefined,
+                  },
+                }),
           ),
         )
       } catch (error) {
@@ -246,7 +290,7 @@ export function SettingsEditForm({ profile, onCancel, onSaved }: SettingsEditFor
                 disabled={isReverifying}
                 onClick={handleReverify}
               >
-                {isReverifying ? '본인인증 진행 중…' : '재인증 하기'}
+                {isReverifying ? '본인인증 진행 중…' : '본인인증 다시하기'}
               </PFButton>
             </div>
             {identityError ? (
@@ -269,102 +313,166 @@ export function SettingsEditForm({ profile, onCancel, onSaved }: SettingsEditFor
               성별
             </PFText>
             <div className={styles.genderOptions}>
-              <PFButton size="xlarge" variant="tertiary" width="100%" type="button" disabled>
+              <PFButton
+                size="xlarge"
+                variant="tertiary"
+                width="100%"
+                type="button"
+                selected={displayGender === 'male'}
+                disabled
+              >
                 남성
               </PFButton>
-              <PFButton size="xlarge" variant="tertiary" width="100%" type="button" disabled>
+              <PFButton
+                size="xlarge"
+                variant="tertiary"
+                width="100%"
+                type="button"
+                selected={displayGender === 'female'}
+                disabled
+              >
                 여성
               </PFButton>
             </div>
           </div>
 
-          <div className={styles.schoolStatusField}>
-            <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
-              현재 학교에 재학 중이신가요?{' '}
-              <span className={styles.inlineRequiredMark}>*</span>
-            </PFText>
-            <div className={styles.schoolStatusOptions}>
-              <PFButton
-                size="xlarge"
-                variant="tertiary"
-                selected={schoolStatus === 'enrolled'}
-                width="100%"
-                onClick={() => handleSchoolStatusChange('enrolled')}
-              >
-                재학 중
-              </PFButton>
-              <PFButton
-                size="xlarge"
-                variant="tertiary"
-                selected={schoolStatus === 'none'}
-                width="100%"
-                onClick={() => handleSchoolStatusChange('none')}
-              >
-                해당 없음
-              </PFButton>
-            </div>
-          </div>
-
-          {schoolStatus === 'enrolled' ? (
+          {isTeacher ? (
             <>
+              <div className={styles.addressField}>
+                <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
+                  소속/학교 <span className={styles.inlineRequiredMark}>*</span>
+                </PFText>
+                <div className={styles.inlineRow}>
+                  <PFTextInput
+                    size="xlarge"
+                    placeholder="검색으로 학교를 선택해 주세요"
+                    value={teacherSchoolName}
+                    readOnly
+                    onClick={() => setIsSchoolSearchOpen(true)}
+                  />
+                  <PFButton
+                    size="xlarge"
+                    variant="secondary"
+                    type="button"
+                    onClick={() => setIsSchoolSearchOpen(true)}
+                  >
+                    검색
+                  </PFButton>
+                </div>
+              </div>
+
+              <div className={styles.schoolStatusField}>
+                <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
+                  재직 현황 <span className={styles.inlineRequiredMark}>*</span>
+                </PFText>
+                <div className={styles.schoolStatusOptions}>
+                  {SETTINGS_TEACHER_EMPLOYMENT_OPTIONS.map(option => (
+                    <PFButton
+                      key={option.value}
+                      size="xlarge"
+                      variant="tertiary"
+                      selected={teacherEmploymentStatus === option.value}
+                      width="100%"
+                      type="button"
+                      onClick={() => setTeacherEmploymentStatus(option.value)}
+                    >
+                      {option.label}
+                    </PFButton>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className={styles.schoolStatusField}>
+                <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
+                  현재 학교에 재학 중이신가요?{' '}
+                  <span className={styles.inlineRequiredMark}>*</span>
+                </PFText>
+                <div className={styles.schoolStatusOptions}>
+                  <PFButton
+                    size="xlarge"
+                    variant="tertiary"
+                    selected={schoolStatus === 'enrolled'}
+                    width="100%"
+                    onClick={() => handleSchoolStatusChange('enrolled')}
+                  >
+                    재학 중
+                  </PFButton>
+                  <PFButton
+                    size="xlarge"
+                    variant="tertiary"
+                    selected={schoolStatus === 'none'}
+                    width="100%"
+                    onClick={() => handleSchoolStatusChange('none')}
+                  >
+                    해당 없음
+                  </PFButton>
+                </div>
+              </div>
+
+              {schoolStatus === 'enrolled' ? (
+                <>
+                  <PFTextInput
+                    size="xlarge"
+                    label="소속/학교명"
+                    placeholder="소속 또는 학교명을 입력해 주세요"
+                    required
+                    value={schoolName}
+                    onValueChange={handleSchoolNameChange}
+                  />
+                  <PFSelect
+                    size="xlarge"
+                    label="학년"
+                    required
+                    placeholder="학년을 선택해 주세요"
+                    value={grade}
+                    onValueChange={setGrade}
+                    options={schoolGradeOptions.map(option => ({
+                      value: option,
+                      label: option,
+                    }))}
+                  />
+                </>
+              ) : null}
+
+              <div className={styles.addressField}>
+                <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
+                  자택 주소 <span className={styles.inlineRequiredMark}>*</span>
+                </PFText>
+                <div className={styles.inlineRow}>
+                  <PFTextInput
+                    size="xlarge"
+                    placeholder="주소를 검색해 주세요"
+                    value={address}
+                    readOnly
+                    onClick={() => setIsAddressModalOpen(true)}
+                  />
+                  <PFButton
+                    size="xlarge"
+                    variant="secondary"
+                    onClick={() => setIsAddressModalOpen(true)}
+                  >
+                    주소 검색
+                  </PFButton>
+                </div>
+                <PFTextInput
+                  size="xlarge"
+                  placeholder="상세주소를 입력해 주세요"
+                  value={addressDetail}
+                  onValueChange={setAddressDetail}
+                />
+              </div>
+
               <PFTextInput
                 size="xlarge"
-                label="소속/학교명"
-                placeholder="소속 또는 학교명을 입력해 주세요"
-                required
-                value={schoolName}
-                onValueChange={handleSchoolNameChange}
-              />
-              <PFSelect
-                size="xlarge"
-                label="학년"
-                required
-                placeholder="학년을 선택해 주세요"
-                value={grade}
-                onValueChange={setGrade}
-                options={schoolGradeOptions.map(option => ({
-                  value: option,
-                  label: option,
-                }))}
+                label="1365 ID"
+                placeholder="1365 ID를 입력해 주세요"
+                value={volunteerId}
+                onValueChange={setVolunteerId}
               />
             </>
-          ) : null}
-
-          <div className={styles.addressField}>
-            <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
-              자택 주소 <span className={styles.inlineRequiredMark}>*</span>
-            </PFText>
-            <div className={styles.inlineRow}>
-              <PFTextInput
-                size="xlarge"
-                placeholder="주소를 검색해 주세요"
-                value={address}
-                readOnly
-                onClick={() => setIsAddressModalOpen(true)}
-              />
-              <PFButton
-                size="xlarge"
-                variant="secondary"
-                onClick={() => setIsAddressModalOpen(true)}
-              >
-                주소 검색
-              </PFButton>
-            </div>
-            <PFTextInput
-              size="xlarge"
-              placeholder="상세주소를 입력해 주세요"
-              value={addressDetail}
-              onValueChange={setAddressDetail}
-            />
-          </div>
-
-          <PFTextInput
-            size="xlarge"
-            label="1365 ID"
-            placeholder="1365 ID를 입력해 주세요"
-            value={volunteerId}
-            onValueChange={setVolunteerId}
-          />
+          )}
 
           <PFTextInput
             size="xlarge"
@@ -405,6 +513,20 @@ export function SettingsEditForm({ profile, onCancel, onSaved }: SettingsEditFor
           setRegionSido(selection.regionSido ?? '')
           setRegionSigungu(selection.regionSigungu ?? '')
           setIsAddressModalOpen(false)
+        }}
+      />
+
+      <SchoolSearchModal
+        open={isSchoolSearchOpen}
+        onClose={() => setIsSchoolSearchOpen(false)}
+        onSelect={school => {
+          setTeacherSchoolName(school.name)
+          setTeacherSchoolOrganizationId(school.organizationId ?? null)
+          setTeacherSchoolAddress(school.address ?? '')
+          setTeacherSchoolNeisCode(school.neisCode ?? '')
+          setTeacherSchoolEducationOfficeCode(school.educationOfficeCode ?? '')
+          setTeacherSchoolSource(school.source)
+          setIsSchoolSearchOpen(false)
         }}
       />
     </div>

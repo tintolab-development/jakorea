@@ -184,6 +184,7 @@ import {
 } from '@/features/program/general/lib/institution-application-form-visibility'
 import {
   getInstitutionApplicationFormHiddenParagraphIds,
+  isInstitutionApplicationBridgeTemplateAuthoring,
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resolveGeneralApplicationFormHiddenParagraphIds } from '@/features/program/general/lib/application-form-preview-options'
@@ -337,7 +338,7 @@ function isGeneralApplicationOverlayVariant(
   )
 }
 
-/** Notion 모집 양식 — 단락 추가·삭제·복제 전부 비활성 */
+/** Notion 모집 양식 — 시드 단락에서 단락 추가·복제·삭제 전부 disabled 노출 */
 function isRecruitmentEditorVariant(variant: ProgramParticipantApplicationEditorVariant): boolean {
   return (
     variant === 'applicant-recruit-institution' ||
@@ -779,11 +780,11 @@ export function useProgramParticipantApplicationEditor(
 
   const effectiveMiddleParagraphActions = !isStructureLocked
     ? writingFormMiddleParagraphActions
-    : isRecruitmentEditorVariant(variant)
-      ? undefined
-      : middleParagraphActions
+    : middleParagraphActions
 
   const effectiveStructureLockedParagraphIds = isStructureLocked ? seedParagraphIds : undefined
+  const allowAddAfterStructureLockedParagraphs =
+    isStructureLocked && !isRecruitmentEditorVariant(variant)
 
   const {
     horizontalTableRowSelectionsByParagraphId,
@@ -1015,8 +1016,7 @@ export function useProgramParticipantApplicationEditor(
     const hidden = getInstitutionApplicationFormHiddenParagraphIds(institutionApplicationBridge)
     if (hidden == null) return undefined
     const isTemplateAuthoringContext =
-      institutionApplicationBridge.educationStructure == null &&
-      institutionApplicationBridge.sessionRound == null
+      isInstitutionApplicationBridgeTemplateAuthoring(institutionApplicationBridge)
     if (!isTemplateAuthoringContext) return hidden
     const next = new Set(hidden)
     next.delete(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice)
@@ -1289,6 +1289,7 @@ export function useProgramParticipantApplicationEditor(
     activeParagraphId,
     singleItemListActiveItemId,
     structureLockedParagraphIds: effectiveStructureLockedParagraphIds,
+    allowAddAfterStructureLockedParagraphs,
     pinnedTop,
     sortableMiddle,
     pinnedBottom,

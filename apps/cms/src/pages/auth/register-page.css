@@ -61,8 +61,8 @@
   padding-left: 8px;
 }
 
-/* /auth/password-change-required/identity 전용 */
-.register-step-progress--password-change-identity {
+/* /auth/password-change-required/* 프로그레스 ↔ 본문 간격 */
+.register-step-progress--password-change-required {
   margin-bottom: 48px;
 }
 
@@ -125,34 +125,6 @@
   border-color: var(--Color-primary-800_immersive_blueblack, #22404d);
   background: var(--Color-primary-800_immersive_blueblack, #22404d);
   color: var(--main-WT, #fff);
-}
-
-.register-step-header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  width: 100%;
-  padding-left: 8px;
-}
-
-.register-step-header__title {
-  margin: 0;
-  color: #3d3d3d;
-  font-size: 30px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 144%;
-}
-
-.register-step-header__description {
-  margin: 0;
-  color: #285f74 !important;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 150%;
-  letter-spacing: -0.18px;
 }
 
 .admin-register-step {
@@ -422,39 +394,10 @@
   gap: 0;
 }
 
-.register-identity-module {
-  display: flex;
+/* 가입 본인인증 step — 패널이 남는 높이를 채움 (공통 패널 패딩은 colocated CSS) */
+.admin-register-step--identity .register-identity-module {
   flex: 1;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
   min-height: 0;
-  padding: 24px;
-  border-radius: var(--radius-8, 8px);
-  background: var(--Color-netural-cool-50, #f5f7f7);
-}
-
-.register-identity-module__title,
-.register-identity-module__meta {
-  margin: 0;
-  color: var(--Color-netural-black, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 160%;
-}
-
-.register-identity-module--verified .register-identity-module__verified-icon {
-  color: #52c41a;
-  font-size: 32px;
-}
-
-.register-identity-module--error {
-  justify-content: flex-start;
-  padding: 16px;
 }
 
 .admin-register-step__form .admin-register-birth-input::placeholder {

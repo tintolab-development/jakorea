@@ -5,6 +5,8 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { SubmissionFile } from './submissionFile';
+import type { SubmissionLink } from './submissionLink';
 
 export interface MemberAssignmentSubmissionResponse {
   submissionId?: number;
@@ -25,4 +27,9 @@ export interface MemberAssignmentSubmissionResponse {
   lectureProgress?: string;
   submissionStatus?: string;
   submissionFileIds?: number[];
+  bindingId?: number;
+  formType?: string;
+  applicabilityStatus?: string;
+  files?: SubmissionFile[];
+  links?: SubmissionLink[];
 }

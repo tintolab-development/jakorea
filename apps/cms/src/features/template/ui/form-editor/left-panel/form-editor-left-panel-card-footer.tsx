@@ -267,32 +267,38 @@ export function modalCardFooterActions(
   middleParagraphActions: FormEditorLeftPanelProps['middleParagraphActions'],
   paragraphs: WritingFormParagraph[],
   structureLockedParagraphIds?: ReadonlySet<string>,
-  editorKind: FormEditorKind = 'survey'
+  editorKind: FormEditorKind = 'survey',
+  allowAddAfterStructureLockedParagraphs = false
 ): ReactNode {
   const structureLocked = structureLockedParagraphIds?.has(paragraph.id) ?? false
   const surveyFreeForm = editorKind === 'survey'
   const titleActionsLocked = !surveyFreeForm && isTitleWithPeriodParagraph(paragraph)
+  const addDisabled =
+    structureLocked && !allowAddAfterStructureLockedParagraphs
+  const lockDupDel = structureLocked
 
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
     if (!isSelected) return undefined
     const tableParagraph = paragraph as HorizontalTableParagraph
-    const dimensionActions = !structureLocked ? (
+    const dimensionActions = (
       <HorizontalTableDimensionActions
         paragraph={tableParagraph}
+        disabled={structureLocked}
         onUpdate={next => updateParagraph(tableParagraph.id, () => next)}
       />
-    ) : null
+    )
     const paragraphActions = middleParagraphActions ? (
       <FormParagraphCardActions
-        addDisabled={structureLocked}
-        duplicateDisabled={structureLocked}
-        deleteDisabled={structureLocked}
+        addDisabled={addDisabled}
+        duplicateDisabled={lockDupDel}
+        deleteDisabled={lockDupDel}
         onAdd={() => middleParagraphActions.onAddAfter(tableParagraph.id)}
         onDuplicate={() => middleParagraphActions.onDuplicate(tableParagraph.id)}
         onDelete={() => middleParagraphActions.onDelete(tableParagraph.id)}
       />
-    ) : null
-    if (!dimensionActions && !paragraphActions) return undefined
+    ) : (
+      disabledParagraphCardActions(false)
+    )
     return (
       <>
         {dimensionActions}
@@ -307,32 +313,36 @@ export function modalCardFooterActions(
     if (vt.verticalTableFlavor === 'file_attachment') {
       return middleParagraphActions ? (
         <FormParagraphCardActions
-          addDisabled={structureLocked}
-          duplicateDisabled={structureLocked}
-          deleteDisabled={structureLocked}
+          addDisabled={addDisabled}
+          duplicateDisabled={lockDupDel}
+          deleteDisabled={lockDupDel}
           onAdd={() => middleParagraphActions.onAddAfter(vt.id)}
           onDuplicate={() => middleParagraphActions.onDuplicate(vt.id)}
           onDelete={() => middleParagraphActions.onDelete(vt.id)}
         />
-      ) : null
+      ) : (
+        disabledParagraphCardActions(false)
+      )
     }
-    const dimensionActions = !structureLocked ? (
+    const dimensionActions = (
       <VerticalTableDimensionActions
         paragraph={vt}
+        disabled={structureLocked}
         onUpdate={next => updateParagraph(vt.id, () => next)}
       />
-    ) : null
+    )
     const paragraphActions = middleParagraphActions ? (
       <FormParagraphCardActions
-        addDisabled={structureLocked}
-        duplicateDisabled={structureLocked}
-        deleteDisabled={structureLocked}
+        addDisabled={addDisabled}
+        duplicateDisabled={lockDupDel}
+        deleteDisabled={lockDupDel}
         onAdd={() => middleParagraphActions.onAddAfter(vt.id)}
         onDuplicate={() => middleParagraphActions.onDuplicate(vt.id)}
         onDelete={() => middleParagraphActions.onDelete(vt.id)}
       />
-    ) : null
-    if (!dimensionActions && !paragraphActions) return undefined
+    ) : (
+      disabledParagraphCardActions(false)
+    )
     return (
       <>
         {dimensionActions}
@@ -353,9 +363,9 @@ export function modalCardFooterActions(
   if (paragraph.kind === 'description' && paragraph.variant === 'closing') {
     return middleParagraphActions ? (
       <FormParagraphCardActionsMinimal
-        addDisabled={structureLocked}
-        duplicateDisabled={structureLocked}
-        deleteDisabled={structureLocked}
+        addDisabled={addDisabled}
+        duplicateDisabled={lockDupDel}
+        deleteDisabled={lockDupDel}
         onAdd={() => {
           if (surveyFreeForm) {
             middleParagraphActions.onAddAfter(paragraph.id)
@@ -382,56 +392,59 @@ export function modalCardFooterActions(
       paragraph.variant === 'short_essay' ||
       paragraph.variant === 'session_plan_short_essay'
     ) {
+      const onAddItem = () =>
+        updateParagraph(paragraph.id, p => {
+          if (
+            p.kind !== 'single_item' ||
+            (p.variant !== 'short_essay' && p.variant !== 'session_plan_short_essay')
+          )
+            return p
+          const itemIdPrefix =
+            p.variant === 'session_plan_short_essay' ? 'session-plan-item' : 'short-essay-item'
+          const defaultFirstId = `${itemIdPrefix}-1`
+          const currentItems =
+            p.items?.length && p.items.length > 0
+              ? p.items
+              : [
+                  {
+                    id: defaultFirstId,
+                    label: 'Title 01',
+                    placeholder: p.bodyPlaceholder,
+                    bodyText: p.bodyText,
+                  },
+                ]
+          const nextIndex = currentItems.length + 1
+          const nextItems = [
+            ...currentItems,
+            {
+              id: `${itemIdPrefix}-${nextIndex}`,
+              label: `Title ${String(nextIndex).padStart(2, '0')}`,
+              placeholder: p.bodyPlaceholder,
+              bodyText: '',
+            },
+          ]
+          return {
+            ...p,
+            items: nextItems,
+            bodyText: nextItems[0]?.bodyText ?? '',
+            showItemTitle: true,
+          }
+        })
       if (!middleParagraphActions) {
-        return disabledParagraphCardActions(false)
+        return (
+          <FormParagraphCardActions
+            disabled
+            onAddItem={onAddItem}
+          />
+        )
       }
       return (
         <FormParagraphCardActions
-          addDisabled={structureLocked}
-          duplicateDisabled={structureLocked}
-          deleteDisabled={structureLocked}
-          onAddItem={
-            structureLocked
-              ? undefined
-              : () =>
-            updateParagraph(paragraph.id, p => {
-              if (
-                p.kind !== 'single_item' ||
-                (p.variant !== 'short_essay' && p.variant !== 'session_plan_short_essay')
-              )
-                return p
-              const itemIdPrefix =
-                p.variant === 'session_plan_short_essay' ? 'session-plan-item' : 'short-essay-item'
-              const defaultFirstId = `${itemIdPrefix}-1`
-              const currentItems =
-                p.items?.length && p.items.length > 0
-                  ? p.items
-                  : [
-                      {
-                        id: defaultFirstId,
-                        label: 'Title 01',
-                        placeholder: p.bodyPlaceholder,
-                        bodyText: p.bodyText,
-                      },
-                    ]
-              const nextIndex = currentItems.length + 1
-              const nextItems = [
-                ...currentItems,
-                {
-                  id: `${itemIdPrefix}-${nextIndex}`,
-                  label: `Title ${String(nextIndex).padStart(2, '0')}`,
-                  placeholder: p.bodyPlaceholder,
-                  bodyText: '',
-                },
-              ]
-              return {
-                ...p,
-                items: nextItems,
-                bodyText: nextItems[0]?.bodyText ?? '',
-                showItemTitle: true,
-              }
-            })
-          }
+          addDisabled={addDisabled}
+          addItemDisabled={structureLocked}
+          duplicateDisabled={lockDupDel}
+          deleteDisabled={lockDupDel}
+          onAddItem={onAddItem}
           onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
           onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
           onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
@@ -440,9 +453,9 @@ export function modalCardFooterActions(
     }
     return middleParagraphActions ? (
       <FormParagraphCardActions
-        addDisabled={structureLocked}
-        duplicateDisabled={structureLocked}
-        deleteDisabled={structureLocked}
+        addDisabled={addDisabled}
+        duplicateDisabled={lockDupDel}
+        deleteDisabled={lockDupDel}
         onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
         onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
         onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
@@ -455,9 +468,9 @@ export function modalCardFooterActions(
   if (isTitleWithPeriodParagraph(paragraph)) {
     return middleParagraphActions ? (
       <FormParagraphCardActionsMinimal
-        addDisabled={structureLocked}
-        duplicateDisabled={structureLocked || titleActionsLocked}
-        deleteDisabled={structureLocked || titleActionsLocked}
+        addDisabled={addDisabled}
+        duplicateDisabled={lockDupDel || titleActionsLocked}
+        deleteDisabled={lockDupDel || titleActionsLocked}
         onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
         onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
         onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
@@ -470,9 +483,9 @@ export function modalCardFooterActions(
   if (paragraph.kind === 'description' && paragraph.variant === 'static_description_lines') {
     return middleParagraphActions ? (
       <FormParagraphCardActionsMinimal
-        addDisabled={structureLocked}
-        duplicateDisabled={structureLocked}
-        deleteDisabled={structureLocked}
+        addDisabled={addDisabled}
+        duplicateDisabled={lockDupDel}
+        deleteDisabled={lockDupDel}
         onAdd={() => middleParagraphActions.onAddAfter(paragraph.id)}
         onDuplicate={() => middleParagraphActions.onDuplicate(paragraph.id)}
         onDelete={() => middleParagraphActions.onDelete(paragraph.id)}
