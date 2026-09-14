@@ -1,9 +1,13 @@
+/* 점수선택형 — 선택 영역 */
 .scale-type {
   display: flex;
+  padding: 12px 0;
   flex-direction: column;
-  gap: 16px;
+  align-items: flex-start;
+  gap: 10px;
   width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .scale-type__body-text {
@@ -21,6 +25,7 @@
 .scale-type-bar {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   width: 100%;
   min-width: 0;
   align-items: stretch;
@@ -30,11 +35,18 @@
   pointer-events: none;
 }
 
+/* 전혀 그렇지 않다 ~ 매우 그렇다 필드 */
 .scale-type-item {
-  flex: 1 1 0;
-  min-width: 0;
+  display: flex;
+  width: 200px;
+  height: 54px;
+  min-width: 100px;
   margin: 0;
-  padding: 12px 8px;
+  padding: 6px 16px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
   border: 1px solid var(--table-line, #e0e0e0);
   border-right: none;
   border-radius: 0;
@@ -52,7 +64,7 @@
   line-height: 150%;
   cursor: pointer;
   box-sizing: border-box;
-  max-width: 200px;
+  flex: 0 0 200px;
   transition:
     background 0.15s ease,
     color 0.15s ease,
