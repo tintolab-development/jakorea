@@ -75,7 +75,6 @@ import {
 import { useInvalidateAlimtalkSendHistory } from '@/features/notifications/hooks/use-alimtalk-send-history-query'
 import { ProgramSelectField } from '@/features/notifications/ui/mail-send/program-select-field'
 import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
-import { SystemManualSendQaBanner } from '@/features/notifications/ui/shared/system-manual-send-qa-banner'
 import { ContentPanel } from './content-panel'
 import { RecipientManualModal } from './recipient-manual-modal'
 import { RecipientSelectModal } from './recipient-select-modal'
@@ -224,7 +223,6 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   )
 
   const variablesCatalog = variablesQuery.data?.variables
-  const systemManualSendQaEnabled = variablesQuery.data?.systemManualSendQaEnabled === true
 
   const isTemplateUsable = useCallback(
     (template: AlimtalkTemplateItem) =>
@@ -584,16 +582,10 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
 
           <div className="alimtalk-send-fullpage-modal__body">
             <div className="alimtalk-send-fullpage-modal__notice">
-              <div className="alimtalk-send-fullpage-modal__notice-copy">
-                <p className="alimtalk-send-fullpage-modal__notice-text">
-                  * 프로그램은 현재 운영 중인 프로그램만 선택 가능하며, 템플릿은 카카오 승인을 받은
-                  템플릿만 사용이 가능합니다.
-                </p>
-                <SystemManualSendQaBanner
-                  enabled={systemManualSendQaEnabled}
-                  className="alimtalk-send-fullpage-modal__qa-banner"
-                />
-              </div>
+              <p className="alimtalk-send-fullpage-modal__notice-text">
+                * 프로그램은 현재 운영 중인 프로그램만 선택 가능하며, 템플릿은 카카오 승인을 받은
+                템플릿만 사용이 가능합니다.
+              </p>
               <div className="alimtalk-send-fullpage-modal__notice-actions">
                 <CmsButton variant="cancel" size="large" width={140} type="button" onClick={onClose}>
                   취소

@@ -164,7 +164,7 @@ export function mapRecipientCandidates(
 
 export type NotificationTemplateVariablesCatalogMapped = {
   variables: AlimtalkTemplateVariable[]
-  /** TEMP local QA — BE `systemManualSendQaEnabled`. true일 때만 배너. */
+  /** TEMP local QA — BE `systemManualSendQaEnabled` (표시용 배너는 사용하지 않음). */
   systemManualSendQaEnabled: boolean
 }
 
