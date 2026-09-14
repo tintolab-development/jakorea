@@ -5,6 +5,9 @@
 import type { AdminRegisterGender } from '@/types/admin-register'
 import { passwordChangeRequiredPaths } from '@/shared/utils/post-auth-redirect'
 
+/** 생년월일·성별 → 본인인증 → 비밀번호 변경 */
+export const PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS = 3 as const
+
 const WIZARD_STORAGE_KEY = 'cms:password-change-required-wizard'
 
 export type PasswordChangeRequiredWizardState = {

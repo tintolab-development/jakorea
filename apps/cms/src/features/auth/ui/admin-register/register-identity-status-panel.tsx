@@ -4,6 +4,8 @@ import type { ReactNode } from 'react'
 
 import type { IdentityVerificationHookStatus } from '@/features/auth/identity-verification'
 
+import './register-identity-status-panel.css'
+
 interface RegisterIdentityStatusPanelProps {
   status: IdentityVerificationHookStatus
   errorMessage?: string | null
@@ -42,13 +44,15 @@ export function RegisterIdentityStatusPanel({
   const resolvedIdleDescription =
     idleDescription === undefined ? defaultIdleDescription : idleDescription
 
-  const rootClass = className
-    ? `register-identity-module ${className}`
-    : 'register-identity-module'
+  const rootClass = className ? `register-identity-module ${className}` : 'register-identity-module'
 
   if (status === 'error' && errorMessage) {
     return (
-      <div className={`${rootClass} register-identity-module--error`} role="region" aria-label="본인인증 오류">
+      <div
+        className={`${rootClass} register-identity-module--error`}
+        role="region"
+        aria-label="본인인증 오류"
+      >
         <Alert type="error" message={errorMessage} showIcon />
       </div>
     )
@@ -58,7 +62,7 @@ export function RegisterIdentityStatusPanel({
     const meta =
       verifiedName && verifiedPhone
         ? `${verifiedName} · ${maskPhone(verifiedPhone)}`
-        : verifiedName ?? (verifiedPhone ? maskPhone(verifiedPhone) : '본인인증 완료')
+        : (verifiedName ?? (verifiedPhone ? maskPhone(verifiedPhone) : '본인인증 완료'))
 
     return (
       <div
@@ -77,9 +81,7 @@ export function RegisterIdentityStatusPanel({
     return (
       <div className={rootClass} role="region" aria-label="본인인증 진행 중">
         <p className="register-identity-module__title">본인인증을 진행하고 있어요</p>
-        <p className="register-identity-module__meta">
-          인증 창에서 절차를 완료해 주세요.
-        </p>
+        <p className="register-identity-module__meta">인증 창에서 절차를 완료해 주세요.</p>
       </div>
     )
   }
