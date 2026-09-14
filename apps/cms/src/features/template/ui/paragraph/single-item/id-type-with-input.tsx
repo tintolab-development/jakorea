@@ -1,3 +1,4 @@
+import { startTransition, useEffect, useEffectEvent, useRef, useState } from 'react'
 import { CmsInput, CmsNumericInput, CmsRadio } from '@/shared/ui'
 import {
   AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID,
@@ -15,6 +16,8 @@ const INPUT_PLACEHOLDER_BY_OPTION_ID: Record<string, string> = {
   'agreement-notice-id-driver': '운전면허번호를 입력해 주세요',
   'agreement-notice-id-alien': '외국인등록번호를 입력해 주세요',
 }
+
+const COMMIT_DELAY_MS = 120
 
 function placeholderForOption(optionId: string, fallback: string): string {
   return INPUT_PLACEHOLDER_BY_OPTION_ID[optionId] ?? fallback
@@ -44,7 +47,69 @@ export function IdTypeWithInputBody({
       ? paragraph.selectedOptionId
       : (options[0]?.id ?? null)
   const isResident = isIdTypeResidentOptionId(selectedId)
-  const residentParts = splitIdTypeResidentInputValue(paragraph.inputValue)
+  const [localInputValue, setLocalInputValue] = useState(paragraph.inputValue)
+  const localInputRef = useRef(localInputValue)
+  const committedInputRef = useRef(paragraph.inputValue)
+  const paragraphRef = useRef(paragraph)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  paragraphRef.current = paragraph
+
+  const clearTimer = () => {
+    if (timerRef.current == null) return
+    clearTimeout(timerRef.current)
+    timerRef.current = null
+  }
+
+  const commitInputValue = useEffectEvent((inputValue: string) => {
+    if (inputValue === committedInputRef.current) return
+    committedInputRef.current = inputValue
+    const current = paragraphRef.current
+    const ph =
+      selectedId != null
+        ? placeholderForOption(selectedId, current.inputPlaceholder.trim() || '번호를 입력해 주세요')
+        : current.inputPlaceholder.trim() || '번호를 입력해 주세요'
+    startTransition(() => {
+      onChange({
+        ...current,
+        selectedOptionId: lockResidentIdType
+          ? AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID
+          : current.selectedOptionId,
+        inputValue,
+        inputPlaceholder: ph,
+      })
+    })
+  })
+
+  useEffect(() => {
+    if (paragraph.inputValue === committedInputRef.current) return
+    clearTimer()
+    committedInputRef.current = paragraph.inputValue
+    localInputRef.current = paragraph.inputValue
+    setLocalInputValue(paragraph.inputValue)
+  }, [paragraph.inputValue])
+
+  const flushOnUnmount = useEffectEvent(() => {
+    clearTimer()
+    const pending = localInputRef.current
+    if (pending === committedInputRef.current) return
+    committedInputRef.current = pending
+    const current = paragraphRef.current
+    onChange({
+      ...current,
+      selectedOptionId: lockResidentIdType
+        ? AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID
+        : current.selectedOptionId,
+      inputValue: pending,
+    })
+  })
+
+  useEffect(() => {
+    return () => {
+      flushOnUnmount()
+    }
+  }, [])
+
+  const residentParts = splitIdTypeResidentInputValue(localInputValue)
 
   const ph =
     selectedId != null
@@ -54,6 +119,10 @@ export function IdTypeWithInputBody({
   const inputsDisabled = documentMode || !isEditMode
 
   const setSelected = (nextId: string) => {
+    clearTimer()
+    localInputRef.current = ''
+    committedInputRef.current = ''
+    setLocalInputValue('')
     onChange({
       ...paragraph,
       selectedOptionId: nextId,
@@ -67,14 +136,18 @@ export function IdTypeWithInputBody({
 
   const patchInputValue = (inputValue: string) => {
     if (!isEditMode) return
-    onChange({
-      ...paragraph,
-      selectedOptionId: lockResidentIdType
-        ? AGREEMENT_NOTICE_ID_TYPE_RESIDENT_OPTION_ID
-        : paragraph.selectedOptionId,
-      inputValue,
-      inputPlaceholder: ph,
-    })
+    localInputRef.current = inputValue
+    setLocalInputValue(inputValue)
+    clearTimer()
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null
+      commitInputValue(localInputRef.current)
+    }, COMMIT_DELAY_MS)
+  }
+
+  const flushInputValue = () => {
+    clearTimer()
+    commitInputValue(localInputRef.current)
   }
 
   return (
@@ -114,6 +187,7 @@ export function IdTypeWithInputBody({
             onValueChange={value =>
               patchInputValue(joinIdTypeResidentInputValue(value, residentParts.back))
             }
+            onBlur={flushInputValue}
           />
           <span className="id-type-with-input__dash" aria-hidden>
             -
@@ -131,6 +205,7 @@ export function IdTypeWithInputBody({
             onValueChange={value =>
               patchInputValue(joinIdTypeResidentInputValue(residentParts.front, value))
             }
+            onBlur={flushInputValue}
           />
         </div>
       ) : (
@@ -138,10 +213,11 @@ export function IdTypeWithInputBody({
           className="id-type-with-input__input"
           inputSize="large"
           width={280}
-          value={paragraph.inputValue}
+          value={localInputValue}
           placeholder={ph}
           disabled={inputsDisabled}
           onChange={e => patchInputValue(e.target.value)}
+          onBlur={flushInputValue}
         />
       )}
     </div>

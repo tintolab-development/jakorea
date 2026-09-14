@@ -1,5 +1,12 @@
-import { useMemo, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
+import {
+  useMemo,
+  useState,
+  type CSSProperties,
+  type MouseEvent,
+  type ReactNode,
+} from 'react'
 import { Input } from 'antd'
+import { useDeferredFieldCommit } from '@/features/template/ui/shared/use-deferred-field-commit'
 import './paragraph-input.css'
 
 export type ParagraphInputType = 'title' | 'description'
@@ -24,14 +31,20 @@ function cn(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(' ')
 }
 
+let measureCanvas: HTMLCanvasElement | null = null
+let measureContext: CanvasRenderingContext2D | null = null
+
 function measureTextWidthPx(
   text: string,
   type: ParagraphInputType,
   isExplanationTitle: boolean
 ): number {
   if (typeof document === 'undefined') return 0
-  const canvas = document.createElement('canvas')
-  const context = canvas.getContext('2d')
+  if (measureCanvas == null) {
+    measureCanvas = document.createElement('canvas')
+    measureContext = measureCanvas.getContext('2d')
+  }
+  const context = measureContext
   if (!context) return 0
   const fontSize = type === 'title' ? (isExplanationTitle ? 24 : 20) : isExplanationTitle ? 18 : 16
   const fontWeight = type === 'title' ? 700 : 500
@@ -53,18 +66,24 @@ export function ParagraphInput({
 }: ParagraphInputProps) {
   const [focused, setFocused] = useState(false)
   const safeValue = typeof value === 'string' ? value : ''
-  const filled = safeValue.trim().length > 0
+  const {
+    value: editValue,
+    setValue: setEditValue,
+    flush: flushEditValue,
+  } = useDeferredFieldCommit(safeValue, isEditMode ? onChange : undefined)
+  const displayValue = isEditMode ? editValue : safeValue
+  const filled = displayValue.trim().length > 0
   const isExplanationTitle = className?.includes('paragraph-input-explanation-title') ?? false
   const isExplanationBody = className?.includes('paragraph-input--explanation-body') ?? false
   /** 단락 카드 설명 — `\n` 개행·여러 줄 편집 */
   const isMultilineCardDescription =
     type === 'description' &&
     !isExplanationBody &&
-    (!isExplanationTitle || safeValue.includes('\n'))
+    (!isExplanationTitle || displayValue.includes('\n'))
   /** 설명글_텍스트형 본문 — 긴 텍스트 줄바꿈(말줄임 금지), `\n`·자동 개행 */
   const isExplanationBodyMultiline = isExplanationBody
   const useMultilineInput = isMultilineCardDescription || isExplanationBodyMultiline
-  const widthSource = filled ? safeValue : (placeholder ?? '')
+  const widthSource = filled ? displayValue : (placeholder ?? '')
   const dynamicWidthPx = useMemo(() => {
     if (useMultilineInput) return 0
     const source = widthSource.length > 0 ? widthSource : ' '
@@ -100,7 +119,7 @@ export function ParagraphInput({
           <span className="paragraph-input__main">
             <span className="paragraph-input__view-text" style={dynamicWidthStyle}>
               {filled ? (
-                safeValue
+                displayValue
               ) : (
                 <span className="paragraph-input__placeholder">{placeholder ?? ''}</span>
               )}
@@ -132,10 +151,13 @@ export function ParagraphInput({
             {useMultilineInput ? (
               <Input.TextArea
                 disabled={disabled}
-                value={safeValue}
-                onChange={e => onChange?.(e.target.value)}
+                value={editValue}
+                onChange={e => setEditValue(e.target.value)}
                 onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
+                onBlur={() => {
+                  flushEditValue()
+                  setFocused(false)
+                }}
                 placeholder={placeholder}
                 variant="borderless"
                 autoSize={{ minRows: 1, maxRows: 12 }}
@@ -143,10 +165,13 @@ export function ParagraphInput({
             ) : (
               <Input
                 disabled={disabled}
-                value={safeValue}
-                onChange={e => onChange?.(e.target.value)}
+                value={editValue}
+                onChange={e => setEditValue(e.target.value)}
                 onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
+                onBlur={() => {
+                  flushEditValue()
+                  setFocused(false)
+                }}
                 placeholder={placeholder}
                 variant="borderless"
               />
