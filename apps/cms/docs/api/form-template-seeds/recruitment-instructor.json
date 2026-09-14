@@ -41,7 +41,7 @@
         "id": "recruit-form-instructor-seed-detail-info",
         "kind": "single_item",
         "variant": "horizontal_table",
-        "requiredMark": true,
+        "requiredMark": false,
         "paragraphTitle": "상세 정보",
         "paragraphDescription": "공란인 경우, 홈페이지 모집 상세에서 해당 항목은 비노출됩니다.",
         "participatesInTitleNumbering": true,
@@ -62,7 +62,7 @@
         "showBottomText": false,
         "showBottomConsent": false,
         "bottomConsent": "agree",
-        "answerRequired": true,
+        "answerRequired": false,
         "idTypeWithInput": null
       }
     ]

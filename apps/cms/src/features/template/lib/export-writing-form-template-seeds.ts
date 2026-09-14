@@ -38,6 +38,7 @@ import {
   createLectureReportIssuanceDraft,
   createUjatEducationJournalIssuanceDraft,
   createUjatEducationPlanIssuanceDraft,
+  normalizeWritingFormDraft,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
 
@@ -295,7 +296,7 @@ export type ExportedWritingFormSeed = {
 
 export function buildWritingFormSeedExport(spec: WritingFormSeedSpec): ExportedWritingFormSeed {
   const catalog = TEMPLATE_CODE_CATALOG[spec.templateCode]
-  const draft = spec.createDraft()
+  const draft = normalizeWritingFormDraft(spec.createDraft())
   const extension = spec.createExtension?.() ?? null
 
   return {
@@ -657,7 +658,8 @@ export function getIssuanceFormSeedSpecsForExport(): IssuanceFormSeedSpec[] {
 
 export function buildIssuanceFormSeedExport(spec: IssuanceFormSeedSpec): ExportedIssuanceFormSeed {
   const catalog = ISSUANCE_TEMPLATE_CODE_CATALOG[spec.templateCode]
-  const draft = spec.schemaJsonNull ? null : (spec.createDraft?.() ?? createEmptyPlaceholderDraft())
+  const rawDraft = spec.schemaJsonNull ? null : (spec.createDraft?.() ?? createEmptyPlaceholderDraft())
+  const draft = rawDraft == null ? null : normalizeWritingFormDraft(rawDraft)
   const extension = spec.createExtension?.() ?? {
     overlay: {},
     editorState: {},

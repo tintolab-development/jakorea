@@ -3994,8 +3994,12 @@ export function createDefaultSurveyDraft(): WritingFormDraft {
         surveyTitle: '',
         surveyDescription: '',
         periodMode: 'immediate',
+        startPeriodMode: 'immediate',
+        endPeriodMode: 'immediate',
         startAt: null,
         endAt: null,
+        startPeriodPresetLabel: null,
+        endPeriodPresetLabel: null,
         showWritingPeriodOnForm: true,
       },
       {

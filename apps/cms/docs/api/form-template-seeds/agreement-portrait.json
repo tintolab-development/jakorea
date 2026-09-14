@@ -22,7 +22,11 @@
         "periodMode": "immediate",
         "startAt": null,
         "endAt": null,
-        "showWritingPeriodOnForm": false
+        "showWritingPeriodOnForm": false,
+        "startPeriodMode": "immediate",
+        "endPeriodMode": "immediate",
+        "startPeriodPresetLabel": null,
+        "endPeriodPresetLabel": null
       },
       {
         "id": "agreement-portrait-intro",
