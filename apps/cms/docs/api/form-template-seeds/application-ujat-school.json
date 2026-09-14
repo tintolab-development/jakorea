@@ -124,7 +124,7 @@
             },
             {
               "kind": "text",
-              "value": "5년"
+              "value": "동의일로부터 3년 보관 후 폐기"
             }
           ]
         ],
@@ -307,7 +307,7 @@
         "items": [
           {
             "id": "ujat-program-application-institution-submit-confirmation-yes",
-            "label": "네, 상기 내용 모두 확인하였으며, 2026년 JA Korea 초등 경제교육 대상 학교에 지원합니다."
+            "label": "네, 상기 내용 모두 확인하였으며, 2NNN년 JA Korea 초등 경제교육 대상 학교에 지원합니다."
           }
         ],
         "selectedPreviewSingleId": null,
