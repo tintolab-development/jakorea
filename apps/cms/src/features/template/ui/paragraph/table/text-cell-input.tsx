@@ -1,5 +1,6 @@
 import { Input } from 'antd'
 import type { FocusEvent, KeyboardEvent } from 'react'
+import { useDeferredFieldCommit } from '@/features/template/ui/shared/use-deferred-field-commit'
 import '@/features/template/ui/paragraph/table/text-cell-input.css'
 
 const { TextArea } = Input
@@ -15,6 +16,7 @@ type TextCellInputProps = {
   autoFocus?: boolean
   onChange: (value: string) => void
   onBlur?: (e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void
+  onFocus?: (e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void
 }
 
@@ -31,9 +33,15 @@ export function TextCellInput({
   autoFocus,
   onChange,
   onBlur,
+  onFocus,
   onKeyDown,
 }: TextCellInputProps) {
-  const multiline = variant === 'body' && isMultiline(value, placeholder)
+  const {
+    value: editValue,
+    setValue: setEditValue,
+    flush: flushEditValue,
+  } = useDeferredFieldCommit(value, onChange)
+  const multiline = variant === 'body' && isMultiline(editValue, placeholder)
   const className = [
     'text-cell-input',
     `text-cell-input--${variant}`,
@@ -46,6 +54,11 @@ export function TextCellInput({
     onKeyDown?.(e)
   }
 
+  const handleBlur = (e: FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    flushEditValue()
+    onBlur?.(e)
+  }
+
   if (!multiline) {
     return (
       <div className={className}>
@@ -53,10 +66,11 @@ export function TextCellInput({
           variant="borderless"
           className="text-cell-input__control"
           autoFocus={autoFocus}
-          value={value}
+          value={editValue}
           placeholder={placeholder}
-          onChange={e => onChange(e.target.value)}
-          onBlur={onBlur}
+          onChange={e => setEditValue(e.target.value)}
+          onBlur={handleBlur}
+          onFocus={onFocus}
           onKeyDown={stopEnterSpace}
         />
       </div>
@@ -70,10 +84,11 @@ export function TextCellInput({
         className="text-cell-input__control text-cell-input__control--area"
         autoSize={{ minRows: 1 }}
         autoFocus={autoFocus}
-        value={value}
+        value={editValue}
         placeholder={placeholder}
-        onChange={e => onChange(e.target.value)}
-        onBlur={onBlur}
+        onChange={e => setEditValue(e.target.value)}
+        onBlur={handleBlur}
+        onFocus={onFocus}
         onKeyDown={stopEnterSpace}
       />
     </div>

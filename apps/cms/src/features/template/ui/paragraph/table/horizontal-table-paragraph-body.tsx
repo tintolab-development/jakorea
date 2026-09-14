@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { DatePicker, Input, Select, TimePicker } from 'antd'
+import { DatePicker, Select, TimePicker } from 'antd'
 import type { RadioChangeEvent } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -79,8 +79,7 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-editor/form-editor-horizontal-table.css'
 import { TextCellInput } from '@/features/template/ui/paragraph/table/text-cell-input'
-
-const { TextArea } = Input
+import { DeferredBorderlessTextArea } from '@/features/template/ui/shared/deferred-borderless-text-area'
 
 dayjs.extend(customParseFormat)
 
@@ -260,17 +259,12 @@ function FieldTableBodyCell({
   if (field.kind === 'text') {
     const textValue = cell.kind === 'text' || cell.kind === 'subjective' ? cell.value : ''
     return (
-      <TextArea
-        variant="borderless"
+      <DeferredBorderlessTextArea
         className="form-editor-horizontal-table__cell-textarea"
-        autoSize={{ minRows: 1 }}
         value={textValue}
         placeholder={ph}
-        onChange={e => onFieldChange({ kind: 'text', value: e.target.value })}
+        onCommit={next => onFieldChange({ kind: 'text', value: next })}
         onFocus={onSelectBodyRow}
-        onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
-        }}
       />
     )
   }
@@ -282,17 +276,12 @@ function FieldTableBodyCell({
         className="form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--subjective"
         title="주관식형"
       >
-        <TextArea
-          variant="borderless"
+        <DeferredBorderlessTextArea
           className="form-editor-horizontal-table__field-subjective-input"
-          autoSize={{ minRows: 1 }}
           value={essayValue}
           placeholder={ph}
-          onChange={e => onFieldChange({ kind: 'subjective', value: e.target.value })}
+          onCommit={next => onFieldChange({ kind: 'subjective', value: next })}
           onFocus={onSelectBodyRow}
-          onKeyDown={e => {
-            if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
-          }}
         />
       </div>
     )
@@ -966,18 +955,15 @@ export function HorizontalTableParagraphBody({
                         'form-editor-horizontal-table__cell-input-shell--header',
                       ].join(' ')}
                     >
-                      <Input
-                        variant="borderless"
+                      <TextCellInput
+                        variant="header"
                         value={h ?? ''}
                         placeholder={ph}
-                        onChange={e => setHeaderValue(i, e.target.value)}
+                        onChange={value => setHeaderValue(i, value)}
                         onFocus={() => {
                           if (canvasInteractive) {
                             setSelection({ area: 'header' })
                           }
-                        }}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
                         }}
                       />
                     </div>
@@ -1049,20 +1035,15 @@ export function HorizontalTableParagraphBody({
                             'form-editor-horizontal-table__cell-input-shell--body',
                           ].join(' ')}
                         >
-                          <TextArea
-                            variant="borderless"
+                          <DeferredBorderlessTextArea
                             className="form-editor-horizontal-table__cell-textarea"
-                            autoSize={{ minRows: 1 }}
                             value={cell}
                             placeholder={ph}
-                            onChange={e => setTextCellValue(rowIdx, colIdx, e.target.value)}
+                            onCommit={next => setTextCellValue(rowIdx, colIdx, next)}
                             onFocus={() => {
                               if (canvasInteractive) {
                                 focusBodyCell(rowIdx, colIdx)
                               }
-                            }}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
                             }}
                           />
                         </div>
