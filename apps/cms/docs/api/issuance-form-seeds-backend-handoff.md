@@ -74,7 +74,7 @@
 | `ujat-edu-journal-title` | description | survey_title_with_period |  |
 | `ujat-edu-journal-explanation-text` | single_item | agreement_explanation_text |  |
 | `ujat-edu-journal-volunteer-info` | single_item | user_info | 봉사자 정보 |
-| `ujat-edu-journal-education-info` | single_item | ujat_journal_education_info | 교육 일정 |
+| `ujat-edu-journal-education-info` | single_item | ujat_journal_education_info | 교육 정보 |
 | `ujat-edu-journal-session-1` | single_item | session_plan_short_essay | 1차시 교육 일지 |
 | `ujat-edu-journal-session-2` | single_item | session_plan_short_essay | 2차시 교육 일지 |
 | `ujat-edu-journal-session-3` | single_item | session_plan_short_essay | 3차시 교육 일지 |
