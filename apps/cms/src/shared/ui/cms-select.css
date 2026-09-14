@@ -183,8 +183,8 @@
 }
 
 .cms-select--explicit-width {
+  /* 고정 px는 인라인(width prop)이 담당. % 폭일 때만 flex 축소 허용 */
   width: 100%;
-  min-width: 0;
 }
 
 /* ----- multiple UI (AppMultiSelect 동일 — Ant Select 미사용) ----- */
