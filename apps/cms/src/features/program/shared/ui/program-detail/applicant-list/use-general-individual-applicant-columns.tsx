@@ -4,26 +4,23 @@ import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
-import {
-  getInstitutionApplicationSessionsTableSlice,
-  shouldShowInstitutionApplicationSessionsColumn,
-} from '@/features/program/general/lib/institution-application-session-display'
+import { getInstitutionApplicationSessionsTableSlice } from '@/features/program/general/lib/institution-application-session-display'
 import { GeneralDetailSessionLine } from './general-detail-session-line'
 
 const GENERAL_DETAIL_INDIVIDUAL_TEXT_COL_MIN_WIDTH = 185
-const GENERAL_DETAIL_INDIVIDUAL_TEXT_COL_WIDTH_WITHOUT_SESSIONS = 305
 const GENERAL_DETAIL_INDIVIDUAL_GRADE_COL_WIDTH = 120
 const GENERAL_DETAIL_INDIVIDUAL_SESSIONS_COL_MIN_WIDTH = 360
 const GENERAL_DETAIL_INDIVIDUAL_APPROVAL_COL_WIDTH = 180
 
+/**
+ * 일반(개인) 참여자 신청 목록 컬럼.
+ * 「프로그램 승인 현황」 우측에 「진행 희망 교육 일정」을 항상 둔다.
+ * (신청 폼 단락 숨김 조건과 달리, 심사 목록에서는 열을 유지하고 값 없으면 `-`)
+ */
 export function useGeneralIndividualApplicantColumns(
   programBridge?: InstitutionApplicationProgramBridge | null
 ): ColumnsType<GeneralIndividualApplicantRow> {
-  const showSessionsColumn =
-    programBridge == null || shouldShowInstitutionApplicationSessionsColumn(programBridge)
-  const textColWidth = showSessionsColumn
-    ? GENERAL_DETAIL_INDIVIDUAL_TEXT_COL_MIN_WIDTH
-    : GENERAL_DETAIL_INDIVIDUAL_TEXT_COL_WIDTH_WITHOUT_SESSIONS
+  const textColWidth = GENERAL_DETAIL_INDIVIDUAL_TEXT_COL_MIN_WIDTH
 
   return useMemo(() => {
     const columns: ColumnsType<GeneralIndividualApplicantRow> = [
@@ -105,6 +102,6 @@ export function useGeneralIndividualApplicantColumns(
       },
     ]
 
-    return showSessionsColumn ? columns : columns.filter(column => column.key !== 'sessions')
-  }, [programBridge, showSessionsColumn, textColWidth])
+    return columns
+  }, [programBridge, textColWidth])
 }
