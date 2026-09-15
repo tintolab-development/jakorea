@@ -1,5 +1,6 @@
 /**
- * 일반 프로그램 상세 — 참여자 모집 정보 표시값 (등록 양식·스크린샷 mock)
+ * 일반 프로그램 상세 — 참여자 모집 정보 표시값
+ * Primary 8 SoT: serviceDetailJson.generalCommonInfo.participantRecruitmentInfo + typed fallback
  */
 
 import type { Program } from '@/types/domain'
@@ -27,6 +28,36 @@ import {
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import {
+  formatCountLabel,
+  labelBool,
+  labelEnum,
+  pickDisplayString,
+  pickDisplayValue,
+} from '@/features/program/general/lib/detail-value-helpers'
+
+type ParticipantRecruitmentInfoLoose = NonNullable<
+  NonNullable<Program['generalCommonInfo']>['participantRecruitmentInfo']
+> & {
+  announcementPublishedLabel?: string
+  studentListRequired?: 'required' | 'not_required' | boolean
+  studentListRequiredLabel?: string
+  preEducationNoticeRequiredLabel?: string
+  advanceGuidanceRequired?: boolean
+  advanceGuidanceRequiredLabel?: string
+  inquiryTel?: string
+  inquiryEmail?: string
+  tel?: string
+  email?: string
+  remarks?: string
+  educationTarget?: string
+  educationTargetDetail?: string
+  recruitmentTarget?: string
+  recruitmentTargetDetail?: string
+  resultAnnouncementLabel?: string
+  contactPhone?: string
+  contactEmail?: string
+}
 
 export function resolveParticipantRecruitmentInterviewEnabled(
   program: Program,
@@ -92,16 +123,6 @@ const JOB담_PARTICIPANT_RECRUITMENT_MOCK = {
   notes: '-',
 } as const
 
-function needOrNotLabel(value: boolean | undefined, yes = '필요', no = '불필요'): string {
-  if (value == null) return '-'
-  return value ? yes : no
-}
-
-function countLabel(value: number | undefined, suffix: string): string {
-  if (value == null || Number.isNaN(value)) return '-'
-  return `${value}${suffix}`
-}
-
 export function resolveGeneralProgramParticipantRecruitmentDisplay(
   program: Program,
   options?: {
@@ -110,7 +131,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
   }
 ): GeneralProgramParticipantRecruitmentDisplay {
   const common = program.generalCommonInfo
-  const info = common?.participantRecruitmentInfo
+  const info = common?.participantRecruitmentInfo as ParticipantRecruitmentInfoLoose | undefined
   const lifecycle = getParticipantRecruitmentLifecycle(program, options)
 
   const showInstitutionApplicationLimits = isGeneralProgramSchoolInstitutionTarget(program)
@@ -136,22 +157,45 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     }
   }
 
-  const studentListValue = program.studentListRequired
-  const studentListLabel =
-    studentListValue === 'required'
-      ? '필요'
-      : studentListValue === 'not_required'
-        ? '불필요'
-        : '-'
+  const studentListValue = pickDisplayValue(
+    typeof info?.studentListRequired === 'string' ? info.studentListRequired : undefined,
+    program.studentListRequired,
+    typeof info?.studentListRequired === 'boolean'
+      ? info.studentListRequired
+        ? 'required'
+        : 'not_required'
+      : undefined
+  )
+  const studentListFromEnum = labelEnum(
+    typeof studentListValue === 'string' ? studentListValue : undefined,
+    {
+      required: '제출 필요',
+      not_required: '제출 불필요',
+    }
+  )
+  const studentListLabel = pickDisplayString(
+    info?.studentListRequiredLabel,
+    studentListFromEnum === '-' ? undefined : studentListFromEnum
+  )
+
+  const preEducationValue = pickDisplayValue(
+    info?.preEducationNoticeRequired,
+    info?.advanceGuidanceRequired
+  )
+  const preEducationNoticeLabel = pickDisplayString(
+    info?.preEducationNoticeRequiredLabel,
+    info?.advanceGuidanceRequiredLabel,
+    labelBool(preEducationValue, '작성', '해당없음')
+  )
 
   const resultDate = program.resultAnnouncementDate ?? program.applicationEndDate
   const resultMethod =
     program.resultAnnouncementMethod ?? '홈페이지 공지 및 담당교사 개별 안내'
-  const finalAnnouncementLabel =
-    info?.finalAnnouncementLabel ??
-    (resultDate
-      ? `${formatDateOnly(resultDate)} | ${resultMethod}`
-      : '-')
+  const finalAnnouncementLabel = pickDisplayString(
+    info?.finalAnnouncementLabel,
+    info?.resultAnnouncementLabel,
+    resultDate ? `${formatDateOnly(resultDate)} | ${resultMethod}` : undefined
+  )
 
   const certificateIssuanceLabel =
     info?.certificateIssuanceProvided == null
@@ -178,44 +222,74 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
   const interviewEndDate = program.interviewEndDate
   const interviewMethod = program.interviewMethod
 
+  const announcementPublishedLabel = pickDisplayString(
+    info?.announcementPublishedLabel,
+    labelBool(info?.announcementPublished, '게시', '미게시')
+  )
+
+  const targetLabel = pickDisplayString(
+    info?.educationTarget,
+    info?.recruitmentTarget,
+    formatTargetLevelsLabel(resolveProgramTargetLevels(program))
+  )
+  const targetDetailLabel = pickDisplayString(
+    info?.educationTargetDetail,
+    info?.recruitmentTargetDetail,
+    program.district
+  )
+
+  const notes = info?.notesNotApplicable
+    ? '-'
+    : pickDisplayString(info?.remarks, program.otherNotes, program.oneLineIntroduction)
+
   return {
     interviewEnabledLabel,
-    announcementPublishedLabel: needOrNotLabel(
-      info?.announcementPublished,
-      '게시',
-      '미게시'
-    ),
-    preEducationNoticeLabel: needOrNotLabel(info?.preEducationNoticeRequired),
+    announcementPublishedLabel,
+    preEducationNoticeLabel,
     certificateIssuanceLabel,
     showInstitutionApplicationLimits,
     showMaxScheduleCountField,
     showMaxSessionsPerDayField,
     studentListLabel,
-    maxClassLabel: countLabel(resolveProgramParticipantMaxClassCount(program), '개'),
-    maxInstructorsLabel: countLabel(info?.maxAssignableInstructors, '명'),
-    maxSessionsPerDayLabel: countLabel(info?.maxSessionsPerDay, '차시'),
-    maxScheduleCountLabel: countLabel(info?.maxScheduleCount, '개'),
-    operationPeriodLabel:
-      info?.operationPeriodLabel ?? formatDateRange(program.startDate, program.endDate),
+    maxClassLabel: formatCountLabel(resolveProgramParticipantMaxClassCount(program), '개'),
+    maxInstructorsLabel: formatCountLabel(info?.maxAssignableInstructors, '명'),
+    maxSessionsPerDayLabel: formatCountLabel(info?.maxSessionsPerDay, '차시'),
+    maxScheduleCountLabel: formatCountLabel(info?.maxScheduleCount, '개'),
+    operationPeriodLabel: pickDisplayString(
+      info?.operationPeriodLabel,
+      formatDateRange(program.startDate, program.endDate)
+    ),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
-    targetLabel: formatTargetLevelsLabel(resolveProgramTargetLevels(program)),
-    targetDetailLabel: program.district ?? '-',
-    recruitmentPeriodLabel:
-      info?.recruitmentPeriodLabel ??
-      formatDateRange(program.applicationStartDate, program.applicationEndDate),
+    targetLabel,
+    targetDetailLabel,
+    recruitmentPeriodLabel: pickDisplayString(
+      info?.recruitmentPeriodLabel,
+      formatDateRange(program.applicationStartDate, program.applicationEndDate)
+    ),
     documentPassAnnouncementDate,
     documentPassAnnouncementMethod,
     interviewStartDate,
     interviewEndDate,
     interviewMethod,
     finalAnnouncementLabel,
-    contactOrganizationName:
-      info?.contactOrganizationName ?? common?.sponsorDisplayName ?? 'JA Korea',
-    contactPhone: program.contactPhone ?? '-',
-    contactEmail: program.contactEmail ?? '-',
-    notes: info?.notesNotApplicable
-      ? '-'
-      : (program.oneLineIntroduction ?? '').trim() || '-',
+    contactOrganizationName: pickDisplayString(
+      info?.contactOrganizationName,
+      common?.sponsorDisplayName,
+      'JA Korea'
+    ),
+    contactPhone: pickDisplayString(
+      info?.inquiryTel,
+      info?.tel,
+      info?.contactPhone,
+      program.contactPhone
+    ),
+    contactEmail: pickDisplayString(
+      info?.inquiryEmail,
+      info?.email,
+      info?.contactEmail,
+      program.contactEmail
+    ),
+    notes,
   }
 }

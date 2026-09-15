@@ -1,5 +1,6 @@
 /**
- * 일반 프로그램 상세 — 강사 모집 정보 표시값 (등록 양식·스크린샷 mock)
+ * 일반 프로그램 상세 — 강사 모집 정보 표시값
+ * Primary 8 SoT: generalCommonInfo.instructorRecruitmentInfo + typed fallback
  */
 
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
@@ -11,6 +12,27 @@ import {
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
+import {
+  labelBool,
+  pickDisplayString,
+} from '@/features/program/general/lib/detail-value-helpers'
+
+type InstructorRecruitmentInfoLoose = NonNullable<
+  NonNullable<Program['generalCommonInfo']>['instructorRecruitmentInfo']
+> & {
+  announcementPublishedLabel?: string
+  finalAnnouncementLabel?: string
+  resultAnnouncementLabel?: string
+  inquiryTel?: string
+  inquiryEmail?: string
+  tel?: string
+  email?: string
+  remarks?: string
+  recruitmentTarget?: string
+  recruitmentTargetDetail?: string
+  contactPhone?: string
+  contactEmail?: string
+}
 
 const INSTRUCTOR_RECRUITMENT_STATUS_TO_LIFECYCLE: Record<
   'scheduled' | 'recruiting' | 'closed',
@@ -51,11 +73,6 @@ const JOB담_INSTRUCTOR_RECRUITMENT_MOCK = {
   notes: '-',
 } as const
 
-function needOrNotLabel(value: boolean | undefined, yes = '게시', no = '미게시'): string {
-  if (value == null) return '-'
-  return value ? yes : no
-}
-
 function resolveInstructorRecruitmentLifecycle(program: Program): ProgramLifecycleStatus | null {
   const status = getInstructorRecruitmentStatus(program)
   if (status == null) return null
@@ -66,7 +83,7 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
   program: Program
 ): GeneralProgramInstructorRecruitmentDisplay {
   const common = program.generalCommonInfo
-  const info = common?.instructorRecruitmentInfo
+  const info = common?.instructorRecruitmentInfo as InstructorRecruitmentInfoLoose | undefined
   const lifecycle = resolveInstructorRecruitmentLifecycle(program)
 
   if (program.id === GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID) {
@@ -78,31 +95,59 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
   }
 
   const finalPassAnnouncementDate = program.finalPassAnnouncementDate
-  const finalPassAnnouncementMethod =
-    program.finalPassAnnouncementMethod ?? '홈페이지 공지 및 합격자 개별 안내'
-
-  const notes = (program.otherNotes ?? program.oneLineIntroduction ?? '').trim() || '-'
+  const finalPassAnnouncementMethod = pickDisplayString(
+    info?.finalAnnouncementLabel,
+    info?.resultAnnouncementLabel,
+    program.finalPassAnnouncementMethod,
+    '홈페이지 공지 및 합격자 개별 안내'
+  )
 
   return {
-    announcementPublishedLabel: needOrNotLabel(info?.announcementPublished),
-    operationPeriodLabel:
-      info?.operationPeriodLabel ?? formatDateRange(program.startDate, program.endDate),
+    announcementPublishedLabel: pickDisplayString(
+      info?.announcementPublishedLabel,
+      labelBool(info?.announcementPublished, '게시', '미게시')
+    ),
+    operationPeriodLabel: pickDisplayString(
+      info?.operationPeriodLabel,
+      formatDateRange(program.startDate, program.endDate)
+    ),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
-    instructorTargetLabel: formatInstructorTargetsLabel(resolveProgramInstructorTargets(program)),
-    instructorTargetDetailLabel: program.instructorTargetDetail ?? '-',
-    recruitmentPeriodLabel:
-      info?.recruitmentPeriodLabel ??
+    instructorTargetLabel: pickDisplayString(
+      info?.recruitmentTarget,
+      formatInstructorTargetsLabel(resolveProgramInstructorTargets(program))
+    ),
+    instructorTargetDetailLabel: pickDisplayString(
+      info?.recruitmentTargetDetail,
+      program.instructorTargetDetail
+    ),
+    recruitmentPeriodLabel: pickDisplayString(
+      info?.recruitmentPeriodLabel,
       formatDateRange(
         program.instructorApplicationStartDate,
         program.instructorApplicationEndDate
-      ),
+      )
+    ),
     finalPassAnnouncementDate,
-    finalPassAnnouncementMethod,
-    contactOrganizationName:
-      info?.contactOrganizationName ?? common?.sponsorDisplayName ?? 'JA Korea',
-    contactPhone: program.contactPhone ?? '-',
-    contactEmail: program.contactEmail ?? '-',
-    notes,
+    finalPassAnnouncementMethod:
+      finalPassAnnouncementMethod === '-' ? undefined : finalPassAnnouncementMethod,
+    contactOrganizationName: pickDisplayString(
+      info?.contactOrganizationName,
+      common?.sponsorDisplayName,
+      'JA Korea'
+    ),
+    contactPhone: pickDisplayString(
+      info?.inquiryTel,
+      info?.tel,
+      info?.contactPhone,
+      program.contactPhone
+    ),
+    contactEmail: pickDisplayString(
+      info?.inquiryEmail,
+      info?.email,
+      info?.contactEmail,
+      program.contactEmail
+    ),
+    notes: pickDisplayString(info?.remarks, program.otherNotes, program.oneLineIntroduction),
   }
 }

@@ -1,5 +1,6 @@
 /**
- * 일반 프로그램 상세 — 봉사자 모집 정보 표시값 (등록 양식·스크린샷 mock)
+ * 일반 프로그램 상세 — 봉사자 모집 정보 표시값
+ * Primary 8 SoT: generalCommonInfo.volunteerRecruitmentInfo + typed fallback
  */
 
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
@@ -12,6 +13,30 @@ import {
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
 import { getGeneralVolunteerInterviewEnabled } from '@/features/program/general/lib/detail-meta'
+import {
+  labelBool,
+  pickDisplayString,
+} from '@/features/program/general/lib/detail-value-helpers'
+
+type VolunteerRecruitmentInfoLoose = NonNullable<
+  NonNullable<Program['generalCommonInfo']>['volunteerRecruitmentInfo']
+> & {
+  announcementPublishedLabel?: string
+  volunteerInterviewEnabled?: boolean
+  generalVolunteerInterviewEnabled?: boolean
+  volunteerInterviewEnabledLabel?: string
+  finalAnnouncementLabel?: string
+  resultAnnouncementLabel?: string
+  inquiryTel?: string
+  inquiryEmail?: string
+  tel?: string
+  email?: string
+  remarks?: string
+  recruitmentTarget?: string
+  recruitmentTargetDetail?: string
+  contactPhone?: string
+  contactEmail?: string
+}
 
 export function resolveVolunteerRecruitmentInterviewEnabled(
   program: Program,
@@ -73,26 +98,15 @@ const JOB담_VOLUNTEER_RECRUITMENT_MOCK = {
   notes: '-',
 } as const
 
-function needOrNotLabel(value: boolean | undefined, yes = '게시', no = '미게시'): string {
-  if (value == null) return '-'
-  return value ? yes : no
-}
-
-function interviewEnabledLabel(value: boolean | undefined): string {
-  if (value == null) return '-'
-  return value ? '면접 있음' : '면접 없음'
-}
-
 function resolveVolunteerRecruitmentLifecycle(program: Program): ProgramLifecycleStatus | null {
   const status = getVolunteerRecruitmentStatus(program)
   if (status == null) return null
   return VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE[status]
 }
 
-function resolveVolunteerPeriod(program: Program, info?: Program['generalCommonInfo']) {
-  const volunteerRecruitmentInfo = info?.volunteerRecruitmentInfo
-  if (volunteerRecruitmentInfo?.recruitmentPeriodLabel) {
-    return volunteerRecruitmentInfo.recruitmentPeriodLabel
+function resolveVolunteerPeriod(program: Program, info?: VolunteerRecruitmentInfoLoose) {
+  if (info?.recruitmentPeriodLabel) {
+    return info.recruitmentPeriodLabel
   }
   const start =
     program.volunteerApplicationStartDate ??
@@ -109,7 +123,7 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
   program: Program
 ): GeneralProgramVolunteerRecruitmentDisplay {
   const common = program.generalCommonInfo
-  const info = common?.volunteerRecruitmentInfo
+  const info = common?.volunteerRecruitmentInfo as VolunteerRecruitmentInfoLoose | undefined
   const lifecycle = resolveVolunteerRecruitmentLifecycle(program)
 
   if (program.id === GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID) {
@@ -120,18 +134,35 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
     }
   }
 
-  const notes = (program.oneLineIntroduction ?? program.otherNotes ?? '').trim() || '-'
+  const interviewEnabled =
+    info?.volunteerInterviewEnabled ??
+    info?.generalVolunteerInterviewEnabled ??
+    program.generalVolunteerInterviewEnabled
 
   return {
-    announcementPublishedLabel: needOrNotLabel(info?.announcementPublished),
-    interviewEnabledLabel: interviewEnabledLabel(program.generalVolunteerInterviewEnabled),
-    operationPeriodLabel:
-      info?.operationPeriodLabel ?? formatDateRange(program.startDate, program.endDate),
+    announcementPublishedLabel: pickDisplayString(
+      info?.announcementPublishedLabel,
+      labelBool(info?.announcementPublished, '게시', '미게시')
+    ),
+    interviewEnabledLabel: pickDisplayString(
+      info?.volunteerInterviewEnabledLabel,
+      labelBool(interviewEnabled, '면접 있음', '면접 없음')
+    ),
+    operationPeriodLabel: pickDisplayString(
+      info?.operationPeriodLabel,
+      formatDateRange(program.startDate, program.endDate)
+    ),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
-    volunteerTargetLabel: formatVolunteerTargetsLabel(resolveProgramVolunteerTargets(program)),
-    volunteerTargetDetailLabel: program.volunteerTargetDetail ?? '-',
-    recruitmentPeriodLabel: resolveVolunteerPeriod(program, common),
+    volunteerTargetLabel: pickDisplayString(
+      info?.recruitmentTarget,
+      formatVolunteerTargetsLabel(resolveProgramVolunteerTargets(program))
+    ),
+    volunteerTargetDetailLabel: pickDisplayString(
+      info?.recruitmentTargetDetail,
+      program.volunteerTargetDetail
+    ),
+    recruitmentPeriodLabel: resolveVolunteerPeriod(program, info),
     documentPassAnnouncementDate: program.documentPassAnnouncementDate,
     documentPassAnnouncementMethod:
       program.documentPassAnnouncementMethod ?? '홈페이지 공지 및 합격자 개별 안내',
@@ -139,12 +170,29 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
     interviewEndDate: program.interviewEndDate,
     interviewMethod: program.interviewMethod,
     finalPassAnnouncementDate: program.finalPassAnnouncementDate,
-    finalPassAnnouncementMethod:
-      program.finalPassAnnouncementMethod ?? '홈페이지 공지 및 합격자 개별 안내',
-    contactOrganizationName:
-      info?.contactOrganizationName ?? common?.sponsorDisplayName ?? 'JA Korea',
-    contactPhone: program.contactPhone ?? '-',
-    contactEmail: program.contactEmail ?? '-',
-    notes,
+    finalPassAnnouncementMethod: pickDisplayString(
+      info?.finalAnnouncementLabel,
+      info?.resultAnnouncementLabel,
+      program.finalPassAnnouncementMethod,
+      '홈페이지 공지 및 합격자 개별 안내'
+    ),
+    contactOrganizationName: pickDisplayString(
+      info?.contactOrganizationName,
+      common?.sponsorDisplayName,
+      'JA Korea'
+    ),
+    contactPhone: pickDisplayString(
+      info?.inquiryTel,
+      info?.tel,
+      info?.contactPhone,
+      program.contactPhone
+    ),
+    contactEmail: pickDisplayString(
+      info?.inquiryEmail,
+      info?.email,
+      info?.contactEmail,
+      program.contactEmail
+    ),
+    notes: pickDisplayString(info?.remarks, program.otherNotes, program.oneLineIntroduction),
   }
 }
