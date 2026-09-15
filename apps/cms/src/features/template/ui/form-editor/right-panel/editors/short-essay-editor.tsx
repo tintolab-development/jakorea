@@ -1,5 +1,5 @@
 import { Form } from 'antd'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { DeferredCmsInput } from '@/features/template/ui/shared/deferred-cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type {
   SessionPlanShortEssayParagraph,
@@ -41,10 +41,10 @@ export function ShortEssayEditor({
       </Form.Item>
       {shortEssayShowItemTitle ? (
         <Form.Item label="항목명">
-          <CmsInput
+          <DeferredCmsInput
             width="100%"
             value={selectedShortEssayItem.label ?? ''}
-            onChange={e =>
+            onCommit={next =>
               updateParagraph(activeShortEssay.id, cur => {
                 if (
                   cur.kind !== 'single_item' ||
@@ -68,9 +68,7 @@ export function ShortEssayEditor({
                 return {
                   ...cur,
                   items: items.map(item =>
-                    item.id === selectedShortEssayItem.id
-                      ? { ...item, label: e.target.value }
-                      : item
+                    item.id === selectedShortEssayItem.id ? { ...item, label: next } : item
                   ),
                 }
               })
@@ -80,10 +78,10 @@ export function ShortEssayEditor({
         </Form.Item>
       ) : null}
       <Form.Item label="입력창 안내 텍스트">
-        <CmsInput
+        <DeferredCmsInput
           width="100%"
           value={selectedShortEssayItem.placeholder ?? activeShortEssay.bodyPlaceholder}
-          onChange={e =>
+          onCommit={next =>
             updateParagraph(activeShortEssay.id, cur => {
               if (
                 cur.kind !== 'single_item' ||
@@ -106,11 +104,9 @@ export function ShortEssayEditor({
                     ]
               return {
                 ...cur,
-                bodyPlaceholder: e.target.value,
+                bodyPlaceholder: next,
                 items: items.map(item =>
-                  item.id === selectedShortEssayItem.id
-                    ? { ...item, placeholder: e.target.value }
-                    : item
+                  item.id === selectedShortEssayItem.id ? { ...item, placeholder: next } : item
                 ),
               }
             })

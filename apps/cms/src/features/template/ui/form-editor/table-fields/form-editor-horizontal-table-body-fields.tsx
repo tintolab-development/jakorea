@@ -1,5 +1,5 @@
 import { Form } from 'antd'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { DeferredCmsInput } from '@/features/template/ui/shared/deferred-cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import type {
@@ -95,15 +95,15 @@ function FieldModeConfigBlock({
           className="form-editor-horizontal-table-body-fields__content-form-item"
           label="입력창 안내 텍스트"
         >
-          <CmsInput
+          <DeferredCmsInput
             width="100%"
             inputSize="large"
             value={field.placeholder}
-            onChange={e =>
+            onCommit={next =>
               setColumnField(
                 field.kind === 'text'
-                  ? { kind: 'text', placeholder: e.target.value }
-                  : { kind: 'subjective', placeholder: e.target.value }
+                  ? { kind: 'text', placeholder: next }
+                  : { kind: 'subjective', placeholder: next }
               )
             }
             placeholder={HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER}
@@ -117,11 +117,11 @@ function FieldModeConfigBlock({
             className="form-editor-horizontal-table-body-fields__content-form-item"
             label="입력창 안내 텍스트"
           >
-            <CmsInput
+            <DeferredCmsInput
               width="100%"
               inputSize="large"
               value={field.placeholder}
-              onChange={e => setColumnField({ ...field, placeholder: e.target.value })}
+              onCommit={next => setColumnField({ ...field, placeholder: next })}
               placeholder={HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER}
             />
           </Form.Item>

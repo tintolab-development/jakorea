@@ -88,16 +88,42 @@
   border-bottom-color: var(--paragraph-input-mint);
 }
 
+/* 단행 타이틀 — JS 폭 측정 대신 브라우저 intrinsic sizing (키입력 레이아웃 스래싱 방지) */
+.paragraph-input--edit.paragraph-input--title:not(.paragraph-input--description-multiline)
+  .paragraph-input__shell
+  .ant-input {
+  width: auto;
+  min-width: 4ch;
+  max-width: 100%;
+  field-sizing: content;
+}
+
+/* 설명 멀티라인 — Ant autoSize 숨김 textarea 측정 대신 field-sizing */
+.paragraph-input--description-multiline.paragraph-input--edit .paragraph-input__shell .ant-input,
+.paragraph-input--explanation-body-multiline.paragraph-input--edit
+  .paragraph-input__shell
+  textarea.ant-input {
+  width: 100%;
+  min-height: 1.5em;
+  max-height: none;
+  overflow-y: hidden;
+  resize: none;
+  field-sizing: content;
+}
+
 .paragraph-input--title {
   font-size: 20px;
   font-weight: 700;
 }
 
-/* 설명글_마무리글형 — view: 회색 24px/700/140% */
+/* 설명글_마무리글형 — view(비활성): #85969D · 24px/700/140% · opacity 0.6 */
 .paragraph-input--closing-body.paragraph-input--view.paragraph-input--title {
+  font-family: Pretendard, sans-serif;
   font-size: 24px;
+  font-style: normal;
   font-weight: 700;
   line-height: 140%;
+  color: var(--gray-85969-d, #85969d);
 }
 
 .paragraph-input--closing-body.paragraph-input--title
@@ -109,11 +135,7 @@
 .paragraph-input--closing-body.paragraph-input--view.paragraph-input--title
   .paragraph-input__leading {
   color: var(--gray-85969-d, #85969d);
-}
-
-.paragraph-input--closing-body.paragraph-input--view.paragraph-input--filled.paragraph-input--title
-  .paragraph-input__leading {
-  color: var(--main-BK, #3d3d3d);
+  opacity: 0.6;
 }
 
 .paragraph-input--closing-body.paragraph-input--view.paragraph-input--title
@@ -123,21 +145,9 @@
   font-style: normal;
   font-weight: 700;
   line-height: 140%;
-  opacity: 1 !important;
-}
-
-/* 마무리글 — placeholder만 회색, 내용 있으면 main-BK */
-.paragraph-input--closing-body.paragraph-input--view.paragraph-input--title
-  .paragraph-input__placeholder {
   color: var(--gray-85969-d, #85969d) !important;
   -webkit-text-fill-color: var(--gray-85969-d, #85969d);
-}
-
-.paragraph-input--closing-body.paragraph-input--view.paragraph-input--filled.paragraph-input--title
-  .paragraph-input__view-text {
-  color: var(--main-BK, #3d3d3d) !important;
-  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
-  opacity: 1 !important;
+  opacity: 0.6 !important;
 }
 
 /* 단락 카드 설명 — `\n` 개행 반영(타이틀 옆 한 줄 측정 레이아웃과 분리) */
@@ -185,6 +195,7 @@
 /* ---- view mode ---- */
 .paragraph-input--view .paragraph-input__view-text {
   flex: 0 1 auto;
+  width: fit-content;
   min-width: 0;
   max-width: 100%;
   white-space: pre-wrap;
@@ -230,14 +241,14 @@
   opacity: 0.6;
 }
 
-/* 단락 설명 — 값이 있으면 placeholder가 아니라 본문 설명 톤(미리보기 `.form-paragraph-section-description`) */
+/* 단락 설명 — 값이 있으면 본문색(검정) 풀 불투명 */
 .paragraph-input--view.paragraph-input--filled.paragraph-input--description:not(
     .paragraph-input--explanation-body
   )
   .paragraph-input__view-text {
   color: var(--paragraph-input-filled);
   -webkit-text-fill-color: var(--paragraph-input-filled);
-  opacity: 0.6;
+  opacity: 1;
 }
 
 .paragraph-input__placeholder {
@@ -330,6 +341,23 @@
   opacity: 0.6 !important;
 }
 
+/* 단락 「설명 입력」 placeholder — cool gray 16/500/150% · opacity 0.6 */
+.paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body)
+  .paragraph-input__shell
+  .ant-input::placeholder,
+.paragraph-input--edit.paragraph-input--description:not(.paragraph-input--explanation-body)
+  .paragraph-input__shell
+  textarea.ant-input::placeholder {
+  color: var(--gray-85969-d, #85969d) !important;
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
 .paragraph-input.paragraph-input-explanation-title.paragraph-input--edit.paragraph-input--description
   .paragraph-input__shell
   .ant-input::placeholder,
@@ -354,7 +382,7 @@
   textarea.ant-input {
   color: var(--paragraph-input-filled) !important;
   -webkit-text-fill-color: var(--paragraph-input-filled);
-  opacity: 0.6 !important;
+  opacity: 1 !important;
 }
 
 /* 설명글_텍스트형 본문: edit에서 포커스 없어도 입력·placeholder 메트릭 20px/500/150% */
@@ -401,7 +429,7 @@
   textarea.ant-input {
   color: var(--paragraph-input-filled) !important;
   -webkit-text-fill-color: var(--paragraph-input-filled);
-  opacity: 0.6 !important;
+  opacity: 1 !important;
 }
 
 .paragraph-input--edit.paragraph-input--filled.paragraph-input--title .paragraph-input__leading {
@@ -413,7 +441,7 @@
   )
   .paragraph-input__leading {
   color: var(--paragraph-input-filled);
-  opacity: 0.6;
+  opacity: 1;
 }
 
 /*
@@ -466,7 +494,7 @@
   opacity: 0.6;
 }
 
-/* 입력값이 있을 때만 포커스·일반 모두 본문색(설명은 본문색 + 0.6, placeholder 회색과 구분) */
+/* 입력값이 있을 때만 포커스·일반 모두 본문색(검정, placeholder 회색과 구분) */
 .paragraph-input--edit.paragraph-input--filled.paragraph-input--title
   .paragraph-input__shell--focused
   .ant-input,
@@ -488,7 +516,7 @@
   textarea.ant-input {
   color: var(--paragraph-input-filled) !important;
   -webkit-text-fill-color: var(--paragraph-input-filled);
-  opacity: 0.6 !important;
+  opacity: 1 !important;
 }
 
 .paragraph-input--edit.paragraph-input--filled.paragraph-input--title
@@ -503,7 +531,7 @@
   .paragraph-input__row:has(.paragraph-input__shell--focused)
   .paragraph-input__leading {
   color: var(--paragraph-input-filled);
-  opacity: 0.6;
+  opacity: 1;
 }
 
 .paragraph-input:not(.paragraph-input--filled).paragraph-input--edit

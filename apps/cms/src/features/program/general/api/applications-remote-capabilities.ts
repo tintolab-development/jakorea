@@ -12,9 +12,14 @@ export function shouldUseGeneralApplicationsRemoteApi(): boolean {
   )
 }
 
-/** 일반 또는 1사1교 신청 HTTP 호출 허용 (서비스 층) */
+/** 일반 또는 1사1교 또는 UJAT 신청 HTTP 호출 허용 (서비스 층) */
 export function shouldUseApplicationsHttpRemoteApi(): boolean {
   return (
-    shouldUseGeneralApplicationsRemoteApi() || shouldUseCompanySchoolApplicationsRemoteApi()
+    shouldUseGeneralApplicationsRemoteApi() ||
+    shouldUseCompanySchoolApplicationsRemoteApi() ||
+    (isRealApiModuleEnabled('programs') &&
+      isRealApiModuleEnabled('ujatPrograms') &&
+      isRealApiModuleEnabled('applications') &&
+      hasRemoteAdminJwt())
   )
 }

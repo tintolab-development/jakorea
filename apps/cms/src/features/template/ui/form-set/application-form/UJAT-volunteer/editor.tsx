@@ -63,6 +63,7 @@ export function UjatProgramApplicationFormVolunteerEditorLeftColumn({
       singleItemListActiveItemId={vm.singleItemListActiveItemId}
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
+      allowAddAfterStructureLockedParagraphs={vm.allowAddAfterStructureLockedParagraphs}
       paragraphBodyOptions={vm.leftPanelParagraphBodyOptions}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
@@ -106,6 +107,7 @@ export function UjatProgramApplicationFormVolunteerEditorRightColumn({
         verticalTableBodyRowSelection={vm.verticalTableBodyRowSelection}
         onVerticalTableBodyRowDeleted={vm.focusVerticalTableBodyRow}
         structureLockedParagraphIds={vm.structureLockedParagraphIds}
+        structureLockedTypeSelectPreset="paragraph_kind_system_settings"
       />
     </FormEditorFieldNav>
   )

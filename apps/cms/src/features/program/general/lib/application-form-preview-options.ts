@@ -30,13 +30,17 @@ export function resolveGeneralApplicationFormHiddenParagraphIds(
     program?: Program | null
     paragraphs: readonly WritingFormParagraph[]
     institutionBridge?: InstitutionApplicationProgramBridge
+    /** 템플릿 작성 — 강사 성범죄 단락 등 기본 노출 */
+    isTemplateAuthoringMode?: boolean
   }
 ): ReadonlySet<string> | undefined {
   if (variant === 'institution' && params.institutionBridge) {
     return getInstitutionApplicationFormHiddenParagraphIds(params.institutionBridge)
   }
   if (variant === 'instructor') {
-    return getInstructorApplicationFormHiddenParagraphIds()
+    return getInstructorApplicationFormHiddenParagraphIds({
+      isTemplateAuthoringMode: params.isTemplateAuthoringMode === true,
+    })
   }
   if (variant === 'volunteer') {
     return getVolunteerApplicationFormHiddenParagraphIds(params.paragraphs, {
@@ -121,6 +125,7 @@ export function buildGeneralApplicationFormPreviewParagraphBodyOptions(
     program,
     paragraphs,
     institutionBridge,
+    isTemplateAuthoringMode: !programLinkedPreview,
   })
 
   return {

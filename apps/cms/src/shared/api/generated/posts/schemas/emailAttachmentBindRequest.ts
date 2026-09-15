@@ -7,5 +7,6 @@
  */
 
 export interface EmailAttachmentBindRequest {
+  /** 템플릿에 바인딩할 CLEAN 상태 file_object.id */
   fileObjectId: number;
 }

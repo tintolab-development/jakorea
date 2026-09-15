@@ -1,11 +1,15 @@
-import { memo, useMemo } from 'react'
+import { memo, useEffect, useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { withDetailedProgramNoneOption } from '@/features/template/lib/template-form-select-options'
-import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
+import {
+  TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+  withDetailedProgramNoneOption,
+} from '@/features/template/lib/template-form-select-options'
+import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import {
   GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
+  patchProgramRegistrationOverlay,
   useProgramRegistrationOverlayKv,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import {
@@ -16,24 +20,23 @@ import {
   TRAINED_TEACHERS_REGISTRATION_REP_KO,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 
-const DETAILED_PROGRAM_OPTIONS = withDetailedProgramNoneOption(
-  mockDetailedProgramManagementListRows.map(row => ({
-    value: row.id,
-    label: row.name,
-  }))
-)
-
 type ControlledTitleProps = {
   programTitleKo?: string
   onProgramTitleKoChange?: (title: string) => void
   /** 교육받은 교사 등록 폼 — overlay 키·기본값 분리 */
   trainedTeachersDefaults?: boolean
+  /**
+   * 일반 일정형 — 세부 프로그램명 셀렉트를「해당없음」으로 고정.
+   * 실적·조회에서는 일정명이 세부 프로그램명으로 반영된다.
+   */
+  lockDetailedProgramToNone?: boolean
 }
 
 function ProgramRegistrationBasicInfoTitleFieldsInner({
   programTitleKo: programTitleKoProp,
   onProgramTitleKoChange,
   trainedTeachersDefaults = false,
+  lockDetailedProgramToNone = false,
 }: ControlledTitleProps) {
   const titleKoKey = trainedTeachersDefaults
     ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.programTitleKo`
@@ -47,6 +50,9 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
   const detailedIdKey = trainedTeachersDefaults
     ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.detailedProgramId`
     : 'generalRegistration.basicInfo.detailedProgramId'
+  const detailedNameKey = trainedTeachersDefaults
+    ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.detailedProgramName`
+    : 'generalRegistration.basicInfo.detailedProgramName'
 
   const [localProgramTitleKo, setLocalProgramTitleKo] = useProgramRegistrationOverlayKv(
     titleKoKey,
@@ -65,13 +71,46 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
     trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE : ''
   )
 
-  const detailedProgramOptions = useMemo(
-    () =>
-      trainedTeachersDefaults
-        ? [TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION, ...DETAILED_PROGRAM_OPTIONS]
-        : DETAILED_PROGRAM_OPTIONS,
-    [trainedTeachersDefaults]
-  )
+  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
+
+  useEffect(() => {
+    if (!lockDetailedProgramToNone) return
+    if (detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) return
+    setDetailedProgramId(TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE)
+    patchProgramRegistrationOverlay({ [detailedNameKey]: '해당없음' })
+  }, [detailedNameKey, detailedProgramId, lockDetailedProgramToNone, setDetailedProgramId])
+
+  useEffect(() => {
+    if (trainedTeachersDefaults && detailedProgramId === TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE) {
+      patchProgramRegistrationOverlay({
+        [detailedNameKey]: TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION.label,
+      })
+    }
+  }, [detailedNameKey, detailedProgramId, trainedTeachersDefaults])
+
+  const detailedProgramOptions = useMemo(() => {
+    const withNone = withDetailedProgramNoneOption(remoteDetailedProgramOptions)
+    return trainedTeachersDefaults
+      ? [TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION, ...withNone]
+      : withNone
+  }, [remoteDetailedProgramOptions, trainedTeachersDefaults])
+
+  const setDetailedProgramSelection = (nextId: string) => {
+    setDetailedProgramId(nextId)
+    if (!nextId) {
+      patchProgramRegistrationOverlay({ [detailedNameKey]: '' })
+      return
+    }
+    if (nextId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) {
+      patchProgramRegistrationOverlay({ [detailedNameKey]: '해당없음' })
+      return
+    }
+    const label =
+      detailedProgramOptions.find(o => o.value === nextId)?.label?.trim() ||
+      remoteDetailedProgramOptions.find(o => o.value === nextId)?.label?.trim() ||
+      ''
+    patchProgramRegistrationOverlay({ [detailedNameKey]: label })
+  }
 
   const isTitleControlled = onProgramTitleKoChange != null
   const programTitleKo = isTitleControlled ? (programTitleKoProp ?? '') : localProgramTitleKo
@@ -82,6 +121,10 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
     }
     setLocalProgramTitleKo(next)
   }
+
+  const detailedProgramSelectValue = lockDetailedProgramToNone
+    ? TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+    : detailedProgramId
 
   return (
     <>
@@ -137,8 +180,9 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
                 placeholder="세부 프로그램명을 선택하세요"
                 width="100%"
                 options={detailedProgramOptions}
-                value={detailedProgramId}
-                onChange={v => setDetailedProgramId(String(v ?? ''))}
+                value={detailedProgramSelectValue}
+                onChange={v => setDetailedProgramSelection(String(v ?? ''))}
+                disabled={lockDetailedProgramToNone}
               />
             </div>
           }

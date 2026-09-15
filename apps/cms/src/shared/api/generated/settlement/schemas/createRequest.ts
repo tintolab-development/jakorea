@@ -15,13 +15,19 @@ export interface CreateRequest {
      */
   batchName: string;
   templateId: number;
+  /**
+     * 대상 프로그램. 미전달(발송 UI 미선택/지정 해제)이면 program 스코프 enrich 불가.
+     * requiresProgram 변수 포함 템플릿은 NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES.
+     * MEMBER(전체회원 팝업)와 DIRECT는 허용, ADMIN 수신자는 프로그램 필수.
+     * FE는 문자열 all을 보내지 않음(필드 생략).
+     */
   programId?: number;
   /** 예약 시각 ISO-8601. 즉시 발송이면 생략. Hub scheduledDateTime은 사용하지 않음. */
   scheduledAt?: string;
   variables?: CreateRequestVariables;
   /**
      * @minItems 0
-     * @maxItems 5000
+     * @maxItems 500
      */
   recipients: RecipientRequest[];
   /**

@@ -9,4 +9,8 @@
 export interface RepresentativeInstructorRequest {
   instructorMemberId?: number;
   participantId?: number;
+  /** @minimum 1 */
+  scheduleId?: number;
+  /** @minimum 1 */
+  organizationApplicationId?: number;
 }

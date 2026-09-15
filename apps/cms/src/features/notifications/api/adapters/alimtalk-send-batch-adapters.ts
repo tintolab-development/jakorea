@@ -162,9 +162,15 @@ export function mapRecipientCandidates(
     .filter((item): item is AlimtalkSendRecipient => item != null)
 }
 
+export type NotificationTemplateVariablesCatalogMapped = {
+  variables: AlimtalkTemplateVariable[]
+  /** TEMP local QA — BE `systemManualSendQaEnabled` (표시용 배너는 사용하지 않음). */
+  systemManualSendQaEnabled: boolean
+}
+
 export function mapTemplateVariablesCatalog(
   catalog: NotificationTemplateVariableCatalogResponse | null | undefined
-): AlimtalkTemplateVariable[] {
+): NotificationTemplateVariablesCatalogMapped {
   const result: AlimtalkTemplateVariable[] = []
   for (const category of catalog?.categories ?? []) {
     for (const variable of category.variables ?? []) {
@@ -172,7 +178,10 @@ export function mapTemplateVariablesCatalog(
       if (mapped) result.push(mapped)
     }
   }
-  return result
+  return {
+    variables: result,
+    systemManualSendQaEnabled: catalog?.systemManualSendQaEnabled === true,
+  }
 }
 
 const TEMPLATE_PLACEHOLDER_RE = /#\{([^{}]+)\}/g
@@ -193,13 +202,48 @@ export const ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS = new Set([
  * Create.variables 에 넣으면 NOTIFICATION_SERVER_RESERVED_VARIABLE 이 나는 키.
  * 서버 enrich / 카탈로그 SYSTEM·문맥 키 — 커스텀 키만 variables로 허용.
  */
+/**
+ * SYSTEM/자동발송 카탈로그 키 — BE enrich 전용.
+ * FE `request.variables` 로 넣으면 NOTIFICATION_SERVER_RESERVED_VARIABLE.
+ * (TEMP QA fixture 키 포함 — 수동 발송도 서버가 채움)
+ */
+export const NOTIFICATION_SYSTEM_CATALOG_VARIABLE_KEYS = new Set([
+  '로그인 실패 횟수',
+  '마지막 로그인 실패일시',
+  '로그인 잠금 종료일시',
+  '관리자 2단계 인증 실패 횟수',
+  '관리자 마지막 2단계 인증 일시',
+  '관리자 2단계 인증 코드 생성일시',
+  '동의 항목',
+  '만료일시',
+  '동의 철회일시',
+  '동의 철회 항목',
+  '동의 철회 일시',
+  '휴면 전환일시',
+  '본인인증 일시',
+  '생년월일',
+  '성별',
+  '사용자 휴대폰 번호',
+  '마지막 로그인 일시',
+  '탈퇴 처리예정일시',
+  '사용자 이메일',
+  '서비스 탈퇴일시',
+  '회원 유형',
+  '서비스 가입일시',
+  '서비스명',
+  'UJAT 프로그램 기관 일정 확인 현황',
+  'UJAT 프로그램 기관 일정 수정사항',
+  'UJAT 봉사자 출석 현황',
+  '프로그램 수료 현황',
+  '피드백 내용',
+])
+
 export const NOTIFICATION_SERVER_RESERVED_VARIABLE_KEYS = new Set([
   ...ALIMTALK_MEMBER_ENRICHABLE_PLACEHOLDER_KEYS,
+  ...NOTIFICATION_SYSTEM_CATALOG_VARIABLE_KEYS,
   '프로그램명',
   '소속명',
   '담당교사명',
-  '동의 항목',
-  '만료일시',
 ])
 
 /** 텍스트들에서 `#{키}` 추출 — contentTemplate·titleTemplate이 SSOT */
@@ -341,7 +385,7 @@ export function pickNonEmptySendVariables(
   for (const [key, raw] of Object.entries(values)) {
     const trimmedKey = key.trim()
     if (!trimmedKey) continue
-    // 서버 예약·카탈로그 enrich 키는 variables로 덮어쓰지 않음
+    // 서버 예약·SYSTEM enrich 키는 variables로 덮어쓰지 않음
     if (NOTIFICATION_SERVER_RESERVED_VARIABLE_KEYS.has(trimmedKey)) continue
     if (typeof raw === 'string') {
       const trimmedValue = raw.trim()

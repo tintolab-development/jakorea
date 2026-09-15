@@ -2,21 +2,17 @@ import { DatePicker, Input } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
+import { useRef } from 'react'
 import type { UjatJournalEducationInfoParagraph } from '@/features/template/model/writing-form-draft.schema'
-import {
-  UJAT_JOURNAL_EDUCATION_INFO_CLASS_OPTIONS,
-  UJAT_JOURNAL_EDUCATION_INFO_GRADE_OPTIONS,
-} from '@/features/template/model/writing-form-draft.schema'
+import { UJAT_JOURNAL_EDUCATION_INFO_GRADE_OPTIONS } from '@/features/template/model/writing-form-draft.schema'
+import { DeferredBorderlessInput } from '@/features/template/ui/shared/deferred-borderless-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import {
   UserInfoPreviewTable,
   type UserInfoPreviewTableSkin,
 } from '@/features/template/ui/paragraph/single-item/user-info'
-import '@/features/template/ui/form-editor/form-editor-template-field-hint.css'
 import '@/features/template/ui/paragraph/table/vertical-table-paragraph-body.css'
 import './ujat-journal-education-info.css'
-
-const TEMPLATE_AUTO_USER_INFO_HINT = '로그인 사용자 정보가 자동으로 반영됩니다.'
 
 const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
@@ -66,10 +62,18 @@ function fromDayjsDate(d: Dayjs | null): string {
   return d.format('YYYY-MM-DD')
 }
 
+function wrapClass(base: string, locked: boolean): string {
+  return locked ? `${base} ${base}--disabled` : base
+}
+
 export type UjatJournalEducationInfoAutofill = {
   institutionName?: string
 }
 
+/**
+ * 시안: 담당 학교명만 배정 연동 → 항상 disabled.
+ * 학년/반·수업 일자는 작성 가능(템플릿 편집 시에도 활성).
+ */
 export function UjatJournalEducationInfo({
   paragraph,
   onChange,
@@ -77,6 +81,7 @@ export function UjatJournalEducationInfo({
   autofill,
   previewReadonly = false,
   previewSkin = 'surface',
+  isTemplateAuthoringMode = false,
 }: {
   paragraph: UjatJournalEducationInfoParagraph
   onChange: (next: UjatJournalEducationInfoParagraph) => void
@@ -84,8 +89,14 @@ export function UjatJournalEducationInfo({
   autofill?: UjatJournalEducationInfoAutofill | null
   previewReadonly?: boolean
   previewSkin?: UserInfoPreviewTableSkin
+  /** 템플릿 편집 — 학년/반·일자 활성 */
+  isTemplateAuthoringMode?: boolean
 }) {
-  const schoolName = (autofill?.institutionName ?? '').trim()
+  const paragraphRef = useRef(paragraph)
+  paragraphRef.current = paragraph
+
+  const schoolName = (autofill?.institutionName ?? paragraph.schoolDisplayFallback ?? '').trim()
+  const fieldsLocked = isTemplateAuthoringMode ? false : !isEditMode
 
   if (previewReadonly) {
     const grade = paragraph.grade.trim() || UJAT_JOURNAL_EDU_INFO_PREVIEW_SAMPLES.grade
@@ -94,10 +105,7 @@ export function UjatJournalEducationInfo({
     const prepDate = paragraph.prepDate.trim() || UJAT_JOURNAL_EDU_INFO_PREVIEW_SAMPLES.prepDate
     const sessionDate =
       paragraph.sessionDate.trim() || UJAT_JOURNAL_EDU_INFO_PREVIEW_SAMPLES.sessionDate
-    const institutionName =
-      schoolName ||
-      (paragraph.schoolDisplayFallback ?? '').trim() ||
-      UJAT_JOURNAL_EDU_INFO_PREVIEW_SAMPLES.institutionName
+    const institutionName = schoolName || UJAT_JOURNAL_EDU_INFO_PREVIEW_SAMPLES.institutionName
     return (
       <UserInfoPreviewTable
         selectedEntries={[
@@ -118,7 +126,7 @@ export function UjatJournalEducationInfo({
   }
 
   const patch = (partial: Partial<UjatJournalEducationInfoParagraph>) => {
-    onChange({ ...paragraph, ...partial })
+    onChange({ ...paragraphRef.current, ...partial })
   }
 
   return (
@@ -131,19 +139,17 @@ export function UjatJournalEducationInfo({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                {schoolName ? (
+                <div className={wrapClass('ujat-journal-edu-info__field-wrap', true)}>
                   <Input
                     className="ujat-journal-edu-info__school-input"
                     variant="borderless"
                     value={schoolName}
                     disabled
+                    placeholder="담당 학교명"
+                    aria-label="담당 학교명"
                     aria-readonly={true}
                   />
-                ) : (
-                  <span className="form-editor-template-field-hint-text">
-                    {TEMPLATE_AUTO_USER_INFO_HINT}
-                  </span>
-                )}
+                </div>
               </div>
             </div>
           </div>
@@ -159,24 +165,23 @@ export function UjatJournalEducationInfo({
                     width={120}
                     withAllOption={false}
                     placeholder="학년"
-                    disabled={!isEditMode}
+                    disabled={fieldsLocked}
                     options={UJAT_JOURNAL_EDUCATION_INFO_GRADE_OPTIONS}
                     value={paragraph.grade || undefined}
                     onChange={v => patch({ grade: String(v ?? '') })}
                     getPopupContainer={verticalTableFieldPopupContainer}
                   />
                   <span className="ujat-journal-edu-info__divider" role="presentation" />
-                  <CmsSelect
-                    inputSize="medium"
-                    width={120}
-                    withAllOption={false}
-                    placeholder="반"
-                    disabled={!isEditMode}
-                    options={UJAT_JOURNAL_EDUCATION_INFO_CLASS_OPTIONS}
-                    value={paragraph.classSection || undefined}
-                    onChange={v => patch({ classSection: String(v ?? '') })}
-                    getPopupContainer={verticalTableFieldPopupContainer}
-                  />
+                  <div className={wrapClass('ujat-journal-edu-info__class-wrap', fieldsLocked)}>
+                    <DeferredBorderlessInput
+                      className="ujat-journal-edu-info__class-input"
+                      value={paragraph.classSection}
+                      onCommit={next => patch({ classSection: next })}
+                      disabled={fieldsLocked}
+                      placeholder="반"
+                      aria-label="반"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -202,16 +207,19 @@ export function UjatJournalEducationInfo({
                     'form-editor-vertical-table__field-box--picker',
                     'form-editor-vertical-table__dt-picker--full',
                     'ujat-journal-edu-info__dt-picker',
-                  ].join(' ')}
+                    fieldsLocked ? 'ujat-journal-edu-info__dt-picker--disabled' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                   className="form-editor-vertical-table__dt-picker-inner"
                   needConfirm={false}
                   styles={verticalTablePickerPopupStyles}
                   getPopupContainer={verticalTableFieldPopupContainer}
                   value={toDayjsDate(paragraph.prepDate)}
-                  onChange={d => isEditMode && patch({ prepDate: fromDayjsDate(d) })}
+                  onChange={d => !fieldsLocked && patch({ prepDate: fromDayjsDate(d) })}
                   format="YYYY-MM-DD"
                   placeholder="수업 준비일"
-                  disabled={!isEditMode}
+                  disabled={fieldsLocked}
                 />
               </div>
             </div>
@@ -234,16 +242,19 @@ export function UjatJournalEducationInfo({
                     'form-editor-vertical-table__field-box--picker',
                     'form-editor-vertical-table__dt-picker--full',
                     'ujat-journal-edu-info__dt-picker',
-                  ].join(' ')}
+                    fieldsLocked ? 'ujat-journal-edu-info__dt-picker--disabled' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                   className="form-editor-vertical-table__dt-picker-inner"
                   needConfirm={false}
                   styles={verticalTablePickerPopupStyles}
                   getPopupContainer={verticalTableFieldPopupContainer}
                   value={toDayjsDate(paragraph.sessionDate)}
-                  onChange={d => isEditMode && patch({ sessionDate: fromDayjsDate(d) })}
+                  onChange={d => !fieldsLocked && patch({ sessionDate: fromDayjsDate(d) })}
                   format="YYYY-MM-DD"
                   placeholder="수업 진행일"
-                  disabled={!isEditMode}
+                  disabled={fieldsLocked}
                 />
               </div>
             </div>

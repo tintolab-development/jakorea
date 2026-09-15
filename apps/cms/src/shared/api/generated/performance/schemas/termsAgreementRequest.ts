@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { FilledDocumentRequest } from './filledDocumentRequest';
+import type { TermsAgreementRequestConsentStatus } from './termsAgreementRequestConsentStatus';
 import type { TermsAgreementRequestTermsType } from './termsAgreementRequestTermsType';
 
 /**
@@ -24,8 +25,12 @@ export interface TermsAgreementRequest {
   version: string;
   /** 클라이언트 표시용 필수 여부 힌트입니다. CMS 개인/강사 pre-register에서는 서버가 등록 유형×termsType 정책으로 필수 여부를 다시 판정하므로 이 값을 신뢰하지 않습니다. */
   required?: boolean;
-  /** 동의 여부 */
+  /** 동의 여부. PORTRAIT_RIGHTS에서는 FULL/PARTIAL 작성 제출 완료이면 true, DISAGREED이면 false입니다. */
   agreed?: boolean;
+  /** PORTRAIT_RIGHTS 전용 부분동의 상태 힌트 */
+  consentStatus?: TermsAgreementRequestConsentStatus;
+  /** PORTRAIT_RIGHTS 전용 프로그램 참여 가능 여부 힌트. 서버가 filledDocument의 1·2번 항목으로 재계산합니다. */
+  programEligible?: boolean;
   /** 호환 입력 필드입니다. 저장되는 약관 스냅샷은 서버가 게시 약관 원장에서 생성하며 이 값을 신뢰하지 않습니다. */
   termsSnapshotJson?: string;
   /** 선택 동의서 4종(PORTRAIT/PAYMENT/FACILITATOR/ADMINISTRATIVE)의 작성 완료 WritingFormDraft. 해당 termsType에서 agreed=true이면 필수이고 agreed=false이면 생략합니다. */

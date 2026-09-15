@@ -8,8 +8,126 @@ import {
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ParagraphLabelInput } from '@/features/template/ui/shared/paragraph-label-input'
+import { useDeferredFieldCommit } from '@/features/template/ui/shared/use-deferred-field-commit'
 import { CmsDateTextInput, CmsInput, CmsPhoneInput } from '@/shared/ui'
 import './short-essay.css'
+
+function ShortEssayItemBody({
+  itemId,
+  bodyText,
+  placeholder,
+  itemLabel,
+  itemInputRows,
+  singleLineExpandable,
+  maxLength,
+  isActive,
+  isBodyInteractive,
+  isName,
+  isBirth,
+  isPhone,
+  onSelectItem,
+  onCommitBody,
+}: {
+  itemId: string
+  bodyText: string
+  placeholder: string
+  itemLabel: string | undefined
+  itemInputRows: number
+  singleLineExpandable: boolean
+  maxLength: number | undefined
+  isActive: boolean
+  isBodyInteractive: boolean
+  isName: boolean
+  isBirth: boolean
+  isPhone: boolean
+  onSelectItem: () => void
+  onCommitBody: (itemId: string, bodyText: string) => void
+}) {
+  const {
+    value: editValue,
+    setValue: setEditValue,
+    flush: flushEditValue,
+  } = useDeferredFieldCommit(
+    bodyText,
+    isBodyInteractive ? next => onCommitBody(itemId, next) : undefined
+  )
+
+  return (
+    <ParagraphLabelInput
+      label={itemLabel}
+      className={
+        [
+          isActive ? 'short-essay-item--active' : '',
+          !isBodyInteractive ? 'short-essay-item--non-interactive' : '',
+        ]
+          .filter(Boolean)
+          .join(' ') || undefined
+      }
+      value={editValue}
+      placeholder={placeholder}
+      rows={itemInputRows}
+      expandableFromSingleRow={singleLineExpandable}
+      maxLength={maxLength}
+      showCount={maxLength != null}
+      readOnly={!isBodyInteractive}
+      tabIndex={isBodyInteractive ? undefined : -1}
+      onClick={event => {
+        event.stopPropagation()
+        onSelectItem()
+      }}
+      onChange={
+        isBodyInteractive
+          ? e => {
+              setEditValue(e.target.value)
+            }
+          : undefined
+      }
+      onBlur={isBodyInteractive ? () => flushEditValue() : undefined}
+      control={
+        isName ? (
+          <CmsInput
+            id={`short-essay-${itemId}`}
+            inputSize="large"
+            width="100%"
+            value={editValue}
+            placeholder={placeholder || '성명을 입력해 주세요'}
+            readOnly={!isBodyInteractive}
+            tabIndex={isBodyInteractive ? undefined : -1}
+            onChange={isBodyInteractive ? e => setEditValue(e.target.value) : undefined}
+            onBlur={isBodyInteractive ? flushEditValue : undefined}
+          />
+        ) : isBirth ? (
+          <CmsDateTextInput
+            id={`short-essay-${itemId}`}
+            inputSize="large"
+            width="100%"
+            value={editValue}
+            placeholder={placeholder || '1991.01.01'}
+            maxLength={10}
+            readOnly={!isBodyInteractive}
+            tabIndex={isBodyInteractive ? undefined : -1}
+            onValueChange={isBodyInteractive ? value => setEditValue(value) : undefined}
+            onBlur={isBodyInteractive ? flushEditValue : undefined}
+          />
+        ) : isPhone ? (
+          <CmsPhoneInput
+            id={`short-essay-${itemId}`}
+            inputSize="large"
+            width="100%"
+            value={editValue}
+            placeholder={placeholder || '010-1234-5678'}
+            readOnly={!isBodyInteractive}
+            tabIndex={isBodyInteractive ? undefined : -1}
+            onChange={
+              isBodyInteractive ? event => setEditValue(event.target.value) : undefined
+            }
+            onBlur={isBodyInteractive ? flushEditValue : undefined}
+          />
+        ) : undefined
+      }
+    />
+  )
+}
 
 /** 주관식형 (short_essay) — 단락 바디 슬롯 */
 export function ShortEssay({
@@ -84,12 +202,25 @@ export function ShortEssay({
   const maxLength = paragraph.maxLength
 
   const updateItemBodyText = (id: string, bodyText: string) => {
-    const nextItems = items.map(item => (item.id === id ? { ...item, bodyText } : item))
+    const p = paragraphRef.current
+    const currentItems =
+      p.items && p.items.length > 0
+        ? p.items
+        : [
+            {
+              id: 'short-essay-item-1',
+              label: 'Title 01',
+              placeholder: ph,
+              bodyText: p.bodyText,
+            },
+          ]
+    const nextItems = currentItems.map(item => (item.id === id ? { ...item, bodyText } : item))
+    const nextShowItemTitle = nextItems.length >= 2 ? true : (p.showItemTitle ?? false)
     onChange({
-      ...paragraph,
+      ...p,
       items: nextItems,
       bodyText: nextItems[0]?.bodyText ?? '',
-      showItemTitle,
+      showItemTitle: nextShowItemTitle,
     })
   }
 
@@ -110,6 +241,7 @@ export function ShortEssay({
   }
 
   const handleItemClick = (id: string) => {
+    if (!isBodyInteractive) return
     const nextFocused = activeItemId === id ? null : id
     onSelectItem?.(nextFocused)
   }
@@ -145,71 +277,38 @@ export function ShortEssay({
           )
         }
 
-        const isName = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name
-        const isBirth = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth
-        const isPhone = item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone
-
         return (
-        <div key={item.id} className="short-essay-item-row">
-          <ParagraphLabelInput
-            label={itemLabel}
-            className={activeItemId === item.id ? 'short-essay-item--active' : undefined}
-            value={item.bodyText}
-            placeholder={item.placeholder ?? ph}
-            rows={itemInputRows}
-            expandableFromSingleRow={singleLineExpandable}
-            maxLength={maxLength}
-            showCount={maxLength != null}
-            onClick={event => {
-              event.stopPropagation()
-              handleItemClick(item.id)
-            }}
-            onChange={isBodyInteractive ? e => updateItemBodyText(item.id, e.target.value) : undefined}
-            control={
-              isName ? (
-                <CmsInput
-                  id={`short-essay-${item.id}`}
-                  inputSize="large"
-                  width="100%"
-                  value={item.bodyText}
-                  placeholder={item.placeholder ?? '성명을 입력해 주세요'}
-                  onChange={e => updateItemBodyText(item.id, e.target.value)}
-                />
-              ) : isBirth ? (
-                <CmsDateTextInput
-                  id={`short-essay-${item.id}`}
-                  inputSize="large"
-                  width="100%"
-                  value={item.bodyText}
-                  placeholder={item.placeholder ?? '1991.01.01'}
-                  maxLength={10}
-                  onValueChange={value => updateItemBodyText(item.id, value)}
-                />
-              ) : isPhone ? (
-                <CmsPhoneInput
-                  id={`short-essay-${item.id}`}
-                  inputSize="large"
-                  width="100%"
-                  value={item.bodyText}
-                  placeholder={item.placeholder ?? '010-1234-5678'}
-                  onChange={event => updateItemBodyText(item.id, event.target.value)}
-                />
-              ) : undefined
-            }
-          />
-          {isCardSelected &&
-          index > 0 &&
-          paragraph.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.subject ? (
-            <ItemDeleteButton
-              className="item-delete-button short-essay-item-delete"
-              aria-label={`항목 ${index + 1} 삭제`}
-              onClick={event => {
-                event.stopPropagation()
-                removeItem(item.id)
-              }}
+          <div key={item.id} className="short-essay-item-row">
+            <ShortEssayItemBody
+              itemId={item.id}
+              bodyText={item.bodyText}
+              placeholder={item.placeholder ?? ph}
+              itemLabel={itemLabel}
+              itemInputRows={itemInputRows}
+              singleLineExpandable={singleLineExpandable}
+              maxLength={maxLength}
+              isActive={activeItemId === item.id}
+              isBodyInteractive={isBodyInteractive}
+              isName={item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name}
+              isBirth={item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth}
+              isPhone={item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone}
+              onSelectItem={() => handleItemClick(item.id)}
+              onCommitBody={updateItemBodyText}
             />
-          ) : null}
-        </div>
+            {isBodyInteractive &&
+            isCardSelected &&
+            index > 0 &&
+            paragraph.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.subject ? (
+              <ItemDeleteButton
+                className="item-delete-button short-essay-item-delete"
+                aria-label={`항목 ${index + 1} 삭제`}
+                onClick={event => {
+                  event.stopPropagation()
+                  removeItem(item.id)
+                }}
+              />
+            ) : null}
+          </div>
         )
       })}
     </div>

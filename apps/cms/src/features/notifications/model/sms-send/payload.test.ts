@@ -178,18 +178,24 @@ describe('buildSmsSendCreateRequest', () => {
 })
 
 describe('validateSmsSendDraft', () => {
-  it('requires program, template, sender phone, schedule, recipients, subject, and body', () => {
-    expect(validateSmsSendDraft(draft({ programId: '' }))).toBe('대상 프로그램을 선택하세요.')
+  it('requires template, sender phone, schedule, recipients, subject, and body', () => {
     expect(validateSmsSendDraft(draft({ programId: 'prog-coy-2026' }))).toBe(
       '대상 프로그램을 선택하세요.'
     )
     expect(
       validateSmsSendDraft(
         draft({
+          programId: '',
+        })
+      )
+    ).toBeNull()
+    expect(
+      validateSmsSendDraft(
+        draft({
           programId: SMS_SEND_ALL_PROGRAM_ID,
         })
       )
-    ).toBe('대상 프로그램이 미선택일 때는 직접 입력 수신자만 사용할 수 있습니다.')
+    ).toBeNull()
     expect(
       validateSmsSendDraft(
         draft({

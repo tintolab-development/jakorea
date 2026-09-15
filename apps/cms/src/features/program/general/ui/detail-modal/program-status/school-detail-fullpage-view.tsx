@@ -7,6 +7,7 @@
 
 import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
@@ -38,7 +39,6 @@ import {
   getInstructorRowsForSchool,
   getAssignedInstructorDisplayRows,
   getWaitingInstructorRows,
-  getCompanySchoolWaitingInstructorScheduleRows,
   type WaitingInstructorRowMock,
 } from '../../../lib/school-detail-mock'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '../../../lib/waiting-instructor-assignment'
@@ -71,6 +71,26 @@ import {
   STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
 } from '@/shared/components'
 import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { shouldUseCompanySchoolProgramProgressRemoteApi } from '@/features/program/1c-1s/api/capabilities'
+import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
+import {
+  fetchCompanySchoolAssignmentBoard,
+  findScheduleIdForLectureDate,
+} from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
+import {
+  buildCompanySchoolWaitingInstructorRows,
+  buildCompanySchoolAssignedInstructorRows,
+} from '@/features/program/1c-1s/lib/build-company-school-assignment-rows'
+import {
+  cancelInstructorAssignmentRemote,
+  createInstructorAssignmentRemote,
+  putRepresentativeInstructorRemote,
+} from '@/features/program/general/api/instructor-assignments-api-client'
+import {
+  isOneSchoolPerDayConflictErrorCode,
+  ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE,
+} from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
 import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
 import { SchoolDetailAttendanceSection } from './school-detail-attendance-section'
 import {
@@ -185,23 +205,20 @@ interface AssignedInstructorDisplayRow extends SchoolDetailInstructorRow {
   assignedTime?: string
   assignedSession?: string
   assignedScheduleLine?: string
+  assignmentId?: string
+  instructorMemberId?: string
+  scheduleId?: string
 }
 
 type WaitingInstructorRow = WaitingInstructorRowMock
 
-/** 필요 배정 인원(분모) — 상세에 필드 없으면 mock */
-const MOCK_REQUIRED_INSTRUCTORS = 4
-
-function isCompanySchoolProgram(program: Program): boolean {
-  return (
-    program.id.startsWith('economy-prog-') ||
-    program.id.startsWith('company-school-prog-') ||
-    program.id.startsWith('company-school-local-') ||
-    program.mainTitle?.includes('1사1교') === true ||
-    program.title?.includes('1사1교') === true
-  )
+/** 필요 배정 인원(분모) — program detail participantRecruitmentInfo.maxAssignableInstructors SSOT */
+function resolveRequiredInstructorCount(program: Program): number {
+  const fromRecruitment =
+    program.generalCommonInfo?.participantRecruitmentInfo?.maxAssignableInstructors
+  if (typeof fromRecruitment === 'number' && fromRecruitment > 0) return fromRecruitment
+  return 2
 }
-
 function getWaitingInstructorRowInstructorId(row: WaitingInstructorRow): string {
   return row.instructorId ?? row.id
 }
@@ -441,6 +458,20 @@ export function GeneralParticipatingInstitutionDetailView(
   const sessions = row.sessions ?? []
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
   const isCompanySchool = isCompanySchoolProgram(program)
+  const requiredInstructorCount = resolveRequiredInstructorCount(program)
+  const programId = String(program.id)
+  const companySchoolAssignmentConflictsEnabled =
+    isCompanySchool && shouldUseCompanySchoolProgramProgressRemoteApi()
+
+  const occupiedLectureDatesQuery = useQuery({
+    queryKey: companySchoolQueryKeys.instructorAssignmentConflicts(programId),
+    queryFn: () => fetchCompanySchoolAssignmentBoard(programId),
+    enabled: companySchoolAssignmentConflictsEnabled,
+    staleTime: 30_000,
+  })
+  const assignmentBoard = occupiedLectureDatesQuery.data
+  const occupiedLectureDatesByInstructorId = assignmentBoard?.occupiedLectureDatesByInstructorId
+  const queryClient = useQueryClient()
 
   const activityWithdrawScheduleOptions = useMemo(
     () => getParticipatingInstitutionActivityWithdrawScheduleOptions(program, sessions),
@@ -602,9 +633,39 @@ export function GeneralParticipatingInstitutionDetailView(
     if (parts.length <= 1) return parts[0] ?? '-'
     return withTdDivider(parts)
   }
-  /** 배정된 강사 테이블용 행 (목 데이터 연동) */
+  /** 배정된 강사 테이블용 행 — 1사1교는 assignment API */
   const assignedRows: AssignedInstructorDisplayRow[] = useMemo(
     () => {
+      if (isCompanySchool && assignmentBoard) {
+        const orgAppId = row.organizationApplicationId ?? ''
+        if (!orgAppId) return []
+        const apiRows = buildCompanySchoolAssignedInstructorRows({
+          assignments: assignmentBoard.assignments,
+          organizationApplicationId: orgAppId,
+          instructorNameByMemberId: assignmentBoard.instructorNameByMemberId,
+          scheduleLabelById: assignmentBoard.scheduleLabelById,
+        })
+        return apiRows.map(r => ({
+          id: r.id,
+          no: r.no,
+          role: r.role,
+          instructorName: r.instructorName,
+          contact: '',
+          email: '',
+          settlementStatus: 'none' as SettlementStatusKey,
+          homeAddress: r.homeAddress,
+          distanceToSchool: r.distanceToSchool,
+          assignedDate: r.assignedDate,
+          assignedTime: r.assignedTime,
+          assignedSession: r.assignedSession,
+          assignedScheduleLine: [r.assignedDate, r.assignedTime, r.assignedSession]
+            .filter(Boolean)
+            .join(' '),
+          assignmentId: r.assignmentId,
+          instructorMemberId: r.instructorMemberId,
+          scheduleId: r.scheduleId,
+        }))
+      }
       const rows = getAssignedInstructorDisplayRows(instructors)
       if (!isCompanySchool) return rows
       const defaultScheduleLine = buildParticipatingSchoolPreferredScheduleLines(row.sessions)[0]
@@ -614,38 +675,49 @@ export function GeneralParticipatingInstitutionDetailView(
           assignedScheduleLinesByInstructorId[assignedRow.id] ?? defaultScheduleLine,
       }))
     },
-    [instructors, isCompanySchool, row.sessions, assignedScheduleLinesByInstructorId]
+    [
+      instructors,
+      isCompanySchool,
+      row.sessions,
+      row.organizationApplicationId,
+      assignedScheduleLinesByInstructorId,
+      assignmentBoard,
+    ]
   )
 
-  /** 배정 대기 강사 목록 (목 데이터 연동: 해당 학교 미배정 참여 강사 + 배정 현황/희망 일정) */
+  /** 배정 대기 — 1사1교는 승인 강사신청 + 희망일정 API (가짜 일정 금지) */
   const waitingRows: WaitingInstructorRow[] = useMemo(
     () => {
       if (isCompanySchool) {
-        const defaultScheduleLine = buildParticipatingSchoolPreferredScheduleLines(row.sessions)[0]
-        return getCompanySchoolWaitingInstructorScheduleRows(
-          row.schoolName,
-          instructorList,
-          participatingSchoolList
-        )
-          .filter(waitingRow => {
-            if (completedWaitingRowKeys.has(waitingRow.id)) return false
-            const instructorId = getWaitingInstructorRowInstructorId(waitingRow)
-            const assignedScheduleLine =
-              assignedScheduleLinesByInstructorId[instructorId] ?? defaultScheduleLine
-            if (!assignedInstructorIdSet.has(instructorId)) return true
-            return waitingRow.hopeScheduleLine !== assignedScheduleLine
-          })
+        if (!assignmentBoard) return []
+        const assignedMemberIds = new Set<string>()
+        for (const a of assignmentBoard.assignments) {
+          if (a.organizationApplicationId == null) continue
+          if (
+            row.organizationApplicationId &&
+            String(a.organizationApplicationId) === row.organizationApplicationId
+          ) {
+            if (a.instructorMemberId != null) assignedMemberIds.add(String(a.instructorMemberId))
+          }
+        }
+        return buildCompanySchoolWaitingInstructorRows({
+          schoolName: row.schoolName,
+          sessions: row.sessions,
+          approvedInstructors: assignmentBoard.approvedInstructorApplications,
+          assignedInstructorMemberIds: assignedMemberIds,
+          occupiedLectureDatesByInstructorId,
+        })
+          .filter(waitingRow => !completedWaitingRowKeys.has(waitingRow.id))
           .map(waitingRow => {
-              const instructorId = getWaitingInstructorRowInstructorId(waitingRow)
-              if (
-                (disabledWaitingInstructorIds.has(instructorId) ||
-                  assignedInstructorIdSet.has(instructorId)) &&
-                waitingRow.assignmentStatus === 'waiting'
-              ) {
-                return { ...waitingRow, assignmentStatus: 'unavailable' as const }
-              }
-              return waitingRow
-            })
+            const instructorId = getWaitingInstructorRowInstructorId(waitingRow)
+            if (
+              disabledWaitingInstructorIds.has(instructorId) &&
+              waitingRow.assignmentStatus === 'waiting'
+            ) {
+              return { ...waitingRow, assignmentStatus: 'unavailable' as const }
+            }
+            return waitingRow
+          })
       }
 
       return getWaitingInstructorRows(row.schoolName, instructorList, participatingSchoolList).filter(
@@ -655,13 +727,15 @@ export function GeneralParticipatingInstitutionDetailView(
     [
       row.schoolName,
       row.sessions,
+      row.organizationApplicationId,
       instructorList,
       participatingSchoolList,
       isCompanySchool,
+      occupiedLectureDatesByInstructorId,
       completedWaitingRowKeys,
       disabledWaitingInstructorIds,
-      assignedScheduleLinesByInstructorId,
       assignedInstructorIdSet,
+      assignmentBoard,
     ]
   )
 
@@ -670,8 +744,14 @@ export function GeneralParticipatingInstitutionDetailView(
     [instructors]
   )
 
+  /** 1사1교는 assignment API 행 수, 그 외는 로컬 instructors */
+  const currentAssignedCount = isCompanySchool ? assignedRows.length : instructors.length
+
   const currentLeadName =
-    instructors.find((i: { role: InstructorRoleKey }) => i.role === 'lead')?.instructorName ?? null
+    (isCompanySchool
+      ? assignedRows.find(i => i.role === 'lead')?.instructorName
+      : instructors.find((i: { role: InstructorRoleKey }) => i.role === 'lead')?.instructorName) ??
+    null
 
   const selectedWaitingRows = useMemo(
     () =>
@@ -681,12 +761,124 @@ export function GeneralParticipatingInstitutionDetailView(
     [waitingRows, selectedWaitingKeys]
   )
 
-  const programId = String(program.id)
-
-  /** 선택 배정 — 배정 반영 후 완료 안내 */
+  /** 선택 배정 — 1사1교는 API create, 그 외는 기존 로컬 반영 */
   const finalizeSelectAssign = useCallback(
-    (rows: WaitingInstructorRow[], showApprovalAlarmSection: boolean) => {
+    async (rows: WaitingInstructorRow[], showApprovalAlarmSection: boolean) => {
       if (rows.length === 0) return
+
+      if (isCompanySchool && companySchoolAssignmentConflictsEnabled) {
+        const orgAppId = row.organizationApplicationId
+        if (!orgAppId) {
+          showAlert({
+            title: '안내',
+            content:
+              '기관 신청 ID가 없어 배정할 수 없습니다. 참여 기관 API에 organizationApplicationId(sourceApplicationId) 매핑이 필요합니다.',
+          })
+          return
+        }
+        if (!assignmentBoard) {
+          showAlert({ title: '안내', content: '배정 데이터를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.' })
+          return
+        }
+
+        try {
+          let leadAssigned = currentAssignedCount > 0 && assignedRows.some(i => i.role === 'lead')
+          for (const waitingRow of rows) {
+            const memberIdRaw =
+              (waitingRow as { instructorMemberId?: string }).instructorMemberId ??
+              getWaitingInstructorRowInstructorId(waitingRow)
+            const memberId = Number(memberIdRaw)
+            if (!Number.isFinite(memberId) || memberId <= 0) {
+              showAlert({
+                title: '안내',
+                content: `강사 memberId가 없어 배정할 수 없습니다. (${waitingRow.instructorName})`,
+              })
+              return
+            }
+            const scheduleUnresolved = Boolean(
+              (waitingRow as { scheduleUnresolved?: boolean }).scheduleUnresolved
+            )
+            const requestedScheduleId = (waitingRow as { requestedScheduleId?: number })
+              .requestedScheduleId
+            const resolvedScheduleId = (waitingRow as { resolvedScheduleId?: number | null })
+              .resolvedScheduleId
+            if (scheduleUnresolved) {
+              showAlert({
+                title: '안내',
+                content: `희망일에 대응하는 program schedule이 없습니다. (일정 미생성) — ${waitingRow.instructorName}`,
+              })
+              return
+            }
+
+            let scheduleId: number | undefined =
+              typeof resolvedScheduleId === 'number' && resolvedScheduleId > 0
+                ? resolvedScheduleId
+                : undefined
+            if (scheduleId == null && requestedScheduleId == null) {
+              scheduleId =
+                findScheduleIdForLectureDate(
+                  assignmentBoard.schedules,
+                  waitingRow.hopeDate ?? waitingRow.hopeScheduleLine
+                ) ?? undefined
+            }
+            if (scheduleId == null && requestedScheduleId == null) {
+              showAlert({
+                title: '안내',
+                content:
+                  '희망일에 대응하는 program schedule이 없습니다. requestedScheduleId 또는 schedule 매핑이 필요합니다.',
+              })
+              return
+            }
+            const applicationIdRaw = (waitingRow as { instructorApplicationId?: string })
+              .instructorApplicationId
+            await createInstructorAssignmentRemote(programId, {
+              instructorMemberId: memberId,
+              ...(scheduleId != null ? { scheduleId } : {}),
+              ...(requestedScheduleId != null ? { requestedScheduleId } : {}),
+              organizationApplicationId: Number(orgAppId),
+              instructorApplicationId: applicationIdRaw ? Number(applicationIdRaw) : undefined,
+              scheduleLead: !leadAssigned,
+            })
+            leadAssigned = true
+          }
+          await queryClient.invalidateQueries({
+            queryKey: companySchoolQueryKeys.instructorAssignmentConflicts(programId),
+          })
+          setSelectAssignConfirmOpen(false)
+          setSelectAssignNewGuideOpen(false)
+          setSelectAssignFeeApprovalOpen(false)
+          setSelectAssignPendingInstructor(null)
+          setSelectAssignOverflowOpen(false)
+          setSelectedWaitingKeys([])
+          const instructorNameLabel =
+            rows.length === 1
+              ? (rows[0]?.instructorName ?? '')
+              : Array.from(new Set(rows.map(r => r.instructorName))).join(', ')
+          setAssignCompleteModal({
+            instructorName: instructorNameLabel,
+            schoolName: row.schoolName,
+            currentCount: (assignmentBoard.assignments.length ?? 0) + rows.length,
+            showApprovalAlarmSection,
+          })
+        } catch (error) {
+          const code =
+            error && typeof error === 'object' && 'response' in error
+              ? String(
+                  (error as { response?: { data?: { error?: { code?: string }; code?: string } } })
+                    .response?.data?.error?.code ??
+                    (error as { response?: { data?: { code?: string } } }).response?.data?.code ??
+                    ''
+                )
+              : ''
+          showAlert({
+            title: '배정 실패',
+            content: isOneSchoolPerDayConflictErrorCode(code)
+              ? ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE
+              : '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+          })
+        }
+        return
+      }
 
       const existingFormList: InstructorListFormInstructor[] = instructors.map(
         ({ id, role, instructorName, contact, email }) => ({
@@ -764,6 +956,15 @@ export function GeneralParticipatingInstitutionDetailView(
       detail.id,
       onSaveInstructorInfo,
       row.schoolName,
+      row.organizationApplicationId,
+      isCompanySchool,
+      companySchoolAssignmentConflictsEnabled,
+      assignmentBoard,
+      assignedRows,
+      currentAssignedCount,
+      programId,
+      queryClient,
+      showAlert,
     ]
   )
 
@@ -819,23 +1020,43 @@ export function GeneralParticipatingInstitutionDetailView(
     setSelectAssignConfirmOpen(true)
   }, [selectedWaitingRows, instructorList, programId, showAlert])
 
-  /** 배정 취소 확인 모달에서 "배정 취소" 클릭 시: 선택한 배정된 강사를 목록에서 제거 */
+  /** 배정 취소 확인 모달에서 "배정 취소" 클릭 시 */
   const handleUnassignConfirm = useCallback(
-    (payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload) => {
       if (selectedAssignedKeys.length === 0) return
-      const removedInstructorNames = assignedRows
-        .filter(r => selectedAssignedKeys.includes(r.id))
-        .map(r => r.instructorName)
-      const newFormList: InstructorListFormInstructor[] = instructors
-        .filter(inv => !selectedAssignedKeys.includes(inv.id))
-        .map(({ id, role, instructorName, contact, email }) => ({
-          id,
-          role,
-          instructorName,
-          contact,
-          email,
-        }))
-      onSaveInstructorInfo?.(detail.id, newFormList)
+      const removedRows = assignedRows.filter(r => selectedAssignedKeys.includes(r.id))
+      const removedInstructorNames = removedRows.map(r => r.instructorName)
+
+      if (isCompanySchool && companySchoolAssignmentConflictsEnabled) {
+        try {
+          for (const removed of removedRows) {
+            const assignmentId = removed.assignmentId ?? removed.id
+            if (!assignmentId) continue
+            await cancelInstructorAssignmentRemote(String(assignmentId))
+          }
+          await queryClient.invalidateQueries({
+            queryKey: companySchoolQueryKeys.instructorAssignmentConflicts(programId),
+          })
+        } catch {
+          showAlert({
+            title: '배정 취소 실패',
+            content: '강사 배정 취소에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+          })
+          return
+        }
+      } else {
+        const newFormList: InstructorListFormInstructor[] = instructors
+          .filter(inv => !selectedAssignedKeys.includes(inv.id))
+          .map(({ id, role, instructorName, contact, email }) => ({
+            id,
+            role,
+            instructorName,
+            contact,
+            email,
+          }))
+        onSaveInstructorInfo?.(detail.id, newFormList)
+      }
+
       setAssignedScheduleLinesByInstructorId(prev => {
         const next = { ...prev }
         selectedAssignedKeys.forEach(key => {
@@ -851,11 +1072,59 @@ export function GeneralParticipatingInstitutionDetailView(
         reason: payload.reason,
       })
     },
-    [selectedAssignedKeys, assignedRows, instructors, detail.id, onSaveInstructorInfo, row.schoolName]
+    [
+      selectedAssignedKeys,
+      assignedRows,
+      instructors,
+      detail.id,
+      onSaveInstructorInfo,
+      row.schoolName,
+      isCompanySchool,
+      companySchoolAssignmentConflictsEnabled,
+      programId,
+      queryClient,
+      showAlert,
+    ]
   )
 
   const applyRoleChange = useCallback(
-    (instructorId: string, newRole: InstructorRoleKey) => {
+    async (instructorId: string, newRole: InstructorRoleKey) => {
+      if (
+        isCompanySchool &&
+        companySchoolAssignmentConflictsEnabled &&
+        newRole === 'lead'
+      ) {
+        const target = assignedRows.find(r => r.id === instructorId)
+        const memberId = Number(target?.instructorMemberId)
+        const orgAppId = Number(row.organizationApplicationId)
+        const scheduleId = Number(target?.scheduleId)
+        if (!Number.isFinite(memberId) || memberId <= 0 || !Number.isFinite(orgAppId) || orgAppId <= 0) {
+          showAlert({
+            title: '안내',
+            content: '대표 강사 변경에 필요한 instructorMemberId / organizationApplicationId가 없습니다.',
+          })
+          return
+        }
+        try {
+          await putRepresentativeInstructorRemote(programId, {
+            instructorMemberId: memberId,
+            organizationApplicationId: orgAppId,
+            ...(Number.isFinite(scheduleId) && scheduleId > 0 ? { scheduleId } : {}),
+          })
+          await queryClient.invalidateQueries({
+            queryKey: companySchoolQueryKeys.instructorAssignmentConflicts(programId),
+          })
+          setOpenRoleDropdownId(null)
+          return
+        } catch {
+          showAlert({
+            title: '대표 강사 변경 실패',
+            content: '대표 강사 지정에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          })
+          return
+        }
+      }
+
       const updated = instructors.map(inv => ({
         ...inv,
         role: inv.id === instructorId ? newRole : newRole === 'lead' ? 'assistant' : inv.role,
@@ -872,14 +1141,25 @@ export function GeneralParticipatingInstitutionDetailView(
       onSaveInstructorInfo?.(detail.id, formList)
       setOpenRoleDropdownId(null)
     },
-    [instructors, detail.id, onSaveInstructorInfo]
+    [
+      instructors,
+      detail.id,
+      onSaveInstructorInfo,
+      isCompanySchool,
+      companySchoolAssignmentConflictsEnabled,
+      assignedRows,
+      row.organizationApplicationId,
+      programId,
+      queryClient,
+      showAlert,
+    ]
   )
-
   const handleRoleChange = useCallback(
     (instructorId: string, newRole: InstructorRoleKey) => {
+      const roleSource = isCompanySchool ? assignedRows : instructors
       if (newRole === 'lead') {
-        const currentLead = instructors.find(inv => inv.role === 'lead')
-        const target = instructors.find(inv => inv.id === instructorId)
+        const currentLead = roleSource.find(inv => inv.role === 'lead')
+        const target = roleSource.find(inv => inv.id === instructorId)
         if (currentLead && currentLead.id !== instructorId && target) {
           setLeadRoleChangeConfirm({
             instructorId,
@@ -889,9 +1169,9 @@ export function GeneralParticipatingInstitutionDetailView(
           return
         }
       }
-      applyRoleChange(instructorId, newRole)
+      void applyRoleChange(instructorId, newRole)
     },
-    [instructors, applyRoleChange]
+    [instructors, assignedRows, isCompanySchool, applyRoleChange]
   )
 
   const assignedInstructorColumns: ColumnsType<AssignedInstructorDisplayRow> = useMemo(
@@ -1477,7 +1757,7 @@ export function GeneralParticipatingInstitutionDetailView(
                     배정된 강사 목록
                   </span>
                   <span className="table-description">
-                    {instructors.length} / {MOCK_REQUIRED_INSTRUCTORS}명
+                    {currentAssignedCount} / {requiredInstructorCount}명
                   </span>
                 </div>
                 <div className="info-section-buttons--wrapper">
@@ -1493,7 +1773,7 @@ export function GeneralParticipatingInstitutionDetailView(
                     size="large"
                     className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
                     onClick={() => {
-                      if (instructors.length >= MOCK_REQUIRED_INSTRUCTORS) {
+                      if (currentAssignedCount >= requiredInstructorCount) {
                         setAddAssignOverflowOpen(true)
                       } else {
                         setAddAssignModalOpen(true)
@@ -1583,7 +1863,7 @@ export function GeneralParticipatingInstitutionDetailView(
             <SchoolDetailAssignOverflowModal
               open={addAssignOverflowOpen}
               onCancel={() => setAddAssignOverflowOpen(false)}
-              requiredCount={MOCK_REQUIRED_INSTRUCTORS}
+              requiredCount={requiredInstructorCount}
               variant="add"
               onConfirm={() => {
                 setAddAssignOverflowOpen(false)
@@ -1605,8 +1885,8 @@ export function GeneralParticipatingInstitutionDetailView(
               participatingSchoolList={participatingSchoolList}
               assignedInstructorNames={assignedInstructorNames}
               currentLeadInstructorName={currentLeadName}
-              currentAssignedCount={instructors.length}
-              requiredInstructorCount={MOCK_REQUIRED_INSTRUCTORS}
+              currentAssignedCount={currentAssignedCount}
+              requiredInstructorCount={requiredInstructorCount}
               overflowAlreadyConfirmed={addModalOpenedFromOverflow}
               onAdd={(_instructorId, role, option, _meta) => {
                 const nextRole: InstructorRoleKey = instructors.length === 0 ? 'lead' : role
@@ -1655,10 +1935,10 @@ export function GeneralParticipatingInstitutionDetailView(
               }}
               schoolName={row.schoolName}
               instructorNames={selectedWaitingRows.map(r => r.instructorName)}
-              currentCount={instructors.length}
-              requiredCount={MOCK_REQUIRED_INSTRUCTORS}
+              currentCount={currentAssignedCount}
+              requiredCount={requiredInstructorCount}
               onConfirm={() => {
-                if (instructors.length + selectedWaitingRows.length > MOCK_REQUIRED_INSTRUCTORS) {
+                if (currentAssignedCount + selectedWaitingRows.length > requiredInstructorCount) {
                   setSelectAssignConfirmOpen(false)
                   setSelectAssignOverflowOpen(true)
                 } else {
@@ -1675,8 +1955,8 @@ export function GeneralParticipatingInstitutionDetailView(
               }}
               instructorName={selectAssignPendingInstructor?.name ?? ''}
               schoolName={row.schoolName}
-              currentCount={instructors.length}
-              requiredCount={MOCK_REQUIRED_INSTRUCTORS}
+              currentCount={currentAssignedCount}
+              requiredCount={requiredInstructorCount}
               onConfirm={() => {
                 setSelectAssignNewGuideOpen(false)
                 setSelectAssignFeeApprovalOpen(true)
@@ -1700,7 +1980,7 @@ export function GeneralParticipatingInstitutionDetailView(
                   setSelectAssignPendingInstructor(null)
                   return
                 }
-                if (instructors.length >= MOCK_REQUIRED_INSTRUCTORS) {
+                if (currentAssignedCount >= requiredInstructorCount) {
                   setSelectAssignFeeApprovalOpen(false)
                   setSelectAssignOverflowOpen(true)
                   return
@@ -1711,7 +1991,7 @@ export function GeneralParticipatingInstitutionDetailView(
             <SchoolDetailAssignOverflowModal
               open={selectAssignOverflowOpen}
               onCancel={() => setSelectAssignOverflowOpen(false)}
-              requiredCount={MOCK_REQUIRED_INSTRUCTORS}
+              requiredCount={requiredInstructorCount}
               variant="select"
               onConfirm={() => {
                 if (selectAssignPendingInstructor) {
@@ -1733,7 +2013,7 @@ export function GeneralParticipatingInstitutionDetailView(
               instructorName={assignCompleteModal?.instructorName ?? ''}
               schoolName={assignCompleteModal?.schoolName ?? ''}
               currentCount={assignCompleteModal?.currentCount ?? 0}
-              requiredCount={MOCK_REQUIRED_INSTRUCTORS}
+              requiredCount={requiredInstructorCount}
               showApprovalAlarmSection={assignCompleteModal?.showApprovalAlarmSection ?? false}
             />
             <SchoolDetailUnassignConfirmModal

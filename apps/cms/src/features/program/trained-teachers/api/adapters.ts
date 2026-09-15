@@ -26,12 +26,18 @@ function toDate(value: Date | string | undefined): string | undefined {
 
 function lifecycleStatusFromPeriodStatus(value?: string): ProgramLifecycleStatus {
   switch (value?.trim().toUpperCase()) {
+    case 'SCHEDULED':
+    case 'PLANNED':
+      return 'scheduled'
+    case 'RECRUITING':
+    case 'RECRUITING_STUDENTS':
+      return 'recruiting_students'
     case 'IN_PROGRESS':
     case 'RUNNING':
-      return 'education_in_progress'
+      return 'in_progress'
     case 'COMPLETED':
     case 'ENDED':
-      return 'education_completed'
+      return 'completed'
     default:
       return 'recruiting_students'
   }
@@ -82,6 +88,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   const id = dto.id == null ? '' : String(dto.id)
   const now = new Date().toISOString()
   const details = parseTrainedTeacherServiceDetailJson(dto.serviceDetailJson)
+  const periodStatus = (dto as ProgramResponse & { periodStatus?: string }).periodStatus
 
   return baseProgram({
     ...details,
@@ -111,7 +118,9 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
-    lifecycleStatus: dto.lifecycleStatus as ProgramLifecycleStatus | undefined,
+    lifecycleStatus:
+      (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
+      (periodStatus ? lifecycleStatusFromPeriodStatus(periodStatus) : undefined),
     businessArea: dto.businessArea,
     titleEn: dto.titleEn,
     textbookName: dto.textbookName,
@@ -134,7 +143,8 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     totalParticipants: dto.totalParticipants,
     generalTeachers: dto.generalTeachers,
     educatedTeachers: dto.educatedTeachers,
-    instructors: dto.instructors,
+    /** TT Primary — 강사 Relation 없음. API null/0을 유지하고 UI에 노출하지 않음 */
+    instructors: dto.instructors ?? 0,
     managerName: dto.managerName,
     venue: dto.venue,
     curriculum: dto.curriculum,

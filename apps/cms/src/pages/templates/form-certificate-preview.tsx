@@ -1,7 +1,10 @@
 import { Fragment, useRef, type CSSProperties, type RefObject } from 'react'
-import { DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES } from '@/features/template/ui/template-management/template-custom-fields-form'
+import {
+  DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,
+  isCertificateEditableFieldName,
+} from '@/features/template/ui/template-management/template-custom-fields-form'
 import { CERTIFICATE_SERIAL_PLACEHOLDER, isIssuedCertificateSerial } from '@/features/program/shared/lib/certificate-serial'
-import templateCertificateBg from '@/assets/images/template/templatge-background.png'
+import templateCertificateBg from '@/assets/images/template/certificate-background.png'
 import templateEducation from '@/assets/images/template/template-education.png'
 import templateLogo from '@/assets/images/template/template-logo.png'
 import templateStamp from '@/assets/images/template/template-stamp.png'
@@ -28,11 +31,9 @@ const P = 'form-certificate-preview'
 const FRAME_ACTIVE = `${P}__region--frame-active`
 const FRAME_DIMMED = `${P}__region--dimmed`
 const HANDLE_DOT = `${P}__region--has-dot`
-// 커스텀 필드 노출 범위와 동일하게 좌측 편집 닷/프레임도 세 필드만 유지
-const CERTIFICATE_EDIT_FIELD_NAMES = new Set(['certificateBackground', 'titleName', 'bodyContent'])
 
 function shouldShowCertificateEditChrome(fieldName: string): boolean {
-  return CERTIFICATE_EDIT_FIELD_NAMES.has(fieldName)
+  return isCertificateEditableFieldName(fieldName)
 }
 
 export type { CertificateCanvasRegion } from './form-certificate-preview-mapping'
@@ -46,7 +47,7 @@ export interface FormCertificatePreviewProps {
   orgLogoPreviewSrc?: string
   /** 기관 로고 2(orgLogo02) 업로드 시 — 교육기부 슬롯에 표시. 없으면 기본 `template-education.png` */
   orgLogo02PreviewSrc?: string
-  /** 수료증 배경(certificateBackground) 업로드 시 — 캔버스 배경. 없으면 기본 `templatge-background.png` */
+  /** 수료증 배경(certificateBackground) 업로드 시 — 캔버스 배경. 없으면 기본 `certificate-background.png` */
   certificateBackgroundPreviewSrc?: string
   /** 회장 직인(chairmanSeal) 업로드 시 — 직인 이미지. 없으면 기본 `template-stamp.png` */
   chairmanSealPreviewSrc?: string
@@ -95,6 +96,10 @@ export const FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS = `${P}__pdf-export-
 /**
  * 양식 관리 — 봉사활동인증서 프리뷰 슬롯
  * 캔버스(1144×1618 비율) 기준 절대 배치 오버레이
+ *
+ * 기본 `certificate-background.png`는 로고·참여자 라벨·서명·직인·푸터가
+ * 합성된 이미지이므로, 업로드 배경이 없을 때는 해당 HTML 레이어를 숨긴다.
+ * (타이틀·본문·발급일·고유번호·참여자 값만 오버레이)
  */
 export function FormCertificatePreview({
   orgLogoPreviewSrc,
@@ -127,6 +132,15 @@ export function FormCertificatePreview({
       ? serialNumber
       : CERTIFICATE_SERIAL_PLACEHOLDER
 
+  /** 기본 합성 배경 사용 중(커스텀 배경 업로드 없음) */
+  const usesCompositeDefaultBackground = !certificateBackgroundPreviewSrc
+  /** 합성 배경에 이미 있는 정적 레이어 — 커스텀 배경일 때만 HTML로 그림 */
+  const showBakedInStaticLayers = !usesCompositeDefaultBackground
+  const showLogoLayer = showBakedInStaticLayers || Boolean(orgLogoPreviewSrc)
+  const showEducationLayer = showBakedInStaticLayers || Boolean(orgLogo02PreviewSrc)
+  const showStampLayer = showBakedInStaticLayers || Boolean(chairmanSealPreviewSrc)
+  const showParticipantLabels = showBakedInStaticLayers
+
   const previewActiveFieldName =
     activeFieldName != null && shouldShowCertificateEditChrome(activeFieldName)
       ? activeFieldName
@@ -150,10 +164,15 @@ export function FormCertificatePreview({
   const showBackgroundEditChrome = shouldShowCertificateEditChrome(bgField)
   const showTitleEditChrome = shouldShowCertificateEditChrome(CANVAS_REGION_TO_FIELD_NAME.title)
   const showBodyEditChrome = shouldShowCertificateEditChrome('bodyContent')
-  const showLogoEditChrome = shouldShowCertificateEditChrome(CANVAS_REGION_TO_FIELD_NAME.logo)
-  const showEducationEditChrome = shouldShowCertificateEditChrome(CANVAS_REGION_TO_FIELD_NAME.education)
-  const showChairmanEditChrome = shouldShowCertificateEditChrome(CANVAS_REGION_TO_FIELD_NAME.chairmanName)
-  const showStampEditChrome = shouldShowCertificateEditChrome(CANVAS_REGION_TO_FIELD_NAME.stamp)
+  const showLogoEditChrome =
+    showLogoLayer && shouldShowCertificateEditChrome(CANVAS_REGION_TO_FIELD_NAME.logo)
+  const showEducationEditChrome =
+    showEducationLayer && shouldShowCertificateEditChrome(CANVAS_REGION_TO_FIELD_NAME.education)
+  const showChairmanEditChrome =
+    showBakedInStaticLayers &&
+    shouldShowCertificateEditChrome(CANVAS_REGION_TO_FIELD_NAME.chairmanName)
+  const showStampEditChrome =
+    showStampLayer && shouldShowCertificateEditChrome(CANVAS_REGION_TO_FIELD_NAME.stamp)
 
   const previewRootRef = useRef<HTMLDivElement>(null)
   useScrollActiveFieldIntoView(previewRootRef, previewActiveFieldName)
@@ -164,13 +183,21 @@ export function FormCertificatePreview({
   const participantTextColor = fieldTextColors?.participantInfo
 
   return (
-    <div ref={previewRootRef} className={cn(P, className)}>
+    <div
+      ref={previewRootRef}
+      className={cn(
+        P,
+        usesCompositeDefaultBackground ? `${P}--composite-default-bg` : '',
+        className
+      )}
+    >
       <div className={`${P}__bg`}>
         <div
           ref={canvasRef}
           className={cn(
             `${P}__canvas`,
-            showBackgroundEditChrome && HANDLE_DOT,
+            // 캔버스는 전체 래퍼라 미선택 시에도 닷이 남으면 다른 영역 포커스와 겹침 → 선택 시에만 노출
+            showBackgroundEditChrome && region === 'canvas' && HANDLE_DOT,
             showBackgroundEditChrome && region === 'canvas' && FRAME_ACTIVE
           )}
           style={canvasBgStyle}
@@ -191,50 +218,54 @@ export function FormCertificatePreview({
           >
             {displaySerialNumber}
           </span>
-          <span
-            role={showLogoEditChrome ? 'button' : undefined}
-            tabIndex={showLogoEditChrome ? 0 : undefined}
-            className={cn(
-              `${P}__logo-wrap`,
-              showLogoEditChrome && HANDLE_DOT,
-              showLogoEditChrome && region === 'logo' && FRAME_ACTIVE,
-              shouldDim(region, 'logo') && FRAME_DIMMED
-            )}
-            data-template-field="orgLogo"
-            {...(showLogoEditChrome
-              ? getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.logo, onRegionClick)
-              : {})}
-          >
-            <img
-              src={logoSrc}
-              alt={orgLogoPreviewSrc ? '기관 로고' : 'JA Korea'}
-              className={`${P}__logo`}
-              draggable={false}
-            />
-          </span>
-          <span
-            role={showEducationEditChrome ? 'button' : undefined}
-            tabIndex={showEducationEditChrome ? 0 : undefined}
-            className={cn(
-              `${P}__education-wrap`,
-              showEducationEditChrome && HANDLE_DOT,
-              showEducationEditChrome && region === 'education' && FRAME_ACTIVE,
-              shouldDim(region, 'education') && FRAME_DIMMED
-            )}
-            data-template-field="orgLogo02"
-            {...(showEducationEditChrome
-              ? getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.education, onRegionClick)
-              : {})}
-          >
-            <img
-              src={educationSrc}
-              alt={orgLogo02PreviewSrc ? '기관 로고 2' : '교육기부'}
-              className={`${P}__education`}
-              width={150}
-              height={130}
-              draggable={false}
-            />
-          </span>
+          {showLogoLayer ? (
+            <span
+              role={showLogoEditChrome ? 'button' : undefined}
+              tabIndex={showLogoEditChrome ? 0 : undefined}
+              className={cn(
+                `${P}__logo-wrap`,
+                showLogoEditChrome && HANDLE_DOT,
+                showLogoEditChrome && region === 'logo' && FRAME_ACTIVE,
+                shouldDim(region, 'logo') && FRAME_DIMMED
+              )}
+              data-template-field="orgLogo"
+              {...(showLogoEditChrome
+                ? getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.logo, onRegionClick)
+                : {})}
+            >
+              <img
+                src={logoSrc}
+                alt={orgLogoPreviewSrc ? '기관 로고' : 'JA Korea'}
+                className={`${P}__logo`}
+                draggable={false}
+              />
+            </span>
+          ) : null}
+          {showEducationLayer ? (
+            <span
+              role={showEducationEditChrome ? 'button' : undefined}
+              tabIndex={showEducationEditChrome ? 0 : undefined}
+              className={cn(
+                `${P}__education-wrap`,
+                showEducationEditChrome && HANDLE_DOT,
+                showEducationEditChrome && region === 'education' && FRAME_ACTIVE,
+                shouldDim(region, 'education') && FRAME_DIMMED
+              )}
+              data-template-field="orgLogo02"
+              {...(showEducationEditChrome
+                ? getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.education, onRegionClick)
+                : {})}
+            >
+              <img
+                src={educationSrc}
+                alt={orgLogo02PreviewSrc ? '기관 로고 2' : '교육기부'}
+                className={`${P}__education`}
+                width={150}
+                height={130}
+                draggable={false}
+              />
+            </span>
+          ) : null}
           <h1
             role={showTitleEditChrome ? 'button' : undefined}
             tabIndex={showTitleEditChrome ? 0 : undefined}
@@ -259,6 +290,7 @@ export function FormCertificatePreview({
             participantTextColor={participantTextColor}
             onRegionClick={undefined}
             showEditChrome={false}
+            showLabels={showParticipantLabels}
           />
           <p
             role={showBodyEditChrome ? 'button' : undefined}
@@ -289,65 +321,73 @@ export function FormCertificatePreview({
           >
             {formatCertificateIssueDate(issueDate)}
           </time>
-          <p className={cn(`${P}__org-name`, shouldDim(region, 'decor') && FRAME_DIMMED)}>
-            사단법인 제이에이코리아
-          </p>
-          <p
-            role={showChairmanEditChrome ? 'button' : undefined}
-            tabIndex={showChairmanEditChrome ? 0 : undefined}
-            className={cn(
-              `${P}__chairman-name`,
-              showChairmanEditChrome && HANDLE_DOT,
-              showChairmanEditChrome && region === 'chairmanName' && FRAME_ACTIVE,
-              shouldDim(region, 'chairmanName') && FRAME_DIMMED
-            )}
-            aria-label={chairmanAriaLabel}
-            data-template-field="chairmanName"
-            style={chairmanTextColor ? { color: chairmanTextColor } : undefined}
-            {...(showChairmanEditChrome
-              ? getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.chairmanName, onRegionClick)
-              : {})}
-          >
-            <span className={`${P}__chairman-name-part`}>회장</span>
-            {chairmanNameParts.map((ch, i) => (
-              <span key={`chairman-name-${i}`} className={`${P}__chairman-name-part`}>
-                {ch}
-              </span>
-            ))}
-          </p>
-          <span
-            role={showStampEditChrome ? 'button' : undefined}
-            tabIndex={showStampEditChrome ? 0 : undefined}
-            className={cn(
-              `${P}__stamp-wrap`,
-              showStampEditChrome && HANDLE_DOT,
-              showStampEditChrome && region === 'stamp' && FRAME_ACTIVE,
-              shouldDim(region, 'stamp') && FRAME_DIMMED
-            )}
-            data-template-field="chairmanSeal"
-            {...(showStampEditChrome
-              ? getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.stamp, onRegionClick)
-              : {})}
-          >
-            <img
-              src={stampSrc}
-              alt="사단법인 제이에이코리아 직인"
-              className={`${P}__stamp`}
-              width={179}
-              height={178}
-              draggable={false}
+          {showBakedInStaticLayers ? (
+            <p className={cn(`${P}__org-name`, shouldDim(region, 'decor') && FRAME_DIMMED)}>
+              사단법인 제이에이코리아
+            </p>
+          ) : null}
+          {showBakedInStaticLayers ? (
+            <p
+              role={showChairmanEditChrome ? 'button' : undefined}
+              tabIndex={showChairmanEditChrome ? 0 : undefined}
+              className={cn(
+                `${P}__chairman-name`,
+                showChairmanEditChrome && HANDLE_DOT,
+                showChairmanEditChrome && region === 'chairmanName' && FRAME_ACTIVE,
+                shouldDim(region, 'chairmanName') && FRAME_DIMMED
+              )}
+              aria-label={chairmanAriaLabel}
+              data-template-field="chairmanName"
+              style={chairmanTextColor ? { color: chairmanTextColor } : undefined}
+              {...(showChairmanEditChrome
+                ? getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.chairmanName, onRegionClick)
+                : {})}
+            >
+              <span className={`${P}__chairman-name-part`}>회장</span>
+              {chairmanNameParts.map((ch, i) => (
+                <span key={`chairman-name-${i}`} className={`${P}__chairman-name-part`}>
+                  {ch}
+                </span>
+              ))}
+            </p>
+          ) : null}
+          {showStampLayer ? (
+            <span
+              role={showStampEditChrome ? 'button' : undefined}
+              tabIndex={showStampEditChrome ? 0 : undefined}
+              className={cn(
+                `${P}__stamp-wrap`,
+                showStampEditChrome && HANDLE_DOT,
+                showStampEditChrome && region === 'stamp' && FRAME_ACTIVE,
+                shouldDim(region, 'stamp') && FRAME_DIMMED
+              )}
+              data-template-field="chairmanSeal"
+              {...(showStampEditChrome
+                ? getRegionActivationHandlers(CANVAS_REGION_TO_FIELD_NAME.stamp, onRegionClick)
+                : {})}
+            >
+              <img
+                src={stampSrc}
+                alt="사단법인 제이에이코리아 직인"
+                className={`${P}__stamp`}
+                width={179}
+                height={178}
+                draggable={false}
+              />
+            </span>
+          ) : null}
+          {showBakedInStaticLayers ? (
+            <CertificatePreviewFooter
+              region={region}
+              orgAddress={orgAddress}
+              orgPhone={orgPhone}
+              orgFax={orgFax}
+              orgWebsite={orgWebsite}
+              fieldTextColors={fieldTextColors}
+              onRegionClick={undefined}
+              showEditChrome={false}
             />
-          </span>
-          <CertificatePreviewFooter
-            region={region}
-            orgAddress={orgAddress}
-            orgPhone={orgPhone}
-            orgFax={orgFax}
-            orgWebsite={orgWebsite}
-            fieldTextColors={fieldTextColors}
-            onRegionClick={undefined}
-            showEditChrome={false}
-          />
+          ) : null}
         </div>
       </div>
     </div>

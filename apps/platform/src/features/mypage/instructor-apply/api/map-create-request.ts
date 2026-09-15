@@ -1,5 +1,5 @@
 import type { InstructorSharedProfileFormValues } from '@jakorea/domain/instructor/profile-form-values'
-import { normalizeKoreanPhoneDigits } from '@jakorea/domain/shared/korean-phone'
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import type {
   InstructorRoleRequestCreateRequest,
   InstructorRoleRequestEducationGraduateRow,
@@ -315,7 +315,8 @@ export function mapInstructorApplyFormToCreateRequest(
     name: values.name.trim(),
     gender: toApiGender(values.gender),
     birthDate: toApiBirthDate(values.birthDate),
-    phone: normalizeKoreanPhoneDigits(values.contact),
+    /** BE는 `010-1234-5678` 하이픈 형식을 요구 (가입 API와 동일) */
+    phone: formatKoreanPhoneNumber(values.contact.trim()),
     email: values.email.trim(),
     profile: mapProfile(values),
     settlement: mapSettlement(values),

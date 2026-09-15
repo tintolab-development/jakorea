@@ -25,6 +25,7 @@
         "showWritingPeriodOnForm": true,
         "startPeriodMode": "immediate",
         "endPeriodMode": "immediate",
+        "startPeriodPresetLabel": null,
         "endPeriodPresetLabel": null
       },
       {

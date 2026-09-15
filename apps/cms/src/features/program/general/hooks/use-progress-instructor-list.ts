@@ -1,14 +1,12 @@
 /**
- * 프로그램 진행현황 탭 - 참여 강사 목록 상태 관리 훅
- * instructorList state (localStorage 지속), 선택/추가/삭제/상세 모달, 정산현황 변경, 필터링
+ * 프로그램 진행현황 탭 - 참여 강사 목록 (API only, mock/localStorage 폴백 없음)
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  MOCK_PARTICIPATING_INSTRUCTORS,
-  type ParticipatingInstructorRow,
-  type SettlementStatusKey,
+import type {
+  ParticipatingInstructorRow,
+  SettlementStatusKey,
 } from '@/data/mock/participating-instructors'
 import { buildParticipatingInstructorRowFromMember } from '../lib/participating-instructor-member-candidates'
 import {
@@ -20,54 +18,15 @@ import { fetchGeneralParticipatingInstructors } from '@/features/program/general
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 
-const INSTRUCTOR_LIST_STORAGE_KEY = 'cms-program-progress-instructors'
-
-function loadInstructorListFromStorage(): ParticipatingInstructorRow[] | null {
-  try {
-    const raw = localStorage.getItem(INSTRUCTOR_LIST_STORAGE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw) as unknown
-    if (!Array.isArray(parsed)) return null
-    const valid = parsed.every(
-      (r: unknown) =>
-        r != null &&
-        typeof r === 'object' &&
-        typeof (r as ParticipatingInstructorRow).id === 'string' &&
-        typeof (r as ParticipatingInstructorRow).instructorName === 'string'
-    )
-    return valid ? (parsed as ParticipatingInstructorRow[]) : null
-  } catch {
-    return null
-  }
-}
-
-function saveInstructorListToStorage(list: ParticipatingInstructorRow[]) {
-  try {
-    localStorage.setItem(INSTRUCTOR_LIST_STORAGE_KEY, JSON.stringify(list))
-  } catch {
-    // ignore
-  }
-}
-
 export interface UseProgressInstructorListOptions {
   appliedFilters: ProgressFilters
-  /** true면 localStorage 대신 항상 MOCK_PARTICIPATING_INSTRUCTORS 사용(저장 안 함). 풀페이지 참여 강사 섹션용 */
+  /** @deprecated mock 제거 — 무시됨 */
   preferMock?: boolean
   programId?: string
 }
 
-/** localStorage에서 로드한 행에 상세·이력서 등 확장 필드가 없을 수 있으므로 mock과 id 기준으로 병합 */
-function mergeWithMock(list: ParticipatingInstructorRow[]): ParticipatingInstructorRow[] {
-  const mockById = new Map(MOCK_PARTICIPATING_INSTRUCTORS.map(m => [m.id, m]))
-  return list.map(row => {
-    const extended = mockById.get(row.id)
-    return extended ? { ...row, ...extended } : row
-  })
-}
-
 export function useProgressInstructorList({
   appliedFilters,
-  preferMock = false,
   programId,
 }: UseProgressInstructorListOptions) {
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
@@ -79,28 +38,15 @@ export function useProgressInstructorList({
     retry: false,
   })
 
-  const [instructorList, setInstructorList] = useState<ParticipatingInstructorRow[]>(() => {
-    // remote ON이면 mock/localStorage로 채우지 않음 (잘못된 목록 플래시 방지)
-    if (remoteEnabled) return []
-    if (preferMock) return [...MOCK_PARTICIPATING_INSTRUCTORS]
-    const stored = loadInstructorListFromStorage()
-    const list = stored ?? [...MOCK_PARTICIPATING_INSTRUCTORS]
-    return stored ? mergeWithMock(list) : list
-  })
+  const [instructorList, setInstructorList] = useState<ParticipatingInstructorRow[]>([])
 
   useEffect(() => {
     if (remoteEnabled) {
       if (remoteQuery.data) setInstructorList(remoteQuery.data)
       return
     }
-    if (preferMock) {
-      setInstructorList([...MOCK_PARTICIPATING_INSTRUCTORS])
-      return
-    }
-    const stored = loadInstructorListFromStorage()
-    const list = stored ?? [...MOCK_PARTICIPATING_INSTRUCTORS]
-    setInstructorList(stored ? mergeWithMock(list) : list)
-  }, [preferMock, remoteEnabled, remoteQuery.data])
+    setInstructorList([])
+  }, [remoteEnabled, remoteQuery.data])
 
   const [selectedInstructorRowKeys, setSelectedInstructorRowKeys] = useState<React.Key[]>([])
   const [selectedInstructorForDetail, setSelectedInstructorForDetail] =
@@ -108,11 +54,6 @@ export function useProgressInstructorList({
   const [instructorDetailModalOpen, setInstructorDetailModalOpen] = useState(false)
   const [addInstructorModalOpen, setAddInstructorModalOpen] = useState(false)
   const [instructorDeleteGuideOpen, setInstructorDeleteGuideOpen] = useState(false)
-
-  useEffect(() => {
-    if (preferMock || remoteEnabled) return
-    saveInstructorListToStorage(instructorList)
-  }, [instructorList, preferMock, remoteEnabled])
 
   const filteredInstructors = useMemo(() => {
     return instructorList.filter(row => {
@@ -181,7 +122,7 @@ export function useProgressInstructorList({
       setInstructorList(prev =>
         prev.map(row => (row.id === recordId ? { ...row, settlementStatus: status } : row))
       )
-      },
+    },
     []
   )
 
@@ -197,7 +138,7 @@ export function useProgressInstructorList({
     setInstructorList(prev => prev.filter(row => !keysToDelete.has(row.id)))
     setSelectedInstructorRowKeys([])
     setInstructorDeleteGuideOpen(false)
-    }, [selectedInstructorRowKeys])
+  }, [selectedInstructorRowKeys])
 
   return {
     instructorList,

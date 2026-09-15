@@ -1,18 +1,8 @@
 /**
- * Playwright webServer용 env — E2E_MOCK_AUTH=1 이면 adminAuth 를 제외해 mock 로그인·TOTP MFA 사용.
+ * Playwright webServer용 env.
+ * E2E_MOCK_AUTH=1 이면 setup이 localStorage에 mock 세션을 심는다 (`seedMockAdminSession`).
+ * 모듈 allowlist는 사용하지 않는다 — remote URL 있으면 전 모듈 실 API.
  */
 export function buildE2eWebServerEnv(): NodeJS.ProcessEnv {
-  const env = { ...process.env }
-
-  if (process.env.E2E_MOCK_AUTH === '1') {
-    const modules = (env.VITE_REAL_API_MODULES ?? '')
-      .split(',')
-      .map(value => value.trim())
-      .filter(Boolean)
-      .filter(module => module !== 'adminAuth')
-
-    env.VITE_REAL_API_MODULES = modules.join(',')
-  }
-
-  return env
+  return { ...process.env }
 }

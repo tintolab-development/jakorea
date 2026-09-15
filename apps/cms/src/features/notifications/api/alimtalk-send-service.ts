@@ -3,7 +3,7 @@ import {
   mapRecipientCandidates,
   mapTemplateVariablesCatalog,
   toTemplateVariablesRequestParams,
-  type AlimtalkTemplateVariable,
+  type NotificationTemplateVariablesCatalogMapped,
   type NotificationTemplateVariablesQuery,
 } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import {
@@ -18,14 +18,17 @@ import {
   fetchTemplateVariablesRemote,
 } from '@/features/notifications/api/notifications-api-client'
 import type { AlimtalkSendRecipient } from '@/features/notifications/model/alimtalk-send/types'
-import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
+import {
+  isNotificationSendWithoutProgram,
+  parseNotificationSendProgramId,
+} from '@/features/notifications/model/send-program-id'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
 function assertAlimtalkSendRemoteReady(): void {
   if (!isRealApiModuleEnabled('notifications')) {
     throw new Error(
-      '알림 API가 활성화되지 않았습니다. VITE_REAL_API_MODULES에 notifications를 추가해 주세요.'
+      '알림 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정해 주세요.'
     )
   }
   if (!hasRemoteAdminJwt()) {
@@ -47,7 +50,8 @@ export async function getAlimtalkSenderProfiles(): Promise<AlimtalkSenderProfile
 }
 
 export async function getAlimtalkRecipientCandidates(input: {
-  programId: number
+  /** 생략 시 전체 회원 후보 (대상 프로그램 미선택) */
+  programId?: number
   keyword?: string
   participantType?: string
   memberType?: string
@@ -73,7 +77,9 @@ export async function getAlimtalkRecipientCandidates(input: {
   }
   const dto = await fetchRecipientCandidatesRemote({
     channelType: ALIMTALK_API_CHANNEL_TYPE,
-    programId: input.programId,
+    ...(input.programId != null && Number.isFinite(input.programId)
+      ? { programId: input.programId }
+      : {}),
     keyword: input.keyword,
     participantType: input.participantType,
     memberType: input.memberType,
@@ -93,8 +99,10 @@ export async function getAlimtalkRecipientCandidates(input: {
 
 export async function getAlimtalkTemplateVariables(
   input: NotificationTemplateVariablesQuery = {}
-): Promise<AlimtalkTemplateVariable[]> {
-  if (!shouldUseAlimtalkSendRemoteApi()) return []
+): Promise<NotificationTemplateVariablesCatalogMapped> {
+  if (!shouldUseAlimtalkSendRemoteApi()) {
+    return { variables: [], systemManualSendQaEnabled: false }
+  }
   const dto = await fetchTemplateVariablesRemote(toTemplateVariablesRequestParams(input))
   return mapTemplateVariablesCatalog(dto)
 }
@@ -115,8 +123,7 @@ export async function createAlimtalkSendBatch(input: {
   if (!Number.isFinite(templateId)) throw new Error('템플릿 ID가 올바르지 않습니다.')
 
   const programId = parseNotificationSendProgramId(input.programId)
-  const isAllProgram = (input.programId?.trim() ?? '').toLowerCase() === 'all'
-  if (!isAllProgram && programId == null) {
+  if (!isNotificationSendWithoutProgram(input.programId) && programId == null) {
     throw new Error('대상 프로그램을 선택하세요.')
   }
 

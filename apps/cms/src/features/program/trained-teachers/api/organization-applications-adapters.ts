@@ -16,14 +16,19 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
   const schoolName =
     dto.schoolName?.trim() || dto.organizationName?.trim() || '기관명 없음'
   const memo = dto.desiredEducationScheduleMemo?.trim()
+  const region =
+    [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ') ||
+    [dto.schoolSido, dto.schoolSigungu].filter(Boolean).join(' ') ||
+    [dto.organizationSido, dto.organizationSigungu].filter(Boolean).join(' ') ||
+    ''
   return {
     id: toId(dto.applicationId),
     no: index + 1,
     schoolName,
-    region: '',
+    region,
     educationGrade: '',
-    classCount: dto.classCount ?? 0,
-    studentCount: dto.studentCount ?? 0,
+    classCount: dto.classCount ?? dto.requestedClassCount ?? 0,
+    studentCount: dto.studentCount ?? dto.requestedStudentCount ?? 0,
     teacherName: dto.teacherName?.trim() || '-',
     contact: dto.teacherPhoneMasked?.trim() || undefined,
     appliedAt: dto.submittedAt ?? dto.createdAt,

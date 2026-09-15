@@ -65,7 +65,7 @@ export const UJAT_PROGRAM_APPLICATION_INSTITUTION_APPLICATION_REGION_ITEMS: Read
 
 const PERSONAL_INFO_RETENTION_CELL =
   '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
-const THIRD_PARTY_RETENTION_CELL = '5년'
+const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
 
 const PERSONAL_INFO_COLLECTION_BOTTOM =
   '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.'
@@ -153,8 +153,11 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
 const SUBMIT_CONFIRMATION_OPTION_ID =
   'ujat-program-application-institution-submit-confirmation-yes' as const
 
+/** 템플릿 편집용 연도 플레이스홀더 — 실제 작성 시 현재 연도로 치환 */
+export const UJAT_INSTITUTION_SUBMIT_CONFIRMATION_YEAR_PLACEHOLDER = '2NNN' as const
+
 export function buildUjatInstitutionSubmitConfirmationLabel(
-  year: number = new Date().getFullYear()
+  year: number | typeof UJAT_INSTITUTION_SUBMIT_CONFIRMATION_YEAR_PLACEHOLDER = UJAT_INSTITUTION_SUBMIT_CONFIRMATION_YEAR_PLACEHOLDER
 ): string {
   return `네, 상기 내용 모두 확인하였으며, ${year}년 JA Korea 초등 경제교육 대상 학교에 지원합니다.`
 }
@@ -310,6 +313,22 @@ export function migrateUjatProgramApplicationInstitutionParagraphs(
       const next = patchHorizontalTableTextCell(paragraph, 0, 3, THIRD_PARTY_RETENTION_CELL)
       if (next !== paragraph) changed = true
       return next
+    }
+    if (
+      paragraph.id === UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.submitConfirmation &&
+      paragraph.kind === 'single_item' &&
+      paragraph.variant === 'multiple_choice'
+    ) {
+      const canonical = buildUjatInstitutionSubmitConfirmationLabel()
+      const items = paragraph.items.map(item => {
+        if (item.id !== SUBMIT_CONFIRMATION_OPTION_ID || item.label === canonical) return item
+        return { ...item, label: canonical }
+      })
+      if (items.some((item, i) => item !== paragraph.items[i])) {
+        changed = true
+        return { ...paragraph, items }
+      }
+      return paragraph
     }
     return paragraph
   })

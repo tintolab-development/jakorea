@@ -100,7 +100,8 @@ function fillProgramProgressParagraph(
   return {
     ...p,
     programName: resolveProgramTitle(ctx.program),
-    finalInstructorCount: '1명',
+    textbookName: ctx.program?.textbookName?.trim() || '경제교육 교재',
+    progressUnit: '1단원',
     institutionName: ctx.row.schoolName,
     institutionLocation: ctx.instructor.region ?? '-',
     educationDate: toIsoDateFromLabel(startDateLabel) || startDateLabel,

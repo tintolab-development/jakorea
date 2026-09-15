@@ -21,6 +21,57 @@ export type EducationDisplayStatusTone = 'pending' | 'progress' | 'completed' | 
  */
 export type EducationWithdrawalPhase = 'before_education' | 'during_education'
 
+/** 교사회원 교육현황 상세 — 교재 배송 현황 */
+export type EducationTeacherDeliveryStatus = 'before' | 'shipping' | 'completed'
+
+export const EDUCATION_TEACHER_DELIVERY_STATUS_LABEL: Record<
+  EducationTeacherDeliveryStatus,
+  string
+> = {
+  before: '배송 전',
+  shipping: '배송 중',
+  completed: '배송 완료',
+}
+
+/** 교사회원 교육현황 상세 — 교재·배정강사(동의서) */
+export type EducationTeacherAssignmentTextbook = {
+  title: string
+  kitCountLabel: string
+  volumeCountLabel: string
+  deliveryStatus: EducationTeacherDeliveryStatus
+}
+
+export type EducationTeacherAssignmentConsent = {
+  id: string
+  title: string
+  fileUrl?: string
+}
+
+export type EducationTeacherAssignedInstructor = {
+  id: string
+  name: string
+  /**
+   * 기관이 JA 시스템에서 동의서 확인을 요청한 경우에만 true.
+   * true일 때 성범죄·행정정보 동의서 다운로드 노출.
+   */
+  consentDocumentsRequested?: boolean
+  consents?: EducationTeacherAssignmentConsent[]
+}
+
+export type EducationTeacherAssignment = {
+  /** 지정 교재가 있을 때만 — 없으면 교재 카드 비노출 */
+  textbook?: EducationTeacherAssignmentTextbook
+  /** 배정 강사. 비어 있으면 강사 카드 비노출. 2명 이상이면 캐러셀 */
+  instructors: EducationTeacherAssignedInstructor[]
+}
+
+export function hasTeacherAssignmentAsideContent(
+  assignment: EducationTeacherAssignment | undefined,
+): boolean {
+  if (!assignment) return false
+  return Boolean(assignment.textbook) || assignment.instructors.length > 0
+}
+
 export type EducationApplicationListItem = {
   id: string
   programId: string
@@ -51,6 +102,47 @@ export type EducationApplicationListItem = {
    * 예: 10회차 중 3회차까지 진행 후 포기 → `3` — 이후 회차 일정·과제·자료 비노출
    */
   lastParticipatedSession?: number
+  /** 교사회원 상세 헤더 우측 — 교재·배정강사 (일반/강사 비노출) */
+  teacherAssignment?: EducationTeacherAssignment
+  /** 교사회원 신청 내용 탭 — 기관 신청·안내사항·희망 일정 */
+  teacherApplicationContent?: EducationTeacherApplicationContent
+}
+
+/** 교사회원 신청 내용 — 신청 기관 정보 */
+export type EducationTeacherApplicationInstitution = {
+  name: string
+  grade: string
+  address: string
+  addressDetail: string
+  classAndHeadcount: string
+  /** 프로그램이 교육형태를 참여자 선택으로 둔 경우에만 */
+  preferredEducationForm?: string
+  venue?: string
+  teacherContact: string
+  reason: string
+  otherRequests: string
+}
+
+/** 교사회원 신청 내용 — 안내사항 */
+export type EducationTeacherApplicationGuidance = {
+  computerInRoom: string
+  waitingPlace: string
+  meal: string
+  otherNotes: string
+  /** 성범죄 동의서 제출 요청 시에만 */
+  sexOffenseConsentMethod?: string
+}
+
+export type EducationTeacherPreferredSchedule = {
+  id: string
+  label: string
+  value: string
+}
+
+export type EducationTeacherApplicationContent = {
+  institution: EducationTeacherApplicationInstitution
+  guidance: EducationTeacherApplicationGuidance
+  preferredSchedules: EducationTeacherPreferredSchedule[]
 }
 
 export type EducationApplicationListParams = {

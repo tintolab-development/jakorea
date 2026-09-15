@@ -76,7 +76,7 @@ export const BACKEND_DUMMY_CATEGORIES: readonly BackendDummyCategory[] = [
   cat({
     id: 'ujat',
     domainId: 'programs',
-    label: 'UJAT 프로그램 관리',
+    label: 'UJAT 프로그램',
     shortLabel: 'UJAT',
     lnbPath: '/programs/ujat',
     detailPct: 24,

@@ -1,5 +1,5 @@
 import { Form } from 'antd'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { DeferredCmsInput } from '@/features/template/ui/shared/deferred-cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import type {
@@ -164,12 +164,12 @@ function FormEditorVerticalTableRowFieldsBody({
                   className="form-editor-horizontal-table-body-fields__content-form-item"
                   label="항목명"
                 >
-                  <CmsInput
+                  <DeferredCmsInput
                     width="100%"
                     inputSize="large"
                     className="form-editor-horizontal-table-body-fields__content-input"
                     value={row.headers[si] ?? ''}
-                    onChange={e => setHeader(si, e.target.value)}
+                    onCommit={next => setHeader(si, next)}
                     placeholder="항목명을 입력해 주세요"
                   />
                 </Form.Item>
@@ -200,12 +200,12 @@ function FormEditorVerticalTableRowFieldsBody({
                           className="form-editor-horizontal-table-body-fields__content-form-item"
                           label="날짜 입력창 안내 텍스트"
                         >
-                          <CmsInput
+                          <DeferredCmsInput
                             width="100%"
                             inputSize="large"
                             className="form-editor-horizontal-table-body-fields__content-input"
                             value={row.placeholderHints?.[si] ?? ''}
-                            onChange={e => setPlaceholderHint(si, e.target.value)}
+                            onCommit={next => setPlaceholderHint(si, next)}
                             placeholder={DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER}
                           />
                         </Form.Item>
@@ -213,14 +213,12 @@ function FormEditorVerticalTableRowFieldsBody({
                           className="form-editor-horizontal-table-body-fields__content-form-item"
                           label="시간 입력창 안내 텍스트"
                         >
-                          <CmsInput
+                          <DeferredCmsInput
                             width="100%"
                             inputSize="large"
                             className="form-editor-horizontal-table-body-fields__content-input"
                             value={row.dateTimeCompositeTimeHints?.[si] ?? ''}
-                            onChange={e =>
-                              setCompositeTimeHint(si as 0 | 1, e.target.value)
-                            }
+                            onCommit={next => setCompositeTimeHint(si as 0 | 1, next)}
                             placeholder={DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER}
                           />
                         </Form.Item>
@@ -230,12 +228,12 @@ function FormEditorVerticalTableRowFieldsBody({
                         className="form-editor-horizontal-table-body-fields__content-form-item"
                         label="입력창 안내 텍스트"
                       >
-                        <CmsInput
+                        <DeferredCmsInput
                           width="100%"
                           inputSize="large"
                           className="form-editor-horizontal-table-body-fields__content-input"
                           value={row.placeholderHints?.[si] ?? ''}
-                          onChange={e => setPlaceholderHint(si, e.target.value)}
+                          onCommit={next => setPlaceholderHint(si, next)}
                           placeholder={DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER}
                         />
                       </Form.Item>
@@ -246,12 +244,12 @@ function FormEditorVerticalTableRowFieldsBody({
                     className="form-editor-horizontal-table-body-fields__content-form-item"
                     label="입력창 안내 텍스트"
                   >
-                    <CmsInput
+                    <DeferredCmsInput
                       width="100%"
                       inputSize="large"
                       className="form-editor-horizontal-table-body-fields__content-input"
                       value={row.placeholderHints?.[si] ?? ''}
-                      onChange={e => setPlaceholderHint(si, e.target.value)}
+                      onCommit={next => setPlaceholderHint(si, next)}
                       placeholder={DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER}
                     />
                   </Form.Item>
@@ -261,12 +259,12 @@ function FormEditorVerticalTableRowFieldsBody({
                     className="form-editor-horizontal-table-body-fields__content-form-item"
                     label="내용"
                   >
-                    <CmsInput
+                    <DeferredCmsInput
                       width="100%"
                       inputSize="large"
                       className="form-editor-horizontal-table-body-fields__content-input"
                       value={row.cells[si] ?? ''}
-                      onChange={e => setCell(si, e.target.value)}
+                      onCommit={next => setCell(si, next)}
                       placeholder="내용을 입력해 주세요"
                     />
                   </Form.Item>

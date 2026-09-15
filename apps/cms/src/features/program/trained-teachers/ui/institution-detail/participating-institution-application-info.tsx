@@ -4,6 +4,7 @@
 
 import type { ReactNode } from 'react'
 import { getTrainedTeachersPreferredScheduleBlocks } from '@/data/mock/trained-teachers-institution-detail'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import {
   INSTITUTION_APPLICATION_INFO_COLGROUP,
@@ -62,7 +63,9 @@ export function TrainedTeachersParticipatingInstitutionApplicationInfo({
   applicationReason,
   otherRequests,
 }: TrainedTeachersParticipatingInstitutionApplicationInfoProps) {
-  const preferredScheduleBlocks = getTrainedTeachersPreferredScheduleBlocks(institutionId)
+  const preferredScheduleBlocks = shouldUseTrainedTeacherProgramsRemoteApi()
+    ? []
+    : getTrainedTeachersPreferredScheduleBlocks(institutionId)
 
   return (
     <div className="institution-basic-info applicant-institution-basic-info participating-institution-application-info">

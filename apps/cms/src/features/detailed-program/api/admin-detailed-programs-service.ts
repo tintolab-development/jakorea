@@ -12,13 +12,14 @@ import {
   updateDetailedProgramRemote,
 } from '@/features/detailed-program/api/detailed-programs-api-client'
 import type { DetailedProgramManagementRow } from '@/features/detailed-program/model/detailed-program-management.types'
+import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
 function assertDetailedProgramsRemoteReady(): void {
   if (!isRealApiModuleEnabled('detailedPrograms')) {
     throw new Error(
-      '세부 프로그램 API가 활성화되지 않았습니다. VITE_REAL_API_MODULES에 detailedPrograms를 추가해 주세요.'
+      '세부 프로그램 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정해 주세요.'
     )
   }
   if (!hasRemoteAdminJwt()) {
@@ -38,6 +39,15 @@ export async function getDetailedProgramList(
     detailedProgramsParamsFromSearchParams(searchParams)
   )
   return mapDetailedProgramListResponse(dto)
+}
+
+/** 등록·공통정보 셀렉트 — 사용(active)만. remote 미사용 시 mock. */
+export async function getDetailedProgramOptionsList(): Promise<DetailedProgramManagementRow[]> {
+  if (!shouldUseDetailedProgramsRemoteApi()) {
+    return mockDetailedProgramManagementListRows.filter(row => row.active)
+  }
+  const rows = await getDetailedProgramList(new URLSearchParams('dp_use=active'))
+  return rows.filter(row => row.active)
 }
 
 export async function createDetailedProgram(input: {

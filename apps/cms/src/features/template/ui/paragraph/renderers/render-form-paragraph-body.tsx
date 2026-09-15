@@ -13,6 +13,11 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { AgreementAdminProxyConfirmBlock } from '@/features/template/ui/paragraph/explanation/agreement-admin-proxy-confirm-block'
 import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
+import {
+  getStructureLockedPartialLockedBodyColumnIndexes,
+  isStructureLockedPartialDisclaimerEdit,
+  isStructureLockedPartialTextParagraph,
+} from '@/features/template/lib/structure-locked-paragraph-hint'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
 import { StaticDescriptionLines } from '@/features/template/ui/paragraph/explanation/static-description-lines'
 import {
@@ -322,8 +327,8 @@ export function renderFormParagraphBody(
           isCardSelected={isCardSelected}
           isBodyInteractive={isBodyInteractive}
           paragraphInteractionMode={paragraphInteractionMode}
-          activeItemId={options?.singleItemListActiveItemId}
-          onSelectItem={options?.onSelectSingleItemListItem}
+          activeItemId={isBodyInteractive ? options?.singleItemListActiveItemId : null}
+          onSelectItem={isBodyInteractive ? options?.onSelectSingleItemListItem : undefined}
         />
       )
     }
@@ -365,11 +370,16 @@ export function renderFormParagraphBody(
       } else if (shouldRenderDisabledPlaceholder) {
         explanationBodyDisplayMode = 'disabled-placeholder'
       }
+      /** 행정정보 이용기관·이용사무 — 시드 구조 잠금이어도 authoring에서 본문 텍스트 수정 허용 */
+      const isAgreementNoticeExplanationEditMode =
+        isAgreementNoticeExplanationParagraph &&
+        !isPreviewReadonly &&
+        paragraphInteractionMode === 'authoring'
       return (
         <ExplanationText
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isBodyInteractive}
+          isEditMode={isAgreementNoticeExplanationEditMode || isBodyInteractive}
           bodyDisplayMode={explanationBodyDisplayMode}
           bottomConsentInteractive={isBodyInteractive || structureLockedConsentChoiceInteractive}
           consentFillMode={consentFillBodyReadOnly}
@@ -381,7 +391,14 @@ export function renderFormParagraphBody(
         p as Extract<WritingFormParagraph, { variant: 'horizontal_table' }>
       )
       /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 동의서 fill은 양식 본문만 잠금.
-       * 텍스트형 셀 편집은 구조 미잠금(사용자 신규/복제)일 때만. 카탈로그 행정정보 구비서류 표는 고정. */
+       * 텍스트형 셀 편집은 구조 미잠금(사용자 신규/복제)일 때만. 카탈로그 행정정보 구비서류 표는 고정.
+       * 개인정보·제3자 시드: 구조 잠금이어도 일부 셀·하단 안내만 authoring 수정 허용. */
+      const structureLockedPartialTextEdit =
+        structureLocked &&
+        isStructureLockedPartialTextParagraph(hp.id) &&
+        paragraphInteractionMode === 'authoring' &&
+        !isPreviewReadonly &&
+        isParagraphSelected
       const isTextTableAuthoringEdit =
         hp.tableFlavor === 'text' &&
         paragraphInteractionMode === 'authoring' &&
@@ -389,6 +406,7 @@ export function renderFormParagraphBody(
         !structureLocked
       const isEditMode =
         isTextTableAuthoringEdit ||
+        structureLockedPartialTextEdit ||
         (!isPreviewReadonly &&
           (!structureLocked ||
             consentFillParagraphInteractive ||
@@ -403,12 +421,19 @@ export function renderFormParagraphBody(
         (hp.tableFlavor === 'field' ||
           hp.tableFlavor === 'text' ||
           isParagraphSelected)
+      const lockedBodyColumnIndexes = structureLockedPartialTextEdit
+        ? getStructureLockedPartialLockedBodyColumnIndexes(hp.id, hp.columnHeaders.length)
+        : undefined
       return (
         <HorizontalTableParagraphBody
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isEditMode}
           tableCanvasInteractive={tableCanvasInteractive}
+          lockedBodyColumnIndexes={lockedBodyColumnIndexes}
+          allowDisclaimerBottomTextEdit={
+            structureLockedPartialTextEdit && isStructureLockedPartialDisclaimerEdit(hp.id)
+          }
           bottomConsentPreviewInAuthoring={structureLockedConsentChoiceInteractive}
           consentFillMode={consentFillBodyReadOnly}
           tableRowSelection={options?.horizontalTableRowSelection}
@@ -420,7 +445,12 @@ export function renderFormParagraphBody(
           lectureFeeCalculationValues={options?.lectureFeeCalculationValues}
           paymentStatementCalculationLines={options?.paymentStatementCalculationLines}
           paymentStatementDisplayMode={options?.paymentStatementDisplayMode}
-          agreementNoticeIdTypeInteractive={options?.agreementNoticeIdTypeInteractive}
+          agreementNoticeIdTypeInteractive={
+            options?.agreementNoticeIdTypeInteractive === true ||
+            (p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.table &&
+              paragraphInteractionMode === 'authoring' &&
+              !isPreviewReadonly)
+          }
           programRegistration={options?.programRegistration}
           ujatProgramRegistration={options?.ujatProgramRegistration}
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
@@ -493,6 +523,7 @@ export function renderFormParagraphBody(
           autofill={options?.ujatJournalEducationInfoAutofill}
           previewReadonly={isUserLikeVisible || isPreviewReadonly}
           previewSkin="surface"
+          isTemplateAuthoringMode={paragraphInteractionMode === 'authoring'}
         />
       )
     }
@@ -598,8 +629,8 @@ export function renderFormParagraphBody(
           isCardSelected={isCardSelected}
           isBodyInteractive={isBodyInteractive}
           paragraphInteractionMode={paragraphInteractionMode}
-          activeItemId={options?.singleItemListActiveItemId}
-          onSelectItem={options?.onSelectSingleItemListItem}
+          activeItemId={isBodyInteractive ? options?.singleItemListActiveItemId : null}
+          onSelectItem={isBodyInteractive ? options?.onSelectSingleItemListItem : undefined}
           readOnlyFilledItems={
             options?.agreementNoticeSubjectPrefilledReadOnly === true &&
             p.id === 'agreement-notice-subject'
@@ -614,8 +645,8 @@ export function renderFormParagraphBody(
           isCardSelected={isCardSelected}
           isBodyInteractive={isBodyInteractive}
           paragraphInteractionMode={paragraphInteractionMode}
-          activeItemId={options?.singleItemListActiveItemId}
-          onSelectItem={options?.onSelectSingleItemListItem}
+          activeItemId={isBodyInteractive ? options?.singleItemListActiveItemId : null}
+          onSelectItem={isBodyInteractive ? options?.onSelectSingleItemListItem : undefined}
         />
       )
     case 'multiple_choice': {
@@ -661,7 +692,8 @@ export function renderFormParagraphBody(
           : undefined
       const resolveItemDisplayLabel =
         options?.ujatProgramApplicationFormInstitution === true &&
-        isUjatProgramApplicationInstitutionSingleOptionMultipleChoiceSeed(p.id)
+        isUjatProgramApplicationInstitutionSingleOptionMultipleChoiceSeed(p.id) &&
+        paragraphInteractionMode !== 'authoring'
           ? (item: { id: string; label: string }) =>
               resolveUjatInstitutionSubmitConfirmationItemLabel(item.label)
           : ujatVolunteerRecruitCohort &&
@@ -673,9 +705,9 @@ export function renderFormParagraphBody(
                   ujatVolunteerRecruitCohort
                 )
             : undefined
-      const suppressMcItemsEditor = isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(
-        p.id
-      )
+      const suppressMcItemsEditor =
+        structureLocked ||
+        isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(p.id)
       const usesMcItemsFocus =
         !suppressMcItemsEditor && options?.onSelectSingleItemListItem != null
       const itemsEditActive = suppressMcItemsEditor
@@ -749,7 +781,13 @@ export function renderFormParagraphBody(
       return (
         <ScaleType
           paragraph={p}
-          onChange={next => updateParagraph(p.id, () => next)}
+          onSelectPreviewItem={selectedPreviewItemId =>
+            updateParagraph(p.id, cur =>
+              cur.kind === 'single_item' && cur.variant === 'scale_type'
+                ? { ...cur, selectedPreviewItemId }
+                : cur
+            )
+          }
           isCardSelected={isCardSelected}
           isBodyInteractive={isBodyInteractive}
           paragraphInteractionMode={paragraphInteractionMode}
@@ -767,11 +805,21 @@ export function renderFormParagraphBody(
           />
         )
       }
+      /**
+       * 구조 잠금 시드(UJAT 봉사자 정보 등)도 authoring에서 노출 필드 칩 토글 허용.
+       * (카드 미선택이어도 가능 — 미리보기·저장의 selectedUserFieldKeys 연동)
+       */
+      const isUserInfoFieldSelectEditMode =
+        isPreviewReadonly
+          ? false
+          : structureLocked && paragraphInteractionMode === 'authoring'
+            ? true
+            : isBodyInteractive
       return (
         <UserInfo
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isBodyInteractive}
+          isEditMode={isUserInfoFieldSelectEditMode}
           layout={isUserLikeVisible ? 'previewTable' : 'chips'}
           previewValues={options?.userInfoPreviewValues}
           forceTwoColumnRow={p.id === UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.volunteerInfo}
@@ -787,11 +835,15 @@ export function renderFormParagraphBody(
       )
     case 'id_type_with_input':
       if (p.kind !== 'single_item' || p.variant !== 'id_type_with_input') return null
+      const isAgreementNoticeIdTypeAuthoringEdit =
+        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.idType &&
+        paragraphInteractionMode === 'authoring' &&
+        !isPreviewReadonly
       return (
         <IdTypeWithInput
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
-          isEditMode={isBodyInteractive}
+          isEditMode={isAgreementNoticeIdTypeAuthoringEdit || isBodyInteractive}
         />
       )
   }

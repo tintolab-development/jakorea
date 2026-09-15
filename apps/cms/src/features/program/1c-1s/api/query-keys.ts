@@ -7,6 +7,9 @@ export const companySchoolQueryKeys = {
   details: () => [...companySchoolQueryKeys.all, 'detail'] as const,
   detail: (programId: string) =>
     [...companySchoolQueryKeys.details(), programId] as const,
+  /** 강사 배정 + 일정 → 1일1교 점유일 */
+  instructorAssignmentConflicts: (programId: string) =>
+    [...companySchoolQueryKeys.all, 'instructor-assignment-conflicts', programId] as const,
   mutations: {
     create: () => [...companySchoolQueryKeys.all, 'mutation', 'create'] as const,
     update: (programId: string) =>

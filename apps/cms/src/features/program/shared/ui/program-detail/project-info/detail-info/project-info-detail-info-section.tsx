@@ -338,7 +338,7 @@ function AdditionalContentRow({
               />
             </div>
             <RichTextViewer
-              content={resolveAdditionalContentHtml(program)}
+              content={resolveAdditionalContentHtml(program, emptyReadDisplay)}
               contentFormat="html"
               maxHeight="none"
               className="program-detail-info-tab__editor-content"
@@ -596,6 +596,7 @@ export interface InstructorDetailInfoSectionProps {
   isEditMode?: boolean
   form?: UseFormReturn<ProgramDetailEditFormValues>
   onRegisterGetAdditionalContentHtml?: (getter: () => string) => void
+  emptyReadDisplay?: DetailInfoEmptyReadDisplay
 }
 
 export function InstructorDetailInfoSection({
@@ -603,6 +604,7 @@ export function InstructorDetailInfoSection({
   isEditMode = false,
   form,
   onRegisterGetAdditionalContentHtml,
+  emptyReadDisplay = 'mock-default',
 }: InstructorDetailInfoSectionProps) {
   const {
     editorOpen,
@@ -616,10 +618,24 @@ export function InstructorDetailInfoSection({
     displayThumbnailUrl,
     thumbnailFilename,
     form: f,
-  } = useDetailInfoEditorBlock(program, isEditMode, form, onRegisterGetAdditionalContentHtml)
+  } = useDetailInfoEditorBlock(
+    program,
+    isEditMode,
+    form,
+    onRegisterGetAdditionalContentHtml,
+    emptyReadDisplay
+  )
 
-  const applicationMethod = program.applicationMethod ?? '-'
-  const otherNotes = program.otherNotes ?? program.oneLineIntroduction ?? '-'
+  const applicationMethod = resolveTextReadContent(
+    program.applicationMethod,
+    emptyReadDisplay,
+    '-'
+  )
+  const otherNotes = resolveTextReadContent(
+    program.otherNotes ?? program.oneLineIntroduction,
+    emptyReadDisplay,
+    '-'
+  )
   const headerDescription = isFormEdit
     ? '공란인 경우, 상세 페이지에서 항목 미노출 됩니다.'
     : undefined
@@ -654,7 +670,11 @@ export function InstructorDetailInfoSection({
             form={f}
             name="description"
             placeholder="프로그램 설명"
-            readContent={program.description || DEFAULT_PROGRAM_DESCRIPTION}
+            readContent={resolveTextReadContent(
+              program.description,
+              emptyReadDisplay,
+              DEFAULT_PROGRAM_DESCRIPTION
+            )}
           />
           <TextAreaFieldRow
             label="모집 안내"
@@ -663,7 +683,11 @@ export function InstructorDetailInfoSection({
             form={f}
             name="recruitmentGuide"
             placeholder="모집 안내"
-            readContent={program.recruitmentGuide || DEFAULT_RECRUITMENT_GUIDE}
+            readContent={resolveTextReadContent(
+              program.recruitmentGuide,
+              emptyReadDisplay,
+              DEFAULT_RECRUITMENT_GUIDE
+            )}
           />
           <TextAreaFieldRow
             label="지원 방법"
@@ -682,6 +706,7 @@ export function InstructorDetailInfoSection({
             editor={editor}
             editorMinHeight={editorMinHeight}
             showRequiredOnTh={false}
+            emptyReadDisplay={emptyReadDisplay}
           />
           <TextAreaFieldRow
             label="기타사항"
@@ -702,6 +727,7 @@ export function InstructorDetailInfoSection({
               '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
               '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
             ]}
+            emptyReadDisplay={emptyReadDisplay}
           />
         </DetailInfoTableFrame>
       </DetailInfoForm>
@@ -717,6 +743,7 @@ export interface VolunteerDetailInfoSectionProps {
   sectionTitle?: string
   sectionDescription?: string | null
   sectionTitleOnly?: boolean
+  emptyReadDisplay?: DetailInfoEmptyReadDisplay
 }
 
 export function VolunteerDetailInfoSection({
@@ -727,6 +754,7 @@ export function VolunteerDetailInfoSection({
   sectionTitle,
   sectionDescription,
   sectionTitleOnly = false,
+  emptyReadDisplay = 'mock-default',
 }: VolunteerDetailInfoSectionProps) {
   const {
     editorOpen,
@@ -740,10 +768,24 @@ export function VolunteerDetailInfoSection({
     displayThumbnailUrl,
     thumbnailFilename,
     form: f,
-  } = useDetailInfoEditorBlock(program, isEditMode, form, onRegisterGetAdditionalContentHtml)
+  } = useDetailInfoEditorBlock(
+    program,
+    isEditMode,
+    form,
+    onRegisterGetAdditionalContentHtml,
+    emptyReadDisplay
+  )
 
-  const applicationMethod = program.applicationMethod ?? '-'
-  const otherNotes = program.otherNotes ?? program.oneLineIntroduction ?? '-'
+  const applicationMethod = resolveTextReadContent(
+    program.applicationMethod,
+    emptyReadDisplay,
+    '-'
+  )
+  const otherNotes = resolveTextReadContent(
+    program.otherNotes ?? program.oneLineIntroduction,
+    emptyReadDisplay,
+    '-'
+  )
   const headerDescription = !isFormEdit
     ? undefined
     : sectionTitleOnly
@@ -780,7 +822,11 @@ export function VolunteerDetailInfoSection({
             form={f}
             name="description"
             placeholder="프로그램 설명"
-            readContent={program.description || DEFAULT_PROGRAM_DESCRIPTION}
+            readContent={resolveTextReadContent(
+              program.description,
+              emptyReadDisplay,
+              DEFAULT_PROGRAM_DESCRIPTION
+            )}
           />
           <TextAreaFieldRow
             label="모집 안내"
@@ -789,7 +835,11 @@ export function VolunteerDetailInfoSection({
             form={f}
             name="recruitmentGuide"
             placeholder="모집 안내"
-            readContent={program.recruitmentGuide || DEFAULT_RECRUITMENT_GUIDE}
+            readContent={resolveTextReadContent(
+              program.recruitmentGuide,
+              emptyReadDisplay,
+              DEFAULT_RECRUITMENT_GUIDE
+            )}
           />
           <TextAreaFieldRow
             label="지원 방법"
@@ -808,6 +858,7 @@ export function VolunteerDetailInfoSection({
             editor={editor}
             editorMinHeight={editorMinHeight}
             showRequiredOnTh={false}
+            emptyReadDisplay={emptyReadDisplay}
           />
           <TextAreaFieldRow
             label="기타사항"

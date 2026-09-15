@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import {
+  isInstitutionApplicationBridgeTemplateAuthoring,
   patchInstitutionApplicationProgramBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
@@ -114,12 +115,21 @@ export function ApplicantRecruitParticipantInfoParagraph({
   defaults,
 }: ApplicantRecruitParticipantInfoParagraphProps = {}) {
   const institutionApplicationBridge = useInstitutionApplicationProgramBridge()
+  const isTrainedTeachers = layoutVariant === 'trainedTeachers'
+  /** 템플릿 관리 편집 — 유형 미연동 시 최대 일정/차시 필드 상시 노출 */
+  const isTemplateAuthoring = isInstitutionApplicationBridgeTemplateAuthoring(
+    institutionApplicationBridge
+  )
   const showMaxScheduleCountField =
     showInstitutionApplicationLimits &&
-    shouldShowInstitutionApplicationMaxScheduleFields(institutionApplicationBridge)
+    (isTrainedTeachers ||
+      isTemplateAuthoring ||
+      shouldShowInstitutionApplicationMaxScheduleFields(institutionApplicationBridge))
   const showMaxSessionsPerDayField =
     showInstitutionApplicationLimits &&
-    shouldShowInstitutionApplicationMaxSessionsPerDayField(institutionApplicationBridge)
+    (isTrainedTeachers ||
+      isTemplateAuthoring ||
+      shouldShowInstitutionApplicationMaxSessionsPerDayField(institutionApplicationBridge))
   type RangeSeal = { start: string; end: string } | null
 
   const [announcementPublished, setAnnouncementPublished] =
@@ -127,14 +137,16 @@ export function ApplicantRecruitParticipantInfoParagraph({
       APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.announcementPublished,
       'published'
     )
-  const [preguidanceRequired, setPreguidanceRequired] = useApplicantRecruitInstitutionOverlayKv<string>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.preguidanceRequired,
-    defaults?.preguidanceRequired ?? 'need'
-  )
-  const [studentListRequired, setStudentListRequired] = useApplicantRecruitInstitutionOverlayKv<string>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.studentListRequired,
-    defaults?.studentListRequired ?? 'need'
-  )
+  const [preguidanceRequired, setPreguidanceRequired] =
+    useApplicantRecruitInstitutionOverlayKv<string>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.preguidanceRequired,
+      defaults?.preguidanceRequired ?? 'need'
+    )
+  const [studentListRequired, setStudentListRequired] =
+    useApplicantRecruitInstitutionOverlayKv<string>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.studentListRequired,
+      defaults?.studentListRequired ?? 'need'
+    )
   const [maxInstructors, setMaxInstructors] = useApplicantRecruitInstitutionOverlayKv<
     number | undefined
   >(
@@ -159,10 +171,11 @@ export function ApplicantRecruitParticipantInfoParagraph({
   const [programAnchorIso, setProgramAnchorIso] = useApplicantRecruitInstitutionOverlayKv<
     string | null
   >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.programAnchorIso, null)
-  const [programRangeSeal, setProgramRangeSeal] = useApplicantRecruitInstitutionOverlayKv<RangeSeal>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.programRangeSeal,
-    null
-  )
+  const [programRangeSeal, setProgramRangeSeal] =
+    useApplicantRecruitInstitutionOverlayKv<RangeSeal>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.programRangeSeal,
+      null
+    )
   const programAnchor = programAnchorIso ? dayjs(programAnchorIso) : null
   const setProgramAnchor = (next: Dayjs | null) => {
     setProgramAnchorIso(next == null ? null : next.toISOString())
@@ -186,10 +199,11 @@ export function ApplicantRecruitParticipantInfoParagraph({
   const [recruitAnchorIso, setRecruitAnchorIso] = useApplicantRecruitInstitutionOverlayKv<
     string | null
   >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.recruitAnchorIso, null)
-  const [recruitRangeSeal, setRecruitRangeSeal] = useApplicantRecruitInstitutionOverlayKv<RangeSeal>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.recruitRangeSeal,
-    null
-  )
+  const [recruitRangeSeal, setRecruitRangeSeal] =
+    useApplicantRecruitInstitutionOverlayKv<RangeSeal>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.recruitRangeSeal,
+      null
+    )
   const recruitAnchor = recruitAnchorIso ? dayjs(recruitAnchorIso) : null
   const setRecruitAnchor = (next: Dayjs | null) => {
     setRecruitAnchorIso(next == null ? null : next.toISOString())
@@ -221,18 +235,20 @@ export function ApplicantRecruitParticipantInfoParagraph({
     APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.targetLevels,
     []
   )
-  const [notesNotApplicable, setNotesNotApplicable] = useApplicantRecruitInstitutionOverlayKv<boolean>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.notesNotApplicable,
-    false
-  )
+  const [notesNotApplicable, setNotesNotApplicable] =
+    useApplicantRecruitInstitutionOverlayKv<boolean>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.notesNotApplicable,
+      false
+    )
   const [notes, setNotes] = useApplicantRecruitInstitutionOverlayKv<string>(
     APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.notes,
     ''
   )
-  const [finalAnnounceMethod, setFinalAnnounceMethod] = useApplicantRecruitInstitutionOverlayKv<string>(
-    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.finalAnnounceMethod,
-    ''
-  )
+  const [finalAnnounceMethod, setFinalAnnounceMethod] =
+    useApplicantRecruitInstitutionOverlayKv<string>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.finalAnnounceMethod,
+      ''
+    )
   const [targetLevelDetail, setTargetLevelDetail] = useApplicantRecruitInstitutionOverlayKv<string>(
     APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.targetLevelDetail,
     ''
@@ -258,13 +274,7 @@ export function ApplicantRecruitParticipantInfoParagraph({
       maxScheduleCount,
       maxSessionsPerDay,
     })
-  }, [
-    preguidanceRequired,
-    maxInstructors,
-    maxClassCount,
-    maxScheduleCount,
-    maxSessionsPerDay,
-  ])
+  }, [preguidanceRequired, maxInstructors, maxClassCount, maxScheduleCount, maxSessionsPerDay])
 
   if (layoutVariant === 'economy') {
     return (
@@ -341,7 +351,9 @@ export function ApplicantRecruitParticipantInfoParagraph({
               label="참여자 모집 현황"
               readOnlyDisplay
               view={
-                <span className="form-editor-template-field-hint-text">{RECRUIT_PROGRESS_HINT}</span>
+                <span className="form-editor-template-field-hint-text">
+                  {RECRUIT_PROGRESS_HINT}
+                </span>
               }
             />
           </DetailInfoForm.Row>
@@ -450,11 +462,6 @@ export function ApplicantRecruitParticipantInfoParagraph({
     )
   }
 
-  const isTrainedTeachers = layoutVariant === 'trainedTeachers'
-  const isGeneral = layoutVariant === 'general'
-  const showTrainedTeachersScheduleLimits =
-    isTrainedTeachers && showInstitutionApplicationLimits
-
   return (
     <div className="applicant-recruit-participant-info-paragraph__forms">
       <DetailInfoForm title="참여 기관 모집 정보" hideHeader mode="edit">
@@ -551,27 +558,14 @@ export function ApplicantRecruitParticipantInfoParagraph({
               />
             </DetailInfoForm.Row>
 
-            {(isGeneral && showInstitutionApplicationLimits) ||
-            showTrainedTeachersScheduleLimits ||
-            showMaxScheduleCountField ||
-            showMaxSessionsPerDayField ? (
+            {showMaxScheduleCountField || showMaxSessionsPerDayField ? (
               <DetailInfoForm.Row
-                type={
-                  isGeneral ||
-                  showTrainedTeachersScheduleLimits ||
-                  (showMaxScheduleCountField && showMaxSessionsPerDayField)
-                    ? 'double'
-                    : 'single'
-                }
+                type={showMaxScheduleCountField && showMaxSessionsPerDayField ? 'double' : 'single'}
               >
-                {isGeneral || showTrainedTeachersScheduleLimits || showMaxScheduleCountField ? (
+                {showMaxScheduleCountField ? (
                   <DetailInfoForm.Field
                     label="신청 가능 최대 일정 수"
-                    fullRow={
-                      !isGeneral &&
-                      !showTrainedTeachersScheduleLimits &&
-                      !showMaxSessionsPerDayField
-                    }
+                    fullRow={!showMaxSessionsPerDayField}
                     edit={
                       <NumberWithSuffixRow
                         placeholder="최대값 입력"
@@ -583,14 +577,10 @@ export function ApplicantRecruitParticipantInfoParagraph({
                     view="-"
                   />
                 ) : null}
-                {isGeneral || showTrainedTeachersScheduleLimits || showMaxSessionsPerDayField ? (
+                {showMaxSessionsPerDayField ? (
                   <DetailInfoForm.Field
                     label="신청 가능 1일 최대 차시"
-                    fullRow={
-                      !isGeneral &&
-                      !showTrainedTeachersScheduleLimits &&
-                      !showMaxScheduleCountField
-                    }
+                    fullRow={!showMaxScheduleCountField}
                     edit={
                       <NumberWithSuffixRow
                         placeholder="최대값 입력"
@@ -642,49 +632,37 @@ export function ApplicantRecruitParticipantInfoParagraph({
           />
         </DetailInfoForm.Row>
 
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field
-              label="교육 대상"
-              edit={
-                isGeneral ? (
-                  <CmsSelect
-                    inputSize="medium"
-                    width={240}
-                    withAllOption
-                    placeholder="교육 대상을 선택하세요"
-                    options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
-                    value={targetLevels[0] ?? ''}
-                    onChange={v => setTargetLevels(v ? [String(v)] : [])}
-                  />
-                ) : (
-                  <CmsSelect
-                    mode="multiple"
-                    inputSize="medium"
-                    width={240}
-                    withAllOption={false}
-                    placeholder="교육 대상을 선택하세요"
-                    options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
-                    value={targetLevels}
-                    onChange={v => setTargetLevels(Array.isArray(v) ? v.map(String) : [])}
-                  />
-                )
-              }
-              view="-"
-            />
-            <DetailInfoForm.Field
-              label="교육 대상 상세"
-              edit={
-                <CmsInput
-                  inputSize="medium"
-                  width="100%"
-                  placeholder="상세 교육 대상을 입력하세요"
-                  value={targetLevelDetail}
-                  onChange={e => setTargetLevelDetail(e.target.value)}
-                />
-              }
-              view="-"
-            />
-          </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="교육 대상"
+            edit={
+              <CmsSelect
+                mode="multiple"
+                inputSize="medium"
+                width={240}
+                withAllOption={false}
+                placeholder="교육 대상을 선택하세요"
+                options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+                value={targetLevels}
+                onChange={v => setTargetLevels(Array.isArray(v) ? v.map(String) : [])}
+              />
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label="교육 대상 상세"
+            edit={
+              <CmsInput
+                inputSize="medium"
+                width="100%"
+                placeholder="상세 교육 대상을 입력하세요"
+                value={targetLevelDetail}
+                onChange={e => setTargetLevelDetail(e.target.value)}
+              />
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
 
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field

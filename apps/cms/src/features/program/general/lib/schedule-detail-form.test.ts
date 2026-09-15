@@ -423,25 +423,28 @@ describe('shouldLockEducationScheduleCalendarToggles', () => {
 })
 
 describe('shouldDisableEducationSchedulePeriodMode', () => {
-  it('개인 대상이면 회차와 무관하게 기간 지정을 막는다', () => {
+  it('단일 회차이면 기관 여부와 무관하게 기간 지정을 막는다', () => {
+    expect(
+      shouldDisableEducationSchedulePeriodMode({
+        participantOrganization: true,
+        sessionRound: 'single',
+      })
+    ).toBe(true)
     expect(
       shouldDisableEducationSchedulePeriodMode({
         participantOrganization: false,
         sessionRound: 'single',
       })
     ).toBe(true)
+  })
+
+  it('복수 회차이면 개인만 기간 지정을 막고 기관은 허용한다', () => {
     expect(
       shouldDisableEducationSchedulePeriodMode({
         participantOrganization: false,
         sessionRound: 'multi',
       })
     ).toBe(true)
-    expect(
-      shouldDisableEducationSchedulePeriodMode({
-        participantOrganization: true,
-        sessionRound: 'single',
-      })
-    ).toBe(false)
     expect(
       shouldDisableEducationSchedulePeriodMode({
         participantOrganization: true,

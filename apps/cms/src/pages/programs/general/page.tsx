@@ -27,6 +27,7 @@ import {
 } from '@/features/template/context/template-writing-preview-context'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useGeneralProgramListFilters } from './use-general-program-list-filters'
 import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
 import { clearGeneralProgramDetailQueryParams } from '@/features/program/general/lib/general-program-detail-route'
@@ -73,7 +74,19 @@ export function GeneralProgramListPageContent() {
     refetchPrograms,
     loading: listLoading,
     isRemoteDataSource,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    listQueryFiltersKey,
   } = useGeneralProgramListFilters()
+
+  const infiniteResetKey = `${statusFilter ?? 'all'}:${listQueryFiltersKey}`
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: infiniteResetKey,
+  })
 
   const deleteGeneralProgramsMutation = useDeleteGeneralPrograms()
 
@@ -121,34 +134,11 @@ export function GeneralProgramListPageContent() {
   }, [closeWritingUserPreview, pNorm, setSearchParams])
 
   const handleGeneralProgramRegistrationSaved = useCallback(
-    (createdProgram?: Program) => {
+    (_createdProgram?: Program) => {
       refetchPrograms()
-      if (createdProgram) {
-        setSelectedProgramForDetail(createdProgram)
-        setSearchParams(
-          prev => {
-            const next = clearGeneralProgramDetailQueryParams(new URLSearchParams(prev))
-            next.delete(PROGRAMS_GENERAL_NEW_QUERY_KEY)
-            next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
-            next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
-            next.delete('userPreview')
-            next.set('programId', createdProgram.id)
-            next.set('lnb', 'info')
-            next.set('tab', 'info')
-            return next
-          },
-          { replace: true }
-        )
-        return
-      }
       handleCloseGeneralProgramRegistrationFullpage()
     },
-    [
-      handleCloseGeneralProgramRegistrationFullpage,
-      refetchPrograms,
-      setSearchParams,
-      setSelectedProgramForDetail,
-    ]
+    [handleCloseGeneralProgramRegistrationFullpage, refetchPrograms]
   )
 
   const userPreviewSyncParams = useMemo(
@@ -412,6 +402,9 @@ export function GeneralProgramListPageContent() {
       >
         {programListToolbarActions}
       </ProgramList>
+      {isRemoteDataSource ? (
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
+      ) : null}
 
       <GeneralProgramDetailFullPageModal
         open={generalDetailModalOpen}

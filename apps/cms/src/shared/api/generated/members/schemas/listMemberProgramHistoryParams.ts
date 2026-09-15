@@ -8,32 +8,31 @@
 
 export type ListMemberProgramHistoryParams = {
 /**
- * 이력 유형 필터. `COURSE` | `VOLUNTEER` | `ALL`(또는 생략=전체).
- * 봉사만: `VOLUNTEER`. `role` query는 없음(보내도 무시).
+ * 이력 유형. COURSE|VOLUNTEER|ALL(생략=전체). 날짜 필터가 아닙니다.
  */
 historyType?: string;
 /**
- * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ * 프로그램명 부분 검색
  */
 programName?: string;
 /**
- * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ * 사업 연도(1900–3000)
  */
 progressYear?: number;
 /**
- * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
+ * 프로그램 진행 상태 필터(SCHEDULED|IN_PROGRESS|COMPLETED 등)
  */
 progressStatus?: string;
 /**
- * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ * 담당 관리자명 부분 검색
  */
 managerName?: string;
 /**
- * 페이지 번호입니다. 목록 화면의 페이지 상태와 함께 유지합니다.
+ * 페이지 번호(0-base)
  */
 page?: number;
 /**
- * 페이지 크기입니다. 화면별 기본 목록 개수와 일치시켜 호출합니다.
+ * 페이지 크기. 기본 20, 서버에서 최대 100으로 clamp(거절하지 않음)
  */
 size?: number;
 };

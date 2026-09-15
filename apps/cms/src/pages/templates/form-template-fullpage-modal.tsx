@@ -9,6 +9,7 @@ import { useCertificateTemplateModalState } from '@/features/template/hooks/use-
 import { persistWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import {
+  CERTIFICATE_EDITABLE_CUSTOM_FIELDS,
   type TemplateCustomFieldDef,
   TemplateCustomFieldsForm,
   TEMPLATE_FIELD_CERTIFICATE_BACKGROUND,
@@ -306,6 +307,7 @@ export function FormTemplateFullpageModal({
       rightNavigation={
         <TemplateCustomFieldsForm
           key={customFieldsFormKey}
+          fields={CERTIFICATE_EDITABLE_CUSTOM_FIELDS}
           initialStringValues={stringPreviewValues}
           initialLogoPreviewUrls={initialLogoPreviewUrls}
           selectedFieldName={activeFieldName}

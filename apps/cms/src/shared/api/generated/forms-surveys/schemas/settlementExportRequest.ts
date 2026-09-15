@@ -56,6 +56,13 @@ export interface SettlementExportRequest {
      * @maxLength 120
      */
   approvalReference?: string;
-  dateRangeValid?: boolean;
+  /**
+     * 화면에서 선택한 정산 ID. 지정하면 필터 결과 중 해당 정산만 발급하며, 미지급/누락/권한 밖 ID가 섞이면 발급하지 않습니다.
+     * @minItems 0
+     * @maxItems 5000
+     * @items.minimum 1
+     */
+  settlementIds?: number[];
   rawPrivacyApprovalValid?: boolean;
+  dateRangeValid?: boolean;
 }

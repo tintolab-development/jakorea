@@ -44,7 +44,12 @@
     linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
     #fff;
   color: var(--color-mint-01, #01a1af);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
   font-weight: 600;
+  line-height: 150%; /* 24px */
 }
 
 .paragraph-chip:disabled {

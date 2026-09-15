@@ -1,8 +1,5 @@
-import { getCompanySchoolPrograms } from '@/data/mock/economy-programs'
-import { programService } from '@/entities/program/api/program-service'
 import {
   deleteCompanySchoolRegistrationLocalSaveProgram,
-  readCompanySchoolRegistrationLocalSavePrograms,
   updateCompanySchoolRegistrationLocalSaveProgram,
 } from '@/features/program/general/lib/registration-local-save'
 import {
@@ -22,48 +19,59 @@ import {
   mapCompanySchoolToUpdateRequest,
 } from './adapters'
 import { shouldUseCompanySchoolRemoteApi } from './capabilities'
-import { companySchoolListParams, type CompanySchoolListFilters } from './list-params'
 import {
-  countCompanySchoolOverviewStages,
-  type CompanySchoolOverviewStageCounts,
-} from '@/features/program/1c-1s/lib/overview-stage-counts'
+  COMPANY_SCHOOL_PROGRAM_LIST_PAGE_SIZE,
+  companySchoolListParams,
+  type CompanySchoolListFilters,
+} from './list-params'
+import type { CompanySchoolOverviewStageCounts } from '@/features/program/1c-1s/lib/overview-stage-counts'
 
 function assertRemoteReady(): void {
   if (shouldUseCompanySchoolRemoteApi()) return
   throw new Error(
-    '1사1교 API가 활성화되지 않았습니다. 원격 JWT, programs 모듈, VITE_COMPANY_SCHOOL_PROGRAMS_REMOTE_ENABLED=true 설정을 확인해 주세요.'
+    '1사1교 API가 활성화되지 않았습니다. 원격 JWT, programs 모듈, VITE_COMPANY_SCHOOL_PROGRAMS_REMOTE_ENABLED=true 설정을 확인해 주세요. mock 폴백은 사용하지 않습니다.'
   )
 }
 
-export function getCompanySchoolMockList(): Program[] {
-  const mockPrograms = getCompanySchoolPrograms()
-  const localPrograms = readCompanySchoolRegistrationLocalSavePrograms().filter(
-    local => !mockPrograms.some(mock => mock.id === local.id)
-  )
-  return [...mockPrograms, ...localPrograms]
+export type CompanySchoolProgramsRemoteListPage = {
+  programs: Program[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
 }
 
+export async function listCompanySchoolProgramsPage(
+  filters: CompanySchoolListFilters = {},
+  pageParam = 0
+): Promise<CompanySchoolProgramsRemoteListPage> {
+  assertRemoteReady()
+  const page = await fetchAdminProgramsRemote(companySchoolListParams(filters, pageParam))
+  const programs = (page.items ?? []).map(mapCompanySchoolListItemToProgram)
+  const size = page.size ?? COMPANY_SCHOOL_PROGRAM_LIST_PAGE_SIZE
+  const currentPage = page.page ?? pageParam
+  const totalElements = page.totalElements ?? programs.length
+  const totalPages =
+    page.totalPages ?? (size > 0 ? Math.ceil(totalElements / size) : currentPage + 1)
+  return {
+    programs,
+    page: currentPage,
+    size,
+    totalElements,
+    hasMore: currentPage + 1 < totalPages,
+  }
+}
+
+/** @deprecated 무한 스크롤은 `listCompanySchoolProgramsPage` 사용 */
 export async function listCompanySchoolPrograms(
   filters: CompanySchoolListFilters = {}
 ): Promise<Program[]> {
-  if (!shouldUseCompanySchoolRemoteApi()) return getCompanySchoolMockList()
-  assertRemoteReady()
-  const page = await fetchAdminProgramsRemote(companySchoolListParams(filters))
-  return (page.items ?? []).map(mapCompanySchoolListItemToProgram)
+  const page = await listCompanySchoolProgramsPage(filters, 0)
+  return page.programs
 }
 
-/**
- * 상단 4카드 건수.
- * remote: GET /programs?programType=COMPANY_SCHOOL&periodStatus=* 의 totalElements
- * mock: 운영 기간·lifecycle 버킷 집계 (목록 overview 필터와 동일)
- *
- * 별도 count API 불필요 — 기존 목록 API로 충분. (500건 초과 시 totalElements가 SSOT)
- */
+/** 상단 4카드 — GET /programs totalElements */
 export async function fetchCompanySchoolOverviewStages(): Promise<CompanySchoolOverviewStageCounts> {
-  if (!shouldUseCompanySchoolRemoteApi()) {
-    return countCompanySchoolOverviewStages(getCompanySchoolMockList())
-  }
-
   assertRemoteReady()
 
   const base = {
@@ -71,8 +79,9 @@ export async function fetchCompanySchoolOverviewStages(): Promise<CompanySchoolO
     page: 0,
     size: 1,
   } as const
-  const [all, scheduled, inProgress, completed] = await Promise.all([
+  const [all, scheduled, recruiting, inProgress, completed] = await Promise.all([
     fetchAdminProgramsRemote({ ...base }),
+    fetchAdminProgramsRemote({ ...base, periodStatus: 'SCHEDULED' }),
     fetchAdminProgramsRemote({ ...base, periodStatus: 'RECRUITING' }),
     fetchAdminProgramsRemote({ ...base, periodStatus: 'IN_PROGRESS' }),
     fetchAdminProgramsRemote({ ...base, periodStatus: 'COMPLETED' }),
@@ -80,23 +89,20 @@ export async function fetchCompanySchoolOverviewStages(): Promise<CompanySchoolO
 
   return {
     total: all.totalElements ?? all.items?.length ?? 0,
-    scheduled: scheduled.totalElements ?? scheduled.items?.length ?? 0,
+    scheduled:
+      (scheduled.totalElements ?? scheduled.items?.length ?? 0) +
+      (recruiting.totalElements ?? recruiting.items?.length ?? 0),
     inProgress: inProgress.totalElements ?? inProgress.items?.length ?? 0,
     completed: completed.totalElements ?? completed.items?.length ?? 0,
   }
 }
 
 export async function getCompanySchoolProgram(programId: string): Promise<Program> {
-  if (!shouldUseCompanySchoolRemoteApi()) return programService.getById(programId)
   assertRemoteReady()
   return mapCompanySchoolDetailToProgram(await fetchAdminProgramByIdRemote(programId))
 }
 
 export async function createCompanySchoolProgram(program: Program): Promise<Program> {
-  if (!shouldUseCompanySchoolRemoteApi()) {
-    const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...data } = program
-    return programService.create(data)
-  }
   assertRemoteReady()
   const dto = await createAdminProgramRemote(mapCompanySchoolToCreateRequest(program))
   return mapCompanySchoolDetailToProgram(dto)
@@ -107,61 +113,25 @@ export async function updateCompanySchoolProgram(
   program: Program,
   patch?: Partial<Program>
 ): Promise<Program> {
-  if (!shouldUseCompanySchoolRemoteApi()) {
-    const mergedPatch = patch ?? program
-    const updatedLocal = updateCompanySchoolRegistrationLocalSaveProgram(
-      programId,
-      mergedPatch
-    )
-    if (updatedLocal) return updatedLocal
-
-    const mockProgram = getCompanySchoolPrograms().find(item => item.id === programId)
-    if (mockProgram) {
-      Object.assign(mockProgram, mergedPatch, {
-        id: mockProgram.id,
-        createdAt: mockProgram.createdAt,
-        updatedAt: new Date().toISOString(),
-      })
-      return mockProgram
-    }
-
-    const { id: _id, createdAt: _createdAt, ...data } = mergedPatch
-    return programService.update(programId, data)
-  }
   assertRemoteReady()
+  const mergedPatch = patch ?? program
+  // 등록 중 로컬 임시저장 키와 충돌하지 않도록 remote 성공 후 로컬 잔여만 정리
+  updateCompanySchoolRegistrationLocalSaveProgram(programId, mergedPatch)
   const dto = await updateAdminProgramRemote(
     programId,
-    mapCompanySchoolToUpdateRequest(program, patch)
+    mapCompanySchoolToUpdateRequest({ ...program, ...mergedPatch, id: programId })
   )
   return mapCompanySchoolDetailToProgram(dto)
 }
 
 export async function deleteCompanySchoolProgram(programId: string): Promise<void> {
-  if (!shouldUseCompanySchoolRemoteApi()) {
-    if (deleteCompanySchoolRegistrationLocalSaveProgram(programId)) return
-    const mockPrograms = getCompanySchoolPrograms()
-    const mockIndex = mockPrograms.findIndex(program => program.id === programId)
-    if (mockIndex >= 0) {
-      mockPrograms.splice(mockIndex, 1)
-      return
-    }
-    await programService.delete(programId)
-    return
-  }
   assertRemoteReady()
+  deleteCompanySchoolRegistrationLocalSaveProgram(programId)
   await deleteAdminProgramRemote(programId)
 }
 
 export async function deleteCompanySchoolPrograms(programIds: string[]): Promise<void> {
   if (programIds.length === 0) return
-
-  if (!shouldUseCompanySchoolRemoteApi()) {
-    for (const programId of programIds) {
-      await deleteCompanySchoolProgram(programId)
-    }
-    return
-  }
-
   assertRemoteReady()
   await bulkDeleteAdminProgramsRemote(programIds)
 }

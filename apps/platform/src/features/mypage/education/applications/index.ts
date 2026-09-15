@@ -4,9 +4,22 @@ export type {
   EducationApplicationListItem,
   EducationDisplayStatus,
   EducationDisplayStatusTone,
+  EducationTeacherAssignedInstructor,
+  EducationTeacherAssignment,
+  EducationTeacherAssignmentConsent,
+  EducationTeacherAssignmentTextbook,
+  EducationTeacherApplicationContent,
+  EducationTeacherApplicationGuidance,
+  EducationTeacherApplicationInstitution,
+  EducationTeacherDeliveryStatus,
+  EducationTeacherPreferredSchedule,
   EducationWithdrawalPhase,
 } from './model/types'
-export { EDUCATION_APPLICATION_PAGE_SIZE } from './model/types'
+export {
+  EDUCATION_APPLICATION_PAGE_SIZE,
+  EDUCATION_TEACHER_DELIVERY_STATUS_LABEL,
+  hasTeacherAssignmentAsideContent,
+} from './model/types'
 export {
   EDUCATION_APPLICATION_TAB_ITEMS,
   MOCK_EDUCATION_APPLICATIONS,
@@ -15,6 +28,7 @@ export {
   getMockEducationApplications,
   getMockEducationApplicationsVersion,
   subscribeMockEducationApplications,
+  updateMockTeacherApplicationGuidance,
 } from './lib/mock-applications'
 export {
   filterEducationStatusApplications,
@@ -43,6 +57,8 @@ export {
 } from './lib/display-status'
 export {
   buildInProgressDetailTabItems,
+  buildTeacherInProgressDetailTabItems,
+  buildTeacherWithdrawnDuringDetailTabItems,
   buildWithdrawnDuringDetailTabItems,
   resolveEducationScheduleTabLabel,
 } from './lib/detail-tabs'
@@ -55,8 +71,23 @@ export {
 } from './lib/list-params'
 export { EducationApplicationListItemRow } from './ui/list-item'
 export { EducationApplicationContent } from './ui/content'
+export { TeacherApplicationContent } from './ui/teacher-application-content'
+export type { TeacherApplicationContentProps } from './ui/teacher-application-content'
 export { EducationApplicationInfoModal } from './ui/application-info-modal'
 export { EducationCancelConfirm } from './ui/cancel-confirm'
 export { EducationDetailBack } from './ui/detail-back'
 export { EducationDetailHeader } from './ui/detail-header'
+export { EducationDetailHeaderLayout } from './ui/detail-header-layout'
+export { EducationStudentsPanel } from './ui/students-panel'
+export type { EducationStudentsPanelProps } from './ui/students-panel'
+export {
+  TeacherAssignedInstructorCard,
+  TeacherEducationAssignmentAside,
+  TeacherTextbookInfoCard,
+} from './ui/teacher-assignment'
+export type {
+  TeacherAssignedInstructorCardProps,
+  TeacherEducationAssignmentAsideProps,
+  TeacherTextbookInfoCardProps,
+} from './ui/teacher-assignment'
 export { DocumentPassBanner, shouldShowDocumentPassBanner } from './ui/document-pass-banner'

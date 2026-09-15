@@ -36,6 +36,8 @@ export function filterCompanySchoolProgramsByOverviewStatus(
     if (status === 'scheduled') {
       if (operationPhase) return operationPhase === 'scheduled'
       return [
+        'scheduled',
+        'planned',
         'recruiting_students',
         'recruiting_instructors',
         'matching_completed',
@@ -44,10 +46,12 @@ export function filterCompanySchoolProgramsByOverviewStatus(
     }
     if (status === 'in_progress') {
       if (operationPhase) return operationPhase === 'in_progress'
-      return program.lifecycleStatus === 'education_after_textbook'
+      return ['in_progress', 'education_after_textbook', 'education_in_progress'].includes(
+        program.lifecycleStatus || ''
+      )
     }
     if (operationPhase) return operationPhase === 'completed'
-    return ['education_completed', 'document_processing_completed'].includes(
+    return ['completed', 'education_completed', 'document_processing_completed'].includes(
       program.lifecycleStatus || ''
     )
   })

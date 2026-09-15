@@ -51,7 +51,7 @@ export async function updateSponsorRemote(
   id: string,
   body: SponsorRequest
 ): Promise<SponsorResponse> {
-  return unwrapApiBody(await dmApi.update3(pathId(id), body))
+  return unwrapApiBody(await dmApi.update4(pathId(id), body))
 }
 
 export async function deleteSponsorRemote(id: string): Promise<void> {

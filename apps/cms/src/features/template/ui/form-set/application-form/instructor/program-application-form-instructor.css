@@ -95,17 +95,12 @@
   overflow: hidden;
 }
 
-.program-application-form-instructor__schedule-side .program-application-form-instructor__session-grid {
+.program-application-form-instructor__schedule-side
+  .program-application-form-instructor__session-grid {
   min-height: 0;
   overflow-y: auto;
   width: 100%;
   max-width: none;
-}
-
-.program-application-form-instructor__schedule-side .program-application-schedule-template-hint {
-  min-height: 0;
-  height: 100%;
-  align-self: stretch;
 }
 
 .program-application-form-instructor__schedule-side .schedule-setting-blocked {

@@ -12,7 +12,7 @@ const LIST_PAGE_SIZE = 100
 
 export async function fetchTextbookBusinessAreasRemote(): Promise<TextbookBusinessAreaResponse[]> {
   const page = unwrapApiBody<PageResponseTextbookBusinessAreaResponse>(
-    await dmApi.list({ page: 0, size: LIST_PAGE_SIZE })
+    await dmApi.list1({ page: 0, size: LIST_PAGE_SIZE })
   )
   return page.items ?? []
 }
@@ -29,7 +29,7 @@ export async function updateTextbookBusinessAreaRemote(
   name: string
 ): Promise<TextbookBusinessAreaResponse> {
   const body: TextbookBusinessAreaRequest = { name, businessAreaName: name }
-  return unwrapApiBody(await dmApi.update1(id, body))
+  return unwrapApiBody(await dmApi.update2(id, body))
 }
 
 export async function deleteTextbookBusinessAreaRemote(id: string): Promise<void> {

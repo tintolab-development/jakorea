@@ -2,7 +2,6 @@ import { mapUploadToDisplayRow } from '@/features/program/gemini/lib/performance
 import { parseUploadExcel } from '@/features/program/gemini/lib/performance/parse-upload-excel'
 import {
   findDuplicateKeys,
-  getGeminiPerformanceRowsSnapshot,
 } from '@/features/program/gemini/model/performance/performance-store'
 import type {
   GeminiPerformanceImportDuplicateStrategy,
@@ -16,16 +15,25 @@ import {
 } from './adapters'
 import { shouldUseGeminiPerformanceRemoteApi } from './capabilities'
 import {
-  fetchGeminiTrainingReportsRemote,
+  fetchGeminiTrainingReportsRemotePage,
   importGeminiTrainingReportsRemote,
   previewGeminiTrainingReportImportRemote,
+  type GeminiTrainingReportsRemotePage,
 } from './client'
 
 function assertRemoteReady(): void {
   if (shouldUseGeminiPerformanceRemoteApi()) return
   throw new Error(
-    'Gemini 실적 API가 활성화되지 않았습니다. VITE_REAL_API_MODULES에 geminiPerformance를 추가해 주세요.'
+    'Gemini 실적 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정해 주세요. mock 폴백은 사용하지 않습니다.'
   )
+}
+
+export type GeminiPerformanceRemoteListPage = {
+  rows: GeminiPerformanceRow[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
 }
 
 export type GeminiPerformanceRemoteImportPrepareResult = {
@@ -35,13 +43,29 @@ export type GeminiPerformanceRemoteImportPrepareResult = {
   uploadRows: GeminiPerformanceUploadRow[]
 }
 
-export async function listGeminiPerformanceRows(): Promise<GeminiPerformanceRow[]> {
-  if (!shouldUseGeminiPerformanceRemoteApi()) {
-    return getGeminiPerformanceRowsSnapshot()
-  }
+export async function listGeminiPerformanceRowsPage(
+  pageParam = 0
+): Promise<GeminiPerformanceRemoteListPage> {
   assertRemoteReady()
-  const items = await fetchGeminiTrainingReportsRemote({ page: 0, size: 500 })
-  return items.map((item, index) => mapGeminiTrainingReportItemToRow(item, index))
+  const page: GeminiTrainingReportsRemotePage = await fetchGeminiTrainingReportsRemotePage({
+    page: pageParam,
+  })
+  const baseNo = pageParam * page.size
+  return {
+    rows: page.items.map((item, index) =>
+      mapGeminiTrainingReportItemToRow(item, baseNo + index)
+    ),
+    page: page.page,
+    size: page.size,
+    totalElements: page.totalElements,
+    hasMore: page.hasMore,
+  }
+}
+
+/** @deprecated 무한 스크롤은 `listGeminiPerformanceRowsPage` 사용 */
+export async function listGeminiPerformanceRows(): Promise<GeminiPerformanceRow[]> {
+  const page = await listGeminiPerformanceRowsPage(0)
+  return page.rows
 }
 
 export async function prepareGeminiPerformanceImportRemote(

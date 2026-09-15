@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 
+import './register-step-header.css'
+
 interface RegisterStepHeaderProps {
   title: ReactNode
   description: ReactNode

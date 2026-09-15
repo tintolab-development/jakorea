@@ -42,6 +42,13 @@ describe('institution-application-form-visibility', () => {
     expect(getInstructorApplicationFormHiddenParagraphIds()).toBeUndefined()
   })
 
+  it('템플릿 작성 모드에서는 기관 선택과 무관하게 강사 성범죄 단락을 노출한다', () => {
+    patchInstitutionSexOffenseConsentSiteSubmission('direct')
+    expect(
+      getInstructorApplicationFormHiddenParagraphIds({ isTemplateAuthoringMode: true })
+    ).toBeUndefined()
+  })
+
   it('JA 시스템 내 확인 선택 시 강사 성범죄 경력 조회서 단락을 숨긴다', () => {
     patchInstitutionSexOffenseConsentInquiryMethod('ja_system')
     expect(shouldShowInstructorApplicationCrimeRecordParagraph()).toBe(false)

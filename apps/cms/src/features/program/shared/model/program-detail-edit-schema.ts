@@ -41,6 +41,9 @@ const roundStatusEnum = z.enum(['active', 'inactive', 'pending', 'completed', 'c
 const roundDeliveryTypeEnum = z.enum(['online', 'offline', 'hybrid'])
 
 const programLifecycleStatusEnum = z.enum([
+  'scheduled',
+  'in_progress',
+  'completed',
   'planned',
   'instructor_recruitment_planned',
   'volunteer_recruitment_planned',

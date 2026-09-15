@@ -12,7 +12,7 @@ export type InstructorApplyConsentKey = (typeof INSTRUCTOR_APPLY_CONSENT_KEYS)[n
 
 const PAGE_TITLES: Record<InstructorApplyConsentKey, string> = {
   consentPaymentStatement: '지급조서 사전 동의서',
-  consentEducatorPledge: '교육진행자 동의 서약서',
+  consentEducatorPledge: 'JA Korea 교육진행자 서약서(안)',
   consentAdministrativeJoint: '행정정보 공동이용 사전동의서',
   consentSexOffenseCheck: '성범죄 경력 조회 동의서',
 }

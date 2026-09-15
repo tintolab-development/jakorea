@@ -7,8 +7,11 @@ type Metric = {
   value: number
 }
 
-function buildMetrics(summary: TrainedTeacherPerformanceSummaryView): Metric[] {
-  return [
+function buildMetrics(
+  summary: TrainedTeacherPerformanceSummaryView,
+  educationCompletionCount?: number
+): Metric[] {
+  const metrics: Metric[] = [
     { key: 'org', label: '기관 신청', value: summary.organizationApplicationCount },
     { key: 'teachers', label: '교육받은 교사', value: summary.trainedTeacherCount },
     { key: 'participants', label: '교사연수 참여', value: summary.teacherTrainingParticipantCount },
@@ -17,18 +20,29 @@ function buildMetrics(summary: TrainedTeacherPerformanceSummaryView): Metric[] {
     { key: 'journal-ok', label: '일지 제출', value: summary.journalSubmittedCount },
     { key: 'journal-pending', label: '일지 미제출', value: summary.journalNotSubmittedCount },
   ]
+  if (typeof educationCompletionCount === 'number') {
+    metrics.push({
+      key: 'education-completion',
+      label: '학생교육 완료',
+      value: educationCompletionCount,
+    })
+  }
+  return metrics
 }
 
 export function TrainedTeachersPerformanceSummaryStrip({
   summary,
   loading,
+  educationCompletionCount,
 }: {
   summary: TrainedTeacherPerformanceSummaryView | undefined
   loading?: boolean
+  /** education-completions 활성 건수 — 일지와 별도 SSOT */
+  educationCompletionCount?: number
 }) {
   if (!summary && !loading) return null
 
-  const metrics = summary ? buildMetrics(summary) : []
+  const metrics = summary ? buildMetrics(summary, educationCompletionCount) : []
 
   return (
     <div

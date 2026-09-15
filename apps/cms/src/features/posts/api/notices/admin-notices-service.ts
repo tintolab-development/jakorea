@@ -32,7 +32,7 @@ import {
 
 function assertNoticesRemoteReady(): void {
   if (!isRealApiModuleEnabled('notices')) {
-    throw new Error('공지 API가 활성화되지 않았습니다. VITE_REAL_API_MODULES에 notices를 추가해 주세요.')
+    throw new Error('공지 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정해 주세요.')
   }
   if (!hasRemoteAdminJwt()) {
     throw new Error('공지 조회는 관리자 로그인 후 이용할 수 있습니다.')

@@ -1,5 +1,5 @@
 /**
- * UJAT 프로그램 상세 LNB·설문·면접 분기용 메타 (mock)
+ * UJAT 프로그램 상세 LNB·설문·면접 분기용 메타
  */
 
 import type { Program } from '@/types/domain'
@@ -13,14 +13,22 @@ import {
   resolveUjatSurveyMenuItems,
   type UjatSurveyMenuItem,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import {
+  isUjatPrimaryProgramId,
+  looksLikeUjatProgramId,
+} from '@/features/program/ujat/lib/is-ujat-primary-program'
 
 export type { UjatSurveyMenuItem }
 
 export function isUjatProgramId(programId: string): boolean {
-  return mockUjatElementaryListProgramsMap.has(programId)
+  return (
+    mockUjatElementaryListProgramsMap.has(programId) ||
+    isUjatPrimaryProgramId(programId) ||
+    looksLikeUjatProgramId(programId)
+  )
 }
 
-/** UJAT 목록·상세 URL에 쓸 수 있는 프로그램 id (mock 7단계·로컬 등록 저장본) */
+/** UJAT 목록·상세 URL에 쓸 수 있는 프로그램 id (Primary · mock · 로컬 등록) */
 export function isResolvableUjatProgramId(programId: string): boolean {
   return (
     isUjatProgramId(programId) ||

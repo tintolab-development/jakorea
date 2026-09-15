@@ -17,20 +17,20 @@ export interface SettlementBulkStatusChangeRequest {
      */
   ids?: number[];
   /**
-     * 지급조서 일괄 확인 대상 statementId 목록
+     * 지급조서 일괄 확인 대상 statementId 목록. FE는 이 필드만 사용합니다.
      * @minItems 0
      * @maxItems 500
      */
   statementIds?: number[];
   /**
-     * 계좌 지급 일괄 완료 대상 paymentId 목록
+     * 이 API(bulk-confirm)에서는 사용하지 않습니다. 계좌 지급 bulk-paid 전용.
      * @minItems 0
      * @maxItems 500
      */
   paymentIds?: number[];
-  /** 지급조서 일괄 확인 시 강의비 지급 예정일 */
+  /** 강의비 지급 예정일. lectureFeePaymentScheduledDate와 동일 처리. */
   scheduledPaymentDate?: string;
-  /** 프론트 UI 필드명 호환 강의비 지급 예정일. scheduledPaymentDate와 동일하게 처리합니다. */
+  /** FE UI 호환 강의비 지급 예정일. scheduledPaymentDate와 동일 처리. */
   lectureFeePaymentScheduledDate?: string;
   /**
      * 상태 변경 사유

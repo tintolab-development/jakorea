@@ -211,7 +211,7 @@ export const TEMPLATE_CODE_CATALOG: Record<string, TemplateCodeCatalogEntry> = {
     variant: 'default',
   },
   'agreement-expense': {
-    templateName: '교육진행자 동의 서약서',
+    templateName: 'JA Korea 교육진행자 서약서(안)',
     category: 'AGREEMENT',
     variant: 'default',
   },

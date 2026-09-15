@@ -1,14 +1,13 @@
 /**
- * 4탭 overview 목록 — 프로그램 진행 현황 텍스트 (배지 없음)
- * 전체 프로그램 탭 등: 프로그램 진행 예정 / 진행 중 / 완료
+ * 일반·1사1교 목록 「진행 현황」— typed lifecycleStatus 라벨 (상세 상단 위젯과 동일 SSOT)
  */
 
 import type { ProgramLifecycleStatus } from '@/types/domain'
-import { getProgramProgressPhaseDisplay } from '@/shared/constants/status'
+import { getTypedProgramLifecycleDisplay } from '@/shared/lib/program-typed-lifecycle'
 import './program-lifecycle-status-badge.css'
 
 export interface ProgramListOverviewProgressCellProps {
-  status: ProgramLifecycleStatus
+  status: ProgramLifecycleStatus | string | null | undefined
   className?: string
 }
 
@@ -16,7 +15,7 @@ export function ProgramListOverviewProgressCell({
   status,
   className,
 }: ProgramListOverviewProgressCellProps) {
-  const { label, color } = getProgramProgressPhaseDisplay(status)
+  const { label, color } = getTypedProgramLifecycleDisplay(status)
 
   return (
     <span

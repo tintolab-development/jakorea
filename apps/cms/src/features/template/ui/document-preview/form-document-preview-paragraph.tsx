@@ -666,7 +666,7 @@ function renderBody(
       return (
         <ScaleType
           paragraph={p}
-          onChange={noopOnParagraphChange}
+          onSelectPreviewItem={() => undefined}
           isCardSelected={false}
           isBodyInteractive={false}
           paragraphInteractionMode="user"

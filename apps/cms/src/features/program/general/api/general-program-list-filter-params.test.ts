@@ -31,7 +31,7 @@ describe('general-program-list-filter-params', () => {
       keyword: '테스트',
       periodStatus: 'RECRUITING',
       page: 0,
-      size: 500,
+      size: 20,
     })
   })
 

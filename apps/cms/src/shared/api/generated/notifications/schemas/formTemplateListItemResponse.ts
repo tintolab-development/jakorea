@@ -19,6 +19,8 @@ export interface FormTemplateListItemResponse {
   responseCount?: number;
   activeBindingCount?: number;
   systemTemplate?: boolean;
+  creatorName?: string;
+  createdAt?: string;
   updatedAt?: string;
   availableActions?: string[];
 }

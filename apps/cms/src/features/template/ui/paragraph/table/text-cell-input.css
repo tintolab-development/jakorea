@@ -15,9 +15,15 @@
   cursor: text;
 }
 
+/* body(한 줄·여러 줄) 셸은 셀 너비 100% */
+.text-cell-input--body {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* soft-wrap / 명시 개행으로 두 줄 이상 */
 .text-cell-input--multiline {
   align-items: flex-start;
-  width: 100%;
 }
 
 .text-cell-input--align-center {
@@ -28,8 +34,7 @@
   justify-content: flex-start;
 }
 
-.text-cell-input__control.ant-input,
-.text-cell-input__control--area.ant-input {
+.text-cell-input__control.ant-input {
   flex: 0 1 auto;
   min-width: 0;
   width: auto;
@@ -53,14 +58,57 @@
   overflow: hidden;
 }
 
+/* 한 줄 body: 높이 24px 고정 + 가로 100% */
+.text-cell-input--single-line .text-cell-input__control--area.ant-input {
+  flex: 1 1 auto;
+  width: 100% !important;
+  max-width: 100%;
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
+  padding: 0 !important;
+  margin: 0;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--main-BK, #3d3d3d);
+  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px !important;
+  resize: none;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 .text-cell-input--multiline .text-cell-input__control--area.ant-input {
-  width: 100%;
+  flex: 1 1 auto;
+  width: 100% !important;
+  max-width: 100%;
   height: auto !important;
   min-height: 24px !important;
+  max-height: none !important;
+  padding: 0 !important;
+  margin: 0;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--main-BK, #3d3d3d);
+  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+  resize: none;
+  overflow: hidden;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: break-word;
-  line-height: 150%;
 }
 
 .text-cell-input--header .text-cell-input__control.ant-input {
@@ -68,11 +116,13 @@
   text-align: center;
 }
 
-.text-cell-input--align-center .text-cell-input__control.ant-input {
+.text-cell-input--align-center .text-cell-input__control.ant-input,
+.text-cell-input--align-center .text-cell-input__control--area.ant-input {
   text-align: center;
 }
 
-.text-cell-input--align-start .text-cell-input__control.ant-input {
+.text-cell-input--align-start .text-cell-input__control.ant-input,
+.text-cell-input--align-start .text-cell-input__control--area.ant-input {
   text-align: left;
 }
 
@@ -88,6 +138,8 @@
 }
 
 .text-cell-input__control.ant-input:focus,
-.text-cell-input__control.ant-input-focused {
+.text-cell-input__control.ant-input-focused,
+.text-cell-input__control--area.ant-input:focus,
+.text-cell-input__control--area.ant-input-focused {
   box-shadow: none !important;
 }

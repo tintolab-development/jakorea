@@ -120,7 +120,7 @@ test.describe('폼 양식 관리 — 브라우저 QA (전수)', () => {
 
   test('P0 — 교육진행자 서약: 객관식 선택이 단락 이동·미리보기에 유지', async ({ page }) => {
     await page.goto(FORM_MANAGEMENT_URL)
-    await openTemplateByName(page, '교육진행자 동의 서약서')
+    await openTemplateByName(page, 'JA Korea 교육진행자 서약서(안)')
 
     await assertMultipleChoiceSurvivesParagraphSwitchById(
       page,

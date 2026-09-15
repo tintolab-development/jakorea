@@ -7,7 +7,7 @@ import {
   mapTemplateVariablesCatalog,
   pickNonEmptySendVariables,
   toTemplateVariablesRequestParams,
-  type AlimtalkTemplateVariable,
+  type NotificationTemplateVariablesCatalogMapped,
   type NotificationTemplateVariablesQuery,
 } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import { mapSmsRecipientCandidates } from '@/features/notifications/api/adapters/sms-send-adapters'
@@ -32,7 +32,7 @@ export type SmsSenderProfileOption = AlimtalkSenderProfileOption
 function assertSmsSendRemoteReady(): void {
   if (!isRealApiModuleEnabled('notifications')) {
     throw new Error(
-      '알림 API가 활성화되지 않았습니다. VITE_REAL_API_MODULES에 notifications를 추가해 주세요.'
+      '알림 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정해 주세요.'
     )
   }
   if (!hasRemoteAdminJwt()) {
@@ -65,7 +65,8 @@ export function resolveSmsSenderProfileId(
 }
 
 export async function getSmsRecipientCandidates(input: {
-  programId: number
+  /** 생략 시 전체 회원 후보 (대상 프로그램 미선택) */
+  programId?: number
   keyword?: string
   participantType?: string
   memberType?: string
@@ -93,7 +94,9 @@ export async function getSmsRecipientCandidates(input: {
 
   const dto = await fetchRecipientCandidatesRemote({
     channelType: SMS_API_CHANNEL_TYPE,
-    programId: input.programId,
+    ...(input.programId != null && Number.isFinite(input.programId)
+      ? { programId: input.programId }
+      : {}),
     keyword: input.keyword,
     participantType: input.participantType,
     memberType: input.memberType,
@@ -113,8 +116,10 @@ export async function getSmsRecipientCandidates(input: {
 
 export async function getSmsTemplateVariables(
   input: NotificationTemplateVariablesQuery = {}
-): Promise<AlimtalkTemplateVariable[]> {
-  if (!shouldUseSmsSendRemoteApi()) return []
+): Promise<NotificationTemplateVariablesCatalogMapped> {
+  if (!shouldUseSmsSendRemoteApi()) {
+    return { variables: [], systemManualSendQaEnabled: false }
+  }
   const dto = await fetchTemplateVariablesRemote(toTemplateVariablesRequestParams(input))
   return mapTemplateVariablesCatalog(dto)
 }

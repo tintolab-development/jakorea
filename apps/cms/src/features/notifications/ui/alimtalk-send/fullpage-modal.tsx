@@ -31,9 +31,9 @@ import {
 import { useNotificationSendProgramsQuery } from '@/features/notifications/hooks/use-send-programs-query'
 import {
   canSelectNotificationSendTemplate,
-  isNotificationSendAllProgram,
-  isNotificationSendProgramUnset,
+  isNotificationSendWithoutProgram,
   parseNotificationSendProgramId,
+  NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT,
 } from '@/features/notifications/model/send-program-id'
 import {
   canUseNotificationSendTemplateForProgram,
@@ -153,7 +153,10 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const senderProfilesQuery = useAlimtalkSenderProfilesQuery(open)
   const programsQuery = useNotificationSendProgramsQuery(open && remote)
   const programs = programsQuery.data ?? []
-  const canLoadProgramScoped = !isNotificationSendProgramUnset(programId)
+  /** 미선택(전체회원) · 특정 프로그램 — 템플릿/변수 카탈로그 로드. 비정상 id만 제외. */
+  const canLoadProgramScoped =
+    isNotificationSendWithoutProgram(programId) ||
+    parseNotificationSendProgramId(programId) != null
 
   useEffect(() => {
     if (!open || !remote || !programsQuery.isError) return
@@ -189,8 +192,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const pickerTemplates = templatesQuery.data ?? []
 
   const programNumericId = parseNotificationSendProgramId(programId)
-  const isAllProgram = isNotificationSendAllProgram(programId)
-  const isProgramUnset = isNotificationSendProgramUnset(programId)
+  const isWithoutProgram = isNotificationSendWithoutProgram(programId)
   const canPickTemplate =
     canSelectNotificationSendTemplate(programId) && pickerTemplates.length > 0
 
@@ -222,6 +224,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     open && remote && canLoadProgramScoped
   )
 
+  const variablesCatalog = variablesQuery.data?.variables
+
   const isTemplateUsable = useCallback(
     (template: AlimtalkTemplateItem) =>
       canUseNotificationSendTemplateForProgram({
@@ -232,10 +236,10 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
           template.emphasisTitle,
           template.emphasisSubtitle,
         ],
-        catalog: variablesQuery.data,
+        catalog: variablesCatalog,
         programNumericId,
       }),
-    [programNumericId, variablesQuery.data]
+    [programNumericId, variablesCatalog]
   )
 
   const getTemplateUnusableMessage = useCallback(
@@ -249,11 +253,11 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
             template.emphasisTitle,
             template.emphasisSubtitle,
           ],
-          catalog: variablesQuery.data,
+          catalog: variablesCatalog,
           programNumericId,
         })
       ),
-    [programNumericId, variablesQuery.data]
+    [programNumericId, variablesCatalog]
   )
 
   const candidatesQuery = useAlimtalkRecipientCandidatesQuery(
@@ -271,7 +275,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       page: recipientSearch.page,
       size: 50,
     },
-    open && recipientSelectOpen && programNumericId != null
+    open && recipientSelectOpen && (programNumericId != null || isWithoutProgram)
   )
 
   const pickerTemplate = useMemo(
@@ -413,33 +417,11 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
 
   const handleManualRecipients = () => {
     if (!requireProfileAndTemplate()) return
-    if (isProgramUnset) {
-      showAlert({
-        title: '안내',
-        content: '대상 프로그램을 선택하세요.',
-      })
-      return
-    }
     setRecipientManualOpen(true)
   }
 
   const handleSetRecipients = () => {
     if (!requireProfileAndTemplate()) return
-    if (isProgramUnset) {
-      showAlert({
-        title: '안내',
-        content: '대상 프로그램을 선택하세요.',
-      })
-      return
-    }
-    if (isAllProgram || !programNumericId) {
-      showAlert({
-        title: '안내',
-        content:
-          '대상 프로그램이 미선택일 때는 프로그램 참여 회원 후보를 조회할 수 없습니다. 수신자 직접 입력을 이용해 주세요.',
-      })
-      return
-    }
     setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
     setRecipientSelectOpen(true)
   }
@@ -474,25 +456,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       showAlert({ title: '필수 입력 안내', content: '수신자를 설정하세요.' })
       return
     }
-    if (isProgramUnset) {
-      showAlert({
-        title: '필수 입력 안내',
-        content: '대상 프로그램을 선택하세요.',
-      })
-      return
-    }
-    if (isAllProgram) {
-      const hasProgramBound = recipients.some(
-        item => item.source !== 'manual' && item.actorType !== 'DIRECT'
-      )
-      if (hasProgramBound) {
-        showAlert({
-          title: '필수 입력 안내',
-          content: '대상 프로그램이 미선택일 때는 직접 입력 수신자만 사용할 수 있습니다.',
-        })
-        return
-      }
-    } else if (!programNumericId) {
+    if (!isWithoutProgram && !programNumericId) {
       showAlert({
         title: '필수 입력 안내',
         content: '대상 프로그램을 선택하세요.',
@@ -506,7 +470,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     if (!selectedTemplate || !selectedSender) return
     setSendConfirmOpen(false)
 
-    if (isProgramUnset || (!isAllProgram && !programNumericId)) {
+    if (!isWithoutProgram && !programNumericId) {
       showAlert({
         title: '필수 입력 안내',
         content: '대상 프로그램을 선택하세요.',
@@ -826,7 +790,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
             : 1
         }
         fetchAllCandidates={
-          remote && programNumericId != null
+          remote && (programNumericId != null || isWithoutProgram)
             ? async () => {
                 const total = Math.max(candidatesQuery.data?.total ?? 0, 1)
                 const result = await getAlimtalkRecipientCandidates({
@@ -841,8 +805,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                       ? toAlimtalkSendMemberTypeApi(recipientSearch.typeValue)
                       : undefined,
                   page: 0,
-                  // 발송 수신자 상한 1000 · 전 페이지를 한 번에 가져와 「전체 선택」
-                  size: Math.min(Math.max(total, 50), 1000),
+                  // 배치 상한 500 · 전 페이지를 한 번에 가져와 「전체 선택」
+                  size: Math.min(Math.max(total, 50), NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT),
                 })
                 return result.items
               }

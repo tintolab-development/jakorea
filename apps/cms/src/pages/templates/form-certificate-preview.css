@@ -171,6 +171,12 @@
   pointer-events: none;
 }
 
+/* 기본 합성 배경 — 라벨은 이미지에 있음. 값만 배경 라벨 오른쪽에 맞춤(111+56) */
+.form-certificate-preview__content-frame--values-only {
+  padding-left: 167px;
+  width: 785px;
+}
+
 /* 우측 폼에서 지정한 흑백 색 — 자식에 고정 #606060이 있어 inherit로 통일 */
 .form-certificate-preview__content-frame--custom-text .form-certificate-preview__label-text,
 .form-certificate-preview__content-frame--custom-text .form-certificate-preview__value-text {

@@ -17,7 +17,6 @@ import {
 import { getProgramRegistrationEducationFormOptions } from './program-registration-education-form-options'
 import { GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS } from '@/features/program/general/lib/curriculum-progress-session-options'
 import {
-  getScheduleEventPerScheduleExtraPlan,
   PRE_EDUCATION_SCHEDULE_LABEL,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
@@ -471,12 +470,6 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   )
 
   const renderIndividualPreEducationScheduleBlock = () => {
-    const extraPlan = getScheduleEventPerScheduleExtraPlan({
-      educationFormScheduleDetail,
-      participationScheduleDetail,
-      ipsScheduleDetail,
-      participantOrganization,
-    })
     const scheduleRange = parseStoredEducationScheduleRange(preEducationScheduleLine)
     const scheduleHasClock = Boolean(
       scheduleRange && educationScheduleRangeHasClock(scheduleRange)
@@ -536,16 +529,10 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                   view="-"
                 />
               </DetailInfoForm.Row>
-              {extraPlan.showIps ? (
-                <DetailInfoForm.Row type="double">
-                  {renderPreEducationEducationFormField()}
-                  {renderLockedPreEducationIpsField({ layout: 'inline' })}
-                </DetailInfoForm.Row>
-              ) : (
-                <DetailInfoForm.Row type="single">
-                  {renderPreEducationEducationFormField({ fullRow: true })}
-                </DetailInfoForm.Row>
-              )}
+              <DetailInfoForm.Row type="double">
+                {renderPreEducationEducationFormField()}
+                {renderLockedPreEducationIpsField({ layout: 'inline' })}
+              </DetailInfoForm.Row>
             </DetailInfoForm>
           </div>
         </div>

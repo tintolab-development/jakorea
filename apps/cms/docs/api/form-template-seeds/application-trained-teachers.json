@@ -92,7 +92,7 @@
         ],
         "columnFields": [
           {
-            "kind": "subjective",
+            "kind": "text",
             "placeholder": "제공받는 곳을 입력해 주세요"
           },
           {
@@ -111,7 +111,7 @@
         "fieldDataRows": [
           [
             {
-              "kind": "subjective",
+              "kind": "text",
               "value": ""
             },
             {

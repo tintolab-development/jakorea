@@ -10,7 +10,7 @@ import type { AdminMfaChallengeResponse } from '@/features/auth/model/admin-logi
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
-/** 로그인 화면에서 명시적으로 선택하는 경로 (미지정 시 `VITE_REAL_API_MODULES` 규칙) */
+/** 로그인 화면에서 명시적으로 선택하는 경로 (미지정 시 remote URL 있으면 실 API) */
 export type LoginMode = 'mock' | 'api'
 
 export interface LoginOptions {

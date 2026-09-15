@@ -89,6 +89,7 @@ export interface PinnedCardProps {
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   showEditorChrome?: boolean
   structureLockedParagraphIds?: ReadonlySet<string>
+  allowAddAfterStructureLockedParagraphs?: boolean
   hideDragHandleForParagraphIds?: ReadonlySet<string>
   hideParagraphRequiredChrome?: boolean
   headingDescriptionExtraClassName?: string
@@ -114,6 +115,7 @@ function PinnedFormCardInner({
   paragraphBodyOptions,
   showEditorChrome = true,
   structureLockedParagraphIds,
+  allowAddAfterStructureLockedParagraphs = false,
   hideDragHandleForParagraphIds,
   hideParagraphRequiredChrome,
   headingDescriptionExtraClassName,
@@ -179,6 +181,9 @@ function PinnedFormCardInner({
         showEditorChrome ? 'paragraph-card--selectable' : '',
         showEditorChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
         isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
+        paragraph.kind === 'single_item' && paragraph.variant === 'scale_type'
+          ? 'paragraph-card--scale-type'
+          : '',
         adminProxyConfirmCard ? 'agreement-admin-proxy-confirm-card' : '',
       ]
         .filter(Boolean)
@@ -208,7 +213,8 @@ function PinnedFormCardInner({
               middleParagraphActions,
               paragraphs,
               structureLockedParagraphIds,
-              editorKind
+              editorKind,
+              allowAddAfterStructureLockedParagraphs
             )
           : undefined
       }
@@ -253,6 +259,7 @@ export interface SortableMiddleCardProps {
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   showEditorChrome?: boolean
   structureLockedParagraphIds?: ReadonlySet<string>
+  allowAddAfterStructureLockedParagraphs?: boolean
   hideDragHandleForParagraphIds?: ReadonlySet<string>
   hideParagraphRequiredChrome?: boolean
   headingDescriptionExtraClassName?: string
@@ -278,6 +285,7 @@ function SortableMiddleFormCardInner({
   paragraphBodyOptions,
   showEditorChrome = true,
   structureLockedParagraphIds,
+  allowAddAfterStructureLockedParagraphs = false,
   hideDragHandleForParagraphIds,
   hideParagraphRequiredChrome,
   headingDescriptionExtraClassName,
@@ -370,6 +378,9 @@ function SortableMiddleFormCardInner({
           showEditorChrome ? 'paragraph-card--selectable' : '',
           showEditorChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
           isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
+          paragraph.kind === 'single_item' && paragraph.variant === 'scale_type'
+            ? 'paragraph-card--scale-type'
+            : '',
           adminProxyConfirmCard ? 'agreement-admin-proxy-confirm-card' : '',
         ]
           .filter(Boolean)
@@ -413,7 +424,8 @@ function SortableMiddleFormCardInner({
                 middleParagraphActions,
                 paragraphs,
                 structureLockedParagraphIds,
-                editorKind
+                editorKind,
+                allowAddAfterStructureLockedParagraphs
               )
             : undefined
         }

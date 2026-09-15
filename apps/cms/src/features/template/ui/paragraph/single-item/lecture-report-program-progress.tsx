@@ -1,18 +1,16 @@
 import { DatePicker, Input, TimePicker } from 'antd'
+import { CalendarOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
-import type { ReactNode } from 'react'
+import { useRef } from 'react'
 import type { LectureReportProgramProgressParagraph } from '@/features/template/model/writing-form-draft.schema'
-import '@/features/template/ui/form-editor/form-editor-template-field-hint.css'
 import '@/features/template/ui/paragraph/table/vertical-table-paragraph-body.css'
+import { DeferredBorderlessInput } from '@/features/template/ui/shared/deferred-borderless-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import './lecture-report-program-progress.css'
 
 dayjs.extend(customParseFormat)
-
-const LECTURE_REPORT_PROGRAM_PROGRESS_AUTO_HINT =
-  '배정된 프로그램·기관·교육 일정 정보가 자동으로 반영됩니다.'
 
 const verticalTablePickerPopupStyles = {
   popup: {
@@ -30,41 +28,20 @@ function toDayjsDate(raw: string): Dayjs | null {
   return d.isValid() ? d : null
 }
 
-function fromDayjsDate(d: Dayjs | null): string {
-  if (!d || !d.isValid()) return ''
-  return d.format('YYYY-MM-DD')
-}
-
 function toDayjsTime(raw: string): Dayjs | null {
   if (!raw?.trim()) return null
   const d = dayjs(raw, 'HH:mm', true)
   return d.isValid() ? d : null
 }
 
-function fromDayjsTime(d: Dayjs | null): string {
-  if (!d || !d.isValid()) return ''
-  return d.format('HH:mm')
+function wrapClass(base: string, locked: boolean): string {
+  return locked ? `${base} ${base}--disabled` : base
 }
 
-function ProgramProgressCell({
-  value,
-  isTemplateAuthoringMode,
-  control,
-}: {
-  value: string
-  isTemplateAuthoringMode: boolean
-  control: ReactNode
-}) {
-  if (isTemplateAuthoringMode && value.trim() === '') {
-    return (
-      <span className="form-editor-template-field-hint-text">
-        {LECTURE_REPORT_PROGRAM_PROGRESS_AUTO_HINT}
-      </span>
-    )
-  }
-  return control
-}
-
+/**
+ * 시안: 배정 연동 필드는 전부 disabled(회색).
+ * 「진행 단원」만 작성 가능(흰 배경).
+ */
 export function LectureReportProgramProgress({
   paragraph,
   onChange,
@@ -74,12 +51,18 @@ export function LectureReportProgramProgress({
   paragraph: LectureReportProgramProgressParagraph
   onChange: (next: LectureReportProgramProgressParagraph) => void
   isEditMode: boolean
-  /** 템플릿 편집 — 프로그램 연동 안내. false: 실제 응답·프로그램 미리보기 본문 */
+  /** 템플릿 편집 — 진행 단원은 시안상 항상 활성 */
   isTemplateAuthoringMode?: boolean
 }) {
+  const paragraphRef = useRef(paragraph)
+  paragraphRef.current = paragraph
+
   const patch = (partial: Partial<LectureReportProgramProgressParagraph>) => {
-    onChange({ ...paragraph, ...partial })
+    onChange({ ...paragraphRef.current, ...partial })
   }
+
+  const autofillLocked = true
+  const progressUnitLocked = isTemplateAuthoringMode ? false : !isEditMode
 
   return (
     <div className="form-editor-body form-editor-vertical-table-wrap lecture-report-prog-info">
@@ -91,43 +74,48 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <ProgramProgressCell
-                  value={paragraph.programName}
-                  isTemplateAuthoringMode={isTemplateAuthoringMode}
-                  control={
-                    <Input
-                      className="lecture-report-prog-info__input"
-                      variant="borderless"
-                      value={paragraph.programName}
-                      onChange={e => patch({ programName: e.target.value })}
-                      disabled={!isEditMode}
-                      placeholder="입력"
-                    />
-                  }
-                />
+                <div className={wrapClass('lecture-report-prog-info__field-wrap', autofillLocked)}>
+                  <Input
+                    className="lecture-report-prog-info__session-input"
+                    variant="borderless"
+                    value={paragraph.programName}
+                    disabled={autofillLocked}
+                    placeholder="프로그램명"
+                    aria-label="프로그램명"
+                  />
+                </div>
               </div>
             </div>
           </div>
           <div className="form-editor-vertical-table__stage">
             <div className="form-editor-vertical-table__th" role="columnheader">
-              <span>교육진행자 최종 인원</span>
+              <span>사용교재 및 진행단원</span>
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <ProgramProgressCell
-                  value={paragraph.finalInstructorCount}
-                  isTemplateAuthoringMode={isTemplateAuthoringMode}
-                  control={
+                <div className="lecture-report-prog-info__time-session-row">
+                  <div className={wrapClass('lecture-report-prog-info__split-wrap', autofillLocked)}>
                     <Input
-                      className="lecture-report-prog-info__input"
+                      className="lecture-report-prog-info__session-input"
                       variant="borderless"
-                      value={paragraph.finalInstructorCount}
-                      onChange={e => patch({ finalInstructorCount: e.target.value })}
-                      disabled={!isEditMode}
-                      placeholder="입력"
+                      value={paragraph.textbookName}
+                      disabled={autofillLocked}
+                      placeholder="교재명"
+                      aria-label="교재명"
                     />
-                  }
-                />
+                  </div>
+                  <span className="lecture-report-prog-info__divider" role="presentation" />
+                  <div className={wrapClass('lecture-report-prog-info__split-wrap', progressUnitLocked)}>
+                    <DeferredBorderlessInput
+                      className="lecture-report-prog-info__session-input"
+                      value={paragraph.progressUnit}
+                      onCommit={next => patch({ progressUnit: next })}
+                      disabled={progressUnitLocked}
+                      placeholder="진행 단원"
+                      aria-label="진행 단원"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -140,20 +128,16 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <ProgramProgressCell
-                  value={paragraph.institutionName}
-                  isTemplateAuthoringMode={isTemplateAuthoringMode}
-                  control={
-                    <Input
-                      className="lecture-report-prog-info__input"
-                      variant="borderless"
-                      value={paragraph.institutionName}
-                      onChange={e => patch({ institutionName: e.target.value })}
-                      disabled={!isEditMode}
-                      placeholder="입력"
-                    />
-                  }
-                />
+                <div className={wrapClass('lecture-report-prog-info__field-wrap', autofillLocked)}>
+                  <Input
+                    className="lecture-report-prog-info__session-input"
+                    variant="borderless"
+                    value={paragraph.institutionName}
+                    disabled={autofillLocked}
+                    placeholder="기관명"
+                    aria-label="기관명"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -163,20 +147,16 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <ProgramProgressCell
-                  value={paragraph.institutionLocation}
-                  isTemplateAuthoringMode={isTemplateAuthoringMode}
-                  control={
-                    <Input
-                      className="lecture-report-prog-info__input"
-                      variant="borderless"
-                      value={paragraph.institutionLocation}
-                      onChange={e => patch({ institutionLocation: e.target.value })}
-                      disabled={!isEditMode}
-                      placeholder="입력"
-                    />
-                  }
-                />
+                <div className={wrapClass('lecture-report-prog-info__field-wrap', autofillLocked)}>
+                  <Input
+                    className="lecture-report-prog-info__session-input"
+                    variant="borderless"
+                    value={paragraph.institutionLocation}
+                    disabled={autofillLocked}
+                    placeholder="기관 소재지"
+                    aria-label="기관 소재지"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -195,28 +175,22 @@ export function LectureReportProgramProgress({
                   'form-editor-vertical-table__cell-input-shell--body-dt-full',
                 ].join(' ')}
               >
-                <ProgramProgressCell
-                  value={paragraph.educationDate}
-                  isTemplateAuthoringMode={isTemplateAuthoringMode}
-                  control={
-                    <DatePicker
-                      rootClassName={[
-                        'form-editor-vertical-table__field-box',
-                        'form-editor-vertical-table__field-box--picker',
-                        'form-editor-vertical-table__dt-picker--full',
-                        'lecture-report-prog-info__dt-picker',
-                      ].join(' ')}
-                      className="form-editor-vertical-table__dt-picker-inner"
-                      needConfirm={false}
-                      styles={verticalTablePickerPopupStyles}
-                      getPopupContainer={verticalTableFieldPopupContainer}
-                      value={toDayjsDate(paragraph.educationDate)}
-                      onChange={d => isEditMode && patch({ educationDate: fromDayjsDate(d) })}
-                      format="YYYY-MM-DD"
-                      placeholder="날짜 선택"
-                      disabled={!isEditMode}
-                    />
-                  }
+                <DatePicker
+                  rootClassName={[
+                    'form-editor-vertical-table__field-box',
+                    'form-editor-vertical-table__field-box--picker',
+                    'form-editor-vertical-table__dt-picker--full',
+                    'lecture-report-prog-info__dt-picker',
+                    'lecture-report-prog-info__picker--disabled',
+                  ].join(' ')}
+                  className="form-editor-vertical-table__dt-picker-inner"
+                  needConfirm={false}
+                  styles={verticalTablePickerPopupStyles}
+                  getPopupContainer={verticalTableFieldPopupContainer}
+                  value={toDayjsDate(paragraph.educationDate)}
+                  format="YYYY-MM-DD"
+                  placeholder="교육 진행일"
+                  disabled={autofillLocked}
                 />
               </div>
             </div>
@@ -227,43 +201,38 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <ProgramProgressCell
-                  value={`${paragraph.sessionTime}${paragraph.sessionIndex}`}
-                  isTemplateAuthoringMode={isTemplateAuthoringMode}
-                  control={
-                    <div className="lecture-report-prog-info__time-session-row">
-                      <div className="lecture-report-prog-info__time-wrap">
-                        <TimePicker
-                          rootClassName={[
-                            'form-editor-vertical-table__field-box',
-                            'form-editor-vertical-table__field-box--picker',
-                            'lecture-report-prog-info__time-picker',
-                          ].join(' ')}
-                          className="form-editor-vertical-table__dt-picker-inner"
-                          needConfirm={false}
-                          styles={verticalTablePickerPopupStyles}
-                          getPopupContainer={verticalTableFieldPopupContainer}
-                          value={toDayjsTime(paragraph.sessionTime)}
-                          onChange={d => isEditMode && patch({ sessionTime: fromDayjsTime(d) })}
-                          format="HH:mm"
-                          placeholder="시간"
-                          disabled={!isEditMode}
-                        />
-                      </div>
-                      <span className="lecture-report-prog-info__divider" role="presentation" />
-                      <div className="lecture-report-prog-info__session-wrap">
-                        <Input
-                          className="lecture-report-prog-info__session-input"
-                          variant="borderless"
-                          value={paragraph.sessionIndex}
-                          onChange={e => patch({ sessionIndex: e.target.value })}
-                          disabled={!isEditMode}
-                          placeholder="차시"
-                        />
-                      </div>
-                    </div>
-                  }
-                />
+                <div className="lecture-report-prog-info__time-session-row">
+                  <div className="lecture-report-prog-info__time-wrap">
+                    <TimePicker
+                      rootClassName={[
+                        'form-editor-vertical-table__field-box',
+                        'form-editor-vertical-table__field-box--picker',
+                        'lecture-report-prog-info__time-picker',
+                        'lecture-report-prog-info__picker--disabled',
+                      ].join(' ')}
+                      className="form-editor-vertical-table__dt-picker-inner"
+                      needConfirm={false}
+                      styles={verticalTablePickerPopupStyles}
+                      getPopupContainer={verticalTableFieldPopupContainer}
+                      value={toDayjsTime(paragraph.sessionTime)}
+                      format="HH:mm"
+                      placeholder="교육 진행 시간"
+                      disabled={autofillLocked}
+                      suffixIcon={<CalendarOutlined aria-hidden />}
+                    />
+                  </div>
+                  <span className="lecture-report-prog-info__divider" role="presentation" />
+                  <div className={wrapClass('lecture-report-prog-info__session-wrap', autofillLocked)}>
+                    <Input
+                      className="lecture-report-prog-info__session-input"
+                      variant="borderless"
+                      value={paragraph.sessionIndex}
+                      disabled={autofillLocked}
+                      placeholder="진행 차시"
+                      aria-label="진행 차시"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -276,20 +245,16 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <ProgramProgressCell
-                  value={paragraph.educationTarget}
-                  isTemplateAuthoringMode={isTemplateAuthoringMode}
-                  control={
-                    <Input
-                      className="lecture-report-prog-info__input"
-                      variant="borderless"
-                      value={paragraph.educationTarget}
-                      onChange={e => patch({ educationTarget: e.target.value })}
-                      disabled={!isEditMode}
-                      placeholder="입력"
-                    />
-                  }
-                />
+                <div className={wrapClass('lecture-report-prog-info__field-wrap', autofillLocked)}>
+                  <Input
+                    className="lecture-report-prog-info__session-input"
+                    variant="borderless"
+                    value={paragraph.educationTarget}
+                    disabled={autofillLocked}
+                    placeholder="교육 대상"
+                    aria-label="교육 대상"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -299,38 +264,31 @@ export function LectureReportProgramProgress({
             </div>
             <div className="form-editor-vertical-table__td" role="gridcell">
               <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body">
-                <ProgramProgressCell
-                  value={`${paragraph.classLabel}${paragraph.studentCount}`}
-                  isTemplateAuthoringMode={isTemplateAuthoringMode}
-                  control={
-                    <div className="lecture-report-prog-info__time-session-row">
-                      <div className="lecture-report-prog-info__class-wrap">
-                        <Input
-                          className="lecture-report-prog-info__session-input"
-                          variant="borderless"
-                          value={paragraph.classLabel}
-                          onChange={e => patch({ classLabel: e.target.value })}
-                          disabled={!isEditMode}
-                          placeholder="학급"
-                        />
-                      </div>
-                      <span className="lecture-report-prog-info__divider" role="presentation" />
-                      <div className="lecture-report-prog-info__count-wrap">
-                        <CmsNumericInput
-                          mode="integer"
-                          min={0}
-                          className="lecture-report-prog-info__session-input"
-                          inputSize="medium"
-                          width="100%"
-                          value={paragraph.studentCount}
-                          onValueChange={value => patch({ studentCount: value })}
-                          disabled={!isEditMode}
-                          placeholder="총 인원"
-                        />
-                      </div>
-                    </div>
-                  }
-                />
+                <div className="lecture-report-prog-info__time-session-row">
+                  <div className={wrapClass('lecture-report-prog-info__class-wrap', autofillLocked)}>
+                    <Input
+                      className="lecture-report-prog-info__session-input"
+                      variant="borderless"
+                      value={paragraph.classLabel}
+                      disabled={autofillLocked}
+                      placeholder="교육 학급(반)"
+                      aria-label="교육 학급(반)"
+                    />
+                  </div>
+                  <span className="lecture-report-prog-info__divider" role="presentation" />
+                  <div className={wrapClass('lecture-report-prog-info__count-wrap', autofillLocked)}>
+                    <CmsNumericInput
+                      mode="integer"
+                      min={0}
+                      className="lecture-report-prog-info__session-input"
+                      inputSize="medium"
+                      width="100%"
+                      value={paragraph.studentCount}
+                      disabled={autofillLocked}
+                      placeholder="총 학생 수"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

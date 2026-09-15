@@ -25,6 +25,7 @@
         "showWritingPeriodOnForm": false,
         "startPeriodMode": "immediate",
         "endPeriodMode": "immediate",
+        "startPeriodPresetLabel": null,
         "endPeriodPresetLabel": null
       },
       {
@@ -355,7 +356,7 @@
         "paragraphTitle": "",
         "paragraphDescription": "",
         "participatesInTitleNumbering": false,
-        "body": "2026년 09월 11일"
+        "body": "2026년 09월 14일"
       },
       {
         "id": "payment-statement-seed-closing-signature",

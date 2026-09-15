@@ -4,8 +4,6 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { CmsTextArea } from '@/shared/ui/cms-textarea'
-import '@/features/template/ui/form-editor/form-editor.css'
 
 const APPLICATION_GRADE_OPTIONS = Array.from({ length: 6 }, (_, i) => ({
   value: String(i + 1),
@@ -29,22 +27,21 @@ const EDUCATION_PLACE_OPTIONS = [
   { value: 'custom', label: '기타(직접입력)' },
 ] as const
 
-const TEMPLATE_AUTO_USER_INFO_HINT = '로그인 사용자 정보가 자동으로 반영됩니다.'
-
-/** 미리보기 전용 — 로그인 사용자 자동 반영 필드 예시 값 */
+/** 미리보기·프로그램 연동 — 신청 교사/기관 자동 반영 예시 */
 const PREVIEW_AUTO_USER_INFO_SAMPLE = {
   institutionName: '진일초등학교',
   institutionAddress: '광주광역시 남구 광복마을4길 40',
   teacherName: '홍길동',
-  mobile: '010-1234-0000',
-  email: 'ti**@naver.com',
+  tel: '',
+  mobile: '',
+  email: '',
 } as const
 
 const inlineChoiceStyle = { display: 'flex', flexWrap: 'wrap' as const, gap: 16 }
 
 /** 교육받은 교사 프로그램 참여자 신청 폼 — 기본 정보 */
 export function TrainedTeachersProgramApplicationBasicInfoParagraph({
-  isTemplateAuthoringMode = false,
+  isTemplateAuthoringMode: _isTemplateAuthoringMode = false,
 }: {
   isTemplateAuthoringMode?: boolean
 }) {
@@ -78,7 +75,15 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
   )
   const [teacherTel, setTeacherTel] = useGeneralApplicationOverlayKv<string>(
     'application.trainedTeachers.basicInfo.teacherTel',
-    ''
+    PREVIEW_AUTO_USER_INFO_SAMPLE.tel
+  )
+  const [teacherMobile, setTeacherMobile] = useGeneralApplicationOverlayKv<string>(
+    'application.trainedTeachers.basicInfo.teacherMobile',
+    PREVIEW_AUTO_USER_INFO_SAMPLE.mobile
+  )
+  const [teacherEmail, setTeacherEmail] = useGeneralApplicationOverlayKv<string>(
+    'application.trainedTeachers.basicInfo.teacherEmail',
+    PREVIEW_AUTO_USER_INFO_SAMPLE.email
   )
   const [applicationReason, setApplicationReason] = useGeneralApplicationOverlayKv<string>(
     'application.trainedTeachers.basicInfo.applicationReason',
@@ -89,27 +94,73 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
     ''
   )
 
+  const autoFilledInstitutionName = (
+    <CmsInput
+      inputSize="medium"
+      width="100%"
+      value={PREVIEW_AUTO_USER_INFO_SAMPLE.institutionName}
+      disabled
+      readOnly
+    />
+  )
+
+  const autoFilledInstitutionAddress = (
+    <CmsInput
+      inputSize="medium"
+      width="100%"
+      value={PREVIEW_AUTO_USER_INFO_SAMPLE.institutionAddress}
+      disabled
+      readOnly
+    />
+  )
+
+  const teacherInfoInputs = (
+    <div className="detail-info-form-inputs-wrapper-no-gap">
+      <span className="mr-6">담당 교사</span>
+      <CmsInput
+        inputSize="medium"
+        width={120}
+        value={PREVIEW_AUTO_USER_INFO_SAMPLE.teacherName}
+        disabled
+        readOnly
+      />
+      <DetailInfoForm.InputsSeparator />
+      <span className="mr-6">Tel</span>
+      <CmsInput
+        inputSize="medium"
+        width={240}
+        placeholder="담당 교사의 내선 번호(직통 번호)"
+        value={teacherTel}
+        onChange={e => setTeacherTel(e.target.value)}
+      />
+      <DetailInfoForm.InputsSeparator />
+      <span className="mr-6">M</span>
+      <CmsInput
+        inputSize="medium"
+        width={240}
+        placeholder="담당 교사의 휴대폰 번호"
+        value={teacherMobile}
+        onChange={e => setTeacherMobile(e.target.value)}
+      />
+      <DetailInfoForm.InputsSeparator />
+      <span className="mr-6">E-mail</span>
+      <CmsInput
+        inputSize="medium"
+        width={240}
+        placeholder="담당 교사의 이메일"
+        value={teacherEmail}
+        onChange={e => setTeacherEmail(e.target.value)}
+      />
+    </div>
+  )
+
   return (
     <DetailInfoForm title="기본 정보" hideHeader mode="edit">
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="신청 기관명"
           readOnlyDisplay
-          view={
-            isTemplateAuthoringMode ? (
-              <span className="form-editor-template-field-hint-text">
-                {TEMPLATE_AUTO_USER_INFO_HINT}
-              </span>
-            ) : (
-              <CmsInput
-                inputSize="medium"
-                width="100%"
-                value={PREVIEW_AUTO_USER_INFO_SAMPLE.institutionName}
-                disabled
-                readOnly
-              />
-            )
-          }
+          view={autoFilledInstitutionName}
         />
         <DetailInfoForm.Field
           label="신청 학년"
@@ -132,21 +183,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
         <DetailInfoForm.Field
           label="기관 소재지"
           readOnlyDisplay
-          view={
-            isTemplateAuthoringMode ? (
-              <span className="form-editor-template-field-hint-text">
-                {TEMPLATE_AUTO_USER_INFO_HINT}
-              </span>
-            ) : (
-              <CmsInput
-                inputSize="medium"
-                width="100%"
-                value={PREVIEW_AUTO_USER_INFO_SAMPLE.institutionAddress}
-                disabled
-                readOnly
-              />
-            )
-          }
+          view={autoFilledInstitutionAddress}
         />
         <DetailInfoForm.Field
           label="상세 주소"
@@ -178,7 +215,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
                 options={CLASS_COUNT_OPTIONS}
               />
               <span>개 학급</span>
-              <span style={{ color: '#9ca3af' }}>|</span>
+              <DetailInfoForm.InputsSeparator />
               <CmsNumericInput
                 inputSize="medium"
                 width={120}
@@ -233,7 +270,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
                   </CmsRadio>
                 ))}
               </CmsRadioGroup>
-              <span style={{ color: '#9ca3af' }}>|</span>
+              <DetailInfoForm.InputsSeparator />
               <CmsInput
                 inputSize="medium"
                 placeholder="교육이 진행될 상세 장소를 입력해 주세요"
@@ -249,63 +286,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
       </DetailInfoForm.Row>
 
       <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="담당 교사 정보"
-          fullRow
-          readOnlyDisplay={isTemplateAuthoringMode}
-          edit={
-            isTemplateAuthoringMode ? undefined : (
-              <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
-                <span>담당 교사</span>
-                <CmsInput
-                  inputSize="medium"
-                  width={120}
-                  value={PREVIEW_AUTO_USER_INFO_SAMPLE.teacherName}
-                  disabled
-                  readOnly
-                />
-                <span style={{ color: '#9ca3af' }}>|</span>
-                <span>Tel</span>
-                <CmsInput
-                  inputSize="medium"
-                  width={170}
-                  placeholder="담당 교사의 내선 번호(직통 번호)"
-                  value={teacherTel}
-                  onChange={e => setTeacherTel(e.target.value)}
-                />
-                <span style={{ color: '#9ca3af' }}>|</span>
-                <span>M</span>
-                <CmsInput
-                  inputSize="medium"
-                  width={160}
-                  placeholder="휴대폰"
-                  value={PREVIEW_AUTO_USER_INFO_SAMPLE.mobile}
-                  disabled
-                  readOnly
-                />
-                <span style={{ color: '#9ca3af' }}>|</span>
-                <span>E-mail</span>
-                <CmsInput
-                  inputSize="medium"
-                  width={180}
-                  placeholder="이메일"
-                  value={PREVIEW_AUTO_USER_INFO_SAMPLE.email}
-                  disabled
-                  readOnly
-                />
-              </div>
-            )
-          }
-          view={
-            isTemplateAuthoringMode ? (
-              <span className="form-editor-template-field-hint-text">
-                {TEMPLATE_AUTO_USER_INFO_HINT}
-              </span>
-            ) : (
-              '-'
-            )
-          }
-        />
+        <DetailInfoForm.Field label="담당 교사 정보" fullRow edit={teacherInfoInputs} view="-" />
       </DetailInfoForm.Row>
 
       <DetailInfoForm.Row type="single">
@@ -313,10 +294,8 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           label="신청 사유"
           fullRow
           edit={
-            <CmsTextArea
+            <CmsInput
               inputSize="medium"
-              rows={1}
-              expandableFromSingleRow
               placeholder="신청 사유를 입력해 주세요."
               width="100%"
               value={applicationReason}
@@ -332,10 +311,8 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           label="기타 요청사항"
           fullRow
           edit={
-            <CmsTextArea
+            <CmsInput
               inputSize="medium"
-              rows={1}
-              expandableFromSingleRow
               placeholder="기타 요청사항을 입력해 주세요."
               width="100%"
               value={otherRequests}

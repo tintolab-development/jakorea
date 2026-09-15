@@ -31,7 +31,7 @@ export const MEMBER_CONSENT_TEMPLATE_MAP: Record<MemberConsentFieldKey, MemberCo
     consentFacilitatorPledge: {
       fieldKey: 'consentFacilitatorPledge',
       templateId: 'agreement-expense',
-      modalTitle: '교육진행자 동의 서약서',
+      modalTitle: 'JA Korea 교육진행자 서약서(안)',
     },
     consentAdministrativeJoint: {
       fieldKey: 'consentAdministrativeJoint',

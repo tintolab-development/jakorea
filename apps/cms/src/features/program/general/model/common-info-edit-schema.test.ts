@@ -381,4 +381,25 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     expect(saved?.assignmentEnabled).toBe(false)
     expect(saved?.assignmentPeriod).toBeUndefined()
   })
+
+  it('지급 항목은 옵션 라벨로 저장되고 비어 있으면 해당없음이다', () => {
+    const program = baseProgram()
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.wagePaymentItemIds = ['pay-1', 'pay-2']
+    const patch = generalCommonInfoEditValuesToProgramPatch(
+      values,
+      program,
+      sponsorContext,
+      undefined,
+      [
+        { value: 'pay-1', label: '교통비(일반)' },
+        { value: 'pay-2', label: '숙박비' },
+      ]
+    )
+    expect(patch.generalCommonInfo?.paymentItems).toBe('교통비(일반), 숙박비')
+
+    values.wagePaymentItemIds = []
+    const emptyPatch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+    expect(emptyPatch.generalCommonInfo?.paymentItems).toBe('해당없음')
+  })
 })

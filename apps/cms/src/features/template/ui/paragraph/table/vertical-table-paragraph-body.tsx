@@ -327,12 +327,14 @@ export function VerticalTableParagraphBody({
     const portraitNameRowInteractive =
       isPortraitPersonalConsentTable &&
       rowIdx === 0 &&
-      portraitConsentResponseFieldsInteractive
+      (portraitConsentResponseFieldsInteractive || isEditMode || portraitSeedPresetLocked)
     const rowEditMode = forceStatic ? false : isEditMode || portraitNameRowInteractive
     const isPortraitAffiliationStage =
       isPortraitPersonalConsentTable && rowIdx === 0 && stageIdx === 1
     const header = row.headers[stageIdx] ?? ''
     const cell = row.cells[stageIdx] ?? ''
+    const isPortraitRetentionPeriodCell =
+      isPortraitPersonalConsentTable && header.trim() === '보유 기간'
     const hPh = verticalTableHeaderPlaceholder(rowIdx, stageIdx, row.stageCount)
     const hint = row.placeholderHints?.[stageIdx] ?? ''
     const stageKind = effectiveVerticalStageKinds(row, p.verticalTableFlavor)[stageIdx as 0 | 1]
@@ -546,7 +548,14 @@ export function VerticalTableParagraphBody({
           )}
         </div>
         <div
-          className="form-editor-vertical-table__td"
+          className={[
+            'form-editor-vertical-table__td',
+            isPortraitRetentionPeriodCell
+              ? 'form-editor-vertical-table__td--portrait-retention'
+              : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
           role="gridcell"
           onClick={
             canvasInteractive

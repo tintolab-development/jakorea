@@ -8,6 +8,7 @@ import {
   parseSponsorContactType,
   shouldPersistYearlyBusinessRow,
   toSponsorContactRequest,
+  toSponsorRequestFromBasicInfo,
   toSponsorRequestFromRegister,
   toYearlyBusinessRequest,
 } from './sponsor-adapters'
@@ -49,6 +50,71 @@ describe('mapSponsorDetailResponse', () => {
     })
     expect(detail.homepageUrl).toBe('https://www.samsung.com')
     expect(detail.logos).toEqual([{ id: 'samsung_logo.ai', fileName: 'samsung_logo.ai' }])
+  })
+})
+
+describe('toSponsorRequestFromBasicInfo', () => {
+  it('does not echo managers or contactInfo on sponsor PATCH', () => {
+    const body = toSponsorRequestFromBasicInfo(
+      {
+        nameDisplayKo: '삼성전자',
+        nameDisplayEn: 'Samsung',
+        organizationKind: 'corporate',
+        businessNumber: '124-81-00998',
+        sponsorshipStartDate: '2024-03-01',
+        sponsorshipStatus: 'active',
+        executives: '이재용',
+        district: '수원시',
+        detailAddress: '삼성로 129',
+        homepageUrl: 'https://www.samsung.com',
+        securityMemo: '메모',
+        logos: [],
+        pendingLogoFiles: [],
+      },
+      {
+        id: 'sp-1',
+        name: '삼성전자',
+        managers: [{ name: '김담당', phone: '010-****-0000' }],
+        contactInfo: '구형 연락처',
+        description: '설명',
+        createdAt: '',
+        updatedAt: '',
+        organizationKind: 'corporate',
+        sponsorshipStatus: 'active',
+        programCount: 0,
+        totalDonationAmount: 0,
+        totalBeneficiaryCount: 0,
+        nameDisplayKo: '삼성전자',
+        nameDisplayEn: 'Samsung',
+        businessNumber: '124-81-00998',
+        executives: '이재용',
+        address: '수원시 삼성로 129',
+        homepageUrl: 'https://www.samsung.com',
+        logos: [],
+        contacts: [
+          {
+            id: 'c-1',
+            name: '김담당',
+            contactType: 'lead',
+            department: '',
+            position: '',
+            officePhone: '',
+            phone: '010-****-0000',
+            email: '',
+            companyAddress: '',
+            memo: '',
+            registeredAt: '',
+          },
+        ],
+        programHistories: [],
+        yearlyBusinesses: [],
+      }
+    )
+
+    expect(body.managers).toBeUndefined()
+    expect(body.contactInfo).toBeUndefined()
+    expect(body.name).toBe('삼성전자')
+    expect(body.homepageUrl).toBe('https://www.samsung.com')
   })
 })
 

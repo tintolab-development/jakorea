@@ -491,7 +491,7 @@ export async function fetchConsentFilledDocumentRemote(
   body: AdminPrivacyUnmaskRequest
 ): Promise<FilledDocumentResponse> {
   return unwrapApiBody(
-    await membersApi.consentFilledDocument(memberId, consentType, body, {
+    await membersApi.consentFilledDocument(memberId, consentType, body, undefined, {
       skipGlobalErrorAlert: true,
     })
   )

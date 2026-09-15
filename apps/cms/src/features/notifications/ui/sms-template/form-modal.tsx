@@ -136,8 +136,8 @@ export function FormModal({
   const senderProfilesQuery = useSmsSenderProfilesQuery(open)
   const variablesQuery = useSmsTemplateVariablesQuery({}, open && remote)
   const variableGroups = useMemo(
-    () => groupMailTemplateVariablesFromCatalog(variablesQuery.data ?? []),
-    [variablesQuery.data]
+    () => groupMailTemplateVariablesFromCatalog(variablesQuery.data?.variables ?? []),
+    [variablesQuery.data?.variables]
   )
   const isEdit = mode === 'edit'
   const headerTitle = form.templateName.trim() || SMS_TEMPLATE_NAME_PLACEHOLDER

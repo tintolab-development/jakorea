@@ -5,7 +5,7 @@ import {
   mapTemplateVariablesCatalog,
   pickNonEmptySendVariables,
   toTemplateVariablesRequestParams,
-  type AlimtalkTemplateVariable,
+  type NotificationTemplateVariablesCatalogMapped,
   type NotificationTemplateVariablesQuery,
 } from '@/features/notifications/api/adapters/alimtalk-send-batch-adapters'
 import {
@@ -25,7 +25,10 @@ import {
   pickNotificationMailContextVariables,
 } from '@/features/notifications/model/shared/mail-context-variables'
 import { applyNotificationSendBodySnapshot } from '@/features/notifications/model/shared/send-body-snapshot'
-import { parseNotificationSendProgramId } from '@/features/notifications/model/send-program-id'
+import {
+  isNotificationSendWithoutProgram,
+  parseNotificationSendProgramId,
+} from '@/features/notifications/model/send-program-id'
 import { resolveScheduledAtForCreateRequest } from '@/features/notifications/model/send-scheduled-at'
 import type { MailSendDraft, MailSendRecipient } from '@/features/notifications/model/mail-send/types'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
@@ -36,7 +39,7 @@ export type MailSenderProfileOption = AlimtalkSenderProfileOption
 function assertMailSendRemoteReady(): void {
   if (!isRealApiModuleEnabled('notifications')) {
     throw new Error(
-      '알림 API가 활성화되지 않았습니다. VITE_REAL_API_MODULES에 notifications를 추가해 주세요.'
+      '알림 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정해 주세요.'
     )
   }
   if (!hasRemoteAdminJwt()) {
@@ -103,7 +106,8 @@ export function resolveMailSenderProfileId(
 }
 
 export async function getMailRecipientCandidates(input: {
-  programId: number
+  /** 생략 시 전체 회원 후보 (대상 프로그램 미선택) */
+  programId?: number
   keyword?: string
   participantType?: string
   memberType?: string
@@ -116,7 +120,7 @@ export async function getMailRecipientCandidates(input: {
   size: number
   totalPages: number
 }> {
-  const size = input.size ?? 100
+  const size = input.size ?? 50
   const page = input.page ?? 0
   if (!shouldUseMailSendRemoteApi()) {
     return {
@@ -129,7 +133,9 @@ export async function getMailRecipientCandidates(input: {
   }
   const dto = await fetchRecipientCandidatesRemote({
     channelType: MAIL_API_CHANNEL_TYPE,
-    programId: input.programId,
+    ...(input.programId != null && Number.isFinite(input.programId)
+      ? { programId: input.programId }
+      : {}),
     keyword: input.keyword,
     participantType: input.participantType,
     memberType: input.memberType,
@@ -143,14 +149,16 @@ export async function getMailRecipientCandidates(input: {
     total,
     page: dto.page ?? page,
     size: resolvedSize,
-    totalPages: dto.totalPages ?? Math.max(Math.ceil(total / (resolvedSize || 100)), 1),
+    totalPages: dto.totalPages ?? Math.max(Math.ceil(total / (resolvedSize || 50)), 1),
   }
 }
 
 export async function getMailTemplateVariables(
   input: NotificationTemplateVariablesQuery = {}
-): Promise<AlimtalkTemplateVariable[]> {
-  if (!shouldUseMailSendRemoteApi()) return []
+): Promise<NotificationTemplateVariablesCatalogMapped> {
+  if (!shouldUseMailSendRemoteApi()) {
+    return { variables: [], systemManualSendQaEnabled: false }
+  }
   const dto = await fetchTemplateVariablesRemote(toTemplateVariablesRequestParams(input))
   return mapTemplateVariablesCatalog(dto)
 }
@@ -191,8 +199,7 @@ export async function submitMailSend(input: {
   }
 
   const programId = parseNotificationSendProgramId(draft.programId)
-  const isAllProgram = draft.programId?.trim().toLowerCase() === 'all'
-  if (!isAllProgram && programId == null) {
+  if (!isNotificationSendWithoutProgram(draft.programId) && programId == null) {
     throw new Error('대상 프로그램을 선택하세요.')
   }
 

@@ -1,6 +1,4 @@
-import { getGeneralPrograms } from '@/data/mock/general-programs'
 import {
-  filterGeneralProgramsByOverviewStatus,
   mapAdminProgramDetailToProgram,
   mapAdminProgramListItemToProgram,
   mapGeneralProgramToCreateRequest,
@@ -8,6 +6,7 @@ import {
 } from '@/features/program/general/api/adapters/general-program-adapters'
 import {
   clientFilterGeneralPrograms,
+  GENERAL_PROGRAM_LIST_PAGE_SIZE,
   generalProgramListParamsFromFilters,
   type GeneralProgramListTableFilters,
 } from '@/features/program/general/api/general-program-list-filter-params'
@@ -42,14 +41,9 @@ import {
   updateAdminProgramPostRemote,
 } from '@/features/program/general/api/programs-api-client'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
-import { resolveGeneralProgramForDetail } from '@/features/program/general/lib/detail-meta'
 import type { ProgramRole } from '@/types/user'
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
-import {
-  countGeneralProgramOverviewStages,
-  type GeneralProgramOverviewStageCounts,
-} from '@/features/program/general/lib/overview-stage-counts'
-import { programService } from '@/entities/program/api/program-service'
+import type { GeneralProgramOverviewStageCounts } from '@/features/program/general/lib/overview-stage-counts'
 import type { Program } from '@/types/domain'
 
 const GENERAL_PROGRAM_API_TYPE = 'GENERAL'
@@ -57,7 +51,7 @@ const GENERAL_PROGRAM_API_TYPE = 'GENERAL'
 function assertGeneralProgramsRemoteReady(): void {
   if (!shouldUseGeneralProgramsRemoteApi()) {
     throw new Error(
-      '일반 프로그램 API가 활성화되지 않았습니다. API 로그인 후 VITE_REAL_API_MODULES에 programs를 추가해 주세요.'
+      '일반 프로그램 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정하고 관리자 API로 로그인해 주세요.'
     )
   }
 }
@@ -71,28 +65,64 @@ function assertProgramsHttpRemoteReady(): void {
 }
 
 export function getGeneralProgramsMockList(
-  statusFilter: GeneralProgramOverviewStatusFilter | null
+  _statusFilter: GeneralProgramOverviewStatusFilter | null
 ): Program[] {
-  return filterGeneralProgramsByOverviewStatus(getGeneralPrograms(), statusFilter)
+  throw new Error(
+    '일반 프로그램 mock 목록은 제거되었습니다. programs 모듈·API 로그인을 사용해 주세요.'
+  )
 }
 
-export function getGeneralProgramMockById(programId: string): Program | null {
-  return resolveGeneralProgramForDetail(programId) ?? null
+export function getGeneralProgramMockById(_programId: string): Program | null {
+  throw new Error(
+    '일반 프로그램 mock 상세는 제거되었습니다. GET /api/admin/programs/{id}를 사용해 주세요.'
+  )
 }
 
+export type GeneralProgramsRemoteListPage = {
+  programs: Program[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
+}
+
+export async function fetchGeneralProgramsRemoteListPage(
+  statusFilter: GeneralProgramOverviewStatusFilter | null,
+  tableFilters: GeneralProgramListTableFilters = {},
+  pageParam = 0
+): Promise<GeneralProgramsRemoteListPage> {
+  assertGeneralProgramsRemoteReady()
+
+  const query = generalProgramListParamsFromFilters(statusFilter, tableFilters, pageParam)
+  const page = await fetchAdminProgramsRemote(query)
+
+  const programs = clientFilterGeneralPrograms(
+    (page.items ?? []).map(mapAdminProgramListItemToProgram),
+    tableFilters
+  )
+  // periodStatus는 서버 필터 — trained-teachers/1사1교와 같이 클라이언트 overview 재필터 스킵
+  const size = page.size ?? GENERAL_PROGRAM_LIST_PAGE_SIZE
+  const currentPage = page.page ?? pageParam
+  const totalElements = page.totalElements ?? programs.length
+  const totalPages =
+    page.totalPages ?? (size > 0 ? Math.ceil(totalElements / size) : currentPage + 1)
+
+  return {
+    programs,
+    page: currentPage,
+    size,
+    totalElements,
+    hasMore: currentPage + 1 < totalPages,
+  }
+}
+
+/** @deprecated 무한 스크롤은 `fetchGeneralProgramsRemoteListPage` 사용 */
 export async function fetchGeneralProgramsRemoteList(
   statusFilter: GeneralProgramOverviewStatusFilter | null,
   tableFilters: GeneralProgramListTableFilters = {}
 ): Promise<Program[]> {
-  assertGeneralProgramsRemoteReady()
-
-  const page = await fetchAdminProgramsRemote(
-    generalProgramListParamsFromFilters(statusFilter, tableFilters)
-  )
-
-  const programs = (page.items ?? []).map(mapAdminProgramListItemToProgram)
-  // periodStatus는 서버 필터 — trained-teachers/1사1교와 같이 클라이언트 overview 재필터 스킵
-  return clientFilterGeneralPrograms(programs, tableFilters)
+  const page = await fetchGeneralProgramsRemoteListPage(statusFilter, tableFilters, 0)
+  return page.programs
 }
 
 /**
@@ -100,13 +130,9 @@ export async function fetchGeneralProgramsRemoteList(
  * remote: GET /programs?periodStatus=* 의 totalElements (목록과 동일 periodStatus 계약)
  * mock: lifecycle 버킷 집계 (목록 filterGeneralProgramsByOverviewStatus 와 동일)
  *
- * 별도 count API 불필요 — 기존 목록 API로 충분. (500건 초과 시 totalElements가 SSOT)
+ * 별도 count API 불필요 — 기존 목록 API로 충분. (목록 페이징과 무관, totalElements가 SSOT)
  */
 export async function fetchGeneralProgramOverviewStages(): Promise<GeneralProgramOverviewStageCounts> {
-  if (!shouldUseGeneralProgramsRemoteApi()) {
-    return countGeneralProgramOverviewStages(getGeneralPrograms())
-  }
-
   assertGeneralProgramsRemoteReady()
 
   const base = { programType: GENERAL_PROGRAM_API_TYPE, page: 0, size: 1 } as const
@@ -132,11 +158,6 @@ export async function fetchGeneralProgramRemoteById(programId: string): Promise<
 }
 
 export async function createGeneralProgram(program: Program): Promise<Program> {
-  if (!shouldUseGeneralProgramsRemoteApi()) {
-    const { id: _id, createdAt: _c, updatedAt: _u, ...data } = program
-    return programService.create(data)
-  }
-
   assertGeneralProgramsRemoteReady()
   const dto = await createAdminProgramRemote(mapGeneralProgramToCreateRequest(program))
   return mapAdminProgramDetailToProgram(dto)
@@ -147,11 +168,6 @@ export async function updateGeneralProgram(
   program: Program,
   patch?: Partial<Program>
 ): Promise<Program> {
-  if (!shouldUseGeneralProgramsRemoteApi()) {
-    const { id: _id, createdAt: _c, ...data } = patch ?? program
-    return programService.update(programId, data)
-  }
-
   assertGeneralProgramsRemoteReady()
   const dto = await updateAdminProgramRemote(
     programId,
@@ -161,25 +177,12 @@ export async function updateGeneralProgram(
 }
 
 export async function deleteGeneralProgram(programId: string): Promise<void> {
-  if (!shouldUseGeneralProgramsRemoteApi()) {
-    await programService.delete(programId)
-    return
-  }
-
   assertGeneralProgramsRemoteReady()
   await deleteAdminProgramRemote(programId)
 }
 
 export async function deleteGeneralPrograms(programIds: string[]): Promise<void> {
   if (programIds.length === 0) return
-
-  if (!shouldUseGeneralProgramsRemoteApi()) {
-    for (const programId of programIds) {
-      await deleteGeneralProgram(programId)
-    }
-    return
-  }
-
   assertGeneralProgramsRemoteReady()
   await bulkDeleteAdminProgramsRemote(programIds)
 }

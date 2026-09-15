@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
-import { getSponsorDetail } from '@/features/sponsor/api/admin-sponsors-service'
+import { getSponsorContacts } from '@/features/sponsor/api/admin-sponsors-service'
+import { EMPTY_CONTACTS_PARAMS_KEY } from '@/features/sponsor/api/contacts-filter-params'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import type { GeneralProgramSponsorEditContext } from '@/features/program/general/model/common-info-edit-schema'
 import { useSponsorOptionsQuery } from '@/features/sponsor/hooks/use-sponsor-options-query'
@@ -8,6 +9,10 @@ import { normalizeSponsorContactsSingleLead } from '@/features/sponsor/utils/nor
 
 const EMPTY_SPONSORS: GeneralProgramSponsorEditContext['sponsors'] = []
 
+/**
+ * 후원사 선택 시 담당자 옵션용 컨텍스트.
+ * 담당자는 상세 embed가 아니라 contacts API로 전부 로드한다(주 담당자만이 아님).
+ */
 export function useGeneralProgramSponsorEditContext(
   sponsorIds: readonly string[] = []
 ): GeneralProgramSponsorEditContext {
@@ -16,8 +21,8 @@ export function useGeneralProgramSponsorEditContext(
 
   const contactQueries = useQueries({
     queries: sponsorIds.map(id => ({
-      queryKey: dataManagementQueryKeys.sponsors.detail(id),
-      queryFn: () => getSponsorDetail(id),
+      queryKey: dataManagementQueryKeys.sponsors.contacts(id, EMPTY_CONTACTS_PARAMS_KEY),
+      queryFn: () => getSponsorContacts(id),
       enabled: Boolean(id) && sponsorsQuery.isSuccess,
       staleTime: 30_000,
     })),
@@ -32,10 +37,10 @@ export function useGeneralProgramSponsorEditContext(
   return useMemo((): GeneralProgramSponsorEditContext => {
     const contactsBySponsorId: GeneralProgramSponsorEditContext['contactsBySponsorId'] = {}
     sponsorIds.forEach((id, index) => {
-      const detail = contactQueries[index]?.data
-      if (!detail) return
+      const contacts = contactQueries[index]?.data
+      if (!contacts) return
       contactsBySponsorId[id] = normalizeSponsorContactsSingleLead(
-        detail.contacts.map(contact => ({ ...contact }))
+        contacts.map(contact => ({ ...contact }))
       )
     })
     return { sponsors, contactsBySponsorId }

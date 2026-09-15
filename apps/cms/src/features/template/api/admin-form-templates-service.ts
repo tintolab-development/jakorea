@@ -64,7 +64,7 @@ function hasExtensionPayload(args: {
 function assertFormsSurveysRemoteReady(): void {
   if (!isRealApiModuleEnabled('formsSurveys')) {
     throw new Error(
-      '양식 템플릿 API가 활성화되지 않았습니다. VITE_REAL_API_MODULES에 formsSurveys를 추가해 주세요.'
+      '양식 템플릿 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정해 주세요.'
     )
   }
   if (!hasRemoteAdminJwt()) {
