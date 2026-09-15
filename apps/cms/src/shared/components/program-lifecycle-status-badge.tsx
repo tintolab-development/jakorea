@@ -10,9 +10,12 @@ import type { ProgramLifecycleStatus } from '@/types/domain'
 import {
   getProgramLifecycleLabel,
   getProgramProgressPhase,
-  PROGRAM_PROGRESS_PHASE_LABELS,
   type ProgramProgressPhaseKey,
 } from '@/shared/constants/status'
+import {
+  getTypedProgramLifecycleDisplay,
+  normalizeTypedProgramLifecycleStatus,
+} from '@/shared/lib/program-typed-lifecycle'
 import { AppStatusBadge } from './app-status-badge'
 import './app-status-badge.css'
 import './program-lifecycle-status-badge.css'
@@ -23,11 +26,13 @@ const LIST_PHASE_MODIFIER: Record<ProgramProgressPhaseKey, string> = {
   completed: 'program-lifecycle-status-badge--list-phase-completed',
 }
 
-function getListPhaseDisplayLabel(status: ProgramLifecycleStatus): string {
-  return PROGRAM_PROGRESS_PHASE_LABELS[getProgramProgressPhase(status)]
-}
-
 function getListPhaseModifier(status: ProgramLifecycleStatus): string {
+  const typed = normalizeTypedProgramLifecycleStatus(status)
+  if (typed === 'in_progress') return LIST_PHASE_MODIFIER.inProgress
+  if (typed === 'completed') return LIST_PHASE_MODIFIER.completed
+  if (typed === 'scheduled' || typed === 'recruiting_students') {
+    return LIST_PHASE_MODIFIER.scheduled
+  }
   return LIST_PHASE_MODIFIER[getProgramProgressPhase(status)]
 }
 
@@ -60,7 +65,7 @@ export function ProgramLifecycleStatusBadge({
     p.startsWith('/programs/trained-teachers/')
 
   const label = isOverviewListPage
-    ? getListPhaseDisplayLabel(status)
+    ? getTypedProgramLifecycleDisplay(status).label
     : getProgramLifecycleLabel(status)
   const modifier = isOverviewListPage
     ? getListPhaseModifier(status)

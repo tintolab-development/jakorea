@@ -310,21 +310,26 @@ export interface ApplicationPath {
   updatedAt: DateValue
 }
 
-// 프로그램 진행 워크플로우 상태 (15개: 예정 4 + 모집 중 4 + 진행 중 3 + 완료 4)
+// 프로그램 진행 워크플로우 상태
+// typed API: scheduled | recruiting_students | in_progress | completed
+// (+ FE 레거시 세분 값 — normalizeTypedProgramLifecycleStatus로 typed에 합침)
 export type ProgramLifecycleStatus =
-  | 'planned' // 참여자 모집 예정
+  | 'scheduled' // typed — 진행 예정
+  | 'in_progress' // typed — 진행 중
+  | 'completed' // typed — 완료
+  | 'planned' // 레거시 → scheduled
   | 'instructor_recruitment_planned' // 강사 모집 예정
   | 'volunteer_recruitment_planned' // 봉사자 모집 예정
   | 'participant_instructor_recruitment_planned' // 참여자&교육자 모집 예정
-  | 'recruiting_students' // 참여자 모집 중
+  | 'recruiting_students' // typed — 모집 중
   | 'recruiting_instructors' // 강사 모집 중
   | 'recruiting_volunteers' // 봉사자 모집 중
   | 'participant_instructor_recruiting' // 참여자&교육자 모집 중
-  | 'education_in_progress' // 프로그램 진행 중
+  | 'education_in_progress' // 레거시 → in_progress
   | 'matching_completed' // 참여자 모집 완료
   | 'education_before_textbook' // 경제교육: 교재 전 단계
   | 'education_after_textbook' // 경제교육: 교재 후 진행 중
-  | 'education_completed' // 강사 모집 완료
+  | 'education_completed' // 레거시 → completed
   | 'document_processing_completed' // 봉사자 모집 완료
   | 'participant_instructor_recruitment_completed' // 참여자&교육자 모집 완료
 
