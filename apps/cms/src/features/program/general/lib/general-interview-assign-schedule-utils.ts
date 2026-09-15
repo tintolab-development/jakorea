@@ -2,7 +2,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import type { Program } from '@/types/domain'
 import type { GeneralInterviewSlotListItem } from '@/features/program/general/api/admin-applications-service'
 import { resolveGeneralProgramVolunteerInterviewScheduleDisplay } from '@/features/program/general/lib/volunteer-interview-schedule-display'
-import { DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK } from '@/data/mock/general-volunteer-interview-schedule-mock'
+import { DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK, GENERAL_INTERVIEW_MOCK_RANGE } from '@/data/mock/general-volunteer-interview-schedule-mock'
 import {
   formatDisplayTimeRange,
   getMockHolidayDateKeys,
@@ -74,18 +74,8 @@ function buildParsedInterviewSchedule(
     cursor = cursor.add(1, 'day')
   }
 
-  const disabledDate = (date: Dayjs) => {
-    if (date.isBefore(rangeStart, 'month') || date.isAfter(rangeEnd, 'month')) {
-      return false
-    }
-
-    const dateKey = date.format('YYYY-MM-DD')
-    if (blockSaturday && date.day() === 6) return true
-    if (blockSunday && date.day() === 0) return true
-    if (unavailableKeys.has(dateKey)) return true
-
-    return !clickableDateKeys.has(dateKey)
-  }
+  /** 면접 기간·슬롯 없는 날·토/일·지정 불가일 → 클릭 비활성(캘린더 opacity 0.5) */
+  const disabledDate = (date: Dayjs) => !clickableDateKeys.has(date.format('YYYY-MM-DD'))
 
   return {
     slotsByDateKey,
@@ -147,12 +137,8 @@ export function parseGeneralInterviewScheduleFromRemoteSlots(
   const rangeStart = (minDate ?? dayjs()).startOf('month')
   const rangeEnd = (maxDate ?? dayjs()).endOf('month')
 
-  const disabledDate = (date: Dayjs) => {
-    if (date.isBefore(rangeStart, 'month') || date.isAfter(rangeEnd, 'month')) {
-      return false
-    }
-    return !clickableDateKeys.has(date.format('YYYY-MM-DD'))
-  }
+  /** 면접 슬롯이 없는 날(기간 외 포함) → 클릭 비활성 */
+  const disabledDate = (date: Dayjs) => !clickableDateKeys.has(date.format('YYYY-MM-DD'))
 
   return {
     slotsByDateKey,
@@ -179,8 +165,8 @@ export function parseGeneralInterviewScheduleFromProgram(program: Program): Pars
   const scheduleSource = hasSchedule
     ? display
     : DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK
-  const rangeStart = dayjs('2026-03-01')
-  const rangeEnd = dayjs('2026-03-31')
+  const rangeStart = dayjs(GENERAL_INTERVIEW_MOCK_RANGE.startIso)
+  const rangeEnd = dayjs(GENERAL_INTERVIEW_MOCK_RANGE.endIso)
 
   return buildParsedInterviewSchedule(
     {

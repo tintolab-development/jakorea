@@ -49,8 +49,8 @@ export const GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS: Record<
   GeneralInterviewAssignmentStatus,
   string
 > = {
-  waiting: '면접일 배정 전',
-  assigned: '면접일 배정 완료',
+  waiting: '배정 대기',
+  assigned: '배정 완료',
   withdrawn: '활동 포기',
 }
 
@@ -59,7 +59,7 @@ export const GENERAL_INTERVIEW_ASSIGNMENT_STATUS_CALENDAR_LIST_TAG_LABELS: Recor
   GeneralInterviewAssignmentStatus,
   string
 > = {
-  waiting: '배정 전',
+  waiting: '배정 대기',
   assigned: '배정 완료',
   withdrawn: '활동 포기',
 }

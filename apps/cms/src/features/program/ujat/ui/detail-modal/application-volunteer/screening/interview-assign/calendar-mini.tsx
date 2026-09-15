@@ -1,10 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, type CSSProperties } from 'react'
 import { Calendar } from 'antd'
 import enUS from 'antd/es/calendar/locale/en_US'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import updateLocale from 'dayjs/plugin/updateLocale'
+import { countMiniCalendarWeekRows } from '@/shared/components/calendar/lib/calendar-mini-layout'
 import '@/shared/components/calendar/styles/calendar.css'
 import './calendar-mini.css'
 
@@ -52,6 +53,11 @@ function InterviewAssignCalendarMiniCore({
   assignedDateKeys,
   disabledDate,
 }: Omit<UjatVolunteerInterviewAssignCalendarMiniProps, 'clickableDates'>) {
+  const weekRows = useMemo(() => countMiniCalendarWeekRows(currentMonth), [currentMonth])
+  const miniStyle = {
+    '--calendar-mini-week-rows': weekRows,
+  } as CSSProperties
+
   const handlePrevMonth = () => {
     onMonthChange(currentMonth.subtract(1, 'month'))
   }
@@ -66,7 +72,6 @@ function InterviewAssignCalendarMiniCore({
     const hasSchedule = programDates.has(dateKey)
     const hasAssignmentComplete = assignedDateKeys?.has(dateKey) ?? false
     const isSelected = date.isSame(selectedDate, 'day')
-    const isToday = date.isSame(dayjs(), 'day')
 
     return (
       <div
@@ -74,7 +79,6 @@ function InterviewAssignCalendarMiniCore({
           'calendar-mini-cell',
           hasSchedule ? 'calendar-mini-cell--has-schedule' : '',
           hasAssignmentComplete ? 'calendar-mini-cell--assignment-complete' : '',
-          isToday ? 'calendar-mini-cell--today' : '',
           isSelected ? 'calendar-mini-cell--selected' : '',
           ...buildInterviewAssignCellWeekendClasses(date, holidayDateKeys),
         ]
@@ -87,7 +91,7 @@ function InterviewAssignCalendarMiniCore({
   }
 
   return (
-    <div className="calendar-mini">
+    <div className="calendar-mini" style={miniStyle} data-week-rows={weekRows}>
       <div className="calendar-mini-header">
         <button type="button" className="calendar-mini-nav-btn" onClick={handlePrevMonth}>
           <LeftOutlined />
@@ -124,10 +128,13 @@ export function UjatVolunteerInterviewAssignCalendarMini({
   disabledDate: disabledDateProp,
   ...rest
 }: UjatVolunteerInterviewAssignCalendarMiniProps) {
+  /** 면접 기간(클릭 가능일) 밖은 항상 비활성 — prop과 clickableDates를 모두 반영 */
   const disabledDate = useMemo(() => {
-    if (disabledDateProp) return disabledDateProp
-    if (!clickableDates) return undefined
-    return (date: Dayjs) => !clickableDates.has(date.format('YYYY-MM-DD'))
+    return (date: Dayjs) => {
+      if (disabledDateProp?.(date)) return true
+      if (clickableDates && !clickableDates.has(date.format('YYYY-MM-DD'))) return true
+      return false
+    }
   }, [clickableDates, disabledDateProp])
 
   return (

@@ -23,6 +23,7 @@ import type {
   UjatEducationProgressVolunteerAssignmentStatus,
   UjatEducationProgressVolunteerGrade,
 } from '@/features/program/ujat/ui/detail-modal/progress/volunteers/types'
+import { GENERAL_INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY } from '@/data/mock/general-volunteer-interview-schedule-mock'
 
 export type UjatVolunteerMockInterviewAvailabilityDay = {
   dateLabel: string
@@ -86,9 +87,9 @@ export type UjatVolunteerMockProfile = {
 }
 
 const PARK_TINTO_INTERVIEW_AVAILABILITY: UjatVolunteerMockInterviewAvailabilityDay[] = [
-  { dateLabel: '26. 03. 30(목)', slots: ['19:30 ~ 20:00'] },
+  { dateLabel: '26. 10. 20(화)', slots: ['14:00 ~ 14:30'] },
   {
-    dateLabel: '26. 03. 23(월)',
+    dateLabel: '26. 09. 23(수)',
     slots: ['09:00 ~ 09:30', '14:00 ~ 14:30', '15:00 ~ 15:30'],
   },
 ]
@@ -128,9 +129,10 @@ export const UJAT_VOLUNTEER_MOCK_PROFILES: readonly UjatVolunteerMockProfile[] =
     managerAEvaluation: 'pass',
     managerBEvaluation: 'neutral',
     interviewAssignmentStatus: 'waiting',
-    interviewAvailability: [
-      { dateLabel: '26. 03. 16(월)', slots: ['09:00 ~ 09:30', '14:00 ~ 14:30'] },
-    ],
+    interviewAvailability: GENERAL_INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY.map(day => ({
+      dateLabel: day.dateLabel,
+      slots: [...day.slots],
+    })),
   },
   {
     id: 'lee-minto',
@@ -164,7 +166,8 @@ export const UJAT_VOLUNTEER_MOCK_PROFILES: readonly UjatVolunteerMockProfile[] =
     managerBEvaluation: 'unreviewed',
     interviewAssignmentStatus: 'waiting',
     interviewAvailability: [
-      { dateLabel: '26. 03. 17(화)', slots: ['15:00 ~ 15:30'] },
+      { dateLabel: '26. 09. 10(목)', slots: ['09:00 ~ 09:30', '14:00 ~ 14:30'] },
+      { dateLabel: '26. 09. 17(목)', slots: ['15:00 ~ 15:30'] },
     ],
   },
   {
@@ -202,8 +205,8 @@ export const UJAT_VOLUNTEER_MOCK_PROFILES: readonly UjatVolunteerMockProfile[] =
     interviewAssignmentStatus: 'assigned',
     interviewAvailability: PARK_TINTO_INTERVIEW_AVAILABILITY,
     secondInterviewScreeningStatus: 'waiting',
-    assignedInterviewDateLabel: '26. 03. 30(목)',
-    assignedInterviewTime: '19:30 ~ 20:00',
+    assignedInterviewDateLabel: '26. 09. 23(수)',
+    assignedInterviewTime: '09:00 ~ 09:30',
     totalScore: null,
     interviewEvaluationRemark: '지원동기도 좋고, 교육 경험이 풍부함',
   },
@@ -240,10 +243,10 @@ export const UJAT_VOLUNTEER_MOCK_PROFILES: readonly UjatVolunteerMockProfile[] =
     managerBEvaluation: 'pass',
     interviewAssignmentStatus: 'assigned',
     interviewAvailability: [
-      { dateLabel: '26. 03. 12(목)', slots: ['14:00 ~ 14:30'] },
+      { dateLabel: '26. 09. 10(목)', slots: ['14:00 ~ 14:30'] },
     ],
     secondInterviewScreeningStatus: 'pass',
-    assignedInterviewDateLabel: '26. 03. 12(목)',
+    assignedInterviewDateLabel: '26. 09. 10(목)',
     assignedInterviewTime: '14:00 ~ 14:30',
     totalScore: 88,
   },
@@ -282,10 +285,10 @@ export const UJAT_VOLUNTEER_MOCK_PROFILES: readonly UjatVolunteerMockProfile[] =
     managerBEvaluation: 'pass',
     interviewAssignmentStatus: 'assigned',
     interviewAvailability: [
-      { dateLabel: '26. 03. 11(수)', slots: ['09:00 ~ 09:30', '15:00 ~ 15:30'] },
+      { dateLabel: '26. 09. 11(금)', slots: ['09:00 ~ 09:30', '15:00 ~ 15:30'] },
     ],
     secondInterviewScreeningStatus: 'pass',
-    assignedInterviewDateLabel: '26. 03. 11(수)',
+    assignedInterviewDateLabel: '26. 09. 11(금)',
     assignedInterviewTime: '09:00 ~ 09:30',
     totalScore: 92,
   },
@@ -314,16 +317,16 @@ export const UJAT_VOLUNTEER_MOCK_PROFILES: readonly UjatVolunteerMockProfile[] =
     essayJaExperience: '없음',
     scheduleChangeCancelCount: 0,
     adminComment: '',
-    assignmentStatus: 'activity_abandoned',
+    assignmentStatus: 'assignment_waiting',
     totalAssignmentDays: null,
     documentScreeningStatus: 'pass',
     managerAEvaluation: 'neutral',
-    managerBEvaluation: 'fail',
-    interviewAssignmentStatus: 'withdrawn',
-    interviewAvailability: [
-      { dateLabel: '26. 03. 18(화)', slots: ['10:00 ~ 10:30', '16:00 ~ 16:30'] },
-      { dateLabel: '26. 03. 21(금)', slots: ['09:00 ~ 09:30'] },
-    ],
+    managerBEvaluation: 'pass',
+    interviewAssignmentStatus: 'waiting',
+    interviewAvailability: GENERAL_INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY.map(day => ({
+      dateLabel: day.dateLabel,
+      slots: [...day.slots],
+    })),
   },
   {
     id: 'han-jiwoo',
@@ -359,9 +362,11 @@ export const UJAT_VOLUNTEER_MOCK_PROFILES: readonly UjatVolunteerMockProfile[] =
     managerBEvaluation: 'neutral',
     interviewAssignmentStatus: 'withdrawn',
     interviewAvailability: [
-      { dateLabel: '26. 03. 19(수)', slots: ['14:00 ~ 14:30', '15:00 ~ 15:30'] },
-      { dateLabel: '26. 03. 22(토)', slots: ['09:00 ~ 09:30', '11:00 ~ 11:30'] },
+      { dateLabel: '26. 09. 15(화)', slots: ['14:00 ~ 14:30', '15:00 ~ 15:30'] },
+      { dateLabel: '26. 09. 22(화)', slots: ['09:00 ~ 09:30', '14:00 ~ 14:30'] },
     ],
+    assignedInterviewDateLabel: '26. 09. 15(화)',
+    assignedInterviewTime: '14:00 ~ 14:30',
   },
 ] as const
 

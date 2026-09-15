@@ -1,6 +1,7 @@
 import dayjs, { type Dayjs } from 'dayjs'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { getUjatVolunteerInterviewScheduleMock } from '@/data/mock/ujat-volunteer-interview-schedule'
+import { GENERAL_INTERVIEW_MOCK_RANGE } from '@/data/mock/general-volunteer-interview-schedule-mock'
 import { parseUjatInterviewDateLabel } from '../shared/interview-calendar-events'
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
@@ -130,8 +131,8 @@ export function parseInterviewScheduleMock(programId: string): ParsedInterviewSc
   const slotsByDateKey = new Map<string, InterviewAssignSlot[]>()
   const clickableDateKeys = new Set<string>()
 
-  const rangeStart = dayjs('2026-03-01')
-  const rangeEnd = dayjs('2026-03-31')
+  const rangeStart = dayjs(GENERAL_INTERVIEW_MOCK_RANGE.startIso)
+  const rangeEnd = dayjs(GENERAL_INTERVIEW_MOCK_RANGE.endIso)
   let cursor = rangeStart.startOf('day')
 
   while (!cursor.isAfter(rangeEnd, 'day')) {
@@ -155,21 +156,8 @@ export function parseInterviewScheduleMock(programId: string): ParsedInterviewSc
     cursor = cursor.add(1, 'day')
   }
 
-  /**
-   * 프로그램 면접 기간(2026-03) 밖 월은 antd disabled 미적용 → 회색이 아닌 일반 숫자·주말 색으로 탐색.
-   * 기간 내에서만 일요일·지정 불가일·슬롯 없는 날을 선택 불가(회색) 처리.
-   */
-  const disabledDate = (date: Dayjs) => {
-    if (date.isBefore(rangeStart, 'month') || date.isAfter(rangeEnd, 'month')) {
-      return false
-    }
-
-    const dateKey = date.format('YYYY-MM-DD')
-    if (blockSunday && date.day() === 0) return true
-    if (unavailableKeys.has(dateKey)) return true
-
-    return !clickableDateKeys.has(dateKey)
-  }
+  /** 면접 기간·슬롯 없는 날·일요일·지정 불가일 → 클릭 비활성(캘린더 opacity 0.5) */
+  const disabledDate = (date: Dayjs) => !clickableDateKeys.has(date.format('YYYY-MM-DD'))
 
   return {
     slotsByDateKey,

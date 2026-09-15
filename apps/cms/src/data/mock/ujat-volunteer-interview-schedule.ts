@@ -1,3 +1,11 @@
+/**
+ * UJAT 봉사자 면접 진행 가능 일정 mock
+ * 일반 프로그램과 동일하게 2026.09~10 기간을 사용한다.
+ */
+
+import {
+  GENERAL_INTERVIEW_MOCK_TIME_SLOTS,
+} from '@/data/mock/general-volunteer-interview-schedule-mock'
 import {
   UJAT_MOCK_PROGRAM_ID_VOLUNTEER_INTERVIEW_COMMON_ONLY,
   UJAT_MOCK_PROGRAM_ID_VOLUNTEER_INTERVIEW_WITH_EXCEPTIONS,
@@ -26,24 +34,28 @@ export type UjatVolunteerInterviewScheduleData = {
   exceptions: UjatVolunteerInterviewScheduleException[]
 }
 
-const COMMON_SLOTS =
-  '09:00 ~ 09:30, 09:30 ~ 10:00, 10:00 ~ 10:30, 10:30 ~ 11:00, 11:00 ~ 11:30, 16:00 ~ 16:30, 20:30 ~ 21:00'
+/** 시안 슬롯 + 오전 추가 — 배정 모달 우측 패널 */
+const COMMON_SLOTS = `${GENERAL_INTERVIEW_MOCK_TIME_SLOTS}, 09:30 ~ 10:00, 10:00 ~ 10:30`
 
+/**
+ * 면접 기간 2026-09 ~ 2026-10.
+ * 지정 불가일(9/18) — 연민트 demo일(8·15·22)과 겹치지 않음.
+ */
 const COMMON_UNAVAILABLE: UjatVolunteerInterviewScheduleCommon = {
   recurringUnavailable: '일요일, 공휴일',
-  specificUnavailableDates: '26년 3월 6일(금), 26년 3월 15일(금)',
+  specificUnavailableDates: '26년 9월 18일(금)',
   availableTimeSlots: COMMON_SLOTS,
 }
 
-/** 시안 기준 — 공통 + 예외 일정 01 (3/22) */
+/** 시안 기준 — 공통 + 예외 일정 (10/16) */
 export const UJAT_VOLUNTEER_INTERVIEW_SCHEDULE_WITH_EXCEPTION: UjatVolunteerInterviewScheduleData =
   {
     common: COMMON_UNAVAILABLE,
     exceptions: [
       {
-        exceptionDate: '26년 3월 22일(금)',
+        exceptionDate: '26년 10월 16일(금)',
         availableTimeSlots:
-          '09:00 ~ 09:30, 11:00 ~ 11:30, 16:00 ~ 16:30, 20:30 ~ 21:00',
+          '09:00 ~ 09:30, 11:00 ~ 11:30, 14:00 ~ 14:30, 16:00 ~ 16:30',
       },
     ],
   }

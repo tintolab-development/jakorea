@@ -217,7 +217,8 @@ export function buildUjatVolunteerApplicantRowFromProfile(
           },
         }
       : {}),
-    ...(profile.interviewAssignmentStatus === 'assigned'
+    ...(profile.interviewAssignmentStatus === 'assigned' ||
+    profile.interviewAssignmentStatus === 'withdrawn'
       ? {
           assignedInterviewDateLabel: profile.assignedInterviewDateLabel,
           assignedInterviewTime: profile.assignedInterviewTime,
@@ -232,14 +233,14 @@ export function buildUjatVolunteerApplicantRowFromProfile(
 const INTERVIEW_TIME_SLOTS = ['09:00 ~ 09:30', '14:00 ~ 14:30', '15:00 ~ 15:30'] as const
 
 const INTERVIEW_DATE_LABELS = [
-  '26. 03. 09(월)',
-  '26. 03. 10(화)',
-  '26. 03. 11(수)',
-  '26. 03. 12(목)',
-  '26. 03. 13(금)',
-  '26. 03. 16(월)',
-  '26. 03. 17(화)',
-  '26. 03. 23(월)',
+  '26. 09. 08(화)',
+  '26. 09. 10(목)',
+  '26. 09. 11(금)',
+  '26. 09. 15(화)',
+  '26. 09. 17(목)',
+  '26. 09. 22(화)',
+  '26. 09. 23(수)',
+  '26. 10. 05(월)',
 ] as const
 
 function buildAssignedInterviewFields(
