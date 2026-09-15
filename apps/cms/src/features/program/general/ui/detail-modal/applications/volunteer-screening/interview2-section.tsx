@@ -13,7 +13,7 @@ import {
   screeningInterview2ListTitle,
   type ScreeningSubjectKind,
 } from '@/features/program/general/lib/screening-subject-kind'
-import { GENERAL_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X } from './interview2-columns'
+import { resolveGeneralInterview2TableScrollX } from './interview2-columns'
 import {
   useGeneralVolunteerApplicantDetail,
   type GeneralVolunteerApplicantDetailMetaChangeHandler,
@@ -387,7 +387,7 @@ export function GeneralVolunteerInterview2Section({
               dataSource={tableData}
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: GENERAL_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X }}
+              scroll={{ x: resolveGeneralInterview2TableScrollX(subjectKind) }}
               rowSelection={{
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),

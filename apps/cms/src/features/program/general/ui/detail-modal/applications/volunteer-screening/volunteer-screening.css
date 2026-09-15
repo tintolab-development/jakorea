@@ -20,8 +20,13 @@
   padding: 0;
 }
 
+/* 1차 서류 심사·합격자·2차 면접 — 개인 doc1(ApplicantList)과 동일 5열+조회 그리드 */
 .participant-applications
   .general-volunteer-screening__filter-layout.filter-table-layout
+  .table-filter-group__fields-rows
+  > .table-filter-group__fields-row-with-action,
+.participant-applications
+  .general-volunteer-doc-passed__filter-layout.filter-table-layout
   .table-filter-group__fields-rows
   > .table-filter-group__fields-row-with-action,
 .participant-applications
@@ -42,6 +47,10 @@
   .table-filter-group__fields-row-with-action
   > .table-filter-group__fields-grid-row,
 .participant-applications
+  .general-volunteer-doc-passed__filter-layout.filter-table-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-grid-row,
+.participant-applications
   .general-volunteer-interview2__filter-layout.filter-table-layout
   .table-filter-group__fields-row-with-action
   > .table-filter-group__fields-grid-row {
@@ -50,6 +59,10 @@
 
 .participant-applications
   .general-volunteer-screening__filter-layout.filter-table-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-shell--inline,
+.participant-applications
+  .general-volunteer-doc-passed__filter-layout.filter-table-layout
   .table-filter-group__fields-row-with-action
   > .table-filter-group__fields-shell--inline,
 .participant-applications

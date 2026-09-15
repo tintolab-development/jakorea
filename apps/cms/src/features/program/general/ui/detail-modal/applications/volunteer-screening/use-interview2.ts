@@ -4,6 +4,7 @@ import {
   getGeneralVolunteerInterview2Applicants,
   patchGeneralVolunteerInterviewEvaluation,
   patchGeneralVolunteerSecondInterviewScreeningStatus,
+  sortGeneralParticipantDocPassedVolunteerRows,
   type GeneralVolunteerApplicantRow,
   type GeneralVolunteerInterviewEvaluationPayload,
 } from '@/data/mock/general-volunteer-applicants-mock'
@@ -51,18 +52,25 @@ export function useGeneralVolunteerInterview2({
   subjectKind?: ScreeningSubjectKind
 }) {
   const { showAlert } = useCmsAlert()
+  const sortInterview2Rows = useCallback(
+    (rows: GeneralVolunteerApplicantRow[]) =>
+      subjectKind === 'participant'
+        ? // 참여자: 1차 서류 합격자와 동일 — 활동 포기 하단, No. 내림차순
+          sortGeneralParticipantDocPassedVolunteerRows(rows)
+        : sortGeneralVolunteerInterview2Applicants(rows),
+    [subjectKind]
+  )
+
   const loadRows = useCallback(() => {
     if (subjectKind === 'participant') {
-      return sortGeneralVolunteerInterview2Applicants(
+      return sortInterview2Rows(
         mapParticipantsToVolunteerScreeningRows(
           getGeneralParticipantInterview2Applicants(programId)
         )
       )
     }
-    return sortGeneralVolunteerInterview2Applicants(
-      getGeneralVolunteerInterview2Applicants(programId)
-    )
-  }, [programId, subjectKind])
+    return sortInterview2Rows(getGeneralVolunteerInterview2Applicants(programId))
+  }, [programId, sortInterview2Rows, subjectKind])
 
   // remote ON이면 mock으로 채우지 않음 (잘못된 목록 플래시 방지)
   const remoteSeed =
@@ -132,19 +140,13 @@ export function useGeneralVolunteerInterview2({
   }, [pendingFilters])
 
   const tableData = useMemo(
-    () =>
-      sortGeneralVolunteerInterview2Applicants(
-        filterGeneralInterview2Applicants(list, appliedFilters)
-      ),
-    [appliedFilters, list]
+    () => sortInterview2Rows(filterGeneralInterview2Applicants(list, appliedFilters)),
+    [appliedFilters, list, sortInterview2Rows]
   )
 
   const calendarFilteredData = useMemo(
-    () =>
-      sortGeneralVolunteerInterview2Applicants(
-        filterGeneralInterview2CalendarApplicants(list, appliedFilters)
-      ),
-    [appliedFilters, list]
+    () => sortInterview2Rows(filterGeneralInterview2CalendarApplicants(list, appliedFilters)),
+    [appliedFilters, list, sortInterview2Rows]
   )
 
   const calendarEvents = useMemo(

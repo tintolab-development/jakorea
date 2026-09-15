@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   getGeneralVolunteerDocPassedApplicants,
+  sortGeneralParticipantDocPassedVolunteerRows,
   sortGeneralVolunteerDocPassedApplicants,
   type GeneralVolunteerApplicantRow,
 } from '@/data/mock/general-volunteer-applicants-mock'
@@ -110,8 +111,11 @@ export function useGeneralVolunteerDocPassed({
 
   const tableData = useMemo(() => {
     const filtered = filterGeneralDocPassedApplicants(list, appliedFilters)
+    if (subjectKind === 'participant') {
+      return sortGeneralParticipantDocPassedVolunteerRows(filtered)
+    }
     return sortGeneralVolunteerDocPassedApplicants(filtered)
-  }, [appliedFilters, list])
+  }, [appliedFilters, list, subjectKind])
 
   const calendarEvents = useMemo(
     () => mapGeneralVolunteerInterviewAvailabilityToCalendarEvents(tableData),

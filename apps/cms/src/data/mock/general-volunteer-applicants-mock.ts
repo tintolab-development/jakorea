@@ -11,7 +11,11 @@ import {
   computeGeneralInterviewTotalScore,
   sortGeneralVolunteerInterview2Applicants,
 } from '@/features/program/general/lib/general-volunteer-interview2-display'
-import { DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK } from '@/data/mock/general-volunteer-interview-schedule-mock'
+import {
+  DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK,
+  GENERAL_INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY,
+  GENERAL_INTERVIEW_ASSIGNED_DATE_LABELS,
+} from '@/data/mock/general-volunteer-interview-schedule-mock'
 
 export type GeneralVolunteerInterviewAvailabilityDay = {
   dateLabel: string
@@ -75,14 +79,25 @@ const NAMES = [
 ] as const
 
 const INTERVIEW_DATE_LABELS = [
-  '26. 03. 09(월)',
-  '26. 03. 10(화)',
-  '26. 03. 11(수)',
-  '26. 03. 12(목)',
-  '26. 03. 16(월)',
-  '26. 03. 17(화)',
-  '26. 03. 23(월)',
+  '26. 09. 08(화)',
+  '26. 09. 10(목)',
+  '26. 09. 11(금)',
+  '26. 09. 15(화)',
+  '26. 09. 17(목)',
+  '26. 09. 22(화)',
+  '26. 09. 23(수)',
+  '26. 10. 05(월)',
 ] as const
+
+/**
+ * 면접일 배정 캘린더 UI demo — 목록 일정 수(6개) = 팝업 연민트 3일×2슬롯
+ * (GENERAL_INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY SSOT)
+ */
+const INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY: GeneralVolunteerInterviewAvailabilityDay[] =
+  GENERAL_INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY.map(day => ({
+    dateLabel: day.dateLabel,
+    slots: [...day.slots],
+  }))
 
 const INTERVIEW_TIME_SLOTS = DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.availableTimeSlots
   .split(',')
@@ -98,9 +113,9 @@ const ESSAY_NECESSITY =
 const ESSAY_JA =
   '중·고등학교 시절 JA Korea 경제금융교육 안내를 들었고, 대학 진학 후 프로그램에 관심을 갖게 되었습니다.'
 
-/** 1차 서류 합격자 — 면접일 배정 현황별 3명 */
-const DOC_PASSED_WAITING_INDICES = new Set([20, 21, 22])
-const DOC_PASSED_ASSIGNED_INDICES = new Set([2, 6, 8])
+/** 1차 서류 합격자 — 면접일 배정 현황별 (5=정하은 캘린더 demo) */
+const DOC_PASSED_WAITING_INDICES = new Set([5, 20, 21, 22])
+const DOC_PASSED_ASSIGNED_INDICES = new Set([2, 3, 4, 6, 8])
 const DOC_PASSED_WITHDRAWN_INDICES = new Set([25, 26, 27])
 
 /** 2차 면접 대상자 — 심사 현황별 demo 1명 (index 30~37: assigned, 25: 활동 포기) */
@@ -128,42 +143,42 @@ const INTERVIEW2_STATUS_DEMO_FIELDS: Partial<
     >
   >
 > = {
-  /** 면접 진행 대기 — 미래 면접 슬롯, 수동 상태 없음 */
+  /** 면접 진행 대기 — 오늘(9/15) 이후 슬롯 */
   30: {
-    assignedInterviewDateLabel: '26. 03. 30(목)',
-    assignedInterviewTime: '19:30 ~ 20:00',
+    assignedInterviewDateLabel: '26. 10. 20(화)',
+    assignedInterviewTime: '14:00 ~ 14:30',
     secondInterviewScreeningStatus: undefined,
     managerAScore: null,
     managerBScore: null,
     interviewEvaluationRemark: '지원동기도 좋고, 교육 경험이 풍부함',
   },
-  /** 면접 진행 완료 — 과거 면접 슬롯, 수동 상태 없음 */
+  /** 면접 진행 완료 — 과거 슬롯 */
   31: {
-    assignedInterviewDateLabel: '26. 05. 12(화)',
-    assignedInterviewTime: '10:00 ~ 10:30',
+    assignedInterviewDateLabel: '26. 09. 08(화)',
+    assignedInterviewTime: '09:00 ~ 09:30',
     secondInterviewScreeningStatus: undefined,
     managerAScore: 4,
     managerBScore: 3,
   },
   /** 면접 합격 */
   32: {
-    assignedInterviewDateLabel: '26. 06. 10(수)',
-    assignedInterviewTime: '11:00 ~ 11:30',
+    assignedInterviewDateLabel: '26. 09. 10(목)',
+    assignedInterviewTime: '14:00 ~ 14:30',
     secondInterviewScreeningStatus: 'pass',
     managerAScore: 5,
     managerBScore: 4,
   },
   /** 면접 불합격 */
   33: {
-    assignedInterviewDateLabel: '26. 06. 11(목)',
-    assignedInterviewTime: '13:00 ~ 13:30',
+    assignedInterviewDateLabel: '26. 09. 11(금)',
+    assignedInterviewTime: '09:00 ~ 09:30',
     secondInterviewScreeningStatus: 'fail',
     managerAScore: 1,
     managerBScore: 2,
   },
   /** 예비 1 */
   34: {
-    assignedInterviewDateLabel: '26. 06. 12(금)',
+    assignedInterviewDateLabel: '26. 09. 17(목)',
     assignedInterviewTime: '14:00 ~ 14:30',
     secondInterviewScreeningStatus: 'reserve1',
     managerAScore: 4,
@@ -171,7 +186,7 @@ const INTERVIEW2_STATUS_DEMO_FIELDS: Partial<
   },
   /** 예비 2 */
   35: {
-    assignedInterviewDateLabel: '26. 06. 13(토)',
+    assignedInterviewDateLabel: '26. 09. 23(수)',
     assignedInterviewTime: '15:00 ~ 15:30',
     secondInterviewScreeningStatus: 'reserve2',
     managerAScore: 3,
@@ -179,24 +194,24 @@ const INTERVIEW2_STATUS_DEMO_FIELDS: Partial<
   },
   /** 예비 3 — 미평가 */
   36: {
-    assignedInterviewDateLabel: '26. 06. 16(월)',
-    assignedInterviewTime: '09:30 ~ 10:00',
+    assignedInterviewDateLabel: '26. 10. 05(월)',
+    assignedInterviewTime: '09:00 ~ 09:30',
     secondInterviewScreeningStatus: 'reserve3',
     managerAScore: null,
     managerBScore: null,
   },
   /** 예비 4 */
   37: {
-    assignedInterviewDateLabel: '26. 06. 17(화)',
-    assignedInterviewTime: '10:30 ~ 11:00',
+    assignedInterviewDateLabel: '26. 10. 13(화)',
+    assignedInterviewTime: '14:00 ~ 14:30',
     secondInterviewScreeningStatus: 'reserve4',
     managerAScore: 5,
     managerBScore: 5,
   },
   /** 활동 포기 */
   25: {
-    assignedInterviewDateLabel: '26. 06. 18(수)',
-    assignedInterviewTime: '11:30 ~ 12:00',
+    assignedInterviewDateLabel: '26. 09. 22(화)',
+    assignedInterviewTime: '14:00 ~ 14:30',
     secondInterviewScreeningStatus: undefined,
     managerAScore: null,
     managerBScore: null,
@@ -242,7 +257,7 @@ function buildInterviewAvailability(
 
   if (index <= 4) {
     days.push({
-      dateLabel: '26. 03. 23(월)',
+      dateLabel: '26. 09. 23(수)',
       slots: ['09:00 ~ 09:30', '14:00 ~ 14:30', '15:00 ~ 15:30'],
     })
   }
@@ -325,7 +340,7 @@ function buildAssignedInterviewFields(
 
   if (index === 2) {
     return {
-      assignedInterviewDateLabel: '26. 03. 23(월)',
+      assignedInterviewDateLabel: '26. 09. 23(수)',
       assignedInterviewTime: '09:00 ~ 09:30',
       secondInterviewScreeningStatus: undefined,
       managerAScore: null,
@@ -334,10 +349,29 @@ function buildAssignedInterviewFields(
     }
   }
 
-  /** 26.03.09 09:00 슬롯 — 배정 모달 `N명` 카운트 demo (2명) */
+  /** 회색 셀 demo — 9/10·9/11 배정 완료일 */
+  if (index === 3) {
+    return {
+      assignedInterviewDateLabel: GENERAL_INTERVIEW_ASSIGNED_DATE_LABELS[0],
+      assignedInterviewTime: '14:00 ~ 14:30',
+      secondInterviewScreeningStatus: undefined,
+      ...buildInterviewManagerScores(seed),
+    }
+  }
+
+  if (index === 4) {
+    return {
+      assignedInterviewDateLabel: GENERAL_INTERVIEW_ASSIGNED_DATE_LABELS[1],
+      assignedInterviewTime: '09:00 ~ 09:30',
+      secondInterviewScreeningStatus: undefined,
+      ...buildInterviewManagerScores(seed),
+    }
+  }
+
+  /** 9/17 09:00 슬롯 — 배정 모달 `N명` 카운트 demo (2명) */
   if (index === 6 || index === 8) {
     return {
-      assignedInterviewDateLabel: '26. 03. 09(월)',
+      assignedInterviewDateLabel: GENERAL_INTERVIEW_ASSIGNED_DATE_LABELS[2],
       assignedInterviewTime: '09:00 ~ 09:30',
       secondInterviewScreeningStatus: undefined,
       ...buildInterviewManagerScores(seed),
@@ -377,15 +411,16 @@ function buildRow(programId: string, index: number): GeneralVolunteerApplicantRo
     index,
     documentScreeningStatus
   )
-  const interviewAvailability =
-    index === 2
+  const interviewAvailability = DOC_PASSED_WAITING_INDICES.has(index)
+    ? INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY
+    : index === 2
       ? ([
           {
-            dateLabel: '26.03.09(월)',
-            slots: ['15:00 - 15:30', '09:00 - 09:30'],
+            dateLabel: '26. 09. 08(화)',
+            slots: ['15:00 ~ 15:30', '09:00 ~ 09:30'],
           },
           {
-            dateLabel: '26. 03. 23(월)',
+            dateLabel: '26. 09. 23(수)',
             slots: ['09:00 ~ 09:30', '14:00 ~ 14:30', '15:00 ~ 15:30'],
           },
         ] satisfies GeneralVolunteerInterviewAvailabilityDay[])
@@ -464,6 +499,18 @@ export function getGeneralVolunteerDoc1Applicants(
   return sortGeneralVolunteerByInterviewSlotCount(
     getGeneralVolunteerApplicants(programId).filter(row => row.documentScreeningStatus === 'pending')
   )
+}
+
+/** 참여자(개인) 1차 서류 합격자·2차 면접 대상자 — 활동 포기 하단, 나머지는 No. 내림차순 */
+export function sortGeneralParticipantDocPassedVolunteerRows(
+  rows: GeneralVolunteerApplicantRow[]
+): GeneralVolunteerApplicantRow[] {
+  return [...rows].sort((a, b) => {
+    const aWithdrawn = a.interviewAssignmentStatus === 'withdrawn' ? 1 : 0
+    const bWithdrawn = b.interviewAssignmentStatus === 'withdrawn' ? 1 : 0
+    if (aWithdrawn !== bWithdrawn) return aWithdrawn - bWithdrawn
+    return b.no - a.no
+  })
 }
 
 export function sortGeneralVolunteerDocPassedApplicants(

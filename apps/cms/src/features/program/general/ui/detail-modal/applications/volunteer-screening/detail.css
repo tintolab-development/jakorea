@@ -50,7 +50,8 @@
 .general-volunteer-applicant-basic-info {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  /* 프로그램 승인 현황 블록과 인적 정보 테이블 분리 간격 (신청 상세 basic-info-fields 와 동일) */
+  gap: 16px;
   width: 100%;
   min-width: 0;
   --detail-info-label-w: 220px;
@@ -88,8 +89,24 @@
   min-width: 0;
 }
 
+/* 담당자 서류 평가 — 행 높이 58px (패딩 포함, DetailInfoForm 기본 12px 상하 패딩 제거) */
+.general-volunteer-applicant-manager-evaluation .detail-info-form__field {
+  height: 58px;
+  min-height: 58px;
+  max-height: 58px;
+  box-sizing: border-box;
+}
+
+.general-volunteer-applicant-manager-evaluation .detail-info-form__field-label,
 .general-volunteer-applicant-manager-evaluation .detail-info-form__field-content {
-  min-height: 54px;
+  height: 100%;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  box-sizing: border-box;
+}
+
+.general-volunteer-applicant-manager-evaluation .detail-info-form__field-content {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -215,9 +232,9 @@
 .general-volunteer-applicant-manager-evaluation
   .general-volunteer-applicant-detail__table--horizontal
   td {
-  height: 54px;
-  min-height: 54px;
-  max-height: 54px;
+  height: 58px;
+  min-height: 58px;
+  max-height: 58px;
   box-sizing: border-box;
 }
 
