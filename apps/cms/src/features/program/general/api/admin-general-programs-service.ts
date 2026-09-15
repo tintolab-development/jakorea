@@ -25,16 +25,24 @@ import {
   deleteAdminProgramManagerRemote,
   deleteAdminProgramRemote,
   deleteAdminProgramPostRemote,
+  deleteAdminProgramPostReactionRemote,
   fetchAdminProgramByIdRemote,
   fetchAdminProgramFormBindingsRemote,
   fetchAdminProgramManagersRemote,
   fetchAdminProgramNavigationRemote,
+  fetchAdminProgramPostAttachmentsRemote,
+  fetchAdminProgramPostCommentsRemote,
+  fetchAdminProgramPostDetailRemote,
+  fetchAdminProgramPostReactionsRemote,
   fetchAdminProgramPostsRemote,
   fetchAdminProgramsRemote,
   fetchAdminProgramSurveyResponseDetailRemote,
   fetchAdminProgramSurveyResponsesRemote,
   fetchAdminProgramSurveySummaryRemote,
   fetchAdminProgramSurveysRemote,
+  putAdminProgramPostAttachmentsRemote,
+  putAdminProgramPostReactionRemote,
+  createAdminProgramPostCommentRemote,
   submitAdminFormResponseRemote,
   updateAdminProgramManagerRemote,
   updateAdminProgramRemote,
@@ -241,6 +249,68 @@ export async function deleteGeneralProgramPost(programId: string, postId: string
   if (!shouldUseProgramsHttpRemoteApi()) return
   assertProgramsHttpRemoteReady()
   await deleteAdminProgramPostRemote(programId, postId)
+}
+
+export async function fetchGeneralProgramPostDetail(programId: string, postId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return fetchAdminProgramPostDetailRemote(programId, postId)
+}
+
+export async function fetchGeneralProgramPostComments(programId: string, postId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return []
+  assertProgramsHttpRemoteReady()
+  const page = await fetchAdminProgramPostCommentsRemote(programId, postId)
+  return page.items ?? []
+}
+
+export async function createGeneralProgramPostComment(
+  programId: string,
+  postId: string,
+  content: string
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return createAdminProgramPostCommentRemote(programId, postId, { content })
+}
+
+export async function fetchGeneralProgramPostReactions(programId: string, postId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return fetchAdminProgramPostReactionsRemote(programId, postId)
+}
+
+export async function putGeneralProgramPostReaction(
+  programId: string,
+  postId: string,
+  reactionType: string
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return putAdminProgramPostReactionRemote(programId, postId, { reactionType })
+}
+
+export async function deleteGeneralProgramPostReaction(programId: string, postId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return
+  assertProgramsHttpRemoteReady()
+  await deleteAdminProgramPostReactionRemote(programId, postId)
+}
+
+export async function fetchGeneralProgramPostAttachments(programId: string, postId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return []
+  assertProgramsHttpRemoteReady()
+  const page = await fetchAdminProgramPostAttachmentsRemote(programId, postId)
+  return page.items ?? []
+}
+
+export async function putGeneralProgramPostAttachments(
+  programId: string,
+  postId: string,
+  fileObjectIds: number[]
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return putAdminProgramPostAttachmentsRemote(programId, postId, { fileObjectIds })
 }
 
 export async function fetchGeneralProgramSurveyResponses(

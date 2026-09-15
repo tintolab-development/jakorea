@@ -276,6 +276,74 @@ export async function putAdminProgramPostReactionRemote(
   )
 }
 
+export async function fetchAdminProgramPostDetailRemote(
+  programId: string,
+  postId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostDetailResponse').ProgramPostDetailResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function fetchAdminProgramPostAttachmentsRemote(
+  programId: string,
+  postId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostAttachmentListResponse').ProgramPostAttachmentListResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/attachments`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function putAdminProgramPostAttachmentsRemote(
+  programId: string,
+  postId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/programPostAttachmentUpdateRequest').ProgramPostAttachmentUpdateRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostAttachmentListResponse').ProgramPostAttachmentListResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/attachments`,
+      method: 'PUT',
+      data: payload,
+    })
+  )
+}
+
+export async function fetchAdminProgramPostReactionsRemote(
+  programId: string,
+  postId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostReactionListResponse').ProgramPostReactionListResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/reactions`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function deleteAdminProgramPostReactionRemote(
+  programId: string,
+  postId: string
+): Promise<void> {
+  await customInstance({
+    url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/reaction`,
+    method: 'DELETE',
+  })
+}
+
 export async function fetchAdminProgramSurveyResponsesRemote(
   programId: string,
   templateVersionId: string

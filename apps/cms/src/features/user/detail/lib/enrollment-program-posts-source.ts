@@ -22,9 +22,11 @@ export function resolveEnrollmentProgramPostsList(options: {
 export function resolveEnrollmentProgramFilesList(options: {
   membersRemote: boolean
   postsOverride: ProgramPost[] | null | undefined
+  filesOverride?: ProgramFile[] | null
   programId: string
 }): ProgramFile[] {
-  const { membersRemote, postsOverride, programId } = options
+  const { membersRemote, postsOverride, filesOverride, programId } = options
+  if (filesOverride != null) return filesOverride
   if (membersRemote && postsOverride == null) return []
   return getProgramFilesByProgramId(programId)
 }

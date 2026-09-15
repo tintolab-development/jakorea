@@ -16,7 +16,10 @@ import {
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import type { Program } from '@/types/domain'
 import { createProgramPost, addProgramFiles } from '@/data/mock'
-import { createGeneralProgramPost } from '@/features/program/general/api/admin-general-programs-service'
+import {
+  createGeneralProgramPost,
+  putGeneralProgramPostAttachments,
+} from '@/features/program/general/api/admin-general-programs-service'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import {
   ADMIN_FILE_PURPOSE,
@@ -169,11 +172,19 @@ export function PostWriteModal({
         : audienceForSave.join(',').toUpperCase()
 
       if (shouldUseGeneralProgramsRemoteApi()) {
-        await createGeneralProgramPost(programId, {
+        const created = await createGeneralProgramPost(programId, {
           title: trimmed.slice(0, 40),
           content: trimmed,
           visibilityType,
         })
+        const createdPostId = created?.postId
+        if (createdPostId != null && uploadResults.length > 0) {
+          await putGeneralProgramPostAttachments(
+            programId,
+            String(createdPostId),
+            uploadResults.map(r => r.fileObjectId)
+          )
+        }
       } else {
         const newPost = createProgramPost({
           programId,

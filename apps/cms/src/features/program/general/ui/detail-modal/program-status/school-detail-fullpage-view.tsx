@@ -431,7 +431,7 @@ export function GeneralParticipatingInstitutionDetailView(
   } | null>(null)
   const [textbookStatusDropdownOpen, setTextbookStatusDropdownOpen] = useState(false)
   const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
-  const { posts: remotePosts, isRemoteDataSource: postsRemote, invalidatePosts } =
+  const { posts: remotePosts, files: remotePostFiles, isRemoteDataSource: postsRemote, invalidatePosts } =
     useGeneralProgramPosts(program.id)
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
@@ -2062,6 +2062,7 @@ export function GeneralParticipatingInstitutionDetailView(
               writeModalOpen={postWriteModalOpen}
               onWriteModalOpenChange={setPostWriteModalOpen}
               postsOverride={postsRemote ? remotePosts : null}
+              filesOverride={postsRemote ? remotePostFiles : null}
               onPostWriteSuccess={() => {
                 void invalidatePosts()
               }}

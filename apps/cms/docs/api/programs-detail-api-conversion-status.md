@@ -19,7 +19,7 @@
 | **5** 봉사자 신청 | **완료(하이브리드)** | list GET + document-result / final-result · 면접 배정 POST · **슬롯 GET hand-wrap**(실패 시 mock) |
 | **6** 진행 목록 | **완료(하이브리드)** | `FORCE_PROGRAM_PROGRESS_MOCK=false` — `participants?participantType=` 실호출 |
 | **7** navigation | **완료(하이브리드)** | `GET …/navigation` → disabled LNB 필터, 실패 시 meta fallback |
-| **8** 게시글 | **부분** | posts 목록 GET + **작성 POST·invalidate** · 출석 dashboard schedules hybrid · 과제 mock(P2-5) |
+| **8** 게시글 | **하이브리드** | posts 목록 GET(+content/counts) · 작성 POST+attachments PUT · 상세/댓글/반응/첨부 GET · 출석 dashboard schedules hybrid · 과제 mock(P2-5) |
 | **9** 설문 | **하이브리드** | surveys + form-bindings · responses(+detail) · summary · **강의평가 제출** `form-responses/submit` |
 | **10** polish | **부분** | lifecycle · managers hybrid · applicationPathId PATCH · path CRUD·상세편집 gaps |
 | **11–16** | **실행됨(부분 DoD)** | 11 mock 해제+SSOT · 12 slots GET · 13 posts invalidate · 14 attendance · 15 lecture-reports/posts · 16 lecture submit+gaps |
