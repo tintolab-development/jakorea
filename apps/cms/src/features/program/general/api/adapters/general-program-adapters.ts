@@ -15,6 +15,7 @@ import {
   parseGeneralProgramServiceDetailJson,
   serializeGeneralProgramServiceDetailJson,
 } from '@/features/program/general/lib/general-program-service-detail-json'
+import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 
 /**
  * BE `applicationTargetMode` — OpenAPI codegen에 아직 없음.
@@ -138,7 +139,13 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
 }
 
 export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
-  const dtoWithNameKo = dto as ProgramResponse & { nameKo?: string }
+  const dtoWithNameKo = dto as ProgramResponse & {
+    nameKo?: string
+    contactName?: string
+    remarks?: string
+    otherMatters?: string
+    recruitmentTargetDetail?: string
+  }
   const title =
     dto.title?.trim() ||
     dto.mainTitle?.trim() ||
@@ -147,6 +154,20 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
   const id = toProgramId(dto.id)
   const now = new Date().toISOString()
   const serviceDetail = parseGeneralProgramServiceDetailJson(dto.serviceDetailJson)
+  const generalCommonInfo = applySettlementPolicyToCommonInfo(
+    serviceDetail.generalCommonInfo,
+    dto.settlementPolicy
+  )
+  const participantRemarks = (
+    serviceDetail.generalCommonInfo?.participantRecruitmentInfo as
+      | { remarks?: string }
+      | undefined
+  )?.remarks
+  const otherNotes =
+    dtoWithNameKo.otherMatters?.trim() ||
+    dtoWithNameKo.remarks?.trim() ||
+    participantRemarks?.trim() ||
+    undefined
 
   return baseProgramDefaults({
     id,
@@ -182,6 +203,7 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     textbookNameEn: dto.textbookNameEn,
     schoolId: dto.schoolId,
     district: dto.district,
+    ips: dto.ips as Program['ips'],
     institutionType: dto.institutionType as Program['institutionType'],
     ipOwned: dto.ipOwned,
     courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
@@ -213,9 +235,11 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     recruitmentGuide: dto.recruitmentGuide,
     learningSupportContent: dto.learningSupportContent,
     attachmentFileNames: dto.attachmentFileNames,
+    otherNotes: otherNotes?.trim() || undefined,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
     ...serviceDetail,
+    generalCommonInfo,
     targetLevel: serviceDetail.targetLevels?.[0] ?? (dto.targetLevel as Program['targetLevel']),
   })
 }
@@ -356,6 +380,9 @@ const SERVICE_DETAIL_PROGRAM_KEYS = [
   'volunteerApplicationEndDate',
   'resultAnnouncementDate',
   'resultAnnouncementMethod',
+  'studentListRequired',
+  'generalParticipantInterviewEnabled',
+  'generalVolunteerInterviewEnabled',
 ] as const satisfies ReadonlyArray<keyof Program>
 
 function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
