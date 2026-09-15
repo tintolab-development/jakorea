@@ -24,6 +24,7 @@ import {
   PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
 } from '@/features/template/lib/program-registration-editor-state'
 import { PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE } from '@/features/program/shared/lib/registration-draft-notice'
+import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import type { Program } from '@/types/domain'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
@@ -344,10 +345,16 @@ export function useGeneralProgramRegistrationFlow(
         registrationFormVariant
       )
       if (next === coercedActiveStep) return
-      // 이전 탭 저장은 백그라운드 — 대기하면 모집 탭 전환 깜빡임이 커짐
-      void persistDraftSilent().catch(() => {})
-      setActiveStep(next)
-      options?.onStepChange?.(next)
+      // 이전 탭 저장을 await — 공유 localStorage race·복원 꼬임 방지 (세션 캐시로 깜빡임은 완화)
+      void (async () => {
+        try {
+          await persistDraftSilent()
+        } catch {
+          // 저장 실패해도 탭 전환은 진행 (작성 중 이탈 방지)
+        }
+        setActiveStep(next)
+        options?.onStepChange?.(next)
+      })()
     },
     [
       coercedActiveStep,
@@ -420,10 +427,22 @@ export function useGeneralProgramRegistrationFlow(
       void registrationVm.handleCompleteRegistration()
       return
     }
-    void participantVm.handleSave({ silent: true }).finally(() => {
+    void (async () => {
+      try {
+        await participantVm.handleSave({ silent: true })
+      } catch (error) {
+        console.debug('generalProgramRegistration complete: participant draft save failed', error)
+        showAlert({
+          title: '임시 저장 실패',
+          content: isLocalStorageQuotaExceededError(error)
+            ? '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
+            : '임시 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+        })
+        return
+      }
       void registrationVm.handleCompleteRegistration()
-    })
-  }, [isProgramStep, registrationVm, participantVm])
+    })()
+  }, [isProgramStep, registrationVm, participantVm, showAlert])
 
   const hasRecruitmentPhase = visibleRecruitTabKeys.length > 0
   const hasApplicationPhase = visibleApplicationTabKeys.length > 0

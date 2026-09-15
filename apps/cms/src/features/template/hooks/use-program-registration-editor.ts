@@ -55,6 +55,7 @@ import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-
 import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
+  isLocalStorageQuotaExceededError,
 } from '@/features/template/lib/writing-form-template-local-save'
 import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
@@ -991,7 +992,9 @@ export function useProgramRegistrationEditor(
         if (options?.silent) throw error
         showAlert({
           title: '임시 저장 실패',
-          content: '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.',
+          content: isLocalStorageQuotaExceededError(error)
+            ? '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
+            : '임시 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
         })
       }
     },

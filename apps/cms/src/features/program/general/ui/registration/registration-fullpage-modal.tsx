@@ -23,14 +23,22 @@ import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
 import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import { useCmsAlert } from '@/shared/ui'
-import { removeWritingFormTemplateSave } from '@/features/template/lib/writing-form-template-local-save'
+import { removeWritingFormTemplateSave, isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
 const TRAINED_TEACHERS_REGISTRATION_MODAL_TITLE = '교육받은 교사 프로그램 등록'
 
-const DRAFT_SAVE_FAILURE_MESSAGE =
+const DRAFT_SAVE_FAILURE_QUOTA_MESSAGE =
   '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
+const DRAFT_SAVE_FAILURE_GENERIC_MESSAGE =
+  '임시 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.'
+
+function draftSaveFailureMessage(error: unknown): string {
+  return isLocalStorageQuotaExceededError(error)
+    ? DRAFT_SAVE_FAILURE_QUOTA_MESSAGE
+    : DRAFT_SAVE_FAILURE_GENERIC_MESSAGE
+}
 
 export type GeneralProgramRegistrationFullpageModalProps = {
   open: boolean
@@ -127,7 +135,7 @@ export function GeneralProgramRegistrationFullpageModal({
       console.debug('generalProgramRegistration draft save failed', error)
       showAlert({
         title: '임시 저장 실패',
-        content: DRAFT_SAVE_FAILURE_MESSAGE,
+        content: draftSaveFailureMessage(error),
       })
     }
   }, [flow, showAlert])
@@ -156,7 +164,7 @@ export function GeneralProgramRegistrationFullpageModal({
         console.debug('generalProgramRegistration draft overwrite save failed', error)
         showAlert({
           title: '임시 저장 실패',
-          content: DRAFT_SAVE_FAILURE_MESSAGE,
+          content: draftSaveFailureMessage(error),
         })
       } finally {
         setOverwriteSaving(false)
