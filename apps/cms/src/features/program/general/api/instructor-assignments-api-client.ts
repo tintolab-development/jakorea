@@ -3,16 +3,22 @@
  * - list: GET /api/admin/program-execution/instructor-assignments
  * - create: POST /api/admin/programs/{programId}/instructor-assignments
  * - cancel: POST /api/admin/program-execution/instructor-assignments/{id}/cancel
+ * - calendar: GET /api/admin/programs/{programId}/instructor-assignment-calendar
+ * - representative: PUT /api/admin/programs/{programId}/representative-instructor
  *
- * assignment calendar GET은 OpenAPI에 없음 → 목록+일정 날짜로 1일1교 충돌을 FE에서 유도.
+ * P0/P1 확장 필드는 OpenAPI codegen 전 — `instructor-assignment-types` 사용.
  */
 
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
-import type { InstructorAssignmentCreateRequest } from '@/shared/api/generated/dashboard/schemas/instructorAssignmentCreateRequest'
 import type { InstructorAssignmentDecisionResponse } from '@/shared/api/generated/dashboard/schemas/instructorAssignmentDecisionResponse'
-import type { InstructorAssignmentListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorAssignmentListItemResponse'
 import type { PageResponseInstructorAssignmentListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseInstructorAssignmentListItemResponse'
+import type {
+  InstructorAssignmentCalendarResponse,
+  InstructorAssignmentCreateBody,
+  InstructorAssignmentListItemEnriched,
+  RepresentativeInstructorBody,
+} from '@/features/program/general/api/instructor-assignment-types'
 
 export type InstructorAssignmentsListQuery = {
   programId?: string | number
@@ -24,7 +30,7 @@ export type InstructorAssignmentsListQuery = {
 }
 
 export interface InstructorAssignmentsPageDto {
-  items?: InstructorAssignmentListItemResponse[]
+  items?: InstructorAssignmentListItemEnriched[]
   page?: number
   size?: number
   totalElements?: number
@@ -40,13 +46,16 @@ export async function fetchInstructorAssignmentsRemote(
       method: 'GET',
       params,
     })
-  )
+  ) as InstructorAssignmentsPageDto
 }
 
 export async function createInstructorAssignmentRemote(
   programId: string,
-  payload: InstructorAssignmentCreateRequest
+  payload: InstructorAssignmentCreateBody
 ): Promise<InstructorAssignmentDecisionResponse> {
+  if (payload.scheduleId == null && payload.requestedScheduleId == null) {
+    throw new Error('scheduleId 또는 requestedScheduleId가 필요합니다.')
+  }
   return unwrapApiBody(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/instructor-assignments`,
@@ -63,6 +72,32 @@ export async function cancelInstructorAssignmentRemote(
     await customInstance({
       url: `/api/admin/program-execution/instructor-assignments/${encodeURIComponent(assignmentId)}/cancel`,
       method: 'POST',
+    })
+  )
+}
+
+export async function fetchInstructorAssignmentCalendarRemote(
+  programId: string,
+  params: { from: string; to: string; instructorMemberId?: string | number }
+): Promise<InstructorAssignmentCalendarResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/instructor-assignment-calendar`,
+      method: 'GET',
+      params,
+    })
+  )
+}
+
+export async function putRepresentativeInstructorRemote(
+  programId: string,
+  payload: RepresentativeInstructorBody
+): Promise<unknown> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/representative-instructor`,
+      method: 'PUT',
+      data: payload,
     })
   )
 }
