@@ -112,6 +112,7 @@ export function mapApplicantSchoolToParticipatingSchool(
     classCount: row.classCount,
     studentCount: row.studentCount,
     lectureRound: '',
+    /** BE에 배송 원장 없음 — 교재명·수량만 표시. 배송 전/중/완료를 API로 invent 하지 않음 */
     textbookStatus: 'not_applicable',
     approvalStatus: 'approved',
     teacherName: row.teacherName || '-',
