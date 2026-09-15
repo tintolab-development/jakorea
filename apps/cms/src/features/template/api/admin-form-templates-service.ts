@@ -41,7 +41,7 @@ import { issuanceFormSections } from '@/features/template/model/issuance-form.sc
 import { writingSections, type TemplateSection } from '@/features/template/model/template.schema'
 import {
   createDefaultDirectAgreementDraft,
-  createDefaultSurveyDraft,
+  createNewSurveyDraft,
   normalizeWritingFormDraft,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -368,7 +368,7 @@ export async function createWritingFormTemplateRemote(args: {
     args.templateName?.trim() ||
     (args.target === 'survey' ? '신규 설문 양식' : '동의 양식 신규 폼')
   const draft =
-    args.target === 'survey' ? createDefaultSurveyDraft() : createDefaultDirectAgreementDraft()
+    args.target === 'survey' ? createNewSurveyDraft() : createDefaultDirectAgreementDraft()
 
   const created = await createFormTemplateRemote({
     templateName,

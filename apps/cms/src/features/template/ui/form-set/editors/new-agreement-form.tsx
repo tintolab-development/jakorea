@@ -7,8 +7,14 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
+import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
+import {
+  createWritingFormTemplateRemote,
+  shouldUseFormsSurveysRemoteApi,
+} from '@/features/template/api/admin-form-templates-service'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
@@ -24,8 +30,11 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
+import { allocateUniqueWritingTemplateName } from '@/features/template/lib/allocate-unique-writing-template-name'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
+import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
+import { getWritingTemplateRowsByCategory } from '@/features/template/lib/writing-template-create-helpers'
 import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
@@ -56,6 +65,7 @@ type NewAgreementFormQuery = {
   mode?: string
   type?: string
   id?: string
+  userTemplate?: string
 }
 
 export type AgreementWritingFormShellProps = {
@@ -94,12 +104,19 @@ export type AgreementWritingFormShellProps = {
   }
   /** forms-surveys draft API 연동 대상 templateCode */
   templateCode?: string
+  /**
+   * templateCode가 없을 때 저장 버튼에서 원격/로컬 템플릿을 최초 생성한다.
+   * (템플릿 관리 > 동의 양식 신규 — 등록 시점이 아닌 저장 시점 create)
+   */
+  enableCreateOnSave?: boolean
   /** 목록 API systemTemplate — 사용자 복제본(false)은 편집 허용 */
   systemTemplate?: boolean
   /** 신규 등록 직후 — catalog code여도 편집 허용 */
   forceUserEditable?: boolean
   /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
   onTemplateDraftSaveConfirmed?: () => void
+  /** enableCreateOnSave로 최초 생성 직후 — URL을 edit 모드로 전환할 때 사용 */
+  onTemplateCreated?: (templateId: string) => void
   showDeleteButton?: boolean
   onDelete?: () => void
   deleteLoading?: boolean
@@ -107,6 +124,22 @@ export type AgreementWritingFormShellProps = {
 
 type AgreementShellUrlQuery = {
   userPreview?: string
+}
+
+const DEFAULT_NEW_AGREEMENT_TEMPLATE_NAME = '동의 양식 신규 폼'
+
+function resolveAgreementTemplateName(draft: WritingFormDraft): string {
+  const titleParagraph = draft.paragraphs.find(
+    p => p.id === DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.title
+  )
+  if (
+    titleParagraph?.kind === 'description' &&
+    titleParagraph.variant === 'survey_title_with_period'
+  ) {
+    const name = titleParagraph.surveyTitle?.trim()
+    if (name != null && name !== '') return name
+  }
+  return DEFAULT_NEW_AGREEMENT_TEMPLATE_NAME
 }
 
 /** 구조 잠금 해제 시에도 마무리+날짜+서명 확인 카드 옵션 유지 */
@@ -146,19 +179,26 @@ export function AgreementWritingFormShell({
   paragraphBodyOptions,
   agreementClosingFooter,
   templateCode,
+  enableCreateOnSave = false,
   systemTemplate,
   forceUserEditable = false,
   onTemplateDraftSaveConfirmed,
+  onTemplateCreated,
   showDeleteButton = false,
   onDelete,
   deleteLoading = false,
 }: AgreementWritingFormShellProps) {
+  const queryClient = useQueryClient()
+  const { sections } = useWritingFormSections()
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
-  const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
+  const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null || enableCreateOnSave
+  const [persistedTemplateCode, setPersistedTemplateCode] = useState<string | null>(
+    templateCode != null && templateCode !== '' ? templateCode : null
+  )
   const isStructureLocked = isWritingFormTemplateStructureLocked({
-    templateCode,
+    templateCode: persistedTemplateCode ?? templateCode,
     systemTemplate,
-    forceUserEditable,
+    forceUserEditable: forceUserEditable || enableCreateOnSave,
   })
   /** 사용자 복제·신규 — 시드 잠금 props가 남아 있어도 편집 허용 */
   const effectiveStructureLockedParagraphIds =
@@ -191,6 +231,12 @@ export function AgreementWritingFormShell({
   } = useTemplateWritingPreview()
   const { params: shellUrlParams, setParams } = useQueryParams<AgreementShellUrlQuery>()
   const openedUserPreviewFromUrlRef = useRef(false)
+
+  useEffect(() => {
+    if (templateCode != null && templateCode !== '') {
+      setPersistedTemplateCode(templateCode)
+    }
+  }, [templateCode])
 
   const updateParagraph = useCallback(
     (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => {
@@ -344,15 +390,51 @@ export function AgreementWritingFormShell({
   }, [setParams, openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    if (templateCode == null || templateCode === '') return
     void (async () => {
       try {
+        let nextTemplateCode = persistedTemplateCode
+        if (
+          (nextTemplateCode == null || nextTemplateCode === '') &&
+          enableCreateOnSave
+        ) {
+          const existingNames = getWritingTemplateRowsByCategory('agreement', sections).map(
+            row => row.templateName
+          )
+          const templateName = allocateUniqueWritingTemplateName(
+            resolveAgreementTemplateName(draft),
+            existingNames
+          )
+          if (shouldUseFormsSurveysRemoteApi()) {
+            nextTemplateCode = await createWritingFormTemplateRemote({
+              target: 'agreement',
+              templateName,
+            })
+          } else {
+            nextTemplateCode = `agreement-custom-${crypto.randomUUID()}`
+          }
+          setPersistedTemplateCode(nextTemplateCode)
+        }
+
+        if (nextTemplateCode == null || nextTemplateCode === '') return
+
         await persistWritingFormTemplateDraft({
-          templateId: templateCode,
+          templateId: nextTemplateCode,
           draft,
         })
+
+        if (enableCreateOnSave) {
+          await queryClient.invalidateQueries({
+            queryKey: formTemplateQueryKeys.writingSections(),
+          })
+        }
+
         if (isTemplateManagementSave) {
-          showSaveSuccess(onTemplateDraftSaveConfirmed)
+          showSaveSuccess(() => {
+            if (enableCreateOnSave) {
+              onTemplateCreated?.(nextTemplateCode)
+            }
+            onTemplateDraftSaveConfirmed?.()
+          })
         }
       } catch (error) {
         console.debug('agreementWritingFormShell save failed', error)
@@ -363,11 +445,15 @@ export function AgreementWritingFormShell({
     })()
   }, [
     draft,
+    enableCreateOnSave,
     isTemplateManagementSave,
+    onTemplateCreated,
     onTemplateDraftSaveConfirmed,
+    persistedTemplateCode,
+    queryClient,
+    sections,
     showSaveFailure,
     showSaveSuccess,
-    templateCode,
   ])
 
   const handleSelectParagraph = useCallback((id: string) => {
@@ -470,6 +556,18 @@ export default function NewAgreementForm() {
     setParams({ mode: undefined, type: undefined, id: undefined })
   }, [setParams])
 
+  const handleTemplateCreated = useCallback(
+    (templateId: string) => {
+      setParams({
+        mode: 'edit',
+        id: templateId,
+        type: 'agreement',
+        userTemplate: '1',
+      })
+    },
+    [setParams]
+  )
+
   return (
     <AgreementWritingFormShell
       initialDraft={createDefaultDirectAgreementDraft}
@@ -477,7 +575,10 @@ export default function NewAgreementForm() {
       modalTitle="동의 양식 신규 폼"
       modalDescription="* 등록 시 최소 1개의 단락은 존재해야 하며, 제목, 마무리글, 날짜, 서명란을 제외하고 최소 1개의 단락은 존재해야합니다."
       paragraphBodyOptions={DIRECT_AGREEMENT_PARAGRAPH_BODY_OPTIONS}
+      enableCreateOnSave
+      forceUserEditable
       onClose={handleClose}
+      onTemplateCreated={handleTemplateCreated}
     />
   )
 }

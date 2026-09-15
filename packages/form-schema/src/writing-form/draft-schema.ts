@@ -3973,6 +3973,112 @@ function createDefaultSurveyShortEssayParagraph(
   }
 }
 
+/**
+ * 템플릿 관리 > 설문 양식 「신규 등록」 편집기 초안.
+ * 시드(`createDefaultSurveyDraft`)와 분리 — 빈 제목·척도 1·주관식 1의 시작 구조.
+ */
+export function createNewSurveyDraft(): WritingFormDraft {
+  return {
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'q123' },
+    paragraphs: [
+      {
+        id: DEFAULT_SURVEY_PARAGRAPH_IDS.title,
+        kind: 'description',
+        variant: 'survey_title_with_period',
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        surveyTitle: '',
+        surveyDescription: '',
+        periodMode: 'immediate',
+        startPeriodMode: 'immediate',
+        endPeriodMode: 'immediate',
+        startAt: null,
+        endAt: null,
+        startPeriodPresetLabel: null,
+        endPeriodPresetLabel: null,
+        showWritingPeriodOnForm: true,
+      },
+      {
+        id: DEFAULT_SURVEY_PARAGRAPH_IDS.user,
+        kind: 'single_item',
+        variant: 'user_info',
+        answerRequired: true,
+        requiredMark: true,
+        paragraphTitle: '설문자 정보',
+        paragraphDescription: '선택한 항목을 자동으로 불러옵니다.',
+        participatesInTitleNumbering: true,
+        userFields: [
+          { key: 'name', label: '이름' },
+          { key: 'gender', label: '성별' },
+          { key: 'birthDate', label: '생년월일' },
+          { key: 'phone', label: '연락처' },
+          { key: 'email', label: '이메일' },
+          { key: 'addressRegion', label: '자택 주소지(지역)' },
+          { key: 'addressDetail', label: '자택 주소지(상세)' },
+          { key: 'affiliation', label: '소속' },
+          { key: 'applicantType', label: '신청자 유형' },
+          { key: 'programName', label: '프로그램명' },
+          { key: 'period', label: '교육 진행 일정(진행 기간)' },
+          { key: 'institutionName', label: '기관명' },
+          { key: 'institutionRegion', label: '기관 소재지(시군구)' },
+          { key: 'educationTarget', label: '교육 대상(담당 대상)' },
+          { key: 'educationGrade', label: '교육 학년(담당 학년)' },
+          { key: 'teamName', label: '팀 명' },
+          { key: 'teamPartnerName', label: '팀원/파트너 명' },
+        ],
+        selectedUserFieldKeys: ['name', 'addressRegion'],
+      },
+      {
+        id: DEFAULT_SURVEY_PARAGRAPH_IDS.score,
+        kind: 'single_item',
+        variant: 'scale_type',
+        answerRequired: true,
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        items: createDefaultScaleTypeItems(),
+        selectedPreviewItemId: 'scale-type-item-5',
+      },
+      {
+        id: DEFAULT_SURVEY_PARAGRAPH_IDS.subjective,
+        kind: 'single_item',
+        variant: 'short_essay',
+        answerRequired: true,
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        showItemTitle: false,
+        items: [
+          {
+            id: 'survey-short-essay-item-1',
+            label: 'Title 01',
+            placeholder: '답변을 입력해 주세요',
+            bodyText: '',
+          },
+        ],
+        bodyPlaceholder: '답변을 입력해 주세요',
+        bodyText: '',
+      },
+      {
+        id: DEFAULT_SURVEY_PARAGRAPH_IDS.closing,
+        kind: 'description',
+        variant: 'closing',
+        requiredMark: false,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        body: '설문에 참여해 주셔서 감사합니다.',
+      },
+    ],
+  }
+}
+
+/** 카탈로그 시드·강의평가 등 — 프로그램 평가 문항이 채워진 기본 설문 */
 export function createDefaultSurveyDraft(): WritingFormDraft {
   return {
     schemaVersion: 1,

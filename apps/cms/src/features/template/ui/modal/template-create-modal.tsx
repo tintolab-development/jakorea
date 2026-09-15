@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { createWritingTemplate } from '@/features/template/api/create-writing-template'
 import { duplicateWritingTemplate } from '@/features/template/api/duplicate-writing-template'
 import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
@@ -29,11 +28,6 @@ export interface TemplateCreateModalProps {
 }
 
 const NEW_TEMPLATE_OPTION_VALUE = '__new__'
-
-const DIRECT_REGISTER_DEFAULT_NAME: Record<'survey' | 'agreement', string> = {
-  survey: '신규 설문 양식',
-  agreement: '동의 양식 신규 폼',
-}
 
 function resolveSelection(
   kind: TemplateCreateKind,
@@ -125,33 +119,9 @@ export function TemplateCreateModal({
     const resolved = resolveSelection(kind, selectValue)
     if (resolved == null) return
 
+    // 설문/동의 신규: 서버 생성은 편집기 「저장」까지 미룸 (mode=new)
     if (resolved.source === 'direct') {
-      setSubmitting(true)
-      try {
-        const baseName = DIRECT_REGISTER_DEFAULT_NAME[resolved.target]
-        const templateName = allocateUniqueWritingTemplateName(
-          baseName,
-          existingNamesInCategory(resolved.target)
-        )
-        const result = await createWritingTemplate(resolved.target, { templateName })
-        if (result.mode === 'local-new') {
-          onDirectRegister(result.target)
-          return
-        }
-        await invalidateWritingSections()
-        onDuplicateSuccess(result.newTemplateId, { formKind: result.target })
-      } catch (error) {
-        console.debug('templateCreateModal create failed', error)
-        showAlert({
-          title: '등록 실패',
-          content: resolveErrorMessage(
-            error,
-            '템플릿 등록 중 오류가 발생했습니다. 다시 시도해 주세요.'
-          ),
-        })
-      } finally {
-        setSubmitting(false)
-      }
+      onDirectRegister(resolved.target)
       return
     }
 
