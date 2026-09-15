@@ -2,11 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchGeneralProgramParticipants } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
-import {
-  getParticipatingIndividualParticipantsForProgram,
-  type ParticipatingIndividualParticipantRow,
-} from '@/data/mock/participating-individual-participants'
+import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
 
+/** 개인 참여자 목록 — API only (gate OFF = 빈 목록) */
 export function useProgressIndividualParticipantList(programId: string | undefined) {
   const remoteEnabled = shouldUseGeneralProgramProgressRemoteApi() && Boolean(programId)
 
@@ -20,9 +18,7 @@ export function useProgressIndividualParticipantList(programId: string | undefin
 
   const participantList: ParticipatingIndividualParticipantRow[] = remoteEnabled
     ? (remoteQuery.data ?? [])
-    : programId
-      ? getParticipatingIndividualParticipantsForProgram(programId)
-      : []
+    : []
 
   return {
     participantList,

@@ -21,18 +21,18 @@ describe('shouldRecordFileAccessRemotely', () => {
     vi.clearAllMocks()
   })
 
-  it('logs 모듈이 꺼져 있으면 false', () => {
+  it('logs 모듈 게이트가 꺼져 있으면 false', () => {
     vi.mocked(hasRemoteAdminJwt).mockReturnValue(true)
     expect(shouldRecordFileAccessRemotely()).toBe(false)
   })
 
   it('관리자 JWT가 없으면 false', () => {
-    vi.mocked(isRealApiModuleEnabled).mockImplementation(module => module === 'logs')
+    vi.mocked(isRealApiModuleEnabled).mockReturnValue(true)
     expect(shouldRecordFileAccessRemotely()).toBe(false)
   })
 
   it('logs 실 API + 관리자 JWT이면 true', () => {
-    vi.mocked(isRealApiModuleEnabled).mockImplementation(module => module === 'logs')
+    vi.mocked(isRealApiModuleEnabled).mockReturnValue(true)
     vi.mocked(hasRemoteAdminJwt).mockReturnValue(true)
     expect(shouldRecordFileAccessRemotely()).toBe(true)
   })

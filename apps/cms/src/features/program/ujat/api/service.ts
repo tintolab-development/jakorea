@@ -1,4 +1,3 @@
-import { getUjatPrograms } from '@/data/mock/program-schedule-categories'
 import {
   createAdminProgramRemote,
   deleteAdminProgramRemote,
@@ -6,18 +5,15 @@ import {
   fetchAdminProgramsRemote,
   updateAdminProgramRemote,
 } from '@/features/program/general/api/programs-api-client'
-import {
-  buildUjatProgramListRowFromRegistrationSnapshot,
-  deleteUjatRegistrationLocalProgram,
-  persistUjatRegistrationFormLocal,
-  readUjatRegistrationLocalSavePrograms,
-  updateUjatRegistrationLocalProgram,
-} from '@/features/program/ujat/lib/ujat-registration-local-save'
-import { resolveUjatProgramForDetail } from '@/features/program/ujat/lib/ujat-program-detail-meta'
+import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import type { Program } from '@/types/domain'
 import { fromDetail, fromListItem, toCreateRequest, toUpdateRequest } from './adapters'
 import { shouldUseRemoteApi } from './capabilities'
-import { toRemoteListParams, type ListParams } from './list-params'
+import {
+  UJAT_PROGRAM_LIST_PAGE_SIZE,
+  toRemoteListParams,
+  type ListParams,
+} from './list-params'
 import {
   parseRegistrationSnapshot,
   type RegistrationSnapshot,
@@ -27,37 +23,57 @@ export type CreateInput = RegistrationSnapshot & {
   idempotencyKey: string
 }
 
-function localList(params: ListParams): Program[] {
-  const merged = [...getUjatPrograms(), ...readUjatRegistrationLocalSavePrograms()]
-  const keyword = params.keyword?.trim().toLocaleLowerCase()
-  const filtered = merged.filter(program => {
-    if (params.businessYear != null) {
-      const year = new Date(program.startDate).getFullYear()
-      if (year !== params.businessYear) return false
-    }
-    return !keyword || `${program.title} ${program.mainTitle ?? ''}`.toLocaleLowerCase().includes(keyword)
-  })
-  const page = params.page ?? 0
-  const size = params.size ?? filtered.length
-  return filtered.slice(page * size, page * size + size)
+function assertRemoteReady(): void {
+  if (shouldUseRemoteApi()) return
+  throw new Error(
+    'UJAT 프로그램 API가 활성화되지 않았습니다. 원격 JWT·programs/ujatPrograms 모듈 설정을 확인해 주세요. mock 폴백은 사용하지 않습니다.'
+  )
 }
 
+export type UjatProgramsRemoteListPage = {
+  programs: Program[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
+}
+
+export async function listPage(
+  params: ListParams = {},
+  pageParam = 0
+): Promise<UjatProgramsRemoteListPage> {
+  assertRemoteReady()
+  const response = await fetchAdminProgramsRemote(
+    toRemoteListParams({ ...params, page: pageParam, size: params.size ?? UJAT_PROGRAM_LIST_PAGE_SIZE })
+  )
+  const programs = (response.items ?? []).map(fromListItem)
+  const size = response.size ?? params.size ?? UJAT_PROGRAM_LIST_PAGE_SIZE
+  const currentPage = response.page ?? pageParam
+  const totalElements = response.totalElements ?? programs.length
+  const totalPages =
+    response.totalPages ?? (size > 0 ? Math.ceil(totalElements / size) : currentPage + 1)
+  return {
+    programs,
+    page: currentPage,
+    size,
+    totalElements,
+    hasMore: currentPage + 1 < totalPages,
+  }
+}
+
+/** @deprecated 무한 스크롤은 `listPage` 사용 */
 export async function list(params: ListParams = {}): Promise<Program[]> {
-  if (!shouldUseRemoteApi()) return localList(params)
-  const response = await fetchAdminProgramsRemote(toRemoteListParams(params))
-  return (response.items ?? []).map(fromListItem)
+  const page = await listPage(params, params.page ?? 0)
+  return page.programs
 }
 
 export async function detail(programId: string): Promise<Program | null> {
-  if (!shouldUseRemoteApi()) return resolveUjatProgramForDetail(programId) ?? null
+  assertRemoteReady()
   return fromDetail(await fetchAdminProgramByIdRemote(programId))
 }
 
 export async function create(input: CreateInput): Promise<Program> {
-  if (!shouldUseRemoteApi()) {
-    return persistUjatRegistrationFormLocal(input)
-  }
-
+  assertRemoteReady()
   const pending = buildUjatProgramListRowFromRegistrationSnapshot({
     id: `ujat-pending-${input.idempotencyKey}`,
     overlay: input.overlay,
@@ -70,38 +86,15 @@ export async function update(
   program: Program,
   patch?: Partial<Program>
 ): Promise<Program> {
-  if (!shouldUseRemoteApi()) {
-    const updated = updateUjatRegistrationLocalProgram(programId, patch ?? program)
-    if (updated) return updated
-
-    const mockProgram = getUjatPrograms().find(item => item.id === programId)
-    if (!mockProgram) throw new Error('수정할 UJAT 프로그램을 찾을 수 없습니다.')
-    Object.assign(mockProgram, patch ?? program, {
-      id: mockProgram.id,
-      createdAt: mockProgram.createdAt,
-      updatedAt: new Date().toISOString(),
-    })
-    return mockProgram
-  }
+  assertRemoteReady()
   const current = await fetchAdminProgramByIdRemote(programId)
   const registration = parseRegistrationSnapshot(current.serviceDetailJson)
   return fromDetail(
-    await updateAdminProgramRemote(
-      programId,
-      toUpdateRequest(program, patch, registration)
-    )
+    await updateAdminProgramRemote(programId, toUpdateRequest(program, patch, registration))
   )
 }
 
 export async function remove(programId: string): Promise<void> {
-  if (!shouldUseRemoteApi()) {
-    if (deleteUjatRegistrationLocalProgram(programId)) return
-
-    const mockPrograms = getUjatPrograms()
-    const mockIndex = mockPrograms.findIndex(program => program.id === programId)
-    if (mockIndex < 0) throw new Error('삭제할 UJAT 프로그램을 찾을 수 없습니다.')
-    mockPrograms.splice(mockIndex, 1)
-    return
-  }
+  assertRemoteReady()
   await deleteAdminProgramRemote(programId)
 }

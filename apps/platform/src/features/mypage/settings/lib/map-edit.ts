@@ -1,3 +1,7 @@
+import {
+  SCHOOL_TEACHER_EMPLOYMENT_STATUS,
+  type SchoolTeacherEmploymentStatus,
+} from '@jakorea/domain/instructor/employment-status'
 import { isRequiredAddressIncomplete } from '@jakorea/domain/shared/required-address'
 import { EMPTY_SETTINGS_VALUE } from './constants.ts'
 import {
@@ -20,6 +24,75 @@ export type SettingsEditFormValues = {
   regionSigungu: string
   volunteerId: string
   schoolOrganizationId: number | null
+}
+
+/** 회원정보 설정·가입과 동일 — 재직 중 / 휴직 중만 */
+export type SettingsTeacherEmploymentStatus = Extract<
+  SchoolTeacherEmploymentStatus,
+  'ACTIVE' | 'ON_LEAVE'
+>
+
+export const SETTINGS_TEACHER_EMPLOYMENT_OPTIONS: {
+  value: SettingsTeacherEmploymentStatus
+  label: string
+}[] = [
+  { value: SCHOOL_TEACHER_EMPLOYMENT_STATUS.active, label: '재직 중' },
+  { value: SCHOOL_TEACHER_EMPLOYMENT_STATUS.onLeave, label: '휴직 중' },
+]
+
+export type SettingsTeacherEditFormValues = {
+  schoolName: string
+  schoolOrganizationId: number | null
+  schoolAddress: string
+  schoolNeisCode: string
+  schoolEducationOfficeCode: string
+  schoolSource?: 'neis' | 'careerNet'
+  employmentStatus: SettingsTeacherEmploymentStatus | ''
+}
+
+export function toTeacherEmploymentStatus(
+  value: string | undefined,
+): SettingsTeacherEmploymentStatus | '' {
+  const normalized = value?.trim().toUpperCase()
+  if (normalized === 'ACTIVE' || normalized === 'EMPLOYED') {
+    return SCHOOL_TEACHER_EMPLOYMENT_STATUS.active
+  }
+  if (normalized === 'ON_LEAVE' || normalized === 'LEAVE') {
+    return SCHOOL_TEACHER_EMPLOYMENT_STATUS.onLeave
+  }
+  return ''
+}
+
+export function mapProfileToTeacherSettingsEditForm(
+  profile: SettingsProfileInput,
+): SettingsTeacherEditFormValues {
+  return {
+    schoolName: profile.schoolName?.trim() || profile.affiliationName?.trim() || '',
+    schoolOrganizationId: profile.schoolOrganizationId ?? null,
+    schoolAddress: profile.schoolAddress?.trim() ?? '',
+    schoolNeisCode: '',
+    schoolEducationOfficeCode: '',
+    employmentStatus: toTeacherEmploymentStatus(profile.teacherEmploymentStatus),
+  }
+}
+
+export function isTeacherSettingsEditValid(form: SettingsTeacherEditFormValues): boolean {
+  return Boolean(form.schoolName.trim() && form.employmentStatus)
+}
+
+export function applyTeacherSettingsEditToSnapshot(
+  previous: SettingsProfileInput,
+  form: SettingsTeacherEditFormValues,
+): SettingsProfileInput {
+  const schoolName = form.schoolName.trim()
+  return {
+    ...previous,
+    schoolName,
+    affiliationName: schoolName,
+    schoolOrganizationId: form.schoolOrganizationId,
+    schoolAddress: form.schoolAddress.trim() || previous.schoolAddress,
+    teacherEmploymentStatus: form.employmentStatus || previous.teacherEmploymentStatus,
+  }
 }
 
 export function toSettingsSchoolStatus(value: string | undefined): SettingsEditSchoolStatus {

@@ -105,7 +105,7 @@ BE에 이미 `166401` 시리즈가 있다면 **재사용**하고, FE mock CASE�
 | FE mock id | `ujatProgressStatus` | 라벨 |
 |------------|----------------------|------|
 | `ujat-progress-education-scheduled` | `EDUCATION_SCHEDULED` | 프로그램 진행 예정 |
-| `ujat-progress-participant-recruiting` | `PARTICIPANT_RECRUITING` | 참여자 모집 중 |
+| `ujat-progress-participant-recruiting` | `PARTICIPANT_RECRUITING` | 참여 기관 모집 중 |
 | `ujat-progress-volunteer-recruiting` | `VOLUNTEER_RECRUITING` | 봉사자 모집 중 |
 | `ujat-progress-education-in-progress` | `EDUCATION_IN_PROGRESS` | 프로그램 진행 중 |
 | `ujat-progress-program-ended` | `PROGRAM_ENDED` | 프로그램 진행 완료 |
@@ -115,11 +115,14 @@ BE local demo의 `164021`/`164022` 메뉴 더미와 **별개**로, 위 5종을 �
 
 ### 2.4 교육받은 교사 8건
 
-| FE mock id | 한 줄 |
-|------------|------|
-| `trained-teachers-prog-001` ~ `008` | 커리큘럼/일정 × 단일/복수 × 교육일지·IPS 상이 매트릭스 |
+| BE Primary id | Case | FE legacy mock id (비권장) |
+|---------------|------|----------------------------|
+| `186001`–`186008` | TCH-01–08 | `trained-teachers-prog-001`–`008` |
 
-→ [`04-trained-teachers-dummy-seed.md`](./04-trained-teachers-dummy-seed.md)
+- **QA SoT = Primary `186001`–`186008`** (`LOCAL-TRAINED-TEACHER-PRIMARY-01`–`08`)
+- Legacy thin `169201`–`169208` / FE mock string id는 Primary ON 시 사용하지 않음
+- → [`trained-teacher-primary-case-fe-adapter-2026-09-15.md`](../trained-teacher-primary-case-fe-adapter-2026-09-15.md)
+- → [`04-trained-teachers-dummy-seed.md`](./04-trained-teachers-dummy-seed.md) (레거시 핸드오프)
 
 ### 2.5 Gemini
 

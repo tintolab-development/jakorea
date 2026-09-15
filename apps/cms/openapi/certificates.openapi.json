@@ -198,6 +198,10 @@
     },
     {
       "name": "기타 API",
+      "description": "GENERAL_ORGANIZATION 신청기관의 교육 일정/학급 canonical 임시배정"
+    },
+    {
+      "name": "기타 API",
       "description": "로그인 회원의 강사 권한 및 인증 동의 API"
     },
     {
@@ -301,8 +305,16 @@
       "description": "강사용 정산 신청서 API"
     },
     {
+      "name": "실적",
+      "description": "실적 산출 입력 API"
+    },
+    {
       "name": "프로그램",
       "description": "프로그램 등록, 일정, 운영, 후원사/교재 연결 API"
+    },
+    {
+      "name": "기타 API",
+      "description": "교사의 실제 학생교육 완료 확인 API"
     },
     {
       "name": "기타 API",
@@ -375,6 +387,10 @@
     {
       "name": "신청/프로그램 워크플로우",
       "description": "프로그램 신청 현황 및 상태별 사용 가능 액션 조회 API"
+    },
+    {
+      "name": "기타 API",
+      "description": "실제 학생교육 완료 증빙 및 실적 SSOT"
     },
     {
       "name": "기타 API",

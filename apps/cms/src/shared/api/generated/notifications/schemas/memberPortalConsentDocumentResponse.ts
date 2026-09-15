@@ -30,6 +30,8 @@ export interface MemberPortalConsentDocumentResponse {
   generatedFileJobId?: number;
   renderStatus?: string;
   renderFailureReason?: string;
+  consentStatus?: string;
+  programEligible?: boolean;
   signatureFields?: MemberPortalConsentSignatureField[];
   events?: MemberPortalConsentEvent[];
 }

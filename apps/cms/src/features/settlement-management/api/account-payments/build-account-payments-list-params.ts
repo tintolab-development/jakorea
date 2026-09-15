@@ -38,10 +38,9 @@ export function buildAccountPaymentsListParams(
     params.status = mapAccountPaymentUiStatusToApiStatus(filters.accountStatus)
   }
 
-  if (filters.fromDate && filters.toDate) {
-    params.fromDate = filters.fromDate
-    params.toDate = filters.toDate
-  } else if (filters.year != null) {
+  if (filters.fromDate) params.fromDate = filters.fromDate
+  if (filters.toDate) params.toDate = filters.toDate
+  if (!filters.fromDate && !filters.toDate && filters.year != null) {
     params.year = filters.year
   }
 

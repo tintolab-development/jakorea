@@ -37,9 +37,10 @@ export function withDetailedProgramNoneOption(
 // ── 프로그램 진행 현황 ─────────────────────────────────────────────
 
 export const TEMPLATE_FORM_PROGRAM_PROGRESS_OPTIONS: TemplateFormSelectOption[] = [
-  { value: 'scheduled', label: '진행 예정' },
-  { value: 'in_progress', label: '진행 중' },
-  { value: 'completed', label: '진행 완료' },
+  { value: 'scheduled', label: '프로그램 진행 예정' },
+  { value: 'recruiting_students', label: '참여 기관 모집 중' },
+  { value: 'in_progress', label: '프로그램 진행 중' },
+  { value: 'completed', label: '프로그램 진행 완료' },
 ]
 
 // ── 교육 대상 (= 모집 대상) — @jakorea/domain/recruitment/education-target 에서 re-export

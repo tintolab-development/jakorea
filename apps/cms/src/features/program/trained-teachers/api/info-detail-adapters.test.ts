@@ -41,7 +41,7 @@ describe('trained-teacher info detail adapters', () => {
     })
     expect(request.teacherTrainingEnabled).toBe(true)
     expect(request.educationJournalEnabled).toBe(false)
-    expect(request.teacherTrainingScheduleName).toBe('교육 연수')
+    expect(request.teacherTrainingScheduleName).toBe('교사 연수')
     expect(request.configJson).toContain('"educatedTeachers":3')
   })
 

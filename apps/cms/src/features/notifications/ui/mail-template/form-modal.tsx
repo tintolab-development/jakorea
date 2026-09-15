@@ -209,8 +209,8 @@ export function FormModal({
   })
   const variablesQuery = useMailTemplateVariablesQuery({}, open && remote)
   const variableGroups = useMemo(
-    () => groupMailTemplateVariablesFromCatalog(variablesQuery.data ?? []),
-    [variablesQuery.data]
+    () => groupMailTemplateVariablesFromCatalog(variablesQuery.data?.variables ?? []),
+    [variablesQuery.data?.variables]
   )
   const harvestedSenderKeys = useMemo(
     () => (senderProfilesQuery.data ?? []).map(profile => profile.senderKey.trim()).filter(Boolean),

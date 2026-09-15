@@ -39,7 +39,7 @@ export function buildProgramListFilters(
       participantType: pendingFilters.participantType,
       targetLevel: pendingFilters.targetLevel,
       operationPeriod:
-        pendingFilters.operationStartDate && pendingFilters.operationEndDate
+        pendingFilters.operationStartDate || pendingFilters.operationEndDate
           ? [pendingFilters.operationStartDate, pendingFilters.operationEndDate]
           : null,
     }
@@ -61,7 +61,7 @@ export function buildProgramListFilters(
     targetLevel: pendingFilters.targetLevel,
     type: pendingFilters.type,
     operationPeriod:
-      pendingFilters.operationStartDate && pendingFilters.operationEndDate
+      pendingFilters.operationStartDate || pendingFilters.operationEndDate
         ? [pendingFilters.operationStartDate, pendingFilters.operationEndDate]
         : null,
   }

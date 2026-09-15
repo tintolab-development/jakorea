@@ -78,6 +78,7 @@ export function mockRecruitmentCaseFromLifecycle(
   lifecycle: string | undefined
 ): MockRecruitmentPeriodCase {
   if (
+    lifecycle === 'scheduled' ||
     lifecycle === 'planned' ||
     lifecycle === 'instructor_recruitment_planned' ||
     lifecycle === 'volunteer_recruitment_planned' ||
@@ -103,11 +104,15 @@ export function mockOperationCaseFromLifecycle(
   if (recruit === 'scheduled') return 'scheduled'
   if (recruit === 'recruiting') return 'recruiting'
   if (
+    lifecycle === 'completed' ||
     lifecycle === 'education_completed' ||
     lifecycle === 'document_processing_completed' ||
     lifecycle === 'matching_completed'
   ) {
     return 'closedCompleted'
+  }
+  if (lifecycle === 'in_progress' || lifecycle === 'education_in_progress') {
+    return 'closed'
   }
   return 'closed'
 }

@@ -26,6 +26,7 @@ export type SettingsConsentItem = {
 
 const MOCK_AGREED_AT = '2026.07.03 09:23'
 
+/** 일반회원·교사회원(비겸직) 공통 — 서비스·개인정보·마케팅·초상권 */
 export const BASIC_CONSENT_ITEMS: SettingsConsentItem[] = [
   {
     id: 'serviceTerms',
@@ -65,6 +66,7 @@ export const BASIC_CONSENT_ITEMS: SettingsConsentItem[] = [
   },
 ]
 
+/** 강사회원(순수·겸직) 전용 — 교사회원(비겸직)에는 노출하지 않음 */
 export const INSTRUCTOR_DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
   {
     id: 'paymentStatement',

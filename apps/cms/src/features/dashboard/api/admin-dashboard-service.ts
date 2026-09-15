@@ -92,7 +92,7 @@ export interface ProgramProgressSummary {
 
 /** 7단계 프로그램 진행 현황 (교육/봉사, 경제교육 교재 전·후 포함) */
 export interface ProgramProgressStages {
-  /** 참여자 모집 중 */
+  /** 참여 기관 모집 중 */
   studentRecruitment: number
   /** 강사 모집 중 */
   instructorRecruitment: number

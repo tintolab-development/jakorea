@@ -36,6 +36,19 @@ describe('inquiriesParamsFromSearchParams', () => {
     expect(params.status).toBe('answered')
   })
 
+  it('sends createdFrom or createdTo when only one URL date is set', () => {
+    expect(inquiriesParamsFromSearchParams(new URLSearchParams('inq_from=2026-01-01'))).toEqual({
+      page: 0,
+      size: 500,
+      createdFrom: '2026-01-01',
+    })
+    expect(inquiriesParamsFromSearchParams(new URLSearchParams('inq_to=2026-01-31'))).toEqual({
+      page: 0,
+      size: 500,
+      createdTo: '2026-01-31',
+    })
+  })
+
   it('does not send ALL category', () => {
     const params = inquiriesParamsFromSearchParams(new URLSearchParams('inq_cat=ALL'))
     expect(params.category).toBeUndefined()

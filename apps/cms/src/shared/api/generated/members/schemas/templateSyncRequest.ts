@@ -7,6 +7,9 @@
  */
 import type { TemplateSyncItemRequest } from './templateSyncItemRequest';
 
+/**
+ * 템플릿 수동 upsert 요청. body 자체를 생략하면 channelType 기준 live pull 또는 LOCAL 처리를 수행합니다.
+ */
 export interface TemplateSyncRequest {
   templates?: TemplateSyncItemRequest[];
 }

@@ -99,8 +99,18 @@
   font-weight: 400;
 }
 
+/* 비활성 캘린더 인풋 텍스트 — 시안 스펙 */
+.paragraph-date-picker__trigger--disabled .paragraph-date-picker__trigger-text,
 .paragraph-date-picker__trigger--disabled .paragraph-date-picker__trigger-text--placeholder {
+  overflow: hidden;
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
 }
 
 /* 트리거: 기간 확정 후 CmsInput ~ CmsInput (중첩 포커스 방지: 바깥은 div role=button) */
@@ -586,7 +596,15 @@
 
 .paragraph-date-picker__trigger--dual-shell.paragraph-date-picker__trigger--disabled
   .paragraph-date-picker__trigger-dual-text {
-  color: rgba(61, 61, 61, 0.35);
+  overflow: hidden;
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
 }
 
 .paragraph-date-picker__trigger-dual-wave {

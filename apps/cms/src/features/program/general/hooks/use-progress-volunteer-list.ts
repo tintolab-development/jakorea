@@ -1,13 +1,10 @@
 /**
- * 프로그램 진행현황 탭 — 참여 봉사자 목록 상태
+ * 프로그램 진행현황 탭 — 참여 봉사자 목록 (API only, mock 폴백 없음)
  */
 
 import { useCallback, useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  MOCK_PARTICIPATING_VOLUNTEERS,
-  type ParticipatingVolunteerRow,
-} from '@/data/mock/participating-volunteers'
+import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
 import { buildParticipatingVolunteerRowFromMember } from '../lib/participating-volunteer-member-candidates'
 import { fetchGeneralParticipatingVolunteers } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
@@ -23,17 +20,14 @@ export function useProgressVolunteerList(programId?: string) {
     retry: false,
   })
 
-  const [volunteerList, setVolunteerList] = useState<ParticipatingVolunteerRow[]>(() =>
-    // remote ON이면 mock으로 채우지 않음 (잘못된 목록 플래시 방지)
-    remoteEnabled ? [] : [...MOCK_PARTICIPATING_VOLUNTEERS]
-  )
+  const [volunteerList, setVolunteerList] = useState<ParticipatingVolunteerRow[]>([])
 
   useEffect(() => {
     if (remoteEnabled) {
       if (remoteQuery.data) setVolunteerList(remoteQuery.data)
       return
     }
-    setVolunteerList([...MOCK_PARTICIPATING_VOLUNTEERS])
+    setVolunteerList([])
   }, [remoteEnabled, remoteQuery.data])
 
   const addVolunteerFromMember = useCallback(

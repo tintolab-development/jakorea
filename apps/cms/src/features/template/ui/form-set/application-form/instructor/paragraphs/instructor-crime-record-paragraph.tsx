@@ -12,7 +12,8 @@ import {
 } from '@/shared/lib/admin-file-upload'
 
 const MOCK_AGENCY_LINE = 'ID : tinto  |  검증번호 : 940412'
-const TEMPLATE_AUTO_USER_INFO_HINT = '로그인 사용자 정보가 자동으로 반영됩니다.'
+/** 템플릿 작성 화면 — 기관 조회 방식(온라인 제출) 연동 값 안내 */
+const TEMPLATE_AGENCY_ID_HINT = '기관이 작성한 ID와 검증번호가 노출됩니다.'
 
 /** 성범죄 경력 조회서 제출 — 가로 테이블 레이아웃(데모 고정값) */
 export function InstructorCrimeRecordParagraph({
@@ -72,9 +73,7 @@ export function InstructorCrimeRecordParagraph({
           edit={MOCK_AGENCY_LINE}
           view={
             readOnly ? (
-              <span className="form-editor-template-field-hint-text">
-                {TEMPLATE_AUTO_USER_INFO_HINT}
-              </span>
+              <span className="form-editor-template-field-hint-text">{TEMPLATE_AGENCY_ID_HINT}</span>
             ) : (
               MOCK_AGENCY_LINE
             )

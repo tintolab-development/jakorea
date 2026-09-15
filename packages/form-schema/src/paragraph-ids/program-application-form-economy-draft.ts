@@ -40,6 +40,11 @@ const PERSONAL_INFO_PURPOSE_CELL =
   'JA 프로그램의 참가자 선발 및 프로그램 진행에 필요한 정보 안내'
 const PERSONAL_INFO_RETENTION_CELL =
   '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
+/** 일반 참여기관 신청 폼과 동일 — 보유기간 열 고정 문구 */
+const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
+const THIRD_PARTY_ITEMS_CELL = '이름, 학교명, 학교 소재지, 개인 연락처, 이메일'
+const THIRD_PARTY_PURPOSE_CELL =
+  'JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내'
 
 function createEconomyPersonalInfoHorizontalTable(): HorizontalTableParagraph {
   const colCount = 3
@@ -86,22 +91,16 @@ function createEconomyPersonalInfoHorizontalTable(): HorizontalTableParagraph {
 function createEconomyThirdPartyHorizontalTable(): HorizontalTableParagraph {
   const colCount = 4
   const columnFields = [
-    { kind: 'subjective' as const, placeholder: '제공받는 곳을 입력해 주세요' },
+    { kind: 'text' as const, placeholder: '제공받는 곳을 입력해 주세요' },
     { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
     { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
     { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
   ]
   const bodyRow = [
     { kind: 'text' as const, value: '' },
-    {
-      kind: 'text' as const,
-      value: '이름, 학교명, 학교주소, 개인 연락처, e-mail',
-    },
-    {
-      kind: 'text' as const,
-      value: 'JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내',
-    },
-    { kind: 'text' as const, value: '5년' },
+    { kind: 'text' as const, value: THIRD_PARTY_ITEMS_CELL },
+    { kind: 'text' as const, value: THIRD_PARTY_PURPOSE_CELL },
+    { kind: 'text' as const, value: THIRD_PARTY_RETENTION_CELL },
   ]
 
   return normalizeHorizontalTableParagraph({
@@ -217,23 +216,74 @@ function patchHorizontalTableTextCell(
   return { ...paragraph, fieldDataRows }
 }
 
+function toProviderTextColumnField(
+  field: NonNullable<HorizontalTableParagraph['columnFields']>[number]
+): NonNullable<HorizontalTableParagraph['columnFields']>[number] {
+  if (field.kind !== 'subjective') return field
+  return {
+    kind: 'text',
+    placeholder: field.placeholder || '제공받는 곳을 입력해 주세요',
+  }
+}
+
+/** 「제공받는 곳」을 주관식→텍스트로 맞추고, 셀·cellColumnFields kind도 함께 정규화 */
+function migrateEconomyThirdPartyProviderColumn(
+  paragraph: HorizontalTableParagraph
+): HorizontalTableParagraph {
+  const columnFields = paragraph.columnFields ?? []
+  const firstField = columnFields[0]
+  const needsFieldKind = firstField != null && firstField.kind === 'subjective'
+  const fieldDataRows = (paragraph.fieldDataRows ?? []).map(cells =>
+    cells.map(cell => ({ ...cell }))
+  )
+  const firstCell = fieldDataRows[0]?.[0]
+  const needsCellKind = firstCell?.kind === 'subjective'
+  const needsMatrixKind = (paragraph.cellColumnFields ?? []).some(
+    row => row[0]?.kind === 'subjective'
+  )
+
+  if (!needsFieldKind && !needsCellKind && !needsMatrixKind) return paragraph
+
+  const nextColumnFields = columnFields.map((field, idx) =>
+    idx === 0 ? toProviderTextColumnField(field) : field
+  )
+  if (needsCellKind && firstCell != null && fieldDataRows[0]) {
+    const value = 'value' in firstCell ? firstCell.value : ''
+    fieldDataRows[0][0] = { kind: 'text', value }
+  }
+  const nextCellColumnFields = paragraph.cellColumnFields?.map(row =>
+    row.map((field, colIdx) => (colIdx === 0 ? toProviderTextColumnField(field) : field))
+  )
+  return {
+    ...paragraph,
+    columnFields: nextColumnFields,
+    fieldDataRows,
+    ...(nextCellColumnFields != null ? { cellColumnFields: nextCellColumnFields } : {}),
+  }
+}
+
 /** 구 시드 고정 문구 보정 */
 export function migrateProgramApplicationFormEconomyParagraphs(
   draft: WritingFormDraft
 ): WritingFormDraft {
   let changed = false
   const paragraphs = draft.paragraphs.map(paragraph => {
-    if (
-      paragraph.id !== PROGRAM_APPLICATION_FORM_ECONOMY_IDS.personalInfoCollection ||
-      paragraph.kind !== 'single_item' ||
-      paragraph.variant !== 'horizontal_table'
-    ) {
+    if (paragraph.kind !== 'single_item' || paragraph.variant !== 'horizontal_table') {
       return paragraph
     }
-    let next = patchHorizontalTableTextCell(paragraph, 0, 1, PERSONAL_INFO_PURPOSE_CELL)
-    next = patchHorizontalTableTextCell(next, 0, 2, PERSONAL_INFO_RETENTION_CELL)
-    if (next !== paragraph) changed = true
-    return next
+    if (paragraph.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.personalInfoCollection) {
+      let next = patchHorizontalTableTextCell(paragraph, 0, 1, PERSONAL_INFO_PURPOSE_CELL)
+      next = patchHorizontalTableTextCell(next, 0, 2, PERSONAL_INFO_RETENTION_CELL)
+      if (next !== paragraph) changed = true
+      return next
+    }
+    if (paragraph.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.thirdPartyConsent) {
+      let next = migrateEconomyThirdPartyProviderColumn(paragraph)
+      next = patchHorizontalTableTextCell(next, 0, 3, THIRD_PARTY_RETENTION_CELL)
+      if (next !== paragraph) changed = true
+      return next
+    }
+    return paragraph
   })
   return changed ? { ...draft, paragraphs } : draft
 }

@@ -13,23 +13,23 @@ export type PaymentOrdersDetailContextData = Awaited<
 
 export type PaymentOrdersDetailContextQueryResult = UseQueryResult<PaymentOrdersDetailContextData>
 
-function paymentOrdersDetailDateRangeKey(dateRange: [Dayjs, Dayjs] | null | undefined): string {
-  if (!dateRange?.[0] || !dateRange[1]) return 'all'
-  return `${dateRange[0].format('YYYY-MM-DD')}_${dateRange[1].format('YYYY-MM-DD')}`
+function paymentOrdersDetailDateRangeKey(
+  dateRange: [Dayjs | null, Dayjs | null] | null | undefined
+): string {
+  if (!dateRange?.[0] && !dateRange?.[1]) return 'all'
+  const from = dateRange?.[0]?.format('YYYY-MM-DD') ?? ''
+  const to = dateRange?.[1]?.format('YYYY-MM-DD') ?? ''
+  return `${from}_${to}`
 }
 
 function toDetailContextParams(
   type: 'program' | 'instructor',
   aggregateKey: string,
-  listPageDateRange: [Dayjs, Dayjs] | null | undefined
+  listPageDateRange: [Dayjs | null, Dayjs | null] | null | undefined
 ): PaymentOrdersDetailContextParams {
-  const dateRange =
-    listPageDateRange?.[0] && listPageDateRange[1]
-      ? {
-          from: listPageDateRange[0].format('YYYY-MM-DD'),
-          to: listPageDateRange[1].format('YYYY-MM-DD'),
-        }
-      : null
+  const from = listPageDateRange?.[0]?.format('YYYY-MM-DD')
+  const to = listPageDateRange?.[1]?.format('YYYY-MM-DD')
+  const dateRange = from || to ? { ...(from ? { from } : {}), ...(to ? { to } : {}) } : null
 
   return { type, aggregateKey, dateRange }
 }
@@ -37,7 +37,7 @@ function toDetailContextParams(
 export function usePaymentOrdersDetailContextQuery(
   type: 'program' | 'instructor',
   aggregateKey: string | null,
-  listPageDateRange: [Dayjs, Dayjs] | null | undefined,
+  listPageDateRange: [Dayjs | null, Dayjs | null] | null | undefined,
   enabled = true
 ) {
   const remoteEnabled = useSettlementRemoteEnabled(

@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, type Key } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useCmsAlert } from '@/shared/ui'
 import {
   getUjatInstitutionApplicationMockRows,
@@ -25,6 +26,13 @@ import {
   getUjatRegionClassCapacityExceededAlertContent,
 } from '@/features/program/ujat/lib/ujat-region-capacity-institution-assign'
 import { rejectUjatOrganizationApplicationsIfRemote } from '@/features/program/ujat/api/temporary-rejections'
+import { listUjatInstitutionApplications } from '@/features/program/ujat/api/applications-service'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
+import {
+  buildUjatRegionCapacityMaxClassMap,
+  fetchUjatRegionCapacitiesRemote,
+} from '@/features/program/ujat/api/region-capacities-client'
 
 function filterRows(
   rows: UjatInstitutionApplicationRow[],
@@ -70,10 +78,29 @@ export function useUjatInstitutionApplicationList(
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
   const [pendingApplicationRejectModal, setPendingApplicationRejectModal] = useState(false)
 
+  const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
+
+  const remoteQuery = useQuery({
+    queryKey: [...ujatQueryKeys.all, 'organization-applications', programId ?? ''] as const,
+    queryFn: () => listUjatInstitutionApplications(String(programId)),
+    enabled: remoteEnabled,
+    staleTime: 30_000,
+    retry: false,
+  })
+
+  const regionCapacityQuery = useQuery({
+    queryKey: [...ujatQueryKeys.all, 'region-capacities', programId ?? ''] as const,
+    queryFn: () => fetchUjatRegionCapacitiesRemote(String(programId)),
+    enabled: remoteEnabled,
+    staleTime: 60_000,
+    retry: false,
+  })
+
   const allRows = useMemo(() => {
+    if (remoteEnabled) return remoteQuery.data ?? []
     void dataVersion
     return getUjatInstitutionApplicationMockRows()
-  }, [dataVersion])
+  }, [dataVersion, remoteEnabled, remoteQuery.data])
 
   const tableData = useMemo(
     () => filterRows(allRows, regionKey, appliedFilters),
@@ -87,7 +114,18 @@ export function useUjatInstitutionApplicationList(
 
   const columns = useUjatInstitutionApplicationColumns()
 
-  const maxClassesPerDay = UJAT_INSTITUTION_MAX_CLASSES_PER_DAY[regionKey]
+  const maxClassesPerDay = useMemo(() => {
+    if (remoteEnabled && regionCapacityQuery.data) {
+      const map = buildUjatRegionCapacityMaxClassMap(regionCapacityQuery.data)
+      if (regionKey in map) return map[regionKey]
+      // regionLabel key fallback
+      const byLabel = Object.entries(map).find(([key]) =>
+        key.toLowerCase().includes(regionKey.toLowerCase())
+      )
+      if (byLabel) return byLabel[1]
+    }
+    return UJAT_INSTITUTION_MAX_CLASSES_PER_DAY[regionKey]
+  }, [remoteEnabled, regionCapacityQuery.data, regionKey])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
     const raw = String(value ?? '')

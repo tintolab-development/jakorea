@@ -24,6 +24,7 @@ import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/prog
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
 import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
+import { formatSponsorManagerSelectLabel } from '@/features/program/general/model/common-info-edit-schema'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import {
   PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
@@ -198,12 +199,12 @@ export function BasicInfoSection({
     const sponsorManagerOptions = selectedSponsorManagementRows.flatMap(sponsor =>
       getSponsorDetailContactsNormalized(sponsor).map(contact => ({
         value: `${sponsor.id}:${contact.id}`,
-        label:
-          selectedSponsorManagementRows.length > 1
-            ? `${sponsor.name} · ${contact.position ? `${contact.position} ` : ''}${contact.name}`
-            : contact.position
-              ? `${contact.position} ${contact.name}`
-              : contact.name,
+        label: formatSponsorManagerSelectLabel({
+          sponsorName: sponsor.name,
+          contactName: contact.name,
+          position: contact.position,
+          multiSponsor: selectedSponsorManagementRows.length > 1,
+        }),
         sponsorId: sponsor.id,
         contactId: contact.id,
         name: contact.name,
@@ -385,6 +386,7 @@ export function BasicInfoSection({
                         {index > 0 ? ', ' : null}
                         <ProgramDetailSponsorLink
                           name={row.name}
+                          homepageUrl={row.homepageUrl}
                           sponsorId={program.sponsorId}
                           sponsorName={row.name}
                           sponsorManagementId={row.id}

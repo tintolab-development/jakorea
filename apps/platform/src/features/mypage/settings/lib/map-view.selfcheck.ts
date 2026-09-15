@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict'
-import { MOCK_SETTINGS_GUARDIAN, MOCK_SETTINGS_PROFILE } from './constants.ts'
+import {
+  MOCK_SETTINGS_GUARDIAN,
+  MOCK_SETTINGS_PROFILE,
+  MOCK_TEACHER_SETTINGS_PROFILE,
+} from './constants.ts'
 import {
   formatSettingsDateDot,
+  formatSettingsEmployment,
   formatSettingsEnrollment,
   formatSettingsGender,
   formatSettingsGrade,
@@ -32,3 +37,18 @@ const remoteWithoutGuardian = mapPortalProfileToSettingsView({
 })
 assert.equal(remoteWithoutGuardian.guardian, null)
 assert.equal(remoteWithoutGuardian.basicRows[1]?.value, '김회원')
+
+assert.equal(formatSettingsEmployment('ACTIVE'), '재직 중')
+assert.equal(formatSettingsEmployment('ON_LEAVE'), '휴직 중')
+assert.equal(formatSettingsEmployment('TRANSFERRED'), '-')
+
+const teacherView = mapPortalProfileToSettingsView(MOCK_TEACHER_SETTINGS_PROFILE, null, {
+  variant: 'teacher',
+})
+assert.equal(teacherView.basicRows[5]?.label, '소속/학교')
+assert.equal(teacherView.basicRows[5]?.value, '서울초등학교')
+assert.equal(teacherView.basicRows[6]?.label, '재직 현황')
+assert.equal(teacherView.basicRows[6]?.value, '재직 중')
+assert.equal(teacherView.guardian, null)
+
+console.log('map-view.selfcheck: ok')

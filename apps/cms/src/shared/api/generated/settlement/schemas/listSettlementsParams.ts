@@ -12,7 +12,7 @@ export type ListSettlementsParams = {
  */
 programId?: number;
 /**
- * 조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ * 대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.
  */
 instructorMemberId?: number;
 /**
@@ -36,7 +36,7 @@ fromDate?: string;
  */
 toDate?: string;
 /**
- * 조회 종료 기준입니다. 날짜/기간 필터 화면에서 선택한 값을 전달합니다.
+ * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
  */
 pendingItemBucket?: string;
 /**

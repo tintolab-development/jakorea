@@ -1,6 +1,6 @@
 {
   "templateCode": "agreement-expense",
-  "templateName": "교육진행자 동의 서약서",
+  "templateName": "JA Korea 교육진행자 서약서(안)",
   "formType": "WRITING",
   "category": "AGREEMENT",
   "schemaJson": {
@@ -17,12 +17,16 @@
         "paragraphTitle": "",
         "paragraphDescription": "",
         "participatesInTitleNumbering": false,
-        "surveyTitle": "교육진행자 동의 서약서",
+        "surveyTitle": "JA Korea 교육진행자 서약서(안)",
         "surveyDescription": "",
         "periodMode": "immediate",
         "startAt": null,
         "endAt": null,
-        "showWritingPeriodOnForm": false
+        "showWritingPeriodOnForm": false,
+        "startPeriodMode": "immediate",
+        "endPeriodMode": "immediate",
+        "startPeriodPresetLabel": null,
+        "endPeriodPresetLabel": null
       },
       {
         "id": "agreement-expense-pledge-intro",
@@ -88,7 +92,7 @@
         "variant": "multiple_choice",
         "requiredMark": true,
         "paragraphTitle": "개인정보 보호",
-        "paragraphDescription": "교육과정 중 알게 된 관련인의 개인정보를 외부에 유출하거나 무단으로 사용하지 않겠습니다.",
+        "paragraphDescription": "교육과정 중 알게 된 관련인의 개인정보를 외부로 유출하거나 무단으로 사용하지 않겠습니다.",
         "participatesInTitleNumbering": true,
         "answerRequired": true,
         "allowMultiple": false,

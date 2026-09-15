@@ -37,6 +37,11 @@
   gap: 2px;
 }
 
+/* 점수선택형 — 설명 입력란 ↔ 척도 선택 필드 간격 16px (:has 대신 카드 클래스로 레이아웃 비용 절감) */
+.form-editor-card.paragraph-card--scale-type .paragraph-card__slot {
+  margin-top: 16px;
+}
+
 .form-editor-card .paragraph-card__description {
   min-height: 1.25em;
 }

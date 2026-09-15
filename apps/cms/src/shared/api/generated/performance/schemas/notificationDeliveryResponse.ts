@@ -12,6 +12,7 @@ export interface NotificationDeliveryResponse {
   templateId?: number;
   recipientActorType?: string;
   recipientActorId?: number;
+  /** 발송 채널 유형(ALIMTALK|SMS|EMAIL) */
   channelType?: string;
   recipientContactMasked?: string;
   templateCodeSnapshot?: string;
@@ -40,6 +41,7 @@ export interface NotificationDeliveryResponse {
   openedAt?: string;
   providerResultCode?: string;
   providerResultMessage?: string;
+  /** 발송 시점 유형(IMMEDIATE|SCHEDULED) */
   sendTiming?: string;
   senderDisplayName?: string;
   senderKey?: string;

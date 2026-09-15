@@ -1,10 +1,15 @@
 /**
  * UJAT 프로그램 관리 > 초등 경제교육·봉사단 모집 목록용 Mock
+ * Primary SoT ID 182101–182105 (= BE local demo). remote OFF 시에만 사용.
  * 프로그램 진행 현황(5종)별 1건 — `ujatProgressStatus` (모집 신청 현황과 별도)
  */
 
 import type { Program, ProgramLifecycleStatus, UjatProgramProgressStatus } from '@/types/domain'
 import { UJAT_PROGRAM_LIST_PROGRESS_ORDER } from '@/features/program/ujat/lib/ujat-program-list-progress'
+import {
+  UJAT_PRIMARY_PROGRAM_IDS,
+  type UjatPrimaryProgramId,
+} from '@/features/program/ujat/lib/is-ujat-primary-program'
 import { mockSponsors } from './sponsors'
 
 const UJAT_LIST_CAP = 30
@@ -20,7 +25,9 @@ function resolveJaSponsorId(): string {
 }
 
 type UjatListMockRow = {
-  id: string
+  id: UjatPrimaryProgramId
+  /** 레거시 string id — 딥링크·localStorage 호환 alias */
+  legacyId: string
   year: number
   ujatProgressStatus: UjatProgramProgressStatus
   lifecycleStatus: ProgramLifecycleStatus
@@ -43,10 +50,11 @@ function defaultRecruitmentLifecycle(
 const progressIdSuffix = (status: UjatProgramProgressStatus) =>
   status.toLowerCase().replace(/_/g, '-')
 
-/** 진행 현황 5종 각 1건 (목록 정렬: 최신 연도 우선) */
+/** 진행 현황 5종 각 1건 — Primary ID 182101–182105 (목록 정렬: 최신 연도 우선) */
 const UJAT_LIST_MOCK_ROWS: readonly UjatListMockRow[] = UJAT_PROGRAM_LIST_PROGRESS_ORDER.map(
   (ujatProgressStatus, index) => ({
-    id: `ujat-progress-${progressIdSuffix(ujatProgressStatus)}`,
+    id: UJAT_PRIMARY_PROGRAM_IDS[index],
+    legacyId: `ujat-progress-${progressIdSuffix(ujatProgressStatus)}`,
     year: 2030 - index,
     ujatProgressStatus,
     lifecycleStatus: defaultRecruitmentLifecycle(ujatProgressStatus),
@@ -176,6 +184,12 @@ function buildUjatElementaryListPrograms(): Program[] {
 
 export const mockUjatElementaryListPrograms: Program[] = buildUjatElementaryListPrograms()
 
-export const mockUjatElementaryListProgramsMap = new Map(
-  mockUjatElementaryListPrograms.map(p => [p.id, p])
-)
+/** Primary id + legacy `ujat-progress-*` alias → 동일 Program */
+export const mockUjatElementaryListProgramsMap = new Map<string, Program>()
+for (const program of mockUjatElementaryListPrograms) {
+  mockUjatElementaryListProgramsMap.set(program.id, program)
+}
+for (const row of UJAT_LIST_MOCK_ROWS) {
+  const program = mockUjatElementaryListProgramsMap.get(row.id)
+  if (program) mockUjatElementaryListProgramsMap.set(row.legacyId, program)
+}

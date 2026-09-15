@@ -9,6 +9,7 @@ import type {
   ApplicantSchoolRow,
 } from '@/data/mock/applicant-institutions'
 import { getTrainedTeachersPreferredScheduleBlocks } from '@/data/mock/trained-teachers-institution-detail'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/program-approval-status-detail-value'
 import type { ApplicantInstitutionEditDraft } from '@/features/program/general/lib/applicant-institution-detail-edit'
@@ -143,7 +144,9 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
   const showScheduleSection =
     institutionApplicationBridge == null ||
     shouldShowInstitutionApplicationScheduleParagraph(institutionApplicationBridge)
-  const preferredScheduleBlocks = getTrainedTeachersPreferredScheduleBlocks(institution.id)
+  const preferredScheduleBlocks = shouldUseTrainedTeacherProgramsRemoteApi()
+    ? []
+    : getTrainedTeachersPreferredScheduleBlocks(institution.id)
 
   const classAndCount: ReactNode =
     isEditMode && draft && onDraftChange ? (

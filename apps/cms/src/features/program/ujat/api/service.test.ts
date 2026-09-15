@@ -9,7 +9,7 @@ describe('ujat API policy', () => {
       businessYear: 2026,
       programType: 'UJAT',
       page: 0,
-      size: 500,
+      size: 20,
     })
   })
 

@@ -31,4 +31,9 @@ export interface FormEditorRightPanelProps {
   hideParagraphKindOutline?: boolean
   /** 구조 잠금 단락 ID — 해당 단락 선택 시 우측 패널이 잠금 안내 UI로 전환 */
   structureLockedParagraphIds?: ReadonlySet<string>
+  /**
+   * 등록·모집 시드 잠금 시 유형 셀렉트를 「테이블 / 시스템 설정」으로 고정 표시.
+   * 신청 양식은 미지정(실제 단락 유형 표시).
+   */
+  structureLockedTypeSelectPreset?: import('@/features/template/ui/form-editor/right-panel/sections/structure-locked-section').StructureLockedTypeSelectPreset
 }

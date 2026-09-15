@@ -1,23 +1,20 @@
 .user-personal-info-reveal-confirm-modal__lead {
-  margin: 0 0 20px;
+  margin: 0 0 30px;
   font-size: 16px;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
-  margin-top: 16px;
 }
 
 .user-personal-info-reveal-confirm-modal__label {
   display: block;
   margin-bottom: 8px;
   font-size: 14px;
-  font-weight: 600;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
+  padding: 0 8px;
+  font-weight: 500;
 }
 
-.user-personal-info-reveal-confirm-modal__hint {
-  margin: 12px 0 0;
-  font-size: 13px;
-  line-height: 150%;
-  color: #888;
+.user-personal-info-reveal-confirm-modal__required {
+  color: var(--color-required-mark, var(--color-error, #ff4d4f));
 }

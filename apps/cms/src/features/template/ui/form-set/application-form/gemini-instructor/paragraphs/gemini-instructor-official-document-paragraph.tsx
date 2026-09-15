@@ -1,7 +1,7 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 type OfficialNeed = 'needed' | 'not_needed'
@@ -41,10 +41,8 @@ export function GeminiInstructorOfficialDocumentParagraph() {
             label="공문 필요 정보"
             fullRow
             edit={
-              <CmsTextArea
+              <CmsInput
                 inputSize="medium"
-                rows={1}
-                expandableFromSingleRow
                 placeholder="공문에 필요한 정보를 작성해 주세요."
                 width="100%"
                 value={detail}

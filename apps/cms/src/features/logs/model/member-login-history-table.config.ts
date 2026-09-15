@@ -66,9 +66,9 @@ function resolvePendingDateRangeFromUrl(args: {
   prev: MemberLoginHistoryPendingDateRange
 }): MemberLoginHistoryPendingDateRange {
   const { from, to, prev } = args
-  if (from && to) {
+  if (from || to) {
     urlDateRangeSyncState.hadCompleteInUrl = true
-    return clampPendingDateRange([dayjs(from), dayjs(to)])
+    return clampPendingDateRange([from ? dayjs(from) : null, to ? dayjs(to) : null])
   }
   if (urlDateRangeSyncState.hadCompleteInUrl) {
     urlDateRangeSyncState.hadCompleteInUrl = false
@@ -105,13 +105,12 @@ const searchSyncRules: readonly TableSearchParamRule<MemberLoginHistoryPendingFi
     kind: 'apply',
     apply: (nextParams, filters) => {
       const clamped = clampPendingDateRange(filters.dateRange)
-      if (clamped?.[0] && clamped?.[1]) {
-        nextParams.set('mlh_from', clamped[0].format('YYYY-MM-DD'))
-        nextParams.set('mlh_to', clamped[1].format('YYYY-MM-DD'))
-      } else {
-        nextParams.delete('mlh_from')
-        nextParams.delete('mlh_to')
-      }
+      const from = clamped?.[0]
+      const to = clamped?.[1]
+      if (from) nextParams.set('mlh_from', from.format('YYYY-MM-DD'))
+      else nextParams.delete('mlh_from')
+      if (to) nextParams.set('mlh_to', to.format('YYYY-MM-DD'))
+      else nextParams.delete('mlh_to')
     },
   },
 ]
@@ -162,7 +161,7 @@ export const memberLoginHistoryTablePageConfig: TablePageConfig<
     hasActiveFilters: ({ searchParams }) => {
       if ((searchParams.get('mlh_name') ?? '').trim()) return true
       if ((searchParams.get('mlh_id') ?? '').trim()) return true
-      if (searchParams.get('mlh_from') && searchParams.get('mlh_to')) return true
+      if (searchParams.get('mlh_from') || searchParams.get('mlh_to')) return true
       return false
     },
     getBaseCount: ({ filteredData }) => filteredData.length,

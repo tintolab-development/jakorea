@@ -9,6 +9,7 @@ export {
   markPasswordChangeRequiredComplete,
   requirePasswordChangeRequiredWizardState,
   updatePasswordChangeRequiredWizardState,
+  PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS,
   type PasswordChangeRequiredWizardState,
 } from './wizard-state'
 

@@ -380,21 +380,18 @@ export function GeneralProgramParticipantRecruitmentInfoView({
               </DetailInfoForm.Row>
 
               {!isCompanySchool &&
-              (isGeneralOrg ||
-                display.showMaxScheduleCountField ||
-                display.showMaxSessionsPerDayField) ? (
+              (display.showMaxScheduleCountField || display.showMaxSessionsPerDayField) ? (
                 <DetailInfoForm.Row
                   type={
-                    isGeneralOrg ||
-                    (display.showMaxScheduleCountField && display.showMaxSessionsPerDayField)
+                    display.showMaxScheduleCountField && display.showMaxSessionsPerDayField
                       ? 'double'
                       : 'single'
                   }
                 >
-                  {isGeneralOrg || display.showMaxScheduleCountField ? (
+                  {display.showMaxScheduleCountField ? (
                     <DetailInfoForm.Field
                       label="신청 가능 최대 일정 수"
-                      fullRow={!isGeneralOrg && !display.showMaxSessionsPerDayField}
+                      fullRow={!display.showMaxSessionsPerDayField}
                       view={display.maxScheduleCountLabel}
                       edit={
                         isEdit && form ? (
@@ -408,10 +405,10 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                       }
                     />
                   ) : null}
-                  {isGeneralOrg || display.showMaxSessionsPerDayField ? (
+                  {display.showMaxSessionsPerDayField ? (
                     <DetailInfoForm.Field
                       label="신청 가능 1일 최대 차시"
-                      fullRow={!isGeneralOrg && !display.showMaxScheduleCountField}
+                      fullRow={!display.showMaxScheduleCountField}
                       view={display.maxSessionsPerDayLabel}
                       edit={
                         isEdit && form ? (
@@ -490,7 +487,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                     name="targetLevels"
                     control={form.control}
                     render={({ field }) =>
-                      isIndividual || isGeneralOrg ? (
+                      isIndividual ? (
                         <CmsSelect
                           inputSize="medium"
                           width={240}

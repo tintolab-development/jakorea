@@ -10,10 +10,12 @@ import type {
   ProgramType,
 } from '@/types/domain'
 import type { Status } from '@/types'
+import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import {
   parseCompanySchoolServiceDetailJson,
   serializeCompanySchoolServiceDetailJson,
 } from './service-detail-json'
+import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 
 export const COMPANY_SCHOOL_PROGRAM_API_TYPE = 'COMPANY_SCHOOL'
 
@@ -24,17 +26,14 @@ function toDate(value: Date | string | undefined): string | undefined {
   return value
 }
 
-function lifecycleStatusFromPeriodStatus(value?: string): ProgramLifecycleStatus {
-  switch (value?.trim().toUpperCase()) {
-    case 'IN_PROGRESS':
-    case 'RUNNING':
-      return 'education_in_progress'
-    case 'COMPLETED':
-    case 'ENDED':
-      return 'education_completed'
-    default:
-      return 'recruiting_students'
-  }
+function resolveCompanySchoolListLifecycle(
+  dto: AdminProgramListItemDto
+): ProgramLifecycleStatus {
+  return (
+    toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
+    toTypedProgramLifecycleStatus(dto.periodStatus) ??
+    'scheduled'
+  )
 }
 
 function baseProgram(
@@ -70,9 +69,8 @@ export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto):
     mainTitle: dto.mainTitle?.trim() || title,
     startDate: dto.businessStartDate ?? dto.startDate,
     endDate: dto.businessEndDate ?? dto.endDate,
-    lifecycleStatus: dto.periodStatus
-      ? lifecycleStatusFromPeriodStatus(dto.periodStatus)
-      : ((dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ?? 'recruiting_students'),
+    status: (dto.status as Status | undefined) ?? 'pending',
+    lifecycleStatus: resolveCompanySchoolListLifecycle(dto),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
     instructors: dto.instructorApplicantCount,
     participatingSchoolCount: dto.organizationApplicationCount,
@@ -82,13 +80,46 @@ export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto):
 }
 
 export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
-  const title = dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
+  const dtoExt = dto as ProgramResponse & {
+    nameKo?: string
+    remarks?: string
+    otherMatters?: string
+    contactName?: string
+    recruitmentTargetDetail?: string
+  }
+  const title =
+    dto.title?.trim() ||
+    dto.mainTitle?.trim() ||
+    dtoExt.nameKo?.trim() ||
+    '제목 없음'
   const id = dto.id == null ? '' : String(dto.id)
   const now = new Date().toISOString()
   const details = parseCompanySchoolServiceDetailJson(dto.serviceDetailJson)
+  const {
+    lifecycleStatus: _serviceDetailLifecycle,
+    status: _serviceDetailStatus,
+    ...detailFields
+  } = details
+  void _serviceDetailLifecycle
+  void _serviceDetailStatus
+  const generalCommonInfo = applySettlementPolicyToCommonInfo(
+    details.generalCommonInfo,
+    dto.settlementPolicy
+  )
+  const otherNotes =
+    dtoExt.otherMatters?.trim() ||
+    dtoExt.remarks?.trim() ||
+    details.otherNotes?.trim() ||
+    undefined
+
+  const periodStatus = (dto as ProgramResponse & { periodStatus?: string }).periodStatus
+  const lifecycleStatus =
+    toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
+    toTypedProgramLifecycleStatus(periodStatus) ??
+    undefined
 
   return baseProgram({
-    ...details,
+    ...detailFields,
     id,
     sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
     title,
@@ -110,12 +141,12 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
         curriculum: round.curriculum,
         deliveryType: round.deliveryType as Program['rounds'][number]['deliveryType'],
       })) ?? [],
-    startDate: dto.startDate,
-    endDate: dto.endDate,
+    startDate: dto.startDate ?? dto.businessStartDate,
+    endDate: dto.endDate ?? dto.businessEndDate,
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
-    lifecycleStatus: dto.lifecycleStatus as ProgramLifecycleStatus | undefined,
+    lifecycleStatus,
     businessArea: dto.businessArea,
     titleEn: dto.titleEn,
     textbookName: dto.textbookName,
@@ -156,7 +187,12 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     recruitmentGuide: dto.recruitmentGuide,
     learningSupportContent: dto.learningSupportContent,
     attachmentFileNames: dto.attachmentFileNames,
+    otherNotes,
+    studentListRequired: details.studentListRequired ?? 'not_required',
     generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+    generalCommonInfo,
+    generalSurveyMenuKeys: details.generalSurveyMenuKeys,
+    generalProgramAudience: details.generalProgramAudience ?? 'organization',
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
   })
@@ -175,65 +211,223 @@ function mapRounds(program: Program): ProgramUpdateRequest['rounds'] {
   }))
 }
 
+/** `serializeCompanySchoolServiceDetailJson` / `companySchoolDetails`에 들어가는 도메인 키 */
+const SERVICE_DETAIL_PROGRAM_KEYS = [
+  'posterImage',
+  'targetLevels',
+  'approvedStudentCount',
+  'instructorCapacity',
+  'participatingSchoolCount',
+  'participatingStudentCount',
+  'instructorApplicationStartDate',
+  'instructorApplicationEndDate',
+  'documentPassAnnouncementDate',
+  'documentPassAnnouncementMethod',
+  'interviewStartDate',
+  'interviewEndDate',
+  'interviewMethod',
+  'finalPassAnnouncementDate',
+  'finalPassAnnouncementMethod',
+  'instructorTarget',
+  'instructorTargets',
+  'instructorTargetDetail',
+  'applicationMethod',
+  'otherNotes',
+  'resultAnnouncementDate',
+  'resultAnnouncementMethod',
+  'studentListRequired',
+  'applicationFormTemplateId',
+  'surveyFormTemplateId',
+  'satisfactionFormTemplateId',
+  'lectureReportFormTemplateId',
+  'generalParticipantTypes',
+  'generalVolunteerInterviewEnabled',
+  'generalParticipantInterviewEnabled',
+  'generalSurveyMenuKeys',
+  'generalProgramAudience',
+  'generalProgramEducationStructure',
+  'generalProgramSessionRound',
+  'generalCommonInfo',
+  'scheduleTimeEnabled',
+  'startTime',
+  'endTime',
+  'createdByName',
+  'updatedByName',
+  'generalVolunteers',
+  'staffVolunteers',
+  'returningVolunteers',
+] as const satisfies ReadonlyArray<keyof Program>
+
+function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
+  return Object.prototype.hasOwnProperty.call(patch, key)
+}
+
+/** GET 마스킹 값(`김*원`, `010-****-1234`)을 PATCH로 되쓰지 않기 위함 */
+function looksMaskedProgramPii(value: string | null | undefined): boolean {
+  if (value == null) return false
+  return value.includes('*')
+}
+
+function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateRequest {
+  return {
+    sponsorId: program.sponsorId,
+    title: program.title,
+    type: program.type,
+    format: program.format,
+    category: program.category,
+    description: program.description,
+    startDate: toDate(program.startDate),
+    endDate: toDate(program.endDate),
+    applicationStartDate: toDate(program.applicationStartDate),
+    applicationEndDate: toDate(program.applicationEndDate),
+    businessArea: program.businessArea,
+    titleEn: program.titleEn,
+    mainTitle: program.mainTitle ?? program.title,
+    textbookName: program.textbookName,
+    textbookNameEn: program.textbookNameEn,
+    schoolId: program.schoolId,
+    district: program.district,
+    ips: program.ips,
+    targetLevel: program.targetLevels?.[0] ?? program.targetLevel,
+    institutionType: program.institutionType,
+    ipOwned: program.ipOwned,
+    courseDeliveredBy: program.courseDeliveredBy,
+    partnerInvolvement: program.partnerInvolvement,
+    programCategory: program.programCategory ?? undefined,
+    programChannel: program.programChannel ?? undefined,
+    educationTime: program.educationTime,
+    teamDivision: program.teamDivision,
+    educationProcess: program.educationProcess,
+    maleParticipants: program.maleParticipants,
+    femaleParticipants: program.femaleParticipants,
+    totalParticipants: program.totalParticipants,
+    generalVolunteers: 0,
+    staffVolunteers: 0,
+    returningVolunteers: 0,
+    generalTeachers: program.generalTeachers,
+    educatedTeachers: program.educatedTeachers,
+    instructors: program.instructors,
+    managerName: program.managerName,
+    venue: program.venue,
+    curriculum: program.curriculum,
+    contactEmail: program.contactEmail,
+    contactPhone: program.contactPhone,
+    oneLineIntroduction: program.oneLineIntroduction,
+    keyVisualImage: program.keyVisualImage ?? program.posterImage,
+    settlementRuleId: program.settlementRuleId,
+    applicationPathId: program.applicationPathId,
+    additionalContentHtml: program.additionalContentHtml,
+    recruitmentGuide: program.recruitmentGuide,
+    learningSupportContent: program.learningSupportContent,
+    attachmentFileNames: program.attachmentFileNames,
+    rounds: mapRounds(program),
+    serviceDetailJson: serializeCompanySchoolServiceDetailJson(program),
+  }
+}
+
+/**
+ * 공통·모집 정보 등 **부분 수정**용 — `patch`에 있는 도메인 키만 UpdateRequest에 실음.
+ * rounds·curriculum·담당자(미변경/마스킹) 등 화면 밖 필드는 보내지 않음.
+ */
+function mapCompanySchoolPatchFieldsToRequest(
+  merged: Program,
+  patch: Partial<Program>
+): ProgramUpdateRequest {
+  const body: ProgramUpdateRequest = {}
+  const has = (key: keyof Program) => patchHasKey(patch, key)
+
+  if (has('sponsorId')) {
+    body.sponsorId = merged.sponsorId != null ? String(merged.sponsorId) : undefined
+  }
+  if (has('title')) body.title = merged.title
+  if (has('type')) body.type = merged.type
+  if (has('format')) body.format = merged.format
+  if (has('category')) body.category = merged.category
+  if (has('description')) body.description = merged.description
+  if (has('startDate')) body.startDate = toDate(merged.startDate)
+  if (has('endDate')) body.endDate = toDate(merged.endDate)
+  if (has('applicationStartDate')) {
+    body.applicationStartDate = toDate(merged.applicationStartDate)
+  }
+  if (has('applicationEndDate')) {
+    body.applicationEndDate = toDate(merged.applicationEndDate)
+  }
+  if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('titleEn')) body.titleEn = merged.titleEn
+  if (has('mainTitle')) body.mainTitle = merged.mainTitle ?? merged.title
+  if (has('textbookName')) body.textbookName = merged.textbookName
+  if (has('textbookNameEn')) body.textbookNameEn = merged.textbookNameEn
+  if (has('schoolId')) body.schoolId = merged.schoolId
+  if (has('district')) body.district = merged.district
+  if (has('ips')) body.ips = merged.ips
+  if (has('targetLevel') || has('targetLevels')) {
+    body.targetLevel = merged.targetLevels?.[0] ?? merged.targetLevel
+  }
+  if (has('institutionType')) body.institutionType = merged.institutionType
+  if (has('ipOwned')) body.ipOwned = merged.ipOwned
+  if (has('courseDeliveredBy')) body.courseDeliveredBy = merged.courseDeliveredBy
+  if (has('partnerInvolvement')) body.partnerInvolvement = merged.partnerInvolvement
+  if (has('programCategory')) body.programCategory = merged.programCategory ?? undefined
+  if (has('programChannel')) body.programChannel = merged.programChannel ?? undefined
+  if (has('educationTime')) body.educationTime = merged.educationTime
+  if (has('teamDivision')) body.teamDivision = merged.teamDivision
+  if (has('educationProcess')) body.educationProcess = merged.educationProcess
+  if (has('maleParticipants')) body.maleParticipants = merged.maleParticipants
+  if (has('femaleParticipants')) body.femaleParticipants = merged.femaleParticipants
+  if (has('totalParticipants')) body.totalParticipants = merged.totalParticipants
+  if (has('generalVolunteers')) body.generalVolunteers = 0
+  if (has('staffVolunteers')) body.staffVolunteers = 0
+  if (has('returningVolunteers')) body.returningVolunteers = 0
+  if (has('generalTeachers')) body.generalTeachers = merged.generalTeachers
+  if (has('educatedTeachers')) body.educatedTeachers = merged.educatedTeachers
+  if (has('instructors')) body.instructors = merged.instructors
+  if (has('managerName') && !looksMaskedProgramPii(merged.managerName)) {
+    body.managerName = merged.managerName
+  }
+  if (has('venue')) body.venue = merged.venue
+  if (has('curriculum')) body.curriculum = merged.curriculum
+  if (has('contactEmail') && !looksMaskedProgramPii(merged.contactEmail)) {
+    body.contactEmail = merged.contactEmail
+  }
+  if (has('contactPhone') && !looksMaskedProgramPii(merged.contactPhone)) {
+    body.contactPhone = merged.contactPhone
+  }
+  if (has('oneLineIntroduction')) body.oneLineIntroduction = merged.oneLineIntroduction
+  if (has('keyVisualImage') || has('posterImage')) {
+    body.keyVisualImage = merged.keyVisualImage ?? merged.posterImage
+  }
+  if (has('settlementRuleId')) body.settlementRuleId = merged.settlementRuleId
+  if (has('applicationPathId')) body.applicationPathId = merged.applicationPathId
+  if (has('additionalContentHtml')) {
+    body.additionalContentHtml = merged.additionalContentHtml
+  }
+  if (has('recruitmentGuide')) body.recruitmentGuide = merged.recruitmentGuide
+  if (has('learningSupportContent')) {
+    body.learningSupportContent = merged.learningSupportContent
+  }
+  if (has('attachmentFileNames')) body.attachmentFileNames = merged.attachmentFileNames
+  if (has('rounds')) body.rounds = mapRounds(merged)
+
+  const touchesServiceDetail = SERVICE_DETAIL_PROGRAM_KEYS.some(key => has(key))
+  if (touchesServiceDetail) {
+    body.serviceDetailJson = serializeCompanySchoolServiceDetailJson(merged)
+  }
+
+  return body
+}
+
+/**
+ * @param patch 있으면 **해당 키만** PATCH body에 포함 (부분 수정).
+ *   없으면 기존처럼 프로그램 코어 필드 전체를 직렬화(생성 직후 전체 동기화 등).
+ */
 export function mapCompanySchoolToUpdateRequest(
   program: Program,
   patch?: Partial<Program>
 ): ProgramUpdateRequest {
-  const merged = patch ? { ...program, ...patch } : program
-  return {
-    sponsorId: merged.sponsorId,
-    title: merged.title,
-    type: merged.type,
-    format: merged.format,
-    category: merged.category,
-    description: merged.description,
-    startDate: toDate(merged.startDate),
-    endDate: toDate(merged.endDate),
-    applicationStartDate: toDate(merged.applicationStartDate),
-    applicationEndDate: toDate(merged.applicationEndDate),
-    businessArea: merged.businessArea,
-    titleEn: merged.titleEn,
-    mainTitle: merged.mainTitle ?? merged.title,
-    textbookName: merged.textbookName,
-    textbookNameEn: merged.textbookNameEn,
-    schoolId: merged.schoolId,
-    district: merged.district,
-    ips: merged.ips,
-    targetLevel: merged.targetLevels?.[0] ?? merged.targetLevel,
-    institutionType: merged.institutionType,
-    ipOwned: merged.ipOwned,
-    courseDeliveredBy: merged.courseDeliveredBy,
-    partnerInvolvement: merged.partnerInvolvement,
-    programCategory: merged.programCategory ?? undefined,
-    programChannel: merged.programChannel ?? undefined,
-    educationTime: merged.educationTime,
-    teamDivision: merged.teamDivision,
-    educationProcess: merged.educationProcess,
-    maleParticipants: merged.maleParticipants,
-    femaleParticipants: merged.femaleParticipants,
-    totalParticipants: merged.totalParticipants,
-    generalVolunteers: 0,
-    staffVolunteers: 0,
-    returningVolunteers: 0,
-    generalTeachers: merged.generalTeachers,
-    educatedTeachers: merged.educatedTeachers,
-    instructors: merged.instructors,
-    managerName: merged.managerName,
-    venue: merged.venue,
-    curriculum: merged.curriculum,
-    contactEmail: merged.contactEmail,
-    contactPhone: merged.contactPhone,
-    oneLineIntroduction: merged.oneLineIntroduction,
-    keyVisualImage: merged.keyVisualImage ?? merged.posterImage,
-    settlementRuleId: merged.settlementRuleId,
-    applicationPathId: merged.applicationPathId,
-    additionalContentHtml: merged.additionalContentHtml,
-    recruitmentGuide: merged.recruitmentGuide,
-    learningSupportContent: merged.learningSupportContent,
-    attachmentFileNames: merged.attachmentFileNames,
-    rounds: mapRounds(merged),
-    serviceDetailJson: serializeCompanySchoolServiceDetailJson(merged),
+  if (patch && Object.keys(patch).length > 0) {
+    return mapCompanySchoolPatchFieldsToRequest({ ...program, ...patch }, patch)
   }
+  return mapCompanySchoolCoreFieldsToRequest(program)
 }
 
 export function mapCompanySchoolToCreateRequest(program: Program): ProgramCreateRequest {

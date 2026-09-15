@@ -27,22 +27,28 @@ export function getPaymentOrdersMonthFilterRange(anchor: Dayjs): [Dayjs, Dayjs] 
 
 /** 조회 적용된 출강일(또는 데이터 앵커) → 캘린더·필터 공통 월간 구간 */
 export function resolvePaymentOrdersCalendarFilterRange(
-  appliedRange: [Dayjs, Dayjs] | null | undefined,
+  appliedRange: [Dayjs | null, Dayjs | null] | null | undefined,
   fallbackAnchor: Dayjs
 ): [Dayjs, Dayjs] {
   const anchor =
-    appliedRange?.[0]?.isValid() && appliedRange[1]?.isValid()
+    appliedRange?.[0]?.isValid()
       ? appliedRange[0]
-      : fallbackAnchor.startOf('day')
+      : appliedRange?.[1]?.isValid()
+        ? appliedRange[1]
+        : fallbackAnchor.startOf('day')
   return getPaymentOrdersMonthFilterRange(anchor)
 }
 
 export function isSamePaymentOrdersDateRange(
-  a: [Dayjs, Dayjs] | null | undefined,
-  b: [Dayjs, Dayjs] | null | undefined
+  a: [Dayjs | null, Dayjs | null] | null | undefined,
+  b: [Dayjs | null, Dayjs | null] | null | undefined
 ): boolean {
-  if (!a?.[0] || !a[1] || !b?.[0] || !b[1]) return false
-  return a[0].isSame(b[0], 'day') && a[1].isSame(b[1], 'day')
+  if (a == null && b == null) return true
+  if (a == null || b == null) return false
+  return (
+    (a[0]?.valueOf() ?? null) === (b[0]?.valueOf() ?? null) &&
+    (a[1]?.valueOf() ?? null) === (b[1]?.valueOf() ?? null)
+  )
 }
 
 /** 예전 시드 URL(2025) — 기본 기간으로 치환하기 전에는 목록 API를 치지 않는다. */
@@ -58,6 +64,6 @@ export function isPaymentOrdersListDateRangeReady(
   from: string | null,
   to: string | null
 ): boolean {
-  if (!from || !to) return false
+  if (!from && !to) return false
   return !isPaymentOrdersLegacyPlaceholderDateRange(from, to)
 }

@@ -98,7 +98,11 @@ function hasIncompleteBasicInfo(
   if (isEmptyText(readOverlay(overlay, 'generalRegistration.basicInfo.publicProgramTitle'))) {
     return true
   }
-  if (isEmptyText(readOverlay(overlay, 'generalRegistration.basicInfo.detailedProgramId'))) {
+  // 일정형: 세부 프로그램명「해당없음」고정 — 선택 검증 생략(실적에서는 일정명 반영)
+  if (
+    ctx.programType !== 'schedule' &&
+    isEmptyText(readOverlay(overlay, 'generalRegistration.basicInfo.detailedProgramId'))
+  ) {
     return true
   }
   const operationRange = readOverlay(overlay, 'generalRegistration.basicInfo.operationRangeSeal')

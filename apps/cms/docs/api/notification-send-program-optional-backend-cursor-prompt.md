@@ -1,5 +1,9 @@
 # Cursor prompt — 알림 발송 「대상 프로그램 미선택」·`programId` optional
 
+> **⚠ 폐기 (2026-09-14)** — 「미선택 = DIRECT만 / recipient-candidates 호출 금지」는 더 이상 유효하지 않다.  
+> 신계약 SSOT: [`CMS_FE_PROMPT_SEND_NO_PROGRAM_ALL_MEMBERS_2026-09-14.md`](./CMS_FE_PROMPT_SEND_NO_PROGRAM_ALL_MEMBERS_2026-09-14.md)  
+> (`programId` optional · 미선택 = 전체회원 후보 · POST MEMBER 허용)
+
 > 작성: 2026-09-09 · 갱신: 미선택 라벨·발송 변수 추가 규칙 반영  
 > 대상: JA Korea CMS Java Backend (`NotificationSendBatch*` / CreateRequest / recipient-candidates)  
 > FE: `apps/cms` 알림 **메일·문자·알림톡 발송** (템플릿 **등록**은 변경 없음)  

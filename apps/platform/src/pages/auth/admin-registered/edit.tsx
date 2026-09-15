@@ -37,6 +37,12 @@ export function AdminRegisteredEditPage() {
   const [schoolNeisCode, setSchoolNeisCode] = useState<string | null>(
     wizardState?.schoolNeisCode ?? null,
   )
+  const [schoolEducationOfficeCode, setSchoolEducationOfficeCode] = useState<string | null>(
+    wizardState?.schoolEducationOfficeCode ?? null,
+  )
+  const [schoolSource, setSchoolSource] = useState<'neis' | 'careerNet' | null>(
+    wizardState?.schoolSource ?? null,
+  )
   const [grade, setGrade] = useState(profile?.grade ?? '')
   const [address, setAddress] = useState(profile?.address ?? '')
   const [addressDetail, setAddressDetail] = useState(profile?.addressDetail ?? '')
@@ -67,6 +73,8 @@ export function AdminRegisteredEditPage() {
       wizardState.schoolOrganizationId ?? wizardState.portalProfile?.schoolOrganizationId ?? null,
     )
     setSchoolNeisCode(wizardState.schoolNeisCode ?? null)
+    setSchoolEducationOfficeCode(wizardState.schoolEducationOfficeCode ?? null)
+    setSchoolSource(wizardState.schoolSource ?? null)
     setGrade(next.grade)
     setAddress(next.address)
     setAddressDetail(next.addressDetail)
@@ -114,6 +122,8 @@ export function AdminRegisteredEditPage() {
       setSchoolAddress('')
       setSchoolOrganizationId(null)
       setSchoolNeisCode(null)
+      setSchoolEducationOfficeCode(null)
+      setSchoolSource(null)
       setGrade('')
     }
   }
@@ -123,6 +133,8 @@ export function AdminRegisteredEditPage() {
     setSchoolAddress(school.address?.trim() ?? '')
     setSchoolOrganizationId(school.organizationId ?? null)
     setSchoolNeisCode(school.neisCode ?? null)
+    setSchoolEducationOfficeCode(school.educationOfficeCode ?? null)
+    setSchoolSource(school.source ?? (school.neisCode ? 'neis' : null))
     setIsSchoolSearchModalOpen(false)
   }
 
@@ -133,6 +145,8 @@ export function AdminRegisteredEditPage() {
       schoolAddress,
       schoolOrganizationId,
       schoolNeisCode,
+      schoolEducationOfficeCode,
+      schoolSource: schoolSource ?? undefined,
       grade,
       address,
       addressDetail,
@@ -163,6 +177,8 @@ export function AdminRegisteredEditPage() {
       schoolOrganizationId,
       schoolAddress,
       schoolNeisCode,
+      schoolEducationOfficeCode,
+      schoolSource: schoolSource ?? undefined,
       employmentStatus: wizardState.employmentStatus,
       portalProfile: wizardState.portalProfile,
     })
@@ -176,6 +192,8 @@ export function AdminRegisteredEditPage() {
           schoolAddress,
           schoolOrganizationId,
           schoolNeisCode,
+          schoolEducationOfficeCode,
+          schoolSource: schoolSource ?? undefined,
           grade,
           address,
           addressDetail,

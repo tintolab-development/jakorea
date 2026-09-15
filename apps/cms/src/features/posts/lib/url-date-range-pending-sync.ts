@@ -18,7 +18,7 @@ export function normalizeDateRangePickerValueToPending(value: unknown): AdminPos
   return [a, b]
 }
 
-/** `syncPendingFromUrl` 모듈 간 공유 — URL에 from·to가 모두 있었는지 추적 */
+/** `syncPendingFromUrl` 모듈 간 공유 — URL에 from 또는 to가 있었는지 추적 */
 export type UrlDateRangePendingSyncRef = { hadCompleteInUrl: boolean }
 
 export function resolvePendingDateRangeFromUrl(args: {
@@ -28,14 +28,14 @@ export function resolvePendingDateRangeFromUrl(args: {
   prev: AdminPostsPendingDateRange | undefined
 }): [Dayjs, Dayjs] | null | [Dayjs | null, Dayjs | null] {
   const { ref, from, to, prev } = args
-  const hasCompleteInUrl = Boolean(from && to)
+  const hasRangeInUrl = Boolean(from || to)
 
-  if (hasCompleteInUrl) {
+  if (hasRangeInUrl) {
     ref.hadCompleteInUrl = true
-    return [dayjs(from!), dayjs(to!)]
+    return [from ? dayjs(from) : null, to ? dayjs(to) : null]
   }
 
-  if (ref.hadCompleteInUrl && !hasCompleteInUrl) {
+  if (ref.hadCompleteInUrl) {
     ref.hadCompleteInUrl = false
     return null
   }

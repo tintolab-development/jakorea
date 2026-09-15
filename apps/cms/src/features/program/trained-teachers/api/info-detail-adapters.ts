@@ -1,6 +1,7 @@
 import type { Program } from '@/types/domain'
 import type { TrainedTeacherProgramDetailRequest } from '@/shared/api/generated/dashboard/schemas/trainedTeacherProgramDetailRequest'
 import type { TrainedTeacherProgramDetailResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherProgramDetailResponse'
+import { TRAINED_TEACHER_TRAINING_SCHEDULE_NAME } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
 
 export const TRAINED_TEACHER_INFO_CONFIG_JSON_VERSION = 1 as const
 
@@ -96,7 +97,7 @@ export function mapTrainedTeacherInfoSaveToRequest(
     educationJournalEnabled: payload.commonInfo.educationJournalEnabled ?? false,
     educationJournalRequired: false,
     teacherTrainingScheduleName: payload.commonInfo.teacherTrainingEnabled
-      ? '교육 연수'
+      ? TRAINED_TEACHER_TRAINING_SCHEDULE_NAME
       : undefined,
     configJson: serializeTrainedTeacherInfoConfigJson(payload),
   }

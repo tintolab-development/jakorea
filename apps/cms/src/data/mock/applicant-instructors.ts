@@ -141,6 +141,10 @@ export interface ApplicantInstructorRow {
   }>
   /** 승인 반려 시 반려 사유 (결재 내역 반려 사유 표시용) */
   rejectionReason?: string
+  /** Admin API — 기관까지 편도 거리(km). mock 해시 대신 우선 */
+  distanceKm?: number
+  /** Admin API — 장거리 여부. threshold 하드코딩보다 우선 */
+  longDistanceYn?: boolean
   /** 강사 이력서 - 경력 상세 (강사 이력서 탭) */
   careerDetails?: ApplicantInstructorCareerDetail[]
   /** 강사 이력서 — JA Korea 활동 경험 */

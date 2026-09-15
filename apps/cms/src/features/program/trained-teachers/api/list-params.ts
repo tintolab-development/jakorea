@@ -1,5 +1,8 @@
 import type { AdminProgramsListQuery } from '@/features/program/general/api/programs-api-client'
+import { GENERAL_PROGRAM_LIST_PAGE_SIZE } from '@/features/program/general/api/general-program-list-filter-params'
 import { TRAINED_TEACHER_PROGRAM_API_TYPE } from './adapters'
+
+export const TRAINED_TEACHER_PROGRAM_LIST_PAGE_SIZE = GENERAL_PROGRAM_LIST_PAGE_SIZE
 
 export type TrainedTeacherOverviewStatusFilter = 'scheduled' | 'in_progress' | 'completed'
 
@@ -26,15 +29,16 @@ function mapOverviewStatusToPeriodStatus(
 }
 
 export function trainedTeacherListParams(
-  filters: TrainedTeacherListFilters = {}
+  filters: TrainedTeacherListFilters = {},
+  pageParam = 0
 ): AdminProgramsListQuery {
   return {
     programType: TRAINED_TEACHER_PROGRAM_API_TYPE,
     keyword: filters.keyword?.trim() || undefined,
     periodStatus: filters.periodStatus,
     businessYear: filters.businessYear,
-    page: 0,
-    size: 500,
+    page: pageParam,
+    size: TRAINED_TEACHER_PROGRAM_LIST_PAGE_SIZE,
   }
 }
 

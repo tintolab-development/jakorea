@@ -7,8 +7,13 @@ import type { MailSendProgram } from '@/features/notifications/model/mail-send/t
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import { mapAdminProgramListItemsToSendPrograms } from './adapters/send-program-adapters'
 
-const PAGE_SIZE = 500
-const MAX_PAGES = 20
+/**
+ * 발송 대상 프로그램 피커용 목록 size.
+ * UI는 클라이언트에서 5건 슬라이스하고, API는 유형별로 페이지네이션한다.
+ * (수신자 후보 size=50 / 전체선택 max 1000 과 분리)
+ */
+const SEND_PROGRAM_LIST_PAGE_SIZE = 50
+const MAX_PAGES = 40
 const SEND_PROGRAM_API_TYPES = [
   'GENERAL',
   'UJAT',
@@ -24,7 +29,11 @@ export function shouldUseNotificationSendProgramsRemote(): boolean {
 async function fetchProgramListPages(programType: string): Promise<AdminProgramListItemDto[]> {
   const items: AdminProgramListItemDto[] = []
   for (let page = 0; page < MAX_PAGES; page += 1) {
-    const dto = await fetchAdminProgramsRemote({ programType, page, size: PAGE_SIZE })
+    const dto = await fetchAdminProgramsRemote({
+      programType,
+      page,
+      size: SEND_PROGRAM_LIST_PAGE_SIZE,
+    })
     items.push(...(dto.items ?? []))
     const totalPages = dto.totalPages ?? 1
     if (page + 1 >= totalPages) break

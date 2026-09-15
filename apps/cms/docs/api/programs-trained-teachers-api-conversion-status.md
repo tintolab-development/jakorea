@@ -87,7 +87,8 @@ VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED=true
 | 기관 신청 | `GET …/trained-teacher/organization-applications` (+ `/{id}`) | **remote (opt-in)** |
 | 승인/반려 | 공통 `…/organization-applications/{id}/approve\|reject` | **remote** · TT 전용 mutation OpenAPI 없음 |
 | 교육일지 | `GET/POST …/education-journals` (+ download/export) | **remote** list/download/bulk · POST create FE 준비(서비스) |
-| 실적 요약 | `GET …/performance-summary` | mock |
+| 실적 요약 | `GET …/performance-summary` | **remote** + education-completions 건수 |
+| 학생교육 완료 | `GET …/education-completions` | **remote** (일지와 별도 SSOT) |
 
 ---
 

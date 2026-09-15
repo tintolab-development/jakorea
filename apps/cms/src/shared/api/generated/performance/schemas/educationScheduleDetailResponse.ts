@@ -12,4 +12,6 @@ export interface EducationScheduleDetailResponse {
   applicationType?: string;
   programId?: number;
   schedule?: EducationScheduleItem;
+  /** 일정 목록과 동일한 scopeStatus 의미를 사용합니다. 화면에 일정이 보인다는 사실만으로 출결 변경 권한이 부여되지는 않습니다. */
+  scopeStatus?: string;
 }

@@ -1,8 +1,7 @@
 import { mailSendUseTemplate } from './flags'
 import { MAIL_SEND_PURPOSE, type MailSendDraft, type MailSendPayload } from './types'
 import {
-  isNotificationSendAllProgram,
-  isNotificationSendProgramUnset,
+  isNotificationSendWithoutProgram,
   parseNotificationSendProgramId,
 } from '@/features/notifications/model/send-program-id'
 import { validateMailSenderEmail } from '@/features/notifications/model/mail-template/sender-email'
@@ -27,9 +26,6 @@ export function buildMailSendPayload(draft: MailSendDraft): MailSendPayload {
 }
 
 export function validateMailSendDraft(draft: MailSendDraft): string | null {
-  if (isNotificationSendProgramUnset(draft.programId)) {
-    return '대상 프로그램을 선택하세요.'
-  }
   if (!draft.templateId?.trim()) return '템플릿을 선택하세요.'
   const senderError = validateMailSenderEmail(draft.senderEmail)
   if (senderError) return senderError
@@ -39,14 +35,10 @@ export function validateMailSendDraft(draft: MailSendDraft): string | null {
   })
   if (scheduleError) return scheduleError
   if (draft.recipients.length === 0) return '수신자를 설정하세요.'
-  if (isNotificationSendAllProgram(draft.programId)) {
-    const hasProgramBound = draft.recipients.some(
-      recipient => recipient.source !== 'manual' && recipient.actorType !== 'DIRECT'
-    )
-    if (hasProgramBound) {
-      return '대상 프로그램이 미선택일 때는 직접 입력 수신자만 사용할 수 있습니다.'
-    }
-  } else if (parseNotificationSendProgramId(draft.programId) == null) {
+  if (
+    !isNotificationSendWithoutProgram(draft.programId) &&
+    parseNotificationSendProgramId(draft.programId) == null
+  ) {
     return '대상 프로그램을 선택하세요.'
   }
   const missingDirectContact = draft.recipients.some(

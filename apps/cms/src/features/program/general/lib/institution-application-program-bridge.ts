@@ -116,6 +116,16 @@ function isDatePeriodSelection(bridge: InstitutionApplicationProgramBridge): boo
   return bridge.educationScheduleMode === 'period'
 }
 
+/**
+ * 템플릿 관리(유형·회차 미연동) 편집 컨텍스트.
+ * 등록 위저드·프로그램 상세에서는 educationStructure/sessionRound가 채워진다.
+ */
+export function isInstitutionApplicationBridgeTemplateAuthoring(
+  bridge: InstitutionApplicationProgramBridge
+): boolean {
+  return bridge.educationStructure == null && bridge.sessionRound == null
+}
+
 /** 희망 일정 신청 — 최대 일정 수 필드(및 일정 UI) 노출 */
 export function shouldShowInstitutionApplicationMaxScheduleFields(
   bridge: InstitutionApplicationProgramBridge

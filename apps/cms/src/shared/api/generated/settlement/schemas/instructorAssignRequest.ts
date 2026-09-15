@@ -15,6 +15,11 @@ export interface InstructorAssignRequest {
      * @minimum 1
      */
   scheduleId: number;
+  /**
+     * 기관형 프로그램의 기관 신청 ID. 동일 일정에 여러 기관이 있으면 필수
+     * @minimum 1
+     */
+  organizationApplicationId?: number;
   /** 해당 일정의 대표/리드 강사 여부 */
   scheduleLead?: boolean;
   /**

@@ -69,11 +69,23 @@ function parseDateRange(
 ): [Dayjs | null, Dayjs | null] | null {
   const start = searchParams.get(startKey)
   const end = searchParams.get(endKey)
-  if (!start || !end) return null
-  const startDate = dayjs(start)
-  const endDate = dayjs(end)
-  if (!startDate.isValid() || !endDate.isValid()) return null
+  if (!start && !end) return null
+  const startDate = start ? dayjs(start) : null
+  const endDate = end ? dayjs(end) : null
+  if (startDate && !startDate.isValid()) return null
+  if (endDate && !endDate.isValid()) return null
   return [startDate, endDate]
+}
+
+function overlapsFilterRange(
+  itemStart: Dayjs,
+  itemEnd: Dayjs,
+  rangeStart: Dayjs | null,
+  rangeEnd: Dayjs | null
+): boolean {
+  if (rangeStart && itemEnd.isBefore(rangeStart, 'day')) return false
+  if (rangeEnd && itemStart.isAfter(rangeEnd, 'day')) return false
+  return true
 }
 
 function filterByOperationAndApplicationPeriods(
@@ -83,9 +95,9 @@ function filterByOperationAndApplicationPeriods(
 ): Program[] {
   let filtered = data
 
-  if (operationPeriodRange?.[0] && operationPeriodRange?.[1]) {
-    const rangeStart = operationPeriodRange[0].startOf('day')
-    const rangeEnd = operationPeriodRange[1].endOf('day')
+  if (operationPeriodRange?.[0] || operationPeriodRange?.[1]) {
+    const rangeStart = operationPeriodRange[0]?.startOf('day') ?? null
+    const rangeEnd = operationPeriodRange[1]?.endOf('day') ?? null
     filtered = filtered.filter(program => {
       if (!program.startDate || !program.endDate) {
         return false
@@ -95,13 +107,13 @@ function filterByOperationAndApplicationPeriods(
       if (!startDate.isValid() || !endDate.isValid()) {
         return false
       }
-      return startDate.isSameOrBefore(rangeEnd) && endDate.isSameOrAfter(rangeStart)
+      return overlapsFilterRange(startDate, endDate, rangeStart, rangeEnd)
     })
   }
 
-  if (applicationPeriodRange?.[0] && applicationPeriodRange?.[1]) {
-    const rangeStart = applicationPeriodRange[0].startOf('day')
-    const rangeEnd = applicationPeriodRange[1].endOf('day')
+  if (applicationPeriodRange?.[0] || applicationPeriodRange?.[1]) {
+    const rangeStart = applicationPeriodRange[0]?.startOf('day') ?? null
+    const rangeEnd = applicationPeriodRange[1]?.endOf('day') ?? null
     filtered = filtered.filter(program => {
       if (program.applicationStartDate && program.applicationEndDate) {
         const appStart = dayjs(program.applicationStartDate)
@@ -109,7 +121,7 @@ function filterByOperationAndApplicationPeriods(
         if (!appStart.isValid() || !appEnd.isValid()) {
           return false
         }
-        return appStart.isSameOrBefore(rangeEnd) && appEnd.isSameOrAfter(rangeStart)
+        return overlapsFilterRange(appStart, appEnd, rangeStart, rangeEnd)
       }
       return false
     })
@@ -276,7 +288,7 @@ export function getProgramTablePageConfig(
             ctx.view === 'ALL' && lifecycleRaw !== '' && isProgramProgressPhaseFilter(lifecycleRaw)
           const hasOperationPeriod =
             isScheduled &&
-            Boolean(searchParams.get('operationStartDate') && searchParams.get('operationEndDate'))
+            Boolean(searchParams.get('operationStartDate') || searchParams.get('operationEndDate'))
           const hasColumnFilter = columnFilters.some(
             f => f.value != null && String(f.value).trim() !== ''
           )
@@ -305,8 +317,10 @@ export function getProgramTablePageConfig(
         )
         return Boolean(
           hasColumnFilter ||
-            (operationPeriodRange?.[0] && operationPeriodRange?.[1]) ||
-            (applicationPeriodRange?.[0] && applicationPeriodRange?.[1])
+            operationPeriodRange?.[0] ||
+            operationPeriodRange?.[1] ||
+            applicationPeriodRange?.[0] ||
+            applicationPeriodRange?.[1]
         )
       },
 

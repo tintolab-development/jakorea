@@ -97,16 +97,13 @@
   min-width: 0;
 }
 
-.payment-statement-basic-info-detail-form__account > .cms-select {
+.payment-statement-basic-info-detail-form__account > .cms-select,
+.payment-statement-basic-info-detail-form__account > .cms-input,
+.payment-statement-basic-info-detail-form__account > .cms-numeric-input {
   flex: 0 0 200px;
   width: 200px;
   min-width: 200px;
-}
-
-.payment-statement-basic-info-detail-form__account > .cms-input,
-.payment-statement-basic-info-detail-form__account > .cms-numeric-input {
-  flex: 1 1 0;
-  min-width: 0;
+  max-width: 200px;
 }
 
 .payment-statement-basic-info-detail-form__address > .address-search__trigger-wrap,

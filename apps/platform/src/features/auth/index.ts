@@ -54,6 +54,7 @@ export {
   useSignupIdentityVerification,
   useGuardianIdentityVerification,
   useFindPasswordIdentityVerification,
+  useFindEmailIdentityVerification,
   processIdentityCallback,
   buildIdentityCallbackKey,
   isIdentityCallbackHandled,

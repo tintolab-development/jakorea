@@ -1,17 +1,37 @@
 /**
- * 일반 프로그램 상세 — 봉사자 모집 정보 표시값 (등록 양식·스크린샷 mock)
+ * 일반 프로그램 상세 — 봉사자 모집 정보 표시값
+ * SSOT: generalCommonInfo.volunteerRecruitmentInfo (모집 양식)
+ * 모집 대상 / 모집 기간 / 문의처 — 공통정보 Program 폴백 없음. 빈값 '-'
  */
 
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import {
-  formatDateRange,
-  formatVolunteerTargetsLabel,
-  getVolunteerRecruitmentStatus,
-  resolveProgramVolunteerTargets,
-} from '@/features/program/shared/lib/program-detail-info-constants'
+import { getVolunteerRecruitmentStatus } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
-import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
 import { getGeneralVolunteerInterviewEnabled } from '@/features/program/general/lib/detail-meta'
+import {
+  labelBool,
+  pickDisplayString,
+} from '@/features/program/general/lib/detail-value-helpers'
+
+type VolunteerRecruitmentInfoLoose = NonNullable<
+  NonNullable<Program['generalCommonInfo']>['volunteerRecruitmentInfo']
+> & {
+  announcementPublishedLabel?: string
+  volunteerInterviewEnabled?: boolean
+  generalVolunteerInterviewEnabled?: boolean
+  volunteerInterviewEnabledLabel?: string
+  finalAnnouncementLabel?: string
+  resultAnnouncementLabel?: string
+  inquiryTel?: string
+  inquiryEmail?: string
+  tel?: string
+  email?: string
+  remarks?: string
+  recruitmentTarget?: string
+  recruitmentTargetDetail?: string
+  contactPhone?: string
+  contactEmail?: string
+}
 
 export function resolveVolunteerRecruitmentInterviewEnabled(
   program: Program,
@@ -53,98 +73,56 @@ export type GeneralProgramVolunteerRecruitmentDisplay = {
   notes: string
 }
 
-const JOB담_VOLUNTEER_RECRUITMENT_MOCK = {
-  announcementPublishedLabel: '게시',
-  interviewEnabledLabel: '면접 있음',
-  operationPeriodLabel: '2026. 03. 04(수) ~ 2026. 12. 30(수)',
-  recruitmentPeriodLabel: '2026. 01. 05(월) ~ 2026. 01. 28(수)',
-  documentPassAnnouncementDate: '2026-02-03T00:00:00+09:00',
-  documentPassAnnouncementMethod: '홈페이지 공지 및 합격자 개별 안내',
-  interviewStartDate: '2026-02-09T00:00:00+09:00',
-  interviewEndDate: '2026-02-13T00:00:00+09:00',
-  interviewMethod: '온라인',
-  finalPassAnnouncementDate: '2026-02-20T00:00:00+09:00',
-  finalPassAnnouncementMethod: '홈페이지 공지 및 합격자 개별 안내',
-  contactOrganizationName: 'JA Korea',
-  contactPhone: '02-6085-6028',
-  contactEmail: 'cc@jakorea.org',
-  volunteerTargetLabel: '대학(원)생',
-  volunteerTargetDetailLabel: '-',
-  notes: '-',
-} as const
-
-function needOrNotLabel(value: boolean | undefined, yes = '게시', no = '미게시'): string {
-  if (value == null) return '-'
-  return value ? yes : no
-}
-
-function interviewEnabledLabel(value: boolean | undefined): string {
-  if (value == null) return '-'
-  return value ? '면접 있음' : '면접 없음'
-}
-
 function resolveVolunteerRecruitmentLifecycle(program: Program): ProgramLifecycleStatus | null {
   const status = getVolunteerRecruitmentStatus(program)
   if (status == null) return null
   return VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE[status]
 }
 
-function resolveVolunteerPeriod(program: Program, info?: Program['generalCommonInfo']) {
-  const volunteerRecruitmentInfo = info?.volunteerRecruitmentInfo
-  if (volunteerRecruitmentInfo?.recruitmentPeriodLabel) {
-    return volunteerRecruitmentInfo.recruitmentPeriodLabel
-  }
-  const start =
-    program.volunteerApplicationStartDate ??
-    program.instructorApplicationStartDate ??
-    program.applicationStartDate
-  const end =
-    program.volunteerApplicationEndDate ??
-    program.instructorApplicationEndDate ??
-    program.applicationEndDate
-  return formatDateRange(start, end)
-}
-
 export function resolveGeneralProgramVolunteerRecruitmentDisplay(
   program: Program
 ): GeneralProgramVolunteerRecruitmentDisplay {
   const common = program.generalCommonInfo
-  const info = common?.volunteerRecruitmentInfo
+  const info = common?.volunteerRecruitmentInfo as VolunteerRecruitmentInfoLoose | undefined
   const lifecycle = resolveVolunteerRecruitmentLifecycle(program)
 
-  if (program.id === GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID) {
-    return {
-      ...JOB담_VOLUNTEER_RECRUITMENT_MOCK,
-      recruitmentStatusLabel: getProgramLifecycleLabel('recruiting_volunteers'),
-      recruitmentStatusLifecycle: 'recruiting_volunteers',
-    }
-  }
+  const interviewEnabled =
+    info?.volunteerInterviewEnabled ??
+    info?.generalVolunteerInterviewEnabled ??
+    program.generalVolunteerInterviewEnabled
 
-  const notes = (program.oneLineIntroduction ?? program.otherNotes ?? '').trim() || '-'
+  const finalPassAnnouncementMethod = pickDisplayString(
+    info?.finalAnnouncementLabel,
+    info?.resultAnnouncementLabel,
+    program.finalPassAnnouncementMethod
+  )
 
   return {
-    announcementPublishedLabel: needOrNotLabel(info?.announcementPublished),
-    interviewEnabledLabel: interviewEnabledLabel(program.generalVolunteerInterviewEnabled),
-    operationPeriodLabel:
-      info?.operationPeriodLabel ?? formatDateRange(program.startDate, program.endDate),
+    announcementPublishedLabel: pickDisplayString(
+      info?.announcementPublishedLabel,
+      labelBool(info?.announcementPublished, '게시', '미게시')
+    ),
+    interviewEnabledLabel: pickDisplayString(
+      info?.volunteerInterviewEnabledLabel,
+      labelBool(interviewEnabled, '면접 있음', '면접 없음')
+    ),
+    operationPeriodLabel: pickDisplayString(info?.operationPeriodLabel),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
-    volunteerTargetLabel: formatVolunteerTargetsLabel(resolveProgramVolunteerTargets(program)),
-    volunteerTargetDetailLabel: program.volunteerTargetDetail ?? '-',
-    recruitmentPeriodLabel: resolveVolunteerPeriod(program, common),
+    volunteerTargetLabel: pickDisplayString(info?.recruitmentTarget),
+    volunteerTargetDetailLabel: pickDisplayString(info?.recruitmentTargetDetail),
+    recruitmentPeriodLabel: pickDisplayString(info?.recruitmentPeriodLabel),
     documentPassAnnouncementDate: program.documentPassAnnouncementDate,
-    documentPassAnnouncementMethod:
-      program.documentPassAnnouncementMethod ?? '홈페이지 공지 및 합격자 개별 안내',
+    documentPassAnnouncementMethod: program.documentPassAnnouncementMethod,
     interviewStartDate: program.interviewStartDate,
     interviewEndDate: program.interviewEndDate,
     interviewMethod: program.interviewMethod,
     finalPassAnnouncementDate: program.finalPassAnnouncementDate,
     finalPassAnnouncementMethod:
-      program.finalPassAnnouncementMethod ?? '홈페이지 공지 및 합격자 개별 안내',
-    contactOrganizationName:
-      info?.contactOrganizationName ?? common?.sponsorDisplayName ?? 'JA Korea',
-    contactPhone: program.contactPhone ?? '-',
-    contactEmail: program.contactEmail ?? '-',
-    notes,
+      finalPassAnnouncementMethod === '-' ? undefined : finalPassAnnouncementMethod,
+    contactOrganizationName: pickDisplayString(info?.contactOrganizationName),
+    contactPhone: pickDisplayString(info?.inquiryTel, info?.tel, info?.contactPhone),
+    contactEmail: pickDisplayString(info?.inquiryEmail, info?.email, info?.contactEmail),
+    notes: info?.notesNotApplicable ? '-' : pickDisplayString(info?.remarks),
   }
 }

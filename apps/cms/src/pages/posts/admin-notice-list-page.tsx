@@ -31,6 +31,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   ActionResultModal,
   CmsButton,
+  useCmsAlert,
 } from '@/shared/ui'
 import { NoticePinnedIcon } from '@/features/posts/ui/notice-pinned-icon'
 import { NoticeCategoryManagementModal } from '@/features/posts/ui/notice-category-management-modal'
@@ -58,6 +59,7 @@ const NOTICE_LIST_COL_WIDTH = {
 export function AdminNoticeListPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
+  const { showAlert } = useCmsAlert()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -120,9 +122,16 @@ export function AdminNoticeListPage() {
   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false)
 
   const handleBulkDelete = useCallback(() => {
-    if (!canWrite || selectedRowKeys.length === 0) return
+    if (!canWrite) return
+    if (selectedRowKeys.length === 0) {
+      showAlert({
+        title: '항목 선택 안내',
+        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+      })
+      return
+    }
     setBulkDeleteConfirmOpen(true)
-  }, [canWrite, selectedRowKeys.length])
+  }, [canWrite, selectedRowKeys.length, showAlert])
 
   const handleConfirmBulkDelete = useCallback(async () => {
     const ids = selectedRowKeys.map(k => String(k))
@@ -298,7 +307,6 @@ export function AdminNoticeListPage() {
             <CmsButton
               variant="delete"
               onClick={handleBulkDelete}
-              disabled={selectedRowKeys.length === 0}
             >
               공지사항 삭제
             </CmsButton>

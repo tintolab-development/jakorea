@@ -2,8 +2,8 @@ import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
 /**
- * UJAT는 공용 programs API가 켜져 있어도 별도 opt-in 없이는 원격 요청하지 않는다.
- * VITE_REAL_API_MODULES에 `programs,ujatPrograms`가 모두 있어야 한다.
+ * UJAT는 공용 programs API와 ujatPrograms 도메인 키가 모두 켜져 있어야 원격 요청한다.
+ * (remote URL 구성 시 전 모듈 동일 — `isRealApiModuleEnabled`)
  */
 export function shouldUseRemoteApi(): boolean {
   return (

@@ -5,10 +5,11 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SyncTemplatesChannelType } from './syncTemplatesChannelType';
 
 export type SyncTemplatesParams = {
 /**
- * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ * 동기화할 알림 채널
  */
-channelType?: string;
+channelType?: SyncTemplatesChannelType;
 };

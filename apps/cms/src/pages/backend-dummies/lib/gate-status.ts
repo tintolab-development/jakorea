@@ -1,5 +1,9 @@
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
-import { isRealApiModuleEnabled, type RealApiModule } from '@/shared/config/real-api-modules'
+import {
+  isRealApiModuleEnabled,
+  REAL_API_MODULE_KEYS,
+  type RealApiModule,
+} from '@/shared/config/real-api-modules'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { isCompanySchoolRemoteOptedIn } from '@/features/program/1c-1s/api/capabilities'
 import { isTrainedTeacherRemoteOptedIn } from '@/features/program/trained-teachers/api/capabilities'
@@ -83,11 +87,8 @@ export function getLiveGateSnapshot(gateKeys: readonly GateKey[]): {
   }
 }
 
+/** remote 구성 시 활성으로 간주되는 도메인 키 목록 (allowlist env 없음). */
 export function getActiveRealApiModuleList(): string[] {
-  const raw = import.meta.env.VITE_REAL_API_MODULES
-  if (raw === undefined || String(raw).trim() === '') return []
-  return String(raw)
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean)
+  if (!isRemoteApiConfigured()) return []
+  return [...REAL_API_MODULE_KEYS]
 }

@@ -59,6 +59,29 @@ describe('mapUserToInstructorProfileFormValues', () => {
     expect(values.employmentStatus).toBe('ACTIVE')
   })
 
+  it('교사 겸 강사는 강사(general) 폼 행을 쓰고 school_teacher로 떨어지지 않는다', () => {
+    const user: Omit<User, 'password'> = {
+      id: 'u-dual',
+      memberId: 2,
+      email: 'dual@b.com',
+      name: '김겸직',
+      role: 'INSTRUCTOR',
+      instructorMemberProfile: 'instructor_dual',
+      isActive: true,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      affiliation: '진월초등학교 | JA 강사단',
+      detailAddress: '서울시 강남구',
+      detailAddressDetail: '1층',
+    }
+
+    const values = mapUserToInstructorProfileFormValues(user, null)
+
+    expect(values.memberType).toBe('general')
+    expect(values.affiliationName).toBe('진월초등학교 | JA 강사단')
+    expect(values.homeAddress).toBe('서울시 강남구')
+  })
+
   it('JA 평가 등급은 listMetrics를 오래된 profile.defaultJaGrade보다 우선한다', () => {
     const user: Omit<User, 'password'> = {
       id: 'u-1',

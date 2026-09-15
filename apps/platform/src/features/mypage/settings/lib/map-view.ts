@@ -1,5 +1,5 @@
-import { EMPTY_SETTINGS_VALUE } from './constants.ts'
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
+import { EMPTY_SETTINGS_VALUE } from './constants.ts'
 
 export type SettingsProfileInput = {
   joinedAt?: string
@@ -38,6 +38,12 @@ export type SettingsGuardianView = {
 export type SettingsViewModel = {
   basicRows: SettingsInfoRow[]
   guardian: SettingsGuardianView | null
+}
+
+export type SettingsViewVariant = 'individual' | 'teacher'
+
+export type MapSettingsViewOptions = {
+  variant?: SettingsViewVariant
 }
 
 export function formatSettingsDateDot(value: string | undefined): string {
@@ -90,6 +96,14 @@ export function formatSettingsText(value: string | undefined): string {
   return value?.trim() || EMPTY_SETTINGS_VALUE
 }
 
+/** 교사회원 설정 — 재직 중 / 휴직 중만 표시 (가입 카피와 동일) */
+export function formatSettingsEmployment(value: string | undefined): string {
+  const normalized = value?.trim().toUpperCase()
+  if (normalized === 'ACTIVE' || normalized === 'EMPLOYED') return '재직 중'
+  if (normalized === 'ON_LEAVE' || normalized === 'LEAVE') return '휴직 중'
+  return EMPTY_SETTINGS_VALUE
+}
+
 function formatSettingsAddress(address: string | undefined, addressDetail: string | undefined) {
   return [address?.trim(), addressDetail?.trim()].filter(Boolean).join(' ')
 }
@@ -97,10 +111,28 @@ function formatSettingsAddress(address: string | undefined, addressDetail: strin
 export function mapPortalProfileToSettingsView(
   profile: SettingsProfileInput,
   guardian?: SettingsGuardianView | null,
+  options?: MapSettingsViewOptions,
 ): SettingsViewModel {
   const affiliation = profile.schoolName?.trim() || profile.affiliationName?.trim()
   const address = formatSettingsAddress(profile.address, profile.addressDetail)
   const volunteerId = profile.external1365Id?.trim() || EMPTY_SETTINGS_VALUE
+  const variant = options?.variant ?? 'individual'
+
+  if (variant === 'teacher') {
+    return {
+      basicRows: [
+        { label: '가입일', value: formatSettingsJoinedAt(profile.joinedAt) },
+        { label: '이름', value: formatSettingsText(profile.name) },
+        { label: '휴대폰 번호', value: formatSettingsPhone(profile.phone) },
+        { label: '생년월일', value: formatSettingsDateDot(profile.birthDate) },
+        { label: '성별', value: formatSettingsGender(profile.gender) },
+        { label: '소속/학교', value: formatSettingsText(affiliation) },
+        { label: '재직 현황', value: formatSettingsEmployment(profile.teacherEmploymentStatus) },
+        { label: 'Email', value: formatSettingsText(profile.email) },
+      ],
+      guardian: null,
+    }
+  }
 
   return {
     basicRows: [

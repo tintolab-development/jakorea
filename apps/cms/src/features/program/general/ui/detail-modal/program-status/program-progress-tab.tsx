@@ -52,6 +52,8 @@ import {
 import { Divider } from '@/shared/components/divider'
 import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherPerformanceSummary } from '@/features/program/trained-teachers/api/performance-summary-hooks'
+import { useTrainedTeacherEducationCompletions } from '@/features/program/trained-teachers/api/education-completions-hooks'
+import { countActiveEducationCompletions } from '@/features/program/trained-teachers/api/education-completions-adapters'
 import { TrainedTeachersPerformanceSummaryStrip } from '@/features/program/trained-teachers/ui/progress/performance-summary-strip'
 import './program-progress-tab.css'
 
@@ -121,6 +123,14 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
     programId,
     isTrainedTeachersSurface
   )
+  const educationCompletionsQuery = useTrainedTeacherEducationCompletions(
+    programId,
+    undefined,
+    isTrainedTeachersSurface
+  )
+  const educationCompletionCount = educationCompletionsQuery.data
+    ? countActiveEducationCompletions(educationCompletionsQuery.data)
+    : undefined
   const [openTextbookDropdownSchoolId, setOpenTextbookDropdownSchoolId] = useState<string | null>(
     null
   )
@@ -541,7 +551,10 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
               {isTrainedTeachersSurface ? (
                 <TrainedTeachersPerformanceSummaryStrip
                   summary={performanceSummaryQuery.data}
-                  loading={performanceSummaryQuery.isFetching}
+                  loading={
+                    performanceSummaryQuery.isFetching || educationCompletionsQuery.isFetching
+                  }
+                  educationCompletionCount={educationCompletionCount}
                 />
               ) : null}
               <div className="program-progress-tab__table-header">

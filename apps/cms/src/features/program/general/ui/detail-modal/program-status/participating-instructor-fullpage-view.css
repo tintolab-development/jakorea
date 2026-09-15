@@ -43,8 +43,9 @@
   min-height: 100%;
 }
 
+/* 섹션 간격은 `.program-detail-fullpage-modal__info-tab-block` margin-top 32px */
 .participating-instructor-fullpage-view__section-block {
-  margin-bottom: var(--spacing-24);
+  margin-bottom: 0;
 }
 
 .participating-instructor-fullpage-view__basic-info-form .detail-info-form__title {

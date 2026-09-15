@@ -40,6 +40,17 @@ describe('buildAccountPaymentsListParams', () => {
       year: 2026,
     })
   })
+
+  it('시작일만 있어도 fromDate만 보내고 year는 생략', () => {
+    expect(
+      buildAccountPaymentsListParams({
+        year: 2026,
+        fromDate: '2026-02-01',
+      })
+    ).toEqual({
+      fromDate: '2026-02-01',
+    })
+  })
 })
 
 describe('serializeAccountPaymentsListParamsKey', () => {

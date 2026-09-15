@@ -1,13 +1,16 @@
-import { useMemo } from 'react'
 import {
-  getProgramWagePaymentItemOptions,
   normalizeProgramPaymentItemSelection,
+  PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
   resolveProgramWageDeductionLabel,
+  useProgramWagePaymentItemOptions,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
-import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  patchProgramRegistrationOverlay,
+  useProgramRegistrationOverlayKv,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import './program-registration-paragraph.css'
 
 const WAGE_GRADE_ROWS = [
@@ -34,7 +37,7 @@ export function ProgramRegistrationWageInfoParagraph() {
     null
   )
 
-  const paymentItemOptions = useMemo(() => getProgramWagePaymentItemOptions(), [])
+  const paymentItemOptions = useProgramWagePaymentItemOptions()
   const deductionLabel = resolveProgramWageDeductionLabel(paymentItemValues)
   const gradeFees = [
     { row: WAGE_GRADE_ROWS[0], value: grade1Fee, setValue: setGrade1Fee },
@@ -87,11 +90,20 @@ export function ProgramRegistrationWageInfoParagraph() {
                 mode="multiple"
                 withAllOption={false}
                 value={paymentItemValues}
-                onChange={next =>
-                  setPaymentItemValues(
-                    normalizeProgramPaymentItemSelection(next as string[], paymentItemValues)
+                onChange={next => {
+                  const ids = normalizeProgramPaymentItemSelection(
+                    next as string[],
+                    paymentItemValues
                   )
-                }
+                  setPaymentItemValues(ids)
+                  const labels = ids
+                    .map(id => paymentItemOptions.find(o => o.value === id)?.label?.trim())
+                    .filter((label): label is string => Boolean(label))
+                  patchProgramRegistrationOverlay({
+                    'generalRegistration.wageInfo.paymentItemLabels':
+                      labels.length > 0 ? labels.join(', ') : PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
+                  })
+                }}
                 options={paymentItemOptions}
                 placeholder="지급 항목을 선택하세요"
                 style={{ width: '100%', minWidth: 0 }}

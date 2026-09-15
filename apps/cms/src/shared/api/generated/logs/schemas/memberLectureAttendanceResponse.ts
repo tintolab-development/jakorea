@@ -15,4 +15,5 @@ export interface MemberLectureAttendanceResponse {
   attendedCount?: number;
   heldCount?: number;
   sessions?: Session[];
+  scopeStatus?: string;
 }

@@ -62,7 +62,7 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
   () => AgreementWritingFormConfig
 > = {
   'agreement-expense': () => {
-    const title = resolveRowTitle('agreement-expense', '교육진행자 동의 서약서')
+    const title = resolveRowTitle('agreement-expense', 'JA Korea 교육진행자 서약서(안)')
     return {
       initialDraft: createEducatorFacilitatorPledgeDraft,
       defaultActiveParagraphId: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.title,

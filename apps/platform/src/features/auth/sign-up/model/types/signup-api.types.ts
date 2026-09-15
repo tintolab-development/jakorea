@@ -51,6 +51,8 @@ export type TermsAgreementRequest = {
 /** CMS 미등록 학교(NEIS 등) 선택값 — OpenAPI PortalSchoolSelectionRequest */
 export type PortalSchoolSelectionRequest = {
   provider?: string
+  /** NEIS `ATPT_OFCDC_SC_CODE` — provider=NEIS일 때 필수 */
+  educationOfficeCode?: string
   externalSchoolCode?: string
   name?: string
   schoolLevel?: string

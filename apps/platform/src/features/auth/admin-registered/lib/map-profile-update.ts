@@ -4,6 +4,7 @@ import type {
   UpdatePortalProfileRequest,
 } from '@/features/auth/sign-in'
 import type { EmploymentStatus, SchoolStatus } from '@/features/auth/sign-up'
+import { buildSchoolSelection } from '@/features/auth/sign-up/lib/build-school-selection'
 
 type AdminRegisteredProfileUpdateInput = {
   schoolStatus: SchoolStatus
@@ -18,6 +19,8 @@ type AdminRegisteredProfileUpdateInput = {
   schoolOrganizationId?: number | null
   schoolAddress?: string
   schoolNeisCode?: string | null
+  schoolEducationOfficeCode?: string | null
+  schoolSource?: 'neis' | 'careerNet'
   employmentStatus?: EmploymentStatus
   /** GET /api/portal/me/profile 스냅샷 — teacherEmploymentStatus 등 */
   portalProfile?: PortalProfileResponse
@@ -27,25 +30,22 @@ function text(value: string | undefined): string {
   return value?.trim() ?? ''
 }
 
-function buildSchoolSelection(input: {
+function buildSchoolSelectionForProfile(input: {
   schoolName: string
   schoolAddress?: string
   schoolNeisCode?: string | null
-  schoolOrganizationId?: number | null
+  schoolEducationOfficeCode?: string | null
+  schoolSource?: 'neis' | 'careerNet'
+  regionSido?: string
 }): PortalSchoolSelectionRequest | undefined {
-  const name = input.schoolName.trim()
-  if (!name) return undefined
-
-  return {
-    ...(input.schoolOrganizationId != null
-      ? { schoolOrganizationId: input.schoolOrganizationId }
-      : {}),
-    provider: 'NEIS',
-    externalSchoolCode: input.schoolNeisCode?.trim() || undefined,
-    name,
-    address: input.schoolAddress?.trim() || undefined,
-    organizationCategory: 'SCHOOL',
-  }
+  return buildSchoolSelection({
+    schoolName: input.schoolName,
+    schoolNeisCode: input.schoolNeisCode,
+    schoolEducationOfficeCode: input.schoolEducationOfficeCode,
+    schoolAddress: input.schoolAddress,
+    regionSido: input.regionSido,
+    source: input.schoolSource,
+  })
 }
 
 /**
@@ -75,10 +75,13 @@ export function mapAdminRegisteredEditToPortalProfileUpdate(
 
   const schoolSelection =
     enrolled && resolvedOrganizationId == null
-      ? buildSchoolSelection({
+      ? buildSchoolSelectionForProfile({
           schoolName: input.schoolName,
           schoolAddress: input.schoolAddress,
           schoolNeisCode: input.schoolNeisCode,
+          schoolEducationOfficeCode: input.schoolEducationOfficeCode,
+          schoolSource: input.schoolSource,
+          regionSido: input.regionSido,
         })
       : undefined
 

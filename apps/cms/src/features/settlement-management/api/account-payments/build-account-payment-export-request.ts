@@ -25,8 +25,12 @@ export function buildAccountPaymentExportRequest(
     status: ACCOUNT_PAYMENT_EXPORT_STATUS_PAID,
     reason: `${EXPORT_REASON} (${label})`,
     businessPurpose: EXPORT_BUSINESS_PURPOSE,
-    ...(input.fromDate && input.toDate
-      ? { fromDate: input.fromDate, toDate: input.toDate, dateRangeValid: true }
+    ...(input.fromDate || input.toDate
+      ? {
+          ...(input.fromDate ? { fromDate: input.fromDate } : {}),
+          ...(input.toDate ? { toDate: input.toDate } : {}),
+          dateRangeValid: true,
+        }
       : {}),
   }
 }

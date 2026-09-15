@@ -30,6 +30,7 @@ export function GeminiVisitingTrainingApplicationFormInstitutionEditorLeftColumn
       singleItemListActiveItemId={vm.singleItemListActiveItemId}
       onSelectSingleItemListItem={vm.onSelectSingleItemListItem}
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
+      allowAddAfterStructureLockedParagraphs={vm.allowAddAfterStructureLockedParagraphs}
       paragraphBodyOptions={vm.leftPanelParagraphBodyOptions}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
@@ -70,6 +71,7 @@ export function GeminiVisitingTrainingApplicationFormInstitutionEditorRightColum
         verticalTableBodyRowSelection={vm.verticalTableBodyRowSelection}
         onVerticalTableBodyRowDeleted={vm.focusVerticalTableBodyRow}
         structureLockedParagraphIds={vm.structureLockedParagraphIds}
+        structureLockedTypeSelectPreset="paragraph_kind_system_settings"
       />
     </FormEditorFieldNav>
   )

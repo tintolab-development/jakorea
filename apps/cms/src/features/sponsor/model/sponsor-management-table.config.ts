@@ -55,9 +55,7 @@ function resolvePendingDateRangeFromUrl(args: {
   const toKey = to?.trim() || null
   if (fromKey || toKey) {
     urlDateRangeSyncState.hadCompleteInUrl = true
-    const start = dayjs(fromKey ?? toKey!)
-    const end = dayjs(toKey ?? fromKey!)
-    return [start, end]
+    return [fromKey ? dayjs(fromKey) : null, toKey ? dayjs(toKey) : null]
   }
   if (urlDateRangeSyncState.hadCompleteInUrl) {
     urlDateRangeSyncState.hadCompleteInUrl = false

@@ -14,6 +14,7 @@ export interface OrganizationScheduleResponse {
   applicationStatus?: string;
   temporaryAssignmentStatus?: string;
   institutionConfirmationStatus?: string;
+  portalBannerState?: string;
   assignmentRevision?: number;
   institutionConfirmedAt?: string;
   assignmentLockedAt?: string;

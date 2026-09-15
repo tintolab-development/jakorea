@@ -62,5 +62,7 @@ describe('payment-orders-date-range', () => {
     expect(isPaymentOrdersListDateRangeReady(null, null)).toBe(false)
     expect(isPaymentOrdersListDateRangeReady('2025-01-01', '2025-02-01')).toBe(false)
     expect(isPaymentOrdersListDateRangeReady('2026-08-01', '2026-09-01')).toBe(true)
+    expect(isPaymentOrdersListDateRangeReady('2026-08-01', null)).toBe(true)
+    expect(isPaymentOrdersListDateRangeReady(null, '2026-09-01')).toBe(true)
   })
 })

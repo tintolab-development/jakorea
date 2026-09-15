@@ -21,7 +21,7 @@ export type PaymentOrderDetailFullPageModalProps = {
   /** 열림 + type 일치 시 해당 행. 닫힌 상태에서는 null 권장 */
   data: PaymentOrderAdminProgramRow | PaymentOrderAdminInstructorRow | null
   /** 목록 페이지에 조회 적용된 기간(URL) — 상세 기간 필터 초기값 */
-  listPageDateRange: [Dayjs, Dayjs] | null
+  listPageDateRange: [Dayjs | null, Dayjs | null] | null
 }
 
 function resolveDetailContentError(

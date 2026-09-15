@@ -42,9 +42,9 @@ function resolvePendingDateRangeFromUrl(args: {
   prev: BugIssueHistoryPendingDateRange
 }): BugIssueHistoryPendingDateRange {
   const { from, to, prev } = args
-  if (from && to) {
+  if (from || to) {
     urlDateRangeSyncState.hadCompleteInUrl = true
-    return [dayjs(from), dayjs(to)]
+    return [from ? dayjs(from) : null, to ? dayjs(to) : null]
   }
   if (urlDateRangeSyncState.hadCompleteInUrl) {
     urlDateRangeSyncState.hadCompleteInUrl = false
@@ -73,13 +73,12 @@ const searchSyncRules: readonly TableSearchParamRule<BugIssueHistoryPendingFilte
   {
     kind: 'apply',
     apply: (nextParams, filters) => {
-      if (filters.dateRange?.[0] && filters.dateRange?.[1]) {
-        nextParams.set('bil_from', filters.dateRange[0].format('YYYY-MM-DD'))
-        nextParams.set('bil_to', filters.dateRange[1].format('YYYY-MM-DD'))
-      } else {
-        nextParams.delete('bil_from')
-        nextParams.delete('bil_to')
-      }
+      const from = filters.dateRange?.[0]
+      const to = filters.dateRange?.[1]
+      if (from) nextParams.set('bil_from', from.format('YYYY-MM-DD'))
+      else nextParams.delete('bil_from')
+      if (to) nextParams.set('bil_to', to.format('YYYY-MM-DD'))
+      else nextParams.delete('bil_to')
     },
   },
 ]
@@ -122,7 +121,7 @@ export const bugIssueHistoryTablePageConfig: TablePageConfig<
     },
     hasActiveFilters: ({ searchParams }) => {
       if ((searchParams.get('bil_user') ?? '').trim()) return true
-      if (searchParams.get('bil_from') && searchParams.get('bil_to')) return true
+      if (searchParams.get('bil_from') || searchParams.get('bil_to')) return true
       return false
     },
     getBaseCount: ({ filteredData }) => filteredData.length,

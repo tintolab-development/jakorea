@@ -1,5 +1,8 @@
 import type { AdminProgramsListQuery } from '@/features/program/general/api/programs-api-client'
+import { GENERAL_PROGRAM_LIST_PAGE_SIZE } from '@/features/program/general/api/general-program-list-filter-params'
 import { COMPANY_SCHOOL_PROGRAM_API_TYPE } from './adapters'
+
+export const COMPANY_SCHOOL_PROGRAM_LIST_PAGE_SIZE = GENERAL_PROGRAM_LIST_PAGE_SIZE
 
 export type CompanySchoolOverviewStatusFilter = 'scheduled' | 'in_progress' | 'completed'
 
@@ -15,7 +18,8 @@ function mapOverviewStatusToPeriodStatus(
   if (!statusFilter) return undefined
   switch (statusFilter) {
     case 'scheduled':
-      return 'RECRUITING'
+      // Primary ONE-01 = SCHEDULED (레거시 CS는 RECRUITING일 수 있음 → overview는 합산)
+      return 'SCHEDULED'
     case 'in_progress':
       return 'IN_PROGRESS'
     case 'completed':
@@ -26,15 +30,16 @@ function mapOverviewStatusToPeriodStatus(
 }
 
 export function companySchoolListParams(
-  filters: CompanySchoolListFilters = {}
+  filters: CompanySchoolListFilters = {},
+  pageParam = 0
 ): AdminProgramsListQuery {
   return {
     programType: COMPANY_SCHOOL_PROGRAM_API_TYPE,
     keyword: filters.keyword?.trim() || undefined,
     periodStatus: filters.periodStatus,
     businessYear: filters.businessYear,
-    page: 0,
-    size: 500,
+    page: pageParam,
+    size: COMPANY_SCHOOL_PROGRAM_LIST_PAGE_SIZE,
   }
 }
 

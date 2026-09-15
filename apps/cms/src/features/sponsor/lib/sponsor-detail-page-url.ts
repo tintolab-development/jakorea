@@ -1,8 +1,10 @@
 /**
- * 후원사 관리 상세 풀페이지 URL (`/sponsor?sponsorId=…&sponsorLnb=sponsor-detail`)
+ * 후원사 관리 상세 풀페이지 URL
+ * 예: `/sponsor?sp_kind=corporate&sponsorId=1627251&sponsorLnb=sponsor-detail`
  */
 
 import type { QueryClient } from '@tanstack/react-query'
+import type { SponsorOrganizationKind } from '@/types/domain'
 import { resolveSponsorManagementIdForDetailLinkAsync } from '@/features/sponsor/lib/sponsor-resolve'
 
 export const SPONSOR_PAGE_PATH = '/sponsor' as const
@@ -23,15 +25,25 @@ export function sanitizeInternalReturnTo(value: string | null | undefined): stri
   return decoded
 }
 
+export function normalizeSponsorOrganizationKind(
+  kind: SponsorOrganizationKind | string | null | undefined
+): SponsorOrganizationKind {
+  return kind === 'foundation' ? 'foundation' : 'corporate'
+}
+
 export function buildSponsorDetailPageUrl(
   sponsorManagementId: string,
-  returnTo?: string | null
+  options?: {
+    returnTo?: string | null
+    organizationKind?: SponsorOrganizationKind | string | null
+  }
 ): string {
   const params = new URLSearchParams({
+    sp_kind: normalizeSponsorOrganizationKind(options?.organizationKind),
     sponsorId: sponsorManagementId,
     sponsorLnb: SPONSOR_DETAIL_LNB,
   })
-  const safeReturnTo = sanitizeInternalReturnTo(returnTo)
+  const safeReturnTo = sanitizeInternalReturnTo(options?.returnTo)
   if (safeReturnTo) {
     params.set(SPONSOR_DETAIL_RETURN_TO_PARAM, safeReturnTo)
   }

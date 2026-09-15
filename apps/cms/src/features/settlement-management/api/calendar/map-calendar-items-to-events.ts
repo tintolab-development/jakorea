@@ -149,7 +149,7 @@ export function mapCalendarItemsToPaymentOrderEvents(
 }
 
 export function calendarRangeFromFilter(
-  filterDateRange: [Dayjs, Dayjs] | null | undefined,
+  filterDateRange: [Dayjs | null, Dayjs | null] | null | undefined,
   fallbackMonth: Dayjs
 ): { fromDate: string; toDate: string } {
   if (filterDateRange?.[0] && filterDateRange[1]) {
@@ -158,7 +158,13 @@ export function calendarRangeFromFilter(
       toDate: filterDateRange[1].format('YYYY-MM-DD'),
     }
   }
-  const start = fallbackMonth.startOf('month')
+  const anchor =
+    filterDateRange?.[0]?.isValid()
+      ? filterDateRange[0]
+      : filterDateRange?.[1]?.isValid()
+        ? filterDateRange[1]
+        : fallbackMonth
+  const start = anchor.startOf('month')
   const end = start.add(1, 'month').subtract(1, 'day')
   return {
     fromDate: start.format('YYYY-MM-DD'),

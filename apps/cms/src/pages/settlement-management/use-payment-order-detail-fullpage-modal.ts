@@ -52,7 +52,7 @@ export type PaymentOrderDetailFullPageModalInput = {
   isOpen: boolean
   onClose: () => void
   data: PaymentOrderAdminProgramRow | PaymentOrderAdminInstructorRow | null
-  listPageDateRange: [Dayjs, Dayjs] | null
+  listPageDateRange: [Dayjs | null, Dayjs | null] | null
 }
 
 export function usePaymentOrderDetailFullPageModalState(

@@ -20,6 +20,8 @@ export interface AdminProgramListItemDto {
   deliveryType?: string
   draftStatus?: string
   periodStatus?: string
+  /** 거친 상태 — 뱃지·필터용 (pending|active|completed|cancelled) */
+  status?: string
   /** OpenAPI 예시 필드 — 일부 BE는 미설정 */
   nameKo?: string
   /** 실제 목록 응답에서 주로 사용 (ProgramResponse와 동일) */

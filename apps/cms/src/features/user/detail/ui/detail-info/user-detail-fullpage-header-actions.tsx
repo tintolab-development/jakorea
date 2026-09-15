@@ -146,7 +146,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
     <>
       <CmsButton
         key="basic-info-cancel"
-        size="medium"
+        size="large"
         variant="secondary"
         onClick={pageShell.onCancelBasicInfoEdit}
       >
@@ -154,7 +154,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
       </CmsButton>
       <CmsButton
         key="basic-info-save"
-        size="medium"
+        size="large"
         variant="primary"
         loading={pageShell.basicInfoSaveLoading}
         onClick={() => {
@@ -169,7 +169,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
   const profileEditButton = showProfileEditStart ? (
     <CmsButton
       key="basic-info-edit"
-      size="medium"
+      size="large"
       variant="secondary"
       onClick={pageShell.onStartBasicInfoEdit}
     >
@@ -180,7 +180,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
   const commentEditButton = showCommentEditStart ? (
     <CmsButton
       key="admin-comment-edit"
-      size="medium"
+      size="large"
       variant="primary"
       onClick={pageShell.onStartAdminCommentEdit}
     >
@@ -196,7 +196,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
         labelMode="stickyReveal"
         revealed={personalInfoRevealed}
         cmsVariant={personalInfoButton.variant}
-        cmsSize="medium"
+        cmsSize="large"
         width={160}
         onClick={personalInfoButton.onClick}
       />
@@ -208,7 +208,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
 
   const actionButtons = headerActionsForLayout.map(action => (
     <CmsButton
-      size="medium"
+      size="large"
       key={action.key}
       variant={actionConfigToCmsVariant(action.variant)}
       onClick={action.onClick}

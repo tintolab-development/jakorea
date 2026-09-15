@@ -47,7 +47,24 @@ const enrolledNeisOnly = mapAdminRegisteredEditToPortalProfileUpdate({
 assert.equal(enrolledNeisOnly.schoolOrganizationId, undefined)
 assert.equal(enrolledNeisOnly.schoolSelection?.provider, 'NEIS')
 assert.equal(enrolledNeisOnly.schoolSelection?.externalSchoolCode, 'B100000658')
+assert.equal(enrolledNeisOnly.schoolSelection?.educationOfficeCode, 'B10')
 assert.equal(enrolledNeisOnly.schoolSelection?.name, '서울중학교')
+
+const teacherNeisNumericCode = mapAdminRegisteredEditToPortalProfileUpdate({
+  schoolStatus: 'enrolled',
+  schoolName: '심원초등학교',
+  grade: '',
+  address: '경기',
+  addressDetail: '1',
+  volunteerId: '',
+  schoolOrganizationId: null,
+  schoolAddress: '경기도 부천시 옥산로 66',
+  schoolNeisCode: '7581089',
+  schoolEducationOfficeCode: 'B10',
+})
+
+assert.equal(teacherNeisNumericCode.schoolSelection?.educationOfficeCode, 'B10')
+assert.equal(teacherNeisNumericCode.schoolSelection?.externalSchoolCode, '7581089')
 
 const with1365 = mapAdminRegisteredEditToPortalProfileUpdate({
   schoolStatus: 'none',

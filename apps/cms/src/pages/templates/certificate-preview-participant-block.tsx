@@ -16,6 +16,11 @@ export interface CertificatePreviewParticipantBlockProps {
   participantTextColor?: string
   onRegionClick?: (fieldName: string) => void
   showEditChrome?: boolean
+  /**
+   * false면 라벨 열 숨김(기본 `certificate-background.png`에 라벨이 포함될 때).
+   * 값 열만 남기고 좌측 오프셋으로 배경 라벨과 정렬.
+   */
+  showLabels?: boolean
 }
 
 export function CertificatePreviewParticipantBlock({
@@ -25,6 +30,7 @@ export function CertificatePreviewParticipantBlock({
   participantTextColor,
   onRegionClick,
   showEditChrome = true,
+  showLabels = true,
 }: CertificatePreviewParticipantBlockProps) {
   return (
     <div
@@ -32,6 +38,7 @@ export function CertificatePreviewParticipantBlock({
       tabIndex={showEditChrome ? 0 : undefined}
       className={cn(
         `${P}__content-frame`,
+        !showLabels ? `${P}__content-frame--values-only` : '',
         participantTextColor ? `${P}__content-frame--custom-text` : '',
         showEditChrome && HANDLE_DOT,
         showEditChrome && region === 'contentFrame' && FRAME_ACTIVE,
@@ -41,22 +48,24 @@ export function CertificatePreviewParticipantBlock({
       style={participantTextColor ? { color: participantTextColor } : undefined}
       {...(showEditChrome ? getRegionActivationHandlers('participantInfo', onRegionClick) : {})}
     >
-      <div className={`${P}__content-frame-labels`}>
-        {PARTICIPANT_INFO_ROW_LABELS.map((label, index) => {
-          if (rowVisibility[index] === false) return null
-          return (
-            <div key={label} className={`${P}__label-row`}>
-              <span className={`${P}__label-text`} aria-label={label}>
-                {labelToGraphemes(label).map((ch, i) => (
-                  <span key={`${label}-${i}`} className={`${P}__label-char`}>
-                    {ch}
-                  </span>
-                ))}
-              </span>
-            </div>
-          )
-        })}
-      </div>
+      {showLabels ? (
+        <div className={`${P}__content-frame-labels`}>
+          {PARTICIPANT_INFO_ROW_LABELS.map((label, index) => {
+            if (rowVisibility[index] === false) return null
+            return (
+              <div key={label} className={`${P}__label-row`}>
+                <span className={`${P}__label-text`} aria-label={label}>
+                  {labelToGraphemes(label).map((ch, i) => (
+                    <span key={`${label}-${i}`} className={`${P}__label-char`}>
+                      {ch}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      ) : null}
       <div className={`${P}__content-frame-values`}>
         {PARTICIPANT_INFO_ROW_LABELS.map((label, index) => {
           if (rowVisibility[index] === false) return null

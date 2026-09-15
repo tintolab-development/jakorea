@@ -148,9 +148,16 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
   ) => {
     const hasExplicitWidth = width != null
     const widthStyle: CSSProperties | undefined =
-      width != null
-        ? { width: typeof width === 'number' ? `${width}px` : width }
-        : undefined
+      width == null
+        ? undefined
+        : typeof width === 'number'
+          ? {
+              width: `${width}px`,
+              minWidth: `${width}px`,
+              maxWidth: `${width}px`,
+              flex: `0 0 ${width}px`,
+            }
+          : { width }
 
     const mergedOptions = useMemo(
       () => mergeOptionsForCmsSelect(options, mode, withAllOption),

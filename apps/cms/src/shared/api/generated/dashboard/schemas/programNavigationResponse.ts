@@ -11,7 +11,9 @@ export interface ProgramNavigationResponse {
   programId?: number;
   rawProgramType?: string;
   canonicalProgramType?: string;
+  /** 허용 신청 대상. 일반 프로그램은 serviceDetailJson.generalParticipantTypes를 반영하며 volunteer가 있으면 VOLUNTEER을 포함합니다. */
   allowedApplicationTargets?: string[];
+  /** 정책상 비활성 신청 대상. 일반 프로그램에서 volunteer/teacher_instructor가 참여자 유형에 없으면 VOLUNTEER/INSTRUCTOR가 포함됩니다. */
   disabledApplicationTargets?: string[];
   lnb?: MenuItem[];
   availableActions?: string[];

@@ -69,13 +69,12 @@ const searchSyncRules: readonly TableSearchParamRule<AdminFaqPendingFilters>[] =
   {
     kind: 'apply',
     apply: (nextParams, f) => {
-      if (f.dateRange?.[0] && f.dateRange?.[1]) {
-        nextParams.set('af_from', f.dateRange[0].format('YYYY-MM-DD'))
-        nextParams.set('af_to', f.dateRange[1].format('YYYY-MM-DD'))
-      } else {
-        nextParams.delete('af_from')
-        nextParams.delete('af_to')
-      }
+      const from = f.dateRange?.[0]
+      const to = f.dateRange?.[1]
+      if (from) nextParams.set('af_from', from.format('YYYY-MM-DD'))
+      else nextParams.delete('af_from')
+      if (to) nextParams.set('af_to', to.format('YYYY-MM-DD'))
+      else nextParams.delete('af_to')
     },
   },
 ]
@@ -142,7 +141,7 @@ export const adminFaqManagementTablePageConfig: TablePageConfig<
       if (parseVisibility(searchParams.get('af_vis')) !== 'public') return true
       if (parseCategory(searchParams.get('af_cat'), context.allowedCategoryLabels) !== 'ALL')
         return true
-      if (searchParams.get('af_from') && searchParams.get('af_to')) return true
+      if (searchParams.get('af_from') || searchParams.get('af_to')) return true
       return false
     },
 

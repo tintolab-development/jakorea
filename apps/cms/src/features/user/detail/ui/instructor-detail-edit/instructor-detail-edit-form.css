@@ -2,17 +2,18 @@
   width: 100%;
 }
 
-/* 상세 수정: 등록 모달과 공유하는 섹션 제목 필수 `*` 숨김 */
-.instructor-detail-edit-form .instructor-register-modal__basic-info .detail-info-form__title::after,
-.instructor-detail-edit-form
-  .instructor-register-modal__consent-heading
-  > .detail-info-form__header
-  .detail-info-form__title::after,
-.instructor-detail-edit-form
-  .instructor-register-career
-  > .detail-info-form__header
-  .detail-info-form__title::after {
+/*
+ * 상세 수정: 필수 표시(*) 전부 숨김
+ * - 섹션 제목 ::after (기본정보·학력·경력 등 등록용 CSS)
+ * - DetailInfoForm.Field required 마크
+ */
+.instructor-detail-edit-form .detail-info-form__header .detail-info-form__title::after,
+.instructor-detail-edit-form .instructor-register-modal__basic-info .detail-info-form__title::after {
   content: none;
+}
+
+.instructor-detail-edit-form .detail-info-form__field-required {
+  display: none;
 }
 
 .instructor-detail-edit-form__ja-grade {
@@ -21,4 +22,10 @@
   gap: 0;
   min-width: 0;
   width: 100%;
+}
+
+/* 조회와 동일하게 반칸일 때 정산 계좌 입력 줄바꿈 */
+.instructor-detail-edit-form .instructor-register-modal__settlement-account {
+  flex-wrap: wrap;
+  gap: 8px;
 }

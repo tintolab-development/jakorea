@@ -4,13 +4,14 @@ import { PlatformPreviewFooter } from './platform-shell/footer'
 import { PlatformPreviewHeader } from './platform-shell/header'
 import './platform-shell/platform-preview-tokens.css'
 import {
-  mapProgramToParticipantRecruitmentUserView,
+  mapProgramToRecruitmentUserView,
   RECRUITMENT_USER_PREVIEW_PAGE_HEIGHT,
   RECRUITMENT_USER_PREVIEW_MAIN_PADDING_TOP,
   RECRUITMENT_USER_PREVIEW_PLATFORM_HEADER_HEIGHT,
   RECRUITMENT_USER_PREVIEW_TOP_FAB_OFFSET_FROM_PAGE_TOP,
   RECRUITMENT_USER_PREVIEW_SIDEBAR_OFFSET_FROM_HEADER_BOTTOM,
   RECRUITMENT_USER_PREVIEW_BODY_FOOTER_GAP,
+  type RecruitmentUserPreviewAudience,
 } from './lib/map-program-to-user-view'
 import { ParticipantRecruitmentUserPageContent } from './user-page-content'
 import './user-page.css'
@@ -18,6 +19,8 @@ import './user-page.css'
 export type ParticipantRecruitmentUserPageProps = {
   program: Program
   sponsorName?: string
+  /** 모집 탭 — 참여자 / 강사 / 봉사자 */
+  audience?: RecruitmentUserPreviewAudience
   /** A4 페이지 min-height 패딩(모달 미리보기). fullscreen은 자연 높이 + 뷰포트 스케일 */
   layoutMode?: 'a4' | 'fullscreen'
 }
@@ -53,13 +56,16 @@ function mergeRefs<T>(...refs: Array<Ref<T> | undefined>) {
   }
 }
 
-/** Platform DS 기반 참여자 모집 사용자 상세 전체본 (1920px 디자인 캔버스) */
+/** Platform DS 기반 모집 사용자 상세 전체본 (1920px 디자인 캔버스) */
 export const ParticipantRecruitmentUserPage = forwardRef<
   HTMLDivElement,
   ParticipantRecruitmentUserPageProps
->(function ParticipantRecruitmentUserPage({ program, sponsorName, layoutMode = 'a4' }, ref) {
+>(function ParticipantRecruitmentUserPage(
+  { program, sponsorName, audience = 'institutions', layoutMode = 'a4' },
+  ref
+) {
   const rootRef = useRef<HTMLDivElement>(null)
-  const viewModel = mapProgramToParticipantRecruitmentUserView(program, sponsorName)
+  const viewModel = mapProgramToRecruitmentUserView(audience, program, sponsorName)
   const isFullscreenLayout = layoutMode === 'fullscreen'
 
   useLayoutEffect(() => {

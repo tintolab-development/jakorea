@@ -259,10 +259,8 @@ export function InstructorDetailEditForm({
 
   const basicInfoExtraBeforeBusinessIncome =
     !isInstructorPermissionDetail && !isSchoolTeacherOnly ? (
-    <DetailInfoForm.Row type="single">
       <DetailInfoForm.Field
         label="강사비 등급"
-        fullRow
         view="-"
         edit={
           <CmsSelect
@@ -292,8 +290,7 @@ export function InstructorDetailEditForm({
           />
         }
       />
-    </DetailInfoForm.Row>
-  ) : null
+    ) : null
 
   return (
     <Form<InstructorProfileFormValues>
@@ -321,7 +318,7 @@ export function InstructorDetailEditForm({
         onSaveConsentAgreementSnapshot={handleSaveConsentAgreementSnapshot}
         onSaveConsentCrimeSnapshot={handleSaveConsentCrimeSnapshot}
         onConsentValuesCommit={flushDraftFromForm}
-        includeInstructorApplicationSections={!isSchoolTeacherOnly}
+        includeInstructorApplicationSections={false}
       />
     </Form>
   )

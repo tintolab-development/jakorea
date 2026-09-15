@@ -139,6 +139,7 @@ export function renderProgramRegistrationParagraphBody(
           onSponsorContactIdChange={options.onSponsorContactIdChange}
           programTitleKo={options.programTitleKo}
           onProgramTitleKoChange={options.onProgramTitleKoChange}
+          programType={options.programType}
         />
       )
     case PROGRAM_REGISTRATION_IDS.businessKpi:

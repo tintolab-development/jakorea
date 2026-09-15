@@ -31,6 +31,7 @@ export function useSmsSendTemplatePickerQuery(enabled = true) {
 
 export function useSmsRecipientCandidatesQuery(
   input: {
+    /** 생략 시 전체 회원 후보 */
     programId?: number
     keyword?: string
     participantType?: string
@@ -40,7 +41,9 @@ export function useSmsRecipientCandidatesQuery(
   },
   enabled = true
 ) {
-  const canFetch = enabled && input.programId != null && Number.isFinite(input.programId)
+  const programOk =
+    input.programId == null || Number.isFinite(input.programId)
+  const canFetch = enabled && programOk
   const key = stableNotificationQueryKey({
     programId: input.programId,
     keyword: input.keyword,
@@ -51,11 +54,7 @@ export function useSmsRecipientCandidatesQuery(
   })
   return useQuery({
     queryKey: notificationsQueryKeys.smsSend.recipients(key),
-    queryFn: () =>
-      getSmsRecipientCandidates({
-        ...input,
-        programId: input.programId as number,
-      }),
+    queryFn: () => getSmsRecipientCandidates(input),
     enabled: canFetch,
     staleTime: 30_000,
     placeholderData: keepPreviousData,

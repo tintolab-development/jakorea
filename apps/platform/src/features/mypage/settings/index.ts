@@ -1,6 +1,7 @@
 export { getSettingsLnbItems } from './lib/lnb'
 export { mapPortalProfileToSettingsView } from './lib/map-view'
 export type { SettingsProfileInput } from './lib/map-view'
+export { showSettingsInstructorConsentDocuments } from './lib/consent-visibility'
 export { SettingsView } from './ui/view'
 export type { SettingsViewProps } from './ui/view'
 export { SettingsConsentsView } from './ui/consents-view'

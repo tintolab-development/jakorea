@@ -67,6 +67,10 @@ export function areFormEditorCardPropsEqual(
   if (prev.headingDescriptionExtraClassName !== next.headingDescriptionExtraClassName) return false
   if (prev.hideParagraphRequiredChrome !== next.hideParagraphRequiredChrome) return false
   if (prev.structureLockedParagraphIds !== next.structureLockedParagraphIds) return false
+  if (
+    prev.allowAddAfterStructureLockedParagraphs !== next.allowAddAfterStructureLockedParagraphs
+  )
+    return false
   if (prev.hideDragHandleForParagraphIds !== next.hideDragHandleForParagraphIds) return false
   if (prev.paragraphBodyOptions !== next.paragraphBodyOptions) return false
   if (prev.surveyWriteNumbering !== next.surveyWriteNumbering) return false

@@ -36,7 +36,6 @@ export function SettlementApplicationIssuanceEditorLeftColumn({
       structureLockedParagraphIds={vm.structureLockedParagraphIds}
       hideDragHandleForParagraphIds={SETTLEMENT_APPLICATION_ISSUANCE_HIDDEN_DRAG_HANDLE_IDS}
       paragraphBodyOptions={SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS}
-      hideParagraphRequiredChrome
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />
   )

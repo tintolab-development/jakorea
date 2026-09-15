@@ -163,7 +163,7 @@
 .applicant-info-section--instructor {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
   padding: 32px 0 0;
 }
 

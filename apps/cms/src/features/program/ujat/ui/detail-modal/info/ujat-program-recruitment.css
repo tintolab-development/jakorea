@@ -1,7 +1,7 @@
 .ujat-program-recruitment-panels {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }
 
 .ujat-program-recruitment-panels__paragraph {

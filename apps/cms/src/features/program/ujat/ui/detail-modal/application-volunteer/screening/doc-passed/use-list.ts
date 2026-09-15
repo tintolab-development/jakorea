@@ -4,6 +4,7 @@ import {
   sortUjatVolunteerDocPassedApplicants,
   type UjatVolunteerApplicantRow,
 } from '@/data/mock/ujat-volunteer-applicants-mock'
+import { listUjatVolunteerDocPassedApplications } from '@/features/program/ujat/api/applications-service'
 import type {
   UjatManagerEvaluation,
   UjatVolunteerRecruitHalf,
@@ -92,10 +93,16 @@ export function useUjatVolunteerDocPassed({
   assignFlowRef.current = assignFlow
 
   useEffect(() => {
-    setList(getUjatVolunteerDocPassedApplicants(programId, half))
+    let cancelled = false
+    void listUjatVolunteerDocPassedApplications(programId, half).then(rows => {
+      if (!cancelled) setList(rows)
+    })
     setPendingFilters({ ...DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS })
     setAppliedFilters({ ...DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS })
     setViewMode('list')
+    return () => {
+      cancelled = true
+    }
   }, [programId, half])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {

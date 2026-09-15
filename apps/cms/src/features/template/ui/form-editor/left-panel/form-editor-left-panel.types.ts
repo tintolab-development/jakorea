@@ -51,6 +51,11 @@ export interface FormEditorLeftPanelProps {
   showEditorChrome?: boolean
   /** 포함된 단락 id — 표 구조·카드 액션·드래그·본문 편집 잠금 */
   structureLockedParagraphIds?: ReadonlySet<string>
+  /**
+   * true면 시드(잠금) 단락 선택 시에도 「단락 추가」만 활성(신청 양식).
+   * 등록·모집은 false — 잠금 시 단락 추가도 disabled로 노출.
+   */
+  allowAddAfterStructureLockedParagraphs?: boolean
   /** 해당 id 단락은 드래그(햄버거) 핸들 비노출 — 지급조서 1번 제목형 등 */
   hideDragHandleForParagraphIds?: ReadonlySet<string>
   /** true면 필수(*)·하단 답변 필수 등 단락 필수 관련 토글·표시 숨김(지급조서 발급 편집 등) */

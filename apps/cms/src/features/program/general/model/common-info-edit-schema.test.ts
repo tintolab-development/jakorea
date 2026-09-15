@@ -101,6 +101,26 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     values.sponsorManagerContactId = encodeSponsorManagerContactRef('sponsor-new', 'contact-1')
     const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
     expect(patch.sponsorId).toBe('sponsor-new')
+    expect(patch.managerName).toBe('김담당')
+    expect(patch.contactPhone).toBe('010-0000-0000')
+  })
+
+  it('담당자 미해석 시 GET 마스킹 managerName/contactPhone을 patch에 넣지 않는다', () => {
+    const program = baseProgram({
+      managerName: '김*원',
+      contactPhone: '010-****-7253',
+    })
+    const values = programToGeneralCommonInfoEditValues(program, {
+      sponsors: sponsorContext.sponsors,
+      contactsBySponsorId: {},
+    })
+    values.sponsorManagerContactId = ''
+    const patch = generalCommonInfoEditValuesToProgramPatch(values, program, {
+      sponsors: sponsorContext.sponsors,
+      contactsBySponsorId: {},
+    })
+    expect(patch).not.toHaveProperty('managerName')
+    expect(patch).not.toHaveProperty('contactPhone')
   })
 
   it('교육 구조·회차·대상이 patch에 포함된다', () => {
@@ -360,5 +380,26 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     const saved = patch.generalCommonInfo?.curriculumSessions?.[0]
     expect(saved?.assignmentEnabled).toBe(false)
     expect(saved?.assignmentPeriod).toBeUndefined()
+  })
+
+  it('지급 항목은 옵션 라벨로 저장되고 비어 있으면 해당없음이다', () => {
+    const program = baseProgram()
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.wagePaymentItemIds = ['pay-1', 'pay-2']
+    const patch = generalCommonInfoEditValuesToProgramPatch(
+      values,
+      program,
+      sponsorContext,
+      undefined,
+      [
+        { value: 'pay-1', label: '교통비(일반)' },
+        { value: 'pay-2', label: '숙박비' },
+      ]
+    )
+    expect(patch.generalCommonInfo?.paymentItems).toBe('교통비(일반), 숙박비')
+
+    values.wagePaymentItemIds = []
+    const emptyPatch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+    expect(emptyPatch.generalCommonInfo?.paymentItems).toBe('해당없음')
   })
 })

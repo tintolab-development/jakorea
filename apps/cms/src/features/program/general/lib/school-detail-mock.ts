@@ -35,6 +35,7 @@ import {
   sortWaitingInstructorRowsUnavailableToBottom,
   type WaitingInstructorAssignmentStatus,
 } from './waiting-instructor-assignment'
+import { resolveOneSchoolPerDayAssignmentStatus } from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
 import type { Application } from '@/types/domain'
 
 const TEACHER_PHONES = ['010-3927-5140', '010-5218-3674', '010-7483-2915']
@@ -195,6 +196,11 @@ export interface WaitingInstructorRowMock {
   hopeTime?: string
   hopeSession?: string
   hopeScheduleLine?: string
+  instructorApplicationId?: string
+  instructorMemberId?: string
+  requestedScheduleId?: number
+  resolvedScheduleId?: number | null
+  scheduleUnresolved?: boolean
 }
 
 function scheduleGroupsForWaitingInstructor(
@@ -265,13 +271,17 @@ export function getCompanySchoolWaitingInstructorScheduleRows(
   schoolName: string,
   instructorList: ParticipatingInstructorRow[],
   schoolRows: ParticipatingSchoolRow[] = [],
-  assignedInstructorIds: Set<string> = new Set()
+  assignedInstructorIds: Set<string> = new Set(),
+  /**
+   * API 유도 1일1교 점유일(강사 participantId/memberId → YYYY-MM-DD).
+   * 있으면 mock 슬롯 겹침 대신 날짜 충돌을 SSOT로 사용.
+   */
+  occupiedLectureDatesByInstructorId?: Map<string, Set<string>> | null
 ): WaitingInstructorRowMock[] {
-  const occupiedSlots = buildOccupiedWaitingInstructorScheduleSlots(
-    instructorList,
-    schoolName,
-    schoolRows
-  )
+  const useApiOccupiedDates = Boolean(occupiedLectureDatesByInstructorId?.size)
+  const occupiedSlots = useApiOccupiedDates
+    ? new Set<string>()
+    : buildOccupiedWaitingInstructorScheduleSlots(instructorList, schoolName, schoolRows)
   const currentSchool = schoolRows.find(s => s.schoolName === schoolName)
   const scheduleGroups = scheduleGroupsForWaitingInstructor(currentSchool?.sessions)
   const notAssignedToThisSchool = instructorList.filter(
@@ -305,6 +315,14 @@ export function getCompanySchoolWaitingInstructorScheduleRows(
             hopeSession: pick(WAITING_HOPE_SESSIONS, scheduleIndex % 2),
           }
 
+      const assignmentStatus = useApiOccupiedDates
+        ? resolveOneSchoolPerDayAssignmentStatus(
+            hopeSchedule.hopeDate ?? group.hopeScheduleLine,
+            occupiedLectureDatesByInstructorId?.get(r.id) ??
+              (r.memberId ? occupiedLectureDatesByInstructorId?.get(r.memberId) : undefined)
+          )
+        : resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedSlots)
+
       rows.push({
         id: `${r.id}__${group.scheduleKey}`,
         instructorId: r.id,
@@ -313,7 +331,7 @@ export function getCompanySchoolWaitingInstructorScheduleRows(
         instructorName: r.instructorName,
         homeAddress: r.address ?? pick(WAITING_HOME_ADDRESSES, seed + instructorIndex),
         distanceToSchool: pick(WAITING_DISTANCES, seed + scheduleIndex),
-        assignmentStatus: resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedSlots),
+        assignmentStatus,
         hopeDate: hopeSchedule.hopeDate,
         hopeTime: hopeSchedule.hopeTime,
         hopeSession: hopeSchedule.hopeSession,

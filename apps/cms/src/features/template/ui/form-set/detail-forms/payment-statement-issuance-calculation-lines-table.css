@@ -100,7 +100,11 @@
   height: 54px;
   min-height: 54px;
   border-bottom: none;
-  background: #f0f7f8 !important;
+  background: var(
+    --color-bg-mint,
+    linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%),
+    #fff
+  ) !important;
   font-weight: 500;
 }
 
@@ -112,8 +116,15 @@
   font-weight: 500;
 }
 
-.payment-statement-issuance-calculation-lines-table__summary-total {
+/* 공통 `td` / summary-row 규칙보다 특이도 높게 — 금액 총액 시안 스펙 */
+.payment-statement-issuance-calculation-lines-table__summary-row
+  > td.payment-statement-issuance-calculation-lines-table__summary-total {
+  color: var(--color-mint-01, #01a1af);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
   font-weight: 700;
-  color: #01a1af;
+  line-height: 150%; /* 24px */
   font-variant-numeric: tabular-nums;
 }

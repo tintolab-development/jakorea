@@ -15,6 +15,9 @@ import type {
 } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
 import type { Status } from '@/types'
+import {
+  getTypedProgramLifecycleLabel,
+} from '@/shared/lib/program-typed-lifecycle'
 
 export interface StatusConfig {
   label: string
@@ -172,11 +175,14 @@ export const programLifecycleStatusConfig = {
     'document_processing_completed',
   ] as ProgramLifecycleStatus[],
   labels: {
+    scheduled: '프로그램 진행 예정',
+    in_progress: '프로그램 진행 중',
+    completed: '프로그램 진행 완료',
     planned: '참여자 모집 예정',
     instructor_recruitment_planned: '강사 모집 예정',
     volunteer_recruitment_planned: '봉사자 모집 예정',
     participant_instructor_recruitment_planned: '참여자&교육자 모집 예정',
-    recruiting_students: '참여자 모집 중',
+    recruiting_students: '참여 기관 모집 중',
     recruiting_instructors: '강사 모집 중',
     recruiting_volunteers: '봉사자 모집 중',
     participant_instructor_recruiting: '참여자&교육자 모집 중',
@@ -184,11 +190,14 @@ export const programLifecycleStatusConfig = {
     matching_completed: '참여자 모집 완료',
     education_before_textbook: '교재 전',
     education_after_textbook: '교재 후 진행 중',
-    education_completed: '강사 모집 완료',
+    education_completed: '프로그램 진행 완료',
     document_processing_completed: '봉사자 모집 완료',
     participant_instructor_recruitment_completed: '참여자&교육자 모집 완료',
   } as Record<ProgramLifecycleStatus, string>,
   colors: {
+    scheduled: 'default',
+    in_progress: 'blue',
+    completed: 'default',
     planned: 'default',
     instructor_recruitment_planned: 'default',
     volunteer_recruitment_planned: 'default',
@@ -212,11 +221,14 @@ export const programLifecycleStatusConfig = {
  * (`programLifecycleStatusConfig.order`는 위젯/워크플로용 6단계이므로 별도)
  */
 export const PROGRAM_LIFECYCLE_STATUS_SELECT_ORDER: ProgramLifecycleStatus[] = [
+  'scheduled',
+  'recruiting_students',
+  'in_progress',
+  'completed',
   'planned',
   'instructor_recruitment_planned',
   'volunteer_recruitment_planned',
   'participant_instructor_recruitment_planned',
-  'recruiting_students',
   'recruiting_instructors',
   'recruiting_volunteers',
   'participant_instructor_recruiting',
@@ -262,6 +274,7 @@ export const PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS: Record<
 
 /** 참여자·강사·봉사자·참여자&교육진행자 모집 예정 */
 export const PROGRAM_RECRUITMENT_APPLICATION_SCHEDULED_STATUSES = [
+  'scheduled',
   'planned',
   'instructor_recruitment_planned',
   'volunteer_recruitment_planned',
@@ -274,11 +287,13 @@ export const PROGRAM_RECRUITMENT_APPLICATION_RECRUITING_STATUSES = [
   'recruiting_instructors',
   'recruiting_volunteers',
   'participant_instructor_recruiting',
+  'in_progress',
   'education_in_progress',
 ] as const satisfies readonly ProgramLifecycleStatus[]
 
 /** 참여자·강사·봉사자·참여자&교육진행자 모집 완료 및 교재·정리 단계 */
 export const PROGRAM_RECRUITMENT_APPLICATION_COMPLETED_STATUSES = [
+  'completed',
   'matching_completed',
   'education_before_textbook',
   'education_after_textbook',
@@ -311,6 +326,7 @@ export function getProgramRecruitmentApplicationTextColor(status: ProgramLifecyc
 }
 
 export const PROGRAM_PROGRESS_PHASE_SCHEDULED_STATUSES: readonly ProgramLifecycleStatus[] = [
+  'scheduled',
   'planned',
   'instructor_recruitment_planned',
   'volunteer_recruitment_planned',
@@ -324,11 +340,13 @@ export const PROGRAM_PROGRESS_PHASE_SCHEDULED_STATUSES: readonly ProgramLifecycl
 ]
 
 export const PROGRAM_PROGRESS_PHASE_IN_PROGRESS_STATUSES: readonly ProgramLifecycleStatus[] = [
+  'in_progress',
   'education_after_textbook',
   'education_in_progress',
 ]
 
 export const PROGRAM_PROGRESS_PHASE_COMPLETED_STATUSES: readonly ProgramLifecycleStatus[] = [
+  'completed',
   'education_completed',
   'document_processing_completed',
   'participant_instructor_recruitment_completed',
@@ -355,6 +373,19 @@ export function getProgramProgressPhaseDisplay(status: ProgramLifecycleStatus): 
 }
 
 export function getProgramLifecycleLabel(status: ProgramLifecycleStatus | string): string {
+  // typed 4종·표시용 레거시 별칭만 공통 라벨 — recruiting_instructors 등 세분은 기존 라벨 유지
+  const raw = String(status ?? '').trim().toLowerCase()
+  if (
+    raw === 'scheduled' ||
+    raw === 'recruiting_students' ||
+    raw === 'in_progress' ||
+    raw === 'completed' ||
+    raw === 'planned' ||
+    raw === 'education_in_progress' ||
+    raw === 'education_completed'
+  ) {
+    return getTypedProgramLifecycleLabel(status)
+  }
   return programLifecycleStatusConfig.labels[status as ProgramLifecycleStatus] || status
 }
 
@@ -504,7 +535,11 @@ export function getApplicationEnrollmentDisplayStatus(
 
 /** 프로그램 라이프사이클이 종료 단계인지 (추론: 이 단계면 수강도 PROGRAM_ENDED로 볼 수 있음) */
 export function isProgramLifecycleEnded(lifecycle: ProgramLifecycleStatus | undefined): boolean {
-  return lifecycle === 'education_completed' || lifecycle === 'document_processing_completed'
+  return (
+    lifecycle === 'completed' ||
+    lifecycle === 'education_completed' ||
+    lifecycle === 'document_processing_completed'
+  )
 }
 
 /**
@@ -521,6 +556,7 @@ export function getEnrollmentDisplayStatusFromProgramLifecycle(
     return 'PROGRAM_ENDED'
   }
   if (
+    lifecycleStatus === 'in_progress' ||
     lifecycleStatus === 'education_in_progress' ||
     lifecycleStatus === 'education_before_textbook' ||
     lifecycleStatus === 'education_after_textbook'

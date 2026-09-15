@@ -17,6 +17,7 @@ import {
   fetchIndividualApplicationsRemote,
   fetchInstructorApplicationsRemote,
   fetchOrganizationApplicationsRemote,
+  fetchOrganizationApplicationRequestedSchedulesRemote,
   fetchVolunteerApplicationsRemote,
   listInterviewSlotsRemote,
   rejectIndividualApplicationRemote,
@@ -26,17 +27,7 @@ import {
   submitVolunteerFinalResultRemote,
   type ApplicationsListQuery,
 } from '@/features/program/general/api/applications-api-client'
-import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications-mock'
-import { getApplicantInstructorsByProgramId } from '@/data/mock/applicant-instructors'
 import {
-  getGeneralIndividualApplicationsForProgram,
-  getGeneralParticipantDoc1Applicants,
-} from '@/data/mock/general-individual-applications-mock'
-import {
-  getGeneralVolunteerApplicants,
-  getGeneralVolunteerDoc1Applicants,
-  getGeneralVolunteerDocPassedApplicants,
-  getGeneralVolunteerInterview2Applicants,
   sortGeneralVolunteerByInterviewSlotCount,
   sortGeneralVolunteerDocPassedApplicants,
   type GeneralVolunteerApplicantRow,
@@ -62,18 +53,30 @@ export async function fetchGeneralOrganizationApplications(
   programId: string,
   params?: ApplicationsListQuery
 ): Promise<ApplicantSchoolRow[]> {
-  if (!shouldUseApplicationsHttpRemoteApi()) {
-    return getGeneralInstitutionApplicationsForProgram(programId)
-  }
-
   assertApplicationsRemoteReady()
   const page = await fetchOrganizationApplicationsRemote(programId, {
     page: 0,
-    size: 500,
+    size: 50,
     ...params,
   })
-  return (page.items ?? []).map((item, index) =>
-    mapOrganizationApplicationToApplicantSchoolRow(item, index, programId)
+  const items = page.items ?? []
+  const scheduleResults = await Promise.all(
+    items.map(async item => {
+      const applicationId = item.id == null ? '' : String(item.id)
+      if (!applicationId) return [] as Awaited<
+        ReturnType<typeof fetchOrganizationApplicationRequestedSchedulesRemote>
+      >
+      try {
+        return await fetchOrganizationApplicationRequestedSchedulesRemote(applicationId)
+      } catch {
+        return []
+      }
+    })
+  )
+  return items.map((item, index) =>
+    mapOrganizationApplicationToApplicantSchoolRow(item, index, programId, {
+      requestedSchedules: scheduleResults[index],
+    })
   )
 }
 
@@ -81,14 +84,10 @@ export async function fetchGeneralInstructorApplications(
   programId: string,
   params?: ApplicationsListQuery
 ): Promise<ApplicantInstructorRow[]> {
-  if (!shouldUseApplicationsHttpRemoteApi()) {
-    return getApplicantInstructorsByProgramId(programId)
-  }
-
   assertApplicationsRemoteReady()
   const page = await fetchInstructorApplicationsRemote(programId, {
     page: 0,
-    size: 500,
+    size: 50,
     ...params,
   })
   return (page.items ?? []).map((item, index) =>
@@ -100,15 +99,10 @@ export async function fetchGeneralIndividualApplications(
   programId: string,
   options?: { doc1?: boolean; query?: ApplicationsListQuery }
 ): Promise<GeneralIndividualApplicantRow[]> {
-  if (!shouldUseApplicationsHttpRemoteApi()) {
-    if (options?.doc1) return getGeneralParticipantDoc1Applicants(programId)
-    return getGeneralIndividualApplicationsForProgram(programId)
-  }
-
   assertApplicationsRemoteReady()
   const page = await fetchIndividualApplicationsRemote(programId, {
     page: 0,
-    size: 500,
+    size: 50,
     ...options?.query,
   })
   return (page.items ?? []).map((item, index) =>
@@ -120,14 +114,10 @@ export async function fetchGeneralVolunteerApplications(
   programId: string,
   params?: ApplicationsListQuery
 ): Promise<GeneralVolunteerApplicantRow[]> {
-  if (!shouldUseApplicationsHttpRemoteApi()) {
-    return getGeneralVolunteerApplicants(programId)
-  }
-
   assertApplicationsRemoteReady()
   const page = await fetchVolunteerApplicationsRemote(programId, {
     page: 0,
-    size: 500,
+    size: 50,
     ...params,
   })
   return (page.items ?? []).map((item, index) =>
@@ -138,9 +128,7 @@ export async function fetchGeneralVolunteerApplications(
 export async function fetchGeneralVolunteerDoc1Applications(
   programId: string
 ): Promise<GeneralVolunteerApplicantRow[]> {
-  if (!shouldUseApplicationsHttpRemoteApi()) {
-    return getGeneralVolunteerDoc1Applicants(programId)
-  }
+  assertApplicationsRemoteReady()
   const rows = await fetchGeneralVolunteerApplications(programId)
   return sortGeneralVolunteerByInterviewSlotCount(filterVolunteerDoc1Rows(rows))
 }
@@ -148,9 +136,7 @@ export async function fetchGeneralVolunteerDoc1Applications(
 export async function fetchGeneralVolunteerDocPassedApplications(
   programId: string
 ): Promise<GeneralVolunteerApplicantRow[]> {
-  if (!shouldUseApplicationsHttpRemoteApi()) {
-    return getGeneralVolunteerDocPassedApplicants(programId)
-  }
+  assertApplicationsRemoteReady()
   const rows = await fetchGeneralVolunteerApplications(programId)
   return sortGeneralVolunteerDocPassedApplicants(filterVolunteerDocPassedRows(rows))
 }
@@ -158,15 +144,12 @@ export async function fetchGeneralVolunteerDocPassedApplications(
 export async function fetchGeneralVolunteerInterview2Applications(
   programId: string
 ): Promise<GeneralVolunteerApplicantRow[]> {
-  if (!shouldUseApplicationsHttpRemoteApi()) {
-    return getGeneralVolunteerInterview2Applicants(programId)
-  }
+  assertApplicationsRemoteReady()
   const rows = await fetchGeneralVolunteerApplications(programId)
   return sortGeneralVolunteerInterview2Applicants(filterVolunteerInterview2Rows(rows))
 }
 
 export async function approveGeneralOrganizationApplication(applicationId: string): Promise<void> {
-  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await approveOrganizationApplicationRemote(applicationId)
 }
@@ -175,13 +158,11 @@ export async function rejectGeneralOrganizationApplication(
   applicationId: string,
   payload: ApplicationRejectRequest
 ): Promise<void> {
-  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await rejectOrganizationApplicationRemote(applicationId, payload)
 }
 
 export async function approveGeneralInstructorApplication(applicationId: string): Promise<void> {
-  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await approveInstructorApplicationRemote(applicationId)
 }
@@ -190,13 +171,11 @@ export async function rejectGeneralInstructorApplication(
   applicationId: string,
   payload: ApplicationRejectRequest
 ): Promise<void> {
-  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await rejectInstructorApplicationRemote(applicationId, payload)
 }
 
 export async function approveGeneralIndividualApplication(applicationId: string): Promise<void> {
-  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await approveIndividualApplicationRemote(applicationId)
 }
@@ -205,7 +184,6 @@ export async function rejectGeneralIndividualApplication(
   applicationId: string,
   payload: ApplicationRejectRequest
 ): Promise<void> {
-  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await rejectIndividualApplicationRemote(applicationId, payload)
 }
@@ -214,7 +192,6 @@ export async function submitGeneralVolunteerDocumentResult(
   applicationId: string,
   payload: DocumentResultRequest
 ): Promise<void> {
-  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await submitVolunteerDocumentResultRemote(applicationId, payload)
 }
@@ -223,15 +200,12 @@ export async function submitGeneralVolunteerFinalResult(
   applicationId: string,
   payload: VolunteerFinalResultRequest
 ): Promise<void> {
-  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await submitVolunteerFinalResultRemote(applicationId, payload)
 }
 
 /**
- * remote ON: 면접 슬롯 생성 후 봉사자 신청에 배정.
- * 슬롯 목록은 `listGeneralInterviewSlots` (GET hand-wrap, OpenAPI P2-1 미등재 시 mock 폴백).
- * remote OFF: no-op (호출부에서 로컬 row patch만).
+ * 면접 슬롯 생성 후 봉사자 신청에 배정. mock/no-op 없음.
  */
 export async function assignGeneralVolunteerInterview(params: {
   programId: string
@@ -241,9 +215,6 @@ export async function assignGeneralVolunteerInterview(params: {
   endAt: string
   maxAssignCount?: number
 }): Promise<{ interviewSlotId?: number; interviewAssignmentId?: number }> {
-  if (!shouldUseApplicationsHttpRemoteApi()) {
-    return {}
-  }
   assertApplicationsRemoteReady()
 
   const slot = await createInterviewSlotRemote(params.programId, {
@@ -293,29 +264,23 @@ export type GeneralInterviewSlotListItem = {
 }
 
 /**
- * remote ON: GET interview-slots (OpenAPI GET/POST 등재). 404/실패 시 null → 호출부 mock.
- * remote OFF: null (호출부 mock).
+ * GET interview-slots. mock 폴백 없음 — 실패 시 throw.
  */
 export async function listGeneralInterviewSlots(
   programId: string,
   range?: { from?: string; to?: string }
-): Promise<GeneralInterviewSlotListItem[] | null> {
-  if (!shouldUseApplicationsHttpRemoteApi()) return null
+): Promise<GeneralInterviewSlotListItem[]> {
   assertApplicationsRemoteReady()
-  try {
-    const rows = await listInterviewSlotsRemote(programId, range)
-    return rows
-      .filter((row) => row.interviewSlotId != null && row.slotDate && row.startAt && row.endAt)
-      .map((row) => ({
-        interviewSlotId: row.interviewSlotId as number,
-        slotDate: row.slotDate as string,
-        startAt: row.startAt as string,
-        endAt: row.endAt as string,
-        maxAssignCount: row.maxAssignCount ?? 1,
-        assignedCount: row.currentAssignCount ?? 0,
-        exceptionSlot: row.exceptionSlot ?? false,
-      }))
-  } catch {
-    return null
-  }
+  const rows = await listInterviewSlotsRemote(programId, range)
+  return rows
+    .filter(row => row.interviewSlotId != null && row.slotDate && row.startAt && row.endAt)
+    .map(row => ({
+      interviewSlotId: row.interviewSlotId as number,
+      slotDate: row.slotDate as string,
+      startAt: row.startAt as string,
+      endAt: row.endAt as string,
+      maxAssignCount: row.maxAssignCount ?? 1,
+      assignedCount: row.currentAssignCount ?? 0,
+      exceptionSlot: row.exceptionSlot ?? false,
+    }))
 }

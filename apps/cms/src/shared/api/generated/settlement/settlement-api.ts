@@ -565,48 +565,12 @@ const requestCorrection = (
     }
 
 /**
- * ### 이 API가 하는 일
- * - POST /api/admin/settlements/statements/bulk-confirm
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `POST /api/admin/settlements/statements/bulk-confirm`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
- * @summary POST /api/admin/settlements/statements/bulk-confirm
+ * 선택된 지급조서를 일괄 CONFIRMED 처리합니다(all-or-nothing).
+ * 확인 가능: WAITING_CONFIRM | REQUESTED | REAPPLICATION | ISSUED.
+ * 409 PAYMENT_STATEMENT_STATUS_CONFLICT (details.statementId),
+ * 404 PAYMENT_STATEMENT_NOT_FOUND,
+ * 400 SCHEDULED_PAYMENT_DATE_REQUIRED.
+ * @summary 지급조서 일괄 확인 처리
  */
 const bulkConfirmPaymentStatements = (
     settlementBulkStatusChangeRequest: SettlementBulkStatusChangeRequest,

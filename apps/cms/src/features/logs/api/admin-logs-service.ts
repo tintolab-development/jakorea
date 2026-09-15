@@ -29,7 +29,7 @@ export function shouldUseLogsRemoteApi(): boolean {
 
 function assertLogsRemoteApiReady(): void {
   if (!isRealApiModuleEnabled('logs')) {
-    throw new Error('로그 관리 API가 활성화되지 않았습니다. VITE_REAL_API_MODULES에 logs를 추가해 주세요.')
+    throw new Error('로그 관리 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정해 주세요.')
   }
   if (!hasRemoteAdminJwt()) {
     throw new Error('로그 조회는 관리자 로그인 후 이용할 수 있습니다.')

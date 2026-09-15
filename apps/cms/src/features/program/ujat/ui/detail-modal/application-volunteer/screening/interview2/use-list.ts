@@ -7,6 +7,7 @@ import {
   type UjatVolunteerApplicantRow,
   type UjatVolunteerInterviewEvaluationPayload,
 } from '@/data/mock/ujat-volunteer-applicants-mock'
+import { listUjatVolunteerInterview2Applications } from '@/features/program/ujat/api/applications-service'
 import type {
   UjatSecondInterviewScreeningStatus,
   UjatVolunteerRecruitHalf,
@@ -117,7 +118,10 @@ export function useUjatVolunteerInterview2({
   const [now, setNow] = useState(() => dayjs())
 
   useEffect(() => {
-    setList(getUjatVolunteerInterview2Applicants(programId, half))
+    let cancelled = false
+    void listUjatVolunteerInterview2Applications(programId, half).then(rows => {
+      if (!cancelled) setList(rows)
+    })
     setPendingFilters({ ...DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS })
     setAppliedFilters({ ...DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS })
     setViewMode('list')
@@ -126,6 +130,9 @@ export function useUjatVolunteerInterview2({
     setEvaluationTargetId(null)
     setBulkPassModalOpen(false)
     setNow(dayjs())
+    return () => {
+      cancelled = true
+    }
   }, [programId, half])
 
   useEffect(() => {

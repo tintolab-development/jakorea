@@ -12,13 +12,26 @@ import type {
   ProgramType,
 } from '@/types/domain'
 import type { Status } from '@/types/index'
+import { resolveUjatPrimaryProgressById } from '@/features/program/ujat/lib/is-ujat-primary-program'
+import {
+  mapPeriodStatusToLifecycle,
+  resolveUjatProgressStatus,
+} from '@/features/program/ujat/lib/normalize-ujat-progress-status'
 import {
   parseServiceDetail,
+  parseUjatServiceDetailExtras,
   serializeServiceDetail,
   type RegistrationSnapshot,
+  type UjatServiceDetailExtras,
 } from './service-detail'
 
 const DEFAULT_SPONSOR_ID = 'sponsor-default'
+
+export type UjatProgramWithExtras = Program & {
+  /** Primary serviceDetail extras — Semester 자식 없이 FULL_YEAR */
+  ujatServiceDetailExtras?: UjatServiceDetailExtras
+  periodStatus?: string
+}
 
 function now(): string {
   return new Date().toISOString()
@@ -51,96 +64,161 @@ function baseProgram(partial: Partial<Program> & Pick<Program, 'id' | 'title'>):
 }
 
 export function fromListItem(dto: AdminProgramListItemDto): Program {
+  const id = idOf(dto.id ?? dto.uuid)
   const title =
     dto.nameKo?.trim() || dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
+  const dtoExt = dto as AdminProgramListItemDto & {
+    serviceDetailJson?: string
+    ujatProgressStatus?: string
+  }
+  const fromJson = parseServiceDetail(dtoExt.serviceDetailJson)
+  const ujatProgressStatus = resolveUjatProgressStatus({
+    ujatProgressStatus: fromJson.ujatProgressStatus ?? dtoExt.ujatProgressStatus,
+    periodStatus: dto.periodStatus,
+    primaryFallback: resolveUjatPrimaryProgressById(id),
+  })
+  const lifecycleStatus =
+    (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
+    mapPeriodStatusToLifecycle(dto.periodStatus) ??
+    'planned'
+
+  // UJAT: target_instructor_count=0 → 강사 KPI를 "-"로 위장하지 않음 (0 유지)
+  const instructorCount = dto.instructorApplicantCount ?? 0
+
   return baseProgram({
-    id: idOf(dto.id ?? dto.uuid),
+    id,
     title,
     mainTitle: dto.mainTitle?.trim() || title,
     startDate: dto.businessStartDate ?? dto.startDate,
     endDate: dto.businessEndDate ?? dto.endDate,
-    approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
-    participatingSchoolCount: dto.organizationApplicationCount,
-    instructors: dto.instructorApplicantCount,
+    lifecycleStatus,
+    ujatProgressStatus,
+    approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount ?? 0,
+    participatingSchoolCount: dto.organizationApplicationCount ?? 0,
+    instructors: instructorCount,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
+    ...fromJson,
   })
 }
 
-export function fromDetail(dto: ProgramResponse): Program {
+export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
   const id = idOf(dto.id)
-  const title = dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
+  const dtoExt = dto as ProgramResponse & {
+    nameKo?: string
+    periodStatus?: string
+    remarks?: string
+  }
+  const title =
+    dto.title?.trim() || dto.mainTitle?.trim() || dtoExt.nameKo?.trim() || '제목 없음'
   const timestamp = now()
-  return baseProgram({
-    id,
-    sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
-    title,
-    mainTitle: dto.mainTitle ?? title,
-    type: (dto.type as ProgramType | undefined) ?? 'offline',
-    format: (dto.format as ProgramFormat | undefined) ?? 'course',
-    category: (dto.category as ProgramCategory | undefined) ?? 'school',
-    description: dto.description,
-    rounds:
-      dto.rounds?.map((round, index) => ({
-        id: idOf(round.id) || `${id}-round-${index + 1}`,
-        programId: id,
-        roundNumber: round.roundNumber ?? index + 1,
-        startDate: round.startDate ?? dto.startDate ?? timestamp,
-        endDate: round.endDate ?? dto.endDate ?? timestamp,
-        capacity: round.capacity,
-        classCount: round.classCount,
-        status: (round.status as Status | undefined) ?? 'pending',
-        curriculum: round.curriculum,
-        deliveryType: round.deliveryType as Program['rounds'][number]['deliveryType'],
-      })) ?? [],
-    startDate: dto.startDate,
-    endDate: dto.endDate,
-    applicationStartDate: dto.applicationStartDate,
-    applicationEndDate: dto.applicationEndDate,
-    status: (dto.status as Status | undefined) ?? 'pending',
-    lifecycleStatus: (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ?? 'planned',
-    businessArea: dto.businessArea,
-    titleEn: dto.titleEn,
-    textbookName: dto.textbookName,
-    textbookNameEn: dto.textbookNameEn,
-    schoolId: dto.schoolId,
-    district: dto.district,
-    targetLevel: dto.targetLevel as Program['targetLevel'],
-    institutionType: dto.institutionType as Program['institutionType'],
-    ipOwned: dto.ipOwned,
-    courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
-    partnerInvolvement: dto.partnerInvolvement,
-    programCategory: dto.programCategory,
-    programChannel: dto.programChannel,
-    educationTime: dto.educationTime,
-    teamDivision: dto.teamDivision,
-    educationProcess: dto.educationProcess,
-    maleParticipants: dto.maleParticipants,
-    femaleParticipants: dto.femaleParticipants,
-    totalParticipants: dto.totalParticipants,
-    generalVolunteers: dto.generalVolunteers,
-    staffVolunteers: dto.staffVolunteers,
-    returningVolunteers: dto.returningVolunteers,
-    generalTeachers: dto.generalTeachers,
-    educatedTeachers: dto.educatedTeachers,
-    instructors: dto.instructors,
-    managerName: dto.managerName,
-    venue: dto.venue,
-    curriculum: dto.curriculum,
-    contactEmail: dto.contactEmail,
-    contactPhone: dto.contactPhone,
-    oneLineIntroduction: dto.oneLineIntroduction,
-    keyVisualImage: dto.keyVisualImage,
-    settlementRuleId: dto.settlementRuleId,
-    applicationPathId: dto.applicationPathId,
-    additionalContentHtml: dto.additionalContentHtml,
-    recruitmentGuide: dto.recruitmentGuide,
-    learningSupportContent: dto.learningSupportContent,
-    attachmentFileNames: dto.attachmentFileNames,
-    createdAt: dto.createdAt,
-    updatedAt: dto.updatedAt,
-    ...parseServiceDetail(dto.serviceDetailJson),
+  const details = parseServiceDetail(dto.serviceDetailJson)
+  const extras = parseUjatServiceDetailExtras(dto.serviceDetailJson)
+  const periodStatus = dtoExt.periodStatus
+  const ujatProgressStatus = resolveUjatProgressStatus({
+    ujatProgressStatus: details.ujatProgressStatus,
+    periodStatus,
+    primaryFallback: resolveUjatPrimaryProgressById(id),
   })
+  const lifecycleStatus =
+    (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
+    mapPeriodStatusToLifecycle(periodStatus) ??
+    'planned'
+
+  const surveyKeys =
+    details.generalSurveyMenuKeys ??
+    extras.surveyMenuKeys ??
+    undefined
+
+  return {
+    ...baseProgram({
+      ...details,
+      id,
+      sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
+      title,
+      mainTitle: dto.mainTitle ?? title,
+      type: (dto.type as ProgramType | undefined) ?? 'offline',
+      format: (dto.format as ProgramFormat | undefined) ?? 'course',
+      category: (dto.category as ProgramCategory | undefined) ?? 'school',
+      description: dto.description,
+      rounds:
+        dto.rounds?.map((round, index) => ({
+          id: idOf(round.id) || `${id}-round-${index + 1}`,
+          programId: id,
+          roundNumber: round.roundNumber ?? index + 1,
+          startDate: round.startDate ?? dto.startDate ?? timestamp,
+          endDate: round.endDate ?? dto.endDate ?? timestamp,
+          capacity: round.capacity,
+          classCount: round.classCount,
+          status: (round.status as Status | undefined) ?? 'pending',
+          curriculum: round.curriculum,
+          deliveryType: round.deliveryType as Program['rounds'][number]['deliveryType'],
+        })) ?? [],
+      startDate: dto.startDate ?? dto.businessStartDate,
+      endDate: dto.endDate ?? dto.businessEndDate,
+      applicationStartDate: dto.applicationStartDate,
+      applicationEndDate: dto.applicationEndDate,
+      status: (dto.status as Status | undefined) ?? 'pending',
+      lifecycleStatus,
+      ujatProgressStatus,
+      businessArea: dto.businessArea,
+      titleEn: dto.titleEn,
+      textbookName: dto.textbookName,
+      textbookNameEn: dto.textbookNameEn,
+      schoolId: dto.schoolId,
+      district: dto.district,
+      targetLevel: dto.targetLevel as Program['targetLevel'],
+      institutionType: dto.institutionType as Program['institutionType'],
+      ipOwned: dto.ipOwned,
+      courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
+      partnerInvolvement: dto.partnerInvolvement,
+      programCategory: dto.programCategory,
+      programChannel: dto.programChannel,
+      educationTime: dto.educationTime,
+      teamDivision: dto.teamDivision,
+      educationProcess: dto.educationProcess,
+      maleParticipants: dto.maleParticipants,
+      femaleParticipants: dto.femaleParticipants,
+      totalParticipants: dto.totalParticipants,
+      generalVolunteers: dto.generalVolunteers ?? 0,
+      staffVolunteers: dto.staffVolunteers ?? 0,
+      returningVolunteers: dto.returningVolunteers ?? 0,
+      generalTeachers: dto.generalTeachers,
+      educatedTeachers: dto.educatedTeachers,
+      instructors: dto.instructors ?? 0,
+      managerName: dto.managerName,
+      venue: dto.venue,
+      curriculum: dto.curriculum,
+      contactEmail: dto.contactEmail,
+      contactPhone: dto.contactPhone,
+      oneLineIntroduction: dto.oneLineIntroduction,
+      keyVisualImage: dto.keyVisualImage,
+      settlementRuleId: dto.settlementRuleId,
+      applicationPathId: dto.applicationPathId,
+      additionalContentHtml: dto.additionalContentHtml,
+      recruitmentGuide: dto.recruitmentGuide,
+      learningSupportContent: dto.learningSupportContent,
+      attachmentFileNames: dto.attachmentFileNames,
+      otherNotes: details.otherNotes ?? dtoExt.remarks,
+      generalSurveyMenuKeys: surveyKeys as Program['generalSurveyMenuKeys'],
+      createdAt: dto.createdAt,
+      updatedAt: dto.updatedAt,
+    }),
+    ujatServiceDetailExtras: {
+      ...extras,
+      semesterType: extras.semesterType ?? 'FULL_YEAR',
+    },
+    periodStatus,
+  }
+}
+
+function looksMaskedPii(value: string | null | undefined): boolean {
+  if (value == null) return false
+  return value.includes('*')
+}
+
+function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
+  return Object.prototype.hasOwnProperty.call(patch, key)
 }
 
 function coreRequest(
@@ -211,6 +289,100 @@ function coreRequest(
   }
 }
 
+/** patch 키만 직렬화 — rounds·마스킹 담당자 등 화면 밖 필드 미전송 */
+function patchRequest(
+  merged: Program,
+  patch: Partial<Program>,
+  registration?: RegistrationSnapshot
+): ProgramUpdateRequest {
+  const body: ProgramUpdateRequest = {}
+  const has = (key: keyof Program) => patchHasKey(patch, key)
+
+  if (has('sponsorId')) {
+    body.sponsorId = merged.sponsorId != null ? String(merged.sponsorId) : undefined
+  }
+  if (has('title')) body.title = merged.title
+  if (has('type')) body.type = merged.type
+  if (has('format')) body.format = merged.format
+  if (has('category')) body.category = merged.category
+  if (has('description')) body.description = merged.description
+  if (has('startDate')) body.startDate = dateValue(merged.startDate)
+  if (has('endDate')) body.endDate = dateValue(merged.endDate)
+  if (has('applicationStartDate')) {
+    body.applicationStartDate = dateValue(merged.applicationStartDate)
+  }
+  if (has('applicationEndDate')) {
+    body.applicationEndDate = dateValue(merged.applicationEndDate)
+  }
+  if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('titleEn')) body.titleEn = merged.titleEn
+  if (has('mainTitle')) body.mainTitle = merged.mainTitle ?? merged.title
+  if (has('textbookName')) body.textbookName = merged.textbookName
+  if (has('textbookNameEn')) body.textbookNameEn = merged.textbookNameEn
+  if (has('schoolId')) body.schoolId = merged.schoolId
+  if (has('district')) body.district = merged.district
+  if (has('targetLevel') || has('targetLevels')) {
+    body.targetLevel = merged.targetLevels?.[0] ?? merged.targetLevel
+  }
+  if (has('institutionType')) body.institutionType = merged.institutionType
+  if (has('ipOwned')) body.ipOwned = merged.ipOwned
+  if (has('courseDeliveredBy')) body.courseDeliveredBy = merged.courseDeliveredBy
+  if (has('partnerInvolvement')) body.partnerInvolvement = merged.partnerInvolvement
+  if (has('programCategory')) body.programCategory = merged.programCategory ?? undefined
+  if (has('programChannel')) body.programChannel = merged.programChannel ?? undefined
+  if (has('educationTime')) body.educationTime = merged.educationTime
+  if (has('teamDivision')) body.teamDivision = merged.teamDivision
+  if (has('educationProcess')) body.educationProcess = merged.educationProcess
+  if (has('maleParticipants')) body.maleParticipants = merged.maleParticipants
+  if (has('femaleParticipants')) body.femaleParticipants = merged.femaleParticipants
+  if (has('totalParticipants')) body.totalParticipants = merged.totalParticipants
+  if (has('generalVolunteers')) body.generalVolunteers = merged.generalVolunteers
+  if (has('staffVolunteers')) body.staffVolunteers = merged.staffVolunteers
+  if (has('returningVolunteers')) body.returningVolunteers = merged.returningVolunteers
+  if (has('generalTeachers')) body.generalTeachers = merged.generalTeachers
+  if (has('educatedTeachers')) body.educatedTeachers = merged.educatedTeachers
+  if (has('instructors')) body.instructors = merged.instructors
+  if (has('managerName') && !looksMaskedPii(merged.managerName)) {
+    body.managerName = merged.managerName
+  }
+  if (has('venue')) body.venue = merged.venue
+  if (has('curriculum')) body.curriculum = merged.curriculum
+  if (has('contactEmail') && !looksMaskedPii(merged.contactEmail)) {
+    body.contactEmail = merged.contactEmail
+  }
+  if (has('contactPhone') && !looksMaskedPii(merged.contactPhone)) {
+    body.contactPhone = merged.contactPhone
+  }
+  if (has('oneLineIntroduction')) body.oneLineIntroduction = merged.oneLineIntroduction
+  if (has('keyVisualImage') || has('posterImage')) {
+    body.keyVisualImage = merged.keyVisualImage ?? merged.posterImage
+  }
+  if (has('settlementRuleId')) body.settlementRuleId = merged.settlementRuleId
+  if (has('applicationPathId')) body.applicationPathId = merged.applicationPathId
+  if (has('additionalContentHtml')) body.additionalContentHtml = merged.additionalContentHtml
+  if (has('recruitmentGuide')) body.recruitmentGuide = merged.recruitmentGuide
+  if (has('learningSupportContent')) {
+    body.learningSupportContent = merged.learningSupportContent
+  }
+  if (has('attachmentFileNames')) body.attachmentFileNames = merged.attachmentFileNames
+  if (has('rounds')) {
+    body.rounds = merged.rounds.map(round => ({
+      roundNumber: round.roundNumber,
+      startDate: dateValue(round.startDate),
+      endDate: dateValue(round.endDate),
+      capacity: round.capacity,
+      classCount: round.classCount,
+      status: round.status,
+      curriculum: round.curriculum,
+      deliveryType: round.deliveryType,
+    }))
+  }
+
+  // UJAT registration overlay 보존을 위해 patch 저장 시 serviceDetailJson은 항상 포함
+  body.serviceDetailJson = serializeServiceDetail(merged, registration)
+  return body
+}
+
 export function toCreateRequest(
   program: Program,
   registration?: RegistrationSnapshot
@@ -230,5 +402,8 @@ export function toUpdateRequest(
   patch?: Partial<Program>,
   registration?: RegistrationSnapshot
 ): ProgramUpdateRequest {
-  return coreRequest(patch ? { ...program, ...patch } : program, registration)
+  if (patch && Object.keys(patch).length > 0) {
+    return patchRequest({ ...program, ...patch }, patch, registration)
+  }
+  return coreRequest(program, registration)
 }

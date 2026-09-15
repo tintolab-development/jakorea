@@ -168,24 +168,24 @@ describe('applyUserListSearchToParams', () => {
     expect(params.get('role')).toBeNull()
   })
 
-  it('가입 시기 — 시작일만 선택해도 createdAtFrom/To를 그날로 넣는다', () => {
+  it('가입 시기 — 시작일만 선택하면 createdAtFrom만 넣는다', () => {
     const params = new URLSearchParams('kind=all')
     applyUserListSearchToParams(params, {
       ...emptyPendingRest,
       createdAtRange: [dayjs('2026-03-15'), null],
     })
     expect(params.get('createdAtFrom')).toBe('2026-03-15')
-    expect(params.get('createdAtTo')).toBe('2026-03-15')
+    expect(params.get('createdAtTo')).toBeNull()
   })
 
-  it('가입 시기 — 종료일만 선택해도 createdAtFrom/To를 그날로 넣는다', () => {
+  it('가입 시기 — 종료일만 선택하면 createdAtTo만 넣는다', () => {
     const params = new URLSearchParams('kind=instructors')
     applyUserListSearchToParams(params, {
       ...emptyPendingRest,
       role: 'INSTRUCTOR',
       createdAtRange: [null, dayjs('2026-04-01')],
     })
-    expect(params.get('createdAtFrom')).toBe('2026-04-01')
+    expect(params.get('createdAtFrom')).toBeNull()
     expect(params.get('createdAtTo')).toBe('2026-04-01')
   })
 
@@ -212,39 +212,35 @@ describe('applyUserListSearchToParams', () => {
 })
 
 describe('createdAt date range helpers', () => {
-  it('pending 한쪽만 → from===to', () => {
+  it('pending 한쪽만 → 해당 키만', () => {
     expect(createdAtBoundsFromPendingRange([dayjs('2026-05-10'), null])).toEqual({
       from: '2026-05-10',
-      to: '2026-05-10',
     })
     expect(createdAtBoundsFromPendingRange([null, dayjs('2026-05-20')])).toEqual({
-      from: '2026-05-20',
       to: '2026-05-20',
     })
     expect(createdAtBoundsFromPendingRange(null)).toEqual({})
   })
 
-  it('URL 한쪽만 → API·pending 미러', () => {
+  it('URL 한쪽만 → API·pending에 해당 쪽만', () => {
     expect(createdAtBoundsFromUrlParams('2026-07-01', undefined)).toEqual({
       from: '2026-07-01',
-      to: '2026-07-01',
     })
     expect(createdAtBoundsFromUrlParams(undefined, '2026-07-15')).toEqual({
-      from: '2026-07-15',
       to: '2026-07-15',
     })
     const range = createdAtRangeFromUrlParams('2026-07-01', undefined)
     expect(range?.[0]?.format('YYYY-MM-DD')).toBe('2026-07-01')
-    expect(range?.[1]?.format('YYYY-MM-DD')).toBe('2026-07-01')
+    expect(range?.[1]).toBeNull()
   })
 
-  it('buildListQueryApiFilters — from만 있어도 하루 구간으로 넣는다', () => {
+  it('buildListQueryApiFilters — from만 있으면 createdAtFrom만', () => {
     const api = buildListQueryApiFilters({
       kind: 'admins',
       createdAtFrom: '2026-08-01',
     })
     expect(api.createdAtFrom).toBe('2026-08-01')
-    expect(api.createdAtTo).toBe('2026-08-01')
+    expect(api.createdAtTo).toBeUndefined()
   })
 
   it('pendingToApiFilters / userListPendingFiltersFromParams — 한쪽만 허용', () => {
@@ -261,13 +257,27 @@ describe('createdAt date range helpers', () => {
         },
         'all'
       )
-    ).toMatchObject({ createdAtFrom: '2026-09-03', createdAtTo: '2026-09-03' })
+    ).toMatchObject({ createdAtFrom: '2026-09-03' })
+    expect(
+      pendingToApiFilters(
+        {
+          search: '',
+          institutionSido: '',
+          institutionSigungu: '',
+          jaEvaluationGrade: '',
+          settlementStatus: '',
+          adminPermissionVariant: '',
+          createdAtRange: [dayjs('2026-09-03'), null],
+        },
+        'all'
+      ).createdAtTo
+    ).toBeUndefined()
 
     const pending = userListPendingFiltersFromParams({
       kind: 'individual',
       createdAtTo: '2026-09-10',
     })
-    expect(pending.createdAtRange?.[0]?.format('YYYY-MM-DD')).toBe('2026-09-10')
+    expect(pending.createdAtRange?.[0]).toBeNull()
     expect(pending.createdAtRange?.[1]?.format('YYYY-MM-DD')).toBe('2026-09-10')
   })
 })

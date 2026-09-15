@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { SortOrderDragIcon } from '@/shared/ui/sort-order-drag-icon'
 import { Form } from 'antd'
 import {
@@ -18,7 +19,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { ItemAddButton } from '@/features/template/ui/shared/item-add-button'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { DeferredCmsInput } from '@/features/template/ui/shared/deferred-cms-input'
 import './form-editor.css'
 
 function pruneSelectedAfterRemove(
@@ -71,10 +72,10 @@ function SortableScaleRow({
       <div className="form-editor-mc-item__field-wrap">
         <span className="form-editor-mc-item__index" aria-hidden>{`${index + 1}.`}</span>
         <div className="form-editor-mc-item__field">
-          <CmsInput
+          <DeferredCmsInput
             width="100%"
             value={item.label}
-            onChange={e => onLabelChange(item.id, e.target.value)}
+            onCommit={next => onLabelChange(item.id, next)}
             placeholder="항목 문구"
           />
         </div>
@@ -100,42 +101,52 @@ export function FormEditorScaleTypeItems({
   const items = paragraph.items?.length ? paragraph.items : createDefaultScaleTypeItems()
   const showDelete = items.length > 2
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
+  const paragraphId = paragraph.id
 
-  const handleDragEnd = ({ active, over }: DragEndEvent) => {
-    if (over == null || active.id === over.id) return
-    updateParagraph(paragraph.id, cur => {
-      if (cur.kind !== 'single_item' || cur.variant !== 'scale_type') return cur
-      const list = cur.items?.length ? cur.items : createDefaultScaleTypeItems()
-      const oldIndex = list.findIndex(i => i.id === String(active.id))
-      const newIndex = list.findIndex(i => i.id === String(over.id))
-      if (oldIndex < 0 || newIndex < 0) return cur
-      return { ...cur, items: arrayMove(list, oldIndex, newIndex) }
-    })
-  }
+  const handleDragEnd = useCallback(
+    ({ active, over }: DragEndEvent) => {
+      if (over == null || active.id === over.id) return
+      updateParagraph(paragraphId, cur => {
+        if (cur.kind !== 'single_item' || cur.variant !== 'scale_type') return cur
+        const list = cur.items?.length ? cur.items : createDefaultScaleTypeItems()
+        const oldIndex = list.findIndex(i => i.id === String(active.id))
+        const newIndex = list.findIndex(i => i.id === String(over.id))
+        if (oldIndex < 0 || newIndex < 0) return cur
+        return { ...cur, items: arrayMove(list, oldIndex, newIndex) }
+      })
+    },
+    [paragraphId, updateParagraph]
+  )
 
-  const setLabel = (id: string, label: string) => {
-    updateParagraph(paragraph.id, cur => {
-      if (cur.kind !== 'single_item' || cur.variant !== 'scale_type') return cur
-      const list = cur.items?.length ? cur.items : createDefaultScaleTypeItems()
-      return {
-        ...cur,
-        items: list.map(row => (row.id === id ? { ...row, label } : row)),
-      }
-    })
-  }
+  const setLabel = useCallback(
+    (id: string, label: string) => {
+      updateParagraph(paragraphId, cur => {
+        if (cur.kind !== 'single_item' || cur.variant !== 'scale_type') return cur
+        const list = cur.items?.length ? cur.items : createDefaultScaleTypeItems()
+        return {
+          ...cur,
+          items: list.map(row => (row.id === id ? { ...row, label } : row)),
+        }
+      })
+    },
+    [paragraphId, updateParagraph]
+  )
 
-  const removeItem = (id: string) => {
-    updateParagraph(paragraph.id, cur => {
-      if (cur.kind !== 'single_item' || cur.variant !== 'scale_type') return cur
-      const list = cur.items?.length ? cur.items : createDefaultScaleTypeItems()
-      if (list.length <= 2) return cur
-      const nextItems = list.filter(row => row.id !== id)
-      return { ...cur, items: nextItems, ...pruneSelectedAfterRemove(cur, id) }
-    })
-  }
+  const removeItem = useCallback(
+    (id: string) => {
+      updateParagraph(paragraphId, cur => {
+        if (cur.kind !== 'single_item' || cur.variant !== 'scale_type') return cur
+        const list = cur.items?.length ? cur.items : createDefaultScaleTypeItems()
+        if (list.length <= 2) return cur
+        const nextItems = list.filter(row => row.id !== id)
+        return { ...cur, items: nextItems, ...pruneSelectedAfterRemove(cur, id) }
+      })
+    },
+    [paragraphId, updateParagraph]
+  )
 
-  const addItem = () => {
-    updateParagraph(paragraph.id, cur => {
+  const addItem = useCallback(() => {
+    updateParagraph(paragraphId, cur => {
       if (cur.kind !== 'single_item' || cur.variant !== 'scale_type') return cur
       const list = cur.items?.length ? cur.items : createDefaultScaleTypeItems()
       const nextIndex = list.length + 1
@@ -145,7 +156,7 @@ export function FormEditorScaleTypeItems({
         items: [...list, { id: newId, label: `항목 ${nextIndex}` }],
       }
     })
-  }
+  }, [paragraphId, updateParagraph])
 
   return (
     <>

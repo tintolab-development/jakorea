@@ -32,6 +32,9 @@ export type AdminRegisteredWizardState = {
   schoolOrganizationId?: number | null
   /** NEIS 학교 코드 — CMS PK 없을 때 schoolSelection.externalSchoolCode */
   schoolNeisCode?: string | null
+  /** NEIS 교육청 코드 — schoolSelection.educationOfficeCode */
+  schoolEducationOfficeCode?: string | null
+  schoolSource?: 'neis' | 'careerNet'
   grade?: string
   address?: string
   addressDetail?: string

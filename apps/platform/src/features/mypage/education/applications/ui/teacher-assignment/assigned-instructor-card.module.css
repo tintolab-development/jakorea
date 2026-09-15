@@ -1,0 +1,106 @@
+.card {
+  display: flex;
+  width: 420px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: var(--spacing-16) var(--spacing-20) var(--spacing-8) var(--spacing-20);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+  border-radius: var(--radius-16);
+  border: 1px solid var(--color-border-light, rgba(61, 61, 61, 0.1));
+  background: var(--color-neutral-cool-50, #f5f7f7);
+}
+
+.nameRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+}
+
+.nameGroup {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: baseline;
+}
+
+.name {
+  margin-right: 8px;
+}
+
+.carouselControls {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.carouselIndex {
+  margin-right: var(--spacing-4);
+  white-space: nowrap;
+}
+
+.consentList {
+  display: flex;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.consentItem {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+}
+
+.divider {
+  width: 317px;
+  max-width: 100%;
+  height: 1px;
+  margin: 4px 0;
+  background: var(--color-border-light, rgba(61, 61, 61, 0.1));
+}
+
+.consentRow {
+  display: flex;
+  padding: var(--spacing-8) 0;
+  align-items: center;
+  gap: var(--spacing-20);
+  align-self: stretch;
+}
+
+.consentTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.downloadButton {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.downloadButton img {
+  display: block;
+  width: 20px;
+  height: 20px;
+}

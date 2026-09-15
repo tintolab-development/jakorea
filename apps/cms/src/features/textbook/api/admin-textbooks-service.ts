@@ -29,7 +29,7 @@ import type { Program } from '@/types/domain'
 
 function assertTextbooksRemoteReady(): void {
   if (!isRealApiModuleEnabled('textbooks')) {
-    throw new Error('교재 API가 활성화되지 않았습니다. VITE_REAL_API_MODULES에 textbooks를 추가해 주세요.')
+    throw new Error('교재 API가 활성화되지 않았습니다. VITE_API_SERVER(또는 VITE_API_BASE_URL)로 백엔드를 설정해 주세요.')
   }
   if (!hasRemoteAdminJwt()) {
     throw new Error('교재 조회는 관리자 로그인 후 이용할 수 있습니다.')

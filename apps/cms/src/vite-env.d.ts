@@ -12,11 +12,6 @@ interface ImportMetaEnv {
   /** Admin SSO callback용 백엔드 public origin (ngrok 등). `redirectUri` body·IdP 등록에 사용 */
   readonly VITE_OAUTH_BACKEND_ORIGIN?: string
   readonly VITE_OAUTH_EXCHANGE_MODE?: string
-  /**
-   * (선택) 실 API 모듈 allowlist. 미설정·빈 값이면 remote URL 있을 때 **전부 실 API**.
-   * 일부만 mock으로 둘 때만 쉼표 구분 키를 넣는다. 예: `adminAuth,textbooks`
-   */
-  readonly VITE_REAL_API_MODULES?: string
   readonly VITE_API_BASE_URL?: string
   /**
    * 로컬 dev: `vite.config`에서 `/api` 프록시 타깃(배포 API·ngrok 오리진). `VITE_API_BASE_URL` 비울 때 클라이언트도 상대 `/api` 사용.

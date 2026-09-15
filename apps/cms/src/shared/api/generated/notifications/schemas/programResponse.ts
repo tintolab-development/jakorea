@@ -58,6 +58,7 @@ export interface ProgramResponse {
   managerName?: string;
   venue?: string;
   curriculum?: string;
+  contactName?: string;
   contactEmail?: string;
   contactPhone?: string;
   oneLineIntroduction?: string;
@@ -67,6 +68,9 @@ export interface ProgramResponse {
   additionalContentHtml?: string;
   recruitmentGuide?: string;
   learningSupportContent?: string;
+  otherMatters?: string;
+  remarks?: string;
+  recruitmentTargetDetail?: string;
   serviceDetailJson?: string;
   attachmentFileNames?: string[];
   adminAssignments?: ProgramAdminAssignmentResponse[];
@@ -74,7 +78,7 @@ export interface ProgramResponse {
   settlementPolicy?: ProgramSettlementPolicyResponse;
   createdAt?: string;
   updatedAt?: string;
-  businessYear?: number;
-  businessEndDate?: string;
   businessStartDate?: string;
+  businessEndDate?: string;
+  businessYear?: number;
 }

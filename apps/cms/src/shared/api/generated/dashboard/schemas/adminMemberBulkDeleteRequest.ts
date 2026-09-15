@@ -16,11 +16,12 @@ export interface AdminMemberBulkDeleteRequest {
      */
   ids: number[];
   /**
-     * @minLength 0
+     * @minLength 5
      * @maxLength 500
      */
-  reason?: string;
+  reason: string;
   /**
+     * CMS 삭제 확인 문구. 허용값: "삭제" (exact match after Java String.trim()). 본인 탈퇴의 "탈퇴"와 구분합니다.
      * @minLength 0
      * @maxLength 30
      */

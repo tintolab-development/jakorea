@@ -31,7 +31,7 @@ export type PaymentOrdersDetailContextParams = {
   type: 'program' | 'instructor'
   aggregateKey: string
   /** 목록(지급조서 확인)에 조회 적용된 출강일 기간 — 상세 라인 API 스코프 */
-  dateRange?: { from: string; to: string } | null
+  dateRange?: { from?: string; to?: string } | null
   /** 상세 필터 「신청자명/프로그램명」 → settlements `search` */
   search?: string | null
   /** 상세 필터 「지급조서 처리 현황」 → `statementStatus` (all이면 생략) */
@@ -47,10 +47,8 @@ export function buildPaymentOrdersDetailListParams(
   const listParams: Omit<ListSettlementsParams, 'page' | 'size'> =
     params.type === 'program' ? { programId: id } : { instructorMemberId: id }
 
-  if (params.dateRange?.from && params.dateRange?.to) {
-    listParams.fromDate = params.dateRange.from
-    listParams.toDate = params.dateRange.to
-  }
+  if (params.dateRange?.from) listParams.fromDate = params.dateRange.from
+  if (params.dateRange?.to) listParams.toDate = params.dateRange.to
 
   const search = params.search?.trim()
   if (search) {

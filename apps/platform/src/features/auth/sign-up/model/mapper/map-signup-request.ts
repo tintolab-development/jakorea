@@ -10,6 +10,7 @@ import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE } from '../../lib/constants'
 import { toApiSignupPhone } from '../../lib/helpers/to-api-phone'
 import { parseBirthDate } from '../../lib/utils'
 import { buildTermsAgreementsFromCatalog } from './map-terms-agreements'
+import { buildSchoolSelection } from '../../lib/build-school-selection'
 import type {
   HomepageGeneralSignupRequest,
   HomepageTeacherSignupRequest,
@@ -59,7 +60,10 @@ export type SignUpMapInput = {
   schoolOrganizationId?: number | null
   /** NEIS 학교 코드 — schoolSelection.externalSchoolCode */
   schoolNeisCode?: string | null
+  /** NEIS 교육청 코드 — schoolSelection.educationOfficeCode */
+  schoolEducationOfficeCode?: string | null
   schoolAddress?: string
+  schoolSource?: 'neis' | 'careerNet'
   grade: string
   employmentStatus: EmploymentStatus | null
   address: string
@@ -73,19 +77,6 @@ export type SignUpMapInput = {
   agreements: AgreementState
   guardianAgreements?: GuardianAgreementState
   termsCatalog?: SignupTermsCatalogResponse | null
-}
-
-function buildSchoolSelection(input: SignUpMapInput) {
-  const name = input.schoolName.trim()
-  if (!name) return undefined
-
-  return {
-    provider: 'NEIS',
-    externalSchoolCode: input.schoolNeisCode?.trim() || undefined,
-    name,
-    address: input.schoolAddress?.trim() || undefined,
-    organizationCategory: 'SCHOOL',
-  }
 }
 
 function buildMember(input: SignUpMapInput): MemberSignupRequest {
@@ -134,7 +125,14 @@ function buildMember(input: SignUpMapInput): MemberSignupRequest {
     if (input.schoolOrganizationId != null) {
       member.schoolOrganizationId = input.schoolOrganizationId
     } else {
-      member.schoolSelection = buildSchoolSelection(input)
+      member.schoolSelection = buildSchoolSelection({
+        schoolName: input.schoolName,
+        schoolNeisCode: input.schoolNeisCode,
+        schoolEducationOfficeCode: input.schoolEducationOfficeCode,
+        schoolAddress: input.schoolAddress,
+        regionSido: input.regionSido,
+        source: input.schoolSource,
+      })
     }
   }
 
@@ -159,7 +157,14 @@ export function mapSignUpToTeacherRequest(
   if (input.schoolOrganizationId != null) {
     member.schoolOrganizationId = input.schoolOrganizationId
   } else {
-    member.schoolSelection = buildSchoolSelection(input)
+    member.schoolSelection = buildSchoolSelection({
+      schoolName: input.schoolName,
+      schoolNeisCode: input.schoolNeisCode,
+      schoolEducationOfficeCode: input.schoolEducationOfficeCode,
+      schoolAddress: input.schoolAddress,
+      regionSido: input.regionSido,
+      source: input.schoolSource,
+    })
   }
 
   return {

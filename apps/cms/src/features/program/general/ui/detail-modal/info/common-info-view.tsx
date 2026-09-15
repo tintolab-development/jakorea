@@ -8,6 +8,7 @@ import { Controller, useFieldArray, type UseFormReturn } from 'react-hook-form'
 import { ClockCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
+import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -70,9 +71,9 @@ import { applyGeneralParticipantAudienceToEditForm } from '@/features/program/ge
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
 import { isGeneralIndividualParticipantTarget } from '@/features/program/general/lib/survey-audience'
 import {
-  getProgramWagePaymentItemOptions,
   normalizeProgramPaymentItemSelection,
   resolveProgramWageDeductionLabel,
+  useProgramWagePaymentItemOptions,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import {
   GENERAL_PROGRAM_EDUCATION_STRUCTURE_LABELS,
@@ -81,6 +82,7 @@ import {
 import {
   encodeSponsorManagerContactRef,
   formatGeneralProgramVenueViewLine,
+  formatSponsorManagerSelectLabel,
   getGeneralSurveyEditFieldsForAudience,
   getGeneralDetailedProgramSelectOptions,
   isGeneralProgramScheduleType,
@@ -294,7 +296,16 @@ function BasicInfoSection({
 }) {
   const isFormEdit = isEditMode && !!form
   const isScheduleType = isGeneralProgramScheduleType(program)
-  const detailedProgramOptions = useMemo(() => getGeneralDetailedProgramSelectOptions(), [])
+  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
+  const detailedProgramOptions = useMemo(
+    () =>
+      getGeneralDetailedProgramSelectOptions(
+        remoteDetailedProgramOptions.length > 0
+          ? remoteDetailedProgramOptions.map(o => ({ id: o.value, name: o.label }))
+          : undefined
+      ),
+    [remoteDetailedProgramOptions]
+  )
   const { options: sponsorOptions, data: sponsorRows = [] } = useSponsorSelectOptions(true)
   const viewSponsorContext = useMemo(
     () => ({
@@ -307,29 +318,41 @@ function BasicInfoSection({
   const announcementTitle = commonInfo.announcementTitle ?? program.title
   const detailedName = resolveGeneralProgramDetailedProgramNameDisplay(program, commonInfo)
   const sponsorManagementIds = resolveSponsorManagementIds(program, viewSponsorContext)
+  const sponsorDisplayEntries = sponsorManagementIds
+    .map((sponsorManagementId, index) => {
+      const sponsorRow =
+        sponsorRows.find(row => row.id === sponsorManagementId) ?? null
+      const name =
+        sponsorRow?.name?.trim() ||
+        (index === 0 ? sponsorName?.trim() : '') ||
+        ''
+      if (!name) return null
+      return { sponsorManagementId, sponsorRow, name }
+    })
+    .filter(
+      (
+        entry
+      ): entry is {
+        sponsorManagementId: string
+        sponsorRow: (typeof sponsorRows)[number] | null
+        name: string
+      } => entry != null
+    )
   const sponsorDisplay =
-    sponsorManagementIds.length > 0 ? (
+    sponsorDisplayEntries.length > 0 ? (
       <>
-        {sponsorManagementIds.map((sponsorManagementId, index) => {
-          const sponsorRow =
-            sponsorRows.find(row => row.id === sponsorManagementId) ?? null
-          const name =
-            sponsorRow?.name?.trim() ||
-            (index === 0 ? sponsorName?.trim() : '') ||
-            ''
-          if (!name) return null
-          return (
-            <Fragment key={sponsorManagementId}>
-              {index > 0 ? ', ' : null}
-              <ProgramDetailSponsorLink
-                name={name}
-                sponsorId={program.sponsorId}
-                sponsorName={name}
-                sponsorManagementId={sponsorManagementId}
-              />
-            </Fragment>
-          )
-        })}
+        {sponsorDisplayEntries.map((entry, index) => (
+          <span key={entry.sponsorManagementId}>
+            {index > 0 ? ', ' : null}
+            <ProgramDetailSponsorLink
+              name={entry.name}
+              homepageUrl={entry.sponsorRow?.homepageUrl}
+              sponsorId={program.sponsorId}
+              sponsorName={entry.name}
+              sponsorManagementId={entry.sponsorManagementId}
+            />
+          </span>
+        ))}
       </>
     ) : (
       '-'
@@ -358,15 +381,14 @@ function BasicInfoSection({
     for (const sponsor of selectedSponsors) {
       const contacts = sponsorEditContext.contactsBySponsorId[sponsor.id] ?? []
       for (const contact of contacts) {
-        const label =
-          selectedSponsors.length > 1
-            ? `${sponsor.name} · ${contact.position ? `${contact.position} ` : ''}${contact.name}`
-            : contact.position
-              ? `${contact.position} ${contact.name}`
-              : contact.name
         options.push({
           value: encodeSponsorManagerContactRef(sponsor.id, contact.id),
-          label,
+          label: formatSponsorManagerSelectLabel({
+            sponsorName: sponsor.name,
+            contactName: contact.name,
+            position: contact.position,
+            multiSponsor: selectedSponsors.length > 1,
+          }),
         })
       }
     }
@@ -377,15 +399,27 @@ function BasicInfoSection({
     if (!isFormEdit) return
     const currentManagerId = editForm.getValues('sponsorManagerContactId')
     if (watchedSponsorIds.length === 0) {
-      if (currentManagerId) editForm.setValue('sponsorManagerContactId', '')
+      if (currentManagerId) {
+        editForm.setValue('sponsorManagerContactId', '', { shouldValidate: false })
+      }
       return
     }
     if (managerOptions.length === 0) {
-      if (currentManagerId) editForm.setValue('sponsorManagerContactId', '')
+      if (currentManagerId) {
+        editForm.setValue('sponsorManagerContactId', '', { shouldValidate: false })
+      }
       return
     }
     if (!managerOptions.some(option => option.value === currentManagerId)) {
-      editForm.setValue('sponsorManagerContactId', managerOptions[0]?.value ?? '')
+      const next = managerOptions[0]?.value ?? ''
+      editForm.setValue('sponsorManagerContactId', next, {
+        shouldValidate: Boolean(next),
+        shouldDirty: true,
+      })
+      if (next) editForm.clearErrors('sponsorManagerContactId')
+    } else if (currentManagerId) {
+      // 옵션 로드 후 유효 값이 있는데 저장 실패 에러가 남은 경우 빨간 글씨 방지
+      editForm.clearErrors('sponsorManagerContactId')
     }
   }, [editForm, isFormEdit, managerOptions, watchedSponsorIds])
 
@@ -651,17 +685,24 @@ function BasicInfoSection({
               <Controller
                 name="businessArea"
                 control={editForm.control}
-                render={({ field }) => (
-                  <CmsSelect
-                    withAllOption={false}
-                    placeholder="사업 분야를 선택하세요"
-                    width="100%"
-                    options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
-                    value={field.value || undefined}
-                    onChange={v => field.onChange(String(v ?? ''))}
-                    status={editForm.formState.errors.businessArea ? 'error' : undefined}
-                  />
-                )}
+                render={({ field, fieldState }) => {
+                  const hasValue = Boolean(String(field.value ?? '').trim())
+                  return (
+                    <CmsSelect
+                      withAllOption={false}
+                      placeholder="사업 분야를 선택하세요"
+                      width="100%"
+                      options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
+                      value={field.value || undefined}
+                      onChange={v => {
+                        const next = String(v ?? '')
+                        field.onChange(next)
+                        if (next) editForm.clearErrors('businessArea')
+                      }}
+                      status={fieldState.error && !hasValue ? 'error' : undefined}
+                    />
+                  )
+                }}
               />
             }
           />
@@ -674,24 +715,28 @@ function BasicInfoSection({
               <Controller
                 name="sponsorManagementIds"
                 control={editForm.control}
-                render={({ field }) => (
-                  <CmsSelect
-                    mode="multiple"
-                    withAllOption={false}
-                    placeholder="후원사를 선택하세요"
-                    width="100%"
-                    showSearch
-                    optionFilterProp="label"
-                    options={sponsorOptions}
-                    value={field.value ?? []}
-                    onChange={v => {
-                      const next = Array.isArray(v) ? v.map(String) : []
-                      field.onChange(next)
-                      editForm.setValue('sponsorManagerContactId', '')
-                    }}
-                    status={editForm.formState.errors.sponsorManagementIds ? 'error' : undefined}
-                  />
-                )}
+                render={({ field, fieldState }) => {
+                  const hasValue = Array.isArray(field.value) && field.value.length > 0
+                  return (
+                    <CmsSelect
+                      mode="multiple"
+                      withAllOption={false}
+                      placeholder="후원사를 선택하세요"
+                      width="100%"
+                      showSearch
+                      optionFilterProp="label"
+                      options={sponsorOptions}
+                      value={field.value ?? []}
+                      onChange={v => {
+                        const next = Array.isArray(v) ? v.map(String) : []
+                        field.onChange(next)
+                        editForm.setValue('sponsorManagerContactId', '')
+                        if (next.length > 0) editForm.clearErrors('sponsorManagementIds')
+                      }}
+                      status={fieldState.error && !hasValue ? 'error' : undefined}
+                    />
+                  )
+                }}
               />
             }
           />
@@ -706,17 +751,29 @@ function BasicInfoSection({
               <Controller
                 name="sponsorManagerContactId"
                 control={editForm.control}
-                render={({ field }) => (
-                  <CmsSelect
-                    placeholder="후원사 담당자를 선택하세요"
-                    width="100%"
-                    options={managerOptions}
-                    value={field.value || undefined}
-                    disabled={watchedSponsorIds.length === 0 || managerOptions.length === 0}
-                    onChange={v => field.onChange(String(v ?? ''))}
-                    status={editForm.formState.errors.sponsorManagerContactId ? 'error' : undefined}
-                  />
-                )}
+                render={({ field, fieldState }) => {
+                  const hasValidSelection =
+                    Boolean(field.value) &&
+                    managerOptions.some(option => option.value === field.value)
+                  return (
+                    <CmsSelect
+                      placeholder="후원사 담당자를 선택하세요"
+                      width="100%"
+                      options={managerOptions}
+                      value={field.value || undefined}
+                      disabled={watchedSponsorIds.length === 0 || managerOptions.length === 0}
+                      onChange={v => {
+                        const next = String(v ?? '')
+                        field.onChange(next)
+                        if (next) editForm.clearErrors('sponsorManagerContactId')
+                      }}
+                      // 유효 선택값이 있으면 error status 금지 (Ant가 선택 라벨을 빨간색으로 칠함)
+                      status={
+                        fieldState.error && !hasValidSelection ? 'error' : undefined
+                      }
+                    />
+                  )
+                }}
               />
             }
           />
@@ -806,17 +863,24 @@ function BasicInfoSection({
               <Controller
                 name="educationProcess"
                 control={editForm.control}
-                render={({ field }) => (
-                  <CmsSelect
-                    withAllOption={false}
-                    placeholder="교육 과정을 선택하세요"
-                    width="100%"
-                    options={[...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]}
-                    value={field.value || undefined}
-                    onChange={v => field.onChange(String(v ?? ''))}
-                    status={editForm.formState.errors.educationProcess ? 'error' : undefined}
-                  />
-                )}
+                render={({ field, fieldState }) => {
+                  const hasValue = Boolean(String(field.value ?? '').trim())
+                  return (
+                    <CmsSelect
+                      withAllOption={false}
+                      placeholder="교육 과정을 선택하세요"
+                      width="100%"
+                      options={[...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]}
+                      value={field.value || undefined}
+                      onChange={v => {
+                        const next = String(v ?? '')
+                        field.onChange(next)
+                        if (next) editForm.clearErrors('educationProcess')
+                      }}
+                      status={fieldState.error && !hasValue ? 'error' : undefined}
+                    />
+                  )
+                }}
               />
             }
           />
@@ -827,17 +891,24 @@ function BasicInfoSection({
               <Controller
                 name="ipOwned"
                 control={editForm.control}
-                render={({ field }) => (
-                  <CmsSelect
-                    withAllOption={false}
-                    placeholder="IP Owned를 선택하세요"
-                    width="100%"
-                    options={[...PROGRAM_REGISTRATION_IP_OWNED_OPTIONS]}
-                    value={field.value || undefined}
-                    onChange={v => field.onChange(String(v ?? ''))}
-                    status={editForm.formState.errors.ipOwned ? 'error' : undefined}
-                  />
-                )}
+                render={({ field, fieldState }) => {
+                  const hasValue = Boolean(String(field.value ?? '').trim())
+                  return (
+                    <CmsSelect
+                      withAllOption={false}
+                      placeholder="IP Owned를 선택하세요"
+                      width="100%"
+                      options={[...PROGRAM_REGISTRATION_IP_OWNED_OPTIONS]}
+                      value={field.value || undefined}
+                      onChange={v => {
+                        const next = String(v ?? '')
+                        field.onChange(next)
+                        if (next) editForm.clearErrors('ipOwned')
+                      }}
+                      status={fieldState.error && !hasValue ? 'error' : undefined}
+                    />
+                  )
+                }}
               />
             }
           />
@@ -850,17 +921,24 @@ function BasicInfoSection({
               <Controller
                 name="courseDeliveredBy"
                 control={editForm.control}
-                render={({ field }) => (
-                  <CmsSelect
-                    withAllOption={false}
-                    placeholder="Course Delivered By를 선택하세요"
-                    width="100%"
-                    options={[...PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS]}
-                    value={field.value || undefined}
-                    onChange={v => field.onChange(String(v ?? ''))}
-                    status={editForm.formState.errors.courseDeliveredBy ? 'error' : undefined}
-                  />
-                )}
+                render={({ field, fieldState }) => {
+                  const hasValue = Boolean(String(field.value ?? '').trim())
+                  return (
+                    <CmsSelect
+                      withAllOption={false}
+                      placeholder="Course Delivered By를 선택하세요"
+                      width="100%"
+                      options={[...PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS]}
+                      value={field.value || undefined}
+                      onChange={v => {
+                        const next = String(v ?? '')
+                        field.onChange(next)
+                        if (next) editForm.clearErrors('courseDeliveredBy')
+                      }}
+                      status={fieldState.error && !hasValue ? 'error' : undefined}
+                    />
+                  )
+                }}
               />
             }
           />
@@ -1133,7 +1211,7 @@ function WageSection({
   const rows = commonInfo.wageGradeRows ?? []
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
-  const paymentItemOptions = useMemo(() => getProgramWagePaymentItemOptions(), [])
+  const paymentItemOptions = useProgramWagePaymentItemOptions()
 
   const editForm =
     form ??
@@ -1273,11 +1351,7 @@ function TypeSettingsScheduleDetailRow({
           fullRow
           view={
             scheduleDetail === 'perSchedule' ? (
-              <div className="detail-info-form-inputs-wrapper">
-                일정 별 상이
-                <DetailInfoForm.InputsSeparator />
-                <span className="program-registration-paragraph__schedule-hint">{perScheduleHint}</span>
-              </div>
+              '일정 별 상이'
             ) : (
               (commonDetailView ?? '-')
             )
@@ -2840,23 +2914,12 @@ function ScheduleEventPerScheduleExtraViewRows({
   assignmentPeriod?: string
 }) {
   if (isPreEducationBlock) {
-    if (extraPlan.showIps) {
-      return (
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="교육 형태" view={educationFormLabel?.trim() || '-'} />
-          <DetailInfoForm.Field
-            label="IPS 유형"
-            view={<PipeSeparatedInlineView text={ipsTypeSummary} />}
-          />
-        </DetailInfoForm.Row>
-      )
-    }
     return (
-      <DetailInfoForm.Row type="single">
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="교육 형태" view={educationFormLabel?.trim() || '-'} />
         <DetailInfoForm.Field
-          label="교육 형태"
-          fullRow
-          view={educationFormLabel?.trim() || '-'}
+          label="IPS 유형"
+          view={<PipeSeparatedInlineView text={ipsTypeSummary || 'Prepare | 해당없음'} />}
         />
       </DetailInfoForm.Row>
     )
@@ -3089,16 +3152,11 @@ function ScheduleEventPerScheduleExtraEditRows({
   )
 
   if (isPreEducationBlock) {
-    if (extraPlan.showIps) {
-      return (
-        <DetailInfoForm.Row type="double">
-          {educationField()}
-          {ipsField({ layout: 'inline' })}
-        </DetailInfoForm.Row>
-      )
-    }
     return (
-      <DetailInfoForm.Row type="single">{educationField(true)}</DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        {educationField()}
+        {ipsField({ layout: 'inline' })}
+      </DetailInfoForm.Row>
     )
   }
 

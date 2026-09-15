@@ -70,7 +70,10 @@ import { useCreateInstructorRoleRequestMutation } from './api/use-create-instruc
 import { EducationSchoolNameField } from './education-school-name-field'
 import { getInstructorApplyConsentPath } from './consent/catalog'
 import { loadInstructorApplyFormDraft, saveInstructorApplyFormDraft } from './consent/form-persist'
-import type { InstructorApplyLockedBasicInfo } from './map-locked-basic-info'
+import {
+  isInstructorApplyHomeAddressLocked,
+  type InstructorApplyLockedBasicInfo,
+} from './map-locked-basic-info'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import styles from './instructor-apply-form.module.css'
@@ -106,8 +109,6 @@ const LOCKED_BASIC_KEYS = [
   'birthDate',
   'contact',
   'email',
-  'homeAddress',
-  'homeAddressDetail',
   'memberType',
   'schoolName',
   'employmentStatus',
@@ -119,6 +120,7 @@ function applyLockedBasic(
   base: InstructorSharedProfileFormValues,
   locked: InstructorApplyLockedBasicInfo
 ): InstructorSharedProfileFormValues {
+  const homeAddressLocked = isInstructorApplyHomeAddressLocked(locked)
   return {
     ...base,
     name: locked.name,
@@ -126,8 +128,8 @@ function applyLockedBasic(
     birthDate: locked.birthDate,
     contact: locked.contact,
     email: locked.email,
-    homeAddress: locked.homeAddress,
-    homeAddressDetail: locked.homeAddressDetail,
+    homeAddress: homeAddressLocked ? locked.homeAddress : base.homeAddress,
+    homeAddressDetail: homeAddressLocked ? locked.homeAddressDetail : base.homeAddressDetail,
     memberType: locked.memberType,
     schoolName: locked.memberType === 'school_teacher' ? locked.schoolName : '',
     employmentStatus: locked.memberType === 'school_teacher' ? locked.employmentStatus : '',
@@ -220,6 +222,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
   const createMutation = useCreateInstructorRoleRequestMutation()
   const useRemoteSubmit = isRemoteApiConfigured() && Boolean(getAccessToken())
   const isSubmitting = submitting || createMutation.isPending
+  const isHomeAddressLocked = isInstructorApplyHomeAddressLocked(lockedBasic)
 
   useEffect(() => {
     setValues(prev => applyLockedBasic(prev, lockedBasic))
@@ -243,6 +246,12 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
     next: InstructorSharedProfileFormValues[K]
   ) => {
     if ((LOCKED_BASIC_KEYS as readonly string[]).includes(key)) return
+    if (
+      isHomeAddressLocked &&
+      (key === 'homeAddress' || key === 'homeAddressDetail')
+    ) {
+      return
+    }
     setValues(prev => ({ ...prev, [key]: next }))
   }
 
@@ -531,7 +540,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                   onDetailChange={value => patch('homeAddressDetail', value)}
                   roadPlaceholder={PH.homeAddress}
                   detailPlaceholder={PH.homeAddressDetail}
-                  disabled
+                  disabled={isHomeAddressLocked}
                 />
               </PFFormField>
             </PFFormFieldRow>

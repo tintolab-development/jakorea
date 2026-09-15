@@ -11,6 +11,13 @@ import { getDevMemberProfile } from '@/shared/lib/dev-member-profile'
 import { MOCK_MYPAGE_USER_NAME } from '../lib/constants'
 import type { PlatformMemberProfile } from '../model/types'
 
+/** 프로필에 자택 주소(도로명)가 있을 때만 강사 신청 폼에서 고정·비활성화 */
+export function isInstructorApplyHomeAddressLocked(
+  locked: Pick<InstructorApplyLockedBasicInfo, 'homeAddress' | 'homeAddressDetail'>,
+): boolean {
+  return Boolean(locked.homeAddress.trim())
+}
+
 /** 강사 신청 — 회원가입 정보로 고정·비활성화하는 기본정보 */
 export type InstructorApplyLockedBasicInfo = {
   name: string

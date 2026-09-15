@@ -71,6 +71,8 @@ export type SelectedSchool = {
   organizationId?: number
   /** NEIS 학교 코드 — CMS와 동일 출처 */
   neisCode?: string
+  /** NEIS 교육청 코드 (`ATPT_OFCDC_SC_CODE`) */
+  educationOfficeCode?: string
   /** NEIS 소재지 도로명 주소 — 확인 화면 소속/학교 표시용 */
   address?: string
   source?: 'neis' | 'careerNet'
@@ -285,6 +287,7 @@ export function SchoolSearchModal({
       onSelect({
         name: school.schulNm,
         neisCode: school.sdSchulCode || undefined,
+        educationOfficeCode: school.atptOfcdcScCode || undefined,
         address: school.orgRdnma?.trim() || undefined,
         source: 'neis',
       })

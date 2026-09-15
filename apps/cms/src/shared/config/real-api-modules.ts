@@ -1,19 +1,15 @@
 /**
- * mock → 실 API 전환
+ * mock → 실 API 전환 게이트
  *
  * `VITE_API_BASE_URL` / `VITE_API_SERVER` 등으로 백엔드가 설정돼 있으면
- * **기본은 전 모듈 실 API** (mock 중단).
+ * **전 모듈 실 API**. 부분 mock 모듈 allowlist는 사용하지 않는다.
  *
- * - **목록 미설정(환경변수 없음·빈 문자열)** : remote URL이 있으면 **전부 실 API**.
- * - **목록 설정** : 예 `adminAuth,textbooks` — 쉼표로 구분한 키만 실 API, 나머지는 mock
- *   (로컬에서 일부만 mock으로 돌릴 때 선택적 allowlist).
- *
- * 새 도메인을 실 API로 붙일 때: 아래 `RealApiModule` 유니온에 키를 추가하고, 해당 서비스에서 `isRealApiModuleEnabled(...)` 호출.
+ * 도메인 식별용 `RealApiModule` 키는 호출부·backend-dummies 칩용으로만 유지한다.
  */
 
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
-/** 실 API 연동 단위 — 필요 시 문자열 하나씩 추가 */
+/** 실 API 연동 단위 — 도메인 식별·디버그 UI용 */
 export const REAL_API_MODULE_KEYS = [
   'adminAuth',
   'dashboard',
@@ -51,32 +47,10 @@ export const REAL_API_MODULE_KEYS = [
 ] as const
 export type RealApiModule = (typeof REAL_API_MODULE_KEYS)[number]
 
-function explicitModuleSet(): Set<string> | null {
-  const raw = import.meta.env.VITE_REAL_API_MODULES
-  if (raw === undefined) return null
-  const trimmed = String(raw).trim()
-  if (trimmed === '') return null
-
-  const set = new Set(
-    trimmed
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean)
-  )
-  return set
-}
-
 /**
- * 백엔드 URL이 준비돼 있으면 true.
- * `VITE_REAL_API_MODULES`가 있으면 그 목록에 포함된 모듈만 true (부분 mock용).
+ * 백엔드 URL이 준비돼 있으면 true (전 모듈 동일).
+ * `_module`은 호출부 호환용이며 게이트에 사용하지 않는다.
  */
-export function isRealApiModuleEnabled(module: RealApiModule): boolean {
-  if (!isRemoteApiConfigured()) return false
-
-  const explicit = explicitModuleSet()
-  if (explicit === null) {
-    return true
-  }
-
-  return explicit.has(module)
+export function isRealApiModuleEnabled(_module: RealApiModule): boolean {
+  return isRemoteApiConfigured()
 }

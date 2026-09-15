@@ -6,7 +6,8 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react'
 import { downloadAttachment } from '@/shared/lib/download-attachment'
-import { chevronDownIconUrl, downloadIconUrl } from './icons'
+import chevronDownIconUrl from '@/shared/assets/icons/r-chevron-down-gray-22.svg'
+import downloadIconUrl from '@/shared/assets/icons/file-download-gray.svg'
 import styles from './pf-attachment-dropdown.module.css'
 
 export type PFAttachmentDropdownItem = {

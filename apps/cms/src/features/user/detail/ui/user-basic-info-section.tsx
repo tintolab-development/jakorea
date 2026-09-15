@@ -47,7 +47,7 @@ export interface UserBasicInfoSectionProps {
   externalId1365?: UserBasicInfoExternalId1365 | null
   personalInfoRevealed?: boolean
   memberInfoEditing?: boolean
-  /** profile 전체 수정 | instructor_fee_ja 강사비·JA만 (조회 레이아웃 유지) */
+  /** profile 전체 수정 | instructor_fee_ja 강사비 등급만 (조회 레이아웃 유지) */
   memberInfoEditScope?: 'profile' | 'instructor_fee_ja'
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void

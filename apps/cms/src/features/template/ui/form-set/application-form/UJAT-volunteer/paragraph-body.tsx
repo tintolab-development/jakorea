@@ -31,6 +31,7 @@ export function renderUjatProgramApplicationFormVolunteerParagraphBody(
         <UjatProgramApplicationVolunteerBasicInfoParagraph
           applicationType={options.applicationType}
           onApplicationTypeChange={options.onApplicationTypeChange}
+          isTemplateAuthoringMode={options.isTemplateAuthoringMode !== false}
         />
       )
     case UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm:

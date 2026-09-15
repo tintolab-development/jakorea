@@ -4,6 +4,8 @@
  */
 
 import type { UjatProgramProgressStatus } from '@/types/domain'
+import { normalizeUjatProgressStatus } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
+import { resolveUjatPrimaryProgressById } from '@/features/program/ujat/lib/is-ujat-primary-program'
 
 export const UJAT_PROGRAM_LIST_PROGRESS_ORDER: readonly UjatProgramProgressStatus[] = [
   'EDUCATION_SCHEDULED',
@@ -15,7 +17,7 @@ export const UJAT_PROGRAM_LIST_PROGRESS_ORDER: readonly UjatProgramProgressStatu
 
 export const UJAT_PROGRAM_LIST_PROGRESS_LABELS: Record<UjatProgramProgressStatus, string> = {
   EDUCATION_SCHEDULED: '프로그램 진행 예정',
-  PARTICIPANT_RECRUITING: '참여자 모집 중',
+  PARTICIPANT_RECRUITING: '참여 기관 모집 중',
   VOLUNTEER_RECRUITING: '봉사자 모집 중',
   EDUCATION_IN_PROGRESS: '프로그램 진행 중',
   PROGRAM_ENDED: '프로그램 진행 완료',
@@ -37,10 +39,14 @@ export function getUjatProgramListProgressLabel(
 }
 
 export function resolveUjatProgramListProgressStatus(program: {
-  ujatProgressStatus?: UjatProgramProgressStatus
+  id?: string
+  ujatProgressStatus?: UjatProgramProgressStatus | string
 }): UjatProgramProgressStatus | null {
-  const status = program.ujatProgressStatus
-  if (!status) return null
-  if (status in UJAT_PROGRAM_LIST_PROGRESS_LABELS) return status
-  return null
+  return (
+    normalizeUjatProgressStatus(
+      typeof program.ujatProgressStatus === 'string' ? program.ujatProgressStatus : null
+    ) ??
+    resolveUjatPrimaryProgressById(program.id) ??
+    null
+  )
 }

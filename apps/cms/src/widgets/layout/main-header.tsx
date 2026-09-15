@@ -126,6 +126,7 @@ export function MainHeader() {
       'volunteer',
       'general',
       'company-school',
+      'trained-teachers',
       'ujat',
       'gemini',
       'education',

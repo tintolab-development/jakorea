@@ -45,11 +45,10 @@ export function listMockMemberLoginLogs(filters: Record<string, string> = {}): M
   return SEED.filter(row => {
     if (adminName && !includesIgnoreCase(row.adminName, adminName)) return false
     if (loginId && !includesIgnoreCase(row.loginId, loginId)) return false
-    if (from && to) {
+    if (from || to) {
       const loggedAt = dayjs(row.loggedAt)
-      if (loggedAt.isBefore(dayjs(from).startOf('day')) || loggedAt.isAfter(dayjs(to).endOf('day'))) {
-        return false
-      }
+      if (from && loggedAt.isBefore(dayjs(from).startOf('day'))) return false
+      if (to && loggedAt.isAfter(dayjs(to).endOf('day'))) return false
     }
     return true
   }).sort((a, b) => dayjs(b.loggedAt).valueOf() - dayjs(a.loggedAt).valueOf())

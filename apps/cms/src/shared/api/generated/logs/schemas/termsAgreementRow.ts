@@ -5,6 +5,7 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { TermsAgreementRowConsentStatus } from './termsAgreementRowConsentStatus';
 
 export interface TermsAgreementRow {
   termsType?: string;
@@ -12,6 +13,10 @@ export interface TermsAgreementRow {
   required?: boolean;
   agreed?: boolean;
   agreedAt?: string;
+  /** PORTRAIT_RIGHTS 전용 상태 */
+  consentStatus?: TermsAgreementRowConsentStatus;
+  /** PORTRAIT_RIGHTS 전용 프로그램 참여 가능 여부 */
+  programEligible?: boolean;
   actorType?: string;
   sourceFlow?: string;
 }

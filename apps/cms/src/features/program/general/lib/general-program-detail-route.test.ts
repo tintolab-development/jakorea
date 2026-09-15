@@ -2,12 +2,16 @@ import { describe, expect, it } from 'vitest'
 import {
   clearGeneralProgramDetailQueryParams,
   GENERAL_PROGRAM_DETAIL_QUERY_PARAMS,
+  GENERAL_PROGRAM_INSTRUCTOR_RECRUITMENT_PREVIEW_PARAM,
   GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE,
   GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
+  GENERAL_PROGRAM_RECRUITMENT_PREVIEW_ACTIVE,
+  GENERAL_PROGRAM_VOLUNTEER_RECRUITMENT_PREVIEW_PARAM,
   isParticipantRecruitmentPreviewOpen,
   patchGeneralProgramDetailLnbTab,
   preserveGeneralProgramDetailProgramId,
   readGeneralProgramDetailRoute,
+  readOpenRecruitmentPreviewAudience,
 } from './general-program-detail-route'
 import { getProgramAdminDetailUrlFromPathname } from './program-admin-detail-url'
 import { getProgramAdminDetailInfoTabUrl } from './program-admin-detail-url'
@@ -86,14 +90,24 @@ describe('general-program-detail-route', () => {
     expect(GENERAL_PROGRAM_DETAIL_QUERY_PARAMS).toContain('participantView')
   })
 
-  it('detects participant recruitment preview from search params', () => {
-    const open = new URLSearchParams(
+  it('detects recruitment preview audience from search params', () => {
+    const participant = new URLSearchParams(
       `${GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM}=${GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE}`
+    )
+    const instructor = new URLSearchParams(
+      `${GENERAL_PROGRAM_INSTRUCTOR_RECRUITMENT_PREVIEW_PARAM}=${GENERAL_PROGRAM_RECRUITMENT_PREVIEW_ACTIVE}`
+    )
+    const volunteer = new URLSearchParams(
+      `${GENERAL_PROGRAM_VOLUNTEER_RECRUITMENT_PREVIEW_PARAM}=${GENERAL_PROGRAM_RECRUITMENT_PREVIEW_ACTIVE}`
     )
     const closed = new URLSearchParams()
 
-    expect(isParticipantRecruitmentPreviewOpen(open)).toBe(true)
+    expect(isParticipantRecruitmentPreviewOpen(participant)).toBe(true)
     expect(isParticipantRecruitmentPreviewOpen(closed)).toBe(false)
+    expect(readOpenRecruitmentPreviewAudience(participant)).toBe('institutions')
+    expect(readOpenRecruitmentPreviewAudience(instructor)).toBe('instructors')
+    expect(readOpenRecruitmentPreviewAudience(volunteer)).toBe('volunteers')
+    expect(readOpenRecruitmentPreviewAudience(closed)).toBeNull()
   })
 
   it('keeps the company-school route when opening a newly created detail', () => {

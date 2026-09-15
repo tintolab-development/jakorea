@@ -15,8 +15,10 @@ import {
   markPasswordChangeRequiredComplete,
   usePasswordChangeRequiredGuard,
   validatePasswordChangeRequiredForm,
+  PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS,
 } from '@/features/auth/password-change-required'
 import { RegisterStepHeader } from '@/features/auth/ui/admin-register/register-step-header'
+import { RegisterStepProgress } from '@/features/auth/ui/admin-register/register-step-progress'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 import { LoadingButton } from '@/shared/ui/loading-button'
 import { CmsInput } from '@/shared/ui'
@@ -101,9 +103,14 @@ export function PasswordChangeRequiredChangePasswordPage() {
 
   return (
     <AuthPageShell showLogo={false} cardClassName="register-card">
+      <RegisterStepProgress
+        currentStep={3}
+        totalSteps={PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS}
+        className="register-step-progress--password-change-required"
+      />
       <div className="admin-register-step">
         <RegisterStepHeader
-          title="비밀번호를 변경해 주세요."
+          title="비밀번호를 변경해 주세요"
           description="현재 비밀번호는 가입된 이메일 주소와 동일합니다."
         />
 

@@ -25,4 +25,6 @@ export interface MemberPortalConsentSummary {
   termsVersion?: string;
   currentTermsVersion?: string;
   policyUpdated?: boolean;
+  consentStatus?: string;
+  programEligible?: boolean;
 }

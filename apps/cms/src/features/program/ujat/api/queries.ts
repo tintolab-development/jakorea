@@ -1,4 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useLayoutEffect, useMemo } from 'react'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type InfiniteData,
+} from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { shouldUseRemoteApi } from './capabilities'
 import { shouldRetryQuery } from './errors'
@@ -7,21 +14,57 @@ import { queryKeys } from './query-keys'
 import {
   create,
   detail,
-  list,
+  listPage,
   remove,
   update,
   type CreateInput,
+  type UjatProgramsRemoteListPage,
 } from './service'
 
 function scope(): 'remote' | 'local' {
   return shouldUseRemoteApi() ? 'remote' : 'local'
 }
 
+function keepFirstInfiniteQueryPage<T>(
+  data: InfiniteData<T> | undefined
+): InfiniteData<T> | undefined {
+  if (!data || data.pages.length <= 1) return data
+  return {
+    ...data,
+    pages: data.pages.slice(0, 1),
+    pageParams: data.pageParams.slice(0, 1),
+  }
+}
+
+function listParamsKey(params: ListParams): string {
+  return JSON.stringify({
+    keyword: params.keyword ?? null,
+    businessYear: params.businessYear ?? null,
+  })
+}
+
 export function usePrograms(params: ListParams = {}) {
   const dataScope = scope()
-  return useQuery({
-    queryKey: queryKeys.list(dataScope, params),
-    queryFn: () => list(params),
+  const queryClient = useQueryClient()
+  const paramsKey = listParamsKey(params)
+  const listQueryKey = useMemo(
+    () => queryKeys.list(dataScope, JSON.parse(paramsKey) as ListParams),
+    [dataScope, paramsKey]
+  )
+
+  useLayoutEffect(() => {
+    if (dataScope !== 'remote') return
+    queryClient.setQueryData<InfiniteData<UjatProgramsRemoteListPage>>(
+      listQueryKey,
+      keepFirstInfiniteQueryPage
+    )
+  }, [queryClient, dataScope, listQueryKey])
+
+  return useInfiniteQuery({
+    queryKey: listQueryKey,
+    queryFn: ({ pageParam }) => listPage(params, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     staleTime: dataScope === 'remote' ? 30_000 : Infinity,
     retry: shouldRetryQuery,
   })

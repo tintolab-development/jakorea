@@ -11,6 +11,9 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
+  /* DetailInfoForm 한 줄 헤더용 height:40px 해제 — 타이틀↔폼은 header margin-bottom 10px만 */
+  height: auto;
+  min-height: 0;
 }
 
 .form-paragraph-section-header__description {

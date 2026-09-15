@@ -29,9 +29,9 @@ import {
 import { useNotificationSendProgramsQuery } from '@/features/notifications/hooks/use-send-programs-query'
 import {
   canSelectNotificationSendTemplate,
-  isNotificationSendAllProgram,
-  isNotificationSendProgramUnset,
+  isNotificationSendWithoutProgram,
   parseNotificationSendProgramId,
+  NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT,
 } from '@/features/notifications/model/send-program-id'
 import {
   canUseNotificationSendTemplateForProgram,
@@ -93,7 +93,9 @@ export function SendFullpageModal({
   const invalidateHistory = useInvalidateSmsSendHistory()
   const form = useSmsSendForm(open, initialTemplateId)
   const remote = shouldUseSmsSendRemoteApi()
-  const canLoadProgramScoped = !isNotificationSendProgramUnset(form.programId)
+  const canLoadProgramScoped =
+    isNotificationSendWithoutProgram(form.programId) ||
+    parseNotificationSendProgramId(form.programId) != null
   const templatesQuery = useSmsSendTemplatePickerQuery(open && remote && canLoadProgramScoped)
   const templates = templatesQuery.data ?? []
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -148,6 +150,7 @@ export function SendFullpageModal({
     return resolveSmsSenderProfileId(senderProfilesQuery.data ?? [], form.senderPhone)
   }, [form.senderPhone, senderProfilesQuery.data])
   const programNumericId = parseNotificationSendProgramId(form.programId)
+  const isWithoutProgram = isNotificationSendWithoutProgram(form.programId)
   const recipientTypeMode = resolveSmsSendRecipientTypeMode(form.programId)
   const typeColumnTitle = smsSendRecipientTypeColumnTitle(recipientTypeMode)
 
@@ -186,36 +189,35 @@ export function SendFullpageModal({
       page: recipientSearch.page,
       size: 50,
     },
-    open && recipientSelectOpen && programNumericId != null
+    open && recipientSelectOpen && (programNumericId != null || isWithoutProgram)
   )
   const variablesQuery = useSmsTemplateVariablesQuery(
     templateVariablesQuery,
     open && remote && canLoadProgramScoped
   )
+  const variablesCatalog = variablesQuery.data?.variables
   const variableGroups = useMemo(
-    () => groupMailTemplateVariablesFromCatalog(variablesQuery.data ?? []),
-    [variablesQuery.data]
+    () => groupMailTemplateVariablesFromCatalog(variablesCatalog ?? []),
+    [variablesCatalog]
   )
   const isCatalogItemDisabled = useCallback(
     (label: string) => {
-      const found = (variablesQuery.data ?? []).find(item => item.key === label)
+      const found = (variablesCatalog ?? []).find(item => item.key === label)
       return isNotificationCatalogVariableDisabled(found, programNumericId)
     },
-    [programNumericId, variablesQuery.data]
+    [programNumericId, variablesCatalog]
   )
   const hasTemplates = templates.length > 0
   const canPickTemplate = canSelectNotificationSendTemplate(form.programId) && hasTemplates
-  const isAllProgram = isNotificationSendAllProgram(form.programId)
-  const isProgramUnset = isNotificationSendProgramUnset(form.programId)
 
   const isTemplateUsable = useCallback(
     (template: (typeof templates)[number]) =>
       canUseNotificationSendTemplateForProgram({
         texts: [template.subject, template.bodyText],
-        catalog: variablesQuery.data,
+        catalog: variablesCatalog,
         programNumericId,
       }),
-    [programNumericId, variablesQuery.data]
+    [programNumericId, variablesCatalog]
   )
 
   const getTemplateUnusableMessage = useCallback(
@@ -223,11 +225,11 @@ export function SendFullpageModal({
       formatNotificationSendTemplateDisabledKeysWarning(
         listNotificationSendTemplateDisabledKeysForProgram({
           texts: [template.subject, template.bodyText],
-          catalog: variablesQuery.data,
+          catalog: variablesCatalog,
           programNumericId,
         })
       ),
-    [programNumericId, variablesQuery.data]
+    [programNumericId, variablesCatalog]
   )
 
   // 선택 완료된 템플릿은 수신자 추가·유형 문맥 변경으로 자동 clear 하지 않음.
@@ -269,27 +271,11 @@ export function SendFullpageModal({
   }
 
   function handleOpenRecipientSelect() {
-    if (isProgramUnset) {
-      showAlert({ title: '안내', content: '대상 프로그램을 선택하세요.' })
-      return
-    }
-    if (isAllProgram || programNumericId == null) {
-      showAlert({
-        title: '안내',
-        content:
-          '대상 프로그램이 미선택일 때는 프로그램 참여 회원 후보를 조회할 수 없습니다. 수신자 직접 입력을 이용해 주세요.',
-      })
-      return
-    }
     setRecipientSearch({ typeValue: '', keyword: '', page: 0 })
     setRecipientSelectOpen(true)
   }
 
   function handleOpenRecipientManual() {
-    if (isProgramUnset) {
-      showAlert({ title: '안내', content: '대상 프로그램을 선택하세요.' })
-      return
-    }
     setRecipientManualOpen(true)
   }
 
@@ -620,7 +606,7 @@ export function SendFullpageModal({
             : 1
         }
         fetchAllCandidates={
-          remote && programNumericId != null
+          remote && (programNumericId != null || isWithoutProgram)
             ? async () => {
                 const total = Math.max(candidatesQuery.data?.total ?? 0, 1)
                 const result = await candidatesQuery.refetch({
@@ -640,7 +626,7 @@ export function SendFullpageModal({
                       ? toSmsSendMemberTypeApi(recipientSearch.typeValue)
                       : undefined,
                   page: 0,
-                  size: Math.min(Math.max(total, 50), 1000),
+                  size: Math.min(Math.max(total, 50), NOTIFICATION_SEND_BATCH_RECIPIENT_LIMIT),
                 })
                 return all.items
               }

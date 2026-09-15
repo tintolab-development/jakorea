@@ -28,6 +28,21 @@ describe('noticesParamsFromSearchParams', () => {
     })
   })
 
+  it('sends createdFrom or createdTo when only one URL date is set', () => {
+    expect(noticesParamsFromSearchParams(new URLSearchParams('an_from=2026-01-01'))).toEqual({
+      page: 0,
+      size: 500,
+      visibility: 'public',
+      createdFrom: '2026-01-01',
+    })
+    expect(noticesParamsFromSearchParams(new URLSearchParams('an_to=2026-01-31'))).toEqual({
+      page: 0,
+      size: 500,
+      visibility: 'public',
+      createdTo: '2026-01-31',
+    })
+  })
+
   it('does not send ALL category', () => {
     const params = noticesParamsFromSearchParams(new URLSearchParams('an_cat=ALL'))
     expect(params.category).toBeUndefined()

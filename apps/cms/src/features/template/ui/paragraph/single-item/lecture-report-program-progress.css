@@ -1,7 +1,4 @@
 /* 강의보고서 — 프로그램 진행 정보(세로 테이블 톤과 정렬, UJAT 교육일지 교육 정보와 동일 계열) */
-.lecture-report-prog-info__input {
-  width: 100%;
-}
 
 .lecture-report-prog-info__time-session-row {
   display: flex;
@@ -16,15 +13,12 @@
   min-width: 0;
 }
 
-.lecture-report-prog-info__class-wrap {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
+.lecture-report-prog-info__field-wrap,
 .lecture-report-prog-info__session-wrap,
-.lecture-report-prog-info__count-wrap {
+.lecture-report-prog-info__count-wrap,
+.lecture-report-prog-info__split-wrap,
+.lecture-report-prog-info__class-wrap {
   box-sizing: border-box;
-  width: 112px;
   height: 40px;
   flex-shrink: 0;
   border-radius: var(--8, 8px);
@@ -32,12 +26,81 @@
   background: var(--main-WT, #fff);
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 12px;
   overflow: hidden;
+}
+
+.lecture-report-prog-info__field-wrap {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.lecture-report-prog-info__class-wrap {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.lecture-report-prog-info__session-wrap,
+.lecture-report-prog-info__count-wrap {
+  width: 112px;
+}
+
+/* 사용교재 및 진행단원 — 시안: 교재명 | 진행 단원 동일 폭 분할 */
+.lecture-report-prog-info__split-wrap {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+}
+
+/* 시안 disabled — CmsInput disabled 토큰과 동일 */
+.lecture-report-prog-info__field-wrap--disabled,
+.lecture-report-prog-info__session-wrap--disabled,
+.lecture-report-prog-info__count-wrap--disabled,
+.lecture-report-prog-info__split-wrap--disabled,
+.lecture-report-prog-info__class-wrap--disabled {
+  border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  background: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%),
+    #fff
+  );
 }
 
 .lecture-report-prog-info__session-input.ant-input {
   padding: 0 !important;
+}
+
+.lecture-report-prog-info__session-input.ant-input:disabled,
+.lecture-report-prog-info__session-input.ant-input[disabled] {
+  color: var(--main-BK, #3d3d3d) !important;
+  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
+  background: transparent !important;
+  cursor: default;
+  opacity: 1;
+}
+
+/* 시안: disabled 인풋 placeholder */
+.lecture-report-prog-info__session-input.ant-input:disabled::placeholder,
+.lecture-report-prog-info__session-input.ant-input[disabled]::placeholder,
+.lecture-report-prog-info__session-input.cms-input
+  .cms-input__control--disabled
+  .cms-input__inner
+  .ant-input::placeholder,
+.lecture-report-prog-info
+  .lecture-report-prog-info__picker--disabled.ant-picker.ant-picker-disabled
+  .ant-picker-input
+  > input::placeholder {
+  overflow: hidden;
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5)) !important;
+  -webkit-text-fill-color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+  opacity: 1;
 }
 
 .lecture-report-prog-info__session-input.cms-input {
@@ -53,6 +116,11 @@
   background: transparent;
 }
 
+.lecture-report-prog-info__session-input.cms-input .cms-input__control--disabled {
+  border: 0;
+  background: transparent;
+}
+
 .lecture-report-prog-info__divider {
   width: 1px;
   height: 13px;
@@ -62,26 +130,7 @@
   margin: 0 8px;
 }
 
-.lecture-report-prog-info .lecture-report-prog-info__dt-picker.ant-picker .ant-picker-input {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap !important;
-  align-items: center !important;
-  gap: 8px !important;
-}
-
-.lecture-report-prog-info .lecture-report-prog-info__dt-picker.ant-picker .ant-picker-suffix {
-  order: -1 !important;
-  margin-inline-start: 0 !important;
-  margin-inline-end: 0 !important;
-  flex-shrink: 0 !important;
-}
-
-.lecture-report-prog-info .lecture-report-prog-info__dt-picker.ant-picker .ant-picker-input > input {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-}
-
+.lecture-report-prog-info .lecture-report-prog-info__dt-picker.ant-picker .ant-picker-input,
 .lecture-report-prog-info .lecture-report-prog-info__time-picker.ant-picker .ant-picker-input {
   display: flex !important;
   flex-direction: row !important;
@@ -90,6 +139,7 @@
   gap: 8px !important;
 }
 
+.lecture-report-prog-info .lecture-report-prog-info__dt-picker.ant-picker .ant-picker-suffix,
 .lecture-report-prog-info .lecture-report-prog-info__time-picker.ant-picker .ant-picker-suffix {
   order: -1 !important;
   margin-inline-start: 0 !important;
@@ -97,7 +147,20 @@
   flex-shrink: 0 !important;
 }
 
+.lecture-report-prog-info .lecture-report-prog-info__dt-picker.ant-picker .ant-picker-input > input,
 .lecture-report-prog-info .lecture-report-prog-info__time-picker.ant-picker .ant-picker-input > input {
   flex: 1 1 auto !important;
   min-width: 0 !important;
+}
+
+/* 시안: Date/TimePicker disabled도 회색 박스 */
+.lecture-report-prog-info
+  .lecture-report-prog-info__picker--disabled.form-editor-vertical-table__field-box.ant-picker.ant-picker-disabled {
+  border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
+  background: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%),
+    #fff
+  ) !important;
+  opacity: 1;
 }

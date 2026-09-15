@@ -15,7 +15,7 @@ import {
   FormEditorFieldListItem,
 } from '@/features/template/ui/form-editor/table-fields/form-editor-custom-field-panel'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { DeferredCmsInput } from '@/features/template/ui/shared/deferred-cms-input'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 
 export function FormEditorHorizontalTableHeaderFields({
@@ -80,19 +80,19 @@ export function FormEditorHorizontalTableHeaderFields({
             >
               <div className="form-editor-horizontal-table-header-fields__row">
                 <div className="form-editor-horizontal-table-header-fields__input-wrap">
-                  <CmsInput
+                  <DeferredCmsInput
                     width="100%"
                     inputSize="large"
                     className="form-editor-horizontal-table-header-fields__cms-input"
                     value={header}
-                    onChange={e =>
+                    onCommit={next =>
                       updateParagraph(paragraphId, cur => {
                         if (cur.kind !== 'single_item' || cur.variant !== 'horizontal_table')
                           return cur
-                        const next = [...cur.columnHeaders]
-                        while (next.length < colCount) next.push('')
-                        next[i] = e.target.value
-                        return { ...cur, columnHeaders: next.slice(0, colCount) }
+                        const nextHeaders = [...cur.columnHeaders]
+                        while (nextHeaders.length < colCount) nextHeaders.push('')
+                        nextHeaders[i] = next
+                        return { ...cur, columnHeaders: nextHeaders.slice(0, colCount) }
                       })
                     }
                     placeholder="항목명을 입력해 주세요"

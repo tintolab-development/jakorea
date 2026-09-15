@@ -15,6 +15,8 @@ import {
   parseGeneralProgramServiceDetailJson,
   serializeGeneralProgramServiceDetailJson,
 } from '@/features/program/general/lib/general-program-service-detail-json'
+import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 
 /**
  * BE `applicationTargetMode` — OpenAPI codegen에 아직 없음.
@@ -78,22 +80,16 @@ function toRequestDate(value: Date | string | undefined): string | undefined {
 }
 
 function mapPeriodStatusToLifecycle(periodStatus?: string): ProgramLifecycleStatus | undefined {
-  if (!periodStatus) return undefined
-  const normalized = periodStatus.trim().toUpperCase()
-  switch (normalized) {
-    case 'RECRUITING':
-    case 'SCHEDULED':
-    case 'PLANNED':
-      return 'recruiting_students'
-    case 'IN_PROGRESS':
-    case 'RUNNING':
-      return 'education_in_progress'
-    case 'COMPLETED':
-    case 'ENDED':
-      return 'education_completed'
-    default:
-      return undefined
-  }
+  // list DTO에 typed lifecycle이 없을 때만 — periodStatus → typed 리다이렉트
+  return toTypedProgramLifecycleStatus(periodStatus)
+}
+
+function resolveListLifecycleStatus(dto: AdminProgramListItemDto): ProgramLifecycleStatus {
+  return (
+    toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
+    mapPeriodStatusToLifecycle(dto.periodStatus) ??
+    'scheduled'
+  )
 }
 
 function baseProgramDefaults(partial: Partial<Program> & Pick<Program, 'id' | 'title'>): Program {
@@ -118,10 +114,7 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
   // 목록 OpenAPI 예시는 nameKo, 실제 BE 응답은 title/mainTitle을 내려준다.
   const title =
     dto.nameKo?.trim() || dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
-  const lifecycleStatus =
-    mapPeriodStatusToLifecycle(dto.periodStatus) ??
-    (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
-    ('recruiting_students' as ProgramLifecycleStatus)
+  const lifecycleStatus = resolveListLifecycleStatus(dto)
 
   return baseProgramDefaults({
     id: toProgramId(dto.id ?? dto.uuid),
@@ -129,6 +122,7 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
     mainTitle: dto.mainTitle?.trim() || title,
     startDate: dto.businessStartDate ?? dto.startDate ?? undefined,
     endDate: dto.businessEndDate ?? dto.endDate ?? undefined,
+    status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus,
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
     instructors: dto.instructorApplicantCount,
@@ -138,7 +132,13 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
 }
 
 export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
-  const dtoWithNameKo = dto as ProgramResponse & { nameKo?: string }
+  const dtoWithNameKo = dto as ProgramResponse & {
+    nameKo?: string
+    contactName?: string
+    remarks?: string
+    otherMatters?: string
+    recruitmentTargetDetail?: string
+  }
   const title =
     dto.title?.trim() ||
     dto.mainTitle?.trim() ||
@@ -147,6 +147,20 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
   const id = toProgramId(dto.id)
   const now = new Date().toISOString()
   const serviceDetail = parseGeneralProgramServiceDetailJson(dto.serviceDetailJson)
+  const generalCommonInfo = applySettlementPolicyToCommonInfo(
+    serviceDetail.generalCommonInfo,
+    dto.settlementPolicy
+  )
+  const participantRemarks = (
+    serviceDetail.generalCommonInfo?.participantRecruitmentInfo as
+      | { remarks?: string }
+      | undefined
+  )?.remarks
+  const otherNotes =
+    dtoWithNameKo.otherMatters?.trim() ||
+    dtoWithNameKo.remarks?.trim() ||
+    participantRemarks?.trim() ||
+    undefined
 
   return baseProgramDefaults({
     id,
@@ -174,14 +188,13 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     endDate: dto.endDate,
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
-    status: (dto.status as Status | undefined) ?? 'pending',
-    lifecycleStatus: (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ?? undefined,
     businessArea: dto.businessArea,
     titleEn: dto.titleEn,
     textbookName: dto.textbookName,
     textbookNameEn: dto.textbookNameEn,
     schoolId: dto.schoolId,
     district: dto.district,
+    ips: dto.ips as Program['ips'],
     institutionType: dto.institutionType as Program['institutionType'],
     ipOwned: dto.ipOwned,
     courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
@@ -213,10 +226,15 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     recruitmentGuide: dto.recruitmentGuide,
     learningSupportContent: dto.learningSupportContent,
     attachmentFileNames: dto.attachmentFileNames,
+    otherNotes: otherNotes?.trim() || undefined,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
     ...serviceDetail,
+    generalCommonInfo,
     targetLevel: serviceDetail.targetLevels?.[0] ?? (dto.targetLevel as Program['targetLevel']),
+    // typed lifecycleStatus SSOT — serviceDetailJson 값으로 덮지 않음
+    status: (dto.status as Status | undefined) ?? 'pending',
+    lifecycleStatus: toTypedProgramLifecycleStatus(dto.lifecycleStatus) ?? undefined,
   })
 }
 
@@ -229,6 +247,8 @@ export function filterGeneralProgramsByOverviewStatus(
   if (statusFilter === 'scheduled') {
     return programs.filter(program =>
       [
+        'scheduled',
+        'planned',
         'recruiting_students',
         'recruiting_instructors',
         'matching_completed',
@@ -239,12 +259,16 @@ export function filterGeneralProgramsByOverviewStatus(
 
   if (statusFilter === 'in_progress') {
     return programs.filter(program =>
-      ['education_after_textbook', 'education_in_progress'].includes(program.lifecycleStatus || '')
+      ['in_progress', 'education_after_textbook', 'education_in_progress'].includes(
+        program.lifecycleStatus || ''
+      )
     )
   }
 
   return programs.filter(program =>
-    ['education_completed', 'document_processing_completed'].includes(program.lifecycleStatus || '')
+    ['completed', 'education_completed', 'document_processing_completed'].includes(
+      program.lifecycleStatus || ''
+    )
   )
 }
 
@@ -342,10 +366,141 @@ export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreat
   }
 }
 
+const SERVICE_DETAIL_PROGRAM_KEYS = [
+  'generalCommonInfo',
+  'generalParticipantTypes',
+  'generalSurveyMenuKeys',
+  'targetLevels',
+  'generalProgramEducationStructure',
+  'generalProgramSessionRound',
+  'generalProgramAudience',
+  'instructorApplicationStartDate',
+  'instructorApplicationEndDate',
+  'volunteerApplicationStartDate',
+  'volunteerApplicationEndDate',
+  'resultAnnouncementDate',
+  'resultAnnouncementMethod',
+  'studentListRequired',
+  'generalParticipantInterviewEnabled',
+  'generalVolunteerInterviewEnabled',
+] as const satisfies ReadonlyArray<keyof Program>
+
+function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
+  return Object.prototype.hasOwnProperty.call(patch, key)
+}
+
+/** GET 마스킹 값(`김*원`, `010-****-1234`)을 PATCH로 되쓰지 않기 위함 */
+function looksMaskedProgramPii(value: string | null | undefined): boolean {
+  if (value == null) return false
+  return value.includes('*')
+}
+
+/**
+ * 공통·모집 정보 등 **부분 수정**용 — `patch`에 있는 도메인 키만 UpdateRequest에 실음.
+ * rounds·curriculum·담당자(미변경/마스킹) 등 화면 밖 필드는 보내지 않음.
+ */
+function mapProgramPatchFieldsToRequest(
+  merged: Program,
+  patch: Partial<Program>
+): ProgramUpdateRequestBody {
+  const body: ProgramUpdateRequestBody = {}
+  const has = (key: keyof Program) => patchHasKey(patch, key)
+
+  if (has('sponsorId')) {
+    body.sponsorId = merged.sponsorId != null ? String(merged.sponsorId) : undefined
+  }
+  if (has('title')) body.title = merged.title
+  if (has('type')) body.type = merged.type
+  if (has('format')) body.format = merged.format
+  if (has('category')) body.category = merged.category
+  if (has('description')) body.description = merged.description
+  if (has('startDate')) body.startDate = toRequestDate(merged.startDate)
+  if (has('endDate')) body.endDate = toRequestDate(merged.endDate)
+  if (has('applicationStartDate')) {
+    body.applicationStartDate = toRequestDate(merged.applicationStartDate)
+  }
+  if (has('applicationEndDate')) {
+    body.applicationEndDate = toRequestDate(merged.applicationEndDate)
+  }
+  if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('titleEn')) body.titleEn = merged.titleEn
+  if (has('mainTitle')) body.mainTitle = merged.mainTitle ?? merged.title
+  if (has('textbookName')) body.textbookName = merged.textbookName
+  if (has('textbookNameEn')) body.textbookNameEn = merged.textbookNameEn
+  if (has('schoolId')) body.schoolId = merged.schoolId
+  if (has('district')) body.district = merged.district
+  if (has('ips')) body.ips = merged.ips
+  if (has('targetLevel') || has('targetLevels')) {
+    body.targetLevel = merged.targetLevels?.[0] ?? merged.targetLevel
+  }
+  if (has('institutionType')) body.institutionType = merged.institutionType
+  if (has('ipOwned')) body.ipOwned = merged.ipOwned
+  if (has('courseDeliveredBy')) body.courseDeliveredBy = merged.courseDeliveredBy
+  if (has('partnerInvolvement')) body.partnerInvolvement = merged.partnerInvolvement
+  if (has('programCategory')) body.programCategory = merged.programCategory ?? undefined
+  if (has('programChannel')) body.programChannel = merged.programChannel ?? undefined
+  if (has('educationTime')) body.educationTime = merged.educationTime
+  if (has('teamDivision')) body.teamDivision = merged.teamDivision
+  if (has('educationProcess')) body.educationProcess = merged.educationProcess
+  if (has('maleParticipants')) body.maleParticipants = merged.maleParticipants
+  if (has('femaleParticipants')) body.femaleParticipants = merged.femaleParticipants
+  if (has('totalParticipants')) body.totalParticipants = merged.totalParticipants
+  if (has('generalVolunteers')) body.generalVolunteers = merged.generalVolunteers
+  if (has('staffVolunteers')) body.staffVolunteers = merged.staffVolunteers
+  if (has('returningVolunteers')) body.returningVolunteers = merged.returningVolunteers
+  if (has('generalTeachers')) body.generalTeachers = merged.generalTeachers
+  if (has('educatedTeachers')) body.educatedTeachers = merged.educatedTeachers
+  if (has('instructors')) body.instructors = merged.instructors
+  if (has('managerName') && !looksMaskedProgramPii(merged.managerName)) {
+    body.managerName = merged.managerName
+  }
+  if (has('venue')) body.venue = merged.venue
+  if (has('curriculum')) body.curriculum = merged.curriculum
+  if (has('contactEmail') && !looksMaskedProgramPii(merged.contactEmail)) {
+    body.contactEmail = merged.contactEmail
+  }
+  if (has('contactPhone') && !looksMaskedProgramPii(merged.contactPhone)) {
+    body.contactPhone = merged.contactPhone
+  }
+  if (has('oneLineIntroduction')) body.oneLineIntroduction = merged.oneLineIntroduction
+  if (has('keyVisualImage') || has('posterImage')) {
+    body.keyVisualImage = merged.keyVisualImage ?? merged.posterImage
+  }
+  if (has('settlementRuleId')) body.settlementRuleId = merged.settlementRuleId
+  if (has('applicationPathId')) body.applicationPathId = merged.applicationPathId
+  if (has('additionalContentHtml')) body.additionalContentHtml = merged.additionalContentHtml
+  if (has('recruitmentGuide')) body.recruitmentGuide = merged.recruitmentGuide
+  if (has('learningSupportContent')) {
+    body.learningSupportContent = merged.learningSupportContent
+  }
+  if (has('attachmentFileNames')) body.attachmentFileNames = merged.attachmentFileNames
+  if (has('rounds')) body.rounds = mapProgramRoundsToRequest(merged)
+
+  if (has('generalProgramAudience') || has('generalParticipantTypes')) {
+    body.applicationTargetMode = mapAudienceToApplicationTargetMode(
+      merged.generalProgramAudience,
+      merged.generalParticipantTypes
+    )
+  }
+
+  const touchesServiceDetail = SERVICE_DETAIL_PROGRAM_KEYS.some(key => has(key))
+  if (touchesServiceDetail) {
+    body.serviceDetailJson = serializeGeneralProgramServiceDetailJson(merged)
+  }
+
+  return body
+}
+
+/**
+ * @param patch 있으면 **해당 키만** PATCH body에 포함 (부분 수정).
+ *   없으면 기존처럼 프로그램 코어 필드 전체를 직렬화(생성 직후 전체 동기화 등).
+ */
 export function mapGeneralProgramToUpdateRequest(
   program: Program,
   patch?: Partial<Program>
 ): ProgramUpdateRequestBody {
-  const merged = patch ? { ...program, ...patch } : program
-  return mapProgramCoreFieldsToRequest(merged)
+  if (patch && Object.keys(patch).length > 0) {
+    return mapProgramPatchFieldsToRequest({ ...program, ...patch }, patch)
+  }
+  return mapProgramCoreFieldsToRequest(program)
 }

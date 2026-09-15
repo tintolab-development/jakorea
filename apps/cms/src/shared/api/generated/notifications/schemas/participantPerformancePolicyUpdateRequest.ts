@@ -12,4 +12,5 @@ export interface ParticipantPerformancePolicyUpdateRequest {
   includedScheduleCount?: number;
   excludedScheduleCount?: number;
   reason?: string;
+  applicableScheduleIds?: number[];
 }
