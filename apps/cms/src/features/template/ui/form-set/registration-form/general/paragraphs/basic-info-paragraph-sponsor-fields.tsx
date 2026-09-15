@@ -7,6 +7,7 @@ import { useGeneralProgramSponsorEditContext } from '@/features/program/general/
 import {
   encodeSponsorManagerContactRef,
   decodeSponsorManagerContactRef,
+  formatSponsorManagerSelectLabel,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
@@ -167,15 +168,14 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
       for (const sponsor of selectedSponsors) {
         const contacts = multiSponsorContext.contactsBySponsorId[sponsor.id] ?? []
         for (const contact of contacts) {
-          const label =
-            selectedSponsors.length > 1
-              ? `${sponsor.name} · ${contact.position ? `${contact.position} ` : ''}${contact.name}`
-              : contact.position
-                ? `${contact.position} ${contact.name}`
-                : contact.name
           options.push({
             value: encodeSponsorManagerContactRef(sponsor.id, contact.id),
-            label,
+            label: formatSponsorManagerSelectLabel({
+              sponsorName: sponsor.name,
+              contactName: contact.name,
+              position: contact.position,
+              multiSponsor: selectedSponsors.length > 1,
+            }),
           })
         }
       }

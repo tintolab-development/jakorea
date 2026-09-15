@@ -82,6 +82,7 @@ import {
 import {
   encodeSponsorManagerContactRef,
   formatGeneralProgramVenueViewLine,
+  formatSponsorManagerSelectLabel,
   getGeneralSurveyEditFieldsForAudience,
   getGeneralDetailedProgramSelectOptions,
   isGeneralProgramScheduleType,
@@ -317,30 +318,41 @@ function BasicInfoSection({
   const announcementTitle = commonInfo.announcementTitle ?? program.title
   const detailedName = resolveGeneralProgramDetailedProgramNameDisplay(program, commonInfo)
   const sponsorManagementIds = resolveSponsorManagementIds(program, viewSponsorContext)
+  const sponsorDisplayEntries = sponsorManagementIds
+    .map((sponsorManagementId, index) => {
+      const sponsorRow =
+        sponsorRows.find(row => row.id === sponsorManagementId) ?? null
+      const name =
+        sponsorRow?.name?.trim() ||
+        (index === 0 ? sponsorName?.trim() : '') ||
+        ''
+      if (!name) return null
+      return { sponsorManagementId, sponsorRow, name }
+    })
+    .filter(
+      (
+        entry
+      ): entry is {
+        sponsorManagementId: string
+        sponsorRow: (typeof sponsorRows)[number] | null
+        name: string
+      } => entry != null
+    )
   const sponsorDisplay =
-    sponsorManagementIds.length > 0 ? (
+    sponsorDisplayEntries.length > 0 ? (
       <>
-        {sponsorManagementIds.map((sponsorManagementId, index) => {
-          const sponsorRow =
-            sponsorRows.find(row => row.id === sponsorManagementId) ?? null
-          const name =
-            sponsorRow?.name?.trim() ||
-            (index === 0 ? sponsorName?.trim() : '') ||
-            ''
-          if (!name) return null
-          return (
-            <Fragment key={sponsorManagementId}>
-              {index > 0 ? ', ' : null}
-              <ProgramDetailSponsorLink
-                name={name}
-                homepageUrl={sponsorRow?.homepageUrl}
-                sponsorId={program.sponsorId}
-                sponsorName={name}
-                sponsorManagementId={sponsorManagementId}
-              />
-            </Fragment>
-          )
-        })}
+        {sponsorDisplayEntries.map((entry, index) => (
+          <span key={entry.sponsorManagementId}>
+            {index > 0 ? ', ' : null}
+            <ProgramDetailSponsorLink
+              name={entry.name}
+              homepageUrl={entry.sponsorRow?.homepageUrl}
+              sponsorId={program.sponsorId}
+              sponsorName={entry.name}
+              sponsorManagementId={entry.sponsorManagementId}
+            />
+          </span>
+        ))}
       </>
     ) : (
       '-'
@@ -369,15 +381,14 @@ function BasicInfoSection({
     for (const sponsor of selectedSponsors) {
       const contacts = sponsorEditContext.contactsBySponsorId[sponsor.id] ?? []
       for (const contact of contacts) {
-        const label =
-          selectedSponsors.length > 1
-            ? `${sponsor.name} · ${contact.position ? `${contact.position} ` : ''}${contact.name}`
-            : contact.position
-              ? `${contact.position} ${contact.name}`
-              : contact.name
         options.push({
           value: encodeSponsorManagerContactRef(sponsor.id, contact.id),
-          label,
+          label: formatSponsorManagerSelectLabel({
+            sponsorName: sponsor.name,
+            contactName: contact.name,
+            position: contact.position,
+            multiSponsor: selectedSponsors.length > 1,
+          }),
         })
       }
     }
@@ -1340,11 +1351,7 @@ function TypeSettingsScheduleDetailRow({
           fullRow
           view={
             scheduleDetail === 'perSchedule' ? (
-              <div className="detail-info-form-inputs-wrapper">
-                일정 별 상이
-                <DetailInfoForm.InputsSeparator />
-                <span className="program-registration-paragraph__schedule-hint">{perScheduleHint}</span>
-              </div>
+              '일정 별 상이'
             ) : (
               (commonDetailView ?? '-')
             )

@@ -22,6 +22,7 @@ import {
   generalRecruitTabItems,
   type GeneralRecruitTabKey,
 } from '@/features/program/general/lib/recruitment-tabs'
+import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { GeneralProgramParticipantRecruitmentInfoView } from './participant-recruitment-info-view'
@@ -96,7 +97,7 @@ export function GeneralProgramRecruitmentView({
       )
       detail = (
         <DetailInfoSection
-          program={program}
+          program={resolveGeneralRecruitDetailDisplayProgram(program, 'participant')}
           isEditMode={isEditModeInstitutions}
           form={isEditModeInstitutions ? institutionsForm : undefined}
           onRegisterGetAdditionalContentHtml={registerInstitutionsAdditionalHtml}
@@ -117,7 +118,7 @@ export function GeneralProgramRecruitmentView({
       )
       detail = (
         <InstructorDetailInfoSection
-          program={program}
+          program={resolveGeneralRecruitDetailDisplayProgram(program, 'instructor')}
           isEditMode={isEditModeInstructors}
           form={isEditModeInstructors ? instructorsForm : undefined}
           onRegisterGetAdditionalContentHtml={registerInstructorsAdditionalHtml}
@@ -136,7 +137,7 @@ export function GeneralProgramRecruitmentView({
       detail = (
         <>
           <VolunteerDetailInfoSection
-            program={program}
+            program={resolveGeneralRecruitDetailDisplayProgram(program, 'volunteer')}
             isEditMode={isEditModeVolunteers}
             form={isEditModeVolunteers ? volunteersForm : undefined}
             onRegisterGetAdditionalContentHtml={registerVolunteersAdditionalHtml}

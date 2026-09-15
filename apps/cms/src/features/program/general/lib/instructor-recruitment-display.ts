@@ -1,16 +1,11 @@
 /**
  * 일반 프로그램 상세 — 강사 모집 정보 표시값
- * Primary: generalCommonInfo.instructorRecruitmentInfo + typed Program fields
- * 빈값 '-' (JOB담 mock / 후원사명 등 비관련 폴백 없음)
+ * SSOT: generalCommonInfo.instructorRecruitmentInfo (모집 양식)
+ * 모집 대상 / 모집 기간 / 문의처 — 공통정보 Program 폴백 없음. 빈값 '-'
  */
 
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import {
-  formatDateRange,
-  formatInstructorTargetsLabel,
-  getInstructorRecruitmentStatus,
-  resolveProgramInstructorTargets,
-} from '@/features/program/shared/lib/program-detail-info-constants'
+import { getInstructorRecruitmentStatus } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
   labelBool,
@@ -84,43 +79,18 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
       info?.announcementPublishedLabel,
       labelBool(info?.announcementPublished, '게시', '미게시')
     ),
-    operationPeriodLabel: pickDisplayString(
-      info?.operationPeriodLabel,
-      formatDateRange(program.startDate, program.endDate)
-    ),
+    operationPeriodLabel: pickDisplayString(info?.operationPeriodLabel),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
-    instructorTargetLabel: pickDisplayString(
-      info?.recruitmentTarget,
-      formatInstructorTargetsLabel(resolveProgramInstructorTargets(program))
-    ),
-    instructorTargetDetailLabel: pickDisplayString(
-      info?.recruitmentTargetDetail,
-      program.instructorTargetDetail
-    ),
-    recruitmentPeriodLabel: pickDisplayString(
-      info?.recruitmentPeriodLabel,
-      formatDateRange(
-        program.instructorApplicationStartDate,
-        program.instructorApplicationEndDate
-      )
-    ),
+    instructorTargetLabel: pickDisplayString(info?.recruitmentTarget),
+    instructorTargetDetailLabel: pickDisplayString(info?.recruitmentTargetDetail),
+    recruitmentPeriodLabel: pickDisplayString(info?.recruitmentPeriodLabel),
     finalPassAnnouncementDate,
     finalPassAnnouncementMethod:
       finalPassAnnouncementMethod === '-' ? undefined : finalPassAnnouncementMethod,
     contactOrganizationName: pickDisplayString(info?.contactOrganizationName),
-    contactPhone: pickDisplayString(
-      info?.inquiryTel,
-      info?.tel,
-      info?.contactPhone,
-      program.contactPhone
-    ),
-    contactEmail: pickDisplayString(
-      info?.inquiryEmail,
-      info?.email,
-      info?.contactEmail,
-      program.contactEmail
-    ),
-    notes: pickDisplayString(info?.remarks, program.otherNotes, program.oneLineIntroduction),
+    contactPhone: pickDisplayString(info?.inquiryTel, info?.tel, info?.contactPhone),
+    contactEmail: pickDisplayString(info?.inquiryEmail, info?.email, info?.contactEmail),
+    notes: pickDisplayString(info?.remarks),
   }
 }

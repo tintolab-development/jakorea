@@ -448,23 +448,14 @@ function ProgramListPageContent() {
     [searchParams, setSearchParams]
   )
 
-  const handleCompanySchoolRegistrationSaved = useCallback((program?: Program) => {
+  const handleCompanySchoolRegistrationSaved = useCallback((_program?: Program) => {
     void companySchoolListQuery.refetch()
     closeWritingUserPreview()
-    if (!program) {
-      handleCloseCompanySchoolRegistrationFullpage()
-      return
-    }
-    setSelectedProgramForFullPageModal(program)
-    navigate(getProgramAdminDetailUrlFromPathname(program.id, location.pathname), {
-      replace: true,
-    })
+    handleCloseCompanySchoolRegistrationFullpage()
   }, [
     closeWritingUserPreview,
     companySchoolListQuery,
     handleCloseCompanySchoolRegistrationFullpage,
-    location.pathname,
-    navigate,
   ])
 
   const handleProgramCreateClick = () => {

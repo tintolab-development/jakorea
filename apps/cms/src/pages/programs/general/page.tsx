@@ -134,34 +134,11 @@ export function GeneralProgramListPageContent() {
   }, [closeWritingUserPreview, pNorm, setSearchParams])
 
   const handleGeneralProgramRegistrationSaved = useCallback(
-    (createdProgram?: Program) => {
+    (_createdProgram?: Program) => {
       refetchPrograms()
-      if (createdProgram) {
-        setSelectedProgramForDetail(createdProgram)
-        setSearchParams(
-          prev => {
-            const next = clearGeneralProgramDetailQueryParams(new URLSearchParams(prev))
-            next.delete(PROGRAMS_GENERAL_NEW_QUERY_KEY)
-            next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
-            next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
-            next.delete('userPreview')
-            next.set('programId', createdProgram.id)
-            next.set('lnb', 'info')
-            next.set('tab', 'info')
-            return next
-          },
-          { replace: true }
-        )
-        return
-      }
       handleCloseGeneralProgramRegistrationFullpage()
     },
-    [
-      handleCloseGeneralProgramRegistrationFullpage,
-      refetchPrograms,
-      setSearchParams,
-      setSelectedProgramForDetail,
-    ]
+    [handleCloseGeneralProgramRegistrationFullpage, refetchPrograms]
   )
 
   const userPreviewSyncParams = useMemo(
