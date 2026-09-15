@@ -5,7 +5,8 @@
 | 작성일 | 2026-09-15 |
 | 대상 | Admin CMS 1사1교 (`programType=COMPANY_SCHOOL`, Primary ONE-01/02/03 `170001`–`170003`) |
 | FE 상태 | **mock 폴백 제거**. remote gate + Admin API만 사용 |
-| 관련 OpenAPI | 로컬 `GET /v3/api-docs` 동기화 기준 (`apps/cms/openapi/backend.openapi.json`) |
+| BE 핸드오프 | 2026-09-15 P0+P1 수락 — FE 배선 완료 (`requestedScheduleId` / `resolvedScheduleId` / calendar GET / list enrich / 분모·대표강사·cancel) |
+| 관련 OpenAPI | 로컬 codegen은 아직 미반영 → `instructor-assignment-types.ts` 확장 타입 사용. OpenAPI sync 후 교체 가능 |
 
 ---
 
