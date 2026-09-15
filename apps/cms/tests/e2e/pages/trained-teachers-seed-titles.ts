@@ -1,15 +1,28 @@
 /**
- * 교육받은 교사 프로그램 E2E — BE/FE 시드 title 상수
+ * 교육받은 교사 프로그램 E2E — BE Primary / FE 시드 title 상수
  *
+ * QA SoT: Primary `186001`–`186008` (BE local demo).
  * title 접두어 권장: `[TT더미]` — 일반·Gemini 등과 충돌 금지.
- * @see apps/cms/docs/api/be-handoff-program-dummy-seeds/04-trained-teachers-dummy-seed.md
+ * @see apps/cms/docs/api/trained-teacher-primary-case-fe-adapter-2026-09-15.md
  */
 
-/** TT-01 — 목록·상세 smoke 우선 후보 (FE mock 원문) */
+/** Primary programId — 목록·상세 딥링크 smoke */
+export const TRAINED_TEACHER_PRIMARY_PROGRAM_IDS = [
+  '186001',
+  '186002',
+  '186003',
+  '186004',
+  '186005',
+  '186006',
+  '186007',
+  '186008',
+] as const
+
+/** TCH-01 — 목록·상세 smoke 우선 후보 (FE mock 원문 · Primary title과 다를 수 있음) */
 export const TRAINED_TEACHERS_FEATURED_TITLE =
   '2026년 신한은행 - JA Korea 청소년 경제금융교육프로그램' as const
 
-/** FE mock TT-01~08 title */
+/** FE mock TT-01~08 title (레거시 후보 · Primary ON 시 BE title 우선) */
 export const TRAINED_TEACHERS_FE_MOCK_TITLES = [
   TRAINED_TEACHERS_FEATURED_TITLE,
   '2026 SAP-함께 성장하니JA! 하계 고등학생 모집 안내',
@@ -28,10 +41,13 @@ export const TRAINED_TEACHERS_FEATURED_CANDIDATES = [
   ...TRAINED_TEACHERS_FE_MOCK_TITLES.slice(1).flatMap(t => [t, `[TT더미] ${t}`] as const),
 ] as const
 
-/** Phase 1 목록 스모크 — 후보를 짧게 유지 (전체 후보 순회 시 타임아웃) */
+/** Phase 1 목록 스모크 — Primary id 딥링크 + 짧은 title 후보 */
 export const TRAINED_TEACHERS_LIST_SMOKE_CANDIDATES = [
   TRAINED_TEACHERS_FEATURED_TITLE,
   `[TT더미] ${TRAINED_TEACHERS_FEATURED_TITLE}`,
 ] as const
 
 export const TRAINED_TEACHERS_DETAIL_SEED_CANDIDATES = TRAINED_TEACHERS_FEATURED_CANDIDATES
+
+/** Primary 상세 딥링크 — `/programs/trained-teachers?programId=186001` */
+export const TRAINED_TEACHERS_PRIMARY_DETAIL_PROGRAM_ID = '186001' as const
