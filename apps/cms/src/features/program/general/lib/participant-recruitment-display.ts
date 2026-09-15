@@ -1,7 +1,7 @@
 /**
  * 일반 프로그램 상세 — 참여자 모집 정보 표시값
- * Primary 8 SoT: serviceDetailJson.generalCommonInfo.participantRecruitmentInfo + typed fallback
- * mock 프로그램(id)만 JOB담 샘플 표시 · 그 외는 하드코드 기본값 없이 빈값 '-'
+ * Primary: serviceDetailJson.generalCommonInfo.participantRecruitmentInfo + typed Program fields
+ * 빈값 '-' (JOB담 mock / 후원사명 등 비관련 폴백 없음)
  */
 
 import type { Program } from '@/types/domain'
@@ -20,7 +20,6 @@ import {
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
-import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
 import {
   formatCountLabel,
   labelBool,
@@ -104,24 +103,6 @@ export type GeneralProgramParticipantRecruitmentDisplay = {
   notes: string
 }
 
-const JOB담_PARTICIPANT_RECRUITMENT_MOCK = {
-  announcementPublishedLabel: '게시',
-  preEducationNoticeLabel: '필요',
-  certificateIssuanceLabel: '제공',
-  studentListLabel: '필요',
-  maxClassLabel: '4개',
-  maxInstructorsLabel: '2명',
-  maxSessionsPerDayLabel: '8차시',
-  maxScheduleCountLabel: '3개',
-  operationPeriodLabel: '2026. 04. 03(금) - 2026. 11. 20(금)',
-  recruitmentPeriodLabel: '2025. 12. 08(월) - 2026. 01. 16(금)',
-  finalAnnouncementLabel: '2026. 01. 26 (금) | 홈페이지 공지 및 담당교사 개별 안내',
-  contactOrganizationName: 'JA Korea',
-  contactPhone: '02-6085-6028',
-  contactEmail: 'cc@jakorea.org',
-  notes: '-',
-} as const
-
 export function resolveGeneralProgramParticipantRecruitmentDisplay(
   program: Program,
   options?: {
@@ -141,20 +122,6 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
   const showMaxSessionsPerDayField =
     showInstitutionApplicationLimits &&
     shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge)
-
-  if (program.id === GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID) {
-    return {
-      ...JOB담_PARTICIPANT_RECRUITMENT_MOCK,
-      showInstitutionApplicationLimits: true,
-      showMaxScheduleCountField,
-      showMaxSessionsPerDayField,
-      recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '참여자 모집 중',
-      recruitmentStatusLifecycle: lifecycle ?? 'recruiting_students',
-      targetLabel: formatTargetLevelsLabel(resolveProgramTargetLevels(program)) || '고등학교',
-      targetDetailLabel: program.district ?? '특성화고등학교 3학년',
-      notes: JOB담_PARTICIPANT_RECRUITMENT_MOCK.notes,
-    }
-  }
 
   const studentListValue = pickDisplayValue(
     typeof info?.studentListRequired === 'string' ? info.studentListRequired : undefined,
@@ -187,7 +154,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     labelBool(preEducationValue, '작성', '해당없음')
   )
 
-  const resultDate = program.resultAnnouncementDate ?? program.applicationEndDate
+  const resultDate = program.resultAnnouncementDate
   const resultMethod = program.resultAnnouncementMethod?.trim()
   const finalAnnouncementLabel = pickDisplayString(
     info?.finalAnnouncementLabel,
@@ -213,12 +180,6 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
         ? '불필요'
         : '-'
     : undefined
-
-  const documentPassAnnouncementDate = program.documentPassAnnouncementDate
-  const documentPassAnnouncementMethod = program.documentPassAnnouncementMethod
-  const interviewStartDate = program.interviewStartDate
-  const interviewEndDate = program.interviewEndDate
-  const interviewMethod = program.interviewMethod
 
   const announcementPublishedLabel = pickDisplayString(
     info?.announcementPublishedLabel,
@@ -265,16 +226,14 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
       info?.recruitmentPeriodLabel,
       formatDateRange(program.applicationStartDate, program.applicationEndDate)
     ),
-    documentPassAnnouncementDate,
-    documentPassAnnouncementMethod,
-    interviewStartDate,
-    interviewEndDate,
-    interviewMethod,
+    documentPassAnnouncementDate: program.documentPassAnnouncementDate,
+    documentPassAnnouncementMethod: program.documentPassAnnouncementMethod,
+    interviewStartDate: program.interviewStartDate,
+    interviewEndDate: program.interviewEndDate,
+    interviewMethod: program.interviewMethod,
     finalAnnouncementLabel,
-    contactOrganizationName: pickDisplayString(
-      info?.contactOrganizationName,
-      common?.sponsorDisplayName
-    ),
+    /** 문의처 이름 — 모집 양식/RecruitmentInfo만. 후원사명은 폴백하지 않음 */
+    contactOrganizationName: pickDisplayString(info?.contactOrganizationName),
     contactPhone: pickDisplayString(
       info?.inquiryTel,
       info?.tel,

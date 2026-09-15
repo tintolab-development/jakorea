@@ -1,7 +1,7 @@
 /**
  * 일반 프로그램 상세 — 봉사자 모집 정보 표시값
- * Primary 8 SoT: generalCommonInfo.volunteerRecruitmentInfo + typed fallback
- * mock 프로그램(id)만 JOB담 샘플 표시 · 그 외는 하드코드 기본값 없이 빈값 '-'
+ * Primary: generalCommonInfo.volunteerRecruitmentInfo + typed Program fields
+ * 빈값 '-' (JOB담 mock / 후원사명 등 비관련 폴백 없음)
  */
 
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
@@ -13,7 +13,6 @@ import {
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { getGeneralVolunteerInterviewEnabled } from '@/features/program/general/lib/detail-meta'
-import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
 import {
   labelBool,
   pickDisplayString,
@@ -79,26 +78,6 @@ export type GeneralProgramVolunteerRecruitmentDisplay = {
   notes: string
 }
 
-const JOB담_VOLUNTEER_RECRUITMENT_MOCK = {
-  announcementPublishedLabel: '게시',
-  interviewEnabledLabel: '면접 있음',
-  operationPeriodLabel: '2026. 03. 04(수) ~ 2026. 12. 30(수)',
-  recruitmentPeriodLabel: '2026. 01. 05(월) ~ 2026. 01. 28(수)',
-  documentPassAnnouncementDate: '2026-02-03T00:00:00+09:00',
-  documentPassAnnouncementMethod: '홈페이지 공지 및 합격자 개별 안내',
-  interviewStartDate: '2026-02-09T00:00:00+09:00',
-  interviewEndDate: '2026-02-13T00:00:00+09:00',
-  interviewMethod: '온라인',
-  finalPassAnnouncementDate: '2026-02-20T00:00:00+09:00',
-  finalPassAnnouncementMethod: '홈페이지 공지 및 합격자 개별 안내',
-  contactOrganizationName: 'JA Korea',
-  contactPhone: '02-6085-6028',
-  contactEmail: 'cc@jakorea.org',
-  volunteerTargetLabel: '대학(원)생',
-  volunteerTargetDetailLabel: '-',
-  notes: '-',
-} as const
-
 function resolveVolunteerRecruitmentLifecycle(program: Program): ProgramLifecycleStatus | null {
   const status = getVolunteerRecruitmentStatus(program)
   if (status == null) return null
@@ -121,14 +100,6 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
   const common = program.generalCommonInfo
   const info = common?.volunteerRecruitmentInfo as VolunteerRecruitmentInfoLoose | undefined
   const lifecycle = resolveVolunteerRecruitmentLifecycle(program)
-
-  if (program.id === GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID) {
-    return {
-      ...JOB담_VOLUNTEER_RECRUITMENT_MOCK,
-      recruitmentStatusLabel: getProgramLifecycleLabel('recruiting_volunteers'),
-      recruitmentStatusLifecycle: 'recruiting_volunteers',
-    }
-  }
 
   const interviewEnabled =
     info?.volunteerInterviewEnabled ??
@@ -173,10 +144,7 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
     finalPassAnnouncementDate: program.finalPassAnnouncementDate,
     finalPassAnnouncementMethod:
       finalPassAnnouncementMethod === '-' ? undefined : finalPassAnnouncementMethod,
-    contactOrganizationName: pickDisplayString(
-      info?.contactOrganizationName,
-      common?.sponsorDisplayName
-    ),
+    contactOrganizationName: pickDisplayString(info?.contactOrganizationName),
     contactPhone: pickDisplayString(
       info?.inquiryTel,
       info?.tel,
