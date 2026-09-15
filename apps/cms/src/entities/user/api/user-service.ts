@@ -276,103 +276,97 @@ const PAGE_SIZE = 20
 
 /**
  * 사용자 목록 페이지 조회 (무한 스크롤용)
- * 필터 적용 후 offset/limit 슬라이스 반환
+ * 실 API만 사용 — `mockUsers` 폴백 없음.
  */
 export async function getUsersPage(
   filters: GetUsersPageParams | undefined,
   pageParam = 0
 ): Promise<GetUsersPageResult> {
-  if (isMembersRemoteEnabled()) {
-    try {
-      const apiFilters = filters ?? {}
-      const page = pageParam
+  if (!isMembersRemoteEnabled()) {
+    throw new Error(
+      '회원 목록은 실 API만 지원합니다. VITE_API_SERVER 또는 VITE_API_BASE_URL을 설정하세요.'
+    )
+  }
 
-      if (apiFilters.listAllAccounts) {
-        return fetchAllAccountsDirectoryPage(
-          {
-            search: apiFilters.search,
-            createdAtFrom: apiFilters.createdAtFrom,
-            createdAtTo: apiFilters.createdAtTo,
-            accountType: apiFilters.accountType,
-            allTabRoleFilter: apiFilters.allTabRoleFilter,
-          },
-          page,
-          PAGE_SIZE
-        )
-      }
+  try {
+    const apiFilters = filters ?? {}
+    const page = pageParam
 
-      if (apiFilters.role === 'ADMIN') {
-        const res = await fetchAdminsPageRemote({
-          keyword: apiFilters.search?.trim() || undefined,
-          roleCode: apiFilters.adminPermissionVariant
-            ? adminPermissionFeeGradeToRoleCode(apiFilters.adminPermissionVariant)
-            : undefined,
-          createdAtFrom: apiFilters.createdAtFrom || undefined,
-          createdAtTo: apiFilters.createdAtTo || undefined,
-          page,
-          size: PAGE_SIZE,
-        })
-        const users = mapAdminAccountListItems(res.items)
-        const total = res.totalElements ?? users.length
-        const totalPages = res.totalPages ?? 0
-        const hasMore = totalPages > 0 ? page + 1 < totalPages : users.length >= PAGE_SIZE
-        return { users, total, hasMore }
-      }
+    if (apiFilters.listAllAccounts) {
+      return fetchAllAccountsDirectoryPage(
+        {
+          search: apiFilters.search,
+          createdAtFrom: apiFilters.createdAtFrom,
+          createdAtTo: apiFilters.createdAtTo,
+          accountType: apiFilters.accountType,
+          allTabRoleFilter: apiFilters.allTabRoleFilter,
+        },
+        page,
+        PAGE_SIZE
+      )
+    }
 
-      if (apiFilters.role === 'SCHOOL') {
-        const res = await fetchSchoolsPageRemote({
-          keyword: apiFilters.search?.trim() || undefined,
-          regionSido: apiFilters.regionSido?.trim() || undefined,
-          regionSigungu: apiFilters.regionSigungu?.trim() || undefined,
-          createdAtFrom: apiFilters.createdAtFrom || undefined,
-          createdAtTo: apiFilters.createdAtTo || undefined,
-          page,
-          size: PAGE_SIZE,
-        })
-        const users = mapSchoolOrganizationsToUsers(res.items)
-        const total = res.totalElements ?? users.length
-        const totalPages = res.totalPages ?? 0
-        const hasMore = totalPages > 0 ? page + 1 < totalPages : users.length >= PAGE_SIZE
-        return { users, total, hasMore }
-      }
-
-      const rolesExactAnyOf =
-        apiFilters.rolesExactAnyOf?.trim() ||
-        (apiFilters.instructorListPureOnly || apiFilters.role === 'INSTRUCTOR'
-          ? instructorListRolesExactAnyOf()
-          : rolesExactAnyOfForAllTabRoleFilter(apiFilters.role))
-
-      const res = await fetchMembersPageRemote({
+    if (apiFilters.role === 'ADMIN') {
+      const res = await fetchAdminsPageRemote({
         keyword: apiFilters.search?.trim() || undefined,
-        ...(rolesExactAnyOf
-          ? { rolesExactAnyOf }
-          : { role: mapUserRoleToApiRole(apiFilters.role) }),
-        memberStatus: mapIsActiveToMemberStatus(apiFilters.isActive),
+        roleCode: apiFilters.adminPermissionVariant
+          ? adminPermissionFeeGradeToRoleCode(apiFilters.adminPermissionVariant)
+          : undefined,
         createdAtFrom: apiFilters.createdAtFrom || undefined,
         createdAtTo: apiFilters.createdAtTo || undefined,
-        instructorType: apiFilters.jaEvaluationGrade?.trim() || undefined,
-        settlementStatus: apiFilters.settlementStatus?.trim() || undefined,
         page,
         size: PAGE_SIZE,
       })
-      const users = mapMemberListItems(res.items)
+      const users = mapAdminAccountListItems(res.items)
       const total = res.totalElements ?? users.length
       const totalPages = res.totalPages ?? 0
       const hasMore = totalPages > 0 ? page + 1 < totalPages : users.length >= PAGE_SIZE
       return { users, total, hasMore }
-    } catch (error) {
-      throw new Error(getMemberApiErrorMessage(error, '회원 목록을 불러오지 못했습니다.'))
     }
-  }
 
-  const all = await getUsers(filters)
-  const page = typeof pageParam === 'number' ? pageParam : 0
-  const offset = page * PAGE_SIZE
-  const users = all.slice(offset, offset + PAGE_SIZE)
-  return {
-    users,
-    total: all.length,
-    hasMore: offset + users.length < all.length,
+    if (apiFilters.role === 'SCHOOL') {
+      const res = await fetchSchoolsPageRemote({
+        keyword: apiFilters.search?.trim() || undefined,
+        regionSido: apiFilters.regionSido?.trim() || undefined,
+        regionSigungu: apiFilters.regionSigungu?.trim() || undefined,
+        createdAtFrom: apiFilters.createdAtFrom || undefined,
+        createdAtTo: apiFilters.createdAtTo || undefined,
+        page,
+        size: PAGE_SIZE,
+      })
+      const users = mapSchoolOrganizationsToUsers(res.items)
+      const total = res.totalElements ?? users.length
+      const totalPages = res.totalPages ?? 0
+      const hasMore = totalPages > 0 ? page + 1 < totalPages : users.length >= PAGE_SIZE
+      return { users, total, hasMore }
+    }
+
+    const rolesExactAnyOf =
+      apiFilters.rolesExactAnyOf?.trim() ||
+      (apiFilters.instructorListPureOnly || apiFilters.role === 'INSTRUCTOR'
+        ? instructorListRolesExactAnyOf()
+        : rolesExactAnyOfForAllTabRoleFilter(apiFilters.role))
+
+    const res = await fetchMembersPageRemote({
+      keyword: apiFilters.search?.trim() || undefined,
+      ...(rolesExactAnyOf
+        ? { rolesExactAnyOf }
+        : { role: mapUserRoleToApiRole(apiFilters.role) }),
+      memberStatus: mapIsActiveToMemberStatus(apiFilters.isActive),
+      createdAtFrom: apiFilters.createdAtFrom || undefined,
+      createdAtTo: apiFilters.createdAtTo || undefined,
+      instructorType: apiFilters.jaEvaluationGrade?.trim() || undefined,
+      settlementStatus: apiFilters.settlementStatus?.trim() || undefined,
+      page,
+      size: PAGE_SIZE,
+    })
+    const users = mapMemberListItems(res.items)
+    const total = res.totalElements ?? users.length
+    const totalPages = res.totalPages ?? 0
+    const hasMore = totalPages > 0 ? page + 1 < totalPages : users.length >= PAGE_SIZE
+    return { users, total, hasMore }
+  } catch (error) {
+    throw new Error(getMemberApiErrorMessage(error, '회원 목록을 불러오지 못했습니다.'))
   }
 }
 
