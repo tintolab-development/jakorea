@@ -1,6 +1,6 @@
 /**
  * 전체 회원 목록 무한 스크롤 (React Query useInfiniteQuery)
- * 15명씩 로드
+ * 20명씩 로드
  */
 
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query'

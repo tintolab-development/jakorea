@@ -1,7 +1,7 @@
 /**
  * 사용자 관리 페이지
  * Phase 5.1.2: 사용자 관리 페이지
- * 회원 목록: React Query useInfiniteQuery + 15명씩 무한 스크롤
+ * 회원 목록: React Query useInfiniteQuery + 20명씩 무한 스크롤
  */
 
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'

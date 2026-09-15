@@ -272,7 +272,7 @@ export interface GetUsersPageResult {
   nextPageParam?: number
 }
 
-const PAGE_SIZE = 15
+const PAGE_SIZE = 20
 
 /**
  * 사용자 목록 페이지 조회 (무한 스크롤용)
