@@ -21,7 +21,8 @@ function nowManualNotifyAt(): Dayjs {
 const DEFAULT_PERMISSION_MODAL_Z = 2500
 const DATE_TIME_PICKER_Z_OFFSET = 100
 
-const MESSAGE_BOLD_PATTERN = /(\*\*[^*]+\*\*)/g
+/** ContentModal `description` 과 동일 — 마스킹 이름(`이*연`) 등 내부 `*` 허용 */
+const MESSAGE_BOLD_PATTERN = /(\*\*.+?\*\*)/g
 
 function PermissionModalFieldLabel({
   children,
@@ -47,7 +48,7 @@ function parsePermissionModalMessageLine(line: string): ReactNode[] {
     .split(MESSAGE_BOLD_PATTERN)
     .filter(Boolean)
     .map((part, index) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
+      if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
         return <strong key={index}>{part.slice(2, -2)}</strong>
       }
       return <Fragment key={index}>{part}</Fragment>
