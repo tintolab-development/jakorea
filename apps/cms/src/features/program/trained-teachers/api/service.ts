@@ -1,10 +1,3 @@
-import { getTrainedTeachersPrograms } from '@/data/mock/trained-teachers-programs'
-import { programService } from '@/entities/program/api/program-service'
-import {
-  deleteCompanySchoolRegistrationLocalSaveProgram,
-  readTrainedTeachersRegistrationLocalSavePrograms,
-  updateCompanySchoolRegistrationLocalSaveProgram,
-} from '@/features/program/general/lib/registration-local-save'
 import {
   bulkDeleteAdminProgramsRemote,
   createAdminProgramRemote,
@@ -30,7 +23,11 @@ import {
   fetchTrainedTeacherInfoDetailRemote,
   patchTrainedTeacherInfoDetailRemote,
 } from './info-detail-client'
-import { trainedTeacherListParams, type TrainedTeacherListFilters } from './list-params'
+import {
+  TRAINED_TEACHER_PROGRAM_LIST_PAGE_SIZE,
+  trainedTeacherListParams,
+  type TrainedTeacherListFilters,
+} from './list-params'
 
 /** remote list 스냅샷 — 상세 분기(isTrainedTeachersDetailProgram)용 */
 let remoteIdSnapshot: Set<string> | null = null
@@ -46,38 +43,61 @@ function setRemoteIdSnapshot(programs: Program[]): void {
 function assertRemoteReady(): void {
   if (shouldUseTrainedTeacherProgramsRemoteApi()) return
   throw new Error(
-    '교육받은 교사 API가 활성화되지 않았습니다. 원격 JWT, programs 모듈, VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED=true(또는 trainedTeacherPrograms) 설정을 확인해 주세요.'
+    '교육받은 교사 API가 활성화되지 않았습니다. 원격 JWT, programs 모듈, VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED=true(또는 trainedTeacherPrograms) 설정을 확인해 주세요. mock 폴백은 사용하지 않습니다.'
   )
 }
 
+/** @deprecated mock 제거 — 호출 시 throw */
 export function getTrainedTeachersMockList(): Program[] {
-  const mockPrograms = getTrainedTeachersPrograms()
-  const localPrograms = readTrainedTeachersRegistrationLocalSavePrograms().filter(
-    local => !mockPrograms.some(mock => mock.id === local.id)
+  throw new Error(
+    '교육받은 교사 mock 목록은 제거되었습니다. Admin programs API를 사용해 주세요.'
   )
-  return [...mockPrograms, ...localPrograms]
 }
 
+export type TrainedTeacherProgramsRemoteListPage = {
+  programs: Program[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
+}
+
+export async function listTrainedTeacherProgramsPage(
+  filters: TrainedTeacherListFilters = {},
+  pageParam = 0
+): Promise<TrainedTeacherProgramsRemoteListPage> {
+  assertRemoteReady()
+  const page = await fetchAdminProgramsRemote(trainedTeacherListParams(filters, pageParam))
+  const programs = (page.items ?? []).map(mapTrainedTeacherListItemToProgram)
+  if (pageParam === 0) setRemoteIdSnapshot(programs)
+  else if (remoteIdSnapshot) {
+    for (const program of programs) remoteIdSnapshot.add(program.id)
+  } else {
+    setRemoteIdSnapshot(programs)
+  }
+  const size = page.size ?? TRAINED_TEACHER_PROGRAM_LIST_PAGE_SIZE
+  const currentPage = page.page ?? pageParam
+  const totalElements = page.totalElements ?? programs.length
+  const totalPages =
+    page.totalPages ?? (size > 0 ? Math.ceil(totalElements / size) : currentPage + 1)
+  return {
+    programs,
+    page: currentPage,
+    size,
+    totalElements,
+    hasMore: currentPage + 1 < totalPages,
+  }
+}
+
+/** @deprecated 무한 스크롤은 `listTrainedTeacherProgramsPage` 사용 */
 export async function listTrainedTeacherPrograms(
   filters: TrainedTeacherListFilters = {}
 ): Promise<Program[]> {
-  if (!shouldUseTrainedTeacherProgramsRemoteApi()) {
-    remoteIdSnapshot = null
-    return getTrainedTeachersMockList()
-  }
-  assertRemoteReady()
-  const page = await fetchAdminProgramsRemote(trainedTeacherListParams(filters))
-  const programs = (page.items ?? []).map(mapTrainedTeacherListItemToProgram)
-  setRemoteIdSnapshot(programs)
-  return programs
+  const page = await listTrainedTeacherProgramsPage(filters, 0)
+  return page.programs
 }
 
 export async function getTrainedTeacherProgram(programId: string): Promise<Program> {
-  if (!shouldUseTrainedTeacherProgramsRemoteApi()) {
-    const local = getTrainedTeachersMockList().find(item => item.id === programId)
-    if (local) return local
-    return programService.getById(programId)
-  }
   assertRemoteReady()
   const program = mapTrainedTeacherDetailToProgram(await fetchAdminProgramByIdRemote(programId))
   try {
@@ -90,10 +110,6 @@ export async function getTrainedTeacherProgram(programId: string): Promise<Progr
 }
 
 export async function createTrainedTeacherProgram(program: Program): Promise<Program> {
-  if (!shouldUseTrainedTeacherProgramsRemoteApi()) {
-    const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...data } = program
-    return programService.create(data)
-  }
   assertRemoteReady()
   const dto = await createAdminProgramRemote(mapTrainedTeacherToCreateRequest(program))
   const mapped = mapTrainedTeacherDetailToProgram(dto)
@@ -107,27 +123,6 @@ export async function updateTrainedTeacherProgram(
   program: Program,
   patch?: Partial<Program>
 ): Promise<Program> {
-  if (!shouldUseTrainedTeacherProgramsRemoteApi()) {
-    const mergedPatch = patch ?? program
-    const updatedLocal = updateCompanySchoolRegistrationLocalSaveProgram(
-      programId,
-      mergedPatch
-    )
-    if (updatedLocal) return updatedLocal
-
-    const mockProgram = getTrainedTeachersPrograms().find(item => item.id === programId)
-    if (mockProgram) {
-      Object.assign(mockProgram, mergedPatch, {
-        id: mockProgram.id,
-        createdAt: mockProgram.createdAt,
-        updatedAt: new Date().toISOString(),
-      })
-      return mockProgram
-    }
-
-    const { id: _id, createdAt: _createdAt, ...data } = mergedPatch
-    return programService.update(programId, data)
-  }
   assertRemoteReady()
   const dto = await updateAdminProgramRemote(
     programId,
@@ -147,22 +142,6 @@ export async function updateTrainedTeacherProgramInfoDetail(
   programId: string,
   payload: TrainedTeachersCommonInfoSavePayload
 ): Promise<Program> {
-  if (!shouldUseTrainedTeacherProgramsRemoteApi()) {
-    const current = await getTrainedTeacherProgram(programId)
-    const next: Program = {
-      ...current,
-      educatedTeachers: payload.educatedTeachers ?? current.educatedTeachers,
-      generalCommonInfo: {
-        ...current.generalCommonInfo,
-        ...payload.commonInfo,
-      },
-      updatedAt: new Date().toISOString(),
-    }
-    return updateTrainedTeacherProgram(programId, next, {
-      educatedTeachers: next.educatedTeachers,
-      generalCommonInfo: next.generalCommonInfo,
-    })
-  }
   assertRemoteReady()
   const dto = await patchTrainedTeacherInfoDetailRemote(
     programId,
@@ -173,17 +152,6 @@ export async function updateTrainedTeacherProgramInfoDetail(
 }
 
 export async function deleteTrainedTeacherProgram(programId: string): Promise<void> {
-  if (!shouldUseTrainedTeacherProgramsRemoteApi()) {
-    if (deleteCompanySchoolRegistrationLocalSaveProgram(programId)) return
-    const mockPrograms = getTrainedTeachersPrograms()
-    const mockIndex = mockPrograms.findIndex(program => program.id === programId)
-    if (mockIndex >= 0) {
-      mockPrograms.splice(mockIndex, 1)
-      return
-    }
-    await programService.delete(programId)
-    return
-  }
   assertRemoteReady()
   await deleteAdminProgramRemote(programId)
   remoteIdSnapshot?.delete(programId)
@@ -191,14 +159,6 @@ export async function deleteTrainedTeacherProgram(programId: string): Promise<vo
 
 export async function deleteTrainedTeacherPrograms(programIds: string[]): Promise<void> {
   if (programIds.length === 0) return
-
-  if (!shouldUseTrainedTeacherProgramsRemoteApi()) {
-    for (const programId of programIds) {
-      await deleteTrainedTeacherProgram(programId)
-    }
-    return
-  }
-
   assertRemoteReady()
   await bulkDeleteAdminProgramsRemote(programIds)
   for (const programId of programIds) {

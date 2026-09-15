@@ -440,7 +440,9 @@ export function ProgramScheduleWidget({
       return new Set(remoteProgramOptions.map(p => p.id))
     }
     if (useCompanySchoolProgramsRemote && companySchoolProgramsQuery.data) {
-      return new Set(companySchoolProgramsQuery.data.map(p => p.id))
+      return new Set(
+        companySchoolProgramsQuery.data.pages.flatMap(page => page.programs).map(p => p.id)
+      )
     }
     return getCategoryProgramIdSet(variant)
   }, [
@@ -461,7 +463,7 @@ export function ProgramScheduleWidget({
       return programsFromOptions(remoteProgramOptions)
     }
     if (useCompanySchoolProgramsRemote && companySchoolProgramsQuery.data) {
-      const base = companySchoolProgramsQuery.data
+      const base = companySchoolProgramsQuery.data.pages.flatMap(page => page.programs)
       if (!user || user.role !== 'ADMIN' || user.adminLevel === 'MASTER') return base
       return filterProgramsByACL(base, user)
     }

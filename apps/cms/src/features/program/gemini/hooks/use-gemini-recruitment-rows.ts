@@ -1,19 +1,12 @@
-import { useSyncExternalStore } from 'react'
-import { geminiRecruitmentService } from '../api/recruitment-service'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from '../api/visiting-training/capabilities'
 import { useGeminiRecruitmentsQuery } from '../api/visiting-training/hooks'
 import type { GeminiRecruitmentRow } from '../model/recruitment/types'
 
+/** API only — gate OFF면 빈 목록 */
 export function useGeminiRecruitmentRows(): GeminiRecruitmentRow[] {
   const remoteEnabled = shouldUseGeminiVisitingTrainingRemoteApi()
   const remoteQuery = useGeminiRecruitmentsQuery(remoteEnabled)
-  const localRows = useSyncExternalStore(
-    geminiRecruitmentService.subscribe,
-    geminiRecruitmentService.getSnapshot,
-    geminiRecruitmentService.getSnapshot
-  )
-  if (remoteEnabled) return remoteQuery.data ?? []
-  return localRows
+  return remoteEnabled ? (remoteQuery.data ?? []) : []
 }
 
 export function useGeminiRecruitmentRowsQueryState() {

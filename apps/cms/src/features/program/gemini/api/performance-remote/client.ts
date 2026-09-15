@@ -4,8 +4,10 @@ import type { GeminiTrainingReportImportRequest } from '@/shared/api/generated/d
 import type { GeminiTrainingReportImportResponse } from '@/shared/api/generated/dashboard/schemas/geminiTrainingReportImportResponse'
 import type { GeminiTrainingReportItem } from '@/shared/api/generated/dashboard/schemas/geminiTrainingReportItem'
 import type { GeminiTrainingReportListResponse } from '@/shared/api/generated/dashboard/schemas/geminiTrainingReportListResponse'
+import { GENERAL_PROGRAM_LIST_PAGE_SIZE } from '@/features/program/general/api/general-program-list-filter-params'
 
 const BASE = '/api/admin/gemini/trainings/training-reports'
+export const GEMINI_PERFORMANCE_LIST_PAGE_SIZE = GENERAL_PROGRAM_LIST_PAGE_SIZE
 
 function asContentArray<T>(
   body: { content?: T[] } | T[] | null | undefined
@@ -14,23 +16,62 @@ function asContentArray<T>(
   return body?.content ?? []
 }
 
+export type GeminiTrainingReportsRemotePage = {
+  items: GeminiTrainingReportItem[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
+}
+
+export async function fetchGeminiTrainingReportsRemotePage(params?: {
+  programId?: number
+  page?: number
+  size?: number
+}): Promise<GeminiTrainingReportsRemotePage> {
+  const pageParam = params?.page ?? 0
+  const sizeParam = params?.size ?? GEMINI_PERFORMANCE_LIST_PAGE_SIZE
+  const query = new URLSearchParams()
+  if (params?.programId != null) query.set('programId', String(params.programId))
+  query.set('page', String(pageParam))
+  query.set('size', String(sizeParam))
+  const body = await unwrapApiBody<GeminiTrainingReportListResponse | GeminiTrainingReportItem[]>(
+    await customInstance({
+      url: `${BASE}?${query.toString()}`,
+      method: 'GET',
+    })
+  )
+  if (Array.isArray(body)) {
+    return {
+      items: body,
+      page: pageParam,
+      size: sizeParam,
+      totalElements: body.length,
+      hasMore: false,
+    }
+  }
+  const items = asContentArray(body)
+  const size = body.size ?? sizeParam
+  const currentPage = body.page ?? pageParam
+  const totalElements = body.totalElements ?? items.length
+  const totalPages = size > 0 ? Math.ceil(totalElements / size) : currentPage + 1
+  return {
+    items,
+    page: currentPage,
+    size,
+    totalElements,
+    hasMore: currentPage + 1 < totalPages,
+  }
+}
+
+/** @deprecated 무한 스크롤은 `fetchGeminiTrainingReportsRemotePage` 사용 */
 export async function fetchGeminiTrainingReportsRemote(params?: {
   programId?: number
   page?: number
   size?: number
 }): Promise<GeminiTrainingReportItem[]> {
-  const query = new URLSearchParams()
-  if (params?.programId != null) query.set('programId', String(params.programId))
-  if (params?.page != null) query.set('page', String(params.page))
-  if (params?.size != null) query.set('size', String(params.size))
-  const qs = query.toString()
-  const body = await unwrapApiBody<GeminiTrainingReportListResponse | GeminiTrainingReportItem[]>(
-    await customInstance({
-      url: qs ? `${BASE}?${qs}` : BASE,
-      method: 'GET',
-    })
-  )
-  return asContentArray(body)
+  const page = await fetchGeminiTrainingReportsRemotePage(params)
+  return page.items
 }
 
 export async function previewGeminiTrainingReportImportRemote(

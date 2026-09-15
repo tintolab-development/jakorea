@@ -26,6 +26,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
 import { CmsButton, ConfirmModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import {
   TemplateWritingPreviewProvider,
   useTemplateWritingPreview,
@@ -73,7 +74,19 @@ function TrainedTeachersProgramPageContent() {
     statusFilter,
     refetchPrograms,
     listQuery,
+    listQueryFiltersKey,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
   } = useTrainedTeachersProgramListFilters()
+
+  const infiniteResetKey = `${statusFilter ?? 'all'}:${listQueryFiltersKey}`
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: infiniteResetKey,
+  })
   const updateMutation = useUpdateTrainedTeacherProgram()
   const deleteProgramsMutation = useDeleteTrainedTeacherPrograms()
 
@@ -374,7 +387,7 @@ function TrainedTeachersProgramPageContent() {
       </div>
       <ProgramList
         data={filteredPrograms}
-        loading={listQuery.isFetching}
+        loading={listQuery.isFetching && !listQuery.isFetchingNextPage}
         headerTitle={headerTitle}
         onView={handleView}
         onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
@@ -389,6 +402,7 @@ function TrainedTeachersProgramPageContent() {
       >
         {programListToolbarActions}
       </ProgramList>
+      <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
 
       <ProgramDetailFullPageModal
         open={Boolean(programIdFromUrl) || Boolean(selectedProgramForFullPageModal)}

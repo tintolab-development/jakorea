@@ -5,9 +5,9 @@
  * 수정 모드 시 form 연동으로 Input 표시.
  */
 
-import { Fragment, type ReactNode, useEffect, useState } from 'react'
+import { Fragment, type ReactNode, useEffect, useMemo } from 'react'
 import { Controller } from 'react-hook-form'
-import { getKpiAchievementList } from '@/features/dashboard/api/admin-dashboard-service'
+import { useKpiAchievementList } from '@/features/dashboard/hooks/use-kpi-achievement-list'
 import type { ProgramKpiItem } from '@/features/dashboard/api/admin-dashboard-service'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -102,23 +102,11 @@ export function ProgramKpiTargetSection({
   isEditMode = false,
   form,
 }: ProgramKpiTargetSectionProps) {
-  const [kpiItem, setKpiItem] = useState<ProgramKpiItem | null>(null)
+  const programIds = useMemo(() => (programId ? [programId] : []), [programId])
+  const { data: kpiList = [] } = useKpiAchievementList(programIds)
+  const kpiItem = kpiList.find(p => p.programId === programId) ?? null
   const isFormEdit = isEditMode && form
   const kpis = kpiItem?.kpis ?? null
-
-  useEffect(() => {
-    let cancelled = false
-    getKpiAchievementList({ programIds: [programId] })
-      .then(list => {
-        if (cancelled) return
-        const item = list.find(p => p.programId === programId)
-        setKpiItem(item ?? null)
-      })
-      .catch(() => setKpiItem(null))
-    return () => {
-      cancelled = true
-    }
-  }, [programId])
 
   // 수정 모드 진입 시 API에서 받은 KPI 값으로 폼 시드 (한 번만)
   useEffect(() => {
