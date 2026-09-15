@@ -18,10 +18,7 @@ import {
   formatModalBoldPhrase,
   formatModalBracketedSubjectName,
 } from '@/features/program/general/lib/modal-message-subject'
-import {
-  PermissionModal,
-  type PermissionModalPayload,
-} from '@/shared/components/permission-modal'
+import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 import './instructor-bulk-approve-modal.css'
@@ -113,7 +110,7 @@ export function ParticipantApprovalCompleteModal({
 
 export function buildParticipantRejectMessage(participantName: string): string {
   const subject = formatModalBracketedSubjectName(participantName, '참여자')
-  return `${subject}의 프로그램 참여를 반려하시겠습니까?\n반려 시 입력하신 반려 사유가 해당 참여자에게 전달되며, 알림이 발송됩니다.`
+  return `${subject}의 프로그램 참여를 반려하시겠습니까?\n반려 시 입력하신 반려 사유가 참여자에게 전달되며, 알림이 발송됩니다.`
 }
 
 export function ParticipantRejectModal({
@@ -212,7 +209,7 @@ export function ParticipantBulkApproveModal({
       variant="approve"
       className="participant-bulk-approve-modal"
       title="참여자 일괄 승인 안내"
-      message={`선택한 **${selectionCount}개**의 모든 참여자의 프로그램 참여를 일괄 승인하시겠습니까?\n승인 시 각 참여자에게 개별로 승인 알림이 발송됩니다.`}
+      message={`선택한 ${selectionCount}명의 모든 참여자의 프로그램 참여를 일괄 승인하시겠습니까?\n승인 시 각 참여자에게 개별로 승인 알림이 발송됩니다.`}
       confirmLabel="승인"
       onCancel={onCancel}
       onConfirm={onConfirm}
