@@ -10,7 +10,7 @@ import {
   type WaitingInstructorAssignmentStatus,
 } from '@/features/program/general/lib/waiting-instructor-assignment'
 import { resolveOneSchoolPerDayAssignmentStatus } from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
-import type { InstructorAssignmentListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorAssignmentListItemResponse'
+import type { InstructorAssignmentListItemEnriched } from '@/features/program/general/api/instructor-assignment-types'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import { extractLectureDateKey } from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
 
@@ -29,6 +29,11 @@ export type CompanySchoolWaitingInstructorRow = {
   hopeScheduleLine?: string
   instructorApplicationId?: string
   instructorMemberId?: string
+  /** create body requestedScheduleId */
+  requestedScheduleId?: number
+  resolvedScheduleId?: number | null
+  /** resolvedScheduleId null — 배정 불가(일정 미생성) */
+  scheduleUnresolved?: boolean
 }
 
 export type CompanySchoolAssignedInstructorRow = {
@@ -38,6 +43,8 @@ export type CompanySchoolAssignedInstructorRow = {
   instructorName: string
   homeAddress?: string
   distanceToSchool?: string
+  longDistance?: boolean
+  organizationName?: string
   assignedDate?: string
   assignedTime?: string
   assignedSession?: string
@@ -49,17 +56,23 @@ export type CompanySchoolAssignedInstructorRow = {
 
 function formatDistanceKm(km: number | undefined): string | undefined {
   if (km == null || Number.isNaN(km)) return undefined
-  return `${Math.round(km)}km`
+  const rounded = Math.round(km)
+  return `${rounded}km`
 }
 
 function hopeScheduleLineFromSession(session: ParticipatingSchoolSession): string {
   const hope = participatingSchoolSessionToHopeSchedule(session)
-  return [hope.hopeDate, hope.hopeTime, hope.hopeSession].filter(Boolean).join(' ')
+  const base = [hope.hopeDate, hope.hopeTime, hope.hopeSession].filter(Boolean).join(' ')
+  if (session.scheduleUnresolved) {
+    return base ? `${base} (일정 미생성)` : '일정 미생성'
+  }
+  return base
 }
 
 /**
  * 승인 강사 × 기관 희망일정(실데이터) → 배정 대기 행.
  * 희망일 없으면 행을 만들지 않음(가짜 일정 금지).
+ * scheduleUnresolved면 unavailable.
  */
 export function buildCompanySchoolWaitingInstructorRows(input: {
   schoolName: string
@@ -91,6 +104,13 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
     for (const session of sessions) {
       const hope = participatingSchoolSessionToHopeSchedule(session)
       const scheduleKey = `${session.date}|${session.round}|${session.classNum}`
+      const conflictStatus = resolveOneSchoolPerDayAssignmentStatus(
+        hope.hopeDate ?? session.date,
+        occupied
+      )
+      const assignmentStatus: WaitingInstructorAssignmentStatus =
+        session.scheduleUnresolved ? 'unavailable' : conflictStatus
+
       rows.push({
         id: `${memberId}__${scheduleKey}`,
         instructorId: memberId,
@@ -98,16 +118,16 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
         no: 0,
         instructorName: app.instructorName?.trim() || '이름 없음',
         distanceToSchool: formatDistanceKm(app.distanceKm),
-        assignmentStatus: resolveOneSchoolPerDayAssignmentStatus(
-          hope.hopeDate ?? session.date,
-          occupied
-        ),
+        assignmentStatus,
         hopeDate: hope.hopeDate,
         hopeTime: hope.hopeTime,
         hopeSession: hope.hopeSession,
         hopeScheduleLine: hopeScheduleLineFromSession(session),
         instructorApplicationId: app.id != null ? String(app.id) : undefined,
         instructorMemberId: memberId,
+        requestedScheduleId: session.requestedScheduleId,
+        resolvedScheduleId: session.resolvedScheduleId,
+        scheduleUnresolved: session.scheduleUnresolved,
       })
     }
   }
@@ -119,7 +139,7 @@ export function buildCompanySchoolWaitingInstructorRows(input: {
 
 /** 기관(organizationApplicationId)에 속한 배정 행 */
 export function buildCompanySchoolAssignedInstructorRows(input: {
-  assignments: InstructorAssignmentListItemResponse[]
+  assignments: InstructorAssignmentListItemEnriched[]
   organizationApplicationId: string
   instructorNameByMemberId: Map<string, string>
   scheduleLabelById: Map<string, { date?: string; time?: string; session?: string }>
@@ -136,12 +156,25 @@ export function buildCompanySchoolAssignedInstructorRows(input: {
     const memberId = a.instructorMemberId != null ? String(a.instructorMemberId) : ''
     const scheduleId = a.scheduleId != null ? String(a.scheduleId) : ''
     const label = scheduleId ? input.scheduleLabelById.get(scheduleId) : undefined
+    const lectureDate = extractLectureDateKey(a.lectureDate) ?? label?.date
+    const distanceLabel =
+      a.longDistance && a.distanceKm != null
+        ? `${formatDistanceKm(a.distanceKm)} (장거리)`
+        : formatDistanceKm(a.distanceKm)
+
     return {
       id: a.assignmentId != null ? String(a.assignmentId) : `assign-${index}`,
       no: filtered.length - index,
       role: a.scheduleLead ? ('lead' as const) : ('assistant' as const),
-      instructorName: input.instructorNameByMemberId.get(memberId) ?? (memberId || '이름 없음'),
-      assignedDate: label?.date,
+      instructorName:
+        a.instructorName?.trim() ||
+        input.instructorNameByMemberId.get(memberId) ||
+        (memberId || '이름 없음'),
+      homeAddress: a.homeAddress,
+      distanceToSchool: distanceLabel,
+      longDistance: a.longDistance,
+      organizationName: a.organizationName,
+      assignedDate: lectureDate,
       assignedTime: label?.time,
       assignedSession: label?.session,
       assignmentId: a.assignmentId != null ? String(a.assignmentId) : undefined,

@@ -34,6 +34,8 @@ describe('buildCompanySchoolWaitingInstructorRows', () => {
           classNum: '1교시',
           timeRange: '1교시',
           status: 'pending',
+          requestedScheduleId: 12345,
+          resolvedScheduleId: 9001,
         },
       ],
       approvedInstructors: [
@@ -49,5 +51,39 @@ describe('buildCompanySchoolWaitingInstructorRows', () => {
     })
     expect(rows).toHaveLength(1)
     expect(rows[0]?.assignmentStatus).toBe('unavailable')
+    expect(rows[0]?.requestedScheduleId).toBe(12345)
+  })
+
+  it('resolvedScheduleId null이면 일정 미생성으로 unavailable', () => {
+    const rows = buildCompanySchoolWaitingInstructorRows({
+      schoolName: '인천가온고등학교',
+      sessions: [
+        {
+          round: 1,
+          date: '2026. 09. 12',
+          dayOfWeek: '금',
+          duration: '1차시',
+          format: '단독',
+          classNum: '1교시',
+          timeRange: '1교시',
+          status: 'pending',
+          requestedScheduleId: 99,
+          resolvedScheduleId: null,
+          scheduleUnresolved: true,
+        },
+      ],
+      approvedInstructors: [
+        {
+          id: 1,
+          instructorMemberId: 170024,
+          instructorName: '한서연',
+          applicationStatus: 'APPROVED',
+        },
+      ],
+      assignedInstructorMemberIds: new Set(),
+    })
+    expect(rows[0]?.assignmentStatus).toBe('unavailable')
+    expect(rows[0]?.scheduleUnresolved).toBe(true)
+    expect(rows[0]?.hopeScheduleLine).toContain('일정 미생성')
   })
 })

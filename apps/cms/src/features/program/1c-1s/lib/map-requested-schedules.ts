@@ -5,6 +5,7 @@
 import dayjs from 'dayjs'
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
 import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
+import type { RequestedScheduleWithResolved } from '@/features/program/general/api/instructor-assignment-types'
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'] as const
 
@@ -18,9 +19,15 @@ function formatRequestedDate(raw?: string): { date: string; dayOfWeek: string } 
   }
 }
 
+function hasResolvedScheduleField(
+  schedule: RequestedScheduleWithResolved
+): boolean {
+  return Object.prototype.hasOwnProperty.call(schedule, 'resolvedScheduleId')
+}
+
 /** preferenceOrder 1|2 → ParticipatingSchoolSession (교시=startPeriod, 차시수=sessionCount) */
 export function mapRequestedSchedulesToSessions(
-  schedules: RequestedScheduleResponse[] | undefined | null
+  schedules: RequestedScheduleResponse[] | RequestedScheduleWithResolved[] | undefined | null
 ): ParticipatingSchoolSession[] | undefined {
   if (!schedules?.length) return undefined
 
@@ -28,7 +35,8 @@ export function mapRequestedSchedulesToSessions(
     (a, b) => (a.preferenceOrder ?? 99) - (b.preferenceOrder ?? 99)
   )
 
-  return sorted.slice(0, 2).map((schedule, index) => {
+  return sorted.slice(0, 2).map((raw, index) => {
+    const schedule = raw as RequestedScheduleWithResolved
     const order = schedule.preferenceOrder ?? index + 1
     const startPeriod = schedule.startPeriod ?? 1
     const sessionCount = Math.min(2, Math.max(1, schedule.sessionCount ?? 1))
@@ -37,6 +45,8 @@ export function mapRequestedSchedulesToSessions(
     const classNum = `${startPeriod}교시`
     const timeRange =
       sessionCount > 1 ? `${startPeriod}교시 ~ ${endPeriod}교시` : `${startPeriod}교시`
+    const scheduleUnresolved =
+      hasResolvedScheduleField(schedule) && schedule.resolvedScheduleId == null
 
     return {
       round: order,
@@ -47,6 +57,11 @@ export function mapRequestedSchedulesToSessions(
       classNum,
       timeRange,
       status: 'pending' as const,
+      requestedScheduleId: schedule.id,
+      resolvedScheduleId: hasResolvedScheduleField(schedule)
+        ? (schedule.resolvedScheduleId ?? null)
+        : undefined,
+      scheduleUnresolved: scheduleUnresolved || undefined,
     }
   })
 }

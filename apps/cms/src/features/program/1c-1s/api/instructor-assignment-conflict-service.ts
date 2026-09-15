@@ -1,23 +1,30 @@
 /**
  * 1사1교 강사 배정 보드 데이터 — mock 없음 (API only)
+ * 점유일 SSOT: assignment-calendar (+ list lectureDate 폴백)
  */
 
-import { fetchInstructorAssignmentsRemote } from '@/features/program/general/api/instructor-assignments-api-client'
+import dayjs from 'dayjs'
+import {
+  fetchInstructorAssignmentCalendarRemote,
+  fetchInstructorAssignmentsRemote,
+} from '@/features/program/general/api/instructor-assignments-api-client'
 import { fetchInstructorApplicationsRemote } from '@/features/program/general/api/applications-api-client'
 import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
 import { shouldUseCompanySchoolApplicationsRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { shouldUseCompanySchoolProgramProgressRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import {
   buildOccupiedLectureDatesByInstructorKeys,
+  buildOccupiedLectureDatesFromCalendar,
   buildScheduleLectureDateById,
   extractLectureDateKey,
+  mergeOccupiedLectureDateMaps,
 } from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
-import type { InstructorAssignmentListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorAssignmentListItemResponse'
+import type { InstructorAssignmentListItemEnriched } from '@/features/program/general/api/instructor-assignment-types'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 
 export type CompanySchoolAssignmentBoardData = {
-  assignments: InstructorAssignmentListItemResponse[]
+  assignments: InstructorAssignmentListItemEnriched[]
   approvedInstructorApplications: InstructorApplicationListItemResponse[]
   schedules: ProgramScheduleResponse[]
   occupiedLectureDatesByInstructorId: Map<string, Set<string>>
@@ -58,18 +65,52 @@ function buildScheduleLabelById(
   return map
 }
 
+function enrichScheduleLabelFromAssignments(
+  base: Map<string, { date?: string; time?: string; session?: string }>,
+  assignments: InstructorAssignmentListItemEnriched[]
+): Map<string, { date?: string; time?: string; session?: string }> {
+  const map = new Map(base)
+  for (const a of assignments) {
+    if (a.scheduleId == null || !a.lectureDate) continue
+    const id = String(a.scheduleId)
+    const prev = map.get(id)
+    const dateKey = extractLectureDateKey(a.lectureDate) ?? a.lectureDate
+    map.set(id, {
+      date: dateKey,
+      time: prev?.time,
+      session: prev?.session,
+    })
+  }
+  return map
+}
+
+async function fetchCalendarSafe(
+  programId: string
+): Promise<ReturnType<typeof buildOccupiedLectureDatesFromCalendar>> {
+  const from = dayjs().subtract(6, 'month').format('YYYY-MM-DD')
+  const to = dayjs().add(12, 'month').format('YYYY-MM-DD')
+  try {
+    const res = await fetchInstructorAssignmentCalendarRemote(programId, { from, to })
+    return buildOccupiedLectureDatesFromCalendar(res.items)
+  } catch {
+    // calendar 미배포/404 시 list+schedules 폴백
+    return new Map()
+  }
+}
+
 export async function fetchCompanySchoolAssignmentBoard(
   programId: string
 ): Promise<CompanySchoolAssignmentBoardData> {
   assertAssignmentRemoteReady()
 
-  const [assignmentsPage, instructorAppsPage, schedules] = await Promise.all([
+  const [assignmentsPage, instructorAppsPage, schedules, calendarOccupied] = await Promise.all([
     fetchInstructorAssignmentsRemote({ programId, page: 0, size: 200 }),
     fetchInstructorApplicationsRemote(programId, { page: 0, size: 100 }),
     fetchAdminProgramSchedulesRemote(programId),
+    fetchCalendarSafe(programId),
   ])
 
-  const assignments = assignmentsPage.items ?? []
+  const assignments = (assignmentsPage.items ?? []) as InstructorAssignmentListItemEnriched[]
   const approvedInstructorApplications = (instructorAppsPage.items ?? []).filter(app => {
     const status = (app.applicationStatus ?? '').toUpperCase()
     return ['APPROVED', 'WAITING_ASSIGNMENT', 'ASSIGNED'].includes(status)
@@ -81,18 +122,23 @@ export async function fetchCompanySchoolAssignmentBoard(
       startAt: s.startAt ?? s.startDate,
     }))
   )
-  const occupiedLectureDatesByInstructorId = buildOccupiedLectureDatesByInstructorKeys(
-    assignments,
-    scheduleDateById
+  const listOccupied = buildOccupiedLectureDatesByInstructorKeys(assignments, scheduleDateById)
+  const occupiedLectureDatesByInstructorId = mergeOccupiedLectureDateMaps(
+    calendarOccupied,
+    listOccupied
   )
 
   const instructorNameByMemberId = new Map<string, string>()
+  for (const a of assignments) {
+    if (a.instructorMemberId == null || !a.instructorName?.trim()) continue
+    instructorNameByMemberId.set(String(a.instructorMemberId), a.instructorName.trim())
+  }
   for (const app of approvedInstructorApplications) {
     if (app.instructorMemberId == null) continue
-    instructorNameByMemberId.set(
-      String(app.instructorMemberId),
-      app.instructorName?.trim() || '이름 없음'
-    )
+    const key = String(app.instructorMemberId)
+    if (!instructorNameByMemberId.has(key)) {
+      instructorNameByMemberId.set(key, app.instructorName?.trim() || '이름 없음')
+    }
   }
 
   return {
@@ -100,7 +146,10 @@ export async function fetchCompanySchoolAssignmentBoard(
     approvedInstructorApplications,
     schedules,
     occupiedLectureDatesByInstructorId,
-    scheduleLabelById: buildScheduleLabelById(schedules),
+    scheduleLabelById: enrichScheduleLabelFromAssignments(
+      buildScheduleLabelById(schedules),
+      assignments
+    ),
     instructorNameByMemberId,
   }
 }
@@ -113,7 +162,7 @@ export async function fetchCompanySchoolOccupiedLectureDates(
   return board.occupiedLectureDatesByInstructorId
 }
 
-/** hope 날짜(YYYY-MM-DD)에 매칭되는 program schedule id */
+/** hope 날짜(YYYY-MM-DD)에 매칭되는 program schedule id — 레거시 폴백 */
 export function findScheduleIdForLectureDate(
   schedules: ProgramScheduleResponse[],
   hopeDateOrLine: string | null | undefined

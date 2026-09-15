@@ -196,6 +196,11 @@ export interface WaitingInstructorRowMock {
   hopeTime?: string
   hopeSession?: string
   hopeScheduleLine?: string
+  instructorApplicationId?: string
+  instructorMemberId?: string
+  requestedScheduleId?: number
+  resolvedScheduleId?: number | null
+  scheduleUnresolved?: boolean
 }
 
 function scheduleGroupsForWaitingInstructor(
