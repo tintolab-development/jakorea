@@ -154,7 +154,6 @@ export async function updateSponsorStatus(
     sponsorshipStatus,
     sponsorshipStartDate:
       existing.sponsorshipStartDate != null ? String(existing.sponsorshipStartDate) : undefined,
-    managers: existing.managers,
   })
 }
 
