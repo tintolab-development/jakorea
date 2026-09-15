@@ -199,22 +199,31 @@ function buildSaveRecordFromVersionResponse(args: {
   }
 }
 
+function savedAtMs(value: string | undefined): number {
+  if (value == null || value === '') return 0
+  const ms = Date.parse(value)
+  return Number.isFinite(ms) ? ms : 0
+}
+
+/** localStorage 성공 = 임시저장 성공. remote는 fire-and-forget(실패해도 throw 안 함). */
 export async function loadFormTemplateVersionDraft(
   templateCode: string
 ): Promise<WritingFormTemplateSaveRecord | null> {
+  const local = loadWritingFormTemplateSave(templateCode)
+
   if (shouldUseRemoteDraftApiForTemplate(templateCode)) {
     try {
       const versionId = await resolveTemplateVersionId(templateCode)
       if (versionId != null) {
         const version = await fetchFormTemplateVersionRemote(versionId)
-        const record = buildSaveRecordFromVersionResponse({
+        const remote = buildSaveRecordFromVersionResponse({
           templateCode,
           schemaJson: version.schemaJson,
           extensionJson: version.extensionJson,
           settingsJson: version.settingsJson,
           updatedAt: version.updatedAt,
         })
-        if (record != null) {
+        if (remote != null) {
           const cached = getFormTemplateVersionCacheEntry(templateCode)
           if (cached?.templateId != null && version.templateVersionId != null) {
             upsertFormTemplateVersionCacheEntry({
@@ -225,14 +234,20 @@ export async function loadFormTemplateVersionDraft(
               latestVersionNo: version.versionNo,
             })
           }
+
+          // local이 더 최신이면 remote로 overwrite하지 않음 (로컬만 저장된 draft 보호)
+          if (local != null && savedAtMs(local.savedAt) > savedAtMs(remote.savedAt)) {
+            return local
+          }
+
           persistWritingFormTemplateSave({
             templateId: templateCode,
-            draft: record.draft,
-            overlay: record.overlay,
-            editorState: record.editorState,
-            settingsJson: record.settingsJson,
+            draft: remote.draft,
+            overlay: remote.overlay,
+            editorState: remote.editorState,
+            settingsJson: remote.settingsJson,
           })
-          return record
+          return remote
         }
       }
     } catch {
@@ -240,7 +255,7 @@ export async function loadFormTemplateVersionDraft(
     }
   }
 
-  return loadWritingFormTemplateSave(templateCode)
+  return local
 }
 
 export async function saveFormTemplateVersionDraft(args: {
@@ -251,6 +266,7 @@ export async function saveFormTemplateVersionDraft(args: {
   uiState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
 }): Promise<void> {
+  // localStorage 우선 — QuotaExceeded 등 local 실패만 UI 실패로 전파
   persistWritingFormTemplateSave({
     templateId: args.templateCode,
     draft: args.draft,
@@ -295,8 +311,8 @@ export async function saveFormTemplateVersionDraft(args: {
 
     await updateFormTemplateVersionRemote(versionId, body)
   } catch (error) {
+    // fire-and-forget: local은 이미 저장됨 — remote 실패로 UI 임시저장을 실패 처리하지 않음
     console.warn('[form-templates] remote draft save failed; localStorage kept', error)
-    throw error
   }
 }
 

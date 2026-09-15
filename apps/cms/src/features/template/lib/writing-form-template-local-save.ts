@@ -44,6 +44,21 @@ function readFile(): LocalSaveFile {
 function writeFile(file: LocalSaveFile): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(file))
 }
+
+/** QuotaExceededError / 용량 부족 — 임시저장 UI 실패 문구 분기용 */
+export function isLocalStorageQuotaExceededError(error: unknown): boolean {
+  if (error == null || typeof error !== 'object') return false
+  const name = 'name' in error && typeof error.name === 'string' ? error.name : ''
+  const code = 'code' in error ? error.code : undefined
+  const message = 'message' in error && typeof error.message === 'string' ? error.message : ''
+  return (
+    name === 'QuotaExceededError' ||
+    name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+    code === 22 ||
+    code === 1014 ||
+    /quotaexceeded|quota.?exceeded|exceeded the quota/i.test(message)
+  )
+}
 export function loadWritingFormTemplateSave(
   templateId: string
 ): WritingFormTemplateSaveRecord | null {
