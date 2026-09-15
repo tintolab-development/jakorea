@@ -7,7 +7,7 @@ import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
-import type { IndividualApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationListItemResponse'
+import type { IndividualApplicationListItemEnriched } from '@/features/program/general/api/individual-application-screening-api-types'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
 import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
@@ -109,11 +109,43 @@ export function mapInstructorApplicationToApplicantInstructorRow(
   }
 }
 
+function formatAssignedInterviewFromIso(
+  startAt?: string | null,
+  endAt?: string | null
+): { assignedInterviewDateLabel?: string; assignedInterviewTime?: string } {
+  if (!startAt?.trim()) return {}
+  const start = new Date(startAt)
+  if (Number.isNaN(start.getTime())) return {}
+  const y = start.getFullYear()
+  const m = String(start.getMonth() + 1).padStart(2, '0')
+  const d = String(start.getDate()).padStart(2, '0')
+  const hh = String(start.getHours()).padStart(2, '0')
+  const mm = String(start.getMinutes()).padStart(2, '0')
+  const startLabel = `${hh}:${mm}`
+  let timeRange = startLabel
+  if (endAt?.trim()) {
+    const end = new Date(endAt)
+    if (!Number.isNaN(end.getTime())) {
+      const eh = String(end.getHours()).padStart(2, '0')
+      const em = String(end.getMinutes()).padStart(2, '0')
+      timeRange = `${startLabel} ~ ${eh}:${em}`
+    }
+  }
+  return {
+    assignedInterviewDateLabel: `${y}.${m}.${d}`,
+    assignedInterviewTime: timeRange,
+  }
+}
+
 export function mapIndividualApplicationToApplicantRow(
-  dto: IndividualApplicationListItemResponse,
+  dto: IndividualApplicationListItemEnriched,
   index: number,
   programId: string
 ): GeneralIndividualApplicantRow {
+  const assigned = formatAssignedInterviewFromIso(
+    dto.assignedInterviewStartAt,
+    dto.assignedInterviewEndAt
+  )
   return {
     id: toId(dto.id),
     no: index + 1,
@@ -123,8 +155,41 @@ export function mapIndividualApplicationToApplicantRow(
     homeAddress: '',
     appliedAt: dto.submittedAt,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
-    programId,
+    programId: toId(dto.programId) || programId,
+    documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(dto.documentStatus),
+    interviewAssignmentStatus: mapApiInterviewStatusToAssignmentStatus(
+      dto.interviewStatus,
+      dto.giveUpYn
+    ),
+    secondInterviewScreeningStatus: mapApiFinalResultToSecondInterviewStatus(
+      dto.finalResultStatus,
+      dto.reserveRank
+    ),
+    ...assigned,
   } as GeneralIndividualApplicantRow
+}
+
+export function filterIndividualDoc1Rows(
+  rows: GeneralIndividualApplicantRow[]
+): GeneralIndividualApplicantRow[] {
+  return rows.filter(row => (row.documentScreeningStatus ?? 'pending') === 'pending')
+}
+
+export function filterIndividualDocPassedRows(
+  rows: GeneralIndividualApplicantRow[]
+): GeneralIndividualApplicantRow[] {
+  return rows.filter(row => row.documentScreeningStatus === 'pass')
+}
+
+export function filterIndividualInterview2Rows(
+  rows: GeneralIndividualApplicantRow[]
+): GeneralIndividualApplicantRow[] {
+  return rows.filter(
+    row =>
+      row.documentScreeningStatus === 'pass' &&
+      (row.interviewAssignmentStatus === 'assigned' ||
+        row.interviewAssignmentStatus === 'withdrawn')
+  )
 }
 
 export function mapParticipantToParticipatingIndividualRow(
@@ -152,7 +217,7 @@ export function mapApiDocumentStatusToScreeningStatus(
   status?: string
 ): GeneralDocumentScreeningStatus {
   const normalized = status?.trim().toUpperCase() ?? ''
-  if (['PASS', 'PASSED', 'APPROVED'].includes(normalized)) return 'pass'
+  if (['PASS', 'PASSED', 'APPROVED', 'DOCUMENT_PASSED'].includes(normalized)) return 'pass'
   if (['FAIL', 'FAILED', 'REJECTED', 'AUTO_REJECTED'].includes(normalized)) return 'fail'
   return 'pending'
 }

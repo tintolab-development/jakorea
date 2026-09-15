@@ -2,13 +2,17 @@ import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
-import type { IndividualApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationListItemResponse'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
 import type { PageResponseOrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseOrganizationApplicationListItemResponse'
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
 import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboard/schemas/volunteerFinalResultRequest'
+import type {
+  IndividualApplicationListItemEnriched,
+  InterviewAssignmentCreateRequestEnriched,
+  InterviewAssignmentResponseEnriched,
+} from '@/features/program/general/api/individual-application-screening-api-types'
 
 export type ApplicationsListQuery = {
   status?: string
@@ -60,8 +64,8 @@ export async function fetchInstructorApplicationsRemote(
 export async function fetchIndividualApplicationsRemote(
   programId: string,
   params?: ApplicationsListQuery
-): Promise<ApplicationsPageDto<IndividualApplicationListItemResponse>> {
-  return fetchApplicationsPage<IndividualApplicationListItemResponse>(
+): Promise<ApplicationsPageDto<IndividualApplicationListItemEnriched>> {
+  return fetchApplicationsPage<IndividualApplicationListItemEnriched>(
     `/api/admin/programs/${encodeURIComponent(programId)}/individual-applications`,
     params
   )
@@ -149,6 +153,43 @@ export async function rejectIndividualApplicationRemote(
   )
 }
 
+export async function giveUpIndividualApplicationRemote(
+  applicationId: string
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/give-up`,
+      method: 'POST',
+    })
+  )
+}
+
+export async function submitIndividualDocumentResultRemote(
+  applicationId: string,
+  payload: DocumentResultRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/document-result`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function submitIndividualFinalResultRemote(
+  applicationId: string,
+  payload: VolunteerFinalResultRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/final-result`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
 export async function submitVolunteerDocumentResultRemote(
   applicationId: string,
   payload: DocumentResultRequest
@@ -216,11 +257,13 @@ export async function listInterviewSlotsRemote(
   return body.items ?? []
 }
 
+/**
+ * Canonical 면접 배정.
+ * volunteerApplicationId ↔ individualApplicationId 상호 배타.
+ */
 export async function createInterviewAssignmentRemote(
-  payload: import('@/shared/api/generated/dashboard/schemas/interviewAssignmentCreateRequest').InterviewAssignmentCreateRequest
-): Promise<
-  import('@/shared/api/generated/dashboard/schemas/interviewAssignmentResponse').InterviewAssignmentResponse
-> {
+  payload: InterviewAssignmentCreateRequestEnriched
+): Promise<InterviewAssignmentResponseEnriched> {
   return unwrapApiBody(
     await customInstance({
       url: '/api/admin/interview-assignments',

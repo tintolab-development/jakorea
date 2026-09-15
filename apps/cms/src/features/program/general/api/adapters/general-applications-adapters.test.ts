@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   mapApiApplicationStatusToApprovalStatus,
+  mapIndividualApplicationToApplicantRow,
   mapInstructorApplicationToApplicantInstructorRow,
   mapOrganizationApplicationToApplicantSchoolRow,
   mapVolunteerApplicationToGeneralVolunteerApplicantRow,
@@ -83,6 +84,37 @@ describe('general-applications-adapters', () => {
     expect(row.interviewAssignmentStatus).toBe('assigned')
     expect(row.secondInterviewScreeningStatus).toBe('reserve2')
     expect(row.applicationType).toBe('ujat-graduate')
+  })
+
+  it('maps individual application list item with screening fields', () => {
+    const row = mapIndividualApplicationToApplicantRow(
+      {
+        id: 55,
+        programId: 5001,
+        memberName: '김참여자',
+        applicationStatus: 'WAITING_REVIEW',
+        documentStatus: 'DOCUMENT_PASSED',
+        interviewStatus: 'ASSIGNED',
+        finalResultStatus: 'RESERVE',
+        reserveRank: 2,
+        giveUpYn: false,
+        submittedAt: '2026-04-03T00:00:00Z',
+        assignedInterviewSlotId: 1001,
+        assignedInterviewStartAt: '2026-04-10T10:00:00+09:00',
+        assignedInterviewEndAt: '2026-04-10T11:00:00+09:00',
+      },
+      0,
+      '5001'
+    )
+
+    expect(row.id).toBe('55')
+    expect(row.applicantName).toBe('김참여자')
+    expect(row.documentScreeningStatus).toBe('pass')
+    expect(row.interviewAssignmentStatus).toBe('assigned')
+    expect(row.secondInterviewScreeningStatus).toBe('reserve2')
+    expect(row.programId).toBe('5001')
+    expect(row.assignedInterviewDateLabel).toBe('2026.04.10')
+    expect(row.assignedInterviewTime).toContain('10:00')
   })
 })
 

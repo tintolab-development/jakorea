@@ -2,17 +2,22 @@ import {
   filterVolunteerDoc1Rows,
   filterVolunteerDocPassedRows,
   filterVolunteerInterview2Rows,
+  filterIndividualDoc1Rows,
+  filterIndividualDocPassedRows,
+  filterIndividualInterview2Rows,
   mapIndividualApplicationToApplicantRow,
   mapInstructorApplicationToApplicantInstructorRow,
   mapOrganizationApplicationToApplicantSchoolRow,
   mapVolunteerApplicationToGeneralVolunteerApplicantRow,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { mapParticipantsToVolunteerScreeningRows } from '@/features/program/general/lib/participant-volunteer-row-adapter'
 import { shouldUseApplicationsHttpRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import {
   approveIndividualApplicationRemote,
   approveInstructorApplicationRemote,
   approveOrganizationApplicationRemote,
   assignVolunteerInterviewSlotRemote,
+  createInterviewAssignmentRemote,
   createInterviewSlotRemote,
   fetchIndividualApplicationsRemote,
   fetchInstructorApplicationsRemote,
@@ -23,6 +28,8 @@ import {
   rejectIndividualApplicationRemote,
   rejectInstructorApplicationRemote,
   rejectOrganizationApplicationRemote,
+  submitIndividualDocumentResultRemote,
+  submitIndividualFinalResultRemote,
   submitVolunteerDocumentResultRemote,
   submitVolunteerFinalResultRemote,
   type ApplicationsListQuery,
@@ -105,8 +112,30 @@ export async function fetchGeneralIndividualApplications(
     size: 50,
     ...options?.query,
   })
-  return (page.items ?? []).map((item, index) =>
+  const rows = (page.items ?? []).map((item, index) =>
     mapIndividualApplicationToApplicantRow(item, index, programId)
+  )
+  if (options?.doc1) return filterIndividualDoc1Rows(rows)
+  return rows
+}
+
+export async function fetchGeneralIndividualDocPassedAsVolunteerRows(
+  programId: string
+): Promise<GeneralVolunteerApplicantRow[]> {
+  assertApplicationsRemoteReady()
+  const rows = await fetchGeneralIndividualApplications(programId)
+  return sortGeneralVolunteerDocPassedApplicants(
+    mapParticipantsToVolunteerScreeningRows(filterIndividualDocPassedRows(rows))
+  )
+}
+
+export async function fetchGeneralIndividualInterview2AsVolunteerRows(
+  programId: string
+): Promise<GeneralVolunteerApplicantRow[]> {
+  assertApplicationsRemoteReady()
+  const rows = await fetchGeneralIndividualApplications(programId)
+  return sortGeneralVolunteerInterview2Applicants(
+    mapParticipantsToVolunteerScreeningRows(filterIndividualInterview2Rows(rows))
   )
 }
 
@@ -196,12 +225,28 @@ export async function submitGeneralVolunteerDocumentResult(
   await submitVolunteerDocumentResultRemote(applicationId, payload)
 }
 
+export async function submitGeneralIndividualDocumentResult(
+  applicationId: string,
+  payload: DocumentResultRequest
+): Promise<void> {
+  assertApplicationsRemoteReady()
+  await submitIndividualDocumentResultRemote(applicationId, payload)
+}
+
 export async function submitGeneralVolunteerFinalResult(
   applicationId: string,
   payload: VolunteerFinalResultRequest
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await submitVolunteerFinalResultRemote(applicationId, payload)
+}
+
+export async function submitGeneralIndividualFinalResult(
+  applicationId: string,
+  payload: VolunteerFinalResultRequest
+): Promise<void> {
+  assertApplicationsRemoteReady()
+  await submitIndividualFinalResultRemote(applicationId, payload)
 }
 
 /**
@@ -231,6 +276,49 @@ export async function assignGeneralVolunteerInterview(params: {
   }
 
   const assignment = await assignVolunteerInterviewSlotRemote(params.applicationId, {
+    interviewSlotId,
+  })
+
+  return {
+    interviewSlotId,
+    interviewAssignmentId: assignment.interviewAssignmentId,
+  }
+}
+
+/**
+ * 면접 슬롯 생성 후 개인 신청에 배정.
+ * Canonical: POST /api/admin/interview-assignments + individualApplicationId
+ */
+export async function assignGeneralIndividualInterview(params: {
+  programId: string
+  applicationId: string
+  slotDate: string
+  startAt: string
+  endAt: string
+  maxAssignCount?: number
+}): Promise<{ interviewSlotId?: number; interviewAssignmentId?: number }> {
+  assertApplicationsRemoteReady()
+
+  const individualApplicationId = Number(params.applicationId)
+  if (!Number.isFinite(individualApplicationId)) {
+    throw new Error('개인 신청 ID가 올바르지 않습니다.')
+  }
+
+  const slot = await createInterviewSlotRemote(params.programId, {
+    slotDate: params.slotDate,
+    startAt: params.startAt,
+    endAt: params.endAt,
+    maxAssignCount: params.maxAssignCount ?? 1,
+    exceptionSlot: false,
+  })
+
+  const interviewSlotId = slot.interviewSlotId
+  if (interviewSlotId == null) {
+    throw new Error('면접 슬롯 생성 응답에 interviewSlotId가 없습니다.')
+  }
+
+  const assignment = await createInterviewAssignmentRemote({
+    individualApplicationId,
     interviewSlotId,
   })
 
