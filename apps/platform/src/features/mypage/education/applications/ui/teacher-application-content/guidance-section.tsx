@@ -14,6 +14,7 @@ import {
   TEACHER_GUIDANCE_FIELDS,
   TEACHER_SEX_OFFENSE_CONSENT_METHOD_LABEL,
 } from './guidance-fields'
+import { splitPipeSeparatedParts } from './split-pipe-parts'
 import styles from './teacher-application-content.module.css'
 
 type GuidanceSectionProps = {
@@ -113,7 +114,18 @@ export function GuidanceSection({ guidance, onSave }: GuidanceSectionProps) {
                   onValueChange={value => updateField('sexOffenseConsentMethod', value)}
                 />
               ) : (
-                <p className={styles.fieldValue}>{guidance.sexOffenseConsentMethod}</p>
+                <p className={styles.inlineParts}>
+                  {splitPipeSeparatedParts(guidance.sexOffenseConsentMethod ?? '').map(
+                    (part, index) => (
+                      <span key={`sex-offense-${index}`} className={styles.inlinePartWrap}>
+                        {index > 0 ? (
+                          <span className={styles.sexOffensePartDivider} aria-hidden="true" />
+                        ) : null}
+                        <span className={styles.inlinePart}>{part}</span>
+                      </span>
+                    ),
+                  )}
+                </p>
               )}
             </PFFormField>
           </PFFormFieldRow>

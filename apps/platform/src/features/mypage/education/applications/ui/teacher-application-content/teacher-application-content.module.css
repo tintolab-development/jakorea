@@ -66,9 +66,52 @@
   background: var(--color-neutral-cool-50);
 }
 
-.scheduleLabel,
-.scheduleValue {
+.scheduleLabel {
   margin: 0;
+}
+
+.scheduleValue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+}
+
+.schedulePartWrap,
+.inlinePartWrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.schedulePart {
+  margin: 0;
+}
+
+.schedulePartDivider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 14px;
+  margin: 0 var(--spacing-12);
+  background: var(--color-border-default);
+}
+
+.inlineParts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+}
+
+.inlinePart {
+  margin: 0;
+}
+
+.sexOffensePartDivider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 14px;
+  margin: 0 var(--spacing-16);
+  background: var(--color-border-strong);
 }
 
 .fieldValue {
