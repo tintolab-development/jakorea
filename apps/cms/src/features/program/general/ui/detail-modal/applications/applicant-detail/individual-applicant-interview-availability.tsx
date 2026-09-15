@@ -5,6 +5,7 @@ import {
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import '@/features/program/general/ui/detail-modal/applications/volunteer-screening/detail.css'
+import '@/features/user/detail/ui/instructor-resume/resume.css'
 
 export function IndividualApplicantInterviewAvailabilitySection({
   interviewAvailability,
@@ -18,9 +19,9 @@ export function IndividualApplicantInterviewAvailabilitySection({
       <DetailInfoForm title="면접 진행 가능 일정" mode="view">
         {days.length === 0 ? (
           <DetailInfoForm.Row type="custom">
-            <p className="general-volunteer-applicant-interview-availability__empty">
-              등록된 일정이 없습니다.
-            </p>
+            <div className="instructor-resume-free-writing-card">
+              <p className="instructor-resume-free-writing-text">-</p>
+            </div>
           </DetailInfoForm.Row>
         ) : (
           days.map(day => (

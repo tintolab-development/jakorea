@@ -11,6 +11,11 @@ import { resolveApplicantSchoolApprovalNotificationSentAt } from '@/data/mock/ap
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
 import type { TextbookStatusKey } from '@/data/mock/participating-schools'
 import { countInterviewAvailabilitySlots } from '@/features/program/general/lib/interview-availability-utils'
+import {
+  GENERAL_INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY,
+  GENERAL_INTERVIEW_ASSIGNED_DATE_LABELS,
+  GENERAL_INTERVIEW_MOCK_TIME_SLOTS,
+} from '@/data/mock/general-volunteer-interview-schedule-mock'
 import type {
   GeneralDocumentScreeningStatus,
   GeneralInterviewAssignmentStatus,
@@ -228,19 +233,32 @@ const APPROVAL_STATUSES: ApplicantApprovalStatusKey[] = ['pending', 'rejected', 
 
 const DAYS_OF_WEEK = ['일', '월', '화', '수', '목', '금', '토']
 
-const INTERVIEW_DATE_LABELS = [
-  '26. 03. 09(월)',
-  '26. 03. 10(화)',
-  '26. 03. 11(수)',
-  '26. 03. 12(목)',
-] as const
+const INTERVIEW_TIME_SLOTS = GENERAL_INTERVIEW_MOCK_TIME_SLOTS.split(',')
+  .map(slot => slot.trim())
+  .filter(Boolean)
 
-const INTERVIEW_TIME_SLOTS = ['09:00 ~ 09:30', '10:00 ~ 10:30', '14:00 ~ 14:30'] as const
+/**
+ * 면접일 배정 캘린더 UI demo — 목록 6개 = 팝업 연민트 3일×2슬롯 (2026.09~10)
+ */
+const INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY: GeneralIndividualApplicantInterviewAvailabilityDay[] =
+  GENERAL_INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY.map(day => ({
+    dateLabel: day.dateLabel,
+    slots: [...day.slots],
+  }))
+
+/**
+ * 참여자 1차 서류 심사 대상자 — 고정 10건 (0-based index).
+ * 0=고종욱, 2=박틴토 데모 상세와 겹침.
+ */
+const PARTICIPANT_DOC1_PENDING_INDICES = new Set([0, 1, 2, 3, 4, 6, 8, 9, 12, 16])
+
+/** 서류 불합격 demo */
+const PARTICIPANT_DOC1_FAIL_INDICES = new Set([11, 22])
 
 function resolveParticipantDocumentStatus(index: number): GeneralDocumentScreeningStatus {
-  if (index % 11 === 0) return 'fail'
-  if (index % 5 === 0 || index % 7 === 0) return 'pass'
-  return 'pending'
+  if (PARTICIPANT_DOC1_PENDING_INDICES.has(index)) return 'pending'
+  if (PARTICIPANT_DOC1_FAIL_INDICES.has(index)) return 'fail'
+  return 'pass'
 }
 
 function resolveParticipantInterviewAssignmentStatus(
@@ -253,10 +271,19 @@ function resolveParticipantInterviewAssignmentStatus(
   return 'waiting'
 }
 
-function buildParticipantInterviewAvailability(index: number) {
-  const day = INTERVIEW_DATE_LABELS[index % INTERVIEW_DATE_LABELS.length]
-  const slots = INTERVIEW_TIME_SLOTS.slice(0, 1 + (index % 3)).map(String)
-  return [{ dateLabel: day, slots }]
+function buildParticipantInterviewAvailability(
+  index: number,
+  interviewAssignmentStatus: GeneralInterviewAssignmentStatus
+): GeneralIndividualApplicantInterviewAvailabilityDay[] {
+  if (interviewAssignmentStatus === 'waiting') {
+    return INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY
+  }
+
+  /** 배정·포기 — 회색 셀용 날짜 (9~10월 기간 내) */
+  const dateLabel =
+    GENERAL_INTERVIEW_ASSIGNED_DATE_LABELS[index % GENERAL_INTERVIEW_ASSIGNED_DATE_LABELS.length]
+  const slots = INTERVIEW_TIME_SLOTS.slice(0, 1 + (index % 2))
+  return [{ dateLabel, slots }]
 }
 
 function buildParticipantScreeningFields(
@@ -281,7 +308,10 @@ function buildParticipantScreeningFields(
     index,
     documentScreeningStatus
   )
-  const interviewAvailability = buildParticipantInterviewAvailability(index)
+  const interviewAvailability = buildParticipantInterviewAvailability(
+    index,
+    interviewAssignmentStatus
+  )
   const assigned =
     interviewAssignmentStatus === 'assigned' || interviewAssignmentStatus === 'withdrawn'
   const day = interviewAvailability[0]!
@@ -356,8 +386,8 @@ const APPLICANT_INDIVIDUAL_1_DETAIL: GeneralIndividualApplicantDetail = {
   teamMemberCountSelect: '3',
   teamRole: 'leader',
   interviewAvailability: [
-    { dateLabel: '2026. 03. 10(화)', slots: ['10:00 ~ 10:30', '14:00 ~ 14:30'] },
-    { dateLabel: '2026. 03. 12(목)', slots: ['11:00 ~ 11:30'] },
+    { dateLabel: '26. 09. 10(목)', slots: ['09:00 ~ 09:30', '14:00 ~ 14:30'] },
+    { dateLabel: '26. 09. 15(화)', slots: ['15:00 ~ 15:30'] },
   ],
 }
 
@@ -383,8 +413,8 @@ const APPLICANT_INDIVIDUAL_DOC1_SCREENSHOT_DETAIL: GeneralIndividualApplicantDet
   teamMemberCountSelect: '2',
   teamRole: 'leader',
   interviewAvailability: [
-    { dateLabel: '26. 03. 09(월)', slots: ['15:00 ~ 15:30', '09:00 ~ 09:30'] },
-    { dateLabel: '26. 03. 23(월)', slots: ['09:00 ~ 09:30', '14:00 ~ 14:30', '15:00 ~ 15:30'] },
+    { dateLabel: '26. 09. 08(화)', slots: ['15:00 ~ 15:30', '09:00 ~ 09:30'] },
+    { dateLabel: '26. 09. 22(화)', slots: ['09:00 ~ 09:30', '14:00 ~ 14:30', '15:00 ~ 15:30'] },
   ],
 }
 
@@ -410,7 +440,7 @@ const APPLICANT_INDIVIDUAL_18_DETAIL: GeneralIndividualApplicantDetail = {
   teamMemberCountSelect: '2',
   teamRole: 'leader',
   interviewAvailability: [
-    { dateLabel: '2026. 03. 11(수)', slots: ['09:30 ~ 10:00', '15:00 ~ 15:30'] },
+    { dateLabel: '26. 09. 11(금)', slots: ['09:00 ~ 09:30', '15:00 ~ 15:30'] },
   ],
 }
 
@@ -418,6 +448,11 @@ function buildMockList(count: number): GeneralIndividualApplicantRow[] {
   const rows: GeneralIndividualApplicantRow[] = []
   for (let i = 0; i < count; i++) {
     const idx = i % APPLICANT_NAMES.length
+    const screening = buildParticipantScreeningFields(i)
+    const interviewAvailability = buildParticipantInterviewAvailability(
+      i,
+      screening.interviewAssignmentStatus ?? 'waiting'
+    )
     rows.push({
       id: `general-individual-applicant-${i + 1}`,
       no: count - i,
@@ -428,9 +463,9 @@ function buildMockList(count: number): GeneralIndividualApplicantRow[] {
       approvalStatus: APPROVAL_STATUSES[i % APPROVAL_STATUSES.length],
       sessions: buildSessionsForRow(i),
       detail: {
-        interviewAvailability: buildParticipantInterviewAvailability(i),
+        interviewAvailability,
       },
-      ...buildParticipantScreeningFields(i),
+      ...screening,
     })
   }
   return rows
@@ -445,7 +480,13 @@ export const MOCK_GENERAL_INDIVIDUAL_APPLICATIONS: GeneralIndividualApplicantRow
     row1.educationGrade = '5학년'
     row1.homeAddress = '서울특별시 강서구'
     row1.approvalStatus = 'pending'
+    row1.documentScreeningStatus = 'pending'
+    row1.managerAEvaluation = 'unreviewed'
+    row1.managerBEvaluation = 'unreviewed'
     row1.detail = APPLICANT_INDIVIDUAL_1_DETAIL
+    row1.interviewSlotCount = countInterviewAvailabilitySlots(
+      APPLICANT_INDIVIDUAL_1_DETAIL.interviewAvailability ?? []
+    )
   }
   const row3 = list.find(r => r.id === 'general-individual-applicant-3')
   if (row3) {
@@ -497,13 +538,17 @@ export function getGeneralIndividualApplicationsForProgram(
   }))
 }
 
-/** 1차 서류 심사 대상자 */
+/** 1차 서류 심사 대상자 — mock 고정 10건 (No. 10→1) */
 export function getGeneralParticipantDoc1Applicants(
   programId: string
 ): GeneralIndividualApplicantRow[] {
-  return getGeneralIndividualApplicationsForProgram(programId).filter(
-    row => row.documentScreeningStatus === 'pending'
-  )
+  const rows = getGeneralIndividualApplicationsForProgram(programId)
+    .filter(row => row.documentScreeningStatus === 'pending')
+    .sort((a, b) => b.no - a.no)
+  return rows.map((row, index) => ({
+    ...row,
+    no: rows.length - index,
+  }))
 }
 
 function sortGeneralParticipantDocPassedApplicants(
@@ -579,24 +624,29 @@ export function updateGeneralIndividualApplicantCancelRejection(
   }
 }
 
-/** 알림 재발송 — 발송 일시 갱신 */
+/** 알림 재발송 — 발송 일시 갱신 (반려 재발송 시 사유 반영) */
 export function patchGeneralIndividualApplicantForNotificationResend(
   row: GeneralIndividualApplicantRow,
-  sentAt = new Date()
+  sentAt = new Date(),
+  options?: { rejectionReason?: string }
 ): GeneralIndividualApplicantRow {
   return {
     ...row,
     approvalNotificationSentAt: formatApprovalNotificationSentAt(sentAt),
+    ...(options?.rejectionReason != null && options.rejectionReason.trim() !== ''
+      ? { participationRejectionReason: options.rejectionReason.trim() }
+      : {}),
   }
 }
 
 export function updateGeneralIndividualApplicantNotificationResend(
   applicantId: string,
-  sentAt = new Date()
+  sentAt = new Date(),
+  options?: { rejectionReason?: string }
 ): void {
   const row = MOCK_GENERAL_INDIVIDUAL_APPLICATIONS.find(r => r.id === applicantId)
   if (row) {
-    Object.assign(row, patchGeneralIndividualApplicantForNotificationResend(row, sentAt))
+    Object.assign(row, patchGeneralIndividualApplicantForNotificationResend(row, sentAt, options))
   }
 }
 

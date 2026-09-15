@@ -65,7 +65,11 @@ export function useGeneralProgramApplicationsRemoteSync({
       fetchGeneralIndividualApplications(programId!, {
         doc1: individualScreeningStage === 'doc1',
       }),
-    enabled: remoteEnabled && menu === 'individual-applications',
+    /** 1차 서류 심사 대상자는 mock 고정 목록 — remote 신청 목록과 분리 */
+    enabled:
+      remoteEnabled &&
+      menu === 'individual-applications' &&
+      individualScreeningStage !== 'doc1',
     staleTime: 30_000,
     retry: false,
   })

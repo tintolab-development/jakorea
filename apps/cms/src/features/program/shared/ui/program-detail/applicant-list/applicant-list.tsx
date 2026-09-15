@@ -56,6 +56,7 @@ import { buildGeneralParticipantDoc1FilterRows } from '@/features/program/genera
 import { ApplicantCalendarView } from './applicant-calendar-view'
 import { mapApplicantDataToCalendarEvents } from './applicant-calendar-events'
 import { ApplicantsDetailContents, type ApplicantType } from './applicants-detail-contents'
+import { GeneralParticipantApplicantDetailView } from '@/features/program/general/ui/detail-modal/applications/participant-screening/participant-applicant-detail-view'
 import type { ApplicantDetailMeta } from './use-applicants-detail'
 import { InstructorFeeApprovalModal } from '@/features/program/shared/ui/detail-modal/components/instructor-fee-approval-modal'
 import {
@@ -695,6 +696,22 @@ export function ApplicantList({
             resolveCancelReject()(id)
           }}
           onResendNotification={handleOpenNotificationResend}
+        />
+      ) : showIndividualDetail && individualScreeningStage === 'doc1' && program ? (
+        <GeneralParticipantApplicantDetailView
+          program={program}
+          applicantId={(selectedItem as GeneralIndividualApplicantRow).id}
+          applicant={selectedItem as GeneralIndividualApplicantRow}
+          screeningStage="doc1"
+          onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
+          onApplicantDetailMetaChange={onApplicantDetailMetaChange}
+          onApplicantUpdated={row => {
+            setIndividualList(prev => prev.map(item => (item.id === row.id ? row : item)))
+            const current = selectedItem as GeneralIndividualApplicantRow
+            if (current.id === row.id) {
+              setSelectedItem(row)
+            }
+          }}
         />
       ) : showIndividualDetail ? (
         <ApplicantsDetailContents
@@ -1405,7 +1422,9 @@ export function ApplicantList({
           setIndividualList(prev => {
             const next = prev.map(row =>
               row.id === id
-                ? patchGeneralIndividualApplicantForNotificationResend(row, sentAt)
+                ? patchGeneralIndividualApplicantForNotificationResend(row, sentAt, {
+                    rejectionReason: notifyOptions.rejectionReason,
+                  })
                 : row
             )
             const updated = next.find(row => row.id === id)
@@ -1415,7 +1434,9 @@ export function ApplicantList({
             }
             return next
           })
-          updateGeneralIndividualApplicantNotificationResend(id, sentAt)
+          updateGeneralIndividualApplicantNotificationResend(id, sentAt, {
+            rejectionReason: notifyOptions.rejectionReason,
+          })
         }}
       />
       <InstructorBulkApproveModal

@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Program } from '@/types/domain'
 import {
   getGeneralIndividualApplicationsForProgram,
   patchGeneralIndividualApplicantForApprovalStatus,
+  patchGeneralIndividualApplicantForNotificationResend,
   updateGeneralIndividualApplicantApprovalStatus,
   updateGeneralIndividualApplicantCancelRejection,
+  updateGeneralIndividualApplicantNotificationResend,
   type GeneralIndividualApplicantRow,
 } from '@/data/mock/general-individual-applications-mock'
 import {
@@ -12,7 +14,16 @@ import {
   toParticipantCancelRejectionNotifyOptions,
   type ParticipantCancelRejectionConfirmPayload,
 } from '@/features/program/general/lib/participant-cancel-rejection'
+import {
+  resolveApplicantNotificationResendSentAt,
+  toApplicantNotificationResendNotifyOptions,
+} from '@/features/program/general/lib/applicant-notification-resend'
 import type { IndividualApplicantScreeningStage } from '@/features/program/general/lib/individual-application-visibility'
+import {
+  screeningDoc1DetailTitle,
+  screeningDocPassedDetailTitle,
+  screeningInterview2DetailTitle,
+} from '@/features/program/general/lib/screening-subject-kind'
 import {
   ParticipantApproveModal,
   ParticipantApprovalCompleteModal,
@@ -21,15 +32,28 @@ import {
   ParticipantCancelRejectModal,
   ParticipantCancelRejectCompleteModal,
 } from '@/features/program/shared/ui/detail-modal/components/participant-application-flow-modals'
+import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
 import {
   ApplicantsDetailContents,
 } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-contents'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 
+function resolveParticipantScreeningDetailTitle(
+  screeningStage: IndividualApplicantScreeningStage,
+  name: string
+): string {
+  if (screeningStage === 'doc1') return screeningDoc1DetailTitle('participant', name)
+  if (screeningStage === 'doc_passed') return screeningDocPassedDetailTitle('participant', name)
+  if (screeningStage === 'interview2') return screeningInterview2DetailTitle('participant', name)
+  return `참여자 신청 상세 (${name})`
+}
+
 export interface GeneralParticipantApplicantDetailViewProps {
   program: Program
   applicantId: string
   screeningStage: IndividualApplicantScreeningStage
+  /** 목록 행(원격 API 등). 없으면 mock SSOT에서 id로 조회 */
+  applicant?: GeneralIndividualApplicantRow | null
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onApplicantDetailMetaChange?: (meta: ApplicantDetailMeta) => void
   onApplicantUpdated?: (row: GeneralIndividualApplicantRow) => void
@@ -39,20 +63,50 @@ export function GeneralParticipantApplicantDetailView({
   program,
   applicantId,
   screeningStage,
+  applicant: applicantProp = null,
   onRegisterApplicantCloseHandler: _onRegisterApplicantCloseHandler,
-  onApplicantDetailMetaChange: _onApplicantDetailMetaChange,
+  onApplicantDetailMetaChange,
   onApplicantUpdated,
 }: GeneralParticipantApplicantDetailViewProps) {
-  const [applicant, setApplicant] = useState<GeneralIndividualApplicantRow | null>(() =>
-    getGeneralIndividualApplicationsForProgram(program.id).find(row => row.id === applicantId) ?? null
+  const resolveFromMock = useCallback((): GeneralIndividualApplicantRow | null => {
+    return (
+      getGeneralIndividualApplicationsForProgram(program.id).find(row => row.id === applicantId) ??
+      null
+    )
+  }, [applicantId, program.id])
+
+  const [applicant, setApplicant] = useState<GeneralIndividualApplicantRow | null>(
+    () => applicantProp ?? resolveFromMock()
   )
 
   useEffect(() => {
-    const next =
-      getGeneralIndividualApplicationsForProgram(program.id).find(row => row.id === applicantId) ??
-      null
+    if (applicantProp) {
+      setApplicant(applicantProp)
+      return
+    }
+    const next = resolveFromMock()
     setApplicant(prev => (prev?.id === next?.id ? prev : next))
-  }, [applicantId, program.id])
+  }, [applicantProp, resolveFromMock])
+
+  const onApplicantDetailMetaChangeRef = useRef(onApplicantDetailMetaChange)
+  onApplicantDetailMetaChangeRef.current = onApplicantDetailMetaChange
+
+  useEffect(() => {
+    const notify = onApplicantDetailMetaChangeRef.current
+    if (!notify) return
+    if (!applicant) {
+      notify(null)
+      return
+    }
+    notify({
+      title: resolveParticipantScreeningDetailTitle(screeningStage, applicant.applicantName),
+      breadcrumbLabel: applicant.applicantName,
+      kind: 'individual',
+    })
+    return () => {
+      onApplicantDetailMetaChangeRef.current?.(null)
+    }
+  }, [applicant, screeningStage])
 
   const syncApplicant = useCallback(
     (row: GeneralIndividualApplicantRow) => {
@@ -75,11 +129,18 @@ export function GeneralParticipantApplicantDetailView({
   const [cancelRejectComplete, setCancelRejectComplete] = useState<{
     participantName: string
   } | null>(null)
+  const [notificationResendOpen, setNotificationResendOpen] = useState(false)
 
   const cancelRejectParticipant = useMemo(() => {
     if (!cancelRejectTarget || !applicant) return null
     return applicant
   }, [applicant, cancelRejectTarget])
+
+  const handleOpenNotificationResend = useCallback(() => {
+    if (!applicant) return
+    if (applicant.approvalStatus !== 'approved' && applicant.approvalStatus !== 'rejected') return
+    setNotificationResendOpen(true)
+  }, [applicant])
 
   if (!applicant) return null
 
@@ -101,7 +162,31 @@ export function GeneralParticipantApplicantDetailView({
         onCancelReject={id => {
           setCancelRejectTarget({ id, name: applicant.applicantName })
         }}
+        onResendNotification={handleOpenNotificationResend}
         onIndividualDetailSaved={syncApplicant}
+      />
+      <ApplicantNotificationResendModal
+        open={notificationResendOpen}
+        subjectKind="individual"
+        subjectName={applicant.applicantName}
+        approvalStatus={
+          applicant.approvalStatus === 'rejected' ? 'rejected' : 'approved'
+        }
+        onCancel={() => setNotificationResendOpen(false)}
+        onConfirm={payload => {
+          const notifyOptions = toApplicantNotificationResendNotifyOptions(payload)
+          const sentAt = resolveApplicantNotificationResendSentAt(notifyOptions)
+          const patched = patchGeneralIndividualApplicantForNotificationResend(
+            applicant,
+            sentAt,
+            { rejectionReason: notifyOptions.rejectionReason }
+          )
+          updateGeneralIndividualApplicantNotificationResend(applicant.id, sentAt, {
+            rejectionReason: notifyOptions.rejectionReason,
+          })
+          syncApplicant(patched)
+          setNotificationResendOpen(false)
+        }}
       />
       <ParticipantApproveModal
         open={approveTarget != null}

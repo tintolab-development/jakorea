@@ -266,6 +266,8 @@ function resolveApplicantHeaderItems(params: {
   isInstitution: boolean
   isInstructor: boolean
   isIndividual: boolean
+  /** 참여자 1차 서류 심사·합격자 상세 — 버튼 고정 */
+  individualScreeningStage?: IndividualApplicantScreeningStage
   onRevealPersonalInfo: () => void
   onApprove: (id: string) => void
   onReject: (id: string) => void
@@ -298,6 +300,7 @@ function resolveApplicantHeaderItems(params: {
     isInstitution,
     isInstructor,
     isIndividual,
+    individualScreeningStage = 'main',
     onRevealPersonalInfo,
     onApprove,
     onReject,
@@ -319,6 +322,14 @@ function resolveApplicantHeaderItems(params: {
     isAdminCommentWriteEnabled = false,
     onEnterAdminCommentEdit,
   } = params
+
+  /** 참여자 1차 서류 심사·합격자 상세: 참여 반려 | 참여 승인 | 개인정보 상세보기 */
+  if (
+    isIndividual &&
+    (individualScreeningStage === 'doc1' || individualScreeningStage === 'doc_passed')
+  ) {
+    return headerBtnsPendingParticipation(applicantId, onApprove, onReject, onRevealPersonalInfo)
+  }
 
   if (isApprovedInstitution) {
     const editButton =
@@ -692,6 +703,7 @@ export function ApplicantsDetailContents({
       isInstitution,
       isInstructor,
       isIndividual,
+      individualScreeningStage,
       onRevealPersonalInfo,
       onApprove,
       onReject,
@@ -748,6 +760,7 @@ export function ApplicantsDetailContents({
     isInstitution,
     isInstructor,
     isIndividual,
+    individualScreeningStage,
     onRevealPersonalInfo,
     onApprove,
     onReject,

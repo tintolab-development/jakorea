@@ -345,6 +345,9 @@ export function useApplicantsDetail({
 
   selectedItemRef.current = selectedItem
 
+  const applicantIdRef = useRef(applicantIdFromUrl)
+  applicantIdRef.current = applicantIdFromUrl
+
   const resolveApplicantFromUrlParams = useCallback(
     (params: URLSearchParams): ApplicantListRow | null => {
       const applicantId = params.get(APPLICANT_ID_PARAM)
@@ -394,18 +397,16 @@ export function useApplicantsDetail({
   )
 
   useEffect(() => {
-    // TODO: 모달 X는 바깥 닫기로 통일됨. 등록 핸들러가 호출되지 않으면 제거 검토.
+    // 헤더 X → 부모 handleHeaderClose가 호출 — 목록으로만 복귀
     if (!onRegisterApplicantCloseHandler) return
     const handler = () => {
-      if (selectedItemRef.current) {
-        setSelectedItem(null)
-        return true
-      }
-      return false
+      if (!selectedItemRef.current && !applicantIdRef.current) return false
+      setSelectedItem(null)
+      return true
     }
     onRegisterApplicantCloseHandler(handler)
     return () => onRegisterApplicantCloseHandler(null)
-  }, [onRegisterApplicantCloseHandler])
+  }, [onRegisterApplicantCloseHandler, setSelectedItem])
 
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
 

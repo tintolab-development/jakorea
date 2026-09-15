@@ -13,7 +13,7 @@
  * 병합 시 `edit` 파싱·`setEditMode`·폼 훅 호출 순서를 바꾸면 수정 모드와 폼이 엇갈릴 수 있음.
  */
 
-import { useMemo, useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { useMemo, useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -883,8 +883,43 @@ export function ProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }
 
-  // TODO: X는 바깥 모달 닫기로 통일됨. breadcrumb/목록 복귀 외 용도가 없으면 등록부 제거 검토.
+  // 신청 상세 중첩 — 헤더 X 시 목록 복귀용 (handleHeaderClose에서 호출)
   const applicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
+  const registerApplicantCloseHandler = useCallback((fn: (() => boolean) | null) => {
+    applicantCloseHandlerRef.current = fn
+  }, [])
+
+  const handleHeaderClose = useCallback(() => {
+    if (applicantCloseHandlerRef.current?.()) return
+    const applicantId = searchParams.get(APPLICANT_ID_PARAM)
+    if (applicantId) {
+      const next = new URLSearchParams(searchParams)
+      next.delete(APPLICANT_ID_PARAM)
+      next.delete(DETAIL_TAB_PARAM)
+      setSearchParams(next, { replace: true })
+      return
+    }
+    if (schoolIdFromUrl) {
+      setSchoolId(null)
+      return
+    }
+    if (instructorIdFromUrl) {
+      setInstructorId(null)
+      return
+    }
+    if (volunteerIdFromUrl) {
+      setVolunteerId(null)
+      return
+    }
+    onClose()
+  }, [
+    searchParams,
+    setSearchParams,
+    schoolIdFromUrl,
+    instructorIdFromUrl,
+    volunteerIdFromUrl,
+    onClose,
+  ])
 
   const setActiveTab = (key: TabKey) => {
     const next = new URLSearchParams(searchParams)
@@ -1246,6 +1281,7 @@ export function ProgramDetailFullPageModal({
       <DetailFullPageModal
       open={open}
       onClose={onClose}
+      onHeaderClose={handleHeaderClose}
       title={title}
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className={[
@@ -1396,9 +1432,7 @@ export function ProgramDetailFullPageModal({
                   filterFields={generalOrganizationApplicationFilterFields}
                   institutionColumnPreset="company-school"
                   detailVariant="general"
-                  onRegisterApplicantCloseHandler={fn => {
-                    applicantCloseHandlerRef.current = fn
-                  }}
+                  onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
                 />
               </div>
             ) : isCompanySchoolDetail && activeLnb === 'applicant_instructors' ? (
@@ -1410,9 +1444,7 @@ export function ProgramDetailFullPageModal({
                   listTitle="강사 신청 목록"
                   instructorColumnPreset="general-detail"
                   detailVariant="general"
-                  onRegisterApplicantCloseHandler={fn => {
-                    applicantCloseHandlerRef.current = fn
-                  }}
+                  onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
                 />
               </div>
             ) : (
@@ -1422,9 +1454,7 @@ export function ProgramDetailFullPageModal({
                 programId={displayProgram.id}
                 institutionColumnPreset={isOverviewProgramDetail ? 'company-school' : undefined}
                 detailVariant="legacy"
-                onRegisterApplicantCloseHandler={fn => {
-                  applicantCloseHandlerRef.current = fn
-                }}
+                onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
               />
             ))}
 

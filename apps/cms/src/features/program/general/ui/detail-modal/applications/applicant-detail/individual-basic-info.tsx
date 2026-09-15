@@ -161,6 +161,8 @@ function IndividualApplicantScreeningBasicInfo({
             }
           />
         </DetailInfoForm.Row>
+      </DetailInfoForm>
+      <DetailInfoForm title="기본 정보" hideHeader mode="view">
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="성명" readOnlyDisplay view={nameCell} />
           <DetailInfoForm.Field
