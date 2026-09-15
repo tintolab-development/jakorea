@@ -23,7 +23,7 @@
   flex-shrink: 0;
 }
 
-/* 참여자 모집 정보 — 사용자 페이지 미리보기 (140×44, JA-mint-01) */
+/* 모집 정보 — 사용자 페이지 미리보기 (140×44, JA-mint-01) */
 .recruitment-view
   .recruitment-view__preview-btn.cms-button.ant-btn {
   display: flex;

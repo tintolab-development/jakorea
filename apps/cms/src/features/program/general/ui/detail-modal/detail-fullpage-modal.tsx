@@ -47,16 +47,17 @@ import {
 } from '@/features/program/general/lib/detail-url'
 import {
   clearGeneralProgramDetailQueryParams,
+  clearGeneralProgramRecruitmentPreviewParams,
   GENERAL_PROGRAM_DETAIL_EDIT_PARAM,
   GENERAL_PROGRAM_DETAIL_LNB_PARAM,
   GENERAL_PROGRAM_DETAIL_QUERY_PARAMS,
   GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM,
   GENERAL_PROGRAM_DETAIL_TAB_PARAM,
-  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE,
-  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
-  isParticipantRecruitmentPreviewOpen,
+  GENERAL_PROGRAM_RECRUITMENT_PREVIEW_ACTIVE,
   preserveGeneralProgramDetailProgramId,
   readGeneralProgramDetailRoute,
+  readOpenRecruitmentPreviewAudience,
+  recruitmentPreviewParamForAudience,
   shouldPatchGeneralProgramDetailUrl,
 } from '@/features/program/general/lib/general-program-detail-route'
 import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/hooks/use-common-info-edit-form'
@@ -766,9 +767,7 @@ export function GeneralProgramDetailFullPageModal({
           if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           next.set(GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM, tab)
-          if (tab !== 'institutions') {
-            next.delete(GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM)
-          }
+          clearGeneralProgramRecruitmentPreviewParams(next)
           preserveGeneralProgramDetailProgramId(prev, next)
           return next
         },
@@ -1024,55 +1023,61 @@ export function GeneralProgramDetailFullPageModal({
     onClose()
   }, [onClose, setSearchParams])
 
-  const participantRecruitmentPreviewOpenFromUrl = useMemo(
-    () => isParticipantRecruitmentPreviewOpen(routerSearchParams),
+  const recruitmentPreviewAudienceFromUrl = useMemo(
+    () => readOpenRecruitmentPreviewAudience(routerSearchParams),
     [routerSearchParamsKey, routerSearchParams]
   )
 
-  const [participantRecruitmentPreviewOpenOptimistic, setParticipantRecruitmentPreviewOpenOptimistic] =
-    useState(false)
+  const [recruitmentPreviewAudienceOptimistic, setRecruitmentPreviewAudienceOptimistic] =
+    useState<GeneralRecruitTabKey | null>(null)
 
   useEffect(() => {
     if (!open) {
-      setParticipantRecruitmentPreviewOpenOptimistic(false)
+      setRecruitmentPreviewAudienceOptimistic(null)
     }
   }, [open])
 
   useEffect(() => {
-    if (!participantRecruitmentPreviewOpenFromUrl) {
-      setParticipantRecruitmentPreviewOpenOptimistic(false)
+    if (!recruitmentPreviewAudienceFromUrl) {
+      setRecruitmentPreviewAudienceOptimistic(null)
     }
-  }, [participantRecruitmentPreviewOpenFromUrl])
+  }, [recruitmentPreviewAudienceFromUrl])
 
-  const participantRecruitmentPreviewOpen =
-    open &&
-    displayProgram != null &&
-    (participantRecruitmentPreviewOpenFromUrl || participantRecruitmentPreviewOpenOptimistic)
+  const recruitmentPreviewAudience =
+    open && displayProgram != null
+      ? (recruitmentPreviewAudienceFromUrl ?? recruitmentPreviewAudienceOptimistic)
+      : null
 
-  const handleOpenParticipantRecruitmentPreview = useCallback(() => {
-    if (!programId) return
-    setParticipantRecruitmentPreviewOpenOptimistic(true)
+  const recruitmentPreviewOpen = recruitmentPreviewAudience != null
+
+  const handleOpenRecruitmentPreview = useCallback(
+    (audience: GeneralRecruitTabKey) => {
+      if (!programId) return
+      setRecruitmentPreviewAudienceOptimistic(audience)
+      setSearchParams(
+        prev => {
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+          const next = new URLSearchParams(prev)
+          preserveGeneralProgramDetailProgramId(prev, next)
+          clearGeneralProgramRecruitmentPreviewParams(next)
+          next.set(
+            recruitmentPreviewParamForAudience(audience),
+            GENERAL_PROGRAM_RECRUITMENT_PREVIEW_ACTIVE
+          )
+          return next
+        },
+        { replace: false }
+      )
+    },
+    [programId, setSearchParams]
+  )
+
+  const handleCloseRecruitmentPreview = useCallback(() => {
+    setRecruitmentPreviewAudienceOptimistic(null)
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
         const next = new URLSearchParams(prev)
-        preserveGeneralProgramDetailProgramId(prev, next)
-        next.set(
-          GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
-          GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE
-        )
-        return next
-      },
-      { replace: false }
-    )
-  }, [programId, setSearchParams])
-
-  const handleCloseParticipantRecruitmentPreview = useCallback(() => {
-    setParticipantRecruitmentPreviewOpenOptimistic(false)
-    setSearchParams(
-      prev => {
-        const next = new URLSearchParams(prev)
-        next.delete(GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM)
+        clearGeneralProgramRecruitmentPreviewParams(next)
         return next
       },
       { replace: true }
@@ -1291,7 +1296,7 @@ export function GeneralProgramDetailFullPageModal({
             next.delete(GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM)
           }
           if (!isRecruitmentTab) {
-            next.delete(GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM)
+            clearGeneralProgramRecruitmentPreviewParams(next)
           }
 
           if (lnb !== 'progress') {
@@ -1721,7 +1726,7 @@ export function GeneralProgramDetailFullPageModal({
                 registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
                 onEdit={handleRecruitmentEdit}
                 onSave={handleRecruitmentSave}
-                onOpenParticipantRecruitmentPreview={handleOpenParticipantRecruitmentPreview}
+                onOpenRecruitmentPreview={handleOpenRecruitmentPreview}
               />
             ) : activeLnb === 'info' && activeTab === 'application' ? (
               <GeneralProgramApplicationView
@@ -1886,10 +1891,11 @@ export function GeneralProgramDetailFullPageModal({
       ) : null}
       {displayProgram ? (
         <ParticipantRecruitmentPreviewModal
-          open={participantRecruitmentPreviewOpen}
-          onClose={handleCloseParticipantRecruitmentPreview}
+          open={recruitmentPreviewOpen}
+          onClose={handleCloseRecruitmentPreview}
           program={displayProgram}
           sponsorName={sponsorName}
+          audience={recruitmentPreviewAudience ?? 'institutions'}
         />
       ) : null}
       <ProgramDetailSponsorDetailOverlay />

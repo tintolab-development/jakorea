@@ -1,5 +1,5 @@
 /**
- * 일반 프로그램 상세 — 참여자 모집 정보 사용자 미리보기
+ * 일반 프로그램 상세 — 모집 정보 사용자 미리보기 (참여자 / 강사 / 봉사자)
  * Platform 사용자 페이지 전체본을 A4 비율로 스케일 다운해 표시한다.
  */
 
@@ -12,29 +12,32 @@ import { TemplatePreviewPageNavigator } from '@/features/template/ui/modal/templ
 import {
   ParticipantRecruitmentUserPage,
   RECRUITMENT_USER_PREVIEW_PAGE_HEIGHT,
+  recruitmentUserPreviewHeaderTitle,
+  type RecruitmentUserPreviewAudience,
 } from '@/features/program/general/ui/user-preview'
 import { PARTICIPANT_RECRUITMENT_PREVIEW_MODAL_Z_INDEX } from '@/features/program/general/lib/general-program-modal-z-index'
 import '@/features/template/ui/modal/template-preview-modal.css'
 import './participant-recruitment-preview-modal.css'
-
-const PREVIEW_HEADER_TITLE = '참여자 모집 폼 미리보기'
 
 export function ParticipantRecruitmentPreviewModal({
   open,
   onClose,
   program,
   sponsorName,
+  audience = 'institutions',
 }: {
   open: boolean
   onClose: () => void
   program: Program
   sponsorName?: string
+  audience?: RecruitmentUserPreviewAudience
 }) {
   const pageContentRef = useRef<HTMLDivElement>(null)
   const [contentHeight, setContentHeight] = useState(RECRUITMENT_USER_PREVIEW_PAGE_HEIGHT)
   const [currentPage, setCurrentPage] = useState(1)
 
   const totalPages = Math.max(1, Math.ceil(contentHeight / RECRUITMENT_USER_PREVIEW_PAGE_HEIGHT))
+  const headerTitle = recruitmentUserPreviewHeaderTitle(audience)
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page)
@@ -66,7 +69,7 @@ export function ParticipantRecruitmentPreviewModal({
     return () => {
       observer.disconnect()
     }
-  }, [open, program.id, sponsorName])
+  }, [open, program.id, sponsorName, audience])
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -89,7 +92,7 @@ export function ParticipantRecruitmentPreviewModal({
       <div className="template-preview-modal__shell">
         <header className="template-preview-modal__title-row">
           <div className="template-preview-modal__title-left">
-            <span className="template-preview-modal__title-text">{PREVIEW_HEADER_TITLE}</span>
+            <span className="template-preview-modal__title-text">{headerTitle}</span>
             <span className="template-preview-modal__badge">미리보기</span>
           </div>
           <button
@@ -136,6 +139,7 @@ export function ParticipantRecruitmentPreviewModal({
                         ref={pageContentRef}
                         program={program}
                         sponsorName={sponsorName}
+                        audience={audience}
                       />
                     </div>
                   </div>

@@ -50,7 +50,7 @@ export function GeneralProgramRecruitmentView({
   registerVolunteersAdditionalHtml,
   onEdit,
   onSave,
-  onOpenParticipantRecruitmentPreview,
+  onOpenRecruitmentPreview,
 }: {
   program: Program
   activeRecruitTab: GeneralRecruitTabKey
@@ -70,12 +70,12 @@ export function GeneralProgramRecruitmentView({
   registerVolunteersAdditionalHtml: (getter: () => string) => void
   onEdit: () => void
   onSave: () => void
-  /** 참여자 모집 사용자 미리보기 — URL·optimistic open은 상세 모달에서 처리 */
-  onOpenParticipantRecruitmentPreview?: () => void
+  /** 모집 사용자 미리보기 — URL·optimistic open은 상세 모달에서 처리 */
+  onOpenRecruitmentPreview?: (tab: GeneralRecruitTabKey) => void
 }) {
   const handleOpenPreview = useCallback(() => {
-    onOpenParticipantRecruitmentPreview?.()
-  }, [onOpenParticipantRecruitmentPreview])
+    onOpenRecruitmentPreview?.(activeRecruitTab)
+  }, [activeRecruitTab, onOpenRecruitmentPreview])
 
   const isEditMode =
     (activeRecruitTab === 'institutions' && isEditModeInstitutions) ||
@@ -155,7 +155,7 @@ export function GeneralProgramRecruitmentView({
     }
   }
 
-  const showHeaderActions = canWrite || isEditMode || activeRecruitTab === 'institutions'
+  const showHeaderActions = canWrite || isEditMode || Boolean(onOpenRecruitmentPreview)
 
   return (
     <>
@@ -186,7 +186,7 @@ export function GeneralProgramRecruitmentView({
                     {PROGRAM_EDIT_INFO_BUTTON_LABEL}
                   </CmsButton>
                 ) : null}
-                {activeRecruitTab === 'institutions' ? (
+                {onOpenRecruitmentPreview ? (
                   <CmsButton
                     type="button"
                     variant="primary"
