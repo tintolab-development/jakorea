@@ -3,9 +3,11 @@ import type { ColumnsType } from 'antd/es/table'
 import { CmsButton } from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import { screeningApplicantNameLabel, type ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
+import { PARTICIPANT_APPLICANT_NAME_COL_WIDTH } from '@/features/program/general/lib/participant-screening-table-widths'
 import { GeneralInterviewAssignmentStatusText } from './status-text'
 
 const CENTER_CELL_CLASS = 'general-volunteer-doc-passed__center-cell'
+const VOLUNTEER_APPLICANT_NAME_COL_WIDTH = 140
 
 export function useGeneralVolunteerDocPassedColumns({
   onAssignInterview,
@@ -15,6 +17,10 @@ export function useGeneralVolunteerDocPassedColumns({
   subjectKind?: ScreeningSubjectKind
 }): ColumnsType<GeneralVolunteerApplicantRow> {
   const applicantNameTitle = screeningApplicantNameLabel(subjectKind)
+  const applicantNameWidth =
+    subjectKind === 'participant'
+      ? PARTICIPANT_APPLICANT_NAME_COL_WIDTH
+      : VOLUNTEER_APPLICANT_NAME_COL_WIDTH
 
   return useMemo(
     (): ColumnsType<GeneralVolunteerApplicantRow> => [
@@ -30,7 +36,7 @@ export function useGeneralVolunteerDocPassedColumns({
         title: applicantNameTitle,
         dataIndex: 'name',
         key: 'name',
-        width: 140,
+        width: applicantNameWidth,
         align: 'center',
         className: CENTER_CELL_CLASS,
       },
@@ -99,6 +105,6 @@ export function useGeneralVolunteerDocPassedColumns({
         },
       },
     ],
-    [applicantNameTitle, onAssignInterview]
+    [applicantNameTitle, applicantNameWidth, onAssignInterview]
   )
 }

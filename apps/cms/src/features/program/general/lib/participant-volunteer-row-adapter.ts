@@ -47,9 +47,8 @@ export function mapParticipantToVolunteerScreeningRow(
     managerAEvaluation: row.managerAEvaluation ?? 'unreviewed',
     managerBEvaluation: row.managerBEvaluation ?? 'unreviewed',
     documentScreeningStatus: row.documentScreeningStatus ?? 'pending',
-    interviewSlotCount:
-      row.interviewSlotCount ??
-      (interviewAvailability.length > 0 ? countInterviewAvailabilitySlots(interviewAvailability) : 0),
+    /** 목록 숫자 = detail availability 슬롯 수 (배정 팝업 연민트·슬롯과 동일 SSOT) */
+    interviewSlotCount: countInterviewAvailabilitySlots(interviewAvailability),
     interviewAssignmentStatus: row.interviewAssignmentStatus ?? 'waiting',
     programId: row.programId ?? '',
     englishName: row.applicantName,

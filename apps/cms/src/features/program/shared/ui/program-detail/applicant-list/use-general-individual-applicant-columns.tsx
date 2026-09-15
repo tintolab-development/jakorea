@@ -5,6 +5,7 @@ import type { ApprovalStatusKey } from '@/shared/components/approval-status-badg
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { getInstitutionApplicationSessionsTableSlice } from '@/features/program/general/lib/institution-application-session-display'
+import { PARTICIPANT_APPLICANT_NAME_COL_WIDTH } from '@/features/program/general/lib/participant-screening-table-widths'
 import { GeneralDetailSessionLine } from './general-detail-session-line'
 
 const GENERAL_DETAIL_INDIVIDUAL_TEXT_COL_MIN_WIDTH = 185
@@ -21,6 +22,7 @@ export function useGeneralIndividualApplicantColumns(
   programBridge?: InstitutionApplicationProgramBridge | null
 ): ColumnsType<GeneralIndividualApplicantRow> {
   const textColWidth = GENERAL_DETAIL_INDIVIDUAL_TEXT_COL_MIN_WIDTH
+  const applicantNameColWidth = PARTICIPANT_APPLICANT_NAME_COL_WIDTH
 
   return useMemo(() => {
     const columns: ColumnsType<GeneralIndividualApplicantRow> = [
@@ -29,8 +31,8 @@ export function useGeneralIndividualApplicantColumns(
         title: '신청자명',
         dataIndex: 'applicantName',
         key: 'applicantName',
-        width: textColWidth,
-        minWidth: textColWidth,
+        width: applicantNameColWidth,
+        minWidth: applicantNameColWidth,
         align: 'center',
         ellipsis: true,
       },
@@ -103,5 +105,5 @@ export function useGeneralIndividualApplicantColumns(
     ]
 
     return columns
-  }, [programBridge, textColWidth])
+  }, [programBridge, textColWidth, applicantNameColWidth])
 }
