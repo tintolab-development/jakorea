@@ -1,16 +1,13 @@
 /**
  * 일반 프로그램 상세 — 참여자 모집 정보 표시값
- * Primary: serviceDetailJson.generalCommonInfo.participantRecruitmentInfo + typed Program fields
- * 빈값 '-' (JOB담 mock / 후원사명 등 비관련 폴백 없음)
+ * SSOT: serviceDetailJson.generalCommonInfo.participantRecruitmentInfo (모집 양식)
+ * 교육 대상 / 모집 기간 / 문의처 — 공통정보 Program 폴백 없음. 빈값 '-'
  */
 
 import type { Program } from '@/types/domain'
 import {
   formatDateOnly,
-  formatDateRange,
-  formatTargetLevelsLabel,
   getParticipantRecruitmentLifecycle,
-  resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
@@ -186,20 +183,16 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     labelBool(info?.announcementPublished, '게시', '미게시')
   )
 
-  const targetLabel = pickDisplayString(
-    info?.educationTarget,
-    info?.recruitmentTarget,
-    formatTargetLevelsLabel(resolveProgramTargetLevels(program))
-  )
+  /** 모집 양식만 — 공통 targetLevels / district 폴백 금지 */
+  const targetLabel = pickDisplayString(info?.educationTarget, info?.recruitmentTarget)
   const targetDetailLabel = pickDisplayString(
     info?.educationTargetDetail,
-    info?.recruitmentTargetDetail,
-    program.district
+    info?.recruitmentTargetDetail
   )
 
   const notes = info?.notesNotApplicable
     ? '-'
-    : pickDisplayString(info?.remarks, program.otherNotes, program.oneLineIntroduction)
+    : pickDisplayString(info?.remarks)
 
   return {
     interviewEnabledLabel,
@@ -214,38 +207,23 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     maxInstructorsLabel: formatCountLabel(info?.maxAssignableInstructors, '명'),
     maxSessionsPerDayLabel: formatCountLabel(info?.maxSessionsPerDay, '차시'),
     maxScheduleCountLabel: formatCountLabel(info?.maxScheduleCount, '개'),
-    operationPeriodLabel: pickDisplayString(
-      info?.operationPeriodLabel,
-      formatDateRange(program.startDate, program.endDate)
-    ),
+    /** 모집 양식 operationPeriodLabel만 — 공통 운영기간(start/end) 폴백 금지 */
+    operationPeriodLabel: pickDisplayString(info?.operationPeriodLabel),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
     targetLabel,
     targetDetailLabel,
-    recruitmentPeriodLabel: pickDisplayString(
-      info?.recruitmentPeriodLabel,
-      formatDateRange(program.applicationStartDate, program.applicationEndDate)
-    ),
+    /** 모집 양식 recruitmentPeriodLabel만 — applicationStart/End(등록 기본값) 폴백 금지 */
+    recruitmentPeriodLabel: pickDisplayString(info?.recruitmentPeriodLabel),
     documentPassAnnouncementDate: program.documentPassAnnouncementDate,
     documentPassAnnouncementMethod: program.documentPassAnnouncementMethod,
     interviewStartDate: program.interviewStartDate,
     interviewEndDate: program.interviewEndDate,
     interviewMethod: program.interviewMethod,
     finalAnnouncementLabel,
-    /** 문의처 이름 — 모집 양식/RecruitmentInfo만. 후원사명은 폴백하지 않음 */
     contactOrganizationName: pickDisplayString(info?.contactOrganizationName),
-    contactPhone: pickDisplayString(
-      info?.inquiryTel,
-      info?.tel,
-      info?.contactPhone,
-      program.contactPhone
-    ),
-    contactEmail: pickDisplayString(
-      info?.inquiryEmail,
-      info?.email,
-      info?.contactEmail,
-      program.contactEmail
-    ),
+    contactPhone: pickDisplayString(info?.inquiryTel, info?.tel, info?.contactPhone),
+    contactEmail: pickDisplayString(info?.inquiryEmail, info?.email, info?.contactEmail),
     notes,
   }
 }

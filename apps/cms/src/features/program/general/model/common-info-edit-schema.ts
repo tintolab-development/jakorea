@@ -426,6 +426,26 @@ export function decodeSponsorManagerContactRef(
   }
 }
 
+/**
+ * 후원사 담당자 셀렉트 라벨
+ * - 복수 후원사: `소속 | 이름 직함` (직함 없으면 생략) — 예: `스타벅스 | 이가원 책임`
+ * - 단일 후원사: `이름 직함` / `이름`
+ */
+export function formatSponsorManagerSelectLabel(input: {
+  sponsorName: string
+  contactName: string
+  position?: string | null
+  multiSponsor: boolean
+}): string {
+  const name = input.contactName.trim()
+  const position = input.position?.trim() ?? ''
+  const nameWithPosition = position ? `${name} ${position}` : name
+  if (!input.multiSponsor) return nameWithPosition || '-'
+  const sponsorName = input.sponsorName.trim()
+  if (!sponsorName) return nameWithPosition || '-'
+  return `${sponsorName} | ${nameWithPosition}`
+}
+
 export type GeneralProgramSponsorEditContext = {
   sponsors: SponsorManagementRow[]
   contactsBySponsorId: Record<string, SponsorContactRow[]>

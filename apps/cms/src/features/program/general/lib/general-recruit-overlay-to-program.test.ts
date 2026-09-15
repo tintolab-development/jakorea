@@ -47,9 +47,14 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(next.district).toBe('특성화고 3학년')
     expect(next.applicationStartDate).toBe('2025-12-08T00:00:00+09:00')
     expect(next.applicationEndDate).toBe('2026-01-16T00:00:00+09:00')
-    expect(next.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName).toBe(
-      'JA Korea'
-    )
+    const participantInfo = next.generalCommonInfo?.participantRecruitmentInfo
+    expect(participantInfo?.contactOrganizationName).toBe('JA Korea')
+    expect(participantInfo?.inquiryTel).toBe('02-6085-6028')
+    expect(participantInfo?.inquiryEmail).toBe('cc@jakorea.org')
+    expect(participantInfo?.educationTarget).toBe('고등학교, 대학(원)생')
+    expect(participantInfo?.educationTargetDetail).toBe('특성화고 3학년')
+    expect(participantInfo?.recruitmentPeriodLabel).toContain('2025')
+    expect(participantInfo?.programDescription).toBe('모집 양식 프로그램 설명')
     expect(next.contactPhone).toBe('02-6085-6028')
     expect(next.contactEmail).toBe('cc@jakorea.org')
     expect(next.description).toBe('모집 양식 프로그램 설명')
@@ -84,15 +89,18 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(next.instructorTargetDetail).toBe('현직 멘토')
     expect(next.instructorApplicationStartDate).toBe('2026-02-01T00:00:00+09:00')
     expect(next.instructorApplicationEndDate).toBe('2026-02-28T00:00:00+09:00')
-    expect(next.generalCommonInfo?.instructorRecruitmentInfo?.contactOrganizationName).toBe(
-      '강사 문의처'
-    )
+    const instructorInfo = next.generalCommonInfo?.instructorRecruitmentInfo
+    expect(instructorInfo?.contactOrganizationName).toBe('강사 문의처')
+    expect(instructorInfo?.inquiryTel).toBe('010-1111-2222')
+    expect(instructorInfo?.recruitmentTarget).toBe('성인')
+    expect(instructorInfo?.recruitmentTargetDetail).toBe('현직 멘토')
+    expect(instructorInfo?.programDescription).toBe('강사 모집 설명')
     expect(next.volunteerTargets).toEqual(['대학(원)생'])
     expect(next.volunteerTargetDetail).toBe('봉사 가능자')
     expect(next.volunteerApplicationStartDate).toBe('2026-03-01T00:00:00+09:00')
-    expect(next.generalCommonInfo?.volunteerRecruitmentInfo?.contactOrganizationName).toBe(
-      '봉사자 문의처'
-    )
+    const volunteerInfo = next.generalCommonInfo?.volunteerRecruitmentInfo
+    expect(volunteerInfo?.contactOrganizationName).toBe('봉사자 문의처')
+    expect(volunteerInfo?.recruitmentTarget).toBe('대학(원)생')
     expect(next.description).toBe('강사 모집 설명')
   })
 

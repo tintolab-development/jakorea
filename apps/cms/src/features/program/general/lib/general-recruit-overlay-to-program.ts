@@ -9,7 +9,12 @@ import {
   getApplicantRecruitInstitutionOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
-import { formatDateRange } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  formatDateRange,
+  formatInstructorTargetsLabel,
+  formatTargetLevelsLabel,
+  formatVolunteerTargetsLabel,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 
 type RangeSeal = { start?: string | null; end?: string | null }
 
@@ -59,14 +64,20 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
     participantDescription: 'recruit.detailInfo.programDescription',
     participantGuide: 'recruit.detailInfo.recruitmentGuide',
     participantMethod: 'recruit.detailInfo.applicationMethod',
+    participantLearningSupport: 'recruit.detailInfo.learningSupportContent',
+    participantAdditionalHtml: 'recruit.detailInfo.additionalContentHtml',
     participantOtherNotes: 'recruit.detailInfo.otherNotes',
     instructorDescription: 'recruitInstructor.detailInfo.programDescription',
     instructorGuide: 'recruitInstructor.detailInfo.recruitmentGuide',
     instructorMethod: 'recruitInstructor.detailInfo.applicationMethod',
+    instructorLearningSupport: 'recruitInstructor.detailInfo.learningSupportContent',
+    instructorAdditionalHtml: 'recruitInstructor.detailInfo.additionalContentHtml',
     instructorOtherNotes: 'recruitInstructor.detailInfo.otherNotes',
     volunteerDescription: 'recruitVolunteer.detailInfo.programDescription',
     volunteerGuide: 'recruitVolunteer.detailInfo.recruitmentGuide',
     volunteerMethod: 'recruitVolunteer.detailInfo.applicationMethod',
+    volunteerLearningSupport: 'recruitVolunteer.detailInfo.learningSupportContent',
+    volunteerAdditionalHtml: 'recruitVolunteer.detailInfo.additionalContentHtml',
     volunteerOtherNotes: 'recruitVolunteer.detailInfo.otherNotes',
   },
 } as const
@@ -255,10 +266,48 @@ export function applyGeneralRecruitOverlayToProgram(
   const instructorInfo = { ...(common.instructorRecruitmentInfo ?? {}) }
   const volunteerInfo = { ...(common.volunteerRecruitmentInfo ?? {}) }
 
+  const participantTargetLabel =
+    targetLevels?.length ? formatTargetLevelsLabel(targetLevels) : undefined
+  if (participantTargetLabel && participantTargetLabel !== '-') {
+    const nextTarget = coalesceString(
+      participantInfo.educationTarget ?? participantInfo.recruitmentTarget,
+      participantTargetLabel,
+      preferOverlay
+    )
+    if (nextTarget) {
+      participantInfo.educationTarget = nextTarget
+      participantInfo.recruitmentTarget = nextTarget
+    }
+  }
+  if (targetLevelDetail) {
+    const nextDetail = coalesceString(
+      participantInfo.educationTargetDetail ?? participantInfo.recruitmentTargetDetail,
+      targetLevelDetail,
+      preferOverlay
+    )
+    if (nextDetail) {
+      participantInfo.educationTargetDetail = nextDetail
+      participantInfo.recruitmentTargetDetail = nextDetail
+    }
+  }
   if (participantContact) {
     participantInfo.contactOrganizationName = coalesceString(
       participantInfo.contactOrganizationName,
       participantContact,
+      preferOverlay
+    )
+  }
+  if (participantTel) {
+    participantInfo.inquiryTel = coalesceString(
+      participantInfo.inquiryTel ?? participantInfo.tel ?? participantInfo.contactPhone,
+      participantTel,
+      preferOverlay
+    )
+  }
+  if (participantEmail) {
+    participantInfo.inquiryEmail = coalesceString(
+      participantInfo.inquiryEmail ?? participantInfo.email ?? participantInfo.contactEmail,
+      participantEmail,
       preferOverlay
     )
   }
@@ -276,11 +325,88 @@ export function applyGeneralRecruitOverlayToProgram(
       preferOverlay
     )
   }
+  const participantDescription = overlayString(overlay, keys.detailInfo.participantDescription)
+  const participantGuide = overlayString(overlay, keys.detailInfo.participantGuide)
+  const participantMethod = overlayString(overlay, keys.detailInfo.participantMethod)
+  const participantRemarks =
+    overlayString(overlay, keys.detailInfo.participantOtherNotes) ??
+    overlayString(overlay, keys.individual.notes) ??
+    overlayString(overlay, inst.notes)
+  if (participantDescription) {
+    participantInfo.programDescription = coalesceString(
+      participantInfo.programDescription,
+      participantDescription,
+      preferOverlay
+    )
+  }
+  if (participantGuide) {
+    participantInfo.recruitmentGuide = coalesceString(
+      participantInfo.recruitmentGuide,
+      participantGuide,
+      preferOverlay
+    )
+  }
+  if (participantMethod) {
+    participantInfo.applicationMethod = coalesceString(
+      participantInfo.applicationMethod,
+      participantMethod,
+      preferOverlay
+    )
+  }
+  const participantLearning = overlayString(overlay, keys.detailInfo.participantLearningSupport)
+  const participantAdditional = overlayString(overlay, keys.detailInfo.participantAdditionalHtml)
+  if (participantLearning) {
+    participantInfo.learningSupportContent = coalesceString(
+      participantInfo.learningSupportContent,
+      participantLearning,
+      preferOverlay
+    )
+  }
+  if (participantAdditional) {
+    participantInfo.additionalContentHtml = coalesceString(
+      participantInfo.additionalContentHtml,
+      participantAdditional,
+      preferOverlay
+    )
+  }
+  if (participantRemarks) {
+    participantInfo.remarks = coalesceString(participantInfo.remarks, participantRemarks, preferOverlay)
+  }
 
+  const instructorTargetLabel =
+    instructorTargets?.length ? formatInstructorTargetsLabel(instructorTargets) : undefined
+  if (instructorTargetLabel && instructorTargetLabel !== '-') {
+    instructorInfo.recruitmentTarget = coalesceString(
+      instructorInfo.recruitmentTarget,
+      instructorTargetLabel,
+      preferOverlay
+    )
+  }
+  if (instructorTargetDetail) {
+    instructorInfo.recruitmentTargetDetail = coalesceString(
+      instructorInfo.recruitmentTargetDetail,
+      instructorTargetDetail,
+      preferOverlay
+    )
+  }
   if (instructorContact) {
     instructorInfo.contactOrganizationName = coalesceString(
       instructorInfo.contactOrganizationName,
       instructorContact,
+      preferOverlay
+    )
+  }
+  if (instructorTel) {
+    instructorInfo.inquiryTel = coalesceString(
+      instructorInfo.inquiryTel ?? instructorInfo.tel ?? instructorInfo.contactPhone,
+      instructorTel,
+      preferOverlay
+    )
+  }
+  if (instructorEmail) {
+    instructorInfo.inquiryEmail = coalesceString(
+      instructorInfo.inquiryEmail ?? instructorInfo.email ?? instructorInfo.contactEmail,
+      instructorEmail,
       preferOverlay
     )
   }
@@ -298,11 +424,87 @@ export function applyGeneralRecruitOverlayToProgram(
       preferOverlay
     )
   }
+  const instructorDescription = overlayString(overlay, keys.detailInfo.instructorDescription)
+  const instructorGuide = overlayString(overlay, keys.detailInfo.instructorGuide)
+  const instructorMethod = overlayString(overlay, keys.detailInfo.instructorMethod)
+  const instructorRemarks =
+    overlayString(overlay, keys.detailInfo.instructorOtherNotes) ??
+    overlayString(overlay, keys.instructor.notes)
+  if (instructorDescription) {
+    instructorInfo.programDescription = coalesceString(
+      instructorInfo.programDescription,
+      instructorDescription,
+      preferOverlay
+    )
+  }
+  if (instructorGuide) {
+    instructorInfo.recruitmentGuide = coalesceString(
+      instructorInfo.recruitmentGuide,
+      instructorGuide,
+      preferOverlay
+    )
+  }
+  if (instructorMethod) {
+    instructorInfo.applicationMethod = coalesceString(
+      instructorInfo.applicationMethod,
+      instructorMethod,
+      preferOverlay
+    )
+  }
+  const instructorLearning = overlayString(overlay, keys.detailInfo.instructorLearningSupport)
+  const instructorAdditional = overlayString(overlay, keys.detailInfo.instructorAdditionalHtml)
+  if (instructorLearning) {
+    instructorInfo.learningSupportContent = coalesceString(
+      instructorInfo.learningSupportContent,
+      instructorLearning,
+      preferOverlay
+    )
+  }
+  if (instructorAdditional) {
+    instructorInfo.additionalContentHtml = coalesceString(
+      instructorInfo.additionalContentHtml,
+      instructorAdditional,
+      preferOverlay
+    )
+  }
+  if (instructorRemarks) {
+    instructorInfo.remarks = coalesceString(instructorInfo.remarks, instructorRemarks, preferOverlay)
+  }
 
+  const volunteerTargetLabel =
+    volunteerTargets?.length ? formatVolunteerTargetsLabel(volunteerTargets) : undefined
+  if (volunteerTargetLabel && volunteerTargetLabel !== '-') {
+    volunteerInfo.recruitmentTarget = coalesceString(
+      volunteerInfo.recruitmentTarget,
+      volunteerTargetLabel,
+      preferOverlay
+    )
+  }
+  if (volunteerTargetDetail) {
+    volunteerInfo.recruitmentTargetDetail = coalesceString(
+      volunteerInfo.recruitmentTargetDetail,
+      volunteerTargetDetail,
+      preferOverlay
+    )
+  }
   if (volunteerContact) {
     volunteerInfo.contactOrganizationName = coalesceString(
       volunteerInfo.contactOrganizationName,
       volunteerContact,
+      preferOverlay
+    )
+  }
+  if (volunteerTel) {
+    volunteerInfo.inquiryTel = coalesceString(
+      volunteerInfo.inquiryTel ?? volunteerInfo.tel ?? volunteerInfo.contactPhone,
+      volunteerTel,
+      preferOverlay
+    )
+  }
+  if (volunteerEmail) {
+    volunteerInfo.inquiryEmail = coalesceString(
+      volunteerInfo.inquiryEmail ?? volunteerInfo.email ?? volunteerInfo.contactEmail,
+      volunteerEmail,
       preferOverlay
     )
   }
@@ -319,6 +521,52 @@ export function applyGeneralRecruitOverlayToProgram(
       operationFromVolunteer,
       preferOverlay
     )
+  }
+  const volunteerDescription = overlayString(overlay, keys.detailInfo.volunteerDescription)
+  const volunteerGuide = overlayString(overlay, keys.detailInfo.volunteerGuide)
+  const volunteerMethod = overlayString(overlay, keys.detailInfo.volunteerMethod)
+  const volunteerRemarks =
+    overlayString(overlay, keys.detailInfo.volunteerOtherNotes) ??
+    overlayString(overlay, keys.volunteer.notes)
+  if (volunteerDescription) {
+    volunteerInfo.programDescription = coalesceString(
+      volunteerInfo.programDescription,
+      volunteerDescription,
+      preferOverlay
+    )
+  }
+  if (volunteerGuide) {
+    volunteerInfo.recruitmentGuide = coalesceString(
+      volunteerInfo.recruitmentGuide,
+      volunteerGuide,
+      preferOverlay
+    )
+  }
+  if (volunteerMethod) {
+    volunteerInfo.applicationMethod = coalesceString(
+      volunteerInfo.applicationMethod,
+      volunteerMethod,
+      preferOverlay
+    )
+  }
+  const volunteerLearning = overlayString(overlay, keys.detailInfo.volunteerLearningSupport)
+  const volunteerAdditional = overlayString(overlay, keys.detailInfo.volunteerAdditionalHtml)
+  if (volunteerLearning) {
+    volunteerInfo.learningSupportContent = coalesceString(
+      volunteerInfo.learningSupportContent,
+      volunteerLearning,
+      preferOverlay
+    )
+  }
+  if (volunteerAdditional) {
+    volunteerInfo.additionalContentHtml = coalesceString(
+      volunteerInfo.additionalContentHtml,
+      volunteerAdditional,
+      preferOverlay
+    )
+  }
+  if (volunteerRemarks) {
+    volunteerInfo.remarks = coalesceString(volunteerInfo.remarks, volunteerRemarks, preferOverlay)
   }
 
   const contactPhone = coalesceString(
@@ -448,4 +696,44 @@ export function resolveGeneralRecruitDisplayProgram(
   return applyGeneralRecruitOverlayToProgram(program, overlay, {
     preferOverlay: options?.preferOverlay ?? true,
   })
+}
+
+export type GeneralRecruitDetailAudience = 'participant' | 'instructor' | 'volunteer'
+
+/**
+ * 모집 정보 탭 상세정보(프로그램 설명·모집 안내 등) — *RecruitmentInfo SSOT.
+ * 공통정보 Program.description 등을 끌어오지 않는다.
+ */
+export function resolveGeneralRecruitDetailDisplayProgram(
+  program: Program,
+  audience: GeneralRecruitDetailAudience
+): Program {
+  const common = program.generalCommonInfo
+  const info =
+    audience === 'participant'
+      ? common?.participantRecruitmentInfo
+      : audience === 'instructor'
+        ? common?.instructorRecruitmentInfo
+        : common?.volunteerRecruitmentInfo
+
+  const description = info?.programDescription?.trim() || undefined
+  const recruitmentGuide = info?.recruitmentGuide?.trim() || undefined
+  const applicationMethod = info?.applicationMethod?.trim() || undefined
+  const learningSupportContent = info?.learningSupportContent?.trim() || undefined
+  const additionalContentHtml = info?.additionalContentHtml?.trim() || undefined
+  const otherNotes =
+    info && 'notesNotApplicable' in info && info.notesNotApplicable
+      ? undefined
+      : info?.remarks?.trim() || undefined
+
+  return {
+    ...program,
+    description,
+    recruitmentGuide,
+    applicationMethod,
+    learningSupportContent,
+    additionalContentHtml,
+    otherNotes,
+    oneLineIntroduction: otherNotes,
+  }
 }

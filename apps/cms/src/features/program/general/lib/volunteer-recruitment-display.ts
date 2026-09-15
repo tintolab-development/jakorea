@@ -1,16 +1,11 @@
 /**
  * 일반 프로그램 상세 — 봉사자 모집 정보 표시값
- * Primary: generalCommonInfo.volunteerRecruitmentInfo + typed Program fields
- * 빈값 '-' (JOB담 mock / 후원사명 등 비관련 폴백 없음)
+ * SSOT: generalCommonInfo.volunteerRecruitmentInfo (모집 양식)
+ * 모집 대상 / 모집 기간 / 문의처 — 공통정보 Program 폴백 없음. 빈값 '-'
  */
 
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
-import {
-  formatDateRange,
-  formatVolunteerTargetsLabel,
-  getVolunteerRecruitmentStatus,
-  resolveProgramVolunteerTargets,
-} from '@/features/program/shared/lib/program-detail-info-constants'
+import { getVolunteerRecruitmentStatus } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { getGeneralVolunteerInterviewEnabled } from '@/features/program/general/lib/detail-meta'
 import {
@@ -84,16 +79,6 @@ function resolveVolunteerRecruitmentLifecycle(program: Program): ProgramLifecycl
   return VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE[status]
 }
 
-function resolveVolunteerPeriod(program: Program, info?: VolunteerRecruitmentInfoLoose) {
-  if (info?.recruitmentPeriodLabel?.trim()) {
-    return info.recruitmentPeriodLabel.trim()
-  }
-  return formatDateRange(
-    program.volunteerApplicationStartDate,
-    program.volunteerApplicationEndDate
-  )
-}
-
 export function resolveGeneralProgramVolunteerRecruitmentDisplay(
   program: Program
 ): GeneralProgramVolunteerRecruitmentDisplay {
@@ -121,21 +106,12 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
       info?.volunteerInterviewEnabledLabel,
       labelBool(interviewEnabled, '면접 있음', '면접 없음')
     ),
-    operationPeriodLabel: pickDisplayString(
-      info?.operationPeriodLabel,
-      formatDateRange(program.startDate, program.endDate)
-    ),
+    operationPeriodLabel: pickDisplayString(info?.operationPeriodLabel),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
-    volunteerTargetLabel: pickDisplayString(
-      info?.recruitmentTarget,
-      formatVolunteerTargetsLabel(resolveProgramVolunteerTargets(program))
-    ),
-    volunteerTargetDetailLabel: pickDisplayString(
-      info?.recruitmentTargetDetail,
-      program.volunteerTargetDetail
-    ),
-    recruitmentPeriodLabel: resolveVolunteerPeriod(program, info),
+    volunteerTargetLabel: pickDisplayString(info?.recruitmentTarget),
+    volunteerTargetDetailLabel: pickDisplayString(info?.recruitmentTargetDetail),
+    recruitmentPeriodLabel: pickDisplayString(info?.recruitmentPeriodLabel),
     documentPassAnnouncementDate: program.documentPassAnnouncementDate,
     documentPassAnnouncementMethod: program.documentPassAnnouncementMethod,
     interviewStartDate: program.interviewStartDate,
@@ -145,18 +121,8 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
     finalPassAnnouncementMethod:
       finalPassAnnouncementMethod === '-' ? undefined : finalPassAnnouncementMethod,
     contactOrganizationName: pickDisplayString(info?.contactOrganizationName),
-    contactPhone: pickDisplayString(
-      info?.inquiryTel,
-      info?.tel,
-      info?.contactPhone,
-      program.contactPhone
-    ),
-    contactEmail: pickDisplayString(
-      info?.inquiryEmail,
-      info?.email,
-      info?.contactEmail,
-      program.contactEmail
-    ),
-    notes: pickDisplayString(info?.remarks, program.otherNotes, program.oneLineIntroduction),
+    contactPhone: pickDisplayString(info?.inquiryTel, info?.tel, info?.contactPhone),
+    contactEmail: pickDisplayString(info?.inquiryEmail, info?.email, info?.contactEmail),
+    notes: info?.notesNotApplicable ? '-' : pickDisplayString(info?.remarks),
   }
 }

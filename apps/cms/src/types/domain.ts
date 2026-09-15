@@ -222,6 +222,12 @@ export interface GeneralProgramParticipantRecruitmentInfo {
   educationTargetDetail?: string
   recruitmentTarget?: string
   recruitmentTargetDetail?: string
+  /** 모집 양식 상세정보 — 프로그램 설명 (공통정보 description과 분리) */
+  programDescription?: string
+  recruitmentGuide?: string
+  applicationMethod?: string
+  learningSupportContent?: string
+  additionalContentHtml?: string
   /** 개인 참여자 모집 — 면접 유무 (등록 양식·상세 mock) */
   interviewEnabled?: boolean
   /** 비고 해당 없음 — true면 공고 비노출·관리자 상세에는 '-' */
@@ -247,6 +253,12 @@ export interface GeneralProgramInstructorRecruitmentInfo {
   remarks?: string
   recruitmentTarget?: string
   recruitmentTargetDetail?: string
+  /** 모집 양식 상세정보 — 프로그램 설명 (공통정보 description과 분리) */
+  programDescription?: string
+  recruitmentGuide?: string
+  applicationMethod?: string
+  learningSupportContent?: string
+  additionalContentHtml?: string
 }
 
 /** 일반 프로그램 — 봉사자 모집 정보 (프로그램 등록 봉사자 모집 양식 필드) */
@@ -275,6 +287,12 @@ export interface GeneralProgramVolunteerRecruitmentInfo {
   remarks?: string
   recruitmentTarget?: string
   recruitmentTargetDetail?: string
+  /** 모집 양식 상세정보 — 프로그램 설명 (공통정보 description과 분리) */
+  programDescription?: string
+  recruitmentGuide?: string
+  applicationMethod?: string
+  learningSupportContent?: string
+  additionalContentHtml?: string
 }
 
 /** 일반 프로그램 — 봉사자 면접 진행 가능 일정 */
