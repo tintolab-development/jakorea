@@ -3505,22 +3505,21 @@ export function paragraphsAreOnlyTableLayoutParagraphs(
   return paragraphs.length > 0 && paragraphs.every(isTableLayoutParagraph)
 }
 
-/** 직접 등록 — 신규 동의 양식 기본 단락 id (제목형·텍스트형·주관식형·테이블 세로·가로·시스템 2종·마무리글형) */
+/** 직접 등록 — 신규 동의 양식 기본 단락 id (제목·텍스트·개인정보 항목·가로표+동의·마무리·날짜·서명) */
 export const DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS = {
   title: 'agreement-direct-paragraph-title',
   explanationText: 'agreement-direct-paragraph-explanation-text',
   shortEssay: 'agreement-direct-paragraph-short-essay',
-  verticalTableText: 'agreement-direct-paragraph-vertical-table-text',
   horizontalTable: 'agreement-direct-paragraph-horizontal-table',
+  closing: 'agreement-direct-paragraph-closing',
   systemDate: 'agreement-direct-paragraph-system-date',
   systemSignature: 'agreement-direct-paragraph-system-signature',
-  closing: 'agreement-direct-paragraph-closing',
 } as const
 
 export function createDefaultDirectAgreementDraft(): WritingFormDraft {
   return {
     schemaVersion: 1,
-    formSettings: { titleNumbering: 'numeric' },
+    formSettings: { titleNumbering: 'none' },
     paragraphs: [
       {
         id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.title,
@@ -3545,7 +3544,7 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
-        bodyPlaceholder: '한 줄 안내를 입력해 주세요',
+        bodyPlaceholder: '텍스트를 작성해 주세요',
         bodyText: '',
         answerRequired: true,
       },
@@ -3582,11 +3581,17 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         bodyPlaceholder: '각 항목에 내용을 입력해 주세요',
         bodyText: '',
       },
-      createVerticalTableParagraph(
-        DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.verticalTableText,
-        'text'
-      ),
       createHorizontalTableParagraph(DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.horizontalTable),
+      {
+        id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.closing,
+        kind: 'description',
+        variant: 'closing',
+        requiredMark: false,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        body: '내용을 자세히 검토하신 후 동의 여부를 결정하여 주시기 바랍니다.',
+      },
       {
         id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.systemDate,
         kind: 'description',
@@ -3606,16 +3611,6 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         paragraphTitle: '서명란 유형',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
-      },
-      {
-        id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.closing,
-        kind: 'description',
-        variant: 'closing',
-        requiredMark: false,
-        paragraphTitle: '',
-        paragraphDescription: '',
-        participatesInTitleNumbering: false,
-        body: '내용을 자세히 검토하신 후 동의 여부를 결정하여 주시기 바랍니다.',
       },
     ],
   }

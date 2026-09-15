@@ -4,6 +4,7 @@ import { createWritingTemplate } from '@/features/template/api/create-writing-te
 import { duplicateWritingTemplate } from '@/features/template/api/duplicate-writing-template'
 import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
+import { allocateUniqueWritingTemplateName } from '@/features/template/lib/allocate-unique-writing-template-name'
 import { getWritingTemplateRowsByCategory } from '@/features/template/lib/writing-template-create-helpers'
 import type {
   TemplateCreateKind,
@@ -21,10 +22,18 @@ export interface TemplateCreateModalProps {
   open: boolean
   onCancel: () => void
   onDirectRegister: (target: 'survey' | 'agreement') => void
-  onDuplicateSuccess: (newTemplateId: string) => void
+  onDuplicateSuccess: (
+    newTemplateId: string,
+    options?: { formKind?: 'survey' | 'agreement' }
+  ) => void
 }
 
 const NEW_TEMPLATE_OPTION_VALUE = '__new__'
+
+const DIRECT_REGISTER_DEFAULT_NAME: Record<'survey' | 'agreement', string> = {
+  survey: '신규 설문 양식',
+  agreement: '동의 양식 신규 폼',
+}
 
 function resolveSelection(
   kind: TemplateCreateKind,
@@ -106,6 +115,12 @@ export function TemplateCreateModal({
     })
   }, [queryClient])
 
+  const existingNamesInCategory = useCallback(
+    (category: WritingTemplateCategory) =>
+      getWritingTemplateRowsByCategory(category, sections).map(row => row.templateName),
+    [sections]
+  )
+
   const handleRegister = useCallback(async () => {
     const resolved = resolveSelection(kind, selectValue)
     if (resolved == null) return
@@ -113,13 +128,18 @@ export function TemplateCreateModal({
     if (resolved.source === 'direct') {
       setSubmitting(true)
       try {
-        const result = await createWritingTemplate(resolved.target)
+        const baseName = DIRECT_REGISTER_DEFAULT_NAME[resolved.target]
+        const templateName = allocateUniqueWritingTemplateName(
+          baseName,
+          existingNamesInCategory(resolved.target)
+        )
+        const result = await createWritingTemplate(resolved.target, { templateName })
         if (result.mode === 'local-new') {
           onDirectRegister(result.target)
           return
         }
         await invalidateWritingSections()
-        onDuplicateSuccess(result.newTemplateId)
+        onDuplicateSuccess(result.newTemplateId, { formKind: result.target })
       } catch (error) {
         console.debug('templateCreateModal create failed', error)
         showAlert({
@@ -137,12 +157,26 @@ export function TemplateCreateModal({
 
     setSubmitting(true)
     try {
+      const sourceRow = getWritingTemplateRowsByCategory(resolved.category, sections).find(
+        row => row.id === resolved.templateId
+      )
+      const baseName = sourceRow?.templateName?.trim() || resolved.templateId
+      const templateName = allocateUniqueWritingTemplateName(
+        baseName,
+        existingNamesInCategory(resolved.category)
+      )
       const { newTemplateId } = await duplicateWritingTemplate({
         sourceTemplateId: resolved.templateId,
         category: resolved.category,
+        templateName,
       })
       await invalidateWritingSections()
-      onDuplicateSuccess(newTemplateId)
+      onDuplicateSuccess(newTemplateId, {
+        formKind:
+          resolved.category === 'survey' || resolved.category === 'agreement'
+            ? resolved.category
+            : undefined,
+      })
     } catch (error) {
       console.debug('templateCreateModal duplicate failed', error)
       showAlert({
@@ -156,10 +190,12 @@ export function TemplateCreateModal({
       setSubmitting(false)
     }
   }, [
+    existingNamesInCategory,
     invalidateWritingSections,
     kind,
     onDirectRegister,
     onDuplicateSuccess,
+    sections,
     selectValue,
     showAlert,
   ])

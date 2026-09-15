@@ -4,6 +4,7 @@ import type { TemplateRow } from '@/features/template/model/template.schema'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import {
   resolveAgreementWritingFormConfig,
+  createDirectAgreementWritingFormConfig,
   stripAgreementWritingFormStructureLocks,
 } from '@/features/template/model/template-registry/agreement-template-config-registry'
 import {
@@ -206,12 +207,25 @@ export default function TemplateFormTab() {
   const agreementWritingFormConfig = useMemo(() => {
     if (params.mode !== 'edit' || params.id == null || params.id.trim() === '') return null
     const templateCode = params.id.trim()
-    const raw = resolveAgreementWritingFormConfig(templateCode)
-    if (raw == null) return null
     const row =
       selectedTemplate?.id === templateCode
         ? selectedTemplate
         : findWritingTemplateRowByDefinitionId(templateCode, writingSections)
+    const isAgreementCategory =
+      params.type === 'agreement' ||
+      writingSections.some(
+        section =>
+          section.key === 'agreement' && section.rows.some(r => r.id === templateCode)
+      )
+
+    const catalog = resolveAgreementWritingFormConfig(templateCode)
+    const raw =
+      catalog ??
+      (isAgreementCategory
+        ? createDirectAgreementWritingFormConfig(row?.templateName ?? '동의 양식 신규 폼')
+        : null)
+    if (raw == null) return null
+
     const locked = isWritingFormTemplateStructureLocked({
       templateCode,
       systemTemplate: row?.systemTemplate,
@@ -222,6 +236,7 @@ export default function TemplateFormTab() {
     forceUserEditable,
     params.id,
     params.mode,
+    params.type,
     selectedTemplate,
     writingSections,
   ])

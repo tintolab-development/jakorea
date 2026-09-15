@@ -26,6 +26,7 @@ import {
   fetchFormTemplateVersionsRemote,
   fetchFormTemplatesRemote,
   publishFormTemplateVersionRemote,
+  updateFormTemplateRemote,
   updateFormTemplateVersionRemote,
 } from '@/features/template/api/form-templates-api-client'
 import { normalizeWritingFormDraftFromApi } from '@/features/template/lib/form-template-seed-registry'
@@ -315,6 +316,8 @@ export async function publishFormTemplateVersion(templateCode: string): Promise<
 export async function duplicateFormTemplateVersionRemote(args: {
   sourceTemplateCode: string
   versionLabel?: string
+  /** 동명 회피용 — 복제 후 PATCH로 적용 */
+  templateName?: string
 }): Promise<string> {
   assertFormsSurveysRemoteReady()
   const cached = getFormTemplateVersionCacheEntry(args.sourceTemplateCode)
@@ -342,6 +345,15 @@ export async function duplicateFormTemplateVersionRemote(args: {
     })
   }
 
+  const nextName = args.templateName?.trim()
+  if (nextName != null && nextName !== '' && copied.templateId != null) {
+    try {
+      await updateFormTemplateRemote(copied.templateId, { templateName: nextName })
+    } catch (error) {
+      console.warn('[form-templates] rename after copy failed', error)
+    }
+  }
+
   return newCode
 }
 
@@ -354,7 +366,7 @@ export async function createWritingFormTemplateRemote(args: {
   const category = args.target === 'survey' ? 'SURVEY' : 'AGREEMENT'
   const templateName =
     args.templateName?.trim() ||
-    (args.target === 'survey' ? '신규 설문 양식' : '신규 동의 양식')
+    (args.target === 'survey' ? '신규 설문 양식' : '동의 양식 신규 폼')
   const draft =
     args.target === 'survey' ? createDefaultSurveyDraft() : createDefaultDirectAgreementDraft()
 

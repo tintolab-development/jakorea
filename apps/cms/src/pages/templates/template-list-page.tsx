@@ -115,13 +115,13 @@ export function TemplateListPage() {
                 { replace: false }
               )
             }}
-            onDuplicateSuccess={newTemplateId => {
+            onDuplicateSuccess={(newTemplateId, options) => {
               setCreateModalOpen(false)
               setParams(
                 {
                   mode: 'edit',
                   id: newTemplateId,
-                  type: undefined,
+                  type: options?.formKind,
                   userPreview: undefined,
                   userTemplate: '1',
                 },

@@ -44,6 +44,7 @@ import {
   FormEditorRightPanel,
   FormEditorTitleNumberingField,
 } from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
+import { DIRECT_AGREEMENT_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/agreement-direct/paragraph-config'
 
 import {
   type FormDocumentPreviewParagraphGapResolver,
@@ -108,6 +109,26 @@ type AgreementShellUrlQuery = {
   userPreview?: string
 }
 
+/** 구조 잠금 해제 시에도 마무리+날짜+서명 확인 카드 옵션 유지 */
+function preserveUnlockedAgreementConfirmBodyOptions(
+  options: RenderFormParagraphBodyOptions | undefined
+): RenderFormParagraphBodyOptions | undefined {
+  if (options == null) return undefined
+  if (
+    options.agreementAdminProxyConfirm !== true &&
+    (options.hiddenParagraphIds == null || options.hiddenParagraphIds.size === 0)
+  ) {
+    return undefined
+  }
+  return {
+    agreementAdminProxyConfirm: options.agreementAdminProxyConfirm,
+    hiddenParagraphIds: options.hiddenParagraphIds,
+    agreementSystemParticipantName: options.agreementSystemParticipantName,
+    agreementSystemNow: options.agreementSystemNow,
+    agreementSystemDisplayMode: options.agreementSystemDisplayMode,
+  }
+}
+
 export function AgreementWritingFormShell({
   initialDraft,
   defaultActiveParagraphId,
@@ -145,7 +166,10 @@ export function AgreementWritingFormShell({
   const effectiveHideDragHandleForParagraphIds = isStructureLocked
     ? hideDragHandleForParagraphIds
     : undefined
-  const effectiveParagraphBodyOptions = isStructureLocked ? paragraphBodyOptions : undefined
+  /** 사용자 복제·신규 — 시드 잠금 props는 제거하되 확인 카드 옵션은 유지 */
+  const effectiveParagraphBodyOptions = isStructureLocked
+    ? paragraphBodyOptions
+    : preserveUnlockedAgreementConfirmBodyOptions(paragraphBodyOptions)
 
   const resolveInitialDraft = useCallback((): WritingFormDraft => {
     const raw = typeof initialDraft === 'function' ? initialDraft() : initialDraft
@@ -450,7 +474,9 @@ export default function NewAgreementForm() {
     <AgreementWritingFormShell
       initialDraft={createDefaultDirectAgreementDraft}
       defaultActiveParagraphId={DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.title}
-      modalTitle="동의 양식"
+      modalTitle="동의 양식 신규 폼"
+      modalDescription="* 등록 시 최소 1개의 단락은 존재해야 하며, 제목, 마무리글, 날짜, 서명란을 제외하고 최소 1개의 단락은 존재해야합니다."
+      paragraphBodyOptions={DIRECT_AGREEMENT_PARAGRAPH_BODY_OPTIONS}
       onClose={handleClose}
     />
   )
