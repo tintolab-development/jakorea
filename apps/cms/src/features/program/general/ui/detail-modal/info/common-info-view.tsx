@@ -333,6 +333,7 @@ function BasicInfoSection({
               {index > 0 ? ', ' : null}
               <ProgramDetailSponsorLink
                 name={name}
+                homepageUrl={sponsorRow?.homepageUrl}
                 sponsorId={program.sponsorId}
                 sponsorName={name}
                 sponsorManagementId={sponsorManagementId}

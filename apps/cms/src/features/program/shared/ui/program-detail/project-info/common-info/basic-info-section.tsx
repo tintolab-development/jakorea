@@ -385,6 +385,7 @@ export function BasicInfoSection({
                         {index > 0 ? ', ' : null}
                         <ProgramDetailSponsorLink
                           name={row.name}
+                          homepageUrl={row.homepageUrl}
                           sponsorId={program.sponsorId}
                           sponsorName={row.name}
                           sponsorManagementId={row.id}
