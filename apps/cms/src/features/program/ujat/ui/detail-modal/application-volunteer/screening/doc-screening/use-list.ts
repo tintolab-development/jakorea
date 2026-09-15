@@ -8,6 +8,7 @@ import {
   formatUjatVolunteerApplicationType,
   type UjatVolunteerApplicantRow,
 } from '@/data/mock/ujat-volunteer-applicants-mock'
+import { listUjatVolunteerApplications } from '@/features/program/ujat/api/applications-service'
 import {
   UJAT_DOCUMENT_SCREENING_STATUS_LABELS,
   UJAT_MANAGER_EVALUATION_LABELS,
@@ -162,10 +163,16 @@ export function useUjatVolunteerDocScreening({
   } | null>(null)
 
   useEffect(() => {
-    setList(sortUjatVolunteerApplicants(getUjatVolunteerApplicants(programId, half)))
+    let cancelled = false
+    void listUjatVolunteerApplications(programId, half).then(rows => {
+      if (!cancelled) setList(rows)
+    })
     setPendingFilters({ ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS })
     setAppliedFilters({ ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS })
     setSelectedRowKeys([])
+    return () => {
+      cancelled = true
+    }
   }, [programId, half])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
