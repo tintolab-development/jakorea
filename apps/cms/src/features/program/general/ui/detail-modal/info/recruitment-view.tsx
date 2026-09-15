@@ -103,6 +103,7 @@ export function GeneralProgramRecruitmentView({
           showThumbnail
           showRecruitmentMethod={showParticipantRecruitmentMethod}
           recruitmentMethodLabel="지원 방법"
+          emptyReadDisplay="dash"
         />
       )
       break
@@ -120,6 +121,7 @@ export function GeneralProgramRecruitmentView({
           isEditMode={isEditModeInstructors}
           form={isEditModeInstructors ? instructorsForm : undefined}
           onRegisterGetAdditionalContentHtml={registerInstructorsAdditionalHtml}
+          emptyReadDisplay="dash"
         />
       )
       break
@@ -138,6 +140,7 @@ export function GeneralProgramRecruitmentView({
             isEditMode={isEditModeVolunteers}
             form={isEditModeVolunteers ? volunteersForm : undefined}
             onRegisterGetAdditionalContentHtml={registerVolunteersAdditionalHtml}
+            emptyReadDisplay="dash"
           />
           <div className="detail-info-form--gap">
             <GeneralProgramVolunteerInterviewScheduleSection

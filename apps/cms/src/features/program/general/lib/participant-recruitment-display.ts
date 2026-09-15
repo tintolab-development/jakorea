@@ -1,14 +1,9 @@
 /**
- * 일반 프로그램 상세 — 참여자 모집 정보 표시값 (등록 양식·스크린샷 mock)
+ * 일반 프로그램 상세 — 참여자 모집 정보 표시값
+ * 값 없으면 '-' (mock/하드코드 기본값 없음)
  */
 
 import type { Program } from '@/types/domain'
-
-/** 학교/기관 대상 일반 프로그램 — 모집·신청 최대값 필드 노출 */
-export function isGeneralProgramSchoolInstitutionTarget(program: Program): boolean {
-  if (program.generalProgramAudience === 'organization') return true
-  return program.generalParticipantTypes?.includes('school_institution') === true
-}
 import {
   formatDateOnly,
   formatDateRange,
@@ -18,15 +13,18 @@ import {
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
-  GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID,
-} from '@/features/program/general/lib/detail-common-info-display'
-import {
   resolveInstitutionApplicationProgramBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+
+/** 학교/기관 대상 일반 프로그램 — 모집·신청 최대값 필드 노출 */
+export function isGeneralProgramSchoolInstitutionTarget(program: Program): boolean {
+  if (program.generalProgramAudience === 'organization') return true
+  return program.generalParticipantTypes?.includes('school_institution') === true
+}
 
 export function resolveParticipantRecruitmentInterviewEnabled(
   program: Program,
@@ -74,24 +72,6 @@ export type GeneralProgramParticipantRecruitmentDisplay = {
   notes: string
 }
 
-const JOB담_PARTICIPANT_RECRUITMENT_MOCK = {
-  announcementPublishedLabel: '게시',
-  preEducationNoticeLabel: '필요',
-  certificateIssuanceLabel: '제공',
-  studentListLabel: '필요',
-  maxClassLabel: '4개',
-  maxInstructorsLabel: '2명',
-  maxSessionsPerDayLabel: '8차시',
-  maxScheduleCountLabel: '3개',
-  operationPeriodLabel: '2026. 04. 03(금) - 2026. 11. 20(금)',
-  recruitmentPeriodLabel: '2025. 12. 08(월) - 2026. 01. 16(금)',
-  finalAnnouncementLabel: '2026. 01. 26 (금) | 홈페이지 공지 및 담당교사 개별 안내',
-  contactOrganizationName: 'JA Korea',
-  contactPhone: '02-6085-6028',
-  contactEmail: 'cc@jakorea.org',
-  notes: '-',
-} as const
-
 function needOrNotLabel(value: boolean | undefined, yes = '필요', no = '불필요'): string {
   if (value == null) return '-'
   return value ? yes : no
@@ -100,6 +80,11 @@ function needOrNotLabel(value: boolean | undefined, yes = '필요', no = '불필
 function countLabel(value: number | undefined, suffix: string): string {
   if (value == null || Number.isNaN(value)) return '-'
   return `${value}${suffix}`
+}
+
+function dashOr(value: string | undefined | null): string {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : '-'
 }
 
 export function resolveGeneralProgramParticipantRecruitmentDisplay(
@@ -122,20 +107,6 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     showInstitutionApplicationLimits &&
     shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge)
 
-  if (program.id === GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID) {
-    return {
-      ...JOB담_PARTICIPANT_RECRUITMENT_MOCK,
-      showInstitutionApplicationLimits: true,
-      showMaxScheduleCountField,
-      showMaxSessionsPerDayField,
-      recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '참여자 모집 중',
-      recruitmentStatusLifecycle: lifecycle ?? 'recruiting_students',
-      targetLabel: formatTargetLevelsLabel(resolveProgramTargetLevels(program)) || '고등학교',
-      targetDetailLabel: program.district ?? '특성화고등학교 3학년',
-      notes: JOB담_PARTICIPANT_RECRUITMENT_MOCK.notes,
-    }
-  }
-
   const studentListValue = program.studentListRequired
   const studentListLabel =
     studentListValue === 'required'
@@ -144,13 +115,12 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
         ? '불필요'
         : '-'
 
-  const resultDate = program.resultAnnouncementDate ?? program.applicationEndDate
-  const resultMethod =
-    program.resultAnnouncementMethod ?? '홈페이지 공지 및 담당교사 개별 안내'
+  const resultDate = program.resultAnnouncementDate
+  const resultMethod = program.resultAnnouncementMethod?.trim()
   const finalAnnouncementLabel =
-    info?.finalAnnouncementLabel ??
+    info?.finalAnnouncementLabel?.trim() ||
     (resultDate
-      ? `${formatDateOnly(resultDate)} | ${resultMethod}`
+      ? `${formatDateOnly(resultDate)}${resultMethod ? ` | ${resultMethod}` : ''}`
       : '-')
 
   const certificateIssuanceLabel =
@@ -172,12 +142,6 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
         : '-'
     : undefined
 
-  const documentPassAnnouncementDate = program.documentPassAnnouncementDate
-  const documentPassAnnouncementMethod = program.documentPassAnnouncementMethod
-  const interviewStartDate = program.interviewStartDate
-  const interviewEndDate = program.interviewEndDate
-  const interviewMethod = program.interviewMethod
-
   return {
     interviewEnabledLabel,
     announcementPublishedLabel: needOrNotLabel(
@@ -196,26 +160,28 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     maxSessionsPerDayLabel: countLabel(info?.maxSessionsPerDay, '차시'),
     maxScheduleCountLabel: countLabel(info?.maxScheduleCount, '개'),
     operationPeriodLabel:
-      info?.operationPeriodLabel ?? formatDateRange(program.startDate, program.endDate),
+      info?.operationPeriodLabel?.trim() ||
+      formatDateRange(program.startDate, program.endDate),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
     targetLabel: formatTargetLevelsLabel(resolveProgramTargetLevels(program)),
-    targetDetailLabel: program.district ?? '-',
+    targetDetailLabel: dashOr(program.district),
     recruitmentPeriodLabel:
-      info?.recruitmentPeriodLabel ??
+      info?.recruitmentPeriodLabel?.trim() ||
       formatDateRange(program.applicationStartDate, program.applicationEndDate),
-    documentPassAnnouncementDate,
-    documentPassAnnouncementMethod,
-    interviewStartDate,
-    interviewEndDate,
-    interviewMethod,
+    documentPassAnnouncementDate: program.documentPassAnnouncementDate,
+    documentPassAnnouncementMethod: program.documentPassAnnouncementMethod,
+    interviewStartDate: program.interviewStartDate,
+    interviewEndDate: program.interviewEndDate,
+    interviewMethod: program.interviewMethod,
     finalAnnouncementLabel,
-    contactOrganizationName:
-      info?.contactOrganizationName ?? common?.sponsorDisplayName ?? 'JA Korea',
-    contactPhone: program.contactPhone ?? '-',
-    contactEmail: program.contactEmail ?? '-',
+    contactOrganizationName: dashOr(
+      info?.contactOrganizationName ?? common?.sponsorDisplayName
+    ),
+    contactPhone: dashOr(program.contactPhone),
+    contactEmail: dashOr(program.contactEmail),
     notes: info?.notesNotApplicable
       ? '-'
-      : (program.oneLineIntroduction ?? '').trim() || '-',
+      : dashOr(program.oneLineIntroduction),
   }
 }
