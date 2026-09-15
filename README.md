@@ -64,7 +64,7 @@ pnpm install
 - **로컬 실행**: `pnpm admin` (또는 `pnpm --filter admin dev`) → 기본 포트 `5173`.
 - **빌드/미리보기**: `pnpm --filter admin build`, `pnpm --filter admin preview`.
 - **품질 검사**: `pnpm --filter admin lint`, `pnpm --filter admin typecheck`.
-- **Vercel**: Root Directory `apps/admin`, Production Branch `development`. 상세는 [`apps/admin/docs/vercel.md`](./apps/admin/docs/vercel.md).
+- **Vercel**: Root Directory `apps/admin`, Production Branch **`development`** ( `main` 아님 ). 상세는 [`apps/admin/docs/vercel.md`](./apps/admin/docs/vercel.md).
 
 ### CMS (플랫폼 어드민)
 
@@ -80,7 +80,7 @@ pnpm install
 - **로컬 실행**: `pnpm cms` (또는 `pnpm --filter cms dev`) → 기본 포트 `3000`.
 - **빌드/미리보기**: `pnpm --filter cms build`, `pnpm --filter cms preview`.
 - **품질 검사**: `pnpm --filter cms lint`, `pnpm --filter cms typecheck`.
-- **Vercel**: Root Directory `apps/cms`, Production Branch `development`. 상세는 [`apps/cms/docs/vercel.md`](./apps/cms/docs/vercel.md).
+- **Vercel**: Root Directory `apps/cms`, Production Branch **`development`** ( `main` 아님 ). 상세는 [`apps/cms/docs/vercel.md`](./apps/cms/docs/vercel.md).
 
 ### Platform (사용자용 플랫폼)
 
@@ -96,7 +96,35 @@ pnpm install
 - **로컬 실행**: `pnpm platform` (또는 `pnpm --filter platform dev`) → 기본 포트 `5173`.
 - **빌드/미리보기**: `pnpm --filter platform build`, `pnpm --filter platform preview`.
 - **품질 검사**: `pnpm --filter platform lint`, `pnpm --filter platform typecheck`.
-- **Vercel**: Root Directory `apps/platform`, Production Branch `development`. 상세는 [`apps/platform/docs/vercel.md`](./apps/platform/docs/vercel.md).
+- **Vercel**: Root Directory `apps/platform`, Production Branch **`development`** ( `main` 아님 ). 상세는 [`apps/platform/docs/vercel.md`](./apps/platform/docs/vercel.md).
+
+## Vercel 배포
+
+세 앱은 **각각 별도 Vercel 프로젝트**로 연결합니다. Production 배포 트리거는 **`development` 브랜치** push/merge입니다. `main`만 머지해서는 Production이 나가지 않을 수 있습니다.
+
+| 앱 | Root Directory | Production Branch | 상세 |
+| --- | --- | --- | --- |
+| Admin | `apps/admin` | `development` | [`apps/admin/docs/vercel.md`](./apps/admin/docs/vercel.md) |
+| CMS | `apps/cms` | `development` | [`apps/cms/docs/vercel.md`](./apps/cms/docs/vercel.md) |
+| Platform | `apps/platform` | `development` | [`apps/platform/docs/vercel.md`](./apps/platform/docs/vercel.md) |
+
+### Private 리포지토리
+
+리포가 **private**이면 자동 배포가 스킵되거나 실패할 수 있습니다.
+
+- Vercel GitHub App에 `tintolab-development/jakorea` 접근이 있는지 확인 (GitHub → Settings → Applications → Vercel → Repository access)
+- 커밋 작성자 GitHub 계정이 Vercel에 연결되어 있고, 해당 Vercel 팀 멤버인지 확인 (Hobby는 org private 협업 제한이 큼 → Pro 권장)
+- 웹훅: 리포 Settings → Webhooks → Vercel Recent Deliveries가 200인지. 깨졌으면 Vercel **Settings → Git** 에서 Disconnect → Connect
+
+### 재배포
+
+자동 배포가 안 나갔을 때:
+
+1. [Vercel Dashboard](https://vercel.com) → 프로젝트 → **Deployments**
+2. 원하는 배포(또는 `development` 최신 커밋) → **⋯ → Redeploy**
+3. 캐시 이슈가 있으면 **Use existing Build Cache** 를 끄고 재배포
+
+또는 `development`에 빈 커밋을 push하거나 Deploy Hook을 호출합니다.
 
 ## 구조
 
@@ -104,22 +132,24 @@ pnpm install
 jakorea/
 ├── .cursor/
 │   └── rules/              # 모노레포 공통 규칙
-│       ├── constraints.md
-│       ├── design-guidelines.md
-│       ├── coding-standards.md
-│       ├── monorepo-structure.md
-│       └── project-system-prompt.md
 │
 ├── apps/
 │   ├── admin/              # 관리 콘솔 애플리케이션
 │   ├── cms/                # CMS (플랫폼 어드민) 애플리케이션
 │   │   ├── .cursor/rules/  # CMS 전용 규칙
-│   │   └── docs/           # CMS 문서 (로드맵, 브리핑 등)
-│   └── platform/           # 사용자용 플랫폼 애플리케이션
+│   │   └── docs/           # CMS 문서 (로드맵, API 핸드오프 등)
+│   └── platform/           # 사용자용 플랫폼 (JaKorea Platform) 애플리케이션
 │
 └── packages/
-    ├── ui/                 # React UI 컴포넌트 (예: Button)
-    └── utils/              # 날짜/텍스트 등 공통 유틸
+    ├── ui/                 # React UI 컴포넌트
+    ├── utils/              # 날짜/텍스트 등 공통 유틸
+    ├── domain/             # 공유 도메인 모델·정책
+    ├── form-schema/        # 양식 스키마 SSOT
+    ├── form-template-runtime/
+    ├── location/
+    ├── identity-verification/
+    ├── rich-text/
+    └── social-auth/
 ```
 
 ## 📚 문서 구조
