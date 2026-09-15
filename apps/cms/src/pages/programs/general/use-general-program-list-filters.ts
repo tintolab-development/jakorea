@@ -1,14 +1,12 @@
-import { useCallback, useLayoutEffect, useMemo, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo } from 'react'
 import {
   useInfiniteQuery,
   useQueryClient,
   type InfiniteData,
 } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
-import { invalidateGeneralProgramsCache } from '@/data/mock/general-programs'
 import {
   fetchGeneralProgramsRemoteListPage,
-  getGeneralProgramsMockList,
   type GeneralProgramsRemoteListPage,
 } from '@/features/program/general/api/admin-general-programs-service'
 import type { GeneralProgramListTableFilters } from '@/features/program/general/api/general-program-list-filter-params'
@@ -63,7 +61,6 @@ function keepFirstInfiniteQueryPage<T>(
 export function useGeneralProgramListFilters() {
   const { params, setParam } = useQueryParams<GeneralProgramListQueryParams>()
   const [searchParams] = useSearchParams()
-  const [mockListVersion, setMockListVersion] = useState(0)
   const remoteEnabled = useGeneralProgramsRemoteEnabled()
   const queryClient = useQueryClient()
 
@@ -110,24 +107,17 @@ export function useGeneralProgramListFilters() {
   })
 
   const filteredPrograms = useMemo(() => {
-    if (remoteEnabled) {
-      return remoteListQuery.data?.pages.flatMap(page => page.programs) ?? []
-    }
-    void mockListVersion
-    return getGeneralProgramsMockList(statusFilter)
-  }, [remoteEnabled, remoteListQuery.data, statusFilter, mockListVersion])
+    if (!remoteEnabled) return []
+    return remoteListQuery.data?.pages.flatMap(page => page.programs) ?? []
+  }, [remoteEnabled, remoteListQuery.data])
 
   const totalElements = remoteEnabled
     ? (remoteListQuery.data?.pages[0]?.totalElements ?? filteredPrograms.length)
-    : filteredPrograms.length
+    : 0
 
   const refetchPrograms = useCallback(() => {
-    if (remoteEnabled) {
-      void remoteListQuery.refetch()
-      return
-    }
-    invalidateGeneralProgramsCache()
-    setMockListVersion(v => v + 1)
+    if (!remoteEnabled) return
+    void remoteListQuery.refetch()
   }, [remoteEnabled, remoteListQuery])
 
   const headerTitle = useMemo(() => {

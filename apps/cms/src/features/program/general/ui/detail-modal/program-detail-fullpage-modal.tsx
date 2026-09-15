@@ -61,7 +61,7 @@ import { GeneralSurveyManagementView } from './survey-management/survey-manageme
 import type { Program } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import { getEconomyPrograms, getGeneralPrograms, getTrainedTeachersPrograms } from '@/data/mock'
-import { COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/program/general/lib/registration-local-save'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { useUpdateTrainedTeacherProgramInfoDetail } from '@/features/program/trained-teachers/api/hooks'
@@ -157,14 +157,7 @@ const LNB_KEYS_READONLY: readonly LnbKey[] = [
 ]
 
 function isCompanySchoolDetailProgram(program: Program | null): boolean {
-  if (!program?.id) return false
-  const id = String(program.id)
-  return (
-    id.startsWith('economy-prog-') ||
-    id.startsWith('company-school-prog-') ||
-    id.startsWith(COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX) ||
-    getEconomyPrograms().some(item => item.id === program.id)
-  )
+  return isCompanySchoolProgram(program)
 }
 
 function parseSchoolTabFromSearch(

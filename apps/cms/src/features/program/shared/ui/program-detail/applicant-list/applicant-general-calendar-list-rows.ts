@@ -152,7 +152,8 @@ export function buildGeneralInstructorCalendarListRows(
     const distanceKm = getInstructorScheduleDistanceKm(
       schoolName,
       instructorName,
-      instructor.address
+      instructor.address,
+      instructor.distanceKm
     )
     const { dispatchCount, longDistanceCount } = getInstructorScheduleDispatchStats(instructorName)
 
@@ -165,8 +166,8 @@ export function buildGeneralInstructorCalendarListRows(
         instructor.approvalStatus as ApprovalStatusKey | undefined
       ),
       sessionLabel,
-      distanceKm,
-      isNearDistance: isInstructorNearDistanceKm(distanceKm),
+      distanceKm: distanceKm ?? 0,
+      isNearDistance: distanceKm != null ? isInstructorNearDistanceKm(distanceKm) : false,
       dispatchCount,
       longDistanceCount,
     }

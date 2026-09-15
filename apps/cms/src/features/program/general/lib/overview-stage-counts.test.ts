@@ -32,7 +32,7 @@ describe('countGeneralProgramOverviewStages', () => {
     ]
     expect(countGeneralProgramOverviewStages(programs)).toEqual({
       total: 5,
-      scheduled: 2,
+      scheduled: 3,
       inProgress: 1,
       completed: 1,
     })

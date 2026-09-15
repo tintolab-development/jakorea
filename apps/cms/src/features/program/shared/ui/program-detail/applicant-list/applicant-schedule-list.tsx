@@ -2,7 +2,6 @@ import { Empty, Checkbox } from 'antd'
 import type { Dayjs } from 'dayjs'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import { MOCK_APPLICANT_INSTITUTIONS } from '@/data/mock/applicant-institutions'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
@@ -10,7 +9,7 @@ import { getInstructorCalendarSessionSummary } from './applicant-instructor-cale
 import {
   getInstructorScheduleDispatchStats,
   getInstructorScheduleDistanceKm,
-  LONG_DISTANCE_THRESHOLD_KM,
+  isInstructorLongDistance,
 } from './applicant-instructor-schedule-meta'
 import './applicant-calendar-view.css'
 
@@ -39,10 +38,6 @@ interface ApplicantScheduleListProps {
   showApprovalStatus?: boolean
   toolbar?: React.ReactNode
 }
-
-const SCHOOL_BY_NAME = new Map<string, ApplicantSchoolRow>(
-  MOCK_APPLICANT_INSTITUTIONS.map(s => [s.schoolName, s])
-)
 
 function parsePrimaryInstructorName(raw?: string): string {
   if (!raw) return '-'
@@ -74,10 +69,7 @@ function getSessionTimeSummaryFromSessions(
   return `${first.classNum} (${normalizeTimeRange(first.timeRange)}) ~ ${last.classNum} (${normalizeTimeRange(last.timeRange)})`
 }
 
-function getSessionTimeSummary(schoolName: string, fallbackPeriod?: string): string {
-  const school = SCHOOL_BY_NAME.get(schoolName)
-  const fromSchool = getSessionTimeSummaryFromSessions(school?.sessions)
-  if (fromSchool) return fromSchool
+function getSessionTimeSummary(_schoolName: string, fallbackPeriod?: string): string {
   if (fallbackPeriod) {
     const match = fallbackPeriod.match(/(\d{1,2}:\d{2})\s*[-~]\s*(\d{1,2}:\d{2})/)
     if (match) return `${match[1]} ~ ${match[2]}`
@@ -145,11 +137,15 @@ export function ApplicantScheduleList({
                     const distanceKm = getInstructorScheduleDistanceKm(
                       schoolName,
                       instructorName,
-                      inst.address
+                      inst.address,
+                      (inst as ApplicantInstructorRow).distanceKm
                     )
                     const { dispatchCount, longDistanceCount } =
                       getInstructorScheduleDispatchStats(instructorName)
-                    const isLongDistance = distanceKm > LONG_DISTANCE_THRESHOLD_KM
+                    const isLongDistance = isInstructorLongDistance({
+                      distanceKm,
+                      longDistanceYn: (inst as ApplicantInstructorRow).longDistanceYn,
+                    })
                     return (
                       <div
                         key={`${event.id}-${inst.id}`}
@@ -194,7 +190,7 @@ export function ApplicantScheduleList({
                             <span
                               className={`applicant-schedule-item-tag ${isLongDistance ? '' : 'applicant-schedule-item-tag--mint'}`.trim()}
                             >
-                              거리 : {distanceKm}km
+                              거리 : {distanceKm != null ? `${distanceKm}km` : '-'}
                             </span>
                             <span className="applicant-schedule-item-tag">출강 : {dispatchCount}회</span>
                             <span className="applicant-schedule-item-tag">
@@ -259,11 +255,16 @@ export function ApplicantScheduleList({
             const distanceKm = getInstructorScheduleDistanceKm(
               schoolName,
               instructorName,
-              originalItem?.address as string | undefined
+              originalItem?.address as string | undefined,
+              (originalItem as ApplicantInstructorRow | undefined)?.distanceKm
             )
             const { dispatchCount, longDistanceCount } =
               getInstructorScheduleDispatchStats(instructorName)
-            const isLongDistance = distanceKm > LONG_DISTANCE_THRESHOLD_KM
+            const isLongDistance = isInstructorLongDistance({
+              distanceKm,
+              longDistanceYn: (originalItem as ApplicantInstructorRow | undefined)
+                ?.longDistanceYn,
+            })
 
             return (
               <div
@@ -314,7 +315,7 @@ export function ApplicantScheduleList({
                       <span
                         className={`applicant-schedule-item-tag ${isLongDistance ? '' : 'applicant-schedule-item-tag--mint'}`.trim()}
                       >
-                        거리 : {distanceKm}km
+                        거리 : {distanceKm != null ? `${distanceKm}km` : '-'}
                       </span>
                       <span className="applicant-schedule-item-tag">출강 : {dispatchCount}회</span>
                       <span className="applicant-schedule-item-tag">

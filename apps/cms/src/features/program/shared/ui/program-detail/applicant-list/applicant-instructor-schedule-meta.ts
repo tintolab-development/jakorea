@@ -1,8 +1,8 @@
-import { MOCK_APPLICANT_INSTRUCTORS } from '@/data/mock/applicant-instructors'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import { MOCK_APPLICANT_INSTITUTIONS } from '@/data/mock/applicant-institutions'
+import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import { LONG_DISTANCE_THRESHOLD_KM as SETTLEMENT_LONG_DISTANCE_KM } from '@/shared/constants/settlement-rules'
 
-export const LONG_DISTANCE_THRESHOLD_KM = 60
+/** Notion/시드·정산 컬럼 기준 100km. API `longDistanceYn`이 있으면 그 값을 우선한다. */
+export const LONG_DISTANCE_THRESHOLD_KM = SETTLEMENT_LONG_DISTANCE_KM
 
 /** 캘린더 우측 목록 — 기관·자택 편도 거리 이하일 때 거리 태그 민트 테두리 */
 export const INSTRUCTOR_NEAR_DISTANCE_THRESHOLD_KM = 30
@@ -11,42 +11,37 @@ export function isInstructorNearDistanceKm(distanceKm: number): boolean {
   return distanceKm <= INSTRUCTOR_NEAR_DISTANCE_THRESHOLD_KM
 }
 
-const SCHOOL_BY_NAME = new Map<string, ApplicantSchoolRow>(
-  MOCK_APPLICANT_INSTITUTIONS.map(s => [s.schoolName, s])
-)
-
-function stableHash(input: string): number {
-  let h = 0
-  for (let i = 0; i < input.length; i++) {
-    h = (Math.imul(31, h) + input.charCodeAt(i)) >>> 0
-  }
-  return h
-}
-
+/**
+ * Admin API `distanceKm`만 사용. 없으면 null (해시 mock 거리 제거).
+ */
 export function getInstructorScheduleDistanceKm(
-  schoolName: string,
-  instructorName: string,
-  instructorAddress?: string
-): number {
-  const schoolRegion = SCHOOL_BY_NAME.get(schoolName)?.region ?? schoolName
-  const seed = `${schoolRegion}|${instructorAddress ?? ''}|${instructorName}`
-  return 20 + (stableHash(seed) % 121)
+  _schoolName: string,
+  _instructorName: string,
+  _instructorAddress?: string,
+  apiDistanceKm?: number
+): number | null {
+  if (apiDistanceKm != null && Number.isFinite(apiDistanceKm)) return apiDistanceKm
+  return null
 }
 
-export function getInstructorScheduleDispatchStats(instructorName: string): {
+export function isInstructorLongDistance(params: {
+  distanceKm: number | null
+  longDistanceYn?: boolean | null
+}): boolean {
+  if (params.longDistanceYn != null) return params.longDistanceYn
+  if (params.distanceKm == null) return false
+  return params.distanceKm >= LONG_DISTANCE_THRESHOLD_KM
+}
+
+/** mock 기반 출강 통계 제거 — API 집계 전까지 0 */
+export function getInstructorScheduleDispatchStats(_instructorName: string): {
   dispatchCount: number
   longDistanceCount: number
 } {
-  const approvedRows = MOCK_APPLICANT_INSTRUCTORS.filter(
-    row => row.instructorName === instructorName && row.approvalStatus === 'approved'
-  )
-  const longDistanceCount = approvedRows.filter(
-    row =>
-      getInstructorScheduleDistanceKm(row.schoolName, row.instructorName, row.address) >
-      LONG_DISTANCE_THRESHOLD_KM
-  ).length
   return {
-    dispatchCount: approvedRows.length,
-    longDistanceCount,
+    dispatchCount: 0,
+    longDistanceCount: 0,
   }
 }
+
+export type { ApplicantInstructorRow }

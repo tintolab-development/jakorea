@@ -273,7 +273,7 @@ type GeneralProgramSeed = Omit<Program, 'id' | 'rounds' | 'createdAt' | 'updated
 
 /** 일반 프로그램(개인) — 상세 수정 모드 QA용 진행 예정 상태 */
 const INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE =
-  'planned' as ProgramLifecycleStatus
+  'scheduled' as ProgramLifecycleStatus
 
 function isIndividualGeneralProgramSeed(seed: {
   generalProgramAudience?: GeneralProgramAudienceKind
@@ -374,7 +374,7 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     instructorApplicationStartDate: calendarDemoIso(2026, 4, 1),
     instructorApplicationEndDate: calendarDemoIso(2026, 4, 20, true),
     status: 'active',
-    lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
+    lifecycleStatus: 'in_progress' as ProgramLifecycleStatus,
     businessArea: '경제금융',
     targetLevel: 'high' as TargetLevel,
     approvedStudentCount: 18,
@@ -442,7 +442,7 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     volunteerApplicationStartDate: calendarDemoIso(2026, 4, 1),
     volunteerApplicationEndDate: calendarDemoIso(2026, 4, 25, true),
     status: 'active',
-    lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
+    lifecycleStatus: 'in_progress' as ProgramLifecycleStatus,
     businessArea: '경제금융',
     targetLevel: 'high' as TargetLevel,
     approvedStudentCount: 16,
@@ -477,7 +477,7 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     applicationStartDate: calendarDemoIso(2025, 11, 1),
     applicationEndDate: calendarDemoIso(2025, 12, 15, true),
     status: 'completed',
-    lifecycleStatus: 'education_completed' as ProgramLifecycleStatus,
+    lifecycleStatus: 'completed' as ProgramLifecycleStatus,
     businessArea: '진로취업',
     targetLevel: 'college' as TargetLevel,
     approvedStudentCount: 28,
@@ -687,7 +687,7 @@ function buildTypeVariantSeed(
       endDate: '2026-12-30T23:59:59+09:00',
       ...mockApplicationPeriod('closed', 0),
       status: 'active',
-      lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
+      lifecycleStatus: 'in_progress' as ProgramLifecycleStatus,
       businessArea: '진로취업',
       targetLevel: 'high' as TargetLevel,
       approvedStudentCount: screenshot.approvedStudentCount,
@@ -739,7 +739,7 @@ function buildTypeVariantSeed(
       endDate: '2026-12-30T23:59:59+09:00',
       ...mockApplicationPeriod('closed', 0),
       status: 'active',
-      lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
+      lifecycleStatus: 'in_progress' as ProgramLifecycleStatus,
       businessArea: '진로취업',
       targetLevel: 'high' as TargetLevel,
       approvedStudentCount: screenshot.approvedStudentCount,
@@ -791,7 +791,7 @@ function buildTypeVariantSeed(
       endDate: '2026-12-30T23:59:59+09:00',
       ...mockApplicationPeriod('closed', 0),
       status: 'active',
-      lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
+      lifecycleStatus: 'in_progress' as ProgramLifecycleStatus,
       businessArea: '진로취업',
       targetLevel: 'high' as TargetLevel,
       approvedStudentCount: screenshot.approvedStudentCount,
@@ -834,7 +834,7 @@ function buildTypeVariantSeed(
   }
 
   const lifecycleStatus = TYPE_VARIANT_LIFECYCLE[index] ?? 'education_after_textbook'
-  const isCompleted = ['education_completed', 'document_processing_completed'].includes(
+  const isCompleted = ['completed', 'education_completed', 'document_processing_completed'].includes(
     lifecycleStatus
   )
   const isScheduled = ['recruiting_students', 'recruiting_instructors'].includes(lifecycleStatus)
@@ -976,7 +976,7 @@ function buildScheduleGapTypeSeed(spec: ScheduleGapSeedSpec): GeneralProgramSeed
     endDate: '2026-12-30T23:59:59+09:00',
     ...mockApplicationPeriod('closed', 2),
     status: 'active',
-    lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
+    lifecycleStatus: 'in_progress' as ProgramLifecycleStatus,
     businessArea: '진로취업',
     targetLevel: 'high' as TargetLevel,
     approvedStudentCount: kpi?.finalParticipants ?? 30,
@@ -1277,7 +1277,7 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
       businessArea: '진로취업',
       targetLevel: 'college' as TargetLevel,
       status: 'completed',
-      lifecycleStatus: 'education_completed' as ProgramLifecycleStatus,
+      lifecycleStatus: 'completed' as ProgramLifecycleStatus,
       approvedStudentCount: 26,
       generalVolunteers: 10,
       scheduleTimeEnabled: false,

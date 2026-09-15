@@ -1,6 +1,4 @@
-import { getGeneralPrograms } from '@/data/mock/general-programs'
 import {
-  filterGeneralProgramsByOverviewStatus,
   mapAdminProgramDetailToProgram,
   mapAdminProgramListItemToProgram,
   mapGeneralProgramToCreateRequest,
@@ -43,14 +41,9 @@ import {
   updateAdminProgramPostRemote,
 } from '@/features/program/general/api/programs-api-client'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
-import { resolveGeneralProgramForDetail } from '@/features/program/general/lib/detail-meta'
 import type { ProgramRole } from '@/types/user'
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
-import {
-  countGeneralProgramOverviewStages,
-  type GeneralProgramOverviewStageCounts,
-} from '@/features/program/general/lib/overview-stage-counts'
-import { programService } from '@/entities/program/api/program-service'
+import type { GeneralProgramOverviewStageCounts } from '@/features/program/general/lib/overview-stage-counts'
 import type { Program } from '@/types/domain'
 
 const GENERAL_PROGRAM_API_TYPE = 'GENERAL'
@@ -72,13 +65,17 @@ function assertProgramsHttpRemoteReady(): void {
 }
 
 export function getGeneralProgramsMockList(
-  statusFilter: GeneralProgramOverviewStatusFilter | null
+  _statusFilter: GeneralProgramOverviewStatusFilter | null
 ): Program[] {
-  return filterGeneralProgramsByOverviewStatus(getGeneralPrograms(), statusFilter)
+  throw new Error(
+    '일반 프로그램 mock 목록은 제거되었습니다. programs 모듈·API 로그인을 사용해 주세요.'
+  )
 }
 
-export function getGeneralProgramMockById(programId: string): Program | null {
-  return resolveGeneralProgramForDetail(programId) ?? null
+export function getGeneralProgramMockById(_programId: string): Program | null {
+  throw new Error(
+    '일반 프로그램 mock 상세는 제거되었습니다. GET /api/admin/programs/{id}를 사용해 주세요.'
+  )
 }
 
 export type GeneralProgramsRemoteListPage = {
@@ -136,10 +133,6 @@ export async function fetchGeneralProgramsRemoteList(
  * 별도 count API 불필요 — 기존 목록 API로 충분. (목록 페이징과 무관, totalElements가 SSOT)
  */
 export async function fetchGeneralProgramOverviewStages(): Promise<GeneralProgramOverviewStageCounts> {
-  if (!shouldUseGeneralProgramsRemoteApi()) {
-    return countGeneralProgramOverviewStages(getGeneralPrograms())
-  }
-
   assertGeneralProgramsRemoteReady()
 
   const base = { programType: GENERAL_PROGRAM_API_TYPE, page: 0, size: 1 } as const
@@ -165,11 +158,6 @@ export async function fetchGeneralProgramRemoteById(programId: string): Promise<
 }
 
 export async function createGeneralProgram(program: Program): Promise<Program> {
-  if (!shouldUseGeneralProgramsRemoteApi()) {
-    const { id: _id, createdAt: _c, updatedAt: _u, ...data } = program
-    return programService.create(data)
-  }
-
   assertGeneralProgramsRemoteReady()
   const dto = await createAdminProgramRemote(mapGeneralProgramToCreateRequest(program))
   return mapAdminProgramDetailToProgram(dto)
@@ -180,11 +168,6 @@ export async function updateGeneralProgram(
   program: Program,
   patch?: Partial<Program>
 ): Promise<Program> {
-  if (!shouldUseGeneralProgramsRemoteApi()) {
-    const { id: _id, createdAt: _c, ...data } = patch ?? program
-    return programService.update(programId, data)
-  }
-
   assertGeneralProgramsRemoteReady()
   const dto = await updateAdminProgramRemote(
     programId,
@@ -194,25 +177,12 @@ export async function updateGeneralProgram(
 }
 
 export async function deleteGeneralProgram(programId: string): Promise<void> {
-  if (!shouldUseGeneralProgramsRemoteApi()) {
-    await programService.delete(programId)
-    return
-  }
-
   assertGeneralProgramsRemoteReady()
   await deleteAdminProgramRemote(programId)
 }
 
 export async function deleteGeneralPrograms(programIds: string[]): Promise<void> {
   if (programIds.length === 0) return
-
-  if (!shouldUseGeneralProgramsRemoteApi()) {
-    for (const programId of programIds) {
-      await deleteGeneralProgram(programId)
-    }
-    return
-  }
-
   assertGeneralProgramsRemoteReady()
   await bulkDeleteAdminProgramsRemote(programIds)
 }

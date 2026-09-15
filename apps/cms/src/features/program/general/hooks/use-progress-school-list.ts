@@ -5,12 +5,10 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  getParticipatingSchoolsForProgram,
-  MOCK_PARTICIPATING_SCHOOLS,
-  type ParticipatingSchoolRow,
-  type ParticipatingSchoolApprovalStatusKey,
-  type TextbookStatusKey,
+import type {
+  ParticipatingSchoolRow,
+  ParticipatingSchoolApprovalStatusKey,
+  TextbookStatusKey,
 } from '@/data/mock/participating-schools'
 import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
 import { formatAssignedInstructorSummary } from '../lib/institution-assigned-instructor-count'
@@ -46,7 +44,6 @@ export function useProgressSchoolList({
     isTrainedTeachersSurface &&
     shouldUseTrainedTeacherProgramsRemoteApi() &&
     Boolean(programId)
-
   const remoteQuery = useQuery({
     queryKey: generalProgramProgressQueryKeys.institutions(programId ?? ''),
     queryFn: () => fetchGeneralParticipatingInstitutions(programId!),
@@ -60,13 +57,8 @@ export function useProgressSchoolList({
     ttRemoteEnabled
   )
 
-  const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>(() => {
-    // remote ON이면 mock으로 채우지 않음 (잘못된 목록 플래시 방지)
-    if (ttRemoteEnabled || remoteEnabled) return []
-    return programId
-      ? getParticipatingSchoolsForProgram(programId)
-      : [...MOCK_PARTICIPATING_SCHOOLS]
-  })
+  /** API only — gate OFF면 빈 목록 (mock 폴백 없음) */
+  const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>([])
 
   useEffect(() => {
     if (ttRemoteEnabled) {
@@ -77,11 +69,8 @@ export function useProgressSchoolList({
       if (remoteQuery.data) setSchoolList(remoteQuery.data)
       return
     }
-    setSchoolList(
-      programId ? getParticipatingSchoolsForProgram(programId) : [...MOCK_PARTICIPATING_SCHOOLS]
-    )
+    setSchoolList([])
   }, [
-    programId,
     remoteEnabled,
     remoteQuery.data,
     ttRemoteEnabled,
