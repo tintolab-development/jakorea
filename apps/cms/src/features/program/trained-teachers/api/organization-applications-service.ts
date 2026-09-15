@@ -1,14 +1,12 @@
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import {
-  approveOrganizationApplicationRemote,
-  rejectOrganizationApplicationRemote,
-} from '@/features/program/general/api/applications-api-client'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { mapTrainedTeacherOrganizationApplicationToRow } from './organization-applications-adapters'
 import {
+  approveTrainedTeacherOrganizationApplicationRemote,
   fetchTrainedTeacherOrganizationApplicationRemote,
   fetchTrainedTeacherOrganizationApplicationsRemote,
+  rejectTrainedTeacherOrganizationApplicationRemote,
 } from './organization-applications-client'
 
 function assertRemoteReady(): void {
@@ -37,21 +35,20 @@ export async function getTrainedTeacherOrganizationApplication(
   return mapTrainedTeacherOrganizationApplicationToRow(dto, 0, programId)
 }
 
-/**
- * OpenAPI에 TT 전용 approve/reject가 없어 공통 organization-applications 결정을 재사용.
- * BE가 동일 applicationId를 허용해야 한다.
- */
+/** TT 전용 approve — Primary 스코프 가드 포함 */
 export async function approveTrainedTeacherOrganizationApplication(
+  programId: string,
   applicationId: string
 ): Promise<void> {
   assertRemoteReady()
-  await approveOrganizationApplicationRemote(applicationId)
+  await approveTrainedTeacherOrganizationApplicationRemote(programId, applicationId)
 }
 
 export async function rejectTrainedTeacherOrganizationApplication(
+  programId: string,
   applicationId: string,
   payload: ApplicationRejectRequest
 ): Promise<void> {
   assertRemoteReady()
-  await rejectOrganizationApplicationRemote(applicationId, payload)
+  await rejectTrainedTeacherOrganizationApplicationRemote(programId, applicationId, payload)
 }
