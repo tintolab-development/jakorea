@@ -52,6 +52,8 @@ export function resolveGeneralProgramForDetail(programId: string): Program | und
 
 export function getGeneralParticipantTypes(program: Program): GeneralProgramParticipantType[] {
   if (program.generalParticipantTypes?.length) return [...program.generalParticipantTypes]
+  if (program.generalProgramAudience === 'individual') return ['individual']
+  if (program.generalProgramAudience === 'organization') return ['school_institution']
   return [CATEGORY_TO_PARTICIPANT[program.category]]
 }
 

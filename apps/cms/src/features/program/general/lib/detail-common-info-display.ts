@@ -50,6 +50,8 @@ export const GENERAL_EDUCATION_SCHEDULE_ONE_DAY_LINES_MOCK = [
 
 function resolveParticipantTypes(program: Program): GeneralProgramParticipantType[] {
   if (program.generalParticipantTypes?.length) return [...program.generalParticipantTypes]
+  if (program.generalProgramAudience === 'individual') return ['individual']
+  if (program.generalProgramAudience === 'organization') return ['school_institution']
   return [CATEGORY_TO_PARTICIPANT[program.category]]
 }
 
@@ -120,7 +122,7 @@ export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_COMMON_INFO_MOCK: NonNullable<
   detailedProgramName: '해당없음',
   sponsorDisplayName: '한국씨티은행',
   sponsorManagementId: 'sponsor-list-131',
-  sponsorManagerLine: 'OO팀 이순신 책임 | 010-1234-5678',
+  sponsorManagerLine: '이순신 책임 | 010-1234-5678',
   venueDetail: '-',
   educationFormLabel: '온라인',
   ipsTypeSummary: '일정 공통 | Succeed | Competition (대회+시상)',
@@ -167,7 +169,7 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK: NonNullable
   detailedProgramName: '특별한 JOB담',
   sponsorDisplayName: '한국씨티은행',
   sponsorManagementId: 'sponsor-list-131',
-  sponsorManagerLine: 'OO팀 이순신 책임 | 010-1234-5678',
+  sponsorManagerLine: '이순신 책임 | 010-1234-5678',
   venueDetail: '-',
   educationFormLabel: '온라인',
   ipsTypeSummary: '일정 공통 | Prepare | 해당없음',
