@@ -17,6 +17,8 @@ import {
   resolveScheduleTypeDetailedProgramNameFromDetails,
 } from '@/features/program/general/lib/detail-common-info-display'
 import {
+  isProgramPaymentNoneOnly,
+  PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
   programPaymentItemLabelsFromIds,
   resolveProgramPaymentItemIdsFromLabels,
   resolveProgramWageDeductionLabel,
@@ -564,8 +566,21 @@ function resolvePaymentItemIds(paymentItems: string | undefined): string[] {
   return resolveProgramPaymentItemIdsFromLabels(paymentItems)
 }
 
-function paymentItemLabelsFromIds(ids: string[] | undefined): string {
-  return programPaymentItemLabelsFromIds(ids)
+/** 편집 저장용 — UI 옵션(원격 포함)으로 라벨 해석. 비어 있으면 해당없음 */
+function paymentItemLabelsFromIds(
+  ids: string[] | undefined,
+  options?: readonly { value: string; label: string }[]
+): string {
+  if (!ids?.length || isProgramPaymentNoneOnly(ids)) {
+    return PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
+  }
+  if (options && options.length > 0) {
+    const labels = ids
+      .map(id => options.find(o => o.value === id)?.label?.trim())
+      .filter((label): label is string => Boolean(label))
+    if (labels.length > 0) return labels.join(', ')
+  }
+  return programPaymentItemLabelsFromIds(ids) || PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
 }
 
 function educationFormLabelFromValue(value: string | undefined): string {
@@ -913,7 +928,8 @@ export function generalCommonInfoEditValuesToProgramPatch(
   values: GeneralProgramCommonInfoEditFormValues,
   existing: Program,
   context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT,
-  detailedProgramCatalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+  detailedProgramCatalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows,
+  paymentItemOptions?: readonly { value: string; label: string }[]
 ): Partial<Program> {
   const sponsorRows = values.sponsorManagementIds
     .map(id => context.sponsors.find(row => row.id === id))
@@ -1197,7 +1213,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
         : values.educationScheduleMode,
       educationScheduleLines: [...values.educationScheduleLines],
       wageGradeRows,
-      paymentItems: paymentItemLabelsFromIds(values.wagePaymentItemIds) || existingCommon.paymentItems,
+      paymentItems: paymentItemLabelsFromIds(values.wagePaymentItemIds, paymentItemOptions),
       deductionItems: resolveProgramWageDeductionLabel(values.wagePaymentItemIds),
       kpi: {
         finalParticipants: values.kpiFinalParticipants ?? existingCommon.kpi?.finalParticipants ?? 0,

@@ -13,6 +13,7 @@ import {
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import { useDetailedProgramOptionsQuery } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
+import { useProgramWagePaymentItemOptions } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 
 export type GeneralProgramCommonInfoSaveResult =
   | { ok: true }
@@ -36,6 +37,7 @@ export function useGeneralProgramCommonInfoSave({
   const sponsorContext = useGeneralProgramSponsorEditContext(watchedSponsorIds)
   const detailedProgramsQuery = useDetailedProgramOptionsQuery(Boolean(program))
   const detailedProgramCatalog = detailedProgramsQuery.data
+  const paymentItemOptions = useProgramWagePaymentItemOptions()
 
   const triggerSave = useCallback(async (): Promise<GeneralProgramCommonInfoSaveResult> => {
     if (savingRef.current || !onSaveEdit || !program) {
@@ -50,7 +52,8 @@ export function useGeneralProgramCommonInfoSave({
         values,
         program,
         sponsorContext,
-        detailedProgramCatalog
+        detailedProgramCatalog,
+        paymentItemOptions
       )
       const resolvedCommon = resolveGeneralProgramCommonInfo(program)
       const draftToSave: Program = {
@@ -70,7 +73,7 @@ export function useGeneralProgramCommonInfoSave({
     } finally {
       savingRef.current = false
     }
-  }, [form, program, onSaveEdit, sponsorContext, detailedProgramCatalog])
+  }, [form, program, onSaveEdit, sponsorContext, detailedProgramCatalog, paymentItemOptions])
 
   const resetToProgram = useCallback(() => {
     if (program) {

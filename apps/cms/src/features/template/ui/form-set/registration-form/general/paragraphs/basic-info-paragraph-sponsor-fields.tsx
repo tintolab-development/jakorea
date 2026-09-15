@@ -6,12 +6,15 @@ import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-op
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import {
   encodeSponsorManagerContactRef,
+  decodeSponsorManagerContactRef,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY,
+  patchProgramRegistrationOverlay,
   useProgramRegistrationOverlayKv,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import {
@@ -37,6 +40,16 @@ function normalizeSponsorIds(value: unknown, fallbackPrimary = ''): string[] {
   return primary ? [primary] : []
 }
 
+function formatSponsorManagerDisplayLine(contact: {
+  name: string
+  phone?: string | null
+  position?: string | null
+}): string {
+  return [contact.position ? `${contact.position} ${contact.name}` : contact.name, contact.phone]
+    .filter(Boolean)
+    .join(' | ')
+}
+
 function ProgramRegistrationBasicInfoSponsorFieldsInner({
   sponsorId: sponsorIdProp,
   onSponsorIdChange,
@@ -54,6 +67,9 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   const sponsorContactKey = trainedTeachersDefaults
     ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.managerContactId`
     : GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY
+  const managerLineKey = trainedTeachersDefaults
+    ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.sponsorManagerLine`
+    : GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY
   const allValueDefault = trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_ALL_VALUE : ''
 
   const [localSponsorId, setLocalSponsorId] = useProgramRegistrationOverlayKv(
@@ -177,6 +193,44 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     selectedSponsors,
     singleContactsQuery.data,
     sponsorId,
+  ])
+
+  // contact ref → 표시용 `이름 | 연락처` (create 시 id::id 노출 방지)
+  useEffect(() => {
+    if (
+      !managerContactId ||
+      (trainedTeachersDefaults && managerContactId === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE)
+    ) {
+      patchProgramRegistrationOverlay({ [managerLineKey]: '' })
+      return
+    }
+
+    if (allowMultipleSponsors) {
+      const decoded = decodeSponsorManagerContactRef(managerContactId)
+      if (!decoded) {
+        patchProgramRegistrationOverlay({ [managerLineKey]: '' })
+        return
+      }
+      const contact = multiSponsorContext.contactsBySponsorId[decoded.sponsorManagementId]?.find(
+        c => c.id === decoded.contactId
+      )
+      patchProgramRegistrationOverlay({
+        [managerLineKey]: contact ? formatSponsorManagerDisplayLine(contact) : '',
+      })
+      return
+    }
+
+    const contact = (singleContactsQuery.data ?? []).find(c => c.id === managerContactId)
+    patchProgramRegistrationOverlay({
+      [managerLineKey]: contact ? formatSponsorManagerDisplayLine(contact) : '',
+    })
+  }, [
+    allowMultipleSponsors,
+    managerContactId,
+    managerLineKey,
+    multiSponsorContext.contactsBySponsorId,
+    singleContactsQuery.data,
+    trainedTeachersDefaults,
   ])
 
   return (

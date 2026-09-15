@@ -1045,6 +1045,15 @@ export function useProgramRegistrationEditor(
               ? []
               : readGeneralRegistrationOverlayScheduleLines(),
           scheduleCurriculumDetailCount: scheduleCurriculumDetailCount,
+          editorExtras: {
+            educationFormScheduleDetail,
+            participationScheduleDetail,
+            ipsScheduleDetail,
+            curriculumSessionCount,
+            curriculumChartSessionCount,
+            scheduleCurriculumPreEducation,
+            participantOrganization: participant.organization,
+          },
         })
         resetProgramRegistrationOverlay()
         onRegistrationSaved(createdProgram)
@@ -1064,17 +1073,23 @@ export function useProgramRegistrationEditor(
     completionPromiseRef.current = completion
     return completion
   }, [
+    curriculumChartSessionCount,
+    curriculumSessionCount,
     draft,
+    educationFormScheduleDetail,
+    educationScheduleMode,
     handleSave,
+    ipsScheduleDetail,
     onRegistrationSaved,
     participant,
+    participationScheduleDetail,
     persistTemplateDraftIfNeeded,
     programRegistrationFormVariant,
     programType,
     resolveProgramTitleKo,
     scheduleCurriculumDetailCount,
+    scheduleCurriculumPreEducation,
     sessionRoundType,
-    educationScheduleMode,
     showAlert,
     sponsorId,
   ])
