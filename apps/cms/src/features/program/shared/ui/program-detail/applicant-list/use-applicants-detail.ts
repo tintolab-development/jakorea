@@ -285,13 +285,23 @@ export function useApplicantsDetail({
     async (ids: string[], decision: 'approve' | 'reject', reason?: string) => {
       if (!applicationsRemote.remoteEnabled) return false
       try {
-        for (const id of ids) {
-          if (decision === 'approve') {
-            await applicationsRemote.approveIndividual(id)
-          } else {
-            await applicationsRemote.rejectIndividual(id, {
-              reason: reason?.trim() || '반려',
+        // 면접 ON 1차 서류 탭: document-result (PASS_DOCUMENT / FAIL)
+        if (individualScreeningStage === 'doc1') {
+          for (const id of ids) {
+            await applicationsRemote.submitIndividualDocumentResult(id, {
+              result: decision === 'approve' ? 'PASS' : 'FAIL',
+              reason: decision === 'reject' ? reason?.trim() || '반려' : reason,
             })
+          }
+        } else {
+          for (const id of ids) {
+            if (decision === 'approve') {
+              await applicationsRemote.approveIndividual(id)
+            } else {
+              await applicationsRemote.rejectIndividual(id, {
+                reason: reason?.trim() || '반려',
+              })
+            }
           }
         }
         await applicationsRemote.invalidateApplications()
@@ -301,7 +311,7 @@ export function useApplicantsDetail({
         return true
       }
     },
-    [applicationsRemote, notifyRemoteDecisionFailure]
+    [applicationsRemote, individualScreeningStage, notifyRemoteDecisionFailure]
   )
 
   const rawTableData = useMemo((): ApplicantListRow[] => {

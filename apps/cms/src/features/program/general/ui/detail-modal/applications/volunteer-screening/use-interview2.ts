@@ -75,8 +75,8 @@ export function useGeneralVolunteerInterview2({
   }, [programId, sortInterview2Rows, subjectKind])
 
   // remote ON이면 mock으로 채우지 않음 (잘못된 목록 플래시 방지)
+  // preferApplicationListMock(병합) + subjectKind 참여자 remote(stash) 합성
   const remoteSeed =
-    subjectKind === 'volunteer' &&
     !preferApplicationListMock &&
     shouldUseGeneralApplicationsRemoteApi() &&
     Boolean(programId)
@@ -86,7 +86,8 @@ export function useGeneralVolunteerInterview2({
   const volunteerRemote = useGeneralVolunteerApplicationsRemote({
     programId,
     stage: 'interview2',
-    enabled: subjectKind === 'volunteer' && !preferApplicationListMock,
+    subjectKind,
+    enabled: !preferApplicationListMock,
     setList,
   })
   const [pendingFilters, setPendingFilters] = useState<GeneralVolunteerInterview2Filters>(() => ({
@@ -319,12 +320,23 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const confirmWithdrawActivity = useCallback(
-    (_payload: ActivityWithdrawScheduleModalPayload) => {
+    async (_payload: ActivityWithdrawScheduleModalPayload) => {
       if (!withdrawTargetId) return
       const row = list.find(item => item.id === withdrawTargetId)
       if (!row) {
         setWithdrawTargetId(null)
         return
+      }
+      if (subjectKind === 'participant' && volunteerRemote.remoteEnabled) {
+        const handled = await volunteerRemote.applyRemoteGiveUp?.(withdrawTargetId)
+        if (handled) {
+          setWithdrawTargetId(null)
+          showAlert({
+            title: '활동 포기',
+            content: screeningWithdrawCompleteContent(subjectKind, row.name),
+          })
+          return
+        }
       }
       setList(prev =>
         prev.map(item =>
@@ -337,7 +349,7 @@ export function useGeneralVolunteerInterview2({
       })
       setWithdrawTargetId(null)
     },
-    [list, showAlert, subjectKind, withdrawTargetId]
+    [list, showAlert, subjectKind, volunteerRemote, withdrawTargetId]
   )
 
   const withdrawTarget = useMemo(

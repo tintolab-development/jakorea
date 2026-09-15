@@ -16,7 +16,7 @@ import {
   type GeneralVolunteerDocPassedFilters,
 } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
-import { assignGeneralVolunteerInterview } from '@/features/program/general/api/admin-applications-service'
+import { assignGeneralIndividualInterview, assignGeneralVolunteerInterview } from '@/features/program/general/api/admin-applications-service'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { buildInterviewSlotTimesFromAssignPayload } from '@/features/program/general/lib/interview-slot-from-assign-payload'
 import {
@@ -70,8 +70,8 @@ export function useGeneralVolunteerDocPassed({
   }, [programId, subjectKind])
 
   // remote ON이면 mock으로 채우지 않음 (잘못된 목록 플래시 방지)
+  // preferApplicationListMock(병합) + subjectKind 참여자 remote(stash) 합성
   const remoteSeed =
-    subjectKind === 'volunteer' &&
     !preferApplicationListMock &&
     shouldUseGeneralApplicationsRemoteApi() &&
     Boolean(programId)
@@ -81,7 +81,8 @@ export function useGeneralVolunteerDocPassed({
   const volunteerRemote = useGeneralVolunteerApplicationsRemote({
     programId,
     stage: 'docPassed',
-    enabled: subjectKind === 'volunteer' && !preferApplicationListMock,
+    subjectKind,
+    enabled: !preferApplicationListMock,
     setList,
   })
   const [pendingFilters, setPendingFilters] = useState<GeneralVolunteerDocPassedFilters>(() => ({
@@ -146,11 +147,7 @@ export function useGeneralVolunteerDocPassed({
       const { target } = flow
       const wasAssigned = target.interviewAssignmentStatus === 'assigned'
 
-      if (
-        subjectKind === 'volunteer' &&
-        !preferApplicationListMock &&
-        shouldUseGeneralApplicationsRemoteApi()
-      ) {
+      if (!preferApplicationListMock && shouldUseGeneralApplicationsRemoteApi()) {
         const slotTimes = buildInterviewSlotTimesFromAssignPayload(payload)
         if (!slotTimes) {
           showAlert({
@@ -160,14 +157,22 @@ export function useGeneralVolunteerDocPassed({
           return
         }
         try {
-          await assignGeneralVolunteerInterview({
-            programId,
-            applicationId: target.id,
-            ...slotTimes,
-          })
+          if (subjectKind === 'participant') {
+            await assignGeneralIndividualInterview({
+              programId,
+              applicationId: target.id,
+              ...slotTimes,
+            })
+          } else {
+            await assignGeneralVolunteerInterview({
+              programId,
+              applicationId: target.id,
+              ...slotTimes,
+            })
+          }
           await volunteerRemote.invalidateVolunteerApplications?.()
         } catch (error) {
-          console.debug('volunteer interview assign remote failed', error)
+          console.debug('interview assign remote failed', error)
           showAlert({
             title: '면접 배정 실패',
             content: '면접 일정 배정 중 오류가 발생했습니다. 다시 시도해 주세요.',
@@ -216,12 +221,23 @@ export function useGeneralVolunteerDocPassed({
     setWithdrawTargetId(null)
   }, [])
 
-  const confirmWithdrawActivity = useCallback((_payload: ActivityWithdrawScheduleModalPayload) => {
+  const confirmWithdrawActivity = useCallback(async (_payload: ActivityWithdrawScheduleModalPayload) => {
     if (!withdrawTargetId) return
     const row = list.find(item => item.id === withdrawTargetId)
     if (!row) {
       setWithdrawTargetId(null)
       return
+    }
+    if (subjectKind === 'participant' && volunteerRemote.remoteEnabled) {
+      const handled = await volunteerRemote.applyRemoteGiveUp?.(withdrawTargetId)
+      if (handled) {
+        setWithdrawTargetId(null)
+        showAlert({
+          title: '활동 포기',
+          content: screeningWithdrawCompleteContent(subjectKind, row.name),
+        })
+        return
+      }
     }
     updateRow(withdrawTargetId, { interviewAssignmentStatus: 'withdrawn' })
     showAlert({
@@ -229,7 +245,7 @@ export function useGeneralVolunteerDocPassed({
       content: screeningWithdrawCompleteContent(subjectKind, row.name),
     })
     setWithdrawTargetId(null)
-  }, [list, showAlert, subjectKind, updateRow, withdrawTargetId])
+  }, [list, showAlert, subjectKind, updateRow, volunteerRemote, withdrawTargetId])
 
   const withdrawTarget = useMemo(
     () => (withdrawTargetId ? list.find(row => row.id === withdrawTargetId) : undefined),

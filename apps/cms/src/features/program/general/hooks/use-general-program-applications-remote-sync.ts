@@ -10,6 +10,7 @@ import {
   rejectGeneralIndividualApplication,
   rejectGeneralInstructorApplication,
   rejectGeneralOrganizationApplication,
+  submitGeneralIndividualDocumentResult,
 } from '@/features/program/general/api/admin-applications-service'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useApplicationsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
@@ -117,6 +118,7 @@ export function useGeneralProgramApplicationsRemoteSync({
     rejectInstructor: rejectGeneralInstructorApplication,
     approveIndividual: approveGeneralIndividualApplication,
     rejectIndividual: rejectGeneralIndividualApplication,
+    submitIndividualDocumentResult: submitGeneralIndividualDocumentResult,
     invalidateApplications,
   }
 }
