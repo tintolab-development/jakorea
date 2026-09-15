@@ -22,10 +22,10 @@ describe('program-typed-lifecycle', () => {
   })
 
   it('uses shared labels for list and detail widget', () => {
-    expect(getTypedProgramLifecycleLabel('scheduled')).toBe('진행 예정')
-    expect(getTypedProgramLifecycleLabel('recruiting_students')).toBe('모집 중')
-    expect(getTypedProgramLifecycleLabel('in_progress')).toBe('진행 중')
-    expect(getTypedProgramLifecycleLabel('completed')).toBe('완료')
-    expect(getTypedProgramLifecycleLabel('education_in_progress')).toBe('진행 중')
+    expect(getTypedProgramLifecycleLabel('scheduled')).toBe('프로그램 진행 예정')
+    expect(getTypedProgramLifecycleLabel('recruiting_students')).toBe('참여 기관 모집 중')
+    expect(getTypedProgramLifecycleLabel('in_progress')).toBe('프로그램 진행 중')
+    expect(getTypedProgramLifecycleLabel('completed')).toBe('프로그램 진행 완료')
+    expect(getTypedProgramLifecycleLabel('education_in_progress')).toBe('프로그램 진행 중')
   })
 })

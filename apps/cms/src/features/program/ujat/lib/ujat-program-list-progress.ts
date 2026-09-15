@@ -17,7 +17,7 @@ export const UJAT_PROGRAM_LIST_PROGRESS_ORDER: readonly UjatProgramProgressStatu
 
 export const UJAT_PROGRAM_LIST_PROGRESS_LABELS: Record<UjatProgramProgressStatus, string> = {
   EDUCATION_SCHEDULED: '프로그램 진행 예정',
-  PARTICIPANT_RECRUITING: '참여자 모집 중',
+  PARTICIPANT_RECRUITING: '참여 기관 모집 중',
   VOLUNTEER_RECRUITING: '봉사자 모집 중',
   EDUCATION_IN_PROGRESS: '프로그램 진행 중',
   PROGRAM_ENDED: '프로그램 진행 완료',

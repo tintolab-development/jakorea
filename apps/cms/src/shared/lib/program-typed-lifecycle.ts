@@ -15,12 +15,12 @@ export const TYPED_PROGRAM_LIFECYCLE_STATUSES = [
 
 export type TypedProgramLifecycleStatus = (typeof TYPED_PROGRAM_LIFECYCLE_STATUSES)[number]
 
-/** 테이블 「진행 현황」·상세 「프로그램 진행상태」 동일 라벨 */
+/** 테이블 「진행 현황」·상세 「프로그램 진행상태」 동일 라벨 (디자인 상태 태그 SSOT) */
 export const TYPED_PROGRAM_LIFECYCLE_LABELS: Record<TypedProgramLifecycleStatus, string> = {
-  scheduled: '진행 예정',
-  recruiting_students: '모집 중',
-  in_progress: '진행 중',
-  completed: '완료',
+  scheduled: '프로그램 진행 예정',
+  recruiting_students: '참여 기관 모집 중',
+  in_progress: '프로그램 진행 중',
+  completed: '프로그램 진행 완료',
 }
 
 export const TYPED_PROGRAM_LIFECYCLE_COLORS: Record<TypedProgramLifecycleStatus, string> = {

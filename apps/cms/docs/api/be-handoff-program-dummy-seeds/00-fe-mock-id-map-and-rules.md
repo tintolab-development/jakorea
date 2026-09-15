@@ -105,7 +105,7 @@ BE에 이미 `166401` 시리즈가 있다면 **재사용**하고, FE mock CASE�
 | FE mock id | `ujatProgressStatus` | 라벨 |
 |------------|----------------------|------|
 | `ujat-progress-education-scheduled` | `EDUCATION_SCHEDULED` | 프로그램 진행 예정 |
-| `ujat-progress-participant-recruiting` | `PARTICIPANT_RECRUITING` | 참여자 모집 중 |
+| `ujat-progress-participant-recruiting` | `PARTICIPANT_RECRUITING` | 참여 기관 모집 중 |
 | `ujat-progress-volunteer-recruiting` | `VOLUNTEER_RECRUITING` | 봉사자 모집 중 |
 | `ujat-progress-education-in-progress` | `EDUCATION_IN_PROGRESS` | 프로그램 진행 중 |
 | `ujat-progress-program-ended` | `PROGRAM_ENDED` | 프로그램 진행 완료 |

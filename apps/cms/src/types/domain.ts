@@ -314,14 +314,14 @@ export interface ApplicationPath {
 // typed API: scheduled | recruiting_students | in_progress | completed
 // (+ FE 레거시 세분 값 — normalizeTypedProgramLifecycleStatus로 typed에 합침)
 export type ProgramLifecycleStatus =
-  | 'scheduled' // typed — 진행 예정
-  | 'in_progress' // typed — 진행 중
-  | 'completed' // typed — 완료
+  | 'scheduled' // typed — 프로그램 진행 예정
+  | 'in_progress' // typed — 프로그램 진행 중
+  | 'completed' // typed — 프로그램 진행 완료
   | 'planned' // 레거시 → scheduled
   | 'instructor_recruitment_planned' // 강사 모집 예정
   | 'volunteer_recruitment_planned' // 봉사자 모집 예정
   | 'participant_instructor_recruitment_planned' // 참여자&교육자 모집 예정
-  | 'recruiting_students' // typed — 모집 중
+  | 'recruiting_students' // typed — 참여 기관 모집 중
   | 'recruiting_instructors' // 강사 모집 중
   | 'recruiting_volunteers' // 봉사자 모집 중
   | 'participant_instructor_recruiting' // 참여자&교육자 모집 중
@@ -338,7 +338,7 @@ export type ProgramLifecycleStatus =
  */
 export type UjatProgramProgressStatus =
   | 'EDUCATION_SCHEDULED' // 프로그램 진행 예정
-  | 'PARTICIPANT_RECRUITING' // 참여자 모집 중
+  | 'PARTICIPANT_RECRUITING' // 참여 기관 모집 중
   | 'VOLUNTEER_RECRUITING' // 봉사자 모집 중
   | 'EDUCATION_IN_PROGRESS' // 프로그램 진행 중
   | 'PROGRAM_ENDED' // 프로그램 진행 완료
