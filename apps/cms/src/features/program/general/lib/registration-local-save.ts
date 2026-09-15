@@ -35,6 +35,9 @@ import {
   applyGeneralRegistrationOverlayToProgram,
   type GeneralRegistrationEditorExtras,
 } from '@/features/program/general/lib/registration-overlay-to-program'
+import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
+import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
 export const COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'company-school-local-'
@@ -322,14 +325,27 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
 
   if (isCompanySchool || isTrainedTeachers) return base
 
-  return applyGeneralRegistrationOverlayToProgram(base, getProgramRegistrationOverlayRecord(), {
-    programType: args.programType,
-    sessionRoundType: args.sessionRoundType ?? 'single',
-    educationScheduleMode: args.educationScheduleMode,
-    scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
-    participantOrganization: args.participant.organization,
-    ...args.editorExtras,
-  })
+  const withRegistration = applyGeneralRegistrationOverlayToProgram(
+    base,
+    getProgramRegistrationOverlayRecord(),
+    {
+      programType: args.programType,
+      sessionRoundType: args.sessionRoundType ?? 'single',
+      educationScheduleMode: args.educationScheduleMode,
+      scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
+      participantOrganization: args.participant.organization,
+      ...args.editorExtras,
+    }
+  )
+
+  return applyGeneralRecruitOverlayToProgram(
+    withRegistration,
+    {
+      ...getApplicantRecruitInstitutionOverlayRecord(),
+      ...getGeneralRecruitOverlayRecord(),
+    },
+    { preferOverlay: true }
+  )
 }
 
 export function readGeneralRegistrationLocalSaveRecords(): GeneralRegistrationLocalSaveRecord[] {
