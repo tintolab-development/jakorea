@@ -1,19 +1,12 @@
-import { useSyncExternalStore } from 'react'
-import { geminiApprovedTrainingService } from '../api/approved-training-service'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from '../api/visiting-training/capabilities'
 import { useGeminiApprovedTrainingsQuery } from '../api/visiting-training/hooks'
 import type { GeminiApprovedTrainingRow } from '../model/approved/types'
 
+/** API only — gate OFF면 빈 목록 */
 export function useGeminiApprovedTrainingRows(): GeminiApprovedTrainingRow[] {
   const remoteEnabled = shouldUseGeminiVisitingTrainingRemoteApi()
   const remoteQuery = useGeminiApprovedTrainingsQuery(remoteEnabled)
-  const localRows = useSyncExternalStore(
-    geminiApprovedTrainingService.subscribe,
-    geminiApprovedTrainingService.getSnapshot,
-    geminiApprovedTrainingService.getSnapshot
-  )
-  if (remoteEnabled) return remoteQuery.data ?? []
-  return localRows
+  return remoteEnabled ? (remoteQuery.data ?? []) : []
 }
 
 export function useGeminiApprovedTrainingRowsQueryState() {

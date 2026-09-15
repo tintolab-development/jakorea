@@ -190,9 +190,16 @@ export interface GeneralProgramCommonInfoExtension {
 /** 일반 프로그램 — 참여자 모집 정보 (프로그램 등록 참여자 모집 양식 필드) */
 export interface GeneralProgramParticipantRecruitmentInfo {
   announcementPublished?: boolean
+  /** Admin API / Primary seed 표시 라벨 (있으면 boolean보다 우선) */
+  announcementPublishedLabel?: string
   preEducationNoticeRequired?: boolean
+  preEducationNoticeRequiredLabel?: string
+  advanceGuidanceRequired?: boolean
+  advanceGuidanceRequiredLabel?: string
   /** 수료증 발급 여부 — 모집 양식 */
   certificateIssuanceProvided?: boolean
+  studentListRequired?: 'required' | 'not_required'
+  studentListRequiredLabel?: string
   maxAssignableInstructors?: number
   /** 기관 신청 시 선택 가능한 최대 학급 수 상한 */
   maxClassCount?: number
@@ -202,7 +209,25 @@ export interface GeneralProgramParticipantRecruitmentInfo {
   operationPeriodLabel?: string
   recruitmentPeriodLabel?: string
   finalAnnouncementLabel?: string
+  resultAnnouncementLabel?: string
   contactOrganizationName?: string
+  inquiryTel?: string
+  inquiryEmail?: string
+  tel?: string
+  email?: string
+  contactPhone?: string
+  contactEmail?: string
+  remarks?: string
+  educationTarget?: string
+  educationTargetDetail?: string
+  recruitmentTarget?: string
+  recruitmentTargetDetail?: string
+  /** 모집 양식 상세정보 — 프로그램 설명 (공통정보 description과 분리) */
+  programDescription?: string
+  recruitmentGuide?: string
+  applicationMethod?: string
+  learningSupportContent?: string
+  additionalContentHtml?: string
   /** 개인 참여자 모집 — 면접 유무 (등록 양식·상세 mock) */
   interviewEnabled?: boolean
   /** 비고 해당 없음 — true면 공고 비노출·관리자 상세에는 '-' */
@@ -212,15 +237,37 @@ export interface GeneralProgramParticipantRecruitmentInfo {
 /** 일반 프로그램 — 강사 모집 정보 (프로그램 등록 강사 모집 양식 필드) */
 export interface GeneralProgramInstructorRecruitmentInfo {
   announcementPublished?: boolean
+  announcementPublishedLabel?: string
   /** 표시용 — 운영·모집 기간 (요일 포함) */
   operationPeriodLabel?: string
   recruitmentPeriodLabel?: string
+  finalAnnouncementLabel?: string
+  resultAnnouncementLabel?: string
   contactOrganizationName?: string
+  inquiryTel?: string
+  inquiryEmail?: string
+  tel?: string
+  email?: string
+  contactPhone?: string
+  contactEmail?: string
+  remarks?: string
+  recruitmentTarget?: string
+  recruitmentTargetDetail?: string
+  /** 모집 양식 상세정보 — 프로그램 설명 (공통정보 description과 분리) */
+  programDescription?: string
+  recruitmentGuide?: string
+  applicationMethod?: string
+  learningSupportContent?: string
+  additionalContentHtml?: string
 }
 
 /** 일반 프로그램 — 봉사자 모집 정보 (프로그램 등록 봉사자 모집 양식 필드) */
 export interface GeneralProgramVolunteerRecruitmentInfo {
   announcementPublished?: boolean
+  announcementPublishedLabel?: string
+  volunteerInterviewEnabled?: boolean
+  generalVolunteerInterviewEnabled?: boolean
+  volunteerInterviewEnabledLabel?: string
   /** UJAT 하반기 — 모집 공고 노출 시점 (`start-day` | `one-day-before` | `one-week-before`) */
   noticeExposureTiming?: string
   /** 비고 해당 없음 — true면 공고 비노출·관리자 상세에는 '-' */
@@ -228,7 +275,24 @@ export interface GeneralProgramVolunteerRecruitmentInfo {
   /** 표시용 — 운영·모집 기간 (요일 포함) */
   operationPeriodLabel?: string
   recruitmentPeriodLabel?: string
+  finalAnnouncementLabel?: string
+  resultAnnouncementLabel?: string
   contactOrganizationName?: string
+  inquiryTel?: string
+  inquiryEmail?: string
+  tel?: string
+  email?: string
+  contactPhone?: string
+  contactEmail?: string
+  remarks?: string
+  recruitmentTarget?: string
+  recruitmentTargetDetail?: string
+  /** 모집 양식 상세정보 — 프로그램 설명 (공통정보 description과 분리) */
+  programDescription?: string
+  recruitmentGuide?: string
+  applicationMethod?: string
+  learningSupportContent?: string
+  additionalContentHtml?: string
 }
 
 /** 일반 프로그램 — 봉사자 면접 진행 가능 일정 */
@@ -264,21 +328,26 @@ export interface ApplicationPath {
   updatedAt: DateValue
 }
 
-// 프로그램 진행 워크플로우 상태 (15개: 예정 4 + 모집 중 4 + 진행 중 3 + 완료 4)
+// 프로그램 진행 워크플로우 상태
+// typed API: scheduled | recruiting_students | in_progress | completed
+// (+ FE 레거시 세분 값 — normalizeTypedProgramLifecycleStatus로 typed에 합침)
 export type ProgramLifecycleStatus =
-  | 'planned' // 참여자 모집 예정
+  | 'scheduled' // typed — 프로그램 진행 예정
+  | 'in_progress' // typed — 프로그램 진행 중
+  | 'completed' // typed — 프로그램 진행 완료
+  | 'planned' // 레거시 → scheduled
   | 'instructor_recruitment_planned' // 강사 모집 예정
   | 'volunteer_recruitment_planned' // 봉사자 모집 예정
   | 'participant_instructor_recruitment_planned' // 참여자&교육자 모집 예정
-  | 'recruiting_students' // 참여자 모집 중
+  | 'recruiting_students' // typed — 참여 기관 모집 중
   | 'recruiting_instructors' // 강사 모집 중
   | 'recruiting_volunteers' // 봉사자 모집 중
   | 'participant_instructor_recruiting' // 참여자&교육자 모집 중
-  | 'education_in_progress' // 프로그램 진행 중
+  | 'education_in_progress' // 레거시 → in_progress
   | 'matching_completed' // 참여자 모집 완료
   | 'education_before_textbook' // 경제교육: 교재 전 단계
   | 'education_after_textbook' // 경제교육: 교재 후 진행 중
-  | 'education_completed' // 강사 모집 완료
+  | 'education_completed' // 레거시 → completed
   | 'document_processing_completed' // 봉사자 모집 완료
   | 'participant_instructor_recruitment_completed' // 참여자&교육자 모집 완료
 
@@ -287,7 +356,7 @@ export type ProgramLifecycleStatus =
  */
 export type UjatProgramProgressStatus =
   | 'EDUCATION_SCHEDULED' // 프로그램 진행 예정
-  | 'PARTICIPANT_RECRUITING' // 참여자 모집 중
+  | 'PARTICIPANT_RECRUITING' // 참여 기관 모집 중
   | 'VOLUNTEER_RECRUITING' // 봉사자 모집 중
   | 'EDUCATION_IN_PROGRESS' // 프로그램 진행 중
   | 'PROGRAM_ENDED' // 프로그램 진행 완료

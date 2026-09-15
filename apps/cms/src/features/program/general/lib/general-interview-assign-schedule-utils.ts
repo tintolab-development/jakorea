@@ -2,6 +2,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import type { Program } from '@/types/domain'
 import type { GeneralInterviewSlotListItem } from '@/features/program/general/api/admin-applications-service'
 import { resolveGeneralProgramVolunteerInterviewScheduleDisplay } from '@/features/program/general/lib/volunteer-interview-schedule-display'
+import { DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK } from '@/data/mock/general-volunteer-interview-schedule-mock'
 import {
   formatDisplayTimeRange,
   getMockHolidayDateKeys,
@@ -171,14 +172,21 @@ export function parseGeneralInterviewScheduleFromRemoteSlots(
  */
 export function parseGeneralInterviewScheduleFromProgram(program: Program): ParsedInterviewSchedule {
   const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
+  const hasSchedule =
+    display.availableTimeSlots !== '-' ||
+    display.recurringUnavailable !== '-' ||
+    display.specificUnavailableDates !== '-'
+  const scheduleSource = hasSchedule
+    ? display
+    : DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK
   const rangeStart = dayjs('2026-03-01')
   const rangeEnd = dayjs('2026-03-31')
 
   return buildParsedInterviewSchedule(
     {
-      recurringUnavailable: display.recurringUnavailable,
-      specificUnavailableDates: display.specificUnavailableDates,
-      availableTimeSlots: display.availableTimeSlots,
+      recurringUnavailable: scheduleSource.recurringUnavailable,
+      specificUnavailableDates: scheduleSource.specificUnavailableDates,
+      availableTimeSlots: scheduleSource.availableTimeSlots,
     },
     rangeStart,
     rangeEnd

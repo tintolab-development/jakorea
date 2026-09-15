@@ -17,6 +17,8 @@ import {
   resolveScheduleTypeDetailedProgramNameFromDetails,
 } from '@/features/program/general/lib/detail-common-info-display'
 import {
+  isProgramPaymentNoneOnly,
+  PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
   programPaymentItemLabelsFromIds,
   resolveProgramPaymentItemIdsFromLabels,
   resolveProgramWageDeductionLabel,
@@ -362,7 +364,10 @@ export function isGeneralProgramScheduleType(program: Program): boolean {
   )
 }
 
-function resolveDetailedProgramId(program: Program): string {
+function resolveDetailedProgramId(
+  program: Program,
+  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+): string {
   if (isGeneralProgramScheduleType(program)) {
     return TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
   }
@@ -372,7 +377,7 @@ function resolveDetailedProgramId(program: Program): string {
     program.textbookName?.trim() ||
     program.teamDivision?.trim()
   if (!name) return ''
-  const matched = mockDetailedProgramManagementListRows.find(row => row.name === name)
+  const matched = catalog.find(row => row.name === name)
   return matched?.id ?? ''
 }
 
@@ -419,6 +424,26 @@ export function decodeSponsorManagerContactRef(
     sponsorManagementId: ref.slice(0, separatorIndex),
     contactId: ref.slice(separatorIndex + SPONSOR_MANAGER_CONTACT_REF_SEPARATOR.length),
   }
+}
+
+/**
+ * 후원사 담당자 셀렉트 라벨
+ * - 복수 후원사: `소속 | 이름 직함` (직함 없으면 생략) — 예: `스타벅스 | 이가원 책임`
+ * - 단일 후원사: `이름 직함` / `이름`
+ */
+export function formatSponsorManagerSelectLabel(input: {
+  sponsorName: string
+  contactName: string
+  position?: string | null
+  multiSponsor: boolean
+}): string {
+  const name = input.contactName.trim()
+  const position = input.position?.trim() ?? ''
+  const nameWithPosition = position ? `${name} ${position}` : name
+  if (!input.multiSponsor) return nameWithPosition || '-'
+  const sponsorName = input.sponsorName.trim()
+  if (!sponsorName) return nameWithPosition || '-'
+  return `${sponsorName} | ${nameWithPosition}`
 }
 
 export type GeneralProgramSponsorEditContext = {
@@ -561,8 +586,21 @@ function resolvePaymentItemIds(paymentItems: string | undefined): string[] {
   return resolveProgramPaymentItemIdsFromLabels(paymentItems)
 }
 
-function paymentItemLabelsFromIds(ids: string[] | undefined): string {
-  return programPaymentItemLabelsFromIds(ids)
+/** 편집 저장용 — UI 옵션(원격 포함)으로 라벨 해석. 비어 있으면 해당없음 */
+function paymentItemLabelsFromIds(
+  ids: string[] | undefined,
+  options?: readonly { value: string; label: string }[]
+): string {
+  if (!ids?.length || isProgramPaymentNoneOnly(ids)) {
+    return PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
+  }
+  if (options && options.length > 0) {
+    const labels = ids
+      .map(id => options.find(o => o.value === id)?.label?.trim())
+      .filter((label): label is string => Boolean(label))
+    if (labels.length > 0) return labels.join(', ')
+  }
+  return programPaymentItemLabelsFromIds(ids) || PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
 }
 
 function educationFormLabelFromValue(value: string | undefined): string {
@@ -795,7 +833,8 @@ function resolveWageFromProgram(program: Program): Pick<
 
 export function programToGeneralCommonInfoEditValues(
   program: Program,
-  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
+  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT,
+  detailedProgramCatalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
 ): GeneralProgramCommonInfoEditFormValues {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
   const sponsorManagementIds = resolveSponsorManagementIds(program, context)
@@ -818,7 +857,7 @@ export function programToGeneralCommonInfoEditValues(
     mainTitle: program.mainTitle?.trim() ?? '',
     titleEn: program.titleEn?.trim() ?? '',
     announcementTitle: commonInfo.announcementTitle?.trim() || program.title?.trim() || '',
-    detailedProgramId: resolveDetailedProgramId(program),
+    detailedProgramId: resolveDetailedProgramId(program, detailedProgramCatalog),
     startDate: toIso(program.startDate),
     endDate: toIso(program.endDate),
     businessArea: resolveBusinessAreaFormValue(program.businessArea),
@@ -895,17 +934,22 @@ function institutionTypeFromVenueKind(
   return undefined
 }
 
-function resolveDetailedProgramName(detailedProgramId: string | undefined): string | undefined {
+function resolveDetailedProgramName(
+  detailedProgramId: string | undefined,
+  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+): string | undefined {
   if (!detailedProgramId || detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) {
     return undefined
   }
-  return mockDetailedProgramManagementListRows.find(row => row.id === detailedProgramId)?.name
+  return catalog.find(row => row.id === detailedProgramId)?.name
 }
 
 export function generalCommonInfoEditValuesToProgramPatch(
   values: GeneralProgramCommonInfoEditFormValues,
   existing: Program,
-  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
+  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT,
+  detailedProgramCatalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows,
+  paymentItemOptions?: readonly { value: string; label: string }[]
 ): Partial<Program> {
   const sponsorRows = values.sponsorManagementIds
     .map(id => context.sponsors.find(row => row.id === id))
@@ -923,7 +967,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
     : undefined
   const detailedProgramName = isScheduleType
     ? resolveScheduleTypeDetailedProgramNameFromDetails(relabeledScheduleDetails)
-    : resolveDetailedProgramName(values.detailedProgramId)
+    : resolveDetailedProgramName(values.detailedProgramId, detailedProgramCatalog)
   const existingCommon = resolveGeneralProgramCommonInfo(existing)
 
   const managerLine = manager
@@ -1189,7 +1233,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
         : values.educationScheduleMode,
       educationScheduleLines: [...values.educationScheduleLines],
       wageGradeRows,
-      paymentItems: paymentItemLabelsFromIds(values.wagePaymentItemIds) || existingCommon.paymentItems,
+      paymentItems: paymentItemLabelsFromIds(values.wagePaymentItemIds, paymentItemOptions),
       deductionItems: resolveProgramWageDeductionLabel(values.wagePaymentItemIds),
       kpi: {
         finalParticipants: values.kpiFinalParticipants ?? existingCommon.kpi?.finalParticipants ?? 0,
@@ -1202,9 +1246,11 @@ export function generalCommonInfoEditValuesToProgramPatch(
   }
 }
 
-export function getGeneralDetailedProgramSelectOptions() {
+export function getGeneralDetailedProgramSelectOptions(
+  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+) {
   return withDetailedProgramNoneOption(
-    mockDetailedProgramManagementListRows.map(row => ({ value: row.id, label: row.name }))
+    catalog.map(row => ({ value: row.id, label: row.name }))
   )
 }
 

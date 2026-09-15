@@ -24,6 +24,12 @@ export interface ParticipatingSchoolSession {
   timeRange: string
   /** 진행 완료 | 진행 대기 | 미진행 희망 (상세 뷰용, 선택) */
   status?: ParticipatingSchoolSessionStatusKey
+  /** Admin requested-schedules.id — 배정 create requestedScheduleId */
+  requestedScheduleId?: number
+  /** program_schedule 매핑. null = 일정 미생성 (필드가 내려온 경우만) */
+  resolvedScheduleId?: number | null
+  /** resolvedScheduleId === null 일 때 true */
+  scheduleUnresolved?: boolean
 }
 
 export interface ParticipatingSchoolRow {
@@ -44,6 +50,8 @@ export interface ParticipatingSchoolRow {
   sessions?: ParticipatingSchoolSession[]
   /** 프로그램 ID (교육받은 교사 등 프로그램별 참여 기관 필터용) */
   programId?: string
+  /** 기관 신청 ID — 강사 배정 create/list 스코프 */
+  organizationApplicationId?: string
 }
 
 export const TEXTBOOK_STATUS_LABELS: Record<TextbookStatusKey, string> = {

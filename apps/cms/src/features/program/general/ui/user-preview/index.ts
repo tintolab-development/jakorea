@@ -2,6 +2,10 @@ export { ParticipantRecruitmentUserPage } from './user-page'
 export type { ParticipantRecruitmentUserPageProps } from './user-page'
 export {
   mapProgramToParticipantRecruitmentUserView,
+  mapProgramToInstructorRecruitmentUserView,
+  mapProgramToVolunteerRecruitmentUserView,
+  mapProgramToRecruitmentUserView,
+  recruitmentUserPreviewHeaderTitle,
   RECRUITMENT_USER_PREVIEW_DESIGN_WIDTH,
   RECRUITMENT_USER_PREVIEW_PAGE_HEIGHT,
   RECRUITMENT_USER_PREVIEW_PLATFORM_HEADER_HEIGHT,
@@ -12,5 +16,6 @@ export {
 } from './lib/map-program-to-user-view'
 export type {
   ParticipantRecruitmentUserViewModel,
+  RecruitmentUserPreviewAudience,
   RecruitmentUserSpecRow,
 } from './lib/map-program-to-user-view'

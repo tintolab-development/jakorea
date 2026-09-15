@@ -1,5 +1,4 @@
 import type { TrainedTeachersEducationJournalEntry } from '@/data/mock/trained-teachers-institution-detail'
-import { getTrainedTeachersEducationJournals } from '@/data/mock/trained-teachers-institution-detail'
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import { downloadFile } from '@/shared/lib/file-download'
@@ -18,7 +17,7 @@ import type { EducationJournalCreateRequest } from '@/shared/api/generated/dashb
 function assertRemoteReady(): void {
   if (shouldUseTrainedTeacherProgramsRemoteApi()) return
   throw new Error(
-    '교육받은 교사 교육일지 API가 활성화되지 않았습니다. VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED(또는 trainedTeacherPrograms)와 programs 모듈을 확인해 주세요.'
+    '교육받은 교사 교육일지 API가 활성화되지 않았습니다. VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED(또는 trainedTeacherPrograms)와 programs 모듈을 확인해 주세요. mock 폴백은 사용하지 않습니다.'
   )
 }
 
@@ -48,9 +47,6 @@ export async function listTrainedTeacherEducationJournals(
   programId: string,
   organizationApplicationId: string
 ): Promise<TrainedTeachersEducationJournalEntry[]> {
-  if (!shouldUseTrainedTeacherProgramsRemoteApi()) {
-    return getTrainedTeachersEducationJournals(organizationApplicationId)
-  }
   assertRemoteReady()
   const items = await fetchTrainedTeacherEducationJournalsRemote(
     programId,
@@ -72,10 +68,6 @@ export async function downloadTrainedTeacherEducationJournal(
   programId: string,
   entry: TrainedTeachersEducationJournalEntry
 ): Promise<void> {
-  if (!shouldUseTrainedTeacherProgramsRemoteApi()) {
-    void downloadFile(entry.fileName, entry.fileUrl)
-    return
-  }
   assertRemoteReady()
   const meta = await fetchTrainedTeacherEducationJournalDownloadRemote(programId, entry.id)
   await downloadFromEndpoint(entry.fileName, meta.downloadEndpoint)
@@ -86,12 +78,6 @@ export async function bulkDownloadTrainedTeacherEducationJournals(
   organizationApplicationId: string,
   entries: TrainedTeachersEducationJournalEntry[]
 ): Promise<void> {
-  if (!shouldUseTrainedTeacherProgramsRemoteApi()) {
-    for (const entry of entries) {
-      void downloadFile(entry.fileName, entry.fileUrl)
-    }
-    return
-  }
   assertRemoteReady()
   const journalIds = entries
     .map(entry => Number.parseInt(entry.id, 10))
@@ -126,6 +112,7 @@ export function mapApplicantSchoolToParticipatingSchool(
     classCount: row.classCount,
     studentCount: row.studentCount,
     lectureRound: '',
+    /** BE에 배송 원장 없음 — 교재명·수량만 표시. 배송 전/중/완료를 API로 invent 하지 않음 */
     textbookStatus: 'not_applicable',
     approvalStatus: 'approved',
     teacherName: row.teacherName || '-',
@@ -138,12 +125,7 @@ export function mapApplicantSchoolToParticipatingSchool(
 export async function listTrainedTeacherParticipatingInstitutions(
   programId: string
 ): Promise<ParticipatingSchoolRow[]> {
-  if (!shouldUseTrainedTeacherProgramsRemoteApi()) {
-    const { getParticipatingSchoolsForProgram } = await import(
-      '@/data/mock/participating-schools'
-    )
-    return getParticipatingSchoolsForProgram(programId)
-  }
+  assertRemoteReady()
   const applications = await listTrainedTeacherOrganizationApplications(programId)
   return applications
     .filter(row => row.approvalStatus === 'approved')

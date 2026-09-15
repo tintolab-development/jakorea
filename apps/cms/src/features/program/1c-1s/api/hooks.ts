@@ -1,4 +1,12 @@
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
+import { useLayoutEffect, useMemo } from 'react'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type InfiniteData,
+  type QueryClient,
+} from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { shouldUseCompanySchoolRemoteApi } from './capabilities'
 import { shouldRetryCompanySchoolQuery } from './errors'
@@ -10,8 +18,9 @@ import {
   deleteCompanySchoolPrograms,
   fetchCompanySchoolOverviewStages,
   getCompanySchoolProgram,
-  listCompanySchoolPrograms,
+  listCompanySchoolProgramsPage,
   updateCompanySchoolProgram,
+  type CompanySchoolProgramsRemoteListPage,
 } from './service'
 
 /** 1사1교 목록 상단 4카드 건수 (목록과 동일 데이터 소스) */
@@ -20,14 +29,25 @@ export function useCompanySchoolOverviewStages(enabled = true) {
   return useQuery({
     queryKey: companySchoolQueryKeys.overviewStages(),
     queryFn: fetchCompanySchoolOverviewStages,
-    enabled,
-    staleTime: remoteEnabled ? 30_000 : 0,
+    enabled: enabled && remoteEnabled,
+    staleTime: 30_000,
     retry: shouldRetryCompanySchoolQuery,
   })
 }
 
-function filtersKey(filters: CompanySchoolListFilters, remoteEnabled: boolean): string {
-  return JSON.stringify({ source: remoteEnabled ? 'remote' : 'mock', ...filters })
+function filtersKey(filters: CompanySchoolListFilters): string {
+  return JSON.stringify({ source: 'remote', ...filters })
+}
+
+function keepFirstInfiniteQueryPage<T>(
+  data: InfiniteData<T> | undefined
+): InfiniteData<T> | undefined {
+  if (!data || data.pages.length <= 1) return data
+  return {
+    ...data,
+    pages: data.pages.slice(0, 1),
+    pageParams: data.pageParams.slice(0, 1),
+  }
 }
 
 export function useCompanySchoolPrograms(
@@ -35,11 +55,25 @@ export function useCompanySchoolPrograms(
   enabled = true
 ) {
   const remoteEnabled = shouldUseCompanySchoolRemoteApi()
-  return useQuery({
-    queryKey: companySchoolQueryKeys.list(filtersKey(filters, remoteEnabled)),
-    queryFn: () => listCompanySchoolPrograms(filters),
-    enabled,
-    staleTime: remoteEnabled ? 30_000 : Number.POSITIVE_INFINITY,
+  const queryClient = useQueryClient()
+  const key = filtersKey(filters)
+  const listQueryKey = useMemo(() => companySchoolQueryKeys.list(key), [key])
+
+  useLayoutEffect(() => {
+    if (!remoteEnabled || !enabled) return
+    queryClient.setQueryData<InfiniteData<CompanySchoolProgramsRemoteListPage>>(
+      listQueryKey,
+      keepFirstInfiniteQueryPage
+    )
+  }, [queryClient, remoteEnabled, enabled, listQueryKey])
+
+  return useInfiniteQuery({
+    queryKey: listQueryKey,
+    queryFn: ({ pageParam }) => listCompanySchoolProgramsPage(filters, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    enabled: enabled && remoteEnabled,
+    staleTime: 30_000,
     retry: shouldRetryCompanySchoolQuery,
   })
 }
@@ -48,10 +82,11 @@ export function useCompanySchoolProgramDetail(
   programId: string | undefined,
   enabled = true
 ) {
+  const remoteEnabled = shouldUseCompanySchoolRemoteApi()
   return useQuery({
     queryKey: companySchoolQueryKeys.detail(programId ?? ''),
     queryFn: () => getCompanySchoolProgram(programId!),
-    enabled: enabled && Boolean(programId),
+    enabled: enabled && remoteEnabled && Boolean(programId),
     staleTime: 30_000,
     retry: shouldRetryCompanySchoolQuery,
   })

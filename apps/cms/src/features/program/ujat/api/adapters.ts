@@ -12,13 +12,26 @@ import type {
   ProgramType,
 } from '@/types/domain'
 import type { Status } from '@/types/index'
+import { resolveUjatPrimaryProgressById } from '@/features/program/ujat/lib/is-ujat-primary-program'
+import {
+  mapPeriodStatusToLifecycle,
+  resolveUjatProgressStatus,
+} from '@/features/program/ujat/lib/normalize-ujat-progress-status'
 import {
   parseServiceDetail,
+  parseUjatServiceDetailExtras,
   serializeServiceDetail,
   type RegistrationSnapshot,
+  type UjatServiceDetailExtras,
 } from './service-detail'
 
 const DEFAULT_SPONSOR_ID = 'sponsor-default'
+
+export type UjatProgramWithExtras = Program & {
+  /** Primary serviceDetail extras — Semester 자식 없이 FULL_YEAR */
+  ujatServiceDetailExtras?: UjatServiceDetailExtras
+  periodStatus?: string
+}
 
 function now(): string {
   return new Date().toISOString()
@@ -51,96 +64,152 @@ function baseProgram(partial: Partial<Program> & Pick<Program, 'id' | 'title'>):
 }
 
 export function fromListItem(dto: AdminProgramListItemDto): Program {
+  const id = idOf(dto.id ?? dto.uuid)
   const title =
     dto.nameKo?.trim() || dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
+  const dtoExt = dto as AdminProgramListItemDto & {
+    serviceDetailJson?: string
+    ujatProgressStatus?: string
+  }
+  const fromJson = parseServiceDetail(dtoExt.serviceDetailJson)
+  const ujatProgressStatus = resolveUjatProgressStatus({
+    ujatProgressStatus: fromJson.ujatProgressStatus ?? dtoExt.ujatProgressStatus,
+    periodStatus: dto.periodStatus,
+    primaryFallback: resolveUjatPrimaryProgressById(id),
+  })
+  const lifecycleStatus =
+    (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
+    mapPeriodStatusToLifecycle(dto.periodStatus) ??
+    'planned'
+
+  // UJAT: target_instructor_count=0 → 강사 KPI를 "-"로 위장하지 않음 (0 유지)
+  const instructorCount = dto.instructorApplicantCount ?? 0
+
   return baseProgram({
-    id: idOf(dto.id ?? dto.uuid),
+    id,
     title,
     mainTitle: dto.mainTitle?.trim() || title,
     startDate: dto.businessStartDate ?? dto.startDate,
     endDate: dto.businessEndDate ?? dto.endDate,
-    approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
-    participatingSchoolCount: dto.organizationApplicationCount,
-    instructors: dto.instructorApplicantCount,
+    lifecycleStatus,
+    ujatProgressStatus,
+    approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount ?? 0,
+    participatingSchoolCount: dto.organizationApplicationCount ?? 0,
+    instructors: instructorCount,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
+    ...fromJson,
   })
 }
 
-export function fromDetail(dto: ProgramResponse): Program {
+export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
   const id = idOf(dto.id)
-  const title = dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
+  const dtoExt = dto as ProgramResponse & {
+    nameKo?: string
+    periodStatus?: string
+    remarks?: string
+  }
+  const title =
+    dto.title?.trim() || dto.mainTitle?.trim() || dtoExt.nameKo?.trim() || '제목 없음'
   const timestamp = now()
-  return baseProgram({
-    id,
-    sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
-    title,
-    mainTitle: dto.mainTitle ?? title,
-    type: (dto.type as ProgramType | undefined) ?? 'offline',
-    format: (dto.format as ProgramFormat | undefined) ?? 'course',
-    category: (dto.category as ProgramCategory | undefined) ?? 'school',
-    description: dto.description,
-    rounds:
-      dto.rounds?.map((round, index) => ({
-        id: idOf(round.id) || `${id}-round-${index + 1}`,
-        programId: id,
-        roundNumber: round.roundNumber ?? index + 1,
-        startDate: round.startDate ?? dto.startDate ?? timestamp,
-        endDate: round.endDate ?? dto.endDate ?? timestamp,
-        capacity: round.capacity,
-        classCount: round.classCount,
-        status: (round.status as Status | undefined) ?? 'pending',
-        curriculum: round.curriculum,
-        deliveryType: round.deliveryType as Program['rounds'][number]['deliveryType'],
-      })) ?? [],
-    startDate: dto.startDate,
-    endDate: dto.endDate,
-    applicationStartDate: dto.applicationStartDate,
-    applicationEndDate: dto.applicationEndDate,
-    status: (dto.status as Status | undefined) ?? 'pending',
-    lifecycleStatus: (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ?? 'planned',
-    businessArea: dto.businessArea,
-    titleEn: dto.titleEn,
-    textbookName: dto.textbookName,
-    textbookNameEn: dto.textbookNameEn,
-    schoolId: dto.schoolId,
-    district: dto.district,
-    targetLevel: dto.targetLevel as Program['targetLevel'],
-    institutionType: dto.institutionType as Program['institutionType'],
-    ipOwned: dto.ipOwned,
-    courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
-    partnerInvolvement: dto.partnerInvolvement,
-    programCategory: dto.programCategory,
-    programChannel: dto.programChannel,
-    educationTime: dto.educationTime,
-    teamDivision: dto.teamDivision,
-    educationProcess: dto.educationProcess,
-    maleParticipants: dto.maleParticipants,
-    femaleParticipants: dto.femaleParticipants,
-    totalParticipants: dto.totalParticipants,
-    generalVolunteers: dto.generalVolunteers,
-    staffVolunteers: dto.staffVolunteers,
-    returningVolunteers: dto.returningVolunteers,
-    generalTeachers: dto.generalTeachers,
-    educatedTeachers: dto.educatedTeachers,
-    instructors: dto.instructors,
-    managerName: dto.managerName,
-    venue: dto.venue,
-    curriculum: dto.curriculum,
-    contactEmail: dto.contactEmail,
-    contactPhone: dto.contactPhone,
-    oneLineIntroduction: dto.oneLineIntroduction,
-    keyVisualImage: dto.keyVisualImage,
-    settlementRuleId: dto.settlementRuleId,
-    applicationPathId: dto.applicationPathId,
-    additionalContentHtml: dto.additionalContentHtml,
-    recruitmentGuide: dto.recruitmentGuide,
-    learningSupportContent: dto.learningSupportContent,
-    attachmentFileNames: dto.attachmentFileNames,
-    createdAt: dto.createdAt,
-    updatedAt: dto.updatedAt,
-    ...parseServiceDetail(dto.serviceDetailJson),
+  const details = parseServiceDetail(dto.serviceDetailJson)
+  const extras = parseUjatServiceDetailExtras(dto.serviceDetailJson)
+  const periodStatus = dtoExt.periodStatus
+  const ujatProgressStatus = resolveUjatProgressStatus({
+    ujatProgressStatus: details.ujatProgressStatus,
+    periodStatus,
+    primaryFallback: resolveUjatPrimaryProgressById(id),
   })
+  const lifecycleStatus =
+    (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
+    mapPeriodStatusToLifecycle(periodStatus) ??
+    'planned'
+
+  const surveyKeys =
+    details.generalSurveyMenuKeys ??
+    extras.surveyMenuKeys ??
+    undefined
+
+  return {
+    ...baseProgram({
+      ...details,
+      id,
+      sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
+      title,
+      mainTitle: dto.mainTitle ?? title,
+      type: (dto.type as ProgramType | undefined) ?? 'offline',
+      format: (dto.format as ProgramFormat | undefined) ?? 'course',
+      category: (dto.category as ProgramCategory | undefined) ?? 'school',
+      description: dto.description,
+      rounds:
+        dto.rounds?.map((round, index) => ({
+          id: idOf(round.id) || `${id}-round-${index + 1}`,
+          programId: id,
+          roundNumber: round.roundNumber ?? index + 1,
+          startDate: round.startDate ?? dto.startDate ?? timestamp,
+          endDate: round.endDate ?? dto.endDate ?? timestamp,
+          capacity: round.capacity,
+          classCount: round.classCount,
+          status: (round.status as Status | undefined) ?? 'pending',
+          curriculum: round.curriculum,
+          deliveryType: round.deliveryType as Program['rounds'][number]['deliveryType'],
+        })) ?? [],
+      startDate: dto.startDate ?? dto.businessStartDate,
+      endDate: dto.endDate ?? dto.businessEndDate,
+      applicationStartDate: dto.applicationStartDate,
+      applicationEndDate: dto.applicationEndDate,
+      status: (dto.status as Status | undefined) ?? 'pending',
+      lifecycleStatus,
+      ujatProgressStatus,
+      businessArea: dto.businessArea,
+      titleEn: dto.titleEn,
+      textbookName: dto.textbookName,
+      textbookNameEn: dto.textbookNameEn,
+      schoolId: dto.schoolId,
+      district: dto.district,
+      targetLevel: dto.targetLevel as Program['targetLevel'],
+      institutionType: dto.institutionType as Program['institutionType'],
+      ipOwned: dto.ipOwned,
+      courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
+      partnerInvolvement: dto.partnerInvolvement,
+      programCategory: dto.programCategory,
+      programChannel: dto.programChannel,
+      educationTime: dto.educationTime,
+      teamDivision: dto.teamDivision,
+      educationProcess: dto.educationProcess,
+      maleParticipants: dto.maleParticipants,
+      femaleParticipants: dto.femaleParticipants,
+      totalParticipants: dto.totalParticipants,
+      generalVolunteers: dto.generalVolunteers ?? 0,
+      staffVolunteers: dto.staffVolunteers ?? 0,
+      returningVolunteers: dto.returningVolunteers ?? 0,
+      generalTeachers: dto.generalTeachers,
+      educatedTeachers: dto.educatedTeachers,
+      instructors: dto.instructors ?? 0,
+      managerName: dto.managerName,
+      venue: dto.venue,
+      curriculum: dto.curriculum,
+      contactEmail: dto.contactEmail,
+      contactPhone: dto.contactPhone,
+      oneLineIntroduction: dto.oneLineIntroduction,
+      keyVisualImage: dto.keyVisualImage,
+      settlementRuleId: dto.settlementRuleId,
+      applicationPathId: dto.applicationPathId,
+      additionalContentHtml: dto.additionalContentHtml,
+      recruitmentGuide: dto.recruitmentGuide,
+      learningSupportContent: dto.learningSupportContent,
+      attachmentFileNames: dto.attachmentFileNames,
+      otherNotes: details.otherNotes ?? dtoExt.remarks,
+      generalSurveyMenuKeys: surveyKeys as Program['generalSurveyMenuKeys'],
+      createdAt: dto.createdAt,
+      updatedAt: dto.updatedAt,
+    }),
+    ujatServiceDetailExtras: {
+      ...extras,
+      semesterType: extras.semesterType ?? 'FULL_YEAR',
+    },
+    periodStatus,
+  }
 }
 
 function looksMaskedPii(value: string | null | undefined): boolean {

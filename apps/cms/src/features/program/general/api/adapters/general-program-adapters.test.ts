@@ -44,6 +44,7 @@ describe('general-program-adapters', () => {
     const program = mapAdminProgramListItemToProgram({
       id: 5001,
       nameKo: 'JA 코리아 금융교육',
+      lifecycleStatus: 'recruiting_students',
       periodStatus: 'RECRUITING',
       businessStartDate: '2026-03-01',
       businessEndDate: '2026-12-31',
@@ -53,6 +54,30 @@ describe('general-program-adapters', () => {
     expect(program.title).toBe('JA 코리아 금융교육')
     expect(program.lifecycleStatus).toBe('recruiting_students')
     expect(program.startDate).toBe('2026-03-01')
+  })
+
+  it('prefers typed lifecycleStatus over periodStatus', () => {
+    const program = mapAdminProgramListItemToProgram({
+      id: 168001,
+      title: 'Primary ACTIVE',
+      lifecycleStatus: 'in_progress',
+      periodStatus: 'RECRUITING',
+      status: 'active',
+    })
+    expect(program.lifecycleStatus).toBe('in_progress')
+    expect(program.status).toBe('active')
+  })
+
+  it('maps periodStatus to typed lifecycle when lifecycleStatus is absent', () => {
+    expect(
+      mapAdminProgramListItemToProgram({ id: 1, periodStatus: 'SCHEDULED' }).lifecycleStatus
+    ).toBe('scheduled')
+    expect(
+      mapAdminProgramListItemToProgram({ id: 2, periodStatus: 'IN_PROGRESS' }).lifecycleStatus
+    ).toBe('in_progress')
+    expect(
+      mapAdminProgramListItemToProgram({ id: 3, periodStatus: 'COMPLETED' }).lifecycleStatus
+    ).toBe('completed')
   })
 
   it('prefers title/mainTitle when list item has no nameKo (actual BE list shape)', () => {

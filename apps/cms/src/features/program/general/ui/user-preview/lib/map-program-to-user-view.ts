@@ -1,5 +1,5 @@
 /**
- * 일반 프로그램 참여자 모집 — 사용자 미리보기 ViewModel
+ * 일반 프로그램 모집(참여자·강사·봉사자) — 사용자 미리보기 ViewModel
  */
 
 import type { Program } from '@/types/domain'
@@ -11,9 +11,12 @@ import {
   formatDateRange,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { resolveGeneralProgramParticipantRecruitmentDisplay } from '@/features/program/general/lib/participant-recruitment-display'
+import { resolveGeneralProgramInstructorRecruitmentDisplay } from '@/features/program/general/lib/instructor-recruitment-display'
+import { resolveGeneralProgramVolunteerRecruitmentDisplay } from '@/features/program/general/lib/volunteer-recruitment-display'
 import {
   GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID,
 } from '@/features/program/general/lib/detail-common-info-display'
+import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
 
 export const RECRUITMENT_USER_PREVIEW_DESIGN_WIDTH = 1920
 export const RECRUITMENT_USER_PREVIEW_PAGE_HEIGHT =
@@ -49,6 +52,9 @@ export type ParticipantRecruitmentUserViewModel = {
   attachmentFileNames: string[]
   contactLines: string[]
 }
+
+/** 모집 탭별 사용자 미리보기 — ViewModel 형상은 동일 */
+export type RecruitmentUserPreviewAudience = GeneralRecruitTabKey
 
 const DEFAULT_APPLICATION_METHOD =
   '해당 페이지의 [신청하기] 클릭 후 항목 상세 기재 후 제출'
@@ -125,6 +131,84 @@ function resolveSponsorLabel(program: Program, sponsorName?: string): string {
   )
 }
 
+function buildDetailSpecs(options: {
+  program: Program
+  sponsorName?: string
+  contactOrganizationName: string
+  contactPhone: string
+  contactEmail: string
+  notes: string
+  additionalHtml?: string
+}): RecruitmentUserSpecRow[] {
+  const {
+    program,
+    sponsorName,
+    contactOrganizationName,
+    contactPhone,
+    contactEmail,
+    notes,
+    additionalHtml,
+  } = options
+
+  return [
+    {
+      label: '후원사',
+      value: resolveSponsorLabel(program, sponsorName),
+    },
+    {
+      label: '모집안내',
+      value: program.recruitmentGuide?.trim() || DEFAULT_RECRUITMENT_GUIDE,
+    },
+    {
+      label: '지원방법',
+      value: program.applicationMethod?.trim() || DEFAULT_APPLICATION_METHOD,
+    },
+    {
+      label: '추가 내용',
+      value: additionalHtml ?? resolveAdditionalHtml(program),
+      isHtml: true,
+    },
+    {
+      label: '선정',
+      value: DEFAULT_SELECTION_INFO,
+    },
+    {
+      label: '기타사항',
+      value: program.otherNotes?.trim() || DEFAULT_OTHER_NOTES,
+    },
+    {
+      label: '비고',
+      value: notes !== '-' ? notes : DEFAULT_REMARKS,
+    },
+    {
+      label: '문의처',
+      value: [
+        contactOrganizationName,
+        contactPhone !== '-' ? `TEL ${contactPhone}` : null,
+        contactEmail !== '-' ? contactEmail : null,
+      ]
+        .filter((line): line is string => Boolean(line?.trim()))
+        .join('\n'),
+    },
+  ]
+}
+
+function buildContactLines(
+  contactOrganizationName: string,
+  contactPhone: string,
+  contactEmail: string
+): string[] {
+  return [
+    contactOrganizationName,
+    contactPhone !== '-' ? contactPhone : '',
+    contactEmail !== '-' ? contactEmail : '',
+  ].filter(Boolean)
+}
+
+function resolveAttachmentFileNames(program: Program): string[] {
+  return program.attachmentFileNames?.filter(name => name.trim()) ?? DEFAULT_ATTACHMENTS
+}
+
 export function mapProgramToParticipantRecruitmentUserView(
   program: Program,
   sponsorName?: string
@@ -166,51 +250,6 @@ export function mapProgramToParticipantRecruitmentUserView(
     },
   ]
 
-  const detailSpecs: RecruitmentUserSpecRow[] = [
-    {
-      label: '후원사',
-      value: resolveSponsorLabel(program, sponsorName),
-    },
-    {
-      label: '모집안내',
-      value: program.recruitmentGuide?.trim() || DEFAULT_RECRUITMENT_GUIDE,
-    },
-    {
-      label: '지원방법',
-      value: program.applicationMethod?.trim() || DEFAULT_APPLICATION_METHOD,
-    },
-    {
-      label: '추가 내용',
-      value: resolveAdditionalHtml(program),
-      isHtml: true,
-    },
-    {
-      label: '선정',
-      value: DEFAULT_SELECTION_INFO,
-    },
-    {
-      label: '기타사항',
-      value: program.otherNotes?.trim() || DEFAULT_OTHER_NOTES,
-    },
-    {
-      label: '비고',
-      value: display.notes !== '-' ? display.notes : DEFAULT_REMARKS,
-    },
-    {
-      label: '문의처',
-      value: [
-        display.contactOrganizationName,
-        display.contactPhone !== '-' ? `TEL ${display.contactPhone}` : null,
-        display.contactEmail !== '-' ? display.contactEmail : null,
-      ]
-        .filter((line): line is string => Boolean(line?.trim()))
-        .join('\n'),
-    },
-  ]
-
-  const attachmentFileNames =
-    program.attachmentFileNames?.filter(name => name.trim()) ?? DEFAULT_ATTACHMENTS
-
   return {
     categoryLabel: resolveCategoryLabel(program),
     title: resolveTitle(program),
@@ -219,13 +258,180 @@ export function mapProgramToParticipantRecruitmentUserView(
     formatTag: resolveFormatTag(program),
     introParagraphs: resolveIntroParagraphs(program),
     scheduleSpecs,
-    detailSpecs,
+    detailSpecs: buildDetailSpecs({
+      program,
+      sponsorName,
+      contactOrganizationName: display.contactOrganizationName,
+      contactPhone: display.contactPhone,
+      contactEmail: display.contactEmail,
+      notes: display.notes,
+    }),
     applicationPeriodLabel: display.recruitmentPeriodLabel,
-    attachmentFileNames,
-    contactLines: [
+    attachmentFileNames: resolveAttachmentFileNames(program),
+    contactLines: buildContactLines(
       display.contactOrganizationName,
-      display.contactPhone !== '-' ? display.contactPhone : '',
-      display.contactEmail !== '-' ? display.contactEmail : '',
-    ].filter(Boolean),
+      display.contactPhone,
+      display.contactEmail
+    ),
+  }
+}
+
+export function mapProgramToInstructorRecruitmentUserView(
+  program: Program,
+  sponsorName?: string
+): ParticipantRecruitmentUserViewModel {
+  const display = resolveGeneralProgramInstructorRecruitmentDisplay(program)
+  const finalPassLabel = resolveDocumentPassLabel(
+    display.finalPassAnnouncementDate,
+    display.finalPassAnnouncementMethod
+  )
+
+  const scheduleSpecs: RecruitmentUserSpecRow[] = [
+    {
+      label: '프로그램 운영기간',
+      value: display.operationPeriodLabel,
+      tone: 'primary',
+    },
+    {
+      label: '최종 합격자 발표',
+      value: finalPassLabel,
+      tone: 'accent-blue',
+    },
+  ]
+
+  return {
+    categoryLabel: resolveCategoryLabel(program),
+    title: resolveTitle(program),
+    statusTag: display.recruitmentStatusLabel,
+    targetTag:
+      display.instructorTargetLabel || display.instructorTargetDetailLabel || '강사',
+    formatTag: resolveFormatTag(program),
+    introParagraphs: resolveIntroParagraphs(program),
+    scheduleSpecs,
+    detailSpecs: buildDetailSpecs({
+      program,
+      sponsorName,
+      contactOrganizationName: display.contactOrganizationName,
+      contactPhone: display.contactPhone,
+      contactEmail: display.contactEmail,
+      notes: display.notes,
+    }),
+    applicationPeriodLabel: display.recruitmentPeriodLabel,
+    attachmentFileNames: resolveAttachmentFileNames(program),
+    contactLines: buildContactLines(
+      display.contactOrganizationName,
+      display.contactPhone,
+      display.contactEmail
+    ),
+  }
+}
+
+export function mapProgramToVolunteerRecruitmentUserView(
+  program: Program,
+  sponsorName?: string
+): ParticipantRecruitmentUserViewModel {
+  const display = resolveGeneralProgramVolunteerRecruitmentDisplay(program)
+
+  const interviewPeriodLabel = (() => {
+    const interviewRange = formatDateRange(
+      display.interviewStartDate,
+      display.interviewEndDate
+    )
+    if (interviewRange !== '-') {
+      const method = display.interviewMethod?.trim()
+      return method ? `${interviewRange} | ${method}` : interviewRange
+    }
+    return display.recruitmentPeriodLabel
+  })()
+
+  const scheduleSpecs: RecruitmentUserSpecRow[] = [
+    {
+      label: '프로그램 운영기간',
+      value: display.operationPeriodLabel,
+      tone: 'primary',
+    },
+    {
+      label: '1차 합격자 발표일',
+      value: resolveDocumentPassLabel(
+        display.documentPassAnnouncementDate,
+        display.documentPassAnnouncementMethod
+      ),
+      tone: 'accent-red',
+    },
+    {
+      label: '면접 기간',
+      value: interviewPeriodLabel,
+      tone: 'accent-blue',
+    },
+    {
+      label: '최종 합격자 발표',
+      value: resolveDocumentPassLabel(
+        display.finalPassAnnouncementDate,
+        display.finalPassAnnouncementMethod
+      ),
+      tone: 'accent-blue',
+    },
+  ]
+
+  return {
+    categoryLabel: resolveCategoryLabel(program),
+    title: resolveTitle(program),
+    statusTag: display.recruitmentStatusLabel,
+    targetTag:
+      display.volunteerTargetLabel || display.volunteerTargetDetailLabel || '봉사자',
+    formatTag: resolveFormatTag(program),
+    introParagraphs: resolveIntroParagraphs(program),
+    scheduleSpecs,
+    detailSpecs: buildDetailSpecs({
+      program,
+      sponsorName,
+      contactOrganizationName: display.contactOrganizationName,
+      contactPhone: display.contactPhone,
+      contactEmail: display.contactEmail,
+      notes: display.notes,
+    }),
+    applicationPeriodLabel: display.recruitmentPeriodLabel,
+    attachmentFileNames: resolveAttachmentFileNames(program),
+    contactLines: buildContactLines(
+      display.contactOrganizationName,
+      display.contactPhone,
+      display.contactEmail
+    ),
+  }
+}
+
+export function mapProgramToRecruitmentUserView(
+  audience: RecruitmentUserPreviewAudience,
+  program: Program,
+  sponsorName?: string
+): ParticipantRecruitmentUserViewModel {
+  switch (audience) {
+    case 'instructors':
+      return mapProgramToInstructorRecruitmentUserView(program, sponsorName)
+    case 'volunteers':
+      return mapProgramToVolunteerRecruitmentUserView(program, sponsorName)
+    case 'institutions':
+      return mapProgramToParticipantRecruitmentUserView(program, sponsorName)
+    default: {
+      const _exhaustive: never = audience
+      return _exhaustive
+    }
+  }
+}
+
+export function recruitmentUserPreviewHeaderTitle(
+  audience: RecruitmentUserPreviewAudience
+): string {
+  switch (audience) {
+    case 'instructors':
+      return '강사 모집 폼 미리보기'
+    case 'volunteers':
+      return '봉사자 모집 폼 미리보기'
+    case 'institutions':
+      return '참여자 모집 폼 미리보기'
+    default: {
+      const _exhaustive: never = audience
+      return _exhaustive
+    }
   }
 }

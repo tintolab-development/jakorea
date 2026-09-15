@@ -23,14 +23,12 @@ import {
   filterGeneralInstructorApplications,
   filterGeneralInstructorCalendarApplications,
 } from '@/features/program/general/lib/application-table-filter'
-import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications-mock'
 import {
   APPLICANTS_CALENDAR_RANGE_PARAM,
   parseCalendarRangeParam,
   applyCalendarRangeParam,
 } from '@/features/program/general/hooks/progress-calendar-range'
 import {
-  MOCK_APPLICANT_INSTITUTIONS,
   updateApplicantSchoolApprovalStatus,
   patchApplicantSchoolForApprovalStatus,
   type ApplicantApprovalStatusKey,
@@ -38,8 +36,6 @@ import {
   type ApplicantSchoolRow,
 } from '@/data/mock/applicant-institutions'
 import {
-  MOCK_APPLICANT_INSTRUCTORS,
-  getApplicantInstructorsByProgramId,
   patchApplicantInstructorForApprovalStatus,
   updateApplicantInstructorApprovalStatus,
   type ApplicantInstructorApprovalNotifyOptions,
@@ -48,8 +44,6 @@ import {
 } from '@/data/mock/applicant-instructors'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import {
-  getGeneralIndividualApplicationsForProgram,
-  getGeneralParticipantDoc1Applicants,
   updateGeneralIndividualApplicantApprovalStatus,
   patchGeneralIndividualApplicantForApprovalStatus,
   type GeneralIndividualApplicantRow,
@@ -78,10 +72,7 @@ import type { InstructorLectureAssignItem } from '@/features/program/general/lib
 import type { Program } from '@/types/domain'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { useGeneralProgramApplicationsRemoteSync } from '@/features/program/general/hooks/use-general-program-applications-remote-sync'
-import {
-  useApplicationsRemoteEnabledForSurface,
-  useIsTrainedTeachersProgramsSurface,
-} from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherOrganizationApplicationsRemoteSync } from '@/features/program/trained-teachers/api/organization-applications-hooks'
 
 export type InstructorApprovalTarget =
@@ -199,38 +190,10 @@ export function useApplicantsDetail({
   const [appliedFilters, setAppliedFilters] = useState<Record<string, unknown>>({})
 
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
-  const applicationsRemoteEnabled = useApplicationsRemoteEnabledForSurface(programId)
-  /** remote ON이면 mock/로컬로 채우지 않음 (잘못된 목록 플래시·덮어쓰기 방지) */
-  const preferRemoteApplications =
-    applicationsRemoteEnabled ||
-    (isTrainedTeachersSurface &&
-      menu === 'institutions' &&
-      usesProgramInstitutionApplications)
 
-  const [institutionList, setInstitutionList] = useState<ApplicantSchoolRow[]>(() => {
-    if (preferRemoteApplications) return []
-    if (programId && usesProgramInstitutionApplications) {
-      return getGeneralInstitutionApplicationsForProgram(programId)
-    }
-    return [...MOCK_APPLICANT_INSTITUTIONS]
-  })
-  const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>(() => {
-    if (preferRemoteApplications) return []
-    if (programId && instructorColumnPreset === 'general-detail') {
-      return getApplicantInstructorsByProgramId(programId)
-    }
-    return [...MOCK_APPLICANT_INSTRUCTORS]
-  })
-  const [individualList, setIndividualList] = useState<GeneralIndividualApplicantRow[]>(() => {
-    if (preferRemoteApplications) return []
-    if (programId) {
-      if (individualScreeningStage === 'doc1') {
-        return getGeneralParticipantDoc1Applicants(programId)
-      }
-      return getGeneralIndividualApplicationsForProgram(programId)
-    }
-    return []
-  })
+  const [institutionList, setInstitutionList] = useState<ApplicantSchoolRow[]>([])
+  const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>([])
+  const [individualList, setIndividualList] = useState<GeneralIndividualApplicantRow[]>([])
 
   const applicationsRemote = useGeneralProgramApplicationsRemoteSync({
     programId,
@@ -523,45 +486,6 @@ export function useApplicantsDetail({
       setSelectedRowKeys([])
     }
   }, [viewMode, menu, instructorColumnPreset, setPendingFilters])
-
-  useEffect(() => {
-    if (programId && usesProgramInstitutionApplications && menu === 'institutions') {
-      // remote sync가 목록을 채우면 덮어쓰지 않음
-      if (isTrainedTeachersSurface && trainedTeacherApplicationsRemote.remoteEnabled) return
-      if (!isTrainedTeachersSurface && applicationsRemote.remoteEnabled) return
-      setInstitutionList(getGeneralInstitutionApplicationsForProgram(programId))
-    }
-  }, [
-    programId,
-    usesProgramInstitutionApplications,
-    menu,
-    isTrainedTeachersSurface,
-    trainedTeacherApplicationsRemote.remoteEnabled,
-    applicationsRemote.remoteEnabled,
-  ])
-
-  useEffect(() => {
-    if (programId && menu === 'individual-applications') {
-      if (applicationsRemote.remoteEnabled) return
-      setIndividualList(
-        individualScreeningStage === 'doc1'
-          ? getGeneralParticipantDoc1Applicants(programId)
-          : getGeneralIndividualApplicationsForProgram(programId)
-      )
-    }
-  }, [
-    programId,
-    menu,
-    individualScreeningStage,
-    applicationsRemote.remoteEnabled,
-  ])
-
-  useEffect(() => {
-    if (programId && instructorColumnPreset === 'general-detail' && menu === 'instructors') {
-      if (applicationsRemote.remoteEnabled) return
-      setInstructorList(getApplicantInstructorsByProgramId(programId))
-    }
-  }, [programId, instructorColumnPreset, menu, applicationsRemote.remoteEnabled])
 
   const fields = useMemo((): FilterFieldConfig[] => {
     if (

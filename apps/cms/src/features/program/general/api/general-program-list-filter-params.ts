@@ -9,6 +9,9 @@ import dayjs from 'dayjs'
 
 const GENERAL_PROGRAM_API_TYPE = 'GENERAL'
 
+/** 일반 프로그램 목록 — 무한 스크롤 페이지 크기 */
+export const GENERAL_PROGRAM_LIST_PAGE_SIZE = 20
+
 export type GeneralProgramListTableFilters = {
   title?: string
   lifecycleStatus?: string
@@ -37,14 +40,15 @@ function mapOverviewStatusToPeriodStatus(
 /** URL·테이블 pending 필터 → GET /api/admin/programs 쿼리 */
 export function generalProgramListParamsFromFilters(
   statusFilter: GeneralProgramOverviewStatusFilter | null,
-  tableFilters: GeneralProgramListTableFilters = {}
+  tableFilters: GeneralProgramListTableFilters = {},
+  page = 0
 ): AdminProgramsListQuery {
   return {
     programType: GENERAL_PROGRAM_API_TYPE,
     keyword: tableFilters.title?.trim() || undefined,
     periodStatus: mapOverviewStatusToPeriodStatus(statusFilter),
-    page: 0,
-    size: 500,
+    page,
+    size: GENERAL_PROGRAM_LIST_PAGE_SIZE,
   }
 }
 

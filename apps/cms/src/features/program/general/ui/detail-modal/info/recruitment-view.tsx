@@ -22,6 +22,7 @@ import {
   generalRecruitTabItems,
   type GeneralRecruitTabKey,
 } from '@/features/program/general/lib/recruitment-tabs'
+import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { GeneralProgramParticipantRecruitmentInfoView } from './participant-recruitment-info-view'
@@ -50,7 +51,7 @@ export function GeneralProgramRecruitmentView({
   registerVolunteersAdditionalHtml,
   onEdit,
   onSave,
-  onOpenParticipantRecruitmentPreview,
+  onOpenRecruitmentPreview,
 }: {
   program: Program
   activeRecruitTab: GeneralRecruitTabKey
@@ -70,12 +71,12 @@ export function GeneralProgramRecruitmentView({
   registerVolunteersAdditionalHtml: (getter: () => string) => void
   onEdit: () => void
   onSave: () => void
-  /** 참여자 모집 사용자 미리보기 — URL·optimistic open은 상세 모달에서 처리 */
-  onOpenParticipantRecruitmentPreview?: () => void
+  /** 모집 사용자 미리보기 — URL·optimistic open은 상세 모달에서 처리 */
+  onOpenRecruitmentPreview?: (tab: GeneralRecruitTabKey) => void
 }) {
   const handleOpenPreview = useCallback(() => {
-    onOpenParticipantRecruitmentPreview?.()
-  }, [onOpenParticipantRecruitmentPreview])
+    onOpenRecruitmentPreview?.(activeRecruitTab)
+  }, [activeRecruitTab, onOpenRecruitmentPreview])
 
   const isEditMode =
     (activeRecruitTab === 'institutions' && isEditModeInstitutions) ||
@@ -96,13 +97,14 @@ export function GeneralProgramRecruitmentView({
       )
       detail = (
         <DetailInfoSection
-          program={program}
+          program={resolveGeneralRecruitDetailDisplayProgram(program, 'participant')}
           isEditMode={isEditModeInstitutions}
           form={isEditModeInstitutions ? institutionsForm : undefined}
           onRegisterGetAdditionalContentHtml={registerInstitutionsAdditionalHtml}
           showThumbnail
           showRecruitmentMethod={showParticipantRecruitmentMethod}
           recruitmentMethodLabel="지원 방법"
+          emptyReadDisplay="dash"
         />
       )
       break
@@ -116,10 +118,11 @@ export function GeneralProgramRecruitmentView({
       )
       detail = (
         <InstructorDetailInfoSection
-          program={program}
+          program={resolveGeneralRecruitDetailDisplayProgram(program, 'instructor')}
           isEditMode={isEditModeInstructors}
           form={isEditModeInstructors ? instructorsForm : undefined}
           onRegisterGetAdditionalContentHtml={registerInstructorsAdditionalHtml}
+          emptyReadDisplay="dash"
         />
       )
       break
@@ -134,10 +137,11 @@ export function GeneralProgramRecruitmentView({
       detail = (
         <>
           <VolunteerDetailInfoSection
-            program={program}
+            program={resolveGeneralRecruitDetailDisplayProgram(program, 'volunteer')}
             isEditMode={isEditModeVolunteers}
             form={isEditModeVolunteers ? volunteersForm : undefined}
             onRegisterGetAdditionalContentHtml={registerVolunteersAdditionalHtml}
+            emptyReadDisplay="dash"
           />
           <div className="detail-info-form--gap">
             <GeneralProgramVolunteerInterviewScheduleSection
@@ -155,7 +159,7 @@ export function GeneralProgramRecruitmentView({
     }
   }
 
-  const showHeaderActions = canWrite || isEditMode || activeRecruitTab === 'institutions'
+  const showHeaderActions = canWrite || isEditMode || Boolean(onOpenRecruitmentPreview)
 
   return (
     <>
@@ -186,7 +190,7 @@ export function GeneralProgramRecruitmentView({
                     {PROGRAM_EDIT_INFO_BUTTON_LABEL}
                   </CmsButton>
                 ) : null}
-                {activeRecruitTab === 'institutions' ? (
+                {onOpenRecruitmentPreview ? (
                   <CmsButton
                     type="button"
                     variant="primary"

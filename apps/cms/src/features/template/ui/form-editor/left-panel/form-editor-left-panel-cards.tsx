@@ -181,6 +181,9 @@ function PinnedFormCardInner({
         showEditorChrome ? 'paragraph-card--selectable' : '',
         showEditorChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
         isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
+        paragraph.kind === 'single_item' && paragraph.variant === 'scale_type'
+          ? 'paragraph-card--scale-type'
+          : '',
         adminProxyConfirmCard ? 'agreement-admin-proxy-confirm-card' : '',
       ]
         .filter(Boolean)
@@ -375,6 +378,9 @@ function SortableMiddleFormCardInner({
           showEditorChrome ? 'paragraph-card--selectable' : '',
           showEditorChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
           isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
+          paragraph.kind === 'single_item' && paragraph.variant === 'scale_type'
+            ? 'paragraph-card--scale-type'
+            : '',
           adminProxyConfirmCard ? 'agreement-admin-proxy-confirm-card' : '',
         ]
           .filter(Boolean)

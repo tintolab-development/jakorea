@@ -17,10 +17,8 @@ import {
   useDownloadTrainedTeacherEducationJournal,
   useTrainedTeacherEducationJournals,
 } from '@/features/program/trained-teachers/api/education-journals-hooks'
-import { listTrainedTeacherEducationJournals } from '@/features/program/trained-teachers/api/education-journals-service'
 import { TrainedTeachersEducationJournalViewModal } from './education-journal-view-modal'
 import './education-journal-section.css'
-import { useQuery } from '@tanstack/react-query'
 
 const VIEW_CELL_CLASSNAME = 'trained-teachers-education-journal-section__view-cell'
 const BULK_DOWNLOAD_GAP_MS = 400
@@ -90,12 +88,6 @@ export function TrainedTeachersEducationJournalSection({
     institutionId,
     remoteEnabled
   )
-  const localJournalsQuery = useQuery({
-    queryKey: ['cms', 'programs', 'trained-teachers', 'education-journals-local', institutionId],
-    queryFn: () => listTrainedTeacherEducationJournals(programId ?? '', institutionId),
-    enabled: !remoteEnabled,
-    staleTime: Number.POSITIVE_INFINITY,
-  })
 
   const downloadMutation = useDownloadTrainedTeacherEducationJournal(programId)
   const bulkDownloadMutation = useBulkDownloadTrainedTeacherEducationJournals(
@@ -103,11 +95,8 @@ export function TrainedTeachersEducationJournalSection({
     institutionId
   )
 
-  const entries = useMemo(
-    () => (remoteEnabled ? journalsQuery.data : localJournalsQuery.data) ?? [],
-    [journalsQuery.data, localJournalsQuery.data, remoteEnabled]
-  )
-  const isLoading = remoteEnabled ? journalsQuery.isFetching : localJournalsQuery.isFetching
+  const entries = useMemo(() => journalsQuery.data ?? [], [journalsQuery.data])
+  const isLoading = journalsQuery.isFetching
 
   const tableData = useMemo(
     () => entries.map((entry, index) => ({ ...entry, no: entries.length - index })),

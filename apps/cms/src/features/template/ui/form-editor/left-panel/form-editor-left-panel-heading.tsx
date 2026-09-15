@@ -684,7 +684,7 @@ export function formCardTitleUsesPlaceholderTone(p: WritingFormParagraph): boole
 }
 
 export function titleWithPeriodPlaceholder(editorKind: FormEditorKind): string {
-  return editorKind === 'agreement' ? '동의서 제목 입력' : '타이틀을 입력해 주세요'
+  return editorKind === 'agreement' ? '동의서 제목 입력' : '설문 제목 입력'
 }
 
 /** JA 등급 평가지 제목 설명 — 등급 구간 문구만 weight 700 */

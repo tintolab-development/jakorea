@@ -1,0 +1,120 @@
+.root {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0;
+}
+
+.section {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+}
+
+/** 신청 기관 정보 아래 / 안내사항 아래 — 60 → 민트선 → 16 → 타이틀 → 32 → 본문 */
+.sectionAfterDivider {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-32);
+  margin-top: var(--spacing-60);
+  padding-top: var(--spacing-16);
+  border-top: 2px solid var(--color-border-focus);
+}
+
+.sectionHeader {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+}
+
+.sectionTitle {
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.scheduleList {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.scheduleCard {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  justify-content: center;
+  gap: var(--spacing-8);
+  padding: var(--spacing-20);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+}
+
+.scheduleLabel {
+  margin: 0;
+}
+
+.scheduleValue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+}
+
+.schedulePartWrap,
+.inlinePartWrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.schedulePart {
+  margin: 0;
+}
+
+.schedulePartDivider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 14px;
+  margin: 0 var(--spacing-12);
+  background: var(--color-border-default);
+}
+
+.inlineParts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+}
+
+.inlinePart {
+  margin: 0;
+}
+
+.sexOffensePartDivider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 14px;
+  margin: 0 var(--spacing-16);
+  background: var(--color-border-strong);
+}
+
+.fieldValue {
+  margin: 0;
+  white-space: pre-line;
+}

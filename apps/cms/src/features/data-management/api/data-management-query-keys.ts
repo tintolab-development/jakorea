@@ -7,6 +7,8 @@ export const dataManagementQueryKeys = {
       [...dataManagementQueryKeys.detailedPrograms.lists(), searchParamsKey] as const,
     detail: (id: string) =>
       [...dataManagementQueryKeys.detailedPrograms.all(), 'detail', id] as const,
+    /** 등록·상세 셀렉트용 (사용 중만) */
+    options: () => [...dataManagementQueryKeys.detailedPrograms.all(), 'options'] as const,
   },
   textbooks: {
     all: () => [...dataManagementQueryKeys.all, 'textbooks'] as const,

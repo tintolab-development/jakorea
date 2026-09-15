@@ -1,0 +1,74 @@
+.card {
+  display: flex;
+  width: 420px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: var(--spacing-8) var(--spacing-8) var(--spacing-8) var(--spacing-16);
+  align-items: center;
+  gap: var(--spacing-16);
+  border-radius: var(--radius-16);
+  border: 1px solid var(--color-border-light, rgba(61, 61, 61, 0.1));
+  background: var(--color-neutral-white, #fff);
+}
+
+.main {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 4px;
+}
+
+.icon {
+  display: block;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+}
+
+.copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+  row-gap: 2px;
+}
+
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qty {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.kit {
+  color: var(--color-neutral-warm-500, #999);
+}
+
+.volume {
+  color: var(--color-neutral-warm-700, #525252);
+}
+
+.deliveryTag {
+  display: flex;
+  height: 30px;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: var(--spacing-4) var(--spacing-12);
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--radius-8);
+  background: var(--color-element-orange, #f07917);
+  color: var(--color-neutral-white, #fff);
+  white-space: nowrap;
+}

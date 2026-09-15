@@ -25,7 +25,8 @@
         "startAt": null,
         "endAt": null,
         "endPeriodPresetLabel": "활동일 전주 목요일 (24:00)",
-        "showWritingPeriodOnForm": true
+        "showWritingPeriodOnForm": true,
+        "startPeriodPresetLabel": null
       },
       {
         "id": "ujat-edu-plan-explanation-text",

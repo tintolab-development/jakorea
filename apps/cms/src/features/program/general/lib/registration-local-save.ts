@@ -31,6 +31,13 @@ import {
   getProgramRegistrationOverlayRecord,
   readGeneralRegistrationOverlaySponsorIds,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  applyGeneralRegistrationOverlayToProgram,
+  type GeneralRegistrationEditorExtras,
+} from '@/features/program/general/lib/registration-overlay-to-program'
+import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
+import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
 export const COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'company-school-local-'
@@ -143,6 +150,11 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   educationScheduleLines?: string[]
   /** 일정형 — 세부 일정 블록 수(단일·복수). 실적 세부 프로그램명 반영 */
   scheduleCurriculumDetailCount?: number
+  /** 일반 등록 — overlay 매핑용 editor 상태 (미전달 시 기본값) */
+  editorExtras?: Omit<
+    GeneralRegistrationEditorExtras,
+    'programType' | 'sessionRoundType' | 'educationScheduleMode' | 'scheduleCurriculumDetailCount'
+  >
 }): Program {
   const now = new Date().toISOString()
   const y = dayjs().year()
@@ -197,7 +209,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
         })()
       : undefined
 
-  return {
+  const base: Program = {
     id: args.id,
     sponsorId,
     title,
@@ -310,6 +322,30 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     createdAt: now,
     updatedAt: now,
   }
+
+  if (isCompanySchool || isTrainedTeachers) return base
+
+  const withRegistration = applyGeneralRegistrationOverlayToProgram(
+    base,
+    getProgramRegistrationOverlayRecord(),
+    {
+      programType: args.programType,
+      sessionRoundType: args.sessionRoundType ?? 'single',
+      educationScheduleMode: args.educationScheduleMode,
+      scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
+      participantOrganization: args.participant.organization,
+      ...args.editorExtras,
+    }
+  )
+
+  return applyGeneralRecruitOverlayToProgram(
+    withRegistration,
+    {
+      ...getApplicantRecruitInstitutionOverlayRecord(),
+      ...getGeneralRecruitOverlayRecord(),
+    },
+    { preferOverlay: true }
+  )
 }
 
 export function readGeneralRegistrationLocalSaveRecords(): GeneralRegistrationLocalSaveRecord[] {
@@ -408,6 +444,10 @@ export function persistGeneralRegistrationFormLocal(args: {
   educationScheduleMode?: ProgramRegistrationEducationScheduleMode
   educationScheduleLines?: string[]
   scheduleCurriculumDetailCount?: number
+  editorExtras?: Omit<
+    GeneralRegistrationEditorExtras,
+    'programType' | 'sessionRoundType' | 'educationScheduleMode' | 'scheduleCurriculumDetailCount'
+  >
 }): Program {
   const variant = args.variant ?? 'general'
   const id =
@@ -427,6 +467,7 @@ export function persistGeneralRegistrationFormLocal(args: {
     educationScheduleMode: args.educationScheduleMode,
     educationScheduleLines: args.educationScheduleLines,
     scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
+    editorExtras: args.editorExtras,
   })
   const record: GeneralRegistrationLocalSaveRecord = {
     version: 1,
@@ -456,6 +497,10 @@ export async function persistGeneralProgramRegistration(args: {
   educationScheduleMode?: ProgramRegistrationEducationScheduleMode
   educationScheduleLines?: string[]
   scheduleCurriculumDetailCount?: number
+  editorExtras?: Omit<
+    GeneralRegistrationEditorExtras,
+    'programType' | 'sessionRoundType' | 'educationScheduleMode' | 'scheduleCurriculumDetailCount'
+  >
 }): Promise<Program> {
   const variant = args.variant ?? 'general'
   const id =
@@ -475,6 +520,7 @@ export async function persistGeneralProgramRegistration(args: {
     educationScheduleMode: args.educationScheduleMode,
     educationScheduleLines: args.educationScheduleLines,
     scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
+    editorExtras: args.editorExtras,
   })
 
   if (variant === 'economy' && shouldUseCompanySchoolRemoteApi()) {

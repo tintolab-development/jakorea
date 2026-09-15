@@ -149,8 +149,9 @@ export function StatusSection() {
 
       <DsDemo label="프로그램 lifecycle (ProgramLifecycleStatusBadge)">
         <p className="ds-note" style={{ marginTop: 0 }}>
-          <code>/programs/general</code> 등 목록 경로에서는 라벨이 「진행 예정 / 중 / 완료」 3단계로
-          축약됩니다. 아래는 상세·비목록 경로 기준 도메인 라벨입니다.
+          목록·상세 「프로그램 진행 현황」은 typed 4종 라벨(
+          프로그램 진행 예정 / 참여 기관 모집 중 / 프로그램 진행 중 / 프로그램 진행 완료)을
+          사용합니다. UJAT는 봉사자 모집 중을 포함한 5종입니다.
         </p>
         <div className="ds-demo__row">
           {LIFECYCLE_SAMPLES.map(status => (

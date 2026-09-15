@@ -7,7 +7,6 @@ import type { ProgramListConfig } from '@/features/program/general/ui/program-li
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { useTrainedTeacherPrograms } from '@/features/program/trained-teachers/api/hooks'
 import { trainedTeacherListParamsFromOverviewStatus } from '@/features/program/trained-teachers/api/list-params'
-import { invalidateTrainedTeachersProgramsCache } from '@/data/mock/trained-teachers-programs'
 
 export type TrainedTeachersOverviewStatusFilter = 'scheduled' | 'in_progress' | 'completed'
 
@@ -83,16 +82,11 @@ export function useTrainedTeachersProgramListFilters() {
   const listQuery = useTrainedTeacherPrograms(listFilters, true)
 
   const refetchPrograms = useCallback(() => {
-    if (remoteEnabled) {
-      void listQuery.refetch()
-      return
-    }
-    invalidateTrainedTeachersProgramsCache()
     void listQuery.refetch()
-  }, [listQuery, remoteEnabled])
+  }, [listQuery])
 
   const filteredPrograms = useMemo(() => {
-    const programs = listQuery.data ?? []
+    const programs = listQuery.data?.pages.flatMap(page => page.programs) ?? []
     if (remoteEnabled) {
       // periodStatus는 서버 필터 — 클라이언트 overview 재필터 스킵
       return programs
@@ -102,6 +96,8 @@ export function useTrainedTeachersProgramListFilters() {
     }
     return programs
   }, [listQuery.data, remoteEnabled, statusFilter])
+
+  const listQueryFiltersKey = useMemo(() => JSON.stringify(listFilters), [listFilters])
 
   const headerTitle = useMemo(() => {
     if (statusFilter === 'scheduled') return '예정 프로그램'
@@ -138,5 +134,9 @@ export function useTrainedTeachersProgramListFilters() {
     refetchPrograms,
     listQuery,
     remoteEnabled,
+    listQueryFiltersKey,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    hasNextPage: listQuery.hasNextPage ?? false,
   }
 }

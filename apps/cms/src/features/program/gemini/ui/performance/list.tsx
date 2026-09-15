@@ -7,6 +7,7 @@ import { resolveFilterTableExcelFilename } from '@/shared/components/filter-tabl
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants/delete-guide-modal'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { formatDateDot } from '@/shared/utils'
@@ -121,7 +122,21 @@ export function GeminiPerformanceList() {
   const canWrite = canPerformWriteAction(user)
   const { showAlert } = useCmsAlert()
   const allRows = useGeminiPerformanceRows()
-  const { remoteEnabled, isFetching, isError, refetch } = useGeminiPerformanceRowsQueryState()
+  const {
+    remoteEnabled,
+    isFetching,
+    isFetchingNextPage,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+  } = useGeminiPerformanceRowsQueryState()
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: 'gemini-performance',
+  })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
@@ -447,6 +462,7 @@ export function GeminiPerformanceList() {
               : undefined
           }
         />
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
       {showBulkDelete ? (

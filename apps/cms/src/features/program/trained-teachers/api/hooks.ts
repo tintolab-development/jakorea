@@ -1,4 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useLayoutEffect, useMemo } from 'react'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type InfiniteData,
+} from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { shouldRetryTrainedTeacherQuery } from './errors'
@@ -9,9 +16,10 @@ import {
   deleteTrainedTeacherProgram,
   deleteTrainedTeacherPrograms,
   getTrainedTeacherProgram,
-  listTrainedTeacherPrograms,
+  listTrainedTeacherProgramsPage,
   updateTrainedTeacherProgram,
   updateTrainedTeacherProgramInfoDetail,
+  type TrainedTeacherProgramsRemoteListPage,
 } from './service'
 import type { TrainedTeachersCommonInfoSavePayload } from './info-detail-adapters'
 
@@ -19,14 +27,39 @@ function filtersKey(filters: TrainedTeacherListFilters, remoteEnabled: boolean):
   return JSON.stringify({ source: remoteEnabled ? 'remote' : 'mock', ...filters })
 }
 
+function keepFirstInfiniteQueryPage<T>(
+  data: InfiniteData<T> | undefined
+): InfiniteData<T> | undefined {
+  if (!data || data.pages.length <= 1) return data
+  return {
+    ...data,
+    pages: data.pages.slice(0, 1),
+    pageParams: data.pageParams.slice(0, 1),
+  }
+}
+
 export function useTrainedTeacherPrograms(
   filters: TrainedTeacherListFilters = {},
   enabled = true
 ) {
   const remoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi()
-  return useQuery({
-    queryKey: trainedTeacherQueryKeys.list(filtersKey(filters, remoteEnabled)),
-    queryFn: () => listTrainedTeacherPrograms(filters),
+  const queryClient = useQueryClient()
+  const key = filtersKey(filters, remoteEnabled)
+  const listQueryKey = useMemo(() => trainedTeacherQueryKeys.list(key), [key])
+
+  useLayoutEffect(() => {
+    if (!enabled || !remoteEnabled) return
+    queryClient.setQueryData<InfiniteData<TrainedTeacherProgramsRemoteListPage>>(
+      listQueryKey,
+      keepFirstInfiniteQueryPage
+    )
+  }, [queryClient, enabled, remoteEnabled, listQueryKey])
+
+  return useInfiniteQuery({
+    queryKey: listQueryKey,
+    queryFn: ({ pageParam }) => listTrainedTeacherProgramsPage(filters, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled,
     staleTime: remoteEnabled ? 30_000 : Number.POSITIVE_INFINITY,
     retry: shouldRetryTrainedTeacherQuery,

@@ -8,15 +8,18 @@
   padding-bottom: 80px;
 }
 
-/* JA KOREA 귀하 — 작성 시트: disabled pill. 상단 갭은 `.form-editor-left` gap 32px */
-.agreement-sheet-closing-footer--recipient-pill {
-  align-items: stretch;
-}
-
-.agreement-sheet-closing-footer__recipient-pill {
+/* JA KOREA 귀하 — 작성 시트: 시안 30/500 cool-500. 상단 갭은 `.form-editor-left` gap 32px */
+.agreement-sheet-closing-footer__recipient {
   margin: 0;
   width: 100%;
   box-sizing: border-box;
+  color: var(--Color-netural-cool-500, #85969d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 144%; /* 43.2px */
 }
 
 .agreement-sheet-closing-footer:not(.agreement-sheet-closing-footer--document)
@@ -47,10 +50,27 @@
   margin-top: 16px;
 }
 
+/* 시안: 240×52 · padding 6×16 · radius 8 · font 18/600/150% · mint primary */
 .agreement-sheet-closing-footer__submit.cms-button.ant-btn.cms-button--large {
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
   width: 240px;
   min-width: 240px;
   max-width: 240px;
-  height: 52px;
-  padding: 0 16px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  padding: 6px 16px !important;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
+  background: var(--color-mint-01, #01a1af) !important;
+  color: var(--main-WT, #fff) !important;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%; /* 27px */
 }

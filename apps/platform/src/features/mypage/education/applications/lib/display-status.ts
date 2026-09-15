@@ -78,13 +78,13 @@ export function canCancelEducationApplication(status: EducationDisplayStatus): b
 }
 
 /**
- * 신청 내용 탭 실 UI — 결과 대기 / 서류 합격 / 활동 포기(전·중).
- * 신청 반려 등은 placeholder.
+ * 신청 내용 탭 실 UI — 결과 대기 / 서류 합격 / 신청 반려 / 활동 포기(전·중).
  */
 export function canShowEducationApplicationContent(status: EducationDisplayStatus): boolean {
   return (
     status === 'waiting_result' ||
     status === 'document_passed' ||
+    status === 'rejected' ||
     status === 'withdrawn'
   )
 }

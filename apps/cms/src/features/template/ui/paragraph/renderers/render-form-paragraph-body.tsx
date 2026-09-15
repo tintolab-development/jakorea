@@ -781,7 +781,13 @@ export function renderFormParagraphBody(
       return (
         <ScaleType
           paragraph={p}
-          onChange={next => updateParagraph(p.id, () => next)}
+          onSelectPreviewItem={selectedPreviewItemId =>
+            updateParagraph(p.id, cur =>
+              cur.kind === 'single_item' && cur.variant === 'scale_type'
+                ? { ...cur, selectedPreviewItemId }
+                : cur
+            )
+          }
           isCardSelected={isCardSelected}
           isBodyInteractive={isBodyInteractive}
           paragraphInteractionMode={paragraphInteractionMode}

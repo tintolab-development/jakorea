@@ -10,12 +10,17 @@ import type { InstructorApplicationListItemResponse } from '@/shared/api/generat
 import type { IndividualApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationListItemResponse'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
+import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
 import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
 import type {
   GeneralDocumentScreeningStatus,
   GeneralInterviewAssignmentStatus,
   GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
+import {
+  formatRequestedSchedulesPeriodLabel,
+  mapRequestedSchedulesToSessions,
+} from '@/features/program/1c-1s/lib/map-requested-schedules'
 
 function toId(value: number | string | undefined): string {
   if (value == null) return ''
@@ -54,8 +59,14 @@ export function mapApprovalStatusToApiFilter(
 export function mapOrganizationApplicationToApplicantSchoolRow(
   dto: OrganizationApplicationListItemResponse,
   index: number,
-  programId: string
+  programId: string,
+  options?: {
+    requestedSchedules?: RequestedScheduleResponse[]
+  }
 ): ApplicantSchoolRow {
+  const sessions = mapRequestedSchedulesToSessions(options?.requestedSchedules)
+  const desiredEducationPeriod = formatRequestedSchedulesPeriodLabel(options?.requestedSchedules)
+
   return {
     id: toId(dto.id),
     no: index + 1,
@@ -68,6 +79,8 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     appliedAt: dto.submittedAt,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     programId,
+    sessions,
+    desiredEducationPeriod,
   }
 }
 
@@ -91,6 +104,8 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     instructorFeeGradeLabel: dto.instructorFeeGradeSnapshot?.trim() || undefined,
     rejectionReason: dto.rejectReason?.trim() || undefined,
+    distanceKm: dto.distanceKm,
+    longDistanceYn: dto.longDistance,
   }
 }
 
@@ -244,6 +259,8 @@ export function mapParticipantToParticipatingSchoolRow(
   index: number,
   programId: string
 ): ParticipatingSchoolRow {
+  const sourceApplicationId =
+    dto.sourceApplicationId != null ? String(dto.sourceApplicationId) : undefined
   return {
     id: toId(dto.participantId),
     no: index + 1,
@@ -258,6 +275,7 @@ export function mapParticipantToParticipatingSchoolRow(
     teacherName: '-',
     instructors: '',
     programId,
+    organizationApplicationId: sourceApplicationId,
   }
 }
 
@@ -277,6 +295,7 @@ export function mapParticipantToParticipatingInstructorRow(
     lectureRound: '',
     settlementStatus: 'none',
     teacherName: '-',
+    memberId: dto.memberId != null ? String(dto.memberId) : undefined,
     contact: '',
     email: '',
   }

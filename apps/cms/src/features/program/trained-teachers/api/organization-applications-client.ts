@@ -32,3 +32,30 @@ export async function fetchTrainedTeacherOrganizationApplicationRemote(
     })
   )
 }
+
+export async function approveTrainedTeacherOrganizationApplicationRemote(
+  programId: string,
+  applicationId: string
+): Promise<void> {
+  await unwrapApiBody(
+    await customInstance({
+      url: `${listUrl(programId)}/${encodeURIComponent(applicationId)}/approve`,
+      method: 'POST',
+    })
+  )
+}
+
+export async function rejectTrainedTeacherOrganizationApplicationRemote(
+  programId: string,
+  applicationId: string,
+  payload: { reason: string }
+): Promise<void> {
+  await unwrapApiBody(
+    await customInstance({
+      url: `${listUrl(programId)}/${encodeURIComponent(applicationId)}/reject`,
+      method: 'POST',
+      data: payload,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  )
+}

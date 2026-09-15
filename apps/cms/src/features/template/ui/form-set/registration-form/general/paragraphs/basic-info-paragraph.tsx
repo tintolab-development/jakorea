@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react'
+import { useEffect, useMemo, type ReactNode } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
@@ -112,7 +112,12 @@ export function ProgramRegistrationBasicInfoParagraph({
   const [partnerInvolvement, setPartnerInvolvement] = useProgramRegistrationOverlayKv<
     'yes' | 'no'
   >(`${overlayPrefix}.partnerInvolvement`, trainedTeachersDefaults ? 'no' : 'yes')
-  
+
+  // 기본값을 overlay record에 기록 — 미터치 시에도 create body에 partnerInvolvement가 실리게
+  useEffect(() => {
+    setPartnerInvolvement(partnerInvolvement)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- mount seed only
+
   const [operationAnchorIso, setOperationAnchorIso] = useProgramRegistrationOverlayKv<
     string | null
   >(

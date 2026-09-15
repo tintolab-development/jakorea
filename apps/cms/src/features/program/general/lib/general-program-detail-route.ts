@@ -10,7 +10,20 @@ export const GENERAL_PROGRAM_DETAIL_EDIT_PARAM = 'edit'
 export const GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM = 'subTab'
 export const GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM =
   'participantRecruitmentPreview'
+export const GENERAL_PROGRAM_INSTRUCTOR_RECRUITMENT_PREVIEW_PARAM =
+  'instructorRecruitmentPreview'
+export const GENERAL_PROGRAM_VOLUNTEER_RECRUITMENT_PREVIEW_PARAM =
+  'volunteerRecruitmentPreview'
 export const GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE = '1'
+/** @deprecated alias — ACTIVE 값은 세 탭 공통 */
+export const GENERAL_PROGRAM_RECRUITMENT_PREVIEW_ACTIVE =
+  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE
+
+export const GENERAL_PROGRAM_RECRUITMENT_PREVIEW_PARAMS = [
+  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
+  GENERAL_PROGRAM_INSTRUCTOR_RECRUITMENT_PREVIEW_PARAM,
+  GENERAL_PROGRAM_VOLUNTEER_RECRUITMENT_PREVIEW_PARAM,
+] as const
 
 export const GENERAL_PROGRAM_DETAIL_NESTED_QUERY_PARAMS = [
   'schoolId',
@@ -43,7 +56,7 @@ export const GENERAL_PROGRAM_DETAIL_QUERY_PARAMS = [
   GENERAL_PROGRAM_DETAIL_TAB_PARAM,
   GENERAL_PROGRAM_DETAIL_EDIT_PARAM,
   GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM,
-  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
+  ...GENERAL_PROGRAM_RECRUITMENT_PREVIEW_PARAMS,
   ...GENERAL_PROGRAM_DETAIL_NESTED_QUERY_PARAMS,
 ] as const
 
@@ -134,4 +147,56 @@ export function isParticipantRecruitmentPreviewOpen(
     searchParams.get(GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM) ===
     GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE
   )
+}
+
+export function isInstructorRecruitmentPreviewOpen(
+  searchParams: URLSearchParams
+): boolean {
+  return (
+    searchParams.get(GENERAL_PROGRAM_INSTRUCTOR_RECRUITMENT_PREVIEW_PARAM) ===
+    GENERAL_PROGRAM_RECRUITMENT_PREVIEW_ACTIVE
+  )
+}
+
+export function isVolunteerRecruitmentPreviewOpen(
+  searchParams: URLSearchParams
+): boolean {
+  return (
+    searchParams.get(GENERAL_PROGRAM_VOLUNTEER_RECRUITMENT_PREVIEW_PARAM) ===
+    GENERAL_PROGRAM_RECRUITMENT_PREVIEW_ACTIVE
+  )
+}
+
+export function clearGeneralProgramRecruitmentPreviewParams(
+  next: URLSearchParams
+): void {
+  for (const key of GENERAL_PROGRAM_RECRUITMENT_PREVIEW_PARAMS) {
+    next.delete(key)
+  }
+}
+
+export function recruitmentPreviewParamForAudience(
+  audience: 'institutions' | 'instructors' | 'volunteers'
+): (typeof GENERAL_PROGRAM_RECRUITMENT_PREVIEW_PARAMS)[number] {
+  switch (audience) {
+    case 'instructors':
+      return GENERAL_PROGRAM_INSTRUCTOR_RECRUITMENT_PREVIEW_PARAM
+    case 'volunteers':
+      return GENERAL_PROGRAM_VOLUNTEER_RECRUITMENT_PREVIEW_PARAM
+    case 'institutions':
+      return GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM
+    default: {
+      const _exhaustive: never = audience
+      return _exhaustive
+    }
+  }
+}
+
+export function readOpenRecruitmentPreviewAudience(
+  searchParams: URLSearchParams
+): 'institutions' | 'instructors' | 'volunteers' | null {
+  if (isInstructorRecruitmentPreviewOpen(searchParams)) return 'instructors'
+  if (isVolunteerRecruitmentPreviewOpen(searchParams)) return 'volunteers'
+  if (isParticipantRecruitmentPreviewOpen(searchParams)) return 'institutions'
+  return null
 }

@@ -15,6 +15,8 @@ import {
   parseGeneralProgramServiceDetailJson,
   serializeGeneralProgramServiceDetailJson,
 } from '@/features/program/general/lib/general-program-service-detail-json'
+import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 
 /**
  * BE `applicationTargetMode` — OpenAPI codegen에 아직 없음.
@@ -78,22 +80,16 @@ function toRequestDate(value: Date | string | undefined): string | undefined {
 }
 
 function mapPeriodStatusToLifecycle(periodStatus?: string): ProgramLifecycleStatus | undefined {
-  if (!periodStatus) return undefined
-  const normalized = periodStatus.trim().toUpperCase()
-  switch (normalized) {
-    case 'RECRUITING':
-    case 'SCHEDULED':
-    case 'PLANNED':
-      return 'recruiting_students'
-    case 'IN_PROGRESS':
-    case 'RUNNING':
-      return 'education_in_progress'
-    case 'COMPLETED':
-    case 'ENDED':
-      return 'education_completed'
-    default:
-      return undefined
-  }
+  // list DTO에 typed lifecycle이 없을 때만 — periodStatus → typed 리다이렉트
+  return toTypedProgramLifecycleStatus(periodStatus)
+}
+
+function resolveListLifecycleStatus(dto: AdminProgramListItemDto): ProgramLifecycleStatus {
+  return (
+    toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
+    mapPeriodStatusToLifecycle(dto.periodStatus) ??
+    'scheduled'
+  )
 }
 
 function baseProgramDefaults(partial: Partial<Program> & Pick<Program, 'id' | 'title'>): Program {
@@ -118,10 +114,7 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
   // 목록 OpenAPI 예시는 nameKo, 실제 BE 응답은 title/mainTitle을 내려준다.
   const title =
     dto.nameKo?.trim() || dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
-  const lifecycleStatus =
-    mapPeriodStatusToLifecycle(dto.periodStatus) ??
-    (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
-    ('recruiting_students' as ProgramLifecycleStatus)
+  const lifecycleStatus = resolveListLifecycleStatus(dto)
 
   return baseProgramDefaults({
     id: toProgramId(dto.id ?? dto.uuid),
@@ -129,6 +122,7 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
     mainTitle: dto.mainTitle?.trim() || title,
     startDate: dto.businessStartDate ?? dto.startDate ?? undefined,
     endDate: dto.businessEndDate ?? dto.endDate ?? undefined,
+    status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus,
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
     instructors: dto.instructorApplicantCount,
@@ -138,7 +132,13 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
 }
 
 export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
-  const dtoWithNameKo = dto as ProgramResponse & { nameKo?: string }
+  const dtoWithNameKo = dto as ProgramResponse & {
+    nameKo?: string
+    contactName?: string
+    remarks?: string
+    otherMatters?: string
+    recruitmentTargetDetail?: string
+  }
   const title =
     dto.title?.trim() ||
     dto.mainTitle?.trim() ||
@@ -147,6 +147,20 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
   const id = toProgramId(dto.id)
   const now = new Date().toISOString()
   const serviceDetail = parseGeneralProgramServiceDetailJson(dto.serviceDetailJson)
+  const generalCommonInfo = applySettlementPolicyToCommonInfo(
+    serviceDetail.generalCommonInfo,
+    dto.settlementPolicy
+  )
+  const participantRemarks = (
+    serviceDetail.generalCommonInfo?.participantRecruitmentInfo as
+      | { remarks?: string }
+      | undefined
+  )?.remarks
+  const otherNotes =
+    dtoWithNameKo.otherMatters?.trim() ||
+    dtoWithNameKo.remarks?.trim() ||
+    participantRemarks?.trim() ||
+    undefined
 
   return baseProgramDefaults({
     id,
@@ -174,14 +188,13 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     endDate: dto.endDate,
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
-    status: (dto.status as Status | undefined) ?? 'pending',
-    lifecycleStatus: (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ?? undefined,
     businessArea: dto.businessArea,
     titleEn: dto.titleEn,
     textbookName: dto.textbookName,
     textbookNameEn: dto.textbookNameEn,
     schoolId: dto.schoolId,
     district: dto.district,
+    ips: dto.ips as Program['ips'],
     institutionType: dto.institutionType as Program['institutionType'],
     ipOwned: dto.ipOwned,
     courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
@@ -213,10 +226,15 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     recruitmentGuide: dto.recruitmentGuide,
     learningSupportContent: dto.learningSupportContent,
     attachmentFileNames: dto.attachmentFileNames,
+    otherNotes: otherNotes?.trim() || undefined,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
     ...serviceDetail,
+    generalCommonInfo,
     targetLevel: serviceDetail.targetLevels?.[0] ?? (dto.targetLevel as Program['targetLevel']),
+    // typed lifecycleStatus SSOT — serviceDetailJson 값으로 덮지 않음
+    status: (dto.status as Status | undefined) ?? 'pending',
+    lifecycleStatus: toTypedProgramLifecycleStatus(dto.lifecycleStatus) ?? undefined,
   })
 }
 
@@ -229,6 +247,8 @@ export function filterGeneralProgramsByOverviewStatus(
   if (statusFilter === 'scheduled') {
     return programs.filter(program =>
       [
+        'scheduled',
+        'planned',
         'recruiting_students',
         'recruiting_instructors',
         'matching_completed',
@@ -239,12 +259,16 @@ export function filterGeneralProgramsByOverviewStatus(
 
   if (statusFilter === 'in_progress') {
     return programs.filter(program =>
-      ['education_after_textbook', 'education_in_progress'].includes(program.lifecycleStatus || '')
+      ['in_progress', 'education_after_textbook', 'education_in_progress'].includes(
+        program.lifecycleStatus || ''
+      )
     )
   }
 
   return programs.filter(program =>
-    ['education_completed', 'document_processing_completed'].includes(program.lifecycleStatus || '')
+    ['completed', 'education_completed', 'document_processing_completed'].includes(
+      program.lifecycleStatus || ''
+    )
   )
 }
 
@@ -356,6 +380,9 @@ const SERVICE_DETAIL_PROGRAM_KEYS = [
   'volunteerApplicationEndDate',
   'resultAnnouncementDate',
   'resultAnnouncementMethod',
+  'studentListRequired',
+  'generalParticipantInterviewEnabled',
+  'generalVolunteerInterviewEnabled',
 ] as const satisfies ReadonlyArray<keyof Program>
 
 function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {

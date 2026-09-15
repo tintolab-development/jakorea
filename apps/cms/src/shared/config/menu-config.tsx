@@ -413,7 +413,7 @@ const allMenuItems: MenuItemConfig[] = [
         children: [
           {
             key: '/programs/ujat',
-            label: '프로그램 관리',
+            label: 'UJAT 프로그램',
             icon: <DotIcon />,
             enabled: true,
             allowedRoles: ['ADMIN'],

@@ -833,9 +833,8 @@
   --ht-pay-header-weight: 500;
 }
 
-/* p1 — 보유기간 열만 20/700 (셀 변수 override) */
-.form-editor-horizontal-table-wrap--payment-pre-consent-p1
-  .form-editor-horizontal-table__td--field:nth-child(3) {
+/* p1 — 항목·수집·이용 목적·보유기간 본문 20/700 (강사비·성명 등 고정 문구) */
+.form-editor-horizontal-table-wrap--payment-pre-consent-p1 {
   --ht-pay-body-size: 20px;
   --ht-pay-body-weight: 700;
 }

@@ -55,6 +55,7 @@ import './program-list-page.css'
 import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants'
 import { CmsButton, DeleteGuideModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import {
   useCompanySchoolProgramDetail,
   useCompanySchoolPrograms,
@@ -108,8 +109,19 @@ function ProgramListPageContent() {
     isCompanySchoolPath
   )
   const companySchoolProgramSource = isCompanySchoolPath
-    ? (companySchoolListQuery.data ?? [])
+    ? (companySchoolListQuery.data?.pages.flatMap(page => page.programs) ?? [])
     : programs
+
+  const companySchoolInfiniteResetKey = useMemo(
+    () => JSON.stringify(companySchoolListFilters),
+    [companySchoolListFilters]
+  )
+  const { sentinelRef: companySchoolLoadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage: Boolean(isCompanySchoolPath && companySchoolListQuery.hasNextPage),
+    isFetchingNextPage: Boolean(isCompanySchoolPath && companySchoolListQuery.isFetchingNextPage),
+    fetchNextPage: companySchoolListQuery.fetchNextPage,
+    resetKey: companySchoolInfiniteResetKey,
+  })
 
   // 1. Logic Hooks
   const { programType, statusFilter, filteredPrograms, params, setParam } = useProgramListFilters(
@@ -448,23 +460,14 @@ function ProgramListPageContent() {
     [searchParams, setSearchParams]
   )
 
-  const handleCompanySchoolRegistrationSaved = useCallback((program?: Program) => {
+  const handleCompanySchoolRegistrationSaved = useCallback((_program?: Program) => {
     void companySchoolListQuery.refetch()
     closeWritingUserPreview()
-    if (!program) {
-      handleCloseCompanySchoolRegistrationFullpage()
-      return
-    }
-    setSelectedProgramForFullPageModal(program)
-    navigate(getProgramAdminDetailUrlFromPathname(program.id, location.pathname), {
-      replace: true,
-    })
+    handleCloseCompanySchoolRegistrationFullpage()
   }, [
     closeWritingUserPreview,
     companySchoolListQuery,
     handleCloseCompanySchoolRegistrationFullpage,
-    location.pathname,
-    navigate,
   ])
 
   const handleProgramCreateClick = () => {
@@ -624,7 +627,11 @@ function ProgramListPageContent() {
       </div>
       <ProgramList
         data={filteredPrograms}
-        loading={isCompanySchoolPath ? companySchoolListQuery.isFetching : loading}
+        loading={
+          isCompanySchoolPath
+            ? companySchoolListQuery.isFetching && !companySchoolListQuery.isFetchingNextPage
+            : loading
+        }
         headerTitle={headerTitle}
         onView={handleView}
         onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
@@ -643,6 +650,9 @@ function ProgramListPageContent() {
       >
         {programListToolbarActions}
       </ProgramList>
+      {isCompanySchoolPath ? (
+        <div ref={companySchoolLoadMoreRef} aria-hidden style={{ height: 1 }} />
+      ) : null}
 
       <ProgramDetailFullPageModal
         open={

@@ -267,6 +267,8 @@ export function toSponsorRequestFromBasicInfo(
     .filter(Boolean)
     .join(' ')
   const homepageUrl = basicInfo.homepageUrl.trim() || existing.homepageUrl
+  // 담당자(managers/contacts)는 PATCH body에 넣지 않는다 — contacts API로만 관리.
+  // GET embed managers(마스킹 전화 등)를 그대로 보내면 서버 검증 400이 난다.
   return {
     name: basicInfo.nameDisplayKo.trim() || existing.name,
     nameEn: basicInfo.nameDisplayEn.trim() || existing.nameEn,
@@ -285,10 +287,7 @@ export function toSponsorRequestFromBasicInfo(
         : existing.sponsorshipStartDate != null
           ? String(existing.sponsorshipStartDate)
           : undefined,
-    managers: existing.managers,
-    contactInfo: existing.contactInfo,
     securityMemo: basicInfo.securityMemo.trim() || existing.securityMemo,
-    homepageUrl: basicInfo.homepageUrl.trim() || undefined,
   }
 }
 

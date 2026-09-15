@@ -45,11 +45,10 @@ export function useTrainedTeacherOrganizationApplicationsRemoteSync({
   return {
     remoteEnabled,
     applicationsLoading: listQuery.isFetching,
-    approveOrganization: approveTrainedTeacherOrganizationApplication,
-    rejectOrganization: (
-      applicationId: string,
-      payload: ApplicationRejectRequest
-    ) => rejectTrainedTeacherOrganizationApplication(applicationId, payload),
+    approveOrganization: (applicationId: string) =>
+      approveTrainedTeacherOrganizationApplication(programId!, applicationId),
+    rejectOrganization: (applicationId: string, payload: ApplicationRejectRequest) =>
+      rejectTrainedTeacherOrganizationApplication(programId!, applicationId, payload),
     invalidateApplications,
   }
 }

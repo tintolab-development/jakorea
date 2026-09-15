@@ -1,5 +1,4 @@
 import {
-  useMemo,
   useState,
   type CSSProperties,
   type MouseEvent,
@@ -29,27 +28,6 @@ export interface ParagraphInputProps {
 
 function cn(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(' ')
-}
-
-let measureCanvas: HTMLCanvasElement | null = null
-let measureContext: CanvasRenderingContext2D | null = null
-
-function measureTextWidthPx(
-  text: string,
-  type: ParagraphInputType,
-  isExplanationTitle: boolean
-): number {
-  if (typeof document === 'undefined') return 0
-  if (measureCanvas == null) {
-    measureCanvas = document.createElement('canvas')
-    measureContext = measureCanvas.getContext('2d')
-  }
-  const context = measureContext
-  if (!context) return 0
-  const fontSize = type === 'title' ? (isExplanationTitle ? 24 : 20) : isExplanationTitle ? 18 : 16
-  const fontWeight = type === 'title' ? 700 : 500
-  context.font = `${fontWeight} ${fontSize}px Pretendard, sans-serif`
-  return Math.ceil(context.measureText(text).width)
 }
 
 export function ParagraphInput({
@@ -83,19 +61,13 @@ export function ParagraphInput({
   /** 설명글_텍스트형 본문 — 긴 텍스트 줄바꿈(말줄임 금지), `\n`·자동 개행 */
   const isExplanationBodyMultiline = isExplanationBody
   const useMultilineInput = isMultilineCardDescription || isExplanationBodyMultiline
-  const widthSource = filled ? displayValue : (placeholder ?? '')
-  const dynamicWidthPx = useMemo(() => {
-    if (useMultilineInput) return 0
-    const source = widthSource.length > 0 ? widthSource : ' '
-    const measured = measureTextWidthPx(source, type, isExplanationTitle)
-    return Math.max(measured + 2, 1)
-  }, [widthSource, type, isExplanationTitle, useMultilineInput])
-  const dynamicWidthStyle: CSSProperties = useMultilineInput
+  /**
+   * 폭·높이는 CSS(`field-sizing` / fit-content)로 처리.
+   * 키마다 canvas 측정·autoSize 재계산하면 레이아웃 스래싱으로 버벅인다.
+   */
+  const shellStyle: CSSProperties | undefined = useMultilineInput
     ? { width: '100%', minWidth: 0, maxWidth: '100%' }
-    : {
-        width: `${dynamicWidthPx}px`,
-        maxWidth: '100%',
-      }
+    : undefined
 
   const rootClass = cn(
     'paragraph-input',
@@ -117,7 +89,7 @@ export function ParagraphInput({
         <div className="paragraph-input__row">
           {row}
           <span className="paragraph-input__main">
-            <span className="paragraph-input__view-text" style={dynamicWidthStyle}>
+            <span className="paragraph-input__view-text">
               {filled ? (
                 displayValue
               ) : (
@@ -147,7 +119,7 @@ export function ParagraphInput({
       <div className="paragraph-input__row">
         {row}
         <span className="paragraph-input__main">
-          <div className={shellClass} style={dynamicWidthStyle}>
+          <div className={shellClass} style={shellStyle}>
             {useMultilineInput ? (
               <Input.TextArea
                 disabled={disabled}
@@ -160,7 +132,7 @@ export function ParagraphInput({
                 }}
                 placeholder={placeholder}
                 variant="borderless"
-                autoSize={{ minRows: 1, maxRows: 12 }}
+                autoSize={false}
               />
             ) : (
               <Input

@@ -230,6 +230,28 @@ export async function createInterviewAssignmentRemote(
   )
 }
 
+/** GET /api/admin/organization-applications/{id}/requested-schedules — 1사1교 희망일정 SSOT */
+export async function fetchOrganizationApplicationRequestedSchedulesRemote(
+  applicationId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/requestedScheduleResponse').RequestedScheduleResponse[]
+> {
+  const body = await unwrapApiBody<
+    | import('@/shared/api/generated/dashboard/schemas/requestedScheduleResponse').RequestedScheduleResponse[]
+    | {
+        items?: import('@/shared/api/generated/dashboard/schemas/requestedScheduleResponse').RequestedScheduleResponse[]
+        schedules?: import('@/shared/api/generated/dashboard/schemas/requestedScheduleResponse').RequestedScheduleResponse[]
+      }
+  >(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}/requested-schedules`,
+      method: 'GET',
+    })
+  )
+  if (Array.isArray(body)) return body
+  return body.items ?? body.schedules ?? []
+}
+
 export async function assignVolunteerInterviewSlotRemote(
   applicationId: string,
   payload: import('@/shared/api/generated/dashboard/schemas/interviewAssignmentRequest').InterviewAssignmentRequest

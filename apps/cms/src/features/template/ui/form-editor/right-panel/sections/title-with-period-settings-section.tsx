@@ -791,6 +791,7 @@ function DefaultTitleWithPeriodSettings({
 }) {
   const startMode = resolveTitleStartPeriodMode(active)
   const endMode = resolveTitleEndPeriodMode(active)
+  const todayPreviewLabel = useMemo(() => ujatEduJournalStartImmediatePreviewLabel(), [])
 
   const startAnchorDate = useMemo((): Dayjs => {
     if (active.startAt) {
@@ -846,6 +847,21 @@ function DefaultTitleWithPeriodSettings({
           <CmsRadio value="custom">직접 설정</CmsRadio>
         </CmsRadioGroup>
       </Form.Item>
+      {startMode === 'immediate' ? (
+        <Form.Item>
+          <ParagraphDatePicker
+            mode="single"
+            presetMode="date"
+            width="100%"
+            suppressAutoTodayWhenEmpty
+            value={null}
+            disabled
+            placeholder={todayPreviewLabel}
+            presetDisplayText={todayPreviewLabel}
+            onChange={() => undefined}
+          />
+        </Form.Item>
+      ) : null}
       {startMode === 'custom' ? (
         <Form.Item>
           <ParagraphDatePicker
@@ -893,6 +909,21 @@ function DefaultTitleWithPeriodSettings({
           <CmsRadio value="custom">직접 설정</CmsRadio>
         </CmsRadioGroup>
       </Form.Item>
+      {endMode === 'immediate' ? (
+        <Form.Item>
+          <ParagraphDatePicker
+            mode="single"
+            presetMode="date"
+            width="100%"
+            suppressAutoTodayWhenEmpty
+            value={null}
+            disabled
+            placeholder={UJAT_EDU_JOURNAL_END_NO_DEADLINE_PREVIEW_LABEL}
+            presetDisplayText={UJAT_EDU_JOURNAL_END_NO_DEADLINE_PREVIEW_LABEL}
+            onChange={() => undefined}
+          />
+        </Form.Item>
+      ) : null}
       {endMode === 'custom' ? (
         <Form.Item>
           <ParagraphDatePicker

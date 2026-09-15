@@ -23,6 +23,14 @@ export const trainedTeacherQueryKeys = {
       programId,
       organizationApplicationId,
     ] as const,
+  educationCompletionsRoot: () =>
+    [...trainedTeacherQueryKeys.all, 'education-completions'] as const,
+  educationCompletions: (programId: string, organizationApplicationId = '') =>
+    [
+      ...trainedTeacherQueryKeys.educationCompletionsRoot(),
+      programId,
+      organizationApplicationId,
+    ] as const,
   participatingInstitutions: (programId: string) =>
     [...trainedTeacherQueryKeys.all, 'participating-institutions', programId] as const,
   performanceSummary: (programId: string) =>

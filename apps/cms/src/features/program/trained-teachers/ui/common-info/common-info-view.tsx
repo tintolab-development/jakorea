@@ -10,7 +10,7 @@
  * - 커리큘럼형 복수: ■ N회차(차시 및 교육 내용/과제 설정), 교육 형태·IPS 회차 별 상이 시 1단/2단 행
  * - 일정형 단일: ■ 세부 일정 NN(일정명/진행 시간 — 진행 그룹 A/B)
  * - 일정형 복수: ■ 행사 일정 NN(일정명/진행 일정/과제 설정) — 교육 진행 일정 설정 섹션 비노출
- * - 교육 연수 ON: 첫 진행 항목 타이틀·일정명 교육 연수 치환 (IPS Prepare 고정)
+ * - 교육 연수 ON: 첫 진행 항목 타이틀·일정명 교사 연수 치환 (IPS Prepare 고정)
  *
  * 수정 모드: KPI 인풋·교육일지 라디오·차시/회차/일정 추가·삭제·교육 연수 토글·진행 그룹 구분 추가
  * (진행 그룹은 전 테이블 동시 적용).
@@ -65,9 +65,9 @@ import '@/features/template/ui/shared/paragraph-time-picker.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './common-info-view.css'
 
-/** 교육 연수 — IPS Prepare 고정 표기 */
+/** 교사 연수 — IPS Prepare 고정 표기 */
 const TEACHER_TRAINING_IPS_SUMMARY = 'Prepare | 해당없음'
-const TEACHER_TRAINING_HEADING = '교육 연수'
+const TEACHER_TRAINING_HEADING = '교사 연수'
 
 type TrainedTeachersCommonInfo = NonNullable<Program['generalCommonInfo']>
 

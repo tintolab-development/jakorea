@@ -53,6 +53,7 @@ import {
   useTemplateWritingPreview,
 } from '@/features/template/context/template-writing-preview-context'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { UjatProgramRegistrationFullpageModal } from '@/features/program/ujat/ui/registration/ujat-program-registration-fullpage-modal'
 import { UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/ujat/model/ujat-program-registration-flow'
 import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
@@ -101,14 +102,26 @@ function UjatProgramListPageContent() {
   const listParams = useMemo(
     () => ({
       businessYear: appliedYear === UJAT_PROGRESS_YEAR_ALL ? undefined : appliedYear,
-      size: 500 as const,
     }),
     [appliedYear]
   )
   const programsQuery = usePrograms(listParams)
   const updateProgramMutation = useUpdateProgram()
-  const programs = useMemo(() => programsQuery.data ?? [], [programsQuery.data])
-  const loading = programsQuery.isFetching
+  const programs = useMemo(
+    () => programsQuery.data?.pages.flatMap(page => page.programs) ?? [],
+    [programsQuery.data]
+  )
+  const loading = programsQuery.isFetching && !programsQuery.isFetchingNextPage
+  const infiniteResetKey = String(appliedYear)
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage: programsQuery.hasNextPage ?? false,
+    isFetchingNextPage: programsQuery.isFetchingNextPage,
+    fetchNextPage: programsQuery.fetchNextPage,
+    resetKey: infiniteResetKey,
+  })
+
+  const totalElements =
+    programsQuery.data?.pages[0]?.totalElements ?? programs.length
 
   useEffect(() => {
     if (!programsQuery.isError || programsQuery.isFetching) return
@@ -376,7 +389,7 @@ function UjatProgramListPageContent() {
         onSearch={handleSearch}
         bordered={false}
         title="전체 프로그램"
-        description={`총 ${filteredRows.length.toLocaleString()}건`}
+        description={`총 ${totalElements.toLocaleString()}건`}
         actions={toolbarActions}
         excelExport={{
           columns,
@@ -395,6 +408,7 @@ function UjatProgramListPageContent() {
             style: { cursor: 'pointer' },
           })}
         />
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
       <UjatProgramDetailFullPageModal

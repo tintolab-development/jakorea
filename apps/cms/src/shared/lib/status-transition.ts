@@ -206,6 +206,9 @@ export const PROGRAM_LIFECYCLE_STATUS_TRANSITIONS: Record<
   ProgramLifecycleStatus,
   ProgramLifecycleStatus[]
 > = {
+  scheduled: ['recruiting_students', 'in_progress', 'planned'],
+  in_progress: ['scheduled', 'completed', 'education_in_progress', 'education_after_textbook'],
+  completed: ['in_progress', 'education_completed', 'document_processing_completed'],
   planned: ['instructor_recruitment_planned', 'recruiting_students', 'participant_instructor_recruitment_planned'],
   instructor_recruitment_planned: ['planned', 'volunteer_recruitment_planned', 'recruiting_instructors', 'participant_instructor_recruitment_planned'],
   volunteer_recruitment_planned: ['instructor_recruitment_planned', 'recruiting_volunteers', 'participant_instructor_recruitment_planned'],
@@ -273,6 +276,9 @@ export function getNextProgramLifecycleStatus(
     return 'recruiting_students'
   }
   const transitions: Record<ProgramLifecycleStatus, ProgramLifecycleStatus | null> = {
+    scheduled: 'recruiting_students',
+    in_progress: 'completed',
+    completed: null,
     planned: 'instructor_recruitment_planned',
     instructor_recruitment_planned: 'volunteer_recruitment_planned',
     volunteer_recruitment_planned: 'recruiting_students',
@@ -304,6 +310,9 @@ export function getPreviousProgramLifecycleStatus(
     return null
   }
   const transitions: Record<ProgramLifecycleStatus, ProgramLifecycleStatus | null> = {
+    scheduled: null,
+    in_progress: 'scheduled',
+    completed: 'in_progress',
     planned: null,
     instructor_recruitment_planned: 'planned',
     volunteer_recruitment_planned: 'instructor_recruitment_planned',
