@@ -1,6 +1,11 @@
 /** 일반 프로그램 신청 심사 UI — 봉사자 / 개인 참여자 구분 */
 export type ScreeningSubjectKind = 'volunteer' | 'participant'
 
+/** 모달 본문 호칭 — `봉사자` / `참여자` */
+export function screeningSubjectNoun(kind: ScreeningSubjectKind): string {
+  return kind === 'participant' ? '참여자' : '봉사자'
+}
+
 export function screeningApplicantNameLabel(kind: ScreeningSubjectKind): string {
   return kind === 'participant' ? '신청자명' : '신청 봉사자명'
 }

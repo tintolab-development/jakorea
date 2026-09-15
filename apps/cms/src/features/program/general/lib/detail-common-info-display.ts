@@ -18,6 +18,10 @@ import {
 import { TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
+import {
+  DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK,
+  GENERAL_INTERVIEW_MOCK_TIME_SLOTS,
+} from '@/data/mock/general-volunteer-interview-schedule-mock'
 
 const PARTICIPANT_LABEL_BY_VALUE = Object.fromEntries(
   TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.map(o => [o.value, o.label])
@@ -229,11 +233,11 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK: NonNullable
     contactOrganizationName: 'JA Korea',
   },
   volunteerInterviewScheduleInfo: {
-    recurringUnavailable: '일요일, 공휴일',
-    specificUnavailableDates: '2026년 2월 10일(화)',
-    specificUnavailableDateIsos: ['2026-02-10'],
-    availableTimeSlots:
-      '09:00 ~ 09:30, 09:30 ~ 10:00, 10:00 ~ 10:30, 10:30 ~ 11:00, 11:00 ~ 11:30, 16:00 ~ 16:30, 20:30 ~ 21:00',
+    recurringUnavailable: DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.recurringUnavailable,
+    specificUnavailableDates:
+      DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.specificUnavailableDates,
+    specificUnavailableDateIsos: ['2026-09-18'],
+    availableTimeSlots: GENERAL_INTERVIEW_MOCK_TIME_SLOTS,
   },
   calendarSurveySchedules: [
     {

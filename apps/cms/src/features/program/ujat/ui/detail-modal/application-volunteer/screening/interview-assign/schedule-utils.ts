@@ -176,10 +176,13 @@ export function resolveInterviewAssignModalCalendarState(
   applicant: UjatVolunteerApplicantRow
 ): { scheduleMonth: Dayjs; selectedDate: Dayjs; selectedSlotKey: string | null } {
   const { scheduleMonth, clickableDateKeys, disabledDate } = schedule
-  const firstClickableKey = [...clickableDateKeys].sort()[0]
-  const firstClickableDate = firstClickableKey
-    ? dayjs(firstClickableKey)
-    : scheduleMonth
+  const availabilityKeys = getApplicantInterviewAvailabilityDateKeys(applicant)
+  const preferredKeys =
+    availabilityKeys.size > 0
+      ? [...clickableDateKeys].filter(key => availabilityKeys.has(key)).sort()
+      : [...clickableDateKeys].sort()
+  const firstClickableKey = preferredKeys[0] ?? [...clickableDateKeys].sort()[0]
+  const firstClickableDate = firstClickableKey ? dayjs(firstClickableKey) : scheduleMonth
 
   const initial = resolveInitialAssignSelection(applicant)
 
@@ -190,7 +193,8 @@ export function resolveInterviewAssignModalCalendarState(
     initial.date &&
     !initial.date.isBefore(schedule.rangeStart, 'day') &&
     !initial.date.isAfter(schedule.rangeEnd, 'day') &&
-    !disabledDate(initial.date)
+    !disabledDate(initial.date) &&
+    (availabilityKeys.size === 0 || availabilityKeys.has(initial.date.format('YYYY-MM-DD')))
   ) {
     selectedDate = initial.date
     selectedSlotKey = initial.slotKey
@@ -213,13 +217,23 @@ export function getSlotsForDate(
 
   const storedLabel = formatStoredInterviewDateLabel(dayjs(dateKey))
   const dayAvailability = applicant.interviewAvailability.find(
-    day => day.dateLabel === storedLabel || parseUjatInterviewDateLabel(day.dateLabel)?.format('YYYY-MM-DD') === dateKey
+    day =>
+      day.dateLabel === storedLabel ||
+      parseUjatInterviewDateLabel(day.dateLabel)?.format('YYYY-MM-DD') === dateKey
   )
-  if (!dayAvailability) return programSlots
+  /** 봉사자가 신청한 시간대만 노출 — 해당일 availability 없으면 빈 목록 */
+  if (!dayAvailability) return []
 
   const allowed = new Set(dayAvailability.slots.map(normalizeTimeRangeKey))
-  const filtered = programSlots.filter(slot => allowed.has(slot.timeRange))
-  return filtered.length > 0 ? filtered : programSlots
+  const fromProgram = programSlots.filter(slot => allowed.has(slot.timeRange))
+  if (fromProgram.length > 0) return fromProgram
+
+  /** 프로그램 슬롯과 교집합이 없어도 신청 시간대는 노출 */
+  return [...allowed].map(timeRange => ({
+    key: `${dateKey}|${timeRange}`,
+    timeRange,
+    displayTimeRange: formatDisplayTimeRange(timeRange),
+  }))
 }
 
 export function formatInterviewSummary(date: Dayjs, timeRange: string): string {

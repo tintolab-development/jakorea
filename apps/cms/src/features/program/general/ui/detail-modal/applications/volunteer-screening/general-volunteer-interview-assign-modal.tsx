@@ -3,11 +3,11 @@ import { Spin } from 'antd'
 import type { Dayjs } from 'dayjs'
 import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
-import { shouldUseApplicationsHttpRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { useGeneralInterviewSlots } from '@/features/program/general/hooks/use-general-interview-slots'
 import {
-  parseGeneralInterviewScheduleFromProgram,
+  parseGeneralInterviewScheduleFromDefaultMock,
   parseGeneralInterviewScheduleFromRemoteSlots,
+  shouldUseRemoteInterviewSchedule,
 } from '@/features/program/general/lib/general-interview-assign-schedule-utils'
 import {
   toInterviewAssignModalApplicant,
@@ -30,6 +30,13 @@ export type GeneralVolunteerInterviewAssignModalProps = {
   applicant: GeneralVolunteerApplicantRow
   allApplicants: GeneralVolunteerApplicantRow[]
   mode: 'assign' | 'reassign'
+  /**
+   * 신청 목록이 remote인지. false면 목록 mock과 동일하게 면접 스케줄도 mock.
+   * (참여자 합격자 목록 등 — 프로그램이 remote여도 신청 mock이면 mock 스케줄)
+   */
+  applicationsUseRemote?: boolean
+  /** 본문 호칭 — 기본 `봉사자` */
+  subjectNoun?: string
   onCancel: () => void
   onConfirm: (payload: GeneralInterviewAssignConfirmPayload) => void
 }
@@ -41,18 +48,25 @@ export function GeneralVolunteerInterviewAssignModal({
   applicant,
   allApplicants,
   mode,
+  applicationsUseRemote = false,
+  subjectNoun = '봉사자',
   onCancel,
   onConfirm,
 }: GeneralVolunteerInterviewAssignModalProps) {
-  const remote = shouldUseApplicationsHttpRemoteApi()
-  const slotsQuery = useGeneralInterviewSlots(program.id, open)
+  const useRemoteSchedule = shouldUseRemoteInterviewSchedule(program.id, {
+    applicationsUseRemote,
+  })
+  const slotsQuery = useGeneralInterviewSlots(program.id, open && useRemoteSchedule, {
+    applicationsUseRemote,
+  })
 
   const schedule = useMemo(() => {
-    if (remote && slotsQuery.data != null) {
-      return parseGeneralInterviewScheduleFromRemoteSlots(slotsQuery.data)
+    if (useRemoteSchedule) {
+      return parseGeneralInterviewScheduleFromRemoteSlots(slotsQuery.data ?? [])
     }
-    return parseGeneralInterviewScheduleFromProgram(program)
-  }, [program, remote, slotsQuery.data])
+    // mock 신청 목록·mock 프로그램: DEFAULT(2026.09~10) — 목록 slotCount·연민트와 동일 SSOT
+    return parseGeneralInterviewScheduleFromDefaultMock()
+  }, [slotsQuery.data, useRemoteSchedule])
 
   const modalApplicant = useMemo(
     () =>
@@ -62,7 +76,7 @@ export function GeneralVolunteerInterviewAssignModal({
     [applicant, mode]
   )
 
-  const waitingRemoteSlots = remote && open && slotsQuery.isLoading
+  const waitingRemoteSlots = useRemoteSchedule && open && slotsQuery.isLoading
 
   return (
     <>
@@ -82,6 +96,7 @@ export function GeneralVolunteerInterviewAssignModal({
           allApplicants={toInterviewAssignModalApplicants(allApplicants)}
           mode={mode}
           schedule={schedule}
+          subjectNoun={subjectNoun}
           onCancel={onCancel}
           onConfirm={onConfirm}
         />

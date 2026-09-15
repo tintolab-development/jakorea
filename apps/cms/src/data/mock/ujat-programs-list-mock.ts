@@ -131,10 +131,10 @@ function buildUjatElementaryListPrograms(): Program[] {
             deductionItems: '일용근로자 원천징수세액',
             volunteerInterviewScheduleInfo: {
               recurringUnavailable: '일요일, 공휴일',
-              specificUnavailableDates: '26년 3월 6일(금), 26년 3월 15일(금)',
-              specificUnavailableDateIsos: ['2026-03-06', '2026-03-15'],
+              specificUnavailableDates: '26년 9월 18일(금)',
+              specificUnavailableDateIsos: ['2026-09-18'],
               availableTimeSlots:
-                '09:00 ~ 09:30, 09:30 ~ 10:00, 10:00 ~ 10:30, 10:30 ~ 11:00, 11:00 ~ 11:30, 16:00 ~ 16:30, 20:30 ~ 21:00',
+                '09:00 ~ 09:30, 14:00 ~ 14:30, 15:00 ~ 15:30, 16:00 ~ 16:30',
             },
           }
         : undefined,
