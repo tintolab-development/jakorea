@@ -56,11 +56,13 @@ export function getGeneralParticipantTypes(program: Program): GeneralProgramPart
 }
 
 export function hasGeneralInstructorApplications(program: Program): boolean {
-  return getGeneralParticipantTypes(program).includes('teacher_instructor')
+  if (getGeneralParticipantTypes(program).includes('teacher_instructor')) return true
+  return program.generalCommonInfo?.instructorRecruitmentInfo != null
 }
 
 export function hasGeneralVolunteerApplications(program: Program): boolean {
-  return getGeneralParticipantTypes(program).includes('volunteer')
+  if (getGeneralParticipantTypes(program).includes('volunteer')) return true
+  return program.generalCommonInfo?.volunteerRecruitmentInfo != null
 }
 
 /** 참여자(개인)·기관 신청 목록 LNB — school_institution 또는 individual 포함 시 */
@@ -82,6 +84,14 @@ export function getGeneralParticipantInterviewEnabled(program: Program): boolean
 export function getGeneralVolunteerInterviewEnabled(program: Program): boolean {
   if (program.generalVolunteerInterviewEnabled != null) {
     return program.generalVolunteerInterviewEnabled
+  }
+  const nested =
+    program.generalCommonInfo?.volunteerRecruitmentInfo as
+      | { volunteerInterviewEnabled?: boolean; generalVolunteerInterviewEnabled?: boolean }
+      | undefined
+  if (nested?.volunteerInterviewEnabled != null) return nested.volunteerInterviewEnabled
+  if (nested?.generalVolunteerInterviewEnabled != null) {
+    return nested.generalVolunteerInterviewEnabled
   }
   return Boolean(
     program.interviewStartDate ||

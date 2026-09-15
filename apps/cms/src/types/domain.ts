@@ -190,9 +190,16 @@ export interface GeneralProgramCommonInfoExtension {
 /** 일반 프로그램 — 참여자 모집 정보 (프로그램 등록 참여자 모집 양식 필드) */
 export interface GeneralProgramParticipantRecruitmentInfo {
   announcementPublished?: boolean
+  /** Admin API / Primary seed 표시 라벨 (있으면 boolean보다 우선) */
+  announcementPublishedLabel?: string
   preEducationNoticeRequired?: boolean
+  preEducationNoticeRequiredLabel?: string
+  advanceGuidanceRequired?: boolean
+  advanceGuidanceRequiredLabel?: string
   /** 수료증 발급 여부 — 모집 양식 */
   certificateIssuanceProvided?: boolean
+  studentListRequired?: 'required' | 'not_required'
+  studentListRequiredLabel?: string
   maxAssignableInstructors?: number
   /** 기관 신청 시 선택 가능한 최대 학급 수 상한 */
   maxClassCount?: number
@@ -202,7 +209,19 @@ export interface GeneralProgramParticipantRecruitmentInfo {
   operationPeriodLabel?: string
   recruitmentPeriodLabel?: string
   finalAnnouncementLabel?: string
+  resultAnnouncementLabel?: string
   contactOrganizationName?: string
+  inquiryTel?: string
+  inquiryEmail?: string
+  tel?: string
+  email?: string
+  contactPhone?: string
+  contactEmail?: string
+  remarks?: string
+  educationTarget?: string
+  educationTargetDetail?: string
+  recruitmentTarget?: string
+  recruitmentTargetDetail?: string
   /** 개인 참여자 모집 — 면접 유무 (등록 양식·상세 mock) */
   interviewEnabled?: boolean
   /** 비고 해당 없음 — true면 공고 비노출·관리자 상세에는 '-' */
@@ -212,15 +231,31 @@ export interface GeneralProgramParticipantRecruitmentInfo {
 /** 일반 프로그램 — 강사 모집 정보 (프로그램 등록 강사 모집 양식 필드) */
 export interface GeneralProgramInstructorRecruitmentInfo {
   announcementPublished?: boolean
+  announcementPublishedLabel?: string
   /** 표시용 — 운영·모집 기간 (요일 포함) */
   operationPeriodLabel?: string
   recruitmentPeriodLabel?: string
+  finalAnnouncementLabel?: string
+  resultAnnouncementLabel?: string
   contactOrganizationName?: string
+  inquiryTel?: string
+  inquiryEmail?: string
+  tel?: string
+  email?: string
+  contactPhone?: string
+  contactEmail?: string
+  remarks?: string
+  recruitmentTarget?: string
+  recruitmentTargetDetail?: string
 }
 
 /** 일반 프로그램 — 봉사자 모집 정보 (프로그램 등록 봉사자 모집 양식 필드) */
 export interface GeneralProgramVolunteerRecruitmentInfo {
   announcementPublished?: boolean
+  announcementPublishedLabel?: string
+  volunteerInterviewEnabled?: boolean
+  generalVolunteerInterviewEnabled?: boolean
+  volunteerInterviewEnabledLabel?: string
   /** UJAT 하반기 — 모집 공고 노출 시점 (`start-day` | `one-day-before` | `one-week-before`) */
   noticeExposureTiming?: string
   /** 비고 해당 없음 — true면 공고 비노출·관리자 상세에는 '-' */
@@ -228,7 +263,18 @@ export interface GeneralProgramVolunteerRecruitmentInfo {
   /** 표시용 — 운영·모집 기간 (요일 포함) */
   operationPeriodLabel?: string
   recruitmentPeriodLabel?: string
+  finalAnnouncementLabel?: string
+  resultAnnouncementLabel?: string
   contactOrganizationName?: string
+  inquiryTel?: string
+  inquiryEmail?: string
+  tel?: string
+  email?: string
+  contactPhone?: string
+  contactEmail?: string
+  remarks?: string
+  recruitmentTarget?: string
+  recruitmentTargetDetail?: string
 }
 
 /** 일반 프로그램 — 봉사자 면접 진행 가능 일정 */
