@@ -1,17 +1,21 @@
 /**
- * 1사1교 1일1교 충돌 — instructor_assignment_calendar write 가드와 동일 기준(강사×강의일).
+ * 1사1교 1일1교 충돌 — instructor_assignment_calendar SSOT + list lectureDate.
  * BE error code: ONE_COMPANY_ONE_SCHOOL_INSTRUCTOR_DAY_CONFLICT
- * Calendar 전용 GET은 없으므로 assignments + schedule.startAt 날짜로 FE 유도.
  */
 
 import type { InstructorAssignmentListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorAssignmentListItemResponse'
 import type { WaitingInstructorAssignmentStatus } from '@/features/program/general/lib/waiting-instructor-assignment'
+import type {
+  InstructorAssignmentCalendarItem,
+  InstructorAssignmentListItemEnriched,
+} from '@/features/program/general/api/instructor-assignment-types'
 
 export const ONE_COMPANY_ONE_SCHOOL_INSTRUCTOR_DAY_CONFLICT =
   'ONE_COMPANY_ONE_SCHOOL_INSTRUCTOR_DAY_CONFLICT' as const
 
+/** 409 안내 — BE message와 동일 톤 */
 export const ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE =
-  '동일 강사는 하루 한 학교만 배정할 수 있습니다. (1일1교)'
+  '같은 강사를 같은 날짜에 두 학교에 배정할 수 없습니다.'
 
 const ACTIVE_ASSIGNMENT_STATUSES = new Set([
   'ASSIGNED',
@@ -41,7 +45,6 @@ export function isActiveInstructorAssignmentStatus(status: string | null | undef
     return false
   }
   if (ACTIVE_ASSIGNMENT_STATUSES.has(normalized)) return true
-  // 알 수 없는 상태도 활성으로 취급(충돌 과소 표시 방지)
   return true
 }
 
@@ -58,43 +61,93 @@ export function buildScheduleLectureDateById(
   return map
 }
 
+function addOccupied(
+  occupied: Map<string, Set<string>>,
+  key: string | null | undefined,
+  dateKey: string
+) {
+  if (!key) return
+  const id = String(key)
+  let set = occupied.get(id)
+  if (!set) {
+    set = new Set()
+    occupied.set(id, set)
+  }
+  set.add(dateKey)
+}
+
 /**
- * 강사 키(participantId · memberId) → 이미 점유된 강의일(YYYY-MM-DD) 집합.
- * 동일 기관 배정일도 포함(정책: 강사×일 중복 금지).
+ * Calendar GET items → 강사 memberId → 점유 강의일.
+ * activeYn === false 는 제외.
+ */
+export function buildOccupiedLectureDatesFromCalendar(
+  items: InstructorAssignmentCalendarItem[] | undefined | null
+): Map<string, Set<string>> {
+  const occupied = new Map<string, Set<string>>()
+  for (const item of items ?? []) {
+    if (item.activeYn === false) continue
+    const dateKey = extractLectureDateKey(item.lectureDate)
+    if (!dateKey || item.instructorMemberId == null) continue
+    addOccupied(occupied, String(item.instructorMemberId), dateKey)
+  }
+  return occupied
+}
+
+/**
+ * 강사 키 → 점유 강의일.
+ * 1) assignment.lectureDate (enrich) 우선
+ * 2) scheduleId → scheduleDateById 폴백
  */
 export function buildOccupiedLectureDatesByInstructorKeys(
-  assignments: InstructorAssignmentListItemResponse[] | undefined | null,
+  assignments:
+    | Array<InstructorAssignmentListItemResponse | InstructorAssignmentListItemEnriched>
+    | undefined
+    | null,
   scheduleDateById: Map<string, string>
 ): Map<string, Set<string>> {
   const occupied = new Map<string, Set<string>>()
 
-  const add = (key: string | null | undefined, dateKey: string) => {
-    if (!key) return
-    const id = String(key)
-    let set = occupied.get(id)
-    if (!set) {
-      set = new Set()
-      occupied.set(id, set)
-    }
-    set.add(dateKey)
-  }
-
   for (const assignment of assignments ?? []) {
     if (!isActiveInstructorAssignmentStatus(assignment.assignmentStatus)) continue
-    if (assignment.scheduleId == null) continue
-    const dateKey = scheduleDateById.get(String(assignment.scheduleId))
+    const enriched = assignment as InstructorAssignmentListItemEnriched
+    const dateKey =
+      extractLectureDateKey(enriched.lectureDate) ??
+      (assignment.scheduleId != null
+        ? scheduleDateById.get(String(assignment.scheduleId))
+        : undefined)
     if (!dateKey) continue
-    add(
+    addOccupied(
+      occupied,
       assignment.participantId != null ? String(assignment.participantId) : null,
       dateKey
     )
-    add(
+    addOccupied(
+      occupied,
       assignment.instructorMemberId != null ? String(assignment.instructorMemberId) : null,
       dateKey
     )
   }
 
   return occupied
+}
+
+/** calendar Map + list Map 병합 */
+export function mergeOccupiedLectureDateMaps(
+  ...maps: Array<Map<string, Set<string>> | undefined | null>
+): Map<string, Set<string>> {
+  const merged = new Map<string, Set<string>>()
+  for (const map of maps) {
+    if (!map) continue
+    for (const [key, dates] of map) {
+      let set = merged.get(key)
+      if (!set) {
+        set = new Set()
+        merged.set(key, set)
+      }
+      for (const d of dates) set.add(d)
+    }
+  }
+  return merged
 }
 
 export function resolveOneSchoolPerDayAssignmentStatus(

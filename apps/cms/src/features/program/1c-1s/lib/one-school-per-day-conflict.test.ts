@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildOccupiedLectureDatesByInstructorKeys,
+  buildOccupiedLectureDatesFromCalendar,
   buildScheduleLectureDateById,
   extractLectureDateKey,
   isOneSchoolPerDayConflictErrorCode,
@@ -61,6 +62,37 @@ describe('one-school-per-day-conflict', () => {
       scheduleDateById
     )
     expect(occupied.size).toBe(0)
+  })
+
+  it('calendar items로 점유일을 채운다', () => {
+    const occupied = buildOccupiedLectureDatesFromCalendar([
+      {
+        instructorMemberId: 170024,
+        lectureDate: '2026-09-18',
+        activeYn: true,
+      },
+      {
+        instructorMemberId: 170024,
+        lectureDate: '2026-09-19',
+        activeYn: false,
+      },
+    ])
+    expect(occupied.get('170024')?.has('2026-09-18')).toBe(true)
+    expect(occupied.get('170024')?.has('2026-09-19')).toBe(false)
+  })
+
+  it('list lectureDate enrich로 schedule join 없이 점유일을 채운다', () => {
+    const occupied = buildOccupiedLectureDatesByInstructorKeys(
+      [
+        {
+          instructorMemberId: 170024,
+          lectureDate: '2026-09-18',
+          assignmentStatus: 'ASSIGNED',
+        },
+      ],
+      new Map()
+    )
+    expect(occupied.get('170024')?.has('2026-09-18')).toBe(true)
   })
 
   it('충돌 error code를 인식한다', () => {
