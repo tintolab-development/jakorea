@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { CMS_CALENDAR_PREVIEW_TOOLTIP_Z_INDEX } from '@/shared/constants/modal-z-index'
 
 import './calendar-preview-tooltip.css'
 
@@ -72,7 +73,7 @@ export function CalendarPreviewTooltip({
   content,
   tooltipOverlayClassName,
 }: CalendarPreviewTooltipProps): ReactNode {
-  if (!enabled || content == null) return children
+  const isActive = enabled && content != null
 
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ x: 0, y: 0 })
@@ -122,12 +123,14 @@ export function CalendarPreviewTooltip({
   }, [clearLeaveTimer])
 
   const handleTriggerMouseEnter = (e: MouseEvent<HTMLDivElement>) => {
+    if (!isActive) return
     clearLeaveTimer()
     updatePosition(e.clientX, e.clientY)
     scheduleOpen()
   }
 
   const handleTriggerMouseMove = (e: MouseEvent<HTMLDivElement>) => {
+    if (!isActive) return
     if (open && panelRef.current != null) {
       const rect = panelRef.current.getBoundingClientRect()
       updatePosition(e.clientX, e.clientY, rect.width, rect.height)
@@ -137,6 +140,7 @@ export function CalendarPreviewTooltip({
   }
 
   const handleTriggerMouseLeave = () => {
+    if (!isActive) return
     clearEnterTimer()
     scheduleClose()
   }
@@ -171,11 +175,20 @@ export function CalendarPreviewTooltip({
   }, [open, scheduleClose, remeasureFromPanel])
 
   useEffect(() => {
+    if (isActive) return
+    clearEnterTimer()
+    clearLeaveTimer()
+    setOpen(false)
+  }, [isActive, clearEnterTimer, clearLeaveTimer])
+
+  useEffect(() => {
     return () => {
       clearEnterTimer()
       clearLeaveTimer()
     }
   }, [clearEnterTimer, clearLeaveTimer])
+
+  if (!isActive) return children
 
   const portal =
     open &&
@@ -183,7 +196,11 @@ export function CalendarPreviewTooltip({
       <div
         ref={panelRef}
         className={['calendar-preview-tooltip', tooltipOverlayClassName].filter(Boolean).join(' ')}
-        style={{ left: pos.x, top: pos.y }}
+        style={{
+          left: pos.x,
+          top: pos.y,
+          zIndex: CMS_CALENDAR_PREVIEW_TOOLTIP_Z_INDEX,
+        }}
         onMouseEnter={handlePanelMouseEnter}
         onMouseLeave={handlePanelMouseLeave}
       >

@@ -6,5 +6,12 @@
  */
 export const CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX = 1200
 
+/**
+ * 캘린더 셀 호버 미리보기(body 포털).
+ * 풀페이지 상세(1100)보다 위 · 날짜/시간 피커(1200)보다 아래.
+ * 1060(ant Tooltip 기본)이면 풀페이지 모달에 가려져 안 보인다.
+ */
+export const CMS_CALENDAR_PREVIEW_TOOLTIP_Z_INDEX = 1150
+
 /** 풀페이지·중첩 ContentModal(권한/면접 등 ~2500) 위에 단일 확인 Alert를 항상 노출 */
 export const CMS_ALERT_MODAL_Z_INDEX = 10000
