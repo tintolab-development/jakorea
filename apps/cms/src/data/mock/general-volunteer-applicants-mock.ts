@@ -113,10 +113,34 @@ const ESSAY_NECESSITY =
 const ESSAY_JA =
   '중·고등학교 시절 JA Korea 경제금융교육 안내를 들었고, 대학 진학 후 프로그램에 관심을 갖게 되었습니다.'
 
-/** 1차 서류 합격자 — 면접일 배정 현황별 (5=정하은 캘린더 demo) */
-const DOC_PASSED_WAITING_INDICES = new Set([5, 20, 21, 22])
-const DOC_PASSED_ASSIGNED_INDICES = new Set([2, 3, 4, 6, 8])
-const DOC_PASSED_WITHDRAWN_INDICES = new Set([25, 26, 27])
+/** 1차 서류 합격자 목록 — 면접일 배정 현황 케이스별 1건 (5=정하은 캘린더 demo) */
+const DOC_PASSED_WAITING_INDICES = new Set([5])
+const DOC_PASSED_ASSIGNED_INDICES = new Set([3])
+const DOC_PASSED_WITHDRAWN_INDICES = new Set([26])
+
+/** 1차 서류 심사 대상자 — 서류 불합격 케이스 1건 */
+const DOC_FAILED_INDICES = new Set([17])
+
+/** 1차 서류 심사 대상자 — 대기 케이스 1건 */
+const DOC1_PENDING_INDICES = new Set([0])
+
+/**
+ * 1차 서류 심사 현황 QA 표시명 (index → name)
+ */
+const DOC1_STATUS_CASE_NAMES: Partial<Record<number, string>> = {
+  0: '서류대기민수',
+  17: '서류불합격서연',
+}
+
+/** 1차 대상자 목록에 포함할 서류 합격 demo index (합격자 탭 배정대기와 동일 행) */
+const DOC1_LIST_PASS_DEMO_INDICES = new Set([5])
+
+/** 면접일 배정 현황 QA 표시명 */
+const DOC_PASSED_ASSIGNMENT_CASE_NAMES: Partial<Record<number, string>> = {
+  5: '배정대기정하은',
+  3: '배정완료준호',
+  26: '활동포기태준',
+}
 
 /** 2차 면접 대상자 — 심사 현황별 demo 1명 (index 30~37: assigned, 25: 활동 포기) */
 const INTERVIEW2_STATUS_DEMO_INDICES = new Set([30, 31, 32, 33, 34, 35, 36, 37])
@@ -124,10 +148,45 @@ const INTERVIEW2_STATUS_DEMO_INDICES = new Set([30, 31, 32, 33, 34, 35, 36, 37])
 /** 2차 면접 상세 — 자유 작성 항목 노출 demo (신규·JA 경험 없음) */
 const INTERVIEW2_FREE_WRITE_DEMO_INDICES = new Set([30, 31])
 
+const INTERVIEW2_STATUS_CASE_NAMES: Partial<Record<number, string>> = {
+  30: '면접대기하린',
+  31: '면접완료지우',
+  32: '면접합격도현',
+  33: '면접불합격지민',
+  34: '예비일호진',
+  35: '예비이서연',
+  36: '예비삼준호',
+  37: '예비사하은',
+  25: '면접포기태준',
+}
+
+/** pass 상태이지만 1차 합격자 목록에는 넣지 않음 — 2차 면접 전용 */
 const DOC_PASSED_ASSIGNED_INDICES_WITH_INTERVIEW2_DEMO = new Set([
   ...DOC_PASSED_ASSIGNED_INDICES,
   ...INTERVIEW2_STATUS_DEMO_INDICES,
 ])
+
+/** 1차 서류 합격자 목록에 노출할 index만 */
+const DOC_PASSED_LIST_INDICES = new Set([
+  ...DOC_PASSED_WAITING_INDICES,
+  ...DOC_PASSED_ASSIGNED_INDICES,
+  ...DOC_PASSED_WITHDRAWN_INDICES,
+])
+
+/** 1차 서류 심사 대상자 목록에 노출할 index만 */
+const DOC1_LIST_INDICES = new Set([
+  ...DOC1_PENDING_INDICES,
+  ...DOC_FAILED_INDICES,
+  ...DOC1_LIST_PASS_DEMO_INDICES,
+])
+
+/** 2차 면접 대상자 목록 */
+const INTERVIEW2_LIST_INDICES = new Set([
+  ...INTERVIEW2_STATUS_DEMO_INDICES,
+  25, // 면접 포기
+])
+
+const VOLUNTEER_MOCK_ROW_COUNT = 38
 
 const INTERVIEW2_STATUS_DEMO_FIELDS: Partial<
   Record<
@@ -219,9 +278,9 @@ const INTERVIEW2_STATUS_DEMO_FIELDS: Partial<
 }
 
 const DOC_PASSED_INDICES = new Set<number>([
-  ...DOC_PASSED_WAITING_INDICES,
+  ...DOC_PASSED_LIST_INDICES,
   ...DOC_PASSED_ASSIGNED_INDICES_WITH_INTERVIEW2_DEMO,
-  ...DOC_PASSED_WITHDRAWN_INDICES,
+  25, // 면접2 포기
 ])
 
 function hashSeed(programId: string, index: number): number {
@@ -275,9 +334,11 @@ function countInterviewSlots(days: GeneralVolunteerInterviewAvailabilityDay[]): 
 }
 
 function resolveDocumentStatus(index: number): GeneralDocumentScreeningStatus {
-  if (DOC_PASSED_INDICES.has(index)) return 'pass'
-  if (index % 19 === 18) return 'fail'
-  return 'pending'
+  if (DOC1_PENDING_INDICES.has(index)) return 'pending'
+  if (DOC_FAILED_INDICES.has(index)) return 'fail'
+  if (DOC_PASSED_INDICES.has(index) || DOC1_LIST_PASS_DEMO_INDICES.has(index)) return 'pass'
+  /** 목록 미노출 행 */
+  return 'fail'
 }
 
 function resolveInterviewAssignmentStatus(
@@ -286,9 +347,15 @@ function resolveInterviewAssignmentStatus(
 ): GeneralInterviewAssignmentStatus {
   if (documentScreeningStatus !== 'pass') return 'waiting'
   if (DOC_PASSED_WAITING_INDICES.has(index)) return 'waiting'
-  if (DOC_PASSED_WITHDRAWN_INDICES.has(index)) return 'withdrawn'
+  if (DOC_PASSED_WITHDRAWN_INDICES.has(index) || index === 25) return 'withdrawn'
   if (DOC_PASSED_ASSIGNED_INDICES_WITH_INTERVIEW2_DEMO.has(index)) return 'assigned'
   return 'waiting'
+}
+
+function volunteerIndexFromId(id: string): number | null {
+  const match = id.match(/-(\d+)$/)
+  if (!match) return null
+  return Number(match[1])
 }
 
 const MANUAL_SECOND_INTERVIEW_STATUSES: GeneralSecondInterviewScreeningStatus[] = [
@@ -400,7 +467,11 @@ function buildAssignedInterviewFields(
 function buildRow(programId: string, index: number): GeneralVolunteerApplicantRow {
   const seed = hashSeed(programId, index)
   const no = index + 1
-  const name = NAMES[index % NAMES.length]
+  const caseName =
+    DOC_PASSED_ASSIGNMENT_CASE_NAMES[index] ??
+    DOC1_STATUS_CASE_NAMES[index] ??
+    INTERVIEW2_STATUS_CASE_NAMES[index]
+  const name = caseName ?? NAMES[index % NAMES.length]
   const phoneSuffix = String(1000 + (seed % 9000)).padStart(4, '0')
   const contactRaw = `010-1234-${phoneSuffix}`
   const emailRaw = `${name}${no}@example.com`
@@ -413,19 +484,17 @@ function buildRow(programId: string, index: number): GeneralVolunteerApplicantRo
   )
   const interviewAvailability = DOC_PASSED_WAITING_INDICES.has(index)
     ? INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY
-    : index === 2
-      ? ([
-          {
-            dateLabel: '26. 09. 08(화)',
-            slots: ['15:00 ~ 15:30', '09:00 ~ 09:30'],
-          },
-          {
-            dateLabel: '26. 09. 23(수)',
-            slots: ['09:00 ~ 09:30', '14:00 ~ 14:30', '15:00 ~ 15:30'],
-          },
-        ] satisfies GeneralVolunteerInterviewAvailabilityDay[])
-      : buildInterviewAvailability(seed, index)
+    : buildInterviewAvailability(seed, index)
   const evaluationOptions: GeneralManagerEvaluation[] = ['pass', 'neutral', 'fail', 'unreviewed']
+
+  /** 담당자 평가 — 1차 서류 케이스 행에 대표값 고정 */
+  const managerEvalCase = DOC1_PENDING_INDICES.has(index)
+    ? ({ managerAEvaluation: 'unreviewed', managerBEvaluation: 'unreviewed' } as const)
+    : DOC_FAILED_INDICES.has(index)
+      ? ({ managerAEvaluation: 'fail', managerBEvaluation: 'fail' } as const)
+      : DOC1_LIST_PASS_DEMO_INDICES.has(index)
+        ? ({ managerAEvaluation: 'pass', managerBEvaluation: 'pass' } as const)
+        : null
 
   return {
     id: `general-vol-${programId}-${index}`,
@@ -436,7 +505,7 @@ function buildRow(programId: string, index: number): GeneralVolunteerApplicantRo
     contactRaw,
     emailRaw,
     id1365: buildId1365(name, no),
-    scheduleChangeCancelCount: index === 2 ? 1 : seed % 7 === 0 ? 1 : 0,
+    scheduleChangeCancelCount: index === 3 ? 1 : seed % 7 === 0 ? 1 : 0,
     applicationType,
     hasJaVolunteerExperience: INTERVIEW2_FREE_WRITE_DEMO_INDICES.has(index)
       ? false
@@ -445,22 +514,25 @@ function buildRow(programId: string, index: number): GeneralVolunteerApplicantRo
     essayEducationExperience: applicationType === 'ujat-graduate' ? '' : ESSAY_EDUCATION,
     essayNecessity: applicationType === 'ujat-graduate' ? '' : ESSAY_NECESSITY,
     essayJaExperience: applicationType === 'ujat-graduate' ? '' : ESSAY_JA,
-    managerAEvaluation: index <= 4 ? 'unreviewed' : evaluationOptions[seed % evaluationOptions.length],
+    managerAEvaluation:
+      managerEvalCase?.managerAEvaluation ??
+      (index <= 4 ? 'unreviewed' : evaluationOptions[seed % evaluationOptions.length]),
     managerBEvaluation:
-      index <= 4 ? 'unreviewed' : evaluationOptions[(seed + 2) % evaluationOptions.length],
+      managerEvalCase?.managerBEvaluation ??
+      (index <= 4 ? 'unreviewed' : evaluationOptions[(seed + 2) % evaluationOptions.length]),
     documentScreeningStatus,
     interviewSlotCount: countInterviewSlots(interviewAvailability),
     interviewAssignmentStatus,
     programId,
     englishName: `General Volunteer ${no}`,
-    gender: index === 2 ? '남성' : seed % 2 === 0 ? '여성' : '남성',
+    gender: index === 3 ? '남성' : seed % 2 === 0 ? '여성' : '남성',
     birthDate:
-      index === 2
+      index === 3
         ? '2000.09.15'
         : `200${seed % 5}.${String(1 + (seed % 12)).padStart(2, '0')}.${String(
             1 + (seed % 28)
           ).padStart(2, '0')}`,
-    age: index === 2 ? 25 : 22 + (seed % 7),
+    age: index === 3 ? 25 : 22 + (seed % 7),
     universityName: '**대학교',
     major: seed % 2 === 0 ? '경제학과 전공' : '경영학과 전공',
     applicationRoute: ['인스타그램', '학교 안내', '링커리어', '캠퍼스픽'][seed % 4],
@@ -476,8 +548,9 @@ const cache = new Map<string, GeneralVolunteerApplicantRow[]>()
 export function getGeneralVolunteerApplicants(programId: string): GeneralVolunteerApplicantRow[] {
   const existing = cache.get(programId)
   if (existing) return existing.map(row => ({ ...row }))
-  const count = 72 + (hashSeed(programId, 0) % 8)
-  const rows = Array.from({ length: count }, (_, index) => buildRow(programId, index))
+  const rows = Array.from({ length: VOLUNTEER_MOCK_ROW_COUNT }, (_, index) =>
+    buildRow(programId, index)
+  )
   cache.set(programId, rows)
   return rows.map(row => ({ ...row }))
 }
@@ -493,11 +566,15 @@ export function sortGeneralVolunteerByInterviewSlotCount(
   })
 }
 
+/** 1차 서류 심사 대상자 — 현황 케이스별 1건 */
 export function getGeneralVolunteerDoc1Applicants(
   programId: string
 ): GeneralVolunteerApplicantRow[] {
   return sortGeneralVolunteerByInterviewSlotCount(
-    getGeneralVolunteerApplicants(programId).filter(row => row.documentScreeningStatus === 'pending')
+    getGeneralVolunteerApplicants(programId).filter(row => {
+      const index = volunteerIndexFromId(row.id)
+      return index != null && DOC1_LIST_INDICES.has(index)
+    })
   )
 }
 
@@ -527,26 +604,34 @@ export function sortGeneralVolunteerDocPassedApplicants(
   })
 }
 
+/** 1차 서류 합격자 — 면접 배정 현황 케이스별 1건 */
 export function getGeneralVolunteerDocPassedApplicants(
   programId: string
 ): GeneralVolunteerApplicantRow[] {
   return sortGeneralVolunteerDocPassedApplicants(
-    getGeneralVolunteerApplicants(programId).filter(row => row.documentScreeningStatus === 'pass')
+    getGeneralVolunteerApplicants(programId).filter(row => {
+      const index = volunteerIndexFromId(row.id)
+      return index != null && DOC_PASSED_LIST_INDICES.has(index)
+    })
   )
 }
 
+/** 2차 면접 대상자 — 심사 현황 케이스별 1건 */
 export function getGeneralVolunteerInterview2Applicants(
   programId: string
 ): GeneralVolunteerApplicantRow[] {
   return sortGeneralVolunteerInterview2Applicants(
-    getGeneralVolunteerApplicants(programId).filter(
-      row =>
+    getGeneralVolunteerApplicants(programId).filter(row => {
+      const index = volunteerIndexFromId(row.id)
+      if (index == null || !INTERVIEW2_LIST_INDICES.has(index)) return false
+      return (
         row.documentScreeningStatus === 'pass' &&
         (row.interviewAssignmentStatus === 'assigned' ||
           row.interviewAssignmentStatus === 'withdrawn') &&
-        row.assignedInterviewDateLabel &&
-        row.assignedInterviewTime
-    )
+        Boolean(row.assignedInterviewDateLabel) &&
+        Boolean(row.assignedInterviewTime)
+      )
+    })
   )
 }
 

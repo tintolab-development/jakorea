@@ -247,18 +247,47 @@ const INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY: GeneralIndividualApplicantInt
   }))
 
 /**
- * 참여자 1차 서류 심사 대상자 — 고정 10건 (0-based index).
- * 0=고종욱, 2=박틴토 데모 상세와 겹침.
+ * 참여자 1차 서류·합격자 — 현황 케이스별 1건 (0-based index).
+ * - doc1: pending / fail / pass(demo)
+ * - docPassed: waiting / assigned / withdrawn
  */
-const PARTICIPANT_DOC1_PENDING_INDICES = new Set([0, 1, 2, 3, 4, 6, 8, 9, 12, 16])
+const PARTICIPANT_DOC1_PENDING_INDICES = new Set([2]) // 박틴토 시안
+const PARTICIPANT_DOC1_FAIL_INDICES = new Set([1])
+const PARTICIPANT_DOC1_PASS_DEMO_INDICES = new Set([3])
 
-/** 서류 불합격 demo */
-const PARTICIPANT_DOC1_FAIL_INDICES = new Set([11, 22])
+const PARTICIPANT_DOC_PASSED_WAITING_INDICES = new Set([0]) // 고종욱 상세 재사용
+const PARTICIPANT_DOC_PASSED_ASSIGNED_INDICES = new Set([5])
+const PARTICIPANT_DOC_PASSED_WITHDRAWN_INDICES = new Set([6])
+
+const PARTICIPANT_DOC_PASSED_INDICES = new Set([
+  ...PARTICIPANT_DOC_PASSED_WAITING_INDICES,
+  ...PARTICIPANT_DOC_PASSED_ASSIGNED_INDICES,
+  ...PARTICIPANT_DOC_PASSED_WITHDRAWN_INDICES,
+])
+
+const PARTICIPANT_DOC1_STATUS_CASE_NAMES: Partial<Record<number, string>> = {
+  2: '서류대기박틴토',
+  1: '서류불합격민준',
+  3: '서류합격서연',
+}
+
+const PARTICIPANT_DOC_PASSED_CASE_NAMES: Partial<Record<number, string>> = {
+  0: '배정대기고종욱',
+  5: '배정완료준호',
+  6: '활동포기태준',
+}
 
 function resolveParticipantDocumentStatus(index: number): GeneralDocumentScreeningStatus {
   if (PARTICIPANT_DOC1_PENDING_INDICES.has(index)) return 'pending'
   if (PARTICIPANT_DOC1_FAIL_INDICES.has(index)) return 'fail'
-  return 'pass'
+  if (
+    PARTICIPANT_DOC1_PASS_DEMO_INDICES.has(index) ||
+    PARTICIPANT_DOC_PASSED_INDICES.has(index)
+  ) {
+    return 'pass'
+  }
+  /** 목록에 안 나오는 나머지 — doc1/합격자 필터에 잡히지 않도록 fail */
+  return 'fail'
 }
 
 function resolveParticipantInterviewAssignmentStatus(
@@ -266,9 +295,17 @@ function resolveParticipantInterviewAssignmentStatus(
   documentScreeningStatus: GeneralDocumentScreeningStatus
 ): GeneralInterviewAssignmentStatus {
   if (documentScreeningStatus !== 'pass') return 'waiting'
-  if (index % 13 === 0) return 'withdrawn'
-  if (index % 3 === 0) return 'assigned'
+  if (PARTICIPANT_DOC_PASSED_WAITING_INDICES.has(index)) return 'waiting'
+  if (PARTICIPANT_DOC_PASSED_WITHDRAWN_INDICES.has(index)) return 'withdrawn'
+  if (PARTICIPANT_DOC_PASSED_ASSIGNED_INDICES.has(index)) return 'assigned'
+  if (PARTICIPANT_DOC1_PASS_DEMO_INDICES.has(index)) return 'waiting'
   return 'waiting'
+}
+
+function participantIndexFromId(id: string): number | null {
+  const match = id.match(/general-individual-applicant-(\d+)$/)
+  if (!match) return null
+  return Number(match[1]) - 1
 }
 
 function buildParticipantInterviewAvailability(
@@ -286,6 +323,57 @@ function buildParticipantInterviewAvailability(
   return [{ dateLabel, slots }]
 }
 
+const TEAM_NAMES = ['JA 봉사팀', '우리가 최고', '경제친구들', '금융탐험대', '미래리더'] as const
+const SECOND_INTERVIEW_STATUSES: GeneralSecondInterviewScreeningStatus[] = [
+  'waiting',
+  'pass',
+  'fail',
+  'reserve1',
+  'completed',
+]
+
+function buildParticipantDetail(
+  index: number,
+  ctx: {
+    name: string
+    affiliation: string
+    grade: string
+    homeAddress: string
+    interviewAvailability: GeneralIndividualApplicantInterviewAvailabilityDay[]
+  }
+): GeneralIndividualApplicantDetail {
+  const no = index + 1
+  const phoneMid = String(2000 + (index % 8000)).padStart(4, '0')
+  const phoneSuffix = String(1000 + ((index * 17) % 9000)).padStart(4, '0')
+  const birthMonth = String(1 + (index % 12)).padStart(2, '0')
+  const birthDay = String(1 + (index % 28)).padStart(2, '0')
+  const birthYear = 2010 + (index % 6)
+  const age = 2026 - birthYear
+  const teamMemberCount = (1 + (index % 5)) as 1 | 2 | 3 | 4 | 5
+
+  return {
+    gender: index % 2 === 0 ? '남성' : '여성',
+    birthDate: `${birthYear}.${birthMonth}.${birthDay}`,
+    age,
+    schoolEnrollmentStatus: '재학 중',
+    affiliationSchool: ctx.affiliation,
+    affiliationGrade: ctx.grade,
+    contact: `010-${phoneMid}-${phoneSuffix}`,
+    email: `participant${no}.${ctx.name}@example.com`,
+    homeAddressFull: `${ctx.homeAddress} ${100 + index}-${10 + (index % 90)} ${1 + (index % 5)}0${1 + (index % 9)}동 ${100 + (index % 50)}호`,
+    id1365: `${birthMonth}${birthDay}${String(1000 + (index % 9000)).padStart(4, '0')}`,
+    scheduleChangeCancelCount: index % 7 === 0 ? 1 : 0,
+    personalInfoConsent: 'agree',
+    thirdPartyConsent: index % 5 === 0 ? 'disagree' : 'agree',
+    selfIntroduction: `${ctx.name}입니다. JA Korea 프로그램 참여를 위해 신청했습니다. 성실하게 활동하겠습니다.`,
+    teamName: TEAM_NAMES[index % TEAM_NAMES.length],
+    teamMemberCount,
+    teamMemberCountSelect: String(teamMemberCount) as '1' | '2' | '3' | '4' | '5',
+    teamRole: index % 3 === 0 ? 'leader' : 'member',
+    interviewAvailability: ctx.interviewAvailability,
+  }
+}
+
 function buildParticipantScreeningFields(
   index: number
 ): Pick<
@@ -301,6 +389,7 @@ function buildParticipantScreeningFields(
   | 'managerAScore'
   | 'managerBScore'
   | 'totalScore'
+  | 'interviewEvaluationRemark'
 > {
   const evaluationOptions: GeneralManagerEvaluation[] = ['pass', 'neutral', 'fail', 'unreviewed']
   const documentScreeningStatus = resolveParticipantDocumentStatus(index)
@@ -316,11 +405,29 @@ function buildParticipantScreeningFields(
     interviewAssignmentStatus === 'assigned' || interviewAssignmentStatus === 'withdrawn'
   const day = interviewAvailability[0]!
   const slot = day.slots[0] ?? INTERVIEW_TIME_SLOTS[0]
+  const managerAScore = 3 + (index % 3)
+  const managerBScore = 2 + ((index + 1) % 4)
+  const totalScore = managerAScore + managerBScore
 
   return {
-    managerAEvaluation: index <= 4 ? 'unreviewed' : evaluationOptions[index % evaluationOptions.length],
-    managerBEvaluation:
-      index <= 4 ? 'unreviewed' : evaluationOptions[(index + 2) % evaluationOptions.length],
+    managerAEvaluation: PARTICIPANT_DOC1_FAIL_INDICES.has(index)
+      ? 'fail'
+      : PARTICIPANT_DOC1_PASS_DEMO_INDICES.has(index)
+        ? 'pass'
+        : PARTICIPANT_DOC1_PENDING_INDICES.has(index)
+          ? 'unreviewed'
+          : index <= 4
+            ? 'unreviewed'
+            : evaluationOptions[index % evaluationOptions.length],
+    managerBEvaluation: PARTICIPANT_DOC1_FAIL_INDICES.has(index)
+      ? 'fail'
+      : PARTICIPANT_DOC1_PASS_DEMO_INDICES.has(index)
+        ? 'pass'
+        : PARTICIPANT_DOC1_PENDING_INDICES.has(index)
+          ? 'pass'
+          : index <= 4
+            ? 'unreviewed'
+            : evaluationOptions[(index + 2) % evaluationOptions.length],
     documentScreeningStatus,
     interviewSlotCount: countInterviewAvailabilitySlots(interviewAvailability),
     interviewAssignmentStatus,
@@ -331,12 +438,11 @@ function buildParticipantScreeningFields(
           secondInterviewScreeningStatus:
             interviewAssignmentStatus === 'withdrawn'
               ? undefined
-              : index % 4 === 0
-                ? ('pass' as const)
-                : undefined,
-          managerAScore: index % 4 === 0 ? 4 + (index % 3) : null,
-          managerBScore: index % 4 === 0 ? 3 + (index % 4) : null,
-          totalScore: index % 4 === 0 ? 7 + (index % 3) : null,
+              : SECOND_INTERVIEW_STATUSES[index % SECOND_INTERVIEW_STATUSES.length],
+          managerAScore,
+          managerBScore,
+          totalScore,
+          interviewEvaluationRemark: `면접 평가 메모 (참여자 #${index + 1})`,
         }
       : {}),
   }
@@ -448,6 +554,12 @@ function buildMockList(count: number): GeneralIndividualApplicantRow[] {
   const rows: GeneralIndividualApplicantRow[] = []
   for (let i = 0; i < count; i++) {
     const idx = i % APPLICANT_NAMES.length
+    const caseName =
+      PARTICIPANT_DOC1_STATUS_CASE_NAMES[i] ?? PARTICIPANT_DOC_PASSED_CASE_NAMES[i]
+    const name = caseName ?? APPLICANT_NAMES[idx]
+    const affiliation = AFFILIATIONS[i % AFFILIATIONS.length]
+    const educationGrade = GRADES[i % GRADES.length]
+    const homeAddress = HOME_ADDRESSES[i % HOME_ADDRESSES.length]
     const screening = buildParticipantScreeningFields(i)
     const interviewAvailability = buildParticipantInterviewAvailability(
       i,
@@ -456,15 +568,19 @@ function buildMockList(count: number): GeneralIndividualApplicantRow[] {
     rows.push({
       id: `general-individual-applicant-${i + 1}`,
       no: count - i,
-      applicantName: APPLICANT_NAMES[idx],
-      affiliation: AFFILIATIONS[i % AFFILIATIONS.length],
-      educationGrade: GRADES[i % GRADES.length],
-      homeAddress: HOME_ADDRESSES[i % HOME_ADDRESSES.length],
+      applicantName: name,
+      affiliation,
+      educationGrade,
+      homeAddress,
       approvalStatus: APPROVAL_STATUSES[i % APPROVAL_STATUSES.length],
       sessions: buildSessionsForRow(i),
-      detail: {
+      detail: buildParticipantDetail(i, {
+        name,
+        affiliation,
+        grade: educationGrade,
+        homeAddress,
         interviewAvailability,
-      },
+      }),
       ...screening,
     })
   }
@@ -475,27 +591,35 @@ export const MOCK_GENERAL_INDIVIDUAL_APPLICATIONS: GeneralIndividualApplicantRow
   const list = buildMockList(30)
   const row1 = list.find(r => r.id === 'general-individual-applicant-1')
   if (row1) {
-    row1.applicantName = '고종욱'
+    row1.applicantName = PARTICIPANT_DOC_PASSED_CASE_NAMES[0] ?? '배정대기고종욱'
     row1.affiliation = '강서초등학교'
     row1.educationGrade = '5학년'
     row1.homeAddress = '서울특별시 강서구'
     row1.approvalStatus = 'pending'
-    row1.documentScreeningStatus = 'pending'
-    row1.managerAEvaluation = 'unreviewed'
-    row1.managerBEvaluation = 'unreviewed'
-    row1.detail = APPLICANT_INDIVIDUAL_1_DETAIL
+    row1.documentScreeningStatus = 'pass'
+    row1.interviewAssignmentStatus = 'waiting'
+    row1.managerAEvaluation = 'pass'
+    row1.managerBEvaluation = 'pass'
+    row1.assignedInterviewDateLabel = undefined
+    row1.assignedInterviewTime = undefined
+    row1.secondInterviewScreeningStatus = undefined
+    row1.detail = {
+      ...APPLICANT_INDIVIDUAL_1_DETAIL,
+      interviewAvailability: INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY,
+    }
     row1.interviewSlotCount = countInterviewAvailabilitySlots(
-      APPLICANT_INDIVIDUAL_1_DETAIL.interviewAvailability ?? []
+      INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY
     )
   }
   const row3 = list.find(r => r.id === 'general-individual-applicant-3')
   if (row3) {
-    row3.applicantName = '박틴토'
+    row3.applicantName = PARTICIPANT_DOC1_STATUS_CASE_NAMES[2] ?? '서류대기박틴토'
     row3.affiliation = '고등학교'
     row3.educationGrade = '1학년'
     row3.homeAddress = '서울특별시 강서구 화곡동'
     row3.approvalStatus = 'pending'
     row3.documentScreeningStatus = 'pending'
+    row3.interviewAssignmentStatus = 'waiting'
     row3.managerAEvaluation = 'unreviewed'
     row3.managerBEvaluation = 'pass'
     row3.interviewSlotCount = countInterviewAvailabilitySlots(
@@ -503,18 +627,24 @@ export const MOCK_GENERAL_INDIVIDUAL_APPLICATIONS: GeneralIndividualApplicantRow
     )
     row3.detail = APPLICANT_INDIVIDUAL_DOC1_SCREENSHOT_DETAIL
   }
-  const row = list.find(r => r.id === 'general-individual-applicant-18')
-  if (row) {
-    row.applicantName = '김범수'
-    row.approvalStatus = 'approved'
-    row.approvalNotificationSentAt = '2026.01.15 09:15:42'
-    row.detail = APPLICANT_INDIVIDUAL_18_DETAIL
-  }
   const row2 = list.find(r => r.id === 'general-individual-applicant-2')
   if (row2) {
+    row2.applicantName = PARTICIPANT_DOC1_STATUS_CASE_NAMES[1] ?? '서류불합격민준'
+    row2.documentScreeningStatus = 'fail'
+    row2.interviewAssignmentStatus = 'waiting'
+    row2.managerAEvaluation = 'fail'
+    row2.managerBEvaluation = 'fail'
     row2.participationRejectionReason = '인원초과'
     row2.approvalNotificationSentAt = '2024.01.15 09:15:42'
+    const baseDetail = buildParticipantDetail(1, {
+      name: row2.applicantName,
+      affiliation: row2.affiliation,
+      grade: row2.educationGrade,
+      homeAddress: row2.homeAddress,
+      interviewAvailability: buildParticipantInterviewAvailability(1, 'waiting'),
+    })
     row2.detail = {
+      ...baseDetail,
       gender: '여성',
       birthDate: '2010.09.15',
       age: 15,
@@ -523,8 +653,39 @@ export const MOCK_GENERAL_INDIVIDUAL_APPLICATIONS: GeneralIndividualApplicantRow
       affiliationGrade: '1학년',
       teamName: '우리가 최고',
       teamMemberCount: 2,
+      teamMemberCountSelect: '2',
       teamRole: 'member',
     }
+    row2.interviewSlotCount = countInterviewAvailabilitySlots(
+      row2.detail.interviewAvailability ?? []
+    )
+  }
+  const rowPassDemo = list.find(r => r.id === 'general-individual-applicant-4')
+  if (rowPassDemo) {
+    rowPassDemo.applicantName = PARTICIPANT_DOC1_STATUS_CASE_NAMES[3] ?? '서류합격서연'
+    rowPassDemo.documentScreeningStatus = 'pass'
+    rowPassDemo.interviewAssignmentStatus = 'waiting'
+    rowPassDemo.managerAEvaluation = 'pass'
+    rowPassDemo.managerBEvaluation = 'pass'
+  }
+  const rowAssigned = list.find(r => r.id === 'general-individual-applicant-6')
+  if (rowAssigned) {
+    rowAssigned.applicantName = PARTICIPANT_DOC_PASSED_CASE_NAMES[5] ?? '배정완료준호'
+    rowAssigned.documentScreeningStatus = 'pass'
+    rowAssigned.interviewAssignmentStatus = 'assigned'
+  }
+  const rowWithdrawn = list.find(r => r.id === 'general-individual-applicant-7')
+  if (rowWithdrawn) {
+    rowWithdrawn.applicantName = PARTICIPANT_DOC_PASSED_CASE_NAMES[6] ?? '활동포기태준'
+    rowWithdrawn.documentScreeningStatus = 'pass'
+    rowWithdrawn.interviewAssignmentStatus = 'withdrawn'
+  }
+  const row = list.find(r => r.id === 'general-individual-applicant-18')
+  if (row) {
+    row.applicantName = '김범수'
+    row.approvalStatus = 'approved'
+    row.approvalNotificationSentAt = '2026.01.15 09:15:42'
+    row.detail = APPLICANT_INDIVIDUAL_18_DETAIL
   }
   return list
 })()
@@ -538,12 +699,20 @@ export function getGeneralIndividualApplicationsForProgram(
   }))
 }
 
-/** 1차 서류 심사 대상자 — mock 고정 10건 (No. 10→1) */
+/** 1차 서류 심사 대상자 — 현황 케이스별 1건 (대기·불합격·합격 demo) */
 export function getGeneralParticipantDoc1Applicants(
   programId: string
 ): GeneralIndividualApplicantRow[] {
   const rows = getGeneralIndividualApplicationsForProgram(programId)
-    .filter(row => row.documentScreeningStatus === 'pending')
+    .filter(row => {
+      const index = participantIndexFromId(row.id)
+      if (index == null) return false
+      return (
+        PARTICIPANT_DOC1_PENDING_INDICES.has(index) ||
+        PARTICIPANT_DOC1_FAIL_INDICES.has(index) ||
+        PARTICIPANT_DOC1_PASS_DEMO_INDICES.has(index)
+      )
+    })
     .sort((a, b) => b.no - a.no)
   return rows.map((row, index) => ({
     ...row,
@@ -565,14 +734,16 @@ function sortGeneralParticipantDocPassedApplicants(
   })
 }
 
-/** 1차 서류 합격자 */
+/** 1차 서류 합격자 — 면접 배정 현황 케이스별 1건 */
 export function getGeneralParticipantDocPassedApplicants(
   programId: string
 ): GeneralIndividualApplicantRow[] {
   return sortGeneralParticipantDocPassedApplicants(
-    getGeneralIndividualApplicationsForProgram(programId).filter(
-      row => row.documentScreeningStatus === 'pass'
-    )
+    getGeneralIndividualApplicationsForProgram(programId).filter(row => {
+      const index = participantIndexFromId(row.id)
+      if (index == null) return false
+      return PARTICIPANT_DOC_PASSED_INDICES.has(index)
+    })
   )
 }
 

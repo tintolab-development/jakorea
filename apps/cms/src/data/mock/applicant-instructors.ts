@@ -4,6 +4,7 @@
  */
 
 import type { Dayjs } from 'dayjs'
+import type { Program } from '@/types/domain'
 import type { InstructorMemberProfile, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { getGeneralProgramById } from '@/data/mock/general-programs'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
@@ -410,96 +411,143 @@ const ACCOUNT_NUMBERS = [
   '361-0094-7615-28',
 ]
 
-/** 강사 이력서 탭 UI 검증용 샘플 (i === 0, 1에만 주입) */
-function getResumeSample(
-  index: number
-): Pick<
+type ApplicantInstructorResumeSample = Pick<
   ApplicantInstructorRow,
   | 'careerDetails'
+  | 'jaKoreaActivities'
   | 'qualifications'
   | 'awards'
   | 'educations'
+  | 'instructorCareerLevel'
   | 'freeWriting1'
   | 'freeWriting2'
   | 'freeWriting3'
   | 'freeWriting4'
-> | null {
-  if (index > 1) return null
-  if (index === 0) {
-    return {
-      careerDetails: [
-        {
-          companyName: '한솔교육',
-          role: '학습지 방문 교육',
-          startDate: '2024.02',
-          isCurrent: true,
-        },
-        {
-          companyName: '대교 눈높이학원',
-          role: '초등학생 수학 강의',
-          startDate: '2023.01',
-          endDate: '2024.01',
-        },
-      ],
-      qualifications: [{ name: '1종 운전면허', year: '2020' }],
-      awards: [
-        { name: '한국생산성본부 퍼실리테이터 양성과정 수료', year: '2024' },
-        { name: '서울특별시 교육청 우수 강사 표창장', year: '2020' },
-      ],
-      educations: [
-        {
-          schoolType: '대학 4년제',
-          status: 'graduated',
-          schoolName: '한성대학교',
-          major: '경영학과',
-          enrollmentYear: '2020.03',
-          graduationYear: '2025.02',
-        },
-        {
-          schoolType: '고등학교',
-          status: 'graduated',
-          schoolName: '경복고등학교',
-          enrollmentYear: '2017.03',
-          graduationYear: '2020.02',
-        },
-      ],
-      freeWriting1:
-        '대학에서 경영학을 전공하며 금융과 경제에 깊은 관심을 갖게 되었습니다. 청소년들이 돈의 흐름과 경제의 원리를 일찍부터 이해하면 더 현명한 선택을 할 수 있다고 믿으며, 실생활 사례 중심의 참여형 수업으로 아이들이 흥미를 잃지 않도록 이끌겠습니다.',
-      freeWriting2:
-        '청소년 경제 교육은 미래 세대의 재정적 독립과 의사결정 능력을 키우는 데 중요합니다. 본인은 실생활 사례를 활용한 참여형 수업으로 흥미를 높이려 노력합니다.',
-      freeWriting3:
-        '청소년과 소통할 때 가장 중요한 것은 경청과 공감입니다. 일방적 설명보다 질문을 유도하고, 학생들이 스스로 답을 찾도록 돕는 것을 실천하고 있습니다.',
-      freeWriting4:
-        '수업 중 참여도가 낮았을 때, 짝 활동과 퀴즈 형식으로 분위기를 전환한 적이 있습니다. 그 결과 학생들의 참여가 늘었고, 이후에도 같은 방식을 적용하고 있습니다.',
-    }
-  }
-  return {
-    careerDetails: [
-      { companyName: '㈜에듀윌', role: '방과후 강사', startDate: '2022.03', endDate: '2023.12' },
-    ],
-    qualifications: [
-      { name: '초등교사 2급 정교사', year: '2021' },
-      { name: '영어회화 지도사', year: '2020' },
-    ],
-    awards: [{ name: 'JA코리아 우수 강사상', year: '2023' }],
-    educations: [
-      {
-        schoolType: '대학 2・3년제',
-        status: 'graduated',
-        schoolName: '동서울대학교',
-        major: '유아교육과',
-        enrollmentYear: '2018.03',
-        graduationYear: '2020.02',
-      },
-    ],
-    freeWriting1:
-      '전공을 살려 초등 대상 교육에 지원하게 되었습니다. 아이들이 경제 개념을 쉽게 이해하도록 돕고 싶습니다.',
-    freeWriting2:
-      '경제 교육을 통해 청소년이 합리적 선택을 할 수 있는 기반이 마련된다고 생각합니다.',
-    freeWriting3:
-      '신뢰를 바탕으로 한 소통을 중요시하며, 수업 전후로 학생들과 짧은 대화 시간을 갖고 있습니다.',
-    freeWriting4: '-',
-  }
+>
+
+const RESUME_SAMPLE_A: ApplicantInstructorResumeSample = {
+  instructorCareerLevel: 'experienced',
+  careerDetails: [
+    {
+      companyName: '한솔교육',
+      role: '학습지 방문 교육',
+      startDate: '2024.02',
+      isCurrent: true,
+    },
+    {
+      companyName: '대교 눈높이학원',
+      role: '초등학생 수학 강의',
+      startDate: '2023.01',
+      endDate: '2024.01',
+    },
+  ],
+  jaKoreaActivities: [
+    {
+      periodStart: '2023.03',
+      periodEnd: '2023.12',
+      title: 'JA 경제교육 봉사',
+      note: '초등 5학년 대상 주 1회 진행',
+    },
+    {
+      periodStart: '2022.09',
+      periodEnd: '2022.11',
+      title: 'JA Our Community 보조 강사',
+      note: '중등 대상',
+    },
+  ],
+  qualifications: [
+    { name: '경제교육지도사 2급', year: '2021', issuer: '한국경제교육학회' },
+    { name: '1종 보통 운전면허', year: '2020', issuer: '서울지방경찰청' },
+  ],
+  awards: [
+    { name: '한국생산성본부 퍼실리테이터 양성과정 수료', year: '2024', issuer: '한국생산성본부' },
+    { name: '서울특별시 교육청 우수 강사 표창장', year: '2020', issuer: '서울특별시교육청' },
+  ],
+  educations: [
+    {
+      schoolType: '대학 4년제',
+      status: 'graduated',
+      schoolName: '한성대학교',
+      major: '경영학과',
+      enrollmentYear: '2020.03',
+      graduationYear: '2025.02',
+    },
+    {
+      schoolType: '고등학교',
+      status: 'graduated',
+      schoolName: '경복고등학교',
+      enrollmentYear: '2017.03',
+      graduationYear: '2020.02',
+    },
+  ],
+  freeWriting1:
+    '대학에서 경영학을 전공하며 금융과 경제에 깊은 관심을 갖게 되었습니다. 청소년들이 돈의 흐름과 경제의 원리를 일찍부터 이해하면 더 현명한 선택을 할 수 있다고 믿으며, 실생활 사례 중심의 참여형 수업으로 아이들이 흥미를 잃지 않도록 이끌겠습니다.',
+  freeWriting2:
+    '청소년 경제 교육은 미래 세대의 재정적 독립과 의사결정 능력을 키우는 데 중요합니다. 본인은 실생활 사례를 활용한 참여형 수업으로 흥미를 높이려 노력합니다.',
+  freeWriting3:
+    '청소년과 소통할 때 가장 중요한 것은 경청과 공감입니다. 일방적 설명보다 질문을 유도하고, 학생들이 스스로 답을 찾도록 돕는 것을 실천하고 있습니다.',
+  freeWriting4:
+    '수업 중 참여도가 낮았을 때, 짝 활동과 퀴즈 형식으로 분위기를 전환한 적이 있습니다. 그 결과 학생들의 참여가 늘었고, 이후에도 같은 방식을 적용하고 있습니다.',
+}
+
+const RESUME_SAMPLE_B: ApplicantInstructorResumeSample = {
+  instructorCareerLevel: 'experienced',
+  careerDetails: [
+    { companyName: '㈜에듀윌', role: '방과후 강사', startDate: '2022.03', endDate: '2023.12' },
+    {
+      companyName: '강남구 청소년수련관',
+      role: '진로·경제 특강 강사',
+      startDate: '2021.05',
+      endDate: '2022.02',
+    },
+  ],
+  jaKoreaActivities: [
+    {
+      periodStart: '2024.03',
+      periodEnd: '2024.06',
+      title: 'JA 금융교육 프로그램 강사',
+      note: '고등 1학년 대상',
+    },
+  ],
+  qualifications: [
+    { name: '초등교사 2급 정교사', year: '2021', issuer: '교육부' },
+    { name: '영어회화 지도사', year: '2020', issuer: '한국직업능력연구원' },
+    { name: '경제교육지도사 3급', year: '2022', issuer: '한국경제교육학회' },
+  ],
+  awards: [
+    { name: 'JA코리아 우수 강사상', year: '2023', issuer: 'JA Korea' },
+    { name: '방과후학교 우수 강사 표창', year: '2022', issuer: '서울특별시교육청' },
+  ],
+  educations: [
+    {
+      schoolType: '대학 2・3년제',
+      status: 'graduated',
+      schoolName: '동서울대학교',
+      major: '유아교육과',
+      enrollmentYear: '2018.03',
+      graduationYear: '2020.02',
+    },
+    {
+      schoolType: '고등학교',
+      status: 'graduated',
+      schoolName: '잠실고등학교',
+      enrollmentYear: '2015.03',
+      graduationYear: '2018.02',
+    },
+  ],
+  freeWriting1:
+    '전공을 살려 초등 대상 교육에 지원하게 되었습니다. 아이들이 경제 개념을 쉽게 이해하도록 돕고 싶습니다.',
+  freeWriting2:
+    '경제 교육을 통해 청소년이 합리적 선택을 할 수 있는 기반이 마련된다고 생각합니다.',
+  freeWriting3:
+    '신뢰를 바탕으로 한 소통을 중요시하며, 수업 전후로 학생들과 짧은 대화 시간을 갖고 있습니다.',
+  freeWriting4:
+    '예상과 다른 질문으로 수업이 멈췄을 때, 학생 의견을 칠판에 정리한 뒤 함께 답을 찾아가며 흐름을 회복했습니다.',
+}
+
+/** 강사 이력서 탭 — 모든 mock 행에 샘플 주입 (index로 A/B 교차) */
+function getResumeSample(index: number): ApplicantInstructorResumeSample {
+  return index % 2 === 0 ? RESUME_SAMPLE_A : RESUME_SAMPLE_B
 }
 
 const BIRTH_MONTHS = ['02', '04', '06', '08', '09', '11', '01', '03', '05', '07', '10', '12']
@@ -636,7 +684,63 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
   return rows
 }
 
-export const MOCK_APPLICANT_INSTRUCTORS: ApplicantInstructorRow[] = buildMockList(72)
+export const MOCK_APPLICANT_INSTRUCTORS: ApplicantInstructorRow[] = (() => {
+  const rows = buildMockList(72)
+  /** 기관 프로그램 강사 목록 QA — 승인 현황 케이스별 1건(맨 앞 고정) */
+  const caseByStatus: Record<ApplicantInstructorApprovalStatusKey, number> = {
+    pending: 0,
+    rejected: 1,
+    approved: 2,
+  }
+  const caseNames: Record<ApplicantInstructorApprovalStatusKey, string> = {
+    pending: '대기강사',
+    rejected: '반려강사',
+    approved: '승인강사',
+  }
+  for (const status of APPROVAL_STATUSES) {
+    const idx = caseByStatus[status]
+    const row = rows[idx]
+    if (!row) continue
+    row.instructorName = caseNames[status]
+    row.accountHolder = caseNames[status]
+    row.approvalStatus = status
+    if (status === 'approved') {
+      row.assignedSchoolId = PREFERRED_SCHOOL_OPTIONS[0].schoolId
+      row.assignedSchoolName = PREFERRED_SCHOOL_OPTIONS[0].schoolName
+      row.managerComment = '정보 재검토 정보 재확인 필요, 입금기입이 다르네요.'
+      row.lectureFeeBasisType = 'special_lecture'
+      row.lectureFeeMeasure = '출강 1회당'
+      row.lectureFeeAmount = '915000'
+      row.lectureFeeBasisDisplay = '특강 강사비 | 출강 1회당 | 915,000원'
+      row.approvalNotificationSentAt = '2026.01.15 09:15:42'
+      row.rejectionReason = undefined
+      row.rejectionNotifyTiming = undefined
+    } else if (status === 'rejected') {
+      row.assignedSchoolId = undefined
+      row.assignedSchoolName = undefined
+      row.managerComment = undefined
+      row.lectureFeeBasisType = undefined
+      row.lectureFeeMeasure = undefined
+      row.lectureFeeAmount = undefined
+      row.lectureFeeBasisDisplay = undefined
+      row.rejectionReason = '인원 초과'
+      row.rejectionNotifyTiming = 'immediate'
+      row.approvalNotificationSentAt = '2026.01.14 11:00:00'
+    } else {
+      row.assignedSchoolId = undefined
+      row.assignedSchoolName = undefined
+      row.managerComment = undefined
+      row.lectureFeeBasisType = undefined
+      row.lectureFeeMeasure = undefined
+      row.lectureFeeAmount = undefined
+      row.lectureFeeBasisDisplay = undefined
+      row.rejectionReason = undefined
+      row.rejectionNotifyTiming = undefined
+      row.approvalNotificationSentAt = undefined
+    }
+  }
+  return rows
+})()
 
 const INDIVIDUAL_PROGRAM_SLOT_KEYS = INDIVIDUAL_LECTURE_ASSIGN_DEMO_SLOT_KEYS
 
@@ -646,51 +750,74 @@ export const INDIVIDUAL_PROGRAM_DEMO_INSTRUCTOR_PROGRAM_ID = 'general-prog-sched
 const INDIVIDUAL_PROGRAM_DEMO_INSTRUCTORS: ApplicantInstructorRow[] = [
   {
     id: 'individual-program-instructor-pending',
-    no: 2,
+    no: 3,
     instructorName: '박틴토',
+    nameHanja: '朴틴토',
+    nameEnglish: 'Park Tinto',
     lectureExperienceYears: 4,
     educationLevel: '대학교',
     educationSchoolName: '한국대학교',
     contact: '010-7733-2211',
     email: 'tinto@naver.com',
-    address: '서울특별시 강서구',
+    address: '서울특별시 강서구 화곡동 123-45',
     appliedAt: '2026.04.01',
     affiliation: '개인',
+    instructorMemberProfile: 'instructor_only',
     approvalStatus: 'pending',
     schoolName: '-',
     evaluationGrade: 'A',
     instructorFeeGradeLabel: '3급 강사비',
+    teachingExperience: '3년 이상',
     gender: '남성',
     birthDate: '1994.04.12',
     age: 32,
+    militaryStatus: '군필',
+    bankName: '국민',
+    accountNumber: '123-456-789012',
     accountHolder: '박틴토',
+    businessIncomeEarnerStatus: '해당 없음',
+    oneLineIntro: ONE_LINE_INTROS[0],
     preferredScheduleSlots: [
       { slotKey: INDIVIDUAL_PROGRAM_SLOT_KEYS.first, assignable: true },
       { slotKey: INDIVIDUAL_PROGRAM_SLOT_KEYS.second, assignable: false },
     ],
+    ...getResumeSample(0),
   },
   {
     id: 'individual-program-instructor-approved',
-    no: 1,
+    no: 2,
     instructorName: '김서연',
+    nameHanja: '金瑞姸',
+    nameEnglish: 'Kim Seoyeon',
     lectureExperienceYears: 6,
     educationLevel: '대학교',
     educationSchoolName: '서울대학교',
     contact: '010-1111-2222',
     email: 'seoyeon@example.com',
-    address: '서울특별시 마포구',
+    address: '서울특별시 마포구 서교동 456-78',
     appliedAt: '2026.03.28',
     affiliation: '개인',
+    instructorMemberProfile: 'instructor_only',
     approvalStatus: 'approved',
     schoolName: '-',
     evaluationGrade: 'B',
     instructorFeeGradeLabel: '2급 강사비',
+    teachingExperience: '3년 이상',
+    gender: '여성',
+    birthDate: '1992.11.08',
+    age: 33,
+    militaryStatus: '해당없음',
+    bankName: '신한',
+    accountNumber: '110-356-820471',
+    accountHolder: '김서연',
     lectureFeeBasisDisplay: '특강 강사비 | 출강 1회당 | 915,000원',
     lectureFeeBasisType: 'special_lecture',
     lectureFeeMeasure: '출강 1회당',
     lectureFeeAmount: '915000',
     businessIncomeEarnerStatus: '해당 없음',
     approvalNotificationSentAt: '2026.04.02 10:00:00',
+    managerComment: '정보 재검토 정보 재확인 필요, 입금기입이 다르네요.',
+    oneLineIntro: ONE_LINE_INTROS[1],
     assignedLectures: [
       {
         slotKey: INDIVIDUAL_PROGRAM_SLOT_KEYS.first,
@@ -703,17 +830,67 @@ const INDIVIDUAL_PROGRAM_DEMO_INSTRUCTORS: ApplicantInstructorRow[] = [
     ],
     assignedSchoolId: INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID,
     assignedSchoolName: 'UJAT 36기',
+    preferredScheduleSlots: [
+      { slotKey: INDIVIDUAL_PROGRAM_SLOT_KEYS.first, assignable: true },
+      { slotKey: INDIVIDUAL_PROGRAM_SLOT_KEYS.second, assignable: true },
+    ],
+    ...getResumeSample(1),
+  },
+  {
+    id: 'individual-program-instructor-rejected',
+    no: 1,
+    instructorName: '이도윤',
+    nameHanja: '李道允',
+    nameEnglish: 'Lee Doyoon',
+    lectureExperienceYears: 3,
+    educationLevel: '대학교',
+    educationSchoolName: '연세대학교',
+    contact: '010-3333-4444',
+    email: 'doyoon@example.com',
+    address: '서울특별시 영등포구 여의도동 12-3',
+    appliedAt: '2026.03.20',
+    affiliation: '개인',
+    instructorMemberProfile: 'instructor_only',
+    approvalStatus: 'rejected',
+    schoolName: '-',
+    evaluationGrade: 'C',
+    instructorFeeGradeLabel: '3급 강사비',
+    teachingExperience: '1~3년',
+    gender: '남성',
+    birthDate: '1996.08.03',
+    age: 29,
+    militaryStatus: '군필',
+    bankName: '농협',
+    accountNumber: '352-4608-3179-24',
+    accountHolder: '이도윤',
+    businessIncomeEarnerStatus: '해당 없음',
+    oneLineIntro: ONE_LINE_INTROS[2],
+    rejectionReason: '인원 초과',
+    rejectionNotifyTiming: 'immediate',
+    approvalNotificationSentAt: '2026.03.25 14:20:00',
+    preferredScheduleSlots: [
+      { slotKey: INDIVIDUAL_PROGRAM_SLOT_KEYS.first, assignable: true },
+    ],
+    ...getResumeSample(0),
   },
 ]
 
 /**
  * 프로그램별 강의 신청 강사 목록 (강사 모집 상세 모달용).
  * Mock: programId별로 다른 수의 강사 반환 (실제 API 연동 시 programId 필터 적용).
+ * `programHint` — API 숫자 id 등 mock 캐시에 없을 때 개인/기관 분기용.
  */
-export function getApplicantInstructorsByProgramId(programId: string): ApplicantInstructorRow[] {
-  const program = getGeneralProgramById(programId)
+export function getApplicantInstructorsByProgramId(
+  programId: string,
+  programHint?: Program | null
+): ApplicantInstructorRow[] {
+  const program = programHint ?? getGeneralProgramById(programId)
   if (program != null && isGeneralIndividualProgram(program)) {
-    return INDIVIDUAL_PROGRAM_DEMO_INSTRUCTORS.map(row => ({ ...row, programId }))
+    return INDIVIDUAL_PROGRAM_DEMO_INSTRUCTORS.map((row, idx, arr) => ({
+      ...row,
+      programId,
+      no: arr.length - idx,
+    }))
   }
 
   const hash = programId.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)

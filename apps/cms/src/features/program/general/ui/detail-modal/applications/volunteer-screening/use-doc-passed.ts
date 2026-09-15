@@ -53,9 +53,11 @@ export type GeneralInterviewAssignFlow =
 export function useGeneralVolunteerDocPassed({
   programId,
   subjectKind = 'volunteer',
+  preferApplicationListMock = false,
 }: {
   programId: string
   subjectKind?: ScreeningSubjectKind
+  preferApplicationListMock?: boolean
 }) {
   const { showAlert } = useCmsAlert()
   const loadRows = useCallback(() => {
@@ -70,6 +72,7 @@ export function useGeneralVolunteerDocPassed({
   // remote ON이면 mock으로 채우지 않음 (잘못된 목록 플래시 방지)
   const remoteSeed =
     subjectKind === 'volunteer' &&
+    !preferApplicationListMock &&
     shouldUseGeneralApplicationsRemoteApi() &&
     Boolean(programId)
   const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() =>
@@ -78,7 +81,7 @@ export function useGeneralVolunteerDocPassed({
   const volunteerRemote = useGeneralVolunteerApplicationsRemote({
     programId,
     stage: 'docPassed',
-    enabled: subjectKind === 'volunteer',
+    enabled: subjectKind === 'volunteer' && !preferApplicationListMock,
     setList,
   })
   const [pendingFilters, setPendingFilters] = useState<GeneralVolunteerDocPassedFilters>(() => ({
@@ -143,7 +146,11 @@ export function useGeneralVolunteerDocPassed({
       const { target } = flow
       const wasAssigned = target.interviewAssignmentStatus === 'assigned'
 
-      if (subjectKind === 'volunteer' && shouldUseGeneralApplicationsRemoteApi()) {
+      if (
+        subjectKind === 'volunteer' &&
+        !preferApplicationListMock &&
+        shouldUseGeneralApplicationsRemoteApi()
+      ) {
         const slotTimes = buildInterviewSlotTimesFromAssignPayload(payload)
         if (!slotTimes) {
           showAlert({
@@ -193,7 +200,7 @@ export function useGeneralVolunteerDocPassed({
         payload,
       })
     },
-    [programId, showAlert, subjectKind, updateRow, volunteerRemote]
+    [preferApplicationListMock, programId, showAlert, subjectKind, updateRow, volunteerRemote]
   )
 
   const closeAssignCompleteModal = useCallback(() => {

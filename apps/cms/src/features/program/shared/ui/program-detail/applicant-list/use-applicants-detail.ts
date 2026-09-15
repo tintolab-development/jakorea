@@ -36,14 +36,17 @@ import {
   type ApplicantSchoolRow,
 } from '@/data/mock/applicant-institutions'
 import {
+  getApplicantInstructorsByProgramId,
   patchApplicantInstructorForApprovalStatus,
   updateApplicantInstructorApprovalStatus,
   type ApplicantInstructorApprovalNotifyOptions,
   type ApplicantInstructorApprovalStatusKey,
   type ApplicantInstructorRow,
 } from '@/data/mock/applicant-instructors'
+import { shouldPreferGeneralApplicationListMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import {
+  getGeneralParticipantDoc1Applicants,
   updateGeneralIndividualApplicantApprovalStatus,
   patchGeneralIndividualApplicantForApprovalStatus,
   type GeneralIndividualApplicantRow,
@@ -195,12 +198,15 @@ export function useApplicantsDetail({
   const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>([])
   const [individualList, setIndividualList] = useState<GeneralIndividualApplicantRow[]>([])
 
+  const preferApplicationListMock = shouldPreferGeneralApplicationListMock(program ?? null)
+
   const applicationsRemote = useGeneralProgramApplicationsRemoteSync({
     programId,
     menu,
     usesProgramInstitutionApplications,
     instructorColumnPreset,
     individualScreeningStage,
+    preferApplicationListMock,
     setInstitutionList,
     setInstructorList,
     setIndividualList,
@@ -254,7 +260,7 @@ export function useApplicantsDetail({
 
   const applyRemoteInstructorDecision = useCallback(
     async (ids: string[], decision: 'approve' | 'reject', reason?: string) => {
-      if (!applicationsRemote.remoteEnabled) return false
+      if (!applicationsRemote.instructorRemoteEnabled) return false
       try {
         for (const id of ids) {
           if (decision === 'approve') {
@@ -473,6 +479,40 @@ export function useApplicantsDetail({
       setViewMode('table')
     }
   }, [individualScreeningStage])
+
+  /** 1차 서류 심사 대상자 — remote와 분리된 mock 고정 목록 */
+  useEffect(() => {
+    if (menu !== 'individual-applications' || individualScreeningStage !== 'doc1') return
+    if (!programId) {
+      setIndividualList([])
+      return
+    }
+    setIndividualList(getGeneralParticipantDoc1Applicants(programId))
+    setPendingFilters({})
+    setAppliedFilters({})
+    setSelectedRowKeys([])
+  }, [menu, individualScreeningStage, programId, setPendingFilters])
+
+  /** 참여자 mock 프로그램(또는 강사 remote off) — 강사 신청 목록 mock 시드 */
+  useEffect(() => {
+    if (menu !== 'instructors' || instructorColumnPreset !== 'general-detail') return
+    if (applicationsRemote.instructorRemoteEnabled) return
+    if (!programId) {
+      setInstructorList([])
+      return
+    }
+    setInstructorList(getApplicantInstructorsByProgramId(programId, program ?? null))
+    setPendingFilters({})
+    setAppliedFilters({})
+    setSelectedRowKeys([])
+  }, [
+    menu,
+    instructorColumnPreset,
+    programId,
+    program,
+    applicationsRemote.instructorRemoteEnabled,
+    setPendingFilters,
+  ])
 
   const prevViewModeRef = useRef(viewMode)
   useEffect(() => {

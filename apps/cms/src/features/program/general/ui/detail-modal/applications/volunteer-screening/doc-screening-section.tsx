@@ -14,6 +14,8 @@ import { GeneralVolunteerDocumentCancelRejectModal } from './general-volunteer-d
 import { GeneralVolunteerDocumentRejectCompleteModal } from './general-volunteer-document-reject-complete-modal'
 import { GeneralVolunteerDocumentRejectModal } from './general-volunteer-document-reject-modal'
 import { buildGeneralVolunteerDoc1FilterRows } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
+import { shouldPreferGeneralApplicationListMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
+import type { Program } from '@/types/domain'
 import { GENERAL_DOC_SCREENING_TABLE_SCROLL_X } from './doc-screening-columns'
 import { useGeneralVolunteerDocScreening } from './use-doc-screening'
 import {
@@ -26,14 +28,18 @@ import './volunteer-screening.css'
 const FILTER_ROWS = buildGeneralVolunteerDoc1FilterRows()
 
 export function GeneralVolunteerDocScreeningSection({
-  programId,
+  program,
+  programId: programIdProp,
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: {
-  programId: string
+  program?: Program
+  programId?: string
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
+  const programId = program?.id ?? programIdProp ?? ''
+  const preferApplicationListMock = shouldPreferGeneralApplicationListMock(program ?? null)
   const {
     list,
     pendingFilters,
@@ -82,7 +88,7 @@ export function GeneralVolunteerDocScreeningSection({
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
     applicationsLoading,
-  } = useGeneralVolunteerDocScreening({ programId })
+  } = useGeneralVolunteerDocScreening({ programId, preferApplicationListMock })
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
     programId,

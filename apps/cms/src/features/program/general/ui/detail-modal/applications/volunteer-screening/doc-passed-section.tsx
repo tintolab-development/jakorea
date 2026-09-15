@@ -12,6 +12,7 @@ import {
   type ScreeningSubjectKind,
 } from '@/features/program/general/lib/screening-subject-kind'
 import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
+import { shouldPreferGeneralApplicationListMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import {
   useGeneralVolunteerApplicantDetail,
@@ -39,6 +40,7 @@ export function GeneralVolunteerDocPassedSection({
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
   const programId = program.id
+  const preferApplicationListMock = shouldPreferGeneralApplicationListMock(program)
   const filterRows = useMemo(
     () => buildGeneralVolunteerDocPassedFilterRows(subjectKind),
     [subjectKind]
@@ -71,7 +73,8 @@ export function GeneralVolunteerDocPassedSection({
     confirmWithdrawActivity,
     withdrawTarget,
     applicationsLoading,
-  } = useGeneralVolunteerDocPassed({ programId, subjectKind })
+    isRemoteDataSource,
+  } = useGeneralVolunteerDocPassed({ programId, subjectKind, preferApplicationListMock })
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
     programId,
@@ -130,6 +133,8 @@ export function GeneralVolunteerDocPassedSection({
       program={program}
       list={list}
       assignFlow={assignFlow}
+      applicationsUseRemote={isRemoteDataSource}
+      subjectKind={subjectKind}
       onClosePick={closeAssignModal}
       onConfirmPick={confirmAssignInterview}
       onCloseComplete={closeAssignCompleteModal}

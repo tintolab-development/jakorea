@@ -31,6 +31,7 @@ import { GeneralVolunteerInterview2CalendarView } from './general-volunteer-inte
 import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
 import { useGeneralVolunteerInterview2 } from './use-interview2'
 import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
+import { shouldPreferGeneralApplicationListMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import './volunteer-screening.css'
@@ -50,6 +51,7 @@ export function GeneralVolunteerInterview2Section({
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
   const listTitle = screeningInterview2ListTitle(subjectKind)
+  const preferApplicationListMock = shouldPreferGeneralApplicationListMock(program)
 
   const {
     list,
@@ -99,7 +101,7 @@ export function GeneralVolunteerInterview2Section({
     saveInterviewEvaluation,
     filterRowsSource,
     applicationsLoading,
-  } = useGeneralVolunteerInterview2({ programId, subjectKind })
+  } = useGeneralVolunteerInterview2({ programId, subjectKind, preferApplicationListMock })
 
   const activityWithdrawScheduleOptions = useMemo(
     () => getGeneralVolunteerActivityWithdrawScheduleOptions(program),

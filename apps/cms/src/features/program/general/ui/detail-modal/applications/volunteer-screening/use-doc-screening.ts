@@ -95,7 +95,13 @@ function toExportRow(row: GeneralVolunteerApplicantRow): Record<string, string |
   }
 }
 
-export function useGeneralVolunteerDocScreening({ programId }: { programId: string }) {
+export function useGeneralVolunteerDocScreening({
+  programId,
+  preferApplicationListMock = false,
+}: {
+  programId: string
+  preferApplicationListMock?: boolean
+}) {
   const [bulkApproveOpen, setBulkApproveOpen] = useState(false)
   const [bulkRejectOpen, setBulkRejectOpen] = useState(false)
   const [bulkApproveCompleteCount, setBulkApproveCompleteCount] = useState<number | null>(null)
@@ -114,13 +120,17 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
   const [cancelApprovalTargetId, setCancelApprovalTargetId] = useState<string | null>(null)
   const [cancelRejectTargetId, setCancelRejectTargetId] = useState<string | null>(null)
   // remote ON이면 mock으로 채우지 않음 (잘못된 목록 플래시 방지)
-  const remoteSeed = shouldUseGeneralApplicationsRemoteApi() && Boolean(programId)
+  const remoteSeed =
+    !preferApplicationListMock &&
+    shouldUseGeneralApplicationsRemoteApi() &&
+    Boolean(programId)
   const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() =>
     remoteSeed ? [] : getGeneralVolunteerDoc1Applicants(programId)
   )
   const volunteerRemote = useGeneralVolunteerApplicationsRemote({
     programId,
     stage: 'doc1',
+    enabled: !preferApplicationListMock,
     setList,
   })
   const [pendingFilters, setPendingFilters] = useState<GeneralVolunteerDoc1Filters>(() => ({

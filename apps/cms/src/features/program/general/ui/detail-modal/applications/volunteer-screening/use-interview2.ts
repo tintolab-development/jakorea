@@ -47,9 +47,11 @@ export type GeneralVolunteerInterview2ViewMode = 'list' | 'calendar'
 export function useGeneralVolunteerInterview2({
   programId,
   subjectKind = 'volunteer',
+  preferApplicationListMock = false,
 }: {
   programId: string
   subjectKind?: ScreeningSubjectKind
+  preferApplicationListMock?: boolean
 }) {
   const { showAlert } = useCmsAlert()
   const sortInterview2Rows = useCallback(
@@ -75,6 +77,7 @@ export function useGeneralVolunteerInterview2({
   // remote ON이면 mock으로 채우지 않음 (잘못된 목록 플래시 방지)
   const remoteSeed =
     subjectKind === 'volunteer' &&
+    !preferApplicationListMock &&
     shouldUseGeneralApplicationsRemoteApi() &&
     Boolean(programId)
   const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() =>
@@ -83,7 +86,7 @@ export function useGeneralVolunteerInterview2({
   const volunteerRemote = useGeneralVolunteerApplicationsRemote({
     programId,
     stage: 'interview2',
-    enabled: subjectKind === 'volunteer',
+    enabled: subjectKind === 'volunteer' && !preferApplicationListMock,
     setList,
   })
   const [pendingFilters, setPendingFilters] = useState<GeneralVolunteerInterview2Filters>(() => ({

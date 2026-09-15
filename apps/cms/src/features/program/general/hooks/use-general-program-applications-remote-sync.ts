@@ -24,6 +24,8 @@ type UseGeneralProgramApplicationsRemoteSyncOptions = {
   usesProgramInstitutionApplications: boolean
   instructorColumnPreset: string
   individualScreeningStage?: 'doc1'
+  /** 참여자 mock 프로그램 — 강사 목록도 remote 비활성 */
+  preferApplicationListMock?: boolean
   setInstitutionList: (rows: ApplicantSchoolRow[]) => void
   setInstructorList: (rows: ApplicantInstructorRow[]) => void
   setIndividualList: (rows: GeneralIndividualApplicantRow[]) => void
@@ -35,12 +37,16 @@ export function useGeneralProgramApplicationsRemoteSync({
   usesProgramInstitutionApplications,
   instructorColumnPreset,
   individualScreeningStage,
+  preferApplicationListMock = false,
   setInstitutionList,
   setInstructorList,
   setIndividualList,
 }: UseGeneralProgramApplicationsRemoteSyncOptions) {
   const queryClient = useQueryClient()
-  const remoteEnabled = useApplicationsRemoteEnabledForSurface(programId)
+  const surfaceRemoteEnabled = useApplicationsRemoteEnabledForSurface(programId)
+  /** 기관 신청은 기존 remote 유지 — 강사만 참여자 mock 프로그램에서 FE mock */
+  const instructorRemoteEnabled = surfaceRemoteEnabled && !preferApplicationListMock
+  const remoteEnabled = surfaceRemoteEnabled
 
   const organizationQuery = useQuery({
     queryKey: generalApplicationsQueryKeys.organizationList(programId ?? ''),
@@ -54,7 +60,10 @@ export function useGeneralProgramApplicationsRemoteSync({
   const instructorQuery = useQuery({
     queryKey: generalApplicationsQueryKeys.instructorList(programId ?? ''),
     queryFn: () => fetchGeneralInstructorApplications(programId!),
-    enabled: remoteEnabled && menu === 'instructors' && instructorColumnPreset === 'general-detail',
+    enabled:
+      instructorRemoteEnabled &&
+      menu === 'instructors' &&
+      instructorColumnPreset === 'general-detail',
     staleTime: 30_000,
     retry: false,
   })
@@ -68,6 +77,7 @@ export function useGeneralProgramApplicationsRemoteSync({
     /** 1차 서류 심사 대상자는 mock 고정 목록 — remote 신청 목록과 분리 */
     enabled:
       remoteEnabled &&
+      !preferApplicationListMock &&
       menu === 'individual-applications' &&
       individualScreeningStage !== 'doc1',
     staleTime: 30_000,
@@ -92,6 +102,8 @@ export function useGeneralProgramApplicationsRemoteSync({
 
   return {
     remoteEnabled,
+    /** 강사 목록 승인/반려 — mock 프로그램에서는 false */
+    instructorRemoteEnabled,
     applicationsLoading:
       (organizationQuery.isEnabled &&
         (organizationQuery.isPending || organizationQuery.isFetching)) ||
