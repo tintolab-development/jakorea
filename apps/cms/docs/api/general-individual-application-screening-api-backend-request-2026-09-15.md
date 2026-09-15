@@ -62,7 +62,7 @@ Response에 `individualApplicationId` 포함. 평가: 기존 `POST …/interview
 - [ ] 최종 PASS / FAIL / RESERVE(rank=2) → finalResultStatus·reserveRank 반영
 - [ ] give-up 기존 API와 충돌 없음
 - [ ] 봉사자 interview-assignments(`volunteerApplicationId`) 회귀 없음
-- [ ] 시드: 「[개인] 커리큘럼형 복수회차 테스트 프로그램」
+- [ ] 시드: 「[개인] 커리큘럼형 복수회차 테스트 프로그램」(`168006`) — 전 카테고리·회원 매핑: [general-primary-168006-nested-seed-backend-request-2026-09-15.md](./general-primary-168006-nested-seed-backend-request-2026-09-15.md)
 
 ---
 
