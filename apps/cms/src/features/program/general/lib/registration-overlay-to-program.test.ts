@@ -156,7 +156,7 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
         'generalRegistration.basicInfo.partnerInvolvement': 'no',
         'generalRegistration.basicInfo.detailedProgramName': '특별한 JOB담',
         'generalRegistration.wageInfo.paymentItemLabels': '교통비(일반), 숙박비',
-        'generalRegistration.basicInfo.sponsorManagerLine': '팀장 김담당 | 010-1234-5678',
+        'generalRegistration.basicInfo.sponsorManagerLine': '김담당 팀장 | 010-1234-5678',
         'generalRegistration.basicInfo.localManagerContactId': '1627251::1627253',
       },
       {
@@ -169,7 +169,7 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
     expect(next.generalCommonInfo?.detailedProgramName).toBe('특별한 JOB담')
     expect(next.textbookName).toBe('특별한 JOB담')
     expect(next.generalCommonInfo?.paymentItems).toBe('교통비(일반), 숙박비')
-    expect(next.generalCommonInfo?.sponsorManagerLine).toBe('팀장 김담당 | 010-1234-5678')
+    expect(next.generalCommonInfo?.sponsorManagerLine).toBe('김담당 팀장 | 010-1234-5678')
   })
 
   it('does not store contact ref as sponsorManagerLine', () => {

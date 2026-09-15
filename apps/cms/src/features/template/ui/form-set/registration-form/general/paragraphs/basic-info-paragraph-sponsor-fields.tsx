@@ -8,6 +8,7 @@ import {
   encodeSponsorManagerContactRef,
   decodeSponsorManagerContactRef,
   formatSponsorManagerSelectLabel,
+  formatSponsorManagerDisplayLine,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
@@ -39,16 +40,6 @@ function normalizeSponsorIds(value: unknown, fallbackPrimary = ''): string[] {
   }
   const primary = fallbackPrimary.trim()
   return primary ? [primary] : []
-}
-
-function formatSponsorManagerDisplayLine(contact: {
-  name: string
-  phone?: string | null
-  position?: string | null
-}): string {
-  return [contact.position ? `${contact.position} ${contact.name}` : contact.name, contact.phone]
-    .filter(Boolean)
-    .join(' | ')
 }
 
 function ProgramRegistrationBasicInfoSponsorFieldsInner({
@@ -215,14 +206,26 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
         c => c.id === decoded.contactId
       )
       patchProgramRegistrationOverlay({
-        [managerLineKey]: contact ? formatSponsorManagerDisplayLine(contact) : '',
+        [managerLineKey]: contact
+          ? formatSponsorManagerDisplayLine({
+              contactName: contact.name,
+              position: contact.position,
+              phone: contact.phone,
+            })
+          : '',
       })
       return
     }
 
     const contact = (singleContactsQuery.data ?? []).find(c => c.id === managerContactId)
     patchProgramRegistrationOverlay({
-      [managerLineKey]: contact ? formatSponsorManagerDisplayLine(contact) : '',
+      [managerLineKey]: contact
+        ? formatSponsorManagerDisplayLine({
+            contactName: contact.name,
+            position: contact.position,
+            phone: contact.phone,
+          })
+        : '',
     })
   }, [
     allowMultipleSponsors,

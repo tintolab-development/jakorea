@@ -198,11 +198,11 @@
 .program-registration-paragraph__card-title-actions {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
-  max-width: min(520px, 100%);
+  max-width: none;
 }
 
 /* 교육 진행 (일정형) — 세부 일정 블록 */

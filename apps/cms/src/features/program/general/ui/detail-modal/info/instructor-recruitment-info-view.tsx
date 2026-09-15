@@ -57,7 +57,12 @@ export function GeneralProgramInstructorRecruitmentInfoView({
 
   return (
     <section className="instructor-recruitment-info-view" aria-label="강사 모집 정보">
-      <FormParagraphSectionHeader title="강사 모집 정보" surface="responseEntry" titleAligned />
+      <FormParagraphSectionHeader
+        title="강사 모집 정보"
+        surface="responseEntry"
+        titleAligned
+        required={isEdit}
+      />
       <div className="instructor-recruitment-info-view__forms">
         <DetailInfoForm
           title="강사 모집 정보(설정)"

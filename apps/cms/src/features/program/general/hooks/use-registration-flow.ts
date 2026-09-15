@@ -29,11 +29,8 @@ import type { Program } from '@/types/domain'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 
-/**
- * TODO(temp): 일반프로그램 등록 필수 항목 미입력 검사 임시 해제 — 이후 `false`로 되돌려 재적용.
- * 검증 로직: `hasIncompleteGeneralProgramRegistrationRequiredFields`
- */
-const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = true
+/** 일반프로그램 등록 필수 항목 미입력 검사 — `hasIncompleteGeneralProgramRegistrationRequiredFields` */
+const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = false
 import {
   coerceGeneralProgramRegistrationStep,
   getDefaultGeneralProgramApplicationStep,

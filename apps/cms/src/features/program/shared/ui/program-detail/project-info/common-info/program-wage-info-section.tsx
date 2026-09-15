@@ -17,6 +17,7 @@ import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 import type { Program } from '@/types/domain'
+import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 export interface ProgramWageInfoSectionProps {
@@ -514,7 +515,11 @@ export function ProgramWageInfoSection({
 
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field label="지급 항목" required view={data.paymentItems} />
-        <DetailInfoForm.Field label="공제 항목" required view={data.deductionItems} />
+        <DetailInfoForm.Field
+          label="공제 항목"
+          required
+          view={mapSettlementDeductionTypeToLabel(data.deductionItems) ?? data.deductionItems}
+        />
       </DetailInfoForm.Row>
     </DetailInfoForm>
   )

@@ -75,6 +75,7 @@ import {
   resolveProgramWageDeductionLabel,
   useProgramWagePaymentItemOptions,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import {
   GENERAL_PROGRAM_EDUCATION_STRUCTURE_LABELS,
   GENERAL_PROGRAM_SESSION_ROUND_LABELS,
@@ -83,6 +84,7 @@ import {
   encodeSponsorManagerContactRef,
   formatGeneralProgramVenueViewLine,
   formatSponsorManagerSelectLabel,
+  resolveSponsorManagerViewLine,
   getGeneralSurveyEditFieldsForAudience,
   getGeneralDetailedProgramSelectOptions,
   isGeneralProgramScheduleType,
@@ -223,6 +225,8 @@ function ProgramRegistrationDetailSection({
   editDescription,
   titleTrailing,
   isFormEdit = false,
+  /** 수정 모드 + 블록 내 입력 항목이 모두 필수일 때 타이틀 `*` */
+  required = false,
 }: {
   title: string
   children: ReactNode
@@ -231,6 +235,7 @@ function ProgramRegistrationDetailSection({
   editDescription?: string
   titleTrailing?: ReactNode
   isFormEdit?: boolean
+  required?: boolean
 }) {
   return (
     <section className="detail-common-info-view__section" aria-label={title}>
@@ -240,6 +245,7 @@ function ProgramRegistrationDetailSection({
         titleTrailing={titleTrailing}
         surface="responseEntry"
         titleAligned
+        required={isFormEdit && required}
       />
       <div
         className={['detail-common-info-view__section-body', bodyClassName]
@@ -368,13 +374,15 @@ function BasicInfoSection({
     } as unknown as UseFormReturn<GeneralProgramCommonInfoEditFormValues>)
 
   const watchedSponsorIds = isFormEdit ? (editForm.watch('sponsorManagementIds') ?? []) : []
-  const sponsorEditContext = useGeneralProgramSponsorEditContext(watchedSponsorIds)
+  const sponsorIdsForContacts =
+    isFormEdit && watchedSponsorIds.length > 0 ? watchedSponsorIds : sponsorManagementIds
+  const sponsorEditContext = useGeneralProgramSponsorEditContext(sponsorIdsForContacts)
   const selectedSponsors = useMemo(
     () =>
-      watchedSponsorIds
+      sponsorIdsForContacts
         .map(id => sponsorEditContext.sponsors.find(s => s.id === id))
         .filter((sponsor): sponsor is SponsorManagementRow => sponsor != null),
-    [watchedSponsorIds, sponsorEditContext.sponsors]
+    [sponsorIdsForContacts, sponsorEditContext.sponsors]
   )
   const managerOptions = useMemo(() => {
     const options: Array<{ value: string; label: string }> = []
@@ -394,6 +402,21 @@ function BasicInfoSection({
     }
     return options
   }, [selectedSponsors, sponsorEditContext.contactsBySponsorId])
+
+  const sponsorManagerViewText = useMemo(
+    () =>
+      resolveSponsorManagerViewLine({
+        storedLine: commonInfo.sponsorManagerLine?.trim() || program.managerName || '-',
+        sponsors: selectedSponsors,
+        contactsBySponsorId: sponsorEditContext.contactsBySponsorId,
+      }),
+    [
+      commonInfo.sponsorManagerLine,
+      program.managerName,
+      selectedSponsors,
+      sponsorEditContext.contactsBySponsorId,
+    ]
+  )
 
   useEffect(() => {
     if (!isFormEdit) return
@@ -451,6 +474,8 @@ function BasicInfoSection({
     <ProgramRegistrationDetailSection
       title="기본 정보"
       bodyClassName="detail-common-info-view__section-body--basic-info"
+      isFormEdit={isFormEdit}
+      required
     >
       <DetailInfoForm
         title="기본 정보 — 등록 이력"
@@ -743,9 +768,7 @@ function BasicInfoSection({
           <DetailInfoForm.Field
             label="후원사 담당자"
             view={
-              <PipeSeparatedInlineView
-                text={commonInfo.sponsorManagerLine?.trim() || program.managerName || '-'}
-              />
+              <PipeSeparatedInlineView text={sponsorManagerViewText} />
             }
             edit={
               <Controller
@@ -1021,7 +1044,7 @@ function KpiSection({
   const formMode = isFormEdit ? 'edit' : 'view'
 
   return (
-    <ProgramRegistrationDetailSection title="사업 KPI 목표">
+    <ProgramRegistrationDetailSection title="사업 KPI 목표" isFormEdit={isFormEdit} required>
       <DetailInfoForm title="사업 KPI 목표" hideHeader mode={formMode} className="program-registration-paragraph">
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -1226,7 +1249,8 @@ function WageSection({
     : []
   const deductionLabel = isFormEdit
     ? resolveProgramWageDeductionLabel(watchedPaymentItemIds)
-    : (commonInfo.deductionItems ?? resolveProgramWageDeductionLabel([]))
+    : (mapSettlementDeductionTypeToLabel(commonInfo.deductionItems) ??
+      resolveProgramWageDeductionLabel([]))
 
   const wageFields = [
     { label: '1급 강사비', name: 'wageGrade1Amount' as const, max: 500_000, maxHint: '500,000' },
@@ -1239,6 +1263,7 @@ function WageSection({
       title={PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.title}
       isFormEdit={isFormEdit}
       editDescription={PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.editDescription}
+      required
     >
       <DetailInfoForm title="임금 정보" hideHeader mode={formMode} className="program-registration-paragraph">
         {wageFields.map(({ label, name, max, maxHint }, index) => {
@@ -1595,6 +1620,7 @@ function TypeSettingsSection({
       isFormEdit={isFormEdit}
       editDescription={PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.editDescription}
       bodyClassName="detail-common-info-view__section-body--type-settings"
+      required
     >
       <DetailInfoForm
         title="프로그램 유형 설정"
@@ -2778,8 +2804,9 @@ function CurriculumSection({
 
   return (
     <ProgramRegistrationDetailSection
-      title={isFormEdit ? `${curriculumMeta.title}*` : curriculumMeta.title}
+      title={curriculumMeta.title}
       isFormEdit={isFormEdit}
+      required
       editDescription={
         isMultiRoundCurriculum
           ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.editDescriptionMultiRound
@@ -4012,8 +4039,9 @@ function ScheduleProgressEditSection({
 
   return (
     <ProgramRegistrationDetailSection
-      title={`${scheduleMeta.title}*`}
+      title={scheduleMeta.title}
       isFormEdit
+      required
       editDescription={editDescription}
       titleTrailing={
         <div
@@ -4528,9 +4556,10 @@ function ScheduleSettingsSection({
 
   return (
     <ProgramRegistrationDetailSection
-      title={isFormEdit ? `${scheduleMeta.title}*` : scheduleMeta.title}
+      title={scheduleMeta.title}
       isFormEdit={isFormEdit}
       editDescription={scheduleMeta.editDescription}
+      required
     >
       {isFormEdit ? (
         <ScheduleSettingsEditFields form={editForm} />
