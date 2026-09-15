@@ -108,11 +108,36 @@
 }
 
 @media (--bp-below-pc) {
+  .pageBackground {
+    display: none;
+  }
+  .content {
+    padding-inline: 0;
+    margin-top: calc(-1 * var(--spacing-40));
+  }
+  .hero {
+    background-color: transparent;
+    background-image: url('/src/assets/background_gradient/people-gradient.png');
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: cover;
+    padding: var(--spacing-40) var(--spacing-20);
+    margin-bottom: var(--spacing-32);
+  }
+
+  .heroLabel {
+    font-size: 14px;
+  }
+  .heroTitle {
+    font-size: 24px;
+  }
   .orgCard {
+    border-radius: 32px;
     padding: var(--spacing-40) var(--spacing-20);
   }
 
   .orgBlock {
+    padding: 0 var(--spacing-16);
     margin-bottom: var(--spacing-48);
   }
 
@@ -121,6 +146,23 @@
   }
 
   .memberList {
-    padding-bottom: var(--spacing-48);
+    padding: 0 var(--spacing-16) var(--spacing-48);
+  }
+  .orgCard {
+    border-radius: 0;
+    padding: 0;
+  }
+}
+
+@media (--bp-pc-up){
+  .pageBackground:after {
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.20) 51.7%, #FFF 89.16%);
   }
 }
