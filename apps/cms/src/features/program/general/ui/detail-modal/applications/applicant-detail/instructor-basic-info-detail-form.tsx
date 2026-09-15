@@ -200,16 +200,16 @@ export function InstructorBasicInfoProfileGrid({
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="연락처" view={profile.contactDisplay} readOnlyDisplay />
+        <DetailInfoForm.Field label="이메일" view={profile.emailDisplay} readOnlyDisplay />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field label="소속" view={profile.affiliationCell} readOnlyDisplay />
         <DetailInfoForm.Field
           label="강사 경력"
           view={profile.lectureExperienceDisplay}
           readOnlyDisplay
         />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field label="연락처" view={profile.contactDisplay} readOnlyDisplay />
-        <DetailInfoForm.Field label="이메일" view={profile.emailDisplay} readOnlyDisplay />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field label="자택 주소지" view={profile.homeAddressDisplay} readOnlyDisplay />

@@ -1,6 +1,6 @@
 /**
  * 일반 프로그램 — 강사 유형 신청 상세 (신청 정보 탭)
- * 스크린샷 시안: 기본 정보 + ApplicantInstructorResume(학력/경력/Q&A)
+ * 스크린샷 시안: 기본 정보(승인·프로필) + 학력/경력/자격
  */
 
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
