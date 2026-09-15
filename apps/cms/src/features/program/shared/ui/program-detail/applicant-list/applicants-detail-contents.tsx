@@ -13,7 +13,10 @@ import { useApplicantInstitutionDetailEdit } from '@/features/program/general/ho
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { useApplicantInstructorDetailEdit } from '@/features/program/general/hooks/use-applicant-instructor-detail-edit'
 import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import {
+  patchApplicantInstructorDetail,
+  type ApplicantInstructorRow,
+} from '@/data/mock/applicant-instructors'
 import {
   patchGeneralIndividualApplicantDetail,
   patchGeneralIndividualApplicantManagerEvaluation,
@@ -266,8 +269,6 @@ function resolveApplicantHeaderItems(params: {
   isInstitution: boolean
   isInstructor: boolean
   isIndividual: boolean
-  /** 참여자 1차 서류 심사·합격자 상세 — 버튼 고정 */
-  individualScreeningStage?: IndividualApplicantScreeningStage
   onRevealPersonalInfo: () => void
   onApprove: (id: string) => void
   onReject: (id: string) => void
@@ -300,7 +301,6 @@ function resolveApplicantHeaderItems(params: {
     isInstitution,
     isInstructor,
     isIndividual,
-    individualScreeningStage = 'main',
     onRevealPersonalInfo,
     onApprove,
     onReject,
@@ -322,14 +322,6 @@ function resolveApplicantHeaderItems(params: {
     isAdminCommentWriteEnabled = false,
     onEnterAdminCommentEdit,
   } = params
-
-  /** 참여자 1차 서류 심사·합격자 상세: 참여 반려 | 참여 승인 | 개인정보 상세보기 */
-  if (
-    isIndividual &&
-    (individualScreeningStage === 'doc1' || individualScreeningStage === 'doc_passed')
-  ) {
-    return headerBtnsPendingParticipation(applicantId, onApprove, onReject, onRevealPersonalInfo)
-  }
 
   if (isApprovedInstitution) {
     const editButton =
@@ -387,11 +379,19 @@ function resolveApplicantHeaderItems(params: {
           )
         : headerBtnEditInfoPreparing()
 
-    return [
+    const items: ApplicantHeaderActionItem[] = [
       headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState),
       editButton,
-      headerBtnPrivacy(onRevealPersonalInfo),
     ]
+
+    if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit) {
+      items.push(
+        headerBtnWriteComment(onEnterAdminCommentEdit, isEditingInstructorDetail)
+      )
+    }
+
+    items.push(headerBtnPrivacy(onRevealPersonalInfo))
+    return items
   }
   if (isRejectedInstructor || isRejectedInstitution || isRejectedIndividual) {
     return [
@@ -490,7 +490,7 @@ export function ApplicantsDetailContents({
   /** 신청 기관(참여자) 승인 완료: [승인 취소], [정보 수정], [개인정보 상세보기] */
   const isApprovedInstitution = isInstitution && institutionData?.approvalStatus === 'approved'
 
-  /** 신청 강사 승인 완료: [승인 취소] [정보 수정] [개인정보 상세보기] */
+  /** 신청 강사 승인 완료: [승인 취소] [정보 수정] [코멘트 작성] [개인정보 상세보기] */
   const isApprovedInstructor = isInstructor && instructorData?.approvalStatus === 'approved'
 
   /** 신청 기관 반려: [반려 취소] [개인정보 상세보기] */
@@ -629,6 +629,46 @@ export function ApplicantsDetailContents({
     },
   })
 
+  const [isInstructorAdminCommentModalOpen, setIsInstructorAdminCommentModalOpen] = useState(false)
+  const [instructorAdminCommentDraft, setInstructorAdminCommentDraft] = useState('')
+
+  /* eslint-disable react-hooks/set-state-in-effect -- 강사 변경 시 코멘트 편집 상태 초기화 */
+  useEffect(() => {
+    setIsInstructorAdminCommentModalOpen(false)
+    setInstructorAdminCommentDraft('')
+  }, [applicantId, instructorData?.managerComment])
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const handleInstructorAdminCommentEditEnter = useCallback(() => {
+    if (instructorDetailEdit.isEditing) return
+    setInstructorAdminCommentDraft(instructorData?.managerComment ?? '')
+    setIsInstructorAdminCommentModalOpen(true)
+  }, [instructorDetailEdit.isEditing, instructorData?.managerComment])
+
+  const handleInstructorAdminCommentSave = useCallback(() => {
+    if (!instructorData) return
+    const updated = patchApplicantInstructorDetail(instructorData.id, {
+      managerComment: instructorAdminCommentDraft,
+    })
+    if (!updated) {
+      void showAlert({
+        title: '안내',
+        content: MESSAGES.error.save,
+      })
+      return
+    }
+    onInstructorDetailSaved?.(updated)
+    setIsInstructorAdminCommentModalOpen(false)
+  }, [instructorAdminCommentDraft, instructorData, onInstructorDetailSaved, showAlert])
+
+  const handleInstructorAdminCommentModalCancel = useCallback(() => {
+    setIsInstructorAdminCommentModalOpen(false)
+  }, [])
+
+  const handleInstructorAdminCommentDraftChange = useCallback((value: string) => {
+    setInstructorAdminCommentDraft(value)
+  }, [])
+
   const cancelApprovalSessions = useMemo(() => {
     if (institutionData?.sessions) return institutionData.sessions
     if (individualData?.sessions) return individualData.sessions
@@ -703,7 +743,6 @@ export function ApplicantsDetailContents({
       isInstitution,
       isInstructor,
       isIndividual,
-      individualScreeningStage,
       onRevealPersonalInfo,
       onApprove,
       onReject,
@@ -729,10 +768,14 @@ export function ApplicantsDetailContents({
         instructorDetailEdit.saveEdit()
       },
       isAdminCommentWriteEnabled:
-        isGeneralInstitutionEditEnabled || isGeneralIndividualEditEnabled,
+        isGeneralInstitutionEditEnabled ||
+        isGeneralIndividualEditEnabled ||
+        isGeneralInstructorEditEnabled,
       onEnterAdminCommentEdit: isApprovedIndividual
         ? handleIndividualAdminCommentEditEnter
-        : handleAdminCommentEditEnter,
+        : isApprovedInstructor
+          ? handleInstructorAdminCommentEditEnter
+          : handleAdminCommentEditEnter,
     })
     if (!items) return null
     return <ApplicantHeaderActionsExtra items={items} personalInfoRevealed={personalInfoRevealed} />
@@ -760,7 +803,6 @@ export function ApplicantsDetailContents({
     isInstitution,
     isInstructor,
     isIndividual,
-    individualScreeningStage,
     onRevealPersonalInfo,
     onApprove,
     onReject,
@@ -769,6 +811,7 @@ export function ApplicantsDetailContents({
     personalInfoRevealed,
     handleAdminCommentEditEnter,
     handleIndividualAdminCommentEditEnter,
+    handleInstructorAdminCommentEditEnter,
   ])
 
   const tabBarExtraContent = headerExtraContent
@@ -942,6 +985,13 @@ export function ApplicantsDetailContents({
         onChange={handleIndividualAdminCommentDraftChange}
         onCancel={handleIndividualAdminCommentModalCancel}
         onConfirm={handleIndividualAdminCommentSave}
+      />
+      <MemberAdminCommentModal
+        open={isInstructorAdminCommentModalOpen}
+        value={instructorAdminCommentDraft}
+        onChange={handleInstructorAdminCommentDraftChange}
+        onCancel={handleInstructorAdminCommentModalCancel}
+        onConfirm={handleInstructorAdminCommentSave}
       />
     </>
   )
