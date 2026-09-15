@@ -1,17 +1,22 @@
 /**
- * 프로그램 상세 — 후원사명 링크 (후원사 홈페이지 새 탭)
+ * 프로그램 상세 — 후원사명 링크 (후원사 관리 상세 `/sponsor`로 이동)
  */
 
-import { useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
-import { resolveSponsorManagementIdForDetailLink } from '@/features/sponsor/lib/sponsor-detail-page-url'
+import {
+  buildSponsorDetailPageUrl,
+  resolveSponsorManagementIdForDetailLink,
+} from '@/features/sponsor/lib/sponsor-detail-page-url'
+import { resolveSponsorManagementRowById } from '@/features/sponsor/lib/sponsor-detail-query-stack'
 import './program-detail-sponsor-link.css'
 
 export interface ProgramDetailSponsorLinkProps {
   name: string
-  /** 후원사 홈페이지. 없으면 options 캐시·resolve로 조회 */
+  /** @deprecated 홈페이지 새 탭 대신 후원사 상세로 이동 — 호환용으로 유지 */
   homepageUrl?: string | null
   sponsorId?: string | null
   /** legacy id 외 표시명·관리 목록 id resolve용 */
@@ -20,7 +25,7 @@ export interface ProgramDetailSponsorLinkProps {
   className?: string
 }
 
-/** 상대·프로토콜 없는 주소를 새 탭용 absolute URL로 맞춤 */
+/** 상대·프로토콜 없는 주소를 absolute URL로 맞춤 (레거시·테스트용) */
 export function normalizeSponsorHomepageUrl(raw: string | null | undefined): string | null {
   const trimmed = raw?.trim() ?? ''
   if (!trimmed || trimmed === '-') return null
@@ -29,60 +34,76 @@ export function normalizeSponsorHomepageUrl(raw: string | null | undefined): str
   return `https://${trimmed}`
 }
 
-function lookupHomepageFromOptionsCache(
+function lookupOrganizationKindFromOptionsCache(
   queryClient: ReturnType<typeof useQueryClient>,
   managementId: string | undefined
-): string | null {
-  if (!managementId) return null
+): string | undefined {
+  if (!managementId) return undefined
   const rows = queryClient.getQueryData<SponsorManagementRow[]>(
     dataManagementQueryKeys.sponsors.options()
   )
-  const row = rows?.find(r => r.id === managementId)
-  return normalizeSponsorHomepageUrl(row?.homepageUrl)
+  return rows?.find(r => r.id === managementId)?.organizationKind
 }
 
 export function ProgramDetailSponsorLink({
   name,
-  homepageUrl,
   sponsorId,
   sponsorName,
   sponsorManagementId,
   className,
 }: ProgramDetailSponsorLinkProps) {
+  const navigate = useNavigate()
+  const location = useLocation()
   const queryClient = useQueryClient()
   const trimmedName = name.trim()
-  const [resolvedHomepageUrl, setResolvedHomepageUrl] = useState<string | null>(() =>
-    normalizeSponsorHomepageUrl(homepageUrl)
-  )
+  const [navigating, setNavigating] = useState(false)
 
-  useEffect(() => {
-    const fromProp = normalizeSponsorHomepageUrl(homepageUrl)
-    if (fromProp) {
-      setResolvedHomepageUrl(fromProp)
-      return
-    }
-    if (!trimmedName) {
-      setResolvedHomepageUrl(null)
-      return
-    }
+  const handleClick = useCallback(async () => {
+    if (navigating) return
+    setNavigating(true)
+    try {
+      const id = await resolveSponsorManagementIdForDetailLink(queryClient, {
+        sponsorId,
+        sponsorName: sponsorName ?? trimmedName,
+        sponsorManagementId,
+      })
+      if (!id) return
 
-    let cancelled = false
-    void resolveSponsorManagementIdForDetailLink(queryClient, {
-      sponsorId,
-      sponsorName: sponsorName ?? trimmedName,
-      sponsorManagementId,
-    }).then(id => {
-      if (cancelled) return
-      setResolvedHomepageUrl(lookupHomepageFromOptionsCache(queryClient, id))
-    })
-    return () => {
-      cancelled = true
+      const row =
+        (await resolveSponsorManagementRowById(queryClient, id)) ??
+        undefined
+      const organizationKind =
+        row?.organizationKind ?? lookupOrganizationKindFromOptionsCache(queryClient, id)
+      const returnTo = `${location.pathname}${location.search}${location.hash}`
+
+      navigate(
+        buildSponsorDetailPageUrl(id, {
+          organizationKind,
+          returnTo,
+        })
+      )
+    } finally {
+      setNavigating(false)
     }
-  }, [queryClient, homepageUrl, sponsorId, sponsorManagementId, sponsorName, trimmedName])
+  }, [
+    navigating,
+    queryClient,
+    sponsorId,
+    sponsorName,
+    sponsorManagementId,
+    trimmedName,
+    location.pathname,
+    location.search,
+    location.hash,
+    navigate,
+  ])
 
   if (!trimmedName) return <>-</>
 
-  if (!resolvedHomepageUrl) {
+  const canNavigate = Boolean(
+    sponsorManagementId?.trim() || sponsorId?.trim() || trimmedName
+  )
+  if (!canNavigate) {
     return <span>{trimmedName}</span>
   }
 
@@ -90,8 +111,9 @@ export function ProgramDetailSponsorLink({
     <button
       type="button"
       className={['program-detail-sponsor-link', className].filter(Boolean).join(' ')}
+      disabled={navigating}
       onClick={() => {
-        window.open(resolvedHomepageUrl, '_blank', 'noopener,noreferrer')
+        void handleClick()
       }}
     >
       {trimmedName}
