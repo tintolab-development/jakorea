@@ -17,6 +17,7 @@ import {
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { ProgramListView } from '@/features/program/general/ui/table/program-table-column-resolver'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
+import { clearGeneralProgramDetailQueryParams } from '@/features/program/general/lib/general-program-detail-route'
 import { resolveProgramAdminDetailInfoTabUrl } from '@/features/program/general/lib/resolve-program-admin-detail-url'
 import { isUjatProgramId } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import {
@@ -563,22 +564,14 @@ function ProgramListPageContent() {
     setSearchParams(nextParams, { replace: true })
   }
 
-  const handleCloseFullPageModal = () => {
+  const handleCloseFullPageModal = useCallback(() => {
     setSelectedProgramForFullPageModal(null)
-    const nextParams = new URLSearchParams(searchParams)
-    nextParams.delete('programId')
-    nextParams.delete('lnb')
-    nextParams.delete('tab')
-    nextParams.delete('edit')
-    nextParams.delete('schoolId')
-    nextParams.delete('schoolTab')
-    nextParams.delete('instructorId')
-    nextParams.delete('instructorTab')
-    nextParams.delete('subTab')
-    nextParams.delete('applicantId')
-    nextParams.delete('detailTab')
-    setSearchParams(nextParams, { replace: true })
-  }
+    // functional clear — 모달 LNB sync 클로저가 stale programId를 다시 싣는 레이스 방지
+    setSearchParams(
+      prev => clearGeneralProgramDetailQueryParams(new URLSearchParams(prev)),
+      { replace: true }
+    )
+  }, [setSearchParams])
 
   /** ProgramList `FilterTableLayout`의 `actions` 슬롯 — 제목·건수는 `headerTitle`·목록 내부 건수로 표시 */
   const programListToolbarActions = (
@@ -657,7 +650,7 @@ function ProgramListPageContent() {
       <ProgramDetailFullPageModal
         open={
           isCompanySchoolPath
-            ? Boolean(companySchoolProgramIdFromUrl) || !!selectedProgramForFullPageModal
+            ? Boolean(companySchoolProgramIdFromUrl)
             : !!selectedProgramForFullPageModal
         }
         program={companySchoolDetailProgram}
