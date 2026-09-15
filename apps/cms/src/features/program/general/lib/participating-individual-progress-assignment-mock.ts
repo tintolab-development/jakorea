@@ -23,34 +23,45 @@ import type {
 const PROGRESS_ASSIGNMENT_DEMO_SESSIONS: ParticipatingSchoolSession[] = [
   {
     round: 1,
-    date: '2026.01.09',
-    dayOfWeek: '금',
+    date: '2026.09.08',
+    dayOfWeek: '화',
     duration: '2시간',
     format: '오프라인',
     classNum: '1교시',
-    timeRange: '9:20~11:20',
-    status: 'pending',
+    timeRange: '09:20~11:20',
+    status: 'completed',
   },
   {
     round: 2,
-    date: '2026.01.12',
-    dayOfWeek: '월',
+    date: '2026.09.22',
+    dayOfWeek: '화',
+    duration: '2시간',
+    format: '오프라인',
+    classNum: '2교시',
+    timeRange: '11:20~13:20',
+    status: 'completed',
+  },
+  {
+    round: 3,
+    date: '2026.10.13',
+    dayOfWeek: '화',
     duration: '2시간',
     format: '오프라인',
     classNum: '3교시',
-    timeRange: '11:20~13:20',
+    timeRange: '09:20~11:20',
     status: 'pending',
   },
 ]
 
 const ASSIGNMENT_PERIOD_BY_ROUND: Record<number, string> = {
-  1: '26. 01. 05(월) ~ 26. 01. 09(금)',
-  2: '26. 01. 05(월) ~ 26. 01. 09(금)',
+  1: '26. 09. 01(화) ~ 26. 09. 08(화)',
+  2: '26. 09. 15(화) ~ 26. 09. 22(화)',
+  3: '26. 10. 06(화) ~ 26. 10. 13(화)',
 }
 
-const REMARK_DATE_LABEL = '26. 01. 11'
+const REMARK_DATE_LABEL = '26. 09. 10'
 
-const PROGRESS_ASSIGNMENT_DEMO_PARTICIPANT_COUNT = 5
+const PROGRESS_ASSIGNMENT_DEMO_PARTICIPANT_COUNT = 6
 
 type DemoAssignmentRowDef = {
   submission: ParticipatingIndividualProgressAssignmentSubmission
@@ -58,15 +69,28 @@ type DemoAssignmentRowDef = {
   remarkDateLabel?: string
 }
 
+/** 1회차 — 제출·비고 케이스별 1건 */
 const SESSION_1_ROW_DEFS: DemoAssignmentRowDef[] = [
   { submission: { kind: 'not_submitted' }, remarkKind: 'none' },
-  { submission: { kind: 'not_submitted' }, remarkKind: 'none' },
+  {
+    submission: { kind: 'not_submitted' },
+    remarkKind: 'deadline_missed',
+    remarkDateLabel: REMARK_DATE_LABEL,
+  },
   {
     submission: {
       kind: 'submitted',
-      fileName: '1회차_과제_김학생.pdf',
+      fileName: '1회차_과제_제출.pdf',
       href: '#',
-      secondaryFileName: '1회차_과제_김학생_추가.pdf',
+    },
+    remarkKind: 'none',
+  },
+  {
+    submission: {
+      kind: 'submitted',
+      fileName: '1회차_과제_수정.pdf',
+      href: '#',
+      secondaryFileName: '1회차_과제_추가.pdf',
       secondaryHref: '#',
     },
     remarkKind: 'revision_submitted',
@@ -75,7 +99,7 @@ const SESSION_1_ROW_DEFS: DemoAssignmentRowDef[] = [
   {
     submission: {
       kind: 'submitted',
-      fileName: '1회차_과제_이학생.pdf',
+      fileName: '1회차_과제_피드백.pdf',
       href: '#',
     },
     remarkKind: 'feedback_delivered',
@@ -84,7 +108,7 @@ const SESSION_1_ROW_DEFS: DemoAssignmentRowDef[] = [
   {
     submission: {
       kind: 'submitted',
-      fileName: '1회차_과제_박학생.pdf',
+      fileName: '1회차_과제_기한.pdf',
       href: '#',
     },
     remarkKind: 'deadline_missed',
@@ -92,7 +116,48 @@ const SESSION_1_ROW_DEFS: DemoAssignmentRowDef[] = [
   },
 ]
 
-const SESSION_2_ROW_DEF: DemoAssignmentRowDef = {
+/** 2회차 — 제출·예약·비고 케이스별 1건 */
+const SESSION_2_ROW_DEFS: DemoAssignmentRowDef[] = [
+  { submission: { kind: 'not_submitted' }, remarkKind: 'none' },
+  {
+    submission: {
+      kind: 'submitted',
+      fileName: '2회차_과제_제출.pdf',
+      href: '#',
+    },
+    remarkKind: 'none',
+  },
+  {
+    submission: {
+      kind: 'submitted',
+      fileName: '2회차_과제_피드백.pdf',
+      href: '#',
+    },
+    remarkKind: 'feedback_delivered',
+    remarkDateLabel: '26. 09. 24',
+  },
+  {
+    submission: {
+      kind: 'submitted',
+      fileName: '2회차_과제_수정.pdf',
+      href: '#',
+    },
+    remarkKind: 'revision_submitted',
+    remarkDateLabel: '26. 09. 25',
+  },
+  {
+    submission: {
+      kind: 'submitted',
+      fileName: '2회차_과제_기한.pdf',
+      href: '#',
+    },
+    remarkKind: 'deadline_missed',
+    remarkDateLabel: '26. 09. 24',
+  },
+  { submission: { kind: 'scheduled' }, remarkKind: 'none' },
+]
+
+const SESSION_3_ROW_DEF: DemoAssignmentRowDef = {
   submission: { kind: 'scheduled' },
   remarkKind: 'none',
 }
@@ -129,14 +194,19 @@ function buildDemoParticipantMeta(
 ) {
   const detail = template.detail
   const name =
-    index === 0 ? '김학생' : index === 1 ? '김학생' : `${template.applicantName}${index > 0 ? ` ${index + 1}` : ''}`.trim()
+    index === 0
+      ? '김학생'
+      : index === 1
+        ? '이학생'
+        : `${template.applicantName}${index > 0 ? ` ${index + 1}` : ''}`.trim()
 
   return {
     participantId: template.id,
     name,
     genderBirthLabel: formatIndividualProgressAssignmentGenderBirthLabel(
       detail?.gender ?? (index % 2 === 0 ? '남성' : '여성'),
-      detail?.birthDate ?? `2010. ${String((index % 12) + 1).padStart(2, '0')}. ${String((index % 28) + 1).padStart(2, '0')}`
+      detail?.birthDate ??
+        `2010. ${String((index % 12) + 1).padStart(2, '0')}. ${String((index % 28) + 1).padStart(2, '0')}`
     ),
     affiliationGradeLabel: formatIndividualProgressAssignmentAffiliationGradeLabel(
       template.affiliation,
@@ -148,7 +218,10 @@ function buildDemoParticipantMeta(
 }
 
 function resolveRowDef(sessionRound: number, index: number): DemoAssignmentRowDef {
-  if (sessionRound >= 2) return SESSION_2_ROW_DEF
+  if (sessionRound >= 3) return SESSION_3_ROW_DEF
+  if (sessionRound === 2) {
+    return SESSION_2_ROW_DEFS[index] ?? SESSION_2_ROW_DEFS[0]!
+  }
   return SESSION_1_ROW_DEFS[index] ?? SESSION_1_ROW_DEFS[0]!
 }
 

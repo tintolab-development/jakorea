@@ -126,17 +126,41 @@ function patchScreenshotSessions(
 }
 
 function buildParticipatingRows(): ParticipatingIndividualParticipantRow[] {
-  return MOCK_GENERAL_INDIVIDUAL_APPLICATIONS.map((row, index) => {
-    const sessionCount = row.sessions?.length ?? 1
-    const base: ParticipatingIndividualParticipantRow = {
-      ...row,
-      approvalStatus: 'approved',
-      lectureAttendanceSessions: buildAttendanceSessions(sessionCount, index),
-      satisfactionSurveyCompleted: index % 3 !== 2,
-      participationAppliedAt: row.approvalNotificationSentAt ?? '2026.01.01 00:00:00',
+  /** 진행 현황 참여자 — 케이스별 1건만 */
+  const CASE_IDS = new Set([
+    'general-individual-applicant-1', // 인증 가능·시안
+    'general-individual-applicant-3', // 상세 세션 시안
+    'general-individual-applicant-4', // 설문 미완료
+    'general-individual-applicant-6', // 결석(인증 불가)
+    'general-individual-applicant-7', // 활동 포기
+  ])
+
+  return MOCK_GENERAL_INDIVIDUAL_APPLICATIONS.filter(row => CASE_IDS.has(row.id)).map(
+    (row, index) => {
+      const sessionCount = row.sessions?.length ?? 1
+      const isSurveyIncomplete = row.id === 'general-individual-applicant-4'
+      const isAbsentCase = row.id === 'general-individual-applicant-6'
+      const isWithdrawn = row.id === 'general-individual-applicant-7'
+      const base: ParticipatingIndividualParticipantRow = {
+        ...row,
+        approvalStatus: 'approved',
+        lectureAttendanceSessions: buildAttendanceSessions(
+          sessionCount,
+          isAbsentCase ? 1 : index
+        ),
+        satisfactionSurveyCompleted: !isSurveyIncomplete,
+        participationAppliedAt: row.approvalNotificationSentAt ?? '2026.01.01 00:00:00',
+        ...(isWithdrawn
+          ? {
+              activityWithdrawn: true,
+              activityWithdrawStopSessionKey: '1',
+              activityWithdrawStopScheduleLabel: '1회차',
+            }
+          : {}),
+      }
+      return patchScreenshotSessions(base)
     }
-    return patchScreenshotSessions(base)
-  })
+  )
 }
 
 const PARTICIPATING_ROWS = buildParticipatingRows()

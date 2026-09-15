@@ -97,7 +97,7 @@ function demoParticipatingSchoolSession(
   }
 }
 
-/** 교재 배송 상태별 2건 + 합반 신청 데모(동일 학교·다른 학년 1쌍) — 총 7건 */
+/** 교재 배송 현황 케이스별 1건 + 합반 데모(동일 학교 다른 학년 1쌍) */
 function buildParticipatingSchoolsByTextbookStatus(): ParticipatingSchoolRow[] {
   const seeds: Array<{
     schoolName: string
@@ -109,6 +109,7 @@ function buildParticipatingSchoolsByTextbookStatus(): ParticipatingSchoolRow[] {
     studentCount: number
     instructors: string
     sessions: ParticipatingSchoolSession[]
+    approvalStatus?: ParticipatingSchoolApprovalStatusKey
   }> = [
     {
       schoolName: '강서초등학교',
@@ -119,12 +120,13 @@ function buildParticipatingSchoolsByTextbookStatus(): ParticipatingSchoolRow[] {
       classCount: 3,
       studentCount: 72,
       instructors: '김서연 외 2명',
+      approvalStatus: 'approved',
       sessions: [
         demoParticipatingSchoolSession(2, '2026.01.09', '금', '9:20~11:20'),
       ],
     },
     {
-      /** 합반 신청 UI 데모 — 강서초등학교 5학년(school-1)과 동일 기관·다른 학년 */
+      /** 합반 신청 UI 데모 — 강서초등학교 5학년과 동일 기관·다른 학년 */
       schoolName: '강서초등학교',
       region: '서울특별시 강서구',
       educationGrade: '3학년',
@@ -133,43 +135,10 @@ function buildParticipatingSchoolsByTextbookStatus(): ParticipatingSchoolRow[] {
       classCount: 2,
       studentCount: 52,
       instructors: '김서연 외 1명',
+      approvalStatus: 'pending',
       sessions: [
         demoParticipatingSchoolSession(1, '2026.01.23', '금', '9:20~10:10'),
         demoParticipatingSchoolSession(2, '2026.02.13', '금', '10:20~11:10'),
-      ],
-    },
-    {
-      schoolName: '마포초등학교',
-      region: '서울특별시 마포구',
-      educationGrade: '3학년',
-      textbookStatus: 'preparing',
-      teacherName: '김민지',
-      classCount: 2,
-      studentCount: 48,
-      instructors: '이준혁 외 1명',
-      sessions: [
-        demoParticipatingSchoolSession(1, '2026.01.16', '금', '9:30~10:20'),
-        demoParticipatingSchoolSession(2, '2026.02.06', '금', '10:30~11:20'),
-      ],
-    },
-    {
-      schoolName: '진월초등학교',
-      region: '광주광역시 남구 광복마을4길 40',
-      educationGrade: '5학년',
-      textbookStatus: 'preparing',
-      teacherName: '이길동',
-      classCount: 4,
-      studentCount: 124,
-      instructors: '최지원 외 3명',
-      sessions: [
-        {
-          ...demoParticipatingSchoolSession(1, '2026.04.20', '월', '9:30~12:20'),
-          status: 'completed',
-        },
-        {
-          ...demoParticipatingSchoolSession(2, '2026.04.27', '일', '13:00~15:50'),
-          status: 'pending',
-        },
       ],
     },
     {
@@ -181,11 +150,10 @@ function buildParticipatingSchoolsByTextbookStatus(): ParticipatingSchoolRow[] {
       classCount: 2,
       studentCount: 44,
       instructors: '박민준',
+      approvalStatus: 'cancelled',
       sessions: [
         demoParticipatingSchoolSession(1, '2026.01.30', '금', '9:20~10:10'),
         demoParticipatingSchoolSession(2, '2026.02.20', '금', '10:20~11:10'),
-        demoParticipatingSchoolSession(3, '2026.03.13', '금', '13:00~13:50'),
-        demoParticipatingSchoolSession(4, '2026.03.27', '금', '14:00~14:50'),
       ],
     },
     {
@@ -197,6 +165,7 @@ function buildParticipatingSchoolsByTextbookStatus(): ParticipatingSchoolRow[] {
       classCount: 3,
       studentCount: 66,
       instructors: '정수아 외 2명',
+      approvalStatus: 'approved',
       sessions: [
         demoParticipatingSchoolSession(1, '2026.02.06', '금', '9:20~10:10'),
         demoParticipatingSchoolSession(2, '2026.02.27', '금', '10:20~11:20'),
@@ -206,17 +175,17 @@ function buildParticipatingSchoolsByTextbookStatus(): ParticipatingSchoolRow[] {
       schoolName: '부산해운대초등학교',
       region: '부산광역시 해운대구',
       educationGrade: '1학년',
-      textbookStatus: 'delivered',
+      textbookStatus: 'not_applicable',
       teacherName: '정다은',
       classCount: 2,
       studentCount: 40,
       instructors: '강현우 외 1명',
+      approvalStatus: 'rejected',
       sessions: [
-        demoParticipatingSchoolSession(1, '2026.02.13', '금', '9:20~10:10'),
-        demoParticipatingSchoolSession(2, '2026.03.06', '금', '10:20~11:10'),
-        demoParticipatingSchoolSession(3, '2026.03.20', '금', '11:20~12:10'),
-        demoParticipatingSchoolSession(4, '2026.04.03', '금', '13:30~14:20'),
-        demoParticipatingSchoolSession(5, '2026.04.17', '금', '14:30~15:20'),
+        {
+          ...demoParticipatingSchoolSession(1, '2026.02.13', '금', '9:20~10:10'),
+          status: 'not_planned',
+        },
       ],
     },
   ]
@@ -232,7 +201,7 @@ function buildParticipatingSchoolsByTextbookStatus(): ParticipatingSchoolRow[] {
     studentCount: seed.studentCount,
     lectureRound: LECTURE_ROUND_LABEL,
     textbookStatus: seed.textbookStatus,
-    approvalStatus: APPROVAL_STATUSES[i % APPROVAL_STATUSES.length],
+    approvalStatus: seed.approvalStatus ?? APPROVAL_STATUSES[i % APPROVAL_STATUSES.length],
     teacherName: seed.teacherName,
     instructors: seed.instructors,
     sessions: seed.sessions,

@@ -12,6 +12,7 @@ import {
 } from '@/features/program/general/api/adapters/progress-attendance-adapters'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { shouldPreferGeneralProgramProgressMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
 import { buildParticipatingIndividualProgressAttendanceFilterFields } from '@/features/program/general/lib/participating-individual-progress-attendance-filter-fields'
 import { filterProgressAttendanceParticipantsForDisplay } from '@/features/program/general/lib/participating-individual-progress-attendance-display'
 import {
@@ -55,7 +56,9 @@ function filterSessionGroups(
 }
 
 export function useParticipatingIndividualProgressAttendance(program: Program) {
-  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
+  const preferMock = shouldPreferGeneralProgramProgressMock(program)
+  const surfaceRemote = useProgramProgressRemoteEnabledForSurface(program.id)
+  const remoteEnabled = surfaceRemote && !preferMock
   const queryClient = useQueryClient()
   const [dataVersion, setDataVersion] = useState(0)
   const [pendingFilters, setPendingFilters] =

@@ -22,27 +22,37 @@ import type {
 const PROGRESS_ATTENDANCE_DEMO_SESSIONS: ParticipatingSchoolSession[] = [
   {
     round: 1,
-    date: '2026.01.09',
-    dayOfWeek: '금',
+    date: '2026.09.08',
+    dayOfWeek: '화',
     duration: '2시간',
     format: '오프라인',
     classNum: '1교시',
-    timeRange: '9:20~11:20',
-    status: 'pending',
+    timeRange: '09:20~11:20',
+    status: 'completed',
   },
   {
     round: 2,
-    date: '2026.02.13',
-    dayOfWeek: '금',
+    date: '2026.09.22',
+    dayOfWeek: '화',
+    duration: '2시간',
+    format: '오프라인',
+    classNum: '2교시',
+    timeRange: '11:20~13:20',
+    status: 'completed',
+  },
+  {
+    round: 3,
+    date: '2026.10.13',
+    dayOfWeek: '화',
     duration: '2시간',
     format: '오프라인',
     classNum: '3교시',
-    timeRange: '11:20~13:20',
+    timeRange: '09:20~11:20',
     status: 'pending',
   },
 ]
 
-const PROGRESS_ATTENDANCE_DEMO_PARTICIPANT_COUNT = 5
+const PROGRESS_ATTENDANCE_DEMO_PARTICIPANT_COUNT = 4
 
 type AttendancePatch = {
   attendanceStatus: ParticipatingIndividualProgressAttendanceStatus
@@ -53,30 +63,26 @@ type AttendancePatch = {
 /** programId → sessionId → participantRowId → patch */
 const attendancePatchStore: Record<string, Record<string, Record<string, AttendancePatch>>> = {}
 
-function hash(s: string): number {
-  let h = 0
-  for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i)
-  return Math.abs(h)
-}
-
 function resolveDemoSessions(_program: Program): ParticipatingSchoolSession[] {
   return PROGRESS_ATTENDANCE_DEMO_SESSIONS
 }
 
+/** 출결 현황 케이스별 1건 — present / late / absent / excused_absence */
 function initialAttendanceStatus(
-  participantRowId: string,
-  sessionId: string
+  _participantRowId: string,
+  _sessionId: string,
+  index: number
 ): AttendancePatch {
-  const h = hash(`${participantRowId}:${sessionId}`) % 16
-  if (h === 0) return { attendanceStatus: 'absent' }
-  if (h === 1) return { attendanceStatus: 'late', lateTime: '9:05' }
-  if (h === 2) {
-    return {
+  const cases: AttendancePatch[] = [
+    { attendanceStatus: 'present' },
+    { attendanceStatus: 'late', lateTime: '09:35' },
+    { attendanceStatus: 'absent' },
+    {
       attendanceStatus: 'excused_absence',
       remark: '예비군으로 인한 불참',
-    }
-  }
-  return { attendanceStatus: 'present' }
+    },
+  ]
+  return cases[index % cases.length]!
 }
 
 function resolveApprovedParticipantTemplates(
@@ -167,7 +173,7 @@ function buildSessionParticipants(
     const rowId = `${sessionId}-participant-${index + 1}`
     const meta = buildDemoParticipantMeta(template, index)
     const saved = attendancePatchStore[programId]?.[sessionId]?.[rowId]
-    const initial = saved ?? initialAttendanceStatus(rowId, sessionId)
+    const initial = saved ?? initialAttendanceStatus(rowId, sessionId, index)
 
     rows.push({
       id: rowId,

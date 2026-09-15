@@ -269,7 +269,7 @@ const EDUCATION_SCHOOLS = ['한성대학교', '동서울대학교', '경복고�
 const GENDERS = ['남성', '여성']
 const MILITARY_STATUSES = ['군필', '미필', '면제']
 
-/** 참여 강사 상세 모달(기본 정보·강사 이력서 탭)용 확장 데이터. 일부 인덱스만 채움 */
+/** 참여 강사 상세·목록용 확장 데이터 — 행마다 전 필드 채움 */
 function getDetailExtension(
   index: number
 ): Partial<
@@ -311,11 +311,19 @@ function getDetailExtension(
     | 'instructorFeeGradeLabel'
     | 'scheduleChangeCancelCount'
     | 'unavailableEducationDateKeys'
+    | 'adminComment'
   >
 > {
-  if (index > 1) return {}
-  const birthYear = 1988 + (index % 5)
-  const age = new Date().getFullYear() - birthYear
+  const birthYear = 1988 + (index % 8)
+  const age = 2026 - birthYear
+  const birthMonth = String(1 + (index % 12)).padStart(2, '0')
+  const birthDay = String(1 + (index % 28)).padStart(2, '0')
+  const phoneMid = String(2000 + ((index * 137) % 8000)).padStart(4, '0')
+  const phoneLast = String(1000 + ((index * 41) % 9000)).padStart(4, '0')
+  const name = INSTRUCTOR_NAMES[index % INSTRUCTOR_NAMES.length]
+  const region = REGIONS[index % REGIONS.length]
+  const lectureYears = JA_LECTURE_YEARS[index % JA_LECTURE_YEARS.length]
+
   if (index === 0) {
     return {
       contact: '010-2847-5913',
@@ -330,7 +338,8 @@ function getDetailExtension(
       bankName: '농협',
       accountNumber: '352-1846-9203-71',
       accountHolder: INSTRUCTOR_NAMES[0],
-      oneLineIntro: '담당 교사분은 물론, 아이들과도 적극적인 소통으로 재미있고 활기차게 강의를 이끌어가는 스타일입니다^^',
+      oneLineIntro:
+        '담당 교사분은 물론, 아이들과도 적극적인 소통으로 재미있고 활기차게 강의를 이끌어가는 스타일입니다^^',
       educationLevel: EDUCATION_LEVELS[0],
       educationSchoolName: EDUCATION_SCHOOLS[0],
       lectureExperienceYears: 3,
@@ -345,9 +354,20 @@ function getDetailExtension(
       lectureFeeBasisDisplay: '프로그램 기준',
       lectureFeeAmount: '240,000원',
       businessIncomeEarnerStatus: '해당 없음',
+      adminComment: '스크린샷 데모 강사',
       careerDetails: [
-        { companyName: '한솔교육', role: '학습지 방문 교육', startDate: '2024.02', isCurrent: true },
-        { companyName: '대교 눈높이학원', role: '초등학생 수학 강의', startDate: '2023.01', endDate: '2024.01' },
+        {
+          companyName: '한솔교육',
+          role: '학습지 방문 교육',
+          startDate: '2024.02',
+          isCurrent: true,
+        },
+        {
+          companyName: '대교 눈높이학원',
+          role: '초등학생 수학 강의',
+          startDate: '2023.01',
+          endDate: '2024.01',
+        },
       ],
       qualifications: [{ name: '1종 운전면허', year: '2020' }],
       awards: [
@@ -355,54 +375,150 @@ function getDetailExtension(
         { name: '서울특별시 교육청 우수 강사 표창장', year: '2020' },
       ],
       educations: [
-        { schoolType: '대학 4년제', status: 'graduated', schoolName: '한성대학교', major: '경영학과', enrollmentYear: '2020.03', graduationYear: '2025.02' },
-        { schoolType: '고등학교', status: 'graduated', schoolName: '경복고등학교', enrollmentYear: '2017.03', graduationYear: '2020.02' },
+        {
+          schoolType: '대학 4년제',
+          status: 'graduated',
+          schoolName: '한성대학교',
+          major: '경영학과',
+          enrollmentYear: '2020.03',
+          graduationYear: '2025.02',
+        },
+        {
+          schoolType: '고등학교',
+          status: 'graduated',
+          schoolName: '경복고등학교',
+          enrollmentYear: '2017.03',
+          graduationYear: '2020.02',
+        },
       ],
-      freeWriting1: '대학에서 경영학을 전공하며 금융과 경제에 깊은 관심을 갖게 되었습니다. 청소년들이 돈의 흐름과 경제의 원리를 일찍부터 이해하면 더 현명한 선택을 할 수 있다고 믿으며, 실생활 사례 중심의 참여형 수업으로 아이들이 흥미를 잃지 않도록 이끌겠습니다.',
-      freeWriting2: '청소년 경제 교육은 미래 세대의 재정적 독립과 의사결정 능력을 키우는 데 중요합니다. 본인은 실생활 사례를 활용한 참여형 수업으로 흥미를 높이려 노력합니다.',
-      freeWriting3: '청소년과 소통할 때 가장 중요한 것은 경청과 공감입니다. 일방적 설명보다 질문을 유도하고, 학생들이 스스로 답을 찾도록 돕는 것을 실천하고 있습니다.',
-      freeWriting4: '수업 중 참여도가 낮았을 때, 짝 활동과 퀴즈 형식으로 분위기를 전환한 적이 있습니다. 그 결과 학생들의 참여가 늘었고, 이후에도 같은 방식을 적용하고 있습니다.',
+      freeWriting1:
+        '대학에서 경영학을 전공하며 금융과 경제에 깊은 관심을 갖게 되었습니다. 청소년들이 돈의 흐름과 경제의 원리를 일찍부터 이해하면 더 현명한 선택을 할 수 있다고 믿으며, 실생활 사례 중심의 참여형 수업으로 아이들이 흥미를 잃지 않도록 이끌겠습니다.',
+      freeWriting2:
+        '청소년 경제 교육은 미래 세대의 재정적 독립과 의사결정 능력을 키우는 데 중요합니다. 본인은 실생활 사례를 활용한 참여형 수업으로 흥미를 높이려 노력합니다.',
+      freeWriting3:
+        '청소년과 소통할 때 가장 중요한 것은 경청과 공감입니다. 일방적 설명보다 질문을 유도하고, 학생들이 스스로 답을 찾도록 돕는 것을 실천하고 있습니다.',
+      freeWriting4:
+        '수업 중 참여도가 낮았을 때, 짝 활동과 퀴즈 형식으로 분위기를 전환한 적이 있습니다. 그 결과 학생들의 참여가 늘었고, 이후에도 같은 방식을 적용하고 있습니다.',
     }
   }
+
+  if (index === 1) {
+    return {
+      contact: '010-3156-8274',
+      email: 'instructor1@example.com',
+      address: '경기도 수원시',
+      unavailableEducationDateKeys: ['2026-01-16'],
+      nameHanja: '李준혁',
+      nameEnglish: 'Lee Junhyuk',
+      birthDate: `${birthYear}.03.07`,
+      age,
+      gender: GENDERS[1],
+      militaryStatus: MILITARY_STATUSES[1],
+      bankName: '국민',
+      accountNumber: '601-3927-4810-56',
+      accountHolder: INSTRUCTOR_NAMES[1],
+      oneLineIntro: '어린이 눈높이에 맞춘 친근하고 이해하기 쉬운 강의를 지향합니다.',
+      educationLevel: EDUCATION_LEVELS[1],
+      educationSchoolName: EDUCATION_SCHOOLS[1],
+      lectureExperienceYears: 2,
+      affiliation: SCHOOL_NAMES[1],
+      instructorMemberProfile: 'instructor_only',
+      instructorFeeGradeLabel: '2급 강사비',
+      scheduleChangeCancelCount: 0,
+      careerDetails: [
+        {
+          companyName: '㈜에듀윌',
+          role: '방과후 강사',
+          startDate: '2022.03',
+          endDate: '2023.12',
+        },
+      ],
+      qualifications: [
+        { name: '초등교사 2급 정교사', year: '2021' },
+        { name: '영어회화 지도사', year: '2020' },
+      ],
+      awards: [{ name: 'JA코리아 우수 강사상', year: '2023' }],
+      educations: [
+        {
+          schoolType: '대학 2・3년제',
+          status: 'graduated',
+          schoolName: '동서울대학교',
+          major: '유아교육과',
+          enrollmentYear: '2018.03',
+          graduationYear: '2020.02',
+        },
+      ],
+      freeWriting1:
+        '전공을 살려 초등 대상 교육에 지원하게 되었습니다. 아이들이 경제 개념을 쉽게 이해하도록 돕고 싶습니다.',
+      freeWriting2:
+        '경제 교육을 통해 청소년이 합리적 선택을 할 수 있는 기반이 마련된다고 생각합니다.',
+      freeWriting3:
+        '신뢰를 바탕으로 한 소통을 중요시하며, 수업 전후로 학생들과 짧은 대화 시간을 갖고 있습니다.',
+      freeWriting4: '예기치 않은 상황에서는 수업 목표를 유지하며 활동을 유연하게 조정합니다.',
+      lectureFeeCategory: '특강 강사비',
+      lectureFeeBasisType: 'special_lecture',
+      lectureFeeMeasure: '출강 1회당',
+      lectureFeeBasisDisplay: '특강 강사비 | 출강 1회당 | 680,000원',
+      lectureFeeAmount: '680000',
+      businessIncomeEarnerStatus: '해당',
+      adminComment: '데모 강사 #2',
+    }
+  }
+
+  const feeAmount = 800000 + (index % 8) * 25000
   return {
-    contact: '010-3156-8274',
-    email: 'instructor1@example.com',
-    address: '경기도 수원시',
-    unavailableEducationDateKeys: ['2026-01-16'],
-    nameHanja: '李준혁',
-    nameEnglish: 'Lee Junhyuk',
-    birthDate: `${birthYear}.03.07`,
+    contact: `010-${phoneMid}-${phoneLast}`,
+    email: `instructor${index + 1}@example.com`,
+    address: region,
+    nameHanja: name,
+    nameEnglish: `Instructor ${index + 1}`,
+    birthDate: `${birthYear}.${birthMonth}.${birthDay}`,
     age,
-    gender: GENDERS[1],
-    militaryStatus: MILITARY_STATUSES[1],
-    bankName: '국민',
-    accountNumber: '601-3927-4810-56',
-    accountHolder: INSTRUCTOR_NAMES[1],
-    oneLineIntro: '어린이 눈높이에 맞춘 친근하고 이해하기 쉬운 강의를 지향합니다.',
-    educationLevel: EDUCATION_LEVELS[1],
-    educationSchoolName: EDUCATION_SCHOOLS[1],
-    lectureExperienceYears: 2,
-    careerDetails: [
-      { companyName: '㈜에듀윌', role: '방과후 강사', startDate: '2022.03', endDate: '2023.12' },
-    ],
-    qualifications: [
-      { name: '초등교사 2급 정교사', year: '2021' },
-      { name: '영어회화 지도사', year: '2020' },
-    ],
-    awards: [{ name: 'JA코리아 우수 강사상', year: '2023' }],
-    educations: [
-      { schoolType: '대학 2・3년제', status: 'graduated', schoolName: '동서울대학교', major: '유아교육과', enrollmentYear: '2018.03', graduationYear: '2020.02' },
-    ],
-    freeWriting1: '전공을 살려 초등 대상 교육에 지원하게 되었습니다. 아이들이 경제 개념을 쉽게 이해하도록 돕고 싶습니다.',
-    freeWriting2: '경제 교육을 통해 청소년이 합리적 선택을 할 수 있는 기반이 마련된다고 생각합니다.',
-    freeWriting3: '신뢰를 바탕으로 한 소통을 중요시하며, 수업 전후로 학생들과 짧은 대화 시간을 갖고 있습니다.',
-    freeWriting4: '-',
-    lectureFeeCategory: '특강 강사비',
-    lectureFeeBasisType: 'special_lecture',
+    gender: GENDERS[index % GENDERS.length],
+    militaryStatus: MILITARY_STATUSES[index % MILITARY_STATUSES.length],
+    bankName: index % 2 === 0 ? '신한' : '우리',
+    accountNumber: `110-${1000 + index}-${100000 + index * 17}`,
+    accountHolder: name,
+    oneLineIntro: `${name} 강사입니다. 학생 눈높이에 맞춘 경제·금융 교육을 진행합니다.`,
+    educationLevel: EDUCATION_LEVELS[index % EDUCATION_LEVELS.length],
+    educationSchoolName: EDUCATION_SCHOOLS[index % EDUCATION_SCHOOLS.length],
+    lectureExperienceYears: lectureYears,
+    affiliation: SCHOOL_NAMES[index % SCHOOL_NAMES.length],
+    instructorMemberProfile: index % 3 === 0 ? 'instructor_dual' : 'instructor_only',
+    affiliationEmploymentStatus: index % 3 === 0 ? 'ACTIVE' : undefined,
+    instructorFeeGradeLabel: `${1 + (index % 3)}급 강사비`,
+    scheduleChangeCancelCount: index % 5 === 0 ? 1 : 0,
+    lectureFeeCategory: index % 2 === 0 ? '특강 강사비' : '정규 강의',
+    lectureFeeBasisType: index % 2 === 0 ? 'special_lecture' : 'program',
     lectureFeeMeasure: '출강 1회당',
-    lectureFeeBasisDisplay: '특강 강사비 | 출강 1회당 | 680,000원',
-    lectureFeeAmount: '680000',
-    businessIncomeEarnerStatus: '해당',
+    lectureFeeBasisDisplay: `${index % 2 === 0 ? '특강 강사비' : '정규 강의'} | 출강 1회당 | ${feeAmount.toLocaleString('ko-KR')}원`,
+    lectureFeeAmount: `${feeAmount.toLocaleString('ko-KR')}원`,
+    businessIncomeEarnerStatus: index % 5 === 0 ? '해당' : '해당 없음',
+    adminComment: `참여 강사 mock #${index + 1}`,
+    careerDetails: [
+      {
+        companyName: 'JA Korea 교육 파트너',
+        role: '경제교육 강사',
+        startDate: '2023.03',
+        isCurrent: true,
+      },
+    ],
+    qualifications: [{ name: '청소년지도사 2급', year: String(2018 + (index % 5)) }],
+    awards: [{ name: '우수 강의 사례 공유', year: String(2022 + (index % 3)) }],
+    educations: [
+      {
+        schoolType: '대학 4년제',
+        status: 'graduated',
+        schoolName: EDUCATION_SCHOOLS[index % EDUCATION_SCHOOLS.length],
+        major: '교육학과',
+        enrollmentYear: `${birthYear + 18}.03`,
+        graduationYear: `${birthYear + 22}.02`,
+      },
+    ],
+    freeWriting1: `${name}입니다. JA Korea 프로그램 강의에 참여하게 되어 기쁩니다.`,
+    freeWriting2: '청소년 경제 교육은 합리적 의사결정의 기초를 마련한다고 생각합니다.',
+    freeWriting3: '경청과 질문을 통해 학생 참여를 유도하는 수업을 지향합니다.',
+    freeWriting4: '예상치 못한 상황에서는 활동 난이도를 조절하며 수업 목표를 유지합니다.',
   }
 }
 
@@ -425,17 +541,25 @@ function buildMockList(): ParticipatingInstructorRow[] {
       classCount: 2 + (i % 4),
       studentCount: 40 + (i % 85),
       lectureRound: LECTURE_ROUNDS[i % LECTURE_ROUNDS.length],
-      settlementStatus: i === 0 ? 'payment_statement_verified' : settlementStatuses[i],
+      settlementStatus: settlementStatuses[i],
       teacherName: TEACHER_NAMES[i % TEACHER_NAMES.length],
       /** 일부 강사는 최초 승인 미완료(신규 배정 안내 모달 테스트용) */
-      initialApproval: i % 4 !== 2,
+      initialApproval: i !== 2,
       region,
       jaEvaluationGrade: jaGrade,
       lectureExperienceYears: extension.lectureExperienceYears ?? lectureYears,
-      registeredByAdmin: i % 7 === 0,
+      registeredByAdmin: i === 0,
       lectureFeeCategory: i % 2 === 0 ? '특강 강사비' : '정규 강의',
       lectureFeeAmount: `${(800000 + (i % 8) * 25000).toLocaleString('ko-KR')}원`,
       businessIncomeEarnerStatus: i % 5 === 0 ? '해당' : '해당 없음',
+      activityWithdrawn: i === 5,
+      ...(i === 5
+        ? {
+            activityWithdrawReason: 'institution' as const,
+            activityWithdrawStopScheduleId: 'pi-sched-2',
+            activityWithdrawStopScheduleLabel: '2025. 04. 10(목)',
+          }
+        : {}),
       ...extension,
     })
   }
@@ -464,7 +588,13 @@ const PARTICIPATING_INSTRUCTOR_EDUCATION_SCHEDULES: Record<
 export function getParticipatingInstructorEducationSchedules(
   instructorId: string
 ): ParticipatingInstructorEducationScheduleRow[] {
-  return PARTICIPATING_INSTRUCTOR_EDUCATION_SCHEDULES[instructorId] ?? []
+  return (
+    PARTICIPATING_INSTRUCTOR_EDUCATION_SCHEDULES[instructorId] ??
+    DEFAULT_PARTICIPATING_INSTRUCTOR_EDUCATION_SCHEDULES.map(row => ({
+      ...row,
+      id: `${instructorId}-${row.id}`,
+    }))
+  )
 }
 
 export function patchParticipatingInstructorDetail(

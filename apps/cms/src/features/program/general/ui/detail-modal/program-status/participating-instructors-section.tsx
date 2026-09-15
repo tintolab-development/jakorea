@@ -163,12 +163,14 @@ export function ParticipatingInstructorsSection({
   } = useProgressInstructorList({
     appliedFilters: progressFilters,
     programId,
+    program,
   })
 
   const { schoolList: schoolRows } = useProgressSchoolList({
     appliedFilters: progressFilters,
     instructorList,
     programId,
+    program,
   })
 
   /** remote ON이면 mock 상세 필드로 덮어쓰지 않음 */

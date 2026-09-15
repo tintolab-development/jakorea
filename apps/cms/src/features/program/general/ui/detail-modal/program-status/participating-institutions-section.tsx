@@ -189,11 +189,13 @@ export function ParticipatingInstitutionsSection({
   const instructorHook = useProgressInstructorList({
     appliedFilters: progressFilters,
     programId: resolvedProgramId,
+    program,
   })
   const schoolHook = useProgressSchoolList({
     appliedFilters: progressFilters,
     instructorList: instructorHook.instructorList,
     programId: resolvedProgramId,
+    program,
   })
 
   const {

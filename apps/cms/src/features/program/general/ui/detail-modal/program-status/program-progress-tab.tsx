@@ -146,11 +146,16 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
     setLocalTeacherName(filters.teacherName ?? '')
   }, [filters.teacherName])
 
-  const instructorHook = useProgressInstructorList({ appliedFilters })
+  const instructorHook = useProgressInstructorList({
+    appliedFilters,
+    programId,
+    preferMock: programId.startsWith('general-prog-'),
+  })
   const schoolHook = useProgressSchoolList({
     appliedFilters,
     instructorList: instructorHook.instructorList,
     programId,
+    preferMock: programId.startsWith('general-prog-'),
   })
 
   const {

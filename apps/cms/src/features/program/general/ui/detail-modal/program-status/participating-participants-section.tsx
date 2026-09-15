@@ -80,7 +80,7 @@ export function ParticipatingParticipantsSection({
     setProgressCalendarGranularity,
   } = useParticipatingIndividualParticipantsParams()
   const { participantList, loading: participantsLoading } =
-    useProgressIndividualParticipantList(programId)
+    useProgressIndividualParticipantList(programId, program)
   const programBridge = useMemo(
     () => resolveInstitutionApplicationProgramBridge(program),
     [program]

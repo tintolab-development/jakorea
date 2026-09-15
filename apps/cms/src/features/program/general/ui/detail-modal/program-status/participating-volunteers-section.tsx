@@ -102,7 +102,7 @@ export function ParticipatingVolunteersSection({
     setProgressCalendarGranularity,
   } = useParticipatingVolunteersParams()
   const { volunteerList, addVolunteerFromMember, applicationsLoading } =
-    useProgressVolunteerList(programId)
+    useProgressVolunteerList(programId, program)
 
   const schoolFilters: ProgressFilters = useMemo(
     () => ({
@@ -121,11 +121,13 @@ export function ParticipatingVolunteersSection({
   const { instructorList } = useProgressInstructorList({
     appliedFilters: schoolFilters,
     programId,
+    program,
   })
   const { schoolList: schoolRows } = useProgressSchoolList({
     appliedFilters: schoolFilters,
     instructorList,
     programId,
+    program,
   })
 
   const { sessionRows, approvedInstitutionOptions, registrations, saveRegistration } =

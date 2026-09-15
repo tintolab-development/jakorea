@@ -1,17 +1,28 @@
 /**
- * 프로그램 진행현황 탭 — 참여 봉사자 목록 (API only, mock 폴백 없음)
+ * 프로그램 진행현황 탭 — 참여 봉사자 목록
+ * prefer mock / remote OFF → FE mock; remote ON → API
  */
 
 import { useCallback, useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+import {
+  MOCK_PARTICIPATING_VOLUNTEERS,
+  type ParticipatingVolunteerRow,
+} from '@/data/mock/participating-volunteers'
 import { buildParticipatingVolunteerRowFromMember } from '../lib/participating-volunteer-member-candidates'
 import { fetchGeneralParticipatingVolunteers } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import { shouldPreferGeneralProgramProgressMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
+import type { Program } from '@/types/domain'
 
-export function useProgressVolunteerList(programId?: string) {
-  const remoteEnabled = shouldUseGeneralProgramProgressRemoteApi() && Boolean(programId)
+export function useProgressVolunteerList(
+  programId?: string,
+  program?: Program | null
+) {
+  const preferMock = shouldPreferGeneralProgramProgressMock(program ?? null)
+  const remoteEnabled =
+    !preferMock && shouldUseGeneralProgramProgressRemoteApi() && Boolean(programId)
   const remoteQuery = useQuery({
     queryKey: generalProgramProgressQueryKeys.volunteers(programId ?? ''),
     queryFn: () => fetchGeneralParticipatingVolunteers(programId!),
@@ -20,14 +31,16 @@ export function useProgressVolunteerList(programId?: string) {
     retry: false,
   })
 
-  const [volunteerList, setVolunteerList] = useState<ParticipatingVolunteerRow[]>([])
+  const [volunteerList, setVolunteerList] = useState<ParticipatingVolunteerRow[]>(() =>
+    remoteEnabled ? [] : MOCK_PARTICIPATING_VOLUNTEERS.map(row => ({ ...row }))
+  )
 
   useEffect(() => {
     if (remoteEnabled) {
       if (remoteQuery.data) setVolunteerList(remoteQuery.data)
       return
     }
-    setVolunteerList([])
+    setVolunteerList(MOCK_PARTICIPATING_VOLUNTEERS.map(row => ({ ...row })))
   }, [remoteEnabled, remoteQuery.data])
 
   const addVolunteerFromMember = useCallback(
