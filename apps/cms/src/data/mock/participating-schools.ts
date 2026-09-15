@@ -44,6 +44,8 @@ export interface ParticipatingSchoolRow {
   sessions?: ParticipatingSchoolSession[]
   /** 프로그램 ID (교육받은 교사 등 프로그램별 참여 기관 필터용) */
   programId?: string
+  /** 기관 신청 ID — 강사 배정 create/list 스코프 */
+  organizationApplicationId?: string
 }
 
 export const TEXTBOOK_STATUS_LABELS: Record<TextbookStatusKey, string> = {

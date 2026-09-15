@@ -10,10 +10,12 @@ import type {
   ProgramType,
 } from '@/types/domain'
 import type { Status } from '@/types'
+import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import {
   parseCompanySchoolServiceDetailJson,
   serializeCompanySchoolServiceDetailJson,
 } from './service-detail-json'
+import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 
 export const COMPANY_SCHOOL_PROGRAM_API_TYPE = 'COMPANY_SCHOOL'
 
@@ -24,17 +26,14 @@ function toDate(value: Date | string | undefined): string | undefined {
   return value
 }
 
-function lifecycleStatusFromPeriodStatus(value?: string): ProgramLifecycleStatus {
-  switch (value?.trim().toUpperCase()) {
-    case 'IN_PROGRESS':
-    case 'RUNNING':
-      return 'education_in_progress'
-    case 'COMPLETED':
-    case 'ENDED':
-      return 'education_completed'
-    default:
-      return 'recruiting_students'
-  }
+function resolveCompanySchoolListLifecycle(
+  dto: AdminProgramListItemDto
+): ProgramLifecycleStatus {
+  return (
+    toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
+    toTypedProgramLifecycleStatus(dto.periodStatus) ??
+    'scheduled'
+  )
 }
 
 function baseProgram(
@@ -70,9 +69,8 @@ export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto):
     mainTitle: dto.mainTitle?.trim() || title,
     startDate: dto.businessStartDate ?? dto.startDate,
     endDate: dto.businessEndDate ?? dto.endDate,
-    lifecycleStatus: dto.periodStatus
-      ? lifecycleStatusFromPeriodStatus(dto.periodStatus)
-      : ((dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ?? 'recruiting_students'),
+    status: (dto.status as Status | undefined) ?? 'pending',
+    lifecycleStatus: resolveCompanySchoolListLifecycle(dto),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
     instructors: dto.instructorApplicantCount,
     participatingSchoolCount: dto.organizationApplicationCount,
@@ -82,13 +80,46 @@ export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto):
 }
 
 export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
-  const title = dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
+  const dtoExt = dto as ProgramResponse & {
+    nameKo?: string
+    remarks?: string
+    otherMatters?: string
+    contactName?: string
+    recruitmentTargetDetail?: string
+  }
+  const title =
+    dto.title?.trim() ||
+    dto.mainTitle?.trim() ||
+    dtoExt.nameKo?.trim() ||
+    '제목 없음'
   const id = dto.id == null ? '' : String(dto.id)
   const now = new Date().toISOString()
   const details = parseCompanySchoolServiceDetailJson(dto.serviceDetailJson)
+  const {
+    lifecycleStatus: _serviceDetailLifecycle,
+    status: _serviceDetailStatus,
+    ...detailFields
+  } = details
+  void _serviceDetailLifecycle
+  void _serviceDetailStatus
+  const generalCommonInfo = applySettlementPolicyToCommonInfo(
+    details.generalCommonInfo,
+    dto.settlementPolicy
+  )
+  const otherNotes =
+    dtoExt.otherMatters?.trim() ||
+    dtoExt.remarks?.trim() ||
+    details.otherNotes?.trim() ||
+    undefined
+
+  const periodStatus = (dto as ProgramResponse & { periodStatus?: string }).periodStatus
+  const lifecycleStatus =
+    toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
+    toTypedProgramLifecycleStatus(periodStatus) ??
+    undefined
 
   return baseProgram({
-    ...details,
+    ...detailFields,
     id,
     sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
     title,
@@ -110,12 +141,12 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
         curriculum: round.curriculum,
         deliveryType: round.deliveryType as Program['rounds'][number]['deliveryType'],
       })) ?? [],
-    startDate: dto.startDate,
-    endDate: dto.endDate,
+    startDate: dto.startDate ?? dto.businessStartDate,
+    endDate: dto.endDate ?? dto.businessEndDate,
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
-    lifecycleStatus: dto.lifecycleStatus as ProgramLifecycleStatus | undefined,
+    lifecycleStatus,
     businessArea: dto.businessArea,
     titleEn: dto.titleEn,
     textbookName: dto.textbookName,
@@ -156,7 +187,12 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     recruitmentGuide: dto.recruitmentGuide,
     learningSupportContent: dto.learningSupportContent,
     attachmentFileNames: dto.attachmentFileNames,
+    otherNotes,
+    studentListRequired: details.studentListRequired ?? 'not_required',
     generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+    generalCommonInfo,
+    generalSurveyMenuKeys: details.generalSurveyMenuKeys,
+    generalProgramAudience: details.generalProgramAudience ?? 'organization',
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
   })

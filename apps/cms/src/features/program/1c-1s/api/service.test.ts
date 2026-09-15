@@ -11,7 +11,7 @@ describe('company-school API policy', () => {
       periodStatus: undefined,
       businessYear: undefined,
       page: 0,
-      size: 500,
+      size: 20,
     })
   })
 

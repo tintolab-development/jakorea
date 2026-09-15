@@ -7,6 +7,7 @@
 
 import type { ReactNode } from 'react'
 import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
@@ -38,7 +39,6 @@ import {
   getInstructorRowsForSchool,
   getAssignedInstructorDisplayRows,
   getWaitingInstructorRows,
-  getCompanySchoolWaitingInstructorScheduleRows,
   type WaitingInstructorRowMock,
 } from '../../../lib/school-detail-mock'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '../../../lib/waiting-instructor-assignment'
@@ -71,6 +71,22 @@ import {
   STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
 } from '@/shared/components'
 import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { shouldUseCompanySchoolProgramProgressRemoteApi } from '@/features/program/1c-1s/api/capabilities'
+import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
+import {
+  fetchCompanySchoolAssignmentBoard,
+  findScheduleIdForLectureDate,
+} from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
+import {
+  buildCompanySchoolWaitingInstructorRows,
+  buildCompanySchoolAssignedInstructorRows,
+} from '@/features/program/1c-1s/lib/build-company-school-assignment-rows'
+import { createInstructorAssignmentRemote } from '@/features/program/general/api/instructor-assignments-api-client'
+import {
+  isOneSchoolPerDayConflictErrorCode,
+  ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE,
+} from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
 import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
 import { SchoolDetailAttendanceSection } from './school-detail-attendance-section'
 import {
@@ -191,16 +207,6 @@ type WaitingInstructorRow = WaitingInstructorRowMock
 
 /** 필요 배정 인원(분모) — 상세에 필드 없으면 mock */
 const MOCK_REQUIRED_INSTRUCTORS = 4
-
-function isCompanySchoolProgram(program: Program): boolean {
-  return (
-    program.id.startsWith('economy-prog-') ||
-    program.id.startsWith('company-school-prog-') ||
-    program.id.startsWith('company-school-local-') ||
-    program.mainTitle?.includes('1사1교') === true ||
-    program.title?.includes('1사1교') === true
-  )
-}
 
 function getWaitingInstructorRowInstructorId(row: WaitingInstructorRow): string {
   return row.instructorId ?? row.id
@@ -441,6 +447,19 @@ export function GeneralParticipatingInstitutionDetailView(
   const sessions = row.sessions ?? []
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
   const isCompanySchool = isCompanySchoolProgram(program)
+  const programId = String(program.id)
+  const companySchoolAssignmentConflictsEnabled =
+    isCompanySchool && shouldUseCompanySchoolProgramProgressRemoteApi()
+
+  const occupiedLectureDatesQuery = useQuery({
+    queryKey: companySchoolQueryKeys.instructorAssignmentConflicts(programId),
+    queryFn: () => fetchCompanySchoolAssignmentBoard(programId),
+    enabled: companySchoolAssignmentConflictsEnabled,
+    staleTime: 30_000,
+  })
+  const assignmentBoard = occupiedLectureDatesQuery.data
+  const occupiedLectureDatesByInstructorId = assignmentBoard?.occupiedLectureDatesByInstructorId
+  const queryClient = useQueryClient()
 
   const activityWithdrawScheduleOptions = useMemo(
     () => getParticipatingInstitutionActivityWithdrawScheduleOptions(program, sessions),
@@ -602,9 +621,36 @@ export function GeneralParticipatingInstitutionDetailView(
     if (parts.length <= 1) return parts[0] ?? '-'
     return withTdDivider(parts)
   }
-  /** 배정된 강사 테이블용 행 (목 데이터 연동) */
+  /** 배정된 강사 테이블용 행 — 1사1교는 assignment API */
   const assignedRows: AssignedInstructorDisplayRow[] = useMemo(
     () => {
+      if (isCompanySchool && assignmentBoard) {
+        const orgAppId = row.organizationApplicationId ?? ''
+        if (!orgAppId) return []
+        const apiRows = buildCompanySchoolAssignedInstructorRows({
+          assignments: assignmentBoard.assignments,
+          organizationApplicationId: orgAppId,
+          instructorNameByMemberId: assignmentBoard.instructorNameByMemberId,
+          scheduleLabelById: assignmentBoard.scheduleLabelById,
+        })
+        return apiRows.map(r => ({
+          id: r.id,
+          no: r.no,
+          role: r.role,
+          instructorName: r.instructorName,
+          contact: '',
+          email: '',
+          settlementStatus: 'none' as SettlementStatusKey,
+          homeAddress: r.homeAddress,
+          distanceToSchool: r.distanceToSchool,
+          assignedDate: r.assignedDate,
+          assignedTime: r.assignedTime,
+          assignedSession: r.assignedSession,
+          assignedScheduleLine: [r.assignedDate, r.assignedTime, r.assignedSession]
+            .filter(Boolean)
+            .join(' '),
+        }))
+      }
       const rows = getAssignedInstructorDisplayRows(instructors)
       if (!isCompanySchool) return rows
       const defaultScheduleLine = buildParticipatingSchoolPreferredScheduleLines(row.sessions)[0]
@@ -614,38 +660,49 @@ export function GeneralParticipatingInstitutionDetailView(
           assignedScheduleLinesByInstructorId[assignedRow.id] ?? defaultScheduleLine,
       }))
     },
-    [instructors, isCompanySchool, row.sessions, assignedScheduleLinesByInstructorId]
+    [
+      instructors,
+      isCompanySchool,
+      row.sessions,
+      row.organizationApplicationId,
+      assignedScheduleLinesByInstructorId,
+      assignmentBoard,
+    ]
   )
 
-  /** 배정 대기 강사 목록 (목 데이터 연동: 해당 학교 미배정 참여 강사 + 배정 현황/희망 일정) */
+  /** 배정 대기 — 1사1교는 승인 강사신청 + 희망일정 API (가짜 일정 금지) */
   const waitingRows: WaitingInstructorRow[] = useMemo(
     () => {
       if (isCompanySchool) {
-        const defaultScheduleLine = buildParticipatingSchoolPreferredScheduleLines(row.sessions)[0]
-        return getCompanySchoolWaitingInstructorScheduleRows(
-          row.schoolName,
-          instructorList,
-          participatingSchoolList
-        )
-          .filter(waitingRow => {
-            if (completedWaitingRowKeys.has(waitingRow.id)) return false
-            const instructorId = getWaitingInstructorRowInstructorId(waitingRow)
-            const assignedScheduleLine =
-              assignedScheduleLinesByInstructorId[instructorId] ?? defaultScheduleLine
-            if (!assignedInstructorIdSet.has(instructorId)) return true
-            return waitingRow.hopeScheduleLine !== assignedScheduleLine
-          })
+        if (!assignmentBoard) return []
+        const assignedMemberIds = new Set<string>()
+        for (const a of assignmentBoard.assignments) {
+          if (a.organizationApplicationId == null) continue
+          if (
+            row.organizationApplicationId &&
+            String(a.organizationApplicationId) === row.organizationApplicationId
+          ) {
+            if (a.instructorMemberId != null) assignedMemberIds.add(String(a.instructorMemberId))
+          }
+        }
+        return buildCompanySchoolWaitingInstructorRows({
+          schoolName: row.schoolName,
+          sessions: row.sessions,
+          approvedInstructors: assignmentBoard.approvedInstructorApplications,
+          assignedInstructorMemberIds: assignedMemberIds,
+          occupiedLectureDatesByInstructorId,
+        })
+          .filter(waitingRow => !completedWaitingRowKeys.has(waitingRow.id))
           .map(waitingRow => {
-              const instructorId = getWaitingInstructorRowInstructorId(waitingRow)
-              if (
-                (disabledWaitingInstructorIds.has(instructorId) ||
-                  assignedInstructorIdSet.has(instructorId)) &&
-                waitingRow.assignmentStatus === 'waiting'
-              ) {
-                return { ...waitingRow, assignmentStatus: 'unavailable' as const }
-              }
-              return waitingRow
-            })
+            const instructorId = getWaitingInstructorRowInstructorId(waitingRow)
+            if (
+              disabledWaitingInstructorIds.has(instructorId) &&
+              waitingRow.assignmentStatus === 'waiting'
+            ) {
+              return { ...waitingRow, assignmentStatus: 'unavailable' as const }
+            }
+            return waitingRow
+          })
       }
 
       return getWaitingInstructorRows(row.schoolName, instructorList, participatingSchoolList).filter(
@@ -655,13 +712,15 @@ export function GeneralParticipatingInstitutionDetailView(
     [
       row.schoolName,
       row.sessions,
+      row.organizationApplicationId,
       instructorList,
       participatingSchoolList,
       isCompanySchool,
+      occupiedLectureDatesByInstructorId,
       completedWaitingRowKeys,
       disabledWaitingInstructorIds,
-      assignedScheduleLinesByInstructorId,
       assignedInstructorIdSet,
+      assignmentBoard,
     ]
   )
 
@@ -681,12 +740,101 @@ export function GeneralParticipatingInstitutionDetailView(
     [waitingRows, selectedWaitingKeys]
   )
 
-  const programId = String(program.id)
-
-  /** 선택 배정 — 배정 반영 후 완료 안내 */
+  /** 선택 배정 — 1사1교는 API create, 그 외는 기존 로컬 반영 */
   const finalizeSelectAssign = useCallback(
-    (rows: WaitingInstructorRow[], showApprovalAlarmSection: boolean) => {
+    async (rows: WaitingInstructorRow[], showApprovalAlarmSection: boolean) => {
       if (rows.length === 0) return
+
+      if (isCompanySchool && companySchoolAssignmentConflictsEnabled) {
+        const orgAppId = row.organizationApplicationId
+        if (!orgAppId) {
+          showAlert({
+            title: '안내',
+            content:
+              '기관 신청 ID가 없어 배정할 수 없습니다. 참여 기관 API에 organizationApplicationId(sourceApplicationId) 매핑이 필요합니다.',
+          })
+          return
+        }
+        if (!assignmentBoard) {
+          showAlert({ title: '안내', content: '배정 데이터를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.' })
+          return
+        }
+
+        try {
+          let leadAssigned = instructors.some(i => i.role === 'lead')
+          for (const waitingRow of rows) {
+            const memberIdRaw =
+              (waitingRow as { instructorMemberId?: string }).instructorMemberId ??
+              getWaitingInstructorRowInstructorId(waitingRow)
+            const memberId = Number(memberIdRaw)
+            if (!Number.isFinite(memberId) || memberId <= 0) {
+              showAlert({
+                title: '안내',
+                content: `강사 memberId가 없어 배정할 수 없습니다. (${waitingRow.instructorName})`,
+              })
+              return
+            }
+            const scheduleId = findScheduleIdForLectureDate(
+              assignmentBoard.schedules,
+              waitingRow.hopeDate ?? waitingRow.hopeScheduleLine
+            )
+            if (scheduleId == null) {
+              showAlert({
+                title: '안내',
+                content:
+                  '희망일에 대응하는 program schedule이 없습니다. BE에 requested-schedule → schedule 생성/매핑 API가 필요합니다.',
+              })
+              return
+            }
+            const applicationIdRaw = (waitingRow as { instructorApplicationId?: string })
+              .instructorApplicationId
+            await createInstructorAssignmentRemote(programId, {
+              instructorMemberId: memberId,
+              scheduleId,
+              organizationApplicationId: Number(orgAppId),
+              instructorApplicationId: applicationIdRaw ? Number(applicationIdRaw) : undefined,
+              scheduleLead: !leadAssigned,
+            })
+            leadAssigned = true
+          }
+          await queryClient.invalidateQueries({
+            queryKey: companySchoolQueryKeys.instructorAssignmentConflicts(programId),
+          })
+          setSelectAssignConfirmOpen(false)
+          setSelectAssignNewGuideOpen(false)
+          setSelectAssignFeeApprovalOpen(false)
+          setSelectAssignPendingInstructor(null)
+          setSelectAssignOverflowOpen(false)
+          setSelectedWaitingKeys([])
+          const instructorNameLabel =
+            rows.length === 1
+              ? (rows[0]?.instructorName ?? '')
+              : Array.from(new Set(rows.map(r => r.instructorName))).join(', ')
+          setAssignCompleteModal({
+            instructorName: instructorNameLabel,
+            schoolName: row.schoolName,
+            currentCount: (assignmentBoard.assignments.length ?? 0) + rows.length,
+            showApprovalAlarmSection,
+          })
+        } catch (error) {
+          const code =
+            error && typeof error === 'object' && 'response' in error
+              ? String(
+                  (error as { response?: { data?: { error?: { code?: string }; code?: string } } })
+                    .response?.data?.error?.code ??
+                    (error as { response?: { data?: { code?: string } } }).response?.data?.code ??
+                    ''
+                )
+              : ''
+          showAlert({
+            title: '배정 실패',
+            content: isOneSchoolPerDayConflictErrorCode(code)
+              ? ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE
+              : '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+          })
+        }
+        return
+      }
 
       const existingFormList: InstructorListFormInstructor[] = instructors.map(
         ({ id, role, instructorName, contact, email }) => ({
@@ -764,6 +912,13 @@ export function GeneralParticipatingInstitutionDetailView(
       detail.id,
       onSaveInstructorInfo,
       row.schoolName,
+      row.organizationApplicationId,
+      isCompanySchool,
+      companySchoolAssignmentConflictsEnabled,
+      assignmentBoard,
+      programId,
+      queryClient,
+      showAlert,
     ]
   )
 

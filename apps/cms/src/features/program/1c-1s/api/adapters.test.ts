@@ -192,4 +192,19 @@ describe('company-school adapters', () => {
     expect(request.curriculum).toBeUndefined()
     expect(request.oneLineIntroduction).toBeUndefined()
   })
+
+  it('maps typed lifecycleStatus from detail and ignores serviceDetailJson lifecycle', () => {
+    const detail = mapCompanySchoolDetailToProgram({
+      id: '170002',
+      title: 'ONE-02',
+      status: 'active',
+      lifecycleStatus: 'in_progress',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: { lifecycleStatus: 'education_completed' },
+      }),
+    })
+    expect(detail.lifecycleStatus).toBe('in_progress')
+    expect(detail.status).toBe('active')
+  })
 })
