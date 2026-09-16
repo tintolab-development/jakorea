@@ -36,6 +36,8 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'surveys', programId] as const,
   navigation: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'navigation', programId] as const,
+  mergeGroups: (programId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'organization-merge-groups', programId] as const,
 }
 
 export const generalInterviewSlotsQueryKeys = {
