@@ -27,9 +27,9 @@ function resolveSubjectQuestionLine(
       : '프로그램 승인 알림을 재발송하시겠습니까?'
   }
   if (subjectKind === 'instructor') {
-    return `[${subjectName}] 강사님의 프로그램 승인 여부에 대한 알림을 재발송하시겠습니까?`
+    return `**[${subjectName}]** 강사님의 프로그램 승인 여부에 대한 알림을 재발송하시겠습니까?`
   }
-  return `[${subjectName}]의 프로그램 승인 여부에 대한 알림을 재발송하시겠습니까?`
+  return `**[${subjectName}]**의 프로그램 승인 여부에 대한 알림을 재발송하시겠습니까?`
 }
 
 function resolveConfirmNotifyLine(

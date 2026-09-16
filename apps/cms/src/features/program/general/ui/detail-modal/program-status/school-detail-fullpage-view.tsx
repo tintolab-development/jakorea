@@ -338,6 +338,11 @@ export interface SchoolDetailFullpageViewProps {
   onTabChange?: (key: SchoolDetailTabKey) => void
   onClearSchoolId: () => void
   onSaveBasicInfo?: (patch: Partial<SchoolDetailForModal> & { id: string }) => void
+  onSaveCombinedClass?: (params: {
+    combinedClassApplication: '신청' | '미신청'
+    combinedClassPartnerSchoolIds: string[]
+  }) => Promise<void>
+  combinedClassReadOnly?: boolean
   onSaveInstructorInfo?: (schoolId: string, instructors: InstructorListFormInstructor[]) => void
   savedBasicPatches?: Record<string, Partial<SchoolDetailForModal>>
   savedInstructorPatches?: Record<string, InstructorListFormInstructor[]>
@@ -368,6 +373,8 @@ export function GeneralParticipatingInstitutionDetailView(
     onTabChange,
     onClearSchoolId: _onClearSchoolId,
     onSaveBasicInfo,
+    onSaveCombinedClass,
+    combinedClassReadOnly = false,
     onSaveInstructorInfo,
     savedBasicPatches = {},
     savedInstructorPatches = {},
@@ -493,12 +500,13 @@ export function GeneralParticipatingInstitutionDetailView(
     program,
     participatingSchoolList,
     onSaveBasicInfo,
+    onSaveCombinedClass,
+    combinedClassReadOnly,
   })
 
   const {
     isEditing: isApplicationInfoEditing,
     draft: applicationInfoDraft,
-    validationErrors: applicationInfoValidationErrors,
     textbookOptions,
     textbookDisplay,
     usesTextbook,
@@ -1551,13 +1559,6 @@ export function GeneralParticipatingInstitutionDetailView(
             })
           }}
         />
-        {applicationInfoValidationErrors?.textbookId ||
-        applicationInfoValidationErrors?.textbookName ? (
-          <span className="institution-basic-info__field-error">
-            {applicationInfoValidationErrors.textbookId ??
-              applicationInfoValidationErrors.textbookName}
-          </span>
-        ) : null}
       </div>
     ) : null
 
@@ -1593,7 +1594,7 @@ export function GeneralParticipatingInstitutionDetailView(
         sameSchoolGradeOptions={sameSchoolGradeOptions}
         isProgramEligible={combinedClassProgramEligible}
         isApplyRadioDisabled={isCombinedClassApplyRadioDisabled}
-        validationError={applicationInfoValidationErrors?.combinedClassPartnerSchoolIds}
+        readOnly={combinedClassReadOnly}
       />
     ) : (
       buildCombinedClassViewValue(mergedDetail, combinedClassProgramEligible)
@@ -1641,7 +1642,9 @@ export function GeneralParticipatingInstitutionDetailView(
                 {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
                 onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
                   onEnterEdit: enterApplicationInfoEdit,
-                  onSaveEdit: () => saveApplicationInfoEdit(),
+                  onSaveEdit: () => {
+                    void saveApplicationInfoEdit()
+                  },
                 })}
               >
                 {PROGRAM_EDIT_INFO_BUTTON_LABEL}
@@ -1676,7 +1679,7 @@ export function GeneralParticipatingInstitutionDetailView(
         {activeTab === 'application' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__application-tab">
             <ParticipatingInstitutionApplicationInfo
-              formError={applicationInfoValidationErrors?.form}
+              isBasicInfoEditing={isApplicationInfoEditing}
               showAdminComment={showAdminCommentSection}
               adminComment={mergedDetail.adminComment}
               isAdminCommentEditing={false}
@@ -1697,7 +1700,6 @@ export function GeneralParticipatingInstitutionDetailView(
                   <InstitutionAddressDetailEdit
                     value={applicationInfoDraft.addressDetail}
                     onChange={value => updateApplicationInfoDraft({ addressDetail: value })}
-                    error={applicationInfoValidationErrors?.addressDetail}
                   />
                 ) : (
                   mergedDetail.addressDetail ?? '-'
@@ -1709,7 +1711,6 @@ export function GeneralParticipatingInstitutionDetailView(
                   <InstitutionEducationFormatRadios
                     value={applicationInfoDraft.educationFormat}
                     onChange={value => updateApplicationInfoDraft({ educationFormat: value })}
-                    error={applicationInfoValidationErrors?.educationFormat}
                   />
                 ) : (
                   mergedDetail.educationFormat ?? '-'
@@ -1723,7 +1724,6 @@ export function GeneralParticipatingInstitutionDetailView(
                     mobile={applicationInfoDraft.teacherMobile}
                     email={applicationInfoDraft.teacherEmail}
                     onChange={patch => updateApplicationInfoDraft(patch)}
-                    errors={applicationInfoValidationErrors}
                   />
                 ) : teacherDisplaySegments.length > 0 ? (
                   withProgramDetailTdDivider(teacherDisplaySegments)
@@ -1737,7 +1737,6 @@ export function GeneralParticipatingInstitutionDetailView(
                     value={applicationInfoDraft.applicationReason}
                     onChange={value => updateApplicationInfoDraft({ applicationReason: value })}
                     placeholder="신청 사유를 입력해 주세요."
-                    error={applicationInfoValidationErrors?.applicationReason}
                   />
                 ) : (
                   mergedDetail.applicationReason ?? '-'
@@ -1749,7 +1748,6 @@ export function GeneralParticipatingInstitutionDetailView(
                     value={applicationInfoDraft.otherRequests}
                     onChange={value => updateApplicationInfoDraft({ otherRequests: value })}
                     placeholder="기타 요청사항을 입력해 주세요."
-                    error={applicationInfoValidationErrors?.otherRequests}
                   />
                 ) : (
                   mergedDetail.otherRequests ?? '-'
@@ -1760,7 +1758,6 @@ export function GeneralParticipatingInstitutionDetailView(
                   <InstitutionComputerInRoomEdit
                     value={applicationInfoDraft.computerInRoom}
                     onChange={value => updateApplicationInfoDraft({ computerInRoom: value })}
-                    error={applicationInfoValidationErrors?.computerInRoom}
                   />
                 ) : (
                   mergedDetail.computerInRoom ?? '-'
@@ -1772,7 +1769,6 @@ export function GeneralParticipatingInstitutionDetailView(
                     available={applicationInfoDraft.waitingRoomAvailable}
                     location={applicationInfoDraft.waitingRoomLocation}
                     onChange={patch => updateApplicationInfoDraft(patch)}
-                    error={applicationInfoValidationErrors?.waitingRoomLocation}
                   />
                 ) : (
                   mergedDetail.waitingRoomLocation ?? '-'
@@ -1784,7 +1780,6 @@ export function GeneralParticipatingInstitutionDetailView(
                     provided={applicationInfoDraft.mealProvided}
                     notice={applicationInfoDraft.mealNotice}
                     onChange={patch => updateApplicationInfoDraft(patch)}
-                    error={applicationInfoValidationErrors?.mealNotice}
                   />
                 ) : (
                   mealDisplay
@@ -1796,7 +1791,6 @@ export function GeneralParticipatingInstitutionDetailView(
                     value={applicationInfoDraft.parkingInfo}
                     onChange={value => updateApplicationInfoDraft({ parkingInfo: value })}
                     placeholder="주차, 전달사항 등을 입력해 주세요."
-                    error={applicationInfoValidationErrors?.parkingInfo}
                   />
                 ) : (
                   mergedDetail.parkingInfo ?? '-'

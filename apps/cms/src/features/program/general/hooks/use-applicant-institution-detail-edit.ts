@@ -13,13 +13,17 @@ import {
 import {
   formatInstitutionApplicationGradeDisplay,
   getInstitutionAffiliatedTeacherOptions,
+  mergeInstitutionAffiliatedTeacherOptions,
   shouldShowInstitutionApplicationEducationFormatField,
   type InstitutionAffiliatedTeacherOption,
 } from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { useAffiliatedTeachersQuery } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
+import { isSchoolAffiliatedTeacherRowSelectable } from '@/features/user/detail/lib/school-teacher-employment-status'
 import {
-  filterTextbooksForApplicant,
-  resolveTextbookOptionLabel,
-} from '@/features/program/general/lib/filter-textbooks-for-applicant'
+  buildApplicantInstitutionTextbookOptions,
+  resolveApplicantInstitutionTextbookDisplayLabel,
+} from '@/features/program/general/lib/applicant-institution-textbook'
 import { getSameSchoolApplicantGrades } from '@/features/program/general/lib/get-same-school-applicant-grades'
 import {
   buildInstitutionClassCountOptions,
@@ -30,7 +34,8 @@ import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program
 
 /**
  * 기관 신청자 상세 편집.
- * OpenAPI에 기관 신청 body PATCH 없음 — P2-6. 저장은 미연동 안내.
+ * - 합반: organization-merge-groups remote (`onSaveCombinedClass`)
+ * - 그 외 신청 body PATCH: OpenAPI 없음(P2-6) → 미연동 안내 (mock 성공 UX 없음)
  */
 
 export interface TextbookSelectOption {
@@ -50,18 +55,37 @@ export interface UseApplicantInstitutionDetailEditParams {
   program: Program | null | undefined
   institutionList: ApplicantSchoolRow[]
   onSaved: (updatedRows: ApplicantSchoolRow[]) => void
+  onSaveCombinedClass?: (params: {
+    combinedClassApplication: '신청' | '미신청'
+    combinedClassPartnerApplicantIds: string[]
+  }) => Promise<void>
+  combinedClassReadOnly?: boolean
 }
 
 export function useApplicantInstitutionDetailEdit({
   institution,
   program,
   institutionList,
+  onSaved,
+  onSaveCombinedClass,
+  combinedClassReadOnly = false,
 }: UseApplicantInstitutionDetailEditParams) {
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [draft, setDraft] = useState<ApplicantInstitutionEditDraft | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
-  const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
+  const applicantEducationGrade = useMemo(() => {
+    if (isEditing && draft?.educationGrade) {
+      return formatInstitutionApplicationGradeDisplay(draft.educationGrade)
+    }
+    return institution?.educationGrade?.trim()
+      ? formatInstitutionApplicationGradeDisplay(institution.educationGrade)
+      : undefined
+  }, [draft?.educationGrade, institution?.educationGrade, isEditing])
+
+  const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
+    useProgramTextbookCatalog(program, applicantEducationGrade)
 
   const resetEditState = useCallback(() => {
     setIsEditing(false)
@@ -108,11 +132,43 @@ export function useApplicantInstitutionDetailEdit({
     [program]
   )
 
+  const canFetchAffiliatedTeachers = Boolean(
+    isMembersRemoteEnabled() && institution?.organizationId != null
+  )
+
+  const affiliatedTeachersQuery = useAffiliatedTeachersQuery(
+    institution?.teacherMemberId,
+    canFetchAffiliatedTeachers && isEditing,
+    institution?.organizationId
+  )
+
   const teacherOptions = useMemo((): InstitutionAffiliatedTeacherOption[] => {
     if (!institution) return []
     const currentName = isEditing ? draft?.teacherName : institution.teacherName
+
+    if (canFetchAffiliatedTeachers && isEditing && affiliatedTeachersQuery.data) {
+      const apiOptions = affiliatedTeachersQuery.data
+        .filter(row => isSchoolAffiliatedTeacherRowSelectable(row.employmentStatus))
+        .map(row => ({
+          value:
+            row.teacherMemberId != null ? String(row.teacherMemberId) : row.id,
+          label: row.name === '-' ? '' : row.name,
+          mobile: row.phone === '-' ? '' : row.phone,
+          email: row.email === '-' ? '' : row.email,
+        }))
+        .filter(option => option.label.trim())
+
+      return mergeInstitutionAffiliatedTeacherOptions(apiOptions, currentName)
+    }
+
     return getInstitutionAffiliatedTeacherOptions(institution.schoolName, currentName)
-  }, [draft?.teacherName, institution, isEditing])
+  }, [
+    affiliatedTeachersQuery.data,
+    canFetchAffiliatedTeachers,
+    draft?.teacherName,
+    institution,
+    isEditing,
+  ])
 
   /** @deprecated sameSchoolGradeOptions.length >= 1 && isCombinedClassProgramEligibleFlag */
   const canApplyCombinedClass =
@@ -143,20 +199,24 @@ export function useApplicantInstitutionDetailEdit({
   }, [])
 
   const textbookOptions = useMemo((): TextbookSelectOption[] => {
-    if (!program) return []
-    const gradeSource =
-      isEditing && draft?.educationGrade
-        ? formatInstitutionApplicationGradeDisplay(draft.educationGrade)
-        : institution?.educationGrade
-    if (!gradeSource) return []
-    return filterTextbooksForApplicant(program, gradeSource, textbookCatalog).map(row => ({
-      value: row.id,
-      label: resolveTextbookOptionLabel(row),
-      textbookName: row.textbookName,
-    }))
-  }, [draft?.educationGrade, institution?.educationGrade, isEditing, program, textbookCatalog])
+    if (!program || !applicantEducationGrade) return []
+    return buildApplicantInstitutionTextbookOptions(
+      program,
+      applicantEducationGrade,
+      textbookCatalog
+    )
+  }, [applicantEducationGrade, program, textbookCatalog])
 
-  const saveEdit = useCallback((): boolean => {
+  const textbookDisplayLabel = useMemo(() => {
+    if (!institution) return undefined
+    return resolveApplicantInstitutionTextbookDisplayLabel({
+      program,
+      institution,
+      catalog: textbookCatalog,
+    })
+  }, [institution, program, textbookCatalog])
+
+  const saveEdit = useCallback(async (): Promise<boolean> => {
     if (!institution || !draft) return false
 
     const normalizedDraft: ApplicantInstitutionEditDraft = {
@@ -178,18 +238,80 @@ export function useApplicantInstitutionDetailEdit({
       return false
     }
 
-    setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
-    return false
-  }, [draft, institution, isCombinedClassProgramEligibleFlag, showEducationFormatField])
+    const canSaveCombined =
+      Boolean(onSaveCombinedClass) &&
+      isCombinedClassProgramEligibleFlag &&
+      !combinedClassReadOnly
+
+    const initialDraft = rowToEditDraft(institution)
+    const combinedClassChanged =
+      normalizedDraft.combinedClassApplication !== initialDraft.combinedClassApplication ||
+      normalizedDraft.combinedClassPartnerApplicantIds.join('|') !==
+        initialDraft.combinedClassPartnerApplicantIds.join('|')
+    const otherFieldsChanged =
+      normalizedDraft.educationGrade !== initialDraft.educationGrade ||
+      normalizedDraft.classCount !== initialDraft.classCount ||
+      normalizedDraft.studentCount !== initialDraft.studentCount ||
+      normalizedDraft.teacherName !== initialDraft.teacherName ||
+      normalizedDraft.textbookId !== initialDraft.textbookId ||
+      normalizedDraft.educationFormat !== initialDraft.educationFormat ||
+      normalizedDraft.addressDetail !== initialDraft.addressDetail
+
+    // Body PATCH는 BE gap — 교재·담당교사 등 mock 성공 금지. 합반만 remote.
+    if (otherFieldsChanged) {
+      setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
+      return false
+    }
+
+    if (!combinedClassChanged) {
+      resetEditState()
+      return true
+    }
+
+    if (!canSaveCombined || !onSaveCombinedClass) {
+      setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
+      return false
+    }
+
+    setIsSaving(true)
+    try {
+      await onSaveCombinedClass({
+        combinedClassApplication: normalizedDraft.combinedClassApplication,
+        combinedClassPartnerApplicantIds: normalizedDraft.combinedClassPartnerApplicantIds,
+      })
+      onSaved([institution])
+      resetEditState()
+      return true
+    } catch {
+      setValidationErrors({ form: '저장에 실패했습니다. 다시 시도해 주세요.' })
+      return false
+    } finally {
+      setIsSaving(false)
+    }
+  }, [
+    combinedClassReadOnly,
+    draft,
+    institution,
+    isCombinedClassProgramEligibleFlag,
+    onSaveCombinedClass,
+    onSaved,
+    resetEditState,
+    showEducationFormatField,
+  ])
 
   return {
     isEditing,
+    isSaving,
+    combinedClassReadOnly,
     draft,
     validationErrors,
     textbookOptions,
+    textbookDisplayLabel,
+    isTextbookCatalogLoading,
     sameSchoolGradeOptions,
     classCountOptions,
     teacherOptions,
+    isTeacherOptionsLoading: canFetchAffiliatedTeachers && isEditing && affiliatedTeachersQuery.isLoading,
     showEducationFormatField,
     canApplyCombinedClass,
     isCombinedClassProgramEligible: isCombinedClassProgramEligibleFlag,

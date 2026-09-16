@@ -26,6 +26,8 @@ describe('general-applications-adapters', () => {
     const row = mapOrganizationApplicationToApplicantSchoolRow(
       {
         id: 101,
+        organizationId: 8801,
+        teacherMemberId: 9901,
         organizationName: '서울초',
         teacherName: '김교사',
         requestedClassCount: 2,
@@ -38,6 +40,8 @@ describe('general-applications-adapters', () => {
     )
 
     expect(row.id).toBe('101')
+    expect(row.organizationId).toBe(8801)
+    expect(row.teacherMemberId).toBe(9901)
     expect(row.schoolName).toBe('서울초')
     expect(row.approvalStatus).toBe('pending')
     expect(row.programId).toBe('5001')

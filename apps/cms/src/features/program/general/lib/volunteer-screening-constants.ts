@@ -3,6 +3,10 @@
  */
 
 import type { SecondInterviewScreeningStatus } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
+import {
+  buildApplicationProcessedSelectionAlert,
+  buildInterview2ProcessedSelectionAlert,
+} from '@/features/program/general/lib/application-processed-selection-alert'
 
 export const GENERAL_VOLUNTEER_APPLICATION_LIST_TITLE = '봉사자 신청 현황'
 
@@ -178,16 +182,10 @@ export const GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_REJECT_ALERT = {
   content: '반려할 항목을 선택해 주세요.',
 } as const
 
-/** 1차 서류 심사 — 선택 승인/반려: 이미 처리된 행 포함 시 AlertModal */
-export const GENERAL_VOLUNTEER_DOC_SCREENING_PROCESSED_SELECTION_ALERT = {
-  title: '신청 처리 완료 안내',
-  content:
-    '이미 승인 또는 반려 완료된 봉사자가 포함되어 있습니다.\n신청 및 대기 중인 봉사자만 선택해 주세요.',
-} as const
+/** @deprecated `buildApplicationProcessedSelectionAlert('volunteer')` 사용 */
+export const GENERAL_VOLUNTEER_DOC_SCREENING_PROCESSED_SELECTION_ALERT =
+  buildApplicationProcessedSelectionAlert('volunteer')
 
-/** 2차 면접 — 선택 합격/불합격: 이미 처리된 행 포함 시 AlertModal */
-export const GENERAL_VOLUNTEER_INTERVIEW2_PROCESSED_SELECTION_ALERT = {
-  title: '면접 처리 완료 안내',
-  content:
-    '이미 합격 또는 불합격 처리된 봉사자가 포함되어 있습니다.\n면접 진행 대기·완료 상태의 봉사자만 선택해 주세요.',
-} as const
+/** @deprecated `buildInterview2ProcessedSelectionAlert('volunteer')` 사용 */
+export const GENERAL_VOLUNTEER_INTERVIEW2_PROCESSED_SELECTION_ALERT =
+  buildInterview2ProcessedSelectionAlert('volunteer')

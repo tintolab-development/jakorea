@@ -91,6 +91,7 @@ export function TrainedTeachersApplicantInstitutionDetailContents({
       textbookOptions={institutionDetailEdit.textbookOptions}
       classCountOptions={institutionDetailEdit.classCountOptions}
       teacherOptions={institutionDetailEdit.teacherOptions}
+      isTeacherOptionsLoading={institutionDetailEdit.isTeacherOptionsLoading}
       showEducationFormatField={institutionDetailEdit.showEducationFormatField}
       validationErrors={institutionDetailEdit.validationErrors}
       onResendNotificationClick={onResendNotification}

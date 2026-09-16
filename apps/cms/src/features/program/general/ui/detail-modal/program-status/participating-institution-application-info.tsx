@@ -26,7 +26,8 @@ import '@/features/program/general/ui/detail-modal/applications/applicant-detail
 import './participating-institution-application-info.css'
 
 export interface ParticipatingInstitutionApplicationInfoProps {
-  formError?: string
+  /** 정보 수정 모드 — 기본 정보 타이틀 `*` 표시 */
+  isBasicInfoEditing?: boolean
   showAdminComment?: boolean
   adminComment?: string
   /** 정보 수정과 분리 — 코멘트 작성 버튼으로만 편집 */
@@ -149,7 +150,7 @@ function CompanySchoolProgressScheduleRows({ sessions }: { sessions: Participati
 }
 
 export function ParticipatingInstitutionApplicationInfo({
-  formError,
+  isBasicInfoEditing = false,
   showAdminComment = false,
   adminComment,
   isAdminCommentEditing = false,
@@ -182,8 +183,6 @@ export function ParticipatingInstitutionApplicationInfo({
 }: ParticipatingInstitutionApplicationInfoProps) {
   return (
     <div className="institution-basic-info applicant-institution-basic-info participating-institution-application-info">
-      {formError ? <div className="institution-basic-info__form-error">{formError}</div> : null}
-
       {showAdminComment ? (
         <ApplicantAdminCommentSection
           adminComment={adminComment}
@@ -195,7 +194,17 @@ export function ParticipatingInstitutionApplicationInfo({
       ) : null}
 
       <section className="applicant-institution-basic-info__section">
-        <h3 className="applicant-institution-basic-info__title">기본 정보</h3>
+        <h3 className="applicant-institution-basic-info__title">
+          기본 정보
+          {isBasicInfoEditing ? (
+            <span
+              className="applicant-institution-basic-info__title-required"
+              aria-hidden="true"
+            >
+              *
+            </span>
+          ) : null}
+        </h3>
         <div className="applicant-institution-basic-info__basic-info-fields">
           <div className="applicant-institution-basic-info__table-wrap participating-institution-application-info__table-wrap--overview">
             <table className="applicant-institution-basic-info__table">

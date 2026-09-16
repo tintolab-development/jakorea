@@ -243,13 +243,14 @@ export function useGeneralVolunteerInterview2({
     requestGeneralVolunteerInterview2BulkFail({
       selectedIds: ids,
       selectedRows,
+      subjectKind,
       onOpenSingleFail: () => {
         const applicant = selectedRows[0]
         if (applicant) openFailModal(applicant)
       },
       onOpenBulkFail: () => setBulkFailModalOpen(true),
     })
-  }, [list, openFailModal, selectedRowKeys])
+  }, [list, openFailModal, selectedRowKeys, subjectKind])
 
   const closeBulkFailModal = useCallback(() => {
     setBulkFailModalOpen(false)
@@ -277,13 +278,14 @@ export function useGeneralVolunteerInterview2({
     requestGeneralVolunteerInterview2BulkPass({
       selectedIds: ids,
       selectedRows,
+      subjectKind,
       onOpenSinglePass: () => {
         const applicant = selectedRows[0]
         if (applicant) openPassModal(applicant)
       },
       onOpenBulkPass: () => setBulkPassModalOpen(true),
     })
-  }, [list, openPassModal, selectedRowKeys])
+  }, [list, openPassModal, selectedRowKeys, subjectKind])
 
   const closeBulkPassModal = useCallback(() => {
     setBulkPassModalOpen(false)

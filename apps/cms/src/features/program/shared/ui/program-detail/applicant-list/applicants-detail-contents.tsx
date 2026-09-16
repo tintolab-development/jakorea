@@ -1,4 +1,5 @@
 import { useMemo, useCallback, useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { Space, Empty } from 'antd'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -9,6 +10,12 @@ import {
   type ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
 import { useApplicantInstitutionDetailEdit } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
+import { useOrganizationMergeGroups } from '@/features/program/general/hooks/use-organization-merge-groups'
+import { saveOrganizationCombinedClassRemote } from '@/features/program/general/api/organization-merge-groups-service'
+import { shouldUseOrganizationMergeGroupsRemoteApi } from '@/features/program/general/api/organization-merge-groups-remote-capabilities'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { applyCombinedClassMergeToApplicantDetail } from '@/features/program/general/lib/apply-combined-class-merge-state'
+import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { useApplicantInstructorDetailEdit } from '@/features/program/general/hooks/use-applicant-instructor-detail-edit'
 import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
@@ -576,13 +583,53 @@ export function ApplicantsDetailContents({
   const isGeneralInstructorEditEnabled =
     isGeneralDetail && isApprovedInstructor && instructorData != null
 
+  const queryClient = useQueryClient()
+  const programId = program?.id
+  const mergeGroupsQuery = useOrganizationMergeGroups(
+    programId,
+    isGeneralDetail && isInstitution && shouldUseOrganizationMergeGroupsRemoteApi()
+  )
+  const institutionMergeView = useMemo(() => {
+    if (!institutionData || !mergeGroupsQuery.data?.length) return null
+    return resolveCombinedClassMergeViewState(
+      mergeGroupsQuery.data,
+      institutionData,
+      institutionList
+    )
+  }, [institutionData, institutionList, mergeGroupsQuery.data])
+
+  const handleSaveInstitutionCombinedClass = useCallback(
+    async (params: {
+      combinedClassApplication: '신청' | '미신청'
+      combinedClassPartnerApplicantIds: string[]
+    }) => {
+      if (!programId || !institutionData) return
+      await saveOrganizationCombinedClassRemote({
+        programId,
+        leadRow: institutionData,
+        allRows: institutionList,
+        combinedClassApplication: params.combinedClassApplication,
+        partnerRowIds: params.combinedClassPartnerApplicantIds,
+        existingMergeGroups: mergeGroupsQuery.data,
+      })
+      await queryClient.invalidateQueries({
+        queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
+      })
+    },
+    [institutionData, institutionList, mergeGroupsQuery.data, programId, queryClient]
+  )
+
   const institutionDetailEdit = useApplicantInstitutionDetailEdit({
-    institution: isGeneralInstitutionEditEnabled ? institutionData : null,
+    institution: isGeneralDetail && isInstitution ? institutionData : null,
     program,
     institutionList,
     onSaved: rows => {
       onInstitutionDetailSaved?.(rows)
     },
+    onSaveCombinedClass: shouldUseOrganizationMergeGroupsRemoteApi()
+      ? handleSaveInstitutionCombinedClass
+      : undefined,
+    combinedClassReadOnly: institutionMergeView?.isLead === false,
   })
 
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
@@ -905,7 +952,7 @@ export function ApplicantsDetailContents({
       isEditingInstitutionDetail: institutionDetailEdit.isEditing,
       onEnterInstitutionEdit: institutionDetailEdit.enterEdit,
       onSaveInstitutionEdit: () => {
-        institutionDetailEdit.saveEdit()
+        void institutionDetailEdit.saveEdit()
       },
       isGeneralIndividualEditEnabled,
       isEditingIndividualDetail: individualDetailEdit.isEditing,
@@ -989,22 +1036,32 @@ export function ApplicantsDetailContents({
     const isCombinedClassHidden =
       isCompanySchoolProgram(program) || isTrainedTeachersDetailProgram(program ?? null)
     if (isGeneralDetail) {
+      const detailWithMerge = applyCombinedClassMergeToApplicantDetail(
+        d.detail,
+        mergeGroupsQuery.data,
+        d,
+        institutionList
+      )
       return (
         <ApplicantGeneralInstitutionBasicInfo
           institution={d}
-          detail={d.detail}
+          detail={detailWithMerge}
           program={program}
           maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
           mode={institutionDetailEdit.isEditing ? 'edit' : 'view'}
           draft={institutionDetailEdit.draft ?? undefined}
           onDraftChange={institutionDetailEdit.updateDraft}
           textbookOptions={institutionDetailEdit.textbookOptions}
+          textbookDisplayLabel={institutionDetailEdit.textbookDisplayLabel}
+          isTextbookCatalogLoading={institutionDetailEdit.isTextbookCatalogLoading}
           sameSchoolGradeOptions={institutionDetailEdit.sameSchoolGradeOptions}
           classCountOptions={institutionDetailEdit.classCountOptions}
           teacherOptions={institutionDetailEdit.teacherOptions}
+          isTeacherOptionsLoading={institutionDetailEdit.isTeacherOptionsLoading}
           showEducationFormatField={institutionDetailEdit.showEducationFormatField}
           isCombinedClassProgramEligible={institutionDetailEdit.isCombinedClassProgramEligible}
           isCombinedClassApplyRadioDisabled={institutionDetailEdit.isCombinedClassApplyRadioDisabled}
+          combinedClassReadOnly={institutionDetailEdit.combinedClassReadOnly}
           hideCombinedClass={isCombinedClassHidden}
           validationErrors={institutionDetailEdit.validationErrors}
           onResendNotificationClick={onResendNotification}
@@ -1029,10 +1086,15 @@ export function ApplicantsDetailContents({
     institutionDetailEdit.draft,
     institutionDetailEdit.updateDraft,
     institutionDetailEdit.textbookOptions,
+    institutionDetailEdit.textbookDisplayLabel,
+    institutionDetailEdit.isTextbookCatalogLoading,
     institutionDetailEdit.sameSchoolGradeOptions,
     institutionDetailEdit.isCombinedClassProgramEligible,
     institutionDetailEdit.isCombinedClassApplyRadioDisabled,
+    institutionDetailEdit.combinedClassReadOnly,
     institutionDetailEdit.validationErrors,
+    institutionList,
+    mergeGroupsQuery.data,
     onResendNotification,
   ])
 

@@ -26,7 +26,13 @@ import {
 import { getSameSchoolParticipatingGrades } from '@/features/program/general/lib/get-same-school-participating-grades'
 import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import { PROGRAM_API_UNAVAILABLE_SAVE_CONTENT } from '@/features/program/shared/lib/program-api-unavailable'
+import type { CombinedClassApplicationStatus } from '@/features/program/general/lib/applicant-institution-detail-edit'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
+import { useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 
 function isCompanySchoolProgram(program: Program): boolean {
   return (
@@ -50,6 +56,13 @@ export interface UseParticipatingInstitutionDetailEditParams {
   program: Program
   participatingSchoolList: ParticipatingSchoolRow[]
   onSaveBasicInfo?: (patch: Partial<SchoolDetailForModal> & { id: string }) => void
+  /** remote 합반 저장 — 미전달 시 로컬 patch만 */
+  onSaveCombinedClass?: (params: {
+    combinedClassApplication: CombinedClassApplicationStatus
+    combinedClassPartnerSchoolIds: string[]
+  }) => Promise<void>
+  /** 합반 멤버(비 lead) 행이면 true — 합반 필드 read-only */
+  combinedClassReadOnly?: boolean
 }
 
 export function useParticipatingInstitutionDetailEdit({
@@ -57,12 +70,17 @@ export function useParticipatingInstitutionDetailEdit({
   row,
   program,
   participatingSchoolList,
+  onSaveBasicInfo,
+  onSaveCombinedClass,
+  combinedClassReadOnly = false,
 }: UseParticipatingInstitutionDetailEditParams) {
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [draft, setDraft] = useState<ReturnType<
     typeof detailToParticipatingInstitutionEditDraft
   > | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const { showAlert } = useCmsAlert()
 
   const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
     useProgramTextbookCatalog(program)
@@ -236,7 +254,7 @@ export function useParticipatingInstitutionDetailEdit({
     [program, row.studentCount, textbookCatalog, textbookOptions, usesTextbook]
   )
 
-  const saveEdit = useCallback((): boolean => {
+  const saveEdit = useCallback(async (): Promise<boolean> => {
     if (!draft) return false
 
     const normalizedDraft = {
@@ -252,21 +270,91 @@ export function useParticipatingInstitutionDetailEdit({
 
     const parsed = parseParticipatingInstitutionEditDraft(normalizedDraft, { usesTextbook })
     if (!parsed.success) {
-      setValidationErrors(parsed.errors)
+      void showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
       return false
     }
 
-    // OpenAPI에 기관 신청 정보 body PATCH 없음 — adminComment만 comments API (P2-6)
-    setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
-    return false
+    const canSaveCombined =
+      Boolean(onSaveCombinedClass) &&
+      isCombinedClassProgramEligibleFlag &&
+      !combinedClassReadOnly
+
+    const initialDraft = detailToParticipatingInstitutionEditDraft(detail)
+    const combinedClassChanged =
+      normalizedDraft.combinedClassApplication !== initialDraft.combinedClassApplication ||
+      normalizedDraft.combinedClassPartnerSchoolIds.join('|') !==
+        initialDraft.combinedClassPartnerSchoolIds.join('|')
+
+    // Body PATCH는 BE gap — 로컬 setSavedBasicPatches 성공 UX 금지. 합반만 remote.
+    // 합반 외 필드 변경이 있으면 미연동 안내 (합반도 함께 저장하지 않음).
+    const otherFieldsChanged =
+      normalizedDraft.educationGrade !== initialDraft.educationGrade ||
+      normalizedDraft.classCount !== initialDraft.classCount ||
+      normalizedDraft.textbookId !== initialDraft.textbookId ||
+      normalizedDraft.textbookName !== initialDraft.textbookName ||
+      normalizedDraft.teacherName !== initialDraft.teacherName
+
+    if (otherFieldsChanged) {
+      setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
+      void showAlert({
+        title: 'API 연동 안내',
+        content: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT,
+      })
+      return false
+    }
+
+    if (!combinedClassChanged) {
+      resetEditState()
+      return true
+    }
+
+    if (!canSaveCombined || !onSaveCombinedClass) {
+      setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
+      void showAlert({
+        title: 'API 연동 안내',
+        content: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT,
+      })
+      return false
+    }
+
+    setIsSaving(true)
+    try {
+      await onSaveCombinedClass({
+        combinedClassApplication: normalizedDraft.combinedClassApplication,
+        combinedClassPartnerSchoolIds: normalizedDraft.combinedClassPartnerSchoolIds,
+      })
+      // keep onSaveBasicInfo unused for body — adminComment is saved via comments API elsewhere
+      void onSaveBasicInfo
+      resetEditState()
+      return true
+    } catch {
+      void showAlert({
+        title: '안내',
+        content: '저장에 실패했습니다. 다시 시도해 주세요.',
+      })
+      return false
+    } finally {
+      setIsSaving(false)
+    }
   }, [
+    combinedClassReadOnly,
+    detail,
     draft,
     isCombinedClassProgramEligibleFlag,
+    onSaveBasicInfo,
+    onSaveCombinedClass,
+    resetEditState,
+    showAlert,
     usesTextbook,
   ])
 
   return {
     isEditing,
+    isSaving,
+    combinedClassReadOnly,
     draft,
     validationErrors,
     textbookOptions,

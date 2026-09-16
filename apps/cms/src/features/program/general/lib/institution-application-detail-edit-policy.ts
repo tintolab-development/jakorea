@@ -54,6 +54,26 @@ export function getInstitutionAffiliatedTeacherOptions(
   ]
 }
 
+/** API 소속 교사 목록 + 현재 담당 교사(목록에 없을 때 legacy) 병합 */
+export function mergeInstitutionAffiliatedTeacherOptions(
+  apiOptions: InstitutionAffiliatedTeacherOption[],
+  currentTeacherName?: string
+): InstitutionAffiliatedTeacherOption[] {
+  const currentName = currentTeacherName?.trim()
+  if (!currentName || apiOptions.some(option => option.label === currentName)) {
+    return apiOptions
+  }
+  return [
+    {
+      value: `legacy:${currentName}`,
+      label: currentName,
+      mobile: '',
+      email: '',
+    },
+    ...apiOptions,
+  ]
+}
+
 export function parseInstitutionTeacherInfoFromDetail(
   detail?: { teacherInfo?: string },
   institution?: { teacherName?: string; contact?: string }

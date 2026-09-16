@@ -522,6 +522,7 @@ export function InstitutionTeacherEdit({
   onChange,
   errors,
   teacherOptions,
+  isTeacherOptionsLoading = false,
 }: {
   name: string
   phone: string
@@ -530,6 +531,7 @@ export function InstitutionTeacherEdit({
   onChange: (patch: Partial<InstitutionApplicationDetailEditFields>) => void
   errors?: Partial<Record<'teacherName' | 'teacherPhone' | 'teacherMobile' | 'teacherEmail', string>>
   teacherOptions?: InstitutionAffiliatedTeacherOption[]
+  isTeacherOptionsLoading?: boolean
 }) {
   const firstError =
     errors?.teacherName ?? errors?.teacherPhone ?? errors?.teacherMobile ?? errors?.teacherEmail
@@ -550,7 +552,8 @@ export function InstitutionTeacherEdit({
             inputSize="medium"
             width={140}
             withAllOption={false}
-            placeholder="교사 선택"
+            loading={isTeacherOptionsLoading}
+            placeholder={isTeacherOptionsLoading ? '교사 목록 불러오는 중…' : '교사 선택'}
             value={resolvedTeacherValue}
             options={teacherOptions.map(option => ({
               label: option.label,

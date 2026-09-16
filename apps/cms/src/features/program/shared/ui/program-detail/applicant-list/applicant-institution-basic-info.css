@@ -36,6 +36,12 @@
   color: #3d3d3d;
 }
 
+.applicant-institution-basic-info__title-required {
+  margin-left: 2px;
+  color: var(--color-required-mark, var(--color-red, #ff4d4f));
+  font-weight: 700;
+}
+
 .applicant-institution-basic-info__manager-comment {
   display: flex;
   flex-direction: column;

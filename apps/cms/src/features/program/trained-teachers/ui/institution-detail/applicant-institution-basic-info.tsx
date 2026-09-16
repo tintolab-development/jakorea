@@ -30,8 +30,8 @@ import {
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import {
   resolveInstitutionApplicationProgramBridge,
-  shouldShowInstitutionApplicationScheduleParagraph,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import { shouldShowInstitutionApplicationDetailScheduleSection } from '@/features/program/general/lib/institution-application-session-display'
 import type { Program } from '@/types/domain'
 import { TrainedTeachersPreferredScheduleDetailSection } from './preferred-schedule-detail-section'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
@@ -54,6 +54,7 @@ export interface TrainedTeachersApplicantInstitutionBasicInfoProps {
   sameSchoolGradeOptions?: SameSchoolGradeOption[]
   classCountOptions?: Array<{ value: string; label: string }>
   teacherOptions?: InstitutionAffiliatedTeacherOption[]
+  isTeacherOptionsLoading?: boolean
   showEducationFormatField?: boolean
   validationErrors?: Record<string, string>
   onResendNotificationClick?: () => void
@@ -101,6 +102,7 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
   textbookOptions = [],
   classCountOptions = [],
   teacherOptions = [],
+  isTeacherOptionsLoading = false,
   showEducationFormatField = false,
   validationErrors,
   onResendNotificationClick,
@@ -115,8 +117,12 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
     ? resolveInstitutionApplicationProgramBridge(program)
     : null
   const showScheduleSection =
-    institutionApplicationBridge == null ||
-    shouldShowInstitutionApplicationScheduleParagraph(institutionApplicationBridge)
+    (institution.preferredScheduleBlocks?.length ?? 0) > 0 ||
+    shouldShowInstitutionApplicationDetailScheduleSection(
+      institutionApplicationBridge,
+      institution
+    )
+  /** remote SoT — preferredScheduleBlocks. memo/mock id 파싱 금지. */
   const preferredScheduleBlocks = institution.preferredScheduleBlocks ?? []
 
   const classAndCount: ReactNode =
@@ -150,6 +156,7 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
         mobile={draft.teacherMobile}
         email={draft.teacherEmail}
         teacherOptions={teacherOptions}
+        isTeacherOptionsLoading={isTeacherOptionsLoading}
         onChange={patch => onDraftChange(patch)}
         errors={{
           teacherName: validationErrors?.teacherName,

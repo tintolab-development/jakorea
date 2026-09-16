@@ -14,8 +14,8 @@
 
 ## 프로그램 자격
 
-- **단일 회차 프로그램**(`resolveInstitutionApplicationProgramBridge(program).sessionRound === 'single'`)에서만 합반 신청 가능.
-- 다회차·비대상 프로그램: 조회·편집 모두 **「해당 없음」**, 저장 시 항상 **미신청**·파트너 ID 빈 배열.
+- **단일·복수 회차 프로그램**(`sessionRound === 'single' | 'multi'`)에서 합반 신청 가능.
+- sessionRound 미설정·비대상 프로그램: 조회·편집 모두 **「해당 없음」**, 저장 시 항상 **미신청**·파트너 ID 빈 배열.
 
 ## 편집 UI (정보 수정 모드)
 
@@ -43,4 +43,4 @@
 - 단위: `combined-class-edit-policy.test.ts`
 - mock 데모: 동일 기관·동일 프로그램 다학년 (`applicant-school-1/5/6` 진월초 등)
 
-**Last updated:** 2026-06-08
+**Last updated:** 2026-09-16
