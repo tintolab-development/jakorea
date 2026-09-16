@@ -141,7 +141,15 @@ export async function addYearlyBusinessRemote(
   sponsorId: string,
   body: SponsorYearlyBusinessRequest
 ): Promise<SponsorYearlyBusinessResponse> {
-  return unwrapApiBody(await dmApi.addYearlyBusiness(pathId(sponsorId), body))
+  // OpenAPI subset currently omits POST; keep runtime path used by CMS sponsor UI.
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/sponsors/${pathId(sponsorId)}/yearly-businesses`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
+  )
 }
 
 export async function updateYearlyBusinessRemote(

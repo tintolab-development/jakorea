@@ -71,10 +71,7 @@ export async function fetchAdminProgramByIdRemote(programId: string): Promise<Pr
 }
 
 export async function createAdminProgramRemote(
-  payload: import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest & {
-    /** OpenAPI 미반영 — BE 필수. ORGANIZATION | INDIVIDUAL | BOTH */
-    applicationTargetMode?: 'ORGANIZATION' | 'INDIVIDUAL' | 'BOTH'
-  }
+  payload: import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest
 ): Promise<ProgramResponse> {
   return unwrapApiBody<ProgramResponse>(
     await customInstance({
@@ -87,9 +84,7 @@ export async function createAdminProgramRemote(
 
 export async function updateAdminProgramRemote(
   programId: string,
-  payload: import('@/shared/api/generated/dashboard/schemas/programUpdateRequest').ProgramUpdateRequest & {
-    applicationTargetMode?: 'ORGANIZATION' | 'INDIVIDUAL' | 'BOTH'
-  }
+  payload: import('@/shared/api/generated/dashboard/schemas/programUpdateRequest').ProgramUpdateRequest
 ): Promise<ProgramResponse> {
   return unwrapApiBody<ProgramResponse>(
     await customInstance({
