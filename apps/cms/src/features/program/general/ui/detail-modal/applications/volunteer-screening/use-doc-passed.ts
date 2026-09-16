@@ -17,7 +17,10 @@ import {
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
 import { assignGeneralIndividualInterview, assignGeneralVolunteerInterview } from '@/features/program/general/api/admin-applications-service'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
-import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
+import {
+  notifyProgramApiUnavailable,
+  useNotifyProgramApiUnavailableOnce,
+} from '@/features/program/shared/lib/program-api-unavailable'
 import { buildInterviewSlotTimesFromAssignPayload } from '@/features/program/general/lib/interview-slot-from-assign-payload'
 import {
   guardGeneralVolunteerAssignInterview,
@@ -119,6 +122,10 @@ export function useGeneralVolunteerDocPassed({
 
   const handleAssignInterview = useCallback((row: GeneralVolunteerApplicantRow) => {
     if (!guardGeneralVolunteerAssignInterview(row)) return
+    if (!shouldUseGeneralApplicationsRemoteApi()) {
+      notifyProgramApiUnavailable('general-volunteer-interview-assign', '봉사자 면접일 배정')
+      return
+    }
     setAssignFlow({ type: 'pick', target: row })
   }, [])
 
@@ -134,38 +141,41 @@ export function useGeneralVolunteerDocPassed({
       const { target } = flow
       const wasAssigned = target.interviewAssignmentStatus === 'assigned'
 
-      if (shouldUseGeneralApplicationsRemoteApi()) {
-        const slotTimes = buildInterviewSlotTimesFromAssignPayload(payload)
-        if (!slotTimes) {
-          showAlert({
-            title: '면접 배정 실패',
-            content: '면접 일시 형식을 확인할 수 없습니다. 다시 선택해 주세요.',
+      if (!shouldUseGeneralApplicationsRemoteApi()) {
+        notifyProgramApiUnavailable('general-volunteer-interview-assign', '봉사자 면접일 배정')
+        return
+      }
+
+      const slotTimes = buildInterviewSlotTimesFromAssignPayload(payload)
+      if (!slotTimes) {
+        showAlert({
+          title: '면접 배정 실패',
+          content: '면접 일시 형식을 확인할 수 없습니다. 다시 선택해 주세요.',
+        })
+        return
+      }
+      try {
+        if (subjectKind === 'participant') {
+          await assignGeneralIndividualInterview({
+            programId,
+            applicationId: target.id,
+            ...slotTimes,
           })
-          return
-        }
-        try {
-          if (subjectKind === 'participant') {
-            await assignGeneralIndividualInterview({
-              programId,
-              applicationId: target.id,
-              ...slotTimes,
-            })
-          } else {
-            await assignGeneralVolunteerInterview({
-              programId,
-              applicationId: target.id,
-              ...slotTimes,
-            })
-          }
-          await volunteerRemote.invalidateVolunteerApplications?.()
-        } catch (error) {
-          console.debug('interview assign remote failed', error)
-          showAlert({
-            title: '면접 배정 실패',
-            content: '면접 일정 배정 중 오류가 발생했습니다. 다시 시도해 주세요.',
+        } else {
+          await assignGeneralVolunteerInterview({
+            programId,
+            applicationId: target.id,
+            ...slotTimes,
           })
-          return
         }
+        await volunteerRemote.invalidateVolunteerApplications?.()
+      } catch (error) {
+        console.debug('interview assign remote failed', error)
+        showAlert({
+          title: '면접 배정 실패',
+          content: '면접 일정 배정 중 오류가 발생했습니다. 다시 시도해 주세요.',
+        })
+        return
       }
 
       const assignedApplicant: GeneralVolunteerApplicantRow = {
@@ -208,31 +218,32 @@ export function useGeneralVolunteerDocPassed({
     setWithdrawTargetId(null)
   }, [])
 
-  const confirmWithdrawActivity = useCallback(async (_payload: ActivityWithdrawScheduleModalPayload) => {
-    if (!withdrawTargetId) return
-    const row = list.find(item => item.id === withdrawTargetId)
-    if (!row) {
-      setWithdrawTargetId(null)
-      return
-    }
-    if (volunteerRemote.remoteEnabled) {
-      const handled = await volunteerRemote.applyRemoteGiveUp?.(withdrawTargetId)
-      if (handled) {
+  const confirmWithdrawActivity = useCallback(
+    async (payload: ActivityWithdrawScheduleModalPayload) => {
+      if (!withdrawTargetId) return
+      const row = list.find(item => item.id === withdrawTargetId)
+      if (!row) {
         setWithdrawTargetId(null)
-        showAlert({
-          title: '활동 포기',
-          content: screeningWithdrawCompleteContent(subjectKind, row.name),
-        })
         return
       }
-    }
-    updateRow(withdrawTargetId, { interviewAssignmentStatus: 'withdrawn' })
-    showAlert({
-      title: '활동 포기',
-      content: screeningWithdrawCompleteContent(subjectKind, row.name),
-    })
-    setWithdrawTargetId(null)
-  }, [list, showAlert, subjectKind, updateRow, volunteerRemote, withdrawTargetId])
+      if (!volunteerRemote.remoteEnabled) {
+        notifyProgramApiUnavailable('general-volunteer-give-up', '봉사자 활동 포기')
+        setWithdrawTargetId(null)
+        return
+      }
+      const handled = await volunteerRemote.applyRemoteGiveUp?.(
+        withdrawTargetId,
+        payload.stopScheduleLabel
+      )
+      setWithdrawTargetId(null)
+      if (!handled) return
+      showAlert({
+        title: '활동 포기',
+        content: screeningWithdrawCompleteContent(subjectKind, row.name),
+      })
+    },
+    [list, showAlert, subjectKind, volunteerRemote, withdrawTargetId]
+  )
 
   const withdrawTarget = useMemo(
     () => (withdrawTargetId ? list.find(row => row.id === withdrawTargetId) : undefined),

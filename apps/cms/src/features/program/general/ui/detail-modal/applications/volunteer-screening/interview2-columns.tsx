@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
-import { CmsButton } from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { screeningApplicantNameLabel, type ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
 import {
@@ -22,7 +21,7 @@ const SCORE_VALUE_CLASS = 'general-volunteer-interview2__score-value'
 const VOLUNTEER_APPLICANT_NAME_COL_WIDTH = 140
 const VOLUNTEER_TOTAL_SCORE_COL_WIDTH = 100
 
-/** 봉사자 기본(140·100). 참여자는 공통 상수(198·120). +재배정 열 136 */
+/** 봉사자 기본(140·100). 참여자는 공통 상수(198·120). */
 export function resolveGeneralInterview2TableScrollX(
   subjectKind: ScreeningSubjectKind = 'volunteer'
 ): number {
@@ -34,7 +33,7 @@ export function resolveGeneralInterview2TableScrollX(
     subjectKind === 'participant'
       ? PARTICIPANT_TOTAL_SCORE_COL_WIDTH
       : VOLUNTEER_TOTAL_SCORE_COL_WIDTH
-  return 80 + nameWidth + 140 + 140 + 140 + scoreWidth + 160 + 136
+  return 80 + nameWidth + 140 + 140 + 140 + scoreWidth + 160
 }
 
 /** @deprecated 봉사자 기본 scroll — `resolveGeneralInterview2TableScrollX` 사용 */
@@ -44,10 +43,8 @@ export const GENERAL_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X = resolveGeneralIntervi
 
 export function useGeneralVolunteerInterview2Columns({
   subjectKind = 'volunteer',
-  onReassignInterview,
 }: {
   subjectKind?: ScreeningSubjectKind
-  onReassignInterview?: (row: GeneralVolunteerApplicantRow) => void
 } = {}): ColumnsType<GeneralVolunteerApplicantRow> {
   const applicantNameTitle = screeningApplicantNameLabel(subjectKind)
   const applicantNameWidth =
@@ -124,36 +121,7 @@ export function useGeneralVolunteerInterview2Columns({
           return <GeneralSecondInterviewStatusText status={status} />
         },
       },
-      ...(onReassignInterview
-        ? ([
-            {
-              title: '면접일 재배정',
-              key: 'interviewReassignAction',
-              width: 136,
-              align: 'center',
-              className: CENTER_CELL_CLASS,
-              render: (_value: unknown, record: GeneralVolunteerApplicantRow) => {
-                const withdrawn = record.interviewAssignmentStatus === 'withdrawn'
-                return (
-                  <CmsButton
-                    type="button"
-                    variant="secondary"
-                    size="small"
-                    width={120}
-                    disabled={withdrawn}
-                    onClick={e => {
-                      e.stopPropagation()
-                      onReassignInterview(record)
-                    }}
-                  >
-                    면접일 재배정
-                  </CmsButton>
-                )
-              },
-            },
-          ] as ColumnsType<GeneralVolunteerApplicantRow>)
-        : []),
     ],
-    [applicantNameTitle, applicantNameWidth, onReassignInterview, totalScoreWidth]
+    [applicantNameTitle, applicantNameWidth, totalScoreWidth]
   )
 }
