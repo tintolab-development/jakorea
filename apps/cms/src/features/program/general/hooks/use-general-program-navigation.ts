@@ -5,19 +5,38 @@ import { generalProgramQueryKeys } from '@/features/program/general/api/general-
 import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import type { GeneralDetailLnbKey } from '@/features/program/general/lib/detail-url'
 
+/**
+ * OpenAPI ProgramNavigationMenuItem.key (SCREAMING_SNAKE) → FE LNB.
+ * lowercase / legacy alias도 함께 허용.
+ */
 const LNB_KEY_ALIASES: Record<string, GeneralDetailLnbKey> = {
+  // OpenAPI enum (lowercased)
+  common_info: 'info',
+  recruitment_info: 'info',
+  organization_applications: 'institution_applications',
+  participant_applications: 'participant_applications',
+  instructor_applications: 'instructor_applications',
+  volunteer_applications: 'volunteer_applications',
+  program_execution: 'progress',
+  education_journal: 'progress',
+  student_roster: 'progress',
+  survey: 'survey',
+  surveys: 'survey',
+  settlement: 'settlement',
+  program_staff: 'managers',
+  // Legacy / short keys
   info: 'info',
   program_info: 'info',
   institution_applications: 'institution_applications',
   institutions: 'institution_applications',
-  instructor_applications: 'instructor_applications',
   instructors: 'instructor_applications',
-  volunteer_applications: 'volunteer_applications',
   volunteers: 'volunteer_applications',
   progress: 'progress',
-  survey: 'survey',
-  surveys: 'survey',
   managers: 'managers',
+}
+
+function normalizeNavigationKey(raw: string | undefined | null): string {
+  return (raw ?? '').trim().toLowerCase().replace(/-/g, '_')
 }
 
 export function useGeneralProgramNavigation(programId: string | undefined, enabled = true) {
@@ -37,8 +56,7 @@ export function useGeneralProgramNavigation(programId: string | undefined, enabl
     const items = query.data?.lnb
     if (!items?.length) return disabled
     for (const item of items) {
-      const raw = item.key?.trim().toLowerCase() ?? ''
-      const mapped = LNB_KEY_ALIASES[raw]
+      const mapped = LNB_KEY_ALIASES[normalizeNavigationKey(item.key)]
       if (mapped && item.enabled === false) disabled.add(mapped)
     }
     return disabled

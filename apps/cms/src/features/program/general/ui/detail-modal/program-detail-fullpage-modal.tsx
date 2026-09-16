@@ -255,15 +255,15 @@ export function ProgramDetailFullPageModal({
       isCompanySchoolDetailProgram(displayProgram),
     [displayProgram, programVariant]
   )
-  const { disabledLnbKeys } = useGeneralProgramNavigation(
-    open && isCompanySchoolDetail ? programId : undefined,
-    open && isCompanySchoolDetail
-  )
   const isTrainedTeachersDetail = useMemo(
     () =>
       programVariant === 'trained-teachers' ||
       isTrainedTeachersDetailProgram(displayProgram),
     [displayProgram, programVariant]
+  )
+  const { disabledLnbKeys } = useGeneralProgramNavigation(
+    open && (isCompanySchoolDetail || isTrainedTeachersDetail) ? programId : undefined,
+    open && (isCompanySchoolDetail || isTrainedTeachersDetail)
   )
   const trainedTeacherRemoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi()
   const updateTrainedTeacherInfoDetailMutation = useUpdateTrainedTeacherProgramInfoDetail()
@@ -679,6 +679,10 @@ export function ProgramDetailFullPageModal({
   const programSidebarItems = useMemo<DetailModalSidebarNavItem[]>(
     () => {
       if (isTrainedTeachersDetail) {
+        const hideApplicants = disabledLnbKeys.has('institution_applications')
+        const hideProgress = disabledLnbKeys.has('progress')
+        const hideSurvey = disabledLnbKeys.has('survey')
+        const hideManagers = disabledLnbKeys.has('managers')
         return [
           {
             key: 'info',
@@ -690,9 +694,19 @@ export function ProgramDetailFullPageModal({
               { key: 'instructors', label: '신청 정보' },
             ],
           },
-          { key: 'applicants', label: '기관 신청 목록', icon: <LnbIconApplicants /> },
-          { key: 'progress', label: '프로그램 진행 현황', icon: <LnbIconProgress /> },
-          ...(surveyMenuItems.length > 0
+          ...(!hideApplicants
+            ? [{ key: 'applicants', label: '기관 신청 목록', icon: <LnbIconApplicants /> }]
+            : []),
+          ...(!hideProgress
+            ? [
+                {
+                  key: 'progress',
+                  label: '프로그램 진행 현황',
+                  icon: <LnbIconProgress />,
+                },
+              ]
+            : []),
+          ...(!hideSurvey && surveyMenuItems.length > 0
             ? [
                 {
                   key: 'survey',
@@ -705,7 +719,9 @@ export function ProgramDetailFullPageModal({
                 },
               ]
             : []),
-          { key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> },
+          ...(!hideManagers
+            ? [{ key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> }]
+            : []),
         ]
       }
 
