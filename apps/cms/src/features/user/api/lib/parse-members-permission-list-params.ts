@@ -20,11 +20,14 @@ function parseRole(raw: string | null): UserRole | 'ALL' {
   return 'ALL'
 }
 
-/** UI 회원 유형 → 강사 권한승인 `memberType` query */
+/** UI 회원 유형 → 강사 권한승인 `memberType` query (`GENERAL` | `SCHOOL_TEACHER`) */
 function mapUiRoleToInstructorMemberType(role: UserRole | 'ALL'): string | undefined {
   if (role === 'ALL') return undefined
+  // 학교(교사) → 교사 강사 유형
   if (role === 'SCHOOL') return 'SCHOOL_TEACHER'
-  return role
+  // 개인·강사 → 일반 강사 유형 (BE는 UserRole `INSTRUCTOR`/`INDIVIDUAL` 거부)
+  if (role === 'INDIVIDUAL' || role === 'INSTRUCTOR') return 'GENERAL'
+  return undefined
 }
 
 function requestedAtBoundsFromUrl(

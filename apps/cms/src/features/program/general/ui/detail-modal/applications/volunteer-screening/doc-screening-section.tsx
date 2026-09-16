@@ -1,4 +1,4 @@
-import { useCallback, type MouseEvent } from 'react'
+import { useCallback, type CSSProperties, type MouseEvent } from 'react'
 import { Spin, Table } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
@@ -264,7 +264,14 @@ export function GeneralVolunteerDocScreeningSection({
           }
           excelExport={excelExport}
         >
-          <div className="general-volunteer-screening__table-wrap">
+          <div
+            className="general-volunteer-screening__table-wrap"
+            style={
+              {
+                '--general-doc-screening-table-width': `${GENERAL_DOC_SCREENING_TABLE_SCROLL_X}px`,
+              } as CSSProperties
+            }
+          >
             <Table<GeneralVolunteerApplicantRow>
               rowKey="id"
               className="cms-data-table general-volunteer-screening__table clickable-table"
@@ -275,6 +282,7 @@ export function GeneralVolunteerDocScreeningSection({
               scroll={{ x: GENERAL_DOC_SCREENING_TABLE_SCROLL_X }}
               rowSelection={{
                 fixed: true,
+                columnWidth: 68,
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
               }}

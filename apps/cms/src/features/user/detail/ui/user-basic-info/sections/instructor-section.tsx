@@ -1,6 +1,6 @@
 /**
  * 강사 기본 정보 — 조회·수정 동일 EditableRow.
- * 수정 모드(`feeJaRestrictedEdit`)에서는 강사비 등급만 인라인 편집 (JA·그 외 필드는 조회 유지).
+ * 수정 모드: 미본인인증=`profile`(기본정보·강사비·JA 모달), 본인인증 후=`feeJaRestrictedEdit`(강사비만).
  */
 
 import type { ReactNode } from 'react'
@@ -43,11 +43,15 @@ import { formatDate } from '@/shared/utils'
 import { RestrictedPiiClickable } from '@/features/user/detail/ui/restricted-pii-clickable'
 import { canAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
-import { CmsInput, CmsNumericInput, CmsRadioGroup, CmsSelect } from '@/shared/ui'
+import { CmsInput, CmsNumericInput, CmsRadioGroup, CmsCheckbox } from '@/shared/ui'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
-import { BUSINESS_INCOME_OPTIONS } from '@/features/user/shared/ui/instructor-profile-form'
+import { toApiGender } from '@/features/user/api/map-member-gender-birth'
+import { INSTRUCTOR_FORM_PLACEHOLDERS } from '@jakorea/domain/instructor/form-copy'
+import {
+  BUSINESS_INCOME_OPTIONS,
+  GENDER_OPTIONS,
+} from '@/features/user/shared/ui/instructor-profile-form'
 import { useBasicInfoEditing } from '../use-basic-info-editing'
-import { GENDER_EDIT_OPTIONS } from './constants'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 
 function instructorBusinessIncomeView(user: BasicInfoSectionContext['user']) {
@@ -215,6 +219,9 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         ? 'no'
         : undefined
 
+  const genderRadioValue =
+    toApiGender(d?.gender) === 'M' ? 'male' : toApiGender(d?.gender) === 'F' ? 'female' : undefined
+
   return (
     <>
       <EditableRow type="double">
@@ -228,7 +235,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
               onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
               inputSize="medium"
               width="100%"
-              placeholder="한글 성명"
+              placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.name}
               aria-label="성명"
             />
           )}
@@ -238,27 +245,33 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
           readOnlyDisplay={editing.isReadOnlyDisplay}
           view={genderBirthView(user)}
           edit={
-            <span className="user-basic-info-section__inline-controls">
-              <CmsSelect
-                value={d?.gender || undefined}
-                onChange={v => onMemberInfoDraftChange?.({ gender: v != null ? String(v) : '' })}
-                options={GENDER_EDIT_OPTIONS}
-                placeholder="성별"
-                withAllOption={false}
-                inputSize="medium"
-                width={120}
+            <span className="detail-info-form-inputs-wrapper-no-gap">
+              <CmsRadioGroup
+                options={[...GENDER_OPTIONS]}
+                size="large"
+                value={genderRadioValue}
+                onChange={e => {
+                  const v = e.target.value
+                  onMemberInfoDraftChange?.({
+                    gender: v === 'male' || v === 'female' ? String(v) : '',
+                  })
+                }}
+                style={{ flexShrink: 0, flexWrap: 'nowrap' }}
               />
-              <CmsDateTextInput
-                value={(d?.birthDate ?? '').replace(/-/g, '.')}
-                onValueChange={value =>
-                  onMemberInfoDraftChange?.({ birthDate: value.replace(/\./g, '-') })
-                }
-                inputSize="medium"
-                width={160}
-                placeholder="YYYY-MM-DD"
-                maxLength={10}
-                aria-label="생년월일"
-              />
+              <DetailInfoForm.InputsSeparator />
+              <span style={{ flex: '1 1 0', minWidth: 0 }}>
+                <CmsDateTextInput
+                  value={(d?.birthDate ?? '').replace(/-/g, '.')}
+                  onValueChange={value =>
+                    onMemberInfoDraftChange?.({ birthDate: value.replace(/\./g, '-') })
+                  }
+                  inputSize="medium"
+                  width="100%"
+                  placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.birthDate}
+                  maxLength={10}
+                  aria-label="생년월일"
+                />
+              </span>
             </span>
           }
         />
@@ -273,6 +286,8 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
           emailValue={d?.email ?? ''}
           onPhoneChange={next => onMemberInfoDraftChange?.({ phone: next })}
           onEmailChange={next => onMemberInfoDraftChange?.({ email: next })}
+          phonePlaceholder={INSTRUCTOR_FORM_PLACEHOLDERS.contact}
+          emailPlaceholder={INSTRUCTOR_FORM_PLACEHOLDERS.email}
         />
       ) : (
         <ContactInfoViewRow user={user} personalInfoRevealed={personalInfoRevealed} />
@@ -293,7 +308,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                   }
                   inputSize="medium"
                   width="100%"
-                  placeholder="소속"
+                  placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.affiliationName}
                   aria-label="소속"
                 />
                 <DetailInfoFormTdDivider />
@@ -304,16 +319,36 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                 />
               </span>
             ) : (
-              <CmsInput
-                value={d?.affiliationInstitution ?? ''}
-                onChange={e =>
-                  onMemberInfoDraftChange?.({ affiliationInstitution: e.target.value })
-                }
-                inputSize="medium"
-                width="100%"
-                placeholder="소속"
-                aria-label="소속"
-              />
+              <span className="user-basic-info-section__affiliation-row">
+                <CmsInput
+                  value={d?.affiliationNone ? '' : (d?.affiliationInstitution ?? '')}
+                  onChange={e =>
+                    onMemberInfoDraftChange?.({
+                      affiliationInstitution: e.target.value,
+                      affiliationNone: false,
+                    })
+                  }
+                  inputSize="medium"
+                  width="100%"
+                  placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.affiliationName}
+                  aria-label="소속"
+                  disabled={d?.affiliationNone === true}
+                />
+                <CmsCheckbox
+                  checkboxSize="medium"
+                  checked={d?.affiliationNone === true}
+                  onChange={e => {
+                    const checked = e.target.checked === true
+                    onMemberInfoDraftChange?.(
+                      checked
+                        ? { affiliationNone: true, affiliationInstitution: '' }
+                        : { affiliationNone: false }
+                    )
+                  }}
+                >
+                  소속 없음
+                </CmsCheckbox>
+              </span>
             )
           }
         />
@@ -329,7 +364,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
               }
               inputSize="medium"
               width="100%"
-              placeholder="강사 경력"
+              placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.instructorCareer}
               aria-label="강사 경력"
             />
           }
@@ -368,7 +403,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                 }
                 inputSize="medium"
                 width={120}
-                placeholder="은행명"
+                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.bankName}
                 aria-label="은행명"
               />
               <CmsNumericInput
@@ -379,7 +414,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                 }
                 inputSize="medium"
                 width={160}
-                placeholder="계좌번호"
+                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountNumber}
                 aria-label="계좌번호"
               />
               <DetailInfoForm.InputsSeparator />
@@ -390,7 +425,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                 }
                 inputSize="medium"
                 width={120}
-                placeholder="예금주"
+                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountHolder}
                 aria-label="예금주"
               />
             </span>
@@ -446,7 +481,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
               onChange={e => onMemberInfoDraftChange?.({ bio: e.target.value })}
               inputSize="medium"
               width="100%"
-              placeholder="한 줄 소개"
+              placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.oneLineIntro}
               aria-label="한 줄 소개"
             />
           }

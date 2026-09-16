@@ -3,13 +3,13 @@ import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/features/program/shared/model/pr
 import { normalizeInstructorFeeGradeSelectValue } from '@/features/user/api/map-instructor-activity-display'
 import type { BasicInfoSectionContext } from './types'
 
-/** 강사·교사겸강사 제한 수정 — 강사비 등급만 인라인 편집 가능 여부 */
+/** 강사·교사겸강사 — 강사비 등급 인라인 편집 (fee-only scope 또는 미본인인증 전체 profile) */
 export function canEditInstructorFeeJaFields(ctx: BasicInfoSectionContext): boolean {
   return Boolean(
-    ctx.feeJaRestrictedEdit &&
-      ctx.memberInfoEditing &&
+    ctx.memberInfoEditing &&
       ctx.memberInfoDraft &&
-      ctx.onMemberInfoDraftChange
+      ctx.onMemberInfoDraftChange &&
+      (ctx.feeJaRestrictedEdit || ctx.cmsMayEditBasicProfileFields)
   )
 }
 

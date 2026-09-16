@@ -140,7 +140,13 @@ export function getGeneralInterview2NextStatusTransitionDelayMs(
  * - 그 외 → 배정 면접 **종료 시각** 기준 `waiting` | `completed` (저장하지 않음)
  */
 export function resolveGeneralEffectiveSecondInterviewStatus(
-  row: GeneralVolunteerApplicantRow,
+  row: Pick<
+    GeneralVolunteerApplicantRow,
+    | 'interviewAssignmentStatus'
+    | 'secondInterviewScreeningStatus'
+    | 'assignedInterviewDateLabel'
+    | 'assignedInterviewTime'
+  >,
   now: Dayjs = dayjs()
 ): GeneralEffectiveSecondInterviewStatus {
   if (row.interviewAssignmentStatus === 'withdrawn') return 'withdrawn'

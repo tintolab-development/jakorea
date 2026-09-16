@@ -48,7 +48,7 @@ export function buildParticipantCancelRejectionMessage(
     return `${subject}의 프로그램 참여 반려를 취소하시겠습니까?\n취소 시 해당 참여자에게 반려 취소 알림이 새롭게 발송됩니다.\n또한, 해당 참여자는 자동으로 ${pendingApproval}됩니다.`
   }
 
-  return `${subject}의 프로그램 참여를 취소하시겠습니까?\n취소 시 기존의 반려 알림은 자동으로 ${notifyCancel}되며,\n해당 참여자는 자동으로 ${pendingApproval}됩니다.`
+  return `${subject}의 프로그램 참여 반려를 취소하시겠습니까?\n취소 시 기존의 반려 알림은 자동으로 ${notifyCancel}되며,\n해당 참여자는 자동으로 ${pendingApproval}됩니다.`
 }
 
 export function patchParticipantForCancelRejection(

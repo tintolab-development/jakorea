@@ -45,18 +45,19 @@ export function buildMemberListDeleteGuideLines(names: string[], kind: MemberLis
     ]
   }
   if (normalized.length >= 2) {
+    const othersCount = normalized.length - 1
     return [
-      `**선택한 ${normalized.length}명의 회원**을 삭제하시겠습니까?`,
-      '삭제 시 즉시 탈퇴 처리 되며, 등록 및 관련된 정보는 모두 삭제됩니다.',
-      '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
+      `**[${normalized[0]}] 님 외 ${othersCount}명**을 삭제하시겠습니까?`,
+      '삭제 시 자동으로 회원 탈퇴 처리되며, 개인정보와 활동 내역을 비롯한 모든 회원 정보가',
+      '즉시 삭제됩니다. 삭제된 정보는 복구할 수 없습니다.',
     ]
   }
   if (kind === 'institutions') {
     return buildSchoolDeleteMessageLines({ displayName: normalized[0] })
   }
   return [
-    `[${normalized[0]}] 회원을 삭제하시겠습니까?`,
-    '삭제 시 즉시 탈퇴 처리 되며, 등록 및 관련된 정보는 모두 삭제됩니다.',
-    '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
+    `[${normalized[0]}] 님을 삭제하시겠습니까?`,
+    '삭제 시 자동으로 회원 탈퇴 처리되며, 개인정보와 활동 내역을 비롯한 모든 회원 정보가',
+    '즉시 삭제됩니다. 삭제된 정보는 복구할 수 없습니다.',
   ]
 }

@@ -26,22 +26,22 @@ Align UI and mocks with `User.registeredByAdmin`, `User.identitySelfSignupComple
 
 | 상태 | [정보 수정] | 수정 범위 |
 |------|-------------|-----------|
-| 어드민 등록 + `identityVerified: false` (미완료) | 노출 | 기본정보 전체 (역할별 기존 규칙) |
-| 어드민 등록 + `identityVerified: true` (완료) | **숨김** | 수정 불가 |
-| 위 + **강사·교사겸강사** (`instructor_only` / `instructor_dual`) | **노출** | 조회 레이아웃 전체 유지 + **강사비 등급·JA 평가 등급만** 인라인 편집 (`instructor_fee_ja` scope, `draftToInstructorFeeAndJaGradePatch`) |
+| 어드민 등록 + `identityVerified: false` (미완료) | 노출 | **기본정보 전체** (역할별 기존 규칙). 강사·겸직 포함 — 성명·연락처·주소·소속·계좌·사업소득·소개·강사비·JA(등급 평가 모달)·**선택 동의**(서비스 이용약관·개인정보 수집·이용은 잠금). scope=`profile` |
+| 어드민 등록 + `identityVerified: true` (완료) | **숨김** | 수정 불가 (개인·관리자 등) |
+| 위 + **강사·교사겸강사** (`instructor_only` / `instructor_dual`) **본인인증 완료** | **노출** | 조회 레이아웃 유지 + **강사비 등급·JA 평가 등급만** (`instructor_fee_ja` scope, `draftToInstructorFeeAndJaGradePatch`) |
 | 위 + **순수 교사** (`school_teacher`) | **숨김** | 교사 상세는 기본 정보·약관만 (강사 제출양식·등급 수정 없음) |
 
-헬퍼: `isCmsInstructorFeeJaRestrictedEditTarget`, `shouldShowCmsMemberInfoEditButtonOrInstructorRestricted`.  
+헬퍼: `isCmsInstructorFeeJaRestrictedEditTarget`, `shouldShowCmsMemberInfoEditButtonOrInstructorRestricted`, `shouldShowCmsBasicProfileFieldsEdit`.  
 코멘트는 별도 [코멘트 작성] 경로 유지.
 
 ## Who can edit what
 
-- **Admin-provisioned (미본인인증):** admins can edit basic info except fields marked read-only (join date, linked socials, system counts, etc.).  
+- **Admin-provisioned (미본인인증):** admins can edit basic info except fields marked read-only (join date, linked socials, system counts, etc.). **INSTRUCTOR** (`instructor_only` · `instructor_dual`)도 동일 — scope=`profile`, 선택 동의 편집(서비스·개인정보 잠금).  
 - **Self-registered / 본인인증 완료 후:** basic info stays read-only for admins; exceptions:  
   - **ADMIN** self-registered: comment via [코멘트 작성]; permission type may use `draftToAdminMemberRestrictedPatch` where still wired.  
   - **Admin comment**: separate header action; CMS admin login always sees the comment block.  
   - **INSTRUCTOR** (`instructor_only` · `instructor_dual`) after admin-provisioned identity verify: [정보 수정] shows with **fee grade + JA evaluation grade only**.  
-  - **순수 교사** (`school_teacher`): 본인인증 후 [정보 수정] 숨김 — 기본 정보·약관만 조회.  
+  - **순수 교사** (`school_teacher`): [정보 수정] 숨김 — 기본 정보·약관만 조회.  
 - **ADMIN member detail:** all admin roles can edit comment + permission type; **only master** edits other profile fields when member is admin-provisioned (`canEditAdminMemberInfo`). Non-master saves comment/permission only via restricted patch.  
 - Captions “registered by admin” live in **`DetailInfoForm` `description`** only — no duplicate titles.
 
@@ -54,7 +54,7 @@ Align UI and mocks with `User.registeredByAdmin`, `User.identitySelfSignupComple
 - **(관리자가) 기본정보 수정 불가** — 상세에서 기본정보 필드는 편집 모드여도 읽기 전용으로 둔다.
 - **예외 — 관리자 회원 (`role === 'ADMIN'`) 직접 등록**: 저장 시 `draftToAdminMemberRestrictedPatch`(코멘트 + 권한 유형)로 SCHOOL용 코멘트 전용 패치와 구분한다.
 - **예외 — 관리자 코멘트**: CMS에 **관리자(`role === 'ADMIN'`)** 로 로그인한 경우 회원 상세에서 [관리자 코멘트] 블록은 **권한 승인 현황과 무관하게 항상 노출**한다(본문 없을 때 `작성된 코멘트가 없습니다.`). **편집·저장** 가능 여부는 등록 유형·대상 role 등 기존 규칙을 따른다(§3).
-- **예외 — 강사·교사겸강사 (`instructor_only` / `instructor_dual`)**: 어드민 등록 후 본인인증 완료 시에도 [정보 수정] 노출. **강사비 등급**·**JA 평가 등급**만 저장 (`draftToInstructorFeeAndJaGradePatch`). 관리자 코멘트는 별도 [코멘트 작성]. 순수 교사(`school_teacher`)는 제외.
+- **예외 — 강사·교사겸강사 (`instructor_only` / `instructor_dual`)**: 미본인인증 시 [정보 수정]=기본정보 전체(+선택 동의, 서비스·개인정보 잠금). **본인인증 완료 후에도** [정보 수정] 노출하되 **강사비 등급**·**JA 평가 등급**만 (`instructor_fee_ja`, `draftToInstructorFeeAndJaGradePatch`). 관리자 코멘트는 별도 [코멘트 작성]. 순수 교사(`school_teacher`)는 제외.
 
 Normalize API fields to the two flags above. CMS-created users get `registeredByAdmin: true` in mocks (`user-service.ts`, `mock/users.ts`).
 

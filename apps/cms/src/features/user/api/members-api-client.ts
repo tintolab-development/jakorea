@@ -33,6 +33,7 @@ import type {
   InstructorRoleReviewRequest,
   ListAdminsParams,
   ListInstructorRoleRequestsParams,
+  ListInstructorsParams,
   ListMembersParams,
   ListSchoolsParams,
   MemberDetailResponse,
@@ -98,6 +99,13 @@ const membersApi = getJAKoreaCMSBackendAPIMembersSubset()
 
 export async function fetchMembersPageRemote(params: ListMembersParams): Promise<PageResponse> {
   return unwrapApiBody(await membersApi.listMembers(params))
+}
+
+/** Swagger `listInstructors` — `GET /api/admin/instructors` (jaGrade·settlementStatus) */
+export async function fetchInstructorsPageRemote(
+  params: ListInstructorsParams
+): Promise<PageResponse> {
+  return unwrapApiBody(await membersApi.listInstructors(params))
 }
 
 /** Swagger `listAllCmsMembersAndAdmins` — `GET /api/admin/members/all` */
