@@ -35,6 +35,8 @@ export interface IndividualApplicantManagerEvaluationSectionProps {
   setOpenManagerDropdown: (value: { rowId: string; manager: 'A' | 'B' } | null) => void
   onManagerAEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
   onManagerBEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
+  canEditManagerAEvaluation?: boolean
+  canEditManagerBEvaluation?: boolean
 }
 
 export function IndividualApplicantManagerEvaluationSection({
@@ -43,6 +45,8 @@ export function IndividualApplicantManagerEvaluationSection({
   setOpenManagerDropdown,
   onManagerAEvaluationChange,
   onManagerBEvaluationChange,
+  canEditManagerAEvaluation = true,
+  canEditManagerBEvaluation = true,
 }: IndividualApplicantManagerEvaluationSectionProps) {
   return (
     <section className="general-volunteer-applicant-manager-evaluation">
@@ -57,6 +61,7 @@ export function IndividualApplicantManagerEvaluationSection({
                   statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
                   renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
                   isItemDisabled={(current, option) => current === option}
+                  isUpdating={!canEditManagerAEvaluation}
                   onChange={evaluation => onManagerAEvaluationChange(applicant.id, evaluation)}
                   isOpen={
                     openManagerDropdown?.rowId === applicant.id &&
@@ -79,6 +84,7 @@ export function IndividualApplicantManagerEvaluationSection({
                   statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
                   renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
                   isItemDisabled={(current, option) => current === option}
+                  isUpdating={!canEditManagerBEvaluation}
                   onChange={evaluation => onManagerBEvaluationChange(applicant.id, evaluation)}
                   isOpen={
                     openManagerDropdown?.rowId === applicant.id &&

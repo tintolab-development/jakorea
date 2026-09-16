@@ -100,6 +100,8 @@ export type PermissionModalProps = {
   zIndex?: number
   confirmLabel?: string
   confirmVariant?: 'delete' | 'primary'
+  /** API 요청 중 확인 버튼 중복 클릭 방지 */
+  confirmLoading?: boolean
   width?: number
   requireReason?: boolean
   reasonLabel?: string
@@ -155,6 +157,7 @@ export function PermissionModal({
   zIndex,
   confirmLabel: confirmLabelProp,
   confirmVariant: confirmVariantProp,
+  confirmLoading = false,
   width = 600,
   requireReason: requireReasonProp,
   reasonLabel: reasonLabelProp,
@@ -244,6 +247,8 @@ export function PermissionModal({
               variant={confirmVariant}
               size="medium"
               type="button"
+              loading={confirmLoading}
+              disabled={confirmLoading}
               onClick={handleConfirm}
             >
               {confirmLabel}
