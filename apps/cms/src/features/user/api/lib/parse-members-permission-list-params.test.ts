@@ -25,6 +25,26 @@ describe('parseInstructorRoleRequestListParams', () => {
     })
   })
 
+  it('강사·개인 필터는 GENERAL로 보낸다 (INSTRUCTOR/INDIVIDUAL wire 금지)', () => {
+    expect(
+      parseInstructorRoleRequestListParams(
+        new URLSearchParams({ permI_role: 'INSTRUCTOR' })
+      ).memberType
+    ).toBe('GENERAL')
+    expect(
+      parseInstructorRoleRequestListParams(
+        new URLSearchParams({ permI_role: 'INDIVIDUAL' })
+      ).memberType
+    ).toBe('GENERAL')
+  })
+
+  it('관리자 등 미지원 역할은 memberType을 생략한다', () => {
+    expect(
+      parseInstructorRoleRequestListParams(new URLSearchParams({ permI_role: 'ADMIN' }))
+        .memberType
+    ).toBeUndefined()
+  })
+
   it('비어 있으면 optional 필터를 생략한다', () => {
     expect(parseInstructorRoleRequestListParams(new URLSearchParams())).toEqual({
       keyword: undefined,

@@ -587,7 +587,6 @@ export const MembersPermissionList = forwardRef<
         { label: '개인', value: 'INDIVIDUAL' },
         { label: '학교(교사)', value: 'SCHOOL' },
         { label: '강사', value: 'INSTRUCTOR' },
-        { label: '관리자', value: 'ADMIN' },
       ],
     }
     const approvalField: FilterFieldConfig = {
