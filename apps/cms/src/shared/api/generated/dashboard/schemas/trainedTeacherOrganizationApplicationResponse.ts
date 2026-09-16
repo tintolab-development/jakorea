@@ -4,48 +4,70 @@
  * JA Korea CMS Backend API — Dashboard subset
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
+ *
+ * Additive 2026-09-16:
+ * - preferredScheduleBlocks (hand-patched; full orval regen blocked by unrelated validation).
+ * - progress completeness fields (educationGrade/lectureRound/progressLabel/round counts/…)
+ *   from program-detail-primary-data-completeness handoff.
  */
-import type { PreferredScheduleBlock } from './preferredScheduleBlock';
+import type { PreferredScheduleBlock } from './preferredScheduleBlock'
 
 export interface TrainedTeacherOrganizationApplicationResponse {
-  applicationId?: number;
-  programId?: number;
-  schoolId?: number;
-  schoolName?: string;
-  organizationId?: number;
-  organizationName?: string;
-  teacherMemberId?: number;
-  teacherName?: string;
-  teacherPhoneMasked?: string;
-  studentCount?: number;
-  classCount?: number;
-  desiredEducationScheduleMemo?: string;
-  preferredScheduleBlocks?: PreferredScheduleBlock[];
-  applicationStatus?: string;
-  educationJournalCount?: number;
-  submittedAt?: string;
-  approvedAt?: string;
-  rejectedAt?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  availableActions?: string[];
-  institutionName?: string;
-  schoolSido?: string;
-  schoolSigungu?: string;
-  organizationSido?: string;
-  organizationSigungu?: string;
-  regionSido?: string;
-  regionSigungu?: string;
-  regionName?: string;
-  requestedStudentCount?: number;
-  requestedClassCount?: number;
-  journalSubmitted?: boolean;
-  educationTarget?: string;
-  educationGrade?: string;
-  lectureRound?: string;
-  totalEducationRoundCount?: number;
-  completedEducationRoundCount?: number;
-  progressLabel?: string;
-  textbookName?: string;
-  educationCompletionCount?: number;
+  applicationId?: number
+  programId?: number
+  schoolId?: number
+  schoolName?: string
+  organizationId?: number
+  organizationName?: string
+  teacherMemberId?: number
+  teacherName?: string
+  teacherPhoneMasked?: string
+  studentCount?: number
+  classCount?: number
+  desiredEducationScheduleMemo?: string
+  /** 희망 교육 일정 UI SoT. 항상 배열(없으면 []). null 금지. memo로 파싱하지 말 것. */
+  preferredScheduleBlocks?: PreferredScheduleBlock[]
+  applicationStatus?: string
+  /** 교육 대상. TT config 우선. */
+  educationTarget?: string | null
+  /** 대상 학년 표시값. 예: 5~6학년. */
+  educationGrade?: string | null
+  /** TT 프로그램 config의 교육 회차 표시값. */
+  lectureRound?: string | null
+  /** 교사 연수 일정 제외 전체 교육 일정 수. 최소 0. */
+  totalEducationRoundCount?: number
+  /** COMPLETED 연결 교육 일정 수. 최소 0. */
+  completedEducationRoundCount?: number
+  /** 진행 상태 라벨. */
+  progressLabel?:
+    | '결과 대기'
+    | '신청 반려'
+    | '진행 전'
+    | '진행 중'
+    | '진행 완료'
+    | '활동 포기'
+    | string
+  /** program_material 교재명 우선, config fallback. */
+  textbookName?: string | null
+  educationJournalCount?: number
+  submittedAt?: string
+  approvedAt?: string
+  rejectedAt?: string
+  createdAt?: string
+  updatedAt?: string
+  availableActions?: string[]
+  institutionName?: string
+  schoolSido?: string
+  schoolSigungu?: string
+  organizationSido?: string
+  organizationSigungu?: string
+  regionSido?: string
+  regionSigungu?: string
+  regionName?: string
+  requestedStudentCount?: number
+  requestedClassCount?: number
+  /** educationJournalCount > 0 호환 필드. */
+  journalSubmitted?: boolean
+  /** COMPLETED 행 수. 최소 0. */
+  educationCompletionCount?: number
 }

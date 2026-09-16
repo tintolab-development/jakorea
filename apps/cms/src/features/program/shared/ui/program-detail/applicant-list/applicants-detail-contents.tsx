@@ -22,7 +22,13 @@ import {
 } from '@/features/program/general/lib/combined-class-lead-teacher'
 import { InstitutionCombinedClassLeadTeacherModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-lead-teacher-modal'
 import { InstitutionCombinedClassCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-complete-modal'
-import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import {
+  buildProgramApiUnavailableSaveContent,
+  notifyProgramApiUnavailable,
+  PROGRAM_API_UNAVAILABLE_TITLE,
+} from '@/features/program/shared/lib/program-api-unavailable'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { useApplicantInstructorDetailEdit } from '@/features/program/general/hooks/use-applicant-instructor-detail-edit'
 import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
@@ -664,14 +670,46 @@ export function ApplicantsDetailContents({
     setAdminCommentModalOpen(true)
   }, [institutionDetailEdit.isEditing, institutionData?.adminComment])
 
-  const handleAdminCommentSave = useCallback(() => {
+  const handleAdminCommentSave = useCallback(async () => {
     if (!institutionData) return
-    notifyProgramApiUnavailable(
-      'general-org-application-admin-comment',
-      '일반 프로그램 · 기관 신청 관리자 코멘트'
-    )
-    setAdminCommentModalOpen(false)
-  }, [institutionData])
+    const comment = adminCommentDraft.trim()
+    if (shouldUseGeneralApplicationsRemoteApi()) {
+      const targetId = Number(institutionData.id)
+      if (!Number.isFinite(targetId)) {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+      try {
+        const result = await upsertAdminCommentByTargetRemote({
+          targetType: 'ORGANIZATION_APPLICATION',
+          targetId,
+          screenCode: 'ORGANIZATION_APPLICATION',
+          comment,
+        })
+        onInstitutionDetailSaved?.([
+          {
+            ...institutionData,
+            adminComment: result.commentText,
+          },
+        ])
+        setAdminCommentModalOpen(false)
+        return
+      } catch {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+    }
+    void showAlert({
+      title: PROGRAM_API_UNAVAILABLE_TITLE,
+      content: buildProgramApiUnavailableSaveContent('기관 신청 관리자 코멘트'),
+    })
+  }, [adminCommentDraft, institutionData, onInstitutionDetailSaved, showAlert])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)

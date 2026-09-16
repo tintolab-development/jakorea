@@ -6,6 +6,7 @@ import {
   mapIndividualApplicationToApplicantRow,
   mapInstructorApplicationToApplicantInstructorRow,
   mapOrganizationApplicationToApplicantSchoolRow,
+  mapParticipantToParticipatingSchoolRow,
   mapVolunteerApplicationToGeneralVolunteerApplicantRow,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import {
@@ -44,6 +45,38 @@ describe('general-applications-adapters', () => {
     expect(row.schoolName).toBe('서울초')
     expect(row.approvalStatus).toBe('pending')
     expect(row.programId).toBe('5001')
+  })
+
+  it('maps ORGANIZATION participant give-up fields to participating school row', () => {
+    const active = mapParticipantToParticipatingSchoolRow(
+      {
+        participantId: 1691423,
+        memberName: '테스트초',
+        participantStatus: 'APPROVED',
+        availableActions: ['VIEW', 'GIVE_UP'],
+      } as never,
+      0,
+      '168001'
+    )
+    expect(active.id).toBe('1691423')
+    expect(active.activityWithdrawn).toBe(false)
+    expect(active.availableActions).toEqual(['VIEW', 'GIVE_UP'])
+
+    const withdrawn = mapParticipantToParticipatingSchoolRow(
+      {
+        participantId: 1691424,
+        organizationName: '포기초',
+        participantStatus: 'GIVE_UP',
+        giveUpAt: '2026-09-01T00:00:00Z',
+        availableActions: ['VIEW'],
+      } as never,
+      1,
+      '168002'
+    )
+    expect(withdrawn.schoolName).toBe('포기초')
+    expect(withdrawn.activityWithdrawn).toBe(true)
+    expect(withdrawn.giveUpAt).toBe('2026-09-01T00:00:00Z')
+    expect(withdrawn.availableActions).toEqual(['VIEW'])
   })
 
   it('maps instructor application list item to applicant row', () => {

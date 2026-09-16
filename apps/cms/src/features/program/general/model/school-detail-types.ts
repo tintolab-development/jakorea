@@ -88,6 +88,8 @@ export interface SchoolDetailForModal {
   activityWithdrawStopSessionKey?: string
   /** 활동 포기 기준 교육 일정 표시 라벨 */
   activityWithdrawStopScheduleLabel?: string
+  /** BE participant availableActions — 상세 포기 버튼 게이트 */
+  availableActions?: string[]
   /** 프로그램 참여 신청일 — 수료증/참여인증서 발급 가능 기한(3년) 산정 기준 */
   participationAppliedAt?: string
   instructors: SchoolDetailInstructorRow[]

@@ -86,6 +86,7 @@ export interface GeneralProgramDetailSidebarProps {
   showParticipantApplications: boolean
   showInstructorApplications: boolean
   showVolunteerApplications: boolean
+  showManagers?: boolean
   participantInterviewEnabled: boolean
   volunteerInterviewEnabled: boolean
   progressMenuItems: GeneralProgressMenuItem[]
@@ -100,6 +101,7 @@ export function GeneralProgramDetailSidebar({
   showParticipantApplications,
   showInstructorApplications,
   showVolunteerApplications,
+  showManagers = true,
   participantInterviewEnabled,
   volunteerInterviewEnabled,
   progressMenuItems,
@@ -445,18 +447,20 @@ export function GeneralProgramDetailSidebar({
             )}
           </li>
 
-          <li>
-            <button
-              type="button"
-              className={`detail-fullpage-modal__lnb-item ${activeLnb === 'managers' ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
-              onClick={() => handleSelectChildTab('managers', 'main')}
-            >
-              <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
-                <LnbIconManagers />
-              </span>
-              <span className="detail-fullpage-modal__lnb-item-label">담당자 정보</span>
-            </button>
-          </li>
+          {showManagers ? (
+            <li>
+              <button
+                type="button"
+                className={`detail-fullpage-modal__lnb-item ${activeLnb === 'managers' ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
+                onClick={() => handleSelectChildTab('managers', 'main')}
+              >
+                <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
+                  <LnbIconManagers />
+                </span>
+                <span className="detail-fullpage-modal__lnb-item-label">담당자 정보</span>
+              </button>
+            </li>
+          ) : null}
         </ul>
       </div>
     </nav>

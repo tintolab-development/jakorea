@@ -19,6 +19,7 @@ import {
   INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   PARTICIPATING_INSTRUCTOR_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE,
+  MESSAGES,
 } from '@/shared/constants/messages'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
@@ -34,6 +35,12 @@ import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-i
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { updateInstructorApplicationManagerCommentRemote } from '@/features/program/general/api/applications-api-client'
+import {
+  buildProgramApiUnavailableSaveContent,
+  PROGRAM_API_UNAVAILABLE_TITLE,
+} from '@/features/program/shared/lib/program-api-unavailable'
 import {
   INSTRUCTOR_ROLE_LABELS,
   type InstructorRoleKey,
@@ -846,11 +853,36 @@ export function ParticipatingInstructorFullpageView({
     setAdminCommentModalOpen(true)
   }, [applicationInfoEdit.isEditing, savedAdminComment])
 
-  const handleAdminCommentSave = useCallback(() => {
-    setSavedAdminComment(adminCommentDraft.trim())
-    setAdminCommentModalOpen(false)
-    setAdminCommentError(undefined)
-  }, [adminCommentDraft])
+  const handleAdminCommentSave = useCallback(async () => {
+    const trimmed = adminCommentDraft.trim()
+    if (shouldUseGeneralApplicationsRemoteApi()) {
+      try {
+        const response = await updateInstructorApplicationManagerCommentRemote(
+          mergedInstructor.id,
+          { managerComment: trimmed || null }
+        )
+        const next = response.managerComment ?? trimmed
+        setSavedAdminComment(next)
+        setInstructorPatches(prev => ({
+          ...prev,
+          adminComment: next || undefined,
+        }))
+        setAdminCommentModalOpen(false)
+        setAdminCommentError(undefined)
+        return
+      } catch {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+    }
+    void showAlert({
+      title: PROGRAM_API_UNAVAILABLE_TITLE,
+      content: buildProgramApiUnavailableSaveContent('참여 강사 관리자 코멘트'),
+    })
+  }, [adminCommentDraft, mergedInstructor.id, showAlert])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)

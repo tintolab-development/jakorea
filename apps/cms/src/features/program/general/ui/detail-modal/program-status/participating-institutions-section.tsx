@@ -3,7 +3,7 @@
  * FilterTableLayout + 테이블(교육 참여 기관 목록, 캘린더 뷰), 교재 배송 현황 StatusDropdownCell
  */
 
-import { useMemo, useState, useEffect, useRef, useLayoutEffect, useCallback } from 'react'
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Spin, Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
@@ -35,10 +35,10 @@ import {
   PARTICIPATING_INSTITUTIONS_ASSIGNED_INSTRUCTOR_COLUMN_WIDTH,
   PARTICIPATING_INSTITUTIONS_CLASS_COUNT_COLUMN_WIDTH,
   PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-  PARTICIPATING_INSTITUTIONS_TABLE_MIN_SCROLL_X,
   PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH,
   PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE,
 } from '../../../lib/participating-institutions-table'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { formatInstitutionRegionForTableDisplay } from '@/shared/lib/format-institution-region-display'
 import { getSchoolDetailByRow } from '../../../lib/school-detail'
 import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
@@ -48,7 +48,7 @@ import { participatingInstitutionsFilterFields } from '../../../lib/participatin
 import { programUsesTextbook } from '../../../lib/participating-institution-textbook'
 import { resolveInstitutionApplicationProgramBridge } from '../../../lib/institution-application-program-bridge'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
-import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import {
@@ -56,13 +56,16 @@ import {
   formatParticipatingSchoolSessionLine,
 } from '../../../lib/participating-school-session-display'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import {
+  useIsTrainedTeachersProgramsSurface,
+  useProgramProgressRemoteEnabledForSurface,
+} from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useOrganizationMergeGroups } from '@/features/program/general/hooks/use-organization-merge-groups'
 import { saveOrganizationCombinedClassRemote } from '@/features/program/general/api/organization-merge-groups-service'
 import { shouldUseOrganizationMergeGroupsRemoteApi } from '@/features/program/general/api/organization-merge-groups-remote-capabilities'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { applyCombinedClassMergeToSchoolDetailWithList } from '@/features/program/general/lib/apply-combined-class-merge-state'
 import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
-import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import './participating-institutions-section.css'
 
 function formatSessionLine(s: ParticipatingSchoolSession): string {
@@ -101,8 +104,6 @@ export function ParticipatingInstitutionsSection({
   onSchoolDetailClose,
 }: ParticipatingInstitutionsSectionProps) {
   const prevSchoolIdFromUrl = useRef<string | null>(null)
-  const tableWrapRef = useRef<HTMLDivElement>(null)
-  const [tableScrollX, setTableScrollX] = useState(PARTICIPATING_INSTITUTIONS_TABLE_MIN_SCROLL_X)
   const {
     filters,
     appliedFilters,
@@ -119,20 +120,6 @@ export function ParticipatingInstitutionsSection({
   useEffect(() => {
     setPendingFilters({ ...filters })
   }, [filters])
-
-  useLayoutEffect(() => {
-    const el = tableWrapRef.current
-    if (!el) return
-    const minW = PARTICIPATING_INSTITUTIONS_TABLE_MIN_SCROLL_X
-    const update = () => {
-      const w = el.getBoundingClientRect().width
-      setTableScrollX(Math.max(minW, Math.floor(w)))
-    }
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [viewMode])
 
   const filterTableValues = useMemo(
     () => ({
@@ -194,6 +181,7 @@ export function ParticipatingInstitutionsSection({
   )
 
   const resolvedProgramId = programId ?? program?.id
+  const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
   const instructorHook = useProgressInstructorList({
     appliedFilters: progressFilters,
     programId: resolvedProgramId,
@@ -201,7 +189,7 @@ export function ParticipatingInstitutionsSection({
   })
   const schoolHook = useProgressSchoolList({
     appliedFilters: progressFilters,
-    instructorList: instructorHook.instructorList,
+    instructorList: isTrainedTeachersSurface ? [] : instructorHook.instructorList,
     programId: resolvedProgramId,
     program,
   })
@@ -448,24 +436,38 @@ export function ParticipatingInstitutionsSection({
         width: 120,
         align: 'center',
       },
-      {
-        title: '배정 강사',
-        key: 'assignedInstructors',
-        width: PARTICIPATING_INSTITUTIONS_ASSIGNED_INSTRUCTOR_COLUMN_WIDTH,
-        align: 'center',
-        ellipsis: true,
-        render: (_: unknown, record: ParticipatingSchoolRow) =>
-          getInstructorDisplayForSchool(record.id, record.schoolName),
-      },
+      // TT Primary — 강사 Relation 없음. 배정 강사 열·일반 instructor list 미사용
+      ...(isTrainedTeachersSurface
+        ? []
+        : [
+            {
+              title: '배정 강사',
+              key: 'assignedInstructors',
+              width: PARTICIPATING_INSTITUTIONS_ASSIGNED_INSTRUCTOR_COLUMN_WIDTH,
+              align: 'center' as const,
+              ellipsis: true,
+              render: (_: unknown, record: ParticipatingSchoolRow) =>
+                getInstructorDisplayForSchool(record.id, record.schoolName),
+            },
+          ]),
     ],
     [
       getInstructorDisplayForSchool,
       handleTextbookStatusChange,
       isCompanySchool,
+      isTrainedTeachersSurface,
       maxClassCount,
       openTextbookDropdownId,
       showTextbookStatusColumn,
     ]
+  )
+
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: false,
+      enabled: viewMode === 'list',
+    }
   )
 
   if (applicationsLoading && schoolList.length === 0) {
@@ -588,9 +590,12 @@ export function ParticipatingInstitutionsSection({
               size="middle"
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: tableScrollX }}
+              scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
               columns={columns}
               dataSource={filteredSchools}
+              rowClassName={record =>
+                record.activityWithdrawn ? CMS_DATA_TABLE_ROW_DISABLED_CLASS : ''
+              }
               onRow={record => ({
                 onClick: e => {
                   const target = e.target as HTMLElement

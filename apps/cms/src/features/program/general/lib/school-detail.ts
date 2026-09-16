@@ -314,6 +314,8 @@ export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailF
     lectureRound: row.lectureRound,
     textbookStatus: row.textbookStatus,
     totalSessions: sessionCount,
+    activityWithdrawn: row.activityWithdrawn === true,
+    availableActions: row.availableActions,
     instructors: [],
   }
 }

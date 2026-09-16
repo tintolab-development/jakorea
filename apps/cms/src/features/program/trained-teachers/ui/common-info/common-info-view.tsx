@@ -12,13 +12,14 @@
  * - 일정형 복수: ■ 행사 일정 NN(일정명/진행 일정/과제 설정) — 교육 진행 일정 설정 섹션 비노출
  * - 교육 연수 ON: 첫 진행 항목 타이틀·일정명 교사 연수 치환 (IPS Prepare 고정)
  *
- * 수정 모드: KPI 인풋·교육일지 라디오·차시/회차/일정 추가·삭제·교육 연수 토글·진행 그룹 구분 추가
+ * 수정 모드: 기본 정보(form) · KPI 인풋 · 교육일지 라디오 · 차시/회차/일정 추가·삭제 · 교육 연수 토글 · 진행 그룹 구분 추가
  * (진행 그룹은 전 테이블 동시 적용).
- * mock 단계 — remote OFF 시 컴포넌트 로컬 오버레이에 반영.
- * remote ON 시 `onPersist` → `PATCH …/trained-teacher/detail`.
+ * remote OFF 시 KPI/커리큘럼은 컴포넌트 로컬 오버레이 · 기본 정보는 `onBeforePersist`(programs PATCH).
+ * remote ON 시 `onPersist` → `PATCH …/trained-teacher/detail` (+ `onBeforePersist`).
  */
 
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
+import type { UseFormReturn } from 'react-hook-form'
 import { PlusOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
 import type {
@@ -37,6 +38,7 @@ import {
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { BasicInfoSection } from '@/features/program/shared/ui/program-detail/project-info/common-info/basic-info-section'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import {
@@ -1393,8 +1395,12 @@ export interface TrainedTeachersCommonInfoViewProps {
   program: Program
   sponsorName?: string
   isEditMode?: boolean
+  /** 기본 정보 섹션 RHF — 수정 모드일 때만 전달 */
+  form?: UseFormReturn<ProgramDetailEditFormValues>
   onEdit?: () => void
   onSave?: () => void
+  /** programs PATCH 등 — onPersist / local overlay 전에 호출 */
+  onBeforePersist?: () => Promise<void>
   /** remote 저장 — 제공 시 local overlay 대신 호출 */
   onPersist?: (payload: {
     educatedTeachers?: number
@@ -1407,8 +1413,10 @@ export function TrainedTeachersCommonInfoView({
   program,
   sponsorName,
   isEditMode = false,
+  form,
   onEdit,
   onSave,
+  onBeforePersist,
   onPersist,
   persistPending = false,
 }: TrainedTeachersCommonInfoViewProps) {
@@ -1497,23 +1505,26 @@ export function TrainedTeachersCommonInfoView({
     }
 
     const run = async () => {
-      if (onPersist) {
-        setSaving(true)
-        try {
+      setSaving(true)
+      try {
+        if (onBeforePersist) {
+          await onBeforePersist()
+        }
+        if (onPersist) {
           await onPersist({
             educatedTeachers: draft.kpiEducatedTeachers,
             commonInfo: commonInfoPayload as NonNullable<Program['generalCommonInfo']>,
           })
-        } catch {
-          return
-        } finally {
-          setSaving(false)
+        } else {
+          setSavedOverride({
+            educatedTeachers: draft.kpiEducatedTeachers,
+            commonInfo: commonInfoPayload,
+          })
         }
-      } else {
-        setSavedOverride({
-          educatedTeachers: draft.kpiEducatedTeachers,
-          commonInfo: commonInfoPayload,
-        })
+      } catch {
+        return
+      } finally {
+        setSaving(false)
       }
       onSave?.()
     }
@@ -1543,6 +1554,8 @@ export function TrainedTeachersCommonInfoView({
         updatedByName={program.updatedByName}
         lifecycleStatus={program.lifecycleStatus ?? undefined}
         forceCompanySchoolLayout
+        isEditMode={isEditMode}
+        form={form}
       />
 
       <TrainedTeachersKpiSection

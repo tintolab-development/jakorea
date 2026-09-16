@@ -1,11 +1,12 @@
 /**
- * 일반 프로그램 상세 표시 — null/빈값만 "-", false·enum·0·[]는 의미 있는 라벨로.
+ * 일반 프로그램 상세 표시 — null/빈 문자열만 "-", false·enum·0은 의미 있는 라벨로.
+ * 빈 배열([])은 결측이 아님 — pickDisplayValue에서 skip하지 않고 호출부에서 「없음」 UI로 처리.
  */
-
 export function isBlankDisplayValue(value: unknown): boolean {
   if (value == null) return true
   if (typeof value === 'string') return value.trim() === ''
-  if (Array.isArray(value)) return value.length === 0
+  // [] is intentional empty (handoff: do not treat as missing)
+  if (Array.isArray(value)) return false
   return false
 }
 

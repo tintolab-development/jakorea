@@ -255,15 +255,15 @@ export function ProgramDetailFullPageModal({
       isCompanySchoolDetailProgram(displayProgram),
     [displayProgram, programVariant]
   )
-  const { disabledLnbKeys } = useGeneralProgramNavigation(
-    open && isCompanySchoolDetail ? programId : undefined,
-    open && isCompanySchoolDetail
-  )
   const isTrainedTeachersDetail = useMemo(
     () =>
       programVariant === 'trained-teachers' ||
       isTrainedTeachersDetailProgram(displayProgram),
     [displayProgram, programVariant]
+  )
+  const { disabledLnbKeys } = useGeneralProgramNavigation(
+    open && (isCompanySchoolDetail || isTrainedTeachersDetail) ? programId : undefined,
+    open && (isCompanySchoolDetail || isTrainedTeachersDetail)
   )
   const trainedTeacherRemoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi()
   const updateTrainedTeacherInfoDetailMutation = useUpdateTrainedTeacherProgramInfoDetail()
@@ -679,6 +679,10 @@ export function ProgramDetailFullPageModal({
   const programSidebarItems = useMemo<DetailModalSidebarNavItem[]>(
     () => {
       if (isTrainedTeachersDetail) {
+        const hideApplicants = disabledLnbKeys.has('institution_applications')
+        const hideProgress = disabledLnbKeys.has('progress')
+        const hideSurvey = disabledLnbKeys.has('survey')
+        const hideManagers = disabledLnbKeys.has('managers')
         return [
           {
             key: 'info',
@@ -690,9 +694,19 @@ export function ProgramDetailFullPageModal({
               { key: 'instructors', label: '신청 정보' },
             ],
           },
-          { key: 'applicants', label: '기관 신청 목록', icon: <LnbIconApplicants /> },
-          { key: 'progress', label: '프로그램 진행 현황', icon: <LnbIconProgress /> },
-          ...(surveyMenuItems.length > 0
+          ...(!hideApplicants
+            ? [{ key: 'applicants', label: '기관 신청 목록', icon: <LnbIconApplicants /> }]
+            : []),
+          ...(!hideProgress
+            ? [
+                {
+                  key: 'progress',
+                  label: '프로그램 진행 현황',
+                  icon: <LnbIconProgress />,
+                },
+              ]
+            : []),
+          ...(!hideSurvey && surveyMenuItems.length > 0
             ? [
                 {
                   key: 'survey',
@@ -705,7 +719,9 @@ export function ProgramDetailFullPageModal({
                 },
               ]
             : []),
-          { key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> },
+          ...(!hideManagers
+            ? [{ key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> }]
+            : []),
         ]
       }
 
@@ -1131,7 +1147,7 @@ export function ProgramDetailFullPageModal({
     program: displayProgram,
     isEditMode: isEditModeInfo,
   })
-  const { resetToProgram: infoResetToProgram } =
+  const { triggerSave: infoTriggerSave, resetToProgram: infoResetToProgram } =
     useProgramDetailInfoSave({
       form: infoForm,
       program: displayProgram ?? ({} as Program),
@@ -1140,9 +1156,9 @@ export function ProgramDetailFullPageModal({
           ? async (draft, patch) => {
               try {
                 await persistProgramPatch(draft, patch)
-                setEditMode(null)
               } catch (error) {
                 handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
+                throw error
               }
             }
           : undefined,
@@ -1156,6 +1172,7 @@ export function ProgramDetailFullPageModal({
     schema: programDetailInstitutionsEditSchema,
   })
   const {
+    triggerSave: institutionsTriggerSave,
     resetToProgram: institutionsResetToProgram,
     registerGetAdditionalContentHtml: registerInstitutionsAdditionalHtml,
   } = useProgramDetailInfoSave({
@@ -1166,9 +1183,9 @@ export function ProgramDetailFullPageModal({
         ? async (draft, patch) => {
             try {
               await persistProgramPatch(draft, patch)
-              setEditMode(null)
             } catch (error) {
               handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
+              throw error
             }
           }
         : undefined,
@@ -1183,6 +1200,7 @@ export function ProgramDetailFullPageModal({
     isEditMode: isEditModeInstructors,
   })
   const {
+    triggerSave: instructorsTriggerSave,
     resetToProgram: instructorsResetToProgram,
     registerGetAdditionalContentHtml: registerInstructorsAdditionalHtml,
   } = useProgramDetailInfoSave({
@@ -1193,9 +1211,9 @@ export function ProgramDetailFullPageModal({
         ? async (draft, patch) => {
             try {
               await persistProgramPatch(draft, patch)
-              setEditMode(null)
             } catch (error) {
               handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
+              throw error
             }
           }
         : undefined,
@@ -1233,18 +1251,10 @@ export function ProgramDetailFullPageModal({
     }
   }
 
-  const handleInfoExit = () => {
-    infoResetToProgram()
-    setEditMode(null)
-  }
-
-  const handleInstitutionsExit = () => {
-    institutionsResetToProgram()
-    setEditMode(null)
-  }
-
-  const handleInstructorsExit = () => {
-    instructorsResetToProgram()
+  /** 공통정보 「정보 수정」저장 — form triggerSave 후 edit 해제 (TT KPI/커리큘럼은 onPersist가 별도) */
+  const handleInfoSave = async () => {
+    const ok = await infoTriggerSave()
+    if (!ok) return
     setEditMode(null)
   }
 
@@ -1255,6 +1265,7 @@ export function ProgramDetailFullPageModal({
     isEditMode: isEditModeVolunteers,
   })
   const {
+    triggerSave: volunteersTriggerSave,
     resetToProgram: volunteersResetToProgram,
     registerGetAdditionalContentHtml: registerVolunteersAdditionalHtml,
   } = useProgramDetailInfoSave({
@@ -1265,16 +1276,17 @@ export function ProgramDetailFullPageModal({
         ? async (draft, patch) => {
             try {
               await persistProgramPatch(draft, patch)
-              setEditMode(null)
             } catch (error) {
               handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
+              throw error
             }
           }
         : undefined,
   })
 
-  const handleVolunteersExit = () => {
-    volunteersResetToProgram()
+  const handleVolunteersSave = async () => {
+    const ok = await volunteersTriggerSave()
+    if (!ok) return
     setEditMode(null)
   }
 
@@ -1295,12 +1307,16 @@ export function ProgramDetailFullPageModal({
     if (programId) next.set('programId', programId)
     setSearchParams(next, { replace: true })
   }
-  const handleCompanySchoolRecruitSave = () => {
+  const handleCompanySchoolRecruitSave = async () => {
     if (activeCompanySchoolRecruitTab === 'instructors') {
-      handleInstructorsExit()
+      const ok = await instructorsTriggerSave()
+      if (!ok) return
+      setEditMode(null)
       return
     }
-    handleInstitutionsExit()
+    const ok = await institutionsTriggerSave()
+    if (!ok) return
+    setEditMode(null)
   }
   const isCompanySchoolApplicationInfoTab =
     isOverviewProgramDetail && activeLnb === 'info' && activeTab === 'instructors'
@@ -1378,7 +1394,7 @@ export function ProgramDetailFullPageModal({
               program={displayProgram}
               activeRecruitTab={activeCompanySchoolRecruitTab}
               onRecruitTabChange={handleCompanySchoolRecruitTabChange}
-              showInstructorTab
+              showInstructorTab={!isTrainedTeachersDetail}
               showVolunteerTab={false}
               showParticipantRecruitmentMethod
               canWrite
@@ -1422,9 +1438,16 @@ export function ProgramDetailFullPageModal({
               program={displayProgram}
               sponsorName={sponsorName}
               isEditMode={isEditModeInfo}
+              form={isEditModeInfo ? infoForm : undefined}
               onEdit={handleInfoEdit}
-              onSave={handleInfoExit}
+              onSave={() => setEditMode(null)}
               persistPending={updateTrainedTeacherInfoDetailMutation.isPending}
+              onBeforePersist={async () => {
+                const basicOk = await infoTriggerSave()
+                if (!basicOk) {
+                  throw new Error('trainedTeacherBasicInfoSaveFailed')
+                }
+              }}
               onPersist={
                 trainedTeacherRemoteEnabled && displayProgram
                   ? async payload => {
@@ -1474,10 +1497,20 @@ export function ProgramDetailFullPageModal({
               volunteersForm={isEditModeVolunteers ? volunteersForm : undefined}
               registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
               onInfoEdit={handleInfoEdit}
-              onInfoSave={handleInfoExit}
-              onInstitutionsSave={handleInstitutionsExit}
-              onInstructorsSave={handleInstructorsExit}
-              onVolunteersSave={handleVolunteersExit}
+              onInfoSave={() => {
+                void handleInfoSave()
+              }}
+              onInstitutionsSave={() => {
+                void handleCompanySchoolRecruitSave()
+              }}
+              onInstructorsSave={() => {
+                void instructorsTriggerSave().then(ok => {
+                  if (ok) setEditMode(null)
+                })
+              }}
+              onVolunteersSave={() => {
+                void handleVolunteersSave()
+              }}
               onPreview={handlePreview}
             />
           )}

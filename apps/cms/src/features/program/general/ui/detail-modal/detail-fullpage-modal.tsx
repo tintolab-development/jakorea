@@ -547,8 +547,11 @@ export function GeneralProgramDetailFullPageModal({
     : false
   const showParticipantApplications = displayProgram
     ? hasGeneralParticipantApplications(displayProgram) &&
-      !disabledLnbKeys.has('institution_applications')
+      !(isIndividualProgram
+        ? disabledLnbKeys.has('participant_applications')
+        : disabledLnbKeys.has('institution_applications'))
     : false
+  const showManagers = !disabledLnbKeys.has('managers')
   const progressMenuItemsFiltered = useMemo(
     () =>
       disabledLnbKeys.has('progress')
@@ -1751,6 +1754,7 @@ export function GeneralProgramDetailFullPageModal({
               showParticipantApplications={showParticipantApplications}
               showInstructorApplications={showInstructorApplications}
               showVolunteerApplications={showVolunteerApplications}
+              showManagers={showManagers}
               participantInterviewEnabled={participantInterviewEnabled}
               volunteerInterviewEnabled={volunteerInterviewEnabled}
               progressMenuItems={progressMenuItemsFiltered}

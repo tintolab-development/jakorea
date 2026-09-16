@@ -7,9 +7,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
-import {
-  patchGeneralIndividualApplicantDetail,
-  type GeneralIndividualApplicantRow,
+import type {
+  GeneralIndividualApplicantRow,
 } from '@/features/program/general/model/individual-applicant'
 import { CmsButton, ExcelButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
 import { MESSAGES } from '@/shared/constants/messages'
@@ -17,6 +16,13 @@ import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { updateIndividualApplication } from '@/features/program/general/api/applications-api-client'
+import { mergeIndividualApplicationUpdateResponse } from '@/features/program/general/api/individual-application-update-helpers'
+import {
+  buildProgramApiUnavailableSaveContent,
+  PROGRAM_API_UNAVAILABLE_TITLE,
+} from '@/features/program/shared/lib/program-api-unavailable'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { buildParticipatingParticipantCertificateContext } from '@/features/program/general/lib/participating-individual-participant-certificate'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
@@ -266,22 +272,31 @@ export function ParticipatingParticipantFullpageView({
     setAdminCommentModalOpen(true)
   }, [isApplicationInfoEditing, savedAdminComment])
 
-  const handleAdminCommentSave = useCallback(() => {
+  const handleAdminCommentSave = useCallback(async () => {
     const trimmed = adminCommentDraft.trim()
-    const updated = patchGeneralIndividualApplicantDetail(mergedParticipant.id, {
-      adminComment: trimmed,
-    })
-    if (!updated) {
-      void showAlert({
-        title: '안내',
-        content: MESSAGES.error.save,
-      })
-      return
+    if (shouldUseGeneralApplicationsRemoteApi()) {
+      try {
+        const response = await updateIndividualApplication(mergedParticipant.id, {
+          managerComment: trimmed || null,
+        })
+        const updated = mergeIndividualApplicationUpdateResponse(mergedParticipant, response)
+        setSavedAdminComment(updated.adminComment ?? '')
+        setParticipantPatches(prev => ({ ...prev, adminComment: updated.adminComment }))
+        setAdminCommentModalOpen(false)
+        return
+      } catch {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
     }
-    setSavedAdminComment(trimmed)
-    setParticipantPatches(prev => ({ ...prev, adminComment: updated.adminComment }))
-    setAdminCommentModalOpen(false)
-  }, [adminCommentDraft, mergedParticipant.id, showAlert])
+    void showAlert({
+      title: PROGRAM_API_UNAVAILABLE_TITLE,
+      content: buildProgramApiUnavailableSaveContent('참여자 관리자 코멘트'),
+    })
+  }, [adminCommentDraft, mergedParticipant, showAlert])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)

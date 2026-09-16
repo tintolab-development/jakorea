@@ -2,7 +2,7 @@
  * 참여자(개인) 페이지 (풀페이지 모달 > 프로그램 진행 현황 > 참여자)
  */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Table, Spin } from 'antd'
 import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -22,9 +22,9 @@ import { useParticipatingIndividualParticipantsParams } from '@/features/program
 import { useProgressIndividualParticipantList } from '@/features/program/general/hooks/use-progress-individual-participant-list'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
-  PARTICIPATING_INDIVIDUAL_PARTICIPANTS_TABLE_MIN_SCROLL_X,
   useParticipatingIndividualParticipantColumns,
 } from '@/features/program/general/lib/participating-individual-participant-columns'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { buildParticipatingParticipantCertificateContext } from '@/features/program/general/lib/participating-individual-participant-certificate'
 import { isWithinStudentCertificateIssuancePeriod } from '@/features/program/general/lib/resolve-student-certificate-kind'
@@ -66,10 +66,6 @@ export function ParticipatingParticipantsSection({
   onParticipantDetailClose,
 }: ParticipatingParticipantsSectionProps) {
   const { showAlert } = useCmsAlert()
-  const tableWrapRef = useRef<HTMLDivElement>(null)
-  const [tableScrollX, setTableScrollX] = useState(
-    PARTICIPATING_INDIVIDUAL_PARTICIPANTS_TABLE_MIN_SCROLL_X
-  )
   const {
     filters,
     appliedFilters,
@@ -86,6 +82,13 @@ export function ParticipatingParticipantsSection({
     [program]
   )
   const columns = useParticipatingIndividualParticipantColumns(programBridge)
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: true,
+      enabled: viewMode === 'list',
+    }
+  )
 
   const [pendingFilters, setPendingFilters] = useState<ParticipatingIndividualParticipantsFilters>(
     () => ({ ...filters })
@@ -106,20 +109,6 @@ export function ParticipatingParticipantsSection({
   useEffect(() => {
     setPendingFilters({ ...filters })
   }, [filters])
-
-  useLayoutEffect(() => {
-    const el = tableWrapRef.current
-    if (!el) return
-    const minW = PARTICIPATING_INDIVIDUAL_PARTICIPANTS_TABLE_MIN_SCROLL_X
-    const update = () => {
-      const w = el.getBoundingClientRect().width
-      setTableScrollX(Math.max(minW, Math.floor(w)))
-    }
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [viewMode])
 
   const filteredParticipants = useMemo(
     () => filterParticipatingIndividualParticipants(participantList, appliedFilters),
@@ -397,7 +386,7 @@ export function ParticipatingParticipantsSection({
               size="middle"
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: tableScrollX }}
+              scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
               columns={columns}
               dataSource={filteredParticipants}
               rowSelection={{

@@ -12,6 +12,27 @@ export const generalApplicationsQueryKeys = {
     [...generalApplicationsQueryKeys.all, 'individual-detail', applicationId] as const,
   volunteerList: (programId: string, status?: string | null) =>
     [...generalApplicationsQueryKeys.all, 'volunteer', programId, status ?? 'all'] as const,
+  /** form_response by application context (기관/강사/봉사 신청 상세 hydrate) */
+  formByContext: (
+    programId: string,
+    contextType: string,
+    contextId: string
+  ) =>
+    [
+      ...generalApplicationsQueryKeys.all,
+      'form-by-context',
+      programId,
+      contextType,
+      contextId,
+    ] as const,
+  /** admin_comment by application target */
+  commentsByTarget: (targetType: string, targetId: string) =>
+    [
+      ...generalApplicationsQueryKeys.all,
+      'comments-by-target',
+      targetType,
+      targetId,
+    ] as const,
 }
 
 export const generalProgramProgressQueryKeys = {

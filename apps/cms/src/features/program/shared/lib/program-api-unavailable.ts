@@ -12,11 +12,19 @@ export const PROGRAM_API_UNAVAILABLE_TITLE = 'API 연동 안내'
 export const PROGRAM_API_UNAVAILABLE_CONTENT =
   '해당 기능의 API 연동이 되어 있지 않아 데이터를 표시할 수 없습니다.'
 
+export const PROGRAM_API_UNAVAILABLE_SAVE_CONTENT =
+  '해당 기능의 API 연동이 되어 있지 않아 저장할 수 없습니다.'
+
 const notifiedKeys = new Set<string>()
 
 export function buildProgramApiUnavailableContent(featureLabel?: string): string {
   if (!featureLabel) return PROGRAM_API_UNAVAILABLE_CONTENT
   return `${featureLabel}\n\n${PROGRAM_API_UNAVAILABLE_CONTENT}`
+}
+
+export function buildProgramApiUnavailableSaveContent(featureLabel?: string): string {
+  if (!featureLabel) return PROGRAM_API_UNAVAILABLE_SAVE_CONTENT
+  return `${featureLabel}\n\n${PROGRAM_API_UNAVAILABLE_SAVE_CONTENT}`
 }
 
 /** React 밖·서비스/훅에서 사용. featureKey당 세션 1회. */

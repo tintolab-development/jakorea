@@ -68,6 +68,8 @@ export interface GeneralVolunteerApplicantRow {
   interviewEvaluationRemark?: string
   /** 참여자 심사 UI 재사용 시 상세에 전달할 원본 개인 신청 행 */
   participantApplicant?: GeneralIndividualApplicantRow
+  /** 관리자 코멘트 (GET /api/admin/comments hydrate) */
+  adminComment?: string
 }
 
 export type GeneralVolunteerInterviewEvaluationPayload = {

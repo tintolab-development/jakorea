@@ -44,6 +44,8 @@ type ParticipantRecruitmentInfoLoose = NonNullable<
   recruitmentTarget?: string
   recruitmentTargetDetail?: string
   resultAnnouncementLabel?: string
+  contactOrganizationName?: string
+  contactName?: string
   contactPhone?: string
   contactEmail?: string
 }
@@ -194,6 +196,13 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     ? '-'
     : pickDisplayString(info?.remarks)
 
+  const orgName = info?.contactOrganizationName?.trim()
+  const personName = info?.contactName?.trim()
+  const contactOrganizationName =
+    orgName && personName
+      ? `${orgName} / ${personName}`
+      : pickDisplayString(orgName, personName)
+
   return {
     interviewEnabledLabel,
     announcementPublishedLabel,
@@ -221,7 +230,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     interviewEndDate: program.interviewEndDate,
     interviewMethod: program.interviewMethod,
     finalAnnouncementLabel,
-    contactOrganizationName: pickDisplayString(info?.contactOrganizationName),
+    contactOrganizationName,
     contactPhone: pickDisplayString(info?.inquiryTel, info?.tel, info?.contactPhone),
     contactEmail: pickDisplayString(info?.inquiryEmail, info?.email, info?.contactEmail),
     notes,

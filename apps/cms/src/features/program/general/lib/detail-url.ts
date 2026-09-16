@@ -5,20 +5,24 @@
 export type GeneralDetailLnbKey =
   | 'info'
   | 'institution_applications'
+  | 'participant_applications'
   | 'instructor_applications'
   | 'volunteer_applications'
   | 'progress'
   | 'survey'
   | 'managers'
+  | 'settlement'
 
 export const GENERAL_DETAIL_LNB_KEYS: readonly GeneralDetailLnbKey[] = [
   'info',
   'institution_applications',
+  'participant_applications',
   'instructor_applications',
   'volunteer_applications',
   'progress',
   'survey',
   'managers',
+  'settlement',
 ] as const
 
 const LNB_PARAM = 'lnb'

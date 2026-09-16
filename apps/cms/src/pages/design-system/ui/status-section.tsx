@@ -149,9 +149,10 @@ export function StatusSection() {
 
       <DsDemo label="프로그램 lifecycle (ProgramLifecycleStatusBadge)">
         <p className="ds-note" style={{ marginTop: 0 }}>
-          목록·상세 「프로그램 진행 현황」은 typed 4종 라벨(
-          프로그램 진행 예정 / 참여 기관 모집 중 / 프로그램 진행 중 / 프로그램 진행 완료)을
-          사용합니다. UJAT는 봉사자 모집 중을 포함한 5종입니다.
+          목록·상세 「프로그램 진행 현황」은 typed lifecycle → UI 3상태(
+          프로그램 진행 예정 / 프로그램 진행 중 / 프로그램 진행 완료)입니다.
+          <code>recruiting_students</code>는 진행 예정 버킷입니다. UJAT는 봉사자 모집 중을
+          포함한 5종입니다.
         </p>
         <div className="ds-demo__row">
           {LIFECYCLE_SAMPLES.map(status => (

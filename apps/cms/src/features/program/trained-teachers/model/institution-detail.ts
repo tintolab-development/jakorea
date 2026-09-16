@@ -5,22 +5,16 @@
 
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
+import type {
+  ApplicantPreferredScheduleBlock,
+  ApplicantPreferredScheduleSessionTime,
+} from '@/features/program/shared/model/applicant-institution'
 
 dayjs.extend(customParseFormat)
 
-export type TrainedTeachersPreferredScheduleSessionTime = {
-  sessionIndex: number
-  classPeriod: string
-  timeRange: string
-}
+export type TrainedTeachersPreferredScheduleSessionTime = ApplicantPreferredScheduleSessionTime
 
-export type TrainedTeachersPreferredScheduleBlock = {
-  preferenceRank: number
-  date: string
-  dayOfWeek: string
-  sessionCount: number
-  sessionTimes: TrainedTeachersPreferredScheduleSessionTime[]
-}
+export type TrainedTeachersPreferredScheduleBlock = ApplicantPreferredScheduleBlock
 
 export type TrainedTeachersEducationJournalEntry = {
   id: string
@@ -34,6 +28,7 @@ export type TrainedTeachersEducationJournalEntry = {
   fileUrl?: string
 }
 
+/** @deprecated remote ON에서는 ApplicantSchoolRow.preferredScheduleBlocks 사용 */
 export function getTrainedTeachersPreferredScheduleBlocks(
   _institutionId: string
 ): TrainedTeachersPreferredScheduleBlock[] {

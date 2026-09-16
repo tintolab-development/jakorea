@@ -57,6 +57,7 @@ import {
   type InstructorSettlementUiStatus,
 } from '@/shared/constants/instructor-settlement-status'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import {
@@ -410,8 +411,6 @@ export function ParticipatingInstructorsSection({
   }
   const handleListView = () => setViewMode('list')
 
-  const tableScrollX = 48 + 64 + 120 + 160 + 220 + 100 + 100 + 120 + 140 + 140
-
   const instructorListExportRows = useMemo(
     () =>
       filteredInstructors.map(row => ({
@@ -546,6 +545,14 @@ export function ParticipatingInstructorsSection({
     [instructorList]
   )
 
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: true,
+      enabled: viewMode === 'list',
+    }
+  )
+
   if (instructorsLoading && instructorList.length === 0) {
     return (
       <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
@@ -651,14 +658,14 @@ export function ParticipatingInstructorsSection({
         }}
       >
         {viewMode === 'list' ? (
-          <div className="participating-institutions-section__table-wrap">
+          <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">
             <Table<ParticipatingInstructorRow>
               className="participating-institutions-section__table cms-data-table participating-institutions-section__table--clickable"
               rowKey="id"
               size="middle"
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: tableScrollX }}
+              scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
               columns={columns}
               dataSource={filteredInstructors}
               rowSelection={{

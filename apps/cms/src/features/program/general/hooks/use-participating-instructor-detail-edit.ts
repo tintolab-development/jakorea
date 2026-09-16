@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
-import { patchParticipatingInstructorDetail } from '@/features/program/general/model/participating-instructors'
 import {
-  draftToParticipatingInstructorSavePayload,
   parseParticipatingInstructorEditDraft,
   rowToParticipatingInstructorEditDraft,
   type ParticipatingInstructorEditDraft,
 } from '@/features/program/general/lib/participating-instructor-detail-edit'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import { PROGRAM_API_UNAVAILABLE_SAVE_CONTENT } from '@/features/program/shared/lib/program-api-unavailable'
 
+/**
+ * 참여 강사 신청 정보 편집.
+ * OpenAPI에 강사 신청 body PATCH 없음 (코멘트만 PATCH) — P2-6. 저장은 미연동 안내.
+ */
 export interface UseParticipatingInstructorDetailEditParams {
   instructor: ParticipatingInstructorRow
   onSaved: (updatedRow: ParticipatingInstructorRow) => void
@@ -15,7 +18,6 @@ export interface UseParticipatingInstructorDetailEditParams {
 
 export function useParticipatingInstructorDetailEdit({
   instructor,
-  onSaved,
 }: UseParticipatingInstructorDetailEditParams) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<ParticipatingInstructorEditDraft | null>(null)
@@ -57,19 +59,9 @@ export function useParticipatingInstructorDetailEdit({
       return false
     }
 
-    const updated = patchParticipatingInstructorDetail(
-      instructor.id,
-      draftToParticipatingInstructorSavePayload(draft)
-    )
-    if (!updated) {
-      setValidationErrors({ form: '저장에 실패했습니다.' })
-      return false
-    }
-
-    onSaved(updated)
-    resetEditState()
-    return true
-  }, [instructor.id, draft, onSaved, resetEditState])
+    setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
+    return false
+  }, [draft])
 
   return {
     isEditing,

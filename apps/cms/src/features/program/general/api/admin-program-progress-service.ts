@@ -9,6 +9,7 @@ import {
   fetchProgramParticipantsRemote,
   fetchProgramSchedulesViaDashboardRemote,
   fetchScheduleAttendancesRemote,
+  giveUpProgramParticipantRemote,
   putScheduleAttendancesRemote,
   type ProgramParticipantsListQuery,
 } from '@/features/program/general/api/program-progress-api-client'
@@ -150,4 +151,21 @@ export async function fetchGeneralProgramLectureReports(
     '@/features/program/general/api/program-progress-api-client'
   )
   return fetchProgramLectureReportsRemote(programId, { page: 0, size: 50 })
+}
+
+/**
+ * 참여 기관(ORGANIZATION participant) 활동 포기.
+ * `organization-applications/{id}/give-up` 가 아님 — participantId 필수.
+ */
+export async function giveUpGeneralParticipatingInstitution(
+  programId: string,
+  participantId: string,
+  reason: string
+): Promise<void> {
+  assertProgramProgressRemoteReady()
+  const trimmed = reason.trim()
+  if (!trimmed) {
+    throw new Error('활동 포기 사유가 필요합니다.')
+  }
+  await giveUpProgramParticipantRemote(programId, participantId, { reason: trimmed })
 }

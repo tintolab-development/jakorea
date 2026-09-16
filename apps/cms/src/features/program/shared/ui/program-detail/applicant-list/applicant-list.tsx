@@ -105,6 +105,7 @@ import {
 } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-reject-modal'
 import { InstitutionCancelRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-reject-complete-modal'
 import { useApplicantsDetail } from './use-applicants-detail'
+import { resolveApplicantListTableMinScrollX } from './applicant-list-table-scroll'
 import type {
   ApplicantListMenu,
   InstitutionColumnPreset,
@@ -214,7 +215,9 @@ export function ApplicantList({
   })
 
   const institutionTableWrapRef = useRef<HTMLDivElement>(null)
-  const [institutionTableScrollX, setInstitutionTableScrollX] = useState(1280)
+  const [institutionTableScrollX, setInstitutionTableScrollX] = useState<number | undefined>(
+    undefined
+  )
   const [instructorBulkApproveOpen, setInstructorBulkApproveOpen] = useState(false)
   const [instructorBulkApproveCompleteCount, setInstructorBulkApproveCompleteCount] = useState<
     number | null
@@ -594,16 +597,20 @@ export function ApplicantList({
     if (!usesInstitutionTableScroll || displayViewMode !== 'table' || selectedItem) return
     const el = institutionTableWrapRef.current
     if (!el) return
-    const minW = institutionColumnPreset === 'company-school' ? 1600 : 1280
+    // 열 합 기반 최소폭 — 하드코딩 1280/1600은 세션 열 숨김 시에도 가로스크롤을 강제함
+    const minW = resolveApplicantListTableMinScrollX(
+      columns as ColumnsType<unknown> | undefined
+    )
     const update = () => {
-      const w = el.getBoundingClientRect().width
-      setInstitutionTableScrollX(Math.max(minW, Math.floor(w)))
+      const w = Math.floor(el.getBoundingClientRect().width)
+      if (w <= 0) return
+      setInstitutionTableScrollX(minW > w ? minW : undefined)
     }
     update()
     const ro = new ResizeObserver(update)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [usesInstitutionTableScroll, displayViewMode, selectedItem])
+  }, [usesInstitutionTableScroll, displayViewMode, selectedItem, columns])
 
   const tableHorizontalScrollX = usesInstitutionTableScroll ? institutionTableScrollX : tableScrollX
 
@@ -1794,7 +1801,10 @@ export function ApplicantList({
           }}
         >
           {displayViewMode === 'table' ? (
-            <div ref={usesInstitutionTableScroll ? institutionTableWrapRef : undefined}>
+            <div
+              ref={usesInstitutionTableScroll ? institutionTableWrapRef : undefined}
+              className="applicant-details__table-wrap"
+            >
               <Table<ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow>
                 rowKey="id"
                 columns={
@@ -1828,7 +1838,9 @@ export function ApplicantList({
                     cursor: 'pointer',
                   },
                 })}
-                scroll={{ x: tableHorizontalScrollX }}
+                scroll={
+                  tableHorizontalScrollX != null ? { x: tableHorizontalScrollX } : undefined
+                }
                 pagination={false}
                 rowSelection={{
                   selectedRowKeys,
