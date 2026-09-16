@@ -3,6 +3,7 @@ import {
   formatInstitutionApplicationScheduleRowLabel,
   getInstitutionApplicationSessionsTableSlice,
   resolveInstitutionApplicationSessionPeriodPart,
+  shouldShowInstitutionApplicationDetailScheduleSection,
   shouldShowInstitutionApplicationSessionsColumn,
 } from './institution-application-session-display'
 
@@ -26,6 +27,42 @@ describe('shouldShowInstitutionApplicationSessionsColumn', () => {
         preEducationNoticeRequired: true,
       })
     ).toBe(false)
+  })
+})
+
+describe('shouldShowInstitutionApplicationDetailScheduleSection', () => {
+  const hiddenBridge = {
+    educationStructure: 'curriculum' as const,
+    sessionRound: 'single' as const,
+    educationScheduleMode: 'date' as const,
+    educationScheduleLines: ['26년 4월 20일(월) 09:30 ~ 12:20', '26년 4월 20일(월) 13:00 ~ 15:50'],
+    preEducationNoticeRequired: true,
+  }
+
+  it('폼 단락 숨김 유형이어도 제출된 sessions가 있으면 상세 섹션을 노출한다', () => {
+    expect(
+      shouldShowInstitutionApplicationDetailScheduleSection(hiddenBridge, {
+        sessions: [{ round: 1, date: '2026.04.20', dayOfWeek: '월', classNum: '1교시', timeRange: '09:30~12:20' }],
+      })
+    ).toBe(true)
+  })
+
+  it('제출 데이터가 없고 폼 단락 숨김 유형이면 상세 섹션도 숨긴다', () => {
+    expect(shouldShowInstitutionApplicationDetailScheduleSection(hiddenBridge, {})).toBe(false)
+  })
+
+  it('기간 지정형이면 제출 데이터 없어도 상세 섹션을 노출한다', () => {
+    expect(
+      shouldShowInstitutionApplicationDetailScheduleSection(
+        {
+          educationStructure: 'curriculum',
+          sessionRound: 'single',
+          educationScheduleMode: 'period',
+          preEducationNoticeRequired: true,
+        },
+        {}
+      )
+    ).toBe(true)
   })
 })
 

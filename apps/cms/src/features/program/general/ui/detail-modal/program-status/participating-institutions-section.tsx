@@ -3,7 +3,8 @@
  * FilterTableLayout + 테이블(교육 참여 기관 목록, 캘린더 뷰), 교재 배송 현황 StatusDropdownCell
  */
 
-import { useMemo, useState, useEffect, useRef, useLayoutEffect } from 'react'
+import { useMemo, useState, useEffect, useRef, useLayoutEffect, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Spin, Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { CmsButton, FilterTableLayout } from '@/shared/ui'
@@ -55,6 +56,13 @@ import {
   formatParticipatingSchoolSessionLine,
 } from '../../../lib/participating-school-session-display'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { useOrganizationMergeGroups } from '@/features/program/general/hooks/use-organization-merge-groups'
+import { saveOrganizationCombinedClassRemote } from '@/features/program/general/api/organization-merge-groups-service'
+import { shouldUseOrganizationMergeGroupsRemoteApi } from '@/features/program/general/api/organization-merge-groups-remote-capabilities'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { applyCombinedClassMergeToSchoolDetailWithList } from '@/features/program/general/lib/apply-combined-class-merge-state'
+import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import './participating-institutions-section.css'
 
 function formatSessionLine(s: ParticipatingSchoolSession): string {
@@ -216,11 +224,48 @@ export function ParticipatingInstitutionsSection({
     applicationsLoading,
   } = schoolHook
 
+  const queryClient = useQueryClient()
+  const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(resolvedProgramId)
+  const mergeGroupsQuery = useOrganizationMergeGroups(
+    resolvedProgramId,
+    progressRemoteEnabled && shouldUseOrganizationMergeGroupsRemoteApi()
+  )
+
   /** URL schoolId로 선택된 학교 행 (인라인 상세 뷰용) */
   const selectedRowFromUrl = useMemo(() => {
     if (!schoolIdFromUrl) return null
     return filteredSchools.find(r => r.id === schoolIdFromUrl) ?? null
   }, [schoolIdFromUrl, filteredSchools])
+
+  const selectedRowMergeView = useMemo(() => {
+    if (!selectedRowFromUrl || !mergeGroupsQuery.data?.length) return null
+    return resolveCombinedClassMergeViewState(
+      mergeGroupsQuery.data,
+      selectedRowFromUrl,
+      schoolList
+    )
+  }, [mergeGroupsQuery.data, schoolList, selectedRowFromUrl])
+
+  const handleSaveCombinedClass = useCallback(
+    async (params: {
+      combinedClassApplication: '신청' | '미신청'
+      combinedClassPartnerSchoolIds: string[]
+    }) => {
+      if (!resolvedProgramId || !selectedRowFromUrl) return
+      await saveOrganizationCombinedClassRemote({
+        programId: resolvedProgramId,
+        leadRow: selectedRowFromUrl,
+        allRows: schoolList,
+        combinedClassApplication: params.combinedClassApplication,
+        partnerRowIds: params.combinedClassPartnerSchoolIds,
+        existingMergeGroups: mergeGroupsQuery.data,
+      })
+      await queryClient.invalidateQueries({
+        queryKey: generalProgramProgressQueryKeys.mergeGroups(resolvedProgramId),
+      })
+    },
+    [mergeGroupsQuery.data, queryClient, resolvedProgramId, schoolList, selectedRowFromUrl]
+  )
 
   /** 상세 뷰 진입/종료 시 부모에 제목용 학교명 알림 */
   useEffect(() => {
@@ -434,8 +479,14 @@ export function ParticipatingInstitutionsSection({
   if (selectedRowFromUrl && program) {
     const baseDetail = getSchoolDetailByRow(selectedRowFromUrl)
     const schoolId = selectedRowFromUrl.id
+    const detailWithMerge = applyCombinedClassMergeToSchoolDetailWithList(
+      baseDetail,
+      mergeGroupsQuery.data,
+      selectedRowFromUrl,
+      schoolList
+    )
     const mergedDetail = {
-      ...baseDetail,
+      ...detailWithMerge,
       ...savedBasicPatches[schoolId],
       instructors:
         savedInstructorPatches[schoolId] !== undefined
@@ -464,6 +515,10 @@ export function ParticipatingInstitutionsSection({
               [patch.id]: { ...prev[patch.id], ...patch },
             }))
           }}
+          onSaveCombinedClass={
+            shouldUseOrganizationMergeGroupsRemoteApi() ? handleSaveCombinedClass : undefined
+          }
+          combinedClassReadOnly={selectedRowMergeView?.isLead === false}
           onSaveInstructorInfo={(id, instructors) => {
             setSavedInstructorPatches(prev => ({ ...prev, [id]: instructors }))
           }}

@@ -27,7 +27,13 @@ import {
 } from '@/features/program/general/lib/participating-institution-textbook'
 import { getSameSchoolParticipatingGrades } from '@/features/program/general/lib/get-same-school-participating-grades'
 import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
+import type { CombinedClassApplicationStatus } from '@/features/program/general/lib/applicant-institution-detail-edit'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
+import { useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 
 function isCompanySchoolProgram(program: Program): boolean {
   return (
@@ -51,6 +57,13 @@ export interface UseParticipatingInstitutionDetailEditParams {
   program: Program
   participatingSchoolList: ParticipatingSchoolRow[]
   onSaveBasicInfo?: (patch: Partial<SchoolDetailForModal> & { id: string }) => void
+  /** remote 합반 저장 — 미전달 시 로컬 patch만 */
+  onSaveCombinedClass?: (params: {
+    combinedClassApplication: CombinedClassApplicationStatus
+    combinedClassPartnerSchoolIds: string[]
+  }) => Promise<void>
+  /** 합반 멤버(비 lead) 행이면 true — 합반 필드 read-only */
+  combinedClassReadOnly?: boolean
 }
 
 export function useParticipatingInstitutionDetailEdit({
@@ -59,12 +72,16 @@ export function useParticipatingInstitutionDetailEdit({
   program,
   participatingSchoolList,
   onSaveBasicInfo,
+  onSaveCombinedClass,
+  combinedClassReadOnly = false,
 }: UseParticipatingInstitutionDetailEditParams) {
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [draft, setDraft] = useState<ReturnType<
     typeof detailToParticipatingInstitutionEditDraft
   > | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const { showAlert } = useCmsAlert()
 
   const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
     useProgramTextbookCatalog(program)
@@ -238,7 +255,7 @@ export function useParticipatingInstitutionDetailEdit({
     [program, row.studentCount, textbookCatalog, textbookOptions, usesTextbook]
   )
 
-  const saveEdit = useCallback((): boolean => {
+  const saveEdit = useCallback(async (): Promise<boolean> => {
     if (!draft) return false
 
     const normalizedDraft = {
@@ -254,7 +271,10 @@ export function useParticipatingInstitutionDetailEdit({
 
     const parsed = parseParticipatingInstitutionEditDraft(normalizedDraft, { usesTextbook })
     if (!parsed.success) {
-      setValidationErrors(parsed.errors)
+      void showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
       return false
     }
 
@@ -270,29 +290,54 @@ export function useParticipatingInstitutionDetailEdit({
       catalog: textbookCatalog,
     })
     if (Object.keys(patch).length === 0) {
-      setValidationErrors({ form: '저장할 수 없습니다. 입력값을 확인해 주세요.' })
+      void showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
       return false
     }
 
-    onSaveBasicInfo?.({ ...patch, id: detail.id })
-    resetEditState()
-    return true
+    setIsSaving(true)
+    try {
+      if (onSaveCombinedClass && isCombinedClassProgramEligibleFlag && !combinedClassReadOnly) {
+        await onSaveCombinedClass({
+          combinedClassApplication: normalizedDraft.combinedClassApplication,
+          combinedClassPartnerSchoolIds: normalizedDraft.combinedClassPartnerSchoolIds,
+        })
+      }
+      onSaveBasicInfo?.({ ...patch, id: detail.id })
+      resetEditState()
+      return true
+    } catch {
+      void showAlert({
+        title: '안내',
+        content: '저장에 실패했습니다. 다시 시도해 주세요.',
+      })
+      return false
+    } finally {
+      setIsSaving(false)
+    }
   }, [
+    combinedClassReadOnly,
     detail.id,
     draft,
     isCombinedClassProgramEligibleFlag,
     onSaveBasicInfo,
+    onSaveCombinedClass,
     participatingSchoolList,
     program,
     resetEditState,
     row.studentCount,
     isCompanySchool,
+    showAlert,
     textbookCatalog,
     usesTextbook,
   ])
 
   return {
     isEditing,
+    isSaving,
+    combinedClassReadOnly,
     draft,
     validationErrors,
     textbookOptions,

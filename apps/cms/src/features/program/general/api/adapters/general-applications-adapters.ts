@@ -75,6 +75,8 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
 
   return {
     id: toId(dto.id),
+    organizationId: dto.organizationId,
+    teacherMemberId: dto.teacherMemberId,
     no: index + 1,
     schoolName: dto.organizationName?.trim() || '기관명 없음',
     region: '',
@@ -566,12 +568,17 @@ export function mapParticipantToParticipatingSchoolRow(
   index: number,
   programId: string
 ): ParticipatingSchoolRow {
-  const sourceApplicationId =
-    dto.sourceApplicationId != null ? String(dto.sourceApplicationId) : undefined
+  const organizationApplicationIdValue =
+    dto.organizationApplicationId ?? dto.sourceApplicationId
+  const organizationApplicationId =
+    organizationApplicationIdValue != null
+      ? String(organizationApplicationIdValue)
+      : undefined
   return {
     id: toId(dto.participantId),
+    organizationId: dto.organizationId,
     no: index + 1,
-    schoolName: dto.memberName?.trim() || '기관명 없음',
+    schoolName: dto.organizationName?.trim() || dto.memberName?.trim() || '기관명 없음',
     region: '',
     educationGrade: '',
     classCount: 0,
@@ -582,7 +589,7 @@ export function mapParticipantToParticipatingSchoolRow(
     teacherName: '-',
     instructors: '',
     programId,
-    organizationApplicationId: sourceApplicationId,
+    organizationApplicationId,
   }
 }
 
