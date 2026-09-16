@@ -42,7 +42,7 @@ import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { SchoolDetailModal } from './detail-modal/program-status/school-detail-modal'
-import { getApplicantSchoolDetail } from '../lib/school-detail-mock'
+import { getApplicantSchoolDetail } from '../lib/school-detail'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import {
   withProgramDetailTdDivider,

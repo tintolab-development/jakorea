@@ -35,7 +35,6 @@ import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import {
   TEXTBOOK_STATUS_LABELS,
@@ -106,7 +105,7 @@ export function SchoolDetailModal({
   onSaveInstructorInfo,
   participatingRow,
   programId = '',
-  participatingInstructorList = MOCK_PARTICIPATING_INSTRUCTORS,
+  participatingInstructorList = [],
   onCancelApproval,
 }: SchoolDetailModalProps) {
   const [unsavedCloseConfirmOpen, setUnsavedCloseConfirmOpen] = useState(false)

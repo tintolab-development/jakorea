@@ -40,7 +40,7 @@ import {
   getAssignedInstructorDisplayRows,
   getWaitingInstructorRows,
   type WaitingInstructorRowMock,
-} from '../../../lib/school-detail-mock'
+} from '../../../lib/school-detail'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '../../../lib/waiting-instructor-assignment'
 import {
   isWaitingInstructorProgramApproved,

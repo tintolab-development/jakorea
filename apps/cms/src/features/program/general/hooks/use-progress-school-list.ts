@@ -12,7 +12,7 @@ import type {
 } from '@/features/program/general/model/participating-schools'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import { formatAssignedInstructorSummary } from '../lib/institution-assigned-instructor-count'
-import { getInstructorRowsForSchool } from '../lib/school-detail-mock'
+import { getInstructorRowsForSchool } from '../lib/school-detail'
 import type {
   SchoolDetailForModal,
   InstructorListFormInstructor,

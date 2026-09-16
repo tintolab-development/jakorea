@@ -19,7 +19,7 @@ import {
   getParticipatingIndividualParticipantAttendanceBundle,
   sortParticipatingIndividualParticipantAttendanceRows,
   buildParticipatingIndividualParticipantAttendanceSummary,
-} from '@/features/program/general/lib/participating-individual-participant-attendance-mock'
+} from '@/features/program/general/lib/participating-individual-participant-attendance'
 import {
   formatParticipatingIndividualParticipantAttendanceShortDateLabel,
 } from '@/features/program/general/lib/participating-individual-participant-attendance-display'

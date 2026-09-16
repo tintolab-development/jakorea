@@ -36,7 +36,7 @@ import {
   buildSchoolMessageLines,
   buildInstructorMessageLines,
 } from '../../manager-delete-guide-modal'
-import { getSchoolDetailByRow, getInstructorRowsForSchool } from '../../../lib/school-detail-mock'
+import { getSchoolDetailByRow, getInstructorRowsForSchool } from '../../../lib/school-detail'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
 import {

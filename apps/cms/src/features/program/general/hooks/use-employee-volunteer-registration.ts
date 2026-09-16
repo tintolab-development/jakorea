@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react'
-import { MOCK_EMPLOYEE_VOLUNTEER_REGISTRATIONS } from '@/data/mock/employee-volunteer-registrations'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import {
@@ -18,7 +17,7 @@ export function useEmployeeVolunteerRegistration(
   volunteerList: ParticipatingVolunteerRow[]
 ) {
   const [registrations, setRegistrations] = useState<EmployeeVolunteerInstitutionRegistration[]>(
-    () => [...MOCK_EMPLOYEE_VOLUNTEER_REGISTRATIONS]
+    () => []
   )
 
   const sessionRows = useMemo(

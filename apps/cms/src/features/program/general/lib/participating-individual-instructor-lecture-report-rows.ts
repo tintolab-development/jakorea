@@ -20,41 +20,6 @@ type DemoRowDef = {
   submissionStatus: ParticipatingIndividualInstructorSubmissionStatus
 }
 
-const DEFAULT_DEMO_ROW_DEFS: DemoRowDef[] = [
-  {
-    id: 'lr-4',
-    dateKey: '2026-01-05',
-    timeRange: '09:20 ~ 12:00',
-    sessionName: '1회차',
-    lectureProgress: 'completed',
-    submissionStatus: 'submitted',
-  },
-  {
-    id: 'lr-3',
-    dateKey: '2026-01-12',
-    timeRange: '09:20 ~ 12:00',
-    sessionName: '2회차',
-    lectureProgress: 'completed',
-    submissionStatus: 'submitted',
-  },
-  {
-    id: 'lr-2',
-    dateKey: '2026-01-19',
-    timeRange: '09:20 ~ 12:00',
-    sessionName: '3회차',
-    lectureProgress: 'completed',
-    submissionStatus: 'not_submitted',
-  },
-  {
-    id: 'lr-1',
-    dateKey: '2026-01-26',
-    timeRange: '09:20 ~ 12:00',
-    sessionName: '4회차',
-    lectureProgress: 'scheduled',
-    submissionStatus: 'scheduled',
-  },
-]
-
 function buildRowFromDef(def: DemoRowDef): ParticipatingIndividualInstructorLectureReportRow {
   const scheduleLabel = formatIndividualInstructorEducationScheduleLabel({
     dateKey: def.dateKey,
@@ -119,9 +84,6 @@ export function getParticipatingIndividualInstructorLectureReportRows(
   instructor: ParticipatingInstructorRow,
   program: Program
 ): ParticipatingIndividualInstructorLectureReportRow[] {
-  const programRows = buildRowsFromProgramSchedule(program)
-  const baseRows =
-    programRows.length > 0 ? programRows : DEFAULT_DEMO_ROW_DEFS.map(buildRowFromDef)
-
+  const baseRows = buildRowsFromProgramSchedule(program)
   return applyActivityWithdrawn([...baseRows].reverse(), instructor)
 }

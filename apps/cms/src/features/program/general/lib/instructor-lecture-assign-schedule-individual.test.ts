@@ -10,7 +10,6 @@ import {
   parseIndividualInstructorLectureAssignSchedule,
   resolveIndividualProgramEducationScheduleLines,
 } from './instructor-lecture-assign-schedule'
-import { MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES } from './individual-lecture-assign-demo'
 import dayjs from 'dayjs'
 
 function createIndividualProgram(): Program {
@@ -97,14 +96,12 @@ describe('individual instructor lecture assign schedule', () => {
     expect(isIndividualLectureAssignSlotDisabled(slots[1]!, instructor)).toBe(false)
   })
 
-  it('교육 일정이 없는 개인 프로그램은 최소 demo 일정을 사용한다', () => {
+  it('교육 일정이 없는 개인 프로그램은 빈 일정을 반환한다', () => {
     const program = createIndividualProgram()
     delete program.generalCommonInfo
 
-    expect(resolveIndividualProgramEducationScheduleLines(program)).toEqual([
-      ...MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES,
-    ])
-    expect(parseIndividualInstructorLectureAssignSchedule(program)).toHaveLength(2)
+    expect(resolveIndividualProgramEducationScheduleLines(program)).toEqual([])
+    expect(parseIndividualInstructorLectureAssignSchedule(program)).toHaveLength(0)
   })
 
   it('개인 프로그램 슬롯·태그 라벨을 시안 형식으로 만든다', () => {

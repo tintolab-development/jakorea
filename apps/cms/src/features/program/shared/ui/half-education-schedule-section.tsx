@@ -4,7 +4,6 @@
 import { useMemo } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { mockInstructors } from '@/data/mock/instructors'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import {
   EMPTY_UJAT_HALF_EVENT_RANGE_SEAL,
@@ -49,11 +48,8 @@ function ScheduleTextView({ text }: { text: string }) {
 function HalfEducationScheduleSubheading({ children }: { children: string }) {
   return <div className="half-education-schedule__subheading">{children}</div>
 }
-function getUjatTextbookInstructorOptions() {
-  return mockInstructors.slice(0, 40).map(instructor => ({
-    value: instructor.id,
-    label: instructor.name,
-  }))
+function getUjatTextbookInstructorOptions(): Array<{ value: string; label: string }> {
+  return []
 }
 
 function getRowRegionOptions(

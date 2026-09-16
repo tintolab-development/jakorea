@@ -40,7 +40,7 @@ import {
 import {
   getParticipatingIndividualInstructorSettlementRows,
   PARTICIPATING_INDIVIDUAL_INSTRUCTOR_PROGRAM_LECTURE_ROUND_TOTAL,
-} from '@/features/program/general/lib/participating-individual-instructor-settlement-mock'
+} from '@/features/program/general/lib/participating-individual-instructor-settlement-rows'
 import type { ParticipatingIndividualInstructorSettlementRow } from '@/features/program/general/lib/participating-individual-instructor-settlement-types'
 import { downloadLectureReportPdfFiles } from '@/features/program/general/lib/download-lecture-reports-bulk-pdf'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'

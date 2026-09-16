@@ -35,7 +35,7 @@ import type {
   StudentGenderKey,
 } from '../../../model/school-detail-types'
 import { STUDENT_GENDER_LABELS } from '../../../model/school-detail-types'
-import { getSchoolDetailStudents, getStudentLectureAttendanceSessions } from '../../../lib/school-detail-mock'
+import { getSchoolDetailStudents, getStudentLectureAttendanceSessions } from '../../../lib/school-detail'
 import {
   buildStudentGradeClassOptions,
   buildStudentListFilterFields,

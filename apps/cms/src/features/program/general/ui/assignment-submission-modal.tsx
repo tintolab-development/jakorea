@@ -20,7 +20,7 @@ import {
   getAssignmentSubmissionDetail,
   getAssignmentSubmissionDetailForApplication,
   updateAssignmentSubmissionTeamRole,
-} from '../lib/school-detail-mock'
+} from '../lib/school-detail'
 import { downloadFormSubmissionFileRemote } from '@/features/user/api/member-program-history-api-client'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'

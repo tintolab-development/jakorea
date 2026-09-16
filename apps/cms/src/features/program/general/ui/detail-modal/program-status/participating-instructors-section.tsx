@@ -31,10 +31,7 @@ import {
 } from '@/features/program/general/lib/participating-instructors-table-display'
 import { ActivityCertificateIssuancePreviewModal } from './activity-certificate-issuance-preview-modal'
 import { renderParticipatingInstructorCalendarMonthEventContent } from './participating-instructor-calendar-month-event'
-import {
-  type ParticipatingInstructorRow,
-  MOCK_PARTICIPATING_INSTRUCTORS,
-} from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { Program } from '@/types/domain'
 import {
   displayServerPiiAsIs,
@@ -102,14 +99,6 @@ export interface ParticipatingInstructorsSectionProps {
   onInstructorDetailClose?: () => void
 }
 
-/** 목록 행 + mock id 병합 (상세·이력서 필드) */
-function mergeParticipatingInstructorRow(
-  row: ParticipatingInstructorRow
-): ParticipatingInstructorRow {
-  const extended = MOCK_PARTICIPATING_INSTRUCTORS.find(m => m.id === row.id) ?? null
-  return extended ? { ...row, ...extended } : row
-}
-
 export function ParticipatingInstructorsSection({
   programId,
   program,
@@ -160,7 +149,6 @@ export function ParticipatingInstructorsSection({
     addInstructorModalOpen,
     setAddInstructorModalOpen,
     handleAddInstructorByMemberId,
-    isRemoteDataSource: instructorsRemote,
     applicationsLoading: instructorsLoading,
   } = useProgressInstructorList({
     appliedFilters: progressFilters,
@@ -174,15 +162,6 @@ export function ParticipatingInstructorsSection({
     programId,
     program,
   })
-
-  /** remote ON이면 mock 상세 필드로 덮어쓰지 않음 */
-  const resolveInstructorRow = useCallback(
-    (row: ParticipatingInstructorRow): ParticipatingInstructorRow => {
-      if (instructorsRemote) return row
-      return mergeParticipatingInstructorRow(row)
-    },
-    [instructorsRemote]
-  )
 
   /** 좌측 캘린더 학교 일정 태그와 동일: 참여 학교명 가나다순 → SCHEDULE_COLORS 순환 */
   const schoolNameToScheduleColor = useMemo(() => {
@@ -330,15 +309,14 @@ export function ParticipatingInstructorsSection({
       return
     }
 
-    setActivityCertPreviewInstructor(resolveInstructorRow(selectedRow))
+    setActivityCertPreviewInstructor(selectedRow)
     setActivityCertPreviewOpen(true)
-  }, [filteredInstructors, resolveInstructorRow, selectedInstructorRowKeys, showAlert])
+  }, [filteredInstructors, selectedInstructorRowKeys, showAlert])
 
   const selectedInstructorFromUrl = useMemo(() => {
     if (!instructorIdFromUrl) return null
-    const row = instructorList.find(r => r.id === instructorIdFromUrl)
-    return row ? resolveInstructorRow(row) : null
-  }, [instructorIdFromUrl, instructorList, resolveInstructorRow])
+    return instructorList.find(r => r.id === instructorIdFromUrl) ?? null
+  }, [instructorIdFromUrl, instructorList])
 
   useEffect(() => {
     if (!instructorIdFromUrl || !onClearInstructorId) return

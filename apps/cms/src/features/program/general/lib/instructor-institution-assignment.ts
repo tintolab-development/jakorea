@@ -14,8 +14,6 @@ import {
 } from './participating-school-session-display'
 import { isGeneralInstitutionCaseProgramId } from './general-institution-case-roster'
 
-const MOCK_REQUIRED_INSTRUCTOR_SLOTS = 4
-
 function hash(s: string): number {
   let h = 0
   for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i)
@@ -92,17 +90,9 @@ function instructorCountLabel(schoolName: string, instructorList: ParticipatingI
   return `${n}명`
 }
 
-function scheduleLinesForSchool(school: ParticipatingSchoolRow, rowSeed: number, idx: number): string[] {
+function scheduleLinesForSchool(school: ParticipatingSchoolRow): string[] {
   const fromSessions = buildParticipatingSchoolSessionLines(school.sessions)
-  if (fromSessions.length > 0) return fromSessions
-
-  const fallbackDates = ['2026. 01. 09(금)', '2026. 01. 10(토)', '2026. 01. 11(일)']
-  const fallbackTimes = ['09:20 ~ 11:10', '09:20 ~ 11:20', '10:20 ~ 11:10']
-  const fallbackSessions = [1, 2, 3, 4]
-  const date = pick(fallbackDates, rowSeed % 3)
-  const time = pick(fallbackTimes, idx % 3)
-  const round = pick(fallbackSessions, idx % 4)
-  return [`${date} ${time} | ${round}차시`]
+  return fromSessions.length > 0 ? fromSessions : ['-']
 }
 
 function scheduleGroupsForSchool(
@@ -154,7 +144,7 @@ export function buildInitialAssignedSchoolRows(
       educationGrade: school.educationGrade,
       region: school.region,
       distanceFromHome: pick(ASSIGNED_DISTANCES, rowSeed + idx),
-      educationScheduleLines: scheduleLinesForSchool(school, rowSeed, idx),
+      educationScheduleLines: scheduleLinesForSchool(school),
     }
   })
 }
@@ -183,7 +173,7 @@ export function buildWaitingSchoolRows(
         desiredGrade: school.educationGrade,
         region: school.region,
         distanceFromHome: pick(WAITING_DISTANCES, rowSeed + idx),
-        educationScheduleLines: scheduleLinesForSchool(school, rowSeed, idx),
+        educationScheduleLines: scheduleLinesForSchool(school),
         assignmentStatus: isGeneralInstitutionCaseProgramId(school.programId)
           ? (['waiting', 'cancelled', 'assigned'] as const)[idx % 3]
           : pick([...WAITING_ASSIGNMENT_STATUSES], rowSeed + idx),
@@ -213,7 +203,7 @@ export function buildWaitingSchoolScheduleRows(
             {
               scheduleKey: `${school.id}|fallback`,
               sessions: [] as ParticipatingSchoolSession[],
-              line: scheduleLinesForSchool(school, rowSeed, 0)[0] ?? '-',
+              line: scheduleLinesForSchool(school)[0] ?? '-',
             },
           ]
 
@@ -255,7 +245,7 @@ export function schoolRowToAssignedRow(
     educationGrade: school.educationGrade,
     region: school.region,
     distanceFromHome: pick(ASSIGNED_DISTANCES, rowSeed + idx),
-    educationScheduleLines: scheduleLinesForSchool(school, rowSeed, idx),
+    educationScheduleLines: scheduleLinesForSchool(school),
   }
 }
 
@@ -274,7 +264,7 @@ export function createWaitingRowForSchool(
     desiredGrade: school.educationGrade,
     region: school.region,
     distanceFromHome: pick(WAITING_DISTANCES, rowSeed),
-    educationScheduleLines: scheduleLinesForSchool(school, rowSeed, 0),
+    educationScheduleLines: scheduleLinesForSchool(school),
     assignmentStatus,
     assignedInstructorCountLabel: instructorCountLabel(school.schoolName, instructorList),
   }
@@ -291,5 +281,3 @@ export function renumberWaitingRows(rows: InstructorWaitingSchoolRow[]): Instruc
   const n = sorted.length
   return sorted.map((r, i) => ({ ...r, no: n - i }))
 }
-
-export { MOCK_REQUIRED_INSTRUCTOR_SLOTS }

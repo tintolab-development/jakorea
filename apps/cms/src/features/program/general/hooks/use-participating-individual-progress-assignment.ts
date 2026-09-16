@@ -6,7 +6,7 @@ import {
   getParticipatingIndividualProgressAssignmentEducationScheduleOptions,
   getParticipatingIndividualProgressAssignmentSessionParticipants,
   getParticipatingIndividualProgressAssignmentSessions,
-} from '@/features/program/general/lib/participating-individual-progress-assignment-mock'
+} from '@/features/program/general/lib/participating-individual-progress-assignment-local'
 import {
   PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_FILTER_ALL,
   type ParticipatingIndividualProgressAssignmentFilters,

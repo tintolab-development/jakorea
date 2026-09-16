@@ -30,7 +30,7 @@ import {
   individualVolunteerWaitingRowToAssignedRow,
   renumberIndividualVolunteerAssignedScheduleRows,
   renumberIndividualVolunteerWaitingScheduleRows,
-} from '@/features/program/general/lib/participating-individual-volunteer-assignment-mock'
+} from '@/features/program/general/lib/participating-individual-volunteer-assignment'
 import type {
   ParticipatingIndividualVolunteerAssignedScheduleRow,
   ParticipatingIndividualVolunteerWaitingScheduleRow,

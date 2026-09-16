@@ -26,7 +26,7 @@ import {
   submissionStatusAccent,
 } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-display'
 import { PARTICIPATING_INDIVIDUAL_INSTRUCTOR_LECTURE_REPORT_EXCEL_COLUMNS } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-export'
-import { getParticipatingIndividualInstructorLectureReportRows } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-mock'
+import { getParticipatingIndividualInstructorLectureReportRows } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-rows'
 import type { ParticipatingIndividualInstructorLectureReportRow } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-types'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { LectureReportBulkPdfExportHost } from './lecture-report-bulk-pdf-export-host'

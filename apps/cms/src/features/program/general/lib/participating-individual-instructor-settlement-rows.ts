@@ -18,64 +18,6 @@ type DemoSettlementDef = {
   canViewPaymentStatement: boolean
 }
 
-const DEFAULT_DEMO_SETTLEMENT_DEFS: DemoSettlementDef[] = [
-  {
-    id: 'st-5',
-    dateKey: '2026-01-09',
-    timeRange: '09:20 ~ 11:20',
-    sessionName: '1회차',
-    lectureProgress: 'completed',
-    hasPaymentStatementApplication: true,
-    paymentStatementStatus: 'payment_statement_verified',
-    scheduledSettlementAmount: 300_000,
-    canViewPaymentStatement: true,
-  },
-  {
-    id: 'st-4',
-    dateKey: '2026-01-16',
-    timeRange: '09:20 ~ 11:20',
-    sessionName: '2회차',
-    lectureProgress: 'completed',
-    hasPaymentStatementApplication: true,
-    paymentStatementStatus: 'application_rejected',
-    scheduledSettlementAmount: 300_000,
-    canViewPaymentStatement: true,
-  },
-  {
-    id: 'st-3',
-    dateKey: '2026-01-23',
-    timeRange: '09:20 ~ 11:20',
-    sessionName: '3회차',
-    lectureProgress: 'completed',
-    hasPaymentStatementApplication: true,
-    paymentStatementStatus: 'payment_correction_requested',
-    scheduledSettlementAmount: 300_000,
-    canViewPaymentStatement: true,
-  },
-  {
-    id: 'st-2',
-    dateKey: '2026-01-30',
-    timeRange: '09:20 ~ 11:20',
-    sessionName: '4회차',
-    lectureProgress: 'completed',
-    hasPaymentStatementApplication: false,
-    paymentStatementStatus: 'none',
-    scheduledSettlementAmount: null,
-    canViewPaymentStatement: false,
-  },
-  {
-    id: 'st-1',
-    dateKey: '2026-02-06',
-    timeRange: '09:20 ~ 11:20',
-    sessionName: '5회차',
-    lectureProgress: 'scheduled',
-    hasPaymentStatementApplication: false,
-    paymentStatementStatus: 'none',
-    scheduledSettlementAmount: null,
-    canViewPaymentStatement: false,
-  },
-]
-
 function buildRowFromDef(def: DemoSettlementDef): ParticipatingIndividualInstructorSettlementRow {
   return {
     id: def.id,
@@ -151,12 +93,7 @@ export function getParticipatingIndividualInstructorSettlementRows(
   instructor: ParticipatingInstructorRow,
   program: Program
 ): ParticipatingIndividualInstructorSettlementRow[] {
-  const programRows = buildRowsFromProgramSchedule(program)
-  const baseRows =
-    programRows.length > 0
-      ? programRows
-      : DEFAULT_DEMO_SETTLEMENT_DEFS.map(buildRowFromDef)
-
+  const baseRows = buildRowsFromProgramSchedule(program)
   return applyActivityWithdrawn([...baseRows].reverse(), instructor)
 }
 

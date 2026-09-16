@@ -25,55 +25,6 @@ import { LectureReportBulkPdfExportHost } from './lecture-report-bulk-pdf-export
 import { LectureReportIssuancePreviewModal } from './lecture-report-issuance-preview-modal'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 
-function buildParticipatingInstructorLectureReportRows(): ParticipatingInstructorLectureReportRow[] {
-  return [
-    {
-      id: '4',
-      no: 4,
-      schoolName: '강서초등학교',
-      educationGrade: '3학년',
-      educationScheduleLabel: '2026. 01. 05(월) ~ 2026. 01. 09(금) | 1회차',
-      submissionPeriodLabel: '2026. 01. 05(월) ~ 2026. 01. 09(금)',
-      lectureProgressLabel: '진행 완료',
-      submissionStatusLabel: '제출 완료',
-      canViewReport: true,
-    },
-    {
-      id: '3',
-      no: 3,
-      schoolName: '강서초등학교',
-      educationGrade: '5학년',
-      educationScheduleLabel: '2026. 01. 12(월) ~ 2026. 01. 16(금) | 2회차',
-      submissionPeriodLabel: '2026. 01. 12(월) ~ 2026. 01. 16(금)',
-      lectureProgressLabel: '진행 완료',
-      submissionStatusLabel: '제출 완료',
-      canViewReport: true,
-    },
-    {
-      id: '2',
-      no: 2,
-      schoolName: '서울등현초등학교',
-      educationGrade: '5학년',
-      educationScheduleLabel: '2026. 01. 19(월) ~ 2026. 01. 23(금) | 3회차',
-      submissionPeriodLabel: '2026. 01. 19(월) ~ 2026. 01. 23(금)',
-      lectureProgressLabel: '진행 완료',
-      submissionStatusLabel: '미제출',
-      canViewReport: false,
-    },
-    {
-      id: '1',
-      no: 1,
-      schoolName: '서울등현초등학교',
-      educationGrade: '5학년',
-      educationScheduleLabel: '2026. 01. 26(월) ~ 2026. 01. 30(금) | 4회차',
-      submissionPeriodLabel: '2026. 01. 26(월) ~ 2026. 01. 30(금)',
-      lectureProgressLabel: '진행 예정',
-      submissionStatusLabel: '진행 예정',
-      canViewReport: false,
-    },
-  ]
-}
-
 const STATUS_ACCENT_DEFAULT = 'var(--default-BK, #3d3d3d)'
 const STATUS_ACCENT_SCHEDULED = 'var(--color-green, #1e8c29)'
 const STATUS_ACCENT_UNDONE = 'var(--color-red, #c32f4a)'
@@ -117,13 +68,11 @@ export function ParticipatingInstructorLectureReportsSection({
 }: ParticipatingInstructorLectureReportsSectionProps) {
   const { showAlert } = useCmsAlert()
   const lectureReports = useProgramLectureReports(program?.id)
-  const mockRows = useMemo(() => buildParticipatingInstructorLectureReportRows(), [])
-  // remote loading 중에는 mock을 쓰지 않음 (건수·테이블 플래시 방지). 실패/OFF만 mock 폴백.
   const rows = lectureReports.loading
     ? []
     : lectureReports.isRemoteDataSource && lectureReports.rows != null
       ? lectureReports.rows
-      : mockRows
+      : []
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewContext, setPreviewContext] = useState<LectureReportPreviewContext | null>(null)
   const [bulkExportQueue, setBulkExportQueue] = useState<LectureReportPreviewContext[]>([])

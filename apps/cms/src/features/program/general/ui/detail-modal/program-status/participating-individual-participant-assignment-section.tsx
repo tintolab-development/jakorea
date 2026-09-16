@@ -20,7 +20,7 @@ import {
   buildParticipatingIndividualParticipantAssignmentSummary,
   getParticipatingIndividualParticipantAssignmentBundle,
   sortParticipatingIndividualParticipantAssignmentRows,
-} from '@/features/program/general/lib/participating-individual-participant-assignment-mock'
+} from '@/features/program/general/lib/participating-individual-participant-assignment'
 import { PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS } from '@/features/program/general/lib/participating-individual-participant-assignment-export'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type {

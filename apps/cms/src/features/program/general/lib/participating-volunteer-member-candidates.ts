@@ -1,5 +1,4 @@
 import { getUserById, getUsers } from '@/entities/user/api/user-service'
-import { MOCK_PARTICIPATING_SCHOOLS } from '@/features/program/general/model/participating-schools'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 
 export type ParticipatingVolunteerMemberCandidate = {
@@ -45,8 +44,7 @@ export async function buildParticipatingVolunteerRowFromMember(
   const user = await getUserById(memberId)
   if (!user || user.role !== 'INDIVIDUAL') return null
 
-  const primarySchool =
-    MOCK_PARTICIPATING_SCHOOLS[0]?.schoolName ?? '배정 기관 미정'
+  const primarySchool = '배정 기관 미정'
 
   const registeredId1365 = resolveMemberId1365(user)
 

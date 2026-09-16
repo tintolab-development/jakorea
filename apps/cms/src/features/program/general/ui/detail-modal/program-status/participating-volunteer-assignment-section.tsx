@@ -7,9 +7,7 @@ import { Table, Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
-import { MOCK_PARTICIPATING_VOLUNTEERS } from '@/features/program/general/model/participating-volunteers'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
-import { MOCK_PARTICIPATING_SCHOOLS } from '@/features/program/general/model/participating-schools'
 import {
   VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
@@ -30,7 +28,7 @@ import {
   type VolunteerAssignedInstitutionRow,
   type VolunteerWaitingInstitutionRow,
   type VolunteerWaitingAssignmentStatus,
-} from '@/features/program/general/lib/participating-volunteer-institution-assignment-mock'
+} from '@/features/program/general/lib/participating-volunteer-institution-assignment'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
 import { ParticipatingVolunteerUnassignConfirmModal } from './participating-volunteer-unassign-confirm-modal'
 import { ParticipatingVolunteerUnassignCompleteModal } from './participating-volunteer-unassign-complete-modal'
@@ -79,8 +77,8 @@ export interface ParticipatingVolunteerAssignmentSectionProps {
 export function ParticipatingVolunteerAssignmentSection({
   program,
   volunteer,
-  schoolRows = MOCK_PARTICIPATING_SCHOOLS,
-  volunteerList = MOCK_PARTICIPATING_VOLUNTEERS,
+  schoolRows = [],
+  volunteerList = [],
 }: ParticipatingVolunteerAssignmentSectionProps) {
   const { showAlert } = useCmsAlert()
   const [assignedInstitutions, setAssignedInstitutions] = useState<VolunteerAssignedInstitutionRow[]>(

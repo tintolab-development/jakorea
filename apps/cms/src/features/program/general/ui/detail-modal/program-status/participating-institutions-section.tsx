@@ -39,7 +39,7 @@ import {
   PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE,
 } from '../../../lib/participating-institutions-table'
 import { formatInstitutionRegionForTableDisplay } from '@/shared/lib/format-institution-region-display'
-import { getSchoolDetailByRow } from '../../../lib/school-detail-mock'
+import { getSchoolDetailByRow } from '../../../lib/school-detail'
 import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
 import type { Program } from '@/types/domain'
 import type { ParticipatingInstitutionsFilters } from '../../../hooks/use-participating-institutions-params'

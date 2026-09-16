@@ -4,15 +4,14 @@
  */
 
 import type { Program, ProgramRound, Application } from '@/types/domain'
-import { mockApplications } from '@/data/mock'
 
 /**
  * 프로그램별 신청 수 계산
  * @param programId 프로그램 ID
  * @returns 신청 수
  */
-export function getApplicationCountByProgram(programId: string): number {
-  return mockApplications.filter(app => app.programId === programId).length
+export function getApplicationCountByProgram(_programId: string): number {
+  return 0
 }
 
 /**
@@ -130,13 +129,8 @@ export function getApplicationUrl(programId: string): string | undefined {
  * @param roundId 회차 ID (선택사항)
  * @returns 승인된 신청 수
  */
-export function getApprovedApplicationCount(programId: string, roundId?: string): number {
-  return mockApplications.filter(
-    app =>
-      app.programId === programId &&
-      (!roundId || app.roundId === roundId) &&
-      app.status === 'approved'
-  ).length
+export function getApprovedApplicationCount(_programId: string, _roundId?: string): number {
+  return 0
 }
 
 /**
@@ -204,19 +198,8 @@ export function isCapacityAlmostFull(program: Program, roundId?: string): boolea
  * @param roundId 회차 ID (선택사항)
  * @returns 대기 목록
  */
-export function getWaitingList(programId: string, roundId?: string): Application[] {
-  return mockApplications
-    .filter(
-      app =>
-        app.programId === programId &&
-        (!roundId || app.roundId === roundId) &&
-        app.status === 'waiting'
-    )
-    .sort((a, b) => {
-      const orderA = a.waitingListOrder ?? 999999
-      const orderB = b.waitingListOrder ?? 999999
-      return orderA - orderB
-    })
+export function getWaitingList(_programId: string, _roundId?: string): Application[] {
+  return []
 }
 
 /**

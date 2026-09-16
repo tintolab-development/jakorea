@@ -14,9 +14,7 @@ import type {
   ParticipatingInstructorEducationItem,
   ParticipatingInstructorQualification,
 } from '@/features/program/general/model/participating-instructors'
-import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
-import { MOCK_PARTICIPATING_SCHOOLS } from '@/features/program/general/model/participating-schools'
 import {
   INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
@@ -59,7 +57,7 @@ import {
   type InstructorAssignedSchoolRow,
   type InstructorWaitingSchoolRow,
   type InstructorWaitingAssignmentStatus,
-} from '@/features/program/general/lib/instructor-institution-assignment-mock'
+} from '@/features/program/general/lib/instructor-institution-assignment'
 import {
   mapParticipatingSessionsToInstructorAssignOptions,
 } from '@/features/program/general/lib/instructor-assign-session-options'
@@ -241,8 +239,8 @@ export function ParticipatingInstructorFullpageView({
   activeTab: activeTabFromUrl,
   onTabChange,
   onClearInstructorId: _onClearInstructorId,
-  schoolRows = MOCK_PARTICIPATING_SCHOOLS,
-  instructorList = MOCK_PARTICIPATING_INSTRUCTORS,
+  schoolRows = [],
+  instructorList = [],
 }: ParticipatingInstructorFullpageViewProps) {
   /**
    * URL(`instructorTab`)이 source of truth이지만, setSearchParams 반영 전·props 지연 시
