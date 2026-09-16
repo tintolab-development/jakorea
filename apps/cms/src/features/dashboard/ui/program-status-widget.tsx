@@ -101,15 +101,13 @@ export function ProgramStatusWidget({
   >(() => {
     if (!isEducationLayoutPath(location.pathname)) return null
     const p = location.pathname.replace(/\/$/, '') || '/'
+    const status = new URLSearchParams(location.search).get('status')
+    if (status === 'recruiting_instructors') return 'instructorRecruitment'
+    if (status === 'recruiting_students') return 'studentRecruitment'
     if (p === '/programs/education/student-recruitment' || p === '/programs/general/student-recruitment')
       return 'studentRecruitment'
-    if (
-      p === '/programs/education/instructor-recruitment' ||
-      p === '/programs/general/instructor-recruitment'
-    )
-      return 'instructorRecruitment'
     return 'total'
-  }, [location.pathname])
+  }, [location.pathname, location.search])
 
   const selectedStatus = useMemo<string | null>(() => {
     if (selectedFromPath !== null) return null
@@ -335,7 +333,7 @@ export function ProgramStatusWidget({
         return
       }
       if (key === 'instructorRecruitment') {
-        mergeQuery('/programs/general/instructor-recruitment', 'recruiting_instructors')
+        mergeQuery('/programs/general', 'recruiting_instructors')
         return
       }
       const stageKey = key as ProgramProgressStageKey

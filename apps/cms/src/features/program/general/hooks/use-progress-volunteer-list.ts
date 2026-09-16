@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  MOCK_PARTICIPATING_VOLUNTEERS,
+  getParticipatingVolunteersForProgram,
   type ParticipatingVolunteerRow,
 } from '@/data/mock/participating-volunteers'
 import { buildParticipatingVolunteerRowFromMember } from '../lib/participating-volunteer-member-candidates'
@@ -32,7 +32,7 @@ export function useProgressVolunteerList(
   })
 
   const [volunteerList, setVolunteerList] = useState<ParticipatingVolunteerRow[]>(() =>
-    remoteEnabled ? [] : MOCK_PARTICIPATING_VOLUNTEERS.map(row => ({ ...row }))
+    remoteEnabled ? [] : getParticipatingVolunteersForProgram(programId)
   )
 
   useEffect(() => {
@@ -40,8 +40,8 @@ export function useProgressVolunteerList(
       if (remoteQuery.data) setVolunteerList(remoteQuery.data)
       return
     }
-    setVolunteerList(MOCK_PARTICIPATING_VOLUNTEERS.map(row => ({ ...row })))
-  }, [remoteEnabled, remoteQuery.data])
+    setVolunteerList(getParticipatingVolunteersForProgram(programId))
+  }, [remoteEnabled, remoteQuery.data, programId])
 
   const addVolunteerFromMember = useCallback(
     async (memberId: string) => {

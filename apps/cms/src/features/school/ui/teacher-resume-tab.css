@@ -1,0 +1,155 @@
+.applicant-instructor-detail-modal__resume {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.applicant-instructor-detail-modal__resume--has-content {
+  align-items: stretch;
+  justify-content: flex-start;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.applicant-instructor-detail-modal__resume-empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 140%;
+}
+
+.applicant-instructor-detail-modal__resume-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.applicant-instructor-detail-modal__resume-section-title {
+  margin: 0;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.applicant-instructor-detail-modal__resume-section-count {
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  color: var(--JA-mint-01, #01a1af);
+  margin-left: 8px;
+}
+
+.applicant-instructor-detail-modal__resume-card {
+  border: 1px solid var(--color-border-skeleton);
+  border-radius: 6px;
+  background: var(--color-bg-base);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+.applicant-instructor-detail-modal__resume-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 0;
+}
+
+.applicant-instructor-detail-modal__resume-row-left {
+  flex-shrink: 0;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 140%;
+  color: var(--color-text-secondary, #8c8c8c);
+  min-width: 0;
+}
+
+.applicant-instructor-detail-modal__resume-row--career
+  .applicant-instructor-detail-modal__resume-row-left {
+  min-width: 170px;
+  height: 21px;
+  box-sizing: border-box;
+}
+
+.applicant-instructor-detail-modal__resume-row-left--single-year {
+  min-width: 40px !important;
+}
+
+.applicant-instructor-detail-modal__resume-row-right {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  word-break: break-word;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 140%;
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.applicant-instructor-detail-modal__resume-row-right
+  .applicant-instructor-detail-modal__resume-emphasis {
+  font-weight: 700;
+}
+
+.applicant-instructor-detail-modal__resume-row-right--with-divider {
+  color: var(--color-text-primary, #262626);
+}
+
+.applicant-instructor-detail-modal__resume-emphasis--left {
+  font-weight: 700;
+  color: var(--color-text-primary, #262626);
+}
+
+.applicant-instructor-detail-modal__resume-role {
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.applicant-instructor-detail-modal__resume-row-right--black {
+  color: var(--default-BK, #3d3d3d);
+}
+
+.applicant-instructor-detail-modal__resume-section--free-writing {
+  gap: 12px;
+}
+
+.applicant-instructor-detail-modal__resume-section-title--free-writing {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.applicant-instructor-detail-modal__resume-free-writing-card {
+  border: 1px solid var(--color-border-skeleton);
+  border-radius: 6px;
+  background: var(--color-bg-base);
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.applicant-instructor-detail-modal__resume-free-writing-text {
+  margin: 0;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 150%;
+  color: var(--color-text-primary, #262626);
+  white-space: pre-wrap;
+  word-break: break-word;
+}

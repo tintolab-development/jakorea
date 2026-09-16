@@ -83,17 +83,6 @@ export function MainHeader() {
       return '전체 회원 관리'
     }
 
-    // 관리자: 강사 모집 경로 — 레이아웃 타이틀 '강의 신청 현황'
-    if (
-      user?.role === 'ADMIN' &&
-      (location.pathname === '/programs/education/instructor-recruitment' ||
-        location.pathname === '/programs/general/instructor-recruitment' ||
-        location.pathname === '/programs/company-school/instructor-recruitment' ||
-        location.pathname === '/programs/economy-education/instructor-recruitment')
-    ) {
-      return '강의 신청 현황'
-    }
-
     // 관리자: 일반/1사1교 하위(수강자 모집/수강 신청 현황) — 레이아웃 타이틀 '수강 신청 현황'
     if (
       user?.role === 'ADMIN' &&
@@ -177,7 +166,7 @@ export function MainHeader() {
 
     // 기본값
     return user?.role === 'ADMIN' ? '대시보드 홈' : '메인 홈'
-  }, [location.pathname, location.search, user?.role, user])
+  }, [location.pathname, location.search, user])
 
   const handleLogout = () => {
     logout()

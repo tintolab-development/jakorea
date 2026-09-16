@@ -2,7 +2,6 @@ import { ContentModal } from '@/shared/ui'
 import { ProgramForm } from '@/features/program/general/ui/program-form'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { EnrollmentStatusDetailModal } from '@/features/program/general/ui/enrollment-status-detail-modal'
-import { InstructorRecruitmentDetailModal } from '@/features/program/general/ui/instructor-recruitment-detail-modal'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import type { Program } from '@/types/domain'
 import type { ProgramFormData } from '@/entities/program/model/schema'
@@ -33,9 +32,6 @@ interface ProgramListModalsProps {
   // Recruitment Modals
   selectedProgramForModal: Program | null
   onCancelEnrollmentModal: () => void
-  selectedProgramForInstructorModal: Program | null
-  onCancelInstructorModal: () => void
-
 }
 
 export function ProgramListModals({
@@ -51,8 +47,6 @@ export function ProgramListModals({
   onCancelDelete,
   selectedProgramForModal,
   onCancelEnrollmentModal,
-  selectedProgramForInstructorModal,
-  onCancelInstructorModal,
 }: ProgramListModalsProps) {
   return (
     <>
@@ -61,12 +55,6 @@ export function ProgramListModals({
         program={selectedProgramForModal}
         onCancel={onCancelEnrollmentModal}
       />
-      <InstructorRecruitmentDetailModal
-        open={!!selectedProgramForInstructorModal}
-        program={selectedProgramForInstructorModal}
-        onCancel={onCancelInstructorModal}
-      />
-
       <ContentModal
         open={formModalOpen}
         title={isEditingMode ? '프로그램 수정' : '프로그램 등록'}

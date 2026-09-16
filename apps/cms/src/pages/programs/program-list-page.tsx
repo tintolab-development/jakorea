@@ -197,13 +197,9 @@ function ProgramListPageContent() {
     searchParams.has(PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY)
   const isRecruitmentRoute =
     pNorm === '/programs/education/student-recruitment' ||
-    pNorm === '/programs/education/instructor-recruitment' ||
     pNorm === '/programs/general/student-recruitment' ||
-    pNorm === '/programs/general/instructor-recruitment' ||
     pNorm === '/programs/company-school/student-recruitment' ||
-    pNorm === '/programs/company-school/instructor-recruitment' ||
-    pNorm === '/programs/economy-education/student-recruitment' ||
-    pNorm === '/programs/economy-education/instructor-recruitment'
+    pNorm === '/programs/economy-education/student-recruitment'
 
   // 3. Modal States
   const {
@@ -222,8 +218,6 @@ function ProgramListPageContent() {
   } = useModalState<Program>()
 
   const [selectedProgramForModal, setSelectedProgramForModal] = useState<Program | null>(null)
-  const [selectedProgramForInstructorModal, setSelectedProgramForInstructorModal] =
-    useState<Program | null>(null)
   const [selectedProgramForFullPageModal, setSelectedProgramForFullPageModal] =
     useState<Program | null>(null)
 
@@ -523,14 +517,6 @@ function ProgramListPageContent() {
     }
 
     if (
-      pNorm === '/programs/education/instructor-recruitment' ||
-      pNorm === '/programs/general/instructor-recruitment'
-    ) {
-      setSelectedProgramForInstructorModal(program)
-      return
-    }
-
-    if (
       pNorm === '/programs' ||
       pNorm === '/programs/education' ||
       pNorm === '/programs/economy-education' ||
@@ -746,8 +732,6 @@ function ProgramListPageContent() {
         }}
         selectedProgramForModal={selectedProgramForModal}
         onCancelEnrollmentModal={() => setSelectedProgramForModal(null)}
-        selectedProgramForInstructorModal={selectedProgramForInstructorModal}
-        onCancelInstructorModal={() => setSelectedProgramForInstructorModal(null)}
       />
 
       <DeleteGuideModal
