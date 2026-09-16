@@ -41,9 +41,9 @@ describe('instructor-cancel-rejection', () => {
   })
 
   it('pendingNotification 메시지에 반려 알림 발송 취소 문구를 포함한다', () => {
-    expect(
-      buildInstructorCancelRejectionMessage('박틴토', 'pendingNotification')
-    ).toContain('기존의 반려 알림은 자동으로 **발송 취소**되며,')
+    const message = buildInstructorCancelRejectionMessage('박틴토', 'pendingNotification')
+    expect(message).toContain('프로그램 참여 반려를 취소하시겠습니까?')
+    expect(message).toContain('기존의 반려 알림은 자동으로 **발송 취소**되며,')
   })
 
   it('alreadySent 메시지에 반려 취소 알림 문구를 포함한다', () => {

@@ -1048,17 +1048,19 @@ export function updateApplicantInstructorApprovalStatus(
   }
 }
 
-/** 승인 취소 — 반려 처리 + 배정·승인 알림 예약 정보 제거 */
+/** 승인 취소 — 승인 대기 복원 + 배정·승인 알림 예약 정보 제거 */
 export function patchApplicantInstructorForCancelApproval(
   row: ApplicantInstructorRow,
   notifyOptions: ApplicantInstructorApprovalNotifyOptions
 ): ApplicantInstructorRow {
-  const rejected = patchApplicantInstructorForApprovalStatus(row, 'rejected', notifyOptions)
+  const pending = patchApplicantInstructorForApprovalStatus(row, 'pending')
   return {
-    ...rejected,
+    ...pending,
     assignedLectures: undefined,
     assignedSchoolId: undefined,
     assignedSchoolName: undefined,
+    approvalNotificationSentAt:
+      resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
   }
 }
 

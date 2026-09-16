@@ -32,19 +32,24 @@ describe('instructor-cancel-approval', () => {
     ).toBe('pendingNotification')
   })
 
-  it('pendingNotification 메시지에 승인 알림 발송 취소 문구를 포함한다', () => {
-    expect(buildInstructorCancelApprovalMessage('박틴토', 'pendingNotification')).toContain(
-      '기존의 승인 알림은 자동으로 **발송 취소**됩니다.'
+  it('pendingNotification 메시지에 승인 알림 발송 취소·승인 대기 문구를 포함한다', () => {
+    const message = buildInstructorCancelApprovalMessage('박틴토', 'pendingNotification')
+    expect(message).toContain('기존의 승인 알림은 자동으로 **발송 취소**됩니다.')
+    expect(message).toContain('자동으로 **승인 대기 처리**됩니다.')
+  })
+
+  it('alreadySent 메시지에 승인 대기 처리 문구를 포함한다', () => {
+    expect(buildInstructorCancelApprovalMessage('박틴토', 'alreadySent')).toContain(
+      '자동으로 **승인 대기 처리**됩니다.'
     )
   })
 
-  it('pendingNotification 사유 라벨에 반려 사유를 포함한다', () => {
-    expect(resolveInstructorCancelApprovalReasonLabel('pendingNotification')).toBe(
-      '취소 사유(반려 사유)'
-    )
+  it('취소 사유 라벨은 반려 사유를 붙이지 않는다', () => {
+    expect(resolveInstructorCancelApprovalReasonLabel('pendingNotification')).toBe('취소 사유')
+    expect(resolveInstructorCancelApprovalReasonLabel('alreadySent')).toBe('취소 사유')
   })
 
-  it('승인 취소 시 반려 처리하고 배정 정보를 제거한다', () => {
+  it('승인 취소 시 승인 대기로 복원하고 배정 정보를 제거한다', () => {
     const next = patchInstructorForCancelApproval(
       {
         ...baseRow,
@@ -66,8 +71,8 @@ describe('instructor-cancel-approval', () => {
         rejectionReason: '인원 초과',
       }
     )
-    expect(next.approvalStatus).toBe('rejected')
-    expect(next.rejectionReason).toBe('인원 초과')
+    expect(next.approvalStatus).toBe('pending')
+    expect(next.rejectionReason).toBeUndefined()
     expect(next.assignedSchoolId).toBeUndefined()
     expect(next.assignedLectures).toBeUndefined()
   })
