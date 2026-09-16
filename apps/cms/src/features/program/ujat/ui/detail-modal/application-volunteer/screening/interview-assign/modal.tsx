@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
 import { UjatVolunteerInterviewAssignCalendarMini } from './calendar-mini'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'

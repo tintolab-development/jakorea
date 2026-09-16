@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { getUjatEducationProgressVolunteerMockRows } from '@/data/mock/ujat-education-progress-volunteers-mock'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import type { EducationProgressHalfKey } from '../tabs'
 import { UJAT_EDU_PROGRESS_VOLUNTEER_FILTER_ALL } from './filter-fields'
 import { useUjatEducationProgressVolunteerColumns } from './columns'
@@ -42,6 +42,12 @@ function filterRows(
 }
 
 export function useUjatEducationProgressVolunteers(half: EducationProgressHalfKey) {
+  useNotifyProgramApiUnavailableOnce(
+    true,
+    'ujat-progress-volunteers',
+    'UJAT 진행 현황 · 봉사자'
+  )
+
   const [pendingFilters, setPendingFilters] = useState<UjatEducationProgressVolunteerFilters>(
     () => ({ ...EMPTY_UJAT_EDU_PROGRESS_VOLUNTEER_FILTERS })
   )
@@ -49,15 +55,13 @@ export function useUjatEducationProgressVolunteers(half: EducationProgressHalfKe
     () => ({ ...EMPTY_UJAT_EDU_PROGRESS_VOLUNTEER_FILTERS })
   )
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [allRows, setAllRows] = useState<UjatEducationProgressVolunteerRow[]>(() =>
-    getUjatEducationProgressVolunteerMockRows(half)
-  )
+  const [allRows, setAllRows] = useState<UjatEducationProgressVolunteerRow[]>(() => [])
   const [memberOptions, setMemberOptions] = useState<UjatEducationProgressVolunteerMemberCandidate[]>(
     []
   )
 
   useEffect(() => {
-    setAllRows(getUjatEducationProgressVolunteerMockRows(half))
+    setAllRows([])
   }, [half])
 
   const registeredVolunteerNames = useMemo(
@@ -96,7 +100,7 @@ export function useUjatEducationProgressVolunteers(half: EducationProgressHalfKe
     setPendingFilters({ ...EMPTY_UJAT_EDU_PROGRESS_VOLUNTEER_FILTERS })
     setAppliedFilters({ ...EMPTY_UJAT_EDU_PROGRESS_VOLUNTEER_FILTERS })
     setSelectedRowKeys([])
-    setAllRows(getUjatEducationProgressVolunteerMockRows(half))
+    setAllRows([])
   }, [half])
 
   const addVolunteerFromMember = useCallback(
@@ -111,8 +115,8 @@ export function useUjatEducationProgressVolunteers(half: EducationProgressHalfKe
   )
 
   const syncRowsFromMock = useCallback(() => {
-    setAllRows(getUjatEducationProgressVolunteerMockRows(half))
-  }, [half])
+    setAllRows([])
+  }, [])
 
   return {
     pendingFilters,

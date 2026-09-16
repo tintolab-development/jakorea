@@ -5,9 +5,24 @@ import {
   mapApiEducationStructureToDomain,
   mapDomainEducationStructureToApi,
   mapTrainedTeacherDetailToProgram,
+  mapTrainedTeacherListItemToProgram,
   mapTrainedTeacherToUpdateRequest,
 } from './adapters'
 import { serializeTrainedTeacherServiceDetailJson } from './service-detail-json'
+
+describe('mapTrainedTeacherListItemToProgram periodStatus', () => {
+  it('maps BE periodStatus to typed lifecycle for table/filter sync', () => {
+    expect(mapTrainedTeacherListItemToProgram({ id: 186005, periodStatus: 'SCHEDULED' }).lifecycleStatus).toBe(
+      'scheduled'
+    )
+    expect(mapTrainedTeacherListItemToProgram({ id: 186002, periodStatus: 'IN_PROGRESS' }).lifecycleStatus).toBe(
+      'in_progress'
+    )
+    expect(mapTrainedTeacherListItemToProgram({ id: 186001, periodStatus: 'COMPLETED' }).lifecycleStatus).toBe(
+      'completed'
+    )
+  })
+})
 
 describe('mapApiEducationStructureToDomain', () => {
   it('maps CURRICULUM and SCHEDULE', () => {

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { Table, Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import {
   VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,

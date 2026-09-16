@@ -3,7 +3,7 @@
  */
 
 import dayjs from 'dayjs'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
 import type { RequestedScheduleWithResolved } from '@/features/program/general/api/instructor-assignment-types'
 

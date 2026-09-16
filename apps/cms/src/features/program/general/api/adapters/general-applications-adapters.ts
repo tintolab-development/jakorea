@@ -1,13 +1,13 @@
-import type { ApplicantApprovalStatusKey, ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ApplicantApprovalStatusKey, ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
-} from '@/data/mock/participating-schools'
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+} from '@/features/program/general/model/participating-schools'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { IndividualApplicationListItemEnriched } from '@/features/program/general/api/individual-application-screening-api-types'
@@ -17,7 +17,7 @@ import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard
 import type { InterviewAvailabilitySlot } from '@/shared/api/generated/dashboard/schemas/interviewAvailabilitySlot'
 import type { PreferredEducationScheduleResponse } from '@/shared/api/generated/dashboard/schemas/preferredEducationScheduleResponse'
 import type { IndividualApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationDetailResponse'
-import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type {
   GeneralDocumentScreeningStatus,
   GeneralInterviewAssignmentStatus,

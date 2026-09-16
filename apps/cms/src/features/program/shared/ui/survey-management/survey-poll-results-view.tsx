@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   UJAT_SURVEY_POLL_RESPONSES_MOCK,
-} from '@/data/mock/ujat-survey-poll-responses-mock'
+} from '@/features/program/ujat/model/ujat-survey-poll'
 import { WRITING_FORM_TEMPLATE_SAVE_EVENT } from '@/features/template/lib/writing-form-template-local-save'
 import {
   buildSurveyPollResultSections,

@@ -6,7 +6,7 @@ import type { ReactNode } from 'react'
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { Program } from '@/types/domain'
 import type { useApplicantInstitutionDetailEdit } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import {

@@ -2,7 +2,7 @@ import { z } from 'zod'
 import type {
   ApplicantInstitutionDetailSavePayload,
   ApplicantSchoolRow,
-} from '@/data/mock/applicant-institutions'
+} from '@/features/program/shared/model/applicant-institution'
 import {
   formatInstitutionApplicationGradeDisplay,
   formatInstitutionTeacherInfoForDetail,

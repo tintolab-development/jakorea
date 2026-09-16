@@ -3,7 +3,7 @@
  * 스크린샷 시안: 기본 정보(승인·프로필) + 학력/경력/자격
  */
 
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'

@@ -1,4 +1,4 @@
-import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { Program } from '@/types/domain'
 import { getProgramProgressDisplayStatus } from '@/shared/constants/status'
 import { programEnrollmentDisplayConfig } from '@/shared/constants/status'
@@ -11,52 +11,6 @@ import type {
   ParticipatingIndividualParticipantAttendanceRow,
   ParticipatingIndividualParticipantAttendanceSummary,
 } from '@/features/program/general/lib/participating-individual-participant-attendance-types'
-
-const APPLICANT_18_ATTENDANCE_ROWS: ParticipatingIndividualParticipantAttendanceRow[] = [
-  {
-    id: 'att-18-5',
-    scheduleLabel: '26년 4월 3일 (금) | 오리엔테이션',
-    attendanceStatus: 'present',
-    educationProgress: 'completed',
-  },
-  {
-    id: 'att-18-4',
-    scheduleLabel: '26년 4월 10일 (금) | 1회차',
-    attendanceStatus: 'late',
-    lateTime: '9:05',
-    educationProgress: 'completed',
-  },
-  {
-    id: 'att-18-3',
-    scheduleLabel: '26년 4월 17일 (금) | 2회차',
-    attendanceStatus: 'excused_absence',
-    educationProgress: 'completed',
-    remark: '예비군으로 인한 불참',
-  },
-  {
-    id: 'att-18-2',
-    scheduleLabel: '26년 4월 24일 (금) | 3회차',
-    attendanceStatus: 'pending',
-    educationProgress: 'scheduled',
-  },
-  {
-    id: 'att-18-1',
-    scheduleLabel: '26년 5월 1일 (금) | 4회차',
-    attendanceStatus: 'withdrawn',
-    educationProgress: 'scheduled',
-  },
-]
-
-const APPLICANT_18_ABSENCE_REASONS: ParticipatingIndividualParticipantAttendanceBundle['absenceReasons'] =
-  [
-    {
-      id: 'abs-18-3',
-      scheduleRowId: 'att-18-3',
-      dateLabel: '4월 17일',
-      reason: '예비군으로 인한 불참',
-      fileName: '김범수_0417_예비군 불참.pdf',
-    },
-  ]
 
 function resolveCompletionStatusLabel(
   participant: ParticipatingIndividualParticipantRow,
@@ -145,15 +99,6 @@ export function getParticipatingIndividualParticipantAttendanceBundle(
   participant: ParticipatingIndividualParticipantRow,
   program: Program
 ): ParticipatingIndividualParticipantAttendanceBundle {
-  if (participant.id === 'general-individual-applicant-18') {
-    const rows = APPLICANT_18_ATTENDANCE_ROWS.map(row => ({ ...row }))
-    return {
-      rows,
-      summary: buildParticipatingIndividualParticipantAttendanceSummary(rows, participant, program),
-      absenceReasons: APPLICANT_18_ABSENCE_REASONS.map(item => ({ ...item })),
-    }
-  }
-
   const rows = buildRowsFromParticipantSessions(participant, program)
   return {
     rows,

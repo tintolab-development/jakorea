@@ -1,10 +1,10 @@
 import type {
   ApplicantInstructorLectureFeeBasisType,
   ApplicantInstructorRow,
-} from '@/data/mock/applicant-instructors'
+} from '@/features/program/shared/model/applicant-instructor'
 import { formatCurrencyInput, sanitizeNumericInput } from '@/shared/lib/numeric-input'
 
-export type { ApplicantInstructorLectureFeeBasisType } from '@/data/mock/applicant-instructors'
+export type { ApplicantInstructorLectureFeeBasisType } from '@/features/program/shared/model/applicant-instructor'
 
 export type ApplicantInstructorBusinessIncomeStatus = '해당' | '해당 없음'
 

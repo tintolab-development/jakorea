@@ -1,5 +1,5 @@
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { formatParticipatingSchoolSessionLine } from '@/features/program/general/lib/participating-school-session-display'
 import type { ActivityWithdrawScheduleOption } from '@/features/program/shared/lib/activity-withdraw-schedule'
 import type { GeneralVolunteerApplicationType } from '@/features/program/general/lib/volunteer-screening-constants'

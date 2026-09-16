@@ -1,4 +1,4 @@
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { mapTrainedTeacherOrganizationApplicationToRow } from './organization-applications-adapters'

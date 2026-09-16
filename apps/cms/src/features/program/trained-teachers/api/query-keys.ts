@@ -1,5 +1,6 @@
 export const trainedTeacherQueryKeys = {
   all: ['cms', 'programs', 'trained-teachers'] as const,
+  overviewStages: () => [...trainedTeacherQueryKeys.all, 'overview-stages'] as const,
   lists: () => [...trainedTeacherQueryKeys.all, 'list'] as const,
   list: (filtersKey = '') => [...trainedTeacherQueryKeys.lists(), filtersKey] as const,
   details: () => [...trainedTeacherQueryKeys.all, 'detail'] as const,

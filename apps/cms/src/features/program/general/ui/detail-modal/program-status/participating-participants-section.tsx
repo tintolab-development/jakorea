@@ -12,7 +12,7 @@ import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
-import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import { participatingIndividualParticipantsFilterFields } from '@/features/program/general/lib/participating-individual-participants-filter-fields'
 import {
   filterParticipatingIndividualParticipants,

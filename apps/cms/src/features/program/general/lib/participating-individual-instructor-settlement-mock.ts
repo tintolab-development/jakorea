@@ -1,4 +1,4 @@
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import type { Program } from '@/types/domain'
 import { formatIndividualInstructorEducationScheduleLabel } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-display'

@@ -9,7 +9,7 @@ import {
   formatTrainedTeachersEducationJournalScheduleLabel,
   formatTrainedTeachersEducationJournalSubmittedDate,
   type TrainedTeachersEducationJournalEntry,
-} from '@/data/mock/trained-teachers-institution-detail'
+} from '@/features/program/trained-teachers/model/institution-detail'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import {

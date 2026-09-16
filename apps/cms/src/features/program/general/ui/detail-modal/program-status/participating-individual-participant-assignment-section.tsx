@@ -12,7 +12,7 @@ import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { useCmsAlert } from '@/shared/ui'
 import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
-import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { Program } from '@/types/domain'
 import { assignmentTeamRoleTagClassName, ASSIGNMENT_TEAM_ROLE_TAG_DROPDOWN_STYLE } from '@/features/program/general/lib/assignment-team-role-tag'
 import {

@@ -1,9 +1,9 @@
 import dayjs, { type Dayjs } from 'dayjs'
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
-} from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/participating-schools'
 import { parseParticipatingSessionTimeRange } from '../ui/detail-modal/program-status/participating-institutions-calendar-day-list'
 import type { CalendarMainEventInput } from '@/shared/components/calendar/model/calendar-main-event-input'
 

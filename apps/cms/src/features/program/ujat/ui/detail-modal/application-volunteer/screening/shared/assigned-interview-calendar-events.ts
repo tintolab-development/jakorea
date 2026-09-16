@@ -1,4 +1,4 @@
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { resolveSecondInterviewScreeningPopoverLabel } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-ui'
 import type { UjatVolunteerInterviewCalendarEvent } from './interview-calendar-events'
 import {

@@ -1,5 +1,5 @@
 import dayjs, { type Dayjs } from 'dayjs'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import type { GeneralSecondInterviewScreeningStatus } from './volunteer-screening-constants'
 import {
   normalizeTimeRangeKey,

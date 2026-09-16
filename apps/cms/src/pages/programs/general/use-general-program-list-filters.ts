@@ -13,10 +13,6 @@ import type { GeneralProgramListTableFilters } from '@/features/program/general/
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
 import {
-  getGeneralProgramFeSeedListForOverview,
-  mergeGeneralProgramFeSeedsIntoList,
-} from '@/features/program/general/lib/general-program-fe-seed'
-import {
   GENERAL_PROGRAM_OVERVIEW_STATUS_VALUES,
   type GeneralProgramOverviewStatusFilter,
 } from '@/features/program/general/lib/list-status-filter'
@@ -110,27 +106,17 @@ export function useGeneralProgramListFilters() {
     retry: false,
   })
 
-  const feSeedPrograms = useMemo(
-    () => getGeneralProgramFeSeedListForOverview(statusFilter, tableFilters),
-    [statusFilter, tableFilters]
-  )
-
   const remotePrograms = useMemo(() => {
     if (!remoteEnabled) return []
     return remoteListQuery.data?.pages.flatMap(page => page.programs) ?? []
   }, [remoteEnabled, remoteListQuery.data])
 
-  const filteredPrograms = useMemo(
-    () => mergeGeneralProgramFeSeedsIntoList(remotePrograms, feSeedPrograms),
-    [remotePrograms, feSeedPrograms]
-  )
+  const filteredPrograms = remotePrograms
 
   const totalElements = useMemo(() => {
-    const remoteTotal = remoteEnabled
-      ? (remoteListQuery.data?.pages[0]?.totalElements ?? remotePrograms.length)
-      : 0
-    return remoteTotal + feSeedPrograms.length
-  }, [remoteEnabled, remoteListQuery.data, remotePrograms.length, feSeedPrograms.length])
+    if (!remoteEnabled) return 0
+    return remoteListQuery.data?.pages[0]?.totalElements ?? remotePrograms.length
+  }, [remoteEnabled, remoteListQuery.data, remotePrograms.length])
 
   const refetchPrograms = useCallback(() => {
     if (!remoteEnabled) return

@@ -1,4 +1,4 @@
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import {
   GENERAL_MANUAL_SECOND_INTERVIEW_SCREENING_STATUSES,
   resolveGeneralEffectiveSecondInterviewStatus,

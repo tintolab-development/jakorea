@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { UjatDocumentScreeningConfirmRequest } from '../doc-screening/document-actions'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { UJAT_APPLICANT_ID_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import {

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import type { CalendarMainEventInput } from '@/shared/components/calendar'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { UJAT_INTERVIEW_ASSIGNMENT_STATUS_LABELS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 
 export type UjatVolunteerInterviewCalendarEvent = CalendarMainEventInput & {

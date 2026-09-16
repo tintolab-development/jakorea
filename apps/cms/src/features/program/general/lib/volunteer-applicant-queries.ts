@@ -8,7 +8,7 @@ import {
   getGeneralVolunteerInterview2Applicants as getGeneralVolunteerInterview2MockApplicants,
   sortGeneralVolunteerByInterviewSlotCount,
   type GeneralVolunteerApplicantRow,
-} from '@/data/mock/general-volunteer-applicants-mock'
+} from '@/features/program/general/model/volunteer-applicant'
 
 /** 면접 가능 일정 수 오름차순 (일반 1차 서류·합격자 목록) */
 export { sortGeneralVolunteerByInterviewSlotCount }

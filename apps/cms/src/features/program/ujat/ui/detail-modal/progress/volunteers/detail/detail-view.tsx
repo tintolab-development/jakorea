@@ -12,11 +12,11 @@ import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-i
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { clearUjatVolunteerApplicantsMockCache } from '@/data/mock/ujat-volunteer-applicants-mock'
+import { clearUjatVolunteerApplicantsMockCache } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import {
   parseEducationProgressVolunteerProfileId,
   patchUjatVolunteerMockProfilePreferredRegion,
-} from '@/data/mock/ujat-volunteer-mock-profiles'
+} from '@/features/program/ujat/model/ujat-volunteer-mock-profile'
 import {
   UJAT_EDU_PROGRESS_VOLUNTEER_DETAIL_TAB_LABELS,
   type UjatEducationProgressVolunteerDetailTab,

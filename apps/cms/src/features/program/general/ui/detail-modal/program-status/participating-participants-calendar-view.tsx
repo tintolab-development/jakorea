@@ -7,7 +7,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import {
   buildParticipatingIndividualParticipantCalendarEvents,
   type ParticipatingIndividualParticipantCalendarEvent,

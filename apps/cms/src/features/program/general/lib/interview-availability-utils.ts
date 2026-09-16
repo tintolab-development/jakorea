@@ -1,7 +1,7 @@
 import type {
   GeneralVolunteerApplicantRow,
   GeneralVolunteerInterviewAvailabilityDay,
-} from '@/data/mock/general-volunteer-applicants-mock'
+} from '@/features/program/general/model/volunteer-applicant'
 import {
   normalizeTimeRangeKey,
   parseInterviewDisplayDateLabel,

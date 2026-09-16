@@ -1,7 +1,7 @@
 import '@/shared/ui/cross-table.css'
 import {
   getUjatEducationProgressSchoolSummary,
-} from '@/data/mock/ujat-education-progress-summary-mock'
+} from '@/features/program/ujat/model/ujat-education-progress'
 import {
   UJAT_EDU_PROGRESS_SCHOOL_METRIC_ORDER,
   UJAT_EDU_PROGRESS_SCHOOL_METRIC_LABEL,

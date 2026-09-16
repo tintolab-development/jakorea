@@ -2,7 +2,7 @@ import { useCallback, type CSSProperties, type MouseEvent } from 'react'
 import { Spin, Table } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { GeneralVolunteerDocumentApproveCompleteModal } from './general-volunteer-document-approve-complete-modal'
 import { GeneralVolunteerDocumentApproveModal } from './general-volunteer-document-approve-modal'
 import { GeneralVolunteerDocumentBulkApproveCompleteModal } from './general-volunteer-document-bulk-approve-complete-modal'
@@ -14,7 +14,6 @@ import { GeneralVolunteerDocumentCancelRejectModal } from './general-volunteer-d
 import { GeneralVolunteerDocumentRejectCompleteModal } from './general-volunteer-document-reject-complete-modal'
 import { GeneralVolunteerDocumentRejectModal } from './general-volunteer-document-reject-modal'
 import { buildGeneralVolunteerDoc1FilterRows } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
-import { shouldPreferGeneralApplicationListMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
 import type { Program } from '@/types/domain'
 import { GENERAL_DOC_SCREENING_TABLE_SCROLL_X } from './doc-screening-columns'
 import { useGeneralVolunteerDocScreening } from './use-doc-screening'
@@ -39,7 +38,6 @@ export function GeneralVolunteerDocScreeningSection({
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
   const programId = program?.id ?? programIdProp ?? ''
-  const preferApplicationListMock = shouldPreferGeneralApplicationListMock(program ?? null)
   const {
     list,
     pendingFilters,
@@ -88,7 +86,7 @@ export function GeneralVolunteerDocScreeningSection({
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
     applicationsLoading,
-  } = useGeneralVolunteerDocScreening({ programId, preferApplicationListMock })
+  } = useGeneralVolunteerDocScreening({ programId })
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
     programId,

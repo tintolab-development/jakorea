@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'

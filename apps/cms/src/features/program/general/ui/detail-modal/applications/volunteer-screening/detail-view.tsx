@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useGeneralInterview2EffectiveStatusTick } from '@/features/program/general/hooks/use-general-interview2-effective-status-tick'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'

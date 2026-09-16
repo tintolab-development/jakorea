@@ -26,12 +26,12 @@ import type {
   InstructorRoleKey,
 } from '../../../model/school-detail-types'
 import { INSTRUCTOR_ROLE_LABELS } from '../../../model/school-detail-types'
-import type { ParticipatingSchoolRow, TextbookStatusKey } from '@/data/mock/participating-schools'
-import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolRow, TextbookStatusKey } from '@/features/program/general/model/participating-schools'
+import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/features/program/general/model/participating-schools'
 import type {
   ParticipatingInstructorRow,
   SettlementStatusKey,
-} from '@/data/mock/participating-instructors'
+} from '@/features/program/general/model/participating-instructors'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import type { InstructorListFormInstructor } from '../../../model/school-detail-types'

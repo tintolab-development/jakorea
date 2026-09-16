@@ -1,5 +1,5 @@
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
-import type { ParticipatingSchoolRow, ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingSchoolRow, ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 
 export type WaitingInstructorAssignmentStatus = 'waiting' | 'unavailable'
 

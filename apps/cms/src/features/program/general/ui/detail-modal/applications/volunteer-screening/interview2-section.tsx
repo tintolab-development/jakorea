@@ -4,7 +4,7 @@ import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import type { Program } from '@/types/domain'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import {
   buildGeneralVolunteerInterview2CalendarFilterRows,
   buildGeneralVolunteerInterview2FilterRows,
@@ -33,7 +33,6 @@ import { mapVolunteerScreeningRowToParticipant } from '@/features/program/genera
 import { useGeneralVolunteerInterview2 } from './use-interview2'
 import { GeneralVolunteerInterviewAssignModals } from './general-volunteer-interview-assign-modals'
 import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
-import { shouldPreferGeneralApplicationListMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
@@ -54,7 +53,6 @@ export function GeneralVolunteerInterview2Section({
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
   const listTitle = screeningInterview2ListTitle(subjectKind)
-  const preferApplicationListMock = shouldPreferGeneralApplicationListMock(program)
 
   const {
     list,
@@ -110,7 +108,7 @@ export function GeneralVolunteerInterview2Section({
     filterRowsSource,
     applicationsLoading,
     isRemoteDataSource,
-  } = useGeneralVolunteerInterview2({ programId, subjectKind, preferApplicationListMock })
+  } = useGeneralVolunteerInterview2({ programId, subjectKind })
 
   const activityWithdrawScheduleOptions = useMemo(
     () => getGeneralVolunteerActivityWithdrawScheduleOptions(program),

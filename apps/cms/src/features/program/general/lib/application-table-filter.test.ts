@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import {
   filterGeneralIndividualApplications,
   filterGeneralInstructorApplications,

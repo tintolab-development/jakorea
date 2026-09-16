@@ -4,8 +4,8 @@
  */
 
 import type { Program } from '@/types/domain'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import {

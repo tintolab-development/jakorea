@@ -66,11 +66,13 @@ import {
   GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
   getProgramRegistrationOverlayRecord,
   patchProgramRegistrationOverlay,
-  readGeneralRegistrationOverlayProgramTitleKo,
   readGeneralRegistrationOverlayScheduleLines,
-  readGeneralRegistrationOverlaySponsorContactId,
-  readGeneralRegistrationOverlaySponsorId,
   readGeneralRegistrationOverlaySponsorIds,
+  readGeneralRegistrationOverlaySponsorId,
+  readGeneralRegistrationOverlaySponsorContactId,
+  readRegistrationOverlayProgramTitleKo,
+  readRegistrationOverlaySponsorContactId,
+  readRegistrationOverlaySponsorId,
   replaceProgramRegistrationOverlay,
   resetProgramRegistrationOverlay,
   subscribeProgramRegistrationOverlayKey,
@@ -243,8 +245,10 @@ export function useProgramRegistrationEditor(
     programRegistrationFormVariant === 'general' && !restrictCurriculumSessionStructure
 
   const resolveProgramTitleKo = useCallback(
-    () => programTitleKo.trim() || readGeneralRegistrationOverlayProgramTitleKo(),
-    [programTitleKo]
+    () =>
+      programTitleKo.trim() ||
+      readRegistrationOverlayProgramTitleKo(programRegistrationFormVariant),
+    [programTitleKo, programRegistrationFormVariant]
   )
 
   const {
@@ -326,9 +330,11 @@ export function useProgramRegistrationEditor(
     setEducationScheduleMode(state.educationScheduleMode)
     // editorState에 없고 overlay에만 남은 후원사(이전 이중 저장·number id 등)를 보강
     const resolvedSponsorId =
-      (state.sponsorId ?? '').trim() || readGeneralRegistrationOverlaySponsorId()
+      (state.sponsorId ?? '').trim() ||
+      readRegistrationOverlaySponsorId(programRegistrationFormVariant)
     const resolvedContactId =
-      (state.sponsorContactId ?? '').trim() || readGeneralRegistrationOverlaySponsorContactId()
+      (state.sponsorContactId ?? '').trim() ||
+      readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
     const resolvedSponsorIds = (() => {
       const fromOverlay = readGeneralRegistrationOverlaySponsorIds()
       if (fromOverlay.length > 0) return fromOverlay
@@ -919,9 +925,10 @@ export function useProgramRegistrationEditor(
   const persistTemplateDraftIfNeeded = useCallback(async () => {
     if (!usesTemplateDraftApi || !templateCode) return
     const resolvedSponsorId =
-      sponsorId.trim() || readGeneralRegistrationOverlaySponsorId()
+      sponsorId.trim() || readRegistrationOverlaySponsorId(programRegistrationFormVariant)
     const resolvedContactId =
-      sponsorContactId.trim() || readGeneralRegistrationOverlaySponsorContactId()
+      sponsorContactId.trim() ||
+      readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
     const resolvedProgramTitleKo = resolveProgramTitleKo()
     await persistWritingFormTemplateDraft({
       templateId: templateCode,
@@ -968,6 +975,7 @@ export function useProgramRegistrationEditor(
     sponsorId,
     templateCode,
     trainedTeachersTeacherTrainingEnabled,
+    programRegistrationFormVariant,
     usesTemplateDraftApi,
     localOnlyDraftPersistence,
   ])
@@ -1028,7 +1036,7 @@ export function useProgramRegistrationEditor(
         shouldUseTrainedTeacherProgramsRemoteApi())
     // React state가 비어도 overlay에 남은 선택을 사용 (스텝 전환·draft 복원 불일치 대비)
     const resolvedSponsorId =
-      sponsorId.trim() || readGeneralRegistrationOverlaySponsorId()
+      sponsorId.trim() || readRegistrationOverlaySponsorId(programRegistrationFormVariant)
     if (isRemoteCreate && !resolvedSponsorId) {
       showAlert({
         title: '등록 실패',
@@ -1102,6 +1110,7 @@ export function useProgramRegistrationEditor(
     scheduleCurriculumPreEducation,
     sessionRoundType,
     showAlert,
+    programRegistrationFormVariant,
     sponsorId,
   ])
 

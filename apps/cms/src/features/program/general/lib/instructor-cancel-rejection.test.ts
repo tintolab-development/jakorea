@@ -4,7 +4,7 @@ import {
   resolveInstructorCancelRejectionNotifyVariant,
 } from '@/features/program/general/lib/instructor-cancel-rejection'
 import { buildInstructorCancelRejectCompleteDescription } from '@/features/program/shared/ui/detail-modal/components/instructor-cancel-reject-complete-modal'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 
 const baseRow = {
   id: 'test',

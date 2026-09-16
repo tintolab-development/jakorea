@@ -5,7 +5,7 @@ import {
   STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
   StatusDropdownCell,
 } from '@/shared/components'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import {
   GENERAL_ESSAY_COLUMN_DEFAULT_WIDTHS,
   GENERAL_MANAGER_EVALUATION_ORDER,

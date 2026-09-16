@@ -1,13 +1,13 @@
 import type {
   ApplicantApprovalStatusKey,
   ApplicantSchoolRow,
-} from '@/data/mock/applicant-institutions'
+} from '@/features/program/shared/model/applicant-institution'
 import type {
   ParticipatingSchoolApprovalStatusKey,
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
   TextbookStatusKey,
-} from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/participating-schools'
 import {
   buildGeneralInstitutionCaseId,
   GENERAL_INSTITUTION_CASE_PROGRAM_IDS,

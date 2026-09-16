@@ -16,15 +16,10 @@ import {
 } from '@/features/program/general/api/admin-applications-service'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useApplicationsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import {
-  getApplicantInstructorsByProgramId,
-  type ApplicantInstructorRow,
-} from '@/data/mock/applicant-instructors'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import { type ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { ApplicantListMenu } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-list-menu'
-import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications-mock'
-import { isGeneralInstitutionCaseProgramId } from '@/features/program/general/lib/general-institution-case-roster'
 
 type UseGeneralProgramApplicationsRemoteSyncOptions = {
   programId?: string
@@ -32,8 +27,6 @@ type UseGeneralProgramApplicationsRemoteSyncOptions = {
   usesProgramInstitutionApplications: boolean
   instructorColumnPreset: string
   individualScreeningStage?: 'doc1'
-  /** 참여자 mock 프로그램 — 강사 목록도 remote 비활성 */
-  preferApplicationListMock?: boolean
   setInstitutionList: (rows: ApplicantSchoolRow[]) => void
   setInstructorList: (rows: ApplicantInstructorRow[]) => void
   setIndividualList: (rows: GeneralIndividualApplicantRow[]) => void
@@ -45,7 +38,6 @@ export function useGeneralProgramApplicationsRemoteSync({
   usesProgramInstitutionApplications,
   instructorColumnPreset,
   individualScreeningStage,
-  preferApplicationListMock = false,
   setInstitutionList,
   setInstructorList,
   setIndividualList,
@@ -53,8 +45,8 @@ export function useGeneralProgramApplicationsRemoteSync({
   const queryClient = useQueryClient()
   const surfaceRemoteEnabled = useApplicationsRemoteEnabledForSurface(programId)
   /** FE 시드만 mock. 실제 등록 프로그램은 유형·면접 단계와 무관하게 remote. */
-  const instructorRemoteEnabled = surfaceRemoteEnabled && !preferApplicationListMock
-  const individualRemoteEnabled = surfaceRemoteEnabled && !preferApplicationListMock
+  const instructorRemoteEnabled = surfaceRemoteEnabled
+  const individualRemoteEnabled = surfaceRemoteEnabled
   const remoteEnabled = surfaceRemoteEnabled
 
   const organizationQuery = useQuery({
@@ -97,38 +89,8 @@ export function useGeneralProgramApplicationsRemoteSync({
   }, [organizationQuery.data, setInstitutionList])
 
   useEffect(() => {
-    if (remoteEnabled || menu !== 'institutions' || !usesProgramInstitutionApplications) return
-    if (!isGeneralInstitutionCaseProgramId(programId)) return
-    setInstitutionList(getGeneralInstitutionApplicationsForProgram(programId))
-  }, [
-    menu,
-    programId,
-    remoteEnabled,
-    setInstitutionList,
-    usesProgramInstitutionApplications,
-  ])
-
-  useEffect(() => {
     if (instructorQuery.data) setInstructorList(instructorQuery.data)
   }, [instructorQuery.data, setInstructorList])
-
-  useEffect(() => {
-    if (
-      instructorRemoteEnabled ||
-      menu !== 'instructors' ||
-      instructorColumnPreset !== 'general-detail'
-    ) {
-      return
-    }
-    if (!isGeneralInstitutionCaseProgramId(programId)) return
-    setInstructorList(getApplicantInstructorsByProgramId(programId))
-  }, [
-    instructorColumnPreset,
-    instructorRemoteEnabled,
-    menu,
-    programId,
-    setInstructorList,
-  ])
 
   useEffect(() => {
     if (!individualRemoteEnabled || menu !== 'individual-applications') return

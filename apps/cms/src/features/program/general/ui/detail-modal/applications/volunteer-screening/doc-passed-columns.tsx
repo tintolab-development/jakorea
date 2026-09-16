@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton } from '@/shared/ui'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { screeningApplicantNameLabel, type ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
 import { PARTICIPANT_APPLICANT_NAME_COL_WIDTH } from '@/features/program/general/lib/participant-screening-table-widths'
 import { GeneralInterviewAssignmentStatusText } from './status-text'

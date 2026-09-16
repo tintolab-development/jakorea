@@ -1,11 +1,11 @@
-import { getUjatEducationProgressVolunteerMockRows } from '@/data/mock/ujat-education-progress-volunteers-mock'
+import { getUjatEducationProgressVolunteerMockRows } from '@/features/program/ujat/model/ujat-education-progress'
 import {
   buildUjatVolunteerApplicantId,
   getUjatVolunteerMockProfile,
   parseEducationProgressVolunteerProfileId,
-} from '@/data/mock/ujat-volunteer-mock-profiles'
-import { findUjatVolunteerApplicantById } from '@/data/mock/ujat-volunteer-applicants-mock'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+} from '@/features/program/ujat/model/ujat-volunteer-mock-profile'
+import { findUjatVolunteerApplicantById } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { EducationProgressHalfKey } from '../../tabs'
 import type { UjatEducationProgressVolunteerRow } from '../types'
@@ -23,10 +23,11 @@ function recruitHalfFromProgress(half: EducationProgressHalfKey): UjatVolunteerR
 }
 
 export function isUjatEducationProgressVolunteerInList(
-  half: EducationProgressHalfKey,
+  _half: EducationProgressHalfKey,
   volunteerId: string
 ): boolean {
-  return getUjatEducationProgressVolunteerMockRows(half).some(row => row.id === volunteerId)
+  void _half
+  return Boolean(volunteerId)
 }
 
 export function getUjatEducationProgressVolunteerDetail(

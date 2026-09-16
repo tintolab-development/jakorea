@@ -1,6 +1,6 @@
 import type { GeminiApprovedTrainingRow } from '@/features/program/gemini/model/approved/types'
 import type { GeminiRecruitmentDetail } from '@/features/program/gemini/model/recruitment/detail-types'
-import type { GeminiInstitutionApplicationRow } from '@/features/program/gemini/model/recruitment/institution-application-mock'
+import type { GeminiInstitutionApplicationRow } from '@/features/program/gemini/model/recruitment/institution-application-types'
 import type { GeminiRecruitmentAddFormSnapshot } from '@/features/program/gemini/lib/recruitment/add-local-save'
 import type { GeminiRecruitmentInfoEditDraft } from '@/features/program/gemini/model/recruitment/info-edit-draft'
 import type { GeminiRecruitmentRow } from '@/features/program/gemini/model/recruitment/types'

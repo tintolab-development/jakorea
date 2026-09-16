@@ -7,7 +7,7 @@ import type {
   ApplicantInstructorCareerDetail,
   ApplicantInstructorEducationItem,
   ApplicantInstructorJaKoreaActivity,
-} from '@/data/mock/applicant-instructors'
+} from '@/features/program/shared/model/applicant-instructor'
 import dayjs from 'dayjs'
 import {
   formatInstructorEducationLevelDisplay,

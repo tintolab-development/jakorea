@@ -6,8 +6,8 @@ import type { ReactNode } from 'react'
 import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
-} from '@/data/mock/applicant-institutions'
-import { getTrainedTeachersPreferredScheduleBlocks } from '@/data/mock/trained-teachers-institution-detail'
+} from '@/features/program/shared/model/applicant-institution'
+import { getTrainedTeachersPreferredScheduleBlocks } from '@/features/program/trained-teachers/model/institution-detail'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/program-approval-status-detail-value'

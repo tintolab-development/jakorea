@@ -21,7 +21,7 @@ import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/g
 import {
   DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK,
   GENERAL_INTERVIEW_MOCK_TIME_SLOTS,
-} from '@/data/mock/general-volunteer-interview-schedule-mock'
+} from '@/features/program/general/model/volunteer-interview-schedule'
 
 const PARTICIPANT_LABEL_BY_VALUE = Object.fromEntries(
   TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.map(o => [o.value, o.label])

@@ -5,7 +5,7 @@
  */
 
 import { useRef } from 'react'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import { formatIndividualLectureAssignTagLabel } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
 import {

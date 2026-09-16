@@ -2,7 +2,7 @@ import {
   getApplicantSchoolsByProgramId,
   MOCK_APPLICANT_INSTITUTIONS,
   type ApplicantSchoolRow,
-} from '@/data/mock/applicant-institutions'
+} from '@/features/program/shared/model/applicant-institution'
 import { getTrainedTeacherRemoteIdSnapshot } from '@/features/program/trained-teachers/api/service'
 import { TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/program/general/lib/registration-local-save'
 import { getGeneralInstitutionCaseApplicationRows } from '@/features/program/general/lib/general-institution-case-mocks'

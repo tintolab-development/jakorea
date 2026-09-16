@@ -4,7 +4,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   formatUjatVolunteerApplicationType,
   type UjatVolunteerApplicantRow,
-} from '@/data/mock/ujat-volunteer-applicants-mock'
+} from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import {
   formatUjatVolunteerApplicationRoute,
   formatUjatVolunteerBirthDateAndAge,

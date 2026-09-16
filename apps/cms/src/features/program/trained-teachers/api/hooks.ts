@@ -5,6 +5,7 @@ import {
   useQuery,
   useQueryClient,
   type InfiniteData,
+  type QueryClient,
 } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
@@ -15,6 +16,7 @@ import {
   createTrainedTeacherProgram,
   deleteTrainedTeacherProgram,
   deleteTrainedTeacherPrograms,
+  fetchTrainedTeacherOverviewStages,
   getTrainedTeacherProgram,
   listTrainedTeacherProgramsPage,
   updateTrainedTeacherProgram,
@@ -36,6 +38,23 @@ function keepFirstInfiniteQueryPage<T>(
     pages: data.pages.slice(0, 1),
     pageParams: data.pageParams.slice(0, 1),
   }
+}
+
+function invalidateTrainedTeacherOverviewStages(queryClient: QueryClient): void {
+  void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.overviewStages() })
+}
+
+/** 교육받은 교사 목록 상단 4카드 건수 (목록과 동일 데이터 소스) */
+export function useTrainedTeacherOverviewStages(enabled = true) {
+  const remoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi()
+
+  return useQuery({
+    queryKey: trainedTeacherQueryKeys.overviewStages(),
+    queryFn: fetchTrainedTeacherOverviewStages,
+    enabled: enabled && remoteEnabled,
+    staleTime: 30_000,
+    retry: shouldRetryTrainedTeacherQuery,
+  })
 }
 
 export function useTrainedTeacherPrograms(
@@ -88,6 +107,7 @@ export function useCreateTrainedTeacherProgram() {
     onSuccess: program => {
       queryClient.setQueryData(trainedTeacherQueryKeys.detail(program.id), program)
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
+      invalidateTrainedTeacherOverviewStages(queryClient)
     },
   })
 }
@@ -109,6 +129,7 @@ export function useUpdateTrainedTeacherProgram() {
     onSuccess: program => {
       queryClient.setQueryData(trainedTeacherQueryKeys.detail(program.id), program)
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
+      invalidateTrainedTeacherOverviewStages(queryClient)
     },
   })
 }
@@ -122,6 +143,7 @@ export function useDeleteTrainedTeacherProgram() {
     onSuccess: (_data, programId) => {
       queryClient.removeQueries({ queryKey: trainedTeacherQueryKeys.detail(programId) })
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
+      invalidateTrainedTeacherOverviewStages(queryClient)
     },
   })
 }
@@ -137,6 +159,7 @@ export function useDeleteTrainedTeacherPrograms() {
         queryClient.removeQueries({ queryKey: trainedTeacherQueryKeys.detail(programId) })
       }
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
+      invalidateTrainedTeacherOverviewStages(queryClient)
     },
   })
 }
@@ -156,6 +179,7 @@ export function useUpdateTrainedTeacherProgramInfoDetail() {
     onSuccess: program => {
       queryClient.setQueryData(trainedTeacherQueryKeys.detail(program.id), program)
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
+      invalidateTrainedTeacherOverviewStages(queryClient)
     },
   })
 }

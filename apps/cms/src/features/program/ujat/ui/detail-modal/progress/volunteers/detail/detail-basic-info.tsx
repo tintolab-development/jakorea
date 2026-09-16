@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
-import { formatUjatVolunteerApplicationType } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import { formatUjatVolunteerApplicationType } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import {

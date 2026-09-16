@@ -7,7 +7,7 @@
 import type { ProgramPost, UUID } from '../../types'
 import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
 import { mockPrograms } from './programs'
-import { MOCK_PARTICIPATING_SCHOOLS } from './participating-schools'
+import { MOCK_PARTICIPATING_SCHOOLS } from '@/features/program/general/model/participating-schools'
 
 /** 일반 프로그램 참여 기관 상세 게시글 탭 mock (canonical programId) */
 export const GENERAL_PARTICIPATING_SCHOOLS_PROGRAM_ID =

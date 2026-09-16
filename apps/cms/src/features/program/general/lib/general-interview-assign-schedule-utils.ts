@@ -4,7 +4,7 @@ import type { GeneralInterviewSlotListItem } from '@/features/program/general/ap
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { resolveGeneralProgramForDetail } from '@/features/program/general/lib/detail-meta'
 import { resolveGeneralProgramVolunteerInterviewScheduleDisplay } from '@/features/program/general/lib/volunteer-interview-schedule-display'
-import { DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK, GENERAL_INTERVIEW_MOCK_RANGE } from '@/data/mock/general-volunteer-interview-schedule-mock'
+import { DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK, GENERAL_INTERVIEW_MOCK_RANGE } from '@/features/program/general/model/volunteer-interview-schedule'
 import {
   formatDisplayTimeRange,
   getMockHolidayDateKeys,

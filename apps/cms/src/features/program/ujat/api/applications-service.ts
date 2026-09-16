@@ -8,12 +8,12 @@ import {
   mapVolunteerApplicationToUjatApplicantRow,
 } from '@/features/program/ujat/api/applications-adapters'
 import type { UjatInstitutionApplicationRow } from '@/features/program/ujat/ui/detail-modal/application-institution/list/types'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import {
   sortUjatVolunteerApplicants,
   sortUjatVolunteerDocPassedApplicants,
-} from '@/data/mock/ujat-volunteer-applicants-mock'
+} from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { GENERAL_PROGRAM_LIST_PAGE_SIZE } from '@/features/program/general/api/general-program-list-filter-params'
 
 const PAGE_SIZE = GENERAL_PROGRAM_LIST_PAGE_SIZE

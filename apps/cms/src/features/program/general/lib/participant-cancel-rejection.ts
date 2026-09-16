@@ -1,6 +1,6 @@
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
-import { patchGeneralIndividualApplicantForCancelRejection } from '@/data/mock/general-individual-applications-mock'
-import type { ApplicantSchoolApprovalNotifyOptions } from '@/data/mock/applicant-institutions'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
+import { patchGeneralIndividualApplicantForCancelRejection } from '@/features/program/general/model/individual-applicant'
+import type { ApplicantSchoolApprovalNotifyOptions } from '@/features/program/shared/model/applicant-institution'
 import {
   formatModalBoldPhrase,
   formatModalBracketedSubjectName,

@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 
 export function useGeneralInstructorApplicantColumns(params: {

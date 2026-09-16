@@ -1,11 +1,11 @@
 import type {
   ParticipatingInstructorEducationScheduleRow,
   ParticipatingInstructorRow,
-} from '@/data/mock/participating-instructors'
+} from '@/features/program/general/model/participating-instructors'
 import {
   getParticipatingInstructorEducationSchedules,
   patchParticipatingInstructorActivityWithdraw as patchMock,
-} from '@/data/mock/participating-instructors'
+} from '@/features/program/general/model/participating-instructors'
 
 export type ParticipatingInstructorActivityWithdrawReason = 'institution'
 

@@ -3,7 +3,7 @@
  */
 
 import type { ReactNode } from 'react'
-import { getTrainedTeachersPreferredScheduleBlocks } from '@/data/mock/trained-teachers-institution-detail'
+import { getTrainedTeachersPreferredScheduleBlocks } from '@/features/program/trained-teachers/model/institution-detail'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import {

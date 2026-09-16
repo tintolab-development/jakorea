@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { Space } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import type { User, AffiliatedTeacherLinkTarget, SchoolTeacherEmploymentStatus } from '@/types/user'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { UserDetailStrategySectionConfig } from '@/features/user/detail/strategies'
 import {
   UserBasicInfoSection,

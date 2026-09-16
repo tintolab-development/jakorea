@@ -6,7 +6,7 @@ import {
   resolveInstructorCancelApprovalReasonLabel,
 } from '@/features/program/general/lib/instructor-cancel-approval'
 import { buildInstructorCancelApprovalCompleteDescription } from '@/features/program/shared/ui/detail-modal/components/instructor-cancel-approval-complete-modal'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 
 const baseRow = {
   id: 'test',

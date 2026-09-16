@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { getUjatEducationProgressInstitutions } from '@/data/mock/ujat-education-progress-institutions-mock'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import type { EducationProgressHalfKey } from '../tabs'
 import { UJAT_EDU_PROGRESS_INSTITUTION_FILTER_ALL } from './filter-fields'
 import { buildUjatEducationProgressInstitutionColumns } from './columns'
@@ -39,6 +39,12 @@ export function useUjatEducationProgressInstitutions(
   programId: string,
   half: EducationProgressHalfKey
 ) {
+  useNotifyProgramApiUnavailableOnce(
+    true,
+    'ujat-progress-institutions',
+    'UJAT 진행 현황 · 참여 기관'
+  )
+
   const [pendingFilters, setPendingFilters] = useState<UjatEducationProgressInstitutionFilters>(
     () => ({ ...EMPTY_UJAT_EDU_PROGRESS_INSTITUTION_FILTERS })
   )
@@ -47,8 +53,8 @@ export function useUjatEducationProgressInstitutions(
   )
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
 
-  const allRows = useMemo(
-    () => getUjatEducationProgressInstitutions(programId, half),
+  const allRows = useMemo<UjatEducationProgressInstitutionRow[]>(
+    () => [],
     [programId, half]
   )
 

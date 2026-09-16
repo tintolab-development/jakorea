@@ -4,7 +4,7 @@ import {
   resolveVolunteerDocumentCancelRejectionNotifyVariant,
   toVolunteerDocumentCancelRejectionNotifyOptions,
 } from '@/features/program/general/lib/volunteer-document-cancel-rejection'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 
 const baseRow = {
   id: 'v1',

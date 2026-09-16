@@ -1,4 +1,4 @@
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import { mapApiApplicationStatusToApprovalStatus } from '@/features/program/general/api/adapters/general-applications-adapters'
 import type { TrainedTeacherOrganizationApplicationResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationApplicationResponse'
 

@@ -1,6 +1,18 @@
+import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
-import { buildInitialRegionAssignmentTableData } from './mock-data'
 import type { RegionAssignmentTableData } from './types'
+
+function buildInitialRegionAssignmentTableData(
+  regionKey: UjatInstitutionApplicationRegionKey
+): RegionAssignmentTableData {
+  return {
+    regionKey,
+    regionLabel: getUjatEducationRegionLabel(regionKey, regionKey),
+    volunteerCount: 0,
+    columns: [],
+    rows: [],
+  }
+}
 
 const regionAssignmentState = new Map<
   UjatInstitutionApplicationRegionKey,

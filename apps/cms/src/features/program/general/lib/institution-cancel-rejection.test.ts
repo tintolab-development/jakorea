@@ -4,7 +4,7 @@ import {
   resolveInstitutionCancelRejectionNotifyVariant,
 } from '@/features/program/general/lib/institution-cancel-rejection'
 import { buildInstitutionCancelRejectCompleteDescription } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-reject-complete-modal'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 
 const baseRow = {
   id: 'test',

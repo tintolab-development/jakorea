@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ColumnsType } from 'antd/es/table'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type {
   TablePageConfig,
   TablePageFiltersSyncArgs,

@@ -1,8 +1,8 @@
 import dayjs, { type Dayjs } from 'dayjs'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
-import { getGeneralProgramById } from '@/data/mock/general-programs'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
+import { resolveGeneralProgramLocalById } from '@/features/program/general/lib/general-program-local-cache'
 import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications-mock'
 import { MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES } from '@/features/program/general/lib/individual-lecture-assign-demo'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
@@ -463,7 +463,7 @@ export function resolveIndividualProgramEducationScheduleLines(program: Program)
     []
   if (direct.length > 0) return direct
 
-  const seeded = getGeneralProgramById(String(program.id))
+  const seeded = resolveGeneralProgramLocalById(String(program.id))
   const fromSeed =
     seeded?.generalCommonInfo?.educationScheduleLines?.map(line => line.trim()).filter(Boolean) ??
     []
@@ -480,7 +480,7 @@ export function resolveProgramForIndividualLectureAssign(
   program: Program | null | undefined,
   programId: string
 ): Program {
-  const seeded = getGeneralProgramById(programId)
+  const seeded = resolveGeneralProgramLocalById(programId)
   if (program && seeded) {
     const scheduleLines = resolveIndividualProgramEducationScheduleLines({
       ...seeded,

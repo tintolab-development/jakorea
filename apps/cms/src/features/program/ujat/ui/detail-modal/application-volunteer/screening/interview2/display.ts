@@ -1,5 +1,5 @@
 import dayjs, { type Dayjs } from 'dayjs'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatSecondInterviewScreeningStatus } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { getUjatEducationRegionSortOrderMap } from '@/features/program/ujat/lib/ujat-education-regions'
 import {

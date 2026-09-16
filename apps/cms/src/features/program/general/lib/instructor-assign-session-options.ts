@@ -2,7 +2,7 @@
  * 참여 기관 회차 일정 → 강사 추가 배정 모달「교육 배정일 선택」태그 옵션
  */
 
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 
 export interface InstructorAssignSessionOption {
   id: string

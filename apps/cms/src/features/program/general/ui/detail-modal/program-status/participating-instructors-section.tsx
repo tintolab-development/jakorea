@@ -34,7 +34,7 @@ import { renderParticipatingInstructorCalendarMonthEventContent } from './partic
 import {
   type ParticipatingInstructorRow,
   MOCK_PARTICIPATING_INSTRUCTORS,
-} from '@/data/mock/participating-instructors'
+} from '@/features/program/general/model/participating-instructors'
 import type { Program } from '@/types/domain'
 import {
   displayServerPiiAsIs,
@@ -60,7 +60,7 @@ import {
   type InstructorSettlementUiStatus,
 } from '@/shared/constants/instructor-settlement-status'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import {
   getScheduleColorPair,

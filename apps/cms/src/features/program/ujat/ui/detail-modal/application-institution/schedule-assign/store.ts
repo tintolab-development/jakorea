@@ -1,4 +1,4 @@
-import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_SEED } from '@/data/mock/ujat-institution-application-mock'
+import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_SEED } from '@/features/program/ujat/model/ujat-institution-application'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import {
   UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES,

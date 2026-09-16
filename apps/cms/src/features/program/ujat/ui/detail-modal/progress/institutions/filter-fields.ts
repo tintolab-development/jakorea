@@ -1,6 +1,6 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
-import { getUjatEducationProgressScheduleFilterOptions } from '@/data/mock/ujat-education-progress-institutions-mock'
+import { getUjatEducationProgressScheduleFilterOptions } from '@/features/program/ujat/model/ujat-education-progress'
 import type { EducationProgressHalfKey } from '../tabs'
 
 export const UJAT_EDU_PROGRESS_INSTITUTION_FILTER_ALL = ''

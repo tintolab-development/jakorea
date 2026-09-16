@@ -20,7 +20,7 @@ import {
   type ApplicantInstructorBusinessIncomeStatus,
   type ApplicantInstructorLectureFeeBasisType,
 } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 
 function FieldError({ message }: { message?: string }) {
   if (!message?.trim()) return null

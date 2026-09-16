@@ -2,7 +2,7 @@
  * 회원 상세 — 학력/경력/자격 (DetailInfoForm + 프로그램 신청 강사 이력 카드 재사용)
  */
 
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   InstructorResumeAwardsCardBody,

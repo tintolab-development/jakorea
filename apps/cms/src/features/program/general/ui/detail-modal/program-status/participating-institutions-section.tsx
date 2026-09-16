@@ -13,7 +13,7 @@ import {
   type TextbookStatusKey,
   type ParticipatingSchoolSession,
   TEXTBOOK_STATUS_OPTION_KEYS,
-} from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/participating-schools'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import {
   StatusDropdownCell,
@@ -40,7 +40,7 @@ import {
 } from '../../../lib/participating-institutions-table'
 import { formatInstitutionRegionForTableDisplay } from '@/shared/lib/format-institution-region-display'
 import { getSchoolDetailByRow } from '../../../lib/school-detail-mock'
-import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
+import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
 import type { Program } from '@/types/domain'
 import type { ParticipatingInstitutionsFilters } from '../../../hooks/use-participating-institutions-params'
 import { participatingInstitutionsFilterFields } from '../../../lib/participating-institutions-filter-fields'

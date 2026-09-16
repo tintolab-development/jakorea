@@ -51,7 +51,6 @@ import {
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import type { ProgramRole } from '@/types/user'
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
-import { resolveGeneralProgramForDetail } from '@/features/program/general/lib/detail-meta'
 import type { GeneralProgramOverviewStageCounts } from '@/features/program/general/lib/overview-stage-counts'
 import type { Program } from '@/types/domain'
 
@@ -71,18 +70,6 @@ function assertProgramsHttpRemoteReady(): void {
       '프로그램 API가 활성화되지 않았습니다. API 로그인 후 programs 모듈(및 1사1교 opt-in)을 확인해 주세요.'
     )
   }
-}
-
-export function getGeneralProgramsMockList(
-  _statusFilter: GeneralProgramOverviewStatusFilter | null
-): Program[] {
-  throw new Error(
-    '일반 프로그램 mock 목록은 제거되었습니다. programs 모듈·API 로그인을 사용해 주세요.'
-  )
-}
-
-export function getGeneralProgramMockById(programId: string): Program | null {
-  return resolveGeneralProgramForDetail(programId) ?? null
 }
 
 export type GeneralProgramsRemoteListPage = {

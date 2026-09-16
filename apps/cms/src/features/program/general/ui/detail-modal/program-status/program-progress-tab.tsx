@@ -18,8 +18,8 @@ import {
   TEXTBOOK_STATUS_OPTION_KEYS,
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
-} from '@/data/mock/participating-schools'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+} from '@/features/program/general/model/participating-schools'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import {
   INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
   INSTRUCTOR_SETTLEMENT_STATUS_ORDER,
@@ -144,13 +144,11 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
   const instructorHook = useProgressInstructorList({
     appliedFilters,
     programId,
-    preferMock: programId.startsWith('general-prog-'),
   })
   const schoolHook = useProgressSchoolList({
     appliedFilters,
     instructorList: instructorHook.instructorList,
     programId,
-    preferMock: programId.startsWith('general-prog-'),
   })
 
   const {

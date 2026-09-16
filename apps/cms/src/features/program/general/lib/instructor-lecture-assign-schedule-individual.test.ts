@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import {
   formatIndividualLectureAssignSlotLabel,
   formatIndividualLectureAssignTagLabel,

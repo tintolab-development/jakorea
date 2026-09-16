@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react'
-import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import {
   UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES,
@@ -25,7 +24,7 @@ export function useUjatInstitutionScheduleAssign(regionKey: UjatInstitutionAppli
 
   const applicationRows = useMemo(() => {
     void version
-    return getUjatInstitutionApplicationMockRows()
+    return []
   }, [version])
 
   const regionState = useMemo(() => {

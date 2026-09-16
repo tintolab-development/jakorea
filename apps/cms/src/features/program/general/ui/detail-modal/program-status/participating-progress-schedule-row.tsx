@@ -2,7 +2,7 @@
  * 참여 기관·참여자(개인) 상세 — 교육 진행 일정 행 (일정 + 진행 현황)
  */
 
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { getSessionLineParts } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import {
   withProgramDetailTdDivider,

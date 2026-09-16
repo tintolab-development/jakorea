@@ -2,7 +2,7 @@ import type { GeminiApprovedTrainingRow } from '@/features/program/gemini/model/
 import type {
   GeminiInstitutionApplicationRow,
   GeminiInstitutionApprovalStatus,
-} from '@/features/program/gemini/model/recruitment/institution-application-mock'
+} from '@/features/program/gemini/model/recruitment/institution-application-types'
 import type { GeminiRecruitmentDetail } from '@/features/program/gemini/model/recruitment/detail-types'
 import type { GeminiRecruitmentAddFormSnapshot } from '@/features/program/gemini/lib/recruitment/add-local-save'
 import type { GeminiRecruitmentInfoEditDraft } from '@/features/program/gemini/model/recruitment/info-edit-draft'

@@ -20,11 +20,11 @@ import {
   rejectGeminiOrganizationApplications,
 } from '../../api/visiting-training/service'
 import {
-  getGeminiInstitutionApplicationRows,
   patchGeminiInstitutionApplicationApprovalStatus,
   type GeminiInstitutionApplicationRow,
   type GeminiInstitutionApprovalStatus,
-} from '../../model/recruitment/institution-application-mock'
+} from '../../model/recruitment/institution-application-types'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import {
   GEMINI_INSTITUTION_APPROVAL_STATUS_OPTIONS,
   GeminiInstitutionApprovalStatusBadge,
@@ -141,8 +141,12 @@ export function GeminiInstitutionApplicationTab({
     recruitmentId,
     remoteEnabled && Boolean(recruitmentId)
   )
-  const [rows, setRows] = useState<GeminiInstitutionApplicationRow[]>(() =>
-    shouldUseGeminiVisitingTrainingRemoteApi() ? [] : getGeminiInstitutionApplicationRows()
+  const [rows, setRows] = useState<GeminiInstitutionApplicationRow[]>([])
+
+  useNotifyProgramApiUnavailableOnce(
+    !remoteEnabled,
+    'gemini-institution-applications',
+    'Gemini 찾아가는 연수 · 기관 신청'
   )
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
@@ -157,7 +161,7 @@ export function GeminiInstitutionApplicationTab({
       return
     }
     if (!remoteEnabled) {
-      setRows(getGeminiInstitutionApplicationRows())
+      setRows([])
     }
   }, [remoteEnabled, remoteQuery.data])
 
@@ -188,7 +192,7 @@ export function GeminiInstitutionApplicationTab({
       void remoteQuery.refetch()
       return
     }
-    setRows([...getGeminiInstitutionApplicationRows()])
+    setRows([])
   }, [remoteEnabled, remoteQuery])
 
   const showRemoteMutationUnavailable = useCallback(() => {

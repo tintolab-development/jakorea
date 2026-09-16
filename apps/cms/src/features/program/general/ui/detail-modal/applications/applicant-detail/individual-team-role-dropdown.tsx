@@ -4,8 +4,8 @@
 
 import { useEffect, useState } from 'react'
 import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
-import type { GeneralIndividualApplicantDetail } from '@/data/mock/general-individual-applications-mock'
-import { updateGeneralIndividualApplicantTeamRole } from '@/data/mock/general-individual-applications-mock'
+import type { GeneralIndividualApplicantDetail } from '@/features/program/general/model/individual-applicant'
+import { updateGeneralIndividualApplicantTeamRole } from '@/features/program/general/model/individual-applicant'
 import { assignmentTeamRoleTagClassName } from '@/features/program/general/lib/assignment-team-role-tag'
 import { ASSIGNMENT_TEAM_ROLE_LABELS } from '@/features/program/general/model/school-detail-types'
 import '@/features/program/general/ui/assignment-submission-modal.css'

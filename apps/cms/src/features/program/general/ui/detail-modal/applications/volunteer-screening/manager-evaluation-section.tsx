@@ -3,7 +3,7 @@ import {
   STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import {
   GENERAL_MANAGER_EVALUATION_ORDER,
   type GeneralManagerEvaluation,

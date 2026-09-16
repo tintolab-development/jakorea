@@ -1,5 +1,5 @@
-import { parseEducationProgressVolunteerProfileId } from '@/data/mock/ujat-volunteer-mock-profiles'
-import type { UjatVolunteerMockProfileId } from '@/data/mock/ujat-volunteer-mock-profiles'
+import { parseEducationProgressVolunteerProfileId } from '@/features/program/ujat/model/ujat-volunteer-mock-profile'
+import type { UjatVolunteerMockProfileId } from '@/features/program/ujat/model/ujat-volunteer-mock-profile'
 import type {
   UjatVolunteerAssignmentProgressBundle,
   UjatVolunteerAssignmentProgressRow,

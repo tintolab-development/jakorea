@@ -5,8 +5,8 @@ import {
   STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
   StatusDropdownCell,
 } from '@/shared/components'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
-import { formatUjatVolunteerApplicationType } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import { formatUjatVolunteerApplicationType } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import {
   UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS,
   UJAT_ESSAY_COLUMN_MIN_WIDTHS,

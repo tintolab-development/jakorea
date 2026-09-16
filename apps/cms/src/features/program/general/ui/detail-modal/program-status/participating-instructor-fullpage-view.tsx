@@ -13,10 +13,10 @@ import type {
   ParticipatingInstructorCareerDetail,
   ParticipatingInstructorEducationItem,
   ParticipatingInstructorQualification,
-} from '@/data/mock/participating-instructors'
-import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
-import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/participating-instructors'
+import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
+import { MOCK_PARTICIPATING_SCHOOLS } from '@/features/program/general/model/participating-schools'
 import {
   INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,

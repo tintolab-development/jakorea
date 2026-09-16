@@ -1,4 +1,4 @@
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { Program } from '@/types/domain'
 import {
   formatIndividualInstructorEducationScheduleLabel,

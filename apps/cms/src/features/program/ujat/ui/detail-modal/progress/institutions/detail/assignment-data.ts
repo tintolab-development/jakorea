@@ -1,4 +1,4 @@
-import { getUjatInstitutionApplicationRowById } from '@/data/mock/ujat-institution-application-mock'
+import { getUjatInstitutionApplicationRowById } from '@/features/program/ujat/model/ujat-institution-application'
 import { parseGradeClassSectionValue } from '@/features/program/ujat/ui/detail-modal/application-institution/list/grade-class-sections'
 import type { UjatInstitutionApplicationGradeBlockDetail } from '../../../application-institution/detail/detail-types'
 import { getUjatScheduleAssignRegionState } from '../../../application-institution/schedule-assign/store'

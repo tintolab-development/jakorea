@@ -1,23 +1,23 @@
-import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchGeneralProgramParticipants } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
-import { shouldPreferGeneralProgramProgressMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
-import {
-  getParticipatingIndividualParticipantsForProgram,
-  type ParticipatingIndividualParticipantRow,
-} from '@/data/mock/participating-individual-participants'
-import type { Program } from '@/types/domain'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
+import { type ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 
-/** 개인 참여자 목록 — prefer mock 또는 remote OFF 시 FE mock */
+/** 개인 참여자 목록 — API 미연동 시 빈 목록 + alert */
 export function useProgressIndividualParticipantList(
   programId: string | undefined,
-  program?: Program | null
+  _program?: unknown
 ) {
-  const preferMock = shouldPreferGeneralProgramProgressMock(program ?? null)
-  const remoteEnabled =
-    !preferMock && shouldUseGeneralProgramProgressRemoteApi() && Boolean(programId)
+  void _program
+  const remoteEnabled = shouldUseGeneralProgramProgressRemoteApi() && Boolean(programId)
+
+  useNotifyProgramApiUnavailableOnce(
+    !remoteEnabled,
+    'general-progress-individual-participants',
+    '프로그램 진행 현황 · 개인 참여자'
+  )
 
   const remoteQuery = useQuery({
     queryKey: generalProgramProgressQueryKeys.participants(programId ?? ''),
@@ -27,14 +27,9 @@ export function useProgressIndividualParticipantList(
     retry: false,
   })
 
-  const mockList = useMemo(
-    () => (programId ? getParticipatingIndividualParticipantsForProgram(programId) : []),
-    [programId]
-  )
-
   const participantList: ParticipatingIndividualParticipantRow[] = remoteEnabled
     ? (remoteQuery.data ?? [])
-    : mockList
+    : []
 
   return {
     participantList,

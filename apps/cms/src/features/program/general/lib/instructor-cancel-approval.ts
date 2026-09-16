@@ -1,8 +1,8 @@
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import {
   patchApplicantInstructorForCancelApproval,
   type ApplicantInstructorApprovalNotifyOptions,
-} from '@/data/mock/applicant-instructors'
+} from '@/features/program/shared/model/applicant-instructor'
 import { formatModalBoldPhrase, formatModalBracketedSubjectName } from '@/features/program/general/lib/modal-message-subject'
 
 export type InstructorCancelApprovalNotifyVariant = 'alreadySent' | 'pendingNotification'

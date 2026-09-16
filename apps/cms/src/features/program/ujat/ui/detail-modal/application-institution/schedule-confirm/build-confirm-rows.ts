@@ -1,7 +1,7 @@
 import {
   getUjatInstitutionApplicationMockRows,
   getUjatInstitutionScheduleConfirmStatus,
-} from '@/data/mock/ujat-institution-application-mock'
+} from '@/features/program/ujat/model/ujat-institution-application'
 import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '../education-schedule'
 import { parseGradeClassSectionValue } from '../list/grade-class-sections'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
