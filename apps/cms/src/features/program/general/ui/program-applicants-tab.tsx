@@ -9,11 +9,10 @@ import { CmsButton } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import { useApplicantsTabParams, type ApplicantsFilters } from '../hooks/use-applicants-tab-params'
 import {
-  MOCK_APPLICANT_INSTITUTIONS,
   type ApplicantApprovalStatusKey,
   type ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
-import { getApplicantSchoolDetail } from '../lib/school-detail-mock'
+import { getApplicantSchoolDetail } from '../lib/school-detail'
 import { SchoolDetailModal } from './detail-modal/program-status/school-detail-modal'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import {
@@ -23,7 +22,6 @@ import {
   buildInstructorApproveMessageLines,
 } from './manager-delete-guide-modal'
 import {
-  MOCK_APPLICANT_INSTRUCTORS,
   type ApplicantInstructorApprovalStatusKey,
   type ApplicantInstructorRow,
 } from '@/features/program/shared/model/applicant-instructor'
@@ -75,38 +73,6 @@ const GRADE_OPTIONS = [
   { label: '6학년', value: '6학년' },
 ]
 
-const SCHOOL_OPTIONS = [
-  { label: '전체', value: 'all' },
-  ...Array.from(new Set(MOCK_APPLICANT_INSTITUTIONS.map(s => s.schoolName))).map(name => ({
-    label: name,
-    value: name,
-  })),
-]
-
-const TEACHER_OPTIONS = [
-  { label: '전체', value: 'all' },
-  ...Array.from(new Set(MOCK_APPLICANT_INSTITUTIONS.map(s => s.teacherName))).map(name => ({
-    label: name,
-    value: name,
-  })),
-]
-
-const INSTRUCTOR_SCHOOL_OPTIONS = [
-  { label: '전체', value: 'all' },
-  ...Array.from(new Set(MOCK_APPLICANT_INSTRUCTORS.map(s => s.schoolName))).map(name => ({
-    label: name,
-    value: name,
-  })),
-]
-
-const INSTRUCTOR_NAME_OPTIONS = [
-  { label: '전체', value: 'all' },
-  ...Array.from(new Set(MOCK_APPLICANT_INSTRUCTORS.map(s => s.instructorName))).map(name => ({
-    label: name,
-    value: name,
-  })),
-]
-
 export type ProgramApplicantsTabMode = 'all' | 'institutions' | 'instructors'
 
 interface ProgramApplicantsTabProps {
@@ -128,12 +94,8 @@ export function ProgramApplicantsTab({
         : subTab
   const showSubTabSwitcher = mode === 'all'
   const [appliedFilters, setAppliedFilters] = useState<ApplicantsFilters>(filters)
-  const [schoolList, setSchoolList] = useState<ApplicantSchoolRow[]>(() => [
-    ...MOCK_APPLICANT_INSTITUTIONS,
-  ])
-  const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>(() => [
-    ...MOCK_APPLICANT_INSTRUCTORS,
-  ])
+  const [schoolList, setSchoolList] = useState<ApplicantSchoolRow[]>(() => [])
+  const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>(() => [])
   const [schoolDetailModalOpen, setSchoolDetailModalOpen] = useState(false)
   const [selectedApplicantSchool, setSelectedApplicantSchool] = useState<ApplicantSchoolRow | null>(
     null
@@ -297,10 +259,54 @@ export function ProgramApplicantsTab({
     })
   }, [schoolList, appliedFilters])
 
+  const schoolOptions = useMemo(
+    () => [
+      { label: '전체', value: 'all' },
+      ...Array.from(new Set(schoolList.map(s => s.schoolName))).map(name => ({
+        label: name,
+        value: name,
+      })),
+    ],
+    [schoolList]
+  )
+
+  const teacherOptions = useMemo(
+    () => [
+      { label: '전체', value: 'all' },
+      ...Array.from(new Set(schoolList.map(s => s.teacherName))).map(name => ({
+        label: name,
+        value: name,
+      })),
+    ],
+    [schoolList]
+  )
+
+  const instructorSchoolOptions = useMemo(
+    () => [
+      { label: '전체', value: 'all' },
+      ...Array.from(new Set(instructorList.map(s => s.schoolName))).map(name => ({
+        label: name,
+        value: name,
+      })),
+    ],
+    [instructorList]
+  )
+
+  const instructorNameOptions = useMemo(
+    () => [
+      { label: '전체', value: 'all' },
+      ...Array.from(new Set(instructorList.map(s => s.instructorName))).map(name => ({
+        label: name,
+        value: name,
+      })),
+    ],
+    [instructorList]
+  )
+
   /** 신청 학교 탭에서만 유효한 학교명이 남아 있으면 강사 목록이 전부 필터링되는 것을 막음 */
   const instructorSchoolNames = useMemo(
-    () => new Set(MOCK_APPLICANT_INSTRUCTORS.map(r => r.schoolName)),
-    []
+    () => new Set(instructorList.map(r => r.schoolName)),
+    [instructorList]
   )
 
   const filteredInstructors = useMemo(() => {
@@ -533,7 +539,7 @@ export function ProgramApplicantsTab({
                           value={filters.schoolName === 'all' ? undefined : filters.schoolName}
                           onChange={v => setFilter('schoolName', v ?? 'all')}
                           allowClear
-                          options={SCHOOL_OPTIONS}
+                          options={schoolOptions}
                           getPopupContainer={() => document.body}
                         />
                       </div>
@@ -574,7 +580,7 @@ export function ProgramApplicantsTab({
                           value={filters.teacherName === 'all' ? undefined : filters.teacherName}
                           onChange={v => setFilter('teacherName', v ?? 'all')}
                           allowClear
-                          options={TEACHER_OPTIONS}
+                          options={teacherOptions}
                           getPopupContainer={() => document.body}
                         />
                       </div>
@@ -606,7 +612,7 @@ export function ProgramApplicantsTab({
                           value={filters.schoolName === 'all' ? undefined : filters.schoolName}
                           onChange={v => setFilter('schoolName', v ?? 'all')}
                           allowClear
-                          options={INSTRUCTOR_SCHOOL_OPTIONS}
+                          options={instructorSchoolOptions}
                           getPopupContainer={() => document.body}
                         />
                       </div>
@@ -621,7 +627,7 @@ export function ProgramApplicantsTab({
                           }
                           onChange={v => setFilter('instructorName', v ?? 'all')}
                           allowClear
-                          options={INSTRUCTOR_NAME_OPTIONS}
+                          options={instructorNameOptions}
                           getPopupContainer={() => document.body}
                         />
                       </div>

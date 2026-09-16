@@ -17,7 +17,7 @@ import {
 } from './survey-audience'
 import { getGeneralSurveyMenuItems } from './detail-meta'
 import { getGeneralSurveyEditFieldsForAudience } from '@/features/program/general/model/common-info-edit-schema'
-import { buildGeneralSurveyMockState } from '@/features/program/general/ui/detail-modal/survey-management/survey-mock'
+import { buildGeneralSurveyEmptyState } from '@/features/program/general/ui/detail-modal/survey-management/survey-empty-state'
 
 function program(overrides: Partial<Program>): Program {
   return {
@@ -265,7 +265,7 @@ describe('general survey audience', () => {
       secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.',
       registerButton: '만족도조사 등록',
     })
-    expect(buildGeneralSurveyMockState(companySchool).satisfactionSurveysByAudience).toEqual({})
+    expect(buildGeneralSurveyEmptyState(companySchool).satisfactionSurveysByAudience).toEqual({})
   })
 
   it('교육받은 교사 프로그램은 1사1교와 동일한 교사용 만족도조사만 제공한다', () => {
@@ -286,7 +286,7 @@ describe('general survey audience', () => {
       secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.',
       registerButton: '만족도조사 등록',
     })
-    expect(buildGeneralSurveyMockState(trainedTeachers).satisfactionSurveysByAudience).toEqual({})
+    expect(buildGeneralSurveyEmptyState(trainedTeachers).satisfactionSurveysByAudience).toEqual({})
   })
 
   it('설문 수정 항목은 공통 3종을 제공한다', () => {

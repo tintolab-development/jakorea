@@ -81,7 +81,7 @@ import {
   resolveGeneralSatisfactionAudienceFromNavTab,
   type GeneralSatisfactionAudienceKey,
 } from '@/features/program/general/lib/survey-audience'
-import { buildGeneralSurveyMockState } from './survey-mock'
+import { buildGeneralSurveyEmptyState } from './survey-empty-state'
 import {
   useGeneralProgramSurveyFormBindingMutations,
   useGeneralProgramSurveyResponses,
@@ -129,7 +129,7 @@ function buildSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: 
 }
 
 export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurveyManagementViewProps) {
-  const initialMock = useMemo(() => buildGeneralSurveyMockState(program), [program])
+  const initialMock = useMemo(() => buildGeneralSurveyEmptyState(program), [program])
   const {
     registeredSurveys: remoteRegisteredSurveys,
     classifiedBindings,
@@ -216,7 +216,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   useEffect(() => {
     // remote ON이면 mock으로 덮어쓰지 않음 — remote 목록 effect가 채움
     if (surveysRemote) return
-    const next = buildGeneralSurveyMockState(program)
+    const next = buildGeneralSurveyEmptyState(program)
     setRegisteredSurveys(next.registeredSurveys)
     setActiveRegisteredSurveyId(next.activeRegisteredSurveyId)
     setSatisfactionSurveysByAudience(next.satisfactionSurveysByAudience)
@@ -288,7 +288,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   const pollResponses = useMemo((): SurveyPollRawResponse[] => {
     if (pollResponsesRemote) return remotePollResponses ?? []
-    return buildGeneralSurveyMockState(program).responses
+    return buildGeneralSurveyEmptyState(program).responses
   }, [pollResponsesRemote, program, remotePollResponses])
 
   const satisfactionResponses = useMemo((): SurveyPollRawResponse[] => {

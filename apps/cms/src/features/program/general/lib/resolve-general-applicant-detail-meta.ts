@@ -5,7 +5,7 @@ import {
   getGeneralParticipantInterview2Applicants,
 } from '@/features/program/general/model/individual-applicant'
 import { getApplicantInstructorsByProgramId } from '@/features/program/shared/model/applicant-instructor'
-import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications-mock'
+import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import type { GeneralDetailLnbKey } from '@/features/program/general/lib/detail-url'
 import { resolveGeneralParticipantApplicantDetailTitle } from '@/features/program/general/lib/screening-subject-kind'
