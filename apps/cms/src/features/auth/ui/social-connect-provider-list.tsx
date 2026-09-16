@@ -41,16 +41,19 @@ interface SocialConnectProviderListProps {
   redirectPath?: string
   onConnectSuccess?: (provider: SocialProvider) => void
   className?: string
+  /** true면 원격 연결 목록 조회를 생략 (비번변경 온보딩 등 세션 불안정 구간) */
+  skipRemoteSync?: boolean
 }
 
 export function SocialConnectProviderList({
   redirectPath,
   onConnectSuccess: _onConnectSuccess,
   className,
+  skipRemoteSync = false,
 }: SocialConnectProviderListProps) {
   const remoteEnabled = isSocialAdminSocialApiRemoteEnabled()
   const [connectedProviders, setConnectedProviders] = useState<Set<SocialProvider>>(() =>
-    remoteEnabled ? new Set() : getConnectedProviders()
+    remoteEnabled && !skipRemoteSync ? new Set() : getConnectedProviders()
   )
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
   const [loadingAccounts, setLoadingAccounts] = useState(false)
@@ -58,7 +61,7 @@ export function SocialConnectProviderList({
   const [unlinkLoading, setUnlinkLoading] = useState(false)
 
   const syncConnectedProviders = useCallback(async () => {
-    if (!remoteEnabled || !cmsSocialAuthClient.hasAccessToken()) {
+    if (skipRemoteSync || !remoteEnabled || !cmsSocialAuthClient.hasAccessToken()) {
       setConnectedProviders(getConnectedProviders())
       return
     }
@@ -78,7 +81,7 @@ export function SocialConnectProviderList({
     } finally {
       setLoadingAccounts(false)
     }
-  }, [remoteEnabled])
+  }, [remoteEnabled, skipRemoteSync])
 
   useEffect(() => {
     void syncConnectedProviders()

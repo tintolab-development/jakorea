@@ -37,7 +37,15 @@ const SOCIAL_CONNECT_AUTH_FLOW_PREFIXES = [
   '/login',
   '/social-connect',
   '/oauth/',
+  '/auth/password-change-required',
 ] as const
+
+/** 비밀번호 변경 완료 → 소셜 연결 진입 시 `?flow=` 값 */
+export const SOCIAL_CONNECT_FLOW_PASSWORD_CHANGE_REQUIRED = 'password-change-required' as const
+
+export function isPasswordChangeRequiredSocialConnectFlow(flow?: string): boolean {
+  return flow === SOCIAL_CONNECT_FLOW_PASSWORD_CHANGE_REQUIRED
+}
 
 /** 소셜 연결 완료·스킵 시 돌아가면 안 되는 인증/가입 플로우 경로 */
 export function isSocialConnectAuthFlowPath(path?: string): boolean {
@@ -83,11 +91,19 @@ export function resolveSocialConnectFinishPath(options: {
   return normalizeSocialConnectRedirectPath(redirectPath, fallbackPath) ?? fallbackPath
 }
 
-export function buildRegisterSocialConnectPath(redirectPath?: string) {
-  if (!redirectPath) {
-    return '/register/social-connect'
+export function buildRegisterSocialConnectPath(
+  redirectPath?: string,
+  options?: { flow?: string }
+) {
+  const params = new URLSearchParams()
+  if (redirectPath) {
+    params.set('redirect', redirectPath)
   }
-  return `/register/social-connect?redirect=${encodeURIComponent(redirectPath)}`
+  if (options?.flow) {
+    params.set('flow', options.flow)
+  }
+  const query = params.toString()
+  return query ? `/register/social-connect?${query}` : '/register/social-connect'
 }
 
 export function buildRegisterCompletePath(redirectPath?: string) {
@@ -97,11 +113,19 @@ export function buildRegisterCompletePath(redirectPath?: string) {
   return `/register/complete?redirect=${encodeURIComponent(redirectPath)}`
 }
 
-export function buildRegisterSocialConnectCompletePath(redirectPath?: string) {
-  if (!redirectPath) {
-    return '/register/social-connect/complete'
+export function buildRegisterSocialConnectCompletePath(
+  redirectPath?: string,
+  options?: { flow?: string }
+) {
+  const params = new URLSearchParams()
+  if (redirectPath) {
+    params.set('redirect', redirectPath)
   }
-  return `/register/social-connect/complete?redirect=${encodeURIComponent(redirectPath)}`
+  if (options?.flow) {
+    params.set('flow', options.flow)
+  }
+  const query = params.toString()
+  return query ? `/register/social-connect/complete?${query}` : '/register/social-connect/complete'
 }
 
 /** 로그인 후 소셜 연결 완료 (내 정보 수정 등) */
