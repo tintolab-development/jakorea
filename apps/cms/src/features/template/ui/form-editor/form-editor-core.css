@@ -9,6 +9,12 @@
   cursor: default;
 }
 
+/* 카드 헤더 우측 액션(차시/회차 추가·토글 등)도 미리보기에서 클릭 차단 */
+.form-editor-left--paragraph-body-preview .paragraph-card__title-trailing {
+  pointer-events: none;
+  cursor: default;
+}
+
 .form-editor-left {
   display: flex;
   flex-direction: column;
