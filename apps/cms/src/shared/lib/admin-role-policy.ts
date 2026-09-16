@@ -114,12 +114,23 @@ export function isPermissionSettingsPath(pathname: string): boolean {
   )
 }
 
+export function isPermissionRequestsPath(pathname: string): boolean {
+  const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
+  return (
+    normalized === '/admin/permission-requests' ||
+    normalized.startsWith('/admin/permission-requests/')
+  )
+}
+
 export function resolveAdminPolicyScreen(pathname: string | undefined): AdminPolicyScreen {
   if (!pathname) return 'default'
   const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
   if (isSecurityLogPath(normalized)) return 'security-logs'
   if (isPermissionSettingsPath(normalized)) {
     return 'permission-settings'
+  }
+  if (isPermissionRequestsPath(normalized)) {
+    return 'admin-permission-approval'
   }
   return 'default'
 }
@@ -135,15 +146,20 @@ export function canAdminAction(input: {
 
   if (roleCode == null) {
     return (
-      input.action === 'view' && screen !== 'security-logs' && screen !== 'permission-settings'
+      input.action === 'view' &&
+      screen !== 'security-logs' &&
+      screen !== 'permission-settings' &&
+      screen !== 'admin-permission-approval'
     )
   }
 
   switch (input.action) {
     case 'view':
       if (screen === 'security-logs') return roleCode === 'MASTER'
-      // 관리자 권한 설정: 뷰어는 화면 조회 자체 불가 (메뉴 클릭 시 권한 없음 모달)
-      if (screen === 'permission-settings') return roleCode !== 'VIEWER'
+      // 관리자 권한 설정·회원 권한 승인: 뷰어는 화면 조회 자체 불가 (메뉴 클릭 시 권한 없음 모달)
+      if (screen === 'permission-settings' || screen === 'admin-permission-approval') {
+        return roleCode !== 'VIEWER'
+      }
       return true
     case 'write':
     case 'delete':
