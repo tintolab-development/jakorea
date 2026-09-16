@@ -172,6 +172,7 @@ import {
   type GeneralParticipatingInstitutionDetailTabKey,
   type ParticipatingInstitutionDetailTabKey,
 } from '../../../lib/participating-institution-detail-tabs'
+import type { GeneralProgramNavigationCapabilities } from '../../../hooks/use-general-program-navigation'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { TrainedTeachersParticipatingInstitutionDetailView } from '@/features/program/trained-teachers/ui/institution-detail/participating-institution-detail-view'
 
@@ -335,6 +336,7 @@ export interface SchoolDetailFullpageViewProps {
   program: Program
   detail: SchoolDetailForModal
   row: ParticipatingSchoolRow
+  navigationCapabilities?: GeneralProgramNavigationCapabilities
   /** 합반 대상 lookup — 동일 프로그램 참여 기관 전체 목록 */
   participatingSchoolList?: ParticipatingSchoolRow[]
   /** URL 쿼리 파라미터와 연동 시 활성 탭 (제공 시 controlled) */
@@ -373,6 +375,7 @@ export function GeneralParticipatingInstitutionDetailView(
     program,
     detail,
     row,
+    navigationCapabilities,
     participatingSchoolList = [],
     activeTab: activeTabFromUrl,
     onTabChange,
@@ -393,13 +396,22 @@ export function GeneralParticipatingInstitutionDetailView(
   const { showAlert } = useCmsAlert()
   const [internalTab, setInternalTab] = useState<SchoolDetailTabKey>('application')
   const visibleDetailTabs = useMemo(
-    () => getGeneralParticipatingInstitutionDetailTabKeys(program),
-    [program]
+    () =>
+      getGeneralParticipatingInstitutionDetailTabKeys(
+        program,
+        navigationCapabilities?.studentRosterEnabled
+      ),
+    [navigationCapabilities?.studentRosterEnabled, program]
   )
-  const activeTab = normalizeSchoolDetailTab(
+  const normalizedActiveTab = normalizeSchoolDetailTab(
     activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab,
     program
   )
+  const activeTab = visibleDetailTabs.includes(
+    normalizedActiveTab as GeneralParticipatingInstitutionDetailTabKey
+  )
+    ? normalizedActiveTab
+    : 'application'
   const setActiveTab = (key: SchoolDetailTabKey) => {
     if (onTabChange) onTabChange(key)
     else setInternalTab(key)

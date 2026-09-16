@@ -3,6 +3,7 @@ import type { Program } from '@/types/domain'
 import {
   getGeneralParticipantApplicationsLnbLabel,
   getGeneralProgressMenuItems,
+  getVisibleGeneralProgressMenuItems,
   hasGeneralInstructorApplications,
   hasGeneralParticipantApplications,
 } from './detail-meta'
@@ -173,6 +174,10 @@ describe('general survey audience', () => {
       })
     )
     expect(items.map(item => item.label)).toEqual(['참여 기관', '참여 강사', '참여 봉사자'])
+  })
+
+  it('상위 진행 현황이 활성이어도 실제 하위 메뉴 대상이 없으면 빈 목록을 반환한다', () => {
+    expect(getVisibleGeneralProgressMenuItems([], false)).toEqual([])
   })
 
   it('강사 신청 목록 LNB는 teacher_instructor 포함 시에만 노출한다', () => {

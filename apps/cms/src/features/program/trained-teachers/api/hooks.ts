@@ -8,6 +8,7 @@ import {
   type QueryClient,
 } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { shouldRetryTrainedTeacherQuery } from './errors'
 import type { TrainedTeacherListFilters } from './list-params'
@@ -130,6 +131,9 @@ export function useUpdateTrainedTeacherProgram() {
       queryClient.setQueryData(trainedTeacherQueryKeys.detail(program.id), program)
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
       invalidateTrainedTeacherOverviewStages(queryClient)
+      void queryClient.invalidateQueries({
+        queryKey: generalProgramQueryKeys.navigation(program.id),
+      })
     },
   })
 }
@@ -180,6 +184,9 @@ export function useUpdateTrainedTeacherProgramInfoDetail() {
       queryClient.setQueryData(trainedTeacherQueryKeys.detail(program.id), program)
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
       invalidateTrainedTeacherOverviewStages(queryClient)
+      void queryClient.invalidateQueries({
+        queryKey: generalProgramQueryKeys.navigation(program.id),
+      })
     },
   })
 }

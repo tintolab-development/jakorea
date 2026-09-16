@@ -64,6 +64,7 @@ import { useOrganizationMergeGroups } from '@/features/program/general/hooks/use
 import { saveOrganizationCombinedClassRemote } from '@/features/program/general/api/organization-merge-groups-service'
 import { shouldUseOrganizationMergeGroupsRemoteApi } from '@/features/program/general/api/organization-merge-groups-remote-capabilities'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import type { GeneralProgramNavigationCapabilities } from '@/features/program/general/hooks/use-general-program-navigation'
 import { applyCombinedClassMergeToSchoolDetailWithList } from '@/features/program/general/lib/apply-combined-class-merge-state'
 import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
 import './participating-institutions-section.css'
@@ -76,6 +77,7 @@ export interface ParticipatingInstitutionsSectionProps {
   programId?: string
   /** 프로그램 정보. 교재 배송 현황 필터는 program에 교재 필드(textbookName 등)가 있을 때만 노출 */
   program?: Program | null
+  navigationCapabilities?: GeneralProgramNavigationCapabilities
   /** URL의 schoolId. 있으면 해당 학교 상세 인라인 뷰 표시 */
   schoolIdFromUrl?: string | null
   /** URL의 학교 상세 탭(application | students | instructors | posts | journal). 쿼리 파라미터 연동용 */
@@ -95,6 +97,7 @@ export interface ParticipatingInstitutionsSectionProps {
 export function ParticipatingInstitutionsSection({
   programId,
   program,
+  navigationCapabilities,
   schoolIdFromUrl,
   schoolTabFromUrl,
   onSchoolTabChange,
@@ -507,6 +510,7 @@ export function ParticipatingInstitutionsSection({
           program={program}
           detail={mergedDetail}
           row={selectedRowFromUrl}
+          navigationCapabilities={navigationCapabilities}
           participatingSchoolList={schoolList}
           activeTab={schoolTabFromUrl ?? undefined}
           onTabChange={onSchoolTabChange}

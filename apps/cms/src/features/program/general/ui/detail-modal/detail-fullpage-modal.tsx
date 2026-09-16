@@ -25,6 +25,7 @@ import {
   getGeneralProgressMenuItems,
   getGeneralSurveyMenuItems,
   getGeneralVolunteerInterviewEnabled,
+  getVisibleGeneralProgressMenuItems,
   hasGeneralInstructorApplications,
   hasGeneralParticipantApplications,
   hasGeneralVolunteerApplications,
@@ -471,7 +472,8 @@ export function GeneralProgramDetailFullPageModal({
     initialProgram: program,
     enabled: open,
   })
-  const { disabledLnbKeys } = useGeneralProgramNavigation(open ? programId : undefined, open)
+  const { disabledLnbKeys, capabilities: navigationCapabilities } =
+    useGeneralProgramNavigation(open ? programId : undefined, open)
   const { showAlert } = useCmsAlert()
   const displayProgram = useMemo(() => {
     // remote(API id): 상세 GET만 본문에 사용 (목록 행·resolve 시드 선표시 금지)
@@ -553,10 +555,7 @@ export function GeneralProgramDetailFullPageModal({
     : false
   const showManagers = !disabledLnbKeys.has('managers')
   const progressMenuItemsFiltered = useMemo(
-    () =>
-      disabledLnbKeys.has('progress')
-        ? []
-        : progressMenuItems,
+    () => getVisibleGeneralProgressMenuItems(progressMenuItems, disabledLnbKeys.has('progress')),
     [disabledLnbKeys, progressMenuItems]
   )
   const surveyItemsFiltered = useMemo(
@@ -1876,6 +1875,7 @@ export function GeneralProgramDetailFullPageModal({
                   <ParticipatingInstitutionsSection
                     programId={displayProgram.id}
                     program={displayProgram}
+                    navigationCapabilities={navigationCapabilities}
                     schoolIdFromUrl={schoolIdFromUrl}
                     schoolTabFromUrl={activeSchoolTab}
                     onSchoolTabChange={setSchoolTab}

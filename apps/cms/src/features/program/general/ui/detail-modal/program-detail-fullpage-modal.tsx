@@ -261,7 +261,7 @@ export function ProgramDetailFullPageModal({
       isTrainedTeachersDetailProgram(displayProgram),
     [displayProgram, programVariant]
   )
-  const { disabledLnbKeys } = useGeneralProgramNavigation(
+  const { disabledLnbKeys, capabilities: navigationCapabilities } = useGeneralProgramNavigation(
     open && (isCompanySchoolDetail || isTrainedTeachersDetail) ? programId : undefined,
     open && (isCompanySchoolDetail || isTrainedTeachersDetail)
   )
@@ -1578,6 +1578,7 @@ export function ProgramDetailFullPageModal({
                 <ParticipatingInstitutionsSection
                   programId={displayProgram?.id}
                   program={displayProgram}
+                  navigationCapabilities={navigationCapabilities}
                   schoolIdFromUrl={schoolIdFromUrl}
                   schoolTabFromUrl={activeSchoolTab}
                   onSchoolTabChange={setSchoolTab}
