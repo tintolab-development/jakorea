@@ -110,14 +110,20 @@ export function removeWritingFormTemplateSave(templateId: string): void {
   }
 }
 
-/** localStorage 우선 저장 + formsSurveys API 동기화(활성 시 fire-and-forget) */
+/** localStorage 저장. `localOnly`가 아니면 양식 관리용 formsSurveys API도 동기화. */
 export async function persistWritingFormTemplateDraft(args: {
   templateId: string
   draft: WritingFormDraft
   overlay?: Record<string, unknown>
   editorState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
+  /** 프로그램 등록 임시저장 — 양식 버전 API와 분리 */
+  localOnly?: boolean
 }): Promise<void> {
+  if (args.localOnly) {
+    persistWritingFormTemplateSave(args)
+    return
+  }
   const { saveFormTemplateVersionDraft } = await import(
     '@/features/template/api/admin-form-templates-service'
   )
@@ -130,10 +136,12 @@ export async function persistWritingFormTemplateDraft(args: {
   })
 }
 
-/** API draft 우선, 실패·미활성 시 localStorage */
+/** API draft 우선, 실패·미활성 시 localStorage. 프로그램 등록은 `localOnly`. */
 export async function loadWritingFormTemplateDraft(
-  templateId: string
+  templateId: string,
+  options?: { localOnly?: boolean }
 ): Promise<WritingFormTemplateSaveRecord | null> {
+  if (options?.localOnly) return loadWritingFormTemplateSave(templateId)
   const { loadFormTemplateVersionDraft } = await import(
     '@/features/template/api/admin-form-templates-service'
   )

@@ -240,13 +240,6 @@ export async function loadFormTemplateVersionDraft(
             return local
           }
 
-          persistWritingFormTemplateSave({
-            templateId: templateCode,
-            draft: remote.draft,
-            overlay: remote.overlay,
-            editorState: remote.editorState,
-            settingsJson: remote.settingsJson,
-          })
           return remote
         }
       }

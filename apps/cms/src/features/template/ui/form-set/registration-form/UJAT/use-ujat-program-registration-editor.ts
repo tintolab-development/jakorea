@@ -35,6 +35,8 @@ export type UseUjatProgramRegistrationEditorOptions = {
   onTemplateDraftSaveConfirmed?: () => void
   /** true면 임시저장 복원 없이 시드로 시작 (신규 등록) */
   skipDraftRestore?: boolean
+  /** 프로그램 등록 임시저장 — localStorage만 사용 */
+  localOnlyDraftPersistence?: boolean
 }
 
 export function useUjatProgramRegistrationEditor(
@@ -44,6 +46,7 @@ export function useUjatProgramRegistrationEditor(
 ) {
   const onTemplateDraftSaveConfirmed = options?.onTemplateDraftSaveConfirmed
   const skipDraftRestore = options?.skipDraftRestore === true
+  const localOnlyDraftPersistence = options?.localOnlyDraftPersistence === true
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
 
@@ -86,7 +89,9 @@ export function useUjatProgramRegistrationEditor(
     setDraft(EMPTY_WRITING_FORM_DRAFT)
     setActiveParagraphId(null)
 
-    void loadWritingFormTemplateDraft(UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE)
+    void loadWritingFormTemplateDraft(UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE, {
+      localOnly: localOnlyDraftPersistence,
+    })
       .then(saved => {
         if (cancelled) return
         if (saved?.draft) {
@@ -116,7 +121,7 @@ export function useUjatProgramRegistrationEditor(
     return () => {
       cancelled = true
     }
-  }, [active, resetToSeed, skipDraftRestore])
+  }, [active, localOnlyDraftPersistence, resetToSeed, skipDraftRestore])
 
   useEffect(() => {
     if (!active) {
@@ -231,10 +236,11 @@ export function useUjatProgramRegistrationEditor(
       templateId: UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE,
       draft,
       overlay,
+      localOnly: localOnlyDraftPersistence,
     })
     persistUjatRegistrationTemplateSave({ draft, overlay })
     return { draft, overlay }
-  }, [draft])
+  }, [draft, localOnlyDraftPersistence])
 
   const handleSave = useCallback(() => {
     void (async () => {

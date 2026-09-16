@@ -171,6 +171,8 @@ export type UseProgramRegistrationEditorOptions = {
   forceUserEditable?: boolean
   /** true면 임시저장 복원 없이 시드로 시작 (신규 등록) */
   skipDraftRestore?: boolean
+  /** 프로그램 등록 임시저장 — localStorage만 사용 */
+  localOnlyDraftPersistence?: boolean
 }
 
 export function useProgramRegistrationEditor(
@@ -186,6 +188,7 @@ export function useProgramRegistrationEditor(
   const onTemplateDraftSaveConfirmed = editorOptions?.onTemplateDraftSaveConfirmed
   const templateCode = editorOptions?.templateCode
   const skipDraftRestore = editorOptions?.skipDraftRestore === true
+  const localOnlyDraftPersistence = editorOptions?.localOnlyDraftPersistence === true
   const isStructureLocked = isWritingFormTemplateStructureLocked({
     templateCode,
     systemTemplate: editorOptions?.systemTemplate,
@@ -382,7 +385,9 @@ export function useProgramRegistrationEditor(
       setActiveParagraphId(null)
       const defaults = createDefaultRegistrationEditorState(programRegistrationFormVariant)
 
-      void loadWritingFormTemplateDraft(templateCode)
+      void loadWritingFormTemplateDraft(templateCode, {
+        localOnly: localOnlyDraftPersistence,
+      })
         .then(saved => {
           if (cancelled) return
           if (saved?.draft) {
@@ -423,6 +428,7 @@ export function useProgramRegistrationEditor(
     skipDraftRestore,
     templateCode,
     usesTemplateDraftApi,
+    localOnlyDraftPersistence,
   ])
 
   useEffect(() => {
@@ -940,6 +946,7 @@ export function useProgramRegistrationEditor(
         programTitleKo: resolvedProgramTitleKo,
         activeParagraphId,
       }),
+      localOnly: localOnlyDraftPersistence,
     })
   }, [
     activeParagraphId,
@@ -962,6 +969,7 @@ export function useProgramRegistrationEditor(
     templateCode,
     trainedTeachersTeacherTrainingEnabled,
     usesTemplateDraftApi,
+    localOnlyDraftPersistence,
   ])
 
   /** 중간 저장 — template draft만. 프로그램 POST는 handleCompleteRegistration에서만. */

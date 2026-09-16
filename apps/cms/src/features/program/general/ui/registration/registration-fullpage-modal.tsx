@@ -13,9 +13,10 @@ import { useGeneralProgramRegistrationFlow } from '@/features/program/general/ho
 import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general/ui/registration/registration-body-header'
 import {
   peekWritingFormDraftOverwrite,
-  REGISTRATION_DRAFT_MODE_FRESH,
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
   clearRegistrationDraftForFreshStart,
+  shouldRemoveRegistrationDraftAfterCompletion,
+  shouldSkipRegistrationDraftRestore,
   type ProgramRegistrationDraftTemplateCode,
 } from '@/features/program/shared/lib/registration-draft-notice'
 import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
@@ -63,8 +64,15 @@ export function GeneralProgramRegistrationFullpageModal({
   const [completeSuccessOpen, setCompleteSuccessOpen] = useState(false)
   const pendingCreatedProgramRef = useRef<Program | undefined>(undefined)
 
-  const skipDraftRestore =
-    searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY) === REGISTRATION_DRAFT_MODE_FRESH
+  // 안내 팝업에서 「이어서 작성」을 명시한 경우만 복원한다.
+  // mode 누락(직접 URL 진입 포함)은 새 폼으로 시작해 저장본이 조용히 노출되지 않게 한다.
+  const skipDraftRestore = shouldSkipRegistrationDraftRestore(
+    searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+  )
+  const shouldRemoveSavedDraftAfterCompletion =
+    shouldRemoveRegistrationDraftAfterCompletion(
+      searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+    )
 
   const initialStep = useMemo(() => {
     const raw = searchParams.get(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
@@ -176,11 +184,19 @@ export function GeneralProgramRegistrationFullpageModal({
     const created = pendingCreatedProgramRef.current
     pendingCreatedProgramRef.current = undefined
     setCompleteSuccessOpen(false)
-    const registrationTemplateCode = flow.registrationTemplateId as ProgramRegistrationDraftTemplateCode
-    clearRegistrationDraftForFreshStart(registrationTemplateCode)
-    removeWritingFormTemplateSave(flow.currentStepDef.templateId)
+    if (shouldRemoveSavedDraftAfterCompletion) {
+      const registrationTemplateCode =
+        flow.registrationTemplateId as ProgramRegistrationDraftTemplateCode
+      clearRegistrationDraftForFreshStart(registrationTemplateCode)
+      removeWritingFormTemplateSave(flow.currentStepDef.templateId)
+    }
     onProgramRegistrationSaved?.(created)
-  }, [flow.currentStepDef.templateId, flow.registrationTemplateId, onProgramRegistrationSaved])
+  }, [
+    flow.currentStepDef.templateId,
+    flow.registrationTemplateId,
+    onProgramRegistrationSaved,
+    shouldRemoveSavedDraftAfterCompletion,
+  ])
 
   const footerActions = useMemo((): TemplateFullpageModalFooterAction[] | undefined => {
     if (flow.phase === 'program') {
