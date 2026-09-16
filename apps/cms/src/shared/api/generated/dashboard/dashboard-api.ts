@@ -39,12 +39,15 @@ import type {
   IndividualDocumentEvaluationRequest,
   IndividualDocumentEvaluationResponse,
   List10Params,
+  ManagerSlot,
   NotificationCasePage,
   NotificationUnreadCountResponse,
   Notifications1Params,
   PageResponse,
   PreferenceResponse,
   PreferenceUpdateRequest,
+  VolunteerDocumentEvaluationRequest,
+  VolunteerDocumentEvaluationResponse,
   WidgetProgramFiltersSaveRequest
 } from './schemas';
 
@@ -55,6 +58,23 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
   export const getJAKoreaCMSBackendAPIDashboardSubset = () => {
+/**
+ * APPLICATION_WRITE 권한과 프로그램 접근 범위가 필요합니다. MASTER와 대상 프로그램의 PM은 A/B 슬롯을 모두 수정할 수 있고 그 외 일반 관리자는 본인에게 배정된 슬롯만 멱등 갱신합니다. 최종 서류 결과가 확정되면 MASTER와 PM을 포함해 수정할 수 없으며 최종 documentStatus는 평가 저장으로 변경되지 않습니다.
+ * @summary 봉사자 담당자 A/B 서류 평가 저장
+ */
+const putVolunteerDocumentManagerEvaluation = (
+    applicationId: number,
+    managerSlot: ManagerSlot,
+    volunteerDocumentEvaluationRequest: VolunteerDocumentEvaluationRequest,
+ options?: SecondParameter<typeof customInstance<VolunteerDocumentEvaluationResponse>>,) => {
+      return customInstance<VolunteerDocumentEvaluationResponse>(
+      {url: `/api/admin/volunteer-applications/${applicationId}/document-evaluations/${managerSlot}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: volunteerDocumentEvaluationRequest
+    },
+      options);
+    }
+
 /**
  * ### 이 API가 하는 일
  * - 현재 관리자 외부 알림 채널 수신 설정 조회
@@ -1799,7 +1819,8 @@ const dashboardHome = (
       options);
     }
 
-return {preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,markRead2,hide1,markClicked1,readAllNotifications,individualApplicationDetail,updateIndividualApplication,notifications1,unreadNotificationCount,list10,getDashboardShortcutBadges,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome}};
+return {putVolunteerDocumentManagerEvaluation,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,markRead2,hide1,markClicked1,readAllNotifications,individualApplicationDetail,updateIndividualApplication,notifications1,unreadNotificationCount,list10,getDashboardShortcutBadges,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome}};
+export type PutVolunteerDocumentManagerEvaluationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['putVolunteerDocumentManagerEvaluation']>>>
 export type Preferences1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['preferences1']>>>
 export type UpdatePreferences1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['updatePreferences1']>>>
 export type GetDashboardPreferencesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getDashboardPreferences']>>>

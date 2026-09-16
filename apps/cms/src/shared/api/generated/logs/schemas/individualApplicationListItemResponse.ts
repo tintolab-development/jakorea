@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { InterviewAvailabilitySlot } from './interviewAvailabilitySlot';
+import type { InterviewEvaluationSummary } from './interviewEvaluationSummary';
 import type { PreferredEducationScheduleResponse } from './preferredEducationScheduleResponse';
 
 /**
@@ -54,6 +55,9 @@ export interface IndividualApplicationListItemResponse {
   assignedInterviewStartAt?: string;
   /** 관리자가 확정한 면접 종료 시각. 신청자 가능 일정과 별개입니다. */
   assignedInterviewEndAt?: string;
+  interviewAssignmentId?: number;
+  interviewAssignmentStatus?: string;
+  interviewEvaluations?: InterviewEvaluationSummary[];
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;

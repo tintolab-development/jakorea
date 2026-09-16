@@ -7739,6 +7739,68 @@
           }
         }
       },
+      "VolunteerDocumentEvaluationRequest": {
+        "type": "object",
+        "description": "일반 프로그램 봉사자 담당자 A/B 서류 평가 저장 요청",
+        "properties": {
+          "evaluation": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "PASS|NEUTRAL|FAIL|UNREVIEWED"
+          }
+        },
+        "required": [
+          "evaluation"
+        ]
+      },
+      "VolunteerDocumentEvaluationResponse": {
+        "type": "object",
+        "description": "일반 프로그램 봉사자 담당자 A/B 서류 평가 저장 결과",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "managerSlot": {
+            "type": "string"
+          },
+          "evaluation": {
+            "type": "string"
+          },
+          "evaluatedByAdminId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "evaluatedByAdminName": {
+            "type": "string"
+          },
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "managerAEvaluation": {
+            "type": "string"
+          },
+          "managerBEvaluation": {
+            "type": "string"
+          },
+          "documentStatus": {
+            "type": "string"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "canEditManagerAEvaluation": {
+            "type": "boolean"
+          },
+          "canEditManagerBEvaluation": {
+            "type": "boolean"
+          }
+        }
+      },
       "UjatEducationRegionOrderItem": {
         "type": "object",
         "properties": {
@@ -17348,10 +17410,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -35800,9 +35862,53 @@
           "giveUpYn": {
             "type": "boolean"
           },
+          "applicationFormResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "essaySubmitted": {
+            "type": "boolean"
+          },
+          "interviewAssignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "interviewAssignmentStatus": {
+            "type": "string"
+          },
+          "assignedInterviewSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignedInterviewStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "assignedInterviewEndAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "interviewEvaluations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InterviewEvaluationSummary"
+            }
+          },
           "submittedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "managerAEvaluation": {
+            "type": "string"
+          },
+          "managerBEvaluation": {
+            "type": "string"
+          },
+          "canEditManagerAEvaluation": {
+            "type": "boolean"
+          },
+          "canEditManagerBEvaluation": {
+            "type": "boolean"
           },
           "availableActions": {
             "type": "array",
@@ -36805,6 +36911,32 @@
           }
         }
       },
+      "AssignmentInstructor": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorName": {
+            "type": "string"
+          },
+          "assignmentStatus": {
+            "type": "string"
+          },
+          "scheduleLead": {
+            "type": "boolean"
+          }
+        }
+      },
       "PageResponseParticipantListItemResponse": {
         "type": "object",
         "properties": {
@@ -36900,6 +37032,92 @@
             "items": {
               "type": "string"
             }
+          },
+          "grade": {
+            "type": "string"
+          },
+          "regionSido": {
+            "type": "string"
+          },
+          "regionSigungu": {
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "studentNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "classCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "studentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "teacherMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "teacherName": {
+            "type": "string"
+          },
+          "materialAssignmentStatus": {
+            "type": "string"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionProgress"
+            }
+          },
+          "assignmentInstructors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignmentInstructor"
+            }
+          },
+          "mergeGroupId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mergeStatus": {
+            "type": "string"
+          },
+          "mergeLead": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SessionProgress": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scheduleName": {
+            "type": "string"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "attendanceStatus": {
+            "type": "string"
+          },
+          "assignmentStatus": {
+            "type": "string"
           }
         }
       },
@@ -36982,6 +37200,31 @@
           },
           "ujatPartnerRecommendationPath": {
             "type": "string"
+          },
+          "grade": {
+            "type": "string"
+          },
+          "regionSido": {
+            "type": "string"
+          },
+          "regionSigungu": {
+            "type": "string"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Session"
+            }
+          },
+          "mergeGroupId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mergeStatus": {
+            "type": "string"
+          },
+          "mergeLead": {
+            "type": "boolean"
           }
         }
       },
@@ -37235,6 +37478,43 @@
           },
           "adminExceptionReason": {
             "type": "string"
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "grade": {
+            "type": "string"
+          },
+          "lectureDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "timeLabel": {
+            "type": "string"
+          },
+          "lectureLabel": {
+            "type": "string"
+          },
+          "dateRoundTimeLabel": {
+            "type": "string"
+          },
+          "lectureProgressStatus": {
+            "type": "string"
+          },
+          "fileCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileObjectIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
           }
         }
       },
@@ -37366,6 +37646,19 @@
           },
           "longDistance": {
             "type": "boolean"
+          },
+          "instructorProfileStatus": {
+            "type": "string"
+          },
+          "primaryActivityType": {
+            "type": "string"
+          },
+          "availableScheduleIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
           },
           "availableScheduleMemo": {
             "type": "string"
@@ -37528,6 +37821,19 @@
             "type": "string",
             "format": "date-time",
             "description": "관리자가 확정한 면접 종료 시각. 신청자 가능 일정과 별개입니다."
+          },
+          "interviewAssignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "interviewAssignmentStatus": {
+            "type": "string"
+          },
+          "interviewEvaluations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InterviewEvaluationSummary"
+            }
           },
           "submittedAt": {
             "type": "string",
@@ -40322,15 +40628,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },

@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { Session } from './session';
 
 export interface OrganizationApplicationListItemResponse {
   id?: number;
@@ -28,4 +29,11 @@ export interface OrganizationApplicationListItemResponse {
   defaultScheduleName?: string;
   ujatPartnerAssignmentsPath?: string;
   ujatPartnerRecommendationPath?: string;
+  grade?: string;
+  regionSido?: string;
+  regionSigungu?: string;
+  sessions?: Session[];
+  mergeGroupId?: number;
+  mergeStatus?: string;
+  mergeLead?: boolean;
 }

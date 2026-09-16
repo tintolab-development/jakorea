@@ -6,9 +6,12 @@
  * OpenAPI spec version: v9
  */
 
-export interface DocumentManagerEvaluation {
-  evaluation?: string;
-  evaluatedByAdminId?: number;
-  evaluatedByAdminName?: string;
-  evaluatedAt?: string;
-}
+export type DocumentManagerEvaluation = typeof DocumentManagerEvaluation[keyof typeof DocumentManagerEvaluation];
+
+
+export const DocumentManagerEvaluation = {
+  PASS: 'PASS',
+  NEUTRAL: 'NEUTRAL',
+  FAIL: 'FAIL',
+  UNREVIEWED: 'UNREVIEWED',
+} as const;

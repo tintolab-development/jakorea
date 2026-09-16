@@ -5,6 +5,7 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InterviewEvaluationSummary } from './interviewEvaluationSummary';
 
 export interface VolunteerApplicationListItemResponse {
   id?: number;
@@ -21,6 +22,18 @@ export interface VolunteerApplicationListItemResponse {
   reserveRank?: number;
   isReparticipation?: boolean;
   giveUpYn?: boolean;
+  applicationFormResponseId?: number;
+  essaySubmitted?: boolean;
+  interviewAssignmentId?: number;
+  interviewAssignmentStatus?: string;
+  assignedInterviewSlotId?: number;
+  assignedInterviewStartAt?: string;
+  assignedInterviewEndAt?: string;
+  interviewEvaluations?: InterviewEvaluationSummary[];
   submittedAt?: string;
+  managerAEvaluation?: string;
+  managerBEvaluation?: string;
+  canEditManagerAEvaluation?: boolean;
+  canEditManagerBEvaluation?: boolean;
   availableActions?: string[];
 }
