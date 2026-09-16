@@ -11882,6 +11882,63 @@
             "items": {
               "type": "string"
             }
+          },
+          "educationTarget": {
+            "type": "string",
+            "nullable": true,
+            "description": "교육 대상. TT 상세 config의 educationTarget 우선, 공통 교육 설정 fallback."
+          },
+          "educationGrade": {
+            "type": "string",
+            "nullable": true,
+            "description": "대상 학년 표시값. 예: 3~6학년."
+          },
+          "lectureRound": {
+            "type": "string",
+            "nullable": true,
+            "description": "TT 프로그램 config의 교육 회차 표시값."
+          },
+          "totalEducationRoundCount": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "교사 연수 일정을 제외한 전체 교육 일정 수."
+          },
+          "completedEducationRoundCount": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "COMPLETED 완료가 연결된 교육 일정 수."
+          },
+          "progressLabel": {
+            "type": "string",
+            "enum": [
+              "결과 대기",
+              "신청 반려",
+              "진행 전",
+              "진행 중",
+              "진행 완료",
+              "활동 포기"
+            ]
+          },
+          "textbookName": {
+            "type": "string",
+            "nullable": true,
+            "description": "program_material에 연결된 첫 교재명. 없으면 TT config fallback."
+          },
+          "educationJournalCount": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "journalSubmitted": {
+            "type": "boolean",
+            "description": "educationJournalCount가 1 이상인지 나타내는 호환 필드."
+          },
+          "educationCompletionCount": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
           }
         }
       },
