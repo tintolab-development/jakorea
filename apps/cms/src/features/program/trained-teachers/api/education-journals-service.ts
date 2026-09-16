@@ -116,6 +116,10 @@ export function mapApplicantSchoolToParticipatingSchool(
   row: ApplicantSchoolRow,
   index: number
 ): ParticipatingSchoolRow {
+  const completed = row.completedEducationRoundCount
+  const total = row.totalEducationRoundCount
+  const lectureRoundFromCounts =
+    completed != null && total != null ? `${completed}/${total}` : undefined
   return {
     id: row.id,
     no: index + 1,
@@ -124,15 +128,24 @@ export function mapApplicantSchoolToParticipatingSchool(
     educationGrade: row.educationGrade || '',
     classCount: row.classCount,
     studentCount: row.studentCount,
-    lectureRound: '',
+    lectureRound: row.lectureRound?.trim() || lectureRoundFromCounts || '',
     /** BE에 배송 원장 없음 — 교재명·수량만 표시. 배송 전/중/완료를 API로 invent 하지 않음 */
     textbookStatus: 'not_applicable',
     approvalStatus: 'approved',
     teacherName: row.teacherName || '-',
+    /** TT는 강사 Relation 없음 — 합성하지 않음 */
     instructors: '',
     programId: row.programId,
     sessions: row.sessions,
     preferredScheduleBlocks: row.preferredScheduleBlocks,
+    educationTarget: row.educationTarget,
+    progressLabel: row.progressLabel,
+    totalEducationRoundCount: row.totalEducationRoundCount,
+    completedEducationRoundCount: row.completedEducationRoundCount,
+    textbookName: row.textbookName,
+    educationJournalCount: row.educationJournalCount,
+    journalSubmitted: row.journalSubmitted,
+    educationCompletionCount: row.educationCompletionCount,
   }
 }
 

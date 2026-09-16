@@ -89,12 +89,27 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
     [dto.organizationSido, dto.organizationSigungu].filter(Boolean).join(' ') ||
     ''
   const preferredScheduleBlocks = mapPreferredScheduleBlocks(dto.preferredScheduleBlocks)
+  const educationGrade = dto.educationGrade?.trim() || ''
+  const lectureRound = dto.lectureRound?.trim() || undefined
+  const progressLabel = dto.progressLabel?.trim() || undefined
+  const textbookName = dto.textbookName?.trim() || undefined
+  const educationTarget = dto.educationTarget?.trim() || undefined
+  const totalEducationRoundCount = toNonNegativeCount(dto.totalEducationRoundCount)
+  const completedEducationRoundCount = toNonNegativeCount(dto.completedEducationRoundCount)
+  const educationJournalCount = toNonNegativeCount(dto.educationJournalCount)
+  const educationCompletionCount = toNonNegativeCount(dto.educationCompletionCount)
+  const journalSubmitted =
+    typeof dto.journalSubmitted === 'boolean'
+      ? dto.journalSubmitted
+      : educationJournalCount != null
+        ? educationJournalCount > 0
+        : undefined
   return {
     id: toId(dto.applicationId),
     no: index + 1,
     schoolName,
     region,
-    educationGrade: '',
+    educationGrade,
     classCount: dto.classCount ?? dto.requestedClassCount ?? 0,
     studentCount: dto.studentCount ?? dto.requestedStudentCount ?? 0,
     teacherName: dto.teacherName?.trim() || '-',
@@ -104,10 +119,24 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
     programId: toId(dto.programId) || programId,
     desiredEducationPeriod: memo || undefined,
     preferredScheduleBlocks,
+    educationTarget,
+    lectureRound,
+    progressLabel,
+    totalEducationRoundCount,
+    completedEducationRoundCount,
+    textbookName,
+    educationJournalCount,
+    journalSubmitted,
+    educationCompletionCount,
     detail: memo
       ? {
           otherRequests: memo,
         }
       : undefined,
   }
+}
+
+function toNonNegativeCount(value: number | null | undefined): number | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined
+  return Math.max(0, Math.trunc(value))
 }

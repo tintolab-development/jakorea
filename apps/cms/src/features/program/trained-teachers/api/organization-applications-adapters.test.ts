@@ -95,6 +95,35 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     expect(row.preferredScheduleBlocks?.[0].date).toBe('2026-07-08')
     expect(row.preferredScheduleBlocks?.[0].sessionTimes[0].classPeriod).toBe('1교시')
   })
+  it('maps progress completeness additive fields (0 is not missing)', () => {
+    const row = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 186341,
+        programId: 186004,
+        educationTarget: '초등',
+        educationGrade: '5~6학년',
+        lectureRound: '총 4회',
+        totalEducationRoundCount: 4,
+        completedEducationRoundCount: 2,
+        progressLabel: '진행 중',
+        textbookName: 'JA 경제생활 첫걸음',
+        educationJournalCount: 0,
+        journalSubmitted: false,
+        educationCompletionCount: 0,
+      },
+      0,
+      '186004'
+    )
+    expect(row.educationGrade).toBe('5~6학년')
+    expect(row.lectureRound).toBe('총 4회')
+    expect(row.progressLabel).toBe('진행 중')
+    expect(row.textbookName).toBe('JA 경제생활 첫걸음')
+    expect(row.totalEducationRoundCount).toBe(4)
+    expect(row.completedEducationRoundCount).toBe(2)
+    expect(row.educationJournalCount).toBe(0)
+    expect(row.journalSubmitted).toBe(false)
+    expect(row.educationCompletionCount).toBe(0)
+  })
 })
 
 describe('mapPreferredScheduleBlocks', () => {

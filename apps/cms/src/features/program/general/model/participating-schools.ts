@@ -68,6 +68,21 @@ export interface ParticipatingSchoolRow {
   availableActions?: string[]
   /** TT 희망 교육 일정 structured blocks (org-application SoT) */
   preferredScheduleBlocks?: ApplicantPreferredScheduleBlock[]
+  /** TT 교육 대상 */
+  educationTarget?: string
+  /** TT 진행 상태 라벨 (progressLabel SoT) */
+  progressLabel?: string
+  /** TT 전체 교육 일정 수. 최소 0 — 결측 아님. */
+  totalEducationRoundCount?: number
+  /** TT 완료 교육 일정 수. 최소 0. */
+  completedEducationRoundCount?: number
+  /** TT 교재명 */
+  textbookName?: string
+  /** TT 교육일지 수. 최소 0. */
+  educationJournalCount?: number
+  journalSubmitted?: boolean
+  /** TT 교육 완료 건수. 최소 0. */
+  educationCompletionCount?: number
 }
 
 export const TEXTBOOK_STATUS_LABELS: Record<TextbookStatusKey, string> = {

@@ -203,100 +203,166 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
   )
 
   const columns: ColumnsType<ParticipatingSchoolRow> = useMemo(
-    () => [
-      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
-      {
-        title: '참여 학교명',
-        dataIndex: 'schoolName',
-        key: 'schoolName',
-        width: 180,
-        align: 'center',
-        ellipsis: true,
-      },
-      {
-        title: '지역',
-        dataIndex: 'region',
-        key: 'region',
-        width: 140,
-        align: 'center',
-        ellipsis: true,
-      },
-      {
-        title: '교육 학년',
-        dataIndex: 'educationGrade',
-        key: 'educationGrade',
-        width: 90,
-        align: 'center',
-      },
-      {
-        title: '교육 학급 수',
-        dataIndex: 'classCount',
-        key: 'classCount',
-        width: 90,
-        align: 'center',
-        render: (v: number) => (v != null ? `${v}개` : '-'),
-      },
-      {
-        title: '총 학생 수',
-        dataIndex: 'studentCount',
-        key: 'studentCount',
-        width: 100,
-        align: 'center',
-        render: (v: number) => (v != null ? `${v}명` : '-'),
-      },
-      {
-        title: '강의 진행 회차',
-        dataIndex: 'lectureRound',
-        key: 'lectureRound',
-        width: 120,
-        align: 'center',
-      },
-      {
-        title: '교재 현황',
-        dataIndex: 'textbookStatus',
-        key: 'textbookStatus',
-        width: 116,
-        align: 'center',
-        onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
-        }),
-        render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (
-          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
-            <StatusDropdownCell<TextbookStatusKey>
-              status={status}
-              statusOptions={textbookStatusKeys}
-              renderBadge={s => <TextbookStatusBadge status={s} />}
-              isItemDisabled={(cur, opt) => cur === opt}
-              onChange={key => handleTextbookStatusChange(record.id, key)}
-              isOpen={openTextbookDropdownSchoolId === record.id}
-              onOpenChange={open => setOpenTextbookDropdownSchoolId(open ? record.id : null)}
-              tagLayout="tag100"
-            />
-          </div>
-        ),
-      },
-      {
-        title: '담당 교사',
-        dataIndex: 'teacherName',
-        key: 'teacherName',
-        width: 110,
-        align: 'center',
-      },
-      {
-        title: '담당 강사진',
-        key: 'instructors',
-        width: 160,
-        align: 'center',
-        ellipsis: true,
-        render: (_: unknown, record: ParticipatingSchoolRow) =>
-          getInstructorDisplayForSchool(record.id, record.schoolName),
-      },
-    ],
+    () => {
+      const base: ColumnsType<ParticipatingSchoolRow> = [
+        { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
+        {
+          title: '참여 학교명',
+          dataIndex: 'schoolName',
+          key: 'schoolName',
+          width: 180,
+          align: 'center',
+          ellipsis: true,
+        },
+        {
+          title: '지역',
+          dataIndex: 'region',
+          key: 'region',
+          width: 140,
+          align: 'center',
+          ellipsis: true,
+        },
+        {
+          title: '교육 학년',
+          dataIndex: 'educationGrade',
+          key: 'educationGrade',
+          width: 90,
+          align: 'center',
+        },
+        {
+          title: '교육 학급 수',
+          dataIndex: 'classCount',
+          key: 'classCount',
+          width: 90,
+          align: 'center',
+          render: (v: number) => (v != null ? `${v}개` : '-'),
+        },
+        {
+          title: '총 학생 수',
+          dataIndex: 'studentCount',
+          key: 'studentCount',
+          width: 100,
+          align: 'center',
+          render: (v: number) => (v != null ? `${v}명` : '-'),
+        },
+      ]
+
+      if (isTrainedTeachersSurface) {
+        return [
+          ...base,
+          {
+            title: '진행 상태',
+            dataIndex: 'progressLabel',
+            key: 'progressLabel',
+            width: 110,
+            align: 'center',
+            render: (label: string | undefined, record: ParticipatingSchoolRow) =>
+              label?.trim() || record.lectureRound || '-',
+          },
+          {
+            title: '강의 진행 회차',
+            key: 'educationRoundProgress',
+            width: 120,
+            align: 'center',
+            render: (_: unknown, record: ParticipatingSchoolRow) => {
+              const completed = record.completedEducationRoundCount
+              const total = record.totalEducationRoundCount
+              if (completed != null && total != null) return `${completed}/${total}`
+              return record.lectureRound?.trim() || '0/0'
+            },
+          },
+          {
+            title: '교재',
+            dataIndex: 'textbookName',
+            key: 'textbookName',
+            width: 140,
+            align: 'center',
+            ellipsis: true,
+            render: (name: string | undefined) => name?.trim() || '-',
+          },
+          {
+            title: '교육일지',
+            dataIndex: 'educationJournalCount',
+            key: 'educationJournalCount',
+            width: 90,
+            align: 'center',
+            render: (count: number | undefined) => (count != null ? String(count) : '0'),
+          },
+          {
+            title: '교육 완료',
+            dataIndex: 'educationCompletionCount',
+            key: 'educationCompletionCount',
+            width: 90,
+            align: 'center',
+            render: (count: number | undefined) => (count != null ? String(count) : '0'),
+          },
+          {
+            title: '담당 교사',
+            dataIndex: 'teacherName',
+            key: 'teacherName',
+            width: 110,
+            align: 'center',
+          },
+        ]
+      }
+
+      return [
+        ...base,
+        {
+          title: '강의 진행 회차',
+          dataIndex: 'lectureRound',
+          key: 'lectureRound',
+          width: 120,
+          align: 'center',
+        },
+        {
+          title: '교재 현황',
+          dataIndex: 'textbookStatus',
+          key: 'textbookStatus',
+          width: 116,
+          align: 'center',
+          onCell: () => ({
+            className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+          }),
+          render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (
+            <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+              <StatusDropdownCell<TextbookStatusKey>
+                status={status}
+                statusOptions={textbookStatusKeys}
+                renderBadge={s => <TextbookStatusBadge status={s} />}
+                isItemDisabled={(cur, opt) => cur === opt}
+                onChange={key => handleTextbookStatusChange(record.id, key)}
+                isOpen={openTextbookDropdownSchoolId === record.id}
+                onOpenChange={open => setOpenTextbookDropdownSchoolId(open ? record.id : null)}
+                tagLayout="tag100"
+              />
+            </div>
+          ),
+        },
+        {
+          title: '담당 교사',
+          dataIndex: 'teacherName',
+          key: 'teacherName',
+          width: 110,
+          align: 'center',
+        },
+        {
+          title: '담당 강사진',
+          key: 'instructors',
+          width: 160,
+          align: 'center',
+          ellipsis: true,
+          render: (_: unknown, record: ParticipatingSchoolRow) =>
+            getInstructorDisplayForSchool(record.id, record.schoolName),
+        },
+      ]
+    },
     [
       handleTextbookStatusChange,
       textbookStatusKeys,
       getInstructorDisplayForSchool,
       openTextbookDropdownSchoolId,
+      isTrainedTeachersSurface,
     ]
   )
 
@@ -387,14 +453,19 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
         <div className="program-progress-tab__top">
           <div className="program-progress-tab__bar-inner">
             <SegmentedTab
-              options={[
-                { label: '참여 학교 정보', value: PARTICIPATING_SCHOOL_TAB },
-                { label: '강사 정보', value: INSTRUCTOR_TAB },
-              ]}
-              value={subTab}
-              onChange={v =>
-                setSubTab(v as typeof PARTICIPATING_SCHOOL_TAB | typeof INSTRUCTOR_TAB)
+              options={
+                isTrainedTeachersSurface
+                  ? [{ label: '참여 학교 정보', value: PARTICIPATING_SCHOOL_TAB }]
+                  : [
+                      { label: '참여 학교 정보', value: PARTICIPATING_SCHOOL_TAB },
+                      { label: '강사 정보', value: INSTRUCTOR_TAB },
+                    ]
               }
+              value={isTrainedTeachersSurface ? PARTICIPATING_SCHOOL_TAB : subTab}
+              onChange={v => {
+                if (isTrainedTeachersSurface) return
+                setSubTab(v as typeof PARTICIPATING_SCHOOL_TAB | typeof INSTRUCTOR_TAB)
+              }}
               size="mediumCompact"
             />
             <div className="program-progress-tab__filters">
@@ -440,7 +511,7 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                     />
                   </div>
                 </Col>
-                {subTab === PARTICIPATING_SCHOOL_TAB && (
+                {!isTrainedTeachersSurface && subTab === PARTICIPATING_SCHOOL_TAB && (
                   <Col flex="0 1 auto" className="program-progress-tab__filter-col">
                     <div className="program-progress-tab__filter-field">
                       <span className="program-progress-tab__filter-label">교재 현황</span>
@@ -455,7 +526,7 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                     </div>
                   </Col>
                 )}
-                {subTab === INSTRUCTOR_TAB && (
+                {!isTrainedTeachersSurface && subTab === INSTRUCTOR_TAB && (
                   <Col flex="0 1 auto" className="program-progress-tab__filter-col">
                     <div className="program-progress-tab__filter-field">
                       <span className="program-progress-tab__filter-label">정산 현황</span>
@@ -500,7 +571,7 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
           </div>
         </div>
 
-        {subTab === PARTICIPATING_SCHOOL_TAB && (
+        {(isTrainedTeachersSurface || subTab === PARTICIPATING_SCHOOL_TAB) && (
           <>
             <Divider className="program-progress-tab__divider" />
             <div className="program-progress-tab__below-divider">
@@ -559,7 +630,7 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
           </>
         )}
 
-        {subTab === INSTRUCTOR_TAB && (
+        {!isTrainedTeachersSurface && subTab === INSTRUCTOR_TAB && (
           <>
             <Divider className="program-progress-tab__divider" />
             <div className="program-progress-tab__below-divider">
