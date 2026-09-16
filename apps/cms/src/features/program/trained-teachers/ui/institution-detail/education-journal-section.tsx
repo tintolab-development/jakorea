@@ -315,6 +315,9 @@ export function TrainedTeachersEducationJournalSection({
         <TrainedTeachersEducationJournalViewModal
           open={viewerEntry != null}
           entry={viewerEntry}
+          programId={programId}
+          isDownloading={downloadMutation.isPending}
+          onDownload={handleDownloadEntry}
           onClose={() => setViewerEntry(null)}
         />
       ) : null}

@@ -99,10 +99,24 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
 }
 
 export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program {
+  const dtoExt = dto as ProgramResponse & {
+    remarks?: string
+    otherMatters?: string
+    contactName?: string
+    recruitmentTargetDetail?: string
+  }
   const title = dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
   const id = dto.id == null ? '' : String(dto.id)
   const now = new Date().toISOString()
   const details = parseTrainedTeacherServiceDetailJson(dto.serviceDetailJson)
+  const {
+    lifecycleStatus: _serviceDetailLifecycle,
+    status: _serviceDetailStatus,
+    ...detailFields
+  } = details
+  void _serviceDetailLifecycle
+  void _serviceDetailStatus
+
   const periodStatus = (dto as ProgramResponse & { periodStatus?: string }).periodStatus
   /** 1급 API 필드 우선, 없을 때만 serviceDetailJson fallback */
   const educationStructure =
@@ -110,9 +124,18 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     details.generalProgramEducationStructure
   const detailedProgramName =
     dto.detailedProgramName?.trim() || details.generalCommonInfo?.detailedProgramName
+  const participantRemarks = (
+    details.generalCommonInfo?.participantRecruitmentInfo as { remarks?: string } | undefined
+  )?.remarks
+  const otherNotes =
+    dtoExt.otherMatters?.trim() ||
+    dtoExt.remarks?.trim() ||
+    details.otherNotes?.trim() ||
+    participantRemarks?.trim() ||
+    undefined
 
   return baseProgram({
-    ...details,
+    ...detailFields,
     id,
     sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
     title,
@@ -180,6 +203,8 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     recruitmentGuide: dto.recruitmentGuide,
     learningSupportContent: dto.learningSupportContent,
     attachmentFileNames: dto.attachmentFileNames,
+    otherNotes,
+    studentListRequired: details.studentListRequired,
     generalParticipantTypes: ['school_institution'],
     generalProgramEducationStructure: educationStructure,
     generalCommonInfo: {

@@ -7,8 +7,6 @@ import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
-import { getTrainedTeachersPreferredScheduleBlocks } from '@/features/program/trained-teachers/model/institution-detail'
-import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/program-approval-status-detail-value'
 import type { ApplicantInstitutionEditDraft } from '@/features/program/general/lib/applicant-institution-detail-edit'
@@ -119,9 +117,7 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
   const showScheduleSection =
     institutionApplicationBridge == null ||
     shouldShowInstitutionApplicationScheduleParagraph(institutionApplicationBridge)
-  const preferredScheduleBlocks = shouldUseTrainedTeacherProgramsRemoteApi()
-    ? []
-    : getTrainedTeachersPreferredScheduleBlocks(institution.id)
+  const preferredScheduleBlocks = institution.preferredScheduleBlocks ?? []
 
   const classAndCount: ReactNode =
     isEditMode && draft && onDraftChange ? (

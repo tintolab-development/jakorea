@@ -64,6 +64,19 @@ export async function createTrainedTeacherEducationJournal(
   return mapEducationJournalResponseToEntry(dto, 0)
 }
 
+export async function fetchTrainedTeacherEducationJournalBlob(
+  programId: string,
+  entry: TrainedTeachersEducationJournalEntry
+): Promise<Blob> {
+  assertRemoteReady()
+  const meta = await fetchTrainedTeacherEducationJournalDownloadRemote(programId, entry.id)
+  const endpoint = meta.downloadEndpoint?.trim()
+  if (!endpoint) {
+    throw new Error('교육일지 다운로드 경로가 없습니다.')
+  }
+  return fetchTrainedTeacherEducationJournalFileBlob(endpoint)
+}
+
 export async function downloadTrainedTeacherEducationJournal(
   programId: string,
   entry: TrainedTeachersEducationJournalEntry
@@ -119,6 +132,7 @@ export function mapApplicantSchoolToParticipatingSchool(
     instructors: '',
     programId: row.programId,
     sessions: row.sessions,
+    preferredScheduleBlocks: row.preferredScheduleBlocks,
   }
 }
 

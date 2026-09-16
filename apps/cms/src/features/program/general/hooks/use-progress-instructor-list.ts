@@ -1,6 +1,7 @@
 /**
  * 프로그램 진행현황 탭 - 참여 강사 목록
  * remote OFF → 빈 목록 + API 미연동 alert; remote ON → API
+ * 교육받은 교사(TT): 강사 Relation·진행 LNB 제품 비범위 — alert/remote 호출 없음
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
@@ -17,7 +18,10 @@ import {
 import type { ProgressFilters } from './use-program-progress-params'
 import { fetchGeneralParticipatingInstructors } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import {
+  useIsTrainedTeachersProgramsSurface,
+  useProgramProgressRemoteEnabledForSurface,
+} from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import type { Program } from '@/types/domain'
 
@@ -31,10 +35,12 @@ export function useProgressInstructorList({
   appliedFilters,
   programId,
 }: UseProgressInstructorListOptions) {
+  const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
 
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled,
+    // TT는 강사 progress API 자체가 제품 비범위 — 참여 기관 섹션이 이 훅을 공유해도 alert 금지
+    !remoteEnabled && !isTrainedTeachersSurface,
     'general-progress-instructors',
     '프로그램 진행 현황 · 강사'
   )

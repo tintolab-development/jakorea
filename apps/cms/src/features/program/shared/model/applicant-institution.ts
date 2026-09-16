@@ -14,6 +14,25 @@ export type ApplicantSchoolApprovalNotifyOptions = {
   rejectionReason?: string
 }
 
+/** TT 희망 교육 일정 세션 (OpenAPI PreferredScheduleSessionTime) */
+export type ApplicantPreferredScheduleSessionTime = {
+  sessionIndex: number
+  classPeriod: string
+  timeRange: string
+  startTime?: string
+  endTime?: string
+}
+
+/** TT 희망 교육 일정 블록 — memo와 별도, memo 파싱 금지 */
+export type ApplicantPreferredScheduleBlock = {
+  preferenceRank: number
+  /** YYYY-MM-DD 또는 표시용 날짜 문자열 */
+  date: string
+  dayOfWeek: string
+  sessionCount: number
+  sessionTimes: ApplicantPreferredScheduleSessionTime[]
+}
+
 /** 신청 기관 상세 — 기본 정보·안내 사항 확장 필드 (mock/UI 공통) */
 export interface ApplicantInstitutionDetailExtend {
   addressDetail?: string
@@ -72,6 +91,11 @@ export interface ApplicantSchoolRow {
   programId?: string
   /** 강의 회차 별 희망 교육 날짜 및 시간 (참여 기관과 동일 형식) */
   sessions?: ParticipatingSchoolSession[]
+  /**
+   * 교육받은 교사 희망 교육 일정 structured blocks.
+   * remote SoT — desiredEducationScheduleMemo를 파싱해 채우지 않음.
+   */
+  preferredScheduleBlocks?: ApplicantPreferredScheduleBlock[]
   /** 담당 강사(들) — 신청 단계에서는 미배정일 수 있음 */
   assignedInstructorNames?: string
   /** 기본 정보·안내 사항 상세 (mock 시안용) */
