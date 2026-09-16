@@ -30,9 +30,11 @@ export interface InstructorAssignmentListItemResponse {
   evaluationComment?: string;
   evaluationSubmittedAt?: string;
   lectureDate?: string;
+  /** 강사 실명. 프로그램 관리에서는 마스킹하지 않습니다. */
   instructorName?: string;
   organizationName?: string;
   distanceKm?: number;
   longDistance?: boolean;
+  /** 자택 주소. 동(읍/면/리)까지 + ' *****' (FE blur). 기관/조직 주소(organizationName)와 무관. */
   homeAddress?: string;
 }

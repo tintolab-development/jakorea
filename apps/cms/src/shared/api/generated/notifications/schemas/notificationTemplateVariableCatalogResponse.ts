@@ -8,8 +8,8 @@
 import type { NotificationCatalogCategory } from './notificationCatalogCategory';
 
 export interface NotificationTemplateVariableCatalogResponse {
-  totalCount: number;
-  categories: NotificationCatalogCategory[];
+  totalCount?: number;
+  categories?: NotificationCatalogCategory[];
   /** TEMP local QA: SYSTEM 자동발송 변수 수동 피커/발송 허용 여부. true일 때만 배너 표시. 되돌리기: ja.notification.qa.system-manual-send-enabled=false */
-  systemManualSendQaEnabled: boolean;
+  systemManualSendQaEnabled?: boolean;
 }

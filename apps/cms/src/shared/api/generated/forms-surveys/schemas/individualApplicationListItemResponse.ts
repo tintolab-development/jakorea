@@ -18,12 +18,13 @@ export interface IndividualApplicationListItemResponse {
   programType?: string;
   recruitmentId?: number;
   memberId?: number;
+  /** 신청자 실명. 프로그램 관리 목록에서는 마스킹하지 않습니다. */
   memberName?: string;
-  /** 신청 시점 소속명 우선의 목록 표시값 */
+  /** 신청 시점 소속/학교명. 학교명은 **대학교 형식으로 마스킹됩니다. */
   affiliationName?: string;
   /** 신청 시점 학년 또는 교육 단계 */
   applicationGrade?: string;
-  /** 상세 번지를 제외한 목록용 주소 요약 */
+  /** 자택 주소 요약. 시군구만 있으면 그대로, 상세 주소가 있으면 동(읍/면/리)까지 + ' *****' (FE blur 대상). 기관 주소 아님. */
   homeAddressSummary?: string;
   /** 해당 신청 건에서 선택한 교육 일정. 미선택 시 빈 배열 */
   preferredEducationSchedules?: PreferredEducationScheduleResponse[];

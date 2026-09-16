@@ -2204,6 +2204,72 @@
   },
   "components": {
     "schemas": {
+      "PreferredScheduleBlockRequest": {
+        "type": "object",
+        "properties": {
+          "preferenceRank": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "dateText": {
+            "type": "string"
+          },
+          "sessionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "session": {
+            "type": "string"
+          },
+          "sessionTimes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreferredScheduleSessionTimeRequest"
+            },
+            "maxItems": 16,
+            "minItems": 0
+          },
+          "times": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreferredScheduleSessionTimeRequest"
+            },
+            "maxItems": 16,
+            "minItems": 0
+          }
+        }
+      },
+      "PreferredScheduleSessionTimeRequest": {
+        "type": "object",
+        "properties": {
+          "sessionIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "classPeriod": {
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string"
+          },
+          "endTime": {
+            "type": "string"
+          },
+          "timeRange": {
+            "type": "string"
+          },
+          "start": {
+            "type": "string"
+          },
+          "end": {
+            "type": "string"
+          }
+        }
+      },
       "RequestedScheduleRequest": {
         "type": "object",
         "properties": {
@@ -2274,6 +2340,14 @@
           "requestedFemaleCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "preferredScheduleBlocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreferredScheduleBlockRequest"
+            },
+            "maxItems": 10,
+            "minItems": 0
           }
         },
         "required": [
@@ -12302,10 +12376,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -18403,7 +18477,8 @@
         "description": "신청 시점 프로필 우선, 기존 데이터는 현재 회원 프로필 fallback",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "신청자 실명. MASKED/UNMASKED 모두 평문(마스킹하지 않음)."
           },
           "gender": {
             "type": "string"
@@ -18420,19 +18495,23 @@
             "type": "string"
           },
           "affiliationSchool": {
-            "type": "string"
+            "type": "string",
+            "description": "MASKED 시 학교명 **대학교 형식 마스킹. UNMASKED 시 원문."
           },
           "affiliationGrade": {
             "type": "string"
           },
           "contact": {
-            "type": "string"
+            "type": "string",
+            "description": "MASKED 예: 010-****-5678. UNMASKED 시 원문."
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "description": "MASKED 예: 0915***@naver.com. UNMASKED 시 원문."
           },
           "homeAddress": {
-            "type": "string"
+            "type": "string",
+            "description": "MASKED 자택 주소: 동까지 + ' *****' (FE blur). 기관 주소 아님. UNMASKED 시 원문."
           },
           "external1365Id": {
             "type": "string"
@@ -24177,7 +24256,8 @@
             "format": "int64"
           },
           "instructorName": {
-            "type": "string"
+            "type": "string",
+            "description": "강사 실명. 프로그램 관리에서는 마스킹하지 않습니다."
           },
           "nameHanja": {
             "type": "string"
@@ -24193,22 +24273,27 @@
             "type": "string"
           },
           "contact": {
-            "type": "string"
+            "type": "string",
+            "description": "마스킹 연락처. 예: 010-****-5678"
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "description": "마스킹 이메일. 예: 0915***@naver.com"
           },
           "homeAddress": {
-            "type": "string"
+            "type": "string",
+            "description": "자택 주소 라인. 동(읍/면/리) 또는 구/군 경계까지. 기관 주소 아님."
           },
           "homeAddressDetail": {
-            "type": "string"
+            "type": "string",
+            "description": "상세주소 blur 자리표시자. 상세가 있으면 '*****', 없으면 null. FE가 CSS blur 적용."
           },
           "educationLevel": {
             "type": "string"
           },
           "educationSchoolName": {
-            "type": "string"
+            "type": "string",
+            "description": "학력 학교명 마스킹. 예: **대학교"
           },
           "affiliation": {
             "type": "string"
@@ -30815,6 +30900,52 @@
           }
         }
       },
+      "PreferredScheduleBlock": {
+        "type": "object",
+        "properties": {
+          "preferenceRank": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "date": {
+            "type": "string"
+          },
+          "dayOfWeek": {
+            "type": "string"
+          },
+          "sessionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sessionTimes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreferredScheduleSessionTime"
+            }
+          }
+        }
+      },
+      "PreferredScheduleSessionTime": {
+        "type": "object",
+        "properties": {
+          "sessionIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "classPeriod": {
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string"
+          },
+          "endTime": {
+            "type": "string"
+          },
+          "timeRange": {
+            "type": "string"
+          }
+        }
+      },
       "TrainedTeacherOrganizationApplicationResponse": {
         "type": "object",
         "properties": {
@@ -30860,6 +30991,12 @@
           },
           "desiredEducationScheduleMemo": {
             "type": "string"
+          },
+          "preferredScheduleBlocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreferredScheduleBlock"
+            }
           },
           "applicationStatus": {
             "type": "string"
@@ -30928,6 +31065,33 @@
           },
           "journalSubmitted": {
             "type": "boolean"
+          },
+          "educationTarget": {
+            "type": "string"
+          },
+          "educationGrade": {
+            "type": "string"
+          },
+          "lectureRound": {
+            "type": "string"
+          },
+          "totalEducationRoundCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completedEducationRoundCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "progressLabel": {
+            "type": "string"
+          },
+          "textbookName": {
+            "type": "string"
+          },
+          "educationCompletionCount": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -31758,6 +31922,12 @@
           "giveUpAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -32188,13 +32358,15 @@
             "format": "int64"
           },
           "instructorName": {
-            "type": "string"
+            "type": "string",
+            "description": "강사 실명. 프로그램 관리에서는 마스킹하지 않습니다."
           },
           "applicationStatus": {
             "type": "string"
           },
           "homeAddress": {
-            "type": "string"
+            "type": "string",
+            "description": "자택 주소. 동(읍/면/리)까지 노출 + ' *****' (FE blur). 기관 주소 아님."
           },
           "jaLectureExperienceYears": {
             "type": "integer",
@@ -32204,10 +32376,12 @@
             "type": "string"
           },
           "contact": {
-            "type": "string"
+            "type": "string",
+            "description": "마스킹 연락처. 예: 010-****-5678"
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "description": "마스킹 이메일. 예: 0915***@naver.com"
           },
           "instructorTypeSnapshot": {
             "type": "string"
@@ -32301,11 +32475,12 @@
             "format": "int64"
           },
           "memberName": {
-            "type": "string"
+            "type": "string",
+            "description": "신청자 실명. 프로그램 관리 목록에서는 마스킹하지 않습니다."
           },
           "affiliationName": {
             "type": "string",
-            "description": "신청 시점 소속명 우선의 목록 표시값"
+            "description": "신청 시점 소속/학교명. 학교명은 **대학교 형식으로 마스킹됩니다."
           },
           "applicationGrade": {
             "type": "string",
@@ -32313,7 +32488,7 @@
           },
           "homeAddressSummary": {
             "type": "string",
-            "description": "상세 번지를 제외한 목록용 주소 요약"
+            "description": "자택 주소 요약. 시군구만 있으면 그대로, 상세 주소가 있으면 동(읍/면/리)까지 + ' *****' (FE blur 대상). 기관 주소 아님."
           },
           "preferredEducationSchedules": {
             "type": "array",
@@ -32926,7 +33101,8 @@
             "format": "date"
           },
           "instructorName": {
-            "type": "string"
+            "type": "string",
+            "description": "강사 실명. 프로그램 관리에서는 마스킹하지 않습니다."
           },
           "organizationName": {
             "type": "string"
@@ -32938,7 +33114,8 @@
             "type": "boolean"
           },
           "homeAddress": {
-            "type": "string"
+            "type": "string",
+            "description": "자택 주소. 동(읍/면/리)까지 + ' *****' (FE blur). 기관/조직 주소(organizationName)와 무관."
           }
         }
       },
@@ -34617,11 +34794,6 @@
       },
       "NotificationCatalogCategory": {
         "type": "object",
-        "required": [
-          "categoryCode",
-          "categoryLabel",
-          "variables"
-        ],
         "properties": {
           "categoryCode": {
             "type": "string",
@@ -34642,16 +34814,6 @@
       "NotificationCatalogVariableItem": {
         "type": "object",
         "description": "카탈로그 변수 1건. enabled=삽입/발송-피커 사용 허용 SSOT(값 존재와 무관). 알림톡 발송 피커(프로그램 지정 시): 본문 키 ⊆ catalog && enabled=true.",
-        "required": [
-          "key",
-          "token",
-          "requiresProgram",
-          "enabled",
-          "programGroups",
-          "recruitmentTypes",
-          "participantTypes",
-          "memberTypes"
-        ],
         "properties": {
           "key": {
             "type": "string",
@@ -34664,8 +34826,10 @@
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
-            "type": "string",
-            "nullable": true,
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null"
           },
           "requiresProgram": {
@@ -34678,53 +34842,36 @@
           },
           "programGroups": {
             "type": "array",
+            "description": "허용 프로그램 유형 그룹. 비면 제한 없음",
             "items": {
               "type": "string"
-            },
-            "description": "허용 프로그램 유형 그룹. 비면 제한 없음"
+            }
           },
           "recruitmentTypes": {
             "type": "array",
+            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음",
             "items": {
               "type": "string"
-            },
-            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음"
+            }
           },
           "participantTypes": {
             "type": "array",
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
-              "type": "string",
-              "enum": [
-                "PARTICIPANT",
-                "INSTRUCTOR",
-                "VOLUNTEER"
-              ]
-            },
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER."
+              "type": "string"
+            }
           },
           "memberTypes": {
             "type": "array",
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
-              "type": "string",
-              "enum": [
-                "GENERAL",
-                "SCHOOL_TEACHER",
-                "INSTRUCTOR",
-                "TEACHER_AND_INSTRUCTOR",
-                "ADMIN"
-              ]
-            },
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
+              "type": "string"
+            }
           }
         }
       },
       "NotificationTemplateVariableCatalogResponse": {
         "type": "object",
-        "required": [
-          "totalCount",
-          "categories",
-          "systemManualSendQaEnabled"
-        ],
         "properties": {
           "totalCount": {
             "type": "integer",
@@ -35203,15 +35350,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
