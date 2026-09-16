@@ -2,7 +2,6 @@ import type { ListAdminApprovalRequestsParams } from '@/features/user/api/admin-
 import { mapUiApprovalFilterToApiStatus } from '@/features/user/api/lib/map-permission-approval-status'
 import type { ListInstructorRoleRequestsParams } from '@/shared/api/generated/members/schemas'
 import type { MemberPermissionApplicationStatus } from '@/types/member-permission-application'
-import type { UserRole } from '@/types/user'
 
 const DEFAULT_PAGE_SIZE = 50
 
@@ -10,24 +9,6 @@ function parseApproval(raw: string | null): MemberPermissionApplicationStatus | 
   if (!raw || raw === 'ALL') return 'ALL'
   if (raw === 'PENDING' || raw === 'APPROVED' || raw === 'REJECTED') return raw
   return 'ALL'
-}
-
-function parseRole(raw: string | null): UserRole | 'ALL' {
-  if (!raw || raw === 'ALL') return 'ALL'
-  if (raw === 'INDIVIDUAL' || raw === 'SCHOOL' || raw === 'INSTRUCTOR' || raw === 'ADMIN') {
-    return raw
-  }
-  return 'ALL'
-}
-
-/** UI 회원 유형 → 강사 권한승인 `memberType` query (`GENERAL` | `SCHOOL_TEACHER`) */
-function mapUiRoleToInstructorMemberType(role: UserRole | 'ALL'): string | undefined {
-  if (role === 'ALL') return undefined
-  // 학교(교사) → 교사 강사 유형
-  if (role === 'SCHOOL') return 'SCHOOL_TEACHER'
-  // 개인·강사 → 일반 강사 유형 (BE는 UserRole `INSTRUCTOR`/`INDIVIDUAL` 거부)
-  if (role === 'INDIVIDUAL' || role === 'INSTRUCTOR') return 'GENERAL'
-  return undefined
 }
 
 function requestedAtBoundsFromUrl(
@@ -42,13 +23,17 @@ function requestedAtBoundsFromUrl(
   return { from: to, to }
 }
 
-/** 강사 탭 — keyword · status · memberType · requestedAt 서버 필터 */
+/**
+ * 강사 탭 — keyword · status · requestedAt 서버 필터.
+ * 회원 유형(`permI_role`)은 API `memberType`으로 보내지 않는다.
+ * BE 라벨(`개인`|`학교/기관`)과 query enum이 불일치해 서버 필터 시 결과가 비거나 잘못 잘림.
+ * → `members-permission-table.config`에서 `memberCategory` 클라 필터.
+ */
 export function parseInstructorRoleRequestListParams(
   searchParams: URLSearchParams
 ): ListInstructorRoleRequestsParams {
   const keyword = (searchParams.get('permI_search') ?? '').trim()
   const approvalStatus = parseApproval(searchParams.get('permI_approval'))
-  const role = parseRole(searchParams.get('permI_role'))
   const requestedAt = requestedAtBoundsFromUrl(
     searchParams.get('permI_from'),
     searchParams.get('permI_to')
@@ -57,7 +42,7 @@ export function parseInstructorRoleRequestListParams(
   return {
     keyword: keyword.length > 0 ? keyword : undefined,
     status: mapUiApprovalFilterToApiStatus(approvalStatus),
-    memberType: mapUiRoleToInstructorMemberType(role),
+    memberType: undefined,
     requestedAtFrom: requestedAt.from,
     requestedAtTo: requestedAt.to,
     page: 0,

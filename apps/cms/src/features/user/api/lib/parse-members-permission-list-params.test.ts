@@ -5,7 +5,7 @@ import {
 } from './parse-members-permission-list-params'
 
 describe('parseInstructorRoleRequestListParams', () => {
-  it('keyword·status·memberType·신청시기를 API params로 넣는다', () => {
+  it('keyword·status·신청시기를 API params로 넣는다 (memberType은 클라 필터 — 미전송)', () => {
     const params = new URLSearchParams({
       permI_search: '홍길동',
       permI_approval: 'PENDING',
@@ -17,7 +17,7 @@ describe('parseInstructorRoleRequestListParams', () => {
     expect(parseInstructorRoleRequestListParams(params)).toEqual({
       keyword: '홍길동',
       status: 'PENDING',
-      memberType: 'SCHOOL_TEACHER',
+      memberType: undefined,
       requestedAtFrom: '2026-03-01',
       requestedAtTo: '2026-03-31',
       page: 0,
@@ -25,22 +25,17 @@ describe('parseInstructorRoleRequestListParams', () => {
     })
   })
 
-  it('강사·개인 필터는 GENERAL로 보낸다 (INSTRUCTOR/INDIVIDUAL wire 금지)', () => {
+  it('회원 유형 UI 필터는 API memberType으로 보내지 않는다', () => {
     expect(
-      parseInstructorRoleRequestListParams(
-        new URLSearchParams({ permI_role: 'INSTRUCTOR' })
-      ).memberType
-    ).toBe('GENERAL')
+      parseInstructorRoleRequestListParams(new URLSearchParams({ permI_role: 'INDIVIDUAL' }))
+        .memberType
+    ).toBeUndefined()
     expect(
-      parseInstructorRoleRequestListParams(
-        new URLSearchParams({ permI_role: 'INDIVIDUAL' })
-      ).memberType
-    ).toBe('GENERAL')
-  })
-
-  it('관리자 등 미지원 역할은 memberType을 생략한다', () => {
+      parseInstructorRoleRequestListParams(new URLSearchParams({ permI_role: 'SCHOOL' }))
+        .memberType
+    ).toBeUndefined()
     expect(
-      parseInstructorRoleRequestListParams(new URLSearchParams({ permI_role: 'ADMIN' }))
+      parseInstructorRoleRequestListParams(new URLSearchParams({ permI_role: 'INSTRUCTOR' }))
         .memberType
     ).toBeUndefined()
   })
