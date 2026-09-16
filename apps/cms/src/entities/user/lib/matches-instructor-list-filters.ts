@@ -31,14 +31,27 @@ export function matchesInstructorSettlementFilter(user: UserRow, selected: strin
   return label === token
 }
 
-/** 필터 value는 `A`|`B`|`C`|`D` — 행 값은 `A` 또는 `A등급` 모두 허용 */
+/** 필터·행 값 정규화 — `JA_A` / `A등급` / `A` → `A`. 미평가(`''`·`-`)는 빈 문자열 */
+export function normalizeInstructorJaEvaluationGradeToken(raw: string): string {
+  const normalized = raw.trim().replace(/^JA_/i, '').replace(/등급$/u, '').toUpperCase()
+  if (!normalized || normalized === '-' || normalized === 'ALL') return ''
+  if (normalized === 'A' || normalized === 'B' || normalized === 'C' || normalized === 'D') {
+    return normalized
+  }
+  return ''
+}
+
+/** 필터 value는 `A`|`B`|`C`|`D` — 행 값은 `A` · `A등급` · `JA_A` 허용. 미평가는 등급 필터에서 제외(전체만 노출) */
 export function matchesInstructorJaEvaluationGradeFilter(
   user: UserRow,
   selected: string
 ): boolean {
-  const token = selected.trim().replace(/등급$/u, '')
-  if (!token || token === 'all') return true
+  const token = normalizeInstructorJaEvaluationGradeToken(selected)
+  if (!token) return true
   if (user.role !== 'INSTRUCTOR') return false
-  const grade = user.listMetrics?.jaEvaluationGrade?.trim().replace(/등급$/u, '') ?? ''
+  const grade = normalizeInstructorJaEvaluationGradeToken(
+    user.listMetrics?.jaEvaluationGrade ?? ''
+  )
+  if (!grade) return false
   return grade === token
 }

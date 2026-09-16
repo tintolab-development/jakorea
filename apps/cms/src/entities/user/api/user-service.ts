@@ -12,6 +12,7 @@ import { matchesUserInstitutionLocation } from '@/entities/user/lib/matches-inst
 import {
   matchesInstructorJaEvaluationGradeFilter,
   matchesInstructorSettlementFilter,
+  normalizeInstructorJaEvaluationGradeToken,
 } from '@/entities/user/lib/matches-instructor-list-filters'
 import { applyInstructorPermissionRevokedToUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
 import {
@@ -82,6 +83,7 @@ import {
   fetchAdminsPageRemote,
   fetchIndividualMemberDetailRemote,
   fetchInstructorMemberDetailRemote,
+  fetchInstructorsPageRemote,
   fetchMemberDetailRemote,
   fetchMemberExternalIdentifiersRemote,
   fetchMembersPageRemote,
@@ -347,6 +349,36 @@ export async function getUsersPage(
         ? instructorListRolesExactAnyOf()
         : rolesExactAnyOfForAllTabRoleFilter(apiFilters.role))
 
+    const isInstructorDirectory =
+      apiFilters.role === 'INSTRUCTOR' ||
+      apiFilters.instructorListPureOnly === true ||
+      rolesExactAnyOf === instructorListRolesExactAnyOf()
+
+    const jaGrade =
+      normalizeInstructorJaEvaluationGradeToken(apiFilters.jaEvaluationGrade ?? '') || undefined
+
+    if (isInstructorDirectory) {
+      const res = await fetchInstructorsPageRemote({
+        keyword: apiFilters.search?.trim() || undefined,
+        jaGrade,
+        settlementStatus: apiFilters.settlementStatus?.trim() || undefined,
+        createdAtFrom: apiFilters.createdAtFrom || undefined,
+        createdAtTo: apiFilters.createdAtTo || undefined,
+        includeRevoked: false,
+        page,
+        size: PAGE_SIZE,
+      })
+      let users = mapMemberListItems(res.items)
+      // BE가 미평가(등급 없음)를 D 등으로 묶어 줄 수 있어, 등급 필터 시 FE에서 한 번 더 제외
+      if (jaGrade) {
+        users = users.filter(user => matchesInstructorJaEvaluationGradeFilter(user, jaGrade))
+      }
+      const total = res.totalElements ?? users.length
+      const totalPages = res.totalPages ?? 0
+      const hasMore = totalPages > 0 ? page + 1 < totalPages : users.length >= PAGE_SIZE
+      return { users, total, hasMore }
+    }
+
     const res = await fetchMembersPageRemote({
       keyword: apiFilters.search?.trim() || undefined,
       ...(rolesExactAnyOf
@@ -355,7 +387,6 @@ export async function getUsersPage(
       memberStatus: mapIsActiveToMemberStatus(apiFilters.isActive),
       createdAtFrom: apiFilters.createdAtFrom || undefined,
       createdAtTo: apiFilters.createdAtTo || undefined,
-      instructorType: apiFilters.jaEvaluationGrade?.trim() || undefined,
       settlementStatus: apiFilters.settlementStatus?.trim() || undefined,
       page,
       size: PAGE_SIZE,
