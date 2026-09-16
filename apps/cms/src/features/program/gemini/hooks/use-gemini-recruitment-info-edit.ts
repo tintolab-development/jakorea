@@ -9,7 +9,7 @@ import {
   type GeminiRecruitmentInfoEditDraft,
 } from '../model/recruitment/info-edit-draft'
 import type { GeminiRecruitmentDetail } from '../model/recruitment/detail-types'
-import { getRecruitmentDetailById, patchRecruitmentDetail } from '../model/recruitment/detail-mock'
+import { getRecruitmentDetailById, patchRecruitmentDetail } from '../model/recruitment/recruitment-detail-cache'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from '../api/visiting-training/capabilities'
 import { useGeminiRecruitmentDetailQuery } from '../api/visiting-training/hooks'
 import { geminiVisitingTrainingQueryKeys } from '../api/visiting-training/query-keys'

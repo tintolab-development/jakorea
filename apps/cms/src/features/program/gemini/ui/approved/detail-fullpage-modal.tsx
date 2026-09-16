@@ -26,7 +26,7 @@ import {
   type GeminiApprovedTrainingDetailLnbKey,
 } from '../../lib/approved/detail-url'
 import { formatTrainingDatetimeDisplay } from '../../lib/approved/format-display'
-import { getGeminiApprovedTrainingDetail } from '../../model/approved/detail-mock'
+import { getGeminiApprovedTrainingDetail } from '../../model/approved/approved-detail-resolver'
 import { GeminiApprovedTrainingDetailInstructorApplicationTab } from './detail-instructor-application-tab'
 import { GeminiApprovedTrainingDetailProgramInfoTab } from './detail-program-info-tab'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'

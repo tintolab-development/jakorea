@@ -1,6 +1,6 @@
 import type { GeminiRecruitmentAddFormSnapshot } from '../../lib/recruitment/add-local-save'
 import { removeGeminiRecruitmentAddDraft } from '../../lib/recruitment/add-local-save'
-import { assignRecruitmentDisplayNumbers } from './mock'
+import { assignRecruitmentDisplayNumbers } from './recruitment-display-numbers'
 import {
   GEMINI_RECRUITMENT_DRAFT_ROW_ID,
   type GeminiRecruitmentRow,

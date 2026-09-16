@@ -1,4 +1,4 @@
-import { assignApprovedTrainingNumbers } from './mock'
+import { assignApprovedTrainingNumbers } from './approved-display-numbers'
 import type { GeminiApprovedTrainingRow } from './types'
 
 type Listener = () => void
