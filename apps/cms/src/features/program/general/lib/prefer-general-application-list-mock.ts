@@ -1,19 +1,16 @@
 import type { Program } from '@/types/domain'
-import { getGeneralParticipantInterviewEnabled } from '@/features/program/general/lib/detail-meta'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 
 /**
- * 참여자 신청이 FE mock으로 노출되는 프로그램에서는
- * 강사·봉사자 신청 목록도 remote 대신 mock을 쓴다.
+ * FE 전용 일반 프로그램 시드만 신청 목록 mock을 쓴다.
  *
- * - 개인 + 면접 2depth: 1차/합격/2차 모두 mock 고정
- * - 개인 `general-prog-*` FE 시드: 동일하게 mock 고정(면접 플래그 누락 대비)
+ * 숫자형 API 프로그램은 면접 2depth 여부와 무관하게
+ * individual-applications API를 사용한다.
  */
 export function shouldPreferGeneralApplicationListMock(
   program: Program | null | undefined
 ): boolean {
   if (!program?.id) return false
-  if (getGeneralParticipantInterviewEnabled(program)) return true
   return isGeneralIndividualProgram(program) && program.id.startsWith('general-prog-')
 }
 

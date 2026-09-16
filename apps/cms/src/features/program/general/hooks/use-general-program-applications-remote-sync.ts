@@ -70,17 +70,18 @@ export function useGeneralProgramApplicationsRemoteSync({
   })
 
   const individualQuery = useQuery({
-    queryKey: generalApplicationsQueryKeys.individualList(programId ?? '', individualScreeningStage ?? null),
+    queryKey: generalApplicationsQueryKeys.individualList(
+      programId ?? '',
+      individualScreeningStage ?? null
+    ),
     queryFn: () =>
       fetchGeneralIndividualApplications(programId!, {
         doc1: individualScreeningStage === 'doc1',
       }),
-    /** 1차 서류 심사 대상자는 mock 고정 목록 — remote 신청 목록과 분리 */
     enabled:
       remoteEnabled &&
       !preferApplicationListMock &&
-      menu === 'individual-applications' &&
-      individualScreeningStage !== 'doc1',
+      menu === 'individual-applications',
     staleTime: 30_000,
     retry: false,
   })

@@ -490,9 +490,10 @@ export function useApplicantsDetail({
     }
   }, [individualScreeningStage])
 
-  /** 1차 서류 심사 대상자 — remote와 분리된 mock 고정 목록 */
+  /** 1차 서류 심사 대상자 — API 프로그램은 remote, FE 시드만 mock */
   useEffect(() => {
     if (menu !== 'individual-applications' || individualScreeningStage !== 'doc1') return
+    if (applicationsRemote.remoteEnabled && !preferApplicationListMock) return
     if (!programId) {
       setIndividualList([])
       return
@@ -501,7 +502,14 @@ export function useApplicantsDetail({
     setPendingFilters({})
     setAppliedFilters({})
     setSelectedRowKeys([])
-  }, [menu, individualScreeningStage, programId, setPendingFilters])
+  }, [
+    menu,
+    individualScreeningStage,
+    programId,
+    preferApplicationListMock,
+    applicationsRemote.remoteEnabled,
+    setPendingFilters,
+  ])
 
   /** 참여자 mock 프로그램(또는 강사 remote off) — 강사 신청 목록 mock 시드 */
   useEffect(() => {

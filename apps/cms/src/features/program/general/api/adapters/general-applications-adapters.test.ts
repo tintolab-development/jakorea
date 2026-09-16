@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  filterIndividualDoc1Rows,
   mapApiApplicationStatusToApprovalStatus,
   mapIndividualApplicationToApplicantRow,
   mapInstructorApplicationToApplicantInstructorRow,
@@ -102,6 +103,21 @@ describe('general-applications-adapters', () => {
         assignedInterviewSlotId: 1001,
         assignedInterviewStartAt: '2026-04-10T10:00:00+09:00',
         assignedInterviewEndAt: '2026-04-10T11:00:00+09:00',
+        interviewAvailabilityCount: 3,
+        interviewAvailabilitySlots: [
+          {
+            startAt: '2026-09-18T01:00:00Z',
+            endAt: '2026-09-18T02:00:00Z',
+          },
+          {
+            startAt: '2026-09-18T05:00:00Z',
+            endAt: '2026-09-18T06:00:00Z',
+          },
+          {
+            startAt: '2026-09-20T01:00:00Z',
+            endAt: '2026-09-20T02:00:00Z',
+          },
+        ],
       },
       0,
       '5001'
@@ -115,6 +131,27 @@ describe('general-applications-adapters', () => {
     expect(row.programId).toBe('5001')
     expect(row.assignedInterviewDateLabel).toBe('2026.04.10')
     expect(row.assignedInterviewTime).toContain('10:00')
+    expect(row.interviewSlotCount).toBe(3)
+    expect(row.detail?.interviewAvailability).toEqual([
+      {
+        dateLabel: '26. 09. 18(금)',
+        slots: ['10:00 ~ 11:00', '14:00 ~ 15:00'],
+      },
+      {
+        dateLabel: '26. 09. 20(일)',
+        slots: ['10:00 ~ 11:00'],
+      },
+    ])
+  })
+
+  it('keeps reviewed applications in the first document screening list', () => {
+    const rows = [
+      { id: '1', documentScreeningStatus: 'pending' },
+      { id: '2', documentScreeningStatus: 'fail' },
+      { id: '3', documentScreeningStatus: 'pass' },
+    ] as ReturnType<typeof mapIndividualApplicationToApplicantRow>[]
+
+    expect(filterIndividualDoc1Rows(rows)).toEqual(rows)
   })
 })
 

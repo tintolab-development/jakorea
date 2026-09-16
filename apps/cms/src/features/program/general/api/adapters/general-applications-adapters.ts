@@ -11,6 +11,7 @@ import type { IndividualApplicationListItemEnriched } from '@/features/program/g
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
 import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
+import type { InterviewAvailabilitySlot } from '@/shared/api/generated/dashboard/schemas/interviewAvailabilitySlot'
 import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
 import type {
   GeneralDocumentScreeningStatus,
@@ -137,6 +138,56 @@ function formatAssignedInterviewFromIso(
   }
 }
 
+function formatKoreanInterviewDate(date: Date): string {
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: '2-digit',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+  }).formatToParts(date)
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find(part => part.type === type)?.value ?? ''
+  return `${value('year')}. ${value('month')}. ${value('day')}(${value('weekday')})`
+}
+
+function formatKoreanInterviewTime(date: Date): string {
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date)
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find(part => part.type === type)?.value ?? ''
+  return `${value('hour')}:${value('minute')}`
+}
+
+function mapInterviewAvailabilitySlots(
+  slots: InterviewAvailabilitySlot[] | undefined
+): NonNullable<
+  NonNullable<GeneralIndividualApplicantRow['detail']>['interviewAvailability']
+> {
+  const grouped = new Map<string, string[]>()
+  for (const slot of slots ?? []) {
+    const start = new Date(slot.startAt)
+    const end = new Date(slot.endAt)
+    if (
+      Number.isNaN(start.getTime()) ||
+      Number.isNaN(end.getTime()) ||
+      end.getTime() <= start.getTime()
+    ) {
+      continue
+    }
+    const dateLabel = formatKoreanInterviewDate(start)
+    const timeRange = `${formatKoreanInterviewTime(start)} ~ ${formatKoreanInterviewTime(end)}`
+    const daySlots = grouped.get(dateLabel) ?? []
+    if (!daySlots.includes(timeRange)) daySlots.push(timeRange)
+    grouped.set(dateLabel, daySlots)
+  }
+  return Array.from(grouped, ([dateLabel, daySlots]) => ({ dateLabel, slots: daySlots }))
+}
+
 export function mapIndividualApplicationToApplicantRow(
   dto: IndividualApplicationListItemEnriched,
   index: number,
@@ -146,6 +197,7 @@ export function mapIndividualApplicationToApplicantRow(
     dto.assignedInterviewStartAt,
     dto.assignedInterviewEndAt
   )
+  const interviewAvailability = mapInterviewAvailabilitySlots(dto.interviewAvailabilitySlots)
   return {
     id: toId(dto.id),
     no: index + 1,
@@ -165,6 +217,12 @@ export function mapIndividualApplicationToApplicantRow(
       dto.finalResultStatus,
       dto.reserveRank
     ),
+    interviewSlotCount:
+      dto.interviewAvailabilityCount ??
+      interviewAvailability.reduce((sum, day) => sum + day.slots.length, 0),
+    detail: {
+      interviewAvailability,
+    },
     ...assigned,
   } as GeneralIndividualApplicantRow
 }
@@ -172,7 +230,7 @@ export function mapIndividualApplicationToApplicantRow(
 export function filterIndividualDoc1Rows(
   rows: GeneralIndividualApplicantRow[]
 ): GeneralIndividualApplicantRow[] {
-  return rows.filter(row => (row.documentScreeningStatus ?? 'pending') === 'pending')
+  return rows
 }
 
 export function filterIndividualDocPassedRows(
