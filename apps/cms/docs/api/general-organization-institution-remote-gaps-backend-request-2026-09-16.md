@@ -1,156 +1,194 @@
-# 일반 프로그램 기관 — remote 보완 · 백엔드 요청
+# 일반 프로그램 신청·기관 — remote 보완 · 백엔드 요청
 
 **작성일:** 2026-09-16  
+**OpenAPI 재검토:** 2026-09-16 (v9 · live = local)  
 **우선순위:** P1  
-**대상:** 일반 프로그램 **기관 신청 상세** · **참여 기관 상세** — 정보 수정·합반·교재 등  
-**SSOT:** 일반 프로그램(기관) FE 수정·미연동 갭은 본 문서에 누적합니다.  
-**FE 연동(2026-09-16):** `organization-merge-groups` GET/POST/DELETE 배선 완료. 그 외 항목은 **서버 계약·응답 보완** 요청.
+**대상:** 일반 프로그램 **기관 신청/참여 상세**(합반·교재) · **봉사자 신청 심사**(1차 서류 · 합격자 · 2차 면접)  
+**SSOT:** 일반 프로그램(기관·봉사자) FE 수정·미연동 갭은 **본 문서에만** 누적합니다.
+
+## FE 원칙 (2026-09-16)
+
+- **연동 가능한 API는 remote 호출** — 성공 시 목록 invalidate·재조회.
+- **API가 없거나 remote 비활성** → **mock/로컬 patch 금지**. `program-api-unavailable` 모달(`useNotifyProgramApiUnavailableOnce` / `notifyProgramApiUnavailable`)로 1회 안내.
+- 승인 취소·반려 취소·상세 PATCH·담당 교사·알림 재발송 등 **계약 부재 액션**도 동일 — 로컬 상태 변경 없음.
 
 ---
 
-## LNB 기준 remote 보완 요약
+## A. 기관 (신청 · 참여)
 
-### 참여자 신청 목록 > 기관 신청 > 기관 신청 상세
+### A-1) FE 연동 현황 (2026-09-16 OpenAPI 재검토 후)
 
-- 기관 신청 상세 GET 부재 — 합반 외 필드(주소·교재·담당 교사 등) 수정은 여전히 mock
+| 화면 | 기능 | API | 연동 |
+|------|------|-----|------|
+| 기관 신청 목록 | 목록 | `GET …/programs/{programId}/organization-applications` | ✅ |
+| 기관 신청 목록/상세 | 승인·반려 | `POST …/organization-applications/{id}/approve\|reject` | ✅ |
+| 기관 신청 목록 | 일괄 승인·반려 (≥2) | `POST …/organization-applications/bulk-approve\|bulk-reject` | ✅ |
+| 기관 신청 상세 | 승인 취소 · 반려 취소 | `POST …/cancel-approval\|cancel-rejection` (`ApplicationDecisionCancelRequest.reason`) | ✅ |
+| 기관 신청 상세 | 알림 재발송 | — | ⏸ **보류** (BE 요청 제외 · FE unavailable 유지) |
+| 기관 신청 상세 | 상세 GET / 필드 PATCH | — | ❌ unavailable (합반 제외) |
+| 기관 신청/참여 상세 | 합반 | `GET/POST/DELETE …/organization-merge-groups` | ✅ |
+| 합반 | 담당 교사 `leadTeacherMemberId` create/update | — (응답에만 필드) | ❌ unavailable |
+| 참여 기관 | participants ORGANIZATION enrich | 목록만 · `availableActions` 추가됨 | ⚠️ 학년·교재·지역 부족 |
+
+### A-2) LNB 기준 remote 보완 요약
+
+#### 참여자 신청 목록 > 기관 신청 > 기관 신청 상세
+
+- 기관 신청 상세 GET 부재 — 합반 외 필드(주소·교재·담당 교사 등) 수정 API 없음 → FE unavailable
 - `organization-applications` 목록에 **학년(`educationGrade`)**·지역·합반 파트너 enrich 없음 → 동일 기관 타 학년 lookup FE가 목록 50건 한정
 - 합반 저장 후 **파트너 학년 신청 건 교재명 동기화** — merge-groups만으로는 FE가 파트너 상세 갱신 불가
-- 신청 단계 합반 POST 후 **목록/상세 재조회 enrich** (합반 상태·파트너 학년) 일관성 검증 필요
+- **`CreateMergeRequest`에 `leadTeacherMemberId` 누락** — 응답 `MergeGroupResponse.leadTeacherMemberId`만 존재, create/update 계약 없음
+- unmask/privacy · admin comment API 부재
+- 알림 재발송 — **보류** (강사·개인과 동일 `…/notifications/resend` 패턴 후순위)
 
-### 프로그램 진행 현황 > 참여 기관 > 참여 기관 상세 > 신청 정보
+#### 프로그램 진행 현황 > 참여 기관 > 참여 기관 상세 > 신청 정보
 
-- `participants`(ORGANIZATION) 목록 **학년·반·인원·교재·지역** 필드 부족 — FE adapter 빈값
-- 참여 기관 상세 GET 부재 — 합반 외 신청 정보 필드 PATCH API 없음
-- `participants` `organizationApplicationId`·`organizationName` 매핑은 2026-09-16 FE 보정, **학년·schedule enrich**는 BE 필요
-- 합반 **멤ber(비 lead) 행**에서 취소·변경 API — DELETE는 lead 그룹 기준, member 단독 해제 계약 없음
+- `participants`(ORGANIZATION) 목록 **학년·반·인원·교재·지역** 필드 부족 — FE adapter 빈값 (`availableActions`만 OpenAPI 추가)
+- 참여 기관 상세 GET 부재 — 합반 외 신청 정보 필드 PATCH API 없음 → FE unavailable
+- 합반 **멤버(비 lead) 행**에서 취소·변경 API — DELETE는 lead 그룹 기준
 - 교재 선택 저장 — participant/org-application textbook PATCH와 merge-groups 연동 계약 없음
 
----
-
-## 1) 이미 구현·FE 연동한 API (참고)
+### A-3) 이미 구현·FE 연동한 API (기관)
 
 | Method | Path | FE 용도 |
 |--------|------|---------|
-| GET | `/api/admin/programs/{programId}/organization-merge-groups` | 상세 진입 시 합반 상태 hydrate |
-| POST | `/api/admin/programs/{programId}/organization-merge-groups` | 「신청」+ 파트너 학년 저장 |
-| DELETE | `/api/admin/programs/{programId}/organization-merge-groups/{mergeGroupId}` | 「미신청」·파트너 변경 전 취소 |
+| GET | `/api/admin/programs/{programId}/organization-applications` | 기관 신청 목록 |
+| POST | `/api/admin/organization-applications/{applicationId}/approve` | 단건 승인 |
+| POST | `/api/admin/organization-applications/{applicationId}/reject` | 단건 반려 |
+| POST | `/api/admin/organization-applications/bulk-approve` | 일괄 승인 (≥2) |
+| POST | `/api/admin/organization-applications/bulk-reject` | 일괄 반려 (≥2) |
+| POST | `/api/admin/organization-applications/{applicationId}/cancel-approval` | 승인 취소 |
+| POST | `/api/admin/organization-applications/{applicationId}/cancel-rejection` | 반려 취소 |
+| GET | `/api/admin/programs/{programId}/organization-merge-groups` | 합반 hydrate |
+| POST | `/api/admin/programs/{programId}/organization-merge-groups` | 합반 신청 |
+| DELETE | `/api/admin/programs/{programId}/organization-merge-groups/{mergeGroupId}` | 합반 취소 |
 
-**CreateMergeRequest:** `leadApplicationId`, `members[{ organizationApplicationId, grade }]`, `changeReason?`
+**CreateMergeRequest:** `leadApplicationId`, `members[{ organizationApplicationId, grade }]`, `changeReason?`  
+**MergeGroupResponse:** `leadTeacherMemberId` (read-only — create body 미포함)
 
----
+### A-4) participants(ORGANIZATION) 목록 enrich — P1
 
-## 2) participants(ORGANIZATION) 목록 enrich — P1
-
-### 요청 배경
-
-참여 기관 목록·합반 partner lookup·상세 표시에 **학년·기관명·organizationApplicationId**가 필요합니다.  
-현재 `ParticipantListItemResponse`는 `organizationName`·`organizationApplicationId`만 일부 내려오며 **학년·반·인원·교재·지역·sessions**는 비어 FE mock 상세에 의존합니다.
-
-### 요청
-
-`GET /api/admin/programs/{programId}/participants?participantType=ORGANIZATION` 응답 item enrich:
+`GET /api/admin/programs/{programId}/participants?participantType=ORGANIZATION` item enrich:
 
 | 필드 | 용도 |
 |------|------|
-| `educationGrade` (또는 `grade`) | 합반 partner select 옵션·POST `members[].grade` |
-| `region` / 소재지 | 목록·상세 |
-| `classCount`, `studentCount` | 목록·교재 키트 계산 |
+| `educationGrade` (또는 `grade`) | 합반 partner select · POST `members[].grade` |
+| `region`, `classCount`, `studentCount` | 목록·상세 |
 | `textbookId`, `textbookName`, `textbookStatus` | 신청 정보 탭 |
-| `organizationApplicationId` | **필수** — merge POST·강사 배정 스코프 (sourceApplicationId와 구분 명확화) |
-| `mergeGroupId`, `combinedClassYn` (optional) | 목록 배지·상세 1회 조회 생략 |
+| `organizationApplicationId` | merge POST·강사 배정 스코프 |
+| `mergeGroupId`, `combinedClassYn` (optional) | 목록 배지 |
 
-동일 `organizationId`·다른 `organizationApplicationId`(학년) 다건 페이징(size>50) 지원.
+### A-5) organization-applications 목록 enrich — P1
 
----
+- `educationGrade` / `grade`, `region`, (optional) `mergeGroupId`, `combinedClassPartnerGrades[]`
 
-## 3) organization-applications 목록 enrich — P1
+### A-6) 기관 신청·참여 상세 GET + PATCH — P1
 
-### 요청 배경
+- `GET/PATCH /api/admin/organization-applications/{applicationId}`
+- (참여) participant enrich 또는 전용 GET/PATCH
+- (권장) `CreateMergeRequest.leadTeacherMemberId` 또는 합반 담당 교사 PATCH
+- ~~(권장) 알림 재발송 `POST …/notifications/resend`~~ — **보류** (이번 BE 요청 범위 제외)
 
-**신청 단계** 합반 partner lookup은 `organization-applications` 목록에서 동일 `organizationName`·다른 학년을 필터합니다.  
-현재 list item에 **학년·지역** 없음.
+### A-7) 합반 저장 후 교재·파트너 동기화 · 멤버 해제 · 신청/진행 단계 — P2
 
-### 요청
+- merge POST 후 member 교재·합반 snapshot propagate
+- DELETE idempotency / member withdraw API
+- 신청 단계 merge 허용 여부 → `availableActions` 또는 phase flag
 
-`OrganizationApplicationListItemResponse` enrich:
+### A-8) 기관 FE 검증 체크리스트
 
-- `educationGrade` / `grade`
-- `region`
-- `schoolName` alias 정리 (`organizationName` SSOT)
-- (optional) `mergeGroupId`, `combinedClassPartnerGrades[]`
-
----
-
-## 4) 기관 신청·참여 상세 GET + PATCH — P1
-
-### 요청 배경
-
-합반 외 **신청 정보 탭** 필드(주소·교육형태·교재·담당 교사·안내 사항 등)는 admin 상세 GET/PATCH가 없어 FE mock patch만 동작합니다.
-
-### 신규 API (안)
-
-- `GET /api/admin/organization-applications/{applicationId}` — 신청 상세 (합반·교재·profile 포함)
-- `PATCH /api/admin/organization-applications/{applicationId}` — 상세 필드 수정
-- (참여) `GET/PATCH /api/admin/programs/{programId}/participants/{participantId}/organization-detail` 또는 participant enrich 확장
-
-합반은 merge-groups 유지, PATCH body에 `combinedClassApplication` 중복 넣지 않음.
+- [ ] remote 프로그램 — 목록 승인/반려·일괄·승인취소·반려취소 후 목록 상태 일치
+- [ ] remote 비활성 — 의사결정·상세 수정 시 unavailable · mock 변경 없음
+- [ ] 동일 기관 2학년+ partner select · GET/POST/DELETE merge-groups
+- [ ] 합반 외 필드 저장 · 담당 교사 → unavailable
+- [ ] 알림 재발송 — 보류 (클릭 시 unavailable 유지, BE 미요청)
+- [ ] participants `organizationApplicationId` = 강사 배정 ID
 
 ---
 
-## 5) 합반 저장 후 교재·파트너 동기화 — P1
+## B. 봉사자 신청 심사
 
-### 요청 배경
+### B-1) LNB 기준 remote 보완 요약
 
-스펙: lead 기관이 합반 「신청」+ 교재 선택 시 **선택한 타 학년(파트너) 신청/참여 건에도 교재명·합반 표시 동기화**.  
-현재 mock `patchApplicantInstitutionDetailWithCombinedClass`만 로컬 반영. remote는 merge POST 후 파트너 row 갱신 API 없음.
+#### 봉사자 신청 목록 > 1차 서류 심사 대상자
 
-### 요청
+- 목록 페이지네이션·서버 필터(`documentStatus`) — FE `page=0, size=50` + 클라이언트 필터
+- 목록 enrich: 담당자 A/B 서류평가·에세이·연락처 등 부족
 
-- merge POST 성공 시 BE가 member `organizationApplicationId`에 대해 **교재·합반 표시 필드** snapshot/propagate
-- 또는 `GET organization-merge-groups` 응답 `members[]`에 `textbookId`, `textbookName`, `textbookGrade` 포함
-- FE는 merge-groups + list refetch로 파트너 상세 갱신
+#### … > 1차 서류 심사 대상자 상세
 
----
+- `GET …/volunteer-applications/{applicationId}` **부재** — 목록 행 pass-through
+- 승인 취소 / 반려 취소 API **부재** → FE mock patch **제거**, unavailable 안내
+- 담당자 A/B 서류평가 저장 API **부재**
+- 상세 본문(에세이·면접 가능일·PII) 계약 부족 · unmask 후 row merge 미구현
+- `document-result`에 `notifyTiming` 미지원
 
-## 6) 합반 수정·멤버 해제 — P2
+#### 봉사자 신청 목록 > 1차 서류 합격자
 
-### 현재 FE 동작
+- `interviewAvailability` · `assignedInterview*` · `interviewAssignmentId` 목록 enrich 부족
+- 서버 필터·페이지네이션
 
-파트너 변경·「미신청」 시 **기존 pending 그룹 DELETE → POST** (OpenAPI에 PUT 없음).
+#### … > 1차 서류 합격자 상세
 
-### BE 확인·요청
+- 상세 GET 부재 · give-up `ApplicationGiveUpRequest.reason` — **2026-09-16 FE reason 전송 연동**
 
-- 효력 발생 전(`effectiveFromScheduleStartAt` 이전)만 DELETE 가능한지 — 409 케이스 FE 안내 문구
-- **member(비 lead) 기관**에서 합반 해제 UI 필요 시: lead 전용 DELETE 외 member withdraw API 또는 lead 위임 규칙
-- 동일 lead·동일 members 재POST idempotency / 409 vs 200
+#### 봉사자 신청 목록 > 2차 면접 대상자 / 상세
 
----
+- 목록 enrich·페이지네이션 (합격자와 동일)
+- 면접 평가: `interviewAssignmentId` 없으면 저장 불가
+- `final-result` `notifyTiming` 미지원 · A/B 점수 분리 필드 부재
 
-## 7) 신청 단계 vs 진행 단계 합반 — P2
+### B-2) FE 연동 현황 (2026-09-16)
 
-### 요청
+| 화면 | 기능 | API | 연동 |
+|------|------|-----|------|
+| 1차 서류 심사 | 목록 | `GET …/programs/{programId}/volunteer-applications` | ✅ (50건 + FE 필터) |
+| 1차 서류 심사 | 선택 승인/반려 | `document-result` / `document-results/bulk` | ✅ |
+| 1차 서류 심사 상세 | 서류 승인/반려 | `document-result` | ✅ |
+| 1차 서류 심사 상세 | 승인·반려 취소 | — | ❌ unavailable (mock 제거) |
+| 1차 서류 심사 상세 | 담당자 A/B 평가 | — | ❌ unavailable |
+| 1차 서류 심사 상세 | 개인정보 | member unmask | ⚠️ 감사만 · 표시 enrich 필요 |
+| 1차 서류 합격자 | 목록 · 면접 배정/재배정 | 목록 + `interview-slots` + `POST …/interview-assignments` | ✅ |
+| 1차 서류 합격자 상세 | 활동 포기 | `POST …/give-up` + `reason` | ✅ (reason 연동) |
+| 2차 면접 | 목록 · 선택 합격/불합격 | 목록 + `final-result`(bulk) | ✅ |
+| 2차 면접 | 면접일 재배정 | `interview-assignments` | ✅ |
+| 2차 면접 상세 | 면접 평가 | `POST …/evaluations` | ⚠️ `interviewAssignmentId` 필수 |
+| 공통 | remote 비활성·API 부재 | — | `program-api-unavailable` |
 
-- 신청(승인 전) `organization-applications`에서 merge POST 허용 여부·비즈 규칙 (승인된 건만 merge 가능 등)
-- 진행 단계 `participants`만 merge 가능한 경우 **신청 상세 합반 UI disabled** 조건을 `availableActions` 또는 program phase flag로 내려주기
+**OpenAPI `VolunteerApplicationListItemResponse`:** 상태·`memberId`·`memberName` 위주 — enrich 필드 codegen 미반영.
 
----
+### B-3) 신규·보완 API 요청
 
-## 8) FE 검증 체크리스트 (스테이징)
+#### 상세 GET
 
-- [ ] 동일 기관 2학년 이상 — 「신청」 라디오 활성·partner select 옵션
-- [ ] GET merge-groups → 상세 「신청 | n학년」 hydrate
-- [ ] POST merge → GET 재조회 반영
-- [ ] 「미신청」→ pending DELETE
-- [ ] 파트너 변경 → DELETE + POST
-- [ ] member(비 lead) 행 — 합반 read-only
-- [ ] participants 목록 `organizationApplicationId` — 강사 배정 create와 동일 ID
+`GET /api/admin/volunteer-applications/{applicationId}` — 에세이 · 면접 가능일 · 담당자 평가 · `interviewAssignmentId` · `assignedInterview*` · `availableActions`
 
----
+#### 목록 enrich · 필터
 
-## 관련
+`GET …/volunteer-applications` — `page`/`size`/`totalElements`, `documentStatus` 등 서버 필터, `interviewAvailability`, `interviewAssignmentId`, `assignedInterview*`, (선택) 담당자 A/B 점수·서류평가
 
-- FE spec: `apps/cms/.cursor/rules/process/applicant-institution-combined-class-spec.md`
-- FE 코드: `organization-merge-groups-api-client.ts`, `organization-merge-groups-service.ts`, `organization-merge-groups-mapper.ts`
-- OpenAPI: `GET/POST/DELETE …/organization-merge-groups` (구현 완료 표기)
+#### 승인 취소 · 반려 취소 · 담당자 서류평가
 
-**Last updated:** 2026-09-16
+| 동작 | 제안 path |
+|------|-----------|
+| 승인 취소 | `POST …/volunteer-applications/{id}/cancel-approval` |
+| 반려 취소 | `POST …/volunteer-applications/{id}/cancel-rejection` |
+| 담당자 서류평가 | `PUT/PATCH …/volunteer-applications/{id}/document-evaluations/{managerSlot}` |
+
+#### 면접 평가 · 알림
+
+- 목록/상세 `interviewAssignmentId` 필수
+- (권장) `managerAScore` / `managerBScore` 또는 조회 API
+- `document-result` / `final-result` / 면접 배정에 `notifyTiming` (또는 notification resend)
+
+### B-4) 봉사자 FE 검증 체크리스트
+
+- [ ] remote 프로그램 — 목록 API 로드 · mock 빈 화면 없음
+- [ ] remote 비활성/seed — unavailable 모달 1회 · 로컬 patch 없음
+- [ ] 서류 승인/반려 후 목록 상태 일치
+- [ ] 승인·반려 취소 클릭 → unavailable (상태 unchanged)
+- [ ] give-up reason body 전송
+- [ ] 면접 배정/재배정 후 invalidate
+- [ ] `interviewAssignmentId` 있을 때 면접 평가 저장
+
+**Last updated:** 2026-09-16 (기관 알림 재발송 BE 요청 **보류**)
