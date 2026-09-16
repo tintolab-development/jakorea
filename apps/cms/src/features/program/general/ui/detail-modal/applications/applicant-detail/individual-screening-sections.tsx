@@ -61,8 +61,11 @@ export function IndividualApplicantManagerEvaluationSection({
                   statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
                   renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
                   isItemDisabled={(current, option) => current === option}
-                  isUpdating={!canEditManagerAEvaluation}
-                  onChange={evaluation => onManagerAEvaluationChange(applicant.id, evaluation)}
+                  onChange={
+                    canEditManagerAEvaluation
+                      ? evaluation => onManagerAEvaluationChange(applicant.id, evaluation)
+                      : undefined
+                  }
                   isOpen={
                     openManagerDropdown?.rowId === applicant.id &&
                     openManagerDropdown.manager === 'A'
@@ -84,8 +87,11 @@ export function IndividualApplicantManagerEvaluationSection({
                   statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
                   renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
                   isItemDisabled={(current, option) => current === option}
-                  isUpdating={!canEditManagerBEvaluation}
-                  onChange={evaluation => onManagerBEvaluationChange(applicant.id, evaluation)}
+                  onChange={
+                    canEditManagerBEvaluation
+                      ? evaluation => onManagerBEvaluationChange(applicant.id, evaluation)
+                      : undefined
+                  }
                   isOpen={
                     openManagerDropdown?.rowId === applicant.id &&
                     openManagerDropdown.manager === 'B'

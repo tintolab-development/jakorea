@@ -116,6 +116,11 @@ describe('general-applications-adapters', () => {
         reserveRank: 2,
         isReparticipation: true,
         giveUpYn: false,
+        managerAEvaluation: 'NEUTRAL',
+        managerBEvaluation: 'UNREVIEWED',
+        canEditManagerAEvaluation: true,
+        canEditManagerBEvaluation: false,
+        availableActions: ['VIEW', 'UPDATE_DOCUMENT_EVALUATION'],
       },
       0,
       '5001'
@@ -127,6 +132,11 @@ describe('general-applications-adapters', () => {
     expect(row.interviewAssignmentStatus).toBe('assigned')
     expect(row.secondInterviewScreeningStatus).toBe('reserve2')
     expect(row.applicationType).toBe('ujat-graduate')
+    expect(row.managerAEvaluation).toBe('neutral')
+    expect(row.managerBEvaluation).toBe('unreviewed')
+    expect(row.canEditManagerAEvaluation).toBe(true)
+    expect(row.canEditManagerBEvaluation).toBe(false)
+    expect(row.availableActions).toEqual(['VIEW', 'UPDATE_DOCUMENT_EVALUATION'])
   })
 
   it('maps individual application list item with screening fields', () => {
@@ -265,8 +275,8 @@ describe('general-applications-adapters', () => {
         screening: {
           documentStatus: 'PASS',
           documentEvaluations: {
-            managerA: { evaluation: 'PASS' },
-            managerB: { evaluation: 'NEUTRAL' },
+            managerA: { evaluation: 'PASS' } as never,
+            managerB: { evaluation: 'NEUTRAL' } as never,
           },
           interviewEvaluations: [
             { evaluatorOrder: 1, score: 42 },
@@ -316,6 +326,30 @@ describe('general-applications-adapters', () => {
     expect(row.detail?.teamRole).toBe('leader')
     expect(row.interviewSlotCount).toBe(1)
     expect(row.assignedInterviewDateLabel).toBe('2026.09.18')
+  })
+
+  it('uses the document-evaluation action when slot edit flags are omitted', () => {
+    const base = {
+      id: '1690625',
+      no: 1,
+      applicantName: '목록 이름',
+      affiliation: '목록 소속',
+      educationGrade: '목록 학년',
+      homeAddress: '목록 주소',
+      approvalStatus: 'pending',
+    } as const
+    const row = mapIndividualApplicationDetailToApplicantRow(
+      {
+        id: 1690625,
+        programId: 168006,
+        applicationStatus: 'PENDING',
+        availableActions: ['VIEW', 'UPDATE_DOCUMENT_EVALUATION'],
+      },
+      base
+    )
+
+    expect(row.canEditManagerAEvaluation).toBe(true)
+    expect(row.canEditManagerBEvaluation).toBe(true)
   })
 })
 

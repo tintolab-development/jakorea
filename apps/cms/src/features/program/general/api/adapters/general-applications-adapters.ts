@@ -1,4 +1,7 @@
-import type { ApplicantApprovalStatusKey, ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type {
+  ApplicantApprovalStatusKey,
+  ApplicantSchoolRow,
+} from '@/features/program/shared/model/applicant-institution'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
@@ -22,6 +25,7 @@ import type { ParticipatingIndividualParticipantRow } from '@/features/program/g
 import type {
   GeneralDocumentScreeningStatus,
   GeneralInterviewAssignmentStatus,
+  GeneralManagerEvaluation,
   GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import {
@@ -114,7 +118,8 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     no: index + 1,
     instructorName: dto.instructorName?.trim() || '이름 없음',
     lectureExperienceYears:
-      typeof dto.jaLectureExperienceYears === 'number' && Number.isFinite(dto.jaLectureExperienceYears)
+      typeof dto.jaLectureExperienceYears === 'number' &&
+      Number.isFinite(dto.jaLectureExperienceYears)
         ? dto.jaLectureExperienceYears
         : 0,
     educationLevel: '',
@@ -161,24 +166,24 @@ export function mapInstructorApplicationDetailToApplicantRow(
     programId: toId(dto.programId) || base.programId,
     instructorName: dto.instructorName?.trim() || base.instructorName,
     lectureExperienceYears:
-      typeof dto.jaLectureExperienceYears === 'number' && Number.isFinite(dto.jaLectureExperienceYears)
+      typeof dto.jaLectureExperienceYears === 'number' &&
+      Number.isFinite(dto.jaLectureExperienceYears)
         ? dto.jaLectureExperienceYears
         : base.lectureExperienceYears,
     educationLevel: dto.educationLevel?.trim() || base.educationLevel,
     educationSchoolName: dto.educationSchoolName?.trim() || base.educationSchoolName,
     contact: dto.contact?.trim() || base.contact,
     email: dto.email?.trim() || base.email,
-    address: [dto.homeAddress, dto.homeAddressDetail]
-      .map(part => part?.trim())
-      .filter(Boolean)
-      .join(' ') || base.address,
+    address:
+      [dto.homeAddress, dto.homeAddressDetail]
+        .map(part => part?.trim())
+        .filter(Boolean)
+        .join(' ') || base.address,
     appliedAt: dto.submittedAt ?? base.appliedAt,
     affiliation: dto.affiliation?.trim() || base.affiliation,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
-    evaluationGrade:
-      formatJaEvaluationGradeLabel(dto.jaEvaluationGrade) ?? base.evaluationGrade,
-    instructorFeeGradeLabel:
-      dto.instructorFeeGradeSnapshot?.trim() || base.instructorFeeGradeLabel,
+    evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade) ?? base.evaluationGrade,
+    instructorFeeGradeLabel: dto.instructorFeeGradeSnapshot?.trim() || base.instructorFeeGradeLabel,
     teachingExperience: dto.teachingExperience?.trim() || base.teachingExperience,
     oneLineIntro: dto.oneLineIntro?.trim() || base.oneLineIntro,
     nameHanja: dto.nameHanja?.trim() || base.nameHanja,
@@ -249,9 +254,7 @@ function formatKoreanInterviewTime(date: Date): string {
 
 function mapInterviewAvailabilitySlots(
   slots: InterviewAvailabilitySlot[] | undefined
-): NonNullable<
-  NonNullable<GeneralIndividualApplicantRow['detail']>['interviewAvailability']
-> {
+): NonNullable<NonNullable<GeneralIndividualApplicantRow['detail']>['interviewAvailability']> {
   const grouped = new Map<string, string[]>()
   for (const slot of slots ?? []) {
     const start = new Date(slot.startAt)
@@ -301,7 +304,9 @@ export function mapPreferredEducationSchedulesToSessions(
       const end = schedule.endAt ? new Date(schedule.endAt) : null
       const validStart = start != null && !Number.isNaN(start.getTime())
       const validEnd = end != null && !Number.isNaN(end.getTime())
-      const dateParts = validStart ? formatPreferredScheduleDate(start) : { date: '-', dayOfWeek: '-' }
+      const dateParts = validStart
+        ? formatPreferredScheduleDate(start)
+        : { date: '-', dayOfWeek: '-' }
       const timeRange =
         validStart && validEnd
           ? `${formatKoreanInterviewTime(start)} ~ ${formatKoreanInterviewTime(end)}`
@@ -322,8 +327,12 @@ export function mapPreferredEducationSchedulesToSessions(
     })
 }
 
-function mapManagerEvaluation(value?: string): GeneralIndividualApplicantRow['managerAEvaluation'] {
-  const normalized = value?.trim().toLowerCase()
+function mapManagerEvaluation(value: unknown): GeneralManagerEvaluation {
+  const raw =
+    value && typeof value === 'object' && 'evaluation' in value
+      ? (value as { evaluation?: unknown }).evaluation
+      : value
+  const normalized = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
   if (normalized === 'pass' || normalized === 'neutral' || normalized === 'fail') {
     return normalized
   }
@@ -395,6 +404,8 @@ export function mapIndividualApplicationDetailToApplicantRow(
       }
     | undefined
   const teamRole = team?.role?.trim().toUpperCase()
+  const canEditDocumentEvaluation =
+    dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
 
   return {
     ...base,
@@ -402,11 +413,10 @@ export function mapIndividualApplicationDetailToApplicantRow(
     memberId: toId(dto.memberId) || undefined,
     applicantName: profile?.name?.trim() || '',
     availableActions: dto.availableActions ?? [],
-    privacyMaskingLevel:
-      dto.privacyMaskingLevel === 'UNMASKED' ? 'UNMASKED' : 'MASKED',
+    privacyMaskingLevel: dto.privacyMaskingLevel === 'UNMASKED' ? 'UNMASKED' : 'MASKED',
     canRevealPersonalInfo: dto.canRevealPersonalInfo === true,
-    canEditManagerAEvaluation: dto.canEditManagerAEvaluation === true,
-    canEditManagerBEvaluation: dto.canEditManagerBEvaluation === true,
+    canEditManagerAEvaluation: dto.canEditManagerAEvaluation ?? canEditDocumentEvaluation,
+    canEditManagerBEvaluation: dto.canEditManagerBEvaluation ?? canEditDocumentEvaluation,
     affiliation: profile?.affiliationSchool?.trim() || '',
     educationGrade: profile?.affiliationGrade?.trim() || '',
     homeAddress: profile?.homeAddress?.trim() || '',
@@ -436,8 +446,7 @@ export function mapIndividualApplicationDetailToApplicantRow(
           : team?.memberCount != null
             ? 'custom'
             : undefined,
-      teamRole:
-        teamRole === 'LEADER' ? 'leader' : teamRole === 'MEMBER' ? 'member' : undefined,
+      teamRole: teamRole === 'LEADER' ? 'leader' : teamRole === 'MEMBER' ? 'member' : undefined,
       interviewAvailability,
       scheduleChangeCancelCount: dto.application?.scheduleChangeCancelCount ?? 0,
     },
@@ -446,12 +455,8 @@ export function mapIndividualApplicationDetailToApplicantRow(
     textbookKits: dto.textbook?.kits,
     textbookQuantity: dto.textbook?.quantity,
     textbookStatus: dto.textbook?.status as GeneralIndividualApplicantRow['textbookStatus'],
-    managerAEvaluation: mapManagerEvaluation(
-      screening?.documentEvaluations?.managerA?.evaluation
-    ),
-    managerBEvaluation: mapManagerEvaluation(
-      screening?.documentEvaluations?.managerB?.evaluation
-    ),
+    managerAEvaluation: mapManagerEvaluation(screening?.documentEvaluations?.managerA),
+    managerBEvaluation: mapManagerEvaluation(screening?.documentEvaluations?.managerB),
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
     interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
     interviewAssignmentStatus: mapApiInterviewStatusToAssignmentStatus(
@@ -516,7 +521,7 @@ export function mapParticipantToParticipatingIndividualRow(
 }
 
 export function mapApiDocumentStatusToScreeningStatus(
-  status?: string
+  status?: string | null
 ): GeneralDocumentScreeningStatus {
   const normalized = status?.trim().toUpperCase() ?? ''
   if (['PASS', 'PASSED', 'APPROVED', 'DOCUMENT_PASSED'].includes(normalized)) return 'pass'
@@ -525,7 +530,7 @@ export function mapApiDocumentStatusToScreeningStatus(
 }
 
 export function mapApiInterviewStatusToAssignmentStatus(
-  status?: string,
+  status?: string | null,
   giveUpYn?: boolean
 ): GeneralInterviewAssignmentStatus {
   if (giveUpYn) return 'withdrawn'
@@ -536,7 +541,7 @@ export function mapApiInterviewStatusToAssignmentStatus(
 }
 
 export function mapApiFinalResultToSecondInterviewStatus(
-  status?: string,
+  status?: string | null,
   reserveRank?: number
 ): GeneralSecondInterviewScreeningStatus | undefined {
   const normalized = status?.trim().toUpperCase() ?? ''
@@ -585,8 +590,11 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     essayEducationExperience: '',
     essayNecessity: '',
     essayJaExperience: '',
-    managerAEvaluation: 'unreviewed',
-    managerBEvaluation: 'unreviewed',
+    managerAEvaluation: mapManagerEvaluation(dto.managerAEvaluation),
+    managerBEvaluation: mapManagerEvaluation(dto.managerBEvaluation),
+    canEditManagerAEvaluation: dto.canEditManagerAEvaluation === true,
+    canEditManagerBEvaluation: dto.canEditManagerBEvaluation === true,
+    availableActions: dto.availableActions ?? [],
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(dto.documentStatus),
     interviewSlotCount: 0,
     interviewAssignmentStatus: mapApiInterviewStatusToAssignmentStatus(
@@ -640,17 +648,13 @@ export function mapParticipantToParticipatingSchoolRow(
   index: number,
   programId: string
 ): ParticipatingSchoolRow {
-  const organizationApplicationIdValue =
-    dto.organizationApplicationId ?? dto.sourceApplicationId
+  const organizationApplicationIdValue = dto.organizationApplicationId ?? dto.sourceApplicationId
   const organizationApplicationId =
-    organizationApplicationIdValue != null
-      ? String(organizationApplicationIdValue)
-      : undefined
+    organizationApplicationIdValue != null ? String(organizationApplicationIdValue) : undefined
   const participantStatus = dto.participantStatus?.trim() || undefined
   const giveUpAt = dto.giveUpAt?.trim() || undefined
   const availableActions = readParticipantAvailableActions(dto)
-  const activityWithdrawn =
-    giveUpAt != null || participantStatus?.toUpperCase() === 'GIVE_UP'
+  const activityWithdrawn = giveUpAt != null || participantStatus?.toUpperCase() === 'GIVE_UP'
   return {
     id: toId(dto.participantId),
     organizationId: dto.organizationId,
@@ -675,11 +679,8 @@ export function mapParticipantToParticipatingSchoolRow(
 }
 
 /** codegen 미반영 additive 필드 — 런타임만 존재할 수 있음 */
-function readParticipantAvailableActions(
-  dto: ParticipantListItemResponse
-): string[] | undefined {
-  const raw = (dto as ParticipantListItemResponse & { availableActions?: unknown })
-    .availableActions
+function readParticipantAvailableActions(dto: ParticipantListItemResponse): string[] | undefined {
+  const raw = (dto as ParticipantListItemResponse & { availableActions?: unknown }).availableActions
   if (!Array.isArray(raw)) return undefined
   const actions = raw.filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
   return actions.length > 0 ? actions : undefined

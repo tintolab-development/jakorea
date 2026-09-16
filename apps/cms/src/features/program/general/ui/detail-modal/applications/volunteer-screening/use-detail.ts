@@ -9,10 +9,7 @@ import {
   type ScreeningSubjectKind,
 } from '@/features/program/general/lib/screening-subject-kind'
 
-export type GeneralVolunteerApplicantDetailVariant =
-  | 'doc_screening'
-  | 'doc_passed'
-  | 'interview2'
+export type GeneralVolunteerApplicantDetailVariant = 'doc_screening' | 'doc_passed' | 'interview2'
 
 export type GeneralVolunteerApplicantDetailMeta = {
   title: string
@@ -51,8 +48,9 @@ export function useGeneralVolunteerApplicantDetail({
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [selectedApplicant, setSelectedApplicant] =
-    useState<GeneralVolunteerApplicantRow | null>(null)
+  const [selectedApplicant, setSelectedApplicant] = useState<GeneralVolunteerApplicantRow | null>(
+    null
+  )
   const selectedApplicantRef = useRef(selectedApplicant)
   selectedApplicantRef.current = selectedApplicant
   const programIdRef = useRef(programId)
@@ -128,10 +126,7 @@ export function useGeneralVolunteerApplicantDetail({
     if (!selectedApplicant) return
     const updated = list.find(row => row.id === selectedApplicant.id)
     if (!updated) return
-    setSelectedApplicant(prev => {
-      if (prev?.id === updated.id && prev.name === updated.name) return prev
-      return updated
-    })
+    setSelectedApplicant(prev => (prev === updated ? prev : updated))
   }, [list, selectedApplicant])
 
   const openApplicantDetail = useCallback(

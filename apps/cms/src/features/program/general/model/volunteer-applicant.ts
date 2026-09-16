@@ -39,6 +39,10 @@ export interface GeneralVolunteerApplicantRow {
   essayJaExperience: string
   managerAEvaluation: GeneralManagerEvaluation
   managerBEvaluation: GeneralManagerEvaluation
+  canEditManagerAEvaluation: boolean
+  canEditManagerBEvaluation: boolean
+  /** Admin API가 현재 상태에서 허용하는 canonical action 목록 */
+  availableActions: string[]
   documentScreeningStatus: GeneralDocumentScreeningStatus
   documentApprovalNotifyTiming?: PermissionModalNotifyTiming
   documentRejectionNotifyTiming?: PermissionModalNotifyTiming
@@ -171,7 +175,9 @@ export function patchGeneralVolunteerInterviewEvaluation(
   })
 }
 
-export function formatGeneralVolunteerApplicationType(type: GeneralVolunteerApplicationType): string {
+export function formatGeneralVolunteerApplicationType(
+  type: GeneralVolunteerApplicationType
+): string {
   return GENERAL_VOLUNTEER_APPLICATION_TYPE_LABELS[type]
 }
 

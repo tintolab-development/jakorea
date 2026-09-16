@@ -71,11 +71,13 @@ export function useGeneralVolunteerDocScreeningColumns({
   onManagerBEvaluationChange,
   openManagerDropdown,
   setOpenManagerDropdown,
+  updatingManagerEvaluation,
 }: {
   onManagerAEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
   onManagerBEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
   openManagerDropdown: { rowId: string; manager: 'A' | 'B' } | null
   setOpenManagerDropdown: Dispatch<SetStateAction<{ rowId: string; manager: 'A' | 'B' } | null>>
+  updatingManagerEvaluation: string | null
 }): ColumnsType<GeneralVolunteerApplicantRow> {
   return useMemo(() => {
     const essayColumns: ColumnsType<GeneralVolunteerApplicantRow> = (
@@ -181,12 +183,21 @@ export function useGeneralVolunteerDocScreeningColumns({
             statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
             renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
             isItemDisabled={(current, option) => current === option}
-            onChange={evaluation => onManagerAEvaluationChange(record.id, evaluation)}
+            onChange={
+              record.canEditManagerAEvaluation
+                ? evaluation => onManagerAEvaluationChange(record.id, evaluation)
+                : undefined
+            }
+            isUpdating={updatingManagerEvaluation === `${record.id}:A`}
             isOpen={
-              openManagerDropdown?.rowId === record.id && openManagerDropdown?.manager === 'A'
+              record.canEditManagerAEvaluation &&
+              openManagerDropdown?.rowId === record.id &&
+              openManagerDropdown?.manager === 'A'
             }
             onOpenChange={open =>
-              setOpenManagerDropdown(open ? { rowId: record.id, manager: 'A' } : null)
+              setOpenManagerDropdown(
+                open && record.canEditManagerAEvaluation ? { rowId: record.id, manager: 'A' } : null
+              )
             }
             tagLayout="tag100"
           />
@@ -208,12 +219,21 @@ export function useGeneralVolunteerDocScreeningColumns({
             statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
             renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
             isItemDisabled={(current, option) => current === option}
-            onChange={evaluation => onManagerBEvaluationChange(record.id, evaluation)}
+            onChange={
+              record.canEditManagerBEvaluation
+                ? evaluation => onManagerBEvaluationChange(record.id, evaluation)
+                : undefined
+            }
+            isUpdating={updatingManagerEvaluation === `${record.id}:B`}
             isOpen={
-              openManagerDropdown?.rowId === record.id && openManagerDropdown?.manager === 'B'
+              record.canEditManagerBEvaluation &&
+              openManagerDropdown?.rowId === record.id &&
+              openManagerDropdown?.manager === 'B'
             }
             onOpenChange={open =>
-              setOpenManagerDropdown(open ? { rowId: record.id, manager: 'B' } : null)
+              setOpenManagerDropdown(
+                open && record.canEditManagerBEvaluation ? { rowId: record.id, manager: 'B' } : null
+              )
             }
             tagLayout="tag100"
           />
@@ -237,5 +257,6 @@ export function useGeneralVolunteerDocScreeningColumns({
     onManagerBEvaluationChange,
     openManagerDropdown,
     setOpenManagerDropdown,
+    updatingManagerEvaluation,
   ])
 }
