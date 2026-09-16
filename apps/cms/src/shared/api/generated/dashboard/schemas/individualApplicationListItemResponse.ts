@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { InterviewAvailabilitySlot } from './interviewAvailabilitySlot';
+import type { PreferredEducationScheduleResponse } from './preferredEducationScheduleResponse';
 
 /**
  * 일반 개인 프로그램 신청 목록 항목. 신청자 가능 일정과 관리자 확정 배정 일정은 별도 필드입니다.
@@ -18,8 +19,23 @@ export interface IndividualApplicationListItemResponse {
   recruitmentId?: number;
   memberId?: number;
   memberName?: string;
+  /** 신청 시점 소속명 우선의 목록 표시값 */
+  affiliationName?: string;
+  /** 신청 시점 학년 또는 교육 단계 */
+  applicationGrade?: string;
+  /** 상세 번지를 제외한 목록용 주소 요약 */
+  homeAddressSummary?: string;
+  /** 해당 신청 건에서 선택한 교육 일정. 미선택 시 빈 배열 */
+  preferredEducationSchedules?: PreferredEducationScheduleResponse[];
   applicationStatus?: string;
+  /**
+     * Admin CMS 전용 최신 관리자 코멘트
+     * @nullable
+     */
+  managerComment?: string | null;
   documentStatus?: string;
+  managerAEvaluation?: string;
+  managerBEvaluation?: string;
   interviewStatus?: string;
   finalResultStatus?: string;
   reserveRank?: number;

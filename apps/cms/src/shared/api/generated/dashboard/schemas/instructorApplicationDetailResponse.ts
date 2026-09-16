@@ -5,29 +5,41 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { AvailableScheduleSlot } from './availableScheduleSlot';
 
-export interface InstructorApplicationListItemResponse {
+export interface InstructorApplicationDetailResponse {
   id?: number;
   programId?: number;
-  programName?: string;
-  programType?: string;
   recruitmentId?: number;
   instructorMemberId?: number;
   instructorName?: string;
-  applicationStatus?: string;
-  homeAddress?: string;
-  jaLectureExperienceYears?: number;
-  jaEvaluationGrade?: string;
+  nameHanja?: string;
+  nameEnglish?: string;
+  birthDate?: string;
+  gender?: string;
   contact?: string;
   email?: string;
+  homeAddress?: string;
+  homeAddressDetail?: string;
+  educationLevel?: string;
+  educationSchoolName?: string;
+  affiliation?: string;
+  teachingExperience?: string;
+  jaLectureExperienceYears?: number;
+  jaEvaluationGrade?: string;
+  oneLineIntro?: string;
+  availableScheduleMemo?: string;
+  availableScheduleSlots?: AvailableScheduleSlot[];
+  managerComment?: string;
+  applicationStatus?: string;
   instructorTypeSnapshot?: string;
   instructorFeeGradeSnapshot?: string;
   distanceKm?: number;
   longDistance?: boolean;
-  availableScheduleMemo?: string;
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;
   rejectReason?: string;
+  participantId?: number;
   availableActions?: string[];
 }
