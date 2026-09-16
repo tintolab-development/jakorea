@@ -13,6 +13,7 @@ export interface RequestedScheduleResponse {
   startPeriod?: number;
   sessionCount?: number;
   combinedClassYn?: boolean;
+  resolvedScheduleId?: number;
   createdByActorType?: string;
   createdByActorId?: number;
   createdAt?: string;

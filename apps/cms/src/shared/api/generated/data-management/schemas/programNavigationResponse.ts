@@ -11,7 +11,7 @@ export interface ProgramNavigationResponse {
   programId?: number;
   rawProgramType?: string;
   canonicalProgramType?: string;
-  /** 허용 신청 대상. 일반 프로그램은 serviceDetailJson.generalParticipantTypes를 반영하며 volunteer가 있으면 VOLUNTEER을 포함합니다. */
+  /** 허용 신청 대상. 일반 프로그램은 역할별 canonical program_recruitment를 우선 반영하고, 해당 역할 row가 없는 구데이터만 serviceDetailJson participant types를 fallback으로 사용합니다. */
   allowedApplicationTargets?: string[];
   /** 정책상 비활성 신청 대상. 일반 프로그램에서 volunteer/teacher_instructor가 참여자 유형에 없으면 VOLUNTEER/INSTRUCTOR가 포함됩니다. */
   disabledApplicationTargets?: string[];
