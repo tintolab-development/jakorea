@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
-import { patchApplicantInstitutionDetailWithCombinedClass } from '@/features/program/shared/model/applicant-institution'
 import type { Program } from '@/types/domain'
 import {
   isCombinedClassProgramEligible,
   resolveCombinedClassApplyRadioDisabled,
 } from '@/features/program/general/lib/combined-class-edit-policy'
 import {
+  buildCombinedClassLeadTeacherCandidatesFromApplicants,
+  type CombinedClassLeadTeacherCandidate,
+} from '@/features/program/general/lib/combined-class-lead-teacher'
+import {
   draftToSavePayload,
+  hasApplicantInstitutionCombinedClassDraftChanges,
+  hasApplicantInstitutionNonCombinedClassDraftChanges,
   parseApplicantInstitutionEditDraft,
   rowToEditDraft,
   type ApplicantInstitutionEditDraft,
@@ -32,9 +37,11 @@ import {
   resolveProgramParticipantMaxClassCount,
 } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 
 /**
- * 기관 신청자 상세 편집 — 합반은 organization-merge-groups remote, 그 외 필드는 mock patch.
+ * 기관 신청자 상세 편집 — 합반은 organization-merge-groups remote만 저장.
+ * 그 외 필드(주소·교재·교사 등)는 상세 PATCH API 부재 → mock 금지, API 연동 안내.
  */
 
 export interface TextbookSelectOption {
@@ -59,6 +66,11 @@ export interface UseApplicantInstitutionDetailEditParams {
     combinedClassPartnerApplicantIds: string[]
   }) => Promise<void>
   combinedClassReadOnly?: boolean
+  /** 합반 「신청」 저장 후 담당 교사 지정 모달용 */
+  onCombinedClassApplied?: (params: {
+    memberRowIds: string[]
+    candidates: CombinedClassLeadTeacherCandidate[]
+  }) => void
 }
 
 export function useApplicantInstitutionDetailEdit({
@@ -68,6 +80,7 @@ export function useApplicantInstitutionDetailEdit({
   onSaved,
   onSaveCombinedClass,
   combinedClassReadOnly = false,
+  onCombinedClassApplied,
 }: UseApplicantInstitutionDetailEditParams) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -237,31 +250,116 @@ export function useApplicantInstitutionDetailEdit({
       return false
     }
 
-    const payload = draftToSavePayload(normalizedDraft, institution, {
-      showEducationFormatField,
-    })
-    if (!payload) {
+    if (!draftToSavePayload(normalizedDraft, institution, { showEducationFormatField })) {
       setValidationErrors({ form: '저장할 수 없습니다. 입력값을 확인해 주세요.' })
       return false
     }
 
     setIsSaving(true)
     try {
-      if (onSaveCombinedClass && isCombinedClassProgramEligibleFlag && !combinedClassReadOnly) {
+      const partnersChanged = hasApplicantInstitutionCombinedClassDraftChanges(
+        institution,
+        normalizedDraft
+      )
+      const nonMergeChanged = hasApplicantInstitutionNonCombinedClassDraftChanges(
+        institution,
+        normalizedDraft
+      )
+
+      let savedCombinedClass = false
+      if (
+        partnersChanged &&
+        onSaveCombinedClass &&
+        isCombinedClassProgramEligibleFlag &&
+        !combinedClassReadOnly
+      ) {
         await onSaveCombinedClass({
           combinedClassApplication: normalizedDraft.combinedClassApplication,
           combinedClassPartnerApplicantIds: normalizedDraft.combinedClassPartnerApplicantIds,
         })
-      }
-
-      const updatedRows = patchApplicantInstitutionDetailWithCombinedClass(institution.id, payload)
-      if (updatedRows.length === 0) {
-        setValidationErrors({ form: '저장에 실패했습니다.' })
+        savedCombinedClass = true
+      } else if (partnersChanged && !onSaveCombinedClass) {
+        notifyProgramApiUnavailable(
+          'general-org-merge-groups',
+          '일반 프로그램 · 기관 합반 신청'
+        )
         return false
       }
 
+      if (nonMergeChanged) {
+        notifyProgramApiUnavailable(
+          'general-org-application-detail-patch',
+          '일반 프로그램 · 기관 신청 상세 정보 수정'
+        )
+        if (!savedCombinedClass) return false
+      }
+
+      if (!savedCombinedClass && !nonMergeChanged) {
+        resetEditState()
+        return true
+      }
+
+      const updatedRows = institutionList.map(row => {
+        if (row.id !== institution.id) {
+          if (
+            !normalizedDraft.combinedClassPartnerApplicantIds.includes(row.id) ||
+            normalizedDraft.combinedClassApplication !== '신청'
+          ) {
+            return row
+          }
+          return {
+            ...row,
+            detail: {
+              ...row.detail,
+              combinedClassApplication: '신청' as const,
+              combinedClassPartnerApplicantIds: [
+                institution.id,
+                ...normalizedDraft.combinedClassPartnerApplicantIds.filter(id => id !== row.id),
+              ],
+            },
+          }
+        }
+        return {
+          ...row,
+          detail: {
+            ...row.detail,
+            combinedClassApplication: normalizedDraft.combinedClassApplication,
+            combinedClassPartnerApplicantIds:
+              normalizedDraft.combinedClassApplication === '신청'
+                ? normalizedDraft.combinedClassPartnerApplicantIds
+                : [],
+          },
+        }
+      })
+
       onSaved(updatedRows)
       resetEditState()
+
+      if (
+        savedCombinedClass &&
+        normalizedDraft.combinedClassApplication === '신청' &&
+        normalizedDraft.combinedClassPartnerApplicantIds.length > 0 &&
+        !combinedClassReadOnly
+      ) {
+        const partnerRows = updatedRows.filter(row =>
+          normalizedDraft.combinedClassPartnerApplicantIds.includes(row.id)
+        )
+        const leadRow = updatedRows.find(row => row.id === institution.id) ?? institution
+        const candidates = buildCombinedClassLeadTeacherCandidatesFromApplicants(
+          leadRow,
+          partnerRows
+        )
+        if (candidates.length > 0) {
+          onCombinedClassApplied?.({
+            memberRowIds: [
+              institution.id,
+              ...normalizedDraft.combinedClassPartnerApplicantIds,
+            ],
+            candidates,
+          })
+        }
+      }
+
       return true
     } catch {
       setValidationErrors({ form: '저장에 실패했습니다. 다시 시도해 주세요.' })
@@ -273,7 +371,9 @@ export function useApplicantInstitutionDetailEdit({
     combinedClassReadOnly,
     draft,
     institution,
+    institutionList,
     isCombinedClassProgramEligibleFlag,
+    onCombinedClassApplied,
     onSaveCombinedClass,
     onSaved,
     resetEditState,

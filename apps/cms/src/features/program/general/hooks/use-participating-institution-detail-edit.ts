@@ -7,6 +7,10 @@ import {
   resolveCombinedClassApplyRadioDisabled,
 } from '@/features/program/general/lib/combined-class-edit-policy'
 import {
+  buildCombinedClassLeadTeacherCandidatesFromParticipating,
+  type CombinedClassLeadTeacherCandidate,
+} from '@/features/program/general/lib/combined-class-lead-teacher'
+import {
   detailToParticipatingInstitutionEditDraft,
   parseParticipatingInstitutionEditDraft,
   participatingInstitutionEditDraftToDetailPatch,
@@ -30,6 +34,7 @@ import type { TextbookSelectOption } from '@/features/program/general/hooks/use-
 import type { CombinedClassApplicationStatus } from '@/features/program/general/lib/applicant-institution-detail-edit'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 import { useCmsAlert } from '@/shared/ui'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -64,6 +69,10 @@ export interface UseParticipatingInstitutionDetailEditParams {
   }) => Promise<void>
   /** 합반 멤버(비 lead) 행이면 true — 합반 필드 read-only */
   combinedClassReadOnly?: boolean
+  onCombinedClassApplied?: (params: {
+    memberRowIds: string[]
+    candidates: CombinedClassLeadTeacherCandidate[]
+  }) => void
 }
 
 export function useParticipatingInstitutionDetailEdit({
@@ -71,9 +80,9 @@ export function useParticipatingInstitutionDetailEdit({
   row,
   program,
   participatingSchoolList,
-  onSaveBasicInfo,
   onSaveCombinedClass,
   combinedClassReadOnly = false,
+  onCombinedClassApplied,
 }: UseParticipatingInstitutionDetailEditParams) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -299,14 +308,95 @@ export function useParticipatingInstitutionDetailEdit({
 
     setIsSaving(true)
     try {
-      if (onSaveCombinedClass && isCombinedClassProgramEligibleFlag && !combinedClassReadOnly) {
+      const baseline = detailToParticipatingInstitutionEditDraft(
+        detail,
+        detail.textbookId || textbookDisplay.textbookId || '',
+        detail.textbookGrade || textbookDisplay.textbookGrade
+      )
+      const partnersChanged =
+        baseline.combinedClassApplication !== normalizedDraft.combinedClassApplication ||
+        baseline.combinedClassPartnerSchoolIds.join('|') !==
+          normalizedDraft.combinedClassPartnerSchoolIds.join('|')
+      const nonMergeChanged =
+        baseline.textbookId !== normalizedDraft.textbookId ||
+        baseline.textbookName !== normalizedDraft.textbookName ||
+        baseline.addressDetail !== normalizedDraft.addressDetail ||
+        baseline.educationFormat !== normalizedDraft.educationFormat ||
+        baseline.teacherName !== normalizedDraft.teacherName ||
+        baseline.teacherPhone !== normalizedDraft.teacherPhone ||
+        baseline.teacherMobile !== normalizedDraft.teacherMobile ||
+        baseline.teacherEmail !== normalizedDraft.teacherEmail ||
+        baseline.applicationReason !== normalizedDraft.applicationReason ||
+        baseline.otherRequests !== normalizedDraft.otherRequests ||
+        baseline.computerInRoom !== normalizedDraft.computerInRoom ||
+        baseline.waitingRoomAvailable !== normalizedDraft.waitingRoomAvailable ||
+        baseline.waitingRoomLocation !== normalizedDraft.waitingRoomLocation ||
+        baseline.mealProvided !== normalizedDraft.mealProvided ||
+        baseline.mealNotice !== normalizedDraft.mealNotice ||
+        baseline.parkingInfo !== normalizedDraft.parkingInfo
+
+      let savedCombinedClass = false
+      if (
+        partnersChanged &&
+        onSaveCombinedClass &&
+        isCombinedClassProgramEligibleFlag &&
+        !combinedClassReadOnly
+      ) {
         await onSaveCombinedClass({
           combinedClassApplication: normalizedDraft.combinedClassApplication,
           combinedClassPartnerSchoolIds: normalizedDraft.combinedClassPartnerSchoolIds,
         })
+        savedCombinedClass = true
+      } else if (partnersChanged && !onSaveCombinedClass) {
+        notifyProgramApiUnavailable(
+          'general-org-merge-groups-progress',
+          '일반 프로그램 · 참여 기관 합반 신청'
+        )
+        return false
       }
-      onSaveBasicInfo?.({ ...patch, id: detail.id })
+
+      if (nonMergeChanged) {
+        notifyProgramApiUnavailable(
+          'general-participating-institution-detail-patch',
+          '일반 프로그램 · 참여 기관 신청 정보 수정'
+        )
+        if (!savedCombinedClass) return false
+      }
+
+      if (!savedCombinedClass && !nonMergeChanged) {
+        resetEditState()
+        return true
+      }
+
       resetEditState()
+
+      if (
+        savedCombinedClass &&
+        normalizedDraft.combinedClassApplication === '신청' &&
+        normalizedDraft.combinedClassPartnerSchoolIds.length > 0 &&
+        !combinedClassReadOnly
+      ) {
+        const partnerRows = participatingSchoolList.filter(item =>
+          normalizedDraft.combinedClassPartnerSchoolIds.includes(item.id)
+        )
+        const candidates = buildCombinedClassLeadTeacherCandidatesFromParticipating(
+          {
+            ...detail,
+            combinedClassApplication: normalizedDraft.combinedClassApplication,
+            combinedClassPartnerSchoolIds: normalizedDraft.combinedClassPartnerSchoolIds,
+            combinedClassPartnerGrades: partnerGrades,
+          },
+          row,
+          partnerRows
+        )
+        if (candidates.length > 0) {
+          onCombinedClassApplied?.({
+            memberRowIds: [detail.id, ...normalizedDraft.combinedClassPartnerSchoolIds],
+            candidates,
+          })
+        }
+      }
+
       return true
     } catch {
       void showAlert({
@@ -319,14 +409,15 @@ export function useParticipatingInstitutionDetailEdit({
     }
   }, [
     combinedClassReadOnly,
-    detail.id,
+    detail,
     draft,
     isCombinedClassProgramEligibleFlag,
-    onSaveBasicInfo,
+    onCombinedClassApplied,
     onSaveCombinedClass,
     participatingSchoolList,
     program,
     resetEditState,
+    row,
     row.studentCount,
     isCompanySchool,
     showAlert,

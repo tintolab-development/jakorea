@@ -188,3 +188,44 @@ export function formatCombinedClassDisplay(detail?: ApplicantSchoolRow['detail']
   if (grades.length === 0) return '신청'
   return `신청 | ${grades.join(', ')}`
 }
+
+/** 합반 외 필드(상세 PATCH API 부재) 변경 여부 */
+export function hasApplicantInstitutionNonCombinedClassDraftChanges(
+  institution: ApplicantSchoolRow,
+  draft: ApplicantInstitutionEditDraft
+): boolean {
+  const baseline = rowToEditDraft(institution)
+  const keys = Object.keys(draft) as Array<keyof ApplicantInstitutionEditDraft>
+  for (const key of keys) {
+    if (key === 'combinedClassApplication' || key === 'combinedClassPartnerApplicantIds') {
+      continue
+    }
+    const next = draft[key]
+    const prev = baseline[key]
+    if (Array.isArray(next) || Array.isArray(prev)) {
+      const nextArr = Array.isArray(next) ? next : []
+      const prevArr = Array.isArray(prev) ? prev : []
+      if (
+        nextArr.length !== prevArr.length ||
+        nextArr.some((value, index) => value !== prevArr[index])
+      ) {
+        return true
+      }
+      continue
+    }
+    if (String(next ?? '') !== String(prev ?? '')) return true
+  }
+  return false
+}
+
+export function hasApplicantInstitutionCombinedClassDraftChanges(
+  institution: ApplicantSchoolRow,
+  draft: ApplicantInstitutionEditDraft
+): boolean {
+  const baseline = rowToEditDraft(institution)
+  if (draft.combinedClassApplication !== baseline.combinedClassApplication) return true
+  const nextIds = [...draft.combinedClassPartnerApplicantIds].sort()
+  const prevIds = [...baseline.combinedClassPartnerApplicantIds].sort()
+  if (nextIds.length !== prevIds.length) return true
+  return nextIds.some((id, index) => id !== prevIds[index])
+}

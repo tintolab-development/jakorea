@@ -124,7 +124,16 @@ import {
   InstitutionWaitingRoomEdit,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
-import { isCombinedClassProgramEligible } from '@/features/program/general/lib/combined-class-edit-policy'
+import {
+  hasCompletedCombinedClassEducationSessions,
+  isCombinedClassProgramEligible,
+} from '@/features/program/general/lib/combined-class-edit-policy'
+import {
+  type CombinedClassLeadTeacherCandidate,
+} from '@/features/program/general/lib/combined-class-lead-teacher'
+import { InstitutionCombinedClassLeadTeacherModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-lead-teacher-modal'
+import { InstitutionCombinedClassCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-complete-modal'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { formatParticipatingCombinedClassDisplay } from '@/features/program/general/lib/participating-institution-detail-edit'
 import { InstitutionCombinedClassEditCell } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-combined-class-edit-cell'
 import {
@@ -476,6 +485,12 @@ export function GeneralParticipatingInstitutionDetailView(
     [program, sessions]
   )
 
+  const [combinedClassLeadTeacherModal, setCombinedClassLeadTeacherModal] = useState<{
+    memberRowIds: string[]
+    candidates: CombinedClassLeadTeacherCandidate[]
+  } | null>(null)
+  const [combinedClassCompleteLabel, setCombinedClassCompleteLabel] = useState<string | null>(null)
+
   const applicationInfoEdit = useParticipatingInstitutionDetailEdit({
     detail: mergedDetail,
     row,
@@ -484,6 +499,9 @@ export function GeneralParticipatingInstitutionDetailView(
     onSaveBasicInfo,
     onSaveCombinedClass,
     combinedClassReadOnly,
+    onCombinedClassApplied: params => {
+      setCombinedClassLeadTeacherModal(params)
+    },
   })
 
   const {
@@ -531,11 +549,13 @@ export function GeneralParticipatingInstitutionDetailView(
   }, [isApplicationInfoEditing, mergedDetail.adminComment])
 
   const handleAdminCommentSave = useCallback(() => {
-    const trimmed = adminCommentDraft.trim()
-    onSaveBasicInfo?.({ id: detail.id, adminComment: trimmed || undefined })
+    notifyProgramApiUnavailable(
+      'general-participating-institution-admin-comment',
+      '일반 프로그램 · 참여 기관 관리자 코멘트'
+    )
     setAdminCommentModalOpen(false)
     setAdminCommentError(undefined)
-  }, [adminCommentDraft, detail.id, onSaveBasicInfo])
+  }, [])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)
@@ -1492,6 +1512,9 @@ export function GeneralParticipatingInstitutionDetailView(
         isProgramEligible={combinedClassProgramEligible}
         isApplyRadioDisabled={isCombinedClassApplyRadioDisabled}
         readOnly={combinedClassReadOnly}
+        showEffectiveFromNextScheduleNotice={hasCompletedCombinedClassEducationSessions(
+          row.sessions
+        )}
       />
     ) : (
       buildCombinedClassViewValue(mergedDetail, combinedClassProgramEligible)
@@ -2058,6 +2081,23 @@ export function GeneralParticipatingInstitutionDetailView(
         onChange={handleAdminCommentDraftChange}
         onCancel={handleAdminCommentModalCancel}
         onConfirm={handleAdminCommentSave}
+      />
+      <InstitutionCombinedClassLeadTeacherModal
+        open={combinedClassLeadTeacherModal != null}
+        candidates={combinedClassLeadTeacherModal?.candidates ?? []}
+        onCancel={() => setCombinedClassLeadTeacherModal(null)}
+        onConfirm={() => {
+          notifyProgramApiUnavailable(
+            'general-org-merge-lead-teacher-progress',
+            '일반 프로그램 · 합반 담당 교사 지정'
+          )
+          setCombinedClassLeadTeacherModal(null)
+        }}
+      />
+      <InstitutionCombinedClassCompleteModal
+        open={combinedClassCompleteLabel != null}
+        teacherLabel={combinedClassCompleteLabel ?? ''}
+        onClose={() => setCombinedClassCompleteLabel(null)}
       />
     </div>
   )

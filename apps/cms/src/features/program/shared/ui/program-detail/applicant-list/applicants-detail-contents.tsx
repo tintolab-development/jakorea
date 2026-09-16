@@ -7,7 +7,6 @@ import type { Program } from '@/types/domain'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert, type CmsButtonVariant } from '@/shared/ui'
 import { MESSAGES } from '@/shared/constants/messages'
 import {
-  patchApplicantInstitutionAdminComment,
   type ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
 import { useApplicantInstitutionDetailEdit } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
@@ -17,6 +16,13 @@ import { shouldUseOrganizationMergeGroupsRemoteApi } from '@/features/program/ge
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { applyCombinedClassMergeToApplicantDetail } from '@/features/program/general/lib/apply-combined-class-merge-state'
 import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
+import { hasCompletedCombinedClassEducationSessions } from '@/features/program/general/lib/combined-class-edit-policy'
+import {
+  type CombinedClassLeadTeacherCandidate,
+} from '@/features/program/general/lib/combined-class-lead-teacher'
+import { InstitutionCombinedClassLeadTeacherModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-lead-teacher-modal'
+import { InstitutionCombinedClassCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-complete-modal'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { useApplicantInstructorDetailEdit } from '@/features/program/general/hooks/use-applicant-instructor-detail-edit'
 import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
@@ -597,6 +603,12 @@ export function ApplicantsDetailContents({
     [institutionData, institutionList, mergeGroupsQuery.data, programId, queryClient]
   )
 
+  const [combinedClassLeadTeacherModal, setCombinedClassLeadTeacherModal] = useState<{
+    memberRowIds: string[]
+    candidates: CombinedClassLeadTeacherCandidate[]
+  } | null>(null)
+  const [combinedClassCompleteLabel, setCombinedClassCompleteLabel] = useState<string | null>(null)
+
   const institutionDetailEdit = useApplicantInstitutionDetailEdit({
     institution: isGeneralDetail && isInstitution ? institutionData : null,
     program,
@@ -608,7 +620,33 @@ export function ApplicantsDetailContents({
       ? handleSaveInstitutionCombinedClass
       : undefined,
     combinedClassReadOnly: institutionMergeView?.isLead === false,
+    onCombinedClassApplied: params => {
+      setCombinedClassLeadTeacherModal(params)
+    },
   })
+
+  const combinedClassModals = (
+    <>
+      <InstitutionCombinedClassLeadTeacherModal
+        open={combinedClassLeadTeacherModal != null}
+        candidates={combinedClassLeadTeacherModal?.candidates ?? []}
+        onCancel={() => setCombinedClassLeadTeacherModal(null)}
+        onConfirm={_candidate => {
+          if (!combinedClassLeadTeacherModal) return
+          notifyProgramApiUnavailable(
+            'general-org-merge-lead-teacher',
+            '일반 프로그램 · 합반 담당 교사 지정'
+          )
+          setCombinedClassLeadTeacherModal(null)
+        }}
+      />
+      <InstitutionCombinedClassCompleteModal
+        open={combinedClassCompleteLabel != null}
+        teacherLabel={combinedClassCompleteLabel ?? ''}
+        onClose={() => setCombinedClassCompleteLabel(null)}
+      />
+    </>
+  )
 
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
@@ -628,17 +666,12 @@ export function ApplicantsDetailContents({
 
   const handleAdminCommentSave = useCallback(() => {
     if (!institutionData) return
-    const updated = patchApplicantInstitutionAdminComment(institutionData.id, adminCommentDraft)
-    if (!updated) {
-      void showAlert({
-        title: '안내',
-        content: MESSAGES.error.save,
-      })
-      return
-    }
-    onInstitutionDetailSaved?.([updated])
+    notifyProgramApiUnavailable(
+      'general-org-application-admin-comment',
+      '일반 프로그램 · 기관 신청 관리자 코멘트'
+    )
     setAdminCommentModalOpen(false)
-  }, [adminCommentDraft, institutionData, onInstitutionDetailSaved, showAlert])
+  }, [institutionData])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)
@@ -992,6 +1025,9 @@ export function ApplicantsDetailContents({
           isCombinedClassProgramEligible={institutionDetailEdit.isCombinedClassProgramEligible}
           isCombinedClassApplyRadioDisabled={institutionDetailEdit.isCombinedClassApplyRadioDisabled}
           combinedClassReadOnly={institutionDetailEdit.combinedClassReadOnly}
+          showCombinedClassScheduleNotice={hasCompletedCombinedClassEducationSessions(
+            d.sessions
+          )}
           hideCombinedClass={isCombinedClassHidden}
           validationErrors={institutionDetailEdit.validationErrors}
           onResendNotificationClick={onResendNotification}
@@ -1184,6 +1220,7 @@ export function ApplicantsDetailContents({
           onAdminCommentDraftChange={() => {}}
         />
         {adminCommentModals}
+        {combinedClassModals}
       </>
     )
   }
@@ -1197,6 +1234,7 @@ export function ApplicantsDetailContents({
         <div className="applicant-contents__panel">{tabPanel}</div>
         {personalInfoRevealModal}
         {adminCommentModals}
+        {combinedClassModals}
       </div>
     )
   }
