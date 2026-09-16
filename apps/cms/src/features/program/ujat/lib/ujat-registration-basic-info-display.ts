@@ -1,5 +1,4 @@
 import dayjs from 'dayjs'
-import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
 import type { Program } from '@/types/domain'
 import {
   createUjatRegistrationBasicInfoOverlayDefaults,
@@ -70,8 +69,7 @@ function optionLabel(
 
 function resolveDetailedProgramName(detailedProgramId: string): string {
   if (detailedProgramId === UJAT_DETAILED_PROGRAM_UJAT_VALUE) return UJAT_DETAILED_PROGRAM_UJAT_LABEL
-  const row = mockDetailedProgramManagementListRows.find(r => r.id === detailedProgramId)
-  return row?.name ?? '-'
+  return '-'
 }
 
 function resolveSponsorName(

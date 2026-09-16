@@ -3,7 +3,7 @@ import {
   SPONSOR_DETAIL_SEED_PROGRAM_HISTORIES,
   SPONSOR_DETAIL_SEED_YEARLY_BUSINESSES,
 } from '@/data/mock/sponsor-management-detail'
-import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
+import detailedProgramsSeedPayload from '../../../../docs/api/detailed-programs-seed.payload.json'
 import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
 import { TEXTBOOK_LNB_SEED_ROWS } from '@/features/textbook/api/textbook-mock-store'
 
@@ -116,22 +116,5 @@ export function buildTextbooksSeedPayload() {
 }
 
 export function buildDetailedProgramsSeedPayload() {
-  return {
-    meta: {
-      domain: 'detailedPrograms',
-      ssot: 'apps/cms/src/data/mock/detailed-program-management-list.ts',
-      upsertKeys: ['nameKo'],
-      forbiddenSentinels: ['__detailed_program_none__', '__ujat_volunteer_core__'],
-      idMapNote: 'FE mock id dp-* is not DB PK. Use suggestedNumericId (900000+n).',
-    },
-    rows: mockDetailedProgramManagementListRows.map(row => ({
-      seedKey: row.id,
-      suggestedNumericId: detailedProgramMockIdToSeedPk(row.id),
-      nameKo: row.name,
-      useYn: row.active,
-      createdByName: row.createdBy,
-      createdAt: row.createdAt,
-      inUseHint: row.inUse ?? false,
-    })),
-  }
+  return detailedProgramsSeedPayload
 }

@@ -145,7 +145,6 @@ export {
   PROGRAM_SCHEDULE_WIDGET_KEYS,
   type ProgramScheduleKind,
 } from './program-schedule-categories'
-export { getFormTemplateByProgramId, formTemplatesByProgramId } from './form-templates'
 export {
   mockProgramProgressByTab,
   PROGRAM_PROGRESS_TAB_LABELS,

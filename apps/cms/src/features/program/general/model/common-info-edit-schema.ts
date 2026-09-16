@@ -10,7 +10,6 @@ import type {
   InstitutionType,
   Program,
 } from '@/types/domain'
-import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
 import type { SponsorContactRow, SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
   resolveGeneralProgramCommonInfo,
@@ -679,7 +678,7 @@ export function isGeneralProgramScheduleType(program: Program): boolean {
 
 function resolveDetailedProgramId(
   program: Program,
-  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+  catalog: readonly { id: string; name: string }[] = []
 ): string {
   if (isGeneralProgramScheduleType(program)) {
     return TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
@@ -1204,7 +1203,7 @@ function resolveWageFromProgram(program: Program): Pick<
 export function programToGeneralCommonInfoEditValues(
   program: Program,
   context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT,
-  detailedProgramCatalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+  detailedProgramCatalog: readonly { id: string; name: string }[] = []
 ): GeneralProgramCommonInfoEditFormValues {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
   const sponsorManagementIds = resolveSponsorManagementIds(program, context)
@@ -1306,7 +1305,7 @@ function institutionTypeFromVenueKind(
 
 function resolveDetailedProgramName(
   detailedProgramId: string | undefined,
-  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+  catalog: readonly { id: string; name: string }[] = []
 ): string | undefined {
   if (!detailedProgramId || detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) {
     return undefined
@@ -1318,7 +1317,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
   values: GeneralProgramCommonInfoEditFormValues,
   existing: Program,
   context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT,
-  detailedProgramCatalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows,
+  detailedProgramCatalog: readonly { id: string; name: string }[] = [],
   paymentItemOptions?: readonly { value: string; label: string }[]
 ): Partial<Program> {
   const sponsorRows = values.sponsorManagementIds
@@ -1619,7 +1618,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
 }
 
 export function getGeneralDetailedProgramSelectOptions(
-  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+  catalog: readonly { id: string; name: string }[] = []
 ) {
   return withDetailedProgramNoneOption(
     catalog.map(row => ({ value: row.id, label: row.name }))
