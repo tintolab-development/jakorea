@@ -3,6 +3,7 @@
 **작성일:** 2026-09-16  
 **우선순위:** P1  
 **대상:** 일반 프로그램 상세 → 강사 신청 목록 · 강사 신청 상세  
+**범위:** 일반 프로그램 기관·개인 참여 모드의 **강사 신청** (Gemini 강사 신청 API와 별도)  
 **관련:** [programs-api-integration.md](./programs-api-integration.md) · [general-participant-application-screening-remote-gaps-backend-request-2026-09-16.md](./general-participant-application-screening-remote-gaps-backend-request-2026-09-16.md)
 
 FE에서 즉시 연동한 항목(목록 조회 · 단건/일괄 승인·반려 · 상세 승인/반려 호출 · unmask용 `instructorMemberId` 매핑)과 별도로, **서버 계약·응답 보완이 필요한 항목**을 LNB 기준으로 정리한다.
@@ -13,9 +14,9 @@ FE에서 즉시 연동한 항목(목록 조회 · 단건/일괄 승인·반려 �
 
 ### 강사 신청 목록
 
-- 목록 페이지네이션·서버 필터 보완 필요 (현재 FE `page=0, size=50` 고정 · OpenAPI는 `status`/`page`/`size`만)
-- 목록 응답 필드 부족 (자택 주소지 · JA 강의 경력 · JA 평가 등급 · 연락처·이메일 등 테이블·필터용)
-- 승인/반려 알림 발송 시점(즉시·예약) request 미지원
+- 목록 페이지네이션·서버 필터 보완 필요 (현재 FE `page=0, size=50` 고정 · OpenAPI query는 `status`/`page`/`size`만 · FE는 `status`도 미전달·클라이언트 필터)
+- 목록 응답 필드 부족 (자택 주소지 · JA 강의 경력 · **JA 평가 등급** · 연락처·이메일 등 테이블용. ※ `instructorFeeGradeSnapshot`(강사비 등급)은 이미 존재·매핑됨 — JA 평가 등급과 별개)
+- 승인/반려 알림 발송 시점 request 미지원 (단건·일괄 공통)
 
 ### 강사 신청 목록 > 강사 신청 상세
 
@@ -24,9 +25,10 @@ FE에서 즉시 연동한 항목(목록 조회 · 단건/일괄 승인·반려 �
 - 반려 취소 API 부재 (`POST …/cancel-rejection`)
 - 신청 건별 관리자 코멘트 저장 API 부재
 - 승인 시 강사비·강의 배정 payload 미지원 (FE 모달 수집값 → BE 미수용)
-- 승인/반려 알림 옵션(`notifyTiming`, `scheduledAt`) request 미지원
-- unmask 응답을 상세 필드에 반영할 데이터 계약 필요 (연락처·이메일·주소·계좌 등)
+- 승인/반려 알림 옵션 request 미지원
+- unmask 응답 → 상세 필드 매핑 계약 필요
 - 상세 본문 enrich 필요 (이력서·학력·경력·자격 · 한줄소개 등 — 목록 DTO만으로는 공란)
+- (추가) 강의 배정 모달용 희망 기관/희망 일정 필드 부재 (`preferredSchools` / `preferredScheduleSlots`)
 
 ---
 
@@ -36,24 +38,37 @@ FE에서 즉시 연동한 항목(목록 조회 · 단건/일괄 승인·반려 �
 
 | 기능 | API | 연동 |
 |------|-----|------|
-| 목록 조회 | `GET /api/admin/programs/{programId}/instructor-applications` | remote 실제 프로그램 연동 (FE seed는 mock) |
+| 목록 조회 | `GET /api/admin/programs/{programId}/instructor-applications` | remote 실제 프로그램 연동 (FE seed는 mock). 항상 `page=0, size=50` |
 | 일괄 승인 | `POST /api/admin/instructor-applications/bulk-approve` | 연동 (선택 ≥2 · 숫자 ID) |
 | 일괄 반려 | `POST /api/admin/instructor-applications/bulk-reject` | 연동 |
+
+### OpenAPI 목록 DTO에 **이미 있는** 필드 (FE 매핑됨)
+
+- `id` · `programId` · `instructorMemberId` · `instructorName` · `applicationStatus`
+- `instructorFeeGradeSnapshot` → UI `instructorFeeGradeLabel` (**강사비 등급**, JA 평가와 다름)
+- `submittedAt` · `rejectReason` · `distanceKm` · `longDistance`
+- `availableScheduleMemo` — OpenAPI에 있으나 **FE 미사용**
 
 ### 서버 보완 요청
 
 1. **페이지네이션**  
-   `totalElements` / `totalPages`와 FE 테이블 페이지 연동 가능하도록 안정적 페이징. 50건 초과 시 누락 방지.
+   `totalElements` / `totalPages`를 안정적으로 반환하고, FE 테이블 페이지와 연동 가능하도록. 현재 FE가 1페이지(50건)만 가져와 초과 건 누락 위험.
 
 2. **서버 필터**  
-   이름 검색 · 승인 상태 · (가능 시) JA 강의 경력·평가 등급 등 UI 필터와 대응되는 query 파라미터.
+   - OpenAPI `status`는 있으나 FE는 미사용(클라이언트 필터). 서버 `status` 필터를 FE가 쓰도록 맞추거나 문서화.  
+   - UI 필터와 대응되는 query 추가 권장: 이름 검색 · (가능 시) JA 강의 경력 · JA 평가 등급 · 지역/주소.
 
-3. **목록 응답 필드**  
-   테이블 컬럼에 쓰는 값 제공:
-   - 자택 주소지(또는 마스킹 주소)
-   - JA 강의 경력(년수 또는 구간 라벨)
-   - JA 평가 등급
+3. **목록 응답 필드 (테이블 컬럼용 — 현재 공란/미제공)**  
+   - 자택 주소지(또는 마스킹 주소) → `address`
+   - JA 강의 경력(년수) → `lectureExperienceYears`
+   - **JA 평가 등급** → `evaluationGrade` (※ `instructorFeeGradeSnapshot`과 혼동 금지)
+   - 연락처·이메일(목록은 마스킹 허용)
    - `instructorMemberId` **항상** 포함 (unmask·코멘트 전제)
+
+4. **강의 배정 모달용 (목록 또는 상세)**  
+   - 기관 프로그램: `preferredSchools` (희망 기관·일정)  
+   - 개인 프로그램: `preferredScheduleSlots`  
+   - 또는 `availableScheduleMemo`를 구조화해 FE가 파싱 가능하도록 계약
 
 ---
 
@@ -67,7 +82,7 @@ FE에서 즉시 연동한 항목(목록 조회 · 단건/일괄 승인·반려 �
 
 1. **상세 GET**  
    예: `GET /api/admin/instructor-applications/{applicationId}`  
-   상세 화면 필드 · `instructorMemberId` · 승인 상태 · 반려 사유 · 강사비 스냅샷 · 이력서(학력·경력·자격) · 기본 프로필 포함.
+   상세 화면 필드 · `instructorMemberId` · 승인 상태 · 반려 사유 · 강사비 스냅샷 · 이력서(학력·경력·자격) · 기본 프로필 · 희망 배정 정보 포함.
 
 2. **목록 enrich (대안)**  
    상세 GET 전에도 목록 항목에 상세 필수 최소 필드를 채우면 FE 공란을 줄일 수 있음. 장기적으로는 상세 GET 권장.
@@ -80,9 +95,9 @@ FE에서 즉시 연동한 항목(목록 조회 · 단건/일괄 승인·반려 �
 
 | 기능 | API | 연동 |
 |------|-----|------|
-| 단건 승인 | `POST …/instructor-applications/{id}/approve` | 목록·**상세** 연동 (상세는 강의배정→강사비 모달 후 호출) |
-| 단건 반려 | `POST …/instructor-applications/{id}/reject` (`reason`) | 목록·**상세** 연동 |
-| 일괄 승인/반려 | `bulk-approve` / `bulk-reject` | 목록 연동 |
+| 단건 승인 | `POST …/instructor-applications/{id}/approve` | 목록·**상세** 연동 (상세는 강의배정→강사비 모달 후 **body 없이** 호출) |
+| 단건 반려 | `POST …/{id}/reject` (`reason`만) | 목록·**상세** 연동 |
+| 일괄 승인/반려 | `bulk-approve` / `bulk-reject` | 목록 연동 (알림·강사비·배정 없음) |
 | 승인 취소 | — | UI·mock만 |
 | 반려 취소 | — | UI·mock만 |
 
@@ -100,13 +115,19 @@ FE에서 즉시 연동한 항목(목록 조회 · 단건/일괄 승인·반려 �
    (기관·참여자 cancel-rejection과 동일 패턴).
 
 3. **알림 옵션**  
-   승인·반려·취소 request에 `notifyTiming` (`IMMEDIATE` | `SCHEDULED`) · `scheduledAt` 수용.  
-   현재 FE 모달은 수집하나 API body에 실을 필드 없음. approve는 body 없음, reject는 `reason`만.
+   승인·반려·취소(및 가능하면 bulk) request에 FE 모달 값 수용.  
+   FE 현재 enum:
+   - `notifyTiming`: `immediate` | `on_announcement` | `manual`
+   - `manualNotifyAt`: `manual`일 때 예약 시각  
+   BE가 `IMMEDIATE`/`SCHEDULED`만 쓸 경우 매핑표를 OpenAPI에 명시.
 
-4. **승인 부가 정보 (선택·제품 확정 후)**  
-   FE 승인 플로우는 강의 배정·강사비(기준·금액·등급)를 모달에서 수집.  
-   OpenAPI approve가 bare POST이면 해당 값은 서버에 저장되지 않음.  
-   필요 시 approve(또는 후속 PATCH)에 배정·강사비 payload 계약 추가.
+4. **승인 부가 정보**  
+   FE 승인 플로우(상세): 강의 배정 모달 → 강사비 모달(기준·금액·등급) 후 approve 호출.  
+   현재 OpenAPI approve는 bare POST라 해당 값이 서버에 저장되지 않음.  
+   approve body(또는 승인 직후 PATCH)에 배정·강사비 payload 계약 추가 필요.  
+   - 기관형: 선택 기관·회차 배정  
+   - 개인형: 선택 일정 슬롯 배정  
+   - 강사비: 기준·금액·등급 스냅샷
 
 ---
 
@@ -124,8 +145,8 @@ FE에서 즉시 연동한 항목(목록 조회 · 단건/일괄 승인·반려 �
    없으면 FE는 로컬 마스킹 토글만 하고 unmask를 호출하지 못함.
 
 2. **unmask 응답 ↔ 상세 필드 매핑 계약**  
-   연락처·이메일·주소·정산 계좌 등 상세에 채울 원문 키를 문서화.  
-   (현재 FE는 열람 성공 시 마스킹 해제 플래그만 올리고, 응답 필드로 row를 재채우지는 않음 — 계약 확정 후 반영 가능)
+   연락처·이메일·주소·정산 계좌·(가능 시) 학력/경력 원문 키를 문서화.  
+   (현재 FE는 열람 성공 시 마스킹 해제 플래그만 올리고, 응답 필드로 row를 재채우지는 않음 — 계약 확정 후 반영)
 
 ---
 
@@ -151,29 +172,30 @@ FE에서 즉시 연동한 항목(목록 조회 · 단건/일괄 승인·반려 �
 
 - [x] 목록 조회 remote
 - [x] 목록 선택/일괄 승인·반려 → 단건 또는 bulk API
-- [x] 상세 서류 승인·반려 모달 → `approve` / `reject` + query invalidate
-- [x] 목록 adapter에 `instructorMemberId` · `programId` 매핑
+- [x] 상세 승인·반려 모달 → `approve` / `reject` + query invalidate
+- [x] 목록 adapter에 `instructorMemberId` · `programId` · `instructorFeeGradeSnapshot` 매핑
 - [x] 개인정보 상세보기 → `instructorMemberId` 있을 때 instructor unmask 호출
 
 서버 대기 (FE mock 유지):
 
-- 상세 GET / 본문 enrich
+- 상세 GET / 본문 enrich · 희망 배정 필드
 - 승인 취소 · 반려 취소
 - 신청 건별 코멘트 저장
-- 승인·반려·취소 알림 옵션 계약
+- 승인·반려·취소·bulk 알림 옵션 계약
 - 승인 시 강사비·강의 배정 영속화
-- 목록 페이지네이션·서버 필터·표시 필드 보강
+- 목록 페이지네이션·서버 필터 · 주소/JA경력/JA평가등급 등 표시 필드
 
 ---
 
 ## 수락 기준 (종합)
 
-- [ ] 강사 신청 목록 50건 초과·이름 필터가 서버와 일치
-- [ ] 목록에 주소·강의 경력·평가 등급·`instructorMemberId` 표시/전달
-- [ ] 상세 GET(또는 enrich)로 기본정보·이력서 공란 해소
+- [ ] 강사 신청 목록 50건 초과·이름/상태 필터가 서버와 일치 (`totalElements` 반영)
+- [ ] 목록에 주소·JA 강의 경력·**JA 평가 등급**·`instructorMemberId` 표시/전달 (강사비 등급과 구분)
+- [ ] 상세 GET(또는 enrich)로 기본정보·이력서·희망 배정 공란 해소
 - [ ] 승인 취소·반려 취소 API + FE 연동 가능
-- [ ] approve/reject(+취소)에 알림 옵션 수용
+- [ ] approve/reject(+취소·가능 시 bulk)에 알림 옵션 수용 (`immediate`/`on_announcement`/`manual` + `manualNotifyAt`)
+- [ ] approve에 강사비·강의 배정 payload 영속화
 - [ ] 신청 건별 코멘트 저장·재조회
 - [ ] unmask 후 상세 PII 필드 계약으로 FE 반영 가능
 
-**Last updated:** 2026-09-16
+**Last updated:** 2026-09-16 (서버 전달 전 최종 검토)
