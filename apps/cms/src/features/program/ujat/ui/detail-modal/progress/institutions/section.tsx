@@ -1,11 +1,12 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
+import { useEffect, useMemo, type MouseEvent } from 'react'
 import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { EducationProgressHalfKey } from '../tabs'
 import { buildUjatEducationProgressInstitutionFilterFields } from './filter-fields'
-import { UJAT_EDU_PROGRESS_INSTITUTIONS_TABLE_MIN_SCROLL_X } from './columns'
 import { UjatEducationProgressInstitutionsCalendarView } from './calendar-view'
 import { useUjatEducationProgressInstitutions } from './use-list'
 import type { UjatEducationProgressInstitutionRow } from './types'
@@ -20,9 +21,6 @@ export function UjatEducationProgressInstitutionsSection({
   half: EducationProgressHalfKey
   onOpenDetail?: (institutionId: string) => void
 }) {
-  const tableWrapRef = useRef<HTMLDivElement>(null)
-  const [tableScrollX, setTableScrollX] = useState(UJAT_EDU_PROGRESS_INSTITUTIONS_TABLE_MIN_SCROLL_X)
-
   const {
     pendingFilters,
     handleFilterChange,
@@ -34,6 +32,14 @@ export function UjatEducationProgressInstitutionsSection({
     resetHalfState,
   } = useUjatEducationProgressInstitutions(programId, half)
 
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: false,
+      enabled: viewMode === 'table',
+    }
+  )
+
   const filterFields = useMemo(
     () => buildUjatEducationProgressInstitutionFilterFields(half),
     [half]
@@ -42,20 +48,6 @@ export function UjatEducationProgressInstitutionsSection({
   useEffect(() => {
     resetHalfState()
   }, [half, resetHalfState])
-
-  useLayoutEffect(() => {
-    const el = tableWrapRef.current
-    if (!el) return
-    const minW = UJAT_EDU_PROGRESS_INSTITUTIONS_TABLE_MIN_SCROLL_X
-    const update = () => {
-      const w = el.getBoundingClientRect().width
-      setTableScrollX(Math.max(minW, Math.floor(w)))
-    }
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
 
   const handleRowClick = (record: UjatEducationProgressInstitutionRow, _e: MouseEvent) => {
     onOpenDetail?.(record.sourceInstitutionId)
@@ -116,7 +108,7 @@ export function UjatEducationProgressInstitutionsSection({
               dataSource={tableData}
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: tableScrollX }}
+              scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
               onRow={record => ({
                 onClick: e => handleRowClick(record, e),
               })}

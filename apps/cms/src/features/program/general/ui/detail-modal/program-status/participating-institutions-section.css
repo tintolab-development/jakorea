@@ -32,33 +32,23 @@
   gap: var(--filter-field-gap);
 }
 
-/* UJAT 진행현황 참여 기관과 동일: 가로 스크롤·열 고정 (공통 table-wrap max-width 규칙은 아래에서 무효화) */
+/* 가로 스크롤·열 고정 — 래퍼만 스크롤 포트 (cms-data-table overflow와 이중 스크롤 방지) */
 .participating-institutions-section__table-wrap {
   width: 100%;
   min-width: 0;
+  max-width: 100%;
   overflow-x: auto;
   overflow-y: visible;
+  box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
-}
-
-.participating-institutions-section__filter-layout
-  .participating-institutions-section__table-wrap
-  .ant-table-wrapper,
-.participating-institutions-section__filter-layout
-  .participating-institutions-section__table-wrap
-  .ant-table-container,
-.participating-institutions-section__filter-layout
-  .participating-institutions-section__table-wrap
-  .ant-table-content {
-  width: auto;
-  max-width: none;
 }
 
 .participating-institutions-section__table-wrap
   .participating-institutions-section__table
   table.ant-table {
   table-layout: fixed !important;
-  width: max-content !important;
+  /* max-content면 열 합이 래퍼보다 작아도 가로스크롤이 남음 — 100%로 맞춤 */
+  width: 100% !important;
   min-width: 100%;
 }
 

@@ -25,14 +25,21 @@
 .ujat-education-progress-volunteers__table-wrap {
   width: 100%;
   min-width: 0;
+  max-width: 100%;
   overflow-x: auto;
   overflow-y: visible;
+  box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
+}
+
+.ujat-education-progress-volunteers__table-wrap .cms-data-table {
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 .ujat-education-progress-volunteers__table-wrap .ujat-education-progress-volunteers__table table.ant-table {
   table-layout: fixed !important;
-  width: max-content !important;
+  width: 100% !important;
   min-width: 100%;
 }
 

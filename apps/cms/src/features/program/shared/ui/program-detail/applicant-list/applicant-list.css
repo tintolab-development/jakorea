@@ -165,7 +165,7 @@
   font-size: 16px !important;
 }
 
-/* 테이블 가로 스크롤 */
+/* 테이블 가로 스크롤 — 열 합이 래퍼보다 클 때만 내부 스크롤 */
 .applicant-details__table-wrap {
   overflow-x: auto;
   overflow-y: visible;
@@ -174,6 +174,11 @@
   min-width: 0;
   box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
+}
+
+/* fluid 전역 min-width:1080이 좁은 상세에서도 강제 스크롤을 만들지 않도록 */
+.applicant-details .cms-data-table.cms-data-table--fluid .ant-table-container {
+  min-width: 0;
 }
 
 /* 체크박스 열: 너비 68px(좌 패딩 8px 포함), 행 높이는 시안 49px 유지 */

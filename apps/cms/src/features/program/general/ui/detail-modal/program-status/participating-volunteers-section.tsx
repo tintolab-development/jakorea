@@ -55,6 +55,7 @@ import { formatParticipatingSchoolSessionLine } from '../../../lib/participating
 import { buildParticipatingVolunteerCalendarEvents } from '../../../lib/build-participating-volunteer-calendar-events'
 import { getSchoolNamesForDateFromVolunteerEvents } from '../../../lib/participating-calendar-date-schools'
 import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '../../../lib/participating-institutions-table'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
@@ -62,10 +63,6 @@ import { renderParticipatingVolunteerCalendarMonthEventContent } from './partici
 import { ParticipatingVolunteersCalendarRight } from './participating-volunteers-calendar-right'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
-
-/** 체크박스(48) + 열 width 합 — 뷰포트보다 좁을 때만 가로 스크롤 */
-const TABLE_SCROLL_X =
-  48 + 64 + 120 + 120 + 220 + PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH + 140 + 180
 
 export interface ParticipatingVolunteersSectionProps {
   programId?: string
@@ -445,6 +442,14 @@ export function ParticipatingVolunteersSection({
     ]
   }, [])
 
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: true,
+      enabled: viewMode === 'list',
+    }
+  )
+
   if (applicationsLoading && volunteerList.length === 0) {
     return (
       <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
@@ -565,14 +570,14 @@ export function ParticipatingVolunteersSection({
         }}
       >
         {viewMode === 'list' ? (
-          <div className="participating-institutions-section__table-wrap">
+          <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">
             <Table<ParticipatingVolunteerRow>
               className="participating-institutions-section__table cms-data-table participating-institutions-section__table--clickable"
               rowKey="id"
               size="middle"
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: TABLE_SCROLL_X }}
+              scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
               columns={columns}
               dataSource={filteredVolunteers}
               rowSelection={{
