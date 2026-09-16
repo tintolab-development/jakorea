@@ -11,12 +11,8 @@ export type RegisteredSurvey = {
   bindingId?: string
 }
 
-export type SurveyPollRawResponse = {
-  respondentId: string
-  respondentName: string
-  addressRegion: string
-  answers: Record<string, string>
-}
+// Type이동 — 모델에서 re-export
+export type { SurveyPollRawResponse } from '@/features/program/shared/model/survey-poll-response'
 
 export type SurveyAudienceTab<TKey extends string> = {
   key: TKey

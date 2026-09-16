@@ -1,4 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react'
+import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
+import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 
 /**
  * 일반·1사1교·교육받은 교사 프로그램 등록 폼 단락 본문이 `WritingFormDraft`가 아닌
@@ -55,6 +57,54 @@ export function readGeneralRegistrationOverlaySponsorContactId(): string {
 
 export function readGeneralRegistrationOverlayProgramTitleKo(): string {
   return readOverlayString(GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
+}
+
+const TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_ID_KEY =
+  'trainedTeachersRegistration.basicInfo.sponsorId' as const
+const TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY =
+  'trainedTeachersRegistration.basicInfo.managerContactId' as const
+const TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY =
+  'trainedTeachersRegistration.basicInfo.programTitleKo' as const
+
+export function readTrainedTeachersRegistrationOverlaySponsorId(): string {
+  const raw = readOverlayString(TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
+  return raw === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE ? '' : raw
+}
+
+export function readTrainedTeachersRegistrationOverlaySponsorContactId(): string {
+  const raw = readOverlayString(TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+  return raw === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE ? '' : raw
+}
+
+export function readTrainedTeachersRegistrationOverlayProgramTitleKo(): string {
+  return readOverlayString(TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
+}
+
+export function readRegistrationOverlaySponsorId(
+  variant: ProgramRegistrationFormVariant = 'general'
+): string {
+  if (variant === 'trainedTeachers') {
+    return readTrainedTeachersRegistrationOverlaySponsorId()
+  }
+  return readGeneralRegistrationOverlaySponsorId()
+}
+
+export function readRegistrationOverlaySponsorContactId(
+  variant: ProgramRegistrationFormVariant = 'general'
+): string {
+  if (variant === 'trainedTeachers') {
+    return readTrainedTeachersRegistrationOverlaySponsorContactId()
+  }
+  return readGeneralRegistrationOverlaySponsorContactId()
+}
+
+export function readRegistrationOverlayProgramTitleKo(
+  variant: ProgramRegistrationFormVariant = 'general'
+): string {
+  if (variant === 'trainedTeachers') {
+    return readTrainedTeachersRegistrationOverlayProgramTitleKo()
+  }
+  return readGeneralRegistrationOverlayProgramTitleKo()
 }
 
 export function readGeneralRegistrationOverlayScheduleLines(): string[] {

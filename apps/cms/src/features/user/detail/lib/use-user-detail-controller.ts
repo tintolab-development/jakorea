@@ -46,7 +46,7 @@ import {
 } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { useUserDetailUrlSync } from './use-user-detail-url-sync'
 import type { UseUserDetailModalsResult } from './use-user-detail-modals'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { User, SchoolTeacherEmploymentStatus } from '@/types/user'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import { navigateToProgramAdminDetail } from '@/features/program/general/lib/navigate-to-program-admin-detail'

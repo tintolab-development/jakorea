@@ -9,7 +9,7 @@ import {
 } from './timeline-row'
 import { instructorCmsProfileToApplicantInstructorRowPartial } from '@/features/user/api/map-instructor-cms-profile'
 import type { InstructorCmsProfileProposal } from '@/features/user/api/types/instructor-cms-profile-proposal'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 
 describe('instructor JA Korea resume blocks', () => {
   it('formats activity period with spaced dots', () => {

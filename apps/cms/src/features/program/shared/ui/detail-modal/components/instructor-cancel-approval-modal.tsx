@@ -9,7 +9,7 @@ import {
   resolveInstructorCancelApprovalReasonLabel,
   type InstructorCancelApprovalNotifyVariant,
 } from '@/features/program/general/lib/instructor-cancel-approval'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import {
   PermissionModal,
   type PermissionModalPayload,

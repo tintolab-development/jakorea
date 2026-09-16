@@ -4,10 +4,6 @@ import { useLocation } from 'react-router-dom'
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { programLifecycleStatusConfig } from '@/shared/constants/status'
-import {
-  getVolunteerPrograms,
-  getEducationPrograms,
-} from '@/data/mock'
 import type { Program, ProgramLifecycleStatus, ProgramCategory } from '@/types/domain'
 import type { User } from '@/types/user'
 
@@ -110,20 +106,7 @@ export function useProgramListFilters(
   const filteredPrograms = useMemo(() => {
     let filtered: Program[]
 
-    if (isAdmin && programType === 'company_school') {
-      filtered = programs
-    } else if (isAdmin && programType === 'education') {
-      filtered = getEducationPrograms()
-    } else {
-      filtered = programs
-    }
-
-    // 관리자용: 봉사 프로그램 필터링
-    if (isAdmin && programType === 'volunteer') {
-      const volunteerPrograms = getVolunteerPrograms()
-      const volunteerProgramIds = new Set(volunteerPrograms.map(p => p.id))
-      filtered = filtered.filter(program => volunteerProgramIds.has(program.id))
-    }
+    filtered = programs
 
     // 1사1교 remote: API `periodStatus`가 이미 반영됨 — 클라이언트 날짜/lifecycle 재필터 금지 (일반 목록과 동일)
     if (programType === 'company_school' && companySchoolRemoteEnabled) {

@@ -3,7 +3,7 @@
  * 기관(Institution*) 모달과 동일 PermissionModal·ContentModal 패턴, 카피만 참여자 명칭으로 변경
  */
 
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import {
   buildParticipantCancelApprovalMessage,
   resolveParticipantCancelApprovalNotifyVariant,

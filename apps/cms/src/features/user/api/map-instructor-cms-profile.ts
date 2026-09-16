@@ -4,7 +4,7 @@ import type {
   ApplicantInstructorAward,
   ApplicantInstructorCareerDetail,
   ApplicantInstructorEducationItem,
-} from '@/data/mock/applicant-instructors'
+} from '@/features/program/shared/model/applicant-instructor'
 import {
   EMPTY_CAREER,
   EMPTY_JA_KOREA_ROW,

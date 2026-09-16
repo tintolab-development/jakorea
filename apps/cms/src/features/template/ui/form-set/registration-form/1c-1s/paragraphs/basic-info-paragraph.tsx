@@ -370,7 +370,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
-                  withAllOption
+                  withAllOption={false}
                   inputSize="medium"
                   placeholder="후원사 담당자를 선택하세요"
                   width={240}

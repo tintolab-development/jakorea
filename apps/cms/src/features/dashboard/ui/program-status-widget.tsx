@@ -13,9 +13,9 @@ import {
   type ProgramProgressStages,
   type ProgramOverviewStages,
 } from '../api/admin-dashboard-service'
-import { useProgramStore } from '@/features/program/general/model/program-store'
 import { useGeneralProgramOverviewStages } from '@/features/program/general/hooks/use-general-program-overview-stages'
 import { useCompanySchoolOverviewStages } from '@/features/program/1c-1s/api/hooks'
+import { useTrainedTeacherOverviewStages } from '@/features/program/trained-teachers/api/hooks'
 import {
   PROGRAM_PROGRESS_STAGE_LABELS,
   PROGRAM_PROGRESS_STAGE_ORDER,
@@ -62,9 +62,6 @@ const isTrainedTeachersLayoutPath = (pathname: string) => {
   const p = pathname.replace(/\/$/, '') || '/'
   return p === '/programs/trained-teachers' || p.startsWith('/programs/trained-teachers/')
 }
-
-/** 의존성 배열용 빈 배열 */
-const EMPTY_PROGRAMS: readonly unknown[] = []
 
 interface ProgramStatusWidgetProps {
   title?: string | null
@@ -115,20 +112,22 @@ export function ProgramStatusWidget({
     return sp.get('status') || null
   }, [location.search, selectedFromPath])
 
-  const programs = useProgramStore(state =>
-    programType === 'education' ||
-    programType === 'trained_teachers'
-      ? state.programs
-      : EMPTY_PROGRAMS
-  )
-
   const generalOverviewQuery = useGeneralProgramOverviewStages(programType === 'general')
   const companySchoolOverviewQuery = useCompanySchoolOverviewStages(
     programType === 'company_school'
   )
+  const trainedTeacherOverviewQuery = useTrainedTeacherOverviewStages(
+    programType === 'trained_teachers'
+  )
 
   useEffect(() => {
-    if (programType === 'general' || programType === 'company_school') return
+    if (
+      programType === 'general' ||
+      programType === 'company_school' ||
+      programType === 'trained_teachers'
+    ) {
+      return
+    }
 
     const loadData = async () => {
       setLoading(true)
@@ -147,7 +146,7 @@ export function ProgramStatusWidget({
       }
     }
     loadData()
-  }, [programType, programs])
+  }, [programType])
 
   useEffect(() => {
     if (programType !== 'general') return
@@ -201,6 +200,33 @@ export function ProgramStatusWidget({
     companySchoolOverviewQuery.data,
     companySchoolOverviewQuery.isError,
     companySchoolOverviewQuery.error,
+  ])
+
+  useEffect(() => {
+    if (programType !== 'trained_teachers') return
+    if (trainedTeacherOverviewQuery.isError) {
+      handleError(trainedTeacherOverviewQuery.error, {
+        defaultMessage: MESSAGES.error.programProgressLoadFailed,
+      })
+      setProgress(null)
+      return
+    }
+    if (!trainedTeacherOverviewQuery.data) {
+      setProgress(null)
+      return
+    }
+    const d = trainedTeacherOverviewQuery.data
+    setProgress({
+      total: d.total,
+      scheduled: d.scheduled,
+      inProgress: d.inProgress,
+      completed: d.completed,
+    } satisfies ProgramOverviewStages)
+  }, [
+    programType,
+    trainedTeacherOverviewQuery.data,
+    trainedTeacherOverviewQuery.isError,
+    trainedTeacherOverviewQuery.error,
   ])
 
   const stages = useMemo((): ProgressStageItem[] => {
@@ -376,7 +402,9 @@ export function ProgramStatusWidget({
           ? generalOverviewQuery.isFetching
           : programType === 'company_school'
             ? companySchoolOverviewQuery.isFetching
-            : loading
+            : programType === 'trained_teachers'
+              ? trainedTeacherOverviewQuery.isFetching
+              : loading
       }
       loadingCardCount={
         programType === 'company_school' ||

@@ -12,7 +12,7 @@ import {
   useInstructorFeeApprovalModal,
   type InstructorFeeApprovalConfirmDetail,
 } from '@/features/program/general/lib/use-instructor-fee-approval-modal'
-import type { ApplicantInstructorLectureFeeBasisType } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorLectureFeeBasisType } from '@/features/program/shared/model/applicant-instructor'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'

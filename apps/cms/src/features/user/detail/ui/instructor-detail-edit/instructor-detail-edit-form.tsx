@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useRef, type MutableRefObject } from 'react'
 import { Form } from 'antd'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { User } from '@/types/user'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import {
