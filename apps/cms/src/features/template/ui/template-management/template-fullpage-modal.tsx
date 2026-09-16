@@ -29,6 +29,8 @@ interface TemplateFullpageModalProps {
    * 문자열 제목일 때 상단 `CmsInputIconClick` 편집·연필 비활성화(프로그램 등록 등 템플릿 사용자 모드).
    */
   titleReadOnly?: boolean
+  /** 상단 폼 이름 편집 커밋(blur/Enter) — 비어 있지 않고 이전과 다를 때만 호출 */
+  onTitleCommit?: (nextTitle: string) => void
   /**
    * 템플릿 등록 사용자 모드 — 미리보기와 동일 청록 헤더·회색 본문·상단 닫기/미리보기/임시저장.
    */
@@ -87,6 +89,7 @@ export function TemplateFullpageModal({
   rightNavigation,
   className,
   titleReadOnly = false,
+  onTitleCommit,
   registrationUserMode = false,
   saveLabel,
   footerAction,
@@ -172,7 +175,15 @@ export function TemplateFullpageModal({
                 editing={titleEditing}
                 onChange={setTitleValue}
                 onRequestEdit={() => setTitleEditing(true)}
-                onCommitEdit={() => setTitleEditing(false)}
+                onCommitEdit={committed => {
+                  setTitleEditing(false)
+                  setTitleValue(committed)
+                  const next = committed.trim()
+                  const prev = (editableTitle ?? '').trim()
+                  if (next !== '' && next !== prev) {
+                    onTitleCommit?.(next)
+                  }
+                }}
                 restoreValueIfEmptyOnBlur={editableTitle}
                 readOnly={resolvedTitleReadOnly}
                 containerClassName="full-page-modal__title-edit-row"

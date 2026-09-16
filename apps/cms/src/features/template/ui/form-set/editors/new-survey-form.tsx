@@ -10,6 +10,7 @@ import {
 import { allocateUniqueWritingTemplateName } from '@/features/template/lib/allocate-unique-writing-template-name'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
+import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
 import { getWritingTemplateRowsByCategory } from '@/features/template/lib/writing-template-create-helpers'
 import { persistWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
@@ -57,6 +58,10 @@ export default function NewSurveyForm() {
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
   const [draft, setDraft] = useState<WritingFormDraft>(() => createNewSurveyDraft())
   const [templateId, setTemplateId] = useState<string | null>(null)
+  const { displayName: modalTitle, commitTitle: commitModalTitle } = useFormTemplateModalTitle({
+    templateCode: templateId,
+    initialName: '설문조사 신규 폼',
+  })
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
     DEFAULT_SURVEY_PARAGRAPH_IDS.user
   )
@@ -146,7 +151,7 @@ export default function NewSurveyForm() {
             row => row.templateName
           )
           const templateName = allocateUniqueWritingTemplateName(
-            resolveSurveyTemplateName(draft),
+            modalTitle.trim() || resolveSurveyTemplateName(draft),
             existingNames
           )
           if (shouldUseFormsSurveysRemoteApi()) {
@@ -177,7 +182,7 @@ export default function NewSurveyForm() {
         showSaveFailure()
       }
     })()
-  }, [draft, queryClient, sections, setParams, showSaveFailure, showSaveSuccess, templateId])
+  }, [draft, modalTitle, queryClient, sections, setParams, showSaveFailure, showSaveSuccess, templateId])
 
   const handleSelectParagraph = useCallback((id: string) => {
     setActiveParagraphId(id)
@@ -204,9 +209,10 @@ export default function NewSurveyForm() {
     <TemplateFullpageModal
       open
       onClose={handleClose}
-      title="설문조사 신규 폼"
+      title={modalTitle}
       description="* 등록 시 제목글과 마무리글, 설문자 정보를 제외하고 최소 1개 이상의 단락이 존재해야 합니다."
       templateTabType="writing"
+      onTitleCommit={commitModalTitle}
       leftContent={
         <FormEditorLeftPanel
           paragraphs={draft.paragraphs}

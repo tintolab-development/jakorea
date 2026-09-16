@@ -90,6 +90,7 @@ import { FormTemplateFullpageModal } from './form-template-fullpage-modal'
 import './form-test-single-item-fullpage-modal.css'
 import { handleError } from '@/shared/utils/error-handler'
 import { useIssuanceFormSections } from '@/features/template/hooks/use-issuance-form-sections'
+import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
 import {
   findIssuanceTemplateRowById,
   LECTURE_REPORT_TEMPLATE_CODE,
@@ -166,6 +167,18 @@ export function IssuanceFormTab() {
   )
   const isPreviewOpen = params.mode === 'edit'
   const [selectedTemplate, setSelectedTemplate] = useState<IssuanceTemplateRow | null>(null)
+  const { displayName: issuanceModalTitle, commitTitle: commitIssuanceModalTitle } =
+    useFormTemplateModalTitle({
+      templateCode: selectedTemplate?.id,
+      initialName: selectedTemplate?.templateName ?? '발급 양식 미리보기',
+    })
+  const handleIssuanceTitleCommit = useCallback(
+    (nextTitle: string) => {
+      commitIssuanceModalTitle(nextTitle)
+      setSelectedTemplate(prev => (prev == null ? prev : { ...prev, templateName: nextTitle }))
+    },
+    [commitIssuanceModalTitle]
+  )
   const closeTemplatePreview = useCallback(() => {
     // URL보다 먼저 비워 일반/인증서 모달 전환 레이스·잔여 mask를 막음
     setSelectedTemplate(null)
@@ -739,10 +752,11 @@ export function IssuanceFormTab() {
         }
         open={isPreviewOpen && selectedTemplate != null && !isCertificateIssuance}
         onClose={closeTemplatePreview}
-        title={selectedTemplate?.templateName ?? '발급 양식 미리보기'}
+        title={issuanceModalTitle}
         description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
         templateTabType="issuance"
         onPreview={handleModalPreview}
+        onTitleCommit={handleIssuanceTitleCommit}
         onSave={
           isPaymentStatementIssuance
             ? paymentStatementVm.handleSave

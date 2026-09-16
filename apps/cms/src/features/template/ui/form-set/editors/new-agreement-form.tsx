@@ -34,6 +34,7 @@ import { allocateUniqueWritingTemplateName } from '@/features/template/lib/alloc
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
+import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
 import { getWritingTemplateRowsByCategory } from '@/features/template/lib/writing-template-create-helpers'
 import {
   loadWritingFormTemplateDraft,
@@ -195,6 +196,12 @@ export function AgreementWritingFormShell({
   const [persistedTemplateCode, setPersistedTemplateCode] = useState<string | null>(
     templateCode != null && templateCode !== '' ? templateCode : null
   )
+  const modalTitleText = typeof modalTitle === 'string' ? modalTitle : ''
+  const { displayName: editableModalTitle, commitTitle: commitModalTitle } =
+    useFormTemplateModalTitle({
+      templateCode: persistedTemplateCode ?? templateCode,
+      initialName: modalTitleText || '동의 양식',
+    })
   const isStructureLocked = isWritingFormTemplateStructureLocked({
     templateCode: persistedTemplateCode ?? templateCode,
     systemTemplate,
@@ -478,9 +485,10 @@ export function AgreementWritingFormShell({
     <TemplateFullpageModal
       open
       onClose={onClose}
-      title={modalTitle}
+      title={modalTitleText !== '' ? editableModalTitle : modalTitle}
       description={modalDescription}
       templateTabType="writing"
+      onTitleCommit={modalTitleText !== '' ? commitModalTitle : undefined}
       leftContent={
         <FormEditorLeftPanel
           paragraphs={draft.paragraphs}
