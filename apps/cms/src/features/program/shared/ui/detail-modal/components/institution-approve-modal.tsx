@@ -12,9 +12,10 @@ export type InstitutionApproveModalProps = {
   zIndex?: number
 }
 
+/** 기관명·대괄호 전체를 bold (`**[기관명]**`) */
 export function buildInstitutionApproveMessage(schoolName: string): string {
   const trimmedName = schoolName.trim() || '기관'
-  return `[${trimmedName}]의 프로그램 참여를 승인하시겠습니까?\n승인 시 담당 교사에게 승인 알림이 발송됩니다.`
+  return `**[${trimmedName}]**의 프로그램 참여를 승인하시겠습니까?\n승인 시 담당 교사에게 승인 알림이 발송됩니다.`
 }
 
 export function InstitutionApproveModal({

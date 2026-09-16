@@ -9,7 +9,7 @@ describe('applicant-notification-resend', () => {
     expect(
       buildApplicantNotificationResendMessage('instructor', '박틴토', 'approved')
     ).toBe(
-      '[박틴토] 강사님의 프로그램 승인 여부에 대한 알림을 재발송하시겠습니까?\n확인 시 강사님에게 승인 알림이 재발송됩니다.'
+      '**[박틴토]** 강사님의 프로그램 승인 여부에 대한 알림을 재발송하시겠습니까?\n확인 시 강사님에게 승인 알림이 재발송됩니다.'
     )
   })
 
@@ -17,13 +17,13 @@ describe('applicant-notification-resend', () => {
     expect(
       buildApplicantNotificationResendMessage('instructor', '박틴토', 'rejected')
     ).toBe(
-      '[박틴토] 강사님의 프로그램 승인 여부에 대한 알림을 재발송하시겠습니까?\n확인 시 강사님에게 반려 알림이 재발송됩니다.'
+      '**[박틴토]** 강사님의 프로그램 승인 여부에 대한 알림을 재발송하시겠습니까?\n확인 시 강사님에게 반려 알림이 재발송됩니다.'
     )
   })
 
   it('기관은 주체에 맞는 질문 문구를 사용한다', () => {
     expect(buildApplicantNotificationResendMessage('institution', '진월초', 'approved')).toContain(
-      '[진월초]의 프로그램 승인 여부에 대한 알림을 재발송하시겠습니까?'
+      '**[진월초]**의 프로그램 승인 여부에 대한 알림을 재발송하시겠습니까?'
     )
   })
 
