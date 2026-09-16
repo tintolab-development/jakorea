@@ -44,6 +44,8 @@ describe('general-applications-adapters', () => {
     const row = mapInstructorApplicationToApplicantInstructorRow(
       {
         id: 77,
+        instructorMemberId: 9001,
+        programId: 5001,
         instructorName: '이강사',
         applicationStatus: 'APPROVED',
         instructorFeeGradeSnapshot: '3급 강사비',
@@ -55,6 +57,8 @@ describe('general-applications-adapters', () => {
     )
 
     expect(row.id).toBe('77')
+    expect(row.instructorMemberId).toBe(9001)
+    expect(row.programId).toBe('5001')
     expect(row.instructorName).toBe('이강사')
     expect(row.approvalStatus).toBe('approved')
     expect(row.instructorFeeGradeLabel).toBe('3급 강사비')
