@@ -2,8 +2,8 @@
  * 1사1교 강사 배정 대기/배정행 — API 전용 (mock 희망일·해시 충돌 없음)
  */
 
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import {
   participatingSchoolSessionToHopeSchedule,
   sortWaitingInstructorRowsUnavailableToBottom,

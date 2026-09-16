@@ -7,7 +7,7 @@ import {
   listTrainedTeacherEducationJournals,
   listTrainedTeacherParticipatingInstitutions,
 } from './education-journals-service'
-import type { TrainedTeachersEducationJournalEntry } from '@/data/mock/trained-teachers-institution-detail'
+import type { TrainedTeachersEducationJournalEntry } from '@/features/program/trained-teachers/model/institution-detail'
 
 export function useTrainedTeacherEducationJournals(
   programId: string | undefined,

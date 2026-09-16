@@ -10,7 +10,6 @@ import { isCompanySchoolProgramsPath } from '@/features/program/1c-1s/lib/is-com
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
-import { shouldUseGeneralProgramFeSeed } from '@/features/program/general/lib/general-program-fe-seed'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { isTrainedTeachersProgramsPath } from '@/features/program/trained-teachers/lib/is-trained-teachers-route'
 
@@ -36,8 +35,6 @@ export function useApplicationsRemoteEnabledForSurface(programId: string | undef
   const isTrainedTeachers = useIsTrainedTeachersProgramsSurface()
   return useMemo(() => {
     if (!programId) return false
-    // FE 시드(env ON): 신청 mock 강제 — API application list 호출 방지
-    if (shouldUseGeneralProgramFeSeed(programId)) return false
     if (isTrainedTeachers) return false
     return isCompanySchool
       ? shouldUseCompanySchoolApplicationsRemoteApi()
@@ -53,7 +50,6 @@ export function useProgramProgressRemoteEnabledForSurface(
   const isTrainedTeachers = useIsTrainedTeachersProgramsSurface()
   return useMemo(() => {
     if (!programId) return false
-    if (shouldUseGeneralProgramFeSeed(programId)) return false
     // 일반 participants API로 오인 호출 방지 — TT는 use-progress-school-list에서 전용 훅 사용
     if (isTrainedTeachers) return false
     return isCompanySchool
@@ -68,8 +64,6 @@ export function useProgramsReadsRemoteEnabledForSurface(programId: string | unde
   const isTrainedTeachers = useIsTrainedTeachersProgramsSurface()
   return useMemo(() => {
     if (!programId) return false
-    // FE 시드(env ON): navigation GET 실패로 LNB 깨짐 방지
-    if (shouldUseGeneralProgramFeSeed(programId)) return false
     if (isTrainedTeachers) return shouldUseTrainedTeacherProgramsRemoteApi()
     return isCompanySchool
       ? shouldUseCompanySchoolProgramsReadsRemoteApi()

@@ -1,6 +1,6 @@
 import { CmsButton } from '@/shared/ui'
 import { ContentModal } from '@/shared/ui/content-modal'
-import type { TrainedTeachersEducationJournalEntry } from '@/data/mock/trained-teachers-institution-detail'
+import type { TrainedTeachersEducationJournalEntry } from '@/features/program/trained-teachers/model/institution-detail'
 import './education-journal-section.css'
 
 interface TrainedTeachersEducationJournalViewModalProps {

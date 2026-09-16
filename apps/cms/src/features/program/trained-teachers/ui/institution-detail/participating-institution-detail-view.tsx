@@ -24,8 +24,8 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
 } from '@/shared/components'
-import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/data/mock/participating-schools'
-import type { TextbookStatusKey } from '@/data/mock/participating-schools'
+import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/features/program/general/model/participating-schools'
+import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
 import {
   getParticipatingInstitutionActivityWithdrawScheduleOptions,

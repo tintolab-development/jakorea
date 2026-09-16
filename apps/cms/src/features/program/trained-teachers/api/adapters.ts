@@ -14,6 +14,7 @@ import type {
   ProgramType,
 } from '@/types/domain'
 import type { Status } from '@/types'
+import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import {
   parseTrainedTeacherServiceDetailJson,
   serializeTrainedTeacherServiceDetailJson,
@@ -51,23 +52,12 @@ export function mapDomainEducationStructureToApi(
   return undefined
 }
 
-function lifecycleStatusFromPeriodStatus(value?: string): ProgramLifecycleStatus {
-  switch (value?.trim().toUpperCase()) {
-    case 'SCHEDULED':
-    case 'PLANNED':
-      return 'scheduled'
-    case 'RECRUITING':
-    case 'RECRUITING_STUDENTS':
-      return 'recruiting_students'
-    case 'IN_PROGRESS':
-    case 'RUNNING':
-      return 'in_progress'
-    case 'COMPLETED':
-    case 'ENDED':
-      return 'completed'
-    default:
-      return 'recruiting_students'
-  }
+function resolveListLifecycleStatus(dto: AdminProgramListItemDto): ProgramLifecycleStatus {
+  return (
+    toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
+    toTypedProgramLifecycleStatus(dto.periodStatus) ??
+    'scheduled'
+  )
 }
 
 function baseProgram(
@@ -100,9 +90,7 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
     mainTitle: dto.mainTitle?.trim() || title,
     startDate: dto.businessStartDate ?? dto.startDate,
     endDate: dto.businessEndDate ?? dto.endDate,
-    lifecycleStatus: dto.periodStatus
-      ? lifecycleStatusFromPeriodStatus(dto.periodStatus)
-      : ((dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ?? 'recruiting_students'),
+    lifecycleStatus: resolveListLifecycleStatus(dto),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
     participatingSchoolCount: dto.organizationApplicationCount,
     createdAt: dto.createdAt,
@@ -152,8 +140,8 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus:
-      (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
-      (periodStatus ? lifecycleStatusFromPeriodStatus(periodStatus) : undefined),
+      toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
+      toTypedProgramLifecycleStatus(periodStatus),
     businessArea: dto.businessArea,
     titleEn: dto.titleEn,
     textbookName: dto.textbookName,
