@@ -5,6 +5,8 @@
 **대상 화면:** CMS 일반 프로그램 → 참여자 신청 목록 → 1차 서류 합격자 명단  
 **관련 API:** `GET /api/admin/programs/{programId}/individual-applications`
 
+**후속 요청:** [개인 신청 목록·상세 표시 필드](./general-individual-application-display-fields-backend-request-2026-09-16.md)
+
 ## 백엔드 전달용 프롬프트
 
 아래 요구사항에 따라 일반 프로그램 개인 참여자의 **신청자 면접 가능 일정**을 조회 API와 QA 시드에 추가해 주세요.
