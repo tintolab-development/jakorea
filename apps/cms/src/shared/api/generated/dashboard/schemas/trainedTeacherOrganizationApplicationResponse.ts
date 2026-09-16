@@ -4,38 +4,43 @@
  * JA Korea CMS Backend API — Dashboard subset
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
+ *
+ * Additive 2026-09-16: preferredScheduleBlocks (hand-patched; full orval regen blocked by unrelated validation).
  */
+import type { PreferredScheduleBlock } from './preferredScheduleBlock'
 
 export interface TrainedTeacherOrganizationApplicationResponse {
-  applicationId?: number;
-  programId?: number;
-  schoolId?: number;
-  schoolName?: string;
-  organizationId?: number;
-  organizationName?: string;
-  teacherMemberId?: number;
-  teacherName?: string;
-  teacherPhoneMasked?: string;
-  studentCount?: number;
-  classCount?: number;
-  desiredEducationScheduleMemo?: string;
-  applicationStatus?: string;
-  educationJournalCount?: number;
-  submittedAt?: string;
-  approvedAt?: string;
-  rejectedAt?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  availableActions?: string[];
-  institutionName?: string;
-  schoolSido?: string;
-  schoolSigungu?: string;
-  organizationSido?: string;
-  organizationSigungu?: string;
-  regionSido?: string;
-  regionSigungu?: string;
-  regionName?: string;
-  requestedStudentCount?: number;
-  requestedClassCount?: number;
-  journalSubmitted?: boolean;
+  applicationId?: number
+  programId?: number
+  schoolId?: number
+  schoolName?: string
+  organizationId?: number
+  organizationName?: string
+  teacherMemberId?: number
+  teacherName?: string
+  teacherPhoneMasked?: string
+  studentCount?: number
+  classCount?: number
+  desiredEducationScheduleMemo?: string
+  /** 희망 교육 일정 UI SoT. 항상 배열(없으면 []). null 금지. memo로 파싱하지 말 것. */
+  preferredScheduleBlocks?: PreferredScheduleBlock[]
+  applicationStatus?: string
+  educationJournalCount?: number
+  submittedAt?: string
+  approvedAt?: string
+  rejectedAt?: string
+  createdAt?: string
+  updatedAt?: string
+  availableActions?: string[]
+  institutionName?: string
+  schoolSido?: string
+  schoolSigungu?: string
+  organizationSido?: string
+  organizationSigungu?: string
+  regionSido?: string
+  regionSigungu?: string
+  regionName?: string
+  requestedStudentCount?: number
+  requestedClassCount?: number
+  journalSubmitted?: boolean
 }

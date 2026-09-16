@@ -820,6 +820,8 @@ export * from './postReactionUpsertRequest';
 export * from './preferenceResponse';
 export * from './preferenceUpdateRequest';
 export * from './preferredEducationScheduleResponse';
+export * from './preferredScheduleBlock';
+export * from './preferredScheduleSessionTime';
 export * from './preRegisterConflictResolveRequest';
 export * from './preRegisterConflictResponse';
 export * from './preRegisteredMemberMatchRequest';
