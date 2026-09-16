@@ -8,12 +8,18 @@ export interface SettlementConfigQueryData {
   sections: SettlementItemSettingSection[]
 }
 
-export async function getSettlementConfigRemote(): Promise<SettlementConfigQueryData> {
-  const config = await fetchCurrentSettlementConfigRemote()
+export function buildSettlementConfigQueryData(
+  config: SettlementConfigResponse
+): SettlementConfigQueryData {
   return {
     config,
     sections: mapSettlementConfigToSections(config),
   }
+}
+
+export async function getSettlementConfigRemote(): Promise<SettlementConfigQueryData> {
+  const config = await fetchCurrentSettlementConfigRemote()
+  return buildSettlementConfigQueryData(config)
 }
 
 /** @deprecated sections only — prefer getSettlementConfigRemote */
