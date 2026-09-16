@@ -11,6 +11,7 @@ import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/sche
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
+import { programMatchesProgressPhase } from '@/features/program/general/ui/constants/program-list-constants'
 import {
   parseGeneralProgramServiceDetailJson,
   serializeGeneralProgramServiceDetailJson,
@@ -349,33 +350,7 @@ export function filterGeneralProgramsByOverviewStatus(
   statusFilter: GeneralProgramOverviewStatusFilter | null
 ): Program[] {
   if (!statusFilter) return programs
-
-  if (statusFilter === 'scheduled') {
-    return programs.filter(program =>
-      [
-        'scheduled',
-        'planned',
-        'recruiting_students',
-        'recruiting_instructors',
-        'matching_completed',
-        'education_before_textbook',
-      ].includes(program.lifecycleStatus || '')
-    )
-  }
-
-  if (statusFilter === 'in_progress') {
-    return programs.filter(program =>
-      ['in_progress', 'education_after_textbook', 'education_in_progress'].includes(
-        program.lifecycleStatus || ''
-      )
-    )
-  }
-
-  return programs.filter(program =>
-    ['completed', 'education_completed', 'document_processing_completed'].includes(
-      program.lifecycleStatus || ''
-    )
-  )
+  return programs.filter(program => programMatchesProgressPhase(program, statusFilter))
 }
 
 function mapProgramRoundsToRequest(program: Program): ProgramCreateRequest['rounds'] {
