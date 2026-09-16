@@ -2,8 +2,8 @@
  * 프로그램 상세 - 담당자 정보 탭
  * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록
  *
- * Hybrid: programs remote 게이트 ON → GET/POST/PATCH/DELETE …/managers
- * OFF → mock(`getMockProgramManagers`). mock 파일은 폴백용으로 유지.
+ * Remote only: GET/POST/PATCH/DELETE …/managers
+ * 권한 변경 → PATCH …/managers/{assignmentId} (`ProgramManagerUpdateRequest.role`)
  * 공유 탭 — 일반·UJAT·1사1교·Gemini 상세에서 재사용 (program-type-isolation).
  */
 
@@ -20,7 +20,7 @@ import {
   type ProgramManagersFilters,
 } from '../../../hooks/use-program-managers-params'
 import { useProgramManagers } from '../../../hooks/use-program-managers'
-import { PROGRAM_ROLE_LABELS, type ProgramManagerRow } from '@/data/mock/program-managers'
+import { PROGRAM_ROLE_LABELS, type ProgramManagerRow } from '@/features/program/general/model/program-managers'
 import {
   canAddProgramPm,
   canSetProgramManagerRole,
@@ -66,6 +66,7 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
     managers: managerList,
     loading,
     isMutating,
+    isUpdatingRole,
     getAssignableCandidates,
     candidatesLoading,
     addManager,
@@ -258,6 +259,7 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
             onChange={key => {
               void handleTableRoleChange(record.id, key)
             }}
+            isUpdating={isUpdatingRole}
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
@@ -292,6 +294,7 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
     ],
     [
       handleTableRoleChange,
+      isUpdatingRole,
       openRoleDropdownId,
       renderRoleBadge,
       roleItemDisabled,

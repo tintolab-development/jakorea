@@ -10,11 +10,11 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { ActionResultModal } from '@/shared/ui/action-result-modal'
 import { CmsButton, CmsRadio } from '@/shared/ui'
 import type { ProgramRole } from '@/types/user'
-import { PROGRAM_ROLE_LABELS } from '@/data/mock/program-managers'
+import { PROGRAM_ROLE_LABELS } from '@/features/program/general/model/program-managers'
 import {
   canSetProgramManagerRole,
   PROGRAM_PM_ROLE_LIMIT_MESSAGE } from '@/entities/program/lib/program-pm-role-policy'
-import type { ProgramManagerRow } from '@/data/mock/program-managers'
+import type { ProgramManagerRow } from '@/features/program/general/model/program-managers'
 import './edit-manager-role-modal.css'
 
 const ROLE_OPTIONS: { label: string; value: ProgramRole }[] = [

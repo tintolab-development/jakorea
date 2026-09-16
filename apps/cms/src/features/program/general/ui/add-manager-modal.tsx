@@ -12,9 +12,8 @@ import { CmsButton, CmsRadio } from '@/shared/ui'
 import type { ProgramRole } from '@/types/user'
 import {
   PROGRAM_ROLE_LABELS,
-  getAssignableManagerCandidates,
   type ProgramManagerRow,
-} from '@/data/mock/program-managers'
+} from '@/features/program/general/model/program-managers'
 import {
   canAddProgramPmFromPmCount,
   PROGRAM_PM_ROLE_LIMIT_MESSAGE,
@@ -61,7 +60,7 @@ export function AddManagerModal({
   open,
   onCancel,
   currentOwnerCount,
-  excludeManagerNames = [],
+  excludeManagerNames: _excludeManagerNames = [],
   candidates,
   candidatesLoading = false,
   confirmLoading = false,
@@ -71,10 +70,8 @@ export function AddManagerModal({
   const [showOwnerLimitModal, setShowOwnerLimitModal] = useState(false)
 
   const assignablePool = useMemo((): AssignableManagerCandidate[] => {
-    if (candidates) return candidates
-    // mock 후보는 adminId 없음 — remote 후보와 동일 shape로 맞춤
-    return getAssignableManagerCandidates(excludeManagerNames).map(c => ({ ...c }))
-  }, [candidates, excludeManagerNames])
+    return candidates ?? []
+  }, [candidates])
 
   useEffect(() => {
     if (!open) return

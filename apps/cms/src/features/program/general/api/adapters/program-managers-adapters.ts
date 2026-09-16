@@ -1,19 +1,40 @@
 import type { ProgramManagerResponse } from '@/shared/api/generated/dashboard/schemas/programManagerResponse'
-import type { ProgramManagerRow } from '@/data/mock/program-managers'
+import type { ProgramManagerRow } from '@/features/program/general/model/program-managers'
 import type { ProgramRole } from '@/types/user'
 import dayjs from 'dayjs'
 
 const PROGRAM_ROLES: readonly ProgramRole[] = ['OWNER', 'PARTNER', 'ASSISTANT']
+
+/** BE `ProgramAdminAssignmentRole` — PM | PARTNER | VIEWER */
+export type ProgramManagerApiRole = 'PM' | 'PARTNER' | 'VIEWER'
 
 export function mapProgramManagerRole(raw: string | undefined | null): ProgramRole {
   const normalized = (raw ?? '').trim().toUpperCase()
   if ((PROGRAM_ROLES as readonly string[]).includes(normalized)) {
     return normalized as ProgramRole
   }
-  // BE 별칭 방어
-  if (normalized === 'PM' || normalized === 'MANAGER') return 'OWNER'
+  // BE canonical: PM / PARTNER / VIEWER
+  if (normalized === 'PM' || normalized === 'MANAGER' || normalized === 'ROLE_LEAD') {
+    return 'OWNER'
+  }
   if (normalized === 'VIEWER' || normalized === 'ASSIST') return 'ASSISTANT'
   return 'ASSISTANT'
+}
+
+/** UI ProgramRole → BE assignment role (OWNER≠PM이면 400 BAD_REQUEST) */
+export function toProgramManagerApiRole(role: ProgramRole): ProgramManagerApiRole {
+  switch (role) {
+    case 'OWNER':
+      return 'PM'
+    case 'PARTNER':
+      return 'PARTNER'
+    case 'ASSISTANT':
+      return 'VIEWER'
+    default: {
+      const _exhaustive: never = role
+      return _exhaustive
+    }
+  }
 }
 
 function formatAssignedAt(iso: string | undefined | null): string {

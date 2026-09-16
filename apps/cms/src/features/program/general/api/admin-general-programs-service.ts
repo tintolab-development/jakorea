@@ -14,7 +14,10 @@ import {
   shouldUseGeneralProgramsRemoteApi,
   shouldUseProgramsHttpRemoteApi,
 } from '@/features/program/general/api/general-programs-remote-capabilities'
-import { mapProgramManagerResponsesToRows } from '@/features/program/general/api/adapters/program-managers-adapters'
+import {
+  mapProgramManagerResponsesToRows,
+  toProgramManagerApiRole,
+} from '@/features/program/general/api/adapters/program-managers-adapters'
 import {
   addAdminProgramManagerRemote,
   bulkDeleteAdminProgramsRemote,
@@ -362,7 +365,6 @@ export async function submitGeneralProgramFormResponse(
 }
 
 export async function fetchGeneralProgramManagers(programId: string) {
-  if (!shouldUseProgramsHttpRemoteApi()) return []
   assertProgramsHttpRemoteReady()
   const items = await fetchAdminProgramManagersRemote(programId)
   return mapProgramManagerResponsesToRows(items)
@@ -372,11 +374,10 @@ export async function addGeneralProgramManager(
   programId: string,
   payload: { adminId: number; role: ProgramRole }
 ) {
-  if (!shouldUseProgramsHttpRemoteApi()) return null
   assertProgramsHttpRemoteReady()
   return addAdminProgramManagerRemote(programId, {
     adminId: payload.adminId,
-    role: payload.role,
+    role: toProgramManagerApiRole(payload.role),
   })
 }
 
@@ -385,13 +386,14 @@ export async function updateGeneralProgramManager(
   assignmentId: string,
   payload: { role?: ProgramRole; adminId?: number }
 ) {
-  if (!shouldUseProgramsHttpRemoteApi()) return null
   assertProgramsHttpRemoteReady()
-  return updateAdminProgramManagerRemote(programId, assignmentId, payload)
+  return updateAdminProgramManagerRemote(programId, assignmentId, {
+    adminId: payload.adminId,
+    ...(payload.role != null ? { role: toProgramManagerApiRole(payload.role) } : {}),
+  })
 }
 
 export async function deleteGeneralProgramManager(programId: string, assignmentId: string) {
-  if (!shouldUseProgramsHttpRemoteApi()) return
   assertProgramsHttpRemoteReady()
   await deleteAdminProgramManagerRemote(programId, assignmentId)
 }
