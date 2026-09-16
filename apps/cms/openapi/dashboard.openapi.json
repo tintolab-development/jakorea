@@ -4604,6 +4604,10 @@
           "combinedClassYn": {
             "type": "boolean"
           },
+          "resolvedScheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "createdByActorType": {
             "type": "string"
           },
@@ -9329,7 +9333,7 @@
       },
       "VolunteerFinalResultRequest": {
         "type": "object",
-        "description": "봉사자 최종 결과 처리 요청",
+        "description": "최종 결과 처리 요청(봉사자/개인 공통)",
         "properties": {
           "result": {
             "type": "string",
@@ -9363,7 +9367,7 @@
       },
       "DocumentResultRequest": {
         "type": "object",
-        "description": "봉사자 서류 결과 처리 요청",
+        "description": "서류 결과 처리 요청(봉사자/개인 공통)",
         "properties": {
           "result": {
             "type": "string",
@@ -12027,10 +12031,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -13198,6 +13202,11 @@
             "format": "int64",
             "minimum": 1
           },
+          "requestedScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
           "scheduleLead": {
             "type": "boolean"
           },
@@ -13216,8 +13225,7 @@
           }
         },
         "required": [
-          "instructorMemberId",
-          "scheduleId"
+          "instructorMemberId"
         ]
       },
       "ProgramFormBindingRequest": {
@@ -16756,34 +16764,61 @@
       },
       "InterviewAssignmentCreateRequest": {
         "type": "object",
+        "description": "면접 배정/재배정 요청. volunteerApplicationId와 individualApplicationId는 상호 배타이며 둘 중 하나만 필수입니다.",
         "properties": {
           "volunteerApplicationId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "봉사자 신청 ID. individualApplicationId와 상호 배타",
+            "example": 101
+          },
+          "individualApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "개인 신청 ID. volunteerApplicationId와 상호 배타",
+            "example": 55
           },
           "interviewSlotId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "면접 슬롯 ID",
+            "example": 1001
+          },
+          "individual": {
+            "type": "boolean"
           }
-        }
+        },
+        "required": [
+          "interviewSlotId"
+        ]
       },
       "InterviewAssignmentResponse": {
         "type": "object",
+        "description": "면접 배정 결과. 봉사자/개인 신청 중 하나만 채워집니다.",
         "properties": {
           "volunteerApplicationId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "봉사자 신청 ID"
+          },
+          "individualApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "개인 신청 ID"
           },
           "interviewAssignmentId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "면접 배정 ID"
           },
           "interviewSlotId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "면접 슬롯 ID"
           },
           "assignmentStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "배정 상태"
           }
         }
       },
@@ -30696,6 +30731,17 @@
             "type": "integer",
             "format": "int64"
           },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationName": {
+            "type": "string"
+          },
           "participantStatus": {
             "type": "string"
           },
@@ -31084,6 +31130,45 @@
           }
         }
       },
+      "InstructorAssignmentCalendarResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          }
+        }
+      },
+      "Item": {
+        "type": "object",
+        "properties": {
+          "instructorMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lectureDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activeYn": {
+            "type": "boolean"
+          }
+        }
+      },
       "InstructorApplicationListItemResponse": {
         "type": "object",
         "properties": {
@@ -31182,6 +31267,7 @@
       },
       "IndividualApplicationListItemResponse": {
         "type": "object",
+        "description": "일반 개인 프로그램 신청 목록 항목. 신청자 가능 일정과 관리자 확정 배정 일정은 별도 필드입니다.",
         "properties": {
           "id": {
             "type": "integer",
@@ -31227,6 +31313,34 @@
           "giveUpYn": {
             "type": "boolean"
           },
+          "interviewAvailabilitySlots": {
+            "type": "array",
+            "description": "신청자가 제출한 면접 가능 시간 구간. 중복 제거 후 시작 시각 오름차순이며, 미제출 시 빈 배열입니다.",
+            "items": {
+              "$ref": "#/components/schemas/InterviewAvailabilitySlot"
+            }
+          },
+          "interviewAvailabilityCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "유효한 신청자 면접 가능 시간 구간 수",
+            "minimum": 0
+          },
+          "assignedInterviewSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자가 확정한 면접 슬롯 ID. 신청자 가능 일정과 별개입니다."
+          },
+          "assignedInterviewStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "관리자가 확정한 면접 시작 시각. 신청자 가능 일정과 별개입니다."
+          },
+          "assignedInterviewEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "관리자가 확정한 면접 종료 시각. 신청자 가능 일정과 별개입니다."
+          },
           "submittedAt": {
             "type": "string",
             "format": "date-time"
@@ -31246,6 +31360,26 @@
             }
           }
         }
+      },
+      "InterviewAvailabilitySlot": {
+        "type": "object",
+        "description": "신청자가 제출한 면접 가능 시간 구간",
+        "properties": {
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "가능 구간 시작 시각"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "가능 구간 종료 시각"
+          }
+        },
+        "required": [
+          "endAt",
+          "startAt"
+        ]
       },
       "PageResponseIndividualApplicationListItemResponse": {
         "type": "object",
@@ -31765,6 +31899,25 @@
           "evaluationSubmittedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "lectureDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "instructorName": {
+            "type": "string"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "distanceKm": {
+            "type": "number"
+          },
+          "longDistance": {
+            "type": "boolean"
+          },
+          "homeAddress": {
+            "type": "string"
           }
         }
       },

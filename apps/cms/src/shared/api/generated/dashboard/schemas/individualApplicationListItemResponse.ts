@@ -5,7 +5,11 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { InterviewAvailabilitySlot } from './interviewAvailabilitySlot';
 
+/**
+ * 일반 개인 프로그램 신청 목록 항목. 신청자 가능 일정과 관리자 확정 배정 일정은 별도 필드입니다.
+ */
 export interface IndividualApplicationListItemResponse {
   id?: number;
   programId?: number;
@@ -20,6 +24,19 @@ export interface IndividualApplicationListItemResponse {
   finalResultStatus?: string;
   reserveRank?: number;
   giveUpYn?: boolean;
+  /** 신청자가 제출한 면접 가능 시간 구간. 중복 제거 후 시작 시각 오름차순이며, 미제출 시 빈 배열입니다. */
+  interviewAvailabilitySlots?: InterviewAvailabilitySlot[];
+  /**
+     * 유효한 신청자 면접 가능 시간 구간 수
+     * @minimum 0
+     */
+  interviewAvailabilityCount?: number;
+  /** 관리자가 확정한 면접 슬롯 ID. 신청자 가능 일정과 별개입니다. */
+  assignedInterviewSlotId?: number;
+  /** 관리자가 확정한 면접 시작 시각. 신청자 가능 일정과 별개입니다. */
+  assignedInterviewStartAt?: string;
+  /** 관리자가 확정한 면접 종료 시각. 신청자 가능 일정과 별개입니다. */
+  assignedInterviewEndAt?: string;
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;
