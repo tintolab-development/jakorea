@@ -12,9 +12,11 @@ export interface InstructorAssignmentCreateRequest {
   /** @minimum 1 */
   instructorMemberId: number;
   /** @minimum 1 */
-  scheduleId: number;
+  scheduleId?: number;
   /** @minimum 1 */
   organizationApplicationId?: number;
+  /** @minimum 1 */
+  requestedScheduleId?: number;
   scheduleLead?: boolean;
   /** @minimum 1 */
   feePolicyId?: number;

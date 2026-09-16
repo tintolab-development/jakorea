@@ -1,11 +1,11 @@
 # 교육받은 교사 프로그램 — API 전환 완료율 · Phase 계획
 
 **작성일**: 2026-07-16  
-**갱신**: 2026-07-16 — Phase 4 진행 기관 + education-journals  
+**갱신**: 2026-09-16 — 로컬 OpenAPI v9 sync · TT approve/reject 전용 path · `educationStructure` 1급 필드  
 **대상**: CMS `/programs/trained-teachers`  
 **범위**: `features/program/trained-teachers/**` + `general` 모달의 trained-teachers 분기 — 일반 기본값 변경 금지  
 **로드맵**: [programs-api-conversion-roadmap.md](./programs-api-conversion-roadmap.md) — **Cat 4**  
-**관련**: [programs-trained-teachers-api-backend-handoff.md](./programs-trained-teachers-api-backend-handoff.md)
+**관련**: [programs-trained-teachers-api-backend-handoff.md](./programs-trained-teachers-api-backend-handoff.md) · [trained-teacher-primary-case-fe-adapter-2026-09-15.md](./trained-teacher-primary-case-fe-adapter-2026-09-15.md)
 
 ---
 
@@ -25,10 +25,10 @@
 
 | Phase | 상태 | 요약 |
 |-------|------|------|
-| **0** BE/OpenAPI | **schema 있음 · FE 연결** | `TRAINED_TEACHER` enum + opt-in gate |
+| **0** BE/OpenAPI | **로컬 v9 sync · FE 연결** | `TRAINED_TEACHER` enum + opt-in · `educationStructure` 1급 필드 |
 | **1** 코어 CRUD | **FE 완료 · gate ON** | `trained-teachers/api/*` · list/detail/create/update/delete |
 | **2** info LNB | **FE 완료 · gate ON** | GET/PATCH `…/trained-teacher/detail` · configJson + 공통정보 저장 |
-| **3** 기관 신청 | **FE 완료 · gate ON** | GET `…/trained-teacher/organization-applications` · 승인/반려는 공통 approve/reject 재사용 |
+| **3** 기관 신청 | **FE 완료 · gate ON** | GET `…/trained-teacher/organization-applications` · 승인/반려도 **TT 전용** `…/approve`·`…/reject` |
 | **4** 진행·교육일지 | **FE 완료 · gate ON** | 승인 기관 → 진행 목록 · journals list/download/bulk-download |
 | **5** 설문·실적·담당자 | **부분 FE** | performance-summary GET + 진행 탭 strip · surveys HTTP gate에 TT 포함 · managers BE 갭 |
 
@@ -52,7 +52,7 @@ VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED=true
 | list/detail/CRUD | `shouldUseTrainedTeacherProgramsRemoteApi()` |
 | info detail GET/PATCH | 동일 gate |
 | 기관 신청 list | 동일 gate · 전용 URL (일반 applications list 미사용) |
-| 기관 신청 승인/반려 | 동일 gate · 공통 `POST …/organization-applications/{id}/approve\|reject` |
+| 기관 신청 승인/반려 | 동일 gate · TT 전용 `POST …/trained-teacher/organization-applications/{id}/approve\|reject` |
 | 진행 기관 목록 | 동일 gate · 승인된 org-applications 매핑 (일반 participants API 미사용) |
 | 교육일지 | 동일 gate · `…/trained-teacher/education-journals` |
 
@@ -85,19 +85,20 @@ VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED=true
 | programs CRUD | `/api/admin/programs?programType=TRAINED_TEACHER` | **remote (opt-in)** |
 | detail 전용 | `GET/PATCH …/trained-teacher/detail` | **remote (opt-in)** · `configJson`에 commonInfo |
 | 기관 신청 | `GET …/trained-teacher/organization-applications` (+ `/{id}`) | **remote (opt-in)** |
-| 승인/반려 | 공통 `…/organization-applications/{id}/approve\|reject` | **remote** · TT 전용 mutation OpenAPI 없음 |
-| 교육일지 | `GET/POST …/education-journals` (+ download/export) | **remote** list/download/bulk · POST create FE 준비(서비스) |
+| 승인/반려 | `POST …/trained-teacher/organization-applications/{id}/approve\|reject` | **remote** · TT 전용 client |
+| 교육일지 | `GET/POST …/education-journals` (+ download/export/jobs) | **remote** list/download/bulk · POST create FE 준비(서비스) |
 | 실적 요약 | `GET …/performance-summary` | **remote** + education-completions 건수 |
 | 학생교육 완료 | `GET …/education-completions` | **remote** (일지와 별도 SSOT) |
+| programs CRUD 구조 | `Program*Request/Response.educationStructure` | **remote** · `CURRICULUM`/`SCHEDULE` ↔ `generalProgramEducationStructure` |
 
 ---
 
 ## 4. OpenAPI 갭
 
-- 공통 applications vs `trained-teacher/organization-applications` — **목록은 TT 전용 GET**, 승인/반려는 공통 mutation 재사용(BE 동일 applicationId 전제)
+- 기관 신청 목록·승인·반려는 **전부** `…/trained-teacher/organization-applications/**` (공통 applications mutation 미사용)
 - managers CRUD — 일반과 동일 갭
 - 등록 템플릿: `registration-trained-teachers` / `application-trained-teachers` seeds
-- TT 전용 approve/reject OpenAPI 추가 시 FE 전용 client로 이전 가능
+- `education-journals/export-data` — 로컬 OpenAPI에서 제거됨 · FE 미사용
 
 ---
 

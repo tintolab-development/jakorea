@@ -4,7 +4,6 @@
 
 import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { CmsInput, CmsNumericInput, CmsSelect } from '@/shared/ui'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import type {
@@ -45,6 +44,10 @@ import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
+import {
+  displayServerPiiAsIs,
+  HomeAddressDisplay,
+} from '@/features/program/shared/lib/program-pii-display'
 import { IndividualApplicantInterviewAvailabilitySection } from './individual-applicant-interview-availability'
 import { IndividualApplicantInterviewEvaluationSection } from './individual-interview-evaluation-section'
 import {
@@ -133,17 +136,9 @@ function IndividualApplicantScreeningBasicInfo({
     return school || grade || '해당 없음'
   })()
 
-  const contactDisplay = detail?.contact
-    ? shouldMask
-      ? MASKING_POLICY.phone(detail.contact.replace(/\s/g, '')) || detail.contact
-      : detail.contact
-    : '-'
+  const contactDisplay = displayServerPiiAsIs(detail?.contact)
 
-  const emailDisplay = detail?.email
-    ? shouldMask
-      ? MASKING_POLICY.email(detail.email)
-      : detail.email
-    : '-'
+  const emailDisplay = displayServerPiiAsIs(detail?.email)
 
   const id1365Raw = detail?.id1365?.trim()
   const id1365Display = id1365Raw ? (shouldMask ? maskId1365(id1365Raw) : id1365Raw) : '-'
@@ -283,60 +278,6 @@ function IndividualApplicantScreeningTeamSection({
 function maskId1365(id: string): string {
   if (id.length <= 4) return '*'.repeat(id.length)
   return `${id.slice(0, 4)}***`
-}
-
-function splitAddressAfterDong(address: string): { head: string; tail: string } | null {
-  const re = /(?:^|\s)([가-힣]{2,12}동)(?=\s|$)/u
-  const m = address.match(re)
-  if (!m) return null
-  const dong = m[1]
-  const i = address.indexOf(dong)
-  if (i === -1) return null
-  const end = i + dong.length
-  return { head: address.slice(0, end), tail: address.slice(end) }
-}
-
-function splitAddressAfterGu(address: string): { head: string; tail: string } | null {
-  const re = /(?:^|\s)([가-힣]{1,12}구)(?=\s|$)/u
-  const m = address.match(re)
-  if (!m) return null
-  const gu = m[1]
-  const i = address.indexOf(gu)
-  if (i === -1) return null
-  const end = i + gu.length
-  return { head: address.slice(0, end), tail: address.slice(end) }
-}
-
-function splitAddressForPrivacyBlur(address: string): { head: string; tail: string } | null {
-  return splitAddressAfterDong(address) ?? splitAddressAfterGu(address)
-}
-
-function HomeAddressDisplay({ address, mask }: { address: string | undefined; mask: boolean }) {
-  if (!address?.trim()) return <>-</>
-  if (!mask) return <>{address}</>
-
-  const split = splitAddressForPrivacyBlur(address)
-  if (!split) {
-    return (
-      <span className="applicant-instructor-basic-info__address-blur" aria-hidden="true">
-        {address}
-      </span>
-    )
-  }
-
-  const { head, tail } = split
-  if (!tail.trim()) {
-    return <>{head}</>
-  }
-
-  return (
-    <>
-      {head}
-      <span className="applicant-instructor-basic-info__address-blur" aria-hidden="true">
-        {tail}
-      </span>
-    </>
-  )
 }
 
 function formatTeamMemberCountDisplay(
@@ -535,17 +476,9 @@ export function ApplicantGeneralIndividualBasicInfo({
     return school || grade || '해당 없음'
   })()
 
-  const contactDisplay = detail?.contact
-    ? shouldMask
-      ? MASKING_POLICY.phone(detail.contact.replace(/\s/g, '')) || detail.contact
-      : detail.contact
-    : '-'
+  const contactDisplay = displayServerPiiAsIs(detail?.contact)
 
-  const emailDisplay = detail?.email
-    ? shouldMask
-      ? MASKING_POLICY.email(detail.email)
-      : detail.email
-    : '-'
+  const emailDisplay = displayServerPiiAsIs(detail?.email)
 
   const homeAddressDisplay = (
     <HomeAddressDisplay

@@ -24,8 +24,8 @@ export async function fetchMaterialKitsRemote(
 export async function createMaterialKitRemote(
   body: MaterialKitRequest
 ): Promise<MaterialKitResponse> {
-  // POST /api/admin/material-kits (Orval create8 — 번호는 OpenAPI 재생성 시 변동)
-  return unwrapApiBody(await dmApi.create8(body))
+  // POST /api/admin/material-kits (Orval create9 — 번호는 OpenAPI 재생성 시 변동)
+  return unwrapApiBody(await dmApi.create9(body))
 }
 
 export async function fetchMaterialKitVersionsRemote(

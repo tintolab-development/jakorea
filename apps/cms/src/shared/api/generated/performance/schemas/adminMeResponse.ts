@@ -5,6 +5,7 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { AdminTermsAgreementResponse } from './adminTermsAgreementResponse';
 
 export interface AdminMeResponse {
   adminAccountId?: number;
@@ -19,6 +20,12 @@ export interface AdminMeResponse {
   roleName?: string;
   mfaRequired?: boolean;
   permissionCodes?: string[];
+  /** 현재 진행 중인 담당 프로그램 수 */
+  activeManagedProgramCount?: number;
+  /** 과거 포함 전체 담당 프로그램 수 */
+  totalManagedProgramCount?: number;
+  /** 관리자 약관 4종 최신 상태. MARKETING은 admin_marketing_consent를 정본으로 사용합니다. */
+  termsAgreements?: AdminTermsAgreementResponse[];
   lastLoginAt?: string;
   createdAt?: string;
   updatedAt?: string;

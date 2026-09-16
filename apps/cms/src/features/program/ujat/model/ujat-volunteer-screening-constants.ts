@@ -183,14 +183,10 @@ export function formatUjatVolunteerBirthDateAndAge(birthDate: string, age: numbe
   return `${birthDate} (만 ${age}세)`
 }
 
-/** 개인정보 마스킹 시 대학교명 — ex) **대학교 */
+/** 대학교명 — 서버 값 그대로 (FE 재마스킹 없음). maskSensitive는 호환용. */
 export function formatUjatVolunteerUniversityDisplay(
   universityName: string,
-  maskSensitive: boolean
+  _maskSensitive?: boolean
 ): string {
-  if (!maskSensitive) return universityName
-  if (universityName.startsWith('**')) return universityName
-  const idx = universityName.indexOf('대학교')
-  if (idx >= 0) return `**${universityName.slice(idx)}`
-  return `**${universityName}`
+  return universityName
 }

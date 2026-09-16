@@ -23,4 +23,7 @@ export interface SaveApplicationRequest {
      */
   requestedSchedules?: RequestedScheduleRequest[];
   requestedClassCount?: number;
+  requestedStudentCount?: number;
+  requestedMaleCount?: number;
+  requestedFemaleCount?: number;
 }

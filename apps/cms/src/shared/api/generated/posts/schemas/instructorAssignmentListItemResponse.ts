@@ -29,4 +29,10 @@ export interface InstructorAssignmentListItemResponse {
   evaluationTotalScore?: number;
   evaluationComment?: string;
   evaluationSubmittedAt?: string;
+  lectureDate?: string;
+  instructorName?: string;
+  organizationName?: string;
+  distanceKm?: number;
+  longDistance?: boolean;
+  homeAddress?: string;
 }

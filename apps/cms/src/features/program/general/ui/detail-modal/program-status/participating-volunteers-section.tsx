@@ -10,7 +10,7 @@ import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_VOLUNTEER_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_VOLUNTEER_ALERT_MESSAGE,
@@ -432,7 +432,7 @@ export function ParticipatingVolunteersSection({
         key: 'contact',
         width: 140,
         align: 'center',
-        render: (v: string | undefined) => (v ? MASKING_POLICY.phone(v.replace(/\s/g, '')) : '-'),
+        render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
       {
         title: '이메일',
@@ -440,7 +440,7 @@ export function ParticipatingVolunteersSection({
         key: 'email',
         width: 180,
         align: 'center',
-        render: (v: string | undefined) => (v ? MASKING_POLICY.email(v) : '-'),
+        render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
     ]
   }, [])

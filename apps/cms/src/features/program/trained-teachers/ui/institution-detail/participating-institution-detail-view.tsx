@@ -12,7 +12,7 @@ import {
   PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import { PARTICIPATING_INSTITUTION_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE } from '@/shared/constants/messages'
 import {
   getProgramProgressDisplayStatus,
@@ -50,10 +50,6 @@ import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-inf
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import {
-  maskEmailLocalAfterTwoChars,
-  maskMobilePhoneMiddleStars,
-} from '@/features/program/general/lib/teacher-contact-display-mask'
 import {
   TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_KEYS,
   TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_LABELS,
@@ -158,8 +154,6 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     controlMode: 'toggleRemask',
   })
 
-  const privacyMasked = !personalInfoRevealed
-
   const handleAdminCommentEditEnter = useCallback(() => {
     if (isApplicationInfoEditing) return
     setAdminCommentDraft(mergedDetail.adminComment ?? '')
@@ -211,26 +205,10 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   )
 
   const teacherDisplaySegments = [
-    mergedDetail.teacherName &&
-      `담당 교사 : ${
-        privacyMasked ? MASKING_POLICY.name(mergedDetail.teacherName) : mergedDetail.teacherName
-      }`,
-    mergedDetail.teacherPhone &&
-      `Tel : ${
-        privacyMasked ? MASKING_POLICY.phone(mergedDetail.teacherPhone) : mergedDetail.teacherPhone
-      }`,
-    mergedDetail.teacherMobile &&
-      `M : ${
-        privacyMasked
-          ? maskMobilePhoneMiddleStars(mergedDetail.teacherMobile)
-          : mergedDetail.teacherMobile
-      }`,
-    mergedDetail.teacherEmail &&
-      `E-mail : ${
-        privacyMasked
-          ? maskEmailLocalAfterTwoChars(mergedDetail.teacherEmail)
-          : mergedDetail.teacherEmail
-      }`,
+    mergedDetail.teacherName && `담당 교사 : ${mergedDetail.teacherName}`,
+    mergedDetail.teacherPhone && `Tel : ${displayServerPiiAsIs(mergedDetail.teacherPhone, mergedDetail.teacherPhone)}`,
+    mergedDetail.teacherMobile && `M : ${displayServerPiiAsIs(mergedDetail.teacherMobile, mergedDetail.teacherMobile)}`,
+    mergedDetail.teacherEmail && `E-mail : ${displayServerPiiAsIs(mergedDetail.teacherEmail, mergedDetail.teacherEmail)}`,
   ].filter((v): v is string => Boolean(v))
 
   const textbookStatusCell =

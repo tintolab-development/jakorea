@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import { UjatEducationProgressVolunteerAssignmentStatusLabel } from './assignment-status-label'
 import type { UjatEducationProgressVolunteerRow } from './types'
 
@@ -68,7 +68,7 @@ export function useUjatEducationProgressVolunteerColumns(): ColumnsType<UjatEduc
         key: 'mobile',
         width: COL.mobile,
         align: 'center',
-        render: (mobile: string) => MASKING_POLICY.phone(mobile.replace(/\s/g, '')) || mobile,
+        render: (mobile: string) => displayServerPiiAsIs(mobile),
       },
       {
         title: '이메일',
@@ -76,7 +76,7 @@ export function useUjatEducationProgressVolunteerColumns(): ColumnsType<UjatEduc
         key: 'email',
         width: COL.email,
         align: 'center',
-        render: (email: string) => MASKING_POLICY.email(email),
+        render: (email: string) => displayServerPiiAsIs(email),
       },
       {
         title: '총 교육 배정일 수',

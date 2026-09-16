@@ -8,7 +8,7 @@
 import type { VolunteerFinalResultRequestResult } from './volunteerFinalResultRequestResult';
 
 /**
- * 봉사자 최종 결과 처리 요청
+ * 최종 결과 처리 요청(봉사자/개인 공통)
  */
 export interface VolunteerFinalResultRequest {
   /** 최종 결과. PASS/APPROVED, FAIL/REJECTED, RESERVE */

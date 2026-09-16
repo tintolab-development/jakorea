@@ -15,6 +15,11 @@ export interface InstructorApplicationListItemResponse {
   instructorMemberId?: number;
   instructorName?: string;
   applicationStatus?: string;
+  homeAddress?: string;
+  jaLectureExperienceYears?: number;
+  jaEvaluationGrade?: string;
+  contact?: string;
+  email?: string;
   instructorTypeSnapshot?: string;
   instructorFeeGradeSnapshot?: string;
   distanceKm?: number;

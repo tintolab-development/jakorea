@@ -12,7 +12,7 @@ import { Spin, Table } from 'antd'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProgramRole } from '@/types/user'
 import {
@@ -50,7 +50,7 @@ interface ProgramManagersTabProps {
   maskSensitive?: boolean
 }
 
-export function ProgramManagersTab({ programId, maskSensitive = false }: ProgramManagersTabProps) {
+export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = false }: ProgramManagersTabProps) {
   const { showAlert } = useCmsAlert()
   const { filters, setFilters } = useProgramManagersParams()
   const [pendingFilters, setPendingFilters] = useState<ProgramManagersFilters>(() => ({
@@ -271,11 +271,7 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
         key: 'phone',
         width: 246,
         align: 'center',
-        render: (phone: string) => {
-          const value = phone?.trim()
-          if (!value) return '-'
-          return maskSensitive ? MASKING_POLICY.phone(value) : value
-        },
+        render: (phone: string) => displayServerPiiAsIs(phone),
       },
       {
         title: '이메일',
@@ -284,11 +280,7 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
         width: 246,
         align: 'center',
         ellipsis: true,
-        render: (email: string) => {
-          const value = email?.trim()
-          if (!value) return '-'
-          return maskSensitive ? MASKING_POLICY.email(value) : value
-        },
+        render: (email: string) => displayServerPiiAsIs(email),
       },
       {
         title: '등록일시',
@@ -300,7 +292,6 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
     ],
     [
       handleTableRoleChange,
-      maskSensitive,
       openRoleDropdownId,
       renderRoleBadge,
       roleItemDisabled,

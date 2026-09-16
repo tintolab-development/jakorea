@@ -14,6 +14,9 @@ export interface ParticipantListItemResponse {
   participantType?: string;
   sourceApplicationType?: string;
   sourceApplicationId?: number;
+  organizationApplicationId?: number;
+  organizationId?: number;
+  organizationName?: string;
   participantStatus?: string;
   completionStatus?: string;
   certificateStatus?: string;
