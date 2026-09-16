@@ -81,6 +81,7 @@ export function GeneralVolunteerDocPassedSection({
     list,
     variant: 'doc_passed',
     subjectKind,
+    loading: applicationsLoading,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailMetaChange,
   })
@@ -174,6 +175,7 @@ export function GeneralVolunteerDocPassedSection({
             program={program}
             applicantId={selectedApplicant.id}
             screeningStage="doc_passed"
+            applicant={selectedApplicant.participantApplicant}
             onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
             onApplicantDetailMetaChange={handleParticipantDetailMetaChange}
           />

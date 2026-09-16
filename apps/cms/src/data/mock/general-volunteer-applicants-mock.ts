@@ -16,6 +16,7 @@ import {
   GENERAL_INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY,
   GENERAL_INTERVIEW_ASSIGNED_DATE_LABELS,
 } from '@/data/mock/general-volunteer-interview-schedule-mock'
+import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 
 export type GeneralVolunteerInterviewAvailabilityDay = {
   dateLabel: string
@@ -61,6 +62,8 @@ export interface GeneralVolunteerApplicantRow {
   managerAScore?: number | null
   managerBScore?: number | null
   interviewEvaluationRemark?: string
+  /** 참여자 심사 UI 재사용 시 상세에 전달할 원본 개인 신청 행 */
+  participantApplicant?: GeneralIndividualApplicantRow
 }
 
 const NAMES = [
