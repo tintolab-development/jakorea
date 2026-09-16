@@ -4,7 +4,6 @@
  */
 
 import type { ReactNode } from 'react'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
@@ -54,24 +53,6 @@ import {
   INSTITUTION_OTHER_NOTES_TABLE_LABEL,
 } from './institution-application-info-table'
 import './institution-basic-info.css'
-
-function maskInstitutionTeacherInfoLine(text: string): string {
-  return text
-    .replace(/(Tel\s*:\s*)([\d-]+)/gi, (_, prefix: string, num: string) => {
-      const cleaned = num.replace(/\s/g, '')
-      const masked = MASKING_POLICY.phone(cleaned)
-      return prefix + (masked || num)
-    })
-    .replace(/(^|\s|\|)(M\s*:\s*)([\d-]+)/g, (_, lead: string, prefix: string, num: string) => {
-      const cleaned = num.replace(/\s/g, '')
-      const masked = MASKING_POLICY.phone(cleaned)
-      return lead + prefix + (masked || num)
-    })
-    .replace(
-      /(E-mail\s*:\s*)(\S+)/gi,
-      (_, prefix: string, em: string) => prefix + MASKING_POLICY.email(em)
-    )
-}
 
 function maskSexOffenseCheckRequestLine(text: string): string {
   return text
@@ -148,13 +129,11 @@ function buildSexOffenseRequestCell(
 
 function buildTeacherInfoCell(
   institution: ApplicantSchoolRow,
-  detail: ApplicantInstitutionDetailExtend | undefined,
-  shouldMask: boolean
+  detail: ApplicantInstitutionDetailExtend | undefined
 ): ReactNode {
   const raw = detail?.teacherInfo?.trim()
   if (raw) {
-    const text = shouldMask ? maskInstitutionTeacherInfoLine(raw) : raw
-    const parts = text
+    const parts = raw
       .split(' | ')
       .map(s => s.trim())
       .filter(Boolean)
@@ -168,12 +147,9 @@ function buildTeacherInfoCell(
   const parts = [institution.teacherName, institution.contact].filter(Boolean) as string[]
   if (parts.length === 0) return '-'
   if (parts.length === 1) return parts[0]
-  const name = parts[0]!
-  const phone = parts[1]!
-  const phoneShown = shouldMask ? MASKING_POLICY.phone(phone.replace(/\s/g, '')) || phone : phone
   return (
     <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider([name, phoneShown])}
+      {withProgramDetailTdDivider(parts)}
     </ProgramDetailTdSegmentWrap>
   )
 }
@@ -289,7 +265,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
         }}
       />
     ) : (
-      buildTeacherInfoCell(institution, detail, shouldMask)
+      buildTeacherInfoCell(institution, detail)
     )
   const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
   const sessions = institution.sessions ?? []

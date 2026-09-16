@@ -3,7 +3,6 @@
  */
 
 import type { ReactNode } from 'react'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
@@ -46,24 +45,6 @@ import {
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-info-table'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info.css'
 
-function maskInstitutionTeacherInfoLine(text: string): string {
-  return text
-    .replace(/(Tel\s*:\s*)([\d-]+)/gi, (_, prefix: string, num: string) => {
-      const cleaned = num.replace(/\s/g, '')
-      const masked = MASKING_POLICY.phone(cleaned)
-      return prefix + (masked || num)
-    })
-    .replace(/(^|\s|\|)(M\s*:\s*)([\d-]+)/g, (_, lead: string, prefix: string, num: string) => {
-      const cleaned = num.replace(/\s/g, '')
-      const masked = MASKING_POLICY.phone(cleaned)
-      return lead + prefix + (masked || num)
-    })
-    .replace(
-      /(E-mail\s*:\s*)(\S+)/gi,
-      (_, prefix: string, em: string) => prefix + MASKING_POLICY.email(em)
-    )
-}
-
 export interface TrainedTeachersApplicantInstitutionBasicInfoProps {
   institution: ApplicantSchoolRow
   detail?: ApplicantInstitutionDetailExtend
@@ -87,13 +68,11 @@ export interface TrainedTeachersApplicantInstitutionBasicInfoProps {
 
 function buildTeacherInfoCell(
   institution: ApplicantSchoolRow,
-  detail: ApplicantInstitutionDetailExtend | undefined,
-  shouldMask: boolean
+  detail: ApplicantInstitutionDetailExtend | undefined
 ): ReactNode {
   const raw = detail?.teacherInfo?.trim()
   if (raw) {
-    const text = shouldMask ? maskInstitutionTeacherInfoLine(raw) : raw
-    const parts = text
+    const parts = raw
       .split(' | ')
       .map(s => s.trim())
       .filter(Boolean)
@@ -107,12 +86,9 @@ function buildTeacherInfoCell(
   const parts = [institution.teacherName, institution.contact].filter(Boolean) as string[]
   if (parts.length === 0) return '-'
   if (parts.length === 1) return parts[0]
-  const name = parts[0]!
-  const phone = parts[1]!
-  const phoneShown = shouldMask ? MASKING_POLICY.phone(phone.replace(/\s/g, '')) || phone : phone
   return (
     <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider([name, phoneShown])}
+      {withProgramDetailTdDivider(parts)}
     </ProgramDetailTdSegmentWrap>
   )
 }
@@ -120,7 +96,7 @@ function buildTeacherInfoCell(
 export function TrainedTeachersApplicantInstitutionBasicInfo({
   institution,
   detail,
-  maskSensitive = true,
+  maskSensitive: _maskSensitive = true,
   mode = 'view',
   draft,
   onDraftChange,
@@ -137,7 +113,6 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
   adminCommentError,
 }: TrainedTeachersApplicantInstitutionBasicInfoProps) {
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
-  const shouldMask = maskSensitive && institution.approvalStatus !== 'approved'
   const institutionApplicationBridge = program
     ? resolveInstitutionApplicationProgramBridge(program)
     : null
@@ -188,7 +163,7 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
         }}
       />
     ) : (
-      buildTeacherInfoCell(institution, detail, shouldMask)
+      buildTeacherInfoCell(institution, detail)
     )
 
   const textbookViewValue = detail?.textbookName?.trim() || '미정'

@@ -9,7 +9,6 @@
  */
 
 import type { ReactNode } from 'react'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
@@ -22,31 +21,6 @@ import {
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import './applicant-institution-basic-info.css'
-
-/** 담당 교사 정보 한 줄 — Tel / M / E-mail 구간만 마스킹 */
-function maskInstitutionTeacherInfoLine(text: string): string {
-  return text
-    .replace(/(Tel\s*:\s*)([\d-]+)/gi, (_, prefix: string, num: string) => {
-      const cleaned = num.replace(/\s/g, '')
-      const masked = MASKING_POLICY.phone(cleaned)
-      return prefix + (masked || num)
-    })
-    .replace(/(^|\s|\|)(M\s*:\s*)([\d-]+)/g, (_, lead: string, prefix: string, num: string) => {
-      const cleaned = num.replace(/\s/g, '')
-      const masked = MASKING_POLICY.phone(cleaned)
-      return lead + prefix + (masked || num)
-    })
-    .replace(
-      /(E-mail\s*:\s*)(\S+)/gi,
-      (_, prefix: string, em: string) => prefix + MASKING_POLICY.email(em)
-    )
-}
-
-/** detail 없을 때 `이름 | 연락처` 폴백 — 연락처만 전화 마스킹 */
-function maskInstitutionContactOnly(phone: string): string {
-  const cleaned = phone.replace(/\s/g, '')
-  return MASKING_POLICY.phone(cleaned) || phone
-}
 
 /** 성범죄 조회 요청 행: ID·검증번호 가림 */
 function maskSexOffenseCheckRequestLine(text: string): string {
@@ -158,13 +132,11 @@ function buildSexOffenseRequestCell(
 
 function buildTeacherInfoCell(
   institution: ApplicantSchoolRow,
-  detail: ApplicantInstitutionDetailExtend | undefined,
-  shouldMask: boolean
+  detail: ApplicantInstitutionDetailExtend | undefined
 ): ReactNode {
   const raw = detail?.teacherInfo?.trim()
   if (raw) {
-    const text = shouldMask ? maskInstitutionTeacherInfoLine(raw) : raw
-    const parts = text
+    const parts = raw
       .split(' | ')
       .map(s => s.trim())
       .filter(Boolean)
@@ -178,12 +150,9 @@ function buildTeacherInfoCell(
   const parts = [institution.teacherName, institution.contact].filter(Boolean) as string[]
   if (parts.length === 0) return '-'
   if (parts.length === 1) return parts[0]
-  const name = parts[0]!
-  const phone = parts[1]!
-  const phoneShown = shouldMask ? maskInstitutionContactOnly(phone) : phone
   return (
     <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider([name, phoneShown])}
+      {withProgramDetailTdDivider(parts)}
     </ProgramDetailTdSegmentWrap>
   )
 }
@@ -212,7 +181,7 @@ export function ApplicantInstitutionBasicInfo({
       '-'
     )
 
-  const teacherInfo = buildTeacherInfoCell(institution, detail, shouldMask)
+  const teacherInfo = buildTeacherInfoCell(institution, detail)
 
   const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
 

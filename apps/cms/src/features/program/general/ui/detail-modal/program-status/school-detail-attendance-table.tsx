@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
   STUDENT_GENDER_LABELS,
   type SchoolDetailAttendanceStudentRow,
@@ -12,13 +12,11 @@ import {
 export const SCHOOL_DETAIL_ATTENDANCE_TABLE_SCROLL_X = 1074
 
 function maskContact(contact?: string): string {
-  if (!contact) return '-'
-  return MASKING_POLICY.phone(contact) || contact
+  return displayServerPiiAsIs(contact)
 }
 
 function maskEmail(email?: string): string {
-  if (!email) return '-'
-  return MASKING_POLICY.email(email) || email
+  return displayServerPiiAsIs(email)
 }
 
 function AttendanceStatusRadios({

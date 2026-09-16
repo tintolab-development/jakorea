@@ -48,10 +48,9 @@ import {
   resolveWaitingInstructorFeeGradeLabel,
 } from '../../../lib/school-add-instructor-assign'
 import {
-  maskEmailLocalAfterTwoChars,
-  maskMobilePhoneMiddleStars,
-} from '../../../lib/teacher-contact-display-mask'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+  displayServerPiiAsIs,
+  PrivacyHomeAddressDisplay,
+} from '@/features/program/shared/lib/program-pii-display'
 import {
   INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_SELECT_UNAPPROVED_SINGLE_ONLY_ALERT_MESSAGE,
@@ -263,14 +262,6 @@ function buildCombinedClassViewValue(
       {withProgramDetailTdDivider(parts)}
     </ProgramDetailTdSegmentWrap>
   )
-}
-
-/** 자택 주소 컬럼 표시: 개인정보 마스킹 대신 앞 두 단위(공백 기준)까지만 노출 */
-function formatHomeAddressToSecondUnit(address?: string): string {
-  if (!address) return '-'
-  const parts = address.trim().split(/\s+/).filter(Boolean)
-  if (parts.length <= 2) return parts.join(' ')
-  return `${parts[0]} ${parts[1]}`
 }
 
 function formatAssignedInstructorScheduleExport(row: AssignedInstructorDisplayRow): string {
@@ -594,26 +585,10 @@ export function GeneralParticipatingInstitutionDetailView(
 
   /** 담당 교사 정보: 담당 교사 : 이름 | Tel : … | M : … | E-mail : … */
   const teacherDisplaySegments = [
-    mergedDetail.teacherName &&
-      `담당 교사 : ${
-        privacyMasked ? MASKING_POLICY.name(mergedDetail.teacherName) : mergedDetail.teacherName
-      }`,
-    mergedDetail.teacherPhone &&
-      `Tel : ${
-        privacyMasked ? MASKING_POLICY.phone(mergedDetail.teacherPhone) : mergedDetail.teacherPhone
-      }`,
-    mergedDetail.teacherMobile &&
-      `M : ${
-        privacyMasked
-          ? maskMobilePhoneMiddleStars(mergedDetail.teacherMobile)
-          : mergedDetail.teacherMobile
-      }`,
-    mergedDetail.teacherEmail &&
-      `E-mail : ${
-        privacyMasked
-          ? maskEmailLocalAfterTwoChars(mergedDetail.teacherEmail)
-          : mergedDetail.teacherEmail
-      }`,
+    mergedDetail.teacherName && `담당 교사 : ${mergedDetail.teacherName}`,
+    mergedDetail.teacherPhone && `Tel : ${displayServerPiiAsIs(mergedDetail.teacherPhone, mergedDetail.teacherPhone)}`,
+    mergedDetail.teacherMobile && `M : ${displayServerPiiAsIs(mergedDetail.teacherMobile, mergedDetail.teacherMobile)}`,
+    mergedDetail.teacherEmail && `E-mail : ${displayServerPiiAsIs(mergedDetail.teacherEmail, mergedDetail.teacherEmail)}`,
   ].filter((v): v is string => Boolean(v))
   const mealDisplay =
     mergedDetail.mealNotice === '가능'
@@ -1211,14 +1186,16 @@ export function GeneralParticipatingInstitutionDetailView(
         dataIndex: 'instructorName',
         key: 'instructorName',
         width: 100,
-        render: (v: string | undefined) => (v ? (privacyMasked ? MASKING_POLICY.name(v) : v) : '-'),
+        render: (v: string | undefined) => (v ? v : '-'),
       },
       {
         title: '자택 주소지',
         dataIndex: 'homeAddress',
         key: 'homeAddress',
         width: 160,
-        render: (v: string | undefined) => formatHomeAddressToSecondUnit(v),
+        render: (v: string | undefined) => (
+          <PrivacyHomeAddressDisplay address={v} revealed={!privacyMasked} />
+        ),
       },
       {
         title: '기관과의 거리',
@@ -1272,14 +1249,16 @@ export function GeneralParticipatingInstitutionDetailView(
         dataIndex: 'instructorName',
         key: 'instructorName',
         width: 100,
-        render: (v: string | undefined) => (v ? (privacyMasked ? MASKING_POLICY.name(v) : v) : '-'),
+        render: (v: string | undefined) => (v ? v : '-'),
       },
       {
         title: '자택 주소지',
         dataIndex: 'homeAddress',
         key: 'homeAddress',
         width: 160,
-        render: (v: string | undefined) => formatHomeAddressToSecondUnit(v),
+        render: (v: string | undefined) => (
+          <PrivacyHomeAddressDisplay address={v} revealed={!privacyMasked} />
+        ),
       },
       {
         title: '기관과의 거리',
@@ -1383,7 +1362,7 @@ export function GeneralParticipatingInstitutionDetailView(
         no: row.no,
         role: INSTRUCTOR_ROLE_LABELS[row.role],
         instructorName: row.instructorName,
-        homeAddress: formatHomeAddressToSecondUnit(row.homeAddress),
+        homeAddress: displayServerPiiAsIs(row.homeAddress),
         distanceToSchool: row.distanceToSchool ?? '-',
         assignedSchedule: formatAssignedInstructorScheduleExport(row),
         settlementStatus: getInstructorSettlementStatusLabel(row.settlementStatus),
@@ -1396,7 +1375,7 @@ export function GeneralParticipatingInstitutionDetailView(
       waitingRows.map(row => ({
         no: row.no,
         instructorName: row.instructorName,
-        homeAddress: formatHomeAddressToSecondUnit(row.homeAddress),
+        homeAddress: displayServerPiiAsIs(row.homeAddress),
         distanceToSchool: row.distanceToSchool ?? '-',
         hopeSchedule: formatWaitingInstructorHopeScheduleExport(row),
         assignmentStatus: WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[row.assignmentStatus],

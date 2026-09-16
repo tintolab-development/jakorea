@@ -3,7 +3,7 @@ import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer
 import { formatParticipatingSchoolSessionLine } from '@/features/program/general/lib/participating-school-session-display'
 import type { ActivityWithdrawScheduleOption } from '@/features/program/shared/lib/activity-withdraw-schedule'
 import type { GeneralVolunteerApplicationType } from '@/features/program/general/lib/volunteer-screening-constants'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 
 export type ParticipatingVolunteerDetailRow = ParticipatingVolunteerRow
 
@@ -16,8 +16,8 @@ export function mergeParticipatingVolunteerDetailRow(
     ...row,
     contactRaw,
     emailRaw,
-    contact: row.contact || MASKING_POLICY.phone(contactRaw.replace(/\s/g, '')) || contactRaw,
-    email: row.email || MASKING_POLICY.email(emailRaw) || emailRaw,
+    contact: row.contact || displayServerPiiAsIs(contactRaw, contactRaw),
+    email: row.email || displayServerPiiAsIs(emailRaw, emailRaw),
     gender: row.gender ?? '여성',
     birthDate: row.birthDate ?? '-',
     age: row.age ?? 0,
@@ -46,10 +46,8 @@ export function participatingVolunteerToApplicantView(
     id: volunteer.id,
     no: volunteer.no,
     name: volunteer.volunteerName,
-    contact: maskSensitive
-      ? MASKING_POLICY.phone(contactRaw.replace(/\s/g, '')) || volunteer.contact
-      : contactRaw,
-    email: maskSensitive ? MASKING_POLICY.email(emailRaw) || volunteer.email : emailRaw,
+    contact: maskSensitive ? displayServerPiiAsIs(volunteer.contact || contactRaw) : contactRaw,
+    email: maskSensitive ? displayServerPiiAsIs(volunteer.email || emailRaw) : emailRaw,
     contactRaw,
     emailRaw,
     id1365: volunteer.id1365,

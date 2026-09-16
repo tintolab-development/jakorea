@@ -62,14 +62,8 @@ function formatBirthDateAndAge(birthDate: string, age: number): string {
   return `${formatted} (만 ${age}세)`
 }
 
-function formatUniversityDisplay(universityName: string, maskSensitive: boolean): string {
-  if (!maskSensitive) return universityName
-  if (universityName.startsWith('**')) return universityName
-  if (universityName.includes('대학교')) {
-    const idx = universityName.indexOf('대학교')
-    return `**${universityName.slice(idx)}`
-  }
-  return `**${universityName}`
+function formatUniversityDisplay(universityName: string, _maskSensitive?: boolean): string {
+  return universityName
 }
 
 export function UjatEducationProgressVolunteerDetailBasicInfo({

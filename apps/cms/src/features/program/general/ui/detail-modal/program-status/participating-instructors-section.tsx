@@ -27,7 +27,6 @@ import { buildParticipatingInstructorCalendarEvents } from '@/features/program/g
 import { matchesInstructorJaExperienceYears } from '@/features/program/general/lib/instructor-application-filter-options'
 import {
   formatParticipatingInstructorAssignedInstitutions,
-  formatParticipatingInstructorHomeAddress,
   getParticipatingInstructorAssignedSchoolNames,
 } from '@/features/program/general/lib/participating-instructors-table-display'
 import { ActivityCertificateIssuancePreviewModal } from './activity-certificate-issuance-preview-modal'
@@ -37,7 +36,10 @@ import {
   MOCK_PARTICIPATING_INSTRUCTORS,
 } from '@/data/mock/participating-instructors'
 import type { Program } from '@/types/domain'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import {
+  displayServerPiiAsIs,
+  PrivacyHomeAddressDisplay,
+} from '@/features/program/shared/lib/program-pii-display'
 import {
   useParticipatingInstructorsParams,
   type ParticipatingInstructorsFilters,
@@ -437,17 +439,15 @@ export function ParticipatingInstructorsSection({
       filteredInstructors.map(row => ({
         no: row.no,
         instructorName: row.instructorName,
-        homeAddress: formatParticipatingInstructorHomeAddress(
-          row.address ? MASKING_POLICY.address(row.address) : row.region
-        ),
+        homeAddress: displayServerPiiAsIs(row.address ?? row.region),
         assignedInstitutions: formatParticipatingInstructorAssignedInstitutions(
           getParticipatingInstructorAssignedSchoolNames(row, schoolRows, instructorList)
         ),
         lectureExperienceYears:
           row.lectureExperienceYears != null ? `${row.lectureExperienceYears}년` : '-',
         jaEvaluationGrade: row.jaEvaluationGrade ?? '-',
-        contact: row.contact ? MASKING_POLICY.phone(row.contact) : '-',
-        email: row.email ? MASKING_POLICY.email(row.email) : '-',
+        contact: displayServerPiiAsIs(row.contact),
+        email: displayServerPiiAsIs(row.email),
         settlementStatus: getInstructorSettlementStatusLabel(row.settlementStatus),
       })),
     [filteredInstructors, instructorList]
@@ -497,12 +497,9 @@ export function ParticipatingInstructorsSection({
         key: 'homeAddress',
         width: 160,
         ellipsis: true,
-        render: (_: unknown, record: ParticipatingInstructorRow) => {
-          const raw = record.address ?? record.region
-          if (!raw) return '-'
-          const display = record.address ? MASKING_POLICY.address(raw) : raw
-          return formatParticipatingInstructorHomeAddress(display)
-        },
+        render: (_: unknown, record: ParticipatingInstructorRow) => (
+          <PrivacyHomeAddressDisplay address={record.address ?? record.region} revealed={false} />
+        ),
       },
       {
         title: '배정 기관명',
@@ -544,7 +541,7 @@ export function ParticipatingInstructorsSection({
         ellipsis: { showTitle: true },
         onHeaderCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
         onCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
-        render: (v: string | undefined) => (v ? MASKING_POLICY.phone(v) : '-'),
+        render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
       {
         title: '이메일',
@@ -555,7 +552,7 @@ export function ParticipatingInstructorsSection({
         ellipsis: { showTitle: true },
         onHeaderCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
         onCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
-        render: (v: string | undefined) => (v ? MASKING_POLICY.email(v) : '-'),
+        render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
       {
         title: '정산 현황',

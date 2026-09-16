@@ -1,5 +1,5 @@
 import type { ColumnsType } from 'antd/es/table'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
   SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS,
   STUDENT_GENDER_LABELS,
@@ -33,12 +33,12 @@ export const SCHOOL_DETAIL_ATTENDANCE_EXCEL_COLUMNS: ColumnsType<SchoolDetailAtt
 
 function maskContact(contact?: string): string {
   if (!contact) return ''
-  return MASKING_POLICY.phone(contact) || contact
+  return displayServerPiiAsIs(contact, '')
 }
 
 function maskEmail(email?: string): string {
   if (!email) return ''
-  return MASKING_POLICY.email(email) || email
+  return displayServerPiiAsIs(email, '')
 }
 
 export function buildSchoolDetailAttendanceSessionExcelRows(
