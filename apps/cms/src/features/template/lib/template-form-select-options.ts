@@ -38,7 +38,7 @@ export function withDetailedProgramNoneOption(
 
 export const TEMPLATE_FORM_PROGRAM_PROGRESS_OPTIONS: TemplateFormSelectOption[] = [
   { value: 'scheduled', label: '프로그램 진행 예정' },
-  { value: 'recruiting_students', label: '참여 기관 모집 중' },
+  { value: 'recruiting_students', label: '프로그램 진행 예정' },
   { value: 'in_progress', label: '프로그램 진행 중' },
   { value: 'completed', label: '프로그램 진행 완료' },
 ]
