@@ -6,9 +6,18 @@
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
 import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import type { GeneralVolunteerApplicationType } from '@/features/program/general/lib/volunteer-screening-constants'
+import {
+  GENERAL_INSTITUTION_MEMBER_ROSTER,
+  GENERAL_INSTITUTION_ORGANIZATION_ROSTER,
+  isGeneralInstitutionCaseProgramId,
+} from '@/features/program/general/lib/general-institution-case-roster'
 
 export interface ParticipatingVolunteerRow {
   id: string
+  /** BE 회원 ID — 참여 PK와 구분 */
+  memberId?: number
+  /** 프로그램 ID — 일반 기관 QA case 격리 */
+  programId?: string
   no: number
   volunteerName: string
   id1365: string
@@ -196,3 +205,33 @@ export const MOCK_PARTICIPATING_VOLUNTEERS: ParticipatingVolunteerRow[] = [
     essayJaExperience: DEMO_ESSAY_JA,
   },
 ]
+
+/** 일반 기관 기본 4유형 — 기존 171001 회원으로 진행 case를 프로그램별 격리 */
+export function getParticipatingVolunteersForProgram(
+  programId?: string
+): ParticipatingVolunteerRow[] {
+  if (!isGeneralInstitutionCaseProgramId(programId)) {
+    return MOCK_PARTICIPATING_VOLUNTEERS.map(row => ({ ...row }))
+  }
+  const member = GENERAL_INSTITUTION_MEMBER_ROSTER.individual
+  return MOCK_PARTICIPATING_VOLUNTEERS.map((row, index) => {
+    const organization =
+      GENERAL_INSTITUTION_ORGANIZATION_ROSTER[
+        index % GENERAL_INSTITUTION_ORGANIZATION_ROSTER.length
+      ]
+    return {
+      ...row,
+      id: `${programId}:volunteer-participant:${index + 1}`,
+      memberId: member.memberId,
+      programId,
+      volunteerName: member.name,
+      contact: member.contact,
+      contactRaw: member.contact,
+      email: member.email,
+      emailRaw: member.email,
+      assignedInstitutionNames: [organization.name],
+      adminComment: `${index + 1}번 참여 봉사자 QA case입니다.`,
+      essayJaExperience: row.essayJaExperience || 'JA Korea 신규 봉사자로 지원했습니다.',
+    }
+  })
+}

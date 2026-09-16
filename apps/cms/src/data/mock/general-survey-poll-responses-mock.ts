@@ -1,5 +1,10 @@
 import { DEFAULT_SURVEY_PARAGRAPH_IDS } from '@/features/template/model/writing-form-draft.schema'
 import type { SurveyPollRawResponse } from '@/features/program/shared/lib/survey-management/survey-management-types'
+import {
+  GENERAL_INSTITUTION_MEMBER_ROSTER,
+  GENERAL_INSTITUTION_ORGANIZATION_ROSTER,
+  isGeneralInstitutionCaseProgramId,
+} from '@/features/program/general/lib/general-institution-case-roster'
 
 const P = DEFAULT_SURVEY_PARAGRAPH_IDS
 
@@ -140,3 +145,34 @@ export const GENERAL_ORGANIZATION_SURVEY_RESPONSE_COUNT =
 
 export const GENERAL_INDIVIDUAL_SURVEY_RESPONSE_COUNT =
   GENERAL_INDIVIDUAL_SURVEY_RESPONSES_MOCK.length
+
+/** 일반 기관 기본 4유형 — 교사/학생 응답 case 각 1건, 기존 171xxx 회원만 사용 */
+export function getGeneralOrganizationSurveyResponsesForProgram(
+  programId: string
+): SurveyPollRawResponse[] {
+  if (!isGeneralInstitutionCaseProgramId(programId)) {
+    return GENERAL_ORGANIZATION_SURVEY_RESPONSES_MOCK.map(row => ({
+      ...row,
+      answers: { ...row.answers },
+    }))
+  }
+  const teacher = GENERAL_INSTITUTION_MEMBER_ROSTER.schoolTeacher
+  const individual = GENERAL_INSTITUTION_MEMBER_ROSTER.individual
+  const organization = GENERAL_INSTITUTION_ORGANIZATION_ROSTER[0]
+  return [
+    {
+      ...GENERAL_ORGANIZATION_SURVEY_RESPONSES_MOCK[0]!,
+      respondentId: String(teacher.memberId),
+      respondentName: teacher.name,
+      addressRegion: organization.region,
+      answers: { ...GENERAL_ORGANIZATION_SURVEY_RESPONSES_MOCK[0]!.answers },
+    },
+    {
+      ...GENERAL_ORGANIZATION_SURVEY_RESPONSES_MOCK[1]!,
+      respondentId: String(individual.memberId),
+      respondentName: individual.name,
+      addressRegion: organization.region,
+      answers: { ...GENERAL_ORGANIZATION_SURVEY_RESPONSES_MOCK[1]!.answers },
+    },
+  ]
+}

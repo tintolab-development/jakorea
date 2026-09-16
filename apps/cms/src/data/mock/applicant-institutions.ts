@@ -56,6 +56,10 @@ export interface ApplicantInstitutionDetailExtend {
 
 export interface ApplicantSchoolRow {
   id: string
+  /** BE 기관 ID — 신청 PK와 구분 */
+  organizationId?: number
+  /** BE 담당 교사 회원 ID */
+  teacherMemberId?: number
   no: number
   schoolName: string
   region: string

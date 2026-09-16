@@ -5,6 +5,10 @@
  */
 
 import type { ProgramRole } from '@/types/user'
+import {
+  GENERAL_INSTITUTION_MEMBER_ROSTER,
+  isGeneralInstitutionCaseProgramId,
+} from '@/features/program/general/lib/general-institution-case-roster'
 
 export interface ProgramManagerRow {
   id: string
@@ -222,6 +226,21 @@ function isUjatProgramManagerId(programId: string): boolean {
 
 /** programId에 맞는 담당자 목록 (행 단위 복사본 — 탭 state 오염 방지) */
 export function getMockProgramManagers(programId: string): ProgramManagerRow[] {
+  if (isGeneralInstitutionCaseProgramId(programId)) {
+    const admin = GENERAL_INSTITUTION_MEMBER_ROSTER.admin
+    const roles: ProgramRole[] = ['OWNER', 'PARTNER', 'ASSISTANT']
+    return roles.map((role, index) => ({
+      id: `${programId}:manager:${role}`,
+      no: roles.length - index,
+      adminId: admin.memberId,
+      name: admin.name,
+      role,
+      phone: admin.contact,
+      email: admin.email,
+      registeredAt: `2026.09.${String(10 + index).padStart(2, '0')} 09:00`,
+      removableYn: role !== 'OWNER',
+    }))
+  }
   if (isUjatProgramManagerId(programId)) {
     return MOCK_MANAGERS_UJAT.map(r => ({ ...r }))
   }

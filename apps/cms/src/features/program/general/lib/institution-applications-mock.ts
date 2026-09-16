@@ -5,6 +5,7 @@ import {
 } from '@/data/mock/applicant-institutions'
 import { getTrainedTeacherRemoteIdSnapshot } from '@/features/program/trained-teachers/api/service'
 import { TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/program/general/lib/registration-local-save'
+import { getGeneralInstitutionCaseApplicationRows } from '@/features/program/general/lib/general-institution-case-mocks'
 
 function isTrainedTeachersProgramId(programId: string): boolean {
   return (
@@ -31,6 +32,8 @@ export function getGeneralInstitutionApplicationsForProgram(
   if (isTrainedTeachersProgramId(programId)) {
     return getTrainedTeachersInstitutionApplicationsForProgram(programId)
   }
+  const caseRows = getGeneralInstitutionCaseApplicationRows(programId)
+  if (caseRows != null) return caseRows
   return getApplicantSchoolsByProgramId(programId).map(row => ({
     ...row,
     programId,

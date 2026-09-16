@@ -8,6 +8,11 @@ import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor
 import { INSTRUCTOR_SETTLEMENT_STATUS_LABELS } from '@/shared/constants/instructor-settlement-status'
 import type { SchoolTeacherEmploymentStatus, InstructorMemberProfile } from '@/types/user'
 import type { ParticipatingInstructorDetailSavePayload } from '@/features/program/general/lib/participating-instructor-detail-edit'
+import {
+  GENERAL_INSTITUTION_MEMBER_ROSTER,
+  GENERAL_INSTITUTION_ORGANIZATION_ROSTER,
+  isGeneralInstitutionCaseProgramId,
+} from '@/features/program/general/lib/general-institution-case-roster'
 
 /** @deprecated `InstructorSettlementUiStatus` 사용 — 하위 호환용 alias */
 export type SettlementStatusKey = InstructorSettlementUiStatus
@@ -567,6 +572,41 @@ function buildMockList(): ParticipatingInstructorRow[] {
 }
 
 export const MOCK_PARTICIPATING_INSTRUCTORS: ParticipatingInstructorRow[] = buildMockList()
+
+/** 일반 기관 기본 4유형 — 정산 상태 8종 각 1건, 기존 171xxx 회원만 배치 */
+export function getParticipatingInstructorsForProgram(
+  programId?: string
+): ParticipatingInstructorRow[] {
+  if (!isGeneralInstitutionCaseProgramId(programId)) {
+    return MOCK_PARTICIPATING_INSTRUCTORS.map(row => ({ ...row }))
+  }
+  const members = [
+    GENERAL_INSTITUTION_MEMBER_ROSTER.instructor,
+    GENERAL_INSTITUTION_MEMBER_ROSTER.dualInstructor,
+    GENERAL_INSTITUTION_MEMBER_ROSTER.revokedInstructor,
+  ]
+  return MOCK_PARTICIPATING_INSTRUCTORS.map((row, index) => {
+    const member = members[index % members.length]
+    const organization =
+      GENERAL_INSTITUTION_ORGANIZATION_ROSTER[
+        index % GENERAL_INSTITUTION_ORGANIZATION_ROSTER.length
+      ]
+    return {
+      ...row,
+      id: `${programId}:instructor-participant:${row.settlementStatus}`,
+      no: MOCK_PARTICIPATING_INSTRUCTORS.length - index,
+      memberId: String(member.memberId),
+      instructorName: member.name,
+      accountHolder: member.name,
+      contact: member.contact,
+      email: member.email,
+      schoolName: organization.name,
+      teacherName: GENERAL_INSTITUTION_MEMBER_ROSTER.schoolTeacher.name,
+      affiliation: organization.name,
+      adminComment: `${row.settlementStatus} 정산 상태 QA 확인용 참여 강사입니다.`,
+    }
+  })
+}
 
 const DEFAULT_PARTICIPATING_INSTRUCTOR_EDUCATION_SCHEDULES: ParticipatingInstructorEducationScheduleRow[] =
   [

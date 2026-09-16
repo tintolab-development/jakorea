@@ -2,7 +2,7 @@ import {
   GENERAL_INDIVIDUAL_SURVEY_RESPONSE_COUNT,
   GENERAL_INDIVIDUAL_SURVEY_RESPONSES_MOCK,
   GENERAL_ORGANIZATION_SURVEY_RESPONSE_COUNT,
-  GENERAL_ORGANIZATION_SURVEY_RESPONSES_MOCK,
+  getGeneralOrganizationSurveyResponsesForProgram,
 } from '@/data/mock/general-survey-poll-responses-mock'
 import type { Program } from '@/types/domain'
 import type {
@@ -15,6 +15,7 @@ import {
   isInstitutionTeacherOnlySatisfactionProgram,
   type GeneralSatisfactionAudienceKey,
 } from '@/features/program/general/lib/survey-audience'
+import { isGeneralInstitutionCaseProgramId } from '@/features/program/general/lib/general-institution-case-roster'
 
 export type GeneralSurveyMockState = {
   registeredSurveys: RegisteredSurvey[]
@@ -123,12 +124,22 @@ export function buildGeneralSurveyMockState(program: Program): GeneralSurveyMock
   const individual = isGeneralIndividualProgram(program)
   const responses = individual
     ? GENERAL_INDIVIDUAL_SURVEY_RESPONSES_MOCK
-    : GENERAL_ORGANIZATION_SURVEY_RESPONSES_MOCK
+    : getGeneralOrganizationSurveyResponsesForProgram(program.id)
   const responseCount = individual
     ? GENERAL_INDIVIDUAL_SURVEY_RESPONSE_COUNT
-    : GENERAL_ORGANIZATION_SURVEY_RESPONSE_COUNT
-  const participantTotal = individual ? 12 : 36
-  const prefix = individual ? 'general-individual' : 'general-organization'
+    : isGeneralInstitutionCaseProgramId(program.id)
+      ? responses.length
+      : GENERAL_ORGANIZATION_SURVEY_RESPONSE_COUNT
+  const participantTotal = individual
+    ? 12
+    : isGeneralInstitutionCaseProgramId(program.id)
+      ? 4
+      : 36
+  const prefix = individual
+    ? 'general-individual'
+    : isGeneralInstitutionCaseProgramId(program.id)
+      ? program.id
+      : 'general-organization'
 
   const registeredSurveyBeforeStart = buildSurvey(
     `${prefix}-survey-before-start`,
@@ -147,9 +158,19 @@ export function buildGeneralSurveyMockState(program: Program): GeneralSurveyMock
     responseCount,
     participantTotal
   )
+  const registeredSurveyFinished = buildSurvey(
+    `${prefix}-survey-finished`,
+    '기관 참여 설문조사 (완료)',
+    'survey-student',
+    'finished',
+    participantTotal,
+    participantTotal
+  )
 
   return {
-    registeredSurveys: [registeredSurveyBeforeStart, registeredSurvey],
+    registeredSurveys: isGeneralInstitutionCaseProgramId(program.id)
+      ? [registeredSurveyBeforeStart, registeredSurvey, registeredSurveyFinished]
+      : [registeredSurveyBeforeStart, registeredSurvey],
     activeRegisteredSurveyId: registeredSurveyBeforeStart.id,
     satisfactionSurveysByAudience: buildSatisfactionSurveysByAudience(
       program,

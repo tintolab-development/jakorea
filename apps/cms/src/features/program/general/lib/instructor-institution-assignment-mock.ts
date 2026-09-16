@@ -12,6 +12,7 @@ import {
   buildParticipatingSchoolPreferredScheduleLines,
   buildParticipatingSchoolSessionLines,
 } from './participating-school-session-display'
+import { isGeneralInstitutionCaseProgramId } from './general-institution-case-roster'
 
 const MOCK_REQUIRED_INSTRUCTOR_SLOTS = 4
 
@@ -139,7 +140,9 @@ export function buildInitialAssignedSchoolRows(
   const sortedRest = [...rest].sort(
     (a, b) => hash(a.id + instructor.id) - hash(b.id + instructor.id)
   )
-  const pickedSchools = [primary, ...sortedRest.slice(0, 2)]
+  const pickedSchools = isGeneralInstitutionCaseProgramId(primary.programId)
+    ? [primary]
+    : [primary, ...sortedRest.slice(0, 2)]
 
   return pickedSchools.map((school, idx) => {
     const rowSeed = hash(school.id + instructor.id)
@@ -181,7 +184,9 @@ export function buildWaitingSchoolRows(
         region: school.region,
         distanceFromHome: pick(WAITING_DISTANCES, rowSeed + idx),
         educationScheduleLines: scheduleLinesForSchool(school, rowSeed, idx),
-        assignmentStatus: pick([...WAITING_ASSIGNMENT_STATUSES], rowSeed + idx),
+        assignmentStatus: isGeneralInstitutionCaseProgramId(school.programId)
+          ? (['waiting', 'cancelled', 'assigned'] as const)[idx % 3]
+          : pick([...WAITING_ASSIGNMENT_STATUSES], rowSeed + idx),
         assignedInstructorCountLabel: instructorCountLabel(school.schoolName, instructorList),
       }
     })

@@ -12,6 +12,7 @@ import {
   cloneAttendanceStudentRows,
   resolveSchoolDetailAttendanceSessionLeadLabel,
 } from './school-detail-attendance-display'
+import { isGeneralInstitutionCaseProgramId } from './general-institution-case-roster'
 
 function hash(s: string): number {
   let h = 0
@@ -69,13 +70,17 @@ function resolveAttendanceSessions(row: ParticipatingSchoolRow): ParticipatingSc
 }
 
 function buildSessionStudents(
-  schoolId: string,
+  row: ParticipatingSchoolRow,
   sessionId: string,
   studentCount: number
 ): SchoolDetailAttendanceStudentRow[] {
+  const schoolId = row.id
   const baseStudents = getSchoolDetailStudents(schoolId, studentCount)
-  const total = baseStudents.length
-  return baseStudents.map((student, index) => {
+  const students = isGeneralInstitutionCaseProgramId(row.programId)
+    ? baseStudents.slice(0, 3)
+    : baseStudents
+  const total = students.length
+  return students.map((student, index) => {
     const saved = attendanceStatusStore[schoolId]?.[sessionId]?.[student.id]
     return {
       id: student.id,
@@ -86,19 +91,23 @@ function buildSessionStudents(
       gradeClass: student.gradeClass,
       contact: student.contact,
       email: student.email,
-      status: saved ?? initialAttendanceStatus(student.id, sessionId),
+      status:
+        saved ??
+        (isGeneralInstitutionCaseProgramId(row.programId)
+          ? (['present', 'absent', 'late'] as const)[index]
+          : initialAttendanceStatus(student.id, sessionId)),
     }
   })
 }
 
 function toSessionGroup(
-  schoolId: string,
+  row: ParticipatingSchoolRow,
   session: ParticipatingSchoolSession,
-  studentCount: number,
   program: Program
 ): SchoolDetailAttendanceSessionGroup {
+  const schoolId = row.id
   const id = `${schoolId}-round-${session.round}`
-  const students = buildSessionStudents(schoolId, id, studentCount)
+  const students = buildSessionStudents(row, id, row.studentCount)
   const sessionLeadLabel = resolveSchoolDetailAttendanceSessionLeadLabel(program, session.round)
   const header = buildAttendanceSessionHeaderParts(session, sessionLeadLabel)
   return {
@@ -119,7 +128,7 @@ export function getSchoolDetailAttendanceSessions(
   program: Program
 ): SchoolDetailAttendanceSessionGroup[] {
   return resolveAttendanceSessions(row).map(session =>
-    toSessionGroup(row.id, session, row.studentCount, program)
+    toSessionGroup(row, session, program)
   )
 }
 
