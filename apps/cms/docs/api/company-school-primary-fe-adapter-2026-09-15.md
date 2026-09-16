@@ -12,8 +12,7 @@ BE 핸드오프: JABACK `docs/frontend/company-school-primary-seed-handoff-2026-
 - 기관 신청: `GET …/requested-schedules` → `sessions` / 희망일정 표시
 - 강사 신청: `distanceKm` / `longDistance`(API) 우선, threshold 100km(시드 컬럼)
 - 1일1교: `instructor-assignments` + `programs/{id}/schedules`로 점유일·배정 보드 (mock 제거)
-- 배정 create: `POST …/instructor-assignments` (희망일↔schedule 매핑 없으면 BE 요청 문서 참고)
-- **BE 요청:** [company-school-instructor-assignment-api-backend-request-2026-09-15.md](./company-school-instructor-assignment-api-backend-request-2026-09-15.md)
+- 배정 create: `POST …/instructor-assignments` (`requestedScheduleId` / `resolvedScheduleId` 매핑)
 
 ## 화면별 확인 API
 

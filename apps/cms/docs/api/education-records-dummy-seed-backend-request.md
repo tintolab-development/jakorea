@@ -13,7 +13,6 @@ CMS **LNB `실적 관리`** 목록·합계 탭을 FE mock 30건과 동일하게 
 | **FE SSOT** | [`programs.ts`](../../src/data/mock/programs.ts) `educationRecords` (30건, 실제 교육실적 샘플) |
 | **BE 복붙 페이로드** | [`education-records-seed.payload.json`](./education-records-seed.payload.json) — CASE-01~30 |
 | **insert 배열만** | [`education-records-seed.db-rows.json`](./education-records-seed.db-rows.json) |
-| **슬랙/메일 복붙본** | [`education-records-dummy-seed-backend-copy.md`](./education-records-dummy-seed-backend-copy.md) |
 | **백엔드 Cursor 프롬프트** | [`education-records-dummy-seed-backend-cursor-prompt.md`](./education-records-dummy-seed-backend-cursor-prompt.md) — 지시 + 30건 JSON 한 파일 |
 
 > **금지:** Gemini 실적 관리(`/programs/gemini/performance`, `training-reports`)와 **혼용하지 마세요.**  

@@ -8,7 +8,7 @@
 | **title (고정)** | `[개인] 커리큘럼형 복수회차 테스트 프로그램` |
 | **BE 구현** | `LocalDemoGeneralPrimaryCaseSeedContributor` + `GeneralPrimaryCase6NestedSeedWriter` |
 | **BE handoff** | `JABACK/docs/frontend/general-primary-168006-nested-seed-handoff-2026-09.md` |
-| **관련** | [개인 심사 API](./general-individual-application-screening-api-backend-request-2026-09-15.md) · [Primary FE 어댑터](./general-primary-case-fe-adapter-2026-09-15.md) · [하위 시드 일반론](./be-handoff-program-dummy-seeds/05-nested-child-data-dummy-seed.md) |
+| **관련** | [개인 면접 가능 일정](./general-primary-168006-individual-interview-availability-backend-request-2026-09-16.md) · [강사 신청 API 계약](./general-primary-168006-instructor-applications-backend-contract-2026-09-16.md) · [Primary FE 어댑터](./general-primary-case-fe-adapter-2026-09-15.md) · [하위 시드 일반론](./be-handoff-program-dummy-seeds/05-nested-child-data-dummy-seed.md) |
 
 **목적:** `168006` 하위 LNB·탭이 비지 않도록 nested 시드를 두고 CMS QA한다.
 
