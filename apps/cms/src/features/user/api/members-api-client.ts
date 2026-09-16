@@ -12,13 +12,14 @@ import {
 } from '@/features/user/api/map-member-comments'
 import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
 import { customInstance } from '@/shared/api/orval-mutator'
+import type { SchoolMemberDetailResponse } from '@/shared/api/generated/members/schemas/schoolMemberDetailResponse'
+import type { AdminPreRegisterSchoolRequest } from '@/shared/api/generated/members/schemas/adminPreRegisterSchoolRequest'
 import type {
   AdminAccountCreateRequest,
   AdminAccountResponse,
   AdminAccountVerificationRequest,
   AdminPreRegisterIndividualRequest,
   AdminPreRegisterInstructorRequest,
-  AdminPreRegisterSchoolRequest,
   AdminPrivacyUnmaskRequest,
   FilledDocumentResponse,
   AdminRoleChangeRequest,
@@ -41,7 +42,6 @@ import type {
   PageResponseInstructorRoleRequestListItemResponse,
   PageResponseSchoolOrganizationListItemResponse,
   SchoolAffiliatedTeacherResponse,
-  SchoolMemberDetailResponse,
   SchoolOrganizationListItemResponse,
   SchoolOrganizationUpsertRequest,
   TeacherMemberDetailResponse,
@@ -65,7 +65,7 @@ import type {
 } from '@/features/user/api/school-organization-program-enrollment-history.types'
 import type { ListMemberProgramHistoryParams } from '@/shared/api/generated/members/schemas/listMemberProgramHistoryParams'
 import type { ListMemberAdminProgramsParams } from '@/shared/api/generated/members/schemas/listMemberAdminProgramsParams'
-import type { ListProgramRoles1Params } from '@/shared/api/generated/members/schemas/listProgramRoles1Params'
+import type { ListProgramRolesParams } from '@/shared/api/generated/members/schemas/listProgramRolesParams'
 import type { PageResponseAdminProgramAssignmentResponse } from '@/shared/api/generated/members/schemas/pageResponseAdminProgramAssignmentResponse'
 import type { PageResponseMemberApplicationHistoryResponse } from '@/shared/api/generated/members/schemas/pageResponseMemberApplicationHistoryResponse'
 import type { PageResponseMemberProgramHistoryResponse } from '@/shared/api/generated/members/schemas/pageResponseMemberProgramHistoryResponse'
@@ -183,7 +183,13 @@ export async function updateTeacherEmploymentStatusRemote(
 export async function fetchMemberDetailRemote(memberId: number): Promise<MemberDetailResponse> {
   const loaders: Array<() => Promise<{ member?: MemberDetailResponse }>> = [
     async () => unwrapApiBody(await membersApi.getIndividualMemberDetail(memberId)),
-    async () => unwrapApiBody(await membersApi.getSchoolMemberDetail(memberId)),
+    async () =>
+      unwrapApiBody(
+        await customInstance<SchoolMemberDetailResponse>({
+          url: `/api/admin/users/${memberId}/school`,
+          method: 'GET',
+        })
+      ),
     async () => unwrapApiBody(await membersApi.getInstructorMemberDetail(memberId)),
   ]
 
@@ -211,7 +217,13 @@ export async function fetchIndividualMemberDetailRemote(
 export async function fetchSchoolMemberDetailRemote(
   memberId: number
 ): Promise<SchoolMemberDetailResponse> {
-  return unwrapApiBody(await membersApi.getSchoolMemberDetail(memberId))
+  // OpenAPI members subset removed deprecated school-member detail; keep runtime path.
+  return unwrapApiBody(
+    await customInstance<SchoolMemberDetailResponse>({
+      url: `/api/admin/users/${memberId}/school`,
+      method: 'GET',
+    })
+  )
 }
 
 export async function fetchInstructorMemberDetailRemote(
@@ -355,15 +367,19 @@ export async function deleteMemberAdminProgramRemote(
   memberId: number,
   programId: number
 ): Promise<void> {
-  await membersApi.deleteAdminProgram(memberId, programId)
+  // OpenAPI members subset removed legacy member admin-programs DELETE; keep runtime path.
+  await customInstance({
+    url: `/api/admin/users/${memberId}/admin-programs/${programId}`,
+    method: 'DELETE',
+  })
 }
 
-/** Swagger `listProgramRoles_1` — GET admin-accounts/{adminAccountId}/program-roles */
+/** Swagger `listProgramRoles` — GET admin-accounts/{adminAccountId}/program-roles */
 export async function fetchAdminAccountProgramRolesRemote(
   adminAccountId: number,
-  params?: ListProgramRoles1Params
+  params?: ListProgramRolesParams
 ): Promise<PageResponseAdminProgramAssignmentResponse> {
-  return unwrapApiBody(await membersApi.listProgramRoles1(adminAccountId, params))
+  return unwrapApiBody(await membersApi.listProgramRoles(adminAccountId, params))
 }
 
 /** Swagger `deleteProgramRole` — DELETE admin-accounts/{adminAccountId}/program-roles/{programId} */
@@ -468,7 +484,14 @@ export async function fetchMemberAdminProgramsRemote(
   memberId: number,
   params?: ListMemberAdminProgramsParams
 ): Promise<PageResponseMemberAdminProgramResponse> {
-  return unwrapApiBody(await membersApi.listMemberAdminPrograms(memberId, params))
+  // OpenAPI members subset removed legacy member admin-programs GET; keep runtime path.
+  return unwrapApiBody(
+    await customInstance<PageResponseMemberAdminProgramResponse>({
+      url: `/api/admin/users/${memberId}/admin-programs`,
+      method: 'GET',
+      params,
+    })
+  )
 }
 
 export async function fetchMemberInstructorProfileRemote(
@@ -578,7 +601,15 @@ export async function preRegisterIndividualRemote(
 export async function preRegisterSchoolRemote(
   body: AdminPreRegisterSchoolRequest
 ): Promise<MemberWorkflowResponse> {
-  return unwrapApiBody(await membersApi.preRegisterSchool(body))
+  // OpenAPI members subset removed deprecated pre-register/school; keep runtime path.
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/users/pre-register/school`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
+  )
 }
 
 export async function preRegisterInstructorRemote(

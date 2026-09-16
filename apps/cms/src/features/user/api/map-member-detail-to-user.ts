@@ -4,7 +4,7 @@ import type { InstructorMemberDetailResponse } from '@/shared/api/generated/memb
 import type { TeacherMemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type { MemberBankAccountHistoryResponse } from '@/shared/api/generated/members/schemas/memberBankAccountHistoryResponse'
 import type { MemberDetailResponse } from '@/shared/api/generated/members/schemas'
-import type { SchoolMemberDetailResponse } from '@/shared/api/generated/members/schemas'
+import type { SchoolMemberDetailResponse } from '@/shared/api/generated/members/schemas/schoolMemberDetailResponse'
 import type { TermsAgreementRow } from '@/shared/api/generated/members/schemas/termsAgreementRow'
 import type { User, UserListRowMetrics } from '@/types/user'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
