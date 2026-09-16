@@ -7,7 +7,7 @@ import {
   getUjatInstitutionApplicationMockRows,
   getUjatInstitutionApplicationRowById,
   patchUjatInstitutionApplicationRows,
-} from '@/data/mock/ujat-institution-application-mock'
+} from '@/features/program/ujat/model/ujat-institution-application'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import type { UjatInstitutionTempAssignmentStatus } from '../list/types'

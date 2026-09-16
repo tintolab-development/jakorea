@@ -1,4 +1,4 @@
-import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
+import { getUjatInstitutionApplicationMockRows } from '@/features/program/ujat/model/ujat-institution-application'
 import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
 import type {
   UjatInstitutionApplicationRegionKey,

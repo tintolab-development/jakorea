@@ -3,7 +3,7 @@ import {
   STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import {
   UJAT_MANAGER_EVALUATION_ORDER,
   type UjatManagerEvaluation,

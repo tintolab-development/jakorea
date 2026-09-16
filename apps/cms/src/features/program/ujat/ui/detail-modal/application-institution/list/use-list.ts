@@ -2,10 +2,10 @@ import { useCallback, useMemo, useState, type Key } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useCmsAlert } from '@/shared/ui'
 import {
-  getUjatInstitutionApplicationMockRows,
   patchUjatInstitutionApplicationRows,
   UJAT_INSTITUTION_MAX_CLASSES_PER_DAY,
-} from '@/data/mock/ujat-institution-application-mock'
+} from '@/features/program/ujat/model/ujat-institution-application'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_ALL } from './filter-fields'
 import {
   type UjatInstitutionApplicationFilters,
@@ -66,6 +66,14 @@ export function useUjatInstitutionApplicationList(
   regionKey: UjatInstitutionApplicationRegionKey,
   programId?: string | null
 ) {
+  const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
+
+  useNotifyProgramApiUnavailableOnce(
+    !remoteEnabled,
+    'ujat-application-institution',
+    'UJAT 학교 신청'
+  )
+
   const { showAlert } = useCmsAlert()
   const [dataVersion, setDataVersion] = useState(0)
   const [pendingFilters, setPendingFilters] = useState<UjatInstitutionApplicationFilters>(
@@ -77,8 +85,6 @@ export function useUjatInstitutionApplicationList(
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
   const [pendingApplicationRejectModal, setPendingApplicationRejectModal] = useState(false)
-
-  const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
 
   const remoteQuery = useQuery({
     queryKey: [...ujatQueryKeys.all, 'organization-applications', programId ?? ''] as const,
@@ -99,7 +105,7 @@ export function useUjatInstitutionApplicationList(
   const allRows = useMemo(() => {
     if (remoteEnabled) return remoteQuery.data ?? []
     void dataVersion
-    return getUjatInstitutionApplicationMockRows()
+    return []
   }, [dataVersion, remoteEnabled, remoteQuery.data])
 
   const tableData = useMemo(

@@ -46,7 +46,7 @@ import {
 } from './progress/volunteers/detail/detail-mock'
 import { UjatInstitutionScheduleConfirmDetailPage } from './application-institution/schedule-confirm/detail-page'
 import type { Program } from '@/types/domain'
-import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
+import { getUjatInstitutionApplicationMockRows } from '@/features/program/ujat/model/ujat-institution-application'
 import {
   isUjatVolunteerApplicantDetailTab,
   parseUjatDetailLnb,
@@ -132,7 +132,7 @@ import type { WritingFormDraft } from '@/features/template/model/writing-form-dr
 import {
   UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT,
   UJAT_SURVEY_POLL_RESPONSES_MOCK,
-} from '@/data/mock/ujat-survey-poll-responses-mock'
+} from '@/features/program/ujat/model/ujat-survey-poll'
 import { useClipboard } from '@/features/template/hooks/use-clipboard'
 import {
   defaultSatisfactionAudienceForSurveyTab,
@@ -157,7 +157,7 @@ import {
   UJAT_LECTURE_EVAL_DOWNLOAD_MODAL_COPY,
   UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY,
 } from './survey-management/lib/ujat-survey-copy'
-import type { UjatSurveyPollRawResponse } from '@/data/mock/ujat-survey-poll-responses-mock'
+import type { UjatSurveyPollRawResponse } from '@/features/program/ujat/model/ujat-survey-poll'
 import {
   buildLectureEvalFormDraft,
   canEditLectureEvalResponse,
@@ -320,7 +320,8 @@ function normalizeUjatDetailParams(
 
   const instAppIdRaw = searchParams.get(UJAT_INST_APP_ID_PARAM)
   if (instAppIdRaw) {
-    if (!validInstAppIds.has(instAppIdRaw)) {
+    const restrictToKnownIds = validInstAppIds.size > 0
+    if (restrictToKnownIds && !validInstAppIds.has(instAppIdRaw)) {
       next.delete(UJAT_INST_APP_ID_PARAM)
     } else {
       lnb = 'institution_applications'
@@ -374,7 +375,7 @@ function normalizeUjatDetailParams(
 
   if (next.get(LNB_PARAM) !== lnb) next.set(LNB_PARAM, lnb)
   if (next.get(TAB_PARAM) !== tab) next.set(TAB_PARAM, tab)
-  if (instAppIdRaw && validInstAppIds.has(instAppIdRaw)) {
+  if (instAppIdRaw && (validInstAppIds.size === 0 || validInstAppIds.has(instAppIdRaw))) {
     next.set(UJAT_INST_APP_ID_PARAM, instAppIdRaw)
   }
 
@@ -687,7 +688,8 @@ export function UjatProgramDetailFullPageModal({
 
   const institutionApplicationId = open ? searchParams.get(UJAT_INST_APP_ID_PARAM) : null
   const institutionDetailId =
-    institutionApplicationId && validInstAppIds.has(institutionApplicationId)
+    institutionApplicationId &&
+    (validInstAppIds.size === 0 || validInstAppIds.has(institutionApplicationId))
       ? institutionApplicationId
       : null
 

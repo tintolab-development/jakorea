@@ -5,7 +5,7 @@ import {
   getUjatInstitutionApplicationRowById,
   getUjatInstitutionScheduleConfirmStatus,
   patchUjatInstitutionScheduleConfirmStatus,
-} from '@/data/mock/ujat-institution-application-mock'
+} from '@/features/program/ujat/model/ujat-institution-application'
 import { shouldShowScheduleConfirmGuidanceNotes } from './types'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'

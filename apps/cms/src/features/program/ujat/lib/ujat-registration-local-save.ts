@@ -1,6 +1,6 @@
 /**
  * UJAT 프로그램 등록 폼 — API 연동 전 임시 저장 (localStorage).
- * 저장 시 목록/상세에서 `programService` 병합 조회로 노출된다.
+ * 등록 에디터 재개용이며 관리 목록 카탈로그에 합치지 않는다.
  */
 
 import dayjs from 'dayjs'
@@ -33,7 +33,7 @@ function resolveDefaultSponsorId(): string {
   const ja = mockSponsors.find(
     s => s.name.includes('JA Korea') || s.name.includes('고유목적') || s.name.includes('JA')
   )
-  return ja?.id ?? mockSponsors[0].id
+  return ja?.id ?? mockSponsors[0]?.id ?? ''
 }
 
 function overlayString(overlay: Record<string, unknown>, key: string): string | undefined {

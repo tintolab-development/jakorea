@@ -1,4 +1,4 @@
-import type { TextbookStatusKey } from '@/data/mock/participating-schools'
+import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import type { UjatInstitutionApplicationGradeBlockDetail } from '../../../application-institution/detail/detail-types'
 
 /** UJAT 초등 프로그램 학년별 교재명(mock) */

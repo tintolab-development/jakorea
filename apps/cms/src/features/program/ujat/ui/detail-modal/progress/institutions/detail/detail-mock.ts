@@ -1,7 +1,7 @@
 import {
   getUjatInstitutionApplicationDetail,
   getUjatInstitutionApplicationRowById,
-} from '@/data/mock/ujat-institution-application-mock'
+} from '@/features/program/ujat/model/ujat-institution-application'
 import { formatUjatInstitutionFridayDisplay } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import { formatGradeClassSectionLabel } from '@/features/program/ujat/ui/detail-modal/application-institution/list/grade-class-sections'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'

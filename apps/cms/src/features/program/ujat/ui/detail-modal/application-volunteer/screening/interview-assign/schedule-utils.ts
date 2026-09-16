@@ -1,7 +1,7 @@
 import dayjs, { type Dayjs } from 'dayjs'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
-import { getUjatVolunteerInterviewScheduleMock } from '@/data/mock/ujat-volunteer-interview-schedule'
-import { GENERAL_INTERVIEW_MOCK_RANGE } from '@/data/mock/general-volunteer-interview-schedule-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import { getUjatVolunteerInterviewScheduleMock } from '@/features/program/ujat/model/ujat-volunteer-interview-schedule'
+import { GENERAL_INTERVIEW_MOCK_RANGE } from '@/features/program/general/model/volunteer-interview-schedule'
 import { parseUjatInterviewDateLabel } from '../shared/interview-calendar-events'
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const

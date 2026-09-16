@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import {
-  getUjatVolunteerInterview2Applicants,
   patchUjatVolunteerInterviewEvaluation,
   patchUjatVolunteerSecondInterviewScreeningStatus,
   type UjatVolunteerApplicantRow,
   type UjatVolunteerInterviewEvaluationPayload,
-} from '@/data/mock/ujat-volunteer-applicants-mock'
+} from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { listUjatVolunteerInterview2Applications } from '@/features/program/ujat/api/applications-service'
 import type {
   UjatSecondInterviewScreeningStatus,
@@ -97,10 +97,14 @@ export function useUjatVolunteerInterview2({
   programId: string
   half: UjatVolunteerRecruitHalf
 }) {
-  const { showAlert } = useCmsAlert()
-  const [list, setList] = useState<UjatVolunteerApplicantRow[]>(() =>
-    getUjatVolunteerInterview2Applicants(programId, half)
+  useNotifyProgramApiUnavailableOnce(
+    true,
+    'ujat-application-volunteer-interview2',
+    'UJAT 봉사자 신청 · 2차 면접 심사'
   )
+
+  const { showAlert } = useCmsAlert()
+  const [list, setList] = useState<UjatVolunteerApplicantRow[]>(() => [])
   const [pendingFilters, setPendingFilters] = useState<UjatVolunteerInterview2Filters>(() => ({
     ...DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS,
   }))

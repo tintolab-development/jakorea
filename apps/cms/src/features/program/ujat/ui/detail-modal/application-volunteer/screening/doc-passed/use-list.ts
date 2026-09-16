@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  getUjatVolunteerDocPassedApplicants,
   sortUjatVolunteerDocPassedApplicants,
   type UjatVolunteerApplicantRow,
-} from '@/data/mock/ujat-volunteer-applicants-mock'
+} from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { listUjatVolunteerDocPassedApplications } from '@/features/program/ujat/api/applications-service'
 import type {
   UjatManagerEvaluation,
@@ -72,10 +72,14 @@ export function useUjatVolunteerDocPassed({
   programId: string
   half: UjatVolunteerRecruitHalf
 }) {
-  const { showAlert } = useCmsAlert()
-  const [list, setList] = useState<UjatVolunteerApplicantRow[]>(() =>
-    getUjatVolunteerDocPassedApplicants(programId, half)
+  useNotifyProgramApiUnavailableOnce(
+    true,
+    'ujat-application-volunteer-doc-passed',
+    'UJAT 봉사자 신청 · 1차 합격자'
   )
+
+  const { showAlert } = useCmsAlert()
+  const [list, setList] = useState<UjatVolunteerApplicantRow[]>(() => [])
   const [pendingFilters, setPendingFilters] = useState<UjatVolunteerDocPassedFilters>(() => ({
     ...DEFAULT_UJAT_VOLUNTEER_DOC_PASSED_FILTERS,
   }))

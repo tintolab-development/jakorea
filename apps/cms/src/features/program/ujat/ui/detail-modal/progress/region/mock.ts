@@ -7,8 +7,6 @@ import type {
   RegionAssignmentVolunteerRow,
 } from './types'
 
-export { buildInitialRegionAssignmentTableData } from './mock-data'
-
 function formatRegionDirectAssignClassOptionLabel(
   dateLabel: string,
   classLabel: string,

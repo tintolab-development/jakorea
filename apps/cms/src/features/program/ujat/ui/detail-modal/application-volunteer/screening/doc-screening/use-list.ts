@@ -3,11 +3,11 @@ import type { FilterTableExcelExportConfig } from '@/shared/components/filter-ta
 import type { UjatDocumentScreeningConfirmRequest } from './document-actions'
 import type { ColumnsType } from 'antd/es/table'
 import {
-  getUjatVolunteerApplicants,
   sortUjatVolunteerApplicants,
   formatUjatVolunteerApplicationType,
   type UjatVolunteerApplicantRow,
-} from '@/data/mock/ujat-volunteer-applicants-mock'
+} from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { listUjatVolunteerApplications } from '@/features/program/ujat/api/applications-service'
 import {
   UJAT_DOCUMENT_SCREENING_STATUS_LABELS,
@@ -145,11 +145,15 @@ export function useUjatVolunteerDocScreening({
   programId: string
   half: UjatVolunteerRecruitHalf
 }) {
+  useNotifyProgramApiUnavailableOnce(
+    true,
+    'ujat-application-volunteer-doc-screening',
+    'UJAT 봉사자 신청 · 1차 서류 심사'
+  )
+
   const [documentScreeningConfirm, setDocumentScreeningConfirm] =
     useState<UjatDocumentScreeningConfirmRequest | null>(null)
-  const [list, setList] = useState<UjatVolunteerApplicantRow[]>(() =>
-    sortUjatVolunteerApplicants(getUjatVolunteerApplicants(programId, half))
-  )
+  const [list, setList] = useState<UjatVolunteerApplicantRow[]>(() => [])
   const [pendingFilters, setPendingFilters] = useState<UjatVolunteerDocScreeningFilters>(() => ({
     ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS,
   }))

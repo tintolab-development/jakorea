@@ -10,7 +10,7 @@ import {
   buildEmptyScheduleSlots,
   sumGradeClassCounts,
 } from '@/features/program/ujat/ui/detail-modal/application-institution/list/types'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { projectUjatVolunteerApplicationStatus } from '@/features/program/ujat/lib/normalize-ujat-volunteer-application-status'
 import { findUjatEducationRegionKeyByLabel } from '@/features/program/ujat/lib/ujat-education-regions'
