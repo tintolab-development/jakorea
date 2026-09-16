@@ -6,7 +6,7 @@ import { UJAT_ELEMENTARY_TEXTBOOK_BY_GRADE } from './textbook'
 import {
   getAttendanceManagerForSchedule,
   getVolunteersForClass,
-} from './assignment-mock'
+} from './institution-assignment-data'
 import type { UjatEducationProgressInstitutionDetail } from './types'
 
 export type AssignmentClassRow = {

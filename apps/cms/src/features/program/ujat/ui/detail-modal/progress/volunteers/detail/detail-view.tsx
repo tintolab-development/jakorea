@@ -16,7 +16,7 @@ import { clearUjatVolunteerApplicantsMockCache } from '@/features/program/ujat/m
 import {
   parseEducationProgressVolunteerProfileId,
   patchUjatVolunteerMockProfilePreferredRegion,
-} from '@/features/program/ujat/model/ujat-volunteer-mock-profile'
+} from '@/features/program/ujat/model/ujat-volunteer-profile'
 import {
   UJAT_EDU_PROGRESS_VOLUNTEER_DETAIL_TAB_LABELS,
   type UjatEducationProgressVolunteerDetailTab,
@@ -31,13 +31,13 @@ import {
   buildActivityCertificateVolunteerFromUjatDetail,
   buildStudentCertificateContextFromUjatVolunteer,
 } from '../activity-certificate'
-import type { UjatEducationProgressVolunteerDetail } from './detail-mock'
+import type { UjatEducationProgressVolunteerDetail } from './volunteer-detail-data'
 import { UjatEducationProgressVolunteerApplicationTab } from './application-tab'
 import {
   UjatEducationProgressActivityWithdrawModal,
   type UjatEducationProgressActivityWithdrawPayload,
 } from '../../shared/activity-withdraw-modal'
-import { getVolunteerActivityWithdrawScheduleOptions } from './assignment-mock'
+import { getVolunteerActivityWithdrawScheduleOptions } from './volunteer-assignment-data'
 import {
   UjatEducationProgressVolunteerAssignmentProgressTab,
 } from './assignment-progress-tab'

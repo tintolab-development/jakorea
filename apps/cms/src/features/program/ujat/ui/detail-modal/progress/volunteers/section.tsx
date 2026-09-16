@@ -26,7 +26,7 @@ import {
 import { buildUjatEducationProgressVolunteerFilterFields } from './filter-fields'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import { UJAT_EDU_PROGRESS_VOLUNTEERS_TABLE_MIN_SCROLL_X } from './columns'
-import { getUjatEducationProgressVolunteerDetail } from './detail/detail-mock'
+import { getUjatEducationProgressVolunteerDetail } from './detail/volunteer-detail-data'
 import { useUjatEducationProgressVolunteers } from './use-list'
 import type { UjatEducationProgressVolunteerRow } from './types'
 import { Volunteer1365PreviewModal } from './volunteer-1365-preview-modal'

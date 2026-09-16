@@ -6,8 +6,6 @@
 import dayjs from 'dayjs'
 import type { Program, ProgramRound } from '@/types/domain'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
-import { mockSponsors } from '@/data/mock/sponsors'
-
 export const UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'ujat-local-'
 
 const STORAGE_KEY = 'cms.jakorea.ujatRegistrationLocalSaves.v1'
@@ -30,10 +28,7 @@ export type UjatRegistrationLocalSaveRecord = {
 }
 
 function resolveDefaultSponsorId(): string {
-  const ja = mockSponsors.find(
-    s => s.name.includes('JA Korea') || s.name.includes('고유목적') || s.name.includes('JA')
-  )
-  return ja?.id ?? mockSponsors[0]?.id ?? ''
+  return ''
 }
 
 function overlayString(overlay: Record<string, unknown>, key: string): string | undefined {

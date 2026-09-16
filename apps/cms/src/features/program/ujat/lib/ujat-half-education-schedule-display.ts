@@ -1,5 +1,4 @@
 import dayjs from 'dayjs'
-import { mockInstructorsMap } from '@/data/mock/instructors'
 import {
   EMPTY_UJAT_HALF_EVENT_RANGE_SEAL,
   EMPTY_UJAT_HALF_MULTI_SCHEDULE_BUNDLE,
@@ -115,8 +114,7 @@ function formatTextbookEducationLabel(
   instructorId: string | undefined
 ): string {
   if (mode === 'ja') return 'JA 진행'
-  const name = instructorId ? mockInstructorsMap.get(instructorId)?.name : undefined
-  return name ? `강사 섭외 (${name})` : '강사 섭외'
+  return instructorId ? '강사 섭외' : '강사 섭외'
 }
 
 export function resolveUjatHalfEducationScheduleDisplay(

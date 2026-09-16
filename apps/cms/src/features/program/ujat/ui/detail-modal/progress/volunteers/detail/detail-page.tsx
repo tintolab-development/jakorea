@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import type { Program } from '@/types/domain'
 import type { EducationProgressHalfKey } from '../../tabs'
 import type { UjatEducationProgressVolunteerDetailTab } from '@/features/program/ujat/lib/ujat-program-detail-url'
-import { getUjatEducationProgressVolunteerDetail } from './detail-mock'
+import { getUjatEducationProgressVolunteerDetail } from './volunteer-detail-data'
 import { UjatEducationProgressVolunteerDetailView } from './detail-view'
 
 export function UjatEducationProgressVolunteerDetailPage({

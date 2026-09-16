@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { Program } from '@/types/domain'
 import type { EducationProgressHalfKey } from '../../tabs'
-import { getUjatEducationProgressInstitutionDetail } from './detail-mock'
+import { getUjatEducationProgressInstitutionDetail } from './institution-detail-data'
 import { UjatEducationProgressInstitutionDetailView } from './detail-view'
 import type { UjatEducationProgressInstitutionDetailTab } from '@/features/program/ujat/lib/ujat-program-detail-url'
 

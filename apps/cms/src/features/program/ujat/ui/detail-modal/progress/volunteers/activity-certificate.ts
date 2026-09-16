@@ -10,8 +10,8 @@ import type {
   SchoolDetailStudentRow,
 } from '@/features/program/general/model/school-detail-types'
 import type { Program } from '@/types/domain'
-import type { UjatEducationProgressVolunteerDetail } from './detail/detail-mock'
-import { getUjatVolunteerAssignmentProgressBundle } from './detail/assignment-mock'
+import type { UjatEducationProgressVolunteerDetail } from './detail/volunteer-detail-data'
+import { getUjatVolunteerAssignmentProgressBundle } from './detail/volunteer-assignment-data'
 import type { UjatVolunteerAssignmentProgressRow } from './detail/assignment-types'
 
 function resolveAssignedInstitutionNames(volunteerId: string): string[] {

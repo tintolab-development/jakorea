@@ -24,7 +24,7 @@ import {
   getRegionDirectAssignClassOptions,
   getRegionDirectAssignVolunteerOptions,
   getRegionEducationDateOptions,
-} from './mock'
+} from './region-assignment-options'
 import './section.css'
 
 export function UjatEducationProgressRegionAssignmentSection({

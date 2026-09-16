@@ -3,7 +3,7 @@ import {
   buildUjatVolunteerApplicantId,
   getUjatVolunteerMockProfile,
   parseEducationProgressVolunteerProfileId,
-} from '@/features/program/ujat/model/ujat-volunteer-mock-profile'
+} from '@/features/program/ujat/model/ujat-volunteer-profile'
 import { findUjatVolunteerApplicantById } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'

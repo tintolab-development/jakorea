@@ -43,7 +43,7 @@ import {
   formatUjatEducationProgressVolunteerDetailTitle,
   getUjatEducationProgressVolunteerDetail,
   isUjatEducationProgressVolunteerInList,
-} from './progress/volunteers/detail/detail-mock'
+} from './progress/volunteers/detail/volunteer-detail-data'
 import { UjatInstitutionScheduleConfirmDetailPage } from './application-institution/schedule-confirm/detail-page'
 import type { Program } from '@/types/domain'
 import { getUjatInstitutionApplicationMockRows } from '@/features/program/ujat/model/ujat-institution-application'
@@ -71,7 +71,7 @@ import {
   isEducationProgressInstitutionsTab,
   isUjatEducationProgressInstitutionInList,
 } from './progress/institutions/detail/detail-url'
-import { getUjatEducationProgressInstitutionName } from './progress/institutions/detail/detail-mock'
+import { getUjatEducationProgressInstitutionName } from './progress/institutions/detail/institution-detail-data'
 import { UjatEducationProgressInstitutionDetailPage } from './progress/institutions/detail/detail-page'
 import {
   getUjatSurveyMenuItemsForProgram,
