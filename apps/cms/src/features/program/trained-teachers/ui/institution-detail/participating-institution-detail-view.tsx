@@ -13,7 +13,10 @@ import {
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
-import { PARTICIPATING_INSTITUTION_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE } from '@/shared/constants/messages'
+import {
+  MESSAGES,
+  PARTICIPATING_INSTITUTION_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE,
+} from '@/shared/constants/messages'
 import {
   getProgramProgressDisplayStatus,
   resolveProgramEnrollmentDisplayStatusFromLabel,
@@ -48,6 +51,12 @@ import {
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
+import {
+  buildProgramApiUnavailableSaveContent,
+  PROGRAM_API_UNAVAILABLE_TITLE,
+} from '@/features/program/shared/lib/program-api-unavailable'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -161,12 +170,44 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     setAdminCommentModalOpen(true)
   }, [isApplicationInfoEditing, mergedDetail.adminComment])
 
-  const handleAdminCommentSave = useCallback(() => {
+  const handleAdminCommentSave = useCallback(async () => {
     const trimmed = adminCommentDraft.trim()
-    onSaveBasicInfo?.({ id: detail.id, adminComment: trimmed || undefined })
-    setAdminCommentModalOpen(false)
-    setAdminCommentError(undefined)
-  }, [adminCommentDraft, detail.id, onSaveBasicInfo])
+    if (shouldUseTrainedTeacherProgramsRemoteApi()) {
+      const targetId = Number(detail.id)
+      if (!Number.isFinite(targetId)) {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+      try {
+        const result = await upsertAdminCommentByTargetRemote({
+          targetType: 'ORGANIZATION_APPLICATION',
+          targetId,
+          screenCode: 'ORGANIZATION_APPLICATION',
+          comment: trimmed,
+        })
+        onSaveBasicInfo?.({
+          id: detail.id,
+          adminComment: result.commentText,
+        })
+        setAdminCommentModalOpen(false)
+        setAdminCommentError(undefined)
+        return
+      } catch {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+    }
+    void showAlert({
+      title: PROGRAM_API_UNAVAILABLE_TITLE,
+      content: buildProgramApiUnavailableSaveContent('참여 기관 관리자 코멘트'),
+    })
+  }, [adminCommentDraft, detail.id, onSaveBasicInfo, showAlert])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)
@@ -351,6 +392,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               usesTextbook={usesTextbook}
               textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
               institutionId={row.id}
+              preferredScheduleBlocks={row.preferredScheduleBlocks}
               schoolName={mergedDetail.schoolName}
               educationGrade={mergedDetail.educationGrade}
               region={mergedDetail.region}

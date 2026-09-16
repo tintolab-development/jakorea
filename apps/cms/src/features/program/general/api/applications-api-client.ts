@@ -193,6 +193,35 @@ export async function rejectInstructorApplicationRemote(
   )
 }
 
+/**
+ * PATCH /api/admin/instructor-applications/{applicationId}
+ * OpenAPI summary: 강사 신청 관리자 코멘트 수정
+ * null 또는 trim 후 빈 문자열은 코멘트 삭제로 처리.
+ */
+export type InstructorApplicationManagerCommentUpdatePayload = {
+  managerComment: string | null
+}
+
+export type InstructorApplicationManagerCommentUpdateResponse = {
+  applicationId?: number
+  managerComment?: string | null
+  updatedAt?: string
+}
+
+export async function updateInstructorApplicationManagerCommentRemote(
+  applicationId: string,
+  payload: InstructorApplicationManagerCommentUpdatePayload
+): Promise<InstructorApplicationManagerCommentUpdateResponse> {
+  return unwrapApiBody<InstructorApplicationManagerCommentUpdateResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}`,
+      method: 'PATCH',
+      data: payload,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  )
+}
+
 /** POST /api/admin/instructor-applications/bulk-approve */
 export async function bulkApproveInstructorApplicationsRemote(
   ids: number[]

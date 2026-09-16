@@ -9,9 +9,7 @@ import {
 import {
   detailToParticipatingInstitutionEditDraft,
   parseParticipatingInstitutionEditDraft,
-  participatingInstitutionEditDraftToDetailPatch,
   requiresParticipatingTextbookSelection,
-  resolvePartnerGradesFromSchoolIds,
   resolveTextbookIdFromName,
   toCombinedClassApplicationStatus,
 } from '@/features/program/general/lib/participating-institution-detail-edit'
@@ -27,6 +25,7 @@ import {
 } from '@/features/program/general/lib/participating-institution-textbook'
 import { getSameSchoolParticipatingGrades } from '@/features/program/general/lib/get-same-school-participating-grades'
 import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
+import { PROGRAM_API_UNAVAILABLE_SAVE_CONTENT } from '@/features/program/shared/lib/program-api-unavailable'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 
 function isCompanySchoolProgram(program: Program): boolean {
@@ -58,7 +57,6 @@ export function useParticipatingInstitutionDetailEdit({
   row,
   program,
   participatingSchoolList,
-  onSaveBasicInfo,
 }: UseParticipatingInstitutionDetailEditParams) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<ReturnType<
@@ -258,36 +256,12 @@ export function useParticipatingInstitutionDetailEdit({
       return false
     }
 
-    const partnerGrades = resolvePartnerGradesFromSchoolIds(
-      normalizedDraft.combinedClassPartnerSchoolIds,
-      participatingSchoolList
-    )
-    const patch = participatingInstitutionEditDraftToDetailPatch(normalizedDraft, partnerGrades, {
-      program,
-      studentCount: row.studentCount,
-      requiresTextbook: usesTextbook,
-      allowTextbookSelectionWithoutCombinedClass: isCompanySchool,
-      catalog: textbookCatalog,
-    })
-    if (Object.keys(patch).length === 0) {
-      setValidationErrors({ form: '저장할 수 없습니다. 입력값을 확인해 주세요.' })
-      return false
-    }
-
-    onSaveBasicInfo?.({ ...patch, id: detail.id })
-    resetEditState()
-    return true
+    // OpenAPI에 기관 신청 정보 body PATCH 없음 — adminComment만 comments API (P2-6)
+    setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
+    return false
   }, [
-    detail.id,
     draft,
     isCombinedClassProgramEligibleFlag,
-    onSaveBasicInfo,
-    participatingSchoolList,
-    program,
-    resetEditState,
-    row.studentCount,
-    isCompanySchool,
-    textbookCatalog,
     usesTextbook,
   ])
 

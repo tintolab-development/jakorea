@@ -70,6 +70,9 @@ import {
   STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
 } from '@/shared/components'
 import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { shouldUseCompanySchoolProgramProgressRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
@@ -114,6 +117,13 @@ import { useGeneralProgramPosts } from '@/features/program/general/hooks/use-gen
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
+import {
+  buildProgramApiUnavailableSaveContent,
+  PROGRAM_API_UNAVAILABLE_TITLE,
+} from '@/features/program/shared/lib/program-api-unavailable'
+import { MESSAGES } from '@/shared/constants/messages'
 import {
   InstitutionAddressDetailEdit,
   InstitutionComputerInRoomEdit,
@@ -425,6 +435,7 @@ export function GeneralParticipatingInstitutionDetailView(
   const { posts: remotePosts, files: remotePostFiles, isRemoteDataSource: postsRemote, invalidatePosts } =
     useGeneralProgramPosts(program.id)
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
+  const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
@@ -448,9 +459,16 @@ export function GeneralParticipatingInstitutionDetailView(
   const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
   const sessions = row.sessions ?? []
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
+  const availableActions = mergedDetail.availableActions ?? row.availableActions
+  const canRequestActivityWithdraw =
+    !isActivityWithdrawn &&
+    (availableActions == null || availableActions.includes('GIVE_UP'))
+  const showActivityWithdrawButton =
+    isActivityWithdrawn || availableActions == null || availableActions.includes('GIVE_UP')
   const isCompanySchool = isCompanySchoolProgram(program)
   const requiredInstructorCount = resolveRequiredInstructorCount(program)
   const programId = String(program.id)
+  const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
   const companySchoolAssignmentConflictsEnabled =
     isCompanySchool && shouldUseCompanySchoolProgramProgressRemoteApi()
 
@@ -522,12 +540,44 @@ export function GeneralParticipatingInstitutionDetailView(
     setAdminCommentModalOpen(true)
   }, [isApplicationInfoEditing, mergedDetail.adminComment])
 
-  const handleAdminCommentSave = useCallback(() => {
+  const handleAdminCommentSave = useCallback(async () => {
     const trimmed = adminCommentDraft.trim()
-    onSaveBasicInfo?.({ id: detail.id, adminComment: trimmed || undefined })
-    setAdminCommentModalOpen(false)
-    setAdminCommentError(undefined)
-  }, [adminCommentDraft, detail.id, onSaveBasicInfo])
+    if (shouldUseGeneralApplicationsRemoteApi()) {
+      const targetId = Number(detail.id)
+      if (!Number.isFinite(targetId)) {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+      try {
+        const result = await upsertAdminCommentByTargetRemote({
+          targetType: 'ORGANIZATION_APPLICATION',
+          targetId,
+          screenCode: 'ORGANIZATION_APPLICATION',
+          comment: trimmed,
+        })
+        onSaveBasicInfo?.({
+          id: detail.id,
+          adminComment: result.commentText,
+        })
+        setAdminCommentModalOpen(false)
+        setAdminCommentError(undefined)
+        return
+      } catch {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+    }
+    void showAlert({
+      title: PROGRAM_API_UNAVAILABLE_TITLE,
+      content: buildProgramApiUnavailableSaveContent('참여 기관 관리자 코멘트'),
+    })
+  }, [adminCommentDraft, detail.id, onSaveBasicInfo, showAlert])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)
@@ -547,16 +597,22 @@ export function GeneralParticipatingInstitutionDetailView(
       })
       return
     }
-    if (isApplicationInfoEditing) return
+    if (!canRequestActivityWithdraw || isApplicationInfoEditing) return
     setActivityWithdrawModalOpen(true)
-  }, [isActivityWithdrawn, isApplicationInfoEditing, showAlert])
+  }, [
+    canRequestActivityWithdraw,
+    isActivityWithdrawn,
+    isApplicationInfoEditing,
+    showAlert,
+  ])
 
   const handleCancelActivityWithdraw = useCallback(() => {
+    if (activityWithdrawSubmitting) return
     setActivityWithdrawModalOpen(false)
-  }, [])
+  }, [activityWithdrawSubmitting])
 
   const handleConfirmActivityWithdraw = useCallback(
-    (payload: ActivityWithdrawScheduleModalPayload) => {
+    async (payload: ActivityWithdrawScheduleModalPayload) => {
       const patch = resolveParticipatingInstitutionActivityWithdrawPatch(
         program,
         sessions,
@@ -564,10 +620,57 @@ export function GeneralParticipatingInstitutionDetailView(
       )
       if (!patch) return
 
+      const reason =
+        [mergedDetail.schoolName, payload.stopScheduleLabel].filter(Boolean).join(' · ') ||
+        payload.stopScheduleLabel ||
+        '활동 포기'
+
+      if (progressRemoteEnabled) {
+        setActivityWithdrawSubmitting(true)
+        try {
+          await giveUpGeneralParticipatingInstitution(programId, detail.id, reason)
+          onSaveBasicInfo?.({ id: detail.id, ...patch })
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.institutions(programId),
+          })
+          setActivityWithdrawModalOpen(false)
+          showAlert({
+            title: '활동 포기',
+            content: `${mergedDetail.schoolName} 기관이 활동 포기 처리되었습니다.`,
+          })
+        } catch (error) {
+          const message =
+            error instanceof Error && error.message.trim()
+              ? error.message
+              : '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          showAlert({
+            title: '활동 포기 실패',
+            content: message,
+          })
+        } finally {
+          setActivityWithdrawSubmitting(false)
+        }
+        return
+      }
+
       onSaveBasicInfo?.({ id: detail.id, ...patch })
       setActivityWithdrawModalOpen(false)
+      showAlert({
+        title: '활동 포기',
+        content: `${mergedDetail.schoolName} 기관이 활동 포기 처리되었습니다.`,
+      })
     },
-    [detail.id, onSaveBasicInfo, program, sessions]
+    [
+      detail.id,
+      mergedDetail.schoolName,
+      onSaveBasicInfo,
+      program,
+      programId,
+      progressRemoteEnabled,
+      queryClient,
+      sessions,
+      showAlert,
+    ]
   )
 
   const instructors =
@@ -1519,15 +1622,21 @@ export function GeneralParticipatingInstitutionDetailView(
         trailing={
           activeTab === 'application' ? (
             <>
-              <CmsButton
-                variant="delete"
-                size="large"
-                width={140}
-                disabled={isActivityWithdrawn || isApplicationInfoEditing}
-                onClick={handleRequestActivityWithdraw}
-              >
-                활동 포기
-              </CmsButton>
+              {showActivityWithdrawButton ? (
+                <CmsButton
+                  variant="delete"
+                  size="large"
+                  width={140}
+                  disabled={
+                    !canRequestActivityWithdraw ||
+                    isApplicationInfoEditing ||
+                    activityWithdrawSubmitting
+                  }
+                  onClick={handleRequestActivityWithdraw}
+                >
+                  활동 포기
+                </CmsButton>
+              ) : null}
               <CmsButton
                 {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
                 onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
@@ -2055,6 +2164,7 @@ export function GeneralParticipatingInstitutionDetailView(
       <ActivityWithdrawScheduleModal
         open={activityWithdrawModalOpen}
         scheduleOptions={activityWithdrawScheduleOptions}
+        confirming={activityWithdrawSubmitting}
         onCancel={handleCancelActivityWithdraw}
         onConfirm={handleConfirmActivityWithdraw}
       />

@@ -6,19 +6,14 @@ import type { Program } from '@/types/domain'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert, type CmsButtonVariant } from '@/shared/ui'
 import { MESSAGES } from '@/shared/constants/messages'
 import {
-  patchApplicantInstitutionAdminComment,
   type ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
 import { useApplicantInstitutionDetailEdit } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { useApplicantInstructorDetailEdit } from '@/features/program/general/hooks/use-applicant-instructor-detail-edit'
 import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import {
-  patchApplicantInstructorDetail,
-  type ApplicantInstructorRow,
-} from '@/features/program/shared/model/applicant-instructor'
-import {
-  patchGeneralIndividualApplicantDetail,
   patchGeneralIndividualApplicantManagerEvaluation,
   type GeneralIndividualApplicantDetailSavePayload,
   type GeneralIndividualApplicantRow,
@@ -45,6 +40,18 @@ import {
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { TrainedTeachersApplicantInstitutionDetailContents } from '@/features/program/trained-teachers/ui/institution-detail/applicant-institution-detail-contents'
+import {
+  useInstructorApplicationDetailEnrichment,
+  useOrganizationApplicationDetailEnrichment,
+} from '@/features/program/general/hooks/use-application-form-detail-enrichment'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
+import { updateInstructorApplicationManagerCommentRemote } from '@/features/program/general/api/applications-api-client'
+import { saveIndividualApplicationAdminCommentRemote } from '@/features/program/general/api/individual-application-update-helpers'
+import {
+  buildProgramApiUnavailableSaveContent,
+  PROGRAM_API_UNAVAILABLE_TITLE,
+} from '@/features/program/shared/lib/program-api-unavailable'
 
 export type ApplicantType =
   | 'institutions'
@@ -520,9 +527,24 @@ export function ApplicantsDetailContents({
     [searchParams, setSearchParams, type]
   )
 
-  const institutionData = isInstitution ? (data as ApplicantSchoolRow) : null
-  const instructorData = isInstructor ? (data as ApplicantInstructorRow) : null
+  const institutionDataRaw = isInstitution ? (data as ApplicantSchoolRow) : null
+  const instructorDataRaw = isInstructor ? (data as ApplicantInstructorRow) : null
   const individualData = isIndividual ? (data as GeneralIndividualApplicantRow) : null
+
+  const enrichRemote =
+    isGeneralDetail && shouldUseGeneralApplicationsRemoteApi()
+
+  const institutionDataEnriched = useOrganizationApplicationDetailEnrichment(
+    institutionDataRaw,
+    { enabled: enrichRemote && isInstitution }
+  )
+  const instructorDataEnriched = useInstructorApplicationDetailEnrichment(
+    instructorDataRaw,
+    { enabled: enrichRemote && isInstructor }
+  )
+
+  const institutionData = institutionDataEnriched ?? institutionDataRaw
+  const instructorData = instructorDataEnriched ?? instructorDataRaw
 
   /** 신청 기관(참여자) 승인 완료: [승인 취소], [정보 수정], [개인정보 상세보기] */
   const isApprovedInstitution = isInstitution && institutionData?.approvalStatus === 'approved'
@@ -579,18 +601,45 @@ export function ApplicantsDetailContents({
     setAdminCommentModalOpen(true)
   }, [institutionDetailEdit.isEditing, institutionData?.adminComment])
 
-  const handleAdminCommentSave = useCallback(() => {
+  const handleAdminCommentSave = useCallback(async () => {
     if (!institutionData) return
-    const updated = patchApplicantInstitutionAdminComment(institutionData.id, adminCommentDraft)
-    if (!updated) {
-      void showAlert({
-        title: '안내',
-        content: MESSAGES.error.save,
-      })
-      return
+    const comment = adminCommentDraft.trim()
+    if (shouldUseGeneralApplicationsRemoteApi()) {
+      const targetId = Number(institutionData.id)
+      if (!Number.isFinite(targetId)) {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+      try {
+        const result = await upsertAdminCommentByTargetRemote({
+          targetType: 'ORGANIZATION_APPLICATION',
+          targetId,
+          screenCode: 'ORGANIZATION_APPLICATION',
+          comment,
+        })
+        onInstitutionDetailSaved?.([
+          {
+            ...institutionData,
+            adminComment: result.commentText,
+          },
+        ])
+        setAdminCommentModalOpen(false)
+        return
+      } catch {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
     }
-    onInstitutionDetailSaved?.([updated])
-    setAdminCommentModalOpen(false)
+    void showAlert({
+      title: PROGRAM_API_UNAVAILABLE_TITLE,
+      content: buildProgramApiUnavailableSaveContent('기관 신청 관리자 코멘트'),
+    })
   }, [adminCommentDraft, institutionData, onInstitutionDetailSaved, showAlert])
 
   const handleAdminCommentModalCancel = useCallback(() => {
@@ -633,18 +682,27 @@ export function ApplicantsDetailContents({
       setIsIndividualAdminCommentModalOpen(false)
       return
     }
-    const updated = patchGeneralIndividualApplicantDetail(individualData.id, {
-      adminComment: individualAdminCommentDraft,
-    })
-    if (!updated) {
-      void showAlert({
-        title: '안내',
-        content: MESSAGES.error.save,
-      })
-      return
+    if (shouldUseGeneralApplicationsRemoteApi()) {
+      try {
+        const updated = await saveIndividualApplicationAdminCommentRemote(
+          individualData,
+          individualAdminCommentDraft
+        )
+        onIndividualDetailSaved?.(updated)
+        setIsIndividualAdminCommentModalOpen(false)
+        return
+      } catch {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
     }
-    onIndividualDetailSaved?.(updated)
-    setIsIndividualAdminCommentModalOpen(false)
+    void showAlert({
+      title: PROGRAM_API_UNAVAILABLE_TITLE,
+      content: buildProgramApiUnavailableSaveContent('개인 신청 관리자 코멘트'),
+    })
   }, [
     individualAdminCommentDraft,
     individualData,
@@ -709,20 +767,32 @@ export function ApplicantsDetailContents({
     setIsInstructorAdminCommentModalOpen(true)
   }, [instructorDetailEdit.isEditing, instructorData?.managerComment])
 
-  const handleInstructorAdminCommentSave = useCallback(() => {
+  const handleInstructorAdminCommentSave = useCallback(async () => {
     if (!instructorData) return
-    const updated = patchApplicantInstructorDetail(instructorData.id, {
-      managerComment: instructorAdminCommentDraft,
-    })
-    if (!updated) {
-      void showAlert({
-        title: '안내',
-        content: MESSAGES.error.save,
-      })
-      return
+    const trimmed = instructorAdminCommentDraft.trim()
+    if (shouldUseGeneralApplicationsRemoteApi()) {
+      try {
+        const response = await updateInstructorApplicationManagerCommentRemote(instructorData.id, {
+          managerComment: trimmed || null,
+        })
+        onInstructorDetailSaved?.({
+          ...instructorData,
+          managerComment: response.managerComment ?? (trimmed || undefined),
+        })
+        setIsInstructorAdminCommentModalOpen(false)
+        return
+      } catch {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
     }
-    onInstructorDetailSaved?.(updated)
-    setIsInstructorAdminCommentModalOpen(false)
+    void showAlert({
+      title: PROGRAM_API_UNAVAILABLE_TITLE,
+      content: buildProgramApiUnavailableSaveContent('강사 신청 관리자 코멘트'),
+    })
   }, [instructorAdminCommentDraft, instructorData, onInstructorDetailSaved, showAlert])
 
   const handleInstructorAdminCommentModalCancel = useCallback(() => {

@@ -1,7 +1,7 @@
 # 프로그램 상세 LNB — 백엔드 미구현(BE gap) CRUD 목록
 
 **작성일**: 2026-07-30  
-**갱신**: 2026-07-30 — FE 전환 가능 항목 분리. **본 문서는 BE 미구현·계약 부재만 유지**  
+**갱신**: 2026-09-16 — 관리자 코멘트 FE remote 연결(comments upsert · instructor/individual managerComment). 신청 정보 **body** PATCH는 여전히 BE gap  
 **목적**: 프로그램 상세에서 **백엔드 API가 없거나 계약이 불충분**해 FE가 실연동할 수 없는 CRUD를 SSOT로 관리한다.  
 **범위**: 일반 · 1사1교 · UJAT · Gemini(찾아가는 연수) · 교육받은 교사  
 
@@ -36,9 +36,9 @@
 |------------|---|---|---|---|---------|------|
 | **프로그램 정보 — 신청경로 CRUD** | ⛔ | ⛔ | ⛔ | ⛔ | path 리소스 CRUD 또는 nested DTO | `applicationPathId` PATCH만 존재 (P2-4) |
 | **면접 슬롯 목록 GET** | — | ⛔ | — | — | `GET …/interview-slots` OpenAPI 등재 | POST create/assign는 있음. FE hand-wrap 실패 시 mock (P2-1) |
-| **신청자 상세 body PATCH** | — | ✅(목록) | ⛔ | — | organization/instructor/individual/volunteer application detail PATCH | approve/reject만 존재 (P2-6) |
-| **진행 — 참여 기관 중첩 mutation** | ⛔ | 🟡목록 | ⛔ | ⛔ | 학생 명단·배정·출석·신청 상세 mutation | participants 목록만 |
-| **진행 — 참여 강사 중첩·정산** | ⛔ | 🟡목록 | ⛔ | — | 기관 배정·강의보고 저장·정산(교통/숙박/100km) | lecture-reports 목록 일부만 |
+| **신청자 상세 body PATCH** | — | ✅(목록) | ⛔ | — | organization/instructor application **필드** PATCH | approve/reject만. **코멘트**는 FE 연결: `POST/PATCH/DELETE /api/admin/comments`(기관·봉사) · `PATCH …/instructor-applications/{id}`(강사 managerComment) · `PATCH …/individual-applications/{id}`(managerComment·교재/팀). 기관/강사 **신청 정보 필드** 수정 UI는 미연동 안내 (P2-6) |
+| **진행 — 참여 기관 중첩 mutation** | ⛔ | 🟡목록 | ⛔ | ⛔ | 학생 명단·배정·출석·신청 상세 mutation | participants 목록만. **관리자 코멘트**는 comments API로 FE 연결 |
+| **진행 — 참여 강사 중첩·정산** | ⛔ | 🟡목록 | ⛔ | — | 기관 배정·강의보고 저장·정산(교통/숙박/100km) | lecture-reports 목록 일부만. **관리자 코멘트**는 instructor-applications PATCH로 FE 연결 |
 | **진행 — 참여 봉사자 C/U/D** | ⛔ | ✅목록 | ⛔ | ⛔ | 회원→참여 봉사자 등록, 임직원 세션 인원, 삭제, 확인서 | 목록 `participants?VOLUNTEER`만 |
 | **진행 — 정식 schedules GET** | — | ⛔ | — | — | `GET …/programs/{id}/schedules` | 출석은 dashboard schedules 우회 (P2-2) |
 | **진행 — 과제** | ⛔ | ⛔ | ⛔ | ⛔ | 프로그램 단위 과제 세션·제출 admin API | 회원 assignment-submissions만 (P2-5) |
@@ -118,5 +118,6 @@ managers는 generic `…/managers` — **BE gap 제외**(스테이징 검증).
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-09-16 | 관리자 코멘트 FE remote(comments upsert · instructor/individual managerComment). 신청 정보 body PATCH는 계속 BE gap · FE 미연동 안내 |
 | 2026-07-30 | 초안 — 미전환·API 미존재 인벤토리 |
 | 2026-07-30 | **BE gap only**로 축소. Gemini 모집·기관 mutation FE 연동 반영. FE-mock/partial 제거 |

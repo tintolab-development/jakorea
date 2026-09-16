@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
-import { patchApplicantInstitutionDetailWithCombinedClass } from '@/features/program/shared/model/applicant-institution'
 import type { Program } from '@/types/domain'
 import {
   isCombinedClassProgramEligible,
   resolveCombinedClassApplyRadioDisabled,
 } from '@/features/program/general/lib/combined-class-edit-policy'
 import {
-  draftToSavePayload,
   parseApplicantInstitutionEditDraft,
   rowToEditDraft,
   type ApplicantInstitutionEditDraft,
@@ -27,10 +25,12 @@ import {
   buildInstitutionClassCountOptions,
   resolveProgramParticipantMaxClassCount,
 } from '@/features/template/lib/participant-recruitment-institution-limits'
+import { PROGRAM_API_UNAVAILABLE_SAVE_CONTENT } from '@/features/program/shared/lib/program-api-unavailable'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 
 /**
- * 기관 신청자 상세 편집 — mock patch 유지 (admin application detail PATCH 계약 없음 · P2-6).
+ * 기관 신청자 상세 편집.
+ * OpenAPI에 기관 신청 body PATCH 없음 — P2-6. 저장은 미연동 안내.
  */
 
 export interface TextbookSelectOption {
@@ -56,7 +56,6 @@ export function useApplicantInstitutionDetailEdit({
   institution,
   program,
   institutionList,
-  onSaved,
 }: UseApplicantInstitutionDetailEditParams) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<ApplicantInstitutionEditDraft | null>(null)
@@ -179,24 +178,9 @@ export function useApplicantInstitutionDetailEdit({
       return false
     }
 
-    const payload = draftToSavePayload(normalizedDraft, institution, {
-      showEducationFormatField,
-    })
-    if (!payload) {
-      setValidationErrors({ form: '저장할 수 없습니다. 입력값을 확인해 주세요.' })
-      return false
-    }
-
-    const updatedRows = patchApplicantInstitutionDetailWithCombinedClass(institution.id, payload)
-    if (updatedRows.length === 0) {
-      setValidationErrors({ form: '저장에 실패했습니다.' })
-      return false
-    }
-
-    onSaved(updatedRows)
-    resetEditState()
-    return true
-  }, [draft, institution, isCombinedClassProgramEligibleFlag, onSaved, resetEditState, showEducationFormatField])
+    setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
+    return false
+  }, [draft, institution, isCombinedClassProgramEligibleFlag, showEducationFormatField])
 
   return {
     isEditing,
