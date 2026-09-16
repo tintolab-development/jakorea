@@ -18,7 +18,9 @@ export type ActivityWithdrawScheduleModalProps = {
   open: boolean
   scheduleOptions: ReadonlyArray<ActivityWithdrawScheduleOption>
   onCancel: () => void
-  onConfirm: (payload: ActivityWithdrawScheduleModalPayload) => void
+  onConfirm: (payload: ActivityWithdrawScheduleModalPayload) => void | Promise<void>
+  /** 확인 API 진행 중 — 중복 제출·취소 차단 */
+  confirming?: boolean
 }
 
 export function ActivityWithdrawScheduleModal({
@@ -26,6 +28,7 @@ export function ActivityWithdrawScheduleModal({
   scheduleOptions,
   onCancel,
   onConfirm,
+  confirming = false,
 }: ActivityWithdrawScheduleModalProps) {
   const [stopSessionKey, setStopSessionKey] = useState<string | undefined>(undefined)
 
@@ -41,25 +44,31 @@ export function ActivityWithdrawScheduleModal({
     [scheduleOptions, stopSessionKey]
   )
 
-  const canConfirm = selectedOption != null
+  const canConfirm = selectedOption != null && !confirming
 
   const handleCancel = useCallback(() => {
+    if (confirming) return
     setStopSessionKey(undefined)
     onCancel()
-  }, [onCancel])
+  }, [confirming, onCancel])
 
   const handleConfirm = useCallback(() => {
-    if (!selectedOption) return
-    onConfirm({
+    if (!selectedOption || confirming) return
+    void onConfirm({
       stopSessionKey: selectedOption.value,
       stopScheduleLabel: selectedOption.label,
     })
-    setStopSessionKey(undefined)
-  }, [onConfirm, selectedOption])
+  }, [confirming, onConfirm, selectedOption])
 
   const footer = (
     <div className="activity-withdraw-schedule-modal__footer">
-      <CmsButton variant="secondary" size="large" type="button" onClick={handleCancel}>
+      <CmsButton
+        variant="secondary"
+        size="large"
+        type="button"
+        disabled={confirming}
+        onClick={handleCancel}
+      >
         취소
       </CmsButton>
       <CmsButton

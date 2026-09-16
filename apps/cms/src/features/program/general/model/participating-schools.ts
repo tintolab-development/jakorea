@@ -1,3 +1,5 @@
+import type { ApplicantPreferredScheduleBlock } from '@/features/program/shared/model/applicant-institution'
+
 /**
  * 참여 학교 — 타입 및 라벨/옵션 상수
  */
@@ -53,6 +55,19 @@ export interface ParticipatingSchoolRow {
   programId?: string
   /** 기관 신청 ID — 강사 배정 create/list 스코프 */
   organizationApplicationId?: string
+  /** BE participantStatus (예: APPROVED · GIVE_UP) */
+  participantStatus?: string
+  /** 활동 포기 시각 (ISO) */
+  giveUpAt?: string
+  /** 활동 포기 처리 여부 */
+  activityWithdrawn?: boolean
+  /**
+   * BE `availableActions` (additive). codegen 미반영 시 adapter가 느슨히 매핑.
+   * 참여 기관 활동 포기 게이트: `GIVE_UP`
+   */
+  availableActions?: string[]
+  /** TT 희망 교육 일정 structured blocks (org-application SoT) */
+  preferredScheduleBlocks?: ApplicantPreferredScheduleBlock[]
 }
 
 export const TEXTBOOK_STATUS_LABELS: Record<TextbookStatusKey, string> = {

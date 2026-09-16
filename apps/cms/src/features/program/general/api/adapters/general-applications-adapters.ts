@@ -568,10 +568,15 @@ export function mapParticipantToParticipatingSchoolRow(
 ): ParticipatingSchoolRow {
   const sourceApplicationId =
     dto.sourceApplicationId != null ? String(dto.sourceApplicationId) : undefined
+  const participantStatus = dto.participantStatus?.trim() || undefined
+  const giveUpAt = dto.giveUpAt?.trim() || undefined
+  const availableActions = readParticipantAvailableActions(dto)
+  const activityWithdrawn =
+    giveUpAt != null || participantStatus?.toUpperCase() === 'GIVE_UP'
   return {
     id: toId(dto.participantId),
     no: index + 1,
-    schoolName: dto.memberName?.trim() || '기관명 없음',
+    schoolName: dto.memberName?.trim() || dto.organizationName?.trim() || '기관명 없음',
     region: '',
     educationGrade: '',
     classCount: 0,
@@ -583,7 +588,23 @@ export function mapParticipantToParticipatingSchoolRow(
     instructors: '',
     programId,
     organizationApplicationId: sourceApplicationId,
+    organizationId: dto.organizationId,
+    participantStatus,
+    giveUpAt,
+    activityWithdrawn,
+    availableActions,
   }
+}
+
+/** codegen 미반영 additive 필드 — 런타임만 존재할 수 있음 */
+function readParticipantAvailableActions(
+  dto: ParticipantListItemResponse
+): string[] | undefined {
+  const raw = (dto as ParticipantListItemResponse & { availableActions?: unknown })
+    .availableActions
+  if (!Array.isArray(raw)) return undefined
+  const actions = raw.filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+  return actions.length > 0 ? actions : undefined
 }
 
 export function mapParticipantToParticipatingInstructorRow(

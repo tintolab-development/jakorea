@@ -108,3 +108,24 @@ export async function fetchProgramLectureReportsRemote(
   if (Array.isArray(body)) return body
   return body.items ?? []
 }
+
+export type ProgramParticipantGiveUpRequest = {
+  reason: string
+}
+
+/**
+ * POST /api/admin/programs/{programId}/participants/{participantId}/give-up
+ * ORGANIZATION(참여 기관) 등 participant 활동 포기.
+ * organization-applications/{id}/give-up 는 없음(의도적).
+ */
+export async function giveUpProgramParticipantRemote(
+  programId: string,
+  participantId: string,
+  payload: ProgramParticipantGiveUpRequest
+): Promise<void> {
+  await customInstance({
+    url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/give-up`,
+    method: 'POST',
+    data: payload,
+  })
+}
