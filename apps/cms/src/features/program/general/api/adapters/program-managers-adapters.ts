@@ -21,7 +21,11 @@ export function mapProgramManagerRole(raw: string | undefined | null): ProgramRo
   return 'ASSISTANT'
 }
 
-/** UI ProgramRole → BE assignment role (OWNER≠PM이면 400 BAD_REQUEST) */
+/** UI ProgramRole → BE assignment role
+ * - OWNER → PM (별칭 허용)
+ * - ASSISTANT(UI 라벨: 뷰어) → VIEWER (조회 전용)
+ * BE가 요청 문자열 `ASSISTANT`를 PARTNER로 별칭 처리해도, FE는 VIEWER를 보낸다.
+ */
 export function toProgramManagerApiRole(role: ProgramRole): ProgramManagerApiRole {
   switch (role) {
     case 'OWNER':

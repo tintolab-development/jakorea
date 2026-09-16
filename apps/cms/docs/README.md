@@ -150,6 +150,9 @@
 | [data-management-api-backend-gaps.md](api/data-management-api-backend-gaps.md) | 데이터 관리 **백엔드 갭 요청** |
 | [template-create-api-backend-handoff.md](api/template-create-api-backend-handoff.md) | 템플릿 관리 **신규 템플릿 생성** API·로직 갭 (BE 전달용) |
 | [programs-detail-api-conversion-status.md](api/programs-detail-api-conversion-status.md) | 일반 프로그램 상세 LNB Phase·완료율 SSOT |
+| [general-org-application-vs-participant-give-up-fe-acceptance-2026-09-16.md](api/general-org-application-vs-participant-give-up-fe-acceptance-2026-09-16.md) | 일반 기관 신청 vs 참여 · 활동 포기 FE 수용 |
+| [general-org-application-detail-form-seed-fe-acceptance-2026-09-16.md](api/general-org-application-detail-form-seed-fe-acceptance-2026-09-16.md) | 일반 기관·강사·봉사 신청 상세 form/코멘트 seed FE 수용 |
+| [general-org-application-form-answers-masking-backend-request-2026-09-16.md](api/general-org-application-form-answers-masking-backend-request-2026-09-16.md) | 기관 신청 form answers 마스킹(빈칸) BE 요청 |
 | [programs-company-school-api-backend-handoff.md](api/programs-company-school-api-backend-handoff.md) | 1사1교 CRUD 전환 계약·gate (Cat1) |
 | [programs-company-school-detail-api-conversion-status.md](api/programs-company-school-detail-api-conversion-status.md) | 1사1교 상세 LNB Phase·완료율 SSOT (Cat1) |
 | [programs-ujat-api-backend-handoff.md](api/programs-ujat-api-backend-handoff.md) | UJAT 프로그램 CRUD 전환 계약·gate (Cat2) |
@@ -158,6 +161,7 @@
 | [programs-ujat-education-regions-api-conversion-status.md](api/programs-ujat-education-regions-api-conversion-status.md) | UJAT 교육 지역 Phase SSOT (Cat3) |
 | [programs-trained-teachers-api-backend-handoff.md](api/programs-trained-teachers-api-backend-handoff.md) | 교육받은 교사 BE 계약 (Cat4) |
 | [programs-trained-teachers-api-conversion-status.md](api/programs-trained-teachers-api-conversion-status.md) | 교육받은 교사 Phase SSOT (Cat4) |
+| [trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md](api/trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md) | 교육받은 교사 상세 미확인 API BE 요청 |
 | [programs-gemini-visiting-training-api-backend-handoff.md](api/programs-gemini-visiting-training-api-backend-handoff.md) | Gemini 찾아가는 연수 BE 계약 (Cat5) |
 | [programs-gemini-visiting-training-api-conversion-status.md](api/programs-gemini-visiting-training-api-conversion-status.md) | Gemini 찾아가는 연수 Phase SSOT (Cat5) |
 | [programs-gemini-performance-api-backend-handoff.md](api/programs-gemini-performance-api-backend-handoff.md) | Gemini 실적 관리 BE 계약 (Cat6) |

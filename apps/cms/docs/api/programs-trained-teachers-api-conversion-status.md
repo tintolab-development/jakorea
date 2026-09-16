@@ -1,11 +1,11 @@
 # 교육받은 교사 프로그램 — API 전환 완료율 · Phase 계획
 
 **작성일**: 2026-07-16  
-**갱신**: 2026-09-16 — 로컬 OpenAPI v9 sync · TT approve/reject 전용 path · `educationStructure` 1급 필드  
+**갱신**: 2026-09-16 — 로컬 OpenAPI v9 sync · TT approve/reject 전용 path · `educationStructure` 1급 필드 · 일지 보기 모달 download API 연결 · [미확인 API BE 요청](./trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md)  
 **대상**: CMS `/programs/trained-teachers`  
 **범위**: `features/program/trained-teachers/**` + `general` 모달의 trained-teachers 분기 — 일반 기본값 변경 금지  
 **로드맵**: [programs-api-conversion-roadmap.md](./programs-api-conversion-roadmap.md) — **Cat 4**  
-**관련**: [programs-trained-teachers-api-backend-handoff.md](./programs-trained-teachers-api-backend-handoff.md) · [trained-teacher-primary-case-fe-adapter-2026-09-15.md](./trained-teacher-primary-case-fe-adapter-2026-09-15.md)
+**관련**: [programs-trained-teachers-api-backend-handoff.md](./programs-trained-teachers-api-backend-handoff.md) · [trained-teacher-primary-case-fe-adapter-2026-09-15.md](./trained-teacher-primary-case-fe-adapter-2026-09-15.md) · [trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md](./trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md)
 
 ---
 
@@ -30,9 +30,9 @@
 | **2** info LNB | **FE 완료 · gate ON** | GET/PATCH `…/trained-teacher/detail` · configJson + 공통정보 저장 |
 | **3** 기관 신청 | **FE 완료 · gate ON** | GET `…/trained-teacher/organization-applications` · 승인/반려도 **TT 전용** `…/approve`·`…/reject` |
 | **4** 진행·교육일지 | **FE 완료 · gate ON** | 승인 기관 → 진행 목록 · journals list/download/bulk-download |
-| **5** 설문·실적·담당자 | **부분 FE** | performance-summary GET + 진행 탭 strip · surveys HTTP gate에 TT 포함 · managers BE 갭 |
+| **5** 설문·실적·담당자 | **부분 FE** | performance-summary GET + 진행 탭 strip · surveys HTTP gate에 TT 포함 · managers는 FE 호출·**BE/OpenAPI 갭(M-18)** |
 
-**추정 완료율 ≈ 85% remote** (CRUD + info + 기관 + 진행/일지 + 실적요약) · managers·설문 answers 잔여
+**추정 완료율 ≈ 90% remote** (CRUD + info + 기관 + 진행/일지·보기 + 실적요약 + **희망일정 blocks**) · managers/survey는 공용 path 사용 · journal/completion CMS mutation UI는 선택 → [BE 회신·FE acceptance](./trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md)
 
 ---
 
@@ -54,7 +54,7 @@ VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED=true
 | 기관 신청 list | 동일 gate · 전용 URL (일반 applications list 미사용) |
 | 기관 신청 승인/반려 | 동일 gate · TT 전용 `POST …/trained-teacher/organization-applications/{id}/approve\|reject` |
 | 진행 기관 목록 | 동일 gate · 승인된 org-applications 매핑 (일반 participants API 미사용) |
-| 교육일지 | 동일 gate · `…/trained-teacher/education-journals` |
+| 교육일지 | 동일 gate · `…/trained-teacher/education-journals` list/download/bulk · **보기 모달도 download blob** |
 
 ---
 
@@ -72,9 +72,9 @@ VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED=true
 | `info` | 프로그램 정보 | 공통 / 모집 / 신청 (`TrainedTeachers*`) |
 | `applicants` | 기관 신청 | |
 | `progress` | 진행 현황 | **참여 기관만** (강사/봉사 없음) |
-| `survey` | 설문 | 조건부 |
-| `managers` | 담당자 | mock |
-| 기관 중첩 | application · journal | 교육일지 |
+| `survey` | 설문 | 조건부 · answers 잔여(BE) |
+| `managers` | 담당자 | FE `…/managers` 호출 · **BE/OpenAPI 갭** |
+| 기관 중첩 | application · journal | 교육일지 list/download/보기 |
 
 ---
 
@@ -86,7 +86,7 @@ VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED=true
 | detail 전용 | `GET/PATCH …/trained-teacher/detail` | **remote (opt-in)** · `configJson`에 commonInfo |
 | 기관 신청 | `GET …/trained-teacher/organization-applications` (+ `/{id}`) | **remote (opt-in)** |
 | 승인/반려 | `POST …/trained-teacher/organization-applications/{id}/approve\|reject` | **remote** · TT 전용 client |
-| 교육일지 | `GET/POST …/education-journals` (+ download/export/jobs) | **remote** list/download/bulk · POST create FE 준비(서비스) |
+| 교육일지 | `GET/POST …/education-journals` (+ download/bulk) | **remote** list/download/bulk · **보기 모달 download blob 미리보기** · POST create는 서비스만(UI 미배선) |
 | 실적 요약 | `GET …/performance-summary` | **remote** + education-completions 건수 |
 | 학생교육 완료 | `GET …/education-completions` | **remote** (일지와 별도 SSOT) |
 | programs CRUD 구조 | `Program*Request/Response.educationStructure` | **remote** · `CURRICULUM`/`SCHEDULE` ↔ `generalProgramEducationStructure` |
@@ -111,7 +111,7 @@ VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED=true
 | 2 | info 저장 · trained-teacher/detail PATCH | FE |
 | 3 | organization-applications GET + 승인/반려(계약된 mutation) | FE |
 | 4 | progress 기관 목록 · journals list/upload/download | FE |
-| 5 | survey · performance-summary · managers (잔여 가능) | performance-summary **FE** · surveys HTTP TT 포함 · managers BE 갭 |
+| 5 | survey · performance-summary · managers (잔여 가능) | performance-summary **FE** · surveys HTTP TT 포함 · managers FE 호출·BE 갭 · 희망일정 blocks·answers는 [BE 요청](./trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md) |
 
 ---
 
@@ -144,3 +144,4 @@ VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED=true
 | 2026-07-16 | Phase 3 org applications GET · 공통 approve/reject · surface isolation |
 | 2026-07-16 | Phase 4 진행 기관(승인 신청 매핑) · journals list/download/bulk |
 | 2026-07-16 | Phase 5: performance-summary GET+strip · surveys HTTP에 TT · progress programId 전달 |
+| 2026-09-16 | 교육일지 보기 모달 → download API · 미확인 갭 BE 요청 문서 · managers “mock” 표기 정정 |
