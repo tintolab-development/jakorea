@@ -3,7 +3,8 @@
 **작성일:** 2026-09-16  
 **우선순위:** P1  
 **대상:** 일반 프로그램 상세 → 참여자 신청 목록 (1차 서류 심사 · 1차 서류 합격자 · 상세)  
-**관련(기완료 배선):** [general-individual-application-screening-api-backend-request-2026-09-15.md](./general-individual-application-screening-api-backend-request-2026-09-15.md)
+**관련(기완료 배선):** [general-individual-application-screening-api-backend-request-2026-09-15.md](./general-individual-application-screening-api-backend-request-2026-09-15.md)  
+**시드(별도 SSOT):** [general-program-remote-db-full-graph-seed-backend-request-2026-09-16.md](./general-program-remote-db-full-graph-seed-backend-request-2026-09-16.md)
 
 FE에서 즉시 가능한 연동(상세 row 전달 · 승인/반려·document-result 호출 · unmask · 기존 슬롯 재사용)과 별도로, **서버 계약·응답 보완이 필요한 항목**을 LNB 기준으로 정리한다.
 

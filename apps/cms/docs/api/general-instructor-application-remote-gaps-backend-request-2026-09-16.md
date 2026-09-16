@@ -5,7 +5,8 @@
 **우선순위:** P1  
 **대상:** 일반 프로그램 상세 → 강사 신청 목록 · 강사 신청 상세  
 **범위:** 일반 프로그램 기관·개인 참여 모드의 **강사 신청** (Gemini 강사 신청 API와 별도)  
-**관련:** [programs-api-integration.md](./programs-api-integration.md)
+**관련:** [programs-api-integration.md](./programs-api-integration.md)  
+**시드(별도 SSOT):** [general-program-remote-db-full-graph-seed-backend-request-2026-09-16.md](./general-program-remote-db-full-graph-seed-backend-request-2026-09-16.md)
 
 ---
 

@@ -4,7 +4,8 @@
 **OpenAPI 재검토:** 2026-09-16 (v9 · live = local)  
 **우선순위:** P1  
 **대상:** 일반 프로그램 **기관 신청/참여 상세**(합반·교재) · **봉사자 신청 심사**(1차 서류 · 합격자 · 2차 면접)  
-**SSOT:** 일반 프로그램(기관·봉사자) FE 수정·미연동 갭은 **본 문서에만** 누적합니다.
+**SSOT:** 일반 프로그램(기관·봉사자) FE 수정·미연동 갭은 **본 문서에만** 누적합니다.  
+**시드(별도 SSOT):** [general-program-remote-db-full-graph-seed-backend-request-2026-09-16.md](./general-program-remote-db-full-graph-seed-backend-request-2026-09-16.md)
 
 ## FE 원칙 (2026-09-16)
 

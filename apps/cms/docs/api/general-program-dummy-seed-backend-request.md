@@ -15,6 +15,7 @@ CMS `/programs/general` **목록 · 상세(풀페이지 모달) · LNB · 모집
 - [programs-registration-flow-api-backend-handoff.md](./programs-registration-flow-api-backend-handoff.md)
 - [general-program-institution-application-bridge-spec.md](../../.cursor/rules/process/general-program-institution-application-bridge-spec.md)
 - [mock-data.md](../../.cursor/rules/data/mock-data.md)
+- **행·진행 그래프 시드 (2026-09-16):** [general-program-remote-db-full-graph-seed-backend-request-2026-09-16.md](./general-program-remote-db-full-graph-seed-backend-request-2026-09-16.md)
 
 > **금지:** 기존 E2E 시드 `[수정 가능] 일반 프로그램 더미` 와 title을 같게 만들거나 덮어쓰지 마세요.
 
