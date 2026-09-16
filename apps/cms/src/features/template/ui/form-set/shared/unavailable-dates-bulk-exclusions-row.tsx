@@ -188,6 +188,8 @@ export function UnavailableDatesBulkExclusionsRow({
         initialCalendarDate={initialCalendarDate}
         appliedDates={appliedDates}
         onApplyDatesChange={handleApplyDatesChange}
+        exclusionState={exclusionState}
+        onExclusionChange={updateExclusionState}
         modalUnavailableDescriptionLead={modalUnavailableDescriptionLead}
         modalUnavailableDescriptionSecond={modalUnavailableDescriptionSecond}
         canOpenDirectUnavailableModal={canOpenDirectUnavailableModal}

@@ -3,12 +3,59 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { ParagraphCalendarMini } from '@/features/template/ui/shared/paragraph-calendar-mini'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
+import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import './direct-unavailable-date-add-button.css'
 
 const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+
+/** 모달 칩 토큰 — 폼 체크박스(토·일·공휴일 제외)와 양방향 연동 */
+const RECURRING_SATURDAY = '토요일'
+const RECURRING_SUNDAY = '일요일'
+const RECURRING_HOLIDAY = '모든 공휴일'
+
+const RECURRING_TOKEN_SET = new Set([RECURRING_SATURDAY, RECURRING_SUNDAY, RECURRING_HOLIDAY])
+
+function buildModalSelectedDates(
+  appliedDates: string[],
+  exclusionState?: UnavailableDatesExclusionState
+): string[] {
+  const recurring: string[] = []
+  if (exclusionState && !exclusionState.excludeNone) {
+    if (exclusionState.excludeSaturday) recurring.push(RECURRING_SATURDAY)
+    if (exclusionState.excludeSunday) recurring.push(RECURRING_SUNDAY)
+    if (exclusionState.excludeHoliday) recurring.push(RECURRING_HOLIDAY)
+  }
+
+  return [...recurring, ...appliedDates]
+}
+
+function exclusionStateFromModalSelectedDates(
+  selected: string[]
+): UnavailableDatesExclusionState {
+  const excludeSaturday = selected.includes(RECURRING_SATURDAY)
+  const excludeSunday = selected.includes(RECURRING_SUNDAY)
+  const excludeHoliday = selected.includes(RECURRING_HOLIDAY)
+  const hasSpecificDates = selected.some(value => ISO_DATE_PATTERN.test(value))
+  const hasRecurring = excludeSaturday || excludeSunday || excludeHoliday
+
+  return {
+    excludeNone: !hasRecurring && !hasSpecificDates,
+    excludeSaturday,
+    excludeSunday,
+    excludeHoliday,
+  }
+}
+
+function formatModalSelectedLabel(value: string): string {
+  if (value === RECURRING_SATURDAY) return '토요일 제외'
+  if (value === RECURRING_SUNDAY) return '일요일 제외'
+  if (value === RECURRING_HOLIDAY) return RECURRING_HOLIDAY
+  if (ISO_DATE_PATTERN.test(value)) return dayjs(value).format('YY년 M월 D일')
+  return value
+}
 
 function findNextEnabledDate(date: Dayjs, disabledDate?: (date: Dayjs) => boolean): Dayjs {
   if (!disabledDate || !disabledDate(date)) return date
@@ -93,6 +140,8 @@ export function DirectUnavailableDateAddButton({
   modalUnavailableDescriptionSecond = DEFAULT_MODAL_UNAVAILABLE_SECOND,
   canOpenDirectUnavailableModal,
   onDirectUnavailableModalBlocked,
+  exclusionState,
+  onExclusionChange,
 }: {
   onClick?: () => void
   disabled?: boolean
@@ -111,12 +160,15 @@ export function DirectUnavailableDateAddButton({
    */
   canOpenDirectUnavailableModal?: boolean
   onDirectUnavailableModalBlocked?: () => void
+  /** 토·일·공휴일 제외 — 모달 칩과 양방향 연동 */
+  exclusionState?: UnavailableDatesExclusionState
+  onExclusionChange?: (state: UnavailableDatesExclusionState) => void
 }) {
   const isControlled = appliedDatesProp !== undefined
   const [open, setOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(() => dayjs().startOf('month'))
   const [selectedDate, setSelectedDate] = useState(() => dayjs())
-  const [selectedDates, setSelectedDates] = useState<string[]>(['모든 공휴일'])
+  const [selectedDates, setSelectedDates] = useState<string[]>([])
   const [uncontrolledAppliedDates, setUncontrolledAppliedDates] = useState<string[]>([])
 
   const appliedDates = isControlled ? appliedDatesProp! : uncontrolledAppliedDates
@@ -186,9 +238,7 @@ export function DirectUnavailableDateAddButton({
     setSelectedDates(prev => (prev.includes(key) ? prev.filter(v => v !== key) : [...prev, key]))
   }
 
-  const displayTags = selectedDates.map(v =>
-    ISO_DATE_PATTERN.test(v) ? dayjs(v).format('YY년 M월 D일') : v
-  )
+  const displayTags = selectedDates.map(formatModalSelectedLabel)
 
   return (
     <>
@@ -215,6 +265,8 @@ export function DirectUnavailableDateAddButton({
             const initialDate = findNextEnabledDate(initialCalendarDate ?? dayjs(), disabledDate)
             setCurrentMonth(initialDate.startOf('month'))
             setSelectedDate(initialDate)
+            // 폼 체크박스(토·일·공휴일) + 직접 추가 날짜를 모달 칩에 동기화
+            setSelectedDates(buildModalSelectedDates(appliedDates, exclusionState))
             setOpen(true)
           }}
         >
@@ -265,14 +317,18 @@ export function DirectUnavailableDateAddButton({
               width={120}
               onClick={() => {
                 const nextDates = selectedDates.filter(v => {
-                  if (v === '모든 공휴일') return false
-                  if (!disabledDate || !ISO_DATE_PATTERN.test(v)) return true
+                  if (RECURRING_TOKEN_SET.has(v)) return false
+                  if (!ISO_DATE_PATTERN.test(v)) return false
+                  if (!disabledDate) return true
                   return !disabledDate(dayjs(v))
                 })
                 if (!isControlled) {
                   setUncontrolledAppliedDates(nextDates)
                 }
                 onApplyDatesChange?.(nextDates)
+                if (onExclusionChange) {
+                  onExclusionChange(exclusionStateFromModalSelectedDates(selectedDates))
+                }
                 closeModal()
               }}
             >
