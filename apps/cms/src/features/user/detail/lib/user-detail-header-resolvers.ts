@@ -47,7 +47,7 @@ export function resolveDefaultHeaderShellState(params: {
     visible: true,
     viewKind,
     leadingSpace: viewKind === 'school_delete',
-    /** 소속 교사 연락처·이메일 마스킹 해제 등 */
-    showPersonalInfoToggle: true,
+    /** 학교 상세는 개인정보 상세보기 미노출 (소속 교사 연락처는 마스킹 유지) */
+    showPersonalInfoToggle: viewKind !== 'school_delete',
   }
 }
