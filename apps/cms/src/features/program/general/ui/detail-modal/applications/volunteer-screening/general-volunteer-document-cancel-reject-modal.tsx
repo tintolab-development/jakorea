@@ -51,7 +51,7 @@ function VolunteerDocumentCancelRejectPendingNotificationModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="봉사자 1차 반려 취소 안내"
+      title="봉사자 1차 서류 반려 취소 안내"
       width={MODAL_WIDTH}
       zIndex={zIndex}
       className="general-volunteer-document-cancel-reject-modal instructor-cancel-reject-modal"
@@ -107,7 +107,7 @@ function VolunteerDocumentCancelRejectAlreadySentModal({
       open={open}
       variant="reject"
       className="general-volunteer-document-cancel-reject-modal instructor-cancel-reject-modal"
-      title="봉사자 1차 반려 취소 안내"
+      title="봉사자 1차 서류 반려 취소 안내"
       message={buildVolunteerDocumentCancelRejectionMessage(volunteerName, 'alreadySent')}
       confirmLabel="반려 취소"
       confirmVariant="delete"

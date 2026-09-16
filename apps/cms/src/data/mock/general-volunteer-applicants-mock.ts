@@ -50,6 +50,10 @@ export interface GeneralVolunteerApplicantRow {
   documentScreeningStatus: GeneralDocumentScreeningStatus
   documentApprovalNotifyTiming?: PermissionModalNotifyTiming
   documentRejectionNotifyTiming?: PermissionModalNotifyTiming
+  /** 반려 취소(alreadySent) 시 재발송 알림 시기 */
+  documentCancelRejectionNotifyTiming?: PermissionModalNotifyTiming
+  /** 반려 취소(alreadySent) 시 취소 사유 */
+  documentCancelRejectionReason?: string
   interviewSlotCount: number
   interviewAssignmentStatus: GeneralInterviewAssignmentStatus
   programId: string
@@ -674,6 +678,8 @@ export function patchGeneralVolunteerDocumentScreeningStatus(
         documentScreeningStatus: status,
         documentApprovalNotifyTiming: notifyTiming,
         documentRejectionNotifyTiming: undefined,
+        documentCancelRejectionNotifyTiming: undefined,
+        documentCancelRejectionReason: undefined,
       }
     }
     return {
@@ -681,21 +687,29 @@ export function patchGeneralVolunteerDocumentScreeningStatus(
       documentScreeningStatus: status,
       documentRejectionNotifyTiming: notifyTiming,
       documentApprovalNotifyTiming: undefined,
+      documentCancelRejectionNotifyTiming: undefined,
+      documentCancelRejectionReason: undefined,
     }
   })
 }
 
 export function patchGeneralVolunteerDocumentScreeningCancel(
   rows: GeneralVolunteerApplicantRow[],
-  id: string
+  id: string,
+  notifyOptions?: {
+    notifyTiming: PermissionModalNotifyTiming
+    rejectionReason?: string
+  }
 ): GeneralVolunteerApplicantRow[] {
   return rows.map(row =>
     row.id === id
       ? {
           ...row,
-          documentScreeningStatus: 'pending',
+          documentScreeningStatus: 'pending' as const,
           documentApprovalNotifyTiming: undefined,
           documentRejectionNotifyTiming: undefined,
+          documentCancelRejectionNotifyTiming: notifyOptions?.notifyTiming,
+          documentCancelRejectionReason: notifyOptions?.rejectionReason,
         }
       : row
   )
