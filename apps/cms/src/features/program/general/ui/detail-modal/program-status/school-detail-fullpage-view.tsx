@@ -12,6 +12,9 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
@@ -66,9 +69,6 @@ import {
   STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
 } from '@/shared/components'
 import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
-import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
-import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { shouldUseCompanySchoolProgramProgressRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
@@ -113,13 +113,6 @@ import { useGeneralProgramPosts } from '@/features/program/general/hooks/use-gen
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
-import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
-import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
-import {
-  buildProgramApiUnavailableSaveContent,
-  PROGRAM_API_UNAVAILABLE_TITLE,
-} from '@/features/program/shared/lib/program-api-unavailable'
-import { MESSAGES } from '@/shared/constants/messages'
 import {
   InstitutionAddressDetailEdit,
   InstitutionComputerInRoomEdit,
@@ -130,7 +123,23 @@ import {
   InstitutionWaitingRoomEdit,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
-import { isCombinedClassProgramEligible } from '@/features/program/general/lib/combined-class-edit-policy'
+import {
+  hasCompletedCombinedClassEducationSessions,
+  isCombinedClassProgramEligible,
+} from '@/features/program/general/lib/combined-class-edit-policy'
+import {
+  type CombinedClassLeadTeacherCandidate,
+} from '@/features/program/general/lib/combined-class-lead-teacher'
+import { InstitutionCombinedClassLeadTeacherModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-lead-teacher-modal'
+import { InstitutionCombinedClassCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-complete-modal'
+import {
+  buildProgramApiUnavailableSaveContent,
+  notifyProgramApiUnavailable,
+  PROGRAM_API_UNAVAILABLE_TITLE,
+} from '@/features/program/shared/lib/program-api-unavailable'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
+import { MESSAGES } from '@/shared/constants/messages'
 import { formatParticipatingCombinedClassDisplay } from '@/features/program/general/lib/participating-institution-detail-edit'
 import { InstitutionCombinedClassEditCell } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-combined-class-edit-cell'
 import {
@@ -490,6 +499,12 @@ export function GeneralParticipatingInstitutionDetailView(
     [program, sessions]
   )
 
+  const [combinedClassLeadTeacherModal, setCombinedClassLeadTeacherModal] = useState<{
+    memberRowIds: string[]
+    candidates: CombinedClassLeadTeacherCandidate[]
+  } | null>(null)
+  const [combinedClassCompleteLabel, setCombinedClassCompleteLabel] = useState<string | null>(null)
+
   const applicationInfoEdit = useParticipatingInstitutionDetailEdit({
     detail: mergedDetail,
     row,
@@ -498,6 +513,9 @@ export function GeneralParticipatingInstitutionDetailView(
     onSaveBasicInfo,
     onSaveCombinedClass,
     combinedClassReadOnly,
+    onCombinedClassApplied: params => {
+      setCombinedClassLeadTeacherModal(params)
+    },
   })
 
   const {
@@ -1592,6 +1610,9 @@ export function GeneralParticipatingInstitutionDetailView(
         isProgramEligible={combinedClassProgramEligible}
         isApplyRadioDisabled={isCombinedClassApplyRadioDisabled}
         readOnly={combinedClassReadOnly}
+        showEffectiveFromNextScheduleNotice={hasCompletedCombinedClassEducationSessions(
+          row.sessions
+        )}
       />
     ) : (
       buildCombinedClassViewValue(mergedDetail, combinedClassProgramEligible)
@@ -2162,6 +2183,23 @@ export function GeneralParticipatingInstitutionDetailView(
         onChange={handleAdminCommentDraftChange}
         onCancel={handleAdminCommentModalCancel}
         onConfirm={handleAdminCommentSave}
+      />
+      <InstitutionCombinedClassLeadTeacherModal
+        open={combinedClassLeadTeacherModal != null}
+        candidates={combinedClassLeadTeacherModal?.candidates ?? []}
+        onCancel={() => setCombinedClassLeadTeacherModal(null)}
+        onConfirm={() => {
+          notifyProgramApiUnavailable(
+            'general-org-merge-lead-teacher-progress',
+            '일반 프로그램 · 합반 담당 교사 지정'
+          )
+          setCombinedClassLeadTeacherModal(null)
+        }}
+      />
+      <InstitutionCombinedClassCompleteModal
+        open={combinedClassCompleteLabel != null}
+        teacherLabel={combinedClassCompleteLabel ?? ''}
+        onClose={() => setCombinedClassCompleteLabel(null)}
       />
     </div>
   )

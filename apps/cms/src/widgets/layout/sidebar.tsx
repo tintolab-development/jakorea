@@ -14,6 +14,7 @@ import {
 } from '@/shared/config/member-list-kinds'
 import {
   canAdminAction,
+  isPermissionRequestsPath,
   isPermissionSettingsPath,
   isSecurityLogPath,
   showAdminAccessDeniedAlert,
@@ -205,6 +206,13 @@ export function Sidebar() {
             if (
               isPermissionSettingsPath(key) &&
               !canAdminAction({ roleCode, action: 'view', screen: 'permission-settings' })
+            ) {
+              showAdminAccessDeniedAlert()
+              return
+            }
+            if (
+              isPermissionRequestsPath(key) &&
+              !canAdminAction({ roleCode, action: 'view', screen: 'admin-permission-approval' })
             ) {
               showAdminAccessDeniedAlert()
               return

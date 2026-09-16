@@ -45,7 +45,7 @@ describe('mapPaymentBasicInfo', () => {
         bankName: '국민',
         accountNumber: '',
         accountHolder: '',
-        paymentPurpose: '강의비 또는 활동비 지급',
+        paymentPurpose: '강사비 또는 활동비 지급',
       })
     ).toEqual({
       nameKo: '홍길동',
@@ -59,7 +59,7 @@ describe('mapPaymentBasicInfo', () => {
       bankName: '국민',
       accountNumber: undefined,
       accountHolder: undefined,
-      paymentPurpose: '강의비 또는 활동비 지급',
+      paymentPurpose: '강사비 또는 활동비 지급',
     })
   })
 
@@ -71,7 +71,18 @@ describe('mapPaymentBasicInfo', () => {
       })
     ).toMatchObject({
       nameKo: '홍길동',
-      paymentPurpose: '강의비 또는 활동비 지급',
+      paymentPurpose: '강사비 또는 활동비 지급',
+    })
+  })
+
+  it('레거시 강의비 오타는 강사비로 정규화한다', () => {
+    expect(
+      mapPaymentBasicInfo({
+        nameKo: '홍길동',
+        paymentPurpose: '강의비 또는 활동비 지급',
+      })
+    ).toMatchObject({
+      paymentPurpose: '강사비 또는 활동비 지급',
     })
   })
 })
@@ -80,7 +91,7 @@ describe('mapAgreementSnapshotToFilledDocument', () => {
   it('지급조서는 templateCode와 paymentBasicInfo를 붙인다', () => {
     const filled = mapAgreementSnapshotToFilledDocument('PAYMENT_STATEMENT_PRE_CONSENT', {
       draft: stubDraft(),
-      paymentBasicInfo: { nameKo: '홍길동', paymentPurpose: '강의비 또는 활동비 지급' },
+      paymentBasicInfo: { nameKo: '홍길동', paymentPurpose: '강사비 또는 활동비 지급' },
     })
     expect(filled.templateCode).toBe('agreement-third-party')
     expect(filled.schemaJson).toMatchObject({ schemaVersion: 1 })
@@ -318,6 +329,24 @@ describe('attachFilledDocumentsToTermsAgreements', () => {
       }
     )
     expect(rows?.[0]?.filledDocument?.paymentBasicInfo).toMatchObject({ nameKo: '개인' })
+  })
+
+  it('성범죄 — 스냅샷 없이 agreed만 있으면 create 모드에서 에러를 던진다', async () => {
+    await expect(
+      attachFilledDocumentsToTermsAgreements(
+        [
+          {
+            termsType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
+            version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+            agreed: true,
+          },
+        ],
+        {
+          mode: 'create',
+          snapshots: { agreementByFieldKey: {}, crimeByFieldKey: {} },
+        }
+      )
+    ).rejects.toThrow('성범죄 동의서 첨부 파일을 찾을 수 없습니다')
   })
 
   it('성범죄는 evidenceFileObjectId를 업로드 결과로 붙인다', async () => {

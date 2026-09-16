@@ -132,7 +132,7 @@ export function useGeneralVolunteerApplicationsRemote({
         return true
       } catch (error) {
         notifyRemoteFailure(error)
-        return true
+        return false
       }
     },
     [invalidateApplications, notifyRemoteFailure, remoteEnabled, showAlert, subjectKind]
@@ -171,7 +171,7 @@ export function useGeneralVolunteerApplicationsRemote({
         return true
       } catch (error) {
         notifyRemoteFailure(error)
-        return true
+        return false
       }
     },
     [invalidateApplications, notifyRemoteFailure, remoteEnabled, showAlert, subjectKind]
@@ -204,19 +204,21 @@ export function useGeneralVolunteerApplicationsRemote({
   )
 
   const applyRemoteGiveUp = useCallback(
-    async (applicationId: string) => {
+    async (applicationId: string, reason: string) => {
       if (!remoteEnabled) return false
+      const trimmed = reason.trim()
+      const giveUpReason = trimmed.length >= 2 ? trimmed : '활동 포기'
       try {
         if (subjectKind === 'participant') {
-          await giveUpIndividualApplicationRemote(applicationId)
+          await giveUpIndividualApplicationRemote(applicationId, { reason: giveUpReason })
         } else {
-          await giveUpGeneralVolunteerApplication(applicationId)
+          await giveUpGeneralVolunteerApplication(applicationId, giveUpReason)
         }
         await invalidateApplications()
         return true
       } catch (error) {
         notifyRemoteFailure(error)
-        return true
+        return false
       }
     },
     [invalidateApplications, notifyRemoteFailure, remoteEnabled, subjectKind]

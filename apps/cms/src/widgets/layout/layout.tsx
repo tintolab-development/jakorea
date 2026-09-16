@@ -16,6 +16,7 @@ import { canAccessPath } from '@/shared/config/menu-config'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 import {
   canAdminAction,
+  isPermissionRequestsPath,
   isPermissionSettingsPath,
   isSecurityLogPath,
   resolveAdminRoleCodeFromUser,
@@ -41,7 +42,12 @@ function LayoutContent() {
     Boolean(user) &&
     isPermissionSettingsPath(location.pathname) &&
     !canAdminAction({ roleCode, action: 'view', screen: 'permission-settings' })
-  const screenAccessBlocked = securityLogBlocked || permissionSettingsBlocked
+  const permissionRequestsBlocked =
+    Boolean(user) &&
+    isPermissionRequestsPath(location.pathname) &&
+    !canAdminAction({ roleCode, action: 'view', screen: 'admin-permission-approval' })
+  const screenAccessBlocked =
+    securityLogBlocked || permissionSettingsBlocked || permissionRequestsBlocked
   const deniedLogPathRef = useRef<string | null>(null)
 
   useEffect(() => {

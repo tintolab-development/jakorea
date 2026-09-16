@@ -175,6 +175,8 @@ export interface ApplicantInstructorRow {
   freeWriting4?: string
   /** 승인 완료 시 기본 정보 상단 노출 관리자 코멘트 */
   managerComment?: string
+  /** BE availableActions — 헤더 CTA 노출 게이트 */
+  availableActions?: string[]
   /** 승인 완료 시 기본 정보 하단: 강의비 책정 기준 (예: 특강 강사비 | 915,000원) */
   lectureFeeBasisDisplay?: string
   /** 강의비 책정 기준 — 유형 */

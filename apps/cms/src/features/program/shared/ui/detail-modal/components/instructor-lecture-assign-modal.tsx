@@ -204,7 +204,7 @@ export function InstructorLectureAssignModal({
 
   const description = isIndividual
     ? `**[${instructor.instructorName}]** 강사님의 프로그램 참여를 승인하시려면 강의를 배정할 일정을 선택해 주세요.`
-    : `**[${instructor.instructorName}]** 강사님의 프로그램 참여를 승인하시려면 강의를 배정할 기관 및 일정을 선택해 주세요.\n강의는 동일한 날짜에 1개의 기관에만 배정 가능합니다.`
+    : `**[${instructor.instructorName}]** 강사님의 프로그램 참여를 승인하시려면 강의를 배정할 기관 및 일정을 선택해 주세요.\n강의는 **동일한 날짜에 1개의 기관에만 배정 가능**합니다.`
 
   const summaryLabel = isIndividual ? '배정된 일정' : '배정된 항목 수'
 

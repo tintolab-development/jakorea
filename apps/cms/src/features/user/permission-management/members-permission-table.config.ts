@@ -57,11 +57,12 @@ function filterRowsBySearchParams(
   const toStr = searchParams.get(`${p}_to`)
 
   let list = data
-  // remote: keyword·승인현황·회원유형·신청시기는 API params로 전달 — 클라 재필터 생략
+  // remote: keyword·승인현황은 API params — 클라 재필터 생략
+  // 회원 유형은 BE `memberTypeLabel`(개인|학교/기관) ↔ query 코드 불일치 대비 클라도 적용
   if (!remoteEnabled && q) {
     list = list.filter(r => r.name.toLowerCase().includes(q))
   }
-  if (!remoteEnabled && role !== 'ALL') {
+  if (role !== 'ALL') {
     list = list.filter(r => r.memberCategory === role)
   }
   if (!remoteEnabled && approvalStatus !== 'ALL') {

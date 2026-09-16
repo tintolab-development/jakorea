@@ -16,11 +16,28 @@ import { shouldUseOrganizationMergeGroupsRemoteApi } from '@/features/program/ge
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { applyCombinedClassMergeToApplicantDetail } from '@/features/program/general/lib/apply-combined-class-merge-state'
 import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
+import { hasCompletedCombinedClassEducationSessions } from '@/features/program/general/lib/combined-class-edit-policy'
+import {
+  type CombinedClassLeadTeacherCandidate,
+} from '@/features/program/general/lib/combined-class-lead-teacher'
+import { InstitutionCombinedClassLeadTeacherModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-lead-teacher-modal'
+import { InstitutionCombinedClassCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-complete-modal'
+import {
+  buildProgramApiUnavailableSaveContent,
+  notifyProgramApiUnavailable,
+  PROGRAM_API_UNAVAILABLE_TITLE,
+} from '@/features/program/shared/lib/program-api-unavailable'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { useApplicantInstructorDetailEdit } from '@/features/program/general/hooks/use-applicant-instructor-detail-edit'
 import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
-import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import {
+  patchApplicantInstructorDetail,
+  type ApplicantInstructorRow,
+} from '@/features/program/shared/model/applicant-instructor'
+import {
+  patchGeneralIndividualApplicantDetail,
   patchGeneralIndividualApplicantManagerEvaluation,
   type GeneralIndividualApplicantDetailSavePayload,
   type GeneralIndividualApplicantRow,
@@ -47,18 +64,6 @@ import {
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { TrainedTeachersApplicantInstitutionDetailContents } from '@/features/program/trained-teachers/ui/institution-detail/applicant-institution-detail-contents'
-import {
-  useInstructorApplicationDetailEnrichment,
-  useOrganizationApplicationDetailEnrichment,
-} from '@/features/program/general/hooks/use-application-form-detail-enrichment'
-import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
-import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
-import { updateInstructorApplicationManagerCommentRemote } from '@/features/program/general/api/applications-api-client'
-import { saveIndividualApplicationAdminCommentRemote } from '@/features/program/general/api/individual-application-update-helpers'
-import {
-  buildProgramApiUnavailableSaveContent,
-  PROGRAM_API_UNAVAILABLE_TITLE,
-} from '@/features/program/shared/lib/program-api-unavailable'
 
 export type ApplicantType =
   | 'institutions'
@@ -534,24 +539,9 @@ export function ApplicantsDetailContents({
     [searchParams, setSearchParams, type]
   )
 
-  const institutionDataRaw = isInstitution ? (data as ApplicantSchoolRow) : null
-  const instructorDataRaw = isInstructor ? (data as ApplicantInstructorRow) : null
+  const institutionData = isInstitution ? (data as ApplicantSchoolRow) : null
+  const instructorData = isInstructor ? (data as ApplicantInstructorRow) : null
   const individualData = isIndividual ? (data as GeneralIndividualApplicantRow) : null
-
-  const enrichRemote =
-    isGeneralDetail && shouldUseGeneralApplicationsRemoteApi()
-
-  const institutionDataEnriched = useOrganizationApplicationDetailEnrichment(
-    institutionDataRaw,
-    { enabled: enrichRemote && isInstitution }
-  )
-  const instructorDataEnriched = useInstructorApplicationDetailEnrichment(
-    instructorDataRaw,
-    { enabled: enrichRemote && isInstructor }
-  )
-
-  const institutionData = institutionDataEnriched ?? institutionDataRaw
-  const instructorData = instructorDataEnriched ?? instructorDataRaw
 
   /** 신청 기관(참여자) 승인 완료: [승인 취소], [정보 수정], [개인정보 상세보기] */
   const isApprovedInstitution = isInstitution && institutionData?.approvalStatus === 'approved'
@@ -619,6 +609,12 @@ export function ApplicantsDetailContents({
     [institutionData, institutionList, mergeGroupsQuery.data, programId, queryClient]
   )
 
+  const [combinedClassLeadTeacherModal, setCombinedClassLeadTeacherModal] = useState<{
+    memberRowIds: string[]
+    candidates: CombinedClassLeadTeacherCandidate[]
+  } | null>(null)
+  const [combinedClassCompleteLabel, setCombinedClassCompleteLabel] = useState<string | null>(null)
+
   const institutionDetailEdit = useApplicantInstitutionDetailEdit({
     institution: isGeneralDetail && isInstitution ? institutionData : null,
     program,
@@ -630,7 +626,33 @@ export function ApplicantsDetailContents({
       ? handleSaveInstitutionCombinedClass
       : undefined,
     combinedClassReadOnly: institutionMergeView?.isLead === false,
+    onCombinedClassApplied: params => {
+      setCombinedClassLeadTeacherModal(params)
+    },
   })
+
+  const combinedClassModals = (
+    <>
+      <InstitutionCombinedClassLeadTeacherModal
+        open={combinedClassLeadTeacherModal != null}
+        candidates={combinedClassLeadTeacherModal?.candidates ?? []}
+        onCancel={() => setCombinedClassLeadTeacherModal(null)}
+        onConfirm={_candidate => {
+          if (!combinedClassLeadTeacherModal) return
+          notifyProgramApiUnavailable(
+            'general-org-merge-lead-teacher',
+            '일반 프로그램 · 합반 담당 교사 지정'
+          )
+          setCombinedClassLeadTeacherModal(null)
+        }}
+      />
+      <InstitutionCombinedClassCompleteModal
+        open={combinedClassCompleteLabel != null}
+        teacherLabel={combinedClassCompleteLabel ?? ''}
+        onClose={() => setCombinedClassCompleteLabel(null)}
+      />
+    </>
+  )
 
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
@@ -729,27 +751,18 @@ export function ApplicantsDetailContents({
       setIsIndividualAdminCommentModalOpen(false)
       return
     }
-    if (shouldUseGeneralApplicationsRemoteApi()) {
-      try {
-        const updated = await saveIndividualApplicationAdminCommentRemote(
-          individualData,
-          individualAdminCommentDraft
-        )
-        onIndividualDetailSaved?.(updated)
-        setIsIndividualAdminCommentModalOpen(false)
-        return
-      } catch {
-        void showAlert({
-          title: '안내',
-          content: MESSAGES.error.save,
-        })
-        return
-      }
-    }
-    void showAlert({
-      title: PROGRAM_API_UNAVAILABLE_TITLE,
-      content: buildProgramApiUnavailableSaveContent('개인 신청 관리자 코멘트'),
+    const updated = patchGeneralIndividualApplicantDetail(individualData.id, {
+      adminComment: individualAdminCommentDraft,
     })
+    if (!updated) {
+      void showAlert({
+        title: '안내',
+        content: MESSAGES.error.save,
+      })
+      return
+    }
+    onIndividualDetailSaved?.(updated)
+    setIsIndividualAdminCommentModalOpen(false)
   }, [
     individualAdminCommentDraft,
     individualData,
@@ -814,32 +827,20 @@ export function ApplicantsDetailContents({
     setIsInstructorAdminCommentModalOpen(true)
   }, [instructorDetailEdit.isEditing, instructorData?.managerComment])
 
-  const handleInstructorAdminCommentSave = useCallback(async () => {
+  const handleInstructorAdminCommentSave = useCallback(() => {
     if (!instructorData) return
-    const trimmed = instructorAdminCommentDraft.trim()
-    if (shouldUseGeneralApplicationsRemoteApi()) {
-      try {
-        const response = await updateInstructorApplicationManagerCommentRemote(instructorData.id, {
-          managerComment: trimmed || null,
-        })
-        onInstructorDetailSaved?.({
-          ...instructorData,
-          managerComment: response.managerComment ?? (trimmed || undefined),
-        })
-        setIsInstructorAdminCommentModalOpen(false)
-        return
-      } catch {
-        void showAlert({
-          title: '안내',
-          content: MESSAGES.error.save,
-        })
-        return
-      }
-    }
-    void showAlert({
-      title: PROGRAM_API_UNAVAILABLE_TITLE,
-      content: buildProgramApiUnavailableSaveContent('강사 신청 관리자 코멘트'),
+    const updated = patchApplicantInstructorDetail(instructorData.id, {
+      managerComment: instructorAdminCommentDraft,
     })
+    if (!updated) {
+      void showAlert({
+        title: '안내',
+        content: MESSAGES.error.save,
+      })
+      return
+    }
+    onInstructorDetailSaved?.(updated)
+    setIsInstructorAdminCommentModalOpen(false)
   }, [instructorAdminCommentDraft, instructorData, onInstructorDetailSaved, showAlert])
 
   const handleInstructorAdminCommentModalCancel = useCallback(() => {
@@ -1062,6 +1063,9 @@ export function ApplicantsDetailContents({
           isCombinedClassProgramEligible={institutionDetailEdit.isCombinedClassProgramEligible}
           isCombinedClassApplyRadioDisabled={institutionDetailEdit.isCombinedClassApplyRadioDisabled}
           combinedClassReadOnly={institutionDetailEdit.combinedClassReadOnly}
+          showCombinedClassScheduleNotice={hasCompletedCombinedClassEducationSessions(
+            d.sessions
+          )}
           hideCombinedClass={isCombinedClassHidden}
           validationErrors={institutionDetailEdit.validationErrors}
           onResendNotificationClick={onResendNotification}
@@ -1254,6 +1258,7 @@ export function ApplicantsDetailContents({
           onAdminCommentDraftChange={() => {}}
         />
         {adminCommentModals}
+        {combinedClassModals}
       </>
     )
   }
@@ -1267,6 +1272,7 @@ export function ApplicantsDetailContents({
         <div className="applicant-contents__panel">{tabPanel}</div>
         {personalInfoRevealModal}
         {adminCommentModals}
+        {combinedClassModals}
       </div>
     )
   }

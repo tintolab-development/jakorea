@@ -52,6 +52,7 @@ import '@/features/program/general/ui/program-list.css'
 import './members-permission-list.css'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, ContentModal, useCmsAlert } from '@/shared/ui'
 
+/** 강사 권한승인 목록 — BE `학교/기관`은 UI `학교(교사)`로 표시 */
 const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCategory'], string> = {
   SCHOOL: '학교(교사)',
   INDIVIDUAL: '개인',
@@ -586,7 +587,6 @@ export const MembersPermissionList = forwardRef<
         { label: '전체', value: 'ALL' },
         { label: '개인', value: 'INDIVIDUAL' },
         { label: '학교(교사)', value: 'SCHOOL' },
-        { label: '강사', value: 'INSTRUCTOR' },
       ],
     }
     const approvalField: FilterFieldConfig = {

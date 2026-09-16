@@ -13,12 +13,16 @@ export interface InstructorApplicationListItemResponse {
   programType?: string;
   recruitmentId?: number;
   instructorMemberId?: number;
+  /** 강사 실명. 프로그램 관리에서는 마스킹하지 않습니다. */
   instructorName?: string;
   applicationStatus?: string;
+  /** 자택 주소. 동(읍/면/리)까지 노출 + ' *****' (FE blur). 기관 주소 아님. */
   homeAddress?: string;
   jaLectureExperienceYears?: number;
   jaEvaluationGrade?: string;
+  /** 마스킹 연락처. 예: 010-****-5678 */
   contact?: string;
+  /** 마스킹 이메일. 예: 0915***@naver.com */
   email?: string;
   instructorTypeSnapshot?: string;
   instructorFeeGradeSnapshot?: string;

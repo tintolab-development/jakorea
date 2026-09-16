@@ -2,15 +2,8 @@ import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
-import {
-  patchGeneralVolunteerDocumentScreeningCancel,
-  patchGeneralVolunteerDocumentScreeningStatus,
-  type GeneralVolunteerApplicantRow,
-} from '@/features/program/general/model/volunteer-applicant'
-import {
-  toVolunteerDocumentCancelRejectionNotifyOptions,
-  type VolunteerDocumentCancelRejectionConfirmPayload,
-} from '@/features/program/general/lib/volunteer-document-cancel-rejection'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
+import type { VolunteerDocumentCancelRejectionConfirmPayload } from '@/features/program/general/lib/volunteer-document-cancel-rejection'
 import {
   DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS,
   filterGeneralDoc1Applicants,
@@ -26,7 +19,10 @@ import {
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
-import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
+import {
+  notifyProgramApiUnavailable,
+  useNotifyProgramApiUnavailableOnce,
+} from '@/features/program/shared/lib/program-api-unavailable'
 import { useGeneralVolunteerDocScreeningColumns } from './doc-screening-columns'
 import {
   requestGeneralVolunteerDocumentBulkApprove,
@@ -176,10 +172,6 @@ export function useGeneralVolunteerDocScreening({
     [exportRows]
   )
 
-  const updateRow = useCallback((id: string, patch: Partial<GeneralVolunteerApplicantRow>) => {
-    setList(prev => prev.map(row => (row.id === id ? { ...row, ...patch } : row)))
-  }, [])
-
   const cancelApprovalVolunteer = useMemo(
     () =>
       cancelApprovalTargetId
@@ -198,7 +190,7 @@ export function useGeneralVolunteerDocScreening({
     async (
       ids: string[],
       status: 'pass' | 'fail',
-      notifyTiming?: PermissionModalPayload['notifyTiming'],
+      _notifyTiming?: PermissionModalPayload['notifyTiming'],
       reason?: string
     ) => {
       const remoteOk = await volunteerRemote.applyRemoteDocumentResult(
@@ -207,23 +199,20 @@ export function useGeneralVolunteerDocScreening({
         reason
       )
       if (remoteOk) return
-      setList(prev => patchGeneralVolunteerDocumentScreeningStatus(prev, ids, status, notifyTiming))
+      notifyProgramApiUnavailable(
+        'general-volunteer-doc-screening-action',
+        '봉사자 1차 서류 심사'
+      )
     },
     [volunteerRemote]
   )
 
-  const applyDocumentScreeningCancel = useCallback(
-    (
-      id: string,
-      notifyOptions?: {
-        notifyTiming: PermissionModalPayload['notifyTiming']
-        rejectionReason?: string
-      }
-    ) => {
-      setList(prev => patchGeneralVolunteerDocumentScreeningCancel(prev, id, notifyOptions))
-    },
-    []
-  )
+  const applyDocumentScreeningCancel = useCallback((_id: string) => {
+    notifyProgramApiUnavailable(
+      'general-volunteer-document-cancel',
+      '봉사자 서류 승인·반려 취소'
+    )
+  }, [])
 
   const closeBulkApproveModal = useCallback(() => {
     setBulkApproveOpen(false)
@@ -345,21 +334,9 @@ export function useGeneralVolunteerDocScreening({
   )
 
   const handleCancelRejectConfirm = useCallback(
-    (payload: VolunteerDocumentCancelRejectionConfirmPayload) => {
+    (_payload: VolunteerDocumentCancelRejectionConfirmPayload) => {
       if (!cancelRejectVolunteer) return
-      const notifyOptions =
-        payload.variant === 'alreadySent'
-          ? toVolunteerDocumentCancelRejectionNotifyOptions(payload)
-          : undefined
-      applyDocumentScreeningCancel(
-        cancelRejectVolunteer.id,
-        notifyOptions
-          ? {
-              notifyTiming: notifyOptions.notifyTiming,
-              rejectionReason: notifyOptions.rejectionReason,
-            }
-          : undefined
-      )
+      applyDocumentScreeningCancel(cancelRejectVolunteer.id)
       setCancelRejectTargetId(null)
     },
     [applyDocumentScreeningCancel, cancelRejectVolunteer]
@@ -393,19 +370,19 @@ export function useGeneralVolunteerDocScreening({
     })
   }, [list, openApproveModal, selectedRowKeys])
 
-  const onManagerAEvaluationChange = useCallback(
-    (id: string, evaluation: GeneralManagerEvaluation) => {
-      updateRow(id, { managerAEvaluation: evaluation })
-    },
-    [updateRow]
-  )
+  const onManagerAEvaluationChange = useCallback((_id: string, _evaluation: GeneralManagerEvaluation) => {
+    notifyProgramApiUnavailable(
+      'general-volunteer-manager-evaluation',
+      '봉사자 담당자 서류평가'
+    )
+  }, [])
 
-  const onManagerBEvaluationChange = useCallback(
-    (id: string, evaluation: GeneralManagerEvaluation) => {
-      updateRow(id, { managerBEvaluation: evaluation })
-    },
-    [updateRow]
-  )
+  const onManagerBEvaluationChange = useCallback((_id: string, _evaluation: GeneralManagerEvaluation) => {
+    notifyProgramApiUnavailable(
+      'general-volunteer-manager-evaluation',
+      '봉사자 담당자 서류평가'
+    )
+  }, [])
 
   const columns = useGeneralVolunteerDocScreeningColumns({
     onManagerAEvaluationChange,

@@ -24,4 +24,5 @@ export interface ParticipantListItemResponse {
   joinedAt?: string;
   completedAt?: string;
   giveUpAt?: string;
+  availableActions?: string[];
 }

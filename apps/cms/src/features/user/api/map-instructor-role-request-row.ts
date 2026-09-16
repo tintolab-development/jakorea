@@ -1,4 +1,5 @@
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
+import { mapInstructorRoleRequestMemberTypeLabel } from '@/features/user/api/lib/map-instructor-role-request-member-type'
 import {
   mapInstructorRoleRequestStatusToApplicationStatus,
 } from '@/features/user/api/lib/map-permission-approval-status'
@@ -30,7 +31,7 @@ export function mapInstructorRoleRequestToRow(
     name,
     phone: item.maskedPhone?.trim() || '',
     email: item.maskedEmail?.trim() || '',
-    memberCategory: 'INSTRUCTOR',
+    memberCategory: mapInstructorRoleRequestMemberTypeLabel(item.memberTypeLabel),
     applicationTypeLabel,
     approvalStatus: mapInstructorRoleRequestStatusToApplicationStatus(item.requestStatus),
     appliedAt: item.requestedAt ?? new Date().toISOString(),

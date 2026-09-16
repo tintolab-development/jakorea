@@ -7,9 +7,15 @@ import {
   resolveCombinedClassApplyRadioDisabled,
 } from '@/features/program/general/lib/combined-class-edit-policy'
 import {
+  buildCombinedClassLeadTeacherCandidatesFromParticipating,
+  type CombinedClassLeadTeacherCandidate,
+} from '@/features/program/general/lib/combined-class-lead-teacher'
+import {
   detailToParticipatingInstitutionEditDraft,
   parseParticipatingInstitutionEditDraft,
+  participatingInstitutionEditDraftToDetailPatch,
   requiresParticipatingTextbookSelection,
+  resolvePartnerGradesFromSchoolIds,
   resolveTextbookIdFromName,
   toCombinedClassApplicationStatus,
 } from '@/features/program/general/lib/participating-institution-detail-edit'
@@ -25,10 +31,10 @@ import {
 } from '@/features/program/general/lib/participating-institution-textbook'
 import { getSameSchoolParticipatingGrades } from '@/features/program/general/lib/get-same-school-participating-grades'
 import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
-import { PROGRAM_API_UNAVAILABLE_SAVE_CONTENT } from '@/features/program/shared/lib/program-api-unavailable'
 import type { CombinedClassApplicationStatus } from '@/features/program/general/lib/applicant-institution-detail-edit'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 import { useCmsAlert } from '@/shared/ui'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -63,6 +69,10 @@ export interface UseParticipatingInstitutionDetailEditParams {
   }) => Promise<void>
   /** 합반 멤버(비 lead) 행이면 true — 합반 필드 read-only */
   combinedClassReadOnly?: boolean
+  onCombinedClassApplied?: (params: {
+    memberRowIds: string[]
+    candidates: CombinedClassLeadTeacherCandidate[]
+  }) => void
 }
 
 export function useParticipatingInstitutionDetailEdit({
@@ -70,9 +80,9 @@ export function useParticipatingInstitutionDetailEdit({
   row,
   program,
   participatingSchoolList,
-  onSaveBasicInfo,
   onSaveCombinedClass,
   combinedClassReadOnly = false,
+  onCombinedClassApplied,
 }: UseParticipatingInstitutionDetailEditParams) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -277,58 +287,116 @@ export function useParticipatingInstitutionDetailEdit({
       return false
     }
 
-    const canSaveCombined =
-      Boolean(onSaveCombinedClass) &&
-      isCombinedClassProgramEligibleFlag &&
-      !combinedClassReadOnly
-
-    const initialDraft = detailToParticipatingInstitutionEditDraft(detail)
-    const combinedClassChanged =
-      normalizedDraft.combinedClassApplication !== initialDraft.combinedClassApplication ||
-      normalizedDraft.combinedClassPartnerSchoolIds.join('|') !==
-        initialDraft.combinedClassPartnerSchoolIds.join('|')
-
-    // Body PATCH는 BE gap — 로컬 setSavedBasicPatches 성공 UX 금지. 합반만 remote.
-    // 합반 외 필드 변경이 있으면 미연동 안내 (합반도 함께 저장하지 않음).
-    const otherFieldsChanged =
-      normalizedDraft.educationGrade !== initialDraft.educationGrade ||
-      normalizedDraft.classCount !== initialDraft.classCount ||
-      normalizedDraft.textbookId !== initialDraft.textbookId ||
-      normalizedDraft.textbookName !== initialDraft.textbookName ||
-      normalizedDraft.teacherName !== initialDraft.teacherName
-
-    if (otherFieldsChanged) {
-      setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
+    const partnerGrades = resolvePartnerGradesFromSchoolIds(
+      normalizedDraft.combinedClassPartnerSchoolIds,
+      participatingSchoolList
+    )
+    const patch = participatingInstitutionEditDraftToDetailPatch(normalizedDraft, partnerGrades, {
+      program,
+      studentCount: row.studentCount,
+      requiresTextbook: usesTextbook,
+      allowTextbookSelectionWithoutCombinedClass: isCompanySchool,
+      catalog: textbookCatalog,
+    })
+    if (Object.keys(patch).length === 0) {
       void showAlert({
-        title: 'API 연동 안내',
-        content: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT,
-      })
-      return false
-    }
-
-    if (!combinedClassChanged) {
-      resetEditState()
-      return true
-    }
-
-    if (!canSaveCombined || !onSaveCombinedClass) {
-      setValidationErrors({ form: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT })
-      void showAlert({
-        title: 'API 연동 안내',
-        content: PROGRAM_API_UNAVAILABLE_SAVE_CONTENT,
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
       })
       return false
     }
 
     setIsSaving(true)
     try {
-      await onSaveCombinedClass({
-        combinedClassApplication: normalizedDraft.combinedClassApplication,
-        combinedClassPartnerSchoolIds: normalizedDraft.combinedClassPartnerSchoolIds,
-      })
-      // keep onSaveBasicInfo unused for body — adminComment is saved via comments API elsewhere
-      void onSaveBasicInfo
+      const baseline = detailToParticipatingInstitutionEditDraft(
+        detail,
+        detail.textbookId || textbookDisplay.textbookId || '',
+        detail.textbookGrade || textbookDisplay.textbookGrade
+      )
+      const partnersChanged =
+        baseline.combinedClassApplication !== normalizedDraft.combinedClassApplication ||
+        baseline.combinedClassPartnerSchoolIds.join('|') !==
+          normalizedDraft.combinedClassPartnerSchoolIds.join('|')
+      const nonMergeChanged =
+        baseline.textbookId !== normalizedDraft.textbookId ||
+        baseline.textbookName !== normalizedDraft.textbookName ||
+        baseline.addressDetail !== normalizedDraft.addressDetail ||
+        baseline.educationFormat !== normalizedDraft.educationFormat ||
+        baseline.teacherName !== normalizedDraft.teacherName ||
+        baseline.teacherPhone !== normalizedDraft.teacherPhone ||
+        baseline.teacherMobile !== normalizedDraft.teacherMobile ||
+        baseline.teacherEmail !== normalizedDraft.teacherEmail ||
+        baseline.applicationReason !== normalizedDraft.applicationReason ||
+        baseline.otherRequests !== normalizedDraft.otherRequests ||
+        baseline.computerInRoom !== normalizedDraft.computerInRoom ||
+        baseline.waitingRoomAvailable !== normalizedDraft.waitingRoomAvailable ||
+        baseline.waitingRoomLocation !== normalizedDraft.waitingRoomLocation ||
+        baseline.mealProvided !== normalizedDraft.mealProvided ||
+        baseline.mealNotice !== normalizedDraft.mealNotice ||
+        baseline.parkingInfo !== normalizedDraft.parkingInfo
+
+      let savedCombinedClass = false
+      if (
+        partnersChanged &&
+        onSaveCombinedClass &&
+        isCombinedClassProgramEligibleFlag &&
+        !combinedClassReadOnly
+      ) {
+        await onSaveCombinedClass({
+          combinedClassApplication: normalizedDraft.combinedClassApplication,
+          combinedClassPartnerSchoolIds: normalizedDraft.combinedClassPartnerSchoolIds,
+        })
+        savedCombinedClass = true
+      } else if (partnersChanged && !onSaveCombinedClass) {
+        notifyProgramApiUnavailable(
+          'general-org-merge-groups-progress',
+          '일반 프로그램 · 참여 기관 합반 신청'
+        )
+        return false
+      }
+
+      if (nonMergeChanged) {
+        notifyProgramApiUnavailable(
+          'general-participating-institution-detail-patch',
+          '일반 프로그램 · 참여 기관 신청 정보 수정'
+        )
+        if (!savedCombinedClass) return false
+      }
+
+      if (!savedCombinedClass && !nonMergeChanged) {
+        resetEditState()
+        return true
+      }
+
       resetEditState()
+
+      if (
+        savedCombinedClass &&
+        normalizedDraft.combinedClassApplication === '신청' &&
+        normalizedDraft.combinedClassPartnerSchoolIds.length > 0 &&
+        !combinedClassReadOnly
+      ) {
+        const partnerRows = participatingSchoolList.filter(item =>
+          normalizedDraft.combinedClassPartnerSchoolIds.includes(item.id)
+        )
+        const candidates = buildCombinedClassLeadTeacherCandidatesFromParticipating(
+          {
+            ...detail,
+            combinedClassApplication: normalizedDraft.combinedClassApplication,
+            combinedClassPartnerSchoolIds: normalizedDraft.combinedClassPartnerSchoolIds,
+            combinedClassPartnerGrades: partnerGrades,
+          },
+          row,
+          partnerRows
+        )
+        if (candidates.length > 0) {
+          onCombinedClassApplied?.({
+            memberRowIds: [detail.id, ...normalizedDraft.combinedClassPartnerSchoolIds],
+            candidates,
+          })
+        }
+      }
+
       return true
     } catch {
       void showAlert({
@@ -344,10 +412,16 @@ export function useParticipatingInstitutionDetailEdit({
     detail,
     draft,
     isCombinedClassProgramEligibleFlag,
-    onSaveBasicInfo,
+    onCombinedClassApplied,
     onSaveCombinedClass,
+    participatingSchoolList,
+    program,
     resetEditState,
+    row,
+    row.studentCount,
+    isCompanySchool,
     showAlert,
+    textbookCatalog,
     usesTextbook,
   ])
 

@@ -6,6 +6,7 @@ import {
   adminRoleCodeToLegacyAdminLevel,
   canAdminAction,
   isAdminAccessDeniedAlert,
+  isPermissionRequestsPath,
   isPermissionSettingsPath,
   isSecurityLogPath,
   parseAdminRoleCode,
@@ -103,9 +104,10 @@ describe('resolveAdminRoleCodeFromUser', () => {
 })
 
 describe('resolveAdminPolicyScreen', () => {
-  it('로그·권한 설정 경로를 매핑한다', () => {
+  it('로그·권한 설정·회원 권한 승인 경로를 매핑한다', () => {
     expect(resolveAdminPolicyScreen('/logs/member-login-history')).toBe('security-logs')
     expect(resolveAdminPolicyScreen('/admin/settings/permissions')).toBe('permission-settings')
+    expect(resolveAdminPolicyScreen('/admin/permission-requests')).toBe('admin-permission-approval')
     expect(resolveAdminPolicyScreen('/users/list')).toBe('default')
   })
 })
@@ -171,6 +173,13 @@ describe('canAdminAction 표 규칙', () => {
     expect(allowed('VIEWER', 'approve', 'admin-permission-approval')).toBe(false)
   })
 
+  it('회원 권한 승인 조회는 뷰어만 차단', () => {
+    expect(allowed('MASTER', 'view', 'admin-permission-approval')).toBe(true)
+    expect(allowed('PM', 'view', 'admin-permission-approval')).toBe(true)
+    expect(allowed('PARTNER', 'view', 'admin-permission-approval')).toBe(true)
+    expect(allowed('VIEWER', 'view', 'admin-permission-approval')).toBe(false)
+  })
+
   it('권한 설정 조회·저장은 뷰어만 차단, 승인·반려는 마스터만', () => {
     expect(allowed('MASTER', 'view', 'permission-settings')).toBe(true)
     expect(allowed('PM', 'view', 'permission-settings')).toBe(true)
@@ -192,6 +201,12 @@ describe('canAdminAction 표 규칙', () => {
     expect(isPermissionSettingsPath('/admin/settings/permissions')).toBe(true)
     expect(isPermissionSettingsPath('/admin/settings/permissions/')).toBe(true)
     expect(isPermissionSettingsPath('/admin/permission-requests')).toBe(false)
+  })
+
+  it('isPermissionRequestsPath는 회원 권한 승인 경로만 인식한다', () => {
+    expect(isPermissionRequestsPath('/admin/permission-requests')).toBe(true)
+    expect(isPermissionRequestsPath('/admin/permission-requests/')).toBe(true)
+    expect(isPermissionRequestsPath('/admin/settings/permissions')).toBe(false)
   })
 
   it('강사 권한 승인은 뷰어만 차단', () => {
