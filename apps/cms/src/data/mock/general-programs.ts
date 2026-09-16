@@ -1316,6 +1316,8 @@ export function invalidateGeneralProgramsCache(): void {
 }
 
 export function getGeneralPrograms(): Program[] {
+  if (generalProgramsCache) return generalProgramsCache
+
   const seeded = GENERAL_PROGRAM_SEEDS.map((seed, index) => {
     const {
       id,

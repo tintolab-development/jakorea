@@ -456,7 +456,10 @@ export function GeneralProgramDetailFullPageModal({
     program?.id ?? programIdHint ?? searchParams.get('programId') ?? undefined
 
   const { updateProgram, setSelectedProgram } = useProgramStore()
-  const remoteEnabled = useGeneralProgramsRemoteEnabled(open && Boolean(programId))
+  const remoteEnabled = useGeneralProgramsRemoteEnabled(
+    open && Boolean(programId),
+    programId
+  )
   const updateGeneralProgramMutation = useUpdateGeneralProgram()
   const {
     program: detailProgram,
@@ -471,7 +474,8 @@ export function GeneralProgramDetailFullPageModal({
   const { disabledLnbKeys } = useGeneralProgramNavigation(open ? programId : undefined, open)
   const { showAlert } = useCmsAlert()
   const displayProgram = useMemo(() => {
-    // remote: 상세 GET만 본문에 사용 (목록 행·resolve 시드 선표시 금지)
+    // remote(API id): 상세 GET만 본문에 사용 (목록 행·resolve 시드 선표시 금지)
+    // FE 시드(`general-prog-*`): remoteEnabled=false → resolve 폴백
     if (remoteEnabled) {
       return detailProgram ? applyGeneralProgramDetailSession(detailProgram) : null
     }

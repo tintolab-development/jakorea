@@ -71,11 +71,17 @@ export function patchInstitutionApplicationProgramBridge(
   partial: Partial<InstitutionApplicationProgramBridge>
 ): void {
   bridgeState = { ...bridgeState, ...partial }
+  bridgeIsDefault = false
   emit()
 }
 
+let bridgeIsDefault = true
+
 export function resetInstitutionApplicationProgramBridge(): void {
+  // 이미 기본값이면 emit 생략 — 닫힌 모달 effect + 불안정 program 참조 루프 방지
+  if (bridgeIsDefault) return
   bridgeState = { ...DEFAULT_BRIDGE }
+  bridgeIsDefault = true
   emit()
 }
 
