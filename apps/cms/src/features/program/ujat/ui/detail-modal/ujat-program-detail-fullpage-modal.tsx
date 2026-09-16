@@ -98,11 +98,7 @@ import {
 } from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   isUjatRecruitTab,
@@ -998,7 +994,7 @@ export function UjatProgramDetailFullPageModal({
     setEditMode('info')
   }, [activeTab, displayProgram, infoResetToProgram, setEditMode])
 
-  const handleInfoSave = useCallback(() => {
+  const handleInfoSave = useCallback(async () => {
     if (displayProgram) {
       const overlay = touchUjatRegistrationOperationAnchorFromRangeSeal(
         readUjatRegistrationBasicInfoOverlayForSave()
@@ -1010,9 +1006,15 @@ export function UjatProgramDetailFullPageModal({
         overlay,
       })
     }
-    setEditMode(null)
-    if (displayProgram) void infoTriggerSave()
+    if (!displayProgram) return
+    const ok = await infoTriggerSave()
+    if (ok) setEditMode(null)
   }, [displayProgram, infoForm, infoTriggerSave, setEditMode])
+
+  const handleInfoCancel = useCallback(() => {
+    infoResetToProgram()
+    setEditMode(null)
+  }, [infoResetToProgram, setEditMode])
 
   const isEditModeRecruitParticipant =
     open &&
@@ -1056,6 +1058,7 @@ export function UjatProgramDetailFullPageModal({
               setSearchParams(next, { replace: true })
             } catch (error) {
               handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
+              throw error
             }
           }
         : undefined,
@@ -1087,6 +1090,7 @@ export function UjatProgramDetailFullPageModal({
               setSearchParams(next, { replace: true })
             } catch (error) {
               handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
+              throw error
             }
           }
         : undefined,
@@ -1152,15 +1156,20 @@ export function UjatProgramDetailFullPageModal({
     setEditMode,
   ])
 
-  const handleRecruitmentSave = useCallback(() => {
-    setEditMode(null)
+  const handleRecruitmentSave = useCallback(async () => {
     if (!activeRecruitTab) return
-    if (activeRecruitTab === 'recruit_participant') {
-      institutionsTriggerSave()
-    } else {
-      volunteersTriggerSave()
-    }
+    const ok =
+      activeRecruitTab === 'recruit_participant'
+        ? await institutionsTriggerSave()
+        : await volunteersTriggerSave()
+    if (ok) setEditMode(null)
   }, [activeRecruitTab, institutionsTriggerSave, volunteersTriggerSave, setEditMode])
+
+  const handleRecruitmentCancel = useCallback(() => {
+    if (activeRecruitTab === 'recruit_participant') institutionsResetToProgram()
+    else volunteersResetToProgram()
+    setEditMode(null)
+  }, [activeRecruitTab, institutionsResetToProgram, setEditMode, volunteersResetToProgram])
 
   // TODO: X는 바깥 모달 닫기로 통일됨. breadcrumb/목록 복귀 외 용도가 없으면 등록부 제거 검토.
   const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
@@ -1791,16 +1800,15 @@ export function UjatProgramDetailFullPageModal({
             <>
               <div className="ujat-detail-modal__info-header">
                 <div className="program-detail-fullpage-modal__header-actions">
-                  <CmsButton
-                    {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
+                  <ProgramEditInfoActions
+                    isEditing={isEditModeInfo}
                     disabled={!canEditInfo && !isEditModeInfo}
-                    onClick={resolveProgramEditInfoClick(isEditModeInfo, {
-                      onEnterEdit: handleInfoEdit,
-                      onSaveEdit: handleInfoSave,
-                    })}
-                  >
-                    {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-                  </CmsButton>
+                    onEdit={handleInfoEdit}
+                    onCancel={handleInfoCancel}
+                    onSave={() => {
+                      void handleInfoSave()
+                    }}
+                  />
                 </div>
               </div>
               <UjatProgramDetailCommonInfoView
@@ -1820,7 +1828,10 @@ export function UjatProgramDetailFullPageModal({
                 canEdit={canEditInfo}
                 isEditMode={isRecruitEditMode}
                 onEdit={handleRecruitmentEdit}
-                onSave={handleRecruitmentSave}
+                onCancel={handleRecruitmentCancel}
+                onSave={() => {
+                  void handleRecruitmentSave()
+                }}
               />
               <UjatProgramRecruitmentPanels
                 program={displayProgram}

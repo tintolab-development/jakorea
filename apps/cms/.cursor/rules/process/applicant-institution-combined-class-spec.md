@@ -9,8 +9,8 @@
 | 기관 **신청** 상세 | 프로그램 상세 → 참여자 신청 → 기관 행 | `institution-basic-info.tsx`, `use-applicant-institution-detail-edit.ts` |
 | **참여** 기관 상세 | 프로그램 진행 현황 → 참여 기관 → 신청 정보 탭 | `school-detail-fullpage-view.tsx`, `use-participating-institution-detail-edit.ts` |
 
-공통 편집 UI: `institution-combined-class-edit-cell.tsx`  
-정책 함수: `combined-class-edit-policy.ts`  
+공통 편집 UI: `institution-combined-class-edit-cell.tsx`
+정책 함수: `combined-class-edit-policy.ts`
 담당 교사 지정: `institution-combined-class-lead-teacher-modal.tsx`
 
 ## 프로그램 자격

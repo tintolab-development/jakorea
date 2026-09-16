@@ -11,11 +11,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
@@ -173,6 +172,7 @@ import {
   type GeneralParticipatingInstitutionDetailTabKey,
   type ParticipatingInstitutionDetailTabKey,
 } from '../../../lib/participating-institution-detail-tabs'
+import type { GeneralProgramNavigationCapabilities } from '../../../hooks/use-general-program-navigation'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { TrainedTeachersParticipatingInstitutionDetailView } from '@/features/program/trained-teachers/ui/institution-detail/participating-institution-detail-view'
 
@@ -336,6 +336,7 @@ export interface SchoolDetailFullpageViewProps {
   program: Program
   detail: SchoolDetailForModal
   row: ParticipatingSchoolRow
+  navigationCapabilities?: GeneralProgramNavigationCapabilities
   /** 합반 대상 lookup — 동일 프로그램 참여 기관 전체 목록 */
   participatingSchoolList?: ParticipatingSchoolRow[]
   /** URL 쿼리 파라미터와 연동 시 활성 탭 (제공 시 controlled) */
@@ -374,6 +375,7 @@ export function GeneralParticipatingInstitutionDetailView(
     program,
     detail,
     row,
+    navigationCapabilities,
     participatingSchoolList = [],
     activeTab: activeTabFromUrl,
     onTabChange,
@@ -394,13 +396,22 @@ export function GeneralParticipatingInstitutionDetailView(
   const { showAlert } = useCmsAlert()
   const [internalTab, setInternalTab] = useState<SchoolDetailTabKey>('application')
   const visibleDetailTabs = useMemo(
-    () => getGeneralParticipatingInstitutionDetailTabKeys(program),
-    [program]
+    () =>
+      getGeneralParticipatingInstitutionDetailTabKeys(
+        program,
+        navigationCapabilities?.studentRosterEnabled
+      ),
+    [navigationCapabilities?.studentRosterEnabled, program]
   )
-  const activeTab = normalizeSchoolDetailTab(
+  const normalizedActiveTab = normalizeSchoolDetailTab(
     activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab,
     program
   )
+  const activeTab = visibleDetailTabs.includes(
+    normalizedActiveTab as GeneralParticipatingInstitutionDetailTabKey
+  )
+    ? normalizedActiveTab
+    : 'application'
   const setActiveTab = (key: SchoolDetailTabKey) => {
     if (onTabChange) onTabChange(key)
     else setInternalTab(key)
@@ -448,6 +459,7 @@ export function GeneralParticipatingInstitutionDetailView(
   const { posts: remotePosts, files: remotePostFiles, isRemoteDataSource: postsRemote, invalidatePosts } =
     useGeneralProgramPosts(program.id)
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
+  const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
@@ -471,9 +483,16 @@ export function GeneralParticipatingInstitutionDetailView(
   const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
   const sessions = row.sessions ?? []
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
+  const availableActions = mergedDetail.availableActions ?? row.availableActions
+  const canRequestActivityWithdraw =
+    !isActivityWithdrawn &&
+    (availableActions == null || availableActions.includes('GIVE_UP'))
+  const showActivityWithdrawButton =
+    isActivityWithdrawn || availableActions == null || availableActions.includes('GIVE_UP')
   const isCompanySchool = isCompanySchoolProgram(program)
   const requiredInstructorCount = resolveRequiredInstructorCount(program)
   const programId = String(program.id)
+  const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
   const companySchoolAssignmentConflictsEnabled =
     isCompanySchool && shouldUseCompanySchoolProgramProgressRemoteApi()
 
@@ -522,6 +541,7 @@ export function GeneralParticipatingInstitutionDetailView(
     isCombinedClassProgramEligible: isCombinedClassProgramEligibleFlag,
     isCombinedClassApplyRadioDisabled,
     enterEdit: enterApplicationInfoEdit,
+    cancelEdit: cancelApplicationInfoEdit,
     saveEdit: saveApplicationInfoEdit,
     updateDraft: updateApplicationInfoDraft,
   } = applicationInfoEdit
@@ -612,16 +632,22 @@ export function GeneralParticipatingInstitutionDetailView(
       })
       return
     }
-    if (isApplicationInfoEditing) return
+    if (!canRequestActivityWithdraw || isApplicationInfoEditing) return
     setActivityWithdrawModalOpen(true)
-  }, [isActivityWithdrawn, isApplicationInfoEditing, showAlert])
+  }, [
+    canRequestActivityWithdraw,
+    isActivityWithdrawn,
+    isApplicationInfoEditing,
+    showAlert,
+  ])
 
   const handleCancelActivityWithdraw = useCallback(() => {
+    if (activityWithdrawSubmitting) return
     setActivityWithdrawModalOpen(false)
-  }, [])
+  }, [activityWithdrawSubmitting])
 
   const handleConfirmActivityWithdraw = useCallback(
-    (payload: ActivityWithdrawScheduleModalPayload) => {
+    async (payload: ActivityWithdrawScheduleModalPayload) => {
       const patch = resolveParticipatingInstitutionActivityWithdrawPatch(
         program,
         sessions,
@@ -629,10 +655,57 @@ export function GeneralParticipatingInstitutionDetailView(
       )
       if (!patch) return
 
+      const reason =
+        [mergedDetail.schoolName, payload.stopScheduleLabel].filter(Boolean).join(' · ') ||
+        payload.stopScheduleLabel ||
+        '활동 포기'
+
+      if (progressRemoteEnabled) {
+        setActivityWithdrawSubmitting(true)
+        try {
+          await giveUpGeneralParticipatingInstitution(programId, detail.id, reason)
+          onSaveBasicInfo?.({ id: detail.id, ...patch })
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.institutions(programId),
+          })
+          setActivityWithdrawModalOpen(false)
+          showAlert({
+            title: '활동 포기',
+            content: `${mergedDetail.schoolName} 기관이 활동 포기 처리되었습니다.`,
+          })
+        } catch (error) {
+          const message =
+            error instanceof Error && error.message.trim()
+              ? error.message
+              : '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          showAlert({
+            title: '활동 포기 실패',
+            content: message,
+          })
+        } finally {
+          setActivityWithdrawSubmitting(false)
+        }
+        return
+      }
+
       onSaveBasicInfo?.({ id: detail.id, ...patch })
       setActivityWithdrawModalOpen(false)
+      showAlert({
+        title: '활동 포기',
+        content: `${mergedDetail.schoolName} 기관이 활동 포기 처리되었습니다.`,
+      })
     },
-    [detail.id, onSaveBasicInfo, program, sessions]
+    [
+      detail.id,
+      mergedDetail.schoolName,
+      onSaveBasicInfo,
+      program,
+      programId,
+      progressRemoteEnabled,
+      queryClient,
+      sessions,
+      showAlert,
+    ]
   )
 
   const instructors =
@@ -1580,26 +1653,29 @@ export function GeneralParticipatingInstitutionDetailView(
         trailing={
           activeTab === 'application' ? (
             <>
-              <CmsButton
-                variant="delete"
-                size="large"
-                width={140}
-                disabled={isActivityWithdrawn || isApplicationInfoEditing}
-                onClick={handleRequestActivityWithdraw}
-              >
-                활동 포기
-              </CmsButton>
-              <CmsButton
-                {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
-                  onEnterEdit: enterApplicationInfoEdit,
-                  onSaveEdit: () => {
-                    void saveApplicationInfoEdit()
-                  },
-                })}
-              >
-                {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-              </CmsButton>
+              {showActivityWithdrawButton ? (
+                <CmsButton
+                  variant="delete"
+                  size="large"
+                  width={140}
+                  disabled={
+                    !canRequestActivityWithdraw ||
+                    isApplicationInfoEditing ||
+                    activityWithdrawSubmitting
+                  }
+                  onClick={handleRequestActivityWithdraw}
+                >
+                  활동 포기
+                </CmsButton>
+              ) : null}
+              <ProgramEditInfoActions
+                isEditing={isApplicationInfoEditing}
+                onEdit={enterApplicationInfoEdit}
+                onCancel={cancelApplicationInfoEdit}
+                onSave={() => {
+                  void saveApplicationInfoEdit()
+                }}
+              />
               {showAdminCommentSection ? (
                 <CmsButton
                   variant="primary"
@@ -2109,6 +2185,7 @@ export function GeneralParticipatingInstitutionDetailView(
       <ActivityWithdrawScheduleModal
         open={activityWithdrawModalOpen}
         scheduleOptions={activityWithdrawScheduleOptions}
+        confirming={activityWithdrawSubmitting}
         onCancel={handleCancelActivityWithdraw}
         onConfirm={handleConfirmActivityWithdraw}
       />

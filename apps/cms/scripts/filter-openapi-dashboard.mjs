@@ -26,6 +26,7 @@ const DASHBOARD_EXACT_PATHS = new Set([
   '/api/admin/individual-applications/{applicationId}/notifications/resend',
   '/api/admin/individual-applications/{applicationId}/privacy/unmask',
   '/api/admin/individual-applications/{applicationId}/document-evaluations/{managerSlot}',
+  '/api/admin/volunteer-applications/{applicationId}/document-evaluations/{managerSlot}',
 ])
 
 function isDashboardSubsetPath(path) {

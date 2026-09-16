@@ -1,6 +1,6 @@
 import { CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 
-/** 프로그램 상세 — 정보 수정 액션 버튼 라벨 (편집 중에도 「정보 저장」으로 바꾸지 않음) */
+/** 프로그램 상세 정보 편집 액션 라벨 */
 export const PROGRAM_EDIT_INFO_BUTTON_LABEL = '정보 수정'
 
 /**

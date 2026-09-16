@@ -15,12 +15,16 @@ import {
   submitGeneralVolunteerFinalResultBulk,
   giveUpGeneralVolunteerApplication,
   submitGeneralInterviewAssignmentEvaluation,
+  updateGeneralVolunteerDocumentEvaluation,
 } from '@/features/program/general/api/admin-applications-service'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import type { ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
-import type { GeneralSecondInterviewScreeningStatus } from '@/features/program/general/lib/volunteer-screening-constants'
+import type {
+  GeneralManagerEvaluation,
+  GeneralSecondInterviewScreeningStatus,
+} from '@/features/program/general/lib/volunteer-screening-constants'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { giveUpIndividualApplicationRemote } from '@/features/program/general/api/applications-api-client'
 
@@ -34,6 +38,26 @@ type UseGeneralVolunteerApplicationsRemoteOptions = {
   /** false면 remote 비활성 — mock 로더는 호출부 유지 */
   enabled?: boolean
   setList: (rows: GeneralVolunteerApplicantRow[]) => void
+}
+
+function getDocumentEvaluationErrorMessage(error: unknown): string {
+  const status =
+    error && typeof error === 'object' && 'response' in error
+      ? (error as { response?: { status?: number } }).response?.status
+      : undefined
+  switch (status) {
+    case 403:
+      return '이 프로그램에 접근할 권한이 없거나 본인에게 배정되지 않은 담당자 슬롯입니다.'
+    case 404:
+      return '봉사자 신청 정보를 찾을 수 없습니다.'
+    case 409:
+      return '최종 서류 결과가 확정되어 담당자 평가를 수정할 수 없습니다.'
+    case 400:
+    case 422:
+      return '담당자 평가값이 올바르지 않습니다.'
+    default:
+      return '담당자 평가 저장 중 오류가 발생했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'
+  }
 }
 
 export function useGeneralVolunteerApplicationsRemote({
@@ -138,6 +162,25 @@ export function useGeneralVolunteerApplicationsRemote({
     [invalidateApplications, notifyRemoteFailure, remoteEnabled, showAlert, subjectKind]
   )
 
+  const applyRemoteManagerEvaluation = useCallback(
+    async (applicationId: string, managerSlot: 'A' | 'B', evaluation: GeneralManagerEvaluation) => {
+      if (!remoteEnabled || subjectKind !== 'volunteer') return false
+      try {
+        await updateGeneralVolunteerDocumentEvaluation(applicationId, managerSlot, evaluation)
+        await invalidateApplications()
+        return true
+      } catch (error) {
+        await invalidateApplications()
+        showAlert({
+          title: '평가 저장 실패',
+          content: getDocumentEvaluationErrorMessage(error),
+        })
+        return false
+      }
+    },
+    [invalidateApplications, remoteEnabled, showAlert, subjectKind]
+  )
+
   const applyRemoteFinalResult = useCallback(
     async (
       ids: string[],
@@ -229,6 +272,7 @@ export function useGeneralVolunteerApplicationsRemote({
     subjectKind,
     applicationsLoading: remoteEnabled ? query.isFetching && query.data === undefined : false,
     applyRemoteDocumentResult,
+    applyRemoteManagerEvaluation,
     applyRemoteFinalResult,
     applyRemoteInterviewEvaluation,
     applyRemoteGiveUp,

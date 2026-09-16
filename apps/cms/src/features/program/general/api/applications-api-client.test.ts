@@ -10,7 +10,11 @@ vi.mock('@/shared/api/orval-mutator', () => ({
 }))
 
 import customInstance from '@/shared/api/orval-mutator'
-import { updateIndividualApplication } from './applications-api-client'
+import {
+  updateIndividualApplication,
+  updateIndividualDocumentEvaluationRemote,
+  updateVolunteerDocumentEvaluationRemote,
+} from './applications-api-client'
 
 describe('updateIndividualApplication', () => {
   beforeEach(() => {
@@ -81,6 +85,72 @@ describe('updateIndividualApplication', () => {
           teamRole: 'LEADER',
         },
       })
+    )
+  })
+})
+
+describe('updateIndividualDocumentEvaluationRemote', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('담당자 서류 평가를 canonical PUT 경로로 저장한다', async () => {
+    const response = {
+      applicationId: 1690625,
+      managerSlot: 'A',
+      evaluation: 'PASS',
+    }
+    vi.mocked(customInstance).mockResolvedValue(response)
+
+    await expect(
+      updateIndividualDocumentEvaluationRemote('1690625', 'A', {
+        evaluation: 'PASS',
+      })
+    ).resolves.toEqual(response)
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/individual-applications/1690625/document-evaluations/A',
+      method: 'PUT',
+      data: {
+        evaluation: 'PASS',
+      },
+    })
+  })
+})
+
+describe('updateVolunteerDocumentEvaluationRemote', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('개인 신청 API가 아닌 봉사자 전용 PUT 경로로 담당자 평가를 저장한다', async () => {
+    const response = {
+      applicationId: 1690641,
+      managerSlot: 'A',
+      evaluation: 'PASS',
+      managerAEvaluation: 'PASS',
+      managerBEvaluation: 'UNREVIEWED',
+    }
+    vi.mocked(customInstance).mockResolvedValue(response)
+
+    await expect(
+      updateVolunteerDocumentEvaluationRemote('1690641', 'A', {
+        evaluation: 'PASS',
+      })
+    ).resolves.toEqual(response)
+
+    expect(customInstance).toHaveBeenCalledWith(
+      {
+        url: '/api/admin/volunteer-applications/1690641/document-evaluations/A',
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        data: {
+          evaluation: 'PASS',
+        },
+      },
+      undefined
     )
   })
 })

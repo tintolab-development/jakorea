@@ -114,6 +114,11 @@ export function useGeminiRecruitmentInfoEdit(
     setEditMode(true)
   }, [detail, resetDraftFromDetail, setEditMode])
 
+  const handleCancel = useCallback(() => {
+    resetDraftFromDetail()
+    setEditMode(false)
+  }, [resetDraftFromDetail, setEditMode])
+
   const handleSave = useCallback(async () => {
     if (detail == null || draft == null || !recruitmentId) return
     const nextDraft: GeminiRecruitmentInfoEditDraft = {
@@ -165,6 +170,7 @@ export function useGeminiRecruitmentInfoEdit(
     draft,
     patchDraft,
     handleEdit,
+    handleCancel,
     handleSave,
     editor,
     editorMinHeight,

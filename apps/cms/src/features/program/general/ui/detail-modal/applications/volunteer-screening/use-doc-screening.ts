@@ -57,7 +57,11 @@ const EXPORT_COLUMNS: ColumnsType<Record<string, string | number>> = [
   },
   { title: '담당자 A 평가', dataIndex: 'managerAEvaluationLabel', key: 'managerAEvaluationLabel' },
   { title: '담당자 B 평가', dataIndex: 'managerBEvaluationLabel', key: 'managerBEvaluationLabel' },
-  { title: '1차 서류 심사 현황', dataIndex: 'documentScreeningStatusLabel', key: 'documentScreeningStatusLabel' },
+  {
+    title: '1차 서류 심사 현황',
+    dataIndex: 'documentScreeningStatusLabel',
+    key: 'documentScreeningStatusLabel',
+  },
 ]
 
 function toExportRow(row: GeneralVolunteerApplicantRow): Record<string, string | number> {
@@ -94,11 +98,7 @@ function toExportRow(row: GeneralVolunteerApplicantRow): Record<string, string |
   }
 }
 
-export function useGeneralVolunteerDocScreening({
-  programId,
-}: {
-  programId: string
-}) {
+export function useGeneralVolunteerDocScreening({ programId }: { programId: string }) {
   const [bulkApproveOpen, setBulkApproveOpen] = useState(false)
   const [bulkRejectOpen, setBulkRejectOpen] = useState(false)
   const [bulkApproveCompleteCount, setBulkApproveCompleteCount] = useState<number | null>(null)
@@ -140,6 +140,7 @@ export function useGeneralVolunteerDocScreening({
     rowId: string
     manager: 'A' | 'B'
   } | null>(null)
+  const [updatingManagerEvaluation, setUpdatingManagerEvaluation] = useState<string | null>(null)
 
   useEffect(() => {
     if (volunteerRemote.remoteEnabled) return
@@ -174,9 +175,7 @@ export function useGeneralVolunteerDocScreening({
 
   const cancelApprovalVolunteer = useMemo(
     () =>
-      cancelApprovalTargetId
-        ? (list.find(row => row.id === cancelApprovalTargetId) ?? null)
-        : null,
+      cancelApprovalTargetId ? (list.find(row => row.id === cancelApprovalTargetId) ?? null) : null,
     [cancelApprovalTargetId, list]
   )
 
@@ -199,19 +198,13 @@ export function useGeneralVolunteerDocScreening({
         reason
       )
       if (remoteOk) return
-      notifyProgramApiUnavailable(
-        'general-volunteer-doc-screening-action',
-        '봉사자 1차 서류 심사'
-      )
+      notifyProgramApiUnavailable('general-volunteer-doc-screening-action', '봉사자 1차 서류 심사')
     },
     [volunteerRemote]
   )
 
   const applyDocumentScreeningCancel = useCallback((_id: string) => {
-    notifyProgramApiUnavailable(
-      'general-volunteer-document-cancel',
-      '봉사자 서류 승인·반려 취소'
-    )
+    notifyProgramApiUnavailable('general-volunteer-document-cancel', '봉사자 서류 승인·반려 취소')
   }, [])
 
   const closeBulkApproveModal = useCallback(() => {
@@ -300,11 +293,7 @@ export function useGeneralVolunteerDocScreening({
     async (payload: PermissionModalPayload) => {
       if (!approveModalVolunteer) return
       const volunteerName = approveModalVolunteer.name
-      await applyDocumentScreeningStatus(
-        [approveModalVolunteer.id],
-        'pass',
-        payload.notifyTiming
-      )
+      await applyDocumentScreeningStatus([approveModalVolunteer.id], 'pass', payload.notifyTiming)
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== approveModalVolunteer.id))
       setApproveModalVolunteer(null)
       setApproveCompleteVolunteerName(volunteerName)
@@ -370,25 +359,37 @@ export function useGeneralVolunteerDocScreening({
     })
   }, [list, openApproveModal, selectedRowKeys])
 
-  const onManagerAEvaluationChange = useCallback((_id: string, _evaluation: GeneralManagerEvaluation) => {
-    notifyProgramApiUnavailable(
-      'general-volunteer-manager-evaluation',
-      '봉사자 담당자 서류평가'
-    )
-  }, [])
+  const updateManagerEvaluation = useCallback(
+    async (id: string, manager: 'A' | 'B', evaluation: GeneralManagerEvaluation) => {
+      const mutationKey = `${id}:${manager}`
+      setUpdatingManagerEvaluation(mutationKey)
+      try {
+        await volunteerRemote.applyRemoteManagerEvaluation(id, manager, evaluation)
+      } finally {
+        setUpdatingManagerEvaluation(current => (current === mutationKey ? null : current))
+      }
+    },
+    [volunteerRemote]
+  )
 
-  const onManagerBEvaluationChange = useCallback((_id: string, _evaluation: GeneralManagerEvaluation) => {
-    notifyProgramApiUnavailable(
-      'general-volunteer-manager-evaluation',
-      '봉사자 담당자 서류평가'
-    )
-  }, [])
+  const onManagerAEvaluationChange = useCallback(
+    (id: string, evaluation: GeneralManagerEvaluation) =>
+      updateManagerEvaluation(id, 'A', evaluation),
+    [updateManagerEvaluation]
+  )
+
+  const onManagerBEvaluationChange = useCallback(
+    (id: string, evaluation: GeneralManagerEvaluation) =>
+      updateManagerEvaluation(id, 'B', evaluation),
+    [updateManagerEvaluation]
+  )
 
   const columns = useGeneralVolunteerDocScreeningColumns({
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
     openManagerDropdown,
     setOpenManagerDropdown,
+    updatingManagerEvaluation,
   })
 
   return {
@@ -437,6 +438,7 @@ export function useGeneralVolunteerDocScreening({
     applyDocumentScreeningStatus,
     openManagerDropdown,
     setOpenManagerDropdown,
+    updatingManagerEvaluation,
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
     applicationsLoading: volunteerRemote.applicationsLoading,

@@ -25,6 +25,7 @@ import {
   getGeneralProgressMenuItems,
   getGeneralSurveyMenuItems,
   getGeneralVolunteerInterviewEnabled,
+  getVisibleGeneralProgressMenuItems,
   hasGeneralInstructorApplications,
   hasGeneralParticipantApplications,
   hasGeneralVolunteerApplications,
@@ -471,7 +472,8 @@ export function GeneralProgramDetailFullPageModal({
     initialProgram: program,
     enabled: open,
   })
-  const { disabledLnbKeys } = useGeneralProgramNavigation(open ? programId : undefined, open)
+  const { disabledLnbKeys, capabilities: navigationCapabilities } =
+    useGeneralProgramNavigation(open ? programId : undefined, open)
   const { showAlert } = useCmsAlert()
   const displayProgram = useMemo(() => {
     // remote(API id): 상세 GET만 본문에 사용 (목록 행·resolve 시드 선표시 금지)
@@ -553,10 +555,7 @@ export function GeneralProgramDetailFullPageModal({
     : false
   const showManagers = !disabledLnbKeys.has('managers')
   const progressMenuItemsFiltered = useMemo(
-    () =>
-      disabledLnbKeys.has('progress')
-        ? []
-        : progressMenuItems,
+    () => getVisibleGeneralProgressMenuItems(progressMenuItems, disabledLnbKeys.has('progress')),
     [disabledLnbKeys, progressMenuItems]
   )
   const surveyItemsFiltered = useMemo(
@@ -754,6 +753,11 @@ export function GeneralProgramDetailFullPageModal({
     }
     setEditMode(null)
   }, [infoForm, infoTriggerSave, setEditMode, showAlert])
+
+  const handleInfoCancel = useCallback(() => {
+    infoResetToProgram()
+    setEditMode(null)
+  }, [infoResetToProgram, setEditMode])
 
   const recruitSubTab = useMemo((): GeneralRecruitTabKey => {
     if (activeLnb !== 'info' || activeTab !== 'recruitment') return 'institutions'
@@ -966,6 +970,19 @@ export function GeneralProgramDetailFullPageModal({
     volunteersTriggerSave,
     setEditMode,
     showAlert,
+  ])
+
+  const handleRecruitmentCancel = useCallback(() => {
+    if (recruitSubTab === 'institutions') institutionsResetToProgram()
+    else if (recruitSubTab === 'instructors') instructorsResetToProgram()
+    else volunteersResetToProgram()
+    setEditMode(null)
+  }, [
+    recruitSubTab,
+    institutionsResetToProgram,
+    instructorsResetToProgram,
+    volunteersResetToProgram,
+    setEditMode,
   ])
 
   // 신청 상세 중첩 — 헤더 X 시 목록 복귀용 (handleHeaderClose에서 호출)
@@ -1779,6 +1796,7 @@ export function GeneralProgramDetailFullPageModal({
                 form={infoForm}
                 canWrite={canWrite}
                 onEdit={handleInfoEdit}
+                onCancel={handleInfoCancel}
                 onSave={handleInfoSave}
               />
             ) : activeLnb === 'info' && activeTab === 'recruitment' ? (
@@ -1799,6 +1817,7 @@ export function GeneralProgramDetailFullPageModal({
                 volunteersForm={isEditModeVolunteers ? volunteersForm : undefined}
                 registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
                 onEdit={handleRecruitmentEdit}
+                onCancel={handleRecruitmentCancel}
                 onSave={handleRecruitmentSave}
                 onOpenRecruitmentPreview={handleOpenRecruitmentPreview}
               />
@@ -1856,6 +1875,7 @@ export function GeneralProgramDetailFullPageModal({
                   <ParticipatingInstitutionsSection
                     programId={displayProgram.id}
                     program={displayProgram}
+                    navigationCapabilities={navigationCapabilities}
                     schoolIdFromUrl={schoolIdFromUrl}
                     schoolTabFromUrl={activeSchoolTab}
                     onSchoolTabChange={setSchoolTab}

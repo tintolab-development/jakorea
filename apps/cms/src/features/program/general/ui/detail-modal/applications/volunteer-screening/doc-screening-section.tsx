@@ -83,6 +83,7 @@ export function GeneralVolunteerDocScreeningSection({
     handleCancelRejectConfirm,
     openManagerDropdown,
     setOpenManagerDropdown,
+    updatingManagerEvaluation,
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
     applicationsLoading,
@@ -205,6 +206,7 @@ export function GeneralVolunteerDocScreeningSection({
           applicant={selectedApplicant}
           openManagerDropdown={openManagerDropdown}
           setOpenManagerDropdown={setOpenManagerDropdown}
+          updatingManagerEvaluation={updatingManagerEvaluation}
           onManagerAEvaluationChange={onManagerAEvaluationChange}
           onManagerBEvaluationChange={onManagerBEvaluationChange}
           onDocumentReject={() => openRejectModal(selectedApplicant)}

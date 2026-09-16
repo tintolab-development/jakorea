@@ -162,3 +162,11 @@ export function getGeneralProgressMenuItems(program: Program): GeneralProgressMe
 
   return items
 }
+
+/** 상위 navigation 비활성 또는 실제 하위 메뉴 없음이면 빈 LNB 카테고리를 만들지 않는다. */
+export function getVisibleGeneralProgressMenuItems(
+  items: readonly GeneralProgressMenuItem[],
+  progressDisabled: boolean
+): GeneralProgressMenuItem[] {
+  return progressDisabled ? [] : [...items]
+}

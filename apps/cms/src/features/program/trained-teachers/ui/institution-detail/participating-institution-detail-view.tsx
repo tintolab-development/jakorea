@@ -7,11 +7,7 @@ import { CmsButton } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
   MESSAGES,
@@ -60,8 +56,8 @@ import {
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
-  TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_KEYS,
   TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_LABELS,
+  getTrainedTeachersInstitutionDetailTabKeys,
   normalizeTrainedTeachersInstitutionDetailTab,
   type TrainedTeachersInstitutionDetailTabKey,
 } from '@/features/program/trained-teachers/lib/institution-detail-tabs'
@@ -76,6 +72,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   program,
   detail,
   row,
+  navigationCapabilities,
   participatingSchoolList = [],
   activeTab: activeTabFromUrl,
   onTabChange,
@@ -88,9 +85,19 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   const { showAlert } = useCmsAlert()
   const [internalTab, setInternalTab] =
     useState<TrainedTeachersInstitutionDetailTabKey>('application')
-  const activeTab = normalizeTrainedTeachersInstitutionDetailTab(
+  const visibleDetailTabs = useMemo(
+    () =>
+      getTrainedTeachersInstitutionDetailTabKeys(
+        navigationCapabilities?.educationJournalEnabled
+      ),
+    [navigationCapabilities?.educationJournalEnabled]
+  )
+  const normalizedActiveTab = normalizeTrainedTeachersInstitutionDetailTab(
     activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
   )
+  const activeTab = visibleDetailTabs.includes(normalizedActiveTab)
+    ? normalizedActiveTab
+    : 'application'
   const setActiveTab = (key: TrainedTeachersInstitutionDetailTabKey) => {
     if (onTabChange) onTabChange(key)
     else setInternalTab(key)
@@ -139,6 +146,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     usesTextbook,
     canEditTextbook,
     enterEdit: enterApplicationInfoEdit,
+    cancelEdit: cancelApplicationInfoEdit,
     saveEdit: saveApplicationInfoEdit,
     updateDraft: updateApplicationInfoDraft,
   } = applicationInfoEdit
@@ -329,7 +337,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         className="school-detail-fullpage-view__tabs-row"
         activeKey={activeTab}
         onChange={key => setActiveTab(key as TrainedTeachersInstitutionDetailTabKey)}
-        items={TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_KEYS.map(key => ({
+        items={visibleDetailTabs.map(key => ({
           key,
           label: TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_LABELS[key],
         }))}
@@ -345,15 +353,14 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               >
                 활동 포기
               </CmsButton>
-              <CmsButton
-                {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
-                  onEnterEdit: enterApplicationInfoEdit,
-                  onSaveEdit: () => saveApplicationInfoEdit(),
-                })}
-              >
-                {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-              </CmsButton>
+              <ProgramEditInfoActions
+                isEditing={isApplicationInfoEditing}
+                onEdit={enterApplicationInfoEdit}
+                onCancel={cancelApplicationInfoEdit}
+                onSave={() => {
+                  void saveApplicationInfoEdit()
+                }}
+              />
               {showAdminCommentSection ? (
                 <CmsButton
                   variant="primary"

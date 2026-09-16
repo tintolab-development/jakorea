@@ -41,6 +41,7 @@ import {
   submitInterviewAssignmentEvaluationRemote,
   submitVolunteerDocumentResultRemote,
   submitVolunteerFinalResultRemote,
+  updateVolunteerDocumentEvaluationRemote,
   type ApplicationsListQuery,
 } from '@/features/program/general/api/applications-api-client'
 import {
@@ -59,6 +60,8 @@ import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schema
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
 import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboard/schemas/volunteerFinalResultRequest'
 import type { GeneralSecondInterviewScreeningStatus } from '@/features/program/general/lib/volunteer-screening-constants'
+import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
+import { DocumentManagerEvaluation } from '@/shared/api/generated/dashboard/schemas/documentManagerEvaluation'
 
 function toBulkNumericApplicationIds(ids: string[]): number[] | null {
   const numericIds = ids.map(id => Number(id))
@@ -88,9 +91,10 @@ export async function fetchGeneralOrganizationApplications(
   const scheduleResults = await Promise.all(
     items.map(async item => {
       const applicationId = item.id == null ? '' : String(item.id)
-      if (!applicationId) return [] as Awaited<
-        ReturnType<typeof fetchOrganizationApplicationRequestedSchedulesRemote>
-      >
+      if (!applicationId)
+        return [] as Awaited<
+          ReturnType<typeof fetchOrganizationApplicationRequestedSchedulesRemote>
+        >
       try {
         return await fetchOrganizationApplicationRequestedSchedulesRemote(applicationId)
       } catch {
@@ -303,6 +307,18 @@ export async function submitGeneralVolunteerDocumentResult(
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await submitVolunteerDocumentResultRemote(applicationId, payload)
+}
+
+export async function updateGeneralVolunteerDocumentEvaluation(
+  applicationId: string,
+  managerSlot: 'A' | 'B',
+  evaluation: GeneralManagerEvaluation
+): Promise<void> {
+  assertApplicationsRemoteReady()
+  await updateVolunteerDocumentEvaluationRemote(applicationId, managerSlot, {
+    evaluation:
+      DocumentManagerEvaluation[evaluation.toUpperCase() as keyof typeof DocumentManagerEvaluation],
+  })
 }
 
 /**

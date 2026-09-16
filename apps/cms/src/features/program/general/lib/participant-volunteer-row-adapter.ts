@@ -48,6 +48,9 @@ export function mapParticipantToVolunteerScreeningRow(
     essayJaExperience: '-',
     managerAEvaluation: row.managerAEvaluation ?? 'unreviewed',
     managerBEvaluation: row.managerBEvaluation ?? 'unreviewed',
+    canEditManagerAEvaluation: row.canEditManagerAEvaluation === true,
+    canEditManagerBEvaluation: row.canEditManagerBEvaluation === true,
+    availableActions: row.availableActions ?? [],
     documentScreeningStatus: row.documentScreeningStatus ?? 'pending',
     /** 목록 숫자 = detail availability 슬롯 수 (배정 팝업 연민트·슬롯과 동일 SSOT) */
     interviewSlotCount: countInterviewAvailabilitySlots(interviewAvailability),

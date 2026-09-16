@@ -16,6 +16,7 @@ export interface GeneralVolunteerApplicantManagerEvaluationSectionProps {
   setOpenManagerDropdown: (value: { rowId: string; manager: 'A' | 'B' } | null) => void
   onManagerAEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
   onManagerBEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
+  updatingManagerEvaluation: string | null
 }
 
 export function GeneralVolunteerApplicantManagerEvaluationSection({
@@ -24,6 +25,7 @@ export function GeneralVolunteerApplicantManagerEvaluationSection({
   setOpenManagerDropdown,
   onManagerAEvaluationChange,
   onManagerBEvaluationChange,
+  updatingManagerEvaluation,
 }: GeneralVolunteerApplicantManagerEvaluationSectionProps) {
   return (
     <section className="general-volunteer-applicant-manager-evaluation">
@@ -36,15 +38,27 @@ export function GeneralVolunteerApplicantManagerEvaluationSection({
                 <StatusDropdownCell<GeneralManagerEvaluation>
                   status={applicant.managerAEvaluation}
                   statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
-                  renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
+                  renderBadge={evaluation => (
+                    <GeneralManagerEvaluationBadge evaluation={evaluation} />
+                  )}
                   isItemDisabled={(current, option) => current === option}
-                  onChange={evaluation => onManagerAEvaluationChange(applicant.id, evaluation)}
+                  onChange={
+                    applicant.canEditManagerAEvaluation
+                      ? evaluation => onManagerAEvaluationChange(applicant.id, evaluation)
+                      : undefined
+                  }
+                  isUpdating={updatingManagerEvaluation === `${applicant.id}:A`}
                   isOpen={
+                    applicant.canEditManagerAEvaluation &&
                     openManagerDropdown?.rowId === applicant.id &&
                     openManagerDropdown.manager === 'A'
                   }
                   onOpenChange={open =>
-                    setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'A' } : null)
+                    setOpenManagerDropdown(
+                      open && applicant.canEditManagerAEvaluation
+                        ? { rowId: applicant.id, manager: 'A' }
+                        : null
+                    )
                   }
                   tagLayout="tag100"
                 />
@@ -58,15 +72,27 @@ export function GeneralVolunteerApplicantManagerEvaluationSection({
                 <StatusDropdownCell<GeneralManagerEvaluation>
                   status={applicant.managerBEvaluation}
                   statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
-                  renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
+                  renderBadge={evaluation => (
+                    <GeneralManagerEvaluationBadge evaluation={evaluation} />
+                  )}
                   isItemDisabled={(current, option) => current === option}
-                  onChange={evaluation => onManagerBEvaluationChange(applicant.id, evaluation)}
+                  onChange={
+                    applicant.canEditManagerBEvaluation
+                      ? evaluation => onManagerBEvaluationChange(applicant.id, evaluation)
+                      : undefined
+                  }
+                  isUpdating={updatingManagerEvaluation === `${applicant.id}:B`}
                   isOpen={
+                    applicant.canEditManagerBEvaluation &&
                     openManagerDropdown?.rowId === applicant.id &&
                     openManagerDropdown.manager === 'B'
                   }
                   onOpenChange={open =>
-                    setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'B' } : null)
+                    setOpenManagerDropdown(
+                      open && applicant.canEditManagerBEvaluation
+                        ? { rowId: applicant.id, manager: 'B' }
+                        : null
+                    )
                   }
                   tagLayout="tag100"
                 />

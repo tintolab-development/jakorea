@@ -1,5 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
+import { getJAKoreaCMSBackendAPIDashboardSubset } from '@/shared/api/generated/dashboard/dashboard-api'
 import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
 import type { ApplicationDecisionCancelRequest } from '@/shared/api/generated/dashboard/schemas/applicationDecisionCancelRequest'
@@ -19,6 +20,8 @@ import type { IndividualApplicationUpdateResponse } from '@/shared/api/generated
 import type { IndividualApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationDetailResponse'
 import type { IndividualDocumentEvaluationRequest } from '@/shared/api/generated/dashboard/schemas/individualDocumentEvaluationRequest'
 import type { IndividualDocumentEvaluationResponse } from '@/shared/api/generated/dashboard/schemas/individualDocumentEvaluationResponse'
+import type { VolunteerDocumentEvaluationRequest } from '@/shared/api/generated/dashboard/schemas/volunteerDocumentEvaluationRequest'
+import type { VolunteerDocumentEvaluationResponse } from '@/shared/api/generated/dashboard/schemas/volunteerDocumentEvaluationResponse'
 import type {
   IndividualApplicationListItemEnriched,
   InterviewAssignmentCreateRequestEnriched,
@@ -30,6 +33,8 @@ export type ApplicationsListQuery = {
   page?: number
   size?: number
 }
+
+const generalApplicationsDashboardApi = getJAKoreaCMSBackendAPIDashboardSubset()
 
 export interface ApplicationsPageDto<T> {
   items?: T[]
@@ -196,6 +201,22 @@ export async function updateIndividualDocumentEvaluationRemote(
       method: 'PUT',
       data: payload,
     })
+  )
+}
+
+export async function updateVolunteerDocumentEvaluationRemote(
+  applicationId: string,
+  managerSlot: 'A' | 'B',
+  payload: VolunteerDocumentEvaluationRequest
+): Promise<VolunteerDocumentEvaluationResponse> {
+  const numericApplicationId = Number(applicationId)
+  if (!Number.isSafeInteger(numericApplicationId)) {
+    throw new Error('봉사자 신청 ID가 올바르지 않습니다.')
+  }
+  return generalApplicationsDashboardApi.putVolunteerDocumentManagerEvaluation(
+    numericApplicationId,
+    managerSlot,
+    payload
   )
 }
 

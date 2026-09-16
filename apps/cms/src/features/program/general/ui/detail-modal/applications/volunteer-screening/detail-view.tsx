@@ -28,6 +28,7 @@ type DocScreeningDetailProps = {
   setOpenManagerDropdown: (value: { rowId: string; manager: 'A' | 'B' } | null) => void
   onManagerAEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
   onManagerBEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
+  updatingManagerEvaluation: string | null
 }
 
 type DocPassedDetailProps = {
@@ -63,7 +64,9 @@ function isInterview2Props(
   return props.variant === 'interview2'
 }
 
-export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerApplicantDetailViewProps) {
+export function GeneralVolunteerApplicantDetailView(
+  props: GeneralVolunteerApplicantDetailViewProps
+) {
   const applicantBase = props.applicant
   const applicantEnriched = useVolunteerApplicationDetailEnrichment(applicantBase, {
     enabled: shouldUseGeneralApplicationsRemoteApi(),
@@ -87,8 +90,7 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem,
-    resolveMemberId: () =>
-      applicant.memberId != null ? String(applicant.memberId) : undefined,
+    resolveMemberId: () => (applicant.memberId != null ? String(applicant.memberId) : undefined),
     resolveMemberRole: () => 'INDIVIDUAL',
     resetDeps: [applicant.id],
     controlMode: 'headerStickyNoop',
@@ -100,12 +102,8 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
   }, [applicant.interviewAssignmentStatus])
 
   if (isInterview2Props(props)) {
-    const {
-      onWithdrawActivity,
-      onInterviewFail,
-      onInterviewPass,
-      onOpenInterviewEvaluation,
-    } = props
+    const { onWithdrawActivity, onInterviewFail, onInterviewPass, onOpenInterviewEvaluation } =
+      props
 
     return (
       <div className="general-volunteer-applicant-detail">
@@ -239,6 +237,7 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
     setOpenManagerDropdown,
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
+    updatingManagerEvaluation,
   } = props
 
   const isDocumentPassed = applicant.documentScreeningStatus === 'pass'
@@ -318,6 +317,7 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
           setOpenManagerDropdown={setOpenManagerDropdown}
           onManagerAEvaluationChange={onManagerAEvaluationChange}
           onManagerBEvaluationChange={onManagerBEvaluationChange}
+          updatingManagerEvaluation={updatingManagerEvaluation}
         />
         <GeneralVolunteerApplicantInterviewAvailability applicant={applicant} />
         <GeneralVolunteerApplicantEssaySections applicant={applicant} />

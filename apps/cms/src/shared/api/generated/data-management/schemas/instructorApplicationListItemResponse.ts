@@ -28,6 +28,9 @@ export interface InstructorApplicationListItemResponse {
   instructorFeeGradeSnapshot?: string;
   distanceKm?: number;
   longDistance?: boolean;
+  instructorProfileStatus?: string;
+  primaryActivityType?: string;
+  availableScheduleIds?: number[];
   availableScheduleMemo?: string;
   submittedAt?: string;
   approvedAt?: string;

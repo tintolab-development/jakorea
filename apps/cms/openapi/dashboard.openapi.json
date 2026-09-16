@@ -446,6 +446,72 @@
     }
   ],
   "paths": {
+    "/api/admin/volunteer-applications/{applicationId}/document-evaluations/{managerSlot}": {
+      "put": {
+        "tags": [
+          "신청 및 프로그램 진행"
+        ],
+        "operationId": "putVolunteerDocumentManagerEvaluation",
+        "summary": "봉사자 담당자 A/B 서류 평가 저장",
+        "description": "APPLICATION_WRITE 권한과 프로그램 접근 범위가 필요합니다. MASTER와 대상 프로그램의 PM은 A/B 슬롯을 모두 수정할 수 있고 그 외 일반 관리자는 본인에게 배정된 슬롯만 멱등 갱신합니다. 최종 서류 결과가 확정되면 MASTER와 PM을 포함해 수정할 수 없으며 최종 documentStatus는 평가 저장으로 변경되지 않습니다.",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "managerSlot",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ManagerSlot"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VolunteerDocumentEvaluationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "저장 후 A/B 최신 평가",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VolunteerDocumentEvaluationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST"
+          },
+          "403": {
+            "description": "FORBIDDEN_APPLICATION_ACTION"
+          },
+          "404": {
+            "description": "VOLUNTEER_APPLICATION_NOT_FOUND"
+          },
+          "409": {
+            "description": "DOCUMENT_EVALUATION_LOCKED"
+          },
+          "422": {
+            "description": "INVALID_DOCUMENT_EVALUATION"
+          }
+        }
+      }
+    },
     "/api/admin/notifications/preferences": {
       "get": {
         "tags": [
@@ -2541,6 +2607,80 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "VolunteerDocumentEvaluationRequest": {
+        "type": "object",
+        "description": "일반 프로그램 봉사자 담당자 A/B 서류 평가 저장 요청",
+        "required": [
+          "evaluation"
+        ],
+        "properties": {
+          "evaluation": {
+            "$ref": "#/components/schemas/DocumentManagerEvaluation"
+          }
+        }
+      },
+      "VolunteerDocumentEvaluationResponse": {
+        "type": "object",
+        "description": "저장 직후 봉사자 A/B 평가 원장과 현재 관리자 편집 권한",
+        "required": [
+          "applicationId",
+          "managerSlot",
+          "evaluation",
+          "managerAEvaluation",
+          "managerBEvaluation",
+          "documentStatus",
+          "availableActions",
+          "canEditManagerAEvaluation",
+          "canEditManagerBEvaluation"
+        ],
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "managerSlot": {
+            "$ref": "#/components/schemas/ManagerSlot"
+          },
+          "evaluation": {
+            "$ref": "#/components/schemas/DocumentManagerEvaluation"
+          },
+          "evaluatedByAdminId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "evaluatedByAdminName": {
+            "type": "string",
+            "nullable": true
+          },
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "managerAEvaluation": {
+            "$ref": "#/components/schemas/DocumentManagerEvaluation"
+          },
+          "managerBEvaluation": {
+            "$ref": "#/components/schemas/DocumentManagerEvaluation"
+          },
+          "documentStatus": {
+            "type": "string"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "canEditManagerAEvaluation": {
+            "type": "boolean"
+          },
+          "canEditManagerBEvaluation": {
+            "type": "boolean"
           }
         }
       },
@@ -18065,23 +18205,13 @@
         }
       },
       "DocumentManagerEvaluation": {
-        "type": "object",
-        "properties": {
-          "evaluation": {
-            "type": "string"
-          },
-          "evaluatedByAdminId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "evaluatedByAdminName": {
-            "type": "string"
-          },
-          "evaluatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
+        "type": "string",
+        "enum": [
+          "PASS",
+          "NEUTRAL",
+          "FAIL",
+          "UNREVIEWED"
+        ]
       },
       "IndividualApplicationDetailResponse": {
         "type": "object",
@@ -30590,7 +30720,8 @@
             "type": "string"
           },
           "interviewStatus": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "finalResultStatus": {
             "type": "string"
@@ -30605,9 +30736,61 @@
           "giveUpYn": {
             "type": "boolean"
           },
+          "applicationFormResponseId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "essaySubmitted": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "지원 에세이 제출 여부. 목록에서는 원문 PII를 노출하지 않고 상세 응답 ID만 함께 제공합니다."
+          },
+          "interviewAssignmentId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "interviewAssignmentStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedInterviewSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assignedInterviewStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assignedInterviewEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "interviewEvaluations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InterviewEvaluationSummary"
+            }
+          },
           "submittedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "managerAEvaluation": {
+            "$ref": "#/components/schemas/DocumentManagerEvaluation"
+          },
+          "managerBEvaluation": {
+            "$ref": "#/components/schemas/DocumentManagerEvaluation"
+          },
+          "canEditManagerAEvaluation": {
+            "type": "boolean"
+          },
+          "canEditManagerBEvaluation": {
+            "type": "boolean"
           },
           "availableActions": {
             "type": "array",
@@ -30615,7 +30798,8 @@
               "type": "string"
             }
           }
-        }
+        },
+        "description": "봉사자 신청 목록의 면접 배정, 담당자 A/B 서류평가 원장과 현재 관리자 편집 권한. 미평가는 UNREVIEWED이며 배열은 항상 []입니다."
       },
       "OrganizationScheduleListResponse": {
         "type": "object",
@@ -31610,6 +31794,32 @@
           }
         }
       },
+      "AssignmentInstructor": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorName": {
+            "type": "string"
+          },
+          "assignmentStatus": {
+            "type": "string"
+          },
+          "scheduleLead": {
+            "type": "boolean"
+          }
+        }
+      },
       "PageResponseParticipantListItemResponse": {
         "type": "object",
         "properties": {
@@ -31705,6 +31915,92 @@
             "items": {
               "type": "string"
             }
+          },
+          "grade": {
+            "type": "string"
+          },
+          "regionSido": {
+            "type": "string"
+          },
+          "regionSigungu": {
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "studentNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "classCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "studentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "teacherMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "teacherName": {
+            "type": "string"
+          },
+          "materialAssignmentStatus": {
+            "type": "string"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionProgress"
+            }
+          },
+          "assignmentInstructors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignmentInstructor"
+            }
+          },
+          "mergeGroupId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mergeStatus": {
+            "type": "string"
+          },
+          "mergeLead": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SessionProgress": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scheduleName": {
+            "type": "string"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "attendanceStatus": {
+            "type": "string"
+          },
+          "assignmentStatus": {
+            "type": "string"
           }
         }
       },
@@ -31787,6 +32083,31 @@
           },
           "ujatPartnerRecommendationPath": {
             "type": "string"
+          },
+          "grade": {
+            "type": "string"
+          },
+          "regionSido": {
+            "type": "string"
+          },
+          "regionSigungu": {
+            "type": "string"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Session"
+            }
+          },
+          "mergeGroupId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mergeStatus": {
+            "type": "string"
+          },
+          "mergeLead": {
+            "type": "boolean"
           }
         }
       },
@@ -32040,6 +32361,43 @@
           },
           "adminExceptionReason": {
             "type": "string"
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "grade": {
+            "type": "string"
+          },
+          "lectureDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "timeLabel": {
+            "type": "string"
+          },
+          "lectureLabel": {
+            "type": "string"
+          },
+          "dateRoundTimeLabel": {
+            "type": "string"
+          },
+          "lectureProgressStatus": {
+            "type": "string"
+          },
+          "fileCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileObjectIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
           }
         }
       },
@@ -32171,6 +32529,19 @@
           },
           "longDistance": {
             "type": "boolean"
+          },
+          "instructorProfileStatus": {
+            "type": "string"
+          },
+          "primaryActivityType": {
+            "type": "string"
+          },
+          "availableScheduleIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
           },
           "availableScheduleMemo": {
             "type": "string"
@@ -32333,6 +32704,19 @@
             "type": "string",
             "format": "date-time",
             "description": "관리자가 확정한 면접 종료 시각. 신청자 가능 일정과 별개입니다."
+          },
+          "interviewAssignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "interviewAssignmentStatus": {
+            "type": "string"
+          },
+          "interviewEvaluations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InterviewEvaluationSummary"
+            }
           },
           "submittedAt": {
             "type": "string",
@@ -34594,12 +34978,12 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨",
+            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
             "example": "교육 진행 수업 시간"
           },
           "token": {
             "type": "string",
-            "description": "본문 삽입용 토큰",
+            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
@@ -34611,11 +34995,11 @@
           },
           "requiresProgram": {
             "type": "boolean",
-            "description": "true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일"
+            "description": "true이면 programId 없이 enabled=false."
           },
           "enabled": {
             "type": "boolean",
-            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich)"
+            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
           },
           "programGroups": {
             "type": "array",
@@ -34633,14 +35017,14 @@
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음",
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
               "type": "string"
             }
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음",
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
               "type": "string"
             }
@@ -35127,15 +35511,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
@@ -38494,6 +38878,13 @@
             "type": "string"
           }
         }
+      },
+      "ManagerSlot": {
+        "type": "string",
+        "enum": [
+          "A",
+          "B"
+        ]
       }
     },
     "responses": {
