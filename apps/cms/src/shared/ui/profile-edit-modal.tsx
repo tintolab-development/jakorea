@@ -14,8 +14,6 @@ import {
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import { isSocialAdminSocialApiRemoteEnabled } from '@/features/auth/api/social-auth-remote-capabilities'
 import { useAdminLinkedSocialAccounts } from '@/features/auth/hooks/use-admin-linked-social-accounts'
-import { EditableField } from '@/features/user/detail/ui/user-basic-info/fields/editable-field'
-import { EditableRow } from '@/features/user/detail/ui/user-basic-info/fields/editable-row'
 import {
   ADMIN_PERMISSION_TAG_LABEL,
   getAdminPermissionVariant,
@@ -31,7 +29,12 @@ import {
 } from '@/features/auth/lib/register-social-connect-state'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { withdrawAdminSelfRemote } from '@/features/user/api/members-api-client'
+import {
+  fetchAdminAccountDetailRemote,
+  withdrawAdminSelfRemote,
+} from '@/features/user/api/members-api-client'
+import { mapAdminAccountDetailToUser } from '@/features/user/api/map-admin-account-detail-to-user'
+import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import {
@@ -43,7 +46,7 @@ import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { CmsButton, CmsRadioGroup, ContentModal, useCmsAlert } from '@/shared/ui'
 import { MemberWithdrawGuideModal } from '@/features/user/shared/ui/member-withdraw-guide-modal'
 import { ProfilePasswordChangeModal } from '@/shared/ui/profile-password-change-modal'
-import type { User } from '@/types/user'
+import type { User, TermsAgreementRow } from '@/types/user'
 import { formatDate } from '@/shared/utils'
 import '@/features/user/detail/ui/user-consent-agreement-section.css'
 import './profile-edit-modal.css'
@@ -55,7 +58,7 @@ interface ProfileEditModalProps {
 }
 
 type MarketingConsentValue = 'agree' | 'disagree'
-type TermsKind = 'SERVICE_TERMS' | 'PERSONAL_INFO' | 'MARKETING'
+type TermsKind = 'SERVICE_TERMS' | 'PERSONAL_INFO' | 'MARKETING' | 'MFA_SETUP'
 
 const MARKETING_RADIO_OPTIONS = [
   { label: '동의', value: 'agree' as const },
@@ -69,33 +72,57 @@ const TERMS_TYPE_TO_KIND: Record<string, TermsKind> = {
   TERMS_OF_SERVICE: 'SERVICE_TERMS',
   PERSONAL_INFO: 'PERSONAL_INFO',
   PERSONAL_INFO_COLLECTION: 'PERSONAL_INFO',
+  PRIVACY_COLLECTION: 'PERSONAL_INFO',
   MARKETING: 'MARKETING',
   MARKETING_CONSENT: 'MARKETING',
+  MFA_SETUP: 'MFA_SETUP',
+  MFA_SETUP_CONSENT: 'MFA_SETUP',
+  TWO_FACTOR_AUTH: 'MFA_SETUP',
+  TWO_FACTOR_AUTHENTICATION: 'MFA_SETUP',
 }
 
-function formatTermsAgreedAt(iso?: string): string {
-  if (!iso?.trim()) return SAMPLE_AGREED_AT
+function formatTermsAgreedAt(iso?: string, emptyFallback = SAMPLE_AGREED_AT): string {
+  if (!iso?.trim()) return emptyFallback
   const parsed = dayjs(iso)
-  return parsed.isValid() ? parsed.format('YYYY.MM.DD HH:mm') : iso
+  return parsed.isValid() ? parsed.format('YYYY.MM.DD HH:mm:ss') : iso
 }
 
 function resolveTermsAgreement(
-  user: Omit<User, 'password'>,
-  kind: TermsKind
+  termsAgreements: TermsAgreementRow[] | undefined,
+  kind: TermsKind,
+  options?: { sampleFallback?: boolean }
 ): { agreed: boolean; agreedAtDisplay: string } {
-  const agreements = user.termsAgreements ?? []
+  const agreements = termsAgreements ?? []
   const record = agreements.find(item => {
     const type = item.termsType?.trim().toUpperCase()
     return type != null && TERMS_TYPE_TO_KIND[type] === kind
   })
 
   if (!record) {
-    return { agreed: true, agreedAtDisplay: SAMPLE_AGREED_AT }
+    // 세션/상세에 약관이 없을 때: mock은 샘플, remote는 미동의로 표시 (마케팅 오표기 방지)
+    if (options?.sampleFallback) {
+      return { agreed: true, agreedAtDisplay: SAMPLE_AGREED_AT }
+    }
+    return { agreed: false, agreedAtDisplay: '-' }
   }
 
   return {
-    agreed: record.agreed ?? false,
-    agreedAtDisplay: formatTermsAgreedAt(record.agreedAt),
+    agreed: record.agreed === true,
+    agreedAtDisplay: formatTermsAgreedAt(
+      record.agreedAt,
+      record.agreed === true ? SAMPLE_AGREED_AT : '-'
+    ),
+  }
+}
+
+function syncMarketingConsentState(
+  termsAgreements: TermsAgreementRow[] | undefined,
+  sampleFallback: boolean
+): { consent: MarketingConsentValue; agreedAt: string } {
+  const marketing = resolveTermsAgreement(termsAgreements, 'MARKETING', { sampleFallback })
+  return {
+    consent: marketing.agreed ? 'agree' : 'disagree',
+    agreedAt: marketing.agreedAtDisplay,
   }
 }
 
@@ -149,13 +176,12 @@ function ProfileFieldWithAction({
   return (
     <span className="profile-edit-modal__value-with-action">
       <span className="profile-edit-modal__value-with-action-text">{value}</span>
-      <DetailInfoForm.TdDivider />
       <CmsButton
         variant="secondary"
         size="small"
         width={100}
-        type="button"
         className="profile-edit-modal__field-action-btn"
+        type="button"
         disabled={actionDisabled}
         loading={actionLoading}
         onClick={onAction}
@@ -170,6 +196,7 @@ function resolveAdminPermissionLabel(user: Omit<User, 'password'>): string {
   if (user.role !== 'ADMIN') return '-'
   const hasPermissionData =
     user.listMetrics?.adminPermissionVariant != null ||
+    Boolean(user.roleCode?.trim()) ||
     (user.programRoles != null && Object.keys(user.programRoles).length > 0) ||
     user.adminLevel != null
   if (!hasPermissionData) return '-'
@@ -190,8 +217,12 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
   const [passwordChangeModalOpen, setPasswordChangeModalOpen] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
-  const [marketingConsent, setMarketingConsent] = useState<MarketingConsentValue>('agree')
-  const [marketingAgreedAt, setMarketingAgreedAt] = useState(SAMPLE_AGREED_AT)
+  const [marketingConsent, setMarketingConsent] = useState<MarketingConsentValue>('disagree')
+  const [marketingAgreedAt, setMarketingAgreedAt] = useState('-')
+  /** 약관 표시용 — 세션에는 terms가 없어 상세 GET으로 보강 */
+  const [profileTermsAgreements, setProfileTermsAgreements] = useState<
+    TermsAgreementRow[] | undefined
+  >(undefined)
   const identityVerifyAttemptRef = useRef(false)
 
   const handleIdentitySuccess = useCallback(
@@ -230,11 +261,51 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
   }, [errorMessage, isVerifying, showAlert])
 
   useEffect(() => {
-    if (!open || !user) return
-    const marketing = resolveTermsAgreement(user, 'MARKETING')
-    setMarketingConsent(marketing.agreed ? 'agree' : 'disagree')
-    setMarketingAgreedAt(marketing.agreedAtDisplay)
-  }, [open, user])
+    if (!open || !user) {
+      setProfileTermsAgreements(undefined)
+      return
+    }
+
+    const sampleFallback = !isMembersRemoteEnabled()
+    const initial = syncMarketingConsentState(user.termsAgreements, sampleFallback)
+    setProfileTermsAgreements(user.termsAgreements)
+    setMarketingConsent(initial.consent)
+    setMarketingAgreedAt(initial.agreedAt)
+
+    const adminAccountId = user.adminAccountId
+    if (!isMembersRemoteEnabled() || adminAccountId == null) {
+      return
+    }
+
+    let cancelled = false
+    void (async () => {
+      try {
+        const detail = await fetchAdminAccountDetailRemote(adminAccountId)
+        if (cancelled) return
+        const mapped = mapAdminAccountDetailToUser(detail, { fallbackId: user.id })
+        const terms = mapped.termsAgreements
+        setProfileTermsAgreements(terms)
+        const marketing = syncMarketingConsentState(terms, false)
+        setMarketingConsent(marketing.consent)
+        setMarketingAgreedAt(marketing.agreedAt)
+        const gender = toApiGender(detail.gender)
+        const birthDate = toApiBirthDate(detail.birthDate)
+        if (gender || birthDate || terms) {
+          updateUser({
+            ...(gender ? { gender } : {}),
+            ...(birthDate ? { birthDate } : {}),
+            ...(terms ? { termsAgreements: terms } : {}),
+          })
+        }
+      } catch (error) {
+        console.debug('profileEditModal fetchAdminAccountDetail failed', error)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [open, user?.id, user?.adminAccountId, updateUser])
 
   const handleCancel = () => {
     onCancel()
@@ -315,8 +386,15 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
 
   const isAdminUser = user.role === 'ADMIN'
 
-  const serviceTerms = resolveTermsAgreement(user, 'SERVICE_TERMS')
-  const personalInfoTerms = resolveTermsAgreement(user, 'PERSONAL_INFO')
+  const sampleFallback = !isMembersRemoteEnabled()
+  const termsForDisplay = profileTermsAgreements ?? user.termsAgreements
+  const serviceTerms = resolveTermsAgreement(termsForDisplay, 'SERVICE_TERMS', {
+    sampleFallback,
+  })
+  const personalInfoTerms = resolveTermsAgreement(termsForDisplay, 'PERSONAL_INFO', {
+    sampleFallback,
+  })
+  const mfaSetupTerms = resolveTermsAgreement(termsForDisplay, 'MFA_SETUP', { sampleFallback })
   const linkedSocialDisplay =
     isSocialAdminSocialApiRemoteEnabled() && cmsSocialAuthClient.hasAccessToken()
       ? linkedLabels.length > 0
@@ -336,13 +414,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
         회원탈퇴
       </button>
       <div className="profile-edit-modal__footer-actions">
-        <CmsButton
-          variant="default"
-          size="medium"
-          type="button"
-          className="profile-edit-modal__close-btn"
-          onClick={handleCancel}
-        >
+        <CmsButton variant="default" size="medium" type="button" width={120} onClick={handleCancel}>
           닫기
         </CmsButton>
         {isAdminUser ? (
@@ -350,7 +422,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
             variant="secondary"
             size="medium"
             type="button"
-            className="profile-edit-modal__password-change-btn"
+            width={140}
             onClick={handleOpenPasswordChangeModal}
           >
             비밀번호 변경
@@ -365,7 +437,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
       open={open}
       onCancel={handleCancel}
       title="내 정보 확인"
-      width={1000}
+      width={1200}
       className="profile-edit-modal"
       footer={footer}
     >
@@ -377,16 +449,16 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
         >
           <div className="profile-edit-modal__basic-info-stack">
             <div className="profile-edit-modal__basic-info-table profile-edit-modal__basic-info-table--top">
-              <EditableRow
+              <DetailInfoForm.Row
                 type="double"
                 className="profile-edit-modal__row profile-edit-modal__row--tall"
               >
-                <EditableField
+                <DetailInfoForm.Field
                   label="가입일"
                   readOnlyDisplay
                   view={<span>{formatDate(user.createdAt)}</span>}
                 />
-                <EditableField
+                <DetailInfoForm.Field
                   label="연동된 소셜 계정"
                   readOnlyDisplay
                   view={
@@ -397,25 +469,25 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
                     />
                   }
                 />
-              </EditableRow>
+              </DetailInfoForm.Row>
             </div>
 
             <div className="profile-edit-modal__basic-info-table profile-edit-modal__basic-info-table--main">
-              <EditableRow type="double" className="profile-edit-modal__row">
-                <EditableField
+              <DetailInfoForm.Row type="double" className="profile-edit-modal__row">
+                <DetailInfoForm.Field
                   label="성명"
                   readOnlyDisplay
                   view={<span>{user.name || '-'}</span>}
                 />
-                <EditableField
+                <DetailInfoForm.Field
                   label="성별 및 생년월일"
                   readOnlyDisplay
                   view={<span>{genderBirthView(user)}</span>}
                 />
-              </EditableRow>
+              </DetailInfoForm.Row>
 
-              <EditableRow type="double" className="profile-edit-modal__row">
-                <EditableField
+              <DetailInfoForm.Row type="double" className="profile-edit-modal__row">
+                <DetailInfoForm.Field
                   label="연락처"
                   readOnlyDisplay
                   view={
@@ -430,20 +502,20 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
                     />
                   }
                 />
-                <EditableField
+                <DetailInfoForm.Field
                   label="이메일"
                   readOnlyDisplay
                   view={<span>{user.email || '-'}</span>}
                 />
-              </EditableRow>
+              </DetailInfoForm.Row>
 
-              <EditableRow type="double" className="profile-edit-modal__row">
-                <EditableField
+              <DetailInfoForm.Row type="double" className="profile-edit-modal__row">
+                <DetailInfoForm.Field
                   label="권한 유형"
                   readOnlyDisplay
                   view={<span>{resolveAdminPermissionLabel(user)}</span>}
                 />
-                <EditableField
+                <DetailInfoForm.Field
                   label="담당 프로그램 수"
                   readOnlyDisplay
                   view={
@@ -452,7 +524,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
                     </span>
                   }
                 />
-              </EditableRow>
+              </DetailInfoForm.Row>
             </div>
           </div>
         </DetailInfoForm>
@@ -463,16 +535,16 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
           className="profile-edit-modal__section profile-edit-modal__section--terms"
         >
           <div className="profile-edit-modal__terms-table">
-            <EditableRow
+            <DetailInfoForm.Row
               type="double"
               className="profile-edit-modal__terms-row profile-edit-modal__terms-row--standard"
             >
-              <EditableField
+              <DetailInfoForm.Field
                 label="서비스 이용약관"
                 readOnlyDisplay
                 view={consentReadonlyContent(serviceTerms.agreed, serviceTerms.agreedAtDisplay)}
               />
-              <EditableField
+              <DetailInfoForm.Field
                 label="개인정보 수집·이용 동의"
                 readOnlyDisplay
                 view={consentReadonlyContent(
@@ -480,21 +552,21 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
                   personalInfoTerms.agreedAtDisplay
                 )}
               />
-            </EditableRow>
+            </DetailInfoForm.Row>
 
-            <EditableRow
-              type="single"
-              className="profile-edit-modal__terms-row profile-edit-modal__terms-row--marketing"
+            <DetailInfoForm.Row
+              type="double"
+              className="profile-edit-modal__terms-row profile-edit-modal__terms-row--bottom"
             >
               <DetailInfoForm.Field
                 label="마케팅 제공 동의"
-                labelWidth={200}
+                labelWidth={220}
                 mode="edit"
                 view={consentReadonlyContent(marketingConsent === 'agree', marketingAgreedAt)}
                 edit={
                   <span className="profile-edit-modal__marketing-consent">
                     <CmsRadioGroup
-                      size="medium"
+                      size="large"
                       options={MARKETING_RADIO_OPTIONS}
                       value={marketingConsent}
                       onChange={event =>
@@ -508,7 +580,12 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
                   </span>
                 }
               />
-            </EditableRow>
+              <DetailInfoForm.Field
+                label="2단계 인증(MFA) 설정 동의"
+                readOnlyDisplay
+                view={consentReadonlyContent(mfaSetupTerms.agreed, mfaSetupTerms.agreedAtDisplay)}
+              />
+            </DetailInfoForm.Row>
           </div>
         </DetailInfoForm>
       </div>

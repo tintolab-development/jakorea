@@ -7,7 +7,10 @@ import { useNavigate } from 'react-router-dom'
 
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { initPasswordChangeRequiredWizardState } from '@/features/auth/password-change-required'
-import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
+import {
+  hasPasswordChangeRequiredComplete,
+  hasPasswordChangeRequiredSocialOnboarding,
+} from '@/features/auth/password-change-required/wizard-state'
 import illustExclamationUrl from '@/shared/assets/illustration/illust-exclamation.svg'
 import { CmsButton } from '@/shared/ui'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
@@ -19,6 +22,10 @@ export function PasswordChangeRequiredPage() {
   const { isAuthenticated, passwordChangeRequired, user } = useAuthStore()
 
   useEffect(() => {
+    if (hasPasswordChangeRequiredSocialOnboarding()) {
+      navigate(passwordChangeRequiredPaths.socialConnect, { replace: true })
+      return
+    }
     if (hasPasswordChangeRequiredComplete()) {
       navigate(passwordChangeRequiredPaths.complete, { replace: true })
       return

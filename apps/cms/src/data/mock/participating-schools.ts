@@ -4,6 +4,7 @@
  */
 
 import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
+import { getGeneralInstitutionCaseParticipatingRows } from '@/features/program/general/lib/general-institution-case-mocks'
 
 export type TextbookStatusKey = 'preparing' | 'shipping' | 'delivered' | 'not_applicable'
 
@@ -34,6 +35,10 @@ export interface ParticipatingSchoolSession {
 
 export interface ParticipatingSchoolRow {
   id: string
+  /** BE 기관 ID — 참여/신청 PK와 구분 */
+  organizationId?: number
+  /** BE 담당 교사 회원 ID */
+  teacherMemberId?: number
   no: number
   schoolName: string
   region: string
@@ -260,6 +265,9 @@ export const MOCK_PARTICIPATING_SCHOOLS: ParticipatingSchoolRow[] = [
 ]
 
 export function getParticipatingSchoolsForProgram(programId: string): ParticipatingSchoolRow[] {
+  const caseRows = getGeneralInstitutionCaseParticipatingRows(programId)
+  if (caseRows != null) return caseRows
+
   const scoped = MOCK_PARTICIPATING_SCHOOLS.filter(row => row.programId === programId)
   if (scoped.length > 0) {
     return scoped.map((row, index) => ({

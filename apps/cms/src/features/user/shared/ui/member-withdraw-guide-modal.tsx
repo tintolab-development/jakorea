@@ -46,7 +46,7 @@ function resolveGuide(props: MemberWithdrawGuideModalProps): {
 
   if (variant === 'self_withdraw') {
     return {
-      title: '회원 탈퇴 처리 안내',
+      title: '회원 탈퇴 안내',
       lines: buildSelfWithdrawMessageLines(),
       confirmText: confirmTextOverride ?? '회원 탈퇴',
       requiredConfirmInput: WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,

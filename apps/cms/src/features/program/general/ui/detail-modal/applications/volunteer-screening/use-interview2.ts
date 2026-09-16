@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   getGeneralVolunteerInterview2Applicants,
@@ -18,11 +18,20 @@ import {
   filterGeneralInterview2CalendarApplicants,
   type GeneralVolunteerInterview2Filters,
 } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
-import { sortGeneralVolunteerInterview2Applicants } from '@/features/program/general/lib/general-volunteer-interview2-display'
+import {
+  computeGeneralInterviewTotalScore,
+  sortGeneralVolunteerInterview2Applicants,
+} from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { mapGeneralVolunteerAssignedInterviewToCalendarEvents } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
 import { useGeneralInterview2EffectiveStatusTick } from '@/features/program/general/hooks/use-general-interview2-effective-status-tick'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
+import { assignGeneralIndividualInterview, assignGeneralVolunteerInterview } from '@/features/program/general/api/admin-applications-service'
+import { buildInterviewSlotTimesFromAssignPayload } from '@/features/program/general/lib/interview-slot-from-assign-payload'
+import {
+  countInterviewAvailabilitySlots,
+  mergeAssignedInterviewIntoAvailability,
+} from '@/features/program/general/lib/interview-availability-utils'
 import {
   GENERAL_INTERVIEW2_BULK_PASS_TYPE_OPTIONS,
   type GeneralSecondInterviewScreeningStatus,
@@ -35,12 +44,15 @@ import {
 } from './general-volunteer-interview2-actions'
 import type { GeneralInterview2BulkPassConfirmPayload } from './general-volunteer-interview2-bulk-pass-modal'
 import {
+  guardGeneralVolunteerAssignInterview,
   guardGeneralVolunteerInterview2Evaluation,
   guardGeneralVolunteerInterview2Fail,
   guardGeneralVolunteerInterview2Pass,
   guardGeneralVolunteerWithdrawActivity,
 } from './general-volunteer-applicant-guard-actions'
 import type { ActivityWithdrawScheduleModalPayload } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import type { GeneralInterviewAssignConfirmPayload } from './general-volunteer-interview-assign-modal'
+import type { GeneralInterviewAssignFlow } from './use-doc-passed'
 
 export type GeneralVolunteerInterview2ViewMode = 'list' | 'calendar'
 
@@ -100,6 +112,9 @@ export function useGeneralVolunteerInterview2({
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
   const [evaluationTargetId, setEvaluationTargetId] = useState<string | null>(null)
+  const [assignFlow, setAssignFlow] = useState<GeneralInterviewAssignFlow | null>(null)
+  const assignFlowRef = useRef(assignFlow)
+  assignFlowRef.current = assignFlow
   const [bulkPassModalOpen, setBulkPassModalOpen] = useState(false)
   const [bulkFailModalOpen, setBulkFailModalOpen] = useState(false)
   const [bulkFailCompleteCount, setBulkFailCompleteCount] = useState<number | null>(null)
@@ -327,7 +342,7 @@ export function useGeneralVolunteerInterview2({
         setWithdrawTargetId(null)
         return
       }
-      if (subjectKind === 'participant' && volunteerRemote.remoteEnabled) {
+      if (volunteerRemote.remoteEnabled) {
         const handled = await volunteerRemote.applyRemoteGiveUp?.(withdrawTargetId)
         if (handled) {
           setWithdrawTargetId(null)
@@ -371,6 +386,92 @@ export function useGeneralVolunteerInterview2({
     [openFailModal]
   )
 
+  const updateRow = useCallback((id: string, patch: Partial<GeneralVolunteerApplicantRow>) => {
+    setList(prev => prev.map(row => (row.id === id ? { ...row, ...patch } : row)))
+  }, [])
+
+  const handleAssignInterview = useCallback((row: GeneralVolunteerApplicantRow) => {
+    if (!guardGeneralVolunteerAssignInterview(row)) return
+    setAssignFlow({ type: 'pick', target: row })
+  }, [])
+
+  const closeAssignModal = useCallback(() => {
+    setAssignFlow(current => (current?.type === 'pick' ? null : current))
+  }, [])
+
+  const confirmAssignInterview = useCallback(
+    async (payload: GeneralInterviewAssignConfirmPayload) => {
+      const flow = assignFlowRef.current
+      if (!flow || flow.type !== 'pick') return
+
+      const { target } = flow
+      const wasAssigned = target.interviewAssignmentStatus === 'assigned'
+
+      if (!preferApplicationListMock && shouldUseGeneralApplicationsRemoteApi()) {
+        const slotTimes = buildInterviewSlotTimesFromAssignPayload(payload)
+        if (!slotTimes) {
+          showAlert({
+            title: '면접 배정 실패',
+            content: '면접 일시 형식을 확인할 수 없습니다. 다시 선택해 주세요.',
+          })
+          return
+        }
+        try {
+          if (subjectKind === 'participant') {
+            await assignGeneralIndividualInterview({
+              programId,
+              applicationId: target.id,
+              ...slotTimes,
+            })
+          } else {
+            await assignGeneralVolunteerInterview({
+              programId,
+              applicationId: target.id,
+              ...slotTimes,
+            })
+          }
+          await volunteerRemote.invalidateVolunteerApplications?.()
+        } catch (error) {
+          console.debug('interview assign remote failed', error)
+          showAlert({
+            title: '면접 배정 실패',
+            content: '면접 일정 배정 중 오류가 발생했습니다. 다시 시도해 주세요.',
+          })
+          return
+        }
+      }
+
+      const assignedApplicant: GeneralVolunteerApplicantRow = {
+        ...target,
+        interviewAssignmentStatus: 'assigned',
+        assignedInterviewDateLabel: payload.dateLabel,
+        assignedInterviewTime: payload.timeRange,
+        secondInterviewScreeningStatus: target.secondInterviewScreeningStatus ?? 'waiting',
+      }
+      const interviewAvailability = mergeAssignedInterviewIntoAvailability(assignedApplicant)
+
+      updateRow(target.id, {
+        interviewAssignmentStatus: 'assigned',
+        assignedInterviewDateLabel: payload.dateLabel,
+        assignedInterviewTime: payload.timeRange,
+        secondInterviewScreeningStatus: target.secondInterviewScreeningStatus ?? 'waiting',
+        interviewAvailability,
+        interviewSlotCount: countInterviewAvailabilitySlots(interviewAvailability),
+      })
+      setAssignFlow({
+        type: 'complete',
+        applicantName: target.name,
+        mode: wasAssigned ? 'reassign' : 'assign',
+        payload,
+      })
+    },
+    [preferApplicationListMock, programId, showAlert, subjectKind, updateRow, volunteerRemote]
+  )
+
+  const closeAssignCompleteModal = useCallback(() => {
+    setAssignFlow(null)
+  }, [])
+
   const openEvaluationModal = useCallback((row: GeneralVolunteerApplicantRow) => {
     if (!guardGeneralVolunteerInterview2Evaluation(row)) return
     setEvaluationTargetId(row.id)
@@ -386,8 +487,37 @@ export function useGeneralVolunteerInterview2({
   )
 
   const saveInterviewEvaluation = useCallback(
-    (payload: GeneralVolunteerInterviewEvaluationPayload) => {
+    async (payload: GeneralVolunteerInterviewEvaluationPayload) => {
       if (!evaluationTargetId) return
+      const target = list.find(row => row.id === evaluationTargetId)
+      const scoreTotal = computeGeneralInterviewTotalScore({
+        managerAScore: payload.managerAScore,
+        managerBScore: payload.managerBScore,
+      })
+      if (scoreTotal == null) return
+
+      if (volunteerRemote.remoteEnabled) {
+        const result = await volunteerRemote.applyRemoteInterviewEvaluation?.(
+          target?.interviewAssignmentId,
+          {
+            scoreTotal,
+            comment: payload.interviewEvaluationRemark?.trim() || undefined,
+          }
+        )
+        if (result === 'missing_assignment' || result === 'error') return
+        if (result === 'ok') {
+          setList(prev =>
+            patchGeneralVolunteerInterviewEvaluation(prev, evaluationTargetId, payload)
+          )
+          showAlert({
+            title: '면접 평가',
+            content: '면접 평가가 저장되었습니다.',
+          })
+          setEvaluationTargetId(null)
+          return
+        }
+      }
+
       setList(prev => patchGeneralVolunteerInterviewEvaluation(prev, evaluationTargetId, payload))
       showAlert({
         title: '면접 평가',
@@ -395,10 +525,13 @@ export function useGeneralVolunteerInterview2({
       })
       setEvaluationTargetId(null)
     },
-    [evaluationTargetId, showAlert]
+    [evaluationTargetId, list, showAlert, volunteerRemote]
   )
 
-  const columns = useGeneralVolunteerInterview2Columns(subjectKind)
+  const columns = useGeneralVolunteerInterview2Columns({
+    subjectKind,
+    onReassignInterview: handleAssignInterview,
+  })
 
   return {
     list,
@@ -446,6 +579,11 @@ export function useGeneralVolunteerInterview2({
     closeEvaluationModal,
     evaluationTarget,
     saveInterviewEvaluation,
+    handleAssignInterview,
+    assignFlow,
+    closeAssignModal,
+    closeAssignCompleteModal,
+    confirmAssignInterview,
     filterRowsSource: list,
     applicationsLoading: volunteerRemote.applicationsLoading,
     isRemoteDataSource: volunteerRemote.remoteEnabled,

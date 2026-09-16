@@ -91,7 +91,7 @@ export function UnifiedActivityFeed({ pageSize = 10 }: UnifiedActivityFeedProps)
           createdAt: typeof matching.createdAt === 'string' ? matching.createdAt : matching.createdAt.toISOString(),
           icon: <TeamOutlined />,
           color: commonStatusStatusConfig[matching.status]?.color || 'default',
-          path: '/programs/education/instructor-recruitment',
+          path: '/programs/general?status=recruiting_instructors',
         }
       })
 

@@ -16,6 +16,10 @@ import {
   GENERAL_INTERVIEW_ASSIGN_CALENDAR_DEMO_AVAILABILITY,
   GENERAL_INTERVIEW_ASSIGNED_DATE_LABELS,
 } from '@/data/mock/general-volunteer-interview-schedule-mock'
+import {
+  GENERAL_INSTITUTION_MEMBER_ROSTER,
+  isGeneralInstitutionCaseProgramId,
+} from '@/features/program/general/lib/general-institution-case-roster'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 
 export type GeneralVolunteerInterviewAvailabilityDay = {
@@ -25,6 +29,8 @@ export type GeneralVolunteerInterviewAvailabilityDay = {
 
 export interface GeneralVolunteerApplicantRow {
   id: string
+  /** BE 회원 ID — 봉사 신청 PK와 구분 */
+  memberId?: number
   no: number
   name: string
   contact: string
@@ -57,6 +63,8 @@ export interface GeneralVolunteerApplicantRow {
   interviewAvailability: GeneralVolunteerInterviewAvailabilityDay[]
   assignedInterviewDateLabel?: string
   assignedInterviewTime?: string
+  /** BE 면접 배정 ID — 면접 평가 API path용 */
+  interviewAssignmentId?: number
   secondInterviewScreeningStatus?: GeneralSecondInterviewScreeningStatus
   totalScore?: number | null
   managerAScore?: number | null
@@ -551,9 +559,20 @@ const cache = new Map<string, GeneralVolunteerApplicantRow[]>()
 export function getGeneralVolunteerApplicants(programId: string): GeneralVolunteerApplicantRow[] {
   const existing = cache.get(programId)
   if (existing) return existing.map(row => ({ ...row }))
-  const rows = Array.from({ length: VOLUNTEER_MOCK_ROW_COUNT }, (_, index) =>
-    buildRow(programId, index)
-  )
+  const rows = Array.from({ length: VOLUNTEER_MOCK_ROW_COUNT }, (_, index) => {
+    const row = buildRow(programId, index)
+    if (!isGeneralInstitutionCaseProgramId(programId)) return row
+    const member = GENERAL_INSTITUTION_MEMBER_ROSTER.individual
+    return {
+      ...row,
+      memberId: member.memberId,
+      name: member.name,
+      contact: member.contact,
+      contactRaw: member.contact.replaceAll('-', ''),
+      email: member.email,
+      emailRaw: member.email,
+    }
+  })
   cache.set(programId, rows)
   return rows.map(row => ({ ...row }))
 }

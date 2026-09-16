@@ -58,8 +58,11 @@ export function ApplicationFormPreviewPanel({
     if (!active) {
       resetInstitutionApplicationProgramBridge()
       resetInstitutionApplicationFormVisibility()
-      return
     }
+  }, [active])
+
+  useEffect(() => {
+    if (!active) return
     if (variant === 'institution' || variant === 'individual') {
       patchInstitutionApplicationProgramBridge(resolveInstitutionApplicationProgramBridge(program))
     }

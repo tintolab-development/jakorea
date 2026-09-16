@@ -42,6 +42,7 @@ type Interview2DetailProps = {
   onInterviewFail?: () => void
   onInterviewPass?: () => void
   onOpenInterviewEvaluation?: () => void
+  onReassignInterview?: () => void
 }
 
 export type GeneralVolunteerApplicantDetailViewProps =
@@ -81,6 +82,9 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem,
+    resolveMemberId: () =>
+      applicant.memberId != null ? String(applicant.memberId) : undefined,
+    resolveMemberRole: () => 'INDIVIDUAL',
     resetDeps: [applicant.id],
     controlMode: 'headerStickyNoop',
   })
@@ -91,8 +95,13 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
   }, [applicant.interviewAssignmentStatus])
 
   if (isInterview2Props(props)) {
-    const { onWithdrawActivity, onInterviewFail, onInterviewPass, onOpenInterviewEvaluation } =
-      props
+    const {
+      onWithdrawActivity,
+      onInterviewFail,
+      onInterviewPass,
+      onOpenInterviewEvaluation,
+      onReassignInterview,
+    } = props
 
     return (
       <div className="general-volunteer-applicant-detail">
@@ -128,6 +137,18 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
             >
               면접 합격
             </CmsButton>
+            {onReassignInterview ? (
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="large"
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
+                onClick={onReassignInterview}
+              >
+                면접일 재배정
+              </CmsButton>
+            ) : null}
             <CmsButton
               type="button"
               variant="primary"

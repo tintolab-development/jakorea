@@ -187,6 +187,10 @@ export function ApplicantList({
     confirmBulkInstitutionApprove,
     confirmBulkParticipantReject,
     confirmBulkParticipantApprove,
+    applyRemoteIndividualDecision,
+    applyRemoteInstructorDecision,
+    individualRemoteEnabled,
+    instructorRemoteEnabled,
     handleCancelApproval,
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,
@@ -470,6 +474,22 @@ export function ApplicantList({
     })
   }, [showAlert])
 
+  const blockProcessedParticipantDoc1Selection = useCallback((): boolean => {
+    if (!isIndividualDoc1Screening) return false
+    const selectedIds = new Set(selectedRowKeys.map(String))
+    const hasProcessedParticipant = individualList.some(
+      row => selectedIds.has(row.id) && row.approvalStatus !== 'pending'
+    )
+    if (!hasProcessedParticipant) return false
+
+    showAlert({
+      title: '신청 처리 완료 안내',
+      content:
+        '이미 승인 또는 반려 완료된 참여자가 포함되어 있습니다.\n승인 대기 중인 참여자만 선택해 주세요.',
+    })
+    return true
+  }, [individualList, isIndividualDoc1Screening, selectedRowKeys, showAlert])
+
   const resolveSingleSelectedIndividual = useCallback((): GeneralIndividualApplicantRow | null => {
     if (selectedRowKeys.length !== 1) return null
     const id = String(selectedRowKeys[0])
@@ -487,6 +507,7 @@ export function ApplicantList({
       showNoSelectionAlert()
       return
     }
+    if (blockProcessedParticipantDoc1Selection()) return
     if (useGeneralInstitutionActionModal) {
       const single = resolveSingleSelectedInstitution()
       if (single) {
@@ -517,6 +538,7 @@ export function ApplicantList({
       showNoSelectionAlert()
       return
     }
+    if (blockProcessedParticipantDoc1Selection()) return
     if (useGeneralInstitutionActionModal) {
       const single = resolveSingleSelectedInstitution()
       if (single) {
@@ -1109,31 +1131,67 @@ export function ApplicantList({
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
           }
-          setParticipantApproveTarget(null)
-          const sourceRow =
-            individualList.find(row => row.id === id) ??
-            (selectedItem && 'applicantName' in selectedItem && selectedItem.id === id
-              ? (selectedItem as GeneralIndividualApplicantRow)
-              : null)
-          const patchedRow = sourceRow
-            ? patchGeneralIndividualApplicantForApprovalStatus(sourceRow, 'approved', notifyOptions)
-            : null
-          setIndividualList(prev => {
-            const next = prev.map(row => (row.id === id && patchedRow ? patchedRow : row))
-            const updated = next.find(row => row.id === id)
-            const current = selectedItem
-            if (
-              updated &&
-              current &&
-              'applicantName' in current &&
-              current.id === id
-            ) {
-              setSelectedItem(updated)
+          const run = async () => {
+            if (individualRemoteEnabled) {
+              const remote = await applyRemoteIndividualDecision([id], 'approve')
+              if (remote === 'error') return
+              if (remote === 'ok') {
+                setParticipantApproveTarget(null)
+                const sourceRow =
+                  individualList.find(row => row.id === id) ??
+                  (selectedItem && 'applicantName' in selectedItem && selectedItem.id === id
+                    ? (selectedItem as GeneralIndividualApplicantRow)
+                    : null)
+                const patchedRow = sourceRow
+                  ? patchGeneralIndividualApplicantForApprovalStatus(
+                      sourceRow,
+                      'approved',
+                      notifyOptions
+                    )
+                  : null
+                if (patchedRow) {
+                  setIndividualList(prev =>
+                    prev.map(row => (row.id === id ? patchedRow : row))
+                  )
+                  if (
+                    selectedItem &&
+                    'applicantName' in selectedItem &&
+                    selectedItem.id === id
+                  ) {
+                    setSelectedItem(patchedRow)
+                  }
+                }
+                setParticipantApprovalComplete({ participantName: name })
+                return
+              }
             }
-            return next
-          })
-          updateGeneralIndividualApplicantApprovalStatus(id, 'approved', notifyOptions)
-          setParticipantApprovalComplete({ participantName: name })
+            setParticipantApproveTarget(null)
+            const sourceRow =
+              individualList.find(row => row.id === id) ??
+              (selectedItem && 'applicantName' in selectedItem && selectedItem.id === id
+                ? (selectedItem as GeneralIndividualApplicantRow)
+                : null)
+            const patchedRow = sourceRow
+              ? patchGeneralIndividualApplicantForApprovalStatus(sourceRow, 'approved', notifyOptions)
+              : null
+            setIndividualList(prev => {
+              const next = prev.map(row => (row.id === id && patchedRow ? patchedRow : row))
+              const updated = next.find(row => row.id === id)
+              const current = selectedItem
+              if (
+                updated &&
+                current &&
+                'applicantName' in current &&
+                current.id === id
+              ) {
+                setSelectedItem(updated)
+              }
+              return next
+            })
+            updateGeneralIndividualApplicantApprovalStatus(id, 'approved', notifyOptions)
+            setParticipantApprovalComplete({ participantName: name })
+          }
+          void run()
         }}
       />
       <ParticipantApprovalCompleteModal
@@ -1153,30 +1211,69 @@ export function ApplicantList({
             manualNotifyAt: payload.manualNotifyAt,
             rejectionReason: payload.reason,
           }
-          setParticipantRejectTarget(null)
-          setIndividualList(prev => {
-            const next = prev.map(row =>
-              row.id === id
-                ? patchGeneralIndividualApplicantForApprovalStatus(row, 'rejected', notifyOptions)
-                : row
-            )
-            const updated = next.find(row => row.id === id)
-            const current = selectedItem
-            if (
-              updated &&
-              current &&
-              'applicantName' in current &&
-              current.id === id
-            ) {
-              setSelectedItem(updated)
+          const run = async () => {
+            if (individualRemoteEnabled) {
+              const remote = await applyRemoteIndividualDecision([id], 'reject', payload.reason)
+              if (remote === 'error') return
+              if (remote === 'ok') {
+                setParticipantRejectTarget(null)
+                const sourceRow =
+                  individualList.find(row => row.id === id) ??
+                  (selectedItem && 'applicantName' in selectedItem && selectedItem.id === id
+                    ? (selectedItem as GeneralIndividualApplicantRow)
+                    : null)
+                const patchedRow = sourceRow
+                  ? patchGeneralIndividualApplicantForApprovalStatus(
+                      sourceRow,
+                      'rejected',
+                      notifyOptions
+                    )
+                  : null
+                if (patchedRow) {
+                  setIndividualList(prev =>
+                    prev.map(row => (row.id === id ? patchedRow : row))
+                  )
+                  if (
+                    selectedItem &&
+                    'applicantName' in selectedItem &&
+                    selectedItem.id === id
+                  ) {
+                    setSelectedItem(patchedRow)
+                  }
+                }
+                setParticipantRejectComplete({
+                  participantName: name,
+                  rejectionReason: payload.reason,
+                })
+                return
+              }
             }
-            return next
-          })
-          updateGeneralIndividualApplicantApprovalStatus(id, 'rejected', notifyOptions)
-          setParticipantRejectComplete({
-            participantName: name,
-            rejectionReason: payload.reason,
-          })
+            setParticipantRejectTarget(null)
+            setIndividualList(prev => {
+              const next = prev.map(row =>
+                row.id === id
+                  ? patchGeneralIndividualApplicantForApprovalStatus(row, 'rejected', notifyOptions)
+                  : row
+              )
+              const updated = next.find(row => row.id === id)
+              const current = selectedItem
+              if (
+                updated &&
+                current &&
+                'applicantName' in current &&
+                current.id === id
+              ) {
+                setSelectedItem(updated)
+              }
+              return next
+            })
+            updateGeneralIndividualApplicantApprovalStatus(id, 'rejected', notifyOptions)
+            setParticipantRejectComplete({
+              participantName: name,
+              rejectionReason: payload.reason,
+            })
+          }
+          void run()
         }}
       />
       <ParticipantRejectCompleteModal
@@ -1276,25 +1373,62 @@ export function ApplicantList({
             manualNotifyAt: payload.manualNotifyAt,
             rejectionReason: payload.reason,
           }
-          setInstructorRejectTarget(null)
-          setInstructorList(prev => {
-            const next = prev.map(row =>
-              row.id === id
-                ? patchApplicantInstructorForApprovalStatus(row, 'rejected', notifyOptions)
-                : row
-            )
-            const updated = next.find(row => row.id === id)
-            const current = selectedItem
-            if (updated && current && 'instructorName' in current && current.id === id) {
-              setSelectedItem(updated)
+          const run = async () => {
+            if (instructorRemoteEnabled) {
+              const remote = await applyRemoteInstructorDecision(
+                [id],
+                'reject',
+                payload.reason
+              )
+              if (remote === 'error') return
+              if (remote === 'ok') {
+                setInstructorRejectTarget(null)
+                setInstructorList(prev => {
+                  const next = prev.map(row =>
+                    row.id === id
+                      ? patchApplicantInstructorForApprovalStatus(row, 'rejected', notifyOptions)
+                      : row
+                  )
+                  const updated = next.find(row => row.id === id)
+                  const current = selectedItem
+                  if (
+                    updated &&
+                    current &&
+                    'instructorName' in current &&
+                    current.id === id
+                  ) {
+                    setSelectedItem(updated)
+                  }
+                  return next
+                })
+                setInstructorRejectComplete({
+                  instructorName: name,
+                  rejectionReason: payload.reason,
+                })
+                return
+              }
             }
-            return next
-          })
-          updateApplicantInstructorApprovalStatus(id, 'rejected', notifyOptions)
-          setInstructorRejectComplete({
-            instructorName: name,
-            rejectionReason: payload.reason,
-          })
+            setInstructorRejectTarget(null)
+            setInstructorList(prev => {
+              const next = prev.map(row =>
+                row.id === id
+                  ? patchApplicantInstructorForApprovalStatus(row, 'rejected', notifyOptions)
+                  : row
+              )
+              const updated = next.find(row => row.id === id)
+              const current = selectedItem
+              if (updated && current && 'instructorName' in current && current.id === id) {
+                setSelectedItem(updated)
+              }
+              return next
+            })
+            updateApplicantInstructorApprovalStatus(id, 'rejected', notifyOptions)
+            setInstructorRejectComplete({
+              instructorName: name,
+              rejectionReason: payload.reason,
+            })
+          }
+          void run()
         }}
       />
       <InstructorRejectCompleteModal
@@ -1485,58 +1619,78 @@ export function ApplicantList({
         onConfirm={detail => {
           if (!instructorApprovalTarget || instructorApprovalTarget.step !== 'fee') return
           const { id, assignments } = instructorApprovalTarget
+          const instructorName = instructorApprovalTarget.name
           const notifyOptions = {
             notifyTiming: detail.notifyTiming,
             manualNotifyAt: detail.manualNotifyAt,
           }
-          setInstructorApprovalTarget(null)
-          setInstructorList(prev => {
-            const next = prev.map(row => {
-              if (row.id !== id) return row
-              const approved = patchApplicantInstructorForApprovalStatus(
-                row,
-                'approved',
-                notifyOptions
-              )
-              const withFee = {
-                ...approved,
-                lectureFeeBasisType: detail.lectureFeeBasisType,
-                lectureFeeMeasure: detail.lectureFeeMeasure ?? undefined,
-                lectureFeeAmount: detail.lectureFeeAmount ?? undefined,
-                lectureFeeBasisDisplay: detail.lectureFeeBasisDisplay,
-                ...(detail.instructorFeeGradeLabel
-                  ? { instructorFeeGradeLabel: detail.instructorFeeGradeLabel }
-                  : {}),
-                approvalNotifyTiming: detail.notifyTiming,
+          const applyLocalApproval = () => {
+            setInstructorList(prev => {
+              const next = prev.map(row => {
+                if (row.id !== id) return row
+                const approved = patchApplicantInstructorForApprovalStatus(
+                  row,
+                  'approved',
+                  notifyOptions
+                )
+                const withFee = {
+                  ...approved,
+                  lectureFeeBasisType: detail.lectureFeeBasisType,
+                  lectureFeeMeasure: detail.lectureFeeMeasure ?? undefined,
+                  lectureFeeAmount: detail.lectureFeeAmount ?? undefined,
+                  lectureFeeBasisDisplay: detail.lectureFeeBasisDisplay,
+                  ...(detail.instructorFeeGradeLabel
+                    ? { instructorFeeGradeLabel: detail.instructorFeeGradeLabel }
+                    : {}),
+                  approvalNotifyTiming: detail.notifyTiming,
+                }
+                if (assignments.length === 0) return withFee
+                const primary = assignments[0]
+                return {
+                  ...withFee,
+                  assignedLectures: assignments.map(item => ({
+                    slotKey: item.slotKey,
+                    dateKey: item.dateKey,
+                    schoolId: item.schoolId,
+                    schoolName: item.schoolName,
+                    sessionLabel: item.sessionLabel,
+                    timeRange: item.timeRange,
+                  })),
+                  assignedSchoolId: primary?.schoolId,
+                  assignedSchoolName: primary?.schoolName,
+                }
+              })
+              const updated = next.find(row => row.id === id)
+              const current = selectedItem
+              if (updated && current && 'instructorName' in current && current.id === id) {
+                setSelectedItem(updated)
               }
-              if (assignments.length === 0) return withFee
-              const primary = assignments[0]
-              return {
-                ...withFee,
-                assignedLectures: assignments.map(item => ({
-                  slotKey: item.slotKey,
-                  dateKey: item.dateKey,
-                  schoolId: item.schoolId,
-                  schoolName: item.schoolName,
-                  sessionLabel: item.sessionLabel,
-                  timeRange: item.timeRange,
-                })),
-                assignedSchoolId: primary?.schoolId,
-                assignedSchoolName: primary?.schoolName,
-              }
+              return next
             })
-            const updated = next.find(row => row.id === id)
-            const current = selectedItem
-            if (updated && current && 'instructorName' in current && current.id === id) {
-              setSelectedItem(updated)
+          }
+          const run = async () => {
+            if (instructorRemoteEnabled) {
+              const remote = await applyRemoteInstructorDecision([id], 'approve')
+              if (remote === 'error') return
+              if (remote === 'ok') {
+                setInstructorApprovalTarget(null)
+                applyLocalApproval()
+                setInstructorApprovalComplete({
+                  instructorName,
+                  assignedInstitutionCount: countAssignedInstitutions(assignments),
+                })
+                return
+              }
             }
-            return next
-          })
-          updateApplicantInstructorApprovalStatus(id, 'approved', notifyOptions)
-          setInstructorApprovalComplete({
-            instructorName: instructorApprovalTarget.name,
-            assignedInstitutionCount: countAssignedInstitutions(assignments),
-          })
+            setInstructorApprovalTarget(null)
+            applyLocalApproval()
+            updateApplicantInstructorApprovalStatus(id, 'approved', notifyOptions)
+            setInstructorApprovalComplete({
+              instructorName,
+              assignedInstitutionCount: countAssignedInstitutions(assignments),
+            })
+          }
+          void run()
         }}
       />
       <InstructorApprovalCompleteModal

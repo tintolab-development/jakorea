@@ -10,6 +10,10 @@ import { getGeneralProgramById } from '@/data/mock/general-programs'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { INDIVIDUAL_LECTURE_ASSIGN_DEMO_SLOT_KEYS } from '@/features/program/general/lib/individual-lecture-assign-demo'
 import { INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
+import {
+  GENERAL_INSTITUTION_MEMBER_ROSTER,
+  isGeneralInstitutionCaseProgramId,
+} from '@/features/program/general/lib/general-institution-case-roster'
 export type ApplicantInstructorLectureFeeBasisType = 'program' | 'special_lecture' | 'other_labor'
 
 export type ApplicantInstructorApprovalStatusKey = 'pending' | 'rejected' | 'approved'
@@ -71,6 +75,10 @@ export interface ApplicantInstructorEducationItem {
 
 export interface ApplicantInstructorRow {
   id: string
+  /** BE 강사 회원 ID — 신청 PK와 구분 */
+  instructorMemberId?: number
+  /** 프로그램 ID — 일반 기관 QA case 격리 */
+  programId?: string
   no: number
   instructorName: string
   lectureExperienceYears: number
@@ -884,6 +892,40 @@ export function getApplicantInstructorsByProgramId(
   programId: string,
   programHint?: Program | null
 ): ApplicantInstructorRow[] {
+  if (isGeneralInstitutionCaseProgramId(programId)) {
+    const members = [
+      GENERAL_INSTITUTION_MEMBER_ROSTER.instructor,
+      GENERAL_INSTITUTION_MEMBER_ROSTER.schoolTeacher,
+      GENERAL_INSTITUTION_MEMBER_ROSTER.dualInstructor,
+    ]
+    const statuses: ApplicantInstructorApprovalStatusKey[] = [
+      'pending',
+      'rejected',
+      'approved',
+    ]
+    return statuses.map((approvalStatus, index) => {
+      const base = MOCK_APPLICANT_INSTRUCTORS[index]!
+      const member = members[index]
+      return {
+        ...base,
+        id: `${programId}:instructor-application:${approvalStatus}`,
+        instructorMemberId: member.memberId,
+        programId,
+        no: statuses.length - index,
+        instructorName: member.name,
+        accountHolder: member.name,
+        contact: member.contact,
+        email: member.email,
+        approvalStatus,
+        schoolName: '서울초등학교',
+        managerComment: `${approvalStatus} 상태 QA 확인용 강사 신청입니다.`,
+        ...(approvalStatus === 'rejected'
+          ? { rejectionReason: '필수 자격 서류를 확인할 수 없습니다.' }
+          : {}),
+      }
+    })
+  }
+
   const program = programHint ?? getGeneralProgramById(programId)
   if (program != null && isGeneralIndividualProgram(program)) {
     return INDIVIDUAL_PROGRAM_DEMO_INSTRUCTORS.map((row, idx, arr) => ({

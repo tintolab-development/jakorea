@@ -6,7 +6,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  MOCK_PARTICIPATING_INSTRUCTORS,
+  getParticipatingInstructorsForProgram,
   type ParticipatingInstructorRow,
   type SettlementStatusKey,
 } from '@/data/mock/participating-instructors'
@@ -31,10 +31,7 @@ export interface UseProgressInstructorListOptions {
 }
 
 function getMockParticipatingInstructors(programId?: string): ParticipatingInstructorRow[] {
-  return MOCK_PARTICIPATING_INSTRUCTORS.map(row => ({
-    ...row,
-    ...(programId ? { memberId: row.memberId ?? `${programId}-${row.id}` } : {}),
-  }))
+  return getParticipatingInstructorsForProgram(programId)
 }
 
 export function useProgressInstructorList({
@@ -68,9 +65,6 @@ export function useProgressInstructorList({
   }, [remoteEnabled, remoteQuery.data, programId])
 
   const [selectedInstructorRowKeys, setSelectedInstructorRowKeys] = useState<React.Key[]>([])
-  const [selectedInstructorForDetail, setSelectedInstructorForDetail] =
-    useState<ParticipatingInstructorRow | null>(null)
-  const [instructorDetailModalOpen, setInstructorDetailModalOpen] = useState(false)
   const [addInstructorModalOpen, setAddInstructorModalOpen] = useState(false)
   const [instructorDeleteGuideOpen, setInstructorDeleteGuideOpen] = useState(false)
 
@@ -164,10 +158,6 @@ export function useProgressInstructorList({
     setInstructorList,
     selectedInstructorRowKeys,
     setSelectedInstructorRowKeys,
-    selectedInstructorForDetail,
-    setSelectedInstructorForDetail,
-    instructorDetailModalOpen,
-    setInstructorDetailModalOpen,
     addInstructorModalOpen,
     setAddInstructorModalOpen,
     instructorDeleteGuideOpen,

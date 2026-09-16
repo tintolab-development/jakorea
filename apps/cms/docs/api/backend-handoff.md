@@ -8,7 +8,7 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 **보안 설정(로그 관리)**: [logs-api-integration.md](./logs-api-integration.md) · [**전환률 · 미적용 API (백엔드 핸드오프 SSOT)**](./logs-api-conversion-status-backend-handoff.md) · [백엔드 갭 요약](./logs-api-backend-gaps.md)  
 **데이터 관리**: [data-management-api-integration.md](./data-management-api-integration.md) · [**후원사 관리 API 수정 (2026-09-03 SSOT)**](./sponsor-management-api-backend-handoff.md) · [**백엔드 갭 요청**](./data-management-api-backend-gaps.md)  
 **템플릿 양식 (forms-surveys)**: [**전환률 · 미적용 API (백엔드 핸드오프 SSOT)**](./templates-api-conversion-status-backend-handoff.md) · [forms-surveys-api-integration.md](./forms-surveys-api-integration.md) · [PHASE별 마이그레이션](./forms-surveys-api-migration-guide.md) · [백엔드 갭 목록](./forms-surveys-api-backend-gaps.md) · [신규 템플릿 생성 갭](./template-create-api-backend-handoff.md)  
-**일반 프로그램 (programs)**: [programs-api-integration.md](./programs-api-integration.md) · [**등록 플로우 API 목록**](./programs-registration-flow-api-backend-handoff.md) · [**등록 완료 POST 핸드오프**](./programs-create-api-backend-handoff.md) · [마이그레이션 가이드](./programs-api-migration-guide.md) · [백엔드 갭](./programs-api-backend-gaps.md) · [남은 작업](./programs-api-remaining-work.md) · [**상세 완료율 · Phase 5–10**](./programs-detail-api-conversion-status.md) · [**상세 LNB 미전환·CRUD 갭**](./programs-detail-lnb-crud-api-gaps.md)
+**일반 프로그램 (programs)**: [programs-api-integration.md](./programs-api-integration.md) · [**등록 플로우 API 목록**](./programs-registration-flow-api-backend-handoff.md) · [**등록 완료 POST 핸드오프**](./programs-create-api-backend-handoff.md) · [마이그레이션 가이드](./programs-api-migration-guide.md) · [백엔드 갭](./programs-api-backend-gaps.md) · [남은 작업](./programs-api-remaining-work.md) · [**상세 완료율 · Phase 5–10**](./programs-detail-api-conversion-status.md) · [**상세 LNB 미전환·CRUD 갭**](./programs-detail-lnb-crud-api-gaps.md) · [**참여자 신청 심사 remote 갭 (2026-09-16)**](./general-participant-application-screening-remote-gaps-backend-request-2026-09-16.md) · [**봉사자 신청 심사 remote 갭 (2026-09-16)**](./general-volunteer-application-screening-remote-gaps-backend-request-2026-09-16.md) · [**강사 신청 remote 갭 (2026-09-16)**](./general-instructor-application-remote-gaps-backend-request-2026-09-16.md)
 
 **E2E 관측 수정 요청**: [**e2e-backend-fixes-index.md**](./e2e-backend-fixes-index.md) (`DATABASE_ERROR` · 회원 등록 path · MFA 동시성)
 
@@ -126,16 +126,16 @@ CMS는 `useAuthStore` 토큰 → [`axios-instance.ts`](../../src/shared/instance
 공유 패키지: [`packages/social-auth`](../../../../packages/social-auth)  
 CMS wiring: [`features/auth/social-auth/cms-client.ts`](../../src/features/auth/social-auth/cms-client.ts)
 
-| API                    | 경로                                           | 용도                                                                                                |
-| ---------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| SSO 시작               | `POST /api/admin/auth/sso/login`                        | 관리자 소셜 **로그인** OAuth 시작 (`redirectUri`=백엔드 callback, `returnUrl`=프론트 complete) |
-| SSO provider callback  | `GET /api/admin/auth/sso/{provider}/callback`           | IdP → 백엔드 code 교환 (브라우저 redirect, 프론트 XHR 아님)                                      |
-| 로그인 session consume | `POST /api/admin/auth/sso/login/sessions/consume`       | `adminSsoSessionId` → JWT                                                                            |
-| 연결 시작              | `POST /api/admin/me/sso/accounts` (`startOAuth: true`)  | 관리자 소셜 **계정 연결** OAuth 시작                                                                 |
-| 연결 session consume   | `POST /api/admin/me/sso/link/sessions/consume`          | `adminSsoSessionId` + consent → LINKED                                                               |
-| 연결 목록              | `GET /api/admin/me/sso/accounts`                        | 로그인 후 연결 목록 (`content[]`)                                                                    |
-| 계정 연결              | `POST /api/admin/me/sso/accounts`                       | mock/pending flush 시 `accessToken` + consent                                                        |
-| 연결 해제              | `DELETE /api/admin/me/sso/accounts/{provider}`          | 연결 해제                                                                                            |
+| API                    | 경로                                                   | 용도                                                                                           |
+| ---------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| SSO 시작               | `POST /api/admin/auth/sso/login`                       | 관리자 소셜 **로그인** OAuth 시작 (`redirectUri`=백엔드 callback, `returnUrl`=프론트 complete) |
+| SSO provider callback  | `GET /api/admin/auth/sso/{provider}/callback`          | IdP → 백엔드 code 교환 (브라우저 redirect, 프론트 XHR 아님)                                    |
+| 로그인 session consume | `POST /api/admin/auth/sso/login/sessions/consume`      | `adminSsoSessionId` → JWT                                                                      |
+| 연결 시작              | `POST /api/admin/me/sso/accounts` (`startOAuth: true`) | 관리자 소셜 **계정 연결** OAuth 시작                                                           |
+| 연결 session consume   | `POST /api/admin/me/sso/link/sessions/consume`         | `adminSsoSessionId` + consent → LINKED                                                         |
+| 연결 목록              | `GET /api/admin/me/sso/accounts`                       | 로그인 후 연결 목록 (`content[]`)                                                              |
+| 계정 연결              | `POST /api/admin/me/sso/accounts`                      | mock/pending flush 시 `accessToken` + consent                                                  |
+| 연결 해제              | `DELETE /api/admin/me/sso/accounts/{provider}`         | 연결 해제                                                                                      |
 
 > legacy `POST /api/admin/auth/sso/callback` 는 Swagger에서 제거됨. canonical은 backend redirect + session consume.
 
@@ -205,20 +205,20 @@ UI·페이지는 분기하지 않습니다. **서비스 레이어**(`entities/*/
 
 CMS·Platform FE는 API 실패 시 서버가 내려준 **`message` 문자열을 가공·번역 없이** alert·모달·폼 에러 영역에 **그대로 노출**합니다.
 
-| 앱 | 대표 FE 경로 | 노출 방식 |
-|----|--------------|-----------|
-| **CMS** | `features/user/detail/lib/use-personal-info-reveal.ts` | `cmsAlertModal` 「열람 실패」 본문 = `error.message` |
-| **CMS** | `features/user/api/get-member-api-error.ts` · `features/*/api/get-*-api-error.ts` | axios `response.data.message` / `error.message` |
-| **CMS** | `shared/utils/error-handler.ts` | 일부 화면은 타입별 fallback만, **API message 우선** |
-| **Platform** | `features/auth/sign-up/lib/helpers/get-signup-api-error-message.ts` | 회원가입·검색 모달 등 `message` 직접 표시 |
+| 앱           | 대표 FE 경로                                                                      | 노출 방식                                            |
+| ------------ | --------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| **CMS**      | `features/user/detail/lib/use-personal-info-reveal.ts`                            | `cmsAlertModal` 「열람 실패」 본문 = `error.message` |
+| **CMS**      | `features/user/api/get-member-api-error.ts` · `features/*/api/get-*-api-error.ts` | axios `response.data.message` / `error.message`      |
+| **CMS**      | `shared/utils/error-handler.ts`                                                   | 일부 화면은 타입별 fallback만, **API message 우선**  |
+| **Platform** | `features/auth/sign-up/lib/helpers/get-signup-api-error-message.ts`               | 회원가입·검색 모달 등 `message` 직접 표시            |
 
 → BE validation·내부 오류 문구가 **최종 사용자 UI**에 그대로 보입니다.
 
 ### 관측 예 (2026-07-31 · CMS unmask)
 
-| HTTP | 현재 BE `message` (UI 그대로) | 문제 |
-|------|-------------------------------|------|
-| 400 | `reason 크기가 5에서 500 사이여야 합니다` | Bean Validation **필드명·제약 리터럴** 노출 |
+| HTTP | 현재 BE `message` (UI 그대로)             | 문제                                        |
+| ---- | ----------------------------------------- | ------------------------------------------- |
+| 400  | `reason 크기가 5에서 500 사이여야 합니다` | Bean Validation **필드명·제약 리터럴** 노출 |
 
 ### BE 요청 (전 API 공통)
 
@@ -230,12 +230,12 @@ CMS·Platform FE는 API 실패 시 서버가 내려준 **`message` 문자열을 
 3. **권장** — `error.code`는 **기계 판별용**(예: `VALIDATION_ERROR`, `UNAUTHORIZED`) · `error.message`는 **사람이 읽을 문구**.
 4. **validation 매핑 예**
 
-| 상황 | `error.code` (예) | `error.message` (UI 노출 OK) |
-|------|-------------------|------------------------------|
-| unmask reason 빈값 | `VALIDATION_ERROR` | `열람 사유를 입력해 주세요.` |
-| unmask reason 500자 초과 | `VALIDATION_ERROR` | `열람 사유는 500자 이내로 입력해 주세요.` |
-| 권한 없음 | `FORBIDDEN` | `접근 권한이 없습니다.` |
-| 서버 내부 오류 | `INTERNAL_ERROR` | `일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.` |
+| 상황                     | `error.code` (예)  | `error.message` (UI 노출 OK)                                |
+| ------------------------ | ------------------ | ----------------------------------------------------------- |
+| unmask reason 빈값       | `VALIDATION_ERROR` | `열람 사유를 입력해 주세요.`                                |
+| unmask reason 500자 초과 | `VALIDATION_ERROR` | `열람 사유는 500자 이내로 입력해 주세요.`                   |
+| 권한 없음                | `FORBIDDEN`        | `접근 권한이 없습니다.`                                     |
+| 서버 내부 오류           | `INTERNAL_ERROR`   | `일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.` |
 
 5. **OpenAPI** — 4xx/5xx response schema에 `message` **사용자 문구 예시** 기재 (필드명·제약 설명 X).
 6. **Platform 회원가입·NICE** 등 공개 API도 **동일 정책** — [Platform handoff](../../platform/docs/api/api-error-response-handoff-2026-07-31.md)

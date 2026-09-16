@@ -10,7 +10,11 @@ import {
   submitGeneralIndividualDocumentResult,
   submitGeneralIndividualFinalResult,
   submitGeneralVolunteerDocumentResult,
+  submitGeneralVolunteerDocumentResultBulk,
   submitGeneralVolunteerFinalResult,
+  submitGeneralVolunteerFinalResultBulk,
+  giveUpGeneralVolunteerApplication,
+  submitGeneralInterviewAssignmentEvaluation,
 } from '@/features/program/general/api/admin-applications-service'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
@@ -76,7 +80,7 @@ export function useGeneralVolunteerApplicationsRemote({
   const invalidateApplications = useCallback(async () => {
     if (subjectKind === 'participant') {
       await queryClient.invalidateQueries({
-        queryKey: generalApplicationsQueryKeys.individualList(programId),
+        queryKey: generalApplicationsQueryKeys.individualLists(programId),
       })
       return
     }
@@ -107,10 +111,20 @@ export function useGeneralVolunteerApplicationsRemote({
           result,
           reason: result === 'FAIL' ? reason?.trim() || '반려' : reason,
         } as const
-        for (const id of ids) {
-          if (subjectKind === 'participant') {
+        if (subjectKind === 'participant') {
+          for (const id of ids) {
             await submitGeneralIndividualDocumentResult(id, payload)
-          } else {
+          }
+        } else if (ids.length > 1) {
+          const bulk = await submitGeneralVolunteerDocumentResultBulk(ids, payload)
+          if ((bulk.failureCount ?? 0) > 0) {
+            showAlert({
+              title: '서류 결과 일부 실패',
+              content: `요청 ${bulk.requestedCount ?? ids.length}건 중 성공 ${bulk.successCount ?? 0}건, 실패 ${bulk.failureCount ?? 0}건입니다.`,
+            })
+          }
+        } else {
+          for (const id of ids) {
             await submitGeneralVolunteerDocumentResult(id, payload)
           }
         }
@@ -121,7 +135,7 @@ export function useGeneralVolunteerApplicationsRemote({
         return true
       }
     },
-    [invalidateApplications, notifyRemoteFailure, remoteEnabled, subjectKind]
+    [invalidateApplications, notifyRemoteFailure, remoteEnabled, showAlert, subjectKind]
   )
 
   const applyRemoteFinalResult = useCallback(
@@ -136,10 +150,20 @@ export function useGeneralVolunteerApplicationsRemote({
       if (!remoteEnabled) return false
       try {
         const payload = mapSecondInterviewStatusToFinalResultPayload(status, reason)
-        for (const id of ids) {
-          if (subjectKind === 'participant') {
+        if (subjectKind === 'participant') {
+          for (const id of ids) {
             await submitGeneralIndividualFinalResult(id, payload)
-          } else {
+          }
+        } else if (ids.length > 1) {
+          const bulk = await submitGeneralVolunteerFinalResultBulk(ids, payload)
+          if ((bulk.failureCount ?? 0) > 0) {
+            showAlert({
+              title: '면접 결과 일부 실패',
+              content: `요청 ${bulk.requestedCount ?? ids.length}건 중 성공 ${bulk.successCount ?? 0}건, 실패 ${bulk.failureCount ?? 0}건입니다.`,
+            })
+          }
+        } else {
+          for (const id of ids) {
             await submitGeneralVolunteerFinalResult(id, payload)
           }
         }
@@ -150,14 +174,44 @@ export function useGeneralVolunteerApplicationsRemote({
         return true
       }
     },
-    [invalidateApplications, notifyRemoteFailure, remoteEnabled, subjectKind]
+    [invalidateApplications, notifyRemoteFailure, remoteEnabled, showAlert, subjectKind]
+  )
+
+  const applyRemoteInterviewEvaluation = useCallback(
+    async (
+      assignmentId: number | string | undefined,
+      payload: { scoreTotal: number; comment?: string }
+    ): Promise<'ok' | 'missing_assignment' | 'error' | 'skipped'> => {
+      if (!remoteEnabled) return 'skipped'
+      if (assignmentId == null || assignmentId === '') {
+        showAlert({
+          title: '면접 평가 실패',
+          content:
+            '면접 배정 ID가 없어 평가를 저장할 수 없습니다. 목록에 interviewAssignmentId가 포함되어야 합니다.',
+        })
+        return 'missing_assignment'
+      }
+      try {
+        await submitGeneralInterviewAssignmentEvaluation(assignmentId, payload)
+        await invalidateApplications()
+        return 'ok'
+      } catch (error) {
+        notifyRemoteFailure(error)
+        return 'error'
+      }
+    },
+    [invalidateApplications, notifyRemoteFailure, remoteEnabled, showAlert]
   )
 
   const applyRemoteGiveUp = useCallback(
     async (applicationId: string) => {
-      if (!remoteEnabled || subjectKind !== 'participant') return false
+      if (!remoteEnabled) return false
       try {
-        await giveUpIndividualApplicationRemote(applicationId)
+        if (subjectKind === 'participant') {
+          await giveUpIndividualApplicationRemote(applicationId)
+        } else {
+          await giveUpGeneralVolunteerApplication(applicationId)
+        }
         await invalidateApplications()
         return true
       } catch (error) {
@@ -174,6 +228,7 @@ export function useGeneralVolunteerApplicationsRemote({
     applicationsLoading: remoteEnabled ? query.isFetching && query.data === undefined : false,
     applyRemoteDocumentResult,
     applyRemoteFinalResult,
+    applyRemoteInterviewEvaluation,
     applyRemoteGiveUp,
     invalidateVolunteerApplications: invalidateApplications,
     invalidateApplications,

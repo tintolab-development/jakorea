@@ -35,9 +35,9 @@ import { ProgramDetailFullPageModal } from '@/features/program/general/ui/detail
 import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
 import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
 import {
-  clearRegistrationDraftForFreshStart,
   peekRegistrationDraftNotice,
   PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE,
+  REGISTRATION_DRAFT_MODE_CONTINUE,
   REGISTRATION_DRAFT_MODE_FRESH,
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
 } from '@/features/program/shared/lib/registration-draft-notice'
@@ -197,13 +197,9 @@ function ProgramListPageContent() {
     searchParams.has(PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY)
   const isRecruitmentRoute =
     pNorm === '/programs/education/student-recruitment' ||
-    pNorm === '/programs/education/instructor-recruitment' ||
     pNorm === '/programs/general/student-recruitment' ||
-    pNorm === '/programs/general/instructor-recruitment' ||
     pNorm === '/programs/company-school/student-recruitment' ||
-    pNorm === '/programs/company-school/instructor-recruitment' ||
-    pNorm === '/programs/economy-education/student-recruitment' ||
-    pNorm === '/programs/economy-education/instructor-recruitment'
+    pNorm === '/programs/economy-education/student-recruitment'
 
   // 3. Modal States
   const {
@@ -222,8 +218,6 @@ function ProgramListPageContent() {
   } = useModalState<Program>()
 
   const [selectedProgramForModal, setSelectedProgramForModal] = useState<Program | null>(null)
-  const [selectedProgramForInstructorModal, setSelectedProgramForInstructorModal] =
-    useState<Program | null>(null)
   const [selectedProgramForFullPageModal, setSelectedProgramForFullPageModal] =
     useState<Program | null>(null)
 
@@ -453,6 +447,8 @@ function ProgramListPageContent() {
       next.delete('tab')
       if (mode === 'fresh') {
         next.set(REGISTRATION_DRAFT_MODE_QUERY_KEY, REGISTRATION_DRAFT_MODE_FRESH)
+      } else if (mode === 'continue') {
+        next.set(REGISTRATION_DRAFT_MODE_QUERY_KEY, REGISTRATION_DRAFT_MODE_CONTINUE)
       } else {
         next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
       }
@@ -479,7 +475,8 @@ function ProgramListPageContent() {
         setDraftNoticeOpen(true)
         return
       }
-      openCompanySchoolRegistration()
+      // 안내할 임시저장본이 없으면 복원 조회 없이 항상 빈 신규 폼으로 시작
+      openCompanySchoolRegistration('fresh')
       return
     }
 
@@ -493,7 +490,7 @@ function ProgramListPageContent() {
     (choice: RegistrationDraftNoticeChoice) => {
       setDraftNoticeOpen(false)
       if (choice === 'fresh') {
-        clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE)
+        // 기존 임시저장본은 유지 — 닫았다가 다시 진입해도 안내 팝업을 다시 노출
         openCompanySchoolRegistration('fresh')
         return
       }
@@ -516,14 +513,6 @@ function ProgramListPageContent() {
 
     if (pNorm === '/programs/education/student-recruitment' || pNorm === '/programs/general/student-recruitment') {
       setSelectedProgramForModal(program)
-      return
-    }
-
-    if (
-      pNorm === '/programs/education/instructor-recruitment' ||
-      pNorm === '/programs/general/instructor-recruitment'
-    ) {
-      setSelectedProgramForInstructorModal(program)
       return
     }
 
@@ -743,8 +732,6 @@ function ProgramListPageContent() {
         }}
         selectedProgramForModal={selectedProgramForModal}
         onCancelEnrollmentModal={() => setSelectedProgramForModal(null)}
-        selectedProgramForInstructorModal={selectedProgramForInstructorModal}
-        onCancelInstructorModal={() => setSelectedProgramForInstructorModal(null)}
       />
 
       <DeleteGuideModal

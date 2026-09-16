@@ -42,10 +42,7 @@ export function MfaPage() {
 
   const isRemoteMfa = Boolean(mfaState?.challengeUuid)
   const isLocalTestMfa =
-    isRemoteMfa &&
-    isAdminLocalTestMfa(mfaState?.mfaMethod) &&
-    !provisioning &&
-    !provisioningLoading
+    isRemoteMfa && isAdminLocalTestMfa(mfaState?.mfaMethod) && !provisioning && !provisioningLoading
 
   const loadProvisioning = useCallback(async () => {
     if (!user?.email) return
@@ -109,7 +106,8 @@ export function MfaPage() {
     try {
       const verified = await verifyTotpCode({
         email: user.email,
-        otpCode: effectiveCode })
+        otpCode: effectiveCode,
+      })
 
       if (verified) {
         completeMfa()
@@ -148,9 +146,7 @@ export function MfaPage() {
   }
 
   const lockMessage =
-    isLocked && lockUntil
-      ? `인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.`
-      : null
+    isLocked && lockUntil ? `인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.` : null
 
   if (!user || user.role !== 'ADMIN') {
     return null
@@ -195,7 +191,12 @@ export function MfaPage() {
         )}
 
         {provisioningError && (
-          <Alert type="warning" description={provisioningError} style={{ marginBottom: 16 }} showIcon />
+          <Alert
+            type="warning"
+            description={provisioningError}
+            style={{ marginBottom: 16 }}
+            showIcon
+          />
         )}
 
         {!isLocalTestMfa && (
@@ -210,7 +211,11 @@ export function MfaPage() {
                     수동 입력 키 (Base32)
                   </Text>
                   <br />
-                  <Text code copyable={{ text: provisioning.manualSecret }} style={{ fontSize: 12 }}>
+                  <Text
+                    code
+                    copyable={{ text: provisioning.manualSecret }}
+                    style={{ fontSize: 12 }}
+                  >
                     {provisioning.manualSecret}
                   </Text>
                 </div>
@@ -223,10 +228,7 @@ export function MfaPage() {
           <Form.Item
             label="인증번호"
             name="otpCode"
-            rules={[
-              { required: true },
-              { len: OTP_LENGTH },
-            ]}
+            rules={[{ required: true }, { len: OTP_LENGTH }]}
           >
             <Input.OTP
               length={OTP_LENGTH}
@@ -241,15 +243,16 @@ export function MfaPage() {
             <Text type="secondary">앱의 코드는 약 30초마다 바뀝니다.</Text>
             {failedAttempts > 0 && !isLocked && (
               <Text type="danger" style={{ display: 'block', marginTop: 4 }}>
-                잘못된 코드를 입력하였습니다. (실패 {clampMfaFailedAttempts(failedAttempts)}회 /
-                최대 {OTP_POLICY.maxFailedAttempts}회)
+                잘못된 코드를 입력하였습니다. (실패 횟수 {clampMfaFailedAttempts(failedAttempts)} /
+                {OTP_POLICY.maxFailedAttempts})
               </Text>
             )}
           </div>
 
           <Space direction="vertical" style={{ width: '100%' }} size="middle">
             <LoadingButton
-              type="primary" htmlType="submit"
+              type="primary"
+              htmlType="submit"
               block
               size="large"
               loading={verifying}

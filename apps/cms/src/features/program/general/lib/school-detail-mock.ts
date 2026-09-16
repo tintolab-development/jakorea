@@ -26,6 +26,10 @@ import type {
   LectureProgressDisplayKey,
   AssignmentSubmissionRowStatusKey,
 } from '../model/school-detail-types'
+import {
+  GENERAL_INSTITUTION_MEMBER_ROSTER,
+  isGeneralInstitutionCaseEntityId,
+} from './general-institution-case-roster'
 import { PORTRAIT_CONSENT_AGREEMENT_TEMPLATE_ID } from './student-portrait-consent'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
 import {
@@ -528,9 +532,20 @@ const PORTRAIT_CONSENT_UNSUBMITTED_STUDENT_NAMES = new Set(['박학생', '강학
  * 해당 학교 학생 명단 Mock (데모 8건)
  */
 export function getSchoolDetailStudents(schoolId: string, _count: number): SchoolDetailStudentRow[] {
-  return SCHOOL_DETAIL_STUDENT_LIST_MOCK.map((row, i) => ({
+  const source = isGeneralInstitutionCaseEntityId(schoolId)
+    ? SCHOOL_DETAIL_STUDENT_LIST_MOCK.slice(0, 4)
+    : SCHOOL_DETAIL_STUDENT_LIST_MOCK
+  return source.map((row, i) => ({
     ...row,
     id: `student-${schoolId}-${i + 1}`,
+    ...(isGeneralInstitutionCaseEntityId(schoolId)
+      ? {
+          memberId: GENERAL_INSTITUTION_MEMBER_ROSTER.individual.memberId,
+          name: GENERAL_INSTITUTION_MEMBER_ROSTER.individual.name,
+          contact: GENERAL_INSTITUTION_MEMBER_ROSTER.individual.contact,
+          email: GENERAL_INSTITUTION_MEMBER_ROSTER.individual.email,
+        }
+      : {}),
     portraitConsentSubmission: PORTRAIT_CONSENT_UNSUBMITTED_STUDENT_NAMES.has(row.name)
       ? null
       : {

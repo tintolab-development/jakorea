@@ -157,7 +157,7 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     })
   })
 
-  it('mirrors remote when remote is newer than local', async () => {
+  it('returns newer remote without overwriting local draft on entry', async () => {
     const localDraft = createProgramRegistrationDraft('general')
     persistWritingFormTemplateSave({
       templateId: TEMPLATE_CODE,
@@ -178,7 +178,7 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     const loaded = await loadFormTemplateVersionDraft(TEMPLATE_CODE)
     expect(loaded?.editorState).toEqual({ marker: 'remote-newer' })
     expect(loadWritingFormTemplateSave(TEMPLATE_CODE)?.editorState).toEqual({
-      marker: 'remote-newer',
+      marker: 'local-older',
     })
 
     removeWritingFormTemplateSave(TEMPLATE_CODE)

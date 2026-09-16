@@ -29,10 +29,13 @@ import { GeneralVolunteerInterview2PassCompleteModal } from './general-volunteer
 import { GeneralVolunteerInterview2PassModal } from './general-volunteer-interview2-pass-modal'
 import { GeneralVolunteerInterview2CalendarView } from './general-volunteer-interview2-calendar-view'
 import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
+import { mapVolunteerScreeningRowToParticipant } from '@/features/program/general/lib/participant-volunteer-row-adapter'
 import { useGeneralVolunteerInterview2 } from './use-interview2'
+import { GeneralVolunteerInterviewAssignModals } from './general-volunteer-interview-assign-modals'
 import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
 import { shouldPreferGeneralApplicationListMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import './volunteer-screening.css'
 import './interview2-section.css'
@@ -99,8 +102,14 @@ export function GeneralVolunteerInterview2Section({
     closeEvaluationModal,
     evaluationTarget,
     saveInterviewEvaluation,
+    handleAssignInterview,
+    assignFlow,
+    closeAssignModal,
+    closeAssignCompleteModal,
+    confirmAssignInterview,
     filterRowsSource,
     applicationsLoading,
+    isRemoteDataSource,
   } = useGeneralVolunteerInterview2({ programId, subjectKind, preferApplicationListMock })
 
   const activityWithdrawScheduleOptions = useMemo(
@@ -162,6 +171,24 @@ export function GeneralVolunteerInterview2Section({
     if (!selectedApplicant) return
     openEvaluationModal(selectedApplicant)
   }, [openEvaluationModal, selectedApplicant])
+
+  const handleDetailReassignInterview = useCallback(() => {
+    if (!selectedApplicant) return
+    handleAssignInterview(selectedApplicant)
+  }, [handleAssignInterview, selectedApplicant])
+
+  const assignModals = (
+    <GeneralVolunteerInterviewAssignModals
+      program={program}
+      list={list}
+      assignFlow={assignFlow}
+      applicationsUseRemote={isRemoteDataSource}
+      subjectKind={subjectKind}
+      onClosePick={closeAssignModal}
+      onConfirmPick={confirmAssignInterview}
+      onCloseComplete={closeAssignCompleteModal}
+    />
+  )
 
   const withdrawConfirmModal = (
     <ActivityWithdrawScheduleModal
@@ -250,7 +277,10 @@ export function GeneralVolunteerInterview2Section({
             program={program}
             applicantId={selectedApplicant.id}
             screeningStage="interview2"
-            applicant={selectedApplicant.participantApplicant}
+            applicant={
+              selectedApplicant.participantApplicant ??
+              mapVolunteerScreeningRowToParticipant(selectedApplicant)
+            }
             onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
             onApplicantDetailMetaChange={meta => {
               if (!meta) {
@@ -266,6 +296,7 @@ export function GeneralVolunteerInterview2Section({
           {passFailModals}
           {withdrawConfirmModal}
           {evaluationModal}
+          {assignModals}
           {bulkPassModal}
           {bulkFailModal}
           {completeModals}
@@ -282,10 +313,12 @@ export function GeneralVolunteerInterview2Section({
           onInterviewFail={handleDetailInterviewFail}
           onInterviewPass={handleDetailInterviewPass}
           onOpenInterviewEvaluation={handleDetailOpenEvaluation}
+          onReassignInterview={handleDetailReassignInterview}
         />
         {passFailModals}
         {withdrawConfirmModal}
         {evaluationModal}
+        {assignModals}
         {bulkPassModal}
         {bulkFailModal}
         {completeModals}
@@ -313,6 +346,7 @@ export function GeneralVolunteerInterview2Section({
       {passFailModals}
       {withdrawConfirmModal}
       {evaluationModal}
+      {assignModals}
       {bulkPassModal}
       {bulkFailModal}
       {completeModals}
@@ -392,16 +426,25 @@ export function GeneralVolunteerInterview2Section({
               pagination={false}
               tableLayout="fixed"
               scroll={{ x: resolveGeneralInterview2TableScrollX(subjectKind) }}
+              rowClassName={record =>
+                record.interviewAssignmentStatus === 'withdrawn'
+                  ? CMS_DATA_TABLE_ROW_DISABLED_CLASS
+                  : ''
+              }
               rowSelection={{
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
+                getCheckboxProps: record => ({
+                  disabled: record.interviewAssignmentStatus === 'withdrawn',
+                }),
               }}
-              onRow={record => ({
-                onClick: e => handleRowClick(record, e),
-                style: {
-                  cursor: record.interviewAssignmentStatus === 'withdrawn' ? 'default' : 'pointer',
-                },
-              })}
+              onRow={record => {
+                const withdrawn = record.interviewAssignmentStatus === 'withdrawn'
+                return {
+                  onClick: withdrawn ? undefined : e => handleRowClick(record, e),
+                  style: { cursor: withdrawn ? 'default' : 'pointer' },
+                }
+              }}
             />
           </div>
         ) : (

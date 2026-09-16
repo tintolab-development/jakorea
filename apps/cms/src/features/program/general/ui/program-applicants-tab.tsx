@@ -15,7 +15,6 @@ import {
 } from '@/data/mock/applicant-institutions'
 import { getApplicantSchoolDetail } from '../lib/school-detail-mock'
 import { SchoolDetailModal } from './detail-modal/program-status/school-detail-modal'
-import { ApplicantInstructorDetailModal } from './applicant-instructor-detail-modal'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import {
   buildSchoolRejectMessageLines,
@@ -139,8 +138,6 @@ export function ProgramApplicantsTab({
   const [selectedApplicantSchool, setSelectedApplicantSchool] = useState<ApplicantSchoolRow | null>(
     null
   )
-  const [instructorDetailModalOpen, setInstructorDetailModalOpen] = useState(false)
-  const [selectedInstructor, setSelectedInstructor] = useState<ApplicantInstructorRow | null>(null)
   const [selectedSchoolRowKeys, setSelectedSchoolRowKeys] = useState<React.Key[]>([])
   const [schoolConfirmModal, setSchoolConfirmModal] = useState<'reject' | 'approve' | null>(null)
   const [selectedInstructorRowKeys, setSelectedInstructorRowKeys] = useState<React.Key[]>([])
@@ -263,33 +260,6 @@ export function ProgramApplicantsTab({
     setSelectedInstructorRowKeys([])
     setInstructorConfirmModal(null)
     }, [selectedInstructorRowKeys])
-
-  const handleInstructorDetailReject = useCallback((instructor: ApplicantInstructorRow) => {
-    setInstructorList(prev =>
-      prev.map(row =>
-        row.id === instructor.id
-          ? { ...row, approvalStatus: 'rejected' as ApplicantInstructorApprovalStatusKey }
-          : row
-      )
-    )
-    setInstructorDetailModalOpen(false)
-    setSelectedInstructor(null)
-    }, [])
-
-  const handleInstructorDetailApprove = useCallback(
-    (instructor: ApplicantInstructorRow, _selectedSchoolId: string) => {
-      setInstructorList(prev =>
-        prev.map(row =>
-          row.id === instructor.id
-            ? { ...row, approvalStatus: 'approved' as ApplicantInstructorApprovalStatusKey }
-            : row
-        )
-      )
-      setInstructorDetailModalOpen(false)
-      setSelectedInstructor(null)
-      },
-    []
-  )
 
   const filteredSchools = useMemo(() => {
     return schoolList.filter(row => {
@@ -791,21 +761,6 @@ export function ProgramApplicantsTab({
                   onChange: keys => setSelectedInstructorRowKeys(keys),
                 }}
                 locale={{ emptyText: '신청 강사 데이터가 없습니다.' }}
-                onRow={record => ({
-                  onClick: e => {
-                    const target = e.target as HTMLElement
-                    if (
-                      target.closest('.status-dropdown-cell__cell-status') ||
-                      target.closest('.status-dropdown-cell__status-trigger') ||
-                      target.closest('.ant-table-selection-column') ||
-                      target.closest('.ant-checkbox-wrapper')
-                    )
-                      return
-                    setSelectedInstructor(record)
-                    setInstructorDetailModalOpen(true)
-                  },
-                  style: { cursor: 'pointer' },
-                })}
               />
             </div>
           </>
@@ -818,17 +773,6 @@ export function ProgramApplicantsTab({
           title="수강 신청 학교 상세 정보"
           variant="applicant"
         />
-        <ApplicantInstructorDetailModal
-          open={instructorDetailModalOpen}
-          onCancel={() => {
-            setInstructorDetailModalOpen(false)
-            setSelectedInstructor(null)
-          }}
-          instructor={selectedInstructor}
-          onReject={handleInstructorDetailReject}
-          onApprove={handleInstructorDetailApprove}
-        />
-
         {schoolConfirmModal === 'reject' && (
           <DeleteGuideModal
             open

@@ -22,6 +22,7 @@ import { GeneralVolunteerApplicantDetailView } from './detail-view'
 import { GeneralVolunteerInterviewAssignModals } from './general-volunteer-interview-assign-modals'
 import { GeneralVolunteerDocPassedCalendarView } from './general-volunteer-doc-passed-calendar-view'
 import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
+import { mapVolunteerScreeningRowToParticipant } from '@/features/program/general/lib/participant-volunteer-row-adapter'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { useGeneralVolunteerDocPassed } from './use-doc-passed'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
@@ -175,7 +176,10 @@ export function GeneralVolunteerDocPassedSection({
             program={program}
             applicantId={selectedApplicant.id}
             screeningStage="doc_passed"
-            applicant={selectedApplicant.participantApplicant}
+            applicant={
+              selectedApplicant.participantApplicant ??
+              mapVolunteerScreeningRowToParticipant(selectedApplicant)
+            }
             onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
             onApplicantDetailMetaChange={handleParticipantDetailMetaChange}
           />

@@ -16,7 +16,8 @@ import {
   approveIndividualApplicationRemote,
   approveInstructorApplicationRemote,
   approveOrganizationApplicationRemote,
-  assignVolunteerInterviewSlotRemote,
+  bulkApproveInstructorApplicationsRemote,
+  bulkRejectInstructorApplicationsRemote,
   createInterviewAssignmentRemote,
   createInterviewSlotRemote,
   fetchIndividualApplicationsRemote,
@@ -24,17 +25,22 @@ import {
   fetchOrganizationApplicationsRemote,
   fetchOrganizationApplicationRequestedSchedulesRemote,
   fetchVolunteerApplicationsRemote,
+  giveUpVolunteerApplicationRemote,
   listInterviewSlotsRemote,
   rejectIndividualApplicationRemote,
   rejectInstructorApplicationRemote,
   rejectOrganizationApplicationRemote,
+  bulkVolunteerDocumentResultsRemote,
+  bulkVolunteerFinalResultsRemote,
   submitIndividualDocumentResultRemote,
   submitIndividualFinalResultRemote,
+  submitInterviewAssignmentEvaluationRemote,
   submitVolunteerDocumentResultRemote,
   submitVolunteerFinalResultRemote,
   type ApplicationsListQuery,
 } from '@/features/program/general/api/applications-api-client'
 import {
+  sortGeneralParticipantDocPassedVolunteerRows,
   sortGeneralVolunteerByInterviewSlotCount,
   sortGeneralVolunteerDocPassedApplicants,
   type GeneralVolunteerApplicantRow,
@@ -44,9 +50,16 @@ import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
+import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
 import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboard/schemas/volunteerFinalResultRequest'
 import type { GeneralSecondInterviewScreeningStatus } from '@/features/program/general/lib/volunteer-screening-constants'
+
+function toBulkNumericApplicationIds(ids: string[]): number[] | null {
+  const numericIds = ids.map(id => Number(id))
+  if (numericIds.some(id => !Number.isFinite(id))) return null
+  return numericIds
+}
 
 function assertApplicationsRemoteReady(): void {
   if (!shouldUseApplicationsHttpRemoteApi()) {
@@ -134,7 +147,7 @@ export async function fetchGeneralIndividualInterview2AsVolunteerRows(
 ): Promise<GeneralVolunteerApplicantRow[]> {
   assertApplicationsRemoteReady()
   const rows = await fetchGeneralIndividualApplications(programId)
-  return sortGeneralVolunteerInterview2Applicants(
+  return sortGeneralParticipantDocPassedVolunteerRows(
     mapParticipantsToVolunteerScreeningRows(filterIndividualInterview2Rows(rows))
   )
 }
@@ -204,6 +217,29 @@ export async function rejectGeneralInstructorApplication(
   await rejectInstructorApplicationRemote(applicationId, payload)
 }
 
+export async function bulkApproveGeneralInstructorApplications(
+  applicationIds: string[]
+): Promise<BulkActionResponse> {
+  assertApplicationsRemoteReady()
+  const ids = toBulkNumericApplicationIds(applicationIds)
+  if (!ids?.length) {
+    throw new Error('강사 신청 ID를 확인할 수 없습니다.')
+  }
+  return bulkApproveInstructorApplicationsRemote(ids)
+}
+
+export async function bulkRejectGeneralInstructorApplications(
+  applicationIds: string[],
+  payload: ApplicationRejectRequest
+): Promise<BulkActionResponse> {
+  assertApplicationsRemoteReady()
+  const ids = toBulkNumericApplicationIds(applicationIds)
+  if (!ids?.length) {
+    throw new Error('강사 신청 ID를 확인할 수 없습니다.')
+  }
+  return bulkRejectInstructorApplicationsRemote(ids, payload.reason)
+}
+
 export async function approveGeneralIndividualApplication(applicationId: string): Promise<void> {
   assertApplicationsRemoteReady()
   await approveIndividualApplicationRemote(applicationId)
@@ -225,6 +261,26 @@ export async function submitGeneralVolunteerDocumentResult(
   await submitVolunteerDocumentResultRemote(applicationId, payload)
 }
 
+/**
+ * 봉사자 서류 결과 일괄 처리.
+ * `POST /api/admin/volunteer-applications/document-results/bulk`
+ */
+export async function submitGeneralVolunteerDocumentResultBulk(
+  applicationIds: string[],
+  payload: Pick<DocumentResultRequest, 'result' | 'reason'>
+): Promise<BulkActionResponse> {
+  assertApplicationsRemoteReady()
+  const ids = toBulkNumericApplicationIds(applicationIds)
+  if (!ids?.length) {
+    throw new Error('봉사자 신청 ID를 확인할 수 없습니다.')
+  }
+  return bulkVolunteerDocumentResultsRemote({
+    ids,
+    result: payload.result,
+    reason: payload.reason,
+  })
+}
+
 export async function submitGeneralIndividualDocumentResult(
   applicationId: string,
   payload: DocumentResultRequest
@@ -241,6 +297,38 @@ export async function submitGeneralVolunteerFinalResult(
   await submitVolunteerFinalResultRemote(applicationId, payload)
 }
 
+/**
+ * 봉사자 최종(2차 면접) 결과 일괄 처리.
+ * `POST /api/admin/volunteer-applications/final-results/bulk`
+ */
+export async function submitGeneralVolunteerFinalResultBulk(
+  applicationIds: string[],
+  payload: VolunteerFinalResultRequest
+): Promise<BulkActionResponse> {
+  assertApplicationsRemoteReady()
+  const ids = toBulkNumericApplicationIds(applicationIds)
+  if (!ids?.length) {
+    throw new Error('봉사자 신청 ID를 확인할 수 없습니다.')
+  }
+  return bulkVolunteerFinalResultsRemote({
+    ids,
+    result: payload.result,
+    reason: payload.reason,
+    reserveRank: payload.reserveRank,
+  })
+}
+
+export async function submitGeneralInterviewAssignmentEvaluation(
+  assignmentId: string | number,
+  payload: {
+    scoreTotal: number
+    comment?: string
+  }
+): Promise<void> {
+  assertApplicationsRemoteReady()
+  await submitInterviewAssignmentEvaluationRemote(assignmentId, payload)
+}
+
 export async function submitGeneralIndividualFinalResult(
   applicationId: string,
   payload: VolunteerFinalResultRequest
@@ -249,8 +337,52 @@ export async function submitGeneralIndividualFinalResult(
   await submitIndividualFinalResultRemote(applicationId, payload)
 }
 
+export async function giveUpGeneralVolunteerApplication(applicationId: string): Promise<void> {
+  assertApplicationsRemoteReady()
+  await giveUpVolunteerApplicationRemote(applicationId)
+}
+
 /**
- * 면접 슬롯 생성 후 봉사자 신청에 배정. mock/no-op 없음.
+ * 동일 일시 슬롯이 있으면 재사용, 없으면 생성.
+ */
+async function resolveInterviewSlotId(params: {
+  programId: string
+  slotDate: string
+  startAt: string
+  endAt: string
+  maxAssignCount?: number
+}): Promise<number> {
+  const existing = await listInterviewSlotsRemote(params.programId, {
+    from: params.slotDate,
+    to: params.slotDate,
+  })
+  const matched = existing.find(
+    row =>
+      row.interviewSlotId != null &&
+      row.slotDate === params.slotDate &&
+      row.startAt === params.startAt &&
+      row.endAt === params.endAt
+  )
+  if (matched?.interviewSlotId != null) {
+    return matched.interviewSlotId
+  }
+
+  const slot = await createInterviewSlotRemote(params.programId, {
+    slotDate: params.slotDate,
+    startAt: params.startAt,
+    endAt: params.endAt,
+    maxAssignCount: params.maxAssignCount ?? 1,
+    exceptionSlot: false,
+  })
+  if (slot.interviewSlotId == null) {
+    throw new Error('면접 슬롯 생성 응답에 interviewSlotId가 없습니다.')
+  }
+  return slot.interviewSlotId
+}
+
+/**
+ * 면접 슬롯 생성(또는 재사용) 후 봉사자 신청에 배정.
+ * Canonical: POST /api/admin/interview-assignments + volunteerApplicationId
  */
 export async function assignGeneralVolunteerInterview(params: {
   programId: string
@@ -262,20 +394,15 @@ export async function assignGeneralVolunteerInterview(params: {
 }): Promise<{ interviewSlotId?: number; interviewAssignmentId?: number }> {
   assertApplicationsRemoteReady()
 
-  const slot = await createInterviewSlotRemote(params.programId, {
-    slotDate: params.slotDate,
-    startAt: params.startAt,
-    endAt: params.endAt,
-    maxAssignCount: params.maxAssignCount ?? 1,
-    exceptionSlot: false,
-  })
-
-  const interviewSlotId = slot.interviewSlotId
-  if (interviewSlotId == null) {
-    throw new Error('면접 슬롯 생성 응답에 interviewSlotId가 없습니다.')
+  const volunteerApplicationId = Number(params.applicationId)
+  if (!Number.isFinite(volunteerApplicationId)) {
+    throw new Error('봉사자 신청 ID가 올바르지 않습니다.')
   }
 
-  const assignment = await assignVolunteerInterviewSlotRemote(params.applicationId, {
+  const interviewSlotId = await resolveInterviewSlotId(params)
+
+  const assignment = await createInterviewAssignmentRemote({
+    volunteerApplicationId,
     interviewSlotId,
   })
 
@@ -286,7 +413,7 @@ export async function assignGeneralVolunteerInterview(params: {
 }
 
 /**
- * 면접 슬롯 생성 후 개인 신청에 배정.
+ * 면접 슬롯 생성(또는 재사용) 후 개인 신청에 배정.
  * Canonical: POST /api/admin/interview-assignments + individualApplicationId
  */
 export async function assignGeneralIndividualInterview(params: {
@@ -304,18 +431,7 @@ export async function assignGeneralIndividualInterview(params: {
     throw new Error('개인 신청 ID가 올바르지 않습니다.')
   }
 
-  const slot = await createInterviewSlotRemote(params.programId, {
-    slotDate: params.slotDate,
-    startAt: params.startAt,
-    endAt: params.endAt,
-    maxAssignCount: params.maxAssignCount ?? 1,
-    exceptionSlot: false,
-  })
-
-  const interviewSlotId = slot.interviewSlotId
-  if (interviewSlotId == null) {
-    throw new Error('면접 슬롯 생성 응답에 interviewSlotId가 없습니다.')
-  }
+  const interviewSlotId = await resolveInterviewSlotId(params)
 
   const assignment = await createInterviewAssignmentRemote({
     individualApplicationId,

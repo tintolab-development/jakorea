@@ -70,11 +70,6 @@ export function useProgramListFilters(
     p === '/programs/general/student-recruitment' ||
     p === '/programs/company-school/student-recruitment' ||
     p === '/programs/economy-education/student-recruitment'
-  const isInstructorRecruitmentRoute =
-    p === '/programs/education/instructor-recruitment' ||
-    p === '/programs/general/instructor-recruitment' ||
-    p === '/programs/company-school/instructor-recruitment' ||
-    p === '/programs/economy-education/instructor-recruitment'
   const statusFilter = useMemo<ProgramLifecycleStatus | OverviewStatusFilter | null>(() => {
     const value = params.status as string | null
     if (
@@ -102,13 +97,11 @@ export function useProgramListFilters(
       return value === 'education_before_textbook' ? 'matching_completed' : (value as ProgramLifecycleStatus)
     }
     if (isStudentRecruitmentRoute) return 'recruiting_students'
-    if (isInstructorRecruitmentRoute) return 'recruiting_instructors'
     return null
   }, [
     params.status,
     programType,
     isStudentRecruitmentRoute,
-    isInstructorRecruitmentRoute,
   ])
 
   const companySchoolRemoteEnabled =

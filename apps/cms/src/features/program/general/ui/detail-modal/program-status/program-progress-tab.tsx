@@ -19,10 +19,7 @@ import {
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
 } from '@/data/mock/participating-schools'
-import {
-  MOCK_PARTICIPATING_INSTRUCTORS,
-  type ParticipatingInstructorRow,
-} from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
 import {
   INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
   INSTRUCTOR_SETTLEMENT_STATUS_ORDER,
@@ -34,13 +31,11 @@ import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { SegmentedTab } from '@/shared/ui'
 import { AddInstructorModal } from '../../add-instructor-modal'
 import { SchoolDetailModal } from './school-detail-modal'
-import { ApplicantInstructorDetailModal } from '../../applicant-instructor-detail-modal'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import {
   buildSchoolMessageLines,
   buildInstructorMessageLines,
 } from '../../manager-delete-guide-modal'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { getSchoolDetailByRow, getInstructorRowsForSchool } from '../../../lib/school-detail-mock'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
@@ -185,10 +180,6 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
     instructorList,
     selectedInstructorRowKeys,
     setSelectedInstructorRowKeys,
-    selectedInstructorForDetail,
-    setSelectedInstructorForDetail,
-    instructorDetailModalOpen,
-    setInstructorDetailModalOpen,
     addInstructorModalOpen,
     setAddInstructorModalOpen,
     instructorDeleteGuideOpen,
@@ -204,44 +195,6 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
   const handleSearch = () => {
     setFilter('teacherName', localTeacherName)
     setAppliedFilters({ ...filters, teacherName: localTeacherName })
-  }
-
-  /** 진행현황 참여 강사 → 모달용 ApplicantInstructorRow 형태로 변환. 목록이 localStorage 기반이면 상세 필드가 없을 수 있으므로 mock에서 같은 id로 보강 */
-  const participatingToApplicantRow = (row: ParticipatingInstructorRow): ApplicantInstructorRow => {
-    const extended = MOCK_PARTICIPATING_INSTRUCTORS.find(m => m.id === row.id) ?? null
-    const r: ParticipatingInstructorRow = extended ? { ...row, ...extended } : row
-    return {
-      id: r.id,
-      no: r.no,
-      instructorName: r.instructorName,
-      schoolName: r.schoolName,
-      contact: r.contact ?? '-',
-      email: r.email ?? '-',
-      address: r.address ?? '-',
-      approvalStatus: 'approved',
-      lectureExperienceYears: r.lectureExperienceYears ?? 0,
-      educationLevel: r.educationLevel ?? '-',
-      educationSchoolName: r.educationSchoolName ?? '-',
-      nameHanja: r.nameHanja,
-      nameEnglish: r.nameEnglish,
-      birthDate: r.birthDate,
-      age: r.age,
-      gender: r.gender,
-      militaryStatus: r.militaryStatus,
-      bankName: r.bankName,
-      accountNumber: r.accountNumber,
-      accountHolder: r.accountHolder,
-      profileImageUrl: r.profileImageUrl,
-      oneLineIntro: r.oneLineIntro,
-      careerDetails: r.careerDetails,
-      qualifications: r.qualifications,
-      awards: r.awards,
-      educations: r.educations,
-      freeWriting1: r.freeWriting1,
-      freeWriting2: r.freeWriting2,
-      freeWriting3: r.freeWriting3,
-      freeWriting4: r.freeWriting4,
-    }
   }
 
   const textbookStatusKeys = TEXTBOOK_STATUS_OPTION_KEYS
@@ -648,7 +601,7 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                 </div>
               </div>
               <Table<ParticipatingInstructorRow>
-                className="program-progress-tab__table program-progress-tab__table--clickable cms-data-table"
+                className="program-progress-tab__table cms-data-table"
                 rowKey="id"
                 size="middle"
                 pagination={false}
@@ -658,20 +611,6 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                 }}
                 columns={instructorColumns}
                 dataSource={filteredInstructors}
-                onRow={record => ({
-                  onClick: e => {
-                    const target = e.target as HTMLElement
-                    if (target.closest('.ant-table-selection-column')) return
-                    if (
-                      target.closest('.status-dropdown-cell__cell-status') ||
-                      target.closest('.status-dropdown-cell__status-trigger')
-                    )
-                      return
-                    setSelectedInstructorForDetail(record)
-                    setInstructorDetailModalOpen(true)
-                  },
-                  style: { cursor: 'pointer' },
-                })}
               />
             </div>
           </>
@@ -698,21 +637,6 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
         onConfirm={handleInstructorDeleteConfirm}
         title="강사 삭제 안내"
         lines={buildInstructorMessageLines(instructorNamesToDelete)}
-      />
-
-      <ApplicantInstructorDetailModal
-        open={instructorDetailModalOpen}
-        onCancel={() => {
-          setInstructorDetailModalOpen(false)
-          setSelectedInstructorForDetail(null)
-        }}
-        instructor={
-          selectedInstructorForDetail
-            ? participatingToApplicantRow(selectedInstructorForDetail)
-            : null
-        }
-        title="참여 강사 상세 정보"
-        showApprovalButtons={false}
       />
 
       <SchoolDetailModal

@@ -29,7 +29,7 @@ export function MatchingStatisticsCard({
         { color: 'green', label: `확정: ${confirmed}` },
         { color: 'orange', label: `대기: ${pending}` },
       ]}
-      to="/programs/education/instructor-recruitment"
+      to="/programs/general?status=recruiting_instructors"
       loading={loading}
     />
   )

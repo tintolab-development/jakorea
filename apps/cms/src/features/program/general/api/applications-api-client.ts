@@ -2,6 +2,10 @@ import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
+import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
+import type { BulkDecisionRequest } from '@/shared/api/generated/dashboard/schemas/bulkDecisionRequest'
+import type { BulkIdsRequest } from '@/shared/api/generated/dashboard/schemas/bulkIdsRequest'
+import type { BulkResultRequest } from '@/shared/api/generated/dashboard/schemas/bulkResultRequest'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
 import type { PageResponseOrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseOrganizationApplicationListItemResponse'
@@ -189,6 +193,35 @@ export async function rejectInstructorApplicationRemote(
   )
 }
 
+/** POST /api/admin/instructor-applications/bulk-approve */
+export async function bulkApproveInstructorApplicationsRemote(
+  ids: number[]
+): Promise<BulkActionResponse> {
+  const body: BulkIdsRequest = { ids }
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/bulk-approve`,
+      method: 'POST',
+      data: body,
+    })
+  )
+}
+
+/** POST /api/admin/instructor-applications/bulk-reject */
+export async function bulkRejectInstructorApplicationsRemote(
+  ids: number[],
+  reason: string
+): Promise<BulkActionResponse> {
+  const body: BulkDecisionRequest = { ids, reason }
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/bulk-reject`,
+      method: 'POST',
+      data: body,
+    })
+  )
+}
+
 export async function approveIndividualApplicationRemote(
   applicationId: string
 ): Promise<ApplicationDecisionResponse> {
@@ -262,6 +295,17 @@ export async function giveUpIndividualApplicationRemote(
   )
 }
 
+export async function giveUpVolunteerApplicationRemote(
+  applicationId: string
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/give-up`,
+      method: 'POST',
+    })
+  )
+}
+
 export async function submitIndividualDocumentResultRemote(
   applicationId: string,
   payload: DocumentResultRequest
@@ -301,6 +345,19 @@ export async function submitVolunteerDocumentResultRemote(
   )
 }
 
+/** POST /api/admin/volunteer-applications/document-results/bulk */
+export async function bulkVolunteerDocumentResultsRemote(
+  payload: BulkResultRequest
+): Promise<BulkActionResponse> {
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: '/api/admin/volunteer-applications/document-results/bulk',
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
 export async function submitVolunteerFinalResultRemote(
   applicationId: string,
   payload: VolunteerFinalResultRequest
@@ -308,6 +365,35 @@ export async function submitVolunteerFinalResultRemote(
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
       url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/final-result`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/** POST /api/admin/volunteer-applications/final-results/bulk */
+export async function bulkVolunteerFinalResultsRemote(
+  payload: BulkResultRequest
+): Promise<BulkActionResponse> {
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: '/api/admin/volunteer-applications/final-results/bulk',
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/** POST /api/admin/interview-assignments/{assignmentId}/evaluations */
+export async function submitInterviewAssignmentEvaluationRemote(
+  assignmentId: string | number,
+  payload: import('@/shared/api/generated/dashboard/schemas/interviewEvaluationRequest').InterviewEvaluationRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/interviewEvaluationResponse').InterviewEvaluationResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/interview-assignments/${encodeURIComponent(String(assignmentId))}/evaluations`,
       method: 'POST',
       data: payload,
     })

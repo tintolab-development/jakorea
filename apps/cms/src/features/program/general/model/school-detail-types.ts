@@ -103,6 +103,8 @@ export const STUDENT_GENDER_LABELS: Record<StudentGenderKey, string> = {
 
 export interface SchoolDetailStudentRow {
   id: string
+  /** BE 회원 ID — 참여자 PK와 구분 */
+  memberId?: number
   no: number
   name: string
   /** 성별: '남' | '여' 표시용 */

@@ -25,6 +25,7 @@ describe('applyAdminMeToSessionUser', () => {
     })
     expect(next.roleCode).toBe('PM')
     expect(next.adminLevel).toBe('ADMIN')
+    expect(next.listMetrics?.adminPermissionVariant).toBe('partner')
     expect(next.email).toBe('pm@jakorea.org')
     expect(next.permissionCodes).toEqual(['dashboard.view'])
   })
@@ -33,5 +34,21 @@ describe('applyAdminMeToSessionUser', () => {
     const next = applyAdminMeToSessionUser(current, { roleCode: 'VIEWER' })
     expect(next.roleCode).toBe('VIEWER')
     expect(next.adminLevel).toBe('GENERAL')
+    expect(next.listMetrics?.adminPermissionVariant).toBe('viewer')
+  })
+
+  it('MASTER roleCode는 마스터 권한 유형으로 반영한다', () => {
+    const next = applyAdminMeToSessionUser(current, { roleCode: 'MASTER' })
+    expect(next.roleCode).toBe('MASTER')
+    expect(next.listMetrics?.adminPermissionVariant).toBe('manager')
+  })
+
+  it('gender·birthDate를 세션에 반영한다', () => {
+    const next = applyAdminMeToSessionUser(current, {
+      gender: 'FEMALE',
+      birthDate: '1990-09-15',
+    })
+    expect(next.gender).toBe('F')
+    expect(next.birthDate).toBe('1990-09-15')
   })
 })

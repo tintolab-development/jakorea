@@ -97,6 +97,7 @@ export function useGeneralProgramRegistrationFlow(
       programRegistrationFormVariant: registrationFormVariant,
       onRegistrationSaved: options?.onProgramRegistrationSaved,
       skipDraftRestore: options?.skipDraftRestore === true,
+      localOnlyDraftPersistence: true,
       templateCode:
         registrationFormVariant === 'general'
           ? PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
@@ -236,6 +237,7 @@ export function useGeneralProgramRegistrationFlow(
     participantTemplateName,
     participantVariant,
     {
+      localOnlyDraftPersistence: true,
       participantOrganization: participantFlags.organization,
       /** 등록 위저드 신청 단계 — 기관 기본정보·강사/봉사자 일정 자동 반영 미리보기 */
       programLinkedInstitutionApplicationForm:
@@ -345,22 +347,14 @@ export function useGeneralProgramRegistrationFlow(
         registrationFormVariant
       )
       if (next === coercedActiveStep) return
-      // 이전 탭 저장을 await — 공유 localStorage race·복원 꼬임 방지 (세션 캐시로 깜빡임은 완화)
-      void (async () => {
-        try {
-          await persistDraftSilent()
-        } catch {
-          // 저장 실패해도 탭 전환은 진행 (작성 중 이탈 방지)
-        }
-        setActiveStep(next)
-        options?.onStepChange?.(next)
-      })()
+      // 탭 전환은 편집 중 React state만 유지한다. 임시저장은 명시적 저장 버튼에서만 수행.
+      setActiveStep(next)
+      options?.onStepChange?.(next)
     },
     [
       coercedActiveStep,
       options,
       participantFlags,
-      persistDraftSilent,
       registrationFormVariant,
     ]
   )

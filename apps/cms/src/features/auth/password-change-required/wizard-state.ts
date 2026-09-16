@@ -3,7 +3,10 @@
  */
 
 import type { AdminRegisterGender } from '@/types/admin-register'
-import { passwordChangeRequiredPaths } from '@/shared/utils/post-auth-redirect'
+import {
+  PASSWORD_CHANGE_REQUIRED_SOCIAL_ONBOARDING_STORAGE_KEY,
+  passwordChangeRequiredPaths,
+} from '@/shared/utils/post-auth-redirect'
 
 /** 생년월일·성별 → 본인인증 → 비밀번호 변경 */
 export const PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS = 3 as const
@@ -96,6 +99,30 @@ export function clearPasswordChangeRequiredComplete() {
     return
   }
   window.sessionStorage.removeItem(COMPLETE_STORAGE_KEY)
+}
+
+/** 비번변경 완료 → 소셜 연결 온보딩 중 (대시보드 진입 차단) */
+export function markPasswordChangeRequiredSocialOnboarding() {
+  if (typeof window === 'undefined' || !window.sessionStorage) {
+    return
+  }
+  window.sessionStorage.setItem(PASSWORD_CHANGE_REQUIRED_SOCIAL_ONBOARDING_STORAGE_KEY, '1')
+}
+
+export function hasPasswordChangeRequiredSocialOnboarding(): boolean {
+  if (typeof window === 'undefined' || !window.sessionStorage) {
+    return false
+  }
+  return (
+    window.sessionStorage.getItem(PASSWORD_CHANGE_REQUIRED_SOCIAL_ONBOARDING_STORAGE_KEY) === '1'
+  )
+}
+
+export function clearPasswordChangeRequiredSocialOnboarding() {
+  if (typeof window === 'undefined' || !window.sessionStorage) {
+    return
+  }
+  window.sessionStorage.removeItem(PASSWORD_CHANGE_REQUIRED_SOCIAL_ONBOARDING_STORAGE_KEY)
 }
 
 export function requirePasswordChangeRequiredWizardState() {
