@@ -8,7 +8,10 @@ import {
   patchGeneralVolunteerDocumentScreeningStatus,
   type GeneralVolunteerApplicantRow,
 } from '@/data/mock/general-volunteer-applicants-mock'
-import type { VolunteerDocumentCancelRejectionConfirmPayload } from '@/features/program/general/lib/volunteer-document-cancel-rejection'
+import {
+  toVolunteerDocumentCancelRejectionNotifyOptions,
+  type VolunteerDocumentCancelRejectionConfirmPayload,
+} from '@/features/program/general/lib/volunteer-document-cancel-rejection'
 import {
   DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS,
   filterGeneralDoc1Applicants,
@@ -212,9 +215,18 @@ export function useGeneralVolunteerDocScreening({
     [volunteerRemote]
   )
 
-  const applyDocumentScreeningCancel = useCallback((id: string) => {
-    setList(prev => patchGeneralVolunteerDocumentScreeningCancel(prev, id))
-  }, [])
+  const applyDocumentScreeningCancel = useCallback(
+    (
+      id: string,
+      notifyOptions?: {
+        notifyTiming: PermissionModalPayload['notifyTiming']
+        rejectionReason?: string
+      }
+    ) => {
+      setList(prev => patchGeneralVolunteerDocumentScreeningCancel(prev, id, notifyOptions))
+    },
+    []
+  )
 
   const closeBulkApproveModal = useCallback(() => {
     setBulkApproveOpen(false)
@@ -336,9 +348,21 @@ export function useGeneralVolunteerDocScreening({
   )
 
   const handleCancelRejectConfirm = useCallback(
-    (_payload: VolunteerDocumentCancelRejectionConfirmPayload) => {
+    (payload: VolunteerDocumentCancelRejectionConfirmPayload) => {
       if (!cancelRejectVolunteer) return
-      applyDocumentScreeningCancel(cancelRejectVolunteer.id)
+      const notifyOptions =
+        payload.variant === 'alreadySent'
+          ? toVolunteerDocumentCancelRejectionNotifyOptions(payload)
+          : undefined
+      applyDocumentScreeningCancel(
+        cancelRejectVolunteer.id,
+        notifyOptions
+          ? {
+              notifyTiming: notifyOptions.notifyTiming,
+              rejectionReason: notifyOptions.rejectionReason,
+            }
+          : undefined
+      )
       setCancelRejectTargetId(null)
     },
     [applyDocumentScreeningCancel, cancelRejectVolunteer]
@@ -346,10 +370,12 @@ export function useGeneralVolunteerDocScreening({
 
   const handleBulkReject = useCallback(() => {
     const ids = selectedRowKeys.map(String)
+    const selectedRows = list.filter(row => ids.includes(row.id))
     requestGeneralVolunteerDocumentBulkReject({
       selectedIds: ids,
+      selectedDocumentStatuses: selectedRows.map(row => row.documentScreeningStatus),
       onOpenSingleReject: () => {
-        const applicant = list.find(row => row.id === ids[0])
+        const applicant = selectedRows[0]
         if (applicant) openRejectModal(applicant)
       },
       onOpenBulkReject: () => setBulkRejectOpen(true),
@@ -358,10 +384,12 @@ export function useGeneralVolunteerDocScreening({
 
   const handleBulkApprove = useCallback(() => {
     const ids = selectedRowKeys.map(String)
+    const selectedRows = list.filter(row => ids.includes(row.id))
     requestGeneralVolunteerDocumentBulkApprove({
       selectedIds: ids,
+      selectedDocumentStatuses: selectedRows.map(row => row.documentScreeningStatus),
       onOpenSingleApprove: () => {
-        const applicant = list.find(row => row.id === ids[0])
+        const applicant = selectedRows[0]
         if (applicant) openApproveModal(applicant)
       },
       onOpenBulkApprove: () => setBulkApproveOpen(true),
