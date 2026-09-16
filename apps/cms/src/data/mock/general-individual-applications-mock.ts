@@ -57,8 +57,15 @@ export interface GeneralIndividualApplicantDetail {
 
 export interface GeneralIndividualApplicantRow {
   id: string
+  memberId?: string
   no: number
   applicantName: string
+  /** Admin API가 현재 상태에서 허용하는 canonical action 목록 */
+  availableActions?: string[]
+  privacyMaskingLevel?: 'MASKED' | 'UNMASKED'
+  canRevealPersonalInfo?: boolean
+  canEditManagerAEvaluation?: boolean
+  canEditManagerBEvaluation?: boolean
   affiliation: string
   educationGrade: string
   homeAddress: string

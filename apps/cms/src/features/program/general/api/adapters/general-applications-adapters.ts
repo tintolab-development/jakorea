@@ -3,7 +3,10 @@ import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
+import type {
+  ParticipatingSchoolRow,
+  ParticipatingSchoolSession,
+} from '@/data/mock/participating-schools'
 import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
@@ -12,6 +15,8 @@ import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboa
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
 import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
 import type { InterviewAvailabilitySlot } from '@/shared/api/generated/dashboard/schemas/interviewAvailabilitySlot'
+import type { PreferredEducationScheduleResponse } from '@/shared/api/generated/dashboard/schemas/preferredEducationScheduleResponse'
+import type { IndividualApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationDetailResponse'
 import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
 import type {
   GeneralDocumentScreeningStatus,
@@ -188,6 +193,64 @@ function mapInterviewAvailabilitySlots(
   return Array.from(grouped, ([dateLabel, daySlots]) => ({ dateLabel, slots: daySlots }))
 }
 
+function formatPreferredScheduleDate(date: Date): { date: string; dayOfWeek: string } {
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+  }).formatToParts(date)
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find(part => part.type === type)?.value ?? ''
+  return {
+    date: `${value('year')}.${value('month')}.${value('day')}`,
+    dayOfWeek: value('weekday').replace('요일', ''),
+  }
+}
+
+export function mapPreferredEducationSchedulesToSessions(
+  schedules: PreferredEducationScheduleResponse[] | undefined
+): ParticipatingSchoolSession[] {
+  return [...(schedules ?? [])]
+    .sort((a, b) => {
+      const byStart = (a.startAt ?? '').localeCompare(b.startAt ?? '')
+      return byStart || (a.scheduleId ?? 0) - (b.scheduleId ?? 0)
+    })
+    .map((schedule, index) => {
+      const start = schedule.startAt ? new Date(schedule.startAt) : null
+      const end = schedule.endAt ? new Date(schedule.endAt) : null
+      const validStart = start != null && !Number.isNaN(start.getTime())
+      const validEnd = end != null && !Number.isNaN(end.getTime())
+      const dateParts = validStart ? formatPreferredScheduleDate(start) : { date: '-', dayOfWeek: '-' }
+      const timeRange =
+        validStart && validEnd
+          ? `${formatKoreanInterviewTime(start)} ~ ${formatKoreanInterviewTime(end)}`
+          : '-'
+      const duration =
+        validStart && validEnd && end.getTime() > start.getTime()
+          ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
+          : '-'
+      return {
+        round: schedule.round ?? index + 1,
+        ...dateParts,
+        duration,
+        format: '-',
+        classNum: '-',
+        timeRange,
+        requestedScheduleId: schedule.scheduleId,
+      }
+    })
+}
+
+function mapManagerEvaluation(value?: string): GeneralIndividualApplicantRow['managerAEvaluation'] {
+  const normalized = value?.trim().toLowerCase()
+  if (normalized === 'pass' || normalized === 'neutral' || normalized === 'fail') {
+    return normalized
+  }
+  return 'unreviewed'
+}
+
 export function mapIndividualApplicationToApplicantRow(
   dto: IndividualApplicationListItemEnriched,
   index: number,
@@ -202,12 +265,17 @@ export function mapIndividualApplicationToApplicantRow(
     id: toId(dto.id),
     no: index + 1,
     applicantName: dto.memberName?.trim() || '이름 없음',
-    affiliation: '',
-    educationGrade: '',
-    homeAddress: '',
+    availableActions: dto.availableActions,
+    affiliation: dto.affiliationName?.trim() || '',
+    educationGrade: dto.applicationGrade?.trim() || '',
+    homeAddress: dto.homeAddressSummary?.trim() || '',
     appliedAt: dto.submittedAt,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    adminComment: dto.managerComment ?? undefined,
     programId: toId(dto.programId) || programId,
+    sessions: mapPreferredEducationSchedulesToSessions(dto.preferredEducationSchedules),
+    managerAEvaluation: mapManagerEvaluation(dto.managerAEvaluation),
+    managerBEvaluation: mapManagerEvaluation(dto.managerBEvaluation),
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(dto.documentStatus),
     interviewAssignmentStatus: mapApiInterviewStatusToAssignmentStatus(
       dto.interviewStatus,
@@ -217,14 +285,110 @@ export function mapIndividualApplicationToApplicantRow(
       dto.finalResultStatus,
       dto.reserveRank
     ),
-    interviewSlotCount:
-      dto.interviewAvailabilityCount ??
-      interviewAvailability.reduce((sum, day) => sum + day.slots.length, 0),
+    interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
     detail: {
       interviewAvailability,
     },
     ...assigned,
   } as GeneralIndividualApplicantRow
+}
+
+export function mapIndividualApplicationDetailToApplicantRow(
+  dto: IndividualApplicationDetailResponse,
+  base: GeneralIndividualApplicantRow
+): GeneralIndividualApplicantRow {
+  const profile = dto.profile
+  const screening = dto.screening
+  const assigned = formatAssignedInterviewFromIso(
+    dto.assignedInterviewStartAt,
+    dto.assignedInterviewEndAt
+  )
+  const interviewAvailability = mapInterviewAvailabilitySlots(dto.interviewAvailabilitySlots)
+  const interviewA = screening?.interviewEvaluations?.find(item => item.evaluatorOrder === 1)
+  const interviewB = screening?.interviewEvaluations?.find(item => item.evaluatorOrder === 2)
+  const team = dto.team as
+    | {
+        name?: string
+        teamName?: string
+        memberCount?: number
+        role?: string
+      }
+    | undefined
+  const teamRole = team?.role?.trim().toUpperCase()
+
+  return {
+    ...base,
+    id: toId(dto.id) || base.id,
+    memberId: toId(dto.memberId) || undefined,
+    applicantName: profile?.name?.trim() || '',
+    availableActions: dto.availableActions ?? [],
+    privacyMaskingLevel:
+      dto.privacyMaskingLevel === 'UNMASKED' ? 'UNMASKED' : 'MASKED',
+    canRevealPersonalInfo: dto.canRevealPersonalInfo === true,
+    canEditManagerAEvaluation: dto.canEditManagerAEvaluation === true,
+    canEditManagerBEvaluation: dto.canEditManagerBEvaluation === true,
+    affiliation: profile?.affiliationSchool?.trim() || '',
+    educationGrade: profile?.affiliationGrade?.trim() || '',
+    homeAddress: profile?.homeAddress?.trim() || '',
+    approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    adminComment: dto.managerComment ?? undefined,
+    programId: toId(dto.programId) || base.programId,
+    sessions: mapPreferredEducationSchedulesToSessions(
+      dto.application?.preferredEducationSchedules
+    ),
+    detail: {
+      gender: profile?.gender ?? undefined,
+      birthDate: profile?.birthDate ?? undefined,
+      age: profile?.age,
+      schoolEnrollmentStatus: profile?.schoolEnrollmentStatus ?? undefined,
+      affiliationSchool: profile?.affiliationSchool ?? undefined,
+      affiliationGrade: profile?.affiliationGrade ?? undefined,
+      contact: profile?.contact ?? undefined,
+      email: profile?.email ?? undefined,
+      homeAddressFull: profile?.homeAddress ?? undefined,
+      id1365: profile?.external1365Id ?? undefined,
+      selfIntroduction: dto.application?.selfIntroduction ?? undefined,
+      teamName: team?.name ?? team?.teamName ?? undefined,
+      teamMemberCount: team?.memberCount,
+      teamMemberCountSelect:
+        team?.memberCount != null && team.memberCount >= 1 && team.memberCount <= 5
+          ? (String(team.memberCount) as '1' | '2' | '3' | '4' | '5')
+          : team?.memberCount != null
+            ? 'custom'
+            : undefined,
+      teamRole:
+        teamRole === 'LEADER' ? 'leader' : teamRole === 'MEMBER' ? 'member' : undefined,
+      interviewAvailability,
+      scheduleChangeCancelCount: dto.application?.scheduleChangeCancelCount ?? 0,
+    },
+    textbookId: toId(dto.textbook?.id) || undefined,
+    textbookName: dto.textbook?.name ?? undefined,
+    textbookKits: dto.textbook?.kits,
+    textbookQuantity: dto.textbook?.quantity,
+    textbookStatus: dto.textbook?.status as GeneralIndividualApplicantRow['textbookStatus'],
+    managerAEvaluation: mapManagerEvaluation(
+      screening?.documentEvaluations?.managerA?.evaluation
+    ),
+    managerBEvaluation: mapManagerEvaluation(
+      screening?.documentEvaluations?.managerB?.evaluation
+    ),
+    documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
+    interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
+    interviewAssignmentStatus: mapApiInterviewStatusToAssignmentStatus(
+      dto.assignedInterviewSlotId != null ? 'ASSIGNED' : 'WAITING_ASSIGNMENT',
+      screening?.giveUpYn
+    ),
+    secondInterviewScreeningStatus: mapApiFinalResultToSecondInterviewStatus(
+      screening?.finalResultStatus,
+      screening?.reserveRank
+    ),
+    totalScore: screening?.interviewTotalScore ?? null,
+    managerAScore: interviewA?.score ?? null,
+    managerBScore: interviewB?.score ?? null,
+    interviewEvaluationRemark: screening?.interviewEvaluationRemark ?? undefined,
+    assignedInterviewDateLabel: assigned.assignedInterviewDateLabel,
+    assignedInterviewTime: assigned.assignedInterviewTime,
+  }
 }
 
 export function filterIndividualDoc1Rows(
