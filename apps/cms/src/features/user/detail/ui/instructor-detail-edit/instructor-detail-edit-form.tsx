@@ -35,7 +35,7 @@ import {
 } from '@/features/user/shared/lib/member-register-consent-write-snapshot'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui'
-import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
+import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/features/program/shared/model/program-wage-info'
 import { normalizeInstructorFeeGradeSelectValue } from '@/features/user/api/map-instructor-activity-display'
 import { formatDate } from '@/shared/utils'
 import '@/features/user/shared/ui/instructor-register-modal.css'

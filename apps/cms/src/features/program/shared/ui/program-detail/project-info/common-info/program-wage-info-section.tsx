@@ -7,10 +7,10 @@ import { Controller, type UseFormReturn } from 'react-hook-form'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import {
-  getProgramWageInfoMock,
+  EMPTY_PROGRAM_WAGE_INFO,
   PROGRAM_WAGE_TYPE_OPTIONS,
   PROGRAM_WAGE_PRICING_MEASURE_OPTIONS,
-} from '@/data/mock/program-wage-info'
+} from '@/features/program/shared/model/program-wage-info'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
@@ -251,7 +251,7 @@ export function ProgramWageInfoSection({
   isEditMode = false,
   form,
 }: ProgramWageInfoSectionProps) {
-  const data = useMemo(() => getProgramWageInfoMock(programId), [programId])
+  const data = useMemo(() => EMPTY_PROGRAM_WAGE_INFO, [])
   const isCompanySchool = isCompanySchoolProgramId(programId)
   const companySchoolPaymentItemOptions = useMemo(() => getCompanySchoolPaymentItemOptions(), [])
   const isFormEdit = isEditMode && form
