@@ -65,7 +65,6 @@ import {
   preserveGeneralProgramDetailProgramId,
   shouldPatchGeneralProgramDetailUrl,
 } from '@/features/program/general/lib/general-program-detail-route'
-import { getEconomyPrograms, getGeneralPrograms, getTrainedTeachersPrograms } from '@/data/mock'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
@@ -79,6 +78,7 @@ import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
 import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
 import {
   getGeneralSurveyMenuItems,
+  isGeneralProgramId,
   type GeneralSurveyNavKey,
 } from '@/features/program/general/lib/detail-meta'
 import {
@@ -1332,9 +1332,9 @@ export function ProgramDetailFullPageModal({
     pNorm === '/programs/trained-teachers' ||
     pNorm.startsWith('/programs/trained-teachers/') ||
     (displayProgram != null &&
-      (getGeneralPrograms().some(pr => pr.id === displayProgram.id) ||
-        getEconomyPrograms().some(pr => pr.id === displayProgram.id) ||
-        getTrainedTeachersPrograms().some(pr => pr.id === displayProgram.id)))
+      (isGeneralProgramId(displayProgram.id) ||
+        isCompanySchoolProgram(displayProgram) ||
+        isTrainedTeachersDetailProgram(displayProgram)))
 
   return (
     <>

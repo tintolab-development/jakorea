@@ -1,4 +1,4 @@
-import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 
 export interface ParticipatingIndividualParticipantsFilters {
   participantName: string

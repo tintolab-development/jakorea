@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
-import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { CalendarMainEventInput } from '@/shared/components/calendar'
 import { parseParticipatingSessionTimeRange } from '@/features/program/general/ui/detail-modal/program-status/participating-institutions-calendar-day-list'
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
-import { patchParticipatingInstructorDetail } from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import { patchParticipatingInstructorDetail } from '@/features/program/general/model/participating-instructors'
 import {
   draftToParticipatingInstructorSavePayload,
   parseParticipatingInstructorEditDraft,

@@ -9,8 +9,8 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolApprovalStatusKey,
   TextbookStatusKey,
-} from '@/data/mock/participating-schools'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+} from '@/features/program/general/model/participating-schools'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import { formatAssignedInstructorSummary } from '../lib/institution-assigned-instructor-count'
 import { getInstructorRowsForSchool } from '../lib/school-detail-mock'
 import type {
@@ -26,8 +26,7 @@ import {
 } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherParticipatingInstitutions } from '@/features/program/trained-teachers/api/education-journals-hooks'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
-import { shouldPreferGeneralProgramProgressMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
-import { getParticipatingSchoolsForProgram } from '@/data/mock/participating-schools'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import type { Program } from '@/types/domain'
 
 export interface UseProgressSchoolListOptions {
@@ -35,27 +34,26 @@ export interface UseProgressSchoolListOptions {
   instructorList: ParticipatingInstructorRow[]
   programId?: string
   program?: Program | null
-  /** true면 remote 대신 FE mock */
-  preferMock?: boolean
 }
 
 export function useProgressSchoolList({
   appliedFilters,
   instructorList,
   programId,
-  program,
-  preferMock: preferMockProp,
 }: UseProgressSchoolListOptions) {
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
-  const preferMock =
-    preferMockProp === true || shouldPreferGeneralProgramProgressMock(program ?? null)
-  const surfaceRemote = useProgramProgressRemoteEnabledForSurface(programId)
-  const remoteEnabled = surfaceRemote && !preferMock
+  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
   const ttRemoteEnabled =
-    !preferMock &&
     isTrainedTeachersSurface &&
     shouldUseTrainedTeacherProgramsRemoteApi() &&
     Boolean(programId)
+
+  useNotifyProgramApiUnavailableOnce(
+    !remoteEnabled && !ttRemoteEnabled,
+    'general-progress-schools',
+    '프로그램 진행 현황 · 참여 기관'
+  )
+
   const remoteQuery = useQuery({
     queryKey: generalProgramProgressQueryKeys.institutions(programId ?? ''),
     queryFn: () => fetchGeneralParticipatingInstitutions(programId!),
@@ -70,11 +68,7 @@ export function useProgressSchoolList({
   )
 
   const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>(() =>
-    preferMock || !remoteEnabled
-      ? programId
-        ? getParticipatingSchoolsForProgram(programId)
-        : []
-      : []
+    remoteEnabled || ttRemoteEnabled ? [] : []
   )
 
   useEffect(() => {
@@ -86,7 +80,7 @@ export function useProgressSchoolList({
       if (remoteQuery.data) setSchoolList(remoteQuery.data)
       return
     }
-    setSchoolList(programId ? getParticipatingSchoolsForProgram(programId) : [])
+    setSchoolList([])
   }, [
     remoteEnabled,
     remoteQuery.data,

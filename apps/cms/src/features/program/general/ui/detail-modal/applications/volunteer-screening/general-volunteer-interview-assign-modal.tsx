@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Spin } from 'antd'
 import type { Dayjs } from 'dayjs'
 import type { Program } from '@/types/domain'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { useGeneralInterviewSlots } from '@/features/program/general/hooks/use-general-interview-slots'
 import {
   parseGeneralInterviewScheduleFromDefaultMock,

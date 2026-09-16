@@ -2,8 +2,8 @@
  * 개인 참여자 심사 mock → 봉사자 심사 UI(합격자·2차 면접) 재사용용 어댑터
  */
 
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { countInterviewAvailabilitySlots } from '@/features/program/general/lib/interview-availability-utils'
 
 function maskContact(contact: string): string {

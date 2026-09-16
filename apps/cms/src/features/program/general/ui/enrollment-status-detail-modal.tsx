@@ -30,11 +30,11 @@ import {
 import {
   getApplicantSchoolsByProgramId,
   updateApplicantSchoolApprovalStatus,
-} from '@/data/mock/applicant-institutions'
+} from '@/features/program/shared/model/applicant-institution'
 import type {
   ApplicantSchoolRow,
   ApplicantApprovalStatusKey,
-} from '@/data/mock/applicant-institutions'
+} from '@/features/program/shared/model/applicant-institution'
 import { ApprovalStatusBadge } from '@/shared/components/approval-status-badge'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import {

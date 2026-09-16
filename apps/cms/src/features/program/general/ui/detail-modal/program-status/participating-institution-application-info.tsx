@@ -3,7 +3,7 @@
  */
 
 import { Fragment, type ReactNode } from 'react'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'

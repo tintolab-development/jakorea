@@ -46,13 +46,15 @@ const programProgressPhaseLifecycleMap: Record<
   readonly ProgramLifecycleStatus[]
 > = {
   scheduled: [
+    'scheduled',
+    'planned',
     'recruiting_students',
     'recruiting_instructors',
     'matching_completed',
     'education_before_textbook',
   ],
-  in_progress: ['education_after_textbook', 'education_in_progress'],
-  completed: ['education_completed', 'document_processing_completed'],
+  in_progress: ['in_progress', 'education_after_textbook', 'education_in_progress'],
+  completed: ['completed', 'education_completed', 'document_processing_completed'],
 }
 
 export const programProgressPhaseFilterValues = new Set<ProgramProgressPhaseFilter>(

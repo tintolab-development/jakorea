@@ -9,8 +9,8 @@ import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import type {
   GeneralIndividualApplicantDetail,
   GeneralIndividualApplicantRow,
-} from '@/data/mock/general-individual-applications-mock'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/individual-applicant'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'

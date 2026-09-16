@@ -6,11 +6,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
-import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import {
   patchGeneralIndividualApplicantDetail,
   type GeneralIndividualApplicantRow,
-} from '@/data/mock/general-individual-applications-mock'
+} from '@/features/program/general/model/individual-applicant'
 import { CmsButton, ExcelButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
 import { MESSAGES } from '@/shared/constants/messages'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'

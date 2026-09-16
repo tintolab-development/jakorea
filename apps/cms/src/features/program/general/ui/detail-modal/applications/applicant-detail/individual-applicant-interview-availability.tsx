@@ -1,5 +1,5 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import type { GeneralIndividualApplicantInterviewAvailabilityDay } from '@/data/mock/general-individual-applications-mock'
+import type { GeneralIndividualApplicantInterviewAvailabilityDay } from '@/features/program/general/model/individual-applicant'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,

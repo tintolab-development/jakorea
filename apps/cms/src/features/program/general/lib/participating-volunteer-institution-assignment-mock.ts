@@ -2,11 +2,11 @@
  * 참여 봉사자 풀페이지 — 봉사 배정 현황 탭용 목 데이터
  */
 
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
-} from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 import { formatVolunteerAssignmentScheduleLine } from './participating-school-session-display'
 import {

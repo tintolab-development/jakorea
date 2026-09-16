@@ -12,10 +12,10 @@ import {
   putScheduleAttendancesRemote,
   type ProgramParticipantsListQuery,
 } from '@/features/program/general/api/program-progress-api-client'
-import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 
 /**
  * 진행현황 participants / attendances — mock 폴백 없음 (API only).

@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import type { ApplicantInstructorLectureFeeBasisType } from '@/data/mock/applicant-instructors'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ApplicantInstructorLectureFeeBasisType } from '@/features/program/shared/model/applicant-instructor'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import {
   buildLectureFeeBasisDisplay,
   formatLectureFeeAmountWon,

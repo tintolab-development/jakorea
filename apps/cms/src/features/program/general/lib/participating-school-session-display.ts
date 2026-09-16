@@ -1,4 +1,4 @@
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { ApplicantSessionLineInput } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'

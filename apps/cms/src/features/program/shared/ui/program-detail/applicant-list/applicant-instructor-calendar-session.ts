@@ -1,4 +1,4 @@
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 
 /** 희망 배정 학교·기관 sessions mock 기반 회차·시간 요약 */
 export function getInstructorCalendarSessionSummary(

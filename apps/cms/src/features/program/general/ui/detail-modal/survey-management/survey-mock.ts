@@ -3,7 +3,7 @@ import {
   GENERAL_INDIVIDUAL_SURVEY_RESPONSES_MOCK,
   GENERAL_ORGANIZATION_SURVEY_RESPONSE_COUNT,
   getGeneralOrganizationSurveyResponsesForProgram,
-} from '@/data/mock/general-survey-poll-responses-mock'
+} from '@/features/program/shared/model/survey-poll-response'
 import type { Program } from '@/types/domain'
 import type {
   RegisteredSurvey,

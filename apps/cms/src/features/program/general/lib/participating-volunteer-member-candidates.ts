@@ -1,6 +1,6 @@
 import { getUserById, getUsers } from '@/entities/user/api/user-service'
-import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+import { MOCK_PARTICIPATING_SCHOOLS } from '@/features/program/general/model/participating-schools'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 
 export type ParticipatingVolunteerMemberCandidate = {
   memberId: string

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import { mapParticipantToVolunteerScreeningRow } from './participant-volunteer-row-adapter'
 
 describe('mapParticipantToVolunteerScreeningRow', () => {

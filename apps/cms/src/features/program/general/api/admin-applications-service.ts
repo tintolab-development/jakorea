@@ -44,11 +44,11 @@ import {
   sortGeneralVolunteerByInterviewSlotCount,
   sortGeneralVolunteerDocPassedApplicants,
   type GeneralVolunteerApplicantRow,
-} from '@/data/mock/general-volunteer-applicants-mock'
+} from '@/features/program/general/model/volunteer-applicant'
 import { sortGeneralVolunteerInterview2Applicants } from '@/features/program/general/lib/general-volunteer-interview2-display'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'

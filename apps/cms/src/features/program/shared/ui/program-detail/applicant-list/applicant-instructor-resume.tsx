@@ -2,7 +2,7 @@
  * 신청 강사 상세 - 학력사항 / 경력사항 / 자격 및 면허 (+ full 시 JA·수상·자기소개)
  */
 
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import {
   InstructorResumeAwardsCardBody,
   InstructorResumeCareerCardBody,

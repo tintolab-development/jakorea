@@ -1,8 +1,8 @@
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import {
   getParticipatingIndividualParticipantsForProgram,
   type ParticipatingIndividualParticipantRow,
-} from '@/data/mock/participating-individual-participants'
+} from '@/features/program/general/model/participating-individual-participants'
 import type { Program } from '@/types/domain'
 import {
   formatIndividualProgressAttendanceAffiliationGradeLabel,

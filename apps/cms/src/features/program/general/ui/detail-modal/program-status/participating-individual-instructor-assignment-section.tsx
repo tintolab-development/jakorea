@@ -6,10 +6,10 @@ import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { Table, Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
-import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
-import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
+import { MOCK_PARTICIPATING_SCHOOLS } from '@/features/program/general/model/participating-schools'
 import {
   INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,

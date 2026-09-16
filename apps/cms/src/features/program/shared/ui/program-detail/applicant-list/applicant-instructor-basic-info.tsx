@@ -6,7 +6,7 @@
 import { type ReactNode } from 'react'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
 import {
   withProgramDetailTdDivider,

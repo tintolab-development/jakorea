@@ -2,8 +2,8 @@
  * 참여 봉사자 상세 — 봉사 배정 현황 탭 (일반 프로그램 · 개인) mock
  */
 
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import {
   countLectureSlotAssignments,
   getApprovedInstitutionLectureScheduleSlots,

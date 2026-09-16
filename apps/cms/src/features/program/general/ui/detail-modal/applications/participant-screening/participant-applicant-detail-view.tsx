@@ -10,7 +10,7 @@ import {
   updateGeneralIndividualApplicantNotificationResend,
   type GeneralIndividualApplicantDetailSavePayload,
   type GeneralIndividualApplicantRow,
-} from '@/data/mock/general-individual-applications-mock'
+} from '@/features/program/general/model/individual-applicant'
 import {
   approveGeneralIndividualApplication,
   rejectGeneralIndividualApplication,
@@ -54,7 +54,6 @@ import {
 } from '@/features/program/general/api/applications-api-client'
 import { mapIndividualApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { shouldPreferGeneralApplicationListMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { extractApiErrorMessage, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
@@ -170,8 +169,8 @@ export function GeneralParticipantApplicantDetailView({
 }: GeneralParticipantApplicantDetailViewProps) {
   const queryClient = useQueryClient()
   const { showAlert } = useCmsAlert()
-  const usesApplicationMock = shouldPreferGeneralApplicationListMock(program)
-  const useRemote = !usesApplicationMock && shouldUseGeneralApplicationsRemoteApi()
+  const usesApplicationMock = false
+  const useRemote = shouldUseGeneralApplicationsRemoteApi()
   const resolveFromMock = useCallback((): GeneralIndividualApplicantRow | null => {
     if (!usesApplicationMock) return null
     return (

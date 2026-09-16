@@ -21,7 +21,7 @@ import {
   PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import {
   fetchParticipatingVolunteerMemberCandidates,
   type ParticipatingVolunteerMemberCandidate,
@@ -42,7 +42,7 @@ import { useEmployeeVolunteerRegistration } from '../../../hooks/use-employee-vo
 import { useProgressVolunteerList } from '../../../hooks/use-progress-volunteer-list'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 import { useParticipatingVolunteersParams } from '../../../hooks/use-participating-volunteers-params'
 import type { ProgressFilters } from '../../../hooks/use-program-progress-params'

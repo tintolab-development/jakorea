@@ -1,4 +1,4 @@
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { formatIndividualInstructorEducationScheduleLabel } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-display'
 import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
 import type { Program } from '@/types/domain'

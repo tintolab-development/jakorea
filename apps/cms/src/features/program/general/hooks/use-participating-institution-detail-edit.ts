@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 import type { SchoolDetailForModal } from '@/features/program/general/model/school-detail-types'
 import {

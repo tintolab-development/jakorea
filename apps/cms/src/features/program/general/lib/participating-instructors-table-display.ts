@@ -1,5 +1,5 @@
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import { buildInitialAssignedSchoolRows } from './instructor-institution-assignment-mock'
 
 /** 자택 주소지 — 시/도·시/군/구까지 표시 */

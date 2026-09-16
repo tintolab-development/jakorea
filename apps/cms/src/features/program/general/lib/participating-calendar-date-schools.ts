@@ -1,6 +1,6 @@
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { ParticipatingVolunteerCalendarEvent } from './build-participating-volunteer-calendar-events'
 
 function parseSessionDateKey(dateStr: string): Dayjs {

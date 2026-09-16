@@ -7,10 +7,10 @@
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
-} from '@/data/mock/participating-schools'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
-import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
+} from '@/features/program/general/model/participating-schools'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/features/program/general/model/participating-instructors'
 import { countLectureAttendanceHeldAndAttended } from './lecture-attendance-count'
 import { buildParticipatingSchoolPreferredScheduleLines } from './participating-school-session-display'
 import type {
@@ -31,7 +31,7 @@ import {
   isGeneralInstitutionCaseEntityId,
 } from './general-institution-case-roster'
 import { PORTRAIT_CONSENT_AGREEMENT_TEMPLATE_ID } from './student-portrait-consent'
-import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
+import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
 import {
   buildOccupiedWaitingInstructorScheduleSlots,
   participatingSchoolSessionToHopeSchedule,

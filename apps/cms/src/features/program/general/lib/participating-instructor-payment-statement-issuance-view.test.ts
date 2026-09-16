@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import { buildParticipatingInstructorPaymentStatementViewOptions } from './participating-instructor-payment-statement-issuance-view'
 
 const instructor = (

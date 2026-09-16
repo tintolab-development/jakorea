@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import { patchApplicantInstitutionDetailWithCombinedClass } from '@/data/mock/applicant-institutions'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import { patchApplicantInstitutionDetailWithCombinedClass } from '@/features/program/shared/model/applicant-institution'
 import type { Program } from '@/types/domain'
 import {
   isCombinedClassProgramEligible,

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import dayjs from 'dayjs'
-import { applyGeneralRegistrationOverlayToProgram } from './registration-overlay-to-program'
+import {
+  applyGeneralRegistrationOverlayToProgram,
+  normalizeRegistrationOverlayForApply,
+} from './registration-overlay-to-program'
 import type { Program } from '@/types/domain'
 
 function baseProgram(): Program {
@@ -185,5 +188,31 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
       }
     )
     expect(next.generalCommonInfo?.sponsorManagerLine).toBeUndefined()
+  })
+})
+
+describe('normalizeRegistrationOverlayForApply', () => {
+  it('maps trainedTeachersRegistration overlay keys to generalRegistration keys', () => {
+    const normalized = normalizeRegistrationOverlayForApply(
+      {
+        'trainedTeachersRegistration.basicInfo.sponsorId': '42',
+        'trainedTeachersRegistration.basicInfo.managerContactId': '99',
+        'trainedTeachersRegistration.basicInfo.programTitleKo': '교육받은 교사 프로그램',
+        'trainedTeachersRegistration.basicInfo.detailedProgramName': '1사1교 경제금융교육',
+        'trainedTeachersRegistration.typeSettings.educationForm': 'offline',
+      },
+      'trainedTeachers'
+    )
+
+    expect(normalized['generalRegistration.basicInfo.localSponsorId']).toBe('42')
+    expect(normalized['generalRegistration.basicInfo.localManagerContactId']).toBe('99')
+    expect(normalized['generalRegistration.basicInfo.localProgramTitleKo']).toBe(
+      '교육받은 교사 프로그램'
+    )
+    expect(normalized['generalRegistration.basicInfo.detailedProgramName']).toBe(
+      '1사1교 경제금융교육'
+    )
+    expect(normalized['generalRegistration.typeSettings.educationForm']).toBe('offline')
+    expect(normalized['generalRegistration.basicInfo.localSponsorIds']).toEqual(['42'])
   })
 })

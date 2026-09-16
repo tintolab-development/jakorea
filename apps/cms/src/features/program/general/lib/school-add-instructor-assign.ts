@@ -5,12 +5,12 @@
 import {
   getApplicantInstructorsByProgramId,
   type ApplicantInstructorRow,
-} from '@/data/mock/applicant-instructors'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+} from '@/features/program/shared/model/applicant-instructor'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
-} from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/participating-schools'
 import type { InstructorAssignSessionOption } from './instructor-assign-session-options'
 
 export interface SchoolAddInstructorAssignOption {

@@ -2,11 +2,11 @@
  * 참여 강사 풀페이지 — 기관 배정 현황 탭용 목 데이터
  */
 
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
-} from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/participating-schools'
 import type { InstructorRoleKey } from '../model/school-detail-types'
 import {
   buildParticipatingSchoolPreferredScheduleLines,

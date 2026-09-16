@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
-import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { InstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
   getInstitutionApplicationSessionsTableSlice,

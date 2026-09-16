@@ -1,15 +1,14 @@
 /**
  * 프로그램 진행현황 탭 - 참여 강사 목록
- * prefer mock / remote OFF → FE mock; remote ON → API
+ * remote OFF → 빈 목록 + API 미연동 alert; remote ON → API
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  getParticipatingInstructorsForProgram,
-  type ParticipatingInstructorRow,
-  type SettlementStatusKey,
-} from '@/data/mock/participating-instructors'
+import type {
+  ParticipatingInstructorRow,
+  SettlementStatusKey,
+} from '@/features/program/general/model/participating-instructors'
 import { buildParticipatingInstructorRowFromMember } from '../lib/participating-instructor-member-candidates'
 import {
   buildInstructorRowFromForm,
@@ -19,31 +18,27 @@ import type { ProgressFilters } from './use-program-progress-params'
 import { fetchGeneralParticipatingInstructors } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
-import { shouldPreferGeneralProgramProgressMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import type { Program } from '@/types/domain'
 
 export interface UseProgressInstructorListOptions {
   appliedFilters: ProgressFilters
-  /** @deprecated `program` 기준 prefer mock으로 대체 */
-  preferMock?: boolean
   programId?: string
   program?: Program | null
-}
-
-function getMockParticipatingInstructors(programId?: string): ParticipatingInstructorRow[] {
-  return getParticipatingInstructorsForProgram(programId)
 }
 
 export function useProgressInstructorList({
   appliedFilters,
   programId,
-  program,
-  preferMock: preferMockProp,
 }: UseProgressInstructorListOptions) {
-  const preferMock =
-    preferMockProp === true || shouldPreferGeneralProgramProgressMock(program ?? null)
-  const surfaceRemote = useProgramProgressRemoteEnabledForSurface(programId)
-  const remoteEnabled = surfaceRemote && !preferMock
+  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
+
+  useNotifyProgramApiUnavailableOnce(
+    !remoteEnabled,
+    'general-progress-instructors',
+    '프로그램 진행 현황 · 강사'
+  )
+
   const remoteQuery = useQuery({
     queryKey: generalProgramProgressQueryKeys.instructors(programId ?? ''),
     queryFn: () => fetchGeneralParticipatingInstructors(programId!),
@@ -52,16 +47,14 @@ export function useProgressInstructorList({
     retry: false,
   })
 
-  const [instructorList, setInstructorList] = useState<ParticipatingInstructorRow[]>(() =>
-    remoteEnabled ? [] : getMockParticipatingInstructors(programId)
-  )
+  const [instructorList, setInstructorList] = useState<ParticipatingInstructorRow[]>(() => [])
 
   useEffect(() => {
     if (remoteEnabled) {
       if (remoteQuery.data) setInstructorList(remoteQuery.data)
       return
     }
-    setInstructorList(getMockParticipatingInstructors(programId))
+    setInstructorList([])
   }, [remoteEnabled, remoteQuery.data, programId])
 
   const [selectedInstructorRowKeys, setSelectedInstructorRowKeys] = useState<React.Key[]>([])

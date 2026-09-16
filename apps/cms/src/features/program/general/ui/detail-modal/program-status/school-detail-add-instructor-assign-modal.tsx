@@ -8,11 +8,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { Form } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CmsRadio, CmsSelect } from '@/shared/ui'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
-} from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/participating-schools'
 import type { InstructorRoleKey } from '../../../model/school-detail-types'
 import { INSTRUCTOR_ROLE_LABELS } from '../../../model/school-detail-types'
 import type { InstructorAssignSessionOption } from '../../../lib/instructor-assign-session-options'

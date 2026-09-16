@@ -29,28 +29,22 @@ import {
   applyCalendarRangeParam,
 } from '@/features/program/general/hooks/progress-calendar-range'
 import {
-  updateApplicantSchoolApprovalStatus,
   patchApplicantSchoolForApprovalStatus,
   type ApplicantApprovalStatusKey,
   type ApplicantSchoolApprovalNotifyOptions,
   type ApplicantSchoolRow,
-} from '@/data/mock/applicant-institutions'
+} from '@/features/program/shared/model/applicant-institution'
 import {
-  getApplicantInstructorsByProgramId,
   patchApplicantInstructorForApprovalStatus,
-  updateApplicantInstructorApprovalStatus,
   type ApplicantInstructorApprovalNotifyOptions,
   type ApplicantInstructorApprovalStatusKey,
   type ApplicantInstructorRow,
-} from '@/data/mock/applicant-instructors'
-import { shouldPreferGeneralApplicationListMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
+} from '@/features/program/shared/model/applicant-instructor'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import {
-  getGeneralParticipantDoc1Applicants,
-  updateGeneralIndividualApplicantApprovalStatus,
   patchGeneralIndividualApplicantForApprovalStatus,
   type GeneralIndividualApplicantRow,
-} from '@/data/mock/general-individual-applications-mock'
+} from '@/features/program/general/model/individual-applicant'
 import { filterGeneralParticipantDoc1Applications } from '@/features/program/general/lib/participant-doc-screening-filter-fields'
 import { APPLICANT_ID_PARAM, DETAIL_TAB_PARAM } from './applicants-detail-constants'
 import {
@@ -77,6 +71,7 @@ import { resolveInstitutionApplicationProgramBridge } from '@/features/program/g
 import { useGeneralProgramApplicationsRemoteSync } from '@/features/program/general/hooks/use-general-program-applications-remote-sync'
 import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherOrganizationApplicationsRemoteSync } from '@/features/program/trained-teachers/api/organization-applications-hooks'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 
 export type InstructorApprovalTarget =
   | { id: string; name: string; step: 'assign' }
@@ -198,15 +193,12 @@ export function useApplicantsDetail({
   const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>([])
   const [individualList, setIndividualList] = useState<GeneralIndividualApplicantRow[]>([])
 
-  const preferApplicationListMock = shouldPreferGeneralApplicationListMock(program ?? null)
-
   const applicationsRemote = useGeneralProgramApplicationsRemoteSync({
     programId,
     menu,
     usesProgramInstitutionApplications,
     instructorColumnPreset,
     individualScreeningStage,
-    preferApplicationListMock,
     setInstitutionList,
     setInstructorList,
     setIndividualList,
@@ -222,6 +214,11 @@ export function useApplicantsDetail({
   const institutionApplicationsRemote = isTrainedTeachersSurface
     ? trainedTeacherApplicationsRemote
     : applicationsRemote
+  useNotifyProgramApiUnavailableOnce(
+    !institutionApplicationsRemote.remoteEnabled && !applicationsRemote.remoteEnabled,
+    'program-applicants-list',
+    '프로그램 신청'
+  )
   const { showAlert } = useCmsAlert()
 
   const notifyRemoteDecisionFailure = useCallback(
@@ -521,15 +518,11 @@ export function useApplicantsDetail({
     }
   }, [individualScreeningStage])
 
-  /** 1차 서류 심사 대상자 — FE 시드만 mock, 실제 프로그램은 remote query 사용 */
+  /** 1차 서류 심사 — remote off이면 빈 목록 */
   useEffect(() => {
     if (menu !== 'individual-applications' || individualScreeningStage !== 'doc1') return
     if (applicationsRemote.individualRemoteEnabled) return
-    if (!programId) {
-      setIndividualList([])
-      return
-    }
-    setIndividualList(getGeneralParticipantDoc1Applicants(programId))
+    setIndividualList([])
     setPendingFilters({})
     setAppliedFilters({})
     setSelectedRowKeys([])
@@ -537,27 +530,20 @@ export function useApplicantsDetail({
     applicationsRemote.individualRemoteEnabled,
     individualScreeningStage,
     menu,
-    programId,
     setPendingFilters,
   ])
 
-  /** 참여자 mock 프로그램(또는 강사 remote off) — 강사 신청 목록 mock 시드 */
+  /** 강사 신청 목록 — remote off이면 빈 목록 */
   useEffect(() => {
     if (menu !== 'instructors' || instructorColumnPreset !== 'general-detail') return
     if (applicationsRemote.instructorRemoteEnabled) return
-    if (!programId) {
-      setInstructorList([])
-      return
-    }
-    setInstructorList(getApplicantInstructorsByProgramId(programId, program ?? null))
+    setInstructorList([])
     setPendingFilters({})
     setAppliedFilters({})
     setSelectedRowKeys([])
   }, [
     menu,
     instructorColumnPreset,
-    programId,
-    program,
     applicationsRemote.instructorRemoteEnabled,
     setPendingFilters,
   ])
@@ -631,7 +617,6 @@ export function useApplicantsDetail({
       setInstitutionList(prev =>
         prev.map(row => (row.id === recordId ? { ...row, approvalStatus: next } : row))
       )
-      updateApplicantSchoolApprovalStatus(recordId, next)
     },
     [applyRemoteInstitutionDecision]
   )
@@ -651,7 +636,6 @@ export function useApplicantsDetail({
           row.id === recordId ? patchApplicantInstructorForApprovalStatus(row, next) : row
         )
       )
-      updateApplicantInstructorApprovalStatus(recordId, next)
     },
     [applyRemoteInstructorDecision]
   )
@@ -707,7 +691,6 @@ export function useApplicantsDetail({
           keys.includes(row.id) ? { ...row, approvalStatus: 'rejected' as const } : row
         )
       )
-      keys.forEach(id => updateApplicantSchoolApprovalStatus(id, 'rejected'))
     } else if (menu === 'individual-applications') {
       const remote = await applyRemoteIndividualDecision(keys, 'reject')
       if (remote !== 'skipped') {
@@ -719,7 +702,6 @@ export function useApplicantsDetail({
           keys.includes(row.id) ? { ...row, approvalStatus: 'rejected' as const } : row
         )
       )
-      keys.forEach(id => updateGeneralIndividualApplicantApprovalStatus(id, 'rejected'))
     } else if (menu === 'instructors') {
       const remote = await applyRemoteInstructorDecision(keys, 'reject')
       if (remote !== 'skipped') {
@@ -731,7 +713,6 @@ export function useApplicantsDetail({
           keys.includes(row.id) ? patchApplicantInstructorForApprovalStatus(row, 'rejected') : row
         )
       )
-      keys.forEach(id => updateApplicantInstructorApprovalStatus(id, 'rejected'))
     } else {
       return
     }
@@ -775,9 +756,6 @@ export function useApplicantsDetail({
             : row
         )
       )
-      keys.forEach(id =>
-        updateApplicantInstructorApprovalStatus(id, 'rejected', notifyOptions)
-      )
       setSelectedRowKeys([])
     },
     [applyRemoteInstructorDecision, selectedRowKeys]
@@ -802,9 +780,6 @@ export function useApplicantsDetail({
             : row
         )
       )
-      keys.forEach(id =>
-        updateApplicantInstructorApprovalStatus(id, 'approved', notifyOptions)
-      )
       setSelectedRowKeys([])
     },
     [applyRemoteInstructorDecision, selectedRowKeys]
@@ -828,7 +803,6 @@ export function useApplicantsDetail({
             : row
         )
       )
-      keys.forEach(id => updateApplicantSchoolApprovalStatus(id, 'rejected', notifyOptions))
       setSelectedRowKeys([])
     },
     [applyRemoteInstitutionDecision, selectedRowKeys]
@@ -852,7 +826,6 @@ export function useApplicantsDetail({
             : row
         )
       )
-      keys.forEach(id => updateApplicantSchoolApprovalStatus(id, 'approved', notifyOptions))
       setSelectedRowKeys([])
     },
     [applyRemoteInstitutionDecision, selectedRowKeys]
@@ -886,9 +859,6 @@ export function useApplicantsDetail({
             : row
         )
       )
-      keys.forEach(id =>
-        updateGeneralIndividualApplicantApprovalStatus(id, 'rejected', notifyOptions)
-      )
       setSelectedRowKeys([])
     },
     [applyRemoteIndividualDecision, selectedRowKeys]
@@ -913,9 +883,6 @@ export function useApplicantsDetail({
             : row
         )
       )
-      keys.forEach(id =>
-        updateGeneralIndividualApplicantApprovalStatus(id, 'approved', notifyOptions)
-      )
       setSelectedRowKeys([])
     },
     [applyRemoteIndividualDecision, selectedRowKeys]
@@ -936,7 +903,6 @@ export function useApplicantsDetail({
           keys.includes(row.id) ? { ...row, approvalStatus: 'approved' as const } : row
         )
       )
-      keys.forEach(id => updateApplicantSchoolApprovalStatus(id, 'approved'))
     } else if (menu === 'individual-applications') {
       const remote = await applyRemoteIndividualDecision(keys, 'approve')
       if (remote !== 'skipped') {
@@ -948,7 +914,6 @@ export function useApplicantsDetail({
           keys.includes(row.id) ? { ...row, approvalStatus: 'approved' as const } : row
         )
       )
-      keys.forEach(id => updateGeneralIndividualApplicantApprovalStatus(id, 'approved'))
     } else if (menu === 'instructors') {
       const remote = await applyRemoteInstructorDecision(keys, 'approve')
       if (remote !== 'skipped') {
@@ -960,7 +925,6 @@ export function useApplicantsDetail({
           keys.includes(row.id) ? patchApplicantInstructorForApprovalStatus(row, 'approved') : row
         )
       )
-      keys.forEach(id => updateApplicantInstructorApprovalStatus(id, 'approved'))
     } else {
       return
     }
@@ -971,7 +935,6 @@ export function useApplicantsDetail({
     setInstitutionList(prev =>
       prev.map(row => (row.id === id ? patchApplicantSchoolForApprovalStatus(row, 'pending') : row))
     )
-    updateApplicantSchoolApprovalStatus(id, 'pending')
   }
 
   const handleCancelApprovalInstructor = (id: string) => {
@@ -980,7 +943,6 @@ export function useApplicantsDetail({
         row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'pending') : row
       )
     )
-    updateApplicantInstructorApprovalStatus(id, 'pending')
   }
 
   const handleCancelRejectInstructor = (id: string) => {
@@ -989,14 +951,12 @@ export function useApplicantsDetail({
         row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'pending') : row
       )
     )
-    updateApplicantInstructorApprovalStatus(id, 'pending')
   }
 
   const handleCancelRejectInstitution = (id: string) => {
     setInstitutionList(prev =>
       prev.map(row => (row.id === id ? patchApplicantSchoolForApprovalStatus(row, 'pending') : row))
     )
-    updateApplicantSchoolApprovalStatus(id, 'pending')
   }
 
   const handleCancelApprovalIndividual = (id: string) => {
@@ -1005,7 +965,6 @@ export function useApplicantsDetail({
         row.id === id ? patchGeneralIndividualApplicantForApprovalStatus(row, 'pending') : row
       )
     )
-    updateGeneralIndividualApplicantApprovalStatus(id, 'pending')
   }
 
   const handleCancelRejectIndividual = (id: string) => {
@@ -1014,7 +973,6 @@ export function useApplicantsDetail({
         row.id === id ? patchGeneralIndividualApplicantForApprovalStatus(row, 'pending') : row
       )
     )
-    updateGeneralIndividualApplicantApprovalStatus(id, 'pending')
   }
 
   const handleViewCalendar = () => {

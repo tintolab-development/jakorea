@@ -3,7 +3,7 @@ import {
   aggregateEmployeeVolunteerEducationMetrics,
   countGeneralReturningVolunteersForInstitutionSession,
 } from './employee-volunteer-registration'
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 
 describe('employee-volunteer-registration', () => {
   it('재참여는 임직원 입력 + 일반 재참여 봉사자를 합산한다', () => {

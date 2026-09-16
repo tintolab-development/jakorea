@@ -21,8 +21,8 @@ import {
 } from '@/shared/ui'
 import type {
   ParticipatingInstructorRow,
-  SettlementStatusKey } from '@/data/mock/participating-instructors'
-import { INSTRUCTOR_SCHOOL_OPTIONS } from '@/data/mock/participating-instructors'
+  SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
+import { INSTRUCTOR_SCHOOL_OPTIONS } from '@/features/program/general/model/participating-instructors'
 import { EducationSection } from './add-instructor-education-section'
 import { CareerDetailSection } from './add-instructor-career-section'
 import { NativeSelect } from './add-instructor-native-select'

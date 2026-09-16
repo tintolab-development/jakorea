@@ -12,7 +12,7 @@ import {
   updateApplicantSchoolCancelApproval,
   updateApplicantSchoolCancelRejection,
   type ApplicantSchoolRow,
-} from '@/data/mock/applicant-institutions'
+} from '@/features/program/shared/model/applicant-institution'
 import {
   patchApplicantInstructorForApprovalStatus,
   patchApplicantInstructorForNotificationResend,
@@ -21,7 +21,7 @@ import {
   updateApplicantInstructorCancelRejection,
   updateApplicantInstructorNotificationResend,
   type ApplicantInstructorRow,
-} from '@/data/mock/applicant-instructors'
+} from '@/features/program/shared/model/applicant-instructor'
 import {
   updateGeneralIndividualApplicantApprovalStatus,
   updateGeneralIndividualApplicantCancelApproval,
@@ -30,7 +30,7 @@ import {
   patchGeneralIndividualApplicantForNotificationResend,
   updateGeneralIndividualApplicantNotificationResend,
   type GeneralIndividualApplicantRow,
-} from '@/data/mock/general-individual-applications-mock'
+} from '@/features/program/general/model/individual-applicant'
 import { patchParticipantForCancelApproval } from '@/features/program/general/lib/participant-cancel-approval'
 import {
   patchParticipantForCancelRejection,

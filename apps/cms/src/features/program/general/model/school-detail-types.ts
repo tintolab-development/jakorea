@@ -4,8 +4,8 @@
  */
 
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
-import type { TextbookStatusKey } from '@/data/mock/participating-schools'
-import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
+import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
+import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
 import type { StudentPortraitConsentSubmission } from '../lib/student-portrait-consent'
 
 export type InstructorRoleKey = 'lead' | 'assistant'

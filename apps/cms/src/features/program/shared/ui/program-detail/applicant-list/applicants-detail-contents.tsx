@@ -8,7 +8,7 @@ import { MESSAGES } from '@/shared/constants/messages'
 import {
   patchApplicantInstitutionAdminComment,
   type ApplicantSchoolRow,
-} from '@/data/mock/applicant-institutions'
+} from '@/features/program/shared/model/applicant-institution'
 import { useApplicantInstitutionDetailEdit } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { useApplicantInstructorDetailEdit } from '@/features/program/general/hooks/use-applicant-instructor-detail-edit'
@@ -16,13 +16,13 @@ import { resolveApplicantCancelApprovalState } from '@/features/program/general/
 import {
   patchApplicantInstructorDetail,
   type ApplicantInstructorRow,
-} from '@/data/mock/applicant-instructors'
+} from '@/features/program/shared/model/applicant-instructor'
 import {
   patchGeneralIndividualApplicantDetail,
   patchGeneralIndividualApplicantManagerEvaluation,
   type GeneralIndividualApplicantDetailSavePayload,
   type GeneralIndividualApplicantRow,
-} from '@/data/mock/general-individual-applications-mock'
+} from '@/features/program/general/model/individual-applicant'
 import type { IndividualApplicantScreeningStage } from '@/features/program/general/lib/individual-application-visibility'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { patchGeneralIndividualApplicantDetail } from '@/data/mock/general-individual-applications-mock'
+import { patchGeneralIndividualApplicantDetail } from '@/features/program/general/model/individual-applicant'
 import type {
   GeneralIndividualApplicantDetailSavePayload,
   GeneralIndividualApplicantRow,
-} from '@/data/mock/general-individual-applications-mock'
+} from '@/features/program/general/model/individual-applicant'
 import type { Program } from '@/types/domain'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 import { buildIndividualApplicantTextbookOptions } from '@/features/program/general/lib/individual-applicant-textbook'

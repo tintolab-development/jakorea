@@ -80,7 +80,7 @@ import {
   programParticipantRecruitmentSaveSchema,
   programVolunteerRecruitmentSaveSchema,
 } from '@/features/program/general/lib/program-recruitment-save-fields'
-import { saveGeneralProgramDetailSnapshot } from '@/data/mock/general-programs'
+import { saveGeneralProgramDetailSnapshot } from '@/features/program/general/lib/general-program-local-cache'
 import { GeneralProgramDetailSidebar } from './detail-sidebar'
 import { GeneralProgramDetailCommonInfoView } from './info/common-info-view'
 import { GeneralProgramRecruitmentView } from './info/recruitment-view'

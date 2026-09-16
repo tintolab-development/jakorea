@@ -4,7 +4,7 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import {
   GENERAL_MANAGER_EVALUATION_ORDER,
   type GeneralManagerEvaluation,

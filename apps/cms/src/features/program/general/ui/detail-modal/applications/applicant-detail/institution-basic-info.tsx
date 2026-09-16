@@ -7,8 +7,8 @@ import type { ReactNode } from 'react'
 import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
-} from '@/data/mock/applicant-institutions'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+} from '@/features/program/shared/model/applicant-institution'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'
 import {

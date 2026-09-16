@@ -12,7 +12,7 @@ import {
   MOCK_APPLICANT_INSTITUTIONS,
   type ApplicantApprovalStatusKey,
   type ApplicantSchoolRow,
-} from '@/data/mock/applicant-institutions'
+} from '@/features/program/shared/model/applicant-institution'
 import { getApplicantSchoolDetail } from '../lib/school-detail-mock'
 import { SchoolDetailModal } from './detail-modal/program-status/school-detail-modal'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
@@ -26,7 +26,7 @@ import {
   MOCK_APPLICANT_INSTRUCTORS,
   type ApplicantInstructorApprovalStatusKey,
   type ApplicantInstructorRow,
-} from '@/data/mock/applicant-instructors'
+} from '@/features/program/shared/model/applicant-instructor'
 import {
   ApprovalStatusBadge,
   APPROVAL_STATUS_LABELS,

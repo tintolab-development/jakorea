@@ -2,7 +2,7 @@
  * 참여 강사 상세 — 교육 배정 현황 탭 (일반 프로그램 · 개인) mock
  */
 
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
 import {
   countLectureSlotAssignments,

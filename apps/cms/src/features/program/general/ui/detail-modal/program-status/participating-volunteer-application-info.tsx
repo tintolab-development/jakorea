@@ -9,7 +9,7 @@ import {
   participatingVolunteerToApplicantView,
   type ParticipatingVolunteerDetailRow,
 } from '@/features/program/general/lib/participating-volunteer-detail'
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import { ParticipatingVolunteerEssaySections } from './participating-volunteer-essay-sections'
 import '@/features/program/general/ui/detail-modal/applications/volunteer-screening/detail.css'
 

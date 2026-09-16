@@ -2,9 +2,9 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import type {
   CalendarGeneralInstitutionApplicationListRow,

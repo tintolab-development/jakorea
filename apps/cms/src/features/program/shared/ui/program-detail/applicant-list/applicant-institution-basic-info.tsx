@@ -12,8 +12,8 @@ import type { ReactNode } from 'react'
 import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
-} from '@/data/mock/applicant-institutions'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+} from '@/features/program/shared/model/applicant-institution'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import {
@@ -41,7 +41,7 @@ const APPROVAL_STATUS_LABELS: Record<ApplicantSchoolRow['approvalStatus'], strin
   rejected: '신청 반려',
 }
 
-export type { ApplicantInstitutionDetailExtend } from '@/data/mock/applicant-institutions'
+export type { ApplicantInstitutionDetailExtend } from '@/features/program/shared/model/applicant-institution'
 
 export interface ApplicantInstitutionBasicInfoProps {
   institution: ApplicantSchoolRow

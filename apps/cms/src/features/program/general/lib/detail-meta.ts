@@ -8,7 +8,6 @@ import type {
   Program,
   ProgramCategory,
 } from '@/types/domain'
-import { getGeneralProgramById, getGeneralPrograms } from '@/data/mock/general-programs'
 import {
   findGeneralRegistrationLocalSaveProgramById,
   GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
@@ -40,14 +39,11 @@ const CATEGORY_TO_PARTICIPANT: Record<ProgramCategory, GeneralProgramParticipant
 
 export function isGeneralProgramId(programId: string, knownPrograms?: readonly Program[]): boolean {
   if (knownPrograms?.some(p => p.id === programId)) return true
-  return (
-    getGeneralPrograms().some(p => p.id === programId) ||
-    programId.startsWith(GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)
-  )
+  return programId.startsWith(GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)
 }
 
 export function resolveGeneralProgramForDetail(programId: string): Program | undefined {
-  return getGeneralProgramById(programId) ?? findGeneralRegistrationLocalSaveProgramById(programId)
+  return findGeneralRegistrationLocalSaveProgramById(programId)
 }
 
 export function getGeneralParticipantTypes(program: Program): GeneralProgramParticipantType[] {

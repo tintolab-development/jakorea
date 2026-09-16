@@ -1,4 +1,4 @@
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { PaymentOrderCalculationStatementLine } from '@/data/mock/payment-order-admin-list'
 import {
   isInstructorSettlementEligibleForPaymentStatementIssue,
