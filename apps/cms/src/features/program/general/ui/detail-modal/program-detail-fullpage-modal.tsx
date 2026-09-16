@@ -1258,6 +1258,14 @@ export function ProgramDetailFullPageModal({
     setEditMode(null)
   }
 
+  const handleEditCancel = () => {
+    if (editTab === 'info') infoResetToProgram()
+    if (editTab === 'institutions') institutionsResetToProgram()
+    if (editTab === 'instructors') instructorsResetToProgram()
+    if (editTab === 'volunteers') volunteersResetToProgram()
+    setEditMode(null)
+  }
+
   const isEditModeVolunteers =
     activeTab === 'volunteers' && editTab === 'volunteers' && !!displayProgram
   const volunteersForm = useProgramDetailEditForm({
@@ -1408,6 +1416,7 @@ export function ProgramDetailFullPageModal({
               volunteersForm={undefined}
               registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
               onEdit={handleInfoEdit}
+              onCancel={handleEditCancel}
               onSave={handleCompanySchoolRecruitSave}
             />
           )}
@@ -1440,6 +1449,7 @@ export function ProgramDetailFullPageModal({
               isEditMode={isEditModeInfo}
               form={isEditModeInfo ? infoForm : undefined}
               onEdit={handleInfoEdit}
+              onCancel={handleEditCancel}
               onSave={() => setEditMode(null)}
               persistPending={updateTrainedTeacherInfoDetailMutation.isPending}
               onBeforePersist={async () => {
@@ -1497,6 +1507,7 @@ export function ProgramDetailFullPageModal({
               volunteersForm={isEditModeVolunteers ? volunteersForm : undefined}
               registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
               onInfoEdit={handleInfoEdit}
+              onCancel={handleEditCancel}
               onInfoSave={() => {
                 void handleInfoSave()
               }}

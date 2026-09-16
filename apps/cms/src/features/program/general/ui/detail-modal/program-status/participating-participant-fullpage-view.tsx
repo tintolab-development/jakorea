@@ -30,11 +30,7 @@ import { getParticipatingInstitutionActivityWithdrawScheduleOptions } from '@/fe
 import { screeningWithdrawCompleteContent } from '@/features/program/general/lib/screening-subject-kind'
 import { isWithinStudentCertificateIssuancePeriod } from '@/features/program/general/lib/resolve-student-certificate-kind'
 import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
@@ -159,6 +155,7 @@ export function ParticipatingParticipantFullpageView({
     validationErrors,
     textbookOptions,
     enterEdit: enterApplicationInfoEdit,
+    cancelEdit: cancelApplicationInfoEdit,
     saveEdit: saveApplicationInfoEdit,
     updateDraft,
   } = useApplicantIndividualDetailEdit({
@@ -353,15 +350,14 @@ export function ParticipatingParticipantFullpageView({
               >
                 수료증/참여인증서 발급
               </CmsButton>
-              <CmsButton
-                {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
-                  onEnterEdit: enterApplicationInfoEdit,
-                  onSaveEdit: () => saveApplicationInfoEdit(),
-                })}
-              >
-                {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-              </CmsButton>
+              <ProgramEditInfoActions
+                isEditing={isApplicationInfoEditing}
+                onEdit={enterApplicationInfoEdit}
+                onCancel={cancelApplicationInfoEdit}
+                onSave={() => {
+                  void saveApplicationInfoEdit()
+                }}
+              />
               <CmsButton
                 variant="primary"
                 size="large"

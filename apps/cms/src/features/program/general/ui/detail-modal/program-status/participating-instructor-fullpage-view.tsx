@@ -23,11 +23,7 @@ import {
 } from '@/shared/constants/messages'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -1053,15 +1049,14 @@ export function ParticipatingInstructorFullpageView({
               >
                 활동인증서 발급
               </CmsButton>
-              <CmsButton
-                {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                onClick={resolveProgramEditInfoClick(applicationInfoEdit.isEditing, {
-                  onEnterEdit: applicationInfoEdit.enterEdit,
-                  onSaveEdit: () => applicationInfoEdit.saveEdit(),
-                })}
-              >
-                {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-              </CmsButton>
+              <ProgramEditInfoActions
+                isEditing={applicationInfoEdit.isEditing}
+                onEdit={applicationInfoEdit.enterEdit}
+                onCancel={applicationInfoEdit.cancelEdit}
+                onSave={() => {
+                  void applicationInfoEdit.saveEdit()
+                }}
+              />
               <CmsButton
                 variant="primary"
                 size="large"

@@ -15,6 +15,7 @@ import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
   PROGRAM_EDIT_INFO_BUTTON_PROPS,
 } from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -572,17 +573,12 @@ export function SchoolDetailStudentListSection({
       </CmsButton>
       {!readOnly ? (
         <>
-          <CmsButton
-            {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-            className={
-              isStudentListEditMode
-                ? 'school-detail-student-list-section__btn-edit-info--active'
-                : undefined
-            }
-            onClick={handleEditInfoClick}
-          >
-            {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-          </CmsButton>
+          <ProgramEditInfoActions
+            isEditing={isStudentListEditMode}
+            onEdit={handleEditInfoClick}
+            onCancel={handleStudentListCancel}
+            onSave={handleStudentListSave}
+          />
           <CmsButton
             variant="primary"
             size="large"

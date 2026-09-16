@@ -11,11 +11,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
@@ -515,6 +511,7 @@ export function GeneralParticipatingInstitutionDetailView(
     isCombinedClassProgramEligible: isCombinedClassProgramEligibleFlag,
     isCombinedClassApplyRadioDisabled,
     enterEdit: enterApplicationInfoEdit,
+    cancelEdit: cancelApplicationInfoEdit,
     saveEdit: saveApplicationInfoEdit,
     updateDraft: updateApplicationInfoDraft,
   } = applicationInfoEdit
@@ -1638,17 +1635,14 @@ export function GeneralParticipatingInstitutionDetailView(
                   활동 포기
                 </CmsButton>
               ) : null}
-              <CmsButton
-                {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
-                  onEnterEdit: enterApplicationInfoEdit,
-                  onSaveEdit: () => {
-                    void saveApplicationInfoEdit()
-                  },
-                })}
-              >
-                {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-              </CmsButton>
+              <ProgramEditInfoActions
+                isEditing={isApplicationInfoEditing}
+                onEdit={enterApplicationInfoEdit}
+                onCancel={cancelApplicationInfoEdit}
+                onSave={() => {
+                  void saveApplicationInfoEdit()
+                }}
+              />
               {showAdminCommentSection ? (
                 <CmsButton
                   variant="primary"

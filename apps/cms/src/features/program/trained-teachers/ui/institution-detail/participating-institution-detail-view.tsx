@@ -7,11 +7,7 @@ import { CmsButton } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
   MESSAGES,
@@ -139,6 +135,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     usesTextbook,
     canEditTextbook,
     enterEdit: enterApplicationInfoEdit,
+    cancelEdit: cancelApplicationInfoEdit,
     saveEdit: saveApplicationInfoEdit,
     updateDraft: updateApplicationInfoDraft,
   } = applicationInfoEdit
@@ -345,15 +342,14 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               >
                 활동 포기
               </CmsButton>
-              <CmsButton
-                {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
-                  onEnterEdit: enterApplicationInfoEdit,
-                  onSaveEdit: () => saveApplicationInfoEdit(),
-                })}
-              >
-                {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-              </CmsButton>
+              <ProgramEditInfoActions
+                isEditing={isApplicationInfoEditing}
+                onEdit={enterApplicationInfoEdit}
+                onCancel={cancelApplicationInfoEdit}
+                onSave={() => {
+                  void saveApplicationInfoEdit()
+                }}
+              />
               {showAdminCommentSection ? (
                 <CmsButton
                   variant="primary"

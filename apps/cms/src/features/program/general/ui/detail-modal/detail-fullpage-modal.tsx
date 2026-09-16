@@ -755,6 +755,11 @@ export function GeneralProgramDetailFullPageModal({
     setEditMode(null)
   }, [infoForm, infoTriggerSave, setEditMode, showAlert])
 
+  const handleInfoCancel = useCallback(() => {
+    infoResetToProgram()
+    setEditMode(null)
+  }, [infoResetToProgram, setEditMode])
+
   const recruitSubTab = useMemo((): GeneralRecruitTabKey => {
     if (activeLnb !== 'info' || activeTab !== 'recruitment') return 'institutions'
     return normalizeGeneralRecruitTab(searchParams.get(GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM), {
@@ -966,6 +971,19 @@ export function GeneralProgramDetailFullPageModal({
     volunteersTriggerSave,
     setEditMode,
     showAlert,
+  ])
+
+  const handleRecruitmentCancel = useCallback(() => {
+    if (recruitSubTab === 'institutions') institutionsResetToProgram()
+    else if (recruitSubTab === 'instructors') instructorsResetToProgram()
+    else volunteersResetToProgram()
+    setEditMode(null)
+  }, [
+    recruitSubTab,
+    institutionsResetToProgram,
+    instructorsResetToProgram,
+    volunteersResetToProgram,
+    setEditMode,
   ])
 
   // 신청 상세 중첩 — 헤더 X 시 목록 복귀용 (handleHeaderClose에서 호출)
@@ -1779,6 +1797,7 @@ export function GeneralProgramDetailFullPageModal({
                 form={infoForm}
                 canWrite={canWrite}
                 onEdit={handleInfoEdit}
+                onCancel={handleInfoCancel}
                 onSave={handleInfoSave}
               />
             ) : activeLnb === 'info' && activeTab === 'recruitment' ? (
@@ -1799,6 +1818,7 @@ export function GeneralProgramDetailFullPageModal({
                 volunteersForm={isEditModeVolunteers ? volunteersForm : undefined}
                 registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
                 onEdit={handleRecruitmentEdit}
+                onCancel={handleRecruitmentCancel}
                 onSave={handleRecruitmentSave}
                 onOpenRecruitmentPreview={handleOpenRecruitmentPreview}
               />

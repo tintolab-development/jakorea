@@ -299,7 +299,7 @@ export function BasicInfoSection({
               view={announcementTitle}
               edit={
                 <Controller
-                  name="title"
+                  name="announcementTitle"
                   control={commonInfoForm.control}
                   render={({ field }) => (
                     <CmsInput
@@ -317,7 +317,7 @@ export function BasicInfoSection({
               view={detailedProgramName}
               edit={
                 <Controller
-                  name="title"
+                  name="detailedProgramName"
                   control={commonInfoForm.control}
                   render={({ field }) => (
                     <CmsInput

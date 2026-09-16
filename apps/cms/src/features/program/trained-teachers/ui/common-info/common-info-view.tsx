@@ -32,11 +32,7 @@ import { CmsButton, CmsNumericInput, CmsToggle } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { BasicInfoSection } from '@/features/program/shared/ui/program-detail/project-info/common-info/basic-info-section'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
@@ -1398,6 +1394,7 @@ export interface TrainedTeachersCommonInfoViewProps {
   /** 기본 정보 섹션 RHF — 수정 모드일 때만 전달 */
   form?: UseFormReturn<ProgramDetailEditFormValues>
   onEdit?: () => void
+  onCancel?: () => void
   onSave?: () => void
   /** programs PATCH 등 — onPersist / local overlay 전에 호출 */
   onBeforePersist?: () => Promise<void>
@@ -1415,6 +1412,7 @@ export function TrainedTeachersCommonInfoView({
   isEditMode = false,
   form,
   onEdit,
+  onCancel,
   onSave,
   onBeforePersist,
   onPersist,
@@ -1534,17 +1532,13 @@ export function TrainedTeachersCommonInfoView({
   return (
     <div className="trained-teachers-common-info program-detail-fullpage-modal__info-tab">
       <div className="trained-teachers-common-info__header">
-        <CmsButton
-          {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-          loading={saving || persistPending}
-          onClick={resolveProgramEditInfoClick(isEditMode, {
-            onEnterEdit: onEdit ?? (() => {}),
-            onSaveEdit: handleSave,
-          })}
-          aria-label={PROGRAM_EDIT_INFO_BUTTON_LABEL}
-        >
-          {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-        </CmsButton>
+        <ProgramEditInfoActions
+          isEditing={isEditMode}
+          onEdit={onEdit ?? (() => {})}
+          onCancel={onCancel ?? (() => {})}
+          onSave={handleSave}
+          saving={saving || persistPending}
+        />
       </div>
 
       <BasicInfoSection

@@ -190,15 +190,15 @@ function headerBtnEditInfo(
 ): ApplicantHeaderActionItem {
   return {
     key: 'edit-info',
-    variant: PROGRAM_EDIT_INFO_BUTTON_PROPS.variant,
+    variant: isEditing ? 'secondary' : 'primary',
     label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
     width: PROGRAM_EDIT_INFO_BUTTON_PROPS.width,
     disabled,
     onClick: disabled
       ? undefined
       : resolveProgramEditInfoClick(isEditing, {
-          onEnterEdit: onEnterEdit,
-          onSaveEdit: onSaveEdit,
+          onEnterEdit,
+          onSaveEdit,
         }),
   }
 }

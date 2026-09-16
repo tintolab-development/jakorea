@@ -7,11 +7,7 @@ import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsButton } from '@/shared/ui'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   DetailInfoSection,
@@ -50,6 +46,7 @@ export function GeneralProgramRecruitmentView({
   volunteersForm,
   registerVolunteersAdditionalHtml,
   onEdit,
+  onCancel,
   onSave,
   onOpenRecruitmentPreview,
 }: {
@@ -70,6 +67,7 @@ export function GeneralProgramRecruitmentView({
   registerInstructorsAdditionalHtml: (getter: () => string) => void
   registerVolunteersAdditionalHtml: (getter: () => string) => void
   onEdit: () => void
+  onCancel: () => void
   onSave: () => void
   /** 모집 사용자 미리보기 — URL·optimistic open은 상세 모달에서 처리 */
   onOpenRecruitmentPreview?: (tab: GeneralRecruitTabKey) => void
@@ -180,15 +178,12 @@ export function GeneralProgramRecruitmentView({
             showHeaderActions ? (
               <div className="recruitment-view__header-actions">
                 {canWrite || isEditMode ? (
-                  <CmsButton
-                    {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                    onClick={resolveProgramEditInfoClick(isEditMode, {
-                      onEnterEdit: onEdit,
-                      onSaveEdit: onSave,
-                    })}
-                  >
-                    {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-                  </CmsButton>
+                  <ProgramEditInfoActions
+                    isEditing={isEditMode}
+                    onEdit={onEdit}
+                    onCancel={onCancel}
+                    onSave={onSave}
+                  />
                 ) : null}
                 {onOpenRecruitmentPreview ? (
                   <CmsButton

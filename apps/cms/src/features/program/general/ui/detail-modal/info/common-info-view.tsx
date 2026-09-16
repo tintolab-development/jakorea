@@ -96,11 +96,7 @@ import {
 } from '@/features/program/general/model/common-info-edit-schema'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsButton } from '@/shared/ui'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsToggle } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -4590,6 +4586,7 @@ export interface GeneralProgramDetailCommonInfoViewProps {
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
   canWrite?: boolean
   onEdit?: () => void
+  onCancel?: () => void
   onSave?: () => void
 }
 
@@ -4600,6 +4597,7 @@ export function GeneralProgramDetailCommonInfoView({
   form,
   canWrite = false,
   onEdit,
+  onCancel,
   onSave,
 }: GeneralProgramDetailCommonInfoViewProps) {
   const v = programToDetailEditValues(program)
@@ -4610,16 +4608,12 @@ export function GeneralProgramDetailCommonInfoView({
     <div className="detail-common-info-view program-detail-fullpage-modal__info-tab">
       {(canWrite || isEditMode) && (
         <div className="detail-common-info-view__header">
-          <CmsButton
-            {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-            onClick={resolveProgramEditInfoClick(isEditMode, {
-              onEnterEdit: onEdit ?? (() => {}),
-              onSaveEdit: onSave ?? (() => {}),
-            })}
-            aria-label={PROGRAM_EDIT_INFO_BUTTON_LABEL}
-          >
-            {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-          </CmsButton>
+          <ProgramEditInfoActions
+            isEditing={isEditMode}
+            onEdit={onEdit ?? (() => {})}
+            onCancel={onCancel ?? (() => {})}
+            onSave={onSave ?? (() => {})}
+          />
         </div>
       )}
 
