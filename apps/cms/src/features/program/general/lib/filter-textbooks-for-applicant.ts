@@ -2,6 +2,11 @@ import type { TextbookEducationTarget } from '@/features/textbook/model/textbook
 import { TEXTBOOK_EDUCATION_TARGETS } from '@/features/textbook/model/textbook-education-targets'
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'
 import { listTextbooksFromStore } from '@/features/textbook/api/textbook-service'
+import {
+  resolveSelectedGradeLabels,
+  toEducationStageKey,
+} from '@/features/textbook/lib/textbook-education-stages'
+import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import type { Program, TargetLevel } from '@/types/domain'
 
 const TARGET_LEVEL_TO_EDUCATION_TARGET: Partial<Record<TargetLevel, TextbookEducationTarget>> = {
@@ -16,14 +21,41 @@ export function resolveProgramEducationTarget(program: Program): TextbookEducati
   return TARGET_LEVEL_TO_EDUCATION_TARGET[program.targetLevel] ?? null
 }
 
-function textbookIncludesGrade(textbook: TextbookRow, educationGrade: string): boolean {
-  if (textbook.grade === educationGrade || textbook.grade === '전학년') {
+function normalizeApplicantEducationGrade(educationGrade: string): string {
+  return formatInstitutionApplicationGradeDisplay(educationGrade.trim())
+}
+
+function textbookGradeIncludesApplicantGrade(
+  textbook: TextbookRow,
+  educationGrade: string
+): boolean {
+  const grade = normalizeApplicantEducationGrade(educationGrade)
+  if (!grade) return false
+
+  const textbookGrade = textbook.grade?.trim()
+  if (!textbookGrade) {
+    return textbook.educationStages.some(stage => {
+      if (!stage.selected) return false
+      return stage.grades?.some(item => item.selected && item.label === grade) ?? false
+    })
+  }
+
+  if (textbookGrade === grade || textbookGrade === '전학년' || textbookGrade === '전체') {
     return true
+  }
+
+  if (normalizeApplicantEducationGrade(textbookGrade) === grade) {
+    return true
+  }
+
+  const stageKey = toEducationStageKey(textbook.educationTarget)
+  if (stageKey) {
+    return resolveSelectedGradeLabels(stageKey, textbookGrade).has(grade)
   }
 
   return textbook.educationStages.some(stage => {
     if (!stage.selected) return false
-    return stage.grades?.some(grade => grade.selected && grade.label === educationGrade) ?? false
+    return stage.grades?.some(item => item.selected && item.label === grade) ?? false
   })
 }
 
@@ -54,7 +86,7 @@ export function filterTextbooksForApplicant(
     if (!catalog && row.useStatus !== 'USED') return false
     if (program.businessArea && row.businessArea !== program.businessArea) return false
     if (educationTarget && row.educationTarget !== educationTarget) return false
-    return textbookIncludesGrade(row, grade)
+    return textbookGradeIncludesApplicantGrade(row, grade)
   })
 
   return dedupeTextbooksByName(filtered).sort((a, b) =>
@@ -62,27 +94,27 @@ export function filterTextbooksForApplicant(
   )
 }
 
-const TEXTBOOK_EDUCATION_TARGET_STUDENT_LABELS: Record<TextbookEducationTarget, string> = {
+const TEXTBOOK_EDUCATION_TARGET_SHORT_LABELS: Record<TextbookEducationTarget, string> = {
   유아: '유아',
-  초등학교: '초등학생',
-  중학교: '중학생',
-  고등학교: '고등학생',
-  대학교: '대학생',
+  초등학교: '초등',
+  중학교: '중등',
+  고등학교: '고등',
+  대학교: '대학',
 }
 
-/** 교재 셀렉트·표시용 — 교육대상을 학생 라벨(초등학생 등)로 변환 */
-export function resolveTextbookEducationTargetStudentLabel(
+/** 교재 셀렉트·표시용 — 교육대상 짧은 라벨 (예: 초등) */
+export function resolveTextbookEducationTargetShortLabel(
   target: string | undefined | null
 ): string {
   if (!target) return ''
   if ((TEXTBOOK_EDUCATION_TARGETS as readonly string[]).includes(target)) {
-    return TEXTBOOK_EDUCATION_TARGET_STUDENT_LABELS[target as TextbookEducationTarget]
+    return TEXTBOOK_EDUCATION_TARGET_SHORT_LABELS[target as TextbookEducationTarget]
   }
   return target
 }
 
 export function resolveTextbookOptionLabel(row: TextbookRow): string {
-  const studentLabel = resolveTextbookEducationTargetStudentLabel(row.educationTarget)
-  if (!studentLabel) return row.textbookName
-  return `${row.textbookName} (${studentLabel})`
+  const targetLabel = resolveTextbookEducationTargetShortLabel(row.educationTarget)
+  if (!targetLabel) return row.textbookName
+  return `${row.textbookName} (${targetLabel})`
 }
