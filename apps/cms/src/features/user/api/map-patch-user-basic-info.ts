@@ -188,7 +188,9 @@ export function mapPatchUserBasicInfoToApiRequest(
   }
   if (patch.socialAccounts !== undefined) body.socialAccounts = patch.socialAccounts
   if (patch.listMetrics != null) {
-    body.listMetrics = { ...patch.listMetrics }
+    // JA 등급은 평가 워크플로 API만 — basic-info PATCH에 실리면 BE 409
+    const { jaEvaluationGrade: _omitJaEvaluationGrade, ...listMetrics } = patch.listMetrics
+    body.listMetrics = { ...listMetrics }
   }
   if (patch.schoolInfo != null) {
     body.schoolInfo = {
@@ -223,7 +225,10 @@ export function mapPatchUserBasicInfoToApiRequest(
   }
 
   if (patch.instructorCmsProfile != null) {
-    body.profile = toApiInstructorCmsProfile(patch.instructorCmsProfile)
+    const profile = toApiInstructorCmsProfile(patch.instructorCmsProfile)
+    // JA 등급 직접 입력 금지 — 변경은 POST …/ja-evaluation 만
+    const { defaultJaGrade: _omitDefaultJaGrade, ...profileWithoutJa } = profile
+    body.profile = profileWithoutJa
   }
   const feeGrade =
     toInstructorFeeGradeApiValue(patch.instructorCmsProfile?.defaultFeeGrade) ??

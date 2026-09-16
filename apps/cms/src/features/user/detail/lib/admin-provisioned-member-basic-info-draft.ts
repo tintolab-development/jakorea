@@ -31,6 +31,11 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   affiliationInstitution: string
   /** 담당·소속 학년 */
   affiliationGrade: string
+  /**
+   * 순수 강사(일반) — 「소속 없음」.
+   * 교사·겸직에는 쓰지 않는다. true면 소속 입력 비활성·저장 시 organizationNames=[].
+   */
+  affiliationNone?: boolean
   /** 개인 회원 — 현재 학교 재학 여부 (등록 폼과 동일) */
   schoolEnrollmentStatus?: 'enrolled' | 'not_enrolled' | ''
   /** 재학 중 CMS 학교 PK */
@@ -189,6 +194,7 @@ const EMPTY_ADMIN_PROVISIONED_DRAFT: AdminProvisionedMemberBasicInfoDraft = {
   detailAddress: '',
   affiliationInstitution: '',
   affiliationGrade: '',
+  affiliationNone: false,
   gender: '',
   birthDate: '',
   socialAccount: '',
@@ -246,8 +252,9 @@ export function userToAdminProvisionedBasicDraft(
   user: Omit<User, 'password'>
 ): AdminProvisionedMemberBasicInfoDraft {
   let { affiliationInstitution, affiliationGrade } = splitUserAffiliationForDraft(user.affiliation)
+  const instructorProfile = user.role === 'INSTRUCTOR' ? resolveInstructorMemberProfile(user) : null
   // 순수 교사: 소속은 affiliation pipe보다 학교명(CMS·기관)을 draft에 우선
-  if (user.role === 'INSTRUCTOR' && resolveInstructorMemberProfile(user) === 'school_teacher') {
+  if (instructorProfile === 'school_teacher') {
     const schoolName =
       user.affiliatedSchoolName?.trim() ||
       user.instructorCmsProfile?.affiliation?.schoolName?.trim() ||
@@ -257,6 +264,23 @@ export function userToAdminProvisionedBasicDraft(
     if (!affiliationGrade.trim()) {
       affiliationGrade = user.listMetrics?.instructorAssignedGrade?.trim() || ''
     }
+  }
+  const affiliationNone =
+    instructorProfile === 'instructor_only'
+      ? !(
+          affiliationInstitution.trim() ||
+          (user.instructorCmsProfile?.affiliation?.organizationNames?.length ?? 0) > 0
+        )
+      : false
+  if (affiliationNone) {
+    affiliationInstitution = ''
+  } else if (
+    instructorProfile === 'instructor_only' &&
+    !affiliationInstitution.trim()
+  ) {
+    const fromOrg =
+      user.instructorCmsProfile?.affiliation?.organizationNames?.[0]?.trim() ?? ''
+    if (fromOrg) affiliationInstitution = fromOrg
   }
   const { detailAddressSearch, detailAddressDetail } = splitAddressForDraft(
     user.detailAddress,
@@ -278,6 +302,7 @@ export function userToAdminProvisionedBasicDraft(
     detailAddress: user.detailAddress ?? '',
     affiliationInstitution,
     affiliationGrade,
+    affiliationNone,
     gender: (() => {
       const display = toDisplayGender(user.gender)
       return display === '-' ? '' : display
@@ -599,6 +624,18 @@ export function mergeInstructorDetailEditFlushIntoDraft(
   }
 }
 
+/**
+ * 기본정보·강사비 PATCH에는 JA 등급을 넣지 않는다.
+ * BE는 `defaultJaGrade` / `listMetrics.jaEvaluationGrade` 직접 입력을
+ * `INSTRUCTOR_JA_GRADE_REQUIRES_EVALUATION_WORKFLOW`로 거절한다 — 변경은 등급 평가 모달만.
+ */
+function instructorCmsProfileWithoutJaGrade(
+  profile: NonNullable<AdminProvisionedMemberBasicInfoDraft['instructorCmsProfile']>
+): NonNullable<AdminProvisionedMemberBasicInfoDraft['instructorCmsProfile']> {
+  const { defaultJaGrade: _omitJaGrade, ...rest } = profile
+  return rest
+}
+
 /** 어드민 등록 강사·교사겸강사 — 제한 수정: 강사비 등급만 (JA는 평가 모달 경로) */
 export function draftToInstructorFeeAndJaGradePatch(
   draft: AdminProvisionedMemberBasicInfoDraft
@@ -611,7 +648,7 @@ export function draftToInstructorFeeAndJaGradePatch(
     ...(draft.instructorCmsProfile
       ? {
           instructorCmsProfile: {
-            ...draft.instructorCmsProfile,
+            ...instructorCmsProfileWithoutJaGrade(draft.instructorCmsProfile),
             ...(feeGrade ? { defaultFeeGrade: feeGrade } : {}),
           },
         }
@@ -624,7 +661,8 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
 ): PatchUserBasicInfoInput {
   const base = draftToBasicInfoPatch(draft)
   const feeGrade = (draft.instructorFeeGrade ?? '').trim()
-  const jaGrade = (draft.jaEvaluationGrade ?? '').trim()
+  const affiliationNone = draft.affiliationNone === true
+  const affiliationName = affiliationNone ? '' : (draft.affiliationInstitution ?? '').trim()
   const highestEducation = [draft.highestEducationLevel, draft.highestEducationSchoolName]
     .map(v => (v ?? '').trim())
     .filter(Boolean)
@@ -641,8 +679,15 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
   const accountHolder = (draft.instructorAccountHolder ?? '').trim()
   const bio = (draft.bio ?? '').trim()
   const certifications = buildInstructorRegisterCertifications(draft.licenseRows)
+  const profileBase = draft.instructorCmsProfile
+    ? instructorCmsProfileWithoutJaGrade(draft.instructorCmsProfile)
+    : undefined
+  const isGeneralInstructorProfile =
+    profileBase != null && profileBase.memberType !== 'SCHOOL_TEACHER'
   return {
     ...base,
+    // 소속 없음이면 flat affiliation도 비움
+    ...(affiliationNone ? { affiliation: undefined } : affiliationName ? { affiliation: affiliationName } : {}),
     ...(bio ? { bio } : {}),
     instructorInfo: {
       ...(bankName ? { bankName } : {}),
@@ -651,12 +696,23 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
       ...(businessIncome !== undefined ? { isBusinessIncome: businessIncome } : {}),
     } as NonNullable<User['instructorInfo']>,
     ...(certifications != null ? { instructorCertifications: certifications } : {}),
-    ...(draft.instructorCmsProfile
+    ...(profileBase
       ? {
           instructorCmsProfile: {
-            ...draft.instructorCmsProfile,
-            ...(jaGrade ? { defaultJaGrade: jaGrade } : {}),
+            ...profileBase,
             ...(feeGrade ? { defaultFeeGrade: feeGrade } : {}),
+            ...(isGeneralInstructorProfile
+              ? {
+                  affiliation: {
+                    ...profileBase.affiliation,
+                    organizationNames: affiliationNone
+                      ? []
+                      : affiliationName
+                        ? [affiliationName]
+                        : [],
+                  },
+                }
+              : {}),
           },
         }
       : {}),
@@ -673,7 +729,6 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
     })(),
     listMetrics: {
       ...(feeGrade ? { instructorFeeGradeLabel: feeGrade } : {}),
-      ...(jaGrade ? { jaEvaluationGrade: jaGrade } : {}),
       ...(highestEducation ? { highestEducationLabel: highestEducation } : {}),
       ...(careerSummary ? { instructorCareerSummaryLabel: careerSummary } : {}),
     },

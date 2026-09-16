@@ -892,10 +892,13 @@ export function useUserDetailController({
       }
 
       if (target.role === 'INSTRUCTOR' && bodyKey === 'instructor') {
-        // 순수 교사: 수정 진입 없음. 강사·겸직: 강사비 등급만.
+        // 순수 교사: 수정 진입 없음.
+        // 강사·겸직: 미본인인증=기본정보 전체(profile), 본인인증 후=강사비·JA만.
         if (resolveInstructorMemberProfile(target) === 'school_teacher') return
         setBasicInfoDraft(userToAdminProvisionedBasicDraft(target))
-        setBasicInfoEditScope('instructor_fee_ja')
+        setBasicInfoEditScope(
+          shouldShowCmsMemberInfoEditButton(target) ? 'profile' : 'instructor_fee_ja'
+        )
         setBasicInfoEditing(true)
         focusDetailInfoTab()
         return
@@ -923,13 +926,15 @@ export function useUserDetailController({
 
   /** 관리자 등록 회원 — 마스킹 미해제 시 안내 모달 후 unmask, 이후 수정 진입.
    * 학교(기관) 상세는 마스킹 대상 없음 → 안내 모달 없이 바로 수정 진입.
-   * 강사·교사겸강사 강사비 등급만 수정도 PII 없음 → 바로 수정 진입. */
+   * 강사·교사겸강사 **본인인증 후** 강사비 등급만 수정도 PII 없음 → 바로 수정 진입.
+   * 미본인인증 강사·겸직(전체 기본정보)은 개인회원과 같이 unmask 안내. */
   const requestStartBasicInfoEdit = useCallback(() => {
     if (!displayUser) return
     if (!shouldShowCmsMemberInfoEditButtonOrInstructorRestricted(displayUser)) return
     const instructorFeeOnlyEdit =
       displayUser.role === 'INSTRUCTOR' &&
-      resolveInstructorMemberProfile(displayUser) !== 'school_teacher'
+      resolveInstructorMemberProfile(displayUser) !== 'school_teacher' &&
+      !shouldShowCmsMemberInfoEditButton(displayUser)
     if (instructorFeeOnlyEdit || displayUser.role === 'SCHOOL' || personalInfoRevealed) {
       startBasicInfoEdit()
       return
