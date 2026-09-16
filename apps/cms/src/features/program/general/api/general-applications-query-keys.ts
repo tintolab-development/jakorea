@@ -4,10 +4,12 @@ export const generalApplicationsQueryKeys = {
     [...generalApplicationsQueryKeys.all, 'organization', programId, status ?? 'all'] as const,
   instructorList: (programId: string, status?: string | null) =>
     [...generalApplicationsQueryKeys.all, 'instructor', programId, status ?? 'all'] as const,
-  individualScope: (programId: string) =>
+  individualLists: (programId: string) =>
     [...generalApplicationsQueryKeys.all, 'individual', programId] as const,
   individualList: (programId: string, status?: string | null) =>
-    [...generalApplicationsQueryKeys.individualScope(programId), status ?? 'all'] as const,
+    [...generalApplicationsQueryKeys.individualLists(programId), status ?? 'all'] as const,
+  individualDetail: (applicationId: string) =>
+    [...generalApplicationsQueryKeys.all, 'individual-detail', applicationId] as const,
   volunteerList: (programId: string, status?: string | null) =>
     [...generalApplicationsQueryKeys.all, 'volunteer', programId, status ?? 'all'] as const,
 }

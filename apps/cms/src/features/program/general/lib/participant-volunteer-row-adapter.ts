@@ -69,6 +69,7 @@ export function mapParticipantToVolunteerScreeningRow(
     managerAScore: row.managerAScore,
     managerBScore: row.managerBScore,
     interviewEvaluationRemark: row.interviewEvaluationRemark,
+    participantApplicant: row,
   }
 }
 

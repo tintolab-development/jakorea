@@ -80,7 +80,7 @@ export function useGeneralVolunteerApplicationsRemote({
   const invalidateApplications = useCallback(async () => {
     if (subjectKind === 'participant') {
       await queryClient.invalidateQueries({
-        queryKey: generalApplicationsQueryKeys.individualScope(programId),
+        queryKey: generalApplicationsQueryKeys.individualLists(programId),
       })
       return
     }

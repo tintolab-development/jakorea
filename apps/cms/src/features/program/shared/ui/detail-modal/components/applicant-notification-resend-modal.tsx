@@ -23,6 +23,7 @@ export type ApplicantNotificationResendModalProps = {
   approvalStatus: ApplicantNotificationResendApprovalStatus
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
+  confirmLoading?: boolean
   zIndex?: number
 }
 
@@ -33,6 +34,7 @@ export function ApplicantNotificationResendModal({
   approvalStatus,
   onCancel,
   onConfirm,
+  confirmLoading,
   zIndex,
 }: ApplicantNotificationResendModalProps) {
   const requireReason = shouldShowApplicantNotificationResendReason(subjectKind, approvalStatus)
@@ -46,6 +48,7 @@ export function ApplicantNotificationResendModal({
       message={buildApplicantNotificationResendMessage(subjectKind, subjectName, approvalStatus)}
       confirmLabel="재발송"
       confirmVariant="primary"
+      confirmLoading={confirmLoading}
       requireReason={requireReason}
       reasonLabel="반려 사유"
       reasonPlaceholder="반려 사유를 입력해 주세요."

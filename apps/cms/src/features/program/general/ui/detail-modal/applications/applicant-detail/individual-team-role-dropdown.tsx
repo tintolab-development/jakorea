@@ -17,12 +17,17 @@ const TEAM_ROLE_OPTIONS: readonly GeneralIndividualTeamRoleKey[] = ['leader', 'm
 export function GeneralIndividualTeamRoleDropdown({
   applicantId,
   teamRole,
+  canEdit = true,
+  onChange,
 }: {
   applicantId: string
   teamRole?: GeneralIndividualTeamRoleKey
+  canEdit?: boolean
+  onChange?: (teamRole: GeneralIndividualTeamRoleKey) => void | Promise<void>
 }) {
   const [role, setRole] = useState(teamRole)
   const [isOpen, setIsOpen] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     setRole(teamRole)
@@ -42,9 +47,22 @@ export function GeneralIndividualTeamRoleDropdown({
         </span>
       )}
       isItemDisabled={(cur, opt) => cur === opt}
-      onChange={newRole => {
-        setRole(newRole)
-        updateGeneralIndividualApplicantTeamRole(applicantId, newRole)
+      isUpdating={!canEdit || isSaving}
+      onChange={async newRole => {
+        if (!canEdit || isSaving) return
+        setIsSaving(true)
+        try {
+          if (onChange) {
+            await onChange(newRole)
+          } else {
+            updateGeneralIndividualApplicantTeamRole(applicantId, newRole)
+          }
+          setRole(newRole)
+        } catch {
+          // 상위 원격 저장 핸들러가 오류 안내와 서버값 refetch를 처리한다.
+        } finally {
+          setIsSaving(false)
+        }
       }}
       isOpen={isOpen}
       onOpenChange={setIsOpen}

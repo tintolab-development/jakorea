@@ -149,7 +149,7 @@ export function useGeneralProgramApplicationsRemoteSync({
   const invalidateIndividualApplications = async () => {
     if (!programId) return
     await queryClient.invalidateQueries({
-      queryKey: generalApplicationsQueryKeys.individualScope(programId),
+      queryKey: generalApplicationsQueryKeys.individualLists(programId),
     })
   }
 

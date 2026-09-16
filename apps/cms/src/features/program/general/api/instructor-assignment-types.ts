@@ -28,7 +28,10 @@ export type InstructorAssignmentListItemEnriched = InstructorAssignmentListItemR
 }
 
 /** requested-schedules — resolvedScheduleId null = 일정 미생성 */
-export type RequestedScheduleWithResolved = RequestedScheduleResponse & {
+export type RequestedScheduleWithResolved = Omit<
+  RequestedScheduleResponse,
+  'resolvedScheduleId'
+> & {
   resolvedScheduleId?: number | null
 }
 

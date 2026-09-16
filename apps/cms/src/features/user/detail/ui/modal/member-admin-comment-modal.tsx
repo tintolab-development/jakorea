@@ -7,6 +7,8 @@ export interface MemberAdminCommentModalProps {
   open: boolean
   value: string
   loading?: boolean
+  maxLength?: number
+  allowEmpty?: boolean
   onChange: (value: string) => void
   onCancel: () => void
   onConfirm: () => void
@@ -16,11 +18,13 @@ export function MemberAdminCommentModal({
   open,
   value,
   loading = false,
+  maxLength = 1000,
+  allowEmpty = false,
   onChange,
   onCancel,
   onConfirm,
 }: MemberAdminCommentModalProps) {
-  const canConfirm = value.trim().length > 0
+  const canConfirm = allowEmpty || value.trim().length > 0
 
   return (
     <ContentModal
@@ -69,7 +73,7 @@ export function MemberAdminCommentModal({
                 placeholder="코멘트를 작성해 주세요"
                 width="100%"
                 rows={4}
-                maxLength={1000}
+                maxLength={maxLength}
                 autoFocus
               />
             }

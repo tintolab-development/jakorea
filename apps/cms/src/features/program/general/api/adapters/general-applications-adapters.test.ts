@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  filterIndividualDoc1Rows,
   mapApiApplicationStatusToApprovalStatus,
+  mapIndividualApplicationDetailToApplicantRow,
   mapIndividualApplicationToApplicantRow,
   mapInstructorApplicationToApplicantInstructorRow,
   mapOrganizationApplicationToApplicantSchoolRow,
@@ -96,16 +98,46 @@ describe('general-applications-adapters', () => {
         id: 55,
         programId: 5001,
         memberName: '김참여자',
+        affiliationName: '한국대학교',
+        applicationGrade: '2학년',
+        homeAddressSummary: '서울특별시 강남구',
+        managerComment: '신청 정보 재확인 필요',
+        preferredEducationSchedules: [
+          {
+            scheduleId: 168362,
+            round: 2,
+            startAt: '2026-09-22T01:00:00Z',
+            endAt: '2026-09-22T03:00:00Z',
+          },
+        ],
         applicationStatus: 'WAITING_REVIEW',
         documentStatus: 'DOCUMENT_PASSED',
         interviewStatus: 'ASSIGNED',
         finalResultStatus: 'RESERVE',
         reserveRank: 2,
         giveUpYn: false,
+        managerAEvaluation: 'UNREVIEWED',
+        managerBEvaluation: 'PASS',
+        availableActions: ['VIEW', 'COMMENT_UPDATE', 'RESEND_NOTIFICATION'],
         submittedAt: '2026-04-03T00:00:00Z',
         assignedInterviewSlotId: 1001,
         assignedInterviewStartAt: '2026-04-10T10:00:00+09:00',
         assignedInterviewEndAt: '2026-04-10T11:00:00+09:00',
+        interviewAvailabilityCount: 3,
+        interviewAvailabilitySlots: [
+          {
+            startAt: '2026-09-18T01:00:00Z',
+            endAt: '2026-09-18T02:00:00Z',
+          },
+          {
+            startAt: '2026-09-18T05:00:00Z',
+            endAt: '2026-09-18T06:00:00Z',
+          },
+          {
+            startAt: '2026-09-20T01:00:00Z',
+            endAt: '2026-09-20T02:00:00Z',
+          },
+        ],
       },
       0,
       '5001'
@@ -113,12 +145,140 @@ describe('general-applications-adapters', () => {
 
     expect(row.id).toBe('55')
     expect(row.applicantName).toBe('김참여자')
+    expect(row.affiliation).toBe('한국대학교')
+    expect(row.educationGrade).toBe('2학년')
+    expect(row.homeAddress).toBe('서울특별시 강남구')
+    expect(row.adminComment).toBe('신청 정보 재확인 필요')
+    expect(row.sessions).toEqual([
+      expect.objectContaining({
+        round: 2,
+        date: '2026.09.22',
+        timeRange: '10:00 ~ 12:00',
+        requestedScheduleId: 168362,
+      }),
+    ])
     expect(row.documentScreeningStatus).toBe('pass')
     expect(row.interviewAssignmentStatus).toBe('assigned')
     expect(row.secondInterviewScreeningStatus).toBe('reserve2')
     expect(row.programId).toBe('5001')
+    expect(row.availableActions).toEqual(['VIEW', 'COMMENT_UPDATE', 'RESEND_NOTIFICATION'])
+    expect(row.managerAEvaluation).toBe('unreviewed')
+    expect(row.managerBEvaluation).toBe('pass')
     expect(row.assignedInterviewDateLabel).toBe('2026.04.10')
     expect(row.assignedInterviewTime).toContain('10:00')
+    expect(row.interviewSlotCount).toBe(3)
+    expect(row.detail?.interviewAvailability).toEqual([
+      {
+        dateLabel: '26. 09. 18(금)',
+        slots: ['10:00 ~ 11:00', '14:00 ~ 15:00'],
+      },
+      {
+        dateLabel: '26. 09. 20(일)',
+        slots: ['10:00 ~ 11:00'],
+      },
+    ])
+  })
+
+  it('keeps reviewed applications in the first document screening list', () => {
+    const rows = [
+      { id: '1', documentScreeningStatus: 'pending' },
+      { id: '2', documentScreeningStatus: 'fail' },
+      { id: '3', documentScreeningStatus: 'pass' },
+    ] as ReturnType<typeof mapIndividualApplicationToApplicantRow>[]
+
+    expect(filterIndividualDoc1Rows(rows)).toEqual(rows)
+  })
+
+  it('maps masked individual detail without member-based fallback', () => {
+    const row = mapIndividualApplicationDetailToApplicantRow(
+      {
+        id: 1690625,
+        programId: 168006,
+        memberId: 190016,
+        applicationStatus: 'APPROVED',
+        managerComment: '상세 코멘트',
+        availableActions: ['VIEW', 'RESEND_NOTIFICATION'],
+        canEditManagerAEvaluation: true,
+        canEditManagerBEvaluation: false,
+        privacyMaskingLevel: 'MASKED',
+        canRevealPersonalInfo: true,
+        profile: {
+          name: '김*자',
+          affiliationSchool: 'Case6 QA school 5',
+          affiliationGrade: '대학교 2학년',
+          contact: '010-****-1234',
+        },
+        application: {
+          selfIntroduction: '신청 시점 자기소개',
+          preferredEducationSchedules: [{ scheduleId: 168362, round: 1 }],
+          scheduleChangeCancelCount: 2,
+        },
+        textbook: {
+          id: 168036,
+          name: '개인 프로그램 교재',
+          kits: 3,
+          quantity: 3,
+          status: 'PREPARING',
+        },
+        team: {
+          name: '우리가 최고',
+          memberCount: 3,
+          role: 'LEADER',
+        } as never,
+        screening: {
+          documentStatus: 'PASS',
+          documentEvaluations: {
+            managerA: { evaluation: 'PASS' },
+            managerB: { evaluation: 'NEUTRAL' },
+          },
+          interviewEvaluations: [
+            { evaluatorOrder: 1, score: 42 },
+            { evaluatorOrder: 2, score: 45 },
+          ],
+          interviewTotalScore: 87,
+          interviewEvaluationRemark: '면접 평가',
+          finalResultStatus: 'PASS',
+          giveUpYn: false,
+        },
+        interviewAvailabilitySlots: [
+          {
+            startAt: '2026-09-18T01:00:00Z',
+            endAt: '2026-09-18T02:00:00Z',
+          },
+        ],
+        interviewAvailabilityCount: 1,
+        assignedInterviewSlotId: 1690961,
+        assignedInterviewStartAt: '2026-09-18T01:00:00Z',
+        assignedInterviewEndAt: '2026-09-18T02:00:00Z',
+      },
+      {
+        id: '1690625',
+        no: 1,
+        applicantName: '목록 이름',
+        affiliation: '목록 소속',
+        educationGrade: '목록 학년',
+        homeAddress: '목록 주소',
+        approvalStatus: 'pending',
+      }
+    )
+
+    expect(row.memberId).toBe('190016')
+    expect(row.applicantName).toBe('김*자')
+    expect(row.privacyMaskingLevel).toBe('MASKED')
+    expect(row.canRevealPersonalInfo).toBe(true)
+    expect(row.managerAEvaluation).toBe('pass')
+    expect(row.managerBEvaluation).toBe('neutral')
+    expect(row.managerAScore).toBe(42)
+    expect(row.managerBScore).toBe(45)
+    expect(row.totalScore).toBe(87)
+    expect(row.detail?.selfIntroduction).toBe('신청 시점 자기소개')
+    expect(row.detail?.scheduleChangeCancelCount).toBe(2)
+    expect(row.textbookId).toBe('168036')
+    expect(row.detail?.teamName).toBe('우리가 최고')
+    expect(row.detail?.teamMemberCount).toBe(3)
+    expect(row.detail?.teamRole).toBe('leader')
+    expect(row.interviewSlotCount).toBe(1)
+    expect(row.assignedInterviewDateLabel).toBe('2026.09.18')
   })
 })
 

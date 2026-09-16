@@ -20,6 +20,7 @@ import {
   GENERAL_INSTITUTION_MEMBER_ROSTER,
   isGeneralInstitutionCaseProgramId,
 } from '@/features/program/general/lib/general-institution-case-roster'
+import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 
 export type GeneralVolunteerInterviewAvailabilityDay = {
   dateLabel: string
@@ -69,6 +70,8 @@ export interface GeneralVolunteerApplicantRow {
   managerAScore?: number | null
   managerBScore?: number | null
   interviewEvaluationRemark?: string
+  /** 참여자 심사 UI 재사용 시 상세에 전달할 원본 개인 신청 행 */
+  participantApplicant?: GeneralIndividualApplicantRow
 }
 
 const NAMES = [

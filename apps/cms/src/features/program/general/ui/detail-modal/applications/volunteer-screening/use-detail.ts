@@ -38,6 +38,7 @@ export function useGeneralVolunteerApplicantDetail({
   list,
   variant,
   subjectKind = 'volunteer',
+  loading = false,
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: {
@@ -45,6 +46,7 @@ export function useGeneralVolunteerApplicantDetail({
   list: GeneralVolunteerApplicantRow[]
   variant: GeneralVolunteerApplicantDetailVariant
   subjectKind?: ScreeningSubjectKind
+  loading?: boolean
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
@@ -117,9 +119,10 @@ export function useGeneralVolunteerApplicantDetail({
       return
     }
 
+    if (loading) return
     setSelectedApplicant(null)
     clearApplicantIdFromUrl()
-  }, [clearApplicantIdFromUrl, list, searchParams])
+  }, [clearApplicantIdFromUrl, list, loading, searchParams])
 
   useEffect(() => {
     if (!selectedApplicant) return

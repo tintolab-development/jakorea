@@ -12,6 +12,11 @@ import type { PageResponseOrganizationApplicationListItemResponse } from '@/shar
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
 import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboard/schemas/volunteerFinalResultRequest'
+import type { IndividualApplicationUpdateRequest } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateRequest'
+import type { IndividualApplicationUpdateResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateResponse'
+import type { IndividualApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationDetailResponse'
+import type { IndividualDocumentEvaluationRequest } from '@/shared/api/generated/dashboard/schemas/individualDocumentEvaluationRequest'
+import type { IndividualDocumentEvaluationResponse } from '@/shared/api/generated/dashboard/schemas/individualDocumentEvaluationResponse'
 import type {
   IndividualApplicationListItemEnriched,
   InterviewAssignmentCreateRequestEnriched,
@@ -30,6 +35,22 @@ export interface ApplicationsPageDto<T> {
   size?: number
   totalElements?: number
   totalPages?: number
+}
+
+export type IndividualApplicationNotificationResendRequest = {
+  timing: 'IMMEDIATE' | 'SCHEDULED'
+  scheduledAt: string | null
+  reason: string | null
+}
+
+export type IndividualApplicationUpdatePayload = Omit<
+  IndividualApplicationUpdateRequest,
+  'textbookId' | 'teamName' | 'teamRole' | 'managerComment'
+> & {
+  textbookId?: number | null
+  teamName?: string | null
+  teamRole?: 'LEADER' | 'MEMBER'
+  managerComment?: string | null
 }
 
 async function fetchApplicationsPage<T>(
@@ -72,6 +93,45 @@ export async function fetchIndividualApplicationsRemote(
   return fetchApplicationsPage<IndividualApplicationListItemEnriched>(
     `/api/admin/programs/${encodeURIComponent(programId)}/individual-applications`,
     params
+  )
+}
+
+export async function fetchIndividualApplicationDetailRemote(
+  applicationId: string
+): Promise<IndividualApplicationDetailResponse> {
+  return unwrapApiBody<IndividualApplicationDetailResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function unmaskIndividualApplicationPrivacyRemote(
+  applicationId: string,
+  reason: string
+): Promise<IndividualApplicationDetailResponse> {
+  return unwrapApiBody<IndividualApplicationDetailResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
+      method: 'POST',
+      data: { reason },
+      headers: { 'Cache-Control': 'no-store' },
+    })
+  )
+}
+
+export async function updateIndividualDocumentEvaluationRemote(
+  applicationId: string,
+  managerSlot: 'A' | 'B',
+  payload: IndividualDocumentEvaluationRequest
+): Promise<IndividualDocumentEvaluationResponse> {
+  return unwrapApiBody<IndividualDocumentEvaluationResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/document-evaluations/${managerSlot}`,
+      method: 'PUT',
+      data: payload,
+    })
   )
 }
 
@@ -181,6 +241,44 @@ export async function rejectIndividualApplicationRemote(
     await customInstance({
       url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/reject`,
       method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/**
+ * OpenAPI operationId: resendIndividualApplicationNotification
+ * 로컬 codegen은 BE 재기동 후 교체한다.
+ */
+export async function resendIndividualApplicationNotification(
+  applicationId: string,
+  payload: IndividualApplicationNotificationResendRequest,
+  idempotencyKey: string
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/notifications/resend`,
+      method: 'POST',
+      data: payload,
+      headers: {
+        'Idempotency-Key': idempotencyKey,
+      },
+    })
+  )
+}
+
+/**
+ * OpenAPI operationId: updateIndividualApplication
+ * 코멘트 모달에서는 managerComment만 전송한다.
+ */
+export async function updateIndividualApplication(
+  applicationId: string,
+  payload: IndividualApplicationUpdatePayload
+): Promise<IndividualApplicationUpdateResponse> {
+  return unwrapApiBody<IndividualApplicationUpdateResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}`,
+      method: 'PATCH',
       data: payload,
     })
   )

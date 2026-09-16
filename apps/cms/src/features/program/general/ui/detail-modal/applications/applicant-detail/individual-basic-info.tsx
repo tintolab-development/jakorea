@@ -74,6 +74,9 @@ export interface ApplicantGeneralIndividualBasicInfoProps {
   setOpenManagerDropdown?: (value: { rowId: string; manager: 'A' | 'B' } | null) => void
   onManagerAEvaluationChange?: (id: string, evaluation: GeneralManagerEvaluation) => void
   onManagerBEvaluationChange?: (id: string, evaluation: GeneralManagerEvaluation) => void
+  onTeamRoleChange?: (
+    teamRole: NonNullable<GeneralIndividualApplicantDetail['teamRole']>
+  ) => void | Promise<void>
 }
 
 function formatBirthDateAndAge(birthDate?: string, age?: number): string {
@@ -95,7 +98,7 @@ function IndividualApplicantScreeningBasicInfo({
   onResendNotificationClick?: () => void
 }) {
   const detail = applicant.detail
-  const shouldMask = maskSensitive && applicant.approvalStatus !== 'approved'
+  const shouldMask = maskSensitive && applicant.privacyMaskingLevel == null
 
   const scheduleChangeCount = detail?.scheduleChangeCancelCount ?? 0
   const nameCell =
@@ -226,9 +229,13 @@ function IndividualApplicantScreeningSelfIntroSection({
 function IndividualApplicantScreeningTeamSection({
   applicant,
   detail,
+  onTeamRoleChange,
 }: {
   applicant: GeneralIndividualApplicantRow
   detail?: GeneralIndividualApplicantDetail
+  onTeamRoleChange?: (
+    teamRole: NonNullable<GeneralIndividualApplicantDetail['teamRole']>
+  ) => void | Promise<void>
 }) {
   return (
     <DetailInfoForm title="팀 정보" mode="view">
@@ -257,6 +264,11 @@ function IndividualApplicantScreeningTeamSection({
               <GeneralIndividualTeamRoleDropdown
                 applicantId={applicant.id}
                 teamRole={detail.teamRole}
+                canEdit={
+                  applicant.availableActions == null ||
+                  applicant.availableActions.includes('UPDATE_APPLICATION')
+                }
+                onChange={onTeamRoleChange}
               />
             ) : (
               '-'
@@ -452,10 +464,11 @@ export function ApplicantGeneralIndividualBasicInfo({
   setOpenManagerDropdown,
   onManagerAEvaluationChange,
   onManagerBEvaluationChange,
+  onTeamRoleChange,
 }: ApplicantGeneralIndividualBasicInfoProps) {
   const detail = applicant.detail
   const isProgressContext = detailContext === 'progress'
-  const shouldMask = maskSensitive && applicant.approvalStatus !== 'approved'
+  const shouldMask = maskSensitive && applicant.privacyMaskingLevel == null
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
   const showAdminComment = isProgressContext || applicant.approvalStatus === 'approved'
   const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
@@ -701,6 +714,11 @@ export function ApplicantGeneralIndividualBasicInfo({
                   <GeneralIndividualTeamRoleDropdown
                     applicantId={applicant.id}
                     teamRole={detail.teamRole}
+                    canEdit={
+                      applicant.availableActions == null ||
+                      applicant.availableActions.includes('UPDATE_APPLICATION')
+                    }
+                    onChange={onTeamRoleChange}
                   />
                 ) : (
                   '-'
@@ -805,6 +823,8 @@ export function ApplicantGeneralIndividualBasicInfo({
             setOpenManagerDropdown={setOpenManagerDropdown}
             onManagerAEvaluationChange={onManagerAEvaluationChange}
             onManagerBEvaluationChange={onManagerBEvaluationChange}
+            canEditManagerAEvaluation={applicant.canEditManagerAEvaluation}
+            canEditManagerBEvaluation={applicant.canEditManagerBEvaluation}
           />
         ) : null}
 
@@ -821,7 +841,11 @@ export function ApplicantGeneralIndividualBasicInfo({
         <IndividualApplicantScreeningSelfIntroSection selfIntroduction={detail?.selfIntroduction} />
 
         {showTeamSection ? (
-          <IndividualApplicantScreeningTeamSection applicant={applicant} detail={detail} />
+          <IndividualApplicantScreeningTeamSection
+            applicant={applicant}
+            detail={detail}
+            onTeamRoleChange={onTeamRoleChange}
+          />
         ) : null}
       </div>
     )

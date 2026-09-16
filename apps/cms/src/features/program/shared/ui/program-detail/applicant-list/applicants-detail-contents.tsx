@@ -20,6 +20,7 @@ import {
 import {
   patchGeneralIndividualApplicantDetail,
   patchGeneralIndividualApplicantManagerEvaluation,
+  type GeneralIndividualApplicantDetailSavePayload,
   type GeneralIndividualApplicantRow,
 } from '@/data/mock/general-individual-applications-mock'
 import type { IndividualApplicantScreeningStage } from '@/features/program/general/lib/individual-application-visibility'
@@ -349,16 +350,17 @@ function resolveApplicantHeaderItems(params: {
   }
 
   if (isApprovedIndividual) {
-    const editButton =
-      isGeneralIndividualEditEnabled && onEnterIndividualEdit && onSaveIndividualEdit
-        ? headerBtnEditInfo(
-            onEnterIndividualEdit,
-            onSaveIndividualEdit,
-            isEditingIndividualDetail
-          )
-        : headerBtnEditInfoDisabled()
+    const items: ApplicantHeaderActionItem[] = []
 
-    const items: ApplicantHeaderActionItem[] = [editButton]
+    if (isGeneralIndividualEditEnabled && onEnterIndividualEdit && onSaveIndividualEdit) {
+      items.push(
+        headerBtnEditInfo(
+          onEnterIndividualEdit,
+          onSaveIndividualEdit,
+          isEditingIndividualDetail
+        )
+      )
+    }
 
     if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit) {
       items.push(
@@ -416,6 +418,32 @@ interface ApplicantsDetailContentsProps {
   onInstitutionDetailSaved?: (rows: ApplicantSchoolRow[]) => void
   /** 일반 프로그램 개인 상세 수정 — 목록 동기화용 */
   onIndividualDetailSaved?: (row: GeneralIndividualApplicantRow) => void
+  /** 일반 개인 신청 운영정보 원격 저장. 미지정 시 기존 mock patch */
+  onSaveIndividualDetail?: (
+    payload: GeneralIndividualApplicantDetailSavePayload
+  ) => Promise<GeneralIndividualApplicantRow | null>
+  /** 일반 프로그램 개인 신청 관리자 코멘트 원격 저장. 미지정 시 기존 mock 저장 */
+  onSaveIndividualAdminComment?: (
+    managerComment: string
+  ) => Promise<GeneralIndividualApplicantRow | null>
+  individualAdminCommentSaving?: boolean
+  canUpdateIndividualAdminComment?: boolean
+  /** 일반 개인 신청 전용 개인정보 원문 조회. 미지정 시 기존 회원/mock 흐름 유지 */
+  onRevealIndividualPersonalInfo?: (
+    reason: string
+  ) => Promise<GeneralIndividualApplicantRow>
+  onIndividualPrivacyUnmasked?: (row: GeneralIndividualApplicantRow) => void
+  showIndividualPrivacyReveal?: boolean
+  /** 일반 개인 신청 전용 담당자 평가 저장. 미지정 시 기존 mock 저장 */
+  onIndividualManagerEvaluationChange?: (
+    managerSlot: 'A' | 'B',
+    evaluation: GeneralManagerEvaluation
+  ) => void | Promise<void>
+  onIndividualTeamRoleChange?: (
+    teamRole: NonNullable<
+      NonNullable<GeneralIndividualApplicantRow['detail']>['teamRole']
+    >
+  ) => void | Promise<void>
   /** 일반 프로그램 강사 상세 수정 — 목록 동기화용 */
   onInstructorDetailSaved?: (row: ApplicantInstructorRow) => void
   onBack: () => void
@@ -439,6 +467,15 @@ export function ApplicantsDetailContents({
   institutionList = [],
   onInstitutionDetailSaved,
   onIndividualDetailSaved,
+  onSaveIndividualDetail,
+  onSaveIndividualAdminComment,
+  individualAdminCommentSaving = false,
+  canUpdateIndividualAdminComment,
+  onRevealIndividualPersonalInfo,
+  onIndividualPrivacyUnmasked,
+  showIndividualPrivacyReveal,
+  onIndividualManagerEvaluationChange,
+  onIndividualTeamRoleChange,
   onInstructorDetailSaved,
   onBack: _onBack,
   onApprove,
@@ -508,7 +545,11 @@ export function ApplicantsDetailContents({
     isGeneralDetail && isApprovedInstitution && institutionData != null
 
   const isGeneralIndividualEditEnabled =
-    isGeneralDetail && isApprovedIndividual && individualData != null
+    isGeneralDetail &&
+    isApprovedIndividual &&
+    individualData != null &&
+    (individualData.availableActions == null ||
+      individualData.availableActions.includes('UPDATE_APPLICATION'))
 
   const isGeneralInstructorEditEnabled =
     isGeneralDetail && isApprovedInstructor && instructorData != null
@@ -566,6 +607,7 @@ export function ApplicantsDetailContents({
     onSaved: row => {
       onIndividualDetailSaved?.(row)
     },
+    saveApplicant: onSaveIndividualDetail,
   })
 
   /* eslint-disable react-hooks/set-state-in-effect -- 개인 신청자 변경 시 코멘트·평가 UI 초기화 */
@@ -582,8 +624,15 @@ export function ApplicantsDetailContents({
     setIsIndividualAdminCommentModalOpen(true)
   }, [individualDetailEdit.isEditing, individualData?.adminComment])
 
-  const handleIndividualAdminCommentSave = useCallback(() => {
+  const handleIndividualAdminCommentSave = useCallback(async () => {
     if (!individualData) return
+    if (onSaveIndividualAdminComment) {
+      const updated = await onSaveIndividualAdminComment(individualAdminCommentDraft)
+      if (!updated) return
+      onIndividualDetailSaved?.(updated)
+      setIsIndividualAdminCommentModalOpen(false)
+      return
+    }
     const updated = patchGeneralIndividualApplicantDetail(individualData.id, {
       adminComment: individualAdminCommentDraft,
     })
@@ -596,11 +645,18 @@ export function ApplicantsDetailContents({
     }
     onIndividualDetailSaved?.(updated)
     setIsIndividualAdminCommentModalOpen(false)
-  }, [individualAdminCommentDraft, individualData, onIndividualDetailSaved, showAlert])
+  }, [
+    individualAdminCommentDraft,
+    individualData,
+    onIndividualDetailSaved,
+    onSaveIndividualAdminComment,
+    showAlert,
+  ])
 
   const handleIndividualAdminCommentModalCancel = useCallback(() => {
+    if (individualAdminCommentSaving) return
     setIsIndividualAdminCommentModalOpen(false)
-  }, [])
+  }, [individualAdminCommentSaving])
 
   const handleIndividualAdminCommentDraftChange = useCallback((value: string) => {
     setIndividualAdminCommentDraft(value)
@@ -608,18 +664,26 @@ export function ApplicantsDetailContents({
 
   const handleManagerAEvaluationChange = useCallback(
     (id: string, evaluation: GeneralManagerEvaluation) => {
+      if (onIndividualManagerEvaluationChange) {
+        void onIndividualManagerEvaluationChange('A', evaluation)
+        return
+      }
       const updated = patchGeneralIndividualApplicantManagerEvaluation(id, 'A', evaluation)
       if (updated) onIndividualDetailSaved?.(updated)
     },
-    [onIndividualDetailSaved]
+    [onIndividualDetailSaved, onIndividualManagerEvaluationChange]
   )
 
   const handleManagerBEvaluationChange = useCallback(
     (id: string, evaluation: GeneralManagerEvaluation) => {
+      if (onIndividualManagerEvaluationChange) {
+        void onIndividualManagerEvaluationChange('B', evaluation)
+        return
+      }
       const updated = patchGeneralIndividualApplicantManagerEvaluation(id, 'B', evaluation)
       if (updated) onIndividualDetailSaved?.(updated)
     },
-    [onIndividualDetailSaved]
+    [onIndividualDetailSaved, onIndividualManagerEvaluationChange]
   )
 
   const instructorDetailEdit = useApplicantInstructorDetailEdit({
@@ -739,6 +803,12 @@ export function ApplicantsDetailContents({
       if (isInstructor) return 'INSTRUCTOR'
       return undefined
     },
+    revealPersonalInfo: onRevealIndividualPersonalInfo,
+    onPrivacyUnmasked: payload => {
+      if (onRevealIndividualPersonalInfo) {
+        onIndividualPrivacyUnmasked?.(payload as GeneralIndividualApplicantRow)
+      }
+    },
     resetDeps: [applicantId],
     controlMode: 'headerStickyNoop',
   })
@@ -781,7 +851,8 @@ export function ApplicantsDetailContents({
       },
       isAdminCommentWriteEnabled:
         isGeneralInstitutionEditEnabled ||
-        isGeneralIndividualEditEnabled ||
+        (isGeneralIndividualEditEnabled &&
+          (canUpdateIndividualAdminComment ?? true)) ||
         isGeneralInstructorEditEnabled,
       onEnterAdminCommentEdit: isApprovedIndividual
         ? handleIndividualAdminCommentEditEnter
@@ -790,7 +861,17 @@ export function ApplicantsDetailContents({
           : handleAdminCommentEditEnter,
     })
     if (!items) return null
-    return <ApplicantHeaderActionsExtra items={items} personalInfoRevealed={personalInfoRevealed} />
+    const visibleItems =
+      isIndividual &&
+      showIndividualPrivacyReveal === false
+        ? items.filter(item => item.key !== 'privacy')
+        : items
+    return (
+      <ApplicantHeaderActionsExtra
+        items={visibleItems}
+        personalInfoRevealed={personalInfoRevealed}
+      />
+    )
   }, [
     applicantId,
     isApprovedInstitution,
@@ -806,6 +887,7 @@ export function ApplicantsDetailContents({
     isGeneralInstitutionEditEnabled,
     isGeneralIndividualEditEnabled,
     isGeneralInstructorEditEnabled,
+    canUpdateIndividualAdminComment,
     cancelApprovalState,
     isApprovedInstructor,
     isApprovedIndividual,
@@ -821,6 +903,8 @@ export function ApplicantsDetailContents({
     onCancelApproval,
     onCancelReject,
     personalInfoRevealed,
+    individualData,
+    showIndividualPrivacyReveal,
     handleAdminCommentEditEnter,
     handleIndividualAdminCommentEditEnter,
     handleInstructorAdminCommentEditEnter,
@@ -939,7 +1023,11 @@ export function ApplicantsDetailContents({
         <ApplicantGeneralIndividualBasicInfo
           applicant={individualData}
           program={program}
-          maskSensitive={!personalInfoRevealed && individualData.approvalStatus !== 'approved'}
+          maskSensitive={
+            individualData.privacyMaskingLevel != null
+              ? individualData.privacyMaskingLevel !== 'UNMASKED'
+              : !personalInfoRevealed && individualData.approvalStatus !== 'approved'
+          }
           mode={individualDetailEdit.isEditing ? 'edit' : 'view'}
           draft={individualDetailEdit.draft ?? undefined}
           onDraftChange={individualDetailEdit.updateDraft}
@@ -951,6 +1039,7 @@ export function ApplicantsDetailContents({
           setOpenManagerDropdown={setOpenManagerDropdown}
           onManagerAEvaluationChange={handleManagerAEvaluationChange}
           onManagerBEvaluationChange={handleManagerBEvaluationChange}
+          onTeamRoleChange={onIndividualTeamRoleChange}
         />
       )
     }
@@ -978,6 +1067,7 @@ export function ApplicantsDetailContents({
     openManagerDropdown,
     handleManagerAEvaluationChange,
     handleManagerBEvaluationChange,
+    onIndividualTeamRoleChange,
   ])
 
   const tabDefs = isVolunteer ? [{ key: 'info', label: '기본 정보' }] : []
@@ -994,6 +1084,9 @@ export function ApplicantsDetailContents({
       <MemberAdminCommentModal
         open={isIndividualAdminCommentModalOpen}
         value={individualAdminCommentDraft}
+        loading={individualAdminCommentSaving}
+        maxLength={2000}
+        allowEmpty={Boolean(individualData?.adminComment)}
         onChange={handleIndividualAdminCommentDraftChange}
         onCancel={handleIndividualAdminCommentModalCancel}
         onConfirm={handleIndividualAdminCommentSave}

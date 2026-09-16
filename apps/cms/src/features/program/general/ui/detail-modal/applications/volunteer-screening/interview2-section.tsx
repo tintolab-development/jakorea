@@ -130,6 +130,7 @@ export function GeneralVolunteerInterview2Section({
     list,
     variant: 'interview2',
     subjectKind,
+    loading: applicationsLoading,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailMetaChange,
   })
@@ -275,8 +276,11 @@ export function GeneralVolunteerInterview2Section({
           <GeneralParticipantApplicantDetailView
             program={program}
             applicantId={selectedApplicant.id}
-            applicant={mapVolunteerScreeningRowToParticipant(selectedApplicant)}
             screeningStage="interview2"
+            applicant={
+              selectedApplicant.participantApplicant ??
+              mapVolunteerScreeningRowToParticipant(selectedApplicant)
+            }
             onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
             onApplicantDetailMetaChange={meta => {
               if (!meta) {

@@ -228,23 +228,15 @@ export function InstructorList.tsx() { ... }
 
 ```
 apps/cms/docs/
-├── admin/                    # 관리자 관련 문서
-│   ├── home-screen-implementation.md
-│   └── migration-guide.md
 ├── api/                      # API 명세서
 │   ├── api-spec-mock-detailed.md
 │   └── api-spec-mock-extended.md
-├── check/                    # 검증/체크리스트 문서
-│   └── INSTRUCTOR_SETTLEMENT_DATA_CHECK.md
 ├── claude-prompt/            # 정책·정리 가이드
-│   ├── CLEANUP_BENEFITS.md
-│   ├── CLEANUP_DEPRECATED_CODE.md
-│   └── POLICY_TO_AUDIT.md
+│   └── CLEANUP_DEPRECATED_CODE.md
 ├── design/                   # 디자인·화면 스펙 문서
 ├── features/                 # 도메인 규칙·이슈 메모
 ├── implementation/           # 구현 요약
 ├── instructor/               # 강사 관련 문서
-│   ├── migration-guide.md
 │   └── satisfaction-survey-flow.md
 ├── members/                  # 멤버 IA 등
 │   └── ia-members.md
@@ -255,14 +247,7 @@ apps/cms/docs/
 ├── roadmap/                  # 로드맵
 │   └── MVP_ROADMAP_V4_DETAILED.md
 ├── settlement/               # 정산 기준 등
-├── status/                   # 우선순위 등
-│   └── REQUIREMENTS_PRIORITY.md
 └── volunteer/                # 봉사 관련 문서
-    ├── BRANCH_GUIDELINES.md
-    ├── category-structure.md
-    ├── ia-structure.md
-    ├── migration-guide.md
-    ├── README.md
     └── volunteer-operations.md
 ```
 
