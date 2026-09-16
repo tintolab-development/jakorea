@@ -3,10 +3,11 @@ import {
   GENERAL_MANUAL_SECOND_INTERVIEW_SCREENING_STATUSES,
   resolveGeneralEffectiveSecondInterviewStatus,
 } from '@/features/program/general/lib/general-volunteer-interview2-display'
-import { GENERAL_VOLUNTEER_INTERVIEW2_PROCESSED_SELECTION_ALERT } from '@/features/program/general/lib/volunteer-screening-constants'
+import { buildInterview2ProcessedSelectionAlert } from '@/features/program/general/lib/application-processed-selection-alert'
+import type { ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 
-/** 선택 합격/불합격 가능 — 면접 진행 대기·완료만 (이미 결과 확정·활동 포기 제외) */
+/** 선택 합격/불합격 가능 — 면접 대기만 (진행 완료·결과 확정·활동 포기 제외) */
 export function isGeneralVolunteerInterview2SelectableForResult(
   row: Pick<
     GeneralVolunteerApplicantRow,
@@ -19,7 +20,7 @@ export function isGeneralVolunteerInterview2SelectableForResult(
   const status = resolveGeneralEffectiveSecondInterviewStatus(row)
   if (status === 'withdrawn') return false
   if (GENERAL_MANUAL_SECOND_INTERVIEW_SCREENING_STATUSES.has(status)) return false
-  return status === 'waiting' || status === 'completed'
+  return status === 'waiting'
 }
 
 function hasProcessedInterview2Selection(
@@ -37,6 +38,7 @@ function hasProcessedInterview2Selection(
 export function requestGeneralVolunteerInterview2BulkPass({
   selectedIds,
   selectedRows,
+  subjectKind = 'volunteer',
   onOpenSinglePass,
   onOpenBulkPass,
 }: {
@@ -48,6 +50,7 @@ export function requestGeneralVolunteerInterview2BulkPass({
     | 'assignedInterviewDateLabel'
     | 'assignedInterviewTime'
   >[]
+  subjectKind?: ScreeningSubjectKind
   onOpenSinglePass: () => void
   onOpenBulkPass: () => void
 }): void {
@@ -59,7 +62,7 @@ export function requestGeneralVolunteerInterview2BulkPass({
     return
   }
   if (hasProcessedInterview2Selection(selectedRows)) {
-    cmsAlertModal.show(GENERAL_VOLUNTEER_INTERVIEW2_PROCESSED_SELECTION_ALERT)
+    cmsAlertModal.show(buildInterview2ProcessedSelectionAlert(subjectKind))
     return
   }
   if (selectedIds.length === 1) {
@@ -72,6 +75,7 @@ export function requestGeneralVolunteerInterview2BulkPass({
 export function requestGeneralVolunteerInterview2BulkFail({
   selectedIds,
   selectedRows,
+  subjectKind = 'volunteer',
   onOpenSingleFail,
   onOpenBulkFail,
 }: {
@@ -83,6 +87,7 @@ export function requestGeneralVolunteerInterview2BulkFail({
     | 'assignedInterviewDateLabel'
     | 'assignedInterviewTime'
   >[]
+  subjectKind?: ScreeningSubjectKind
   onOpenSingleFail: () => void
   onOpenBulkFail: () => void
 }): void {
@@ -94,7 +99,7 @@ export function requestGeneralVolunteerInterview2BulkFail({
     return
   }
   if (hasProcessedInterview2Selection(selectedRows)) {
-    cmsAlertModal.show(GENERAL_VOLUNTEER_INTERVIEW2_PROCESSED_SELECTION_ALERT)
+    cmsAlertModal.show(buildInterview2ProcessedSelectionAlert(subjectKind))
     return
   }
   if (selectedIds.length === 1) {

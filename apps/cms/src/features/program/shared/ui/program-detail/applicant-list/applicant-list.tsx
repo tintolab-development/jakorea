@@ -65,6 +65,7 @@ import {
 } from '@/features/program/shared/ui/detail-modal/components/instructor-approval-complete-modal'
 import { InstructorLectureAssignModal } from '@/features/program/shared/ui/detail-modal/components/instructor-lecture-assign-modal'
 import { getGeneralParticipantInterviewEnabled } from '@/features/program/general/lib/detail-meta'
+import { buildApplicationProcessedSelectionAlert } from '@/features/program/general/lib/application-processed-selection-alert'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
   resolveApplicantNotificationResendSentAt,
@@ -474,21 +475,47 @@ export function ApplicantList({
     })
   }, [showAlert])
 
-  const blockProcessedParticipantDoc1Selection = useCallback((): boolean => {
-    if (!isIndividualDoc1Screening) return false
+  const blockProcessedBulkSelection = useCallback((): boolean => {
     const selectedIds = new Set(selectedRowKeys.map(String))
-    const hasProcessedParticipant = individualList.some(
-      row => selectedIds.has(row.id) && row.approvalStatus !== 'pending'
-    )
-    if (!hasProcessedParticipant) return false
 
-    showAlert({
-      title: '신청 처리 완료 안내',
-      content:
-        '이미 승인 또는 반려 완료된 참여자가 포함되어 있습니다.\n승인 대기 중인 참여자만 선택해 주세요.',
-    })
-    return true
-  }, [individualList, isIndividualDoc1Screening, selectedRowKeys, showAlert])
+    if (useGeneralInstitutionActionModal) {
+      const hasProcessed = institutionList.some(
+        row => selectedIds.has(row.id) && row.approvalStatus !== 'pending'
+      )
+      if (!hasProcessed) return false
+      showAlert(buildApplicationProcessedSelectionAlert('institution'))
+      return true
+    }
+
+    if (useGeneralInstructorBulkActionModal) {
+      const hasProcessed = instructorList.some(
+        row => selectedIds.has(row.id) && row.approvalStatus !== 'pending'
+      )
+      if (!hasProcessed) return false
+      showAlert(buildApplicationProcessedSelectionAlert('instructor'))
+      return true
+    }
+
+    if (useGeneralParticipantActionModal) {
+      const hasProcessed = individualList.some(
+        row => selectedIds.has(row.id) && row.approvalStatus !== 'pending'
+      )
+      if (!hasProcessed) return false
+      showAlert(buildApplicationProcessedSelectionAlert('participant'))
+      return true
+    }
+
+    return false
+  }, [
+    individualList,
+    institutionList,
+    instructorList,
+    selectedRowKeys,
+    showAlert,
+    useGeneralInstitutionActionModal,
+    useGeneralInstructorBulkActionModal,
+    useGeneralParticipantActionModal,
+  ])
 
   const resolveSingleSelectedIndividual = useCallback((): GeneralIndividualApplicantRow | null => {
     if (selectedRowKeys.length !== 1) return null
@@ -507,7 +534,7 @@ export function ApplicantList({
       showNoSelectionAlert()
       return
     }
-    if (blockProcessedParticipantDoc1Selection()) return
+    if (blockProcessedBulkSelection()) return
     if (useGeneralInstitutionActionModal) {
       const single = resolveSingleSelectedInstitution()
       if (single) {
@@ -538,7 +565,7 @@ export function ApplicantList({
       showNoSelectionAlert()
       return
     }
-    if (blockProcessedParticipantDoc1Selection()) return
+    if (blockProcessedBulkSelection()) return
     if (useGeneralInstitutionActionModal) {
       const single = resolveSingleSelectedInstitution()
       if (single) {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { buildApplicationProcessedSelectionAlert } from '@/features/program/general/lib/application-processed-selection-alert'
 import {
-  GENERAL_VOLUNTEER_DOC_SCREENING_PROCESSED_SELECTION_ALERT,
   GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_APPROVE_ALERT,
   GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_REJECT_ALERT,
 } from '@/features/program/general/lib/volunteer-screening-constants'
@@ -46,9 +46,22 @@ describe('general-volunteer-document-screening-actions', () => {
       onOpenBulkApprove,
     })
     expect(cmsAlertModal.show).toHaveBeenCalledWith(
-      GENERAL_VOLUNTEER_DOC_SCREENING_PROCESSED_SELECTION_ALERT
+      buildApplicationProcessedSelectionAlert('volunteer')
     )
     expect(onOpenBulkApprove).not.toHaveBeenCalled()
+  })
+
+  it('blocks approve with participant noun when subjectKind is participant', () => {
+    requestGeneralVolunteerDocumentBulkApprove({
+      selectedIds: ['1', '2'],
+      selectedDocumentStatuses: ['pending', 'pass'],
+      subjectKind: 'participant',
+      onOpenSingleApprove,
+      onOpenBulkApprove,
+    })
+    expect(cmsAlertModal.show).toHaveBeenCalledWith(
+      buildApplicationProcessedSelectionAlert('participant')
+    )
   })
 
   it('opens bulk approve only for pending rows', () => {
@@ -70,7 +83,7 @@ describe('general-volunteer-document-screening-actions', () => {
       onOpenBulkReject,
     })
     expect(cmsAlertModal.show).toHaveBeenCalledWith(
-      GENERAL_VOLUNTEER_DOC_SCREENING_PROCESSED_SELECTION_ALERT
+      buildApplicationProcessedSelectionAlert('volunteer')
     )
     expect(onOpenSingleReject).not.toHaveBeenCalled()
   })
