@@ -155,6 +155,7 @@ export function mapIndividualApplicationToApplicantRow(
     homeAddress: '',
     appliedAt: dto.submittedAt,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    memberId: dto.memberId != null ? String(dto.memberId) : undefined,
     programId: toId(dto.programId) || programId,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(dto.documentStatus),
     interviewAssignmentStatus: mapApiInterviewStatusToAssignmentStatus(
@@ -258,6 +259,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
 ): GeneralVolunteerApplicantRow {
   return {
     id: toId(dto.id),
+    memberId: dto.memberId,
     no: index + 1,
     name: dto.memberName?.trim() || '이름 없음',
     contact: '-',

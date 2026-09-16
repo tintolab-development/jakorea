@@ -63,6 +63,8 @@ export interface GeneralIndividualApplicantRow {
   educationGrade: string
   homeAddress: string
   approvalStatus: ApplicantApprovalStatusKey
+  /** unmask path용 — remote 목록 `memberId` */
+  memberId?: string
   programId?: string
   sessions?: ParticipatingSchoolSession[]
   detail?: GeneralIndividualApplicantDetail
@@ -751,13 +753,12 @@ export function getGeneralParticipantDocPassedApplicants(
 export function getGeneralParticipantInterview2Applicants(
   programId: string
 ): GeneralIndividualApplicantRow[] {
-  return getGeneralIndividualApplicationsForProgram(programId).filter(
+  return getGeneralParticipantDocPassedApplicants(programId).filter(
     row =>
-      row.documentScreeningStatus === 'pass' &&
       (row.interviewAssignmentStatus === 'assigned' ||
         row.interviewAssignmentStatus === 'withdrawn') &&
-      row.assignedInterviewDateLabel &&
-      row.assignedInterviewTime
+      Boolean(row.assignedInterviewDateLabel) &&
+      Boolean(row.assignedInterviewTime)
   )
 }
 

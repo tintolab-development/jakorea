@@ -29,10 +29,12 @@ import { GeneralVolunteerInterview2PassCompleteModal } from './general-volunteer
 import { GeneralVolunteerInterview2PassModal } from './general-volunteer-interview2-pass-modal'
 import { GeneralVolunteerInterview2CalendarView } from './general-volunteer-interview2-calendar-view'
 import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
+import { mapVolunteerScreeningRowToParticipant } from '@/features/program/general/lib/participant-volunteer-row-adapter'
 import { useGeneralVolunteerInterview2 } from './use-interview2'
 import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
 import { shouldPreferGeneralApplicationListMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import './volunteer-screening.css'
 import './interview2-section.css'
@@ -248,6 +250,7 @@ export function GeneralVolunteerInterview2Section({
           <GeneralParticipantApplicantDetailView
             program={program}
             applicantId={selectedApplicant.id}
+            applicant={mapVolunteerScreeningRowToParticipant(selectedApplicant)}
             screeningStage="interview2"
             onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
             onApplicantDetailMetaChange={meta => {
@@ -390,16 +393,25 @@ export function GeneralVolunteerInterview2Section({
               pagination={false}
               tableLayout="fixed"
               scroll={{ x: resolveGeneralInterview2TableScrollX(subjectKind) }}
+              rowClassName={record =>
+                record.interviewAssignmentStatus === 'withdrawn'
+                  ? CMS_DATA_TABLE_ROW_DISABLED_CLASS
+                  : ''
+              }
               rowSelection={{
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
+                getCheckboxProps: record => ({
+                  disabled: record.interviewAssignmentStatus === 'withdrawn',
+                }),
               }}
-              onRow={record => ({
-                onClick: e => handleRowClick(record, e),
-                style: {
-                  cursor: record.interviewAssignmentStatus === 'withdrawn' ? 'default' : 'pointer',
-                },
-              })}
+              onRow={record => {
+                const withdrawn = record.interviewAssignmentStatus === 'withdrawn'
+                return {
+                  onClick: withdrawn ? undefined : e => handleRowClick(record, e),
+                  style: { cursor: withdrawn ? 'default' : 'pointer' },
+                }
+              }}
             />
           </div>
         ) : (

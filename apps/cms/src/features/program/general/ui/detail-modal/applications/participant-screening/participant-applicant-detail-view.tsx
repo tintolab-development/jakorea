@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import {
   getGeneralIndividualApplicationsForProgram,
@@ -9,6 +10,14 @@ import {
   updateGeneralIndividualApplicantNotificationResend,
   type GeneralIndividualApplicantRow,
 } from '@/data/mock/general-individual-applications-mock'
+import {
+  approveGeneralIndividualApplication,
+  rejectGeneralIndividualApplication,
+  submitGeneralIndividualDocumentResult,
+} from '@/features/program/general/api/admin-applications-service'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { shouldPreferGeneralApplicationListMock } from '@/features/program/general/lib/prefer-general-application-list-mock'
 import {
   patchParticipantForCancelRejection,
   toParticipantCancelRejectionNotifyOptions,
@@ -37,6 +46,7 @@ import {
   ApplicantsDetailContents,
 } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-contents'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 
 function resolveParticipantScreeningDetailTitle(
   screeningStage: IndividualApplicantScreeningStage,
@@ -68,6 +78,11 @@ export function GeneralParticipantApplicantDetailView({
   onApplicantDetailMetaChange,
   onApplicantUpdated,
 }: GeneralParticipantApplicantDetailViewProps) {
+  const queryClient = useQueryClient()
+  const { showAlert } = useCmsAlert()
+  const useRemote =
+    !shouldPreferGeneralApplicationListMock(program) && shouldUseGeneralApplicationsRemoteApi()
+
   const resolveFromMock = useCallback((): GeneralIndividualApplicantRow | null => {
     return (
       getGeneralIndividualApplicationsForProgram(program.id).find(row => row.id === applicantId) ??
@@ -116,6 +131,12 @@ export function GeneralParticipantApplicantDetailView({
     [onApplicantUpdated]
   )
 
+  const invalidateIndividualApplications = useCallback(async () => {
+    await queryClient.invalidateQueries({
+      queryKey: generalApplicationsQueryKeys.individualScope(program.id),
+    })
+  }, [program.id, queryClient])
+
   const [approveTarget, setApproveTarget] = useState<{ id: string; name: string } | null>(null)
   const [approveComplete, setApproveComplete] = useState<{ participantName: string } | null>(null)
   const [rejectTarget, setRejectTarget] = useState<{ id: string; name: string } | null>(null)
@@ -130,6 +151,7 @@ export function GeneralParticipantApplicantDetailView({
     participantName: string
   } | null>(null)
   const [notificationResendOpen, setNotificationResendOpen] = useState(false)
+  const [decisionBusy, setDecisionBusy] = useState(false)
 
   const cancelRejectParticipant = useMemo(() => {
     if (!cancelRejectTarget || !applicant) return null
@@ -141,6 +163,17 @@ export function GeneralParticipantApplicantDetailView({
     if (applicant.approvalStatus !== 'approved' && applicant.approvalStatus !== 'rejected') return
     setNotificationResendOpen(true)
   }, [applicant])
+
+  const notifyDecisionFailure = useCallback(
+    (error: unknown) => {
+      console.debug('participant detail decision remote failed', error)
+      void showAlert({
+        title: '처리 실패',
+        content: '참여자 신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
+      })
+    },
+    [showAlert]
+  )
 
   if (!applicant) return null
 
@@ -191,22 +224,52 @@ export function GeneralParticipantApplicantDetailView({
       <ParticipantApproveModal
         open={approveTarget != null}
         participantName={approveTarget?.name ?? ''}
-        onCancel={() => setApproveTarget(null)}
+        onCancel={() => {
+          if (decisionBusy) return
+          setApproveTarget(null)
+        }}
         onConfirm={payload => {
-          if (!approveTarget) return
+          if (!approveTarget || decisionBusy) return
           const notifyOptions = {
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
           }
-          const patched = patchGeneralIndividualApplicantForApprovalStatus(
-            applicant,
-            'approved',
-            notifyOptions
-          )
-          updateGeneralIndividualApplicantApprovalStatus(applicant.id, 'approved', notifyOptions)
-          syncApplicant(patched)
-          setApproveTarget(null)
-          setApproveComplete({ participantName: approveTarget.name })
+          const run = async () => {
+            if (useRemote) {
+              setDecisionBusy(true)
+              try {
+                if (screeningStage === 'doc1') {
+                  await submitGeneralIndividualDocumentResult(applicant.id, { result: 'PASS' })
+                } else {
+                  await approveGeneralIndividualApplication(applicant.id)
+                }
+                await invalidateIndividualApplications()
+              } catch (error) {
+                notifyDecisionFailure(error)
+                return
+              } finally {
+                setDecisionBusy(false)
+              }
+            } else {
+              updateGeneralIndividualApplicantApprovalStatus(applicant.id, 'approved', notifyOptions)
+            }
+            const patched =
+              screeningStage === 'doc1'
+                ? {
+                    ...applicant,
+                    documentScreeningStatus: 'pass' as const,
+                    approvalNotifyTiming: notifyOptions.notifyTiming,
+                  }
+                : patchGeneralIndividualApplicantForApprovalStatus(
+                    applicant,
+                    'approved',
+                    notifyOptions
+                  )
+            syncApplicant(patched)
+            setApproveTarget(null)
+            setApproveComplete({ participantName: approveTarget.name })
+          }
+          void run()
         }}
       />
       <ParticipantApprovalCompleteModal
@@ -217,26 +280,62 @@ export function GeneralParticipantApplicantDetailView({
       <ParticipantRejectModal
         open={rejectTarget != null}
         participantName={rejectTarget?.name ?? ''}
-        onCancel={() => setRejectTarget(null)}
+        onCancel={() => {
+          if (decisionBusy) return
+          setRejectTarget(null)
+        }}
         onConfirm={payload => {
-          if (!rejectTarget) return
+          if (!rejectTarget || decisionBusy) return
           const notifyOptions = {
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
             rejectionReason: payload.reason,
           }
-          const patched = patchGeneralIndividualApplicantForApprovalStatus(
-            applicant,
-            'rejected',
-            notifyOptions
-          )
-          updateGeneralIndividualApplicantApprovalStatus(applicant.id, 'rejected', notifyOptions)
-          syncApplicant(patched)
-          setRejectTarget(null)
-          setRejectComplete({
-            participantName: rejectTarget.name,
-            rejectionReason: payload.reason,
-          })
+          const run = async () => {
+            if (useRemote) {
+              setDecisionBusy(true)
+              try {
+                if (screeningStage === 'doc1') {
+                  await submitGeneralIndividualDocumentResult(applicant.id, {
+                    result: 'FAIL',
+                    reason: payload.reason.trim() || '반려',
+                  })
+                } else {
+                  await rejectGeneralIndividualApplication(applicant.id, {
+                    reason: payload.reason.trim() || '반려',
+                  })
+                }
+                await invalidateIndividualApplications()
+              } catch (error) {
+                notifyDecisionFailure(error)
+                return
+              } finally {
+                setDecisionBusy(false)
+              }
+            } else {
+              updateGeneralIndividualApplicantApprovalStatus(applicant.id, 'rejected', notifyOptions)
+            }
+            const patched =
+              screeningStage === 'doc1'
+                ? {
+                    ...applicant,
+                    documentScreeningStatus: 'fail' as const,
+                    participationRejectionReason: payload.reason,
+                    rejectionNotifyTiming: notifyOptions.notifyTiming,
+                  }
+                : patchGeneralIndividualApplicantForApprovalStatus(
+                    applicant,
+                    'rejected',
+                    notifyOptions
+                  )
+            syncApplicant(patched)
+            setRejectTarget(null)
+            setRejectComplete({
+              participantName: rejectTarget.name,
+              rejectionReason: payload.reason,
+            })
+          }
+          void run()
         }}
       />
       <ParticipantRejectCompleteModal

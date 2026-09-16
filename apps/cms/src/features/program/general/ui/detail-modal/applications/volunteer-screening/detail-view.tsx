@@ -81,6 +81,9 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem,
+    resolveMemberId: () =>
+      applicant.memberId != null ? String(applicant.memberId) : undefined,
+    resolveMemberRole: () => 'INDIVIDUAL',
     resetDeps: [applicant.id],
     controlMode: 'headerStickyNoop',
   })

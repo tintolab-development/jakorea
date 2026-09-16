@@ -28,6 +28,8 @@ export function mapParticipantToVolunteerScreeningRow(
   const emailRaw = row.detail?.email?.trim() || '-'
   const interviewAvailability = row.detail?.interviewAvailability ?? []
 
+  const memberIdNum = row.memberId != null ? Number(row.memberId) : NaN
+
   return {
     id: row.id,
     no: row.no,
@@ -51,6 +53,7 @@ export function mapParticipantToVolunteerScreeningRow(
     interviewSlotCount: countInterviewAvailabilitySlots(interviewAvailability),
     interviewAssignmentStatus: row.interviewAssignmentStatus ?? 'waiting',
     programId: row.programId ?? '',
+    memberId: Number.isFinite(memberIdNum) ? memberIdNum : undefined,
     englishName: row.applicantName,
     gender: row.detail?.gender ?? '-',
     birthDate: row.detail?.birthDate ?? '-',
@@ -73,4 +76,44 @@ export function mapParticipantsToVolunteerScreeningRows(
   rows: GeneralIndividualApplicantRow[]
 ): GeneralVolunteerApplicantRow[] {
   return rows.map(mapParticipantToVolunteerScreeningRow)
+}
+
+/** 합격자·2차 면접 목록 row → 참여자 상세 뷰용 (목록 전달, mock 재조회 방지) */
+export function mapVolunteerScreeningRowToParticipant(
+  row: GeneralVolunteerApplicantRow
+): GeneralIndividualApplicantRow {
+  return {
+    id: row.id,
+    no: row.no,
+    applicantName: row.name,
+    affiliation: row.universityName,
+    educationGrade: row.major,
+    homeAddress: '',
+    approvalStatus: 'pending',
+    memberId: row.memberId != null ? String(row.memberId) : undefined,
+    programId: row.programId,
+    managerAEvaluation: row.managerAEvaluation,
+    managerBEvaluation: row.managerBEvaluation,
+    documentScreeningStatus: row.documentScreeningStatus,
+    interviewSlotCount: row.interviewSlotCount,
+    interviewAssignmentStatus: row.interviewAssignmentStatus,
+    assignedInterviewDateLabel: row.assignedInterviewDateLabel,
+    assignedInterviewTime: row.assignedInterviewTime,
+    secondInterviewScreeningStatus: row.secondInterviewScreeningStatus,
+    totalScore: row.totalScore,
+    managerAScore: row.managerAScore,
+    managerBScore: row.managerBScore,
+    interviewEvaluationRemark: row.interviewEvaluationRemark,
+    detail: {
+      contact: row.contactRaw,
+      email: row.emailRaw,
+      gender: row.gender,
+      birthDate: row.birthDate,
+      age: row.age,
+      id1365: row.id1365,
+      scheduleChangeCancelCount: row.scheduleChangeCancelCount,
+      selfIntroduction: row.essayIntro,
+      interviewAvailability: row.interviewAvailability,
+    },
+  }
 }

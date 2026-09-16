@@ -10,6 +10,7 @@ import {
   submitGeneralIndividualDocumentResult,
   submitGeneralIndividualFinalResult,
   submitGeneralVolunteerDocumentResult,
+  submitGeneralVolunteerDocumentResultBulk,
   submitGeneralVolunteerFinalResult,
 } from '@/features/program/general/api/admin-applications-service'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
@@ -76,7 +77,7 @@ export function useGeneralVolunteerApplicationsRemote({
   const invalidateApplications = useCallback(async () => {
     if (subjectKind === 'participant') {
       await queryClient.invalidateQueries({
-        queryKey: generalApplicationsQueryKeys.individualList(programId),
+        queryKey: generalApplicationsQueryKeys.individualScope(programId),
       })
       return
     }
@@ -107,10 +108,20 @@ export function useGeneralVolunteerApplicationsRemote({
           result,
           reason: result === 'FAIL' ? reason?.trim() || '반려' : reason,
         } as const
-        for (const id of ids) {
-          if (subjectKind === 'participant') {
+        if (subjectKind === 'participant') {
+          for (const id of ids) {
             await submitGeneralIndividualDocumentResult(id, payload)
-          } else {
+          }
+        } else if (ids.length > 1) {
+          const bulk = await submitGeneralVolunteerDocumentResultBulk(ids, payload)
+          if ((bulk.failureCount ?? 0) > 0) {
+            showAlert({
+              title: '서류 결과 일부 실패',
+              content: `요청 ${bulk.requestedCount ?? ids.length}건 중 성공 ${bulk.successCount ?? 0}건, 실패 ${bulk.failureCount ?? 0}건입니다.`,
+            })
+          }
+        } else {
+          for (const id of ids) {
             await submitGeneralVolunteerDocumentResult(id, payload)
           }
         }
@@ -121,7 +132,7 @@ export function useGeneralVolunteerApplicationsRemote({
         return true
       }
     },
-    [invalidateApplications, notifyRemoteFailure, remoteEnabled, subjectKind]
+    [invalidateApplications, notifyRemoteFailure, remoteEnabled, showAlert, subjectKind]
   )
 
   const applyRemoteFinalResult = useCallback(

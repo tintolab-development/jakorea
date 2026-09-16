@@ -727,6 +727,9 @@ export function ApplicantsDetailContents({
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolveApplicantPersonalInfoAccessItem,
+    resolveMemberId: () =>
+      isIndividual ? individualData?.memberId : undefined,
+    resolveMemberRole: () => (isIndividual ? 'INDIVIDUAL' : undefined),
     resetDeps: [applicantId],
     controlMode: 'headerStickyNoop',
   })
