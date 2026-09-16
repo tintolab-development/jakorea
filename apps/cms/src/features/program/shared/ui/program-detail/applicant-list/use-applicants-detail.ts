@@ -259,8 +259,12 @@ export function useApplicantsDetail({
   )
 
   const applyRemoteInstructorDecision = useCallback(
-    async (ids: string[], decision: 'approve' | 'reject', reason?: string) => {
-      if (!applicationsRemote.instructorRemoteEnabled) return false
+    async (
+      ids: string[],
+      decision: 'approve' | 'reject',
+      reason?: string
+    ): Promise<'ok' | 'error' | 'skipped'> => {
+      if (!applicationsRemote.instructorRemoteEnabled) return 'skipped'
       try {
         const numericIds = ids.map(id => Number(id))
         const canBulk =
@@ -280,6 +284,8 @@ export function useApplicantsDetail({
                 firstFailure?.message?.trim() ||
                 `선택한 신청 중 ${result.failureCount}건을 처리하지 못했습니다.`,
             })
+            await applicationsRemote.invalidateApplications()
+            return 'error'
           }
         } else {
           for (const id of ids) {
@@ -293,10 +299,10 @@ export function useApplicantsDetail({
           }
         }
         await applicationsRemote.invalidateApplications()
-        return true
+        return 'ok'
       } catch (error) {
         notifyRemoteDecisionFailure(error)
-        return true
+        return 'error'
       }
     },
     [applicationsRemote, notifyRemoteDecisionFailure, showAlert]
@@ -634,11 +640,11 @@ export function useApplicantsDetail({
     async (recordId: string, status: ApprovalStatusKey) => {
       const next = status as ApplicantInstructorApprovalStatusKey
       if (next === 'approved' || next === 'rejected') {
-        const remoteOk = await applyRemoteInstructorDecision(
+        const remote = await applyRemoteInstructorDecision(
           [recordId],
           next === 'approved' ? 'approve' : 'reject'
         )
-        if (remoteOk) return
+        if (remote !== 'skipped') return
       }
       setInstructorList(prev =>
         prev.map(row =>
@@ -715,8 +721,9 @@ export function useApplicantsDetail({
       )
       keys.forEach(id => updateGeneralIndividualApplicantApprovalStatus(id, 'rejected'))
     } else if (menu === 'instructors') {
-      if (await applyRemoteInstructorDecision(keys, 'reject')) {
-        setSelectedRowKeys([])
+      const remote = await applyRemoteInstructorDecision(keys, 'reject')
+      if (remote !== 'skipped') {
+        if (remote === 'ok') setSelectedRowKeys([])
         return
       }
       setInstructorList(prev =>
@@ -755,8 +762,9 @@ export function useApplicantsDetail({
         return
       }
       const keys = selectedRowKeys as string[]
-      if (await applyRemoteInstructorDecision(keys, 'reject', payload.reason)) {
-        setSelectedRowKeys([])
+      const remote = await applyRemoteInstructorDecision(keys, 'reject', payload.reason)
+      if (remote !== 'skipped') {
+        if (remote === 'ok') setSelectedRowKeys([])
         return
       }
       const notifyOptions = toInstructorNotifyOptions(payload, payload.reason)
@@ -781,8 +789,9 @@ export function useApplicantsDetail({
         return
       }
       const keys = selectedRowKeys as string[]
-      if (await applyRemoteInstructorDecision(keys, 'approve')) {
-        setSelectedRowKeys([])
+      const remote = await applyRemoteInstructorDecision(keys, 'approve')
+      if (remote !== 'skipped') {
+        if (remote === 'ok') setSelectedRowKeys([])
         return
       }
       const notifyOptions = toInstructorNotifyOptions(payload)
@@ -941,8 +950,9 @@ export function useApplicantsDetail({
       )
       keys.forEach(id => updateGeneralIndividualApplicantApprovalStatus(id, 'approved'))
     } else if (menu === 'instructors') {
-      if (await applyRemoteInstructorDecision(keys, 'approve')) {
-        setSelectedRowKeys([])
+      const remote = await applyRemoteInstructorDecision(keys, 'approve')
+      if (remote !== 'skipped') {
+        if (remote === 'ok') setSelectedRowKeys([])
         return
       }
       setInstructorList(prev =>
@@ -1112,7 +1122,9 @@ export function useApplicantsDetail({
     confirmBulkParticipantReject,
     confirmBulkParticipantApprove,
     applyRemoteIndividualDecision,
+    applyRemoteInstructorDecision,
     individualRemoteEnabled: applicationsRemote.individualRemoteEnabled,
+    instructorRemoteEnabled: applicationsRemote.instructorRemoteEnabled,
     handleCancelApproval,
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,

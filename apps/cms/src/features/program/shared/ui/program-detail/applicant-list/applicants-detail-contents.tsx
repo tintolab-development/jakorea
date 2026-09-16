@@ -727,9 +727,18 @@ export function ApplicantsDetailContents({
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolveApplicantPersonalInfoAccessItem,
-    resolveMemberId: () =>
-      isIndividual ? individualData?.memberId : undefined,
-    resolveMemberRole: () => (isIndividual ? 'INDIVIDUAL' : undefined),
+    resolveMemberId: () => {
+      if (isIndividual) return individualData?.memberId
+      if (isInstructor && instructorData?.instructorMemberId != null) {
+        return String(instructorData.instructorMemberId)
+      }
+      return undefined
+    },
+    resolveMemberRole: () => {
+      if (isIndividual) return 'INDIVIDUAL'
+      if (isInstructor) return 'INSTRUCTOR'
+      return undefined
+    },
     resetDeps: [applicantId],
     controlMode: 'headerStickyNoop',
   })

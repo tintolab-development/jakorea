@@ -62,6 +62,8 @@ export interface GeneralVolunteerApplicantRow {
   interviewAvailability: GeneralVolunteerInterviewAvailabilityDay[]
   assignedInterviewDateLabel?: string
   assignedInterviewTime?: string
+  /** BE 면접 배정 ID — 면접 평가 API path용 */
+  interviewAssignmentId?: number
   secondInterviewScreeningStatus?: GeneralSecondInterviewScreeningStatus
   totalScore?: number | null
   managerAScore?: number | null

@@ -87,10 +87,15 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
 export function mapInstructorApplicationToApplicantInstructorRow(
   dto: InstructorApplicationListItemResponse,
   index: number,
-  _programId: string
+  programId: string
 ): ApplicantInstructorRow {
   return {
     id: toId(dto.id),
+    instructorMemberId:
+      dto.instructorMemberId != null && Number.isFinite(dto.instructorMemberId)
+        ? dto.instructorMemberId
+        : undefined,
+    programId: toId(dto.programId) || programId,
     no: index + 1,
     instructorName: dto.instructorName?.trim() || '이름 없음',
     lectureExperienceYears: 0,
@@ -257,6 +262,16 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
   index: number,
   programId: string
 ): GeneralVolunteerApplicantRow {
+  const enriched = dto as VolunteerApplicationListItemResponse & {
+    interviewAssignmentId?: number | null
+    assignedInterviewSlotId?: number | null
+    assignedInterviewStartAt?: string | null
+    assignedInterviewEndAt?: string | null
+  }
+  const assigned = formatAssignedInterviewFromIso(
+    enriched.assignedInterviewStartAt,
+    enriched.assignedInterviewEndAt
+  )
   return {
     id: toId(dto.id),
     memberId: dto.memberId,
@@ -291,6 +306,9 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     major: '',
     applicationRoute: '',
     interviewAvailability: [],
+    interviewAssignmentId:
+      enriched.interviewAssignmentId != null ? Number(enriched.interviewAssignmentId) : undefined,
+    ...assigned,
     secondInterviewScreeningStatus: mapApiFinalResultToSecondInterviewStatus(
       dto.finalResultStatus,
       dto.reserveRank

@@ -228,7 +228,7 @@ export function useGeneralVolunteerDocPassed({
       setWithdrawTargetId(null)
       return
     }
-    if (subjectKind === 'participant' && volunteerRemote.remoteEnabled) {
+    if (volunteerRemote.remoteEnabled) {
       const handled = await volunteerRemote.applyRemoteGiveUp?.(withdrawTargetId)
       if (handled) {
         setWithdrawTargetId(null)

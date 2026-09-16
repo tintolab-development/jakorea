@@ -197,6 +197,17 @@ export async function giveUpIndividualApplicationRemote(
   )
 }
 
+export async function giveUpVolunteerApplicationRemote(
+  applicationId: string
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/give-up`,
+      method: 'POST',
+    })
+  )
+}
+
 export async function submitIndividualDocumentResultRemote(
   applicationId: string,
   payload: DocumentResultRequest
@@ -256,6 +267,35 @@ export async function submitVolunteerFinalResultRemote(
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
       url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/final-result`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/** POST /api/admin/volunteer-applications/final-results/bulk */
+export async function bulkVolunteerFinalResultsRemote(
+  payload: BulkResultRequest
+): Promise<BulkActionResponse> {
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: '/api/admin/volunteer-applications/final-results/bulk',
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/** POST /api/admin/interview-assignments/{assignmentId}/evaluations */
+export async function submitInterviewAssignmentEvaluationRemote(
+  assignmentId: string | number,
+  payload: import('@/shared/api/generated/dashboard/schemas/interviewEvaluationRequest').InterviewEvaluationRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/interviewEvaluationResponse').InterviewEvaluationResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/interview-assignments/${encodeURIComponent(String(assignmentId))}/evaluations`,
       method: 'POST',
       data: payload,
     })
