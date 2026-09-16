@@ -2,11 +2,13 @@ import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
+import type { ApplicationDecisionCancelRequest } from '@/shared/api/generated/dashboard/schemas/applicationDecisionCancelRequest'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { BulkDecisionRequest } from '@/shared/api/generated/dashboard/schemas/bulkDecisionRequest'
 import type { BulkIdsRequest } from '@/shared/api/generated/dashboard/schemas/bulkIdsRequest'
 import type { BulkResultRequest } from '@/shared/api/generated/dashboard/schemas/bulkResultRequest'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
+import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
 import type { PageResponseOrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseOrganizationApplicationListItemResponse'
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
@@ -41,6 +43,44 @@ export type IndividualApplicationNotificationResendRequest = {
   timing: 'IMMEDIATE' | 'SCHEDULED'
   scheduledAt: string | null
   reason: string | null
+}
+
+/** OpenAPI `Notification` — 강사 신청 승인/반려/취소/재발송 공통 */
+export type InstructorApplicationNotificationRequest = {
+  timing: 'IMMEDIATE' | 'SCHEDULED' | string
+  scheduledAt?: string | null
+}
+
+/** OpenAPI `FeePolicy` */
+export type InstructorApplicationFeePolicyRequest = {
+  basisType: string
+  measure: string
+  amount: number
+  instructorFeeGrade: string
+}
+
+/** OpenAPI `Assignment` */
+export type InstructorApplicationAssignmentRequest = {
+  scheduleId: number
+  organizationApplicationId?: number
+  scheduleLead?: boolean
+}
+
+/** OpenAPI `Approval` */
+export type InstructorApplicationApprovalRequest = {
+  assignments?: InstructorApplicationAssignmentRequest[]
+  feePolicy?: InstructorApplicationFeePolicyRequest
+  notification?: InstructorApplicationNotificationRequest
+}
+
+/** OpenAPI `Rejection` / `Cancellation` */
+export type InstructorApplicationDecisionWithReasonRequest = {
+  reason: string
+  notification?: InstructorApplicationNotificationRequest
+}
+
+export type InstructorApplicationUpdatePayload = {
+  managerComment?: string | null
 }
 
 export type IndividualApplicationUpdatePayload = Omit<
@@ -83,6 +123,30 @@ export async function fetchInstructorApplicationsRemote(
   return fetchApplicationsPage<InstructorApplicationListItemResponse>(
     `/api/admin/programs/${encodeURIComponent(programId)}/instructor-applications`,
     params
+  )
+}
+
+export async function fetchInstructorApplicationDetailRemote(
+  applicationId: string
+): Promise<InstructorApplicationDetailResponse> {
+  return unwrapApiBody<InstructorApplicationDetailResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function updateInstructorApplication(
+  applicationId: string,
+  payload: InstructorApplicationUpdatePayload
+): Promise<InstructorApplicationDetailResponse> {
+  return unwrapApiBody<InstructorApplicationDetailResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}`,
+      method: 'PATCH',
+      data: payload,
+    })
   )
 }
 
@@ -169,26 +233,122 @@ export async function rejectOrganizationApplicationRemote(
   )
 }
 
+export async function cancelOrganizationApplicationApprovalRemote(
+  applicationId: string,
+  payload: ApplicationDecisionCancelRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}/cancel-approval`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function cancelOrganizationApplicationRejectionRemote(
+  applicationId: string,
+  payload: ApplicationDecisionCancelRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}/cancel-rejection`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
 export async function approveInstructorApplicationRemote(
-  applicationId: string
+  applicationId: string,
+  payload?: InstructorApplicationApprovalRequest
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
       url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/approve`,
       method: 'POST',
+      ...(payload ? { data: payload } : {}),
     })
   )
 }
 
 export async function rejectInstructorApplicationRemote(
   applicationId: string,
-  payload: ApplicationRejectRequest
+  payload: ApplicationRejectRequest | InstructorApplicationDecisionWithReasonRequest
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
       url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/reject`,
       method: 'POST',
       data: payload,
+    })
+  )
+}
+
+export async function cancelInstructorApplicationApprovalRemote(
+  applicationId: string,
+  payload: InstructorApplicationDecisionWithReasonRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/cancel-approval`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function cancelInstructorApplicationRejectionRemote(
+  applicationId: string,
+  payload: InstructorApplicationDecisionWithReasonRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/cancel-rejection`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function resendInstructorApplicationNotification(
+  applicationId: string,
+  payload: InstructorApplicationNotificationRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/notifications/resend`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/** POST /api/admin/organization-applications/bulk-approve */
+export async function bulkApproveOrganizationApplicationsRemote(
+  ids: number[]
+): Promise<BulkActionResponse> {
+  const body: BulkIdsRequest = { ids }
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: `/api/admin/organization-applications/bulk-approve`,
+      method: 'POST',
+      data: body,
+    })
+  )
+}
+
+/** POST /api/admin/organization-applications/bulk-reject */
+export async function bulkRejectOrganizationApplicationsRemote(
+  ids: number[],
+  reason: string
+): Promise<BulkActionResponse> {
+  const body: BulkDecisionRequest = { ids, reason }
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: `/api/admin/organization-applications/bulk-reject`,
+      method: 'POST',
+      data: body,
     })
   )
 }
@@ -285,23 +445,27 @@ export async function updateIndividualApplication(
 }
 
 export async function giveUpIndividualApplicationRemote(
-  applicationId: string
+  applicationId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/applicationGiveUpRequest').ApplicationGiveUpRequest
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
       url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/give-up`,
       method: 'POST',
+      data: payload,
     })
   )
 }
 
 export async function giveUpVolunteerApplicationRemote(
-  applicationId: string
+  applicationId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/applicationGiveUpRequest').ApplicationGiveUpRequest
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
       url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/give-up`,
       method: 'POST',
+      data: payload,
     })
   )
 }

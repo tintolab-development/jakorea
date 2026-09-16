@@ -29,7 +29,6 @@ import {
   applyCalendarRangeParam,
 } from '@/features/program/general/hooks/progress-calendar-range'
 import {
-  patchApplicantSchoolForApprovalStatus,
   type ApplicantApprovalStatusKey,
   type ApplicantSchoolApprovalNotifyOptions,
   type ApplicantSchoolRow,
@@ -71,7 +70,10 @@ import { resolveInstitutionApplicationProgramBridge } from '@/features/program/g
 import { useGeneralProgramApplicationsRemoteSync } from '@/features/program/general/hooks/use-general-program-applications-remote-sync'
 import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherOrganizationApplicationsRemoteSync } from '@/features/program/trained-teachers/api/organization-applications-hooks'
-import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
+import {
+  notifyProgramApiUnavailable,
+  useNotifyProgramApiUnavailableOnce,
+} from '@/features/program/shared/lib/program-api-unavailable'
 
 export type InstructorApprovalTarget =
   | { id: string; name: string; step: 'assign' }
@@ -233,26 +235,64 @@ export function useApplicantsDetail({
   )
 
   const applyRemoteInstitutionDecision = useCallback(
-    async (ids: string[], decision: 'approve' | 'reject', reason?: string) => {
-      if (!institutionApplicationsRemote.remoteEnabled) return false
+    async (
+      ids: string[],
+      decision: 'approve' | 'reject',
+      reason?: string
+    ): Promise<'ok' | 'error' | 'skipped'> => {
+      if (!institutionApplicationsRemote.remoteEnabled) return 'skipped'
       try {
-        for (const id of ids) {
-          if (decision === 'approve') {
-            await institutionApplicationsRemote.approveOrganization(id)
-          } else {
-            await institutionApplicationsRemote.rejectOrganization(id, {
-              reason: reason?.trim() || '반려',
+        const numericIds = ids.map(id => Number(id))
+        const generalRemote = !isTrainedTeachersSurface
+          ? applicationsRemote
+          : null
+        const canBulk =
+          generalRemote != null &&
+          ids.length >= 2 &&
+          numericIds.every(id => Number.isFinite(id))
+        if (canBulk) {
+          const result =
+            decision === 'approve'
+              ? await generalRemote.bulkApproveOrganization(ids)
+              : await generalRemote.bulkRejectOrganization(ids, {
+                  reason: reason?.trim() || '반려',
+                })
+          if ((result.failureCount ?? 0) > 0) {
+            const firstFailure = result.failures?.[0]
+            showAlert({
+              title: '처리 실패',
+              content:
+                firstFailure?.message?.trim() ||
+                `선택한 신청 중 ${result.failureCount}건을 처리하지 못했습니다.`,
             })
+            await institutionApplicationsRemote.invalidateApplications()
+            return 'error'
+          }
+        } else {
+          for (const id of ids) {
+            if (decision === 'approve') {
+              await institutionApplicationsRemote.approveOrganization(id)
+            } else {
+              await institutionApplicationsRemote.rejectOrganization(id, {
+                reason: reason?.trim() || '반려',
+              })
+            }
           }
         }
         await institutionApplicationsRemote.invalidateApplications()
-        return true
+        return 'ok'
       } catch (error) {
         notifyRemoteDecisionFailure(error)
-        return true
+        return 'error'
       }
     },
-    [institutionApplicationsRemote, notifyRemoteDecisionFailure]
+    [
+      applicationsRemote,
+      institutionApplicationsRemote,
+      isTrainedTeachersSurface,
+      notifyRemoteDecisionFailure,
+      showAlert,
+    ]
   )
 
   const applyRemoteInstructorDecision = useCallback(
@@ -608,14 +648,20 @@ export function useApplicantsDetail({
     async (recordId: string, status: ApprovalStatusKey) => {
       const next = status as ApplicantApprovalStatusKey
       if (next === 'approved' || next === 'rejected') {
-        const remoteOk = await applyRemoteInstitutionDecision(
+        const remote = await applyRemoteInstitutionDecision(
           [recordId],
           next === 'approved' ? 'approve' : 'reject'
         )
-        if (remoteOk) return
+        if (remote !== 'skipped') return
+        notifyProgramApiUnavailable(
+          'general-org-application-decision',
+          '일반 프로그램 · 기관 신청 승인·반려'
+        )
+        return
       }
-      setInstitutionList(prev =>
-        prev.map(row => (row.id === recordId ? { ...row, approvalStatus: next } : row))
+      notifyProgramApiUnavailable(
+        'general-org-application-decision',
+        '일반 프로그램 · 기관 신청 승인·반려'
       )
     },
     [applyRemoteInstitutionDecision]
@@ -682,15 +728,16 @@ export function useApplicantsDetail({
     }
     const keys = selectedRowKeys as string[]
     if (menu === 'institutions') {
-      if (await applyRemoteInstitutionDecision(keys, 'reject')) {
-        setSelectedRowKeys([])
+      const remote = await applyRemoteInstitutionDecision(keys, 'reject')
+      if (remote === 'skipped') {
+        notifyProgramApiUnavailable(
+          'general-org-application-decision',
+          '일반 프로그램 · 기관 신청 승인·반려'
+        )
         return
       }
-      setInstitutionList(prev =>
-        prev.map(row =>
-          keys.includes(row.id) ? { ...row, approvalStatus: 'rejected' as const } : row
-        )
-      )
+      if (remote === 'ok') setSelectedRowKeys([])
+      return
     } else if (menu === 'individual-applications') {
       const remote = await applyRemoteIndividualDecision(keys, 'reject')
       if (remote !== 'skipped') {
@@ -723,15 +770,6 @@ export function useApplicantsDetail({
     payload: PermissionModalPayload,
     rejectionReason?: string
   ): ApplicantInstructorApprovalNotifyOptions => ({
-    notifyTiming: payload.notifyTiming,
-    manualNotifyAt: payload.manualNotifyAt ?? undefined,
-    rejectionReason,
-  })
-
-  const toInstitutionNotifyOptions = (
-    payload: PermissionModalPayload,
-    rejectionReason?: string
-  ): ApplicantSchoolApprovalNotifyOptions => ({
     notifyTiming: payload.notifyTiming,
     manualNotifyAt: payload.manualNotifyAt ?? undefined,
     rejectionReason,
@@ -791,42 +829,34 @@ export function useApplicantsDetail({
         return
       }
       const keys = selectedRowKeys as string[]
-      if (await applyRemoteInstitutionDecision(keys, 'reject', payload.reason)) {
-        setSelectedRowKeys([])
+      const remote = await applyRemoteInstitutionDecision(keys, 'reject', payload.reason)
+      if (remote === 'skipped') {
+        notifyProgramApiUnavailable(
+          'general-org-application-decision',
+          '일반 프로그램 · 기관 신청 승인·반려'
+        )
         return
       }
-      const notifyOptions = toInstitutionNotifyOptions(payload, payload.reason)
-      setInstitutionList(prev =>
-        prev.map(row =>
-          keys.includes(row.id)
-            ? patchApplicantSchoolForApprovalStatus(row, 'rejected', notifyOptions)
-            : row
-        )
-      )
-      setSelectedRowKeys([])
+      if (remote === 'ok') setSelectedRowKeys([])
     },
     [applyRemoteInstitutionDecision, selectedRowKeys]
   )
 
   const confirmBulkInstitutionApprove = useCallback(
-    async (payload: PermissionModalPayload) => {
+    async (_payload: PermissionModalPayload) => {
       if (selectedRowKeys.length === 0) {
         return
       }
       const keys = selectedRowKeys as string[]
-      if (await applyRemoteInstitutionDecision(keys, 'approve')) {
-        setSelectedRowKeys([])
+      const remote = await applyRemoteInstitutionDecision(keys, 'approve')
+      if (remote === 'skipped') {
+        notifyProgramApiUnavailable(
+          'general-org-application-decision',
+          '일반 프로그램 · 기관 신청 승인·반려'
+        )
         return
       }
-      const notifyOptions = toInstitutionNotifyOptions(payload)
-      setInstitutionList(prev =>
-        prev.map(row =>
-          keys.includes(row.id)
-            ? patchApplicantSchoolForApprovalStatus(row, 'approved', notifyOptions)
-            : row
-        )
-      )
-      setSelectedRowKeys([])
+      if (remote === 'ok') setSelectedRowKeys([])
     },
     [applyRemoteInstitutionDecision, selectedRowKeys]
   )
@@ -894,15 +924,16 @@ export function useApplicantsDetail({
     }
     const keys = selectedRowKeys as string[]
     if (menu === 'institutions') {
-      if (await applyRemoteInstitutionDecision(keys, 'approve')) {
-        setSelectedRowKeys([])
+      const remote = await applyRemoteInstitutionDecision(keys, 'approve')
+      if (remote === 'skipped') {
+        notifyProgramApiUnavailable(
+          'general-org-application-decision',
+          '일반 프로그램 · 기관 신청 승인·반려'
+        )
         return
       }
-      setInstitutionList(prev =>
-        prev.map(row =>
-          keys.includes(row.id) ? { ...row, approvalStatus: 'approved' as const } : row
-        )
-      )
+      if (remote === 'ok') setSelectedRowKeys([])
+      return
     } else if (menu === 'individual-applications') {
       const remote = await applyRemoteIndividualDecision(keys, 'approve')
       if (remote !== 'skipped') {
@@ -931,10 +962,62 @@ export function useApplicantsDetail({
     setSelectedRowKeys([])
   }
 
+  const applyRemoteInstitutionCancelApproval = useCallback(
+    async (id: string, reason: string): Promise<'ok' | 'error' | 'unavailable'> => {
+      if (isTrainedTeachersSurface || !applicationsRemote.remoteEnabled) {
+        notifyProgramApiUnavailable(
+          'general-org-application-cancel-approval',
+          '일반 프로그램 · 기관 신청 승인 취소'
+        )
+        return 'unavailable'
+      }
+      try {
+        await applicationsRemote.cancelOrganizationApproval(id, {
+          reason: reason.trim() || '승인 취소',
+        })
+        await applicationsRemote.invalidateApplications()
+        return 'ok'
+      } catch (error) {
+        notifyRemoteDecisionFailure(error)
+        return 'error'
+      }
+    },
+    [
+      applicationsRemote,
+      isTrainedTeachersSurface,
+      notifyRemoteDecisionFailure,
+    ]
+  )
+
+  const applyRemoteInstitutionCancelRejection = useCallback(
+    async (id: string, reason: string): Promise<'ok' | 'error' | 'unavailable'> => {
+      if (isTrainedTeachersSurface || !applicationsRemote.remoteEnabled) {
+        notifyProgramApiUnavailable(
+          'general-org-application-cancel-rejection',
+          '일반 프로그램 · 기관 신청 반려 취소'
+        )
+        return 'unavailable'
+      }
+      try {
+        await applicationsRemote.cancelOrganizationRejection(id, {
+          reason: reason.trim() || '반려 취소',
+        })
+        await applicationsRemote.invalidateApplications()
+        return 'ok'
+      } catch (error) {
+        notifyRemoteDecisionFailure(error)
+        return 'error'
+      }
+    },
+    [
+      applicationsRemote,
+      isTrainedTeachersSurface,
+      notifyRemoteDecisionFailure,
+    ]
+  )
+
   const handleCancelApproval = (id: string) => {
-    setInstitutionList(prev =>
-      prev.map(row => (row.id === id ? patchApplicantSchoolForApprovalStatus(row, 'pending') : row))
-    )
+    void applyRemoteInstitutionCancelApproval(id, '승인 취소')
   }
 
   const handleCancelApprovalInstructor = (id: string) => {
@@ -954,9 +1037,7 @@ export function useApplicantsDetail({
   }
 
   const handleCancelRejectInstitution = (id: string) => {
-    setInstitutionList(prev =>
-      prev.map(row => (row.id === id ? patchApplicantSchoolForApprovalStatus(row, 'pending') : row))
-    )
+    void applyRemoteInstitutionCancelRejection(id, '반려 취소')
   }
 
   const handleCancelApprovalIndividual = (id: string) => {
@@ -1081,8 +1162,12 @@ export function useApplicantsDetail({
     confirmBulkParticipantApprove,
     applyRemoteIndividualDecision,
     applyRemoteInstructorDecision,
+    applyRemoteInstitutionDecision,
+    applyRemoteInstitutionCancelApproval,
+    applyRemoteInstitutionCancelRejection,
     individualRemoteEnabled: applicationsRemote.individualRemoteEnabled,
     instructorRemoteEnabled: applicationsRemote.instructorRemoteEnabled,
+    institutionRemoteEnabled: institutionApplicationsRemote.remoteEnabled,
     handleCancelApproval,
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,

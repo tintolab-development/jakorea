@@ -17,7 +17,11 @@ import {
   approveInstructorApplicationRemote,
   approveOrganizationApplicationRemote,
   bulkApproveInstructorApplicationsRemote,
+  bulkApproveOrganizationApplicationsRemote,
   bulkRejectInstructorApplicationsRemote,
+  bulkRejectOrganizationApplicationsRemote,
+  cancelOrganizationApplicationApprovalRemote,
+  cancelOrganizationApplicationRejectionRemote,
   createInterviewAssignmentRemote,
   createInterviewSlotRemote,
   fetchIndividualApplicationsRemote,
@@ -50,6 +54,7 @@ import type { ApplicantSchoolRow } from '@/features/program/shared/model/applica
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
+import type { ApplicationDecisionCancelRequest } from '@/shared/api/generated/dashboard/schemas/applicationDecisionCancelRequest'
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
 import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboard/schemas/volunteerFinalResultRequest'
@@ -204,6 +209,45 @@ export async function rejectGeneralOrganizationApplication(
   await rejectOrganizationApplicationRemote(applicationId, payload)
 }
 
+export async function cancelGeneralOrganizationApplicationApproval(
+  applicationId: string,
+  payload: ApplicationDecisionCancelRequest
+): Promise<void> {
+  assertApplicationsRemoteReady()
+  await cancelOrganizationApplicationApprovalRemote(applicationId, payload)
+}
+
+export async function cancelGeneralOrganizationApplicationRejection(
+  applicationId: string,
+  payload: ApplicationDecisionCancelRequest
+): Promise<void> {
+  assertApplicationsRemoteReady()
+  await cancelOrganizationApplicationRejectionRemote(applicationId, payload)
+}
+
+export async function bulkApproveGeneralOrganizationApplications(
+  applicationIds: string[]
+): Promise<BulkActionResponse> {
+  assertApplicationsRemoteReady()
+  const ids = toBulkNumericApplicationIds(applicationIds)
+  if (!ids?.length) {
+    throw new Error('기관 신청 ID를 확인할 수 없습니다.')
+  }
+  return bulkApproveOrganizationApplicationsRemote(ids)
+}
+
+export async function bulkRejectGeneralOrganizationApplications(
+  applicationIds: string[],
+  payload: ApplicationRejectRequest
+): Promise<BulkActionResponse> {
+  assertApplicationsRemoteReady()
+  const ids = toBulkNumericApplicationIds(applicationIds)
+  if (!ids?.length) {
+    throw new Error('기관 신청 ID를 확인할 수 없습니다.')
+  }
+  return bulkRejectOrganizationApplicationsRemote(ids, payload.reason)
+}
+
 export async function approveGeneralInstructorApplication(applicationId: string): Promise<void> {
   assertApplicationsRemoteReady()
   await approveInstructorApplicationRemote(applicationId)
@@ -337,9 +381,15 @@ export async function submitGeneralIndividualFinalResult(
   await submitIndividualFinalResultRemote(applicationId, payload)
 }
 
-export async function giveUpGeneralVolunteerApplication(applicationId: string): Promise<void> {
+export async function giveUpGeneralVolunteerApplication(
+  applicationId: string,
+  reason: string
+): Promise<void> {
   assertApplicationsRemoteReady()
-  await giveUpVolunteerApplicationRemote(applicationId)
+  const trimmed = reason.trim()
+  await giveUpVolunteerApplicationRemote(applicationId, {
+    reason: trimmed.length >= 2 ? trimmed : '활동 포기',
+  })
 }
 
 /**

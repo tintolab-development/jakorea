@@ -5,12 +5,7 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
 import {
-  updateApplicantSchoolApprovalStatus,
   patchApplicantSchoolForApprovalStatus,
-  patchApplicantSchoolForNotificationResend,
-  updateApplicantSchoolNotificationResend,
-  updateApplicantSchoolCancelApproval,
-  updateApplicantSchoolCancelRejection,
   type ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
 import {
@@ -74,6 +69,7 @@ import {
   type ApplicantNotificationResendSubjectKind,
 } from '@/features/program/general/lib/applicant-notification-resend'
 import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { patchInstructorForCancelApproval } from '@/features/program/general/lib/instructor-cancel-approval'
 import {
   patchInstructorForCancelRejection,
@@ -93,11 +89,6 @@ import { InstructorBulkRejectModal } from '@/features/program/shared/ui/detail-m
 import { InstructorRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/instructor-reject-complete-modal'
 import { InstructorRejectModal } from '@/features/program/shared/ui/detail-modal/components/instructor-reject-modal'
 import { countAssignedInstructors } from '@/features/program/general/lib/institution-assigned-instructor-count'
-import { patchInstitutionForCancelApproval } from '@/features/program/general/lib/institution-cancel-approval'
-import {
-  patchInstitutionForCancelRejection,
-  toInstitutionCancelRejectionNotifyOptions,
-} from '@/features/program/general/lib/institution-cancel-rejection'
 import { InstitutionBulkApproveModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-approve-modal'
 import { InstitutionBulkApproveCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-approve-complete-modal'
 import { InstitutionBulkRejectModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-reject-modal'
@@ -190,6 +181,9 @@ export function ApplicantList({
     confirmBulkParticipantApprove,
     applyRemoteIndividualDecision,
     applyRemoteInstructorDecision,
+    applyRemoteInstitutionDecision,
+    applyRemoteInstitutionCancelApproval,
+    applyRemoteInstitutionCancelRejection,
     individualRemoteEnabled,
     instructorRemoteEnabled,
     handleCancelApproval,
@@ -650,14 +644,10 @@ export function ApplicantList({
     }
 
     if (menu === 'institutions' && 'schoolName' in item) {
-      const row = item as ApplicantSchoolRow
-      if (row.approvalStatus !== 'approved' && row.approvalStatus !== 'rejected') return
-      setNotificationResendTarget({
-        id: row.id,
-        name: row.schoolName,
-        subjectKind: 'institution',
-        approvalStatus: row.approvalStatus,
-      })
+      notifyProgramApiUnavailable(
+        'general-org-application-notification-resend',
+        '일반 프로그램 · 기관 신청 알림 재발송'
+      )
       return
     }
 
@@ -702,15 +692,20 @@ export function ApplicantList({
               setInstitutionApproveTarget({ id, name: row.schoolName })
               return
             }
-            setInstitutionList(prev =>
-              prev.map(r =>
-                r.id === id ? patchApplicantSchoolForApprovalStatus(r, 'approved') : r
-              )
-            )
-            updateApplicantSchoolApprovalStatus(id, 'approved')
-            if (detailVariant !== 'general') {
-              setSelectedItem(null)
-            }
+            void (async () => {
+              const remote = await applyRemoteInstitutionDecision([id], 'approve')
+              if (remote === 'error') return
+              if (remote === 'skipped') {
+                notifyProgramApiUnavailable(
+                  'general-org-application-decision',
+                  '일반 프로그램 · 기관 신청 승인·반려'
+                )
+                return
+              }
+              if (detailVariant !== 'general') {
+                setSelectedItem(null)
+              }
+            })()
           }}
           onReject={id => {
             const row = selectedItem
@@ -718,15 +713,20 @@ export function ApplicantList({
               setInstitutionRejectTarget({ id, name: row.schoolName })
               return
             }
-            setInstitutionList(prev =>
-              prev.map(r =>
-                r.id === id ? patchApplicantSchoolForApprovalStatus(r, 'rejected') : r
-              )
-            )
-            updateApplicantSchoolApprovalStatus(id, 'rejected')
-            if (detailVariant !== 'general') {
-              setSelectedItem(null)
-            }
+            void (async () => {
+              const remote = await applyRemoteInstitutionDecision([id], 'reject')
+              if (remote === 'error') return
+              if (remote === 'skipped') {
+                notifyProgramApiUnavailable(
+                  'general-org-application-decision',
+                  '일반 프로그램 · 기관 신청 승인·반려'
+                )
+                return
+              }
+              if (detailVariant !== 'general') {
+                setSelectedItem(null)
+              }
+            })()
           }}
           onCancelApproval={id => {
             const row = selectedItem
@@ -976,29 +976,39 @@ export function ApplicantList({
             notifyTiming: payload.notifyTiming,
             manualNotifyAt: payload.manualNotifyAt,
           }
-          setInstitutionApproveTarget(null)
-          const sourceRow =
-            institutionList.find(row => row.id === id) ??
-            (selectedItem && 'schoolName' in selectedItem && selectedItem.id === id
-              ? (selectedItem as ApplicantSchoolRow)
-              : null)
-          const patchedRow = sourceRow
-            ? patchApplicantSchoolForApprovalStatus(sourceRow, 'approved', notifyOptions)
-            : null
-          setInstitutionList(prev => {
-            const next = prev.map(row => (row.id === id && patchedRow ? patchedRow : row))
-            const updated = next.find(row => row.id === id)
-            const current = selectedItem
-            if (updated && current && 'schoolName' in current && current.id === id) {
-              setSelectedItem(updated)
+          const run = async () => {
+            const remote = await applyRemoteInstitutionDecision([id], 'approve')
+            if (remote === 'error') return
+            if (remote === 'skipped') {
+              notifyProgramApiUnavailable(
+                'general-org-application-decision',
+                '일반 프로그램 · 기관 신청 승인·반려'
+              )
+              return
             }
-            return next
-          })
-          updateApplicantSchoolApprovalStatus(id, 'approved', notifyOptions)
-          setInstitutionApprovalComplete({
-            schoolName: name,
-            assignedInstructorCount: countAssignedInstructors(patchedRow?.assignedInstructorNames),
-          })
+            setInstitutionApproveTarget(null)
+            const sourceRow =
+              institutionList.find(row => row.id === id) ??
+              (selectedItem && 'schoolName' in selectedItem && selectedItem.id === id
+                ? (selectedItem as ApplicantSchoolRow)
+                : null)
+            const patchedRow = sourceRow
+              ? patchApplicantSchoolForApprovalStatus(sourceRow, 'approved', notifyOptions)
+              : null
+            if (patchedRow) {
+              setInstitutionList(prev => prev.map(row => (row.id === id ? patchedRow : row)))
+              if (selectedItem && 'schoolName' in selectedItem && selectedItem.id === id) {
+                setSelectedItem(patchedRow)
+              }
+            }
+            setInstitutionApprovalComplete({
+              schoolName: name,
+              assignedInstructorCount: countAssignedInstructors(
+                patchedRow?.assignedInstructorNames
+              ),
+            })
+          }
+          void run()
         }}
       />
       <InstitutionApprovalCompleteModal
@@ -1019,25 +1029,40 @@ export function ApplicantList({
             manualNotifyAt: payload.manualNotifyAt,
             rejectionReason: payload.reason,
           }
-          setInstitutionRejectTarget(null)
-          setInstitutionList(prev => {
-            const next = prev.map(row =>
-              row.id === id
-                ? patchApplicantSchoolForApprovalStatus(row, 'rejected', notifyOptions)
-                : row
+          const run = async () => {
+            const remote = await applyRemoteInstitutionDecision(
+              [id],
+              'reject',
+              payload.reason
             )
-            const updated = next.find(row => row.id === id)
-            const current = selectedItem
-            if (updated && current && 'schoolName' in current && current.id === id) {
-              setSelectedItem(updated)
+            if (remote === 'error') return
+            if (remote === 'skipped') {
+              notifyProgramApiUnavailable(
+                'general-org-application-decision',
+                '일반 프로그램 · 기관 신청 승인·반려'
+              )
+              return
             }
-            return next
-          })
-          updateApplicantSchoolApprovalStatus(id, 'rejected', notifyOptions)
-          setInstitutionRejectComplete({
-            schoolName: name,
-            rejectionReason: payload.reason,
-          })
+            setInstitutionRejectTarget(null)
+            setInstitutionList(prev => {
+              const next = prev.map(row =>
+                row.id === id
+                  ? patchApplicantSchoolForApprovalStatus(row, 'rejected', notifyOptions)
+                  : row
+              )
+              const updated = next.find(row => row.id === id)
+              const current = selectedItem
+              if (updated && current && 'schoolName' in current && current.id === id) {
+                setSelectedItem(updated)
+              }
+              return next
+            })
+            setInstitutionRejectComplete({
+              schoolName: name,
+              rejectionReason: payload.reason,
+            })
+          }
+          void run()
         }}
       />
       <InstitutionRejectCompleteModal
@@ -1053,28 +1078,16 @@ export function ApplicantList({
         onConfirm={payload => {
           if (!institutionCancelApprovalTarget) return
           const { id, name } = institutionCancelApprovalTarget
-          const notifyOptions = {
-            notifyTiming: payload.notifyTiming,
-            manualNotifyAt: payload.manualNotifyAt,
-            rejectionReason: payload.reason,
-          }
+          const reason = payload.reason?.trim() || '승인 취소'
           setInstitutionCancelApprovalTarget(null)
-          setInstitutionList(prev => {
-            const next = prev.map(row =>
-              row.id === id ? patchInstitutionForCancelApproval(row, notifyOptions) : row
-            )
-            const updated = next.find(row => row.id === id)
-            const current = selectedItem
-            if (updated && current && 'schoolName' in current && current.id === id) {
-              setSelectedItem(updated)
-            }
-            return next
-          })
-          updateApplicantSchoolCancelApproval(id, notifyOptions)
-          setInstitutionCancelApprovalComplete({
-            schoolName: name,
-            cancellationReason: payload.reason,
-          })
+          void (async () => {
+            const remote = await applyRemoteInstitutionCancelApproval(id, reason)
+            if (remote === 'error' || remote === 'unavailable') return
+            setInstitutionCancelApprovalComplete({
+              schoolName: name,
+              cancellationReason: reason,
+            })
+          })()
         }}
       />
       <InstitutionCancelApprovalCompleteModal
@@ -1090,24 +1103,16 @@ export function ApplicantList({
         onConfirm={(payload: InstitutionCancelRejectionConfirmPayload) => {
           if (!institutionCancelRejectTarget) return
           const { id, name } = institutionCancelRejectTarget
-          const notifyOptions =
+          const reason =
             payload.variant === 'alreadySent'
-              ? toInstitutionCancelRejectionNotifyOptions(payload)
-              : undefined
+              ? payload.reason?.trim() || '반려 취소'
+              : '반려 취소'
           setInstitutionCancelRejectTarget(null)
-          setInstitutionList(prev => {
-            const next = prev.map(row =>
-              row.id === id ? patchInstitutionForCancelRejection(row, notifyOptions) : row
-            )
-            const updated = next.find(row => row.id === id)
-            const current = selectedItem
-            if (updated && current && 'schoolName' in current && current.id === id) {
-              setSelectedItem(updated)
-            }
-            return next
-          })
-          updateApplicantSchoolCancelRejection(id, notifyOptions)
-          setInstitutionCancelRejectComplete({ schoolName: name })
+          void (async () => {
+            const remote = await applyRemoteInstitutionCancelRejection(id, reason)
+            if (remote === 'error' || remote === 'unavailable') return
+            setInstitutionCancelRejectComplete({ schoolName: name })
+          })()
         }}
       />
       <InstitutionCancelRejectCompleteModal
@@ -1565,18 +1570,10 @@ export function ApplicantList({
           }
 
           if (subjectKind === 'institution') {
-            setInstitutionList(prev => {
-              const next = prev.map(row =>
-                row.id === id ? patchApplicantSchoolForNotificationResend(row, sentAt) : row
-              )
-              const updated = next.find(row => row.id === id)
-              const current = selectedItem
-              if (updated && current && 'schoolName' in current && current.id === id) {
-                setSelectedItem(updated)
-              }
-              return next
-            })
-            updateApplicantSchoolNotificationResend(id, sentAt)
+            notifyProgramApiUnavailable(
+              'general-org-application-notification-resend',
+              '일반 프로그램 · 기관 신청 알림 재발송'
+            )
             return
           }
 

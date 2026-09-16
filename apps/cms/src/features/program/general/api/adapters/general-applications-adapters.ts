@@ -10,6 +10,7 @@ import type {
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
+import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 import type { IndividualApplicationListItemEnriched } from '@/features/program/general/api/individual-application-screening-api-types'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
@@ -92,6 +93,12 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
   }
 }
 
+function formatJaEvaluationGradeLabel(raw?: string | null): string | undefined {
+  const trimmed = raw?.trim()
+  if (!trimmed) return undefined
+  return trimmed.replace(/등급$/, '')
+}
+
 export function mapInstructorApplicationToApplicantInstructorRow(
   dto: InstructorApplicationListItemResponse,
   index: number,
@@ -106,19 +113,84 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     programId: toId(dto.programId) || programId,
     no: index + 1,
     instructorName: dto.instructorName?.trim() || '이름 없음',
-    lectureExperienceYears: 0,
+    lectureExperienceYears:
+      typeof dto.jaLectureExperienceYears === 'number' && Number.isFinite(dto.jaLectureExperienceYears)
+        ? dto.jaLectureExperienceYears
+        : 0,
     educationLevel: '',
     educationSchoolName: '',
-    contact: '',
-    email: '',
-    address: '',
+    contact: dto.contact?.trim() || '',
+    email: dto.email?.trim() || '',
+    address: dto.homeAddress?.trim() || '',
     appliedAt: dto.submittedAt,
     schoolName: '',
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade),
     instructorFeeGradeLabel: dto.instructorFeeGradeSnapshot?.trim() || undefined,
     rejectionReason: dto.rejectReason?.trim() || undefined,
     distanceKm: dto.distanceKm,
     longDistanceYn: dto.longDistance,
+    availableActions: dto.availableActions,
+  }
+}
+
+export function mapInstructorApplicationDetailToApplicantRow(
+  dto: InstructorApplicationDetailResponse,
+  base: ApplicantInstructorRow
+): ApplicantInstructorRow {
+  const preferredScheduleSlots =
+    dto.availableScheduleSlots
+      ?.map(slot => {
+        const scheduleId = slot.scheduleId
+        if (scheduleId == null || !Number.isFinite(scheduleId)) return null
+        return {
+          slotKey: String(scheduleId),
+          assignable: slot.assignable !== false,
+        }
+      })
+      .filter((slot): slot is { slotKey: string; assignable: boolean } => slot != null) ??
+    base.preferredScheduleSlots
+
+  return {
+    ...base,
+    id: toId(dto.id) || base.id,
+    instructorMemberId:
+      dto.instructorMemberId != null && Number.isFinite(dto.instructorMemberId)
+        ? dto.instructorMemberId
+        : base.instructorMemberId,
+    programId: toId(dto.programId) || base.programId,
+    instructorName: dto.instructorName?.trim() || base.instructorName,
+    lectureExperienceYears:
+      typeof dto.jaLectureExperienceYears === 'number' && Number.isFinite(dto.jaLectureExperienceYears)
+        ? dto.jaLectureExperienceYears
+        : base.lectureExperienceYears,
+    educationLevel: dto.educationLevel?.trim() || base.educationLevel,
+    educationSchoolName: dto.educationSchoolName?.trim() || base.educationSchoolName,
+    contact: dto.contact?.trim() || base.contact,
+    email: dto.email?.trim() || base.email,
+    address: [dto.homeAddress, dto.homeAddressDetail]
+      .map(part => part?.trim())
+      .filter(Boolean)
+      .join(' ') || base.address,
+    appliedAt: dto.submittedAt ?? base.appliedAt,
+    affiliation: dto.affiliation?.trim() || base.affiliation,
+    approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    evaluationGrade:
+      formatJaEvaluationGradeLabel(dto.jaEvaluationGrade) ?? base.evaluationGrade,
+    instructorFeeGradeLabel:
+      dto.instructorFeeGradeSnapshot?.trim() || base.instructorFeeGradeLabel,
+    teachingExperience: dto.teachingExperience?.trim() || base.teachingExperience,
+    oneLineIntro: dto.oneLineIntro?.trim() || base.oneLineIntro,
+    nameHanja: dto.nameHanja?.trim() || base.nameHanja,
+    nameEnglish: dto.nameEnglish?.trim() || base.nameEnglish,
+    birthDate: dto.birthDate?.trim() || base.birthDate,
+    gender: dto.gender?.trim() || base.gender,
+    rejectionReason: dto.rejectReason?.trim() || base.rejectionReason,
+    distanceKm: dto.distanceKm ?? base.distanceKm,
+    longDistanceYn: dto.longDistance ?? base.longDistanceYn,
+    managerComment: dto.managerComment ?? base.managerComment,
+    availableActions: dto.availableActions ?? base.availableActions,
+    preferredScheduleSlots,
   }
 }
 
