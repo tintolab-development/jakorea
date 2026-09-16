@@ -5,16 +5,18 @@ alwaysApply: true
 
 # 프로그램 유형 간 간섭 방지 (CMS)
 
-**Scope:** `apps/cms/src/features/program/**`, 관련 mock·라우트·상세 모달
+**Scope:** `apps/cms/src/features/program/**`, 관련 라우트·상세 모달
 
-일반 프로그램·UJAT·1사1교·Gemini(찾아가는 연수)는 **UI가 비슷해도 스펙·컬럼·필터·LNB·mock이 다르다.** 한 유형 작업이 다른 유형 기본 동작을 바꾸면 회귀가 잦다.
+일반 프로그램·UJAT·1사1교·Gemini(찾아가는 연수)는 **UI가 비슷해도 스펙·컬럼·필터·LNB가 다르다.** 한 유형 작업이 다른 유형 기본 동작을 바꾸면 회귀가 잦다.
+
+**FE Mock 시드 금지:** [program-no-fe-mock.mdc](./program-no-fe-mock.mdc)
 
 ## 1. 유형 경계 (먼저 확인)
 
 | 유형 | 코드 루트 | 라우트·식별 (대표) |
 |------|-----------|-------------------|
-| **일반 프로그램** | `features/program/general/` | `/programs/general`, `general-prog-*` mock |
-| **UJAT** | `features/program/ujat/` | UJAT 전용 id·상세 URL, `ujat-*` mock |
+| **일반 프로그램** | `features/program/general/` | `/programs/general` |
+| **UJAT** | `features/program/ujat/` | UJAT 전용 id·상세 URL |
 | **1사1교** | `features/program/1c-1s/` (추출 예정) + **`general/` 내 `economy` 분기** | `/programs/economy-education`, `ProgramListProgramMode: 'overview'` |
 | **Gemini (찾아가는 연수)** | `features/program/gemini/` | `/programs/gemini/visiting-training`, 모집(`recruitment/`)·승인(`approved/`) 하위 플로우 |
 | **공유** | `features/program/shared/` | **모든 유형에 영향** |
@@ -27,7 +29,7 @@ alwaysApply: true
 2. **`shared/` 수정은 최후 수단.** 불가피하면 영향받는 유형(일반·UJAT·1사1교·Gemini)을 응답·PR에 명시한다.
 3. **타 유형 폴더를 import만 해 재사용할 때**, 그 파일의 **기본값·기본 UI는 해당 타 유형 스펙을 유지**한다. 일반용 변경을 UJAT 기본값에 넣지 않는다.
 4. **「공통화·통합·중복 제거」 리팩터**는 유저가 명시적으로 요청한 경우에만 한다.
-5. **mock·필터·테이블 컬럼·LNB·breadcrumb**은 유형별로 다를 수 있다. 한쪽 스펙에 맞춰 다른 쪽 필드를 **무조건 삭제·축소하지 않는다.**
+5. **필터·테이블 컬럼·LNB·breadcrumb**은 유형별로 다를 수 있다. 한쪽 스펙에 맞춰 다른 쪽 필드를 **무조건 삭제·축소하지 않는다.** (프로그램 FE Mock 시드는 [program-no-fe-mock.mdc](./program-no-fe-mock.mdc) — 복원 금지)
 
 ## 3. 크로스 재사용 패턴 (필수)
 
