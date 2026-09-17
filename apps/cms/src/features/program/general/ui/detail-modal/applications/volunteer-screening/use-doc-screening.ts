@@ -18,6 +18,9 @@ import {
   type GeneralManagerEvaluation,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { getTempMockOrgVolunteerApplicants } from '@/features/program/general/lib/temp-mock-org-program'
+import { patchGeneralVolunteerDocumentScreeningStatus } from '@/features/program/general/model/volunteer-applicant'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
 import {
   notifyProgramApiUnavailable,
@@ -116,9 +119,12 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
   } | null>(null)
   const [cancelApprovalTargetId, setCancelApprovalTargetId] = useState<string | null>(null)
   const [cancelRejectTargetId, setCancelRejectTargetId] = useState<string | null>(null)
-  const remoteEnabled = shouldUseGeneralApplicationsRemoteApi() && Boolean(programId)
+  const remoteEnabled =
+    shouldUseGeneralApplicationsRemoteApi() &&
+    Boolean(programId) &&
+    !isGeneralProgramTempMockProgramId(programId)
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled,
+    !remoteEnabled && !isGeneralProgramTempMockProgramId(programId),
     'general-volunteer-doc-screening',
     '프로그램 신청 · 봉사자 1차 서류 심사'
   )
@@ -144,6 +150,10 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
 
   useEffect(() => {
     if (volunteerRemote.remoteEnabled) return
+    if (isGeneralProgramTempMockProgramId(programId)) {
+      setList(getTempMockOrgVolunteerApplicants(programId, 'doc1'))
+      return
+    }
     setList([])
     setPendingFilters({ ...DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS })
     setAppliedFilters({ ...DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS })
@@ -199,9 +209,15 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
         _notifyTiming
       )
       if (remoteOk) return
+      if (isGeneralProgramTempMockProgramId(programId)) {
+        setList(prev =>
+          patchGeneralVolunteerDocumentScreeningStatus(prev, ids, status, _notifyTiming)
+        )
+        return
+      }
       notifyProgramApiUnavailable('general-volunteer-doc-screening-action', '봉사자 1차 서류 심사')
     },
-    [volunteerRemote]
+    [programId, volunteerRemote]
   )
 
   const applyDocumentScreeningCancel = useCallback((_id: string) => {

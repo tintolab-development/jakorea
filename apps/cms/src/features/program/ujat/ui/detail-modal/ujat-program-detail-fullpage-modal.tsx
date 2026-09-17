@@ -2217,6 +2217,7 @@ export function UjatProgramDetailFullPageModal({
           {activeLnb === 'education_progress' && /^edu_h[12]_attendance$/.test(activeTab) && (
             <div className="program-detail-fullpage-modal__info-tab">
               <UjatEducationProgressAttendanceSection
+                programId={displayProgram.id}
                 half={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
               />
             </div>
@@ -2231,6 +2232,7 @@ export function UjatProgramDetailFullPageModal({
           {activeLnb === 'education_progress' && /^edu_h[12]_region$/.test(activeTab) && (
             <div className="program-detail-fullpage-modal__info-tab">
               <UjatEducationProgressRegionAssignmentSection
+                programId={displayProgram.id}
                 half={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
               />
             </div>

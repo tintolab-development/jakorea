@@ -35,6 +35,7 @@ const EMPTY_DEFAULTS: GeneralProgramCommonInfoEditFormValues = {
   participantVolunteer: false,
   businessArea: '',
   sponsorManagementIds: [],
+  sponsorManagerContactIds: [],
   sponsorManagerContactId: '',
   venueKind: 'inside',
   venueDetail: '',

@@ -192,6 +192,13 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   ]
 
   const lifecycleStatus: ProgramLifecycleStatus = 'recruiting_students'
+  const generalProgramAudience: Program['generalProgramAudience'] =
+    isCompanySchool || isTrainedTeachers
+      ? 'organization'
+      : audienceFromParticipant(args.participant)
+  /** 개인 프로그램은 학생 명단 제출 기능을 쓸 수 없음 (BE `GENERAL_INDIVIDUAL_STUDENT_ROSTER_NOT_ALLOWED`) */
+  const studentListRequired: Program['studentListRequired'] =
+    isCompanySchool || generalProgramAudience === 'individual' ? 'not_required' : 'required'
 
   const isGeneralSchedule =
     !isCompanySchool && !isTrainedTeachers && args.programType === 'schedule'
@@ -249,12 +256,10 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     scheduleTimeEnabled: true,
     startTime: '09:00',
     endTime: '18:00',
-    studentListRequired: isCompanySchool ? 'not_required' : 'required',
+    studentListRequired,
     textbookName: scheduleDetailedProgramName,
     teamDivision: scheduleDetailedProgramName,
-    generalProgramAudience: isCompanySchool || isTrainedTeachers
-      ? 'organization'
-      : audienceFromParticipant(args.participant),
+    generalProgramAudience,
     generalProgramEducationStructure:
       isCompanySchool || isTrainedTeachers ? 'curriculum' : args.programType,
     generalProgramSessionRound:
@@ -545,7 +550,16 @@ export async function persistGeneralProgramRegistration(args: {
     variant !== 'trainedTeachers' &&
     shouldUseGeneralProgramsRemoteApi()
   ) {
-    return createGeneralProgram(program)
+    const created = await createGeneralProgram(program)
+    try {
+      const { attachRegistrationFormDraftsToProgram } = await import(
+        '@/features/program/general/lib/sync-registration-form-bindings'
+      )
+      await attachRegistrationFormDraftsToProgram(created)
+    } catch (error) {
+      console.warn('[general-program] attach registration form drafts failed', error)
+    }
+    return created
   }
 
   return persistGeneralRegistrationFormLocal(args)

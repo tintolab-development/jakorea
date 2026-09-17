@@ -6,6 +6,7 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { formatNumberDisplay } from '@/shared/utils'
 import './settlement-transport-fee-detail-form.css'
 
 const INPUT_W = 244
@@ -30,8 +31,11 @@ export type SettlementTransportFeeDetailFormProps = {
   displayMode?: PaymentStatementIssuanceParagraphDisplayMode
 }
 
-function textOrDash(value: string): string {
-  return value.trim() || '-'
+function formatAmountView(value: string, unit: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return '-'
+  const formatted = formatNumberDisplay(trimmed)
+  return formatted === '-' ? '-' : `${formatted}${unit}`
 }
 
 function SuffixInput({
@@ -79,7 +83,11 @@ export function SettlementTransportFeeDetailForm({
           <DetailInfoForm.Field
             label="자택과 출강지 간의 거리"
             fullRow
-            view={textOrDash(v.distanceKm ? `${v.distanceKm} km (편도)` : '')}
+            view={
+              v.distanceKm.trim()
+                ? `${formatNumberDisplay(v.distanceKm)} km (편도)`
+                : '-'
+            }
             edit={
               <SuffixInput
                 value={v.distanceKm}
@@ -94,12 +102,12 @@ export function SettlementTransportFeeDetailForm({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="유류비"
-            view={textOrDash(v.fuelCost ? `${v.fuelCost}원` : '')}
+            view={formatAmountView(v.fuelCost, '원')}
             edit={<SuffixInput value={v.fuelCost} aria-label="유류비" suffix="원" />}
           />
           <DetailInfoForm.Field
             label="톨비"
-            view={textOrDash(v.tollFee ? `${v.tollFee}원` : '')}
+            view={formatAmountView(v.tollFee, '원')}
             edit={<SuffixInput value={v.tollFee} aria-label="톨비" suffix="원" />}
           />
         </DetailInfoForm.Row>
@@ -115,7 +123,7 @@ export function SettlementTransportFeeDetailForm({
           <DetailInfoForm.Field
             label="총 산정 교통비"
             fullRow
-            view={textOrDash(v.totalTransportFee ? `${v.totalTransportFee}원` : '')}
+            view={formatAmountView(v.totalTransportFee, '원')}
             edit={
               <SuffixInput value={v.totalTransportFee} aria-label="총 산정 교통비" suffix="원" />
             }

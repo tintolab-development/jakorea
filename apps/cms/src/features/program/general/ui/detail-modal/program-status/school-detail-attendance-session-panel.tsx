@@ -24,11 +24,13 @@ export function SchoolDetailAttendanceSessionPanel({
   appliedFilters,
   getSessionStudents,
   onSave,
+  saving = false,
 }: {
   session: SchoolDetailAttendanceSessionGroup
   appliedFilters: SchoolDetailAttendanceFilters
   getSessionStudents: (sessionId: string) => SchoolDetailAttendanceStudentRow[]
-  onSave: (sessionId: string, students: SchoolDetailAttendanceStudentRow[]) => void
+  onSave: (sessionId: string, students: SchoolDetailAttendanceStudentRow[]) => Promise<void>
+  saving?: boolean
 }) {
   const { showAlert } = useCmsAlert()
   const [savedRows, setSavedRows] = useState<SchoolDetailAttendanceStudentRow[]>(() =>
@@ -37,6 +39,7 @@ export function SchoolDetailAttendanceSessionPanel({
   const [workingRows, setWorkingRows] = useState<SchoolDetailAttendanceStudentRow[]>(() =>
     cloneAttendanceStudentRows(getSessionStudents(session.id))
   )
+  const [isSavingLocal, setIsSavingLocal] = useState(false)
 
   useEffect(() => {
     const rows = cloneAttendanceStudentRows(getSessionStudents(session.id))
@@ -65,6 +68,13 @@ export function SchoolDetailAttendanceSessionPanel({
     [savedRows, workingRows]
   )
 
+  const canSave =
+    hasChanges &&
+    !saving &&
+    !isSavingLocal &&
+    typeof session.scheduleId === 'number' &&
+    session.scheduleId > 0
+
   const handleStatusChange = useCallback(
     (studentId: string, status: SchoolSessionAttendanceStatusKey) => {
       setWorkingRows(prev => prev.map(row => (row.id === studentId ? { ...row, status } : row)))
@@ -72,12 +82,19 @@ export function SchoolDetailAttendanceSessionPanel({
     []
   )
 
-  const handleSave = useCallback(() => {
-    if (!hasChanges) return
-    onSave(session.id, workingRows)
-    setSavedRows(cloneAttendanceStudentRows(workingRows))
-    showAlert({ title: '안내', content: '출결 정보가 저장되었습니다.' })
-  }, [hasChanges, onSave, session.id, showAlert, workingRows])
+  const handleSave = useCallback(async () => {
+    if (!canSave) return
+    setIsSavingLocal(true)
+    try {
+      await onSave(session.id, workingRows)
+      setSavedRows(cloneAttendanceStudentRows(workingRows))
+      showAlert({ title: '안내', content: '출결 정보가 저장되었습니다.' })
+    } catch {
+      // handleError already surfaced in hook
+    } finally {
+      setIsSavingLocal(false)
+    }
+  }, [canSave, onSave, session.id, showAlert, workingRows])
 
   return (
     <section className="school-detail-attendance-session">
@@ -97,8 +114,11 @@ export function SchoolDetailAttendanceSessionPanel({
             variant="secondary"
             size="large"
             width={120}
-            disabled={!hasChanges}
-            onClick={handleSave}
+            disabled={!canSave}
+            loading={isSavingLocal || saving}
+            onClick={() => {
+              void handleSave()
+            }}
           >
             저장
           </CmsButton>

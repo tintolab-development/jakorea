@@ -54,13 +54,20 @@ export interface ProgramResponse {
   educationProcess?: string;
   maleParticipants?: number;
   femaleParticipants?: number;
+  /** 참여자 최종 인원. dual-read totalParticipants|finalParticipants */
   totalParticipants?: number;
+  /** Write alias for totalParticipants (dual-read) */
+  finalParticipants?: number;
   generalVolunteers?: number;
   staffVolunteers?: number;
   returningVolunteers?: number;
   generalTeachers?: number;
   educatedTeachers?: number;
   instructors?: number;
+  /** 최종 파견 학교 수. dual-read root|kpi|generalCommonInfo.kpi */
+  finalSchools?: number;
+  /** 최종 파견 학급 수. dual-read root|kpi|generalCommonInfo.kpi */
+  finalClasses?: number;
   managerName?: string;
   venue?: string;
   curriculum?: string;
@@ -75,8 +82,15 @@ export interface ProgramResponse {
   recruitmentGuide?: string;
   learningSupportContent?: string;
   otherMatters?: string;
+  /** 모집 비고 SSOT. oneLineIntroduction과 분리. */
   remarks?: string;
   recruitmentTargetDetail?: string;
+  /** 모집/교육 대상 상세. district와 분리. */
+  educationTargetDetail?: string;
+  /** 교육 장소 기타 직접입력. */
+  venueDetail?: string;
+  /** 교육 장소 유형: inside | outside | other (legacy inside_school/outside_school) */
+  venueKind?: string;
   serviceDetailJson?: string;
   attachmentFileNames?: string[];
   adminAssignments?: ProgramAdminAssignmentResponse[];

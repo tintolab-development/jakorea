@@ -1,13 +1,19 @@
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 
 export type RegionAssignmentClassSlot = {
+  /** educationSlotId (직접 배정 API path param) */
   id: string
   classLabel: string
 }
 
 export type RegionAssignmentColumn = {
+  /** allocation-matrix columnKey */
   id: string
+  scheduleId?: string
+  organizationApplicationId?: string
   dateLabel: string
+  /** YYYY-MM-DD — 출석·필터용 */
+  isoDate?: string
   institutionName: string
   /** 구/군 또는 시(경기 남부는 시 단위만) */
   location: string

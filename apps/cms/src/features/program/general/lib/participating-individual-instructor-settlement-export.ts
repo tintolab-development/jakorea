@@ -6,13 +6,12 @@ import {
   resolveIndividualPaymentStatementExportLabel,
   resolveIndividualSettlementExportAmount,
 } from '@/features/program/general/lib/participating-individual-instructor-settlement-display'
-import type { ParticipatingIndividualInstructorSettlementRow } from '@/features/program/general/lib/participating-individual-instructor-settlement-types'
+import type { ParticipatingInstructorSettlementApiRow } from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
 
-export const PARTICIPATING_INDIVIDUAL_INSTRUCTOR_SETTLEMENT_EXCEL_COLUMNS: ColumnsType<
-  ParticipatingIndividualInstructorSettlementRow & { no: number }
-> = [
+export const PARTICIPATING_INDIVIDUAL_INSTRUCTOR_SETTLEMENT_EXCEL_COLUMNS: ColumnsType<ParticipatingInstructorSettlementApiRow> =
+  [
   { title: 'No.', dataIndex: 'no', key: 'no' },
-  { title: '교육 진행 일정', dataIndex: 'scheduleLabel', key: 'scheduleLabel' },
+  { title: '교육 진행 일정', dataIndex: 'educationScheduleLabel', key: 'educationScheduleLabel' },
   {
     title: '강의 진행 여부',
     key: 'lectureProgress',

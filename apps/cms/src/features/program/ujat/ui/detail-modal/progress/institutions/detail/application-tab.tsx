@@ -3,6 +3,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import { CmsButton } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { formatNumberDisplay } from '@/shared/utils'
 import { InstitutionTeacherEdit } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -185,19 +186,19 @@ export function UjatEducationProgressInstitutionApplicationTab({
             return (
               <DetailInfoForm
                 key={`${block.gradeLabel}-${blockIndex}`}
-                title={`${block.gradeLabel} (${block.classCount}학급)`}
+                title={`${block.gradeLabel} (${formatNumberDisplay(block.classCount)}학급)`}
                 hideHeader
                 mode="view"
               >
                 <DetailInfoForm.Row type="single">
                   <DetailInfoForm.Field
-                    label={`${block.gradeLabel} (${block.classCount}학급)`}
+                    label={`${block.gradeLabel} (${formatNumberDisplay(block.classCount)}학급)`}
                     fullRow
                     view={
                       <PipeSeparatedValues
                         parts={block.classes.map(classRow => (
                           <span key={classRow.classNo}>
-                            {classRow.classNo}반 : {classRow.studentCount}명
+                            {classRow.classNo}반 : {formatNumberDisplay(classRow.studentCount)}명
                           </span>
                         ))}
                       />

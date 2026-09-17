@@ -76,14 +76,33 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
   dto: TrainedTeacherProgramDetailResponse
 ): Program {
   const patch = mapTrainedTeacherInfoDetailToProgramPatch(dto)
+  const programKpi = program.generalCommonInfo?.kpi
+  const patchKpi = patch.generalCommonInfo?.kpi
   return {
     ...program,
     ...patch,
     generalCommonInfo: {
       ...program.generalCommonInfo,
       ...patch.generalCommonInfo,
+      // KPI SSOT = programs PATCH / serviceDetailJson — configJson 이 옛 kpi 로 덮지 않음
+      kpi: {
+        ...patchKpi,
+        ...programKpi,
+        finalParticipants:
+          program.totalParticipants ??
+          programKpi?.finalParticipants ??
+          patchKpi?.finalParticipants ??
+          0,
+        finalSchools: programKpi?.finalSchools ?? patchKpi?.finalSchools ?? 0,
+        finalClasses: programKpi?.finalClasses ?? patchKpi?.finalClasses ?? 0,
+        instructorCount: programKpi?.instructorCount ?? patchKpi?.instructorCount ?? 0,
+        volunteerCount: programKpi?.volunteerCount ?? patchKpi?.volunteerCount ?? 0,
+      },
     },
-    educatedTeachers: patch.educatedTeachers ?? program.educatedTeachers,
+    educatedTeachers: program.educatedTeachers ?? patch.educatedTeachers,
+    totalParticipants: program.totalParticipants,
+    participatingSchoolCount:
+      program.participatingSchoolCount ?? programKpi?.finalSchools,
     updatedAt: patch.updatedAt ?? program.updatedAt,
   }
 }

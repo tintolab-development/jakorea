@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Input } from 'antd'
 import type {
   GeneralVolunteerApplicantRow,
   GeneralVolunteerInterviewEvaluationPayload,
@@ -13,8 +12,10 @@ import {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import './interview-evaluation-modal.css'
 
 export type GeneralVolunteerInterviewEvaluationModalProps = {
   open: boolean
@@ -84,6 +85,7 @@ export function GeneralVolunteerInterviewEvaluationModal({
       open={open}
       onCancel={onCancel}
       title={`면접 평가 (${applicant.name})`}
+      className="general-volunteer-interview-evaluation-modal"
       footer={
         <>
           <CmsButton type="button" variant="default" size="large" width={120} onClick={onCancel}>
@@ -95,7 +97,12 @@ export function GeneralVolunteerInterviewEvaluationModal({
         </>
       }
     >
-      <DetailInfoForm title="" hideHeader mode="edit">
+      <DetailInfoForm
+        title=""
+        hideHeader
+        mode="edit"
+        className="general-volunteer-interview-evaluation-modal__form"
+      >
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="면접 일정"
@@ -113,10 +120,11 @@ export function GeneralVolunteerInterviewEvaluationModal({
                 min={0}
                 max={GENERAL_INTERVIEW_TOTAL_SCORE_MAX}
                 precision={0}
+                inputSize="medium"
+                width="100%"
                 value={managerAScore == null ? '' : String(managerAScore)}
                 onValueChange={value => setManagerAScore(value === '' ? null : Number(value))}
                 placeholder="점수 입력"
-                style={{ width: '100%' }}
               />
             }
             view={managerAScore ?? '-'}
@@ -129,10 +137,11 @@ export function GeneralVolunteerInterviewEvaluationModal({
                 min={0}
                 max={GENERAL_INTERVIEW_TOTAL_SCORE_MAX}
                 precision={0}
+                inputSize="medium"
+                width="100%"
                 value={managerBScore == null ? '' : String(managerBScore)}
                 onValueChange={value => setManagerBScore(value === '' ? null : Number(value))}
                 placeholder="점수 입력"
-                style={{ width: '100%' }}
               />
             }
             view={managerBScore ?? '-'}
@@ -142,11 +151,13 @@ export function GeneralVolunteerInterviewEvaluationModal({
           <DetailInfoForm.Field
             label="비고"
             edit={
-              <Input.TextArea
+              <CmsTextArea
+                inputSize="medium"
+                width="100%"
+                rows={3}
                 value={remark}
                 onChange={e => setRemark(e.target.value)}
                 placeholder="비고를 입력해 주세요."
-                rows={3}
               />
             }
             view={remark || '-'}

@@ -40,6 +40,8 @@ export type UjatAttendanceSessionGroup = {
   institutionName: string
   district: string
   timeRange: string
+  /** program_schedule.id — bulk-upsert 대상 */
+  scheduleId?: string
   volunteers: UjatAttendanceVolunteerRow[]
 }
 

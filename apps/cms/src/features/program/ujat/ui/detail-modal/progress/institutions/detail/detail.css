@@ -16,6 +16,13 @@
   margin-bottom: 0;
 }
 
+.ujat-education-progress-institution-detail__posts-register-btn {
+  width: 100px !important;
+  min-width: 100px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
 .ujat-education-progress-institution-detail__content {
   display: flex;
   flex-direction: column;
@@ -112,6 +119,12 @@
   min-height: 100%;
   max-height: none;
   align-self: stretch;
+}
+
+.ujat-education-progress-institution-detail__posts-tab-wrap
+  .enrollment-program-detail-modal__posts-tab-body {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .ujat-education-progress-institution-detail__posts-tab-wrap

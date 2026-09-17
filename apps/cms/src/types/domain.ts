@@ -138,12 +138,18 @@ export interface GeneralProgramCommonInfoExtension {
   sponsorManagerLine?: string
   /** 교육 장소 상세 (기관 안/밖 뒤 `|` 구분) */
   venueDetail?: string
+  /** 교육 장소 구분 — inside/outside/other (other 는 top-level venue 로 라운드트립) */
+  venueKind?: 'inside' | 'outside' | 'other'
   /** 후원사 표시명 mock — `sponsorId` resolve 전 스크린샷·데모용 (복수 시 `, ` 구분) */
   sponsorDisplayName?: string
   /** 후원사 관리 목록 id — `/sponsor?sponsorId=` 링크용 (레거시·주 후원사) */
   sponsorManagementId?: string
   /** 후원사 관리 목록 id — 다중 선택 */
   sponsorManagementIds?: string[]
+  /** 후원사 담당자 선택 ref (`sponsorManagementId::contactId`) — 레거시 단일 */
+  sponsorManagerContactId?: string
+  /** 후원사 담당자 선택 ref — 다중 선택 (후원사 멀티와 동일 UX) */
+  sponsorManagerContactIds?: string[]
   educationFormLabel?: string
   /** 참여 방식 — 개인 대상 · 일정 공통 (등록 폼·상세 조회 mock) */
   participationMethod?: 'individual' | 'team'
@@ -389,6 +395,8 @@ export interface Program {
   businessArea?: string // 사업분야
   titleEn?: string // 프로그램명(영문)
   mainTitle?: string // 대표 프로그램명(국문)
+  /** 세부 프로그램 마스터 ID (`GET/POST programs.detailedProgramId`) */
+  detailedProgramId?: string
   textbookName?: string // 교재명(국문)
   textbookNameEn?: string // 교재명(영문)
   schoolId?: UUID // 학교명 (기관) - Application을 통해 연결
@@ -427,6 +435,10 @@ export interface Program {
   contactEmail?: string // 문의처 이메일
   contactPhone?: string // 문의처 연락처
   oneLineIntroduction?: string // 한 줄 소개
+  /** 모집 비고 — oneLineIntroduction 과 분리 (BE `remarks`) */
+  remarks?: string
+  /** 교육 대상 상세 — district(시군구)와 분리 (BE `educationTargetDetail`) */
+  educationTargetDetail?: string
   keyVisualImage?: string // 키비주얼 이미지 URL
   /** 추가 내용 (Toast UI Editor getHTML() 출력 HTML) */
   additionalContentHtml?: string
@@ -993,6 +1005,10 @@ export interface ProgramPost {
   authorName: string
   /** 작성자 사용자 ID (선택, 프로필 연동용) */
   authorUserId?: UUID
+  /** remote: 작성 actor 유형 (ADMIN / MEMBER 등) */
+  createdByActorType?: string
+  /** remote: 작성 actor 숫자 ID — 본인 글 판별 */
+  createdByActorId?: number
   title?: string
   content: string
   /** 읽음 여부 (수강자/회원 관점) — 미읽음이면 민트 스트로크 + "읽지 않음" 태그 */

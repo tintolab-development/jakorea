@@ -11,6 +11,7 @@ import {
   type UjatRegionCapacitySemesterValues,
   UJAT_REGION_CAPACITY_OVERLAY_KEY,
 } from '@/features/program/ujat/lib/ujat-region-capacity-types'
+import { formatNumberDisplay } from '@/shared/utils'
 
 const DEFAULT_CLASS_COUNTS: Record<string, string> = Object.fromEntries(
   UJAT_DEFAULT_EDUCATION_REGIONS.map(row => {
@@ -83,12 +84,16 @@ export function resolveUjatRegionCapacityBySemester(
 
 export function formatUjatRegionCapacityClassView(value: string | undefined): string {
   const trimmed = value?.trim()
-  return trimmed ? `${trimmed}개 학급` : '-'
+  if (!trimmed) return '-'
+  const formatted = formatNumberDisplay(trimmed)
+  return formatted === '-' ? '-' : `${formatted}개 학급`
 }
 
 export function formatUjatRegionCapacityVolunteerView(value: string | undefined): string {
   const trimmed = value?.trim()
-  return trimmed ? `${trimmed}명` : '-'
+  if (!trimmed) return '-'
+  const formatted = formatNumberDisplay(trimmed)
+  return formatted === '-' ? '-' : `${formatted}명`
 }
 
 export function formatUjatRegionCapacityRegionView(

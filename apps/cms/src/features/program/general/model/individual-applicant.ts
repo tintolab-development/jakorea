@@ -42,6 +42,11 @@ export interface GeneralIndividualApplicantDetail {
 
 export interface GeneralIndividualApplicantRow {
   id: string
+  /**
+   * 개인 신청 PK — participants `sourceApplicationId`.
+   * 진행현황 목록 `id`는 participantId이므로 PATCH/GET 신청 API는 이 필드를 쓴다.
+   */
+  individualApplicationId?: string
   /** unmask path용 — remote 목록 `memberId` */
   memberId?: string
   /** DB로 연결된 기존 소속 학교/기관 ID. 소속 없음은 null */

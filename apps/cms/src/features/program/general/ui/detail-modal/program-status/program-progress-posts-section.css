@@ -23,6 +23,11 @@
   align-self: stretch;
 }
 
+.program-progress-posts-section .enrollment-program-detail-modal__posts-tab-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .program-progress-posts-section
   .enrollment-program-detail-modal__posts-tab-column--left,
 .program-progress-posts-section

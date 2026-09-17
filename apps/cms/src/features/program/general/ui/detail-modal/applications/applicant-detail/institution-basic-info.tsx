@@ -41,6 +41,7 @@ import {
   formatInstitutionApplicationScheduleRowLabel,
   shouldShowInstitutionApplicationDetailScheduleSection,
 } from '@/features/program/general/lib/institution-application-session-display'
+import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import type { Program } from '@/types/domain'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import {
@@ -264,10 +265,9 @@ export function ApplicantGeneralInstitutionBasicInfo({
       />
     ) : institution.classCount != null && institution.studentCount != null ? (
       <ProgramDetailTdSegmentWrap>
-        {withProgramDetailTdDivider([
-          `${institution.classCount}개 학급`,
-          `총 ${institution.studentCount}명`,
-        ])}
+        {withProgramDetailTdDivider(
+          formatClassStudentCountSegments(institution.classCount, institution.studentCount)
+        )}
       </ProgramDetailTdSegmentWrap>
     ) : (
       '-'

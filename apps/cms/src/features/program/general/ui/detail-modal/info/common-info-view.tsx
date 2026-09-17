@@ -48,7 +48,6 @@ import {
   scheduleDetailsPreEducationSyncEqual,
   shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
-  shouldLockEducationScheduleCalendarToggles,
   PRE_EDUCATION_SCHEDULE_LABEL,
   type ScheduleEventPerScheduleExtraPlan,
 } from '@/features/program/general/lib/schedule-detail-form'
@@ -103,10 +102,8 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import {
-  TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
-  TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS,
-} from '@/features/template/lib/template-form-select-options'
+import { formatNumberDisplay } from '@/shared/utils'
+import { TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import {
   PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS,
   PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
@@ -276,7 +273,9 @@ function ProgramProgressView({ program }: { program: Program }) {
 }
 
 function KpiBoldNumber({ value }: { value: number }) {
-  return <span className="detail-common-info-view__kpi-number">{value}</span>
+  return (
+    <span className="detail-common-info-view__kpi-number">{formatNumberDisplay(value)}</span>
+  )
 }
 
 function BasicInfoSection({
@@ -391,7 +390,8 @@ function BasicInfoSection({
             sponsorName: sponsor.name,
             contactName: contact.name,
             position: contact.position,
-            multiSponsor: selectedSponsors.length > 1,
+            // 시안: 드롭다운은 항상 `후원사명 | 담당자명 직함`
+            multiSponsor: true,
           }),
         })
       }
@@ -416,29 +416,34 @@ function BasicInfoSection({
 
   useEffect(() => {
     if (!isFormEdit) return
-    const currentManagerId = editForm.getValues('sponsorManagerContactId')
+    const currentIds = editForm.getValues('sponsorManagerContactIds') ?? []
     if (watchedSponsorIds.length === 0) {
-      if (currentManagerId) {
+      if (currentIds.length > 0) {
+        editForm.setValue('sponsorManagerContactIds', [], { shouldValidate: false })
         editForm.setValue('sponsorManagerContactId', '', { shouldValidate: false })
       }
       return
     }
     if (managerOptions.length === 0) {
-      if (currentManagerId) {
+      if (currentIds.length > 0) {
+        editForm.setValue('sponsorManagerContactIds', [], { shouldValidate: false })
         editForm.setValue('sponsorManagerContactId', '', { shouldValidate: false })
       }
       return
     }
-    if (!managerOptions.some(option => option.value === currentManagerId)) {
-      const next = managerOptions[0]?.value ?? ''
-      editForm.setValue('sponsorManagerContactId', next, {
-        shouldValidate: Boolean(next),
+    const optionValues = new Set(managerOptions.map(option => option.value))
+    const validIds = currentIds.filter(id => optionValues.has(id))
+    if (validIds.length !== currentIds.length) {
+      editForm.setValue('sponsorManagerContactIds', validIds, {
+        shouldValidate: validIds.length > 0,
         shouldDirty: true,
       })
-      if (next) editForm.clearErrors('sponsorManagerContactId')
-    } else if (currentManagerId) {
-      // 옵션 로드 후 유효 값이 있는데 저장 실패 에러가 남은 경우 빨간 글씨 방지
-      editForm.clearErrors('sponsorManagerContactId')
+      editForm.setValue('sponsorManagerContactId', validIds[0] ?? '', {
+        shouldValidate: false,
+      })
+      if (validIds.length > 0) editForm.clearErrors('sponsorManagerContactIds')
+    } else if (validIds.length > 0) {
+      editForm.clearErrors('sponsorManagerContactIds')
     }
   }, [editForm, isFormEdit, managerOptions, watchedSponsorIds])
 
@@ -713,7 +718,7 @@ function BasicInfoSection({
                       withAllOption={false}
                       placeholder="사업 분야를 선택하세요"
                       width="100%"
-                      options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
+                      options={[...BUSINESS_AREA_OPTIONS]}
                       value={field.value || undefined}
                       onChange={v => {
                         const next = String(v ?? '')
@@ -751,6 +756,7 @@ function BasicInfoSection({
                       onChange={v => {
                         const next = Array.isArray(v) ? v.map(String) : []
                         field.onChange(next)
+                        editForm.setValue('sponsorManagerContactIds', [])
                         editForm.setValue('sponsorManagerContactId', '')
                         if (next.length > 0) editForm.clearErrors('sponsorManagementIds')
                       }}
@@ -768,25 +774,31 @@ function BasicInfoSection({
             }
             edit={
               <Controller
-                name="sponsorManagerContactId"
+                name="sponsorManagerContactIds"
                 control={editForm.control}
                 render={({ field, fieldState }) => {
+                  const selected = Array.isArray(field.value) ? field.value : []
                   const hasValidSelection =
-                    Boolean(field.value) &&
-                    managerOptions.some(option => option.value === field.value)
+                    selected.length > 0 &&
+                    selected.every(id => managerOptions.some(option => option.value === id))
                   return (
                     <CmsSelect
+                      mode="multiple"
                       placeholder="후원사 담당자를 선택하세요"
                       width="100%"
+                      showSearch
+                      optionFilterProp="label"
                       options={managerOptions}
-                      value={field.value || undefined}
+                      value={selected}
                       disabled={watchedSponsorIds.length === 0 || managerOptions.length === 0}
                       onChange={v => {
-                        const next = String(v ?? '')
-                        field.onChange(next)
-                        if (next) editForm.clearErrors('sponsorManagerContactId')
+                        const ids = Array.isArray(v) ? v.map(String) : []
+                        field.onChange(ids)
+                        editForm.setValue('sponsorManagerContactId', ids[0] ?? '', {
+                          shouldDirty: true,
+                        })
+                        if (ids.length > 0) editForm.clearErrors('sponsorManagerContactIds')
                       }}
-                      // 유효 선택값이 있으면 error status 금지 (Ant가 선택 라벨을 빨간색으로 칠함)
                       status={
                         fieldState.error && !hasValidSelection ? 'error' : undefined
                       }
@@ -4335,10 +4347,6 @@ function ScheduleSettingsEditFields({
     participantOrganization: Boolean(participantOrganization),
     sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
   })
-  const lockCalendarTogglesToScheduleMode = shouldLockEducationScheduleCalendarToggles({
-    participantOrganization: Boolean(participantOrganization),
-    educationStructure: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
-  })
   const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
   const autoFillDatePicker = autoFillFromScheduleGroupTimes && scheduleMode === 'date'
   const groupTimeSlotsKey = JSON.stringify(
@@ -4467,9 +4475,9 @@ function ScheduleSettingsEditFields({
                 mode="single"
                 presetMode={autoFillDatePicker ? 'date' : 'schedule'}
                 customizable={false}
+                showPeriodToggle={false}
                 showTimeToggle={!autoFillDatePicker}
-                showPeriodToggle={!lockDateMode && !lockCalendarTogglesToScheduleMode}
-                lockTimeToggleOn={lockCalendarTogglesToScheduleMode && !autoFillDatePicker}
+                lockTimeToggleOn={!autoFillDatePicker}
                 suppressAutoTodayWhenEmpty
                 value={singleDate}
                 onChange={handleDateApply}
@@ -4481,8 +4489,8 @@ function ScheduleSettingsEditFields({
                 mode="single"
                 presetMode="period"
                 customizable={false}
-                showTimeToggle={!lockCalendarTogglesToScheduleMode}
-                lockPeriodToggleOn={lockCalendarTogglesToScheduleMode}
+                showTimeToggle={false}
+                showPeriodToggle={false}
                 suppressAutoTodayWhenEmpty
                 value={periodDate}
                 onChange={setPeriodDate}

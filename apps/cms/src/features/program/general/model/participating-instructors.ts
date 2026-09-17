@@ -51,6 +51,8 @@ export interface ParticipatingInstructorRow {
   teacherName: string
   /** Admin participant.memberId — 1일1교 배정 충돌 키 보조 */
   memberId?: string
+  /** 강사 신청 PK — `sourceApplicationId` (코멘트 PATCH·신청 상세 GET) */
+  instructorApplicationId?: string
   /** 저장된 기존 소속 학교/기관 ID */
   affiliationOrganizationId?: number | null
   /** 참여 강사 상세 모달(기본 정보 탭)용 */
@@ -89,6 +91,8 @@ export interface ParticipatingInstructorRow {
   initialApproval?: boolean
   /** 거주 지역 (참여 강사 목록 필터·테이블용) */
   region?: string
+  /** 배정 기관명 목록 (participants enrich 또는 instructor-assignments 조인) */
+  assignedOrganizationNames?: string[]
   /** JA 평가 등급 (참여 강사 목록 필터·테이블용) */
   jaEvaluationGrade?: string
   /** 강의 보고서 제출 여부 (캘린더 카드 태그 등) */
@@ -131,6 +135,8 @@ export interface ParticipatingInstructorRow {
    * 활동 중단일까지 포함·이후 일정 제외 — API 연동 시 performance aggregation 기준.
    */
   performanceIncludedScheduleIds?: string[]
+  /** participants `sessions[]` enrich — 활동 포기 중단일 선택지 */
+  educationSchedules?: ParticipatingInstructorEducationScheduleRow[]
 }
 
 export type ParticipatingInstructorActivityWithdrawReason = 'institution'

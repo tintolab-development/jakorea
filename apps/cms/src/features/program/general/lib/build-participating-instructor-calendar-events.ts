@@ -38,10 +38,15 @@ export function buildParticipatingInstructorCalendarEvents(
   const events: ParticipatingInstructorCalendarEvent[] = []
 
   for (const instructor of instructors) {
-    const school = schoolByName.get(instructor.schoolName)
-    if (!school?.sessions?.length) continue
+    const assignedSchoolNames =
+      instructor.assignedOrganizationNames?.filter(Boolean) ??
+      (instructor.schoolName?.trim() ? [instructor.schoolName.trim()] : [])
 
-    for (const session of school.sessions) {
+    for (const schoolName of assignedSchoolNames) {
+      const school = schoolByName.get(schoolName)
+      if (!school?.sessions?.length) continue
+
+      for (const session of school.sessions) {
       const sessionDate = parseSessionDate(session.date)
       const times = parseParticipatingSessionTimeRange(session.timeRange)
       const timeRangeDisplay = session.timeRange.replace(/\s*~\s*/g, ' ~ ')
@@ -67,6 +72,7 @@ export function buildParticipatingInstructorCalendarEvents(
           desiredEducationPeriod: periodStr,
         },
       })
+      }
     }
   }
 

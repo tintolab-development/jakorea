@@ -17,6 +17,8 @@ import {
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
 import { assignGeneralIndividualInterview, assignGeneralVolunteerInterview } from '@/features/program/general/api/admin-applications-service'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { getTempMockOrgVolunteerApplicants } from '@/features/program/general/lib/temp-mock-org-program'
 import {
   notifyProgramApiUnavailable,
   useNotifyProgramApiUnavailableOnce,
@@ -61,9 +63,12 @@ export function useGeneralVolunteerDocPassed({
   subjectKind?: ScreeningSubjectKind
 }) {
   const { showAlert } = useCmsAlert()
-  const remoteEnabled = shouldUseGeneralApplicationsRemoteApi() && Boolean(programId)
+  const remoteEnabled =
+    shouldUseGeneralApplicationsRemoteApi() &&
+    Boolean(programId) &&
+    !isGeneralProgramTempMockProgramId(programId)
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled,
+    !remoteEnabled && !isGeneralProgramTempMockProgramId(programId),
     'general-volunteer-doc-passed',
     '프로그램 신청 · 봉사자 1차 서류 합격자'
   )
@@ -89,11 +94,15 @@ export function useGeneralVolunteerDocPassed({
 
   useEffect(() => {
     if (volunteerRemote.remoteEnabled) return
+    if (isGeneralProgramTempMockProgramId(programId) && subjectKind !== 'participant') {
+      setList(getTempMockOrgVolunteerApplicants(programId, 'docPassed'))
+      return
+    }
     setList([])
     setPendingFilters({ ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS })
     setAppliedFilters({ ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS })
     setViewMode('list')
-  }, [volunteerRemote.remoteEnabled])
+  }, [programId, subjectKind, volunteerRemote.remoteEnabled])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
     setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -120,14 +129,20 @@ export function useGeneralVolunteerDocPassed({
     setList(prev => prev.map(row => (row.id === id ? { ...row, ...patch } : row)))
   }, [])
 
-  const handleAssignInterview = useCallback((row: GeneralVolunteerApplicantRow) => {
-    if (!guardGeneralVolunteerAssignInterview(row)) return
-    if (!shouldUseGeneralApplicationsRemoteApi()) {
-      notifyProgramApiUnavailable('general-volunteer-interview-assign', '봉사자 면접일 배정')
-      return
-    }
-    setAssignFlow({ type: 'pick', target: row })
-  }, [])
+  const handleAssignInterview = useCallback(
+    (row: GeneralVolunteerApplicantRow) => {
+      if (!guardGeneralVolunteerAssignInterview(row)) return
+      if (
+        !shouldUseGeneralApplicationsRemoteApi() &&
+        !isGeneralProgramTempMockProgramId(programId)
+      ) {
+        notifyProgramApiUnavailable('general-volunteer-interview-assign', '봉사자 면접일 배정')
+        return
+      }
+      setAssignFlow({ type: 'pick', target: row })
+    },
+    [programId]
+  )
 
   const closeAssignModal = useCallback(() => {
     setAssignFlow(current => (current?.type === 'pick' ? null : current))
@@ -141,7 +156,38 @@ export function useGeneralVolunteerDocPassed({
       const { target } = flow
       const wasAssigned = target.interviewAssignmentStatus === 'assigned'
 
-      if (!shouldUseGeneralApplicationsRemoteApi()) {
+      if (isGeneralProgramTempMockProgramId(programId)) {
+        const assignedApplicant: GeneralVolunteerApplicantRow = {
+          ...target,
+          interviewAssignmentStatus: 'assigned',
+          assignedInterviewDateLabel: payload.dateLabel,
+          assignedInterviewTime: payload.timeRange,
+          secondInterviewScreeningStatus: target.secondInterviewScreeningStatus ?? 'waiting',
+        }
+        const interviewAvailability = mergeAssignedInterviewIntoAvailability(assignedApplicant)
+        updateRow(target.id, {
+          interviewAssignmentStatus: 'assigned',
+          assignedInterviewDateLabel: payload.dateLabel,
+          assignedInterviewTime: payload.timeRange,
+          secondInterviewScreeningStatus: target.secondInterviewScreeningStatus ?? 'waiting',
+          interviewAvailability,
+          interviewSlotCount: countInterviewAvailabilitySlots(interviewAvailability),
+          interviewAssignmentId:
+            target.interviewAssignmentId ?? 860_000 + (target.memberId ?? 0),
+        })
+        setAssignFlow({
+          type: 'complete',
+          applicantName: target.name,
+          mode: wasAssigned ? 'reassign' : 'assign',
+          payload,
+        })
+        return
+      }
+
+      if (
+        !shouldUseGeneralApplicationsRemoteApi() &&
+        !isGeneralProgramTempMockProgramId(programId)
+      ) {
         notifyProgramApiUnavailable('general-volunteer-interview-assign', '봉사자 면접일 배정')
         return
       }
@@ -227,6 +273,17 @@ export function useGeneralVolunteerDocPassed({
         return
       }
       if (!volunteerRemote.remoteEnabled) {
+        if (isGeneralProgramTempMockProgramId(programId)) {
+          setList(prev =>
+            prev.map(item =>
+              item.id === withdrawTargetId
+                ? { ...item, interviewAssignmentStatus: 'withdrawn' as const }
+                : item
+            )
+          )
+          setWithdrawTargetId(null)
+          return
+        }
         notifyProgramApiUnavailable('general-volunteer-give-up', '봉사자 활동 포기')
         setWithdrawTargetId(null)
         return

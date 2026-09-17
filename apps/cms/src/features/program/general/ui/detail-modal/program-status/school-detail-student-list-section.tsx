@@ -39,6 +39,13 @@ import { STUDENT_GENDER_LABELS } from '../../../model/school-detail-types'
 import { getSchoolDetailStudents, getStudentLectureAttendanceSessions } from '../../../lib/school-detail'
 import { useOrganizationStudentRosterRemote } from '../../../hooks/use-organization-student-roster-remote'
 import {
+  fetchStudentLectureAttendanceByParticipantRemote,
+  saveStudentLectureAttendanceByParticipantRemote,
+} from '../../../api/student-lecture-attendance-api'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import type { LectureAttendanceDetail } from '../../../model/school-detail-types'
+import {
   buildStudentClassFilterOptionsFromRows,
   buildStudentGradeClassOptions,
   buildStudentListFilterFields,
@@ -190,6 +197,11 @@ export function SchoolDetailStudentListSection({
   const [lectureAttendanceModalOpen, setLectureAttendanceModalOpen] = useState(false)
   const [lectureAttendanceStudent, setLectureAttendanceStudent] =
     useState<SchoolDetailStudentRow | null>(null)
+  const [lectureAttendanceRemoteDetail, setLectureAttendanceRemoteDetail] = useState<
+    LectureAttendanceDetail | null | undefined
+  >(undefined)
+  const [lectureAttendanceRemoteLoading, setLectureAttendanceRemoteLoading] = useState(false)
+  const [lectureAttendanceSaving, setLectureAttendanceSaving] = useState(false)
   const [attendanceSessionsByStudentId, setAttendanceSessionsByStudentId] = useState<
     Record<string, LectureAttendanceSession[]>
   >({})
@@ -210,6 +222,9 @@ export function SchoolDetailStudentListSection({
     organizationApplicationId,
     educationGrade,
   })
+  const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(
+    programId != null ? String(programId) : undefined
+  )
 
   const showStudentListEditModeBlockedAlert = useCallback(
     () => showAlert({ title: '안내', content: STUDENT_LIST_EDIT_MODE_BLOCKED_ALERT_MESSAGE }),
@@ -554,18 +569,98 @@ export function SchoolDetailStudentListSection({
     }
   }, [isStudentListEditMode, filteredStudentList, reset])
 
-  const openLectureAttendance = useCallback((record: SchoolDetailStudentRow) => {
-    setLectureAttendanceStudent(record)
-    setLectureAttendanceModalOpen(true)
-  }, [])
+  const openLectureAttendance = useCallback(
+    async (record: SchoolDetailStudentRow) => {
+      setLectureAttendanceStudent(record)
+      setLectureAttendanceModalOpen(true)
+      setLectureAttendanceRemoteDetail(null)
+      setLectureAttendanceRemoteLoading(false)
+
+      const programIdValue = programId != null ? String(programId) : ''
+      const participantId = record.participantId
+
+      if (!progressRemoteEnabled || !programIdValue || participantId == null) {
+        notifyProgramApiUnavailable(
+          'general-student-lecture-attendance',
+          '참여 기관 · 학생 강의 출석 내역'
+        )
+        return
+      }
+
+      setLectureAttendanceRemoteLoading(true)
+      try {
+        const detail = await fetchStudentLectureAttendanceByParticipantRemote({
+          programId: programIdValue,
+          participantId,
+          studentName: record.name,
+        })
+        setLectureAttendanceRemoteDetail(detail)
+        setAttendanceSessionsByStudentId(prev => ({
+          ...prev,
+          [record.id]: detail.sessions.map(session => ({ ...session })),
+        }))
+      } catch (error) {
+        console.debug('student lecture attendance fetch failed', error)
+        setLectureAttendanceRemoteDetail(null)
+        showAlert({
+          title: '조회 실패',
+          content: '강의 출석 내역을 불러오지 못했습니다. 다시 시도해 주세요.',
+        })
+      } finally {
+        setLectureAttendanceRemoteLoading(false)
+      }
+    },
+    [programId, progressRemoteEnabled, showAlert]
+  )
 
   const handleSaveLectureAttendance = useCallback(
-    (sessions: LectureAttendanceSession[]) => {
-      const id = lectureAttendanceStudent?.id
-      if (!id) return
-      setAttendanceSessionsByStudentId(prev => ({ ...prev, [id]: sessions }))
+    async (sessions: LectureAttendanceSession[]) => {
+      const student = lectureAttendanceStudent
+      if (!student) return
+
+      const programIdValue = programId != null ? String(programId) : ''
+      const participantId = student.participantId
+
+      if (!progressRemoteEnabled || !programIdValue || participantId == null) {
+        notifyProgramApiUnavailable(
+          'general-student-lecture-attendance-save',
+          '참여 기관 · 학생 출석 정정'
+        )
+        return
+      }
+
+      setLectureAttendanceSaving(true)
+      try {
+        await saveStudentLectureAttendanceByParticipantRemote({
+          programId: programIdValue,
+          participantId,
+          sessions,
+        })
+        const refreshed = await fetchStudentLectureAttendanceByParticipantRemote({
+          programId: programIdValue,
+          participantId,
+          studentName: student.name,
+        })
+        setLectureAttendanceRemoteDetail(refreshed)
+        setAttendanceSessionsByStudentId(prev => ({
+          ...prev,
+          [student.id]: refreshed.sessions.map(session => ({ ...session })),
+        }))
+        showAlert({
+          title: '출석 정정 완료',
+          content: '출석 정보가 저장되었습니다.',
+        })
+      } catch (error) {
+        console.debug('student lecture attendance save failed', error)
+        showAlert({
+          title: '저장 실패',
+          content: '출석 정정 저장에 실패했습니다. 다시 시도해 주세요.',
+        })
+      } finally {
+        setLectureAttendanceSaving(false)
+      }
     },
-    [lectureAttendanceStudent?.id]
+    [lectureAttendanceStudent, programId, progressRemoteEnabled, showAlert]
   )
 
   const handleEditInfoClick = useCallback(() => {
@@ -1007,16 +1102,22 @@ export function SchoolDetailStudentListSection({
         onCancel={() => {
           setLectureAttendanceModalOpen(false)
           setLectureAttendanceStudent(null)
+          setLectureAttendanceRemoteDetail(undefined)
+          setLectureAttendanceRemoteLoading(false)
         }}
         student={lectureAttendanceStudent}
         schoolId={schoolId}
         zIndex={1200}
+        remoteDetail={lectureAttendanceRemoteDetail}
+        remoteDetailLoading={lectureAttendanceRemoteLoading || lectureAttendanceSaving}
         savedSessions={
           lectureAttendanceStudent?.id
             ? attendanceSessionsByStudentId[lectureAttendanceStudent.id]
             : undefined
         }
-        onSaveAttendance={handleSaveLectureAttendance}
+        onSaveAttendance={sessions => {
+          void handleSaveLectureAttendance(sessions)
+        }}
       />
       <AddStudentModal
         open={addStudentModalOpen}

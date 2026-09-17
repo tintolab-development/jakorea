@@ -60,12 +60,26 @@ export function mergeIndividualApplicationUpdateResponse(
   }
 }
 
+/** 신청 PATCH/GET용 PK. 진행현황 행은 `individualApplicationId`, 신청 목록은 `id`. */
+export function resolveIndividualApplicationId(
+  applicant: Pick<GeneralIndividualApplicantRow, 'id' | 'individualApplicationId'>
+): string | null {
+  const mapped = applicant.individualApplicationId?.trim()
+  if (mapped) return mapped
+  const fallback = applicant.id?.trim()
+  return fallback || null
+}
+
 /** PATCH individual-applications — 교재·팀 운영정보 */
 export async function saveIndividualApplicationDetailRemote(
   applicant: GeneralIndividualApplicantRow,
   payload: GeneralIndividualApplicantDetailSavePayload
 ): Promise<GeneralIndividualApplicantRow> {
-  const response = await updateIndividualApplication(applicant.id, {
+  const applicationId = resolveIndividualApplicationId(applicant)
+  if (!applicationId) {
+    throw new Error('개인 신청 ID가 없어 저장할 수 없습니다.')
+  }
+  const response = await updateIndividualApplication(applicationId, {
     textbookId:
       payload.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE
         ? null
@@ -93,7 +107,11 @@ export async function saveIndividualApplicationAdminCommentRemote(
   applicant: GeneralIndividualApplicantRow,
   managerComment: string
 ): Promise<GeneralIndividualApplicantRow> {
-  const response = await updateIndividualApplication(applicant.id, {
+  const applicationId = resolveIndividualApplicationId(applicant)
+  if (!applicationId) {
+    throw new Error('개인 신청 ID가 없어 코멘트를 저장할 수 없습니다.')
+  }
+  const response = await updateIndividualApplication(applicationId, {
     managerComment: managerComment.trim() || null,
   })
   return mergeIndividualApplicationUpdateResponse(applicant, response)

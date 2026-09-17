@@ -76,11 +76,7 @@ function formatSessionLine(s: ParticipatingSchoolSession): string {
   return formatParticipatingSchoolSessionLine(s)
 }
 
-function ParticipatingInstitutionTextbookStatusBadge({
-  status,
-}: {
-  status: TextbookStatusKey
-}) {
+function ParticipatingInstitutionTextbookStatusBadge({ status }: { status: TextbookStatusKey }) {
   if (status === 'not_applicable') return <>-</>
   return (
     <EditableStatusBadge
@@ -146,10 +142,8 @@ export function ParticipatingInstitutionsSection({
       schoolName: pendingFilters.schoolName,
       institutionSido: pendingFilters.institutionSido,
       institutionSigungu: pendingFilters.institutionSigungu,
-      educationGrade:
-        pendingFilters.educationGrade === 'all' ? '' : pendingFilters.educationGrade,
-      textbookStatus:
-        pendingFilters.textbookStatus === 'all' ? '' : pendingFilters.textbookStatus,
+      educationGrade: pendingFilters.educationGrade === 'all' ? '' : pendingFilters.educationGrade,
+      textbookStatus: pendingFilters.textbookStatus === 'all' ? '' : pendingFilters.textbookStatus,
       teacherName: pendingFilters.teacherName,
     }),
     [pendingFilters]
@@ -248,9 +242,7 @@ export function ParticipatingInstitutionsSection({
   const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(resolvedProgramId)
   const mergeGroupsQuery = useOrganizationMergeGroups(
     resolvedProgramId,
-    progressRemoteEnabled &&
-      !isCompanySchool &&
-      shouldUseOrganizationMergeGroupsRemoteApi()
+    progressRemoteEnabled && !isCompanySchool && shouldUseOrganizationMergeGroupsRemoteApi()
   )
 
   /** URL schoolId로 선택된 학교 행 (인라인 상세 뷰용) */
@@ -261,11 +253,7 @@ export function ParticipatingInstitutionsSection({
 
   const selectedRowMergeView = useMemo(() => {
     if (!selectedRowFromUrl || !mergeGroupsQuery.data?.length) return null
-    return resolveCombinedClassMergeViewState(
-      mergeGroupsQuery.data,
-      selectedRowFromUrl,
-      schoolList
-    )
+    return resolveCombinedClassMergeViewState(mergeGroupsQuery.data, selectedRowFromUrl, schoolList)
   }, [mergeGroupsQuery.data, schoolList, selectedRowFromUrl])
 
   const handleSaveCombinedClass = useCallback(
@@ -426,9 +414,7 @@ export function ParticipatingInstitutionsSection({
                     statusOptions={TEXTBOOK_STATUS_OPTION_KEYS.filter(
                       key => key !== 'not_applicable'
                     )}
-                    renderBadge={s => (
-                      <ParticipatingInstitutionTextbookStatusBadge status={s} />
-                    )}
+                    renderBadge={s => <ParticipatingInstitutionTextbookStatusBadge status={s} />}
                     isItemDisabled={(cur, opt) => cur === opt}
                     onChange={key => handleTextbookStatusChange(record.id, key)}
                     isOpen={openTextbookDropdownId === record.id}
@@ -732,7 +718,6 @@ export function ParticipatingInstitutionsSection({
           onCancelApproval={handleSchoolApprovalCancel}
         />
       )}
-
     </div>
   )
 }

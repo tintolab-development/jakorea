@@ -2,7 +2,7 @@
  * 참여 봉사자 페이지 (풀페이지 모달 > 프로그램 진행 현황 > 참여 봉사자)
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { Table, Spin } from 'antd'
@@ -14,34 +14,22 @@ import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-
 import {
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_VOLUNTEER_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_VOLUNTEER_ALERT_MESSAGE,
-  PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COMPLETE_ALERT_MESSAGE,
-  PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COUNTS_REQUIRED_ALERT_MESSAGE,
-  PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_SELECT_INSTITUTION_ALERT_MESSAGE,
-  PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE,
-  PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
-import {
-  fetchParticipatingVolunteerMemberCandidates,
-  type ParticipatingVolunteerMemberCandidate,
-} from '@/features/program/general/lib/participating-volunteer-member-candidates'
 import { participatingVolunteersFilterFields } from '@/features/program/general/lib/participating-volunteers-filter-fields'
-import { AddParticipatingVolunteerModal } from '../../add-participating-volunteer-modal'
-import { ParticipatingVolunteerAddRegistrationModal } from '../../participating-volunteer-add-registration-modal'
 import {
   ParticipatingVolunteerFullpageView,
   type VolunteerDetailTabKey,
 } from './participating-volunteer-fullpage-view'
 import { mergeParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
-import {
-  RegisterEmployeeVolunteerModal,
-  type RegisterEmployeeVolunteerPayload,
-} from '../../register-employee-volunteer-modal'
-import { useEmployeeVolunteerRegistration } from '../../../hooks/use-employee-volunteer-registration'
+import { ParticipatingVolunteerActivityCertificatePreviewModal } from './participating-volunteer-activity-certificate-preview-modal'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { useProgressVolunteerList } from '../../../hooks/use-progress-volunteer-list'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
@@ -101,7 +89,6 @@ export function ParticipatingVolunteersSection({
   } = useParticipatingVolunteersParams()
   const {
     volunteerList,
-    addVolunteerFromMember,
     applicationsLoading,
     hasNextPage,
     isFetchingNextPage,
@@ -138,10 +125,8 @@ export function ParticipatingVolunteersSection({
     instructorList,
     programId,
     program,
+    enabled: !(program != null && isGeneralIndividualProgram(program)),
   })
-
-  const { sessionRows, approvedInstitutionOptions, registrations, saveRegistration } =
-    useEmployeeVolunteerRegistration(program, schoolRows, volunteerList)
 
   const [pendingFilters, setPendingFilters] = useState<ParticipatingVolunteersFilters>(() => ({
     ...filters,
@@ -150,13 +135,9 @@ export function ParticipatingVolunteersSection({
   const [calendarSelectedDate, setCalendarSelectedDate] = useState<Dayjs>(() => dayjs())
   /** `null` — 해당 날짜 기관 전체 선택(날짜 변경 시 기본), `[]` — 사용자가 모두 해제 */
   const [calendarSelectedSchools, setCalendarSelectedSchools] = useState<string[] | null>(null)
-  const [addVolunteerModalOpen, setAddVolunteerModalOpen] = useState(false)
-  const [volunteerRegistrationModalOpen, setVolunteerRegistrationModalOpen] = useState(false)
-  const [pendingVolunteerMemberId, setPendingVolunteerMemberId] = useState<string | null>(null)
-  const [addEmployeeVolunteerModalOpen, setAddEmployeeVolunteerModalOpen] = useState(false)
-  const [volunteerMemberOptions, setVolunteerMemberOptions] = useState<
-    ParticipatingVolunteerMemberCandidate[]
-  >([])
+  const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
+  const [activityCertPreviewVolunteer, setActivityCertPreviewVolunteer] =
+    useState<ParticipatingVolunteerRow | null>(null)
 
   useEffect(() => {
     setPendingFilters({ ...filters })
@@ -171,21 +152,6 @@ export function ParticipatingVolunteersSection({
   const handleFilterSearch = () => {
     applyFilters({ ...pendingFilters })
   }
-
-  const registeredVolunteerNames = useMemo(
-    () => volunteerList.map(row => row.volunteerName),
-    [volunteerList]
-  )
-
-  useEffect(() => {
-    let cancelled = false
-    void fetchParticipatingVolunteerMemberCandidates(registeredVolunteerNames).then(options => {
-      if (!cancelled) setVolunteerMemberOptions(options)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [registeredVolunteerNames])
 
   const filteredVolunteers = useMemo(
     () => filterParticipatingVolunteers(volunteerList, appliedFilters),
@@ -241,64 +207,35 @@ export function ParticipatingVolunteersSection({
     [volunteerCalendarEvents, calendarSelectedDate]
   )
 
-  const showVolunteerAddSelectAlert = useCallback(() => {
-    showAlert({ title: '안내', content: PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE })
-  }, [showAlert])
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
 
-  const showEmployeeVolunteerInstitutionSelectAlert = useCallback(() => {
-    showAlert({
-      title: '안내',
-      content: PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_SELECT_INSTITUTION_ALERT_MESSAGE,
-    })
-  }, [showAlert])
-
-  const showEmployeeVolunteerCountsRequiredAlert = useCallback(() => {
-    showAlert({
-      title: '안내',
-      content: PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COUNTS_REQUIRED_ALERT_MESSAGE,
-    })
-  }, [showAlert])
-
-  const handleRegisterEmployeeVolunteer = useCallback(
-    (payload: RegisterEmployeeVolunteerPayload) => {
-      saveRegistration(payload.institutionId, payload.countsBySessionId)
+  const handleRegisterEmployeeVolunteerClick = useCallback(() => {
+    if (isTempMockProgram) {
       showAlert({
-        title: '안내',
-        content: PARTICIPATING_EMPLOYEE_VOLUNTEER_REGISTER_COMPLETE_ALERT_MESSAGE,
+        title: '등록 완료',
+        content: '임직원 자원봉사자 등록이 완료되었습니다. (temp mock)',
       })
-    },
-    [saveRegistration, showAlert]
-  )
-
-  const pendingVolunteerHideBasicInfo = useMemo(() => {
-    if (!pendingVolunteerMemberId) return false
-    const candidate = volunteerMemberOptions.find(
-      member => member.memberId === pendingVolunteerMemberId
-    )
-    return candidate?.hasRegisteredId1365 ?? false
-  }, [pendingVolunteerMemberId, volunteerMemberOptions])
-
-  const handleProceedToVolunteerRegistration = useCallback((memberId: string) => {
-    setPendingVolunteerMemberId(memberId)
-    setVolunteerRegistrationModalOpen(true)
-  }, [])
-
-  const handleVolunteerRegistrationClose = useCallback(() => {
-    setVolunteerRegistrationModalOpen(false)
-    setPendingVolunteerMemberId(null)
-  }, [])
-
-  const handleVolunteerRegistrationConfirm = useCallback(async () => {
-    const memberId = pendingVolunteerMemberId
-    setVolunteerRegistrationModalOpen(false)
-    setPendingVolunteerMemberId(null)
-    if (!memberId) return
-
-    const row = await addVolunteerFromMember(memberId)
-    if (row) {
-      showAlert({ title: '안내', content: PARTICIPATING_VOLUNTEER_ADD_COMPLETE_ALERT_MESSAGE })
+      return
     }
-  }, [addVolunteerFromMember, pendingVolunteerMemberId, showAlert])
+    notifyProgramApiUnavailable(
+      'general-progress-volunteer-employee-register',
+      '참여 봉사자 · 임직원 자원봉사자 등록'
+    )
+  }, [isTempMockProgram, showAlert])
+
+  const handleRegisterVolunteerClick = useCallback(() => {
+    if (isTempMockProgram) {
+      showAlert({
+        title: '등록 완료',
+        content: '봉사자 등록이 완료되었습니다. (temp mock)',
+      })
+      return
+    }
+    notifyProgramApiUnavailable(
+      'general-progress-volunteer-register',
+      '참여 봉사자 · 봉사자 등록'
+    )
+  }, [isTempMockProgram, showAlert])
 
   const handleActivityCertificateIssueClick = useCallback(() => {
     const selectedCount = selectedRowKeys.length
@@ -327,8 +264,9 @@ export function ParticipatingVolunteersSection({
       })
       return
     }
-    onVolunteerRowClick?.(selectedRow)
-  }, [filteredVolunteers, onVolunteerRowClick, selectedRowKeys, showAlert, volunteerList])
+    setActivityCertPreviewVolunteer(selectedRow)
+    setActivityCertPreviewOpen(true)
+  }, [filteredVolunteers, selectedRowKeys, showAlert, volunteerList])
 
   const selectedVolunteerFromUrl = useMemo(() => {
     if (!volunteerIdFromUrl) return null
@@ -441,15 +379,25 @@ export function ParticipatingVolunteersSection({
         dataIndex: 'contact',
         key: 'contact',
         width: 140,
+        minWidth: 140,
         align: 'center',
+        ellipsis: { showTitle: true },
+        className: 'participating-volunteers-section__col-contact',
+        onHeaderCell: () => ({ className: 'participating-volunteers-section__col-contact' }),
+        onCell: () => ({ className: 'participating-volunteers-section__col-contact' }),
         render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
       {
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 180,
+        width: 220,
+        minWidth: 220,
         align: 'center',
+        ellipsis: { showTitle: true },
+        className: 'participating-volunteers-section__col-email',
+        onHeaderCell: () => ({ className: 'participating-volunteers-section__col-email' }),
+        onCell: () => ({ className: 'participating-volunteers-section__col-email' }),
         render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
     ]
@@ -480,29 +428,8 @@ export function ParticipatingVolunteersSection({
           activeTab={volunteerTabFromUrl ?? undefined}
           onTabChange={onVolunteerTabChange}
           onClearVolunteerId={onClearVolunteerId ?? (() => {})}
-        />
-        <AddParticipatingVolunteerModal
-          open={addVolunteerModalOpen}
-          onCancel={() => setAddVolunteerModalOpen(false)}
-          memberOptions={volunteerMemberOptions}
-          onNoMemberSelected={showVolunteerAddSelectAlert}
-          onProceedToRegistration={handleProceedToVolunteerRegistration}
-        />
-        <ParticipatingVolunteerAddRegistrationModal
-          open={volunteerRegistrationModalOpen}
-          hideBasicInfoSection={pendingVolunteerHideBasicInfo}
-          onClose={handleVolunteerRegistrationClose}
-          onConfirm={handleVolunteerRegistrationConfirm}
-        />
-        <RegisterEmployeeVolunteerModal
-          open={addEmployeeVolunteerModalOpen}
-          onCancel={() => setAddEmployeeVolunteerModalOpen(false)}
-          sessionRows={sessionRows}
-          institutionOptions={approvedInstitutionOptions}
-          savedRegistrations={registrations}
-          onNoInstitutionSelected={showEmployeeVolunteerInstitutionSelectAlert}
-          onIncompleteCounts={showEmployeeVolunteerCountsRequiredAlert}
-          onRegister={handleRegisterEmployeeVolunteer}
+          schoolRows={schoolRows}
+          volunteerList={volunteerList}
         />
       </div>
     )
@@ -563,7 +490,7 @@ export function ParticipatingVolunteersSection({
               variant="primary"
               size="large"
               width={220}
-              onClick={() => setAddEmployeeVolunteerModalOpen(true)}
+              onClick={handleRegisterEmployeeVolunteerClick}
             >
               임직원 자원봉사자 등록
             </CmsButton>
@@ -571,7 +498,7 @@ export function ParticipatingVolunteersSection({
               variant="primary"
               size="large"
               width={140}
-              onClick={() => setAddVolunteerModalOpen(true)}
+              onClick={handleRegisterVolunteerClick}
             >
               봉사자 등록
             </CmsButton>
@@ -583,7 +510,17 @@ export function ParticipatingVolunteersSection({
         }}
       >
         {viewMode === 'list' ? (
-          <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">
+          <div
+            ref={tableWrapRef}
+            className="participating-institutions-section__table-wrap"
+            style={
+              tableScrollX != null
+                ? ({
+                    ['--participating-institutions-table-width']: `${tableScrollX}px`,
+                  } as CSSProperties)
+                : undefined
+            }
+          >
             <Table<ParticipatingVolunteerRow>
               className="participating-institutions-section__table cms-data-table participating-institutions-section__table--clickable"
               rowKey="id"
@@ -644,29 +581,17 @@ export function ParticipatingVolunteersSection({
 
       <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />
 
-      <AddParticipatingVolunteerModal
-        open={addVolunteerModalOpen}
-        onCancel={() => setAddVolunteerModalOpen(false)}
-        memberOptions={volunteerMemberOptions}
-        onNoMemberSelected={showVolunteerAddSelectAlert}
-        onProceedToRegistration={handleProceedToVolunteerRegistration}
-      />
-      <ParticipatingVolunteerAddRegistrationModal
-        open={volunteerRegistrationModalOpen}
-        hideBasicInfoSection={pendingVolunteerHideBasicInfo}
-        onClose={handleVolunteerRegistrationClose}
-        onConfirm={handleVolunteerRegistrationConfirm}
-      />
-      <RegisterEmployeeVolunteerModal
-        open={addEmployeeVolunteerModalOpen}
-        onCancel={() => setAddEmployeeVolunteerModalOpen(false)}
-        sessionRows={sessionRows}
-        institutionOptions={approvedInstitutionOptions}
-        savedRegistrations={registrations}
-        onNoInstitutionSelected={showEmployeeVolunteerInstitutionSelectAlert}
-        onIncompleteCounts={showEmployeeVolunteerCountsRequiredAlert}
-        onRegister={handleRegisterEmployeeVolunteer}
-      />
+      {activityCertPreviewVolunteer ? (
+        <ParticipatingVolunteerActivityCertificatePreviewModal
+          open={activityCertPreviewOpen}
+          onClose={() => {
+            setActivityCertPreviewOpen(false)
+            setActivityCertPreviewVolunteer(null)
+          }}
+          volunteer={mergeParticipatingVolunteerDetailRow(activityCertPreviewVolunteer)}
+          program={program}
+        />
+      ) : null}
     </div>
   )
 }

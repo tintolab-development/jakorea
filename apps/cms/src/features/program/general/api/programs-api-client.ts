@@ -80,6 +80,29 @@ export async function fetchAdminProgramByIdRemote(programId: string): Promise<Pr
   )
 }
 
+/** GET /api/admin/programs/{id}/sponsors — 후원사·담당자 배정 SSOT */
+export type AdminProgramSponsorAssignmentDto = {
+  id?: string
+  sponsorId?: string
+  sponsorName?: string
+  sponsorContactId?: string | null
+  sponsorContactName?: string | null
+  sponsorYear?: number | null
+  contributionAmountSnapshot?: number | null
+  displayOrder?: number | null
+}
+
+export async function fetchAdminProgramSponsorsRemote(
+  programId: string
+): Promise<AdminProgramSponsorAssignmentDto[]> {
+  return unwrapApiBody<AdminProgramSponsorAssignmentDto[]>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/sponsors`,
+      method: 'GET',
+    })
+  )
+}
+
 export async function createAdminProgramRemote(
   payload: import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest
 ): Promise<ProgramResponse> {
@@ -152,7 +175,9 @@ export async function bulkDeleteAdminProgramsRemote(programIds: string[]): Promi
 
 export async function fetchAdminProgramNavigationRemote(
   programId: string
-): Promise<import('@/shared/api/generated/dashboard/schemas/programNavigationResponse').ProgramNavigationResponse> {
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programNavigationResponse').ProgramNavigationResponse
+> {
   return unwrapApiBody(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/navigation`,
@@ -349,6 +374,44 @@ export async function deleteAdminProgramPostReactionRemote(
   })
 }
 
+export async function fetchAdminProgramPostReadsRemote(
+  programId: string,
+  postId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostReadsResponse').ProgramPostReadsResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/reads`,
+      method: 'GET',
+    })
+  )
+}
+
+/**
+ * POST …/unread-reminders
+ * OpenAPI `UnreadReminderRequest`는 `message`만 정의.
+ * FE는 선택 대상 전달을 위해 additive `memberIds`를 함께 전송(서버 미지원 시 무시·갭 문서화).
+ */
+export async function createAdminProgramPostUnreadReminderRemote(
+  programId: string,
+  postId: string,
+  payload: {
+    message?: string
+    memberIds?: number[]
+  }
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostUnreadReminderResponse').ProgramPostUnreadReminderResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/unread-reminders`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
 export async function fetchAdminProgramSurveyResponsesRemote(
   programId: string,
   templateVersionId: string
@@ -439,6 +502,38 @@ export async function createAdminProgramFormBindingRemote(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/form-bindings`,
       method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/** POST /api/admin/programs/{programId}/surveys/bindings/{bindingId}/share-link */
+export async function createAdminProgramSurveyShareLinkRemote(
+  programId: string,
+  bindingId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/surveyShareLinkResponse').SurveyShareLinkResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/surveys/bindings/${encodeURIComponent(bindingId)}/share-link`,
+      method: 'POST',
+    })
+  )
+}
+
+/** PATCH /api/admin/programs/{programId}/form-bindings/{bindingId} */
+export async function updateAdminProgramFormBindingRemote(
+  programId: string,
+  bindingId: string,
+  payload: import('@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest').ProgramFormBindingRequest
+): Promise<
+  import('@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse').ProgramFormBindingResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/form-bindings/${encodeURIComponent(bindingId)}`,
+      method: 'PATCH',
       data: payload,
     })
   )

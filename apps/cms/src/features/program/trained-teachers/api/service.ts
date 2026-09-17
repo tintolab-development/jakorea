@@ -3,15 +3,19 @@ import {
   createAdminProgramRemote,
   deleteAdminProgramRemote,
   fetchAdminProgramByIdRemote,
+  fetchAdminProgramSponsorsRemote,
   fetchAdminProgramsRemote,
   updateAdminProgramRemote,
 } from '@/features/program/general/api/programs-api-client'
+import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import customInstance from '@/shared/api/orval-mutator'
 import type { Program } from '@/types/domain'
 import {
   mapTrainedTeacherDetailToProgram,
   mapTrainedTeacherListItemToProgram,
   mapTrainedTeacherToCreateRequest,
   mapTrainedTeacherToUpdateRequest,
+  mergeTrainedTeacherSponsorAssignments,
 } from './adapters'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import {
@@ -100,44 +104,53 @@ export async function listTrainedTeacherPrograms(
 }
 
 /**
- * 상단 4카드 건수 — GET /programs totalElements (목록과 동일 periodStatus 계약).
- * TRAINED_TEACHER: scheduled=SCHEDULED(+RECRUITING 방어), in_progress=IN_PROGRESS, completed=COMPLETED
+ * 상단 4카드 건수 — GET /api/admin/programs/overview-stages?programType=TRAINED_TEACHER
+ * scheduled/recruiting 동일 버킷 가능 — FE에서 합산하지 않음 (BE list periodStatus 계약과 동일)
  */
 export async function fetchTrainedTeacherOverviewStages(): Promise<GeneralProgramOverviewStageCounts> {
   assertRemoteReady()
 
-  const base = {
-    programType: TRAINED_TEACHER_PROGRAM_API_TYPE,
-    page: 0,
-    size: 1,
-  } as const
-  const [all, scheduled, recruiting, inProgress, completed] = await Promise.all([
-    fetchAdminProgramsRemote({ ...base }),
-    fetchAdminProgramsRemote({ ...base, periodStatus: 'SCHEDULED' }),
-    fetchAdminProgramsRemote({ ...base, periodStatus: 'RECRUITING' }),
-    fetchAdminProgramsRemote({ ...base, periodStatus: 'IN_PROGRESS' }),
-    fetchAdminProgramsRemote({ ...base, periodStatus: 'COMPLETED' }),
-  ])
+  const data = await unwrapApiBody<{
+    total?: number
+    scheduled?: number
+    recruiting?: number
+    inProgress?: number
+    completed?: number
+  }>(
+    await customInstance({
+      url: '/api/admin/programs/overview-stages',
+      method: 'GET',
+      params: { programType: TRAINED_TEACHER_PROGRAM_API_TYPE },
+    })
+  )
 
+  // BE: scheduled/recruiting 은 동일 예정 버킷일 수 있음 — 강제 합산하지 않음
   return {
-    total: all.totalElements ?? all.items?.length ?? 0,
-    scheduled:
-      (scheduled.totalElements ?? scheduled.items?.length ?? 0) +
-      (recruiting.totalElements ?? recruiting.items?.length ?? 0),
-    inProgress: inProgress.totalElements ?? inProgress.items?.length ?? 0,
-    completed: completed.totalElements ?? completed.items?.length ?? 0,
+    total: data.total ?? 0,
+    scheduled: data.scheduled ?? 0,
+    inProgress: data.inProgress ?? 0,
+    completed: data.completed ?? 0,
   }
 }
 
 export async function getTrainedTeacherProgram(programId: string): Promise<Program> {
   assertRemoteReady()
-  const program = mapTrainedTeacherDetailToProgram(await fetchAdminProgramByIdRemote(programId))
+  const [dto, sponsors] = await Promise.all([
+    fetchAdminProgramByIdRemote(programId),
+    fetchAdminProgramSponsorsRemote(programId).catch(() => [] as Awaited<
+      ReturnType<typeof fetchAdminProgramSponsorsRemote>
+    >),
+  ])
+  const base = mapTrainedTeacherDetailToProgram(dto)
   try {
     const infoDetail = await fetchTrainedTeacherInfoDetailRemote(programId)
-    return mergeTrainedTeacherInfoDetailIntoProgram(program, infoDetail)
+    // sponsors API 가 후원·담당자 SSOT — info-detail configJson 보다 우선
+    return mergeTrainedTeacherSponsorAssignments(
+      mergeTrainedTeacherInfoDetailIntoProgram(base, infoDetail),
+      sponsors
+    )
   } catch {
-    // info detail 실패 시 programs 코어 detail만 반환 (Phase 2 soft-fail)
-    return program
+    return mergeTrainedTeacherSponsorAssignments(base, sponsors)
   }
 }
 
@@ -160,12 +173,18 @@ export async function updateTrainedTeacherProgram(
     programId,
     mapTrainedTeacherToUpdateRequest(program, patch)
   )
+  const sponsors = await fetchAdminProgramSponsorsRemote(programId).catch(
+    () => [] as Awaited<ReturnType<typeof fetchAdminProgramSponsorsRemote>>
+  )
   const mapped = mapTrainedTeacherDetailToProgram(dto)
   try {
     const infoDetail = await fetchTrainedTeacherInfoDetailRemote(programId)
-    return mergeTrainedTeacherInfoDetailIntoProgram(mapped, infoDetail)
+    return mergeTrainedTeacherSponsorAssignments(
+      mergeTrainedTeacherInfoDetailIntoProgram(mapped, infoDetail),
+      sponsors
+    )
   } catch {
-    return mapped
+    return mergeTrainedTeacherSponsorAssignments(mapped, sponsors)
   }
 }
 

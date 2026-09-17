@@ -2,8 +2,8 @@
  * 참여 강사 상세 — 강의보고서 관리 탭 (일반 프로그램 · 개인)
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Table } from 'antd'
+import { useCallback, useMemo, useState } from 'react'
+import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
@@ -13,24 +13,52 @@ import { StatusBadge } from '@/shared/components'
 import { CmsButton, ExcelButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import { handleError } from '@/shared/utils/error-handler'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
+import { useProgramLectureReports } from '@/features/program/general/hooks/use-program-lecture-reports'
+import type { ParticipatingInstructorLectureReportRow } from '@/features/program/general/api/adapters/lecture-reports-adapters'
 import {
-  buildLectureReportPreviewContext,
-  type LectureReportPreviewContext,
-} from '@/features/program/general/lib/build-lecture-report-issuance-preview'
-import { downloadLectureReportPdfFiles } from '@/features/program/general/lib/download-lecture-reports-bulk-pdf'
-import {
-  lectureProgressAccent,
-  PARTICIPATING_INDIVIDUAL_INSTRUCTOR_LECTURE_PROGRESS_LABELS,
-  PARTICIPATING_INDIVIDUAL_INSTRUCTOR_SUBMISSION_STATUS_LABELS,
-  submissionStatusAccent,
-} from '@/features/program/general/lib/participating-individual-instructor-lecture-report-display'
-import { PARTICIPATING_INDIVIDUAL_INSTRUCTOR_LECTURE_REPORT_EXCEL_COLUMNS } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-export'
-import { getParticipatingIndividualInstructorLectureReportRows } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-rows'
-import type { ParticipatingIndividualInstructorLectureReportRow } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-types'
-import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
-import { LectureReportBulkPdfExportHost } from './lecture-report-bulk-pdf-export-host'
-import { LectureReportIssuancePreviewModal } from './lecture-report-issuance-preview-modal'
+  downloadGeneralProgramLectureReportFiles,
+  downloadGeneralProgramLectureReports,
+} from '@/features/program/general/api/admin-program-progress-service'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+
+const STATUS_ACCENT_DEFAULT = 'var(--default-BK, #3d3d3d)'
+const STATUS_ACCENT_SCHEDULED = 'var(--color-green, #1e8c29)'
+const STATUS_ACCENT_UNDONE = 'var(--color-red, #c32f4a)'
+
+function lectureProgressAccent(
+  label: ParticipatingInstructorLectureReportRow['lectureProgressLabel']
+): string {
+  return label === '진행 완료' ? STATUS_ACCENT_DEFAULT : STATUS_ACCENT_SCHEDULED
+}
+
+function submissionStatusAccent(
+  label: ParticipatingInstructorLectureReportRow['submissionStatusLabel']
+): string {
+  if (label === '미제출') return STATUS_ACCENT_UNDONE
+  if (label === '진행 예정') return STATUS_ACCENT_SCHEDULED
+  return STATUS_ACCENT_DEFAULT
+}
+
+function resolveInstructorMemberId(instructor: ParticipatingInstructorRow): number | undefined {
+  if (instructor.memberId == null || instructor.memberId === '') return undefined
+  const n = Number(instructor.memberId)
+  return Number.isFinite(n) && n > 0 ? n : undefined
+}
+
+const excelColumns: ColumnsType<ParticipatingInstructorLectureReportRow> = [
+  { title: 'No.', dataIndex: 'no', key: 'no' },
+  { title: '교육 진행 일정', dataIndex: 'educationScheduleLabel', key: 'educationScheduleLabel' },
+  {
+    title: '강의보고서 제출 기간',
+    dataIndex: 'submissionPeriodLabel',
+    key: 'submissionPeriodLabel',
+  },
+  { title: '강의 진행 여부', dataIndex: 'lectureProgressLabel', key: 'lectureProgressLabel' },
+  { title: '제출 현황', dataIndex: 'submissionStatusLabel', key: 'submissionStatusLabel' },
+]
 
 export interface ParticipatingIndividualInstructorLectureReportsSectionProps {
   instructor: ParticipatingInstructorRow
@@ -42,74 +70,80 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
   program,
 }: ParticipatingIndividualInstructorLectureReportsSectionProps) {
   const { showAlert } = useCmsAlert()
-  const rows = useMemo(
-    () => getParticipatingIndividualInstructorLectureReportRows(instructor, program),
-    [instructor, program]
-  )
+  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
+  const instructorMemberId = resolveInstructorMemberId(instructor)
+  const lectureReports = useProgramLectureReports(program.id, { instructorMemberId })
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage: lectureReports.hasNextPage,
+    isFetchingNextPage: lectureReports.isFetchingNextPage,
+    fetchNextPage: lectureReports.fetchNextPage,
+    resetKey: `${program.id}:${instructor.id}:${instructorMemberId ?? ''}`,
+  })
 
-  const tableData = useMemo(
-    () =>
-      rows.map((row, index) => ({
-        ...row,
-        no: rows.length - index,
-      })),
+  const rows = lectureReports.loading
+    ? []
+    : lectureReports.isRemoteDataSource && lectureReports.rows != null
+      ? lectureReports.rows
+      : []
+
+  const [viewDownloadingId, setViewDownloadingId] = useState<string | null>(null)
+  const [bulkDownloading, setBulkDownloading] = useState(false)
+
+  const submittedRows = useMemo(
+    () => rows.filter(row => row.canViewReport),
     [rows]
   )
 
-  const [previewOpen, setPreviewOpen] = useState(false)
-  const [previewContext, setPreviewContext] = useState<LectureReportPreviewContext | null>(null)
-  const [bulkExportQueue, setBulkExportQueue] = useState<LectureReportPreviewContext[]>([])
-  const [bulkExportActive, setBulkExportActive] = useState(false)
-  const bulkExportResultsRef = useRef<Array<{ fileName: string; blob: Blob }>>([])
-  const bulkExportStartedRef = useRef(false)
-
-  const submittedRows = useMemo(() => rows.filter(row => row.canViewReport), [rows])
-
-  const programTitle = program.mainTitle?.trim() || program.title?.trim() || '개인 프로그램'
-
-  const buildRowPreviewContext = useCallback(
-    (row: ParticipatingIndividualInstructorLectureReportRow, no: number): LectureReportPreviewContext =>
-      buildLectureReportPreviewContext(instructor, program, {
-        id: row.id,
-        no,
-        schoolName: programTitle,
-        educationGrade: '-',
-        educationScheduleLabel: row.scheduleLabel,
-      }),
-    [instructor, program, programTitle]
-  )
-
-  const handleOpenPreview = useCallback(
-    (row: ParticipatingIndividualInstructorLectureReportRow & { no: number }) => {
-      setPreviewContext(buildRowPreviewContext(row, row.no))
-      setPreviewOpen(true)
-    },
-    [buildRowPreviewContext]
-  )
-
-  const handleClosePreview = useCallback(() => {
-    setPreviewOpen(false)
-    setPreviewContext(null)
-  }, [])
-
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
-    columns: PARTICIPATING_INDIVIDUAL_INSTRUCTOR_LECTURE_REPORT_EXCEL_COLUMNS,
-    data: tableData,
+    columns: excelColumns,
+    data: rows,
     filename: `강의보고서_제출현황_${instructor.instructorName}`,
   })
 
-  const handleBulkExportItemComplete = useCallback(
-    (result: { fileName: string; blob: Blob } | null) => {
-      if (result != null) {
-        bulkExportResultsRef.current.push(result)
+  const handleViewReport = useCallback(
+    async (row: ParticipatingInstructorLectureReportRow) => {
+      if (!row.canViewReport) return
+      if (!remoteEnabled) {
+        notifyProgramApiUnavailable(
+          'general-lecture-report-view-individual',
+          '일반 프로그램 · 강의보고서 보기'
+        )
+        return
       }
-      setBulkExportQueue(prev => prev.slice(1))
+      if (row.fileObjectIds.length === 0) {
+        showAlert({
+          title: '안내',
+          content: '제출 파일이 없어 강의보고서를 열 수 없습니다.',
+        })
+        return
+      }
+      setViewDownloadingId(row.id)
+      try {
+        await downloadGeneralProgramLectureReportFiles(
+          row.fileObjectIds,
+          `강의보고서_${row.reportId ?? row.id}`
+        )
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content: getGeneralProgramApiErrorMessage(error, '강의보고서 다운로드에 실패했습니다.'),
+        })
+      } finally {
+        setViewDownloadingId(null)
+      }
     },
-    []
+    [remoteEnabled, showAlert]
   )
 
-  const handleBulkDownload = useCallback(() => {
-    if (bulkExportActive) return
+  const handleBulkDownload = useCallback(async () => {
+    if (bulkDownloading) return
+    if (!remoteEnabled) {
+      notifyProgramApiUnavailable(
+        'general-lecture-report-bulk-download-individual',
+        '일반 프로그램 · 강의보고서 일괄 다운로드'
+      )
+      return
+    }
     if (submittedRows.length === 0) {
       showAlert({
         title: '안내',
@@ -117,98 +151,73 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
       })
       return
     }
-
-    bulkExportResultsRef.current = []
-    bulkExportStartedRef.current = true
-    setBulkExportQueue(
-      submittedRows.map((row, index) =>
-        buildRowPreviewContext(row, submittedRows.length - index)
-      )
-    )
-    setBulkExportActive(true)
-  }, [bulkExportActive, buildRowPreviewContext, showAlert, submittedRows])
-
-  useEffect(() => {
-    if (!bulkExportActive || !bulkExportStartedRef.current || bulkExportQueue.length > 0) {
-      return
+    setBulkDownloading(true)
+    try {
+      await downloadGeneralProgramLectureReports(program.id, { instructorMemberId })
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: getGeneralProgramApiErrorMessage(
+          error,
+          '강의보고서 일괄 다운로드에 실패했습니다.'
+        ),
+      })
+    } finally {
+      setBulkDownloading(false)
     }
-
-    bulkExportStartedRef.current = false
-    const files = bulkExportResultsRef.current
-
-    void (async () => {
-      try {
-        if (files.length === 0) {
-          showAlert({
-            title: '안내',
-            content: 'PDF 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-          })
-          return
-        }
-        await downloadLectureReportPdfFiles(files)
-      } catch (error) {
-        handleError(error, {
-          context: 'participatingIndividualInstructorLectureReportsSection.bulkDownload',
-        })
-        showAlert({
-          title: '안내',
-          content: '강의보고서 일괄 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-        })
-      } finally {
-        bulkExportResultsRef.current = []
-        setBulkExportActive(false)
-      }
-    })()
-  }, [bulkExportActive, bulkExportQueue.length, showAlert])
-
-  const currentBulkExportContext = bulkExportQueue[0] ?? null
+  }, [
+    bulkDownloading,
+    instructorMemberId,
+    program.id,
+    remoteEnabled,
+    showAlert,
+    submittedRows.length,
+  ])
 
   const columns = useMemo(
-    (): ColumnsType<ParticipatingIndividualInstructorLectureReportRow & { no: number }> => [
+    (): ColumnsType<ParticipatingInstructorLectureReportRow> => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '교육 진행 일정',
-        dataIndex: 'scheduleLabel',
-        key: 'scheduleLabel',
+        dataIndex: 'educationScheduleLabel',
+        key: 'educationScheduleLabel',
         align: 'center',
-        width: 400,
-        render: (value: string | undefined) => renderProgramDetailPipeSeparated(value),
+        width: 360,
+        render: (label: string) => renderProgramDetailPipeSeparated(label),
       },
       {
         title: '강의보고서 제출 기간',
         dataIndex: 'submissionPeriodLabel',
         key: 'submissionPeriodLabel',
         align: 'center',
-        width: 220,
+        width: 280,
       },
       {
         title: '강의 진행 여부',
-        dataIndex: 'lectureProgress',
-        key: 'lectureProgress',
+        dataIndex: 'lectureProgressLabel',
+        key: 'lectureProgressLabel',
         align: 'center',
         width: 120,
-        render: (_value, record) => (
+        render: (label: ParticipatingInstructorLectureReportRow['lectureProgressLabel']) => (
           <StatusBadge
             domain="custom"
-            label={PARTICIPATING_INDIVIDUAL_INSTRUCTOR_LECTURE_PROGRESS_LABELS[record.lectureProgress]}
-            accentColor={lectureProgressAccent(record.lectureProgress)}
+            label={label}
+            accentColor={lectureProgressAccent(label)}
             variant="text"
           />
         ),
       },
       {
         title: '제출 현황',
-        dataIndex: 'submissionStatus',
-        key: 'submissionStatus',
+        dataIndex: 'submissionStatusLabel',
+        key: 'submissionStatusLabel',
         align: 'center',
         width: 120,
-        render: (_value, record) => (
+        render: (label: ParticipatingInstructorLectureReportRow['submissionStatusLabel']) => (
           <StatusBadge
             domain="custom"
-            label={
-              PARTICIPATING_INDIVIDUAL_INSTRUCTOR_SUBMISSION_STATUS_LABELS[record.submissionStatus]
-            }
-            accentColor={submissionStatusAccent(record.submissionStatus)}
+            label={label}
+            accentColor={submissionStatusAccent(label)}
             variant="text"
           />
         ),
@@ -218,27 +227,37 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
         key: 'report',
         align: 'center',
         width: 180,
-        render: (_value, record) => (
-          <div className="participating-instructor-lecture-reports-section__report-cell-inner">
-            <CmsButton
-              variant="default"
-              size="medium"
-              width={140}
-              disabled={!record.canViewReport}
-              onClick={() => handleOpenPreview(record)}
-            >
-              강의보고서 보기
-            </CmsButton>
-          </div>
+        render: (_: unknown, record: ParticipatingInstructorLectureReportRow) => (
+          <CmsButton
+            variant="default"
+            size="medium"
+            width={140}
+            disabled={!record.canViewReport || viewDownloadingId === record.id}
+            loading={viewDownloadingId === record.id}
+            onClick={() => {
+              void handleViewReport(record)
+            }}
+          >
+            강의보고서 보기
+          </CmsButton>
         ),
       },
     ],
-    [handleOpenPreview]
+    [handleViewReport, viewDownloadingId]
   )
+
+  if (lectureReports.loading) {
+    return (
+      <div className="school-detail-fullpage-view__instructor-section">
+        <div className="flex min-h-[160px] items-center justify-center py-8" role="status">
+          <Spin size="large" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="school-detail-fullpage-view__instructor-section">
-      <FormCertificatePdfExportOverlay visible={bulkExportActive} />
       <div className="table-header-actions">
         <div className="table-header-title--wrapper">
           <span className="table-title">강의보고서 제출 현황</span>
@@ -250,8 +269,11 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
             size="large"
             width={220}
             icon={<DownloadOutlined />}
-            disabled={bulkExportActive || submittedRows.length === 0}
-            onClick={() => void handleBulkDownload()}
+            disabled={bulkDownloading || submittedRows.length === 0}
+            loading={bulkDownloading}
+            onClick={() => {
+              void handleBulkDownload()
+            }}
           >
             강의보고서 일괄 다운로드
           </CmsButton>
@@ -259,28 +281,17 @@ export function ParticipatingIndividualInstructorLectureReportsSection({
         </div>
       </div>
       <div className="participating-institutions-section__table-wrap">
-        <Table<ParticipatingIndividualInstructorLectureReportRow & { no: number }>
+        <Table<ParticipatingInstructorLectureReportRow>
           className="participating-institutions-section__table cms-data-table"
           rowKey="id"
           size="middle"
           pagination={false}
           scroll={{ x: 1100 }}
           columns={columns}
-          dataSource={tableData}
+          dataSource={rows}
         />
       </div>
-      <LectureReportIssuancePreviewModal
-        open={previewOpen}
-        onClose={handleClosePreview}
-        context={previewContext}
-      />
-      {currentBulkExportContext != null ? (
-        <LectureReportBulkPdfExportHost
-          key={currentBulkExportContext.row.id}
-          context={currentBulkExportContext}
-          onComplete={handleBulkExportItemComplete}
-        />
-      ) : null}
+      <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
     </div>
   )
 }

@@ -4,17 +4,17 @@
  * 모달 내 LNB, 헤더 타이틀, 탭, 기본정보/커리큘럼/KPI 테이블 구성.
  *
  * ─── 수정 모드 ↔ React Hook Form / Zod ─────────────────────────────────────
- * - URL: `edit` 쿼리(`EDIT_PARAM`)가 현재 `tab` 과 같을 때만 해당 탭이 수정 모드 (예: 공통정보 `edit=info`).
+ * - 수정 모드: 로컬 `editingTab` 이 소스. URL `edit` 는 북마크·복원용으로 best-effort 동기화.
  * - 폼: 탭마다 `useProgramDetailEditForm` 인스턴스가 분리됨(info / institutions / instructors / volunteers).
  *   `ProgramDetailEditFormValues` 공유, 검증 스키마는 탭별로 `programDetailEditSchema` 또는 `programDetailInstitutionsEditSchema`(참여자 정보).
  * - 저장·취소: 각 탭별 `useProgramDetailInfoSave` — `triggerSave` → Zod `trigger` 후 patch, `resetToProgram` 으로 리셋.
  * - 하위 UI는 `ProjectInfoDetailPanels` 로 `form` prop 이 전달되며, 수정 중일 때만 `form` 이 정의됨.
  *
- * 병합 시 `edit` 파싱·`setEditMode`·폼 훅 호출 순서를 바꾸면 수정 모드와 폼이 엇갈릴 수 있음.
+ * 병합 시 `editingTab`·`setEditMode`·폼 훅 호출 순서를 바꾸면 수정 모드와 폼이 엇갈릴 수 있음.
  */
 
 import { useMemo, useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -30,7 +30,14 @@ import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-save'
-import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
+import {
+  programDetailInstitutionsEditSchema,
+  programDetailTrainedTeachersCommonInfoEditSchema,
+} from '@/features/program/shared/model/program-detail-edit-schema'
+import {
+  programInstructorRecruitmentSaveSchema,
+  programParticipantRecruitmentSaveSchema,
+} from '@/features/program/general/lib/program-recruitment-save-fields'
 import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
 import {
   normalizeParticipatingInstitutionDetailTab,
@@ -59,7 +66,6 @@ import { GeneralProgramApplicationTemplateEditModal } from './info/application-t
 import { GeneralProgramRecruitmentView } from './info/recruitment-view'
 import { GeneralSurveyManagementView } from './survey-management/survey-management-view'
 import type { Program } from '@/types/domain'
-import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import {
   clearGeneralProgramDetailQueryParams,
   preserveGeneralProgramDetailProgramId,
@@ -73,6 +79,7 @@ import { TrainedTeachersCommonInfoView } from '@/features/program/trained-teache
 import { TrainedTeachersApplicationInfoView } from '@/features/program/trained-teachers/ui/application-info/application-info-view'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { handleError } from '@/shared/utils/error-handler'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useGeneralProgramNavigation } from '@/features/program/general/hooks/use-general-program-navigation'
 import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
 import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
@@ -203,13 +210,6 @@ function parseLnbFromSearch(searchParams: URLSearchParams): LnbKey | null {
   return null
 }
 
-/** 쿼리 파라미터에서 수정 모드 탭 파싱. edit=info 등 현재 탭과 일치할 때만 해당 탭이 수정 모드 */
-function parseEditTabFromSearch(searchParams: URLSearchParams): TabKey | null {
-  const edit = searchParams.get(EDIT_PARAM)
-  if (edit && (TAB_KEYS as readonly string[]).includes(edit)) return edit as TabKey
-  return null
-}
-
 export function ProgramDetailFullPageModal({
   open,
   onClose,
@@ -219,9 +219,9 @@ export function ProgramDetailFullPageModal({
   externalError = false,
   onUpdateProgram,
 }: ProgramDetailFullPageModalProps) {
-  const navigate = useNavigate()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { showAlert } = useCmsAlert()
   const programId = program?.id
   const {
     program: detailProgram,
@@ -270,14 +270,18 @@ export function ProgramDetailFullPageModal({
   const isOverviewProgramDetail = isCompanySchoolDetail || isTrainedTeachersDetail
   const isClosingRef = useRef(false)
   const initialEditResetKeyRef = useRef<string | null>(null)
+  /** 수정 모드 SSOT — URL sync effect 가 edit 를 지워도 로컬 상태로 편집 유지 */
+  const [editingTab, setEditingTab] = useState<TabKey | null>(null)
   useLayoutEffect(() => {
     const resetKey = open && isOverviewProgramDetail && programId ? programId : null
     if (!resetKey) {
       initialEditResetKeyRef.current = null
+      if (!open) setEditingTab(null)
       return
     }
     if (initialEditResetKeyRef.current === resetKey) return
     initialEditResetKeyRef.current = resetKey
+    setEditingTab(null)
     if (isClosingRef.current) return
     setSearchParams(
       prev => {
@@ -296,7 +300,7 @@ export function ProgramDetailFullPageModal({
     [displayProgram]
   )
   const activeTab = open ? parseTabFromSearch(searchParams) : 'info'
-  const editTab = open ? parseEditTabFromSearch(searchParams) : null
+  const editTab = editingTab
   const activeLnb = open ? (parseLnbFromSearch(searchParams) ?? 'info') : 'info'
   const activeChildMenu: TabKey | '' =
     activeLnb === 'applicants'
@@ -431,10 +435,12 @@ export function ProgramDetailFullPageModal({
 
         if (currentLnb === 'managers') return prev
 
+        // lnb 누락 보정 — 이미 edit=info 이면 유지 (수정 클릭과 race 시 edit 소실 방지)
         const next = new URLSearchParams(prev)
         next.set(LNB_PARAM, 'info')
         next.set(TAB_PARAM, 'info')
-        next.delete(EDIT_PARAM)
+        const edit = prev.get(EDIT_PARAM)
+        if (edit !== 'info') next.delete(EDIT_PARAM)
         preserveGeneralProgramDetailProgramId(prev, next)
         return next
       },
@@ -584,8 +590,10 @@ export function ProgramDetailFullPageModal({
   }, [onClose, setSearchParams])
 
   const setLnb = (key: LnbKey, childTab?: TabKey) => {
+    setEditingTab(null)
     const next = new URLSearchParams(searchParams)
     next.set(LNB_PARAM, key)
+    next.delete(EDIT_PARAM)
     if (key === 'info') {
       const tab = searchParams.get(TAB_PARAM)
       if (isOverviewProgramDetail) {
@@ -632,7 +640,6 @@ export function ProgramDetailFullPageModal({
         ? tab
         : surveyMenuItems[0]?.key
       if (surveyTab) next.set(TAB_PARAM, surveyTab)
-      next.delete(EDIT_PARAM)
     }
     setSearchParams(next, { replace: true })
   }
@@ -998,6 +1005,7 @@ export function ProgramDetailFullPageModal({
   ])
 
   const setActiveTab = (key: TabKey) => {
+    setEditingTab(null)
     const next = new URLSearchParams(searchParams)
     next.set(LNB_PARAM, 'info')
     next.set(TAB_PARAM, key)
@@ -1007,10 +1015,35 @@ export function ProgramDetailFullPageModal({
   }
 
   const setEditMode = (tab: TabKey | null) => {
-    const next = new URLSearchParams(searchParams)
-    if (tab) next.set(EDIT_PARAM, tab)
-    else next.delete(EDIT_PARAM)
-    setSearchParams(next, { replace: true })
+    setEditingTab(tab)
+    setSearchParams(
+      prev => {
+        if (isClosingRef.current) return prev
+        const next = new URLSearchParams(prev)
+        // programId 누락 시 prop 으로 보정 — 없으면 URL 동기화만 건너뛰고 로컬 editingTab 유지
+        if (!next.get('programId') && programId) {
+          next.set('programId', String(programId))
+        }
+        if (!next.get('programId')) return prev
+        if (tab) {
+          next.set(EDIT_PARAM, tab)
+          if (!parseLnbFromSearch(next)) next.set(LNB_PARAM, 'info')
+          if (!prev.get(TAB_PARAM)) {
+            next.set(
+              TAB_PARAM,
+              tab === 'institutions' || tab === 'instructors' || tab === 'volunteers'
+                ? tab
+                : 'info'
+            )
+          }
+        } else {
+          next.delete(EDIT_PARAM)
+        }
+        preserveGeneralProgramDetailProgramId(prev, next)
+        return next
+      },
+      { replace: true }
+    )
   }
 
   const [schoolDetailTitle, setSchoolDetailTitle] = useState<string | null>(null)
@@ -1146,11 +1179,17 @@ export function ProgramDetailFullPageModal({
   const infoForm = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeInfo,
+    schema: isTrainedTeachersDetail
+      ? programDetailTrainedTeachersCommonInfoEditSchema
+      : undefined,
   })
   const { triggerSave: infoTriggerSave, resetToProgram: infoResetToProgram } =
     useProgramDetailInfoSave({
       form: infoForm,
       program: displayProgram ?? ({} as Program),
+      validateSchema: isTrainedTeachersDetail
+        ? programDetailTrainedTeachersCommonInfoEditSchema
+        : undefined,
       onSaveEdit:
         displayProgram
           ? async (draft, patch) => {
@@ -1178,6 +1217,8 @@ export function ProgramDetailFullPageModal({
   } = useProgramDetailInfoSave({
     form: institutionsForm,
     program: displayProgram ?? ({} as Program),
+    // 모집 탭은 공통정보 필수값(설명·후원사 등) 검증 제외 — 일반 상세와 동일
+    validateSchema: programParticipantRecruitmentSaveSchema,
     onSaveEdit:
       displayProgram
         ? async (draft, patch) => {
@@ -1206,6 +1247,7 @@ export function ProgramDetailFullPageModal({
   } = useProgramDetailInfoSave({
     form: instructorsForm,
     program: displayProgram ?? ({} as Program),
+    validateSchema: programInstructorRecruitmentSaveSchema,
     onSaveEdit:
       displayProgram
         ? async (draft, patch) => {
@@ -1220,34 +1262,55 @@ export function ProgramDetailFullPageModal({
   })
 
   const handleInfoEdit = () => {
-    if (activeTab === 'info' && displayProgram) {
+    if (!displayProgram) return
+
+    // 교육받은 교사·1사1교 프로그램 정보 LNB — 탭별 수정 모드 (실패 시 목록으로 navigate 하지 않음)
+    if (isOverviewProgramDetail && activeLnb === 'info') {
+      if (activeTab === 'info') {
+        infoResetToProgram()
+        setEditMode('info')
+        return
+      }
+      if (activeTab === 'institutions') {
+        if (isCompanySchoolRecruitmentInstructorTab) {
+          instructorsResetToProgram()
+          setEditMode('instructors')
+          return
+        }
+        institutionsResetToProgram()
+        setEditMode('institutions')
+        return
+      }
+      if (activeTab === 'instructors') {
+        // 신청 정보는 양식 수정 모달 경로 — 「정보 수정」이 호출되면 무시
+        return
+      }
+      return
+    }
+
+    if (activeTab === 'info') {
       infoResetToProgram()
       setEditMode('info')
       return
     }
-    if (isCompanySchoolRecruitmentInstructorTab && displayProgram) {
+    if (isCompanySchoolRecruitmentInstructorTab) {
       instructorsResetToProgram()
       setEditMode('instructors')
       return
     }
-    if (activeTab === 'institutions' && displayProgram) {
+    if (activeTab === 'institutions') {
       institutionsResetToProgram()
       setEditMode('institutions')
       return
     }
-    if (activeTab === 'instructors' && displayProgram) {
+    if (activeTab === 'instructors') {
       instructorsResetToProgram()
       setEditMode('instructors')
       return
     }
-    if (activeTab === 'volunteers' && displayProgram) {
+    if (activeTab === 'volunteers') {
       volunteersResetToProgram()
       setEditMode('volunteers')
-      return
-    }
-    if (displayProgram) {
-      onClose()
-      navigate(getProgramAdminDetailUrlFromPathname(displayProgram.id, location.pathname))
     }
   }
 
@@ -1306,6 +1369,7 @@ export function ProgramDetailFullPageModal({
 
   const handleCompanySchoolRecruitTabChange = (tab: GeneralRecruitTabKey) => {
     if (tab === 'volunteers') return
+    setEditingTab(null)
     const next = new URLSearchParams(searchParams)
     next.set(LNB_PARAM, 'info')
     next.set(TAB_PARAM, 'institutions')
@@ -1317,10 +1381,34 @@ export function ProgramDetailFullPageModal({
   }
   const handleCompanySchoolRecruitSave = async () => {
     if (activeCompanySchoolRecruitTab === 'instructors') {
+      const validation = programInstructorRecruitmentSaveSchema.safeParse(
+        instructorsForm.getValues()
+      )
+      if (!validation.success) {
+        void showAlert({
+          title: '입력 확인',
+          content: validation.error.issues[0]?.message ?? '입력값을 확인해 주세요.',
+        })
+        return
+      }
       const ok = await instructorsTriggerSave()
       if (!ok) return
       setEditMode(null)
       return
+    }
+    const validation = programParticipantRecruitmentSaveSchema.safeParse(
+      institutionsForm.getValues()
+    )
+    if (!validation.success) {
+      void showAlert({
+        title: '입력 확인',
+        content: validation.error.issues[0]?.message ?? '입력값을 확인해 주세요.',
+      })
+      return
+    }
+    // preprocess 정규화된 교육 대상을 폼에 반영 후 PATCH
+    if (validation.data.targetLevels) {
+      institutionsForm.setValue('targetLevels', [...validation.data.targetLevels])
     }
     const ok = await institutionsTriggerSave()
     if (!ok) return
@@ -1453,8 +1541,26 @@ export function ProgramDetailFullPageModal({
               onSave={() => setEditMode(null)}
               persistPending={updateTrainedTeacherInfoDetailMutation.isPending}
               onBeforePersist={async () => {
+                const values = infoForm.getValues()
+                if (!values.sponsorId?.trim() && values.sponsorManagementIds?.[0]) {
+                  infoForm.setValue('sponsorId', values.sponsorManagementIds[0], {
+                    shouldDirty: true,
+                  })
+                }
+                const validation = programDetailTrainedTeachersCommonInfoEditSchema.safeParse(
+                  infoForm.getValues()
+                )
+                if (!validation.success) {
+                  void showAlert({
+                    title: '입력 확인',
+                    content:
+                      validation.error.issues[0]?.message ?? '입력값을 확인해 주세요.',
+                  })
+                  throw new Error('trainedTeacherBasicInfoValidationFailed')
+                }
                 const basicOk = await infoTriggerSave()
                 if (!basicOk) {
+                  // API 오류는 onSaveEdit → handleError 에서 이미 안내
                   throw new Error('trainedTeacherBasicInfoSaveFailed')
                 }
               }}
@@ -1465,7 +1571,7 @@ export function ProgramDetailFullPageModal({
                         await updateTrainedTeacherInfoDetailMutation.mutateAsync({
                           programId: displayProgram.id,
                           payload: {
-                            educatedTeachers: payload.educatedTeachers,
+                            // KPI SSOT = programs PATCH — detail에는 commonInfo만
                             commonInfo: {
                               ...displayProgram.generalCommonInfo,
                               ...payload.commonInfo,

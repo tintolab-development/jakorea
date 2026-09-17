@@ -88,7 +88,17 @@ import {
   useGeneralProgramSurveys,
   useGeneralProgramSurveySummary,
 } from '@/features/program/general/hooks/use-general-program-posts-surveys'
-import { submitGeneralProgramFormResponse } from '@/features/program/general/api/admin-general-programs-service'
+import {
+  createGeneralProgramSurveyShareLink,
+  submitGeneralProgramFormResponse,
+} from '@/features/program/general/api/admin-general-programs-service'
+import {
+  resolveSurveyCreateBindingTemplateCode,
+  resolveSurveyShareClipboardUrl,
+} from '@/features/program/general/api/adapters/program-survey-adapters'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { buildTempMockSurveyShareUrl } from '@/features/program/general/lib/temp-mock-local-actions'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
@@ -130,6 +140,7 @@ function buildSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: 
 }
 
 export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurveyManagementViewProps) {
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
   const initialMock = useMemo(() => buildGeneralSurveyEmptyState(program), [program])
   const {
     registeredSurveys: remoteRegisteredSurveys,
@@ -156,10 +167,16 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const [lectureEvalSurvey, setLectureEvalSurvey] = useState<RegisteredSurvey | null>(() =>
     surveysRemote ? null : initialMock.lectureEvalSurvey
   )
-  const [lectureEvalSubmitted, setLectureEvalSubmitted] = useState(false)
+  const [lectureEvalSubmitted, setLectureEvalSubmitted] = useState(
+    () => (surveysRemote ? false : initialMock.lectureEvalSubmitted)
+  )
   const [lectureEvalFormDraft, setLectureEvalFormDraft] = useState<WritingFormDraft | null>(null)
-  const [lectureEvalResponses, setLectureEvalResponses] = useState<SurveyPollRawResponse[]>([])
-  const [activeLectureEvalTab, setActiveLectureEvalTab] = useState<LectureEvalTabKey>('eval')
+  const [lectureEvalResponses, setLectureEvalResponses] = useState<SurveyPollRawResponse[]>(() =>
+    surveysRemote ? [] : initialMock.lectureEvalResponses
+  )
+  const [activeLectureEvalTab, setActiveLectureEvalTab] = useState<LectureEvalTabKey>(() =>
+    surveysRemote ? 'eval' : initialMock.initialLectureEvalTab
+  )
   const [createModalKind, setCreateModalKind] = useState<CreateModalKind | null>(null)
   const [deleteModalKind, setDeleteModalKind] = useState<DeleteModalKind | null>(null)
   const [deleteConfirmWord, setDeleteConfirmWord] = useState('')
@@ -224,10 +241,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     setPendingSatisfactionAudience(null)
     setActiveSatisfactionAudience(getDefaultGeneralSatisfactionAudience(program))
     setLectureEvalSurvey(next.lectureEvalSurvey)
-    setLectureEvalSubmitted(false)
+    setLectureEvalSubmitted(next.lectureEvalSubmitted)
     setLectureEvalFormDraft(null)
-    setLectureEvalResponses([])
-    setActiveLectureEvalTab('eval')
+    setLectureEvalResponses(next.lectureEvalResponses)
+    setActiveLectureEvalTab(next.initialLectureEvalTab)
   }, [program, surveysRemote])
 
   useEffect(() => {
@@ -452,12 +469,15 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         category: 'survey',
       })
       const row = findWritingTemplateRowByDefinitionId(newTemplateId)
-      const templateCode = row?.id ?? newTemplateId
+      const templateCode = resolveSurveyCreateBindingTemplateCode({
+        duplicatedTemplateId: newTemplateId,
+        catalogTemplateCode: row?.id,
+      })
 
       if (surveysRemote) {
         const payload = buildFormBindingPayload(
           createModalKind,
-          selectedTemplateId,
+          templateCode,
           pendingSatisfactionAudience
         )
         if (payload == null) {
@@ -477,48 +497,54 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         return
       }
 
-      if (row != null && createModalKind === 'survey') {
-        const nextSurvey: RegisteredSurvey = {
-          id: `general-survey-${Date.now()}`,
-          title: `${row.templateName} ${registeredSurveys.length + 1}`,
-          templateId: row.id,
-          status: 'before_start',
-          responseCount: 0,
-          participantTotal: individualProgram ? 12 : 36,
+      if (isTempMockProgram) {
+        const row = findWritingTemplateRowByDefinitionId(newTemplateId)
+        const titleBase = row?.templateName ?? '설문조사'
+        if (createModalKind === 'survey') {
+          const surveyIndex = registeredSurveys.length + 1
+          const newSurvey: RegisteredSurvey = {
+            id: `temp-mock-org-survey-poll-${Date.now()}`,
+            title: `${titleBase} ${String(surveyIndex).padStart(2, '0')}`,
+            templateId: newTemplateId,
+            status: 'before_start',
+            responseCount: 0,
+            participantTotal: program.totalParticipants ?? 0,
+          }
+          setRegisteredSurveys(prev => [...prev, newSurvey])
+          setActiveRegisteredSurveyId(newSurvey.id)
+        } else if (createModalKind === 'satisfaction' && pendingSatisfactionAudience != null) {
+          const newSurvey: RegisteredSurvey = {
+            id: `temp-mock-org-survey-satisfaction-${pendingSatisfactionAudience}-${Date.now()}`,
+            title: `${titleBase} (${getGeneralSatisfactionAudienceLabel(pendingSatisfactionAudience)})`,
+            templateId:
+              newTemplateId ||
+              GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE[pendingSatisfactionAudience],
+            status: 'before_start',
+            responseCount: 0,
+            participantTotal: program.totalParticipants ?? 0,
+          }
+          setSatisfactionSurveysByAudience(prev => ({
+            ...prev,
+            [pendingSatisfactionAudience]: newSurvey,
+          }))
+        } else if (createModalKind === 'lecture') {
+          setLectureEvalSurvey({
+            id: `temp-mock-org-survey-lecture-${Date.now()}`,
+            title: titleBase,
+            templateId: newTemplateId,
+            status: 'before_start',
+            responseCount: 0,
+            participantTotal: 1,
+          })
         }
-        setRegisteredSurveys(prev => [...prev, nextSurvey])
-        setActiveRegisteredSurveyId(nextSurvey.id)
+        setCreateModalKind(null)
+        return
       }
-      if (row != null && createModalKind === 'satisfaction' && pendingSatisfactionAudience != null) {
-        const audienceLabel = getGeneralSatisfactionAudienceLabel(pendingSatisfactionAudience)
-        const nextSurvey: RegisteredSurvey = {
-          id: `general-satisfaction-${pendingSatisfactionAudience}-${Date.now()}`,
-          title: `${audienceLabel} 만족도조사`,
-          templateId: row.id,
-          status: 'before_start',
-          responseCount: 0,
-          participantTotal: individualProgram ? 12 : 36,
-        }
-        setSatisfactionSurveysByAudience(prev => ({
-          ...prev,
-          [pendingSatisfactionAudience]: nextSurvey,
-        }))
-      }
-      if (row != null && createModalKind === 'lecture') {
-        const nextSurvey: RegisteredSurvey = {
-          id: `general-lecture-eval-${Date.now()}`,
-          title: row.templateName,
-          templateId: templateCode,
-          status: 'before_start',
-          responseCount: 0,
-          participantTotal: 1,
-        }
-        setLectureEvalSurvey(nextSurvey)
-        setLectureEvalSubmitted(false)
-        setLectureEvalResponses([])
-        setActiveLectureEvalTab('eval')
-        setLectureEvalFormDraft(null)
-      }
+
+      notifyProgramApiUnavailable(
+        'general-survey-create-binding',
+        '설문 관리 · 설문 등록'
+      )
       setCreateModalKind(null)
     } catch (error) {
       handleError(error, { context: 'generalSurveyManagement.createSurvey' })
@@ -529,7 +555,9 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     createBinding,
     createModalKind,
     individualProgram,
+    isTempMockProgram,
     pendingSatisfactionAudience,
+    program.totalParticipants,
     registeredSurveys.length,
     selectedTemplateId,
     showAlert,
@@ -610,21 +638,84 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   ])
 
   const shareRegisteredSurveyUrl = useCallback(
-    (survey: RegisteredSurvey) => {
-      const url = `${window.location.origin}/programs/general/survey?programId=${program.id}&surveyId=${survey.id}`
-      void copyText(url)
-      showShareCopyToast()
+    async (survey: RegisteredSurvey) => {
+      if (isTempMockProgram) {
+        void copyText(buildTempMockSurveyShareUrl(program.id, survey.id))
+        showShareCopyToast()
+        return
+      }
+      const bindingId = survey.bindingId?.trim()
+      if (!bindingId) {
+        notifyProgramApiUnavailable(
+          'general-survey-share-link',
+          '설문 관리 · 설문 공유'
+        )
+        return
+      }
+      try {
+        const response = await createGeneralProgramSurveyShareLink(program.id, bindingId)
+        const url = response
+          ? resolveSurveyShareClipboardUrl(response, window.location.origin)
+          : null
+        if (!url) {
+          notifyProgramApiUnavailable(
+            'general-survey-share-link-empty',
+            '설문 관리 · 설문 공유'
+          )
+          return
+        }
+        void copyText(url)
+        showShareCopyToast()
+      } catch (error) {
+        handleError(error, { context: 'generalSurveyShareLink' })
+        showAlert({
+          title: '공유',
+          content: '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      }
     },
-    [copyText, program.id, showShareCopyToast]
+    [copyText, isTempMockProgram, program.id, showAlert, showShareCopyToast]
   )
 
   const shareSatisfactionSurveyUrl = useCallback(
-    (audience: GeneralSatisfactionAudienceKey) => {
-      const url = `${window.location.origin}/programs/general/satisfaction?programId=${program.id}&audience=${audience}`
-      void copyText(url)
-      showShareCopyToast(GENERAL_SATISFACTION_SHARE_TOAST_COPY)
+    async (audience: GeneralSatisfactionAudienceKey) => {
+      const survey = satisfactionSurveysByAudience[audience]
+      if (isTempMockProgram && survey) {
+        void copyText(buildTempMockSurveyShareUrl(program.id, survey.id))
+        showShareCopyToast(GENERAL_SATISFACTION_SHARE_TOAST_COPY)
+        return
+      }
+      const bindingId = survey?.bindingId?.trim()
+      if (!bindingId) {
+        notifyProgramApiUnavailable(
+          'general-satisfaction-share-link',
+          '설문 관리 · 만족도조사 공유'
+        )
+        return
+      }
+      try {
+        const response = await createGeneralProgramSurveyShareLink(program.id, bindingId)
+        const url = response
+          ? resolveSurveyShareClipboardUrl(response, window.location.origin)
+          : null
+        if (!url) {
+          notifyProgramApiUnavailable(
+            'general-satisfaction-share-link-empty',
+            '설문 관리 · 만족도조사 공유'
+          )
+          return
+        }
+        void copyText(url)
+        showShareCopyToast(GENERAL_SATISFACTION_SHARE_TOAST_COPY)
+      } catch (error) {
+        handleError(error, { context: 'generalSatisfactionShareLink' })
+        showAlert({
+          title: '공유',
+          content: '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      }
     },
-    [copyText, program.id, showShareCopyToast]
+    [copyText, isTempMockProgram, program.id, satisfactionSurveysByAudience, showAlert, showShareCopyToast]
   )
 
   const handleDownloadSatisfactionResults = useCallback(

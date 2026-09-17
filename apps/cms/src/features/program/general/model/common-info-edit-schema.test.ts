@@ -98,6 +98,9 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     const program = baseProgram()
     const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
     values.sponsorManagementIds = ['sponsor-new']
+    values.sponsorManagerContactIds = [
+      encodeSponsorManagerContactRef('sponsor-new', 'contact-1'),
+    ]
     values.sponsorManagerContactId = encodeSponsorManagerContactRef('sponsor-new', 'contact-1')
     const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
     expect(patch.sponsorId).toBe('sponsor-new')
@@ -114,6 +117,7 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
       sponsors: sponsorContext.sponsors,
       contactsBySponsorId: {},
     })
+    values.sponsorManagerContactIds = []
     values.sponsorManagerContactId = ''
     const patch = generalCommonInfoEditValuesToProgramPatch(values, program, {
       sponsors: sponsorContext.sponsors,

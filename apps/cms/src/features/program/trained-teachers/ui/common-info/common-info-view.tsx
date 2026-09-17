@@ -18,7 +18,7 @@
  * remote ON 시 `onPersist` → `PATCH …/trained-teacher/detail` (+ `onBeforePersist`).
  */
 
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { PlusOutlined } from '@ant-design/icons'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -32,6 +32,7 @@ import { CmsButton, CmsNumericInput, CmsToggle } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { formatNumberDisplay } from '@/shared/utils'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { BasicInfoSection } from '@/features/program/shared/ui/program-detail/project-info/common-info/basic-info-section'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -117,9 +118,20 @@ function parseProgressTimeRange(text: string): [Dayjs, Dayjs] | null {
   ]
 }
 
+const JAVA_INT_MAX = 2_147_483_647
+
+/** BE Integer 범위 밖 KPI는 상한으로 캡 — 기입력값 유지 + 저장 Zod 통과 */
+function clampKpiDraftValue(value: number | null | undefined): number | undefined {
+  if (value == null || !Number.isFinite(value)) return undefined
+  const n = Math.trunc(value)
+  if (n < 0) return undefined
+  return Math.min(n, JAVA_INT_MAX)
+}
+
 function seedDraft(
   commonInfo: TrainedTeachersCommonInfo,
-  educatedTeachers: number | undefined
+  educatedTeachers: number | undefined,
+  totals?: { totalParticipants?: number; participatingSchoolCount?: number }
 ): TrainedTeachersCommonInfoDraft {
   const scheduleDetails = (commonInfo.scheduleDetails ?? []).map(detail => ({ ...detail }))
   // 그룹 수는 전 테이블 공통 — 최대 그룹 수 기준으로 정규화
@@ -128,10 +140,14 @@ function seedDraft(
   )
   const maxGroupCount = Math.max(1, ...parsedGroups.map(groups => groups.length))
   return {
-    kpiFinalParticipants: commonInfo.kpi?.finalParticipants,
-    kpiEducatedTeachers: educatedTeachers,
-    kpiFinalSchools: commonInfo.kpi?.finalSchools,
-    kpiFinalClasses: commonInfo.kpi?.finalClasses,
+    kpiFinalParticipants: clampKpiDraftValue(
+      commonInfo.kpi?.finalParticipants ?? totals?.totalParticipants
+    ),
+    kpiEducatedTeachers: clampKpiDraftValue(educatedTeachers),
+    kpiFinalSchools: clampKpiDraftValue(
+      commonInfo.kpi?.finalSchools ?? totals?.participatingSchoolCount
+    ),
+    kpiFinalClasses: clampKpiDraftValue(commonInfo.kpi?.finalClasses),
     educationJournalEnabled: commonInfo.educationJournalEnabled === true,
     teacherTrainingEnabled: commonInfo.teacherTrainingEnabled === true,
     curriculumSessions: (commonInfo.curriculumSessions ?? []).map(session => ({ ...session })),
@@ -227,7 +243,9 @@ function PipeSeparatedInlineView({ text }: { text: string | undefined | null }) 
 
 function KpiBoldNumber({ value }: { value: number | undefined }) {
   if (value == null) return <>-</>
-  return <span className="trained-teachers-common-info__kpi-number">{value}</span>
+  return (
+    <span className="trained-teachers-common-info__kpi-number">{formatNumberDisplay(value)}</span>
+  )
 }
 
 function KpiNumberInput({
@@ -239,13 +257,26 @@ function KpiNumberInput({
   onChange: (next: number | undefined) => void
   width?: number | string
 }) {
+  const safeValue = clampKpiDraftValue(value)
   return (
     <CmsNumericInput
       width={width}
       mode="integer"
       min={0}
-      value={value == null ? '' : String(value)}
-      onValueChange={raw => onChange(raw === '' ? undefined : Number.parseInt(raw, 10))}
+      max={JAVA_INT_MAX}
+      value={safeValue == null ? '' : String(safeValue)}
+      onValueChange={raw => {
+        if (raw === '') {
+          onChange(undefined)
+          return
+        }
+        const parsed = Number.parseInt(raw, 10)
+        if (!Number.isFinite(parsed)) {
+          onChange(undefined)
+          return
+        }
+        onChange(clampKpiDraftValue(parsed))
+      }}
     />
   )
 }
@@ -265,6 +296,8 @@ function TrainedTeachersKpiSection({
   updateDraft: DraftUpdater
 }) {
   const kpi = commonInfo.kpi
+  const finalParticipants = kpi?.finalParticipants ?? program.totalParticipants
+  const finalSchools = kpi?.finalSchools ?? program.participatingSchoolCount
   const isFormEdit = isEditMode && draft != null
   return (
     <DetailInfoForm
@@ -276,7 +309,7 @@ function TrainedTeachersKpiSection({
         <DetailInfoForm.Field
           label="참여자 최종 인원"
           required
-          view={<KpiBoldNumber value={kpi?.finalParticipants} />}
+          view={<KpiBoldNumber value={finalParticipants} />}
           edit={
             isFormEdit ? (
               <KpiNumberInput
@@ -312,7 +345,7 @@ function TrainedTeachersKpiSection({
         <DetailInfoForm.Field
           label="최종 파견 학교 수"
           required
-          view={<KpiBoldNumber value={kpi?.finalSchools} />}
+          view={<KpiBoldNumber value={finalSchools} />}
           edit={
             isFormEdit ? (
               <KpiNumberInput
@@ -1452,13 +1485,17 @@ export function TrainedTeachersCommonInfoView({
 
   const [draft, setDraft] = useState<TrainedTeachersCommonInfoDraft | null>(null)
 
-  // 수정 모드 진입 시 현재 표시값으로 draft 시드
-  useEffect(() => {
+  // 수정 모드 진입 시 현재 표시값으로 draft 시드 (페인트 전 — KPI 등 draft 의존 UI가 바로 편집 가능)
+  useLayoutEffect(() => {
     if (isEditMode) {
       setDraft(
         seedDraft(
           { ...resolveGeneralProgramCommonInfo(program), ...savedOverride?.commonInfo },
-          savedOverride?.educatedTeachers ?? program.educatedTeachers
+          savedOverride?.educatedTeachers ?? program.educatedTeachers,
+          {
+            totalParticipants: program.totalParticipants,
+            participatingSchoolCount: program.participatingSchoolCount,
+          }
         )
       )
       return
@@ -1472,59 +1509,101 @@ export function TrainedTeachersCommonInfoView({
     setDraft(current => (current ? update(current) : current))
 
   const handleSave = () => {
-    if (!draft) {
-      onSave?.()
-      return
-    }
-    const commonInfoPayload: Partial<TrainedTeachersCommonInfo> = {
-      kpi: {
-        finalParticipants: draft.kpiFinalParticipants ?? 0,
-        instructorCount: 0,
-        volunteerCount: 0,
-        finalSchools: draft.kpiFinalSchools ?? 0,
-        finalClasses: draft.kpiFinalClasses ?? 0,
-      },
-      educationJournalEnabled: draft.educationJournalEnabled,
-      teacherTrainingEnabled: draft.teacherTrainingEnabled,
-      curriculumSessions:
-        educationStructure === 'curriculum'
-          ? draft.curriculumSessions
-          : commonInfo.curriculumSessions,
-      scheduleDetails:
-        educationStructure === 'schedule'
-          ? draft.scheduleDetails.map((detail, index) => ({
-              ...detail,
-              progressTimeSummary:
-                sessionRound === 'single'
-                  ? joinProgressGroups(draft.progressGroupsByDetail[index] ?? [''])
-                  : detail.progressTimeSummary,
-            }))
-          : commonInfo.scheduleDetails,
-    }
-
     const run = async () => {
       setSaving(true)
       try {
+        // KPI SSOT = programs PATCH — draft → RHF 동기화 후 onBeforePersist(infoTriggerSave)
+        // int32 초과 시드는 이미 clamp — 저장 직전 한 번 더 방어
+        if (form && draft) {
+          form.setValue(
+            'kpiFinalParticipants',
+            clampKpiDraftValue(draft.kpiFinalParticipants),
+            { shouldDirty: true }
+          )
+          form.setValue(
+            'kpiEducatedTeachers',
+            clampKpiDraftValue(draft.kpiEducatedTeachers),
+            { shouldDirty: true }
+          )
+          form.setValue('kpiFinalSchools', clampKpiDraftValue(draft.kpiFinalSchools), {
+            shouldDirty: true,
+          })
+          form.setValue('kpiFinalClasses', clampKpiDraftValue(draft.kpiFinalClasses), {
+            shouldDirty: true,
+          })
+        }
+
         if (onBeforePersist) {
           await onBeforePersist()
         }
-        if (onPersist) {
-          await onPersist({
-            educatedTeachers: draft.kpiEducatedTeachers,
-            commonInfo: commonInfoPayload as NonNullable<Program['generalCommonInfo']>,
-          })
-        } else {
-          setSavedOverride({
-            educatedTeachers: draft.kpiEducatedTeachers,
-            commonInfo: commonInfoPayload,
-          })
+
+        if (draft) {
+          const commonInfoPayload: Partial<TrainedTeachersCommonInfo> = {
+            kpi: {
+              finalParticipants: clampKpiDraftValue(draft.kpiFinalParticipants) ?? 0,
+              instructorCount: 0,
+              volunteerCount: 0,
+              finalSchools: clampKpiDraftValue(draft.kpiFinalSchools) ?? 0,
+              finalClasses: clampKpiDraftValue(draft.kpiFinalClasses) ?? 0,
+            },
+            educationJournalEnabled: draft.educationJournalEnabled,
+            teacherTrainingEnabled: draft.teacherTrainingEnabled,
+            curriculumSessions:
+              educationStructure === 'curriculum'
+                ? draft.curriculumSessions
+                : commonInfo.curriculumSessions,
+            scheduleDetails:
+              educationStructure === 'schedule'
+                ? draft.scheduleDetails.map((detail, index) => ({
+                    ...detail,
+                    progressTimeSummary:
+                      sessionRound === 'single'
+                        ? joinProgressGroups(draft.progressGroupsByDetail[index] ?? [''])
+                        : detail.progressTimeSummary,
+                  }))
+                : commonInfo.scheduleDetails,
+          }
+
+          const needsInfoDetailPatch =
+            draft.educationJournalEnabled !== commonInfo.educationJournalEnabled ||
+            draft.teacherTrainingEnabled !== commonInfo.teacherTrainingEnabled ||
+            (educationStructure === 'curriculum' &&
+              JSON.stringify(draft.curriculumSessions) !==
+                JSON.stringify(commonInfo.curriculumSessions ?? [])) ||
+            (educationStructure === 'schedule' &&
+              JSON.stringify(commonInfoPayload.scheduleDetails) !==
+                JSON.stringify(commonInfo.scheduleDetails ?? []))
+
+          if (needsInfoDetailPatch) {
+            if (onPersist) {
+              // KPI는 programs PATCH만 — detail PATCH에 educatedTeachers 미포함
+              await onPersist({
+                commonInfo: commonInfoPayload as NonNullable<Program['generalCommonInfo']>,
+              })
+            } else {
+              setSavedOverride({
+                educatedTeachers: draft.kpiEducatedTeachers,
+                commonInfo: commonInfoPayload,
+              })
+            }
+          } else {
+            // programs PATCH 만으로 KPI 저장 — 재조회 전 화면 즉시 반영
+            setSavedOverride({
+              educatedTeachers: draft.kpiEducatedTeachers,
+              commonInfo: {
+                ...commonInfo,
+                kpi: commonInfoPayload.kpi,
+              },
+            })
+          }
         }
+
+        onSave?.()
       } catch {
         return
       } finally {
         setSaving(false)
       }
-      onSave?.()
     }
     void run()
   }

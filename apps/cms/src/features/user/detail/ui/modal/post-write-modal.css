@@ -11,7 +11,7 @@
 
 /* 헤더 타이틀: 24px Bold, line-height 150% */
 .post-write-modal.ant-modal .ant-modal-title {
-  color: var(--default-BK, #3D3D3D);
+  color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 24px;
   font-style: normal;
@@ -26,7 +26,6 @@
   min-height: 0;
   overflow: hidden;
   padding: 0;
-  padding-top: 16px; /* 타이틀과 디스크립션(본문) 갭 */
   box-sizing: border-box;
   background: var(--color-bg-base);
 }
@@ -127,37 +126,34 @@
   border-color: var(--color-modal-header, #01a1af);
 }
 
-/* 게시글 내용: 높이 280px 고정, padding 상하 12 / 좌 16 / 우 14 */
-.post-write-modal__textarea.post-write-modal__textarea,
-.post-write-modal__textarea.ant-input {
-  width: 100% !important;
-  height: 280px !important;
-  min-height: 280px !important;
-  max-height: 280px !important;
-  resize: none !important;
-  padding: 12px 14px 12px 16px !important;
-  border-radius: 8px;
-  border: 1px solid #c4cdd1;
-  background: #fff;
+/* 게시글 내용: TipTap WYSIWYG (공지 등록 모달과 동일 스택) */
+.post-write-modal__field--editor {
+  gap: 0;
+}
+
+.post-write-modal__editor-host {
+  width: 100%;
+  height: 280px;
+  min-height: 280px;
+  flex-shrink: 0;
   box-sizing: border-box;
 }
 
-.post-write-modal__textarea:hover,
-.post-write-modal__textarea:focus {
-  border-color: var(--color-modal-header, #01a1af);
-  box-shadow: 0 0 0 1px var(--color-modal-header, #01a1af);
+.post-write-modal__editor-host .rich-text-editor {
+  height: 100%;
+  min-height: inherit;
+  border-radius: var(--rt-radius, 8px);
 }
 
-.post-write-modal__textarea::placeholder,
-.post-write-modal__textarea.ant-input::placeholder {
-  overflow: hidden;
-  color: #85969d;
-  text-overflow: ellipsis;
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
+.post-write-modal__editor-host .rich-text-editor__body {
+  align-items: stretch;
+  min-height: var(--rt-body-min-height, 180px);
+}
+
+.post-write-modal__editor-host .ProseMirror,
+.post-write-modal__editor-host .rich-text-editor__content {
+  min-height: 100%;
+  cursor: text;
 }
 
 /* 첨부 파일 — file-attachment 패턴: 내용 높이 auto, 좌측 라벨 + 우측 본문 */
@@ -244,8 +240,7 @@
   border-radius: 6px;
   border: 1px solid var(--JA-mint-01, #01a1af) !important;
   background:
-    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
-    #fff !important;
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff !important;
   color: var(--JA-mint-01, #01a1af) !important;
   text-align: center;
   font-family: Pretendard, sans-serif;

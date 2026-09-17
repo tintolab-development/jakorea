@@ -45,11 +45,22 @@ describe('trained-teacher info detail adapters', () => {
     expect(request.configJson).toContain('"educatedTeachers":3')
   })
 
-  it('merges GET detail into program', () => {
+  it('merges GET detail into program without wiping programs KPI', () => {
     const program = {
       id: '1',
       title: 't',
-      generalCommonInfo: { educationJournalEnabled: false },
+      totalParticipants: 100,
+      educatedTeachers: 12,
+      generalCommonInfo: {
+        educationJournalEnabled: false,
+        kpi: {
+          finalParticipants: 100,
+          instructorCount: 0,
+          volunteerCount: 0,
+          finalSchools: 8,
+          finalClasses: 12,
+        },
+      },
     } as Program
     const merged = mergeTrainedTeacherInfoDetailIntoProgram(program, {
       teacherTrainingEnabled: true,
@@ -67,10 +78,13 @@ describe('trained-teacher info detail adapters', () => {
         },
       }),
     })
-    expect(merged.educatedTeachers).toBe(7)
+    // programs PATCH SSOT — configJson 옛 kpi 로 덮지 않음
+    expect(merged.educatedTeachers).toBe(12)
+    expect(merged.totalParticipants).toBe(100)
     expect(merged.generalCommonInfo?.teacherTrainingEnabled).toBe(true)
     expect(merged.generalCommonInfo?.educationJournalEnabled).toBe(true)
-    expect(merged.generalCommonInfo?.kpi?.finalSchools).toBe(1)
+    expect(merged.generalCommonInfo?.kpi?.finalParticipants).toBe(100)
+    expect(merged.generalCommonInfo?.kpi?.finalSchools).toBe(8)
   })
 
   it('prefers DTO flags over configJson when both present', () => {

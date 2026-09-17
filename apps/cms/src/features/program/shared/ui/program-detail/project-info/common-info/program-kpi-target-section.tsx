@@ -1,7 +1,7 @@
 /**
  * 사업 KPI 목표 테이블 섹션
  * 프로그램 상세 공통 정보 탭 하단에 표시 (참여자 최종 인원, 최종 파견 학교 수, 교육진행자 최종 인원, 최종 파견 학급 수)
- * td 영역에서는 숫자 텍스트만 볼드 처리.
+ * td 영역에서는 숫자 텍스트만 볼드·천단위 콤마 처리.
  * 수정 모드 시 form 연동으로 Input 표시.
  */
 
@@ -13,6 +13,7 @@ import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import { CmsInput, CmsNumericInput } from '@/shared/ui'
+import { formatNumberDisplay } from '@/shared/utils'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
 import './program-kpi-target-section.css'
 
@@ -30,7 +31,7 @@ function boldNumbersInSegment(segment: string, keyPrefix: string): ReactNode[] {
   return parts.map((part, i) =>
     /^\d+$/.test(part) ? (
       <span key={`${keyPrefix}-${i}`} style={{ fontWeight: 'bold' }}>
-        {part}
+        {formatNumberDisplay(part)}
       </span>
     ) : (
       <span key={`${keyPrefix}-${i}`}>{part}</span>
@@ -38,13 +39,13 @@ function boldNumbersInSegment(segment: string, keyPrefix: string): ReactNode[] {
   )
 }
 
-/** td 내용 중 숫자만 볼드 처리. 여러 "라벨: 숫자" 구간은 세로 디바이더로 연결 */
+/** td 내용 중 숫자만 볼드·천단위 콤마. 여러 "라벨: 숫자" 구간은 세로 디바이더로 연결 */
 function formatKpiValueWithBoldNumbers(value: string | number | undefined): ReactNode {
   if (value === undefined || value === null || value === '') return '-'
   const str = String(value).trim()
   if (str === '-') return '-'
   if (/^\d+(\.\d+)?$/.test(str)) {
-    return <span style={{ fontWeight: 'bold' }}>{str}</span>
+    return <span style={{ fontWeight: 'bold' }}>{formatNumberDisplay(str)}</span>
   }
 
   const matches = [...str.matchAll(KPI_SEGMENT_REGEX)]
@@ -88,7 +89,10 @@ function formatEducationInstructorTargets(
   return (
     <span className="program-kpi-target-section__inline-segments">
       <span>
-        강사: <span style={{ fontWeight: 'bold' }}>{targets?.instructors ?? 0}</span>
+        강사:{' '}
+        <span style={{ fontWeight: 'bold' }}>
+          {formatNumberDisplay(targets?.instructors ?? 0)}
+        </span>
       </span>
       <DetailInfoForm.InputsSeparator />
       <span>봉사자: 해당 없음</span>
