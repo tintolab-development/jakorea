@@ -113,6 +113,10 @@ import {
 } from '@/shared/constants/status'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { useGeneralProgramPosts } from '@/features/program/general/hooks/use-general-program-posts-surveys'
+import {
+  buildTemporaryParticipatingInstitutionPostFiles,
+  buildTemporaryParticipatingInstitutionPosts,
+} from '@/features/program/general/lib/participating-institution-temp-posts'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
@@ -465,6 +469,33 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     isRemoteDataSource: postsRemote,
     invalidatePosts,
   } = useGeneralProgramPosts(program.id)
+  // TODO(temp-mock): 열여라 참깨 — 참여 기관 상세 게시글 검증 후 삭제
+  const temporarySchoolPosts = useMemo(
+    () =>
+      detail.id.startsWith('temp-textbook-status-')
+        ? buildTemporaryParticipatingInstitutionPosts(String(program.id), detail.id)
+        : [],
+    [detail.id, program.id]
+  )
+  const temporarySchoolPostFiles = useMemo(
+    () =>
+      detail.id.startsWith('temp-textbook-status-')
+        ? buildTemporaryParticipatingInstitutionPostFiles(String(program.id), detail.id)
+        : [],
+    [detail.id, program.id]
+  )
+  const postsForTab = useMemo(() => {
+    if (temporarySchoolPosts.length === 0) {
+      return postsRemote ? remotePosts : null
+    }
+    return [...temporarySchoolPosts, ...(remotePosts ?? [])]
+  }, [postsRemote, remotePosts, temporarySchoolPosts])
+  const filesForTab = useMemo(() => {
+    if (temporarySchoolPostFiles.length === 0) {
+      return postsRemote ? remotePostFiles : null
+    }
+    return [...temporarySchoolPostFiles, ...(remotePostFiles ?? [])]
+  }, [postsRemote, remotePostFiles, temporarySchoolPostFiles])
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
   const [scheduleChangeModalOpen, setScheduleChangeModalOpen] = useState(false)
   const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
@@ -1852,8 +1883,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
           ) : activeTab === 'posts' ? (
             <CmsButton
               variant="primary"
-              size="large"
-              width={160}
+              size="medium"
+              className="school-detail-fullpage-view__posts-register-btn"
               onClick={() => setPostWriteModalOpen(true)}
             >
               게시글 등록
@@ -2476,8 +2507,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               showWriteButtonInSection={false}
               writeModalOpen={postWriteModalOpen}
               onWriteModalOpenChange={setPostWriteModalOpen}
-              postsOverride={postsRemote ? remotePosts : null}
-              filesOverride={postsRemote ? remotePostFiles : null}
+              postsOverride={postsForTab}
+              filesOverride={filesForTab}
               onPostWriteSuccess={() => {
                 void invalidatePosts()
               }}
