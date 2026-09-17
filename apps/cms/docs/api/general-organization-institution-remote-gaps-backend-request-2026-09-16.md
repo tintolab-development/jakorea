@@ -37,9 +37,19 @@
 | 학생 명단 | 강의 출석 조회·정정 | ✅ schedules attendances / bulk-upsert | ✅ `participantId` | roster `participantId`·출석 요약 보완 |
 | 참여 기관 상세 | **출석 관리** 탭 | ✅ roster + schedule attendances / bulk-upsert | ✅ (progress+applications remote) | `resolvedScheduleId`·roster `participantId` 필수 · 기관 전용 조회 API는 선택 |
 | 강사 배정 | list/create/cancel/representative | ✅ | ✅ (progress remote) | waiting 전용 API 없음 |
-| **참여 강사 목록** | participants INSTRUCTOR enrich | 부분 | ✅ adapter·assignments 조인 | 주소·PII·정산·경력·등급·배정 기관명 |
+| **참여 강사 목록** | participants INSTRUCTOR enrich | 부분 | ✅ adapter·assignments 조인 | 주소·PII·정산·경력·등급·배정 기관명·`sourceApplicationId` |
 | **참여 강사 목록** | 강사 등록·삭제 | — | ❌ unavailable | participant C/D API |
+| **참여 강사 목록** | 정산 현황 변경 | — | ❌ unavailable | settlement status API |
 | **참여 강사 목록** | 필터·엑셀 | — | 클라 only | 서버 필터·export (P2) |
+| **참여 강사 상세** | 신청 정보 조회·코멘트·PII·활동 포기 | 부분 | ✅ (§G-8) | 강의비 PATCH·이력서 enrich·`stopScheduleId` |
+| **참여 강사 상세** | 교육 배정 현황 탭 | list/create/cancel/representative | ✅ (§G-8) | waiting 전용 API · list `instructorMemberId` 필터 · 일반→보조 demote |
+| **참여 강사 상세** | **정산 현황** 탭 | settlements list/detail/download | ✅ (§G-9) | `educationGrade` · render-data payload · program+member 복합 필터 |
+| **게시글** | list/CRUD/comments/reactions/attachments | ✅ | ✅ | 작성자 displayName · 기관(school) scope |
+| **게시글** | reads GET · unread-reminders POST | ✅ (부분) | ✅ | displayName · `memberIds` · school filter |
+| **강의보고서 관리** | list + download ZIP | ✅ | ✅ | list `instructorMemberId` query · download 응답 스키마 |
+| **참여 봉사자 목록** | participants VOLUNTEER | 부분 | ✅ adapter enrich · mock 제거 | `id1365`·배정기관·PII enrich · 등록 C/D |
+| **참여 봉사자 목록** | 활동확인서 발급 | ✅ serial allocate | ✅ 목록 미리보기 모달 | — |
+| **참여 봉사자 목록** | 봉사자·임직원 등록 | — | ❌ unavailable | POST participants/volunteers 등 |
 
 ---
 
@@ -301,7 +311,7 @@ FE는 GET의 id 재사용, 없으면 `0` 전송 → optional 반영 전 실패 �
 | 점유일 캘린더 | GET assignment-calendar | ✅ (404 시 list+schedules 폴백) |
 | 승인 강사 신청 | instructor-applications list | ✅ waiting 합성용 |
 | schedules | admin program schedules | ✅ |
-| **배정 대기 전용 API** | ❌ | ⚠️ 승인 강사 × 기관 sessions 임시 합성 |
+| **배정 대기 전용 API** | ❌ | ⚠️ 기관 상세·강사 상세 모두 합성 |
 
 remote OFF / `organizationApplicationId` 없음 → 빈 목록 · mutation unavailable · mock 없음.
 
@@ -469,7 +479,8 @@ remote OFF / JWT·`programProgress` 미활성 → **빈 목록** + `program-api-
 | `assignedOrganizationNames[]` | 배정 기관명 열 | 없으면 FE가 instructor-assignments list 조인 |
 | `lectureReportSubmitted` | 캘린더 카드 「강의보고서」 태그 | boolean |
 | `giveUpAt`, `participantStatus` | 활동 포기 · 상세 가드 | |
-| `instructorApplicationId` | (권장) 신청 정보 탭 deep link | |
+| `sourceApplicationId` → FE `instructorApplicationId` | 코멘트 PATCH·신청 상세 GET | **P0** — 없으면 코멘트·상세 hydrate 불가 |
+| `sessions[]` (`scheduleId`, `scheduleName`, `startAt`) | 활동 포기 중단일 선택지 | §G-8 · B-5와 동일 |
 
 **정산 8종 UI key (FE SSOT):**  
 `payment_statement_reapplication` · `awaiting_confirmation` · `partial_confirmation` · `payment_statement_verified` · `account_paid` · `none` · `application_rejected` · `payment_correction_requested`
@@ -533,10 +544,11 @@ cms-table-bulk-delete-api-backend-handoff.md #21. 진행 중 프로그램·정�
 ### G-6) FE가 이미 하는 일 (2026-09-17)
 
 - remote ON: participants infinite query + instructor-assignments board 조인 → `assignedOrganizationNames` · primary `schoolName`
-- adapter: codegen + additive enrich (`homeAddressSummary`, PII, settlement, grade, 경력)
+- adapter: codegen + additive enrich (`homeAddressSummary`, PII, settlement, grade, 경력, `educationSchedules`)
 - remote OFF: 빈 목록 · mock/temp-progress-instructor **미사용**
 - 등록·삭제·정산 변경: `notifyProgramApiUnavailable` · 로컬 `setInstructorList` patch **없음**
 - 활동인증서: serial allocate (기존 §certificate-serial)
+- 참여 강사 상세(§G-8): 신청 enrich · 배정 create/cancel · give-up · PII unmask — mock patch **없음**
 
 ### G-7) BE · QA 체크리스트
 
@@ -548,6 +560,410 @@ cms-table-bulk-delete-api-backend-handoff.md #21. 진행 중 프로그램·정�
 - [ ] 강사 등록 확인 → unavailable (POST 구현 전)
 - [ ] 활동인증서 다운로드 → serial API 200
 
+### G-8) 참여 강사 상세 — 신청 정보 · 교육 배정 현황
+
+**관련 FE:** `participating-instructor-fullpage-view.tsx`, `use-participating-instructor-application-detail-enrichment.ts`, `use-participating-instructor-institution-assignment.ts`, `build-participating-instructor-assignment-rows.ts`
+
+#### G-8-1) 신청 정보 탭 — FE 연동 (applications + progress remote ON)
+
+| 액션 | OpenAPI / 계약 | FE (2026-09-17) |
+|------|----------------|-----------------|
+| 신청 정보 조회 | `GET /api/admin/instructor-applications/{applicationId}` + form_response | ✅ `sourceApplicationId` → enrich |
+| 정보 수정 (강의비·등급·사업소득) | PATCH body **`managerComment`만** (codegen `Update`) | ❌ unavailable — 저장 시 안내 |
+| 코멘트 작성 | `PATCH …/instructor-applications/{id}` (`managerComment`) | ✅ `instructorApplicationId` |
+| 개인정보 상세보기 | member unmask (`INSTRUCTOR`) | ✅ `memberId` |
+| 활동인증서 발급 | certificate serial allocate | ✅ |
+| 활동 포기 | `POST …/participants/{participantId}/give-up` | ✅ + `stopScheduleId` optional |
+| 활동 포기 중단일 선택 | participants `sessions[]` enrich | ✅ FE 매핑 · BE `stopScheduleId` 수용 |
+| 학력/경력/자격 | 상세 GET + form_response | ⚠️ enrich · BE resume 필드 보완 |
+
+remote OFF / `instructorApplicationId` 없음 → unavailable · **mock/local patch 금지**.
+
+#### G-8-2) 교육 배정 현황 탭 — FE 연동 (progress remote ON)
+
+기관형·개인형 공통: `use-participating-instructor-institution-assignment.ts` + assignment board.
+
+| 액션 | API | FE |
+|------|-----|-----|
+| 배정된 목록 | `GET …/instructor-assignments` (program-wide → `instructorMemberId` 클라 조인) | ✅ 기관형·개인형 |
+| 배정 대기 목록 | `schoolRows` × 미배정 슬롯 합성 (§D-2-1 전용 API 없음) | ✅ |
+| 선택 배정 · 추가 배정 | `POST …/programs/{programId}/instructor-assignments` | ✅ |
+| 배정 취소 | `POST …/instructor-assignments/{id}/cancel` | ✅ (`assignmentIds[]`) |
+| 대표 강사 지정 | `PUT …/representative-instructor` | ✅ (`newRole === 'lead'`) |
+| 일반 강사로 변경(demote) | — | ❌ unavailable (전용 demote API 없음) |
+| 엑셀 | — | ✅ 클라 export |
+
+remote OFF / `memberId` 없음 → 빈 목록 + unavailable · **mock 금지**.
+
+#### G-8-3) 서버 보완
+
+| 항목 | 우선순위 | 요청 |
+|------|----------|------|
+| `sourceApplicationId` on participants(INSTRUCTOR) | P0 | 코멘트·상세 GET PK |
+| `sessions[]` on participants(INSTRUCTOR) | P0 | 활동 포기 중단일 · give-up `stopScheduleId` |
+| PATCH feePolicy + businessIncome | P1 | 「정보 수정」 저장 |
+| GET resume/education/career enrich | P1 | 이력서 탭 |
+| **배정 대기 전용 API** | P1 | §D-2-1 — 강사 상세도 동일 갭 (현재 schoolRows 합성) |
+| **list `instructorMemberId` 쿼리** | P2 | 강사 상세는 program-wide list 후 클라 필터 (size 200 한도) |
+| **대표→일반 demote API** | P2 | 현재는 다른 강사 lead 지정으로만 간접 반영 · 단독 demote 불가 |
+| settlement status change | P1 | 목록·상세 정산 드롭다운 |
+| POST participants/instructors (등록) | P1 | §G-4 |
+| bulk-remove (삭제) | P1 | §G-4 |
+
+give-up body (§B-5와 통일):
+
+```json
+{ "reason": "활동 포기", "stopScheduleId": 12345 }
+```
+
+feePolicy PATCH (승인 `Approval.feePolicy`와 동일 구조 권장):
+
+```json
+{
+  "feePolicy": {
+    "basisType": "PROGRAM",
+    "measure": "SESSION",
+    "amount": 150000,
+    "instructorFeeGrade": "3급 강사비"
+  }
+}
+```
+
+#### G-8-4) QA
+
+- [ ] 신청 정보: enrich · 코멘트 · unmask · give-up(+stopScheduleId)
+- [ ] 정보 수정 저장: fee PATCH 전 unavailable
+- [ ] 배정 탭: create/cancel/representative(lead) 후 board 재조회 · mock 없음
+- [ ] 일반 강사 demote · 정산·등록·삭제: unavailable (API 전)
+- [ ] 개인형 교육 배정 탭도 동일 remote 경로
+
+### G-9) 참여 강사 상세 — 정산 현황
+
+**관련 FE:** `participating-instructor-settlement-section.tsx`, `participating-individual-instructor-settlement-section.tsx`, `use-participating-instructor-settlement-list.ts`, `map-settlement-to-participating-instructor-settlement-row.ts`, `participating-instructor-payment-statement-view-container.tsx`
+
+**Remote 게이트:** `isMemberInstructorSettlementsRemoteEnabled()` — members + (`paymentOrders` **or** `accountPayments` in `VITE_REAL_API_MODULES`). program progress remote와 **별도**.
+
+#### G-9-1) FE 연동 (settlement remote ON + `memberId`)
+
+| 액션 | OpenAPI / 계약 | FE (2026-09-17) |
+|------|----------------|-----------------|
+| 요약 — 지급조서 처리현황 | participants enrich `settlementStatus` | ✅ `instructor.settlementStatus` |
+| 요약 — 프로그램 진행 회차 | settlements `sessionCompleted`/`sessionTotal` | ✅ 목록 집계 |
+| 요약 — 강의비·사업소득 | instructor-applications / participants enrich | ✅ 신청 정보와 동일 소스 |
+| 정산 내역 테이블 | `GET /api/admin/settlements?programId=&instructorMemberId=` | ✅ |
+| 지급조서 보기 | `GET …/settlements/{id}` + 미리보기 렌더 | ✅ settlement detail → 양식 preview |
+| 지급조서 파일 다운로드 | `POST …/settlements/{id}/payment-statement/download` | ✅ (모달·일괄) |
+| 지급조서 일괄 다운로드 | `POST …/payment-statements/bulk-download` | ✅ (fallback: 건별 download) |
+| 엑셀 | — | ✅ 클라 Excel (조회 결과) |
+
+remote OFF / `memberId` 없음 → **빈 목록** + `program-api-unavailable` 1회 · **mock 5행·FE PDF 합성 금지**.
+
+#### G-9-2) FE가 이미 하는 일
+
+- `fetchAllSettlementsRemote({ programId, instructorMemberId })` — 회원 상세 `instructor-payment-tab`과 동일 API·status mapper 재사용
+- 지급조서 미리보기: settlement detail `items[]` → 지급조서 양식 preview (원천징수 8.8% **FE 가정 제거**)
+- 지급조서 다운로드: 서버 PDF URL (`downloadPaymentStatementRemote` / bulk-download)
+- 기관형·개인형 동일 hook · 컬럼만 분기
+
+#### G-9-3) 서버 보완
+
+| 항목 | 우선순위 | 요청 |
+|------|----------|------|
+| `programId` + `instructorMemberId` **동시 필터** | P0 | 해당 프로그램·강사 정산만 반환 (다른 프로그램 혼입 방지) |
+| `institutionName`, `lectureDate`, `sessionOrdinal`, `programSessionProgressDisplay` | P0 | 테이블 「기관명」「교육 진행 일정」 |
+| `educationGrade` (교육 학년) | P1 | 기관형 테이블 열 — 없으면 FE `-` |
+| `sessionCompleted` / `sessionTotal` on list item | P1 | 요약 「프로그램 진행 회차」 SSOT |
+| `GET …/payment-statement/render-data` `payload` | P2 | frozen snapshot 직접 렌더(현재 FE는 detail GET 기반 preview) |
+| settlement status change (목록 드롭다운) | P1 | §G-4 · 목록 정산 변경 unavailable 유지 |
+
+#### G-9-4) QA
+
+- [ ] settlement remote ON: seed programId+memberId 정산 ≥1행
+- [ ] 지급조서 보기: detail 로드 후 preview · 서버 PDF 다운로드 200
+- [ ] 일괄 다운로드: bulk-download 또는 건별 fallback
+- [ ] remote OFF: 빈 목록 · mock 행 없음
+- [ ] `memberId` 없는 participant: unavailable
+
 ---
 
-**Last updated:** 2026-09-17 (§G 참여 강사 목록 remote 연동 · BE enrich·등록 API 요청)
+## H. 프로그램 게시글 (참여 기관 상세 · 게시글 탭)
+
+**화면:** 참여 기관/수강 프로그램 상세 → 게시글 탭 (카드·메타·⋮·상세·읽음 현황)
+
+### H-1) FE 연동 현황 (2026-09-17)
+
+| 기능 | API | FE | 비고 |
+|------|-----|-----|------|
+| 목록 | `GET …/posts` | ✅ | adapter: author actor·count·visibility |
+| 상세 | `GET …/posts/{postId}` | ✅ | |
+| 등록/수정/삭제 | POST / PUT / DELETE | ✅ | 본인 글만 ⋮ (actorId 매칭) |
+| 댓글 | GET / POST comments | ✅ | |
+| 반응 | GET / PUT / DELETE reaction | ✅ | summary + **items → 반응 사용자 목록** |
+| 첨부 | GET / PUT attachments | ✅ | 목록 카드 attachmentCount |
+| 읽음 현황 | `GET …/posts/{postId}/reads` | ✅ | readers + unreadMembers |
+| 미읽음 알림 | `POST …/unread-reminders` | ✅ | `message` + additive `memberIds` |
+
+remote OFF: 목록/상세는 빈·mock 분리 정책 유지. 읽음 팝업은 remote OFF 시 디자인시스템용 mock 경로만.
+
+### H-2) BE 갭 · 요청
+
+#### H-2-1. 작성자·반응자·읽음 대상 **displayName** enrich
+
+현재 DTO는 actorType/actorId · memberId만 제공. FE는 `{역할} #{id}` 폴백.
+
+요청 필드 (additive):
+
+| 위치 | 필드 | 설명 |
+|------|------|------|
+| list/detail/comment | `createdByDisplayName` | 작성자 표시명 |
+| reaction items | `actorDisplayName` | 반응자 표시명 |
+| reads.readers | `readerDisplayName` | 읽은 사람 표시명 |
+| reads.unreadMembers | `memberDisplayName` | 미읽음 대상 표시명 |
+
+#### H-2-2. 미읽음 알림 대상 선택 (`memberIds`)
+
+OpenAPI `UnreadReminderRequest`는 `message`만 정의.
+
+```http
+POST /api/admin/programs/{programId}/posts/{postId}/unread-reminders
+Content-Type: application/json
+
+{
+  "message": "게시글을 확인해 주세요.",
+  "memberIds": [101, 102]
+}
+```
+
+- `memberIds` 있으면 **선택 대상만** 발송
+- 없으면 기존(전체 미읽음) 정책 유지 가능
+- FE는 이미 additive `memberIds`를 전송 중 → 스펙 반영·서버 적용 필요
+
+#### H-2-3. 기관(학교) 스코프 게시글
+
+참여 기관 상세 탭은 `schoolId` / organization participant 기준으로 게시글을 걸러야 함.
+
+| 요청 | 설명 |
+|------|------|
+| list query `organizationParticipantId` 또는 `schoolId` | 해당 기관 스코프 글만 |
+| create body 동일 스코프 필드 | 기관 공지 vs 프로그램 전체 구분 |
+| reads GET query 동일 | 읽음/미읽음도 기관 참여자만 |
+| DTO `organizationParticipantId` / `schoolId` | 카드·필터용 |
+
+현재 FE는 프로그램 단위 posts만 조회. 기관 탭의 `tabSchoolId`는 reads remote에서 **미적용**(서버 필터 없음).
+
+#### H-2-4. 기타 (P2)
+
+| 항목 | 설명 |
+|------|------|
+| `postType` / 공지 플래그 | UI 배지·정렬 |
+| 목록 pagination | cursor/page (대량 시) |
+| 첨부 originalFileName 누락 시 | list에 attachmentCount 직접 제공 |
+
+### H-3) FE가 이미 하는 일
+
+- posts CRUD · comments · reactions · attachments remote
+- reads GET → 읽음/안읽음 팝업
+- unread-reminders POST (`message` + `memberIds`)
+- reaction `items` → 상세 반응 사용자 목록
+- 본인 작성 글만 목록/상세 ⋮ (수정·삭제)
+- author/reader displayName 폴백: 역할 + `#actorId`
+
+### H-4) BE · QA 체크리스트
+
+- [ ] `GET …/posts/{id}/reads` — readers·unreadMembers 샘플 ≥1
+- [ ] displayName enrich 후 UI에 실명 표시
+- [ ] `POST …/unread-reminders` + `memberIds` — 선택 인원만 알림
+- [ ] `GET …/posts?schoolId=` (또는 participant) — 기관 탭 목록 일치
+- [ ] reaction items에 actorDisplayName
+- [ ] 타 사용자 글 ⋮ 미노출 · 본인 글 수정/삭제 200
+
+---
+
+## I. 참여 강사 상세 — 강의보고서 관리
+
+**화면:** 일반 프로그램 상세 → 프로그램 진행 현황 → 참여 강사 → 참여 강사 상세 → **강의보고서 관리**
+
+**관련 FE:** `participating-instructor-lecture-reports-section.tsx`, `participating-individual-instructor-lecture-reports-section.tsx`, `use-program-lecture-reports.ts`, `lecture-reports-adapters.ts`, `program-progress-api-client.ts`
+
+### I-1) FE 연동 현황 (2026-09-17)
+
+| UI | API | FE | 비고 |
+|----|-----|-----|------|
+| 목록 조회 (기관·개인) | `GET /api/admin/programs/{programId}/lecture-reports` | ✅ | 무한스크롤 · adapter enrich |
+| 강사 스코프 | query `instructorMemberId` (additive) + FE 필터 | 🔶 | OpenAPI list **params 없음** → FE best-effort |
+| 강의보고서 보기 | `GET /api/admin/files/{fileObjectId}/download` (+ content blob 폴백) | ✅ | list `fileObjectIds[]` 사용 · mock 미리보기 제거 |
+| 일괄 다운로드 | `GET …/lecture-reports/download?instructorMemberId=` | ✅ | `downloadUrl`/`downloadEndpoint`/`fileObjectId` 수용 |
+| 엑셀 다운로드 | — | 클라 only | 테이블 행 export (P2 서버화 가능) |
+| 관리자 예외 처리 | `POST …/program-execution/lecture-reports/{reportId}/admin-exception` | ❌ | **이 화면 UI 없음** — 연동 대상 아님 |
+
+remote OFF / progress 모듈 OFF → 빈 목록 · 보기/일괄은 `notifyProgramApiUnavailable` · **mock PDF/시드 행 금지**.
+
+### I-2) BE 갭 · 요청
+
+#### I-2-1. 목록 강사 필터 (P0)
+
+```http
+GET /api/admin/programs/{programId}/lecture-reports?page=0&size=20&instructorMemberId=190005
+```
+
+- 참여 강사 상세는 **해당 강사 행만** 필요
+- OpenAPI에 `instructorMemberId` query 추가 · 서버 필터 적용
+- 응답 각 행에 `instructorMemberId` 항상 포함 (FE 교차검증)
+
+현재 FE: query를 additive로 전송 + 응답에 필드가 있을 때만 클라이언트 필터. 필드 없으면 프로그램 전체가 노출될 수 있음.
+
+#### I-2-2. download 응답 스키마 명시 (P0)
+
+```http
+GET /api/admin/programs/{programId}/lecture-reports/download?instructorMemberId=190005
+```
+
+OpenAPI `200`에 스키마 없음. FE는 회원 일괄과 동일하게 가정:
+
+```json
+{
+  "downloadUrl": "https://…/….zip",
+  "fileObjectId": 123,
+  "status": "READY"
+}
+```
+
+또는 `downloadEndpoint` (교육일지 bulk와 동일). **스키마 `$ref: FileDownloadJobResponse` 권장**.
+
+요구:
+
+- `instructorMemberId` 있으면 해당 강사 제출분 ZIP만
+- 제출 0건 → 404/204 + 명확한 error code
+- 감사로그 · LECTURE_REPORT_READ
+
+#### I-2-3. 목록 라벨 enrich 품질 (P1)
+
+DTO에 `dateRoundTimeLabel` · `grade` · `lectureProgressStatus` 가 있음. FE adapter는 사용 중.
+
+시드/응답에서:
+
+- `dateRoundTimeLabel` 실값 ( `일정 #n` 단독 금지 — seed SSOT §3.4)
+- 제출 완료 행 `fileObjectIds` ≥1 (보기 연동)
+- `lectureProgressStatus`: `UPCOMING` | `COMPLETED`
+
+#### I-2-4. 단건 report download path (P2 · 선택)
+
+`fileObjectIds` 없으면 보기 불가. 대안:
+
+```http
+GET /api/admin/programs/{programId}/lecture-reports/{reportId}/download
+```
+
+회원 상세 PH-015와 정렬. 있으면 FE 폴백으로 연결 가능.
+
+#### I-2-5. 엑셀 export (P2)
+
+서버 export 없으면 클라 Excel 유지. 필요 시 `GET …/lecture-reports/export?instructorMemberId=`.
+
+### I-3) FE가 이미 하는 일
+
+- list infinite query (기관·개인 공통 remote)
+- additive `instructorMemberId` + FE 필터
+- 보기 → `fileObjectIds` → files download API
+- 일괄 → `…/lecture-reports/download?instructorMemberId=`
+- adapter: `dateRoundTimeLabel`/`grade`/`lectureProgressStatus`/`fileObjectIds`
+- mock issuance PDF 미리보기·클라이언트 순차 PDF **제거**
+
+### I-4) BE · QA 체크리스트
+
+- [ ] `GET …/lecture-reports?instructorMemberId=` → 해당 강사만
+- [ ] 제출 완료 행 `fileObjectIds` ≥1 · 보기 200
+- [ ] `GET …/download?instructorMemberId=` → ZIP (`downloadUrl` 스키마 문서화)
+- [ ] `dateRoundTimeLabel`이 `일정 #n`만이 아님
+- [ ] remote OFF → 빈 목록 · unavailable (mock 없음)
+- [ ] 개인 참여 방식도 동일 list/download 동작
+
+---
+
+## J. 프로그램 진행 현황 — 참여 봉사자 목록
+
+**관련 FE:** `participating-volunteers-section.tsx`, `use-progress-volunteer-list.ts`, `mapParticipantToParticipatingVolunteerRow`
+
+**시드 스펙:** `general-program-remote-db-full-graph-seed-backend-request-2026-09-16.md` §7.5
+
+### J-1) FE 연동 (progress remote ON)
+
+| 액션 | OpenAPI / 계약 | FE (2026-09-17) |
+|------|----------------|-----------------|
+| 목록 조회 (무한 스크롤) | `GET …/programs/{programId}/participants?participantType=VOLUNTEER&page=&size=` | ✅ |
+| 컬럼 매핑 | `sessions[]` · `organizationName` · additive enrich | ✅ adapter (`mapSessionProgressToParticipatingSchoolSessions`) |
+| 필터 (성명·1365) | ❌ 서버 쿼리 없음 | ✅ 클라 필터 |
+| 행 클릭 → 상세 | — (URL `volunteerId`) | ✅ 목록 row 기반 |
+| 활동확인서 발급 | `POST …/certificates/issues/serial` + template | ✅ 목록 미리보기 모달 (강사 목록과 동일 패턴) |
+| 캘린더 / 리스트 | — | ✅ URL + sessions 이벤트 |
+| 엑셀 | ❌ 서버 export 없음 | ✅ 클라 Excel |
+| **봉사자 등록** | ❌ | ❌ **unavailable** (로컬 append 제거) |
+| **임직원 자원봉사자 등록** | ❌ | ❌ **unavailable** (로컬 인원 저장 제거) |
+
+remote OFF → **빈 목록** + unavailable 1회 · **temp mock 봉사자 prepend 제거**.
+
+### J-2) participants(VOLUNTEER) 목록 enrich — P0
+
+`GET …/participants?participantType=VOLUNTEER` 응답 `items[]` 최소:
+
+| 필드 | UI 용도 | 비고 |
+|------|---------|------|
+| `participantId`, `memberId`, `memberName` | rowKey · 성명 | ✅ codegen |
+| `sessions[]` (`scheduleId`, `sessionNo`, `startAt`, `endAt`, status) | 봉사 진행 일정 · 캘린더 | ✅ codegen · FE 매핑됨 |
+| `organizationName` | 소속/단일 기관 fallback | ✅ |
+| `assignedOrganizationNames[]` 또는 `assignedInstitutionNames[]` | **배정 기관명** 열 | additive · 없으면 orgName fallback |
+| `id1365` / `external1365Id` | 1365 ID 열 · 필터 | **P0 enrich** — 없으면 빈 문자열 |
+| `contact` / `phone`, `email` | 연락처·이메일 | **서버 마스킹** · FE 재마스킹 금지 |
+| `sourceApplicationId` | (권장) 신청 상세 deep link | |
+| `giveUpAt`, `participantStatus` | 활동 포기 | ✅ |
+
+### J-3) 신규 API — P1
+
+#### J-3-1. 참여 봉사자 등록 (관리자)
+
+화면 「봉사자 등록」: 기존 **개인 회원**을 프로그램 참여자(VOLUNTEER)로 추가.
+
+```http
+POST /api/admin/programs/{programId}/participants/volunteers
+Content-Type: application/json
+
+{
+  "memberId": 190005
+}
+```
+
+#### J-3-2. 임직원 자원봉사자 등록
+
+기관×회차별 신규/재참여 인원 스냅샷 저장. 택1:
+
+| 안 | 예시 |
+|----|------|
+| A | `PUT …/organization-applications/{id}/employee-volunteer-counts` |
+| B | `POST …/programs/{programId}/employee-volunteer-registrations` |
+
+행 최소: `organizationApplicationId`, `scheduleId`/`requestedScheduleId`, `newCount`, `returningCount`.
+
+#### J-3-3. 삭제/제외 (일괄, 선택)
+
+```http
+POST /api/admin/programs/{programId}/participants/volunteers/bulk-remove
+```
+
+### J-4) FE가 이미 하는 일
+
+- remote infinite query · sessions/기관명/PII additive 매핑
+- 활동확인서: serial allocate + PDF (목록·상세)
+- 등록·임직원: unavailable · **로컬 목록 patch 없음**
+- temp-progress-volunteer mock **삭제**
+
+### J-5) BE · QA 체크리스트
+
+- [ ] VOLUNTEER participants ≥1 · `sessions[]` · `id1365` · 마스킹 contact/email 샘플
+- [ ] `assignedOrganizationNames` 다건 → 목록 「기관 외 N개」 표기
+- [ ] remote OFF → 빈 목록 + unavailable (임시 봉사자 mock 없음)
+- [ ] 봉사자/임직원 등록 클릭 → unavailable (POST 구현 전)
+- [ ] 활동확인서 1명 선택 → serial + PDF 다운로드
+
+---
+
+**Last updated:** 2026-09-17 (§J 참여 봉사자 목록 remote enrich · 등록 unavailable · mock 제거)
