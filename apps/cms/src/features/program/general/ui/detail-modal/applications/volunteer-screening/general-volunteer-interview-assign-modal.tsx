@@ -5,9 +5,11 @@ import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { useGeneralInterviewSlots } from '@/features/program/general/hooks/use-general-interview-slots'
 import {
+  parseGeneralInterviewScheduleFromProgram,
   parseGeneralInterviewScheduleFromRemoteSlots,
   shouldUseRemoteInterviewSchedule,
 } from '@/features/program/general/lib/general-interview-assign-schedule-utils'
+import { resolveGeneralProgramForDetail } from '@/features/program/general/lib/detail-meta'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import {
   toInterviewAssignModalApplicant,
@@ -53,22 +55,27 @@ export function GeneralVolunteerInterviewAssignModal({
   const useRemoteSchedule = shouldUseRemoteInterviewSchedule(program.id, {
     applicationsUseRemote,
   })
+  const localProgramDetail = resolveGeneralProgramForDetail(program.id)
+  const useLocalInterviewSchedule = !useRemoteSchedule && localProgramDetail != null
   const slotsQuery = useGeneralInterviewSlots(program.id, open && useRemoteSchedule, {
     applicationsUseRemote,
   })
 
   useEffect(() => {
-    if (!open || useRemoteSchedule) return
+    if (!open || useRemoteSchedule || useLocalInterviewSchedule) return
     notifyProgramApiUnavailable('general-volunteer-interview-assign-schedule', '봉사자 면접일 배정')
     onCancel()
-  }, [open, onCancel, useRemoteSchedule])
+  }, [open, onCancel, useLocalInterviewSchedule, useRemoteSchedule])
 
   const schedule = useMemo(() => {
-    if (!useRemoteSchedule) {
-      return parseGeneralInterviewScheduleFromRemoteSlots([])
+    if (useRemoteSchedule) {
+      return parseGeneralInterviewScheduleFromRemoteSlots(slotsQuery.data ?? [])
     }
-    return parseGeneralInterviewScheduleFromRemoteSlots(slotsQuery.data ?? [])
-  }, [slotsQuery.data, useRemoteSchedule])
+    if (useLocalInterviewSchedule && localProgramDetail) {
+      return parseGeneralInterviewScheduleFromProgram(localProgramDetail)
+    }
+    return parseGeneralInterviewScheduleFromRemoteSlots([])
+  }, [localProgramDetail, slotsQuery.data, useLocalInterviewSchedule, useRemoteSchedule])
 
   const modalApplicant = useMemo(
     () =>
