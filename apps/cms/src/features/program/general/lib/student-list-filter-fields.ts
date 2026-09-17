@@ -11,20 +11,38 @@ export const STUDENT_LIST_GENDER_FILTER_OPTIONS = [
   { label: '해당 없음(미기재)', value: STUDENT_LIST_GENDER_FILTER_UNSPECIFIED },
 ]
 
-/** @deprecated 고정 1~6반 — `buildStudentGradeClassOptions(classCount)` 사용 */
+/** @deprecated 고정 1~6반 — `buildStudentGradeClassOptions(classCount, educationGrade)` 사용 */
 export const STUDENT_GRADE_CLASS_OPTIONS = buildStudentGradeClassOptions(6)
 
-/** 참여 기관 신청 학급 수(`classCount`) 기준 학급 Select 옵션 (예: 4 → 1반 … 4반) — 학생 등록·수정용 */
-export function buildStudentGradeClassOptions(classCount?: number | null) {
+/** 교육 학년 라벨을 학급 옵션용 `N학년` 형태로 정규화 */
+export function normalizeStudentGradeLabelForClassOption(
+  educationGrade?: string | null
+): string {
+  const trimmed = educationGrade?.trim() ?? ''
+  if (!trimmed) return ''
+  const withGrade = trimmed.match(/(\d+)\s*학년/)
+  if (withGrade?.[1]) return `${withGrade[1]}학년`
+  const onlyNum = trimmed.match(/^(\d+)$/)
+  if (onlyNum?.[1]) return `${onlyNum[1]}학년`
+  return trimmed.endsWith('학년') ? trimmed : trimmed
+}
+
+/** 참여 기관 신청 학급 수(`classCount`) + 교육 학년 기준 학급 Select 옵션 */
+export function buildStudentGradeClassOptions(
+  classCount?: number | null,
+  educationGrade?: string | null
+) {
   if (classCount == null || classCount < 1) return []
 
+  const gradeLabel = normalizeStudentGradeLabelForClassOption(educationGrade)
   return Array.from({ length: classCount }, (_, index) => {
-    const label = `${index + 1}반`
+    const classPart = `${index + 1}반`
+    const label = gradeLabel ? `${gradeLabel} ${classPart}` : classPart
     return { label, value: label }
   })
 }
 
-/** 명단에 실제로 입력된 학급 값으로 필터 Select 옵션 구성 */
+/** 명단에 실제로 입력된 학급 값으로 필터·Select 옵션 구성 */
 export function buildStudentClassFilterOptionsFromRows(
   rows: Array<{ gradeClass?: string | null }>
 ): Array<{ label: string; value: string }> {
@@ -36,6 +54,23 @@ export function buildStudentClassFilterOptionsFromRows(
   return Array.from(unique)
     .sort((a, b) => a.localeCompare(b, 'ko'))
     .map(value => ({ label: value, value }))
+}
+
+/** 신청 학급 옵션 + 명단 학급 값을 합쳐 필터·추가·수정 Select에 동일 적용 */
+export function mergeStudentClassSelectOptions(
+  ...groups: Array<Array<{ label: string; value: string }>>
+): Array<{ label: string; value: string }> {
+  const unique = new Map<string, string>()
+  for (const group of groups) {
+    for (const option of group) {
+      const value = option.value.trim()
+      if (!value) continue
+      if (!unique.has(value)) unique.set(value, option.label.trim() || value)
+    }
+  }
+  return Array.from(unique.entries())
+    .sort(([a], [b]) => a.localeCompare(b, 'ko'))
+    .map(([value, label]) => ({ label, value }))
 }
 
 export type StudentListRowFilterInput = {
@@ -74,7 +109,7 @@ export function matchesStudentListFilters(
 
 const STUDENT_LIST_FILTER_CONTROL_WIDTH = FILTER_CONTROL_MAX_WIDTH_PX
 
-/** 학교 상세 > 학생 명단 탭 필터 (학생명·성별·학급) — 학급 옵션은 명단 입력값 기준 */
+/** 학교 상세 > 학생 명단 탭 필터 (학생명·성별·학급) — 학급 옵션은 추가 모달·수정 Select와 동일 */
 export function buildStudentListFilterFields(
   gradeClassOptions: Array<{ label: string; value: string }> = []
 ): FilterFieldConfig[] {

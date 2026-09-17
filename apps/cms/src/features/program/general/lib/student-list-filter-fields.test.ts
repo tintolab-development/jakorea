@@ -2,9 +2,36 @@ import { describe, expect, it } from 'vitest'
 import {
   STUDENT_LIST_GENDER_FILTER_UNSPECIFIED,
   buildStudentClassFilterOptionsFromRows,
+  buildStudentGradeClassOptions,
   buildStudentListFilterFields,
   matchesStudentListFilters,
+  mergeStudentClassSelectOptions,
+  normalizeStudentGradeLabelForClassOption,
 } from './student-list-filter-fields'
+
+describe('normalizeStudentGradeLabelForClassOption', () => {
+  it('교육 학년 표기를 N학년으로 정규화한다', () => {
+    expect(normalizeStudentGradeLabelForClassOption('4학년')).toBe('4학년')
+    expect(normalizeStudentGradeLabelForClassOption('4')).toBe('4학년')
+    expect(normalizeStudentGradeLabelForClassOption('초등학교 4학년')).toBe('4학년')
+    expect(normalizeStudentGradeLabelForClassOption('')).toBe('')
+  })
+})
+
+describe('buildStudentGradeClassOptions', () => {
+  it('신청 학급 수와 교육 학년으로 학급 옵션을 만든다', () => {
+    expect(buildStudentGradeClassOptions(3, '4학년')).toEqual([
+      { label: '4학년 1반', value: '4학년 1반' },
+      { label: '4학년 2반', value: '4학년 2반' },
+      { label: '4학년 3반', value: '4학년 3반' },
+    ])
+    expect(buildStudentGradeClassOptions(2)).toEqual([
+      { label: '1반', value: '1반' },
+      { label: '2반', value: '2반' },
+    ])
+    expect(buildStudentGradeClassOptions(0)).toEqual([])
+  })
+})
 
 describe('buildStudentClassFilterOptionsFromRows', () => {
   it('명단에 입력된 학급만 중복 없이 정렬해 옵션으로 만든다', () => {
@@ -21,6 +48,21 @@ describe('buildStudentClassFilterOptionsFromRows', () => {
       { label: '1반', value: '1반' },
       { label: '2반', value: '2반' },
       { label: '3반', value: '3반' },
+    ])
+  })
+})
+
+describe('mergeStudentClassSelectOptions', () => {
+  it('신청 학급 옵션과 명단 학급을 합친다', () => {
+    expect(
+      mergeStudentClassSelectOptions(
+        buildStudentGradeClassOptions(2, '4학년'),
+        buildStudentClassFilterOptionsFromRows([{ gradeClass: '5학년 1반' }])
+      )
+    ).toEqual([
+      { label: '4학년 1반', value: '4학년 1반' },
+      { label: '4학년 2반', value: '4학년 2반' },
+      { label: '5학년 1반', value: '5학년 1반' },
     ])
   })
 })

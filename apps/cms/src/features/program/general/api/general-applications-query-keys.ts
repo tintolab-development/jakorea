@@ -65,6 +65,10 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'navigation', programId] as const,
   mergeGroups: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'organization-merge-groups', programId] as const,
+  studentRoster: (organizationApplicationId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'student-roster', organizationApplicationId] as const,
+  instructorAssignments: (programId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'instructor-assignments', programId] as const,
 }
 
 export const generalInterviewSlotsQueryKeys = {

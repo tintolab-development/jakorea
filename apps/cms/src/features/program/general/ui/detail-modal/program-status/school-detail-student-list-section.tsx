@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'rea
 import { useStudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
 import type { StudentListFilterParams } from '../../../hooks/use-student-list-filter-params'
 import { CheckOutlined, DownloadOutlined } from '@ant-design/icons'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { CmsButton, CmsInput, CmsRadio, CmsSelect, FilterTableLayout, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
 import {
@@ -37,11 +37,13 @@ import type {
 } from '../../../model/school-detail-types'
 import { STUDENT_GENDER_LABELS } from '../../../model/school-detail-types'
 import { getSchoolDetailStudents, getStudentLectureAttendanceSessions } from '../../../lib/school-detail'
+import { useOrganizationStudentRosterRemote } from '../../../hooks/use-organization-student-roster-remote'
 import {
   buildStudentClassFilterOptionsFromRows,
   buildStudentGradeClassOptions,
   buildStudentListFilterFields,
   matchesStudentListFilters,
+  mergeStudentClassSelectOptions,
 } from '../../../lib/student-list-filter-fields'
 import { lectureAttendanceStringFromSessions } from '../../../lib/lecture-attendance-from-sessions'
 import {
@@ -124,6 +126,11 @@ export interface SchoolDetailStudentListSectionProps {
   classCount?: number
   schoolName?: string
   educationGrade?: string
+  /**
+   * 기관 신청 ID — 있으면 `GET/PUT …/student-roster` remote 연동.
+   * 없으면 빈 목록 + API unavailable 안내.
+   */
+  organizationApplicationId?: string | number | null
   /** 고유번호 발급 키 — 없으면 다운로드 API가 400 */
   programId?: string | number
   /** 과제·설문 제출 내역 모달 설명에 사용하는 프로그램명 */
@@ -154,6 +161,7 @@ export function SchoolDetailStudentListSection({
   classCount,
   schoolName = '',
   educationGrade = '',
+  organizationApplicationId = null,
   programId,
   programTitle = 'JA Korea 경제교육 프로그램',
   programStartDate = null,
@@ -198,15 +206,26 @@ export function SchoolDetailStudentListSection({
   const portraitConsentExportStartedRef = useRef(false)
   const { showAlert } = useCmsAlert()
 
+  const rosterRemote = useOrganizationStudentRosterRemote({
+    organizationApplicationId,
+    educationGrade,
+  })
+
   const showStudentListEditModeBlockedAlert = useCallback(
     () => showAlert({ title: '안내', content: STUDENT_LIST_EDIT_MODE_BLOCKED_ALERT_MESSAGE }),
     [showAlert]
   )
 
-  const studentList = useMemo(
-    () => getSchoolDetailStudents(schoolId, studentCount),
-    [schoolId, studentCount]
-  )
+  const studentList = useMemo(() => {
+    if (rosterRemote.remoteEnabled) return rosterRemote.students
+    return getSchoolDetailStudents(schoolId, studentCount)
+  }, [rosterRemote.remoteEnabled, rosterRemote.students, schoolId, studentCount])
+
+  useEffect(() => {
+    if (!rosterRemote.remoteEnabled) return
+    setAddedStudents([])
+  }, [rosterRemote.remoteEnabled, rosterRemote.students])
+
   const mergedStudentList = useMemo(() => {
     const patchRow = (row: SchoolDetailStudentRow): SchoolDetailStudentRow => {
       const saved = attendanceSessionsByStudentId[row.id]
@@ -435,21 +454,19 @@ export function SchoolDetailStudentListSection({
     [pendingFilters]
   )
 
-  /** 학생 등록·수정 Select — 신청 학급 수 기준 */
+  /** 필터·학생 추가·명단 수정 Select 공통 학급 옵션 */
   const gradeClassOptions = useMemo(
-    () => buildStudentGradeClassOptions(classCount),
-    [classCount]
-  )
-
-  /** 필터 Select — 명단에 입력된 학급 종류만 */
-  const studentClassFilterOptions = useMemo(
-    () => buildStudentClassFilterOptionsFromRows(mergedStudentList),
-    [mergedStudentList]
+    () =>
+      mergeStudentClassSelectOptions(
+        buildStudentGradeClassOptions(classCount, educationGrade),
+        buildStudentClassFilterOptionsFromRows(mergedStudentList)
+      ),
+    [classCount, educationGrade, mergedStudentList]
   )
 
   const studentListFilterFields = useMemo(
-    () => buildStudentListFilterFields(studentClassFilterOptions),
-    [studentClassFilterOptions]
+    () => buildStudentListFilterFields(gradeClassOptions),
+    [gradeClassOptions]
   )
 
   const studentListForm = useForm<StudentListFormValues>({
@@ -469,15 +486,29 @@ export function SchoolDetailStudentListSection({
     setIsStudentListEditMode(false)
   }, [filteredStudentList, reset])
 
-  const handleStudentListSave = useCallback(() => {
+  const handleStudentListSave = useCallback(async () => {
     const values = getValues()
     const rows = formValuesToRows(values.students ?? [])
+    if (rosterRemote.remoteEnabled) {
+      try {
+        await rosterRemote.commitRows(rows)
+        setIsStudentListEditMode(false)
+        onSaveEdit?.(rows)
+      } catch {
+        showAlert({
+          title: '저장 실패',
+          content:
+            '학생 명단 저장에 실패했습니다. 수동 편집용 sourceFileObjectId 계약이 서버에 반영됐는지 확인해 주세요.',
+        })
+      }
+      return
+    }
     onSaveEdit?.(rows)
     setIsStudentListEditMode(false)
-  }, [getValues, onSaveEdit])
+  }, [getValues, onSaveEdit, rosterRemote, showAlert])
 
   const handleAddStudent = useCallback(
-    (values: AddStudentFormValues) => {
+    async (values: AddStudentFormValues) => {
       const nextNo = mergedStudentList.length + 1
       const newRow: SchoolDetailStudentRow = {
         id: crypto.randomUUID(),
@@ -490,10 +521,31 @@ export function SchoolDetailStudentListSection({
         email: values.email?.trim() || undefined,
         notes: values.notes?.trim() || undefined,
       }
+
+      if (rosterRemote.remoteEnabled) {
+        try {
+          const nextRows = [...studentList, newRow].map((row, index) => ({
+            ...row,
+            no: index + 1,
+          }))
+          await rosterRemote.commitRows(nextRows)
+          setAddStudentModalOpen(false)
+          onAddStudent?.()
+        } catch {
+          showAlert({
+            title: '등록 실패',
+            content:
+              '학생 등록에 실패했습니다. 명단 전체 교체(PUT) 계약과 sourceFileObjectId 요구사항을 확인해 주세요.',
+          })
+        }
+        return
+      }
+
       setAddedStudents(prev => [...prev, newRow])
       setAddStudentModalOpen(false)
+      onAddStudent?.()
     },
-    [mergedStudentList.length]
+    [mergedStudentList.length, onAddStudent, rosterRemote, showAlert, studentList]
   )
 
   useEffect(() => {
@@ -523,7 +575,7 @@ export function SchoolDetailStudentListSection({
     }
     if (isStudentListEditMode) {
       if (isDirty) {
-        handleStudentListSave()
+        void handleStudentListSave()
       } else {
         handleStudentListCancel()
       }
@@ -573,9 +625,12 @@ export function SchoolDetailStudentListSection({
           <ProgramEditInfoActions
             isEditing={isStudentListEditMode}
             idleVariant="secondary"
+            saving={rosterRemote.isCommitting}
             onEdit={handleEditInfoClick}
             onCancel={handleStudentListCancel}
-            onSave={handleStudentListSave}
+            onSave={() => {
+              void handleStudentListSave()
+            }}
           />
           <CmsButton
             variant="primary"
@@ -915,7 +970,11 @@ export function SchoolDetailStudentListSection({
         }}
       >
         <div className="school-detail-student-list-section__table-wrap">
-          {isStudentListEditMode ? (
+          {rosterRemote.isLoading && filteredStudentList.length === 0 ? (
+            <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+              <Spin size="large" />
+            </div>
+          ) : isStudentListEditMode ? (
             <Table
               rowKey="id"
               size="middle"
