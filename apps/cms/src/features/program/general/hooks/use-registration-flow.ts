@@ -97,6 +97,7 @@ export function useGeneralProgramRegistrationFlow(
       programRegistrationFormVariant: registrationFormVariant,
       onRegistrationSaved: options?.onProgramRegistrationSaved,
       skipDraftRestore: options?.skipDraftRestore === true,
+      // 프로그램 임시저장 — remote 전환: docs/api/program-draft-local-storage-follow-up.md
       localOnlyDraftPersistence: true,
       templateCode:
         registrationFormVariant === 'general'
