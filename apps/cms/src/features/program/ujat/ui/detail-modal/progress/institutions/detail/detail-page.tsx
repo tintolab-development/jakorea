@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
+import { Spin } from 'antd'
 import type { Program } from '@/types/domain'
 import type { EducationProgressHalfKey } from '../../tabs'
-import { getUjatEducationProgressInstitutionDetail } from './institution-detail-data'
+import { useUjatEducationProgressInstitutionDetail } from './use-detail'
 import { UjatEducationProgressInstitutionDetailView } from './detail-view'
 import type { UjatEducationProgressInstitutionDetailTab } from '@/features/program/ujat/lib/ujat-program-detail-url'
 
@@ -18,10 +18,19 @@ export function UjatEducationProgressInstitutionDetailPage({
   activeTab: UjatEducationProgressInstitutionDetailTab
   onSelectTab: (tab: UjatEducationProgressInstitutionDetailTab) => void
 }) {
-  const detail = useMemo(
-    () => getUjatEducationProgressInstitutionDetail(program.id, half, institutionId),
-    [program.id, half, institutionId]
-  )
+  const { detail, loading } = useUjatEducationProgressInstitutionDetail({
+    programId: program.id,
+    half,
+    institutionId,
+  })
+
+  if (loading && !detail) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
+        <Spin />
+      </div>
+    )
+  }
 
   if (!detail) return null
 

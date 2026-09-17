@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { buildUjatScheduleConfirmRows } from './build-confirm-rows'
 import { buildUjatScheduleConfirmFilterFields, UJAT_SCHEDULE_CONFIRM_FILTER_ALL } from './filter-fields'
@@ -8,6 +9,9 @@ import {
   type UjatScheduleConfirmFilters,
   type UjatScheduleConfirmRow,
 } from './types'
+import { listUjatInstitutionApplicationsPage } from '@/features/program/ujat/api/applications-service'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 
 function filterRows(
   rows: UjatScheduleConfirmRow[],
@@ -34,7 +38,11 @@ function filterRows(
   })
 }
 
-export function useUjatScheduleConfirmList(regionKey: UjatInstitutionApplicationRegionKey) {
+export function useUjatScheduleConfirmList(
+  regionKey: UjatInstitutionApplicationRegionKey,
+  programId?: string | null
+) {
+  const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
   const [pendingFilters, setPendingFilters] = useState<UjatScheduleConfirmFilters>(
     () => ({ ...EMPTY_UJAT_SCHEDULE_CONFIRM_FILTERS })
   )
@@ -43,7 +51,30 @@ export function useUjatScheduleConfirmList(regionKey: UjatInstitutionApplication
   )
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
 
-  const allRows = useMemo(() => buildUjatScheduleConfirmRows(regionKey), [regionKey])
+  const remoteQuery = useInfiniteQuery({
+    queryKey: ujatQueryKeys.organizationApplications(programId ?? '', {
+      status: 'TEMP_ASSIGNED',
+    }),
+    queryFn: ({ pageParam }) =>
+      listUjatInstitutionApplicationsPage(String(programId), pageParam, {
+        status: 'TEMP_ASSIGNED',
+      }),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    enabled: remoteEnabled,
+    staleTime: 30_000,
+    retry: false,
+  })
+
+  const sourceRows = useMemo(
+    () => remoteQuery.data?.pages.flatMap(page => page.rows) ?? [],
+    [remoteQuery.data]
+  )
+
+  const allRows = useMemo(
+    () => buildUjatScheduleConfirmRows(regionKey, sourceRows),
+    [regionKey, sourceRows]
+  )
 
   const tableData = useMemo(
     () => filterRows(allRows, appliedFilters),

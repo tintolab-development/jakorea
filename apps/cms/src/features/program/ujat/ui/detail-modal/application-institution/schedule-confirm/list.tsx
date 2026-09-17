@@ -13,8 +13,10 @@ import type { UjatScheduleConfirmRow } from './types'
 import './list.css'
 
 export function UjatInstitutionScheduleConfirmList({
+  programId,
   onOpenDetail,
 }: {
+  programId?: string | null
   onOpenDetail: (row: UjatScheduleConfirmRow) => void
 }) {
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
@@ -30,7 +32,7 @@ export function UjatInstitutionScheduleConfirmList({
     viewMode,
     setViewMode,
     resetRegionState,
-  } = useUjatScheduleConfirmList(activeRegion)
+  } = useUjatScheduleConfirmList(activeRegion, programId)
 
   useEffect(() => {
     resetRegionState()

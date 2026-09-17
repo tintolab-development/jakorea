@@ -1,6 +1,6 @@
 /**
- * UJAT 교육 지역 — localStorage mock (API 연동 전)
- * 프로그램 상세·신청 폼의 지역 목록 순서·노출에 사용한다.
+ * UJAT 교육 지역 — **local-only** 저장소 (remote OFF일 때만 CRUD).
+ * remote ON(`ujatEducationRegions` + JWT)이면 API/스냅샷 SSOT — 이 모듈에 쓰지 않는다.
  */
 
 import type {
@@ -81,12 +81,22 @@ function normalizeSortOrders(items: UjatEducationRegion[]): UjatEducationRegion[
   return assignSortOrders([...items].sort((a, b) => a.sortOrder - b.sortOrder))
 }
 
-export function readUjatEducationRegions(): UjatEducationRegion[] {
-  const file = readFile()
-  if (!localStorage.getItem(STORAGE_KEY)) {
-    writeFile(file)
+/** remote ON 전환 후 레거시 키 제거 */
+export function clearUjatEducationRegionsLocalStorage(): void {
+  try {
+    if (localStorage.getItem(STORAGE_KEY) == null) return
+    localStorage.removeItem(STORAGE_KEY)
+  } catch {
+    /* ignore */
   }
-  return normalizeSortOrders(file.items)
+}
+
+/**
+ * local-only 읽기. 시드는 메모리만 — 조회만으로 localStorage에 쓰지 않는다.
+ * 영속화는 create/update/reorder/delete 시에만.
+ */
+export function readUjatEducationRegions(): UjatEducationRegion[] {
+  return normalizeSortOrders(readFile().items)
 }
 
 export function readActiveUjatEducationRegionsOrdered(): UjatEducationRegion[] {

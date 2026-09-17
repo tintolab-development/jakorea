@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import {
   UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES,
@@ -18,14 +19,37 @@ import {
   listTempAssignedSchoolsForDate,
   sumSelectedGradeClassCount,
 } from './utils'
+import { listUjatInstitutionApplicationsPage } from '@/features/program/ujat/api/applications-service'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 
-export function useUjatInstitutionScheduleAssign(regionKey: UjatInstitutionApplicationRegionKey) {
+export function useUjatInstitutionScheduleAssign(
+  regionKey: UjatInstitutionApplicationRegionKey,
+  programId?: string | null
+) {
+  const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
   const [version, setVersion] = useState(0)
+
+  const remoteQuery = useInfiniteQuery({
+    queryKey: ujatQueryKeys.organizationApplications(programId ?? '', {
+      status: 'TEMP_ASSIGNED',
+    }),
+    queryFn: ({ pageParam }) =>
+      listUjatInstitutionApplicationsPage(String(programId), pageParam, {
+        status: 'TEMP_ASSIGNED',
+      }),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    enabled: remoteEnabled,
+    staleTime: 30_000,
+    retry: false,
+  })
 
   const applicationRows = useMemo(() => {
     void version
-    return []
-  }, [version])
+    const rows = remoteQuery.data?.pages.flatMap(page => page.rows) ?? []
+    return rows.filter(row => row.regionKey === regionKey)
+  }, [regionKey, remoteQuery.data, version])
 
   const regionState = useMemo(() => {
     void version

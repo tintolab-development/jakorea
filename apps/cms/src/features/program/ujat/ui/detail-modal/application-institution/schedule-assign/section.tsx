@@ -5,8 +5,10 @@ import { useUjatInstitutionScheduleAssign } from './use-schedule-assign'
 
 export function UjatInstitutionScheduleAssignSection({
   regionKey,
+  programId,
 }: {
   regionKey: UjatInstitutionApplicationRegionKey
+  programId?: string | null
 }) {
   const {
     assignDates,
@@ -19,7 +21,7 @@ export function UjatInstitutionScheduleAssignSection({
     setExpectedVolunteerCount,
     semesterClassTotals,
     volunteerEducationDays,
-  } = useUjatInstitutionScheduleAssign(regionKey)
+  } = useUjatInstitutionScheduleAssign(regionKey, programId)
 
   return (
     <div className="ujat-schedule-assign-section">

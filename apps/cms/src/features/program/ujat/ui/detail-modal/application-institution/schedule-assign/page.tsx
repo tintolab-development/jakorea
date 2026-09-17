@@ -10,7 +10,11 @@ import { UjatInstitutionScheduleSheetPreviewModal } from './schedule-sheet-previ
 import { commitUjatScheduleAssignDraft } from './store'
 import './page.css'
 
-export function UjatInstitutionScheduleAssignPage() {
+export function UjatInstitutionScheduleAssignPage({
+  programId,
+}: {
+  programId?: string | null
+}) {
   const { showAlert } = useCmsAlert()
   const { regions: regionTabs } = useUjatEducationRegions()
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
@@ -57,7 +61,11 @@ export function UjatInstitutionScheduleAssignPage() {
         }
       />
 
-      <UjatInstitutionScheduleAssignSection key={activeRegion} regionKey={activeRegion} />
+      <UjatInstitutionScheduleAssignSection
+        key={activeRegion}
+        regionKey={activeRegion}
+        programId={programId}
+      />
 
       <UjatInstitutionScheduleSheetPreviewModal
         open={scheduleSheetOpen}

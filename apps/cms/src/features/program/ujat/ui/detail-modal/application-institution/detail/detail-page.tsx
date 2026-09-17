@@ -1,16 +1,10 @@
-import { useCallback, useMemo, useState } from 'react'
-import { Space } from 'antd'
+import { useCallback, useState } from 'react'
+import { Space, Spin } from 'antd'
 import { useCmsAlert } from '@/shared/ui'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
-import {
-  getUjatInstitutionApplicationDetail,
-  getUjatInstitutionApplicationMockRows,
-  getUjatInstitutionApplicationRowById,
-  patchUjatInstitutionApplicationRows,
-} from '@/features/program/ujat/model/ujat-institution-application'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
-import type { UjatInstitutionTempAssignmentStatus } from '../list/types'
+import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { UjatInstitutionApplicationDetailView } from './detail-view'
 import {
   UjatInstitutionApplicationActionModal,
@@ -24,7 +18,6 @@ import {
   checkUjatRegionClassCapacityExceeded,
   getUjatRegionClassCapacityExceededAlertContent,
 } from '@/features/program/ujat/lib/ujat-region-capacity-institution-assign'
-import { rejectUjatOrganizationApplicationsIfRemote } from '@/features/program/ujat/api/temporary-rejections'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 
 const TEMP_REJECT_BUTTON_STYLE = {
@@ -44,12 +37,14 @@ export function UjatInstitutionApplicationDetailPage({
   onStatusUpdated: () => void
 }) {
   const { showAlert } = useCmsAlert()
-  const row = useMemo(
-    () => getUjatInstitutionApplicationRowById(institutionId),
-    [institutionId]
-  )
-
-  const detail = useMemo(() => (row ? getUjatInstitutionApplicationDetail(row) : null), [row])
+  const {
+    row,
+    detail,
+    loading,
+    approveRemote,
+    rejectRemote,
+    tempRejectRemote,
+  } = useUjatInstitutionApplicationDetail({ institutionId, programId })
 
   const {
     personalInfoRevealed,
@@ -63,75 +58,86 @@ export function UjatInstitutionApplicationDetailPage({
 
   const [pendingAction, setPendingAction] =
     useState<UjatInstitutionApplicationRejectModalAction | null>(null)
-
-  const patchStatus = useCallback(
-    (status: UjatInstitutionTempAssignmentStatus) => {
-      if (!row) return
-      patchUjatInstitutionApplicationRows([row.id], status)
-      onStatusUpdated()
-      onBack()
-    },
-    [row, onStatusUpdated, onBack]
-  )
+  const [actionLoading, setActionLoading] = useState(false)
 
   const handleTempAssign = useCallback(() => {
     if (!row) return
-    const rowsAfterAssign = getUjatInstitutionApplicationMockRows().map(item =>
-      item.id === row.id ? { ...item, tempAssignmentStatus: 'temp_assigned' as const } : item
-    )
-    patchUjatInstitutionApplicationRows([row.id], 'temp_assigned')
-    onStatusUpdated()
-    onBack()
-
-    const capacityCheck = checkUjatRegionClassCapacityExceeded({
-      regionKey: row.regionKey,
-      rowsAfterAssign,
-    })
-    const completeContent = getUjatInstitutionTempAssignCompleteContent(1)
-    const content =
-      capacityCheck.exceeded && capacityCheck.maxClassCount != null
-        ? `${completeContent}\n\n${getUjatRegionClassCapacityExceededAlertContent({
-            regionLabel: capacityCheck.regionLabel,
-            maxClassCount: capacityCheck.maxClassCount,
-            totalAfterAssign: capacityCheck.totalAfterAssign,
-          })}`
-        : completeContent
-
-    showAlert({
-      title: UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
-      content,
-    })
-  }, [row, onStatusUpdated, onBack, showAlert])
+    void (async () => {
+      setActionLoading(true)
+      try {
+        await approveRemote()
+        onStatusUpdated()
+        onBack()
+        const capacityCheck = checkUjatRegionClassCapacityExceeded({
+          regionKey: row.regionKey,
+          rowsAfterAssign: [{ ...row, tempAssignmentStatus: 'temp_assigned' }],
+        })
+        const completeContent = getUjatInstitutionTempAssignCompleteContent(1)
+        const content =
+          capacityCheck.exceeded && capacityCheck.maxClassCount != null
+            ? `${completeContent}\n\n${getUjatRegionClassCapacityExceededAlertContent({
+                regionLabel: capacityCheck.regionLabel,
+                maxClassCount: capacityCheck.maxClassCount,
+                totalAfterAssign: capacityCheck.totalAfterAssign,
+              })}`
+            : completeContent
+        showAlert({
+          title: UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
+          content,
+        })
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content: error instanceof Error ? error.message : '임시 배정(승인)에 실패했습니다.',
+        })
+      } finally {
+        setActionLoading(false)
+      }
+    })()
+  }, [approveRemote, onBack, onStatusUpdated, row, showAlert])
 
   const handleActionConfirm = (payload: PermissionModalPayload) => {
     if (!pendingAction || !row) return
-    const statusMap = {
-      application_reject: 'application_rejected',
-      temp_reject: 'temp_rejected',
-    } as const
     void (async () => {
+      setActionLoading(true)
       try {
         if (pendingAction === 'temp_reject') {
-          await rejectUjatOrganizationApplicationsIfRemote({
-            programId,
-            applicationIds: [row.id],
-            reason: payload.reason ?? 'CMS UJAT 신청기관 임시 반려',
-          })
+          await tempRejectRemote(payload.reason ?? 'CMS UJAT 신청기관 임시 반려')
+        } else {
+          await rejectRemote(payload.reason ?? 'CMS UJAT 신청기관 신청 반려')
         }
-        patchStatus(statusMap[pendingAction])
         setPendingAction(null)
+        onStatusUpdated()
+        onBack()
       } catch (error) {
         showAlert({
           title: '안내',
           content:
-            error instanceof Error ? error.message : '신청기관 임시 반려에 실패했습니다.',
+            error instanceof Error ? error.message : '신청기관 반려 처리에 실패했습니다.',
         })
+      } finally {
+        setActionLoading(false)
       }
     })()
   }
 
+  if (loading) {
+    return (
+      <div className="page-content-loading" role="status">
+        <Spin size="large" />
+      </div>
+    )
+  }
+
   if (!row || !detail) {
-    return null
+    return (
+      <div className="ujat-institution-application-detail-page">
+        <p>신청 기관 정보를 찾을 수 없습니다.</p>
+        <CmsButton type="button" variant="secondary" size="large" onClick={onBack}>
+          목록으로
+        </CmsButton>
+      </div>
+    )
   }
 
   return (
@@ -147,6 +153,7 @@ export function UjatInstitutionApplicationDetailPage({
             size="large"
             className="cms-button--action"
             width={CMS_ACTION_BUTTON_WIDTH}
+            loading={actionLoading}
             onClick={() => setPendingAction('application_reject')}
           >
             신청 반려
@@ -158,6 +165,7 @@ export function UjatInstitutionApplicationDetailPage({
             className="cms-button--action"
             width={CMS_ACTION_BUTTON_WIDTH}
             style={TEMP_REJECT_BUTTON_STYLE}
+            loading={actionLoading}
             onClick={() => setPendingAction('temp_reject')}
           >
             임시 반려
@@ -168,6 +176,7 @@ export function UjatInstitutionApplicationDetailPage({
             size="large"
             className="cms-button--action"
             width={CMS_ACTION_BUTTON_WIDTH}
+            loading={actionLoading}
             onClick={handleTempAssign}
           >
             임시 배정
