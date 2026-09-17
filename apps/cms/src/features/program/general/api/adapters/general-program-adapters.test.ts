@@ -117,6 +117,14 @@ describe('general-program-adapters', () => {
     expect(mapGeneralApiProgramTypeToAudience('GENERAL')).toBeNull()
   })
 
+  it('maps RECRUITING periodStatus to scheduled UI bucket (예정 별칭, 모집 아님)', () => {
+    const program = mapAdminProgramListItemToProgram({
+      id: 1,
+      periodStatus: 'RECRUITING',
+    })
+    expect(program.lifecycleStatus).toBe('recruiting_students')
+  })
+
   it('prefers typed lifecycleStatus over periodStatus', () => {
     const program = mapAdminProgramListItemToProgram({
       id: 168001,

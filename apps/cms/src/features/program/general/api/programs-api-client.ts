@@ -19,6 +19,10 @@ export interface AdminProgramListItemDto {
   programType?: string
   deliveryType?: string
   draftStatus?: string
+  /**
+   * 4카드/목록 필터 축 (상호 배타).
+   * `RECRUITING` = 예정 버킷 별칭(SCHEDULED와 동일). 참여자 모집 창이 아님.
+   */
   periodStatus?: string
   /** 거친 상태 — 뱃지·필터용 (pending|active|completed|cancelled) */
   status?: string
@@ -27,7 +31,13 @@ export interface AdminProgramListItemDto {
   /** 실제 목록 응답에서 주로 사용 (ProgramResponse와 동일) */
   title?: string
   mainTitle?: string
+  /**
+   * typed 테이블「프로그램 진행 현황」축.
+   * BE는 `periodStatus`와 동일 UI 버킷으로 내려줌.
+   */
   lifecycleStatus?: string
+  /** 참여자 모집 창 (`scheduled`|`recruiting`|`closed`) — `periodStatus`와 독립 */
+  recruitmentStatus?: string
   businessYear?: number
   businessStartDate?: string
   businessEndDate?: string
@@ -447,10 +457,15 @@ export async function deleteAdminProgramFormBindingRemote(
 
 /** GET /api/admin/programs/{programId}/managers */
 export async function fetchAdminProgramManagersRemote(
-  programId: string
+  programId: string,
+  query: { keyword?: string; role?: string } = {}
 ): Promise<
   import('@/shared/api/generated/dashboard/schemas/programManagerResponse').ProgramManagerResponse[]
 > {
+  const params: Record<string, string> = {}
+  if (query.keyword?.trim()) params.keyword = query.keyword.trim()
+  if (query.role?.trim()) params.role = query.role.trim()
+
   const body = await unwrapApiBody<
     | import('@/shared/api/generated/dashboard/schemas/programManagerResponse').ProgramManagerResponse[]
     | {
@@ -460,6 +475,7 @@ export async function fetchAdminProgramManagersRemote(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/managers`,
       method: 'GET',
+      ...(Object.keys(params).length > 0 ? { params } : {}),
     })
   )
   if (Array.isArray(body)) return body

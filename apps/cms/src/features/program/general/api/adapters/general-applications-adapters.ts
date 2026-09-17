@@ -32,17 +32,13 @@ import {
   formatRequestedSchedulesPeriodLabel,
   mapRequestedSchedulesToSessions,
 } from '@/features/program/1c-1s/lib/map-requested-schedules'
+import {
+  resolveStoredAffiliation,
+} from '@/features/program/general/lib/affiliation-organization'
 
 function toId(value: number | string | undefined): string {
   if (value == null) return ''
   return String(value)
-}
-
-function toAffiliationOrganizationId(
-  value: number | null | undefined
-): number | null | undefined {
-  if (value === null) return null
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
 export function mapApiApplicationStatusToApprovalStatus(
@@ -115,15 +111,16 @@ export function mapInstructorApplicationToApplicantInstructorRow(
   index: number,
   programId: string
 ): ApplicantInstructorRow {
+  const affiliation = resolveStoredAffiliation({
+    affiliationOrganizationId: dto.affiliationOrganizationId,
+  })
   return {
     id: toId(dto.id),
     instructorMemberId:
       dto.instructorMemberId != null && Number.isFinite(dto.instructorMemberId)
         ? dto.instructorMemberId
         : undefined,
-    affiliationOrganizationId: toAffiliationOrganizationId(
-      dto.affiliationOrganizationId
-    ),
+    affiliationOrganizationId: affiliation.affiliationOrganizationId,
     programId: toId(dto.programId) || programId,
     no: index + 1,
     instructorName: dto.instructorName?.trim() || '이름 없음',
@@ -359,20 +356,22 @@ export function mapIndividualApplicationToApplicantRow(
     dto.assignedInterviewEndAt
   )
   const interviewAvailability = mapInterviewAvailabilitySlots(dto.interviewAvailabilitySlots)
+  const affiliation = resolveStoredAffiliation({
+    affiliationOrganizationId: dto.affiliationOrganizationId,
+    affiliationDisplayName: dto.affiliationName,
+  })
   return {
     id: toId(dto.id),
     no: index + 1,
     applicantName: dto.memberName?.trim() || '이름 없음',
     availableActions: dto.availableActions,
-    affiliation: dto.affiliationName?.trim() || '',
+    affiliation: affiliation.affiliation,
     educationGrade: dto.applicationGrade?.trim() || '',
     homeAddress: dto.homeAddressSummary?.trim() || '',
     appliedAt: dto.submittedAt,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     memberId: dto.memberId != null ? String(dto.memberId) : undefined,
-    affiliationOrganizationId: toAffiliationOrganizationId(
-      dto.affiliationOrganizationId
-    ),
+    affiliationOrganizationId: affiliation.affiliationOrganizationId,
     adminComment: dto.managerComment ?? undefined,
     programId: toId(dto.programId) || programId,
     sessions: mapPreferredEducationSchedulesToSessions(dto.preferredEducationSchedules),
@@ -517,12 +516,16 @@ export function mapParticipantToParticipatingIndividualRow(
   index: number,
   programId: string
 ): ParticipatingIndividualParticipantRow {
+  const affiliation = resolveStoredAffiliation({
+    affiliationOrganizationId: dto.organizationId,
+    affiliationDisplayName: dto.organizationName,
+  })
   return {
     id: toId(dto.participantId),
     no: index + 1,
     applicantName: dto.memberName?.trim() || '이름 없음',
-    affiliationOrganizationId: toAffiliationOrganizationId(dto.organizationId),
-    affiliation: dto.organizationName?.trim() || '',
+    affiliationOrganizationId: affiliation.affiliationOrganizationId,
+    affiliation: affiliation.affiliation,
     educationGrade: '',
     homeAddress: '',
     approvalStatus: 'approved',
@@ -587,12 +590,13 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     enriched.assignedInterviewStartAt,
     enriched.assignedInterviewEndAt
   )
+  const affiliation = resolveStoredAffiliation({
+    affiliationOrganizationId: dto.affiliationOrganizationId,
+  })
   return {
     id: toId(dto.id),
     memberId: dto.memberId,
-    affiliationOrganizationId: toAffiliationOrganizationId(
-      dto.affiliationOrganizationId
-    ),
+    affiliationOrganizationId: affiliation.affiliationOrganizationId,
     no: index + 1,
     name: dto.memberName?.trim() || '이름 없음',
     contact: '-',
@@ -708,6 +712,10 @@ export function mapParticipantToParticipatingInstructorRow(
   index: number,
   _programId: string
 ): ParticipatingInstructorRow {
+  const affiliation = resolveStoredAffiliation({
+    affiliationOrganizationId: dto.organizationId,
+    affiliationDisplayName: dto.organizationName,
+  })
   return {
     id: toId(dto.participantId),
     no: index + 1,
@@ -720,8 +728,8 @@ export function mapParticipantToParticipatingInstructorRow(
     settlementStatus: 'none',
     teacherName: '-',
     memberId: dto.memberId != null ? String(dto.memberId) : undefined,
-    affiliationOrganizationId: toAffiliationOrganizationId(dto.organizationId),
-    affiliation: dto.organizationName?.trim() || '',
+    affiliationOrganizationId: affiliation.affiliationOrganizationId,
+    affiliation: affiliation.affiliation,
     contact: '',
     email: '',
   }
@@ -732,12 +740,16 @@ export function mapParticipantToParticipatingVolunteerRow(
   index: number,
   _programId: string
 ): ParticipatingVolunteerRow {
+  const affiliation = resolveStoredAffiliation({
+    affiliationOrganizationId: dto.organizationId,
+    affiliationDisplayName: dto.organizationName,
+  })
   return {
     id: toId(dto.participantId),
     no: index + 1,
     volunteerName: dto.memberName?.trim() || '이름 없음',
-    affiliationOrganizationId: toAffiliationOrganizationId(dto.organizationId),
-    affiliation: dto.organizationName?.trim() || '',
+    affiliationOrganizationId: affiliation.affiliationOrganizationId,
+    affiliation: affiliation.affiliation,
     id1365: '',
     assignedInstitutionNames: [],
     sessions: [],

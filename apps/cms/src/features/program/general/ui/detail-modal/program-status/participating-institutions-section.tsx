@@ -169,6 +169,9 @@ export function ParticipatingInstitutionsSection({
     applyFilters(pendingFilters)
   }
 
+  const resolvedProgramId = programId ?? program?.id
+  const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
+
   const progressFilters: ProgressFilters = useMemo(
     () => ({
       schoolName: appliedFilters.schoolName,
@@ -177,15 +180,14 @@ export function ParticipatingInstitutionsSection({
       institutionSigungu: appliedFilters.institutionSigungu,
       educationGrade: appliedFilters.educationGrade,
       lectureRound: 'all',
-      textbookStatus: appliedFilters.textbookStatus,
+      // TT는 배송 원장 없음 — URL에 남은 textbookStatus로 0건 필터 방지
+      textbookStatus: isTrainedTeachersSurface ? 'all' : appliedFilters.textbookStatus,
       settlementStatus: 'all',
       teacherName: appliedFilters.teacherName,
     }),
-    [appliedFilters]
+    [appliedFilters, isTrainedTeachersSurface]
   )
 
-  const resolvedProgramId = programId ?? program?.id
-  const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
   const instructorHook = useProgressInstructorList({
     appliedFilters: progressFilters,
     programId: resolvedProgramId,
@@ -308,7 +310,9 @@ export function ParticipatingInstitutionsSection({
   const showTextbookFeatures = program
     ? isTextbookCatalogLoading || programUsesTextbook(program, textbookCatalog)
     : true
-  const showTextbookStatusColumn = isCompanySchool || showTextbookFeatures
+  /** TT는 배송 원장 없음 — 행이 전부 `not_applicable`. 필터/컬럼 노출 시 조회하면 0건이 됨 */
+  const showTextbookStatusColumn =
+    !isTrainedTeachersSurface && (isCompanySchool || showTextbookFeatures)
 
   const filterFields = useMemo(
     () =>

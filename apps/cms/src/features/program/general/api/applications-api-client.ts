@@ -32,6 +32,20 @@ export type ApplicationsListQuery = {
   status?: string
   page?: number
   size?: number
+  /** 봉사자명 등 부분 검색 (`GET …/volunteer-applications`) */
+  keyword?: string
+  /** 서류 상태. PASS/FAIL 별칭 허용 */
+  documentStatus?: string
+  /** 면접 상태 */
+  interviewStatus?: string
+  /** 최종 결과 상태. APPROVED/REJECTED 별칭 허용 */
+  finalResultStatus?: string
+  /** JA 봉사 재참여 여부 */
+  isReparticipation?: boolean
+  /** 담당자 A 평가 — PASS/NEUTRAL/FAIL/UNREVIEWED */
+  managerAEvaluation?: string
+  /** 담당자 B 평가 — PASS/NEUTRAL/FAIL/UNREVIEWED */
+  managerBEvaluation?: string
 }
 
 const generalApplicationsDashboardApi = getJAKoreaCMSBackendAPIDashboardSubset()
@@ -227,6 +241,37 @@ export async function fetchVolunteerApplicationsRemote(
   return fetchApplicationsPage<VolunteerApplicationListItemResponse>(
     `/api/admin/programs/${encodeURIComponent(programId)}/volunteer-applications`,
     params
+  )
+}
+
+/** GET /api/admin/organization-applications/{applicationId} */
+export type OrganizationApplicationDetailDto = {
+  id?: number
+  programId?: number
+  organizationName?: string | null
+  organizationAddress?: string | null
+  organizationAddressDetail?: string | null
+  requestedGrade?: string | null
+  teacherName?: string | null
+  teacherPhone?: string | null
+  teacherEmail?: string | null
+  applicationStatus?: string
+  requestedStudentCount?: number | null
+  requestedClassCount?: number | null
+  managerComment?: string | null
+  regionSido?: string | null
+  regionSigungu?: string | null
+  grade?: string | null
+}
+
+export async function fetchOrganizationApplicationDetailRemote(
+  applicationId: string
+): Promise<OrganizationApplicationDetailDto> {
+  return unwrapApiBody<OrganizationApplicationDetailDto>(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}`,
+      method: 'GET',
+    })
   )
 }
 
