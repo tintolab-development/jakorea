@@ -2,7 +2,12 @@ import { useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import {
+  buildInitialAssignedSchoolRows,
+  buildWaitingSchoolRows,
+} from '@/features/program/general/lib/instructor-institution-assignment'
 import {
   buildEmptyParticipatingInstructorAssignmentRows,
   buildParticipatingInstructorAssignedSchoolRowsFromBoard,
@@ -36,16 +41,22 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
   waitingSchools: InstructorWaitingSchoolRow[]
   assignedSchedules: ParticipatingIndividualInstructorAssignedScheduleRow[]
   waitingSchedules: ParticipatingIndividualInstructorWaitingScheduleRow[]
+  isTempMockDataSource: boolean
   invalidate: () => Promise<void>
 } {
   const remoteEnabled = shouldUseGeneralProgramProgressRemoteApi()
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(input.programId)
   const instructorMemberId = input.instructor.memberId?.trim() ?? ''
   const queryEnabled = Boolean(
     input.enabled !== false && remoteEnabled && input.programId && instructorMemberId
   )
 
   useNotifyProgramApiUnavailableOnce(
-    Boolean(input.enabled !== false && (!remoteEnabled || !instructorMemberId)),
+    Boolean(
+      input.enabled !== false &&
+        !isTempMockProgram &&
+        (!remoteEnabled || !instructorMemberId)
+    ),
     'general-participating-instructor-assignment',
     '참여 강사 · 교육 배정 현황'
   )
@@ -61,6 +72,27 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
   const queryClient = useQueryClient()
 
   const rows = useMemo(() => {
+    if (isTempMockProgram && input.enabled !== false) {
+      const assignedSchools = buildInitialAssignedSchoolRows(
+        input.instructor,
+        input.schoolRows,
+        input.instructorList
+      )
+      const assignedSchoolIds = new Set(assignedSchools.map(row => row.id))
+      const waitingSchools = buildWaitingSchoolRows(
+        input.instructor,
+        input.schoolRows,
+        input.instructorList,
+        assignedSchoolIds
+      )
+      return {
+        assignedSchools,
+        waitingSchools,
+        assignedSchedules: [] as ParticipatingIndividualInstructorAssignedScheduleRow[],
+        waitingSchedules: [] as ParticipatingIndividualInstructorWaitingScheduleRow[],
+      }
+    }
+
     if (!remoteEnabled || !instructorMemberId) {
       return {
         ...buildEmptyParticipatingInstructorAssignmentRows(),
@@ -115,11 +147,13 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
     }
   }, [
     boardQuery.data,
+    input.enabled,
     input.instructor,
     input.instructorList,
     input.isCompanySchool,
     input.schoolRows,
     instructorMemberId,
+    isTempMockProgram,
     remoteEnabled,
   ])
 
@@ -131,7 +165,9 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
 
   return {
     remoteEnabled: remoteEnabled && Boolean(instructorMemberId),
-    isLoading: queryEnabled && boardQuery.isFetching && boardQuery.data === undefined,
+    isTempMockDataSource: isTempMockProgram && input.enabled !== false,
+    isLoading:
+      !isTempMockProgram && queryEnabled && boardQuery.isFetching && boardQuery.data === undefined,
     assignedSchools: rows.assignedSchools,
     waitingSchools: rows.waitingSchools,
     assignedSchedules: rows.assignedSchedules,

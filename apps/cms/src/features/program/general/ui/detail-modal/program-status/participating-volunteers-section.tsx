@@ -25,6 +25,7 @@ import {
 import { mergeParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from './participating-volunteer-activity-certificate-preview-modal'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { useProgressVolunteerList } from '../../../hooks/use-progress-volunteer-list'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
@@ -206,19 +207,35 @@ export function ParticipatingVolunteersSection({
     [volunteerCalendarEvents, calendarSelectedDate]
   )
 
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
+
   const handleRegisterEmployeeVolunteerClick = useCallback(() => {
+    if (isTempMockProgram) {
+      showAlert({
+        title: '등록 완료',
+        content: '임직원 자원봉사자 등록이 완료되었습니다. (temp mock)',
+      })
+      return
+    }
     notifyProgramApiUnavailable(
       'general-progress-volunteer-employee-register',
       '참여 봉사자 · 임직원 자원봉사자 등록'
     )
-  }, [])
+  }, [isTempMockProgram, showAlert])
 
   const handleRegisterVolunteerClick = useCallback(() => {
+    if (isTempMockProgram) {
+      showAlert({
+        title: '등록 완료',
+        content: '봉사자 등록이 완료되었습니다. (temp mock)',
+      })
+      return
+    }
     notifyProgramApiUnavailable(
       'general-progress-volunteer-register',
       '참여 봉사자 · 봉사자 등록'
     )
-  }, [])
+  }, [isTempMockProgram, showAlert])
 
   const handleActivityCertificateIssueClick = useCallback(() => {
     const selectedCount = selectedRowKeys.length
@@ -411,6 +428,8 @@ export function ParticipatingVolunteersSection({
           activeTab={volunteerTabFromUrl ?? undefined}
           onTabChange={onVolunteerTabChange}
           onClearVolunteerId={onClearVolunteerId ?? (() => {})}
+          schoolRows={schoolRows}
+          volunteerList={volunteerList}
         />
       </div>
     )

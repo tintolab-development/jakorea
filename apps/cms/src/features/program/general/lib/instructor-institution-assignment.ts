@@ -13,6 +13,7 @@ import {
   buildParticipatingSchoolSessionLines,
 } from './participating-school-session-display'
 import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
+import { isTempMockOrgProgressInstructorId } from '@/features/program/general/lib/temp-mock-org-program'
 
 function hash(s: string): number {
   let h = 0
@@ -128,7 +129,9 @@ export function buildInitialAssignedSchoolRows(
 
   // TODO(temp-mock): 열여라 참깨 — 참여 강사·배정 현황 검증 후 삭제
   const isTemporaryInstructor =
-    isGeneralProgramTempMockEnabled() && instructor.id.startsWith('temp-progress-instructor-')
+    isGeneralProgramTempMockEnabled() &&
+    (isTempMockOrgProgressInstructorId(instructor.id) ||
+      instructor.id.startsWith('temp-progress-instructor-'))
   if (pickedSchools.length === 0 && isTemporaryInstructor) {
     const seed = hash(instructor.id)
     const primary =
@@ -177,7 +180,8 @@ export function buildWaitingSchoolRows(
         // TODO(temp-mock): 열여라 참깨 — 배정 대기/불가/완료 검증 후 삭제
         assignmentStatus:
           isGeneralProgramTempMockEnabled() &&
-          instructor.id.startsWith('temp-progress-instructor-')
+          (isTempMockOrgProgressInstructorId(instructor.id) ||
+            instructor.id.startsWith('temp-progress-instructor-'))
             ? (['waiting', 'cancelled', 'assigned'] as const)[idx % 3]
             : ('waiting' as const),
         assignedInstructorCountLabel: instructorCountLabel(school.schoolName, instructorList),
@@ -271,4 +275,104 @@ export function renumberWaitingRows(rows: InstructorWaitingSchoolRow[]): Instruc
   const sorted = sortWaitingRowsAssignedToBottom(rows)
   const n = sorted.length
   return sorted.map((r, i) => ({ ...r, no: n - i }))
+}
+
+/** TODO(temp-mock): 참여 강사 상세 — 로컬 기관 배정 */
+export function applyLocalParticipatingInstructorAssign(input: {
+  assignedSchools: InstructorAssignedSchoolRow[]
+  waitingSchools: InstructorWaitingSchoolRow[]
+  rowsToAssign: InstructorWaitingSchoolRow[]
+  instructor: ParticipatingInstructorRow
+  schoolRows: ParticipatingSchoolRow[]
+  instructorList: ParticipatingInstructorRow[]
+  role: InstructorRoleKey
+}): {
+  assignedSchools: InstructorAssignedSchoolRow[]
+  waitingSchools: InstructorWaitingSchoolRow[]
+} {
+  const assignIds = new Set(input.rowsToAssign.map(row => row.id))
+  const assignedSchoolIds = new Set(input.assignedSchools.map(row => row.id))
+  const nextWaiting = renumberWaitingRows(
+    input.waitingSchools.filter(row => !assignIds.has(row.id))
+  )
+  const nextAssigned = [...input.assignedSchools]
+  let hasLead = nextAssigned.some(row => row.role === 'lead')
+
+  for (const waitingRow of input.rowsToAssign) {
+    const schoolId = waitingRow.schoolId ?? waitingRow.id
+    if (assignedSchoolIds.has(schoolId)) continue
+    const school = input.schoolRows.find(item => item.id === schoolId)
+    if (!school) continue
+    const role: InstructorRoleKey =
+      !hasLead && input.role === 'lead' ? 'lead' : hasLead ? 'assistant' : input.role
+    if (role === 'lead') hasLead = true
+    nextAssigned.push(
+      schoolRowToAssignedRow(
+        school,
+        input.instructor,
+        input.instructorList,
+        nextAssigned.length + 1,
+        role,
+        nextAssigned.length
+      )
+    )
+    assignedSchoolIds.add(schoolId)
+  }
+
+  return {
+    assignedSchools: renumberAssignedRows(nextAssigned),
+    waitingSchools: nextWaiting,
+  }
+}
+
+/** TODO(temp-mock): 참여 강사 상세 — 로컬 기관 배정 취소 */
+export function applyLocalParticipatingInstructorUnassign(input: {
+  assignedSchools: InstructorAssignedSchoolRow[]
+  waitingSchools: InstructorWaitingSchoolRow[]
+  selectedAssignedIds: string[]
+  instructor: ParticipatingInstructorRow
+  schoolRows: ParticipatingSchoolRow[]
+  instructorList: ParticipatingInstructorRow[]
+}): {
+  assignedSchools: InstructorAssignedSchoolRow[]
+  waitingSchools: InstructorWaitingSchoolRow[]
+} {
+  const removeIds = new Set(input.selectedAssignedIds)
+  const removedRows = input.assignedSchools.filter(row => removeIds.has(row.id))
+  const nextAssigned = renumberAssignedRows(
+    input.assignedSchools.filter(row => !removeIds.has(row.id))
+  )
+  const waitingSchoolIds = new Set(
+    input.waitingSchools.map(row => row.schoolId ?? row.id)
+  )
+  const restoredWaiting = [...input.waitingSchools]
+
+  for (const removed of removedRows) {
+    if (waitingSchoolIds.has(removed.id)) continue
+    const school = input.schoolRows.find(item => item.id === removed.id)
+    if (!school) continue
+    restoredWaiting.push(
+      createWaitingRowForSchool(school, input.instructor, input.instructorList, 0, 'waiting')
+    )
+    waitingSchoolIds.add(school.id)
+  }
+
+  return {
+    assignedSchools: nextAssigned,
+    waitingSchools: renumberWaitingRows(restoredWaiting),
+  }
+}
+
+/** TODO(temp-mock): 참여 강사·기관 상세 — 대표 강사 로컬 변경 */
+export function applyLocalInstructorLeadRoleChange<T extends { id: string; role: InstructorRoleKey }>(
+  rows: T[],
+  instructorId: string,
+  newRole: InstructorRoleKey
+): T[] {
+  if (newRole !== 'lead') return rows
+  return rows.map(row => {
+    if (row.id === instructorId) return { ...row, role: 'lead' as const }
+    if (row.role === 'lead') return { ...row, role: 'assistant' as const }
+    return row
+  })
 }

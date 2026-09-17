@@ -23,6 +23,8 @@ import {
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { buildAssignedOrganizationNamesByMemberId } from '@/features/program/general/lib/participating-instructor-assigned-institutions'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { getTempMockOrgProgressInstructors } from '@/features/program/general/lib/temp-mock-org-program'
 import type { Program } from '@/types/domain'
 
 function mergeInstructorRowsWithAssignments(
@@ -53,10 +55,12 @@ export function useProgressInstructorList({
   programId,
 }: UseProgressInstructorListOptions) {
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
-  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
+  const remoteEnabled =
+    useProgramProgressRemoteEnabledForSurface(programId) && !isTempMockProgram
 
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled && !isTrainedTeachersSurface,
+    !remoteEnabled && !isTrainedTeachersSurface && !isTempMockProgram,
     'general-progress-instructors',
     '프로그램 진행 현황 · 강사'
   )
@@ -91,19 +95,40 @@ export function useProgressInstructorList({
   }, [remoteQuery.data])
 
   const instructorList = useMemo(() => {
+    if (isTempMockProgram) return getTempMockOrgProgressInstructors(programId)
     if (!remoteEnabled) return []
     return mergeInstructorRowsWithAssignments(
       remoteInstructorRows,
       assignedOrganizationNamesByMemberId
     )
-  }, [assignedOrganizationNamesByMemberId, remoteEnabled, remoteInstructorRows])
+  }, [
+    assignedOrganizationNamesByMemberId,
+    isTempMockProgram,
+    programId,
+    remoteEnabled,
+    remoteInstructorRows,
+  ])
 
   const [selectedInstructorRowKeys, setSelectedInstructorRowKeys] = useState<React.Key[]>([])
   const [addInstructorModalOpen, setAddInstructorModalOpen] = useState(false)
   const [instructorDeleteGuideOpen, setInstructorDeleteGuideOpen] = useState(false)
+  const [tempMockInstructorList, setTempMockInstructorList] = useState<
+    ParticipatingInstructorRow[] | null
+  >(null)
+
+  useEffect(() => {
+    if (!isTempMockProgram) {
+      setTempMockInstructorList(null)
+    }
+  }, [isTempMockProgram, programId])
+
+  const resolvedInstructorList = useMemo(() => {
+    if (!isTempMockProgram) return instructorList
+    return tempMockInstructorList ?? instructorList
+  }, [instructorList, isTempMockProgram, tempMockInstructorList])
 
   const filteredInstructors = useMemo(() => {
-    return instructorList.filter(row => {
+    return resolvedInstructorList.filter(row => {
       if (
         appliedFilters.educationGrade &&
         appliedFilters.educationGrade !== 'all' &&
@@ -133,12 +158,12 @@ export function useProgressInstructorList({
       }
       return true
     })
-  }, [instructorList, appliedFilters])
+  }, [appliedFilters, resolvedInstructorList])
 
   const instructorNamesToDelete = useMemo(() => {
     const keysSet = new Set(selectedInstructorRowKeys.map(String))
-    return instructorList.filter(row => keysSet.has(row.id)).map(row => row.instructorName)
-  }, [selectedInstructorRowKeys, instructorList])
+    return resolvedInstructorList.filter(row => keysSet.has(row.id)).map(row => row.instructorName)
+  }, [resolvedInstructorList, selectedInstructorRowKeys])
 
   const notifyInstructorRegisterUnavailable = useCallback(() => {
     notifyProgramApiUnavailable(
@@ -148,47 +173,68 @@ export function useProgressInstructorList({
   }, [])
 
   const handleAddInstructorByMemberId = useCallback(async (_memberId: string): Promise<boolean> => {
+    if (isTempMockProgram) return true
     notifyInstructorRegisterUnavailable()
     return false
-  }, [notifyInstructorRegisterUnavailable])
+  }, [isTempMockProgram, notifyInstructorRegisterUnavailable])
 
   const handleAddInstructor = useCallback((_values: unknown) => {
     void _values
+    if (isTempMockProgram) return
     notifyInstructorRegisterUnavailable()
-  }, [notifyInstructorRegisterUnavailable])
+  }, [isTempMockProgram, notifyInstructorRegisterUnavailable])
 
   const handleSettlementStatusChange = useCallback(
     (recordId: string, status: SettlementStatusKey) => {
-      void recordId
-      void status
+      if (isTempMockProgram) {
+        setTempMockInstructorList(prev =>
+          (prev ?? getTempMockOrgProgressInstructors(programId)).map(row =>
+            row.id === recordId ? { ...row, settlementStatus: status } : row
+          )
+        )
+        return
+      }
       notifyProgramApiUnavailable(
         'general-progress-instructor-settlement',
         '참여 강사 정산 현황 변경'
       )
     },
-    []
+    [isTempMockProgram, programId]
   )
 
   const handleInstructorDeleteClick = useCallback(() => {
     if (selectedInstructorRowKeys.length === 0) return
+    if (isTempMockProgram) {
+      setInstructorDeleteGuideOpen(true)
+      return
+    }
     notifyProgramApiUnavailable(
       'general-progress-instructor-delete',
       '참여 강사 삭제'
     )
-  }, [selectedInstructorRowKeys.length])
+  }, [isTempMockProgram, selectedInstructorRowKeys.length])
 
   const handleInstructorDeleteConfirm = useCallback(() => {
+    if (isTempMockProgram) {
+      const keysToDelete = new Set(selectedInstructorRowKeys.map(String))
+      setTempMockInstructorList(prev =>
+        (prev ?? getTempMockOrgProgressInstructors(programId)).filter(
+          row => !keysToDelete.has(row.id)
+        )
+      )
+      setSelectedInstructorRowKeys([])
+    }
     setInstructorDeleteGuideOpen(false)
-  }, [])
+  }, [isTempMockProgram, programId, selectedInstructorRowKeys])
 
   useEffect(() => {
     setSelectedInstructorRowKeys(prev =>
-      prev.filter(key => instructorList.some(row => row.id === String(key)))
+      prev.filter(key => resolvedInstructorList.some(row => row.id === String(key)))
     )
-  }, [instructorList])
+  }, [resolvedInstructorList])
 
   return {
-    instructorList,
+    instructorList: resolvedInstructorList,
     selectedInstructorRowKeys,
     setSelectedInstructorRowKeys,
     addInstructorModalOpen,

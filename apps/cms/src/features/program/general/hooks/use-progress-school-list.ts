@@ -32,89 +32,8 @@ import {
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import type { Program } from '@/types/domain'
-import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
-
-// TODO(temp-mock): 열여라 참깨 — 참여 기관·강사 배정 현황 검증 후 삭제
-export const TEMP_TEXTBOOK_STATUS_SCHOOL_PREFIX = 'temp-textbook-status-'
-
-function buildTemporaryProgressSchools(programId: string): ParticipatingSchoolRow[] {
-  const cases: Array<{
-    status: TextbookStatusKey
-    schoolName: string
-    region: string
-    grade: string
-    teacherName: string
-    instructors: string
-  }> = [
-    {
-      status: 'preparing',
-      schoolName: '서울해봄초등학교',
-      region: '서울특별시 강서구',
-      grade: '초등학교 4학년',
-      teacherName: '김하늘',
-      instructors: '임시 강사 1 외 1명',
-    },
-    {
-      status: 'shipping',
-      schoolName: '서울푸른초등학교',
-      region: '서울특별시 마포구',
-      grade: '초등학교 5학년',
-      teacherName: '박서준',
-      instructors: '임시 강사 2 외 1명',
-    },
-    {
-      status: 'delivered',
-      schoolName: '서울나래초등학교',
-      region: '서울특별시 영등포구',
-      grade: '초등학교 6학년',
-      teacherName: '이지우',
-      instructors: '임시 강사 3 외 1명',
-    },
-    {
-      status: 'not_applicable',
-      schoolName: '서울미래중학교',
-      region: '서울특별시 서대문구',
-      grade: '중학교 1학년',
-      teacherName: '최민서',
-      instructors: '임시 강사 4 외 1명',
-    },
-  ]
-
-  return cases.map((item, index) => ({
-    id: `${TEMP_TEXTBOOK_STATUS_SCHOOL_PREFIX}${item.status}`,
-    organizationId: 994_001 + index,
-    teacherMemberId: 993_001 + index,
-    no: index + 1,
-    schoolName: item.schoolName,
-    region: item.region,
-    educationGrade: item.grade,
-    classCount: index + 1,
-    studentCount: 24 + index,
-    lectureRound: '4회차',
-    textbookStatus: item.status,
-    approvalStatus: 'approved',
-    teacherName: item.teacherName,
-    instructors: item.instructors,
-    sessions: [1, 2, 3, 4].map(round => ({
-      round,
-      date: `2026.10.${String(12 + index * 4 + round).padStart(2, '0')}`,
-      dayOfWeek: ['월', '화', '수', '목'][index],
-      duration: '2시간',
-      format: '대면 교육',
-      classNum: `${round}교시`,
-      timeRange: `${String(8 + round).padStart(2, '0')}:00 ~ ${String(9 + round).padStart(2, '0')}:50`,
-      status: round === 1 ? 'completed' : 'pending',
-      requestedScheduleId: 992_000 + index * 10 + round,
-      resolvedScheduleId: 991_000 + index * 10 + round,
-      scheduleUnresolved: false,
-    })),
-    programId,
-    organizationApplicationId: String(990_001 + index),
-    participantStatus: 'APPROVED',
-    activityWithdrawn: false,
-    availableActions: ['GIVE_UP'],
-  }))
-}
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { getTempMockOrgParticipatingSchools } from '@/features/program/general/lib/temp-mock-org-program'
 
 export interface UseProgressSchoolListOptions {
   appliedFilters: ProgressFilters
@@ -142,8 +61,10 @@ export function useProgressSchoolList({
     shouldUseTrainedTeacherProgramsRemoteApi() &&
     Boolean(programId)
 
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
+
   useNotifyProgramApiUnavailableOnce(
-    enabled && !remoteEnabled && !ttRemoteEnabled,
+    enabled && !remoteEnabled && !ttRemoteEnabled && !isTempMockProgram,
     'general-progress-schools',
     '프로그램 진행 현황 · 참여 기관'
   )
@@ -173,14 +94,10 @@ export function useProgressSchoolList({
   )
   const temporaryProgressSchools = useMemo(
     () =>
-      enabled &&
-      isGeneralProgramTempMockEnabled() &&
-      programId &&
-      !isTrainedTeachersSurface &&
-      !isCompanySchoolSurface
-        ? buildTemporaryProgressSchools(programId)
+      enabled && isTempMockProgram && !isTrainedTeachersSurface && !isCompanySchoolSurface
+        ? getTempMockOrgParticipatingSchools(programId)
         : [],
-    [enabled, isCompanySchoolSurface, isTrainedTeachersSurface, programId]
+    [enabled, isCompanySchoolSurface, isTempMockProgram, isTrainedTeachersSurface, programId]
   )
   const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>([])
 
@@ -189,17 +106,19 @@ export function useProgressSchoolList({
       if (ttParticipatingQuery.data) setSchoolList(ttParticipatingQuery.data)
       return
     }
+    if (isTempMockProgram) {
+      setSchoolList(temporaryProgressSchools)
+      return
+    }
     if (remoteEnabled) {
       if (remoteQuery.data) {
-        const remoteRows = remoteQuery.data.pages.flatMap(page => page.rows)
-        setSchoolList([...temporaryProgressSchools, ...remoteRows])
-      } else {
-        setSchoolList(temporaryProgressSchools)
+        setSchoolList(remoteQuery.data.pages.flatMap(page => page.rows))
       }
       return
     }
-    setSchoolList(temporaryProgressSchools)
+    setSchoolList([])
   }, [
+    isTempMockProgram,
     remoteEnabled,
     remoteQuery.data,
     ttRemoteEnabled,
@@ -275,13 +194,19 @@ export function useProgressSchoolList({
   }, [selectedSchoolRowKeys, schoolList])
 
   const handleTextbookStatusChange = useCallback(
-    (_recordId: string, _status: TextbookStatusKey) => {
+    (recordId: string, status: TextbookStatusKey) => {
+      if (isTempMockProgram) {
+        setSchoolList(prev =>
+          prev.map(row => (row.id === recordId ? { ...row, textbookStatus: status } : row))
+        )
+        return
+      }
       notifyProgramApiUnavailable(
         'general-participating-institution-textbook-delivery-status',
         '참여 기관 · 교재 배송 현황 변경'
       )
     },
-    []
+    [isTempMockProgram]
   )
 
   const handleSchoolDeleteClick = useCallback(() => {

@@ -39,6 +39,7 @@ import {
   PrivacyHomeAddressDisplay,
 } from '@/features/program/shared/lib/program-pii-display'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import {
   useParticipatingInstructorsParams,
   type ParticipatingInstructorsFilters,
@@ -711,7 +712,10 @@ export function ParticipatingInstructorsSection({
               size="large"
               width={160}
               onClick={() => {
-                if (!isRemoteDataSource) {
+                if (
+                  !isRemoteDataSource &&
+                  !(programId != null && isGeneralProgramTempMockProgramId(programId))
+                ) {
                   notifyProgramApiUnavailable(
                     'general-progress-instructor-register',
                     '참여 강사 등록'
