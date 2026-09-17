@@ -449,6 +449,8 @@ export interface DetailInfoSectionProps {
   sectionTitleOnly?: boolean
   /** 조회 모드 공란 표시 — UJAT: 관리자 상세는 '-' */
   emptyReadDisplay?: DetailInfoEmptyReadDisplay
+  /** 프로그램 설명·모집 안내 등 — UJAT 참여 기관 모집은 `input` */
+  textFieldControl?: 'textarea' | 'input'
 }
 
 export function DetailInfoSection({
@@ -463,6 +465,7 @@ export function DetailInfoSection({
   sectionDescription,
   sectionTitleOnly = false,
   emptyReadDisplay = 'mock-default',
+  textFieldControl = 'textarea',
 }: DetailInfoSectionProps) {
   const {
     editorOpen,
@@ -523,6 +526,7 @@ export function DetailInfoSection({
             form={f}
             name="description"
             placeholder="프로그램 설명"
+            control={textFieldControl}
             readContent={resolveTextReadContent(
               program.description,
               emptyReadDisplay,
@@ -536,6 +540,7 @@ export function DetailInfoSection({
             form={f}
             name="recruitmentGuide"
             placeholder="모집 안내"
+            control={textFieldControl}
             readContent={resolveTextReadContent(
               program.recruitmentGuide,
               emptyReadDisplay,
@@ -550,6 +555,7 @@ export function DetailInfoSection({
               form={f}
               name="applicationMethod"
               placeholder={recruitmentMethodLabel}
+              control={textFieldControl}
               readContent={program.applicationMethod ?? '-'}
             />
           ) : null}
@@ -560,6 +566,7 @@ export function DetailInfoSection({
             form={f}
             name="learningSupportContent"
             placeholder="학습 지원 내용"
+            control={textFieldControl}
             readContent={resolveTextReadContent(
               program.learningSupportContent,
               emptyReadDisplay,

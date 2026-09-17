@@ -21,7 +21,6 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
-import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { UjatRecruitSectionDescriptionHeader } from '../ujat-recruit-section-description-header'
 import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segments'
@@ -58,10 +57,6 @@ function resolveEducationTargetLabel(program: Program): string {
   const level = program.targetLevel ?? program.targetLevels?.[0]
   if (!level) return '초등학교'
   return TARGET_LEVEL_LABEL[level] ?? level
-}
-
-function resolveActivityTermDisplay(program: Program): string {
-  return program.rounds?.[0]?.curriculum?.trim() || '-'
 }
 
 export function UjatRecruitParticipantInfoProgramView({
@@ -103,7 +98,6 @@ export function UjatRecruitParticipantInfoProgramView({
   )
   const publicTitle = resolveUjatAnnouncementTitle(program).trim() || '-'
   const notes = resolveParticipantNotesDisplay(program)
-  const activityTerm = resolveActivityTermDisplay(program)
   const announcementPublishedValue =
     (isEdit && form ? form.watch('participantRecruitmentAnnouncementPublished') : undefined) ??
     announcementPublishedToFormValue(
@@ -147,6 +141,7 @@ export function UjatRecruitParticipantInfoProgramView({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="공고용 프로그램명"
+          fullRow
           view={publicTitle}
           edit={
             isEdit && form ? (
@@ -161,32 +156,6 @@ export function UjatRecruitParticipantInfoProgramView({
                     width="100%"
                     placeholder="공고용 프로그램명"
                   />
-                )}
-              />
-            ) : undefined
-          }
-        />
-        <DetailInfoForm.Field
-          label="활동 기수"
-          view={activityTerm}
-          edit={
-            isEdit && form ? (
-              <Controller
-                name="rounds.0.curriculum"
-                control={form.control}
-                render={({ field }) => (
-                  <div className={`${UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS} ujat-recruit-activity-term-field`}>
-                    <CmsNumericInput
-                      {...field}
-                      mode="numericText"
-                      value={(field.value as string | undefined) ?? ''}
-                      inputSize="medium"
-                      width="100%"
-                      placeholder="활동 기수"
-                      onValueChange={field.onChange}
-                    />
-                    <span className="ujat-recruit-activity-term-field__suffix">기</span>
-                  </div>
                 )}
               />
             ) : undefined
