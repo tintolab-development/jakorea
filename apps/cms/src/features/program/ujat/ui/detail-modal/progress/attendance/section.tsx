@@ -43,8 +43,10 @@ const UJAT_ATTENDANCE_EXCEL_COLUMNS: ColumnsType<UjatAttendanceExcelRow> = [
 ]
 
 export function UjatEducationProgressAttendanceSection({
+  programId,
   half,
 }: {
+  programId: string
   half: EducationProgressHalfKey
 }) {
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
@@ -64,7 +66,7 @@ export function UjatEducationProgressAttendanceSection({
     resetRegionState,
     saveSessionVolunteers,
     getSessionVolunteers,
-  } = useUjatEducationProgressAttendance(half, activeRegion)
+  } = useUjatEducationProgressAttendance(programId, half, activeRegion)
 
   const attendanceExcelRows = useMemo(() => {
     const rows: UjatAttendanceExcelRow[] = []
