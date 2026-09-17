@@ -47,6 +47,11 @@ interface ImportMetaEnv {
   readonly VITE_CAREER_NET_API_KEY?: string
   /** @deprecated 오타 호환 — `VITE_CAREER_NET_API_KEY` 사용 권장 */
   readonly VITE_CAREEAR_NET_API_KEY?: string
+  /**
+   * 열여라 참깨 임시 FE mock (일반 프로그램 진행현황 QA).
+   * `true`일 때만 참여 기관/강사/봉사자·학생·게시글·정산 임시 데이터 노출.
+   */
+  readonly VITE_GENERAL_PROGRAM_TEMP_MOCK_ENABLED?: string
 }
 
 interface ImportMeta {
