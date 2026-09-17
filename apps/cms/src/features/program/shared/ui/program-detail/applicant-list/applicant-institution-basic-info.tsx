@@ -20,6 +20,7 @@ import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
+import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import './applicant-institution-basic-info.css'
 
 /** 성범죄 조회 요청 행: ID·검증번호 가림 */
@@ -172,10 +173,9 @@ export function ApplicantInstitutionBasicInfo({
   const classAndCount: ReactNode =
     institution.classCount != null && institution.studentCount != null ? (
       <ProgramDetailTdSegmentWrap>
-        {withProgramDetailTdDivider([
-          `${institution.classCount}개 학급`,
-          `총 ${institution.studentCount}명`,
-        ])}
+        {withProgramDetailTdDivider(
+          formatClassStudentCountSegments(institution.classCount, institution.studentCount)
+        )}
       </ProgramDetailTdSegmentWrap>
     ) : (
       '-'

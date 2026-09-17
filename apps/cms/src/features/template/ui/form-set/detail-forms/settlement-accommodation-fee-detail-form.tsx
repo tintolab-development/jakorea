@@ -7,6 +7,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { formatNumberDisplay } from '@/shared/utils'
 import {
   ADMIN_FILE_OWNER,
   ADMIN_FILE_PURPOSE,
@@ -39,8 +40,11 @@ export type SettlementAccommodationFeeDetailFormProps = {
   displayMode?: PaymentStatementIssuanceParagraphDisplayMode
 }
 
-function textOrDash(value: string): string {
-  return value.trim() || '-'
+function formatAmountView(value: string, unit: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return '-'
+  const formatted = formatNumberDisplay(trimmed)
+  return formatted === '-' ? '-' : `${formatted}${unit}`
 }
 
 export function SettlementAccommodationFeeDetailForm({
@@ -64,7 +68,7 @@ export function SettlementAccommodationFeeDetailForm({
         <DetailInfoForm.Field
           label="숙박비"
           fullRow
-          view={textOrDash(v.accommodationFee ? `${v.accommodationFee}원` : '')}
+          view={formatAmountView(v.accommodationFee, '원')}
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap settlement-accommodation-fee-detail-form__suffix-row">
               <CmsInput

@@ -159,6 +159,7 @@ import {
   renderProgramDetailPipeSeparated,
   renderDetailInfoPipeSeparated,
 } from '@/features/program/shared/ui/program-detail-td-divider'
+import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import './participating-institutions-section.css'
@@ -1786,10 +1787,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       onChange={patch => updateApplicationInfoDraft(patch)}
     />
   ) : (
-    withProgramDetailTdDivider([
-      `${mergedDetail.classCount}개 학급`,
-      `총 ${mergedDetail.studentCount}명`,
-    ])
+    withProgramDetailTdDivider(
+      formatClassStudentCountSegments(mergedDetail.classCount, mergedDetail.studentCount)
+    )
   )
 
   return (

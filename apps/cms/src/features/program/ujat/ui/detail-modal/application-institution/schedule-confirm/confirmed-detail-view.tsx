@@ -1,5 +1,6 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DeliveryStatusBadge } from '@/shared/components/delivery-status-badge'
+import { formatNumberDisplay } from '@/shared/utils'
 import { UjatInstitutionScheduleConfirmStatusBadge } from './status-badge'
 import {
   ClassTimeTable,
@@ -98,19 +99,19 @@ export function UjatScheduleConfirmConfirmedDetailView({
           {detail.gradeEducationBlocks.map((block, blockIndex) => (
             <DetailInfoForm
               key={`${block.gradeLabel}-${blockIndex}`}
-              title={`${block.gradeLabel} (${block.classCount}학급)`}
+              title={`${block.gradeLabel} (${formatNumberDisplay(block.classCount)}학급)`}
               hideHeader
               mode="view"
             >
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
-                  label={`${block.gradeLabel} (${block.classCount}학급)`}
+                  label={`${block.gradeLabel} (${formatNumberDisplay(block.classCount)}학급)`}
                   fullRow
                   view={
                     <PipeSeparatedValues
                       parts={block.classes.map(classRow => (
                         <span key={classRow.classNo}>
-                          {classRow.classNo}반 : {classRow.studentCount}명
+                          {classRow.classNo}반 : {formatNumberDisplay(classRow.studentCount)}명
                         </span>
                       ))}
                     />

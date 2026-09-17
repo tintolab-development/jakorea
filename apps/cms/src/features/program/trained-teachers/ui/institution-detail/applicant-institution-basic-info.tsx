@@ -32,6 +32,7 @@ import {
   resolveInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { shouldShowInstitutionApplicationDetailScheduleSection } from '@/features/program/general/lib/institution-application-session-display'
+import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import type { Program } from '@/types/domain'
 import { TrainedTeachersPreferredScheduleDetailSection } from './preferred-schedule-detail-section'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
@@ -139,10 +140,9 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
       />
     ) : institution.classCount != null && institution.studentCount != null ? (
       <ProgramDetailTdSegmentWrap>
-        {withProgramDetailTdDivider([
-          `${institution.classCount}개 학급`,
-          `총 ${institution.studentCount}명`,
-        ])}
+        {withProgramDetailTdDivider(
+          formatClassStudentCountSegments(institution.classCount, institution.studentCount)
+        )}
       </ProgramDetailTdSegmentWrap>
     ) : (
       '-'
