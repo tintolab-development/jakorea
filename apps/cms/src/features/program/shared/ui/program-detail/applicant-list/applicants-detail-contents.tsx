@@ -134,6 +134,17 @@ function ApplicantHeaderActionsExtra({
             disabled={a.disabled}
             onClick={a.onClick ?? (() => {})}
           />
+        ) : a.key === 'edit-info' ? (
+          <CmsButton
+            key={a.key}
+            {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
+            className="cms-button--action"
+            disabled={a.disabled}
+            title={a.title}
+            onClick={a.onClick}
+          >
+            {a.label}
+          </CmsButton>
         ) : (
           <CmsButton
             key={a.key}
@@ -188,7 +199,7 @@ function headerBtnEditInfo(
 ): ApplicantHeaderActionItem {
   return {
     key: 'edit-info',
-    variant: isEditing ? 'secondary' : 'primary',
+    variant: PROGRAM_EDIT_INFO_BUTTON_PROPS.variant,
     label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
     width: PROGRAM_EDIT_INFO_BUTTON_PROPS.width,
     disabled,
@@ -378,7 +389,11 @@ function resolveApplicantHeaderItems(params: {
   if (isApprovedInstructor) {
     const editButton =
       isGeneralInstructorEditEnabled && onEnterInstructorEdit && onSaveInstructorEdit
-        ? headerBtnEditInfo(onEnterInstructorEdit, onSaveInstructorEdit, isEditingInstructorDetail)
+        ? headerBtnEditInfo(
+            onEnterInstructorEdit,
+            onSaveInstructorEdit,
+            isEditingInstructorDetail
+          )
         : headerBtnEditInfoPreparing()
 
     const items: ApplicantHeaderActionItem[] = [
@@ -885,6 +900,16 @@ export function ApplicantsDetailContents({
       return { disabled: false, reason: null }
     }
 
+    // 일반 프로그램 — 강사 신청 상세: 승인 완료 시 승인 취소 가능 (POST …/cancel-approval)
+    if (
+      isGeneralDetail &&
+      isInstructor &&
+      instructorData?.approvalStatus === 'approved' &&
+      onCancelApproval
+    ) {
+      return { disabled: false, reason: null }
+    }
+
     return resolved
   }, [
     program,
@@ -895,6 +920,7 @@ export function ApplicantsDetailContents({
     onCancelApproval,
     isGeneralDetail,
     isInstitution,
+    isInstructor,
   ])
 
   const resolveApplicantPersonalInfoAccessItem = useCallback(() => {
