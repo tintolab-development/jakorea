@@ -74,6 +74,23 @@ function nullToUndefined(value: unknown): unknown {
 
 const optionalNumber = z.preprocess(nullToUndefined, z.number().optional())
 const optionalNonNegNumber = z.preprocess(nullToUndefined, z.number().min(0).optional())
+/** BE ProgramUpdateRequest Integer 필드 — Jackson int32 초과 시 MALFORMED_REQUEST */
+const JAVA_INT_MAX = 2_147_483_647
+const optionalNonNegJavaInt = z.preprocess(
+  nullToUndefined,
+  z
+    .number()
+    .min(0)
+    .max(JAVA_INT_MAX, `0 ~ ${JAVA_INT_MAX.toLocaleString('ko-KR')} 범위로 입력해주세요`)
+    .optional()
+)
+
+function clampJavaInt(value: number | null | undefined): number | undefined {
+  if (value == null || !Number.isFinite(value)) return undefined
+  const n = Math.trunc(value)
+  if (n < 0) return undefined
+  return Math.min(n, JAVA_INT_MAX)
+}
 const optionalNonNegNumberMessage = (message: string) =>
   z.preprocess(nullToUndefined, z.number().min(0, message).optional())
 
@@ -164,6 +181,8 @@ const programDetailEditSchemaBase = z.object({
   businessArea: z.string().optional(),
   sponsorId: z.string().min(1, '후원사를 선택해주세요'),
   sponsorManagementIds: z.array(z.string()).optional(),
+  sponsorManagerContactIds: z.array(z.string()).optional(),
+  /** @deprecated 레거시 단일 — seed 호환 */
   sponsorManagerContactId: z.string().optional(),
   managerName: z.string().min(1, '후원사 담당자를 입력해주세요'),
   contactPhone: z
@@ -177,6 +196,10 @@ const programDetailEditSchemaBase = z.object({
   venueKind: z.enum(['inside', 'outside', 'other']).optional(),
   venueDetail: z.string().optional(),
   oneLineIntroduction: z.string().optional(),
+  /** 모집 비고 (BE remarks) — oneLineIntroduction 과 분리 */
+  remarks: z.string().optional(),
+  /** 교육 대상 상세 (BE educationTargetDetail) — district 와 분리 */
+  educationTargetDetail: z.string().optional(),
   keyVisualImage: z.string().optional(),
   posterImage: z.string().optional(),
   description: z.string().min(1, '프로그램 설명을 입력해주세요'),
@@ -282,12 +305,14 @@ const programDetailEditSchemaBase = z.object({
   wagePaymentItems: z.string().optional(),
   wagePaymentItemIds: z.array(z.string()).optional(),
   wageDeductionItems: z.string().optional(),
-  // KPI
-  kpiFinalParticipants: optionalNonNegNumber,
-  kpiInstructorCount: optionalNonNegNumber,
-  kpiVolunteerCount: optionalNonNegNumber,
-  kpiFinalSchools: optionalNonNegNumber,
-  kpiFinalClasses: optionalNonNegNumber,
+  // KPI — BE Integer(int32); 초과 시 MALFORMED_REQUEST
+  kpiFinalParticipants: optionalNonNegJavaInt,
+  kpiInstructorCount: optionalNonNegJavaInt,
+  kpiVolunteerCount: optionalNonNegJavaInt,
+  kpiFinalSchools: optionalNonNegJavaInt,
+  kpiFinalClasses: optionalNonNegJavaInt,
+  /** 교육받은 교사 KPI — programs PATCH `educatedTeachers` */
+  kpiEducatedTeachers: optionalNonNegJavaInt,
 })
 
 /** 기본: 공통·강사·봉사 탭 등 — 모집 안내는 값이 있으면 공백만 불가 */
@@ -369,6 +394,13 @@ function parseWageAmountFromPricing(pricing: string | undefined, kind: 'regular'
   return target?.match(/([\d,]+)\s*원/)?.[1]
 }
 
+function formatCompanySchoolWageAmount(amount: string | number | undefined): string {
+  if (amount == null || amount === '') return ''
+  const num = typeof amount === 'number' ? amount : Number(String(amount).replace(/,/g, ''))
+  if (Number.isNaN(num)) return String(amount)
+  return num.toLocaleString('ko-KR')
+}
+
 function buildWageGradeRowsFromDetailValues(
   values: ProgramDetailEditFormValues,
   existing: import('@/types/domain').Program
@@ -391,7 +423,7 @@ function buildWageGradeRowsFromDetailValues(
       ''
     return {
       grade: row.grade,
-      pricing: `1시간 당 | 기본 : ${amount}원 | 장거리 : ${longDistance}원`,
+      pricing: `1시간 당 | 기본 : ${formatCompanySchoolWageAmount(amount)}원 | 장거리 : ${formatCompanySchoolWageAmount(longDistance)}원`,
     }
   })
 }
@@ -431,8 +463,16 @@ export function programToDetailEditValues(
           : program.sponsorId
             ? [program.sponsorId]
             : [],
+    sponsorManagerContactIds: (() => {
+      const ids = program.generalCommonInfo?.sponsorManagerContactIds
+      if (ids?.length) return [...ids]
+      const single = program.generalCommonInfo?.sponsorManagerContactId?.trim()
+      return single ? [single] : []
+    })(),
     sponsorManagerContactId:
-      program.generalCommonInfo?.sponsorManagerContactId ?? undefined,
+      program.generalCommonInfo?.sponsorManagerContactIds?.[0] ??
+      program.generalCommonInfo?.sponsorManagerContactId ??
+      undefined,
     managerName: program.managerName ?? '',
     contactPhone: program.contactPhone
       ? formatKoreanPhoneNumber(program.contactPhone)
@@ -444,6 +484,14 @@ export function programToDetailEditValues(
       program.venue?.trim() ||
       undefined,
     oneLineIntroduction: program.oneLineIntroduction ?? undefined,
+    remarks:
+      program.remarks?.trim() ||
+      program.generalCommonInfo?.participantRecruitmentInfo?.remarks?.trim() ||
+      undefined,
+    educationTargetDetail:
+      program.educationTargetDetail?.trim() ||
+      program.generalCommonInfo?.participantRecruitmentInfo?.educationTargetDetail?.trim() ||
+      undefined,
     keyVisualImage: program.keyVisualImage ?? undefined,
     posterImage: program.posterImage ?? undefined,
     description: program.description ?? '',
@@ -620,14 +668,24 @@ export function programToDetailEditValues(
     ),
     wageDeductionItems: undefined,
     kpiFinalParticipants:
-      program.generalCommonInfo?.kpi?.finalParticipants ?? program.approvedStudentCount ?? undefined,
+      clampJavaInt(program.generalCommonInfo?.kpi?.finalParticipants) ??
+      clampJavaInt(program.totalParticipants) ??
+      clampJavaInt(program.approvedStudentCount) ??
+      undefined,
     kpiInstructorCount:
-      program.generalCommonInfo?.kpi?.instructorCount ?? program.instructors ?? undefined,
+      clampJavaInt(program.generalCommonInfo?.kpi?.instructorCount) ??
+      clampJavaInt(program.instructors) ??
+      undefined,
     kpiVolunteerCount:
-      program.generalCommonInfo?.kpi?.volunteerCount ?? program.generalVolunteers ?? undefined,
+      clampJavaInt(program.generalCommonInfo?.kpi?.volunteerCount) ??
+      clampJavaInt(program.generalVolunteers) ??
+      undefined,
     kpiFinalSchools:
-      program.generalCommonInfo?.kpi?.finalSchools ?? program.participatingSchoolCount ?? undefined,
-    kpiFinalClasses: program.generalCommonInfo?.kpi?.finalClasses ?? undefined,
+      clampJavaInt(program.generalCommonInfo?.kpi?.finalSchools) ??
+      clampJavaInt(program.participatingSchoolCount) ??
+      undefined,
+    kpiFinalClasses: clampJavaInt(program.generalCommonInfo?.kpi?.finalClasses) ?? undefined,
+    kpiEducatedTeachers: clampJavaInt(program.educatedTeachers) ?? undefined,
   }
 }
 
@@ -683,10 +741,12 @@ export function detailEditValuesToProgramPatch(
             ? undefined
             : existing.institutionType,
     venue: values.venueDetail?.trim() || undefined,
-    oneLineIntroduction:
+    oneLineIntroduction: values.oneLineIntroduction,
+    remarks:
       values.participantRecruitmentNotesNotApplicable === 'not_applicable'
         ? undefined
-        : values.oneLineIntroduction,
+        : (values.remarks?.trim() || undefined),
+    educationTargetDetail: values.educationTargetDetail?.trim() || undefined,
     keyVisualImage: values.keyVisualImage,
     posterImage: values.posterImage,
     description: values.description,
@@ -697,9 +757,21 @@ export function detailEditValuesToProgramPatch(
     resultAnnouncementDate: values.resultAnnouncementDate ?? existing.resultAnnouncementDate,
     resultAnnouncementMethod: values.resultAnnouncementMethod ?? existing.resultAnnouncementMethod,
     studentListRequired: values.studentListRequired ?? existing.studentListRequired,
-    approvedStudentCount: values.kpiFinalParticipants ?? existing.approvedStudentCount,
-    generalVolunteers: values.kpiVolunteerCount ?? existing.generalVolunteers,
-    participatingSchoolCount: values.kpiFinalSchools ?? existing.participatingSchoolCount,
+    totalParticipants: clampJavaInt(
+      values.kpiFinalParticipants ?? existing.totalParticipants
+    ),
+    educatedTeachers: clampJavaInt(
+      values.kpiEducatedTeachers ?? existing.educatedTeachers
+    ),
+    approvedStudentCount: clampJavaInt(
+      values.kpiFinalParticipants ?? existing.approvedStudentCount
+    ),
+    generalVolunteers: clampJavaInt(
+      values.kpiVolunteerCount ?? existing.generalVolunteers
+    ),
+    participatingSchoolCount: clampJavaInt(
+      values.kpiFinalSchools ?? existing.participatingSchoolCount
+    ),
     generalSurveyMenuKeys:
       values.surveySurvey != null ||
       values.surveySatisfaction != null ||
@@ -718,8 +790,26 @@ export function detailEditValuesToProgramPatch(
         values.detailedProgramName ?? existing.generalCommonInfo?.detailedProgramName,
       sponsorManagementIds:
         values.sponsorManagementIds ?? existing.generalCommonInfo?.sponsorManagementIds,
-      sponsorManagerContactId:
-        values.sponsorManagerContactId ?? existing.generalCommonInfo?.sponsorManagerContactId,
+      sponsorManagerContactIds: (() => {
+        if (values.sponsorManagerContactIds != null) return values.sponsorManagerContactIds
+        if (values.sponsorManagerContactId != null) {
+          return values.sponsorManagerContactId.trim()
+            ? [values.sponsorManagerContactId.trim()]
+            : []
+        }
+        return existing.generalCommonInfo?.sponsorManagerContactIds
+      })(),
+      sponsorManagerContactId: (() => {
+        const ids =
+          values.sponsorManagerContactIds ??
+          (values.sponsorManagerContactId?.trim()
+            ? [values.sponsorManagerContactId.trim()]
+            : undefined)
+        return (
+          ids?.[0] ??
+          existing.generalCommonInfo?.sponsorManagerContactId
+        )
+      })(),
       venueDetail: values.venueDetail ?? existing.generalCommonInfo?.venueDetail,
       venueKind: values.venueKind ?? existing.generalCommonInfo?.venueKind,
       curriculumSessions:
@@ -766,23 +856,28 @@ export function detailEditValuesToProgramPatch(
       wageGradeRows: buildWageGradeRowsFromDetailValues(values, existing),
       kpi: {
         finalParticipants:
-          values.kpiFinalParticipants ??
-          existing.generalCommonInfo?.kpi?.finalParticipants ??
-          existing.approvedStudentCount ??
+          clampJavaInt(values.kpiFinalParticipants) ??
+          clampJavaInt(existing.generalCommonInfo?.kpi?.finalParticipants) ??
+          clampJavaInt(existing.approvedStudentCount) ??
           0,
         instructorCount:
-          values.kpiInstructorCount ?? existing.generalCommonInfo?.kpi?.instructorCount ?? 0,
+          clampJavaInt(values.kpiInstructorCount) ??
+          clampJavaInt(existing.generalCommonInfo?.kpi?.instructorCount) ??
+          0,
         volunteerCount:
-          values.kpiVolunteerCount ??
-          existing.generalCommonInfo?.kpi?.volunteerCount ??
-          existing.generalVolunteers ??
+          clampJavaInt(values.kpiVolunteerCount) ??
+          clampJavaInt(existing.generalCommonInfo?.kpi?.volunteerCount) ??
+          clampJavaInt(existing.generalVolunteers) ??
           0,
         finalSchools:
-          values.kpiFinalSchools ??
-          existing.generalCommonInfo?.kpi?.finalSchools ??
-          existing.participatingSchoolCount ??
+          clampJavaInt(values.kpiFinalSchools) ??
+          clampJavaInt(existing.generalCommonInfo?.kpi?.finalSchools) ??
+          clampJavaInt(existing.participatingSchoolCount) ??
           0,
-        finalClasses: values.kpiFinalClasses ?? existing.generalCommonInfo?.kpi?.finalClasses ?? 0,
+        finalClasses:
+          clampJavaInt(values.kpiFinalClasses) ??
+          clampJavaInt(existing.generalCommonInfo?.kpi?.finalClasses) ??
+          0,
       },
       participantRecruitmentInfo: {
         ...existing.generalCommonInfo?.participantRecruitmentInfo,
@@ -820,6 +915,14 @@ export function detailEditValuesToProgramPatch(
               ? false
               : existing.generalCommonInfo?.participantRecruitmentInfo?.interviewEnabled,
         notesNotApplicable: values.participantRecruitmentNotesNotApplicable === 'not_applicable',
+        remarks:
+          values.participantRecruitmentNotesNotApplicable === 'not_applicable'
+            ? undefined
+            : (values.remarks?.trim() ||
+              existing.generalCommonInfo?.participantRecruitmentInfo?.remarks),
+        educationTargetDetail:
+          values.educationTargetDetail?.trim() ||
+          existing.generalCommonInfo?.participantRecruitmentInfo?.educationTargetDetail,
       },
       instructorRecruitmentInfo: {
         ...existing.generalCommonInfo?.instructorRecruitmentInfo,

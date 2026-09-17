@@ -146,8 +146,10 @@ export interface GeneralProgramCommonInfoExtension {
   sponsorManagementId?: string
   /** 후원사 관리 목록 id — 다중 선택 */
   sponsorManagementIds?: string[]
-  /** 후원사 담당자 선택 ref (`sponsorManagementId::contactId`) — PATCH sponsors[] 용 */
+  /** 후원사 담당자 선택 ref (`sponsorManagementId::contactId`) — 레거시 단일 */
   sponsorManagerContactId?: string
+  /** 후원사 담당자 선택 ref — 다중 선택 (후원사 멀티와 동일 UX) */
+  sponsorManagerContactIds?: string[]
   educationFormLabel?: string
   /** 참여 방식 — 개인 대상 · 일정 공통 (등록 폼·상세 조회 mock) */
   participationMethod?: 'individual' | 'team'
@@ -431,6 +433,10 @@ export interface Program {
   contactEmail?: string // 문의처 이메일
   contactPhone?: string // 문의처 연락처
   oneLineIntroduction?: string // 한 줄 소개
+  /** 모집 비고 — oneLineIntroduction 과 분리 (BE `remarks`) */
+  remarks?: string
+  /** 교육 대상 상세 — district(시군구)와 분리 (BE `educationTargetDetail`) */
+  educationTargetDetail?: string
   keyVisualImage?: string // 키비주얼 이미지 URL
   /** 추가 내용 (Toast UI Editor getHTML() 출력 HTML) */
   additionalContentHtml?: string

@@ -71,6 +71,8 @@ export const programParticipantRecruitmentSaveSchema = z.object({
   contactPhone: optionalString,
   contactEmail: optionalString,
   oneLineIntroduction: optionalString,
+  remarks: optionalString,
+  educationTargetDetail: optionalString,
   participantRecruitmentNotesNotApplicable: notesApplicableEnum,
 })
 

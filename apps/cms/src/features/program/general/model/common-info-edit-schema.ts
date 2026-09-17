@@ -37,10 +37,10 @@ import {
   shouldDisableEducationSchedulePeriodMode,
 } from '@/features/program/general/lib/schedule-detail-form'
 import {
-  TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   withDetailedProgramNoneOption,
 } from '@/features/template/lib/template-form-select-options'
+import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS,
   PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
@@ -121,7 +121,9 @@ export const generalProgramCommonInfoEditSchema = z
     endDate: z.string().min(1, '사업 운영 기간을 선택해주세요'),
     businessArea: z.string().min(1, '사업 분야를 선택해주세요'),
     sponsorManagementIds: z.array(z.string()).min(1, '후원사를 선택해주세요'),
-    sponsorManagerContactId: z.string().min(1, '후원사 담당자를 선택해주세요'),
+    sponsorManagerContactIds: z.array(z.string()).min(1, '후원사 담당자를 선택해주세요'),
+    /** @deprecated 레거시 단일 — seed 호환용, 검증은 ids 사용 */
+    sponsorManagerContactId: z.string().optional(),
     venueKind: z.enum(['inside', 'outside', 'other']),
     venueDetail: z.string().trim().min(1, '교육 장소를 입력해주세요'),
     surveySurvey: z.boolean(),
@@ -599,11 +601,7 @@ function toIso(d: string | Date | undefined): string {
 }
 
 function resolveBusinessAreaFormValue(businessArea: string | undefined): string {
-  if (!businessArea?.trim()) return ''
-  const byValue = TEMPLATE_FORM_BUSINESS_AREA_OPTIONS.find(o => o.value === businessArea)
-  if (byValue) return byValue.value
-  const byLabel = TEMPLATE_FORM_BUSINESS_AREA_OPTIONS.find(o => o.label === businessArea)
-  return byLabel?.value ?? businessArea
+  return normalizeProgramBusinessAreaValue(businessArea)
 }
 
 function resolveEducationProcessFormValue(value: string | undefined): string {
@@ -659,9 +657,7 @@ function courseDeliveredToProgramValue(formValue: string): 'JA' | 'Jointly' | 'P
 }
 
 function businessAreaToProgramValue(formValue: string): string {
-  return (
-    TEMPLATE_FORM_BUSINESS_AREA_OPTIONS.find(o => o.value === formValue)?.label ?? formValue
-  )
+  return normalizeProgramBusinessAreaValue(formValue)
 }
 
 export function isGeneralProgramScheduleType(program: Program): boolean {
@@ -740,6 +736,47 @@ export function decodeSponsorManagerContactRef(
   }
 }
 
+/** 단일/배열 담당자 ref 를 배열로 정규화 */
+export function normalizeSponsorManagerContactIds(input: {
+  ids?: readonly string[] | null
+  id?: string | null
+}): string[] {
+  if (input.ids != null && input.ids.length > 0) {
+    return [...new Set(input.ids.map(v => v.trim()).filter(Boolean))]
+  }
+  const single = input.id?.trim()
+  return single ? [single] : []
+}
+
+/**
+ * 후원사 id + 담당자 ref[] → PATCH `sponsors[]`.
+ * BE는 후원사당 contact 1개 — 동일 후원사에 여러 ref면 마지막 값 사용.
+ */
+export function buildProgramSponsorAssignmentsWire(
+  sponsorManagementIds: readonly string[],
+  contactRefs: readonly string[]
+): Array<{ sponsorId: string; sponsorContactId?: string }> {
+  const contactBySponsor = new Map<string, string>()
+  for (const ref of contactRefs) {
+    const decoded = decodeSponsorManagerContactRef(ref.trim())
+    if (!decoded?.sponsorManagementId || !decoded.contactId) continue
+    contactBySponsor.set(decoded.sponsorManagementId, decoded.contactId)
+  }
+  const sponsorIds = [
+    ...new Set(
+      [...sponsorManagementIds, ...contactBySponsor.keys()]
+        .map(id => String(id).trim())
+        .filter(Boolean)
+    ),
+  ]
+  return sponsorIds.map(sponsorId => {
+    const contactId = contactBySponsor.get(sponsorId)
+    return contactId
+      ? { sponsorId, sponsorContactId: contactId }
+      : { sponsorId }
+  })
+}
+
 /**
  * 후원사 담당자 이름(+직함) — `이름 직함`, 직함 없으면 `이름`
  */
@@ -755,8 +792,8 @@ export function formatSponsorManagerPersonLabel(input: {
 
 /**
  * 후원사 담당자 셀렉트 라벨
- * - 복수 후원사: `소속 | 이름 직함` (직함 없으면 생략) — 예: `스타벅스 | 이가원 책임`
- * - 단일 후원사: `이름 직함` / `이름`
+ * - multiSponsor(시안 기본): `소속 | 이름 직함` (직함 없으면 생략) — 예: `스타벅스 | 이가원 책임`
+ * - 단일 표시만 필요할 때: `이름 직함` / `이름`
  */
 export function formatSponsorManagerSelectLabel(input: {
   sponsorName: string
@@ -861,40 +898,53 @@ export function resolveSponsorManagementIds(
   return sponsors[0] ? [sponsors[0].id] : []
 }
 
-function resolveSponsorManagerContactId(
+function resolveSponsorManagerContactIds(
   program: Program,
   sponsorManagementIds: string[],
   context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
-): string {
-  const primarySponsorId = sponsorManagementIds[0]
-  if (!primarySponsorId) return ''
-  const contacts = context.contactsBySponsorId[primarySponsorId] ?? []
+): string[] {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
-  const line = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
-  if (!line) {
-    const first = contacts[0]
-    return first ? encodeSponsorManagerContactRef(primarySponsorId, first.id) : ''
+  const stored = normalizeSponsorManagerContactIds({
+    ids: commonInfo.sponsorManagerContactIds,
+    id: commonInfo.sponsorManagerContactId,
+  })
+  if (stored.length > 0) return stored
+
+  // 후원사별 1명씩 시드 (이름·전화 매칭, 없으면 첫 연락처)
+  const refs: string[] = []
+  for (const sponsorId of sponsorManagementIds) {
+    const contacts = context.contactsBySponsorId[sponsorId] ?? []
+    if (contacts.length === 0) continue
+    const line = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
+    const namePart = line.split('|')[0]?.trim() ?? line
+    const matched = line
+      ? contacts.find(
+          c => c.name === namePart || line.includes(c.name) || (c.phone && line.includes(c.phone))
+        )
+      : undefined
+    const contact = matched ?? contacts[0]
+    if (contact) refs.push(encodeSponsorManagerContactRef(sponsorId, contact.id))
   }
-  const namePart = line.split('|')[0]?.trim() ?? line
-  const matched = contacts.find(
-    c => c.name === namePart || line.includes(c.name) || (c.phone && line.includes(c.phone))
-  )
-  const contact = matched ?? contacts[0]
-  return contact ? encodeSponsorManagerContactRef(primarySponsorId, contact.id) : ''
+  return refs
 }
 
 function resolveManagerFromFormValues(
   values: GeneralProgramCommonInfoEditFormValues,
   context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
 ) {
-  const decoded = decodeSponsorManagerContactRef(values.sponsorManagerContactId)
+  const refs = normalizeSponsorManagerContactIds({
+    ids: values.sponsorManagerContactIds,
+    id: values.sponsorManagerContactId,
+  })
+  const primaryRef = refs[0] ?? ''
+  const decoded = primaryRef ? decodeSponsorManagerContactRef(primaryRef) : null
   const sponsorManagementId = decoded?.sponsorManagementId ?? values.sponsorManagementIds[0]
-  const contactId = decoded?.contactId ?? values.sponsorManagerContactId
+  const contactId = decoded?.contactId ?? primaryRef
   if (!sponsorManagementId || !contactId) {
-    return { manager: undefined, sponsorManagementId }
+    return { manager: undefined, sponsorManagementId, contactRefs: refs }
   }
   const manager = context.contactsBySponsorId[sponsorManagementId]?.find(c => c.id === contactId)
-  return { manager, sponsorManagementId }
+  return { manager, sponsorManagementId, contactRefs: refs }
 }
 
 function participantFlagsFromProgram(program: Program): Pick<
@@ -1074,24 +1124,41 @@ function parseIpsTypeSummary(summary: string | undefined): {
   return { ipsScheduleDetail, ipsCategory, ipsDetail }
 }
 
+function resolveIpsCategoryFromProgramIps(
+  ips: string | undefined
+): ProgramRegistrationIpsCategory | '' {
+  const raw = ips?.trim() ?? ''
+  if (!raw) return ''
+  const lower = raw.toLowerCase()
+  if (lower === 'inspire' || lower === 'prepare' || lower === 'succeed') return lower
+  if (/inspire/i.test(raw)) return 'inspire'
+  if (/prepare/i.test(raw)) return 'prepare'
+  if (/succeed/i.test(raw)) return 'succeed'
+  return ''
+}
+
 function parseIpsTypeSummaryFromProgram(
   program: Program,
   summary: string | undefined
 ): ReturnType<typeof parseIpsTypeSummary> {
   const parsed = parseIpsTypeSummary(summary)
-  if (!parsed.ipsCategory && program.ips) {
-    parsed.ipsCategory = program.ips.toLowerCase() as ProgramRegistrationIpsCategory
-    if (parsed.ipsCategory === 'prepare') parsed.ipsDetail = 'none'
+  if (!parsed.ipsCategory) {
+    parsed.ipsCategory = resolveIpsCategoryFromProgramIps(program.ips)
+    if (parsed.ipsCategory === 'prepare') parsed.ipsDetail = parsed.ipsDetail || 'none'
     else if (parsed.ipsCategory === 'succeed' && program.programCategory) {
       parsed.ipsDetail =
         PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS.find(
-          o => o.label === program.programCategory
-        )?.value ?? 'none'
+          o => o.label === program.programCategory || o.value === program.programCategory
+        )?.value ||
+        parsed.ipsDetail ||
+        'none'
     } else if (parsed.ipsCategory === 'inspire' && program.programChannel) {
       parsed.ipsDetail =
         PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS.find(
-          o => o.label === program.programChannel
-        )?.value ?? 'none'
+          o => o.label === program.programChannel || o.value === program.programChannel
+        )?.value ||
+        parsed.ipsDetail ||
+        'none'
     }
   }
   return parsed
@@ -1223,6 +1290,11 @@ export function programToGeneralCommonInfoEditValues(
     PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS[0]?.value ||
     'ja'
   const participantFlags = participantFlagsFromProgram(program)
+  const sponsorManagerContactIds = resolveSponsorManagerContactIds(
+    program,
+    sponsorManagementIds,
+    context
+  )
 
   return {
     mainTitle: program.mainTitle?.trim() ?? '',
@@ -1233,7 +1305,8 @@ export function programToGeneralCommonInfoEditValues(
     endDate: toIso(program.endDate),
     businessArea: resolveBusinessAreaFormValue(program.businessArea),
     sponsorManagementIds,
-    sponsorManagerContactId: resolveSponsorManagerContactId(program, sponsorManagementIds, context),
+    sponsorManagerContactIds,
+    sponsorManagerContactId: sponsorManagerContactIds[0],
     venueKind: resolveVenueKind(program),
     venueDetail: commonInfo.venueDetail?.trim() || program.venue?.trim() || '',
     ...participantFlags,
@@ -1430,6 +1503,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
     programCategory,
     programChannel,
     approvedStudentCount: values.kpiFinalParticipants ?? existing.approvedStudentCount,
+    totalParticipants: values.kpiFinalParticipants ?? existing.totalParticipants,
     instructors: values.kpiInstructorCount ?? existing.instructors,
     instructorCapacity: values.kpiInstructorCount ?? existing.instructorCapacity,
     generalVolunteers: values.kpiVolunteerCount ?? existing.generalVolunteers,
@@ -1450,6 +1524,14 @@ export function generalCommonInfoEditValuesToProgramPatch(
         sponsorRows.map(row => row.name).join(', ') || existingCommon.sponsorDisplayName,
       sponsorManagementId: values.sponsorManagementIds[0] ?? existingCommon.sponsorManagementId,
       sponsorManagementIds: values.sponsorManagementIds,
+      sponsorManagerContactIds: normalizeSponsorManagerContactIds({
+        ids: values.sponsorManagerContactIds,
+        id: values.sponsorManagerContactId,
+      }),
+      sponsorManagerContactId: normalizeSponsorManagerContactIds({
+        ids: values.sponsorManagerContactIds,
+        id: values.sponsorManagerContactId,
+      })[0],
       sponsorManagerLine: managerLine,
       venueDetail: values.venueDetail?.trim() || existingCommon.venueDetail,
       educationFormLabel:

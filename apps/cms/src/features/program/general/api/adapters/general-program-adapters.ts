@@ -404,7 +404,10 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     educationProcess: program.educationProcess,
     maleParticipants: program.maleParticipants,
     femaleParticipants: program.femaleParticipants,
-    totalParticipants: program.totalParticipants,
+    totalParticipants:
+      program.totalParticipants ??
+      program.approvedStudentCount ??
+      program.generalCommonInfo?.kpi?.finalParticipants,
     generalVolunteers: program.generalVolunteers,
     staffVolunteers: program.staffVolunteers,
     returningVolunteers: program.returningVolunteers,
@@ -428,6 +431,11 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     applicationTargetMode,
     rounds: mapProgramRoundsToRequest(program),
     serviceDetailJson: serializeGeneralProgramServiceDetailJson(program),
+    finalSchools:
+      program.participatingSchoolCount ?? program.generalCommonInfo?.kpi?.finalSchools,
+    finalClasses: program.generalCommonInfo?.kpi?.finalClasses,
+    venueKind: program.generalCommonInfo?.venueKind,
+    venueDetail: program.generalCommonInfo?.venueDetail?.trim() || undefined,
   }
 }
 
@@ -525,7 +533,21 @@ function mapProgramPatchFieldsToRequest(
   if (has('educationProcess')) body.educationProcess = merged.educationProcess
   if (has('maleParticipants')) body.maleParticipants = merged.maleParticipants
   if (has('femaleParticipants')) body.femaleParticipants = merged.femaleParticipants
-  if (has('totalParticipants')) body.totalParticipants = merged.totalParticipants
+  if (has('totalParticipants') || has('approvedStudentCount') || has('generalCommonInfo')) {
+    body.totalParticipants =
+      merged.totalParticipants ??
+      merged.approvedStudentCount ??
+      merged.generalCommonInfo?.kpi?.finalParticipants
+  }
+  if (has('participatingSchoolCount') || has('generalCommonInfo')) {
+    body.finalSchools =
+      merged.participatingSchoolCount ?? merged.generalCommonInfo?.kpi?.finalSchools
+  }
+  if (has('generalCommonInfo')) {
+    body.finalClasses = merged.generalCommonInfo?.kpi?.finalClasses
+    body.venueKind = merged.generalCommonInfo?.venueKind
+    body.venueDetail = merged.generalCommonInfo?.venueDetail?.trim() || undefined
+  }
   if (has('generalVolunteers')) body.generalVolunteers = merged.generalVolunteers
   if (has('staffVolunteers')) body.staffVolunteers = merged.staffVolunteers
   if (has('returningVolunteers')) body.returningVolunteers = merged.returningVolunteers

@@ -25,8 +25,10 @@ import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/prog
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import {
+  decodeSponsorManagerContactRef,
   encodeSponsorManagerContactRef,
   formatSponsorManagerSelectLabel,
+  normalizeSponsorManagerContactIds,
   resolveVenueKind,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
@@ -187,7 +189,7 @@ export function BasicInfoSection({
             sponsorName: sponsor.name,
             contactName: contact.name,
             position: contact.position,
-            multiSponsor: selectedSponsorManagementRows.length > 1,
+            multiSponsor: true,
           }),
           sponsorId: sponsor.id,
           contactId: contact.id,
@@ -199,25 +201,63 @@ export function BasicInfoSection({
     return options
   }, [selectedSponsorManagementRows, sponsorEditContext.contactsBySponsorId])
 
-  // 담당자 옵션 로드 후 현재 managerName/phone 과 매칭되는 ref 시드 (빈 셀렉트·disabled 방지)
+  // 담당자 옵션 로드 후 — API/저장된 contactId[] 우선. 없는 사람 강제 선택 금지
   useEffect(() => {
     if (!isFormEdit || !form || sponsorManagerOptions.length === 0) return
-    const current = form.getValues('sponsorManagerContactId')
-    if (current) return
+
+    const optionValues = new Set(sponsorManagerOptions.map(o => o.value))
+    const currentIds = normalizeSponsorManagerContactIds({
+      ids: form.getValues('sponsorManagerContactIds'),
+      id: form.getValues('sponsorManagerContactId'),
+    })
+    const validIds = currentIds.filter(id => optionValues.has(id))
+
+    if (validIds.length > 0) {
+      if (validIds.length !== currentIds.length) {
+        form.setValue('sponsorManagerContactIds', validIds, { shouldDirty: false })
+      }
+      form.setValue('sponsorManagerContactId', validIds[0], { shouldDirty: false })
+      const primary = sponsorManagerOptions.find(o => o.value === validIds[0])
+      if (primary) {
+        form.setValue('managerName', primary.name, { shouldDirty: false })
+        if (primary.phone) {
+          form.setValue('contactPhone', primary.phone, { shouldDirty: false })
+        }
+      }
+      return
+    }
+
+    // 저장된 ref 가 옵션에 없으면 contactId 단위로 재매칭
+    const rematched: string[] = []
+    for (const ref of currentIds) {
+      const decoded = decodeSponsorManagerContactRef(ref)
+      if (!decoded?.contactId) continue
+      const byContact = sponsorManagerOptions.find(o => o.contactId === decoded.contactId)
+      if (byContact) rematched.push(byContact.value)
+    }
+    if (rematched.length > 0) {
+      form.setValue('sponsorManagerContactIds', rematched, { shouldDirty: false })
+      form.setValue('sponsorManagerContactId', rematched[0], { shouldDirty: false })
+      const primary = sponsorManagerOptions.find(o => o.value === rematched[0])
+      if (primary) {
+        form.setValue('managerName', primary.name, { shouldDirty: false })
+        if (primary.phone) form.setValue('contactPhone', primary.phone, { shouldDirty: false })
+      }
+      return
+    }
+
     const managerName = form.getValues('managerName')?.trim()
     const phone = form.getValues('contactPhone')?.trim()
-    const matched =
-      sponsorManagerOptions.find(
-        option =>
-          (managerName && option.name === managerName) ||
-          (phone && option.phone && option.phone === phone)
-      ) ?? sponsorManagerOptions[0]
+    const matched = sponsorManagerOptions.find(
+      option =>
+        (managerName && option.name === managerName) ||
+        (phone && option.phone && option.phone === phone)
+    )
     if (!matched) return
+    form.setValue('sponsorManagerContactIds', [matched.value], { shouldDirty: false })
     form.setValue('sponsorManagerContactId', matched.value, { shouldDirty: false })
-    if (!managerName) form.setValue('managerName', matched.name, { shouldDirty: false })
-    if (!phone && matched.phone) {
-      form.setValue('contactPhone', matched.phone, { shouldDirty: false })
-    }
+    form.setValue('managerName', matched.name, { shouldDirty: false })
+    if (matched.phone) form.setValue('contactPhone', matched.phone, { shouldDirty: false })
   }, [isFormEdit, form, sponsorManagerOptions])
 
   const categoryLabel = CATEGORY_LABEL[program.category] ?? program.category ?? '-'
@@ -469,6 +509,9 @@ export function BasicInfoSection({
                       onChange={next => {
                         const ids = Array.isArray(next) ? next.map(String) : []
                         field.onChange(ids)
+                        commonInfoForm.setValue('sponsorManagerContactIds', [], {
+                          shouldDirty: true,
+                        })
                         commonInfoForm.setValue('sponsorManagerContactId', undefined)
                         if (ids[0]) {
                           commonInfoForm.setValue('sponsorId', ids[0], { shouldDirty: true })
@@ -496,22 +539,30 @@ export function BasicInfoSection({
               }
               edit={
                 <Controller
-                  name="sponsorManagerContactId"
+                  name="sponsorManagerContactIds"
                   control={commonInfoForm.control}
                   render={({ field }) => (
                     <CmsSelect
+                      mode="multiple"
                       withAllOption={false}
                       placeholder="후원사 담당자를 선택하세요"
                       width="100%"
+                      showSearch
+                      optionFilterProp="label"
                       options={sponsorManagerOptions}
-                      value={field.value ?? undefined}
+                      value={field.value ?? []}
                       disabled={sponsorManagerOptions.length === 0}
                       onChange={next => {
-                        const value = next == null ? undefined : String(next)
-                        field.onChange(value)
-                        const selected = sponsorManagerOptions.find(option => option.value === value)
-                        commonInfoForm.setValue('managerName', selected?.name ?? '')
-                        commonInfoForm.setValue('contactPhone', selected?.phone)
+                        const ids = Array.isArray(next) ? next.map(String) : []
+                        field.onChange(ids)
+                        commonInfoForm.setValue('sponsorManagerContactId', ids[0], {
+                          shouldDirty: true,
+                        })
+                        const primary = sponsorManagerOptions.find(
+                          option => option.value === ids[0]
+                        )
+                        commonInfoForm.setValue('managerName', primary?.name ?? '')
+                        commonInfoForm.setValue('contactPhone', primary?.phone)
                       }}
                     />
                   )}

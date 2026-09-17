@@ -80,6 +80,29 @@ export async function fetchAdminProgramByIdRemote(programId: string): Promise<Pr
   )
 }
 
+/** GET /api/admin/programs/{id}/sponsors — 후원사·담당자 배정 SSOT */
+export type AdminProgramSponsorAssignmentDto = {
+  id?: string
+  sponsorId?: string
+  sponsorName?: string
+  sponsorContactId?: string | null
+  sponsorContactName?: string | null
+  sponsorYear?: number | null
+  contributionAmountSnapshot?: number | null
+  displayOrder?: number | null
+}
+
+export async function fetchAdminProgramSponsorsRemote(
+  programId: string
+): Promise<AdminProgramSponsorAssignmentDto[]> {
+  return unwrapApiBody<AdminProgramSponsorAssignmentDto[]>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/sponsors`,
+      method: 'GET',
+    })
+  )
+}
+
 export async function createAdminProgramRemote(
   payload: import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest
 ): Promise<ProgramResponse> {

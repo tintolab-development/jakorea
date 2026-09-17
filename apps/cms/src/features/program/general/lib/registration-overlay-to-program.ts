@@ -39,12 +39,12 @@ import type { ProgramRegistrationIpsTypeValue } from '@/features/template/ui/for
 import type { ProgramRegistrationMultiRoundAssignmentValue } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-multi-round-assignment-fields'
 import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import {
-  TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
   TEMPLATE_FORM_IP_OWNED_OPTIONS,
 } from '@/features/template/lib/template-form-select-options'
+import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY,
   GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
@@ -120,8 +120,7 @@ function readOperationRangeSeal(
 }
 
 function businessAreaToProgramValue(formValue: string): string {
-  if (!formValue) return ''
-  return TEMPLATE_FORM_BUSINESS_AREA_OPTIONS.find(o => o.value === formValue)?.label ?? formValue
+  return normalizeProgramBusinessAreaValue(formValue)
 }
 
 function educationProcessToProgramValue(formValue: string): string | undefined {
