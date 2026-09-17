@@ -28,6 +28,12 @@ import {
 } from '@/features/program/general/api/adapters/application-form-detail-adapters'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import {
+  mapInstructorApplicationDetailToParticipatingRow,
+  mergeInstructorApplicationIntoParticipatingRow,
+  participatingRowToInstructorApplicationSeed,
+} from '@/features/program/general/lib/participating-instructor-application-detail'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 
 function parseNumericId(id: string | undefined): number | null {
@@ -179,6 +185,62 @@ export function useInstructorApplicationDetailEnrichment(
       adminComment,
     })
   }, [row, detailQuery.data, formResponse, adminComment])
+}
+
+/** 참여 강사 상세 — 신청 정보 탭 (instructor-applications GET + form_response hydrate) */
+export function useParticipatingInstructorApplicationDetailEnrichment(
+  row: ParticipatingInstructorRow | null | undefined,
+  programId: string,
+  options?: { enabled?: boolean }
+): ParticipatingInstructorRow | null {
+  const applicationId = parseNumericId(row?.instructorApplicationId)
+  const detailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.instructorDetail(String(applicationId ?? '')),
+    queryFn: () => fetchInstructorApplicationDetailRemote(String(applicationId)),
+    enabled: Boolean(
+      options?.enabled !== false &&
+        row &&
+        shouldUseGeneralApplicationsRemoteApi() &&
+        applicationId != null
+    ),
+    staleTime: 30_000,
+    retry: false,
+  })
+  const parsedProgramId = parseProgramId(programId)
+  const { formResponse, adminComment } = useApplicationFormAndComments({
+    enabled: Boolean(options?.enabled !== false && row && applicationId != null),
+    programId: parsedProgramId,
+    contextType: 'INSTRUCTOR_APPLICATION',
+    contextId: applicationId,
+    targetType: 'INSTRUCTOR_APPLICATION',
+  })
+
+  return useMemo(() => {
+    if (!row) return null
+    if (!detailQuery.data) {
+      if (!formResponse && !adminComment) return row
+      const seed = participatingRowToInstructorApplicationSeed(row, programId)
+      const hydrated = hydrateInstructorApplicationRowFromForm({
+        row: seed,
+        formResponse,
+        adminComment,
+      })
+      return mergeInstructorApplicationIntoParticipatingRow(row, hydrated)
+    }
+    const canonical = mapInstructorApplicationDetailToParticipatingRow(
+      detailQuery.data,
+      row,
+      programId
+    )
+    if (!formResponse && !adminComment) return canonical
+    const seed = participatingRowToInstructorApplicationSeed(canonical, programId)
+    const hydrated = hydrateInstructorApplicationRowFromForm({
+      row: seed,
+      formResponse,
+      adminComment,
+    })
+    return mergeInstructorApplicationIntoParticipatingRow(canonical, hydrated)
+  }, [row, programId, detailQuery.data, formResponse, adminComment])
 }
 
 /** 일반 봉사 신청 상세 — form_response hydrate (essay 등) */

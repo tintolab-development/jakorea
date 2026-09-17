@@ -566,22 +566,32 @@ export function ParticipatingInstructorsSection({
         title: '연락처',
         dataIndex: 'contact',
         key: 'contact',
-        width: 120,
-        minWidth: 120,
+        width: 140,
+        minWidth: 140,
         ellipsis: { showTitle: true },
-        onHeaderCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
-        onCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
+        className: `${INSTRUCTOR_ELLIPSIS_CELL_CLASS} participating-instructors-section__col-contact`,
+        onHeaderCell: () => ({
+          className: `${INSTRUCTOR_ELLIPSIS_CELL_CLASS} participating-instructors-section__col-contact`,
+        }),
+        onCell: () => ({
+          className: `${INSTRUCTOR_ELLIPSIS_CELL_CLASS} participating-instructors-section__col-contact`,
+        }),
         render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
       {
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 140,
-        minWidth: 140,
+        width: 220,
+        minWidth: 220,
         ellipsis: { showTitle: true },
-        onHeaderCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
-        onCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
+        className: `${INSTRUCTOR_ELLIPSIS_CELL_CLASS} participating-instructors-section__col-email`,
+        onHeaderCell: () => ({
+          className: `${INSTRUCTOR_ELLIPSIS_CELL_CLASS} participating-instructors-section__col-email`,
+        }),
+        onCell: () => ({
+          className: `${INSTRUCTOR_ELLIPSIS_CELL_CLASS} participating-instructors-section__col-email`,
+        }),
         render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
       {
@@ -720,7 +730,17 @@ export function ParticipatingInstructorsSection({
         }}
       >
         {viewMode === 'list' ? (
-          <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">
+          <div
+            ref={tableWrapRef}
+            className="participating-institutions-section__table-wrap"
+            style={
+              tableScrollX != null
+                ? ({
+                    ['--participating-institutions-table-width']: `${tableScrollX}px`,
+                  } as CSSProperties)
+                : undefined
+            }
+          >
             <Table<ParticipatingInstructorRow>
               className="participating-institutions-section__table cms-data-table participating-institutions-section__table--clickable"
               rowKey="id"

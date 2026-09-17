@@ -239,6 +239,88 @@
   color: var(--color-text-disabled) !important;
 }
 
+/*
+ * cms-data-table 이 No. 이후 col 을 width:auto 로 풀어 연락처·이메일이 우측에서 찌그러짐.
+ * th/td 로 최소·고정 폭을 강제하고, 열 합이 뷰포트보다 크면 scroll.x 로 가로 스크롤.
+ */
+.participating-institutions-section--instructors
+  .participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-thead
+  > tr
+  > th.participating-instructors-section__col-contact,
+.participating-institutions-section--instructors
+  .participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-instructors-section__col-contact {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  box-sizing: border-box !important;
+}
+
+.participating-institutions-section--instructors
+  .participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-thead
+  > tr
+  > th.participating-instructors-section__col-email,
+.participating-institutions-section--instructors
+  .participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-instructors-section__col-email {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  box-sizing: border-box !important;
+}
+
+.participating-institutions-section--volunteers
+  .participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-thead
+  > tr
+  > th.participating-volunteers-section__col-contact,
+.participating-institutions-section--volunteers
+  .participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-volunteers-section__col-contact {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.participating-institutions-section--volunteers
+  .participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-thead
+  > tr
+  > th.participating-volunteers-section__col-email,
+.participating-institutions-section--volunteers
+  .participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  .ant-table-tbody
+  > tr
+  > td.participating-volunteers-section__col-email {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
 /* 연락처·이메일: 가로 축소 시 셀 밖으로 텍스트가 삐져나오지 않도록 말줄임 */
 .participating-institutions-section--instructors
   .participating-institutions-section__table-wrap

@@ -61,6 +61,13 @@ export interface InstructorAssignedSchoolRow {
   region: string
   distanceFromHome: string
   educationScheduleLines: string[]
+  /** remote — cancel / representative */
+  assignmentId?: string
+  assignmentIds?: string[]
+  instructorMemberId?: string
+  scheduleId?: string
+  organizationApplicationId?: string
+  schoolId?: string
 }
 
 export interface InstructorWaitingSchoolRow {
@@ -76,6 +83,13 @@ export interface InstructorWaitingSchoolRow {
   educationScheduleLines: string[]
   assignmentStatus: InstructorWaitingAssignmentStatus
   assignedInstructorCountLabel: string
+  /** assignment create API */
+  organizationApplicationId?: string
+  instructorApplicationId?: string
+  instructorMemberId?: string
+  requestedScheduleId?: number
+  resolvedScheduleId?: number | null
+  scheduleUnresolved?: boolean
 }
 
 function countInstructorsAtSchool(

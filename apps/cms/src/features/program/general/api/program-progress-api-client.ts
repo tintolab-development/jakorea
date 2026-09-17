@@ -104,7 +104,7 @@ export interface ProgramLectureReportsPageDto {
 
 export async function fetchProgramLectureReportsRemote(
   programId: string,
-  params?: { page?: number; size?: number }
+  params?: { page?: number; size?: number; instructorMemberId?: number }
 ): Promise<ProgramLectureReportsPageDto> {
   const body = await unwrapApiBody<unknown[] | ProgramLectureReportsPageDto>(
     await customInstance({
@@ -125,8 +125,33 @@ export async function fetchProgramLectureReportsRemote(
   return body
 }
 
+/**
+ * GET /api/admin/programs/{programId}/lecture-reports/download
+ * OpenAPI 응답 스키마 미정 — 회원 일괄과 동일하게 `FileDownloadJobResponse`(`downloadUrl`) 가정.
+ * `downloadEndpoint` additive 도 수용.
+ */
+export async function downloadProgramLectureReportsRemote(
+  programId: string,
+  params?: { instructorMemberId?: number }
+): Promise<{
+  downloadUrl?: string
+  downloadEndpoint?: string
+  fileObjectId?: number
+  status?: string
+}> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/lecture-reports/download`,
+      method: 'GET',
+      params,
+    })
+  )
+}
+
 export type ProgramParticipantGiveUpRequest = {
   reason: string
+  /** BE 보완 — §G-8 활동 포기 중단일 (resolvedScheduleId) */
+  stopScheduleId?: number
 }
 
 /**
