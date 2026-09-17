@@ -1,4 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -36,11 +37,41 @@ import {
   ParticipatingIndividualParticipantTeamChangeModal,
   type ParticipatingIndividualParticipantTeamChangeConfirmPayload,
 } from './participating-individual-participant-team-change-modal'
+import {
+  createGeneralProgramSubmissionTeam,
+  fetchGeneralParticipantSubmissionTeam,
+  fetchGeneralProgramSubmissionTeams,
+  saveGeneralParticipantSubmissionTeam,
+} from '@/features/program/general/api/admin-program-progress-service'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import {
+  notifyProgramApiUnavailable,
+  useNotifyProgramApiUnavailableOnce,
+} from '@/features/program/shared/lib/program-api-unavailable'
+import type { ParticipantSubmissionTeamRole } from '@/features/program/general/api/program-progress-api-client'
 import '@/features/program/general/ui/assignment-submission-modal.css'
 import './participating-individual-participant-assignment-section.css'
 
 const TEAM_ASSIGNMENT_ROLE_OPTIONS: readonly ParticipatingIndividualParticipantAssignmentTeamRole[] =
   ['leader', 'member']
+
+function mapApiSubmissionTeamRole(
+  role?: string | null
+): ParticipatingIndividualParticipantAssignmentTeamRole {
+  const normalized = role?.trim().toUpperCase()
+  if (normalized === 'LEADER') return 'leader'
+  if (normalized === 'MEMBER') return 'member'
+  return 'individual'
+}
+
+function mapUiSubmissionTeamRole(
+  role: ParticipatingIndividualParticipantAssignmentTeamRole
+): ParticipantSubmissionTeamRole {
+  if (role === 'leader') return 'LEADER'
+  if (role === 'member') return 'MEMBER'
+  return 'INDIVIDUAL'
+}
 
 export type ParticipatingIndividualParticipantAssignmentSectionHandle = {
   openTeamChangeModal: () => void
@@ -66,22 +97,50 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
   ParticipatingIndividualParticipantAssignmentSectionProps
 >(function ParticipatingIndividualParticipantAssignmentSection({ program, participant }, ref) {
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
+  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
+
+  useNotifyProgramApiUnavailableOnce(
+    !remoteEnabled,
+    'general-participant-detail-assignment',
+    '참여자 상세 · 과제 팀 변경'
+  )
+
   const bundle = useMemo(
     () => getParticipatingIndividualParticipantAssignmentBundle(participant, program),
     [participant, program]
   )
 
-  const [rows, setRows] = useState(() =>
-    sortParticipatingIndividualParticipantAssignmentRows(bundle.rows)
-  )
+  const submissionTeamQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.submissionTeam(program.id, participant.id),
+    queryFn: () => fetchGeneralParticipantSubmissionTeam(program.id, participant.id),
+    enabled: remoteEnabled,
+    staleTime: 15_000,
+    retry: false,
+  })
+
+  const overlayRows = useMemo(() => {
+    const base = sortParticipatingIndividualParticipantAssignmentRows(bundle.rows)
+    const team = submissionTeamQuery.data
+    if (!team) return base
+    const teamName = team.teamName?.trim() || team.name?.trim()
+    const teamRole = mapApiSubmissionTeamRole(team.role)
+    return base.map(row => ({
+      ...row,
+      teamName: teamName || row.teamName,
+      teamRole: row.isTeamSchedule ? teamRole : row.teamRole,
+    }))
+  }, [bundle.rows, submissionTeamQuery.data])
+
+  const [rows, setRows] = useState(() => overlayRows)
   const [teamChangeModalOpen, setTeamChangeModalOpen] = useState(false)
   const [openTeamRoleDropdownRowId, setOpenTeamRoleDropdownRowId] = useState<string | null>(null)
 
   useEffect(() => {
-    setRows(sortParticipatingIndividualParticipantAssignmentRows(bundle.rows))
+    setRows(overlayRows)
     setTeamChangeModalOpen(false)
     setOpenTeamRoleDropdownRowId(null)
-  }, [bundle.rows, participant.id])
+  }, [overlayRows, participant.id])
 
   const tableData = useMemo(
     () =>
@@ -154,26 +213,88 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
   )
 
   const handleTeamRoleChange = useCallback(
-    (rowId: string, newRole: ParticipatingIndividualParticipantAssignmentTeamRole) => {
-      setRows(prev => prev.map(row => (row.id === rowId ? { ...row, teamRole: newRole } : row)))
+    (_rowId: string, newRole: ParticipatingIndividualParticipantAssignmentTeamRole) => {
+      if (!remoteEnabled) {
+        notifyProgramApiUnavailable(
+          'general-participant-detail-assignment-role',
+          '참여자 상세 · 과제 팀 역할'
+        )
+        return
+      }
+      const current = submissionTeamQuery.data
+      const expectedRevision = current?.revision ?? current?.expectedRevision ?? 0
+      const teamId = current?.teamId ?? null
+      void saveGeneralParticipantSubmissionTeam(program.id, participant.id, {
+        teamId,
+        role: mapUiSubmissionTeamRole(newRole),
+        expectedRevision,
+        reason: '팀 역할 변경',
+      })
+        .then(async () => {
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.submissionTeam(program.id, participant.id),
+          })
+        })
+        .catch(() => {
+          showAlert({
+            title: '안내',
+            content: '팀 역할 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          })
+        })
     },
-    []
+    [participant.id, program.id, queryClient, remoteEnabled, showAlert, submissionTeamQuery.data]
   )
 
   const handleTeamChangeConfirm = useCallback(
-    (payload: ParticipatingIndividualParticipantTeamChangeConfirmPayload) => {
-      setRows(prev =>
-        sortParticipatingIndividualParticipantAssignmentRows(
-          applyTeamNameFromSessionOrder(prev, payload.fromSessionOrder, payload.teamName)
+    async (payload: ParticipatingIndividualParticipantTeamChangeConfirmPayload) => {
+      if (!remoteEnabled) {
+        notifyProgramApiUnavailable(
+          'general-participant-detail-assignment-team',
+          '참여자 상세 · 과제 팀 변경'
         )
-      )
-      setTeamChangeModalOpen(false)
-      showAlert({
-        title: '안내',
-        content: '팀명이 변경되었습니다.',
-      })
+        return
+      }
+      try {
+        const teams = await fetchGeneralProgramSubmissionTeams(program.id)
+        const matched = teams.find(item => {
+          const name = item.teamName?.trim() || item.name?.trim()
+          return name === payload.teamName
+        })
+        const team =
+          matched ??
+          (await createGeneralProgramSubmissionTeam(program.id, payload.teamName))
+        const teamId = team.teamId ?? team.id
+        if (teamId == null) {
+          throw new Error('팀 ID를 확인할 수 없습니다.')
+        }
+        const current = submissionTeamQuery.data
+        await saveGeneralParticipantSubmissionTeam(program.id, participant.id, {
+          teamId,
+          role: current?.role === 'LEADER' ? 'LEADER' : 'MEMBER',
+          expectedRevision: current?.revision ?? current?.expectedRevision ?? 0,
+          reason: '팀 변경',
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.submissionTeam(program.id, participant.id),
+        })
+        setRows(prev =>
+          sortParticipatingIndividualParticipantAssignmentRows(
+            applyTeamNameFromSessionOrder(prev, payload.fromSessionOrder, payload.teamName)
+          )
+        )
+        setTeamChangeModalOpen(false)
+        showAlert({
+          title: '안내',
+          content: '팀명이 변경되었습니다.',
+        })
+      } catch {
+        showAlert({
+          title: '안내',
+          content: '팀 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      }
     },
-    [showAlert]
+    [participant.id, program.id, queryClient, remoteEnabled, showAlert, submissionTeamQuery.data]
   )
 
   const showComingSoon = useCallback(() => {

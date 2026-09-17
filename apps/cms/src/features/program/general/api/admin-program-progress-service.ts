@@ -11,6 +11,12 @@ import {
   fetchScheduleAttendancesRemote,
   giveUpProgramParticipantRemote,
   putScheduleAttendancesRemote,
+  fetchParticipantEducationScopeRemote,
+  putParticipantEducationScopeRemote,
+  fetchParticipantSubmissionTeamRemote,
+  putParticipantSubmissionTeamRemote,
+  fetchProgramSubmissionTeamsRemote,
+  createProgramSubmissionTeamRemote,
   type ProgramParticipantsListQuery,
 } from '@/features/program/general/api/program-progress-api-client'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
@@ -359,4 +365,51 @@ export async function giveUpGeneralParticipatingInstitution(
     reason: trimmed,
     ...(options?.stopScheduleId != null ? { stopScheduleId: options.stopScheduleId } : {}),
   })
+}
+
+export async function fetchGeneralParticipantEducationScope(
+  programId: string,
+  participantId: string
+) {
+  assertProgramProgressRemoteReady()
+  return fetchParticipantEducationScopeRemote(programId, participantId)
+}
+
+export async function saveGeneralParticipantEducationScope(
+  programId: string,
+  participantId: string,
+  payload: import('@/features/program/general/api/program-progress-api-client').ParticipantEducationScopeUpdateRequest
+) {
+  assertProgramProgressRemoteReady()
+  return putParticipantEducationScopeRemote(programId, participantId, payload)
+}
+
+export async function fetchGeneralParticipantSubmissionTeam(
+  programId: string,
+  participantId: string
+) {
+  assertProgramProgressRemoteReady()
+  return fetchParticipantSubmissionTeamRemote(programId, participantId)
+}
+
+export async function saveGeneralParticipantSubmissionTeam(
+  programId: string,
+  participantId: string,
+  payload: import('@/features/program/general/api/program-progress-api-client').ParticipantSubmissionTeamUpdateRequest
+) {
+  assertProgramProgressRemoteReady()
+  return putParticipantSubmissionTeamRemote(programId, participantId, payload)
+}
+
+export async function fetchGeneralProgramSubmissionTeams(programId: string) {
+  assertProgramProgressRemoteReady()
+  return fetchProgramSubmissionTeamsRemote(programId)
+}
+
+export async function createGeneralProgramSubmissionTeam(
+  programId: string,
+  teamName: string
+) {
+  assertProgramProgressRemoteReady()
+  return createProgramSubmissionTeamRemote(programId, { teamName })
 }

@@ -170,3 +170,129 @@ export async function giveUpProgramParticipantRemote(
     data: payload,
   })
 }
+
+export type ParticipantEducationScopeResponse = {
+  programId?: number
+  participantId?: number
+  revision?: number
+  configured?: boolean
+  scheduleIds?: number[]
+}
+
+export type ParticipantEducationScopeUpdateRequest = {
+  scheduleIds: number[]
+  expectedRevision: number
+  reason: string
+}
+
+/** GET /api/admin/programs/{programId}/participants/{participantId}/education-scope */
+export async function fetchParticipantEducationScopeRemote(
+  programId: string,
+  participantId: string
+): Promise<ParticipantEducationScopeResponse> {
+  return unwrapApiBody<ParticipantEducationScopeResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/education-scope`,
+      method: 'GET',
+    })
+  )
+}
+
+/** PUT /api/admin/programs/{programId}/participants/{participantId}/education-scope */
+export async function putParticipantEducationScopeRemote(
+  programId: string,
+  participantId: string,
+  payload: ParticipantEducationScopeUpdateRequest
+): Promise<ParticipantEducationScopeResponse> {
+  return unwrapApiBody<ParticipantEducationScopeResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/education-scope`,
+      method: 'PUT',
+      data: payload,
+    })
+  )
+}
+
+export type ParticipantSubmissionTeamRole = 'LEADER' | 'MEMBER' | 'INDIVIDUAL'
+
+export type ParticipantSubmissionTeamResponse = {
+  teamId?: number | null
+  teamName?: string
+  name?: string
+  role?: ParticipantSubmissionTeamRole
+  revision?: number
+  expectedRevision?: number
+}
+
+export type ParticipantSubmissionTeamUpdateRequest = {
+  teamId?: number | null
+  role: ParticipantSubmissionTeamRole
+  expectedRevision: number
+  reason: string
+}
+
+export type ProgramSubmissionTeamItem = {
+  teamId?: number
+  id?: number
+  teamName?: string
+  name?: string
+  revision?: number
+}
+
+/** GET /api/admin/programs/{programId}/participants/{participantId}/submission-team */
+export async function fetchParticipantSubmissionTeamRemote(
+  programId: string,
+  participantId: string
+): Promise<ParticipantSubmissionTeamResponse> {
+  return unwrapApiBody<ParticipantSubmissionTeamResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/submission-team`,
+      method: 'GET',
+    })
+  )
+}
+
+/** PUT /api/admin/programs/{programId}/participants/{participantId}/submission-team */
+export async function putParticipantSubmissionTeamRemote(
+  programId: string,
+  participantId: string,
+  payload: ParticipantSubmissionTeamUpdateRequest
+): Promise<ParticipantSubmissionTeamResponse> {
+  return unwrapApiBody<ParticipantSubmissionTeamResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/submission-team`,
+      method: 'PUT',
+      data: payload,
+    })
+  )
+}
+
+/** GET /api/admin/programs/{programId}/submission-teams */
+export async function fetchProgramSubmissionTeamsRemote(
+  programId: string
+): Promise<ProgramSubmissionTeamItem[]> {
+  const body = await unwrapApiBody<
+    ProgramSubmissionTeamItem[] | { items?: ProgramSubmissionTeamItem[] }
+  >(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/submission-teams`,
+      method: 'GET',
+    })
+  )
+  if (Array.isArray(body)) return body
+  return body.items ?? []
+}
+
+/** POST /api/admin/programs/{programId}/submission-teams */
+export async function createProgramSubmissionTeamRemote(
+  programId: string,
+  payload: { teamName: string }
+): Promise<ProgramSubmissionTeamItem> {
+  return unwrapApiBody<ProgramSubmissionTeamItem>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/submission-teams`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}

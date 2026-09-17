@@ -22,9 +22,7 @@ import { useParticipatingIndividualParticipantsParams } from '@/features/program
 import { useProgressIndividualParticipantList } from '@/features/program/general/hooks/use-progress-individual-participant-list'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
-import {
-  useParticipatingIndividualParticipantColumns,
-} from '@/features/program/general/lib/participating-individual-participant-columns'
+import { useParticipatingIndividualParticipantColumns } from '@/features/program/general/lib/participating-individual-participant-columns'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { buildParticipatingParticipantCertificateContext } from '@/features/program/general/lib/participating-individual-participant-certificate'
@@ -35,7 +33,10 @@ import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certific
 import { handleError } from '@/shared/utils/error-handler'
 import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
 import type { Program } from '@/types/domain'
-import { ParticipatingParticipantFullpageView, type ParticipantDetailTabKey } from './participating-participant-fullpage-view'
+import {
+  ParticipatingParticipantFullpageView,
+  type ParticipantDetailTabKey,
+} from './participating-participant-fullpage-view'
 import { ParticipatingParticipantsCalendarView } from './participating-participants-calendar-view'
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
 import './participating-institutions-section.css'
@@ -145,8 +146,7 @@ export function ParticipatingParticipantsSection({
   const filterTableValues = useMemo(
     () => ({
       participantName: pendingFilters.participantName,
-      educationGrade:
-        pendingFilters.educationGrade === 'all' ? '' : pendingFilters.educationGrade,
+      educationGrade: pendingFilters.educationGrade === 'all' ? '' : pendingFilters.educationGrade,
       homeSido: pendingFilters.homeSido,
       homeSigungu: pendingFilters.homeSigungu,
     }),
@@ -207,13 +207,7 @@ export function ParticipatingParticipantsSection({
     }
 
     setCertificateIssueModalOpen(true)
-  }, [
-    certificateExportActive,
-    filteredParticipants,
-    program,
-    selectedRowKeys,
-    showAlert,
-  ])
+  }, [certificateExportActive, filteredParticipants, program, selectedRowKeys, showAlert])
 
   const handleCertificateIssueModalCancel = useCallback(() => {
     setCertificateIssueModalOpen(false)
@@ -405,9 +399,7 @@ export function ParticipatingParticipantsSection({
       <CertificateBulkIssueReasonModal
         open={certificateIssueModalOpen}
         onCancel={handleCertificateIssueModalCancel}
-        applicationIds={
-          selectedRowKeys.length === 1 ? [String(selectedRowKeys[0])] : []
-        }
+        applicationIds={selectedRowKeys.length === 1 ? [String(selectedRowKeys[0])] : []}
         onIssue={handleCertificateIssueConfirm}
       />
       <FormCertificatePdfExportOverlay visible={certificateExportActive} />
