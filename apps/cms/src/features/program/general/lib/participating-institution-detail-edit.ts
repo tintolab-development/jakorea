@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { SchoolDetailForModal } from '@/features/program/general/model/school-detail-types'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { CombinedClassApplicationStatus } from '@/features/program/general/lib/applicant-institution-detail-edit'
 import type { Program } from '@/types/domain'
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'

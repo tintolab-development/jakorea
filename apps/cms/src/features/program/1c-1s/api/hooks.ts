@@ -8,6 +8,7 @@ import {
   type QueryClient,
 } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { shouldUseCompanySchoolRemoteApi } from './capabilities'
 import { shouldRetryCompanySchoolQuery } from './errors'
 import type { CompanySchoolListFilters } from './list-params'
@@ -122,6 +123,9 @@ export function useUpdateCompanySchoolProgram() {
     onSuccess: program => {
       queryClient.setQueryData(companySchoolQueryKeys.detail(program.id), program)
       invalidateCompanySchoolListCaches(queryClient)
+      void queryClient.invalidateQueries({
+        queryKey: generalProgramQueryKeys.navigation(program.id),
+      })
     },
   })
 }

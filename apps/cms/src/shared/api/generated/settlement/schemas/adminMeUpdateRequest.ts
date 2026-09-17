@@ -7,7 +7,10 @@
  */
 
 export interface AdminMeUpdateRequest {
+  /** 내 정보 화면에서는 수정 불가. 값이 전달되면 400으로 거부됩니다. */
   name?: string;
+  /** 직접 수정 불가. /api/admin/me/identity-contact 재인증 API를 사용합니다. */
   phone?: string;
+  /** 현재 이메일 변경 호환 필드. 별도 이메일 재인증 정책 확정 전까지 기존 계약을 유지합니다. */
   email?: string;
 }

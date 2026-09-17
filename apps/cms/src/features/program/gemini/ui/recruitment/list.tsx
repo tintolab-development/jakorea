@@ -4,24 +4,23 @@
 
 import { useCallback, useMemo, useState, type Key, type MouseEvent } from 'react'
 import dayjs from 'dayjs'
-import { Alert, Table } from 'antd'
+import { Alert, Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants/delete-guide-modal'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { CmsButton, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
 import { geminiRecruitmentService } from '../../api/recruitment-service'
-import {
-  useGeminiRecruitmentRows,
-  useGeminiRecruitmentRowsQueryState,
-} from '../../hooks/use-gemini-recruitment-rows'
+import { useGeminiRecruitmentRows } from '../../hooks/use-gemini-recruitment-rows'
 import { useToday } from '../../hooks/use-today'
 import { GEMINI_RECRUITMENT_FILTER_FIELDS } from '../../model/recruitment/filter-fields'
 import {
+  getDefaultTrainingRequestPeriodRange,
   geminiRecruitmentTablePageConfig,
   type GeminiRecruitmentTableContext,
 } from '../../model/recruitment/table.config'
@@ -86,10 +85,37 @@ export function GeminiRecruitmentList() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const todayKey = useToday()
-  const recruitmentRows = useGeminiRecruitmentRows()
-  const { remoteEnabled, isFetching, isError, refetch } = useGeminiRecruitmentRowsQueryState()
-  const { openDetail } = useGeminiRecruitmentDetailUrl()
+  const searchParamsKey = searchParams.toString()
+  const { recruitmentId, openDetail } = useGeminiRecruitmentDetailUrl()
   const { openAdd } = useGeminiRecruitmentAddUrl()
+  const detailOpen = Boolean(recruitmentId)
+  const queryFilters = useMemo(() => {
+    const params = new URLSearchParams(searchParamsKey)
+    const [defaultFrom, defaultTo] = getDefaultTrainingRequestPeriodRange(todayKey)
+    return {
+      title: params.get('gvt_title') ?? undefined,
+      status: params.get('gvt_status') ?? undefined,
+      from: params.get('gvt_from') ?? defaultFrom.format('YYYY-MM-DD'),
+      to: params.get('gvt_to') ?? defaultTo.format('YYYY-MM-DD'),
+    }
+  }, [searchParamsKey, todayKey])
+  const {
+    rows: recruitmentRows,
+    remoteEnabled,
+    isFetching,
+    isFetchingNextPage,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    totalElements,
+  } = useGeminiRecruitmentRows(queryFilters)
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: JSON.stringify(queryFilters),
+  })
 
   const tableContext = useMemo<GeminiRecruitmentTableContext>(() => ({ todayKey }), [todayKey])
 
@@ -104,6 +130,7 @@ export function GeminiRecruitmentList() {
     searchParams,
     setSearchParams,
     context: tableContext,
+    disableUrlSync: detailOpen,
   })
 
   const showNoSelectionAlert = useCallback(() => {
@@ -218,7 +245,7 @@ export function GeminiRecruitmentList() {
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="전체 모집 공고"
-        description={`총 ${displayedCount.toLocaleString()}건`}
+        description={`총 ${(remoteEnabled ? totalElements : displayedCount).toLocaleString()}건`}
         actions={
           <>
             <CmsButton variant="delete" onClick={handleBulkDeleteClick}>
@@ -265,6 +292,8 @@ export function GeminiRecruitmentList() {
               : undefined
           }
         />
+        {isFetchingNextPage ? <Spin size="small" aria-label="다음 모집 공고 불러오는 중" /> : null}
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
       <DeleteGuideModal

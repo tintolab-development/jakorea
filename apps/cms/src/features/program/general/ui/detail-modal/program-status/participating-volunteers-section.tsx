@@ -10,7 +10,7 @@ import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONE_VOLUNTEER_ALERT_MESSAGE,
   ACTIVITY_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_VOLUNTEER_ALERT_MESSAGE,
@@ -21,7 +21,7 @@ import {
   PARTICIPATING_VOLUNTEER_ADD_SELECT_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import {
   fetchParticipatingVolunteerMemberCandidates,
   type ParticipatingVolunteerMemberCandidate,
@@ -40,9 +40,10 @@ import {
 } from '../../register-employee-volunteer-modal'
 import { useEmployeeVolunteerRegistration } from '../../../hooks/use-employee-volunteer-registration'
 import { useProgressVolunteerList } from '../../../hooks/use-progress-volunteer-list'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 import { useParticipatingVolunteersParams } from '../../../hooks/use-participating-volunteers-params'
 import type { ProgressFilters } from '../../../hooks/use-program-progress-params'
@@ -55,6 +56,7 @@ import { formatParticipatingSchoolSessionLine } from '../../../lib/participating
 import { buildParticipatingVolunteerCalendarEvents } from '../../../lib/build-participating-volunteer-calendar-events'
 import { getSchoolNamesForDateFromVolunteerEvents } from '../../../lib/participating-calendar-date-schools'
 import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '../../../lib/participating-institutions-table'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
@@ -62,10 +64,6 @@ import { renderParticipatingVolunteerCalendarMonthEventContent } from './partici
 import { ParticipatingVolunteersCalendarRight } from './participating-volunteers-calendar-right'
 import './participating-institutions-section.css'
 import './program-progress-tab.css'
-
-/** 체크박스(48) + 열 width 합 — 뷰포트보다 좁을 때만 가로 스크롤 */
-const TABLE_SCROLL_X =
-  48 + 64 + 120 + 120 + 220 + PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH + 140 + 180
 
 export interface ParticipatingVolunteersSectionProps {
   programId?: string
@@ -101,8 +99,20 @@ export function ParticipatingVolunteersSection({
     progressCalendarGranularity,
     setProgressCalendarGranularity,
   } = useParticipatingVolunteersParams()
-  const { volunteerList, addVolunteerFromMember, applicationsLoading } =
-    useProgressVolunteerList(programId)
+  const {
+    volunteerList,
+    addVolunteerFromMember,
+    applicationsLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useProgressVolunteerList(programId, program)
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: `${programId ?? ''}:${viewMode}:${JSON.stringify(appliedFilters)}`,
+  })
 
   const schoolFilters: ProgressFilters = useMemo(
     () => ({
@@ -121,11 +131,13 @@ export function ParticipatingVolunteersSection({
   const { instructorList } = useProgressInstructorList({
     appliedFilters: schoolFilters,
     programId,
+    program,
   })
   const { schoolList: schoolRows } = useProgressSchoolList({
     appliedFilters: schoolFilters,
     instructorList,
     programId,
+    program,
   })
 
   const { sessionRows, approvedInstitutionOptions, registrations, saveRegistration } =
@@ -430,7 +442,7 @@ export function ParticipatingVolunteersSection({
         key: 'contact',
         width: 140,
         align: 'center',
-        render: (v: string | undefined) => (v ? MASKING_POLICY.phone(v.replace(/\s/g, '')) : '-'),
+        render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
       {
         title: '이메일',
@@ -438,10 +450,18 @@ export function ParticipatingVolunteersSection({
         key: 'email',
         width: 180,
         align: 'center',
-        render: (v: string | undefined) => (v ? MASKING_POLICY.email(v) : '-'),
+        render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
     ]
   }, [])
+
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: true,
+      enabled: viewMode === 'list',
+    }
+  )
 
   if (applicationsLoading && volunteerList.length === 0) {
     return (
@@ -563,14 +583,14 @@ export function ParticipatingVolunteersSection({
         }}
       >
         {viewMode === 'list' ? (
-          <div className="participating-institutions-section__table-wrap">
+          <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">
             <Table<ParticipatingVolunteerRow>
               className="participating-institutions-section__table cms-data-table participating-institutions-section__table--clickable"
               rowKey="id"
               size="middle"
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: TABLE_SCROLL_X }}
+              scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
               columns={columns}
               dataSource={filteredVolunteers}
               rowSelection={{
@@ -619,6 +639,7 @@ export function ParticipatingVolunteersSection({
             />
           </div>
         )}
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
       <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />

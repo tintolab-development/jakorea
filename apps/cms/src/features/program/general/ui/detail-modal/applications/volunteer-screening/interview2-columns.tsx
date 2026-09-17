@@ -1,7 +1,11 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { screeningApplicantNameLabel, type ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
+import {
+  PARTICIPANT_APPLICANT_NAME_COL_WIDTH,
+  PARTICIPANT_TOTAL_SCORE_COL_WIDTH,
+} from '@/features/program/general/lib/participant-screening-table-widths'
 import {
   computeGeneralInterviewTotalScore,
   resolveGeneralEffectiveSecondInterviewStatus,
@@ -14,18 +18,55 @@ import {
 const CENTER_CELL_CLASS = 'general-volunteer-screening__center-cell'
 const NOWRAP_CELL_CLASS = 'general-volunteer-screening__nowrap-cell'
 const SCORE_VALUE_CLASS = 'general-volunteer-interview2__score-value'
+const VOLUNTEER_APPLICANT_NAME_COL_WIDTH = 140
+const VOLUNTEER_TOTAL_SCORE_COL_WIDTH = 100
 
-export const GENERAL_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X = 892
-
-export function useGeneralVolunteerInterview2Columns(
+/** 봉사자 기본(140·100). 참여자는 공통 상수(198·120). */
+export function resolveGeneralInterview2TableScrollX(
   subjectKind: ScreeningSubjectKind = 'volunteer'
-): ColumnsType<GeneralVolunteerApplicantRow> {
+): number {
+  const nameWidth =
+    subjectKind === 'participant'
+      ? PARTICIPANT_APPLICANT_NAME_COL_WIDTH
+      : VOLUNTEER_APPLICANT_NAME_COL_WIDTH
+  const scoreWidth =
+    subjectKind === 'participant'
+      ? PARTICIPANT_TOTAL_SCORE_COL_WIDTH
+      : VOLUNTEER_TOTAL_SCORE_COL_WIDTH
+  return 80 + nameWidth + 140 + 140 + 140 + scoreWidth + 160
+}
+
+/** @deprecated 봉사자 기본 scroll — `resolveGeneralInterview2TableScrollX` 사용 */
+export const GENERAL_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X = resolveGeneralInterview2TableScrollX(
+  'volunteer'
+)
+
+export function useGeneralVolunteerInterview2Columns({
+  subjectKind = 'volunteer',
+}: {
+  subjectKind?: ScreeningSubjectKind
+} = {}): ColumnsType<GeneralVolunteerApplicantRow> {
   const applicantNameTitle = screeningApplicantNameLabel(subjectKind)
+  const applicantNameWidth =
+    subjectKind === 'participant'
+      ? PARTICIPANT_APPLICANT_NAME_COL_WIDTH
+      : VOLUNTEER_APPLICANT_NAME_COL_WIDTH
+  const totalScoreWidth =
+    subjectKind === 'participant'
+      ? PARTICIPANT_TOTAL_SCORE_COL_WIDTH
+      : VOLUNTEER_TOTAL_SCORE_COL_WIDTH
 
   return useMemo(
     () => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center', className: CENTER_CELL_CLASS },
-      { title: applicantNameTitle, dataIndex: 'name', key: 'name', width: 140, align: 'center', className: CENTER_CELL_CLASS },
+      {
+        title: applicantNameTitle,
+        dataIndex: 'name',
+        key: 'name',
+        width: applicantNameWidth,
+        align: 'center',
+        className: CENTER_CELL_CLASS,
+      },
       {
         title: '연락처',
         dataIndex: 'contact',
@@ -54,7 +95,7 @@ export function useGeneralVolunteerInterview2Columns(
       {
         title: '점수 종합',
         key: 'totalScore',
-        width: 100,
+        width: totalScoreWidth,
         align: 'center',
         className: CENTER_CELL_CLASS,
         render: (_value, record) => {
@@ -81,6 +122,6 @@ export function useGeneralVolunteerInterview2Columns(
         },
       },
     ],
-    [applicantNameTitle]
+    [applicantNameTitle, applicantNameWidth, totalScoreWidth]
   )
 }

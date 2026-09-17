@@ -55,6 +55,7 @@ import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-
 import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
+  isLocalStorageQuotaExceededError,
 } from '@/features/template/lib/writing-form-template-local-save'
 import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
@@ -65,11 +66,13 @@ import {
   GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
   getProgramRegistrationOverlayRecord,
   patchProgramRegistrationOverlay,
-  readGeneralRegistrationOverlayProgramTitleKo,
   readGeneralRegistrationOverlayScheduleLines,
-  readGeneralRegistrationOverlaySponsorContactId,
-  readGeneralRegistrationOverlaySponsorId,
   readGeneralRegistrationOverlaySponsorIds,
+  readGeneralRegistrationOverlaySponsorId,
+  readGeneralRegistrationOverlaySponsorContactId,
+  readRegistrationOverlayProgramTitleKo,
+  readRegistrationOverlaySponsorContactId,
+  readRegistrationOverlaySponsorId,
   replaceProgramRegistrationOverlay,
   resetProgramRegistrationOverlay,
   subscribeProgramRegistrationOverlayKey,
@@ -170,6 +173,8 @@ export type UseProgramRegistrationEditorOptions = {
   forceUserEditable?: boolean
   /** true면 임시저장 복원 없이 시드로 시작 (신규 등록) */
   skipDraftRestore?: boolean
+  /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
+  localOnlyDraftPersistence?: boolean
 }
 
 export function useProgramRegistrationEditor(
@@ -185,6 +190,7 @@ export function useProgramRegistrationEditor(
   const onTemplateDraftSaveConfirmed = editorOptions?.onTemplateDraftSaveConfirmed
   const templateCode = editorOptions?.templateCode
   const skipDraftRestore = editorOptions?.skipDraftRestore === true
+  const localOnlyDraftPersistence = editorOptions?.localOnlyDraftPersistence === true
   const isStructureLocked = isWritingFormTemplateStructureLocked({
     templateCode,
     systemTemplate: editorOptions?.systemTemplate,
@@ -239,8 +245,10 @@ export function useProgramRegistrationEditor(
     programRegistrationFormVariant === 'general' && !restrictCurriculumSessionStructure
 
   const resolveProgramTitleKo = useCallback(
-    () => programTitleKo.trim() || readGeneralRegistrationOverlayProgramTitleKo(),
-    [programTitleKo]
+    () =>
+      programTitleKo.trim() ||
+      readRegistrationOverlayProgramTitleKo(programRegistrationFormVariant),
+    [programTitleKo, programRegistrationFormVariant]
   )
 
   const {
@@ -322,9 +330,11 @@ export function useProgramRegistrationEditor(
     setEducationScheduleMode(state.educationScheduleMode)
     // editorState에 없고 overlay에만 남은 후원사(이전 이중 저장·number id 등)를 보강
     const resolvedSponsorId =
-      (state.sponsorId ?? '').trim() || readGeneralRegistrationOverlaySponsorId()
+      (state.sponsorId ?? '').trim() ||
+      readRegistrationOverlaySponsorId(programRegistrationFormVariant)
     const resolvedContactId =
-      (state.sponsorContactId ?? '').trim() || readGeneralRegistrationOverlaySponsorContactId()
+      (state.sponsorContactId ?? '').trim() ||
+      readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
     const resolvedSponsorIds = (() => {
       const fromOverlay = readGeneralRegistrationOverlaySponsorIds()
       if (fromOverlay.length > 0) return fromOverlay
@@ -381,7 +391,9 @@ export function useProgramRegistrationEditor(
       setActiveParagraphId(null)
       const defaults = createDefaultRegistrationEditorState(programRegistrationFormVariant)
 
-      void loadWritingFormTemplateDraft(templateCode)
+      void loadWritingFormTemplateDraft(templateCode, {
+        localOnly: localOnlyDraftPersistence,
+      })
         .then(saved => {
           if (cancelled) return
           if (saved?.draft) {
@@ -422,6 +434,7 @@ export function useProgramRegistrationEditor(
     skipDraftRestore,
     templateCode,
     usesTemplateDraftApi,
+    localOnlyDraftPersistence,
   ])
 
   useEffect(() => {
@@ -448,28 +461,36 @@ export function useProgramRegistrationEditor(
     [seedParagraphIds]
   )
 
-  const onReorderMiddle = useCallback((dragId: string, overId: string) => {
-    setDraft(prev => ({
-      ...prev,
-      paragraphs: (() => {
-        const from = prev.paragraphs.findIndex(p => p.id === dragId)
-        const to = prev.paragraphs.findIndex(p => p.id === overId)
-        if (from < 0 || to < 0 || from === to) return prev.paragraphs
-        const next = [...prev.paragraphs]
-        const [moved] = next.splice(from, 1)
-        if (!moved) return prev.paragraphs
-        next.splice(to, 0, moved)
-        return next
-      })(),
-    }))
-  }, [])
+  const onReorderMiddle = useCallback(
+    (dragId: string, overId: string) => {
+      if (isStructureLocked) return
+      setDraft(prev => ({
+        ...prev,
+        paragraphs: (() => {
+          const from = prev.paragraphs.findIndex(p => p.id === dragId)
+          const to = prev.paragraphs.findIndex(p => p.id === overId)
+          if (from < 0 || to < 0 || from === to) return prev.paragraphs
+          const next = [...prev.paragraphs]
+          const [moved] = next.splice(from, 1)
+          if (!moved) return prev.paragraphs
+          next.splice(to, 0, moved)
+          return next
+        })(),
+      }))
+    },
+    [isStructureLocked]
+  )
 
-  const onTitleNumberingChange = useCallback((style: FormTitleNumberingStyle) => {
-    setDraft(prev => ({
-      ...prev,
-      formSettings: { ...prev.formSettings, titleNumbering: style },
-    }))
-  }, [])
+  const onTitleNumberingChange = useCallback(
+    (style: FormTitleNumberingStyle) => {
+      if (isStructureLocked) return
+      setDraft(prev => ({
+        ...prev,
+        formSettings: { ...prev.formSettings, titleNumbering: style },
+      }))
+    },
+    [isStructureLocked]
+  )
 
   const middleParagraphActions = useWritingFormMiddleParagraphActions(
     setDraft,
@@ -912,9 +933,10 @@ export function useProgramRegistrationEditor(
   const persistTemplateDraftIfNeeded = useCallback(async () => {
     if (!usesTemplateDraftApi || !templateCode) return
     const resolvedSponsorId =
-      sponsorId.trim() || readGeneralRegistrationOverlaySponsorId()
+      sponsorId.trim() || readRegistrationOverlaySponsorId(programRegistrationFormVariant)
     const resolvedContactId =
-      sponsorContactId.trim() || readGeneralRegistrationOverlaySponsorContactId()
+      sponsorContactId.trim() ||
+      readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
     const resolvedProgramTitleKo = resolveProgramTitleKo()
     await persistWritingFormTemplateDraft({
       templateId: templateCode,
@@ -939,6 +961,7 @@ export function useProgramRegistrationEditor(
         programTitleKo: resolvedProgramTitleKo,
         activeParagraphId,
       }),
+      localOnly: localOnlyDraftPersistence,
     })
   }, [
     activeParagraphId,
@@ -960,7 +983,9 @@ export function useProgramRegistrationEditor(
     sponsorId,
     templateCode,
     trainedTeachersTeacherTrainingEnabled,
+    programRegistrationFormVariant,
     usesTemplateDraftApi,
+    localOnlyDraftPersistence,
   ])
 
   /** 중간 저장 — template draft만. 프로그램 POST는 handleCompleteRegistration에서만. */
@@ -991,7 +1016,9 @@ export function useProgramRegistrationEditor(
         if (options?.silent) throw error
         showAlert({
           title: '임시 저장 실패',
-          content: '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.',
+          content: isLocalStorageQuotaExceededError(error)
+            ? '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
+            : '임시 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
         })
       }
     },
@@ -1017,7 +1044,7 @@ export function useProgramRegistrationEditor(
         shouldUseTrainedTeacherProgramsRemoteApi())
     // React state가 비어도 overlay에 남은 선택을 사용 (스텝 전환·draft 복원 불일치 대비)
     const resolvedSponsorId =
-      sponsorId.trim() || readGeneralRegistrationOverlaySponsorId()
+      sponsorId.trim() || readRegistrationOverlaySponsorId(programRegistrationFormVariant)
     if (isRemoteCreate && !resolvedSponsorId) {
       showAlert({
         title: '등록 실패',
@@ -1091,6 +1118,7 @@ export function useProgramRegistrationEditor(
     scheduleCurriculumPreEducation,
     sessionRoundType,
     showAlert,
+    programRegistrationFormVariant,
     sponsorId,
   ])
 

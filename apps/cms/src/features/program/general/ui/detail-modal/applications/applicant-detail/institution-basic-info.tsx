@@ -4,12 +4,11 @@
  */
 
 import type { ReactNode } from 'react'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
-} from '@/data/mock/applicant-institutions'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+} from '@/features/program/shared/model/applicant-institution'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'
 import {
@@ -37,11 +36,11 @@ import {
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { GeneralDetailSessionLine } from '@/features/program/shared/ui/program-detail/applicant-list/general-detail-session-line'
+import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
-  resolveInstitutionApplicationProgramBridge,
-  shouldShowInstitutionApplicationScheduleParagraph,
-} from '@/features/program/general/lib/institution-application-program-bridge'
-import { formatInstitutionApplicationScheduleRowLabel } from '@/features/program/general/lib/institution-application-session-display'
+  formatInstitutionApplicationScheduleRowLabel,
+  shouldShowInstitutionApplicationDetailScheduleSection,
+} from '@/features/program/general/lib/institution-application-session-display'
 import type { Program } from '@/types/domain'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import {
@@ -54,24 +53,6 @@ import {
   INSTITUTION_OTHER_NOTES_TABLE_LABEL,
 } from './institution-application-info-table'
 import './institution-basic-info.css'
-
-function maskInstitutionTeacherInfoLine(text: string): string {
-  return text
-    .replace(/(Tel\s*:\s*)([\d-]+)/gi, (_, prefix: string, num: string) => {
-      const cleaned = num.replace(/\s/g, '')
-      const masked = MASKING_POLICY.phone(cleaned)
-      return prefix + (masked || num)
-    })
-    .replace(/(^|\s|\|)(M\s*:\s*)([\d-]+)/g, (_, lead: string, prefix: string, num: string) => {
-      const cleaned = num.replace(/\s/g, '')
-      const masked = MASKING_POLICY.phone(cleaned)
-      return lead + prefix + (masked || num)
-    })
-    .replace(
-      /(E-mail\s*:\s*)(\S+)/gi,
-      (_, prefix: string, em: string) => prefix + MASKING_POLICY.email(em)
-    )
-}
 
 function maskSexOffenseCheckRequestLine(text: string): string {
   return text
@@ -93,12 +74,16 @@ export interface ApplicantGeneralInstitutionBasicInfoProps {
   draft?: ApplicantInstitutionEditDraft
   onDraftChange?: (partial: Partial<ApplicantInstitutionEditDraft>) => void
   textbookOptions?: TextbookSelectOption[]
+  textbookDisplayLabel?: string
+  isTextbookCatalogLoading?: boolean
   sameSchoolGradeOptions?: SameSchoolGradeOption[]
   classCountOptions?: Array<{ value: string; label: string }>
   teacherOptions?: InstitutionAffiliatedTeacherOption[]
+  isTeacherOptionsLoading?: boolean
   showEducationFormatField?: boolean
   isCombinedClassProgramEligible?: boolean
   isCombinedClassApplyRadioDisabled?: boolean
+  combinedClassReadOnly?: boolean
   hideCombinedClass?: boolean
   validationErrors?: Record<string, string>
   onResendNotificationClick?: () => void
@@ -148,13 +133,11 @@ function buildSexOffenseRequestCell(
 
 function buildTeacherInfoCell(
   institution: ApplicantSchoolRow,
-  detail: ApplicantInstitutionDetailExtend | undefined,
-  shouldMask: boolean
+  detail: ApplicantInstitutionDetailExtend | undefined
 ): ReactNode {
   const raw = detail?.teacherInfo?.trim()
   if (raw) {
-    const text = shouldMask ? maskInstitutionTeacherInfoLine(raw) : raw
-    const parts = text
+    const parts = raw
       .split(' | ')
       .map(s => s.trim())
       .filter(Boolean)
@@ -165,16 +148,28 @@ function buildTeacherInfoCell(
       </ProgramDetailTdSegmentWrap>
     )
   }
-  const parts = [institution.teacherName, institution.contact].filter(Boolean) as string[]
-  if (parts.length === 0) return '-'
-  if (parts.length === 1) return parts[0]
-  const name = parts[0]!
-  const phone = parts[1]!
-  const phoneShown = shouldMask ? MASKING_POLICY.phone(phone.replace(/\s/g, '')) || phone : phone
+
+  const name = institution.teacherName?.trim()
+  const contact = institution.contact?.trim()
+  const segments: string[] = []
+  if (name) segments.push(`담당 교사 : ${name}`)
+  if (contact) {
+    // contact가 이미 Tel/M/E-mail 조합이면 그대로, 아니면 Tel로 표기
+    if (/Tel\s*:|M\s*:|E-mail\s*:/i.test(contact)) {
+      segments.push(
+        ...contact
+          .split('|')
+          .map(s => s.trim())
+          .filter(Boolean)
+      )
+    } else {
+      segments.push(`Tel : ${contact}`)
+    }
+  }
+  if (segments.length === 0) return '-'
+  if (segments.length === 1) return segments[0]
   return (
-    <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider([name, phoneShown])}
-    </ProgramDetailTdSegmentWrap>
+    <ProgramDetailTdSegmentWrap>{withProgramDetailTdDivider(segments)}</ProgramDetailTdSegmentWrap>
   )
 }
 
@@ -223,12 +218,16 @@ export function ApplicantGeneralInstitutionBasicInfo({
   draft,
   onDraftChange,
   textbookOptions = [],
+  textbookDisplayLabel,
+  isTextbookCatalogLoading = false,
   sameSchoolGradeOptions = [],
   classCountOptions = [],
   teacherOptions = [],
+  isTeacherOptionsLoading = false,
   showEducationFormatField = false,
   isCombinedClassProgramEligible: isCombinedClassProgramEligibleProp,
   isCombinedClassApplyRadioDisabled = true,
+  combinedClassReadOnly = false,
   hideCombinedClass = false,
   validationErrors,
   onResendNotificationClick,
@@ -245,10 +244,12 @@ export function ApplicantGeneralInstitutionBasicInfo({
     : null
   const combinedClassProgramEligible =
     isCombinedClassProgramEligibleProp ?? isCombinedClassProgramEligible(program)
-  const showScheduleSection =
-    institutionApplicationBridge == null ||
-    shouldShowInstitutionApplicationScheduleParagraph(institutionApplicationBridge)
-
+  const showScheduleSection = shouldShowInstitutionApplicationDetailScheduleSection(
+    institutionApplicationBridge,
+    institution
+  )
+  /** 승인 완료 시에만 교재명·합반 신청 노출 (스펙·스크린샷) */
+  const showTextbookAndCombinedClass = institution.approvalStatus === 'approved'
   const classAndCount: ReactNode =
     isEditMode && draft && onDraftChange ? (
       <InstitutionClassAndStudentCountEdit
@@ -280,6 +281,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
         mobile={draft.teacherMobile}
         email={draft.teacherEmail}
         teacherOptions={teacherOptions}
+        isTeacherOptionsLoading={isTeacherOptionsLoading}
         onChange={patch => onDraftChange(patch)}
         errors={{
           teacherName: validationErrors?.teacherName,
@@ -289,12 +291,15 @@ export function ApplicantGeneralInstitutionBasicInfo({
         }}
       />
     ) : (
-      buildTeacherInfoCell(institution, detail, shouldMask)
+      buildTeacherInfoCell(institution, detail)
     )
   const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
   const sessions = institution.sessions ?? []
 
-  const textbookViewValue = detail?.textbookName?.trim() || (hideCombinedClass ? '미정' : '-')
+  const textbookViewValue =
+    textbookDisplayLabel?.trim() ||
+    detail?.textbookName?.trim() ||
+    (hideCombinedClass ? '미정' : '-')
   const combinedClassViewValue = buildCombinedClassViewValue(detail, combinedClassProgramEligible)
 
   const addressDetailValue =
@@ -360,7 +365,8 @@ export function ApplicantGeneralInstitutionBasicInfo({
         <CmsSelect
           className="institution-basic-info__full-width-control"
           inputSize="large"
-          placeholder="교재명 선택"
+          placeholder={isTextbookCatalogLoading ? '교재 목록 불러오는 중…' : '교재명 선택'}
+          loading={isTextbookCatalogLoading}
           value={draft.textbookId || undefined}
           options={textbookOptions.map(option => ({
             label: option.label,
@@ -402,6 +408,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
         sameSchoolGradeOptions={sameSchoolGradeOptions}
         isProgramEligible={combinedClassProgramEligible}
         isApplyRadioDisabled={isCombinedClassApplyRadioDisabled}
+        readOnly={combinedClassReadOnly}
         validationError={validationErrors?.combinedClassPartnerApplicantIds}
       />
     ) : (
@@ -435,16 +442,21 @@ export function ApplicantGeneralInstitutionBasicInfo({
                   label="프로그램 승인 현황"
                   value={<ProgramApprovalStatusValue institution={institution} onResendNotificationClick={onResendNotificationClick} />}
                 />
-                {hideCombinedClass ? (
-                  <InstitutionApplicationTableRowFullWidth label="교재명" value={textbookEditValue} />
-                ) : (
-                  <InstitutionApplicationTableRowTwoCols
-                    label1="교재명"
-                    value1={textbookEditValue}
-                    label2="합반 신청 여부"
-                    value2={combinedClassEditValue}
-                  />
-                )}
+                {showTextbookAndCombinedClass ? (
+                  hideCombinedClass ? (
+                    <InstitutionApplicationTableRowFullWidth
+                      label="교재명"
+                      value={textbookEditValue}
+                    />
+                  ) : (
+                    <InstitutionApplicationTableRowTwoCols
+                      label1="교재명"
+                      value1={textbookEditValue}
+                      label2="합반 신청 여부"
+                      value2={combinedClassEditValue}
+                    />
+                  )
+                ) : null}
               </tbody>
             </table>
           </div>
@@ -504,7 +516,10 @@ export function ApplicantGeneralInstitutionBasicInfo({
                 label="강의 공간 내 컴퓨터 여부"
                 value={computerValue}
               />
-              <InstitutionApplicationTableRowSingleCol label="대기 장소 안내" value={waitingPlaceValue} />
+              <InstitutionApplicationTableRowSingleCol
+                label="대기 장소 안내"
+                value={waitingPlaceValue}
+              />
               <InstitutionApplicationTableRowSingleCol
                 label="식사 가능 여부 및 안내"
                 value={mealValue}

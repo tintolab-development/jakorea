@@ -58,7 +58,9 @@ export function matchesProgramHistoryFilter(
 
   if (
     filters.educationTarget !== SPONSOR_PROGRAM_HISTORY_FILTER_ALL &&
-    row.educationTarget !== filters.educationTarget
+    !(row.educationTargets ?? [row.educationTarget]).includes(
+      filters.educationTarget as SponsorProgramHistoryRow['educationTarget']
+    )
   ) {
     return false
   }

@@ -1,7 +1,7 @@
 {
   "meta": {
     "domain": "detailedPrograms",
-    "ssot": "apps/cms/src/data/mock/detailed-program-management-list.ts",
+    "ssot": "apps/cms/docs/api/detailed-programs-seed.payload.json",
     "upsertKeys": [
       "nameKo"
     ],

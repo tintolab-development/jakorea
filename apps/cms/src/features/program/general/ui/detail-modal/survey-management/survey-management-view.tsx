@@ -81,7 +81,7 @@ import {
   resolveGeneralSatisfactionAudienceFromNavTab,
   type GeneralSatisfactionAudienceKey,
 } from '@/features/program/general/lib/survey-audience'
-import { buildGeneralSurveyMockState } from './survey-mock'
+import { buildGeneralSurveyEmptyState } from './survey-empty-state'
 import {
   useGeneralProgramSurveyFormBindingMutations,
   useGeneralProgramSurveyResponses,
@@ -102,13 +102,14 @@ export type GeneralSurveyManagementViewProps = {
   activeTab: string
 }
 
-function buildPreviewSession(templateId: string, onEditForm?: () => void) {
+async function buildPreviewSession(templateId: string, onEditForm?: () => void) {
   const row = findWritingTemplateRowByDefinitionId(templateId)
   if (row == null) return null
   const entry = lookupTemplateRegistry(row.id)
   if (entry == null || !isSurveyRegistryEntry(entry)) return null
+  const draft = await resolveSurveyWritingDraft(templateId, { templateName: row.templateName })
   return {
-    draft: resolveSurveyWritingDraft(templateId, { templateName: row.templateName }),
+    draft,
     updateParagraph: () => {},
     headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
     editorKind: 'survey' as const,
@@ -129,7 +130,7 @@ function buildSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: 
 }
 
 export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurveyManagementViewProps) {
-  const initialMock = useMemo(() => buildGeneralSurveyMockState(program), [program])
+  const initialMock = useMemo(() => buildGeneralSurveyEmptyState(program), [program])
   const {
     registeredSurveys: remoteRegisteredSurveys,
     classifiedBindings,
@@ -216,7 +217,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   useEffect(() => {
     // remote ON이면 mock으로 덮어쓰지 않음 — remote 목록 effect가 채움
     if (surveysRemote) return
-    const next = buildGeneralSurveyMockState(program)
+    const next = buildGeneralSurveyEmptyState(program)
     setRegisteredSurveys(next.registeredSurveys)
     setActiveRegisteredSurveyId(next.activeRegisteredSurveyId)
     setSatisfactionSurveysByAudience(next.satisfactionSurveysByAudience)
@@ -288,7 +289,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   const pollResponses = useMemo((): SurveyPollRawResponse[] => {
     if (pollResponsesRemote) return remotePollResponses ?? []
-    return buildGeneralSurveyMockState(program).responses
+    return buildGeneralSurveyEmptyState(program).responses
   }, [pollResponsesRemote, program, remotePollResponses])
 
   const satisfactionResponses = useMemo((): SurveyPollRawResponse[] => {
@@ -330,7 +331,15 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       return
     }
     if (lectureEvalSurvey.status === 'in_progress' || lectureEvalSurvey.status === 'finished') {
-      setLectureEvalFormDraft(prev => prev ?? buildLectureEvalFormDraft(lectureEvalSurvey.templateId))
+      let cancelled = false
+      void buildLectureEvalFormDraft(lectureEvalSurvey.templateId).then(draft => {
+        if (!cancelled) {
+          setLectureEvalFormDraft(prev => prev ?? draft)
+        }
+      })
+      return () => {
+        cancelled = true
+      }
     }
   }, [lectureEvalSurvey, lectureResponsesRemote])
 
@@ -389,8 +398,9 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     (templateId: string, options?: { allowEdit?: boolean }) => {
       const onEditForm =
         options?.allowEdit === true ? () => setTemplateEditId(templateId) : undefined
-      const session = buildPreviewSession(templateId, onEditForm)
-      if (session != null) openWritingUserPreview(session)
+      void buildPreviewSession(templateId, onEditForm).then(session => {
+        if (session != null) openWritingUserPreview(session)
+      })
     },
     [openWritingUserPreview]
   )
@@ -761,15 +771,17 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     if (row == null) return
     const entry = lookupTemplateRegistry(row.id)
     if (entry == null || !isSurveyRegistryEntry(entry)) return
-    openWritingUserPreview({
-      draft: buildLectureEvalFormDraft(row.id),
-      updateParagraph: () => {},
-      headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
-      editorKind: 'survey',
-      paragraphBodyOptions: LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
-      ...(lectureEvalSurvey.status === 'before_start'
-        ? { onEditForm: () => setTemplateEditId(row.id) }
-        : {}),
+    void buildLectureEvalFormDraft(row.id).then(draft => {
+      openWritingUserPreview({
+        draft,
+        updateParagraph: () => {},
+        headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
+        editorKind: 'survey',
+        paragraphBodyOptions: LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
+        ...(lectureEvalSurvey.status === 'before_start'
+          ? { onEditForm: () => setTemplateEditId(row.id) }
+          : {}),
+      })
     })
   }, [lectureEvalSurvey, openWritingUserPreview])
 

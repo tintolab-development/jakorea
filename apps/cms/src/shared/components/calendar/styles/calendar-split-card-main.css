@@ -56,7 +56,9 @@
 .calendar-split-card-main .calendar-cell-events {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: 4px;
+  min-height: 0;
   overflow: hidden;
   align-items: stretch;
   text-align: left;
@@ -64,10 +66,12 @@
 }
 
 .calendar-split-card-main .calendar-event {
+  flex: 0 0 auto;
   font-size: 11px;
-  padding: 4px 6px;
-  height: auto;
+  padding: 0 6px;
+  height: 24px;
   min-height: 24px;
+  max-height: 24px;
   align-items: center;
   border-radius: 4px;
   white-space: nowrap;
@@ -86,9 +90,11 @@
 }
 
 .calendar-split-card-main .calendar-event-more {
+  flex: 0 0 auto;
   overflow: hidden;
   color: var(--default-BK, #3d3d3d);
   text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: Pretendard, sans-serif;
   font-size: 12px;
   font-style: normal;

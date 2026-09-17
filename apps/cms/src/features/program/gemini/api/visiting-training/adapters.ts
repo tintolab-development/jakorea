@@ -2,11 +2,12 @@ import type { GeminiApprovedTrainingRow } from '@/features/program/gemini/model/
 import type {
   GeminiInstitutionApplicationRow,
   GeminiInstitutionApprovalStatus,
-} from '@/features/program/gemini/model/recruitment/institution-application-mock'
+} from '@/features/program/gemini/model/recruitment/institution-application-types'
 import type { GeminiRecruitmentDetail } from '@/features/program/gemini/model/recruitment/detail-types'
 import type { GeminiRecruitmentAddFormSnapshot } from '@/features/program/gemini/lib/recruitment/add-local-save'
 import type { GeminiRecruitmentInfoEditDraft } from '@/features/program/gemini/model/recruitment/info-edit-draft'
 import type { GeminiRecruitmentRow } from '@/features/program/gemini/model/recruitment/types'
+import type { GeminiApprovedTrainingItem } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingItem'
 import type { GeminiOrganizationApplicationItem } from '@/shared/api/generated/dashboard/schemas/geminiOrganizationApplicationItem'
 import type { GeminiRecruitmentDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiRecruitmentDetailResponse'
 import type { GeminiRecruitmentItem } from '@/shared/api/generated/dashboard/schemas/geminiRecruitmentItem'
@@ -175,28 +176,25 @@ export function mapGeminiOrganizationApplicationToRow(
   }
 }
 
-/**
- * OpenAPI approved list는 GeminiRecruitmentItem 재사용 — FE 승인 연수 행과 필드 갭이 큼.
- * 식별·제목·기간만 매핑하고 나머지는 빈 값/기본값.
- */
 export function mapGeminiRecruitmentItemToApprovedRow(
-  dto: GeminiRecruitmentItem,
+  dto: GeminiApprovedTrainingItem,
   index: number
 ): GeminiApprovedTrainingRow {
+  const instructorName = dto.instructorName?.trim() || '미지정'
   return {
-    id: toId(dto.programId),
+    id: toId(dto.id ?? dto.programId),
     no: index + 1,
-    recruitmentTitle: dto.nameKo?.trim() || undefined,
-    institutionName: dto.nameKo?.trim() || '기관명 없음',
-    institutionSido: '',
-    institutionSigungu: '',
-    officialDocumentRequired: false,
-    lastPreferredDate: dto.businessEndDate ?? '',
-    instructorAssigned: false,
-    trainingDate: dto.businessStartDate ?? '',
-    trainingTimeText: '',
-    studentCount: dto.approvedOrganizationApplicationCount ?? 0,
-    instructorName: '미지정',
-    managerName: '-',
+    recruitmentTitle: dto.recruitmentTitle?.trim() || undefined,
+    institutionName: dto.institutionName?.trim() || '기관명 없음',
+    institutionSido: dto.institutionSido?.trim() || '',
+    institutionSigungu: dto.institutionSigungu?.trim() || '',
+    officialDocumentRequired: dto.officialDocumentRequired ?? false,
+    lastPreferredDate: dto.trainingDate ?? '',
+    instructorAssigned: instructorName !== '미지정',
+    trainingDate: dto.trainingDate ?? '',
+    trainingTimeText: dto.trainingTimeText ?? '',
+    studentCount: dto.studentCount ?? 0,
+    instructorName,
+    managerName: dto.managerName?.trim() || '-',
   }
 }

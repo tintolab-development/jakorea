@@ -23,11 +23,13 @@ import {
   fetchTrainedTeacherInfoDetailRemote,
   patchTrainedTeacherInfoDetailRemote,
 } from './info-detail-client'
+import type { GeneralProgramOverviewStageCounts } from '@/features/program/general/lib/overview-stage-counts'
 import {
   TRAINED_TEACHER_PROGRAM_LIST_PAGE_SIZE,
   trainedTeacherListParams,
   type TrainedTeacherListFilters,
 } from './list-params'
+import { TRAINED_TEACHER_PROGRAM_API_TYPE } from './adapters'
 
 /** remote list 스냅샷 — 상세 분기(isTrainedTeachersDetailProgram)용 */
 let remoteIdSnapshot: Set<string> | null = null
@@ -95,6 +97,36 @@ export async function listTrainedTeacherPrograms(
 ): Promise<Program[]> {
   const page = await listTrainedTeacherProgramsPage(filters, 0)
   return page.programs
+}
+
+/**
+ * 상단 4카드 건수 — GET /programs totalElements (목록과 동일 periodStatus 계약).
+ * TRAINED_TEACHER: scheduled=SCHEDULED(+RECRUITING 방어), in_progress=IN_PROGRESS, completed=COMPLETED
+ */
+export async function fetchTrainedTeacherOverviewStages(): Promise<GeneralProgramOverviewStageCounts> {
+  assertRemoteReady()
+
+  const base = {
+    programType: TRAINED_TEACHER_PROGRAM_API_TYPE,
+    page: 0,
+    size: 1,
+  } as const
+  const [all, scheduled, recruiting, inProgress, completed] = await Promise.all([
+    fetchAdminProgramsRemote({ ...base }),
+    fetchAdminProgramsRemote({ ...base, periodStatus: 'SCHEDULED' }),
+    fetchAdminProgramsRemote({ ...base, periodStatus: 'RECRUITING' }),
+    fetchAdminProgramsRemote({ ...base, periodStatus: 'IN_PROGRESS' }),
+    fetchAdminProgramsRemote({ ...base, periodStatus: 'COMPLETED' }),
+  ])
+
+  return {
+    total: all.totalElements ?? all.items?.length ?? 0,
+    scheduled:
+      (scheduled.totalElements ?? scheduled.items?.length ?? 0) +
+      (recruiting.totalElements ?? recruiting.items?.length ?? 0),
+    inProgress: inProgress.totalElements ?? inProgress.items?.length ?? 0,
+    completed: completed.totalElements ?? completed.items?.length ?? 0,
+  }
 }
 
 export async function getTrainedTeacherProgram(programId: string): Promise<Program> {

@@ -1,4 +1,4 @@
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 
 const ACTIVE_APPROVAL_STATUSES = new Set<ApplicantSchoolRow['approvalStatus']>(['approved', 'pending'])
 

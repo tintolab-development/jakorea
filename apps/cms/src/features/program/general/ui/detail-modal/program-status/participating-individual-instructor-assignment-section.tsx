@@ -6,10 +6,8 @@ import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { Table, Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
-import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
-import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import {
   INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
@@ -44,7 +42,7 @@ import {
   individualWaitingRowToAssignedRow,
   renumberIndividualAssignedScheduleRows,
   renumberIndividualWaitingScheduleRows,
-} from '@/features/program/general/lib/participating-individual-instructor-assignment-mock'
+} from '@/features/program/general/lib/participating-individual-instructor-assignment'
 import type {
   ParticipatingIndividualInstructorAssignedScheduleRow,
   ParticipatingIndividualInstructorWaitingScheduleRow,
@@ -88,8 +86,8 @@ export interface ParticipatingIndividualInstructorAssignmentSectionProps {
 export function ParticipatingIndividualInstructorAssignmentSection({
   program,
   instructor,
-  schoolRows: _schoolRows = MOCK_PARTICIPATING_SCHOOLS,
-  instructorList: _instructorList = MOCK_PARTICIPATING_INSTRUCTORS,
+  schoolRows: _schoolRows = [],
+  instructorList: _instructorList = [],
 }: ParticipatingIndividualInstructorAssignmentSectionProps) {
   const { showAlert } = useCmsAlert()
   const [assignedSchedules, setAssignedSchedules] = useState<

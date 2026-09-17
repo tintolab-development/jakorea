@@ -1,6 +1,6 @@
 import type { GeminiApprovedTrainingRow } from '@/features/program/gemini/model/approved/types'
 import type { GeminiRecruitmentDetail } from '@/features/program/gemini/model/recruitment/detail-types'
-import type { GeminiInstitutionApplicationRow } from '@/features/program/gemini/model/recruitment/institution-application-mock'
+import type { GeminiInstitutionApplicationRow } from '@/features/program/gemini/model/recruitment/institution-application-types'
 import type { GeminiRecruitmentAddFormSnapshot } from '@/features/program/gemini/lib/recruitment/add-local-save'
 import type { GeminiRecruitmentInfoEditDraft } from '@/features/program/gemini/model/recruitment/info-edit-draft'
 import type { GeminiRecruitmentRow } from '@/features/program/gemini/model/recruitment/types'
@@ -24,9 +24,10 @@ import {
   fetchGeminiApprovedTrainingsRemote,
   fetchGeminiOrganizationApplicationsRemote,
   fetchGeminiRecruitmentDetailRemote,
-  fetchGeminiRecruitmentsRemote,
+  fetchGeminiRecruitmentsRemotePage,
   rejectGeminiOrganizationApplicationRemote,
   updateGeminiRecruitmentRemote,
+  type GeminiRecruitmentRemoteFilters,
 } from './client'
 
 function assertRemoteReady(): void {
@@ -36,10 +37,49 @@ function assertRemoteReady(): void {
   )
 }
 
-export async function listGeminiRecruitments(): Promise<GeminiRecruitmentRow[]> {
+export type GeminiRecruitmentsPage = {
+  rows: GeminiRecruitmentRow[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
+}
+
+export type GeminiOrganizationApplicationsPage = {
+  rows: GeminiInstitutionApplicationRow[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
+}
+
+export type GeminiApprovedTrainingsPage = {
+  rows: GeminiApprovedTrainingRow[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
+}
+
+export async function listGeminiRecruitmentsPage(
+  filters: GeminiRecruitmentRemoteFilters,
+  pageParam = 0
+): Promise<GeminiRecruitmentsPage> {
   assertRemoteReady()
-  const items = await fetchGeminiRecruitmentsRemote()
-  return items.map((item, index) => mapGeminiRecruitmentItemToRow(item, index))
+  const page = await fetchGeminiRecruitmentsRemotePage(filters, pageParam)
+  const baseNo = page.page * page.size
+  return {
+    rows: page.items.map((item, index) =>
+      mapGeminiRecruitmentItemToRow(
+        item,
+        Math.max(page.totalElements - baseNo - index - 1, 0)
+      )
+    ),
+    page: page.page,
+    size: page.size,
+    totalElements: page.totalElements,
+    hasMore: page.hasMore,
+  }
 }
 
 export async function getGeminiRecruitmentDetail(
@@ -50,18 +90,41 @@ export async function getGeminiRecruitmentDetail(
   return mapGeminiRecruitmentDetailToDetail(dto)
 }
 
-export async function listGeminiOrganizationApplications(
-  programId: string
-): Promise<GeminiInstitutionApplicationRow[]> {
+export async function listGeminiOrganizationApplicationsPage(
+  programId: string,
+  status: string | undefined,
+  pageParam = 0
+): Promise<GeminiOrganizationApplicationsPage> {
   assertRemoteReady()
-  const items = await fetchGeminiOrganizationApplicationsRemote(programId)
-  return items.map((item, index) => mapGeminiOrganizationApplicationToRow(item, index))
+  const page = await fetchGeminiOrganizationApplicationsRemote(programId, status, pageParam)
+  const baseNo = page.page * page.size
+  return {
+    rows: page.items.map((item, index) =>
+      mapGeminiOrganizationApplicationToRow(item, baseNo + index)
+    ),
+    page: page.page,
+    size: page.size,
+    totalElements: page.totalElements,
+    hasMore: page.hasMore,
+  }
 }
 
-export async function listGeminiApprovedTrainings(): Promise<GeminiApprovedTrainingRow[]> {
+export async function listGeminiApprovedTrainingsPage(
+  keyword: string | undefined,
+  pageParam = 0
+): Promise<GeminiApprovedTrainingsPage> {
   assertRemoteReady()
-  const items = await fetchGeminiApprovedTrainingsRemote()
-  return items.map((item, index) => mapGeminiRecruitmentItemToApprovedRow(item, index))
+  const page = await fetchGeminiApprovedTrainingsRemote(keyword, pageParam)
+  const baseNo = page.page * page.size
+  return {
+    rows: page.items.map((item, index) =>
+      mapGeminiRecruitmentItemToApprovedRow(item, baseNo + index)
+    ),
+    page: page.page,
+    size: page.size,
+    totalElements: page.totalElements,
+    hasMore: page.hasMore,
+  }
 }
 
 export async function createGeminiRecruitment(

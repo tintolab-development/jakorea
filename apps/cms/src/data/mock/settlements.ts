@@ -69,7 +69,26 @@ function createSettlement(
   daysAgo: number,
   documentGenerated: boolean
 ): Settlement {
-  const matching = mockMatchings[matchingIndex % mockMatchings.length]
+  const matching = mockMatchings.length === 0
+    ? undefined
+    : mockMatchings[matchingIndex % mockMatchings.length]
+  if (!matching) {
+    return {
+      id,
+      programId: '',
+      instructorId: '',
+      matchingId: '',
+      period,
+      items: [],
+      totalAmount: 0,
+      status,
+      documentGeneratedAt: undefined,
+      notes: undefined,
+      calculationResult: undefined,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+  }
 
   // Phase 0.4.1: 정산 규칙에 맞게 계산
   // 차시 수 (1~6차시)
@@ -459,8 +478,10 @@ function createSettlementsForMultipleInstructors(): Settlement[] {
 export const mockSettlements: Settlement[] = [
   ...createInstructor1Settlements2026(), // 2026년 1월 데이터 10개 추가 (강사1용)
   ...createInstructor1Settlements(), // instructor1@example.com용 기존 정산 데이터 10개
-  ...createSettlementsForMultipleInstructors(), // 여러 강사에게 정산 데이터 생성
-  ...Array.from({ length: 20 }, (_, index) => {
+  ...createSettlementsForMultipleInstructors(),
+  ...(mockMatchings.length === 0
+    ? []
+    : Array.from({ length: 20 }, (_, index) => {
     const matchingIndex = Math.floor(Math.random() * mockMatchings.length)
     const now = new Date()
     const month = String(now.getMonth() + 1).padStart(2, '0')
@@ -478,7 +499,7 @@ export const mockSettlements: Settlement[] = [
       daysAgo,
       documentGenerated
     )
-  }),
+  })),
 ]
 
 export const mockSettlementsMap = new Map<UUID, Settlement>()

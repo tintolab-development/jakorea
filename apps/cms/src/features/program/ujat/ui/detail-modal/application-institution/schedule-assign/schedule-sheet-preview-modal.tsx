@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type CSSProperties } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
-import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
+import { getUjatInstitutionApplicationMockRows } from '@/features/program/ujat/model/ujat-institution-application'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui'

@@ -7,10 +7,12 @@
  */
 import type { ProgramAdminAssignmentRequest } from './programAdminAssignmentRequest';
 import type { ProgramPeriodRequest } from './programPeriodRequest';
+import type { ProgramRecruitmentRequest } from './programRecruitmentRequest';
 import type { ProgramRoundRequest } from './programRoundRequest';
 import type { ProgramScheduleRequest } from './programScheduleRequest';
 import type { ProgramSettlementPaymentItemRequest } from './programSettlementPaymentItemRequest';
 import type { ProgramSponsorAssignmentRequest } from './programSponsorAssignmentRequest';
+import type { ProgramUpdateRequestEducationStructure } from './programUpdateRequestEducationStructure';
 import type { ProgramWagePolicyRequest } from './programWagePolicyRequest';
 
 /**
@@ -31,7 +33,13 @@ export interface ProgramUpdateRequest {
   businessPeriod?: ProgramPeriodRequest;
   applicationStartDate?: string;
   applicationEndDate?: string;
+  /** 모집 유형별 canonical 설정. 지정 시 legacy applicationStartDate/applicationEndDate보다 우선 */
+  recruitments?: ProgramRecruitmentRequest[];
   businessArea?: string;
+  /** 세부 프로그램 마스터 ID. 일정형 등 해당없음인 경우 null */
+  detailedProgramId?: number;
+  /** 교육 진행 구조 */
+  educationStructure?: ProgramUpdateRequestEducationStructure;
   titleEn?: string;
   mainTitle?: string;
   textbookName?: string;
@@ -67,6 +75,7 @@ export interface ProgramUpdateRequest {
   keyVisualImage?: string;
   settlementRuleId?: string;
   applicationPathId?: string;
+  applicationTargetMode?: string;
   additionalContentHtml?: string;
   recruitmentGuide?: string;
   learningSupportContent?: string;

@@ -2,7 +2,7 @@ import {
   getUjatInstitutionApplicationDetail,
   getUjatInstitutionApplicationRowById,
   getUjatInstitutionScheduleConfirmStatus,
-} from '@/data/mock/ujat-institution-application-mock'
+} from '@/features/program/ujat/model/ujat-institution-application'
 import {
   formatGradeClassSectionLabel,
   parseGradeClassSectionValue,
@@ -13,7 +13,7 @@ import {
 } from '../education-schedule'
 import { getUjatScheduleAssignRegionState } from '../schedule-assign/store'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
-import { getUjatInstitutionScheduleConfirmConfirmedDetailExtras } from '@/data/mock/ujat-institution-application-mock'
+import { getUjatInstitutionScheduleConfirmConfirmedDetailExtras } from '@/features/program/ujat/model/ujat-institution-application'
 import type {
   UjatScheduleConfirmConfirmedDetail,
   UjatScheduleConfirmGuidanceNotes,

@@ -1,10 +1,9 @@
 /**
  * 일반 프로그램 — 강사 유형 신청 상세 (신청 정보 탭)
- * 스크린샷 시안: 기본 정보 + ApplicantInstructorResume(학력/경력/Q&A)
+ * 스크린샷 시안: 기본 정보(승인·프로필) + 학력/경력/자격
  */
 
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'
@@ -14,6 +13,7 @@ import {
   ProgramDetailTdSegmentWrap,
   withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import type { ApplicantInstructorEditDraft } from '@/features/program/general/lib/applicant-instructor-detail-edit'
 import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 import {
@@ -116,17 +116,9 @@ export function ApplicantGeneralInstructorBasicInfo({
   const lectureExperienceDisplay =
     instructor.lectureExperienceYears != null ? `${instructor.lectureExperienceYears}년` : '-'
 
-  const contactDisplay = instructor.contact
-    ? shouldMask
-      ? MASKING_POLICY.phone(instructor.contact.replace(/\s/g, '')) || instructor.contact
-      : instructor.contact
-    : '-'
+  const contactDisplay = displayServerPiiAsIs(instructor.contact)
 
-  const emailDisplay = instructor.email
-    ? shouldMask
-      ? MASKING_POLICY.email(instructor.email)
-      : instructor.email
-    : '-'
+  const emailDisplay = displayServerPiiAsIs(instructor.email)
 
   const evaluationGradeDisplay = formatJaEvaluationGradeCellDisplay(instructor.evaluationGrade)
 

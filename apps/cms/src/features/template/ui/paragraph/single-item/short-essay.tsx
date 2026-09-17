@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { applyConsentShortEssayItemInput } from '@jakorea/form-schema/consent'
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
   AGREEMENT_NOTICE_SUBJECT_ITEM_IDS,
@@ -22,6 +23,7 @@ function ShortEssayItemBody({
   maxLength,
   isActive,
   isBodyInteractive,
+  disableItemSelection = false,
   isName,
   isBirth,
   isPhone,
@@ -37,6 +39,7 @@ function ShortEssayItemBody({
   maxLength: number | undefined
   isActive: boolean
   isBodyInteractive: boolean
+  disableItemSelection?: boolean
   isName: boolean
   isBirth: boolean
   isPhone: boolean
@@ -49,8 +52,97 @@ function ShortEssayItemBody({
     flush: flushEditValue,
   } = useDeferredFieldCommit(
     bodyText,
-    isBodyInteractive ? next => onCommitBody(itemId, next) : undefined
+    isBodyInteractive
+      ? next => onCommitBody(itemId, applyConsentShortEssayItemInput(itemId, next))
+      : undefined
   )
+
+  const commitFormatted = (nextRaw: string) => {
+    setEditValue(applyConsentShortEssayItemInput(itemId, nextRaw))
+    flushEditValue()
+  }
+
+  if (disableItemSelection) {
+    return (
+      <div className="short-essay-item-row short-essay-item-row--fill">
+        {itemLabel != null ? (
+          <span className="short-essay-item-row__label">
+            <span className="short-essay-item-row__bullet" aria-hidden>
+              ·
+            </span>
+            {itemLabel}
+          </span>
+        ) : null}
+        <div className="short-essay-item-row__control">
+          {isName ? (
+            <CmsInput
+              id={`short-essay-${itemId}`}
+              inputSize="large"
+              width="100%"
+              value={editValue}
+              placeholder={placeholder || '성명을 입력해 주세요'}
+              readOnly={!isBodyInteractive}
+              onChange={
+                isBodyInteractive
+                  ? e => setEditValue(applyConsentShortEssayItemInput(itemId, e.target.value))
+                  : undefined
+              }
+              onBlur={isBodyInteractive ? () => commitFormatted(editValue) : undefined}
+            />
+          ) : isBirth ? (
+            <CmsDateTextInput
+              id={`short-essay-${itemId}`}
+              inputSize="large"
+              width="100%"
+              value={editValue}
+              placeholder={placeholder || '1991.01.01'}
+              maxLength={10}
+              readOnly={!isBodyInteractive}
+              onValueChange={
+                isBodyInteractive
+                  ? value => setEditValue(applyConsentShortEssayItemInput(itemId, value))
+                  : undefined
+              }
+              onBlur={isBodyInteractive ? () => commitFormatted(editValue) : undefined}
+            />
+          ) : isPhone ? (
+            <CmsPhoneInput
+              id={`short-essay-${itemId}`}
+              inputSize="large"
+              width="100%"
+              value={editValue}
+              placeholder={placeholder || '010-1234-5678'}
+              readOnly={!isBodyInteractive}
+              onChange={
+                isBodyInteractive
+                  ? event =>
+                      setEditValue(
+                        applyConsentShortEssayItemInput(itemId, event.target.value)
+                      )
+                  : undefined
+              }
+              onBlur={isBodyInteractive ? () => commitFormatted(editValue) : undefined}
+            />
+          ) : (
+            <ParagraphLabelInput
+              label={undefined}
+              value={editValue}
+              placeholder={placeholder}
+              rows={itemInputRows}
+              expandableFromSingleRow={singleLineExpandable}
+              maxLength={maxLength}
+              showCount={maxLength != null}
+              readOnly={!isBodyInteractive}
+              onChange={
+                isBodyInteractive ? e => setEditValue(e.target.value) : undefined
+              }
+              onBlur={isBodyInteractive ? () => flushEditValue() : undefined}
+            />
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <ParagraphLabelInput
@@ -200,6 +292,10 @@ export function ShortEssay({
   const itemInputRows = paragraph.itemInputRows ?? 1
   const singleLineExpandable = itemInputRows === 1
   const maxLength = paragraph.maxLength
+  /** 행정정보「대상자 본인」— 작성(fill)에서는 값 입력만, 항목별 선택·활성(수정모드 UX)은 금지 */
+  const disablePerItemSelection =
+    paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject &&
+    paragraphInteractionMode === 'user'
 
   const updateItemBodyText = (id: string, bodyText: string) => {
     const p = paragraphRef.current
@@ -241,7 +337,7 @@ export function ShortEssay({
   }
 
   const handleItemClick = (id: string) => {
-    if (!isBodyInteractive) return
+    if (!isBodyInteractive || disablePerItemSelection) return
     const nextFocused = activeItemId === id ? null : id
     onSelectItem?.(nextFocused)
   }
@@ -278,7 +374,10 @@ export function ShortEssay({
         }
 
         return (
-          <div key={item.id} className="short-essay-item-row">
+          <div
+            key={item.id}
+            className={disablePerItemSelection ? undefined : 'short-essay-item-row'}
+          >
             <ShortEssayItemBody
               itemId={item.id}
               bodyText={item.bodyText}
@@ -287,8 +386,9 @@ export function ShortEssay({
               itemInputRows={itemInputRows}
               singleLineExpandable={singleLineExpandable}
               maxLength={maxLength}
-              isActive={activeItemId === item.id}
+              isActive={!disablePerItemSelection && activeItemId === item.id}
               isBodyInteractive={isBodyInteractive}
+              disableItemSelection={disablePerItemSelection}
               isName={item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name}
               isBirth={item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.birth}
               isPhone={item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.phone}

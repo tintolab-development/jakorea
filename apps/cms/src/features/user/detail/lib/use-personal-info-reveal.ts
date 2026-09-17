@@ -45,6 +45,8 @@ export interface UsePersonalInfoRevealOptions {
   resolveAdminAccountId?: () => number | undefined
   /** 강사 권한 신청 상세 unmask — `instructor-role-requests/{requestId}/privacy/unmask` */
   resolveInstructorRoleRequestId?: () => number | undefined
+  /** 회원 API가 아닌 화면 전용 개인정보 원문 조회 API */
+  revealPersonalInfo?: (reason: string) => Promise<unknown>
   /**
    * 역할별 unmask API가 원문 상세 DTO를 반환하면 호출.
    * 회원 상세 화면에서 주소·계좌 등 표시 갱신에 사용.
@@ -165,6 +167,7 @@ export function usePersonalInfoReveal({
   resolveMemberRole,
   resolveAdminAccountId,
   resolveInstructorRoleRequestId,
+  revealPersonalInfo,
   onPrivacyUnmasked,
   resetDeps,
   controlMode,
@@ -194,6 +197,21 @@ export function usePersonalInfoReveal({
       reason: string
     ): Promise<{ ok: true; payload?: unknown } | { ok: false }> => {
       if (!guardPiiReveal()) return { ok: false }
+      if (revealPersonalInfo) {
+        try {
+          const payload = await revealPersonalInfo(reason)
+          onPrivacyUnmasked?.(payload, resolveMemberRole?.())
+          setPersonalInfoRevealed(true)
+          setConfirmOpen(false)
+          return { ok: true, payload }
+        } catch {
+          cmsAlertModal.show({
+            title: '열람 실패',
+            content: '개인정보 원문 조회에 실패했습니다.',
+          })
+          return { ok: false }
+        }
+      }
       const result = await revealPersonalInfoWithAudit(
         resolveAccessItem,
         resolveMemberId,
@@ -217,6 +235,7 @@ export function usePersonalInfoReveal({
       resolveMemberRole,
       resolveAdminAccountId,
       resolveInstructorRoleRequestId,
+      revealPersonalInfo,
       guardPiiReveal,
     ]
   )

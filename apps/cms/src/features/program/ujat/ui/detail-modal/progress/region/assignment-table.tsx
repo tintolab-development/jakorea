@@ -1,5 +1,5 @@
 import '@/shared/ui/cross-table.css'
-import { getRegionAssignmentInstitutionHeaderLabel } from './mock'
+import { getRegionAssignmentInstitutionHeaderLabel } from './region-assignment-options'
 import { RegionAssignmentCellContent } from './assignment-cell'
 import type { RegionAssignmentTableData } from './types'
 import './assignment-table.css'

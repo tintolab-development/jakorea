@@ -25,8 +25,6 @@ import type { Program } from '@/types/domain'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import { programService } from '@/entities/program/api/program-service'
-import { mockFileTemplates } from '@/data/mock/templates'
-import { getFormTemplateByProgramId, formTemplatesByProgramId } from '@/data/mock/form-templates'
 import type { FormFieldDef } from '@/types/form-template'
 import {
   ADMIN_FILE_PURPOSE,
@@ -200,9 +198,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
     name: 'rounds',
   })
 
-  const programId = program?.id || 'new'
-  const currentTemplate = getFormTemplateByProgramId(programId)
-  const [customFields, setCustomFields] = useState<FormFieldDef[]>(currentTemplate.customFields)
+  const [customFields, setCustomFields] = useState<FormFieldDef[]>([])
 
   const handleSaveCustomFields = (fields: FormFieldDef[]) => {
     setCustomFields(fields)
@@ -214,14 +210,6 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
   const onFormSubmit = async (data: ProgramFormData) => {
     try {
       await onSubmit(data)
-      // 프로그램 저장 후 커스텀 필드도 저장
-      const savedProgramId = program?.id || `program-${Date.now()}`
-      if (customFields.length > 0 || program) {
-        formTemplatesByProgramId.set(savedProgramId, {
-          programId: savedProgramId,
-          customFields: customFields,
-        })
-      }
     } catch (e) {
       console.error('Failed to submit form:', e)
       // 에러는 상위에서 처리하되, 폼 에러 표시를 위해 에러 필드로 스크롤
@@ -513,13 +501,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                     return label ? label.toLowerCase().includes(input.toLowerCase()) : false
                   }}
                 >
-                  {mockFileTemplates
-                    .filter(t => t.status === 'published')
-                    .map(template => (
-                      <Option key={template.id} value={template.id}>
-                        {template.title}
-                      </Option>
-                    ))}
+                  {[]}
                 </Select>
                 <Button
                   icon={<EditOutlined />}
@@ -546,13 +528,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                   return label ? label.toLowerCase().includes(input.toLowerCase()) : false
                 }}
               >
-                {mockFileTemplates
-                  .filter(t => t.status === 'published')
-                  .map(template => (
-                    <Option key={template.id} value={template.id}>
-                      {template.title}
-                    </Option>
-                  ))}
+                {[]}
               </Select>
             </Form.Item>
 
@@ -571,13 +547,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                   return label ? label.toLowerCase().includes(input.toLowerCase()) : false
                 }}
               >
-                {mockFileTemplates
-                  .filter(t => t.status === 'published')
-                  .map(template => (
-                    <Option key={template.id} value={template.id}>
-                      {template.title}
-                    </Option>
-                  ))}
+                {[]}
               </Select>
             </Form.Item>
 
@@ -596,13 +566,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                   return label ? label.toLowerCase().includes(input.toLowerCase()) : false
                 }}
               >
-                {mockFileTemplates
-                  .filter(t => t.status === 'published')
-                  .map(template => (
-                    <Option key={template.id} value={template.id}>
-                      {template.title}
-                    </Option>
-                  ))}
+                {[]}
               </Select>
             </Form.Item>
           </Card>

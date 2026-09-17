@@ -324,11 +324,15 @@ export function VerticalTableParagraphBody({
     /** 초상권 1번 표 고정 문구 행 등 — 헤더·본문 모두 읽기 전용 텍스트 */
     forceStatic = false
   ) => {
-    const portraitNameRowInteractive =
-      isPortraitPersonalConsentTable &&
-      rowIdx === 0 &&
+    const isPortraitPersonalConsentNameRow =
+      isPortraitPersonalConsentTable && rowIdx === 0
+    /** 1번 표 1행 — 성명·소속 값(td)만 입력. th(성명/소속 라벨)는 시드 고정 */
+    const portraitNameRowBodyInteractive =
+      isPortraitPersonalConsentNameRow &&
       (portraitConsentResponseFieldsInteractive || isEditMode || portraitSeedPresetLocked)
-    const rowEditMode = forceStatic ? false : isEditMode || portraitNameRowInteractive
+    const rowBodyEditMode = forceStatic ? false : isEditMode || portraitNameRowBodyInteractive
+    const rowHeaderEditMode =
+      forceStatic ? false : isEditMode && !isPortraitPersonalConsentNameRow
     const isPortraitAffiliationStage =
       isPortraitPersonalConsentTable && rowIdx === 0 && stageIdx === 1
     const header = row.headers[stageIdx] ?? ''
@@ -499,7 +503,7 @@ export function VerticalTableParagraphBody({
               : undefined
           }
         >
-          {rowEditMode ? (
+          {rowHeaderEditMode ? (
             isTextTable && stageKind === 'text' ? (
               isTextCellEditing({ row: rowIdx, stage: stageIdx, part: 'header' }) ? (
                 <TextCellInput
@@ -594,13 +598,13 @@ export function VerticalTableParagraphBody({
                 size="large"
                 value={cell.trim() !== '' ? cell : undefined}
                 onChange={(e: RadioChangeEvent) => {
-                  if (!rowEditMode) return
+                  if (!rowBodyEditMode) return
                   setCell(rowIdx, stageIdx, e.target.value)
                 }}
                 onFocus={() => {
                   if (canvasInteractive) setSelectedRow(rowIdx)
                 }}
-                disabled={!rowEditMode}
+                disabled={!rowBodyEditMode}
               >
                 {choiceOpts.map((o, i) => (
                   <CmsRadio key={`${rowIdx}-${stageIdx}-${i}`} size="large" value={o}>
@@ -627,9 +631,9 @@ export function VerticalTableParagraphBody({
                       checkboxSize="large"
                       className="form-editor-horizontal-table__field-check-label"
                       checked={checked}
-                      disabled={!rowEditMode}
+                      disabled={!rowBodyEditMode}
                       onChange={e => {
-                        if (!rowEditMode) return
+                        if (!rowBodyEditMode) return
                         const cur = row.choiceMultipleSelections?.[stageIdx] ?? []
                         const s = new Set(cur)
                         if (e.target.checked) s.add(o)
@@ -646,7 +650,7 @@ export function VerticalTableParagraphBody({
                 })}
               </div>
             </div>
-          ) : rowEditMode && stageKind === 'subjective' ? (
+          ) : rowBodyEditMode && stageKind === 'subjective' ? (
             isPortraitAffiliationStage ? (
               <PortraitAffiliationBody
                 cell={cell}
@@ -681,7 +685,7 @@ export function VerticalTableParagraphBody({
                 />
               </div>
             )
-          ) : rowEditMode && isTextTable && stageKind === 'text' ? (
+          ) : rowBodyEditMode && isTextTable && stageKind === 'text' ? (
             isTextCellEditing({ row: rowIdx, stage: stageIdx, part: 'body' }) ? (
               <TextCellInput
                 variant="body"
@@ -702,7 +706,7 @@ export function VerticalTableParagraphBody({
                 <VerticalTableCellText value={cell} placeholder={cPh} variant="body" />
               </div>
             )
-          ) : rowEditMode ? (
+          ) : rowBodyEditMode ? (
             <div
               className={[
                 'form-editor-vertical-table__cell-input-shell',

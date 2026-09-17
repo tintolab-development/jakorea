@@ -4,7 +4,7 @@ import {
   type InstitutionCancelRejectionConfirmPayload,
   type InstitutionCancelRejectionNotifyVariant,
 } from '@/features/program/general/lib/institution-cancel-rejection'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import {
   PermissionModal,
   type PermissionModalPayload,

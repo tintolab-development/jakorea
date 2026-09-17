@@ -1,6 +1,10 @@
 import { listTextbooks } from '@/features/textbook/api/textbook-mock-store'
 import type { TextbookRow } from '@/features/textbook/model/textbook.types'
-import { resolveProgramEducationTarget } from '@/features/program/general/lib/filter-textbooks-for-applicant'
+import { formatInstitutionApplicationGradeDisplay } from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import {
+  filterTextbooksForApplicant,
+  resolveProgramEducationTarget,
+} from '@/features/program/general/lib/filter-textbooks-for-applicant'
 import type { MatchesParams } from '@/shared/api/generated/data-management/schemas'
 import type { Program } from '@/types/domain'
 
@@ -12,13 +16,37 @@ export function buildTextbookMatchesParamsFromProgram(program: Program): Matches
   }
 }
 
-export function serializeProgramTextbookCatalogKey(program: Program): string {
-  const params = buildTextbookMatchesParamsFromProgram(program)
-  return `${params.businessArea ?? ''}|${params.educationTarget ?? ''}`
+export function buildTextbookMatchesParamsForApplicant(
+  program: Program,
+  educationGrade?: string
+): MatchesParams {
+  const base = buildTextbookMatchesParamsFromProgram(program)
+  const grade = educationGrade?.trim()
+  if (!grade) return base
+  return {
+    ...base,
+    grade: formatInstitutionApplicationGradeDisplay(grade),
+  }
 }
 
-/** API 비활성 시 프로그램 폼용 mock 교재 카탈로그 */
-export function listMockTextbookCatalogForProgram(program: Program): TextbookRow[] {
+export function serializeProgramTextbookCatalogKey(
+  program: Program,
+  educationGrade?: string
+): string {
+  const params = buildTextbookMatchesParamsForApplicant(program, educationGrade)
+  return `${params.businessArea ?? ''}|${params.educationTarget ?? ''}|${params.grade ?? ''}`
+}
+
+/** API 비활성 시 프로그램·신청 학년 기준 mock 교재 카탈로그 */
+export function listMockTextbookCatalogForProgram(
+  program: Program,
+  educationGrade?: string
+): TextbookRow[] {
+  const grade = educationGrade?.trim()
+  if (grade) {
+    return filterTextbooksForApplicant(program, grade)
+  }
+
   const educationTarget = resolveProgramEducationTarget(program)
   return listTextbooks().filter(row => {
     if (row.useStatus !== 'USED') return false

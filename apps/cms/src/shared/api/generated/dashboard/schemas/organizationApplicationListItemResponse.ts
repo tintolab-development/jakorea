@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { Session } from './session';
 
 export interface OrganizationApplicationListItemResponse {
   id?: number;
@@ -28,4 +29,15 @@ export interface OrganizationApplicationListItemResponse {
   defaultScheduleName?: string;
   ujatPartnerAssignmentsPath?: string;
   ujatPartnerRecommendationPath?: string;
+  grade?: string;
+  regionSido?: string;
+  regionSigungu?: string;
+  sessions?: Session[];
+  mergeGroupId?: number;
+  mergeStatus?: string;
+  mergeLead?: boolean;
+  /** UJAT — 학교 모집은 보통 null */
+  recruitHalf?: 'FIRST_HALF' | 'SECOND_HALF' | null;
+  /** UJAT 임시배정 워크플로. TEMP_ASSIGNED|TEMP_REJECTED 등 */
+  temporaryAssignmentStatus?: string | null;
 }

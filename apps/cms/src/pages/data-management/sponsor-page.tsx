@@ -30,7 +30,10 @@ import {
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { EMPTY_TABLE_PAGE_CONTEXT } from '@/shared/components/table-system/model/use-table-page'
-import { useDeleteGuideMessages } from '@/shared/hooks'
+import {
+  buildSponsorBulkDeleteMessageLines,
+  buildSponsorDeleteMessageLines,
+} from '@/features/sponsor/lib/sponsor-delete-guide-messages'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 import './sponsor-page.css'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -39,6 +42,7 @@ import {
   ActionResultModal,
   CmsButton,
   DeleteGuideModal,
+  buildBulkDeleteGuideTitle,
   buildDeleteCompletedMessageBulk,
   buildDeleteCompletedMessageSingle,
   buildDeleteCompletedTitle,
@@ -178,13 +182,17 @@ export default function SponsorPage() {
     return rows.filter(r => keySet.has(r.id))
   }, [rows, selectedRowKeys])
 
-  const { title: bulkSponsorDeleteTitle, lines: bulkSponsorDeleteLines } = useDeleteGuideMessages({
-    items: selectedSponsors,
-    domainLabel: '후원사',
-    bulkCounterPhrase: '개의 후원사',
-    particleTargetNoun: '후원사',
-    singleTitle: '후원사 삭제 안내',
-    getDisplayName: sponsor => sponsor.name ?? '' })
+  const { title: bulkSponsorDeleteTitle, lines: bulkSponsorDeleteLines } = useMemo(() => {
+    const isMulti = selectedSponsors.length >= 2
+    const title = isMulti ? buildBulkDeleteGuideTitle('후원사') : '후원사 삭제 안내'
+    if (selectedSponsors.length === 0) {
+      return { title, lines: [] as string[] }
+    }
+    const lines = isMulti
+      ? buildSponsorBulkDeleteMessageLines(selectedSponsors.length)
+      : buildSponsorDeleteMessageLines([selectedSponsors[0]?.name ?? ''])
+    return { title, lines }
+  }, [selectedSponsors])
 
   const handleBulkDelete = useCallback(() => {
     if (!canWrite) return
@@ -488,6 +496,7 @@ export default function SponsorPage() {
         open={registerModalOpen}
         onCancel={handleRegisterModalClose}
         onSubmit={handleRegisterSubmit}
+        submitting={createMutation.isPending}
       />
       <ActionResultModal
         open={actionResultModalOpen}

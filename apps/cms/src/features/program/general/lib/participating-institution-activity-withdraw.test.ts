@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import {
   buildParticipatingSchoolSessionKey,
   formatParticipatingInstitutionActivityWithdrawScheduleOptionLabel,

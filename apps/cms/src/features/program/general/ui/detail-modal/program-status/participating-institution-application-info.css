@@ -10,6 +10,19 @@
   margin-top: 0;
 }
 
+.participating-institution-application-info__schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.participating-institution-application-info__schedule-header
+  .applicant-institution-basic-info__title {
+  margin: 0;
+}
+
 /*
  * 교재 배송 StatusDropdown 행:
  * - 인라인 배지: STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME (116×48 고정 셸)

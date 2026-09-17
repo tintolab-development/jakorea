@@ -1,5 +1,5 @@
 import type { CalendarMainEventInput } from '@/shared/components/calendar'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import {
   GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS,
 } from '@/features/program/general/lib/volunteer-screening-constants'

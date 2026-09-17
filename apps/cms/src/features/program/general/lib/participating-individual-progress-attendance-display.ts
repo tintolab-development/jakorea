@@ -1,4 +1,4 @@
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import type { ProgramAttendanceStatusTextKind } from '@/features/program/shared/ui/program-attendance-status-text'
 import {
   PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_FILTER_ALL,
@@ -27,13 +27,11 @@ export function formatIndividualProgressAttendanceAffiliationGradeLabel(
 }
 
 export function maskProgressAttendanceContact(contact?: string): string {
-  if (!contact?.trim()) return '-'
-  return MASKING_POLICY.phone(contact) || contact
+  return displayServerPiiAsIs(contact)
 }
 
 export function maskProgressAttendanceEmail(email?: string): string {
-  if (!email?.trim()) return '-'
-  return MASKING_POLICY.email(email) || email
+  return displayServerPiiAsIs(email)
 }
 
 export function toProgressAttendanceStatusTextKind(

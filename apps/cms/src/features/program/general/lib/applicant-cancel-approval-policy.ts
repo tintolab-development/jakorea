@@ -1,5 +1,5 @@
-import type { ApplicantApprovalStatusKey } from '@/data/mock/applicant-institutions'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ApplicantApprovalStatusKey } from '@/features/program/shared/model/applicant-institution'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import {
   PROGRAM_PROGRESS_PHASE_COMPLETED_STATUSES,
   PROGRAM_PROGRESS_PHASE_IN_PROGRESS_STATUSES,

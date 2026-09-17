@@ -109,6 +109,7 @@ export function mapSponsorContactResponse(dto: SponsorContactResponse): SponsorC
 export function mapProgramHistoryResponse(
   dto: SponsorProgramHistoryResponse
 ): SponsorProgramHistoryRow {
+  const educationTargets = parseEducationTargets(dto.educationTarget)
   return {
     id: dto.id ?? '',
     programId: dto.programId ?? '',
@@ -118,8 +119,72 @@ export function mapProgramHistoryResponse(
     managerName: dto.managerName ?? '',
     participantCount: dto.participantCount ?? '',
     participantType: parseParticipantType(dto.participantType),
-    educationTarget: (dto.educationTarget ?? 'elementary') as SponsorProgramHistoryRow['educationTarget'],
+    educationTarget: educationTargets[0] ?? 'unknown',
+    educationTargets,
   }
+}
+
+const EDUCATION_TARGET_ALIASES: Record<
+  string,
+  SponsorProgramHistoryRow['educationTarget']
+> = {
+  elementary: 'elementary',
+  elementary_school: 'elementary',
+  초등: 'elementary',
+  초등학생: 'elementary',
+  초등학교: 'elementary',
+  middle: 'middle',
+  middle_school: 'middle',
+  중등: 'middle',
+  중학생: 'middle',
+  중학교: 'middle',
+  high: 'high',
+  high_school: 'high',
+  고등: 'high',
+  고등학생: 'high',
+  고등학교: 'high',
+  college: 'college',
+  university: 'college',
+  대학: 'college',
+  대학생: 'college',
+  대학교: 'college',
+  adult: 'adult',
+  adults: 'adult',
+  성인: 'adult',
+}
+
+export function parseEducationTarget(
+  raw: string | undefined | null
+): SponsorProgramHistoryRow['educationTarget'] {
+  const normalized = raw?.trim().toLowerCase().replace(/[\s-]+/g, '_') ?? ''
+  return EDUCATION_TARGET_ALIASES[normalized] ?? 'unknown'
+}
+
+export function parseEducationTargets(
+  raw: string | undefined | null
+): NonNullable<SponsorProgramHistoryRow['educationTargets']> {
+  const trimmed = raw?.trim() ?? ''
+  if (!trimmed) return []
+
+  let values: string[] = []
+  if (trimmed.startsWith('[')) {
+    try {
+      const parsed: unknown = JSON.parse(trimmed)
+      if (Array.isArray(parsed)) {
+        values = parsed.filter((value): value is string => typeof value === 'string')
+      }
+    } catch {
+      values = []
+    }
+  }
+  if (values.length === 0) {
+    values = trimmed.split(/[,/|·]+/)
+  }
+
+  const targets = values
+    .map(parseEducationTarget)
+    .filter(target => target !== 'unknown')
+  return [...new Set(targets)]
 }
 
 function parseParticipantType(

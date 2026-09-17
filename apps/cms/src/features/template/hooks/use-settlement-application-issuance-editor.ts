@@ -212,7 +212,7 @@ export function useSettlementApplicationIssuanceEditor(
       } catch (error) {
         console.debug('settlementApplicationIssuance save failed', error)
         if (isTemplateManagementSave) {
-          showSaveFailure()
+          showSaveFailure(error)
         }
       }
     })()

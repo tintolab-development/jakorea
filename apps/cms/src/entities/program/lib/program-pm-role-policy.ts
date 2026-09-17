@@ -9,6 +9,22 @@ export const MAX_PM_PER_PROGRAM = 3
 
 export const PROGRAM_PM_ROLE_LIMIT_MESSAGE = `프로그램당 PM(담당자)은 최대 ${MAX_PM_PER_PROGRAM}명까지 지정할 수 있습니다.`
 
+/** CMS 전역 VIEWER는 프로그램 담당 역할도 뷰어만 가능 (BE `INVALID_PROGRAM_ASSIGNMENT_ROLE`) */
+export const CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE =
+  '조회 전용 관리자에게는 프로그램 뷰어 권한만 지정할 수 있습니다.'
+
+export function isCmsViewerAdminRole(roleCode: string | undefined | null): boolean {
+  return (roleCode ?? '').trim().toUpperCase() === 'VIEWER'
+}
+
+export function canAssignProgramRoleToCmsAdmin(
+  cmsRoleCode: string | undefined | null,
+  programRole: ProgramRole
+): boolean {
+  if (!isCmsViewerAdminRole(cmsRoleCode)) return true
+  return programRole === 'ASSISTANT'
+}
+
 export function countProgramPmsInManagerList(
   rows: readonly { role: ProgramRole }[]
 ): number {

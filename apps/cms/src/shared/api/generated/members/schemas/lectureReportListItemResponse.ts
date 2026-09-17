@@ -17,4 +17,14 @@ export interface LectureReportListItemResponse {
   submittedAt?: string;
   adminException?: boolean;
   adminExceptionReason?: string;
+  schoolName?: string;
+  grade?: string;
+  lectureDate?: string;
+  sessionNo?: number;
+  timeLabel?: string;
+  lectureLabel?: string;
+  dateRoundTimeLabel?: string;
+  lectureProgressStatus?: string;
+  fileCount?: number;
+  fileObjectIds?: number[];
 }

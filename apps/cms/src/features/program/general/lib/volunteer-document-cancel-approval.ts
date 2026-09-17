@@ -1,4 +1,4 @@
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { formatModalBoldPhrase, formatModalBracketedSubjectName } from '@/features/program/general/lib/modal-message-subject'
 
 export type VolunteerDocumentCancelApprovalNotifyVariant = 'alreadySent' | 'pendingNotification'

@@ -5,7 +5,8 @@ Backend SoT: `186001`–`186008` / `trained-teacher-primary-case-01`–`08` /
 BE: `JA_LOCAL_DEMO_TRAINED_TEACHER_PRIMARY_CASES_ENABLED=true`,  
 `JA_LOCAL_DEMO_FRONTEND_PROGRAM_DUMMY_ENABLED=false`,  
 `JA_LOCAL_DEMO_LEGACY_PROGRAM_SEEDS_ENABLED=false`  
-BE 핸드오프: JABACK `docs/frontend/trained-teacher-primary-case-seed-handoff-2026-09.md`
+BE 핸드오프: JABACK `docs/frontend/trained-teacher-primary-case-seed-handoff-2026-09.md` ·  
+모집 시드 보강: JABACK `docs/frontend/trained-teacher-primary-case-recruitment-detail-frontend-handoff-2026-09-16.md`
 
 ## FE 변경 요약
 
@@ -19,6 +20,9 @@ BE 핸드오프: JABACK `docs/frontend/trained-teacher-primary-case-seed-handoff
 - **학생교육 완료** `GET …/trained-teacher/education-completions` 배선 — 일지와 별도 SSOT
 - 실적 strip: performance-summary + 활성 completion 건수
 - 강사/봉사자/합반 UI 비노출 유지 · 배송상태 API 필드 invent 금지 (`not_applicable`)
+- **모집 정보 (2026-09-16)**: BE flat+nested `serviceDetailJson`(`generalCommonInfo.participantRecruitmentInfo` + `participantRecruitment` alias) dual-path parse · typed `remarks`/`otherMatters`→`otherNotes` · `false`/`not_required`/`0`을 `-`로 렌더하지 않음 · 강사 모집 탭 숨김 · 문의처 `org / contactName`
+- **OpenAPI (2026-09-16)**: 로컬 BE `v9` `/v3/api-docs` → `fetch:openapi` + `generate:api` 동기화
+- **`educationStructure` 1급 필드**: `ProgramResponse`/`Create`/`Update`의 `CURRICULUM`|`SCHEDULE` ↔ FE `generalProgramEducationStructure` (`curriculum`|`schedule`). API 값 우선, 없을 때만 `serviceDetailJson` fallback. `detailedProgramName`도 API→도메인 매핑
 
 ## Case 매핑
 
@@ -53,7 +57,8 @@ VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED=true
 
 ## 하지 않음
 
-- OpenAPI 재생성 / BE DTO·Flyway 변경
+- BE DTO·Flyway 변경 (OpenAPI 스냅샷·Orval 재생성은 2026-09-16 로컬 sync 완료)
 - thin TT `169201`–`169208` / FE mock `trained-teachers-prog-*`를 Primary SoT로 취급
 - 배송 전/중/완료를 API 필드로 가정
 - 강사·봉사자·합반 UI 추가
+- `education-journals/export-data` (로컬 OpenAPI에서 제거됨 · FE 미사용)

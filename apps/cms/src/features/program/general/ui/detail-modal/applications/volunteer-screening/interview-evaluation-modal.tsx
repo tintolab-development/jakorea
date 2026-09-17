@@ -3,7 +3,7 @@ import { Input } from 'antd'
 import type {
   GeneralVolunteerApplicantRow,
   GeneralVolunteerInterviewEvaluationPayload,
-} from '@/data/mock/general-volunteer-applicants-mock'
+} from '@/features/program/general/model/volunteer-applicant'
 import {
   computeGeneralInterviewTotalScore,
   formatGeneralAssignedInterviewScheduleDisplay,

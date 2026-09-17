@@ -339,7 +339,7 @@ export type ProgramLifecycleStatus =
   | 'instructor_recruitment_planned' // 강사 모집 예정
   | 'volunteer_recruitment_planned' // 봉사자 모집 예정
   | 'participant_instructor_recruitment_planned' // 참여자&교육자 모집 예정
-  | 'recruiting_students' // typed — 참여 기관 모집 중
+  | 'recruiting_students' // typed — 진행현황 UI는 진행 예정 버킷 (모집 중 단독 노출 금지)
   | 'recruiting_instructors' // 강사 모집 중
   | 'recruiting_volunteers' // 봉사자 모집 중
   | 'participant_instructor_recruiting' // 참여자&교육자 모집 중

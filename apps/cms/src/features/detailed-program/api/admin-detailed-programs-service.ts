@@ -12,7 +12,6 @@ import {
   updateDetailedProgramRemote,
 } from '@/features/detailed-program/api/detailed-programs-api-client'
 import type { DetailedProgramManagementRow } from '@/features/detailed-program/model/detailed-program-management.types'
-import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
@@ -41,10 +40,10 @@ export async function getDetailedProgramList(
   return mapDetailedProgramListResponse(dto)
 }
 
-/** 등록·공통정보 셀렉트 — 사용(active)만. remote 미사용 시 mock. */
+/** 등록·공통정보 셀렉트 — 사용(active)만. remote 미연동 시 빈 목록. */
 export async function getDetailedProgramOptionsList(): Promise<DetailedProgramManagementRow[]> {
   if (!shouldUseDetailedProgramsRemoteApi()) {
-    return mockDetailedProgramManagementListRows.filter(row => row.active)
+    return []
   }
   const rows = await getDetailedProgramList(new URLSearchParams('dp_use=active'))
   return rows.filter(row => row.active)
@@ -53,6 +52,7 @@ export async function getDetailedProgramOptionsList(): Promise<DetailedProgramMa
 export async function createDetailedProgram(input: {
   name: string
   active: boolean
+  businessArea: string
 }): Promise<DetailedProgramManagementRow> {
   assertDetailedProgramsRemoteReady()
   const dto = await createDetailedProgramRemote(toDetailedProgramRequest(input))

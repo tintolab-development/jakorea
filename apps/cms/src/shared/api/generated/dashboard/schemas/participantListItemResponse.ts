@@ -5,6 +5,8 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { AssignmentInstructor } from './assignmentInstructor';
+import type { SessionProgress } from './sessionProgress';
 
 export interface ParticipantListItemResponse {
   participantId?: number;
@@ -14,6 +16,10 @@ export interface ParticipantListItemResponse {
   participantType?: string;
   sourceApplicationType?: string;
   sourceApplicationId?: number;
+  organizationApplicationId?: number;
+  /** 기관 참여자는 기관 신청의 실제 기관 ID, 개인·강사·봉사자는 저장된 기존 소속 기관 ID. 소속이 없으면 null */
+  organizationId?: number | null;
+  organizationName?: string | null;
   participantStatus?: string;
   completionStatus?: string;
   certificateStatus?: string;
@@ -21,4 +27,20 @@ export interface ParticipantListItemResponse {
   joinedAt?: string;
   completedAt?: string;
   giveUpAt?: string;
+  availableActions?: string[];
+  grade?: string;
+  regionSido?: string;
+  regionSigungu?: string;
+  className?: string;
+  studentNo?: number;
+  classCount?: number;
+  studentCount?: number;
+  teacherMemberId?: number;
+  teacherName?: string;
+  materialAssignmentStatus?: string;
+  sessions?: SessionProgress[];
+  assignmentInstructors?: AssignmentInstructor[];
+  mergeGroupId?: number;
+  mergeStatus?: string;
+  mergeLead?: boolean;
 }

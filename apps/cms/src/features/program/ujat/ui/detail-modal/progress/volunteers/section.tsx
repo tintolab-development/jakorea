@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { UJAT_EDU_VOL_ID_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { Table } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -10,6 +11,7 @@ import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
 } from '@/shared/constants'
 import { CmsButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from '@/features/program/general/ui/detail-modal/program-status/participating-volunteer-activity-certificate-preview-modal'
 import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
@@ -25,8 +27,7 @@ import {
 } from './activity-certificate'
 import { buildUjatEducationProgressVolunteerFilterFields } from './filter-fields'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
-import { UJAT_EDU_PROGRESS_VOLUNTEERS_TABLE_MIN_SCROLL_X } from './columns'
-import { getUjatEducationProgressVolunteerDetail } from './detail/detail-mock'
+import { getUjatEducationProgressVolunteerDetail } from './detail/volunteer-detail-data'
 import { useUjatEducationProgressVolunteers } from './use-list'
 import type { UjatEducationProgressVolunteerRow } from './types'
 import { Volunteer1365PreviewModal } from './volunteer-1365-preview-modal'
@@ -51,8 +52,6 @@ export function UjatEducationProgressVolunteersSection({
   const { showAlert } = useCmsAlert()
   const [searchParams] = useSearchParams()
   const eduVolDetailId = searchParams.get(UJAT_EDU_VOL_ID_PARAM)
-  const tableWrapRef = useRef<HTMLDivElement>(null)
-  const [tableScrollX, setTableScrollX] = useState(UJAT_EDU_PROGRESS_VOLUNTEERS_TABLE_MIN_SCROLL_X)
   const [addVolunteerModalOpen, setAddVolunteerModalOpen] = useState(false)
   const [activityCertificateVolunteer, setActivityCertificateVolunteer] =
     useState<ParticipatingVolunteerDetailRow | null>(null)
@@ -79,7 +78,12 @@ export function UjatEducationProgressVolunteersSection({
     memberOptions,
     addVolunteerFromMember,
     syncRowsFromMock,
-  } = useUjatEducationProgressVolunteers(half)
+  } = useUjatEducationProgressVolunteers(program.id, half)
+
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    { includeSelection: true }
+  )
 
   useEffect(() => {
     resetHalfState()
@@ -95,20 +99,6 @@ export function UjatEducationProgressVolunteersSection({
   useEffect(() => {
     onBindRegisterVolunteer?.(addVolunteerFromMember)
   }, [addVolunteerFromMember, onBindRegisterVolunteer])
-
-  useLayoutEffect(() => {
-    const el = tableWrapRef.current
-    if (!el) return
-    const minW = UJAT_EDU_PROGRESS_VOLUNTEERS_TABLE_MIN_SCROLL_X
-    const update = () => {
-      const w = el.getBoundingClientRect().width
-      setTableScrollX(Math.max(minW, Math.floor(w)))
-    }
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
 
   const handleRowClick = useCallback(
     (record: UjatEducationProgressVolunteerRow, event: MouseEvent) => {
@@ -277,7 +267,7 @@ export function UjatEducationProgressVolunteersSection({
             dataSource={tableData}
             pagination={false}
             tableLayout="fixed"
-            scroll={{ x: tableScrollX }}
+            scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
             onRow={record => ({
               onClick: event => handleRowClick(record, event),
             })}

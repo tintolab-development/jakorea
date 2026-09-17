@@ -4,6 +4,7 @@ import { RichTextEditor } from '@/shared/rich-text'
 import { ProgramThumbnailPlaceholder } from '@/features/program/shared/ui/program-thumbnail-placeholder'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import {
   useGeneralRecruitOverlayKv,
@@ -41,35 +42,45 @@ export type RecruitDetailInfoParagraphProps = {
   afterEditorFields?: RecruitDetailInfoTextField[]
   attachmentAccept?: string
   attachmentGuideLines?: string[]
+  /** 텍스트 필드 컨트롤 — UJAT 참여 기관 모집 등은 `input` */
+  textFieldControl?: 'textarea' | 'input'
 }
 
 function RecruitDetailInfoTextFieldRow({
   field,
   overlayKeyPrefix,
+  textFieldControl = 'textarea',
 }: {
   field: RecruitDetailInfoTextField
   overlayKeyPrefix: string
+  textFieldControl?: 'textarea' | 'input'
 }) {
   const overlayKey = resolveRecruitDetailTextFieldOverlayKey(overlayKeyPrefix, field.label)
   const [value, setValue] = useGeneralRecruitOverlayKv<string>(overlayKey, '')
 
+  const control =
+    textFieldControl === 'input' ? (
+      <CmsInput
+        inputSize="medium"
+        width="100%"
+        placeholder={field.placeholder}
+        value={value}
+        onChange={e => setValue(e.target.value)}
+      />
+    ) : (
+      <CmsTextArea
+        inputSize="medium"
+        width="100%"
+        placeholder={field.placeholder}
+        rows={1}
+        value={value}
+        onChange={e => setValue(e.target.value)}
+      />
+    )
+
   return (
     <DetailInfoForm.Row type="single">
-      <DetailInfoForm.Field
-        label={field.label}
-        fullRow
-        edit={
-          <CmsTextArea
-            inputSize="medium"
-            width="100%"
-            placeholder={field.placeholder}
-            rows={1}
-            value={value}
-            onChange={e => setValue(e.target.value)}
-          />
-        }
-        view="-"
-      />
+      <DetailInfoForm.Field label={field.label} fullRow edit={control} view="-" />
     </DetailInfoForm.Row>
   )
 }
@@ -77,9 +88,11 @@ function RecruitDetailInfoTextFieldRow({
 function RecruitDetailInfoTextFieldRows({
   fields,
   overlayKeyPrefix,
+  textFieldControl = 'textarea',
 }: {
   fields: RecruitDetailInfoTextField[]
   overlayKeyPrefix: string
+  textFieldControl?: 'textarea' | 'input'
 }) {
   return (
     <>
@@ -88,6 +101,7 @@ function RecruitDetailInfoTextFieldRows({
           key={field.label}
           field={field}
           overlayKeyPrefix={overlayKeyPrefix}
+          textFieldControl={textFieldControl}
         />
       ))}
     </>
@@ -101,6 +115,7 @@ export function RecruitDetailInfoParagraph({
   afterEditorFields,
   attachmentAccept = RECRUIT_DETAIL_ATTACHMENT_ACCEPT,
   attachmentGuideLines = RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
+  textFieldControl = 'textarea',
 }: RecruitDetailInfoParagraphProps) {
   const thumbObjectUrlKey = `${overlayKeyPrefix}.thumbObjectUrl`
   const thumbFileNameKey = `${overlayKeyPrefix}.thumbFileName`
@@ -179,7 +194,11 @@ export function RecruitDetailInfoParagraph({
           />
         </DetailInfoForm.Row>
 
-        <RecruitDetailInfoTextFieldRows fields={textFields} overlayKeyPrefix={overlayKeyPrefix} />
+        <RecruitDetailInfoTextFieldRows
+          fields={textFields}
+          overlayKeyPrefix={overlayKeyPrefix}
+          textFieldControl={textFieldControl}
+        />
 
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
@@ -200,6 +219,7 @@ export function RecruitDetailInfoParagraph({
           <RecruitDetailInfoTextFieldRows
             fields={afterEditorFields}
             overlayKeyPrefix={overlayKeyPrefix}
+            textFieldControl={textFieldControl}
           />
         ) : null}
 

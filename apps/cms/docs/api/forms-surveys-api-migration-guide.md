@@ -152,10 +152,15 @@ flowchart LR
 
 ### v1에서 **제외** (PHASE 6로)
 
-- `overlay`, `editorState` (UJAT 모집 등)
-- 등록 양식의 `program` mock 객체 (`registration-local-save`)
-- 발급 양식 `issuance-*` templateCode
+- 등록 양식의 `program` mock 객체 (`registration-local-save`) — 프로그램 **임시저장** 후속
+- 발급 양식 `issuance-*` templateCode (발급은 settingsJson 경로로 일부 전환됨 — 시드 문서 참고)
 - 로고·인장·수료증 배경 파일
+
+**프로그램 상세 설문 편집 (2026-09-17)**: `saveSurveyWritingTemplate` / lecture-eval resolve는 양식 관리와 동일하게 **form-template version PUT/GET**. localStorage 미사용.
+
+**UJAT 모집 overlay (2026-09-17)**: `extensionJson` via form-template version. `ujatRecruitTemplateSaves`는 `localOnly` 임시저장만.
+
+**UJAT 상세 기본정보 (2026-09-17)**: program PATCH + 세션 overlay. `ujatRegistrationTemplateSaves`는 `localOnly`만.
 
 ### 검증 (DoD)
 
@@ -256,12 +261,12 @@ VITE_REAL_API_MODULES=...,notices,faqs  # formsSurveys 없음
 
 ```
 저장: persistWritingFormTemplateDraft
-  → localStorage (cms.jakorea.writingFormTemplateSaves.v1)  // 항상
-  → PUT /api/admin/form-template-versions/{versionId}       // formsSurveys on
+  → PUT /api/admin/form-template-versions/{versionId}   // 성공 = UI 성공
+  → (양식 관리: localStorage 미기록)
 
 로드: loadWritingFormTemplateDraft
-  → GET version (schemaJson)                                // 우선
-  → localStorage fallback                                   // 실패 시
+  → GET version (schemaJson)                            // SSOT
+  → 실패/없음 → FE seed (local fallback는 VITE_FORM_TEMPLATE_LOCAL_FALLBACK=1 만)
 ```
 
 ### 백엔드 작업

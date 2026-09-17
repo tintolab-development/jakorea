@@ -43,7 +43,8 @@
 .ujat-volunteer-interview-assign-modal__calendar-panel {
   flex: 0 0 360px;
   max-width: 360px;
-  overflow: hidden;
+  /* 캘린더 5~6주 행이 잘리지 않도록 — 높이 동기화는 slots 패널이 맞춤 */
+  overflow: visible;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -80,8 +81,9 @@
   line-height: 150%;
 }
 
-/* --- 우측 시간 슬롯 카드 (시안) --- */
+/* --- 우측 시간 슬롯 카드 --- */
 
+/* 기본: 연민트 배경 · border 없음 */
 .ujat-volunteer-interview-assign-modal__slot-chip.paragraph-chip {
   display: flex;
   height: 54px;
@@ -93,32 +95,40 @@
   gap: 10px;
   align-self: stretch;
   border-radius: var(--8, 8px);
-  border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
-  background: var(
-    --disabled-default-bg,
-    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%),
-    #fff
-  );
+  border: none;
+  background: linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+    #fff;
   white-space: nowrap;
   text-align: center;
 }
 
 .ujat-volunteer-interview-assign-modal__slot-chip.paragraph-chip--interactive:hover:not(
     .paragraph-chip--selected
-  ) {
-  border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  ):not(:disabled) {
+  border: none;
+  background: linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+    #fff;
+}
+
+/* 선택 */
+.ujat-volunteer-interview-assign-modal__slot-chip.paragraph-chip--selected {
+  border: 1px solid var(--color-mint-01, #01a1af) !important;
+  background: linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+    #fff !important;
+  font-weight: 600;
+}
+
+/* 비활성(다른 항목 선택됨) — 기존 회색 UI */
+.ujat-volunteer-interview-assign-modal__slot-chip.paragraph-chip:disabled,
+.ujat-volunteer-interview-assign-modal__slot-chip--disabled.paragraph-chip {
+  cursor: not-allowed;
+  border: none;
   background: var(
     --disabled-default-bg,
     linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%),
     #fff
   );
-}
-
-.ujat-volunteer-interview-assign-modal__slot-chip.paragraph-chip--selected {
-  border: 1px solid var(--color-mint-01, #01a1af) !important;
-  background:
-    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff !important;
-  font-weight: 600;
+  opacity: 1;
 }
 
 .ujat-volunteer-interview-assign-modal__slot-time {
@@ -127,7 +137,7 @@
   font-style: normal;
   line-height: 150%;
   text-align: center;
-  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
+  color: var(--main-BK, #3d3d3d);
   font-weight: 500;
 }
 
@@ -135,6 +145,13 @@
   .ujat-volunteer-interview-assign-modal__slot-time {
   color: var(--color-mint-01, #01a1af);
   font-weight: 600;
+}
+
+.ujat-volunteer-interview-assign-modal__slot-chip.paragraph-chip:disabled
+  .ujat-volunteer-interview-assign-modal__slot-time,
+.ujat-volunteer-interview-assign-modal__slot-chip--disabled
+  .ujat-volunteer-interview-assign-modal__slot-time {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
 }
 
 .ujat-volunteer-interview-assign-modal__slot-count {

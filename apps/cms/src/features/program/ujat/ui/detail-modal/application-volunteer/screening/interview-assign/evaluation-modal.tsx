@@ -3,7 +3,7 @@ import { Input } from 'antd'
 import type {
   UjatVolunteerApplicantRow,
   UjatVolunteerInterviewEvaluationPayload,
-} from '@/data/mock/ujat-volunteer-applicants-mock'
+} from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'

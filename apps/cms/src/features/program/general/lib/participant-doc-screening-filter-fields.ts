@@ -1,6 +1,6 @@
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import {
   GENERAL_DOCUMENT_SCREENING_STATUS_LABELS,
   GENERAL_MANAGER_EVALUATION_LABELS,

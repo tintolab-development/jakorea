@@ -17,15 +17,12 @@ import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-p
 import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-program-detail-info-save'
 import { handleError } from '@/shared/utils/error-handler'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import { normalizeWritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
-import { createUjatProgramRegistrationDraft } from '@/features/template/model/ujat-program-registration-draft'
 import { applyUjatRegistrationOverlayToProgram } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import {
   readUjatRegistrationBasicInfoOverlayForSave,
   seedUjatRegistrationBasicInfoOverlayFromProgram,
   touchUjatRegistrationOperationAnchorFromRangeSeal,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
-import { persistUjatRegistrationTemplateSave } from '@/features/program/ujat/lib/ujat-registration-template-local-save'
 import { ProgramManagersTab } from '@/features/program/general/ui/detail-modal/managers/program-managers-tab'
 import { UjatInstitutionApplicationList } from './application-institution/list/list'
 import { UjatInstitutionApplicationDetailPage } from './application-institution/detail/detail-page'
@@ -43,10 +40,10 @@ import {
   formatUjatEducationProgressVolunteerDetailTitle,
   getUjatEducationProgressVolunteerDetail,
   isUjatEducationProgressVolunteerInList,
-} from './progress/volunteers/detail/detail-mock'
+} from './progress/volunteers/detail/volunteer-detail-data'
 import { UjatInstitutionScheduleConfirmDetailPage } from './application-institution/schedule-confirm/detail-page'
 import type { Program } from '@/types/domain'
-import { getUjatInstitutionApplicationMockRows } from '@/data/mock/ujat-institution-application-mock'
+import { getUjatInstitutionApplicationMockRows } from '@/features/program/ujat/model/ujat-institution-application'
 import {
   isUjatVolunteerApplicantDetailTab,
   parseUjatDetailLnb,
@@ -71,7 +68,7 @@ import {
   isEducationProgressInstitutionsTab,
   isUjatEducationProgressInstitutionInList,
 } from './progress/institutions/detail/detail-url'
-import { getUjatEducationProgressInstitutionName } from './progress/institutions/detail/detail-mock'
+import { getUjatEducationProgressInstitutionName } from './progress/institutions/detail/institution-detail-data'
 import { UjatEducationProgressInstitutionDetailPage } from './progress/institutions/detail/detail-page'
 import {
   getUjatSurveyMenuItemsForProgram,
@@ -98,11 +95,7 @@ import {
 } from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   isUjatRecruitTab,
@@ -132,7 +125,7 @@ import type { WritingFormDraft } from '@/features/template/model/writing-form-dr
 import {
   UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT,
   UJAT_SURVEY_POLL_RESPONSES_MOCK,
-} from '@/data/mock/ujat-survey-poll-responses-mock'
+} from '@/features/program/ujat/model/ujat-survey-poll'
 import { useClipboard } from '@/features/template/hooks/use-clipboard'
 import {
   defaultSatisfactionAudienceForSurveyTab,
@@ -157,7 +150,7 @@ import {
   UJAT_LECTURE_EVAL_DOWNLOAD_MODAL_COPY,
   UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY,
 } from './survey-management/lib/ujat-survey-copy'
-import type { UjatSurveyPollRawResponse } from '@/data/mock/ujat-survey-poll-responses-mock'
+import type { UjatSurveyPollRawResponse } from '@/features/program/ujat/model/ujat-survey-poll'
 import {
   buildLectureEvalFormDraft,
   canEditLectureEvalResponse,
@@ -189,6 +182,14 @@ import { UjatSurveyNoResponseState } from './survey-management/ui/ujat-survey-no
 import { UjatSurveyPollResultsView } from './survey-management/ui/ujat-survey-poll-results-view'
 import { UjatSurveyRegisteredActions } from './survey-management/ui/ujat-survey-registered-actions'
 import { SurveyShareCopyToast } from '@/features/program/shared/ui/survey-management/survey-share-copy-toast'
+import {
+  useGeneralProgramSurveyFormBindingMutations,
+  useGeneralProgramSurveyResponses,
+  useGeneralProgramSurveys,
+  useGeneralProgramSurveySummary,
+} from '@/features/program/general/hooks/use-general-program-posts-surveys'
+import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
+import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal.css'
 import './ujat-program-detail-fullpage-modal.css'
 
@@ -221,6 +222,24 @@ const UJAT_REGISTERED_SURVEY_MOCK: UjatRegisteredSurvey[] = []
 const UJAT_SATISFACTION_SURVEY_MOCK: UjatSatisfactionSurveyByAudience = {}
 
 const UJAT_LECTURE_EVAL_SURVEY_MOCK: UjatRegisteredSurvey | null = null
+
+function resolveUjatSurveyBindingIds(templateCode: string): {
+  templateId?: number
+  templateVersionId?: number
+} {
+  const cached = getFormTemplateVersionCacheEntry(templateCode)
+  if (cached) {
+    return {
+      templateId: cached.templateId,
+      templateVersionId: cached.templateVersionId ?? cached.latestVersionId,
+    }
+  }
+  const numeric = Number(templateCode)
+  if (Number.isFinite(numeric) && numeric > 0) {
+    return { templateId: Math.trunc(numeric) }
+  }
+  return {}
+}
 
 function buildUjatSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: string): string {
   const safeProgram = programTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '프로그램'
@@ -320,7 +339,8 @@ function normalizeUjatDetailParams(
 
   const instAppIdRaw = searchParams.get(UJAT_INST_APP_ID_PARAM)
   if (instAppIdRaw) {
-    if (!validInstAppIds.has(instAppIdRaw)) {
+    const restrictToKnownIds = validInstAppIds.size > 0
+    if (restrictToKnownIds && !validInstAppIds.has(instAppIdRaw)) {
       next.delete(UJAT_INST_APP_ID_PARAM)
     } else {
       lnb = 'institution_applications'
@@ -374,7 +394,7 @@ function normalizeUjatDetailParams(
 
   if (next.get(LNB_PARAM) !== lnb) next.set(LNB_PARAM, lnb)
   if (next.get(TAB_PARAM) !== tab) next.set(TAB_PARAM, tab)
-  if (instAppIdRaw && validInstAppIds.has(instAppIdRaw)) {
+  if (instAppIdRaw && (validInstAppIds.size === 0 || validInstAppIds.has(instAppIdRaw))) {
     next.set(UJAT_INST_APP_ID_PARAM, instAppIdRaw)
   }
 
@@ -538,6 +558,12 @@ export function UjatProgramDetailFullPageModal({
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const programId = program?.id ?? programIdHint ?? undefined
+  const {
+    registeredSurveys: remoteRegisteredSurveys,
+    classifiedBindings,
+    isRemoteDataSource: surveysRemote,
+  } = useGeneralProgramSurveys(programId)
+  const { createBinding, deleteBinding } = useGeneralProgramSurveyFormBindingMutations(programId)
 
   const {
     program: detailProgram,
@@ -631,9 +657,10 @@ export function UjatProgramDetailFullPageModal({
             setSurveyTemplateEditOpen(true)
           }
         : undefined
-      const session = buildUjatSurveyWritingPreviewSession(templateId, onEditForm)
-      if (session == null) return
-      openWritingUserPreview(session)
+      void buildUjatSurveyWritingPreviewSession(templateId, onEditForm).then(session => {
+        if (session == null) return
+        openWritingUserPreview(session)
+      })
     },
     [closeWritingUserPreview, openWritingUserPreview]
   )
@@ -658,23 +685,103 @@ export function UjatProgramDetailFullPageModal({
     setSurveyTemplateEditId(null)
   }, [])
 
+  useEffect(() => {
+    if (!surveysRemote || !remoteRegisteredSurveys) return
+    setRegisteredSurveys(remoteRegisteredSurveys)
+    setActiveRegisteredSurveyId(prev =>
+      prev && remoteRegisteredSurveys.some(s => s.id === prev)
+        ? prev
+        : (remoteRegisteredSurveys[0]?.id ?? null)
+    )
+  }, [remoteRegisteredSurveys, surveysRemote])
+
+  useEffect(() => {
+    if (!surveysRemote || !classifiedBindings) return
+    const nextSatisfaction: UjatSatisfactionSurveyByAudience = {}
+    let nextLecture: UjatRegisteredSurvey | null = null
+    for (const item of classifiedBindings) {
+      if (item.kind === 'satisfaction' && item.satisfactionAudience) {
+        const audience = item.satisfactionAudience
+        if (
+          audience === 'teacher' ||
+          audience === 'volunteer_h1' ||
+          audience === 'volunteer_h2'
+        ) {
+          nextSatisfaction[audience] = item.survey
+        }
+      }
+      if (item.kind === 'lecture_evaluation') {
+        nextLecture = item.survey
+      }
+    }
+    setSatisfactionSurveysByAudience(nextSatisfaction)
+    setLectureEvalSurvey(nextLecture)
+  }, [classifiedBindings, surveysRemote])
+
   const surveyTemplateOptions = useMemo(() => getSurveyWritingTemplateSelectOptions(), [])
   const activeRegisteredSurvey = useMemo(
     () => registeredSurveys.find(item => item.id === activeRegisteredSurveyId) ?? null,
     [registeredSurveys, activeRegisteredSurveyId]
   )
-  const pollResponses = useMemo(() => {
+  const pollResponseVersionId = activeRegisteredSurveyId ?? undefined
+  const satisfactionResponseVersionId =
+    satisfactionSurveysByAudience[activeSatisfactionAudience]?.id ?? undefined
+  const lectureResponseVersionId = lectureEvalSurvey?.id ?? undefined
+
+  const {
+    pollResponses: remotePollResponses,
+    isRemoteDataSource: pollResponsesRemote,
+  } = useGeneralProgramSurveyResponses(programId, pollResponseVersionId)
+  const {
+    pollResponses: remoteSatisfactionResponses,
+    isRemoteDataSource: satisfactionResponsesRemote,
+  } = useGeneralProgramSurveyResponses(programId, satisfactionResponseVersionId)
+  const {
+    pollResponses: remoteLectureResponses,
+    isRemoteDataSource: lectureResponsesRemote,
+  } = useGeneralProgramSurveyResponses(programId, lectureResponseVersionId)
+  const { totalResponseCount: remotePollSummaryCount } = useGeneralProgramSurveySummary(
+    programId,
+    pollResponseVersionId
+  )
+
+  const pollResponses = useMemo((): UjatSurveyPollRawResponse[] => {
+    if (pollResponsesRemote) return remotePollResponses ?? []
     if (activeRegisteredSurvey == null) return []
     return UJAT_SURVEY_POLL_RESPONSES_MOCK.slice(0, activeRegisteredSurvey.responseCount)
-  }, [activeRegisteredSurvey])
+  }, [activeRegisteredSurvey, pollResponsesRemote, remotePollResponses])
   const activeSatisfactionSurvey = useMemo(
     () => satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null,
     [satisfactionSurveysByAudience, activeSatisfactionAudience]
   )
-  const satisfactionResponses = useMemo(() => {
+  const satisfactionResponses = useMemo((): UjatSurveyPollRawResponse[] => {
+    if (satisfactionResponsesRemote) return remoteSatisfactionResponses ?? []
     if (activeSatisfactionSurvey == null) return []
     return UJAT_SURVEY_POLL_RESPONSES_MOCK.slice(0, activeSatisfactionSurvey.responseCount)
-  }, [activeSatisfactionSurvey])
+  }, [activeSatisfactionSurvey, remoteSatisfactionResponses, satisfactionResponsesRemote])
+
+  useEffect(() => {
+    if (!pollResponsesRemote || !activeRegisteredSurveyId) return
+    const count = remotePollSummaryCount || (remotePollResponses?.length ?? 0)
+    setRegisteredSurveys(prev =>
+      prev.map(survey =>
+        survey.id === activeRegisteredSurveyId ? { ...survey, responseCount: count } : survey
+      )
+    )
+  }, [
+    activeRegisteredSurveyId,
+    pollResponsesRemote,
+    remotePollResponses,
+    remotePollSummaryCount,
+  ])
+
+  useEffect(() => {
+    if (!lectureResponsesRemote) return
+    if (remoteLectureResponses && remoteLectureResponses.length > 0) {
+      setLectureEvalResponses(remoteLectureResponses)
+      setLectureEvalSubmitted(true)
+    }
+  }, [lectureResponsesRemote, remoteLectureResponses])
 
   const activeLnb: UjatDetailLnbKey = open
     ? (resolveUjatDetailLnbFromSearchParams(searchParams) ?? 'info')
@@ -687,7 +794,8 @@ export function UjatProgramDetailFullPageModal({
 
   const institutionApplicationId = open ? searchParams.get(UJAT_INST_APP_ID_PARAM) : null
   const institutionDetailId =
-    institutionApplicationId && validInstAppIds.has(institutionApplicationId)
+    institutionApplicationId &&
+    (validInstAppIds.size === 0 || validInstAppIds.has(institutionApplicationId))
       ? institutionApplicationId
       : null
 
@@ -996,21 +1104,23 @@ export function UjatProgramDetailFullPageModal({
     setEditMode('info')
   }, [activeTab, displayProgram, infoResetToProgram, setEditMode])
 
-  const handleInfoSave = useCallback(() => {
+  const handleInfoSave = useCallback(async () => {
     if (displayProgram) {
       const overlay = touchUjatRegistrationOperationAnchorFromRangeSeal(
         readUjatRegistrationBasicInfoOverlayForSave()
       )
       const mergedProgram = applyUjatRegistrationOverlayToProgram(displayProgram, overlay)
       infoForm.reset(programToDetailEditValues(mergedProgram))
-      persistUjatRegistrationTemplateSave({
-        draft: normalizeWritingFormDraft(createUjatProgramRegistrationDraft()),
-        overlay,
-      })
     }
-    setEditMode(null)
-    if (displayProgram) void infoTriggerSave()
+    if (!displayProgram) return
+    const ok = await infoTriggerSave()
+    if (ok) setEditMode(null)
   }, [displayProgram, infoForm, infoTriggerSave, setEditMode])
+
+  const handleInfoCancel = useCallback(() => {
+    infoResetToProgram()
+    setEditMode(null)
+  }, [infoResetToProgram, setEditMode])
 
   const isEditModeRecruitParticipant =
     open &&
@@ -1054,6 +1164,7 @@ export function UjatProgramDetailFullPageModal({
               setSearchParams(next, { replace: true })
             } catch (error) {
               handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
+              throw error
             }
           }
         : undefined,
@@ -1085,6 +1196,7 @@ export function UjatProgramDetailFullPageModal({
               setSearchParams(next, { replace: true })
             } catch (error) {
               handleError(error, { context: 'ujatProgramDetailFullpageModal.saveEdit' })
+              throw error
             }
           }
         : undefined,
@@ -1150,15 +1262,20 @@ export function UjatProgramDetailFullPageModal({
     setEditMode,
   ])
 
-  const handleRecruitmentSave = useCallback(() => {
-    setEditMode(null)
+  const handleRecruitmentSave = useCallback(async () => {
     if (!activeRecruitTab) return
-    if (activeRecruitTab === 'recruit_participant') {
-      institutionsTriggerSave()
-    } else {
-      volunteersTriggerSave()
-    }
+    const ok =
+      activeRecruitTab === 'recruit_participant'
+        ? await institutionsTriggerSave()
+        : await volunteersTriggerSave()
+    if (ok) setEditMode(null)
   }, [activeRecruitTab, institutionsTriggerSave, volunteersTriggerSave, setEditMode])
+
+  const handleRecruitmentCancel = useCallback(() => {
+    if (activeRecruitTab === 'recruit_participant') institutionsResetToProgram()
+    else volunteersResetToProgram()
+    setEditMode(null)
+  }, [activeRecruitTab, institutionsResetToProgram, setEditMode, volunteersResetToProgram])
 
   // TODO: X는 바깥 모달 닫기로 통일됨. breadcrumb/목록 복귀 외 용도가 없으면 등록부 제거 검토.
   const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
@@ -1216,6 +1333,33 @@ export function UjatProgramDetailFullPageModal({
         category: 'survey',
       })
       const next = findWritingTemplateRowByDefinitionId(newTemplateId)
+
+      if (surveysRemote) {
+        const ids = resolveUjatSurveyBindingIds(selectedSurveyTemplateId)
+        if (ids.templateId == null) {
+          void showAlert({
+            title: '등록 실패',
+            content:
+              '선택한 템플릿의 서버 ID를 찾지 못했습니다. 양식 관리에서 템플릿을 동기화한 뒤 다시 시도해 주세요.',
+          })
+          return
+        }
+        const payload: ProgramFormBindingRequest = {
+          formType: 'SURVEY',
+          templateId: ids.templateId,
+          templateVersionId: ids.templateVersionId,
+          active: true,
+          required: false,
+        }
+        const result = await createBinding(payload)
+        if (!result.ok) {
+          void showAlert({ title: '등록 실패', content: result.message })
+          return
+        }
+        setSurveyCreateModalOpen(false)
+        return
+      }
+
       if (next != null) {
         const surveyIndex = registeredSurveys.length + 1
         const newSurvey: UjatRegisteredSurvey = {
@@ -1235,10 +1379,24 @@ export function UjatProgramDetailFullPageModal({
     } finally {
       setSubmittingSurveyTemplate(false)
     }
-  }, [selectedSurveyTemplateId, registeredSurveys.length])
+  }, [
+    createBinding,
+    registeredSurveys.length,
+    selectedSurveyTemplateId,
+    showAlert,
+    surveysRemote,
+  ])
 
-  const handleDeleteRegisteredSurvey = useCallback(() => {
+  const handleDeleteRegisteredSurvey = useCallback(async () => {
     if (!activeRegisteredSurvey || activeRegisteredSurvey.status !== 'before_start') return
+    if (surveysRemote && activeRegisteredSurvey.bindingId) {
+      const result = await deleteBinding(activeRegisteredSurvey.bindingId)
+      if (!result.ok) {
+        void showAlert({ title: '삭제 실패', content: result.message })
+        return
+      }
+      return
+    }
     setRegisteredSurveys(prev => {
       const next = prev.filter(item => item.id !== activeRegisteredSurvey.id)
       setActiveRegisteredSurveyId(current => {
@@ -1247,7 +1405,7 @@ export function UjatProgramDetailFullPageModal({
       })
       return next
     })
-  }, [activeRegisteredSurvey])
+  }, [activeRegisteredSurvey, deleteBinding, showAlert, surveysRemote])
 
   const handleOpenSurveyDeleteModal = useCallback(() => {
     if (!activeRegisteredSurvey || activeRegisteredSurvey.status !== 'before_start') return
@@ -1262,7 +1420,7 @@ export function UjatProgramDetailFullPageModal({
 
   const handleConfirmSurveyDelete = useCallback(() => {
     if (surveyDeleteConfirmWord !== '삭제') return
-    handleDeleteRegisteredSurvey()
+    void handleDeleteRegisteredSurvey()
     setSurveyDeleteModalOpen(false)
     setSurveyDeleteConfirmWord('')
   }, [surveyDeleteConfirmWord, handleDeleteRegisteredSurvey])
@@ -1340,6 +1498,40 @@ export function UjatProgramDetailFullPageModal({
         category: 'survey',
       })
       const next = findWritingTemplateRowByDefinitionId(newTemplateId)
+
+      if (surveysRemote) {
+        const ids = resolveUjatSurveyBindingIds(selectedSatisfactionTemplateId)
+        if (ids.templateId == null) {
+          void showAlert({
+            title: '등록 실패',
+            content:
+              '선택한 템플릿의 서버 ID를 찾지 못했습니다. 양식 관리에서 템플릿을 동기화한 뒤 다시 시도해 주세요.',
+          })
+          return
+        }
+        const targetRole =
+          activeSatisfactionAudience === 'teacher'
+            ? 'TEACHER'
+            : activeSatisfactionAudience === 'volunteer_h2'
+              ? 'VOLUNTEER_H2'
+              : 'VOLUNTEER_H1'
+        const payload: ProgramFormBindingRequest = {
+          formType: 'SATISFACTION',
+          templateId: ids.templateId,
+          templateVersionId: ids.templateVersionId,
+          targetRole,
+          active: true,
+          required: false,
+        }
+        const result = await createBinding(payload)
+        if (!result.ok) {
+          void showAlert({ title: '등록 실패', content: result.message })
+          return
+        }
+        setSatisfactionCreateModalOpen(false)
+        return
+      }
+
       if (next != null) {
         const isTeacherAudience = activeSatisfactionAudience === 'teacher'
         const audienceLabel = getSatisfactionAudienceLabel(activeSatisfactionAudience)
@@ -1362,16 +1554,36 @@ export function UjatProgramDetailFullPageModal({
     } finally {
       setSubmittingSatisfactionSurvey(false)
     }
-  }, [activeSatisfactionAudience, selectedSatisfactionTemplateId])
+  }, [
+    activeSatisfactionAudience,
+    createBinding,
+    selectedSatisfactionTemplateId,
+    showAlert,
+    surveysRemote,
+  ])
 
-  const handleDeleteSatisfactionSurvey = useCallback(() => {
+  const handleDeleteSatisfactionSurvey = useCallback(async () => {
     if (!activeSatisfactionSurvey || activeSatisfactionSurvey.status !== 'before_start') return
+    if (surveysRemote && activeSatisfactionSurvey.bindingId) {
+      const result = await deleteBinding(activeSatisfactionSurvey.bindingId)
+      if (!result.ok) {
+        void showAlert({ title: '삭제 실패', content: result.message })
+        return
+      }
+      return
+    }
     setSatisfactionSurveysByAudience(prev => {
       const next = { ...prev }
       delete next[activeSatisfactionAudience]
       return next
     })
-  }, [activeSatisfactionSurvey, activeSatisfactionAudience])
+  }, [
+    activeSatisfactionAudience,
+    activeSatisfactionSurvey,
+    deleteBinding,
+    showAlert,
+    surveysRemote,
+  ])
 
   const handleOpenSatisfactionDeleteModal = useCallback(() => {
     if (!activeSatisfactionSurvey || activeSatisfactionSurvey.status !== 'before_start') return
@@ -1386,7 +1598,7 @@ export function UjatProgramDetailFullPageModal({
 
   const handleConfirmSatisfactionDelete = useCallback(() => {
     if (satisfactionDeleteConfirmWord !== '삭제') return
-    handleDeleteSatisfactionSurvey()
+    void handleDeleteSatisfactionSurvey()
     setSatisfactionDeleteModalOpen(false)
     setSatisfactionDeleteConfirmWord('')
   }, [satisfactionDeleteConfirmWord, handleDeleteSatisfactionSurvey])
@@ -1453,7 +1665,9 @@ export function UjatProgramDetailFullPageModal({
 
   const ensureLectureEvalFormDraft = useCallback(() => {
     const templateId = lectureEvalSurvey?.templateId ?? UJAT_LECTURE_EVAL_TEMPLATE_ID
-    setLectureEvalFormDraft(prev => prev ?? buildLectureEvalFormDraft(templateId))
+    void buildLectureEvalFormDraft(templateId).then(draft => {
+      setLectureEvalFormDraft(prev => prev ?? draft)
+    })
   }, [lectureEvalSurvey?.templateId])
 
   useEffect(() => {
@@ -1492,12 +1706,39 @@ export function UjatProgramDetailFullPageModal({
         category: 'survey',
       })
       const next = findWritingTemplateRowByDefinitionId(newTemplateId)
+
+      if (surveysRemote) {
+        const ids = resolveUjatSurveyBindingIds(selectedLectureEvalTemplateId)
+        if (ids.templateId == null) {
+          void showAlert({
+            title: '등록 실패',
+            content:
+              '선택한 템플릿의 서버 ID를 찾지 못했습니다. 양식 관리에서 템플릿을 동기화한 뒤 다시 시도해 주세요.',
+          })
+          return
+        }
+        const payload: ProgramFormBindingRequest = {
+          formType: 'LECTURE_EVALUATION',
+          templateId: ids.templateId,
+          templateVersionId: ids.templateVersionId,
+          targetRole: 'ADMIN',
+          active: true,
+          required: false,
+        }
+        const result = await createBinding(payload)
+        if (!result.ok) {
+          void showAlert({ title: '등록 실패', content: result.message })
+          return
+        }
+        setLectureEvalCreateModalOpen(false)
+        return
+      }
+
       if (next != null) {
         const newSurvey: UjatRegisteredSurvey = {
           id: `ujat-lecture-eval-${Date.now()}`,
           title: next.templateName,
           templateId: next.id,
-          // TODO(api): 서버 status — 진행 전(before_start) / 진행 중 / 종료
           status: 'in_progress',
           responseCount: 0,
           participantTotal: 1,
@@ -1506,7 +1747,7 @@ export function UjatProgramDetailFullPageModal({
         setLectureEvalSubmitted(false)
         setLectureEvalResponses([])
         setActiveLectureEvalTab('eval')
-        setLectureEvalFormDraft(buildLectureEvalFormDraft(next.id))
+        void buildLectureEvalFormDraft(next.id).then(setLectureEvalFormDraft)
       }
       setLectureEvalCreateModalOpen(false)
     } catch (error) {
@@ -1514,7 +1755,7 @@ export function UjatProgramDetailFullPageModal({
     } finally {
       setSubmittingLectureEvalSurvey(false)
     }
-  }, [selectedLectureEvalTemplateId])
+  }, [createBinding, selectedLectureEvalTemplateId, showAlert, surveysRemote])
 
   const handleOpenLectureEvalPreview = useCallback(() => {
     if (!lectureEvalSurvey) return
@@ -1523,21 +1764,23 @@ export function UjatProgramDetailFullPageModal({
     const entry = lookupTemplateRegistry(row.id)
     if (entry == null || !isSurveyRegistryEntry(entry)) return
 
-    openWritingUserPreview({
-      draft: buildLectureEvalFormDraft(row.id),
-      updateParagraph: () => {},
-      headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
-      editorKind: 'survey',
-      paragraphBodyOptions: UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
-      ...(lectureEvalSurvey.status === 'before_start'
-        ? {
-            onEditForm: () => {
-              closeWritingUserPreview()
-              setSurveyTemplateEditId(row.id)
-              setSurveyTemplateEditOpen(true)
-            },
-          }
-        : {}),
+    void buildLectureEvalFormDraft(row.id).then(draft => {
+      openWritingUserPreview({
+        draft,
+        updateParagraph: () => {},
+        headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
+        editorKind: 'survey',
+        paragraphBodyOptions: UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
+        ...(lectureEvalSurvey.status === 'before_start'
+          ? {
+              onEditForm: () => {
+                closeWritingUserPreview()
+                setSurveyTemplateEditId(row.id)
+                setSurveyTemplateEditOpen(true)
+              },
+            }
+          : {}),
+      })
     })
   }, [lectureEvalSurvey, closeWritingUserPreview, openWritingUserPreview])
 
@@ -1789,16 +2032,15 @@ export function UjatProgramDetailFullPageModal({
             <>
               <div className="ujat-detail-modal__info-header">
                 <div className="program-detail-fullpage-modal__header-actions">
-                  <CmsButton
-                    {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
+                  <ProgramEditInfoActions
+                    isEditing={isEditModeInfo}
                     disabled={!canEditInfo && !isEditModeInfo}
-                    onClick={resolveProgramEditInfoClick(isEditModeInfo, {
-                      onEnterEdit: handleInfoEdit,
-                      onSaveEdit: handleInfoSave,
-                    })}
-                  >
-                    {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-                  </CmsButton>
+                    onEdit={handleInfoEdit}
+                    onCancel={handleInfoCancel}
+                    onSave={() => {
+                      void handleInfoSave()
+                    }}
+                  />
                 </div>
               </div>
               <UjatProgramDetailCommonInfoView
@@ -1818,7 +2060,10 @@ export function UjatProgramDetailFullPageModal({
                 canEdit={canEditInfo}
                 isEditMode={isRecruitEditMode}
                 onEdit={handleRecruitmentEdit}
-                onSave={handleRecruitmentSave}
+                onCancel={handleRecruitmentCancel}
+                onSave={() => {
+                  void handleRecruitmentSave()
+                }}
               />
               <UjatProgramRecruitmentPanels
                 program={displayProgram}
@@ -1850,17 +2095,19 @@ export function UjatProgramDetailFullPageModal({
               />
             ))}
           {activeLnb === 'institution_applications' && activeTab === 'inst_schedule_assign' && (
-            <UjatInstitutionScheduleAssignPage />
+            <UjatInstitutionScheduleAssignPage programId={programId} />
           )}
           {activeLnb === 'institution_applications' && activeTab === 'inst_schedule_confirm' && (
             institutionDetailId ? (
               <UjatInstitutionScheduleConfirmDetailPage
                 institutionId={institutionDetailId}
+                programId={programId}
                 onBack={() => setInstitutionApplicationId(null)}
                 onStatusUpdated={() => setInstitutionListVersion(v => v + 1)}
               />
             ) : (
               <UjatInstitutionScheduleConfirmList
+                programId={programId}
                 onOpenDetail={row => setInstitutionApplicationId(row.id)}
               />
             )
@@ -1913,7 +2160,7 @@ export function UjatProgramDetailFullPageModal({
             activeTab !== 'vh2_interview2' && (
               <UjatPlaceholderSection
                 title={volunteerScreenTitle(activeTab)}
-                description="봉사자 신청·심사·면접 일정 배정 화면(상·하반기 동일 프로세스)입니다. 목 데이터 연동 후 테이블이 표시됩니다."
+                description="봉사자 신청·심사·면접 일정 배정 화면(상·하반기 동일 프로세스)입니다."
               />
             )}
 

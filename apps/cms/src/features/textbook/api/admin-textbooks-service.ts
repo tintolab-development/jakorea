@@ -18,7 +18,7 @@ import {
   updateTextbookRemote,
 } from '@/features/textbook/api/textbooks-api-client'
 import {
-  buildTextbookMatchesParamsFromProgram,
+  buildTextbookMatchesParamsForApplicant,
   listMockTextbookCatalogForProgram,
 } from '@/features/textbook/api/textbook-program-catalog'
 import type { TextbookCreateInput, TextbookRow } from '@/features/textbook/model/textbook.types'
@@ -79,9 +79,13 @@ export async function getTextbookMatches(params: MatchesParams = {}): Promise<Te
   return dtos.map(mapTextbookMatchResponse)
 }
 
-export async function getProgramTextbookCatalog(program: Program): Promise<TextbookRow[]> {
+export async function getProgramTextbookCatalog(
+  program: Program,
+  educationGrade?: string
+): Promise<TextbookRow[]> {
+  const params = buildTextbookMatchesParamsForApplicant(program, educationGrade)
   if (shouldUseTextbooksRemoteApi()) {
-    return getTextbookMatches(buildTextbookMatchesParamsFromProgram(program))
+    return getTextbookMatches(params)
   }
-  return listMockTextbookCatalogForProgram(program)
+  return listMockTextbookCatalogForProgram(program, educationGrade)
 }

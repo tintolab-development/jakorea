@@ -3,13 +3,10 @@
  */
 
 import type { ReactNode } from 'react'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type {
   ApplicantInstitutionDetailExtend,
   ApplicantSchoolRow,
-} from '@/data/mock/applicant-institutions'
-import { getTrainedTeachersPreferredScheduleBlocks } from '@/data/mock/trained-teachers-institution-detail'
-import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+} from '@/features/program/shared/model/applicant-institution'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/program-approval-status-detail-value'
 import type { ApplicantInstitutionEditDraft } from '@/features/program/general/lib/applicant-institution-detail-edit'
@@ -33,8 +30,8 @@ import {
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import {
   resolveInstitutionApplicationProgramBridge,
-  shouldShowInstitutionApplicationScheduleParagraph,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import { shouldShowInstitutionApplicationDetailScheduleSection } from '@/features/program/general/lib/institution-application-session-display'
 import type { Program } from '@/types/domain'
 import { TrainedTeachersPreferredScheduleDetailSection } from './preferred-schedule-detail-section'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
@@ -45,24 +42,6 @@ import {
   InstitutionApplicationTableRowTwoCols,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-info-table'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info.css'
-
-function maskInstitutionTeacherInfoLine(text: string): string {
-  return text
-    .replace(/(Tel\s*:\s*)([\d-]+)/gi, (_, prefix: string, num: string) => {
-      const cleaned = num.replace(/\s/g, '')
-      const masked = MASKING_POLICY.phone(cleaned)
-      return prefix + (masked || num)
-    })
-    .replace(/(^|\s|\|)(M\s*:\s*)([\d-]+)/g, (_, lead: string, prefix: string, num: string) => {
-      const cleaned = num.replace(/\s/g, '')
-      const masked = MASKING_POLICY.phone(cleaned)
-      return lead + prefix + (masked || num)
-    })
-    .replace(
-      /(E-mail\s*:\s*)(\S+)/gi,
-      (_, prefix: string, em: string) => prefix + MASKING_POLICY.email(em)
-    )
-}
 
 export interface TrainedTeachersApplicantInstitutionBasicInfoProps {
   institution: ApplicantSchoolRow
@@ -75,6 +54,7 @@ export interface TrainedTeachersApplicantInstitutionBasicInfoProps {
   sameSchoolGradeOptions?: SameSchoolGradeOption[]
   classCountOptions?: Array<{ value: string; label: string }>
   teacherOptions?: InstitutionAffiliatedTeacherOption[]
+  isTeacherOptionsLoading?: boolean
   showEducationFormatField?: boolean
   validationErrors?: Record<string, string>
   onResendNotificationClick?: () => void
@@ -87,13 +67,11 @@ export interface TrainedTeachersApplicantInstitutionBasicInfoProps {
 
 function buildTeacherInfoCell(
   institution: ApplicantSchoolRow,
-  detail: ApplicantInstitutionDetailExtend | undefined,
-  shouldMask: boolean
+  detail: ApplicantInstitutionDetailExtend | undefined
 ): ReactNode {
   const raw = detail?.teacherInfo?.trim()
   if (raw) {
-    const text = shouldMask ? maskInstitutionTeacherInfoLine(raw) : raw
-    const parts = text
+    const parts = raw
       .split(' | ')
       .map(s => s.trim())
       .filter(Boolean)
@@ -107,12 +85,9 @@ function buildTeacherInfoCell(
   const parts = [institution.teacherName, institution.contact].filter(Boolean) as string[]
   if (parts.length === 0) return '-'
   if (parts.length === 1) return parts[0]
-  const name = parts[0]!
-  const phone = parts[1]!
-  const phoneShown = shouldMask ? MASKING_POLICY.phone(phone.replace(/\s/g, '')) || phone : phone
   return (
     <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider([name, phoneShown])}
+      {withProgramDetailTdDivider(parts)}
     </ProgramDetailTdSegmentWrap>
   )
 }
@@ -120,13 +95,14 @@ function buildTeacherInfoCell(
 export function TrainedTeachersApplicantInstitutionBasicInfo({
   institution,
   detail,
-  maskSensitive = true,
+  maskSensitive: _maskSensitive = true,
   mode = 'view',
   draft,
   onDraftChange,
   textbookOptions = [],
   classCountOptions = [],
   teacherOptions = [],
+  isTeacherOptionsLoading = false,
   showEducationFormatField = false,
   validationErrors,
   onResendNotificationClick,
@@ -137,16 +113,17 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
   adminCommentError,
 }: TrainedTeachersApplicantInstitutionBasicInfoProps) {
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
-  const shouldMask = maskSensitive && institution.approvalStatus !== 'approved'
   const institutionApplicationBridge = program
     ? resolveInstitutionApplicationProgramBridge(program)
     : null
   const showScheduleSection =
-    institutionApplicationBridge == null ||
-    shouldShowInstitutionApplicationScheduleParagraph(institutionApplicationBridge)
-  const preferredScheduleBlocks = shouldUseTrainedTeacherProgramsRemoteApi()
-    ? []
-    : getTrainedTeachersPreferredScheduleBlocks(institution.id)
+    (institution.preferredScheduleBlocks?.length ?? 0) > 0 ||
+    shouldShowInstitutionApplicationDetailScheduleSection(
+      institutionApplicationBridge,
+      institution
+    )
+  /** remote SoT — preferredScheduleBlocks. memo/mock id 파싱 금지. */
+  const preferredScheduleBlocks = institution.preferredScheduleBlocks ?? []
 
   const classAndCount: ReactNode =
     isEditMode && draft && onDraftChange ? (
@@ -179,6 +156,7 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
         mobile={draft.teacherMobile}
         email={draft.teacherEmail}
         teacherOptions={teacherOptions}
+        isTeacherOptionsLoading={isTeacherOptionsLoading}
         onChange={patch => onDraftChange(patch)}
         errors={{
           teacherName: validationErrors?.teacherName,
@@ -188,7 +166,7 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
         }}
       />
     ) : (
-      buildTeacherInfoCell(institution, detail, shouldMask)
+      buildTeacherInfoCell(institution, detail)
     )
 
   const textbookViewValue = detail?.textbookName?.trim() || '미정'

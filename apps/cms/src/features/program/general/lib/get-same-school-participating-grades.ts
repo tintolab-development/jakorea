@@ -1,4 +1,4 @@
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 
 const ACTIVE_APPROVAL_STATUSES = new Set<ParticipatingSchoolRow['approvalStatus']>([
   'approved',

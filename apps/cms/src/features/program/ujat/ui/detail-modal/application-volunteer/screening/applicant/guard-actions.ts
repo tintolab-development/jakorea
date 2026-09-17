@@ -1,4 +1,4 @@
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 
 export function guardUjatVolunteerWithdrawActivity(row: UjatVolunteerApplicantRow): boolean {

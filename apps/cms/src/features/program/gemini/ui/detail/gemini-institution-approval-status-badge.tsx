@@ -1,6 +1,6 @@
 import { Tag } from 'antd'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
-import type { GeminiInstitutionApprovalStatus } from '../../model/recruitment/institution-application-mock'
+import type { GeminiInstitutionApprovalStatus } from '../../model/recruitment/institution-application-types'
 import '@/shared/components/textbook-status-badge.css'
 
 export const GEMINI_INSTITUTION_APPROVAL_STATUS_OPTIONS: GeminiInstitutionApprovalStatus[] = [

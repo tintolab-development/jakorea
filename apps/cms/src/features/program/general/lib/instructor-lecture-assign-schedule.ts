@@ -1,11 +1,9 @@
 import dayjs, { type Dayjs } from 'dayjs'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
-import { getGeneralProgramById } from '@/data/mock/general-programs'
-import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications-mock'
-import { MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES } from '@/features/program/general/lib/individual-lecture-assign-demo'
-import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
+import { resolveGeneralProgramLocalById } from '@/features/program/general/lib/general-program-local-cache'
+import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications'
 import type { Program } from '@/types/domain'
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
@@ -36,19 +34,6 @@ export type InstructorLectureAssignItem = {
 
 /** 개인 프로그램 강의 배정 — 기관 ID 대체값 */
 export const INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID = 'individual-program'
-
-export { MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES } from '@/features/program/general/lib/individual-lecture-assign-demo'
-
-/** 슬롯별 기존 배정 강사 수 (mock seed) */
-const MOCK_SLOT_ASSIGNMENT_COUNTS: Record<string, number> = {
-  '2026-03-19|assign-school-gangseo|1': 3,
-  '2026-03-19|assign-school-1|1': 2,
-  '2026-03-19|assign-school-2|1': 1,
-  '2026-03-19|assign-school-3|1': 0,
-  '2026-03-19|assign-school-4|1': 2,
-  '2026-04-20|individual-program|1': 2,
-  '2026-04-27|individual-program|2': 2,
-}
 
 function parseEducationScheduleLine(
   line: string
@@ -379,7 +364,7 @@ export function countLectureSlotAssignments(
   instructors: ApplicantInstructorRow[],
   excludeInstructorId?: string
 ): number {
-  let count = MOCK_SLOT_ASSIGNMENT_COUNTS[slotKey] ?? 0
+  let count = 0
   for (const row of instructors) {
     if (excludeInstructorId && row.id === excludeInstructorId) continue
     const lectures = row.assignedLectures ?? []
@@ -463,15 +448,11 @@ export function resolveIndividualProgramEducationScheduleLines(program: Program)
     []
   if (direct.length > 0) return direct
 
-  const seeded = getGeneralProgramById(String(program.id))
+  const seeded = resolveGeneralProgramLocalById(String(program.id))
   const fromSeed =
     seeded?.generalCommonInfo?.educationScheduleLines?.map(line => line.trim()).filter(Boolean) ??
     []
   if (fromSeed.length > 0) return fromSeed
-
-  if (isGeneralIndividualProgram(program) || (seeded != null && isGeneralIndividualProgram(seeded))) {
-    return [...MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES]
-  }
 
   return []
 }
@@ -480,7 +461,7 @@ export function resolveProgramForIndividualLectureAssign(
   program: Program | null | undefined,
   programId: string
 ): Program {
-  const seeded = getGeneralProgramById(programId)
+  const seeded = resolveGeneralProgramLocalById(programId)
   if (program && seeded) {
     const scheduleLines = resolveIndividualProgramEducationScheduleLines({
       ...seeded,
@@ -527,9 +508,9 @@ export function resolveProgramForIndividualLectureAssign(
     id: programId,
     generalProgramAudience: 'individual',
     generalCommonInfo: {
-      educationScheduleLines: [...MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES],
+      educationScheduleLines: [] as string[],
     },
-  } as Program
+  } as unknown as Program
 }
 
 export function parseIndividualInstructorLectureAssignSchedule(

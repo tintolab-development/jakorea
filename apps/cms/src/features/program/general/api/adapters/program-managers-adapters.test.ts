@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   mapProgramManagerResponsesToRows,
   mapProgramManagerRole,
+  toProgramManagerApiRole,
 } from './program-managers-adapters'
 
 describe('mapProgramManagerRole', () => {
@@ -15,6 +16,14 @@ describe('mapProgramManagerRole', () => {
     expect(mapProgramManagerRole('PM')).toBe('OWNER')
     expect(mapProgramManagerRole('VIEWER')).toBe('ASSISTANT')
     expect(mapProgramManagerRole('???')).toBe('ASSISTANT')
+  })
+})
+
+describe('toProgramManagerApiRole', () => {
+  it('maps UI roles to BE ProgramAdminAssignmentRole', () => {
+    expect(toProgramManagerApiRole('OWNER')).toBe('PM')
+    expect(toProgramManagerApiRole('PARTNER')).toBe('PARTNER')
+    expect(toProgramManagerApiRole('ASSISTANT')).toBe('VIEWER')
   })
 })
 

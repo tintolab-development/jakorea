@@ -25,4 +25,6 @@ export interface FaqResponse {
   status?: FaqResponseStatus;
   /** 생성 시각 */
   createdAt?: string;
+  /** 최종 수정 시각 */
+  updatedAt?: string;
 }

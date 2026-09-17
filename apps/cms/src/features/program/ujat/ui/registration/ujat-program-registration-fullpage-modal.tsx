@@ -13,9 +13,13 @@ import { UjatProgramRegistrationBodyHeader } from '@/features/program/ujat/ui/re
 import type { Program } from '@/types/domain'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
-  REGISTRATION_DRAFT_MODE_FRESH,
+  clearRegistrationDraftForFreshStart,
+  PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
+  shouldRemoveRegistrationDraftAfterCompletion,
+  shouldSkipRegistrationDraftRestore,
 } from '@/features/program/shared/lib/registration-draft-notice'
+import { removeWritingFormTemplateSave } from '@/features/template/lib/writing-form-template-local-save'
 
 const UJAT_REGISTRATION_MODAL_TITLE = 'UJAT 프로그램 등록'
 
@@ -33,8 +37,14 @@ export function UjatProgramRegistrationFullpageModal({
   const [searchParams, setSearchParams] = useSearchParams()
   const { showAlert } = useCmsAlert()
 
-  const skipDraftRestore =
-    searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY) === REGISTRATION_DRAFT_MODE_FRESH
+  // 안내 팝업에서 「이어서 작성」을 명시한 경우만 저장본을 복원한다.
+  const skipDraftRestore = shouldSkipRegistrationDraftRestore(
+    searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+  )
+  const shouldRemoveSavedDraftAfterCompletion =
+    shouldRemoveRegistrationDraftAfterCompletion(
+      searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+    )
 
   const initialStep = useMemo(() => {
     const raw = searchParams.get(UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
@@ -120,19 +130,26 @@ export function UjatProgramRegistrationFullpageModal({
           showArrow: false,
           disabled: flow.isCompletingRegistration,
           onClick: () => {
-            void flow.handleCompleteRegistration().catch(error => {
-              console.debug('UJAT program registration completion failed', error)
-              showAlert({
-                title: '프로그램 등록 실패',
-                content: '입력 내용은 유지됩니다. 잠시 후 다시 시도해 주세요.',
+            void flow
+              .handleCompleteRegistration()
+              .then(() => {
+                if (!shouldRemoveSavedDraftAfterCompletion) return
+                clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE)
+                removeWritingFormTemplateSave(flow.currentStepDef.templateId)
               })
-            })
+              .catch(error => {
+                console.debug('UJAT program registration completion failed', error)
+                showAlert({
+                  title: '프로그램 등록 실패',
+                  content: '입력 내용은 유지됩니다. 잠시 후 다시 시도해 주세요.',
+                })
+              })
           },
         },
       ]
     }
     return undefined
-  }, [flow, showAlert])
+  }, [flow, shouldRemoveSavedDraftAfterCompletion, showAlert])
 
   return (
     <TemplateFullpageModal

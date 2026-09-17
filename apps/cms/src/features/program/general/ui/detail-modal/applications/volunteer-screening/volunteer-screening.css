@@ -1,6 +1,12 @@
 .general-volunteer-screening,
 .general-volunteer-doc-passed,
 .general-volunteer-interview2 {
+  /* 고정 열·본문 열 hover 동일 · 가로 스크롤 시 비침 방지용 불투명 배경 */
+  --general-volunteer-row-hover-bg: color-mix(
+    in srgb,
+    var(--color-mint-01, #01a1af) 6%,
+    #fff
+  );
   width: 100%;
   min-width: 0;
   max-width: 100%;
@@ -20,8 +26,13 @@
   padding: 0;
 }
 
+/* 1차 서류 심사·합격자·2차 면접 — 개인 doc1(ApplicantList)과 동일 5열+조회 그리드 */
 .participant-applications
   .general-volunteer-screening__filter-layout.filter-table-layout
+  .table-filter-group__fields-rows
+  > .table-filter-group__fields-row-with-action,
+.participant-applications
+  .general-volunteer-doc-passed__filter-layout.filter-table-layout
   .table-filter-group__fields-rows
   > .table-filter-group__fields-row-with-action,
 .participant-applications
@@ -42,6 +53,10 @@
   .table-filter-group__fields-row-with-action
   > .table-filter-group__fields-grid-row,
 .participant-applications
+  .general-volunteer-doc-passed__filter-layout.filter-table-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-grid-row,
+.participant-applications
   .general-volunteer-interview2__filter-layout.filter-table-layout
   .table-filter-group__fields-row-with-action
   > .table-filter-group__fields-grid-row {
@@ -50,6 +65,10 @@
 
 .participant-applications
   .general-volunteer-screening__filter-layout.filter-table-layout
+  .table-filter-group__fields-row-with-action
+  > .table-filter-group__fields-shell--inline,
+.participant-applications
+  .general-volunteer-doc-passed__filter-layout.filter-table-layout
   .table-filter-group__fields-row-with-action
   > .table-filter-group__fields-shell--inline,
 .participant-applications
@@ -73,8 +92,87 @@
 .general-volunteer-doc-passed__table-wrap,
 .general-volunteer-interview2__table-wrap {
   width: 100%;
+  max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
+  /* 래퍼 overflow-x:auto 시 sticky 고정 열이 깨져 본문 텍스트가 비침 — Ant Table content만 스크롤 */
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+.general-volunteer-screening__table-wrap .general-volunteer-screening__table.cms-data-table {
+  overflow-x: visible;
+  min-width: 0;
+  width: 100%;
+}
+
+.general-volunteer-screening__table-wrap .general-volunteer-screening__table .ant-table-container {
+  width: 100%;
+  min-width: 0;
+}
+
+.general-volunteer-screening__table-wrap .general-volunteer-screening__table .ant-table-content {
+  overflow-x: auto !important;
+  overscroll-behavior-x: contain;
+}
+
+/*
+ * cms-data-table 기본 width:100% 때문에 열 width가 늘어남 → 합계 폭으로 고정.
+ * 개별 열은 아래 !important 로 픽셀 고정 (UJAT 서류 심사와 동일).
+ */
+.general-volunteer-screening__table-wrap .general-volunteer-screening__table table.ant-table {
+  table-layout: fixed !important;
+  width: var(--general-doc-screening-table-width) !important;
+  min-width: var(--general-doc-screening-table-width) !important;
+  max-width: none !important;
+}
+
+.general-volunteer-screening th.general-volunteer-screening__col-name,
+.general-volunteer-screening td.general-volunteer-screening__col-name {
+  box-sizing: border-box !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.general-volunteer-screening th.general-volunteer-screening__col-contact,
+.general-volunteer-screening td.general-volunteer-screening__col-contact {
+  box-sizing: border-box !important;
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+}
+
+.general-volunteer-screening th.general-volunteer-screening__col-email,
+.general-volunteer-screening td.general-volunteer-screening__col-email {
+  box-sizing: border-box !important;
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+}
+
+.general-volunteer-screening th.general-volunteer-screening__col-ja-experience,
+.general-volunteer-screening td.general-volunteer-screening__col-ja-experience {
+  box-sizing: border-box !important;
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+}
+
+/* 서술형 1~3번: 700px 고정 */
+.general-volunteer-screening th.general-volunteer-screening__essay-cell,
+.general-volunteer-screening td.general-volunteer-screening__essay-cell {
+  box-sizing: border-box !important;
+  width: 700px !important;
+  min-width: 700px !important;
+  max-width: 700px !important;
+}
+
+/* 서술형 4번(초·중·고 당시): 740px 고정 */
+.general-volunteer-screening th.general-volunteer-screening__essay-cell--wide,
+.general-volunteer-screening td.general-volunteer-screening__essay-cell--wide {
+  width: 740px !important;
+  min-width: 740px !important;
+  max-width: 740px !important;
 }
 
 /*
@@ -121,6 +219,15 @@
   z-index: 4;
 }
 
+/* 행 hover: 고정·스크롤 열 모두 동일 불투명 mint (applicant-details #fafafa 오버라이드) */
+.general-volunteer-screening
+  .clickable-table
+  .ant-table-tbody
+  > tr.ant-table-row:hover:not(.ant-table-row-selected)
+  > td {
+  background: var(--general-volunteer-row-hover-bg) !important;
+}
+
 .general-volunteer-screening
   .clickable-table
   .ant-table-tbody
@@ -131,7 +238,7 @@
   .ant-table-tbody
   > tr.ant-table-row:hover:not(.ant-table-row-selected)
   > td.ant-table-cell-fix-left-last {
-  background: var(--color-table-row-hover, rgba(1, 161, 175, 0.06)) !important;
+  background: var(--general-volunteer-row-hover-bg) !important;
   z-index: 4;
 }
 

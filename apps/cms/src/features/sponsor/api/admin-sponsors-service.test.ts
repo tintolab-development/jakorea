@@ -8,28 +8,44 @@ vi.mock('@/shared/config/real-api-modules', () => ({
   isRealApiModuleEnabled: () => true,
 }))
 
+vi.mock('@/features/sponsor/api/sponsor-logo-upload', () => ({
+  uploadSponsorLogoFile: vi.fn(),
+}))
+
 vi.mock('@/features/sponsor/api/sponsors-api-client', async importOriginal => {
   const actual = await importOriginal<typeof import('@/features/sponsor/api/sponsors-api-client')>()
   return {
     ...actual,
+    createSponsorRemote: vi.fn(),
     fetchSponsorRemote: vi.fn(),
     fetchSponsorContactsRemote: vi.fn(),
     fetchYearlyBusinessesRemote: vi.fn(),
     addYearlyBusinessRemote: vi.fn(),
+    bulkDeleteSponsorContactsRemote: vi.fn(),
+    bulkDeleteSponsorProgramHistoriesRemote: vi.fn(),
     updateYearlyBusinessRemote: vi.fn(),
     updateSponsorContactRemote: vi.fn(),
+    updateSponsorRemote: vi.fn(),
   }
 })
 
+import { uploadSponsorLogoFile } from '@/features/sponsor/api/sponsor-logo-upload'
 import {
   addYearlyBusinessRemote,
+  bulkDeleteSponsorContactsRemote,
+  bulkDeleteSponsorProgramHistoriesRemote,
+  createSponsorRemote,
   fetchSponsorContactsRemote,
   fetchSponsorRemote,
   fetchYearlyBusinessesRemote,
+  updateSponsorRemote,
   updateSponsorContactRemote,
   updateYearlyBusinessRemote,
 } from '@/features/sponsor/api/sponsors-api-client'
 import {
+  createSponsor,
+  deleteSponsorContacts,
+  deleteSponsorProgramHistories,
   getSponsorContacts,
   getSponsorDetail,
   getSponsorYearlyBusinesses,
@@ -41,8 +57,86 @@ const fetchSponsorRemoteMock = vi.mocked(fetchSponsorRemote)
 const fetchSponsorContactsRemoteMock = vi.mocked(fetchSponsorContactsRemote)
 const fetchYearlyBusinessesRemoteMock = vi.mocked(fetchYearlyBusinessesRemote)
 const addYearlyBusinessRemoteMock = vi.mocked(addYearlyBusinessRemote)
+const bulkDeleteSponsorContactsRemoteMock = vi.mocked(bulkDeleteSponsorContactsRemote)
+const bulkDeleteSponsorProgramHistoriesRemoteMock = vi.mocked(
+  bulkDeleteSponsorProgramHistoriesRemote
+)
 const updateYearlyBusinessRemoteMock = vi.mocked(updateYearlyBusinessRemote)
 const updateSponsorContactRemoteMock = vi.mocked(updateSponsorContactRemote)
+const createSponsorRemoteMock = vi.mocked(createSponsorRemote)
+const updateSponsorRemoteMock = vi.mocked(updateSponsorRemote)
+const uploadSponsorLogoFileMock = vi.mocked(uploadSponsorLogoFile)
+
+describe('createSponsor', () => {
+  beforeEach(() => {
+    createSponsorRemoteMock.mockReset()
+    updateSponsorRemoteMock.mockReset()
+    uploadSponsorLogoFileMock.mockReset()
+  })
+
+  it('생성된 후원사 id로 로고를 업로드하고 fileObjectId를 PATCH한다', async () => {
+    const logoFile = new File(['logo'], 'sponsor.png', { type: 'image/png' })
+    createSponsorRemoteMock.mockResolvedValue({
+      id: '10',
+      name: '후원사',
+      createdAt: '2026-09-17T00:00:00Z',
+      updatedAt: '2026-09-17T00:00:00Z',
+    })
+    uploadSponsorLogoFileMock.mockResolvedValue(301)
+    updateSponsorRemoteMock.mockResolvedValue({
+      id: '10',
+      name: '후원사',
+      logoFileId: '301',
+      createdAt: '2026-09-17T00:00:00Z',
+      updatedAt: '2026-09-17T00:00:00Z',
+    })
+
+    const created = await createSponsor({
+      nameDisplayKo: '후원사',
+      nameDisplayEn: 'Sponsor',
+      organizationKind: 'corporate',
+      businessNumber: '',
+      sponsorshipStartDate: '2026-09-17T00:00:00.000Z',
+      sponsorshipStatus: 'active',
+      executives: '',
+      district: '',
+      detailAddress: '',
+      homepageUrl: '',
+      securityMemo: '',
+      logoFile,
+    })
+
+    expect(uploadSponsorLogoFileMock).toHaveBeenCalledWith(10, logoFile)
+    expect(updateSponsorRemoteMock).toHaveBeenCalledWith(
+      '10',
+      expect.objectContaining({ logoFileId: '301' })
+    )
+    expect(created.logoFileId).toBe('301')
+  })
+})
+
+describe('deleteSponsorContacts', () => {
+  it('선택한 담당자 id를 일괄 삭제 API에 전달한다', async () => {
+    bulkDeleteSponsorContactsRemoteMock.mockResolvedValue()
+
+    await deleteSponsorContacts(['201', '202'])
+
+    expect(bulkDeleteSponsorContactsRemoteMock).toHaveBeenCalledWith(['201', '202'])
+  })
+})
+
+describe('deleteSponsorProgramHistories', () => {
+  it('후원사 id와 선택 이력의 programId를 일괄 삭제 API에 전달한다', async () => {
+    bulkDeleteSponsorProgramHistoriesRemoteMock.mockResolvedValue()
+
+    await deleteSponsorProgramHistories('10', ['101', '102'])
+
+    expect(bulkDeleteSponsorProgramHistoriesRemoteMock).toHaveBeenCalledWith('10', [
+      '101',
+      '102',
+    ])
+  })
+})
 
 describe('getSponsorDetail', () => {
   beforeEach(() => {

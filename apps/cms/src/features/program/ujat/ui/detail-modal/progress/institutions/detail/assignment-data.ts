@@ -1,4 +1,4 @@
-import { getUjatInstitutionApplicationRowById } from '@/data/mock/ujat-institution-application-mock'
+import { getUjatInstitutionApplicationRowById } from '@/features/program/ujat/model/ujat-institution-application'
 import { parseGradeClassSectionValue } from '@/features/program/ujat/ui/detail-modal/application-institution/list/grade-class-sections'
 import type { UjatInstitutionApplicationGradeBlockDetail } from '../../../application-institution/detail/detail-types'
 import { getUjatScheduleAssignRegionState } from '../../../application-institution/schedule-assign/store'
@@ -6,7 +6,7 @@ import { UJAT_ELEMENTARY_TEXTBOOK_BY_GRADE } from './textbook'
 import {
   getAttendanceManagerForSchedule,
   getVolunteersForClass,
-} from './assignment-mock'
+} from './institution-assignment-data'
 import type { UjatEducationProgressInstitutionDetail } from './types'
 
 export type AssignmentClassRow = {

@@ -17,6 +17,8 @@ export type AdminActionKind =
   | 'approve'
   | 'send'
   | 'download'
+  | 'sponsorWrite'
+  | 'sponsorContactWrite'
   | 'pii'
   | 'piiRrn'
   | 'piiAccount'
@@ -26,6 +28,7 @@ export type AdminPolicyScreen =
   | 'security-logs'
   | 'admin-permission-approval'
   | 'permission-settings'
+  | 'template-management'
 
 export const ADMIN_ACCESS_DENIED_ALERT_TITLE = '접근 권한이 없습니다.'
 export const ADMIN_ACCESS_DENIED_ALERT_CONTENT =
@@ -114,12 +117,32 @@ export function isPermissionSettingsPath(pathname: string): boolean {
   )
 }
 
+export function isPermissionRequestsPath(pathname: string): boolean {
+  const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
+  return (
+    normalized === '/admin/permission-requests' ||
+    normalized.startsWith('/admin/permission-requests/')
+  )
+}
+
+/** 템플릿 관리(`/templates`, form-management·레거시 program-forms 등) */
+export function isTemplateManagementPath(pathname: string): boolean {
+  const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
+  return normalized === '/templates' || normalized.startsWith('/templates/')
+}
+
 export function resolveAdminPolicyScreen(pathname: string | undefined): AdminPolicyScreen {
   if (!pathname) return 'default'
   const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
   if (isSecurityLogPath(normalized)) return 'security-logs'
   if (isPermissionSettingsPath(normalized)) {
     return 'permission-settings'
+  }
+  if (isPermissionRequestsPath(normalized)) {
+    return 'admin-permission-approval'
+  }
+  if (isTemplateManagementPath(normalized)) {
+    return 'template-management'
   }
   return 'default'
 }
@@ -135,15 +158,25 @@ export function canAdminAction(input: {
 
   if (roleCode == null) {
     return (
-      input.action === 'view' && screen !== 'security-logs' && screen !== 'permission-settings'
+      input.action === 'view' &&
+      screen !== 'security-logs' &&
+      screen !== 'permission-settings' &&
+      screen !== 'admin-permission-approval' &&
+      screen !== 'template-management'
     )
   }
 
   switch (input.action) {
     case 'view':
       if (screen === 'security-logs') return roleCode === 'MASTER'
-      // 관리자 권한 설정: 뷰어는 화면 조회 자체 불가 (메뉴 클릭 시 권한 없음 모달)
-      if (screen === 'permission-settings') return roleCode !== 'VIEWER'
+      // 관리자 권한 설정·회원 권한 승인·템플릿 관리: 뷰어는 화면 조회 자체 불가
+      if (
+        screen === 'permission-settings' ||
+        screen === 'admin-permission-approval' ||
+        screen === 'template-management'
+      ) {
+        return roleCode !== 'VIEWER'
+      }
       return true
     case 'write':
     case 'delete':
@@ -154,6 +187,13 @@ export function canAdminAction(input: {
       // DASHBOARD_WRITE: 본인 레이아웃·설정만. PROGRAM_WRITE와 묶지 않음.
       // V80: MASTER / PM / VIEWER. PARTNER는 서버 미부여.
       return roleCode === 'MASTER' || roleCode === 'PM' || roleCode === 'VIEWER'
+    case 'sponsorContactWrite':
+      // 후원사 상세 > 담당자 목록 CRUD: VIEWER는 조회만.
+      return roleCode !== 'VIEWER'
+    case 'sponsorWrite':
+      // 후원사 기본정보·후원상태 수정: VIEWER는 조회만.
+      // 엑셀 다운로드와 후원사 삭제는 각각 download/delete 정책으로 별도 판정.
+      return roleCode !== 'VIEWER'
     case 'approve':
       if (screen === 'admin-permission-approval' || screen === 'permission-settings') {
         return roleCode === 'MASTER'
@@ -224,8 +264,9 @@ export function denyAdminActionEvent(
 /** 목록 툴바·상세 헤더 등 공유 액션 영역의 클릭을 write로 가로챈다. */
 export function onAdminWriteClickCapture(
   event: DomClickEvent,
-  roleCode?: AdminRoleCode | null
+  roleCode?: AdminRoleCode | null,
+  action: AdminActionKind = 'write'
 ): void {
   if (!isInteractiveClickTarget(event.target)) return
-  denyAdminActionEvent(event, { roleCode, action: 'write' })
+  denyAdminActionEvent(event, { roleCode, action })
 }

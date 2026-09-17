@@ -1,6 +1,6 @@
 /**
  * 일반 프로그램 등록 폼 — API 연동 전 임시 저장 (localStorage).
- * `/programs/general` 목록·상세 mock 병합용.
+ * 등록 에디터 재개용이며 관리 목록 카탈로그에 합치지 않는다.
  */
 
 import dayjs from 'dayjs'
@@ -24,8 +24,6 @@ import { createGeneralProgram } from '@/features/program/general/api/admin-gener
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
-import { mockSponsors } from '@/data/mock/sponsors'
-import { publishRegisteredProgramToMockCatalog } from '@/features/program/shared/lib/publish-mock-program-catalog'
 import { resolveScheduleTypeDetailedProgramNameFromDetails } from '@/features/program/general/lib/detail-common-info-display'
 import {
   getProgramRegistrationOverlayRecord,
@@ -33,8 +31,10 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import {
   applyGeneralRegistrationOverlayToProgram,
+  normalizeRegistrationOverlayForApply,
   type GeneralRegistrationEditorExtras,
 } from '@/features/program/general/lib/registration-overlay-to-program'
+import { readRegistrationOverlaySponsorId } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
@@ -59,7 +59,7 @@ export type GeneralRegistrationLocalSaveRecord = {
 }
 
 function resolveDefaultSponsorId(): string {
-  return mockSponsors[0]?.id ?? 'sponsor-1'
+  return ''
 }
 
 function cloneJson<T>(value: T): T {
@@ -171,7 +171,11 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
       ? ['school_institution']
       : participantTypesFromState(args.participant)
   const capacity = 30
-  const sponsorId = args.sponsorId?.trim() || resolveDefaultSponsorId()
+  const overlaySponsorId = isTrainedTeachers
+    ? readRegistrationOverlaySponsorId('trainedTeachers')
+    : readRegistrationOverlaySponsorId('general')
+  const sponsorId =
+    args.sponsorId?.trim() || overlaySponsorId || (isTrainedTeachers ? '' : resolveDefaultSponsorId())
 
   const rounds: ProgramRound[] = [
     {
@@ -323,20 +327,21 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     updatedAt: now,
   }
 
-  if (isCompanySchool || isTrainedTeachers) return base
+  if (isCompanySchool) return base
 
-  const withRegistration = applyGeneralRegistrationOverlayToProgram(
-    base,
+  const overlay = normalizeRegistrationOverlayForApply(
     getProgramRegistrationOverlayRecord(),
-    {
-      programType: args.programType,
-      sessionRoundType: args.sessionRoundType ?? 'single',
-      educationScheduleMode: args.educationScheduleMode,
-      scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
-      participantOrganization: args.participant.organization,
-      ...args.editorExtras,
-    }
+    isTrainedTeachers ? 'trainedTeachers' : 'general'
   )
+
+  const withRegistration = applyGeneralRegistrationOverlayToProgram(base, overlay, {
+    programType: isTrainedTeachers ? 'curriculum' : args.programType,
+    sessionRoundType: isTrainedTeachers ? 'single' : (args.sessionRoundType ?? 'single'),
+    educationScheduleMode: args.educationScheduleMode,
+    scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
+    participantOrganization: isTrainedTeachers ? true : args.participant.organization,
+    ...args.editorExtras,
+  })
 
   return applyGeneralRecruitOverlayToProgram(
     withRegistration,
@@ -480,8 +485,6 @@ export function persistGeneralRegistrationFormLocal(args: {
   const prev = readGeneralRegistrationLocalSaveRecords()
   const nextFile: LocalSaveFile = { version: 1, items: [...prev, record] }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(nextFile))
-
-  void publishRegisteredProgramToMockCatalog(program)
 
   return program
 }

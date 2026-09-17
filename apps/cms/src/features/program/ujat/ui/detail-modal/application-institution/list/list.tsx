@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
@@ -8,12 +8,11 @@ import type { UjatInstitutionApplicationRegionKey } from './regions'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './filter-fields'
 import { UjatInstitutionApplicationRegionTabs } from './region-tabs'
 import { UjatInstitutionApplicationCalendarView } from './calendar-view'
-import {
-  UJAT_INSTITUTION_APPLICATION_TABLE_MIN_SCROLL_X,
-} from './columns'
+import { UJAT_INSTITUTION_APPLICATION_TABLE_MIN_SCROLL_X } from './columns'
 import type { UjatInstitutionApplicationRow } from './types'
 import { useUjatInstitutionApplicationList } from './use-list'
 import { UjatInstitutionApplicationActionModal } from './action-modal'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import './list.css'
 
 export function UjatInstitutionApplicationList({
@@ -45,7 +44,17 @@ export function UjatInstitutionApplicationList({
     confirmApplicationRejectModal,
     selectedApplications,
     resetRegionState,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    infiniteScrollResetKey,
   } = useUjatInstitutionApplicationList(activeRegion, programId)
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: infiniteScrollResetKey,
+  })
   useEffect(() => {
     resetRegionState()
   }, [activeRegion, resetRegionState])
@@ -173,6 +182,9 @@ export function UjatInstitutionApplicationList({
             onOpenDetail={onOpenDetail}
           />
         )}
+        <div ref={loadMoreRef} aria-hidden={!isFetchingNextPage} style={{ minHeight: 1 }}>
+          {isFetchingNextPage ? <Spin size="small" /> : null}
+        </div>
       </FilterTableLayout>
       {viewMode === 'calendar' ? (
         <div className="ujat-institution-application-list__page-bottom-spacer" aria-hidden />

@@ -12,7 +12,7 @@ import {
   type UjatSatisfactionAudienceKey,
   type UjatSatisfactionSurveyByAudience,
 } from '../lib/ujat-satisfaction-survey'
-import type { UjatSurveyPollRawResponse } from '@/data/mock/ujat-survey-poll-responses-mock'
+import type { UjatSurveyPollRawResponse } from '@/features/program/ujat/model/ujat-survey-poll'
 import { UjatSurveyEmptyState } from './ujat-survey-empty-state'
 import { UjatSurveyNoResponseState } from './ujat-survey-no-response-state'
 import { UjatSurveyPollResultsView } from './ujat-survey-poll-results-view'

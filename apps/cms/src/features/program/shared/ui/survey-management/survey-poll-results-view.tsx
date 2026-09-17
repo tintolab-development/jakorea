@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   UJAT_SURVEY_POLL_RESPONSES_MOCK,
-} from '@/data/mock/ujat-survey-poll-responses-mock'
+} from '@/features/program/ujat/model/ujat-survey-poll'
 import { WRITING_FORM_TEMPLATE_SAVE_EVENT } from '@/features/template/lib/writing-form-template-local-save'
 import {
   buildSurveyPollResultSections,
+  type SurveyPollResultSection,
 } from '../../lib/survey-management/aggregate-survey-poll-results'
 import type { SurveyPollRawResponse } from '../../lib/survey-management/survey-management-types'
 import { SurveyScaleResultChart } from './survey-scale-result-chart'
@@ -27,6 +28,7 @@ export function SurveyPollResultsView({
   pdfTitle = '강의 평가 결과',
 }: SurveyPollResultsViewProps) {
   const [templateSaveRevision, setTemplateSaveRevision] = useState(0)
+  const [sections, setSections] = useState<SurveyPollResultSection[]>([])
 
   useEffect(() => {
     const handleTemplateSaved = (event: Event) => {
@@ -39,10 +41,18 @@ export function SurveyPollResultsView({
     return () => window.removeEventListener(WRITING_FORM_TEMPLATE_SAVE_EVENT, handleTemplateSaved)
   }, [templateId])
 
-  const sections = useMemo(
-    () => buildSurveyPollResultSections(templateId, responses ?? UJAT_SURVEY_POLL_RESPONSES_MOCK),
-    [templateId, responses, templateSaveRevision]
-  )
+  useEffect(() => {
+    let cancelled = false
+    void buildSurveyPollResultSections(
+      templateId,
+      responses ?? UJAT_SURVEY_POLL_RESPONSES_MOCK
+    ).then(next => {
+      if (!cancelled) setSections(next)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [templateId, responses, templateSaveRevision])
 
   const summary = (
     <>

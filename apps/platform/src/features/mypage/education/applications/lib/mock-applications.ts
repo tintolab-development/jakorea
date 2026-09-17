@@ -74,6 +74,12 @@ function createMockTeacherApplicationContent(): EducationTeacherApplicationConte
       otherNotes:
         "본교 주차장이 협소한 관계로 학교 바로 옆 '운남동 공영주차장' 이용 부탁드립니다!",
       sexOffenseConsentMethod: '온라인 제출 | ID: tinto | 검증번호: 940412',
+      sexOffenseConsent: {
+        inquiryMethod: 'criminal_record_site',
+        siteSubmission: 'online',
+        orgId: 'tinto',
+        verificationCode: '940412',
+      },
     },
     preferredSchedules: [
       {
@@ -98,7 +104,12 @@ export function updateMockTeacherApplicationGuidance(
   guidance: EducationTeacherApplicationGuidance,
 ): void {
   if (!shouldUsePlatformMockData()) return
-  teacherGuidanceOverrides.set(applicationId, { ...guidance })
+  teacherGuidanceOverrides.set(applicationId, {
+    ...guidance,
+    sexOffenseConsent: guidance.sexOffenseConsent
+      ? { ...guidance.sexOffenseConsent }
+      : undefined,
+  })
   emitMockEducationApplicationsChange()
 }
 
@@ -273,7 +284,12 @@ function buildEducationApplications(): EducationApplicationListItem[] {
         const content = createMockTeacherApplicationContent()
         const guidanceOverride = teacherGuidanceOverrides.get(item.id)
         if (guidanceOverride) {
-          content.guidance = { ...guidanceOverride }
+          content.guidance = {
+            ...guidanceOverride,
+            sexOffenseConsent: guidanceOverride.sexOffenseConsent
+              ? { ...guidanceOverride.sexOffenseConsent }
+              : undefined,
+          }
         }
         item.teacherApplicationContent = content
       }

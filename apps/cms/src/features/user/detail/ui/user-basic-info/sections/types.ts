@@ -24,7 +24,7 @@ export interface BasicInfoSectionContext {
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
   cmsMayEditBasicProfileFields: boolean
-  /** 본인인증 완료 후 강사·교사 — 강사비·JA만 인라인 수정 (레이아웃은 view 유지) */
+  /** 본인인증 완료 후 강사·겸직 — 강사비·JA만 (`instructor_fee_ja` scope; 레이아웃은 view 유지) */
   feeJaRestrictedEdit?: boolean
   adminPermissionVariantPatching?: boolean
   onPatchAdminPermissionVariantFromDetailView?: (

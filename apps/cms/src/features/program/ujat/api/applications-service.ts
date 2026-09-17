@@ -1,6 +1,7 @@
 import {
   fetchOrganizationApplicationsRemote,
   fetchVolunteerApplicationsRemote,
+  type ApplicationsListQuery,
 } from '@/features/program/general/api/applications-api-client'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import {
@@ -8,13 +9,11 @@ import {
   mapVolunteerApplicationToUjatApplicantRow,
 } from '@/features/program/ujat/api/applications-adapters'
 import type { UjatInstitutionApplicationRow } from '@/features/program/ujat/ui/detail-modal/application-institution/list/types'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import {
-  sortUjatVolunteerApplicants,
-  sortUjatVolunteerDocPassedApplicants,
-} from '@/data/mock/ujat-volunteer-applicants-mock'
+import { sortUjatVolunteerApplicants } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { GENERAL_PROGRAM_LIST_PAGE_SIZE } from '@/features/program/general/api/general-program-list-filter-params'
+import { toUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 
 const PAGE_SIZE = GENERAL_PROGRAM_LIST_PAGE_SIZE
 
@@ -25,92 +24,95 @@ function assertApplicationsRemoteReady(): void {
   )
 }
 
-function filterDocPassed(rows: UjatVolunteerApplicantRow[]): UjatVolunteerApplicantRow[] {
-  return rows.filter(row => row.documentScreeningStatus === 'pass')
+export type UjatInstitutionApplicationsPage = {
+  rows: UjatInstitutionApplicationRow[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
 }
 
-function filterInterview2(rows: UjatVolunteerApplicantRow[]): UjatVolunteerApplicantRow[] {
-  return rows.filter(
-    row =>
-      row.documentScreeningStatus === 'pass' &&
-      (row.interviewAssignmentStatus === 'assigned' ||
-        row.interviewAssignmentStatus === 'withdrawn')
-  )
+export type UjatVolunteerApplicationsPage = {
+  rows: UjatVolunteerApplicantRow[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
 }
 
-/** size=20 페이지를 이어 받아 상세 탭용 전체 목록 구성 (테이블 infinite UI는 후속) */
-async function fetchAllOrganizationApplicationItems(programId: string) {
-  const items = []
-  let page = 0
-  for (;;) {
-    const result = await fetchOrganizationApplicationsRemote(programId, {
-      page,
-      size: PAGE_SIZE,
-    })
-    const chunk = result.items ?? []
-    items.push(...chunk)
-    const size = result.size ?? PAGE_SIZE
-    const current = result.page ?? page
-    const total = result.totalElements ?? items.length
-    const totalPages = result.totalPages ?? (size > 0 ? Math.ceil(total / size) : current + 1)
-    if (chunk.length === 0 || current + 1 >= totalPages) break
-    page = current + 1
+function resolvePageMeta(input: {
+  itemCount: number
+  requestedPage: number
+  page?: number
+  size?: number
+  totalElements?: number
+  totalPages?: number
+}) {
+  const size = input.size ?? PAGE_SIZE
+  const page = input.page ?? input.requestedPage
+  const totalElements = input.totalElements ?? page * size + input.itemCount
+  const totalPages = input.totalPages ?? (size > 0 ? Math.ceil(totalElements / size) : page + 1)
+  return {
+    page,
+    size,
+    totalElements,
+    hasMore: page + 1 < totalPages,
   }
-  return items
 }
 
-async function fetchAllVolunteerApplicationItems(programId: string) {
-  const items = []
-  let page = 0
-  for (;;) {
-    const result = await fetchVolunteerApplicationsRemote(programId, {
-      page,
-      size: PAGE_SIZE,
-    })
-    const chunk = result.items ?? []
-    items.push(...chunk)
-    const size = result.size ?? PAGE_SIZE
-    const current = result.page ?? page
-    const total = result.totalElements ?? items.length
-    const totalPages = result.totalPages ?? (size > 0 ? Math.ceil(total / size) : current + 1)
-    if (chunk.length === 0 || current + 1 >= totalPages) break
-    page = current + 1
+export async function listUjatInstitutionApplicationsPage(
+  programId: string,
+  pageParam = 0,
+  query: ApplicationsListQuery = {}
+): Promise<UjatInstitutionApplicationsPage> {
+  assertApplicationsRemoteReady()
+  const response = await fetchOrganizationApplicationsRemote(programId, {
+    page: pageParam,
+    size: PAGE_SIZE,
+    ...query,
+  })
+  const meta = resolvePageMeta({
+    itemCount: response.items?.length ?? 0,
+    requestedPage: pageParam,
+    page: response.page,
+    size: response.size,
+    totalElements: response.totalElements,
+    totalPages: response.totalPages,
+  })
+  return {
+    ...meta,
+    rows: (response.items ?? []).map((dto, index) =>
+      mapOrganizationApplicationToUjatInstitutionRow(dto, meta.page * meta.size + index)
+    ),
   }
-  return items
 }
 
-export async function listUjatInstitutionApplications(
-  programId: string
-): Promise<UjatInstitutionApplicationRow[]> {
-  assertApplicationsRemoteReady()
-  const items = await fetchAllOrganizationApplicationItems(programId)
-  return items.map((dto, index) => mapOrganizationApplicationToUjatInstitutionRow(dto, index))
-}
-
-export async function listUjatVolunteerApplications(
+export async function listUjatVolunteerApplicationsPage(
   programId: string,
-  half: UjatVolunteerRecruitHalf
-): Promise<UjatVolunteerApplicantRow[]> {
+  half: UjatVolunteerRecruitHalf,
+  pageParam = 0,
+  query: ApplicationsListQuery = {}
+): Promise<UjatVolunteerApplicationsPage> {
   assertApplicationsRemoteReady()
-  const items = await fetchAllVolunteerApplicationItems(programId)
-  return sortUjatVolunteerApplicants(
-    items.map((dto, index) =>
-      mapVolunteerApplicationToUjatApplicantRow(dto, index, programId, half)
-    )
+  const response = await fetchVolunteerApplicationsRemote(programId, {
+    page: pageParam,
+    size: PAGE_SIZE,
+    ...query,
+    recruitHalf: toUjatRecruitHalfApi(half),
+  })
+  const meta = resolvePageMeta({
+    itemCount: response.items?.length ?? 0,
+    requestedPage: pageParam,
+    page: response.page,
+    size: response.size,
+    totalElements: response.totalElements,
+    totalPages: response.totalPages,
+  })
+  const rows = (response.items ?? []).map((dto, index) =>
+    mapVolunteerApplicationToUjatApplicantRow(dto, meta.page * meta.size + index, programId, half)
   )
-}
-
-export async function listUjatVolunteerDocPassedApplications(
-  programId: string,
-  half: UjatVolunteerRecruitHalf
-): Promise<UjatVolunteerApplicantRow[]> {
-  const all = await listUjatVolunteerApplications(programId, half)
-  return sortUjatVolunteerDocPassedApplicants(filterDocPassed(all))
-}
-
-export async function listUjatVolunteerInterview2Applications(
-  programId: string,
-  half: UjatVolunteerRecruitHalf
-): Promise<UjatVolunteerApplicantRow[]> {
-  return filterInterview2(await listUjatVolunteerApplications(programId, half))
+  return {
+    ...meta,
+    rows: sortUjatVolunteerApplicants(rows),
+  }
 }

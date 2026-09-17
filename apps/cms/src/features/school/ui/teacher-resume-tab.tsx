@@ -12,7 +12,7 @@ import {
   ProgramDetailTdDivider,
   withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
-import '@/features/program/general/ui/applicant-instructor-detail-modal.css'
+import './teacher-resume-tab.css'
 
 function getEducationLevelBadge(educationLevel?: string, schoolType?: string): string {
   const raw = schoolType ?? educationLevel ?? ''

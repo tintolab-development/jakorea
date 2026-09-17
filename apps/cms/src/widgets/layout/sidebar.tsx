@@ -14,8 +14,10 @@ import {
 } from '@/shared/config/member-list-kinds'
 import {
   canAdminAction,
+  isPermissionRequestsPath,
   isPermissionSettingsPath,
   isSecurityLogPath,
+  isTemplateManagementPath,
   showAdminAccessDeniedAlert,
 } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
@@ -205,6 +207,20 @@ export function Sidebar() {
             if (
               isPermissionSettingsPath(key) &&
               !canAdminAction({ roleCode, action: 'view', screen: 'permission-settings' })
+            ) {
+              showAdminAccessDeniedAlert()
+              return
+            }
+            if (
+              isPermissionRequestsPath(key) &&
+              !canAdminAction({ roleCode, action: 'view', screen: 'admin-permission-approval' })
+            ) {
+              showAdminAccessDeniedAlert()
+              return
+            }
+            if (
+              isTemplateManagementPath(key) &&
+              !canAdminAction({ roleCode, action: 'view', screen: 'template-management' })
             ) {
               showAdminAccessDeniedAlert()
               return

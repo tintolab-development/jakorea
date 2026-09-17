@@ -14,6 +14,8 @@ export type UjatVolunteerInterviewAssignCompleteModalProps = {
   applicantName: string
   mode: 'assign' | 'reassign'
   payload: UjatInterviewAssignConfirmPayload
+  /** 본문 호칭 — 기본 `봉사자`, 참여자 신청 목록에서는 `참여자` */
+  subjectNoun?: string
   onClose: () => void
 }
 
@@ -30,6 +32,7 @@ export function UjatVolunteerInterviewAssignCompleteModal({
   applicantName,
   mode,
   payload,
+  subjectNoun = '봉사자',
   onClose,
 }: UjatVolunteerInterviewAssignCompleteModalProps) {
   const title = mode === 'reassign' ? '면접일 재배정 완료' : '면접일 배정 완료'
@@ -45,7 +48,7 @@ export function UjatVolunteerInterviewAssignCompleteModal({
       width={MODAL_WIDTH}
       zIndex={MODAL_Z_INDEX}
       className="ujat-volunteer-interview-assign-complete-modal"
-      description={`**[${applicantName}]** 봉사자의 ${descriptionAction}`}
+      description={`**[${applicantName}]** ${subjectNoun}의 ${descriptionAction}`}
       footer={
         <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>
           확인

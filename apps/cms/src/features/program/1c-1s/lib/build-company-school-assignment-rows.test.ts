@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { buildCompanySchoolWaitingInstructorRows } from './build-company-school-assignment-rows'
+import {
+  buildCompanySchoolAssignedInstructorRows,
+  buildCompanySchoolWaitingInstructorRows,
+} from './build-company-school-assignment-rows'
 
 describe('buildCompanySchoolWaitingInstructorRows', () => {
   it('희망일(session)이 없으면 행을 만들지 않는다 (가짜 일정 금지)', () => {
@@ -85,5 +88,38 @@ describe('buildCompanySchoolWaitingInstructorRows', () => {
     expect(rows[0]?.assignmentStatus).toBe('unavailable')
     expect(rows[0]?.scheduleUnresolved).toBe(true)
     expect(rows[0]?.hopeScheduleLine).toContain('일정 미생성')
+  })
+})
+
+describe('buildCompanySchoolAssignedInstructorRows', () => {
+  it('배정 응답의 organizationId를 그대로 전달한다', () => {
+    const rows = buildCompanySchoolAssignedInstructorRows({
+      organizationApplicationId: '9001',
+      instructorNameByMemberId: new Map([['170024', '한서연']]),
+      scheduleLabelById: new Map(),
+      assignments: [
+        {
+          assignmentId: 1,
+          organizationApplicationId: 9001,
+          organizationId: 8801,
+          organizationName: '인천가온고등학교',
+          instructorMemberId: 170024,
+          assignmentStatus: 'ASSIGNED',
+          scheduleLead: true,
+        },
+        {
+          assignmentId: 2,
+          organizationApplicationId: 9001,
+          organizationId: null,
+          instructorMemberId: 170025,
+          assignmentStatus: 'ASSIGNED',
+        },
+      ],
+    })
+
+    expect(rows).toHaveLength(2)
+    expect(rows[0]?.organizationId).toBe(8801)
+    expect(rows[0]?.organizationName).toBe('인천가온고등학교')
+    expect(rows[1]?.organizationId).toBeNull()
   })
 })

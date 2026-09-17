@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   filterGeneralProgramsByOverviewStatus,
+  mapAdminProgramDetailToProgram,
   mapAdminProgramListItemToProgram,
+  mapGeneralApiProgramTypeToAudience,
   mapGeneralProgramToCreateRequest,
   mapGeneralProgramToUpdateRequest,
 } from '@/features/program/general/api/adapters/general-program-adapters'
 import type { Program } from '@/types/domain'
+import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 
 const sampleProgram: Program = {
   id: 'prog-1',
@@ -54,6 +57,72 @@ describe('general-program-adapters', () => {
     expect(program.title).toBe('JA 코리아 금융교육')
     expect(program.lifecycleStatus).toBe('recruiting_students')
     expect(program.startDate).toBe('2026-03-01')
+  })
+
+  it('maps list programType GENERAL_INDIVIDUAL to individual category/audience', () => {
+    const program = mapAdminProgramListItemToProgram({
+      id: 5002,
+      title: '개인 프로그램',
+      programType: 'GENERAL_INDIVIDUAL',
+    })
+    expect(program.category).toBe('individual')
+    expect(program.generalProgramAudience).toBe('individual')
+  })
+
+  it('maps list programType GENERAL_ORGANIZATION to school category/audience', () => {
+    const program = mapAdminProgramListItemToProgram({
+      id: 5003,
+      title: '기관 프로그램',
+      programType: 'GENERAL_ORGANIZATION',
+    })
+    expect(program.category).toBe('school')
+    expect(program.generalProgramAudience).toBe('organization')
+  })
+
+  it('prefers programType over category school for individual detail', () => {
+    const program = mapAdminProgramDetailToProgram({
+      id: '168010',
+      programType: 'GENERAL_INDIVIDUAL',
+      category: 'school',
+      title: '개인인데 category school',
+    } as ProgramResponse)
+    expect(program.category).toBe('individual')
+    expect(program.generalProgramAudience).toBe('individual')
+  })
+
+  it('keeps serviceDetail audience when present on detail', () => {
+    const program = mapAdminProgramDetailToProgram({
+      id: '168011',
+      programType: 'GENERAL_ORGANIZATION',
+      title: 'serviceDetail audience wins',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        generalProgramAudience: 'individual',
+        generalParticipantTypes: ['individual'],
+      }),
+    } as ProgramResponse)
+    expect(program.generalProgramAudience).toBe('individual')
+    expect(program.category).toBe('individual')
+  })
+
+  it('mapGeneralApiProgramTypeToAudience covers GENERAL_* values', () => {
+    expect(mapGeneralApiProgramTypeToAudience('GENERAL_INDIVIDUAL')).toEqual({
+      audience: 'individual',
+      category: 'individual',
+    })
+    expect(mapGeneralApiProgramTypeToAudience('GENERAL_ORGANIZATION')).toEqual({
+      audience: 'organization',
+      category: 'school',
+    })
+    expect(mapGeneralApiProgramTypeToAudience('GENERAL')).toBeNull()
+  })
+
+  it('maps RECRUITING periodStatus to scheduled UI bucket (예정 별칭, 모집 아님)', () => {
+    const program = mapAdminProgramListItemToProgram({
+      id: 1,
+      periodStatus: 'RECRUITING',
+    })
+    expect(program.lifecycleStatus).toBe('recruiting_students')
   })
 
   it('prefers typed lifecycleStatus over periodStatus', () => {

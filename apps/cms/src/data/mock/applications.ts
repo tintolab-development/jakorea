@@ -107,114 +107,122 @@ const statuses: Application['status'][] = [
 ]
 const subjectTypes: Application['subjectType'][] = ['school', 'student', 'instructor', 'volunteer']
 
-// 기본 50개 Application 생성
-const baseApplications: Application[] = Array.from({ length: 50 }, (_, index) => {
-  const programIndex = Math.floor(Math.random() * mockPrograms.length)
-  const program = mockPrograms[programIndex]
-  const hasRound = program.rounds.length > 0 && Math.random() > 0.3
-  const roundIndex = hasRound ? Math.floor(Math.random() * program.rounds.length) : null
-  const subjectType = subjectTypes[Math.floor(Math.random() * subjectTypes.length)]
-  const subjectIndex = Math.floor(Math.random() * 30)
-  const status = statuses[Math.floor(Math.random() * statuses.length)]
-  const daysAgo = Math.floor(Math.random() * 30) + 1
-  const reviewedDaysAgo = status !== 'submitted' ? Math.floor(Math.random() * daysAgo) : undefined
+// 프로그램 mock 시드 제거(실제 API) — 파생 신청 mock도 비움
+const hasProgramSeeds = mockPrograms.length > 0
 
-  return createApplication(
-    `app-${String(index + 1).padStart(3, '0')}`,
-    programIndex,
-    roundIndex,
-    subjectType,
-    subjectIndex,
-    status,
-    daysAgo,
-    reviewedDaysAgo
-  )
-})
+// 기본 50개 Application 생성
+const baseApplications: Application[] = !hasProgramSeeds
+  ? []
+  : Array.from({ length: 50 }, (_, index) => {
+      const programIndex = Math.floor(Math.random() * mockPrograms.length)
+      const program = mockPrograms[programIndex]
+      const hasRound = program.rounds.length > 0 && Math.random() > 0.3
+      const roundIndex = hasRound ? Math.floor(Math.random() * program.rounds.length) : null
+      const subjectType = subjectTypes[Math.floor(Math.random() * subjectTypes.length)]
+      const subjectIndex = Math.floor(Math.random() * 30)
+      const status = statuses[Math.floor(Math.random() * statuses.length)]
+      const daysAgo = Math.floor(Math.random() * 30) + 1
+      const reviewedDaysAgo = status !== 'submitted' ? Math.floor(Math.random() * daysAgo) : undefined
+
+      return createApplication(
+        `app-${String(index + 1).padStart(3, '0')}`,
+        programIndex,
+        roundIndex,
+        subjectType,
+        subjectIndex,
+        status,
+        daysAgo,
+        reviewedDaysAgo
+      )
+    })
 
 // Phase 4.1: 참여자 조회를 위한 추가 school/student 타입 Application (30개 추가)
-const participantApplications: Application[] = Array.from({ length: 30 }, (_, index) => {
-  const programIndex = Math.floor(Math.random() * mockPrograms.length)
-  const program = mockPrograms[programIndex]
-  const hasRound = program.rounds.length > 0 && Math.random() > 0.3
-  const roundIndex = hasRound ? Math.floor(Math.random() * program.rounds.length) : null
-  // school과 student 타입만 생성 (참여자 조회용)
-  const subjectType = Math.random() > 0.5 ? 'school' : 'student'
-  // Phase 0.1.1: mockIndividualUsers, mockSchoolUsers 포함
-  const subjectIndex = Math.floor(
-    Math.random() *
-      Math.max(
-        mockSchools.length,
-        mockIndividualUsers.length,
-        mockSchoolUsers.length
+const participantApplications: Application[] = !hasProgramSeeds
+  ? []
+  : Array.from({ length: 30 }, (_, index) => {
+      const programIndex = Math.floor(Math.random() * mockPrograms.length)
+      const program = mockPrograms[programIndex]
+      const hasRound = program.rounds.length > 0 && Math.random() > 0.3
+      const roundIndex = hasRound ? Math.floor(Math.random() * program.rounds.length) : null
+      // school과 student 타입만 생성 (참여자 조회용)
+      const subjectType = Math.random() > 0.5 ? 'school' : 'student'
+      // Phase 0.1.1: mockIndividualUsers, mockSchoolUsers 포함
+      const subjectIndex = Math.floor(
+        Math.random() *
+          Math.max(
+            mockSchools.length,
+            mockIndividualUsers.length,
+            mockSchoolUsers.length
+          )
       )
-  )
-  const status = statuses[Math.floor(Math.random() * statuses.length)]
-  const daysAgo = Math.floor(Math.random() * 60) + 1
-  const reviewedDaysAgo = status !== 'submitted' ? Math.floor(Math.random() * daysAgo) : undefined
+      const status = statuses[Math.floor(Math.random() * statuses.length)]
+      const daysAgo = Math.floor(Math.random() * 60) + 1
+      const reviewedDaysAgo = status !== 'submitted' ? Math.floor(Math.random() * daysAgo) : undefined
 
-  return createApplication(
-    `app-participant-${String(index + 1).padStart(3, '0')}`,
-    programIndex,
-    roundIndex,
-    subjectType,
-    subjectIndex,
-    status,
-    daysAgo,
-    reviewedDaysAgo
-  )
-})
+      return createApplication(
+        `app-participant-${String(index + 1).padStart(3, '0')}`,
+        programIndex,
+        roundIndex,
+        subjectType,
+        subjectIndex,
+        status,
+        daysAgo,
+        reviewedDaysAgo
+      )
+    })
 
 // 회원 상세 > 프로그램 수강 이력 탭용: 특정 회원(목록 상 첫 사용자)에게 수강 이력 2~3건 추가
 const memberEnrollmentUser = mockUsers[0] // 목록 첫 번째 회원(관리자 김관리) — 수강 이력 노출용
-const memberEnrollmentApplications: Application[] = memberEnrollmentUser
-  ? (() => {
-      const program = mockPrograms[0]
-      const round = program.rounds?.[0] ?? null
-      const baseTime = new Date()
-      baseTime.setDate(baseTime.getDate() - 14)
-      return [
-        {
-          id: 'app-member-enrollment-1',
-          programId: program.id,
-          roundId: round?.id,
-          applicationPathId: getApplicationPathByProgramId(program.id)?.id,
-          subjectType: 'student' as const,
-          subjectId: memberEnrollmentUser.id as UUID,
-          status: 'approved' as const,
-          progressStatus: 'REPORT_SUBMITTED' as ApplicationProgressStatus,
-          submittedAt: new Date(baseTime.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          reviewedAt: new Date(baseTime.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-          createdAt: new Date(baseTime.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: baseTime.toISOString(),
-        },
-        {
-          id: 'app-member-enrollment-2',
-          programId: program.id,
-          roundId: round?.id,
-          applicationPathId: getApplicationPathByProgramId(program.id)?.id,
-          subjectType: 'student' as const,
-          subjectId: memberEnrollmentUser.id as UUID,
-          status: 'approved' as const,
-          progressStatus: 'IN_PROGRESS' as ApplicationProgressStatus,
-          submittedAt: new Date(baseTime.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-          reviewedAt: new Date(baseTime.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-          createdAt: new Date(baseTime.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(baseTime.getTime() + 4 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: 'app-member-enrollment-3',
-          programId: mockPrograms[1]?.id ?? program.id,
-          applicationPathId: getApplicationPathByProgramId(mockPrograms[1]?.id ?? program.id)?.id,
-          subjectType: 'student' as const,
-          subjectId: memberEnrollmentUser.id as UUID,
-          status: 'submitted' as const,
-          submittedAt: new Date(baseTime.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-          createdAt: new Date(baseTime.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-          updatedAt: new Date(baseTime.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-      ]
-    })()
-  : []
+const memberEnrollmentApplications: Application[] =
+  memberEnrollmentUser && hasProgramSeeds
+    ? (() => {
+        const program = mockPrograms[0]
+        const round = program.rounds?.[0] ?? null
+        const baseTime = new Date()
+        baseTime.setDate(baseTime.getDate() - 14)
+        return [
+          {
+            id: 'app-member-enrollment-1',
+            programId: program.id,
+            roundId: round?.id,
+            applicationPathId: getApplicationPathByProgramId(program.id)?.id,
+            subjectType: 'student' as const,
+            subjectId: memberEnrollmentUser.id as UUID,
+            status: 'approved' as const,
+            progressStatus: 'REPORT_SUBMITTED' as ApplicationProgressStatus,
+            submittedAt: new Date(baseTime.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+            reviewedAt: new Date(baseTime.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+            createdAt: new Date(baseTime.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+            updatedAt: baseTime.toISOString(),
+          },
+          {
+            id: 'app-member-enrollment-2',
+            programId: program.id,
+            roundId: round?.id,
+            applicationPathId: getApplicationPathByProgramId(program.id)?.id,
+            subjectType: 'student' as const,
+            subjectId: memberEnrollmentUser.id as UUID,
+            status: 'approved' as const,
+            progressStatus: 'IN_PROGRESS' as ApplicationProgressStatus,
+            submittedAt: new Date(baseTime.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+            reviewedAt: new Date(baseTime.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+            createdAt: new Date(baseTime.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString(),
+            updatedAt: new Date(baseTime.getTime() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+          },
+          {
+            id: 'app-member-enrollment-3',
+            programId: mockPrograms[1]?.id ?? program.id,
+            applicationPathId: getApplicationPathByProgramId(mockPrograms[1]?.id ?? program.id)?.id,
+            subjectType: 'student' as const,
+            subjectId: memberEnrollmentUser.id as UUID,
+            status: 'submitted' as const,
+            submittedAt: new Date(baseTime.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+            createdAt: new Date(baseTime.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+            updatedAt: new Date(baseTime.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+          },
+        ]
+      })()
+    : []
 
 // 학교 상세 모달용: 고정 학교 ID별 프로그램 신청 이력 (1~4행은 회원 mock User.id와 동일)
 const fixedSchoolIds = [
@@ -232,34 +240,36 @@ const fixedSchoolIds = [
   'school-fixed-12',
 ]
 const schoolApprovalStatuses: Application['status'][] = ['approved', 'approved', 'submitted', 'reviewing', 'approved']
-const schoolDetailApplications: Application[] = fixedSchoolIds.flatMap((schoolId, sIdx) => {
-  const count = 3 + (sIdx % 4) // 3~6건
-  return Array.from({ length: count }, (_, i) => {
-    const progIdx = (sIdx * 3 + i) % mockPrograms.length
-    const program = mockPrograms[progIdx]
-    const round = program.rounds.length > 0 ? program.rounds[0] : null
-    const daysAgo = 10 + sIdx * 5 + i * 7
-    const status = schoolApprovalStatuses[(sIdx + i) % schoolApprovalStatuses.length]
-    const submittedAt = new Date()
-    submittedAt.setDate(submittedAt.getDate() - daysAgo)
-    const reviewedAt = status !== 'submitted'
-      ? new Date(submittedAt.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString()
-      : undefined
-    return {
-      id: `app-school-detail-${sIdx}-${i}`,
-      programId: program.id,
-      roundId: round?.id,
-      applicationPathId: getApplicationPathByProgramId(program.id)?.id,
-      subjectType: 'school' as const,
-      subjectId: schoolId as UUID,
-      status,
-      submittedAt: submittedAt.toISOString(),
-      reviewedAt,
-      createdAt: submittedAt.toISOString(),
-      updatedAt: (reviewedAt ?? submittedAt).toString(),
-    }
-  })
-})
+const schoolDetailApplications: Application[] = !hasProgramSeeds
+  ? []
+  : fixedSchoolIds.flatMap((schoolId, sIdx) => {
+      const count = 3 + (sIdx % 4) // 3~6건
+      return Array.from({ length: count }, (_, i) => {
+        const progIdx = (sIdx * 3 + i) % mockPrograms.length
+        const program = mockPrograms[progIdx]
+        const round = program.rounds.length > 0 ? program.rounds[0] : null
+        const daysAgo = 10 + sIdx * 5 + i * 7
+        const status = schoolApprovalStatuses[(sIdx + i) % schoolApprovalStatuses.length]
+        const submittedAt = new Date()
+        submittedAt.setDate(submittedAt.getDate() - daysAgo)
+        const reviewedAt = status !== 'submitted'
+          ? new Date(submittedAt.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString()
+          : undefined
+        return {
+          id: `app-school-detail-${sIdx}-${i}`,
+          programId: program.id,
+          roundId: round?.id,
+          applicationPathId: getApplicationPathByProgramId(program.id)?.id,
+          subjectType: 'school' as const,
+          subjectId: schoolId as UUID,
+          status,
+          submittedAt: submittedAt.toISOString(),
+          reviewedAt,
+          createdAt: submittedAt.toISOString(),
+          updatedAt: (reviewedAt ?? submittedAt).toString(),
+        }
+      })
+    })
 
 /**
  * 회원 상세 — 프로그램 수강 이력(student) / 프로그램 강의 이력(instructor) / 학교 수강(school)

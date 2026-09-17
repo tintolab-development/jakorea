@@ -19,7 +19,7 @@ import { LECTURE_ATTENDANCE_STATUS_LABELS } from '../model/school-detail-types'
 import {
   getLectureAttendanceDetail,
   getLectureAttendanceDetailForApplication,
-} from '../lib/school-detail-mock'
+} from '../lib/school-detail'
 import { countLectureAttendanceHeldAndAttended } from '../lib/lecture-attendance-count'
 import './lecture-attendance-modal.css'
 

@@ -5,6 +5,7 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { PreferredScheduleBlockRequest } from './preferredScheduleBlockRequest';
 import type { RequestedScheduleRequest } from './requestedScheduleRequest';
 import type { SaveApplicationRequestAnswers } from './saveApplicationRequestAnswers';
 
@@ -23,4 +24,12 @@ export interface SaveApplicationRequest {
      */
   requestedSchedules?: RequestedScheduleRequest[];
   requestedClassCount?: number;
+  requestedStudentCount?: number;
+  requestedMaleCount?: number;
+  requestedFemaleCount?: number;
+  /**
+     * @minItems 0
+     * @maxItems 10
+     */
+  preferredScheduleBlocks?: PreferredScheduleBlockRequest[];
 }

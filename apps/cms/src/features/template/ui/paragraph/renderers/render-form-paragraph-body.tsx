@@ -80,6 +80,7 @@ import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { AGREEMENT_NOTICE_PARAGRAPH_IDS } from '@/features/template/model/writing-form-draft.schema'
+import { AgreementNoticeSubjectFillFields } from '@/features/template/ui/form-set/agreement-notice/agreement-notice-subject-fill-fields'
 import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/basic-info-paragraph'
 import type { ProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { ProgramApplicationFormInstructorBodyOptions } from '@/features/template/ui/form-set/application-form/instructor/paragraph-body'
@@ -621,7 +622,19 @@ export function renderFormParagraphBody(
     case 'static_description_lines':
       if (p.kind !== 'description' || p.variant !== 'static_description_lines') return null
       return <StaticDescriptionLines paragraph={p} />
-    case 'short_essay':
+    case 'short_essay': {
+      if (
+        p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.subject &&
+        paragraphInteractionMode === 'user'
+      ) {
+        return (
+          <AgreementNoticeSubjectFillFields
+            paragraph={p}
+            onChange={next => updateParagraph(p.id, () => next)}
+            isBodyInteractive={isBodyInteractive}
+          />
+        )
+      }
       return (
         <ShortEssay
           paragraph={p}
@@ -637,6 +650,7 @@ export function renderFormParagraphBody(
           }
         />
       )
+    }
     case 'session_plan_short_essay':
       return (
         <SessionPlanShortEssay

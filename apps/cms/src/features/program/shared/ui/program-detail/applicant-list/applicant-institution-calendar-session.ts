@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 
 function parseSessionDate(dateStr: string): dayjs.Dayjs {
   const normalized = dateStr.replace(/\s/g, '').replace(/\./g, '-')

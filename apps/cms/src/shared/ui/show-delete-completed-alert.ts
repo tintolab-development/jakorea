@@ -8,7 +8,7 @@ import { cmsAlertModal } from './cms-alert-modal-api'
 export function showDeleteCompletedAlert(options?: { onConfirm?: () => void }): void {
   cmsAlertModal.show({
     title: '삭제 완료',
-    content: '삭제가 완료되었습니다.',
+    content: '삭제되었습니다.',
     confirmLabel: '확인',
     onConfirm: options?.onConfirm,
   })

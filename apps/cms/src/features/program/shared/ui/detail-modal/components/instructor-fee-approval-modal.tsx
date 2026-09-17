@@ -3,7 +3,7 @@
  */
 
 import dayjs from 'dayjs'
-import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
+import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/features/program/shared/model/program-wage-info'
 import {
   INSTRUCTOR_FEE_APPROVAL_BASIS_OPTIONS,
   LECTURE_FEE_PAYMENT_CRITERIA_OPTIONS,
@@ -12,7 +12,7 @@ import {
   useInstructorFeeApprovalModal,
   type InstructorFeeApprovalConfirmDetail,
 } from '@/features/program/general/lib/use-instructor-fee-approval-modal'
-import type { ApplicantInstructorLectureFeeBasisType } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorLectureFeeBasisType } from '@/features/program/shared/model/applicant-instructor'
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'

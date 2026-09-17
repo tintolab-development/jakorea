@@ -14,45 +14,25 @@ Keep mock **services** in `entities/*/api/*-service.ts` (or feature-local mocks 
 
 When deleting or mutating entities, keep **referential integrity** (e.g. cascade deletes where the real API would).
 
-## General programs (`general-programs.ts`)
+## 프로그램 관리 (일반 / UJAT / 1사1교 / Gemini / 교육받은 교사)
 
-세 그룹으로 구성한다.
+> **FE 시드·Mock 목록 데이터는 제거됨.** 복원하지 말 것.  
+> 규칙: [program-no-fe-mock.mdc](../process/program-no-fe-mock.mdc)
 
-### 1) Realistic (6건)
+| 구분 | 상태 |
+|------|------|
+| 목록·상세 시드 (`general-programs`, `economy-programs`, `ujat-*-mock` row 시드 등) | **제거/빈 stub** — remote API만 |
+| API 미연동 탭 | 빈 UI + `program-api-unavailable` alert |
+| `data/mock`에 남은 것 | **타입·라벨·옵션** 또는 타 도메인(대시보드·회원 이력)용 mock — 프로그램 관리 시드로 쓰지 말 것 |
+| 로컬 등록 `registration-local-save` | 사용자 작성분 — 시드와 별개로 허용 |
 
-진행현황별 2건. 실제 후원사·프로그램명 스타일. id: `general-prog-scheduled-*`, `general-prog-in-progress-*`, `general-prog-completed-*`.
-
-### 2) Type variant (8건)
-
-등록 폼 선택에 따른 **8종 유형** mock. 규칙: [general-program-type-variant-spec.md](../process/general-program-type-variant-spec.md).
-
-- id: `general-prog-type-{org|ind}-{curriculum|schedule}-{single|multi}`
-- **title**: `일반 프로그램 (기관)_커리큘럼형_단일 회차` 형식 (8종 전체) — **목록·상세 헤더·breadcrumb**
-- **공고용 프로그램명** 등 공통 정보 필드는 `generalCommonInfo` / `buildGeneralOrgCurriculumSingleProgramSeedFields()` (기관_커리큘럼형_단일 회차 스크린샷 mock: `general-prog-type-org-curriculum-single`)
-- **참여 기관 1건** — `participating-schools.ts` `ORG_CURRICULUM_SINGLE_PARTICIPATING_SCHOOLS` (`school-1` 강서초, `programId` 스코프). `getParticipatingSchoolsForProgram`이 programId 매칭 시 해당 목록만 반환
-- **추가 데모 1건** — 기관_커리큘럼형_복수 회차 + 교육 형태·IPS **일정 별 상이**: id `general-prog-type-org-curriculum-multi-edu-ips-per-schedule`, 목록 **title** `…복수 회차 · 교육·IPS 일정별 상이` (8종 mock과 구분)
-- **LNB**: 강사·봉사(면접 2depth)·설문(3항목) **전부 포함**
-- `generalProgramAudience` / `generalProgramEducationStructure` / `generalProgramSessionRound` 필드 설정
-- 복수 회차: `rounds` 2건
-
-### 3) LNB matrix (9건, 스크린샷 행 16~24)
-
-LNB 메뉴 조합 확인용. id: `general-prog-lnb-16` … `general-prog-lnb-24`, title: `【LNB·NN】강사 … · 봉사자 … · 설문 …` (구 `general-prog-lnb-01`~`09` 대체).
-
-### 4) 유형 케이스 라벨 (행 7~15)
-
-8종 variant + 15행(교육·IPS 일정별 상이). 목록 title: `【유형·NN】일반 프로그램 (기관|개인)_…`.
-
-### 공통
-
-- `category`: 목록 필터용 — 기관 유형 `school`, 개인 유형 `individual` 등
-- `scheduleTimeEnabled: false` → `startTime`/`endTime` 없음 → 주간 격자 **종일** + 라벨 `종일` ([calendar-week-time-grid.md](../design/calendar-week-time-grid.md))
-- 로컬 등록 저장본: `readGeneralRegistrationLocalSavePrograms()` — seed와 id 중복 시 seed 우선
+레거시 시드 id(`general-prog-*` 등) 상수·문서 참조는 deprecated. 신규 QA는 **백엔드/스테이징 데이터**를 사용한다.
 
 ## Related
 
-- [general-program-type-variant-spec.md](../process/general-program-type-variant-spec.md)
+- [program-no-fe-mock.mdc](../process/program-no-fe-mock.mdc)
+- [program-type-isolation.mdc](../process/program-type-isolation.mdc)
 - [api-spec-mock.md](./api-spec-mock.md)
 - [fsd-structure.md](../architecture/fsd-structure.md)
 
-**Last updated:** 2026-06-01
+**Last updated:** 2026-09-16

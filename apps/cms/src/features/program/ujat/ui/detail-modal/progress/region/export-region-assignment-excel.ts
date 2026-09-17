@@ -1,6 +1,6 @@
 import ExcelJS from '@zurmokeeper/exceljs'
 import { downloadExcel, generateFilename } from '@/shared/utils/file-download'
-import { getRegionAssignmentInstitutionHeaderLabel } from './mock'
+import { getRegionAssignmentInstitutionHeaderLabel } from './region-assignment-options'
 import type {
   RegionAssignmentCell,
   RegionAssignmentColumn,

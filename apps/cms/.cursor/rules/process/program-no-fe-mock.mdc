@@ -1,0 +1,51 @@
+---
+description: 프로그램 관리 — FE Mock API/시드 데이터 금지, remote + 빈화면·alert
+globs: apps/cms/src/features/program/**/*,apps/cms/src/data/mock/{general,economy,ujat,trained,participating,applicant,program}*
+alwaysApply: false
+---
+
+# 프로그램 관리 — FE Mock 금지
+
+**Scope:** CMS `features/program/**`, 프로그램 목록·상세·진행·신청 탭, 관련 `data/mock` 시드.
+
+## 원칙
+
+1. **프로그램 관리 화면은 remote API(+ JWT)만** 데이터 소스로 쓴다.
+2. **FE 시드·Mock API 목록/상세 데이터를 새로 추가하거나 복원하지 않는다.**
+3. API 미연동·게이트 OFF 구간은 **빈 목록/빈 화면** + `useNotifyProgramApiUnavailableOnce` / `notifyProgramApiUnavailable` (`features/program/shared/lib/program-api-unavailable.ts`)로 안내한다.
+4. `VITE_GENERAL_PROGRAM_FE_SEEDS_ENABLED` / `prefer-*-mock` / `general-prog-*` 시드 경로는 **비활성(항상 OFF)**. 재도입 금지.
+
+## 명시적 임시 예외
+
+- 사용자가 프롬프트에 정확히 **`열여라 참깨`**라고 쓰면, 해당 요청에 한해 실제 화면 확인용 FE mock을 임시로 추가할 수 있다.
+- 예외는 요청한 화면·데이터에만 최소 범위로 적용하고 `// TODO(temp-mock): 열여라 참깨 — 검증 후 삭제` 주석을 남긴다.
+- 완료 응답에 수정 파일, mock 활성 조건, 삭제할 위치를 반드시 명시한다.
+- 후속 요청에서 제거를 지시하면 mock·분기·주석을 모두 삭제하고 remote-only 상태로 복원한다.
+
+## 허용
+
+| 허용 | 예 |
+|------|-----|
+| Remote admin programs / applications / progress API | `programs-api-client`, applications·progress hooks |
+| **타입·라벨·옵션 상수**가 mock 경로에 남은 경우 | `ParticipatingSchoolRow`, `TEXTBOOK_STATUS_LABELS`, `program-wage-info` 옵션 |
+| 사용자가 등록 폼으로 만든 **localStorage 등록본** | `registration-local-save` (시드와 구분) |
+| 단위 테스트 fixture | `*.test.ts` 인라인 stub (대용량 `data/mock` 시드 복원 금지) |
+
+## 금지
+
+- `data/mock/general-programs` 등에 **시드 배열·빌더**를 다시 채우기
+- remote OFF일 때 mock getter로 테이블을 채우기
+- 신규 `*-mock.ts`에 **목록/상세 row 시드** 추가 (타입-only 파일은 가능하나 `features/program/**/model|lib`로 타입 이전 권장)
+- MSW program handlers로 목록 위장
+
+## 기존 stub 파일
+
+시드가 비워진 stub getter(`getGeneralPrograms` → 로컬 등록만, `getParticipating*ForProgram` → `[]` 등)는 **삭제해도 되지만**, 타입/라벨 export 소비자가 있으면 **타입을 domain/feature로 옮긴 뒤** 파일을 지운다. “빈 stub라서” 무작정 삭제하지 말 것.
+
+## 관련
+
+- [program-type-isolation.mdc](./program-type-isolation.mdc)
+- [mock-data.md](../data/mock-data.md)
+- `program-api-unavailable.ts`
+
+**Last updated:** 2026-09-17

@@ -1066,6 +1066,8 @@ export function paragraphEditableHeading(
     const p = paragraph as TitleWithPeriodParagraph
     return {
       isEditMode: isSelected,
+      /** 비선택·빈 제목일 때도 placeholder(동의서/설문 제목 입력) 회색 노출 */
+      showTitlePlaceholderWhenInactive: true,
       titleValue: p.surveyTitle,
       onTitleChange: (next: string) =>
         updateParagraph(p.id, cur =>
@@ -1128,6 +1130,7 @@ export function paragraphEditableHeading(
     return {
       /* 카드 타이틀 줄 = 마무리 본문(body) — `ParagraphInput` title과 동일 UX, 우측 패널에는 유형만 */
       isEditMode: isSelected,
+      showTitlePlaceholderWhenInactive: true,
       titleValue: p.body,
       onTitleChange: (next: string) =>
         updateParagraph(p.id, cur =>
@@ -1214,6 +1217,7 @@ export function paragraphEditableHeading(
           : (p.answerRequired ?? p.requiredMark)
     return {
       isEditMode: isSelected,
+      showTitlePlaceholderWhenInactive: true,
       titleValue: p.paragraphTitle,
       onTitleChange: (next: string) =>
         updateParagraph(p.id, cur =>

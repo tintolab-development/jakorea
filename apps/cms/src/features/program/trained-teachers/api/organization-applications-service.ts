@@ -1,4 +1,4 @@
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { mapTrainedTeacherOrganizationApplicationToRow } from './organization-applications-adapters'
@@ -17,10 +17,11 @@ function assertRemoteReady(): void {
 }
 
 export async function listTrainedTeacherOrganizationApplications(
-  programId: string
+  programId: string,
+  query: import('./organization-applications-list-query').TrainedTeacherOrganizationApplicationsListQuery = {}
 ): Promise<ApplicantSchoolRow[]> {
   assertRemoteReady()
-  const items = await fetchTrainedTeacherOrganizationApplicationsRemote(programId)
+  const items = await fetchTrainedTeacherOrganizationApplicationsRemote(programId, query)
   return items.map((item, index) =>
     mapTrainedTeacherOrganizationApplicationToRow(item, index, programId)
   )

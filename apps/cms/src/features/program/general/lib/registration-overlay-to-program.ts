@@ -11,7 +11,8 @@ import type {
   GeneralProgramSurveyMenuKey,
   Program,
 } from '@/types/domain'
-import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
+import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
+import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 import {
   buildScheduleProgressTimeSummary,
   buildSessionIpsTypeSummary,
@@ -160,11 +161,70 @@ function buildWageGradePricing(amount: number | undefined): string {
   return `1시간 당 | 기본 : ${amount.toLocaleString('ko-KR')}원`
 }
 
-function resolveDetailedProgramName(detailedProgramId: string): string | undefined {
+function resolveDetailedProgramName(
+  overlay: Record<string, unknown>,
+  detailedProgramId: string
+): string | undefined {
+  const fromOverlay = overlayString(overlay, `${BASIC}.detailedProgramName`)
+  if (fromOverlay) return fromOverlay
   if (!detailedProgramId || detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) {
     return undefined
   }
-  return mockDetailedProgramManagementListRows.find(row => row.id === detailedProgramId)?.name
+  return undefined
+}
+
+const TRAINED_TEACHERS_REGISTRATION_PREFIX = 'trainedTeachersRegistration' as const
+
+/** 교육받은 교사 등록 overlay 키 → generalRegistration 키 (applyGeneralRegistrationOverlayToProgram 재사용) */
+export function normalizeRegistrationOverlayForApply(
+  overlay: Record<string, unknown>,
+  variant: ProgramRegistrationFormVariant
+): Record<string, unknown> {
+  if (variant !== 'trainedTeachers') return overlay
+
+  const normalized: Record<string, unknown> = { ...overlay }
+  const ttBasic = `${TRAINED_TEACHERS_REGISTRATION_PREFIX}.basicInfo`
+  const genBasic = `${BASIC}`
+
+  const copyWhenMissing = (fromKey: string, toKey: string) => {
+    if (overlay[fromKey] === undefined) return
+    if (normalized[toKey] !== undefined) return
+    normalized[toKey] = overlay[fromKey]
+  }
+
+  copyWhenMissing(`${ttBasic}.sponsorId`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
+  copyWhenMissing(`${ttBasic}.managerContactId`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+  copyWhenMissing(`${ttBasic}.sponsorManagerLine`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY)
+  copyWhenMissing(`${ttBasic}.programTitleKo`, GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
+
+  for (const [key, value] of Object.entries(overlay)) {
+    if (!key.startsWith(`${TRAINED_TEACHERS_REGISTRATION_PREFIX}.`)) continue
+    const suffix = key.slice(TRAINED_TEACHERS_REGISTRATION_PREFIX.length)
+    const targetKey = `generalRegistration${suffix}`
+    if (normalized[targetKey] === undefined) {
+      normalized[targetKey] = value
+    }
+  }
+
+  for (const [key] of Object.entries(overlay)) {
+    if (!key.startsWith(`${ttBasic}.`)) continue
+    const field = key.slice(ttBasic.length + 1)
+    if (['sponsorId', 'managerContactId', 'programTitleKo', 'sponsorManagerLine'].includes(field)) {
+      continue
+    }
+    copyWhenMissing(key, `${genBasic}.${field}`)
+  }
+
+  const sponsorId = overlayString(normalized, GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
+  if (
+    sponsorId &&
+    sponsorId !== TRAINED_TEACHERS_REGISTRATION_ALL_VALUE &&
+    normalized[GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY] === undefined
+  ) {
+    normalized[GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY] = [sponsorId]
+  }
+
+  return normalized
 }
 
 function buildIpsTypeSummaryFull(
@@ -588,7 +648,7 @@ export function applyGeneralRegistrationOverlayToProgram(
     : detailedProgramNameFromOverlay ||
       (detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
         ? '해당없음'
-        : resolveDetailedProgramName(detailedProgramId))
+        : resolveDetailedProgramName(overlay, detailedProgramId))
 
   const scheduleLinesRaw = overlay[GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]
   const educationScheduleLines = Array.isArray(scheduleLinesRaw)

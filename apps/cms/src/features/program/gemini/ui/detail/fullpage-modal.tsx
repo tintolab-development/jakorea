@@ -10,11 +10,7 @@ import {
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { MESSAGES } from '@/shared/constants/messages'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import {
@@ -91,9 +87,9 @@ export function GeminiRecruitmentDetailFullPageModal({
     draft: infoDraft,
     patchDraft,
     handleEdit: handleInfoEdit,
+    handleCancel: handleInfoCancel,
     handleSave: handleInfoSave,
-    editor: infoEditor,
-    editorMinHeight: infoEditorMinHeight,
+    registerGetAdditionalContentMarkdown,
     isDetailFetching,
   } = useGeminiRecruitmentInfoEdit(recruitmentId, todayKey)
 
@@ -227,16 +223,12 @@ export function GeminiRecruitmentDetailFullPageModal({
               <>
                 <div className="gemini-recruitment-detail__header-actions program-detail-fullpage-modal__header-actions">
                   {canWrite ? (
-                    <CmsButton
-                      type="button"
-                      {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                      onClick={resolveProgramEditInfoClick(isEditModeInfo, {
-                        onEnterEdit: handleInfoEditClick,
-                        onSaveEdit: handleInfoSaveClick,
-                      })}
-                    >
-                      {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-                    </CmsButton>
+                    <ProgramEditInfoActions
+                      isEditing={isEditModeInfo}
+                      onEdit={handleInfoEditClick}
+                      onCancel={handleInfoCancel}
+                      onSave={handleInfoSaveClick}
+                    />
                   ) : null}
                   <CmsButton
                     type="button"
@@ -254,8 +246,7 @@ export function GeminiRecruitmentDetailFullPageModal({
                   isEditMode={isEditModeInfo}
                   draft={infoDraft}
                   onDraftChange={patchDraft}
-                  editor={infoEditor}
-                  editorMinHeight={infoEditorMinHeight}
+                  registerGetAdditionalContentMarkdown={registerGetAdditionalContentMarkdown}
                 />
               </>
             ) : activeLnb === 'institutions' ? (

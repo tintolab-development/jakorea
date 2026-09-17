@@ -38,6 +38,11 @@ const selectedPrograms = mockPrograms.slice(0, 5)
  * 권한 요청 Mock 데이터 생성
  */
 function createPermissionRequests(): PermissionRequest[] {
+  // mockPrograms 비움(API 전환) 시 modulo/undefined.id 크래시 방지
+  if (selectedPrograms.length === 0 || requesterUsers.length === 0) {
+    return []
+  }
+
   const requests: PermissionRequest[] = []
   const statuses: PermissionRequest['status'][] = ['PENDING', 'APPROVED', 'REJECTED']
   const actions: PermissionRequest['requestedAction'][] = ['VIEW', 'DOWNLOAD', 'EDIT']

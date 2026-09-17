@@ -24,16 +24,14 @@ import {
   PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
 } from '@/features/template/lib/program-registration-editor-state'
 import { PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE } from '@/features/program/shared/lib/registration-draft-notice'
+import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import type { Program } from '@/types/domain'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 
-/**
- * TODO(temp): 일반프로그램 등록 필수 항목 미입력 검사 임시 해제 — 이후 `false`로 되돌려 재적용.
- * 검증 로직: `hasIncompleteGeneralProgramRegistrationRequiredFields`
- */
-const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = true
+/** 일반프로그램 등록 필수 항목 미입력 검사 — `hasIncompleteGeneralProgramRegistrationRequiredFields` */
+const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = false
 import {
   coerceGeneralProgramRegistrationStep,
   getDefaultGeneralProgramApplicationStep,
@@ -99,6 +97,8 @@ export function useGeneralProgramRegistrationFlow(
       programRegistrationFormVariant: registrationFormVariant,
       onRegistrationSaved: options?.onProgramRegistrationSaved,
       skipDraftRestore: options?.skipDraftRestore === true,
+      // 프로그램 임시저장 — remote 전환: docs/api/program-draft-local-storage-follow-up.md
+      localOnlyDraftPersistence: true,
       templateCode:
         registrationFormVariant === 'general'
           ? PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
@@ -238,6 +238,7 @@ export function useGeneralProgramRegistrationFlow(
     participantTemplateName,
     participantVariant,
     {
+      localOnlyDraftPersistence: true,
       participantOrganization: participantFlags.organization,
       /** 등록 위저드 신청 단계 — 기관 기본정보·강사/봉사자 일정 자동 반영 미리보기 */
       programLinkedInstitutionApplicationForm:
@@ -347,8 +348,7 @@ export function useGeneralProgramRegistrationFlow(
         registrationFormVariant
       )
       if (next === coercedActiveStep) return
-      // 이전 탭 저장은 백그라운드 — 대기하면 모집 탭 전환 깜빡임이 커짐
-      void persistDraftSilent().catch(() => {})
+      // 탭 전환은 편집 중 React state만 유지한다. 임시저장은 명시적 저장 버튼에서만 수행.
       setActiveStep(next)
       options?.onStepChange?.(next)
     },
@@ -356,7 +356,6 @@ export function useGeneralProgramRegistrationFlow(
       coercedActiveStep,
       options,
       participantFlags,
-      persistDraftSilent,
       registrationFormVariant,
     ]
   )
@@ -423,10 +422,22 @@ export function useGeneralProgramRegistrationFlow(
       void registrationVm.handleCompleteRegistration()
       return
     }
-    void participantVm.handleSave({ silent: true }).finally(() => {
+    void (async () => {
+      try {
+        await participantVm.handleSave({ silent: true })
+      } catch (error) {
+        console.debug('generalProgramRegistration complete: participant draft save failed', error)
+        showAlert({
+          title: '임시 저장 실패',
+          content: isLocalStorageQuotaExceededError(error)
+            ? '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
+            : '임시 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+        })
+        return
+      }
       void registrationVm.handleCompleteRegistration()
-    })
-  }, [isProgramStep, registrationVm, participantVm])
+    })()
+  }, [isProgramStep, registrationVm, participantVm, showAlert])
 
   const hasRecruitmentPhase = visibleRecruitTabKeys.length > 0
   const hasApplicationPhase = visibleApplicationTabKeys.length > 0

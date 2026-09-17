@@ -1,12 +1,6 @@
 /**
  * DeleteGuideModal 본문 문구 조합 (도메인 라벨 기반 3단 구성)
  *
- * 예: 후원사
- * - [삼성전자] 를 후원사에서 삭제하시겠습니까?
- * - 후원사에서 삭제 시 관련 정보들도 모두 삭제됩니다.
- * - 삭제된 항목 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?
- */
-
 /** 본문 `[이름]`에 쓰는 표시용 이름 최대 길이(초과 시 `...` 접미) */
 export const DELETE_GUIDE_ENTITY_DISPLAY_MAX_LENGTH = 18
 
@@ -39,11 +33,7 @@ export function buildDomainEntityDeleteMessageLines(
 
   const count = displayNames.length
   const nameList = displayNames.map(n => `[${n}]`).join(', ')
-  return [
-    `선택한 ${count}건(${nameList})을 ${domainLabel}에서 삭제하시겠습니까?`,
-    line2,
-    line3,
-  ]
+  return [`선택한 ${count}건(${nameList})을 ${domainLabel}에서 삭제하시겠습니까?`, line2, line3]
 }
 
 /** 한국어 명사(마지막 음절) 기준 목적격 조사 을/를 */

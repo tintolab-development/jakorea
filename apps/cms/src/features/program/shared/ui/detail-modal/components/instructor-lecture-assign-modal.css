@@ -151,52 +151,94 @@
   margin-top: 20px;
 }
 
+.instructor-lecture-assign-modal__summary-section .detail-info-form__body {
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.instructor-lecture-assign-modal__summary-section .detail-info-form__field {
+  --detail-info-label-w: 140px;
+  min-height: 48px;
+}
+
+.instructor-lecture-assign-modal__summary-section .detail-info-form__field-label {
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px;
+}
+
+.instructor-lecture-assign-modal__summary-section .detail-info-form__field-content {
+  padding: 8px 12px;
+  font-size: 14px;
+  min-width: 0;
+}
+
 .instructor-lecture-assign-modal__assigned-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
   align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
 }
 
 .instructor-lecture-assign-modal__assigned-tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px 6px 12px;
-  border-radius: 6px;
-  border: 1px solid rgba(61, 61, 61, 0.12);
-  background: #fff;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .instructor-lecture-assign-modal__assigned-tag-text {
+  overflow: hidden;
+  min-width: 0;
   color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
   font-family: Pretendard, system-ui, sans-serif;
-  font-size: 14px;
+  font-size: 16px;
+  font-style: normal;
   font-weight: 500;
   line-height: 150%;
+  white-space: nowrap;
 }
 
 .instructor-lecture-assign-modal__assigned-tag-remove {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  width: 20px;
+  height: 20px;
   padding: 0;
   border: none;
   background: transparent;
-  color: rgba(61, 61, 61, 0.45);
   cursor: pointer;
-  font-size: 12px;
-  line-height: 1;
+  line-height: 0;
 }
 
-.instructor-lecture-assign-modal__assigned-tag-remove:hover {
-  color: var(--main-BK, #3d3d3d);
+.instructor-lecture-assign-modal__assigned-tag-remove-icon {
+  width: 15.833px;
+  height: 15.833px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+}
+
+.instructor-lecture-assign-modal__assigned-tag-remove:hover
+  .instructor-lecture-assign-modal__assigned-tag-remove-icon
+  path {
+  fill: var(--main-BK, #3d3d3d);
 }
 
 .instructor-lecture-assign-modal__assigned-placeholder {
   color: rgba(61, 61, 61, 0.45);
   font-family: Pretendard, system-ui, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
 }
@@ -490,95 +532,6 @@
   align-self: stretch;
   width: 100%;
   margin-top: 20px;
-}
-
-.instructor-lecture-assign-modal--individual .instructor-lecture-assign-modal__summary-section .detail-info-form__body {
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.instructor-lecture-assign-modal--individual .instructor-lecture-assign-modal__summary-section .detail-info-form__field {
-  --detail-info-label-w: 140px;
-  min-height: 48px;
-}
-
-.instructor-lecture-assign-modal--individual .instructor-lecture-assign-modal__summary-section .detail-info-form__field-label {
-  font-size: 14px;
-  font-weight: 700;
-  padding: 12px;
-}
-
-.instructor-lecture-assign-modal--individual .instructor-lecture-assign-modal__summary-section .detail-info-form__field-content {
-  padding: 8px 12px;
-  font-size: 14px;
-  min-width: 0;
-}
-
-.instructor-lecture-assign-modal--individual .instructor-lecture-assign-modal__assigned-tags {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  width: 100%;
-}
-
-.instructor-lecture-assign-modal--individual .instructor-lecture-assign-modal__assigned-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-  max-width: 100%;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-}
-
-.instructor-lecture-assign-modal--individual .instructor-lecture-assign-modal__assigned-tag-text {
-  overflow: hidden;
-  min-width: 0;
-  color: var(--main-BK, #3d3d3d);
-  text-overflow: ellipsis;
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  white-space: nowrap;
-}
-
-.instructor-lecture-assign-modal--individual .instructor-lecture-assign-modal__assigned-tag-remove {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  line-height: 0;
-}
-
-.instructor-lecture-assign-modal--individual .instructor-lecture-assign-modal__assigned-tag-remove-icon {
-  width: 15.833px;
-  height: 15.833px;
-  aspect-ratio: 1 / 1;
-  flex-shrink: 0;
-}
-
-.instructor-lecture-assign-modal--individual .instructor-lecture-assign-modal__assigned-tag-remove:hover
-  .instructor-lecture-assign-modal__assigned-tag-remove-icon
-  path {
-  fill: var(--main-BK, #3d3d3d);
-}
-
-
-.instructor-lecture-assign-modal--individual .instructor-lecture-assign-modal__assigned-placeholder {
-  font-size: 14px;
 }
 
 .instructor-lecture-assign-modal--individual .teal-header-modal__footer {

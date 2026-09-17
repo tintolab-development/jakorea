@@ -12,7 +12,7 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { individualApplicationSchema, type IndividualApplicationFormData } from '@/entities/application/model/schema'
 import type { Program, Application } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { getFormTemplateByProgramId } from '@/data/mock/form-templates'
+import { getProgramApplicationFormTemplate } from '@/features/application/lib/program-application-form-template'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
 import {
   DynamicApplicationForm,
@@ -40,7 +40,7 @@ export function IndividualApplicationForm({
 }: IndividualApplicationFormProps) {
   void applicationPath
   const { user } = useAuthStore()
-  const template = useMemo(() => getFormTemplateByProgramId(program.id), [program.id])
+  const template = useMemo(() => getProgramApplicationFormTemplate(program.id), [program.id])
   const [customFieldErrors, setCustomFieldErrors] = useState<Record<string, string>>({})
   const isEditMode = !!application
 

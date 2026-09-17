@@ -6,7 +6,8 @@ interface CmsInputIconClickProps {
   editing: boolean
   onChange: (next: string, options?: { composing?: boolean }) => void
   onRequestEdit: () => void
-  onCommitEdit: () => void
+  /** blur/Enter 커밋 — 최종 문자열(빈 값 복원 반영 후)을 넘긴다 */
+  onCommitEdit: (committedValue: string) => void
   restoreValueIfEmptyOnBlur?: string
   inputAriaLabel?: string
   editButtonAriaLabel?: string
@@ -54,12 +55,12 @@ export function CmsInputIconClick({
   const handleBlur = () => {
     // controlled IME 중 props value가 DOM과 어긋날 수 있음 → 실제 input 값 기준으로 커밋
     const raw = inputRef.current?.value ?? value
-    if (raw.trim() === '' && restoreValueIfEmptyOnBlur !== '') {
-      onChange(restoreValueIfEmptyOnBlur)
-    } else {
-      onChange(raw)
-    }
-    onCommitEdit()
+    const committed =
+      raw.trim() === '' && restoreValueIfEmptyOnBlur !== ''
+        ? restoreValueIfEmptyOnBlur
+        : raw
+    onChange(committed)
+    onCommitEdit(committed)
   }
 
   const canRequestEdit = !readOnly && !editing

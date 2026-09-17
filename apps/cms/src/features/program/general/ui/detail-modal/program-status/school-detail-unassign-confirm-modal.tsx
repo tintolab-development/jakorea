@@ -1,7 +1,7 @@
 /**
  * 강사 배정 취소 안내 모달
  * 배정된 강사/기관 목록에서 선택 후 "배정 취소" 클릭 시 노출.
- * `PermissionModal` — 취소 사유 + 알림 발송(즉시 / 직접 설정)
+ * `PermissionModal` — 취소 사유 → 알림 발송(즉시 / 직접 설정)
  */
 
 import {
@@ -58,7 +58,6 @@ export function SchoolDetailUnassignConfirmModal({
       reasonPlaceholder="취소 사유를 입력해 주세요."
       reasonRequiredMessage="취소 사유를 입력해 주세요."
       notifyTimingOptions="two"
-      notifyBeforeReason
       onCancel={onCancel}
       onConfirm={onConfirm}
     />

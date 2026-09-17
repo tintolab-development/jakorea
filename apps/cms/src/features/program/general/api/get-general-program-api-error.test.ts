@@ -40,4 +40,24 @@ describe('getGeneralProgramApiErrorMessage', () => {
     }
     expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toContain('후원사')
   })
+
+  it('INVALID_PROGRAM_ASSIGNMENT_ROLE을 조회 전용 관리자 안내로 변환한다', () => {
+    const error = {
+      response: {
+        status: 400,
+        data: {
+          success: false,
+          message: '프로그램 담당 역할을 확인해 주세요.',
+          error: {
+            code: 'INVALID_PROGRAM_ASSIGNMENT_ROLE',
+            message: '프로그램 담당 역할을 확인해 주세요.',
+            field: 'role',
+          },
+        },
+      },
+    }
+    expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toBe(
+      '조회 전용 관리자에게는 프로그램 뷰어 권한만 지정할 수 있습니다.'
+    )
+  })
 })

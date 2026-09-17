@@ -61,8 +61,11 @@ export function GeneralProgramApplicationTemplateEditModal({
   useEffect(() => {
     if (!open) {
       resetInstitutionApplicationProgramBridge()
-      return
     }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
     if (variant !== 'institution' && variant !== 'trained-teachers-application-institution') return
     patchInstitutionApplicationProgramBridge(resolveInstitutionApplicationProgramBridge(program))
     return () => {

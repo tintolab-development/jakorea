@@ -33,7 +33,6 @@ import {
 import { useSaveDashboardPreferences } from '../hooks/use-dashboard-preferences'
 import { getDashboardProgramOptions } from '../api/admin-dashboard-service'
 import { useDashboardQueryScope } from '../hooks/use-dashboard-query-scope'
-import { getMockDashboardProgramOptions } from '../api/dashboard-program-options-mock'
 import { dashboardQueryKeys } from '../api/dashboard-query-keys'
 import { useDashboardShortcuts } from '../hooks/use-dashboard-shortcuts'
 import {
@@ -148,7 +147,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
     if (!useRemote) {
       const catalog: Record<string, { id: string; title: string }[]> = {}
       visibleWidgetKeys.forEach(widgetKey => {
-        catalog[widgetKey] = getMockDashboardProgramOptions(widgetKey)
+        catalog[widgetKey] = []
       })
       return catalog
     }

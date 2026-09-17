@@ -5,6 +5,7 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { PreferredScheduleBlock } from './preferredScheduleBlock';
 
 export interface TrainedTeacherOrganizationApplicationResponse {
   applicationId?: number;
@@ -19,6 +20,7 @@ export interface TrainedTeacherOrganizationApplicationResponse {
   studentCount?: number;
   classCount?: number;
   desiredEducationScheduleMemo?: string;
+  preferredScheduleBlocks?: PreferredScheduleBlock[];
   applicationStatus?: string;
   educationJournalCount?: number;
   submittedAt?: string;
@@ -38,4 +40,12 @@ export interface TrainedTeacherOrganizationApplicationResponse {
   requestedStudentCount?: number;
   requestedClassCount?: number;
   journalSubmitted?: boolean;
+  educationTarget?: string;
+  educationGrade?: string;
+  lectureRound?: string;
+  totalEducationRoundCount?: number;
+  completedEducationRoundCount?: number;
+  progressLabel?: string;
+  textbookName?: string;
+  educationCompletionCount?: number;
 }

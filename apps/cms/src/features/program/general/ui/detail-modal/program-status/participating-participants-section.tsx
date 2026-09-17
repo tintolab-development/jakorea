@@ -2,7 +2,7 @@
  * 참여자(개인) 페이지 (풀페이지 모달 > 프로그램 진행 현황 > 참여자)
  */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Table, Spin } from 'antd'
 import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -12,7 +12,7 @@ import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
-import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import { participatingIndividualParticipantsFilterFields } from '@/features/program/general/lib/participating-individual-participants-filter-fields'
 import {
   filterParticipatingIndividualParticipants,
@@ -20,11 +20,12 @@ import {
 } from '@/features/program/general/lib/participating-individual-participants-filter'
 import { useParticipatingIndividualParticipantsParams } from '@/features/program/general/hooks/use-participating-individual-participants-params'
 import { useProgressIndividualParticipantList } from '@/features/program/general/hooks/use-progress-individual-participant-list'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
-  PARTICIPATING_INDIVIDUAL_PARTICIPANTS_TABLE_MIN_SCROLL_X,
   useParticipatingIndividualParticipantColumns,
 } from '@/features/program/general/lib/participating-individual-participant-columns'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { buildParticipatingParticipantCertificateContext } from '@/features/program/general/lib/participating-individual-participant-certificate'
 import { isWithinStudentCertificateIssuancePeriod } from '@/features/program/general/lib/resolve-student-certificate-kind'
@@ -32,8 +33,6 @@ import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { handleError } from '@/shared/utils/error-handler'
-import { rebuildProgramCompletionParticipantsRemote } from '@/features/program/general/api/programs-api-client'
-import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
 import type { Program } from '@/types/domain'
 import { ParticipatingParticipantFullpageView, type ParticipantDetailTabKey } from './participating-participant-fullpage-view'
@@ -66,10 +65,6 @@ export function ParticipatingParticipantsSection({
   onParticipantDetailClose,
 }: ParticipatingParticipantsSectionProps) {
   const { showAlert } = useCmsAlert()
-  const tableWrapRef = useRef<HTMLDivElement>(null)
-  const [tableScrollX, setTableScrollX] = useState(
-    PARTICIPATING_INDIVIDUAL_PARTICIPANTS_TABLE_MIN_SCROLL_X
-  )
   const {
     filters,
     appliedFilters,
@@ -79,13 +74,31 @@ export function ParticipatingParticipantsSection({
     progressCalendarGranularity,
     setProgressCalendarGranularity,
   } = useParticipatingIndividualParticipantsParams()
-  const { participantList, loading: participantsLoading } =
-    useProgressIndividualParticipantList(programId)
+  const {
+    participantList,
+    loading: participantsLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useProgressIndividualParticipantList(programId, program)
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: `${programId ?? ''}:${viewMode}:${JSON.stringify(appliedFilters)}`,
+  })
   const programBridge = useMemo(
     () => resolveInstitutionApplicationProgramBridge(program),
     [program]
   )
   const columns = useParticipatingIndividualParticipantColumns(programBridge)
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: true,
+      enabled: viewMode === 'list',
+    }
+  )
 
   const [pendingFilters, setPendingFilters] = useState<ParticipatingIndividualParticipantsFilters>(
     () => ({ ...filters })
@@ -95,7 +108,6 @@ export function ParticipatingParticipantsSection({
   const [certificateExportContext, setCertificateExportContext] =
     useState<StudentCertificateDownloadContext | null>(null)
   const [certificateExportActive, setCertificateExportActive] = useState(false)
-  const [rebuildParticipantsLoading, setRebuildParticipantsLoading] = useState(false)
 
   const hasStudentSatisfactionSurvey = useMemo(
     () =>
@@ -106,20 +118,6 @@ export function ParticipatingParticipantsSection({
   useEffect(() => {
     setPendingFilters({ ...filters })
   }, [filters])
-
-  useLayoutEffect(() => {
-    const el = tableWrapRef.current
-    if (!el) return
-    const minW = PARTICIPATING_INDIVIDUAL_PARTICIPANTS_TABLE_MIN_SCROLL_X
-    const update = () => {
-      const w = el.getBoundingClientRect().width
-      setTableScrollX(Math.max(minW, Math.floor(w)))
-    }
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [viewMode])
 
   const filteredParticipants = useMemo(
     () => filterParticipatingIndividualParticipants(participantList, appliedFilters),
@@ -216,24 +214,6 @@ export function ParticipatingParticipantsSection({
     selectedRowKeys,
     showAlert,
   ])
-
-  const handleRebuildParticipants = useCallback(async () => {
-    const numericProgramId = Number(programId)
-    if (!Number.isFinite(numericProgramId) || numericProgramId <= 0) {
-      showAlert({ title: '안내', content: '프로그램 ID를 확인할 수 없습니다.' })
-      return
-    }
-    setRebuildParticipantsLoading(true)
-    try {
-      await rebuildProgramCompletionParticipantsRemote(numericProgramId)
-      showAlert({ title: '안내', content: '참가자 수료 상태를 다시 계산했습니다.' })
-    } catch (error) {
-      const info = handleError(error, { defaultMessage: '수료 상태 재계산에 실패했습니다.' })
-      showAlert({ title: '안내', content: info.detail })
-    } finally {
-      setRebuildParticipantsLoading(false)
-    }
-  }, [programId, showAlert])
 
   const handleCertificateIssueModalCancel = useCallback(() => {
     setCertificateIssueModalOpen(false)
@@ -337,20 +317,6 @@ export function ParticipatingParticipantsSection({
         description={`${filteredParticipants.length}건`}
         actions={
           <>
-            {isRealApiModuleEnabled('programs') && programId ? (
-              <CmsButton
-                variant="secondary"
-                size="large"
-                width={180}
-                loading={rebuildParticipantsLoading}
-                disabled={rebuildParticipantsLoading}
-                onClick={() => {
-                  void handleRebuildParticipants()
-                }}
-              >
-                수료 상태 재계산
-              </CmsButton>
-            ) : null}
             <CmsButton
               variant="secondary"
               size="large"
@@ -397,7 +363,7 @@ export function ParticipatingParticipantsSection({
               size="middle"
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: tableScrollX }}
+              scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
               columns={columns}
               dataSource={filteredParticipants}
               rowSelection={{
@@ -431,6 +397,7 @@ export function ParticipatingParticipantsSection({
             />
           </div>
         )}
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
       <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />

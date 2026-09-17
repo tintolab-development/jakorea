@@ -3,7 +3,7 @@ import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
-import { getUjatVolunteerAssignmentProgressBundle } from './assignment-mock'
+import { getUjatVolunteerAssignmentProgressBundle } from './volunteer-assignment-data'
 import { UjatEducationProgressVolunteerAssignmentAttendanceInfo } from './assignment-attendance-info'
 import { UjatEducationProgressVolunteerAssignmentTable } from './assignment-table'
 import { UjatVolunteerAssignmentAssignModal } from './assign-modal'
@@ -14,8 +14,8 @@ import {
   applyVolunteerAssignmentConfirm,
   formatScheduleShortDateLabel,
   getUjatVolunteerAssignmentAssignModalData,
-} from './assign-mock'
-import { mergeVolunteerActivityWithdrawnRows, sortVolunteerAssignmentRows } from './assignment-mock'
+} from './volunteer-assign-modal-data'
+import { mergeVolunteerActivityWithdrawnRows, sortVolunteerAssignmentRows } from './volunteer-assignment-data'
 import {
   isVolunteerAssignmentClassWithdrawn,
   type UjatVolunteerAssignmentAbsenceReason,

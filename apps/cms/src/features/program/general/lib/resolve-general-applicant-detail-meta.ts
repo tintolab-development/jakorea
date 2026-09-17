@@ -3,9 +3,9 @@ import {
   getGeneralParticipantDoc1Applicants,
   getGeneralParticipantDocPassedApplicants,
   getGeneralParticipantInterview2Applicants,
-} from '@/data/mock/general-individual-applications-mock'
-import { getApplicantInstructorsByProgramId } from '@/data/mock/applicant-instructors'
-import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications-mock'
+} from '@/features/program/general/model/individual-applicant'
+import { getApplicantInstructorsByProgramId } from '@/features/program/shared/model/applicant-instructor'
+import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import type { GeneralDetailLnbKey } from '@/features/program/general/lib/detail-url'
 import { resolveGeneralParticipantApplicantDetailTitle } from '@/features/program/general/lib/screening-subject-kind'

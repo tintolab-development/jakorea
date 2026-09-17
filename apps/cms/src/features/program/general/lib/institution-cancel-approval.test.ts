@@ -4,7 +4,7 @@ import {
   resolveInstitutionCancelApprovalNotifyVariant,
   resolveInstitutionCancelApprovalReasonLabel,
 } from '@/features/program/general/lib/institution-cancel-approval'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 
 const baseRow = {
   id: 'test',

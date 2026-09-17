@@ -7,7 +7,7 @@ import {
 import {
   getUjatVolunteerInterviewScheduleMock,
   type UjatVolunteerInterviewScheduleData,
-} from '@/data/mock/ujat-volunteer-interview-schedule'
+} from '@/features/program/ujat/model/ujat-volunteer-interview-schedule'
 
 const EMPTY_UJAT_VOLUNTEER_INTERVIEW_SCHEDULE: UjatVolunteerInterviewScheduleData = {
   common: {

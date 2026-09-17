@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from 'react'
 import dayjs from 'dayjs'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import { HomeAddressDisplay } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/instructor-basic-info-detail-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { buildGeminiApprovedManagerTableItems } from '../../lib/approved/build-manager-profile-fields'
@@ -198,20 +198,8 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
                     </td>
                     <td>{detail.instructor.experienceYears}년</td>
                     <td>{detail.instructor.grade}</td>
-                    <td>
-                      {instructorContact
-                        ? maskInstructorSensitive
-                          ? MASKING_POLICY.phone(instructorContact)
-                          : instructorContact
-                        : '-'}
-                    </td>
-                    <td>
-                      {instructorEmail
-                        ? maskInstructorSensitive
-                          ? MASKING_POLICY.email(instructorEmail)
-                          : instructorEmail
-                        : '-'}
-                    </td>
+                    <td>{displayServerPiiAsIs(instructorContact)}</td>
+                    <td>{displayServerPiiAsIs(instructorEmail)}</td>
                   </tr>
                 </tbody>
               </table>

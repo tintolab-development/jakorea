@@ -37,6 +37,8 @@ export interface EnrollmentProgramDetailPostsTabProps {
   onPostWriteSuccess?: () => void
   /** remote API 등으로 주입한 게시글 목록 — 있으면 mock 대신 사용 */
   postsOverride?: ProgramPost[] | null
+  /** remote API 첨부 파일 목록 — 있으면 우측 파일 패널에 사용 */
+  filesOverride?: ProgramFile[] | null
 }
 
 function formatKoDate(date: string | Date): string {
@@ -252,6 +254,7 @@ export function EnrollmentProgramDetailPostsTab({
   writeAuthorName = DEFAULT_WRITE_AUTHOR_NAME,
   onPostWriteSuccess,
   postsOverride = null,
+  filesOverride = null,
 }: EnrollmentProgramDetailPostsTabProps) {
   const [internalWriteModalOpen, setInternalWriteModalOpen] = useState(false)
   const isWriteModalControlled =
@@ -283,10 +286,12 @@ export function EnrollmentProgramDetailPostsTab({
       resolveEnrollmentProgramFilesList({
         membersRemote,
         postsOverride,
+        filesOverride,
         programId: program.id,
       }),
-    [program.id, postsVersion, membersRemote, postsOverride]
+    [program.id, postsVersion, membersRemote, postsOverride, filesOverride]
   )
+  const useRemotePostMeta = postsOverride != null
   const schoolPostIds = useMemo(() => new Set(posts.map(p => p.id)), [posts])
   const allFiles = useMemo(() => {
     if (!schoolId) return allFilesRaw
@@ -448,13 +453,24 @@ export function EnrollmentProgramDetailPostsTab({
                       >
                         <PostMetaEyeIcon postId={post.id} />
                         <span>
-                          {getPostViewCountForContext(post.id, program.id, post.schoolId, schoolId)}
+                          {useRemotePostMeta
+                            ? post.viewCount
+                            : getPostViewCountForContext(
+                                post.id,
+                                program.id,
+                                post.schoolId,
+                                schoolId
+                              )}
                         </span>
                       </button>
                     </Popover>
                     <span className="enrollment-program-detail-modal__post-meta-item">
                       <PostMetaEmoticonIcon postId={post.id} />
-                      <span>{getReactionTotalCountByPostId(post.id)}</span>
+                      <span>
+                        {useRemotePostMeta
+                          ? post.reactionCount
+                          : getReactionTotalCountByPostId(post.id)}
+                      </span>
                     </span>
                     <span className="enrollment-program-detail-modal__post-meta-item">
                       <PostMetaCommentIcon postId={post.id} />

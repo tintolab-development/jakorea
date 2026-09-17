@@ -7,16 +7,17 @@ import { Controller, type UseFormReturn } from 'react-hook-form'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import {
-  getProgramWageInfoMock,
+  EMPTY_PROGRAM_WAGE_INFO,
   PROGRAM_WAGE_TYPE_OPTIONS,
   PROGRAM_WAGE_PRICING_MEASURE_OPTIONS,
-} from '@/data/mock/program-wage-info'
+} from '@/features/program/shared/model/program-wage-info'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 import type { Program } from '@/types/domain'
+import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 export interface ProgramWageInfoSectionProps {
@@ -250,7 +251,7 @@ export function ProgramWageInfoSection({
   isEditMode = false,
   form,
 }: ProgramWageInfoSectionProps) {
-  const data = useMemo(() => getProgramWageInfoMock(programId), [programId])
+  const data = useMemo(() => EMPTY_PROGRAM_WAGE_INFO, [])
   const isCompanySchool = isCompanySchoolProgramId(programId)
   const companySchoolPaymentItemOptions = useMemo(() => getCompanySchoolPaymentItemOptions(), [])
   const isFormEdit = isEditMode && form
@@ -514,7 +515,11 @@ export function ProgramWageInfoSection({
 
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field label="지급 항목" required view={data.paymentItems} />
-        <DetailInfoForm.Field label="공제 항목" required view={data.deductionItems} />
+        <DetailInfoForm.Field
+          label="공제 항목"
+          required
+          view={mapSettlementDeductionTypeToLabel(data.deductionItems) ?? data.deductionItems}
+        />
       </DetailInfoForm.Row>
     </DetailInfoForm>
   )

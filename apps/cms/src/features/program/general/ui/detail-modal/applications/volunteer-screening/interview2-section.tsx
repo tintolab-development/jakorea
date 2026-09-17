@@ -4,7 +4,7 @@ import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import type { Program } from '@/types/domain'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import {
   buildGeneralVolunteerInterview2CalendarFilterRows,
   buildGeneralVolunteerInterview2FilterRows,
@@ -13,7 +13,7 @@ import {
   screeningInterview2ListTitle,
   type ScreeningSubjectKind,
 } from '@/features/program/general/lib/screening-subject-kind'
-import { GENERAL_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X } from './interview2-columns'
+import { resolveGeneralInterview2TableScrollX } from './interview2-columns'
 import {
   useGeneralVolunteerApplicantDetail,
   type GeneralVolunteerApplicantDetailMetaChangeHandler,
@@ -29,9 +29,12 @@ import { GeneralVolunteerInterview2PassCompleteModal } from './general-volunteer
 import { GeneralVolunteerInterview2PassModal } from './general-volunteer-interview2-pass-modal'
 import { GeneralVolunteerInterview2CalendarView } from './general-volunteer-interview2-calendar-view'
 import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
+import { mapVolunteerScreeningRowToParticipant } from '@/features/program/general/lib/participant-volunteer-row-adapter'
 import { useGeneralVolunteerInterview2 } from './use-interview2'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import './volunteer-screening.css'
 import './interview2-section.css'
@@ -99,7 +102,16 @@ export function GeneralVolunteerInterview2Section({
     saveInterviewEvaluation,
     filterRowsSource,
     applicationsLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
   } = useGeneralVolunteerInterview2({ programId, subjectKind })
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: `${programId}:${subjectKind}:${viewMode}`,
+  })
 
   const activityWithdrawScheduleOptions = useMemo(
     () => getGeneralVolunteerActivityWithdrawScheduleOptions(program),
@@ -119,6 +131,7 @@ export function GeneralVolunteerInterview2Section({
     list,
     variant: 'interview2',
     subjectKind,
+    loading: applicationsLoading,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailMetaChange,
   })
@@ -247,6 +260,10 @@ export function GeneralVolunteerInterview2Section({
             program={program}
             applicantId={selectedApplicant.id}
             screeningStage="interview2"
+            applicant={
+              selectedApplicant.participantApplicant ??
+              mapVolunteerScreeningRowToParticipant(selectedApplicant)
+            }
             onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
             onApplicantDetailMetaChange={meta => {
               if (!meta) {
@@ -387,17 +404,26 @@ export function GeneralVolunteerInterview2Section({
               dataSource={tableData}
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: GENERAL_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X }}
+              scroll={{ x: resolveGeneralInterview2TableScrollX(subjectKind) }}
+              rowClassName={record =>
+                record.interviewAssignmentStatus === 'withdrawn'
+                  ? CMS_DATA_TABLE_ROW_DISABLED_CLASS
+                  : ''
+              }
               rowSelection={{
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
+                getCheckboxProps: record => ({
+                  disabled: record.interviewAssignmentStatus === 'withdrawn',
+                }),
               }}
-              onRow={record => ({
-                onClick: e => handleRowClick(record, e),
-                style: {
-                  cursor: record.interviewAssignmentStatus === 'withdrawn' ? 'default' : 'pointer',
-                },
-              })}
+              onRow={record => {
+                const withdrawn = record.interviewAssignmentStatus === 'withdrawn'
+                return {
+                  onClick: withdrawn ? undefined : e => handleRowClick(record, e),
+                  style: { cursor: withdrawn ? 'default' : 'pointer' },
+                }
+              }}
             />
           </div>
         ) : (
@@ -410,6 +436,7 @@ export function GeneralVolunteerInterview2Section({
             />
           </div>
         )}
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
       {viewMode === 'calendar' ? (
         <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />

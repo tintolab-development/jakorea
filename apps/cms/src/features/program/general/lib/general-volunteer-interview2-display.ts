@@ -1,5 +1,5 @@
 import dayjs, { type Dayjs } from 'dayjs'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import type { GeneralSecondInterviewScreeningStatus } from './volunteer-screening-constants'
 import {
   normalizeTimeRangeKey,
@@ -140,7 +140,13 @@ export function getGeneralInterview2NextStatusTransitionDelayMs(
  * - 그 외 → 배정 면접 **종료 시각** 기준 `waiting` | `completed` (저장하지 않음)
  */
 export function resolveGeneralEffectiveSecondInterviewStatus(
-  row: GeneralVolunteerApplicantRow,
+  row: Pick<
+    GeneralVolunteerApplicantRow,
+    | 'interviewAssignmentStatus'
+    | 'secondInterviewScreeningStatus'
+    | 'assignedInterviewDateLabel'
+    | 'assignedInterviewTime'
+  >,
   now: Dayjs = dayjs()
 ): GeneralEffectiveSecondInterviewStatus {
   if (row.interviewAssignmentStatus === 'withdrawn') return 'withdrawn'

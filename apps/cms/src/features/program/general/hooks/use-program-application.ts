@@ -5,7 +5,6 @@
 import { useMemo } from 'react'
 import type { Program, ApplicationPath } from '@/types/domain'
 import type { User } from '@/types/user'
-import { mockApplications } from '@/data/mock'
 import {
   isApplicationAvailable,
   getApplicationUrl,
@@ -74,13 +73,7 @@ export function useProgramApplication({
     const subjectId = userSubjectType === 'instructor' ? user.instructorId : user.id
     if (!subjectId) return false
 
-    return mockApplications.some(
-      app =>
-        app.programId === program.id &&
-        app.subjectId === subjectId &&
-        app.subjectType === userSubjectType &&
-        app.status !== 'cancelled'
-    )
+    return false
   }, [program, user, userSubjectType])
 
   // 정원 정보 계산
@@ -127,7 +120,7 @@ export function useProgramApplication({
 
   // 중복 신청 체크
   const checkDuplicate = (program: Program, userId: string) => {
-    return checkDuplicateApplication(program, userId, mockApplications)
+    return checkDuplicateApplication(program, userId, [])
   }
 
   return {

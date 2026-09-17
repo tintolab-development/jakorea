@@ -1,8 +1,12 @@
 import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
+import type { ProgramCreateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programCreateRequestEducationStructure'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
+import type { ProgramUpdateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestEducationStructure'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
+import type { ProgramResponseEducationStructure } from '@/shared/api/generated/logs/schemas/programResponseEducationStructure'
 import type {
+  GeneralProgramEducationStructure,
   Program,
   ProgramCategory,
   ProgramFormat,
@@ -10,6 +14,7 @@ import type {
   ProgramType,
 } from '@/types/domain'
 import type { Status } from '@/types'
+import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import {
   parseTrainedTeacherServiceDetailJson,
   serializeTrainedTeacherServiceDetailJson,
@@ -24,23 +29,35 @@ function toDate(value: Date | string | undefined): string | undefined {
   return value
 }
 
-function lifecycleStatusFromPeriodStatus(value?: string): ProgramLifecycleStatus {
+/** BE `educationStructure` → FE `generalProgramEducationStructure` */
+export function mapApiEducationStructureToDomain(
+  value?: ProgramResponseEducationStructure | string | null
+): GeneralProgramEducationStructure | undefined {
   switch (value?.trim().toUpperCase()) {
-    case 'SCHEDULED':
-    case 'PLANNED':
-      return 'scheduled'
-    case 'RECRUITING':
-    case 'RECRUITING_STUDENTS':
-      return 'recruiting_students'
-    case 'IN_PROGRESS':
-    case 'RUNNING':
-      return 'in_progress'
-    case 'COMPLETED':
-    case 'ENDED':
-      return 'completed'
+    case 'CURRICULUM':
+      return 'curriculum'
+    case 'SCHEDULE':
+      return 'schedule'
     default:
-      return 'recruiting_students'
+      return undefined
   }
+}
+
+/** FE `generalProgramEducationStructure` → BE `educationStructure` */
+export function mapDomainEducationStructureToApi(
+  value?: GeneralProgramEducationStructure | null
+): ProgramCreateRequestEducationStructure | ProgramUpdateRequestEducationStructure | undefined {
+  if (value === 'curriculum') return 'CURRICULUM'
+  if (value === 'schedule') return 'SCHEDULE'
+  return undefined
+}
+
+function resolveListLifecycleStatus(dto: AdminProgramListItemDto): ProgramLifecycleStatus {
+  return (
+    toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
+    toTypedProgramLifecycleStatus(dto.periodStatus) ??
+    'scheduled'
+  )
 }
 
 function baseProgram(
@@ -73,9 +90,7 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
     mainTitle: dto.mainTitle?.trim() || title,
     startDate: dto.businessStartDate ?? dto.startDate,
     endDate: dto.businessEndDate ?? dto.endDate,
-    lifecycleStatus: dto.periodStatus
-      ? lifecycleStatusFromPeriodStatus(dto.periodStatus)
-      : ((dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ?? 'recruiting_students'),
+    lifecycleStatus: resolveListLifecycleStatus(dto),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
     participatingSchoolCount: dto.organizationApplicationCount,
     createdAt: dto.createdAt,
@@ -84,14 +99,43 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
 }
 
 export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program {
+  const dtoExt = dto as ProgramResponse & {
+    remarks?: string
+    otherMatters?: string
+    contactName?: string
+    recruitmentTargetDetail?: string
+  }
   const title = dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
   const id = dto.id == null ? '' : String(dto.id)
   const now = new Date().toISOString()
   const details = parseTrainedTeacherServiceDetailJson(dto.serviceDetailJson)
+  const {
+    lifecycleStatus: _serviceDetailLifecycle,
+    status: _serviceDetailStatus,
+    ...detailFields
+  } = details
+  void _serviceDetailLifecycle
+  void _serviceDetailStatus
+
   const periodStatus = (dto as ProgramResponse & { periodStatus?: string }).periodStatus
+  /** 1급 API 필드 우선, 없을 때만 serviceDetailJson fallback */
+  const educationStructure =
+    mapApiEducationStructureToDomain(dto.educationStructure) ??
+    details.generalProgramEducationStructure
+  const detailedProgramName =
+    dto.detailedProgramName?.trim() || details.generalCommonInfo?.detailedProgramName
+  const participantRemarks = (
+    details.generalCommonInfo?.participantRecruitmentInfo as { remarks?: string } | undefined
+  )?.remarks
+  const otherNotes =
+    dtoExt.otherMatters?.trim() ||
+    dtoExt.remarks?.trim() ||
+    details.otherNotes?.trim() ||
+    participantRemarks?.trim() ||
+    undefined
 
   return baseProgram({
-    ...details,
+    ...detailFields,
     id,
     sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
     title,
@@ -119,8 +163,8 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus:
-      (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
-      (periodStatus ? lifecycleStatusFromPeriodStatus(periodStatus) : undefined),
+      toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
+      toTypedProgramLifecycleStatus(periodStatus),
     businessArea: dto.businessArea,
     titleEn: dto.titleEn,
     textbookName: dto.textbookName,
@@ -159,7 +203,14 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     recruitmentGuide: dto.recruitmentGuide,
     learningSupportContent: dto.learningSupportContent,
     attachmentFileNames: dto.attachmentFileNames,
+    otherNotes,
+    studentListRequired: details.studentListRequired,
     generalParticipantTypes: ['school_institution'],
+    generalProgramEducationStructure: educationStructure,
+    generalCommonInfo: {
+      ...details.generalCommonInfo,
+      ...(detailedProgramName ? { detailedProgramName } : {}),
+    },
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
   })
@@ -183,6 +234,9 @@ export function mapTrainedTeacherToUpdateRequest(
   patch?: Partial<Program>
 ): ProgramUpdateRequest {
   const merged = patch ? { ...program, ...patch } : program
+  const educationStructure = mapDomainEducationStructureToApi(
+    merged.generalProgramEducationStructure
+  )
   return {
     sponsorId: merged.sponsorId,
     title: merged.title,
@@ -195,6 +249,7 @@ export function mapTrainedTeacherToUpdateRequest(
     applicationStartDate: toDate(merged.applicationStartDate),
     applicationEndDate: toDate(merged.applicationEndDate),
     businessArea: merged.businessArea,
+    educationStructure,
     titleEn: merged.titleEn,
     mainTitle: merged.mainTitle ?? merged.title,
     textbookName: merged.textbookName,

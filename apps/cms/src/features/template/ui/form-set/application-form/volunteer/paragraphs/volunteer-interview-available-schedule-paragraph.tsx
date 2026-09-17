@@ -66,6 +66,7 @@ function VolunteerInterviewScheduleBlock({
   commonScheduleSeed,
   onCommonExclusionChange,
   overlayStore = 'application',
+  freezeUnavailableCalendar = false,
 }: {
   /** 예외 일정이 있을 때만 공통 블록에 전달 */
   title?: string
@@ -73,6 +74,8 @@ function VolunteerInterviewScheduleBlock({
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
   overlayStore?: VolunteerInterviewOverlayStore
+  /** 템플릿 편집 — 진행 불가일 모달 달력 월 이동·선택 고정 */
+  freezeUnavailableCalendar?: boolean
 }) {
   const seed = type === 'common' ? commonScheduleSeed : undefined
   const initialTimeRange = useMemo(
@@ -208,6 +211,7 @@ function VolunteerInterviewScheduleBlock({
                   defaultExcludeSunday={seed?.excludeSunday}
                   defaultExcludeHoliday={seed?.excludeHoliday}
                   defaultExcludeNone={seed?.excludeNone}
+                  freezeCalendarInteraction={freezeUnavailableCalendar}
                 />
               }
               view="-"
@@ -299,6 +303,7 @@ function VolunteerInterviewScheduleTemplateUi({
   commonScheduleSeed,
   onCommonExclusionChange,
   overlayStore = 'application',
+  freezeUnavailableCalendar = false,
 }: {
   exceptionScheduleCount?: number
   exceptionBlockKeys?: number[]
@@ -306,6 +311,7 @@ function VolunteerInterviewScheduleTemplateUi({
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
   overlayStore?: VolunteerInterviewOverlayStore
+  freezeUnavailableCalendar?: boolean
 }) {
   const [internalBlockKeys, setInternalBlockKeys] = useState<number[]>([])
 
@@ -345,6 +351,7 @@ function VolunteerInterviewScheduleTemplateUi({
         commonScheduleSeed={commonScheduleSeed}
         onCommonExclusionChange={onCommonExclusionChange}
         overlayStore={overlayStore}
+        freezeUnavailableCalendar={freezeUnavailableCalendar}
       />
       {blockKeys.map((key, index) => (
         <div key={key} className="volunteer-interview-available-schedule__exception-row">
@@ -379,6 +386,7 @@ export function VolunteerInterviewAvailableScheduleParagraph({
   commonScheduleSeed,
   onCommonExclusionChange,
   overlayStore = 'application',
+  freezeUnavailableCalendar = false,
 }: {
   isTemplateAuthoringMode?: boolean
   readOnlyPreview?: boolean
@@ -388,6 +396,8 @@ export function VolunteerInterviewAvailableScheduleParagraph({
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
   overlayStore?: VolunteerInterviewOverlayStore
+  /** 템플릿 관리 화면 — 진행 불가일 모달 달력 샘플 고정 */
+  freezeUnavailableCalendar?: boolean
 }) {
   if (isTemplateAuthoringMode && !readOnlyPreview) {
     return (
@@ -398,6 +408,7 @@ export function VolunteerInterviewAvailableScheduleParagraph({
         commonScheduleSeed={commonScheduleSeed}
         onCommonExclusionChange={onCommonExclusionChange}
         overlayStore={overlayStore}
+        freezeUnavailableCalendar={freezeUnavailableCalendar}
       />
     )
   }

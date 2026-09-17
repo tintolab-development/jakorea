@@ -12,6 +12,15 @@ export const TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_LABELS: Record<
   journal: '교육 일지',
 }
 
+export function getTrainedTeachersInstitutionDetailTabKeys(
+  educationJournalEnabled?: boolean
+): readonly TrainedTeachersInstitutionDetailTabKey[] {
+  if (educationJournalEnabled !== false) {
+    return TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_KEYS
+  }
+  return TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_KEYS.filter(key => key !== 'journal')
+}
+
 export function normalizeTrainedTeachersInstitutionDetailTab(
   tab: string | null | undefined
 ): TrainedTeachersInstitutionDetailTabKey {

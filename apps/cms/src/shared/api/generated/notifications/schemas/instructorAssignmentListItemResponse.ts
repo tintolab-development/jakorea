@@ -11,6 +11,8 @@ export interface InstructorAssignmentListItemResponse {
   programId?: number;
   scheduleId?: number;
   organizationApplicationId?: number;
+  /** 배정 대상 기관 신청이 참조하는 실제 기관 ID. 개인 출강지 배정이면 null */
+  organizationId?: number;
   instructorApplicationId?: number;
   instructorMemberId?: number;
   participantId?: number;
@@ -29,4 +31,12 @@ export interface InstructorAssignmentListItemResponse {
   evaluationTotalScore?: number;
   evaluationComment?: string;
   evaluationSubmittedAt?: string;
+  lectureDate?: string;
+  /** 강사 실명. 프로그램 관리에서는 마스킹하지 않습니다. */
+  instructorName?: string;
+  organizationName?: string;
+  distanceKm?: number;
+  longDistance?: boolean;
+  /** 자택 주소. 동(읍/면/리)까지 + ' *****' (FE blur). 기관/조직 주소(organizationName)와 무관. */
+  homeAddress?: string;
 }

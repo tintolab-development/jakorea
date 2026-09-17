@@ -69,7 +69,7 @@ export function modalCardFooterToggles(
         </div>
         <div className="form-editor-card__table-footer-toggle-slot">
           <CmsToggle
-            label="하단 설명"
+            label="하단 텍스트"
             checked={ht.showBottomText}
             onChange={checked =>
               updateParagraph(ht.id, p =>
@@ -124,7 +124,7 @@ export function modalCardFooterToggles(
         </div>
         <div className="form-editor-card__table-footer-toggle-slot">
           <CmsToggle
-            label="하단 설명"
+            label="하단 텍스트"
             checked={vt.showBottomText}
             onChange={checked =>
               updateParagraph(vt.id, p =>
