@@ -117,7 +117,11 @@ import {
   buildTemporaryParticipatingInstitutionPostFiles,
   buildTemporaryParticipatingInstitutionPosts,
 } from '@/features/program/general/lib/participating-institution-temp-posts'
-import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
+import {
+  isGeneralProgramTempMockEnabled,
+  isGeneralProgramTempMockProgramId,
+} from '@/features/program/general/api/temp-mock-capabilities'
+import { isTempMockOrgSchoolRowId } from '@/features/program/general/lib/temp-mock-org-program'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
@@ -473,14 +477,14 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   // TODO(temp-mock): 열여라 참깨 — 참여 기관 상세 게시글 검증 후 삭제
   const temporarySchoolPosts = useMemo(
     () =>
-      isGeneralProgramTempMockEnabled() && detail.id.startsWith('temp-textbook-status-')
+      isGeneralProgramTempMockEnabled() && isTempMockOrgSchoolRowId(detail.id)
         ? buildTemporaryParticipatingInstitutionPosts(String(program.id), detail.id)
         : [],
     [detail.id, program.id]
   )
   const temporarySchoolPostFiles = useMemo(
     () =>
-      isGeneralProgramTempMockEnabled() && detail.id.startsWith('temp-textbook-status-')
+      isGeneralProgramTempMockEnabled() && isTempMockOrgSchoolRowId(detail.id)
         ? buildTemporaryParticipatingInstitutionPostFiles(String(program.id), detail.id)
         : [],
     [detail.id, program.id]
@@ -556,6 +560,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const isCompanySchool = isCompanySchoolProgram(program)
   const requiredInstructorCount = resolveRequiredInstructorCount(program)
   const programId = String(program.id)
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
   const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
   const companySchoolAssignmentConflictsEnabled =
     isCompanySchool && shouldUseCompanySchoolProgramProgressRemoteApi()
@@ -752,6 +757,12 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         return
       }
     }
+    if (isTempMockProgram) {
+      onSaveBasicInfo?.({ id: detail.id, adminComment: trimmed })
+      setAdminCommentModalOpen(false)
+      setAdminCommentError(undefined)
+      return
+    }
     void showAlert({
       title: PROGRAM_API_UNAVAILABLE_TITLE,
       content: buildProgramApiUnavailableSaveContent('참여 기관 관리자 코멘트'),
@@ -760,6 +771,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     adminCommentDraft,
     detail.id,
     hasOrganizationApplicationId,
+    isTempMockProgram,
     onSaveBasicInfo,
     organizationApplicationId,
     queryClient,
@@ -807,14 +819,16 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         payload.stopScheduleLabel ||
         '활동 포기'
 
-      if (progressRemoteEnabled) {
+      if (progressRemoteEnabled || isTempMockProgram) {
         setActivityWithdrawSubmitting(true)
         try {
-          await giveUpGeneralParticipatingInstitution(programId, detail.id, reason)
+          if (progressRemoteEnabled) {
+            await giveUpGeneralParticipatingInstitution(programId, detail.id, reason)
+            await queryClient.invalidateQueries({
+              queryKey: generalProgramProgressQueryKeys.institutions(programId),
+            })
+          }
           onSaveBasicInfo?.({ id: detail.id, ...patch })
-          await queryClient.invalidateQueries({
-            queryKey: generalProgramProgressQueryKeys.institutions(programId),
-          })
           setActivityWithdrawModalOpen(false)
           showAlert({
             title: '활동 포기',
@@ -846,6 +860,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       onSaveBasicInfo,
       program,
       programId,
+      isTempMockProgram,
       progressRemoteEnabled,
       queryClient,
       sessions,
@@ -927,19 +942,31 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         scheduleId: r.scheduleId,
       }))
     }
-    // 일반 remote OFF — mock 금지
-    if (!isCompanySchool) return []
+    // 일반 remote OFF — FE mock 프로그램만 로컬 시드
+    if (!isCompanySchool && !isTempMockProgram) return []
     const rows = getAssignedInstructorDisplayRows(instructors)
     const defaultScheduleLine = buildParticipatingSchoolPreferredScheduleLines(row.sessions)[0]
     return rows.map(assignedRow => ({
       ...assignedRow,
       assignedScheduleLine:
         assignedScheduleLinesByInstructorId[assignedRow.id] ?? defaultScheduleLine,
+      ...(isTempMockProgram
+        ? {
+            homeAddress:
+              instructorList.find(item => item.id === assignedRow.id)?.address?.trim() || '-',
+            distanceToSchool: `${(assignedRow.no % 4) + 1}.${(assignedRow.no % 9) + 1}km`,
+            assignedDate: row.sessions?.[0]?.date ?? '-',
+            assignedTime: row.sessions?.[0]?.timeRange ?? '-',
+            assignedSession: row.sessions?.[0]?.classNum ?? '-',
+          }
+        : {}),
     }))
   }, [
     instructors,
     isCompanySchool,
+    isTempMockProgram,
     assignmentBoardRemoteEnabled,
+    instructorList,
     row.sessions,
     row.organizationApplicationId,
     assignedScheduleLinesByInstructorId,
@@ -978,8 +1005,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         })
     }
 
-    // 일반 remote OFF — mock 금지
-    if (!isCompanySchool) return []
+    // 일반 remote OFF — FE mock 프로그램만 로컬 시드
+    if (!isCompanySchool && !isTempMockProgram) return []
 
     return getWaitingInstructorRows(row.schoolName, instructorList, participatingSchoolList).filter(
       waitingRow => !assignedInstructorIdSet.has(getWaitingInstructorRowInstructorId(waitingRow))
@@ -991,6 +1018,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     instructorList,
     participatingSchoolList,
     isCompanySchool,
+    isTempMockProgram,
     assignmentBoardRemoteEnabled,
     occupiedLectureDatesByInstructorId,
     completedWaitingRowKeys,
@@ -1146,7 +1174,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         return
       }
 
-      if (!isCompanySchool) {
+      if (!isCompanySchool && !isTempMockProgram) {
         void showAlert({
           title: PROGRAM_API_UNAVAILABLE_TITLE,
           content: buildProgramApiUnavailableSaveContent('강사 배정'),
@@ -1323,7 +1351,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
           })
           return
         }
-      } else if (!isCompanySchool) {
+      } else if (!isCompanySchool && !isTempMockProgram) {
         void showAlert({
           title: PROGRAM_API_UNAVAILABLE_TITLE,
           content: buildProgramApiUnavailableSaveContent('강사 배정 취소'),
@@ -1409,7 +1437,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         }
       }
 
-      if (!isCompanySchool) {
+      if (!isCompanySchool && !isTempMockProgram) {
         void showAlert({
           title: PROGRAM_API_UNAVAILABLE_TITLE,
           content: buildProgramApiUnavailableSaveContent('대표 강사 변경'),
@@ -2536,6 +2564,13 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         onCancel={() => setScheduleChangeModalOpen(false)}
         onConfirm={() => {
           setScheduleChangeModalOpen(false)
+          if (isTempMockProgram) {
+            showAlert({
+              title: '일정 변경',
+              content: '교육 진행 일정 변경이 저장되었습니다. (temp mock)',
+            })
+            return
+          }
           notifyProgramApiUnavailable(
             'general-participating-institution-schedule-change',
             '일반 프로그램 · 참여 기관 교육 진행 일정 변경'

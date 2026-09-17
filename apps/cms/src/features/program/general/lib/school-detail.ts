@@ -21,6 +21,7 @@ import type {
   LectureAttendanceStatusKey,
   AssignmentSubmissionDetail,
   AssignmentTeamRoleKey,
+  SchoolSessionAttendanceStatusKey,
 } from '../model/school-detail-types'
 import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
 import {
@@ -33,6 +34,7 @@ import {
 import { resolveOneSchoolPerDayAssignmentStatus } from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
 import type { Application } from '@/types/domain'
 import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
+import { isTempMockOrgProgressInstructorId, isTempMockOrgSchoolRowId } from '@/features/program/general/lib/temp-mock-org-program'
 
 /**
  * 참여 강사 행 → 학교 상세 모달용 강사 행 (모달·테이블 연동 시 재사용)
@@ -67,7 +69,7 @@ export function getInstructorRowsForSchool(
   // TODO(temp-mock): 열여라 참깨 — 원격 기관 강사 배정 현황 검증 후 삭제
   if (!isGeneralProgramTempMockEnabled()) return []
   const temporaryInstructors = instructorRows
-    .filter(r => r.id.startsWith('temp-progress-instructor-'))
+    .filter(r => isTempMockOrgProgressInstructorId(r.id) || r.id.startsWith('temp-progress-instructor-'))
     .slice(0, 2)
   return temporaryInstructors.map((r, i) => toDetailInstructor(r, i))
 }
@@ -166,7 +168,8 @@ export function getWaitingInstructorRows(
       const hopeSession = hopeFromSchool?.hopeSession ?? '-'
       const hopeSchedule = { hopeDate, hopeTime, hopeSession }
       const isTemporaryInstructor =
-        isGeneralProgramTempMockEnabled() && r.id.startsWith('temp-progress-instructor-')
+        isGeneralProgramTempMockEnabled() &&
+        (isTempMockOrgProgressInstructorId(r.id) || r.id.startsWith('temp-progress-instructor-'))
       return {
         id: r.id,
         no: n - idx,
@@ -266,7 +269,7 @@ export function getCompanySchoolWaitingInstructorScheduleRows(
 export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailForModal {
   const sessionCount = row.sessions?.length ?? 0
   // TODO(temp-mock): 열여라 참깨 — 참여 기관 상세 필드 검증 후 삭제
-  if (isGeneralProgramTempMockEnabled() && row.id.startsWith('temp-textbook-status-')) {
+  if (isGeneralProgramTempMockEnabled() && isTempMockOrgSchoolRowId(row.id)) {
     const textbookUsed = row.textbookStatus !== 'not_applicable'
     return {
       id: row.id,
@@ -492,10 +495,26 @@ function getTemporaryStudentAttendanceSessions(
   }))
 }
 
+/** FE mock 학생 — 회차별 출석 관리 상태 */
+export function resolveTemporaryStudentSessionAttendanceStatus(
+  studentId: string,
+  roundNumber: number
+): SchoolSessionAttendanceStatusKey {
+  if (!isGeneralProgramTempMockEnabled() || !studentId.startsWith(TEMP_STUDENT_ID_PREFIX)) {
+    return 'present'
+  }
+  const sessions = getTemporaryStudentAttendanceSessions(studentId)
+  const session = sessions?.find(item => item.roundNumber === roundNumber)
+  if (!session || session.status === 'not_held') return 'present'
+  if (session.status === 'late') return 'late'
+  if (session.status === 'absent') return 'absent'
+  return 'present'
+}
+
 /** 해당 학교 학생 명단 — remote API 연동 전 빈 목록 */
 export function getSchoolDetailStudents(schoolId: string, _count: number): SchoolDetailStudentRow[] {
   // TODO(temp-mock): 열여라 참깨 — 학생 명단·강의 출석 내역 검증 후 삭제
-  if (isGeneralProgramTempMockEnabled() && schoolId.startsWith('temp-textbook-status-')) {
+  if (isGeneralProgramTempMockEnabled() && isTempMockOrgSchoolRowId(schoolId)) {
     return buildTemporarySchoolDetailStudents(schoolId)
   }
   return []
@@ -621,9 +640,10 @@ export function getAssignmentSubmissionDetailForApplication(
  * 기본 정보만 채우고, 강사진은 빈 배열, 교재/강의 정보는 mock 기본값
  */
 export function getApplicantSchoolDetail(row: ApplicantSchoolRow): SchoolDetailForModal {
-  const educationGradeLabel = row.educationGrade.startsWith('초')
-    ? row.educationGrade
-    : `초등학교 ${row.educationGrade}`
+  const educationGradeLabel =
+    /^(초|중|고)/.test(row.educationGrade.trim()) || row.educationGrade.includes('학교')
+      ? row.educationGrade
+      : `초등학교 ${row.educationGrade}`
 
   return {
     id: row.id,
@@ -637,5 +657,15 @@ export function getApplicantSchoolDetail(row: ApplicantSchoolRow): SchoolDetailF
     lectureRound: '진행 전',
     textbookStatus: 'preparing',
     instructors: [],
+    addressDetail: row.detail?.addressDetail,
+    educationFormat: row.detail?.educationType,
+    textbookName: row.detail?.textbookName,
+    teacherEmail: row.contact,
+    teacherPhone: row.contact,
+    applicationReason: row.detail?.applicationReason,
+    computerInRoom: row.detail?.computerInSpace,
+    waitingRoomLocation: row.detail?.waitingPlaceGuide,
+    mealNotice: row.detail?.mealInfo,
+    adminComment: row.adminComment,
   }
 }

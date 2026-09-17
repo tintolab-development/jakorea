@@ -20,10 +20,12 @@ import {
   filterAttendanceStudentsForDisplay,
 } from '../lib/school-detail-attendance-display'
 import {
+  buildTemporarySchoolDetailAttendanceSessionGroups,
   getSchoolDetailAttendanceEducationScheduleOptions,
   mergeSchoolDetailAttendanceRemoteData,
   resolveAttendanceSessions,
 } from '../lib/school-detail-attendance'
+import { isTempMockOrgSchoolRowId } from '../lib/temp-mock-org-program'
 import {
   SCHOOL_ATTENDANCE_FILTER_ALL,
   type SchoolDetailAttendanceFilters,
@@ -79,15 +81,17 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       : ''
   const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(programId || undefined)
   const applicationsRemoteEnabled = shouldUseGeneralApplicationsRemoteApi()
+  const isTempMockSchool = isTempMockOrgSchoolRowId(row.id)
   const remoteEnabled = Boolean(
     progressRemoteEnabled &&
       applicationsRemoteEnabled &&
       programId &&
-      organizationApplicationId
+      organizationApplicationId &&
+      !isTempMockSchool
   )
 
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled,
+    !remoteEnabled && !isTempMockSchool,
     'general-institution-attendance',
     '참여 기관 · 출석 관리'
   )
@@ -146,6 +150,14 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     [educationScheduleOptions]
   )
 
+  const [mockSessionStudentsPatch, setMockSessionStudentsPatch] = useState<
+    Record<string, SchoolDetailAttendanceStudentRow[]>
+  >({})
+
+  useEffect(() => {
+    setMockSessionStudentsPatch({})
+  }, [row.id])
+
   const remoteSessionGroups = useMemo(() => {
     if (!remoteEnabled || remoteQuery.data == null) return []
     return mergeSchoolDetailAttendanceRemoteData({
@@ -156,10 +168,28 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
     })
   }, [program, remoteEnabled, remoteQuery.data, row])
 
+  const mockSessionGroups = useMemo(() => {
+    if (!isTempMockSchool) return []
+    const base = buildTemporarySchoolDetailAttendanceSessionGroups(row, program)
+    return base.map(session => ({
+      ...session,
+      students: mockSessionStudentsPatch[session.id] ?? session.students,
+    }))
+  }, [isTempMockSchool, mockSessionStudentsPatch, program, row])
+
   const sessionGroups = useMemo(() => {
+    if (isTempMockSchool) {
+      return filterSessionGroups(mockSessionGroups, appliedFilters)
+    }
     if (!remoteEnabled) return []
     return filterSessionGroups(remoteSessionGroups, appliedFilters)
-  }, [appliedFilters, remoteEnabled, remoteSessionGroups])
+  }, [
+    appliedFilters,
+    isTempMockSchool,
+    mockSessionGroups,
+    remoteEnabled,
+    remoteSessionGroups,
+  ])
 
   const handleFilterChange = useCallback((key: string, value: string) => {
     setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -174,6 +204,13 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
       sessionId: string
       students: SchoolDetailAttendanceStudentRow[]
     }) => {
+      if (isTempMockSchool) {
+        setMockSessionStudentsPatch(prev => ({
+          ...prev,
+          [payload.sessionId]: cloneAttendanceStudentRows(payload.students),
+        }))
+        return
+      }
       if (!remoteEnabled) {
         notifyProgramApiUnavailable(
           'general-institution-attendance-save',
@@ -223,10 +260,11 @@ export function useSchoolDetailAttendance(row: ParticipatingSchoolRow, program: 
 
   const getSessionStudents = useCallback(
     (sessionId: string): SchoolDetailAttendanceStudentRow[] => {
-      const session = remoteSessionGroups.find(item => item.id === sessionId)
+      const sourceGroups = isTempMockSchool ? mockSessionGroups : remoteSessionGroups
+      const session = sourceGroups.find(item => item.id === sessionId)
       return cloneAttendanceStudentRows(session?.students ?? [])
     },
-    [remoteSessionGroups]
+    [isTempMockSchool, mockSessionGroups, remoteSessionGroups]
   )
 
   return {
