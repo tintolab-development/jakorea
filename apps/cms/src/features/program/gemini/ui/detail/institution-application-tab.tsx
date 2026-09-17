@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useMemo, useState, type Key } from 'react'
 import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -8,6 +8,7 @@ import {
 } from '@/shared/components'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
@@ -137,11 +138,6 @@ export function GeminiInstitutionApplicationTab({
   const canWrite = canPerformWriteAction(user)
   const { showAlert } = useCmsAlert()
   const remoteEnabled = shouldUseGeminiVisitingTrainingRemoteApi()
-  const remoteQuery = useGeminiOrganizationApplicationsQuery(
-    recruitmentId,
-    remoteEnabled && Boolean(recruitmentId)
-  )
-  const [rows, setRows] = useState<GeminiInstitutionApplicationRow[]>([])
 
   useNotifyProgramApiUnavailableOnce(
     !remoteEnabled,
@@ -154,16 +150,35 @@ export function GeminiInstitutionApplicationTab({
   const [openApprovalDropdownId, setOpenApprovalDropdownId] = useState<string | null>(null)
   const [bulkRejectOpen, setBulkRejectOpen] = useState(false)
   const [bulkApproveOpen, setBulkApproveOpen] = useState(false)
-
-  useEffect(() => {
-    if (remoteEnabled && remoteQuery.data) {
-      setRows(remoteQuery.data)
-      return
-    }
-    if (!remoteEnabled) {
-      setRows([])
-    }
-  }, [remoteEnabled, remoteQuery.data])
+  const queryFilters = useMemo(
+    () => ({
+      institutionName: appliedFilters.institutionName || undefined,
+      institutionSido: appliedFilters.institutionSido || undefined,
+      institutionSigungu: appliedFilters.institutionSigungu || undefined,
+      approvalStatus:
+        appliedFilters.approvalStatus !== 'ALL'
+          ? appliedFilters.approvalStatus
+          : undefined,
+      teacherName: appliedFilters.teacherName || undefined,
+    }),
+    [appliedFilters]
+  )
+  const remoteQuery = useGeminiOrganizationApplicationsQuery(
+    recruitmentId,
+    queryFilters,
+    remoteEnabled && Boolean(recruitmentId)
+  )
+  const rows = useMemo(
+    () => remoteQuery.data?.pages.flatMap(page => page.rows) ?? [],
+    [remoteQuery.data]
+  )
+  const hasNextPage = remoteEnabled ? (remoteQuery.hasNextPage ?? false) : false
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage: remoteQuery.isFetchingNextPage,
+    fetchNextPage: remoteQuery.fetchNextPage,
+    resetKey: `${recruitmentId ?? ''}:${JSON.stringify(queryFilters)}`,
+  })
 
   const filteredRows = useMemo(() => filterRows(rows, appliedFilters), [rows, appliedFilters])
   const awaitingRemoteRows = remoteEnabled && isAwaitingFirstQueryData(remoteQuery)
@@ -192,7 +207,6 @@ export function GeminiInstitutionApplicationTab({
       void remoteQuery.refetch()
       return
     }
-    setRows([])
   }, [remoteEnabled, remoteQuery])
 
   const showRemoteMutationUnavailable = useCallback(() => {
@@ -425,7 +439,7 @@ export function GeminiInstitutionApplicationTab({
           setSelectedRowKeys([])
         }}
         title="기관 신청 목록"
-        description={`총 ${filteredRows.length.toLocaleString()}건`}
+        description={`총 ${(remoteQuery.data?.pages[0]?.totalElements ?? filteredRows.length).toLocaleString()}건`}
         actions={
           canWrite ? (
             <>
@@ -476,6 +490,10 @@ export function GeminiInstitutionApplicationTab({
               : undefined
           }
         />
+        {remoteQuery.isFetchingNextPage ? (
+          <Spin size="small" aria-label="다음 기관 신청 불러오는 중" />
+        ) : null}
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
       )}
 
