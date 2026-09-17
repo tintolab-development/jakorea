@@ -145,6 +145,14 @@ describe('canAdminAction 표 규칙', () => {
     expect(allowed('PARTNER', 'dashboardWrite')).toBe(false)
   })
 
+  it('후원사 담당자 CRUD는 관리자 4역할 모두 허용', () => {
+    for (const role of ROLES) {
+      expect(allowed(role, 'sponsorContactWrite')).toBe(true)
+    }
+    expect(canAdminAction({ roleCode: null, action: 'sponsorContactWrite' })).toBe(false)
+    expect(allowed('VIEWER', 'download')).toBe(false)
+  })
+
   it('일반 개인정보 열람은 뷰어만 차단', () => {
     expect(allowed('MASTER', 'pii')).toBe(true)
     expect(allowed('PM', 'pii')).toBe(true)

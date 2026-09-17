@@ -18,6 +18,47 @@ const baseRow: SponsorProgramHistoryRow = {
 }
 
 describe('matchesProgramHistoryFilter', () => {
+  it('matches educationTarget when set', () => {
+    expect(
+      matchesProgramHistoryFilter(baseRow, {
+        title: '',
+        year: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        lifecycleStatus: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        participantType: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        educationTarget: 'elementary',
+        managerName: '',
+      })
+    ).toBe(true)
+    expect(
+      matchesProgramHistoryFilter(baseRow, {
+        title: '',
+        year: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        lifecycleStatus: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        participantType: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        educationTarget: 'middle',
+        managerName: '',
+      })
+    ).toBe(false)
+  })
+
+  it('복수 교육 대상 중 선택값이 포함되면 일치한다', () => {
+    const multiTargetRow: SponsorProgramHistoryRow = {
+      ...baseRow,
+      educationTarget: 'elementary',
+      educationTargets: ['elementary', 'middle'],
+    }
+    expect(
+      matchesProgramHistoryFilter(multiTargetRow, {
+        title: '',
+        year: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        lifecycleStatus: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        participantType: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+        educationTarget: 'middle',
+        managerName: '',
+      })
+    ).toBe(true)
+  })
+
   it('matches participantType when set', () => {
     expect(
       matchesProgramHistoryFilter(baseRow, {

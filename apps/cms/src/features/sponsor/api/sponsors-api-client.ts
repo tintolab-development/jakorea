@@ -67,6 +67,20 @@ export async function bulkDeleteSponsorsRemote(ids: string[]): Promise<void> {
   })
 }
 
+export async function bulkDeleteSponsorProgramHistoriesRemote(
+  sponsorId: string,
+  historyIds: string[]
+): Promise<void> {
+  await forEachBulkIdChunk(historyIds, async chunk => {
+    const result = unwrapApiBody<BulkActionResponse>(
+      await dmApi.bulkDeleteProgramHistories(pathId(sponsorId), {
+        ids: toBulkNumericIds(chunk),
+      })
+    )
+    assertBulkDeleteSucceeded(result, '후원사 프로그램 진행 이력 삭제에 실패했습니다.')
+  })
+}
+
 export async function endSponsorRemote(id: string): Promise<void> {
   await dmApi.end(pathId(id))
 }

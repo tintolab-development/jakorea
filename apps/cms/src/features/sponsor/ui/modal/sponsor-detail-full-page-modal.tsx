@@ -43,6 +43,10 @@ import { DetailModalSidebar, type DetailModalSidebarNavItem } from '@/shared/ui/
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import {
+  canAdminAction,
+  resolveAdminRoleCodeFromUser,
+} from '@/shared/lib/admin-role-policy'
+import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
@@ -106,6 +110,11 @@ function SponsorDetailFullPageModalInner({
   const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
+  const adminRoleCode = resolveAdminRoleCodeFromUser(user)
+  const canManageSponsorContacts = canAdminAction({
+    roleCode: adminRoleCode,
+    action: 'sponsorContactWrite',
+  })
   const { showAlert } = useCmsAlert()
   const [logoBulkDownloading, setLogoBulkDownloading] = useState(false)
   const rawLnbKey = searchParams.get(SPONSOR_LNB_PARAM)
@@ -193,7 +202,7 @@ function SponsorDetailFullPageModalInner({
   const sponsorContacts = useSponsorContacts(
     contactsList.allContacts,
     sponsorDetail.setContacts,
-    canWrite,
+    canManageSponsorContacts,
     remoteContactActions
   )
   const { registerModalOpen, setRegisterModalOpen, handleRegister } = sponsorContacts
@@ -203,7 +212,7 @@ function SponsorDetailFullPageModalInner({
   )
   const { contactColumns, programHistoryColumns } = useSponsorDetailModalTableColumns({
     contacts: contactsList.allContacts,
-    canWrite,
+    canWrite: canManageSponsorContacts,
     sponsorContacts,
     filteredProgramHistoryRowCount: programHistory.filteredRows.length,
   })
@@ -353,7 +362,7 @@ function SponsorDetailFullPageModalInner({
           />
         ) : lnbKey === LNB_CONTACTS ? (
           <SponsorContactsPanel
-            canWrite={canWrite}
+            canWrite={canManageSponsorContacts}
             contactsProps={sponsorContacts}
             columns={contactColumns}
             contactsList={contactsList}

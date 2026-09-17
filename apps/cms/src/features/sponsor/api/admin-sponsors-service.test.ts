@@ -16,6 +16,8 @@ vi.mock('@/features/sponsor/api/sponsors-api-client', async importOriginal => {
     fetchSponsorContactsRemote: vi.fn(),
     fetchYearlyBusinessesRemote: vi.fn(),
     addYearlyBusinessRemote: vi.fn(),
+    bulkDeleteSponsorContactsRemote: vi.fn(),
+    bulkDeleteSponsorProgramHistoriesRemote: vi.fn(),
     updateYearlyBusinessRemote: vi.fn(),
     updateSponsorContactRemote: vi.fn(),
   }
@@ -23,6 +25,8 @@ vi.mock('@/features/sponsor/api/sponsors-api-client', async importOriginal => {
 
 import {
   addYearlyBusinessRemote,
+  bulkDeleteSponsorContactsRemote,
+  bulkDeleteSponsorProgramHistoriesRemote,
   fetchSponsorContactsRemote,
   fetchSponsorRemote,
   fetchYearlyBusinessesRemote,
@@ -30,6 +34,8 @@ import {
   updateYearlyBusinessRemote,
 } from '@/features/sponsor/api/sponsors-api-client'
 import {
+  deleteSponsorContacts,
+  deleteSponsorProgramHistories,
   getSponsorContacts,
   getSponsorDetail,
   getSponsorYearlyBusinesses,
@@ -41,8 +47,35 @@ const fetchSponsorRemoteMock = vi.mocked(fetchSponsorRemote)
 const fetchSponsorContactsRemoteMock = vi.mocked(fetchSponsorContactsRemote)
 const fetchYearlyBusinessesRemoteMock = vi.mocked(fetchYearlyBusinessesRemote)
 const addYearlyBusinessRemoteMock = vi.mocked(addYearlyBusinessRemote)
+const bulkDeleteSponsorContactsRemoteMock = vi.mocked(bulkDeleteSponsorContactsRemote)
+const bulkDeleteSponsorProgramHistoriesRemoteMock = vi.mocked(
+  bulkDeleteSponsorProgramHistoriesRemote
+)
 const updateYearlyBusinessRemoteMock = vi.mocked(updateYearlyBusinessRemote)
 const updateSponsorContactRemoteMock = vi.mocked(updateSponsorContactRemote)
+
+describe('deleteSponsorContacts', () => {
+  it('선택한 담당자 id를 일괄 삭제 API에 전달한다', async () => {
+    bulkDeleteSponsorContactsRemoteMock.mockResolvedValue()
+
+    await deleteSponsorContacts(['201', '202'])
+
+    expect(bulkDeleteSponsorContactsRemoteMock).toHaveBeenCalledWith(['201', '202'])
+  })
+})
+
+describe('deleteSponsorProgramHistories', () => {
+  it('후원사 id와 선택한 이력 id를 일괄 삭제 API에 전달한다', async () => {
+    bulkDeleteSponsorProgramHistoriesRemoteMock.mockResolvedValue()
+
+    await deleteSponsorProgramHistories('10', ['101', '102'])
+
+    expect(bulkDeleteSponsorProgramHistoriesRemoteMock).toHaveBeenCalledWith('10', [
+      '101',
+      '102',
+    ])
+  })
+})
 
 describe('getSponsorDetail', () => {
   beforeEach(() => {

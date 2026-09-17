@@ -5,6 +5,7 @@ import type { SponsorContactRow } from '@/features/sponsor/model/sponsor-managem
 import { buildContactColumns } from '@/features/sponsor/columns/sponsor-contact-columns'
 import type { UseSponsorContactsReturn } from '@/features/sponsor/hooks/use-sponsor-contacts'
 import type { UseContactsListReturn } from '@/features/sponsor/hooks/use-contacts-list'
+import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { SponsorContactDeleteModal } from '@/features/sponsor/ui/modal/sponsor-contact-delete-modal'
 import { SponsorContactTypeChangeBlockedModal } from '@/features/sponsor/ui/modal/sponsor-contact-type-change-blocked-modal'
 import {
@@ -72,6 +73,7 @@ export function SponsorContactsPanel({
     selectedNames,
     isEditing,
     isSavingEdits,
+    isDeleting,
     draftRows,
     startEdit,
     saveEdits,
@@ -86,13 +88,42 @@ export function SponsorContactsPanel({
   }, [canWrite, setRegisterModalOpen])
 
   const handleDeleteClick = useCallback((): void => {
-    if (!canWrite || selectedKeys.length === 0) return
+    if (!canWrite || isEditing || isDeleting) return
+    if (selectedKeys.length === 0) {
+      showAlert({
+        title: '항목 선택 안내',
+        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+      })
+      return
+    }
     setDeleteModalOpen(true)
-  }, [canWrite, selectedKeys.length, setDeleteModalOpen])
+  }, [
+    canWrite,
+    isDeleting,
+    isEditing,
+    selectedKeys.length,
+    setDeleteModalOpen,
+    showAlert,
+  ])
 
   const handleDeleteCancel = useCallback((): void => {
+    if (isDeleting) return
     setDeleteModalOpen(false)
-  }, [setDeleteModalOpen])
+  }, [isDeleting, setDeleteModalOpen])
+
+  const handleDeleteConfirm = useCallback(async (): Promise<void> => {
+    try {
+      await handleDelete()
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: getDataManagementApiErrorMessage(
+          error,
+          '후원사 담당자 삭제에 실패했습니다.'
+        ),
+      })
+    }
+  }, [handleDelete, showAlert])
 
   const handleToggleEdit = useCallback(async (): Promise<void> => {
     if (!canWrite || isSavingEdits) return
@@ -146,6 +177,7 @@ export function SponsorContactsPanel({
         onSearch={handleSearch}
         title="담당자 목록"
         description={`${tableRows.length.toLocaleString()}건`}
+        toolbarAdminAction="sponsorContactWrite"
         excelExport={{ columns: excelColumns, data: tableRows }}
         actions={
           <>
@@ -153,7 +185,9 @@ export function SponsorContactsPanel({
               variant="delete"
               size="medium"
               onClick={handleDeleteClick}
-              disabled={isEditing || selectedKeys.length === 0}
+              disabled={!canWrite || isEditing || isDeleting}
+              loading={isDeleting}
+              adminAction="sponsorContactWrite"
             >
               담당자 삭제
             </CmsButton>
@@ -201,8 +235,9 @@ export function SponsorContactsPanel({
       <SponsorContactDeleteModal
         open={deleteModalOpen}
         onCancel={handleDeleteCancel}
-        onConfirm={handleDelete}
+        onConfirm={handleDeleteConfirm}
         contactNames={selectedNames}
+        confirmLoading={isDeleting}
       />
       <SponsorContactTypeChangeBlockedModal
         open={typeChangeBlockedModalOpen}

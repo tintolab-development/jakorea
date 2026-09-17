@@ -16,6 +16,7 @@ import { sponsorsParamsFromSearchParams } from '@/features/sponsor/api/sponsor-f
 import {
   addSponsorContactRemote,
   addYearlyBusinessRemote,
+  bulkDeleteSponsorProgramHistoriesRemote,
   bulkDeleteSponsorContactsRemote,
   bulkDeleteSponsorsRemote,
   createSponsorRemote,
@@ -169,6 +170,14 @@ export async function deleteSponsors(ids: string[]): Promise<void> {
     return
   }
   await bulkDeleteSponsorsRemote(ids)
+}
+
+export async function deleteSponsorProgramHistories(
+  sponsorId: string,
+  historyIds: string[]
+): Promise<void> {
+  assertSponsorsRemoteReady()
+  await bulkDeleteSponsorProgramHistoriesRemote(sponsorId, historyIds)
 }
 
 export async function endSponsorship(id: string): Promise<void> {

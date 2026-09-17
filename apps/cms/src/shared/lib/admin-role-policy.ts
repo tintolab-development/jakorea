@@ -17,6 +17,7 @@ export type AdminActionKind =
   | 'approve'
   | 'send'
   | 'download'
+  | 'sponsorContactWrite'
   | 'pii'
   | 'piiRrn'
   | 'piiAccount'
@@ -185,6 +186,9 @@ export function canAdminAction(input: {
       // DASHBOARD_WRITE: 본인 레이아웃·설정만. PROGRAM_WRITE와 묶지 않음.
       // V80: MASTER / PM / VIEWER. PARTNER는 서버 미부여.
       return roleCode === 'MASTER' || roleCode === 'PM' || roleCode === 'VIEWER'
+    case 'sponsorContactWrite':
+      // 후원사 상세 > 담당자 목록 CRUD는 관리자 4역할 모두 허용.
+      return true
     case 'approve':
       if (screen === 'admin-permission-approval' || screen === 'permission-settings') {
         return roleCode === 'MASTER'
@@ -255,8 +259,9 @@ export function denyAdminActionEvent(
 /** 목록 툴바·상세 헤더 등 공유 액션 영역의 클릭을 write로 가로챈다. */
 export function onAdminWriteClickCapture(
   event: DomClickEvent,
-  roleCode?: AdminRoleCode | null
+  roleCode?: AdminRoleCode | null,
+  action: AdminActionKind = 'write'
 ): void {
   if (!isInteractiveClickTarget(event.target)) return
-  denyAdminActionEvent(event, { roleCode, action: 'write' })
+  denyAdminActionEvent(event, { roleCode, action })
 }
