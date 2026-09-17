@@ -16,10 +16,7 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { CmsButton, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
 import { geminiRecruitmentService } from '../../api/recruitment-service'
-import {
-  useGeminiRecruitmentRows,
-  useGeminiRecruitmentRowsQueryState,
-} from '../../hooks/use-gemini-recruitment-rows'
+import { useGeminiRecruitmentRows } from '../../hooks/use-gemini-recruitment-rows'
 import { useToday } from '../../hooks/use-today'
 import { GEMINI_RECRUITMENT_FILTER_FIELDS } from '../../model/recruitment/filter-fields'
 import {
@@ -88,17 +85,22 @@ export function GeminiRecruitmentList() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const todayKey = useToday()
+  const searchParamsKey = searchParams.toString()
+  const { recruitmentId, openDetail } = useGeminiRecruitmentDetailUrl()
+  const { openAdd } = useGeminiRecruitmentAddUrl()
+  const detailOpen = Boolean(recruitmentId)
   const queryFilters = useMemo(() => {
+    const params = new URLSearchParams(searchParamsKey)
     const [defaultFrom, defaultTo] = getDefaultTrainingRequestPeriodRange(todayKey)
     return {
-      title: searchParams.get('gvt_title') ?? undefined,
-      status: searchParams.get('gvt_status') ?? undefined,
-      from: searchParams.get('gvt_from') ?? defaultFrom.format('YYYY-MM-DD'),
-      to: searchParams.get('gvt_to') ?? defaultTo.format('YYYY-MM-DD'),
+      title: params.get('gvt_title') ?? undefined,
+      status: params.get('gvt_status') ?? undefined,
+      from: params.get('gvt_from') ?? defaultFrom.format('YYYY-MM-DD'),
+      to: params.get('gvt_to') ?? defaultTo.format('YYYY-MM-DD'),
     }
-  }, [searchParams, todayKey])
-  const recruitmentRows = useGeminiRecruitmentRows(queryFilters)
+  }, [searchParamsKey, todayKey])
   const {
+    rows: recruitmentRows,
     remoteEnabled,
     isFetching,
     isFetchingNextPage,
@@ -107,15 +109,13 @@ export function GeminiRecruitmentList() {
     fetchNextPage,
     hasNextPage,
     totalElements,
-  } = useGeminiRecruitmentRowsQueryState(queryFilters)
+  } = useGeminiRecruitmentRows(queryFilters)
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
     resetKey: JSON.stringify(queryFilters),
   })
-  const { openDetail } = useGeminiRecruitmentDetailUrl()
-  const { openAdd } = useGeminiRecruitmentAddUrl()
 
   const tableContext = useMemo<GeminiRecruitmentTableContext>(() => ({ todayKey }), [todayKey])
 
@@ -130,6 +130,7 @@ export function GeminiRecruitmentList() {
     searchParams,
     setSearchParams,
     context: tableContext,
+    disableUrlSync: detailOpen,
   })
 
   const showNoSelectionAlert = useCallback(() => {

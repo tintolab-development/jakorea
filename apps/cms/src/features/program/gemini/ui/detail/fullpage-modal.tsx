@@ -89,8 +89,7 @@ export function GeminiRecruitmentDetailFullPageModal({
     handleEdit: handleInfoEdit,
     handleCancel: handleInfoCancel,
     handleSave: handleInfoSave,
-    editor: infoEditor,
-    editorMinHeight: infoEditorMinHeight,
+    registerGetAdditionalContentMarkdown,
     isDetailFetching,
   } = useGeminiRecruitmentInfoEdit(recruitmentId, todayKey)
 
@@ -247,8 +246,7 @@ export function GeminiRecruitmentDetailFullPageModal({
                   isEditMode={isEditModeInfo}
                   draft={infoDraft}
                   onDraftChange={patchDraft}
-                  editor={infoEditor}
-                  editorMinHeight={infoEditorMinHeight}
+                  registerGetAdditionalContentMarkdown={registerGetAdditionalContentMarkdown}
                 />
               </>
             ) : activeLnb === 'institutions' ? (
