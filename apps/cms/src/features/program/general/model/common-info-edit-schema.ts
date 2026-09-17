@@ -702,9 +702,11 @@ export const GENERAL_PROGRAM_VENUE_KIND_LABELS: Record<GeneralProgramVenueKind, 
 }
 
 export function resolveVenueKind(program: Program): GeneralProgramVenueKind {
+  const nested = program.generalCommonInfo?.venueKind
+  if (nested === 'inside' || nested === 'outside' || nested === 'other') return nested
   if (program.institutionType === 'inside_school') return 'inside'
   if (program.institutionType === 'outside_school') return 'outside'
-  if (program.venue?.trim()) return 'other'
+  if (program.venue?.trim() || program.generalCommonInfo?.venueDetail?.trim()) return 'other'
   return 'inside'
 }
 
