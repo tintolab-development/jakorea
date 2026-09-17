@@ -16,6 +16,10 @@ import type {
 import type { Status } from '@/types'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import {
+  decodeSponsorManagerContactRef,
+} from '@/features/program/general/model/common-info-edit-schema'
+import { resolveProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
   parseTrainedTeacherServiceDetailJson,
   serializeTrainedTeacherServiceDetailJson,
 } from './service-detail-json'
@@ -172,7 +176,15 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     schoolId: dto.schoolId,
     district: dto.district,
     ips: dto.ips as Program['ips'],
-    targetLevel: details.targetLevels?.[0] ?? (dto.targetLevel as Program['targetLevel']),
+    targetLevel:
+      resolveProgramTargetLevels({
+        targetLevels: details.targetLevels,
+        targetLevel: details.targetLevels?.[0] ?? dto.targetLevel,
+      })[0] ?? undefined,
+    targetLevels: resolveProgramTargetLevels({
+      targetLevels: details.targetLevels,
+      targetLevel: details.targetLevels?.[0] ?? dto.targetLevel,
+    }),
     institutionType: dto.institutionType as Program['institutionType'],
     ipOwned: dto.ipOwned,
     courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
@@ -237,9 +249,33 @@ export function mapTrainedTeacherToUpdateRequest(
   const educationStructure = mapDomainEducationStructureToApi(
     merged.generalProgramEducationStructure
   )
+  const announcementTitle =
+    merged.generalCommonInfo?.announcementTitle?.trim() || merged.title?.trim()
+  const detailedProgramName =
+    merged.generalCommonInfo?.detailedProgramName?.trim() || merged.textbookName?.trim()
+  const sponsorContactRef = merged.generalCommonInfo?.sponsorManagerContactId?.trim()
+  const decodedContact = sponsorContactRef
+    ? decodeSponsorManagerContactRef(sponsorContactRef)
+    : null
+  const primarySponsorId =
+    merged.generalCommonInfo?.sponsorManagementIds?.[0] ||
+    decodedContact?.sponsorManagementId ||
+    merged.sponsorId
+  const sponsors =
+    primarySponsorId != null && String(primarySponsorId).trim() !== ''
+      ? [
+          {
+            sponsorId: String(primarySponsorId),
+            ...(decodedContact?.contactId
+              ? { sponsorContactId: decodedContact.contactId }
+              : {}),
+          },
+        ]
+      : undefined
   return {
-    sponsorId: merged.sponsorId,
-    title: merged.title,
+    sponsorId: merged.sponsorId || primarySponsorId,
+    sponsors,
+    title: announcementTitle || merged.title,
     type: merged.type,
     format: merged.format,
     category: merged.category,
@@ -252,7 +288,7 @@ export function mapTrainedTeacherToUpdateRequest(
     educationStructure,
     titleEn: merged.titleEn,
     mainTitle: merged.mainTitle ?? merged.title,
-    textbookName: merged.textbookName,
+    textbookName: detailedProgramName || merged.textbookName,
     textbookNameEn: merged.textbookNameEn,
     schoolId: merged.schoolId,
     district: merged.district,
@@ -274,7 +310,10 @@ export function mapTrainedTeacherToUpdateRequest(
     educatedTeachers: merged.educatedTeachers,
     instructors: merged.instructors,
     managerName: merged.managerName,
-    venue: merged.venue,
+    venue:
+      merged.venue?.trim() ||
+      merged.generalCommonInfo?.venueDetail?.trim() ||
+      undefined,
     curriculum: merged.curriculum,
     contactEmail: merged.contactEmail,
     contactPhone: merged.contactPhone,

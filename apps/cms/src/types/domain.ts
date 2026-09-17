@@ -138,12 +138,16 @@ export interface GeneralProgramCommonInfoExtension {
   sponsorManagerLine?: string
   /** 교육 장소 상세 (기관 안/밖 뒤 `|` 구분) */
   venueDetail?: string
+  /** 교육 장소 구분 — inside/outside/other (other 는 top-level venue 로 라운드트립) */
+  venueKind?: 'inside' | 'outside' | 'other'
   /** 후원사 표시명 mock — `sponsorId` resolve 전 스크린샷·데모용 (복수 시 `, ` 구분) */
   sponsorDisplayName?: string
   /** 후원사 관리 목록 id — `/sponsor?sponsorId=` 링크용 (레거시·주 후원사) */
   sponsorManagementId?: string
   /** 후원사 관리 목록 id — 다중 선택 */
   sponsorManagementIds?: string[]
+  /** 후원사 담당자 선택 ref (`sponsorManagementId::contactId`) — PATCH sponsors[] 용 */
+  sponsorManagerContactId?: string
   educationFormLabel?: string
   /** 참여 방식 — 개인 대상 · 일정 공통 (등록 폼·상세 조회 mock) */
   participationMethod?: 'individual' | 'team'

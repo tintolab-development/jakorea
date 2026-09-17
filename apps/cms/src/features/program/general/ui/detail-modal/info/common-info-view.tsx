@@ -103,6 +103,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { formatNumberDisplay } from '@/shared/utils'
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS,
@@ -276,7 +277,9 @@ function ProgramProgressView({ program }: { program: Program }) {
 }
 
 function KpiBoldNumber({ value }: { value: number }) {
-  return <span className="detail-common-info-view__kpi-number">{value}</span>
+  return (
+    <span className="detail-common-info-view__kpi-number">{formatNumberDisplay(value)}</span>
+  )
 }
 
 function BasicInfoSection({

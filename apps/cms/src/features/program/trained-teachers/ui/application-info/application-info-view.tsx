@@ -17,6 +17,7 @@ import { WRITING_FORM_TEMPLATE_SAVE_EVENT } from '@/features/template/lib/writin
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import { CmsButton } from '@/shared/ui'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import '@/features/program/general/ui/detail-modal/info/application-view.css'
 
@@ -94,7 +95,19 @@ export function TrainedTeachersApplicationInfoView({
   onEditForm: () => void
   previewReloadKey?: number
 }) {
+  const { showAlert } = useCmsAlert()
   const formEditable = isTrainedTeachersApplicationFormEditable(program)
+
+  const handleEditFormClick = () => {
+    if (!formEditable) {
+      showAlert({
+        title: '안내',
+        content: '모집 시작일 이후에는 신청 양식을 수정할 수 없습니다.',
+      })
+      return
+    }
+    onEditForm()
+  }
 
   return (
     <div className="application-view program-detail-fullpage-modal__info-tab">
@@ -105,9 +118,7 @@ export function TrainedTeachersApplicationInfoView({
         items={[{ key: 'institutions', label: '참여 기관 신청 정보' }]}
         trailing={
           canWrite ? (
-            <CmsButton onClick={onEditForm} disabled={!formEditable}>
-              양식 수정
-            </CmsButton>
+            <CmsButton onClick={handleEditFormClick}>양식 수정</CmsButton>
           ) : null
         }
       />

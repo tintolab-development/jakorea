@@ -7339,98 +7339,512 @@
     },
     "/api/admin/program-execution/programs/{programId}/attendances:bulk-upsert": {
       "post": {
-        "summary": "프로그램 일괄 처리",
+        "tags": [
+          "신청 및 프로그램 진행"
+        ],
+        "summary": "출석 일괄 저장",
+        "operationId": "bulkUpsertProgramAttendances",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttendanceBulkUpsertRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceBulkUpsertResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/admin/program-execution/programs/{programId}/schedules/{scheduleId}/attendances": {
       "get": {
-        "summary": "프로그램 상세 조회",
+        "tags": [
+          "신청 및 프로그램 진행"
+        ],
+        "summary": "출석 목록 조회",
+        "operationId": "listProgramScheduleAttendances",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttendanceItemResponse"
+                  }
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/admin/program-execution/programs/{programId}/schedules/{scheduleId}/ujat/partner-assignments": {
       "get": {
-        "summary": "UJAT 운영 상세 조회",
+        "tags": [
+          "신청 및 프로그램 진행"
+        ],
+        "summary": "UJAT 파트너 배정 목록 조회",
+        "operationId": "listUjatPartnerAssignments",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "organizationApplicationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UjatDgbongPartnerAssignmentResponse"
+                  }
+                }
+              }
+            }
           }
         }
       },
       "post": {
-        "summary": "UJAT 운영 생성/처리",
+        "tags": [
+          "신청 및 프로그램 진행"
+        ],
+        "summary": "UJAT 파트너 매칭 확정",
+        "operationId": "confirmUjatPartnerAssignment",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UjatDgbongPartnerAssignmentConfirmRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UjatDgbongPartnerAssignmentResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/admin/program-execution/programs/{programId}/schedules/{scheduleId}/ujat/partner-assignments/{assignmentGroupId}/cancel": {
       "post": {
-        "summary": "UJAT 운영 취소",
+        "tags": [
+          "신청 및 프로그램 진행"
+        ],
+        "summary": "UJAT 파트너 매칭 취소",
+        "operationId": "cancelUjatPartnerAssignment",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "assignmentGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignmentCancelRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UjatDgbongPartnerAssignmentResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/admin/program-execution/programs/{programId}/schedules/{scheduleId}/ujat/partner-recommendation": {
       "get": {
-        "summary": "UJAT 운영 상세 조회",
+        "tags": [
+          "신청 및 프로그램 진행"
+        ],
+        "summary": "UJAT 파트너 매칭 추천",
+        "operationId": "recommendUjatPartnerPair",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "organizationApplicationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UjatDgbongPartnerPairRecommendationResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/admin/program-execution/programs/{programId}/ujat/allocation-matrix": {
       "get": {
+        "tags": [
+          "UJAT 지역별 교육 배정"
+        ],
         "summary": "UJAT 지역별 교육 배정 Matrix 조회",
+        "operationId": "getUjatAllocationMatrix",
+        "description": "semesterType/recruitHalf로 상·하반기 교육일 컬럼을 가른다. 미지정 시 전체.",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "educationRegionCode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scheduleIds",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              }
+            },
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "semesterType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "FIRST_HALF",
+                "SECOND_HALF"
+              ]
+            }
+          },
+          {
+            "name": "recruitHalf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "FIRST_HALF",
+                "SECOND_HALF"
+              ]
+            },
+            "description": "semesterType alias (P0 신청 목록과 동일)"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AllocationMatrixResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/admin/program-execution/programs/{programId}/ujat/education-slots/{educationSlotId}/direct-assignment": {
       "post": {
-        "summary": "UJAT 교육일 직접배정 및 2인조 분할 재배정",
+        "tags": [
+          "UJAT 지역별 교육 배정"
+        ],
+        "summary": "UJAT 교육일 직접배정",
+        "operationId": "directAssignUjatEducationSlot",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "educationSlotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DirectAssignmentRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectAssignmentResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/admin/program-execution/programs/{programId}/ujat/education-slots/{educationSlotId}/direct-assignment-candidates": {
       "get": {
+        "tags": [
+          "UJAT 지역별 교육 배정"
+        ],
         "summary": "UJAT 교육일 직접배정 후보 조회",
+        "operationId": "listUjatDirectAssignmentCandidates",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "educationSlotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DirectAssignmentCandidatesResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/admin/program-execution/programs/{programId}/ujat/partner-assignments:auto": {
       "post": {
+        "tags": [
+          "UJAT 지역별 교육 배정"
+        ],
         "summary": "UJAT 지역별 미배정 교육일/학급 자동 배정",
+        "operationId": "autoAssignUjatPartnerAssignments",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoAssignmentRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoAssignmentResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -7579,7 +7993,41 @@
     },
     "/api/admin/program-execution/programs/{programId}/ujat/schedules/{scheduleId}/attendance-manager": {
       "put": {
+        "tags": [
+          "UJAT 지역별 교육 배정"
+        ],
         "summary": "UJAT 교육일 출결 담당자 변경",
+        "operationId": "updateUjatAttendanceManager",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttendanceManagerUpdateRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -7589,25 +8037,133 @@
     },
     "/api/admin/program-execution/programs/{programId}/ujat/schedules/{scheduleId}/unavailability": {
       "get": {
+        "tags": [
+          "UJAT 지역별 교육 배정"
+        ],
         "summary": "UJAT 교육일 활동 불가 봉사자 목록",
+        "operationId": "listUjatVolunteerUnavailability",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VolunteerUnavailabilityResponse"
+                  }
+                }
+              }
+            }
           }
         }
       },
       "post": {
+        "tags": [
+          "UJAT 지역별 교육 배정"
+        ],
         "summary": "UJAT 봉사자 활동 불가일 설정 및 기존 배정 대체",
+        "operationId": "markUjatVolunteerUnavailable",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VolunteerUnavailabilityRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VolunteerUnavailabilityResponse"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/admin/program-execution/programs/{programId}/ujat/schedules/{scheduleId}/unavailability/{participantId}": {
       "delete": {
+        "tags": [
+          "UJAT 지역별 교육 배정"
+        ],
         "summary": "UJAT 봉사자 활동 불가일 해제",
+        "operationId": "clearUjatVolunteerUnavailability",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "participantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -17861,10 +18417,6 @@
           "businessYear": {
             "type": "integer",
             "nullable": true
-          },
-          "recruitmentStatus": {
-            "type": "string",
-            "description": "참여자 모집 창 — periodStatus와 독립"
           }
         }
       },
@@ -31936,6 +32488,791 @@
           "educationRegionCode": {
             "type": "string",
             "maxLength": 100
+          }
+        }
+      },
+      "AllocationColumn": {
+        "type": "object",
+        "properties": {
+          "columnKey": {
+            "type": "string"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationName": {
+            "type": "string",
+            "nullable": true
+          },
+          "organizationRegion": {
+            "type": "string",
+            "nullable": true
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "classCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "AllocationCell": {
+        "type": "object",
+        "properties": {
+          "columnKey": {
+            "type": "string"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assignmentGroupId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "attendanceManager": {
+            "type": "boolean"
+          },
+          "singleAssignment": {
+            "type": "boolean"
+          },
+          "unavailable": {
+            "type": "boolean"
+          },
+          "needsReassignment": {
+            "type": "boolean"
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "VolunteerRow": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "volunteerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "participantStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "giveUp": {
+            "type": "boolean"
+          },
+          "totalAssignedDays": {
+            "type": "integer"
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllocationCell"
+            }
+          }
+        }
+      },
+      "AllocationMatrixResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "semesterType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
+            "description": "요청 반기 필터 echo. 미지정 조회 시 null"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllocationColumn"
+            }
+          },
+          "volunteers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VolunteerRow"
+            }
+          }
+        }
+      },
+      "DirectAssignmentCandidate": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "volunteerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalAssignedDays": {
+            "type": "integer"
+          },
+          "alreadyAssignedOnEducationDate": {
+            "type": "boolean"
+          },
+          "sourceAssignmentGroupId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "sourceEducationSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "sourceClassLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourcePartnerParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          }
+        }
+      },
+      "DirectAssignmentCandidatesResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "reallocationRequired": {
+            "type": "boolean"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DirectAssignmentCandidate"
+            }
+          }
+        }
+      },
+      "DirectAssignmentRequest": {
+        "type": "object",
+        "required": [
+          "participantId"
+        ],
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "UjatDgbongPartnerAssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "assignmentGroupId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "primaryParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "secondaryParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "attendanceManagerParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cancelReason": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "DirectAssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "movedParticipantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "movedFromExistingPair": {
+            "type": "boolean"
+          },
+          "targetAssignment": {
+            "$ref": "#/components/schemas/UjatDgbongPartnerAssignmentResponse"
+          },
+          "remainingSourceAssignment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UjatDgbongPartnerAssignmentResponse"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "AutoAssignmentRequest": {
+        "type": "object",
+        "properties": {
+          "educationRegionCode": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true
+          },
+          "semesterType": {
+            "type": "string",
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "AutoAssignmentSlotResult": {
+        "type": "object",
+        "properties": {
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "result": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignmentGroupId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "primaryParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "secondaryParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "attendanceManagerParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AutoAssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "targetSlotCount": {
+            "type": "integer"
+          },
+          "pairAssignedCount": {
+            "type": "integer"
+          },
+          "singleAssignedCount": {
+            "type": "integer"
+          },
+          "unassignedCount": {
+            "type": "integer"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutoAssignmentSlotResult"
+            }
+          },
+          "capacityWarnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UjatCapacityWarning"
+            }
+          }
+        }
+      },
+      "VolunteerUnavailabilityRequest": {
+        "type": "object",
+        "required": [
+          "participantId"
+        ],
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "replacementParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "nullable": true
+          }
+        }
+      },
+      "VolunteerUnavailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "replacementParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "replacementApplied": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AttendanceManagerUpdateRequest": {
+        "type": "object",
+        "required": [
+          "participantId"
+        ],
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "UjatDgbongPartnerAssignmentConfirmRequest": {
+        "type": "object",
+        "properties": {
+          "primaryParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "secondaryParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "attendanceManagerParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "generatedByAdminId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "deprecated": true
+          }
+        }
+      },
+      "UjatDgbongPartnerCandidateResponse": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "memberName": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedScheduleCount": {
+            "type": "integer",
+            "nullable": true
+          },
+          "samePartnerCount": {
+            "type": "integer",
+            "nullable": true
+          },
+          "attendanceManagerCount": {
+            "type": "integer",
+            "nullable": true
+          },
+          "rank": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "UjatDgbongPartnerPairRecommendationResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "primary": {
+            "$ref": "#/components/schemas/UjatDgbongPartnerCandidateResponse"
+          },
+          "secondary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UjatDgbongPartnerCandidateResponse"
+              }
+            ],
+            "nullable": true
+          },
+          "attendanceManager": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UjatDgbongPartnerCandidateResponse"
+              }
+            ],
+            "nullable": true
+          },
+          "rankedCandidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UjatDgbongPartnerCandidateResponse"
+            }
+          }
+        }
+      },
+      "AssignmentCancelRequest": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 500
+          }
+        }
+      },
+      "AttendanceItemResponse": {
+        "type": "object",
+        "properties": {
+          "attendanceId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "absenceReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "checkedByAdminId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "arrivalTime": {
+            "type": "string",
+            "format": "time",
+            "nullable": true
+          },
+          "internalLate": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "volunteer1365Minutes": {
+            "type": "integer",
+            "nullable": true
+          },
+          "volunteer1365DurationLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "checkedByMemberId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "memberCheckedInAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "checkInSource": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AttendanceItemRequest": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "absenceReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "arrivalTime": {
+            "type": "string",
+            "format": "time",
+            "nullable": true
+          }
+        }
+      },
+      "AttendanceBulkUpsertRequest": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttendanceItemRequest"
+            }
+          }
+        }
+      },
+      "AttendanceBulkUpsertResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "savedCount": {
+            "type": "integer"
+          },
+          "attendances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttendanceItemResponse"
+            }
           }
         }
       }

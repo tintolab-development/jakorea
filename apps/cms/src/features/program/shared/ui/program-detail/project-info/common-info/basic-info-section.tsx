@@ -8,7 +8,7 @@
  */
 
 
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -27,6 +27,7 @@ import { useGeneralProgramSponsorEditContext } from '@/features/program/general/
 import {
   encodeSponsorManagerContactRef,
   formatSponsorManagerSelectLabel,
+  resolveVenueKind,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -111,13 +112,11 @@ function formatCompanySchoolSurveyItems(program: Program): string {
 }
 
 function formatCompanySchoolVenue(program: Program): string {
+  const kind = resolveVenueKind(program)
   const kindLabel =
-    program.institutionType === 'inside_school'
-      ? '기관 안'
-      : program.institutionType === 'outside_school'
-        ? '기관 밖'
-        : '기관 안'
-  const detail = program.generalCommonInfo?.venueDetail?.trim() || '-'
+    kind === 'outside' ? '기관 밖' : kind === 'other' ? '기타(직접입력)' : '기관 안'
+  const detail =
+    program.generalCommonInfo?.venueDetail?.trim() || program.venue?.trim() || '-'
   return `${kindLabel} | ${detail}`
 }
 
@@ -199,6 +198,28 @@ export function BasicInfoSection({
     }
     return options
   }, [selectedSponsorManagementRows, sponsorEditContext.contactsBySponsorId])
+
+  // 담당자 옵션 로드 후 현재 managerName/phone 과 매칭되는 ref 시드 (빈 셀렉트·disabled 방지)
+  useEffect(() => {
+    if (!isFormEdit || !form || sponsorManagerOptions.length === 0) return
+    const current = form.getValues('sponsorManagerContactId')
+    if (current) return
+    const managerName = form.getValues('managerName')?.trim()
+    const phone = form.getValues('contactPhone')?.trim()
+    const matched =
+      sponsorManagerOptions.find(
+        option =>
+          (managerName && option.name === managerName) ||
+          (phone && option.phone && option.phone === phone)
+      ) ?? sponsorManagerOptions[0]
+    if (!matched) return
+    form.setValue('sponsorManagerContactId', matched.value, { shouldDirty: false })
+    if (!managerName) form.setValue('managerName', matched.name, { shouldDirty: false })
+    if (!phone && matched.phone) {
+      form.setValue('contactPhone', matched.phone, { shouldDirty: false })
+    }
+  }, [isFormEdit, form, sponsorManagerOptions])
+
   const categoryLabel = CATEGORY_LABEL[program.category] ?? program.category ?? '-'
 
   /* 공통 정보 탭 기본 정보 */
@@ -446,8 +467,12 @@ export function BasicInfoSection({
                       options={sponsorManagementOptions}
                       value={field.value ?? []}
                       onChange={next => {
-                        field.onChange(Array.isArray(next) ? next.map(String) : [])
+                        const ids = Array.isArray(next) ? next.map(String) : []
+                        field.onChange(ids)
                         commonInfoForm.setValue('sponsorManagerContactId', undefined)
+                        if (ids[0]) {
+                          commonInfoForm.setValue('sponsorId', ids[0], { shouldDirty: true })
+                        }
                       }}
                     />
                   )}

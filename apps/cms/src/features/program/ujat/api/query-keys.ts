@@ -20,4 +20,19 @@ export const queryKeys = {
     stage: UjatVolunteerApplicationsStage = 'doc1',
     query: ApplicationsListQuery = {}
   ) => [...queryKeys.applications(), 'volunteers', programId, { half, stage, query }] as const,
+  execution: () => [...queryKeys.all, 'execution'] as const,
+  allocationMatrix: (
+    programId: string,
+    educationRegionCode: string,
+    semesterType: 'FIRST_HALF' | 'SECOND_HALF' | 'ALL' = 'ALL'
+  ) =>
+    [
+      ...queryKeys.execution(),
+      'allocation-matrix',
+      programId,
+      educationRegionCode,
+      semesterType,
+    ] as const,
+  scheduleAttendances: (programId: string, scheduleId: string) =>
+    [...queryKeys.execution(), 'attendances', programId, scheduleId] as const,
 }
