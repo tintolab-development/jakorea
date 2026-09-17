@@ -63,6 +63,7 @@ function GeneralProgramVolunteerInterviewScheduleView({
         onRemoveExceptionBlock={onRemoveExceptionBlock}
         commonScheduleSeed={commonScheduleSeed}
         onCommonExclusionChange={onCommonExclusionChange}
+        freezeUnavailableCalendar={false}
       />
     )
   }

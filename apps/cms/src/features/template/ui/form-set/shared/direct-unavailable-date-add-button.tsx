@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { ParagraphCalendarMini } from '@/features/template/ui/shared/paragraph-calendar-mini'
+import { UjatVolunteerInterviewAssignCalendarMini } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/calendar-mini'
+import { getMockHolidayDateKeys } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -10,6 +11,9 @@ import './direct-unavailable-date-add-button.css'
 
 const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+
+/** 강사 배정 안내 캘린더와 동일 — 공휴일 숫자 색(빨강)용 */
+const UNAVAILABLE_MODAL_HOLIDAY_DATE_KEYS = getMockHolidayDateKeys()
 
 /** 모달 칩 토큰 — 폼 체크박스(토·일·공휴일 제외)와 양방향 연동 */
 const RECURRING_SATURDAY = '토요일'
@@ -55,6 +59,29 @@ function formatModalSelectedLabel(value: string): string {
   if (value === RECURRING_HOLIDAY) return RECURRING_HOLIDAY
   if (ISO_DATE_PATTERN.test(value)) return dayjs(value).format('YY년 M월 D일')
   return value
+}
+
+/** 모달 칩(토·일·공휴일)에 따라 해당 요일·공휴일을 캘린더에서 비활성 */
+function isDateBlockedByRecurringTokens(date: Dayjs, selected: string[]): boolean {
+  if (selected.includes(RECURRING_SATURDAY) && date.day() === 6) return true
+  if (selected.includes(RECURRING_SUNDAY) && date.day() === 0) return true
+  if (
+    selected.includes(RECURRING_HOLIDAY) &&
+    UNAVAILABLE_MODAL_HOLIDAY_DATE_KEYS.has(date.format('YYYY-MM-DD'))
+  ) {
+    return true
+  }
+  return false
+}
+
+function buildCalendarDisabledDate(
+  selected: string[],
+  baseDisabledDate?: (date: Dayjs) => boolean
+): (date: Dayjs) => boolean {
+  return (date: Dayjs) => {
+    if (baseDisabledDate?.(date)) return true
+    return isDateBlockedByRecurringTokens(date, selected)
+  }
 }
 
 function findNextEnabledDate(date: Dayjs, disabledDate?: (date: Dayjs) => boolean): Dayjs {
@@ -142,6 +169,11 @@ export function DirectUnavailableDateAddButton({
   onDirectUnavailableModalBlocked,
   exclusionState,
   onExclusionChange,
+  /**
+   * 템플릿 편집 등 — 진입 월만 샘플 노출, 월 이동·날짜 선택 불가
+   * (`disabled` 스타일 없이 pointer-events로 차단 — 미리보기와 동일)
+   */
+  freezeCalendarInteraction = false,
 }: {
   onClick?: () => void
   disabled?: boolean
@@ -163,6 +195,7 @@ export function DirectUnavailableDateAddButton({
   /** 토·일·공휴일 제외 — 모달 칩과 양방향 연동 */
   exclusionState?: UnavailableDatesExclusionState
   onExclusionChange?: (state: UnavailableDatesExclusionState) => void
+  freezeCalendarInteraction?: boolean
 }) {
   const isControlled = appliedDatesProp !== undefined
   const [open, setOpen] = useState(false)
@@ -203,6 +236,12 @@ export function DirectUnavailableDateAddButton({
     [selectedDates]
   )
 
+  // 모달 칩(토·일·공휴일 제외) + 외부 disabledDate → 캘린더 비활성
+  const calendarDisabledDate = useMemo(
+    () => buildCalendarDisabledDate(selectedDates, disabledDate),
+    [disabledDate, selectedDates]
+  )
+
   const appliedDateText = useMemo(
     () => appliedDates.map(formatUnavailableDateLabel).join(', '),
     [appliedDates]
@@ -231,11 +270,17 @@ export function DirectUnavailableDateAddButton({
   }
 
   const handleCalendarSelect = (d: Dayjs) => {
-    if (disabledDate?.(d)) return
+    if (freezeCalendarInteraction) return
+    if (calendarDisabledDate(d)) return
 
     setSelectedDate(d)
     const key = d.format('YYYY-MM-DD')
     setSelectedDates(prev => (prev.includes(key) ? prev.filter(v => v !== key) : [...prev, key]))
+  }
+
+  const handleMonthChange = (month: Dayjs) => {
+    if (freezeCalendarInteraction) return
+    setCurrentMonth(month)
   }
 
   const displayTags = selectedDates.map(formatModalSelectedLabel)
@@ -262,11 +307,17 @@ export function DirectUnavailableDateAddButton({
               onDirectUnavailableModalBlocked?.()
               return
             }
-            const initialDate = findNextEnabledDate(initialCalendarDate ?? dayjs(), disabledDate)
+            const draftSelected = buildModalSelectedDates(appliedDates, exclusionState)
+            const openDisabledDate = buildCalendarDisabledDate(draftSelected, disabledDate)
+            const initialDate = findNextEnabledDate(
+              initialCalendarDate ?? dayjs(),
+              openDisabledDate
+            )
             setCurrentMonth(initialDate.startOf('month'))
             setSelectedDate(initialDate)
             // 폼 체크박스(토·일·공휴일) + 직접 추가 날짜를 모달 칩에 동기화
-            setSelectedDates(buildModalSelectedDates(appliedDates, exclusionState))
+            // 제외 대상 요일·공휴일에 걸린 개별 날짜는 칩/선택에서 제거
+            setSelectedDates(filterEnabledDateValues(draftSelected, openDisabledDate))
             setOpen(true)
           }}
         >
@@ -319,8 +370,7 @@ export function DirectUnavailableDateAddButton({
                 const nextDates = selectedDates.filter(v => {
                   if (RECURRING_TOKEN_SET.has(v)) return false
                   if (!ISO_DATE_PATTERN.test(v)) return false
-                  if (!disabledDate) return true
-                  return !disabledDate(dayjs(v))
+                  return !calendarDisabledDate(dayjs(v))
                 })
                 if (!isControlled) {
                   setUncontrolledAppliedDates(nextDates)
@@ -338,15 +388,24 @@ export function DirectUnavailableDateAddButton({
         }
       >
         <div className="direct-unavailable-date-modal__body">
-          <div className="direct-unavailable-date-modal__calendar">
-            <ParagraphCalendarMini
-              size="small"
+          <div
+            className={[
+              'direct-unavailable-date-modal__calendar',
+              freezeCalendarInteraction &&
+                'direct-unavailable-date-modal__calendar--frozen-sample',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            {/* 선택일·지정일·토/일/공휴 색 — 강사 배정 안내 캘린더와 동일 조건 */}
+            <UjatVolunteerInterviewAssignCalendarMini
               currentMonth={currentMonth}
               selectedDate={selectedDate}
-              onMonthChange={setCurrentMonth}
+              onMonthChange={handleMonthChange}
               onSelectDate={handleCalendarSelect}
               programDates={selectedDateSet}
-              disabledDate={disabledDate}
+              holidayDateKeys={UNAVAILABLE_MODAL_HOLIDAY_DATE_KEYS}
+              disabledDate={calendarDisabledDate}
             />
           </div>
           <div className="direct-unavailable-date-modal__selected">
