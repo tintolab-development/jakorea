@@ -25,7 +25,8 @@ import type { SponsorOrganizationKind, SponsorSponsorshipStatus } from '@/types/
 export interface SponsorRegisterModalProps {
   open: boolean
   onCancel: () => void
-  onSubmit: (payload: SponsorRegisterPayload) => void
+  onSubmit: (payload: SponsorRegisterPayload) => void | Promise<void>
+  submitting?: boolean
 }
 
 type FormState = {
@@ -63,7 +64,12 @@ const emptyForm = (): FormState => ({
   logoFile: null,
 })
 
-export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegisterModalProps) {
+export function SponsorRegisterModal({
+  open,
+  onCancel,
+  onSubmit,
+  submitting = false,
+}: SponsorRegisterModalProps) {
   const [form, setForm] = useState<FormState>(emptyForm)
   const [isSponsorshipStatusOpen, setIsSponsorshipStatusOpen] = useState(false)
 
@@ -119,10 +125,16 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
       width={LAYOUT_CONSTANTS.widths.modal.large}
       footer={
         <>
-          <CmsButton variant="secondary" type="button" onClick={onCancel}>
+          <CmsButton variant="secondary" type="button" disabled={submitting} onClick={onCancel}>
             닫기
           </CmsButton>
-          <CmsButton variant="primary" type="button" disabled={!canSubmit} onClick={handleSubmit}>
+          <CmsButton
+            variant="primary"
+            type="button"
+            disabled={!canSubmit || submitting}
+            loading={submitting}
+            onClick={handleSubmit}
+          >
             신규 등록
           </CmsButton>
         </>
@@ -306,6 +318,8 @@ export function SponsorRegisterModal({ open, onCancel, onSubmit }: SponsorRegist
                 onFilesChange={files => setField('logoFile', files[0] ?? null)}
                 onRemoveFile={() => setField('logoFile', null)}
                 guideLines={LOGO_GUIDE_LINES}
+                uploading={submitting && form.logoFile != null}
+                disabled={submitting}
               />
             }
           />

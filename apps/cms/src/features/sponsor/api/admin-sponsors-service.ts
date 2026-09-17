@@ -91,10 +91,11 @@ export async function createSponsor(payload: SponsorRegisterPayload): Promise<Sp
     const sponsorId = Number(row.id)
     if (Number.isFinite(sponsorId) && sponsorId >= 1) {
       const logoFileId = await uploadSponsorLogoFile(sponsorId, payload.logoFile)
-      await updateSponsorRemote(row.id, {
+      const updated = await updateSponsorRemote(row.id, {
         ...toSponsorRequestFromRegister(payload),
         logoFileId: String(logoFileId),
       })
+      return mapSponsorResponse(updated)
     }
   }
   return row

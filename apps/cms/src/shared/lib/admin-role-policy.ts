@@ -17,6 +17,7 @@ export type AdminActionKind =
   | 'approve'
   | 'send'
   | 'download'
+  | 'sponsorWrite'
   | 'sponsorContactWrite'
   | 'pii'
   | 'piiRrn'
@@ -187,8 +188,12 @@ export function canAdminAction(input: {
       // V80: MASTER / PM / VIEWER. PARTNER는 서버 미부여.
       return roleCode === 'MASTER' || roleCode === 'PM' || roleCode === 'VIEWER'
     case 'sponsorContactWrite':
-      // 후원사 상세 > 담당자 목록 CRUD는 관리자 4역할 모두 허용.
-      return true
+      // 후원사 상세 > 담당자 목록 CRUD: VIEWER는 조회만.
+      return roleCode !== 'VIEWER'
+    case 'sponsorWrite':
+      // 후원사 기본정보·후원상태 수정: VIEWER는 조회만.
+      // 엑셀 다운로드와 후원사 삭제는 각각 download/delete 정책으로 별도 판정.
+      return roleCode !== 'VIEWER'
     case 'approve':
       if (screen === 'admin-permission-approval' || screen === 'permission-settings') {
         return roleCode === 'MASTER'

@@ -145,12 +145,23 @@ describe('canAdminAction 표 규칙', () => {
     expect(allowed('PARTNER', 'dashboardWrite')).toBe(false)
   })
 
-  it('후원사 담당자 CRUD는 관리자 4역할 모두 허용', () => {
-    for (const role of ROLES) {
-      expect(allowed(role, 'sponsorContactWrite')).toBe(true)
-    }
+  it('후원사 담당자 CRUD는 파트너 이상 허용, 뷰어는 조회만', () => {
+    expect(allowed('MASTER', 'sponsorContactWrite')).toBe(true)
+    expect(allowed('PM', 'sponsorContactWrite')).toBe(true)
+    expect(allowed('PARTNER', 'sponsorContactWrite')).toBe(true)
+    expect(allowed('VIEWER', 'sponsorContactWrite')).toBe(false)
     expect(canAdminAction({ roleCode: null, action: 'sponsorContactWrite' })).toBe(false)
     expect(allowed('VIEWER', 'download')).toBe(false)
+  })
+
+  it('후원사 기본정보·후원상태 수정은 파트너 이상 허용, 뷰어는 수정·다운로드 차단', () => {
+    expect(allowed('MASTER', 'sponsorWrite')).toBe(true)
+    expect(allowed('PM', 'sponsorWrite')).toBe(true)
+    expect(allowed('PARTNER', 'sponsorWrite')).toBe(true)
+    expect(allowed('VIEWER', 'sponsorWrite')).toBe(false)
+    expect(canAdminAction({ roleCode: null, action: 'sponsorWrite' })).toBe(false)
+    expect(allowed('VIEWER', 'download')).toBe(false)
+    expect(allowed('PARTNER', 'download')).toBe(true)
   })
 
   it('일반 개인정보 열람은 뷰어만 차단', () => {

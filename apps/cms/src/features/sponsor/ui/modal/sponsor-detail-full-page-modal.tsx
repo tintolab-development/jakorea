@@ -115,6 +115,10 @@ function SponsorDetailFullPageModalInner({
     roleCode: adminRoleCode,
     action: 'sponsorContactWrite',
   })
+  const canManageSponsor = canAdminAction({
+    roleCode: adminRoleCode,
+    action: 'sponsorWrite',
+  })
   const { showAlert } = useCmsAlert()
   const [logoBulkDownloading, setLogoBulkDownloading] = useState(false)
   const rawLnbKey = searchParams.get(SPONSOR_LNB_PARAM)
@@ -248,7 +252,7 @@ function SponsorDetailFullPageModalInner({
   }, [setRegisterModalOpen])
   const handleToggleBasicInfoClick = useCallback((): void => {
     void (async () => {
-      const result = await handleToggleBasicInfoEdit(canWrite)
+      const result = await handleToggleBasicInfoEdit(canManageSponsor)
       if (result === 'invalid') {
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -256,7 +260,7 @@ function SponsorDetailFullPageModalInner({
         })
       }
     })()
-  }, [canWrite, handleToggleBasicInfoEdit, showAlert])
+  }, [canManageSponsor, handleToggleBasicInfoEdit, showAlert])
 
   const handleLogoBulkDownload = useCallback((): void => {
     const logos = basicInfo?.logos ?? detail.logos
@@ -328,7 +332,12 @@ function SponsorDetailFullPageModalInner({
               <CmsButton variant="delete" size="large" onClick={sponsorDelete.openDeleteModal}>
                 후원사 삭제
               </CmsButton>
-              <CmsButton variant="secondary" size="large" onClick={handleToggleBasicInfoClick}>
+              <CmsButton
+                variant="secondary"
+                size="large"
+                onClick={handleToggleBasicInfoClick}
+                adminAction="sponsorWrite"
+              >
                 {isEditingBasicInfo ? '수정 완료' : '정보 수정'}
               </CmsButton>
               <CmsButton
@@ -345,6 +354,7 @@ function SponsorDetailFullPageModalInner({
           </div>
         ) : null
       }
+      contentExtraAdminAction="sponsorWrite"
     >
       {showDetailBody && basicInfo ? (
         lnbKey === LNB_DETAIL ? (
@@ -358,7 +368,7 @@ function SponsorDetailFullPageModalInner({
             }}
             sponsorshipStartDate={detail.sponsorshipStartDate}
             programHistories={programHistories}
-            canWrite={canWrite}
+            canWrite={canManageSponsor}
           />
         ) : lnbKey === LNB_CONTACTS ? (
           <SponsorContactsPanel

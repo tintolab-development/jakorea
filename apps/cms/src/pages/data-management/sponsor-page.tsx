@@ -496,6 +496,7 @@ export default function SponsorPage() {
         open={registerModalOpen}
         onCancel={handleRegisterModalClose}
         onSubmit={handleRegisterSubmit}
+        submitting={createMutation.isPending}
       />
       <ActionResultModal
         open={actionResultModalOpen}
