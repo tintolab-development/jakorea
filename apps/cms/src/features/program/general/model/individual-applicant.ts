@@ -44,6 +44,8 @@ export interface GeneralIndividualApplicantRow {
   id: string
   /** unmask path용 — remote 목록 `memberId` */
   memberId?: string
+  /** DB로 연결된 기존 소속 학교/기관 ID. 소속 없음은 null */
+  affiliationOrganizationId?: number | null
   no: number
   applicantName: string
   /** Admin API가 현재 상태에서 허용하는 canonical action 목록 */

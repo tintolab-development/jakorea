@@ -20,7 +20,7 @@ export interface IndividualApplicationListItemResponse {
   recruitmentId?: number;
   memberId?: number;
   /** 신청 시점에 DB로 연결된 소속 학교/기관 ID. 저장된 소속이 없으면 null */
-  affiliationOrganizationId?: number;
+  affiliationOrganizationId?: number | null;
   /** 신청자 실명. 프로그램 관리 목록에서는 마스킹하지 않습니다. */
   memberName?: string;
   /** 신청 시점 소속명 우선의 목록 표시값 */

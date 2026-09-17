@@ -9,6 +9,10 @@ export interface ParticipatingVolunteerRow {
   id: string
   /** BE 회원 ID — 참여 PK와 구분 */
   memberId?: number
+  /** 저장된 기존 소속 학교/기관 ID */
+  affiliationOrganizationId?: number | null
+  /** 저장된 기존 소속 학교/기관 표시명 */
+  affiliation?: string
   /** 프로그램 ID — 일반 기관 QA case 격리 */
   programId?: string
   no: number

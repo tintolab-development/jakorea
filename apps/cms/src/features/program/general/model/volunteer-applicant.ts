@@ -23,6 +23,8 @@ export interface GeneralVolunteerApplicantRow {
   id: string
   /** BE 회원 ID — 봉사 신청 PK와 구분 */
   memberId?: number
+  /** DB로 연결된 기존 소속 학교/기관 ID. 소속 없음은 null */
+  affiliationOrganizationId?: number | null
   no: number
   name: string
   contact: string

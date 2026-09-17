@@ -76,6 +76,8 @@ export interface ApplicantInstructorRow {
   id: string
   /** BE 강사 회원 ID — 신청 PK와 구분 */
   instructorMemberId?: number
+  /** DB로 연결된 기존 소속 학교/기관 ID. 소속 없음은 null */
+  affiliationOrganizationId?: number | null
   /** 프로그램 ID — 일반 기관 QA case 격리 */
   programId?: string
   no: number

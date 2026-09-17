@@ -19,7 +19,7 @@ export interface VolunteerApplicationListItemResponse {
   recruitmentId?: number;
   memberId?: number;
   /** 봉사자 회원에 DB로 연결된 기존 소속 학교/기관 ID. 저장된 소속이 없으면 null */
-  affiliationOrganizationId?: number;
+  affiliationOrganizationId?: number | null;
   memberName?: string;
   /** 목록용 마스킹 연락처 */
   contact?: string;

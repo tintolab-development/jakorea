@@ -7,7 +7,10 @@ import {
   mapInstructorApplicationToApplicantInstructorRow,
   mapMaterialAssignmentStatusToTextbookStatus,
   mapOrganizationApplicationToApplicantSchoolRow,
+  mapParticipantToParticipatingIndividualRow,
+  mapParticipantToParticipatingInstructorRow,
   mapParticipantToParticipatingSchoolRow,
+  mapParticipantToParticipatingVolunteerRow,
   mapVolunteerApplicationToGeneralVolunteerApplicantRow,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import {
@@ -92,11 +95,32 @@ describe('general-applications-adapters', () => {
     expect(mapMaterialAssignmentStatusToTextbookStatus(status)).toBe(expected)
   })
 
+  it('maps saved affiliation fallback for individual, instructor, and volunteer participants', () => {
+    const dto = {
+      participantId: 1691500,
+      memberName: '기존 회원',
+      organizationId: 8801,
+      organizationName: '기존 소속 기관',
+    }
+
+    const individual = mapParticipantToParticipatingIndividualRow(dto, 0, '168001')
+    const instructor = mapParticipantToParticipatingInstructorRow(dto, 0, '168001')
+    const volunteer = mapParticipantToParticipatingVolunteerRow(dto, 0, '168001')
+
+    expect(individual.affiliationOrganizationId).toBe(8801)
+    expect(individual.affiliation).toBe('기존 소속 기관')
+    expect(instructor.affiliationOrganizationId).toBe(8801)
+    expect(instructor.affiliation).toBe('기존 소속 기관')
+    expect(volunteer.affiliationOrganizationId).toBe(8801)
+    expect(volunteer.affiliation).toBe('기존 소속 기관')
+  })
+
   it('maps instructor application list item to applicant row', () => {
     const row = mapInstructorApplicationToApplicantInstructorRow(
       {
         id: 77,
         instructorMemberId: 9001,
+        affiliationOrganizationId: 8801,
         programId: 5001,
         instructorName: '이강사',
         applicationStatus: 'APPROVED',
@@ -110,6 +134,7 @@ describe('general-applications-adapters', () => {
 
     expect(row.id).toBe('77')
     expect(row.instructorMemberId).toBe(9001)
+    expect(row.affiliationOrganizationId).toBe(8801)
     expect(row.programId).toBe('5001')
     expect(row.instructorName).toBe('이강사')
     expect(row.approvalStatus).toBe('approved')
@@ -122,6 +147,7 @@ describe('general-applications-adapters', () => {
       {
         id: 55,
         programId: 5001,
+        affiliationOrganizationId: null,
         memberName: '김봉사',
         documentStatus: 'PASS',
         interviewStatus: 'ASSIGNED',
@@ -140,6 +166,7 @@ describe('general-applications-adapters', () => {
     )
 
     expect(row.id).toBe('55')
+    expect(row.affiliationOrganizationId).toBeNull()
     expect(row.name).toBe('김봉사')
     expect(row.documentScreeningStatus).toBe('pass')
     expect(row.interviewAssignmentStatus).toBe('assigned')
@@ -157,6 +184,7 @@ describe('general-applications-adapters', () => {
       {
         id: 55,
         programId: 5001,
+        affiliationOrganizationId: 8802,
         memberName: '김참여자',
         affiliationName: '한국대학교',
         applicationGrade: '2학년',
@@ -204,6 +232,7 @@ describe('general-applications-adapters', () => {
     )
 
     expect(row.id).toBe('55')
+    expect(row.affiliationOrganizationId).toBe(8802)
     expect(row.applicantName).toBe('김참여자')
     expect(row.affiliation).toBe('한국대학교')
     expect(row.educationGrade).toBe('2학년')

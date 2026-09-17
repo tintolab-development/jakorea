@@ -51,6 +51,8 @@ export interface ParticipatingInstructorRow {
   teacherName: string
   /** Admin participant.memberId — 1일1교 배정 충돌 키 보조 */
   memberId?: string
+  /** 저장된 기존 소속 학교/기관 ID */
+  affiliationOrganizationId?: number | null
   /** 참여 강사 상세 모달(기본 정보 탭)용 */
   contact?: string
   email?: string
