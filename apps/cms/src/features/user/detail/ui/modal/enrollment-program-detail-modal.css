@@ -297,16 +297,35 @@
   color: var(--color-text-secondary, #8c8c8c);
 }
 
-/* ─── 게시글 탭 (좌측 flex fill + 우측 420px | gap 32px) ───── */
+/* ─── 게시글 탭 (상단 등록 버튼 + 좌측 flex fill + 우측 420px) ───── */
 .enrollment-program-detail-modal__posts-tab {
   display: flex;
-  gap: 32px;
+  flex-direction: column;
+  gap: 12px;
   width: 100%;
   min-height: 480px;
   height: 100%;
   padding: 0;
   box-sizing: border-box;
   overflow: hidden;
+  align-items: stretch;
+}
+
+/* 게시글 등록 — 탭/본문 우측 상단 (파일 패널 우측 끝 정렬) */
+.enrollment-program-detail-modal__posts-tab-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.enrollment-program-detail-modal__posts-tab-body {
+  display: flex;
+  gap: 32px;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
   align-items: stretch;
 }
 
@@ -340,13 +359,6 @@
   border: 1px solid #D4D4D4;
   box-sizing: border-box;
   background: var(--color-bg-base, #fff);
-}
-
-.enrollment-program-detail-modal__posts-tab-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
 }
 
 .enrollment-program-detail-modal__posts-tab-btn {
@@ -536,17 +548,19 @@
   opacity: 0.5;
 }
 
-/* 게시글 카드 — 래퍼 너비 100%, 최대 높이 248px */
+/* 게시글 카드 — 세로 스택, 하단 메타가 잘리지 않도록 overflow visible */
 .enrollment-program-detail-modal__post-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   width: 100%;
   min-width: 0;
   padding: 20px;
   border-radius: 10px;
   border: 1px solid #d4d4d4;
   background: var(--default-WT, #FFF);
-  max-height: 248px;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -582,7 +596,31 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 0;
+}
+
+.enrollment-program-detail-modal__post-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.enrollment-program-detail-modal__post-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.enrollment-program-detail-modal__post-menu-btn:hover {
+  background: rgba(61, 61, 61, 0.06);
 }
 
 .enrollment-program-detail-modal__post-author {
@@ -657,7 +695,7 @@
   align-items: baseline;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 0;
   min-width: 0;
 }
 
@@ -705,11 +743,24 @@
   opacity: 0.8;
 }
 
-/* 첨부파일 — 읽음/이모티콘/메시지와 같은 메타 행 레벨 */
-.enrollment-program-detail-modal__post-meta-item--attachment {
+/* 첨부파일 + 조회/댓글/반응 — 한 줄 수평 정렬 (좌: 첨부, 우: 메타) */
+.enrollment-program-detail-modal__post-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  flex-shrink: 0;
+  min-height: 24px;
+  margin-top: 0;
+}
+
+.enrollment-program-detail-modal__post-attachments {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
+  color: var(--default-BK, #3d3d3d);
   opacity: 0.6;
 }
 
@@ -726,10 +777,6 @@
 .enrollment-program-detail-modal__post-attachment-icon svg {
   width: 20px;
   height: 20px;
-}
-
-.enrollment-program-detail-modal__post-attachment-mask {
-  mask-type: alpha;
 }
 
 .enrollment-program-detail-modal__post-attachment-label {
@@ -752,32 +799,24 @@
   line-height: 150%;
 }
 
-/* 확인/이모티콘/댓글 영역 — 우측 정렬, 아이콘 20×20, 숫자 폰트 */
-.enrollment-program-detail-modal__post-meta {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-}
-
 .enrollment-program-detail-modal__post-meta-right {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .enrollment-program-detail-modal__post-meta-item {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--default-BK, #3d3d3d);
+  color: #8c8c8c;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
-  opacity: 0.6;
 }
 
 .enrollment-program-detail-modal__post-meta-trigger {
@@ -788,7 +827,6 @@
   cursor: pointer;
   font: inherit;
   color: inherit;
-  opacity: inherit;
 }
 
 .enrollment-program-detail-modal__post-meta-icon {
@@ -799,17 +837,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-text-muted, #8c8c8c);
+  color: #8c8c8c;
 }
 
 .enrollment-program-detail-modal__post-meta-icon svg {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-}
-
-.enrollment-program-detail-modal__post-meta-mask {
-  mask-type: alpha;
+  display: block;
 }
 
 /* 업로드된 파일 위젯 — width 100% 반응형, min-height 82px, padding 16px 12px 16px 16px, 배경 #F5F6F7 */

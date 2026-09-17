@@ -34,6 +34,7 @@ import {
   giveUpVolunteerApplicationRemote,
   listInterviewSlotsRemote,
   rejectIndividualApplicationRemote,
+  cancelIndividualApplicationRejectionRemote,
   rejectInstructorApplicationRemote,
   rejectOrganizationApplicationRemote,
   resendInstructorApplicationNotification,
@@ -456,6 +457,16 @@ export async function rejectGeneralIndividualApplication(
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await rejectIndividualApplicationRemote(applicationId, payload)
+}
+
+export async function cancelGeneralIndividualApplicationRejection(
+  applicationId: string,
+  reason: string
+): Promise<void> {
+  assertApplicationsRemoteReady()
+  await cancelIndividualApplicationRejectionRemote(applicationId, {
+    reason: reason.trim() || '반려 취소',
+  })
 }
 
 export async function submitGeneralVolunteerDocumentResult(

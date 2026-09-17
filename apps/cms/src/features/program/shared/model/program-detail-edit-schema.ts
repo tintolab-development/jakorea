@@ -20,6 +20,7 @@
  */
 
 import {
+  normalizeTargetLevelValue,
   resolveProgramInstructorTargets,
   resolveProgramTargetLevels,
   resolveProgramVolunteerTargets,
@@ -35,6 +36,8 @@ import {
   announcementPublishedFromFormValue,
   announcementPublishedToFormValue,
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import { resolveVenueKind } from '@/features/program/general/model/common-info-edit-schema'
+import type { TargetLevel } from '@/types/domain'
 
 const roundStatusEnum = z.enum(['active', 'inactive', 'pending', 'completed', 'cancelled'])
 
@@ -61,14 +64,87 @@ const programLifecycleStatusEnum = z.enum([
   'participant_instructor_recruitment_completed',
 ])
 
+/**
+ * API/RHF 는 optional 숫자에 `null` 을 넣는 경우가 많다.
+ * Zod `optional()` 은 undefined 만 허용해 "Expected number, received null" 로 저장을 막음 → null 은 undefined 로 취급.
+ */
+function nullToUndefined(value: unknown): unknown {
+  return value === null ? undefined : value
+}
+
+const optionalNumber = z.preprocess(nullToUndefined, z.number().optional())
+const optionalNonNegNumber = z.preprocess(nullToUndefined, z.number().min(0).optional())
+/** BE ProgramUpdateRequest Integer 필드 — Jackson int32 초과 시 MALFORMED_REQUEST */
+const JAVA_INT_MAX = 2_147_483_647
+const optionalNonNegJavaInt = z.preprocess(
+  nullToUndefined,
+  z
+    .number()
+    .min(0)
+    .max(JAVA_INT_MAX, `0 ~ ${JAVA_INT_MAX.toLocaleString('ko-KR')} 범위로 입력해주세요`)
+    .optional()
+)
+
+function clampJavaInt(value: number | null | undefined): number | undefined {
+  if (value == null || !Number.isFinite(value)) return undefined
+  const n = Math.trunc(value)
+  if (n < 0) return undefined
+  return Math.min(n, JAVA_INT_MAX)
+}
+const optionalNonNegNumberMessage = (message: string) =>
+  z.preprocess(nullToUndefined, z.number().min(0, message).optional())
+
+const COURSE_DELIVERED_BY_VALUES = new Set(['JA', 'Jointly', 'Partner'] as const)
+type CourseDeliveredByFormValue = 'JA' | 'Jointly' | 'Partner'
+
+/** API 확장값(TEACHER 등)은 폼 enum 밖 → undefined 시드·검증 통과, patch 시 existing 유지 */
+function normalizeCourseDeliveredByFormValue(
+  raw: unknown
+): CourseDeliveredByFormValue | undefined {
+  if (raw == null || raw === '') return undefined
+  const trimmed = String(raw).trim()
+  if ((COURSE_DELIVERED_BY_VALUES as Set<string>).has(trimmed)) {
+    return trimmed as CourseDeliveredByFormValue
+  }
+  const lower = trimmed.toLowerCase()
+  if (lower === 'ja') return 'JA'
+  if (lower === 'jointly' || lower === 'joint') return 'Jointly'
+  if (lower === 'partner') return 'Partner'
+  return undefined
+}
+
+const IPS_FORM_VALUES = new Set(['Inspire', 'Prepare', 'Succeed'] as const)
+type IpsFormValue = 'Inspire' | 'Prepare' | 'Succeed'
+
+function normalizeIpsFormValue(raw: unknown): IpsFormValue | undefined {
+  if (raw == null || raw === '') return undefined
+  const trimmed = String(raw).trim()
+  if ((IPS_FORM_VALUES as Set<string>).has(trimmed)) return trimmed as IpsFormValue
+  const lower = trimmed.toLowerCase()
+  if (lower === 'inspire') return 'Inspire'
+  if (lower === 'prepare') return 'Prepare'
+  if (lower === 'succeed') return 'Succeed'
+  return undefined
+}
+
+const courseDeliveredByFormSchema = z.preprocess(
+  normalizeCourseDeliveredByFormValue,
+  z.enum(['JA', 'Jointly', 'Partner']).optional()
+)
+
+const ipsFormSchema = z.preprocess(
+  normalizeIpsFormValue,
+  z.enum(['Inspire', 'Prepare', 'Succeed']).optional()
+)
+
 const roundEditSchema = z.object({
   id: z.string(),
   programId: z.string(),
   roundNumber: z.number(),
   startDate: z.string(),
   endDate: z.string(),
-  capacity: z.number().min(0).optional(),
-  classCount: z.number().optional(),
+  capacity: optionalNonNegNumber,
+  classCount: optionalNumber,
   status: roundStatusEnum,
   curriculum: z.string().optional(),
   deliveryType: roundDeliveryTypeEnum.optional(),
@@ -76,12 +152,26 @@ const roundEditSchema = z.object({
 
 const targetLevelEnum = z.enum(['elementary', 'middle', 'high', 'university', 'adult'])
 
+/** 폼·API 혼용값(한글 라벨 포함) → enum 배열. 알 수 없는 값은 제외 */
+function coerceTargetLevels(value: unknown): TargetLevel[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const levels = value
+    .map(normalizeTargetLevelValue)
+    .filter((level): level is TargetLevel => level != null)
+  return levels.length > 0 ? [...new Set(levels)] : undefined
+}
+
+const targetLevelsFormSchema = z.preprocess(
+  coerceTargetLevels,
+  z.array(targetLevelEnum).optional()
+)
+
 const programDetailEditSchemaBase = z.object({
   title: z.string().min(1, '프로그램명을 입력해주세요'),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   category: z.enum(['school', 'individual']),
-  targetLevels: z.array(targetLevelEnum).optional(),
+  targetLevels: targetLevelsFormSchema,
   district: z.string().optional(),
   type: z.enum(['online', 'offline', 'hybrid']),
   lifecycleStatus: programLifecycleStatusEnum.optional(),
@@ -91,6 +181,8 @@ const programDetailEditSchemaBase = z.object({
   businessArea: z.string().optional(),
   sponsorId: z.string().min(1, '후원사를 선택해주세요'),
   sponsorManagementIds: z.array(z.string()).optional(),
+  sponsorManagerContactIds: z.array(z.string()).optional(),
+  /** @deprecated 레거시 단일 — seed 호환 */
   sponsorManagerContactId: z.string().optional(),
   managerName: z.string().min(1, '후원사 담당자를 입력해주세요'),
   contactPhone: z
@@ -104,6 +196,10 @@ const programDetailEditSchemaBase = z.object({
   venueKind: z.enum(['inside', 'outside', 'other']).optional(),
   venueDetail: z.string().optional(),
   oneLineIntroduction: z.string().optional(),
+  /** 모집 비고 (BE remarks) — oneLineIntroduction 과 분리 */
+  remarks: z.string().optional(),
+  /** 교육 대상 상세 (BE educationTargetDetail) — district 와 분리 */
+  educationTargetDetail: z.string().optional(),
   keyVisualImage: z.string().optional(),
   posterImage: z.string().optional(),
   description: z.string().min(1, '프로그램 설명을 입력해주세요'),
@@ -131,16 +227,16 @@ const programDetailEditSchemaBase = z.object({
   participantRecruitmentAnnouncementPublished: z.enum(['published', 'unpublished']).optional(),
   participantRecruitmentPreEducationRequired: z.enum(['required', 'not_required']).optional(),
   participantRecruitmentCertificateProvided: z.enum(['provided', 'not_provided']).optional(),
-  participantRecruitmentMaxInstructors: z.number().min(0).optional(),
-  participantRecruitmentMaxClassCount: z.number().min(0).optional(),
-  participantRecruitmentMaxScheduleCount: z.number().min(0).optional(),
-  participantRecruitmentMaxSessionsPerDay: z.number().min(0).optional(),
+  participantRecruitmentMaxInstructors: optionalNonNegNumber,
+  participantRecruitmentMaxClassCount: optionalNonNegNumber,
+  participantRecruitmentMaxScheduleCount: optionalNonNegNumber,
+  participantRecruitmentMaxSessionsPerDay: optionalNonNegNumber,
   participantRecruitmentInterviewEnabled: z.enum(['yes', 'no']).optional(),
   /** 참여자 모집 비고 — 해당 없음 선택 시 공고 비노출 */
   participantRecruitmentNotesNotApplicable: z.enum(['applicable', 'not_applicable']).optional(),
   // 강사 모집
   instructorRecruitmentAnnouncementPublished: z.enum(['published', 'unpublished']).optional(),
-  instructorCapacity: z.number().min(0).optional(),
+  instructorCapacity: optionalNonNegNumber,
   instructorApplicationStartDate: z.string().optional(),
   instructorApplicationEndDate: z.string().optional(),
   documentPassAnnouncementDate: z.string().optional(),
@@ -181,9 +277,9 @@ const programDetailEditSchemaBase = z.object({
   teamDivision: z.string().optional(),
   educationProcess: z.string().optional(),
   ipOwned: z.string().optional(),
-  courseDeliveredBy: z.enum(['JA', 'Jointly', 'Partner']).optional(),
+  courseDeliveredBy: courseDeliveredByFormSchema,
   partnerInvolvement: z.boolean().optional(),
-  ips: z.enum(['Inspire', 'Prepare', 'Succeed']).optional(),
+  ips: ipsFormSchema,
   programCategory: z.string().optional(),
   programChannel: z.string().optional(),
   surveySurvey: z.boolean().optional(),
@@ -195,7 +291,7 @@ const programDetailEditSchemaBase = z.object({
   /** 임금 책정 기준 — 단위 셀렉트(예: 시간) */
   wagePricingMeasureLabel: z.string().optional(),
   /** 임금 책정 기준 — 수치(예: 1) */
-  wagePricingQuantity: z.number().min(0, '0 이상을 입력해주세요').optional(),
+  wagePricingQuantity: optionalNonNegNumberMessage('0 이상을 입력해주세요'),
   /** 임금 책정 기준 — 기준(당) / 초과 / 이하 */
   wagePricingCompareMode: z.enum(['per', 'over', 'under']).optional(),
   wagePricingBase: z.string().optional(),
@@ -209,12 +305,14 @@ const programDetailEditSchemaBase = z.object({
   wagePaymentItems: z.string().optional(),
   wagePaymentItemIds: z.array(z.string()).optional(),
   wageDeductionItems: z.string().optional(),
-  // KPI
-  kpiFinalParticipants: z.number().min(0).optional(),
-  kpiInstructorCount: z.number().min(0).optional(),
-  kpiVolunteerCount: z.number().min(0).optional(),
-  kpiFinalSchools: z.number().min(0).optional(),
-  kpiFinalClasses: z.number().min(0).optional(),
+  // KPI — BE Integer(int32); 초과 시 MALFORMED_REQUEST
+  kpiFinalParticipants: optionalNonNegJavaInt,
+  kpiInstructorCount: optionalNonNegJavaInt,
+  kpiVolunteerCount: optionalNonNegJavaInt,
+  kpiFinalSchools: optionalNonNegJavaInt,
+  kpiFinalClasses: optionalNonNegJavaInt,
+  /** 교육받은 교사 KPI — programs PATCH `educatedTeachers` */
+  kpiEducatedTeachers: optionalNonNegJavaInt,
 })
 
 /** 기본: 공통·강사·봉사 탭 등 — 모집 안내는 값이 있으면 공백만 불가 */
@@ -228,7 +326,44 @@ export const programDetailInstitutionsEditSchema = programDetailEditSchemaBase.e
   recruitmentGuide: z.string().optional(),
 })
 
+/**
+ * 교육받은 교사 공통 정보 — 1사1교 레이아웃에 노출되는 필드만 필수.
+ * 일반 스키마의 모집·설명·학습지원 필수값이 TT 화면에 없어 저장이 조용히 실패하던 것을 방지.
+ */
+export const programDetailTrainedTeachersCommonInfoEditSchema = programDetailEditSchemaBase
+  .extend({
+    applicationStartDate: z.string().optional(),
+    applicationEndDate: z.string().optional(),
+    description: z.string().optional(),
+    learningSupportContent: z.string().optional(),
+    resultAnnouncementDate: z.string().optional(),
+    resultAnnouncementMethod: z.string().optional(),
+    managerName: z.string().optional(),
+    sponsorId: z.string().optional(),
+    sponsorManagementIds: z.array(z.string()).optional(),
+  })
+  .superRefine((values, ctx) => {
+    const hasSponsor =
+      Boolean(values.sponsorId?.trim()) || (values.sponsorManagementIds?.length ?? 0) > 0
+    if (!hasSponsor) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '후원사를 선택해주세요',
+        path: ['sponsorManagementIds'],
+      })
+    }
+  })
+
 export type ProgramDetailEditFormValues = z.infer<typeof programDetailEditSchema>
+
+export function getProgramDetailEditValidationMessage(
+  values: ProgramDetailEditFormValues,
+  schema: z.ZodType<unknown> = programDetailEditSchema
+): string {
+  const result = schema.safeParse(values)
+  if (result.success) return '입력값을 확인해 주세요.'
+  return result.error.issues[0]?.message ?? '입력값을 확인해 주세요.'
+}
 
 const COMPANY_SCHOOL_WAGE_GRADE_ROWS = [
   {
@@ -259,6 +394,13 @@ function parseWageAmountFromPricing(pricing: string | undefined, kind: 'regular'
   return target?.match(/([\d,]+)\s*원/)?.[1]
 }
 
+function formatCompanySchoolWageAmount(amount: string | number | undefined): string {
+  if (amount == null || amount === '') return ''
+  const num = typeof amount === 'number' ? amount : Number(String(amount).replace(/,/g, ''))
+  if (Number.isNaN(num)) return String(amount)
+  return num.toLocaleString('ko-KR')
+}
+
 function buildWageGradeRowsFromDetailValues(
   values: ProgramDetailEditFormValues,
   existing: import('@/types/domain').Program
@@ -281,7 +423,7 @@ function buildWageGradeRowsFromDetailValues(
       ''
     return {
       grade: row.grade,
-      pricing: `1시간 당 | 기본 : ${amount}원 | 장거리 : ${longDistance}원`,
+      pricing: `1시간 당 | 기본 : ${formatCompanySchoolWageAmount(amount)}원 | 장거리 : ${formatCompanySchoolWageAmount(longDistance)}원`,
     }
   })
 }
@@ -313,21 +455,43 @@ export function programToDetailEditValues(
     applicationEndDate: toStr(program.applicationEndDate),
     businessArea: program.businessArea ?? undefined,
     sponsorId: program.sponsorId ?? '',
-    sponsorManagementIds: program.generalCommonInfo?.sponsorManagementIds ?? [],
-    sponsorManagerContactId: undefined,
+    sponsorManagementIds:
+      program.generalCommonInfo?.sponsorManagementIds?.length
+        ? program.generalCommonInfo.sponsorManagementIds
+        : program.generalCommonInfo?.sponsorManagementId
+          ? [program.generalCommonInfo.sponsorManagementId]
+          : program.sponsorId
+            ? [program.sponsorId]
+            : [],
+    sponsorManagerContactIds: (() => {
+      const ids = program.generalCommonInfo?.sponsorManagerContactIds
+      if (ids?.length) return [...ids]
+      const single = program.generalCommonInfo?.sponsorManagerContactId?.trim()
+      return single ? [single] : []
+    })(),
+    sponsorManagerContactId:
+      program.generalCommonInfo?.sponsorManagerContactIds?.[0] ??
+      program.generalCommonInfo?.sponsorManagerContactId ??
+      undefined,
     managerName: program.managerName ?? '',
     contactPhone: program.contactPhone
       ? formatKoreanPhoneNumber(program.contactPhone)
       : undefined,
     contactEmail: program.contactEmail ?? undefined,
-    venueKind:
-      program.institutionType === 'outside_school'
-        ? 'outside'
-        : program.institutionType === 'inside_school'
-          ? 'inside'
-          : 'inside',
-    venueDetail: program.generalCommonInfo?.venueDetail ?? undefined,
+    venueKind: resolveVenueKind(program),
+    venueDetail:
+      program.generalCommonInfo?.venueDetail?.trim() ||
+      program.venue?.trim() ||
+      undefined,
     oneLineIntroduction: program.oneLineIntroduction ?? undefined,
+    remarks:
+      program.remarks?.trim() ||
+      program.generalCommonInfo?.participantRecruitmentInfo?.remarks?.trim() ||
+      undefined,
+    educationTargetDetail:
+      program.educationTargetDetail?.trim() ||
+      program.generalCommonInfo?.participantRecruitmentInfo?.educationTargetDetail?.trim() ||
+      undefined,
     keyVisualImage: program.keyVisualImage ?? undefined,
     posterImage: program.posterImage ?? undefined,
     description: program.description ?? '',
@@ -455,9 +619,9 @@ export function programToDetailEditValues(
     teamDivision: program.teamDivision ?? undefined,
     educationProcess: program.educationProcess ?? undefined,
     ipOwned: program.ipOwned ?? undefined,
-    courseDeliveredBy: program.courseDeliveredBy ?? undefined,
+    courseDeliveredBy: normalizeCourseDeliveredByFormValue(program.courseDeliveredBy),
     partnerInvolvement: program.partnerInvolvement,
-    ips: program.ips ?? undefined,
+    ips: normalizeIpsFormValue(program.ips),
     programCategory: program.programCategory ?? undefined,
     programChannel: program.programChannel ?? undefined,
     surveySurvey: program.generalSurveyMenuKeys?.includes('survey') ?? false,
@@ -504,14 +668,24 @@ export function programToDetailEditValues(
     ),
     wageDeductionItems: undefined,
     kpiFinalParticipants:
-      program.generalCommonInfo?.kpi?.finalParticipants ?? program.approvedStudentCount ?? undefined,
+      clampJavaInt(program.generalCommonInfo?.kpi?.finalParticipants) ??
+      clampJavaInt(program.totalParticipants) ??
+      clampJavaInt(program.approvedStudentCount) ??
+      undefined,
     kpiInstructorCount:
-      program.generalCommonInfo?.kpi?.instructorCount ?? program.instructors ?? undefined,
+      clampJavaInt(program.generalCommonInfo?.kpi?.instructorCount) ??
+      clampJavaInt(program.instructors) ??
+      undefined,
     kpiVolunteerCount:
-      program.generalCommonInfo?.kpi?.volunteerCount ?? program.generalVolunteers ?? undefined,
+      clampJavaInt(program.generalCommonInfo?.kpi?.volunteerCount) ??
+      clampJavaInt(program.generalVolunteers) ??
+      undefined,
     kpiFinalSchools:
-      program.generalCommonInfo?.kpi?.finalSchools ?? program.participatingSchoolCount ?? undefined,
-    kpiFinalClasses: program.generalCommonInfo?.kpi?.finalClasses ?? undefined,
+      clampJavaInt(program.generalCommonInfo?.kpi?.finalSchools) ??
+      clampJavaInt(program.participatingSchoolCount) ??
+      undefined,
+    kpiFinalClasses: clampJavaInt(program.generalCommonInfo?.kpi?.finalClasses) ?? undefined,
+    kpiEducatedTeachers: clampJavaInt(program.educatedTeachers) ?? undefined,
   }
 }
 
@@ -525,8 +699,21 @@ export function detailEditValuesToProgramPatch(
   existing: import('@/types/domain').Program
 ): Partial<import('@/types/domain').Program> {
   type ProgramRound = import('@/types/domain').ProgramRound
+  // TT·1사1교 레이아웃: 공고용/세부명은 폼 필드가 announcementTitle·detailedProgramName.
+  // BE handoff는 top-level title / textbookName(또는 detailedProgramName) 라운드트립을 기대.
+  const announcementTitle =
+    values.announcementTitle?.trim() ||
+    values.title?.trim() ||
+    existing.generalCommonInfo?.announcementTitle ||
+    existing.title
+  const detailedProgramName =
+    values.detailedProgramName?.trim() ||
+    existing.generalCommonInfo?.detailedProgramName ||
+    existing.textbookName
+
   return {
-    title: values.title,
+    title: announcementTitle || existing.title,
+    textbookName: detailedProgramName || existing.textbookName,
     startDate: values.startDate ?? existing.startDate,
     endDate: values.endDate ?? existing.endDate,
     category: values.category,
@@ -538,7 +725,10 @@ export function detailEditValuesToProgramPatch(
     applicationStartDate: values.applicationStartDate,
     applicationEndDate: values.applicationEndDate,
     businessArea: values.businessArea,
-    sponsorId: values.sponsorId || existing.sponsorId,
+    sponsorId:
+      values.sponsorId ||
+      values.sponsorManagementIds?.[0] ||
+      existing.sponsorId,
     managerName: values.managerName,
     contactPhone: values.contactPhone,
     contactEmail: values.contactEmail,
@@ -547,11 +737,16 @@ export function detailEditValuesToProgramPatch(
         ? 'outside_school'
         : values.venueKind === 'inside'
           ? 'inside_school'
-          : existing.institutionType,
-    oneLineIntroduction:
+          : values.venueKind === 'other'
+            ? undefined
+            : existing.institutionType,
+    venue: values.venueDetail?.trim() || undefined,
+    oneLineIntroduction: values.oneLineIntroduction,
+    remarks:
       values.participantRecruitmentNotesNotApplicable === 'not_applicable'
         ? undefined
-        : values.oneLineIntroduction,
+        : (values.remarks?.trim() || undefined),
+    educationTargetDetail: values.educationTargetDetail?.trim() || undefined,
     keyVisualImage: values.keyVisualImage,
     posterImage: values.posterImage,
     description: values.description,
@@ -562,9 +757,21 @@ export function detailEditValuesToProgramPatch(
     resultAnnouncementDate: values.resultAnnouncementDate ?? existing.resultAnnouncementDate,
     resultAnnouncementMethod: values.resultAnnouncementMethod ?? existing.resultAnnouncementMethod,
     studentListRequired: values.studentListRequired ?? existing.studentListRequired,
-    approvedStudentCount: values.kpiFinalParticipants ?? existing.approvedStudentCount,
-    generalVolunteers: values.kpiVolunteerCount ?? existing.generalVolunteers,
-    participatingSchoolCount: values.kpiFinalSchools ?? existing.participatingSchoolCount,
+    totalParticipants: clampJavaInt(
+      values.kpiFinalParticipants ?? existing.totalParticipants
+    ),
+    educatedTeachers: clampJavaInt(
+      values.kpiEducatedTeachers ?? existing.educatedTeachers
+    ),
+    approvedStudentCount: clampJavaInt(
+      values.kpiFinalParticipants ?? existing.approvedStudentCount
+    ),
+    generalVolunteers: clampJavaInt(
+      values.kpiVolunteerCount ?? existing.generalVolunteers
+    ),
+    participatingSchoolCount: clampJavaInt(
+      values.kpiFinalSchools ?? existing.participatingSchoolCount
+    ),
     generalSurveyMenuKeys:
       values.surveySurvey != null ||
       values.surveySatisfaction != null ||
@@ -583,7 +790,28 @@ export function detailEditValuesToProgramPatch(
         values.detailedProgramName ?? existing.generalCommonInfo?.detailedProgramName,
       sponsorManagementIds:
         values.sponsorManagementIds ?? existing.generalCommonInfo?.sponsorManagementIds,
+      sponsorManagerContactIds: (() => {
+        if (values.sponsorManagerContactIds != null) return values.sponsorManagerContactIds
+        if (values.sponsorManagerContactId != null) {
+          return values.sponsorManagerContactId.trim()
+            ? [values.sponsorManagerContactId.trim()]
+            : []
+        }
+        return existing.generalCommonInfo?.sponsorManagerContactIds
+      })(),
+      sponsorManagerContactId: (() => {
+        const ids =
+          values.sponsorManagerContactIds ??
+          (values.sponsorManagerContactId?.trim()
+            ? [values.sponsorManagerContactId.trim()]
+            : undefined)
+        return (
+          ids?.[0] ??
+          existing.generalCommonInfo?.sponsorManagerContactId
+        )
+      })(),
       venueDetail: values.venueDetail ?? existing.generalCommonInfo?.venueDetail,
+      venueKind: values.venueKind ?? existing.generalCommonInfo?.venueKind,
       curriculumSessions:
         values.curriculumSession1Title != null ||
         values.curriculumSession1Description != null ||
@@ -628,23 +856,28 @@ export function detailEditValuesToProgramPatch(
       wageGradeRows: buildWageGradeRowsFromDetailValues(values, existing),
       kpi: {
         finalParticipants:
-          values.kpiFinalParticipants ??
-          existing.generalCommonInfo?.kpi?.finalParticipants ??
-          existing.approvedStudentCount ??
+          clampJavaInt(values.kpiFinalParticipants) ??
+          clampJavaInt(existing.generalCommonInfo?.kpi?.finalParticipants) ??
+          clampJavaInt(existing.approvedStudentCount) ??
           0,
         instructorCount:
-          values.kpiInstructorCount ?? existing.generalCommonInfo?.kpi?.instructorCount ?? 0,
+          clampJavaInt(values.kpiInstructorCount) ??
+          clampJavaInt(existing.generalCommonInfo?.kpi?.instructorCount) ??
+          0,
         volunteerCount:
-          values.kpiVolunteerCount ??
-          existing.generalCommonInfo?.kpi?.volunteerCount ??
-          existing.generalVolunteers ??
+          clampJavaInt(values.kpiVolunteerCount) ??
+          clampJavaInt(existing.generalCommonInfo?.kpi?.volunteerCount) ??
+          clampJavaInt(existing.generalVolunteers) ??
           0,
         finalSchools:
-          values.kpiFinalSchools ??
-          existing.generalCommonInfo?.kpi?.finalSchools ??
-          existing.participatingSchoolCount ??
+          clampJavaInt(values.kpiFinalSchools) ??
+          clampJavaInt(existing.generalCommonInfo?.kpi?.finalSchools) ??
+          clampJavaInt(existing.participatingSchoolCount) ??
           0,
-        finalClasses: values.kpiFinalClasses ?? existing.generalCommonInfo?.kpi?.finalClasses ?? 0,
+        finalClasses:
+          clampJavaInt(values.kpiFinalClasses) ??
+          clampJavaInt(existing.generalCommonInfo?.kpi?.finalClasses) ??
+          0,
       },
       participantRecruitmentInfo: {
         ...existing.generalCommonInfo?.participantRecruitmentInfo,
@@ -682,6 +915,14 @@ export function detailEditValuesToProgramPatch(
               ? false
               : existing.generalCommonInfo?.participantRecruitmentInfo?.interviewEnabled,
         notesNotApplicable: values.participantRecruitmentNotesNotApplicable === 'not_applicable',
+        remarks:
+          values.participantRecruitmentNotesNotApplicable === 'not_applicable'
+            ? undefined
+            : (values.remarks?.trim() ||
+              existing.generalCommonInfo?.participantRecruitmentInfo?.remarks),
+        educationTargetDetail:
+          values.educationTargetDetail?.trim() ||
+          existing.generalCommonInfo?.participantRecruitmentInfo?.educationTargetDetail,
       },
       instructorRecruitmentInfo: {
         ...existing.generalCommonInfo?.instructorRecruitmentInfo,

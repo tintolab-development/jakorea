@@ -11,6 +11,10 @@ export type ParticipatingIndividualInstructorAssignedScheduleRow = {
   lectureLocation: string
   distanceFromHome: string
   scheduleLabel: string
+  assignmentId?: string
+  instructorMemberId?: string
+  scheduleId?: string
+  organizationApplicationId?: string
 }
 
 export type ParticipatingIndividualInstructorWaitingScheduleRow = {
@@ -23,4 +27,11 @@ export type ParticipatingIndividualInstructorWaitingScheduleRow = {
   scheduleLabel: string
   assignmentStatus: WaitingInstructorAssignmentStatus
   assignedInstructorCountLabel: string
+  organizationApplicationId?: string
+  instructorApplicationId?: string
+  instructorMemberId?: string
+  requestedScheduleId?: number
+  resolvedScheduleId?: number | null
+  scheduleUnresolved?: boolean
+  sessions?: import('@/features/program/general/model/participating-schools').ParticipatingSchoolSession[]
 }

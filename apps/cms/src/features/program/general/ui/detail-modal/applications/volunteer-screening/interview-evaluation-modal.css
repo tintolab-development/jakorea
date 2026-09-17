@@ -1,0 +1,70 @@
+/**
+ * 면접 평가 모달 — DetailInfoForm edit 슬롯 + 더블 행(비고·점수 총합) 레이아웃 보정
+ * 공통 `.detail-info-form__field-content--edit > * { display:flex }` 가 textarea·숫자 입력 폭을 깨뜨림
+ */
+
+.general-volunteer-interview-evaluation-modal__form .detail-info-form__row--double {
+  align-items: stretch;
+}
+
+.general-volunteer-interview-evaluation-modal__form
+  .detail-info-form__field--edit:has(.cms-textarea)
+  .detail-info-form__field-label {
+  align-items: flex-start;
+  padding-top: 16px;
+}
+
+.general-volunteer-interview-evaluation-modal__form
+  .detail-info-form__field-content--edit:has(.cms-textarea) {
+  align-items: flex-start;
+}
+
+.general-volunteer-interview-evaluation-modal__form
+  .detail-info-form__field-content--edit
+  > .cms-textarea {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+  margin-block: 0 !important;
+  box-sizing: border-box;
+}
+
+.general-volunteer-interview-evaluation-modal__form
+  .detail-info-form__field-content--edit
+  > .cms-textarea
+  .cms-textarea__control {
+  width: 100% !important;
+  min-width: 0;
+}
+
+.general-volunteer-interview-evaluation-modal__form
+  .detail-info-form__field-content--edit
+  > .cms-input {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+  margin-block: 0 !important;
+  box-sizing: border-box;
+}
+
+.general-volunteer-interview-evaluation-modal__form
+  .detail-info-form__field-content--edit
+  > .cms-input
+  .cms-input__control {
+  width: 100% !important;
+  min-width: 0;
+}
+
+.general-volunteer-interview-evaluation-modal__form
+  .detail-info-form__field:not(.detail-info-form__field--edit)
+  .detail-info-form__field-label {
+  align-items: center;
+}
+
+.general-volunteer-interview-evaluation-modal__form
+  .detail-info-form__field:not(.detail-info-form__field--edit)
+  .detail-info-form__field-content {
+  align-items: center;
+}

@@ -527,7 +527,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
               edit={
                 isEdit && form ? (
                   <Controller
-                    name="district"
+                    name="educationTargetDetail"
                     control={form.control}
                     render={({ field }) => (
                       <CmsInput
@@ -648,7 +648,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                               const checked = e.target.checked
                               field.onChange(checked ? 'not_applicable' : 'applicable')
                               if (checked) {
-                                form.setValue('oneLineIntroduction', '', { shouldDirty: true })
+                                form.setValue('remarks', '', { shouldDirty: true })
                               }
                             }}
                           >
@@ -658,7 +658,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                       />
                       <DetailInfoForm.InputsSeparator />
                       <Controller
-                        name="oneLineIntroduction"
+                        name="remarks"
                         control={form.control}
                         render={({ field }) => (
                           <CmsInput
@@ -678,7 +678,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                     </div>
                   ) : (
                     <Controller
-                      name="oneLineIntroduction"
+                      name="remarks"
                       control={form.control}
                       render={({ field }) => (
                         <CmsInput

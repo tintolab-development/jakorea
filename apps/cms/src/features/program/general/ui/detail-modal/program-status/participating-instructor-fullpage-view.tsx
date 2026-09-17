@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback, type Key } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Table } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -33,8 +34,17 @@ import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-
 import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { updateInstructorApplicationManagerCommentRemote } from '@/features/program/general/api/applications-api-client'
+import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
+import {
+  generalApplicationsQueryKeys,
+  generalProgramProgressQueryKeys,
+} from '@/features/program/general/api/general-applications-query-keys'
+import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { useParticipatingInstructorApplicationDetailEnrichment } from '@/features/program/general/hooks/use-application-form-detail-enrichment'
 import {
   buildProgramApiUnavailableSaveContent,
+  notifyProgramApiUnavailable,
   PROGRAM_API_UNAVAILABLE_TITLE,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import {
@@ -50,17 +60,24 @@ import {
 } from '@/shared/components'
 import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import {
-  buildInitialAssignedSchoolRows,
-  buildWaitingSchoolRows,
-  buildWaitingSchoolScheduleRows,
-  createWaitingRowForSchool,
-  schoolRowToAssignedRow,
+  applyLocalInstructorLeadRoleChange,
+  applyLocalParticipatingInstructorAssign,
+  applyLocalParticipatingInstructorUnassign,
   renumberAssignedRows,
-  renumberWaitingRows,
   type InstructorAssignedSchoolRow,
   type InstructorWaitingSchoolRow,
   type InstructorWaitingAssignmentStatus,
 } from '@/features/program/general/lib/instructor-institution-assignment'
+import { useParticipatingInstructorInstitutionAssignment } from '@/features/program/general/hooks/use-participating-instructor-institution-assignment'
+import {
+  cancelInstructorAssignmentRemote,
+  createInstructorAssignmentRemote,
+  putRepresentativeInstructorRemote,
+} from '@/features/program/general/api/instructor-assignments-api-client'
+import {
+  fetchGeneralInstructorAssignmentBoard,
+  findScheduleIdForLectureDate,
+} from '@/features/program/general/api/instructor-assignment-board-service'
 import {
   mapParticipatingSessionsToInstructorAssignOptions,
 } from '@/features/program/general/lib/instructor-assign-session-options'
@@ -70,10 +87,7 @@ import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confi
 import { AssignGuideModal } from './assign-guide-modal'
 import { ParticipatingInstructorApplicationInfo } from './participating-instructor-application-info'
 import { useParticipatingInstructorDetailEdit } from '@/features/program/general/hooks/use-participating-instructor-detail-edit'
-import {
-  applyParticipatingInstructorActivityWithdraw,
-  getParticipatingInstructorActivityWithdrawScheduleOptions,
-} from '@/features/program/general/lib/participating-instructor-activity-withdraw'
+import { getParticipatingInstructorActivityWithdrawScheduleOptions } from '@/features/program/general/lib/participating-instructor-activity-withdraw'
 import {
   ParticipatingInstructorActivityWithdrawModal,
   type ParticipatingInstructorActivityWithdrawModalPayload,
@@ -127,7 +141,8 @@ function renderWaitingTableEmpty() {
   )
 }
 
-/** TODO(api): 강사 중첩 탭 mutation 잔여 — institutionAssignment·settlement.
+/** TODO(api): 강사 중첩 탭 mutation 잔여 — settlement.
+ * institutionAssignment: instructor-assignments list/create/cancel/representative 연동.
  * lectureReports: GET list hybrid (`useProgramLectureReports`).
  * 1사1교 정산은 100km·교통·숙박·wagePolicies/paymentItems 구조화 계약 후. */
 export const INSTRUCTOR_DETAIL_TAB_KEYS = [
@@ -276,9 +291,22 @@ export function ParticipatingInstructorFullpageView({
     {}
   )
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
+  const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
+  const progressRemoteEnabled = shouldUseGeneralProgramProgressRemoteApi()
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
 
-  const mergedInstructor = useMemo(() => ({ ...d, ...instructorPatches }), [d, instructorPatches])
+  const enrichedInstructor = useParticipatingInstructorApplicationDetailEnrichment(d, program.id)
+  const baseInstructor = enrichedInstructor ?? d
+  const instructorApplicationId = baseInstructor.instructorApplicationId
+  const hasInstructorApplicationId =
+    instructorApplicationId != null && instructorApplicationId.trim() !== ''
+
+  const mergedInstructor = useMemo(
+    () => ({ ...baseInstructor, ...instructorPatches }),
+    [baseInstructor, instructorPatches]
+  )
 
   const isIndividualProgram = isGeneralIndividualProgram(program)
   const isCompanySchool = isCompanySchoolProgram(program)
@@ -286,8 +314,11 @@ export function ParticipatingInstructorFullpageView({
   const isActivityWithdrawn = mergedInstructor.activityWithdrawn === true
 
   const activityWithdrawScheduleOptions = useMemo(
-    () => getParticipatingInstructorActivityWithdrawScheduleOptions(mergedInstructor.id),
-    [mergedInstructor.id]
+    () =>
+      getParticipatingInstructorActivityWithdrawScheduleOptions(
+        mergedInstructor.educationSchedules ?? []
+      ),
+    [mergedInstructor.educationSchedules]
   )
 
   const applicationInfoEdit = useParticipatingInstructorDetailEdit({
@@ -317,7 +348,9 @@ export function ParticipatingInstructorFullpageView({
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolveParticipatingInstructorFullpageAccessItem,
-    resetDeps: [d.id, schoolRows, instructorList],
+    resolveMemberId: () => mergedInstructor.memberId,
+    resolveMemberRole: () => 'INSTRUCTOR',
+    resetDeps: [d.id, mergedInstructor.memberId, schoolRows, instructorList],
     controlMode: 'toggleRemask',
   })
 
@@ -334,15 +367,18 @@ export function ParticipatingInstructorFullpageView({
     [onTabChange]
   )
 
+  const institutionAssignment = useParticipatingInstructorInstitutionAssignment({
+    programId: program.id,
+    instructor: mergedInstructor,
+    schoolRows,
+    instructorList,
+    isCompanySchool,
+    enabled: uiTab === 'institutionAssignment',
+  })
+
   useEffect(() => {
-    const assigned = buildInitialAssignedSchoolRows(d, schoolRows, instructorList)
-    const assignedSchoolIds = new Set(assigned.map(r => r.id))
-    setAssignedSchools(assigned)
-    setWaitingSchools(
-      isCompanySchool
-        ? buildWaitingSchoolScheduleRows(d, schoolRows, instructorList, assignedSchoolIds)
-        : buildWaitingSchoolRows(d, schoolRows, instructorList, assignedSchoolIds)
-    )
+    setAssignedSchools(institutionAssignment.assignedSchools)
+    setWaitingSchools(institutionAssignment.waitingSchools)
     setSelectedAssignedSchoolKeys([])
     setSelectedWaitingSchoolKeys([])
     setOpenRoleDropdownId(null)
@@ -350,32 +386,94 @@ export function ParticipatingInstructorFullpageView({
     setAssignGuideSchoolId(null)
     setAssignGuideRole('assistant')
     setAssignGuideSessionIds([])
-  }, [d, isCompanySchool, schoolRows, instructorList])
+  }, [
+    d.id,
+    institutionAssignment.assignedSchools,
+    institutionAssignment.waitingSchools,
+  ])
 
   useEffect(() => {
-    setSavedAdminComment(d.adminComment ?? '')
+    setSavedAdminComment(baseInstructor.adminComment ?? '')
     setAdminCommentModalOpen(false)
     setAdminCommentDraft('')
     setAdminCommentError(undefined)
     setInstructorPatches({})
     setActivityWithdrawModalOpen(false)
-  }, [d.id, d.adminComment])
+  }, [d.id, baseInstructor.adminComment])
 
-  const handleRoleChange = useCallback((schoolId: string, newRole: InstructorRoleKey) => {
-    setAssignedSchools(prev => {
-      const updated = prev.map(row => ({
-        ...row,
-        role:
-          row.id === schoolId
-            ? newRole
-            : newRole === 'lead'
-              ? ('assistant' satisfies InstructorRoleKey)
-              : row.role,
-      }))
-      return renumberAssignedRows(updated)
-    })
-    setOpenRoleDropdownId(null)
-  }, [])
+  const handleRoleChange = useCallback(
+    async (schoolId: string, newRole: InstructorRoleKey) => {
+      setOpenRoleDropdownId(null)
+      if (newRole !== 'lead') {
+        if (isTempMockProgram) {
+          setAssignedSchools(prev =>
+            renumberAssignedRows(
+              prev.map(row =>
+                row.id === schoolId ? { ...row, role: 'assistant' as const } : row
+              )
+            )
+          )
+          return
+        }
+        notifyProgramApiUnavailable(
+          'general-participating-instructor-role-demote',
+          '참여 강사 · 일반 강사 변경'
+        )
+        return
+      }
+      if (institutionAssignment.isTempMockDataSource) {
+        setAssignedSchools(prev =>
+          renumberAssignedRows(applyLocalInstructorLeadRoleChange(prev, schoolId, newRole))
+        )
+        return
+      }
+      if (!institutionAssignment.remoteEnabled) {
+        notifyProgramApiUnavailable(
+          'general-participating-instructor-role-change',
+          '참여 강사 · 대표 강사 변경'
+        )
+        return
+      }
+      const target = assignedSchools.find(row => row.id === schoolId)
+      const memberId = Number(target?.instructorMemberId ?? mergedInstructor.memberId)
+      const orgAppId = Number(target?.organizationApplicationId)
+      const scheduleId = Number(target?.scheduleId)
+      if (
+        !Number.isFinite(memberId) ||
+        memberId <= 0 ||
+        !Number.isFinite(orgAppId) ||
+        orgAppId <= 0
+      ) {
+        showAlert({
+          title: '안내',
+          content:
+            '대표 강사 변경에 필요한 instructorMemberId / organizationApplicationId가 없습니다.',
+        })
+        return
+      }
+      try {
+        await putRepresentativeInstructorRemote(program.id, {
+          instructorMemberId: memberId,
+          organizationApplicationId: orgAppId,
+          ...(Number.isFinite(scheduleId) && scheduleId > 0 ? { scheduleId } : {}),
+        })
+        await institutionAssignment.invalidate()
+      } catch {
+        showAlert({
+          title: '대표 강사 변경 실패',
+          content: '대표 강사 지정에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      }
+    },
+    [
+      assignedSchools,
+      institutionAssignment,
+      isTempMockProgram,
+      mergedInstructor.memberId,
+      program.id,
+      showAlert,
+    ]
+  )
 
   const assignedSchoolColumns: ColumnsType<InstructorAssignedSchoolRow> = useMemo(
     () => [
@@ -619,40 +717,79 @@ export function ParticipatingInstructorFullpageView({
   }, [selectedWaitingSchoolKeys, waitingSchools, assignedSchools, showAlert])
 
   const handleUnassignConfirm = useCallback(
-    (payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload) => {
       if (selectedAssignedSchoolKeys.length === 0) return
-      const removedSchoolNames = assignedSchools
-        .filter(r => selectedAssignedSchoolKeys.includes(r.id))
-        .map(r => r.schoolName)
-      const toRemove = new Set(selectedAssignedSchoolKeys.map(String))
-      setAssignedSchools(prev => {
-        const removedRows = prev.filter(r => toRemove.has(r.id))
-        const next = renumberAssignedRows(prev.filter(r => !toRemove.has(r.id)))
-        setWaitingSchools(wPrev => {
-          const added: InstructorWaitingSchoolRow[] = []
-          for (const row of removedRows) {
-            const school = schoolRows.find(s => s.id === row.id)
-            if (school) {
-              if (isCompanySchool) {
-                added.push(...buildWaitingSchoolScheduleRows(d, [school], instructorList, new Set()))
-              } else {
-                added.push(createWaitingRowForSchool(school, d, instructorList, 0, 'waiting'))
-              }
+      const selectedRows = assignedSchools.filter(r => selectedAssignedSchoolKeys.includes(r.id))
+      const removedSchoolNames = selectedRows.map(r => r.schoolName)
+
+      if (institutionAssignment.isTempMockDataSource) {
+        const next = applyLocalParticipatingInstructorUnassign({
+          assignedSchools,
+          waitingSchools,
+          selectedAssignedIds: selectedAssignedSchoolKeys.map(String),
+          instructor: mergedInstructor,
+          schoolRows,
+          instructorList,
+        })
+        setAssignedSchools(next.assignedSchools)
+        setWaitingSchools(next.waitingSchools)
+        setUnassignConfirmOpen(false)
+        setSelectedAssignedSchoolKeys([])
+        setUnassignCompleteModal({
+          instructorNames: [mergedInstructor.instructorName],
+          targetNames: removedSchoolNames,
+          reason: payload.reason,
+        })
+        return
+      }
+
+      if (institutionAssignment.remoteEnabled) {
+        try {
+          for (const row of selectedRows) {
+            const ids =
+              row.assignmentIds && row.assignmentIds.length > 0
+                ? row.assignmentIds
+                : row.assignmentId
+                  ? [row.assignmentId]
+                  : []
+            for (const assignmentId of ids) {
+              await cancelInstructorAssignmentRemote(assignmentId)
             }
           }
-          return renumberWaitingRows([...wPrev, ...added])
-        })
-        return next
-      })
-      setUnassignConfirmOpen(false)
-      setSelectedAssignedSchoolKeys([])
-      setUnassignCompleteModal({
-        instructorNames: [d.instructorName],
-        targetNames: removedSchoolNames,
-        reason: payload.reason,
-      })
+          await institutionAssignment.invalidate()
+          setUnassignConfirmOpen(false)
+          setSelectedAssignedSchoolKeys([])
+          setUnassignCompleteModal({
+            instructorNames: [mergedInstructor.instructorName],
+            targetNames: removedSchoolNames,
+            reason: payload.reason,
+          })
+        } catch (error) {
+          const message =
+            error instanceof Error && error.message.trim()
+              ? error.message
+              : '배정 취소에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          showAlert({ title: '배정 취소 실패', content: message })
+        }
+        return
+      }
+
+      notifyProgramApiUnavailable(
+        'general-participating-instructor-unassign',
+        '일반 프로그램 · 참여 강사 배정 취소'
+      )
     },
-    [selectedAssignedSchoolKeys, assignedSchools, schoolRows, d, instructorList, isCompanySchool]
+    [
+      assignedSchools,
+      institutionAssignment,
+      instructorList,
+      mergedInstructor,
+      mergedInstructor.instructorName,
+      schoolRows,
+      selectedAssignedSchoolKeys,
+      showAlert,
+      waitingSchools,
+    ]
   )
 
   const closeAssignGuideModal = useCallback(() => {
@@ -662,83 +799,168 @@ export function ParticipatingInstructorFullpageView({
     setAssignGuideSessionIds([])
   }, [])
 
-  const handleAssignGuideConfirm = useCallback(() => {
-    if (!assignGuideMode || !assignGuideSchoolId) {
+  const handleAssignGuideConfirm = useCallback(async () => {
+    if (!assignGuideMode || !assignGuideSchoolId) return
+
+    const memberId = Number(mergedInstructor.memberId)
+    if (!Number.isFinite(memberId) || memberId <= 0) {
+      showAlert({
+        title: '안내',
+        content: '강사 memberId가 없어 배정할 수 없습니다.',
+      })
       return
     }
-    const school = schoolRows.find(s => s.id === assignGuideSchoolId)
-    if (!school) return
 
-    const selectedWaitingRowKeys = new Set(selectedWaitingSchoolKeys.map(String))
-    const selectedAssignSessionIds = new Set(assignGuideSessionIds)
-    const hasSelectedSession = (row: InstructorWaitingSchoolRow): boolean =>
-      row.sessions?.some(session =>
-        selectedAssignSessionIds.has(`session-${session.round}-${session.date}-${session.timeRange}`)
-      ) === true
-    const selectedScheduleKeys = new Set<string>()
-    waitingSchools.forEach(row => {
-      if ((selectedWaitingRowKeys.has(row.id) || hasSelectedSession(row)) && row.scheduleKey) {
-        selectedScheduleKeys.add(row.scheduleKey)
-      }
-    })
-    school.sessions?.forEach(session => {
-      if (selectedAssignSessionIds.has(`session-${session.round}-${session.date}-${session.timeRange}`)) {
-        selectedScheduleKeys.add(`${session.date}|${session.dayOfWeek}`)
-      }
-    })
-
-    setWaitingSchools(prev =>
-      renumberWaitingRows(
-        prev
-          .filter(w => {
-            if (!isCompanySchool) return w.id !== assignGuideSchoolId
-            const rowSchoolId = w.schoolId ?? w.id
-            if (rowSchoolId !== assignGuideSchoolId) return true
-            if (selectedWaitingRowKeys.has(w.id) || hasSelectedSession(w)) return false
-            return true
-          })
-          .map(w => {
-            if (!isCompanySchool) return w
-            const rowSchoolId = w.schoolId ?? w.id
-            const isSameAssignedSchool = rowSchoolId === assignGuideSchoolId
-            const isSameAssignedSchedule =
-              w.scheduleKey != null && selectedScheduleKeys.has(w.scheduleKey)
-            if (
-              (!isSameAssignedSchool && !isSameAssignedSchedule) ||
-              w.assignmentStatus !== 'waiting'
-            ) {
-              return w
-            }
-            return { ...w, assignmentStatus: 'cancelled' satisfies InstructorWaitingAssignmentStatus }
-          })
-      )
+    const rowsToAssign = waitingSchools.filter(
+      w =>
+        selectedWaitingSchoolKeys.includes(w.id) &&
+        w.assignmentStatus === 'waiting' &&
+        (assignGuideMode === 'select'
+          ? w.schoolId === assignGuideSchoolId || w.id === assignGuideSchoolId
+          : true)
     )
-    setAssignedSchools(prev => {
-      const next = [
-        ...prev,
-        schoolRowToAssignedRow(school, d, instructorList, 0, assignGuideRole, prev.length),
-      ]
-      return renumberAssignedRows(next)
-    })
-    setSelectedWaitingSchoolKeys(prev =>
-      prev.filter(key => {
-        if (!isCompanySchool) return String(key) !== assignGuideSchoolId
-        return !selectedWaitingSchoolKeys.includes(key)
+    if (rowsToAssign.length === 0) return
+
+    if (institutionAssignment.isTempMockDataSource) {
+      const next = applyLocalParticipatingInstructorAssign({
+        assignedSchools,
+        waitingSchools,
+        rowsToAssign,
+        instructor: mergedInstructor,
+        schoolRows,
+        instructorList,
+        role: assignGuideRole,
       })
-    )
-    closeAssignGuideModal()
+      setAssignedSchools(next.assignedSchools)
+      setWaitingSchools(next.waitingSchools)
+      setSelectedWaitingSchoolKeys([])
+      closeAssignGuideModal()
+      return
+    }
+
+    if (!institutionAssignment.remoteEnabled) {
+      notifyProgramApiUnavailable(
+        'general-participating-instructor-assign',
+        '일반 프로그램 · 참여 강사 기관 배정'
+      )
+      return
+    }
+
+    try {
+      const board = await fetchGeneralInstructorAssignmentBoard(program.id)
+      let leadAssigned = assignedSchools.some(row => row.role === 'lead')
+      const selectedSessionKeys = new Set(assignGuideSessionIds)
+
+      for (const waitingRow of rowsToAssign) {
+        const orgAppId = Number(waitingRow.organizationApplicationId)
+        if (!Number.isFinite(orgAppId) || orgAppId <= 0) {
+          showAlert({
+            title: '안내',
+            content: `${waitingRow.schoolName} 기관의 organizationApplicationId가 없어 배정할 수 없습니다.`,
+          })
+          return
+        }
+
+        const sessions = waitingRow.sessions ?? []
+        const targetSessions =
+          selectedSessionKeys.size > 0
+            ? sessions.filter(session =>
+                selectedSessionKeys.has(
+                  `session-${session.round}-${session.date}-${session.timeRange}`
+                )
+              )
+            : sessions.length > 0
+              ? [sessions[0]!]
+              : [null]
+
+        if (selectedSessionKeys.size > 0 && targetSessions.length === 0) {
+          showAlert({
+            title: '안내',
+            content: '교육 배정일을 선택해 주세요.',
+          })
+          return
+        }
+
+        for (const session of targetSessions) {
+          if (session?.scheduleUnresolved || waitingRow.scheduleUnresolved) {
+            showAlert({
+              title: '안내',
+              content: `${waitingRow.schoolName} — 희망일에 대응하는 program schedule이 없습니다.`,
+            })
+            return
+          }
+
+          let scheduleId: number | undefined =
+            session &&
+            typeof session.resolvedScheduleId === 'number' &&
+            session.resolvedScheduleId > 0
+              ? session.resolvedScheduleId
+              : typeof waitingRow.resolvedScheduleId === 'number' &&
+                  waitingRow.resolvedScheduleId > 0
+                ? waitingRow.resolvedScheduleId
+                : undefined
+          const requestedScheduleId =
+            session?.requestedScheduleId ?? waitingRow.requestedScheduleId
+          if (scheduleId == null && requestedScheduleId == null) {
+            const hopeLine =
+              session != null
+                ? `${session.date}`
+                : waitingRow.educationScheduleLines[0]
+            scheduleId =
+              findScheduleIdForLectureDate(board.schedules, hopeLine) ?? undefined
+          }
+          if (scheduleId == null && requestedScheduleId == null) {
+            showAlert({
+              title: '안내',
+              content:
+                '희망일에 대응하는 program schedule이 없습니다. requestedScheduleId 또는 schedule 매핑이 필요합니다.',
+            })
+            return
+          }
+
+          await createInstructorAssignmentRemote(program.id, {
+            instructorMemberId: memberId,
+            ...(scheduleId != null ? { scheduleId } : {}),
+            ...(requestedScheduleId != null ? { requestedScheduleId } : {}),
+            organizationApplicationId: orgAppId,
+            instructorApplicationId: waitingRow.instructorApplicationId
+              ? Number(waitingRow.instructorApplicationId)
+              : mergedInstructor.instructorApplicationId
+                ? Number(mergedInstructor.instructorApplicationId)
+                : undefined,
+            scheduleLead: !leadAssigned && assignGuideRole === 'lead',
+          })
+          if (assignGuideRole === 'lead') leadAssigned = true
+        }
+      }
+
+      await institutionAssignment.invalidate()
+      setSelectedWaitingSchoolKeys([])
+      closeAssignGuideModal()
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message.trim()
+          ? error.message
+          : '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+      showAlert({ title: '배정 실패', content: message })
+    }
   }, [
     assignGuideMode,
-    assignGuideSchoolId,
     assignGuideRole,
-    selectedWaitingSchoolKeys,
+    assignGuideSchoolId,
     assignGuideSessionIds,
-    waitingSchools,
-    isCompanySchool,
-    schoolRows,
-    d,
-    instructorList,
+    assignedSchools,
     closeAssignGuideModal,
+    institutionAssignment,
+    instructorList,
+    mergedInstructor,
+    mergedInstructor.instructorApplicationId,
+    mergedInstructor.memberId,
+    program.id,
+    schoolRows,
+    selectedWaitingSchoolKeys,
+    showAlert,
+    waitingSchools,
   ])
 
   const addAssignOptions = useMemo(
@@ -793,13 +1015,15 @@ export function ParticipatingInstructorFullpageView({
   const privacyMasked = !personalInfoRevealed
 
   const educationSummary =
-    d.educations?.[0]?.schoolType != null
-      ? getEducationLevelBadge(undefined, d.educations[0].schoolType)
-      : getEducationLevelBadge(d.educationLevel)
-  const careerYearsFromDetails = getTotalCareerYears(d.careerDetails)
+    mergedInstructor.educations?.[0]?.schoolType != null
+      ? getEducationLevelBadge(undefined, mergedInstructor.educations[0].schoolType)
+      : getEducationLevelBadge(mergedInstructor.educationLevel)
+  const careerYearsFromDetails = getTotalCareerYears(mergedInstructor.careerDetails)
   const careerSummaryYears =
-    careerYearsFromDetails > 0 ? careerYearsFromDetails : (d.lectureExperienceYears ?? 0)
-  const qualificationCount = d.qualifications?.length ?? 0
+    careerYearsFromDetails > 0
+      ? careerYearsFromDetails
+      : (mergedInstructor.lectureExperienceYears ?? 0)
+  const qualificationCount = mergedInstructor.qualifications?.length ?? 0
 
   const handleActivityCertificateIssueClick = useCallback(() => {
     setActivityCertPreviewOpen(true)
@@ -822,24 +1046,75 @@ export function ParticipatingInstructorFullpageView({
   }, [])
 
   const handleConfirmActivityWithdraw = useCallback(
-    (payload: ParticipatingInstructorActivityWithdrawModalPayload) => {
-      const updated = applyParticipatingInstructorActivityWithdraw(mergedInstructor.id, {
-        reason: 'institution',
-        stopScheduleId: payload.stopScheduleId,
-      })
-      if (!updated) return
+    async (payload: ParticipatingInstructorActivityWithdrawModalPayload) => {
+      const stopScheduleLabel = payload.stopScheduleId
+        ? activityWithdrawScheduleOptions.find(option => option.value === payload.stopScheduleId)
+            ?.label
+        : undefined
+      const reason =
+        [mergedInstructor.instructorName, stopScheduleLabel].filter(Boolean).join(' · ') ||
+        stopScheduleLabel ||
+        '활동 포기'
 
-      setInstructorPatches(prev => ({
-        ...prev,
-        activityWithdrawn: updated.activityWithdrawn,
-        activityWithdrawReason: updated.activityWithdrawReason,
-        activityWithdrawStopScheduleId: updated.activityWithdrawStopScheduleId,
-        activityWithdrawStopScheduleLabel: updated.activityWithdrawStopScheduleLabel,
-        performanceIncludedScheduleIds: updated.performanceIncludedScheduleIds,
-      }))
-      setActivityWithdrawModalOpen(false)
+      if (progressRemoteEnabled || isTempMockProgram) {
+        setActivityWithdrawSubmitting(true)
+        try {
+          if (progressRemoteEnabled) {
+            const stopScheduleIdNum = payload.stopScheduleId
+              ? Number(payload.stopScheduleId)
+              : undefined
+            await giveUpGeneralParticipatingInstitution(program.id, mergedInstructor.id, reason, {
+              stopScheduleId:
+                stopScheduleIdNum != null && Number.isFinite(stopScheduleIdNum)
+                  ? stopScheduleIdNum
+                  : undefined,
+            })
+            await queryClient.invalidateQueries({
+              queryKey: generalProgramProgressQueryKeys.instructors(program.id),
+            })
+          }
+          setInstructorPatches(prev => ({
+            ...prev,
+            activityWithdrawn: true,
+            activityWithdrawReason: 'institution',
+            activityWithdrawStopScheduleId: payload.stopScheduleId,
+            activityWithdrawStopScheduleLabel: stopScheduleLabel,
+          }))
+          setActivityWithdrawModalOpen(false)
+          showAlert({
+            title: '활동 포기',
+            content: `${mergedInstructor.instructorName} 강사가 활동 포기 처리되었습니다.`,
+          })
+        } catch (error) {
+          const message =
+            error instanceof Error && error.message.trim()
+              ? error.message
+              : '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          showAlert({
+            title: '활동 포기 실패',
+            content: message,
+          })
+        } finally {
+          setActivityWithdrawSubmitting(false)
+        }
+        return
+      }
+
+      notifyProgramApiUnavailable(
+        'general-participating-instructor-give-up',
+        '일반 프로그램 · 참여 강사 활동 포기'
+      )
     },
-    [mergedInstructor.id]
+    [
+      activityWithdrawScheduleOptions,
+      isTempMockProgram,
+      mergedInstructor.id,
+      mergedInstructor.instructorName,
+      program.id,
+      progressRemoteEnabled,
+      queryClient,
+      showAlert,
+    ]
   )
 
   const handleAdminCommentEditEnter = useCallback(() => {
@@ -852,9 +1127,17 @@ export function ParticipatingInstructorFullpageView({
   const handleAdminCommentSave = useCallback(async () => {
     const trimmed = adminCommentDraft.trim()
     if (shouldUseGeneralApplicationsRemoteApi()) {
+      if (!hasInstructorApplicationId) {
+        void showAlert({
+          title: '안내',
+          content:
+            '강사 신청 ID가 없어 코멘트를 저장할 수 없습니다. participants API에 sourceApplicationId 매핑이 필요합니다.',
+        })
+        return
+      }
       try {
         const response = await updateInstructorApplicationManagerCommentRemote(
-          mergedInstructor.id,
+          instructorApplicationId!,
           { managerComment: trimmed || null }
         )
         const next = response.managerComment ?? trimmed
@@ -863,6 +1146,9 @@ export function ParticipatingInstructorFullpageView({
           ...prev,
           adminComment: next || undefined,
         }))
+        await queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.instructorDetail(instructorApplicationId!),
+        })
         setAdminCommentModalOpen(false)
         setAdminCommentError(undefined)
         return
@@ -874,11 +1160,28 @@ export function ParticipatingInstructorFullpageView({
         return
       }
     }
+    if (isTempMockProgram) {
+      setSavedAdminComment(trimmed)
+      setInstructorPatches(prev => ({
+        ...prev,
+        adminComment: trimmed || undefined,
+      }))
+      setAdminCommentModalOpen(false)
+      setAdminCommentError(undefined)
+      return
+    }
     void showAlert({
       title: PROGRAM_API_UNAVAILABLE_TITLE,
       content: buildProgramApiUnavailableSaveContent('참여 강사 관리자 코멘트'),
     })
-  }, [adminCommentDraft, mergedInstructor.id, showAlert])
+  }, [
+    adminCommentDraft,
+    hasInstructorApplicationId,
+    instructorApplicationId,
+    isTempMockProgram,
+    queryClient,
+    showAlert,
+  ])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)
@@ -915,8 +1218,8 @@ export function ParticipatingInstructorFullpageView({
           className="participating-instructor-fullpage-view__resume-form"
         >
           <div className="instructor-resume-card">
-            {(d.educations?.length ?? 0) > 0 ? (
-              d.educations!.map((item, idx) => {
+            {(mergedInstructor.educations?.length ?? 0) > 0 ? (
+              mergedInstructor.educations!.map((item, idx) => {
                 const period = formatEducationPeriod(item)
                 const schoolLabel = item.schoolName
                   ? [
@@ -960,8 +1263,8 @@ export function ParticipatingInstructorFullpageView({
           className="participating-instructor-fullpage-view__resume-form"
         >
           <div className="instructor-resume-card">
-            {(d.careerDetails?.length ?? 0) > 0 ? (
-              d.careerDetails!.map((item, idx) => (
+            {(mergedInstructor.careerDetails?.length ?? 0) > 0 ? (
+              mergedInstructor.careerDetails!.map((item, idx) => (
                 <div key={idx} className="instructor-resume-row instructor-resume-row--timeline">
                   <span className="instructor-resume-row-left">{formatCareerPeriod(item)}</span>
                   <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
@@ -998,8 +1301,8 @@ export function ParticipatingInstructorFullpageView({
           className="participating-instructor-fullpage-view__resume-form"
         >
           <div className="instructor-resume-card">
-            {(d.qualifications?.length ?? 0) > 0 ? (
-              d.qualifications!.map((q: ParticipatingInstructorQualification, idx: number) => (
+            {(mergedInstructor.qualifications?.length ?? 0) > 0 ? (
+              mergedInstructor.qualifications!.map((q: ParticipatingInstructorQualification, idx: number) => (
                 <div key={idx} className="instructor-resume-row">
                   <span className="instructor-resume-row-left instructor-resume-row-left--single-year">
                     {q.year ?? '-'}
@@ -1035,7 +1338,11 @@ export function ParticipatingInstructorFullpageView({
                 variant="delete"
                 size="large"
                 width={140}
-                disabled={isActivityWithdrawn || applicationInfoEdit.isEditing}
+                disabled={
+                  isActivityWithdrawn ||
+                  applicationInfoEdit.isEditing ||
+                  activityWithdrawSubmitting
+                }
                 onClick={handleRequestActivityWithdraw}
               >
                 활동 포기
@@ -1051,6 +1358,7 @@ export function ParticipatingInstructorFullpageView({
               </CmsButton>
               <ProgramEditInfoActions
                 isEditing={applicationInfoEdit.isEditing}
+                idleVariant="secondary"
                 onEdit={applicationInfoEdit.enterEdit}
                 onCancel={applicationInfoEdit.cancelEdit}
                 onSave={() => {

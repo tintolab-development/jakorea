@@ -15,6 +15,10 @@ import type { ColumnsType } from 'antd/es/table'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import {
+  formatClassCountLabel,
+  formatTotalStudentCountLabel,
+} from '@/features/program/general/lib/detail-value-helpers'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import type {
   SchoolDetailForModal,
@@ -424,7 +428,7 @@ export function SchoolDetailModal({
       .join(' | ') || undefined
   )
   const classDisplay = renderDetailInfoPipeSeparated(
-    `${detail.classCount}개 학급 | 총 ${detail.studentCount}명`
+    `${formatClassCountLabel(detail.classCount)} | ${formatTotalStudentCountLabel(detail.studentCount)}`
   )
   const waitingDisplay =
     detail.waitingRoomAvailable && detail.waitingRoomLocation

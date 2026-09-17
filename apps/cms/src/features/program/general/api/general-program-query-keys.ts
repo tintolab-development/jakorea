@@ -18,6 +18,8 @@ export const generalProgramQueryKeys = {
     [...generalProgramQueryKeys.all, 'posts', programId, 'reactions', postId] as const,
   postAttachments: (programId: string, postId: string) =>
     [...generalProgramQueryKeys.all, 'posts', programId, 'attachments', postId] as const,
+  postReads: (programId: string, postId: string) =>
+    [...generalProgramQueryKeys.all, 'posts', programId, 'reads', postId] as const,
   postFiles: (programId: string) =>
     [...generalProgramQueryKeys.all, 'posts', programId, 'files'] as const,
   managersRoot: (programId: string) =>

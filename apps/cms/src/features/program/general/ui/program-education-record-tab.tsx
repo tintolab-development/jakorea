@@ -4,6 +4,8 @@
 
 import { Space, Card, Tag, Typography } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { formatCountLabel } from '@/features/program/general/lib/detail-value-helpers'
+import { formatNumberDisplay } from '@/shared/utils'
 import type { Program } from '@/types/domain'
 
 const { Text } = Typography
@@ -124,12 +126,18 @@ export function ProgramEducationRecordTab({
           </DetailInfoForm.Row>
           {program.educationTime && (
             <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field label="교육시간" view={`${program.educationTime}시간`} />
+              <DetailInfoForm.Field
+                label="교육시간"
+                view={formatCountLabel(program.educationTime, '시간')}
+              />
             </DetailInfoForm.Row>
           )}
           {program.rounds && program.rounds[0]?.classCount && (
             <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field label="학급수" view={program.rounds[0].classCount} />
+              <DetailInfoForm.Field
+                label="학급수"
+                view={formatNumberDisplay(program.rounds[0].classCount)}
+              />
             </DetailInfoForm.Row>
           )}
           {program.managerName && (
@@ -149,10 +157,16 @@ export function ProgramEducationRecordTab({
             {(program.maleParticipants !== undefined || program.femaleParticipants !== undefined) && (
               <DetailInfoForm.Row type="double">
                 {program.maleParticipants !== undefined && (
-                  <DetailInfoForm.Field label="남성 참가자" view={`${program.maleParticipants}명`} />
+                  <DetailInfoForm.Field
+                    label="남성 참가자"
+                    view={formatCountLabel(program.maleParticipants, '명')}
+                  />
                 )}
                 {program.femaleParticipants !== undefined && (
-                  <DetailInfoForm.Field label="여성 참가자" view={`${program.femaleParticipants}명`} />
+                  <DetailInfoForm.Field
+                    label="여성 참가자"
+                    view={formatCountLabel(program.femaleParticipants, '명')}
+                  />
                 )}
               </DetailInfoForm.Row>
             )}
@@ -160,7 +174,11 @@ export function ProgramEducationRecordTab({
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label="총 참가자"
-                  view={<Text strong style={{ fontSize: 16 }}>{program.totalParticipants}명</Text>}
+                  view={
+                    <Text strong style={{ fontSize: 16 }}>
+                      {formatCountLabel(program.totalParticipants, '명')}
+                    </Text>
+                  }
                 />
               </DetailInfoForm.Row>
             )}
@@ -176,15 +194,24 @@ export function ProgramEducationRecordTab({
           <DetailInfoForm title="자원봉사자 통계" hideHeader mode="view">
             <DetailInfoForm.Row type="double">
               {program.generalVolunteers !== undefined && (
-                <DetailInfoForm.Field label="일반 자원봉사자" view={`${program.generalVolunteers}명`} />
+                <DetailInfoForm.Field
+                  label="일반 자원봉사자"
+                  view={formatCountLabel(program.generalVolunteers, '명')}
+                />
               )}
               {program.staffVolunteers !== undefined && (
-                <DetailInfoForm.Field label="임직원 자원봉사자" view={`${program.staffVolunteers}명`} />
+                <DetailInfoForm.Field
+                  label="임직원 자원봉사자"
+                  view={formatCountLabel(program.staffVolunteers, '명')}
+                />
               )}
             </DetailInfoForm.Row>
             {program.returningVolunteers !== undefined && (
               <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field label="재참여 자원봉사자" view={`${program.returningVolunteers}명`} />
+                <DetailInfoForm.Field
+                  label="재참여 자원봉사자"
+                  view={formatCountLabel(program.returningVolunteers, '명')}
+                />
               </DetailInfoForm.Row>
             )}
           </DetailInfoForm>
@@ -199,15 +226,24 @@ export function ProgramEducationRecordTab({
           <DetailInfoForm title="교사/강사 통계" hideHeader mode="view">
             <DetailInfoForm.Row type="double">
               {program.generalTeachers !== undefined && (
-                <DetailInfoForm.Field label="일반담당교사" view={`${program.generalTeachers}명`} />
+                <DetailInfoForm.Field
+                  label="일반담당교사"
+                  view={formatCountLabel(program.generalTeachers, '명')}
+                />
               )}
               {program.educatedTeachers !== undefined && (
-                <DetailInfoForm.Field label="교육받은교사" view={`${program.educatedTeachers}명`} />
+                <DetailInfoForm.Field
+                  label="교육받은교사"
+                  view={formatCountLabel(program.educatedTeachers, '명')}
+                />
               )}
             </DetailInfoForm.Row>
             {program.instructors !== undefined && (
               <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field label="강사" view={`${program.instructors}명`} />
+                <DetailInfoForm.Field
+                  label="강사"
+                  view={formatCountLabel(program.instructors, '명')}
+                />
               </DetailInfoForm.Row>
             )}
           </DetailInfoForm>

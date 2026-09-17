@@ -1,5 +1,6 @@
 import type { Program } from '@/types/domain'
 import { pickDisplayValue } from '@/features/program/general/lib/detail-value-helpers'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 
 export const GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -63,6 +64,23 @@ function normalizeStudentListRequired(
   if (value === true) return 'required'
   if (value === false) return 'not_required'
   return undefined
+}
+
+function stripIndividualStudentRosterFromCommonInfo(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  const info = common?.participantRecruitmentInfo
+  if (!info) return common
+  if (info.studentListRequired !== 'required') {
+    return common
+  }
+  return {
+    ...common,
+    participantRecruitmentInfo: {
+      ...info,
+      studentListRequired: 'not_required',
+    },
+  }
 }
 
 /**
@@ -189,9 +207,13 @@ export function normalizeGeneralProgramServiceDetailParsed(
 }
 
 export function serializeGeneralProgramServiceDetailJson(program: Program): string | undefined {
+  const isIndividual = isGeneralIndividualProgram(program)
+  const generalCommonInfo = isIndividual
+    ? stripIndividualStudentRosterFromCommonInfo(program.generalCommonInfo)
+    : program.generalCommonInfo
   const payload: GeneralProgramServiceDetailJsonV1 = {
     schemaVersion: GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION,
-    generalCommonInfo: program.generalCommonInfo,
+    generalCommonInfo,
     generalParticipantTypes: program.generalParticipantTypes,
     generalSurveyMenuKeys: program.generalSurveyMenuKeys,
     targetLevels: program.targetLevels,
@@ -204,7 +226,7 @@ export function serializeGeneralProgramServiceDetailJson(program: Program): stri
     volunteerApplicationEndDate: program.volunteerApplicationEndDate,
     resultAnnouncementDate: program.resultAnnouncementDate,
     resultAnnouncementMethod: program.resultAnnouncementMethod,
-    studentListRequired: program.studentListRequired,
+    studentListRequired: isIndividual ? 'not_required' : program.studentListRequired,
     generalParticipantInterviewEnabled: program.generalParticipantInterviewEnabled,
     generalVolunteerInterviewEnabled: program.generalVolunteerInterviewEnabled,
   }

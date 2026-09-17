@@ -182,8 +182,7 @@ export function useUpdateTrainedTeacherProgramInfoDetail() {
     retry: false,
     onSuccess: program => {
       queryClient.setQueryData(trainedTeacherQueryKeys.detail(program.id), program)
-      void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
-      invalidateTrainedTeacherOverviewStages(queryClient)
+      // 공통정보 저장: programs PATCH(KPI SSOT) → 필요 시 info-detail PATCH(커리큘럼 등). overview는 programs 쪽만.
       void queryClient.invalidateQueries({
         queryKey: generalProgramQueryKeys.navigation(program.id),
       })

@@ -40,6 +40,7 @@ import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
+import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import {
   ActivityWithdrawScheduleModal,
   type ActivityWithdrawScheduleModalPayload,
@@ -326,10 +327,9 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   const isApplicationDetailEditing =
     isApplicationInfoEditing && applicationInfoDraft != null
 
-  const classAndCountDisplay = withProgramDetailTdDivider([
-    `${mergedDetail.classCount}개 학급`,
-    `총 ${mergedDetail.studentCount}명`,
-  ])
+  const classAndCountDisplay = withProgramDetailTdDivider(
+    formatClassStudentCountSegments(mergedDetail.classCount, mergedDetail.studentCount)
+  )
 
   return (
     <div className="school-detail-fullpage-view">

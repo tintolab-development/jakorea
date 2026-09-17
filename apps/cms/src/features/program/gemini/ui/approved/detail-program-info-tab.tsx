@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import { HomeAddressDisplay } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/instructor-basic-info-detail-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { formatCountLabel } from '@/features/program/general/lib/detail-value-helpers'
 import { buildGeminiApprovedManagerTableItems } from '../../lib/approved/build-manager-profile-fields'
 import {
   approvedTrainingStatusModifier,
@@ -95,7 +96,7 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
       {
         key: 'studentCount',
         label: '수강 인원',
-        children: `${detail.studentCount}명`,
+        children: formatCountLabel(detail.studentCount, '명'),
       },
     ],
     [detail, status]
@@ -108,12 +109,12 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
       {
         key: 'recruitmentCount',
         label: '프로그램 신청 횟수',
-        children: `${detail.recruitmentCount}회`,
+        children: formatCountLabel(detail.recruitmentCount, '회'),
       },
       {
         key: 'completedRecruitmentCount',
         label: '프로그램 수강 횟수',
-        children: `${detail.completedRecruitmentCount}회`,
+        children: formatCountLabel(detail.completedRecruitmentCount, '회'),
       },
       { key: 'joinedAt', label: '등록일', span: 2, children: detail.joinedAt },
     ],

@@ -23,6 +23,7 @@ vi.mock('@/features/template/api/form-templates-api-client', () => ({
   fetchFormTemplateVersionRemote: (...args: unknown[]) => fetchRemoteMock(...args),
   fetchFormTemplateVersionsRemote: (...args: unknown[]) => fetchVersionsMock(...args),
   fetchFormTemplatesRemote: (...args: unknown[]) => fetchTemplatesMock(...args),
+  fetchFormTemplatePayloadByCodeRemote: vi.fn(),
   copyFormTemplateVersionRemote: vi.fn(),
   createFormTemplateRemote: vi.fn(),
   deleteFormTemplateRemote: vi.fn(),

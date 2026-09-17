@@ -6,6 +6,7 @@ import {
   getApplicantInstructorsByProgramId,
   type ApplicantInstructorRow,
 } from '@/features/program/shared/model/applicant-instructor'
+import { getTempMockOrgApplicantInstructors } from '@/features/program/general/lib/temp-mock-org-program'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type {
   ParticipatingSchoolRow,
@@ -153,13 +154,19 @@ function isSessionDisabledForInstructor(params: {
   return false
 }
 
+function instructorsForProgram(programId: string): ApplicantInstructorRow[] {
+  const mock = getTempMockOrgApplicantInstructors(programId)
+  if (mock.length > 0) return mock
+  return getApplicantInstructorsByProgramId(programId)
+}
+
 /** 해당 프로그램에 승인된 강사만 선택 목록에 노출 (학교 신청 단위 아님) */
 export function buildProgramApprovedInstructorAssignOptions(
   programId: string,
   assignedInstructorNames: Iterable<string>
 ): SchoolAddInstructorAssignOption[] {
   const assignedNames = new Set(assignedInstructorNames)
-  return getApplicantInstructorsByProgramId(programId)
+  return instructorsForProgram(programId)
     .filter(row => row.approvalStatus === 'approved' && !assignedNames.has(row.instructorName))
     .map(row => ({
       value: row.id,
@@ -192,7 +199,7 @@ export function buildSchoolAddInstructorAssignSessionOptions(params: {
 
   if (!sessions?.length) return []
 
-  const applicantInstructors = getApplicantInstructorsByProgramId(programId)
+  const applicantInstructors = instructorsForProgram(programId)
 
   return sessions.map(session => {
     const dateLabel = formatScheduleDateLabel(session.date, session.dayOfWeek)
@@ -229,7 +236,7 @@ function findApplicantInstructorByName(
   programId: string,
   instructorName: string
 ): ApplicantInstructorRow | undefined {
-  return getApplicantInstructorsByProgramId(programId).find(
+  return instructorsForProgram(programId).find(
     row => row.instructorName === instructorName
   )
 }

@@ -100,21 +100,57 @@
   .school-detail-attendance-table
   table.ant-table {
   table-layout: fixed !important;
-  width: 100% !important;
-  min-width: 100%;
+  /* cms-data-table width:100% 가 scroll.x·열 width 를 덮지 않도록 고정 */
+  width: 1110px !important;
+  min-width: 1110px;
+}
+
+/*
+ * cms-data-table 이 No. 이후 col 을 width:auto 로 풀어 열 width prop 이 무시됨.
+ * 학생명·성별은 th/td 로 폭을 강제한다.
+ */
+.school-detail-attendance-table .ant-table-thead > tr > th.school-detail-attendance-table__col-name,
+.school-detail-attendance-table .ant-table-tbody > tr > td.school-detail-attendance-table__col-name {
+  width: 88px !important;
+  min-width: 88px !important;
+  max-width: 88px !important;
+  box-sizing: border-box !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+.school-detail-attendance-table .ant-table-thead > tr > th.school-detail-attendance-table__col-gender,
+.school-detail-attendance-table .ant-table-tbody > tr > td.school-detail-attendance-table__col-gender {
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+  box-sizing: border-box !important;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
+.school-detail-attendance-table__status-header {
+  white-space: nowrap !important;
+}
+
+.school-detail-attendance-table__status-header .ant-table-cell,
+.school-detail-attendance-table th.school-detail-attendance-table__status-header {
+  white-space: nowrap !important;
 }
 
 .school-detail-attendance-table__status-cell {
   padding-top: 8px !important;
   padding-bottom: 8px !important;
+  white-space: nowrap !important;
 }
 
 .school-detail-attendance-table__status-radios.app-radio-group {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   align-items: center;
   gap: 12px;
+  white-space: nowrap;
 }
 
 .school-detail-attendance-table__status-radios .app-radio {

@@ -12,6 +12,7 @@ vi.mock('@/shared/api/orval-mutator', () => ({
 import customInstance from '@/shared/api/orval-mutator'
 import {
   bulkIndividualDocumentResultsRemote,
+  cancelIndividualApplicationRejectionRemote,
   updateIndividualApplication,
   updateIndividualDocumentEvaluationRemote,
   updateVolunteerDocumentEvaluationRemote,
@@ -181,5 +182,26 @@ describe('updateVolunteerDocumentEvaluationRemote', () => {
       },
       undefined
     )
+  })
+})
+
+describe('cancelIndividualApplicationRejectionRemote', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('개인 신청 반려 취소를 canonical POST 경로로 호출한다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      applicationId: 1690625,
+      applicationStatus: 'WAITING_REVIEW',
+    })
+
+    await cancelIndividualApplicationRejectionRemote('1690625', { reason: '반려 취소' })
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/individual-applications/1690625/cancel-rejection',
+      method: 'POST',
+      data: { reason: '반려 취소' },
+    })
   })
 })

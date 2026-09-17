@@ -9,6 +9,7 @@ import {
   createGeneralProgramFormBinding,
   createGeneralProgramPost,
   createGeneralProgramPostComment,
+  createGeneralProgramPostUnreadReminder,
   deleteGeneralProgramFormBinding,
   deleteGeneralProgramPost,
   deleteGeneralProgramPostReaction,
@@ -17,6 +18,7 @@ import {
   fetchGeneralProgramPostComments,
   fetchGeneralProgramPostDetail,
   fetchGeneralProgramPostReactions,
+  fetchGeneralProgramPostReads,
   fetchGeneralProgramPosts,
   fetchGeneralProgramSurveyResponseDetail,
   fetchGeneralProgramSurveyResponses,
@@ -36,13 +38,22 @@ import {
   mapProgramPostAttachmentToFile,
   mapProgramPostCommentToDomain,
   mapProgramPostListItemToDomain,
+  mapProgramPostReactionItemsToUsers,
   mapProgramPostReactionSummariesToDomain,
+  mapProgramPostReadsToDomainRows,
   mapProgramPostResponseToDomain,
 } from '@/features/program/general/api/adapters/program-post-adapters'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
-import type { ProgramFile, ProgramPost, ProgramPostComment, ProgramPostReaction } from '@/types/domain'
+import type {
+  ProgramFile,
+  ProgramPost,
+  ProgramPostComment,
+  ProgramPostReaction,
+  ProgramPostReactionUser,
+  ProgramPostReadRow,
+} from '@/types/domain'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import type { RegisteredSurvey } from '@/features/program/shared/lib/survey-management/survey-management-types'
 import type { SurveyPollRawResponse } from '@/features/program/shared/lib/survey-management/survey-management-types'
@@ -252,6 +263,11 @@ export function useGeneralProgramPostDetail(
     return mapProgramPostReactionSummariesToDomain(reactionsQuery.data.summary, postId)
   }, [postId, reactionsQuery.data])
 
+  const reactionUsers = useMemo((): ProgramPostReactionUser[] => {
+    if (!postId || !reactionsQuery.data) return []
+    return mapProgramPostReactionItemsToUsers(reactionsQuery.data.items, postId)
+  }, [postId, reactionsQuery.data])
+
   const files = useMemo((): ProgramFile[] => {
     if (!programId || !attachmentsQuery.data) return []
     return attachmentsQuery.data
@@ -274,6 +290,9 @@ export function useGeneralProgramPostDetail(
       queryClient.invalidateQueries({
         queryKey: generalProgramQueryKeys.postAttachments(programId, postId),
       }),
+      queryClient.invalidateQueries({
+        queryKey: generalProgramQueryKeys.postReads(programId, postId),
+      }),
       queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.posts(programId) }),
     ])
   }, [postId, programId, queryClient])
@@ -284,6 +303,7 @@ export function useGeneralProgramPostDetail(
     post,
     comments,
     reactions,
+    reactionUsers,
     files,
     reactionTotalCount: reactions.reduce((sum, row) => sum + row.count, 0),
     createComment: async (content: string) => {
@@ -304,6 +324,64 @@ export function useGeneralProgramPostDetail(
       await invalidateDetail()
     },
     invalidateDetail,
+  }
+}
+
+/** 게시글 읽음/안읽음 현황 + 미읽음 알림 */
+export function useGeneralProgramPostReads(
+  programId: string | undefined,
+  postId: string | undefined,
+  enabled = true
+) {
+  const remoteEnabled = useProgramsReadsRemoteEnabledForSurface(programId)
+  const queryClient = useQueryClient()
+  const active = remoteEnabled && enabled && Boolean(programId) && Boolean(postId)
+
+  const query = useQuery({
+    queryKey: generalProgramQueryKeys.postReads(programId ?? '', postId ?? ''),
+    queryFn: () => fetchGeneralProgramPostReads(programId!, postId!),
+    enabled: active,
+    staleTime: 15_000,
+    retry: false,
+  })
+
+  const rows = useMemo((): ProgramPostReadRow[] => {
+    if (!active || !postId || !query.data) return []
+    return mapProgramPostReadsToDomainRows(query.data, postId)
+  }, [active, postId, query.data])
+
+  const readCount = useMemo(() => rows.filter(row => row.hasRead).length, [rows])
+  const unreadCount = useMemo(
+    () => query.data?.unreadCount ?? rows.filter(row => !row.hasRead).length,
+    [query.data?.unreadCount, rows]
+  )
+
+  const invalidateReads = useCallback(async () => {
+    if (!programId || !postId) return
+    await queryClient.invalidateQueries({
+      queryKey: generalProgramQueryKeys.postReads(programId, postId),
+    })
+  }, [postId, programId, queryClient])
+
+  return {
+    isRemoteDataSource: active && !query.isError,
+    loading: active && query.isFetching && query.data === undefined,
+    rows,
+    readCount,
+    unreadCount,
+    sendUnreadReminder: async (memberIds: string[], message?: string) => {
+      if (!programId || !postId || !remoteEnabled) return null
+      const numericIds = memberIds
+        .map(id => Number(id))
+        .filter(id => Number.isFinite(id) && id > 0)
+      const result = await createGeneralProgramPostUnreadReminder(programId, postId, {
+        message: message?.trim() || '게시글을 확인해 주세요.',
+        memberIds: numericIds.length > 0 ? numericIds : undefined,
+      })
+      await invalidateReads()
+      return result
+    },
+    invalidateReads,
   }
 }
 

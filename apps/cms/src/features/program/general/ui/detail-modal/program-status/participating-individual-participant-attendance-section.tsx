@@ -6,6 +6,7 @@ import {
   useMemo,
   useState,
 } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -16,7 +17,6 @@ import { useCmsAlert } from '@/shared/ui'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { Program } from '@/types/domain'
 import {
-  getParticipatingIndividualParticipantAttendanceBundle,
   sortParticipatingIndividualParticipantAttendanceRows,
   buildParticipatingIndividualParticipantAttendanceSummary,
 } from '@/features/program/general/lib/participating-individual-participant-attendance'
@@ -44,6 +44,22 @@ import {
   ParticipatingIndividualParticipantAttendanceCorrectionModal,
   type ParticipatingIndividualParticipantAttendanceCorrectionConfirmPayload,
 } from './participating-individual-participant-attendance-correction-modal'
+import {
+  fetchGeneralProgressAttendanceBundle,
+  saveGeneralScheduleAttendances,
+} from '@/features/program/general/api/admin-program-progress-service'
+import {
+  buildAttendanceItemRequest,
+  buildProgressAttendanceSessionsFromRemote,
+} from '@/features/program/general/api/adapters/progress-attendance-adapters'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import {
+  notifyProgramApiUnavailable,
+  useNotifyProgramApiUnavailableOnce,
+} from '@/features/program/shared/lib/program-api-unavailable'
+import { handleError } from '@/shared/utils/error-handler'
+import type { ParticipatingIndividualProgressAttendanceStatus } from '@/features/program/general/lib/participating-individual-progress-attendance-types'
 
 export type ParticipatingIndividualParticipantAttendanceSectionHandle = {
   openAttendanceCorrectionModal: () => void
@@ -90,6 +106,24 @@ function mapCorrectionPayloadToAttendanceStatus(
   }
 }
 
+function mapDetailStatusToProgressStatus(
+  status: ParticipatingIndividualParticipantAttendanceRow['attendanceStatus']
+): ParticipatingIndividualProgressAttendanceStatus {
+  if (status === 'late') return 'late'
+  if (status === 'excused_absence') return 'excused_absence'
+  if (status === 'present') return 'present'
+  return 'absent'
+}
+
+function mapProgressStatusToDetailStatus(
+  status: ParticipatingIndividualProgressAttendanceStatus
+): ParticipatingIndividualParticipantAttendanceRow['attendanceStatus'] {
+  if (status === 'late') return 'late'
+  if (status === 'excused_absence') return 'excused_absence'
+  if (status === 'present') return 'present'
+  return 'pending'
+}
+
 function renderAttendanceStatus(row: ParticipatingIndividualParticipantAttendanceRow) {
   return (
     <ProgramAttendanceStatusText
@@ -113,21 +147,68 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
   ref
 ) {
   const { showAlert } = useCmsAlert()
-  const bundle = useMemo(
-    () => getParticipatingIndividualParticipantAttendanceBundle(participant, program),
-    [participant, program]
+  const queryClient = useQueryClient()
+  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
+
+  useNotifyProgramApiUnavailableOnce(
+    !remoteEnabled,
+    'general-participant-detail-attendance',
+    '참여자 상세 · 출석 관리'
   )
 
-  const [rows, setRows] = useState(() => sortParticipatingIndividualParticipantAttendanceRows(bundle.rows))
-  const [absenceReasons, setAbsenceReasons] = useState<ParticipatingIndividualParticipantAbsenceReason[]>(
-    () => bundle.absenceReasons
-  )
+  const remoteQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.schedules(String(program.id)),
+    queryFn: () => fetchGeneralProgressAttendanceBundle(String(program.id)),
+    enabled: remoteEnabled,
+    staleTime: 15_000,
+    retry: false,
+  })
+
+  const remoteSessions = useMemo(() => {
+    if (!remoteEnabled || remoteQuery.data == null) return null
+    return buildProgressAttendanceSessionsFromRemote(remoteQuery.data)
+  }, [remoteEnabled, remoteQuery.data])
+
+  const remoteRows = useMemo(() => {
+    if (remoteSessions == null) return null
+    return sortParticipatingIndividualParticipantAttendanceRows(
+      remoteSessions.map(session => {
+        const self = session.participants.find(row => row.participantId === participant.id)
+        const status = self
+          ? mapProgressStatusToDetailStatus(self.attendanceStatus)
+          : 'pending'
+        return {
+          id: session.id,
+          scheduleId: session.id,
+          scheduleLabel: session.headerScheduleSummary,
+          attendanceStatus: participant.activityWithdrawn ? 'withdrawn' : status,
+          lateTime: self?.lateTime,
+          remark: self?.remark,
+          educationProgress: self != null && status !== 'pending' ? 'completed' : 'scheduled',
+        } satisfies ParticipatingIndividualParticipantAttendanceRow
+      })
+    )
+  }, [participant.activityWithdrawn, participant.id, remoteSessions])
+
+  const sourceRows = useMemo(() => {
+    if (!remoteEnabled) return []
+    return remoteRows ?? []
+  }, [remoteEnabled, remoteRows])
+
+  const [rows, setRows] = useState(() => sourceRows)
+  const [absenceReasons, setAbsenceReasons] = useState<
+    ParticipatingIndividualParticipantAbsenceReason[]
+  >([])
   const [attendanceCorrectionModalOpen, setAttendanceCorrectionModalOpen] = useState(false)
 
   const correctableScheduleOptions = useMemo(
     () =>
       rows
-        .filter(row => !isParticipatingIndividualParticipantAttendanceRowWithdrawn(row))
+        .filter(
+          row =>
+            !isParticipatingIndividualParticipantAttendanceRowWithdrawn(row) &&
+            Boolean(row.scheduleId?.trim())
+        )
         .map(row => ({
           value: row.id,
           label: row.scheduleLabel,
@@ -137,10 +218,64 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
   )
 
   useEffect(() => {
-    setRows(sortParticipatingIndividualParticipantAttendanceRows(bundle.rows))
-    setAbsenceReasons(bundle.absenceReasons)
+    setRows(sourceRows)
+    setAbsenceReasons(
+      sourceRows
+        .filter(row => row.attendanceStatus === 'excused_absence' && row.remark?.trim())
+        .map(row => ({
+          id: `abs-${row.id}`,
+          scheduleRowId: row.id,
+          dateLabel: formatParticipatingIndividualParticipantAttendanceShortDateLabel(
+            row.scheduleLabel
+          ),
+          reason: row.remark!.trim(),
+        }))
+    )
     setAttendanceCorrectionModalOpen(false)
-  }, [bundle.absenceReasons, bundle.rows, participant.id])
+  }, [participant.id, sourceRows])
+
+  const saveMutation = useMutation({
+    mutationFn: async (payload: {
+      scheduleId: string
+      patch: Pick<
+        ParticipatingIndividualParticipantAttendanceRow,
+        'attendanceStatus' | 'lateTime' | 'remark'
+      >
+    }) => {
+      const session = remoteSessions?.find(item => item.id === payload.scheduleId)
+      const requests = (session?.participants ?? []).map(row => {
+        const isTarget = row.participantId === participant.id
+        return buildAttendanceItemRequest({
+          participantId: row.participantId,
+          attendanceStatus: isTarget
+            ? mapDetailStatusToProgressStatus(payload.patch.attendanceStatus)
+            : row.attendanceStatus,
+          lateTime: isTarget ? payload.patch.lateTime : row.lateTime,
+          remark: isTarget ? payload.patch.remark : row.remark,
+        })
+      })
+      const hasSelf = requests.some(item => String(item.participantId) === participant.id)
+      if (!hasSelf) {
+        requests.push(
+          buildAttendanceItemRequest({
+            participantId: participant.id,
+            attendanceStatus: mapDetailStatusToProgressStatus(payload.patch.attendanceStatus),
+            lateTime: payload.patch.lateTime,
+            remark: payload.patch.remark,
+          })
+        )
+      }
+      await saveGeneralScheduleAttendances(payload.scheduleId, requests)
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: generalProgramProgressQueryKeys.schedules(String(program.id)),
+      })
+    },
+    onError: error => {
+      handleError(error, { context: 'saveGeneralScheduleAttendances.participantDetail' })
+    },
+  })
 
   const tableData = useMemo(
     () =>
@@ -187,45 +322,33 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
     (payload: ParticipatingIndividualParticipantAttendanceCorrectionConfirmPayload) => {
       const targetRow = rows.find(row => row.id === payload.scheduleRowId)
       if (!targetRow) return
+      const scheduleId = targetRow.scheduleId?.trim()
+      if (!remoteEnabled || !scheduleId) {
+        notifyProgramApiUnavailable(
+          'general-participant-detail-attendance-save',
+          '참여자 상세 · 출석 정정'
+        )
+        return
+      }
 
       const patch = mapCorrectionPayloadToAttendanceStatus(payload, targetRow)
-      setRows(prev =>
-        sortParticipatingIndividualParticipantAttendanceRows(
-          prev.map(row => (row.id === targetRow.id ? { ...row, ...patch } : row))
-        )
-      )
-
-      setAbsenceReasons(prev => {
-        const nextWithoutCurrent = prev.filter(
-          item =>
-            item.scheduleRowId !== targetRow.id && item.id !== `abs-${targetRow.id}`
-        )
-
-        if (patch.attendanceStatus !== 'excused_absence' || !patch.remark?.trim()) {
-          return nextWithoutCurrent
+      void saveMutation.mutateAsync({ scheduleId, patch }).then(
+        () => {
+          setAttendanceCorrectionModalOpen(false)
+          showAlert({
+            title: '안내',
+            content: '출결이 정정되었습니다.',
+          })
+        },
+        () => {
+          showAlert({
+            title: '안내',
+            content: '출결 정정에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          })
         }
-
-        return [
-          ...nextWithoutCurrent,
-          {
-            id: `abs-${targetRow.id}`,
-            scheduleRowId: targetRow.id,
-            dateLabel: formatParticipatingIndividualParticipantAttendanceShortDateLabel(
-              targetRow.scheduleLabel
-            ),
-            reason: patch.remark.trim(),
-            fileName: payload.evidenceFileName,
-          },
-        ]
-      })
-
-      setAttendanceCorrectionModalOpen(false)
-      showAlert({
-        title: '안내',
-        content: '출결이 정정되었습니다.',
-      })
+      )
     },
-    [rows, showAlert]
+    [remoteEnabled, rows, saveMutation, showAlert]
   )
 
   const showComingSoon = useCallback(() => {

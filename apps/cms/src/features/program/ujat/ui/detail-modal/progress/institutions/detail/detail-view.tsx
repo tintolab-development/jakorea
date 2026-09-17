@@ -293,8 +293,8 @@ export function UjatEducationProgressInstitutionDetailView({
             <CmsButton
               type="button"
               variant="primary"
-              size="large"
-              width={160}
+              size="medium"
+              className="ujat-education-progress-institution-detail__posts-register-btn"
               onClick={() => setPostWriteModalOpen(true)}
             >
               게시글 등록

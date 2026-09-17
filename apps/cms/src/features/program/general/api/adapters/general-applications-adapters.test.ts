@@ -113,6 +113,143 @@ describe('general-applications-adapters', () => {
     expect(instructor.affiliation).toBe('기존 소속 기관')
     expect(volunteer.affiliationOrganizationId).toBe(8801)
     expect(volunteer.affiliation).toBe('기존 소속 기관')
+    expect(volunteer.assignedInstitutionNames).toEqual(['기존 소속 기관'])
+  })
+
+  it('maps individual sourceApplicationId to individualApplicationId and keeps participantId as id', () => {
+    const individual = mapParticipantToParticipatingIndividualRow(
+      {
+        participantId: 1691701,
+        memberId: 9102,
+        memberName: '김참여자',
+        sourceApplicationId: 88001,
+        grade: '고등학교 2학년',
+        regionSido: '서울특별시',
+        regionSigungu: '강서구',
+        sessions: [
+          {
+            scheduleId: 601,
+            sessionNo: 1,
+            scheduleName: '1회차',
+            startAt: '2026-10-12T09:00:00+09:00',
+            endAt: '2026-10-12T11:00:00+09:00',
+            attendanceStatus: 'COMPLETED',
+          },
+        ],
+      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      0,
+      '168001'
+    )
+
+    expect(individual.id).toBe('1691701')
+    expect(individual.individualApplicationId).toBe('88001')
+    expect(individual.memberId).toBe('9102')
+    expect(individual.educationGrade).toBe('고등학교 2학년')
+    expect(individual.homeAddress).toBe('서울특별시 강서구')
+    expect(individual.sessions).toHaveLength(1)
+    expect(individual.sessions?.[0]?.resolvedScheduleId).toBe(601)
+  })
+
+  it('maps volunteer participant sessions and additive enrich fields', () => {
+    const volunteer = mapParticipantToParticipatingVolunteerRow(
+      {
+        participantId: 1691601,
+        memberId: 9101,
+        memberName: '이봉사자',
+        organizationName: '해봄초등학교',
+        id1365: '1365-10001',
+        contact: '010-****-9999',
+        email: 'vol***@example.com',
+        assignedOrganizationNames: ['해봄초등학교', '푸른초등학교'],
+        sessions: [
+          {
+            scheduleId: 501,
+            sessionNo: 1,
+            scheduleName: '1회차',
+            startAt: '2026-10-12T09:00:00+09:00',
+            endAt: '2026-10-12T11:00:00+09:00',
+            attendanceStatus: 'COMPLETED',
+          },
+        ],
+      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      0,
+      '168001'
+    )
+
+    expect(volunteer.memberId).toBe(9101)
+    expect(volunteer.id1365).toBe('1365-10001')
+    expect(volunteer.assignedInstitutionNames).toEqual(['해봄초등학교', '푸른초등학교'])
+    expect(volunteer.contact).toBe('010-****-9999')
+    expect(volunteer.email).toBe('vol***@example.com')
+    expect(volunteer.sessions).toHaveLength(1)
+    expect(volunteer.sessions[0]?.resolvedScheduleId).toBe(501)
+    expect(volunteer.sessions[0]?.status).toBe('completed')
+  })
+
+  it('maps instructor participant enrich fields for progress instructor list', () => {
+    const instructor = mapParticipantToParticipatingInstructorRow(
+      {
+        participantId: 1691501,
+        memberId: 9001,
+        memberName: '김강사',
+        regionSido: '서울특별시',
+        regionSigungu: '강서구',
+        homeAddressSummary: '서울특별시 강서구',
+        contact: '010-****-1234',
+        email: 'kim***@example.com',
+        jaEvaluationGrade: 'A',
+        lectureExperienceYears: 4,
+        settlementStatus: 'awaiting_confirmation',
+        assignedOrganizationNames: ['해봄초등학교', '푸른초등학교'],
+        lectureReportSubmitted: true,
+      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      0,
+      '168006'
+    )
+
+    expect(instructor.address).toBe('서울특별시 강서구')
+    expect(instructor.contact).toBe('010-****-1234')
+    expect(instructor.email).toBe('kim***@example.com')
+    expect(instructor.jaEvaluationGrade).toBe('A')
+    expect(instructor.lectureExperienceYears).toBe(4)
+    expect(instructor.settlementStatus).toBe('awaiting_confirmation')
+    expect(instructor.assignedOrganizationNames).toEqual(['해봄초등학교', '푸른초등학교'])
+    expect(instructor.schoolName).toBe('해봄초등학교')
+    expect(instructor.lectureReportSubmitted).toBe(true)
+    expect(instructor.instructorApplicationId).toBeUndefined()
+  })
+
+  it('maps instructor sourceApplicationId to instructorApplicationId', () => {
+    const instructor = mapParticipantToParticipatingInstructorRow(
+      {
+        participantId: 1691502,
+        memberName: '박강사',
+        sourceApplicationId: 77001,
+      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      0,
+      '168006'
+    )
+
+    expect(instructor.instructorApplicationId).toBe('77001')
+  })
+
+  it('maps participant sessions to educationSchedules for activity withdraw', () => {
+    const instructor = mapParticipantToParticipatingInstructorRow(
+      {
+        participantId: 1691503,
+        memberName: '일정강사',
+        sessions: [
+          { scheduleId: 501, sessionNo: 1, scheduleName: '1차 교육', startAt: '2026-05-01T09:00:00' },
+          { scheduleId: 502, sessionNo: 2, scheduleName: '2차 교육', startAt: '2026-05-08T09:00:00' },
+        ],
+      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      0,
+      '168006'
+    )
+
+    expect(instructor.educationSchedules).toHaveLength(2)
+    expect(instructor.educationSchedules?.[0]?.id).toBe('501')
+    expect(instructor.educationSchedules?.[0]?.scheduleLabel).toContain('1차')
   })
 
   it('does not invent affiliationOrganizationId from display name alone', () => {

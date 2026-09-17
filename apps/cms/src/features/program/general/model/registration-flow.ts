@@ -81,10 +81,6 @@ export type GeneralProgramRegistrationParticipantFlags = {
   volunteer: boolean
 }
 
-function hasRecruitAudience(flags: GeneralProgramRegistrationParticipantFlags): boolean {
-  return flags.organization || flags.individual
-}
-
 function isRecruitStepVisible(
   key: GeneralProgramRecruitTabKey,
   flags: GeneralProgramRegistrationParticipantFlags,
@@ -92,10 +88,9 @@ function isRecruitStepVisible(
 ): boolean {
   if (key === 'recruit-participant-school') return flags.organization
   if (key === 'recruit-participant-individual') return flags.individual
-  // 등록 모집 단계: 참여자(개인/기관) 선택 시 강사·봉사자 모집 정보 탭을 함께 노출
-  if (key === 'recruit-instructor') return hasRecruitAudience(flags)
+  if (key === 'recruit-instructor') return flags.teacherInstructor
   if (options?.hideVolunteer === true) return false
-  return hasRecruitAudience(flags)
+  return flags.volunteer
 }
 
 function isApplicationStepVisible(
@@ -105,10 +100,9 @@ function isApplicationStepVisible(
 ): boolean {
   if (key === 'application-participant-school') return flags.organization
   if (key === 'application-participant-individual') return flags.individual
-  // 등록 3단계(신청): 참여자(개인/기관) 선택 시 강사·봉사자 신청 정보 탭을 함께 노출
-  if (key === 'application-instructor') return hasRecruitAudience(flags)
+  if (key === 'application-instructor') return flags.teacherInstructor
   if (options?.hideVolunteer === true) return false
-  return hasRecruitAudience(flags)
+  return flags.volunteer
 }
 
 export function getVisibleGeneralProgramRecruitTabKeys(

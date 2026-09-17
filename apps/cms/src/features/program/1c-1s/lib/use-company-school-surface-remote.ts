@@ -10,6 +10,7 @@ import { isCompanySchoolProgramsPath } from '@/features/program/1c-1s/lib/is-com
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { isTrainedTeachersProgramsPath } from '@/features/program/trained-teachers/lib/is-trained-teachers-route'
 
@@ -36,6 +37,7 @@ export function useApplicationsRemoteEnabledForSurface(programId: string | undef
   return useMemo(() => {
     if (!programId) return false
     if (isTrainedTeachers) return false
+    if (isGeneralProgramTempMockProgramId(programId)) return false
     return isCompanySchool
       ? shouldUseCompanySchoolApplicationsRemoteApi()
       : shouldUseGeneralApplicationsRemoteApi()
@@ -52,6 +54,7 @@ export function useProgramProgressRemoteEnabledForSurface(
     if (!programId) return false
     // 일반 participants API로 오인 호출 방지 — TT는 use-progress-school-list에서 전용 훅 사용
     if (isTrainedTeachers) return false
+    if (isGeneralProgramTempMockProgramId(programId)) return false
     return isCompanySchool
       ? shouldUseCompanySchoolProgramProgressRemoteApi()
       : shouldUseGeneralProgramProgressRemoteApi()
@@ -64,6 +67,7 @@ export function useProgramsReadsRemoteEnabledForSurface(programId: string | unde
   const isTrainedTeachers = useIsTrainedTeachersProgramsSurface()
   return useMemo(() => {
     if (!programId) return false
+    if (isGeneralProgramTempMockProgramId(programId)) return false
     if (isTrainedTeachers) return shouldUseTrainedTeacherProgramsRemoteApi()
     return isCompanySchool
       ? shouldUseCompanySchoolProgramsReadsRemoteApi()

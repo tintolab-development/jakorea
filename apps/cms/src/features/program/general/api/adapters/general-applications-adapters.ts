@@ -17,13 +17,17 @@ import type { InstructorApplicationListItemResponse } from '@/shared/api/generat
 import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 import type { IndividualApplicationListItemEnriched } from '@/features/program/general/api/individual-application-screening-api-types'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
+import { mapParticipantSessionsToEducationSchedules } from '@/features/program/general/lib/map-participant-sessions-to-education-schedules'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
 import type { VolunteerApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationDetailResponse'
 import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
 import type { InterviewAvailabilitySlot } from '@/shared/api/generated/dashboard/schemas/interviewAvailabilitySlot'
 import type { PreferredEducationScheduleResponse } from '@/shared/api/generated/dashboard/schemas/preferredEducationScheduleResponse'
+import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
 import type { IndividualApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationDetailResponse'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
+import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
+import { INSTRUCTOR_SETTLEMENT_STATUS_ORDER } from '@/shared/constants/instructor-settlement-status'
 import type {
   GeneralDocumentScreeningStatus,
   GeneralInterviewAssignmentStatus,
@@ -387,6 +391,61 @@ export function mapPreferredEducationSchedulesToSessions(
     })
 }
 
+function mapSessionProgressStatusToParticipating(
+  raw?: string | null
+): ParticipatingSchoolSession['status'] {
+  const upper = (raw ?? '').trim().toUpperCase()
+  if (upper === 'COMPLETED' || upper === 'DONE' || upper === 'ATTENDED' || upper === 'PRESENT') {
+    return 'completed'
+  }
+  if (upper === 'NOT_PLANNED' || upper === 'CANCELLED' || upper === 'CANCELED') {
+    return 'not_planned'
+  }
+  return 'pending'
+}
+
+/** participants `sessions[]` (SessionProgress) → 참여 봉사자/캘린더용 세션 */
+export function mapSessionProgressToParticipatingSchoolSessions(
+  sessions: SessionProgress[] | undefined | null
+): ParticipatingSchoolSession[] {
+  return [...(sessions ?? [])]
+    .sort((a, b) => {
+      const byStart = (a.startAt ?? '').localeCompare(b.startAt ?? '')
+      return byStart || (a.sessionNo ?? 0) - (b.sessionNo ?? 0)
+    })
+    .map((session, index) => {
+      const start = session.startAt ? new Date(session.startAt) : null
+      const end = session.endAt ? new Date(session.endAt) : null
+      const validStart = start != null && !Number.isNaN(start.getTime())
+      const validEnd = end != null && !Number.isNaN(end.getTime())
+      const dateParts = validStart
+        ? formatPreferredScheduleDate(start)
+        : { date: '-', dayOfWeek: '-' }
+      const timeRange =
+        validStart && validEnd
+          ? `${formatKoreanInterviewTime(start)} ~ ${formatKoreanInterviewTime(end)}`
+          : '-'
+      const duration =
+        validStart && validEnd && end.getTime() > start.getTime()
+          ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
+          : '-'
+      const round = session.sessionNo ?? index + 1
+      return {
+        round,
+        ...dateParts,
+        duration,
+        format: session.scheduleName?.trim() || '-',
+        classNum: `${round}교시`,
+        timeRange,
+        status: mapSessionProgressStatusToParticipating(
+          session.attendanceStatus ?? session.assignmentStatus
+        ),
+        resolvedScheduleId: session.scheduleId ?? null,
+        scheduleUnresolved: session.scheduleId == null,
+      }
+    })
+}
+
 function mapManagerEvaluation(value: unknown): GeneralManagerEvaluation {
   const raw =
     value && typeof value === 'object' && 'evaluation' in value
@@ -573,20 +632,27 @@ export function mapParticipantToParticipatingIndividualRow(
     affiliationOrganizationId: dto.organizationId,
     affiliationDisplayName: dto.organizationName,
   })
+  const homeAddress = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
   return {
     id: toId(dto.participantId),
+    individualApplicationId:
+      dto.sourceApplicationId != null ? String(dto.sourceApplicationId) : undefined,
+    memberId: dto.memberId != null ? String(dto.memberId) : undefined,
     no: index + 1,
     applicantName: dto.memberName?.trim() || '이름 없음',
     affiliationOrganizationId: affiliation.affiliationOrganizationId,
     affiliation: affiliation.affiliation,
-    educationGrade: '',
-    homeAddress: '',
+    educationGrade: dto.grade?.trim() || '',
+    homeAddress,
     approvalStatus: 'approved',
     programId,
+    sessions: mapSessionProgressToParticipatingSchoolSessions(dto.sessions),
+    availableActions: dto.availableActions,
     lectureAttendanceSessions: [],
     satisfactionSurveyCompleted: false,
     participationAppliedAt: dto.joinedAt ?? '',
-    activityWithdrawn: dto.giveUpAt != null,
+    activityWithdrawn:
+      dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
   }
 }
 
@@ -825,54 +891,160 @@ function readParticipantAvailableActions(dto: ParticipantListItemResponse): stri
   return actions.length > 0 ? actions : undefined
 }
 
+/** participants(INSTRUCTOR) codegen 미반영 enrich — BE additive 필드 */
+type ParticipantInstructorListEnriched = ParticipantListItemResponse & {
+  homeAddress?: string | null
+  homeAddressSummary?: string | null
+  contact?: string | null
+  phone?: string | null
+  email?: string | null
+  jaEvaluationGrade?: string | null
+  jaGrade?: string | null
+  lectureExperienceYears?: number | null
+  settlementStatus?: string | null
+  assignedOrganizationNames?: string[] | null
+  lectureReportSubmitted?: boolean | null
+}
+
+function readParticipantInstructorEnriched(
+  dto: ParticipantListItemResponse
+): ParticipantInstructorListEnriched {
+  return dto as ParticipantInstructorListEnriched
+}
+
+function readParticipantStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const items = value
+    .filter((item): item is string => typeof item === 'string')
+    .map(item => item.trim())
+    .filter(Boolean)
+  return items.length > 0 ? items : undefined
+}
+
+function mapParticipantInstructorSettlementStatus(
+  raw?: string | null
+): InstructorSettlementUiStatus {
+  if (!raw?.trim()) return 'none'
+  const snake = raw.trim().toLowerCase().replace(/-/g, '_')
+  if (INSTRUCTOR_SETTLEMENT_STATUS_ORDER.includes(snake as InstructorSettlementUiStatus)) {
+    return snake as InstructorSettlementUiStatus
+  }
+  return 'none'
+}
+
+function resolveParticipantInstructorHomeAddress(
+  dto: ParticipantInstructorListEnriched
+): string | undefined {
+  const summary = dto.homeAddressSummary?.trim()
+  if (summary) return summary
+  const full = dto.homeAddress?.trim()
+  if (full) return full
+  const region = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
+  return region || undefined
+}
+
 export function mapParticipantToParticipatingInstructorRow(
   dto: ParticipantListItemResponse,
   index: number,
   _programId: string
 ): ParticipatingInstructorRow {
+  const enriched = readParticipantInstructorEnriched(dto)
+  const homeAddress = resolveParticipantInstructorHomeAddress(enriched)
+  const assignedOrganizationNames =
+    readParticipantStringArray(enriched.assignedOrganizationNames) ??
+    (enriched.organizationName?.trim() ? [enriched.organizationName.trim()] : undefined)
+  const primarySchoolName = assignedOrganizationNames?.[0] ?? ''
   const affiliation = resolveStoredAffiliation({
     affiliationOrganizationId: dto.organizationId,
     affiliationDisplayName: dto.organizationName,
   })
+
   return {
     id: toId(dto.participantId),
     no: index + 1,
     instructorName: dto.memberName?.trim() || '이름 없음',
-    schoolName: '',
-    educationGrade: '',
-    classCount: 0,
-    studentCount: 0,
+    schoolName: primarySchoolName,
+    educationGrade: dto.grade?.trim() || '',
+    classCount: dto.classCount ?? 0,
+    studentCount: dto.studentCount ?? 0,
     lectureRound: '',
-    settlementStatus: 'none',
-    teacherName: '-',
+    settlementStatus: mapParticipantInstructorSettlementStatus(enriched.settlementStatus),
+    teacherName: dto.teacherName?.trim() || '-',
     memberId: dto.memberId != null ? String(dto.memberId) : undefined,
+    instructorApplicationId:
+      dto.sourceApplicationId != null ? String(dto.sourceApplicationId) : undefined,
     affiliationOrganizationId: affiliation.affiliationOrganizationId,
     affiliation: affiliation.affiliation,
-    contact: '',
-    email: '',
+    contact: enriched.contact?.trim() || enriched.phone?.trim() || '',
+    email: enriched.email?.trim() || '',
+    address: homeAddress,
+    region: homeAddress,
+    assignedOrganizationNames,
+    jaEvaluationGrade:
+      enriched.jaEvaluationGrade?.trim() || enriched.jaGrade?.trim() || undefined,
+    lectureExperienceYears:
+      typeof enriched.lectureExperienceYears === 'number'
+        ? enriched.lectureExperienceYears
+        : undefined,
+    lectureReportSubmitted: enriched.lectureReportSubmitted ?? undefined,
+    educationSchedules: mapParticipantSessionsToEducationSchedules(dto.sessions),
+    activityWithdrawn:
+      dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
   }
+}
+
+/** participants(VOLUNTEER) codegen 미반영 enrich — BE additive 필드 */
+type ParticipantVolunteerListEnriched = ParticipantListItemResponse & {
+  contact?: string | null
+  phone?: string | null
+  email?: string | null
+  id1365?: string | null
+  external1365Id?: string | null
+  assignedOrganizationNames?: string[] | null
+  assignedInstitutionNames?: string[] | null
+}
+
+function readParticipantVolunteerEnriched(
+  dto: ParticipantListItemResponse
+): ParticipantVolunteerListEnriched {
+  return dto as ParticipantVolunteerListEnriched
 }
 
 export function mapParticipantToParticipatingVolunteerRow(
   dto: ParticipantListItemResponse,
   index: number,
-  _programId: string
+  programId: string
 ): ParticipatingVolunteerRow {
+  const enriched = readParticipantVolunteerEnriched(dto)
   const affiliation = resolveStoredAffiliation({
     affiliationOrganizationId: dto.organizationId,
     affiliationDisplayName: dto.organizationName,
   })
+  const assignedInstitutionNames =
+    readParticipantStringArray(enriched.assignedInstitutionNames) ??
+    readParticipantStringArray(enriched.assignedOrganizationNames) ??
+    (dto.organizationName?.trim() ? [dto.organizationName.trim()] : [])
+  const contact = enriched.contact?.trim() || enriched.phone?.trim() || ''
+  const email = enriched.email?.trim() || ''
+  const id1365 =
+    enriched.id1365?.trim() || enriched.external1365Id?.trim() || ''
+
   return {
     id: toId(dto.participantId),
+    memberId: dto.memberId,
+    programId,
     no: index + 1,
     volunteerName: dto.memberName?.trim() || '이름 없음',
     affiliationOrganizationId: affiliation.affiliationOrganizationId,
     affiliation: affiliation.affiliation,
-    id1365: '',
-    assignedInstitutionNames: [],
-    sessions: [],
-    contact: '-',
-    email: '-',
-    activityWithdrawn: dto.giveUpAt != null,
+    id1365,
+    assignedInstitutionNames,
+    sessions: mapSessionProgressToParticipatingSchoolSessions(dto.sessions),
+    contact: contact || '-',
+    email: email || '-',
+    contactRaw: contact || undefined,
+    emailRaw: email || undefined,
+    activityWithdrawn:
+      dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
   }
 }

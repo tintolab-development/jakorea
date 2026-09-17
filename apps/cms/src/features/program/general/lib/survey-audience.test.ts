@@ -6,6 +6,7 @@ import {
   getVisibleGeneralProgressMenuItems,
   hasGeneralInstructorApplications,
   hasGeneralParticipantApplications,
+  hasGeneralVolunteerApplications,
 } from './detail-meta'
 import {
   getDefaultGeneralSatisfactionAudience,
@@ -195,6 +196,33 @@ describe('general survey audience', () => {
     ).toBe(true)
     expect(
       hasGeneralInstructorApplications(program({ generalParticipantTypes: ['individual'] }))
+    ).toBe(false)
+    expect(
+      hasGeneralInstructorApplications(
+        program({
+          generalParticipantTypes: ['individual'],
+          generalCommonInfo: { instructorRecruitmentInfo: {} },
+        })
+      )
+    ).toBe(false)
+  })
+
+  it('봉사자 신청 목록 LNB는 volunteer 포함 시에만 노출한다', () => {
+    expect(
+      hasGeneralVolunteerApplications(program({ generalParticipantTypes: ['individual'] }))
+    ).toBe(false)
+    expect(
+      hasGeneralVolunteerApplications(
+        program({ generalParticipantTypes: ['individual', 'volunteer'] })
+      )
+    ).toBe(true)
+    expect(
+      hasGeneralVolunteerApplications(
+        program({
+          generalParticipantTypes: ['school_institution'],
+          generalCommonInfo: { volunteerRecruitmentInfo: {} },
+        })
+      )
     ).toBe(false)
   })
 

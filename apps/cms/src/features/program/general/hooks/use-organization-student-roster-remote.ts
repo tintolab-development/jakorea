@@ -15,6 +15,7 @@ import {
 } from '@/features/program/general/api/adapters/student-roster-adapters'
 import type { SchoolDetailStudentRow } from '@/features/program/general/model/school-detail-types'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { isTempMockOrgSchoolRowId } from '@/features/program/general/lib/temp-mock-org-program'
 import {
   notifyProgramApiUnavailable,
   useNotifyProgramApiUnavailableOnce,
@@ -32,10 +33,17 @@ export function useOrganizationStudentRosterRemote(input: {
       ? String(input.organizationApplicationId)
       : ''
   const remoteCapability = shouldUseGeneralApplicationsRemoteApi()
-  const enabled = Boolean(input.enabled !== false && remoteCapability && applicationId)
+  const isTempMockOrgApplication = isTempMockOrgSchoolRowId(applicationId)
+  const enabled = Boolean(
+    input.enabled !== false && remoteCapability && applicationId && !isTempMockOrgApplication
+  )
 
   useNotifyProgramApiUnavailableOnce(
-    Boolean(input.enabled !== false && (!remoteCapability || !applicationId)),
+    Boolean(
+      input.enabled !== false &&
+        !isTempMockOrgApplication &&
+        (!remoteCapability || !applicationId)
+    ),
     'general-student-roster',
     '참여 기관 · 학생 명단'
   )

@@ -17,6 +17,10 @@ import {
   serializeGeneralProgramServiceDetailJson,
 } from '@/features/program/general/lib/general-program-service-detail-json'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import {
+  omitIfDetailedProgramNameAlias,
+  parseDetailedProgramMasterId,
+} from '@/features/program/general/lib/detailed-program-request-id'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 
 /**
@@ -238,8 +242,14 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
   const id = toProgramId(dto.id)
   const now = new Date().toISOString()
   const serviceDetail = parseGeneralProgramServiceDetailJson(dto.serviceDetailJson)
+  const dtoDetailedProgramName = dto.detailedProgramName?.trim()
   const generalCommonInfo = applySettlementPolicyToCommonInfo(
-    serviceDetail.generalCommonInfo,
+    {
+      ...serviceDetail.generalCommonInfo,
+      ...(dtoDetailedProgramName
+        ? { detailedProgramName: dtoDetailedProgramName }
+        : {}),
+    },
     dto.settlementPolicy
   )
   const participantRemarks = (
@@ -330,6 +340,8 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     updatedAt: dto.updatedAt,
     ...serviceDetail,
     generalCommonInfo,
+    detailedProgramId:
+      dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
     targetLevel: serviceDetail.targetLevels?.[0] ?? (dto.targetLevel as Program['targetLevel']),
     // typed lifecycleStatus SSOT — serviceDetailJson 값으로 덮지 않음
     status: (dto.status as Status | undefined) ?? 'pending',
@@ -372,6 +384,7 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     program.generalProgramAudience,
     program.generalParticipantTypes
   )
+  const detailedProgramName = program.generalCommonInfo?.detailedProgramName
 
   return {
     sponsorId: program.sponsorId,
@@ -385,9 +398,10 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     applicationStartDate: toRequestDate(program.applicationStartDate),
     applicationEndDate: toRequestDate(program.applicationEndDate),
     businessArea: program.businessArea,
+    detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,
-    textbookName: program.textbookName,
+    textbookName: omitIfDetailedProgramNameAlias(program.textbookName, detailedProgramName),
     textbookNameEn: program.textbookNameEn,
     schoolId: program.schoolId,
     district: program.district,
@@ -400,11 +414,14 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     programCategory: program.programCategory ?? undefined,
     programChannel: program.programChannel ?? undefined,
     educationTime: program.educationTime,
-    teamDivision: program.teamDivision,
+    teamDivision: omitIfDetailedProgramNameAlias(program.teamDivision, detailedProgramName),
     educationProcess: program.educationProcess,
     maleParticipants: program.maleParticipants,
     femaleParticipants: program.femaleParticipants,
-    totalParticipants: program.totalParticipants,
+    totalParticipants:
+      program.totalParticipants ??
+      program.approvedStudentCount ??
+      program.generalCommonInfo?.kpi?.finalParticipants,
     generalVolunteers: program.generalVolunteers,
     staffVolunteers: program.staffVolunteers,
     returningVolunteers: program.returningVolunteers,
@@ -428,6 +445,11 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     applicationTargetMode,
     rounds: mapProgramRoundsToRequest(program),
     serviceDetailJson: serializeGeneralProgramServiceDetailJson(program),
+    finalSchools:
+      program.participatingSchoolCount ?? program.generalCommonInfo?.kpi?.finalSchools,
+    finalClasses: program.generalCommonInfo?.kpi?.finalClasses,
+    venueKind: program.generalCommonInfo?.venueKind,
+    venueDetail: program.generalCommonInfo?.venueDetail?.trim() || undefined,
   }
 }
 
@@ -504,9 +526,17 @@ function mapProgramPatchFieldsToRequest(
     body.applicationEndDate = toRequestDate(merged.applicationEndDate)
   }
   if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('detailedProgramId') || has('generalCommonInfo')) {
+    body.detailedProgramId = parseDetailedProgramMasterId(merged.detailedProgramId)
+  }
   if (has('titleEn')) body.titleEn = merged.titleEn
   if (has('mainTitle')) body.mainTitle = merged.mainTitle ?? merged.title
-  if (has('textbookName')) body.textbookName = merged.textbookName
+  if (has('textbookName')) {
+    body.textbookName = omitIfDetailedProgramNameAlias(
+      merged.textbookName,
+      merged.generalCommonInfo?.detailedProgramName
+    )
+  }
   if (has('textbookNameEn')) body.textbookNameEn = merged.textbookNameEn
   if (has('schoolId')) body.schoolId = merged.schoolId
   if (has('district')) body.district = merged.district
@@ -521,11 +551,30 @@ function mapProgramPatchFieldsToRequest(
   if (has('programCategory')) body.programCategory = merged.programCategory ?? undefined
   if (has('programChannel')) body.programChannel = merged.programChannel ?? undefined
   if (has('educationTime')) body.educationTime = merged.educationTime
-  if (has('teamDivision')) body.teamDivision = merged.teamDivision
+  if (has('teamDivision')) {
+    body.teamDivision = omitIfDetailedProgramNameAlias(
+      merged.teamDivision,
+      merged.generalCommonInfo?.detailedProgramName
+    )
+  }
   if (has('educationProcess')) body.educationProcess = merged.educationProcess
   if (has('maleParticipants')) body.maleParticipants = merged.maleParticipants
   if (has('femaleParticipants')) body.femaleParticipants = merged.femaleParticipants
-  if (has('totalParticipants')) body.totalParticipants = merged.totalParticipants
+  if (has('totalParticipants') || has('approvedStudentCount') || has('generalCommonInfo')) {
+    body.totalParticipants =
+      merged.totalParticipants ??
+      merged.approvedStudentCount ??
+      merged.generalCommonInfo?.kpi?.finalParticipants
+  }
+  if (has('participatingSchoolCount') || has('generalCommonInfo')) {
+    body.finalSchools =
+      merged.participatingSchoolCount ?? merged.generalCommonInfo?.kpi?.finalSchools
+  }
+  if (has('generalCommonInfo')) {
+    body.finalClasses = merged.generalCommonInfo?.kpi?.finalClasses
+    body.venueKind = merged.generalCommonInfo?.venueKind
+    body.venueDetail = merged.generalCommonInfo?.venueDetail?.trim() || undefined
+  }
   if (has('generalVolunteers')) body.generalVolunteers = merged.generalVolunteers
   if (has('staffVolunteers')) body.staffVolunteers = merged.staffVolunteers
   if (has('returningVolunteers')) body.returningVolunteers = merged.returningVolunteers
