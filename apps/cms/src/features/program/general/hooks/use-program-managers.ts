@@ -13,10 +13,19 @@ import {
 } from '@/features/program/general/api/admin-general-programs-service'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import {
+  buildProgramManagersListQuery,
+  serializeProgramManagersListQuery,
+  type ProgramManagersUiFilters,
+} from '@/features/program/general/api/managers-list-query'
 import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import type { ProgramManagerRow } from '@/features/program/general/model/program-managers'
 import { fetchAdminsPageRemote } from '@/features/user/api/members-api-client'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
+import {
+  canAssignProgramRoleToCmsAdmin,
+  CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE,
+} from '@/entities/program/lib/program-pm-role-policy'
 import type { ProgramRole } from '@/types/user'
 
 export type AssignableManagerCandidate = {
@@ -25,9 +34,15 @@ export type AssignableManagerCandidate = {
   email: string
   phone: string
   adminId?: number
+  cmsRoleCode?: string
 }
 
-export function useProgramManagers(programId: string | undefined) {
+const EMPTY_MANAGERS_LIST_FILTERS: ProgramManagersUiFilters = Object.freeze({})
+
+export function useProgramManagers(
+  programId: string | undefined,
+  listFilters: ProgramManagersUiFilters = EMPTY_MANAGERS_LIST_FILTERS
+) {
   const remoteEnabled = useProgramsReadsRemoteEnabledForSurface(programId)
 
   useNotifyProgramApiUnavailableOnce(
@@ -38,9 +53,18 @@ export function useProgramManagers(programId: string | undefined) {
 
   const queryClient = useQueryClient()
 
+  const managersListQuery = useMemo(
+    () => buildProgramManagersListQuery(listFilters),
+    [listFilters]
+  )
+  const filtersKey = useMemo(
+    () => serializeProgramManagersListQuery(managersListQuery),
+    [managersListQuery]
+  )
+
   const listQuery = useQuery({
-    queryKey: generalProgramQueryKeys.managers(programId ?? ''),
-    queryFn: () => fetchGeneralProgramManagers(programId!),
+    queryKey: generalProgramQueryKeys.managers(programId ?? '', filtersKey),
+    queryFn: () => fetchGeneralProgramManagers(programId!, managersListQuery),
     enabled: remoteEnabled && Boolean(programId),
     staleTime: 30_000,
     retry: false,
@@ -58,6 +82,7 @@ export function useProgramManagers(programId: string | undefined) {
           email: item.email?.trim() || '',
           phone: item.phone?.trim() || '',
           adminId: item.adminAccountId,
+          cmsRoleCode: item.roleCode?.trim() || undefined,
         }))
     },
     enabled: remoteEnabled,
@@ -69,23 +94,27 @@ export function useProgramManagers(programId: string | undefined) {
     if (!programId || !remoteEnabled) return []
     if (listQuery.isError) return []
     const rows = listQuery.data ?? []
-    const phoneByAdminId = new Map(
+    const candidateByAdminId = new Map(
       (candidatesQuery.data ?? [])
-        .filter(c => c.adminId != null && c.phone.trim())
-        .map(c => [c.adminId!, c.phone] as const)
+        .filter(c => c.adminId != null)
+        .map(c => [c.adminId!, c] as const)
     )
     return rows.map(row => {
-      if (row.phone.trim()) return row
       if (row.adminId == null) return row
-      const phone = phoneByAdminId.get(row.adminId)
-      return phone ? { ...row, phone } : row
+      const candidate = candidateByAdminId.get(row.adminId)
+      if (!candidate) return row
+      return {
+        ...row,
+        phone: row.phone.trim() ? row.phone : candidate.phone,
+        cmsRoleCode: candidate.cmsRoleCode,
+      }
     })
   }, [candidatesQuery.data, listQuery.data, listQuery.isError, programId, remoteEnabled])
 
   const invalidateManagers = useCallback(async () => {
     if (!programId) return
     await queryClient.invalidateQueries({
-      queryKey: generalProgramQueryKeys.managers(programId),
+      queryKey: generalProgramQueryKeys.managersRoot(programId),
     })
   }, [programId, queryClient])
 
@@ -156,6 +185,7 @@ export function useProgramManagers(programId: string | undefined) {
     addManager: async (payload: {
       adminId?: number
       role: ProgramRole
+      cmsRoleCode?: string
       name: string
       email: string
       phone: string
@@ -169,6 +199,12 @@ export function useProgramManagers(programId: string | undefined) {
       try {
         if (payload.adminId == null) {
           throw new Error('등록할 관리자(adminId)가 없습니다.')
+        }
+        if (!canAssignProgramRoleToCmsAdmin(payload.cmsRoleCode, payload.role)) {
+          return {
+            ok: false as const,
+            message: CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE,
+          }
         }
         await addMutation.mutateAsync({
           adminId: payload.adminId,

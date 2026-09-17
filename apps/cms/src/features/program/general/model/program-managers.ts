@@ -10,6 +10,8 @@ export interface ProgramManagerRow {
   registeredAt: string
   /** remote assignment의 adminId */
   adminId?: number
+  /** CMS 전역 역할 — VIEWER면 프로그램 뷰어만 지정 가능 */
+  cmsRoleCode?: string
   /** remote 삭제 가능 여부 — false면 선택·삭제 비활성 */
   removableYn?: boolean
 }
