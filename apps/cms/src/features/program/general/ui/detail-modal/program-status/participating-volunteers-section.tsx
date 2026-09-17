@@ -28,6 +28,7 @@ import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/progr
 import { useProgressVolunteerList } from '../../../hooks/use-progress-volunteer-list'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
@@ -123,6 +124,7 @@ export function ParticipatingVolunteersSection({
     instructorList,
     programId,
     program,
+    enabled: !(program != null && isGeneralIndividualProgram(program)),
   })
 
   const [pendingFilters, setPendingFilters] = useState<ParticipatingVolunteersFilters>(() => ({

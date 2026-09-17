@@ -1,5 +1,6 @@
 /**
  * TODO(temp-mock): 열여라 참깨 — 참여 봉사자 정산 현황 검증 후 삭제
+ * `VITE_GENERAL_PROGRAM_TEMP_MOCK_ENABLED=true` 일 때만 사용.
  */
 
 import type { ParticipatingVolunteerSettlementApiRow } from '@/features/program/general/lib/map-settlement-to-participating-volunteer-settlement-row'
@@ -128,7 +129,10 @@ export function buildTemporaryParticipatingVolunteerSettlementRows(
   const n = TEMP_VOLUNTEER_SETTLEMENT_CASES.length
 
   return TEMP_VOLUNTEER_SETTLEMENT_CASES.map((item, index) => {
-    const institutionFromVolunteer = volunteer.assignedInstitutionNames?.[index % Math.max(volunteer.assignedInstitutionNames.length, 1)]
+    const institutionFromVolunteer =
+      volunteer.assignedInstitutionNames?.[
+        index % Math.max(volunteer.assignedInstitutionNames.length, 1)
+      ]
     const institutionName = institutionFromVolunteer || item.institutionName
     const canView =
       item.progress === 'completed' &&

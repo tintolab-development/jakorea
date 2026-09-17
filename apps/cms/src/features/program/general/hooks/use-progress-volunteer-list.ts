@@ -15,6 +15,9 @@ import {
   useIsCompanySchoolProgramsSurface,
   useIsTrainedTeachersProgramsSurface,
 } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import type { Program } from '@/types/domain'
 
 // TODO(temp-mock): 열여라 참깨 — 참여 봉사자·정산 현황 검증 후 삭제
 export const TEMP_PROGRESS_VOLUNTEER_PREFIX = 'temp-progress-volunteer-'
@@ -71,19 +74,28 @@ function buildTemporaryProgressVolunteers(programId: string): ParticipatingVolun
   })
 }
 
-export function useProgressVolunteerList(programId?: string, _program?: unknown) {
-  void _program
+export function useProgressVolunteerList(programId?: string, program?: Program | null) {
   const isCompanySchoolSurface = useIsCompanySchoolProgramsSurface()
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
+  const isIndividualProgram = program != null && isGeneralIndividualProgram(program)
   const remoteEnabled = shouldUseGeneralProgramProgressRemoteApi() && Boolean(programId)
 
   // TODO(temp-mock): 열여라 참깨 — 참여 봉사자·정산 현황 검증 후 삭제
   const temporaryProgressVolunteers = useMemo(
     () =>
-      programId && !isCompanySchoolSurface && !isTrainedTeachersSurface
+      isGeneralProgramTempMockEnabled() &&
+      programId &&
+      !isCompanySchoolSurface &&
+      !isTrainedTeachersSurface &&
+      !isIndividualProgram
         ? buildTemporaryProgressVolunteers(programId)
         : [],
-    [isCompanySchoolSurface, isTrainedTeachersSurface, programId]
+    [
+      isCompanySchoolSurface,
+      isIndividualProgram,
+      isTrainedTeachersSurface,
+      programId,
+    ]
   )
 
   useNotifyProgramApiUnavailableOnce(

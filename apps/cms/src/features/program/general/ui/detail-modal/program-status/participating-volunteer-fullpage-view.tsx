@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
@@ -15,8 +16,12 @@ import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-inf
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
+import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import {
   buildProgramApiUnavailableSaveContent,
+  notifyProgramApiUnavailable,
   PROGRAM_API_UNAVAILABLE_TITLE,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import {
@@ -66,6 +71,8 @@ export function ParticipatingVolunteerFullpageView({
   onClearVolunteerId: _onClearVolunteerId,
 }: ParticipatingVolunteerFullpageViewProps) {
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
+  const progressRemoteEnabled = shouldUseGeneralProgramProgressRemoteApi()
   /**
    * URL(`volunteerTab`)이 source of truth이지만, setSearchParams 반영 전·props 지연 시
    * 탭 UI/본문이 안 바뀌는 문제가 있어 로컬 탭을 먼저 갱신한 뒤 URL과 동기화한다.
@@ -79,6 +86,7 @@ export function ParticipatingVolunteerFullpageView({
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
+  const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
 
   const mergedVolunteer = useMemo(
@@ -126,6 +134,7 @@ export function ParticipatingVolunteerFullpageView({
     setAdminCommentError(undefined)
     setVolunteerPatches({})
     setActivityWithdrawModalOpen(false)
+    setActivityWithdrawSubmitting(false)
     setActivityCertPreviewOpen(false)
   }, [initialVolunteer.id, initialVolunteer.adminComment])
 
@@ -150,17 +159,67 @@ export function ParticipatingVolunteerFullpageView({
   }, [activityWithdrawScheduleOptions.length, mergedVolunteer.activityWithdrawn, showAlert])
 
   const handleConfirmActivityWithdraw = useCallback(
-    (payload: { stopSessionKey: string }) => {
-      const patch = applyParticipatingVolunteerActivityWithdraw(mergedVolunteer, payload)
-      if (Object.keys(patch).length === 0) return
-      setVolunteerPatches(prev => ({ ...prev, ...patch }))
-      setActivityWithdrawModalOpen(false)
-      showAlert({
-        title: '활동 포기',
-        content: `${mergedVolunteer.volunteerName} 봉사자가 활동 포기 처리되었습니다.`,
-      })
+    async (payload: { stopSessionKey: string }) => {
+      const stopSession = (mergedVolunteer.sessions ?? []).find(
+        session => String(session.round) === payload.stopSessionKey
+      )
+      const stopScheduleLabel = stopSession
+        ? activityWithdrawScheduleOptions.find(option => option.value === payload.stopSessionKey)
+            ?.label
+        : undefined
+      const reason =
+        [mergedVolunteer.volunteerName, stopScheduleLabel].filter(Boolean).join(' · ') ||
+        stopScheduleLabel ||
+        '활동 포기'
+      const stopScheduleIdNum =
+        stopSession?.resolvedScheduleId != null ? Number(stopSession.resolvedScheduleId) : Number.NaN
+
+      if (progressRemoteEnabled) {
+        setActivityWithdrawSubmitting(true)
+        try {
+          await giveUpGeneralParticipatingInstitution(program.id, mergedVolunteer.id, reason, {
+            stopScheduleId: Number.isFinite(stopScheduleIdNum) ? stopScheduleIdNum : undefined,
+          })
+          const patch = applyParticipatingVolunteerActivityWithdraw(mergedVolunteer, payload)
+          if (Object.keys(patch).length > 0) {
+            setVolunteerPatches(prev => ({ ...prev, ...patch }))
+          }
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.volunteers(program.id),
+          })
+          setActivityWithdrawModalOpen(false)
+          showAlert({
+            title: '활동 포기',
+            content: `${mergedVolunteer.volunteerName} 봉사자가 활동 포기 처리되었습니다.`,
+          })
+        } catch (error) {
+          const message =
+            error instanceof Error && error.message.trim()
+              ? error.message
+              : '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          showAlert({
+            title: '활동 포기 실패',
+            content: message,
+          })
+        } finally {
+          setActivityWithdrawSubmitting(false)
+        }
+        return
+      }
+
+      notifyProgramApiUnavailable(
+        'general-participating-volunteer-give-up',
+        '일반 프로그램 · 참여 봉사자 활동 포기'
+      )
     },
-    [mergedVolunteer, showAlert]
+    [
+      activityWithdrawScheduleOptions,
+      mergedVolunteer,
+      program.id,
+      progressRemoteEnabled,
+      queryClient,
+      showAlert,
+    ]
   )
 
   const handleActivityCertificateIssueClick = useCallback(() => {
@@ -238,6 +297,7 @@ export function ParticipatingVolunteerFullpageView({
                 width={140}
                 disabled={
                   mergedVolunteer.activityWithdrawn ||
+                  activityWithdrawSubmitting ||
                   activityWithdrawScheduleOptions.length === 0
                 }
                 onClick={handleRequestActivityWithdraw}

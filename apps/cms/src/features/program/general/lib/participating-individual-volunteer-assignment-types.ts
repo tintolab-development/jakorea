@@ -6,6 +6,7 @@ export type ParticipatingIndividualVolunteerAssignedScheduleRow = {
   no: number
   slotKey: string
   scheduleLabel: string
+  scheduleId?: number
 }
 
 export type ParticipatingIndividualVolunteerWaitingScheduleRow = {
@@ -16,4 +17,5 @@ export type ParticipatingIndividualVolunteerWaitingScheduleRow = {
   hopeSchedule: WaitingInstructorHopeSchedule
   assignmentStatus: WaitingInstructorAssignmentStatus
   assignedVolunteerCountLabel: string
+  scheduleId?: number
 }

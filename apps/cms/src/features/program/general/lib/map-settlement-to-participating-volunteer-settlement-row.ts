@@ -102,12 +102,23 @@ export function mapSettlementToParticipatingVolunteerSettlementRow(
     hasApplication &&
     !VOLUNTEER_EXCLUDED_PAYMENT_STATEMENT_STATUSES.has(paymentStatementStatus)
 
+  const additive = item as SettlementListItemResponse & {
+    educationGrade?: string
+    assignedGrade?: string
+    grade?: string
+  }
+  const assignedGrade =
+    additive.educationGrade?.trim() ||
+    additive.assignedGrade?.trim() ||
+    additive.grade?.trim() ||
+    '-'
+
   return {
     id: String(settlementId),
     settlementId,
     no: totalCount - index,
     institutionName: item.institutionName?.trim() || '-',
-    assignedGrade: '-',
+    assignedGrade,
     volunteerScheduleLabel: buildParticipatingInstructorEducationScheduleLabel(item),
     volunteerProgress,
     volunteerProgressLabel,

@@ -21,81 +21,8 @@ import {
   type WaitingInstructorHopeSchedule,
 } from '@/features/program/general/lib/waiting-instructor-assignment'
 import type { Program } from '@/types/domain'
-
-type AssignedDef = {
-  id: string
-  slotKey: string
-  dateKey: string
-  timeRange?: string
-  sessionRound: number
-  sessionName?: string
-}
-
-type WaitingDef = {
-  id: string
-  slotKey: string
-  dateKey: string
-  timeRange?: string
-  sessionRound: number
-  sessionName?: string
-  forceUnavailable?: boolean
-  assignedVolunteerCount?: number
-}
-
-const DEFAULT_ASSIGNED_DEFS: AssignedDef[] = [
-  {
-    id: 'iv-as-2',
-    slotKey: '2026-01-09|individual-program|2',
-    dateKey: '2026-01-09',
-    timeRange: '09:20 ~ 11:20',
-    sessionRound: 2,
-    sessionName: '2회차',
-  },
-  {
-    id: 'iv-as-1',
-    slotKey: '2026-01-16|individual-program|2',
-    dateKey: '2026-01-16',
-    timeRange: '09:30 ~ 11:30',
-    sessionRound: 2,
-    sessionName: '2회차',
-  },
-]
-
-const DEFAULT_WAITING_DEFS: WaitingDef[] = [
-  {
-    id: 'iv-w-3',
-    slotKey: '2026-01-09|individual-program|1',
-    dateKey: '2026-01-09',
-    timeRange: '09:20 ~ 11:20',
-    sessionRound: 1,
-    sessionName: '1회차',
-    assignedVolunteerCount: 4,
-  },
-  {
-    id: 'iv-w-2',
-    slotKey: '2026-01-09|individual-program|2',
-    dateKey: '2026-01-09',
-    timeRange: '09:20 ~ 11:20',
-    sessionRound: 2,
-    sessionName: '2회차',
-    assignedVolunteerCount: 4,
-  },
-  {
-    id: 'iv-w-1',
-    slotKey: '2026-01-16|individual-program|1',
-    dateKey: '2026-01-16',
-    sessionRound: 1,
-    sessionName: '1회차',
-    forceUnavailable: true,
-    assignedVolunteerCount: 1,
-  },
-]
-
-function hash(s: string): number {
-  let h = 0
-  for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i)
-  return Math.abs(h)
-}
+import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
+import { mapSessionProgressToParticipatingSchoolSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
 
 function formatHopeDate(dateKey: string): string {
   const weekday = ['일', '월', '화', '수', '목', '금', '토'][
@@ -183,25 +110,20 @@ export function buildOccupiedVolunteerHopeSlotKeys(
 
 function volunteerCountLabel(slotKey: string, overrideCount?: number): string {
   if (overrideCount != null) return `${overrideCount}명`
-  const count = countLectureSlotAssignments(slotKey, [])
-  return `${count > 0 ? count : 1 + (hash(slotKey) % 4)}명`
-}
-
-function buildAssignedRowFromDef(
-  def: AssignedDef,
-  no: number,
-  program: Program
-): ParticipatingIndividualVolunteerAssignedScheduleRow {
-  return {
-    id: def.id,
-    no,
-    slotKey: def.slotKey,
-    scheduleLabel: scheduleLabelFromDef(program, def),
-  }
+  return `${countLectureSlotAssignments(slotKey, [])}명`
 }
 
 function buildWaitingRowFromDef(
-  def: WaitingDef,
+  def: {
+    id: string
+    slotKey: string
+    dateKey: string
+    timeRange?: string
+    sessionRound: number
+    sessionName?: string
+    forceUnavailable?: boolean
+    assignedVolunteerCount?: number
+  },
   no: number,
   program: Program,
   occupiedHopeSlots: Set<string>
@@ -239,25 +161,6 @@ function buildAssignedFromVolunteerSessions(
     no: sessions.length - idx,
     slotKey: `${session.date.replace(/\./g, '-')}|individual-program|${session.round}`,
     scheduleLabel: formatVolunteerAssignmentScheduleLine(session, program),
-  }))
-}
-
-function buildAssignedFromProgramSlots(
-  program: Program,
-  volunteer: ParticipatingVolunteerRow
-): ParticipatingIndividualVolunteerAssignedScheduleRow[] {
-  const slots = getApprovedInstitutionLectureScheduleSlots(String(program.id))
-  if (slots.length === 0) return []
-
-  const picked = [...slots]
-    .sort((a, b) => hash(a.key + volunteer.id) - hash(b.key + volunteer.id))
-    .slice(0, 2)
-
-  return picked.map((slot, idx) => ({
-    id: `iv-program-as-${slot.key}`,
-    no: picked.length - idx,
-    slotKey: slot.key,
-    scheduleLabel: formatVolunteerAssignmentScheduleLine(slotToSession(slot), program),
   }))
 }
 
@@ -302,14 +205,7 @@ export function buildInitialIndividualVolunteerAssignedScheduleRows(
   volunteer: ParticipatingVolunteerRow,
   program: Program
 ): ParticipatingIndividualVolunteerAssignedScheduleRow[] {
-  const fromVolunteer = buildAssignedFromVolunteerSessions(volunteer, program)
-  if (fromVolunteer.length > 0) return fromVolunteer
-
-  const fromProgram = buildAssignedFromProgramSlots(program, volunteer)
-  if (fromProgram.length > 0) return fromProgram
-
-  const n = DEFAULT_ASSIGNED_DEFS.length
-  return DEFAULT_ASSIGNED_DEFS.map((def, idx) => buildAssignedRowFromDef(def, n - idx, program))
+  return buildAssignedFromVolunteerSessions(volunteer, program)
 }
 
 export function buildIndividualVolunteerWaitingScheduleRows(
@@ -320,18 +216,11 @@ export function buildIndividualVolunteerWaitingScheduleRows(
   const assignedSlotKeys = new Set(assignedRows.map(r => r.slotKey))
   const occupiedHopeSlots = buildOccupiedVolunteerHopeSlotKeys(assignedRows)
 
-  const fromProgram = buildWaitingFromProgramSlots(
+  return buildWaitingFromProgramSlots(
     program,
     volunteer,
     assignedSlotKeys,
     occupiedHopeSlots
-  )
-  if (fromProgram.length > 0) return fromProgram
-
-  const filtered = DEFAULT_WAITING_DEFS.filter(def => !assignedSlotKeys.has(def.slotKey))
-  const n = filtered.length
-  return sortWaitingInstructorRowsUnavailableToBottom(
-    filtered.map((def, idx) => buildWaitingRowFromDef(def, n - idx, program, occupiedHopeSlots))
   )
 }
 
@@ -344,6 +233,7 @@ export function individualVolunteerWaitingRowToAssignedRow(
     no,
     slotKey: waitingRow.slotKey,
     scheduleLabel: waitingRow.scheduleLabel,
+    scheduleId: waitingRow.scheduleId,
   }
 }
 
@@ -369,6 +259,7 @@ export function createIndividualVolunteerWaitingRowFromAssigned(
     hopeSchedule,
     assignmentStatus: resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedHopeSlots),
     assignedVolunteerCountLabel: volunteerCountLabel(assignedRow.slotKey),
+    scheduleId: assignedRow.scheduleId,
   }
 }
 
@@ -385,4 +276,70 @@ export function renumberIndividualVolunteerWaitingScheduleRows(
   const sorted = sortWaitingInstructorRowsUnavailableToBottom(rows)
   const n = sorted.length
   return sorted.map((r, i) => ({ ...r, no: n - i }))
+}
+
+function dashboardScheduleToSession(schedule: DashboardProgramScheduleResponse, index: number) {
+  const mapped = mapSessionProgressToParticipatingSchoolSessions([
+    {
+      scheduleId: schedule.scheduleId,
+      sessionNo: schedule.sessionNo ?? index + 1,
+      scheduleName: schedule.scheduleName,
+      startAt: schedule.startAt,
+      endAt: schedule.endAt,
+    },
+  ])
+  return mapped[0]
+}
+
+export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params: {
+  program: Program
+  assignedScheduleIds: number[]
+  schedules: DashboardProgramScheduleResponse[]
+}): {
+  assigned: ParticipatingIndividualVolunteerAssignedScheduleRow[]
+  waiting: ParticipatingIndividualVolunteerWaitingScheduleRow[]
+} {
+  const assignedIdSet = new Set(params.assignedScheduleIds)
+  const assigned: ParticipatingIndividualVolunteerAssignedScheduleRow[] = []
+  const waiting: ParticipatingIndividualVolunteerWaitingScheduleRow[] = []
+
+  params.schedules
+    .filter(schedule => schedule.scheduleId != null)
+    .forEach((schedule, index) => {
+      const scheduleId = schedule.scheduleId as number
+      const session = dashboardScheduleToSession(schedule, index)
+      if (!session) return
+      const slotKey = `${session.date.replace(/\./g, '-')}|individual-program|${session.round}`
+      const scheduleLabel = formatVolunteerAssignmentScheduleLine(session, params.program)
+      if (assignedIdSet.has(scheduleId)) {
+        assigned.push({
+          id: `iv-scope-as-${scheduleId}`,
+          no: 0,
+          slotKey,
+          scheduleLabel,
+          scheduleId,
+        })
+        return
+      }
+      const hopeSchedule: WaitingInstructorHopeSchedule = {
+        hopeDate: `${session.date}(${session.dayOfWeek})`,
+        hopeTime: session.timeRange,
+        hopeSession: session.format !== '-' ? session.format : `${session.round}회차`,
+      }
+      waiting.push({
+        id: `iv-scope-w-${scheduleId}`,
+        no: 0,
+        slotKey,
+        scheduleLabel,
+        hopeSchedule,
+        assignmentStatus: 'waiting',
+        assignedVolunteerCountLabel: '-',
+        scheduleId,
+      })
+    })
+
+  return {
+    assigned: renumberIndividualVolunteerAssignedScheduleRows(assigned),
+    waiting: renumberIndividualVolunteerWaitingScheduleRows(waiting),
+  }
 }

@@ -1,5 +1,5 @@
 /**
- * 참여 봉사자 풀페이지 — 봉사 배정 현황 탭용 목 데이터
+ * 참여 봉사자 풀페이지 — 봉사 배정 현황 탭
  */
 
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
@@ -17,9 +17,7 @@ import {
   type WaitingInstructorAssignmentStatus,
   type WaitingInstructorHopeSchedule,
 } from './waiting-instructor-assignment'
-
-const ASSIGNED_DISTANCES = ['3km', '5km', '7km', '4km', '6km', '8km']
-const WAITING_DISTANCES = ['2km', '4km', '6km', '5km', '7km', '32km', '12km']
+import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
 
 /** 배정 대기 목록 — 기관+일정별 행 식별자 */
 export type VolunteerWaitingAssignmentStatus = WaitingInstructorAssignmentStatus
@@ -54,64 +52,10 @@ function hash(s: string): number {
   return Math.abs(h)
 }
 
-function pick<T>(arr: T[], seed: number): T {
-  return arr[seed % arr.length]
-}
-
-function demoTintoElementarySchool(): ParticipatingSchoolRow {
-  return {
-    id: 'school-tinto-elementary',
-    no: 0,
-    schoolName: '틴토초등학교',
-    region: '서울특별시 강서구',
-    educationGrade: '3학년',
-    classCount: 2,
-    studentCount: 48,
-    lectureRound: '진행 전',
-    textbookStatus: 'preparing',
-    approvalStatus: 'approved',
-    teacherName: '김선생',
-    instructors: '-',
-    sessions: [
-      {
-        round: 1,
-        date: '2026.01.09',
-        dayOfWeek: '금',
-        duration: '2시간',
-        format: '오프라인',
-        classNum: '1교시',
-        timeRange: '9:20~11:20',
-        status: 'pending',
-      },
-      {
-        round: 2,
-        date: '2026.01.07',
-        dayOfWeek: '수',
-        duration: '2시간',
-        format: '오프라인',
-        classNum: '1교시',
-        timeRange: '9:20~11:20',
-        status: 'pending',
-      },
-      {
-        round: 3,
-        date: '2026.01.16',
-        dayOfWeek: '금',
-        duration: '2시간',
-        format: '오프라인',
-        classNum: '2교시',
-        timeRange: '9:30~11:30',
-        status: 'pending',
-      },
-    ],
-  }
-}
-
 export function resolveVolunteerAssignmentSchoolPool(
   schoolRows: ParticipatingSchoolRow[]
 ): ParticipatingSchoolRow[] {
-  const hasTinto = schoolRows.some(s => s.schoolName === '틴토초등학교')
-  return hasTinto ? schoolRows : [demoTintoElementarySchool(), ...schoolRows]
+  return schoolRows
 }
 
 function scheduleLineForSession(
@@ -134,7 +78,7 @@ function scheduleLinesForSchool(
     return volunteerSessions.map(s => scheduleLineForSession(s, program))
   }
 
-  return ['2026. 01. 09(금) 09:20 ~ 11:20 | 1차시']
+  return ['-']
 }
 
 function buildOccupiedVolunteerScheduleSlots(volunteer: ParticipatingVolunteerRow): Set<string> {
@@ -168,7 +112,7 @@ function countVolunteersAtInstitutionSession(
       }
     }
   }
-  return count > 0 ? count : 3 + (hash(schoolName + session.date) % 3)
+  return count
 }
 
 function volunteerCountLabel(
@@ -180,31 +124,6 @@ function volunteerCountLabel(
   return `${n}명`
 }
 
-function buildParktintoAssignedRows(
-  schoolPool: ParticipatingSchoolRow[],
-  volunteer: ParticipatingVolunteerRow,
-  program?: Program
-): VolunteerAssignedInstitutionRow[] {
-  const gangseo =
-    schoolPool.find(s => s.schoolName === '강서초등학교' && s.educationGrade === '3학년') ??
-    schoolPool.find(s => s.schoolName === '강서초등학교')
-  const mapo = schoolPool.find(s => s.schoolName === '마포초등학교')
-  const picked = [gangseo, mapo, gangseo].filter((s): s is ParticipatingSchoolRow => Boolean(s))
-
-  return picked.map((school, idx) => {
-    const rowSeed = hash(school.id + volunteer.id + String(idx))
-    return {
-      id: `${school.id}__assigned_${idx}`,
-      no: picked.length - idx,
-      schoolName: school.schoolName,
-      educationGrade: school.educationGrade,
-      region: school.region,
-      distanceFromHome: pick(ASSIGNED_DISTANCES, rowSeed + idx),
-      volunteerScheduleLines: scheduleLinesForSchool(school, volunteer, program),
-    }
-  })
-}
-
 /** 배정된 기관 목록 — 기관 단위(한 기관에 복수 일정 가능) */
 export function buildInitialVolunteerAssignedRows(
   volunteer: ParticipatingVolunteerRow,
@@ -212,11 +131,6 @@ export function buildInitialVolunteerAssignedRows(
   program?: Program
 ): VolunteerAssignedInstitutionRow[] {
   const schoolPool = resolveVolunteerAssignmentSchoolPool(schoolRows)
-
-  if (volunteer.id === 'participating-volunteer-demo-parktinto') {
-    return buildParktintoAssignedRows(schoolPool, volunteer, program)
-  }
-
   const assignedNames = volunteer.assignedInstitutionNames ?? []
   if (assignedNames.length === 0) return []
 
@@ -227,14 +141,13 @@ export function buildInitialVolunteerAssignedRows(
   if (picked.length === 0) return []
 
   return picked.map((school, idx) => {
-    const rowSeed = hash(school.id + volunteer.id)
     return {
       id: `${school.id}__assigned`,
       no: picked.length - idx,
       schoolName: school.schoolName,
       educationGrade: school.educationGrade,
       region: school.region,
-      distanceFromHome: pick(ASSIGNED_DISTANCES, rowSeed + idx),
+      distanceFromHome: '-',
       volunteerScheduleLines: scheduleLinesForSchool(school, volunteer, program),
     }
   })
@@ -247,26 +160,13 @@ function expandSchoolSessionsToWaitingRows(
   occupiedSlots: Set<string>,
   program?: Program
 ): VolunteerWaitingInstitutionRow[] {
-  const sessions =
-    school.sessions && school.sessions.length > 0
-      ? school.sessions
-      : [
-          {
-            round: 1,
-            date: '2026.01.09',
-            dayOfWeek: '금',
-            duration: '2시간',
-            format: '오프라인',
-            classNum: '1교시',
-            timeRange: '9:20~11:20',
-            status: 'pending' as const,
-          },
-        ]
+  const sessions = school.sessions?.filter(s => s.status !== 'not_planned') ?? []
+  if (sessions.length === 0) return []
 
   return sessions.map((session, sessionIdx) => {
     const hopeSchedule = participatingSchoolSessionToHopeSchedule(session)
-    const rowSeed = hash(school.id + volunteer.id + session.date + String(session.round))
-    const isTemporaryVolunteer = volunteer.id.startsWith('temp-progress-volunteer-')
+    const isTemporaryVolunteer =
+      isGeneralProgramTempMockEnabled() && volunteer.id.startsWith('temp-progress-volunteer-')
     return {
       id: `${school.id}__${session.date}__${session.round}`,
       no: 0,
@@ -274,7 +174,7 @@ function expandSchoolSessionsToWaitingRows(
       schoolName: school.schoolName,
       desiredGrade: school.educationGrade,
       region: school.region,
-      distanceFromHome: pick(WAITING_DISTANCES, rowSeed + sessionIdx),
+      distanceFromHome: '-',
       hopeScheduleLine: scheduleLineForSession(session, program),
       hopeSchedule,
       // TODO(temp-mock): 열여라 참깨 — 봉사 배정 대기/불가 검증 후 삭제
@@ -301,18 +201,7 @@ export function buildVolunteerWaitingInstitutionRows(
     [...assignedRowIds].map(id => id.split('__assigned')[0] ?? id)
   )
   const occupiedSlots = buildOccupiedVolunteerScheduleSlots(volunteer)
-
-  let candidateSchools: ParticipatingSchoolRow[]
-
-  if (volunteer.id === 'participating-volunteer-demo-parktinto') {
-    const tinto = schoolPool.find(s => s.schoolName === '틴토초등학교') ?? demoTintoElementarySchool()
-    const extras = schoolPool
-      .filter(s => s.schoolName !== '틴토초등학교' && !assignedSchoolIds.has(s.id))
-      .slice(0, 2)
-    candidateSchools = [tinto, ...extras]
-  } else {
-    candidateSchools = schoolPool.filter(s => !assignedSchoolIds.has(s.id))
-  }
+  const candidateSchools = schoolPool.filter(s => !assignedSchoolIds.has(s.id))
 
   const sorted = [...candidateSchools].sort(
     (a, b) => hash(a.id + volunteer.id + 'w') - hash(b.id + volunteer.id + 'w')
@@ -332,17 +221,16 @@ export function schoolRowToVolunteerAssignedRow(
   school: ParticipatingSchoolRow,
   volunteer: ParticipatingVolunteerRow,
   no: number,
-  idx: number,
+  _idx: number,
   program?: Program
 ): VolunteerAssignedInstitutionRow {
-  const rowSeed = hash(school.id + volunteer.id)
   return {
     id: `${school.id}__assigned`,
     no,
     schoolName: school.schoolName,
     educationGrade: school.educationGrade,
     region: school.region,
-    distanceFromHome: pick(ASSIGNED_DISTANCES, rowSeed + idx),
+    distanceFromHome: '-',
     volunteerScheduleLines: scheduleLinesForSchool(school, volunteer, program),
   }
 }
