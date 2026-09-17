@@ -6,7 +6,6 @@ import {
   patchGeneralIndividualApplicantForApprovalStatus,
   patchGeneralIndividualApplicantForNotificationResend,
   updateGeneralIndividualApplicantApprovalStatus,
-  updateGeneralIndividualApplicantCancelRejection,
   updateGeneralIndividualApplicantNotificationResend,
   type GeneralIndividualApplicantDetailSavePayload,
   type GeneralIndividualApplicantRow,
@@ -15,6 +14,7 @@ import {
   approveGeneralIndividualApplication,
   rejectGeneralIndividualApplication,
   submitGeneralIndividualDocumentResult,
+  cancelGeneralIndividualApplicationRejection,
 } from '@/features/program/general/api/admin-applications-service'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import {
@@ -55,6 +55,7 @@ import {
 import { mapIndividualApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { extractApiErrorMessage, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import type { IndividualApplicationUpdateResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateResponse'
@@ -752,16 +753,39 @@ export function GeneralParticipantApplicantDetailView({
         participant={cancelRejectParticipant}
         onCancel={() => setCancelRejectTarget(null)}
         onConfirm={(payload: ParticipantCancelRejectionConfirmPayload) => {
-          if (!cancelRejectTarget) return
+          if (!cancelRejectTarget || !applicant || decisionBusy) return
           const notifyOptions =
             payload.variant === 'alreadySent'
               ? toParticipantCancelRejectionNotifyOptions(payload)
               : undefined
-          const patched = patchParticipantForCancelRejection(applicant, notifyOptions)
-          updateGeneralIndividualApplicantCancelRejection(applicant.id, notifyOptions)
-          syncApplicant(patched)
-          setCancelRejectTarget(null)
-          setCancelRejectComplete({ participantName: cancelRejectTarget.name })
+          const run = async () => {
+            if (useRemote) {
+              setDecisionBusy(true)
+              try {
+                await cancelGeneralIndividualApplicationRejection(
+                  applicant.id,
+                  payload.variant === 'alreadySent' ? payload.reason : '반려 취소'
+                )
+                await invalidateIndividualApplications()
+              } catch (error) {
+                notifyDecisionFailure(error)
+                return
+              } finally {
+                setDecisionBusy(false)
+              }
+            } else {
+              notifyProgramApiUnavailable(
+                'general-individual-application-cancel-rejection',
+                '참여자 신청 · 반려 취소'
+              )
+              return
+            }
+            const patched = patchParticipantForCancelRejection(applicant, notifyOptions)
+            syncApplicant(patched)
+            setCancelRejectTarget(null)
+            setCancelRejectComplete({ participantName: cancelRejectTarget.name })
+          }
+          void run()
         }}
       />
       <ParticipantCancelRejectCompleteModal

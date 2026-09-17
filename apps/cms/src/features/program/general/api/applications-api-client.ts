@@ -523,6 +523,19 @@ export async function rejectIndividualApplicationRemote(
   )
 }
 
+export async function cancelIndividualApplicationRejectionRemote(
+  applicationId: string,
+  payload: ApplicationDecisionCancelRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/cancel-rejection`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
 /**
  * OpenAPI operationId: resendIndividualApplicationNotification
  * 로컬 codegen은 BE 재기동 후 교체한다.

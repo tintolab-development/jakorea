@@ -632,20 +632,27 @@ export function mapParticipantToParticipatingIndividualRow(
     affiliationOrganizationId: dto.organizationId,
     affiliationDisplayName: dto.organizationName,
   })
+  const homeAddress = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
   return {
     id: toId(dto.participantId),
+    individualApplicationId:
+      dto.sourceApplicationId != null ? String(dto.sourceApplicationId) : undefined,
+    memberId: dto.memberId != null ? String(dto.memberId) : undefined,
     no: index + 1,
     applicantName: dto.memberName?.trim() || '이름 없음',
     affiliationOrganizationId: affiliation.affiliationOrganizationId,
     affiliation: affiliation.affiliation,
-    educationGrade: '',
-    homeAddress: '',
+    educationGrade: dto.grade?.trim() || '',
+    homeAddress,
     approvalStatus: 'approved',
     programId,
+    sessions: mapSessionProgressToParticipatingSchoolSessions(dto.sessions),
+    availableActions: dto.availableActions,
     lectureAttendanceSessions: [],
     satisfactionSurveyCompleted: false,
     participationAppliedAt: dto.joinedAt ?? '',
-    activityWithdrawn: dto.giveUpAt != null,
+    activityWithdrawn:
+      dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
   }
 }
 

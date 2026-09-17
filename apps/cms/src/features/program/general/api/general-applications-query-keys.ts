@@ -76,6 +76,12 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'student-roster', organizationApplicationId] as const,
   instructorAssignments: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'instructor-assignments', programId] as const,
+  educationScope: (programId: string, participantId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'education-scope', programId, participantId] as const,
+  submissionTeam: (programId: string, participantId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'submission-team', programId, participantId] as const,
+  submissionTeams: (programId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'submission-teams', programId] as const,
   instructorSettlements: (programId: string, instructorMemberId: string) =>
     [
       ...generalProgramProgressQueryKeys.all,

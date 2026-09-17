@@ -116,6 +116,40 @@ describe('general-applications-adapters', () => {
     expect(volunteer.assignedInstitutionNames).toEqual(['기존 소속 기관'])
   })
 
+  it('maps individual sourceApplicationId to individualApplicationId and keeps participantId as id', () => {
+    const individual = mapParticipantToParticipatingIndividualRow(
+      {
+        participantId: 1691701,
+        memberId: 9102,
+        memberName: '김참여자',
+        sourceApplicationId: 88001,
+        grade: '고등학교 2학년',
+        regionSido: '서울특별시',
+        regionSigungu: '강서구',
+        sessions: [
+          {
+            scheduleId: 601,
+            sessionNo: 1,
+            scheduleName: '1회차',
+            startAt: '2026-10-12T09:00:00+09:00',
+            endAt: '2026-10-12T11:00:00+09:00',
+            attendanceStatus: 'COMPLETED',
+          },
+        ],
+      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      0,
+      '168001'
+    )
+
+    expect(individual.id).toBe('1691701')
+    expect(individual.individualApplicationId).toBe('88001')
+    expect(individual.memberId).toBe('9102')
+    expect(individual.educationGrade).toBe('고등학교 2학년')
+    expect(individual.homeAddress).toBe('서울특별시 강서구')
+    expect(individual.sessions).toHaveLength(1)
+    expect(individual.sessions?.[0]?.resolvedScheduleId).toBe(601)
+  })
+
   it('maps volunteer participant sessions and additive enrich fields', () => {
     const volunteer = mapParticipantToParticipatingVolunteerRow(
       {

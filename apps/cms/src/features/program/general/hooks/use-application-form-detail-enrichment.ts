@@ -7,6 +7,7 @@ import {
   mapVolunteerApplicationDetailToApplicantRow,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import {
+  fetchIndividualApplicationDetailRemote,
   fetchInstructorApplicationDetailRemote,
   fetchOrganizationApplicationDetailRemote,
   fetchVolunteerApplicationDetailRemote,
@@ -34,6 +35,8 @@ import {
   mergeInstructorApplicationIntoParticipatingRow,
   participatingRowToInstructorApplicationSeed,
 } from '@/features/program/general/lib/participating-instructor-application-detail'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
+import { mapIndividualApplicationDetailToParticipatingRow } from '@/features/program/general/lib/participating-individual-application-detail'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 
 function parseNumericId(id: string | undefined): number | null {
@@ -241,6 +244,32 @@ export function useParticipatingInstructorApplicationDetailEnrichment(
     })
     return mergeInstructorApplicationIntoParticipatingRow(canonical, hydrated)
   }, [row, programId, detailQuery.data, formResponse, adminComment])
+}
+
+/** 참여자(개인) 상세 — 신청 정보 탭 (individual-applications GET) */
+export function useParticipatingIndividualApplicationDetailEnrichment(
+  row: ParticipatingIndividualParticipantRow | null | undefined,
+  options?: { enabled?: boolean }
+): ParticipatingIndividualParticipantRow | null {
+  const applicationId = parseNumericId(row?.individualApplicationId)
+  const detailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.individualDetail(String(applicationId ?? '')),
+    queryFn: () => fetchIndividualApplicationDetailRemote(String(applicationId)),
+    enabled: Boolean(
+      options?.enabled !== false &&
+        row &&
+        shouldUseGeneralApplicationsRemoteApi() &&
+        applicationId != null
+    ),
+    staleTime: 30_000,
+    retry: false,
+  })
+
+  return useMemo(() => {
+    if (!row) return null
+    if (!detailQuery.data) return row
+    return mapIndividualApplicationDetailToParticipatingRow(detailQuery.data, row)
+  }, [row, detailQuery.data])
 }
 
 /** 일반 봉사 신청 상세 — form_response hydrate (essay 등) */
