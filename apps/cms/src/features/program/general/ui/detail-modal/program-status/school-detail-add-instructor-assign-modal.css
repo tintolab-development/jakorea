@@ -4,27 +4,6 @@
  * 교육 배정일: 외곽 보더 박스 안 1열 칩 리스트(선택/미선택/비활성)
  */
 
-.school-detail-add-instructor-assign-modal.ant-modal .ant-modal-content {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  width: 800px;
-  max-width: 800px;
-}
-
-.school-detail-add-instructor-assign-modal.ant-modal .ant-modal-body {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-  padding: 0;
-}
-
-.school-detail-add-instructor-assign-modal .teal-header-modal__header {
-  flex-shrink: 0;
-}
-
 .school-detail-add-instructor-assign-modal .teal-header-modal__body {
   flex-shrink: 0;
   width: 100%;
@@ -115,6 +94,22 @@
   font-weight: var(--font-weight-500);
   color: var(--color-text-label);
   height: auto;
+}
+
+.school-detail-add-instructor-assign-modal__required {
+  margin-left: var(--spacing-4, 4px);
+  color: var(--color-required-mark, #ff4d4f);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-500);
+  line-height: 1;
+}
+
+/* Ant Form 기본 * 와 커스텀 * 중복 방지 */
+.school-detail-add-instructor-assign-modal__field
+  .ant-form-item-label
+  > label.ant-form-item-required:not(.ant-form-item-required-mark-optional)::after {
+  display: none !important;
+  content: none !important;
 }
 
 .school-detail-add-instructor-assign-modal__role-radios {

@@ -5,6 +5,7 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { RequestedSessionTimeRequest } from './requestedSessionTimeRequest';
 
 export interface RequestedScheduleRequest {
   requestedDate: string;
@@ -19,4 +20,9 @@ export interface RequestedScheduleRequest {
      */
   sessionCount?: number;
   combinedClassYn?: boolean;
+  /**
+     * @minItems 0
+     * @maxItems 2
+     */
+  sessionTimes?: RequestedSessionTimeRequest[];
 }

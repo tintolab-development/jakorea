@@ -2,7 +2,8 @@ import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
-import { DeleteGuideModal, buildDomainEntityDeleteMessageLines } from '@/shared/ui'
+import { buildSponsorDeleteMessageLines } from '@/features/sponsor/lib/sponsor-delete-guide-messages'
+import { DeleteGuideModal } from '@/shared/ui'
 
 export interface SponsorDeleteModalProps {
   open: boolean
@@ -17,9 +18,8 @@ export function SponsorDeleteModal({
   onConfirm,
   sponsorName,
 }: SponsorDeleteModalProps) {
-  const lines = buildDomainEntityDeleteMessageLines(
-    sponsorName.trim() ? [sponsorName.trim()] : [],
-    '후원사'
+  const lines = buildSponsorDeleteMessageLines(
+    sponsorName.trim() ? [sponsorName.trim()] : []
   )
 
   return (

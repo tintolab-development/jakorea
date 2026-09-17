@@ -19,6 +19,7 @@ export interface SurveyResponseListItemResponse {
   submittedByAdminId?: number;
   submittedByAdminName?: string;
   answerCount?: number;
+  /** 최대 5개 답변 preview JSON 문자열. NON_PII/PUBLIC/NONE의 answerDisplayText만 표시하고 민감·미분류 답변은 null */
   answerPreviewJson?: string;
   submittedAt?: string;
   createdAt?: string;

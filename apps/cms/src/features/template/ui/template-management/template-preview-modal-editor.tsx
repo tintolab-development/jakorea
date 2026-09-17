@@ -197,7 +197,10 @@ function GeneralRegistrationTemplatePreviewEditor({
 function UjatRegistrationTemplatePreviewEditor({
   title,
   registryEntry,
+  templateId,
   templateName,
+  systemTemplate,
+  forceUserEditable = false,
   onTemplateDraftSaveConfirmed,
   registrationUserMode,
   footerAction,
@@ -207,6 +210,9 @@ function UjatRegistrationTemplatePreviewEditor({
 }: TemplatePreviewModalEditorProps & { registryEntry: TemplateRegistryDefinition }) {
   const previewTitle = resolvePreviewHeaderTitle(registryEntry, templateName)
   const ujatProgramRegistrationVm = useUjatProgramRegistrationEditor(true, previewTitle, {
+    templateCode: templateId,
+    systemTemplate,
+    forceUserEditable,
     onTemplateDraftSaveConfirmed,
   })
 

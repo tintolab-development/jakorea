@@ -23,11 +23,11 @@ export interface IndividualApplicationListItemResponse {
   affiliationOrganizationId?: number | null;
   /** 신청자 실명. 프로그램 관리 목록에서는 마스킹하지 않습니다. */
   memberName?: string;
-  /** 신청 시점 소속/학교명. 학교명은 **대학교 형식으로 마스킹됩니다. */
+  /** 신청 시점 소속명 우선의 목록 표시값 */
   affiliationName?: string;
   /** 신청 시점 학년 또는 교육 단계 */
   applicationGrade?: string;
-  /** 자택 주소 요약. 시군구만 있으면 그대로, 상세 주소가 있으면 동(읍/면/리)까지 + ' *****' (FE blur 대상). 기관 주소 아님. */
+  /** 상세 번지를 제외한 목록용 주소 요약 */
   homeAddressSummary?: string;
   /** 해당 신청 건에서 선택한 교육 일정. 미선택 시 빈 배열 */
   preferredEducationSchedules?: PreferredEducationScheduleResponse[];
@@ -51,15 +51,18 @@ export interface IndividualApplicationListItemResponse {
      * @minimum 0
      */
   interviewAvailabilityCount?: number;
+  /** 현재 유효한 면접 배정 ID. 면접 평가 API path에 사용 */
+  interviewAssignmentId?: number;
+  interviewAssignmentStatus?: string;
   /** 관리자가 확정한 면접 슬롯 ID. 신청자 가능 일정과 별개입니다. */
   assignedInterviewSlotId?: number;
   /** 관리자가 확정한 면접 시작 시각. 신청자 가능 일정과 별개입니다. */
   assignedInterviewStartAt?: string;
   /** 관리자가 확정한 면접 종료 시각. 신청자 가능 일정과 별개입니다. */
   assignedInterviewEndAt?: string;
-  interviewAssignmentId?: number;
-  interviewAssignmentStatus?: string;
   interviewEvaluations?: InterviewEvaluationSummary[];
+  /** 현재 신청/서류 반려 사유. 반려 상태가 아니면 null */
+  rejectReason?: string;
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;

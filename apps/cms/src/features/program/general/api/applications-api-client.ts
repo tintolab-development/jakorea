@@ -11,9 +11,12 @@ import type { BulkResultRequest } from '@/shared/api/generated/dashboard/schemas
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
+import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
+import type { OrganizationApplicationUpdateRequest } from '@/shared/api/generated/dashboard/schemas/organizationApplicationUpdateRequest'
 import type { PageResponseOrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseOrganizationApplicationListItemResponse'
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
+import type { VolunteerApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationDetailResponse'
 import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboard/schemas/volunteerFinalResultRequest'
 import type { IndividualApplicationUpdateRequest } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateRequest'
 import type { IndividualApplicationUpdateResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateResponse'
@@ -46,6 +49,10 @@ export type ApplicationsListQuery = {
   managerAEvaluation?: string
   /** 담당자 B 평가 — PASS/NEUTRAL/FAIL/UNREVIEWED */
   managerBEvaluation?: string
+  /** UJAT 상·하반기 — FIRST_HALF | SECOND_HALF (별칭 H1/H2 허용) */
+  recruitHalf?: string
+  /** 모집 ID 직접 지정 (선택) */
+  recruitmentId?: number | string
 }
 
 const generalApplicationsDashboardApi = getJAKoreaCMSBackendAPIDashboardSubset()
@@ -132,6 +139,41 @@ export async function fetchOrganizationApplicationsRemote(
   return fetchApplicationsPage<OrganizationApplicationListItemResponse>(
     `/api/admin/programs/${encodeURIComponent(programId)}/organization-applications`,
     params
+  )
+}
+
+/**
+ * 기관 신청 상세 — OpenAPI `OrganizationApplicationDetailResponse` +
+ * UJAT hydrate용 보조 필드(목록·레거시 호환).
+ */
+export type OrganizationApplicationDetailDto = OrganizationApplicationDetailResponse & {
+  managerComment?: string | null
+  regionSido?: string | null
+  regionSigungu?: string | null
+  grade?: string | null
+}
+
+export async function fetchOrganizationApplicationDetailRemote(
+  applicationId: string
+): Promise<OrganizationApplicationDetailDto> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function updateOrganizationApplicationRemote(
+  applicationId: string,
+  payload: OrganizationApplicationUpdateRequest
+): Promise<OrganizationApplicationDetailResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}`,
+      method: 'PATCH',
+      data: payload,
+    })
   )
 }
 
@@ -244,32 +286,12 @@ export async function fetchVolunteerApplicationsRemote(
   )
 }
 
-/** GET /api/admin/organization-applications/{applicationId} */
-export type OrganizationApplicationDetailDto = {
-  id?: number
-  programId?: number
-  organizationName?: string | null
-  organizationAddress?: string | null
-  organizationAddressDetail?: string | null
-  requestedGrade?: string | null
-  teacherName?: string | null
-  teacherPhone?: string | null
-  teacherEmail?: string | null
-  applicationStatus?: string
-  requestedStudentCount?: number | null
-  requestedClassCount?: number | null
-  managerComment?: string | null
-  regionSido?: string | null
-  regionSigungu?: string | null
-  grade?: string | null
-}
-
-export async function fetchOrganizationApplicationDetailRemote(
+export async function fetchVolunteerApplicationDetailRemote(
   applicationId: string
-): Promise<OrganizationApplicationDetailDto> {
-  return unwrapApiBody<OrganizationApplicationDetailDto>(
+): Promise<VolunteerApplicationDetailResponse> {
+  return unwrapApiBody(
     await customInstance({
-      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}`,
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}`,
       method: 'GET',
     })
   )
@@ -611,6 +633,18 @@ export async function bulkVolunteerDocumentResultsRemote(
   return unwrapApiBody<BulkActionResponse>(
     await customInstance({
       url: '/api/admin/volunteer-applications/document-results/bulk',
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function bulkIndividualDocumentResultsRemote(
+  payload: BulkResultRequest
+): Promise<BulkActionResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: '/api/admin/individual-applications/document-results/bulk',
       method: 'POST',
       data: payload,
     })

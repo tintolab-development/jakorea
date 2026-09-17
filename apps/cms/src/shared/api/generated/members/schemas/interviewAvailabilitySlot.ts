@@ -6,12 +6,7 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 신청자가 제출한 면접 가능 시간 구간
- */
 export interface InterviewAvailabilitySlot {
-  /** 가능 구간 시작 시각 */
-  startAt: string;
-  /** 가능 구간 종료 시각 */
-  endAt: string;
+  startAt?: string;
+  endAt?: string;
 }

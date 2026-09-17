@@ -77,6 +77,7 @@ export type SponsorProgramEducationTarget =
   | 'high'
   | 'college'
   | 'adult'
+  | 'unknown'
 
 export type SponsorProgramHistoryRow = {
   id: string
@@ -89,6 +90,8 @@ export type SponsorProgramHistoryRow = {
   participantCount: string
   participantType: SponsorProgramParticipantType
   educationTarget: SponsorProgramEducationTarget
+  /** 프로그램의 복수 교육 대상. 구형 단일 응답은 educationTarget 하나만 포함 */
+  educationTargets?: SponsorProgramEducationTarget[]
 }
 
 export type SponsorProgramHistoryFilters = {

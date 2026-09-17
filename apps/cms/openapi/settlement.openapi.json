@@ -7151,10 +7151,39 @@
           },
           "combinedClassYn": {
             "type": "boolean"
+          },
+          "sessionTimes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequestedSessionTimeRequest"
+            },
+            "maxItems": 2,
+            "minItems": 0
           }
         },
         "required": [
           "requestedDate"
+        ]
+      },
+      "RequestedSessionTimeRequest": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 12,
+            "minimum": 1
+          },
+          "startTime": {
+            "type": "string"
+          },
+          "endTime": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "endTime",
+          "startTime"
         ]
       },
       "SaveApplicationRequest": {
@@ -7629,7 +7658,7 @@
       },
       "VolunteerDocumentEvaluationRequest": {
         "type": "object",
-        "description": "일반 프로그램 봉사자 담당자 A/B 서류 평가 저장 요청",
+        "description": "봉사자 신청 담당자 A/B 서류 평가 저장 요청",
         "properties": {
           "evaluation": {
             "type": "string",
@@ -7643,7 +7672,7 @@
       },
       "VolunteerDocumentEvaluationResponse": {
         "type": "object",
-        "description": "일반 프로그램 봉사자 담당자 A/B 서류 평가 저장 결과",
+        "description": "봉사자 신청 담당자 A/B 서류 평가 저장 결과",
         "properties": {
           "applicationId": {
             "type": "integer",
@@ -10033,6 +10062,12 @@
           "combinedClassYn": {
             "type": "boolean"
           },
+          "sessionTimes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RequestedSessionTimeResponse"
+            }
+          },
           "resolvedScheduleId": {
             "type": "integer",
             "format": "int64"
@@ -10051,6 +10086,25 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "RequestedSessionTimeResponse": {
+        "type": "object",
+        "properties": {
+          "sessionOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "period": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startTime": {
+            "type": "string"
+          },
+          "endTime": {
+            "type": "string"
           }
         }
       },
@@ -14789,6 +14843,295 @@
           }
         }
       },
+      "AdminPrivacyUnmaskRequest": {
+        "type": "object",
+        "description": "관리자 개인정보 원문 조회 요청",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "원문 조회 사유. 1자 이상 500자 이하로 입력하며 감사 로그에 저장됩니다.",
+            "example": "회원 요청 확인",
+            "maxLength": 500,
+            "minLength": 1
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로그램 상세 문맥에서 조회하는 경우 프로그램 ID. 지정 시 CMS 전역 역할 대신 프로그램 PM 권한과 대상 회원의 프로그램 연관성을 검증합니다.",
+            "example": 1001
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "Application": {
+        "type": "object",
+        "description": "신청 당시 저장된 폼 응답. 개인정보 직접 식별자는 별도 profile/unmask 정책을 따릅니다.",
+        "properties": {
+          "jaVolunteerExperience": {
+            "type": "boolean"
+          },
+          "formAnswers": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "scheduleChangeCancelCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ujat": {
+            "$ref": "#/components/schemas/UjatProjection"
+          }
+        }
+      },
+      "DocumentEvaluations": {
+        "type": "object",
+        "properties": {
+          "managerA": {
+            "$ref": "#/components/schemas/DocumentManagerEvaluation"
+          },
+          "managerB": {
+            "$ref": "#/components/schemas/DocumentManagerEvaluation"
+          }
+        }
+      },
+      "DocumentManagerEvaluation": {
+        "type": "object",
+        "properties": {
+          "evaluation": {
+            "type": "string"
+          },
+          "evaluatedByAdminId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "evaluatedByAdminName": {
+            "type": "string"
+          },
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "InterviewAvailabilitySlot": {
+        "type": "object",
+        "properties": {
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "InterviewEvaluationSummary": {
+        "type": "object",
+        "properties": {
+          "evaluationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "evaluatorOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "evaluatorAdminId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "evaluatorName": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "evaluationStatus": {
+            "type": "string"
+          },
+          "remark": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "age": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "contact": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "external1365Id": {
+            "type": "string"
+          },
+          "privacyState": {
+            "type": "string"
+          }
+        }
+      },
+      "Screening": {
+        "type": "object",
+        "properties": {
+          "documentStatus": {
+            "type": "string"
+          },
+          "documentEvaluations": {
+            "$ref": "#/components/schemas/DocumentEvaluations"
+          },
+          "interviewEvaluations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InterviewEvaluationSummary"
+            }
+          },
+          "interviewTotalScore": {
+            "type": "number"
+          },
+          "interviewEvaluationRemark": {
+            "type": "string"
+          },
+          "finalResultStatus": {
+            "type": "string"
+          },
+          "reserveRank": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "giveUpYn": {
+            "type": "boolean"
+          },
+          "giveUpReason": {
+            "type": "string"
+          },
+          "rejectReason": {
+            "type": "string"
+          }
+        }
+      },
+      "UjatProjection": {
+        "type": "object",
+        "description": "UJAT 봉사자 신청 상세에서 반복 사용되는 안정적인 named projection",
+        "properties": {
+          "previousActivityTerm": {
+            "type": "string"
+          },
+          "preferredActivityRegion": {
+            "type": "string"
+          },
+          "educationExperience": {
+            "type": "string"
+          }
+        }
+      },
+      "VolunteerApplicationDetailResponse": {
+        "type": "object",
+        "description": "일반/UJAT 프로그램 봉사자 신청 상세",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recruitmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationStatus": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "canEditManagerAEvaluation": {
+            "type": "boolean"
+          },
+          "canEditManagerBEvaluation": {
+            "type": "boolean"
+          },
+          "privacyMaskingLevel": {
+            "type": "string"
+          },
+          "canRevealPersonalInfo": {
+            "type": "boolean"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/Profile"
+          },
+          "application": {
+            "$ref": "#/components/schemas/Application"
+          },
+          "screening": {
+            "$ref": "#/components/schemas/Screening"
+          },
+          "interviewAvailability": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InterviewAvailabilitySlot"
+            }
+          },
+          "interviewAvailabilityCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "interviewAssignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignedInterviewSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignedInterviewStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "assignedInterviewEndAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ApplicationGiveUpRequest": {
         "type": "object",
         "description": "신청 포기 처리 요청",
@@ -14865,6 +15208,11 @@
             "example": "면접 평가 기준 미충족",
             "maxLength": 500,
             "minLength": 0
+          },
+          "notifyTiming": {
+            "type": "string",
+            "description": "최종 결과 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL",
+            "example": "ON_ANNOUNCEMENT"
           }
         },
         "required": [
@@ -14890,10 +15238,31 @@
             "example": "지원 요건 미충족",
             "maxLength": 500,
             "minLength": 0
+          },
+          "notifyTiming": {
+            "type": "string",
+            "description": "결과 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL",
+            "example": "ON_ANNOUNCEMENT"
           }
         },
         "required": [
           "result"
+        ]
+      },
+      "ApplicationDecisionCancelRequest": {
+        "type": "object",
+        "description": "신청 결정 취소 요청",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "승인/반려 취소 사유. 상태 이력과 알림에 사용됩니다.",
+            "example": "신청 정보 재검토 필요",
+            "maxLength": 500,
+            "minLength": 2
+          }
+        },
+        "required": [
+          "reason"
         ]
       },
       "BulkResultRequest": {
@@ -15036,28 +15405,6 @@
         },
         "required": [
           "ids"
-        ]
-      },
-      "AdminPrivacyUnmaskRequest": {
-        "type": "object",
-        "description": "관리자 개인정보 원문 조회 요청",
-        "properties": {
-          "reason": {
-            "type": "string",
-            "description": "원문 조회 사유. 1자 이상 500자 이하로 입력하며 감사 로그에 저장됩니다.",
-            "example": "회원 요청 확인",
-            "maxLength": 500,
-            "minLength": 1
-          },
-          "programId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "프로그램 상세 문맥에서 조회하는 경우 프로그램 ID. 지정 시 CMS 전역 역할 대신 프로그램 PM 권한과 대상 회원의 프로그램 연관성을 검증합니다.",
-            "example": 1001
-          }
-        },
-        "required": [
-          "reason"
         ]
       },
       "MemberDetailResponse": {
@@ -17298,10 +17645,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -17387,7 +17734,6 @@
               "GENERAL_ORGANIZATION",
               "GENERAL_INDIVIDUAL",
               "COMPANY_SCHOOL",
-              "ONE_COMPANY_ONE_SCHOOL",
               "TRAINED_TEACHER",
               "GEMINI",
               "GEMINI_TRAINING",
@@ -19040,21 +19386,29 @@
       },
       "ProgramDraftSaveRequest": {
         "type": "object",
-        "description": "프로그램 draft 저장 요청",
+        "description": "프로그램 임시저장 요청",
         "properties": {
           "programType": {
             "type": "string",
             "description": "프로그램 유형",
-            "example": "GEMINI_TRAINING"
+            "example": "GEMINI_TRAINING",
+            "maxLength": 100,
+            "minLength": 0
           },
           "draftPayloadJson": {
             "type": "string",
-            "description": "프론트 편집 상태를 보존하는 draft JSON. 개인정보/secret을 포함하지 않습니다.",
+            "description": "프론트 편집 상태를 담는 임시저장 JSON 객체입니다. 개인정보나 비밀정보를 포함할 수 없습니다.",
             "example": {
               "nameKo": "JA 코리아 금융교육"
-            }
+            },
+            "maxLength": 1048576,
+            "minLength": 0
           }
-        }
+        },
+        "required": [
+          "draftPayloadJson",
+          "programType"
+        ]
       },
       "ProgramPostRequest": {
         "type": "object",
@@ -20778,21 +21132,124 @@
           "historyRowIds"
         ]
       },
-      "ApplicationDecisionCancelRequest": {
+      "OrganizationApplicationDetailResponse": {
         "type": "object",
-        "description": "신청 결정 취소 요청",
         "properties": {
-          "reason": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programName": {
+            "type": "string"
+          },
+          "programType": {
+            "type": "string"
+          },
+          "recruitmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "organizationAddress": {
+            "type": "string"
+          },
+          "organizationAddressDetail": {
+            "type": "string"
+          },
+          "requestedGrade": {
+            "type": "string"
+          },
+          "requestedEducationFormat": {
+            "type": "string"
+          },
+          "textbookId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "textbookName": {
+            "type": "string"
+          },
+          "teacherMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "teacherName": {
+            "type": "string"
+          },
+          "teacherPhone": {
+            "type": "string"
+          },
+          "teacherEmail": {
+            "type": "string"
+          },
+          "applicationStatus": {
+            "type": "string"
+          },
+          "requestedStudentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requestedMaleCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requestedFemaleCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requestedClassCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "requestedScheduleMemo": {
+            "type": "string"
+          },
+          "submittedAt": {
             "type": "string",
-            "description": "승인/반려 취소 사유. 상태 이력과 알림에 사용됩니다.",
-            "example": "신청 정보 재검토 필요",
-            "maxLength": 500,
-            "minLength": 2
+            "format": "date-time"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rejectedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rejectReason": {
+            "type": "string"
+          },
+          "latestFormResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "privacyMaskingLevel": {
+            "type": "string"
+          },
+          "canRevealPersonalInfo": {
+            "type": "boolean"
           }
-        },
-        "required": [
-          "reason"
-        ]
+        }
       },
       "NotificationTemplateUpsertRequest": {
         "type": "object",
@@ -22397,6 +22854,21 @@
           }
         }
       },
+      "InterviewAssignmentCancelRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "면접 배정 취소 사유",
+            "example": "서류 승인 취소 전 면접 배정을 해제합니다.",
+            "maxLength": 500,
+            "minLength": 2
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
       "InstructorVerificationRequestCreateRequest": {
         "type": "object",
         "properties": {
@@ -22951,6 +23423,155 @@
           "reason"
         ]
       },
+      "AvailableScheduleSlot": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "assignable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "InstructorApplicationDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recruitmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorName": {
+            "type": "string"
+          },
+          "nameHanja": {
+            "type": "string"
+          },
+          "nameEnglish": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "contact": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "homeAddress": {
+            "type": "string"
+          },
+          "homeAddressDetail": {
+            "type": "string"
+          },
+          "educationLevel": {
+            "type": "string"
+          },
+          "educationSchoolName": {
+            "type": "string"
+          },
+          "affiliation": {
+            "type": "string"
+          },
+          "teachingExperience": {
+            "type": "string"
+          },
+          "jaLectureExperienceYears": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "jaEvaluationGrade": {
+            "type": "string"
+          },
+          "oneLineIntro": {
+            "type": "string"
+          },
+          "availableScheduleMemo": {
+            "type": "string"
+          },
+          "availableScheduleSlots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailableScheduleSlot"
+            }
+          },
+          "managerComment": {
+            "type": "string"
+          },
+          "applicationStatus": {
+            "type": "string"
+          },
+          "instructorTypeSnapshot": {
+            "type": "string"
+          },
+          "instructorFeeGradeSnapshot": {
+            "type": "string"
+          },
+          "distanceKm": {
+            "type": "number"
+          },
+          "longDistance": {
+            "type": "boolean"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rejectedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rejectReason": {
+            "type": "string"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "privacyMaskingLevel": {
+            "type": "string"
+          },
+          "canRevealPersonalInfo": {
+            "type": "boolean"
+          }
+        }
+      },
       "Cancellation": {
         "type": "object",
         "properties": {
@@ -23180,54 +23801,6 @@
           }
         }
       },
-      "Application": {
-        "type": "object",
-        "properties": {
-          "selfIntroduction": {
-            "type": "string"
-          },
-          "preferredEducationSchedules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PreferredEducationScheduleResponse"
-            }
-          },
-          "scheduleChangeCancelCount": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "DocumentEvaluations": {
-        "type": "object",
-        "properties": {
-          "managerA": {
-            "$ref": "#/components/schemas/DocumentManagerEvaluation"
-          },
-          "managerB": {
-            "$ref": "#/components/schemas/DocumentManagerEvaluation"
-          }
-        }
-      },
-      "DocumentManagerEvaluation": {
-        "type": "object",
-        "properties": {
-          "evaluation": {
-            "type": "string"
-          },
-          "evaluatedByAdminId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "evaluatedByAdminName": {
-            "type": "string"
-          },
-          "evaluatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
       "IndividualApplicationDetailResponse": {
         "type": "object",
         "description": "일반 프로그램 개인 신청 상세",
@@ -23319,59 +23892,6 @@
           }
         }
       },
-      "InterviewAvailabilitySlot": {
-        "type": "object",
-        "description": "신청자가 제출한 면접 가능 시간 구간",
-        "properties": {
-          "startAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "가능 구간 시작 시각"
-          },
-          "endAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "가능 구간 종료 시각"
-          }
-        },
-        "required": [
-          "endAt",
-          "startAt"
-        ]
-      },
-      "InterviewEvaluationSummary": {
-        "type": "object",
-        "properties": {
-          "evaluationId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "evaluatorOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "evaluatorAdminId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "evaluatorName": {
-            "type": "string"
-          },
-          "score": {
-            "type": "number"
-          },
-          "evaluationStatus": {
-            "type": "string"
-          },
-          "remark": {
-            "type": "string"
-          },
-          "submittedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
       "PreferredEducationScheduleResponse": {
         "type": "object",
         "description": "신청자가 해당 신청 건에서 선택한 교육 일정",
@@ -23391,91 +23911,6 @@
           "endAt": {
             "type": "string",
             "format": "date-time"
-          }
-        }
-      },
-      "Profile": {
-        "type": "object",
-        "description": "신청 시점 프로필 우선, 기존 데이터는 현재 회원 프로필 fallback",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "신청자 실명. MASKED/UNMASKED 모두 평문(마스킹하지 않음)."
-          },
-          "gender": {
-            "type": "string"
-          },
-          "birthDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "age": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "schoolEnrollmentStatus": {
-            "type": "string"
-          },
-          "affiliationSchool": {
-            "type": "string",
-            "description": "MASKED 시 학교명 **대학교 형식 마스킹. UNMASKED 시 원문."
-          },
-          "affiliationGrade": {
-            "type": "string"
-          },
-          "contact": {
-            "type": "string",
-            "description": "MASKED 예: 010-****-5678. UNMASKED 시 원문."
-          },
-          "email": {
-            "type": "string",
-            "description": "MASKED 예: 0915***@naver.com. UNMASKED 시 원문."
-          },
-          "homeAddress": {
-            "type": "string",
-            "description": "MASKED 자택 주소: 동까지 + ' *****' (FE blur). 기관 주소 아님. UNMASKED 시 원문."
-          },
-          "external1365Id": {
-            "type": "string"
-          },
-          "privacyState": {
-            "type": "string"
-          }
-        }
-      },
-      "Screening": {
-        "type": "object",
-        "properties": {
-          "documentStatus": {
-            "type": "string"
-          },
-          "documentEvaluations": {
-            "$ref": "#/components/schemas/DocumentEvaluations"
-          },
-          "interviewEvaluations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InterviewEvaluationSummary"
-            }
-          },
-          "interviewTotalScore": {
-            "type": "number"
-          },
-          "interviewEvaluationRemark": {
-            "type": "string"
-          },
-          "finalResultStatus": {
-            "type": "string"
-          },
-          "reserveRank": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "giveUpYn": {
-            "type": "boolean"
-          },
-          "giveUpReason": {
-            "type": "string"
           }
         }
       },
@@ -23910,7 +24345,6 @@
               "GENERAL_ORGANIZATION",
               "GENERAL_INDIVIDUAL",
               "COMPANY_SCHOOL",
-              "ONE_COMPANY_ONE_SCHOOL",
               "TRAINED_TEACHER",
               "GEMINI",
               "GEMINI_TRAINING",
@@ -28768,6 +29202,52 @@
           }
         }
       },
+      "OrganizationApplicationUpdateRequest": {
+        "type": "object",
+        "description": "승인된 기관 신청의 수정 허용 항목 부분 수정 요청. 누락 필드는 기존값을 유지합니다.",
+        "properties": {
+          "requestedGrade": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "organizationAddressDetail": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "requestedClassCount": {
+            "type": "integer",
+            "format": "int32",
+            "writeOnly": true
+          },
+          "requestedStudentCount": {
+            "type": "integer",
+            "format": "int32",
+            "writeOnly": true
+          },
+          "requestedEducationFormat": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "teacherMemberId": {
+            "type": "integer",
+            "format": "int64",
+            "writeOnly": true
+          },
+          "teacherPhone": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "teacherEmail": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "textbookId": {
+            "type": "integer",
+            "format": "int64",
+            "writeOnly": true
+          }
+        }
+      },
       "PortraitConsentReviewRequest": {
         "type": "object",
         "properties": {
@@ -29135,155 +29615,6 @@
             "type": "string",
             "maxLength": 2000,
             "minLength": 0
-          }
-        }
-      },
-      "AvailableScheduleSlot": {
-        "type": "object",
-        "properties": {
-          "scheduleId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "startAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "endAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "assignable": {
-            "type": "boolean"
-          }
-        }
-      },
-      "InstructorApplicationDetailResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "programId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "recruitmentId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "instructorMemberId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "instructorName": {
-            "type": "string",
-            "description": "강사 실명. 프로그램 관리에서는 마스킹하지 않습니다."
-          },
-          "nameHanja": {
-            "type": "string"
-          },
-          "nameEnglish": {
-            "type": "string"
-          },
-          "birthDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "gender": {
-            "type": "string"
-          },
-          "contact": {
-            "type": "string",
-            "description": "마스킹 연락처. 예: 010-****-5678"
-          },
-          "email": {
-            "type": "string",
-            "description": "마스킹 이메일. 예: 0915***@naver.com"
-          },
-          "homeAddress": {
-            "type": "string",
-            "description": "자택 주소 라인. 동(읍/면/리) 또는 구/군 경계까지. 기관 주소 아님."
-          },
-          "homeAddressDetail": {
-            "type": "string",
-            "description": "상세주소 blur 자리표시자. 상세가 있으면 '*****', 없으면 null. FE가 CSS blur 적용."
-          },
-          "educationLevel": {
-            "type": "string"
-          },
-          "educationSchoolName": {
-            "type": "string",
-            "description": "학력 학교명 마스킹. 예: **대학교"
-          },
-          "affiliation": {
-            "type": "string"
-          },
-          "teachingExperience": {
-            "type": "string"
-          },
-          "jaLectureExperienceYears": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "jaEvaluationGrade": {
-            "type": "string"
-          },
-          "oneLineIntro": {
-            "type": "string"
-          },
-          "availableScheduleMemo": {
-            "type": "string"
-          },
-          "availableScheduleSlots": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AvailableScheduleSlot"
-            }
-          },
-          "managerComment": {
-            "type": "string"
-          },
-          "applicationStatus": {
-            "type": "string"
-          },
-          "instructorTypeSnapshot": {
-            "type": "string"
-          },
-          "instructorFeeGradeSnapshot": {
-            "type": "string"
-          },
-          "distanceKm": {
-            "type": "number"
-          },
-          "longDistance": {
-            "type": "boolean"
-          },
-          "submittedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "approvedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "rejectedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "rejectReason": {
-            "type": "string"
-          },
-          "participantId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "availableActions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           }
         }
       },
@@ -35702,6 +36033,7 @@
       },
       "VolunteerApplicationListItemResponse": {
         "type": "object",
+        "description": "봉사자 신청 목록 항목",
         "properties": {
           "id": {
             "type": "integer",
@@ -35725,8 +36057,21 @@
             "type": "integer",
             "format": "int64"
           },
+          "affiliationOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "봉사자 회원에 DB로 연결된 기존 소속 학교/기관 ID. 저장된 소속이 없으면 null"
+          },
           "memberName": {
             "type": "string"
+          },
+          "contact": {
+            "type": "string",
+            "description": "목록용 마스킹 연락처"
+          },
+          "email": {
+            "type": "string",
+            "description": "목록용 마스킹 이메일"
           },
           "applicationStatus": {
             "type": "string"
@@ -35757,16 +36102,43 @@
           "essaySubmitted": {
             "type": "boolean"
           },
+          "rejectReason": {
+            "type": "string",
+            "description": "현재 반려 사유. 반려 상태가 아니면 null"
+          },
+          "managerAEvaluation": {
+            "type": "string",
+            "description": "담당자 A 서류평가: UNREVIEWED/PASS/NEUTRAL/FAIL"
+          },
+          "managerBEvaluation": {
+            "type": "string",
+            "description": "담당자 B 서류평가: UNREVIEWED/PASS/NEUTRAL/FAIL"
+          },
+          "interviewAvailability": {
+            "type": "array",
+            "description": "신청자가 제출한 면접 가능 시간 구간",
+            "items": {
+              "$ref": "#/components/schemas/InterviewAvailabilitySlot"
+            }
+          },
+          "interviewAvailabilityCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "유효한 면접 가능 시간 구간 수",
+            "minimum": 0
+          },
           "interviewAssignmentId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "현재 유효한 면접 배정 ID. 면접 평가 API path에 사용"
           },
           "interviewAssignmentStatus": {
             "type": "string"
           },
           "assignedInterviewSlotId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "현재 배정된 면접 슬롯 ID"
           },
           "assignedInterviewStartAt": {
             "type": "string",
@@ -35785,12 +36157,6 @@
           "submittedAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "managerAEvaluation": {
-            "type": "string"
-          },
-          "managerBEvaluation": {
-            "type": "string"
           },
           "canEditManagerAEvaluation": {
             "type": "boolean"
@@ -36265,7 +36631,8 @@
             "format": "int64"
           },
           "answerPreviewJson": {
-            "type": "string"
+            "type": "string",
+            "description": "최대 5개 답변 preview JSON 문자열. NON_PII/PUBLIC/NONE의 answerDisplayText만 표시하고 민감·미분류 답변은 null"
           },
           "submittedAt": {
             "type": "string",
@@ -37497,6 +37864,11 @@
             "type": "integer",
             "format": "int64"
           },
+          "affiliationOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "강사 회원에 DB로 연결된 기존 소속 학교/기관 ID. 저장된 소속이 없으면 null"
+          },
           "instructorName": {
             "type": "string",
             "description": "강사 실명. 프로그램 관리에서는 마스킹하지 않습니다."
@@ -37627,13 +37999,18 @@
             "type": "integer",
             "format": "int64"
           },
+          "affiliationOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "신청 시점에 DB로 연결된 소속 학교/기관 ID. 저장된 소속이 없으면 null"
+          },
           "memberName": {
             "type": "string",
             "description": "신청자 실명. 프로그램 관리 목록에서는 마스킹하지 않습니다."
           },
           "affiliationName": {
             "type": "string",
-            "description": "신청 시점 소속/학교명. 학교명은 **대학교 형식으로 마스킹됩니다."
+            "description": "신청 시점 소속명 우선의 목록 표시값"
           },
           "applicationGrade": {
             "type": "string",
@@ -37641,7 +38018,7 @@
           },
           "homeAddressSummary": {
             "type": "string",
-            "description": "자택 주소 요약. 시군구만 있으면 그대로, 상세 주소가 있으면 동(읍/면/리)까지 + ' *****' (FE blur 대상). 기관 주소 아님."
+            "description": "상세 번지를 제외한 목록용 주소 요약"
           },
           "preferredEducationSchedules": {
             "type": "array",
@@ -37695,6 +38072,14 @@
             "description": "유효한 신청자 면접 가능 시간 구간 수",
             "minimum": 0
           },
+          "interviewAssignmentId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "현재 유효한 면접 배정 ID. 면접 평가 API path에 사용"
+          },
+          "interviewAssignmentStatus": {
+            "type": "string"
+          },
           "assignedInterviewSlotId": {
             "type": "integer",
             "format": "int64",
@@ -37710,18 +38095,15 @@
             "format": "date-time",
             "description": "관리자가 확정한 면접 종료 시각. 신청자 가능 일정과 별개입니다."
           },
-          "interviewAssignmentId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "interviewAssignmentStatus": {
-            "type": "string"
-          },
           "interviewEvaluations": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/InterviewEvaluationSummary"
             }
+          },
+          "rejectReason": {
+            "type": "string",
+            "description": "현재 신청/서류 반려 사유. 반려 상태가 아니면 null"
           },
           "submittedAt": {
             "type": "string",
@@ -38196,6 +38578,11 @@
           "organizationApplicationId": {
             "type": "integer",
             "format": "int64"
+          },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "배정 대상 기관 신청이 참조하는 실제 기관 ID. 개인 출강지 배정이면 null"
           },
           "instructorApplicationId": {
             "type": "integer",
@@ -40516,15 +40903,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },

@@ -47,8 +47,8 @@
   .participating-institutions-section__table
   table.ant-table {
   table-layout: fixed !important;
-  /* max-content면 열 합이 래퍼보다 작아도 가로스크롤이 남음 — 100%로 맞춤 */
-  width: 100% !important;
+  /* 공통 cms-data-table의 width: 100% !important가 scroll.x 숫자 폭을 덮지 않도록 복원 */
+  width: var(--participating-institutions-table-width, 100%) !important;
   min-width: 100%;
 }
 
@@ -161,7 +161,7 @@
 
 /*
  * 교재 배송 현황(StatusDropdownCell)
- * - 배지 100×32 / 열·트리거 116px: column width + `PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE` + status-dropdown-cell.css `--sdcb-*`
+ * - 배지 100×32 / 열 최소 140px: column width + `PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE` + status-dropdown-cell.css `--sdcb-*`
  * - 아래는 cms-data-table 행 패딩·드롭다운 열림 시 세로 흔들림만 막음 (공통 셀 패딩 0은 status-dropdown-cell.css)
  */
 .participating-institutions-section__table--textbook-dropdown.cms-data-table
@@ -189,9 +189,9 @@
   th.status-dropdown-cell__header--tag-100,
 .participating-institutions-section__table--textbook-dropdown.cms-data-table
   td.status-dropdown-cell__cell-status--tag-100 {
-  width: 116px !important;
-  min-width: 116px !important;
-  max-width: 116px !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
   box-sizing: border-box !important;
   text-align: center !important;
   padding-left: 0 !important;

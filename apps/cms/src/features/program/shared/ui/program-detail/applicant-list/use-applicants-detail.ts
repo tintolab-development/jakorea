@@ -244,13 +244,9 @@ export function useApplicantsDetail({
       if (!institutionApplicationsRemote.remoteEnabled) return 'skipped'
       try {
         const numericIds = ids.map(id => Number(id))
-        const generalRemote = !isTrainedTeachersSurface
-          ? applicationsRemote
-          : null
+        const generalRemote = !isTrainedTeachersSurface ? applicationsRemote : null
         const canBulk =
-          generalRemote != null &&
-          ids.length >= 2 &&
-          numericIds.every(id => Number.isFinite(id))
+          generalRemote != null && ids.length >= 2 && numericIds.every(id => Number.isFinite(id))
         if (canBulk) {
           const result =
             decision === 'approve'
@@ -300,13 +296,13 @@ export function useApplicantsDetail({
     async (
       ids: string[],
       decision: 'approve' | 'reject',
-      reason?: string
+      reason?: string,
+      approvalPayload?: import('@/features/program/general/api/applications-api-client').InstructorApplicationApprovalRequest
     ): Promise<'ok' | 'error' | 'skipped'> => {
       if (!applicationsRemote.instructorRemoteEnabled) return 'skipped'
       try {
         const numericIds = ids.map(id => Number(id))
-        const canBulk =
-          ids.length >= 2 && numericIds.every(id => Number.isFinite(id))
+        const canBulk = ids.length >= 2 && numericIds.every(id => Number.isFinite(id))
         if (canBulk) {
           const result =
             decision === 'approve'
@@ -328,7 +324,7 @@ export function useApplicantsDetail({
         } else {
           for (const id of ids) {
             if (decision === 'approve') {
-              await applicationsRemote.approveInstructor(id)
+              await applicationsRemote.approveInstructor(id, approvalPayload)
             } else {
               await applicationsRemote.rejectInstructor(id, {
                 reason: reason?.trim() || '반려',
@@ -356,11 +352,22 @@ export function useApplicantsDetail({
       try {
         // 면접 ON 1차 서류 탭: document-result (PASS_DOCUMENT / FAIL)
         if (individualScreeningStage === 'doc1') {
-          for (const id of ids) {
-            await applicationsRemote.submitIndividualDocumentResult(id, {
-              result: decision === 'approve' ? 'PASS' : 'FAIL',
-              reason: decision === 'reject' ? reason?.trim() || '반려' : reason,
-            })
+          const payload = {
+            result: decision === 'approve' ? 'PASS' : 'FAIL',
+            reason: decision === 'reject' ? reason?.trim() || '반려' : reason,
+          } as const
+          if (ids.length > 1) {
+            const result = await applicationsRemote.submitIndividualDocumentResultBulk(ids, payload)
+            if ((result.failureCount ?? 0) > 0) {
+              showAlert({
+                title: '처리 실패',
+                content: `선택한 신청 중 ${result.failureCount}건을 처리하지 못했습니다.`,
+              })
+              await applicationsRemote.invalidateIndividualApplications()
+              return 'error'
+            }
+          } else {
+            await applicationsRemote.submitIndividualDocumentResult(ids[0], payload)
           }
         } else {
           for (const id of ids) {
@@ -380,7 +387,7 @@ export function useApplicantsDetail({
         return 'error'
       }
     },
-    [applicationsRemote, individualScreeningStage, notifyRemoteDecisionFailure]
+    [applicationsRemote, individualScreeningStage, notifyRemoteDecisionFailure, showAlert]
   )
 
   const rawTableData = useMemo((): ApplicantListRow[] => {
@@ -512,8 +519,7 @@ export function useApplicantsDetail({
     if (!applicantIdFromUrl || selectedItem || !menu || menu === 'volunteers') return
     // remote 목록 로딩 중에는 URL deep-link를 지우지 않음
     const applicationsLoading =
-      applicationsRemote.applicationsLoading ||
-      trainedTeacherApplicationsRemote.applicationsLoading
+      applicationsRemote.applicationsLoading || trainedTeacherApplicationsRemote.applicationsLoading
     if (applicationsLoading) return
     setSearchParams(
       prevParams => {
@@ -582,12 +588,7 @@ export function useApplicantsDetail({
     setPendingFilters({})
     setAppliedFilters({})
     setSelectedRowKeys([])
-  }, [
-    menu,
-    instructorColumnPreset,
-    applicationsRemote.instructorRemoteEnabled,
-    setPendingFilters,
-  ])
+  }, [menu, instructorColumnPreset, applicationsRemote.instructorRemoteEnabled, setPendingFilters])
 
   const prevViewModeRef = useRef(viewMode)
   useEffect(() => {
@@ -983,11 +984,7 @@ export function useApplicantsDetail({
         return 'error'
       }
     },
-    [
-      applicationsRemote,
-      isTrainedTeachersSurface,
-      notifyRemoteDecisionFailure,
-    ]
+    [applicationsRemote, isTrainedTeachersSurface, notifyRemoteDecisionFailure]
   )
 
   const applyRemoteInstitutionCancelRejection = useCallback(
@@ -1010,31 +1007,50 @@ export function useApplicantsDetail({
         return 'error'
       }
     },
-    [
-      applicationsRemote,
-      isTrainedTeachersSurface,
-      notifyRemoteDecisionFailure,
-    ]
+    [applicationsRemote, isTrainedTeachersSurface, notifyRemoteDecisionFailure]
   )
 
   const handleCancelApproval = (id: string) => {
     void applyRemoteInstitutionCancelApproval(id, '승인 취소')
   }
 
-  const handleCancelApprovalInstructor = (id: string) => {
-    setInstructorList(prev =>
-      prev.map(row =>
-        row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'pending') : row
-      )
-    )
+  const handleCancelApprovalInstructor = async (id: string, reason = '승인 취소') => {
+    if (!applicationsRemote.instructorRemoteEnabled) return false
+    try {
+      await applicationsRemote.cancelInstructorApproval(id, reason)
+      await applicationsRemote.invalidateApplications()
+      return true
+    } catch (error) {
+      notifyRemoteDecisionFailure(error)
+      return false
+    }
   }
 
-  const handleCancelRejectInstructor = (id: string) => {
-    setInstructorList(prev =>
-      prev.map(row =>
-        row.id === id ? patchApplicantInstructorForApprovalStatus(row, 'pending') : row
-      )
-    )
+  const handleCancelRejectInstructor = async (id: string, reason = '반려 취소') => {
+    if (!applicationsRemote.instructorRemoteEnabled) return false
+    try {
+      await applicationsRemote.cancelInstructorRejection(id, reason)
+      await applicationsRemote.invalidateApplications()
+      return true
+    } catch (error) {
+      notifyRemoteDecisionFailure(error)
+      return false
+    }
+  }
+
+  const resendInstructorNotification = async (
+    id: string,
+    payload: { timing: string; scheduledAt?: string | null }
+  ) => {
+    if (!applicationsRemote.instructorRemoteEnabled) return false
+    try {
+      await applicationsRemote.resendInstructorNotification(id, payload)
+      await applicationsRemote.invalidateApplications()
+      return true
+    } catch (error) {
+      notifyRemoteDecisionFailure(error)
+      return false
+    }
   }
 
   const handleCancelRejectInstitution = (id: string) => {
@@ -1177,6 +1193,7 @@ export function useApplicantsDetail({
     handleCancelApproval,
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,
+    resendInstructorNotification,
     handleCancelRejectInstitution,
     handleCancelApprovalIndividual,
     handleCancelRejectIndividual,
@@ -1190,8 +1207,7 @@ export function useApplicantsDetail({
       applicationsRemote.applicationsLoading ||
       trainedTeacherApplicationsRemote.applicationsLoading,
     hasNextPage: !isTrainedTeachersSurface && applicationsRemote.hasNextPage,
-    isFetchingNextPage:
-      !isTrainedTeachersSurface && applicationsRemote.isFetchingNextPage,
+    isFetchingNextPage: !isTrainedTeachersSurface && applicationsRemote.isFetchingNextPage,
     fetchNextPage: applicationsRemote.fetchNextPage,
     infiniteScrollResetKey: `${programId ?? ''}:${menu}:${JSON.stringify(appliedFilters)}:${viewMode}`,
   }

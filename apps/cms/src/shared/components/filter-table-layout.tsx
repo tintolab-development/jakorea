@@ -25,7 +25,10 @@ import {
   type FilterFieldConfig,
   type TableFilterGroupProps,
 } from './table-filter-group'
-import { onAdminWriteClickCapture } from '@/shared/lib/admin-role-policy'
+import {
+  onAdminWriteClickCapture,
+  type AdminActionKind,
+} from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 
 export type { FilterFieldConfig, TableFilterGroupProps }
@@ -48,6 +51,8 @@ export interface FilterTableLayoutProps extends TableFilterGroupProps {
   filterResponsiveWrap?: boolean
   /** 테이블 상단 제목 */
   title?: ReactNode
+  /** 툴바 actions 클릭 권한. 기본은 일반 쓰기 권한 */
+  toolbarAdminAction?: AdminActionKind
   /** false면 `title`을 툴바에 렌더하지 않음 (엑셀 파일명 등에는 `title` 값 그대로 사용 가능) */
   showTitle?: boolean
   /** 제목과 건수(description) 사이 보조 텍스트(JSX) */
@@ -87,6 +92,7 @@ export function FilterTableLayout({
   showFilter = true,
   filterResponsiveWrap = true,
   title,
+  toolbarAdminAction = 'write',
   showTitle = true,
   titleNote,
   description,
@@ -208,7 +214,9 @@ export function FilterTableLayout({
               {actions != null ? (
                 <div
                   className="filter-table-layout__toolbar-actions-slot"
-                  onClickCapture={event => onAdminWriteClickCapture(event, roleCode)}
+                  onClickCapture={event =>
+                    onAdminWriteClickCapture(event, roleCode, toolbarAdminAction)
+                  }
                 >
                   {actions}
                 </div>
@@ -225,7 +233,9 @@ export function FilterTableLayout({
               {actionsAfterExcel != null ? (
                 <div
                   className="filter-table-layout__toolbar-actions-slot"
-                  onClickCapture={event => onAdminWriteClickCapture(event, roleCode)}
+                  onClickCapture={event =>
+                    onAdminWriteClickCapture(event, roleCode, toolbarAdminAction)
+                  }
                 >
                   {actionsAfterExcel}
                 </div>

@@ -29,12 +29,12 @@ import {
 } from '@/features/auth/lib/register-social-connect-state'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { withdrawAdminSelfRemote } from '@/features/user/api/members-api-client'
 import {
-  fetchAdminAccountDetailRemote,
-  withdrawAdminSelfRemote,
-} from '@/features/user/api/members-api-client'
-import { mapAdminAccountDetailToUser } from '@/features/user/api/map-admin-account-detail-to-user'
-import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
+  fetchAdminMe,
+  updateAdminMarketingConsent,
+} from '@/features/auth/api/fetch-admin-me'
+import { applyAdminMeToSessionUser } from '@/features/auth/lib/apply-admin-me-to-session-user'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import {
@@ -219,7 +219,8 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
   const [withdrawing, setWithdrawing] = useState(false)
   const [marketingConsent, setMarketingConsent] = useState<MarketingConsentValue>('disagree')
   const [marketingAgreedAt, setMarketingAgreedAt] = useState('-')
-  /** 약관 표시용 — 세션에는 terms가 없어 상세 GET으로 보강 */
+  const [marketingConsentUpdating, setMarketingConsentUpdating] = useState(false)
+  /** 약관 표시용 — GET /api/admin/me 응답을 정본으로 사용 */
   const [profileTermsAgreements, setProfileTermsAgreements] = useState<
     TermsAgreementRow[] | undefined
   >(undefined)
@@ -261,51 +262,43 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
   }, [errorMessage, isVerifying, showAlert])
 
   useEffect(() => {
-    if (!open || !user) {
+    const currentUser = useAuthStore.getState().user
+    if (!open || !currentUser) {
       setProfileTermsAgreements(undefined)
       return
     }
 
     const sampleFallback = !isMembersRemoteEnabled()
-    const initial = syncMarketingConsentState(user.termsAgreements, sampleFallback)
-    setProfileTermsAgreements(user.termsAgreements)
+    const initial = syncMarketingConsentState(currentUser.termsAgreements, sampleFallback)
+    setProfileTermsAgreements(currentUser.termsAgreements)
     setMarketingConsent(initial.consent)
     setMarketingAgreedAt(initial.agreedAt)
 
-    const adminAccountId = user.adminAccountId
-    if (!isMembersRemoteEnabled() || adminAccountId == null) {
+    if (!isMembersRemoteEnabled()) {
       return
     }
 
     let cancelled = false
     void (async () => {
       try {
-        const detail = await fetchAdminAccountDetailRemote(adminAccountId)
+        const me = await fetchAdminMe()
         if (cancelled) return
-        const mapped = mapAdminAccountDetailToUser(detail, { fallbackId: user.id })
+        const mapped = applyAdminMeToSessionUser(currentUser, me)
         const terms = mapped.termsAgreements
         setProfileTermsAgreements(terms)
         const marketing = syncMarketingConsentState(terms, false)
         setMarketingConsent(marketing.consent)
         setMarketingAgreedAt(marketing.agreedAt)
-        const gender = toApiGender(detail.gender)
-        const birthDate = toApiBirthDate(detail.birthDate)
-        if (gender || birthDate || terms) {
-          updateUser({
-            ...(gender ? { gender } : {}),
-            ...(birthDate ? { birthDate } : {}),
-            ...(terms ? { termsAgreements: terms } : {}),
-          })
-        }
+        updateUser(mapped)
       } catch (error) {
-        console.debug('profileEditModal fetchAdminAccountDetail failed', error)
+        console.debug('profileEditModal fetchAdminMe failed', error)
       }
     })()
 
     return () => {
       cancelled = true
     }
-  }, [open, user?.id, user?.adminAccountId, updateUser])
+  }, [open, user?.id, updateUser])
 
   const handleCancel = () => {
     onCancel()
@@ -375,11 +368,51 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
     await verify()
   }
 
-  const handleMarketingChange = (next: MarketingConsentValue) => {
-    if (!user || next === marketingConsent) return
+  const handleMarketingChange = async (next: MarketingConsentValue) => {
+    if (!user || next === marketingConsent || marketingConsentUpdating) return
+    if (!isMembersRemoteEnabled()) {
+      setMarketingConsent(next)
+      return
+    }
 
-    // TODO(api): 마케팅 제공 동의 변경 API 연동 후 서버 반영
-    setMarketingConsent(next)
+    setMarketingConsentUpdating(true)
+    try {
+      const response = await updateAdminMarketingConsent({ agreed: next === 'agree' })
+      const agreed = response.agreed === true
+      const agreedAtDisplay = formatTermsAgreedAt(
+        response.agreedAt,
+        agreed ? SAMPLE_AGREED_AT : '-'
+      )
+      const previousTerms = profileTermsAgreements ?? user.termsAgreements ?? []
+      const marketingRow: TermsAgreementRow = {
+        termsType: response.consentType?.trim() || 'MARKETING',
+        termsVersion: response.version?.trim() || undefined,
+        required: false,
+        agreed,
+        agreedAt: response.agreedAt,
+      }
+      const nextTerms = previousTerms.some(
+        row => TERMS_TYPE_TO_KIND[row.termsType?.trim().toUpperCase() ?? ''] === 'MARKETING'
+      )
+        ? previousTerms.map(row =>
+            TERMS_TYPE_TO_KIND[row.termsType?.trim().toUpperCase() ?? ''] === 'MARKETING'
+              ? { ...row, ...marketingRow }
+              : row
+          )
+        : [...previousTerms, marketingRow]
+
+      setMarketingConsent(agreed ? 'agree' : 'disagree')
+      setMarketingAgreedAt(agreedAtDisplay)
+      setProfileTermsAgreements(nextTerms)
+      updateUser({ termsAgreements: nextTerms })
+    } catch (error) {
+      showAlert({
+        title: '마케팅 동의 변경 실패',
+        content: getMemberApiErrorMessage(error, '마케팅 제공 동의를 변경하지 못했습니다.'),
+      })
+    } finally {
+      setMarketingConsentUpdating(false)
+    }
   }
 
   if (!user) return null
@@ -569,8 +602,9 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
                       size="large"
                       options={MARKETING_RADIO_OPTIONS}
                       value={marketingConsent}
+                      disabled={marketingConsentUpdating}
                       onChange={event =>
-                        handleMarketingChange(event.target.value as MarketingConsentValue)
+                        void handleMarketingChange(event.target.value as MarketingConsentValue)
                       }
                     />
                     <DetailInfoForm.TdDivider />

@@ -195,7 +195,8 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
       const remoteOk = await volunteerRemote.applyRemoteDocumentResult(
         ids,
         status === 'pass' ? 'PASS' : 'FAIL',
-        reason
+        reason,
+        _notifyTiming
       )
       if (remoteOk) return
       notifyProgramApiUnavailable('general-volunteer-doc-screening-action', '봉사자 1차 서류 심사')

@@ -22,6 +22,8 @@ import {
   bulkRejectOrganizationApplicationsRemote,
   cancelOrganizationApplicationApprovalRemote,
   cancelOrganizationApplicationRejectionRemote,
+  cancelInstructorApplicationApprovalRemote,
+  cancelInstructorApplicationRejectionRemote,
   createInterviewAssignmentRemote,
   createInterviewSlotRemote,
   fetchIndividualApplicationsRemote,
@@ -34,6 +36,8 @@ import {
   rejectIndividualApplicationRemote,
   rejectInstructorApplicationRemote,
   rejectOrganizationApplicationRemote,
+  resendInstructorApplicationNotification,
+  bulkIndividualDocumentResultsRemote,
   bulkVolunteerDocumentResultsRemote,
   bulkVolunteerFinalResultsRemote,
   submitIndividualDocumentResultRemote,
@@ -43,6 +47,8 @@ import {
   submitVolunteerFinalResultRemote,
   updateVolunteerDocumentEvaluationRemote,
   type ApplicationsListQuery,
+  type InstructorApplicationApprovalRequest,
+  type InstructorApplicationNotificationRequest,
 } from '@/features/program/general/api/applications-api-client'
 import {
   sortGeneralParticipantDocPassedVolunteerRows,
@@ -233,14 +239,10 @@ export async function fetchGeneralIndividualScreeningApplicationsPage(
   const rows =
     stage === 'interview2'
       ? sortGeneralParticipantDocPassedVolunteerRows(
-          mapParticipantsToVolunteerScreeningRows(
-            filterIndividualInterview2Rows(page.rows)
-          )
+          mapParticipantsToVolunteerScreeningRows(filterIndividualInterview2Rows(page.rows))
         )
       : sortGeneralVolunteerDocPassedApplicants(
-          mapParticipantsToVolunteerScreeningRows(
-            filterIndividualDocPassedRows(page.rows)
-          )
+          mapParticipantsToVolunteerScreeningRows(filterIndividualDocPassedRows(page.rows))
         )
   return { ...page, rows }
 }
@@ -317,16 +319,10 @@ export async function fetchGeneralVolunteerScreeningApplicationsPage(
   })
   const rows =
     stage === 'docPassed'
-      ? sortGeneralVolunteerDocPassedApplicants(
-          filterVolunteerDocPassedRows(page.rows)
-        )
+      ? sortGeneralVolunteerDocPassedApplicants(filterVolunteerDocPassedRows(page.rows))
       : stage === 'interview2'
-        ? sortGeneralVolunteerInterview2Applicants(
-            filterVolunteerInterview2Rows(page.rows)
-          )
-        : sortGeneralVolunteerByInterviewSlotCount(
-            filterVolunteerDoc1Rows(page.rows)
-          )
+        ? sortGeneralVolunteerInterview2Applicants(filterVolunteerInterview2Rows(page.rows))
+        : sortGeneralVolunteerByInterviewSlotCount(filterVolunteerDoc1Rows(page.rows))
   return { ...page, rows }
 }
 
@@ -382,9 +378,12 @@ export async function bulkRejectGeneralOrganizationApplications(
   return bulkRejectOrganizationApplicationsRemote(ids, payload.reason)
 }
 
-export async function approveGeneralInstructorApplication(applicationId: string): Promise<void> {
+export async function approveGeneralInstructorApplication(
+  applicationId: string,
+  payload?: InstructorApplicationApprovalRequest
+): Promise<void> {
   assertApplicationsRemoteReady()
-  await approveInstructorApplicationRemote(applicationId)
+  await approveInstructorApplicationRemote(applicationId, payload)
 }
 
 export async function rejectGeneralInstructorApplication(
@@ -393,6 +392,34 @@ export async function rejectGeneralInstructorApplication(
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await rejectInstructorApplicationRemote(applicationId, payload)
+}
+
+export async function cancelGeneralInstructorApplicationApproval(
+  applicationId: string,
+  reason: string
+): Promise<void> {
+  assertApplicationsRemoteReady()
+  await cancelInstructorApplicationApprovalRemote(applicationId, {
+    reason: reason.trim() || '승인 취소',
+  })
+}
+
+export async function cancelGeneralInstructorApplicationRejection(
+  applicationId: string,
+  reason: string
+): Promise<void> {
+  assertApplicationsRemoteReady()
+  await cancelInstructorApplicationRejectionRemote(applicationId, {
+    reason: reason.trim() || '반려 취소',
+  })
+}
+
+export async function resendGeneralInstructorApplicationNotification(
+  applicationId: string,
+  payload: InstructorApplicationNotificationRequest
+): Promise<void> {
+  assertApplicationsRemoteReady()
+  await resendInstructorApplicationNotification(applicationId, payload)
 }
 
 export async function bulkApproveGeneralInstructorApplications(
@@ -477,6 +504,20 @@ export async function submitGeneralIndividualDocumentResult(
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await submitIndividualDocumentResultRemote(applicationId, payload)
+}
+
+export async function submitGeneralIndividualDocumentResultBulk(
+  applicationIds: string[],
+  payload: Pick<DocumentResultRequest, 'result' | 'reason'>
+): Promise<BulkActionResponse> {
+  assertApplicationsRemoteReady()
+  const ids = toBulkNumericApplicationIds(applicationIds)
+  if (!ids?.length) throw new Error('참여자 신청 ID를 확인할 수 없습니다.')
+  return bulkIndividualDocumentResultsRemote({
+    ids,
+    result: payload.result,
+    reason: payload.reason,
+  })
 }
 
 export async function submitGeneralVolunteerFinalResult(

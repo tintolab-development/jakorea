@@ -11,6 +11,7 @@ export interface ProgramEditInfoActionsProps {
   onSave: () => void
   saving?: boolean
   disabled?: boolean
+  idleVariant?: 'primary' | 'secondary'
 }
 
 /** 조회/편집 상태 모두 단일 「정보 수정」 버튼을 사용하고 색상으로 동작을 구분한다. */
@@ -20,11 +21,12 @@ export function ProgramEditInfoActions({
   onSave,
   saving = false,
   disabled = false,
+  idleVariant = 'primary',
 }: ProgramEditInfoActionsProps) {
   return (
     <CmsButton
       {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-      variant={isEditing ? 'secondary' : 'primary'}
+      variant={isEditing ? 'secondary' : idleVariant}
       disabled={disabled}
       loading={saving}
       onClick={isEditing ? onSave : onEdit}

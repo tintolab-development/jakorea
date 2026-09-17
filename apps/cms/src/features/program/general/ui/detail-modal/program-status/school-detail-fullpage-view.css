@@ -132,6 +132,13 @@
   width: 100%;
 }
 
+.school-detail-fullpage-view__page-bottom-spacer {
+  display: block;
+  width: 100%;
+  height: var(--detail-fullpage-padding-bottom, 52px);
+  flex-shrink: 0;
+}
+
 .school-detail-fullpage-view:has(.school-detail-fullpage-view__posts-tab-wrap)
   .school-detail-fullpage-view__content {
   display: flex;

@@ -217,7 +217,7 @@ export function buildSchoolAddInstructorAssignSessionOptions(params: {
       timeLabel,
       scheduleLabel: `${dateLabel} ${timeLabel}`,
       sessionRoundLabel: `${session.round}차시`,
-      capacityLabel: '-',
+      capacityLabel: '0명',
       dateKey: dateKey ?? undefined,
       slotKey,
       disabled,

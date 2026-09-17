@@ -59,9 +59,9 @@ export type ParagraphDatePickerPopoverProps = {
   invalidTimeRange: boolean
   showPeriodToggle: boolean
   showTimeToggle?: boolean
-  /** 기간 토글 ON 고정(비활성). 기본 false. */
+  /** 기간 토글 ON 고정. 조작 불가하므로 팝오버에서는 숨김. 기본 false. */
   periodToggleDisabled?: boolean
-  /** 시간 토글 ON 고정(비활성). 기본 false. */
+  /** 시간 토글 ON 고정. 조작 불가하므로 팝오버에서는 숨김. 기본 false. */
   timeToggleDisabled?: boolean
   periodOn: boolean
   onPeriodOnChange: (next: boolean) => void
@@ -127,6 +127,10 @@ export function ParagraphDatePickerPopover({
     dismissExcludeRef,
     repositionDeps: [isRangeCalendarMode, timeOn],
   })
+  const showInteractivePeriodToggle =
+    showPeriodToggle && !disabled && !periodToggleDisabled
+  const showInteractiveTimeToggle =
+    showTimeToggle && !disabled && !timeToggleDisabled
 
   if (!open) return null
 
@@ -312,9 +316,9 @@ export function ParagraphDatePickerPopover({
               </div>
             ) : null}
             <div className="date-time-picker-popover__footer">
-              {showPeriodToggle || showTimeToggle ? (
+              {showInteractivePeriodToggle || showInteractiveTimeToggle ? (
                 <div className="date-time-picker-popover__toggles">
-                  {showPeriodToggle ? (
+                  {showInteractivePeriodToggle ? (
                     <CmsToggle
                       label="기간"
                       checked={periodOn}
@@ -325,10 +329,9 @@ export function ParagraphDatePickerPopover({
                           onPeriodToggleOn?.(draft, nextEnd)
                         }
                       }}
-                      disabled={disabled || periodToggleDisabled}
                     />
                   ) : null}
-                  {showTimeToggle ? (
+                  {showInteractiveTimeToggle ? (
                     <CmsToggle
                       label="시간"
                       checked={timeOn}
@@ -342,7 +345,6 @@ export function ParagraphDatePickerPopover({
                           })
                         }
                       }}
-                      disabled={disabled || timeToggleDisabled}
                     />
                   ) : null}
                 </div>
@@ -435,6 +437,8 @@ export function ParagraphTimePickerPopover({
     dismissExcludeRef,
     repositionDeps: [isEndTimeOn],
   })
+  const showInteractiveEndTimeToggle =
+    showEndTimeToggle && !disabled && !endTimeAlwaysOn
 
   const renderTimeRow = (
     phase: 'single' | 'start' | 'end',
@@ -505,7 +509,7 @@ export function ParagraphTimePickerPopover({
         )}
 
         <div className="date-time-picker-time-popover__footer">
-          {showEndTimeToggle ? (
+          {showInteractiveEndTimeToggle ? (
             <CmsToggle
               label="종료 시간"
               checked={isEndTimeOn}
@@ -519,7 +523,6 @@ export function ParagraphTimePickerPopover({
                   onFocusPhaseChange('single')
                 }
               }}
-              disabled={disabled || endTimeAlwaysOn}
             />
           ) : (
             <span />

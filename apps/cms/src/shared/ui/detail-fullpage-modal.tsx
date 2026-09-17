@@ -5,7 +5,10 @@
 import { CloseOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { onAdminWriteClickCapture } from '@/shared/lib/admin-role-policy'
+import {
+  onAdminWriteClickCapture,
+  type AdminActionKind,
+} from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import './detail-fullpage-modal.css'
 
@@ -19,6 +22,8 @@ export interface DetailFullPageModalProps {
   headerExtra?: React.ReactNode
   /** 메인 컨텐츠 영역 추가 영역 (예: 회원 상세 액션 버튼) */
   contentExtra?: React.ReactNode
+  /** contentExtra 클릭 권한. 기본은 일반 쓰기 권한 */
+  contentExtraAdminAction?: AdminActionKind
   /** 미지정 시 LNB 없이 메인만 풀폭 */
   sidebar?: React.ReactNode
   children?: React.ReactNode
@@ -68,6 +73,7 @@ export function DetailFullPageModal({
   headerTrailing,
   headerExtra,
   contentExtra,
+  contentExtraAdminAction = 'write',
   sidebar,
   children,
   loading,
@@ -131,7 +137,9 @@ export function DetailFullPageModal({
               <div className="detail-fullpage-modal__content-actions-wrapper">
                 <div
                   className="detail-fullpage-modal__content-actions"
-                  onClickCapture={event => onAdminWriteClickCapture(event, roleCode)}
+                  onClickCapture={event =>
+                    onAdminWriteClickCapture(event, roleCode, contentExtraAdminAction)
+                  }
                 >
                   {contentExtra}
                 </div>

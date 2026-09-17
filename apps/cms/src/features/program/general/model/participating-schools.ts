@@ -92,6 +92,16 @@ export const TEXTBOOK_STATUS_LABELS: Record<TextbookStatusKey, string> = {
   not_applicable: '해당 없음',
 }
 
+/** 참여 기관 목록의 교재 배송 현황 표기 — 화면 정의서 문구 */
+export const PARTICIPATING_INSTITUTION_TEXTBOOK_STATUS_LABELS: Record<
+  Exclude<TextbookStatusKey, 'not_applicable'>,
+  string
+> = {
+  preparing: '배송 전',
+  shipping: '배송 중',
+  delivered: '배송 완료',
+}
+
 /** StatusDropdownCell·필터 셀렉트 등 옵션 순서 */
 export const TEXTBOOK_STATUS_OPTION_KEYS: TextbookStatusKey[] = [
   'preparing',

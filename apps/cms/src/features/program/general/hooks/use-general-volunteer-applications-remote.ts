@@ -5,6 +5,7 @@ import {
   fetchGeneralVolunteerScreeningApplicationsPage,
   mapSecondInterviewStatusToFinalResultPayload,
   submitGeneralIndividualDocumentResult,
+  submitGeneralIndividualDocumentResultBulk,
   submitGeneralIndividualFinalResult,
   submitGeneralVolunteerDocumentResult,
   submitGeneralVolunteerDocumentResultBulk,
@@ -132,16 +133,30 @@ export function useGeneralVolunteerApplicationsRemote({
   )
 
   const applyRemoteDocumentResult = useCallback(
-    async (ids: string[], result: 'PASS' | 'FAIL', reason?: string) => {
+    async (
+      ids: string[],
+      result: 'PASS' | 'FAIL',
+      reason?: string,
+      notifyTiming?: string
+    ) => {
       if (!remoteEnabled) return false
       try {
         const payload = {
           result,
           reason: result === 'FAIL' ? reason?.trim() || '반려' : reason,
+          notifyTiming: notifyTiming?.trim().toUpperCase() || undefined,
         } as const
         if (subjectKind === 'participant') {
-          for (const id of ids) {
-            await submitGeneralIndividualDocumentResult(id, payload)
+          if (ids.length > 1) {
+            const bulk = await submitGeneralIndividualDocumentResultBulk(ids, payload)
+            if ((bulk.failureCount ?? 0) > 0) {
+              showAlert({
+                title: '서류 결과 일부 실패',
+                content: `요청 ${bulk.requestedCount ?? ids.length}건 중 성공 ${bulk.successCount ?? 0}건, 실패 ${bulk.failureCount ?? 0}건입니다.`,
+              })
+            }
+          } else {
+            await submitGeneralIndividualDocumentResult(ids[0], payload)
           }
         } else if (ids.length > 1) {
           const bulk = await submitGeneralVolunteerDocumentResultBulk(ids, payload)

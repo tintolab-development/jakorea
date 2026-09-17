@@ -18,6 +18,13 @@ export interface InstructorAssignSessionSlotChipProps {
   onClick?: () => void
 }
 
+/** 인원 미표기(`-`·빈 값)는 UI에서 `0명`으로 표시 */
+function resolveCapacityLabel(raw: string): string {
+  const trimmed = raw.trim()
+  if (!trimmed || trimmed === '-') return '0명'
+  return trimmed
+}
+
 export function InstructorAssignSessionSlotChip({
   scheduleLabel,
   timeLabel,
@@ -68,7 +75,9 @@ export function InstructorAssignSessionSlotChip({
           )}
         </span>
       </span>
-      <span className="instructor-assign-session-slot-chip__count">{capacityLabel}</span>
+      <span className="instructor-assign-session-slot-chip__count">
+        {resolveCapacityLabel(capacityLabel)}
+      </span>
     </ParagraphChip>
   )
 }

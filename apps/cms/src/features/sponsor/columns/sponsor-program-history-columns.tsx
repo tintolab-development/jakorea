@@ -11,6 +11,7 @@ const EDUCATION_TARGET_LABEL: Record<SponsorProgramHistoryRow['educationTarget']
   high: '고등학생',
   college: '대학생',
   adult: '성인',
+  unknown: '-',
 }
 
 function renderParticipantType(_: unknown, row: SponsorProgramHistoryRow): string {
@@ -76,8 +77,12 @@ export function buildProgramHistoryColumns(
       key: 'educationTarget',
       width: 120,
       align: 'center',
-      render: (_: unknown, row: SponsorProgramHistoryRow) =>
-        EDUCATION_TARGET_LABEL[row.educationTarget],
+      render: (_: unknown, row: SponsorProgramHistoryRow) => {
+        const targets = row.educationTargets ?? [row.educationTarget]
+        return targets.length > 0
+          ? targets.map(target => EDUCATION_TARGET_LABEL[target]).join(', ')
+          : '-'
+      },
     },
     {
       title: '총 수혜자 수',

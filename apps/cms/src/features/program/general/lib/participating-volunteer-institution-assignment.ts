@@ -266,6 +266,7 @@ function expandSchoolSessionsToWaitingRows(
   return sessions.map((session, sessionIdx) => {
     const hopeSchedule = participatingSchoolSessionToHopeSchedule(session)
     const rowSeed = hash(school.id + volunteer.id + session.date + String(session.round))
+    const isTemporaryVolunteer = volunteer.id.startsWith('temp-progress-volunteer-')
     return {
       id: `${school.id}__${session.date}__${session.round}`,
       no: 0,
@@ -276,7 +277,12 @@ function expandSchoolSessionsToWaitingRows(
       distanceFromHome: pick(WAITING_DISTANCES, rowSeed + sessionIdx),
       hopeScheduleLine: scheduleLineForSession(session, program),
       hopeSchedule,
-      assignmentStatus: resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedSlots),
+      // TODO(temp-mock): 열여라 참깨 — 봉사 배정 대기/불가 검증 후 삭제
+      assignmentStatus: isTemporaryVolunteer
+        ? sessionIdx % 2 === 0
+          ? 'waiting'
+          : 'unavailable'
+        : resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedSlots),
       assignedVolunteerCountLabel: volunteerCountLabel(volunteerList, school.schoolName, session),
     }
   })

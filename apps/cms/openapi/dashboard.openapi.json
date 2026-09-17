@@ -490,6 +490,24 @@
         }
       }
     },
+    "/api/admin/instructor-applications/{applicationId}": {
+      "get": {
+        "summary": "강사 신청 상세 조회",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "summary": "강사 신청 관리자 코멘트 수정",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/admin/me/dashboard-preferences": {
       "get": {
         "summary": "대시보드 목록 조회",
@@ -613,6 +631,558 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/organization-applications/{applicationId}": {
+      "get": {
+        "tags": [
+          "신청 및 프로그램 진행"
+        ],
+        "operationId": "organizationApplicationDetail",
+        "summary": "기관 신청 상세 조회",
+        "description": "APPLICATION_READ와 프로그램 관계를 검증한 뒤 담당 교사 개인정보를 마스킹해 반환합니다. 동적 신청 답변은 latestFormResponseId를 이용해 기존 form-response 개인정보 API에서 조회합니다.",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "마스킹된 기관 신청 상세",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationApplicationDetailResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "APPLICATION_READ 또는 프로그램 접근 권한 없음"
+          },
+          "404": {
+            "description": "ORGANIZATION_APPLICATION_NOT_FOUND"
+          }
+        }
+      },
+      "patch": {
+        "summary": "승인된 기관 신청 정보 수정",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/programs/{programId}/individual-applications": {
+      "get": {
+        "tags": [
+          "신청 및 프로그램 진행"
+        ],
+        "operationId": "listIndividualApplications",
+        "summary": "프로그램 개인 신청 목록 조회",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "신청 전체 상태 필터"
+          },
+          {
+            "name": "documentStatus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "서류 상태. PASS/FAIL 별칭도 허용"
+          },
+          {
+            "name": "interviewStatus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "면접 상태"
+          },
+          {
+            "name": "finalResultStatus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "최종 결과 상태. APPROVED/REJECTED 별칭도 허용"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "페이지 조회 결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseIndividualApplicationListItemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/programs/{programId}/instructor-applications": {
+      "get": {
+        "summary": "프로그램 강사 신청 목록 조회",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "신청 강사명 검색"
+          },
+          {
+            "name": "jaEvaluationGrade",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "JA 평가 등급(A~D) exact filter"
+          },
+          {
+            "name": "lectureExperienceMin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "description": "JA 강의 경력 최소 연수(포함)"
+          },
+          {
+            "name": "lectureExperienceMax",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "description": "JA 강의 경력 최대 연수(포함)"
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "자택 소재지(시/군/구 포함) 검색"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ]
+      }
+    },
+    "/api/admin/programs/{programId}/organization-applications": {
+      "get": {
+        "summary": "프로그램 기관 신청 목록 조회",
+        "responses": {
+          "200": {
+            "description": "페이지 조회 결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseOrganizationApplicationListItemResponse"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "listOrganizationApplications",
+        "tags": [
+          "신청 및 프로그램 진행"
+        ],
+        "description": "status=TEMP_ASSIGNED|TEMP_REJECTED(및 TEMPORARY_* 별칭)는 ujat_temp_assignment_status를 필터한다. 그 외 status는 application_status 정규화 필터. keyword는 기관명·교사명 부분검색. recruitHalf/recruitmentId는 선택 필터(학교 모집은 recruitHalf=null).",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "application_status 또는 TEMP_ASSIGNED|TEMP_REJECTED(임시배정 워크플로)"
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "기관명·담당 교사명 부분 검색"
+          },
+          {
+            "name": "recruitHalf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "FIRST_HALF",
+                "SECOND_HALF"
+              ]
+            },
+            "description": "상·하반기. 학교 모집은 보통 null"
+          },
+          {
+            "name": "recruitmentId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ]
+      }
+    },
+    "/api/admin/programs/{programId}/volunteer-applications": {
+      "get": {
+        "tags": [
+          "신청 및 프로그램 진행"
+        ],
+        "operationId": "listVolunteerApplications",
+        "summary": "프로그램 봉사자 신청 목록 조회",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "신청 전체 상태 필터"
+          },
+          {
+            "name": "documentStatus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "서류 상태. PASS/FAIL 별칭도 허용"
+          },
+          {
+            "name": "interviewStatus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "면접 상태"
+          },
+          {
+            "name": "finalResultStatus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "최종 결과 상태. APPROVED/REJECTED 별칭도 허용"
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "봉사자명 부분 검색"
+          },
+          {
+            "name": "isReparticipation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "JA 봉사 프로그램 진행 경험 여부"
+          },
+          {
+            "name": "managerAEvaluation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/DocumentManagerEvaluation"
+            },
+            "description": "담당자 A 평가. O/X/△/미검토 별칭도 허용"
+          },
+          {
+            "name": "managerBEvaluation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/DocumentManagerEvaluation"
+            },
+            "description": "담당자 B 평가. O/X/△/미검토 별칭도 허용"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "recruitHalf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "FIRST_HALF",
+                "SECOND_HALF"
+              ]
+            },
+            "description": "상·하반기. VOLUNTEER 모집 시작일 순 FIRST_HALF|SECOND_HALF"
+          },
+          {
+            "name": "recruitmentId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "모집 ID 정확 필터"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "페이지 조회 결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageResponseVolunteerApplicationListItemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/individual-applications/document-results/bulk": {
+      "post": {
+        "tags": [
+          "신청 및 프로그램 진행"
+        ],
+        "operationId": "bulkIndividualDocumentResult",
+        "summary": "개인 신청 서류 결과 일괄 처리",
+        "description": "동일 프로그램의 개인 신청 최대 100건을 PASS/FAIL로 부분 성공 처리합니다.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkResultRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "처리 결과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseBulkActionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "형식 오류 또는 서로 다른 프로그램의 ID 혼합"
+          },
+          "403": {
+            "description": "APPLICATION_WRITE 또는 프로그램 범위 권한 없음"
+          }
+        }
+      }
+    },
+    "/api/admin/volunteer-applications/{applicationId}": {
+      "get": {
+        "tags": [
+          "신청 및 프로그램 진행"
+        ],
+        "operationId": "volunteerApplicationDetail",
+        "summary": "봉사자 신청 상세 조회",
+        "description": "APPLICATION_READ 권한과 프로그램 접근 범위가 필요합니다. 신청서 자유작성, A/B 서류평가, 면접 가능일·배정·평가와 마스킹 개인정보를 반환합니다.",
+        "parameters": [
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "최신 봉사자 신청 상세",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VolunteerApplicationDetailResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "APPLICATION_READ 권한 또는 프로그램 접근 범위 없음"
+          },
+          "404": {
+            "description": "VOLUNTEER_APPLICATION_NOT_FOUND"
           }
         }
       }
@@ -831,6 +1401,10 @@
           "businessYear": {
             "type": "integer",
             "nullable": true
+          },
+          "recruitmentStatus": {
+            "type": "string",
+            "description": "참여자 모집 창 — periodStatus와 독립"
           }
         }
       },
@@ -12685,6 +13259,15 @@
           },
           "canEditManagerBEvaluation": {
             "type": "boolean"
+          },
+          "recruitHalf": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
+            "description": "VOLUNTEER 모집 시작일 순 상·하반기. 비봉사 모집이면 null"
           }
         },
         "required": [
@@ -13368,6 +13951,20 @@
           "mergeLead": {
             "type": "boolean",
             "nullable": true
+          },
+          "recruitHalf": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
+            "description": "학교 모집은 연 1회라 보통 null"
+          },
+          "temporaryAssignmentStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "UJAT 임시배정 워크플로. TEMP_ASSIGNED|TEMP_REJECTED 등"
           }
         },
         "description": "기관 신청 목록 항목. GENERAL 유형은 확정 일정·학급·합반 정보를 함께 제공합니다.",
@@ -14633,6 +15230,252 @@
             "items": {
               "$ref": "#/components/schemas/SurveyAnswerResponse"
             }
+          }
+        }
+      },
+      "UjatTemporaryScheduleSlotRequest": {
+        "type": "object",
+        "required": [
+          "scheduleId",
+          "grade",
+          "className",
+          "studentCount"
+        ],
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "grade": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "className": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "studentCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "UjatTemporaryScheduleSaveRequest": {
+        "type": "object",
+        "required": [
+          "educationRegionCode",
+          "slots"
+        ],
+        "properties": {
+          "educationRegionCode": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "slots": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/UjatTemporaryScheduleSlotRequest"
+            }
+          }
+        }
+      },
+      "UjatScheduleChangeRequest": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      },
+      "UjatOrganizationScheduleSlotResponse": {
+        "type": "object",
+        "properties": {
+          "slotId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "revision": {
+            "type": "integer",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "nullable": true
+          },
+          "className": {
+            "type": "string",
+            "nullable": true
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "studentCount": {
+            "type": "integer",
+            "nullable": true
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "scheduleStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "scheduleEndAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "organizationName": {
+            "type": "string",
+            "nullable": true
+          },
+          "organizationAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "organizationAddressDetail": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UjatOrganizationScheduleResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "applicationStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "temporaryAssignmentStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "TEMP_ASSIGNED|TEMP_REJECTED|…"
+          },
+          "institutionConfirmationStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "CHECKING|CONFIRMED|REVISION_REQUESTED|…"
+          },
+          "portalBannerState": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignmentRevision": {
+            "type": "integer",
+            "nullable": true
+          },
+          "institutionConfirmedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assignmentLockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UjatOrganizationScheduleSlotResponse"
+            }
+          },
+          "capacityWarnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UjatCapacityWarning"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "UjatCapacityWarning": {
+        "type": "object",
+        "properties": {
+          "semesterType": {
+            "type": "string",
+            "nullable": true
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "capacityType": {
+            "type": "string",
+            "nullable": true
+          },
+          "maxCount": {
+            "type": "integer",
+            "nullable": true
+          },
+          "currentCount": {
+            "type": "integer",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "UjatOrganizationScheduleListResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UjatOrganizationScheduleSlotResponse"
+            }
+          }
+        }
+      },
+      "UjatVolunteerActivityRegionUpdateRequest": {
+        "type": "object",
+        "required": [
+          "educationRegionCode"
+        ],
+        "properties": {
+          "educationRegionCode": {
+            "type": "string",
+            "maxLength": 100
           }
         }
       }

@@ -1,0 +1,20 @@
+.participating-institution-schedule-change-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.participating-institution-schedule-change-modal__description {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.participating-institution-schedule-change-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  gap: 8px;
+}

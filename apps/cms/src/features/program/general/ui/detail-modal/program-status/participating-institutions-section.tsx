@@ -13,9 +13,11 @@ import {
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
   type ParticipatingSchoolSession,
+  PARTICIPATING_INSTITUTION_TEXTBOOK_STATUS_LABELS,
   TEXTBOOK_STATUS_OPTION_KEYS,
 } from '@/features/program/general/model/participating-schools'
-import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
+import { EditableStatusBadge } from '@/shared/components/editable-status-badge'
+import { getTextbookStatusBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -72,6 +74,20 @@ import './participating-institutions-section.css'
 
 function formatSessionLine(s: ParticipatingSchoolSession): string {
   return formatParticipatingSchoolSessionLine(s)
+}
+
+function ParticipatingInstitutionTextbookStatusBadge({
+  status,
+}: {
+  status: TextbookStatusKey
+}) {
+  if (status === 'not_applicable') return <>-</>
+  return (
+    <EditableStatusBadge
+      label={PARTICIPATING_INSTITUTION_TEXTBOOK_STATUS_LABELS[status]}
+      tone={getTextbookStatusBadgeTone(status)}
+    />
+  )
 }
 
 export interface ParticipatingInstitutionsSectionProps {
@@ -344,6 +360,7 @@ export function ParticipatingInstitutionsSection({
         dataIndex: 'region',
         key: 'region',
         width: 200,
+        minWidth: 190,
         render: (region: string | undefined) => formatInstitutionRegionForTableDisplay(region),
       },
       {
@@ -390,6 +407,7 @@ export function ParticipatingInstitutionsSection({
               dataIndex: 'textbookStatus',
               key: 'textbookStatus',
               width: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH,
+              minWidth: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH,
               align: 'center' as const,
               onHeaderCell: () => ({
                 className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
@@ -408,7 +426,9 @@ export function ParticipatingInstitutionsSection({
                     statusOptions={TEXTBOOK_STATUS_OPTION_KEYS.filter(
                       key => key !== 'not_applicable'
                     )}
-                    renderBadge={s => <TextbookStatusBadge status={s} />}
+                    renderBadge={s => (
+                      <ParticipatingInstitutionTextbookStatusBadge status={s} />
+                    )}
                     isItemDisabled={(cur, opt) => cur === opt}
                     onChange={key => handleTextbookStatusChange(record.id, key)}
                     isOpen={openTextbookDropdownId === record.id}
@@ -522,10 +542,12 @@ export function ParticipatingInstitutionsSection({
               ...inv,
               settlementStatus: 'awaiting_confirmation' as SettlementStatusKey,
             }))
-          : getInstructorRowsForSchool(
-              selectedRowFromUrl.schoolName,
-              instructorHook.instructorList
-            ),
+          : (() => {
+              return getInstructorRowsForSchool(
+                selectedRowFromUrl.schoolName,
+                instructorHook.instructorList
+              )
+            })(),
     }
     return (
       <div className="program-status-participating participating-institutions-section">
@@ -683,7 +705,7 @@ export function ParticipatingInstitutionsSection({
                   const schoolId = selectedSchoolForDetail.id
                   const schoolName = selectedSchoolForDetail.schoolName
                   const savedInstructors = savedInstructorPatches[schoolId]
-                  const instructors =
+                  const remoteInstructors =
                     savedInstructors !== undefined
                       ? savedInstructors.map(inv => ({
                           ...inv,
@@ -693,7 +715,7 @@ export function ParticipatingInstitutionsSection({
                   return {
                     ...base,
                     ...savedBasicPatches[schoolId],
-                    instructors,
+                    instructors: remoteInstructors,
                   }
                 })()
               : null

@@ -84,8 +84,6 @@ export interface ApplicantGeneralInstitutionBasicInfoProps {
   isCombinedClassProgramEligible?: boolean
   isCombinedClassApplyRadioDisabled?: boolean
   combinedClassReadOnly?: boolean
-  /** 진행된 교육이 있을 때 합반 반영 시점 안내 */
-  showCombinedClassScheduleNotice?: boolean
   hideCombinedClass?: boolean
   validationErrors?: Record<string, string>
   onResendNotificationClick?: () => void
@@ -230,7 +228,6 @@ export function ApplicantGeneralInstitutionBasicInfo({
   isCombinedClassProgramEligible: isCombinedClassProgramEligibleProp,
   isCombinedClassApplyRadioDisabled = true,
   combinedClassReadOnly = false,
-  showCombinedClassScheduleNotice = false,
   hideCombinedClass = false,
   validationErrors,
   onResendNotificationClick,
@@ -412,7 +409,6 @@ export function ApplicantGeneralInstitutionBasicInfo({
         isProgramEligible={combinedClassProgramEligible}
         isApplyRadioDisabled={isCombinedClassApplyRadioDisabled}
         readOnly={combinedClassReadOnly}
-        showEffectiveFromNextScheduleNotice={showCombinedClassScheduleNotice}
         validationError={validationErrors?.combinedClassPartnerApplicantIds}
       />
     ) : (
