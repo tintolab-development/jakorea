@@ -182,8 +182,7 @@ export function useUpdateTrainedTeacherProgramInfoDetail() {
     retry: false,
     onSuccess: program => {
       queryClient.setQueryData(trainedTeacherQueryKeys.detail(program.id), program)
-      void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
-      invalidateTrainedTeacherOverviewStages(queryClient)
+      // 공통정보 저장은 programs PATCH → info-detail PATCH 순. 목록·overview(5 GET)는 programs 쪽에서만.
       void queryClient.invalidateQueries({
         queryKey: generalProgramQueryKeys.navigation(program.id),
       })
