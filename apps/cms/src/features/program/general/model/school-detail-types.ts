@@ -107,6 +107,8 @@ export interface SchoolDetailStudentRow {
   id: string
   /** BE 회원 ID — 참여자 PK와 구분 */
   memberId?: number
+  /** 진행 출석 API용 participant PK */
+  participantId?: number
   no: number
   name: string
   /** 성별: '남' | '여' 표시용 */
@@ -169,6 +171,8 @@ export type LectureAttendanceStatusKey = 'attended' | 'absent' | 'late' | 'not_h
 export interface LectureAttendanceSession {
   roundNumber: number
   status: LectureAttendanceStatusKey
+  /** 진행 출석 정정용 schedule PK */
+  scheduleId?: number
 }
 
 export interface LectureAttendanceDetail {
@@ -282,6 +286,8 @@ export interface SchoolDetailAttendanceStudentRow {
   contact?: string
   email?: string
   status: SchoolSessionAttendanceStatusKey
+  /** schedule attendances / bulk-upsert 키 — roster `participantId` */
+  participantId?: number | null
 }
 
 export interface SchoolDetailAttendanceSessionGroup {
@@ -289,6 +295,8 @@ export interface SchoolDetailAttendanceSessionGroup {
   round: number
   /** 필터 Select value (ISO date 또는 session id) */
   filterValue: string
+  /** program_schedule id — 없으면 출석 GET/저장 불가 */
+  scheduleId?: number | null
   /** 회차/일정 선행 라벨 (커리큘럼: 1회차·1차시, 일정형: 일정명) */
   sessionLeadLabel: string
   /** 회차 헤더 — table-title (예: 1회차 : 2026. 01. 09(금)) */

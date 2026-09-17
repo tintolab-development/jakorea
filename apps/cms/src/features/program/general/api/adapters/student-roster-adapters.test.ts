@@ -47,7 +47,7 @@ describe('student-roster-adapters', () => {
       gradeClass: '초5 1반',
       contact: '010-****-1234',
       email: 'k***@example.com',
-      memberId: 99,
+      participantId: 99,
     })
   })
 
