@@ -10,10 +10,11 @@ import { useUjatProgramRegistrationOverlayKv } from '@/features/template/ui/form
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { formatNumberDisplay } from '@/shared/utils'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 function KpiNumber({ value }: { value: number }) {
-  return <span style={{ fontWeight: 700 }}>{value}</span>
+  return <span style={{ fontWeight: 700 }}>{formatNumberDisplay(value)}</span>
 }
 
 function NotApplicableText() {
