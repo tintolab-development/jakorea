@@ -27,6 +27,7 @@ import { buildParticipatingInstructorCalendarEvents } from '@/features/program/g
 import { matchesInstructorJaExperienceYears } from '@/features/program/general/lib/instructor-application-filter-options'
 import {
   formatParticipatingInstructorAssignedInstitutions,
+  formatParticipatingInstructorHomeAddress,
   getParticipatingInstructorAssignedSchoolNames,
 } from '@/features/program/general/lib/participating-instructors-table-display'
 import { ActivityCertificateIssuancePreviewModal } from './activity-certificate-issuance-preview-modal'
@@ -37,6 +38,7 @@ import {
   displayServerPiiAsIs,
   PrivacyHomeAddressDisplay,
 } from '@/features/program/shared/lib/program-pii-display'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import {
   useParticipatingInstructorsParams,
   type ParticipatingInstructorsFilters,
@@ -151,7 +153,9 @@ export function ParticipatingInstructorsSection({
     addInstructorModalOpen,
     setAddInstructorModalOpen,
     handleAddInstructorByMemberId,
+    assignedOrganizationNamesByMemberId,
     applicationsLoading: instructorsLoading,
+    isRemoteDataSource,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
@@ -402,6 +406,10 @@ export function ParticipatingInstructorsSection({
   )
 
   useEffect(() => {
+    if (!isRemoteDataSource) {
+      setInstructorMemberOptions([])
+      return
+    }
     let cancelled = false
     void fetchParticipatingInstructorMemberCandidates(registeredInstructorNames).then(options => {
       if (!cancelled) setInstructorMemberOptions(options)
@@ -409,7 +417,7 @@ export function ParticipatingInstructorsSection({
     return () => {
       cancelled = true
     }
-  }, [registeredInstructorNames])
+  }, [isRemoteDataSource, registeredInstructorNames])
 
   const showInstructorAddSelectAlert = useCallback(() => {
     showAlert({ title: '안내', content: PARTICIPATING_INSTRUCTOR_ADD_SELECT_ALERT_MESSAGE })
@@ -421,14 +429,27 @@ export function ParticipatingInstructorsSection({
   }
   const handleListView = () => setViewMode('list')
 
+  const assignedSchoolNameOptions = useMemo(
+    () => ({
+      assignedOrganizationNamesByMemberId,
+      allowMockFallback: !isRemoteDataSource,
+    }),
+    [assignedOrganizationNamesByMemberId, isRemoteDataSource]
+  )
+
   const instructorListExportRows = useMemo(
     () =>
       filteredInstructors.map(row => ({
         no: row.no,
         instructorName: row.instructorName,
-        homeAddress: displayServerPiiAsIs(row.address ?? row.region),
+        homeAddress: formatParticipatingInstructorHomeAddress(row.address ?? row.region),
         assignedInstitutions: formatParticipatingInstructorAssignedInstitutions(
-          getParticipatingInstructorAssignedSchoolNames(row, schoolRows, instructorList)
+          getParticipatingInstructorAssignedSchoolNames(
+            row,
+            schoolRows,
+            instructorList,
+            assignedSchoolNameOptions
+          )
         ),
         lectureExperienceYears:
           row.lectureExperienceYears != null ? `${row.lectureExperienceYears}년` : '-',
@@ -437,7 +458,7 @@ export function ParticipatingInstructorsSection({
         email: displayServerPiiAsIs(row.email),
         settlementStatus: getInstructorSettlementStatusLabel(row.settlementStatus),
       })),
-    [filteredInstructors, instructorList]
+    [assignedSchoolNameOptions, filteredInstructors, instructorList, schoolRows]
   )
 
   const instructorListExportColumns: ColumnsType<(typeof instructorListExportRows)[number]> =
@@ -483,25 +504,47 @@ export function ParticipatingInstructorsSection({
         title: '자택 주소지',
         key: 'homeAddress',
         width: 160,
-        ellipsis: true,
-        render: (_: unknown, record: ParticipatingInstructorRow) => (
-          <PrivacyHomeAddressDisplay address={record.address ?? record.region} revealed={false} />
-        ),
+        ellipsis: { showTitle: true },
+        className: INSTRUCTOR_ELLIPSIS_CELL_CLASS,
+        onHeaderCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
+        onCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
+        render: (_: unknown, record: ParticipatingInstructorRow) => {
+          const formatted = formatParticipatingInstructorHomeAddress(
+            record.address ?? record.region
+          )
+          if (formatted === '-') return '-'
+          return (
+            <span className="participating-instructors-section__ellipsis-cell-inner">
+              <PrivacyHomeAddressDisplay address={formatted} revealed={false} />
+            </span>
+          )
+        },
       },
       {
         title: '배정 기관명',
         key: 'assignedInstitutions',
         width: 220,
         minWidth: 220,
-        ellipsis: true,
-        render: (_: unknown, record: ParticipatingInstructorRow) =>
-          formatParticipatingInstructorAssignedInstitutions(
+        ellipsis: { showTitle: true },
+        className: INSTRUCTOR_ELLIPSIS_CELL_CLASS,
+        onHeaderCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
+        onCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
+        render: (_: unknown, record: ParticipatingInstructorRow) => {
+          const label = formatParticipatingInstructorAssignedInstitutions(
             getParticipatingInstructorAssignedSchoolNames(
               record,
               schoolRows,
-              instructorList
+              instructorList,
+              assignedSchoolNameOptions
             )
-          ),
+          )
+          if (label === '-') return '-'
+          return (
+            <span className="participating-instructors-section__ellipsis-cell-inner">
+              {label}
+            </span>
+          )
+        },
       },
       {
         title: 'JA 강의 경력',
@@ -552,7 +595,7 @@ export function ParticipatingInstructorsSection({
         ),
       },
     ],
-    [instructorList]
+    [assignedSchoolNameOptions, instructorList, schoolRows]
   )
 
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
@@ -655,7 +698,16 @@ export function ParticipatingInstructorsSection({
               variant="primary"
               size="large"
               width={160}
-              onClick={() => setAddInstructorModalOpen(true)}
+              onClick={() => {
+                if (!isRemoteDataSource) {
+                  notifyProgramApiUnavailable(
+                    'general-progress-instructor-register',
+                    '참여 강사 등록'
+                  )
+                  return
+                }
+                setAddInstructorModalOpen(true)
+              }}
               className="participating-instructors-section__btn-add-instructor"
             >
               강사 등록

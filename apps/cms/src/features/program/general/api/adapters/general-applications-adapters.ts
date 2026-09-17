@@ -24,6 +24,8 @@ import type { InterviewAvailabilitySlot } from '@/shared/api/generated/dashboard
 import type { PreferredEducationScheduleResponse } from '@/shared/api/generated/dashboard/schemas/preferredEducationScheduleResponse'
 import type { IndividualApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationDetailResponse'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
+import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
+import { INSTRUCTOR_SETTLEMENT_STATUS_ORDER } from '@/shared/constants/instructor-settlement-status'
 import type {
   GeneralDocumentScreeningStatus,
   GeneralInterviewAssignmentStatus,
@@ -821,27 +823,98 @@ function readParticipantAvailableActions(dto: ParticipantListItemResponse): stri
   return actions.length > 0 ? actions : undefined
 }
 
+/** participants(INSTRUCTOR) codegen 미반영 enrich — BE additive 필드 */
+type ParticipantInstructorListEnriched = ParticipantListItemResponse & {
+  homeAddress?: string | null
+  homeAddressSummary?: string | null
+  contact?: string | null
+  phone?: string | null
+  email?: string | null
+  jaEvaluationGrade?: string | null
+  jaGrade?: string | null
+  lectureExperienceYears?: number | null
+  settlementStatus?: string | null
+  assignedOrganizationNames?: string[] | null
+  lectureReportSubmitted?: boolean | null
+}
+
+function readParticipantInstructorEnriched(
+  dto: ParticipantListItemResponse
+): ParticipantInstructorListEnriched {
+  return dto as ParticipantInstructorListEnriched
+}
+
+function readParticipantStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const items = value
+    .filter((item): item is string => typeof item === 'string')
+    .map(item => item.trim())
+    .filter(Boolean)
+  return items.length > 0 ? items : undefined
+}
+
+function mapParticipantInstructorSettlementStatus(
+  raw?: string | null
+): InstructorSettlementUiStatus {
+  if (!raw?.trim()) return 'none'
+  const snake = raw.trim().toLowerCase().replace(/-/g, '_')
+  if (INSTRUCTOR_SETTLEMENT_STATUS_ORDER.includes(snake as InstructorSettlementUiStatus)) {
+    return snake as InstructorSettlementUiStatus
+  }
+  return 'none'
+}
+
+function resolveParticipantInstructorHomeAddress(
+  dto: ParticipantInstructorListEnriched
+): string | undefined {
+  const summary = dto.homeAddressSummary?.trim()
+  if (summary) return summary
+  const full = dto.homeAddress?.trim()
+  if (full) return full
+  const region = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
+  return region || undefined
+}
+
 export function mapParticipantToParticipatingInstructorRow(
   dto: ParticipantListItemResponse,
   index: number,
   _programId: string
 ): ParticipatingInstructorRow {
+  const enriched = readParticipantInstructorEnriched(dto)
+  const homeAddress = resolveParticipantInstructorHomeAddress(enriched)
+  const assignedOrganizationNames =
+    readParticipantStringArray(enriched.assignedOrganizationNames) ??
+    (enriched.organizationName?.trim() ? [enriched.organizationName.trim()] : undefined)
+  const primarySchoolName = assignedOrganizationNames?.[0] ?? ''
+
   return {
     id: toId(dto.participantId),
     no: index + 1,
     instructorName: dto.memberName?.trim() || '이름 없음',
-    schoolName: '',
-    educationGrade: '',
-    classCount: 0,
-    studentCount: 0,
+    schoolName: primarySchoolName,
+    educationGrade: dto.grade?.trim() || '',
+    classCount: dto.classCount ?? 0,
+    studentCount: dto.studentCount ?? 0,
     lectureRound: '',
-    settlementStatus: 'none',
-    teacherName: '-',
+    settlementStatus: mapParticipantInstructorSettlementStatus(enriched.settlementStatus),
+    teacherName: dto.teacherName?.trim() || '-',
     memberId: dto.memberId != null ? String(dto.memberId) : undefined,
     affiliationOrganizationId: toAffiliationOrganizationId(dto.organizationId),
     affiliation: dto.organizationName?.trim() || '',
-    contact: '',
-    email: '',
+    contact: enriched.contact?.trim() || enriched.phone?.trim() || '',
+    email: enriched.email?.trim() || '',
+    address: homeAddress,
+    region: homeAddress,
+    assignedOrganizationNames,
+    jaEvaluationGrade:
+      enriched.jaEvaluationGrade?.trim() || enriched.jaGrade?.trim() || undefined,
+    lectureExperienceYears:
+      typeof enriched.lectureExperienceYears === 'number'
+        ? enriched.lectureExperienceYears
+        : undefined,
+    lectureReportSubmitted: enriched.lectureReportSubmitted ?? undefined,
+    activityWithdrawn:
+      dto.giveUpAt != null || dto.participantStatus?.trim().toUpperCase() === 'GIVE_UP',
   }
 }
 

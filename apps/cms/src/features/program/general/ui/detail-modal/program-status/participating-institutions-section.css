@@ -257,7 +257,12 @@
   .participating-institutions-section__table-wrap
   .participating-institutions-section__table
   td.participating-instructors-section__ellipsis-cell
-  .ant-table-cell-content {
+  .ant-table-cell-content,
+.participating-institutions-section--instructors
+  .participating-institutions-section__table-wrap
+  .participating-institutions-section__table
+  td.participating-instructors-section__ellipsis-cell
+  .participating-instructors-section__ellipsis-cell-inner {
   display: block;
   width: 100%;
   max-width: 100%;

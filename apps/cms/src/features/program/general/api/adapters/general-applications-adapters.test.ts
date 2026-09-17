@@ -115,6 +115,38 @@ describe('general-applications-adapters', () => {
     expect(volunteer.affiliation).toBe('기존 소속 기관')
   })
 
+  it('maps instructor participant enrich fields for progress instructor list', () => {
+    const instructor = mapParticipantToParticipatingInstructorRow(
+      {
+        participantId: 1691501,
+        memberId: 9001,
+        memberName: '김강사',
+        regionSido: '서울특별시',
+        regionSigungu: '강서구',
+        homeAddressSummary: '서울특별시 강서구',
+        contact: '010-****-1234',
+        email: 'kim***@example.com',
+        jaEvaluationGrade: 'A',
+        lectureExperienceYears: 4,
+        settlementStatus: 'awaiting_confirmation',
+        assignedOrganizationNames: ['해봄초등학교', '푸른초등학교'],
+        lectureReportSubmitted: true,
+      } as import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse,
+      0,
+      '168006'
+    )
+
+    expect(instructor.address).toBe('서울특별시 강서구')
+    expect(instructor.contact).toBe('010-****-1234')
+    expect(instructor.email).toBe('kim***@example.com')
+    expect(instructor.jaEvaluationGrade).toBe('A')
+    expect(instructor.lectureExperienceYears).toBe(4)
+    expect(instructor.settlementStatus).toBe('awaiting_confirmation')
+    expect(instructor.assignedOrganizationNames).toEqual(['해봄초등학교', '푸른초등학교'])
+    expect(instructor.schoolName).toBe('해봄초등학교')
+    expect(instructor.lectureReportSubmitted).toBe(true)
+  })
+
   it('maps instructor application list item to applicant row', () => {
     const row = mapInstructorApplicationToApplicantInstructorRow(
       {

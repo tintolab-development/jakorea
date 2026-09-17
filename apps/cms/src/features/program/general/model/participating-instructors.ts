@@ -89,6 +89,8 @@ export interface ParticipatingInstructorRow {
   initialApproval?: boolean
   /** 거주 지역 (참여 강사 목록 필터·테이블용) */
   region?: string
+  /** 배정 기관명 목록 (participants enrich 또는 instructor-assignments 조인) */
+  assignedOrganizationNames?: string[]
   /** JA 평가 등급 (참여 강사 목록 필터·테이블용) */
   jaEvaluationGrade?: string
   /** 강의 보고서 제출 여부 (캘린더 카드 태그 등) */

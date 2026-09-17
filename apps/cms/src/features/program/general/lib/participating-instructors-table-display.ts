@@ -10,12 +10,28 @@ export function formatParticipatingInstructorHomeAddress(address?: string): stri
   return `${parts[0]} ${parts[1]}`
 }
 
+export type ParticipatingInstructorAssignedSchoolNamesOptions = {
+  assignedOrganizationNamesByMemberId?: Map<string, string[]>
+  /** false면 instructor-assignments·participants enrich 없을 때 mock 합성 금지 */
+  allowMockFallback?: boolean
+}
+
 /** 참여 강사 상세 배정 탭과 동일한 배정 기관명 목록 */
 export function getParticipatingInstructorAssignedSchoolNames(
   instructor: ParticipatingInstructorRow,
   schoolRows: ParticipatingSchoolRow[],
-  instructorList: ParticipatingInstructorRow[]
+  instructorList: ParticipatingInstructorRow[],
+  options?: ParticipatingInstructorAssignedSchoolNamesOptions
 ): string[] {
+  if (instructor.assignedOrganizationNames?.length) {
+    return instructor.assignedOrganizationNames
+  }
+  if (options?.assignedOrganizationNamesByMemberId && instructor.memberId) {
+    const fromAssignments = options.assignedOrganizationNamesByMemberId.get(instructor.memberId)
+    if (fromAssignments?.length) return fromAssignments
+    if (options.assignedOrganizationNamesByMemberId.has(instructor.memberId)) return []
+  }
+  if (options?.allowMockFallback === false) return []
   return buildInitialAssignedSchoolRows(instructor, schoolRows, instructorList).map(
     row => row.schoolName
   )
