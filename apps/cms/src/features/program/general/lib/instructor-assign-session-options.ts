@@ -60,7 +60,7 @@ export function mapParticipatingSessionsToInstructorAssignOptions(
       timeLabel: timeRange,
       scheduleLabel: `${dateLabel} ${timeRange}`,
       sessionRoundLabel: `${s.round}차시`,
-      capacityLabel: '-',
+      capacityLabel: '0명',
       disabled: s.status === 'completed',
     }
   })
