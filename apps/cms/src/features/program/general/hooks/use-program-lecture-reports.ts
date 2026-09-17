@@ -5,12 +5,18 @@ import { generalProgramProgressQueryKeys } from '@/features/program/general/api/
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { mapLectureReportDtoToInstructorRow } from '@/features/program/general/api/adapters/lecture-reports-adapters'
 import type { ParticipatingInstructorLectureReportRow } from '@/features/program/general/api/adapters/lecture-reports-adapters'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { buildTemporaryParticipatingInstructorLectureReportRows } from '@/features/program/general/lib/participating-instructor-temp-lecture-reports'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import { getTempMockOrgParticipatingSchools } from '@/features/program/general/lib/temp-mock-org-program'
 
 export type { ParticipatingInstructorLectureReportRow }
 
 export type UseProgramLectureReportsOptions = {
   /** 참여 강사 상세 — 해당 강사 행만 (서버 미지원 시 FE 필터) */
   instructorMemberId?: number | null
+  /** TODO(temp-mock): 열여라 참깨 — 강의보고서 temp rows용 */
+  instructor?: ParticipatingInstructorRow | null
 }
 
 /**
@@ -43,6 +49,18 @@ export function useProgramLectureReports(
     retry: false,
   })
 
+  // TODO(temp-mock): 열여라 참깨 — 참여 강사 강의보고서 검증 후 삭제
+  const temporaryRows = useMemo(() => {
+    if (!isGeneralProgramTempMockProgramId(programId) || !options?.instructor) return null
+    const schools = getTempMockOrgParticipatingSchools(programId)
+    const school =
+      schools.find(item => item.schoolName === options.instructor!.schoolName) ?? schools[0]
+    return buildTemporaryParticipatingInstructorLectureReportRows(
+      options.instructor,
+      school?.sessions ?? []
+    )
+  }, [options?.instructor, programId])
+
   const remoteRows = useMemo(() => {
     if (!remoteEnabled || query.data == null) return null
     const mapped = query.data.pages
@@ -65,10 +83,17 @@ export function useProgramLectureReports(
     return filtered.map((row, index) => ({ ...row, no: index + 1 }))
   }, [instructorMemberId, query.data, remoteEnabled])
 
+  const rows = remoteRows ?? temporaryRows
+
   return {
-    rows: remoteRows,
-    loading: remoteEnabled && query.isFetching && query.data === undefined,
-    isRemoteDataSource: remoteEnabled && remoteRows != null && !query.isError,
+    rows,
+    loading:
+      remoteEnabled &&
+      temporaryRows == null &&
+      query.isFetching &&
+      query.data === undefined,
+    isRemoteDataSource:
+      (remoteEnabled && remoteRows != null && !query.isError) || temporaryRows != null,
     hasNextPage: query.hasNextPage ?? false,
     isFetchingNextPage: query.isFetchingNextPage,
     fetchNextPage: query.fetchNextPage,

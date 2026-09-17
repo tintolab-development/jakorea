@@ -40,6 +40,7 @@ import {
   generalProgramProgressQueryKeys,
 } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { useParticipatingInstructorApplicationDetailEnrichment } from '@/features/program/general/hooks/use-application-form-detail-enrichment'
 import {
   buildProgramApiUnavailableSaveContent,
@@ -58,10 +59,14 @@ import {
   STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
 } from '@/shared/components'
 import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
-import type {
-  InstructorAssignedSchoolRow,
-  InstructorWaitingSchoolRow,
-  InstructorWaitingAssignmentStatus,
+import {
+  applyLocalInstructorLeadRoleChange,
+  applyLocalParticipatingInstructorAssign,
+  applyLocalParticipatingInstructorUnassign,
+  renumberAssignedRows,
+  type InstructorAssignedSchoolRow,
+  type InstructorWaitingSchoolRow,
+  type InstructorWaitingAssignmentStatus,
 } from '@/features/program/general/lib/instructor-institution-assignment'
 import { useParticipatingInstructorInstitutionAssignment } from '@/features/program/general/hooks/use-participating-instructor-institution-assignment'
 import {
@@ -290,6 +295,7 @@ export function ParticipatingInstructorFullpageView({
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const progressRemoteEnabled = shouldUseGeneralProgramProgressRemoteApi()
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
 
   const enrichedInstructor = useParticipatingInstructorApplicationDetailEnrichment(d, program.id)
   const baseInstructor = enrichedInstructor ?? d
@@ -399,9 +405,25 @@ export function ParticipatingInstructorFullpageView({
     async (schoolId: string, newRole: InstructorRoleKey) => {
       setOpenRoleDropdownId(null)
       if (newRole !== 'lead') {
+        if (isTempMockProgram) {
+          setAssignedSchools(prev =>
+            renumberAssignedRows(
+              prev.map(row =>
+                row.id === schoolId ? { ...row, role: 'assistant' as const } : row
+              )
+            )
+          )
+          return
+        }
         notifyProgramApiUnavailable(
           'general-participating-instructor-role-demote',
           '참여 강사 · 일반 강사 변경'
+        )
+        return
+      }
+      if (institutionAssignment.isTempMockDataSource) {
+        setAssignedSchools(prev =>
+          renumberAssignedRows(applyLocalInstructorLeadRoleChange(prev, schoolId, newRole))
         )
         return
       }
@@ -446,6 +468,7 @@ export function ParticipatingInstructorFullpageView({
     [
       assignedSchools,
       institutionAssignment,
+      isTempMockProgram,
       mergedInstructor.memberId,
       program.id,
       showAlert,
@@ -699,6 +722,27 @@ export function ParticipatingInstructorFullpageView({
       const selectedRows = assignedSchools.filter(r => selectedAssignedSchoolKeys.includes(r.id))
       const removedSchoolNames = selectedRows.map(r => r.schoolName)
 
+      if (institutionAssignment.isTempMockDataSource) {
+        const next = applyLocalParticipatingInstructorUnassign({
+          assignedSchools,
+          waitingSchools,
+          selectedAssignedIds: selectedAssignedSchoolKeys.map(String),
+          instructor: mergedInstructor,
+          schoolRows,
+          instructorList,
+        })
+        setAssignedSchools(next.assignedSchools)
+        setWaitingSchools(next.waitingSchools)
+        setUnassignConfirmOpen(false)
+        setSelectedAssignedSchoolKeys([])
+        setUnassignCompleteModal({
+          instructorNames: [mergedInstructor.instructorName],
+          targetNames: removedSchoolNames,
+          reason: payload.reason,
+        })
+        return
+      }
+
       if (institutionAssignment.remoteEnabled) {
         try {
           for (const row of selectedRows) {
@@ -738,9 +782,13 @@ export function ParticipatingInstructorFullpageView({
     [
       assignedSchools,
       institutionAssignment,
+      instructorList,
+      mergedInstructor,
       mergedInstructor.instructorName,
+      schoolRows,
       selectedAssignedSchoolKeys,
       showAlert,
+      waitingSchools,
     ]
   )
 
@@ -772,6 +820,23 @@ export function ParticipatingInstructorFullpageView({
           : true)
     )
     if (rowsToAssign.length === 0) return
+
+    if (institutionAssignment.isTempMockDataSource) {
+      const next = applyLocalParticipatingInstructorAssign({
+        assignedSchools,
+        waitingSchools,
+        rowsToAssign,
+        instructor: mergedInstructor,
+        schoolRows,
+        instructorList,
+        role: assignGuideRole,
+      })
+      setAssignedSchools(next.assignedSchools)
+      setWaitingSchools(next.waitingSchools)
+      setSelectedWaitingSchoolKeys([])
+      closeAssignGuideModal()
+      return
+    }
 
     if (!institutionAssignment.remoteEnabled) {
       notifyProgramApiUnavailable(
@@ -887,9 +952,12 @@ export function ParticipatingInstructorFullpageView({
     assignedSchools,
     closeAssignGuideModal,
     institutionAssignment,
+    instructorList,
+    mergedInstructor,
     mergedInstructor.instructorApplicationId,
     mergedInstructor.memberId,
     program.id,
+    schoolRows,
     selectedWaitingSchoolKeys,
     showAlert,
     waitingSchools,
@@ -988,18 +1056,23 @@ export function ParticipatingInstructorFullpageView({
         stopScheduleLabel ||
         '활동 포기'
 
-      if (progressRemoteEnabled) {
+      if (progressRemoteEnabled || isTempMockProgram) {
         setActivityWithdrawSubmitting(true)
         try {
-          const stopScheduleIdNum = payload.stopScheduleId
-            ? Number(payload.stopScheduleId)
-            : undefined
-          await giveUpGeneralParticipatingInstitution(program.id, mergedInstructor.id, reason, {
-            stopScheduleId:
-              stopScheduleIdNum != null && Number.isFinite(stopScheduleIdNum)
-                ? stopScheduleIdNum
-                : undefined,
-          })
+          if (progressRemoteEnabled) {
+            const stopScheduleIdNum = payload.stopScheduleId
+              ? Number(payload.stopScheduleId)
+              : undefined
+            await giveUpGeneralParticipatingInstitution(program.id, mergedInstructor.id, reason, {
+              stopScheduleId:
+                stopScheduleIdNum != null && Number.isFinite(stopScheduleIdNum)
+                  ? stopScheduleIdNum
+                  : undefined,
+            })
+            await queryClient.invalidateQueries({
+              queryKey: generalProgramProgressQueryKeys.instructors(program.id),
+            })
+          }
           setInstructorPatches(prev => ({
             ...prev,
             activityWithdrawn: true,
@@ -1007,9 +1080,6 @@ export function ParticipatingInstructorFullpageView({
             activityWithdrawStopScheduleId: payload.stopScheduleId,
             activityWithdrawStopScheduleLabel: stopScheduleLabel,
           }))
-          await queryClient.invalidateQueries({
-            queryKey: generalProgramProgressQueryKeys.instructors(program.id),
-          })
           setActivityWithdrawModalOpen(false)
           showAlert({
             title: '활동 포기',
@@ -1037,6 +1107,7 @@ export function ParticipatingInstructorFullpageView({
     },
     [
       activityWithdrawScheduleOptions,
+      isTempMockProgram,
       mergedInstructor.id,
       mergedInstructor.instructorName,
       program.id,
@@ -1089,6 +1160,16 @@ export function ParticipatingInstructorFullpageView({
         return
       }
     }
+    if (isTempMockProgram) {
+      setSavedAdminComment(trimmed)
+      setInstructorPatches(prev => ({
+        ...prev,
+        adminComment: trimmed || undefined,
+      }))
+      setAdminCommentModalOpen(false)
+      setAdminCommentError(undefined)
+      return
+    }
     void showAlert({
       title: PROGRAM_API_UNAVAILABLE_TITLE,
       content: buildProgramApiUnavailableSaveContent('참여 강사 관리자 코멘트'),
@@ -1097,6 +1178,7 @@ export function ParticipatingInstructorFullpageView({
     adminCommentDraft,
     hasInstructorApplicationId,
     instructorApplicationId,
+    isTempMockProgram,
     queryClient,
     showAlert,
   ])
