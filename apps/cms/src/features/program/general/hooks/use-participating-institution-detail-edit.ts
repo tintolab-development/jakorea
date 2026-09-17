@@ -164,7 +164,7 @@ export function useParticipatingInstitutionDetailEdit({
 
   const canEditTextbook =
     usesTextbook &&
-    (isCompanySchool ? row.approvalStatus === 'approved' : draft?.combinedClassApplication === '신청')
+    row.approvalStatus === 'approved'
 
   const sameSchoolGradeOptions = useMemo((): SameSchoolParticipatingGradeOption[] => {
     if (!isCombinedClassProgramEligibleFlag) return []
@@ -295,7 +295,7 @@ export function useParticipatingInstitutionDetailEdit({
       program,
       studentCount: row.studentCount,
       requiresTextbook: usesTextbook,
-      allowTextbookSelectionWithoutCombinedClass: isCompanySchool,
+      allowTextbookSelectionWithoutCombinedClass: row.approvalStatus === 'approved',
       catalog: textbookCatalog,
     })
     if (Object.keys(patch).length === 0) {

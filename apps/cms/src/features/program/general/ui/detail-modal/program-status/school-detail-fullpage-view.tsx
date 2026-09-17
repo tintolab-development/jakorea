@@ -1807,7 +1807,6 @@ export function GeneralParticipatingInstitutionDetailView(
               textbookCell={textbookCell}
               combinedClassCell={combinedClassCell}
               usesTextbook={isCompanySchool || usesTextbook}
-              textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
               hideCombinedClass={isCompanySchool}
               schoolName={
                 isApplicationDetailEditing ? (
