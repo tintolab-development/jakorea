@@ -461,28 +461,36 @@ export function useProgramRegistrationEditor(
     [seedParagraphIds]
   )
 
-  const onReorderMiddle = useCallback((dragId: string, overId: string) => {
-    setDraft(prev => ({
-      ...prev,
-      paragraphs: (() => {
-        const from = prev.paragraphs.findIndex(p => p.id === dragId)
-        const to = prev.paragraphs.findIndex(p => p.id === overId)
-        if (from < 0 || to < 0 || from === to) return prev.paragraphs
-        const next = [...prev.paragraphs]
-        const [moved] = next.splice(from, 1)
-        if (!moved) return prev.paragraphs
-        next.splice(to, 0, moved)
-        return next
-      })(),
-    }))
-  }, [])
+  const onReorderMiddle = useCallback(
+    (dragId: string, overId: string) => {
+      if (isStructureLocked) return
+      setDraft(prev => ({
+        ...prev,
+        paragraphs: (() => {
+          const from = prev.paragraphs.findIndex(p => p.id === dragId)
+          const to = prev.paragraphs.findIndex(p => p.id === overId)
+          if (from < 0 || to < 0 || from === to) return prev.paragraphs
+          const next = [...prev.paragraphs]
+          const [moved] = next.splice(from, 1)
+          if (!moved) return prev.paragraphs
+          next.splice(to, 0, moved)
+          return next
+        })(),
+      }))
+    },
+    [isStructureLocked]
+  )
 
-  const onTitleNumberingChange = useCallback((style: FormTitleNumberingStyle) => {
-    setDraft(prev => ({
-      ...prev,
-      formSettings: { ...prev.formSettings, titleNumbering: style },
-    }))
-  }, [])
+  const onTitleNumberingChange = useCallback(
+    (style: FormTitleNumberingStyle) => {
+      if (isStructureLocked) return
+      setDraft(prev => ({
+        ...prev,
+        formSettings: { ...prev.formSettings, titleNumbering: style },
+      }))
+    },
+    [isStructureLocked]
+  )
 
   const middleParagraphActions = useWritingFormMiddleParagraphActions(
     setDraft,

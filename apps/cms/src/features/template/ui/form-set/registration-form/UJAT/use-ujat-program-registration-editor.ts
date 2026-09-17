@@ -3,6 +3,7 @@ import { useTemplateWritingPreview } from '@/features/template/context/template-
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
+import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
 import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
@@ -33,6 +34,10 @@ export const UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE = 'registration-ujat' as co
 export type UseUjatProgramRegistrationEditorOptions = {
   /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
   onTemplateDraftSaveConfirmed?: () => void
+  /** 템플릿 관리 복제본은 고유 코드로 조회·저장 */
+  templateCode?: string
+  systemTemplate?: boolean
+  forceUserEditable?: boolean
   /** true면 임시저장 복원 없이 시드로 시작 (신규 등록) */
   skipDraftRestore?: boolean
   /** 프로그램 등록 임시저장 — localStorage만 사용 */
@@ -47,6 +52,12 @@ export function useUjatProgramRegistrationEditor(
   const onTemplateDraftSaveConfirmed = options?.onTemplateDraftSaveConfirmed
   const skipDraftRestore = options?.skipDraftRestore === true
   const localOnlyDraftPersistence = options?.localOnlyDraftPersistence === true
+  const templateCode = options?.templateCode?.trim() || UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE
+  const isStructureLocked = isWritingFormTemplateStructureLocked({
+    templateCode,
+    systemTemplate: options?.systemTemplate,
+    forceUserEditable: options?.forceUserEditable,
+  })
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
 
@@ -89,7 +100,7 @@ export function useUjatProgramRegistrationEditor(
     setDraft(EMPTY_WRITING_FORM_DRAFT)
     setActiveParagraphId(null)
 
-    void loadWritingFormTemplateDraft(UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE, {
+    void loadWritingFormTemplateDraft(templateCode, {
       localOnly: localOnlyDraftPersistence,
     })
       .then(saved => {
@@ -105,7 +116,10 @@ export function useUjatProgramRegistrationEditor(
           return
         }
 
-        const legacy = loadUjatRegistrationTemplateSave()
+        const legacy =
+          templateCode === UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE
+            ? loadUjatRegistrationTemplateSave()
+            : null
         if (legacy?.overlay && Object.keys(legacy.overlay).length > 0) {
           patchUjatProgramRegistrationOverlay(legacy.overlay)
         }
@@ -121,7 +135,7 @@ export function useUjatProgramRegistrationEditor(
     return () => {
       cancelled = true
     }
-  }, [active, localOnlyDraftPersistence, resetToSeed, skipDraftRestore])
+  }, [active, localOnlyDraftPersistence, resetToSeed, skipDraftRestore, templateCode])
 
   useEffect(() => {
     if (!active) {
@@ -147,28 +161,36 @@ export function useUjatProgramRegistrationEditor(
     []
   )
 
-  const onReorderMiddle = useCallback((dragId: string, overId: string) => {
-    setDraft(prev => ({
-      ...prev,
-      paragraphs: (() => {
-        const from = prev.paragraphs.findIndex(p => p.id === dragId)
-        const to = prev.paragraphs.findIndex(p => p.id === overId)
-        if (from < 0 || to < 0 || from === to) return prev.paragraphs
-        const next = [...prev.paragraphs]
-        const [moved] = next.splice(from, 1)
-        if (!moved) return prev.paragraphs
-        next.splice(to, 0, moved)
-        return next
-      })(),
-    }))
-  }, [])
+  const onReorderMiddle = useCallback(
+    (dragId: string, overId: string) => {
+      if (isStructureLocked) return
+      setDraft(prev => ({
+        ...prev,
+        paragraphs: (() => {
+          const from = prev.paragraphs.findIndex(p => p.id === dragId)
+          const to = prev.paragraphs.findIndex(p => p.id === overId)
+          if (from < 0 || to < 0 || from === to) return prev.paragraphs
+          const next = [...prev.paragraphs]
+          const [moved] = next.splice(from, 1)
+          if (!moved) return prev.paragraphs
+          next.splice(to, 0, moved)
+          return next
+        })(),
+      }))
+    },
+    [isStructureLocked]
+  )
 
-  const onTitleNumberingChange = useCallback((style: FormTitleNumberingStyle) => {
-    setDraft(prev => ({
-      ...prev,
-      formSettings: { ...prev.formSettings, titleNumbering: style },
-    }))
-  }, [])
+  const onTitleNumberingChange = useCallback(
+    (style: FormTitleNumberingStyle) => {
+      if (isStructureLocked) return
+      setDraft(prev => ({
+        ...prev,
+        formSettings: { ...prev.formSettings, titleNumbering: style },
+      }))
+    },
+    [isStructureLocked]
+  )
 
   const {
     horizontalTableRowSelectionsByParagraphId,
@@ -233,14 +255,16 @@ export function useUjatProgramRegistrationEditor(
   const persistDraft = useCallback(async () => {
     const overlay = { ...getUjatProgramRegistrationOverlayRecord() }
     await persistWritingFormTemplateDraft({
-      templateId: UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE,
+      templateId: templateCode,
       draft,
       overlay,
       localOnly: localOnlyDraftPersistence,
     })
-    persistUjatRegistrationTemplateSave({ draft, overlay })
+    if (templateCode === UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE) {
+      persistUjatRegistrationTemplateSave({ draft, overlay })
+    }
     return { draft, overlay }
-  }, [draft, localOnlyDraftPersistence])
+  }, [draft, localOnlyDraftPersistence, templateCode])
 
   const handleSave = useCallback(() => {
     void (async () => {
@@ -269,8 +293,9 @@ export function useUjatProgramRegistrationEditor(
     isDraftLoading,
     activeParagraphId,
     singleItemListActiveItemId,
-    structureLockedParagraphIds:
-      UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS as ReadonlySet<string>,
+    structureLockedParagraphIds: isStructureLocked
+      ? (UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS as ReadonlySet<string>)
+      : undefined,
     pinnedTop,
     sortableMiddle,
     pinnedBottom,

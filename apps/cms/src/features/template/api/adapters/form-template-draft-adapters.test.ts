@@ -15,6 +15,22 @@ describe('form-template-draft-adapters', () => {
     expect(restored?.paragraphs[0]?.id).toBe('program-registration-seed-basic-info')
   })
 
+  it('사용자 양식의 단락 순서와 타이틀 번호를 schemaJson에 보존한다', () => {
+    const draft = createProgramRegistrationDraft('general')
+    const reordered = {
+      ...draft,
+      formSettings: { ...draft.formSettings, titleNumbering: 'alpha' as const },
+      paragraphs: [...draft.paragraphs].reverse(),
+    }
+
+    const restored = schemaJsonToWritingFormDraft(writingFormDraftToSchemaJson(reordered))
+
+    expect(restored?.formSettings.titleNumbering).toBe('alpha')
+    expect(restored?.paragraphs.map(paragraph => paragraph.id)).toEqual(
+      reordered.paragraphs.map(paragraph => paragraph.id)
+    )
+  })
+
   it('parses extensionJson editorState', () => {
     const extensionJson = JSON.stringify({
       overlay: { limit: 1 },

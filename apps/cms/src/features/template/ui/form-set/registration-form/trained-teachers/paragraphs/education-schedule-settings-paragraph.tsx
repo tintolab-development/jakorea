@@ -119,6 +119,8 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
                 mode="single"
                 presetMode="schedule"
                 customizable={false}
+                showPeriodToggle={false}
+                lockTimeToggleOn
                 suppressAutoTodayWhenEmpty
                 value={singleDate}
                 onChange={setSingleDate}
@@ -131,6 +133,7 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
                 mode="single"
                 presetMode="period"
                 customizable={false}
+                showTimeToggle={false}
                 suppressAutoTodayWhenEmpty
                 value={periodDate}
                 onChange={setPeriodDate}

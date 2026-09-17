@@ -123,7 +123,9 @@ function PinnedFormCardInner({
   userInfoWriteField,
 }: PinnedCardProps) {
   const isSelected = selectedCardId === paragraph.id
-  const hideDragHandle = hideDragHandleForParagraphIds?.has(paragraph.id) ?? false
+  const hideDragHandle =
+    (hideDragHandleForParagraphIds?.has(paragraph.id) ?? false) ||
+    (editorKind === 'horizontal_table' && structureLockedParagraphIds != null)
   const editableHeadingBase = withoutPlaceholderDescriptionInPreview(
     withoutTitleRequired(
       withSurveyWriteTitleNumbering(
@@ -292,7 +294,9 @@ function SortableMiddleFormCardInner({
   surveyWriteNumbering = false,
   userInfoWriteField,
 }: SortableMiddleCardProps) {
-  const hideDragHandle = hideDragHandleForParagraphIds?.has(paragraph.id) ?? false
+  const hideDragHandle =
+    (hideDragHandleForParagraphIds?.has(paragraph.id) ?? false) ||
+    (editorKind === 'horizontal_table' && structureLockedParagraphIds != null)
   const {
     attributes,
     listeners,
