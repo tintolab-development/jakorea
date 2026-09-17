@@ -5,6 +5,7 @@ import {
   mapIndividualApplicationDetailToApplicantRow,
   mapIndividualApplicationToApplicantRow,
   mapInstructorApplicationToApplicantInstructorRow,
+  mapMaterialAssignmentStatusToTextbookStatus,
   mapOrganizationApplicationToApplicantSchoolRow,
   mapParticipantToParticipatingSchoolRow,
   mapVolunteerApplicationToGeneralVolunteerApplicantRow,
@@ -52,6 +53,7 @@ describe('general-applications-adapters', () => {
       {
         participantId: 1691423,
         memberName: '테스트초',
+        teacherMemberId: 9901,
         participantStatus: 'APPROVED',
         availableActions: ['VIEW', 'GIVE_UP'],
       } as never,
@@ -59,6 +61,7 @@ describe('general-applications-adapters', () => {
       '168001'
     )
     expect(active.id).toBe('1691423')
+    expect(active.teacherMemberId).toBe(9901)
     expect(active.activityWithdrawn).toBe(false)
     expect(active.availableActions).toEqual(['VIEW', 'GIVE_UP'])
 
@@ -77,6 +80,16 @@ describe('general-applications-adapters', () => {
     expect(withdrawn.activityWithdrawn).toBe(true)
     expect(withdrawn.giveUpAt).toBe('2026-09-01T00:00:00Z')
     expect(withdrawn.availableActions).toEqual(['VIEW'])
+  })
+
+  it.each([
+    ['BEFORE_SHIPPING', 'preparing'],
+    ['SHIPPING', 'shipping'],
+    ['DELIVERED', 'delivered'],
+    ['NOT_APPLICABLE', 'not_applicable'],
+    [undefined, 'not_applicable'],
+  ] as const)('maps material assignment status %s to %s', (status, expected) => {
+    expect(mapMaterialAssignmentStatusToTextbookStatus(status)).toBe(expected)
   })
 
   it('maps instructor application list item to applicant row', () => {

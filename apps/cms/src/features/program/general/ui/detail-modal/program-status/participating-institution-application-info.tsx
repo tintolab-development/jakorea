@@ -5,6 +5,7 @@
 import { Fragment, type ReactNode } from 'react'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
+import { CmsButton } from '@/shared/ui'
 import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import { ParticipatingProgressScheduleRow } from './participating-progress-schedule-row'
@@ -58,6 +59,7 @@ export interface ParticipatingInstitutionApplicationInfoProps {
   program: Program
   sessions: ParticipatingSchoolSession[]
   useCompanySchoolScheduleFormat?: boolean
+  onScheduleChangeClick?: () => void
 }
 
 function padScheduleTimePart(part: string): string {
@@ -180,6 +182,7 @@ export function ParticipatingInstitutionApplicationInfo({
   program,
   sessions,
   useCompanySchoolScheduleFormat = false,
+  onScheduleChangeClick,
 }: ParticipatingInstitutionApplicationInfoProps) {
   return (
     <div className="institution-basic-info applicant-institution-basic-info participating-institution-application-info">
@@ -194,17 +197,7 @@ export function ParticipatingInstitutionApplicationInfo({
       ) : null}
 
       <section className="applicant-institution-basic-info__section">
-        <h3 className="applicant-institution-basic-info__title">
-          기본 정보
-          {isBasicInfoEditing ? (
-            <span
-              className="applicant-institution-basic-info__title-required"
-              aria-hidden="true"
-            >
-              *
-            </span>
-          ) : null}
-        </h3>
+        <h3 className="applicant-institution-basic-info__title">기본 정보</h3>
         <div className="applicant-institution-basic-info__basic-info-fields">
           <div className="applicant-institution-basic-info__table-wrap participating-institution-application-info__table-wrap--overview">
             <table className="applicant-institution-basic-info__table">
@@ -317,7 +310,19 @@ export function ParticipatingInstitutionApplicationInfo({
       </section>
 
       <section className="applicant-institution-basic-info__section">
-        <h3 className="applicant-institution-basic-info__title">교육 진행 일정</h3>
+        <div className="participating-institution-application-info__schedule-header">
+          <h3 className="applicant-institution-basic-info__title">교육 진행 일정</h3>
+          {isBasicInfoEditing && onScheduleChangeClick ? (
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              type="button"
+              onClick={onScheduleChangeClick}
+            >
+              일정 변경
+            </CmsButton>
+          ) : null}
+        </div>
         <div className="applicant-institution-basic-info__table-wrap">
           <table className="applicant-institution-basic-info__table">
             {useCompanySchoolScheduleFormat

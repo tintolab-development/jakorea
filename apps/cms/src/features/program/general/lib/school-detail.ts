@@ -73,7 +73,15 @@ export function getInstructorRowsForSchool(
   instructorRows: ParticipatingInstructorRow[]
 ): SchoolDetailInstructorRow[] {
   const forSchool = instructorRows.filter(r => r.schoolName === schoolName)
-  return forSchool.map((r, i) => toDetailInstructor(r, i))
+  if (forSchool.length > 0) {
+    return forSchool.map((r, i) => toDetailInstructor(r, i))
+  }
+
+  // TODO(temp-mock): 열여라 참깨 — 원격 기관 강사 배정 현황 검증 후 삭제
+  const temporaryInstructors = instructorRows
+    .filter(r => r.id.startsWith('temp-progress-instructor-'))
+    .slice(0, 2)
+  return temporaryInstructors.map((r, i) => toDetailInstructor(r, i))
 }
 
 /** 배정된 강사 목록 테이블용 확장 필드 목 데이터 */
@@ -204,16 +212,34 @@ export function getWaitingInstructorRows(
       const hopeTime = hopeFromSchool?.hopeTime ?? pick(WAITING_HOPE_TIMES, idx % 3)
       const hopeSession = hopeFromSchool?.hopeSession ?? pick(WAITING_HOPE_SESSIONS, idx % 2)
       const hopeSchedule = { hopeDate, hopeTime, hopeSession }
+      const isTemporaryInstructor = r.id.startsWith('temp-progress-instructor-')
       return {
         id: r.id,
         no: n - idx,
         instructorName: r.instructorName,
         homeAddress: r.address ?? pick(WAITING_HOME_ADDRESSES, seed + idx),
         distanceToSchool: pick(WAITING_DISTANCES, seed % 5),
-        assignmentStatus: resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedSlots),
+        // TODO(temp-mock): 열여라 참깨 — 배정 대기/불가 검증 후 삭제
+        assignmentStatus: isTemporaryInstructor
+          ? idx % 2 === 0
+            ? 'waiting'
+            : 'unavailable'
+          : resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedSlots),
         hopeDate,
         hopeTime,
         hopeSession,
+        ...(isTemporaryInstructor
+          ? {
+              instructorId: r.id,
+              scheduleKey: `${currentSchool?.id ?? schoolName}|${idx + 1}`,
+              hopeScheduleLine: `${hopeDate} | ${hopeTime} | ${hopeSession}`,
+              instructorApplicationId: `996${String(idx + 1).padStart(3, '0')}`,
+              instructorMemberId: r.memberId,
+              requestedScheduleId: 997_000 + idx + 1,
+              resolvedScheduleId: 998_000 + idx + 1,
+              scheduleUnresolved: false,
+            }
+          : {}),
       }
     })
   )
@@ -303,6 +329,58 @@ export function getCompanySchoolWaitingInstructorScheduleRows(
  */
 export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailForModal {
   const sessionCount = row.sessions?.length ?? 0
+  // TODO(temp-mock): 열여라 참깨 — 참여 기관 상세 필드 검증 후 삭제
+  if (row.id.startsWith('temp-textbook-status-')) {
+    const textbookUsed = row.textbookStatus !== 'not_applicable'
+    return {
+      id: row.id,
+      schoolName: row.schoolName,
+      adminComment: `${row.schoolName} 진행 현황 확인용 임시 데이터`,
+      scheduleChangeCancelCount: 1,
+      region: row.region,
+      addressDetail: '본관 1층 교무실 담당 교사 앞',
+      educationGrade: row.educationGrade,
+      venue: '본관 3층 경제교육실',
+      educationFormat: '대면 교육',
+      totalEducationHours: 8,
+      totalSessions: sessionCount,
+      affiliatedFinancialCompany: 'JA Korea 협력 금융사',
+      mealProvided: true,
+      mealNotice: '강사 식사 1식 제공',
+      teacherName: row.teacherName,
+      teacherPhone: '02-1234-5678',
+      teacherEmail: 'teacher@school.example',
+      teacherMobile: '010-1234-5678',
+      classCount: row.classCount,
+      studentCount: row.studentCount,
+      waitingRoomAvailable: true,
+      waitingRoomLocation: '본관 2층 회의실',
+      computerInRoom: '강의용 노트북 및 빔프로젝터 사용 가능',
+      parkingInfo: '교내 주차장 이용 가능',
+      criminalCheckRequest: '교육 시작 전 조회서 제출 요청',
+      lectureRound: row.lectureRound,
+      textbookName: textbookUsed ? 'JA 경제교육 표준 교재' : '교재 미사용',
+      textbookId: textbookUsed ? 'temp-textbook-standard' : 'temp-textbook-none',
+      textbookGrade: row.educationGrade,
+      textbookKits: textbookUsed ? row.classCount : 0,
+      textbookStatus: row.textbookStatus,
+      textbookQuantity: textbookUsed ? row.studentCount + 2 : 0,
+      previousYearParticipation: '참여',
+      applicationReason: '학생 경제·금융 역량 향상을 위해 신청했습니다.',
+      otherRequests: '교육 시작 20분 전 도착을 요청드립니다.',
+      combinedClassApplication: '미신청',
+      combinedClassPartnerSchoolIds: [],
+      combinedClassPartnerGrades: [],
+      programProgressLabel: '교육 진행 중',
+      programProgressStatus: 'EDUCATION_IN_PROGRESS',
+      activityWithdrawn: false,
+      activityWithdrawStopSessionKey: '',
+      activityWithdrawStopScheduleLabel: '해당 없음',
+      availableActions: row.availableActions,
+      participationAppliedAt: '2026-09-01T09:00:00+09:00',
+      instructors: [],
+    }
+  }
   return {
     id: row.id,
     schoolName: row.schoolName,

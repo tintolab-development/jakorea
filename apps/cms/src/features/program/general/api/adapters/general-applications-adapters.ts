@@ -643,6 +643,16 @@ export function filterVolunteerInterview2Rows(
   )
 }
 
+export function mapMaterialAssignmentStatusToTextbookStatus(
+  status?: string
+): ParticipatingSchoolRow['textbookStatus'] {
+  const normalized = status?.trim().toUpperCase() ?? ''
+  if (['PREPARING', 'BEFORE_SHIPPING'].includes(normalized)) return 'preparing'
+  if (['SHIPPING', 'IN_TRANSIT'].includes(normalized)) return 'shipping'
+  if (['DELIVERED', 'DELIVERY_COMPLETED'].includes(normalized)) return 'delivered'
+  return 'not_applicable'
+}
+
 export function mapParticipantToParticipatingSchoolRow(
   dto: ParticipantListItemResponse,
   index: number,
@@ -658,6 +668,7 @@ export function mapParticipantToParticipatingSchoolRow(
   return {
     id: toId(dto.participantId),
     organizationId: dto.organizationId,
+    teacherMemberId: dto.teacherMemberId,
     no: index + 1,
     schoolName: dto.organizationName?.trim() || dto.memberName?.trim() || '기관명 없음',
     region: '',
@@ -665,7 +676,7 @@ export function mapParticipantToParticipatingSchoolRow(
     classCount: 0,
     studentCount: 0,
     lectureRound: '',
-    textbookStatus: 'not_applicable',
+    textbookStatus: mapMaterialAssignmentStatusToTextbookStatus(dto.materialAssignmentStatus),
     approvalStatus: 'approved',
     teacherName: '-',
     instructors: '',

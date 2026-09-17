@@ -318,6 +318,9 @@ export function useParticipatingInstitutionDetailEdit({
         baseline.combinedClassPartnerSchoolIds.join('|') !==
           normalizedDraft.combinedClassPartnerSchoolIds.join('|')
       const nonMergeChanged =
+        baseline.educationGrade !== normalizedDraft.educationGrade ||
+        baseline.classCount !== normalizedDraft.classCount ||
+        baseline.studentCount !== normalizedDraft.studentCount ||
         baseline.textbookId !== normalizedDraft.textbookId ||
         baseline.textbookName !== normalizedDraft.textbookName ||
         baseline.addressDetail !== normalizedDraft.addressDetail ||

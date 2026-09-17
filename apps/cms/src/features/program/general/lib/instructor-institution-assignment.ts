@@ -130,7 +130,9 @@ export function buildInitialAssignedSchoolRows(
   const sortedRest = [...rest].sort(
     (a, b) => hash(a.id + instructor.id) - hash(b.id + instructor.id)
   )
-  const pickedSchools = isGeneralInstitutionCaseProgramId(primary.programId)
+  // TODO(temp-mock): 열여라 참깨 — 참여 강사·배정 현황 검증 후 삭제
+  const isTemporaryInstructor = instructor.id.startsWith('temp-progress-instructor-')
+  const pickedSchools = isGeneralInstitutionCaseProgramId(primary.programId) || isTemporaryInstructor
     ? [primary]
     : [primary, ...sortedRest.slice(0, 2)]
 
@@ -174,7 +176,10 @@ export function buildWaitingSchoolRows(
         region: school.region,
         distanceFromHome: pick(WAITING_DISTANCES, rowSeed + idx),
         educationScheduleLines: scheduleLinesForSchool(school),
-        assignmentStatus: isGeneralInstitutionCaseProgramId(school.programId)
+        // TODO(temp-mock): 열여라 참깨 — 배정 대기/불가/완료 검증 후 삭제
+        assignmentStatus: instructor.id.startsWith('temp-progress-instructor-')
+          ? (['waiting', 'cancelled', 'assigned'] as const)[idx % 3]
+          : isGeneralInstitutionCaseProgramId(school.programId)
           ? (['waiting', 'cancelled', 'assigned'] as const)[idx % 3]
           : pick([...WAITING_ASSIGNMENT_STATUSES], rowSeed + idx),
         assignedInstructorCountLabel: instructorCountLabel(school.schoolName, instructorList),

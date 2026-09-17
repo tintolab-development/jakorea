@@ -115,13 +115,20 @@ import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-inf
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import {
   InstitutionAddressDetailEdit,
+  InstitutionClassAndStudentCountEdit,
   InstitutionComputerInRoomEdit,
   InstitutionEducationFormatRadios,
+  InstitutionGradeSelectEdit,
   InstitutionMealEdit,
   InstitutionMultilineEdit,
+  InstitutionReadonlyInput,
   InstitutionTeacherEdit,
   InstitutionWaitingRoomEdit,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
+import {
+  buildInstitutionClassCountOptions,
+  resolveProgramParticipantMaxClassCount,
+} from '@/features/template/lib/participant-recruitment-institution-limits'
 import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
 import {
   hasCompletedCombinedClassEducationSessions,
@@ -138,7 +145,13 @@ import {
   PROGRAM_API_UNAVAILABLE_TITLE,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
-import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
+import {
+  listAdminCommentsByTargetRemote,
+  resolveLatestAdminCommentText,
+  upsertAdminCommentByTargetRemote,
+} from '@/features/program/general/api/admin-comments-api-client'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
 import { MESSAGES } from '@/shared/constants/messages'
 import { formatParticipatingCombinedClassDisplay } from '@/features/program/general/lib/participating-institution-detail-edit'
 import { InstitutionCombinedClassEditCell } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-combined-class-edit-cell'
@@ -153,6 +166,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import './participating-institutions-section.css'
 import './instructor-assignment-status-text.css'
 import { ParticipatingInstitutionApplicationInfo } from './participating-institution-application-info'
+import { ParticipatingInstitutionScheduleChangeModal } from './participating-institution-schedule-change-modal'
 import {
   getParticipatingInstitutionActivityWithdrawScheduleOptions,
   resolveParticipatingInstitutionActivityWithdrawPatch,
@@ -459,6 +473,7 @@ export function GeneralParticipatingInstitutionDetailView(
   const { posts: remotePosts, files: remotePostFiles, isRemoteDataSource: postsRemote, invalidatePosts } =
     useGeneralProgramPosts(program.id)
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
+  const [scheduleChangeModalOpen, setScheduleChangeModalOpen] = useState(false)
   const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
@@ -478,9 +493,34 @@ export function GeneralParticipatingInstitutionDetailView(
     setAdminCommentDraft('')
     setAdminCommentError(undefined)
     setActivityWithdrawModalOpen(false)
+    setScheduleChangeModalOpen(false)
   }, [detail.id, detail.adminComment, savedBasicPatches[detail.id]?.adminComment])
 
-  const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
+  const organizationApplicationId = Number(row.organizationApplicationId)
+  const hasOrganizationApplicationId = Number.isFinite(organizationApplicationId)
+  const adminCommentQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.commentsByTarget(
+      'ORGANIZATION_APPLICATION',
+      hasOrganizationApplicationId ? String(organizationApplicationId) : ''
+    ),
+    queryFn: () =>
+      listAdminCommentsByTargetRemote({
+        targetType: 'ORGANIZATION_APPLICATION',
+        targetId: organizationApplicationId,
+        screenCode: 'ORGANIZATION_APPLICATION',
+      }),
+    enabled:
+      showAdminCommentSection &&
+      shouldUseGeneralApplicationsRemoteApi() &&
+      hasOrganizationApplicationId,
+    staleTime: 30_000,
+  })
+  const remoteAdminComment = resolveLatestAdminCommentText(adminCommentQuery.data)
+  const mergedDetail = {
+    ...detail,
+    ...(adminCommentQuery.data ? { adminComment: remoteAdminComment } : {}),
+    ...savedBasicPatches[detail.id],
+  }
   const sessions = row.sessions ?? []
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
   const availableActions = mergedDetail.availableActions ?? row.availableActions
@@ -555,6 +595,28 @@ export function GeneralParticipatingInstitutionDetailView(
     () => mergedDetail.schoolName ?? row.schoolName ?? '학교 상세 정보',
     [mergedDetail.schoolName, row.schoolName]
   )
+  const revealInstitutionTeacherPersonalInfo = useCallback(
+    async (reason: string) => {
+      if (row.teacherMemberId == null) {
+        throw new Error('담당 교사 회원 ID가 없습니다.')
+      }
+      return fetchMemberRolePrivacyUnmask(row.teacherMemberId, reason, 'SCHOOL')
+    },
+    [row.teacherMemberId]
+  )
+  const applyInstitutionTeacherPersonalInfo = useCallback(
+    (payload: unknown) => {
+      if (payload == null || typeof payload !== 'object') return
+      const privacy = payload as { name?: unknown; phone?: unknown; email?: unknown }
+      onSaveBasicInfo?.({
+        id: detail.id,
+        ...(typeof privacy.name === 'string' ? { teacherName: privacy.name } : {}),
+        ...(typeof privacy.phone === 'string' ? { teacherMobile: privacy.phone } : {}),
+        ...(typeof privacy.email === 'string' ? { teacherEmail: privacy.email } : {}),
+      })
+    },
+    [detail.id, onSaveBasicInfo]
+  )
 
   const {
     personalInfoRevealed,
@@ -562,6 +624,8 @@ export function GeneralParticipatingInstitutionDetailView(
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolvePersonalInfoAccessItem,
+    revealPersonalInfo: revealInstitutionTeacherPersonalInfo,
+    onPrivacyUnmasked: applyInstitutionTeacherPersonalInfo,
     resetDeps: [detail.id],
     controlMode: 'toggleRemask',
   })
@@ -578,8 +642,7 @@ export function GeneralParticipatingInstitutionDetailView(
   const handleAdminCommentSave = useCallback(async () => {
     const trimmed = adminCommentDraft.trim()
     if (shouldUseGeneralApplicationsRemoteApi()) {
-      const targetId = Number(detail.id)
-      if (!Number.isFinite(targetId)) {
+      if (!hasOrganizationApplicationId) {
         void showAlert({
           title: '안내',
           content: MESSAGES.error.save,
@@ -589,13 +652,19 @@ export function GeneralParticipatingInstitutionDetailView(
       try {
         const result = await upsertAdminCommentByTargetRemote({
           targetType: 'ORGANIZATION_APPLICATION',
-          targetId,
+          targetId: organizationApplicationId,
           screenCode: 'ORGANIZATION_APPLICATION',
           comment: trimmed,
         })
         onSaveBasicInfo?.({
           id: detail.id,
           adminComment: result.commentText,
+        })
+        void queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.commentsByTarget(
+            'ORGANIZATION_APPLICATION',
+            String(organizationApplicationId)
+          ),
         })
         setAdminCommentModalOpen(false)
         setAdminCommentError(undefined)
@@ -612,7 +681,15 @@ export function GeneralParticipatingInstitutionDetailView(
       title: PROGRAM_API_UNAVAILABLE_TITLE,
       content: buildProgramApiUnavailableSaveContent('참여 기관 관리자 코멘트'),
     })
-  }, [adminCommentDraft, detail.id, onSaveBasicInfo, showAlert])
+  }, [
+    adminCommentDraft,
+    detail.id,
+    hasOrganizationApplicationId,
+    onSaveBasicInfo,
+    organizationApplicationId,
+    queryClient,
+    showAlert,
+  ])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)
@@ -688,12 +765,10 @@ export function GeneralParticipatingInstitutionDetailView(
         return
       }
 
-      onSaveBasicInfo?.({ id: detail.id, ...patch })
-      setActivityWithdrawModalOpen(false)
-      showAlert({
-        title: '활동 포기',
-        content: `${mergedDetail.schoolName} 기관이 활동 포기 처리되었습니다.`,
-      })
+      notifyProgramApiUnavailable(
+        'general-participating-institution-give-up',
+        '일반 프로그램 · 참여 기관 활동 포기'
+      )
     },
     [
       detail.id,
@@ -1633,10 +1708,24 @@ export function GeneralParticipatingInstitutionDetailView(
   const isApplicationDetailEditing =
     isApplicationInfoEditing && applicationInfoDraft != null
 
-  const classAndCountDisplay = withProgramDetailTdDivider([
-    `${mergedDetail.classCount}개 학급`,
-    `총 ${mergedDetail.studentCount}명`,
-  ])
+  const classCountOptions = useMemo(
+    () => buildInstitutionClassCountOptions(resolveProgramParticipantMaxClassCount(program)),
+    [program]
+  )
+  const classAndCountDisplay =
+    isApplicationDetailEditing ? (
+      <InstitutionClassAndStudentCountEdit
+        classCount={applicationInfoDraft.classCount}
+        studentCount={applicationInfoDraft.studentCount}
+        classCountOptions={classCountOptions}
+        onChange={patch => updateApplicationInfoDraft(patch)}
+      />
+    ) : (
+      withProgramDetailTdDivider([
+        `${mergedDetail.classCount}개 학급`,
+        `총 ${mergedDetail.studentCount}명`,
+      ])
+    )
 
   return (
     <div className="school-detail-fullpage-view">
@@ -1670,6 +1759,7 @@ export function GeneralParticipatingInstitutionDetailView(
               ) : null}
               <ProgramEditInfoActions
                 isEditing={isApplicationInfoEditing}
+                idleVariant="secondary"
                 onEdit={enterApplicationInfoEdit}
                 onCancel={cancelApplicationInfoEdit}
                 onSave={() => {
@@ -1719,9 +1809,30 @@ export function GeneralParticipatingInstitutionDetailView(
               usesTextbook={isCompanySchool || usesTextbook}
               textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
               hideCombinedClass={isCompanySchool}
-              schoolName={mergedDetail.schoolName}
-              educationGrade={mergedDetail.educationGrade}
-              region={mergedDetail.region}
+              schoolName={
+                isApplicationDetailEditing ? (
+                  <InstitutionReadonlyInput value={mergedDetail.schoolName ?? ''} />
+                ) : (
+                  mergedDetail.schoolName
+                )
+              }
+              educationGrade={
+                isApplicationDetailEditing ? (
+                  <InstitutionGradeSelectEdit
+                    value={applicationInfoDraft.educationGrade}
+                    onChange={value => updateApplicationInfoDraft({ educationGrade: value })}
+                  />
+                ) : (
+                  mergedDetail.educationGrade
+                )
+              }
+              region={
+                isApplicationDetailEditing ? (
+                  <InstitutionReadonlyInput value={mergedDetail.region ?? ''} />
+                ) : (
+                  mergedDetail.region
+                )
+              }
               addressDetail={
                 isApplicationDetailEditing ? (
                   <InstitutionAddressDetailEdit
@@ -1827,6 +1938,7 @@ export function GeneralParticipatingInstitutionDetailView(
               program={program}
               sessions={sessions}
               useCompanySchoolScheduleFormat={isCompanySchool}
+              onScheduleChangeClick={() => setScheduleChangeModalOpen(true)}
             />
           </div>
         )}
@@ -2180,6 +2292,8 @@ export function GeneralParticipatingInstitutionDetailView(
         )}
       </div>
 
+      <div className="school-detail-fullpage-view__page-bottom-spacer" aria-hidden />
+
       {personalInfoRevealModal}
 
       <ActivityWithdrawScheduleModal
@@ -2188,6 +2302,19 @@ export function GeneralParticipatingInstitutionDetailView(
         confirming={activityWithdrawSubmitting}
         onCancel={handleCancelActivityWithdraw}
         onConfirm={handleConfirmActivityWithdraw}
+      />
+      <ParticipatingInstitutionScheduleChangeModal
+        open={scheduleChangeModalOpen}
+        program={program}
+        sessions={sessions}
+        onCancel={() => setScheduleChangeModalOpen(false)}
+        onConfirm={() => {
+          setScheduleChangeModalOpen(false)
+          notifyProgramApiUnavailable(
+            'general-participating-institution-schedule-change',
+            '일반 프로그램 · 참여 기관 교육 진행 일정 변경'
+          )
+        }}
       />
       <MemberAdminCommentModal
         open={adminCommentModalOpen}
