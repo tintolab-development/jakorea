@@ -22,6 +22,7 @@ import type {
 import { UJAT_VOLUNTEER_GRADE_OPTIONS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { projectUjatVolunteerApplicationStatus } from '@/features/program/ujat/lib/normalize-ujat-volunteer-application-status'
 import { findUjatEducationRegionKeyByLabel } from '@/features/program/ujat/lib/ujat-education-regions'
+import { fromUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 
 function toId(value: number | string | undefined): string {
   if (value == null) return ''
@@ -29,8 +30,19 @@ function toId(value: number | string | undefined): string {
 }
 
 function mapOrgStatusToTempAssignment(
-  status?: string
+  status?: string | null,
+  temporaryAssignmentStatus?: string | null
 ): UjatInstitutionApplicationRow['tempAssignmentStatus'] {
+  const temp = temporaryAssignmentStatus?.trim().toUpperCase() ?? ''
+  if (['TEMP_REJECTED', 'TEMPORARY_REJECTED'].includes(temp)) {
+    return 'temp_rejected'
+  }
+  if (
+    ['TEMP_ASSIGNED', 'TEMPORARY_ASSIGNED', 'TEMPORARY', 'TEMP_ASSIGNMENT_CONFIRMED'].includes(temp)
+  ) {
+    return 'temp_assigned'
+  }
+
   const normalized = status?.trim().toUpperCase() ?? ''
   if (['REJECTED', 'AUTO_REJECTED', 'CANCELLED'].includes(normalized)) {
     return 'application_rejected'
@@ -98,7 +110,10 @@ export function mapOrganizationApplicationToUjatInstitutionRow(
     regionKey,
     no: index + 1,
     institutionName: dto.organizationName?.trim() || '기관명 없음',
-    tempAssignmentStatus: mapOrgStatusToTempAssignment(dto.applicationStatus),
+    tempAssignmentStatus: mapOrgStatusToTempAssignment(
+      dto.applicationStatus,
+      dto.temporaryAssignmentStatus
+    ),
     gradeClassCounts,
     totalClassCount: sumGradeClassCounts(gradeClassCounts) || classCount,
     scheduleSlots: buildEmptyScheduleSlots(),
@@ -312,7 +327,7 @@ export function mapVolunteerApplicationToUjatApplicantRow(
         ? 'assigned'
         : projection.interviewAssignmentStatus,
     programId: toId(dto.programId) || programId,
-    half,
+    half: fromUjatRecruitHalfApi(dto.recruitHalf, half),
     englishName: '',
     id1365: '',
     gender: '',

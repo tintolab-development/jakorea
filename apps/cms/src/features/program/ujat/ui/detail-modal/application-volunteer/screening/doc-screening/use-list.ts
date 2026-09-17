@@ -181,8 +181,8 @@ export function useUjatVolunteerDocScreening({
   } | null>(null)
 
   const listQuery = useMemo(
-    () => buildUjatVolunteerDoc1ListQuery(appliedFilters),
-    [appliedFilters]
+    () => buildUjatVolunteerDoc1ListQuery(appliedFilters, half),
+    [appliedFilters, half]
   )
 
   const applicationsQuery = useInfiniteQuery({

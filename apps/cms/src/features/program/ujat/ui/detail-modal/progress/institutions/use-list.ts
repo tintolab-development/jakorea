@@ -13,6 +13,7 @@ import {
 import { listUjatInstitutionApplicationsPage } from '@/features/program/ujat/api/applications-service'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
+import { toUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRow } from '@/features/program/ujat/ui/detail-modal/application-institution/list/types'
 
@@ -95,12 +96,18 @@ export function useUjatEducationProgressInstitutions(
 
   const remoteQuery = useInfiniteQuery({
     queryKey: [
-      ...ujatQueryKeys.organizationApplications(programId, { status: 'APPROVED' }),
+      ...ujatQueryKeys.organizationApplications(programId, {
+        status: 'APPROVED',
+        recruitHalf: toUjatRecruitHalfApi(half),
+      }),
       'edu-progress',
       half,
     ] as const,
     queryFn: ({ pageParam }) =>
-      listUjatInstitutionApplicationsPage(programId, pageParam, { status: 'APPROVED' }),
+      listUjatInstitutionApplicationsPage(programId, pageParam, {
+        status: 'APPROVED',
+        recruitHalf: toUjatRecruitHalfApi(half),
+      }),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled,

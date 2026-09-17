@@ -1,4 +1,5 @@
 import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_SEED } from '@/features/program/ujat/model/ujat-institution-application'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import {
   UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES,
@@ -103,6 +104,7 @@ function applyScheduleAssignMockSeed(regionKey: UjatInstitutionApplicationRegion
 function ensureScheduleAssignMockSeeded(): void {
   if (scheduleAssignMockSeeded) return
   scheduleAssignMockSeeded = true
+  if (shouldUseUjatApplicationsRemoteApi()) return
   for (const regionKey of Object.keys(
     UJAT_INSTITUTION_SCHEDULE_ASSIGN_SEED
   ) as UjatInstitutionApplicationRegionKey[]) {
@@ -159,6 +161,16 @@ export function commitUjatScheduleAssignDraft(
 ): void {
   const draft = ensureDraftRegionState(regionKey)
   savedRegionState.set(regionKey, cloneRegionState(draft))
+}
+
+/** remote hydrate — draft·saved 동시 교체 */
+export function replaceUjatScheduleAssignRegionState(
+  regionKey: UjatInstitutionApplicationRegionKey,
+  next: UjatScheduleAssignRegionState
+): void {
+  const cloned = cloneRegionState(next)
+  savedRegionState.set(regionKey, cloned)
+  draftRegionState.set(regionKey, cloneRegionState(cloned))
 }
 
 export function patchUjatScheduleAssignDay(

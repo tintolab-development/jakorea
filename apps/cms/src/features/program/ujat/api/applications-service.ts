@@ -13,6 +13,7 @@ import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/uj
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { sortUjatVolunteerApplicants } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { GENERAL_PROGRAM_LIST_PAGE_SIZE } from '@/features/program/general/api/general-program-list-filter-params'
+import { toUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 
 const PAGE_SIZE = GENERAL_PROGRAM_LIST_PAGE_SIZE
 
@@ -97,6 +98,7 @@ export async function listUjatVolunteerApplicationsPage(
     page: pageParam,
     size: PAGE_SIZE,
     ...query,
+    recruitHalf: toUjatRecruitHalfApi(half),
   })
   const meta = resolvePageMeta({
     itemCount: response.items?.length ?? 0,

@@ -1,7 +1,7 @@
 # BE 수정 요청 — UJAT 프로그램 상세 LNB API 계약 보강
 
 **작성일:** 2026-09-17  
-**상태:** ⏳ BE 요청 (FE 일부 연동 완료 · 잔여 갭)  
+**상태:** ✅ BE P0 반영 · FE P0 연동 (2026-09-17)  
 **우선순위:** P0(반기·임시배정 스키마) → P1(교육 진행 execution) → P2(OpenAPI 스키마 채우기)  
 **대상 화면:** CMS `/programs/ujat?programId=…` 풀페이지 상세  
 **범위:** `features/program/ujat/**` only (일반·1사1교·Gemini 간섭 금지)  

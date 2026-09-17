@@ -139,8 +139,8 @@ export function useUjatVolunteerInterview2({
   const [now, setNow] = useState(() => dayjs())
 
   const listQuery = useMemo(
-    () => buildUjatVolunteerInterview2ListQuery(appliedFilters),
-    [appliedFilters]
+    () => buildUjatVolunteerInterview2ListQuery(appliedFilters, half),
+    [appliedFilters, half]
   )
 
   const applicationsQuery = useInfiniteQuery({

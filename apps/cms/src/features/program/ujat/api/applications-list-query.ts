@@ -12,6 +12,8 @@ import type { UjatVolunteerInterview2Filters } from '@/features/program/ujat/ui/
 import { UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview2/filter-fields'
 import type { UjatInstitutionApplicationFilters } from '@/features/program/ujat/ui/detail-modal/application-institution/list/types'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_ALL } from '@/features/program/ujat/ui/detail-modal/application-institution/list/filter-fields'
+import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
+import { toUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 
 export type UjatVolunteerApplicationsStage = 'doc1' | 'docPassed' | 'interview2'
 
@@ -58,8 +60,17 @@ function trimKeyword(value: string | undefined): string | undefined {
   return trimmed ? trimmed : undefined
 }
 
+function withRecruitHalf(
+  query: ApplicationsListQuery,
+  half?: UjatVolunteerRecruitHalf | 'h1' | 'h2' | null
+): ApplicationsListQuery {
+  if (!half) return query
+  return { ...query, recruitHalf: toUjatRecruitHalfApi(half) }
+}
+
 export function buildUjatVolunteerDoc1ListQuery(
-  filters: UjatVolunteerDocScreeningFilters
+  filters: UjatVolunteerDocScreeningFilters,
+  half?: UjatVolunteerRecruitHalf | null
 ): ApplicationsListQuery {
   const keyword = trimKeyword(filters.volunteerName)
   const documentStatus =
@@ -79,17 +90,21 @@ export function buildUjatVolunteerDoc1ListQuery(
       ? undefined
       : filters.applicationType === 'ujat-graduate'
 
-  return {
-    ...(keyword ? { keyword } : {}),
-    ...(documentStatus ? { documentStatus } : {}),
-    ...(managerAEvaluation ? { managerAEvaluation } : {}),
-    ...(managerBEvaluation ? { managerBEvaluation } : {}),
-    ...(isReparticipation != null ? { isReparticipation } : {}),
-  }
+  return withRecruitHalf(
+    {
+      ...(keyword ? { keyword } : {}),
+      ...(documentStatus ? { documentStatus } : {}),
+      ...(managerAEvaluation ? { managerAEvaluation } : {}),
+      ...(managerBEvaluation ? { managerBEvaluation } : {}),
+      ...(isReparticipation != null ? { isReparticipation } : {}),
+    },
+    half
+  )
 }
 
 export function buildUjatVolunteerDocPassedListQuery(
-  filters: UjatVolunteerDocPassedFilters
+  filters: UjatVolunteerDocPassedFilters,
+  half?: UjatVolunteerRecruitHalf | null
 ): ApplicationsListQuery {
   const keyword = trimKeyword(filters.volunteerName)
   const interviewStatus =
@@ -97,15 +112,19 @@ export function buildUjatVolunteerDocPassedListQuery(
       ? INTERVIEW_ASSIGN_TO_API[filters.interviewAssignmentStatus]
       : undefined
 
-  return {
-    documentStatus: 'PASS',
-    ...(keyword ? { keyword } : {}),
-    ...(interviewStatus ? { interviewStatus } : {}),
-  }
+  return withRecruitHalf(
+    {
+      documentStatus: 'PASS',
+      ...(keyword ? { keyword } : {}),
+      ...(interviewStatus ? { interviewStatus } : {}),
+    },
+    half
+  )
 }
 
 export function buildUjatVolunteerInterview2ListQuery(
-  filters: UjatVolunteerInterview2Filters
+  filters: UjatVolunteerInterview2Filters,
+  half?: UjatVolunteerRecruitHalf | null
 ): ApplicationsListQuery {
   const keyword = trimKeyword(filters.volunteerName)
   const finalResultStatus =
@@ -114,28 +133,33 @@ export function buildUjatVolunteerInterview2ListQuery(
       ? FINAL_STATUS_TO_API[filters.secondInterviewScreeningStatus]
       : undefined
 
-  return {
-    documentStatus: 'PASS',
-    ...(keyword ? { keyword } : {}),
-    ...(finalResultStatus ? { finalResultStatus } : {}),
-    ...(filters.secondInterviewScreeningStatus === 'withdrawn'
-      ? { interviewStatus: 'WITHDRAWN' }
-      : {}),
-  }
+  return withRecruitHalf(
+    {
+      documentStatus: 'PASS',
+      ...(keyword ? { keyword } : {}),
+      ...(finalResultStatus ? { finalResultStatus } : {}),
+      ...(filters.secondInterviewScreeningStatus === 'withdrawn'
+        ? { interviewStatus: 'WITHDRAWN' }
+        : {}),
+    },
+    half
+  )
 }
 
 export function buildUjatVolunteerStageBaseQuery(
-  stage: UjatVolunteerApplicationsStage
+  stage: UjatVolunteerApplicationsStage,
+  half?: UjatVolunteerRecruitHalf | null
 ): ApplicationsListQuery {
   if (stage === 'docPassed' || stage === 'interview2') {
-    return { documentStatus: 'PASS' }
+    return withRecruitHalf({ documentStatus: 'PASS' }, half)
   }
-  return {}
+  return withRecruitHalf({}, half)
 }
 
-/** 기관 신청 — OpenAPI에 명시된 list query가 빈약해 keyword/status만 전달 (미지원 시 BE가 무시) */
+/** 기관 신청 — keyword/status + 선택적 recruitHalf(교육 진행 상·하반기) */
 export function buildUjatInstitutionApplicationsListQuery(
-  filters: UjatInstitutionApplicationFilters
+  filters: UjatInstitutionApplicationFilters,
+  half?: UjatVolunteerRecruitHalf | 'h1' | 'h2' | null
 ): ApplicationsListQuery {
   const keyword =
     trimKeyword(filters.institutionName) ?? trimKeyword(filters.teacherName) ?? undefined
@@ -144,8 +168,11 @@ export function buildUjatInstitutionApplicationsListQuery(
       ? TEMP_ASSIGN_TO_ORG_STATUS[filters.tempAssignmentStatus]
       : undefined
 
-  return {
-    ...(keyword ? { keyword } : {}),
-    ...(status ? { status } : {}),
-  }
+  return withRecruitHalf(
+    {
+      ...(keyword ? { keyword } : {}),
+      ...(status ? { status } : {}),
+    },
+    half
+  )
 }

@@ -36,4 +36,8 @@ export interface OrganizationApplicationListItemResponse {
   mergeGroupId?: number;
   mergeStatus?: string;
   mergeLead?: boolean;
+  /** UJAT — 학교 모집은 보통 null */
+  recruitHalf?: 'FIRST_HALF' | 'SECOND_HALF' | null;
+  /** UJAT 임시배정 워크플로. TEMP_ASSIGNED|TEMP_REJECTED 등 */
+  temporaryAssignmentStatus?: string | null;
 }

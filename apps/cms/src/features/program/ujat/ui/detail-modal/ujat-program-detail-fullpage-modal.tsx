@@ -2101,6 +2101,7 @@ export function UjatProgramDetailFullPageModal({
             institutionDetailId ? (
               <UjatInstitutionScheduleConfirmDetailPage
                 institutionId={institutionDetailId}
+                programId={programId}
                 onBack={() => setInstitutionApplicationId(null)}
                 onStatusUpdated={() => setInstitutionListVersion(v => v + 1)}
               />

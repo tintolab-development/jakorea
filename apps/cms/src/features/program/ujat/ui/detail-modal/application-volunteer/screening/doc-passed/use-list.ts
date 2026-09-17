@@ -107,8 +107,8 @@ export function useUjatVolunteerDocPassed({
   assignFlowRef.current = assignFlow
 
   const listQuery = useMemo(
-    () => buildUjatVolunteerDocPassedListQuery(appliedFilters),
-    [appliedFilters]
+    () => buildUjatVolunteerDocPassedListQuery(appliedFilters, half),
+    [appliedFilters, half]
   )
 
   const applicationsQuery = useInfiniteQuery({

@@ -13,23 +13,33 @@ import { EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS } from '@/features/program/u
 describe('buildUjatVolunteerDoc1ListQuery', () => {
   it('maps searchable filters to OpenAPI query params', () => {
     expect(
-      buildUjatVolunteerDoc1ListQuery({
-        ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS,
-        volunteerName: ' 김봉사 ',
-        documentScreeningStatus: 'pass',
-        managerAEvaluation: 'neutral',
-        applicationType: 'ujat-graduate',
-      })
+      buildUjatVolunteerDoc1ListQuery(
+        {
+          ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS,
+          volunteerName: ' 김봉사 ',
+          documentScreeningStatus: 'pass',
+          managerAEvaluation: 'neutral',
+          applicationType: 'ujat-graduate',
+        },
+        'h1'
+      )
     ).toEqual({
       keyword: '김봉사',
       documentStatus: 'PASS',
       managerAEvaluation: 'NEUTRAL',
       isReparticipation: true,
+      recruitHalf: 'FIRST_HALF',
     })
   })
 
   it('omits empty / ALL filters', () => {
     expect(buildUjatVolunteerDoc1ListQuery(DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS)).toEqual({})
+  })
+
+  it('maps h2 to SECOND_HALF', () => {
+    expect(
+      buildUjatVolunteerDoc1ListQuery(DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS, 'h2')
+    ).toEqual({ recruitHalf: 'SECOND_HALF' })
   })
 })
 

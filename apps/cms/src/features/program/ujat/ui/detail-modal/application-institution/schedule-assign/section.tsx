@@ -1,14 +1,21 @@
+import { useEffect } from 'react'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { UjatInstitutionScheduleAssignDateBlock } from './date-block'
 import { UjatInstitutionScheduleAssignEstimationTable } from './estimation-table'
 import { useUjatInstitutionScheduleAssign } from './use-schedule-assign'
 
+export type UjatScheduleAssignRemoteSave = () => Promise<
+  { ok: true } | { ok: false; message: string }
+>
+
 export function UjatInstitutionScheduleAssignSection({
   regionKey,
   programId,
+  onBindRemoteSave,
 }: {
   regionKey: UjatInstitutionApplicationRegionKey
   programId?: string | null
+  onBindRemoteSave?: (save: UjatScheduleAssignRemoteSave | null, meta: { saving: boolean; remoteEnabled: boolean }) => void
 }) {
   const {
     assignDates,
@@ -21,7 +28,15 @@ export function UjatInstitutionScheduleAssignSection({
     setExpectedVolunteerCount,
     semesterClassTotals,
     volunteerEducationDays,
+    saveTemporarySchedules,
+    saving,
+    remoteEnabled,
   } = useUjatInstitutionScheduleAssign(regionKey, programId)
+
+  useEffect(() => {
+    onBindRemoteSave?.(saveTemporarySchedules, { saving, remoteEnabled })
+    return () => onBindRemoteSave?.(null, { saving: false, remoteEnabled: false })
+  }, [onBindRemoteSave, remoteEnabled, saveTemporarySchedules, saving])
 
   return (
     <div className="ujat-schedule-assign-section">
