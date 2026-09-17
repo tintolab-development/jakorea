@@ -51,4 +51,33 @@ describe('applyAdminMeToSessionUser', () => {
     expect(next.gender).toBe('F')
     expect(next.birthDate).toBe('1990-09-15')
   })
+
+  it('약관과 담당 프로그램 수를 GET /api/admin/me 응답에서 반영한다', () => {
+    const next = applyAdminMeToSessionUser(current, {
+      activeManagedProgramCount: 2,
+      totalManagedProgramCount: 5,
+      termsAgreements: [
+        {
+          consentType: 'MARKETING',
+          version: '1.0',
+          required: false,
+          agreed: false,
+          agreedAt: undefined,
+        },
+      ],
+    })
+
+    expect(next.listMetrics?.managedProgramInProgressCount).toBe(2)
+    expect(next.listMetrics?.managedProgramCount).toBe(5)
+    expect(next.termsAgreements).toEqual([
+      {
+        termsType: 'MARKETING',
+        termsVersion: '1.0',
+        required: false,
+        agreed: false,
+        agreedAt: undefined,
+        sourceFlow: undefined,
+      },
+    ])
+  })
 })
