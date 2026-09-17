@@ -10,6 +10,7 @@ import {
   type GeneralApplicationTabKey,
 } from '@/features/program/general/lib/application-tabs'
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
+import { useProgramApplicationFormLoadSource } from '@/features/program/general/hooks/use-application-form-load-source'
 import {
   useProgramParticipantApplicationEditor,
   type ProgramParticipantApplicationEditorVariant,
@@ -73,7 +74,15 @@ export function GeneralProgramApplicationTemplateEditModal({
     }
   }, [open, program, variant])
 
-  const vm = useProgramParticipantApplicationEditor(open, templateName, variant, {
+  const formSource = useProgramApplicationFormLoadSource(program, variant, {
+    attachLocalDrafts: open,
+  })
+
+  const vm = useProgramParticipantApplicationEditor(
+    open && !formSource.bindingsLoading,
+    templateName,
+    variant,
+    {
     participantOrganization: variant === 'institution',
     programLinkedInstitutionApplicationForm: variant === 'institution',
     program,
@@ -82,7 +91,10 @@ export function GeneralProgramApplicationTemplateEditModal({
       variant === 'instructor' ||
       variant === 'volunteer' ||
       variant === 'trained-teachers-application-institution',
-  })
+    templateVersionId: formSource.templateVersionId,
+    preferLocalDraft: formSource.preferLocalDraft,
+    }
+  )
 
   const editorVm = useMemo((): TemplateEditorVm => {
     return {

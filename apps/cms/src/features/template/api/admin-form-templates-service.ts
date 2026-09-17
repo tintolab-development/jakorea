@@ -22,6 +22,7 @@ import {
   copyFormTemplateVersionRemote,
   createFormTemplateRemote,
   deleteFormTemplateRemote,
+  fetchFormTemplatePayloadByCodeRemote,
   fetchFormTemplateVersionRemote,
   fetchFormTemplateVersionsRemote,
   fetchFormTemplatesRemote,
@@ -174,6 +175,31 @@ async function resolveTemplateVersionId(templateCode: string): Promise<number | 
   return versionId
 }
 
+export async function resolveFormTemplateCatalogIds(
+  templateCode: string
+): Promise<{ templateId: number; templateVersionId: number } | null> {
+  const versionId = await resolveTemplateVersionId(templateCode)
+  const cached = getFormTemplateVersionCacheEntry(templateCode)
+  if (cached?.templateId != null && versionId != null) {
+    return { templateId: cached.templateId, templateVersionId: versionId }
+  }
+
+  try {
+    const payload = await fetchFormTemplatePayloadByCodeRemote(templateCode)
+    if (payload.templateId == null || payload.templateVersionId == null) return null
+    upsertFormTemplateVersionCacheEntry({
+      templateCode,
+      templateId: payload.templateId,
+      templateVersionId: payload.templateVersionId,
+      latestVersionId: payload.templateVersionId,
+      latestVersionNo: payload.versionNo,
+    })
+    return { templateId: payload.templateId, templateVersionId: payload.templateVersionId }
+  } catch {
+    return null
+  }
+}
+
 const EMPTY_SCHEMA_DRAFT: WritingFormDraft = normalizeWritingFormDraft({
   schemaVersion: 1,
   formSettings: { titleNumbering: 'none' },
@@ -261,29 +287,32 @@ export async function loadFormTemplateVersionDraft(
   }
 }
 
-/**
- * Remote SSOT save — PUT 성공만 임시저장 성공.
- * 양식 관리 경로에서는 localStorage에 쓰지 않는다.
- */
-export async function saveFormTemplateVersionDraft(args: {
-  templateCode: string
+export async function loadFormTemplateVersionDraftByVersionId(
+  templateCode: string,
+  versionId: number
+): Promise<WritingFormTemplateSaveRecord | null> {
+  assertFormsSurveysRemoteReady()
+  const version = await fetchFormTemplateVersionRemote(versionId)
+  return buildSaveRecordFromVersionResponse({
+    templateCode,
+    schemaJson: version.schemaJson,
+    extensionJson: version.extensionJson,
+    settingsJson: version.settingsJson,
+    updatedAt: version.updatedAt,
+  })
+}
+
+function buildVersionUpdateBody(args: {
   draft: WritingFormDraft
   overlay?: Record<string, unknown>
   editorState?: Record<string, unknown>
   uiState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
-}): Promise<void> {
-  assertFormsSurveysRemoteReady()
-
-  if (!shouldUseRemoteDraftApiForTemplateCode(args.templateCode)) {
-    throw new Error('이 템플릿은 원격 draft API 대상이 아닙니다.')
-  }
-
-  const versionId = await resolveTemplateVersionId(args.templateCode)
-  if (versionId == null) {
-    throw new Error('저장할 템플릿 버전 ID를 찾을 수 없습니다. 작성 양식 목록을 먼저 조회해 주세요.')
-  }
-
+}): {
+  schemaJson: string
+  extensionJson?: string
+  settingsJson?: string
+} {
   const body: {
     schemaJson: string
     extensionJson?: string
@@ -309,8 +338,45 @@ export async function saveFormTemplateVersionDraft(args: {
   if (args.settingsJson != null) {
     body.settingsJson = settingsPayloadToSettingsJson(args.settingsJson)
   }
+  return body
+}
 
-  await updateFormTemplateVersionRemote(versionId, body)
+export async function saveFormTemplateVersionDraftByVersionId(args: {
+  versionId: number
+  draft: WritingFormDraft
+  overlay?: Record<string, unknown>
+  editorState?: Record<string, unknown>
+  uiState?: Record<string, unknown>
+  settingsJson?: Record<string, unknown>
+}): Promise<void> {
+  assertFormsSurveysRemoteReady()
+  await updateFormTemplateVersionRemote(args.versionId, buildVersionUpdateBody(args))
+}
+
+/**
+ * Remote SSOT save — PUT 성공만 임시저장 성공.
+ * 양식 관리 경로에서는 localStorage에 쓰지 않는다.
+ */
+export async function saveFormTemplateVersionDraft(args: {
+  templateCode: string
+  draft: WritingFormDraft
+  overlay?: Record<string, unknown>
+  editorState?: Record<string, unknown>
+  uiState?: Record<string, unknown>
+  settingsJson?: Record<string, unknown>
+}): Promise<void> {
+  assertFormsSurveysRemoteReady()
+
+  if (!shouldUseRemoteDraftApiForTemplateCode(args.templateCode)) {
+    throw new Error('이 템플릿은 원격 draft API 대상이 아닙니다.')
+  }
+
+  const versionId = await resolveTemplateVersionId(args.templateCode)
+  if (versionId == null) {
+    throw new Error('저장할 템플릿 버전 ID를 찾을 수 없습니다. 작성 양식 목록을 먼저 조회해 주세요.')
+  }
+
+  await updateFormTemplateVersionRemote(versionId, buildVersionUpdateBody(args))
 }
 
 export async function publishFormTemplateVersion(templateCode: string): Promise<void> {
@@ -324,6 +390,13 @@ export async function publishFormTemplateVersion(templateCode: string): Promise<
   }
 
   await publishFormTemplateVersionRemote(versionId)
+}
+
+/** 프로그램 form-binding은 PUBLISHED version만 허용 (`PROGRAM_FORM_BINDING_REQUIRES_PUBLISHED_VERSION`) */
+export async function publishFormTemplateVersionById(versionId: number): Promise<number> {
+  assertFormsSurveysRemoteReady()
+  const published = await publishFormTemplateVersionRemote(versionId)
+  return published.templateVersionId ?? versionId
 }
 
 export async function duplicateFormTemplateVersionRemote(args: {

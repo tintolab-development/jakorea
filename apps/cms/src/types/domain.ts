@@ -389,6 +389,8 @@ export interface Program {
   businessArea?: string // 사업분야
   titleEn?: string // 프로그램명(영문)
   mainTitle?: string // 대표 프로그램명(국문)
+  /** 세부 프로그램 마스터 ID (`GET/POST programs.detailedProgramId`) */
+  detailedProgramId?: string
   textbookName?: string // 교재명(국문)
   textbookNameEn?: string // 교재명(영문)
   schoolId?: UUID // 학교명 (기관) - Application을 통해 연결

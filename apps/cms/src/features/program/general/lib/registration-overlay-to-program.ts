@@ -689,8 +689,12 @@ export function applyGeneralRegistrationOverlayToProgram(
     ips: ipsCapitalized,
     programCategory,
     programChannel,
-    textbookName: detailedProgramName ?? program.textbookName,
-    teamDivision: detailedProgramName ?? program.teamDivision,
+    detailedProgramId:
+      isSchedule ||
+      !detailedProgramId ||
+      detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+        ? undefined
+        : detailedProgramId,
     approvedStudentCount: kpi.finalParticipants,
     instructors: kpi.instructorCount,
     instructorCapacity: kpi.instructorCount,

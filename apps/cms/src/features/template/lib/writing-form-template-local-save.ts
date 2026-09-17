@@ -124,9 +124,24 @@ export async function persistWritingFormTemplateDraft(args: {
   settingsJson?: Record<string, unknown>
   /** 프로그램 등록·모집 임시저장 전용. 양식 관리에서는 사용하지 않는다. */
   localOnly?: boolean
+  /** 프로그램 form-binding 전용 version — 카탈로그 code PUT을 건너뛴다 */
+  templateVersionId?: number
 }): Promise<void> {
   if (args.localOnly) {
     persistWritingFormTemplateSave(args)
+    return
+  }
+  if (args.templateVersionId != null) {
+    const { saveFormTemplateVersionDraftByVersionId } = await import(
+      '@/features/template/api/admin-form-templates-service'
+    )
+    await saveFormTemplateVersionDraftByVersionId({
+      versionId: args.templateVersionId,
+      draft: args.draft,
+      overlay: args.overlay,
+      editorState: args.editorState,
+      settingsJson: args.settingsJson,
+    })
     return
   }
   const { saveFormTemplateVersionDraft } = await import(
@@ -143,13 +158,25 @@ export async function persistWritingFormTemplateDraft(args: {
 
 /**
  * `localOnly: true` — 프로그램 localStorage만.
+ * `preferLocal: true` — local 초안이 있으면 사용, 없으면 remote.
+ * `templateVersionId` — 프로그램 binding version payload.
  * 그 외 — remote draft GET (dev fallback: `VITE_FORM_TEMPLATE_LOCAL_FALLBACK=1`).
  */
 export async function loadWritingFormTemplateDraft(
   templateId: string,
-  options?: { localOnly?: boolean }
+  options?: { localOnly?: boolean; templateVersionId?: number; preferLocal?: boolean }
 ): Promise<WritingFormTemplateSaveRecord | null> {
   if (options?.localOnly) return loadWritingFormTemplateSave(templateId)
+  if (options?.preferLocal) {
+    const local = loadWritingFormTemplateSave(templateId)
+    if (local?.draft != null) return local
+  }
+  if (options?.templateVersionId != null) {
+    const { loadFormTemplateVersionDraftByVersionId } = await import(
+      '@/features/template/api/admin-form-templates-service'
+    )
+    return loadFormTemplateVersionDraftByVersionId(templateId, options.templateVersionId)
+  }
   const { loadFormTemplateVersionDraft } = await import(
     '@/features/template/api/admin-form-templates-service'
   )

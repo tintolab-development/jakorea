@@ -4,6 +4,7 @@ import type {
   FormResponseFeedbackCreateRequest,
   FormResponseFeedbackResponse,
   FormTemplateCreateRequest,
+  FormTemplateLatestPayloadResponse,
   FormTemplateResponse,
   FormTemplateUpdateRequest,
   FormTemplateVersionCopyRequest,
@@ -22,6 +23,12 @@ export async function fetchFormTemplatesRemote(
   params?: ListTemplatesParams
 ): Promise<PageResponseFormTemplateListItemResponse> {
   return unwrapApiBody(await formsSurveysApi.listTemplates(params))
+}
+
+export async function fetchFormTemplatePayloadByCodeRemote(
+  templateCode: string
+): Promise<FormTemplateLatestPayloadResponse> {
+  return unwrapApiBody(await formsSurveysApi.getTemplatePayloadByCode(templateCode))
 }
 
 export async function fetchFormTemplateVersionRemote(

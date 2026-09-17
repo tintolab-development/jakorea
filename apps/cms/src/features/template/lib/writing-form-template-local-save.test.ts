@@ -5,6 +5,8 @@ import { createProgramRegistrationDraft } from '@/features/template/model/progra
 vi.mock('@/features/template/api/admin-form-templates-service', () => ({
   loadFormTemplateVersionDraft: vi.fn(),
   saveFormTemplateVersionDraft: vi.fn(),
+  loadFormTemplateVersionDraftByVersionId: vi.fn(),
+  saveFormTemplateVersionDraftByVersionId: vi.fn(),
 }))
 
 import {
