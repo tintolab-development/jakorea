@@ -29,7 +29,8 @@
 | 기관 신청 상세 | 상세 GET / 필드 PATCH | — | ❌ unavailable (합반 제외) |
 | 기관 신청/참여 상세 | 합반 | `GET/POST/DELETE …/organization-merge-groups` | ✅ |
 | 합반 | 담당 교사 `leadTeacherMemberId` create/update | — (응답에만 필드) | ❌ unavailable |
-| 참여 기관 | participants ORGANIZATION enrich | 목록만 · `availableActions` 추가됨 | ⚠️ 학년·교재·지역 부족 |
+| 참여 기관 | participants ORGANIZATION enrich | 목록에 `materialAssignmentStatus` 포함 | ⚠️ 학년·교재·지역 부족 |
+| 참여 기관 | 교재 배송 현황 변경 | — | ❌ unavailable (로컬 변경 금지) |
 
 ### A-2) LNB 기준 remote 보완 요약
 
@@ -39,12 +40,13 @@
 - `organization-applications` 목록에 **학년(`educationGrade`)**·지역·합반 파트너 enrich 없음 → 동일 기관 타 학년 lookup FE가 목록 50건 한정
 - 합반 저장 후 **파트너 학년 신청 건 교재명 동기화** — merge-groups만으로는 FE가 파트너 상세 갱신 불가
 - **`CreateMergeRequest`에 `leadTeacherMemberId` 누락** — 응답 `MergeGroupResponse.leadTeacherMemberId`만 존재, create/update 계약 없음
-- unmask/privacy · admin comment API 부재
+- 기관 신청 전용 unmask/privacy API 부재
 - 알림 재발송 — **보류** (강사·개인과 동일 `…/notifications/resend` 패턴 후순위)
 
 #### 프로그램 진행 현황 > 참여 기관 > 참여 기관 상세 > 신청 정보
 
 - `participants`(ORGANIZATION) 목록 **학년·반·인원·교재·지역** 필드 부족 — FE adapter 빈값 (`availableActions`만 OpenAPI 추가)
+- `materialAssignmentStatus`는 배송 전/중/완료/해당 없음 조회에 사용. 배송 상태 변경 API는 부재
 - 참여 기관 상세 GET 부재 — 합반 외 신청 정보 필드 PATCH API 없음 → FE unavailable
 - 합반 **멤버(비 lead) 행**에서 취소·변경 API — DELETE는 lead 그룹 기준
 - 교재 선택 저장 — participant/org-application textbook PATCH와 merge-groups 연동 계약 없음
@@ -88,6 +90,7 @@
 - `GET/PATCH /api/admin/organization-applications/{applicationId}`
 - (참여) participant enrich 또는 전용 GET/PATCH
 - (권장) `CreateMergeRequest.leadTeacherMemberId` 또는 합반 담당 교사 PATCH
+- (필요) 참여 기관 교재 배송 상태 변경 API — `BEFORE_SHIPPING` / `SHIPPING` / `DELIVERED`
 - ~~(권장) 알림 재발송 `POST …/notifications/resend`~~ — **보류** (이번 BE 요청 범위 제외)
 
 ### A-7) 합반 저장 후 교재·파트너 동기화 · 멤버 해제 · 신청/진행 단계 — P2
