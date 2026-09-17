@@ -24410,6 +24410,12 @@
             "type": "integer",
             "format": "int64"
           },
+          "affiliationOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "봉사자 회원에 DB로 연결된 기존 소속 학교/기관 ID. 저장된 소속이 없으면 null"
+          },
           "memberName": {
             "type": "string"
           },
@@ -29227,6 +29233,12 @@
             "type": "integer",
             "format": "int64"
           },
+          "affiliationOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "강사 회원에 DB로 연결된 기존 소속 학교/기관 ID. 저장된 소속이 없으면 null"
+          },
           "instructorName": {
             "type": "string",
             "description": "신청자 실명. 서버에서 마스킹하지 않습니다."
@@ -30710,6 +30722,12 @@
             "type": "integer",
             "format": "int64"
           },
+          "affiliationOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "신청 시점에 DB로 연결된 소속 학교/기관 ID. 저장된 소속이 없으면 null"
+          },
           "memberName": {
             "type": "string"
           },
@@ -31849,6 +31867,7 @@
       },
       "ParticipantListItemResponse": {
         "type": "object",
+        "description": "프로그램 참여자 진행현황. organizationId/organizationName은 기관 참여자의 실제 기관 또는 개인·강사·봉사자의 저장된 기존 소속을 반환합니다.",
         "properties": {
           "participantId": {
             "type": "integer",
@@ -31881,10 +31900,13 @@
           },
           "organizationId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true,
+            "description": "기관 참여자는 기관 신청의 실제 기관 ID, 개인·강사·봉사자는 저장된 기존 소속 기관 ID. 소속이 없으면 null"
           },
           "organizationName": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "participantStatus": {
             "type": "string"
@@ -33175,6 +33197,7 @@
       },
       "InstructorAssignmentListItemResponse": {
         "type": "object",
+        "description": "강사 배정 목록 항목. organizationId는 기관 신청 배정에서만 값이 있고 개인 출강지이면 null입니다.",
         "properties": {
           "assignmentId": {
             "type": "integer",
@@ -33191,6 +33214,12 @@
           "organizationApplicationId": {
             "type": "integer",
             "format": "int64"
+          },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "기관 신청 배정이 참조하는 실제 기관 ID. 개인 출강지이면 null"
           },
           "instructorApplicationId": {
             "type": "integer",

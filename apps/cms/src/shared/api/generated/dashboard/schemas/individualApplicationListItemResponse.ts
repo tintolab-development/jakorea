@@ -19,6 +19,8 @@ export interface IndividualApplicationListItemResponse {
   programType?: string;
   recruitmentId?: number;
   memberId?: number;
+  /** 신청 시점에 DB로 연결된 소속 학교/기관 ID. 저장된 소속이 없으면 null */
+  affiliationOrganizationId?: number | null;
   /** 신청자 실명. 프로그램 관리 목록에서는 마스킹하지 않습니다. */
   memberName?: string;
   /** 신청 시점 소속/학교명. 학교명은 **대학교 형식으로 마스킹됩니다. */

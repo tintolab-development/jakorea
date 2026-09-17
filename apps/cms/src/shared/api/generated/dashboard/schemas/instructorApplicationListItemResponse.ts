@@ -13,6 +13,8 @@ export interface InstructorApplicationListItemResponse {
   programType?: string;
   recruitmentId?: number;
   instructorMemberId?: number;
+  /** 강사 회원에 DB로 연결된 기존 소속 학교/기관 ID. 저장된 소속이 없으면 null */
+  affiliationOrganizationId?: number | null;
   /** 강사 실명. 프로그램 관리에서는 마스킹하지 않습니다. */
   instructorName?: string;
   applicationStatus?: string;

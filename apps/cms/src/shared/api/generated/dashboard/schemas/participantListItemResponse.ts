@@ -17,8 +17,9 @@ export interface ParticipantListItemResponse {
   sourceApplicationType?: string;
   sourceApplicationId?: number;
   organizationApplicationId?: number;
-  organizationId?: number;
-  organizationName?: string;
+  /** 기관 참여자는 기관 신청의 실제 기관 ID, 개인·강사·봉사자는 저장된 기존 소속 기관 ID. 소속이 없으면 null */
+  organizationId?: number | null;
+  organizationName?: string | null;
   participantStatus?: string;
   completionStatus?: string;
   certificateStatus?: string;

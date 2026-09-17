@@ -18,6 +18,8 @@ export interface VolunteerApplicationListItemResponse {
   programType?: string;
   recruitmentId?: number;
   memberId?: number;
+  /** 봉사자 회원에 DB로 연결된 기존 소속 학교/기관 ID. 저장된 소속이 없으면 null */
+  affiliationOrganizationId?: number | null;
   memberName?: string;
   applicationStatus?: string;
   documentStatus?: string;
