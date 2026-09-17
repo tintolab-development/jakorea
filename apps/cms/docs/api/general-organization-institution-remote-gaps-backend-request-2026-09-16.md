@@ -50,6 +50,9 @@
 | **참여 봉사자 목록** | participants VOLUNTEER | 부분 | ✅ adapter enrich · mock 제거 | `id1365`·배정기관·PII enrich · 등록 C/D |
 | **참여 봉사자 목록** | 활동확인서 발급 | ✅ serial allocate | ✅ 목록 미리보기 모달 | — |
 | **참여 봉사자 목록** | 봉사자·임직원 등록 | — | ❌ unavailable | POST participants/volunteers 등 |
+| **참여 봉사자 상세** | **정산 현황** 탭 | settlements list/detail/download | ✅ (§J-6) | `educationGrade` · volunteer=instructorMemberId 필터 · bulk jobs |
+| **참여 봉사자 상세** | **활동 포기** | ✅ give-up | ✅ FE 연동 (개인·기관 공통, 2026-09-17) | `stopScheduleId`만 서버 잔여 |
+| **참여 봉사자 상세** | **봉사 배정** | 개인: education-scope ✅ / 기관: ❌ | 개인 ✅ · 기관 unavailable | 기관 volunteer-assignment 계약 (강사 `instructor-assignments` 대응) |
 
 ---
 
@@ -964,6 +967,88 @@ POST /api/admin/programs/{programId}/participants/volunteers/bulk-remove
 - [ ] 봉사자/임직원 등록 클릭 → unavailable (POST 구현 전)
 - [ ] 활동확인서 1명 선택 → serial + PDF 다운로드
 
+### J-6) 참여 봉사자 상세 — 정산 현황
+
+**관련 FE:** `participating-volunteer-settlement-section.tsx`, `use-participating-volunteer-settlement-list.ts`, `map-settlement-to-participating-volunteer-settlement-row.ts`, `participating-volunteer-payment-statement-view-container.tsx`, `participating-volunteer-settlement-download.ts`
+
+**Remote 게이트:** 강사와 동일 — `isMemberInstructorSettlementsRemoteEnabled()` (members + paymentOrders|accountPayments). program progress remote와 **별도**.
+
+**API 재사용:** 봉사자 전용 settlement path 없음. `instructorMemberId` 쿼리에 봉사자 `memberId`를 넣어 강사 정산 API를 호출.
+
+#### J-6-1) FE 연동 (settlement remote ON + `memberId`)
+
+| 액션 | OpenAPI / 계약 | FE (2026-09-17) |
+|------|----------------|-----------------|
+| 요약 — 지급조서 처리현황 | list 행 집계 | ✅ |
+| 요약 — 프로그램 진행 회차 | `sessionCompleted`/`sessionTotal` | ✅ |
+| 정산 내역 테이블 | `GET /api/admin/settlements?programId=&instructorMemberId=` | ✅ |
+| 지급조서 보기 | `GET …/settlements/{id}` → preview | ✅ |
+| 지급조서 파일 다운로드 | `GET …/settlements/{id}/payment-statement/download` | ✅ |
+| 지급조서 일괄 다운로드 | `POST …/payment-statements/bulk-download/jobs` → ZIP (`fileObjectId`) · 실패 시 건별 GET download | ✅ |
+| 엑셀 | — | ✅ 클라 Excel |
+| 개인정보 상세보기 | — | — (신청 정보 탭만) |
+
+remote OFF / `memberId` 없음 → **빈 목록** + `program-api-unavailable` 1회 · **temp-mock 행 제거**.
+
+#### J-6-2) FE가 이미 하는 일
+
+- `fetchAllSettlementsRemote({ programId, instructorMemberId: volunteer.memberId })`
+- 지급조서 미리보기: settlement detail → 양식 preview (강사 컨테이너 패턴 재사용)
+- 일괄: OpenAPI **jobs** path 우선 · `CLIENT_RENDER_REQUIRED`/실패 시 건별 download fallback
+- 정정요청·재신청 상태는 봉사자 UI에서 제외(대시 표시)
+
+#### J-6-3) 서버 보완
+
+| 항목 | 우선순위 | 요청 |
+|------|----------|------|
+| `programId` + `instructorMemberId` **동시 필터** (봉사자 memberId) | P0 | §G-9와 동일 — 해당 프로그램·회원 정산만 |
+| VOLUNTEER 정산 시드 | P0 | 참여 봉사자 상세에서 ≥1행 조회 가능 (seed §7.5에 settlement 명시) |
+| `educationGrade` / `assignedGrade` on list item | P1 | 테이블 「담당 학년」 — 없으면 FE `-` |
+| `institutionName`, `lectureDate`, `sessionOrdinal`, `programSessionProgressDisplay` | P0 | 「기관명」「담당 봉사 진행 일정」 |
+| `sessionCompleted` / `sessionTotal` | P1 | 요약 회차 |
+| bulk-download **jobs** ZIP_READY + `zipJob.fileObjectId` | P0 | canonical PDF 등록 전 `CLIENT_RENDER_REQUIRED` 시 FE 건별 fallback |
+| (선택) `volunteerMemberId` alias query | P2 | 의미 명확화 — 현재는 `instructorMemberId` 재사용 |
+
+#### J-6-4) QA
+
+- [ ] settlement remote ON: volunteer memberId 정산 ≥1행 · mock 행 없음
+- [ ] 지급조서 보기: detail preview · GET download 200
+- [ ] 일괄: jobs ZIP 또는 건별 fallback
+- [ ] remote OFF / memberId 없음: 빈 목록 · unavailable
+- [ ] 담당 학년 enrich 후 `-` 해소
+
 ---
 
-**Last updated:** 2026-09-17 (§J 참여 봉사자 목록 remote enrich · 등록 unavailable · mock 제거)
+## J-7. 참여 봉사자 상세 — 활동 포기 · 봉사 배정
+
+**교차:** 개인 전용 문서는 [general-individual-progress-survey-remote-gaps-backend-request-2026-09-17.md](./general-individual-progress-survey-remote-gaps-backend-request-2026-09-17.md).
+
+### J-7-1) 활동 포기 (개인·기관 공통)
+
+| 항목 | 상태 |
+|------|------|
+| API | `POST /api/admin/programs/{programId}/participants/{participantId}/give-up` |
+| FE | ✅ 참여 봉사자 상세 (로컬 `setVolunteerPatches` 제거, 2026-09-17) |
+| 서버 잔여 | `stopScheduleId` optional 수용 — §B-5 / §G-8과 동일 |
+
+### J-7-2) 봉사 배정
+
+| 대상 | API | FE |
+|------|-----|-----|
+| **개인** GENERAL_INDIVIDUAL VOLUNTEER | `GET/PUT …/participants/{id}/education-scope` (empty list = 배정 없음) | ✅ 2026-09-17 |
+| **기관** (학교 단위 배정) | ❌ create/cancel 없음 | ❌ unavailable · 로컬 이동 금지 |
+
+기관용 요청(강사 `instructor-assignments` 대응):
+
+```http
+POST /api/admin/programs/{programId}/volunteer-assignments
+DELETE /api/admin/programs/{programId}/volunteer-assignments/{assignmentId}
+```
+
+- 권한: `PROGRAM_EDIT` + `ASSIGNMENT_MANAGE`
+- body 예: `{ "volunteerParticipantId", "organizationApplicationId" 또는 "scheduleId", "reason" }`
+- 개인 education-scope와 **경로를 섞지 말 것**
+
+---
+
+**Last updated:** 2026-09-17 (개인 진행현황 교차 · 봉사 배정/포기 현황)
