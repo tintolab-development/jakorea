@@ -443,5 +443,8 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
     onManagerBEvaluationChange,
     applicationsLoading: volunteerRemote.applicationsLoading,
     isRemoteDataSource: volunteerRemote.remoteEnabled,
+    hasNextPage: volunteerRemote.hasNextPage,
+    isFetchingNextPage: volunteerRemote.isFetchingNextPage,
+    fetchNextPage: volunteerRemote.fetchNextPage,
   }
 }

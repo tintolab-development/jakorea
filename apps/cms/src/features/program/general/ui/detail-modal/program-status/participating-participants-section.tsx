@@ -20,6 +20,7 @@ import {
 } from '@/features/program/general/lib/participating-individual-participants-filter'
 import { useParticipatingIndividualParticipantsParams } from '@/features/program/general/hooks/use-participating-individual-participants-params'
 import { useProgressIndividualParticipantList } from '@/features/program/general/hooks/use-progress-individual-participant-list'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
   useParticipatingIndividualParticipantColumns,
@@ -75,8 +76,19 @@ export function ParticipatingParticipantsSection({
     progressCalendarGranularity,
     setProgressCalendarGranularity,
   } = useParticipatingIndividualParticipantsParams()
-  const { participantList, loading: participantsLoading } =
-    useProgressIndividualParticipantList(programId, program)
+  const {
+    participantList,
+    loading: participantsLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useProgressIndividualParticipantList(programId, program)
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: `${programId ?? ''}:${viewMode}:${JSON.stringify(appliedFilters)}`,
+  })
   const programBridge = useMemo(
     () => resolveInstitutionApplicationProgramBridge(program),
     [program]
@@ -420,6 +432,7 @@ export function ParticipatingParticipantsSection({
             />
           </div>
         )}
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
       <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />

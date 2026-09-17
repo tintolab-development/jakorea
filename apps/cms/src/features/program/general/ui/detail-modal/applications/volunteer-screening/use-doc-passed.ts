@@ -286,5 +286,8 @@ export function useGeneralVolunteerDocPassed({
     calendarEvents,
     applicationsLoading: volunteerRemote.applicationsLoading,
     isRemoteDataSource: volunteerRemote.remoteEnabled,
+    hasNextPage: volunteerRemote.hasNextPage,
+    isFetchingNextPage: volunteerRemote.isFetchingNextPage,
+    fetchNextPage: volunteerRemote.fetchNextPage,
   }
 }

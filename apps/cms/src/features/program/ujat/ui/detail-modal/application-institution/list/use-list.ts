@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, type Key } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useCmsAlert } from '@/shared/ui'
 import {
   patchUjatInstitutionApplicationRows,
@@ -26,7 +26,7 @@ import {
   getUjatRegionClassCapacityExceededAlertContent,
 } from '@/features/program/ujat/lib/ujat-region-capacity-institution-assign'
 import { rejectUjatOrganizationApplicationsIfRemote } from '@/features/program/ujat/api/temporary-rejections'
-import { listUjatInstitutionApplications } from '@/features/program/ujat/api/applications-service'
+import { listUjatInstitutionApplicationsPage } from '@/features/program/ujat/api/applications-service'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import {
@@ -76,19 +76,21 @@ export function useUjatInstitutionApplicationList(
 
   const { showAlert } = useCmsAlert()
   const [dataVersion, setDataVersion] = useState(0)
-  const [pendingFilters, setPendingFilters] = useState<UjatInstitutionApplicationFilters>(
-    () => ({ ...EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS })
-  )
-  const [appliedFilters, setAppliedFilters] = useState<UjatInstitutionApplicationFilters>(
-    () => ({ ...EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS })
-  )
+  const [pendingFilters, setPendingFilters] = useState<UjatInstitutionApplicationFilters>(() => ({
+    ...EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS,
+  }))
+  const [appliedFilters, setAppliedFilters] = useState<UjatInstitutionApplicationFilters>(() => ({
+    ...EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS,
+  }))
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
   const [pendingApplicationRejectModal, setPendingApplicationRejectModal] = useState(false)
 
-  const remoteQuery = useQuery({
-    queryKey: [...ujatQueryKeys.all, 'organization-applications', programId ?? ''] as const,
-    queryFn: () => listUjatInstitutionApplications(String(programId)),
+  const remoteQuery = useInfiniteQuery({
+    queryKey: ujatQueryKeys.organizationApplications(programId ?? ''),
+    queryFn: ({ pageParam }) => listUjatInstitutionApplicationsPage(String(programId), pageParam),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled,
     staleTime: 30_000,
     retry: false,
@@ -103,7 +105,7 @@ export function useUjatInstitutionApplicationList(
   })
 
   const allRows = useMemo(() => {
-    if (remoteEnabled) return remoteQuery.data ?? []
+    if (remoteEnabled) return remoteQuery.data?.pages.flatMap(page => page.rows) ?? []
     void dataVersion
     return []
   }, [dataVersion, remoteEnabled, remoteQuery.data])
@@ -111,6 +113,10 @@ export function useUjatInstitutionApplicationList(
   const tableData = useMemo(
     () => filterRows(allRows, regionKey, appliedFilters),
     [allRows, regionKey, appliedFilters]
+  )
+  const infiniteScrollResetKey = useMemo(
+    () => `${programId ?? ''}:${regionKey}:${JSON.stringify(appliedFilters)}`,
+    [appliedFilters, programId, regionKey]
   )
 
   const selectedApplications = useMemo(
@@ -196,10 +202,7 @@ export function useUjatInstitutionApplicationList(
       } catch (error) {
         showAlert({
           title: '안내',
-          content:
-            error instanceof Error
-              ? error.message
-              : '신청기관 임시 반려에 실패했습니다.',
+          content: error instanceof Error ? error.message : '신청기관 임시 반려에 실패했습니다.',
         })
       }
     })()
@@ -280,5 +283,9 @@ export function useUjatInstitutionApplicationList(
     selectedApplications,
     resetRegionState,
     refreshData,
+    fetchNextPage: remoteQuery.fetchNextPage,
+    hasNextPage: remoteQuery.hasNextPage,
+    isFetchingNextPage: remoteQuery.isFetchingNextPage,
+    infiniteScrollResetKey,
   }
 }

@@ -94,19 +94,35 @@ export async function fetchProgramSchedulesViaDashboardRemote(
 }
 
 /** GET /api/admin/programs/{programId}/lecture-reports */
+export interface ProgramLectureReportsPageDto {
+  items?: unknown[]
+  page?: number
+  size?: number
+  totalElements?: number
+  totalPages?: number
+}
+
 export async function fetchProgramLectureReportsRemote(
   programId: string,
   params?: { page?: number; size?: number }
-): Promise<unknown[]> {
-  const body = await unwrapApiBody<unknown[] | { items?: unknown[] }>(
+): Promise<ProgramLectureReportsPageDto> {
+  const body = await unwrapApiBody<unknown[] | ProgramLectureReportsPageDto>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/lecture-reports`,
       method: 'GET',
       params,
     })
   )
-  if (Array.isArray(body)) return body
-  return body.items ?? []
+  if (Array.isArray(body)) {
+    return {
+      items: body,
+      page: params?.page ?? 0,
+      size: params?.size ?? body.length,
+      totalElements: body.length,
+      totalPages: 1,
+    }
+  }
+  return body
 }
 
 export type ProgramParticipantGiveUpRequest = {

@@ -18,6 +18,36 @@ import type { ParticipatingSchoolRow } from '@/features/program/general/model/pa
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 
+export const GENERAL_PROGRAM_PROGRESS_PAGE_SIZE = 20
+
+export interface GeneralProgramProgressListPage<Row> {
+  rows: Row[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
+}
+
+function resolveProgressListPage<Row>(
+  rows: Row[],
+  response: {
+    page?: number
+    size?: number
+    totalElements?: number
+    totalPages?: number
+  },
+  requestedPage: number
+): GeneralProgramProgressListPage<Row> {
+  const page = response.page ?? requestedPage
+  const size = response.size ?? GENERAL_PROGRAM_PROGRESS_PAGE_SIZE
+  const totalElements = response.totalElements ?? page * size + rows.length
+  const hasMore =
+    response.totalPages != null
+      ? page + 1 < response.totalPages
+      : (page + 1) * size < totalElements || rows.length === size
+  return { rows, page, size, totalElements, hasMore }
+}
+
 /**
  * 진행현황 participants / attendances — mock 폴백 없음 (API only).
  */
@@ -33,58 +63,107 @@ export async function fetchGeneralProgramParticipants(
   programId: string,
   params?: ProgramParticipantsListQuery
 ): Promise<ParticipatingIndividualParticipantRow[]> {
+  return (await fetchGeneralProgramParticipantsPage(programId, params)).rows
+}
+
+export async function fetchGeneralProgramParticipantsPage(
+  programId: string,
+  params?: ProgramParticipantsListQuery
+): Promise<GeneralProgramProgressListPage<ParticipatingIndividualParticipantRow>> {
   assertProgramProgressRemoteReady()
+  const requestedPage = params?.page ?? 0
   const page = await fetchProgramParticipantsRemote(programId, {
-    page: 0,
-    size: 50,
+    page: requestedPage,
+    size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
     participantType: 'INDIVIDUAL',
     ...params,
   })
-  return (page.items ?? []).map((item, index) =>
-    mapParticipantToParticipatingIndividualRow(item, index, programId)
+  const rows = (page.items ?? []).map((item, index) =>
+    mapParticipantToParticipatingIndividualRow(
+      item,
+      requestedPage * GENERAL_PROGRAM_PROGRESS_PAGE_SIZE + index,
+      programId
+    )
   )
+  return resolveProgressListPage(rows, page, requestedPage)
 }
 
 export async function fetchGeneralParticipatingInstitutions(
   programId: string
 ): Promise<ParticipatingSchoolRow[]> {
+  return (await fetchGeneralParticipatingInstitutionsPage(programId)).rows
+}
+
+export async function fetchGeneralParticipatingInstitutionsPage(
+  programId: string,
+  pageParam = 0
+): Promise<GeneralProgramProgressListPage<ParticipatingSchoolRow>> {
   assertProgramProgressRemoteReady()
   const page = await fetchProgramParticipantsRemote(programId, {
-    page: 0,
-    size: 50,
+    page: pageParam,
+    size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
     participantType: 'ORGANIZATION',
   })
-  return (page.items ?? []).map((item, index) =>
-    mapParticipantToParticipatingSchoolRow(item, index, programId)
+  const rows = (page.items ?? []).map((item, index) =>
+    mapParticipantToParticipatingSchoolRow(
+      item,
+      pageParam * GENERAL_PROGRAM_PROGRESS_PAGE_SIZE + index,
+      programId
+    )
   )
+  return resolveProgressListPage(rows, page, pageParam)
 }
 
 export async function fetchGeneralParticipatingInstructors(
   programId: string
 ): Promise<ParticipatingInstructorRow[]> {
+  return (await fetchGeneralParticipatingInstructorsPage(programId)).rows
+}
+
+export async function fetchGeneralParticipatingInstructorsPage(
+  programId: string,
+  pageParam = 0
+): Promise<GeneralProgramProgressListPage<ParticipatingInstructorRow>> {
   assertProgramProgressRemoteReady()
   const page = await fetchProgramParticipantsRemote(programId, {
-    page: 0,
-    size: 50,
+    page: pageParam,
+    size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
     participantType: 'INSTRUCTOR',
   })
-  return (page.items ?? []).map((item, index) =>
-    mapParticipantToParticipatingInstructorRow(item, index, programId)
+  const rows = (page.items ?? []).map((item, index) =>
+    mapParticipantToParticipatingInstructorRow(
+      item,
+      pageParam * GENERAL_PROGRAM_PROGRESS_PAGE_SIZE + index,
+      programId
+    )
   )
+  return resolveProgressListPage(rows, page, pageParam)
 }
 
 export async function fetchGeneralParticipatingVolunteers(
   programId: string
 ): Promise<ParticipatingVolunteerRow[]> {
+  return (await fetchGeneralParticipatingVolunteersPage(programId)).rows
+}
+
+export async function fetchGeneralParticipatingVolunteersPage(
+  programId: string,
+  pageParam = 0
+): Promise<GeneralProgramProgressListPage<ParticipatingVolunteerRow>> {
   assertProgramProgressRemoteReady()
   const page = await fetchProgramParticipantsRemote(programId, {
-    page: 0,
-    size: 50,
+    page: pageParam,
+    size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
     participantType: 'VOLUNTEER',
   })
-  return (page.items ?? []).map((item, index) =>
-    mapParticipantToParticipatingVolunteerRow(item, index, programId)
+  const rows = (page.items ?? []).map((item, index) =>
+    mapParticipantToParticipatingVolunteerRow(
+      item,
+      pageParam * GENERAL_PROGRAM_PROGRESS_PAGE_SIZE + index,
+      programId
+    )
   )
+  return resolveProgressListPage(rows, page, pageParam)
 }
 
 export async function fetchGeneralScheduleAttendances(programId: string, scheduleId: string) {
@@ -113,10 +192,27 @@ export async function fetchGeneralProgressAttendanceBundle(programId: string): P
   >
 }> {
   assertProgramProgressRemoteReady()
-  const [schedules, participantsPage] = await Promise.all([
+  const [schedules, firstParticipantsPage] = await Promise.all([
     fetchProgramSchedulesViaDashboardRemote(programId),
-    fetchProgramParticipantsRemote(programId, { page: 0, size: 50 }),
+    fetchProgramParticipantsRemote(programId, {
+      page: 0,
+      size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
+    }),
   ])
+  const participantItems = [...(firstParticipantsPage.items ?? [])]
+  const participantTotalPages =
+    firstParticipantsPage.totalPages ??
+    Math.ceil(
+      (firstParticipantsPage.totalElements ?? participantItems.length) /
+        (firstParticipantsPage.size ?? GENERAL_PROGRAM_PROGRESS_PAGE_SIZE)
+    )
+  for (let page = 1; page < participantTotalPages; page += 1) {
+    const nextPage = await fetchProgramParticipantsRemote(programId, {
+      page,
+      size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
+    })
+    participantItems.push(...(nextPage.items ?? []))
+  }
   const attendancesByScheduleId: Record<
     string,
     import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
@@ -138,7 +234,7 @@ export async function fetchGeneralProgressAttendanceBundle(programId: string): P
   )
   return {
     schedules,
-    participants: participantsPage.items ?? [],
+    participants: participantItems,
     attendancesByScheduleId,
   }
 }
@@ -146,11 +242,22 @@ export async function fetchGeneralProgressAttendanceBundle(programId: string): P
 export async function fetchGeneralProgramLectureReports(
   programId: string
 ): Promise<unknown[]> {
+  return (await fetchGeneralProgramLectureReportsPage(programId)).rows
+}
+
+export async function fetchGeneralProgramLectureReportsPage(
+  programId: string,
+  pageParam = 0
+): Promise<GeneralProgramProgressListPage<unknown>> {
   assertProgramProgressRemoteReady()
   const { fetchProgramLectureReportsRemote } = await import(
     '@/features/program/general/api/program-progress-api-client'
   )
-  return fetchProgramLectureReportsRemote(programId, { page: 0, size: 50 })
+  const page = await fetchProgramLectureReportsRemote(programId, {
+    page: pageParam,
+    size: GENERAL_PROGRAM_PROGRESS_PAGE_SIZE,
+  })
+  return resolveProgressListPage(page.items ?? [], page, pageParam)
 }
 
 /**

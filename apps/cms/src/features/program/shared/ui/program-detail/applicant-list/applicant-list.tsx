@@ -105,6 +105,7 @@ import {
 } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-reject-modal'
 import { InstitutionCancelRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-reject-complete-modal'
 import { useApplicantsDetail } from './use-applicants-detail'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { resolveApplicantListTableMinScrollX } from './applicant-list-table-scroll'
 import type {
   ApplicantListMenu,
@@ -199,6 +200,10 @@ export function ApplicantList({
     columns,
     tableScrollX,
     applicationsLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    infiniteScrollResetKey,
   } = useApplicantsDetail({
     menu,
     onRegisterApplicantCloseHandler,
@@ -212,6 +217,12 @@ export function ApplicantList({
     detailVariant,
     program,
     individualScreeningStage,
+  })
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: infiniteScrollResetKey,
   })
 
   const institutionTableWrapRef = useRef<HTMLDivElement>(null)
@@ -1881,6 +1892,12 @@ export function ApplicantList({
               />
             </div>
           )}
+          <div
+            ref={loadMoreRef}
+            aria-hidden
+            data-fetching={isFetchingNextPage || undefined}
+            style={{ height: 1 }}
+          />
         </FilterTableLayout>
         {isGeneralProgramCalendarView ? (
           <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />

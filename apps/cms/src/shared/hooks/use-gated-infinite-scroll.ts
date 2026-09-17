@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 const CMS_MAIN_SCROLL_SELECTOR = '.layout-content'
+const DETAIL_MODAL_SCROLL_SELECTOR = '.detail-fullpage-modal__main'
 
 /** 레이아웃 복원·jitter와 구분하는 최소 스크롤 위치 */
 export const GATED_INFINITE_SCROLL_MIN_TOP_PX = 16
@@ -69,8 +70,11 @@ export function useGatedInfiniteScroll({
   fetchNextPageRef.current = fetchNextPage
 
   useLayoutEffect(() => {
-    setScrollRoot(document.querySelector(CMS_MAIN_SCROLL_SELECTOR))
-  }, [])
+    const nextRoot =
+      sentinelRef.current?.closest(DETAIL_MODAL_SCROLL_SELECTOR) ??
+      document.querySelector(CMS_MAIN_SCROLL_SELECTOR)
+    setScrollRoot(current => (current === nextRoot ? current : nextRoot))
+  })
 
   useEffect(() => {
     armedRef.current = false

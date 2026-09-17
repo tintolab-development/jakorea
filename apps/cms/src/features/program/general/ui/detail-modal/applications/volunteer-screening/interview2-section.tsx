@@ -31,6 +31,7 @@ import { GeneralVolunteerInterview2CalendarView } from './general-volunteer-inte
 import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
 import { mapVolunteerScreeningRowToParticipant } from '@/features/program/general/lib/participant-volunteer-row-adapter'
 import { useGeneralVolunteerInterview2 } from './use-interview2'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
@@ -101,7 +102,16 @@ export function GeneralVolunteerInterview2Section({
     saveInterviewEvaluation,
     filterRowsSource,
     applicationsLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
   } = useGeneralVolunteerInterview2({ programId, subjectKind })
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: `${programId}:${subjectKind}:${viewMode}`,
+  })
 
   const activityWithdrawScheduleOptions = useMemo(
     () => getGeneralVolunteerActivityWithdrawScheduleOptions(program),
@@ -426,6 +436,7 @@ export function GeneralVolunteerInterview2Section({
             />
           </div>
         )}
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
       {viewMode === 'calendar' ? (
         <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />

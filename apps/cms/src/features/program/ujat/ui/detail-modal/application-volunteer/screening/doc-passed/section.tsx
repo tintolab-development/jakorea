@@ -1,5 +1,5 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
@@ -10,13 +10,11 @@ import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/acti
 import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import { useUjatVolunteerDocPassed } from './use-list'
-import {
-  useApplicantDetail,
-  type ApplicantDetailMetaChangeHandler,
-} from '../applicant/use-detail'
+import { useApplicantDetail, type ApplicantDetailMetaChangeHandler } from '../applicant/use-detail'
 import { ApplicantDetailView } from '../applicant/detail-view'
 import { UjatVolunteerDocPassedCalendarView } from './calendar-view'
 import { DOC_PASSED_TABLE_SCROLL_X } from './columns'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { UjatVolunteerInterviewAssignModal } from '../interview-assign/modal'
 import { UjatVolunteerInterviewAssignCompleteModal } from '../interview-assign/complete-modal'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
@@ -67,7 +65,17 @@ export function DocPassedSection({
     cancelWithdrawActivity,
     confirmWithdrawActivity,
     withdrawTarget,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    infiniteScrollResetKey,
   } = useUjatVolunteerDocPassed({ programId, half })
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: infiniteScrollResetKey,
+  })
 
   const { selectedApplicant, openApplicantDetail } = useApplicantDetail({
     programId,
@@ -82,10 +90,12 @@ export function DocPassedSection({
 
   const activityWithdrawScheduleOptions = useMemo(
     () =>
-      UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES.filter(entry => entry.semester === half).map(entry => ({
-        value: entry.isoDate,
-        label: entry.title,
-      })),
+      UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES.filter(entry => entry.semester === half).map(
+        entry => ({
+          value: entry.isoDate,
+          label: entry.title,
+        })
+      ),
     [half]
   )
 
@@ -129,9 +139,7 @@ export function DocPassedSection({
       applicant={assignPickFlow.target}
       programId={programId}
       allApplicants={list}
-      mode={
-        assignPickFlow.target.interviewAssignmentStatus === 'assigned' ? 'reassign' : 'assign'
-      }
+      mode={assignPickFlow.target.interviewAssignmentStatus === 'assigned' ? 'reassign' : 'assign'}
       onCancel={closeAssignModal}
       onConfirm={confirmAssignInterview}
     />
@@ -245,6 +253,9 @@ export function DocPassedSection({
             />
           </div>
         )}
+        <div ref={loadMoreRef} aria-hidden={!isFetchingNextPage} style={{ minHeight: 1 }}>
+          {isFetchingNextPage ? <Spin size="small" /> : null}
+        </div>
       </FilterTableLayout>
       {withdrawConfirmModal}
       {assignInterviewModal}

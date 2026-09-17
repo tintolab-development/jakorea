@@ -62,6 +62,36 @@ import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboa
 import type { GeneralSecondInterviewScreeningStatus } from '@/features/program/general/lib/volunteer-screening-constants'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
 
+export const GENERAL_PROGRAM_DETAIL_PAGE_SIZE = 20
+
+export interface GeneralApplicationsListPage<Row> {
+  rows: Row[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
+}
+
+function resolveApplicationsListPage<Row>(
+  rows: Row[],
+  response: {
+    page?: number
+    size?: number
+    totalElements?: number
+    totalPages?: number
+  },
+  requestedPage: number
+): GeneralApplicationsListPage<Row> {
+  const page = response.page ?? requestedPage
+  const size = response.size ?? GENERAL_PROGRAM_DETAIL_PAGE_SIZE
+  const totalElements = response.totalElements ?? page * size + rows.length
+  const hasMore =
+    response.totalPages != null
+      ? page + 1 < response.totalPages
+      : (page + 1) * size < totalElements || rows.length === size
+  return { rows, page, size, totalElements, hasMore }
+}
+
 function toBulkNumericApplicationIds(ids: string[]): number[] | null {
   const numericIds = ids.map(id => Number(id))
   if (numericIds.some(id => !Number.isFinite(id))) return null
@@ -80,10 +110,18 @@ export async function fetchGeneralOrganizationApplications(
   programId: string,
   params?: ApplicationsListQuery
 ): Promise<ApplicantSchoolRow[]> {
+  return (await fetchGeneralOrganizationApplicationsPage(programId, params)).rows
+}
+
+export async function fetchGeneralOrganizationApplicationsPage(
+  programId: string,
+  params?: ApplicationsListQuery
+): Promise<GeneralApplicationsListPage<ApplicantSchoolRow>> {
   assertApplicationsRemoteReady()
+  const requestedPage = params?.page ?? 0
   const page = await fetchOrganizationApplicationsRemote(programId, {
-    page: 0,
-    size: 50,
+    page: requestedPage,
+    size: GENERAL_PROGRAM_DETAIL_PAGE_SIZE,
     ...params,
   })
   const items = page.items ?? []
@@ -101,43 +139,77 @@ export async function fetchGeneralOrganizationApplications(
       }
     })
   )
-  return items.map((item, index) =>
-    mapOrganizationApplicationToApplicantSchoolRow(item, index, programId, {
-      requestedSchedules: scheduleResults[index],
-    })
+  const rows = items.map((item, index) =>
+    mapOrganizationApplicationToApplicantSchoolRow(
+      item,
+      requestedPage * GENERAL_PROGRAM_DETAIL_PAGE_SIZE + index,
+      programId,
+      {
+        requestedSchedules: scheduleResults[index],
+      }
+    )
   )
+  return resolveApplicationsListPage(rows, page, requestedPage)
 }
 
 export async function fetchGeneralInstructorApplications(
   programId: string,
   params?: ApplicationsListQuery
 ): Promise<ApplicantInstructorRow[]> {
+  return (await fetchGeneralInstructorApplicationsPage(programId, params)).rows
+}
+
+export async function fetchGeneralInstructorApplicationsPage(
+  programId: string,
+  params?: ApplicationsListQuery
+): Promise<GeneralApplicationsListPage<ApplicantInstructorRow>> {
   assertApplicationsRemoteReady()
+  const requestedPage = params?.page ?? 0
   const page = await fetchInstructorApplicationsRemote(programId, {
-    page: 0,
-    size: 50,
+    page: requestedPage,
+    size: GENERAL_PROGRAM_DETAIL_PAGE_SIZE,
     ...params,
   })
-  return (page.items ?? []).map((item, index) =>
-    mapInstructorApplicationToApplicantInstructorRow(item, index, programId)
+  const rows = (page.items ?? []).map((item, index) =>
+    mapInstructorApplicationToApplicantInstructorRow(
+      item,
+      requestedPage * GENERAL_PROGRAM_DETAIL_PAGE_SIZE + index,
+      programId
+    )
   )
+  return resolveApplicationsListPage(rows, page, requestedPage)
 }
 
 export async function fetchGeneralIndividualApplications(
   programId: string,
   options?: { doc1?: boolean; query?: ApplicationsListQuery }
 ): Promise<GeneralIndividualApplicantRow[]> {
+  return (await fetchGeneralIndividualApplicationsPage(programId, options)).rows
+}
+
+export async function fetchGeneralIndividualApplicationsPage(
+  programId: string,
+  options?: { doc1?: boolean; query?: ApplicationsListQuery }
+): Promise<GeneralApplicationsListPage<GeneralIndividualApplicantRow>> {
   assertApplicationsRemoteReady()
+  const requestedPage = options?.query?.page ?? 0
   const page = await fetchIndividualApplicationsRemote(programId, {
-    page: 0,
-    size: 50,
+    page: requestedPage,
+    size: GENERAL_PROGRAM_DETAIL_PAGE_SIZE,
     ...options?.query,
   })
   const rows = (page.items ?? []).map((item, index) =>
-    mapIndividualApplicationToApplicantRow(item, index, programId)
+    mapIndividualApplicationToApplicantRow(
+      item,
+      requestedPage * GENERAL_PROGRAM_DETAIL_PAGE_SIZE + index,
+      programId
+    )
   )
-  if (options?.doc1) return filterIndividualDoc1Rows(rows)
-  return rows
+  return resolveApplicationsListPage(
+    options?.doc1 ? filterIndividualDoc1Rows(rows) : rows,
+    page,
+    requestedPage
+  )
 }
 
 export async function fetchGeneralIndividualDocPassedAsVolunteerRows(
@@ -148,6 +220,29 @@ export async function fetchGeneralIndividualDocPassedAsVolunteerRows(
   return sortGeneralVolunteerDocPassedApplicants(
     mapParticipantsToVolunteerScreeningRows(filterIndividualDocPassedRows(rows))
   )
+}
+
+export async function fetchGeneralIndividualScreeningApplicationsPage(
+  programId: string,
+  stage: 'docPassed' | 'interview2',
+  pageParam: number
+): Promise<GeneralApplicationsListPage<GeneralVolunteerApplicantRow>> {
+  const page = await fetchGeneralIndividualApplicationsPage(programId, {
+    query: { page: pageParam },
+  })
+  const rows =
+    stage === 'interview2'
+      ? sortGeneralParticipantDocPassedVolunteerRows(
+          mapParticipantsToVolunteerScreeningRows(
+            filterIndividualInterview2Rows(page.rows)
+          )
+        )
+      : sortGeneralVolunteerDocPassedApplicants(
+          mapParticipantsToVolunteerScreeningRows(
+            filterIndividualDocPassedRows(page.rows)
+          )
+        )
+  return { ...page, rows }
 }
 
 export async function fetchGeneralIndividualInterview2AsVolunteerRows(
@@ -164,15 +259,28 @@ export async function fetchGeneralVolunteerApplications(
   programId: string,
   params?: ApplicationsListQuery
 ): Promise<GeneralVolunteerApplicantRow[]> {
+  return (await fetchGeneralVolunteerApplicationsPage(programId, params)).rows
+}
+
+export async function fetchGeneralVolunteerApplicationsPage(
+  programId: string,
+  params?: ApplicationsListQuery
+): Promise<GeneralApplicationsListPage<GeneralVolunteerApplicantRow>> {
   assertApplicationsRemoteReady()
+  const requestedPage = params?.page ?? 0
   const page = await fetchVolunteerApplicationsRemote(programId, {
-    page: 0,
-    size: 50,
+    page: requestedPage,
+    size: GENERAL_PROGRAM_DETAIL_PAGE_SIZE,
     ...params,
   })
-  return (page.items ?? []).map((item, index) =>
-    mapVolunteerApplicationToGeneralVolunteerApplicantRow(item, index, programId)
+  const rows = (page.items ?? []).map((item, index) =>
+    mapVolunteerApplicationToGeneralVolunteerApplicantRow(
+      item,
+      requestedPage * GENERAL_PROGRAM_DETAIL_PAGE_SIZE + index,
+      programId
+    )
   )
+  return resolveApplicationsListPage(rows, page, requestedPage)
 }
 
 export async function fetchGeneralVolunteerDoc1Applications(
@@ -197,6 +305,29 @@ export async function fetchGeneralVolunteerInterview2Applications(
   assertApplicationsRemoteReady()
   const rows = await fetchGeneralVolunteerApplications(programId)
   return sortGeneralVolunteerInterview2Applicants(filterVolunteerInterview2Rows(rows))
+}
+
+export async function fetchGeneralVolunteerScreeningApplicationsPage(
+  programId: string,
+  stage: 'doc1' | 'docPassed' | 'interview2',
+  pageParam: number
+): Promise<GeneralApplicationsListPage<GeneralVolunteerApplicantRow>> {
+  const page = await fetchGeneralVolunteerApplicationsPage(programId, {
+    page: pageParam,
+  })
+  const rows =
+    stage === 'docPassed'
+      ? sortGeneralVolunteerDocPassedApplicants(
+          filterVolunteerDocPassedRows(page.rows)
+        )
+      : stage === 'interview2'
+        ? sortGeneralVolunteerInterview2Applicants(
+            filterVolunteerInterview2Rows(page.rows)
+          )
+        : sortGeneralVolunteerByInterviewSlotCount(
+            filterVolunteerDoc1Rows(page.rows)
+          )
+  return { ...page, rows }
 }
 
 export async function approveGeneralOrganizationApplication(applicationId: string): Promise<void> {

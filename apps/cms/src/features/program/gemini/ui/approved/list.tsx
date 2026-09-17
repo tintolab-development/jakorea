@@ -1,10 +1,11 @@
 import { useCallback, useMemo, useState, type Key, type MouseEvent } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { Alert, Table } from 'antd'
+import { Alert, Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants/delete-guide-modal'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { CmsButton, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
@@ -144,12 +145,44 @@ export function GeminiApprovedTrainingList() {
   const { showAlert } = useCmsAlert()
   const { openDetail } = useGeminiApprovedTrainingDetailUrl()
   const todayKey = useToday()
-  const allRows = useGeminiApprovedTrainingRows()
-  const { remoteEnabled, isFetching, isError, refetch } = useGeminiApprovedTrainingRowsQueryState()
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
+  const queryFilters = useMemo(
+    () => ({
+      institutionName: appliedFilters.institutionName || undefined,
+      institutionSido: appliedFilters.institutionSido || undefined,
+      institutionSigungu: appliedFilters.institutionSigungu || undefined,
+      status: appliedFilters.status !== 'ALL' ? appliedFilters.status : undefined,
+      officialDocumentRequired:
+        appliedFilters.officialDocumentRequired !== 'ALL'
+          ? appliedFilters.officialDocumentRequired
+          : undefined,
+      trainingDateFrom:
+        appliedFilters.trainingDateRange?.[0]?.format('YYYY-MM-DD'),
+      trainingDateTo:
+        appliedFilters.trainingDateRange?.[1]?.format('YYYY-MM-DD'),
+    }),
+    [appliedFilters]
+  )
+  const allRows = useGeminiApprovedTrainingRows(queryFilters)
+  const {
+    remoteEnabled,
+    isFetching,
+    isFetchingNextPage,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    totalElements,
+  } = useGeminiApprovedTrainingRowsQueryState(queryFilters)
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: JSON.stringify(queryFilters),
+  })
 
   const filteredRows = useMemo(
     () => filterRows(allRows, appliedFilters, todayKey),
@@ -333,7 +366,7 @@ export function GeminiApprovedTrainingList() {
         }}
         onSearch={() => setAppliedFilters(pendingFilters)}
         title="전체 승인 연수"
-        description={`총 ${filteredRows.length.toLocaleString()}건`}
+        description={`총 ${(remoteEnabled ? totalElements : filteredRows.length).toLocaleString()}건`}
         actions={
           <>
             <CmsButton variant="delete" onClick={handleBulkDeleteClick}>
@@ -373,6 +406,8 @@ export function GeminiApprovedTrainingList() {
               : undefined
           }
         />
+        {isFetchingNextPage ? <Spin size="small" aria-label="다음 승인 연수 불러오는 중" /> : null}
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
       <DeleteGuideModal

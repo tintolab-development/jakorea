@@ -5,7 +5,7 @@
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import type {
   ParticipatingInstructorRow,
   SettlementStatusKey,
@@ -16,7 +16,7 @@ import {
   type AddInstructorFormValues,
 } from '../ui/add-instructor-modal'
 import type { ProgressFilters } from './use-program-progress-params'
-import { fetchGeneralParticipatingInstructors } from '@/features/program/general/api/admin-program-progress-service'
+import { fetchGeneralParticipatingInstructorsPage } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
   useIsTrainedTeachersProgramsSurface,
@@ -45,9 +45,12 @@ export function useProgressInstructorList({
     '프로그램 진행 현황 · 강사'
   )
 
-  const remoteQuery = useQuery({
+  const remoteQuery = useInfiniteQuery({
     queryKey: generalProgramProgressQueryKeys.instructors(programId ?? ''),
-    queryFn: () => fetchGeneralParticipatingInstructors(programId!),
+    queryFn: ({ pageParam }) =>
+      fetchGeneralParticipatingInstructorsPage(programId!, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled,
     staleTime: 30_000,
     retry: false,
@@ -57,7 +60,9 @@ export function useProgressInstructorList({
 
   useEffect(() => {
     if (remoteEnabled) {
-      if (remoteQuery.data) setInstructorList(remoteQuery.data)
+      if (remoteQuery.data) {
+        setInstructorList(remoteQuery.data.pages.flatMap(page => page.rows))
+      }
       return
     }
     setInstructorList([])
@@ -172,5 +177,8 @@ export function useProgressInstructorList({
       ? remoteQuery.isFetching && remoteQuery.data === undefined
       : false,
     isRemoteDataSource: remoteEnabled,
+    hasNextPage: remoteQuery.hasNextPage ?? false,
+    isFetchingNextPage: remoteQuery.isFetchingNextPage,
+    fetchNextPage: remoteQuery.fetchNextPage,
   }
 }

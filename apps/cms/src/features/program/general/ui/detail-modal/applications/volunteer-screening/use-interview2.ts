@@ -455,5 +455,8 @@ export function useGeneralVolunteerInterview2({
     saveInterviewEvaluation,
     filterRowsSource: list,
     applicationsLoading: volunteerRemote.applicationsLoading,
+    hasNextPage: volunteerRemote.hasNextPage,
+    isFetchingNextPage: volunteerRemote.isFetchingNextPage,
+    fetchNextPage: volunteerRemote.fetchNextPage,
   }
 }

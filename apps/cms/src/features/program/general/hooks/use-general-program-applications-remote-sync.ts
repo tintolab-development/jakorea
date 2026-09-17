@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import {
   approveGeneralIndividualApplication,
   approveGeneralInstructorApplication,
@@ -10,9 +10,9 @@ import {
   bulkRejectGeneralOrganizationApplications,
   cancelGeneralOrganizationApplicationApproval,
   cancelGeneralOrganizationApplicationRejection,
-  fetchGeneralIndividualApplications,
-  fetchGeneralInstructorApplications,
-  fetchGeneralOrganizationApplications,
+  fetchGeneralIndividualApplicationsPage,
+  fetchGeneralInstructorApplicationsPage,
+  fetchGeneralOrganizationApplicationsPage,
   rejectGeneralIndividualApplication,
   rejectGeneralInstructorApplication,
   rejectGeneralOrganizationApplication,
@@ -53,18 +53,24 @@ export function useGeneralProgramApplicationsRemoteSync({
   const individualRemoteEnabled = surfaceRemoteEnabled
   const remoteEnabled = surfaceRemoteEnabled
 
-  const organizationQuery = useQuery({
+  const organizationQuery = useInfiniteQuery({
     queryKey: generalApplicationsQueryKeys.organizationList(programId ?? ''),
-    queryFn: () => fetchGeneralOrganizationApplications(programId!),
+    queryFn: ({ pageParam }) =>
+      fetchGeneralOrganizationApplicationsPage(programId!, { page: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled:
       remoteEnabled && menu === 'institutions' && usesProgramInstitutionApplications,
     staleTime: 30_000,
     retry: false,
   })
 
-  const instructorQuery = useQuery({
+  const instructorQuery = useInfiniteQuery({
     queryKey: generalApplicationsQueryKeys.instructorList(programId ?? ''),
-    queryFn: () => fetchGeneralInstructorApplications(programId!),
+    queryFn: ({ pageParam }) =>
+      fetchGeneralInstructorApplicationsPage(programId!, { page: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled:
       instructorRemoteEnabled &&
       menu === 'instructors' &&
@@ -73,15 +79,18 @@ export function useGeneralProgramApplicationsRemoteSync({
     retry: false,
   })
 
-  const individualQuery = useQuery({
+  const individualQuery = useInfiniteQuery({
     queryKey: generalApplicationsQueryKeys.individualList(
       programId ?? '',
       individualScreeningStage ?? null
     ),
-    queryFn: () =>
-      fetchGeneralIndividualApplications(programId!, {
+    queryFn: ({ pageParam }) =>
+      fetchGeneralIndividualApplicationsPage(programId!, {
         doc1: individualScreeningStage === 'doc1',
+        query: { page: pageParam },
       }),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled:
       individualRemoteEnabled && menu === 'individual-applications',
     staleTime: 30_000,
@@ -89,16 +98,20 @@ export function useGeneralProgramApplicationsRemoteSync({
   })
 
   useEffect(() => {
-    if (organizationQuery.data) setInstitutionList(organizationQuery.data)
+    if (organizationQuery.data) {
+      setInstitutionList(organizationQuery.data.pages.flatMap(page => page.rows))
+    }
   }, [organizationQuery.data, setInstitutionList])
 
   useEffect(() => {
-    if (instructorQuery.data) setInstructorList(instructorQuery.data)
+    if (instructorQuery.data) {
+      setInstructorList(instructorQuery.data.pages.flatMap(page => page.rows))
+    }
   }, [instructorQuery.data, setInstructorList])
 
   useEffect(() => {
     if (!individualRemoteEnabled || menu !== 'individual-applications') return
-    setIndividualList(individualQuery.data ?? [])
+    setIndividualList(individualQuery.data?.pages.flatMap(page => page.rows) ?? [])
   }, [
     individualQuery.data,
     individualRemoteEnabled,
@@ -119,6 +132,13 @@ export function useGeneralProgramApplicationsRemoteSync({
     })
   }
 
+  const activeQuery =
+    menu === 'institutions'
+      ? organizationQuery
+      : menu === 'instructors'
+        ? instructorQuery
+        : individualQuery
+
   return {
     remoteEnabled,
     /** 강사 목록 승인/반려 — mock 프로그램에서는 false */
@@ -127,11 +147,17 @@ export function useGeneralProgramApplicationsRemoteSync({
     individualRemoteEnabled,
     applicationsLoading:
       (organizationQuery.isEnabled &&
-        (organizationQuery.isPending || organizationQuery.isFetching)) ||
+        (organizationQuery.isPending ||
+          (organizationQuery.isFetching && organizationQuery.data === undefined))) ||
       (instructorQuery.isEnabled &&
-        (instructorQuery.isPending || instructorQuery.isFetching)) ||
+        (instructorQuery.isPending ||
+          (instructorQuery.isFetching && instructorQuery.data === undefined))) ||
       (individualQuery.isEnabled &&
-        (individualQuery.isPending || individualQuery.isFetching)),
+        (individualQuery.isPending ||
+          (individualQuery.isFetching && individualQuery.data === undefined))),
+    hasNextPage: activeQuery.hasNextPage ?? false,
+    isFetchingNextPage: activeQuery.isFetchingNextPage,
+    fetchNextPage: activeQuery.fetchNextPage,
     approveOrganization: approveGeneralOrganizationApplication,
     rejectOrganization: rejectGeneralOrganizationApplication,
     cancelOrganizationApproval: cancelGeneralOrganizationApplicationApproval,
