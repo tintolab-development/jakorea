@@ -19,6 +19,7 @@ import {
 } from '@/features/program/general/lib/build-lecture-report-issuance-preview'
 import { downloadLectureReportPdfFiles } from '@/features/program/general/lib/download-lecture-reports-bulk-pdf'
 import { useProgramLectureReports } from '@/features/program/general/hooks/use-program-lecture-reports'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import type { ParticipatingInstructorLectureReportRow } from '@/features/program/general/api/adapters/lecture-reports-adapters'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { LectureReportBulkPdfExportHost } from './lecture-report-bulk-pdf-export-host'
@@ -68,6 +69,12 @@ export function ParticipatingInstructorLectureReportsSection({
 }: ParticipatingInstructorLectureReportsSectionProps) {
   const { showAlert } = useCmsAlert()
   const lectureReports = useProgramLectureReports(program?.id)
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage: lectureReports.hasNextPage,
+    isFetchingNextPage: lectureReports.isFetchingNextPage,
+    fetchNextPage: lectureReports.fetchNextPage,
+    resetKey: `${program?.id ?? ''}:${instructor.id}`,
+  })
   const rows = lectureReports.loading
     ? []
     : lectureReports.isRemoteDataSource && lectureReports.rows != null
@@ -299,6 +306,7 @@ export function ParticipatingInstructorLectureReportsSection({
           dataSource={rows}
         />
       </div>
+      <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       <LectureReportIssuancePreviewModal
         open={previewOpen}
         onClose={handleClosePreview}

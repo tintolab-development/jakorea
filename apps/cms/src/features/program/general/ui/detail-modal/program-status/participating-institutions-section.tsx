@@ -61,6 +61,7 @@ import {
   useProgramProgressRemoteEnabledForSurface,
 } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useOrganizationMergeGroups } from '@/features/program/general/hooks/use-organization-merge-groups'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { saveOrganizationCombinedClassRemote } from '@/features/program/general/api/organization-merge-groups-service'
 import { shouldUseOrganizationMergeGroupsRemoteApi } from '@/features/program/general/api/organization-merge-groups-remote-capabilities'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
@@ -213,13 +214,25 @@ export function ParticipatingInstitutionsSection({
     getInstructorRowsForSchool,
     getInstructorDisplayForSchool,
     applicationsLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
   } = schoolHook
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: `${resolvedProgramId ?? ''}:${viewMode}:${JSON.stringify(progressFilters)}`,
+  })
 
   const queryClient = useQueryClient()
+  const isCompanySchool = isCompanySchoolProgram(program)
   const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(resolvedProgramId)
   const mergeGroupsQuery = useOrganizationMergeGroups(
     resolvedProgramId,
-    progressRemoteEnabled && shouldUseOrganizationMergeGroupsRemoteApi()
+    progressRemoteEnabled &&
+      !isCompanySchool &&
+      shouldUseOrganizationMergeGroupsRemoteApi()
   )
 
   /** URL schoolId로 선택된 학교 행 (인라인 상세 뷰용) */
@@ -242,7 +255,7 @@ export function ParticipatingInstitutionsSection({
       combinedClassApplication: '신청' | '미신청'
       combinedClassPartnerSchoolIds: string[]
     }) => {
-      if (!resolvedProgramId || !selectedRowFromUrl) return
+      if (!resolvedProgramId || !selectedRowFromUrl || isCompanySchool) return
       await saveOrganizationCombinedClassRemote({
         programId: resolvedProgramId,
         leadRow: selectedRowFromUrl,
@@ -255,7 +268,14 @@ export function ParticipatingInstitutionsSection({
         queryKey: generalProgramProgressQueryKeys.mergeGroups(resolvedProgramId),
       })
     },
-    [mergeGroupsQuery.data, queryClient, resolvedProgramId, schoolList, selectedRowFromUrl]
+    [
+      isCompanySchool,
+      mergeGroupsQuery.data,
+      queryClient,
+      resolvedProgramId,
+      schoolList,
+      selectedRowFromUrl,
+    ]
   )
 
   /** 상세 뷰 진입/종료 시 부모에 제목용 학교명 알림 */
@@ -280,7 +300,6 @@ export function ParticipatingInstitutionsSection({
   const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
     useProgramTextbookCatalog(program)
 
-  const isCompanySchool = isCompanySchoolProgram(program)
   const programBridge = useMemo(
     () => resolveInstitutionApplicationProgramBridge(program),
     [program]
@@ -522,7 +541,9 @@ export function ParticipatingInstitutionsSection({
             }))
           }}
           onSaveCombinedClass={
-            shouldUseOrganizationMergeGroupsRemoteApi() ? handleSaveCombinedClass : undefined
+            !isCompanySchool && shouldUseOrganizationMergeGroupsRemoteApi()
+              ? handleSaveCombinedClass
+              : undefined
           }
           combinedClassReadOnly={selectedRowMergeView?.isLead === false}
           onSaveInstructorInfo={(id, instructors) => {
@@ -639,6 +660,7 @@ export function ParticipatingInstitutionsSection({
             />
           </div>
         )}
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
       <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />

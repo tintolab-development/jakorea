@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useMemo } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  fetchGeneralIndividualDocPassedAsVolunteerRows,
-  fetchGeneralIndividualInterview2AsVolunteerRows,
-  fetchGeneralVolunteerDoc1Applications,
-  fetchGeneralVolunteerDocPassedApplications,
-  fetchGeneralVolunteerInterview2Applications,
+  fetchGeneralIndividualScreeningApplicationsPage,
+  fetchGeneralVolunteerScreeningApplicationsPage,
   mapSecondInterviewStatusToFinalResultPayload,
   submitGeneralIndividualDocumentResult,
   submitGeneralIndividualFinalResult,
@@ -74,14 +71,19 @@ export function useGeneralVolunteerApplicationsRemote({
     [enabled, programId]
   )
 
-  const queryFn = useCallback(() => {
+  const queryFn = useCallback(({ pageParam }: { pageParam: number }) => {
     if (subjectKind === 'participant') {
-      if (stage === 'interview2') return fetchGeneralIndividualInterview2AsVolunteerRows(programId)
-      return fetchGeneralIndividualDocPassedAsVolunteerRows(programId)
+      return fetchGeneralIndividualScreeningApplicationsPage(
+        programId,
+        stage === 'interview2' ? 'interview2' : 'docPassed',
+        pageParam
+      )
     }
-    if (stage === 'docPassed') return fetchGeneralVolunteerDocPassedApplications(programId)
-    if (stage === 'interview2') return fetchGeneralVolunteerInterview2Applications(programId)
-    return fetchGeneralVolunteerDoc1Applications(programId)
+    return fetchGeneralVolunteerScreeningApplicationsPage(
+      programId,
+      stage,
+      pageParam
+    )
   }, [programId, stage, subjectKind])
 
   const listQueryKey =
@@ -89,16 +91,18 @@ export function useGeneralVolunteerApplicationsRemote({
       ? ([...generalApplicationsQueryKeys.individualList(programId), 'screening', stage] as const)
       : ([...generalApplicationsQueryKeys.volunteerList(programId), stage] as const)
 
-  const query = useQuery({
+  const query = useInfiniteQuery({
     queryKey: listQueryKey,
     queryFn,
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled,
     staleTime: 30_000,
     retry: false,
   })
 
   useEffect(() => {
-    if (query.data) setList(query.data)
+    if (query.data) setList(query.data.pages.flatMap(page => page.rows))
   }, [query.data, setList])
 
   const invalidateApplications = useCallback(async () => {
@@ -271,6 +275,9 @@ export function useGeneralVolunteerApplicationsRemote({
     remoteEnabled,
     subjectKind,
     applicationsLoading: remoteEnabled ? query.isFetching && query.data === undefined : false,
+    hasNextPage: query.hasNextPage ?? false,
+    isFetchingNextPage: query.isFetchingNextPage,
+    fetchNextPage: query.fetchNextPage,
     applyRemoteDocumentResult,
     applyRemoteManagerEvaluation,
     applyRemoteFinalResult,

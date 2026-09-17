@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolApprovalStatusKey,
@@ -18,7 +18,7 @@ import type {
   InstructorListFormInstructor,
 } from '../model/school-detail-types'
 import type { ProgressFilters } from './use-program-progress-params'
-import { fetchGeneralParticipatingInstitutions } from '@/features/program/general/api/admin-program-progress-service'
+import { fetchGeneralParticipatingInstitutionsPage } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
   useIsTrainedTeachersProgramsSurface,
@@ -54,9 +54,12 @@ export function useProgressSchoolList({
     '프로그램 진행 현황 · 참여 기관'
   )
 
-  const remoteQuery = useQuery({
+  const remoteQuery = useInfiniteQuery({
     queryKey: generalProgramProgressQueryKeys.institutions(programId ?? ''),
-    queryFn: () => fetchGeneralParticipatingInstitutions(programId!),
+    queryFn: ({ pageParam }) =>
+      fetchGeneralParticipatingInstitutionsPage(programId!, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled && !isTrainedTeachersSurface,
     staleTime: 30_000,
     retry: false,
@@ -77,7 +80,9 @@ export function useProgressSchoolList({
       return
     }
     if (remoteEnabled) {
-      if (remoteQuery.data) setSchoolList(remoteQuery.data)
+      if (remoteQuery.data) {
+        setSchoolList(remoteQuery.data.pages.flatMap(page => page.rows))
+      }
       return
     }
     setSchoolList([])
@@ -255,5 +260,11 @@ export function useProgressSchoolList({
         ? remoteQuery.isFetching && remoteQuery.data === undefined
         : false,
     isRemoteDataSource: ttRemoteEnabled || remoteEnabled,
+    hasNextPage:
+      remoteEnabled && !isTrainedTeachersSurface
+        ? (remoteQuery.hasNextPage ?? false)
+        : false,
+    isFetchingNextPage: remoteQuery.isFetchingNextPage,
+    fetchNextPage: remoteQuery.fetchNextPage,
   }
 }

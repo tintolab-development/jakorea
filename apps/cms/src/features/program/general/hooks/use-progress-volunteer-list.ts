@@ -4,10 +4,10 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { type ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import { buildParticipatingVolunteerRowFromMember } from '../lib/participating-volunteer-member-candidates'
-import { fetchGeneralParticipatingVolunteers } from '@/features/program/general/api/admin-program-progress-service'
+import { fetchGeneralParticipatingVolunteersPage } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
@@ -25,9 +25,12 @@ export function useProgressVolunteerList(
     '프로그램 진행 현황 · 봉사자'
   )
 
-  const remoteQuery = useQuery({
+  const remoteQuery = useInfiniteQuery({
     queryKey: generalProgramProgressQueryKeys.volunteers(programId ?? ''),
-    queryFn: () => fetchGeneralParticipatingVolunteers(programId!),
+    queryFn: ({ pageParam }) =>
+      fetchGeneralParticipatingVolunteersPage(programId!, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled,
     staleTime: 30_000,
     retry: false,
@@ -37,7 +40,9 @@ export function useProgressVolunteerList(
 
   useEffect(() => {
     if (remoteEnabled) {
-      if (remoteQuery.data) setVolunteerList(remoteQuery.data)
+      if (remoteQuery.data) {
+        setVolunteerList(remoteQuery.data.pages.flatMap(page => page.rows))
+      }
       return
     }
     setVolunteerList([])
@@ -63,5 +68,8 @@ export function useProgressVolunteerList(
       ? remoteQuery.isFetching && remoteQuery.data === undefined
       : false,
     isRemoteDataSource: remoteEnabled,
+    hasNextPage: remoteQuery.hasNextPage ?? false,
+    isFetchingNextPage: remoteQuery.isFetchingNextPage,
+    fetchNextPage: remoteQuery.fetchNextPage,
   }
 }

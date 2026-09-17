@@ -17,6 +17,7 @@ import { buildGeneralVolunteerDoc1FilterRows } from '@/features/program/general/
 import type { Program } from '@/types/domain'
 import { GENERAL_DOC_SCREENING_TABLE_SCROLL_X } from './doc-screening-columns'
 import { useGeneralVolunteerDocScreening } from './use-doc-screening'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import {
   useGeneralVolunteerApplicantDetail,
   type GeneralVolunteerApplicantDetailMetaChangeHandler,
@@ -87,7 +88,16 @@ export function GeneralVolunteerDocScreeningSection({
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
     applicationsLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
   } = useGeneralVolunteerDocScreening({ programId })
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: programId,
+  })
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
     programId,
@@ -294,6 +304,7 @@ export function GeneralVolunteerDocScreeningSection({
               })}
             />
           </div>
+          <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
         </FilterTableLayout>
       </div>
     </>

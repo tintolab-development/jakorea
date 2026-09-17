@@ -40,6 +40,7 @@ import {
 } from '../../register-employee-volunteer-modal'
 import { useEmployeeVolunteerRegistration } from '../../../hooks/use-employee-volunteer-registration'
 import { useProgressVolunteerList } from '../../../hooks/use-progress-volunteer-list'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
@@ -98,8 +99,20 @@ export function ParticipatingVolunteersSection({
     progressCalendarGranularity,
     setProgressCalendarGranularity,
   } = useParticipatingVolunteersParams()
-  const { volunteerList, addVolunteerFromMember, applicationsLoading } =
-    useProgressVolunteerList(programId, program)
+  const {
+    volunteerList,
+    addVolunteerFromMember,
+    applicationsLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useProgressVolunteerList(programId, program)
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: `${programId ?? ''}:${viewMode}:${JSON.stringify(appliedFilters)}`,
+  })
 
   const schoolFilters: ProgressFilters = useMemo(
     () => ({
@@ -626,6 +639,7 @@ export function ParticipatingVolunteersSection({
             />
           </div>
         )}
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
       <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />

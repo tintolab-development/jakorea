@@ -62,6 +62,7 @@ import {
   PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { TrainedTeachersApplicantInstitutionDetailContents } from '@/features/program/trained-teachers/ui/institution-detail/applicant-institution-detail-contents'
 
@@ -74,16 +75,6 @@ export type ApplicantType =
 export type ApplicantDetailVariant = 'legacy' | 'general'
 
 const DETAIL_TAB_PARAM = 'detailTab'
-
-function isCompanySchoolProgram(program: Program | null | undefined): boolean {
-  return (
-    program?.id.startsWith('economy-prog-') === true ||
-    program?.id.startsWith('company-school-prog-') === true ||
-    program?.id.startsWith('company-school-local-') === true ||
-    program?.mainTitle?.includes('1사1교') === true ||
-    program?.title?.includes('1사1교') === true
-  )
-}
 
 function parseDetailTabFromSearch(
   searchParams: URLSearchParams,
@@ -575,9 +566,13 @@ export function ApplicantsDetailContents({
 
   const queryClient = useQueryClient()
   const programId = program?.id
+  const isCompanySchool = isCompanySchoolProgram(program)
   const mergeGroupsQuery = useOrganizationMergeGroups(
     programId,
-    isGeneralDetail && isInstitution && shouldUseOrganizationMergeGroupsRemoteApi()
+    isGeneralDetail &&
+      isInstitution &&
+      !isCompanySchool &&
+      shouldUseOrganizationMergeGroupsRemoteApi()
   )
   const institutionMergeView = useMemo(() => {
     if (!institutionData || !mergeGroupsQuery.data?.length) return null
@@ -593,7 +588,7 @@ export function ApplicantsDetailContents({
       combinedClassApplication: '신청' | '미신청'
       combinedClassPartnerApplicantIds: string[]
     }) => {
-      if (!programId || !institutionData) return
+      if (!programId || !institutionData || isCompanySchool) return
       await saveOrganizationCombinedClassRemote({
         programId,
         leadRow: institutionData,
@@ -606,7 +601,14 @@ export function ApplicantsDetailContents({
         queryKey: generalProgramProgressQueryKeys.mergeGroups(programId),
       })
     },
-    [institutionData, institutionList, mergeGroupsQuery.data, programId, queryClient]
+    [
+      institutionData,
+      institutionList,
+      isCompanySchool,
+      mergeGroupsQuery.data,
+      programId,
+      queryClient,
+    ]
   )
 
   const [combinedClassLeadTeacherModal, setCombinedClassLeadTeacherModal] = useState<{
@@ -622,9 +624,10 @@ export function ApplicantsDetailContents({
     onSaved: rows => {
       onInstitutionDetailSaved?.(rows)
     },
-    onSaveCombinedClass: shouldUseOrganizationMergeGroupsRemoteApi()
-      ? handleSaveInstitutionCombinedClass
-      : undefined,
+    onSaveCombinedClass:
+      !isCompanySchool && shouldUseOrganizationMergeGroupsRemoteApi()
+        ? handleSaveInstitutionCombinedClass
+        : undefined,
     combinedClassReadOnly: institutionMergeView?.isLead === false,
     onCombinedClassApplied: params => {
       setCombinedClassLeadTeacherModal(params)

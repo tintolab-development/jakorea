@@ -24,6 +24,7 @@ import { GeneralParticipantApplicantDetailView } from '../participant-screening/
 import { mapVolunteerScreeningRowToParticipant } from '@/features/program/general/lib/participant-volunteer-row-adapter'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { useGeneralVolunteerDocPassed } from './use-doc-passed'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import './doc-passed-section.css'
 import './volunteer-screening.css'
@@ -73,7 +74,16 @@ export function GeneralVolunteerDocPassedSection({
     withdrawTarget,
     applicationsLoading,
     isRemoteDataSource,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
   } = useGeneralVolunteerDocPassed({ programId, subjectKind })
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: `${programId}:${subjectKind}:${viewMode}`,
+  })
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
     programId,
@@ -265,6 +275,7 @@ export function GeneralVolunteerDocPassedSection({
             />
           </div>
         )}
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
       {viewMode === 'calendar' ? (
         <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />

@@ -1183,5 +1183,10 @@ export function useApplicantsDetail({
     applicationsLoading:
       applicationsRemote.applicationsLoading ||
       trainedTeacherApplicationsRemote.applicationsLoading,
+    hasNextPage: !isTrainedTeachersSurface && applicationsRemote.hasNextPage,
+    isFetchingNextPage:
+      !isTrainedTeachersSurface && applicationsRemote.isFetchingNextPage,
+    fetchNextPage: applicationsRemote.fetchNextPage,
+    infiniteScrollResetKey: `${programId ?? ''}:${menu}:${JSON.stringify(appliedFilters)}:${viewMode}`,
   }
 }

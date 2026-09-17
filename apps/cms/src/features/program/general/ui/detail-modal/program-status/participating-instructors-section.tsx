@@ -43,6 +43,7 @@ import {
 } from '../../../hooks/use-participating-instructors-params'
 import type { ProgressFilters } from '../../../hooks/use-program-progress-params'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { AddParticipatingInstructorModal } from '../../add-participating-instructor-modal'
 import { ParticipatingInstructorAddConsentModal } from '../../participating-instructor-add-consent-modal'
@@ -151,10 +152,19 @@ export function ParticipatingInstructorsSection({
     setAddInstructorModalOpen,
     handleAddInstructorByMemberId,
     applicationsLoading: instructorsLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
   } = useProgressInstructorList({
     appliedFilters: progressFilters,
     programId,
     program,
+  })
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: `${programId ?? ''}:${viewMode}:${JSON.stringify(progressFilters)}`,
   })
 
   const { schoolList: schoolRows } = useProgressSchoolList({
@@ -796,6 +806,7 @@ export function ParticipatingInstructorsSection({
             />
           </div>
         )}
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
       <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />
