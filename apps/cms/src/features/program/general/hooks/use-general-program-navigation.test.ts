@@ -2,6 +2,34 @@ import { describe, expect, it } from 'vitest'
 import { resolveGeneralProgramNavigation } from './use-general-program-navigation'
 
 describe('resolveGeneralProgramNavigation', () => {
+  it('기관 신청 활성 응답은 기관 신청 LNB를 숨기지 않는다', () => {
+    const result = resolveGeneralProgramNavigation([
+      { key: 'ORGANIZATION_APPLICATIONS', enabled: true },
+    ])
+
+    expect(result.disabledLnbKeys.has('institution_applications')).toBe(false)
+  })
+
+  it('기관 신청 비활성 응답은 기관 신청 LNB만 숨긴다', () => {
+    const result = resolveGeneralProgramNavigation([
+      { key: 'ORGANIZATION_APPLICATIONS', enabled: false },
+      { key: 'PARTICIPANT_APPLICATIONS', enabled: true },
+    ])
+
+    expect(result.disabledLnbKeys.has('institution_applications')).toBe(true)
+    expect(result.disabledLnbKeys.has('participant_applications')).toBe(false)
+  })
+
+  it('개인 신청 비활성 응답은 기관 신청 LNB에 전파되지 않는다', () => {
+    const result = resolveGeneralProgramNavigation([
+      { key: 'ORGANIZATION_APPLICATIONS', enabled: true },
+      { key: 'PARTICIPANT_APPLICATIONS', enabled: false },
+    ])
+
+    expect(result.disabledLnbKeys.has('institution_applications')).toBe(false)
+    expect(result.disabledLnbKeys.has('participant_applications')).toBe(true)
+  })
+
   it('PROGRAM_EXECUTION이 활성이고 교육일지가 비활성이어도 progress를 숨기지 않는다', () => {
     const result = resolveGeneralProgramNavigation([
       { key: 'PROGRAM_EXECUTION', enabled: true },
