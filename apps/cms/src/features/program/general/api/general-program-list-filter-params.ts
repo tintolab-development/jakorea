@@ -21,6 +21,11 @@ export type GeneralProgramListTableFilters = {
   operationEndDate?: string
 }
 
+/**
+ * 4카드 → `periodStatus` 쿼리.
+ * GENERAL 예정 카드는 `RECRUITING`(예정 버킷 별칭). 참여자 모집 창(`recruitmentStatus`)과 혼동 금지.
+ * @see programs-list-period-lifecycle-parity-frontend-handoff-2026-09-17.md
+ */
 function mapOverviewStatusToPeriodStatus(
   statusFilter: GeneralProgramOverviewStatusFilter | null
 ): string | undefined {

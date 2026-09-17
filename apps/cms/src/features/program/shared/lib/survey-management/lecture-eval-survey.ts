@@ -1,7 +1,5 @@
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
-import { loadWritingFormTemplateSave } from '@/features/template/lib/writing-form-template-local-save'
 import {
-  createDefaultSurveyDraft,
   DEFAULT_SURVEY_PARAGRAPH_IDS,
   normalizeWritingFormDraft,
   type ScaleTypeParagraph,
@@ -11,6 +9,10 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
+import {
+  resolveSurveyWritingDraft,
+  resolveSurveyWritingDraftSync,
+} from './survey-writing-draft'
 import type { RegisteredSurvey, SurveyPollRawResponse } from './survey-management-types'
 
 export const LECTURE_EVAL_TEMPLATE_ID = 'survey-admin'
@@ -100,34 +102,14 @@ function applyLectureEvalTitleParagraph(
   }
 }
 
-/** 등록·응답·결과 집계 공통 — 양식 관리 localStorage draft 우선 */
-export function resolveLectureEvalWritingDraft(
+function applyLectureEvalDraftTransforms(
+  base: WritingFormDraft,
   templateId: string,
   options?: ResolveLectureEvalWritingDraftOptions
 ): WritingFormDraft {
   const clearAnswers = options?.clearAnswers ?? false
-  const saved = loadWritingFormTemplateSave(templateId)
   const row = findWritingTemplateRowByDefinitionId(templateId)
   const displayName = (options?.templateName ?? row?.templateName)?.trim()
-
-  let base: WritingFormDraft
-  if (saved?.draft != null) {
-    base = normalizeWritingFormDraft(saved.draft)
-  } else {
-    const defaultDraft = normalizeWritingFormDraft(createDefaultSurveyDraft())
-    if (displayName == null || displayName === '') {
-      base = defaultDraft
-    } else {
-      base = normalizeWritingFormDraft({
-        ...defaultDraft,
-        paragraphs: defaultDraft.paragraphs.map(paragraph =>
-          paragraph.id === DEFAULT_SURVEY_PARAGRAPH_IDS.title
-            ? { ...paragraph, surveyTitle: displayName }
-            : paragraph
-        ),
-      })
-    }
-  }
 
   return normalizeWritingFormDraft({
     ...base,
@@ -137,8 +119,34 @@ export function resolveLectureEvalWritingDraft(
   })
 }
 
-export function buildLectureEvalFormDraft(templateId: string): WritingFormDraft {
+/** 등록·응답·결과 집계 공통 — form-template remote draft 우선 */
+export async function resolveLectureEvalWritingDraft(
+  templateId: string,
+  options?: ResolveLectureEvalWritingDraftOptions
+): Promise<WritingFormDraft> {
+  const base = await resolveSurveyWritingDraft(templateId, {
+    templateName: options?.templateName,
+  })
+  return applyLectureEvalDraftTransforms(base, templateId, options)
+}
+
+/** 캐시/시드 동기 경로 — hydrate 후 사용 */
+export function resolveLectureEvalWritingDraftSync(
+  templateId: string,
+  options?: ResolveLectureEvalWritingDraftOptions
+): WritingFormDraft {
+  const base = resolveSurveyWritingDraftSync(templateId, {
+    templateName: options?.templateName,
+  })
+  return applyLectureEvalDraftTransforms(base, templateId, options)
+}
+
+export async function buildLectureEvalFormDraft(templateId: string): Promise<WritingFormDraft> {
   return resolveLectureEvalWritingDraft(templateId, { clearAnswers: true })
+}
+
+export function buildLectureEvalFormDraftSync(templateId: string): WritingFormDraft {
+  return resolveLectureEvalWritingDraftSync(templateId, { clearAnswers: true })
 }
 
 function getShortEssayText(paragraph: ShortEssayParagraph): string {

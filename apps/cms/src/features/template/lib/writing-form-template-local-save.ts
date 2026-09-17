@@ -1,7 +1,9 @@
 /**
- * 폼 양식 관리 — 작성 양식 템플릿 localStorage 영속화 (API 연동 전).
- * UJAT 전용 키(`ujat-registration-local-save`, `ujat-recruit-template-local-save`)와 병행해
- * 그 외 등록·모집·신청·설문 양식 draft·부가 상태를 저장한다.
+ * 브라우저 localStorage — **프로그램 상세 임시저장** (`localOnly: true`) 및
+ * 레거시 키 정리용. 양식 관리 draft SSOT는 remote API
+ * (`saveFormTemplateVersionDraft` / `loadFormTemplateVersionDraft`).
+ *
+ * 프로그램 코드에서는 `@/features/program/shared/lib/program-draft-local-save` 를 선호한다.
  */
 import {
   normalizeWritingFormDraft,
@@ -110,14 +112,17 @@ export function removeWritingFormTemplateSave(templateId: string): void {
   }
 }
 
-/** localStorage 저장. `localOnly`가 아니면 양식 관리용 formsSurveys API도 동기화. */
+/**
+ * `localOnly: true` — 프로그램 등록 임시저장 (양식 버전 API와 분리).
+ * 그 외 — 양식 관리용 remote draft API (`saveFormTemplateVersionDraft`).
+ */
 export async function persistWritingFormTemplateDraft(args: {
   templateId: string
   draft: WritingFormDraft
   overlay?: Record<string, unknown>
   editorState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
-  /** 프로그램 등록 임시저장 — 양식 버전 API와 분리 */
+  /** 프로그램 등록·모집 임시저장 전용. 양식 관리에서는 사용하지 않는다. */
   localOnly?: boolean
 }): Promise<void> {
   if (args.localOnly) {
@@ -136,7 +141,10 @@ export async function persistWritingFormTemplateDraft(args: {
   })
 }
 
-/** API draft 우선, 실패·미활성 시 localStorage. 프로그램 등록은 `localOnly`. */
+/**
+ * `localOnly: true` — 프로그램 localStorage만.
+ * 그 외 — remote draft GET (dev fallback: `VITE_FORM_TEMPLATE_LOCAL_FALLBACK=1`).
+ */
 export async function loadWritingFormTemplateDraft(
   templateId: string,
   options?: { localOnly?: boolean }

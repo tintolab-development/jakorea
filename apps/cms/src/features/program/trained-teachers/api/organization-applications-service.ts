@@ -17,10 +17,11 @@ function assertRemoteReady(): void {
 }
 
 export async function listTrainedTeacherOrganizationApplications(
-  programId: string
+  programId: string,
+  query: import('./organization-applications-list-query').TrainedTeacherOrganizationApplicationsListQuery = {}
 ): Promise<ApplicantSchoolRow[]> {
   assertRemoteReady()
-  const items = await fetchTrainedTeacherOrganizationApplicationsRemote(programId)
+  const items = await fetchTrainedTeacherOrganizationApplicationsRemote(programId, query)
   return items.map((item, index) =>
     mapTrainedTeacherOrganizationApplicationToRow(item, index, programId)
   )

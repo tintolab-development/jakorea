@@ -44,6 +44,8 @@ export type CompanySchoolAssignedInstructorRow = {
   homeAddress?: string
   distanceToSchool?: string
   longDistance?: boolean
+  /** 기관 신청 배정이 참조하는 실제 기관 ID. 개인 출강지이면 null */
+  organizationId?: number | null
   organizationName?: string
   assignedDate?: string
   assignedTime?: string
@@ -173,6 +175,7 @@ export function buildCompanySchoolAssignedInstructorRows(input: {
       homeAddress: a.homeAddress,
       distanceToSchool: distanceLabel,
       longDistance: a.longDistance,
+      organizationId: a.organizationId ?? null,
       organizationName: a.organizationName,
       assignedDate: lectureDate,
       assignedTime: label?.time,

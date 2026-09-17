@@ -213,7 +213,7 @@ export function usePaymentStatementPreConsentEditor(
       } catch (error) {
         console.debug('paymentStatementPreConsent save failed', error)
         if (isTemplateManagementSave) {
-          showSaveFailure()
+          showSaveFailure(error)
         }
       }
     })()

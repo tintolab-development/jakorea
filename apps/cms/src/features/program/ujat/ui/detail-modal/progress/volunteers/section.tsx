@@ -78,7 +78,7 @@ export function UjatEducationProgressVolunteersSection({
     memberOptions,
     addVolunteerFromMember,
     syncRowsFromMock,
-  } = useUjatEducationProgressVolunteers(half)
+  } = useUjatEducationProgressVolunteers(program.id, half)
 
   const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
     columns as ColumnsType<unknown>,

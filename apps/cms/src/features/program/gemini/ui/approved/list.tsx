@@ -27,7 +27,6 @@ import {
 } from '../../lib/approved/resolve-status'
 import {
   useGeminiApprovedTrainingRows,
-  useGeminiApprovedTrainingRowsQueryState,
 } from '../../hooks/use-gemini-approved-training-rows'
 import { useToday } from '../../hooks/use-today'
 import {
@@ -166,8 +165,8 @@ export function GeminiApprovedTrainingList() {
     }),
     [appliedFilters]
   )
-  const allRows = useGeminiApprovedTrainingRows(queryFilters)
   const {
+    rows: allRows,
     remoteEnabled,
     isFetching,
     isFetchingNextPage,
@@ -176,7 +175,7 @@ export function GeminiApprovedTrainingList() {
     fetchNextPage,
     hasNextPage,
     totalElements,
-  } = useGeminiApprovedTrainingRowsQueryState(queryFilters)
+  } = useGeminiApprovedTrainingRows(queryFilters)
   const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
     hasNextPage,
     isFetchingNextPage,

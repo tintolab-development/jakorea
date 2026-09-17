@@ -52,6 +52,7 @@ export async function getDetailedProgramOptionsList(): Promise<DetailedProgramMa
 export async function createDetailedProgram(input: {
   name: string
   active: boolean
+  businessArea: string
 }): Promise<DetailedProgramManagementRow> {
   assertDetailedProgramsRemoteReady()
   const dto = await createDetailedProgramRemote(toDetailedProgramRequest(input))

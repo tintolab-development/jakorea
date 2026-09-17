@@ -68,9 +68,10 @@ function buildFromScheduleAssignStore(
 }
 
 export function buildUjatScheduleConfirmRows(
-  regionKey: UjatInstitutionApplicationRegionKey
+  regionKey: UjatInstitutionApplicationRegionKey,
+  sourceRows: readonly import('../list/types').UjatInstitutionApplicationRow[] = getUjatInstitutionApplicationMockRows()
 ): UjatScheduleConfirmRow[] {
-  const source = getUjatInstitutionApplicationMockRows().filter(
+  const source = sourceRows.filter(
     row => row.regionKey === regionKey && row.tempAssignmentStatus === 'temp_assigned'
   )
 

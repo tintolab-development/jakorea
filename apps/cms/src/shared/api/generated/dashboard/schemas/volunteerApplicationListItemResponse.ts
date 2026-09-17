@@ -59,4 +59,6 @@ export interface VolunteerApplicationListItemResponse {
   canEditManagerAEvaluation?: boolean;
   canEditManagerBEvaluation?: boolean;
   availableActions?: string[];
+  /** UJAT 상·하반기 — VOLUNTEER 모집 순위 기준 */
+  recruitHalf?: 'FIRST_HALF' | 'SECOND_HALF' | null;
 }

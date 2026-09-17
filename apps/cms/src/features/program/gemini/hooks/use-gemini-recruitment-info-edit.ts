@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
-import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import {
   applyInfoEditDraft,
   detailToInfoEditDraft,
@@ -36,6 +35,7 @@ export function useGeminiRecruitmentInfoEdit(
     recruitmentId ?? undefined,
     remoteEnabled && Boolean(recruitmentId)
   )
+  const getAdditionalContentMarkdownRef = useRef<() => string>(() => '')
 
   const detail = useMemo(() => {
     if (!recruitmentId) return null
@@ -73,19 +73,9 @@ export function useGeminiRecruitmentInfoEdit(
     resetDraftFromDetail()
   }, [isEditMode, resetDraftFromDetail])
 
-  const additionalContentSource =
-    isEditMode && draft != null
-      ? draft.additionalContentMarkdown
-      : detail?.additionalContentMarkdown ?? ''
-
-  const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
-    isEditMode && detail != null,
-    additionalContentSource,
-    `gemini-recruitment-info-edit-${recruitmentId ?? 'none'}-${isEditMode ? 'edit' : 'view'}`,
-    {
-      placeholder: '내용을 작성하세요',
-    }
-  )
+  const registerGetAdditionalContentMarkdown = useCallback((getter: () => string) => {
+    getAdditionalContentMarkdownRef.current = getter
+  }, [])
 
   const setEditMode = useCallback(
     (enabled: boolean) => {
@@ -123,7 +113,8 @@ export function useGeminiRecruitmentInfoEdit(
     if (detail == null || draft == null || !recruitmentId) return
     const nextDraft: GeminiRecruitmentInfoEditDraft = {
       ...draft,
-      additionalContentMarkdown: getMarkdown() || draft.additionalContentMarkdown,
+      additionalContentMarkdown:
+        getAdditionalContentMarkdownRef.current() || draft.additionalContentMarkdown,
     }
     if (remoteEnabled) {
       await updateGeminiRecruitment(recruitmentId, nextDraft)
@@ -143,15 +134,7 @@ export function useGeminiRecruitmentInfoEdit(
       setDetailVersion(v => v + 1)
     }
     setEditMode(false)
-  }, [
-    detail,
-    draft,
-    getMarkdown,
-    queryClient,
-    recruitmentId,
-    remoteEnabled,
-    setEditMode,
-  ])
+  }, [detail, draft, queryClient, recruitmentId, remoteEnabled, setEditMode])
 
   const patchDraft = useCallback((patch: Partial<GeminiRecruitmentInfoEditDraft>) => {
     setDraft(prev => (prev == null ? prev : { ...prev, ...patch }))
@@ -172,8 +155,7 @@ export function useGeminiRecruitmentInfoEdit(
     handleEdit,
     handleCancel,
     handleSave,
-    editor,
-    editorMinHeight,
+    registerGetAdditionalContentMarkdown,
     remoteEnabled,
     isDetailFetching: remoteEnabled ? remoteDetailQuery.isFetching : false,
     isDetailError: remoteEnabled ? remoteDetailQuery.isError : false,

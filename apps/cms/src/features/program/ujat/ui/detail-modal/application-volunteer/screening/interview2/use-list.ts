@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs, { type Dayjs } from 'dayjs'
 import {
   patchUjatVolunteerInterviewEvaluation,
@@ -9,7 +9,13 @@ import {
 } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { listUjatVolunteerApplicationsPage } from '@/features/program/ujat/api/applications-service'
+import { buildUjatVolunteerInterview2ListQuery } from '@/features/program/ujat/api/applications-list-query'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
+import {
+  giveUpUjatVolunteerApplicationRemote,
+  submitUjatVolunteerFinalResultsRemote,
+} from '@/features/program/ujat/api/volunteer-mutations'
 import type {
   UjatSecondInterviewScreeningStatus,
   UjatVolunteerRecruitHalf,
@@ -106,12 +112,14 @@ export function useUjatVolunteerInterview2({
   programId: string
   half: UjatVolunteerRecruitHalf
 }) {
+  const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
   useNotifyProgramApiUnavailableOnce(
-    true,
+    !remoteEnabled,
     'ujat-application-volunteer-interview2',
     'UJAT 봉사자 신청 · 2차 면접 심사'
   )
 
+  const queryClient = useQueryClient()
   const { showAlert } = useCmsAlert()
   const [list, setList] = useState<UjatVolunteerApplicantRow[]>(() => [])
   const [pendingFilters, setPendingFilters] = useState<UjatVolunteerInterview2Filters>(() => ({
@@ -130,12 +138,18 @@ export function useUjatVolunteerInterview2({
   const [bulkPassModalOpen, setBulkPassModalOpen] = useState(false)
   const [now, setNow] = useState(() => dayjs())
 
+  const listQuery = useMemo(
+    () => buildUjatVolunteerInterview2ListQuery(appliedFilters, half),
+    [appliedFilters, half]
+  )
+
   const applicationsQuery = useInfiniteQuery({
-    queryKey: ujatQueryKeys.volunteerApplications(programId, half),
-    queryFn: ({ pageParam }) => listUjatVolunteerApplicationsPage(programId, half, pageParam),
+    queryKey: ujatQueryKeys.volunteerApplications(programId, half, 'interview2', listQuery),
+    queryFn: ({ pageParam }) =>
+      listUjatVolunteerApplicationsPage(programId, half, pageParam, listQuery),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
-    enabled: Boolean(programId),
+    enabled: remoteEnabled,
     staleTime: 30_000,
     retry: false,
   })
@@ -167,6 +181,12 @@ export function useUjatVolunteerInterview2({
     return () => window.clearInterval(timer)
   }, [])
 
+  const invalidateVolunteerLists = useCallback(async () => {
+    await queryClient.invalidateQueries({
+      queryKey: [...ujatQueryKeys.applications(), 'volunteers', programId],
+    })
+  }, [programId, queryClient])
+
   const updateRow = useCallback((id: string, patch: Partial<UjatVolunteerApplicantRow>) => {
     setList(prev => prev.map(row => (row.id === id ? { ...row, ...patch } : row)))
   }, [])
@@ -180,7 +200,14 @@ export function useUjatVolunteerInterview2({
   }, [pendingFilters])
 
   const filteredSorted = useMemo(() => {
-    const filtered = filterInterview2Applicants(list, appliedFilters, now)
+    const clientOnly: UjatVolunteerInterview2Filters = {
+      ...DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS,
+      preferredRegion: appliedFilters.preferredRegion,
+      interviewDate: appliedFilters.interviewDate,
+      interviewTime: appliedFilters.interviewTime,
+      totalScore: appliedFilters.totalScore,
+    }
+    const filtered = filterInterview2Applicants(list, clientOnly, now)
     return sortUjatVolunteerInterview2Rows(filtered)
   }, [appliedFilters, list, now])
   const infiniteScrollResetKey = useMemo(
@@ -197,8 +224,26 @@ export function useUjatVolunteerInterview2({
     (ids: string[], status: UjatSecondInterviewScreeningStatus) => {
       setList(prev => patchUjatVolunteerSecondInterviewScreeningStatus(prev, ids, status))
       setSelectedRowKeys([])
+      if (
+        status === 'pass' ||
+        status === 'fail' ||
+        status === 'reserve1' ||
+        status === 'reserve2' ||
+        status === 'reserve3' ||
+        status === 'reserve4'
+      ) {
+        void submitUjatVolunteerFinalResultsRemote(ids, status)
+          .then(() => invalidateVolunteerLists())
+          .catch(() => {
+            showAlert({
+              title: '2차 면접 결과 저장 실패',
+              content: '최종 결과 처리에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+            })
+            void invalidateVolunteerLists()
+          })
+      }
     },
-    []
+    [invalidateVolunteerLists, showAlert]
   )
 
   const showInterview2Confirm = useCallback((options: UjatInterview2ConfirmRequest) => {
@@ -244,7 +289,7 @@ export function useUjatVolunteerInterview2({
             : (payload.manualNotifyAt?.format('YYYY. MM. DD HH:mm') ?? '직접 설정')
       showAlert({
         title: '일괄 합격',
-        content: `선택한 ${ids.length}건이 ${passTypeLabel} 처리되었습니다. (알림: ${notifyLabel}, 목 데이터)`,
+        content: `선택한 ${ids.length}건이 ${passTypeLabel} 처리되었습니다. (알림: ${notifyLabel})`,
       })
       setBulkPassModalOpen(false)
     },
@@ -293,13 +338,27 @@ export function useUjatVolunteerInterview2({
         return
       }
       updateRow(withdrawTargetId, { interviewAssignmentStatus: 'withdrawn' })
+      void giveUpUjatVolunteerApplicationRemote(
+        withdrawTargetId,
+        _payload.stopScheduleLabel
+          ? `활동 포기 (${_payload.stopScheduleLabel})`
+          : '활동 포기'
+      )
+        .then(() => invalidateVolunteerLists())
+        .catch(() => {
+          showAlert({
+            title: '활동 포기 처리 실패',
+            content: '활동 포기 처리에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+          })
+          void invalidateVolunteerLists()
+        })
       showAlert({
         title: '활동 포기',
         content: `${row.name} 봉사자가 활동 포기 처리되었습니다.`,
       })
       setWithdrawTargetId(null)
     },
-    [list, showAlert, updateRow, withdrawTargetId]
+    [invalidateVolunteerLists, list, showAlert, updateRow, withdrawTargetId]
   )
 
   const withdrawTarget = useMemo(

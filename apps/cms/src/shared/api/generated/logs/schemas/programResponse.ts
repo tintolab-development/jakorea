@@ -29,7 +29,19 @@ export interface ProgramResponse {
   applicationStartDate?: string;
   applicationEndDate?: string;
   status?: string;
+  /**
+   * 목록 카드/필터 축.
+   * SCHEDULED·RECRUITING(예정)·IN_PROGRESS·COMPLETED는 상호 배타.
+   * RECRUITING은 예정 버킷 별칭(참여자 모집은 recruitmentStatus).
+   */
+  periodStatus?: string;
+  /**
+   * typed 진행 현황. periodStatus와 동일 UI 버킷
+   * (scheduled|recruiting_students=예정, in_progress, completed).
+   */
   lifecycleStatus?: string;
+  /** 참여자 모집 창 — periodStatus와 독립 */
+  recruitmentStatus?: string;
   businessArea?: string;
   /** 교육 진행 구조 */
   educationStructure?: ProgramResponseEducationStructure;

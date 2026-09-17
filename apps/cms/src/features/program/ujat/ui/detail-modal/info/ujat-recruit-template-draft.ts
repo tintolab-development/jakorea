@@ -1,11 +1,12 @@
 /**
- * UJAT 모집 폼 draft — 템플릿 관리(`recruitment-ujat-school` / `recruitment-ujat-volunteer`)와 동일 시드.
- * API·localStorage 영속화 연동 시 이 모듈만 교체하면 프로그램 상세 모집 탭에 반영된다.
+ * UJAT 모집 폼 draft — 템플릿 관리와 동일 시드 + remote/메모리 스냅샷.
  */
 
 import {
+  hydrateAllUjatRecruitTemplatesFromRemote,
   loadUjatRecruitInstitutionTemplateSave,
   loadUjatRecruitVolunteerTemplateSave,
+  UJAT_RECRUIT_TEMPLATE_CHANGED_EVENT,
 } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import { createUjatRecruitFormInstitutionDraft } from '@/features/template/model/ujat-recruit-form-institution-draft'
 import { createUjatRecruitFormVolunteerDraft } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
@@ -13,6 +14,8 @@ import { normalizeWritingFormDraft, type WritingFormDraft } from '@/features/tem
 
 export const UJAT_RECRUIT_INSTITUTION_TEMPLATE_ID = 'recruitment-ujat-school' as const
 export const UJAT_RECRUIT_VOLUNTEER_TEMPLATE_ID = 'recruitment-ujat-volunteer' as const
+
+export { hydrateAllUjatRecruitTemplatesFromRemote, UJAT_RECRUIT_TEMPLATE_CHANGED_EVENT }
 
 export function getUjatRecruitInstitutionDraft(): WritingFormDraft {
   const saved = loadUjatRecruitInstitutionTemplateSave()

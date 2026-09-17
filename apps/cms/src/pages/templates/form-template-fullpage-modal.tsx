@@ -192,7 +192,7 @@ export function FormTemplateFullpageModal({
         showSaveSuccess(onSaveConfirmed)
       } catch (error) {
         console.debug('certificateFormTemplate save failed', error)
-        showSaveFailure()
+        showSaveFailure(error)
       }
     })()
   }, [

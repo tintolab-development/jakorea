@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -6,7 +7,12 @@ import type { HorizontalTableParagraph } from '@/features/template/model/writing
 import { UJAT_RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
 import { renderUjatRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/paragraph-body'
 import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraph-body'
-import { getUjatRecruitInstitutionDraft, getUjatRecruitVolunteerDraft } from './ujat-recruit-template-draft'
+import {
+  getUjatRecruitInstitutionDraft,
+  getUjatRecruitVolunteerDraft,
+  hydrateAllUjatRecruitTemplatesFromRemote,
+  UJAT_RECRUIT_TEMPLATE_CHANGED_EVENT,
+} from './ujat-recruit-template-draft'
 import type { UjatRecruitParagraphProps } from './ujat-recruit-paragraph-props'
 import { resolveUjatRecruitParagraphMode } from './ujat-recruit-paragraph-props'
 import { volunteerHalfFromRecruitTab, volunteerRecruitInfoSectionTitle, type UjatRecruitTabKey } from './ujat-program-detail-recruitment-tabs'
@@ -74,6 +80,18 @@ export function UjatProgramRecruitmentPanels({
 }) {
   const volunteerHalf = volunteerHalfFromRecruitTab(activeRecruitTab)
   const recruitDisplayProgram = resolveUjatRecruitDisplayProgram(program)
+  const [draftRevision, setDraftRevision] = useState(0)
+
+  useEffect(() => {
+    void hydrateAllUjatRecruitTemplatesFromRemote().then(() => {
+      setDraftRevision(v => v + 1)
+    })
+    const onChanged = () => setDraftRevision(v => v + 1)
+    window.addEventListener(UJAT_RECRUIT_TEMPLATE_CHANGED_EVENT, onChanged)
+    return () => window.removeEventListener(UJAT_RECRUIT_TEMPLATE_CHANGED_EVENT, onChanged)
+  }, [])
+
+  void draftRevision
 
   if (activeRecruitTab === 'recruit_participant') {
     const draft = getUjatRecruitInstitutionDraft()

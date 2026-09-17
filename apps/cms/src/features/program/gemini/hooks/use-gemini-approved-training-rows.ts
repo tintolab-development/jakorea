@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from '../api/visiting-training/capabilities'
 import { useGeminiApprovedTrainingsQuery } from '../api/visiting-training/hooks'
 import type { GeminiApprovedTrainingRow } from '../model/approved/types'
@@ -12,23 +13,36 @@ export type GeminiApprovedTrainingQueryFilters = {
   trainingDateTo?: string
 }
 
-/** API only — gate OFF면 빈 목록 */
-export function useGeminiApprovedTrainingRows(
-  filters: GeminiApprovedTrainingQueryFilters
-): GeminiApprovedTrainingRow[] {
-  const remoteEnabled = shouldUseGeminiVisitingTrainingRemoteApi()
-  const remoteQuery = useGeminiApprovedTrainingsQuery(filters, remoteEnabled)
-  return remoteEnabled
-    ? (remoteQuery.data?.pages.flatMap(page => page.rows) ?? [])
-    : []
+const EMPTY_ROWS: GeminiApprovedTrainingRow[] = []
+
+export type GeminiApprovedTrainingRowsResult = {
+  rows: GeminiApprovedTrainingRow[]
+  remoteEnabled: boolean
+  isFetching: boolean
+  isFetchingNextPage: boolean
+  isError: boolean
+  refetch: () => unknown
+  fetchNextPage: () => unknown
+  hasNextPage: boolean
+  totalElements: number
 }
 
-export function useGeminiApprovedTrainingRowsQueryState(
+/** 승인 연수 목록 — 단일 infinite query 구독 */
+export function useGeminiApprovedTrainingRows(
   filters: GeminiApprovedTrainingQueryFilters
-) {
+): GeminiApprovedTrainingRowsResult {
   const remoteEnabled = shouldUseGeminiVisitingTrainingRemoteApi()
   const remoteQuery = useGeminiApprovedTrainingsQuery(filters, remoteEnabled)
+  const rows = useMemo(
+    () =>
+      remoteEnabled
+        ? (remoteQuery.data?.pages.flatMap(page => page.rows) ?? EMPTY_ROWS)
+        : EMPTY_ROWS,
+    [remoteEnabled, remoteQuery.data]
+  )
+
   return {
+    rows,
     remoteEnabled,
     isFetching: remoteEnabled
       ? remoteQuery.isFetching && !remoteQuery.isFetchingNextPage

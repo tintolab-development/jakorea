@@ -1,3 +1,9 @@
+/**
+ * UJAT 등록 양식 템플릿 — **localOnly 임시저장 전용**.
+ * 프로그램 상세 기본정보 SSOT는 program PATCH + 세션 overlay.
+ * 양식 관리 draft는 form-template version API.
+ */
+import { shouldUseFormsSurveysRemoteApi } from '@/features/template/api/admin-form-templates-service'
 import { normalizeWritingFormDraft, type WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { WRITING_FORM_TEMPLATE_SAVE_EVENT } from '@/features/template/lib/writing-form-template-local-save'
 import { UJAT_REGISTRATION_TEMPLATE_ID } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
@@ -39,10 +45,24 @@ function writeFile(file: LocalSaveFile): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(file))
 }
 
+export function clearUjatRegistrationTemplateLocalStorage(): void {
+  try {
+    if (localStorage.getItem(STORAGE_KEY) == null) return
+    localStorage.removeItem(STORAGE_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+/** localOnly 임시저장 peek. remote ON이면 레거시 키 삭제 후 null. */
 export function loadUjatRegistrationTemplateSave(): {
   draft: WritingFormDraft
   overlay: Record<string, unknown>
 } | null {
+  if (shouldUseFormsSurveysRemoteApi()) {
+    clearUjatRegistrationTemplateLocalStorage()
+    return null
+  }
   const record = readFile().byTemplateId[UJAT_REGISTRATION_TEMPLATE_ID]
   if (!record || record.version !== 1) return null
   return {
@@ -51,10 +71,15 @@ export function loadUjatRegistrationTemplateSave(): {
   }
 }
 
+/** localOnly 임시저장 전용 — 양식 관리·상세 기본정보에서 호출하지 말 것 */
 export function persistUjatRegistrationTemplateSave(args: {
   draft: WritingFormDraft
   overlay: Record<string, unknown>
 }): void {
+  if (shouldUseFormsSurveysRemoteApi()) {
+    clearUjatRegistrationTemplateLocalStorage()
+    return
+  }
   const file = readFile()
   file.byTemplateId[UJAT_REGISTRATION_TEMPLATE_ID] = {
     version: 1,
@@ -73,12 +98,8 @@ export function persistUjatRegistrationTemplateSave(args: {
   }
 }
 
-/** 신규 등록 등 — UJAT legacy 템플릿 임시저장본 제거 */
 export function removeUjatRegistrationTemplateSave(): void {
-  const file = readFile()
-  if (!(UJAT_REGISTRATION_TEMPLATE_ID in file.byTemplateId)) return
-  delete file.byTemplateId[UJAT_REGISTRATION_TEMPLATE_ID]
-  writeFile(file)
+  clearUjatRegistrationTemplateLocalStorage()
   if (typeof window !== 'undefined') {
     window.dispatchEvent(
       new CustomEvent(WRITING_FORM_TEMPLATE_SAVE_EVENT, {

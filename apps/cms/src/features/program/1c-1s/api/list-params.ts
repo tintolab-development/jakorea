@@ -4,11 +4,19 @@ import { COMPANY_SCHOOL_PROGRAM_API_TYPE } from './adapters'
 
 export const COMPANY_SCHOOL_PROGRAM_LIST_PAGE_SIZE = GENERAL_PROGRAM_LIST_PAGE_SIZE
 
+/** 예정 위젯·목록 — Primary SCHEDULED + 레거시 RECRUITING 합집합 */
+export const COMPANY_SCHOOL_SCHEDULED_PERIOD_STATUSES = ['SCHEDULED', 'RECRUITING'] as const
+
 export type CompanySchoolOverviewStatusFilter = 'scheduled' | 'in_progress' | 'completed'
 
 export interface CompanySchoolListFilters {
   keyword?: string
   periodStatus?: string
+  /**
+   * 복수 periodStatus 합집합 (예정 카드와 동일).
+   * API는 단일 `periodStatus`만 받으므로 서비스에서 병렬 조회 후 id 기준 병합한다.
+   */
+  periodStatuses?: readonly string[]
   businessYear?: number
 }
 
@@ -18,8 +26,8 @@ function mapOverviewStatusToPeriodStatus(
   if (!statusFilter) return undefined
   switch (statusFilter) {
     case 'scheduled':
-      // Primary ONE-01 = SCHEDULED (레거시 CS는 RECRUITING일 수 있음 → overview는 합산)
-      return 'SCHEDULED'
+      // periodStatuses 로 처리 — 단일 periodStatus 미사용
+      return undefined
     case 'in_progress':
       return 'IN_PROGRESS'
     case 'completed':
@@ -48,6 +56,14 @@ export function companySchoolListParamsFromOverviewStatus(
   statusFilter: CompanySchoolOverviewStatusFilter | null | undefined,
   tableFilters: { title?: string; businessYear?: number } = {}
 ): CompanySchoolListFilters {
+  if (statusFilter === 'scheduled') {
+    return {
+      keyword: tableFilters.title?.trim() || undefined,
+      periodStatuses: [...COMPANY_SCHOOL_SCHEDULED_PERIOD_STATUSES],
+      businessYear: tableFilters.businessYear,
+    }
+  }
+
   return {
     keyword: tableFilters.title?.trim() || undefined,
     periodStatus: mapOverviewStatusToPeriodStatus(statusFilter),

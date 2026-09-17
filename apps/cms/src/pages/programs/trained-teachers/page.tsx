@@ -402,6 +402,7 @@ function TrainedTeachersProgramPageContent() {
         config={programListConfig}
         onDisplayCountChange={handleDisplayCountChange}
         toolbarActionsAfterExcel={programListToolbarActionsAfterExcel}
+        disableUrlSync={Boolean(programIdFromUrl) || Boolean(selectedProgramForFullPageModal)}
       >
         {programListToolbarActions}
       </ProgramList>

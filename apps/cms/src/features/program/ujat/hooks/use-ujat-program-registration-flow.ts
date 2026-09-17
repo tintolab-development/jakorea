@@ -106,6 +106,7 @@ export function useUjatProgramRegistrationFlow(
   // 공통 정보 overlay는 모집·신청 단계로 이동한 뒤 완료할 때까지 유지되어야 한다.
   const registrationVm = useUjatProgramRegistrationEditor(open, programTemplateName, {
     skipDraftRestore: options?.skipDraftRestore === true,
+    // 프로그램 임시저장 — remote 전환: docs/api/program-draft-local-storage-follow-up.md
     localOnlyDraftPersistence: true,
   })
 

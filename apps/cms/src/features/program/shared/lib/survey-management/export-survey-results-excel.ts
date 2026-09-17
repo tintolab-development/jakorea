@@ -28,7 +28,7 @@ export async function exportSurveyResultsExcel({
   summarySheet.addRow({ label: '응답 수', value: `${responseCount}명` })
   summarySheet.addRow({ label: '프로그램 참여', value: `${participantTotal}명` })
 
-  const sections = buildSurveyPollResultSections(templateId, responses)
+  const sections = await buildSurveyPollResultSections(templateId, responses)
   for (const section of sections) {
     const sheetName = section.title.replace(/[[\]\\/*?:]/g, '_').trim().slice(0, 31) || '설문'
     const sheet = workbook.addWorksheet(sheetName)

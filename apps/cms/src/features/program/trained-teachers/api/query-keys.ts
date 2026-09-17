@@ -8,8 +8,12 @@ export const trainedTeacherQueryKeys = {
     [...trainedTeacherQueryKeys.details(), programId] as const,
   organizationApplicationsRoot: () =>
     [...trainedTeacherQueryKeys.all, 'organization-applications'] as const,
-  organizationApplications: (programId: string) =>
-    [...trainedTeacherQueryKeys.organizationApplicationsRoot(), programId] as const,
+  organizationApplications: (programId: string, filtersKey = '') =>
+    [
+      ...trainedTeacherQueryKeys.organizationApplicationsRoot(),
+      programId,
+      filtersKey,
+    ] as const,
   organizationApplication: (programId: string, applicationId: string) =>
     [
       ...trainedTeacherQueryKeys.organizationApplications(programId),
@@ -32,8 +36,13 @@ export const trainedTeacherQueryKeys = {
       programId,
       organizationApplicationId,
     ] as const,
-  participatingInstitutions: (programId: string) =>
-    [...trainedTeacherQueryKeys.all, 'participating-institutions', programId] as const,
+  participatingInstitutions: (programId: string, filtersKey = '') =>
+    [
+      ...trainedTeacherQueryKeys.all,
+      'participating-institutions',
+      programId,
+      filtersKey,
+    ] as const,
   performanceSummary: (programId: string) =>
     [...trainedTeacherQueryKeys.all, 'performance-summary', programId] as const,
   mutations: {

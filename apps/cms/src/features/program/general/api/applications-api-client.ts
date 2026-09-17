@@ -35,6 +35,24 @@ export type ApplicationsListQuery = {
   status?: string
   page?: number
   size?: number
+  /** 봉사자명 등 부분 검색 (`GET …/volunteer-applications`) */
+  keyword?: string
+  /** 서류 상태. PASS/FAIL 별칭 허용 */
+  documentStatus?: string
+  /** 면접 상태 */
+  interviewStatus?: string
+  /** 최종 결과 상태. APPROVED/REJECTED 별칭 허용 */
+  finalResultStatus?: string
+  /** JA 봉사 재참여 여부 */
+  isReparticipation?: boolean
+  /** 담당자 A 평가 — PASS/NEUTRAL/FAIL/UNREVIEWED */
+  managerAEvaluation?: string
+  /** 담당자 B 평가 — PASS/NEUTRAL/FAIL/UNREVIEWED */
+  managerBEvaluation?: string
+  /** UJAT 상·하반기 — FIRST_HALF | SECOND_HALF (별칭 H1/H2 허용) */
+  recruitHalf?: string
+  /** 모집 ID 직접 지정 (선택) */
+  recruitmentId?: number | string
 }
 
 const generalApplicationsDashboardApi = getJAKoreaCMSBackendAPIDashboardSubset()
@@ -124,9 +142,20 @@ export async function fetchOrganizationApplicationsRemote(
   )
 }
 
+/**
+ * 기관 신청 상세 — OpenAPI `OrganizationApplicationDetailResponse` +
+ * UJAT hydrate용 보조 필드(목록·레거시 호환).
+ */
+export type OrganizationApplicationDetailDto = OrganizationApplicationDetailResponse & {
+  managerComment?: string | null
+  regionSido?: string | null
+  regionSigungu?: string | null
+  grade?: string | null
+}
+
 export async function fetchOrganizationApplicationDetailRemote(
   applicationId: string
-): Promise<OrganizationApplicationDetailResponse> {
+): Promise<OrganizationApplicationDetailDto> {
   return unwrapApiBody(
     await customInstance({
       url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}`,

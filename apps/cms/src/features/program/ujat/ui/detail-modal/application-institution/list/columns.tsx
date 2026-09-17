@@ -7,17 +7,23 @@ import { UJAT_INSTITUTION_SCHEDULE_COLUMNS, type UjatInstitutionApplicationRow }
 const COL = {
   no: 80,
   institution: 180,
-  status: 140,
+  /** 「임시 배정 평가」 16px bold + 패딩 */
+  status: 160,
+  /** 「학년 별 신청 학급 수」 + 학년 세그먼트 본문 */
   grade: 340,
   /** 헤더 「총 신청 학급 수」 16px bold + 좌우 패딩 16px */
   total: 152,
-  schedule: 100,
+  /** 「M월 D일」 헤더 */
+  schedule: 112,
   teacher: 120,
   selection: 68,
 } as const
 
 const GRADE_CELL_CLASS = 'ujat-institution-application-list__cell-grade'
 const TOTAL_CELL_CLASS = 'ujat-institution-application-list__cell-total'
+const STATUS_CELL_CLASS = 'ujat-institution-application-list__cell-status'
+const SCHEDULE_CELL_CLASS = 'ujat-institution-application-list__cell-schedule'
+const INSTITUTION_CELL_CLASS = 'ujat-institution-application-list__cell-institution'
 
 function renderGradeClassCounts(row: UjatInstitutionApplicationRow) {
   return (
@@ -54,6 +60,8 @@ export function useUjatInstitutionApplicationColumns(): ColumnsType<UjatInstitut
         key: 'institutionName',
         width: COL.institution,
         align: 'center',
+        onHeaderCell: () => ({ className: INSTITUTION_CELL_CLASS }),
+        onCell: () => ({ className: INSTITUTION_CELL_CLASS }),
       },
       {
         title: '임시 배정 평가',
@@ -61,6 +69,8 @@ export function useUjatInstitutionApplicationColumns(): ColumnsType<UjatInstitut
         key: 'tempAssignmentStatus',
         width: COL.status,
         align: 'center',
+        onHeaderCell: () => ({ className: STATUS_CELL_CLASS }),
+        onCell: () => ({ className: STATUS_CELL_CLASS }),
         render: (status: UjatInstitutionApplicationRow['tempAssignmentStatus']) => (
           <UjatInstitutionApplicationStatusBadge status={status} />
         ),
@@ -90,6 +100,8 @@ export function useUjatInstitutionApplicationColumns(): ColumnsType<UjatInstitut
         key: col.key,
         width: COL.schedule,
         align: 'center' as const,
+        onHeaderCell: () => ({ className: SCHEDULE_CELL_CLASS }),
+        onCell: () => ({ className: SCHEDULE_CELL_CLASS }),
         render: (_: unknown, record: UjatInstitutionApplicationRow) =>
           record.scheduleSlots[col.key],
       })),

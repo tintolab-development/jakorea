@@ -208,7 +208,10 @@ export function useApplicantsDetail({
   const trainedTeacherApplicationsRemote = useTrainedTeacherOrganizationApplicationsRemoteSync({
     programId,
     enabled:
-      isTrainedTeachersSurface && menu === 'institutions' && usesProgramInstitutionApplications,
+      isTrainedTeachersSurface &&
+      menu === 'institutions' &&
+      usesProgramInstitutionApplications,
+    listFilters: appliedFilters,
     setInstitutionList,
   })
   const institutionApplicationsRemote = isTrainedTeachersSurface
@@ -1095,7 +1098,12 @@ export function useApplicantsDetail({
       }
       return filterGeneralIndividualApplications(individualList, appliedFilters)
     }
-    if (menu === 'institutions' && institutionColumnPreset === 'general-detail') {
+    if (
+      menu === 'institutions' &&
+      (institutionColumnPreset === 'general-detail' ||
+        institutionColumnPreset === 'company-school')
+    ) {
+      // 1사1교·교육받은 교사 overview도 일반 기관 신청과 동일 필터 키(organizationName·소재지·학년…)
       return filterGeneralOrganizationApplications(institutionList, appliedFilters)
     }
     if (menu === 'instructors' && instructorColumnPreset === 'general-detail') {

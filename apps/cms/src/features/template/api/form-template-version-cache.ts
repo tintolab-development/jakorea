@@ -1,4 +1,7 @@
-const VERSION_CACHE_KEY = 'cms.jakorea.formTemplateVersionCache.v1'
+/**
+ * templateCode → API numeric id 캐시 (메모리).
+ * 목록·version 응답으로 채운다. localStorage에 쓰지 않는다.
+ */
 
 export type FormTemplateVersionCacheEntry = {
   templateCode: string
@@ -8,47 +11,27 @@ export type FormTemplateVersionCacheEntry = {
   latestVersionNo?: number
 }
 
-type FormTemplateVersionCacheFile = {
-  version: 1
-  byTemplateCode: Record<string, FormTemplateVersionCacheEntry>
-}
-
-function readCacheFile(): FormTemplateVersionCacheFile {
-  try {
-    const raw = localStorage.getItem(VERSION_CACHE_KEY)
-    if (raw == null || raw === '') return { version: 1, byTemplateCode: {} }
-    const parsed = JSON.parse(raw) as FormTemplateVersionCacheFile
-    if (parsed?.version !== 1 || typeof parsed.byTemplateCode !== 'object') {
-      return { version: 1, byTemplateCode: {} }
-    }
-    return parsed
-  } catch {
-    return { version: 1, byTemplateCode: {} }
-  }
-}
-
-function writeCacheFile(file: FormTemplateVersionCacheFile): void {
-  localStorage.setItem(VERSION_CACHE_KEY, JSON.stringify(file))
-}
+const byTemplateCode = new Map<string, FormTemplateVersionCacheEntry>()
 
 export function getFormTemplateVersionCacheEntry(
   templateCode: string
 ): FormTemplateVersionCacheEntry | null {
-  return readCacheFile().byTemplateCode[templateCode] ?? null
+  return byTemplateCode.get(templateCode) ?? null
 }
 
 export function upsertFormTemplateVersionCacheEntry(
   entry: FormTemplateVersionCacheEntry
 ): void {
-  const file = readCacheFile()
-  file.byTemplateCode[entry.templateCode] = entry
-  writeCacheFile(file)
+  byTemplateCode.set(entry.templateCode, entry)
 }
 
 export function removeFormTemplateVersionCacheEntry(templateCode: string): void {
-  const file = readCacheFile()
-  delete file.byTemplateCode[templateCode]
-  writeCacheFile(file)
+  byTemplateCode.delete(templateCode)
+}
+
+/** 테스트·로그아웃 등 — 메모리 캐시 전체 비우기 */
+export function clearFormTemplateVersionCache(): void {
+  byTemplateCode.clear()
 }
 
 export function upsertFormTemplateVersionCacheFromListItems(
@@ -59,19 +42,17 @@ export function upsertFormTemplateVersionCacheFromListItems(
     latestVersionNo?: number
   }>
 ): void {
-  const file = readCacheFile()
   for (const item of items) {
     const templateCode = item.templateCode?.trim()
     if (templateCode == null || templateCode === '' || item.templateId == null) continue
-    const existing = file.byTemplateCode[templateCode]
+    const existing = byTemplateCode.get(templateCode)
     const latestVersionId = item.latestVersionId ?? existing?.latestVersionId
-    file.byTemplateCode[templateCode] = {
+    byTemplateCode.set(templateCode, {
       templateCode,
       templateId: item.templateId,
       templateVersionId: latestVersionId ?? existing?.templateVersionId,
       latestVersionId,
       latestVersionNo: item.latestVersionNo ?? existing?.latestVersionNo,
-    }
+    })
   }
-  writeCacheFile(file)
 }

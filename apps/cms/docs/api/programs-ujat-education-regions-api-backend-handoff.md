@@ -63,8 +63,8 @@ FE DnD 완료 시 전체 순서 스냅샷을 보내고, 성공 후 list invalida
 
 ## 5. migration · 소비처
 
-- localStorage key: `cms.jakorea.ujatEducationRegions.v1`
-- 원격 ON 시: 서버 list를 SSOT로 하고 local은 폐기 또는 one-time import(충돌 정책 BE/FE 합의)
+- localStorage key: `cms.jakorea.ujatEducationRegions.v1` (**remote OFF 전용**. remote ON 시 list 성공 후 키 삭제, sync 헬퍼는 local로 폴백하지 않음)
+- 원격 ON 시: 서버 list + 메모리 스냅샷 SSOT
 - 신청·진행·봉사자 필터는 현재 `regionKey` 문자열에 의존 → 서버 `code`와 **안정 매핑** 필수
 
 ---

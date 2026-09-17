@@ -5,6 +5,7 @@ import type {
 } from '@/features/program/ujat/model/education-region.types'
 import {
   createUjatEducationRegion as createLocal,
+  clearUjatEducationRegionsLocalStorage,
   deleteUjatEducationRegion as deleteLocal,
   readUjatEducationRegions,
   reorderUjatEducationRegions as reorderLocal,
@@ -49,6 +50,8 @@ export async function listUjatEducationRegionsService(): Promise<UjatEducationRe
     setUjatEducationRegionsRemoteSnapshot(null)
     return local
   }
+  // remote SSOT — 레거시 localStorage 키는 list 진입 시점에 제거 (성공 전에도 쓰지 않음)
+  clearUjatEducationRegionsLocalStorage()
   const items = normalizeEducationRegionSort(
     (await fetchAdminUjatEducationRegionsRemote()).map(mapEducationRegionResponse)
   )

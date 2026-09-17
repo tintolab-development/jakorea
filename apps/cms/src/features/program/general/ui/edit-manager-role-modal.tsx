@@ -13,7 +13,10 @@ import type { ProgramRole } from '@/types/user'
 import { PROGRAM_ROLE_LABELS } from '@/features/program/general/model/program-managers'
 import {
   canSetProgramManagerRole,
-  PROGRAM_PM_ROLE_LIMIT_MESSAGE } from '@/entities/program/lib/program-pm-role-policy'
+  canAssignProgramRoleToCmsAdmin,
+  CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE,
+  PROGRAM_PM_ROLE_LIMIT_MESSAGE,
+} from '@/entities/program/lib/program-pm-role-policy'
 import type { ProgramManagerRow } from '@/features/program/general/model/program-managers'
 import './edit-manager-role-modal.css'
 
@@ -42,7 +45,7 @@ export function EditManagerRoleModal({
   onSave,
   onDeleteRequest }: EditManagerRoleModalProps) {
   const [form] = Form.useForm<{ role: ProgramRole }>()
-  const [showOwnerLimitModal, setShowOwnerLimitModal] = useState(false)
+  const [blockMessage, setBlockMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (open && manager) {
@@ -51,7 +54,7 @@ export function EditManagerRoleModal({
   }, [open, manager, form])
 
   useEffect(() => {
-    if (!open) setShowOwnerLimitModal(false)
+    if (!open) setBlockMessage(null)
   }, [open])
 
   const handleSubmit = (values: { role: ProgramRole }) => {
@@ -64,7 +67,11 @@ export function EditManagerRoleModal({
       return
     }
     if (!canSetProgramManagerRole(managerList, manager.id, values.role)) {
-      setShowOwnerLimitModal(true)
+      setBlockMessage(PROGRAM_PM_ROLE_LIMIT_MESSAGE)
+      return
+    }
+    if (!canAssignProgramRoleToCmsAdmin(manager.cmsRoleCode, values.role)) {
+      setBlockMessage(CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE)
       return
     }
     onSave(values.role)
@@ -110,6 +117,11 @@ export function EditManagerRoleModal({
               name="role"
               label="권한 설정"
               className="edit-manager-role-modal__field"
+              extra={
+                manager && !canAssignProgramRoleToCmsAdmin(manager.cmsRoleCode, 'OWNER')
+                  ? CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE
+                  : undefined
+              }
             >
               <CmsRadio.Group size="large" className="edit-manager-role-modal__role-radios">
                 {ROLE_OPTIONS.map(opt => {
@@ -117,8 +129,14 @@ export function EditManagerRoleModal({
                     manager &&
                     opt.value === 'OWNER' &&
                     !canSetProgramManagerRole(managerList, manager.id, 'OWNER')
+                  const disableForCmsViewer =
+                    manager && !canAssignProgramRoleToCmsAdmin(manager.cmsRoleCode, opt.value)
                   return (
-                    <CmsRadio key={opt.value} value={opt.value} disabled={!!disablePm}>
+                    <CmsRadio
+                      key={opt.value}
+                      value={opt.value}
+                      disabled={!!disablePm || !!disableForCmsViewer}
+                    >
                       {opt.label}
                     </CmsRadio>
                   )
@@ -151,10 +169,10 @@ export function EditManagerRoleModal({
       </ContentModal>
 
       <ActionResultModal
-        open={showOwnerLimitModal}
-        onClose={() => setShowOwnerLimitModal(false)}
+        open={Boolean(blockMessage)}
+        onClose={() => setBlockMessage(null)}
         title="설정 불가"
-        body={PROGRAM_PM_ROLE_LIMIT_MESSAGE}
+        body={blockMessage ?? ''}
         zIndex={1200}
       />
     </>

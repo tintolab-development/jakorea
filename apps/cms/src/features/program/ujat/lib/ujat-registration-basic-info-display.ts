@@ -19,7 +19,7 @@ import {
   resolveUjatWageDeductionLabel,
   ujatPaymentItemLabelsFromIds,
 } from '@/features/program/ujat/lib/ujat-wage-info-display'
-import { loadUjatRegistrationTemplateSave } from '@/features/program/ujat/lib/ujat-registration-template-local-save'
+import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { formatDateRange } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
@@ -187,8 +187,9 @@ export type UjatRegistrationBasicInfoDisplay = {
 export function resolveUjatRegistrationBasicInfoOverlay(
   overlayInput?: Record<string, unknown>
 ): Record<string, unknown> {
-  const saved = loadUjatRegistrationTemplateSave()
-  return { ...overlayInput, ...(saved?.overlay ?? {}) }
+  // 프로그램 상세 세션 overlay (PATCH 반영 전 편집 중). localStorage 템플릿 키는 사용하지 않음.
+  const session = getUjatProgramRegistrationOverlayRecord()
+  return { ...session, ...overlayInput }
 }
 
 /** 폼 양식 등록 양식 기본 정보 — overlay(저장본·기본값) 기준 표시 모델 */
@@ -368,5 +369,7 @@ export function resolveUjatAnnouncementTitle(program: Program): string {
 }
 
 export function applyUjatRegistrationTemplateDefaults(program: Program): Program {
-  return applyUjatRegistrationOverlayToProgram(program, resolveUjatRegistrationBasicInfoOverlay())
+  const overlay = resolveUjatRegistrationBasicInfoOverlay()
+  if (Object.keys(overlay).length === 0) return program
+  return applyUjatRegistrationOverlayToProgram(program, overlay)
 }

@@ -27,6 +27,7 @@ import {
 } from '@/features/program/ujat/lib/ujat-region-capacity-institution-assign'
 import { rejectUjatOrganizationApplicationsIfRemote } from '@/features/program/ujat/api/temporary-rejections'
 import { listUjatInstitutionApplicationsPage } from '@/features/program/ujat/api/applications-service'
+import { buildUjatInstitutionApplicationsListQuery } from '@/features/program/ujat/api/applications-list-query'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import {
@@ -86,9 +87,15 @@ export function useUjatInstitutionApplicationList(
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
   const [pendingApplicationRejectModal, setPendingApplicationRejectModal] = useState(false)
 
+  const listQuery = useMemo(
+    () => buildUjatInstitutionApplicationsListQuery(appliedFilters),
+    [appliedFilters]
+  )
+
   const remoteQuery = useInfiniteQuery({
-    queryKey: ujatQueryKeys.organizationApplications(programId ?? ''),
-    queryFn: ({ pageParam }) => listUjatInstitutionApplicationsPage(String(programId), pageParam),
+    queryKey: ujatQueryKeys.organizationApplications(programId ?? '', listQuery),
+    queryFn: ({ pageParam }) =>
+      listUjatInstitutionApplicationsPage(String(programId), pageParam, listQuery),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled,
@@ -110,10 +117,21 @@ export function useUjatInstitutionApplicationList(
     return []
   }, [dataVersion, remoteEnabled, remoteQuery.data])
 
-  const tableData = useMemo(
-    () => filterRows(allRows, regionKey, appliedFilters),
-    [allRows, regionKey, appliedFilters]
-  )
+  const tableData = useMemo(() => {
+    // API keyword/status 외 필드(총 학급 수·교사명 등)는 클라이언트 보강 필터
+    const clientOnly: UjatInstitutionApplicationFilters = {
+      ...EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS,
+      totalClassCount: appliedFilters.totalClassCount,
+      teacherName: appliedFilters.teacherName,
+      // institutionName·tempAssignmentStatus는 서버 query로 전달됨 — 지역 탭만 클라 필터
+    }
+    return filterRows(allRows, regionKey, {
+      ...clientOnly,
+      // 서버가 keyword를 무시할 수 있어 기관명·상태는 클라에서도 유지
+      institutionName: appliedFilters.institutionName,
+      tempAssignmentStatus: appliedFilters.tempAssignmentStatus,
+    })
+  }, [allRows, regionKey, appliedFilters])
   const infiniteScrollResetKey = useMemo(
     () => `${programId ?? ''}:${regionKey}:${JSON.stringify(appliedFilters)}`,
     [appliedFilters, programId, regionKey]

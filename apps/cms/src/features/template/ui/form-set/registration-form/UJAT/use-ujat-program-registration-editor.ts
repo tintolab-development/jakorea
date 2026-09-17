@@ -40,7 +40,7 @@ export type UseUjatProgramRegistrationEditorOptions = {
   forceUserEditable?: boolean
   /** true면 임시저장 복원 없이 시드로 시작 (신규 등록) */
   skipDraftRestore?: boolean
-  /** 프로그램 등록 임시저장 — localStorage만 사용 */
+  /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
   localOnlyDraftPersistence?: boolean
 }
 
@@ -116,10 +116,7 @@ export function useUjatProgramRegistrationEditor(
           return
         }
 
-        const legacy =
-          templateCode === UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE
-            ? loadUjatRegistrationTemplateSave()
-            : null
+        const legacy = localOnlyDraftPersistence ? loadUjatRegistrationTemplateSave() : null
         if (legacy?.overlay && Object.keys(legacy.overlay).length > 0) {
           patchUjatProgramRegistrationOverlay(legacy.overlay)
         }
@@ -260,8 +257,13 @@ export function useUjatProgramRegistrationEditor(
       overlay,
       localOnly: localOnlyDraftPersistence,
     })
-    if (templateCode === UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE) {
+    if (localOnlyDraftPersistence) {
       persistUjatRegistrationTemplateSave({ draft, overlay })
+    } else {
+      const { clearUjatRegistrationTemplateLocalStorage } = await import(
+        '@/features/program/ujat/lib/ujat-registration-template-local-save'
+      )
+      clearUjatRegistrationTemplateLocalStorage()
     }
     return { draft, overlay }
   }, [draft, localOnlyDraftPersistence, templateCode])
@@ -276,7 +278,7 @@ export function useUjatProgramRegistrationEditor(
       } catch (error) {
         console.debug('ujatProgramRegistrationEditor save failed', error)
         if (isTemplateManagementSave) {
-          showSaveFailure()
+          showSaveFailure(error)
         }
       }
     })()

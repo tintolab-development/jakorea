@@ -125,6 +125,7 @@ export async function fetchGeneralProgramsRemoteList(
 /**
  * 상단 4카드 건수.
  * remote: GET /programs?periodStatus=* 의 totalElements (목록과 동일 periodStatus 계약)
+ * 예정 = `RECRUITING`(예정 버킷 별칭). BE가 버킷을 배타로 유지 — FE에서 합을 강제 정규화하지 않음.
  * mock: lifecycle 버킷 집계 (목록 filterGeneralProgramsByOverviewStatus 와 동일)
  *
  * 별도 count API 불필요 — 기존 목록 API로 충분. (목록 페이징과 무관, totalElements가 SSOT)
@@ -364,9 +365,12 @@ export async function submitGeneralProgramFormResponse(
   return submitAdminFormResponseRemote(payload)
 }
 
-export async function fetchGeneralProgramManagers(programId: string) {
+export async function fetchGeneralProgramManagers(
+  programId: string,
+  query: { keyword?: string; role?: string } = {}
+) {
   assertProgramsHttpRemoteReady()
-  const items = await fetchAdminProgramManagersRemote(programId)
+  const items = await fetchAdminProgramManagersRemote(programId, query)
   return mapProgramManagerResponsesToRows(items)
 }
 

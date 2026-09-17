@@ -1,6 +1,7 @@
 import {
   fetchOrganizationApplicationsRemote,
   fetchVolunteerApplicationsRemote,
+  type ApplicationsListQuery,
 } from '@/features/program/general/api/applications-api-client'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import {
@@ -12,6 +13,7 @@ import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/uj
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { sortUjatVolunteerApplicants } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { GENERAL_PROGRAM_LIST_PAGE_SIZE } from '@/features/program/general/api/general-program-list-filter-params'
+import { toUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 
 const PAGE_SIZE = GENERAL_PROGRAM_LIST_PAGE_SIZE
 
@@ -60,12 +62,14 @@ function resolvePageMeta(input: {
 
 export async function listUjatInstitutionApplicationsPage(
   programId: string,
-  pageParam = 0
+  pageParam = 0,
+  query: ApplicationsListQuery = {}
 ): Promise<UjatInstitutionApplicationsPage> {
   assertApplicationsRemoteReady()
   const response = await fetchOrganizationApplicationsRemote(programId, {
     page: pageParam,
     size: PAGE_SIZE,
+    ...query,
   })
   const meta = resolvePageMeta({
     itemCount: response.items?.length ?? 0,
@@ -86,12 +90,15 @@ export async function listUjatInstitutionApplicationsPage(
 export async function listUjatVolunteerApplicationsPage(
   programId: string,
   half: UjatVolunteerRecruitHalf,
-  pageParam = 0
+  pageParam = 0,
+  query: ApplicationsListQuery = {}
 ): Promise<UjatVolunteerApplicationsPage> {
   assertApplicationsRemoteReady()
   const response = await fetchVolunteerApplicationsRemote(programId, {
     page: pageParam,
     size: PAGE_SIZE,
+    ...query,
+    recruitHalf: toUjatRecruitHalfApi(half),
   })
   const meta = resolvePageMeta({
     itemCount: response.items?.length ?? 0,

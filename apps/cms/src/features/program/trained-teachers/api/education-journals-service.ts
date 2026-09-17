@@ -150,10 +150,14 @@ export function mapApplicantSchoolToParticipatingSchool(
 }
 
 export async function listTrainedTeacherParticipatingInstitutions(
-  programId: string
+  programId: string,
+  query: import('./organization-applications-list-query').TrainedTeacherOrganizationApplicationsListQuery = {}
 ): Promise<ParticipatingSchoolRow[]> {
   assertRemoteReady()
-  const applications = await listTrainedTeacherOrganizationApplications(programId)
+  const applications = await listTrainedTeacherOrganizationApplications(programId, {
+    keyword: query.keyword,
+    status: 'APPROVED',
+  })
   return applications
     .filter(row => row.approvalStatus === 'approved')
     .map((row, index) => mapApplicantSchoolToParticipatingSchool(row, index))

@@ -179,7 +179,7 @@ export default function NewSurveyForm() {
         })
       } catch (error) {
         console.debug('newSurveyForm save failed', error)
-        showSaveFailure()
+        showSaveFailure(error)
       }
     })()
   }, [draft, modalTitle, queryClient, sections, setParams, showSaveFailure, showSaveSuccess, templateId])

@@ -291,7 +291,7 @@ export type UseProgramParticipantApplicationEditorOptions = {
   templateCode?: string
   systemTemplate?: boolean
   forceUserEditable?: boolean
-  /** 프로그램 등록 임시저장 — localStorage만 사용 */
+  /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
   localOnlyDraftPersistence?: boolean
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
   /** 프로그램 등록 마법사 — 참여자 유형이 학교/기관일 때만 모집 최대값 필드 노출 */
@@ -652,9 +652,11 @@ export function useProgramParticipantApplicationEditor(
           return
         }
         const legacy =
-          variant === 'ujat-recruit-institution'
-            ? loadUjatRecruitInstitutionTemplateSave()
-            : loadUjatRecruitVolunteerTemplateSave()
+          localOnlyDraftPersistence
+            ? variant === 'ujat-recruit-institution'
+              ? loadUjatRecruitInstitutionTemplateSave()
+              : loadUjatRecruitVolunteerTemplateSave()
+            : null
         if (legacy) {
           applyDraftNow(legacy.draft)
           if (variant === 'ujat-recruit-institution') {
@@ -1261,7 +1263,14 @@ export function useProgramParticipantApplicationEditor(
           overlay,
           localOnly: localOnlyDraftPersistence,
         })
-        persistUjatRecruitInstitutionTemplateSave({ draft, overlay })
+        if (localOnlyDraftPersistence) {
+          persistUjatRecruitInstitutionTemplateSave({ draft, overlay })
+        } else {
+          const { rememberUjatRecruitTemplateSave, clearUjatRecruitTemplateLocalStorage } =
+            await import('@/features/program/ujat/lib/ujat-recruit-template-local-save')
+          clearUjatRecruitTemplateLocalStorage()
+          rememberUjatRecruitTemplateSave(templateId, { draft, overlay })
+        }
       } else if (variant === 'ujat-recruit-volunteer') {
         const overlay = { ...getUjatRecruitVolunteerOverlayRecord() }
         await persistWritingFormTemplateDraft({
@@ -1270,7 +1279,14 @@ export function useProgramParticipantApplicationEditor(
           overlay,
           localOnly: localOnlyDraftPersistence,
         })
-        persistUjatRecruitVolunteerTemplateSave({ draft, overlay })
+        if (localOnlyDraftPersistence) {
+          persistUjatRecruitVolunteerTemplateSave({ draft, overlay })
+        } else {
+          const { rememberUjatRecruitTemplateSave, clearUjatRecruitTemplateLocalStorage } =
+            await import('@/features/program/ujat/lib/ujat-recruit-template-local-save')
+          clearUjatRecruitTemplateLocalStorage()
+          rememberUjatRecruitTemplateSave(templateId, { draft, overlay })
+        }
       } else {
         const editorState = buildParticipantApplicationEditorState({
           variant,
@@ -1297,7 +1313,7 @@ export function useProgramParticipantApplicationEditor(
       console.debug('programParticipantApplicationEditor save failed', error)
       if (options?.silent) throw error
       if (isTemplateManagementSave) {
-        showSaveFailure()
+        showSaveFailure(error)
       }
     }
   }, [

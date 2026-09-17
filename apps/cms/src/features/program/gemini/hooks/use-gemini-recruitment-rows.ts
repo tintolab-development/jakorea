@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from '../api/visiting-training/capabilities'
 import { useGeminiRecruitmentsQuery } from '../api/visiting-training/hooks'
 import type { GeminiRecruitmentRow } from '../model/recruitment/types'
@@ -10,10 +11,27 @@ export type GeminiRecruitmentQueryFilters = {
   to?: string
 }
 
-/** API only — gate OFF면 빈 목록 + 안내 alert */
+const EMPTY_ROWS: GeminiRecruitmentRow[] = []
+
+export type GeminiRecruitmentRowsResult = {
+  rows: GeminiRecruitmentRow[]
+  remoteEnabled: boolean
+  isFetching: boolean
+  isFetchingNextPage: boolean
+  isError: boolean
+  refetch: () => unknown
+  fetchNextPage: () => unknown
+  hasNextPage: boolean
+  totalElements: number
+}
+
+/**
+ * 모집 공고 목록 — 단일 infinite query 구독.
+ * (rows + queryState를 각각 호출하면 trim effect·observer가 이중으로 붙는다.)
+ */
 export function useGeminiRecruitmentRows(
   filters: GeminiRecruitmentQueryFilters
-): GeminiRecruitmentRow[] {
+): GeminiRecruitmentRowsResult {
   const remoteEnabled = shouldUseGeminiVisitingTrainingRemoteApi()
   useNotifyProgramApiUnavailableOnce(
     !remoteEnabled,
@@ -21,17 +39,16 @@ export function useGeminiRecruitmentRows(
     'Gemini 찾아가는 연수 · 모집 공고'
   )
   const remoteQuery = useGeminiRecruitmentsQuery(filters, remoteEnabled)
-  return remoteEnabled
-    ? (remoteQuery.data?.pages.flatMap(page => page.rows) ?? [])
-    : []
-}
+  const rows = useMemo(
+    () =>
+      remoteEnabled
+        ? (remoteQuery.data?.pages.flatMap(page => page.rows) ?? EMPTY_ROWS)
+        : EMPTY_ROWS,
+    [remoteEnabled, remoteQuery.data]
+  )
 
-export function useGeminiRecruitmentRowsQueryState(
-  filters: GeminiRecruitmentQueryFilters
-) {
-  const remoteEnabled = shouldUseGeminiVisitingTrainingRemoteApi()
-  const remoteQuery = useGeminiRecruitmentsQuery(filters, remoteEnabled)
   return {
+    rows,
     remoteEnabled,
     isFetching: remoteEnabled
       ? remoteQuery.isFetching && !remoteQuery.isFetchingNextPage

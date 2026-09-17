@@ -38,7 +38,8 @@ export async function updateDetailedProgramRemote(
   id: number,
   body: DetailedProgramRequest
 ): Promise<DetailedProgramResponse> {
-  return unwrapApiBody(await dmApi.update5(id, body))
+  // PATCH /api/admin/detailed-programs/{id} (Orval update6 — material-kits update5와 혼동 금지)
+  return unwrapApiBody(await dmApi.update6(id, body))
 }
 
 export async function deleteDetailedProgramRemote(id: number): Promise<void> {

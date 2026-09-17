@@ -147,6 +147,23 @@ describe('general-applications-adapters', () => {
     expect(instructor.lectureReportSubmitted).toBe(true)
   })
 
+  it('does not invent affiliationOrganizationId from display name alone', () => {
+    const row = mapIndividualApplicationToApplicantRow(
+      {
+        id: 56,
+        programId: 5001,
+        memberName: '이름만있는참여자',
+        affiliationName: '서울초등학교',
+        applicationStatus: 'WAITING_REVIEW',
+      } as never,
+      0,
+      '5001'
+    )
+
+    expect(row.affiliationOrganizationId).toBeUndefined()
+    expect(row.affiliation).toBe('서울초등학교')
+  })
+
   it('maps instructor application list item to applicant row', () => {
     const row = mapInstructorApplicationToApplicantInstructorRow(
       {

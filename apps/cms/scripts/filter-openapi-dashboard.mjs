@@ -35,6 +35,9 @@ const DASHBOARD_EXACT_PATHS = new Set([
   '/api/admin/programs/{programId}/instructor-applications',
   '/api/admin/programs/{programId}/individual-applications',
   '/api/admin/programs/{programId}/volunteer-applications',
+  '/api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule',
+  '/api/admin/programs/{programId}/ujat/organization-schedule-assignments',
+  '/api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/schedule-change-request',
 ])
 
 function isDashboardSubsetPath(path) {

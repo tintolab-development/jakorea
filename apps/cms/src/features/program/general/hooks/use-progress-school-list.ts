@@ -153,9 +153,18 @@ export function useProgressSchoolList({
     retry: false,
   })
 
+  const ttListFilters = useMemo(
+    () => ({
+      schoolName: appliedFilters.schoolName,
+      teacherName: appliedFilters.teacherName,
+    }),
+    [appliedFilters.schoolName, appliedFilters.teacherName]
+  )
+
   const ttParticipatingQuery = useTrainedTeacherParticipatingInstitutions(
     programId,
-    ttRemoteEnabled
+    ttRemoteEnabled,
+    ttListFilters
   )
   const temporaryProgressSchools = useMemo(
     () =>
