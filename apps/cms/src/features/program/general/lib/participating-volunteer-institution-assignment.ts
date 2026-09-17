@@ -18,6 +18,7 @@ import {
   type WaitingInstructorHopeSchedule,
 } from './waiting-instructor-assignment'
 import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
+import { isTempMockOrgProgressVolunteerId } from '@/features/program/general/lib/temp-mock-org-program'
 
 /** 배정 대기 목록 — 기관+일정별 행 식별자 */
 export type VolunteerWaitingAssignmentStatus = WaitingInstructorAssignmentStatus
@@ -166,7 +167,9 @@ function expandSchoolSessionsToWaitingRows(
   return sessions.map((session, sessionIdx) => {
     const hopeSchedule = participatingSchoolSessionToHopeSchedule(session)
     const isTemporaryVolunteer =
-      isGeneralProgramTempMockEnabled() && volunteer.id.startsWith('temp-progress-volunteer-')
+      isGeneralProgramTempMockEnabled() &&
+      (isTempMockOrgProgressVolunteerId(volunteer.id) ||
+        volunteer.id.startsWith('temp-progress-volunteer-'))
     return {
       id: `${school.id}__${session.date}__${session.round}`,
       no: 0,

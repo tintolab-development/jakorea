@@ -8,6 +8,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { MESSAGES } from '@/shared/constants/messages'
@@ -61,6 +63,8 @@ export interface ParticipatingVolunteerFullpageViewProps {
   activeTab?: VolunteerDetailTabKey
   onTabChange?: (key: VolunteerDetailTabKey) => void
   onClearVolunteerId: () => void
+  schoolRows?: ParticipatingSchoolRow[]
+  volunteerList?: ParticipatingVolunteerRow[]
 }
 
 export function ParticipatingVolunteerFullpageView({
@@ -69,10 +73,13 @@ export function ParticipatingVolunteerFullpageView({
   activeTab: activeTabFromUrl,
   onTabChange,
   onClearVolunteerId: _onClearVolunteerId,
+  schoolRows = [],
+  volunteerList = [],
 }: ParticipatingVolunteerFullpageViewProps) {
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const progressRemoteEnabled = shouldUseGeneralProgramProgressRemoteApi()
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(program.id)
   /**
    * URL(`volunteerTab`)이 source of truth이지만, setSearchParams 반영 전·props 지연 시
    * 탭 UI/본문이 안 바뀌는 문제가 있어 로컬 탭을 먼저 갱신한 뒤 URL과 동기화한다.
@@ -174,19 +181,21 @@ export function ParticipatingVolunteerFullpageView({
       const stopScheduleIdNum =
         stopSession?.resolvedScheduleId != null ? Number(stopSession.resolvedScheduleId) : Number.NaN
 
-      if (progressRemoteEnabled) {
+      if (progressRemoteEnabled || isTempMockProgram) {
         setActivityWithdrawSubmitting(true)
         try {
-          await giveUpGeneralParticipatingInstitution(program.id, mergedVolunteer.id, reason, {
-            stopScheduleId: Number.isFinite(stopScheduleIdNum) ? stopScheduleIdNum : undefined,
-          })
+          if (progressRemoteEnabled) {
+            await giveUpGeneralParticipatingInstitution(program.id, mergedVolunteer.id, reason, {
+              stopScheduleId: Number.isFinite(stopScheduleIdNum) ? stopScheduleIdNum : undefined,
+            })
+            await queryClient.invalidateQueries({
+              queryKey: generalProgramProgressQueryKeys.volunteers(program.id),
+            })
+          }
           const patch = applyParticipatingVolunteerActivityWithdraw(mergedVolunteer, payload)
           if (Object.keys(patch).length > 0) {
             setVolunteerPatches(prev => ({ ...prev, ...patch }))
           }
-          await queryClient.invalidateQueries({
-            queryKey: generalProgramProgressQueryKeys.volunteers(program.id),
-          })
           setActivityWithdrawModalOpen(false)
           showAlert({
             title: '활동 포기',
@@ -216,6 +225,7 @@ export function ParticipatingVolunteerFullpageView({
       activityWithdrawScheduleOptions,
       mergedVolunteer,
       program.id,
+      isTempMockProgram,
       progressRemoteEnabled,
       queryClient,
       showAlert,
@@ -262,11 +272,18 @@ export function ParticipatingVolunteerFullpageView({
         return
       }
     }
+    if (isTempMockProgram) {
+      setSavedAdminComment(trimmed)
+      setVolunteerPatches(prev => ({ ...prev, adminComment: trimmed || undefined }))
+      setAdminCommentModalOpen(false)
+      setAdminCommentError(undefined)
+      return
+    }
     void showAlert({
       title: PROGRAM_API_UNAVAILABLE_TITLE,
       content: buildProgramApiUnavailableSaveContent('참여 봉사자 관리자 코멘트'),
     })
-  }, [adminCommentDraft, mergedVolunteer.id, showAlert])
+  }, [adminCommentDraft, isTempMockProgram, mergedVolunteer.id, showAlert])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)
@@ -360,7 +377,12 @@ export function ParticipatingVolunteerFullpageView({
                 volunteer={mergedVolunteer}
               />
             ) : (
-              <ParticipatingVolunteerAssignmentSection program={program} volunteer={mergedVolunteer} />
+              <ParticipatingVolunteerAssignmentSection
+                program={program}
+                volunteer={mergedVolunteer}
+                schoolRows={schoolRows}
+                volunteerList={volunteerList}
+              />
             )}
           </div>
         )}

@@ -11,7 +11,7 @@ import {
   type ParticipatingVolunteerSettlementApiRow,
 } from '@/features/program/general/lib/map-settlement-to-participating-volunteer-settlement-row'
 import { buildTemporaryParticipatingVolunteerSettlementRows } from '@/features/program/general/lib/participating-volunteer-temp-settlement'
-import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import type { SettlementListItemResponse } from '@/shared/api/generated/settlement/schemas'
@@ -46,10 +46,10 @@ export function useParticipatingVolunteerSettlementList(input: {
   // TODO(temp-mock): 열여라 참깨 — 참여 봉사자 정산 현황 검증 후 삭제
   const temporaryRows = useMemo(
     () =>
-      input.enabled === false || !isGeneralProgramTempMockEnabled()
+      input.enabled === false || !isGeneralProgramTempMockProgramId(input.programId)
         ? []
         : buildTemporaryParticipatingVolunteerSettlementRows(input.volunteer),
-    [input.enabled, input.volunteer]
+    [input.enabled, input.programId, input.volunteer]
   )
 
   useNotifyProgramApiUnavailableOnce(
