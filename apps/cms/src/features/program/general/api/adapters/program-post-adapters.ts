@@ -2,20 +2,69 @@
  * 일반 프로그램 게시글 DTO → domain 어댑터
  */
 
-import type { ProgramFile, ProgramPost, ProgramPostComment, ProgramPostReaction } from '@/types/domain'
+import type {
+  ProgramFile,
+  ProgramPost,
+  ProgramPostComment,
+  ProgramPostReaction,
+  ProgramPostReactionUser,
+  ProgramPostReadRow,
+} from '@/types/domain'
 import type { ProgramPostListItemResponse } from '@/shared/api/generated/dashboard/schemas/programPostListItemResponse'
 import type { ProgramPostResponse } from '@/shared/api/generated/dashboard/schemas/programPostResponse'
 import type { ProgramPostCommentResponse } from '@/shared/api/generated/dashboard/schemas/programPostCommentResponse'
 import type { ProgramPostAttachmentResponse } from '@/shared/api/generated/dashboard/schemas/programPostAttachmentResponse'
 import type { ProgramPostReactionSummaryResponse } from '@/shared/api/generated/dashboard/schemas/programPostReactionSummaryResponse'
+import type { ProgramPostReactionResponse } from '@/shared/api/generated/dashboard/schemas/programPostReactionResponse'
+import type { ProgramPostReadsResponse } from '@/shared/api/generated/dashboard/schemas/programPostReadsResponse'
 import { contentUrlForFileObjectId } from '@/shared/lib/admin-file-upload'
 
-function resolvePostAuthorName(actorType: string | undefined): string {
+function mapActorRoleLabel(actorType: string | undefined): string {
+  const normalized = (actorType ?? '').trim().toUpperCase()
+  switch (normalized) {
+    case 'ADMIN':
+    case 'CMS':
+    case 'SYSTEM':
+      return '관리자'
+    case 'TEACHER':
+    case 'SCHOOL':
+    case 'ORGANIZATION':
+      return '담당교사'
+    case 'INSTRUCTOR':
+      return '강사'
+    case 'STUDENT':
+    case 'MEMBER':
+      return '참여자'
+    case 'VOLUNTEER':
+      return '봉사자'
+    default:
+      return normalized || '회원'
+  }
+}
+
+/** displayName 미제공 시 역할 + actorId 폴백 (BE enrich 전까지) */
+function resolveActorDisplayName(
+  actorType: string | undefined,
+  actorId: number | undefined,
+  displayName?: string | null
+): string {
+  const named = displayName?.trim()
+  if (named) return named
+  const role = mapActorRoleLabel(actorType)
+  if (actorId != null) return `${role} #${actorId}`
+  return role
+}
+
+function resolvePostAuthorName(
+  actorType: string | undefined,
+  actorId?: number,
+  displayName?: string | null
+): string {
   const normalized = (actorType ?? '').trim().toUpperCase()
   if (!normalized || normalized === 'ADMIN' || normalized === 'SYSTEM' || normalized === 'CMS') {
-    return 'JA KOREA 알림'
+    return displayName?.trim() || 'JA KOREA 알림'
   }
-  return 'JA KOREA 알림'
+  return resolveActorDisplayName(actorType, actorId, displayName)
 }
 
 function mapVisibilityToAudience(visibilityType: string | undefined): string[] | undefined {
@@ -37,7 +86,7 @@ export function mapProgramPostListItemToDomain(
   return {
     id: String(dto.postId ?? ''),
     programId,
-    authorName: resolvePostAuthorName(dto.createdByActorType),
+    authorName: resolvePostAuthorName(dto.createdByActorType, dto.createdByActorId),
     createdByActorType: dto.createdByActorType,
     createdByActorId: dto.createdByActorId,
     title: dto.title?.trim() || undefined,
@@ -63,7 +112,7 @@ export function mapProgramPostResponseToDomain(
   return {
     id: String(dto.id ?? ''),
     programId: dto.programId != null ? String(dto.programId) : programId,
-    authorName: resolvePostAuthorName(dto.createdByActorType),
+    authorName: resolvePostAuthorName(dto.createdByActorType, dto.createdByActorId),
     createdByActorType: dto.createdByActorType,
     createdByActorId: dto.createdByActorId,
     title: dto.title?.trim() || undefined,
@@ -87,7 +136,7 @@ export function mapProgramPostCommentToDomain(
   return {
     id: String(dto.id ?? ''),
     postId: dto.postId != null ? String(dto.postId) : postId,
-    authorName: resolvePostAuthorName(dto.createdByActorType),
+    authorName: resolvePostAuthorName(dto.createdByActorType, dto.createdByActorId),
     content: dto.content?.trim() ?? '',
     createdAt: dto.createdAt ?? new Date().toISOString(),
   }
@@ -105,6 +154,52 @@ export function mapProgramPostReactionSummariesToDomain(
       emojiType: row.reactionType!.trim(),
       count: row.count ?? 0,
     }))
+}
+
+export function mapProgramPostReactionItemsToUsers(
+  items: ProgramPostReactionResponse[] | undefined,
+  postId: string
+): ProgramPostReactionUser[] {
+  return (items ?? [])
+    .filter(row => Boolean(row.reactionType?.trim()))
+    .map((row, index) => ({
+      id: `${postId}-${row.actorType ?? 'actor'}-${row.actorId ?? index}-${row.reactionType}`,
+      postId,
+      authorName: resolveActorDisplayName(row.actorType, row.actorId),
+      roleLabel: mapActorRoleLabel(row.actorType),
+      emojiType: row.reactionType!.trim(),
+      createdAt: row.createdAt ?? new Date().toISOString(),
+    }))
+}
+
+export function mapProgramPostReadsToDomainRows(
+  dto: ProgramPostReadsResponse,
+  postId: string
+): ProgramPostReadRow[] {
+  const readers: ProgramPostReadRow[] = (dto.readers ?? []).map((row, index) => {
+    const actorId = row.readerActorId
+    return {
+      id: String(actorId ?? row.readId ?? `read-${index}`),
+      postId,
+      displayName: resolveActorDisplayName(row.readerActorType, actorId),
+      roleLabel: mapActorRoleLabel(row.readerActorType),
+      hasRead: true,
+      readAt: row.lastReadAt ?? row.firstReadAt ?? row.readAt,
+    }
+  })
+
+  const unread: ProgramPostReadRow[] = (dto.unreadMembers ?? []).map((row, index) => {
+    const memberId = row.memberId
+    return {
+      id: String(memberId ?? `unread-${index}`),
+      postId,
+      displayName: resolveActorDisplayName(row.targetRole, memberId),
+      roleLabel: mapActorRoleLabel(row.targetRole),
+      hasRead: false,
+    }
+  })
+
+  return [...readers, ...unread]
 }
 
 export function mapProgramPostAttachmentToFile(

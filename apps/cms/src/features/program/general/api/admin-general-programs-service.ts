@@ -37,7 +37,9 @@ import {
   fetchAdminProgramPostCommentsRemote,
   fetchAdminProgramPostDetailRemote,
   fetchAdminProgramPostReactionsRemote,
+  fetchAdminProgramPostReadsRemote,
   fetchAdminProgramPostsRemote,
+  createAdminProgramPostUnreadReminderRemote,
   fetchAdminProgramsRemote,
   fetchAdminProgramSurveyResponseDetailRemote,
   fetchAdminProgramSurveyResponsesRemote,
@@ -301,6 +303,22 @@ export async function putGeneralProgramPostAttachments(
   if (!shouldUseProgramsHttpRemoteApi()) return null
   assertProgramsHttpRemoteReady()
   return putAdminProgramPostAttachmentsRemote(programId, postId, { fileObjectIds })
+}
+
+export async function fetchGeneralProgramPostReads(programId: string, postId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return fetchAdminProgramPostReadsRemote(programId, postId)
+}
+
+export async function createGeneralProgramPostUnreadReminder(
+  programId: string,
+  postId: string,
+  payload: { message?: string; memberIds?: number[] }
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return createAdminProgramPostUnreadReminderRemote(programId, postId, payload)
 }
 
 export async function fetchGeneralProgramSurveyResponses(

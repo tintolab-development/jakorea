@@ -190,8 +190,11 @@ export function PostDetailModal({
     [displayPost, post?.id, useRemote]
   )
   const reactionUsers = useMemo(
-    () => (useRemote || !post ? [] : getReactionUsersByPostId(post.id)),
-    [post?.id, reactionsVersion, useRemote]
+    () => {
+      if (useRemote) return remoteDetail.reactionUsers
+      return post ? getReactionUsersByPostId(post.id) : []
+    },
+    [post?.id, reactionsVersion, remoteDetail.reactionUsers, useRemote]
   )
   useEffect(() => {
     if (open && post && !useRemote) markPostAsRead(post.id)

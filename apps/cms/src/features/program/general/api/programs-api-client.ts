@@ -152,7 +152,9 @@ export async function bulkDeleteAdminProgramsRemote(programIds: string[]): Promi
 
 export async function fetchAdminProgramNavigationRemote(
   programId: string
-): Promise<import('@/shared/api/generated/dashboard/schemas/programNavigationResponse').ProgramNavigationResponse> {
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programNavigationResponse').ProgramNavigationResponse
+> {
   return unwrapApiBody(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/navigation`,
@@ -347,6 +349,44 @@ export async function deleteAdminProgramPostReactionRemote(
     url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/reaction`,
     method: 'DELETE',
   })
+}
+
+export async function fetchAdminProgramPostReadsRemote(
+  programId: string,
+  postId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostReadsResponse').ProgramPostReadsResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/reads`,
+      method: 'GET',
+    })
+  )
+}
+
+/**
+ * POST …/unread-reminders
+ * OpenAPI `UnreadReminderRequest`는 `message`만 정의.
+ * FE는 선택 대상 전달을 위해 additive `memberIds`를 함께 전송(서버 미지원 시 무시·갭 문서화).
+ */
+export async function createAdminProgramPostUnreadReminderRemote(
+  programId: string,
+  postId: string,
+  payload: {
+    message?: string
+    memberIds?: number[]
+  }
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostUnreadReminderResponse').ProgramPostUnreadReminderResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/unread-reminders`,
+      method: 'POST',
+      data: payload,
+    })
+  )
 }
 
 export async function fetchAdminProgramSurveyResponsesRemote(
