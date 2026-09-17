@@ -679,6 +679,10 @@ function resolveDetailedProgramId(
   if (isGeneralProgramScheduleType(program)) {
     return TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
   }
+  const storedId = program.detailedProgramId?.trim()
+  if (storedId && storedId !== TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) {
+    return storedId
+  }
   const commonInfo = resolveGeneralProgramCommonInfo(program)
   const name =
     commonInfo.detailedProgramName?.trim() ||
@@ -1492,8 +1496,11 @@ export function generalCommonInfoEditValuesToProgramPatch(
     generalSurveyMenuKeys: surveyKeysFromFlags(values),
     institutionType: institutionTypeFromVenueKind(values.venueKind),
     venue: values.venueKind === 'other' ? values.venueDetail?.trim() || undefined : undefined,
-    textbookName: detailedProgramName ?? existing.textbookName,
-    teamDivision: detailedProgramName ?? existing.teamDivision,
+    detailedProgramId: isScheduleType
+      ? undefined
+      : values.detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+        ? undefined
+        : values.detailedProgramId.trim() || undefined,
     educationProcess: educationProcessToProgramValue(values.educationProcess),
     ipOwned: ipOwnedToProgramValue(values.ipOwned),
     courseDeliveredBy: courseDeliveredToProgramValue(values.courseDeliveredBy),

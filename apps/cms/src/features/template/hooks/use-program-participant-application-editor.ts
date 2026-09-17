@@ -293,6 +293,10 @@ export type UseProgramParticipantApplicationEditorOptions = {
   forceUserEditable?: boolean
   /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
   localOnlyDraftPersistence?: boolean
+  /** 프로그램 form-binding `templateVersionId` — 카탈로그 code 대신 이 버전을 로드/저장 */
+  templateVersionId?: number
+  /** 바인딩 전용 version이 없을 때 등록 위저드 localStorage 초안을 우선 */
+  preferLocalDraft?: boolean
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
   /** 프로그램 등록 마법사 — 참여자 유형이 학교/기관일 때만 모집 최대값 필드 노출 */
   participantOrganization?: boolean
@@ -431,6 +435,8 @@ export function useProgramParticipantApplicationEditor(
 ) {
   const onTemplateDraftSaveConfirmed = editorOptions?.onTemplateDraftSaveConfirmed
   const localOnlyDraftPersistence = editorOptions?.localOnlyDraftPersistence === true
+  const persistTemplateVersionId = editorOptions?.templateVersionId
+  const preferLocalDraft = editorOptions?.preferLocalDraft === true
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
 
@@ -573,6 +579,7 @@ export function useProgramParticipantApplicationEditor(
     /* eslint-disable react-hooks/set-state-in-effect -- 풀페이지 미리보기 열림과 동기화해 시드·저장본을 반영 */
     let cancelled = false
     const templateId = resolvePersistTemplateId()
+    const hydrateKey = `${templateId}::${persistTemplateVersionId ?? 'none'}::${localOnlyDraftPersistence ? 'local' : 'remote'}::${preferLocalDraft ? 'prefer-local' : 'bound'}`
 
     const applyDraftNow = (next: WritingFormDraft) => {
       const migrated =
@@ -599,7 +606,7 @@ export function useProgramParticipantApplicationEditor(
       setSingleItemListActiveItemId(null)
     }
 
-    const cached = sessionDraftCacheRef.current.get(templateId)
+    const cached = sessionDraftCacheRef.current.get(hydrateKey)
     if (cached) {
       applyDraftNow(cached.draft)
       if (variant === 'ujat-recruit-institution') {
@@ -633,12 +640,16 @@ export function useProgramParticipantApplicationEditor(
     }
 
     const preferSessionCache =
-      cached != null && storageHydratedTemplateIdsRef.current.has(templateId)
+      cached != null && storageHydratedTemplateIdsRef.current.has(hydrateKey)
+
+    const loadOptions = {
+      localOnly: localOnlyDraftPersistence,
+      templateVersionId: persistTemplateVersionId,
+      preferLocal: preferLocalDraft,
+    }
 
     if (variant === 'ujat-recruit-institution' || variant === 'ujat-recruit-volunteer') {
-      void loadWritingFormTemplateDraft(templateId, {
-        localOnly: localOnlyDraftPersistence,
-      }).then(saved => {
+      void loadWritingFormTemplateDraft(templateId, loadOptions).then(saved => {
         if (cancelled) return
         if (preferSessionCache) return
         if (saved?.draft) {
@@ -648,7 +659,7 @@ export function useProgramParticipantApplicationEditor(
           } else {
             replaceUjatRecruitVolunteerOverlay(saved.overlay ?? {})
           }
-          storageHydratedTemplateIdsRef.current.add(templateId)
+          storageHydratedTemplateIdsRef.current.add(hydrateKey)
           return
         }
         const legacy =
@@ -665,12 +676,10 @@ export function useProgramParticipantApplicationEditor(
             replaceUjatRecruitVolunteerOverlay(legacy.overlay ?? {})
           }
         }
-        storageHydratedTemplateIdsRef.current.add(templateId)
+        storageHydratedTemplateIdsRef.current.add(hydrateKey)
       })
     } else {
-      void loadWritingFormTemplateDraft(templateId, {
-        localOnly: localOnlyDraftPersistence,
-      }).then(saved => {
+      void loadWritingFormTemplateDraft(templateId, loadOptions).then(saved => {
         if (cancelled) return
         if (preferSessionCache) return
         if (saved?.draft) {
@@ -685,7 +694,7 @@ export function useProgramParticipantApplicationEditor(
             setUjatApplicationGradeByBlockId,
             setUjatGradeClassTimeBlockIds,
           })
-          storageHydratedTemplateIdsRef.current.add(templateId)
+          storageHydratedTemplateIdsRef.current.add(hydrateKey)
           return
         }
         if (variant === 'ujat-application-volunteer') {
@@ -696,7 +705,7 @@ export function useProgramParticipantApplicationEditor(
           setUjatApplicationGradeByBlockId({})
           setUjatGradeClassTimeBlockIds([crypto.randomUUID()])
         }
-        storageHydratedTemplateIdsRef.current.add(templateId)
+        storageHydratedTemplateIdsRef.current.add(hydrateKey)
       })
     }
 
@@ -705,7 +714,7 @@ export function useProgramParticipantApplicationEditor(
     return () => {
       cancelled = true
       if (draftRef.current.paragraphs.length === 0) return
-      sessionDraftCacheRef.current.set(templateId, {
+      sessionDraftCacheRef.current.set(hydrateKey, {
         draft: draftRef.current,
         overlay:
           variant === 'ujat-recruit-institution'
@@ -727,6 +736,8 @@ export function useProgramParticipantApplicationEditor(
     active,
     createSeedDraft,
     localOnlyDraftPersistence,
+    persistTemplateVersionId,
+    preferLocalDraft,
     resolvePersistTemplateId,
     variant,
   ])
@@ -1261,7 +1272,10 @@ export function useProgramParticipantApplicationEditor(
           templateId,
           draft,
           overlay,
-          localOnly: localOnlyDraftPersistence,
+          localOnly:
+            localOnlyDraftPersistence ||
+            (preferLocalDraft && persistTemplateVersionId == null),
+          templateVersionId: persistTemplateVersionId,
         })
         if (localOnlyDraftPersistence) {
           persistUjatRecruitInstitutionTemplateSave({ draft, overlay })
@@ -1277,7 +1291,10 @@ export function useProgramParticipantApplicationEditor(
           templateId,
           draft,
           overlay,
-          localOnly: localOnlyDraftPersistence,
+          localOnly:
+            localOnlyDraftPersistence ||
+            (preferLocalDraft && persistTemplateVersionId == null),
+          templateVersionId: persistTemplateVersionId,
         })
         if (localOnlyDraftPersistence) {
           persistUjatRecruitVolunteerTemplateSave({ draft, overlay })
@@ -1302,7 +1319,10 @@ export function useProgramParticipantApplicationEditor(
           draft,
           editorState,
           ...(overlay != null ? { overlay } : {}),
-          localOnly: localOnlyDraftPersistence,
+          localOnly:
+            localOnlyDraftPersistence ||
+            (preferLocalDraft && persistTemplateVersionId == null),
+          templateVersionId: persistTemplateVersionId,
         })
       }
       if (options?.silent) return
@@ -1321,6 +1341,8 @@ export function useProgramParticipantApplicationEditor(
     isTemplateManagementSave,
     localOnlyDraftPersistence,
     onTemplateDraftSaveConfirmed,
+    persistTemplateVersionId,
+    preferLocalDraft,
     resolvePersistTemplateId,
     showSaveFailure,
     showSaveSuccess,

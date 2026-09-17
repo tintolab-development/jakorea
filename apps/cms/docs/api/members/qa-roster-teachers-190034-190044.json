@@ -1,0 +1,840 @@
+{
+  "pureSchoolTeachers": [
+    {
+      "member": {
+        "memberId": 190034,
+        "uuid": "qa-roster-34-teacher-mun-hayoung",
+        "email": "qa.teacher.mun.hayoung@tinto.co.kr",
+        "name": "문하영",
+        "phone": "01012349484",
+        "birthDate": "1984-05-20",
+        "gender": "FEMALE",
+        "status": "ACTIVE",
+        "loginEnabled": true,
+        "identityVerified": true,
+        "preRegistered": false,
+        "createdByAdmin": true,
+        "under14": false,
+        "guardianConsentRequired": false,
+        "external1365Id": null,
+        "roles": ["SCHOOL_TEACHER"],
+        "identitySelfSignupCompletedAfterAdminRegistration": false,
+        "adminRegisteredNoticeVisible": true,
+        "socialAccounts": [],
+        "scheduleChangeCount": 0,
+        "scheduleCancelCount": 0,
+        "scheduleChangeCancelCount": 0,
+        "joinedAt": "2026-09-17T12:00:00.000000Z",
+        "lastLoginAt": null,
+        "createdAt": "2026-09-17T12:00:00.000000Z",
+        "updatedAt": "2026-09-17T12:00:00.000000Z"
+      },
+      "organizationId": 165101,
+      "organizationName": "강서초등학교",
+      "neisCode": null,
+      "organizationCategory": "SCHOOL",
+      "address": "서울특별시 강서구 공항대로 1",
+      "addressDetail": null,
+      "zipCode": "07500",
+      "regionSido": "서울특별시",
+      "regionSigungu": "강서구",
+      "employmentStatus": "ACTIVE",
+      "affiliationStatus": "ACTIVE",
+      "affiliationStartedAt": "2018-03-01T00:00:00.000000Z",
+      "termsAgreements": []
+    },
+    {
+      "member": {
+        "memberId": 190035,
+        "uuid": "qa-roster-35-teacher-oh-sejin",
+        "email": "qa.teacher.oh.sejin@tinto.co.kr",
+        "name": "오세진",
+        "phone": "01012349485",
+        "birthDate": "1987-09-14",
+        "gender": "MALE",
+        "status": "ACTIVE",
+        "loginEnabled": true,
+        "identityVerified": true,
+        "preRegistered": false,
+        "createdByAdmin": true,
+        "under14": false,
+        "guardianConsentRequired": false,
+        "external1365Id": null,
+        "roles": ["SCHOOL_TEACHER"],
+        "identitySelfSignupCompletedAfterAdminRegistration": false,
+        "adminRegisteredNoticeVisible": true,
+        "socialAccounts": [],
+        "scheduleChangeCount": 0,
+        "scheduleCancelCount": 0,
+        "scheduleChangeCancelCount": 0,
+        "joinedAt": "2026-09-17T12:00:00.000000Z",
+        "lastLoginAt": null,
+        "createdAt": "2026-09-17T12:00:00.000000Z",
+        "updatedAt": "2026-09-17T12:00:00.000000Z"
+      },
+      "organizationId": 165102,
+      "organizationName": "푸른솔초등학교",
+      "neisCode": null,
+      "organizationCategory": "SCHOOL",
+      "address": "경기도 성남시 분당구 판교로 1",
+      "addressDetail": null,
+      "zipCode": "13400",
+      "regionSido": "경기도",
+      "regionSigungu": "성남시 분당구",
+      "employmentStatus": "ACTIVE",
+      "affiliationStatus": "ACTIVE",
+      "affiliationStartedAt": "2019-03-01T00:00:00.000000Z",
+      "termsAgreements": []
+    },
+    {
+      "member": {
+        "memberId": 190036,
+        "uuid": "qa-roster-36-teacher-nam-yuna",
+        "email": "qa.teacher.nam.yuna@tinto.co.kr",
+        "name": "남유나",
+        "phone": "01012349486",
+        "birthDate": "1990-02-03",
+        "gender": "FEMALE",
+        "status": "ACTIVE",
+        "loginEnabled": true,
+        "identityVerified": true,
+        "preRegistered": false,
+        "createdByAdmin": true,
+        "under14": false,
+        "guardianConsentRequired": false,
+        "external1365Id": null,
+        "roles": ["SCHOOL_TEACHER"],
+        "identitySelfSignupCompletedAfterAdminRegistration": false,
+        "adminRegisteredNoticeVisible": true,
+        "socialAccounts": [],
+        "scheduleChangeCount": 0,
+        "scheduleCancelCount": 0,
+        "scheduleChangeCancelCount": 0,
+        "joinedAt": "2026-09-17T12:00:00.000000Z",
+        "lastLoginAt": null,
+        "createdAt": "2026-09-17T12:00:00.000000Z",
+        "updatedAt": "2026-09-17T12:00:00.000000Z"
+      },
+      "organizationId": 165103,
+      "organizationName": "하늘빛초등학교",
+      "neisCode": null,
+      "organizationCategory": "SCHOOL",
+      "address": "인천광역시 연수구 송도대로 1",
+      "addressDetail": null,
+      "zipCode": "21900",
+      "regionSido": "인천광역시",
+      "regionSigungu": "연수구",
+      "employmentStatus": "ACTIVE",
+      "affiliationStatus": "ACTIVE",
+      "affiliationStartedAt": "2021-03-01T00:00:00.000000Z",
+      "termsAgreements": []
+    },
+    {
+      "member": {
+        "memberId": 190037,
+        "uuid": "qa-roster-37-teacher-bae-junhyuk",
+        "email": "qa.teacher.bae.junhyuk@tinto.co.kr",
+        "name": "배준혁",
+        "phone": "01012349487",
+        "birthDate": "1982-11-28",
+        "gender": "MALE",
+        "status": "ACTIVE",
+        "loginEnabled": true,
+        "identityVerified": true,
+        "preRegistered": false,
+        "createdByAdmin": true,
+        "under14": false,
+        "guardianConsentRequired": false,
+        "external1365Id": null,
+        "roles": ["SCHOOL_TEACHER"],
+        "identitySelfSignupCompletedAfterAdminRegistration": false,
+        "adminRegisteredNoticeVisible": true,
+        "socialAccounts": [],
+        "scheduleChangeCount": 0,
+        "scheduleCancelCount": 0,
+        "scheduleChangeCancelCount": 0,
+        "joinedAt": "2026-09-17T12:00:00.000000Z",
+        "lastLoginAt": null,
+        "createdAt": "2026-09-17T12:00:00.000000Z",
+        "updatedAt": "2026-09-17T12:00:00.000000Z"
+      },
+      "organizationId": 165104,
+      "organizationName": "새싹초등학교",
+      "neisCode": null,
+      "organizationCategory": "SCHOOL",
+      "address": "부산광역시 해운대구 센텀로 1",
+      "addressDetail": null,
+      "zipCode": "48000",
+      "regionSido": "부산광역시",
+      "regionSigungu": "해운대구",
+      "employmentStatus": "ACTIVE",
+      "affiliationStatus": "ACTIVE",
+      "affiliationStartedAt": "2016-03-01T00:00:00.000000Z",
+      "termsAgreements": []
+    },
+    {
+      "member": {
+        "memberId": 190038,
+        "uuid": "qa-roster-38-teacher-song-mira",
+        "email": "qa.teacher.song.mira@tinto.co.kr",
+        "name": "송미라",
+        "phone": "01012349488",
+        "birthDate": "1988-07-07",
+        "gender": "FEMALE",
+        "status": "ACTIVE",
+        "loginEnabled": true,
+        "identityVerified": true,
+        "preRegistered": false,
+        "createdByAdmin": true,
+        "under14": false,
+        "guardianConsentRequired": false,
+        "external1365Id": null,
+        "roles": ["SCHOOL_TEACHER"],
+        "identitySelfSignupCompletedAfterAdminRegistration": false,
+        "adminRegisteredNoticeVisible": true,
+        "socialAccounts": [],
+        "scheduleChangeCount": 0,
+        "scheduleCancelCount": 0,
+        "scheduleChangeCancelCount": 0,
+        "joinedAt": "2026-09-17T12:00:00.000000Z",
+        "lastLoginAt": null,
+        "createdAt": "2026-09-17T12:00:00.000000Z",
+        "updatedAt": "2026-09-17T12:00:00.000000Z"
+      },
+      "organizationId": 186101,
+      "organizationName": "JA서울미래초등학교",
+      "neisCode": null,
+      "organizationCategory": "SCHOOL",
+      "address": "서울특별시 종로구 세종대로 110",
+      "addressDetail": "본관",
+      "zipCode": "00000",
+      "regionSido": "서울특별시",
+      "regionSigungu": "종로구",
+      "employmentStatus": "ACTIVE",
+      "affiliationStatus": "ACTIVE",
+      "affiliationStartedAt": "2017-03-01T00:00:00.000000Z",
+      "termsAgreements": []
+    },
+    {
+      "member": {
+        "memberId": 190039,
+        "uuid": "qa-roster-39-teacher-kwon-taeyang",
+        "email": "qa.teacher.kwon.taeyang@tinto.co.kr",
+        "name": "권태양",
+        "phone": "01012349489",
+        "birthDate": "1985-01-19",
+        "gender": "MALE",
+        "status": "ACTIVE",
+        "loginEnabled": true,
+        "identityVerified": true,
+        "preRegistered": false,
+        "createdByAdmin": true,
+        "under14": false,
+        "guardianConsentRequired": false,
+        "external1365Id": null,
+        "roles": ["SCHOOL_TEACHER"],
+        "identitySelfSignupCompletedAfterAdminRegistration": false,
+        "adminRegisteredNoticeVisible": true,
+        "socialAccounts": [],
+        "scheduleChangeCount": 0,
+        "scheduleCancelCount": 0,
+        "scheduleChangeCancelCount": 0,
+        "joinedAt": "2026-09-17T12:00:00.000000Z",
+        "lastLoginAt": null,
+        "createdAt": "2026-09-17T12:00:00.000000Z",
+        "updatedAt": "2026-09-17T12:00:00.000000Z"
+      },
+      "organizationId": 186102,
+      "organizationName": "경기한빛중학교",
+      "neisCode": null,
+      "organizationCategory": "SCHOOL",
+      "address": "경기도 성남시 분당구 판교로 242",
+      "addressDetail": "본관",
+      "zipCode": "00000",
+      "regionSido": "경기도",
+      "regionSigungu": "성남시 분당구",
+      "employmentStatus": "ACTIVE",
+      "affiliationStatus": "ACTIVE",
+      "affiliationStartedAt": "2015-03-01T00:00:00.000000Z",
+      "termsAgreements": []
+    },
+    {
+      "member": {
+        "memberId": 190040,
+        "uuid": "qa-roster-40-teacher-hong-jia",
+        "email": "qa.teacher.hong.jia@tinto.co.kr",
+        "name": "홍지아",
+        "phone": "01012349490",
+        "birthDate": "1991-04-12",
+        "gender": "FEMALE",
+        "status": "ACTIVE",
+        "loginEnabled": true,
+        "identityVerified": true,
+        "preRegistered": false,
+        "createdByAdmin": true,
+        "under14": false,
+        "guardianConsentRequired": false,
+        "external1365Id": null,
+        "roles": ["SCHOOL_TEACHER"],
+        "identitySelfSignupCompletedAfterAdminRegistration": false,
+        "adminRegisteredNoticeVisible": true,
+        "socialAccounts": [],
+        "scheduleChangeCount": 0,
+        "scheduleCancelCount": 0,
+        "scheduleChangeCancelCount": 0,
+        "joinedAt": "2026-09-17T12:00:00.000000Z",
+        "lastLoginAt": null,
+        "createdAt": "2026-09-17T12:00:00.000000Z",
+        "updatedAt": "2026-09-17T12:00:00.000000Z"
+      },
+      "organizationId": 186103,
+      "organizationName": "인천새봄고등학교",
+      "neisCode": null,
+      "organizationCategory": "SCHOOL",
+      "address": "인천광역시 연수구 컨벤시아대로 69",
+      "addressDetail": "본관",
+      "zipCode": "00000",
+      "regionSido": "인천광역시",
+      "regionSigungu": "연수구",
+      "employmentStatus": "ACTIVE",
+      "affiliationStatus": "ACTIVE",
+      "affiliationStartedAt": "2022-03-01T00:00:00.000000Z",
+      "termsAgreements": []
+    },
+    {
+      "member": {
+        "memberId": 190041,
+        "uuid": "qa-roster-41-teacher-noh-seongmin",
+        "email": "qa.teacher.noh.seongmin@tinto.co.kr",
+        "name": "노성민",
+        "phone": "01012349491",
+        "birthDate": "1983-12-02",
+        "gender": "MALE",
+        "status": "ACTIVE",
+        "loginEnabled": true,
+        "identityVerified": true,
+        "preRegistered": false,
+        "createdByAdmin": true,
+        "under14": false,
+        "guardianConsentRequired": false,
+        "external1365Id": null,
+        "roles": ["SCHOOL_TEACHER"],
+        "identitySelfSignupCompletedAfterAdminRegistration": false,
+        "adminRegisteredNoticeVisible": true,
+        "socialAccounts": [],
+        "scheduleChangeCount": 0,
+        "scheduleCancelCount": 0,
+        "scheduleChangeCancelCount": 0,
+        "joinedAt": "2026-09-17T12:00:00.000000Z",
+        "lastLoginAt": null,
+        "createdAt": "2026-09-17T12:00:00.000000Z",
+        "updatedAt": "2026-09-17T12:00:00.000000Z"
+      },
+      "organizationId": 186104,
+      "organizationName": "부산다온초등학교",
+      "neisCode": null,
+      "organizationCategory": "SCHOOL",
+      "address": "부산광역시 해운대구 센텀중앙로 79",
+      "addressDetail": "본관",
+      "zipCode": "00000",
+      "regionSido": "부산광역시",
+      "regionSigungu": "해운대구",
+      "employmentStatus": "ACTIVE",
+      "affiliationStatus": "ACTIVE",
+      "affiliationStartedAt": "2014-03-01T00:00:00.000000Z",
+      "termsAgreements": []
+    }
+  ],
+  "schoolTeacherAndInstructors": [
+    {
+      "member": {
+        "memberId": 190042,
+        "uuid": "qa-roster-42-teacher-instructor-jang-gyeomim",
+        "email": "qa.teacher.instructor.jang.gyeomim@tinto.co.kr",
+        "name": "장겸임",
+        "phone": "01012349492",
+        "birthDate": "1986-08-11",
+        "gender": "MALE",
+        "status": "ACTIVE",
+        "loginEnabled": true,
+        "identityVerified": true,
+        "preRegistered": false,
+        "createdByAdmin": true,
+        "under14": false,
+        "guardianConsentRequired": false,
+        "external1365Id": null,
+        "roles": ["INSTRUCTOR", "SCHOOL_TEACHER"],
+        "identitySelfSignupCompletedAfterAdminRegistration": false,
+        "adminRegisteredNoticeVisible": true,
+        "socialAccounts": [],
+        "scheduleChangeCount": 0,
+        "scheduleCancelCount": 0,
+        "scheduleChangeCancelCount": 0,
+        "joinedAt": "2026-09-17T12:00:00.000000Z",
+        "lastLoginAt": null,
+        "createdAt": "2026-09-17T12:00:00.000000Z",
+        "updatedAt": "2026-09-17T12:00:00.000000Z"
+      },
+      "profile": {
+        "memberType": "SCHOOL_TEACHER",
+        "status": "ACTIVE",
+        "affiliation": {
+          "organizationId": 186105,
+          "schoolName": "대전초록중학교",
+          "employmentStatus": "ACTIVE",
+          "organizationNames": []
+        },
+        "instructorCareerSummary": "중등 사회 담임 11년, 방과후·방문 경제교육 겸임 7년",
+        "oneLineIntro": "중등 교실과 방문 강의를 함께하는 교사 겸 강사",
+        "homeAddress": {
+          "line": "대전광역시 유성구 대학로 99",
+          "detail": "본관 인근"
+        },
+        "education": {
+          "highestSchoolType": "college4",
+          "highestStatus": "graduated",
+          "detailKeys": ["high", "college4"],
+          "highSchool": {
+            "admitYear": "2002",
+            "gradYear": "2005",
+            "schoolName": "대전중앙고등학교",
+            "major": ""
+          },
+          "college4": [
+            {
+              "admitYear": "2005",
+              "gradYear": "2009",
+              "schoolName": "공주교육대학교",
+              "major": "사회교육과"
+            }
+          ]
+        },
+        "career": {
+          "level": "experienced",
+          "summaryYears": "11년",
+          "rows": [
+            {
+              "companyName": "대전초록중학교",
+              "roleName": "2학년 담임 / 사회과",
+              "periodStart": "2018-03",
+              "periodEnd": "",
+              "currentlyEmployed": true
+            },
+            {
+              "companyName": "JA Korea",
+              "roleName": "방문 강사(겸임)",
+              "periodStart": "2019-03",
+              "periodEnd": "",
+              "currentlyEmployed": true
+            },
+            {
+              "companyName": "대전가온중학교",
+              "roleName": "사회과 교사",
+              "periodStart": "2009-03",
+              "periodEnd": "2018-02",
+              "currentlyEmployed": false
+            }
+          ]
+        },
+        "jaKoreaActivities": [
+          {
+            "periodStart": "2024-03",
+            "periodEnd": "2024-11",
+            "title": "자교 자유학기 경제 수업",
+            "note": "대전초록중 2학년"
+          },
+          {
+            "periodStart": "2022-04",
+            "periodEnd": "2022-10",
+            "title": "충청 중등 방문 강의",
+            "note": "인근 학교 순회"
+          }
+        ],
+        "licenses": [
+          {
+            "acquiredYear": "2009",
+            "title": "중등학교 정교사 2급(사회)",
+            "issuer": "교육부"
+          },
+          {
+            "acquiredYear": "2016",
+            "title": "중등학교 정교사 1급(사회)",
+            "issuer": "교육부"
+          }
+        ],
+        "awards": [
+          {
+            "acquiredYear": "2023",
+            "title": "자유학기 우수 수업",
+            "issuer": "대전광역시교육청"
+          }
+        ],
+        "essays": {
+          "freeWrite1": "중등 담임으로 진로·소비 고민을 매일 듣습니다. 그 대화를 경제 수업의 도입으로 씁니다.",
+          "freeWrite2": "모둠 토론과 지역 물가 조사로 수요·공급을 다룹니다.",
+          "freeWrite3": "자교 자유학기와 인근 학교 방문을 병행했습니다.",
+          "freeWrite4": "수업 전 학년 진도와 겹치지 않게 사회과 교사와 조율합니다."
+        },
+        "defaultFeeGrade": "GRADE_1",
+        "defaultJaGrade": "C"
+      },
+      "settlement": {
+        "bankName": "하나은행",
+        "accountNumber": "123401234567",
+        "accountHolder": "장겸임",
+        "businessIncome": true,
+        "bankAccounts": [
+          {
+            "bankName": "하나은행",
+            "accountNumber": "123401234567",
+            "accountHolder": "장겸임",
+            "current": true
+          }
+        ]
+      },
+      "certifications": [
+        {
+          "certificationName": "중등학교 정교사 2급(사회)",
+          "issuer": "교육부",
+          "issuedDate": "2009-02-01"
+        },
+        {
+          "certificationName": "중등학교 정교사 1급(사회)",
+          "issuer": "교육부",
+          "issuedDate": "2016-02-01",
+          "current": true
+        }
+      ],
+      "termsAgreements": []
+    },
+    {
+      "member": {
+        "memberId": 190043,
+        "uuid": "qa-roster-43-teacher-instructor-ha-yunseo",
+        "email": "qa.teacher.instructor.ha.yunseo@tinto.co.kr",
+        "name": "하윤서",
+        "phone": "01012349493",
+        "birthDate": "1989-03-25",
+        "gender": "FEMALE",
+        "status": "ACTIVE",
+        "loginEnabled": true,
+        "identityVerified": true,
+        "preRegistered": false,
+        "createdByAdmin": true,
+        "under14": false,
+        "guardianConsentRequired": false,
+        "external1365Id": null,
+        "roles": ["INSTRUCTOR", "SCHOOL_TEACHER"],
+        "identitySelfSignupCompletedAfterAdminRegistration": false,
+        "adminRegisteredNoticeVisible": true,
+        "socialAccounts": [],
+        "scheduleChangeCount": 0,
+        "scheduleCancelCount": 0,
+        "scheduleChangeCancelCount": 0,
+        "joinedAt": "2026-09-17T12:00:00.000000Z",
+        "lastLoginAt": null,
+        "createdAt": "2026-09-17T12:00:00.000000Z",
+        "updatedAt": "2026-09-17T12:00:00.000000Z"
+      },
+      "profile": {
+        "memberType": "SCHOOL_TEACHER",
+        "status": "ACTIVE",
+        "affiliation": {
+          "organizationId": 186106,
+          "schoolName": "광주누리초등학교",
+          "employmentStatus": "ACTIVE",
+          "organizationNames": []
+        },
+        "instructorCareerSummary": "초등 담임 10년, 방과후 경제클럽·방문 강의 겸임 5년",
+        "oneLineIntro": "학급 경제클럽을 운영하는 초등 교사 겸 강사",
+        "homeAddress": {
+          "line": "광주광역시 서구 상무중앙로 61",
+          "detail": "본관"
+        },
+        "education": {
+          "highestSchoolType": "college4",
+          "highestStatus": "graduated",
+          "detailKeys": ["high", "college4"],
+          "highSchool": {
+            "admitYear": "2005",
+            "gradYear": "2008",
+            "schoolName": "광주제일여자고등학교",
+            "major": ""
+          },
+          "college4": [
+            {
+              "admitYear": "2008",
+              "gradYear": "2012",
+              "schoolName": "광주교육대학교",
+              "major": "초등교육과"
+            }
+          ]
+        },
+        "career": {
+          "level": "experienced",
+          "summaryYears": "10년",
+          "rows": [
+            {
+              "companyName": "광주누리초등학교",
+              "roleName": "4학년 담임",
+              "periodStart": "2016-03",
+              "periodEnd": "",
+              "currentlyEmployed": true
+            },
+            {
+              "companyName": "JA Korea",
+              "roleName": "방문 강사(겸임)",
+              "periodStart": "2021-03",
+              "periodEnd": "",
+              "currentlyEmployed": true
+            }
+          ]
+        },
+        "jaKoreaActivities": [
+          {
+            "periodStart": "2024-03",
+            "periodEnd": "2024-12",
+            "title": "자교 경제클럽 운영",
+            "note": "방과후 주 1회"
+          },
+          {
+            "periodStart": "2023-04",
+            "periodEnd": "2023-10",
+            "title": "광주 초등 방문 강의",
+            "note": "인근 학급 2개교"
+          }
+        ],
+        "licenses": [
+          {
+            "acquiredYear": "2012",
+            "title": "초등학교 정교사 2급",
+            "issuer": "교육부"
+          },
+          {
+            "acquiredYear": "2019",
+            "title": "초등학교 정교사 1급",
+            "issuer": "교육부"
+          }
+        ],
+        "awards": [
+          {
+            "acquiredYear": "2024",
+            "title": "방과후 우수 동아리",
+            "issuer": "광주광역시교육청"
+          }
+        ],
+        "essays": {
+          "freeWrite1": "담임 학급에서 쓰는 용돈 기입장을 방문 수업에도 그대로 가져갑니다.",
+          "freeWrite2": "가게 놀이로 생산·소비를 한 차시에 경험하게 합니다.",
+          "freeWrite3": "자교 클럽과 인근 학교 방문을 함께 했습니다.",
+          "freeWrite4": "수업 후 학급 게시 자료를 담당 담임과 공유합니다."
+        },
+        "defaultFeeGrade": "GRADE_2",
+        "defaultJaGrade": "D"
+      },
+      "settlement": {
+        "bankName": "광주은행",
+        "accountNumber": "110112233445",
+        "accountHolder": "하윤서",
+        "businessIncome": true,
+        "bankAccounts": [
+          {
+            "bankName": "광주은행",
+            "accountNumber": "110112233445",
+            "accountHolder": "하윤서",
+            "current": true
+          }
+        ]
+      },
+      "certifications": [
+        {
+          "certificationName": "초등학교 정교사 2급",
+          "issuer": "교육부",
+          "issuedDate": "2012-02-01"
+        },
+        {
+          "certificationName": "초등학교 정교사 1급",
+          "issuer": "교육부",
+          "issuedDate": "2019-02-01",
+          "current": true
+        }
+      ],
+      "termsAgreements": []
+    },
+    {
+      "member": {
+        "memberId": 190044,
+        "uuid": "qa-roster-44-teacher-instructor-doh-hajun",
+        "email": "qa.teacher.instructor.doh.hajun@tinto.co.kr",
+        "name": "도하준",
+        "phone": "01012349494",
+        "birthDate": "1981-06-30",
+        "gender": "MALE",
+        "status": "ACTIVE",
+        "loginEnabled": true,
+        "identityVerified": true,
+        "preRegistered": false,
+        "createdByAdmin": true,
+        "under14": false,
+        "guardianConsentRequired": false,
+        "external1365Id": null,
+        "roles": ["INSTRUCTOR", "SCHOOL_TEACHER"],
+        "identitySelfSignupCompletedAfterAdminRegistration": false,
+        "adminRegisteredNoticeVisible": true,
+        "socialAccounts": [],
+        "scheduleChangeCount": 0,
+        "scheduleCancelCount": 0,
+        "scheduleChangeCancelCount": 0,
+        "joinedAt": "2026-09-17T12:00:00.000000Z",
+        "lastLoginAt": null,
+        "createdAt": "2026-09-17T12:00:00.000000Z",
+        "updatedAt": "2026-09-17T12:00:00.000000Z"
+      },
+      "profile": {
+        "memberType": "SCHOOL_TEACHER",
+        "status": "ACTIVE",
+        "affiliation": {
+          "organizationId": 186108,
+          "schoolName": "제주해올초등학교",
+          "employmentStatus": "ACTIVE",
+          "organizationNames": []
+        },
+        "instructorCareerSummary": "초등 담임 15년, 지역 금융교육 강사 겸임 8년",
+        "oneLineIntro": "제주 지역 초등과 방문 강의를 겸하는 교사",
+        "homeAddress": {
+          "line": "제주특별자치도 제주시 연삼로 73",
+          "detail": "본관"
+        },
+        "education": {
+          "highestSchoolType": "graduate",
+          "highestStatus": "graduated",
+          "detailKeys": ["high", "college4", "graduate"],
+          "highSchool": {
+            "admitYear": "1997",
+            "gradYear": "2000",
+            "schoolName": "제주제일고등학교",
+            "major": ""
+          },
+          "college4": [
+            {
+              "admitYear": "2000",
+              "gradYear": "2004",
+              "schoolName": "제주대학교",
+              "major": "초등교육과"
+            }
+          ],
+          "graduate": [
+            {
+              "admitYear": "2008",
+              "gradYear": "2011",
+              "schoolName": "제주대학교 교육대학원",
+              "major": "초등사회교육",
+              "degree": "master"
+            }
+          ]
+        },
+        "career": {
+          "level": "experienced",
+          "summaryYears": "15년",
+          "rows": [
+            {
+              "companyName": "제주해올초등학교",
+              "roleName": "6학년 담임 / 연구부장",
+              "periodStart": "2013-03",
+              "periodEnd": "",
+              "currentlyEmployed": true
+            },
+            {
+              "companyName": "JA Korea",
+              "roleName": "방문 강사(겸임)",
+              "periodStart": "2018-03",
+              "periodEnd": "",
+              "currentlyEmployed": true
+            },
+            {
+              "companyName": "제주중앙초등학교",
+              "roleName": "담임교사",
+              "periodStart": "2004-03",
+              "periodEnd": "2013-02",
+              "currentlyEmployed": false
+            }
+          ]
+        },
+        "jaKoreaActivities": [
+          {
+            "periodStart": "2024-03",
+            "periodEnd": "2024-11",
+            "title": "제주 초등 방문 경제교육",
+            "note": "서귀포·제주 학급"
+          },
+          {
+            "periodStart": "2021-05",
+            "periodEnd": "2021-10",
+            "title": "교사 대상 지역 금융교육 연수",
+            "note": "제주교육청 연계"
+          }
+        ],
+        "licenses": [
+          {
+            "acquiredYear": "2004",
+            "title": "초등학교 정교사 2급",
+            "issuer": "교육부"
+          },
+          {
+            "acquiredYear": "2012",
+            "title": "초등학교 정교사 1급",
+            "issuer": "교육부"
+          }
+        ],
+        "awards": [
+          {
+            "acquiredYear": "2022",
+            "title": "연구부장 우수교원",
+            "issuer": "제주특별자치도교육청"
+          },
+          {
+            "acquiredYear": "2024",
+            "title": "지역 밀착 교육상",
+            "issuer": "JA Korea"
+          }
+        ],
+        "essays": {
+          "freeWrite1": "제주 생활 물가와 관광 산업 사례로 지역 경제를 가르칩니다.",
+          "freeWrite2": "시장 조사 활동 후 학급에서 가게를 열어 봅니다.",
+          "freeWrite3": "자교 연구수업과 도내 방문 강의를 병행했습니다.",
+          "freeWrite4": "이동 수업은 배편·도로 일정을 학교에 미리 알립니다."
+        },
+        "defaultFeeGrade": "GRADE_1",
+        "defaultJaGrade": "C"
+      },
+      "settlement": {
+        "bankName": "제주은행",
+        "accountNumber": "110998877665",
+        "accountHolder": "도하준",
+        "businessIncome": true,
+        "bankAccounts": [
+          {
+            "bankName": "제주은행",
+            "accountNumber": "110998877665",
+            "accountHolder": "도하준",
+            "current": true
+          }
+        ]
+      },
+      "certifications": [
+        {
+          "certificationName": "초등학교 정교사 2급",
+          "issuer": "교육부",
+          "issuedDate": "2004-02-01"
+        },
+        {
+          "certificationName": "초등학교 정교사 1급",
+          "issuer": "교육부",
+          "issuedDate": "2012-02-01",
+          "current": true
+        }
+      ],
+      "termsAgreements": []
+    }
+  ]
+}

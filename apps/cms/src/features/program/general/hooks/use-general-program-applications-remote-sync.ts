@@ -24,6 +24,11 @@ import {
 } from '@/features/program/general/api/admin-applications-service'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useApplicationsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import {
+  getTempMockOrgApplicantInstructors,
+  getTempMockOrgApplicantSchools,
+} from '@/features/program/general/lib/temp-mock-org-program'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import { type ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
@@ -110,6 +115,13 @@ export function useGeneralProgramApplicationsRemoteSync({
       setInstructorList(instructorQuery.data.pages.flatMap(page => page.rows))
     }
   }, [instructorQuery.data, setInstructorList])
+
+  useEffect(() => {
+    if (!isGeneralProgramTempMockProgramId(programId)) return
+    setInstitutionList(getTempMockOrgApplicantSchools(programId))
+    setInstructorList(getTempMockOrgApplicantInstructors(programId))
+    setIndividualList([])
+  }, [programId, setIndividualList, setInstitutionList, setInstructorList])
 
   useEffect(() => {
     if (!individualRemoteEnabled || menu !== 'individual-applications') return

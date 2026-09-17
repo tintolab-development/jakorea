@@ -195,6 +195,41 @@ describe('general-program-adapters', () => {
     expect(create.applicationTargetMode).toBe('ORGANIZATION')
   })
 
+  it('sends detailedProgramId and does not alias the name as textbookName', () => {
+    const request = mapGeneralProgramToCreateRequest({
+      ...sampleProgram,
+      detailedProgramId: '163006',
+      textbookName: '사회공헌 프로젝트',
+      teamDivision: '사회공헌 프로젝트',
+      generalCommonInfo: { detailedProgramName: '사회공헌 프로젝트' },
+    })
+
+    expect(request.detailedProgramId).toBe(163006)
+    expect(request.textbookName).toBeUndefined()
+    expect(request.teamDivision).toBeUndefined()
+  })
+
+  it('does not send student roster required for individual programs', () => {
+    const request = mapGeneralProgramToCreateRequest({
+      ...sampleProgram,
+      category: 'individual',
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+      studentListRequired: 'required',
+      generalCommonInfo: {
+        participantRecruitmentInfo: { studentListRequired: 'required' },
+      },
+    })
+    const parsed = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      studentListRequired?: string
+      generalCommonInfo?: { participantRecruitmentInfo?: { studentListRequired?: string } }
+    }
+    expect(parsed.studentListRequired).toBe('not_required')
+    expect(parsed.generalCommonInfo?.participantRecruitmentInfo?.studentListRequired).toBe(
+      'not_required'
+    )
+  })
+
   it('maps generalProgramAudience to applicationTargetMode', () => {
     expect(
       mapGeneralProgramToCreateRequest({

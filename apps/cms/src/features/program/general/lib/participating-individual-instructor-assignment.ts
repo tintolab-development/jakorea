@@ -25,149 +25,6 @@ import type {
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-types'
 import type { Program } from '@/types/domain'
 
-const ASSIGNED_DISTANCES = ['3km', '5km', '7km', '4km', '6km', '8km', '12km']
-const WAITING_DISTANCES = ['2km', '4km', '6km', '5km', '7km', '32km', '12km']
-
-type AssignedDef = {
-  id: string
-  slotKey: string
-  schoolId: string
-  region: string
-  distanceFromHome: string
-  dateKey: string
-  timeRange: string
-  sessionRound: number
-  sessionName?: string
-  role: InstructorRoleKey
-}
-
-type WaitingDef = {
-  id: string
-  slotKey: string
-  schoolId: string
-  region: string
-  distanceFromHome: string
-  dateKey: string
-  timeRange: string
-  sessionRound: number
-  sessionName?: string
-  forceUnavailable?: boolean
-  assignedInstructorCount?: number
-}
-
-const DEFAULT_ASSIGNED_DEFS: AssignedDef[] = [
-  {
-    id: 'ia-as-3',
-    slotKey: '2026-01-09|assign-school-gangseo|2',
-    schoolId: 'assign-school-gangseo',
-    region: '서울특별시 강서구 화곡동 3394-23',
-    distanceFromHome: '5km',
-    dateKey: '2026-01-09',
-    timeRange: '09:20 ~ 11:20',
-    sessionRound: 2,
-    sessionName: '2회차',
-    role: 'lead',
-  },
-  {
-    id: 'ia-as-2',
-    slotKey: '2026-01-09|assign-school-gangseo|1',
-    schoolId: 'assign-school-gangseo',
-    region: '서울특별시 강서구 화곡동 3394-23',
-    distanceFromHome: '12km',
-    dateKey: '2026-01-09',
-    timeRange: '09:20 ~ 11:20',
-    sessionRound: 1,
-    sessionName: '1회차',
-    role: 'assistant',
-  },
-  {
-    id: 'ia-as-1',
-    slotKey: '2026-01-16|assign-school-gangseo|2',
-    schoolId: 'assign-school-gangseo',
-    region: '서울특별시 강서구 화곡동 3394-23',
-    distanceFromHome: '5km',
-    dateKey: '2026-01-16',
-    timeRange: '09:20 ~ 11:20',
-    sessionRound: 2,
-    sessionName: '2회차',
-    role: 'assistant',
-  },
-]
-
-const DEFAULT_WAITING_DEFS: WaitingDef[] = [
-  {
-    id: 'ia-w-5',
-    slotKey: '2026-01-09|assign-school-1|1',
-    schoolId: 'assign-school-1',
-    region: '서울특별시 양천구 목동 123-45',
-    distanceFromHome: '32km',
-    dateKey: '2026-01-09',
-    timeRange: '09:20 ~ 11:20',
-    sessionRound: 1,
-    sessionName: '1회차',
-    assignedInstructorCount: 4,
-  },
-  {
-    id: 'ia-w-4',
-    slotKey: '2026-01-09|assign-school-2|1',
-    schoolId: 'assign-school-2',
-    region: '서울특별시 양천구 신월동 456-78',
-    distanceFromHome: '32km',
-    dateKey: '2026-01-09',
-    timeRange: '09:20 ~ 11:20',
-    sessionRound: 1,
-    sessionName: '1회차',
-    assignedInstructorCount: 4,
-  },
-  {
-    id: 'ia-w-3',
-    slotKey: '2026-01-09|assign-school-3|1',
-    schoolId: 'assign-school-3',
-    region: '서울특별시 양천구 신정동 789-01',
-    distanceFromHome: '32km',
-    dateKey: '2026-01-09',
-    timeRange: '09:20 ~ 11:20',
-    sessionRound: 1,
-    sessionName: '1회차',
-    assignedInstructorCount: 4,
-  },
-  {
-    id: 'ia-w-2',
-    slotKey: '2026-01-09|assign-school-4|1',
-    schoolId: 'assign-school-4',
-    region: '서울특별시 양천구 신정동 234-56',
-    distanceFromHome: '32km',
-    dateKey: '2026-01-09',
-    timeRange: '09:20 ~ 11:20',
-    sessionRound: 1,
-    sessionName: '1회차',
-    forceUnavailable: true,
-    assignedInstructorCount: 1,
-  },
-  {
-    id: 'ia-w-1',
-    slotKey: '2026-01-16|assign-school-1|1',
-    schoolId: 'assign-school-1',
-    region: '서울특별시 양천구 목동 123-45',
-    distanceFromHome: '32km',
-    dateKey: '2026-01-16',
-    timeRange: '09:20 ~ 11:20',
-    sessionRound: 1,
-    sessionName: '1회차',
-    assignedInstructorCount: 1,
-  },
-]
-
-function hash(s: string): number {
-  let h = 0
-  for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i)
-  return Math.abs(h)
-}
-
-function pick<T>(arr: T[], seed: number): T {
-  return arr[seed % arr.length]
-}
-
 function slotToHopeSchedule(slot: InstructorLectureAssignSlot): WaitingInstructorHopeSchedule {
   const datePart = slot.dateKey.replace(/^(\d{4})-(\d{2})-(\d{2})$/, (_, y, m, d) => {
     const date = `${y.slice(-2)}.${m}.${d}`
@@ -215,34 +72,23 @@ function instructorCountLabel(
   overrideCount?: number
 ): string {
   if (overrideCount != null) return `${overrideCount}명`
-  const count = countLectureSlotAssignments(slotKey, [])
-  return `${count > 0 ? count : 1 + (hash(slotKey) % 4)}명`
-}
-
-function buildAssignedRowFromDef(
-  def: AssignedDef,
-  no: number,
-  program: Program
-): ParticipatingIndividualInstructorAssignedScheduleRow {
-  return {
-    id: def.id,
-    no,
-    role: def.role,
-    slotKey: def.slotKey,
-    schoolId: def.schoolId,
-    lectureLocation: formatIndividualInstructorLectureLocation(def.region),
-    distanceFromHome: def.distanceFromHome,
-    scheduleLabel: formatIndividualInstructorAssignmentScheduleLabel(program, {
-      dateKey: def.dateKey,
-      timeRange: def.timeRange,
-      sessionRound: def.sessionRound,
-      sessionName: def.sessionName,
-    }),
-  }
+  return `${countLectureSlotAssignments(slotKey, [])}명`
 }
 
 function buildWaitingRowFromDef(
-  def: WaitingDef,
+  def: {
+    id: string
+    slotKey: string
+    schoolId: string
+    region: string
+    distanceFromHome: string
+    dateKey: string
+    timeRange: string
+    sessionRound: number
+    sessionName?: string
+    forceUnavailable?: boolean
+    assignedInstructorCount?: number
+  },
   no: number,
   program: Program,
   occupiedHopeSlots: Set<string>
@@ -275,39 +121,16 @@ function buildWaitingRowFromDef(
   }
 }
 
-function buildAssignedFromProgramSlots(
-  program: Program,
-  instructor: ParticipatingInstructorRow
+export function buildInitialIndividualInstructorAssignedScheduleRows(
+  _instructor: ParticipatingInstructorRow,
+  _program: Program
 ): ParticipatingIndividualInstructorAssignedScheduleRow[] {
-  const slots = getApprovedInstitutionLectureScheduleSlots(String(program.id))
-  if (slots.length === 0) return []
-
-  const picked = [...slots].sort((a, b) => hash(a.key + instructor.id) - hash(b.key + instructor.id)).slice(0, 3)
-
-  return picked.map((slot, idx) => {
-    const rowSeed = hash(slot.key + instructor.id)
-    return buildAssignedRowFromDef(
-      {
-        id: `ia-program-as-${slot.key}`,
-        slotKey: slot.key,
-        schoolId: slot.schoolId,
-        region: slot.region || slot.schoolName,
-        distanceFromHome: pick(ASSIGNED_DISTANCES, rowSeed + idx),
-        dateKey: slot.dateKey,
-        timeRange: slot.timeRange,
-        sessionRound: slot.sessionRound,
-        sessionName: slot.sessionLabel,
-        role: idx === 0 ? 'lead' : 'assistant',
-      },
-      picked.length - idx,
-      program
-    )
-  })
+  return []
 }
 
 function buildWaitingFromProgramSlots(
   program: Program,
-  instructor: ParticipatingInstructorRow,
+  _instructor: ParticipatingInstructorRow,
   assignedSlotKeys: Set<string>,
   occupiedHopeSlots: Set<string>
 ): ParticipatingIndividualInstructorWaitingScheduleRow[] {
@@ -315,8 +138,7 @@ function buildWaitingFromProgramSlots(
   const candidates = slots.filter(slot => !assignedSlotKeys.has(slot.key))
   if (candidates.length === 0) return []
 
-  const expanded = candidates.map((slot, idx) => {
-    const rowSeed = hash(slot.key + instructor.id + 'w')
+  const expanded = candidates.map(slot => {
     const hopeSchedule = slotToHopeSchedule(slot)
     return buildWaitingRowFromDef(
       {
@@ -324,7 +146,7 @@ function buildWaitingFromProgramSlots(
         slotKey: slot.key,
         schoolId: slot.schoolId,
         region: slot.region || slot.schoolName,
-        distanceFromHome: pick(WAITING_DISTANCES, rowSeed + idx),
+        distanceFromHome: '-',
         dateKey: slot.dateKey,
         timeRange: slot.timeRange,
         sessionRound: slot.sessionRound,
@@ -346,17 +168,6 @@ function buildWaitingFromProgramSlots(
   )
 }
 
-export function buildInitialIndividualInstructorAssignedScheduleRows(
-  instructor: ParticipatingInstructorRow,
-  program: Program
-): ParticipatingIndividualInstructorAssignedScheduleRow[] {
-  const fromProgram = buildAssignedFromProgramSlots(program, instructor)
-  if (fromProgram.length > 0) return fromProgram
-
-  const n = DEFAULT_ASSIGNED_DEFS.length
-  return DEFAULT_ASSIGNED_DEFS.map((def, idx) => buildAssignedRowFromDef(def, n - idx, program))
-}
-
 export function buildIndividualInstructorWaitingScheduleRows(
   instructor: ParticipatingInstructorRow,
   program: Program,
@@ -365,18 +176,11 @@ export function buildIndividualInstructorWaitingScheduleRows(
   const assignedSlotKeys = new Set(assignedRows.map(r => r.slotKey))
   const occupiedHopeSlots = buildOccupiedHopeSlotKeys(assignedRows)
 
-  const fromProgram = buildWaitingFromProgramSlots(
+  return buildWaitingFromProgramSlots(
     program,
     instructor,
     assignedSlotKeys,
     occupiedHopeSlots
-  )
-  if (fromProgram.length > 0) return fromProgram
-
-  const filtered = DEFAULT_WAITING_DEFS.filter(def => !assignedSlotKeys.has(def.slotKey))
-  const n = filtered.length
-  return sortWaitingInstructorRowsUnavailableToBottom(
-    filtered.map((def, idx) => buildWaitingRowFromDef(def, n - idx, program, occupiedHopeSlots))
   )
 }
 

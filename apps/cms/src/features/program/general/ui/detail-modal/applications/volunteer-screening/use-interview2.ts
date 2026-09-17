@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
+  patchGeneralVolunteerSecondInterviewScreeningStatus,
   sortGeneralParticipantDocPassedVolunteerRows,
   type GeneralVolunteerApplicantRow,
   type GeneralVolunteerInterviewEvaluationPayload,
@@ -22,6 +23,8 @@ import {
 import { mapGeneralVolunteerAssignedInterviewToCalendarEvents } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
 import { useGeneralInterview2EffectiveStatusTick } from '@/features/program/general/hooks/use-general-interview2-effective-status-tick'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { getTempMockOrgVolunteerApplicants } from '@/features/program/general/lib/temp-mock-org-program'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
 import {
   notifyProgramApiUnavailable,
@@ -65,9 +68,12 @@ export function useGeneralVolunteerInterview2({
     [subjectKind]
   )
 
-  const remoteEnabled = shouldUseGeneralApplicationsRemoteApi() && Boolean(programId)
+  const remoteEnabled =
+    shouldUseGeneralApplicationsRemoteApi() &&
+    Boolean(programId) &&
+    !isGeneralProgramTempMockProgramId(programId)
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled,
+    !remoteEnabled && !isGeneralProgramTempMockProgramId(programId),
     'general-volunteer-interview2',
     '프로그램 신청 · 봉사자 2차 면접'
   )
@@ -108,6 +114,10 @@ export function useGeneralVolunteerInterview2({
 
   useEffect(() => {
     if (volunteerRemote.remoteEnabled) return
+    if (isGeneralProgramTempMockProgramId(programId) && subjectKind !== 'participant') {
+      setList(getTempMockOrgVolunteerApplicants(programId, 'interview2'))
+      return
+    }
     setList([])
     setPendingFilters({ ...DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS })
     setAppliedFilters({ ...DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS })
@@ -122,7 +132,7 @@ export function useGeneralVolunteerInterview2({
     setFailModalVolunteer(null)
     setPassCompleteVolunteerName(null)
     setFailCompleteVolunteer(null)
-  }, [volunteerRemote.remoteEnabled])
+  }, [programId, subjectKind, volunteerRemote.remoteEnabled])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
     setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -170,10 +180,16 @@ export function useGeneralVolunteerInterview2({
       ) {
         const remoteOk = await volunteerRemote.applyRemoteFinalResult(ids, status, reason)
         if (remoteOk) return
+        if (isGeneralProgramTempMockProgramId(programId)) {
+          setList(prev =>
+            patchGeneralVolunteerSecondInterviewScreeningStatus(prev, ids, status)
+          )
+          return
+        }
         notifyProgramApiUnavailable('general-volunteer-interview2-action', '봉사자 2차 면접 심사')
       }
     },
-    [volunteerRemote]
+    [programId, volunteerRemote]
   )
 
   const openPassModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
@@ -321,6 +337,17 @@ export function useGeneralVolunteerInterview2({
         return
       }
       if (!volunteerRemote.remoteEnabled) {
+        if (isGeneralProgramTempMockProgramId(programId)) {
+          setList(prev =>
+            prev.map(item =>
+              item.id === withdrawTargetId
+                ? { ...item, interviewAssignmentStatus: 'withdrawn' as const }
+                : item
+            )
+          )
+          setWithdrawTargetId(null)
+          return
+        }
         notifyProgramApiUnavailable('general-volunteer-give-up', '봉사자 활동 포기')
         setWithdrawTargetId(null)
         return

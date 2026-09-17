@@ -37,7 +37,9 @@ import {
   fetchAdminProgramPostCommentsRemote,
   fetchAdminProgramPostDetailRemote,
   fetchAdminProgramPostReactionsRemote,
+  fetchAdminProgramPostReadsRemote,
   fetchAdminProgramPostsRemote,
+  createAdminProgramPostUnreadReminderRemote,
   fetchAdminProgramsRemote,
   fetchAdminProgramSurveyResponseDetailRemote,
   fetchAdminProgramSurveyResponsesRemote,
@@ -47,6 +49,8 @@ import {
   putAdminProgramPostReactionRemote,
   createAdminProgramPostCommentRemote,
   submitAdminFormResponseRemote,
+  createAdminProgramSurveyShareLinkRemote,
+  updateAdminProgramFormBindingRemote,
   updateAdminProgramManagerRemote,
   updateAdminProgramRemote,
   updateAdminProgramPostRemote,
@@ -303,6 +307,22 @@ export async function putGeneralProgramPostAttachments(
   return putAdminProgramPostAttachmentsRemote(programId, postId, { fileObjectIds })
 }
 
+export async function fetchGeneralProgramPostReads(programId: string, postId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return fetchAdminProgramPostReadsRemote(programId, postId)
+}
+
+export async function createGeneralProgramPostUnreadReminder(
+  programId: string,
+  postId: string,
+  payload: { message?: string; memberIds?: number[] }
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return createAdminProgramPostUnreadReminderRemote(programId, postId, payload)
+}
+
 export async function fetchGeneralProgramSurveyResponses(
   programId: string,
   templateVersionId: string
@@ -350,10 +370,26 @@ export async function createGeneralProgramFormBinding(
   return createAdminProgramFormBindingRemote(programId, payload)
 }
 
+export async function updateGeneralProgramFormBinding(
+  programId: string,
+  bindingId: string,
+  payload: ProgramFormBindingRequest
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return updateAdminProgramFormBindingRemote(programId, bindingId, payload)
+}
+
 export async function deleteGeneralProgramFormBinding(programId: string, bindingId: string) {
   if (!shouldUseProgramsHttpRemoteApi()) return
   assertProgramsHttpRemoteReady()
   await deleteAdminProgramFormBindingRemote(programId, bindingId)
+}
+
+export async function createGeneralProgramSurveyShareLink(programId: string, bindingId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return createAdminProgramSurveyShareLinkRemote(programId, bindingId)
 }
 
 /** 강의평가 등 관리자 form response 제출. remote OFF면 null. */

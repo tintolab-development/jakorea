@@ -90,7 +90,7 @@ export function mapStudentRosterItemToRow(
     gradeClass: formatStudentGradeClass(item.grade, item.className) || '-',
     contact: item.maskedPhone?.trim() || undefined,
     email: item.maskedEmail?.trim() || undefined,
-    memberId: item.participantId,
+    participantId: item.participantId,
   }
 }
 

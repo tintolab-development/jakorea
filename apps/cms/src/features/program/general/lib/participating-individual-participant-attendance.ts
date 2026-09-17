@@ -69,7 +69,12 @@ function buildRowsFromParticipantSessions(
       session.round === index + 1
 
     return {
-      id: `att-${participant.id}-${index}`,
+      id:
+        session.resolvedScheduleId != null
+          ? String(session.resolvedScheduleId)
+          : `att-${participant.id}-${index}`,
+      scheduleId:
+        session.resolvedScheduleId != null ? String(session.resolvedScheduleId) : null,
       scheduleLabel: formatParticipatingIndividualParticipantAttendanceScheduleLabel(program, session),
       attendanceStatus: isWithdrawn
         ? 'withdrawn'

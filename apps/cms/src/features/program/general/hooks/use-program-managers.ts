@@ -22,6 +22,8 @@ import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1
 import type { ProgramManagerRow } from '@/features/program/general/model/program-managers'
 import { fetchAdminsPageRemote } from '@/features/user/api/members-api-client'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { getTempMockOrgProgramManagers } from '@/features/program/general/lib/temp-mock-org-program'
 import {
   canAssignProgramRoleToCmsAdmin,
   CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE,
@@ -44,9 +46,10 @@ export function useProgramManagers(
   listFilters: ProgramManagersUiFilters = EMPTY_MANAGERS_LIST_FILTERS
 ) {
   const remoteEnabled = useProgramsReadsRemoteEnabledForSurface(programId)
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
 
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled && Boolean(programId),
+    !remoteEnabled && Boolean(programId) && !isTempMockProgram,
     'general-program-managers',
     '프로그램 담당자'
   )
@@ -91,7 +94,9 @@ export function useProgramManagers(
   })
 
   const managers = useMemo((): ProgramManagerRow[] => {
-    if (!programId || !remoteEnabled) return []
+    if (!programId) return []
+    if (isTempMockProgram) return getTempMockOrgProgramManagers(programId)
+    if (!remoteEnabled) return []
     if (listQuery.isError) return []
     const rows = listQuery.data ?? []
     const candidateByAdminId = new Map(
@@ -109,7 +114,7 @@ export function useProgramManagers(
         cmsRoleCode: candidate.cmsRoleCode,
       }
     })
-  }, [candidatesQuery.data, listQuery.data, listQuery.isError, programId, remoteEnabled])
+  }, [candidatesQuery.data, isTempMockProgram, listQuery.data, listQuery.isError, programId, remoteEnabled])
 
   const invalidateManagers = useCallback(async () => {
     if (!programId) return
@@ -175,8 +180,12 @@ export function useProgramManagers(
 
   return {
     managers,
-    loading: remoteEnabled ? listQuery.isLoading || listQuery.isFetching : false,
-    isRemoteDataSource: remoteEnabled && !listQuery.isError,
+    loading: isTempMockProgram
+      ? false
+      : remoteEnabled
+        ? listQuery.isLoading || listQuery.isFetching
+        : false,
+    isRemoteDataSource: !isTempMockProgram && remoteEnabled && !listQuery.isError,
     isMutating:
       addMutation.isPending || updateRoleMutation.isPending || deleteMutation.isPending,
     isUpdatingRole: updateRoleMutation.isPending,

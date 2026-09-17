@@ -1,5 +1,5 @@
 /**
- * 참여 강사 풀페이지 — 기관 배정 현황 탭용 목 데이터
+ * 참여 강사 풀페이지 — 기관 배정 현황 탭
  */
 
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
@@ -12,31 +12,14 @@ import {
   buildParticipatingSchoolPreferredScheduleLines,
   buildParticipatingSchoolSessionLines,
 } from './participating-school-session-display'
-import { isGeneralInstitutionCaseProgramId } from './general-institution-case-roster'
+import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
+import { isTempMockOrgProgressInstructorId } from '@/features/program/general/lib/temp-mock-org-program'
 
 function hash(s: string): number {
   let h = 0
   for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i)
   return Math.abs(h)
 }
-
-function pick<T>(arr: T[], seed: number): T {
-  return arr[seed % arr.length]
-}
-
-const ASSIGNED_DISTANCES = ['3km', '5km', '7km', '4km', '6km', '8km']
-
-const WAITING_ASSIGNMENT_STATUSES = [
-  'waiting',
-  'assigned',
-  'waiting',
-  'assigned',
-  'cancelled',
-  'assigned',
-  'waiting',
-] as const
-
-const WAITING_DISTANCES = ['2km', '4km', '6km', '5km', '7km', '32km', '12km']
 
 export type InstructorWaitingAssignmentStatus = 'waiting' | 'cancelled' | 'assigned'
 
@@ -61,6 +44,13 @@ export interface InstructorAssignedSchoolRow {
   region: string
   distanceFromHome: string
   educationScheduleLines: string[]
+  /** remote — cancel / representative */
+  assignmentId?: string
+  assignmentIds?: string[]
+  instructorMemberId?: string
+  scheduleId?: string
+  organizationApplicationId?: string
+  schoolId?: string
 }
 
 export interface InstructorWaitingSchoolRow {
@@ -76,6 +66,13 @@ export interface InstructorWaitingSchoolRow {
   educationScheduleLines: string[]
   assignmentStatus: InstructorWaitingAssignmentStatus
   assignedInstructorCountLabel: string
+  /** assignment create API */
+  organizationApplicationId?: string
+  instructorApplicationId?: string
+  instructorMemberId?: string
+  requestedScheduleId?: number
+  resolvedScheduleId?: number | null
+  scheduleUnresolved?: boolean
 }
 
 function countInstructorsAtSchool(
@@ -114,7 +111,7 @@ function scheduleGroupsForSchool(
   }))
 }
 
-/** 배정된 학교 3건 목업: 강사의 schoolName 학교 필수 포함 + 나머지 2교 */
+/** 배정된 학교 — instructor.schoolName / assignedOrganizationNames 에 실제 매칭되는 기관만 */
 export function buildInitialAssignedSchoolRows(
   instructor: ParticipatingInstructorRow,
   schools: ParticipatingSchoolRow[],
@@ -122,22 +119,27 @@ export function buildInitialAssignedSchoolRows(
 ): InstructorAssignedSchoolRow[] {
   if (schools.length === 0) return []
 
-  const seed = hash(instructor.id)
-  const primary =
-    schools.find(s => s.schoolName === instructor.schoolName) ?? schools[seed % schools.length]
-
-  const rest = schools.filter(s => s.id !== primary.id)
-  const sortedRest = [...rest].sort(
-    (a, b) => hash(a.id + instructor.id) - hash(b.id + instructor.id)
+  const assignedNames = new Set(
+    [instructor.schoolName, ...(instructor.assignedOrganizationNames ?? [])]
+      .map(name => name?.trim())
+      .filter((name): name is string => Boolean(name))
   )
+
+  let pickedSchools = schools.filter(school => assignedNames.has(school.schoolName))
+
   // TODO(temp-mock): 열여라 참깨 — 참여 강사·배정 현황 검증 후 삭제
-  const isTemporaryInstructor = instructor.id.startsWith('temp-progress-instructor-')
-  const pickedSchools = isGeneralInstitutionCaseProgramId(primary.programId) || isTemporaryInstructor
-    ? [primary]
-    : [primary, ...sortedRest.slice(0, 2)]
+  const isTemporaryInstructor =
+    isGeneralProgramTempMockEnabled() &&
+    (isTempMockOrgProgressInstructorId(instructor.id) ||
+      instructor.id.startsWith('temp-progress-instructor-'))
+  if (pickedSchools.length === 0 && isTemporaryInstructor) {
+    const seed = hash(instructor.id)
+    const primary =
+      schools.find(s => s.schoolName === instructor.schoolName) ?? schools[seed % schools.length]
+    pickedSchools = primary ? [primary] : []
+  }
 
   return pickedSchools.map((school, idx) => {
-    const rowSeed = hash(school.id + instructor.id)
     return {
       id: school.id,
       no: pickedSchools.length - idx,
@@ -145,7 +147,7 @@ export function buildInitialAssignedSchoolRows(
       schoolName: school.schoolName,
       educationGrade: school.educationGrade,
       region: school.region,
-      distanceFromHome: pick(ASSIGNED_DISTANCES, rowSeed + idx),
+      distanceFromHome: '-',
       educationScheduleLines: scheduleLinesForSchool(school),
     }
   })
@@ -167,21 +169,21 @@ export function buildWaitingSchoolRows(
 
   return sortWaitingRowsAssignedToBottom(
     slice.map((school, idx) => {
-      const rowSeed = hash(school.id + instructor.id)
       return {
         id: school.id,
         no: n - idx,
         schoolName: school.schoolName,
         desiredGrade: school.educationGrade,
         region: school.region,
-        distanceFromHome: pick(WAITING_DISTANCES, rowSeed + idx),
+        distanceFromHome: '-',
         educationScheduleLines: scheduleLinesForSchool(school),
         // TODO(temp-mock): 열여라 참깨 — 배정 대기/불가/완료 검증 후 삭제
-        assignmentStatus: instructor.id.startsWith('temp-progress-instructor-')
-          ? (['waiting', 'cancelled', 'assigned'] as const)[idx % 3]
-          : isGeneralInstitutionCaseProgramId(school.programId)
-          ? (['waiting', 'cancelled', 'assigned'] as const)[idx % 3]
-          : pick([...WAITING_ASSIGNMENT_STATUSES], rowSeed + idx),
+        assignmentStatus:
+          isGeneralProgramTempMockEnabled() &&
+          (isTempMockOrgProgressInstructorId(instructor.id) ||
+            instructor.id.startsWith('temp-progress-instructor-'))
+            ? (['waiting', 'cancelled', 'assigned'] as const)[idx % 3]
+            : ('waiting' as const),
         assignedInstructorCountLabel: instructorCountLabel(school.schoolName, instructorList),
       }
     })
@@ -190,7 +192,7 @@ export function buildWaitingSchoolRows(
 
 /** 1사1교 — 신청 기관 + 신청 일정별 배정 대기 행 */
 export function buildWaitingSchoolScheduleRows(
-  instructor: ParticipatingInstructorRow,
+  _instructor: ParticipatingInstructorRow,
   schools: ParticipatingSchoolRow[],
   instructorList: ParticipatingInstructorRow[],
   assignedSchoolIds: Set<string>
@@ -199,20 +201,10 @@ export function buildWaitingSchoolScheduleRows(
   const pool = schools.filter(s => !assignedSchoolIds.has(s.id))
 
   for (const school of pool) {
-    const rowSeed = hash(school.id + instructor.id + 'w-schedule')
     const groups = scheduleGroupsForSchool(school)
-    const sourceGroups =
-      groups.length > 0
-        ? groups
-        : [
-            {
-              scheduleKey: `${school.id}|fallback`,
-              sessions: [] as ParticipatingSchoolSession[],
-              line: scheduleLinesForSchool(school)[0] ?? '-',
-            },
-          ]
+    if (groups.length === 0) continue
 
-    sourceGroups.forEach((group, index) => {
+    groups.forEach(group => {
       rows.push({
         id: `${school.id}__${group.scheduleKey}`,
         schoolId: school.id,
@@ -222,9 +214,9 @@ export function buildWaitingSchoolScheduleRows(
         schoolName: school.schoolName,
         desiredGrade: school.educationGrade,
         region: school.region,
-        distanceFromHome: pick(WAITING_DISTANCES, rowSeed + index),
+        distanceFromHome: '-',
         educationScheduleLines: [group.line],
-        assignmentStatus: pick(['waiting', 'waiting', 'cancelled'] as const, rowSeed + index),
+        assignmentStatus: 'waiting',
         assignedInstructorCountLabel: instructorCountLabel(school.schoolName, instructorList),
       })
     })
@@ -235,13 +227,12 @@ export function buildWaitingSchoolScheduleRows(
 
 export function schoolRowToAssignedRow(
   school: ParticipatingSchoolRow,
-  instructor: ParticipatingInstructorRow,
+  _instructor: ParticipatingInstructorRow,
   _instructorList: ParticipatingInstructorRow[],
   no: number,
   role: InstructorRoleKey,
-  idx: number
+  _idx: number
 ): InstructorAssignedSchoolRow {
-  const rowSeed = hash(school.id + instructor.id)
   return {
     id: school.id,
     no,
@@ -249,26 +240,25 @@ export function schoolRowToAssignedRow(
     schoolName: school.schoolName,
     educationGrade: school.educationGrade,
     region: school.region,
-    distanceFromHome: pick(ASSIGNED_DISTANCES, rowSeed + idx),
+    distanceFromHome: '-',
     educationScheduleLines: scheduleLinesForSchool(school),
   }
 }
 
 export function createWaitingRowForSchool(
   school: ParticipatingSchoolRow,
-  instructor: ParticipatingInstructorRow,
+  _instructor: ParticipatingInstructorRow,
   instructorList: ParticipatingInstructorRow[],
   no: number,
   assignmentStatus: InstructorWaitingAssignmentStatus = 'waiting'
 ): InstructorWaitingSchoolRow {
-  const rowSeed = hash(school.id + instructor.id + 'back')
   return {
     id: school.id,
     no,
     schoolName: school.schoolName,
     desiredGrade: school.educationGrade,
     region: school.region,
-    distanceFromHome: pick(WAITING_DISTANCES, rowSeed),
+    distanceFromHome: '-',
     educationScheduleLines: scheduleLinesForSchool(school),
     assignmentStatus,
     assignedInstructorCountLabel: instructorCountLabel(school.schoolName, instructorList),
@@ -285,4 +275,104 @@ export function renumberWaitingRows(rows: InstructorWaitingSchoolRow[]): Instruc
   const sorted = sortWaitingRowsAssignedToBottom(rows)
   const n = sorted.length
   return sorted.map((r, i) => ({ ...r, no: n - i }))
+}
+
+/** TODO(temp-mock): 참여 강사 상세 — 로컬 기관 배정 */
+export function applyLocalParticipatingInstructorAssign(input: {
+  assignedSchools: InstructorAssignedSchoolRow[]
+  waitingSchools: InstructorWaitingSchoolRow[]
+  rowsToAssign: InstructorWaitingSchoolRow[]
+  instructor: ParticipatingInstructorRow
+  schoolRows: ParticipatingSchoolRow[]
+  instructorList: ParticipatingInstructorRow[]
+  role: InstructorRoleKey
+}): {
+  assignedSchools: InstructorAssignedSchoolRow[]
+  waitingSchools: InstructorWaitingSchoolRow[]
+} {
+  const assignIds = new Set(input.rowsToAssign.map(row => row.id))
+  const assignedSchoolIds = new Set(input.assignedSchools.map(row => row.id))
+  const nextWaiting = renumberWaitingRows(
+    input.waitingSchools.filter(row => !assignIds.has(row.id))
+  )
+  const nextAssigned = [...input.assignedSchools]
+  let hasLead = nextAssigned.some(row => row.role === 'lead')
+
+  for (const waitingRow of input.rowsToAssign) {
+    const schoolId = waitingRow.schoolId ?? waitingRow.id
+    if (assignedSchoolIds.has(schoolId)) continue
+    const school = input.schoolRows.find(item => item.id === schoolId)
+    if (!school) continue
+    const role: InstructorRoleKey =
+      !hasLead && input.role === 'lead' ? 'lead' : hasLead ? 'assistant' : input.role
+    if (role === 'lead') hasLead = true
+    nextAssigned.push(
+      schoolRowToAssignedRow(
+        school,
+        input.instructor,
+        input.instructorList,
+        nextAssigned.length + 1,
+        role,
+        nextAssigned.length
+      )
+    )
+    assignedSchoolIds.add(schoolId)
+  }
+
+  return {
+    assignedSchools: renumberAssignedRows(nextAssigned),
+    waitingSchools: nextWaiting,
+  }
+}
+
+/** TODO(temp-mock): 참여 강사 상세 — 로컬 기관 배정 취소 */
+export function applyLocalParticipatingInstructorUnassign(input: {
+  assignedSchools: InstructorAssignedSchoolRow[]
+  waitingSchools: InstructorWaitingSchoolRow[]
+  selectedAssignedIds: string[]
+  instructor: ParticipatingInstructorRow
+  schoolRows: ParticipatingSchoolRow[]
+  instructorList: ParticipatingInstructorRow[]
+}): {
+  assignedSchools: InstructorAssignedSchoolRow[]
+  waitingSchools: InstructorWaitingSchoolRow[]
+} {
+  const removeIds = new Set(input.selectedAssignedIds)
+  const removedRows = input.assignedSchools.filter(row => removeIds.has(row.id))
+  const nextAssigned = renumberAssignedRows(
+    input.assignedSchools.filter(row => !removeIds.has(row.id))
+  )
+  const waitingSchoolIds = new Set(
+    input.waitingSchools.map(row => row.schoolId ?? row.id)
+  )
+  const restoredWaiting = [...input.waitingSchools]
+
+  for (const removed of removedRows) {
+    if (waitingSchoolIds.has(removed.id)) continue
+    const school = input.schoolRows.find(item => item.id === removed.id)
+    if (!school) continue
+    restoredWaiting.push(
+      createWaitingRowForSchool(school, input.instructor, input.instructorList, 0, 'waiting')
+    )
+    waitingSchoolIds.add(school.id)
+  }
+
+  return {
+    assignedSchools: nextAssigned,
+    waitingSchools: renumberWaitingRows(restoredWaiting),
+  }
+}
+
+/** TODO(temp-mock): 참여 강사·기관 상세 — 대표 강사 로컬 변경 */
+export function applyLocalInstructorLeadRoleChange<T extends { id: string; role: InstructorRoleKey }>(
+  rows: T[],
+  instructorId: string,
+  newRole: InstructorRoleKey
+): T[] {
+  if (newRole !== 'lead') return rows
+  return rows.map(row => {
+    if (row.id === instructorId) return { ...row, role: 'lead' as const }
+    if (row.role === 'lead') return { ...row, role: 'assistant' as const }
+    return row
+  })
 }

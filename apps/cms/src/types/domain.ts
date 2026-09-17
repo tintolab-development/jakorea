@@ -395,6 +395,8 @@ export interface Program {
   businessArea?: string // 사업분야
   titleEn?: string // 프로그램명(영문)
   mainTitle?: string // 대표 프로그램명(국문)
+  /** 세부 프로그램 마스터 ID (`GET/POST programs.detailedProgramId`) */
+  detailedProgramId?: string
   textbookName?: string // 교재명(국문)
   textbookNameEn?: string // 교재명(영문)
   schoolId?: UUID // 학교명 (기관) - Application을 통해 연결
@@ -1003,6 +1005,10 @@ export interface ProgramPost {
   authorName: string
   /** 작성자 사용자 ID (선택, 프로필 연동용) */
   authorUserId?: UUID
+  /** remote: 작성 actor 유형 (ADMIN / MEMBER 등) */
+  createdByActorType?: string
+  /** remote: 작성 actor 숫자 ID — 본인 글 판별 */
+  createdByActorId?: number
   title?: string
   content: string
   /** 읽음 여부 (수강자/회원 관점) — 미읽음이면 민트 스트로크 + "읽지 않음" 태그 */

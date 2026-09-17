@@ -90,6 +90,10 @@ export async function downloadPaymentStatementRemote(
   return unwrapApiBody(await settlementApi.downloadPaymentStatement(settlementId))
 }
 
+export async function fetchPaymentStatementRenderDataRemote(settlementId: number) {
+  return unwrapApiBody(await settlementApi.paymentStatementRenderData(settlementId))
+}
+
 /** settlement-api — PATCH .../statements/{statementId}/reject (notificationType OpenAPI 반영) */
 export async function rejectPaymentStatementRemote(
   statementId: number,
@@ -105,18 +109,40 @@ export async function requestSettlementCorrectionRemote(
   await settlementApi.requestCorrection(settlementId, body)
 }
 
-/** 선택 정산 건 지급조서 ZIP — cms-table-bulk-download §5.1 #6 */
+/** 선택 정산 건 지급조서 ZIP — OpenAPI `POST …/payment-statements/bulk-download/jobs` */
 export async function bulkDownloadPaymentStatementsRemote(body: {
   settlementIds: number[]
 }): Promise<BulkDownloadEndpointResponse> {
-  return unwrapApiBody(
-    await customInstance<BulkDownloadEndpointResponse>({
-      url: '/api/admin/settlements/payment-statements/bulk-download',
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      data: body,
-    })
-  )
+  const job = unwrapApiBody(
+    await settlementApi.paymentStatements({ settlementIds: body.settlementIds })
+  ) as import('@/shared/api/generated/settlement/schemas/bulkDownloadJobResponse').BulkDownloadJobResponse
+
+  const status = (job.status ?? '').trim().toUpperCase()
+  if (status === 'CLIENT_RENDER_REQUIRED') {
+    throw new Error('CLIENT_RENDER_REQUIRED')
+  }
+
+  const fileObjectId = job.zipJob?.fileObjectId ?? job.fileObjectIds?.[0]
+  if (fileObjectId != null) {
+    const { getFileDownload } = await import('@/shared/lib/admin-file-upload')
+    const resolved = await getFileDownload(fileObjectId)
+    const url = resolved.downloadUrl?.trim()
+    if (url) return { downloadEndpoint: url }
+  }
+
+  // 레거시 hand-wrap path (스펙 외) — 서버가 아직 jobs만 지원하면 404 → 호출부 건별 fallback
+  try {
+    return unwrapApiBody(
+      await customInstance<BulkDownloadEndpointResponse>({
+        url: '/api/admin/settlements/payment-statements/bulk-download',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        data: body,
+      })
+    )
+  } catch {
+    throw new Error('지급조서 일괄 다운로드 URL이 없습니다.')
+  }
 }
 
 export async function resolvePaymentStatementIdForSettlement(

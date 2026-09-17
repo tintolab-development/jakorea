@@ -68,6 +68,7 @@ import type { InstructorLectureAssignItem } from '@/features/program/general/lib
 import type { Program } from '@/types/domain'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { useGeneralProgramApplicationsRemoteSync } from '@/features/program/general/hooks/use-general-program-applications-remote-sync'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherOrganizationApplicationsRemoteSync } from '@/features/program/trained-teachers/api/organization-applications-hooks'
 import {
@@ -218,7 +219,9 @@ export function useApplicantsDetail({
     ? trainedTeacherApplicationsRemote
     : applicationsRemote
   useNotifyProgramApiUnavailableOnce(
-    !institutionApplicationsRemote.remoteEnabled && !applicationsRemote.remoteEnabled,
+    !institutionApplicationsRemote.remoteEnabled &&
+      !applicationsRemote.remoteEnabled &&
+      !isGeneralProgramTempMockProgramId(programId),
     'program-applicants-list',
     '프로그램 신청'
   )
@@ -580,15 +583,22 @@ export function useApplicantsDetail({
     setPendingFilters,
   ])
 
-  /** 강사 신청 목록 — remote off이면 빈 목록 */
+  /** 강사 신청 목록 — remote off이면 빈 목록 (FE mock 프로그램은 시드 유지) */
   useEffect(() => {
     if (menu !== 'instructors' || instructorColumnPreset !== 'general-detail') return
     if (applicationsRemote.instructorRemoteEnabled) return
+    if (isGeneralProgramTempMockProgramId(programId)) return
     setInstructorList([])
     setPendingFilters({})
     setAppliedFilters({})
     setSelectedRowKeys([])
-  }, [menu, instructorColumnPreset, applicationsRemote.instructorRemoteEnabled, setPendingFilters])
+  }, [
+    menu,
+    instructorColumnPreset,
+    applicationsRemote.instructorRemoteEnabled,
+    programId,
+    setPendingFilters,
+  ])
 
   const prevViewModeRef = useRef(viewMode)
   useEffect(() => {
@@ -1015,7 +1025,13 @@ export function useApplicantsDetail({
   }
 
   const handleCancelApprovalInstructor = async (id: string, reason = '승인 취소') => {
-    if (!applicationsRemote.instructorRemoteEnabled) return false
+    if (!applicationsRemote.instructorRemoteEnabled) {
+      notifyProgramApiUnavailable(
+        'general-instructor-application-cancel-approval',
+        '일반 프로그램 · 강사 신청 승인 취소'
+      )
+      return false
+    }
     try {
       await applicationsRemote.cancelInstructorApproval(id, reason)
       await applicationsRemote.invalidateApplications()

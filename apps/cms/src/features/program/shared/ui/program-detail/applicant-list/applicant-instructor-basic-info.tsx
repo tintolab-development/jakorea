@@ -16,6 +16,7 @@ import {
   displayServerPiiAsIs,
   PrivacyHomeAddressDisplay,
 } from '@/features/program/shared/lib/program-pii-display'
+import { LectureFeeBasisView } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-fee-fields'
 import './applicant-instructor-basic-info.css'
 
 const APPROVAL_STATUS_LABELS: Record<ApplicantInstructorRow['approvalStatus'], string> = {
@@ -355,7 +356,7 @@ export function ApplicantInstructorBasicInfo({
                   강의비 책정 기준
                 </th>
                 <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
-                  {instructor.lectureFeeBasisDisplay ?? '-'}
+                  <LectureFeeBasisView instructor={instructor} />
                 </td>
                 <th
                   scope="row"

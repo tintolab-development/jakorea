@@ -28,6 +28,8 @@ export const PARTICIPATING_INDIVIDUAL_PARTICIPANT_SESSION_PROGRESS_LABELS: Recor
 
 export type ParticipatingIndividualParticipantAttendanceRow = {
   id: string
+  /** program-schedules PK — bulk-upsert 대상. 없으면 저장 불가 */
+  scheduleId?: string | null
   scheduleLabel: string
   attendanceStatus: ParticipatingIndividualParticipantAttendanceStatus
   lateTime?: string

@@ -1,0 +1,1057 @@
+[
+  {
+    "member": {
+      "memberId": 190022,
+      "uuid": "qa-roster-22-instructor-lee-gangsa",
+      "email": "qa.instructor.lee.gangsa@tinto.co.kr",
+      "name": "이강사",
+      "phone": "01012349472",
+      "birthDate": "1990-07-21",
+      "gender": "FEMALE",
+      "status": "ACTIVE",
+      "loginEnabled": true,
+      "identityVerified": true,
+      "preRegistered": false,
+      "createdByAdmin": true,
+      "under14": false,
+      "guardianConsentRequired": false,
+      "external1365Id": null,
+      "roles": ["INSTRUCTOR"],
+      "identitySelfSignupCompletedAfterAdminRegistration": false,
+      "adminRegisteredNoticeVisible": true,
+      "socialAccounts": [],
+      "scheduleChangeCount": 0,
+      "scheduleCancelCount": 0,
+      "scheduleChangeCancelCount": 0,
+      "joinedAt": "2026-09-17T12:00:00.000000Z",
+      "lastLoginAt": null,
+      "createdAt": "2026-09-17T12:00:00.000000Z",
+      "updatedAt": "2026-09-17T12:00:00.000000Z"
+    },
+    "profile": {
+      "memberType": "GENERAL",
+      "status": "ACTIVE",
+      "affiliation": { "organizationNames": ["JA 강사단"] },
+      "instructorCareerSummary": "초등 고학년 경제교육 9년, 학급 활동·보드게임 수업 특화",
+      "oneLineIntro": "놀이로 익히는 초등 경제 수업",
+      "homeAddress": { "line": "경기도 성남시 분당구 판교로 1", "detail": "202동 805호" },
+      "education": {
+        "highestSchoolType": "college4",
+        "highestStatus": "graduated",
+        "detailKeys": ["high", "college4"],
+        "highSchool": { "admitYear": "2006", "gradYear": "2009", "schoolName": "분당대진고등학교", "major": "" },
+        "college4": [{ "admitYear": "2009", "gradYear": "2013", "schoolName": "이화여자대학교", "major": "사회과교육과" }]
+      },
+      "career": {
+        "level": "experienced",
+        "summaryYears": "9년",
+        "rows": [
+          { "companyName": "JA Korea", "roleName": "전임 강사", "periodStart": "2018-03", "periodEnd": "", "currentlyEmployed": true },
+          { "companyName": "성남시 청소년수련관", "roleName": "경제교육 강사", "periodStart": "2014-03", "periodEnd": "2018-02", "currentlyEmployed": false }
+        ]
+      },
+      "jaKoreaActivities": [
+        { "periodStart": "2024-03", "periodEnd": "2024-11", "title": "초등 5~6학년 방문 강의", "note": "경기·서울 학급 주강사" },
+        { "periodStart": "2022-04", "periodEnd": "2022-10", "title": "학부모 금융교육 특강", "note": "방과후 학부모 대상 2회" }
+      ],
+      "licenses": [
+        { "acquiredYear": "2013", "title": "중등학교 정교사 2급(사회)", "issuer": "교육부" },
+        { "acquiredYear": "2017", "title": "초등 경제교육 지도자 과정", "issuer": "한국경제교육학회" }
+      ],
+      "awards": [
+        { "acquiredYear": "2022", "title": "우수 수업 사례상", "issuer": "JA Korea" }
+      ],
+      "essays": {
+        "freeWrite1": "교대·사범 과정에서 배운 수업 설계를 학교 방문 강의에 적용하고 있습니다. 학생 참여도가 높은 활동형 수업을 지향합니다.",
+        "freeWrite2": "보드게임·역할극으로 수요·공급, 예산 잡기를 체험하게 한 뒤 활동지로 개념을 정리합니다.",
+        "freeWrite3": "초등 고학년 학급 수업과 학부모 특강을 주로 진행했습니다.",
+        "freeWrite4": "수업 전 교실 기자재와 합반 여부를 확인하고, 수업 후 활동 사진을 담당교사와 공유합니다."
+      },
+      "defaultFeeGrade": "GRADE_1",
+      "defaultJaGrade": "C"
+    },
+    "settlement": {
+      "bankName": "신한은행",
+      "accountNumber": "110123456789",
+      "accountHolder": "이강사",
+      "businessIncome": true,
+      "bankAccounts": [
+        { "bankName": "신한은행", "accountNumber": "110123456789", "accountHolder": "이강사", "current": true }
+      ]
+    },
+    "certifications": [
+      { "certificationName": "중등학교 정교사 2급(사회)", "issuer": "교육부", "issuedDate": "2013-02-01", "current": true },
+      { "certificationName": "초등 경제교육 지도자 과정", "issuer": "한국경제교육학회", "issuedDate": "2017-08-01" }
+    ],
+    "termsAgreements": []
+  },
+  {
+    "member": {
+      "memberId": 190023,
+      "uuid": "qa-roster-23-instructor-park-educ",
+      "email": "qa.instructor.park.educ@tinto.co.kr",
+      "name": "박교육",
+      "phone": "01012349473",
+      "birthDate": "1985-11-03",
+      "gender": "MALE",
+      "status": "ACTIVE",
+      "loginEnabled": true,
+      "identityVerified": true,
+      "preRegistered": false,
+      "createdByAdmin": true,
+      "under14": false,
+      "guardianConsentRequired": false,
+      "external1365Id": null,
+      "roles": ["INSTRUCTOR"],
+      "identitySelfSignupCompletedAfterAdminRegistration": false,
+      "adminRegisteredNoticeVisible": true,
+      "socialAccounts": [],
+      "scheduleChangeCount": 0,
+      "scheduleCancelCount": 0,
+      "scheduleChangeCancelCount": 0,
+      "joinedAt": "2026-09-17T12:00:00.000000Z",
+      "lastLoginAt": null,
+      "createdAt": "2026-09-17T12:00:00.000000Z",
+      "updatedAt": "2026-09-17T12:00:00.000000Z"
+    },
+    "profile": {
+      "memberType": "GENERAL",
+      "status": "ACTIVE",
+      "affiliation": { "organizationNames": ["JA 강사단"] },
+      "instructorCareerSummary": "중·고등 금융교육 15년, 진로·창업 연계 수업 다수",
+      "oneLineIntro": "진로와 연결하는 중등 금융 교육",
+      "homeAddress": { "line": "인천광역시 연수구 송도대로 1", "detail": "오피스텔 1502호" },
+      "education": {
+        "highestSchoolType": "graduate",
+        "highestStatus": "graduated",
+        "detailKeys": ["high", "college4", "graduate"],
+        "highSchool": { "admitYear": "2001", "gradYear": "2004", "schoolName": "제물포고등학교", "major": "" },
+        "college4": [{ "admitYear": "2004", "gradYear": "2008", "schoolName": "연세대학교", "major": "경영학과" }],
+        "graduate": [
+          { "admitYear": "2008", "gradYear": "2010", "schoolName": "연세대학교 대학원", "major": "경영학과", "degree": "master" }
+        ]
+      },
+      "career": {
+        "level": "experienced",
+        "summaryYears": "15년",
+        "rows": [
+          { "companyName": "JA Korea", "roleName": "시니어 강사", "periodStart": "2016-09", "periodEnd": "", "currentlyEmployed": true },
+          { "companyName": "미래에셋증권", "roleName": "리테일영업부 과장", "periodStart": "2010-03", "periodEnd": "2016-08", "currentlyEmployed": false }
+        ]
+      },
+      "jaKoreaActivities": [
+        { "periodStart": "2025-03", "periodEnd": "2025-12", "title": "고등 금융이해력 집중과정", "note": "인천·경기 고등학교 순회" },
+        { "periodStart": "2023-05", "periodEnd": "2023-11", "title": "중등 창업 체험 캠프", "note": "2박 3일 캠프 멘토" },
+        { "periodStart": "2021-04", "periodEnd": "2021-10", "title": "교사 직무연수 강사", "note": "금융소비자보호 과정" }
+      ],
+      "licenses": [
+        { "acquiredYear": "2011", "title": "투자자산운용사", "issuer": "금융투자협회" },
+        { "acquiredYear": "2012", "title": "AFPK", "issuer": "한국FPSB" },
+        { "acquiredYear": "2018", "title": "중등 진로교육 전문가 과정", "issuer": "한국직업능력연구원" }
+      ],
+      "awards": [
+        { "acquiredYear": "2024", "title": "최우수 강사상", "issuer": "JA Korea" },
+        { "acquiredYear": "2019", "title": "청소년 금융교육 공로상", "issuer": "금융감독원" }
+      ],
+      "essays": {
+        "freeWrite1": "증권사 근무 경험을 학교 수업에 녹여, 실제 금융상품과 리스크를 눈높이에 맞게 설명합니다.",
+        "freeWrite2": "사례 토론 → 모의투자 활동 → 성찰 일지로 수업을 구성합니다.",
+        "freeWrite3": "중·고등 정규 수업과 캠프형 집중과정을 모두 진행했습니다.",
+        "freeWrite4": "평가 루브릭을 미리 공유하고, 수업 후 교사 피드백을 다음 회차에 반영합니다."
+      },
+      "defaultFeeGrade": "GRADE_1",
+      "defaultJaGrade": "B"
+    },
+    "settlement": {
+      "bankName": "우리은행",
+      "accountNumber": "1002123456789",
+      "accountHolder": "박교육",
+      "businessIncome": true,
+      "bankAccounts": [
+        { "bankName": "우리은행", "accountNumber": "1002123456789", "accountHolder": "박교육", "current": true }
+      ]
+    },
+    "certifications": [
+      { "certificationName": "투자자산운용사", "issuer": "금융투자협회", "issuedDate": "2011-05-01", "current": true },
+      { "certificationName": "AFPK", "issuer": "한국FPSB", "issuedDate": "2012-09-01" },
+      { "certificationName": "중등 진로교육 전문가 과정", "issuer": "한국직업능력연구원", "issuedDate": "2018-07-01" }
+    ],
+    "termsAgreements": []
+  },
+  {
+    "member": {
+      "memberId": 190024,
+      "uuid": "qa-roster-24-instructor-jung-hyunwoo",
+      "email": "qa.instructor.jung.hyunwoo@tinto.co.kr",
+      "name": "정현우",
+      "phone": "01012349474",
+      "birthDate": "1994-02-18",
+      "gender": "MALE",
+      "status": "ACTIVE",
+      "loginEnabled": true,
+      "identityVerified": true,
+      "preRegistered": false,
+      "createdByAdmin": true,
+      "under14": false,
+      "guardianConsentRequired": false,
+      "external1365Id": null,
+      "roles": ["INSTRUCTOR"],
+      "identitySelfSignupCompletedAfterAdminRegistration": false,
+      "adminRegisteredNoticeVisible": true,
+      "socialAccounts": [],
+      "scheduleChangeCount": 0,
+      "scheduleCancelCount": 0,
+      "scheduleChangeCancelCount": 0,
+      "joinedAt": "2026-09-17T12:00:00.000000Z",
+      "lastLoginAt": null,
+      "createdAt": "2026-09-17T12:00:00.000000Z",
+      "updatedAt": "2026-09-17T12:00:00.000000Z"
+    },
+    "profile": {
+      "memberType": "GENERAL",
+      "status": "ACTIVE",
+      "affiliation": { "organizationNames": ["JA 강사단"] },
+      "instructorCareerSummary": "초등 저학년·특수교육 학급 협력 수업 6년",
+      "oneLineIntro": "쉬운 말로 전하는 초등 저학년 경제",
+      "homeAddress": { "line": "서울특별시 마포구 월드컵북로 400", "detail": "3층" },
+      "education": {
+        "highestSchoolType": "college4",
+        "highestStatus": "graduated",
+        "detailKeys": ["high", "college4"],
+        "highSchool": { "admitYear": "2010", "gradYear": "2013", "schoolName": "서울예술고등학교", "major": "" },
+        "college4": [{ "admitYear": "2013", "gradYear": "2017", "schoolName": "서울교육대학교", "major": "초등교육과" }]
+      },
+      "career": {
+        "level": "experienced",
+        "summaryYears": "6년",
+        "rows": [
+          { "companyName": "JA Korea", "roleName": "방문 강사", "periodStart": "2021-03", "periodEnd": "", "currentlyEmployed": true },
+          { "companyName": "서울시립어린이경제교육관", "roleName": "체험학습 해설사", "periodStart": "2017-09", "periodEnd": "2021-02", "currentlyEmployed": false }
+        ]
+      },
+      "jaKoreaActivities": [
+        { "periodStart": "2024-04", "periodEnd": "2024-10", "title": "초등 3~4학년 방문 강의", "note": "서울 서부 학급" },
+        { "periodStart": "2023-03", "periodEnd": "2023-12", "title": "통합학급 협력 수업", "note": "특수교육 교사와 코티칭" }
+      ],
+      "licenses": [
+        { "acquiredYear": "2017", "title": "초등학교 정교사 2급", "issuer": "교육부" },
+        { "acquiredYear": "2020", "title": "특수교육 이해 과정", "issuer": "국립특수교육원" }
+      ],
+      "awards": [
+        { "acquiredYear": "2023", "title": "포용 교육 우수상", "issuer": "JA Korea" }
+      ],
+      "essays": {
+        "freeWrite1": "초등 저학년이 이해하는 어휘와 시각 자료로 돈의 쓰임새를 가르칩니다.",
+        "freeWrite2": "그림 카드와 역할극으로 시장 놀이를 한 뒤 교실 규칙과 연결합니다.",
+        "freeWrite3": "일반 학급과 통합학급 협력 수업을 모두 진행했습니다.",
+        "freeWrite4": "수업 전 개별 지원이 필요한 학생 정보를 교사와 공유합니다."
+      },
+      "defaultFeeGrade": "GRADE_2",
+      "defaultJaGrade": "D"
+    },
+    "settlement": {
+      "bankName": "KB국민은행",
+      "accountNumber": "123601234567",
+      "accountHolder": "정현우",
+      "businessIncome": false,
+      "bankAccounts": [
+        { "bankName": "KB국민은행", "accountNumber": "123601234567", "accountHolder": "정현우", "current": true }
+      ]
+    },
+    "certifications": [
+      { "certificationName": "초등학교 정교사 2급", "issuer": "교육부", "issuedDate": "2017-02-01", "current": true },
+      { "certificationName": "특수교육 이해 과정", "issuer": "국립특수교육원", "issuedDate": "2020-11-01" }
+    ],
+    "termsAgreements": []
+  },
+  {
+    "member": {
+      "memberId": 190025,
+      "uuid": "qa-roster-25-instructor-yoon-seoyeon",
+      "email": "qa.instructor.yoon.seoyeon@tinto.co.kr",
+      "name": "윤서연",
+      "phone": "01012349475",
+      "birthDate": "1991-09-08",
+      "gender": "FEMALE",
+      "status": "ACTIVE",
+      "loginEnabled": true,
+      "identityVerified": true,
+      "preRegistered": false,
+      "createdByAdmin": true,
+      "under14": false,
+      "guardianConsentRequired": false,
+      "external1365Id": null,
+      "roles": ["INSTRUCTOR"],
+      "identitySelfSignupCompletedAfterAdminRegistration": false,
+      "adminRegisteredNoticeVisible": true,
+      "socialAccounts": [],
+      "scheduleChangeCount": 0,
+      "scheduleCancelCount": 0,
+      "scheduleChangeCancelCount": 0,
+      "joinedAt": "2026-09-17T12:00:00.000000Z",
+      "lastLoginAt": null,
+      "createdAt": "2026-09-17T12:00:00.000000Z",
+      "updatedAt": "2026-09-17T12:00:00.000000Z"
+    },
+    "profile": {
+      "memberType": "GENERAL",
+      "status": "ACTIVE",
+      "affiliation": { "organizationNames": ["JA 강사단"] },
+      "instructorCareerSummary": "기업 사회공헌 금융교육 8년, 1사1교 멘토링 다수",
+      "oneLineIntro": "기업 멘토와 함께하는 금융 수업",
+      "homeAddress": { "line": "서울특별시 종로구 세종대로 110", "detail": "본관 인근" },
+      "education": {
+        "highestSchoolType": "college4",
+        "highestStatus": "graduated",
+        "detailKeys": ["high", "college4"],
+        "highSchool": { "admitYear": "2007", "gradYear": "2010", "schoolName": "경기여자고등학교", "major": "" },
+        "college4": [{ "admitYear": "2010", "gradYear": "2014", "schoolName": "고려대학교", "major": "국제학부" }]
+      },
+      "career": {
+        "level": "experienced",
+        "summaryYears": "8년",
+        "rows": [
+          { "companyName": "JA Korea", "roleName": "프로그램 강사", "periodStart": "2019-01", "periodEnd": "", "currentlyEmployed": true },
+          { "companyName": "국내 시중은행 CSR팀", "roleName": "사회공헌 담당", "periodStart": "2014-07", "periodEnd": "2018-12", "currentlyEmployed": false }
+        ]
+      },
+      "jaKoreaActivities": [
+        { "periodStart": "2024-03", "periodEnd": "2024-12", "title": "1사1교 연계 방문 강의", "note": "기업 멘토 동행 수업" },
+        { "periodStart": "2022-09", "periodEnd": "2022-11", "title": "임직원 봉사 사전교육", "note": "기업 봉사자 오리엔테이션" }
+      ],
+      "licenses": [
+        { "acquiredYear": "2015", "title": "사회복지사 2급", "issuer": "보건복지부" },
+        { "acquiredYear": "2018", "title": "기업 사회공헌 실무 과정", "issuer": "한국사회복지협의회" }
+      ],
+      "awards": [
+        { "acquiredYear": "2021", "title": "파트너십 우수 강사", "issuer": "JA Korea" }
+      ],
+      "essays": {
+        "freeWrite1": "은행 CSR 경험을 바탕으로 기업 멘토와 학생을 잇는 수업을 설계합니다.",
+        "freeWrite2": "멘토 소개 → 직업 탐구 → 저축·소비 미션 순으로 진행합니다.",
+        "freeWrite3": "1사1교·임직원 봉사 사전교육을 주로 담당했습니다.",
+        "freeWrite4": "기업 측 일정과 학교 시수를 맞춰 사전 조율합니다."
+      },
+      "defaultFeeGrade": "GRADE_1",
+      "defaultJaGrade": "C"
+    },
+    "settlement": {
+      "bankName": "하나은행",
+      "accountNumber": "123890123456",
+      "accountHolder": "윤서연",
+      "businessIncome": true,
+      "bankAccounts": [
+        { "bankName": "하나은행", "accountNumber": "123890123456", "accountHolder": "윤서연", "current": true }
+      ]
+    },
+    "certifications": [
+      { "certificationName": "사회복지사 2급", "issuer": "보건복지부", "issuedDate": "2015-02-01", "current": true },
+      { "certificationName": "기업 사회공헌 실무 과정", "issuer": "한국사회복지협의회", "issuedDate": "2018-06-01" }
+    ],
+    "termsAgreements": []
+  },
+  {
+    "member": {
+      "memberId": 190026,
+      "uuid": "qa-roster-26-instructor-han-jihun",
+      "email": "qa.instructor.han.jihun@tinto.co.kr",
+      "name": "한지훈",
+      "phone": "01012349476",
+      "birthDate": "1987-05-27",
+      "gender": "MALE",
+      "status": "ACTIVE",
+      "loginEnabled": true,
+      "identityVerified": true,
+      "preRegistered": false,
+      "createdByAdmin": true,
+      "under14": false,
+      "guardianConsentRequired": false,
+      "external1365Id": null,
+      "roles": ["INSTRUCTOR"],
+      "identitySelfSignupCompletedAfterAdminRegistration": false,
+      "adminRegisteredNoticeVisible": true,
+      "socialAccounts": [],
+      "scheduleChangeCount": 0,
+      "scheduleCancelCount": 0,
+      "scheduleChangeCancelCount": 0,
+      "joinedAt": "2026-09-17T12:00:00.000000Z",
+      "lastLoginAt": null,
+      "createdAt": "2026-09-17T12:00:00.000000Z",
+      "updatedAt": "2026-09-17T12:00:00.000000Z"
+    },
+    "profile": {
+      "memberType": "GENERAL",
+      "status": "ACTIVE",
+      "affiliation": { "organizationNames": ["JA 강사단"] },
+      "instructorCareerSummary": "회계·세무 실무 기반 고등 경제 수업 11년",
+      "oneLineIntro": "숫자로 보는 생활 경제",
+      "homeAddress": { "line": "대전광역시 유성구 대학로 99", "detail": "상가 2층" },
+      "education": {
+        "highestSchoolType": "college4",
+        "highestStatus": "graduated",
+        "detailKeys": ["high", "college4"],
+        "highSchool": { "admitYear": "2003", "gradYear": "2006", "schoolName": "대전중앙고등학교", "major": "" },
+        "college4": [{ "admitYear": "2006", "gradYear": "2010", "schoolName": "충남대학교", "major": "회계학과" }]
+      },
+      "career": {
+        "level": "experienced",
+        "summaryYears": "11년",
+        "rows": [
+          { "companyName": "JA Korea", "roleName": "전문 강사", "periodStart": "2017-03", "periodEnd": "", "currentlyEmployed": true },
+          { "companyName": "한지훈세무회계사무소", "roleName": "세무사 보조 / 교육담당", "periodStart": "2011-01", "periodEnd": "2017-02", "currentlyEmployed": false }
+        ]
+      },
+      "jaKoreaActivities": [
+        { "periodStart": "2024-03", "periodEnd": "2024-11", "title": "고등 세금·예산 수업", "note": "대전·충청 고등학교" },
+        { "periodStart": "2020-05", "periodEnd": "2020-10", "title": "소상공인 대상 특강 보조", "note": "지역 상권 연계" }
+      ],
+      "licenses": [
+        { "acquiredYear": "2013", "title": "전산세무 2급", "issuer": "한국세무사회" },
+        { "acquiredYear": "2016", "title": "전산회계 1급", "issuer": "한국세무사회" }
+      ],
+      "awards": [
+        { "acquiredYear": "2022", "title": "실무 연계 수업 우수상", "issuer": "JA Korea" }
+      ],
+      "essays": {
+        "freeWrite1": "세무·회계 현장에서 본 사례로 세금과 가계부를 가르칩니다.",
+        "freeWrite2": "영수증 분류 활동과 간이 손익계산서를 학급에서 만들어 봅니다.",
+        "freeWrite3": "고등 정규 수업과 지역 특강을 진행했습니다.",
+        "freeWrite4": "숫자 부담이 큰 학급은 시각 자료 비중을 높입니다."
+      },
+      "defaultFeeGrade": "GRADE_2",
+      "defaultJaGrade": "C"
+    },
+    "settlement": {
+      "bankName": "NH농협은행",
+      "accountNumber": "3011234567890",
+      "accountHolder": "한지훈",
+      "businessIncome": true,
+      "bankAccounts": [
+        { "bankName": "NH농협은행", "accountNumber": "3011234567890", "accountHolder": "한지훈", "current": true }
+      ]
+    },
+    "certifications": [
+      { "certificationName": "전산세무 2급", "issuer": "한국세무사회", "issuedDate": "2013-04-01", "current": true },
+      { "certificationName": "전산회계 1급", "issuer": "한국세무사회", "issuedDate": "2016-10-01" }
+    ],
+    "termsAgreements": []
+  },
+  {
+    "member": {
+      "memberId": 190027,
+      "uuid": "qa-roster-27-instructor-oh-jieun",
+      "email": "qa.instructor.oh.jieun@tinto.co.kr",
+      "name": "오지은",
+      "phone": "01012349477",
+      "birthDate": "1996-12-01",
+      "gender": "FEMALE",
+      "status": "ACTIVE",
+      "loginEnabled": true,
+      "identityVerified": true,
+      "preRegistered": false,
+      "createdByAdmin": true,
+      "under14": false,
+      "guardianConsentRequired": false,
+      "external1365Id": null,
+      "roles": ["INSTRUCTOR"],
+      "identitySelfSignupCompletedAfterAdminRegistration": false,
+      "adminRegisteredNoticeVisible": true,
+      "socialAccounts": [],
+      "scheduleChangeCount": 0,
+      "scheduleCancelCount": 0,
+      "scheduleChangeCancelCount": 0,
+      "joinedAt": "2026-09-17T12:00:00.000000Z",
+      "lastLoginAt": null,
+      "createdAt": "2026-09-17T12:00:00.000000Z",
+      "updatedAt": "2026-09-17T12:00:00.000000Z"
+    },
+    "profile": {
+      "memberType": "GENERAL",
+      "status": "ACTIVE",
+      "affiliation": { "organizationNames": ["JA 강사단"] },
+      "instructorCareerSummary": "신입 강사, 보조 강의 및 캠프 스태프 2년",
+      "oneLineIntro": "또래 눈높이의 신규 경제 강사",
+      "homeAddress": { "line": "부산광역시 해운대구 센텀로 1", "detail": "808호" },
+      "education": {
+        "highestSchoolType": "college4",
+        "highestStatus": "graduated",
+        "detailKeys": ["high", "college4"],
+        "highSchool": { "admitYear": "2012", "gradYear": "2015", "schoolName": "해운대고등학교", "major": "" },
+        "college4": [{ "admitYear": "2015", "gradYear": "2020", "schoolName": "부산대학교", "major": "경제학과" }]
+      },
+      "career": {
+        "level": "new",
+        "summaryYears": "2년",
+        "rows": [
+          { "companyName": "JA Korea", "roleName": "보조 강사", "periodStart": "2024-03", "periodEnd": "", "currentlyEmployed": true },
+          { "companyName": "부산시 청소년재단", "roleName": "경제캠프 스태프", "periodStart": "2022-07", "periodEnd": "2023-08", "currentlyEmployed": false }
+        ]
+      },
+      "jaKoreaActivities": [
+        { "periodStart": "2024-04", "periodEnd": "2024-11", "title": "초등 방문 강의 보조", "note": "주강사 수업 보조·활동 진행" },
+        { "periodStart": "2025-01", "periodEnd": "2025-02", "title": "겨울방학 캠프 보조", "note": "모둠 퍼실리테이션" }
+      ],
+      "licenses": [
+        { "acquiredYear": "2023", "title": "청소년지도사 2급", "issuer": "여성가족부" },
+        { "acquiredYear": "2024", "title": "JA 신규 강사 양성과정", "issuer": "JA Korea" }
+      ],
+      "awards": [
+        { "acquiredYear": "2024", "title": "신규 강사 성장상", "issuer": "JA Korea" }
+      ],
+      "essays": {
+        "freeWrite1": "캠프 스태프 경험을 살려 학생과 빠르게 라포를 형성하는 수업을 지향합니다.",
+        "freeWrite2": "주강사 흐름에 맞춰 모둠을 돌며 질문을 유도합니다.",
+        "freeWrite3": "보조 강의와 방학 캠프를 주로 맡았습니다.",
+        "freeWrite4": "수업 후 일지를 남겨 다음 회차 개선점을 기록합니다."
+      },
+      "defaultFeeGrade": "GRADE_3",
+      "defaultJaGrade": "D"
+    },
+    "settlement": {
+      "bankName": "부산은행",
+      "accountNumber": "112123456789",
+      "accountHolder": "오지은",
+      "businessIncome": false,
+      "bankAccounts": [
+        { "bankName": "부산은행", "accountNumber": "112123456789", "accountHolder": "오지은", "current": true }
+      ]
+    },
+    "certifications": [
+      { "certificationName": "청소년지도사 2급", "issuer": "여성가족부", "issuedDate": "2023-12-01", "current": true },
+      { "certificationName": "JA 신규 강사 양성과정", "issuer": "JA Korea", "issuedDate": "2024-02-01" }
+    ],
+    "termsAgreements": []
+  },
+  {
+    "member": {
+      "memberId": 190028,
+      "uuid": "qa-roster-28-instructor-seo-minjae",
+      "email": "qa.instructor.seo.minjae@tinto.co.kr",
+      "name": "서민재",
+      "phone": "01012349478",
+      "birthDate": "1983-08-14",
+      "gender": "MALE",
+      "status": "ACTIVE",
+      "loginEnabled": true,
+      "identityVerified": true,
+      "preRegistered": false,
+      "createdByAdmin": true,
+      "under14": false,
+      "guardianConsentRequired": false,
+      "external1365Id": null,
+      "roles": ["INSTRUCTOR"],
+      "identitySelfSignupCompletedAfterAdminRegistration": false,
+      "adminRegisteredNoticeVisible": true,
+      "socialAccounts": [],
+      "scheduleChangeCount": 0,
+      "scheduleCancelCount": 0,
+      "scheduleChangeCancelCount": 0,
+      "joinedAt": "2026-09-17T12:00:00.000000Z",
+      "lastLoginAt": null,
+      "createdAt": "2026-09-17T12:00:00.000000Z",
+      "updatedAt": "2026-09-17T12:00:00.000000Z"
+    },
+    "profile": {
+      "memberType": "GENERAL",
+      "status": "ACTIVE",
+      "affiliation": { "organizationNames": ["JA 강사단"] },
+      "instructorCareerSummary": "기업가정신·창업 교육 18년, 고등·대학 연계",
+      "oneLineIntro": "창업으로 배우는 기업가정신",
+      "homeAddress": { "line": "광주광역시 서구 상무중앙로 61", "detail": "본관" },
+      "education": {
+        "highestSchoolType": "graduate",
+        "highestStatus": "graduated",
+        "detailKeys": ["high", "college4", "graduate"],
+        "highSchool": { "admitYear": "1999", "gradYear": "2002", "schoolName": "광주제일고등학교", "major": "" },
+        "college4": [{ "admitYear": "2002", "gradYear": "2006", "schoolName": "전남대학교", "major": "경영학과" }],
+        "graduate": [
+          { "admitYear": "2006", "gradYear": "2008", "schoolName": "전남대학교 대학원", "major": "경영학과", "degree": "master" },
+          { "admitYear": "2012", "gradYear": "2016", "schoolName": "전남대학교 대학원", "major": "경영학과", "degree": "doctor" }
+        ]
+      },
+      "career": {
+        "level": "experienced",
+        "summaryYears": "18년",
+        "rows": [
+          { "companyName": "JA Korea", "roleName": "수석 강사", "periodStart": "2015-03", "periodEnd": "", "currentlyEmployed": true },
+          { "companyName": "광주창조경제혁신센터", "roleName": "창업 멘토", "periodStart": "2011-01", "periodEnd": "2015-02", "currentlyEmployed": false },
+          { "companyName": "중소벤처기업진흥공단", "roleName": "교육운영", "periodStart": "2008-03", "periodEnd": "2010-12", "currentlyEmployed": false }
+        ]
+      },
+      "jaKoreaActivities": [
+        { "periodStart": "2024-03", "periodEnd": "2024-12", "title": "고등 기업가정신 과정", "note": "광주·전남 순회" },
+        { "periodStart": "2022-06", "periodEnd": "2022-08", "title": "청소년 창업 캠프 총괄 강사", "note": "팀 피칭 코칭" },
+        { "periodStart": "2019-04", "periodEnd": "2019-11", "title": "교사 기업가정신 연수", "note": "집합연수 4회" }
+      ],
+      "licenses": [
+        { "acquiredYear": "2010", "title": "창업지도사", "issuer": "중소벤처기업부" },
+        { "acquiredYear": "2014", "title": "경영지도사", "issuer": "한국산업인력공단" }
+      ],
+      "awards": [
+        { "acquiredYear": "2023", "title": "평생교육 우수 강사상", "issuer": "광주광역시" },
+        { "acquiredYear": "2020", "title": "기업가정신 교육 공헌상", "issuer": "JA Korea" }
+      ],
+      "essays": {
+        "freeWrite1": "창업 현장 멘토링을 학교 수업에 옮겨, 문제 발견부터 피칭까지 경험하게 합니다.",
+        "freeWrite2": "팀 미션 → 고객 인터뷰 → 간단한 시제품 발표로 구성합니다.",
+        "freeWrite3": "고등 정규 과정과 캠프, 교사 연수를 진행했습니다.",
+        "freeWrite4": "발표 평가 기준을 사전에 공유하고 동료 피드백을 넣습니다."
+      },
+      "defaultFeeGrade": "GRADE_1",
+      "defaultJaGrade": "A"
+    },
+    "settlement": {
+      "bankName": "광주은행",
+      "accountNumber": "110987654321",
+      "accountHolder": "서민재",
+      "businessIncome": true,
+      "bankAccounts": [
+        { "bankName": "광주은행", "accountNumber": "110987654321", "accountHolder": "서민재", "current": true }
+      ]
+    },
+    "certifications": [
+      { "certificationName": "창업지도사", "issuer": "중소벤처기업부", "issuedDate": "2010-09-01", "current": true },
+      { "certificationName": "경영지도사", "issuer": "한국산업인력공단", "issuedDate": "2014-11-01" }
+    ],
+    "termsAgreements": []
+  },
+  {
+    "member": {
+      "memberId": 190029,
+      "uuid": "qa-roster-29-instructor-bae-sua",
+      "email": "qa.instructor.bae.sua@tinto.co.kr",
+      "name": "배수아",
+      "phone": "01012349479",
+      "birthDate": "1993-04-09",
+      "gender": "FEMALE",
+      "status": "ACTIVE",
+      "loginEnabled": true,
+      "identityVerified": true,
+      "preRegistered": false,
+      "createdByAdmin": true,
+      "under14": false,
+      "guardianConsentRequired": false,
+      "external1365Id": null,
+      "roles": ["INSTRUCTOR"],
+      "identitySelfSignupCompletedAfterAdminRegistration": false,
+      "adminRegisteredNoticeVisible": true,
+      "socialAccounts": [],
+      "scheduleChangeCount": 0,
+      "scheduleCancelCount": 0,
+      "scheduleChangeCancelCount": 0,
+      "joinedAt": "2026-09-17T12:00:00.000000Z",
+      "lastLoginAt": null,
+      "createdAt": "2026-09-17T12:00:00.000000Z",
+      "updatedAt": "2026-09-17T12:00:00.000000Z"
+    },
+    "profile": {
+      "memberType": "GENERAL",
+      "status": "ACTIVE",
+      "affiliation": { "organizationNames": ["JA 강사단"] },
+      "instructorCareerSummary": "디지털 금융·핀테크 이해 수업 7년",
+      "oneLineIntro": "디지털로 배우는 생활 금융",
+      "homeAddress": { "line": "서울특별시 강남구 테헤란로 1", "detail": "12층" },
+      "education": {
+        "highestSchoolType": "college4",
+        "highestStatus": "graduated",
+        "detailKeys": ["high", "college4"],
+        "highSchool": { "admitYear": "2009", "gradYear": "2012", "schoolName": "진선여자고등학교", "major": "" },
+        "college4": [{ "admitYear": "2012", "gradYear": "2016", "schoolName": "서강대학교", "major": "컴퓨터공학과" }]
+      },
+      "career": {
+        "level": "experienced",
+        "summaryYears": "7년",
+        "rows": [
+          { "companyName": "JA Korea", "roleName": "전문 강사", "periodStart": "2020-09", "periodEnd": "", "currentlyEmployed": true },
+          { "companyName": "핀테크 스타트업", "roleName": "서비스 기획", "periodStart": "2016-07", "periodEnd": "2020-08", "currentlyEmployed": false }
+        ]
+      },
+      "jaKoreaActivities": [
+        { "periodStart": "2024-03", "periodEnd": "2024-11", "title": "중등 디지털 금융 리터러시", "note": "피싱·간편결제 사례" },
+        { "periodStart": "2023-05", "periodEnd": "2023-09", "title": "교사 ICT 금융교육 연수", "note": "온라인 수업 도구" }
+      ],
+      "licenses": [
+        { "acquiredYear": "2017", "title": "정보처리기사", "issuer": "한국산업인력공단" },
+        { "acquiredYear": "2021", "title": "개인정보보호 관리사", "issuer": "한국인터넷진흥원" }
+      ],
+      "awards": [
+        { "acquiredYear": "2024", "title": "디지털 교육 우수상", "issuer": "JA Korea" }
+      ],
+      "essays": {
+        "freeWrite1": "앱·간편결제 사례로 디지털 금융의 편리함과 위험을 함께 다룹니다.",
+        "freeWrite2": "가짜 문자 판별 미션과 비밀번호 관리 실습을 넣습니다.",
+        "freeWrite3": "중등 정규 수업과 교사 연수를 진행했습니다.",
+        "freeWrite4": "학교 와이파이·스마트패드 환경을 사전 점검합니다."
+      },
+      "defaultFeeGrade": "GRADE_1",
+      "defaultJaGrade": "C"
+    },
+    "settlement": {
+      "bankName": "카카오뱅크",
+      "accountNumber": "3333123456789",
+      "accountHolder": "배수아",
+      "businessIncome": true,
+      "bankAccounts": [
+        { "bankName": "카카오뱅크", "accountNumber": "3333123456789", "accountHolder": "배수아", "current": true }
+      ]
+    },
+    "certifications": [
+      { "certificationName": "정보처리기사", "issuer": "한국산업인력공단", "issuedDate": "2017-06-01", "current": true },
+      { "certificationName": "개인정보보호 관리사", "issuer": "한국인터넷진흥원", "issuedDate": "2021-03-01" }
+    ],
+    "termsAgreements": []
+  },
+  {
+    "member": {
+      "memberId": 190030,
+      "uuid": "qa-roster-30-instructor-lim-taeho",
+      "email": "qa.instructor.lim.taeho@tinto.co.kr",
+      "name": "임태호",
+      "phone": "01012349480",
+      "birthDate": "1989-01-30",
+      "gender": "MALE",
+      "status": "ACTIVE",
+      "loginEnabled": true,
+      "identityVerified": true,
+      "preRegistered": false,
+      "createdByAdmin": true,
+      "under14": false,
+      "guardianConsentRequired": false,
+      "external1365Id": null,
+      "roles": ["INSTRUCTOR"],
+      "identitySelfSignupCompletedAfterAdminRegistration": false,
+      "adminRegisteredNoticeVisible": true,
+      "socialAccounts": [],
+      "scheduleChangeCount": 0,
+      "scheduleCancelCount": 0,
+      "scheduleChangeCancelCount": 0,
+      "joinedAt": "2026-09-17T12:00:00.000000Z",
+      "lastLoginAt": null,
+      "createdAt": "2026-09-17T12:00:00.000000Z",
+      "updatedAt": "2026-09-17T12:00:00.000000Z"
+    },
+    "profile": {
+      "memberType": "GENERAL",
+      "status": "ACTIVE",
+      "affiliation": { "organizationNames": ["JA 강사단"] },
+      "instructorCareerSummary": "보험·리스크 관리 교육 10년, 고등 진로 연계",
+      "oneLineIntro": "위험과 대비를 가르치는 금융 강사",
+      "homeAddress": { "line": "울산광역시 남구 삼산로 100", "detail": "본관" },
+      "education": {
+        "highestSchoolType": "college4",
+        "highestStatus": "graduated",
+        "detailKeys": ["high", "college23", "college4"],
+        "highSchool": { "admitYear": "2005", "gradYear": "2008", "schoolName": "울산중앙고등학교", "major": "" },
+        "college23": [{ "admitYear": "2008", "gradYear": "2011", "schoolName": "울산과학대학교", "major": "세무회계과" }],
+        "college4": [{ "admitYear": "2011", "gradYear": "2014", "schoolName": "동국대학교", "major": "보험계리학과" }]
+      },
+      "career": {
+        "level": "experienced",
+        "summaryYears": "10년",
+        "rows": [
+          { "companyName": "JA Korea", "roleName": "전임 강사", "periodStart": "2018-03", "periodEnd": "", "currentlyEmployed": true },
+          { "companyName": "국내 생명보험사", "roleName": "교육지원 파트", "periodStart": "2014-03", "periodEnd": "2018-02", "currentlyEmployed": false }
+        ]
+      },
+      "jaKoreaActivities": [
+        { "periodStart": "2024-04", "periodEnd": "2024-10", "title": "고등 보험·리스크 수업", "note": "울산·경남" },
+        { "periodStart": "2021-03", "periodEnd": "2021-11", "title": "학부모 보험 이해 특강", "note": "방과후" }
+      ],
+      "licenses": [
+        { "acquiredYear": "2015", "title": "보험설계사", "issuer": "생명보험협회" },
+        { "acquiredYear": "2017", "title": "변액보험판매관리사", "issuer": "생명보험협회" }
+      ],
+      "awards": [
+        { "acquiredYear": "2022", "title": "현장 밀착 교육상", "issuer": "JA Korea" }
+      ],
+      "essays": {
+        "freeWrite1": "보험을 상품 판매가 아니라 위험 관리 관점으로 설명합니다.",
+        "freeWrite2": "가상의 사고 시나리오로 보장과 자기부담을 비교합니다.",
+        "freeWrite3": "고등 수업과 학부모 특강을 진행했습니다.",
+        "freeWrite4": "민감 개인정보는 수업에서 다루지 않고 가상 사례만 사용합니다."
+      },
+      "defaultFeeGrade": "GRADE_2",
+      "defaultJaGrade": "D"
+    },
+    "settlement": {
+      "bankName": "경남은행",
+      "accountNumber": "207123456789",
+      "accountHolder": "임태호",
+      "businessIncome": true,
+      "bankAccounts": [
+        { "bankName": "경남은행", "accountNumber": "207123456789", "accountHolder": "임태호", "current": true }
+      ]
+    },
+    "certifications": [
+      { "certificationName": "보험설계사", "issuer": "생명보험협회", "issuedDate": "2015-03-01", "current": true },
+      { "certificationName": "변액보험판매관리사", "issuer": "생명보험협회", "issuedDate": "2017-08-01" }
+    ],
+    "termsAgreements": []
+  },
+  {
+    "member": {
+      "memberId": 190031,
+      "uuid": "qa-roster-31-instructor-kang-haneul",
+      "email": "qa.instructor.kang.haneul@tinto.co.kr",
+      "name": "강하늘",
+      "phone": "01012349481",
+      "birthDate": "1995-06-16",
+      "gender": "FEMALE",
+      "status": "ACTIVE",
+      "loginEnabled": true,
+      "identityVerified": true,
+      "preRegistered": false,
+      "createdByAdmin": true,
+      "under14": false,
+      "guardianConsentRequired": false,
+      "external1365Id": null,
+      "roles": ["INSTRUCTOR"],
+      "identitySelfSignupCompletedAfterAdminRegistration": false,
+      "adminRegisteredNoticeVisible": true,
+      "socialAccounts": [],
+      "scheduleChangeCount": 0,
+      "scheduleCancelCount": 0,
+      "scheduleChangeCancelCount": 0,
+      "joinedAt": "2026-09-17T12:00:00.000000Z",
+      "lastLoginAt": null,
+      "createdAt": "2026-09-17T12:00:00.000000Z",
+      "updatedAt": "2026-09-17T12:00:00.000000Z"
+    },
+    "profile": {
+      "memberType": "GENERAL",
+      "status": "ACTIVE",
+      "affiliation": { "organizationNames": ["JA 강사단"] },
+      "instructorCareerSummary": "환경·지속가능 소비 교육 5년, 초등 특화",
+      "oneLineIntro": "지속가능한 소비를 가르치는 강사",
+      "homeAddress": { "line": "제주특별자치도 제주시 연삼로 73", "detail": "본관" },
+      "education": {
+        "highestSchoolType": "college4",
+        "highestStatus": "graduated",
+        "detailKeys": ["high", "college4"],
+        "highSchool": { "admitYear": "2011", "gradYear": "2014", "schoolName": "제주여자고등학교", "major": "" },
+        "college4": [{ "admitYear": "2014", "gradYear": "2018", "schoolName": "제주대학교", "major": "환경공학과" }]
+      },
+      "career": {
+        "level": "experienced",
+        "summaryYears": "5년",
+        "rows": [
+          { "companyName": "JA Korea", "roleName": "방문 강사", "periodStart": "2021-09", "periodEnd": "", "currentlyEmployed": true },
+          { "companyName": "제주환경교육센터", "roleName": "교육 강사", "periodStart": "2018-08", "periodEnd": "2021-08", "currentlyEmployed": false }
+        ]
+      },
+      "jaKoreaActivities": [
+        { "periodStart": "2024-03", "periodEnd": "2024-11", "title": "초등 지속가능 소비 수업", "note": "제주·부산 순회" },
+        { "periodStart": "2022-04", "periodEnd": "2022-10", "title": "탄소발자국 체험 캠프", "note": "1일 캠프" }
+      ],
+      "licenses": [
+        { "acquiredYear": "2019", "title": "환경교육사 2급", "issuer": "환경부" },
+        { "acquiredYear": "2022", "title": "초등 환경교육 과정", "issuer": "한국환경교육원" }
+      ],
+      "awards": [
+        { "acquiredYear": "2023", "title": "생태교육 우수상", "issuer": "제주특별자치도" }
+      ],
+      "essays": {
+        "freeWrite1": "소비가 환경에 미치는 영향을 경제 개념과 함께 가르칩니다.",
+        "freeWrite2": "물건 생애주기 활동과 업사이클 미션을 넣습니다.",
+        "freeWrite3": "초등 정규 수업과 1일 캠프를 진행했습니다.",
+        "freeWrite4": "야외 활동 시 안전 수칙을 교사와 사전 합의합니다."
+      },
+      "defaultFeeGrade": "GRADE_2",
+      "defaultJaGrade": "C"
+    },
+    "settlement": {
+      "bankName": "제주은행",
+      "accountNumber": "110555667788",
+      "accountHolder": "강하늘",
+      "businessIncome": true,
+      "bankAccounts": [
+        { "bankName": "제주은행", "accountNumber": "110555667788", "accountHolder": "강하늘", "current": true }
+      ]
+    },
+    "certifications": [
+      { "certificationName": "환경교육사 2급", "issuer": "환경부", "issuedDate": "2019-05-01", "current": true },
+      { "certificationName": "초등 환경교육 과정", "issuer": "한국환경교육원", "issuedDate": "2022-07-01" }
+    ],
+    "termsAgreements": []
+  },
+  {
+    "member": {
+      "memberId": 190032,
+      "uuid": "qa-roster-32-instructor-cho-eunbi",
+      "email": "qa.instructor.cho.eunbi@tinto.co.kr",
+      "name": "조은비",
+      "phone": "01012349482",
+      "birthDate": "1992-10-22",
+      "gender": "FEMALE",
+      "status": "ACTIVE",
+      "loginEnabled": true,
+      "identityVerified": true,
+      "preRegistered": false,
+      "createdByAdmin": true,
+      "under14": false,
+      "guardianConsentRequired": false,
+      "external1365Id": null,
+      "roles": ["INSTRUCTOR"],
+      "identitySelfSignupCompletedAfterAdminRegistration": false,
+      "adminRegisteredNoticeVisible": true,
+      "socialAccounts": [],
+      "scheduleChangeCount": 0,
+      "scheduleCancelCount": 0,
+      "scheduleChangeCancelCount": 0,
+      "joinedAt": "2026-09-17T12:00:00.000000Z",
+      "lastLoginAt": null,
+      "createdAt": "2026-09-17T12:00:00.000000Z",
+      "updatedAt": "2026-09-17T12:00:00.000000Z"
+    },
+    "profile": {
+      "memberType": "GENERAL",
+      "status": "ACTIVE",
+      "affiliation": { "organizationNames": ["JA 강사단"] },
+      "instructorCareerSummary": "다문화·이중언어 학급 경제교육 8년",
+      "oneLineIntro": "쉬운 한국어로 전하는 경제 수업",
+      "homeAddress": { "line": "경기도 성남시 분당구 판교로 242", "detail": "본관" },
+      "education": {
+        "highestSchoolType": "graduate",
+        "highestStatus": "graduated",
+        "detailKeys": ["high", "college4", "graduate"],
+        "highSchool": { "admitYear": "2008", "gradYear": "2011", "schoolName": "분당고등학교", "major": "" },
+        "college4": [{ "admitYear": "2011", "gradYear": "2015", "schoolName": "한국외국어대학교", "major": "한국어교육과" }],
+        "graduate": [
+          { "admitYear": "2015", "gradYear": "2017", "schoolName": "한국외국어대학교 대학원", "major": "한국어교육", "degree": "master" }
+        ]
+      },
+      "career": {
+        "level": "experienced",
+        "summaryYears": "8년",
+        "rows": [
+          { "companyName": "JA Korea", "roleName": "전임 강사", "periodStart": "2019-03", "periodEnd": "", "currentlyEmployed": true },
+          { "companyName": "다문화가족지원센터", "roleName": "한국어·경제 강사", "periodStart": "2017-03", "periodEnd": "2019-02", "currentlyEmployed": false }
+        ]
+      },
+      "jaKoreaActivities": [
+        { "periodStart": "2024-03", "periodEnd": "2024-12", "title": "다문화 학급 방문 강의", "note": "경기 남부" },
+        { "periodStart": "2021-09", "periodEnd": "2021-12", "title": "학부모 이중언어 금융교육", "note": "통역 동행" }
+      ],
+      "licenses": [
+        { "acquiredYear": "2015", "title": "한국어교원 2급", "issuer": "국립국어원" },
+        { "acquiredYear": "2018", "title": "다문화교육 실무 과정", "issuer": "법무부" }
+      ],
+      "awards": [
+        { "acquiredYear": "2022", "title": "포용 수업 우수상", "issuer": "JA Korea" }
+      ],
+      "essays": {
+        "freeWrite1": "한국어가 익숙하지 않은 학생도 따라올 수 있게 시각·활동 중심으로 수업합니다.",
+        "freeWrite2": "그림 카드와 짧은 문장으로 개념을 반복합니다.",
+        "freeWrite3": "다문화 학급과 학부모 특강을 진행했습니다.",
+        "freeWrite4": "수업 전 언어 지원 필요 여부를 교사와 확인합니다."
+      },
+      "defaultFeeGrade": "GRADE_1",
+      "defaultJaGrade": "C"
+    },
+    "settlement": {
+      "bankName": "IBK기업은행",
+      "accountNumber": "010123456789",
+      "accountHolder": "조은비",
+      "businessIncome": true,
+      "bankAccounts": [
+        { "bankName": "IBK기업은행", "accountNumber": "010123456789", "accountHolder": "조은비", "current": true }
+      ]
+    },
+    "certifications": [
+      { "certificationName": "한국어교원 2급", "issuer": "국립국어원", "issuedDate": "2015-08-01", "current": true },
+      { "certificationName": "다문화교육 실무 과정", "issuer": "법무부", "issuedDate": "2018-04-01" }
+    ],
+    "termsAgreements": []
+  },
+  {
+    "member": {
+      "memberId": 190033,
+      "uuid": "qa-roster-33-instructor-shin-doyun",
+      "email": "qa.instructor.shin.doyun@tinto.co.kr",
+      "name": "신도윤",
+      "phone": "01012349483",
+      "birthDate": "1986-12-25",
+      "gender": "MALE",
+      "status": "ACTIVE",
+      "loginEnabled": true,
+      "identityVerified": true,
+      "preRegistered": false,
+      "createdByAdmin": true,
+      "under14": false,
+      "guardianConsentRequired": false,
+      "external1365Id": null,
+      "roles": ["INSTRUCTOR"],
+      "identitySelfSignupCompletedAfterAdminRegistration": false,
+      "adminRegisteredNoticeVisible": true,
+      "socialAccounts": [],
+      "scheduleChangeCount": 0,
+      "scheduleCancelCount": 0,
+      "scheduleChangeCancelCount": 0,
+      "joinedAt": "2026-09-17T12:00:00.000000Z",
+      "lastLoginAt": null,
+      "createdAt": "2026-09-17T12:00:00.000000Z",
+      "updatedAt": "2026-09-17T12:00:00.000000Z"
+    },
+    "profile": {
+      "memberType": "GENERAL",
+      "status": "ACTIVE",
+      "affiliation": { "organizationNames": ["JA 강사단"] },
+      "instructorCareerSummary": "공공·지역 금융복지 교육 13년, 중등·성인 연계",
+      "oneLineIntro": "가계 재무설계를 쉽게 가르치는 강사",
+      "homeAddress": { "line": "서울특별시 중구 세종대로 110", "detail": "본관" },
+      "education": {
+        "highestSchoolType": "college4",
+        "highestStatus": "graduated",
+        "detailKeys": ["high", "college4"],
+        "highSchool": { "admitYear": "2002", "gradYear": "2005", "schoolName": "경기고등학교", "major": "" },
+        "college4": [{ "admitYear": "2005", "gradYear": "2009", "schoolName": "성균관대학교", "major": "소비자학과" }]
+      },
+      "career": {
+        "level": "experienced",
+        "summaryYears": "13년",
+        "rows": [
+          { "companyName": "JA Korea", "roleName": "시니어 강사", "periodStart": "2017-01", "periodEnd": "", "currentlyEmployed": true },
+          { "companyName": "서민금융진흥원", "roleName": "금융교육 강사", "periodStart": "2012-03", "periodEnd": "2016-12", "currentlyEmployed": false },
+          { "companyName": "소비자단체", "roleName": "교육팀", "periodStart": "2009-07", "periodEnd": "2012-02", "currentlyEmployed": false }
+        ]
+      },
+      "jaKoreaActivities": [
+        { "periodStart": "2024-03", "periodEnd": "2024-12", "title": "중등 가계부·부채 이해 수업", "note": "서울 중부" },
+        { "periodStart": "2022-03", "periodEnd": "2022-11", "title": "교사 대상 서민금융 연수", "note": "집합 3회" },
+        { "periodStart": "2020-05", "periodEnd": "2020-10", "title": "학부모 재무설계 특강", "note": "야간 특강" }
+      ],
+      "licenses": [
+        { "acquiredYear": "2011", "title": "AFPK", "issuer": "한국FPSB" },
+        { "acquiredYear": "2016", "title": "CFP", "issuer": "한국FPSB" },
+        { "acquiredYear": "2018", "title": "신용상담사", "issuer": "신용회복위원회" }
+      ],
+      "awards": [
+        { "acquiredYear": "2021", "title": "서민금융 교육 공로상", "issuer": "서민금융진흥원" },
+        { "acquiredYear": "2024", "title": "우수 시니어 강사상", "issuer": "JA Korea" }
+      ],
+      "essays": {
+        "freeWrite1": "가계 재무와 부채를 학생 눈높이로 풀어, 충동 소비와 대출의 차이를 분명히 합니다.",
+        "freeWrite2": "한 달 예산 시뮬레이션과 이자 계산 활동을 넣습니다.",
+        "freeWrite3": "중등 정규, 교사 연수, 학부모 특강을 진행했습니다.",
+        "freeWrite4": "개인 재무 상담은 하지 않고 공적 정보만 안내합니다."
+      },
+      "defaultFeeGrade": "GRADE_1",
+      "defaultJaGrade": "B"
+    },
+    "settlement": {
+      "bankName": "우리은행",
+      "accountNumber": "1002987654321",
+      "accountHolder": "신도윤",
+      "businessIncome": true,
+      "bankAccounts": [
+        { "bankName": "우리은행", "accountNumber": "1002987654321", "accountHolder": "신도윤", "current": true }
+      ]
+    },
+    "certifications": [
+      { "certificationName": "AFPK", "issuer": "한국FPSB", "issuedDate": "2011-04-01" },
+      { "certificationName": "CFP", "issuer": "한국FPSB", "issuedDate": "2016-09-01", "current": true },
+      { "certificationName": "신용상담사", "issuer": "신용회복위원회", "issuedDate": "2018-02-01" }
+    ],
+    "termsAgreements": []
+  }
+]

@@ -167,6 +167,43 @@ export function getLectureEvalPeriodEndAt(formDraft: WritingFormDraft | null | u
   return title.endAt ?? LECTURE_EVAL_MOCK_PERIOD.endAt
 }
 
+const LECTURE_EVAL_MOCK_SHORT_ANSWERS: Partial<Record<string, string>> = {
+  [DEFAULT_SURVEY_PARAGRAPH_IDS.subjective]:
+    '강의 자료 배포 시기를 수업 전에 미리 공유해 주시면 좋겠습니다.',
+  [DEFAULT_SURVEY_PARAGRAPH_IDS.subjective2]:
+    '학생들의 참여도가 높았고, 실습 중심 진행이 인상적이었습니다.',
+  [DEFAULT_SURVEY_PARAGRAPH_IDS.subjective3]:
+    '진로·창업 연계 교육 콘텐츠를 추가로 도입하면 좋겠습니다.',
+}
+
+function fillLectureEvalMockAnswers(draft: WritingFormDraft): WritingFormDraft {
+  return normalizeWritingFormDraft({
+    ...draft,
+    paragraphs: draft.paragraphs.map(paragraph => {
+      if (paragraph.kind !== 'single_item' || paragraph.variant !== 'short_essay') {
+        return paragraph
+      }
+      const mockText = LECTURE_EVAL_MOCK_SHORT_ANSWERS[paragraph.id]
+      if (mockText == null) return paragraph
+      const items =
+        paragraph.items?.map(item => ({ ...item, bodyText: mockText })) ?? paragraph.items
+      return {
+        ...paragraph,
+        bodyText: mockText,
+        items,
+      } satisfies ShortEssayParagraph
+    }),
+  })
+}
+
+/** temp mock·제출 미리보기 — 시드 척도 + 주관식 샘플 답변 */
+export function buildLectureEvalSubmittedPollResponse(
+  templateId: string = LECTURE_EVAL_TEMPLATE_ID
+): SurveyPollRawResponse {
+  const draft = fillLectureEvalMockAnswers(resolveLectureEvalWritingDraftSync(templateId))
+  return draftToLectureEvalPollResponse(draft)
+}
+
 export function draftToLectureEvalPollResponse(draft: WritingFormDraft): SurveyPollRawResponse {
   const answers: Record<string, string> = {}
 
