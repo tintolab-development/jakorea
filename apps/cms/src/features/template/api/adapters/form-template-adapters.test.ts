@@ -19,7 +19,7 @@ function listItem(
 }
 
 describe('buildWritingFormSectionsFromApiItems', () => {
-  it('groups writing templates by category and merges API names', () => {
+  it('groups writing templates by category without mock merge', () => {
     const sections = buildWritingFormSectionsFromApiItems([
       listItem({
         templateCode: 'registration-general',
@@ -37,12 +37,13 @@ describe('buildWritingFormSectionsFromApiItems', () => {
     expect(registration?.rows.find(row => row.id === 'registration-general')?.templateName).toBe(
       '일반 프로그램 등록 폼 (API)'
     )
-    expect(registration?.rows.some(row => row.id === 'registration-economy')).toBe(true)
+    expect(registration?.rows.some(row => row.id === 'registration-economy')).toBe(false)
+    expect(registration?.rows).toHaveLength(1)
   })
 })
 
 describe('buildIssuanceFormSectionsFromApiItems', () => {
-  it('groups issuance templates into report and document sections', () => {
+  it('groups issuance templates into report and document sections without mock merge', () => {
     const sections = buildIssuanceFormSectionsFromApiItems([
       listItem({
         templateCode: 'issuance-3',
@@ -61,14 +62,14 @@ describe('buildIssuanceFormSectionsFromApiItems', () => {
 
     expect(report?.rows.find(row => row.id === 'issuance-3')?.templateName).toBe('강의보고서 (API)')
     expect(report?.rows.some(row => row.id === 'issuance-1')).toBe(false)
-    expect(report?.rows.some(row => row.id === 'issuance-2')).toBe(true)
+    expect(report?.rows.some(row => row.id === 'issuance-2')).toBe(false)
+    expect(report?.rows).toHaveLength(1)
     expect(document?.rows.find(row => row.id === 'document-3')?.templateName).toBe('수료증 (API)')
-    expect(document?.rows.some(row => row.id === 'document-payment-order-issue')).toBe(true)
-    expect(document?.rows.some(row => row.id === 'document-1')).toBe(false)
-    expect(document?.rows.some(row => row.id === 'document-payment-order-pre-consent')).toBe(false)
+    expect(document?.rows.some(row => row.id === 'document-payment-order-issue')).toBe(false)
+    expect(document?.rows).toHaveLength(1)
   })
 
-  it('hides Notion-excluded issuance catalog codes from the list merge', () => {
+  it('hides Notion-excluded issuance catalog codes from the list', () => {
     const sections = buildIssuanceFormSectionsFromApiItems([
       listItem({
         templateCode: 'issuance-1',

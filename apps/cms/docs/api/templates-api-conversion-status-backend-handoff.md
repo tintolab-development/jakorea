@@ -18,8 +18,7 @@
 - 인증서 이미지: [certificate-image-storage-handoff.md](./certificate-image-storage-handoff.md)
 - 시드 JSON: [form-template-seeds/](./form-template-seeds/)
 
-게이트: `VITE_REAL_API_MODULES`에 `formsSurveys` + MFA 완료 JWT (`hasRemoteAdminJwt()`).  
-로컬 `.env`에는 **이미 `formsSurveys` 포함**. 목록·draft는 실패 시 **mock/localStorage로 조용히 대체**됩니다. 빈 DB여도 화면이 가득 찬 것처럼 보입니다.
+로컬 `.env`에는 **이미 `formsSurveys` 포함**. 목록·draft는 **remote SSOT** — 실패 시 mock/local로 조용히 대체하지 않습니다 ([form-template-remote-ssot.md](./form-template-remote-ssot.md)).
 
 ---
 
@@ -78,7 +77,7 @@ LNB는 자식 메뉴가 없고, 화면 **탭 3개**가 하위 카테고리입니
 | 발급 `templateCode` | **14** | 보고 6 + 서류 8 |
 | forms-surveys OpenAPI path | **18** | 아래 §3 |
 | 그중 **템플릿 LNB가 지금 호출** | **7** | 목록 GET/POST, versions GET, copy, version GET/PUT, publish(서비스만) |
-| mock/local fallback | **목록·draft 전부** | 로그인 이력처럼 조용히 대체 — 운영 오인 위험 |
+| mock/local fallback | **제거됨 (양식 관리)** | remote 실패 시 empty/에러·seed. 프로그램 `localOnly`만 localStorage |
 
 ```mermaid
 flowchart TB

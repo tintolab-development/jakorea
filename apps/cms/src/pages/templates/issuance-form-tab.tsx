@@ -88,6 +88,7 @@ import {
 import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-overlay'
 import { FormTemplateFullpageModal } from './form-template-fullpage-modal'
 import './form-test-single-item-fullpage-modal.css'
+import './template-form-tab.css'
 import { handleError } from '@/shared/utils/error-handler'
 import { useIssuanceFormSections } from '@/features/template/hooks/use-issuance-form-sections'
 import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
@@ -150,8 +151,12 @@ type IssuanceFormTabQuery = {
 }
 
 export function IssuanceFormTab() {
-  const { sections: issuanceSections, isLoading: isIssuanceSectionsLoading } =
-    useIssuanceFormSections()
+  const {
+    sections: issuanceSections,
+    isLoading: isIssuanceSectionsLoading,
+    isMockCatalog,
+    isError: isIssuanceSectionsError,
+  } = useIssuanceFormSections()
   const reportSection = issuanceSections.find(section => section.key === 'issuance-report')
   const documentSection = issuanceSections.find(section => section.key === 'issuance-document')
   const {
@@ -716,6 +721,16 @@ export function IssuanceFormTab() {
       {isPreviewOpen && isLectureReportIssuance ? lectureReportPdfMeasureLayer : null}
       {isPreviewOpen && isUjatStructuredIssuance ? ujatStructuredPdfMeasureLayer : null}
       <div className="template-form-tab__content">
+        {isMockCatalog ? (
+          <p className="template-form-tab__catalog-notice" role="status">
+            mock 카탈로그 — 백엔드 API가 연결되지 않아 FE 시드 목록을 표시합니다.
+          </p>
+        ) : null}
+        {isIssuanceSectionsError ? (
+          <p className="template-form-tab__catalog-error" role="alert">
+            발급 양식 목록을 불러오지 못했습니다. 네트워크·권한을 확인한 뒤 새로고침해 주세요.
+          </p>
+        ) : null}
         {isIssuanceSectionsLoading ? (
           <p className="template-form-tab__loading">양식 목록을 불러오는 중입니다.</p>
         ) : (

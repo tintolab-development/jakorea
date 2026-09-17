@@ -22,3 +22,11 @@ export function shouldUseRemoteDraftApiForTemplateCode(templateCode: string): bo
   }
   return true
 }
+
+/**
+ * 개발 전용 — remote load 실패 시 localStorage fallback.
+ * 운영·스테이징에서는 끄고 remote SSOT만 사용한다.
+ */
+export function isFormTemplateLocalFallbackEnabled(): boolean {
+  return String(import.meta.env.VITE_FORM_TEMPLATE_LOCAL_FALLBACK ?? '') === '1'
+}

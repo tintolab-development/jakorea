@@ -173,7 +173,7 @@ export type UseProgramRegistrationEditorOptions = {
   forceUserEditable?: boolean
   /** true면 임시저장 복원 없이 시드로 시작 (신규 등록) */
   skipDraftRestore?: boolean
-  /** 프로그램 등록 임시저장 — localStorage만 사용 */
+  /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
   localOnlyDraftPersistence?: boolean
 }
 

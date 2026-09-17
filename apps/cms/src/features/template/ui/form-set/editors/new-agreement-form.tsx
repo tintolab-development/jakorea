@@ -446,7 +446,7 @@ export function AgreementWritingFormShell({
       } catch (error) {
         console.debug('agreementWritingFormShell save failed', error)
         if (isTemplateManagementSave) {
-          showSaveFailure()
+          showSaveFailure(error)
         }
       }
     })()
