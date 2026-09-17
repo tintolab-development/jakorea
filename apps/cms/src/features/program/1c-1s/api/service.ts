@@ -21,10 +21,14 @@ import {
 import { shouldUseCompanySchoolRemoteApi } from './capabilities'
 import {
   COMPANY_SCHOOL_PROGRAM_LIST_PAGE_SIZE,
+  COMPANY_SCHOOL_SCHEDULED_PERIOD_STATUSES,
   companySchoolListParams,
   type CompanySchoolListFilters,
 } from './list-params'
 import type { CompanySchoolOverviewStageCounts } from '@/features/program/1c-1s/lib/overview-stage-counts'
+
+/** 복수 periodStatus 합집합 조회 상한 (1사1교 목록 규모 · 카드·목록 동일 집합) */
+const COMPANY_SCHOOL_PERIOD_UNION_FETCH_SIZE = 500
 
 function assertRemoteReady(): void {
   if (shouldUseCompanySchoolRemoteApi()) return
@@ -41,11 +45,63 @@ export type CompanySchoolProgramsRemoteListPage = {
   hasMore: boolean
 }
 
+async function listCompanySchoolProgramsByPeriodStatusUnion(
+  filters: CompanySchoolListFilters,
+  periodStatuses: readonly string[]
+): Promise<CompanySchoolProgramsRemoteListPage> {
+  const remotes = await Promise.all(
+    periodStatuses.map(periodStatus =>
+      fetchAdminProgramsRemote({
+        programType: COMPANY_SCHOOL_PROGRAM_API_TYPE,
+        keyword: filters.keyword?.trim() || undefined,
+        periodStatus,
+        businessYear: filters.businessYear,
+        page: 0,
+        size: COMPANY_SCHOOL_PERIOD_UNION_FETCH_SIZE,
+      })
+    )
+  )
+
+  const byId = new Map<string, Program>()
+  for (const page of remotes) {
+    for (const item of page.items ?? []) {
+      const program = mapCompanySchoolListItemToProgram(item)
+      if (!program.id) continue
+      byId.set(program.id, program)
+    }
+  }
+
+  const programs = [...byId.values()]
+  return {
+    programs,
+    page: 0,
+    size: COMPANY_SCHOOL_PERIOD_UNION_FETCH_SIZE,
+    totalElements: programs.length,
+    hasMore: false,
+  }
+}
+
 export async function listCompanySchoolProgramsPage(
   filters: CompanySchoolListFilters = {},
   pageParam = 0
 ): Promise<CompanySchoolProgramsRemoteListPage> {
   assertRemoteReady()
+
+  const unionStatuses = filters.periodStatuses
+  if (unionStatuses && unionStatuses.length > 0) {
+    // 합집합은 page0 1회 적재 — 위젯 scheduled 건수와 동일 집합
+    if (pageParam > 0) {
+      return {
+        programs: [],
+        page: pageParam,
+        size: COMPANY_SCHOOL_PERIOD_UNION_FETCH_SIZE,
+        totalElements: 0,
+        hasMore: false,
+      }
+    }
+    return listCompanySchoolProgramsByPeriodStatusUnion(filters, unionStatuses)
+  }
+
   const page = await fetchAdminProgramsRemote(companySchoolListParams(filters, pageParam))
   const programs = (page.items ?? []).map(mapCompanySchoolListItemToProgram)
   const size = page.size ?? COMPANY_SCHOOL_PROGRAM_LIST_PAGE_SIZE
@@ -70,7 +126,12 @@ export async function listCompanySchoolPrograms(
   return page.programs
 }
 
-/** 상단 4카드 — GET /programs totalElements */
+/**
+ * 상단 4카드 — GET /programs totalElements.
+ * 예정: SCHEDULED ∪ RECRUITING (id 중복 제거) — 목록 예정 필터와 동일.
+ * BE가 버킷을 배타로 유지 — FE에서 카드 합을 강제 정규화하지 않음.
+ * `RECRUITING`은 예정 별칭(참여자 모집 창 아님).
+ */
 export async function fetchCompanySchoolOverviewStages(): Promise<CompanySchoolOverviewStageCounts> {
   assertRemoteReady()
 
@@ -79,19 +140,16 @@ export async function fetchCompanySchoolOverviewStages(): Promise<CompanySchoolO
     page: 0,
     size: 1,
   } as const
-  const [all, scheduled, recruiting, inProgress, completed] = await Promise.all([
+  const [all, inProgress, completed, scheduledUnion] = await Promise.all([
     fetchAdminProgramsRemote({ ...base }),
-    fetchAdminProgramsRemote({ ...base, periodStatus: 'SCHEDULED' }),
-    fetchAdminProgramsRemote({ ...base, periodStatus: 'RECRUITING' }),
     fetchAdminProgramsRemote({ ...base, periodStatus: 'IN_PROGRESS' }),
     fetchAdminProgramsRemote({ ...base, periodStatus: 'COMPLETED' }),
+    listCompanySchoolProgramsByPeriodStatusUnion({}, COMPANY_SCHOOL_SCHEDULED_PERIOD_STATUSES),
   ])
 
   return {
     total: all.totalElements ?? all.items?.length ?? 0,
-    scheduled:
-      (scheduled.totalElements ?? scheduled.items?.length ?? 0) +
-      (recruiting.totalElements ?? recruiting.items?.length ?? 0),
+    scheduled: scheduledUnion.totalElements,
     inProgress: inProgress.totalElements ?? inProgress.items?.length ?? 0,
     completed: completed.totalElements ?? completed.items?.length ?? 0,
   }

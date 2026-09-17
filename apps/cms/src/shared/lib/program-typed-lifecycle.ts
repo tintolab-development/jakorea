@@ -1,6 +1,8 @@
 /**
- * Admin typed ProgramResponse.lifecycleStatus — 목록·상세 상단 위젯 SSOT.
- * serviceDetailJson / periodStatus 로 위젯·테이블을 채우지 않는다.
+ * Admin typed ProgramResponse.lifecycleStatus — 테이블「프로그램 진행 현황」SSOT.
+ * 목록 4카드 건수는 `periodStatus` 필터 totalElements (이 모듈과 별축).
+ * BE는 periodStatus↔lifecycleStatus를 동일 UI 버킷으로 맞춤.
+ * `periodStatus=RECRUITING`은 예정 별칭이며 참여자 모집(`recruitmentStatus`)이 아님.
  *
  * 진행현황 UI는 제품 규칙 3상태만 노출한다.
  * recruiting_students 는 「모집 중」이 아니라 「프로그램 진행 예정」버킷.
