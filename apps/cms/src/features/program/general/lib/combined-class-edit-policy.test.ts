@@ -3,7 +3,6 @@ import type { Program } from '@/types/domain'
 import {
   isCombinedClassProgramEligible,
   resolveCombinedClassApplyRadioDisabled,
-  hasCompletedCombinedClassEducationSessions,
 } from '@/features/program/general/lib/combined-class-edit-policy'
 
 describe('combined-class-edit-policy', () => {
@@ -24,15 +23,5 @@ describe('combined-class-edit-policy', () => {
   it('동일 기관 타 학년이 없으면 신청 라디오를 비활성화한다', () => {
     expect(resolveCombinedClassApplyRadioDisabled([])).toBe(true)
     expect(resolveCombinedClassApplyRadioDisabled([{ value: 'a' }])).toBe(false)
-  })
-
-  it('완료된 교육 세션이 있으면 합반 안내를 노출한다', () => {
-    expect(hasCompletedCombinedClassEducationSessions(undefined)).toBe(false)
-    expect(
-      hasCompletedCombinedClassEducationSessions([{ status: 'pending' } as never])
-    ).toBe(false)
-    expect(
-      hasCompletedCombinedClassEducationSessions([{ status: 'completed' } as never])
-    ).toBe(true)
   })
 })

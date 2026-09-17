@@ -47,7 +47,8 @@
   .participating-institutions-section__table
   table.ant-table {
   table-layout: fixed !important;
-  /* scroll.x가 지정한 실제 열 합계를 유지하고, 넓은 화면에서만 컨테이너를 채움 */
+  /* 공통 cms-data-table의 width: 100% !important가 scroll.x 숫자 폭을 덮지 않도록 복원 */
+  width: var(--participating-institutions-table-width, 100%) !important;
   min-width: 100%;
 }
 

@@ -48,6 +48,7 @@ export interface ParticipatingInstitutionApplicationInfoProps {
   addressDetail: ReactNode
   classAndCount: ReactNode
   educationFormat: ReactNode
+  showEducationFormatField?: boolean
   teacherInfo: ReactNode
   applicationReason: ReactNode
   otherRequests: ReactNode
@@ -171,6 +172,7 @@ export function ParticipatingInstitutionApplicationInfo({
   addressDetail,
   classAndCount,
   educationFormat,
+  showEducationFormatField = true,
   teacherInfo,
   applicationReason,
   otherRequests,
@@ -256,12 +258,19 @@ export function ParticipatingInstitutionApplicationInfo({
                   label2="상세 주소"
                   value2={addressDetail}
                 />
-                <InstitutionApplicationTableRowTwoCols
-                  label1="신청 학급 수 및 총 인원"
-                  value1={classAndCount}
-                  label2="교육 형태"
-                  value2={educationFormat}
-                />
+                {showEducationFormatField ? (
+                  <InstitutionApplicationTableRowTwoCols
+                    label1="신청 학급 수 및 총 인원"
+                    value1={classAndCount}
+                    label2="교육 형태"
+                    value2={educationFormat}
+                  />
+                ) : (
+                  <InstitutionApplicationTableRowSingleCol
+                    label="신청 학급 수 및 총 인원"
+                    value={classAndCount}
+                  />
+                )}
                 <InstitutionApplicationTableRowFullWidth label="담당 교사 정보" value={teacherInfo} />
                 <InstitutionApplicationTableRowFullWidth
                   label="신청 사유"
