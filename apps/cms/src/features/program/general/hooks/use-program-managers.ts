@@ -1,9 +1,9 @@
 /**
- * 프로그램 상세 담당자 정보 — list/CRUD hybrid (remote ↔ mock)
+ * 프로그램 상세 담당자 정보 — remote only
  * Cache: Class C (standard nested list) — staleTime 30s, invalidate on mutation
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   addGeneralProgramManager,
@@ -13,13 +13,19 @@ import {
 } from '@/features/program/general/api/admin-general-programs-service'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
-import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import {
-  getAssignableManagerCandidates,
-  getMockProgramManagers,
-  type ProgramManagerRow,
-} from '@/data/mock/program-managers'
+  buildProgramManagersListQuery,
+  serializeProgramManagersListQuery,
+  type ProgramManagersUiFilters,
+} from '@/features/program/general/api/managers-list-query'
+import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import type { ProgramManagerRow } from '@/features/program/general/model/program-managers'
 import { fetchAdminsPageRemote } from '@/features/user/api/members-api-client'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
+import {
+  canAssignProgramRoleToCmsAdmin,
+  CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE,
+} from '@/entities/program/lib/program-pm-role-policy'
 import type { ProgramRole } from '@/types/user'
 
 export type AssignableManagerCandidate = {
@@ -28,24 +34,37 @@ export type AssignableManagerCandidate = {
   email: string
   phone: string
   adminId?: number
+  cmsRoleCode?: string
 }
 
-export function useProgramManagers(programId: string | undefined) {
-  const remoteEnabled = useProgramsReadsRemoteEnabledForSurface(programId)
-  const queryClient = useQueryClient()
+const EMPTY_MANAGERS_LIST_FILTERS: ProgramManagersUiFilters = Object.freeze({})
 
-  const [localManagers, setLocalManagers] = useState<ProgramManagerRow[]>(() =>
-    programId ? getMockProgramManagers(programId) : []
+export function useProgramManagers(
+  programId: string | undefined,
+  listFilters: ProgramManagersUiFilters = EMPTY_MANAGERS_LIST_FILTERS
+) {
+  const remoteEnabled = useProgramsReadsRemoteEnabledForSurface(programId)
+
+  useNotifyProgramApiUnavailableOnce(
+    !remoteEnabled && Boolean(programId),
+    'general-program-managers',
+    '프로그램 담당자'
   )
 
-  useEffect(() => {
-    if (remoteEnabled || !programId) return
-    setLocalManagers(getMockProgramManagers(programId))
-  }, [programId, remoteEnabled])
+  const queryClient = useQueryClient()
+
+  const managersListQuery = useMemo(
+    () => buildProgramManagersListQuery(listFilters),
+    [listFilters]
+  )
+  const filtersKey = useMemo(
+    () => serializeProgramManagersListQuery(managersListQuery),
+    [managersListQuery]
+  )
 
   const listQuery = useQuery({
-    queryKey: generalProgramQueryKeys.managers(programId ?? ''),
-    queryFn: () => fetchGeneralProgramManagers(programId!),
+    queryKey: generalProgramQueryKeys.managers(programId ?? '', filtersKey),
+    queryFn: () => fetchGeneralProgramManagers(programId!, managersListQuery),
     enabled: remoteEnabled && Boolean(programId),
     staleTime: 30_000,
     retry: false,
@@ -63,6 +82,7 @@ export function useProgramManagers(programId: string | undefined) {
           email: item.email?.trim() || '',
           phone: item.phone?.trim() || '',
           adminId: item.adminAccountId,
+          cmsRoleCode: item.roleCode?.trim() || undefined,
         }))
     },
     enabled: remoteEnabled,
@@ -70,128 +90,85 @@ export function useProgramManagers(programId: string | undefined) {
     retry: false,
   })
 
-  const managers = useMemo(() => {
-    if (!programId) return []
-    if (remoteEnabled) {
-      if (listQuery.isError) return []
-      const rows = listQuery.data ?? []
-      const phoneByAdminId = new Map(
-        (candidatesQuery.data ?? [])
-          .filter(c => c.adminId != null && c.phone.trim())
-          .map(c => [c.adminId!, c.phone] as const)
-      )
-      return rows.map(row => {
-        if (row.phone.trim()) return row
-        if (row.adminId == null) return row
-        const phone = phoneByAdminId.get(row.adminId)
-        return phone ? { ...row, phone } : row
-      })
-    }
-    return localManagers
-  }, [
-    candidatesQuery.data,
-    listQuery.data,
-    listQuery.isError,
-    localManagers,
-    programId,
-    remoteEnabled,
-  ])
+  const managers = useMemo((): ProgramManagerRow[] => {
+    if (!programId || !remoteEnabled) return []
+    if (listQuery.isError) return []
+    const rows = listQuery.data ?? []
+    const candidateByAdminId = new Map(
+      (candidatesQuery.data ?? [])
+        .filter(c => c.adminId != null)
+        .map(c => [c.adminId!, c] as const)
+    )
+    return rows.map(row => {
+      if (row.adminId == null) return row
+      const candidate = candidateByAdminId.get(row.adminId)
+      if (!candidate) return row
+      return {
+        ...row,
+        phone: row.phone.trim() ? row.phone : candidate.phone,
+        cmsRoleCode: candidate.cmsRoleCode,
+      }
+    })
+  }, [candidatesQuery.data, listQuery.data, listQuery.isError, programId, remoteEnabled])
 
   const invalidateManagers = useCallback(async () => {
     if (!programId) return
     await queryClient.invalidateQueries({
-      queryKey: generalProgramQueryKeys.managers(programId),
+      queryKey: generalProgramQueryKeys.managersRoot(programId),
     })
   }, [programId, queryClient])
 
   const addMutation = useMutation({
-    mutationFn: async (payload: {
-      adminId: number
-      role: ProgramRole
-      /** mock fallback fields */
-      name?: string
-      email?: string
-      phone?: string
-    }) => {
+    mutationFn: async (payload: { adminId: number; role: ProgramRole }) => {
       if (!programId) throw new Error('programId가 없습니다.')
-      if (remoteEnabled) {
-        return addGeneralProgramManager(programId, {
-          adminId: payload.adminId,
-          role: payload.role,
-        })
-      }
-      const nextNo =
-        localManagers.length > 0 ? Math.max(...localManagers.map(r => r.no)) + 1 : 1
-      const newRow: ProgramManagerRow = {
-        id: `manager-new-${Date.now()}`,
-        no: nextNo,
-        name: payload.name ?? '-',
-        email: payload.email ?? '',
-        phone: payload.phone ?? '',
+      return addGeneralProgramManager(programId, {
+        adminId: payload.adminId,
         role: payload.role,
-        registeredAt: formatNow(),
-      }
-      setLocalManagers(prev => [newRow, ...prev])
-      return newRow
+      })
     },
     retry: false,
     onSuccess: async () => {
-      if (remoteEnabled) await invalidateManagers()
+      await invalidateManagers()
     },
   })
 
   const updateRoleMutation = useMutation({
     mutationFn: async (payload: { assignmentId: string; role: ProgramRole }) => {
       if (!programId) throw new Error('programId가 없습니다.')
-      if (remoteEnabled) {
-        return updateGeneralProgramManager(programId, payload.assignmentId, {
-          role: payload.role,
-        })
-      }
-      setLocalManagers(prev =>
-        prev.map(row =>
-          row.id === payload.assignmentId ? { ...row, role: payload.role } : row
-        )
-      )
-      return null
+      return updateGeneralProgramManager(programId, payload.assignmentId, {
+        role: payload.role,
+      })
     },
     retry: false,
     onSuccess: async () => {
-      if (remoteEnabled) await invalidateManagers()
+      await invalidateManagers()
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: async (assignmentIds: string[]) => {
       if (!programId) throw new Error('programId가 없습니다.')
-      if (remoteEnabled) {
-        for (const assignmentId of assignmentIds) {
-          await deleteGeneralProgramManager(programId, assignmentId)
-        }
-        return
+      for (const assignmentId of assignmentIds) {
+        await deleteGeneralProgramManager(programId, assignmentId)
       }
-      const keys = new Set(assignmentIds)
-      setLocalManagers(prev => prev.filter(row => !keys.has(row.id)))
     },
     retry: false,
     onSuccess: async () => {
-      if (remoteEnabled) await invalidateManagers()
+      await invalidateManagers()
     },
   })
 
   const getAssignableCandidates = useCallback(
     (excludeNames: readonly string[]): AssignableManagerCandidate[] => {
-      if (remoteEnabled) {
-        const exclude = new Set(excludeNames.map(n => n.trim().toLowerCase()))
-        const assignedAdminIds = new Set(
-          managers.map(m => m.adminId).filter((id): id is number => id != null)
-        )
-        return (candidatesQuery.data ?? []).filter(c => {
-          if (c.adminId != null && assignedAdminIds.has(c.adminId)) return false
-          return !exclude.has(c.name.trim().toLowerCase())
-        })
-      }
-      return getAssignableManagerCandidates(excludeNames)
+      if (!remoteEnabled) return []
+      const exclude = new Set(excludeNames.map(n => n.trim().toLowerCase()))
+      const assignedAdminIds = new Set(
+        managers.map(m => m.adminId).filter((id): id is number => id != null)
+      )
+      return (candidatesQuery.data ?? []).filter(c => {
+        if (c.adminId != null && assignedAdminIds.has(c.adminId)) return false
+        return !exclude.has(c.name.trim().toLowerCase())
+      })
     },
     [candidatesQuery.data, managers, remoteEnabled]
   )
@@ -202,33 +179,37 @@ export function useProgramManagers(programId: string | undefined) {
     isRemoteDataSource: remoteEnabled && !listQuery.isError,
     isMutating:
       addMutation.isPending || updateRoleMutation.isPending || deleteMutation.isPending,
+    isUpdatingRole: updateRoleMutation.isPending,
     getAssignableCandidates,
     candidatesLoading: remoteEnabled ? candidatesQuery.isFetching : false,
     addManager: async (payload: {
       adminId?: number
       role: ProgramRole
+      cmsRoleCode?: string
       name: string
       email: string
       phone: string
     }) => {
-      try {
-        if (remoteEnabled) {
-          if (payload.adminId == null) {
-            throw new Error('등록할 관리자(adminId)가 없습니다.')
-          }
-          await addMutation.mutateAsync({
-            adminId: payload.adminId,
-            role: payload.role,
-          })
-        } else {
-          await addMutation.mutateAsync({
-            adminId: 0,
-            role: payload.role,
-            name: payload.name,
-            email: payload.email,
-            phone: payload.phone,
-          })
+      if (!remoteEnabled) {
+        return {
+          ok: false as const,
+          message: '프로그램 API를 사용할 수 없습니다.',
         }
+      }
+      try {
+        if (payload.adminId == null) {
+          throw new Error('등록할 관리자(adminId)가 없습니다.')
+        }
+        if (!canAssignProgramRoleToCmsAdmin(payload.cmsRoleCode, payload.role)) {
+          return {
+            ok: false as const,
+            message: CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE,
+          }
+        }
+        await addMutation.mutateAsync({
+          adminId: payload.adminId,
+          role: payload.role,
+        })
         return { ok: true as const }
       } catch (error) {
         return {
@@ -241,10 +222,18 @@ export function useProgramManagers(programId: string | undefined) {
       }
     },
     updateManagerRole: async (assignmentId: string, role: ProgramRole) => {
+      if (!remoteEnabled) {
+        return {
+          ok: false as const,
+          message: '프로그램 API를 사용할 수 없습니다.',
+        }
+      }
       try {
         await updateRoleMutation.mutateAsync({ assignmentId, role })
         return { ok: true as const }
       } catch (error) {
+        // OpenAPI 409: 상태 충돌 시 목록 재조회 후 안내
+        await invalidateManagers()
         return {
           ok: false as const,
           message: getGeneralProgramApiErrorMessage(
@@ -255,6 +244,12 @@ export function useProgramManagers(programId: string | undefined) {
       }
     },
     deleteManagers: async (assignmentIds: string[]) => {
+      if (!remoteEnabled) {
+        return {
+          ok: false as const,
+          message: '프로그램 API를 사용할 수 없습니다.',
+        }
+      }
       try {
         await deleteMutation.mutateAsync(assignmentIds)
         return { ok: true as const }
@@ -269,14 +264,4 @@ export function useProgramManagers(programId: string | undefined) {
       }
     },
   }
-}
-
-function formatNow(): string {
-  const date = new Date()
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  const h = String(date.getHours()).padStart(2, '0')
-  const min = String(date.getMinutes()).padStart(2, '0')
-  return `${y}.${m}.${d} ${h}:${min}`
 }

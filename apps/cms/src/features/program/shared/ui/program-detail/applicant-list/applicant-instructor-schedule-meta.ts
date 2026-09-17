@@ -1,4 +1,4 @@
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import { LONG_DISTANCE_THRESHOLD_KM as SETTLEMENT_LONG_DISTANCE_KM } from '@/shared/constants/settlement-rules'
 
 /** Notion/시드·정산 컬럼 기준 100km. API `longDistanceYn`이 있으면 그 값을 우선한다. */

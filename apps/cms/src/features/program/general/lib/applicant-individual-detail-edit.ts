@@ -3,8 +3,8 @@ import type {
   GeneralIndividualApplicantDetail,
   GeneralIndividualApplicantDetailSavePayload,
   GeneralIndividualApplicantRow,
-} from '@/data/mock/general-individual-applications-mock'
-import type { TextbookStatusKey } from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/individual-applicant'
+import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 import {
   calculateParticipatingTextbookKitQuantity,

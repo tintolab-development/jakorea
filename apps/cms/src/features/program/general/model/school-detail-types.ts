@@ -4,8 +4,8 @@
  */
 
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
-import type { TextbookStatusKey } from '@/data/mock/participating-schools'
-import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
+import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
+import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
 import type { StudentPortraitConsentSubmission } from '../lib/student-portrait-consent'
 
 export type InstructorRoleKey = 'lead' | 'assistant'
@@ -88,6 +88,8 @@ export interface SchoolDetailForModal {
   activityWithdrawStopSessionKey?: string
   /** 활동 포기 기준 교육 일정 표시 라벨 */
   activityWithdrawStopScheduleLabel?: string
+  /** BE participant availableActions — 상세 포기 버튼 게이트 */
+  availableActions?: string[]
   /** 프로그램 참여 신청일 — 수료증/참여인증서 발급 가능 기한(3년) 산정 기준 */
   participationAppliedAt?: string
   instructors: SchoolDetailInstructorRow[]
@@ -103,6 +105,8 @@ export const STUDENT_GENDER_LABELS: Record<StudentGenderKey, string> = {
 
 export interface SchoolDetailStudentRow {
   id: string
+  /** BE 회원 ID — 참여자 PK와 구분 */
+  memberId?: number
   no: number
   name: string
   /** 성별: '남' | '여' 표시용 */

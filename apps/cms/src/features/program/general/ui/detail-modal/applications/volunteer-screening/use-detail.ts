@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import {
   screeningDoc1DetailTitle,
   screeningDocPassedDetailTitle,
@@ -9,10 +9,7 @@ import {
   type ScreeningSubjectKind,
 } from '@/features/program/general/lib/screening-subject-kind'
 
-export type GeneralVolunteerApplicantDetailVariant =
-  | 'doc_screening'
-  | 'doc_passed'
-  | 'interview2'
+export type GeneralVolunteerApplicantDetailVariant = 'doc_screening' | 'doc_passed' | 'interview2'
 
 export type GeneralVolunteerApplicantDetailMeta = {
   title: string
@@ -38,6 +35,7 @@ export function useGeneralVolunteerApplicantDetail({
   list,
   variant,
   subjectKind = 'volunteer',
+  loading = false,
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: {
@@ -45,12 +43,14 @@ export function useGeneralVolunteerApplicantDetail({
   list: GeneralVolunteerApplicantRow[]
   variant: GeneralVolunteerApplicantDetailVariant
   subjectKind?: ScreeningSubjectKind
+  loading?: boolean
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [selectedApplicant, setSelectedApplicant] =
-    useState<GeneralVolunteerApplicantRow | null>(null)
+  const [selectedApplicant, setSelectedApplicant] = useState<GeneralVolunteerApplicantRow | null>(
+    null
+  )
   const selectedApplicantRef = useRef(selectedApplicant)
   selectedApplicantRef.current = selectedApplicant
   const programIdRef = useRef(programId)
@@ -80,7 +80,7 @@ export function useGeneralVolunteerApplicantDetail({
   }, [clearApplicantIdFromUrl, programId])
 
   useEffect(() => {
-    // TODO: 모달 X는 바깥 닫기로 통일됨. 등록 핸들러가 호출되지 않으면 제거 검토.
+    // 헤더 X → 부모 handleHeaderClose가 호출 — 목록으로만 복귀
     if (!onRegisterApplicantCloseHandler) return
     const handler = () => {
       if (!selectedApplicantRef.current) return false
@@ -117,18 +117,16 @@ export function useGeneralVolunteerApplicantDetail({
       return
     }
 
+    if (loading) return
     setSelectedApplicant(null)
     clearApplicantIdFromUrl()
-  }, [clearApplicantIdFromUrl, list, searchParams])
+  }, [clearApplicantIdFromUrl, list, loading, searchParams])
 
   useEffect(() => {
     if (!selectedApplicant) return
     const updated = list.find(row => row.id === selectedApplicant.id)
     if (!updated) return
-    setSelectedApplicant(prev => {
-      if (prev?.id === updated.id && prev.name === updated.name) return prev
-      return updated
-    })
+    setSelectedApplicant(prev => (prev === updated ? prev : updated))
   }, [list, selectedApplicant])
 
   const openApplicantDetail = useCallback(

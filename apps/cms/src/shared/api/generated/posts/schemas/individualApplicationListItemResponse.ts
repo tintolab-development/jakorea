@@ -5,7 +5,13 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InterviewAvailabilitySlot } from './interviewAvailabilitySlot';
+import type { InterviewEvaluationSummary } from './interviewEvaluationSummary';
+import type { PreferredEducationScheduleResponse } from './preferredEducationScheduleResponse';
 
+/**
+ * 일반 개인 프로그램 신청 목록 항목. 신청자 가능 일정과 관리자 확정 배정 일정은 별도 필드입니다.
+ */
 export interface IndividualApplicationListItemResponse {
   id?: number;
   programId?: number;
@@ -13,13 +19,50 @@ export interface IndividualApplicationListItemResponse {
   programType?: string;
   recruitmentId?: number;
   memberId?: number;
+  /** 신청 시점에 DB로 연결된 소속 학교/기관 ID. 저장된 소속이 없으면 null */
+  affiliationOrganizationId?: number;
+  /** 신청자 실명. 프로그램 관리 목록에서는 마스킹하지 않습니다. */
   memberName?: string;
+  /** 신청 시점 소속명 우선의 목록 표시값 */
+  affiliationName?: string;
+  /** 신청 시점 학년 또는 교육 단계 */
+  applicationGrade?: string;
+  /** 상세 번지를 제외한 목록용 주소 요약 */
+  homeAddressSummary?: string;
+  /** 해당 신청 건에서 선택한 교육 일정. 미선택 시 빈 배열 */
+  preferredEducationSchedules?: PreferredEducationScheduleResponse[];
   applicationStatus?: string;
+  /**
+     * Admin CMS 전용 최신 관리자 코멘트
+     * @nullable
+     */
+  managerComment?: string | null;
   documentStatus?: string;
+  managerAEvaluation?: string;
+  managerBEvaluation?: string;
   interviewStatus?: string;
   finalResultStatus?: string;
   reserveRank?: number;
   giveUpYn?: boolean;
+  /** 신청자가 제출한 면접 가능 시간 구간. 중복 제거 후 시작 시각 오름차순이며, 미제출 시 빈 배열입니다. */
+  interviewAvailabilitySlots?: InterviewAvailabilitySlot[];
+  /**
+     * 유효한 신청자 면접 가능 시간 구간 수
+     * @minimum 0
+     */
+  interviewAvailabilityCount?: number;
+  /** 현재 유효한 면접 배정 ID. 면접 평가 API path에 사용 */
+  interviewAssignmentId?: number;
+  interviewAssignmentStatus?: string;
+  /** 관리자가 확정한 면접 슬롯 ID. 신청자 가능 일정과 별개입니다. */
+  assignedInterviewSlotId?: number;
+  /** 관리자가 확정한 면접 시작 시각. 신청자 가능 일정과 별개입니다. */
+  assignedInterviewStartAt?: string;
+  /** 관리자가 확정한 면접 종료 시각. 신청자 가능 일정과 별개입니다. */
+  assignedInterviewEndAt?: string;
+  interviewEvaluations?: InterviewEvaluationSummary[];
+  /** 현재 신청/서류 반려 사유. 반려 상태가 아니면 null */
+  rejectReason?: string;
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;

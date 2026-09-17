@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
+import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
 import { TEMPLATE_FORM_MODAL_DESCRIPTION } from '@/features/template/model/template-registry/template-registry'
 import {
   isSurveyRegistryEntry,
@@ -19,9 +20,8 @@ import {
   FormEditorTitleNumberingField,
 } from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
-import { useCmsAlert } from '@/shared/ui'
 import {
-  resolveSurveyWritingDraft,
+  buildDefaultSurveyWritingDraft,
   saveSurveyWritingTemplate,
 } from '../../lib/survey-management/survey-writing-draft'
 
@@ -38,7 +38,7 @@ export function SurveyTemplateEditModal({
   onClose,
   onSaved,
 }: SurveyTemplateEditModalProps) {
-  const { showAlert } = useCmsAlert()
+  const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
   const templateRow = useMemo(
     () => (open ? findWritingTemplateRowByDefinitionId(templateId) : null),
     [open, templateId]
@@ -53,7 +53,7 @@ export function SurveyTemplateEditModal({
   )
 
   const getInitialDraft = useCallback(
-    () => resolveSurveyWritingDraft(templateId, { templateName: templateRow?.templateName }),
+    () => buildDefaultSurveyWritingDraft(templateId, { templateName: templateRow?.templateName }),
     [templateId, templateRow?.templateName]
   )
   const getDefaultActiveParagraphId = useCallback(
@@ -68,20 +68,22 @@ export function SurveyTemplateEditModal({
     previewHeaderTitle: headerTitle,
     editorKind: 'survey',
     previewZIndex: 1300,
+    templateCode: templateId,
   })
 
   const draftRef = useRef(editor.draft)
   draftRef.current = editor.draft
 
   const handleSave = useCallback(() => {
-    const result = saveSurveyWritingTemplate(templateId, draftRef.current)
-    if (!result.ok) {
-      showAlert({ title: '안내', content: result.message })
-      return
-    }
-    showAlert({ title: '안내', content: '양식이 저장되었습니다.' })
-    onSaved?.(templateId)
-  }, [onSaved, showAlert, templateId])
+    void (async () => {
+      const result = await saveSurveyWritingTemplate(templateId, draftRef.current)
+      if (!result.ok) {
+        showSaveFailure(new Error(result.message))
+        return
+      }
+      showSaveSuccess(() => onSaved?.(templateId))
+    })()
+  }, [onSaved, showSaveFailure, showSaveSuccess, templateId])
 
   const tableRowSelection = useTableRowSelectionState({
     paragraphs: editor.draft.paragraphs,

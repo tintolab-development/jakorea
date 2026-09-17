@@ -1,9 +1,4 @@
-import { CmsButton } from '@/shared/ui'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   UJAT_RECRUIT_TAB_KEYS,
@@ -17,6 +12,7 @@ export function UjatProgramRecruitmentTabsRow({
   canEdit,
   isEditMode,
   onEdit,
+  onCancel,
   onSave,
 }: {
   activeTab: UjatRecruitTabKey
@@ -24,6 +20,7 @@ export function UjatProgramRecruitmentTabsRow({
   canEdit: boolean
   isEditMode: boolean
   onEdit: () => void
+  onCancel: () => void
   onSave: () => void
 }) {
   return (
@@ -36,16 +33,13 @@ export function UjatProgramRecruitmentTabsRow({
         label: UJAT_RECRUIT_TAB_LABELS[key],
       }))}
       trailing={
-        <CmsButton
-          {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
+        <ProgramEditInfoActions
+          isEditing={isEditMode}
           disabled={!canEdit && !isEditMode}
-          onClick={resolveProgramEditInfoClick(isEditMode, {
-            onEnterEdit: onEdit,
-            onSaveEdit: onSave,
-          })}
-        >
-          {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-        </CmsButton>
+          onEdit={onEdit}
+          onCancel={onCancel}
+          onSave={onSave}
+        />
       }
     />
   )

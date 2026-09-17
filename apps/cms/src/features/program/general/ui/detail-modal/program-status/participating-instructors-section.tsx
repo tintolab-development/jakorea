@@ -27,23 +27,23 @@ import { buildParticipatingInstructorCalendarEvents } from '@/features/program/g
 import { matchesInstructorJaExperienceYears } from '@/features/program/general/lib/instructor-application-filter-options'
 import {
   formatParticipatingInstructorAssignedInstitutions,
-  formatParticipatingInstructorHomeAddress,
   getParticipatingInstructorAssignedSchoolNames,
 } from '@/features/program/general/lib/participating-instructors-table-display'
 import { ActivityCertificateIssuancePreviewModal } from './activity-certificate-issuance-preview-modal'
 import { renderParticipatingInstructorCalendarMonthEventContent } from './participating-instructor-calendar-month-event'
-import {
-  type ParticipatingInstructorRow,
-  MOCK_PARTICIPATING_INSTRUCTORS,
-} from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type { Program } from '@/types/domain'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import {
+  displayServerPiiAsIs,
+  PrivacyHomeAddressDisplay,
+} from '@/features/program/shared/lib/program-pii-display'
 import {
   useParticipatingInstructorsParams,
   type ParticipatingInstructorsFilters,
 } from '../../../hooks/use-participating-instructors-params'
 import type { ProgressFilters } from '../../../hooks/use-program-progress-params'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { AddParticipatingInstructorModal } from '../../add-participating-instructor-modal'
 import { ParticipatingInstructorAddConsentModal } from '../../participating-instructor-add-consent-modal'
@@ -58,7 +58,8 @@ import {
   type InstructorSettlementUiStatus,
 } from '@/shared/constants/instructor-settlement-status'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import {
   getScheduleColorPair,
@@ -98,14 +99,6 @@ export interface ParticipatingInstructorsSectionProps {
   onClearInstructorId?: () => void
   onInstructorDetailOpen?: (name: string) => void
   onInstructorDetailClose?: () => void
-}
-
-/** 목록 행 + mock id 병합 (상세·이력서 필드) */
-function mergeParticipatingInstructorRow(
-  row: ParticipatingInstructorRow
-): ParticipatingInstructorRow {
-  const extended = MOCK_PARTICIPATING_INSTRUCTORS.find(m => m.id === row.id) ?? null
-  return extended ? { ...row, ...extended } : row
 }
 
 export function ParticipatingInstructorsSection({
@@ -158,27 +151,28 @@ export function ParticipatingInstructorsSection({
     addInstructorModalOpen,
     setAddInstructorModalOpen,
     handleAddInstructorByMemberId,
-    isRemoteDataSource: instructorsRemote,
     applicationsLoading: instructorsLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
   } = useProgressInstructorList({
     appliedFilters: progressFilters,
     programId,
+    program,
+  })
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: `${programId ?? ''}:${viewMode}:${JSON.stringify(progressFilters)}`,
   })
 
   const { schoolList: schoolRows } = useProgressSchoolList({
     appliedFilters: progressFilters,
     instructorList,
     programId,
+    program,
   })
-
-  /** remote ON이면 mock 상세 필드로 덮어쓰지 않음 */
-  const resolveInstructorRow = useCallback(
-    (row: ParticipatingInstructorRow): ParticipatingInstructorRow => {
-      if (instructorsRemote) return row
-      return mergeParticipatingInstructorRow(row)
-    },
-    [instructorsRemote]
-  )
 
   /** 좌측 캘린더 학교 일정 태그와 동일: 참여 학교명 가나다순 → SCHEDULE_COLORS 순환 */
   const schoolNameToScheduleColor = useMemo(() => {
@@ -326,15 +320,14 @@ export function ParticipatingInstructorsSection({
       return
     }
 
-    setActivityCertPreviewInstructor(resolveInstructorRow(selectedRow))
+    setActivityCertPreviewInstructor(selectedRow)
     setActivityCertPreviewOpen(true)
-  }, [filteredInstructors, resolveInstructorRow, selectedInstructorRowKeys, showAlert])
+  }, [filteredInstructors, selectedInstructorRowKeys, showAlert])
 
   const selectedInstructorFromUrl = useMemo(() => {
     if (!instructorIdFromUrl) return null
-    const row = instructorList.find(r => r.id === instructorIdFromUrl)
-    return row ? resolveInstructorRow(row) : null
-  }, [instructorIdFromUrl, instructorList, resolveInstructorRow])
+    return instructorList.find(r => r.id === instructorIdFromUrl) ?? null
+  }, [instructorIdFromUrl, instructorList])
 
   useEffect(() => {
     if (!instructorIdFromUrl || !onClearInstructorId) return
@@ -428,24 +421,20 @@ export function ParticipatingInstructorsSection({
   }
   const handleListView = () => setViewMode('list')
 
-  const tableScrollX = 48 + 64 + 120 + 160 + 220 + 100 + 100 + 120 + 140 + 140
-
   const instructorListExportRows = useMemo(
     () =>
       filteredInstructors.map(row => ({
         no: row.no,
         instructorName: row.instructorName,
-        homeAddress: formatParticipatingInstructorHomeAddress(
-          row.address ? MASKING_POLICY.address(row.address) : row.region
-        ),
+        homeAddress: displayServerPiiAsIs(row.address ?? row.region),
         assignedInstitutions: formatParticipatingInstructorAssignedInstitutions(
           getParticipatingInstructorAssignedSchoolNames(row, schoolRows, instructorList)
         ),
         lectureExperienceYears:
           row.lectureExperienceYears != null ? `${row.lectureExperienceYears}년` : '-',
         jaEvaluationGrade: row.jaEvaluationGrade ?? '-',
-        contact: row.contact ? MASKING_POLICY.phone(row.contact) : '-',
-        email: row.email ? MASKING_POLICY.email(row.email) : '-',
+        contact: displayServerPiiAsIs(row.contact),
+        email: displayServerPiiAsIs(row.email),
         settlementStatus: getInstructorSettlementStatusLabel(row.settlementStatus),
       })),
     [filteredInstructors, instructorList]
@@ -495,12 +484,9 @@ export function ParticipatingInstructorsSection({
         key: 'homeAddress',
         width: 160,
         ellipsis: true,
-        render: (_: unknown, record: ParticipatingInstructorRow) => {
-          const raw = record.address ?? record.region
-          if (!raw) return '-'
-          const display = record.address ? MASKING_POLICY.address(raw) : raw
-          return formatParticipatingInstructorHomeAddress(display)
-        },
+        render: (_: unknown, record: ParticipatingInstructorRow) => (
+          <PrivacyHomeAddressDisplay address={record.address ?? record.region} revealed={false} />
+        ),
       },
       {
         title: '배정 기관명',
@@ -542,7 +528,7 @@ export function ParticipatingInstructorsSection({
         ellipsis: { showTitle: true },
         onHeaderCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
         onCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
-        render: (v: string | undefined) => (v ? MASKING_POLICY.phone(v) : '-'),
+        render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
       {
         title: '이메일',
@@ -553,7 +539,7 @@ export function ParticipatingInstructorsSection({
         ellipsis: { showTitle: true },
         onHeaderCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
         onCell: () => ({ className: INSTRUCTOR_ELLIPSIS_CELL_CLASS }),
-        render: (v: string | undefined) => (v ? MASKING_POLICY.email(v) : '-'),
+        render: (v: string | undefined) => displayServerPiiAsIs(v),
       },
       {
         title: '정산 현황',
@@ -567,6 +553,14 @@ export function ParticipatingInstructorsSection({
       },
     ],
     [instructorList]
+  )
+
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    {
+      includeSelection: true,
+      enabled: viewMode === 'list',
+    }
   )
 
   if (instructorsLoading && instructorList.length === 0) {
@@ -674,14 +668,14 @@ export function ParticipatingInstructorsSection({
         }}
       >
         {viewMode === 'list' ? (
-          <div className="participating-institutions-section__table-wrap">
+          <div ref={tableWrapRef} className="participating-institutions-section__table-wrap">
             <Table<ParticipatingInstructorRow>
               className="participating-institutions-section__table cms-data-table participating-institutions-section__table--clickable"
               rowKey="id"
               size="middle"
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: tableScrollX }}
+              scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
               columns={columns}
               dataSource={filteredInstructors}
               rowSelection={{
@@ -812,6 +806,7 @@ export function ParticipatingInstructorsSection({
             />
           </div>
         )}
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
       <div className="participating-institutions-section__page-bottom-spacer" aria-hidden />

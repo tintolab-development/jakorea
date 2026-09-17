@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 import { buildSchoolDetailAttendanceFilterFields } from '../lib/school-detail-attendance-filter-fields'
 import {
@@ -11,7 +11,7 @@ import {
   getSchoolDetailAttendanceSessionStudents,
   getSchoolDetailAttendanceSessions,
   patchSchoolDetailAttendanceSession,
-} from '../lib/school-detail-attendance-mock'
+} from '../lib/school-detail-attendance'
 import {
   SCHOOL_ATTENDANCE_FILTER_ALL,
   type SchoolDetailAttendanceFilters,

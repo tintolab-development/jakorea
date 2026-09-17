@@ -3,7 +3,10 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
-import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
+import {
+  getDataManagementApiErrorMessage,
+  getDetailedProgramBusinessAreaFieldError,
+} from '@/features/data-management/api/get-data-management-api-error'
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useDetailedProgramListQuery } from '@/features/detailed-program/hooks/use-detailed-program-list-query'
 import { useDetailedProgramMutations } from '@/features/detailed-program/hooks/use-detailed-program-mutations'
@@ -105,6 +108,7 @@ export default function DetailedProgramPage() {
   const draftByIdRef = useRef<Record<string, DetailedProgramDraft>>({})
   const [addItemModalOpen, setAddItemModalOpen] = useState(false)
   const [addItemModalKey, setAddItemModalKey] = useState(0)
+  const [addItemBusinessAreaError, setAddItemBusinessAreaError] = useState<string | null>(null)
   const [viewDeleteModalOpen, setViewDeleteModalOpen] = useState(false)
   const [viewDeleteModalLines, setViewDeleteModalLines] = useState<string[]>([])
   const viewDeletePendingIdsRef = useRef<string[]>([])
@@ -225,6 +229,7 @@ export default function DetailedProgramPage() {
 
   const handleAddClick = useCallback(() => {
     if (!canWrite) return
+    setAddItemBusinessAreaError(null)
     setAddItemModalKey(k => k + 1)
     setAddItemModalOpen(true)
   }, [canWrite])
@@ -232,14 +237,24 @@ export default function DetailedProgramPage() {
   const handleAddItemSubmit = useCallback(
     async (values: DetailedProgramAddItemValues) => {
       if (!canWrite) return
+      setAddItemBusinessAreaError(null)
       try {
-        await createMutation.mutateAsync({ name: values.name, active: values.active })
+        await createMutation.mutateAsync({
+          name: values.name,
+          active: values.active,
+          businessArea: values.businessArea,
+        })
         setAddItemModalOpen(false)
       } catch (error) {
-        console.debug(
-          'detailedProgramPage create failed',
-          getDataManagementApiErrorMessage(error, '등록에 실패했습니다.')
-        )
+        const fieldError = getDetailedProgramBusinessAreaFieldError(error)
+        if (fieldError) {
+          setAddItemBusinessAreaError(fieldError)
+          return
+        }
+        cmsAlertModal.show({
+          title: '등록 실패',
+          content: getDataManagementApiErrorMessage(error, '등록에 실패했습니다.'),
+        })
       }
     },
     [canWrite, createMutation]
@@ -421,8 +436,13 @@ export default function DetailedProgramPage() {
       <DetailedProgramAddItemModal
         key={addItemModalKey}
         open={addItemModalOpen}
-        onCancel={() => setAddItemModalOpen(false)}
+        onCancel={() => {
+          setAddItemBusinessAreaError(null)
+          setAddItemModalOpen(false)
+        }}
         onSubmit={handleAddItemSubmit}
+        businessAreaError={addItemBusinessAreaError}
+        onBusinessAreaChange={() => setAddItemBusinessAreaError(null)}
       />
 
       <ContentModal

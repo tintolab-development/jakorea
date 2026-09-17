@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import type { UjatVolunteerAssignmentAssignModalMode } from '../volunteers/detail/assign-mock'
+import type { UjatVolunteerAssignmentAssignModalMode } from '../volunteers/detail/volunteer-assign-modal-data'
 import './assign-modal.css'
 
 const MODAL_Z_INDEX = 1100

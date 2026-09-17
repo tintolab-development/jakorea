@@ -7,6 +7,7 @@
  */
 
 export interface ProgramScheduleRequest {
+  id?: number;
   sessionNo?: number;
   scheduleName?: string;
   startAt?: string;

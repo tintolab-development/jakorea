@@ -62,7 +62,7 @@ describe('isCmsInstructorFeeJaRestrictedEditTarget', () => {
     ).toBe(false)
   })
 
-  it('allows before identity completion (fee-grade-only edit still applies)', () => {
+  it('allows before identity completion (button OR; entry uses profile full edit)', () => {
     expect(
       isCmsInstructorFeeJaRestrictedEditTarget({
         role: 'INSTRUCTOR',
@@ -208,12 +208,54 @@ describe('shouldShowCmsBasicProfileFieldsEdit', () => {
     ).toBe(true)
   })
 
-  it('is false for INSTRUCTOR (fee-grade-only via restricted scope)', () => {
+  it('is true for admin-provisioned instructor_only before identity', () => {
     expect(
       shouldShowCmsBasicProfileFieldsEdit({
         role: 'INSTRUCTOR',
+        instructorMemberProfile: 'instructor_only',
         registeredByAdmin: true,
         identitySelfSignupCompletedAfterAdminRegistration: false,
+      })
+    ).toBe(true)
+  })
+
+  it('is true for admin-provisioned instructor_dual before identity', () => {
+    expect(
+      shouldShowCmsBasicProfileFieldsEdit({
+        role: 'INSTRUCTOR',
+        instructorMemberProfile: 'instructor_dual',
+        registeredByAdmin: true,
+        identitySelfSignupCompletedAfterAdminRegistration: false,
+      })
+    ).toBe(true)
+  })
+
+  it('is false for instructor after identity (fee-grade-only via restricted scope)', () => {
+    expect(
+      shouldShowCmsBasicProfileFieldsEdit({
+        role: 'INSTRUCTOR',
+        instructorMemberProfile: 'instructor_only',
+        registeredByAdmin: true,
+        identitySelfSignupCompletedAfterAdminRegistration: true,
+      })
+    ).toBe(false)
+  })
+
+  it('is false for school_teacher before or after identity', () => {
+    expect(
+      shouldShowCmsBasicProfileFieldsEdit({
+        role: 'INSTRUCTOR',
+        instructorMemberProfile: 'school_teacher',
+        registeredByAdmin: true,
+        identitySelfSignupCompletedAfterAdminRegistration: false,
+      })
+    ).toBe(false)
+    expect(
+      shouldShowCmsBasicProfileFieldsEdit({
+        role: 'INSTRUCTOR',
+        instructorMemberProfile: 'school_teacher',
+        registeredByAdmin: true,
+        identitySelfSignupCompletedAfterAdminRegistration: true,
       })
     ).toBe(false)
   })

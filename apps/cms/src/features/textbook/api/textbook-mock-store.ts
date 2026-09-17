@@ -73,7 +73,7 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
   {
     id: 'TB-126',
-    businessArea: '디지털 리터러시',
+    businessArea: '디지털리터러시',
     educationTarget: '초등학교',
     grade: '1학년',
     textbookName: 'JA MY Business',
@@ -83,7 +83,7 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
   {
     id: 'TB-125',
-    businessArea: '디지털 리터러시',
+    businessArea: '디지털리터러시',
     educationTarget: '중학교',
     grade: '2학년',
     textbookName: 'JA MY Business',
@@ -93,7 +93,7 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
   {
     id: 'TB-124',
-    businessArea: '디지털 리터러시',
+    businessArea: '디지털리터러시',
     educationTarget: '고등학교',
     grade: '3학년',
     textbookName: 'JA MY Business',

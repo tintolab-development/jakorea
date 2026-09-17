@@ -3,6 +3,8 @@ import customInstance from '@/shared/api/orval-mutator'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
 import type { BulkDecisionRequest } from '@/shared/api/generated/dashboard/schemas/bulkDecisionRequest'
 import type { BulkIdsRequest } from '@/shared/api/generated/dashboard/schemas/bulkIdsRequest'
+import type { GeminiApprovedTrainingItem } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingItem'
+import type { GeminiApprovedTrainingListResponse } from '@/shared/api/generated/dashboard/schemas/geminiApprovedTrainingListResponse'
 import type { GeminiOrganizationApplicationItem } from '@/shared/api/generated/dashboard/schemas/geminiOrganizationApplicationItem'
 import type { GeminiOrganizationApplicationListResponse } from '@/shared/api/generated/dashboard/schemas/geminiOrganizationApplicationListResponse'
 import type { GeminiRecruitmentDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiRecruitmentDetailResponse'
@@ -15,22 +17,74 @@ import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/sche
 const BASE = '/api/admin/gemini/trainings'
 
 const DEFAULT_REJECT_REASON = '관리자 반려'
+export const GEMINI_VISITING_TRAINING_LIST_PAGE_SIZE = 20
 
-function asContentArray<T>(
-  body: { content?: T[] } | T[] | null | undefined
-): T[] {
-  if (Array.isArray(body)) return body
-  return body?.content ?? []
+type PageEnvelope<T> = {
+  items: T[]
+  page: number
+  size: number
+  totalElements: number
+  hasMore: boolean
 }
 
-export async function fetchGeminiRecruitmentsRemote(): Promise<GeminiRecruitmentItem[]> {
+function toPageEnvelope<T>(
+  body: { content?: T[]; page?: number; size?: number; totalElements?: number } | T[],
+  requestedPage: number,
+  requestedSize: number
+): PageEnvelope<T> {
+  if (Array.isArray(body)) {
+    return {
+      items: body,
+      page: requestedPage,
+      size: requestedSize,
+      totalElements: body.length,
+      hasMore: false,
+    }
+  }
+  const items = body.content ?? []
+  const page = body.page ?? requestedPage
+  const size = body.size ?? requestedSize
+  const totalElements = body.totalElements ?? items.length
+  const totalPages = size > 0 ? Math.ceil(totalElements / size) : page + 1
+  return {
+    items,
+    page,
+    size,
+    totalElements,
+    hasMore: page + 1 < totalPages,
+  }
+}
+
+function appendPageParams(
+  query: URLSearchParams,
+  page: number,
+  size: number
+): void {
+  query.set('page', String(page))
+  query.set('size', String(size))
+}
+
+export type GeminiRecruitmentRemoteFilters = {
+  keyword?: string
+  periodStatus?: string
+}
+
+export async function fetchGeminiRecruitmentsRemotePage(
+  filters: GeminiRecruitmentRemoteFilters = {},
+  page = 0,
+  size = GEMINI_VISITING_TRAINING_LIST_PAGE_SIZE
+): Promise<PageEnvelope<GeminiRecruitmentItem>> {
+  const query = new URLSearchParams()
+  if (filters.keyword) query.set('keyword', filters.keyword)
+  if (filters.periodStatus) query.set('periodStatus', filters.periodStatus)
+  appendPageParams(query, page, size)
   const body = await unwrapApiBody<GeminiRecruitmentListResponse | GeminiRecruitmentItem[]>(
     await customInstance({
-      url: `${BASE}/recruitments`,
+      url: `${BASE}/recruitments?${query.toString()}`,
       method: 'GET',
     })
   )
-  return asContentArray(body)
+  return toPageEnvelope(body, page, size)
 }
 
 export async function fetchGeminiRecruitmentDetailRemote(
@@ -45,27 +99,42 @@ export async function fetchGeminiRecruitmentDetailRemote(
 }
 
 export async function fetchGeminiOrganizationApplicationsRemote(
-  programId: string
-): Promise<GeminiOrganizationApplicationItem[]> {
+  programId: string,
+  status: string | undefined,
+  page = 0,
+  size = GEMINI_VISITING_TRAINING_LIST_PAGE_SIZE
+): Promise<PageEnvelope<GeminiOrganizationApplicationItem>> {
+  const query = new URLSearchParams()
+  if (status) query.set('status', status)
+  appendPageParams(query, page, size)
   const body = await unwrapApiBody<
     GeminiOrganizationApplicationListResponse | GeminiOrganizationApplicationItem[]
   >(
     await customInstance({
-      url: `${BASE}/recruitments/${encodeURIComponent(programId)}/organization-applications`,
+      url: `${BASE}/recruitments/${encodeURIComponent(programId)}/organization-applications?${query.toString()}`,
       method: 'GET',
     })
   )
-  return asContentArray(body)
+  return toPageEnvelope(body, page, size)
 }
 
-export async function fetchGeminiApprovedTrainingsRemote(): Promise<GeminiRecruitmentItem[]> {
-  const body = await unwrapApiBody<GeminiRecruitmentListResponse | GeminiRecruitmentItem[]>(
+export async function fetchGeminiApprovedTrainingsRemote(
+  keyword: string | undefined,
+  page = 0,
+  size = GEMINI_VISITING_TRAINING_LIST_PAGE_SIZE
+): Promise<PageEnvelope<GeminiApprovedTrainingItem>> {
+  const query = new URLSearchParams()
+  if (keyword) query.set('keyword', keyword)
+  appendPageParams(query, page, size)
+  const body = await unwrapApiBody<
+    GeminiApprovedTrainingListResponse | GeminiApprovedTrainingItem[]
+  >(
     await customInstance({
-      url: `${BASE}/approved`,
+      url: `${BASE}/approved?${query.toString()}`,
       method: 'GET',
     })
   )
-  return asContentArray(body)
+  return toPageEnvelope(body, page, size)
 }
 
 export async function createGeminiRecruitmentRemote(

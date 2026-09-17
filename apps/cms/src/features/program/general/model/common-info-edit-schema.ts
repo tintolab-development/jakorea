@@ -10,7 +10,6 @@ import type {
   InstitutionType,
   Program,
 } from '@/types/domain'
-import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
 import type { SponsorContactRow, SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
   resolveGeneralProgramCommonInfo,
@@ -98,19 +97,33 @@ const participantTypeSchema = z.object({
   participantVolunteer: z.boolean(),
 })
 
+function isBlankText(value: string | undefined | null): boolean {
+  return value == null || value.trim() === ''
+}
+
+function isIpsTypeIncomplete(category: string | undefined, detail: string | undefined): boolean {
+  if (isBlankText(category)) return true
+  if (category === 'prepare') return false
+  return isBlankText(detail)
+}
+
+/**
+ * 일반 프로그램 공통 정보 — 등록(`registration-required-fields`)과 동일하게
+ * 화면에 노출되는 입력은 모두 필수. 조건부 필드는 superRefine에서 검사.
+ */
 export const generalProgramCommonInfoEditSchema = z
   .object({
     mainTitle: z.string().trim().min(1, '대표 프로그램명(국문)을 입력해주세요'),
-    titleEn: z.string().optional(),
+    titleEn: z.string().trim().min(1, '대표 프로그램명(영문)을 입력해주세요'),
     announcementTitle: z.string().trim().min(1, '공고용 프로그램명을 입력해주세요'),
-    detailedProgramId: z.string().optional(),
+    detailedProgramId: z.string(),
     startDate: z.string().min(1, '사업 운영 기간을 선택해주세요'),
     endDate: z.string().min(1, '사업 운영 기간을 선택해주세요'),
     businessArea: z.string().min(1, '사업 분야를 선택해주세요'),
     sponsorManagementIds: z.array(z.string()).min(1, '후원사를 선택해주세요'),
     sponsorManagerContactId: z.string().min(1, '후원사 담당자를 선택해주세요'),
     venueKind: z.enum(['inside', 'outside', 'other']),
-    venueDetail: z.string().optional(),
+    venueDetail: z.string().trim().min(1, '교육 장소를 입력해주세요'),
     surveySurvey: z.boolean(),
     surveySatisfaction: z.boolean(),
     surveyLectureEvaluation: z.boolean(),
@@ -118,29 +131,39 @@ export const generalProgramCommonInfoEditSchema = z
     ipOwned: z.string().min(1, 'IP Owned를 선택해주세요'),
     courseDeliveredBy: z.string().min(1, 'Course Delivered By를 선택해주세요'),
     partnerInvolvement: z.enum(['yes', 'no']),
-    kpiFinalParticipants: z.coerce.number().min(0).optional(),
-    kpiInstructorCount: z.coerce.number().min(0).optional(),
-    kpiVolunteerCount: z.coerce.number().min(0).optional(),
-    kpiFinalSchools: z.coerce.number().min(0).optional(),
-    kpiFinalClasses: z.coerce.number().min(0).optional(),
-    wageGrade1Amount: z.string().optional(),
-    wageGrade2Amount: z.string().optional(),
-    wageGrade3Amount: z.string().optional(),
-    wagePaymentItemIds: z.array(z.string()).optional(),
+    kpiFinalParticipants: z.coerce.number({
+      invalid_type_error: '참여자 최종 인원을 입력해주세요',
+    }),
+    kpiInstructorCount: z.coerce.number({
+      invalid_type_error: '강사 인원을 입력해주세요',
+    }),
+    kpiVolunteerCount: z.coerce.number({
+      invalid_type_error: '봉사자 인원을 입력해주세요',
+    }),
+    kpiFinalSchools: z.coerce.number({
+      invalid_type_error: '파견 학교 수를 입력해주세요',
+    }),
+    kpiFinalClasses: z.coerce.number({
+      invalid_type_error: '파견 학급 수를 입력해주세요',
+    }),
+    wageGrade1Amount: z.string().trim().min(1, '1급 강사비를 입력해주세요'),
+    wageGrade2Amount: z.string().trim().min(1, '2급 강사비를 입력해주세요'),
+    wageGrade3Amount: z.string().trim().min(1, '3급 강사비를 입력해주세요'),
+    wagePaymentItemIds: z.array(z.string()).min(1, '지급 항목을 선택해주세요'),
     wageDeductionItems: z.string().optional(),
     educationStructure: z.enum(['curriculum', 'schedule']),
     sessionRound: z.enum(['single', 'multi']),
-    educationForm: z.string().optional(),
-    educationFormScheduleDetail: z.enum(['common', 'perSchedule']).optional(),
-    participationScheduleDetail: z.enum(['common', 'perSchedule']).optional(),
+    educationForm: z.string(),
+    educationFormScheduleDetail: z.enum(['common', 'perSchedule']),
+    participationScheduleDetail: z.enum(['common', 'perSchedule']),
     ipsScheduleDetail: z.enum(['common', 'perSchedule']),
     ipsCategory: z.enum(['inspire', 'prepare', 'succeed', '']),
-    ipsDetail: z.string().optional(),
-    participationMethod: z.enum(['individual', 'team']).optional(),
+    ipsDetail: z.string(),
+    participationMethod: z.enum(['individual', 'team']),
     curriculumSessions: z.array(curriculumSessionSchema),
     scheduleGroupCount: z.coerce.number().min(1).max(4).default(1),
     scheduleDetails: z.array(scheduleDetailFormSchema),
-    scheduleCurriculumPreEducation: z.boolean().optional(),
+    scheduleCurriculumPreEducation: z.boolean(),
     educationScheduleMode: z.enum(['date', 'period']).default('date'),
     educationScheduleLines: z.array(z.string()),
   })
@@ -157,6 +180,295 @@ export const generalProgramCommonInfoEditSchema = z
         message: '참여자 유형을 선택해주세요',
         path: ['participantOrganization'],
       })
+    }
+
+    if (
+      data.educationStructure !== 'schedule' &&
+      (isBlankText(data.detailedProgramId) ||
+        data.detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '세부 프로그램명을 선택해주세요',
+        path: ['detailedProgramId'],
+      })
+    }
+
+    if (!data.surveySurvey && !data.surveySatisfaction && !data.surveyLectureEvaluation) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '설문 진행 항목을 선택해주세요',
+        path: ['surveySurvey'],
+      })
+    }
+
+    const isIndividualTarget = isGeneralIndividualParticipantSelection(
+      data.participantIndividual,
+      data.participantOrganization
+    )
+    if (!Number.isFinite(data.kpiFinalParticipants) || data.kpiFinalParticipants < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '참여자 최종 인원을 입력해주세요',
+        path: ['kpiFinalParticipants'],
+      })
+    }
+    if (data.participantTeacherInstructor) {
+      if (!Number.isFinite(data.kpiInstructorCount) || data.kpiInstructorCount < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '강사 인원을 입력해주세요',
+          path: ['kpiInstructorCount'],
+        })
+      }
+    }
+    if (data.participantVolunteer) {
+      if (!Number.isFinite(data.kpiVolunteerCount) || data.kpiVolunteerCount < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '봉사자 인원을 입력해주세요',
+          path: ['kpiVolunteerCount'],
+        })
+      }
+    }
+    if (!isIndividualTarget) {
+      if (!Number.isFinite(data.kpiFinalSchools) || data.kpiFinalSchools < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '파견 학교 수를 입력해주세요',
+          path: ['kpiFinalSchools'],
+        })
+      }
+      if (!Number.isFinite(data.kpiFinalClasses) || data.kpiFinalClasses < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '파견 학급 수를 입력해주세요',
+          path: ['kpiFinalClasses'],
+        })
+      }
+    }
+
+    const showParticipation = !data.participantOrganization
+    const educationFormDetail = data.educationFormScheduleDetail
+    const participationDetail = data.participationScheduleDetail
+
+    if (data.sessionRound === 'multi') {
+      if (educationFormDetail === 'common' && isBlankText(data.educationForm)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '교육 형태를 선택해주세요',
+          path: ['educationForm'],
+        })
+      }
+      if (
+        showParticipation &&
+        participationDetail === 'common' &&
+        data.participationMethod !== 'individual' &&
+        data.participationMethod !== 'team'
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '참여 방식을 선택해주세요',
+          path: ['participationMethod'],
+        })
+      }
+    } else if (isBlankText(data.educationForm)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '교육 형태를 선택해주세요',
+        path: ['educationForm'],
+      })
+    }
+
+    if (data.ipsScheduleDetail === 'common' && isIpsTypeIncomplete(data.ipsCategory, data.ipsDetail)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'IPS Type을 선택해주세요',
+        path: ['ipsCategory'],
+      })
+    }
+
+    if (data.educationStructure === 'curriculum') {
+      if (data.curriculumSessions.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '교육 진행(커리큘럼) 차시를 추가해주세요',
+          path: ['curriculumSessions'],
+        })
+      }
+      data.curriculumSessions.forEach((session, index) => {
+        const isPre = isPreEducationCurriculumSession(session)
+        if (isBlankText(session.title)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: isPre ? '사전 교육명을 입력해주세요' : '차시명을 입력해주세요',
+            path: ['curriculumSessions', index, 'title'],
+          })
+        }
+        if (!isPre && isBlankText(session.description)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '차시 내용을 입력해주세요',
+            path: ['curriculumSessions', index, 'description'],
+          })
+        }
+        if (isPre && isBlankText(session.scheduleDate)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '사전 교육 일정을 입력해주세요',
+            path: ['curriculumSessions', index, 'scheduleDate'],
+          })
+        }
+        if (
+          educationFormDetail === 'perSchedule' &&
+          !isPre &&
+          isBlankText(session.educationForm)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '교육 형태를 선택해주세요',
+            path: ['curriculumSessions', index, 'educationForm'],
+          })
+        }
+        if (
+          showParticipation &&
+          participationDetail === 'perSchedule' &&
+          !isPre &&
+          session.participationMethod !== 'individual' &&
+          session.participationMethod !== 'team'
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '참여 방식을 선택해주세요',
+            path: ['curriculumSessions', index, 'participationMethod'],
+          })
+        }
+        if (
+          data.ipsScheduleDetail === 'perSchedule' &&
+          !isPre &&
+          isIpsTypeIncomplete(session.ipsCategory, session.ipsDetail)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'IPS Type을 선택해주세요',
+            path: ['curriculumSessions', index, 'ipsCategory'],
+          })
+        }
+        if (!isPre && session.assignmentEnabled === true && isBlankText(session.assignmentPeriod)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '과제 제출 기간을 입력해주세요',
+            path: ['curriculumSessions', index, 'assignmentPeriod'],
+          })
+        }
+      })
+    }
+
+    if (data.educationStructure === 'schedule') {
+      if (data.scheduleDetails.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '교육 진행(일정형) 세부 일정을 추가해주세요',
+          path: ['scheduleDetails'],
+        })
+      }
+      const groupCount =
+        data.sessionRound === 'multi' ? 1 : Math.max(1, data.scheduleGroupCount ?? 1)
+      data.scheduleDetails.forEach((detail, index) => {
+        const isPre = detail.blockKind === 'preEducation'
+        if (isBlankText(detail.name)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: isPre ? '사전 교육명을 입력해주세요' : '일정 상세를 입력해주세요',
+            path: ['scheduleDetails', index, 'name'],
+          })
+        }
+        const useEventDate =
+          data.sessionRound === 'multi' && educationFormDetail === 'perSchedule'
+        if (useEventDate || isPre || detail.blockKind === 'event') {
+          if (useEventDate && isBlankText(detail.scheduleDate)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: '일정을 선택해주세요',
+              path: ['scheduleDetails', index, 'scheduleDate'],
+            })
+          }
+        } else {
+          const slots = detail.groupTimes ?? []
+          if (slots.length < groupCount) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: '진행 시간을 입력해주세요',
+              path: ['scheduleDetails', index, 'groupTimes'],
+            })
+          } else {
+            for (let g = 0; g < groupCount; g += 1) {
+              const slot = slots[g]
+              if (isBlankText(slot?.startTime) || isBlankText(slot?.endTime)) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: '진행 시간을 입력해주세요',
+                  path: ['scheduleDetails', index, 'groupTimes', g],
+                })
+              }
+            }
+          }
+        }
+        if (educationFormDetail === 'perSchedule' && isBlankText(detail.educationForm)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '교육 형태를 선택해주세요',
+            path: ['scheduleDetails', index, 'educationForm'],
+          })
+        }
+        if (
+          showParticipation &&
+          participationDetail === 'perSchedule' &&
+          detail.participationMethod !== 'individual' &&
+          detail.participationMethod !== 'team'
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '참여 방식을 선택해주세요',
+            path: ['scheduleDetails', index, 'participationMethod'],
+          })
+        }
+        if (
+          data.ipsScheduleDetail === 'perSchedule' &&
+          !isPre &&
+          isIpsTypeIncomplete(detail.ipsCategory, detail.ipsDetail)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'IPS Type을 선택해주세요',
+            path: ['scheduleDetails', index, 'ipsCategory'],
+          })
+        }
+        if (
+          showParticipation &&
+          detail.assignmentEnabled === true &&
+          isBlankText(detail.assignmentPeriod)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '과제 제출 기간을 입력해주세요',
+            path: ['scheduleDetails', index, 'assignmentPeriod'],
+          })
+        }
+      })
+    }
+
+    const hideEducationSchedule =
+      data.educationStructure === 'schedule' && data.sessionRound === 'multi'
+    if (!hideEducationSchedule) {
+      const hasLine = data.educationScheduleLines.some(line => !isBlankText(line))
+      if (!hasLine) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '교육 진행 일정을 입력해주세요',
+          path: ['educationScheduleLines'],
+        })
+      }
     }
   })
 
@@ -366,7 +678,7 @@ export function isGeneralProgramScheduleType(program: Program): boolean {
 
 function resolveDetailedProgramId(
   program: Program,
-  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+  catalog: readonly { id: string; name: string }[] = []
 ): string {
   if (isGeneralProgramScheduleType(program)) {
     return TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
@@ -427,6 +739,19 @@ export function decodeSponsorManagerContactRef(
 }
 
 /**
+ * 후원사 담당자 이름(+직함) — `이름 직함`, 직함 없으면 `이름`
+ */
+export function formatSponsorManagerPersonLabel(input: {
+  contactName: string
+  position?: string | null
+}): string {
+  const name = input.contactName.trim()
+  const position = input.position?.trim() ?? ''
+  if (!name) return position || '-'
+  return position ? `${name} ${position}` : name
+}
+
+/**
  * 후원사 담당자 셀렉트 라벨
  * - 복수 후원사: `소속 | 이름 직함` (직함 없으면 생략) — 예: `스타벅스 | 이가원 책임`
  * - 단일 후원사: `이름 직함` / `이름`
@@ -437,13 +762,57 @@ export function formatSponsorManagerSelectLabel(input: {
   position?: string | null
   multiSponsor: boolean
 }): string {
-  const name = input.contactName.trim()
-  const position = input.position?.trim() ?? ''
-  const nameWithPosition = position ? `${name} ${position}` : name
-  if (!input.multiSponsor) return nameWithPosition || '-'
+  const nameWithPosition = formatSponsorManagerPersonLabel({
+    contactName: input.contactName,
+    position: input.position,
+  })
+  if (!input.multiSponsor) return nameWithPosition
   const sponsorName = input.sponsorName.trim()
-  if (!sponsorName) return nameWithPosition || '-'
+  if (!sponsorName) return nameWithPosition
   return `${sponsorName} | ${nameWithPosition}`
+}
+
+/**
+ * view/저장용 담당자 한 줄 — `이름 직함 | 연락처` (직함·연락처 없으면 생략)
+ */
+export function formatSponsorManagerDisplayLine(input: {
+  contactName: string
+  position?: string | null
+  phone?: string | null
+}): string {
+  return [formatSponsorManagerPersonLabel(input), input.phone?.trim()]
+    .filter(Boolean)
+    .join(' | ')
+}
+
+/**
+ * view 모드 — 저장된 문구에서 담당자명을 매칭해 `이름 직함`(복수 시 `소속 | …`)으로 재구성.
+ * 매칭 실패 시 stored 원문 반환.
+ */
+export function resolveSponsorManagerViewLine(input: {
+  storedLine?: string | null
+  sponsors: ReadonlyArray<{ id: string; name: string }>
+  contactsBySponsorId: Record<string, ReadonlyArray<{ name: string; position?: string | null; phone?: string | null }>>
+}): string {
+  const stored = input.storedLine?.trim() ?? ''
+  if (!stored || stored === '-') return stored || '-'
+  const multiSponsor = input.sponsors.length > 1
+  for (const sponsor of input.sponsors) {
+    const contacts = input.contactsBySponsorId[sponsor.id] ?? []
+    for (const contact of contacts) {
+      const name = contact.name?.trim() ?? ''
+      if (!name || !stored.includes(name)) continue
+      const label = formatSponsorManagerSelectLabel({
+        sponsorName: sponsor.name,
+        contactName: contact.name,
+        position: contact.position,
+        multiSponsor,
+      })
+      const phone = contact.phone?.trim()
+      return phone ? `${label} | ${phone}` : label
+    }
+  }
+  return stored
 }
 
 export type GeneralProgramSponsorEditContext = {
@@ -834,7 +1203,7 @@ function resolveWageFromProgram(program: Program): Pick<
 export function programToGeneralCommonInfoEditValues(
   program: Program,
   context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT,
-  detailedProgramCatalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+  detailedProgramCatalog: readonly { id: string; name: string }[] = []
 ): GeneralProgramCommonInfoEditFormValues {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
   const sponsorManagementIds = resolveSponsorManagementIds(program, context)
@@ -936,7 +1305,7 @@ function institutionTypeFromVenueKind(
 
 function resolveDetailedProgramName(
   detailedProgramId: string | undefined,
-  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+  catalog: readonly { id: string; name: string }[] = []
 ): string | undefined {
   if (!detailedProgramId || detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) {
     return undefined
@@ -948,7 +1317,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
   values: GeneralProgramCommonInfoEditFormValues,
   existing: Program,
   context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT,
-  detailedProgramCatalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows,
+  detailedProgramCatalog: readonly { id: string; name: string }[] = [],
   paymentItemOptions?: readonly { value: string; label: string }[]
 ): Partial<Program> {
   const sponsorRows = values.sponsorManagementIds
@@ -971,9 +1340,11 @@ export function generalCommonInfoEditValuesToProgramPatch(
   const existingCommon = resolveGeneralProgramCommonInfo(existing)
 
   const managerLine = manager
-    ? [manager.position ? `${manager.position} ${manager.name}` : manager.name, manager.phone]
-        .filter(Boolean)
-        .join(' | ')
+    ? formatSponsorManagerDisplayLine({
+        contactName: manager.name,
+        position: manager.position,
+        phone: manager.phone,
+      })
     : existingCommon.sponsorManagerLine
 
   const ipsCategory = values.ipsCategory as ProgramRegistrationIpsCategory | ''
@@ -1247,7 +1618,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
 }
 
 export function getGeneralDetailedProgramSelectOptions(
-  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+  catalog: readonly { id: string; name: string }[] = []
 ) {
   return withDetailedProgramNoneOption(
     catalog.map(row => ({ value: row.id, label: row.name }))

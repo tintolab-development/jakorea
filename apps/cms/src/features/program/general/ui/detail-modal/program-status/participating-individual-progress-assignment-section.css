@@ -3,7 +3,7 @@
   .participating-individual-progress-assignment-table
   table.ant-table {
   table-layout: fixed !important;
-  width: max-content !important;
+  width: 100% !important;
   min-width: 100%;
 }
 

@@ -13,13 +13,13 @@ import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { useCmsAlert } from '@/shared/ui'
-import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { Program } from '@/types/domain'
 import {
   getParticipatingIndividualParticipantAttendanceBundle,
   sortParticipatingIndividualParticipantAttendanceRows,
   buildParticipatingIndividualParticipantAttendanceSummary,
-} from '@/features/program/general/lib/participating-individual-participant-attendance-mock'
+} from '@/features/program/general/lib/participating-individual-participant-attendance'
 import {
   formatParticipatingIndividualParticipantAttendanceShortDateLabel,
 } from '@/features/program/general/lib/participating-individual-participant-attendance-display'

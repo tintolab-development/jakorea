@@ -39,7 +39,7 @@ describe('fetchAllAccountsDirectoryPage', () => {
       totalPages: 1,
     })
 
-    const result = await fetchAllAccountsDirectoryPage({ allTabRoleFilter: 'ALL' }, 0, 15)
+    const result = await fetchAllAccountsDirectoryPage({ allTabRoleFilter: 'ALL' }, 0, 20)
 
     expect(fetchAllCmsMembersAndAdminsPageRemote).toHaveBeenCalledWith({
       keyword: undefined,
@@ -47,7 +47,7 @@ describe('fetchAllAccountsDirectoryPage', () => {
       createdAtTo: undefined,
       accountType: undefined,
       page: 0,
-      size: 15,
+      size: 20,
     })
     expect(result.users.map(u => u.name)).toEqual(['개인', '강사'])
     expect(result.total).toBe(2)
@@ -69,14 +69,14 @@ describe('fetchAllAccountsDirectoryPage', () => {
     const result = await fetchAllAccountsDirectoryPage(
       { accountType: 'MEMBER', allTabRoleFilter: 'INDIVIDUAL' },
       0,
-      15
+      20
     )
 
     expect(result.users.map(u => u.name)).toEqual(['개인1', '개인2'])
     expect(result.total).toBe(2)
     expect(result.hasMore).toBe(false)
     expect(fetchAllCmsMembersAndAdminsPageRemote).toHaveBeenCalledWith(
-      expect.objectContaining({ accountType: 'MEMBER', size: 15 })
+      expect.objectContaining({ accountType: 'MEMBER', size: 20 })
     )
   })
 
@@ -94,7 +94,7 @@ describe('fetchAllAccountsDirectoryPage', () => {
     const result = await fetchAllAccountsDirectoryPage(
       { accountType: 'MEMBER', allTabRoleFilter: 'SCHOOL_TEACHER' },
       0,
-      15
+      20
     )
 
     expect(result.users.map(u => u.name)).toEqual(['교사'])

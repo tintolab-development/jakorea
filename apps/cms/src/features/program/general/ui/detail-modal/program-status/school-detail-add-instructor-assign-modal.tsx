@@ -4,15 +4,15 @@
  * 대표 강사 지정 → 강사명 → 교육 배정일(1열 칩 리스트) · 취소/강사 배정
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Form } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CmsRadio, CmsSelect } from '@/shared/ui'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
-} from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/participating-schools'
 import type { InstructorRoleKey } from '../../../model/school-detail-types'
 import { INSTRUCTOR_ROLE_LABELS } from '../../../model/school-detail-types'
 import type { InstructorAssignSessionOption } from '../../../lib/instructor-assign-session-options'
@@ -30,7 +30,8 @@ import './school-detail-add-instructor-assign-modal.css'
 function InstructorAssignSessionTags({
   value,
   onChange,
-  options }: {
+  options,
+}: {
   value?: string[]
   onChange?: (ids: string[]) => void
   options: InstructorAssignSessionOption[]
@@ -125,7 +126,18 @@ export interface SchoolDetailAddInstructorAssignModalProps {
 }
 
 const DEFAULT_ROLE: InstructorRoleKey = 'assistant'
-const MODAL_WIDTH = 800
+const MODAL_WIDTH = 600
+
+function RequiredFieldLabel({ children }: { children: ReactNode }) {
+  return (
+    <>
+      {children}
+      <span className="school-detail-add-instructor-assign-modal__required" aria-hidden>
+        *
+      </span>
+    </>
+  )
+}
 
 export function SchoolDetailAddInstructorAssignModal({
   open,
@@ -236,7 +248,8 @@ export function SchoolDetailAddInstructorAssignModal({
         instructorId: values.instructorId,
         role: values.role,
         option,
-        sessionIds })
+        sessionIds,
+      })
       setOverflowOpen(true)
       return
     }
@@ -267,8 +280,14 @@ export function SchoolDetailAddInstructorAssignModal({
 
   const handleLeadConfirmOk = () => {
     if (leadConfirmPayload) {
-      commitAdd(leadConfirmPayload.instructorId, leadConfirmPayload.role, leadConfirmPayload.option, {
-        sessionIds: leadConfirmPayload.sessionIds })
+      commitAdd(
+        leadConfirmPayload.instructorId,
+        leadConfirmPayload.role,
+        leadConfirmPayload.option,
+        {
+          sessionIds: leadConfirmPayload.sessionIds,
+        }
+      )
     }
   }
 
@@ -311,7 +330,9 @@ export function SchoolDetailAddInstructorAssignModal({
             <div className="school-detail-add-instructor-assign-modal__fields">
               <Form.Item
                 name="role"
-                label="대표 강사 지정"
+                label={<RequiredFieldLabel>대표 강사 지정</RequiredFieldLabel>}
+                required
+                rules={[{ required: true, message: '대표 강사 지정을 선택해 주세요.' }]}
                 className="school-detail-add-instructor-assign-modal__field"
               >
                 <CmsRadio.Group
@@ -328,7 +349,9 @@ export function SchoolDetailAddInstructorAssignModal({
               </Form.Item>
               <Form.Item
                 name="instructorId"
-                label="강사명"
+                label={<RequiredFieldLabel>강사명</RequiredFieldLabel>}
+                required
+                rules={[{ required: true, message: '배정할 강사를 선택해 주세요.' }]}
                 className="school-detail-add-instructor-assign-modal__field"
               >
                 <CmsSelect
@@ -347,7 +370,16 @@ export function SchoolDetailAddInstructorAssignModal({
               </Form.Item>
               <Form.Item
                 name="sessionIds"
-                label="교육 배정일 선택"
+                label={<RequiredFieldLabel>교육 배정일 선택</RequiredFieldLabel>}
+                required
+                rules={[
+                  {
+                    required: true,
+                    type: 'array',
+                    min: 1,
+                    message: '교육 배정일을 선택해 주세요.',
+                  },
+                ]}
                 className="school-detail-add-instructor-assign-modal__field school-detail-add-instructor-assign-modal__field--sessions"
               >
                 <InstructorAssignSessionTags options={assignmentSessionOptions} />

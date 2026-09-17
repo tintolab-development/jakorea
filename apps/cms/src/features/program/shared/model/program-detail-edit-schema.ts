@@ -176,6 +176,8 @@ const programDetailEditSchemaBase = z.object({
   additionalContentHtml: z.string().optional(),
   // 공통 정보
   mainTitle: z.string().optional(),
+  announcementTitle: z.string().optional(),
+  detailedProgramName: z.string().optional(),
   teamDivision: z.string().optional(),
   educationProcess: z.string().optional(),
   ipOwned: z.string().optional(),
@@ -444,6 +446,12 @@ export function programToDetailEditValues(
     curriculumSession2Description: program.generalCommonInfo?.curriculumSessions?.[1]?.description,
     educationScheduleLines: program.generalCommonInfo?.educationScheduleLines,
     mainTitle: program.mainTitle ?? undefined,
+    announcementTitle: program.generalCommonInfo?.announcementTitle ?? program.title,
+    detailedProgramName:
+      program.generalCommonInfo?.detailedProgramName ??
+      program.textbookName ??
+      program.title ??
+      undefined,
     teamDivision: program.teamDivision ?? undefined,
     educationProcess: program.educationProcess ?? undefined,
     ipOwned: program.ipOwned ?? undefined,
@@ -569,6 +577,10 @@ export function detailEditValuesToProgramPatch(
         : existing.generalSurveyMenuKeys,
     generalCommonInfo: {
       ...existing.generalCommonInfo,
+      announcementTitle:
+        values.announcementTitle ?? existing.generalCommonInfo?.announcementTitle,
+      detailedProgramName:
+        values.detailedProgramName ?? existing.generalCommonInfo?.detailedProgramName,
       sponsorManagementIds:
         values.sponsorManagementIds ?? existing.generalCommonInfo?.sponsorManagementIds,
       venueDetail: values.venueDetail ?? existing.generalCommonInfo?.venueDetail,

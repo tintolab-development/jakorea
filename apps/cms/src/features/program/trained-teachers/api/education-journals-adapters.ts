@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import type { TrainedTeachersEducationJournalEntry } from '@/data/mock/trained-teachers-institution-detail'
+import type { TrainedTeachersEducationJournalEntry } from '@/features/program/trained-teachers/model/institution-detail'
 import type { EducationJournalResponse } from '@/shared/api/generated/dashboard/schemas/educationJournalResponse'
 
 function toId(value: number | string | undefined): string {

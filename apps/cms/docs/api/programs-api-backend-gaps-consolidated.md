@@ -15,7 +15,7 @@
 | 1 | 1사1교 | [programs-company-school-api-backend-handoff.md](./programs-company-school-api-backend-handoff.md) |
 | 2 | UJAT 프로그램 | [programs-ujat-api-backend-handoff.md](./programs-ujat-api-backend-handoff.md) |
 | 3 | UJAT 교육 지역 | [programs-ujat-education-regions-api-backend-handoff.md](./programs-ujat-education-regions-api-backend-handoff.md) |
-| 4 | 교육받은 교사 | [programs-trained-teachers-api-backend-handoff.md](./programs-trained-teachers-api-backend-handoff.md) |
+| 4 | 교육받은 교사 | [programs-trained-teachers-api-backend-handoff.md](./programs-trained-teachers-api-backend-handoff.md) · [trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md](./trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md) |
 | 5 | Gemini 찾아가는 연수 | [programs-gemini-visiting-training-api-backend-handoff.md](./programs-gemini-visiting-training-api-backend-handoff.md) |
 | 6 | Gemini 실적 | [programs-gemini-performance-api-backend-handoff.md](./programs-gemini-performance-api-backend-handoff.md) |
 
@@ -28,7 +28,7 @@
 | 1 1사1교 | CRUD·신청·진행 하이브리드 | opt-in ON 가능 | 중첩(학교/강사)·정산·managers·설문 answers |
 | 2 UJAT | programs CRUD | `ujatPrograms` | 신청/선발/진행·partner-assignments·schedules |
 | 3 교육 지역 | GET/PATCH/reorder + Option A create/delete | `ujatEducationRegions` | **POST/DELETE OpenAPI 공식화** · `hasUsageHistory` |
-| 4 교육받은 교사 | CRUD·detail·기관·일지·실적요약 | opt-in ON | managers · 설문 answers · approve 스코프 검증 |
+| 4 교육받은 교사 | CRUD·detail·기관·일지·실적요약·일지 보기 download | opt-in ON | managers · 설문 answers · 희망일정 blocks · journal/completion create UI 제품 확인 |
 | 5 찾아가는 연수 | **GET만** | **OFF** (권장) | **enum 확정 · 모집 CRUD · 승인 mutation · 강사 신청** |
 | 6 실적 | list+import · delete Option B | **OFF** (권장) | **list SSOT · DTO 컬럼 · DELETE 또는 미지원 확정 · duplicateStrategy** |
 
@@ -124,10 +124,13 @@
 |----|------|------|
 | C-40 | type | `TRAINED_TEACHER` filter/create · PATCH type 보존 |
 | C-41 | org-applications 필드 | FE 테이블(기관명·지역·승인상태·희망일정·인원·교사명) ↔ DTO **컬럼 매핑표** |
-| C-42 | 공통 approve | `POST …/organization-applications/{id}/approve\|reject`가 TT applicationId에 동작 · **타 유형 혼입 방지** |
-| C-43 | education-journals | download/bulk-download · 권한 · **감사로그** |
-| C-44 | performance-summary | FE 연결됨 — 스테이징 숫자 정합성 · `availableActions` 의미 |
+| C-42 | TT approve/reject | `POST …/trained-teacher/organization-applications/{id}/approve\|reject` · **타 유형 혼입 방지** (공통 applications mutation 아님) |
+| C-43 | education-journals | download/bulk-download · 권한 · **감사로그** · (선택) CMS POST create |
+| C-44 | performance-summary | FE 연결됨 — 스테이징 숫자 정합성 · `availableStatuses` 의미 |
 | C-45 | 설문 | surveys list는 TT HTTP gate 포함 — **answers/summary** 완성도 |
+| C-46 | 희망일정 blocks | org-application DTO structured preferred-schedule — [상세 요청](./trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md) §1 |
+| C-47 | managers | M-18 — TT에서도 `…/managers` 동작 |
+
 
 ### 2.6 Cat5 — Gemini 찾아가는 연수
 
@@ -188,10 +191,12 @@ DELETE /api/admin/ujat/education-regions/{regionId} ← Option A
 GET/POST/PATCH/DELETE /api/admin/programs (?programType=TRAINED_TEACHER)
 GET/PATCH /api/admin/programs/{programId}/trained-teacher/detail
 GET     …/trained-teacher/organization-applications
-POST    /api/admin/organization-applications/{id}/approve|reject
+POST    …/trained-teacher/organization-applications/{id}/approve|reject
 GET/POST …/trained-teacher/education-journals (+ download / bulk-download)
 GET     …/trained-teacher/performance-summary
+GET     …/trained-teacher/education-completions
 GET     /api/admin/programs/{programId}/surveys   (+ summary/responses — answers 잔여)
+GET/POST/PATCH/DELETE …/programs/{id}/managers   (M-18 · BE 갭)
 ```
 
 ### Cat5 — 찾아가는 연수 (gate OFF · GET만)

@@ -6,7 +6,7 @@ import { useMemo } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
+import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -180,17 +180,14 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     }))
   }, [contactsQuery.data, sponsorId])
 
+  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
+
   const detailedProgramOptions = useMemo(
     () => [
       DETAILED_PROGRAM_MAIN_OPTION,
-      ...withDetailedProgramNoneOption(
-        mockDetailedProgramManagementListRows.map(row => ({
-          value: row.id,
-          label: row.name,
-        }))
-      ),
+      ...withDetailedProgramNoneOption(remoteDetailedProgramOptions),
     ],
-    []
+    [remoteDetailedProgramOptions]
   )
 
   return (
@@ -370,7 +367,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
-                  withAllOption
+                  withAllOption={false}
                   inputSize="medium"
                   placeholder="후원사 담당자를 선택하세요"
                   width={240}

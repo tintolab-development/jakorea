@@ -6,6 +6,8 @@
  * OpenAPI spec version: v9
  */
 import type { ProgramAdminAssignmentResponse } from './programAdminAssignmentResponse';
+import type { ProgramRecruitmentResponse } from './programRecruitmentResponse';
+import type { ProgramResponseEducationStructure } from './programResponseEducationStructure';
 import type { ProgramResponseProgramType } from './programResponseProgramType';
 import type { ProgramRoundResponse } from './programRoundResponse';
 import type { ProgramScheduleResponse } from './programScheduleResponse';
@@ -29,6 +31,10 @@ export interface ProgramResponse {
   status?: string;
   lifecycleStatus?: string;
   businessArea?: string;
+  /** 교육 진행 구조 */
+  educationStructure?: ProgramResponseEducationStructure;
+  detailedProgramId?: number;
+  detailedProgramName?: string;
   titleEn?: string;
   mainTitle?: string;
   textbookName?: string;
@@ -75,6 +81,7 @@ export interface ProgramResponse {
   attachmentFileNames?: string[];
   adminAssignments?: ProgramAdminAssignmentResponse[];
   schedules?: ProgramScheduleResponse[];
+  recruitments?: ProgramRecruitmentResponse[];
   settlementPolicy?: ProgramSettlementPolicyResponse;
   createdAt?: string;
   updatedAt?: string;

@@ -42,14 +42,16 @@ export function isStudentListDependentInstitutionDetailTab(
 }
 
 export function getGeneralParticipatingInstitutionDetailTabKeys(
-  program?: Pick<Program, 'studentListRequired'> | null
+  program?: Pick<Program, 'studentListRequired'> | null,
+  studentRosterEnabled?: boolean
 ): readonly GeneralParticipatingInstitutionDetailTabKey[] {
-  if (isParticipatingInstitutionStudentListApplicable(program)) {
-    return GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS
-  }
-  return GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS.filter(
-    key => !isStudentListDependentInstitutionDetailTab(key)
-  )
+  return GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS.filter(key => {
+    if (key === 'students' && studentRosterEnabled === false) return false
+    return (
+      isParticipatingInstitutionStudentListApplicable(program) ||
+      !isStudentListDependentInstitutionDetailTab(key)
+    )
+  })
 }
 
 export function normalizeGeneralParticipatingInstitutionDetailTab(

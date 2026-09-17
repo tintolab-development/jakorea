@@ -55,10 +55,16 @@ describe('gemini visiting-training adapters', () => {
 
   it('maps approved list with gaps filled by defaults', () => {
     const row = mapGeminiRecruitmentItemToApprovedRow(
-      { programId: 3, nameKo: '승인 연수', businessStartDate: '2026-05-01' },
+      {
+        id: 3,
+        recruitmentTitle: '승인 연수',
+        institutionName: '한국중학교',
+        trainingDate: '2026-05-01',
+      },
       0
     )
     expect(row.id).toBe('3')
+    expect(row.institutionName).toBe('한국중학교')
     expect(row.instructorName).toBe('미지정')
     expect(row.trainingDate).toBe('2026-05-01')
   })

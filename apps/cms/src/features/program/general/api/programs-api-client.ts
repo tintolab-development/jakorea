@@ -19,6 +19,10 @@ export interface AdminProgramListItemDto {
   programType?: string
   deliveryType?: string
   draftStatus?: string
+  /**
+   * 4카드/목록 필터 축 (상호 배타).
+   * `RECRUITING` = 예정 버킷 별칭(SCHEDULED와 동일). 참여자 모집 창이 아님.
+   */
   periodStatus?: string
   /** 거친 상태 — 뱃지·필터용 (pending|active|completed|cancelled) */
   status?: string
@@ -27,7 +31,13 @@ export interface AdminProgramListItemDto {
   /** 실제 목록 응답에서 주로 사용 (ProgramResponse와 동일) */
   title?: string
   mainTitle?: string
+  /**
+   * typed 테이블「프로그램 진행 현황」축.
+   * BE는 `periodStatus`와 동일 UI 버킷으로 내려줌.
+   */
   lifecycleStatus?: string
+  /** 참여자 모집 창 (`scheduled`|`recruiting`|`closed`) — `periodStatus`와 독립 */
+  recruitmentStatus?: string
   businessYear?: number
   businessStartDate?: string
   businessEndDate?: string
@@ -71,10 +81,7 @@ export async function fetchAdminProgramByIdRemote(programId: string): Promise<Pr
 }
 
 export async function createAdminProgramRemote(
-  payload: import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest & {
-    /** OpenAPI 미반영 — BE 필수. ORGANIZATION | INDIVIDUAL | BOTH */
-    applicationTargetMode?: 'ORGANIZATION' | 'INDIVIDUAL' | 'BOTH'
-  }
+  payload: import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest
 ): Promise<ProgramResponse> {
   return unwrapApiBody<ProgramResponse>(
     await customInstance({
@@ -87,9 +94,7 @@ export async function createAdminProgramRemote(
 
 export async function updateAdminProgramRemote(
   programId: string,
-  payload: import('@/shared/api/generated/dashboard/schemas/programUpdateRequest').ProgramUpdateRequest & {
-    applicationTargetMode?: 'ORGANIZATION' | 'INDIVIDUAL' | 'BOTH'
-  }
+  payload: import('@/shared/api/generated/dashboard/schemas/programUpdateRequest').ProgramUpdateRequest
 ): Promise<ProgramResponse> {
   return unwrapApiBody<ProgramResponse>(
     await customInstance({
@@ -276,6 +281,74 @@ export async function putAdminProgramPostReactionRemote(
   )
 }
 
+export async function fetchAdminProgramPostDetailRemote(
+  programId: string,
+  postId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostDetailResponse').ProgramPostDetailResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function fetchAdminProgramPostAttachmentsRemote(
+  programId: string,
+  postId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostAttachmentListResponse').ProgramPostAttachmentListResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/attachments`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function putAdminProgramPostAttachmentsRemote(
+  programId: string,
+  postId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/programPostAttachmentUpdateRequest').ProgramPostAttachmentUpdateRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostAttachmentListResponse').ProgramPostAttachmentListResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/attachments`,
+      method: 'PUT',
+      data: payload,
+    })
+  )
+}
+
+export async function fetchAdminProgramPostReactionsRemote(
+  programId: string,
+  postId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostReactionListResponse').ProgramPostReactionListResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/reactions`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function deleteAdminProgramPostReactionRemote(
+  programId: string,
+  postId: string
+): Promise<void> {
+  await customInstance({
+    url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/reaction`,
+    method: 'DELETE',
+  })
+}
+
 export async function fetchAdminProgramSurveyResponsesRemote(
   programId: string,
   templateVersionId: string
@@ -384,10 +457,15 @@ export async function deleteAdminProgramFormBindingRemote(
 
 /** GET /api/admin/programs/{programId}/managers */
 export async function fetchAdminProgramManagersRemote(
-  programId: string
+  programId: string,
+  query: { keyword?: string; role?: string } = {}
 ): Promise<
   import('@/shared/api/generated/dashboard/schemas/programManagerResponse').ProgramManagerResponse[]
 > {
+  const params: Record<string, string> = {}
+  if (query.keyword?.trim()) params.keyword = query.keyword.trim()
+  if (query.role?.trim()) params.role = query.role.trim()
+
   const body = await unwrapApiBody<
     | import('@/shared/api/generated/dashboard/schemas/programManagerResponse').ProgramManagerResponse[]
     | {
@@ -397,6 +475,7 @@ export async function fetchAdminProgramManagersRemote(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/managers`,
       method: 'GET',
+      ...(Object.keys(params).length > 0 ? { params } : {}),
     })
   )
   if (Array.isArray(body)) return body
@@ -458,18 +537,6 @@ export async function temporarilyRejectUjatOrganizationApplicationsRemote(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       data: body,
-    })
-  )
-}
-
-/** POST /api/admin/programs/{programId}/completion/rebuild-participants */
-export async function rebuildProgramCompletionParticipantsRemote(
-  programId: number
-): Promise<unknown> {
-  return unwrapApiBody(
-    await customInstance({
-      url: `/api/admin/programs/${programId}/completion/rebuild-participants`,
-      method: 'POST',
     })
   )
 }

@@ -3,8 +3,7 @@
  */
 
 import type { ReactNode } from 'react'
-import { getTrainedTeachersPreferredScheduleBlocks } from '@/data/mock/trained-teachers-institution-detail'
-import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import type { ApplicantPreferredScheduleBlock } from '@/features/program/shared/model/applicant-institution'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import {
   INSTITUTION_APPLICATION_INFO_COLGROUP,
@@ -29,6 +28,8 @@ export interface TrainedTeachersParticipatingInstitutionApplicationInfoProps {
   usesTextbook?: boolean
   textbookEditFullWidth?: boolean
   institutionId: string
+  /** remote SoT — 없으면 empty state */
+  preferredScheduleBlocks?: ApplicantPreferredScheduleBlock[]
   schoolName: ReactNode
   educationGrade: ReactNode
   region: ReactNode
@@ -52,7 +53,8 @@ export function TrainedTeachersParticipatingInstitutionApplicationInfo({
   textbookCell,
   usesTextbook = true,
   textbookEditFullWidth = false,
-  institutionId,
+  institutionId: _institutionId,
+  preferredScheduleBlocks = [],
   schoolName,
   educationGrade,
   region,
@@ -63,9 +65,7 @@ export function TrainedTeachersParticipatingInstitutionApplicationInfo({
   applicationReason,
   otherRequests,
 }: TrainedTeachersParticipatingInstitutionApplicationInfoProps) {
-  const preferredScheduleBlocks = shouldUseTrainedTeacherProgramsRemoteApi()
-    ? []
-    : getTrainedTeachersPreferredScheduleBlocks(institutionId)
+  void _institutionId
 
   return (
     <div className="institution-basic-info applicant-institution-basic-info participating-institution-application-info">

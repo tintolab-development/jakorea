@@ -5,7 +5,9 @@ import {
   getUjatInstitutionApplicationRowById,
   getUjatInstitutionScheduleConfirmStatus,
   patchUjatInstitutionScheduleConfirmStatus,
-} from '@/data/mock/ujat-institution-application-mock'
+} from '@/features/program/ujat/model/ujat-institution-application'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import { postUjatScheduleChangeRequest } from '@/features/program/ujat/api/temporary-schedule-api'
 import { shouldShowScheduleConfirmGuidanceNotes } from './types'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -31,10 +33,12 @@ const APPROVE_BUTTON_STYLE = {
 
 export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
   institutionId,
+  programId,
   onBack,
   onStatusUpdated,
 }: {
   institutionId: string
+  programId?: string | null
   onBack: () => void
   onStatusUpdated: () => void
 }) {
@@ -96,8 +100,24 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
   }, [row, onStatusUpdated, showAlert])
 
   const handleRevisionRequestConfirm = useCallback(
-    (_payload: UjatScheduleConfirmRevisionRequestModalPayload) => {
+    async (payload: UjatScheduleConfirmRevisionRequestModalPayload) => {
       if (!row) return
+      if (shouldUseUjatApplicationsRemoteApi() && programId) {
+        try {
+          await postUjatScheduleChangeRequest(String(programId), row.id, {
+            reason: payload.message || '학급 수 변경 요청',
+          })
+        } catch (error) {
+          showAlert({
+            title: '수정 요청 실패',
+            content:
+              error instanceof Error
+                ? error.message
+                : '수정 요청 전송에 실패했습니다. 다시 시도해 주세요.',
+          })
+          return
+        }
+      }
       patchUjatInstitutionScheduleConfirmStatus([row.id], 'revision_requested')
       setStatusRefreshTick(t => t + 1)
       onStatusUpdated()
@@ -107,7 +127,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
         content: `[${row.institutionName}] 담당교사님에게 수정 요청이 전달되었습니다.`,
       })
     },
-    [row, onStatusUpdated, showAlert]
+    [programId, row, onStatusUpdated, showAlert]
   )
 
   if (!row || !detail) {
@@ -193,7 +213,9 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
           open
           institutionName={row.institutionName}
           onCancel={() => setPendingRevisionRequest(false)}
-          onConfirm={handleRevisionRequestConfirm}
+          onConfirm={payload => {
+            void handleRevisionRequestConfirm(payload)
+          }}
         />
       ) : null}
     </div>

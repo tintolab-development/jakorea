@@ -1,5 +1,5 @@
 /**
- * Gemini 실적관리 서비스 — mock/localStorage + remote(training-reports) 분기
+ * Gemini 실적관리 서비스 — remote(training-reports) only
  */
 
 import { queryClient } from '@/shared/lib/query-client'
@@ -8,13 +8,7 @@ import {
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
   parseUploadExcel,
 } from '../lib/performance/parse-upload-excel'
-import {
-  deleteGeminiPerformanceRows,
-  findDuplicateKeys,
-  getGeminiPerformanceRowsSnapshot,
-  importGeminiPerformanceRows,
-  subscribeGeminiPerformanceRows,
-} from '../model/performance/performance-store'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import type {
   GeminiPerformanceImportDuplicateStrategy,
   GeminiPerformanceRow,
@@ -28,6 +22,9 @@ import {
   prepareGeminiPerformanceImportRemote,
 } from './performance-remote/service'
 
+const REMOTE_ONLY_MESSAGE =
+  'Gemini 실적은 Admin API를 사용하세요. mock 카탈로그는 제거되었습니다.'
+
 export type GeminiPerformanceImportResult = {
   importedRows: GeminiPerformanceRow[]
   duplicateKeys: string[]
@@ -36,9 +33,6 @@ export type GeminiPerformanceImportResult = {
 }
 
 export const geminiPerformanceService = {
-  subscribe: subscribeGeminiPerformanceRows,
-  getSnapshot: getGeminiPerformanceRowsSnapshot,
-
   async parseExcelFile(file: File): Promise<GeminiPerformanceUploadRow[]> {
     return parseUploadExcel(file)
   },
@@ -51,17 +45,16 @@ export const geminiPerformanceService = {
     if (shouldUseGeminiPerformanceRemoteApi()) {
       return prepareGeminiPerformanceImportRemote(file)
     }
-    const uploadRows = await parseUploadExcel(file)
-    const importedRows = await Promise.all(uploadRows.map(row => mapUploadToDisplayRow(row)))
-    const duplicateKeys = findDuplicateKeys(importedRows)
-    return { importedRows, duplicateKeys, uploadRows }
+    notifyProgramApiUnavailable('gemini-performance-import', 'Gemini 실적 가져오기')
+    throw new Error(REMOTE_ONLY_MESSAGE)
   },
 
   async applyImport(
-    importedRows: GeminiPerformanceRow[],
+    _importedRows: GeminiPerformanceRow[],
     strategy: GeminiPerformanceImportDuplicateStrategy,
     remoteImportRows?: GeminiTrainingReportImportRow[]
   ): Promise<void> {
+    void _importedRows
     if (shouldUseGeminiPerformanceRemoteApi()) {
       const rows = remoteImportRows
       if (!rows || rows.length === 0) {
@@ -71,16 +64,14 @@ export const geminiPerformanceService = {
       await queryClient.invalidateQueries({ queryKey: geminiPerformanceQueryKeys.list() })
       return
     }
-    importGeminiPerformanceRows(importedRows, strategy)
+    notifyProgramApiUnavailable('gemini-performance-import-apply', 'Gemini 실적 가져오기')
+    throw new Error(REMOTE_ONLY_MESSAGE)
   },
 
-  delete(ids: string[]): void {
-    if (shouldUseGeminiPerformanceRemoteApi()) {
-      throw new Error(
-        '실적 삭제 API가 아직 연동되지 않았습니다. OpenAPI DELETE 추가 후 사용할 수 있습니다.'
-      )
-    }
-    deleteGeminiPerformanceRows(ids)
+  delete(_ids: string[]): void {
+    void _ids
+    notifyProgramApiUnavailable('gemini-performance-delete', 'Gemini 실적 삭제')
+    throw new Error(REMOTE_ONLY_MESSAGE)
   },
 }
 

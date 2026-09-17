@@ -8,7 +8,7 @@
 import type { DocumentResultRequestResult } from './documentResultRequestResult';
 
 /**
- * 봉사자 서류 결과 처리 요청
+ * 서류 결과 처리 요청(봉사자/개인 공통)
  */
 export interface DocumentResultRequest {
   /** 서류 결과. PASS/DOCUMENT_PASSED 또는 FAIL/REJECTED */
@@ -19,4 +19,6 @@ export interface DocumentResultRequest {
      * @maxLength 500
      */
   reason?: string;
+  /** 결과 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL */
+  notifyTiming?: string;
 }

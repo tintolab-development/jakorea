@@ -12,14 +12,9 @@ import {
 } from '@/features/program/general/api/adapters/progress-attendance-adapters'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { buildParticipatingIndividualProgressAttendanceFilterFields } from '@/features/program/general/lib/participating-individual-progress-attendance-filter-fields'
 import { filterProgressAttendanceParticipantsForDisplay } from '@/features/program/general/lib/participating-individual-progress-attendance-display'
-import {
-  getParticipatingIndividualProgressAttendanceEducationScheduleOptions,
-  getParticipatingIndividualProgressAttendanceSessionParticipants,
-  getParticipatingIndividualProgressAttendanceSessions,
-  patchParticipatingIndividualProgressAttendanceParticipant,
-} from '@/features/program/general/lib/participating-individual-progress-attendance-mock'
 import {
   PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_FILTER_ALL,
   type ParticipatingIndividualProgressAttendanceFilters,
@@ -56,6 +51,13 @@ function filterSessionGroups(
 
 export function useParticipatingIndividualProgressAttendance(program: Program) {
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
+
+  useNotifyProgramApiUnavailableOnce(
+    !remoteEnabled,
+    'general-progress-attendance',
+    '프로그램 진행 현황 · 출석'
+  )
+
   const queryClient = useQueryClient()
   const [dataVersion, setDataVersion] = useState(0)
   const [pendingFilters, setPendingFilters] =
@@ -89,9 +91,8 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
         label: session.filterLabel,
       }))
     }
-    void dataVersion
-    return getParticipatingIndividualProgressAttendanceEducationScheduleOptions(program)
-  }, [dataVersion, isRemoteDataSource, program, remoteSessions])
+    return []
+  }, [isRemoteDataSource, remoteSessions])
 
   const filterFields = useMemo(
     () => buildParticipatingIndividualProgressAttendanceFilterFields(educationScheduleOptions),
@@ -100,9 +101,8 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
 
   const mockSessionGroups = useMemo(() => {
     void dataVersion
-    const sessions = getParticipatingIndividualProgressAttendanceSessions(program)
-    return filterSessionGroups(sessions, appliedFilters)
-  }, [appliedFilters, dataVersion, program])
+    return filterSessionGroups([], appliedFilters)
+  }, [appliedFilters, dataVersion])
 
   const sessionGroups = useMemo(() => {
     if (isRemoteDataSource && remoteSessions) {
@@ -121,25 +121,10 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
         remark?: string
       }
     }) => {
-      const session =
-        remoteSessions?.find(s => s.id === payload.sessionId) ??
-        getParticipatingIndividualProgressAttendanceSessions(program).find(
-          s => s.id === payload.sessionId
-        )
-      const participant =
-        session?.participants.find(p => p.id === payload.participantRowId) ??
-        getParticipatingIndividualProgressAttendanceSessionParticipants(
-          program,
-          payload.sessionId
-        ).find(p => p.id === payload.participantRowId)
+      const session = remoteSessions?.find(s => s.id === payload.sessionId)
+      const participant = session?.participants.find(p => p.id === payload.participantRowId)
 
       if (!isRemoteDataSource || !participant) {
-        patchParticipatingIndividualProgressAttendanceParticipant(
-          String(program.id),
-          payload.sessionId,
-          payload.participantRowId,
-          payload.patch
-        )
         return
       }
 
@@ -198,13 +183,9 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
 
   const getSessionParticipants = useCallback(
     (sessionId: string): ParticipatingIndividualProgressAttendanceParticipantRow[] => {
-      if (isRemoteDataSource && remoteSessions) {
-        return remoteSessions.find(s => s.id === sessionId)?.participants ?? []
-      }
-      void dataVersion
-      return getParticipatingIndividualProgressAttendanceSessionParticipants(program, sessionId)
+      return remoteSessions?.find(s => s.id === sessionId)?.participants ?? []
     },
-    [dataVersion, isRemoteDataSource, program, remoteSessions]
+    [remoteSessions]
   )
 
   return {

@@ -7,13 +7,12 @@ import { CmsButton } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
-import { PARTICIPATING_INSTITUTION_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE } from '@/shared/constants/messages'
+  MESSAGES,
+  PARTICIPATING_INSTITUTION_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE,
+} from '@/shared/constants/messages'
 import {
   getProgramProgressDisplayStatus,
   resolveProgramEnrollmentDisplayStatusFromLabel,
@@ -24,8 +23,8 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
 } from '@/shared/components'
-import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/data/mock/participating-schools'
-import type { TextbookStatusKey } from '@/data/mock/participating-schools'
+import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/features/program/general/model/participating-schools'
+import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
 import {
   getParticipatingInstitutionActivityWithdrawScheduleOptions,
@@ -48,15 +47,17 @@ import {
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
+import {
+  buildProgramApiUnavailableSaveContent,
+  PROGRAM_API_UNAVAILABLE_TITLE,
+} from '@/features/program/shared/lib/program-api-unavailable'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
-  maskEmailLocalAfterTwoChars,
-  maskMobilePhoneMiddleStars,
-} from '@/features/program/general/lib/teacher-contact-display-mask'
-import {
-  TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_KEYS,
   TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_LABELS,
+  getTrainedTeachersInstitutionDetailTabKeys,
   normalizeTrainedTeachersInstitutionDetailTab,
   type TrainedTeachersInstitutionDetailTabKey,
 } from '@/features/program/trained-teachers/lib/institution-detail-tabs'
@@ -71,6 +72,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   program,
   detail,
   row,
+  navigationCapabilities,
   participatingSchoolList = [],
   activeTab: activeTabFromUrl,
   onTabChange,
@@ -83,9 +85,19 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   const { showAlert } = useCmsAlert()
   const [internalTab, setInternalTab] =
     useState<TrainedTeachersInstitutionDetailTabKey>('application')
-  const activeTab = normalizeTrainedTeachersInstitutionDetailTab(
+  const visibleDetailTabs = useMemo(
+    () =>
+      getTrainedTeachersInstitutionDetailTabKeys(
+        navigationCapabilities?.educationJournalEnabled
+      ),
+    [navigationCapabilities?.educationJournalEnabled]
+  )
+  const normalizedActiveTab = normalizeTrainedTeachersInstitutionDetailTab(
     activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
   )
+  const activeTab = visibleDetailTabs.includes(normalizedActiveTab)
+    ? normalizedActiveTab
+    : 'application'
   const setActiveTab = (key: TrainedTeachersInstitutionDetailTabKey) => {
     if (onTabChange) onTabChange(key)
     else setInternalTab(key)
@@ -134,6 +146,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     usesTextbook,
     canEditTextbook,
     enterEdit: enterApplicationInfoEdit,
+    cancelEdit: cancelApplicationInfoEdit,
     saveEdit: saveApplicationInfoEdit,
     updateDraft: updateApplicationInfoDraft,
   } = applicationInfoEdit
@@ -158,8 +171,6 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     controlMode: 'toggleRemask',
   })
 
-  const privacyMasked = !personalInfoRevealed
-
   const handleAdminCommentEditEnter = useCallback(() => {
     if (isApplicationInfoEditing) return
     setAdminCommentDraft(mergedDetail.adminComment ?? '')
@@ -167,12 +178,44 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     setAdminCommentModalOpen(true)
   }, [isApplicationInfoEditing, mergedDetail.adminComment])
 
-  const handleAdminCommentSave = useCallback(() => {
+  const handleAdminCommentSave = useCallback(async () => {
     const trimmed = adminCommentDraft.trim()
-    onSaveBasicInfo?.({ id: detail.id, adminComment: trimmed || undefined })
-    setAdminCommentModalOpen(false)
-    setAdminCommentError(undefined)
-  }, [adminCommentDraft, detail.id, onSaveBasicInfo])
+    if (shouldUseTrainedTeacherProgramsRemoteApi()) {
+      const targetId = Number(detail.id)
+      if (!Number.isFinite(targetId)) {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+      try {
+        const result = await upsertAdminCommentByTargetRemote({
+          targetType: 'ORGANIZATION_APPLICATION',
+          targetId,
+          screenCode: 'ORGANIZATION_APPLICATION',
+          comment: trimmed,
+        })
+        onSaveBasicInfo?.({
+          id: detail.id,
+          adminComment: result.commentText,
+        })
+        setAdminCommentModalOpen(false)
+        setAdminCommentError(undefined)
+        return
+      } catch {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+    }
+    void showAlert({
+      title: PROGRAM_API_UNAVAILABLE_TITLE,
+      content: buildProgramApiUnavailableSaveContent('참여 기관 관리자 코멘트'),
+    })
+  }, [adminCommentDraft, detail.id, onSaveBasicInfo, showAlert])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)
@@ -211,26 +254,10 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   )
 
   const teacherDisplaySegments = [
-    mergedDetail.teacherName &&
-      `담당 교사 : ${
-        privacyMasked ? MASKING_POLICY.name(mergedDetail.teacherName) : mergedDetail.teacherName
-      }`,
-    mergedDetail.teacherPhone &&
-      `Tel : ${
-        privacyMasked ? MASKING_POLICY.phone(mergedDetail.teacherPhone) : mergedDetail.teacherPhone
-      }`,
-    mergedDetail.teacherMobile &&
-      `M : ${
-        privacyMasked
-          ? maskMobilePhoneMiddleStars(mergedDetail.teacherMobile)
-          : mergedDetail.teacherMobile
-      }`,
-    mergedDetail.teacherEmail &&
-      `E-mail : ${
-        privacyMasked
-          ? maskEmailLocalAfterTwoChars(mergedDetail.teacherEmail)
-          : mergedDetail.teacherEmail
-      }`,
+    mergedDetail.teacherName && `담당 교사 : ${mergedDetail.teacherName}`,
+    mergedDetail.teacherPhone && `Tel : ${displayServerPiiAsIs(mergedDetail.teacherPhone, mergedDetail.teacherPhone)}`,
+    mergedDetail.teacherMobile && `M : ${displayServerPiiAsIs(mergedDetail.teacherMobile, mergedDetail.teacherMobile)}`,
+    mergedDetail.teacherEmail && `E-mail : ${displayServerPiiAsIs(mergedDetail.teacherEmail, mergedDetail.teacherEmail)}`,
   ].filter((v): v is string => Boolean(v))
 
   const textbookStatusCell =
@@ -310,7 +337,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         className="school-detail-fullpage-view__tabs-row"
         activeKey={activeTab}
         onChange={key => setActiveTab(key as TrainedTeachersInstitutionDetailTabKey)}
-        items={TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_KEYS.map(key => ({
+        items={visibleDetailTabs.map(key => ({
           key,
           label: TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_LABELS[key],
         }))}
@@ -326,15 +353,14 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               >
                 활동 포기
               </CmsButton>
-              <CmsButton
-                {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
-                  onEnterEdit: enterApplicationInfoEdit,
-                  onSaveEdit: () => saveApplicationInfoEdit(),
-                })}
-              >
-                {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-              </CmsButton>
+              <ProgramEditInfoActions
+                isEditing={isApplicationInfoEditing}
+                onEdit={enterApplicationInfoEdit}
+                onCancel={cancelApplicationInfoEdit}
+                onSave={() => {
+                  void saveApplicationInfoEdit()
+                }}
+              />
               {showAdminCommentSection ? (
                 <CmsButton
                   variant="primary"
@@ -373,6 +399,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               usesTextbook={usesTextbook}
               textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
               institutionId={row.id}
+              preferredScheduleBlocks={row.preferredScheduleBlocks}
               schoolName={mergedDetail.schoolName}
               educationGrade={mergedDetail.educationGrade}
               region={mergedDetail.region}

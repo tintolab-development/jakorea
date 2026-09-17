@@ -11,20 +11,19 @@
  */
 export interface FileUploadConfirmRequest {
   /**
-     * 실제 업로드된 파일 크기(byte)
+     * 실제 업로드된 파일 크기(byte). 생략 시 prepare 값으로 검증하며 실제 스토리지 HEAD 검증은 confirm outbox에서 수행합니다.
      * @minimum 1
      */
-  fileSize: number;
+  fileSize?: number;
   /**
-     * 실제 업로드된 파일의 SHA-256 체크섬(64자리 HEX)
-     * @minLength 1
+     * 실제 업로드된 파일의 SHA-256 체크섬(64자리 HEX). 생략 시 prepare 체크섬을 사용합니다.
      * @pattern ^[0-9a-fA-F]{64}$
      */
-  checksumSha256: string;
+  checksumSha256?: string;
   /**
-     * 실제 업로드된 파일 content type
+     * 실제 업로드된 파일 content type. 생략 시 prepare 단계에서 정규화된 content type을 사용합니다.
      * @minLength 0
      * @maxLength 120
      */
-  contentType: string;
+  contentType?: string;
 }

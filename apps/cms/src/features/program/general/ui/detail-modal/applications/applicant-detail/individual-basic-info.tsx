@@ -4,14 +4,13 @@
 
 import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { CmsInput, CmsNumericInput, CmsSelect } from '@/shared/ui'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import type {
   GeneralIndividualApplicantDetail,
   GeneralIndividualApplicantRow,
-} from '@/data/mock/general-individual-applications-mock'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/individual-applicant'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'
@@ -45,6 +44,10 @@ import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
+import {
+  displayServerPiiAsIs,
+  HomeAddressDisplay,
+} from '@/features/program/shared/lib/program-pii-display'
 import { IndividualApplicantInterviewAvailabilitySection } from './individual-applicant-interview-availability'
 import { IndividualApplicantInterviewEvaluationSection } from './individual-interview-evaluation-section'
 import {
@@ -74,6 +77,9 @@ export interface ApplicantGeneralIndividualBasicInfoProps {
   setOpenManagerDropdown?: (value: { rowId: string; manager: 'A' | 'B' } | null) => void
   onManagerAEvaluationChange?: (id: string, evaluation: GeneralManagerEvaluation) => void
   onManagerBEvaluationChange?: (id: string, evaluation: GeneralManagerEvaluation) => void
+  onTeamRoleChange?: (
+    teamRole: NonNullable<GeneralIndividualApplicantDetail['teamRole']>
+  ) => void | Promise<void>
 }
 
 function formatBirthDateAndAge(birthDate?: string, age?: number): string {
@@ -95,7 +101,7 @@ function IndividualApplicantScreeningBasicInfo({
   onResendNotificationClick?: () => void
 }) {
   const detail = applicant.detail
-  const shouldMask = maskSensitive && applicant.approvalStatus !== 'approved'
+  const shouldMask = maskSensitive && applicant.privacyMaskingLevel == null
 
   const scheduleChangeCount = detail?.scheduleChangeCancelCount ?? 0
   const nameCell =
@@ -130,17 +136,9 @@ function IndividualApplicantScreeningBasicInfo({
     return school || grade || '해당 없음'
   })()
 
-  const contactDisplay = detail?.contact
-    ? shouldMask
-      ? MASKING_POLICY.phone(detail.contact.replace(/\s/g, '')) || detail.contact
-      : detail.contact
-    : '-'
+  const contactDisplay = displayServerPiiAsIs(detail?.contact)
 
-  const emailDisplay = detail?.email
-    ? shouldMask
-      ? MASKING_POLICY.email(detail.email)
-      : detail.email
-    : '-'
+  const emailDisplay = displayServerPiiAsIs(detail?.email)
 
   const id1365Raw = detail?.id1365?.trim()
   const id1365Display = id1365Raw ? (shouldMask ? maskId1365(id1365Raw) : id1365Raw) : '-'
@@ -161,6 +159,8 @@ function IndividualApplicantScreeningBasicInfo({
             }
           />
         </DetailInfoForm.Row>
+      </DetailInfoForm>
+      <DetailInfoForm title="기본 정보" hideHeader mode="view">
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field label="성명" readOnlyDisplay view={nameCell} />
           <DetailInfoForm.Field
@@ -224,9 +224,13 @@ function IndividualApplicantScreeningSelfIntroSection({
 function IndividualApplicantScreeningTeamSection({
   applicant,
   detail,
+  onTeamRoleChange,
 }: {
   applicant: GeneralIndividualApplicantRow
   detail?: GeneralIndividualApplicantDetail
+  onTeamRoleChange?: (
+    teamRole: NonNullable<GeneralIndividualApplicantDetail['teamRole']>
+  ) => void | Promise<void>
 }) {
   return (
     <DetailInfoForm title="팀 정보" mode="view">
@@ -255,6 +259,11 @@ function IndividualApplicantScreeningTeamSection({
               <GeneralIndividualTeamRoleDropdown
                 applicantId={applicant.id}
                 teamRole={detail.teamRole}
+                canEdit={
+                  applicant.availableActions == null ||
+                  applicant.availableActions.includes('UPDATE_APPLICATION')
+                }
+                onChange={onTeamRoleChange}
               />
             ) : (
               '-'
@@ -269,60 +278,6 @@ function IndividualApplicantScreeningTeamSection({
 function maskId1365(id: string): string {
   if (id.length <= 4) return '*'.repeat(id.length)
   return `${id.slice(0, 4)}***`
-}
-
-function splitAddressAfterDong(address: string): { head: string; tail: string } | null {
-  const re = /(?:^|\s)([가-힣]{2,12}동)(?=\s|$)/u
-  const m = address.match(re)
-  if (!m) return null
-  const dong = m[1]
-  const i = address.indexOf(dong)
-  if (i === -1) return null
-  const end = i + dong.length
-  return { head: address.slice(0, end), tail: address.slice(end) }
-}
-
-function splitAddressAfterGu(address: string): { head: string; tail: string } | null {
-  const re = /(?:^|\s)([가-힣]{1,12}구)(?=\s|$)/u
-  const m = address.match(re)
-  if (!m) return null
-  const gu = m[1]
-  const i = address.indexOf(gu)
-  if (i === -1) return null
-  const end = i + gu.length
-  return { head: address.slice(0, end), tail: address.slice(end) }
-}
-
-function splitAddressForPrivacyBlur(address: string): { head: string; tail: string } | null {
-  return splitAddressAfterDong(address) ?? splitAddressAfterGu(address)
-}
-
-function HomeAddressDisplay({ address, mask }: { address: string | undefined; mask: boolean }) {
-  if (!address?.trim()) return <>-</>
-  if (!mask) return <>{address}</>
-
-  const split = splitAddressForPrivacyBlur(address)
-  if (!split) {
-    return (
-      <span className="applicant-instructor-basic-info__address-blur" aria-hidden="true">
-        {address}
-      </span>
-    )
-  }
-
-  const { head, tail } = split
-  if (!tail.trim()) {
-    return <>{head}</>
-  }
-
-  return (
-    <>
-      {head}
-      <span className="applicant-instructor-basic-info__address-blur" aria-hidden="true">
-        {tail}
-      </span>
-    </>
-  )
 }
 
 function formatTeamMemberCountDisplay(
@@ -450,10 +405,11 @@ export function ApplicantGeneralIndividualBasicInfo({
   setOpenManagerDropdown,
   onManagerAEvaluationChange,
   onManagerBEvaluationChange,
+  onTeamRoleChange,
 }: ApplicantGeneralIndividualBasicInfoProps) {
   const detail = applicant.detail
   const isProgressContext = detailContext === 'progress'
-  const shouldMask = maskSensitive && applicant.approvalStatus !== 'approved'
+  const shouldMask = maskSensitive && applicant.privacyMaskingLevel == null
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
   const showAdminComment = isProgressContext || applicant.approvalStatus === 'approved'
   const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
@@ -520,17 +476,9 @@ export function ApplicantGeneralIndividualBasicInfo({
     return school || grade || '해당 없음'
   })()
 
-  const contactDisplay = detail?.contact
-    ? shouldMask
-      ? MASKING_POLICY.phone(detail.contact.replace(/\s/g, '')) || detail.contact
-      : detail.contact
-    : '-'
+  const contactDisplay = displayServerPiiAsIs(detail?.contact)
 
-  const emailDisplay = detail?.email
-    ? shouldMask
-      ? MASKING_POLICY.email(detail.email)
-      : detail.email
-    : '-'
+  const emailDisplay = displayServerPiiAsIs(detail?.email)
 
   const homeAddressDisplay = (
     <HomeAddressDisplay
@@ -699,6 +647,11 @@ export function ApplicantGeneralIndividualBasicInfo({
                   <GeneralIndividualTeamRoleDropdown
                     applicantId={applicant.id}
                     teamRole={detail.teamRole}
+                    canEdit={
+                      applicant.availableActions == null ||
+                      applicant.availableActions.includes('UPDATE_APPLICATION')
+                    }
+                    onChange={onTeamRoleChange}
                   />
                 ) : (
                   '-'
@@ -803,6 +756,8 @@ export function ApplicantGeneralIndividualBasicInfo({
             setOpenManagerDropdown={setOpenManagerDropdown}
             onManagerAEvaluationChange={onManagerAEvaluationChange}
             onManagerBEvaluationChange={onManagerBEvaluationChange}
+            canEditManagerAEvaluation={applicant.canEditManagerAEvaluation}
+            canEditManagerBEvaluation={applicant.canEditManagerBEvaluation}
           />
         ) : null}
 
@@ -819,7 +774,11 @@ export function ApplicantGeneralIndividualBasicInfo({
         <IndividualApplicantScreeningSelfIntroSection selfIntroduction={detail?.selfIntroduction} />
 
         {showTeamSection ? (
-          <IndividualApplicantScreeningTeamSection applicant={applicant} detail={detail} />
+          <IndividualApplicantScreeningTeamSection
+            applicant={applicant}
+            detail={detail}
+            onTeamRoleChange={onTeamRoleChange}
+          />
         ) : null}
       </div>
     )

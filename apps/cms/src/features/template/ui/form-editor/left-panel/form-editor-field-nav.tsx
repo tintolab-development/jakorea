@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { SortOrderDragIcon } from '@/shared/ui/sort-order-drag-icon'
 import {
   DndContext,
@@ -128,12 +128,23 @@ export function FormEditorFieldNav({
   fieldListBottomSlot,
   children,
 }: FormEditorFieldNavProps) {
+  const childProps =
+    isValidElement(children)
+      ? (children.props as {
+          editorKind?: string
+          structureLockedParagraphIds?: ReadonlySet<string>
+        })
+      : undefined
+  const structureControlsDisabled =
+    childProps?.editorKind === 'horizontal_table' &&
+    childProps.structureLockedParagraphIds != null
   const pinnedBottomList =
     pinnedBottom == null ? [] : Array.isArray(pinnedBottom) ? pinnedBottom : [pinnedBottom]
   const sortableIds = sortableMiddle.map(i => i.id)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (structureControlsDisabled) return
     if (over == null || active.id === over.id) return
     const activeId = String(active.id)
     const overId = String(over.id)
@@ -170,7 +181,10 @@ export function FormEditorFieldNav({
                 item={item}
                 selected={selectedItemId === item.id}
                 onSelect={() => onSelectItem(item.id)}
-                hideDragHandle={hideSortableDragHandleForIds?.has(item.id) ?? false}
+                hideDragHandle={
+                  structureControlsDisabled ||
+                  (hideSortableDragHandleForIds?.has(item.id) ?? false)
+                }
               />
             ))}
           </SortableContext>
@@ -184,7 +198,12 @@ export function FormEditorFieldNav({
           />
         ))}
       </div>
-      {fieldListBottomSlot}
+      {structureControlsDisabled && isValidElement(fieldListBottomSlot)
+        ? cloneElement(
+            fieldListBottomSlot as ReactElement<{ disabled?: boolean }>,
+            { disabled: true }
+          )
+        : fieldListBottomSlot}
       <hr className="template-modal-nav__children-divider" aria-hidden="true" />
       {children}
     </>

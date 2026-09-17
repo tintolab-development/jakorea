@@ -104,8 +104,11 @@ export function FormEditorLeftPanel({
     .join(' ')
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
+  const structureControlsDisabled =
+    editorKind === 'horizontal_table' && structureLockedParagraphIds != null
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (structureControlsDisabled) return
     if (over == null || active.id === over.id) return
     onReorderMiddle(String(active.id), String(over.id))
   }

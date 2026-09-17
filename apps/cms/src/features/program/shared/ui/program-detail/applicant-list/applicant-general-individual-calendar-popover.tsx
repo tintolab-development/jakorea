@@ -4,7 +4,7 @@
 
 import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import type { CalendarItem } from '@/shared/components/calendar'
 import type { ApplicantCalendarEvent } from './applicant-calendar-events'

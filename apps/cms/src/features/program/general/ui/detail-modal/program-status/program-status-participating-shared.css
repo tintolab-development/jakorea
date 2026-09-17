@@ -260,25 +260,29 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 
-/* scroll.x 테이블: 부모가 내용만큼만 넓어지면 스크롤 영역 clientWidth가 커져 가로 스크롤이 안 보임 → 래퍼·Ant 컨테이너 폭 고정 */
+/* scroll.x 테이블: 래퍼·Ant 컨테이너 폭 고정. cms-data-table 기본 overflow-x와 이중 스크롤 방지 */
 .program-status-participating__table-wrap .ant-table-wrapper,
-.participating-institutions-section__table-wrap .ant-table-wrapper {
+.participating-institutions-section__table-wrap .ant-table-wrapper,
+.program-status-participating__table-wrap .cms-data-table,
+.participating-institutions-section__table-wrap .cms-data-table {
   min-width: 0;
   max-width: 100%;
+  overflow-x: hidden;
 }
 
 .program-status-participating__table-wrap .ant-table-container,
 .participating-institutions-section__table-wrap .ant-table-container {
   width: 100%;
   min-width: 0;
+  max-width: 100%;
 }
 
 .program-status-participating__table-wrap .ant-table-content,
 .participating-institutions-section__table-wrap .ant-table-content {
   max-width: 100%;
-  overflow-x: auto !important;
 }
 
 .program-status-participating__table--clickable .ant-table-tbody > tr,

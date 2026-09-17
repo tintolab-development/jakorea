@@ -21,7 +21,7 @@ export interface UseSponsorDetailReturn {
   contacts: SponsorContactRow[]
   setContacts: React.Dispatch<React.SetStateAction<SponsorContactRow[]>>
   programHistories: SponsorProgramHistoryRow[]
-  removeProgramHistoryRows: (ids: string[]) => void
+  removeProgramHistoryRows: (ids: string[]) => Promise<void>
   isEditingBasicInfo: boolean
   handleBasicInfoChange: (updater: (prev: BasicInfoEditState) => BasicInfoEditState) => void
   /** 조회 모드: 즉시 API. 수정 모드: 로컬만(수정 완료 시 basicInfo와 함께 저장). */
@@ -74,7 +74,11 @@ function sponsorRowToPlaceholderDetail(sponsor: SponsorManagementRow): SponsorMa
 
 export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetailReturn {
   const detailQuery = useSponsorDetailQuery(sponsor.id, true)
-  const { updateBasicInfoMutation, updateStatusMutation } = useSponsorMutations()
+  const {
+    deleteProgramHistoriesMutation,
+    updateBasicInfoMutation,
+    updateStatusMutation,
+  } = useSponsorMutations()
   const isAwaitingDetail = isAwaitingFirstQueryData(detailQuery)
 
   const detail = useMemo((): SponsorManagementDetailView => {
@@ -109,9 +113,16 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
   }, [detailQuery.data])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const removeProgramHistoryRows = useCallback((_ids: string[]): void => {
-    // API에 삭제 엔드포인트 없음 — no-op
-  }, [])
+  const removeProgramHistoryRows = useCallback(
+    async (ids: string[]): Promise<void> => {
+      if (ids.length === 0) return
+      await deleteProgramHistoriesMutation.mutateAsync({
+        sponsorId: sponsor.id,
+        ids,
+      })
+    },
+    [deleteProgramHistoriesMutation, sponsor.id]
+  )
 
   const handleBasicInfoChange = useCallback(
     (updater: (prev: BasicInfoEditState) => BasicInfoEditState): void => {
@@ -198,7 +209,7 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
     handleBasicInfoChange,
     handleSponsorshipStatusChange,
     handleToggleBasicInfoEdit,
-    programHistoryDeleteDisabled: true,
+    programHistoryDeleteDisabled: deleteProgramHistoriesMutation.isPending,
     refetchDetail: () => detailQuery.refetch(),
     isLoading: isAwaitingDetail,
     isError: detailQuery.isError,

@@ -18,7 +18,7 @@ export function buildInstitutionApprovalCompleteDescription(
   assignedInstructorCount: number
 ): string {
   const trimmedName = schoolName.trim() || '기관'
-  const firstLine = `[${trimmedName}]의 프로그램 참여가 승인 되었습니다.`
+  const firstLine = `**[${trimmedName}]**의 프로그램 참여가 승인 되었습니다.`
   return `${firstLine}\n(현재 배정 강사 : ${assignedInstructorCount}명)`
 }
 

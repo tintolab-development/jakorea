@@ -1,6 +1,6 @@
 /**
  * 전체 회원 목록 무한 스크롤 (React Query useInfiniteQuery)
- * 15명씩 로드
+ * 20명씩 로드 — 실 API만 (mockUsers 경로 없음)
  */
 
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query'
@@ -14,9 +14,6 @@ import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabi
 import type { User } from '@/types/user'
 
 export type UseInfiniteUserListFilters = GetUsersPageParams
-
-/** mock 경로 레거시 키 — remote 전환 전 `['users','list']` */
-const MOCK_MEMBER_LIST_QUERY_KEY = ['users', 'list'] as const
 
 /**
  * Class C 목록. 동일 LNB 재클릭은 sidebar에서 `invalidateMemberListQueries`로 강제 갱신한다.
@@ -40,25 +37,19 @@ export function useInfiniteUserList(filters: UseInfiniteUserListFilters) {
   const queryClient = useQueryClient()
   const remote = isMembersRemoteEnabled()
   const filtersKey = serializeMemberListFilters(filters)
-  const listNamespace = remote ? (filters.role === 'SCHOOL' ? 'schools' : 'members') : 'mock'
-  const queryKey = remote
-    ? listNamespace === 'schools'
+  const listNamespace = filters.role === 'SCHOOL' ? 'schools' : 'members'
+  const queryKey =
+    listNamespace === 'schools'
       ? memberQueryKeys.schoolsList(filtersKey)
       : memberQueryKeys.list(filtersKey)
-    : ([...MOCK_MEMBER_LIST_QUERY_KEY, filters] as const)
 
   // useInfiniteQuery보다 먼저 두어, remount 시 캐시된 2페이지를 모두 치지 않게 한다.
   useLayoutEffect(() => {
-    const key =
-      listNamespace === 'schools'
-        ? memberQueryKeys.schoolsList(filtersKey)
-        : listNamespace === 'members'
-          ? memberQueryKeys.list(filtersKey)
-          : ([...MOCK_MEMBER_LIST_QUERY_KEY, filters] as const)
-    queryClient.setQueryData<InfiniteData<GetUsersPageResult>>(key, keepFirstInfiniteQueryPage)
+    if (!remote) return
+    queryClient.setQueryData<InfiniteData<GetUsersPageResult>>(queryKey, keepFirstInfiniteQueryPage)
     // filters 참조는 매 렌더 달라질 수 있어 직렬화된 식별자만 의존한다.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- queryKey 안정성은 filtersKey + listNamespace
-  }, [queryClient, filtersKey, listNamespace])
+  }, [queryClient, filtersKey, listNamespace, remote])
 
   const query = useInfiniteQuery({
     queryKey,
@@ -66,6 +57,7 @@ export function useInfiniteUserList(filters: UseInfiniteUserListFilters) {
       return getUsersPage(filters, pageParam as number)
     },
     initialPageParam: 0,
+    enabled: remote,
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage.hasMore) return undefined
       if (lastPage.nextPageParam !== undefined) return lastPage.nextPageParam
@@ -75,20 +67,20 @@ export function useInfiniteUserList(filters: UseInfiniteUserListFilters) {
   })
 
   const users = useMemo(() => {
-    if (!query.data?.pages) return []
+    if (!remote || !query.data?.pages) return []
     return query.data.pages.flatMap(page => page.users) as Omit<User, 'password'>[]
-  }, [query.data?.pages])
+  }, [query.data?.pages, remote])
 
-  const total = query.data?.pages[0]?.total ?? 0
+  const total = remote ? (query.data?.pages[0]?.total ?? 0) : 0
 
   return {
     users,
     total,
-    isLoading: query.isLoading,
+    isLoading: remote ? query.isLoading : false,
     isFetchingNextPage: query.isFetchingNextPage,
     fetchNextPage: query.fetchNextPage,
     hasNextPage: query.hasNextPage ?? false,
     refetch: query.refetch,
-    isFetching: query.isFetching,
+    isFetching: remote ? query.isFetching : false,
   }
 }

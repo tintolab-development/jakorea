@@ -73,9 +73,9 @@ function buildGroupedSummaryEntries(
 const EMPTY_PROGRAM_DATES = new Set<string>()
 const TEMPLATE_CALENDAR_UNSELECTED = dayjs('1970-01-01')
 
-/** 템플릿 작성 — mock 일정 없이 캘린더 + 안내 문구만 */
+/** 템플릿 작성 — mock 일정 없이 캘린더 + 안내 문구만 (월 이동·날짜 선택은 미리보기와 동일하게 차단) */
 function VolunteerInterviewApplicantScheduleTemplatePlaceholder() {
-  const [currentMonth, setCurrentMonth] = useState(() => dayjs().startOf('month'))
+  const [currentMonth] = useState(() => dayjs().startOf('month'))
   const scheduleTopRef = useRef<HTMLDivElement>(null)
   const calendarWrapRef = useRef<HTMLDivElement>(null)
   useProgramRegistrationScheduleTopCalendarHeightSync(scheduleTopRef, calendarWrapRef)
@@ -87,7 +87,7 @@ function VolunteerInterviewApplicantScheduleTemplatePlaceholder() {
   )
 
   return (
-    <div className="volunteer-interview-applicant-schedule program-application-form-instructor__available-schedule">
+    <div className="volunteer-interview-applicant-schedule program-application-form-instructor__available-schedule program-application-form-instructor__available-schedule--readonly-preview">
       <div
         ref={scheduleTopRef}
         className="program-application-form-instructor__available-schedule-top"
@@ -96,7 +96,7 @@ function VolunteerInterviewApplicantScheduleTemplatePlaceholder() {
           <ParagraphCalendarMini
             currentMonth={currentMonth}
             selectedDate={TEMPLATE_CALENDAR_UNSELECTED}
-            onMonthChange={date => setCurrentMonth(date.startOf('month'))}
+            onMonthChange={() => {}}
             onSelectDate={() => {}}
             programDates={EMPTY_PROGRAM_DATES}
           />

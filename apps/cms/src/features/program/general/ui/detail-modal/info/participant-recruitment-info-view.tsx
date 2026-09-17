@@ -287,7 +287,12 @@ export function GeneralProgramParticipantRecruitmentInfoView({
 
   return (
     <section className="participant-recruitment-info-view" aria-label={recruitmentSectionTitle}>
-      <FormParagraphSectionHeader title={recruitmentSectionTitle} surface="responseEntry" titleAligned />
+      <FormParagraphSectionHeader
+        title={recruitmentSectionTitle}
+        surface="responseEntry"
+        titleAligned
+        required={isEdit}
+      />
       <div className="participant-recruitment-info-view__forms">
         <DetailInfoForm
           title="참여자 모집 정보(설정)"

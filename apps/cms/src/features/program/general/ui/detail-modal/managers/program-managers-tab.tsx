@@ -2,8 +2,8 @@
  * 프로그램 상세 - 담당자 정보 탭
  * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록
  *
- * Hybrid: programs remote 게이트 ON → GET/POST/PATCH/DELETE …/managers
- * OFF → mock(`getMockProgramManagers`). mock 파일은 폴백용으로 유지.
+ * Remote only: GET/POST/PATCH/DELETE …/managers
+ * 권한 변경 → PATCH …/managers/{assignmentId} (`ProgramManagerUpdateRequest.role`)
  * 공유 탭 — 일반·UJAT·1사1교·Gemini 상세에서 재사용 (program-type-isolation).
  */
 
@@ -12,7 +12,7 @@ import { Spin, Table } from 'antd'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProgramRole } from '@/types/user'
 import {
@@ -20,10 +20,12 @@ import {
   type ProgramManagersFilters,
 } from '../../../hooks/use-program-managers-params'
 import { useProgramManagers } from '../../../hooks/use-program-managers'
-import { PROGRAM_ROLE_LABELS, type ProgramManagerRow } from '@/data/mock/program-managers'
+import { PROGRAM_ROLE_LABELS, type ProgramManagerRow } from '@/features/program/general/model/program-managers'
 import {
   canAddProgramPm,
+  canAssignProgramRoleToCmsAdmin,
   canSetProgramManagerRole,
+  CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE,
 } from '@/entities/program/lib/program-pm-role-policy'
 import { AddManagerModal, type AddManagerFormValues } from '../../add-manager-modal'
 import { ManagerDeleteGuideModal } from '../../manager-delete-guide-modal'
@@ -50,7 +52,7 @@ interface ProgramManagersTabProps {
   maskSensitive?: boolean
 }
 
-export function ProgramManagersTab({ programId, maskSensitive = false }: ProgramManagersTabProps) {
+export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = false }: ProgramManagersTabProps) {
   const { showAlert } = useCmsAlert()
   const { filters, setFilters } = useProgramManagersParams()
   const [pendingFilters, setPendingFilters] = useState<ProgramManagersFilters>(() => ({
@@ -62,16 +64,25 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [deleteGuideModalOpen, setDeleteGuideModalOpen] = useState(false)
 
+  const managersListFilters = useMemo(
+    () => ({
+      managerName: appliedFilters.managerName,
+      role: appliedFilters.role,
+    }),
+    [appliedFilters.managerName, appliedFilters.role]
+  )
+
   const {
     managers: managerList,
     loading,
     isMutating,
+    isUpdatingRole,
     getAssignableCandidates,
     candidatesLoading,
     addManager,
     updateManagerRole,
     deleteManagers,
-  } = useProgramManagers(programId)
+  } = useProgramManagers(programId, managersListFilters)
 
   useEffect(() => {
     setPendingFilters({ ...filters })
@@ -185,6 +196,10 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
     if (values.role === 'OWNER' && !canAddProgramPm(managerList)) {
       return false
     }
+    if (!canAssignProgramRoleToCmsAdmin(values.cmsRoleCode, values.role)) {
+      void showAlert({ title: '등록 실패', content: CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE })
+      return false
+    }
     const result = await addManager(values)
     if (!result.ok) {
       void showAlert({ title: '등록 실패', content: result.message })
@@ -199,6 +214,14 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
       if (!manager) return
       if (manager.role === newRole) {
         setOpenRoleDropdownId(null)
+        return
+      }
+      if (!canAssignProgramRoleToCmsAdmin(manager.cmsRoleCode, newRole)) {
+        setOpenRoleDropdownId(null)
+        void showAlert({
+          title: '권한 변경 실패',
+          content: CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE,
+        })
         return
       }
       if (!canSetProgramManagerRole(managerList, recordId, newRole)) {
@@ -217,6 +240,7 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
   const roleItemDisabled = useCallback(
     (record: ProgramManagerRow, optionRole: ProgramRole) => {
       if (record.role === optionRole) return true
+      if (!canAssignProgramRoleToCmsAdmin(record.cmsRoleCode, optionRole)) return true
       if (optionRole !== 'OWNER') return false
       return !canSetProgramManagerRole(managerList, record.id, 'OWNER')
     },
@@ -258,6 +282,7 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
             onChange={key => {
               void handleTableRoleChange(record.id, key)
             }}
+            isUpdating={isUpdatingRole}
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
@@ -271,11 +296,7 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
         key: 'phone',
         width: 246,
         align: 'center',
-        render: (phone: string) => {
-          const value = phone?.trim()
-          if (!value) return '-'
-          return maskSensitive ? MASKING_POLICY.phone(value) : value
-        },
+        render: (phone: string) => displayServerPiiAsIs(phone),
       },
       {
         title: '이메일',
@@ -284,11 +305,7 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
         width: 246,
         align: 'center',
         ellipsis: true,
-        render: (email: string) => {
-          const value = email?.trim()
-          if (!value) return '-'
-          return maskSensitive ? MASKING_POLICY.email(value) : value
-        },
+        render: (email: string) => displayServerPiiAsIs(email),
       },
       {
         title: '등록일시',
@@ -300,7 +317,7 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
     ],
     [
       handleTableRoleChange,
-      maskSensitive,
+      isUpdatingRole,
       openRoleDropdownId,
       renderRoleBadge,
       roleItemDisabled,

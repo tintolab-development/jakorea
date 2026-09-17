@@ -8,10 +8,10 @@ import {
   getUjatVolunteerMockProfile,
   parseEducationProgressVolunteerProfileId,
   regionLabelForVolunteerProfile,
-} from '@/data/mock/ujat-volunteer-mock-profiles'
+} from '@/features/program/ujat/model/ujat-volunteer-profile'
 import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import type { EducationProgressHalfKey } from '../tabs'
-import { getUjatVolunteerAssignmentProgressBundle } from './detail/assignment-mock'
+import { getUjatVolunteerAssignmentProgressBundle } from './detail/volunteer-assignment-data'
 import type { UjatVolunteerAssignmentProgressRow } from './detail/assignment-types'
 
 const FIXED_HEADER_LABELS = ['이름', '생년월일', '1365 ID', '지역', '발대식'] as const

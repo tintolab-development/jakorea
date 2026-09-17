@@ -1,5 +1,6 @@
 /**
- * 최초 로그인 — 본인인증 후 비밀번호 변경 (스크린샷3)
+ * 최초 로그인 — 본인인증 후 비밀번호 변경 (step 3)
+ * 이메일(읽기전용) · 새 비밀번호 · 확인 — 인풋 그룹 간격 40px
  */
 
 import { Form } from 'antd'
@@ -25,9 +26,9 @@ import { CmsInput } from '@/shared/ui'
 import { passwordChangeRequiredPaths } from '@/shared/utils/post-auth-redirect'
 
 import './register-page.css'
+import './password-change-required-change-password-page.css'
 
 type FormValues = {
-  currentPassword: string
   newPassword: string
   newPasswordConfirm: string
 }
@@ -40,6 +41,7 @@ export function PasswordChangeRequiredChangePasswordPage() {
   const wizardState = getPasswordChangeRequiredWizardState()
   const birthReady = hasBirthGender(wizardState)
   const identityReady = hasIdentityVerified(wizardState)
+  const email = wizardState?.email?.trim() ?? ''
 
   useEffect(() => {
     if (hasPasswordChangeRequiredComplete()) {
@@ -57,25 +59,19 @@ export function PasswordChangeRequiredChangePasswordPage() {
   }, [isReady, birthReady, identityReady, navigate])
 
   const handleSubmit = async (values: FormValues) => {
-    if (!wizardState?.email) {
+    if (!email) {
       navigate(passwordChangeRequiredPaths.notice, { replace: true })
       return
     }
 
     const validation = validatePasswordChangeRequiredForm({
-      currentPassword: values.currentPassword,
       newPassword: values.newPassword,
       confirmPassword: values.newPasswordConfirm,
-      initialPassword: wizardState.email,
+      initialPassword: email,
     })
 
     if (validation) {
-      const fieldName =
-        validation.field === 'current'
-          ? 'currentPassword'
-          : validation.field === 'new'
-            ? 'newPassword'
-            : 'newPasswordConfirm'
+      const fieldName = validation.field === 'new' ? 'newPassword' : 'newPasswordConfirm'
       form.setFields([{ name: fieldName, errors: [validation.message] }])
       return
     }
@@ -83,15 +79,15 @@ export function PasswordChangeRequiredChangePasswordPage() {
     setSubmitting(true)
     try {
       await fetchAdminPasswordChange({
-        currentPassword: values.currentPassword,
-        newPassword: values.newPassword,
+        currentPassword: email,
+        newPassword: values.newPassword.trim(),
       })
       markPasswordChangeRequiredComplete()
       navigate(passwordChangeRequiredPaths.complete, { replace: true })
     } catch (error) {
       const message =
         error instanceof Error ? error.message : '비밀번호 변경에 실패했습니다. 다시 시도해 주세요.'
-      form.setFields([{ name: 'currentPassword', errors: [message] }])
+      form.setFields([{ name: 'newPassword', errors: [message] }])
     } finally {
       setSubmitting(false)
     }
@@ -102,15 +98,18 @@ export function PasswordChangeRequiredChangePasswordPage() {
   }
 
   return (
-    <AuthPageShell showLogo={false} cardClassName="register-card">
+    <AuthPageShell
+      showLogo={false}
+      cardClassName="register-card auth-card--password-change-required-change"
+    >
       <RegisterStepProgress
         currentStep={3}
         totalSteps={PASSWORD_CHANGE_REQUIRED_TOTAL_STEPS}
         className="register-step-progress--password-change-required"
       />
-      <div className="admin-register-step">
+      <div className="admin-register-step admin-register-step--password-change-required">
         <RegisterStepHeader
-          title="비밀번호를 변경해 주세요"
+          title="비밀번호를 변경해 주세요."
           description="현재 비밀번호는 가입된 이메일 주소와 동일합니다."
         />
 
@@ -118,27 +117,26 @@ export function PasswordChangeRequiredChangePasswordPage() {
           form={form}
           layout="vertical"
           requiredMark={false}
-          className="auth-form admin-register-step__form"
+          className="auth-form admin-register-step__form password-change-required-change-form"
           onFinish={values => {
             void handleSubmit(values)
           }}
         >
-          <Form.Item
-            name="currentPassword"
-            rules={[{ required: true, message: '현재 비밀번호를 입력해 주세요.' }]}
-          >
+          <div className="password-change-required-change-form__field">
             <CmsInput
-              label="현재 비밀번호"
-              required
-              type="password"
+              label="이메일"
+              value={email}
+              disabled
               inputSize="xlarge"
               width="100%"
-              placeholder="현재 비밀번호를 입력해 주세요."
-              autoComplete="current-password"
+              allowClear={false}
+              autoComplete="username"
             />
-          </Form.Item>
+          </div>
+
           <Form.Item
             name="newPassword"
+            className="password-change-required-change-form__item"
             rules={[{ required: true, message: '새 비밀번호를 입력해 주세요.' }]}
           >
             <CmsInput
@@ -149,10 +147,13 @@ export function PasswordChangeRequiredChangePasswordPage() {
               width="100%"
               placeholder="새 비밀번호를 입력해 주세요"
               autoComplete="new-password"
+              allowClear
             />
           </Form.Item>
+
           <Form.Item
             name="newPasswordConfirm"
+            className="password-change-required-change-form__item"
             rules={[{ required: true, message: '새 비밀번호를 한 번 더 입력해 주세요.' }]}
           >
             <CmsInput
@@ -163,6 +164,7 @@ export function PasswordChangeRequiredChangePasswordPage() {
               width="100%"
               placeholder="새 비밀번호를 한 번 더 입력해 주세요"
               autoComplete="new-password"
+              allowClear
             />
           </Form.Item>
 

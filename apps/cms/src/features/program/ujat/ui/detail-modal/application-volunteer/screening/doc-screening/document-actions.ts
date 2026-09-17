@@ -1,6 +1,6 @@
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import type { UjatDocumentScreeningStatus } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 
 export type UjatDocumentScreeningConfirmRequest = {
   title: string

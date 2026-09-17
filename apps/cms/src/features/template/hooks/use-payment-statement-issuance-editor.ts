@@ -207,7 +207,7 @@ export function usePaymentStatementIssuanceEditor(
       } catch (error) {
         console.debug('paymentStatementIssuance save failed', error)
         if (isTemplateManagementSave) {
-          showSaveFailure()
+          showSaveFailure(error)
         }
       }
     })()

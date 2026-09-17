@@ -3,7 +3,8 @@ import {
   getUjatEducationProgressAttendanceDateOptions,
   getUjatEducationProgressAttendanceSessions,
   patchUjatEducationProgressAttendanceSession,
-} from '@/data/mock/ujat-education-progress-attendance-mock'
+} from '@/features/program/ujat/model/ujat-education-progress'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import type { EducationProgressHalfKey } from '../tabs'
 import { buildUjatAttendanceFilterFields } from './filter-fields'
@@ -75,6 +76,12 @@ export function useUjatEducationProgressAttendance(
   half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ) {
+  useNotifyProgramApiUnavailableOnce(
+    true,
+    'ujat-progress-attendance',
+    'UJAT 진행 현황 · 출석'
+  )
+
   const [dataVersion, setDataVersion] = useState(0)
   const [pendingFilters, setPendingFilters] = useState<UjatAttendanceFilters>(
     () => ({ ...EMPTY_UJAT_ATTENDANCE_FILTERS })

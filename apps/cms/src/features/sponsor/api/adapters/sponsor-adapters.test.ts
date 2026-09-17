@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  mapProgramHistoryResponse,
   mapSponsorContactResponse,
   mapSponsorDetailResponse,
   mapSponsorResponse,
@@ -12,6 +13,33 @@ import {
   toSponsorRequestFromRegister,
   toYearlyBusinessRequest,
 } from './sponsor-adapters'
+
+describe('mapProgramHistoryResponse', () => {
+  it.each([
+    ['ELEMENTARY', 'elementary'],
+    ['초등학생', 'elementary'],
+    ['middle_school', 'middle'],
+    ['고등학교', 'high'],
+    ['대학생', 'college'],
+    ['성인', 'adult'],
+  ] as const)('교육 대상 응답 %s를 %s로 표준화한다', (educationTarget, expected) => {
+    const row = mapProgramHistoryResponse({ educationTarget })
+    expect(row.educationTarget).toBe(expected)
+  })
+
+  it('알 수 없거나 누락된 교육 대상을 초등학생으로 오인하지 않는다', () => {
+    expect(mapProgramHistoryResponse({}).educationTarget).toBe('unknown')
+    expect(mapProgramHistoryResponse({ educationTarget: '기타' }).educationTarget).toBe('unknown')
+  })
+
+  it.each([
+    ['elementary,middle', ['elementary', 'middle']],
+    ['초등학생 / 고등학생', ['elementary', 'high']],
+    ['["college","adult"]', ['college', 'adult']],
+  ])('복수 교육 대상 응답 %s를 표준 목록으로 변환한다', (educationTarget, expected) => {
+    expect(mapProgramHistoryResponse({ educationTarget }).educationTargets).toEqual(expected)
+  })
+})
 
 describe('mapSponsorResponse', () => {
   it('maps list aggregate columns from SponsorResponse', () => {

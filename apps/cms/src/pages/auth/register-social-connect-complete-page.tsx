@@ -8,9 +8,15 @@ import { RegisterSocialConnectCompleteView } from '@/features/auth/ui/admin-regi
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 import {
   buildRegisterSocialConnectPath,
+  isPasswordChangeRequiredSocialConnectFlow,
   resolveSocialConnectFinishPath,
+  SOCIAL_CONNECT_FLOW_PASSWORD_CHANGE_REQUIRED,
 } from '@/features/auth/lib/register-social-connect-state'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import {
+  clearPasswordChangeRequiredComplete,
+  clearPasswordChangeRequiredSocialOnboarding,
+} from '@/features/auth/password-change-required'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 
@@ -18,9 +24,11 @@ import './register-complete-page.css'
 
 export function RegisterSocialConnectCompletePage() {
   const navigate = useNavigate()
-  const { params } = useQueryParams<{ redirect?: string }>()
-  const { isAuthenticated, user } = useAuthStore()
+  const { params } = useQueryParams<{ redirect?: string; flow?: string }>()
+  const { isAuthenticated, user, logout } = useAuthStore()
+  const clearPasswordChangeRequired = useAuthStore(state => state.clearPasswordChangeRequired)
   const fallbackPath = getRedirectPathByRole(user)
+  const passwordChangeOnboarding = isPasswordChangeRequiredSocialConnectFlow(params.flow)
 
   const finishPath = resolveSocialConnectFinishPath({
     isAuthenticated,
@@ -28,13 +36,26 @@ export function RegisterSocialConnectCompletePage() {
     fallbackPath,
   })
   const socialConnectPath = buildRegisterSocialConnectPath(
-    isAuthenticated ? fallbackPath : params.redirect
+    isAuthenticated && !passwordChangeOnboarding ? fallbackPath : params.redirect,
+    passwordChangeOnboarding
+      ? { flow: SOCIAL_CONNECT_FLOW_PASSWORD_CHANGE_REQUIRED }
+      : undefined
   )
 
   return (
     <AuthPageShell showLogo={false} cardClassName="auth-card--register-complete">
       <RegisterSocialConnectCompleteView
-        onGoLogin={() => navigate(finishPath, { replace: true })}
+        onGoLogin={() => {
+          clearPasswordChangeRequiredComplete()
+          clearPasswordChangeRequiredSocialOnboarding()
+          clearPasswordChangeRequired()
+          logout()
+          if (passwordChangeOnboarding) {
+            navigate('/login', { replace: true })
+            return
+          }
+          navigate(finishPath, { replace: true })
+        }}
         onConnectMore={() => navigate(socialConnectPath, { replace: true })}
       />
     </AuthPageShell>

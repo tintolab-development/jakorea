@@ -7,7 +7,6 @@
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
-import { getEducationPrograms } from '@/data/mock/education-programs'
 import { getApplicationCountByProgram, getCapacity } from '../lib/program-helpers'
 import { SponsorNameById } from '@/features/sponsor/ui/sponsor-name-by-id'
 import {
@@ -30,7 +29,7 @@ export interface EnrollmentStatusTableProps {
 }
 
 export function EnrollmentStatusTable({ data, loading }: EnrollmentStatusTableProps) {
-  const programs = data ?? getEducationPrograms()
+  const programs = data ?? []
 
   const columns: ColumnsType<Program> = [
     {

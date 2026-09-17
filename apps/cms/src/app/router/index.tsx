@@ -466,8 +466,16 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <ProgramListPage /> },
           { path: 'general', element: <GeneralProgramListRouteShell /> },
+          {
+            path: 'general/instructor-recruitment',
+            element: <Navigate to="/programs/general" replace />,
+          },
           { path: 'general/*', element: <ProgramListPage /> },
           { path: 'company-school', element: <ProgramListPage /> },
+          {
+            path: 'company-school/instructor-recruitment',
+            element: <Navigate to="/programs/company-school" replace />,
+          },
           { path: 'company-school/*', element: <ProgramListPage /> },
           { path: 'trained-teachers', element: <TrainedTeachersProgramPage /> },
           { path: 'trained-teachers/*', element: <TrainedTeachersProgramPage /> },
@@ -879,11 +887,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'instructor-applications',
-        element: <Navigate to="/programs/education/instructor-recruitment" replace />,
+        element: <Navigate to="/programs/general" replace />,
       },
       {
         path: 'instructor-applications/*',
-        element: <Navigate to="/programs/education/instructor-recruitment" replace />,
+        element: <Navigate to="/programs/general" replace />,
       },
       {
         path: 'application-paths',
@@ -907,19 +915,19 @@ export const router = createBrowserRouter([
       },
       {
         path: 'matchings',
-        element: <Navigate to="/programs/education/instructor-recruitment" replace />,
+        element: <Navigate to="/programs/general" replace />,
       },
       {
         path: 'matchings/*',
-        element: <Navigate to="/programs/education/instructor-recruitment" replace />,
+        element: <Navigate to="/programs/general" replace />,
       },
       {
         path: 'interviews',
-        element: <Navigate to="/programs/education/instructor-recruitment" replace />,
+        element: <Navigate to="/programs/general" replace />,
       },
       {
         path: 'interviews/*',
-        element: <Navigate to="/programs/education/instructor-recruitment" replace />,
+        element: <Navigate to="/programs/general" replace />,
       },
       {
         path: 'todos',

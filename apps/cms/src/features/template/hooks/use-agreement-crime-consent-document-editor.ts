@@ -68,7 +68,7 @@ export function useAgreementCrimeConsentDocumentEditor(active: boolean) {
         showSaveSuccess()
       } catch (error) {
         console.debug('agreementCrimeConsent save failed', error)
-        showSaveFailure()
+        showSaveFailure(error)
       }
     },
     [showSaveFailure, showSaveSuccess]

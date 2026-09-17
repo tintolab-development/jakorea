@@ -12,9 +12,10 @@ export type InstitutionRejectModalProps = {
   zIndex?: number
 }
 
+/** 기관명·대괄호 전체를 bold (`**[기관명]**`) */
 export function buildInstitutionRejectMessage(schoolName: string): string {
   const trimmedName = schoolName.trim() || '기관'
-  return `[${trimmedName}]의 프로그램 참여를 반려하시겠습니까?\n반려 시 입력하신 반려 사유가 담당 교사에게 전달되며, 알림이 발송됩니다.`
+  return `**[${trimmedName}]**의 프로그램 참여를 반려하시겠습니까?\n반려 시 입력하신 반려 사유가 담당 교사에게 전달되며, 알림이 발송됩니다.`
 }
 
 export function InstitutionRejectModal({

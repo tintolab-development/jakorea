@@ -23,4 +23,12 @@ describe('mergePaymentStatementBasicInfo', () => {
       mergePaymentStatementBasicInfo({ paymentPurpose: '기타 지급' }).paymentPurpose
     ).toBe('기타 지급')
   })
+
+  it('레거시 강의비 오타는 강사비 고정 문구로 정규화한다', () => {
+    expect(
+      mergePaymentStatementBasicInfo({
+        paymentPurpose: '강의비 또는 활동비 지급',
+      }).paymentPurpose
+    ).toBe(PAYMENT_STATEMENT_DEFAULT_PURPOSE)
+  })
 })

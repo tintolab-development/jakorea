@@ -20,9 +20,17 @@ import { LoginUtilityLinks } from '@/features/auth/ui/login-utility-links'
 import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
 import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-approval-pending-notice'
 import { isAdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
-import { hasPasswordChangeRequiredComplete } from '@/features/auth/password-change-required/wizard-state'
+import {
+  hasPasswordChangeRequiredComplete,
+  hasPasswordChangeRequiredSocialOnboarding,
+  markPasswordChangeRequiredSocialOnboarding,
+} from '@/features/auth/password-change-required/wizard-state'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
-import { passwordChangeRequiredPaths, resolvePostAuthRedirectPath } from '@/shared/utils/post-auth-redirect'
+import {
+  isPasswordChangeRequiredSocialConnectPath,
+  passwordChangeRequiredPaths,
+  resolvePostAuthRedirectPath,
+} from '@/shared/utils/post-auth-redirect'
 import { DEV_LOGIN_QA_ACCOUNTS } from '@/features/auth/lib/dev-login-accounts'
 import { useLoginAttempts } from '@/features/auth/hooks/use-login-attempts'
 import { LOGIN_POLICY } from '@/shared/constants/login-policy'
@@ -67,6 +75,7 @@ export function LoginPage() {
   const navigate = useNavigate()
   const { params } = useQueryParams<{
     redirect?: string
+    next?: string
     socialNotLinked?: string
     socialAlreadyLinked?: string
   }>()
@@ -96,6 +105,7 @@ export function LoginPage() {
   } = useLoginAttempts()
 
   const redirectPath = params.redirect
+  const nextPath = params.next
   const showSocialNotLinked = params.socialNotLinked === '1' || params.socialNotLinked === 'true'
   const showSocialAlreadyLinked =
     params.socialAlreadyLinked === '1' || params.socialAlreadyLinked === 'true'
@@ -104,7 +114,22 @@ export function LoginPage() {
     : '/register'
 
   useEffect(() => {
+    // 세션 만료로 login?next=/register/social-connect?flow=... 에 떨어진 경우 → 소셜 연결 화면 복귀
+    if (nextPath?.startsWith('/')) {
+      const nextUrl = new URL(nextPath, 'http://local.invalid')
+      if (isPasswordChangeRequiredSocialConnectPath(nextUrl.pathname, nextUrl.search)) {
+        markPasswordChangeRequiredSocialOnboarding()
+        navigate(nextPath, { replace: true })
+        return
+      }
+    }
+
+    const socialOnboarding = hasPasswordChangeRequiredSocialOnboarding()
     const complete = hasPasswordChangeRequiredComplete()
+    if (socialOnboarding) {
+      navigate(passwordChangeRequiredPaths.socialConnect, { replace: true })
+      return
+    }
     if (complete) {
       navigate(passwordChangeRequiredPaths.complete, { replace: true })
       return
@@ -114,13 +139,14 @@ export function LoginPage() {
       navigate(
         resolvePostAuthRedirectPath({
           complete,
+          socialOnboarding,
           passwordChangeRequired,
           fallbackPath: fallback,
         }),
         { replace: true }
       )
     }
-  }, [isAuthenticated, user, navigate, redirectPath, passwordChangeRequired])
+  }, [isAuthenticated, user, navigate, redirectPath, passwordChangeRequired, nextPath])
 
   const submitLogin = async (values: LoginRequest, mode: LoginMode) => {
     if (checkLocked()) {
@@ -154,6 +180,7 @@ export function LoginPage() {
       navigate(
         resolvePostAuthRedirectPath({
           complete: hasPasswordChangeRequiredComplete(),
+          socialOnboarding: hasPasswordChangeRequiredSocialOnboarding(),
           passwordChangeRequired: useAuthStore.getState().passwordChangeRequired,
           fallbackPath: fallback,
         }),
@@ -207,6 +234,7 @@ export function LoginPage() {
         navigate(
           resolvePostAuthRedirectPath({
             complete: hasPasswordChangeRequiredComplete(),
+            socialOnboarding: hasPasswordChangeRequiredSocialOnboarding(),
             passwordChangeRequired: latest.passwordChangeRequired,
             fallbackPath: fallback,
           }),
@@ -227,6 +255,7 @@ export function LoginPage() {
         navigate(
           resolvePostAuthRedirectPath({
             complete: hasPasswordChangeRequiredComplete(),
+            socialOnboarding: hasPasswordChangeRequiredSocialOnboarding(),
             passwordChangeRequired: authState.passwordChangeRequired,
             fallbackPath: fallback,
           }),

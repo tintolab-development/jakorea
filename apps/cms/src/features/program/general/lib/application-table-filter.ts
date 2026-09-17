@@ -1,6 +1,6 @@
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import { matchesInstructorJaExperienceYears } from '@/features/program/general/lib/instructor-application-filter-options'
 
 function matchesAddressRegion(

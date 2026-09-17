@@ -124,3 +124,11 @@
   color: var(--ant-color-error, #ff4d4f);
   font-weight: 700;
 }
+
+.detailed-program-add-item-modal__field-error {
+  margin: 6px 0 0;
+  color: var(--ant-color-error, #ff4d4f);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 140%;
+}

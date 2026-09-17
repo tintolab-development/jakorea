@@ -1,6 +1,6 @@
 import dayjs, { type Dayjs } from 'dayjs'
 import type { GeminiApprovedTrainingStatus } from '../../model/approved/types'
-import { getApprovedInstitutionProgressStatuses } from '../../model/recruitment/institution-application-mock'
+import { getApprovedInstitutionProgressStatuses } from '../../model/recruitment/institution-application-types'
 import { resolveRecruitmentStatus } from './resolve-status'
 
 export type GeminiRecruitmentProgramProgressLabel =

@@ -6,7 +6,6 @@
  * OpenAPI spec version: v9
  */
 import type {
-  AdminPrivacyUnmaskRequest,
   ApiResponseBulkActionResponse,
   ApiResponseBulkDownloadJobResponse,
   ApiResponseDeleteResponse,
@@ -666,85 +665,29 @@ const create4 = (
 
 /**
  * ### 이 API가 하는 일
- * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
- * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}/yearly-businesses`
+ * - 후원사 프로그램 진행 이력 일괄 연결 삭제
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/sponsors/{sponsorId}/program-histories/bulk-delete`
  *
  * ### 화면/프론트 사용 기준
- * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
- * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
- * - 프론트 조회 키: `get_admin_sponsors_sponsorId_yearly-businesses`
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
  * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
  * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
- * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 필요 권한: MASTER_DATA_WRITE 권한 필요
+ * - 접근 범위: GLOBAL 범위 정책
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
- * ### Swagger에서 확인할 때
- * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
- * @summary 관리자 조회
- */
-const yearlyBusinesses = (
-    sponsorId: number,
- options?: SecondParameter<typeof customInstance<SponsorYearlyBusinessResponse[]>>,) => {
-      return customInstance<SponsorYearlyBusinessResponse[]>(
-      {url: `/api/admin/sponsors/${sponsorId}/yearly-businesses`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - POST /api/admin/sponsors/{sponsorId}/yearly-businesses
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
- * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `POST /api/admin/sponsors/{sponsorId}/yearly-businesses`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: 폼 상태 or 선택 행 action payload
- * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
- * - 프론트 조회 키: `post_admin_sponsors_sponsorId_yearly-businesses`
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
- * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 개인정보 노출 기준: NONE 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -760,17 +703,17 @@ const yearlyBusinesses = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
- * @summary POST /api/admin/sponsors/{sponsorId}/yearly-businesses
+ * - 검토 메모: Notion 체크박스 기반 프로그램 진행 이력 삭제를 atomic bulk-delete로 정렬; performance_record 실적 원장은 보존
+ * @summary 후원사 프로그램 진행 이력 일괄 연결 삭제
  */
-const addYearlyBusiness = (
+const bulkDeleteProgramHistories = (
     sponsorId: number,
-    sponsorYearlyBusinessRequest: SponsorYearlyBusinessRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseSponsorYearlyBusinessResponse>>,) => {
-      return customInstance<ApiResponseSponsorYearlyBusinessResponse>(
-      {url: `/api/admin/sponsors/${sponsorId}/yearly-businesses`, method: 'POST',
+    bulkIdsRequest: BulkIdsRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseBulkActionResponse>>,) => {
+      return customInstance<ApiResponseBulkActionResponse>(
+      {url: `/api/admin/sponsors/${sponsorId}/program-histories/bulk-delete`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: sponsorYearlyBusinessRequest
+      data: bulkIdsRequest
     },
       options);
     }
@@ -872,6 +815,7 @@ const end = (
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
  * - 검토 메모: Auto-synced from implemented controller route
+ * @deprecated
  * @summary 관리자 조회
  */
 const contacts = (
@@ -992,61 +936,6 @@ const sponsorLogos = (
       {url: `/api/admin/sponsors/logo-download/jobs`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: sponsorLogoBulkDownloadRequest
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - 후원사 담당자 개인정보 원문 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `POST /api/admin/sponsors/contacts/{contactId}/privacy/unmask`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: PRIVACY_RAW_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNMASK_REASON_REQUIRED 개인정보 정책
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: 2026-09-09 cumulative content/runtime/settlement final merge contract synchronization
- * @summary 후원사 담당자 개인정보 원문 조회
- */
-const unmaskContact = (
-    contactId: number,
-    adminPrivacyUnmaskRequest: AdminPrivacyUnmaskRequest,
- options?: SecondParameter<typeof customInstance<SponsorContactResponse>>,) => {
-      return customInstance<SponsorContactResponse>(
-      {url: `/api/admin/sponsors/contacts/${contactId}/privacy/unmask`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: adminPrivacyUnmaskRequest
     },
       options);
     }
@@ -1259,7 +1148,7 @@ const kits = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary POST /api/admin/material-kits
  */
-const create8 = (
+const create9 = (
     materialKitRequest: MaterialKitRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseMaterialKitResponse>>,) => {
       return customInstance<ApiResponseMaterialKitResponse>(
@@ -1538,7 +1427,7 @@ const detailedPrograms = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary POST /api/admin/detailed-programs
  */
-const create9 = (
+const create10 = (
     detailedProgramRequest: DetailedProgramRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseDetailedProgramResponse>>,) => {
       return customInstance<ApiResponseDetailedProgramResponse>(
@@ -2647,6 +2536,60 @@ const matches = (
 
 /**
  * ### 이 API가 하는 일
+ * - 관리자 조회
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - 프론트 담당 영역: master-data (`master-data`)
+ * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}/yearly-businesses`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
+ * - 프론트 조회 키: `get_admin_sponsors_sponsorId_yearly-businesses`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
+ */
+const yearlyBusinesses = (
+    sponsorId: number,
+ options?: SecondParameter<typeof customInstance<SponsorYearlyBusinessResponse[]>>,) => {
+      return customInstance<SponsorYearlyBusinessResponse[]>(
+      {url: `/api/admin/sponsors/${sponsorId}/yearly-businesses`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 프로그램 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
@@ -2866,7 +2809,7 @@ const deleteProgramHistory1 = (
       options);
     }
 
-return {currentConfig1,replaceCurrentConfig,globalCurrentConfig,replaceGlobalCurrentConfig,textbooks,create1,bulkDelete,list1,create2,sponsors,create4,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,sponsorLogos,unmaskContact,bulkDeleteContacts,bulkDeleteSponsors,kits,create8,versions,createVersion,addTargetCount,detailedPrograms,create9,bulkDelete3,textbook,_delete,update1,get2,delete1,update2,sponsor,delete2,update4,updateYearlyBusiness,deleteContact,updateContact,kit,delete3,update5,detailedProgram,delete4,update6,matches,programHistories,currentKitCalculation,calculate1,deleteProgramHistory1}};
+return {currentConfig1,replaceCurrentConfig,globalCurrentConfig,replaceGlobalCurrentConfig,textbooks,create1,bulkDelete,list1,create2,sponsors,create4,bulkDeleteProgramHistories,end,contacts,addContact,sponsorLogos,bulkDeleteContacts,bulkDeleteSponsors,kits,create9,versions,createVersion,addTargetCount,detailedPrograms,create10,bulkDelete3,textbook,_delete,update1,get2,delete1,update2,sponsor,delete2,update4,updateYearlyBusiness,deleteContact,updateContact,kit,delete3,update5,detailedProgram,delete4,update6,matches,yearlyBusinesses,programHistories,currentKitCalculation,calculate1,deleteProgramHistory1}};
 export type CurrentConfig1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['currentConfig1']>>>
 export type ReplaceCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['replaceCurrentConfig']>>>
 export type GlobalCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['globalCurrentConfig']>>>
@@ -2878,22 +2821,20 @@ export type List1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJA
 export type Create2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create2']>>>
 export type SponsorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['sponsors']>>>
 export type Create4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create4']>>>
-export type YearlyBusinessesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['yearlyBusinesses']>>>
-export type AddYearlyBusinessResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addYearlyBusiness']>>>
+export type BulkDeleteProgramHistoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDeleteProgramHistories']>>>
 export type EndResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['end']>>>
 export type ContactsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['contacts']>>>
 export type AddContactResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addContact']>>>
 export type SponsorLogosResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['sponsorLogos']>>>
-export type UnmaskContactResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['unmaskContact']>>>
 export type BulkDeleteContactsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDeleteContacts']>>>
 export type BulkDeleteSponsorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDeleteSponsors']>>>
 export type KitsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['kits']>>>
-export type Create8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create8']>>>
+export type Create9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create9']>>>
 export type VersionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['versions']>>>
 export type CreateVersionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['createVersion']>>>
 export type AddTargetCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addTargetCount']>>>
 export type DetailedProgramsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['detailedPrograms']>>>
-export type Create9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create9']>>>
+export type Create10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create10']>>>
 export type BulkDelete3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDelete3']>>>
 export type TextbookResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbook']>>>
 export type _DeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['_delete']>>>
@@ -2914,6 +2855,7 @@ export type DetailedProgramResult = NonNullable<Awaited<ReturnType<ReturnType<ty
 export type Delete4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['delete4']>>>
 export type Update6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update6']>>>
 export type MatchesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['matches']>>>
+export type YearlyBusinessesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['yearlyBusinesses']>>>
 export type ProgramHistoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['programHistories']>>>
 export type CurrentKitCalculationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['currentKitCalculation']>>>
 export type Calculate1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['calculate1']>>>

@@ -1,7 +1,7 @@
 import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import { EssaySections } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/applicant/essay-sections'
-import type { UjatEducationProgressVolunteerDetail } from './detail-mock'
+import type { UjatEducationProgressVolunteerDetail } from './volunteer-detail-data'
 import { UjatEducationProgressVolunteerDetailBasicInfo } from './detail-basic-info'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './detail.css'

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
+import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/features/program/shared/model/program-wage-info'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -20,7 +20,7 @@ import {
   type ApplicantInstructorBusinessIncomeStatus,
   type ApplicantInstructorLectureFeeBasisType,
 } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 
 function FieldError({ message }: { message?: string }) {
   if (!message?.trim()) return null

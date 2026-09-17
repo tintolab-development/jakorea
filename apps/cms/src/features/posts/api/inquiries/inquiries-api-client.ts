@@ -1,16 +1,17 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPIPostsSubset } from '@/shared/api/generated/posts/posts-api'
+import { customInstance } from '@/shared/api/orval-mutator'
 import type {
   CategoryRequest,
   Inquiries1Params,
   InquiryAnswerRequest,
   InquiryAnswerResponse,
-  InquiryAnswerUpdateRequest,
   InquiryCategoriesParams,
   InquiryResponse,
   PageResponse,
   PageResponseMapStringObject,
 } from '@/shared/api/generated/posts/schemas'
+import type { InquiryAnswerUpdateRequest } from '@/shared/api/generated/posts/schemas/inquiryAnswerUpdateRequest'
 
 const postsApi = getJAKoreaCMSBackendAPIPostsSubset()
 
@@ -45,7 +46,15 @@ export async function updateInquiryAnswerRemote(
   answerId: string,
   body: InquiryAnswerUpdateRequest
 ): Promise<unknown> {
-  return unwrapApiBody(await postsApi.updateInquiryAnswer(pathId(inquiryId), pathId(answerId), body))
+  // OpenAPI posts subset currently omits PATCH; keep runtime path used by CMS inquiry UI.
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/inquiries/${pathId(inquiryId)}/answers/${pathId(answerId)}`,
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
+  )
 }
 
 export async function deleteInquiryRemote(id: string): Promise<void> {

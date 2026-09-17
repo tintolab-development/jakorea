@@ -1,6 +1,6 @@
-import type { TextbookStatusKey } from '@/data/mock/participating-schools'
-import { TEXTBOOK_STATUS_LABELS } from '@/data/mock/participating-schools'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
+import { TEXTBOOK_STATUS_LABELS } from '@/features/program/general/model/participating-schools'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { Program } from '@/types/domain'
 import {
   calculateParticipatingTextbookKitQuantity,

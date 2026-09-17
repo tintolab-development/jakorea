@@ -13,22 +13,17 @@ import type {
   ParticipatingInstructorCareerDetail,
   ParticipatingInstructorEducationItem,
   ParticipatingInstructorQualification,
-} from '@/data/mock/participating-instructors'
-import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
-import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import {
   INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   PARTICIPATING_INSTRUCTOR_ALREADY_ACTIVITY_WITHDRAWN_ALERT_MESSAGE,
+  MESSAGES,
 } from '@/shared/constants/messages'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -36,6 +31,12 @@ import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-i
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { updateInstructorApplicationManagerCommentRemote } from '@/features/program/general/api/applications-api-client'
+import {
+  buildProgramApiUnavailableSaveContent,
+  PROGRAM_API_UNAVAILABLE_TITLE,
+} from '@/features/program/shared/lib/program-api-unavailable'
 import {
   INSTRUCTOR_ROLE_LABELS,
   type InstructorRoleKey,
@@ -59,7 +60,7 @@ import {
   type InstructorAssignedSchoolRow,
   type InstructorWaitingSchoolRow,
   type InstructorWaitingAssignmentStatus,
-} from '@/features/program/general/lib/instructor-institution-assignment-mock'
+} from '@/features/program/general/lib/instructor-institution-assignment'
 import {
   mapParticipatingSessionsToInstructorAssignOptions,
 } from '@/features/program/general/lib/instructor-assign-session-options'
@@ -241,8 +242,8 @@ export function ParticipatingInstructorFullpageView({
   activeTab: activeTabFromUrl,
   onTabChange,
   onClearInstructorId: _onClearInstructorId,
-  schoolRows = MOCK_PARTICIPATING_SCHOOLS,
-  instructorList = MOCK_PARTICIPATING_INSTRUCTORS,
+  schoolRows = [],
+  instructorList = [],
 }: ParticipatingInstructorFullpageViewProps) {
   /**
    * URL(`instructorTab`)이 source of truth이지만, setSearchParams 반영 전·props 지연 시
@@ -848,11 +849,36 @@ export function ParticipatingInstructorFullpageView({
     setAdminCommentModalOpen(true)
   }, [applicationInfoEdit.isEditing, savedAdminComment])
 
-  const handleAdminCommentSave = useCallback(() => {
-    setSavedAdminComment(adminCommentDraft.trim())
-    setAdminCommentModalOpen(false)
-    setAdminCommentError(undefined)
-  }, [adminCommentDraft])
+  const handleAdminCommentSave = useCallback(async () => {
+    const trimmed = adminCommentDraft.trim()
+    if (shouldUseGeneralApplicationsRemoteApi()) {
+      try {
+        const response = await updateInstructorApplicationManagerCommentRemote(
+          mergedInstructor.id,
+          { managerComment: trimmed || null }
+        )
+        const next = response.managerComment ?? trimmed
+        setSavedAdminComment(next)
+        setInstructorPatches(prev => ({
+          ...prev,
+          adminComment: next || undefined,
+        }))
+        setAdminCommentModalOpen(false)
+        setAdminCommentError(undefined)
+        return
+      } catch {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+    }
+    void showAlert({
+      title: PROGRAM_API_UNAVAILABLE_TITLE,
+      content: buildProgramApiUnavailableSaveContent('참여 강사 관리자 코멘트'),
+    })
+  }, [adminCommentDraft, mergedInstructor.id, showAlert])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)
@@ -1023,15 +1049,14 @@ export function ParticipatingInstructorFullpageView({
               >
                 활동인증서 발급
               </CmsButton>
-              <CmsButton
-                {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                onClick={resolveProgramEditInfoClick(applicationInfoEdit.isEditing, {
-                  onEnterEdit: applicationInfoEdit.enterEdit,
-                  onSaveEdit: () => applicationInfoEdit.saveEdit(),
-                })}
-              >
-                {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-              </CmsButton>
+              <ProgramEditInfoActions
+                isEditing={applicationInfoEdit.isEditing}
+                onEdit={applicationInfoEdit.enterEdit}
+                onCancel={applicationInfoEdit.cancelEdit}
+                onSave={() => {
+                  void applicationInfoEdit.saveEdit()
+                }}
+              />
               <CmsButton
                 variant="primary"
                 size="large"

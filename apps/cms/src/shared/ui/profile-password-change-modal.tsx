@@ -4,10 +4,15 @@
 
 import { Form } from 'antd'
 import { useState } from 'react'
+import { fetchAdminPasswordChange } from '@/features/auth/api/admin-password-change-fetcher'
 import {
   isValidRegisterPassword,
   REGISTER_PASSWORD_MISMATCH_MESSAGE,
 } from '@/features/auth/lib/validate-register-password'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { CmsButton, CmsInput, ContentModal, useCmsAlert } from '@/shared/ui'
 import './profile-password-change-modal.css'
 
@@ -33,7 +38,6 @@ type PasswordFieldRowProps = {
   autoComplete: string
   hasError?: boolean
   errorMessage?: string
-  rules?: Array<{ required?: boolean; message: string }>
 }
 
 function PasswordFieldRow({
@@ -43,15 +47,17 @@ function PasswordFieldRow({
   autoComplete,
   hasError = false,
   errorMessage,
-  rules,
 }: PasswordFieldRowProps) {
   return (
     <div className="profile-password-change-modal__row">
       <label className="profile-password-change-modal__label" htmlFor={`profile-password-${name}`}>
-        {label}
+        <span className="profile-password-change-modal__label-text">{label}</span>
+        <span className="profile-password-change-modal__required" aria-hidden>
+          *
+        </span>
       </label>
       <div className="profile-password-change-modal__control">
-        <Form.Item name={name} rules={rules} className="profile-password-change-modal__form-item">
+        <Form.Item name={name} className="profile-password-change-modal__form-item">
           <CmsInput
             id={`profile-password-${name}`}
             type="password"
@@ -88,7 +94,9 @@ export function ProfilePasswordChangeModal({
     !isNewPasswordValid &&
     (newPassword.length >= 8 || Boolean(newPasswordConfirm))
   const isConfirmMismatch =
-    Boolean(newPasswordConfirm) && newPassword !== newPasswordConfirm && !isNewPasswordConditionError
+    Boolean(newPasswordConfirm) &&
+    newPassword !== newPasswordConfirm &&
+    !isNewPasswordConditionError
 
   const handleCancel = () => {
     if (submitting) return
@@ -96,15 +104,32 @@ export function ProfilePasswordChangeModal({
     onCancel()
   }
 
-  const handleSubmit = async (values: ProfilePasswordChangeFormValues) => {
-    if (!isValidRegisterPassword(values.newPassword) || values.newPassword !== values.newPasswordConfirm) {
+  const handleChangeComplete = async () => {
+    if (submitting) return
+
+    const values = form.getFieldsValue()
+    const currentPassword = (values.currentPassword ?? '').trim()
+    const nextPassword = (values.newPassword ?? '').trim()
+    const nextPasswordConfirm = (values.newPasswordConfirm ?? '').trim()
+
+    if (!currentPassword || !nextPassword || !nextPasswordConfirm) {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
+
+    if (!isValidRegisterPassword(nextPassword) || nextPassword !== nextPasswordConfirm) {
       return
     }
 
     setSubmitting(true)
     try {
-      // TODO(api): POST /api/admin/auth/password/change 연동
-      await new Promise(resolve => setTimeout(resolve, 150))
+      await fetchAdminPasswordChange({
+        currentPassword,
+        newPassword: nextPassword,
+      })
       form.resetFields()
       onSuccess?.()
       onCancel()
@@ -113,10 +138,11 @@ export function ProfilePasswordChangeModal({
         content: '비밀번호가 변경되었습니다.',
       })
     } catch (error) {
-      console.error('Failed to change password:', error)
+      const message =
+        error instanceof Error ? error.message : '비밀번호 변경에 실패했습니다. 다시 시도해 주세요.'
       showAlert({
         title: '비밀번호 변경 실패',
-        content: '비밀번호 변경에 실패했습니다. 다시 시도해 주세요.',
+        content: message,
       })
     } finally {
       setSubmitting(false)
@@ -130,7 +156,6 @@ export function ProfilePasswordChangeModal({
       title="비밀번호 변경"
       description={MODAL_DESCRIPTION}
       width={600}
-      className="profile-password-change-modal"
       footer={
         <>
           <CmsButton variant="secondary" size="medium" onClick={handleCancel} disabled={submitting}>
@@ -141,29 +166,21 @@ export function ProfilePasswordChangeModal({
             size="medium"
             loading={submitting}
             onClick={() => {
-              void form.submit()
+              void handleChangeComplete()
             }}
           >
-            수정완료
+            변경 완료
           </CmsButton>
         </>
       }
     >
-      <Form
-        form={form}
-        requiredMark={false}
-        layout="vertical"
-        onFinish={values => {
-          void handleSubmit(values)
-        }}
-      >
+      <Form form={form} requiredMark={false} layout="vertical">
         <div className="profile-password-change-modal__fields">
           <PasswordFieldRow
             label="현재 비밀번호"
             name="currentPassword"
             placeholder="현재 비밀번호를 입력해 주세요"
             autoComplete="current-password"
-            rules={[{ required: true, message: '현재 비밀번호를 입력해 주세요.' }]}
           />
           <PasswordFieldRow
             label="새 비밀번호"
@@ -171,7 +188,6 @@ export function ProfilePasswordChangeModal({
             placeholder="변경할 비밀번호를 입력해 주세요"
             autoComplete="new-password"
             hasError={isNewPasswordConditionError}
-            rules={[{ required: true, message: '새 비밀번호를 입력해 주세요.' }]}
           />
           <PasswordFieldRow
             label="새 비밀번호 확인"
@@ -180,7 +196,6 @@ export function ProfilePasswordChangeModal({
             autoComplete="new-password"
             hasError={isConfirmMismatch}
             errorMessage={isConfirmMismatch ? REGISTER_PASSWORD_MISMATCH_MESSAGE : undefined}
-            rules={[{ required: true, message: '비밀번호를 한 번 더 입력해 주세요.' }]}
           />
         </div>
       </Form>

@@ -12,13 +12,14 @@ export interface TrainedTeacherListFilters {
   businessYear?: number
 }
 
+/** BE TRAINED_TEACHER Primary: SCHEDULED | IN_PROGRESS | COMPLETED (RECRUITING 아님) */
 function mapOverviewStatusToPeriodStatus(
   statusFilter: TrainedTeacherOverviewStatusFilter | null | undefined
 ): string | undefined {
   if (!statusFilter) return undefined
   switch (statusFilter) {
     case 'scheduled':
-      return 'RECRUITING'
+      return 'SCHEDULED'
     case 'in_progress':
       return 'IN_PROGRESS'
     case 'completed':

@@ -2,8 +2,8 @@
  * 1사1교 강사 배정 대기/배정행 — API 전용 (mock 희망일·해시 충돌 없음)
  */
 
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import {
   participatingSchoolSessionToHopeSchedule,
   sortWaitingInstructorRowsUnavailableToBottom,
@@ -44,6 +44,8 @@ export type CompanySchoolAssignedInstructorRow = {
   homeAddress?: string
   distanceToSchool?: string
   longDistance?: boolean
+  /** 기관 신청 배정이 참조하는 실제 기관 ID. 개인 출강지이면 null */
+  organizationId?: number | null
   organizationName?: string
   assignedDate?: string
   assignedTime?: string
@@ -173,6 +175,7 @@ export function buildCompanySchoolAssignedInstructorRows(input: {
       homeAddress: a.homeAddress,
       distanceToSchool: distanceLabel,
       longDistance: a.longDistance,
+      organizationId: a.organizationId ?? null,
       organizationName: a.organizationName,
       assignedDate: lectureDate,
       assignedTime: label?.time,

@@ -10,7 +10,7 @@ import {
   type InstructorCancelRejectionConfirmPayload,
   type InstructorCancelRejectionNotifyVariant,
 } from '@/features/program/general/lib/instructor-cancel-rejection'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import {
   PermissionModal,
   type PermissionModalPayload,

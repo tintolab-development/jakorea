@@ -2,7 +2,7 @@
  * 편집 가능 상태 배지 톤 — 시안 4종(재직·권한·교재배송·서류평가) 공통
  */
 
-import type { TextbookStatusKey } from '@/data/mock/participating-schools'
+import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import type { InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { SponsorSponsorshipStatus } from '@/types/domain'

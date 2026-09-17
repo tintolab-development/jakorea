@@ -32,33 +32,23 @@
   gap: var(--filter-field-gap);
 }
 
-/* UJAT 진행현황 참여 기관과 동일: 가로 스크롤·열 고정 (공통 table-wrap max-width 규칙은 아래에서 무효화) */
+/* 가로 스크롤·열 고정 — 래퍼만 스크롤 포트 (cms-data-table overflow와 이중 스크롤 방지) */
 .participating-institutions-section__table-wrap {
   width: 100%;
   min-width: 0;
+  max-width: 100%;
   overflow-x: auto;
   overflow-y: visible;
+  box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
-}
-
-.participating-institutions-section__filter-layout
-  .participating-institutions-section__table-wrap
-  .ant-table-wrapper,
-.participating-institutions-section__filter-layout
-  .participating-institutions-section__table-wrap
-  .ant-table-container,
-.participating-institutions-section__filter-layout
-  .participating-institutions-section__table-wrap
-  .ant-table-content {
-  width: auto;
-  max-width: none;
 }
 
 .participating-institutions-section__table-wrap
   .participating-institutions-section__table
   table.ant-table {
   table-layout: fixed !important;
-  width: max-content !important;
+  /* 공통 cms-data-table의 width: 100% !important가 scroll.x 숫자 폭을 덮지 않도록 복원 */
+  width: var(--participating-institutions-table-width, 100%) !important;
   min-width: 100%;
 }
 
@@ -171,7 +161,7 @@
 
 /*
  * 교재 배송 현황(StatusDropdownCell)
- * - 배지 100×32 / 열·트리거 116px: column width + `PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE` + status-dropdown-cell.css `--sdcb-*`
+ * - 배지 100×32 / 열 최소 140px: column width + `PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE` + status-dropdown-cell.css `--sdcb-*`
  * - 아래는 cms-data-table 행 패딩·드롭다운 열림 시 세로 흔들림만 막음 (공통 셀 패딩 0은 status-dropdown-cell.css)
  */
 .participating-institutions-section__table--textbook-dropdown.cms-data-table
@@ -199,9 +189,9 @@
   th.status-dropdown-cell__header--tag-100,
 .participating-institutions-section__table--textbook-dropdown.cms-data-table
   td.status-dropdown-cell__cell-status--tag-100 {
-  width: 116px !important;
-  min-width: 116px !important;
-  max-width: 116px !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
   box-sizing: border-box !important;
   text-align: center !important;
   padding-left: 0 !important;

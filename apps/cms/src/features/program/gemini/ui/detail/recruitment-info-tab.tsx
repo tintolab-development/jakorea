@@ -36,6 +36,7 @@ export function GeminiRecruitmentInfoTab({
   onDraftChange,
   editor = null,
   editorMinHeight,
+  registerGetAdditionalContentMarkdown,
 }: {
   detail: GeminiRecruitmentDetail
   todayKey: string
@@ -44,6 +45,7 @@ export function GeminiRecruitmentInfoTab({
   onDraftChange?: (patch: Partial<GeminiRecruitmentInfoEditDraft>) => void
   editor?: Editor | null
   editorMinHeight?: string | number
+  registerGetAdditionalContentMarkdown?: (getMarkdown: () => string) => void
 }) {
   const resolvedDetail = useMemo((): GeminiRecruitmentDetail => {
     if (!isEditMode || draft == null) return detail
@@ -219,6 +221,14 @@ export function GeminiRecruitmentInfoTab({
           values={fieldValues}
           editor={editor}
           editorMinHeight={editorMinHeight}
+          recruitmentIdForEditor={
+            contentMode === 'edit' && registerGetAdditionalContentMarkdown
+              ? detail.id
+              : undefined
+          }
+          registerGetAdditionalContentMarkdown={
+            contentMode === 'edit' ? registerGetAdditionalContentMarkdown : undefined
+          }
           readOnlyUpload={contentMode === 'view'}
           onChange={
             onDraftChange

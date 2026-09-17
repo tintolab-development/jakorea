@@ -63,6 +63,7 @@ function GeneralProgramVolunteerInterviewScheduleView({
         onRemoveExceptionBlock={onRemoveExceptionBlock}
         commonScheduleSeed={commonScheduleSeed}
         onCommonExclusionChange={onCommonExclusionChange}
+        freezeUnavailableCalendar={false}
       />
     )
   }
@@ -128,7 +129,7 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
         title="면접 진행 가능 일정"
         surface="responseEntry"
         titleAligned
-        required
+        required={isFormEdit}
         description={isFormEdit ? INTERVIEW_SCHEDULE_EDIT_DESCRIPTION : undefined}
         titleTrailing={
           isFormEdit ? (

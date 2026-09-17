@@ -5,7 +5,12 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InterviewAvailabilitySlot } from './interviewAvailabilitySlot';
+import type { InterviewEvaluationSummary } from './interviewEvaluationSummary';
 
+/**
+ * 봉사자 신청 목록 항목
+ */
 export interface VolunteerApplicationListItemResponse {
   id?: number;
   programId?: number;
@@ -13,7 +18,13 @@ export interface VolunteerApplicationListItemResponse {
   programType?: string;
   recruitmentId?: number;
   memberId?: number;
+  /** 봉사자 회원에 DB로 연결된 기존 소속 학교/기관 ID. 저장된 소속이 없으면 null */
+  affiliationOrganizationId?: number;
   memberName?: string;
+  /** 목록용 마스킹 연락처 */
+  contact?: string;
+  /** 목록용 마스킹 이메일 */
+  email?: string;
   applicationStatus?: string;
   documentStatus?: string;
   interviewStatus?: string;
@@ -21,6 +32,31 @@ export interface VolunteerApplicationListItemResponse {
   reserveRank?: number;
   isReparticipation?: boolean;
   giveUpYn?: boolean;
+  applicationFormResponseId?: number;
+  essaySubmitted?: boolean;
+  /** 현재 반려 사유. 반려 상태가 아니면 null */
+  rejectReason?: string;
+  /** 담당자 A 서류평가: UNREVIEWED/PASS/NEUTRAL/FAIL */
+  managerAEvaluation?: string;
+  /** 담당자 B 서류평가: UNREVIEWED/PASS/NEUTRAL/FAIL */
+  managerBEvaluation?: string;
+  /** 신청자가 제출한 면접 가능 시간 구간 */
+  interviewAvailability?: InterviewAvailabilitySlot[];
+  /**
+     * 유효한 면접 가능 시간 구간 수
+     * @minimum 0
+     */
+  interviewAvailabilityCount?: number;
+  /** 현재 유효한 면접 배정 ID. 면접 평가 API path에 사용 */
+  interviewAssignmentId?: number;
+  interviewAssignmentStatus?: string;
+  /** 현재 배정된 면접 슬롯 ID */
+  assignedInterviewSlotId?: number;
+  assignedInterviewStartAt?: string;
+  assignedInterviewEndAt?: string;
+  interviewEvaluations?: InterviewEvaluationSummary[];
   submittedAt?: string;
+  canEditManagerAEvaluation?: boolean;
+  canEditManagerBEvaluation?: boolean;
   availableActions?: string[];
 }

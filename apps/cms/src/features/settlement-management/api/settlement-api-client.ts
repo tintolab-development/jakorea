@@ -172,18 +172,16 @@ export async function updateCurrentSettlementConfigRemote(
   return unwrapApiBody(await settlementApi.updateCurrentConfig(body))
 }
 
-export async function duplicateSettlementConfigItemRemote(
-  itemKind: 'wage' | 'payment' | 'deduction',
+export async function duplicateSettlementConfigPaymentItemRemote(
   itemId: number
 ): Promise<SettlementConfigResponse> {
-  return unwrapApiBody(await settlementApi.duplicateConfigItem(itemKind, itemId))
+  return unwrapApiBody(await settlementApi.duplicateConfigItem('payment', itemId))
 }
 
-export async function deleteSettlementConfigItemRemote(
-  itemKind: 'wage' | 'payment' | 'deduction',
+export async function deleteSettlementConfigPaymentItemRemote(
   itemId: number
 ): Promise<SettlementConfigResponse> {
-  return unwrapApiBody(await settlementApi.deleteConfigItem(itemKind, itemId))
+  return unwrapApiBody(await settlementApi.deleteConfigItem('payment', itemId))
 }
 
 export async function fetchSettlementCalendarRemote(

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { mapApplicantDataToCalendarEvents } from './applicant-calendar-events'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 
 describe('mapApplicantDataToCalendarEvents', () => {
   it('maps individual applications from sessions', () => {

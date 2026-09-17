@@ -4,60 +4,175 @@
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolApprovalStatusKey,
   TextbookStatusKey,
-} from '@/data/mock/participating-schools'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+} from '@/features/program/general/model/participating-schools'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import { formatAssignedInstructorSummary } from '../lib/institution-assigned-instructor-count'
-import { getInstructorRowsForSchool } from '../lib/school-detail-mock'
+import { getInstructorRowsForSchool } from '../lib/school-detail'
 import type {
   SchoolDetailForModal,
   InstructorListFormInstructor,
 } from '../model/school-detail-types'
 import type { ProgressFilters } from './use-program-progress-params'
-import { fetchGeneralParticipatingInstitutions } from '@/features/program/general/api/admin-program-progress-service'
+import { fetchGeneralParticipatingInstitutionsPage } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
+  useIsCompanySchoolProgramsSurface,
   useIsTrainedTeachersProgramsSurface,
   useProgramProgressRemoteEnabledForSurface,
 } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherParticipatingInstitutions } from '@/features/program/trained-teachers/api/education-journals-hooks'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import {
+  notifyProgramApiUnavailable,
+  useNotifyProgramApiUnavailableOnce,
+} from '@/features/program/shared/lib/program-api-unavailable'
+import type { Program } from '@/types/domain'
+
+// TODO(temp-mock): 열여라 참깨 — 참여 기관·강사 배정 현황 검증 후 삭제
+export const TEMP_TEXTBOOK_STATUS_SCHOOL_PREFIX = 'temp-textbook-status-'
+
+function buildTemporaryProgressSchools(programId: string): ParticipatingSchoolRow[] {
+  const cases: Array<{
+    status: TextbookStatusKey
+    schoolName: string
+    region: string
+    grade: string
+    teacherName: string
+    instructors: string
+  }> = [
+    {
+      status: 'preparing',
+      schoolName: '서울해봄초등학교',
+      region: '서울특별시 강서구',
+      grade: '초등학교 4학년',
+      teacherName: '김하늘',
+      instructors: '임시 강사 1 외 1명',
+    },
+    {
+      status: 'shipping',
+      schoolName: '서울푸른초등학교',
+      region: '서울특별시 마포구',
+      grade: '초등학교 5학년',
+      teacherName: '박서준',
+      instructors: '임시 강사 2 외 1명',
+    },
+    {
+      status: 'delivered',
+      schoolName: '서울나래초등학교',
+      region: '서울특별시 영등포구',
+      grade: '초등학교 6학년',
+      teacherName: '이지우',
+      instructors: '임시 강사 3 외 1명',
+    },
+    {
+      status: 'not_applicable',
+      schoolName: '서울미래중학교',
+      region: '서울특별시 서대문구',
+      grade: '중학교 1학년',
+      teacherName: '최민서',
+      instructors: '임시 강사 4 외 1명',
+    },
+  ]
+
+  return cases.map((item, index) => ({
+    id: `${TEMP_TEXTBOOK_STATUS_SCHOOL_PREFIX}${item.status}`,
+    organizationId: 994_001 + index,
+    teacherMemberId: 993_001 + index,
+    no: index + 1,
+    schoolName: item.schoolName,
+    region: item.region,
+    educationGrade: item.grade,
+    classCount: index + 1,
+    studentCount: 24 + index,
+    lectureRound: '4회차',
+    textbookStatus: item.status,
+    approvalStatus: 'approved',
+    teacherName: item.teacherName,
+    instructors: item.instructors,
+    sessions: [1, 2, 3, 4].map(round => ({
+      round,
+      date: `2026.10.${String(12 + index * 4 + round).padStart(2, '0')}`,
+      dayOfWeek: ['월', '화', '수', '목'][index],
+      duration: '2시간',
+      format: '대면 교육',
+      classNum: `${round}교시`,
+      timeRange: `${String(8 + round).padStart(2, '0')}:00 ~ ${String(9 + round).padStart(2, '0')}:50`,
+      status: round === 1 ? 'completed' : 'pending',
+      requestedScheduleId: 992_000 + index * 10 + round,
+      resolvedScheduleId: 991_000 + index * 10 + round,
+      scheduleUnresolved: false,
+    })),
+    programId,
+    organizationApplicationId: String(990_001 + index),
+    participantStatus: 'APPROVED',
+    activityWithdrawn: false,
+    availableActions: ['GIVE_UP'],
+  }))
+}
 
 export interface UseProgressSchoolListOptions {
   appliedFilters: ProgressFilters
   instructorList: ParticipatingInstructorRow[]
   programId?: string
+  program?: Program | null
 }
 
 export function useProgressSchoolList({
   appliedFilters,
   instructorList,
   programId,
+  program: _program,
 }: UseProgressSchoolListOptions) {
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
+  const isCompanySchoolSurface = useIsCompanySchoolProgramsSurface()
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
   const ttRemoteEnabled =
     isTrainedTeachersSurface &&
     shouldUseTrainedTeacherProgramsRemoteApi() &&
     Boolean(programId)
-  const remoteQuery = useQuery({
+
+  useNotifyProgramApiUnavailableOnce(
+    !remoteEnabled && !ttRemoteEnabled,
+    'general-progress-schools',
+    '프로그램 진행 현황 · 참여 기관'
+  )
+
+  const remoteQuery = useInfiniteQuery({
     queryKey: generalProgramProgressQueryKeys.institutions(programId ?? ''),
-    queryFn: () => fetchGeneralParticipatingInstitutions(programId!),
+    queryFn: ({ pageParam }) =>
+      fetchGeneralParticipatingInstitutionsPage(programId!, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled && !isTrainedTeachersSurface,
     staleTime: 30_000,
     retry: false,
   })
 
-  const ttParticipatingQuery = useTrainedTeacherParticipatingInstitutions(
-    programId,
-    ttRemoteEnabled
+  const ttListFilters = useMemo(
+    () => ({
+      schoolName: appliedFilters.schoolName,
+      teacherName: appliedFilters.teacherName,
+    }),
+    [appliedFilters.schoolName, appliedFilters.teacherName]
   )
 
-  /** API only — gate OFF면 빈 목록 (mock 폴백 없음) */
+  const ttParticipatingQuery = useTrainedTeacherParticipatingInstitutions(
+    programId,
+    ttRemoteEnabled,
+    ttListFilters
+  )
+  const temporaryProgressSchools = useMemo(
+    () =>
+      programId && !isTrainedTeachersSurface && !isCompanySchoolSurface
+        ? buildTemporaryProgressSchools(programId)
+        : [],
+    [isCompanySchoolSurface, isTrainedTeachersSurface, programId]
+  )
   const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>([])
 
   useEffect(() => {
@@ -66,15 +181,21 @@ export function useProgressSchoolList({
       return
     }
     if (remoteEnabled) {
-      if (remoteQuery.data) setSchoolList(remoteQuery.data)
+      if (remoteQuery.data) {
+        const remoteRows = remoteQuery.data.pages.flatMap(page => page.rows)
+        setSchoolList([...temporaryProgressSchools, ...remoteRows])
+      } else {
+        setSchoolList(temporaryProgressSchools)
+      }
       return
     }
-    setSchoolList([])
+    setSchoolList(temporaryProgressSchools)
   }, [
     remoteEnabled,
     remoteQuery.data,
     ttRemoteEnabled,
     ttParticipatingQuery.data,
+    temporaryProgressSchools,
   ])
 
   const [selectedSchoolRowKeys, setSelectedSchoolRowKeys] = useState<React.Key[]>([])
@@ -145,9 +266,10 @@ export function useProgressSchoolList({
   }, [selectedSchoolRowKeys, schoolList])
 
   const handleTextbookStatusChange = useCallback(
-    (recordId: string, status: TextbookStatusKey) => {
-      setSchoolList(prev =>
-        prev.map(row => (row.id === recordId ? { ...row, textbookStatus: status } : row))
+    (_recordId: string, _status: TextbookStatusKey) => {
+      notifyProgramApiUnavailable(
+        'general-participating-institution-textbook-delivery-status',
+        '참여 기관 · 교재 배송 현황 변경'
       )
     },
     []
@@ -243,5 +365,11 @@ export function useProgressSchoolList({
         ? remoteQuery.isFetching && remoteQuery.data === undefined
         : false,
     isRemoteDataSource: ttRemoteEnabled || remoteEnabled,
+    hasNextPage:
+      remoteEnabled && !isTrainedTeachersSurface
+        ? (remoteQuery.hasNextPage ?? false)
+        : false,
+    isFetchingNextPage: remoteQuery.isFetchingNextPage,
+    fetchNextPage: remoteQuery.fetchNextPage,
   }
 }

@@ -4,6 +4,7 @@ import {
   PASSWORD_CHANGE_REQUIRED_STORAGE_KEY,
   isAdminFirstLoginOnboardingIncomplete,
   isPasswordChangeRequiredPath,
+  isPasswordChangeRequiredSocialConnectPath,
   passwordChangeRequiredPaths,
   resolvePostAuthRedirectPath,
   resolveSessionAuthFailureRedirect,
@@ -24,6 +25,17 @@ describe('resolvePostAuthRedirectPath', () => {
         fallbackPath: '/',
       })
     ).toBe(passwordChangeRequiredPaths.complete)
+  })
+
+  it('소셜 온보딩 중이면 완료·대시보드보다 소셜 연결을 우선한다', () => {
+    expect(
+      resolvePostAuthRedirectPath({
+        socialOnboarding: true,
+        complete: true,
+        passwordChangeRequired: false,
+        fallbackPath: '/',
+      })
+    ).toBe(passwordChangeRequiredPaths.socialConnect)
   })
 })
 
@@ -48,6 +60,16 @@ describe('resolveSessionAuthFailureRedirect', () => {
       resolveSessionAuthFailureRedirect({ pathname: '/', search: '', complete: false })
     ).toBe('/login?next=%2F')
   })
+
+  it('비번변경 소셜 연결 경로면 현재 화면을 유지한다', () => {
+    expect(
+      resolveSessionAuthFailureRedirect({
+        pathname: '/register/social-connect',
+        search: '?flow=password-change-required',
+        complete: false,
+      })
+    ).toBeNull()
+  })
 })
 
 describe('isPasswordChangeRequiredPath', () => {
@@ -56,6 +78,24 @@ describe('isPasswordChangeRequiredPath', () => {
     expect(isPasswordChangeRequiredPath('/auth/password-change-required/identity')).toBe(true)
     expect(isPasswordChangeRequiredPath('/auth/password-change-required/complete')).toBe(true)
     expect(isPasswordChangeRequiredPath('/login')).toBe(false)
+  })
+})
+
+describe('isPasswordChangeRequiredSocialConnectPath', () => {
+  it('flow=password-change-required 소셜 연결 경로를 인식한다', () => {
+    expect(
+      isPasswordChangeRequiredSocialConnectPath(
+        '/register/social-connect',
+        '?flow=password-change-required'
+      )
+    ).toBe(true)
+    expect(
+      isPasswordChangeRequiredSocialConnectPath(
+        '/register/social-connect?flow=password-change-required'
+      )
+    ).toBe(true)
+    expect(isPasswordChangeRequiredSocialConnectPath('/register/social-connect', '')).toBe(false)
+    expect(isPasswordChangeRequiredSocialConnectPath('/login', '?next=%2F')).toBe(false)
   })
 })
 

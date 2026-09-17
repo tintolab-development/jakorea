@@ -60,6 +60,7 @@ export function GeneralVolunteerApplicationsView({
   )
 
   const sharedSectionProps = {
+    program,
     programId: program.id,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailMetaChange: handleVolunteerApplicantDetailMetaChange,
@@ -74,7 +75,7 @@ export function GeneralVolunteerApplicationsView({
           onVolunteerApplicantDetailMetaChange={handleVolunteerApplicantDetailMetaChange}
         />
       ) : screenTab === 'vol_interview2' ? (
-        <GeneralVolunteerInterview2Section program={program} {...sharedSectionProps} />
+        <GeneralVolunteerInterview2Section {...sharedSectionProps} />
       ) : (
         <GeneralVolunteerDocScreeningSection {...sharedSectionProps} />
       )}

@@ -8,6 +8,7 @@
  */
 
 
+import { useMemo } from 'react'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -22,9 +23,12 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
-import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
-import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
-import { formatSponsorManagerSelectLabel } from '@/features/program/general/model/common-info-edit-schema'
+import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
+import {
+  encodeSponsorManagerContactRef,
+  formatSponsorManagerSelectLabel,
+} from '@/features/program/general/model/common-info-edit-schema'
+import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import {
   PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
@@ -140,10 +144,61 @@ export function BasicInfoSection({
   forceCompanySchoolLayout = false,
 }: BasicInfoSectionProps) {
   const isFormEdit = isEditMode && form
+  const companySchoolLayout = forceCompanySchoolLayout || isCompanySchoolProgram(program)
   const { options: sponsorOptions } = useSponsorSelectOptions(Boolean(isFormEdit || program.sponsorId))
   const watchedSponsorId = isFormEdit ? form?.watch('sponsorId') : program.sponsorId
   const contactsQuery = useSponsorContactsQuery(watchedSponsorId, Boolean(isFormEdit))
   const managers = contactsQuery.data ?? []
+  const sponsorManagementIds = isFormEdit
+    ? (form?.watch('sponsorManagementIds') ?? [])
+    : (program.generalCommonInfo?.sponsorManagementIds ?? [])
+  const sponsorEditContext = useGeneralProgramSponsorEditContext(
+    companySchoolLayout ? sponsorManagementIds : []
+  )
+  const selectedSponsorManagementRows = useMemo(
+    () =>
+      sponsorManagementIds
+        .map(id => sponsorEditContext.sponsors.find(row => row.id === id))
+        .filter((row): row is SponsorManagementRow => row != null),
+    [sponsorEditContext.sponsors, sponsorManagementIds]
+  )
+  const sponsorManagementOptions = useMemo(
+    () =>
+      sponsorEditContext.sponsors.map(row => ({
+        value: row.id,
+        label: row.name,
+      })),
+    [sponsorEditContext.sponsors]
+  )
+  const sponsorManagerOptions = useMemo(() => {
+    const options: Array<{
+      value: string
+      label: string
+      sponsorId: string
+      contactId: string
+      name: string
+      phone: string
+    }> = []
+    for (const sponsor of selectedSponsorManagementRows) {
+      const contacts = sponsorEditContext.contactsBySponsorId[sponsor.id] ?? []
+      for (const contact of contacts) {
+        options.push({
+          value: encodeSponsorManagerContactRef(sponsor.id, contact.id),
+          label: formatSponsorManagerSelectLabel({
+            sponsorName: sponsor.name,
+            contactName: contact.name,
+            position: contact.position,
+            multiSponsor: selectedSponsorManagementRows.length > 1,
+          }),
+          sponsorId: sponsor.id,
+          contactId: contact.id,
+          name: contact.name,
+          phone: contact.phone,
+        })
+      }
+    }
+    return options
+  }, [selectedSponsorManagementRows, sponsorEditContext.contactsBySponsorId])
   const categoryLabel = CATEGORY_LABEL[program.category] ?? program.category ?? '-'
 
   /* 공통 정보 탭 기본 정보 */
@@ -174,7 +229,7 @@ export function BasicInfoSection({
       getValues: () => undefined,
     } as unknown as UseFormReturn<ProgramDetailEditFormValues>)
 
-  if (forceCompanySchoolLayout || isCompanySchoolProgram(program)) {
+  if (companySchoolLayout) {
     const commonInfo = program.generalCommonInfo
     const announcementTitle = commonInfo?.announcementTitle ?? program.title
     const detailedProgramName =
@@ -186,32 +241,6 @@ export function BasicInfoSection({
       program.courseDeliveredBy ?? 'JA'
     )
     const ipsLabel = optionLabel(IPS_OPTIONS, program.ips ?? 'Prepare')
-    const selectedSponsorManagementIds = commonInfoFormEdit
-      ? (commonInfoForm.watch('sponsorManagementIds') ?? [])
-      : (commonInfo?.sponsorManagementIds ?? [])
-    const selectedSponsorManagementRows = selectedSponsorManagementIds
-      .map(id => mockSponsorManagementListRows.find(row => row.id === id))
-      .filter((row): row is NonNullable<typeof row> => row != null)
-    const sponsorManagementOptions = mockSponsorManagementListRows.map(row => ({
-      value: row.id,
-      label: row.name,
-    }))
-    const sponsorManagerOptions = selectedSponsorManagementRows.flatMap(sponsor =>
-      getSponsorDetailContactsNormalized(sponsor).map(contact => ({
-        value: `${sponsor.id}:${contact.id}`,
-        label: formatSponsorManagerSelectLabel({
-          sponsorName: sponsor.name,
-          contactName: contact.name,
-          position: contact.position,
-          multiSponsor: selectedSponsorManagementRows.length > 1,
-        }),
-        sponsorId: sponsor.id,
-        contactId: contact.id,
-        name: contact.name,
-        phone: contact.phone,
-      }))
-    )
-
     return (
       <div className="project-info-basic-info-section__company-school-forms">
         <DetailInfoForm title="기본 정보" mode="view">
@@ -270,7 +299,7 @@ export function BasicInfoSection({
               view={announcementTitle}
               edit={
                 <Controller
-                  name="title"
+                  name="announcementTitle"
                   control={commonInfoForm.control}
                   render={({ field }) => (
                     <CmsInput
@@ -288,7 +317,7 @@ export function BasicInfoSection({
               view={detailedProgramName}
               edit={
                 <Controller
-                  name="title"
+                  name="detailedProgramName"
                   control={commonInfoForm.control}
                   render={({ field }) => (
                     <CmsInput

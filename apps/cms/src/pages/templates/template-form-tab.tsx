@@ -4,6 +4,7 @@ import type { TemplateRow } from '@/features/template/model/template.schema'
 import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import {
   resolveAgreementWritingFormConfig,
+  createDirectAgreementWritingFormConfig,
   stripAgreementWritingFormStructureLocks,
 } from '@/features/template/model/template-registry/agreement-template-config-registry'
 import {
@@ -47,7 +48,12 @@ type TemplateFormTabQuery = {
 
 export default function TemplateFormTab() {
   const { params, setParams } = useQueryParams<TemplateFormTabQuery>()
-  const { sections: writingSections, isLoading: isWritingSectionsLoading } = useWritingFormSections()
+  const {
+    sections: writingSections,
+    isLoading: isWritingSectionsLoading,
+    isMockCatalog,
+    isError: isWritingSectionsError,
+  } = useWritingFormSections()
   const isPreviewOpen = params.mode === 'edit'
   const { closeWritingUserPreview, isWritingUserPreviewOpen } = useTemplateWritingPreview()
 
@@ -187,7 +193,8 @@ export default function TemplateFormTab() {
   )
 
   const isCrimeConsentDetail =
-    isPreviewOpen && registryEntry?.usesCrimeConsentModal === true
+    isPreviewOpen &&
+    lookupTemplateRegistry(params.id?.trim() || templateId)?.usesCrimeConsentModal === true
 
   const forceUserEditable = useMemo(() => {
     if (params.userTemplate === '1') return true
@@ -206,12 +213,28 @@ export default function TemplateFormTab() {
   const agreementWritingFormConfig = useMemo(() => {
     if (params.mode !== 'edit' || params.id == null || params.id.trim() === '') return null
     const templateCode = params.id.trim()
-    const raw = resolveAgreementWritingFormConfig(templateCode)
-    if (raw == null) return null
+    // 성범죄 동의서는 정적 문서 모달 전용 — 동의 셸/직접등록 fallback 금지
+    if (lookupTemplateRegistry(templateCode)?.usesCrimeConsentModal === true) return null
+
     const row =
       selectedTemplate?.id === templateCode
         ? selectedTemplate
         : findWritingTemplateRowByDefinitionId(templateCode, writingSections)
+    const isAgreementCategory =
+      params.type === 'agreement' ||
+      writingSections.some(
+        section =>
+          section.key === 'agreement' && section.rows.some(r => r.id === templateCode)
+      )
+
+    const catalog = resolveAgreementWritingFormConfig(templateCode)
+    const raw =
+      catalog ??
+      (isAgreementCategory
+        ? createDirectAgreementWritingFormConfig(row?.templateName ?? '동의 양식 신규 폼')
+        : null)
+    if (raw == null) return null
+
     const locked = isWritingFormTemplateStructureLocked({
       templateCode,
       systemTemplate: row?.systemTemplate,
@@ -222,6 +245,7 @@ export default function TemplateFormTab() {
     forceUserEditable,
     params.id,
     params.mode,
+    params.type,
     selectedTemplate,
     writingSections,
   ])
@@ -248,6 +272,18 @@ export default function TemplateFormTab() {
   }
   if (params.mode === 'new' && params.type === 'horizontal_table') {
     return <NewHorizontalTableForm />
+  }
+
+  if (isCrimeConsentDetail) {
+    return (
+      <>
+        {deleteConfirmModal}
+        <CrimeRecordConsentDocumentFullpageModal
+          open
+          onClose={handleCloseTemplatePreview}
+        />
+      </>
+    )
   }
 
   if (agreementWritingFormConfig != null) {
@@ -277,6 +313,16 @@ export default function TemplateFormTab() {
     <>
       {deleteConfirmModal}
       <div className="template-form-tab__content">
+        {isMockCatalog ? (
+          <p className="template-form-tab__catalog-notice" role="status">
+            mock 카탈로그 — 백엔드 API가 연결되지 않아 FE 시드 목록을 표시합니다.
+          </p>
+        ) : null}
+        {isWritingSectionsError ? (
+          <p className="template-form-tab__catalog-error" role="alert">
+            작성 양식 목록을 불러오지 못했습니다. 네트워크·권한을 확인한 뒤 새로고침해 주세요.
+          </p>
+        ) : null}
         {isWritingSectionsLoading ? (
           <p className="template-form-tab__loading">양식 목록을 불러오는 중입니다.</p>
         ) : (
@@ -292,13 +338,8 @@ export default function TemplateFormTab() {
         )}
       </div>
 
-      <CrimeRecordConsentDocumentFullpageModal
-        open={isCrimeConsentDetail}
-        onClose={handleCloseTemplatePreview}
-      />
-
       <TemplatePreviewModal
-        open={isPreviewOpen && !isCrimeConsentDetail && selectedTemplate != null}
+        open={isPreviewOpen && selectedTemplate != null}
         onClose={handleCloseTemplatePreview}
         title={resolvePreviewHeaderTitle(registryEntry, selectedTemplate?.templateName)}
         showDeleteButton={showDeleteButton}

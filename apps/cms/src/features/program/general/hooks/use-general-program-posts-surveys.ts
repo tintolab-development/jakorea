@@ -4,18 +4,25 @@
  */
 
 import { useCallback, useMemo } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createGeneralProgramFormBinding,
   createGeneralProgramPost,
+  createGeneralProgramPostComment,
   deleteGeneralProgramFormBinding,
   deleteGeneralProgramPost,
+  deleteGeneralProgramPostReaction,
   fetchGeneralProgramFormBindings,
+  fetchGeneralProgramPostAttachments,
+  fetchGeneralProgramPostComments,
+  fetchGeneralProgramPostDetail,
+  fetchGeneralProgramPostReactions,
   fetchGeneralProgramPosts,
   fetchGeneralProgramSurveyResponseDetail,
   fetchGeneralProgramSurveyResponses,
   fetchGeneralProgramSurveySummary,
   fetchGeneralProgramSurveys,
+  putGeneralProgramPostReaction,
   updateGeneralProgramPost,
 } from '@/features/program/general/api/admin-general-programs-service'
 import {
@@ -25,11 +32,17 @@ import {
   surveyResponseNeedsDetail,
   type ClassifiedFormBinding,
 } from '@/features/program/general/api/adapters/program-survey-adapters'
+import {
+  mapProgramPostAttachmentToFile,
+  mapProgramPostCommentToDomain,
+  mapProgramPostListItemToDomain,
+  mapProgramPostReactionSummariesToDomain,
+  mapProgramPostResponseToDomain,
+} from '@/features/program/general/api/adapters/program-post-adapters'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
-import type { ProgramPost } from '@/types/domain'
-import type { ProgramPostListItemResponse } from '@/shared/api/generated/dashboard/schemas/programPostListItemResponse'
+import type { ProgramFile, ProgramPost, ProgramPostComment, ProgramPostReaction } from '@/types/domain'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import type { RegisteredSurvey } from '@/features/program/shared/lib/survey-management/survey-management-types'
 import type { SurveyPollRawResponse } from '@/features/program/shared/lib/survey-management/survey-management-types'
@@ -37,25 +50,6 @@ import type { SurveySummaryResponse } from '@/shared/api/generated/dashboard/sch
 import type { SurveyResponseListItemResponse } from '@/shared/api/generated/dashboard/schemas/surveyResponseListItemResponse'
 
 const DETAIL_FETCH_CONCURRENCY = 4
-
-function mapPostListItem(dto: ProgramPostListItemResponse, programId: string): ProgramPost {
-  const createdAt = dto.createdAt ?? new Date().toISOString()
-  return {
-    id: String(dto.postId ?? ''),
-    programId,
-    authorName: 'JA KOREA 알림',
-    title: dto.title?.trim() || '제목 없음',
-    content: '',
-    read: (dto.unreadCount ?? 0) === 0,
-    viewCount: dto.readCount ?? 0,
-    reactionCount: 0,
-    commentCount: 0,
-    attachmentCount: 0,
-    publishedAt: createdAt,
-    createdAt,
-    updatedAt: dto.updatedAt ?? createdAt,
-  }
-}
 
 async function mapResponsesWithDetails(
   programId: string,
@@ -106,25 +100,79 @@ export function useGeneralProgramPosts(programId: string | undefined) {
     retry: false,
   })
 
-  const posts = useMemo(() => {
+  const postsBase = useMemo(() => {
     if (!remoteEnabled || !programId) return null
-    // 로딩 중에는 []가 아니라 null — empty→API 플래시·스피너 스킵 방지
     if (query.data === undefined) return null
-    return query.data.map(item => mapPostListItem(item, programId))
+    return query.data.map(item => mapProgramPostListItemToDomain(item, programId))
   }, [programId, query.data, remoteEnabled])
+
+  const postIds = useMemo(() => (postsBase ?? []).map(post => post.id).filter(Boolean), [postsBase])
+
+  const attachmentQueries = useQueries({
+    queries: postIds.map(postId => ({
+      queryKey: generalProgramQueryKeys.postAttachments(programId ?? '', postId),
+      queryFn: () => fetchGeneralProgramPostAttachments(programId!, postId),
+      enabled: remoteEnabled && Boolean(programId) && postIds.length > 0,
+      staleTime: 30_000,
+      retry: false,
+    })),
+  })
+
+  const attachmentCountByPostId = useMemo(() => {
+    const map = new Map<string, number>()
+    postIds.forEach((postId, index) => {
+      const items = attachmentQueries[index]?.data
+      map.set(postId, Array.isArray(items) ? items.length : 0)
+    })
+    return map
+  }, [attachmentQueries, postIds])
+
+  const posts = useMemo(() => {
+    if (!postsBase) return null
+    return postsBase.map(post => ({
+      ...post,
+      attachmentCount: attachmentCountByPostId.get(post.id) ?? post.attachmentCount,
+    }))
+  }, [attachmentCountByPostId, postsBase])
+
+  const files = useMemo((): ProgramFile[] | null => {
+    if (!remoteEnabled || !programId || postsBase == null) return null
+    if (postIds.length === 0) return []
+    if (attachmentQueries.some(q => q.data === undefined && (q.isFetching || q.isLoading))) {
+      return null
+    }
+    const collected: ProgramFile[] = []
+    postIds.forEach((postId, index) => {
+      const items = attachmentQueries[index]?.data ?? []
+      for (const item of items) {
+        const file = mapProgramPostAttachmentToFile(item, programId)
+        if (file) collected.push({ ...file, postId: file.postId ?? postId })
+      }
+    })
+    collected.sort(
+      (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+    )
+    return collected
+  }, [attachmentQueries, postIds, postsBase, programId, remoteEnabled])
+
+  const invalidatePosts = useCallback(async () => {
+    if (!programId) return
+    await queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.posts(programId) })
+    await queryClient.invalidateQueries({
+      queryKey: [...generalProgramQueryKeys.posts(programId)],
+    })
+  }, [programId, queryClient])
 
   return {
     posts,
+    files,
     loading: remoteEnabled ? query.isFetching && query.data === undefined : false,
     isRemoteDataSource: remoteEnabled && !query.isError,
-    invalidatePosts: async () => {
-      if (!programId) return
-      await queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.posts(programId) })
-    },
+    invalidatePosts,
     createPost: async (payload: { title?: string; content: string; visibilityType?: string }) => {
       if (!programId || !remoteEnabled) return null
       const result = await createGeneralProgramPost(programId, payload)
-      await queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.posts(programId) })
+      await invalidatePosts()
       return result
     },
     updatePost: async (
@@ -133,14 +181,129 @@ export function useGeneralProgramPosts(programId: string | undefined) {
     ) => {
       if (!programId || !remoteEnabled) return null
       const result = await updateGeneralProgramPost(programId, postId, payload)
-      await queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.posts(programId) })
+      await invalidatePosts()
       return result
     },
     deletePost: async (postId: string) => {
       if (!programId || !remoteEnabled) return
       await deleteGeneralProgramPost(programId, postId)
-      await queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.posts(programId) })
+      await invalidatePosts()
     },
+  }
+}
+
+export function useGeneralProgramPostDetail(
+  programId: string | undefined,
+  postId: string | undefined,
+  enabled = true
+) {
+  const remoteEnabled = useProgramsReadsRemoteEnabledForSurface(programId)
+  const active = remoteEnabled && Boolean(programId) && Boolean(postId) && enabled
+  const queryClient = useQueryClient()
+
+  const detailQuery = useQuery({
+    queryKey: generalProgramQueryKeys.postDetail(programId ?? '', postId ?? ''),
+    queryFn: () => fetchGeneralProgramPostDetail(programId!, postId!),
+    enabled: active,
+    staleTime: 30_000,
+    retry: false,
+  })
+
+  const commentsQuery = useQuery({
+    queryKey: generalProgramQueryKeys.postComments(programId ?? '', postId ?? ''),
+    queryFn: () => fetchGeneralProgramPostComments(programId!, postId!),
+    enabled: active,
+    staleTime: 15_000,
+    retry: false,
+  })
+
+  const reactionsQuery = useQuery({
+    queryKey: generalProgramQueryKeys.postReactions(programId ?? '', postId ?? ''),
+    queryFn: () => fetchGeneralProgramPostReactions(programId!, postId!),
+    enabled: active,
+    staleTime: 15_000,
+    retry: false,
+  })
+
+  const attachmentsQuery = useQuery({
+    queryKey: generalProgramQueryKeys.postAttachments(programId ?? '', postId ?? ''),
+    queryFn: () => fetchGeneralProgramPostAttachments(programId!, postId!),
+    enabled: active,
+    staleTime: 30_000,
+    retry: false,
+  })
+
+  const post = useMemo((): ProgramPost | null => {
+    if (!active || !programId || !postId) return null
+    const dto = detailQuery.data?.post
+    if (!dto) return null
+    const mapped = mapProgramPostResponseToDomain(dto, programId)
+    const attachmentCount = attachmentsQuery.data?.length ?? mapped.attachmentCount
+    return { ...mapped, attachmentCount }
+  }, [active, attachmentsQuery.data, detailQuery.data, postId, programId])
+
+  const comments = useMemo((): ProgramPostComment[] => {
+    if (!postId || !commentsQuery.data) return []
+    return commentsQuery.data.map(item => mapProgramPostCommentToDomain(item, postId))
+  }, [commentsQuery.data, postId])
+
+  const reactions = useMemo((): ProgramPostReaction[] => {
+    if (!postId || !reactionsQuery.data) return []
+    return mapProgramPostReactionSummariesToDomain(reactionsQuery.data.summary, postId)
+  }, [postId, reactionsQuery.data])
+
+  const files = useMemo((): ProgramFile[] => {
+    if (!programId || !attachmentsQuery.data) return []
+    return attachmentsQuery.data
+      .map(item => mapProgramPostAttachmentToFile(item, programId))
+      .filter((file): file is ProgramFile => file != null)
+  }, [attachmentsQuery.data, programId])
+
+  const invalidateDetail = useCallback(async () => {
+    if (!programId || !postId) return
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: generalProgramQueryKeys.postDetail(programId, postId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: generalProgramQueryKeys.postComments(programId, postId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: generalProgramQueryKeys.postReactions(programId, postId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: generalProgramQueryKeys.postAttachments(programId, postId),
+      }),
+      queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.posts(programId) }),
+    ])
+  }, [postId, programId, queryClient])
+
+  return {
+    isRemoteDataSource: active && !detailQuery.isError,
+    loading: active && detailQuery.isFetching && detailQuery.data === undefined,
+    post,
+    comments,
+    reactions,
+    files,
+    reactionTotalCount: reactions.reduce((sum, row) => sum + row.count, 0),
+    createComment: async (content: string) => {
+      if (!programId || !postId || !remoteEnabled) return null
+      const result = await createGeneralProgramPostComment(programId, postId, content)
+      await invalidateDetail()
+      return result
+    },
+    putReaction: async (reactionType: string) => {
+      if (!programId || !postId || !remoteEnabled) return null
+      const result = await putGeneralProgramPostReaction(programId, postId, reactionType)
+      await invalidateDetail()
+      return result
+    },
+    removeReaction: async () => {
+      if (!programId || !postId || !remoteEnabled) return
+      await deleteGeneralProgramPostReaction(programId, postId)
+      await invalidateDetail()
+    },
+    invalidateDetail,
   }
 }
 

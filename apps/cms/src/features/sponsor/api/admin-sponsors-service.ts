@@ -16,6 +16,7 @@ import { sponsorsParamsFromSearchParams } from '@/features/sponsor/api/sponsor-f
 import {
   addSponsorContactRemote,
   addYearlyBusinessRemote,
+  bulkDeleteSponsorProgramHistoriesRemote,
   bulkDeleteSponsorContactsRemote,
   bulkDeleteSponsorsRemote,
   createSponsorRemote,
@@ -90,10 +91,11 @@ export async function createSponsor(payload: SponsorRegisterPayload): Promise<Sp
     const sponsorId = Number(row.id)
     if (Number.isFinite(sponsorId) && sponsorId >= 1) {
       const logoFileId = await uploadSponsorLogoFile(sponsorId, payload.logoFile)
-      await updateSponsorRemote(row.id, {
+      const updated = await updateSponsorRemote(row.id, {
         ...toSponsorRequestFromRegister(payload),
         logoFileId: String(logoFileId),
       })
+      return mapSponsorResponse(updated)
     }
   }
   return row
@@ -169,6 +171,14 @@ export async function deleteSponsors(ids: string[]): Promise<void> {
     return
   }
   await bulkDeleteSponsorsRemote(ids)
+}
+
+export async function deleteSponsorProgramHistories(
+  sponsorId: string,
+  programIds: string[]
+): Promise<void> {
+  assertSponsorsRemoteReady()
+  await bulkDeleteSponsorProgramHistoriesRemote(sponsorId, programIds)
 }
 
 export async function endSponsorship(id: string): Promise<void> {

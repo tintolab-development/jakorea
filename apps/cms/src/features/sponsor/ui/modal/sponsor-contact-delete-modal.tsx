@@ -6,6 +6,7 @@ export interface SponsorContactDeleteModalProps {
   onCancel: () => void
   onConfirm: () => void
   contactNames: string[]
+  confirmLoading?: boolean
 }
 
 function buildSponsorContactDeleteMessageLines(names: string[]): string[] {
@@ -25,6 +26,7 @@ export function SponsorContactDeleteModal({
   onCancel,
   onConfirm,
   contactNames,
+  confirmLoading = false,
 }: SponsorContactDeleteModalProps) {
   const lines = useMemo(() => buildSponsorContactDeleteMessageLines(contactNames), [contactNames])
 
@@ -36,6 +38,7 @@ export function SponsorContactDeleteModal({
       title="후원사 담당자 삭제"
       lines={lines}
       confirmText="담당자 삭제"
+      confirmLoading={confirmLoading}
     />
   )
 }

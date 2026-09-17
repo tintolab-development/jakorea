@@ -1,6 +1,6 @@
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
-import { buildInitialAssignedSchoolRows } from './instructor-institution-assignment-mock'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
+import { buildInitialAssignedSchoolRows } from './instructor-institution-assignment'
 
 /** 자택 주소지 — 시/도·시/군/구까지 표시 */
 export function formatParticipatingInstructorHomeAddress(address?: string): string {

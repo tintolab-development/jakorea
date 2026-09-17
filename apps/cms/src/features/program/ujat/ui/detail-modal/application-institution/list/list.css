@@ -45,7 +45,7 @@
   table.ant-table {
   table-layout: fixed !important;
   width: max-content !important;
-  min-width: 100%;
+  min-width: max-content !important;
 }
 
 .ujat-institution-application-list__table-wrap
@@ -58,8 +58,64 @@
   .ant-table-tbody
   > tr
   > td {
-  overflow: visible;
-  text-overflow: clip;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table
+  .ant-table-thead
+  > tr
+  > th
+  .ant-table-cell-content {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table
+  .ant-table-thead
+  > tr
+  > th.ujat-institution-application-list__cell-institution,
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-institution-application-list__cell-institution {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+}
+
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table
+  .ant-table-thead
+  > tr
+  > th.ujat-institution-application-list__cell-status,
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-institution-application-list__cell-status {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+}
+
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table
+  .ant-table-thead
+  > tr
+  > th.ujat-institution-application-list__cell-grade,
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-institution-application-list__cell-grade {
+  width: 340px !important;
+  min-width: 340px !important;
+  max-width: 340px !important;
 }
 
 .ujat-institution-application-list__table-wrap
@@ -93,6 +149,7 @@
   > td.ujat-institution-application-list__cell-total {
   min-width: 152px !important;
   width: 152px !important;
+  max-width: 152px !important;
 }
 
 .ujat-institution-application-list__table-wrap
@@ -103,6 +160,21 @@
   .ant-table-cell-content {
   overflow: visible !important;
   text-overflow: clip !important;
+}
+
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table
+  .ant-table-thead
+  > tr
+  > th.ujat-institution-application-list__cell-schedule,
+.ujat-institution-application-list__table-wrap
+  .ujat-institution-application-list__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-institution-application-list__cell-schedule {
+  width: 112px !important;
+  min-width: 112px !important;
+  max-width: 112px !important;
 }
 
 .ujat-institution-application-list .calendar-set {

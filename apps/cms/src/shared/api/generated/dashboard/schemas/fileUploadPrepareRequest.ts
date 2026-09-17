@@ -40,11 +40,11 @@ export interface FileUploadPrepareRequest {
      */
   originalFileName: string;
   /**
-     * MIME 콘텐츠 타입
+     * MIME 콘텐츠 타입. 브라우저가 비워 보내거나 application/octet-stream이면 서버가 허용 확장자 기준으로 안전한 표준 MIME을 보정합니다.
      * @minLength 0
      * @maxLength 120
      */
-  contentType: string;
+  contentType?: string;
   /**
      * 파일 크기(byte)
      * @minimum 1

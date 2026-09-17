@@ -1,4 +1,3 @@
-import { settlementItemSettingSections } from '@/data/mock/settlement-item-settings'
 import type { Program } from '@/types/domain'
 import {
   getProgramWagePaymentItemOptions,
@@ -67,13 +66,7 @@ export function resolveUjatPaymentItemIdsFromProgram(
     .split(',')
     .map((s: string) => s.trim())
     .filter(Boolean)
-    .map((label: string) => {
-      const exact = options.find(o => o.label === label)
-      if (exact) return exact.value
-      const section = settlementItemSettingSections.find(s => s.kind === 'payment')
-      const row = section?.items.find(item => label.includes(item.title))
-      return row?.id
-    })
+    .map((label: string) => options.find(o => o.label === label)?.value)
     .filter((v: string | undefined): v is string => Boolean(v))
 
   return resolved.length > 0 ? resolved : [...UJAT_DEFAULT_PAYMENT_ITEM_VALUES]

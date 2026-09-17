@@ -7,11 +7,19 @@
  */
 
 /**
- * 프로그램 draft 저장 요청
+ * 프로그램 임시저장 요청
  */
 export interface ProgramDraftSaveRequest {
-  /** 프로그램 유형 */
-  programType?: string;
-  /** 프론트 편집 상태를 보존하는 draft JSON. 개인정보/secret을 포함하지 않습니다. */
-  draftPayloadJson?: string;
+  /**
+     * 프로그램 유형
+     * @minLength 0
+     * @maxLength 100
+     */
+  programType: string;
+  /**
+     * 프론트 편집 상태를 담는 임시저장 JSON 객체입니다. 개인정보나 비밀정보를 포함할 수 없습니다.
+     * @minLength 0
+     * @maxLength 1048576
+     */
+  draftPayloadJson: string;
 }

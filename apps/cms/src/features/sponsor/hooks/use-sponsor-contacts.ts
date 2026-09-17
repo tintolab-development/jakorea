@@ -45,12 +45,13 @@ export interface UseSponsorContactsReturn {
   selectedNames: string[]
   isEditing: boolean
   isSavingEdits: boolean
+  isDeleting: boolean
   draftRows: SponsorContactRow[]
   startEdit: (rows: SponsorContactRow[]) => void
   updateDraft: (rowId: string, patch: Partial<SponsorContactRow>) => void
   saveEdits: () => Promise<'saved' | 'invalid' | 'invalid-format' | 'failed'>
   handleRegister: (payload: SponsorContactRegisterPayload) => void | Promise<void>
-  handleDelete: () => void
+  handleDelete: () => Promise<void>
   handleTypeChange: (rowId: string, nextType: SponsorContactRow['contactType']) => void
 }
 
@@ -80,6 +81,7 @@ export function useSponsorContacts(
   const [typeChangeBlockedModalOpen, setTypeChangeBlockedModalOpenState] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isSavingEdits, setIsSavingEdits] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [draftRows, setDraftRows] = useState<SponsorContactRow[]>([])
 
   const setSelectedKeys = useCallback((keys: Key[]): void => {
@@ -200,17 +202,18 @@ export function useSponsorContacts(
     [canWrite, contacts.length, remoteActions, setContacts]
   )
 
-  const handleDelete = useCallback((): void => {
+  const handleDelete = useCallback(async (): Promise<void> => {
     if (!canWrite || selectedKeys.length === 0) return
     if (remoteActions) {
       const ids = selectedKeys.map(k => String(k))
-      void remoteActions
-        .onDelete(ids)
-        .then(() => {
-          setSelectedKeysState([])
-          setDeleteModalOpenState(false)
-        })
-        .catch(() => undefined)
+      setIsDeleting(true)
+      try {
+        await remoteActions.onDelete(ids)
+        setSelectedKeysState([])
+        setDeleteModalOpenState(false)
+      } finally {
+        setIsDeleting(false)
+      }
       return
     }
     const selectedSet = new Set(selectedKeys.map(key => String(key)))
@@ -278,6 +281,7 @@ export function useSponsorContacts(
     selectedNames,
     isEditing,
     isSavingEdits,
+    isDeleting,
     draftRows,
     startEdit,
     updateDraft,

@@ -26,13 +26,16 @@ import {
   fetchFormTemplateVersionsRemote,
   fetchFormTemplatesRemote,
   publishFormTemplateVersionRemote,
+  updateFormTemplateRemote,
   updateFormTemplateVersionRemote,
 } from '@/features/template/api/form-templates-api-client'
 import { normalizeWritingFormDraftFromApi } from '@/features/template/lib/form-template-seed-registry'
-import { shouldUseRemoteDraftApiForTemplateCode } from '@/features/template/lib/form-template-remote-draft'
+import {
+  isFormTemplateLocalFallbackEnabled,
+  shouldUseRemoteDraftApiForTemplateCode,
+} from '@/features/template/lib/form-template-remote-draft'
 import {
   loadWritingFormTemplateSave,
-  persistWritingFormTemplateSave,
   removeWritingFormTemplateSave,
   type WritingFormTemplateSaveRecord,
 } from '@/features/template/lib/writing-form-template-local-save'
@@ -40,7 +43,7 @@ import { issuanceFormSections } from '@/features/template/model/issuance-form.sc
 import { writingSections, type TemplateSection } from '@/features/template/model/template.schema'
 import {
   createDefaultDirectAgreementDraft,
-  createDefaultSurveyDraft,
+  createNewSurveyDraft,
   normalizeWritingFormDraft,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -110,6 +113,19 @@ export function getMockIssuanceFormSections(): TemplateSection[] {
   return issuanceFormSections
 }
 
+async function warmTemplateListCaches(): Promise<void> {
+  try {
+    await getWritingFormSectionsRemote()
+  } catch {
+    /* issuance-only codes may miss writing list */
+  }
+  try {
+    await getIssuanceFormSectionsRemote()
+  } catch {
+    /* ignore */
+  }
+}
+
 async function resolveTemplateVersionId(templateCode: string): Promise<number | null> {
   let cached = getFormTemplateVersionCacheEntry(templateCode)
   if (cached?.templateVersionId != null) return cached.templateVersionId
@@ -124,13 +140,8 @@ async function resolveTemplateVersionId(templateCode: string): Promise<number | 
     return cached.latestVersionId
   }
 
-  // 작성 양식 목록을 아직 안 본 경우 — 목록 조회로 캐시 워밍 후 재시도
   if (cached?.templateId == null) {
-    try {
-      await getWritingFormSectionsRemote()
-    } catch {
-      return null
-    }
+    await warmTemplateListCaches()
     cached = getFormTemplateVersionCacheEntry(templateCode)
     if (cached?.templateVersionId != null) return cached.templateVersionId
     if (cached?.latestVersionId != null) {
@@ -198,50 +209,62 @@ function buildSaveRecordFromVersionResponse(args: {
   }
 }
 
+/**
+ * Remote SSOT load. Dev-only local fallback when `VITE_FORM_TEMPLATE_LOCAL_FALLBACK=1`.
+ * 프로그램 등록 `localOnly`는 `loadWritingFormTemplateDraft(..., { localOnly: true })` 경로.
+ * remote 실패 시 local을 쓰지 않고 `null`(에디터 seed hydrate).
+ */
 export async function loadFormTemplateVersionDraft(
   templateCode: string
 ): Promise<WritingFormTemplateSaveRecord | null> {
-  if (shouldUseRemoteDraftApiForTemplate(templateCode)) {
-    try {
-      const versionId = await resolveTemplateVersionId(templateCode)
-      if (versionId != null) {
-        const version = await fetchFormTemplateVersionRemote(versionId)
-        const record = buildSaveRecordFromVersionResponse({
-          templateCode,
-          schemaJson: version.schemaJson,
-          extensionJson: version.extensionJson,
-          settingsJson: version.settingsJson,
-          updatedAt: version.updatedAt,
-        })
-        if (record != null) {
-          const cached = getFormTemplateVersionCacheEntry(templateCode)
-          if (cached?.templateId != null && version.templateVersionId != null) {
-            upsertFormTemplateVersionCacheEntry({
-              templateCode,
-              templateId: cached.templateId,
-              templateVersionId: version.templateVersionId,
-              latestVersionId: version.templateVersionId,
-              latestVersionNo: version.versionNo,
-            })
-          }
-          persistWritingFormTemplateSave({
-            templateId: templateCode,
-            draft: record.draft,
-            overlay: record.overlay,
-            editorState: record.editorState,
-            settingsJson: record.settingsJson,
-          })
-          return record
-        }
-      }
-    } catch {
-      // remote 실패 시 localStorage fallback
-    }
+  const allowLocalFallback = isFormTemplateLocalFallbackEnabled()
+  const local = allowLocalFallback ? loadWritingFormTemplateSave(templateCode) : null
+
+  if (!shouldUseRemoteDraftApiForTemplate(templateCode)) {
+    return allowLocalFallback ? local : null
   }
 
-  return loadWritingFormTemplateSave(templateCode)
+  try {
+    const versionId = await resolveTemplateVersionId(templateCode)
+    if (versionId == null) {
+      return allowLocalFallback ? local : null
+    }
+
+    const version = await fetchFormTemplateVersionRemote(versionId)
+    const remote = buildSaveRecordFromVersionResponse({
+      templateCode,
+      schemaJson: version.schemaJson,
+      extensionJson: version.extensionJson,
+      settingsJson: version.settingsJson,
+      updatedAt: version.updatedAt,
+    })
+    if (remote == null) {
+      return allowLocalFallback ? local : null
+    }
+
+    const cached = getFormTemplateVersionCacheEntry(templateCode)
+    if (cached?.templateId != null && version.templateVersionId != null) {
+      upsertFormTemplateVersionCacheEntry({
+        templateCode,
+        templateId: cached.templateId,
+        templateVersionId: version.templateVersionId,
+        latestVersionId: version.templateVersionId,
+        latestVersionNo: version.versionNo,
+      })
+    }
+
+    return remote
+  } catch (error) {
+    if (allowLocalFallback) return local
+    console.warn('[form-templates] remote draft load failed; using seed (no local fallback)', error)
+    return null
+  }
 }
 
+/**
+ * Remote SSOT save — PUT 성공만 임시저장 성공.
+ * 양식 관리 경로에서는 localStorage에 쓰지 않는다.
+ */
 export async function saveFormTemplateVersionDraft(args: {
   templateCode: string
   draft: WritingFormDraft
@@ -250,53 +273,44 @@ export async function saveFormTemplateVersionDraft(args: {
   uiState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
 }): Promise<void> {
-  persistWritingFormTemplateSave({
-    templateId: args.templateCode,
-    draft: args.draft,
-    overlay: args.overlay,
-    editorState: args.editorState,
-    settingsJson: args.settingsJson,
-  })
+  assertFormsSurveysRemoteReady()
 
-  if (!shouldUseRemoteDraftApiForTemplate(args.templateCode)) return
-
-  try {
-    const versionId = await resolveTemplateVersionId(args.templateCode)
-    if (versionId == null) {
-      throw new Error('저장할 템플릿 버전 ID를 찾을 수 없습니다. 작성 양식 목록을 먼저 조회해 주세요.')
-    }
-
-    const body: {
-      schemaJson: string
-      extensionJson?: string
-      settingsJson?: string
-    } = {
-      schemaJson: writingFormDraftToSchemaJson(args.draft),
-    }
-
-    if (
-      hasExtensionPayload({
-        overlay: args.overlay,
-        editorState: args.editorState,
-        uiState: args.uiState,
-      })
-    ) {
-      body.extensionJson = extensionPayloadToExtensionJson({
-        overlay: args.overlay,
-        editorState: args.editorState,
-        uiState: args.uiState,
-      })
-    }
-
-    if (args.settingsJson != null) {
-      body.settingsJson = settingsPayloadToSettingsJson(args.settingsJson)
-    }
-
-    await updateFormTemplateVersionRemote(versionId, body)
-  } catch (error) {
-    console.warn('[form-templates] remote draft save failed; localStorage kept', error)
-    throw error
+  if (!shouldUseRemoteDraftApiForTemplateCode(args.templateCode)) {
+    throw new Error('이 템플릿은 원격 draft API 대상이 아닙니다.')
   }
+
+  const versionId = await resolveTemplateVersionId(args.templateCode)
+  if (versionId == null) {
+    throw new Error('저장할 템플릿 버전 ID를 찾을 수 없습니다. 작성 양식 목록을 먼저 조회해 주세요.')
+  }
+
+  const body: {
+    schemaJson: string
+    extensionJson?: string
+    settingsJson?: string
+  } = {
+    schemaJson: writingFormDraftToSchemaJson(args.draft),
+  }
+
+  if (
+    hasExtensionPayload({
+      overlay: args.overlay,
+      editorState: args.editorState,
+      uiState: args.uiState,
+    })
+  ) {
+    body.extensionJson = extensionPayloadToExtensionJson({
+      overlay: args.overlay,
+      editorState: args.editorState,
+      uiState: args.uiState,
+    })
+  }
+
+  if (args.settingsJson != null) {
+    body.settingsJson = settingsPayloadToSettingsJson(args.settingsJson)
+  }
+
+  await updateFormTemplateVersionRemote(versionId, body)
 }
 
 export async function publishFormTemplateVersion(templateCode: string): Promise<void> {
@@ -315,6 +329,8 @@ export async function publishFormTemplateVersion(templateCode: string): Promise<
 export async function duplicateFormTemplateVersionRemote(args: {
   sourceTemplateCode: string
   versionLabel?: string
+  /** 동명 회피용 — 복제 후 PATCH로 적용 */
+  templateName?: string
 }): Promise<string> {
   assertFormsSurveysRemoteReady()
   const cached = getFormTemplateVersionCacheEntry(args.sourceTemplateCode)
@@ -342,6 +358,15 @@ export async function duplicateFormTemplateVersionRemote(args: {
     })
   }
 
+  const nextName = args.templateName?.trim()
+  if (nextName != null && nextName !== '' && copied.templateId != null) {
+    try {
+      await updateFormTemplateRemote(copied.templateId, { templateName: nextName })
+    } catch (error) {
+      console.warn('[form-templates] rename after copy failed', error)
+    }
+  }
+
   return newCode
 }
 
@@ -354,9 +379,9 @@ export async function createWritingFormTemplateRemote(args: {
   const category = args.target === 'survey' ? 'SURVEY' : 'AGREEMENT'
   const templateName =
     args.templateName?.trim() ||
-    (args.target === 'survey' ? '신규 설문 양식' : '신규 동의 양식')
+    (args.target === 'survey' ? '신규 설문 양식' : '동의 양식 신규 폼')
   const draft =
-    args.target === 'survey' ? createDefaultSurveyDraft() : createDefaultDirectAgreementDraft()
+    args.target === 'survey' ? createNewSurveyDraft() : createDefaultDirectAgreementDraft()
 
   const created = await createFormTemplateRemote({
     templateName,
@@ -389,6 +414,49 @@ export async function createWritingFormTemplateRemote(args: {
   }
 
   return newCode
+}
+
+/**
+ * 템플릿 코드 기준 표시명(templateName) 변경.
+ * 목록 조회로 캐시된 templateId가 필요하며, 없으면 작성 양식 목록을 한 번 워밍한다.
+ */
+export async function renameFormTemplateByCode(
+  templateCode: string,
+  templateName: string
+): Promise<void> {
+  const nextName = templateName.trim()
+  if (nextName === '') {
+    throw new Error('템플릿 이름을 입력해 주세요.')
+  }
+
+  if (!shouldUseFormsSurveysRemoteApi()) {
+    return
+  }
+
+  assertFormsSurveysRemoteReady()
+
+  let cached = getFormTemplateVersionCacheEntry(templateCode)
+  if (cached?.templateId == null) {
+    try {
+      await getWritingFormSectionsRemote()
+    } catch {
+      /* issuance-only 등 — 아래 issuance 워밍 */
+    }
+    cached = getFormTemplateVersionCacheEntry(templateCode)
+  }
+  if (cached?.templateId == null) {
+    try {
+      await getIssuanceFormSectionsRemote()
+    } catch {
+      /* ignore */
+    }
+    cached = getFormTemplateVersionCacheEntry(templateCode)
+  }
+  if (cached?.templateId == null) {
+    throw new Error('이름 변경할 템플릿 ID를 찾을 수 없습니다. 목록을 먼저 조회해 주세요.')
+  }
+
+  await updateFormTemplateRemote(cached.templateId, { templateName: nextName })
 }
 
 export async function deleteFormTemplate(templateCode: string): Promise<void> {

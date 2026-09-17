@@ -16,7 +16,6 @@
 .mfa-otp-input__boxes {
   display: flex;
   justify-content: center;
-  padding: 0 14px;
 }
 
 .mfa-otp-input__boxes .ant-otp {

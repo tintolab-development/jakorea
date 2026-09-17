@@ -8,7 +8,7 @@ import {
   UjatVolunteerAssignmentRoleCell,
   UJAT_VOLUNTEER_ASSIGNMENT_ROLE_CELL_CLASSNAME,
 } from './assignment-role-cell'
-import { sortVolunteerAssignmentRows } from './assignment-mock'
+import { sortVolunteerAssignmentRows } from './volunteer-assignment-data'
 import {
   isVolunteerAssignmentClassWithdrawn,
   type UjatVolunteerAssignmentProgressRow,

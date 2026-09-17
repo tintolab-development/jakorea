@@ -6,25 +6,15 @@
  * 데이터 소스: 현재는 `@/data/mock/*` 기반(로컬 목). API 연동 시 이 모듈에서 분기·어댑터만 교체.
  */
 
-import dayjs from 'dayjs'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import type { Program } from '@/types/domain'
-import { mockPrograms, mockProgramsMap } from '@/data/mock/programs'
-import { getEducationPrograms } from '@/data/mock/education-programs'
-import { getCompanySchoolPrograms, getCompanySchoolProgramById } from '@/data/mock/economy-programs'
-import { getGeneralPrograms } from '@/data/mock/general-programs'
 import { countGeneralProgramOverviewStages } from '@/features/program/general/lib/overview-stage-counts'
 import { countCompanySchoolOverviewStages } from '@/features/program/1c-1s/lib/overview-stage-counts'
-import { getTrainedTeachersPrograms } from '@/data/mock/trained-teachers-programs'
-import {
-  isGeneralIndividualProgram,
-  isTrainedTeachersProgram,
-} from '@/features/program/general/lib/survey-audience'
-import { getVolunteerPrograms } from '@/data/mock/volunteer-programs'
 import { mockApplications } from '@/data/mock/applications'
 import { mockMatchings } from '@/data/mock/matchings'
 import { mockSettlements } from '@/data/mock/settlements'
-import { MOCK_APPLICANT_INSTITUTIONS } from '@/data/mock/applicant-institutions'
-import { MOCK_APPLICANT_INSTRUCTORS } from '@/data/mock/applicant-instructors'
+import { MOCK_APPLICANT_INSTITUTIONS } from '@/features/program/shared/model/applicant-institution'
+import { MOCK_APPLICANT_INSTRUCTORS } from '@/features/program/shared/model/applicant-instructor'
 import { mockInquiries } from '@/data/mock/inquiries'
 import { mockInstructors } from '@/data/mock/instructors'
 import { mockPermissionRequests } from '@/data/mock/permission-requests'
@@ -66,7 +56,6 @@ import {
 } from '@/features/dashboard/api/adapters/dashboard-adapters'
 import { mapNotificationInboxPage } from '@/features/dashboard/api/adapters/notification-adapters'
 import type { Notification } from '@/features/dashboard/api/notification-service'
-import { getMockDashboardProgramOptions } from '@/features/dashboard/api/dashboard-program-options-mock'
 import { getDashboardProgramTypeParamForWidget } from '@/features/dashboard/lib/dashboard-widget-program-type'
 
 export type { DashboardHomeSummary, ProgramInquiryRow, DashboardScheduleEventDto, DashboardProgramOption }
@@ -123,19 +112,6 @@ export type ProgramEconomyStages = ProgramOverviewStages
 
 export type ProgramProgressStagesResult = ProgramProgressStages | ProgramOverviewStages
 
-function resolveCompanySchoolOperationPhase(
-  program: Program
-): 'scheduled' | 'in_progress' | 'completed' | null {
-  const start = dayjs(program.startDate)
-  const end = dayjs(program.endDate)
-  if (!start.isValid() || !end.isValid()) return null
-
-  const today = dayjs().startOf('day')
-  if (today.isBefore(start.startOf('day'))) return 'scheduled'
-  if (today.isBefore(end.startOf('day'))) return 'in_progress'
-  return 'completed'
-}
-
 export interface PendingActionCounts {
   pendingApplications: number
   pendingMatchings: number
@@ -170,49 +146,20 @@ export interface ProgramKpiItem {
  * 7단계 lifecycle → RECEIVED, MATCHING_*, MATERIAL_*, IN_PROGRESS, REPORT_SUBMITTED 매핑
  */
 export async function getProgramProgressSummary(): Promise<ProgramProgressSummary> {
-  await new Promise(resolve => setTimeout(resolve, 300))
-
-  const byStatus = {
-    RECEIVED: 0,
-    MATCHING_IN_PROGRESS: 0,
-    MATCHING_COMPLETED: 0,
-    MATERIAL_PREPARING: 0,
-    MATERIAL_SHIPPED: 0,
-    IN_PROGRESS: 0,
-    SURVEY_SUBMITTED: 0,
-    REPORT_SUBMITTED: 0,
+  notifyProgramApiUnavailable('dashboard-program-progress-summary', '대시보드 · 프로그램 진행 현황')
+  return {
+    total: 0,
+    byStatus: {
+      RECEIVED: 0,
+      MATCHING_IN_PROGRESS: 0,
+      MATCHING_COMPLETED: 0,
+      MATERIAL_PREPARING: 0,
+      MATERIAL_SHIPPED: 0,
+      IN_PROGRESS: 0,
+      SURVEY_SUBMITTED: 0,
+      REPORT_SUBMITTED: 0,
+    },
   }
-
-  mockPrograms.forEach(program => {
-    switch (program.lifecycleStatus) {
-      case 'planned':
-      case 'instructor_recruitment_planned':
-      case 'volunteer_recruitment_planned':
-      case 'participant_instructor_recruitment_planned':
-        break
-      case 'recruiting_students':
-      case 'recruiting_instructors':
-      case 'recruiting_volunteers':
-      case 'participant_instructor_recruiting':
-        byStatus.RECEIVED++
-        break
-      case 'matching_completed':
-      case 'participant_instructor_recruitment_completed':
-        byStatus.MATCHING_COMPLETED++
-        break
-      case 'education_completed':
-        byStatus.IN_PROGRESS++
-        break
-      case 'document_processing_completed':
-        byStatus.REPORT_SUBMITTED++
-        break
-      default:
-        break
-    }
-  })
-
-  const total = Object.values(byStatus).reduce((sum, c) => sum + c, 0)
-  return { total, byStatus }
 }
 
 /**
@@ -230,12 +177,8 @@ export async function getProgramProgressStages(options?: {
     options?.programType === 'general' ||
     options?.programType === 'trained_teachers'
   ) {
-    const programs =
-      options.programType === 'general'
-        ? getGeneralPrograms()
-        : options.programType === 'trained_teachers'
-          ? getTrainedTeachersPrograms()
-          : getCompanySchoolPrograms()
+    notifyProgramApiUnavailable('dashboard-program-progress-stages', '대시보드 · 프로그램 진행 현황')
+    const programs: Program[] = []
 
     if (options.programType === 'general') {
       return countGeneralProgramOverviewStages(programs)
@@ -245,40 +188,11 @@ export async function getProgramProgressStages(options?: {
       return countCompanySchoolOverviewStages(programs)
     }
 
-    const stages = {
-      scheduled: 0,
-      inProgress: 0,
-      completed: 0,
-    }
-
-    programs.forEach(program => {
-      const operationPhase = resolveCompanySchoolOperationPhase(program)
-      if (operationPhase === 'scheduled') stages.scheduled++
-      else if (operationPhase === 'in_progress') stages.inProgress++
-      else if (operationPhase === 'completed') stages.completed++
-      else {
-        const status = program.lifecycleStatus || ''
-        if (
-          [
-            'recruiting_students',
-            'recruiting_instructors',
-            'matching_completed',
-            'education_before_textbook',
-          ].includes(status)
-        ) {
-          stages.scheduled++
-        } else if (status === 'education_after_textbook' || status === 'education_in_progress') {
-          stages.inProgress++
-        } else if (['education_completed', 'document_processing_completed'].includes(status)) {
-          stages.completed++
-        }
-      }
-    })
-
-    return { ...stages, total: programs.length }
+    return { scheduled: 0, inProgress: 0, completed: 0, total: 0 }
   }
 
-  const programs = options?.programType === 'education' ? getEducationPrograms() : mockPrograms
+  notifyProgramApiUnavailable('dashboard-program-progress-stages-legacy', '대시보드 · 프로그램 진행 현황')
+  const programs: Program[] = []
 
   const stages = {
     studentRecruitment: 0,
@@ -333,12 +247,14 @@ export async function getProgramProgressStages(options?: {
  * 특정 프로그램의 7단계 진행 현황 (상세 페이지 위젯용)
  */
 export async function getProgramProgressStagesByProgramId(
-  programId: string
+  _programId: string
 ): Promise<ProgramProgressStages> {
-  await new Promise(resolve => setTimeout(resolve, 150))
-
-  const program = mockPrograms.find(p => p.id === programId)
-  const stages = {
+  void _programId
+  notifyProgramApiUnavailable(
+    'dashboard-program-progress-stages-by-id',
+    '대시보드 · 프로그램 진행 현황'
+  )
+  return {
     studentRecruitment: 0,
     instructorRecruitment: 0,
     matchingCompleted: 0,
@@ -346,64 +262,13 @@ export async function getProgramProgressStagesByProgramId(
     educationAfterTextbook: 0,
     educationCompleted: 0,
     documentProcessingCompleted: 0,
+    total: 0,
   }
-
-  if (program) {
-    switch (program.lifecycleStatus) {
-      case 'planned':
-      case 'instructor_recruitment_planned':
-      case 'volunteer_recruitment_planned':
-      case 'participant_instructor_recruitment_planned':
-        break
-      case 'recruiting_students':
-        stages.studentRecruitment =
-          mockApplications.filter(a => a.programId === programId).length || 1
-        break
-      case 'recruiting_instructors':
-      case 'recruiting_volunteers':
-        stages.instructorRecruitment =
-          mockApplications.filter(a => a.programId === programId && a.subjectType === 'instructor')
-            .length || 1
-        break
-      case 'participant_instructor_recruiting':
-        stages.studentRecruitment = mockApplications.filter(a => a.programId === programId).length || 1
-        stages.instructorRecruitment = mockApplications.filter(a => a.programId === programId && a.subjectType === 'instructor').length || 1
-        break
-      case 'matching_completed':
-      case 'participant_instructor_recruitment_completed':
-        stages.matchingCompleted = mockMatchings.filter(m => m.programId === programId).length || 1
-        break
-      case 'education_before_textbook':
-        stages.educationBeforeTextbook = 1
-        break
-      case 'education_after_textbook':
-        stages.educationAfterTextbook = 1
-        break
-      case 'education_completed':
-        stages.educationCompleted = 1
-        break
-      case 'document_processing_completed':
-        stages.documentProcessingCompleted = 1
-        break
-      default:
-        stages.studentRecruitment =
-          mockApplications.filter(a => a.programId === programId).length || 0
-        break
-    }
-  }
-
-  // 전체 건수는 해당 프로그램이 현재 속한 단계에 1건으로 집계
-  const total = Math.max(
-    1,
-    Object.values(stages).reduce((sum, c) => sum + c, 0)
-  )
-  return { ...stages, total }
 }
 
 /**
  * 모집 신청 현황 위젯용 프로그램 목록
- * 프로그램 리스트 + lifecycleStatus, approvedStudentCount, instructors, instructorCapacity 등
- * 정합성: 일반 교육 프로그램 목록과 동일한 getEducationPrograms() 사용 → 목록·위젯 상태 일치
+ * remote dashboard recruitments API. mock 카탈로그 없음.
  */
 export async function getRecruitmentStatusList(options?: {
   programIds?: string[]
@@ -413,19 +278,8 @@ export async function getRecruitmentStatusList(options?: {
     const dto = await fetchDashboardRecruitmentsRemote(queryParams)
     return mapRecruitmentListResponse(dto)
   }
-  return getRecruitmentStatusListFromMock(options)
-}
-
-async function getRecruitmentStatusListFromMock(options?: {
-  programIds?: string[]
-}): Promise<Program[]> {
-  await new Promise(resolve => setTimeout(resolve, 200))
-  const programs = getEducationPrograms()
-  if (options?.programIds && options.programIds.length > 0) {
-    const idSet = new Set(options.programIds)
-    return programs.filter(p => idSet.has(p.id))
-  }
-  return programs
+  notifyProgramApiUnavailable('dashboard-recruitment-status', '대시보드 · 모집 신청 현황')
+  return []
 }
 
 /**
@@ -454,93 +308,8 @@ export async function getPendingActionCounts(): Promise<PendingActionCounts> {
   }
 }
 
-const KPI_LABELS: Record<KpiMetricKey, { label: string; description: string }> = {
-  finalParticipants: { label: '최종 달성 인원', description: '명' },
-  finalSchools: { label: '최종 파견 학교 수', description: '개' },
-  finalClasses: { label: '최종 파견 학급 수', description: '개' },
-}
-
-/** 사업 KPI 목표·위젯 공통: 달성/목표 수치 (patternIndex로 목록 간 변주) */
-function buildKpiMetricsForPattern(patternIndex: number, program?: Program): KpiMetric[] {
-  const trainedTeachers = program != null && isTrainedTeachersProgram(program)
-  const isIndividual = program != null && isGeneralIndividualProgram(program)
-  const schoolClassApplicable = !trainedTeachers && !isIndividual
-  const achievedParticipants = trainedTeachers ? 0 : patternIndex % 3 === 0 ? 100 : 80
-  const targetParticipants = trainedTeachers ? 0 : 100
-  const achievedSchools = schoolClassApplicable ? 100 : 0
-  const targetSchools = schoolClassApplicable ? 100 : 0
-  const achievedClasses = schoolClassApplicable ? (patternIndex % 2 === 0 ? 100 : 80) : 0
-  const targetClasses = schoolClassApplicable ? 100 : 0
-
-  return [
-    {
-      key: 'finalParticipants',
-      label: KPI_LABELS.finalParticipants.label,
-      description: KPI_LABELS.finalParticipants.description,
-      achieved: achievedParticipants,
-      target: targetParticipants,
-      applicable: !trainedTeachers,
-    },
-    {
-      key: 'finalSchools',
-      label: KPI_LABELS.finalSchools.label,
-      description: KPI_LABELS.finalSchools.description,
-      achieved: achievedSchools,
-      target: targetSchools,
-      applicable: schoolClassApplicable,
-    },
-    {
-      key: 'finalClasses',
-      label: KPI_LABELS.finalClasses.label,
-      description: KPI_LABELS.finalClasses.description,
-      achieved: achievedClasses,
-      target: targetClasses,
-      applicable: schoolClassApplicable,
-    },
-  ]
-}
-
-function isCompanySchoolKpiProgram(programOrId: Program | string): boolean {
-  const id = typeof programOrId === 'string' ? programOrId : programOrId.id
-  const title = typeof programOrId === 'string' ? '' : (programOrId.mainTitle ?? programOrId.title ?? '')
-  return (
-    id.startsWith('economy-prog-') ||
-    id.startsWith('company-school-prog-') ||
-    id.startsWith('company-school-local-') ||
-    title.includes('1사1교')
-  )
-}
-
-function buildProgramKpiItemFromProgram(program: Program, patternIndex: number): ProgramKpiItem {
-  const isCompanySchool = isCompanySchoolKpiProgram(program)
-  return {
-    programId: program.id,
-    programTitle: program.title ?? '',
-    kpis: buildKpiMetricsForPattern(patternIndex, program),
-    educationInstructorTargets: {
-      instructors: isCompanySchool ? (program.instructors ?? program.instructorCapacity ?? 0) : 80,
-      volunteers: isCompanySchool ? 0 : 80,
-    },
-  }
-}
-
-/** 상세 모달 등: id만 알 때 — 목 KPI로 항상 행이 채워지도록 */
-function buildDefaultProgramKpiItem(programId: string, title: string): ProgramKpiItem {
-  const isCompanySchool = isCompanySchoolKpiProgram(programId) || title.includes('1사1교')
-  return {
-    programId,
-    programTitle: title,
-    kpis: buildKpiMetricsForPattern(0),
-    educationInstructorTargets: {
-      instructors: isCompanySchool ? 0 : 80,
-      volunteers: isCompanySchool ? 0 : 80,
-    },
-  }
-}
-
 /**
  * 사업 별 KPI 대비 달성률 위젯용 목록
- * programIds 있으면 해당 id마다 1건씩 반환(교육 목록에 없어도 mockPrograms·기본값으로 채움)
  */
 export async function getKpiAchievementList(options?: {
   programIds?: string[]
@@ -550,42 +319,8 @@ export async function getKpiAchievementList(options?: {
     const dto = await fetchDashboardKpiProgressRemote(queryParams)
     return mapKpiProgressListResponse(dto)
   }
-  return getKpiAchievementListFromMock(options)
-}
-
-async function getKpiAchievementListFromMock(options?: {
-  programIds?: string[]
-}): Promise<ProgramKpiItem[]> {
-  await new Promise(resolve => setTimeout(resolve, 200))
-  const educationPrograms = getEducationPrograms()
-
-  if (options?.programIds && options.programIds.length > 0) {
-    return options.programIds.map((id, requestIndex) => {
-      const inEducation = educationPrograms.find(p => p.id === id)
-      if (inEducation) {
-        const patternIndex = educationPrograms.indexOf(inEducation)
-        return buildProgramKpiItemFromProgram(inEducation, patternIndex)
-      }
-      const fromRegistry = mockProgramsMap.get(id)
-      if (fromRegistry) {
-        return buildProgramKpiItemFromProgram(fromRegistry, requestIndex)
-      }
-      const companySchoolProgram = getCompanySchoolProgramById(id)
-      if (companySchoolProgram) {
-        return buildProgramKpiItemFromProgram(companySchoolProgram, requestIndex)
-      }
-      return buildDefaultProgramKpiItem(id, '프로그램')
-    })
-  }
-
-  const trainedTeachers = getTrainedTeachersPrograms()
-  const fromEducation = educationPrograms.map((program, index) =>
-    buildProgramKpiItemFromProgram(program, index)
-  )
-  const fromTrainedTeachers = trainedTeachers.map((program, index) =>
-    buildProgramKpiItemFromProgram(program, educationPrograms.length + index)
-  )
-  return [...fromEducation, ...fromTrainedTeachers]
+  notifyProgramApiUnavailable('dashboard-kpi-achievement', '대시보드 · 사업 KPI')
+  return []
 }
 
 /** getProgramProgressStages(교육)와 동일한 lifecycle 집계 — 동기·목 데이터 전용 */
@@ -659,16 +394,7 @@ function getPendingActionCountsSync(): PendingActionCounts {
  * API 연동 시 이 함수만 서버 집계로 교체하면 된다.
  */
 export function getMenuShortcutBadgeCounts(): Record<string, number> {
-  const educationPrograms = getEducationPrograms()
-  const stages = accumulateLifecycleStages(educationPrograms)
-  const companySchoolPrograms = getCompanySchoolPrograms()
-  const companySchoolStages = accumulateLifecycleStages(companySchoolPrograms)
-  const geminiPrograms = educationPrograms.filter(
-    p => (p.title ?? '').includes('제미나이') || (p.mainTitle ?? '').includes('제미나이')
-  )
-  const geminiStages = accumulateLifecycleStages(geminiPrograms)
-  const ujatPrograms = getVolunteerPrograms()
-  const ujatStages = accumulateLifecycleStages(ujatPrograms)
+  const emptyStages = accumulateLifecycleStages([])
 
   const pending = getPendingActionCountsSync()
   const institutionPending = MOCK_APPLICANT_INSTITUTIONS.filter(s => s.approvalStatus === 'pending').length
@@ -686,11 +412,11 @@ export function getMenuShortcutBadgeCounts(): Record<string, number> {
   ).length
 
   const mapped: Record<string, number> = {
-    'programs-general-education': stages.studentRecruitment,
-    'programs-economy': companySchoolStages.studentRecruitment + companySchoolStages.instructorRecruitment,
-    'programs-gemini': geminiStages.studentRecruitment + geminiStages.instructorRecruitment,
-    'programs-ujat': ujatStages.studentRecruitment + ujatStages.instructorRecruitment,
-    'programs-detail': stages.matchingCompleted,
+    'programs-general-education': emptyStages.studentRecruitment,
+    'programs-economy': 0,
+    'programs-gemini': 0,
+    'programs-ujat': 0,
+    'programs-detail': emptyStages.matchingCompleted,
     'users-all': Math.min(
       999,
       institutionPending + instructorApplicantPending + pending.pendingApplications
@@ -731,10 +457,10 @@ export async function getDashboardHomeSummary(): Promise<DashboardHomeSummary> {
     const dto = await fetchDashboardHomeRemote()
     return mapDashboardHomeResponse(dto)
   }
-  await new Promise(resolve => setTimeout(resolve, 150))
+  notifyProgramApiUnavailable('dashboard-home-summary', '대시보드 · 홈 요약')
   return {
     version: 'mock',
-    programCount: mockPrograms.length,
+    programCount: 0,
     memberCount: mockInstructors.length,
     unreadNotificationCount: 0,
   }
@@ -810,7 +536,7 @@ export async function getDashboardProgramOptions(widgetKey: string): Promise<Das
     const dto = await fetchDashboardRecruitmentsRemote(queryParams)
     return mapProgramOptionsFromRecruitmentList(dto)
   }
-  return getMockDashboardProgramOptions(widgetKey)
+  return []
 }
 
 export interface DashboardShortcutItem {

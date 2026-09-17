@@ -41,18 +41,25 @@ export const programProgressPhaseFilterOptions: {
   { value: 'completed', label: '프로그램 진행 완료' },
 ]
 
+/**
+ * 4카드 위젯·목록「프로그램 진행 현황」필터 공통 버킷.
+ * typed API(`scheduled`|`recruiting_students`|`in_progress`|`completed`) + FE 레거시 세분 값.
+ * `filterGeneralProgramsByOverviewStatus` 와 동일해야 한다.
+ */
 const programProgressPhaseLifecycleMap: Record<
   ProgramProgressPhaseFilter,
   readonly ProgramLifecycleStatus[]
 > = {
   scheduled: [
+    'scheduled',
+    'planned',
     'recruiting_students',
     'recruiting_instructors',
     'matching_completed',
     'education_before_textbook',
   ],
-  in_progress: ['education_after_textbook', 'education_in_progress'],
-  completed: ['education_completed', 'document_processing_completed'],
+  in_progress: ['in_progress', 'education_after_textbook', 'education_in_progress'],
+  completed: ['completed', 'education_completed', 'document_processing_completed'],
 }
 
 export const programProgressPhaseFilterValues = new Set<ProgramProgressPhaseFilter>(

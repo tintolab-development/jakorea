@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { trainedTeacherQueryKeys } from './query-keys'
 import {
@@ -7,7 +8,14 @@ import {
   listTrainedTeacherEducationJournals,
   listTrainedTeacherParticipatingInstitutions,
 } from './education-journals-service'
-import type { TrainedTeachersEducationJournalEntry } from '@/data/mock/trained-teachers-institution-detail'
+import type { TrainedTeachersEducationJournalEntry } from '@/features/program/trained-teachers/model/institution-detail'
+import {
+  buildTrainedTeacherParticipatingInstitutionsListQuery,
+  serializeTrainedTeacherOrganizationApplicationsListQuery,
+  type TrainedTeacherOrganizationApplicationUiFilters,
+} from './organization-applications-list-query'
+
+const EMPTY_TT_LIST_FILTERS: TrainedTeacherOrganizationApplicationUiFilters = Object.freeze({})
 
 export function useTrainedTeacherEducationJournals(
   programId: string | undefined,
@@ -30,12 +38,22 @@ export function useTrainedTeacherEducationJournals(
 
 export function useTrainedTeacherParticipatingInstitutions(
   programId: string | undefined,
-  enabled = true
+  enabled = true,
+  listFilters: TrainedTeacherOrganizationApplicationUiFilters = EMPTY_TT_LIST_FILTERS
 ) {
   const remoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi()
+  const listQuery = useMemo(
+    () => buildTrainedTeacherParticipatingInstitutionsListQuery(listFilters),
+    [listFilters]
+  )
+  const filtersKey = useMemo(
+    () => serializeTrainedTeacherOrganizationApplicationsListQuery(listQuery),
+    [listQuery]
+  )
+
   return useQuery({
-    queryKey: trainedTeacherQueryKeys.participatingInstitutions(programId ?? ''),
-    queryFn: () => listTrainedTeacherParticipatingInstitutions(programId!),
+    queryKey: trainedTeacherQueryKeys.participatingInstitutions(programId ?? '', filtersKey),
+    queryFn: () => listTrainedTeacherParticipatingInstitutions(programId!, listQuery),
     enabled: enabled && Boolean(programId),
     staleTime: remoteEnabled ? 30_000 : Number.POSITIVE_INFINITY,
     retry: false,

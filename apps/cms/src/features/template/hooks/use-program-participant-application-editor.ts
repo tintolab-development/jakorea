@@ -291,6 +291,8 @@ export type UseProgramParticipantApplicationEditorOptions = {
   templateCode?: string
   systemTemplate?: boolean
   forceUserEditable?: boolean
+  /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
+  localOnlyDraftPersistence?: boolean
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
   /** 프로그램 등록 마법사 — 참여자 유형이 학교/기관일 때만 모집 최대값 필드 노출 */
   participantOrganization?: boolean
@@ -428,6 +430,7 @@ export function useProgramParticipantApplicationEditor(
   editorOptions?: UseProgramParticipantApplicationEditorOptions
 ) {
   const onTemplateDraftSaveConfirmed = editorOptions?.onTemplateDraftSaveConfirmed
+  const localOnlyDraftPersistence = editorOptions?.localOnlyDraftPersistence === true
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
 
@@ -633,7 +636,9 @@ export function useProgramParticipantApplicationEditor(
       cached != null && storageHydratedTemplateIdsRef.current.has(templateId)
 
     if (variant === 'ujat-recruit-institution' || variant === 'ujat-recruit-volunteer') {
-      void loadWritingFormTemplateDraft(templateId).then(saved => {
+      void loadWritingFormTemplateDraft(templateId, {
+        localOnly: localOnlyDraftPersistence,
+      }).then(saved => {
         if (cancelled) return
         if (preferSessionCache) return
         if (saved?.draft) {
@@ -647,9 +652,11 @@ export function useProgramParticipantApplicationEditor(
           return
         }
         const legacy =
-          variant === 'ujat-recruit-institution'
-            ? loadUjatRecruitInstitutionTemplateSave()
-            : loadUjatRecruitVolunteerTemplateSave()
+          localOnlyDraftPersistence
+            ? variant === 'ujat-recruit-institution'
+              ? loadUjatRecruitInstitutionTemplateSave()
+              : loadUjatRecruitVolunteerTemplateSave()
+            : null
         if (legacy) {
           applyDraftNow(legacy.draft)
           if (variant === 'ujat-recruit-institution') {
@@ -661,7 +668,9 @@ export function useProgramParticipantApplicationEditor(
         storageHydratedTemplateIdsRef.current.add(templateId)
       })
     } else {
-      void loadWritingFormTemplateDraft(templateId).then(saved => {
+      void loadWritingFormTemplateDraft(templateId, {
+        localOnly: localOnlyDraftPersistence,
+      }).then(saved => {
         if (cancelled) return
         if (preferSessionCache) return
         if (saved?.draft) {
@@ -714,7 +723,13 @@ export function useProgramParticipantApplicationEditor(
         }),
       })
     }
-  }, [active, createSeedDraft, resolvePersistTemplateId, variant])
+  }, [
+    active,
+    createSeedDraft,
+    localOnlyDraftPersistence,
+    resolvePersistTemplateId,
+    variant,
+  ])
 
   useEffect(() => {
     if (!active) {
@@ -747,28 +762,36 @@ export function useProgramParticipantApplicationEditor(
     [seedParagraphIds]
   )
 
-  const onReorderMiddle = useCallback((dragId: string, overId: string) => {
-    setDraft(prev => ({
-      ...prev,
-      paragraphs: (() => {
-        const from = prev.paragraphs.findIndex(p => p.id === dragId)
-        const to = prev.paragraphs.findIndex(p => p.id === overId)
-        if (from < 0 || to < 0 || from === to) return prev.paragraphs
-        const next = [...prev.paragraphs]
-        const [moved] = next.splice(from, 1)
-        if (!moved) return prev.paragraphs
-        next.splice(to, 0, moved)
-        return next
-      })(),
-    }))
-  }, [])
+  const onReorderMiddle = useCallback(
+    (dragId: string, overId: string) => {
+      if (isStructureLocked) return
+      setDraft(prev => ({
+        ...prev,
+        paragraphs: (() => {
+          const from = prev.paragraphs.findIndex(p => p.id === dragId)
+          const to = prev.paragraphs.findIndex(p => p.id === overId)
+          if (from < 0 || to < 0 || from === to) return prev.paragraphs
+          const next = [...prev.paragraphs]
+          const [moved] = next.splice(from, 1)
+          if (!moved) return prev.paragraphs
+          next.splice(to, 0, moved)
+          return next
+        })(),
+      }))
+    },
+    [isStructureLocked]
+  )
 
-  const onTitleNumberingChange = useCallback((style: FormTitleNumberingStyle) => {
-    setDraft(prev => ({
-      ...prev,
-      formSettings: { ...prev.formSettings, titleNumbering: style },
-    }))
-  }, [])
+  const onTitleNumberingChange = useCallback(
+    (style: FormTitleNumberingStyle) => {
+      if (isStructureLocked) return
+      setDraft(prev => ({
+        ...prev,
+        formSettings: { ...prev.formSettings, titleNumbering: style },
+      }))
+    },
+    [isStructureLocked]
+  )
 
   const middleParagraphActions = useParticipantApplicationMiddleActions(
     setDraft,
@@ -1238,16 +1261,32 @@ export function useProgramParticipantApplicationEditor(
           templateId,
           draft,
           overlay,
+          localOnly: localOnlyDraftPersistence,
         })
-        persistUjatRecruitInstitutionTemplateSave({ draft, overlay })
+        if (localOnlyDraftPersistence) {
+          persistUjatRecruitInstitutionTemplateSave({ draft, overlay })
+        } else {
+          const { rememberUjatRecruitTemplateSave, clearUjatRecruitTemplateLocalStorage } =
+            await import('@/features/program/ujat/lib/ujat-recruit-template-local-save')
+          clearUjatRecruitTemplateLocalStorage()
+          rememberUjatRecruitTemplateSave(templateId, { draft, overlay })
+        }
       } else if (variant === 'ujat-recruit-volunteer') {
         const overlay = { ...getUjatRecruitVolunteerOverlayRecord() }
         await persistWritingFormTemplateDraft({
           templateId,
           draft,
           overlay,
+          localOnly: localOnlyDraftPersistence,
         })
-        persistUjatRecruitVolunteerTemplateSave({ draft, overlay })
+        if (localOnlyDraftPersistence) {
+          persistUjatRecruitVolunteerTemplateSave({ draft, overlay })
+        } else {
+          const { rememberUjatRecruitTemplateSave, clearUjatRecruitTemplateLocalStorage } =
+            await import('@/features/program/ujat/lib/ujat-recruit-template-local-save')
+          clearUjatRecruitTemplateLocalStorage()
+          rememberUjatRecruitTemplateSave(templateId, { draft, overlay })
+        }
       } else {
         const editorState = buildParticipantApplicationEditorState({
           variant,
@@ -1263,6 +1302,7 @@ export function useProgramParticipantApplicationEditor(
           draft,
           editorState,
           ...(overlay != null ? { overlay } : {}),
+          localOnly: localOnlyDraftPersistence,
         })
       }
       if (options?.silent) return
@@ -1273,12 +1313,13 @@ export function useProgramParticipantApplicationEditor(
       console.debug('programParticipantApplicationEditor save failed', error)
       if (options?.silent) throw error
       if (isTemplateManagementSave) {
-        showSaveFailure()
+        showSaveFailure(error)
       }
     }
   }, [
     draft,
     isTemplateManagementSave,
+    localOnlyDraftPersistence,
     onTemplateDraftSaveConfirmed,
     resolvePersistTemplateId,
     showSaveFailure,

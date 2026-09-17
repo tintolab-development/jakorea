@@ -1,7 +1,9 @@
 import { useCallback, useMemo } from 'react'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useGeneralInterview2EffectiveStatusTick } from '@/features/program/general/hooks/use-general-interview2-effective-status-tick'
+import { useVolunteerApplicationDetailEnrichment } from '@/features/program/general/hooks/use-application-form-detail-enrichment'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -26,6 +28,7 @@ type DocScreeningDetailProps = {
   setOpenManagerDropdown: (value: { rowId: string; manager: 'A' | 'B' } | null) => void
   onManagerAEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
   onManagerBEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
+  updatingManagerEvaluation: string | null
 }
 
 type DocPassedDetailProps = {
@@ -61,8 +64,14 @@ function isInterview2Props(
   return props.variant === 'interview2'
 }
 
-export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerApplicantDetailViewProps) {
-  const { applicant } = props
+export function GeneralVolunteerApplicantDetailView(
+  props: GeneralVolunteerApplicantDetailViewProps
+) {
+  const applicantBase = props.applicant
+  const applicantEnriched = useVolunteerApplicationDetailEnrichment(applicantBase, {
+    enabled: shouldUseGeneralApplicationsRemoteApi(),
+  })
+  const applicant = applicantEnriched ?? applicantBase
 
   const interview2StatusTickRows = useMemo(
     () => (props.variant === 'interview2' ? [applicant] : []),
@@ -81,6 +90,8 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem,
+    resolveMemberId: () => (applicant.memberId != null ? String(applicant.memberId) : undefined),
+    resolveMemberRole: () => 'INDIVIDUAL',
     resetDeps: [applicant.id],
     controlMode: 'headerStickyNoop',
   })
@@ -226,6 +237,7 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
     setOpenManagerDropdown,
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
+    updatingManagerEvaluation,
   } = props
 
   const isDocumentPassed = applicant.documentScreeningStatus === 'pass'
@@ -305,6 +317,7 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
           setOpenManagerDropdown={setOpenManagerDropdown}
           onManagerAEvaluationChange={onManagerAEvaluationChange}
           onManagerBEvaluationChange={onManagerBEvaluationChange}
+          updatingManagerEvaluation={updatingManagerEvaluation}
         />
         <GeneralVolunteerApplicantInterviewAvailability applicant={applicant} />
         <GeneralVolunteerApplicantEssaySections applicant={applicant} />

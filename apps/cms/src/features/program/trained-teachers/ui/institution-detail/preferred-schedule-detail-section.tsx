@@ -1,4 +1,4 @@
-import type { TrainedTeachersPreferredScheduleBlock } from '@/data/mock/trained-teachers-institution-detail'
+import type { TrainedTeachersPreferredScheduleBlock } from '@/features/program/trained-teachers/model/institution-detail'
 import {
   INSTITUTION_APPLICATION_SCHEDULE_COLGROUP,
   InstitutionApplicationTableRowSingleCol,

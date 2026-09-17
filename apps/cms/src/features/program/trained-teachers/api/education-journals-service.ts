@@ -1,6 +1,6 @@
-import type { TrainedTeachersEducationJournalEntry } from '@/data/mock/trained-teachers-institution-detail'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { TrainedTeachersEducationJournalEntry } from '@/features/program/trained-teachers/model/institution-detail'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import { downloadFile } from '@/shared/lib/file-download'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { mapEducationJournalResponseToEntry } from './education-journals-adapters'
@@ -64,6 +64,19 @@ export async function createTrainedTeacherEducationJournal(
   return mapEducationJournalResponseToEntry(dto, 0)
 }
 
+export async function fetchTrainedTeacherEducationJournalBlob(
+  programId: string,
+  entry: TrainedTeachersEducationJournalEntry
+): Promise<Blob> {
+  assertRemoteReady()
+  const meta = await fetchTrainedTeacherEducationJournalDownloadRemote(programId, entry.id)
+  const endpoint = meta.downloadEndpoint?.trim()
+  if (!endpoint) {
+    throw new Error('교육일지 다운로드 경로가 없습니다.')
+  }
+  return fetchTrainedTeacherEducationJournalFileBlob(endpoint)
+}
+
 export async function downloadTrainedTeacherEducationJournal(
   programId: string,
   entry: TrainedTeachersEducationJournalEntry
@@ -103,6 +116,10 @@ export function mapApplicantSchoolToParticipatingSchool(
   row: ApplicantSchoolRow,
   index: number
 ): ParticipatingSchoolRow {
+  const completed = row.completedEducationRoundCount
+  const total = row.totalEducationRoundCount
+  const lectureRoundFromCounts =
+    completed != null && total != null ? `${completed}/${total}` : undefined
   return {
     id: row.id,
     no: index + 1,
@@ -111,22 +128,36 @@ export function mapApplicantSchoolToParticipatingSchool(
     educationGrade: row.educationGrade || '',
     classCount: row.classCount,
     studentCount: row.studentCount,
-    lectureRound: '',
+    lectureRound: row.lectureRound?.trim() || lectureRoundFromCounts || '',
     /** BE에 배송 원장 없음 — 교재명·수량만 표시. 배송 전/중/완료를 API로 invent 하지 않음 */
     textbookStatus: 'not_applicable',
     approvalStatus: 'approved',
     teacherName: row.teacherName || '-',
+    /** TT는 강사 Relation 없음 — 합성하지 않음 */
     instructors: '',
     programId: row.programId,
     sessions: row.sessions,
+    preferredScheduleBlocks: row.preferredScheduleBlocks,
+    educationTarget: row.educationTarget,
+    progressLabel: row.progressLabel,
+    totalEducationRoundCount: row.totalEducationRoundCount,
+    completedEducationRoundCount: row.completedEducationRoundCount,
+    textbookName: row.textbookName,
+    educationJournalCount: row.educationJournalCount,
+    journalSubmitted: row.journalSubmitted,
+    educationCompletionCount: row.educationCompletionCount,
   }
 }
 
 export async function listTrainedTeacherParticipatingInstitutions(
-  programId: string
+  programId: string,
+  query: import('./organization-applications-list-query').TrainedTeacherOrganizationApplicationsListQuery = {}
 ): Promise<ParticipatingSchoolRow[]> {
   assertRemoteReady()
-  const applications = await listTrainedTeacherOrganizationApplications(programId)
+  const applications = await listTrainedTeacherOrganizationApplications(programId, {
+    keyword: query.keyword,
+    status: 'APPROVED',
+  })
   return applications
     .filter(row => row.approvalStatus === 'approved')
     .map((row, index) => mapApplicantSchoolToParticipatingSchool(row, index))

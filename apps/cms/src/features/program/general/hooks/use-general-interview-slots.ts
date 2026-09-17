@@ -1,14 +1,18 @@
 import { useQuery } from '@tanstack/react-query'
 import { listGeneralInterviewSlots } from '@/features/program/general/api/admin-applications-service'
-import { shouldUseApplicationsHttpRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { shouldUseRemoteInterviewSchedule } from '@/features/program/general/lib/general-interview-assign-schedule-utils'
 import { generalInterviewSlotsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 
 /**
- * remote ON: GET …/interview-slots. 실패·404 → data null → 호출부 mock 폴백.
- * remote OFF: 쿼리 비활성, data undefined.
+ * remote 실제 프로그램 + 신청 remote ON일 때만 GET …/interview-slots.
+ * 신청 목록이 mock이면 쿼리 비활성(호출부 mock 스케줄).
  */
-export function useGeneralInterviewSlots(programId: string, enabled = true) {
-  const remote = shouldUseApplicationsHttpRemoteApi()
+export function useGeneralInterviewSlots(
+  programId: string,
+  enabled = true,
+  options?: { applicationsUseRemote?: boolean }
+) {
+  const remote = shouldUseRemoteInterviewSchedule(programId, options)
   return useQuery({
     queryKey: generalInterviewSlotsQueryKeys.list(programId),
     queryFn: () => listGeneralInterviewSlots(programId),

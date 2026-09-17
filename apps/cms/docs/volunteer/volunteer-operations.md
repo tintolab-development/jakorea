@@ -223,7 +223,4 @@
 
 ## 🔗 관련 문서
 
-- [IA 구조 및 카테고리 정의](./ia-structure.md)
-- [카테고리 구조 상세](./category-structure.md)
 - [초기 인터뷰 요약](../initial_interview.md)
-- [브랜치 작업 가이드라인](./BRANCH_GUIDELINES.md)

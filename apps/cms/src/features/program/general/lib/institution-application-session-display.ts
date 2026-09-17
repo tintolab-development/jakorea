@@ -23,6 +23,25 @@ export function shouldShowInstitutionApplicationSessionsColumn(
   return shouldShowInstitutionApplicationScheduleParagraph(bridge)
 }
 
+export type InstitutionApplicationScheduleDisplaySource = {
+  sessions?: readonly unknown[]
+  desiredEducationPeriod?: string
+}
+
+/**
+ * CMS 기관 신청 상세 — 진행 희망 교육 일정 섹션 노출.
+ * 신청 폼 단락 숨김 규칙을 따르되, 이미 제출된 일정 데이터가 있으면 항상 노출한다.
+ */
+export function shouldShowInstitutionApplicationDetailScheduleSection(
+  bridge: InstitutionApplicationProgramBridge | null,
+  institution: InstitutionApplicationScheduleDisplaySource
+): boolean {
+  if ((institution.sessions?.length ?? 0) > 0) return true
+  if (institution.desiredEducationPeriod?.trim()) return true
+  if (bridge == null) return true
+  return shouldShowInstitutionApplicationScheduleParagraph(bridge)
+}
+
 /**
  * 신청 상세 — 진행 희망 교육 일정 행 라벨
  * - 날짜 선택(기간)형: 1지망, 2지망 …

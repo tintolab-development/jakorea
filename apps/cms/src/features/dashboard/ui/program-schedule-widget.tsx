@@ -11,19 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { LoadingButton, EmptyState } from '@/shared/ui'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
-import {
-  mockSchedules,
-  getCompanySchoolPrograms,
-  getUjatPrograms,
-  buildCompanySchoolSchedulesForVisibleRange,
-  buildGeneralSchedulesForVisibleRange,
-  buildGeminiSchedulesForVisibleRange,
-  buildUjatSchedulesForVisibleRange,
-  getGeneralEducationPrograms,
-  getGeminiPrograms,
-  type ProgramScheduleKind,
-} from '@/data/mock'
-import { programService } from '@/entities/program/api/program-service'
+import { type ProgramScheduleKind } from '@/data/mock'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import type { Schedule } from '@/types'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
@@ -77,14 +65,10 @@ function getEventTypeLabel(type: ScheduleEvent['type']) {
   }
 }
 
-function resolveWidgetProgram(programId: string, variant: ProgramScheduleKind): Program | undefined {
-  if (variant === 'company_school') {
-    return programService.getByIdSync(programId) ?? getCompanySchoolPrograms().find(p => p.id === programId)
-  }
-  if (variant === 'ujat') {
-    return programService.getByIdSync(programId) ?? getUjatPrograms().find(p => p.id === programId)
-  }
-  return programService.getByIdSync(programId)
+function resolveWidgetProgram(_programId: string, _variant: ProgramScheduleKind): Program | undefined {
+  void _programId
+  void _variant
+  return undefined
 }
 
 function programsFromOptions(options: { id: string; title: string }[]): Program[] {
@@ -117,30 +101,14 @@ function allowedProgramIdsFromSelection(
   return out.size > 0 ? out : null
 }
 
-function getCategoryProgramIdSet(variant: ProgramScheduleKind): Set<string> {
-  switch (variant) {
-    case 'general':
-      return new Set(getGeneralEducationPrograms().map(p => p.id))
-    case 'company_school':
-      return new Set(getCompanySchoolPrograms().map(p => p.id))
-    case 'ujat':
-      return new Set(getUjatPrograms().map(p => p.id))
-    case 'gemini':
-      return new Set(getGeminiPrograms().map(p => p.id))
-  }
+function getCategoryProgramIdSet(_variant: ProgramScheduleKind): Set<string> {
+  void _variant
+  return new Set()
 }
 
-function getProgramsForRecruitment(variant: ProgramScheduleKind): Program[] {
-  switch (variant) {
-    case 'general':
-      return getGeneralEducationPrograms()
-    case 'company_school':
-      return getCompanySchoolPrograms()
-    case 'ujat':
-      return getUjatPrograms()
-    case 'gemini':
-      return getGeminiPrograms()
-  }
+function getProgramsForRecruitment(_variant: ProgramScheduleKind): Program[] {
+  void _variant
+  return []
 }
 
 /** 비마스터 관리자: ACL로 당일 모집 일정에 쓸 프로그램만 */
@@ -166,20 +134,14 @@ function allowedIdsFromWidgetSelection(
 }
 
 function buildDynamicSchedulesForVisibleRange(
-  variant: ProgramScheduleKind,
-  visibleDateKeys: string[],
-  allowedProgramIdSet: Set<string> | null
+  _variant: ProgramScheduleKind,
+  _visibleDateKeys: string[],
+  _allowedProgramIdSet: Set<string> | null
 ): Schedule[] {
-  switch (variant) {
-    case 'general':
-      return buildGeneralSchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
-    case 'company_school':
-      return buildCompanySchoolSchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
-    case 'ujat':
-      return buildUjatSchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
-    case 'gemini':
-      return buildGeminiSchedulesForVisibleRange(visibleDateKeys, allowedProgramIdSet)
-  }
+  void _variant
+  void _visibleDateKeys
+  void _allowedProgramIdSet
+  return []
 }
 
 /** 일정 목록·캘린더·팝오버에서 동일한 SCHEDULE_COLORS 매핑 */
@@ -503,13 +465,7 @@ export function ProgramScheduleWidget({
     }
     const grouped: Record<string, Schedule[]> = {}
     const visibleKeys = visibleDateRange.map(d => d.format('YYYY-MM-DD'))
-    const dynamic = buildDynamicSchedulesForVisibleRange(variant, visibleKeys, allowedProgramIdSet)
-
-    let schedules = mockSchedules.filter(s => categoryProgramIdSet.has(s.programId))
-    if (allowedProgramIdSet) {
-      schedules = schedules.filter(s => allowedProgramIdSet.has(s.programId))
-    }
-    schedules = [...schedules, ...dynamic]
+    const schedules = buildDynamicSchedulesForVisibleRange(variant, visibleKeys, allowedProgramIdSet)
 
     schedules.forEach(schedule => {
       const dateKey = dayjs(schedule.date).format('YYYY-MM-DD')

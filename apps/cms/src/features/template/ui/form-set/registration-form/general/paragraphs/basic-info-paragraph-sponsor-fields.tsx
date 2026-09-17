@@ -8,6 +8,7 @@ import {
   encodeSponsorManagerContactRef,
   decodeSponsorManagerContactRef,
   formatSponsorManagerSelectLabel,
+  formatSponsorManagerDisplayLine,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
@@ -39,16 +40,6 @@ function normalizeSponsorIds(value: unknown, fallbackPrimary = ''): string[] {
   }
   const primary = fallbackPrimary.trim()
   return primary ? [primary] : []
-}
-
-function formatSponsorManagerDisplayLine(contact: {
-  name: string
-  phone?: string | null
-  position?: string | null
-}): string {
-  return [contact.position ? `${contact.position} ${contact.name}` : contact.name, contact.phone]
-    .filter(Boolean)
-    .join(' | ')
 }
 
 function ProgramRegistrationBasicInfoSponsorFieldsInner({
@@ -195,6 +186,28 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     sponsorId,
   ])
 
+  const managerContactsReady = allowMultipleSponsors
+    ? sponsorIds.length === 0 ||
+      sponsorIds.every(id => multiSponsorContext.contactsBySponsorId[id] != null)
+    : isAllSponsor || singleContactsQuery.isSuccess
+
+  // 담당자 API 로드 후 옵션에 없는 overlay 값(이전 mock id 등)만 선택 해제
+  useEffect(() => {
+    if (!managerContactsReady || !managerContactId) return
+    if (isAllSponsor && managerContactId === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE) return
+    const optionValues = new Set(managerOptions.map(option => option.value))
+    if (optionValues.has(managerContactId)) return
+    setManagerContactId(
+      isAllSponsor ? TRAINED_TEACHERS_REGISTRATION_ALL_VALUE : ''
+    )
+  }, [
+    isAllSponsor,
+    managerContactId,
+    managerContactsReady,
+    managerOptions,
+    setManagerContactId,
+  ])
+
   // contact ref → 표시용 `이름 | 연락처` (create 시 id::id 노출 방지)
   useEffect(() => {
     if (
@@ -215,14 +228,26 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
         c => c.id === decoded.contactId
       )
       patchProgramRegistrationOverlay({
-        [managerLineKey]: contact ? formatSponsorManagerDisplayLine(contact) : '',
+        [managerLineKey]: contact
+          ? formatSponsorManagerDisplayLine({
+              contactName: contact.name,
+              position: contact.position,
+              phone: contact.phone,
+            })
+          : '',
       })
       return
     }
 
     const contact = (singleContactsQuery.data ?? []).find(c => c.id === managerContactId)
     patchProgramRegistrationOverlay({
-      [managerLineKey]: contact ? formatSponsorManagerDisplayLine(contact) : '',
+      [managerLineKey]: contact
+        ? formatSponsorManagerDisplayLine({
+            contactName: contact.name,
+            position: contact.position,
+            phone: contact.phone,
+          })
+        : '',
     })
   }, [
     allowMultipleSponsors,
@@ -283,6 +308,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
         edit={
           <div className="detail-info-form-inputs-wrapper-no-gap">
             <CmsSelect
+              withAllOption={false}
               inputSize="medium"
               placeholder="후원사 담당자를 선택하세요"
               width={240}

@@ -1,5 +1,5 @@
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
   formatAccountDisplayContent,
   HomeAddressDisplay,
@@ -61,12 +61,12 @@ export function buildGeminiApprovedManagerTableItems(
     {
       key: 'contact',
       label: '연락처',
-      children: contact ? (mask ? MASKING_POLICY.phone(contact) : contact) : '-',
+      children: displayServerPiiAsIs(contact),
     },
     {
       key: 'email',
       label: '이메일',
-      children: email ? (mask ? MASKING_POLICY.email(email) : email) : '-',
+      children: displayServerPiiAsIs(email),
     },
     {
       key: 'affiliation',

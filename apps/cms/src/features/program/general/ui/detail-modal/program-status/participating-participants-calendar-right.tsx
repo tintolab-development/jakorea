@@ -8,7 +8,7 @@ import type { ParticipatingIndividualParticipantCalendarEvent } from '@/features
 import { formatInstitutionCalendarSessionTimeDisplay } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-calendar-session'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
-import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import {
   ParticipatingParticipantCalendarListItem,
   type ParticipatingParticipantCalendarListRow,

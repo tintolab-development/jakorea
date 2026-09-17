@@ -30,15 +30,16 @@ export async function fetchDetailedProgramRemote(
 export async function createDetailedProgramRemote(
   body: DetailedProgramRequest
 ): Promise<DetailedProgramResponse> {
-  // POST /api/admin/detailed-programs (Orval create8 — material-kits create7과 혼동 금지)
-  return unwrapApiBody(await dmApi.create8(body))
+  // POST /api/admin/detailed-programs (Orval create10 — material-kits create9과 혼동 금지)
+  return unwrapApiBody(await dmApi.create10(body))
 }
 
 export async function updateDetailedProgramRemote(
   id: number,
   body: DetailedProgramRequest
 ): Promise<DetailedProgramResponse> {
-  return unwrapApiBody(await dmApi.update5(id, body))
+  // PATCH /api/admin/detailed-programs/{id} (Orval update6 — material-kits update5와 혼동 금지)
+  return unwrapApiBody(await dmApi.update6(id, body))
 }
 
 export async function deleteDetailedProgramRemote(id: number): Promise<void> {

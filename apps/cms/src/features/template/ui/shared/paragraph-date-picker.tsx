@@ -153,12 +153,12 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
    */
   showPeriodToggle?: boolean
   /**
-   * true면 「시간」 토글을 ON으로 고정하고 비활성. `showTimeToggle`이 false면 무시.
+   * true면 「시간」을 ON으로 고정하고 조작 불가 토글은 숨김. `showTimeToggle`이 false면 무시.
    * 기본 false — 다른 피커는 기존처럼 토글을 조작할 수 있음.
    */
   lockTimeToggleOn?: boolean
   /**
-   * true면 「기간」 토글을 ON으로 고정하고 비활성. 푸터에 기간 토글을 강제 노출.
+   * true면 「기간」을 ON으로 고정하고 조작 불가 토글은 숨김.
    * `showPeriodToggle`이 false면 무시.
    * 기본 false.
    */

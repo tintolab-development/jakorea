@@ -1,11 +1,16 @@
 /**
- * Admin typed ProgramResponse.lifecycleStatus — 목록·상세 상단 위젯 SSOT.
- * serviceDetailJson / periodStatus 로 위젯·테이블을 채우지 않는다.
+ * Admin typed ProgramResponse.lifecycleStatus — 테이블「프로그램 진행 현황」SSOT.
+ * 목록 4카드 건수는 `periodStatus` 필터 totalElements (이 모듈과 별축).
+ * BE는 periodStatus↔lifecycleStatus를 동일 UI 버킷으로 맞춤.
+ * `periodStatus=RECRUITING`은 예정 별칭이며 참여자 모집(`recruitmentStatus`)이 아님.
+ *
+ * 진행현황 UI는 제품 규칙 3상태만 노출한다.
+ * recruiting_students 는 「모집 중」이 아니라 「프로그램 진행 예정」버킷.
  */
 
 import type { ProgramLifecycleStatus } from '@/types/domain'
 
-/** BE typed 어휘 (일반 Primary · 1사1교 ONE) */
+/** BE typed 어휘 (일반 Primary · 1사1교 ONE) — API 필드는 4종 유지 */
 export const TYPED_PROGRAM_LIFECYCLE_STATUSES = [
   'scheduled',
   'recruiting_students',
@@ -15,19 +20,37 @@ export const TYPED_PROGRAM_LIFECYCLE_STATUSES = [
 
 export type TypedProgramLifecycleStatus = (typeof TYPED_PROGRAM_LIFECYCLE_STATUSES)[number]
 
-/** 테이블 「진행 현황」·상세 「프로그램 진행상태」 동일 라벨 (디자인 상태 태그 SSOT) */
+/** 목록「진행 현황」·상세「프로그램 진행상태」공통 UI 버킷 (3상태) */
+export type ProgramProgressUiBucket = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED'
+
+const PROGRAM_PROGRESS_UI_BUCKET_LABELS: Record<ProgramProgressUiBucket, string> = {
+  SCHEDULED: '프로그램 진행 예정',
+  IN_PROGRESS: '프로그램 진행 중',
+  COMPLETED: '프로그램 진행 완료',
+}
+
+const PROGRAM_PROGRESS_UI_BUCKET_COLORS: Record<ProgramProgressUiBucket, string> = {
+  SCHEDULED: 'var(--color-green, #1E8C29)',
+  IN_PROGRESS: 'var(--color-blue, #017EAF)',
+  COMPLETED: 'var(--default-BK, #3D3D3D)',
+}
+
+/**
+ * typed API 값 → 표시 라벨.
+ * recruiting_students 는 진행 예정과 동일 문구 (모집 중 단독 노출 금지).
+ */
 export const TYPED_PROGRAM_LIFECYCLE_LABELS: Record<TypedProgramLifecycleStatus, string> = {
-  scheduled: '프로그램 진행 예정',
-  recruiting_students: '참여 기관 모집 중',
-  in_progress: '프로그램 진행 중',
-  completed: '프로그램 진행 완료',
+  scheduled: PROGRAM_PROGRESS_UI_BUCKET_LABELS.SCHEDULED,
+  recruiting_students: PROGRAM_PROGRESS_UI_BUCKET_LABELS.SCHEDULED,
+  in_progress: PROGRAM_PROGRESS_UI_BUCKET_LABELS.IN_PROGRESS,
+  completed: PROGRAM_PROGRESS_UI_BUCKET_LABELS.COMPLETED,
 }
 
 export const TYPED_PROGRAM_LIFECYCLE_COLORS: Record<TypedProgramLifecycleStatus, string> = {
-  scheduled: 'var(--color-green, #1E8C29)',
-  recruiting_students: 'var(--color-orange, #f07917)',
-  in_progress: 'var(--color-blue, #017EAF)',
-  completed: 'var(--default-BK, #3D3D3D)',
+  scheduled: PROGRAM_PROGRESS_UI_BUCKET_COLORS.SCHEDULED,
+  recruiting_students: PROGRAM_PROGRESS_UI_BUCKET_COLORS.SCHEDULED,
+  in_progress: PROGRAM_PROGRESS_UI_BUCKET_COLORS.IN_PROGRESS,
+  completed: PROGRAM_PROGRESS_UI_BUCKET_COLORS.COMPLETED,
 }
 
 const TYPED_SET = new Set<string>(TYPED_PROGRAM_LIFECYCLE_STATUSES)
@@ -104,31 +127,49 @@ export function toTypedProgramLifecycleStatus(
   return normalizeTypedProgramLifecycleStatus(raw) as ProgramLifecycleStatus | undefined
 }
 
+/**
+ * lifecycleStatus → UI 3버킷.
+ * scheduled + recruiting_students (+ null/미지) → SCHEDULED
+ */
+export function getProgramProgressUiBucket(
+  status: ProgramLifecycleStatus | string | null | undefined
+): ProgramProgressUiBucket {
+  const typed = normalizeTypedProgramLifecycleStatus(status)
+  if (typed === 'in_progress') return 'IN_PROGRESS'
+  if (typed === 'completed') return 'COMPLETED'
+  return 'SCHEDULED'
+}
+
+/** 목록·상세 진행현황 공통 라벨 (3상태만) */
+export function getProgramProgressUiLabel(
+  status: ProgramLifecycleStatus | string | null | undefined
+): string {
+  return PROGRAM_PROGRESS_UI_BUCKET_LABELS[getProgramProgressUiBucket(status)]
+}
+
 export function getTypedProgramLifecycleLabel(
   status: ProgramLifecycleStatus | string | null | undefined
 ): string {
-  const typed = normalizeTypedProgramLifecycleStatus(status)
-  if (!typed) return status ? String(status) : '-'
-  return TYPED_PROGRAM_LIFECYCLE_LABELS[typed]
+  return getProgramProgressUiLabel(status)
 }
 
 export function getTypedProgramLifecycleDisplay(
   status: ProgramLifecycleStatus | string | null | undefined
 ): { status: TypedProgramLifecycleStatus | null; label: string; color: string } {
   const typed = normalizeTypedProgramLifecycleStatus(status) ?? null
-  if (!typed) {
-    return { status: null, label: status ? String(status) : '-', color: 'var(--default-BK, #3D3D3D)' }
-  }
+  const bucket = getProgramProgressUiBucket(status)
   return {
     status: typed,
-    label: TYPED_PROGRAM_LIFECYCLE_LABELS[typed],
-    color: TYPED_PROGRAM_LIFECYCLE_COLORS[typed],
+    label: PROGRAM_PROGRESS_UI_BUCKET_LABELS[bucket],
+    color: PROGRAM_PROGRESS_UI_BUCKET_COLORS[bucket],
   }
 }
 
 export function isTypedProgramLifecycleStatus(
   value: string | null | undefined
 ): value is TypedProgramLifecycleStatus {
-  return normalizeTypedProgramLifecycleStatus(value) != null &&
+  return (
+    normalizeTypedProgramLifecycleStatus(value) != null &&
     TYPED_SET.has(String(value).trim().toLowerCase())
+  )
 }

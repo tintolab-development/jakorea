@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import {
   resolveSecondInterviewScreeningPopoverLabel,
   resolveSecondInterviewScreeningTone,

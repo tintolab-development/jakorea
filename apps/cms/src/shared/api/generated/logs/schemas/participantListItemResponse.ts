@@ -5,6 +5,8 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { AssignmentInstructor } from './assignmentInstructor';
+import type { SessionProgress } from './sessionProgress';
 
 export interface ParticipantListItemResponse {
   participantId?: number;
@@ -14,6 +16,9 @@ export interface ParticipantListItemResponse {
   participantType?: string;
   sourceApplicationType?: string;
   sourceApplicationId?: number;
+  organizationApplicationId?: number;
+  organizationId?: number;
+  organizationName?: string;
   participantStatus?: string;
   completionStatus?: string;
   certificateStatus?: string;
@@ -21,4 +26,20 @@ export interface ParticipantListItemResponse {
   joinedAt?: string;
   completedAt?: string;
   giveUpAt?: string;
+  availableActions?: string[];
+  grade?: string;
+  regionSido?: string;
+  regionSigungu?: string;
+  className?: string;
+  studentNo?: number;
+  classCount?: number;
+  studentCount?: number;
+  teacherMemberId?: number;
+  teacherName?: string;
+  materialAssignmentStatus?: string;
+  sessions?: SessionProgress[];
+  assignmentInstructors?: AssignmentInstructor[];
+  mergeGroupId?: number;
+  mergeStatus?: string;
+  mergeLead?: boolean;
 }

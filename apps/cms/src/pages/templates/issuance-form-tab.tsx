@@ -88,8 +88,10 @@ import {
 import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-overlay'
 import { FormTemplateFullpageModal } from './form-template-fullpage-modal'
 import './form-test-single-item-fullpage-modal.css'
+import './template-form-tab.css'
 import { handleError } from '@/shared/utils/error-handler'
 import { useIssuanceFormSections } from '@/features/template/hooks/use-issuance-form-sections'
+import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
 import {
   findIssuanceTemplateRowById,
   LECTURE_REPORT_TEMPLATE_CODE,
@@ -149,8 +151,12 @@ type IssuanceFormTabQuery = {
 }
 
 export function IssuanceFormTab() {
-  const { sections: issuanceSections, isLoading: isIssuanceSectionsLoading } =
-    useIssuanceFormSections()
+  const {
+    sections: issuanceSections,
+    isLoading: isIssuanceSectionsLoading,
+    isMockCatalog,
+    isError: isIssuanceSectionsError,
+  } = useIssuanceFormSections()
   const reportSection = issuanceSections.find(section => section.key === 'issuance-report')
   const documentSection = issuanceSections.find(section => section.key === 'issuance-document')
   const {
@@ -166,6 +172,18 @@ export function IssuanceFormTab() {
   )
   const isPreviewOpen = params.mode === 'edit'
   const [selectedTemplate, setSelectedTemplate] = useState<IssuanceTemplateRow | null>(null)
+  const { displayName: issuanceModalTitle, commitTitle: commitIssuanceModalTitle } =
+    useFormTemplateModalTitle({
+      templateCode: selectedTemplate?.id,
+      initialName: selectedTemplate?.templateName ?? '발급 양식 미리보기',
+    })
+  const handleIssuanceTitleCommit = useCallback(
+    (nextTitle: string) => {
+      commitIssuanceModalTitle(nextTitle)
+      setSelectedTemplate(prev => (prev == null ? prev : { ...prev, templateName: nextTitle }))
+    },
+    [commitIssuanceModalTitle]
+  )
   const closeTemplatePreview = useCallback(() => {
     // URL보다 먼저 비워 일반/인증서 모달 전환 레이스·잔여 mask를 막음
     setSelectedTemplate(null)
@@ -703,6 +721,16 @@ export function IssuanceFormTab() {
       {isPreviewOpen && isLectureReportIssuance ? lectureReportPdfMeasureLayer : null}
       {isPreviewOpen && isUjatStructuredIssuance ? ujatStructuredPdfMeasureLayer : null}
       <div className="template-form-tab__content">
+        {isMockCatalog ? (
+          <p className="template-form-tab__catalog-notice" role="status">
+            mock 카탈로그 — 백엔드 API가 연결되지 않아 FE 시드 목록을 표시합니다.
+          </p>
+        ) : null}
+        {isIssuanceSectionsError ? (
+          <p className="template-form-tab__catalog-error" role="alert">
+            발급 양식 목록을 불러오지 못했습니다. 네트워크·권한을 확인한 뒤 새로고침해 주세요.
+          </p>
+        ) : null}
         {isIssuanceSectionsLoading ? (
           <p className="template-form-tab__loading">양식 목록을 불러오는 중입니다.</p>
         ) : (
@@ -739,10 +767,11 @@ export function IssuanceFormTab() {
         }
         open={isPreviewOpen && selectedTemplate != null && !isCertificateIssuance}
         onClose={closeTemplatePreview}
-        title={selectedTemplate?.templateName ?? '발급 양식 미리보기'}
+        title={issuanceModalTitle}
         description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
         templateTabType="issuance"
         onPreview={handleModalPreview}
+        onTitleCommit={handleIssuanceTitleCommit}
         onSave={
           isPaymentStatementIssuance
             ? paymentStatementVm.handleSave

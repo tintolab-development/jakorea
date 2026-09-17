@@ -10,8 +10,20 @@ export const generalProgramQueryKeys = {
   navigation: (programId: string) =>
     [...generalProgramQueryKeys.all, 'navigation', programId] as const,
   posts: (programId: string) => [...generalProgramQueryKeys.all, 'posts', programId] as const,
-  managers: (programId: string) =>
+  postDetail: (programId: string, postId: string) =>
+    [...generalProgramQueryKeys.all, 'posts', programId, 'detail', postId] as const,
+  postComments: (programId: string, postId: string) =>
+    [...generalProgramQueryKeys.all, 'posts', programId, 'comments', postId] as const,
+  postReactions: (programId: string, postId: string) =>
+    [...generalProgramQueryKeys.all, 'posts', programId, 'reactions', postId] as const,
+  postAttachments: (programId: string, postId: string) =>
+    [...generalProgramQueryKeys.all, 'posts', programId, 'attachments', postId] as const,
+  postFiles: (programId: string) =>
+    [...generalProgramQueryKeys.all, 'posts', programId, 'files'] as const,
+  managersRoot: (programId: string) =>
     [...generalProgramQueryKeys.all, 'managers', programId] as const,
+  managers: (programId: string, filtersKey = '') =>
+    [...generalProgramQueryKeys.managersRoot(programId), filtersKey] as const,
   managerCandidates: () => [...generalProgramQueryKeys.all, 'manager-candidates'] as const,
   surveys: (programId: string) => [...generalProgramQueryKeys.all, 'surveys', programId] as const,
   formBindings: (programId: string) =>

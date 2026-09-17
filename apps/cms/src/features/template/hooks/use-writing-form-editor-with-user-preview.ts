@@ -282,7 +282,7 @@ export function useWritingFormEditorWithUserPreview(
       } catch (error) {
         console.debug('writingFormEditor save failed', error)
         if (isTemplateManagementSave) {
-          showSaveFailure()
+          showSaveFailure(error)
         }
       }
     })()

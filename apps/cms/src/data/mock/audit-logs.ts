@@ -83,7 +83,11 @@ function createAuditLogs(): AuditLog[] {
         case 'PERMISSION_REQUESTED':
         case 'PERMISSION_APPROVED':
         case 'PERMISSION_REJECTED': {
-          const program = mockPrograms[Math.floor(Math.random() * mockPrograms.length)]
+          const program =
+            mockPrograms.length > 0
+              ? mockPrograms[Math.floor(Math.random() * mockPrograms.length)]
+              : undefined
+          if (!program) break
           targetId = program.id
           targetType = 'program'
           targetName = program.title
@@ -99,7 +103,11 @@ function createAuditLogs(): AuditLog[] {
         }
 
         case 'DOWNLOAD': {
-          const program = mockPrograms[Math.floor(Math.random() * mockPrograms.length)]
+          const program =
+            mockPrograms.length > 0
+              ? mockPrograms[Math.floor(Math.random() * mockPrograms.length)]
+              : undefined
+          if (!program) break
           targetId = program.id
           targetType = 'program'
           targetName = program.title

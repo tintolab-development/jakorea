@@ -8,6 +8,8 @@ import { buildLocalDuplicateWritingTemplateCode } from '@/features/template/lib/
 export interface DuplicateWritingTemplateParams {
   sourceTemplateId: string
   category: WritingTemplateCategory
+  /** 동명 회피용 표시명 — 원격 복제 후 PATCH */
+  templateName?: string
 }
 
 export interface DuplicateWritingTemplateResult {
@@ -25,6 +27,7 @@ export async function duplicateWritingTemplate(
     try {
       const newTemplateId = await duplicateFormTemplateVersionRemote({
         sourceTemplateCode: params.sourceTemplateId,
+        templateName: params.templateName,
       })
       return { newTemplateId }
     } catch (error) {

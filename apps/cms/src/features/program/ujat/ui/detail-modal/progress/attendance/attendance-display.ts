@@ -1,4 +1,4 @@
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
   UJAT_ATTENDANCE_STATUS_LABEL,
   type UjatAttendanceStatus,
@@ -29,11 +29,11 @@ export function formatAttendanceRemarks(row: Pick<
 }
 
 export function maskAttendanceContact(contact: string): string {
-  return MASKING_POLICY.phone(contact) || contact
+  return displayServerPiiAsIs(contact)
 }
 
 export function maskAttendanceEmail(email: string): string {
-  return MASKING_POLICY.email(email) || email
+  return displayServerPiiAsIs(email)
 }
 
 export function attendanceStatusLabel(status: UjatAttendanceStatus): string {

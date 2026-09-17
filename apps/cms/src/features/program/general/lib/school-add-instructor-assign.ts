@@ -5,12 +5,12 @@
 import {
   getApplicantInstructorsByProgramId,
   type ApplicantInstructorRow,
-} from '@/data/mock/applicant-instructors'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+} from '@/features/program/shared/model/applicant-instructor'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
-} from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/participating-schools'
 import type { InstructorAssignSessionOption } from './instructor-assign-session-options'
 
 export interface SchoolAddInstructorAssignOption {
@@ -153,11 +153,6 @@ function isSessionDisabledForInstructor(params: {
   return false
 }
 
-function mockAssignedInstructorCount(sessionIndex: number, sessionRound: number): number {
-  const counts = [3, 3, 2, 3, 2, 1]
-  return counts[(sessionIndex + sessionRound) % counts.length]
-}
-
 /** 해당 프로그램에 승인된 강사만 선택 목록에 노출 (학교 신청 단위 아님) */
 export function buildProgramApprovedInstructorAssignOptions(
   programId: string,
@@ -199,7 +194,7 @@ export function buildSchoolAddInstructorAssignSessionOptions(params: {
 
   const applicantInstructors = getApplicantInstructorsByProgramId(programId)
 
-  return sessions.map((session, idx) => {
+  return sessions.map(session => {
     const dateLabel = formatScheduleDateLabel(session.date, session.dayOfWeek)
     const timeLabel = normalizeTimeRangeDisplay(session.timeRange)
     const dateKey = parseSessionDateKey(session.date)
@@ -222,7 +217,7 @@ export function buildSchoolAddInstructorAssignSessionOptions(params: {
       timeLabel,
       scheduleLabel: `${dateLabel} ${timeLabel}`,
       sessionRoundLabel: `${session.round}차시`,
-      capacityLabel: `${mockAssignedInstructorCount(idx, session.round)}명`,
+      capacityLabel: '0명',
       dateKey: dateKey ?? undefined,
       slotKey,
       disabled,

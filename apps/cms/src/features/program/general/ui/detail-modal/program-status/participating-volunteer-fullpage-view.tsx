@@ -6,12 +6,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
+import { MESSAGES } from '@/shared/constants/messages'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
+import {
+  buildProgramApiUnavailableSaveContent,
+  PROGRAM_API_UNAVAILABLE_TITLE,
+} from '@/features/program/shared/lib/program-api-unavailable'
 import {
   applyParticipatingVolunteerActivityWithdraw,
   getParticipatingVolunteerActivityWithdrawScheduleOptions,
@@ -164,11 +171,41 @@ export function ParticipatingVolunteerFullpageView({
     setAdminCommentModalOpen(true)
   }, [savedAdminComment])
 
-  const handleAdminCommentSave = useCallback(() => {
-    setSavedAdminComment(adminCommentDraft.trim())
-    setAdminCommentModalOpen(false)
-    setAdminCommentError(undefined)
-  }, [adminCommentDraft])
+  const handleAdminCommentSave = useCallback(async () => {
+    const trimmed = adminCommentDraft.trim()
+    if (shouldUseGeneralApplicationsRemoteApi()) {
+      const targetId = Number(mergedVolunteer.id)
+      if (!Number.isFinite(targetId)) {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+      try {
+        const result = await upsertAdminCommentByTargetRemote({
+          targetType: 'VOLUNTEER_APPLICATION',
+          targetId,
+          screenCode: 'VOLUNTEER_APPLICATION',
+          comment: trimmed,
+        })
+        setSavedAdminComment(result.commentText ?? '')
+        setAdminCommentModalOpen(false)
+        setAdminCommentError(undefined)
+        return
+      } catch {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+    }
+    void showAlert({
+      title: PROGRAM_API_UNAVAILABLE_TITLE,
+      content: buildProgramApiUnavailableSaveContent('참여 봉사자 관리자 코멘트'),
+    })
+  }, [adminCommentDraft, mergedVolunteer.id, showAlert])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)

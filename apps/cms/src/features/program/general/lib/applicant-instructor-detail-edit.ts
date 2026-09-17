@@ -2,7 +2,7 @@ import { z } from 'zod'
 import type {
   ApplicantInstructorDetailSavePayload,
   ApplicantInstructorRow,
-} from '@/data/mock/applicant-instructors'
+} from '@/features/program/shared/model/applicant-instructor'
 import {
   buildLectureFeeBasisDisplay,
   parseBusinessIncomeStatus,

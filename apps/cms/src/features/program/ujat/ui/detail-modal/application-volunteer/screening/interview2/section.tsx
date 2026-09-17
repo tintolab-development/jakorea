@@ -1,25 +1,23 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { buildUjatVolunteerInterview2FilterRows } from './filter-fields'
 import { useUjatVolunteerInterview2 } from './use-list'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import { UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
-import {
-  useApplicantDetail,
-  type ApplicantDetailMetaChangeHandler,
-} from '../applicant/use-detail'
+import { useApplicantDetail, type ApplicantDetailMetaChangeHandler } from '../applicant/use-detail'
 import { ApplicantDetailView } from '../applicant/detail-view'
 import { UjatVolunteerInterviewEvaluationModal } from '../interview-assign/evaluation-modal'
 import { UjatVolunteerInterview2BulkPassModal } from './bulk-pass-modal'
 import { UjatVolunteerInterview2CalendarView } from './calendar-view'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import { UJAT_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X } from './columns'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import './section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
 
@@ -75,7 +73,17 @@ export function Interview2Section({
     closeEvaluationModal,
     evaluationTarget,
     saveInterviewEvaluation,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    infiniteScrollResetKey,
   } = useUjatVolunteerInterview2({ programId, half })
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: infiniteScrollResetKey,
+  })
 
   const { selectedApplicant, openApplicantDetail } = useApplicantDetail({
     programId,
@@ -98,10 +106,12 @@ export function Interview2Section({
 
   const activityWithdrawScheduleOptions = useMemo(
     () =>
-      UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES.filter(entry => entry.semester === half).map(entry => ({
-        value: entry.isoDate,
-        label: entry.title,
-      })),
+      UJAT_INSTITUTION_SCHEDULE_ASSIGN_DATES.filter(entry => entry.semester === half).map(
+        entry => ({
+          value: entry.isoDate,
+          label: entry.title,
+        })
+      ),
     [half]
   )
 
@@ -325,6 +335,9 @@ export function Interview2Section({
             />
           </div>
         )}
+        <div ref={loadMoreRef} aria-hidden={!isFetchingNextPage} style={{ minHeight: 1 }}>
+          {isFetchingNextPage ? <Spin size="small" /> : null}
+        </div>
       </FilterTableLayout>
     </div>
   )

@@ -1,0 +1,32 @@
+.agreement-notice-subject-fill-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.agreement-notice-subject-fill-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.agreement-notice-subject-fill-field__label {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 96px;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.agreement-notice-subject-fill-field__bullet {
+  margin-right: 4px;
+}
+
+.agreement-notice-subject-fill-field__control {
+  flex: 1 1 auto;
+  min-width: 0;
+}

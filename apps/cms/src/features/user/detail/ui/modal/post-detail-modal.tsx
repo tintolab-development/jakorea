@@ -32,6 +32,8 @@ import {
 import { downloadFile } from '@/shared/lib/file-download'
 import { PostReadStatusPopoverContent } from '../post-read-status-popover'
 import { formatProgramPostAudienceBadgeLabel } from '../../lib/post-audience-display'
+import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
+import { useGeneralProgramPostDetail } from '@/features/program/general/hooks/use-general-program-posts-surveys'
 import './post-detail-modal.css'
 
 function formatKoDate(date: string | Date): string {
@@ -122,32 +124,57 @@ export function PostDetailModal({
   const [commentsVersion, setCommentsVersion] = useState(0)
   const [reactionsVersion, setReactionsVersion] = useState(0)
 
+  const remoteEnabled = shouldUseGeneralProgramsRemoteApi()
+  const remoteDetail = useGeneralProgramPostDetail(
+    post?.programId,
+    post?.id,
+    open && remoteEnabled && Boolean(post?.id)
+  )
+  const useRemote = remoteEnabled
+
+  const displayPost = (useRemote && remoteDetail.post) || post
+  const displayFiles =
+    useRemote && remoteDetail.files.length > 0
+      ? remoteDetail.files
+      : files
+
   const comments = useMemo(
-    () => (post ? getCommentsByPostId(post.id) : []),
-    [post?.id, commentsVersion]
+    () => {
+      if (useRemote) return remoteDetail.comments
+      return post ? getCommentsByPostId(post.id) : []
+    },
+    [post?.id, commentsVersion, remoteDetail.comments, useRemote]
   )
   const reactions = useMemo(
-    () =>
-      post
+    () => {
+      if (useRemote) return remoteDetail.reactions
+      return post
         ? getReactionsByPostId(post.id).sort((a, b) => b.count - a.count)
-        : [],
-    [post?.id, reactionsVersion]
+        : []
+    },
+    [post?.id, reactionsVersion, remoteDetail.reactions, useRemote]
   )
   const reactionTotalCount = useMemo(
-    () => (post ? getReactionTotalCountByPostId(post.id) : 0),
-    [post?.id, reactionsVersion]
+    () => {
+      if (useRemote) return remoteDetail.reactionTotalCount
+      return post ? getReactionTotalCountByPostId(post.id) : 0
+    },
+    [post?.id, reactionsVersion, remoteDetail.reactionTotalCount, useRemote]
   )
   const viewReadCount = useMemo(
-    () => (post ? getPostViewCountByPostId(post.id) : 0),
-    [post?.id]
+    () => {
+      if (useRemote && displayPost) return displayPost.viewCount
+      return post ? getPostViewCountByPostId(post.id) : 0
+    },
+    [displayPost, post?.id, useRemote]
   )
   const reactionUsers = useMemo(
-    () => (post ? getReactionUsersByPostId(post.id) : []),
-    [post?.id, reactionsVersion]
+    () => (useRemote || !post ? [] : getReactionUsersByPostId(post.id)),
+    [post?.id, reactionsVersion, useRemote]
   )
   useEffect(() => {
-    if (open && post) markPostAsRead(post.id)
-  }, [open, post?.id])
+    if (open && post && !useRemote) markPostAsRead(post.id)
+  }, [open, post?.id, useRemote])
 
   useEffect(() => {
     if (!open) {
@@ -177,6 +204,10 @@ export function PostDetailModal({
 
   const handleRemoveOwnReaction = (reactionUserId: string) => {
     if (!post) return
+    if (useRemote) {
+      void remoteDetail.removeReaction().then(() => onPostStatsChanged?.())
+      return
+    }
     const ok = removeProgramPostReactionUser(post.id, reactionUserId)
     if (!ok) return
     setReactionsVersion(v => v + 1)
@@ -192,6 +223,22 @@ export function PostDetailModal({
     }
     const emojiType =
       selectedEmojiIndex != null ? getReactionEmojiTypeForBarIndex(selectedEmojiIndex) : undefined
+
+    if (useRemote) {
+      void (async () => {
+        if (emojiType) {
+          await remoteDetail.putReaction(emojiType)
+        }
+        if (trimmed) {
+          await remoteDetail.createComment(trimmed)
+        }
+        setCommentInput('')
+        setSelectedEmojiIndex(null)
+        onPostStatsChanged?.()
+      })()
+      return
+    }
+
     if (!trimmed && emojiType) {
       addProgramPostReaction(post.id, commentAuthorName ?? '나', emojiType, {
         roleLabel: viewerRoleLabel,
@@ -213,14 +260,14 @@ export function PostDetailModal({
     onPostStatsChanged?.()
   }
 
-  if (!post) return null
+  if (!displayPost) return null
 
-  const dateStr = formatKoDate(post.publishedAt)
+  const dateStr = formatKoDate(displayPost.publishedAt)
   const postTypeLabel =
-    post.postType === 'notice' ? '[공지사항]' :
-    post.postType === 'schedule' ? '[일정 알림]' :
+    displayPost.postType === 'notice' ? '[공지사항]' :
+    displayPost.postType === 'schedule' ? '[일정 알림]' :
     null
-  const audienceBadgeLabel = formatProgramPostAudienceBadgeLabel(post.audience)
+  const audienceBadgeLabel = formatProgramPostAudienceBadgeLabel(displayPost.audience)
 
   return (
     <ContentModal
@@ -245,7 +292,7 @@ export function PostDetailModal({
                 <div className="post-detail-modal__card-header-main">
                   <ProfileAvatarIcon className="post-detail-modal__avatar" />
                   <div className="post-detail-modal__author-info">
-                    <span className="post-detail-modal__author-name">{post.authorName}</span>
+                    <span className="post-detail-modal__author-name">{displayPost.authorName}</span>
                     <div className="post-detail-modal__author-meta">
                     <span className="post-detail-modal__date">{dateStr}</span>
                     <span className="post-detail-modal__meta-divider">|</span>
@@ -261,11 +308,11 @@ export function PostDetailModal({
                         trigger.closest('.post-detail-modal__card') ?? document.body
                       }
                       content={
-                        post ? (
+                        displayPost ? (
                           <PostReadStatusPopoverContent
-                            postId={post.id}
-                            programId={post.programId}
-                            postSchoolId={post.schoolId}
+                            postId={displayPost.id}
+                            programId={displayPost.programId}
+                            postSchoolId={displayPost.schoolId}
                           />
                         ) : null
                       }
@@ -306,7 +353,7 @@ export function PostDetailModal({
                       </button>
                     </Popover>
                     <span className="post-detail-modal__meta-item">
-                      <CommentIcon /> {post.commentCount}
+                      <CommentIcon /> {useRemote ? comments.length : displayPost.commentCount}
                     </span>
                   </div>
                 </div>
@@ -318,11 +365,11 @@ export function PostDetailModal({
                 {postTypeLabel && (
                   <span className="post-detail-modal__type-tag">{postTypeLabel}</span>
                 )}
-                {post.content}
+                {displayPost.content}
               </div>
 
               <AttachmentDownloadList
-                items={files.map(file => ({
+                items={displayFiles.map(file => ({
                   id: file.id,
                   fileName: file.fileName,
                   fileUrl: file.fileUrl,

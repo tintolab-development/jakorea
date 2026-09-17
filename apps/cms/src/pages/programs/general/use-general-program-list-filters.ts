@@ -106,14 +106,17 @@ export function useGeneralProgramListFilters() {
     retry: false,
   })
 
-  const filteredPrograms = useMemo(() => {
+  const remotePrograms = useMemo(() => {
     if (!remoteEnabled) return []
     return remoteListQuery.data?.pages.flatMap(page => page.programs) ?? []
   }, [remoteEnabled, remoteListQuery.data])
 
-  const totalElements = remoteEnabled
-    ? (remoteListQuery.data?.pages[0]?.totalElements ?? filteredPrograms.length)
-    : 0
+  const filteredPrograms = remotePrograms
+
+  const totalElements = useMemo(() => {
+    if (!remoteEnabled) return 0
+    return remoteListQuery.data?.pages[0]?.totalElements ?? remotePrograms.length
+  }, [remoteEnabled, remoteListQuery.data, remotePrograms.length])
 
   const refetchPrograms = useCallback(() => {
     if (!remoteEnabled) return

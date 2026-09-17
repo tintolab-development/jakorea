@@ -2,8 +2,8 @@
  * 정산 관리 > 정산 항목 설정 — 임금 / 지급 / 공제 카테고리 카드 목록
  */
 
-import { useCallback, useMemo, useState } from 'react'
-import { Dropdown, Spin } from 'antd'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { App, Dropdown, Spin } from 'antd'
 import type { MenuProps } from 'antd'
 import {
   getSettlementItemSettingDetail,
@@ -53,6 +53,7 @@ export default function SettlementItemSettingsPage() {
   const configQuery = useSettlementConfigQuery(settlementConfigsRemote)
   const sectionsQuery = useSettlementConfigSectionsQuery(settlementConfigsRemote)
   const { showAlert } = useCmsAlert()
+  const { message } = App.useApp()
 
   const updateItemMutation = useUpdateSettlementConfigItemMutation()
   const duplicatePaymentMutation = useDuplicateSettlementConfigPaymentItemMutation()
@@ -62,6 +63,8 @@ export default function SettlementItemSettingsPage() {
     cloneSettlementSections(settlementItemSettingSections)
   )
   const [selectedItem, setSelectedItem] = useState<SettlementItemSettingRow | null>(null)
+  const [duplicatedItemId, setDuplicatedItemId] = useState<number | null>(null)
+  const notifiedDuplicatedItemIdRef = useRef<number | null>(null)
 
   const sections = useMemo(() => {
     if (settlementConfigsRemote) {
@@ -79,6 +82,13 @@ export default function SettlementItemSettingsPage() {
     }
     return map
   }, [sections])
+
+  useEffect(() => {
+    if (duplicatedItemId == null || !itemById.has(`p-${duplicatedItemId}`)) return
+    if (notifiedDuplicatedItemIdRef.current === duplicatedItemId) return
+    notifiedDuplicatedItemIdRef.current = duplicatedItemId
+    void message.success('지급 항목이 복제되었습니다.')
+  }, [duplicatedItemId, itemById, message])
 
   const deleteItem = useCallback(
     (sectionKind: SettlementItemSettingCategoryKind, item: SettlementItemSettingRow) => {
@@ -123,14 +133,28 @@ export default function SettlementItemSettingsPage() {
           })
           return
         }
-        duplicatePaymentMutation.mutate(item.apiItemId, {
-          onError: error => {
-            void showAlert({
-              title: '복제 실패',
-              content: resolveSettlementConfigMutationError(error),
-            })
-          },
-        })
+        const currentConfig = configQuery.data?.config
+        if (!currentConfig) {
+          void showAlert({
+            title: '복제 실패',
+            content: '현재 정산 설정을 확인할 수 없습니다.',
+          })
+          return
+        }
+        duplicatePaymentMutation.mutate(
+          { itemId: item.apiItemId, currentConfig },
+          {
+            onSuccess: ({ duplicatedItemId: newItemId }) => {
+              setDuplicatedItemId(newItemId)
+            },
+            onError: error => {
+              void showAlert({
+                title: '복제 실패',
+                content: resolveSettlementConfigMutationError(error),
+              })
+            },
+          }
+        )
         return
       }
       const newId = `${item.id}__dup__${Date.now()}`
@@ -143,7 +167,7 @@ export default function SettlementItemSettingsPage() {
         )
       )
     },
-    [duplicatePaymentMutation, settlementConfigsRemote, showAlert]
+    [configQuery.data?.config, duplicatePaymentMutation, settlementConfigsRemote, showAlert]
   )
 
   const isLoading = settlementConfigsRemote && configQuery.isLoading

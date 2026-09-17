@@ -12,19 +12,17 @@ function resolveAdminPermissionPhrase(variant: AdminPermissionTagVariant | undef
 }
 
 function buildSingleApprovedDescription(
-  userDisplayName: string,
   permissionKind: PermissionApproveModalKind,
   approvedPermissionVariant?: AdminPermissionTagVariant
 ): string {
-  const name = userDisplayName.trim() || '회원'
   const isAdmin = permissionKind === 'admin'
 
   if (isAdmin) {
     const adminPermissionPhrase = resolveAdminPermissionPhrase(approvedPermissionVariant)
-    return `**[${name}]** 님의 관리자 권한을 승인하였습니다.\n${name} 님은 지금부터 **${adminPermissionPhrase}**으로 JA 관리자 활동이 가능합니다.`
+    return `관리자 권한이 승인되었습니다.\n승인된 회원은 지금부터 **${adminPermissionPhrase}**으로 JA 관리자 활동이 가능합니다.`
   }
 
-  return `**[${name}]** 님의 강사 권한을 승인하였습니다.\n${name} 님은 지금부터 JA 강사단 소속으로 강사 활동이 가능합니다.\n(JA 강사단 및 제미나이 강사단은 프로그램에 따라 특강 강사로도 활동이 가능합니다.)`
+  return `강사 권한이 승인되었습니다.\n승인된 회원은 지금부터 JA 프로그램의 강사 활동이 가능합니다.`
 }
 
 function buildBulkApprovedDescription(
@@ -75,16 +73,8 @@ export function InstructorPermissionApprovedCompleteModal(
 
   const description =
     variant === 'single'
-      ? buildSingleApprovedDescription(
-          props.userDisplayName,
-          permissionKind,
-          approvedPermissionVariant
-        )
-      : buildBulkApprovedDescription(
-          props.memberCount,
-          permissionKind,
-          approvedPermissionVariant
-        )
+      ? buildSingleApprovedDescription(permissionKind, approvedPermissionVariant)
+      : buildBulkApprovedDescription(props.memberCount, permissionKind, approvedPermissionVariant)
 
   return (
     <ContentModal

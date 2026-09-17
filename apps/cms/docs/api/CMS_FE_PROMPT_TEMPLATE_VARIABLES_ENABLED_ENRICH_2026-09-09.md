@@ -44,7 +44,6 @@ FE 쪽 잔여 작업 체크리스트(§2 OpenAPI·§3 QA)를 쓰는 경우:
 4. §3 UI 체크리스트는 로컬 시드 `164003` / `1799401` 로 수동 검증
 
 BE SSOT 프롬프트 파일명: 이 문서.  
-(FE 레포에서 `CMS_FE_PROMPT_NOTIFICATION_TEMPLATE_VARIABLES_ENABLED_2026-09-09.md` 로 복사해도 동일 내용.)
 
 ---
 

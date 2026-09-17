@@ -2,9 +2,9 @@ import type { CreateUserRequest } from '@/entities/user/api/user-service'
 import type {
   AdminPreRegisterIndividualRequest,
   AdminPreRegisterInstructorRequest,
-  AdminPreRegisterSchoolRequest,
   SchoolOrganizationUpsertRequest,
 } from '@/shared/api/generated/members/schemas'
+import type { AdminPreRegisterSchoolRequest } from '@/shared/api/generated/members/schemas/adminPreRegisterSchoolRequest'
 import type { PortalSchoolSelectionRequest } from '@/shared/api/generated/members/schemas/portalSchoolSelectionRequest'
 import type { AdminPreRegisterMemberRequest } from '@/shared/api/generated/members/schemas/adminPreRegisterMemberRequest'
 import { resolveNeisEducationOfficeCode } from '@/features/user/api/neis-education-office-code'

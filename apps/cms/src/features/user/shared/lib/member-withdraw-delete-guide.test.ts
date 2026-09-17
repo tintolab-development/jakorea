@@ -29,18 +29,18 @@ describe('member-withdraw-delete-guide', () => {
 
   it('buildSelfWithdrawMessageLines — 프로필 본인 탈퇴 문구', () => {
     const lines = buildSelfWithdrawMessageLines()
-    expect(lines[0]).toContain('JA KOREA 서비스에서 탈퇴')
+    expect(lines[0]).toContain('JA KOREA 서비스를 탈퇴')
     expect(lines).toHaveLength(3)
   })
 
   it('buildMemberListDeleteGuideLines — 회원 단일', () => {
     const lines = buildMemberListDeleteGuideLines(['홍길동'], 'all')
-    expect(lines[0]).toBe('[홍길동] 회원을 삭제하시겠습니까?')
+    expect(lines[0]).toBe('[홍길동] 님을 삭제하시겠습니까?')
   })
 
   it('buildMemberListDeleteGuideLines — 회원 복수', () => {
-    const lines = buildMemberListDeleteGuideLines(['A', 'B', 'C'], 'all')
-    expect(lines[0]).toBe('선택한 3명의 회원을 삭제하시겠습니까?')
+    const lines = buildMemberListDeleteGuideLines(['김틴토', 'B', 'C'], 'all')
+    expect(lines[0]).toBe('**[김틴토] 님 외 2명**을 삭제하시겠습니까?')
   })
 
   it('buildMemberListDeleteGuideLines — 학교 단일은 school delete와 동일', () => {
