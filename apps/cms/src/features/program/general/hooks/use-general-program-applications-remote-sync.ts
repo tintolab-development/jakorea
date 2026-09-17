@@ -8,6 +8,8 @@ import {
   bulkApproveGeneralOrganizationApplications,
   bulkRejectGeneralInstructorApplications,
   bulkRejectGeneralOrganizationApplications,
+  cancelGeneralInstructorApplicationApproval,
+  cancelGeneralInstructorApplicationRejection,
   cancelGeneralOrganizationApplicationApproval,
   cancelGeneralOrganizationApplicationRejection,
   fetchGeneralIndividualApplicationsPage,
@@ -16,7 +18,9 @@ import {
   rejectGeneralIndividualApplication,
   rejectGeneralInstructorApplication,
   rejectGeneralOrganizationApplication,
+  resendGeneralInstructorApplicationNotification,
   submitGeneralIndividualDocumentResult,
+  submitGeneralIndividualDocumentResultBulk,
 } from '@/features/program/general/api/admin-applications-service'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useApplicationsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
@@ -59,8 +63,7 @@ export function useGeneralProgramApplicationsRemoteSync({
       fetchGeneralOrganizationApplicationsPage(programId!, { page: pageParam }),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
-    enabled:
-      remoteEnabled && menu === 'institutions' && usesProgramInstitutionApplications,
+    enabled: remoteEnabled && menu === 'institutions' && usesProgramInstitutionApplications,
     staleTime: 30_000,
     retry: false,
   })
@@ -91,8 +94,7 @@ export function useGeneralProgramApplicationsRemoteSync({
       }),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
-    enabled:
-      individualRemoteEnabled && menu === 'individual-applications',
+    enabled: individualRemoteEnabled && menu === 'individual-applications',
     staleTime: 30_000,
     retry: false,
   })
@@ -168,9 +170,13 @@ export function useGeneralProgramApplicationsRemoteSync({
     rejectInstructor: rejectGeneralInstructorApplication,
     bulkApproveInstructor: bulkApproveGeneralInstructorApplications,
     bulkRejectInstructor: bulkRejectGeneralInstructorApplications,
+    cancelInstructorApproval: cancelGeneralInstructorApplicationApproval,
+    cancelInstructorRejection: cancelGeneralInstructorApplicationRejection,
+    resendInstructorNotification: resendGeneralInstructorApplicationNotification,
     approveIndividual: approveGeneralIndividualApplication,
     rejectIndividual: rejectGeneralIndividualApplication,
     submitIndividualDocumentResult: submitGeneralIndividualDocumentResult,
+    submitIndividualDocumentResultBulk: submitGeneralIndividualDocumentResultBulk,
     invalidateApplications,
     invalidateIndividualApplications,
   }

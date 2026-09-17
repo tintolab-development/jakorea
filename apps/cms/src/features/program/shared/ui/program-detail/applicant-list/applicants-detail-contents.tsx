@@ -6,20 +6,18 @@ import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert, type CmsButtonVariant } from '@/shared/ui'
 import { MESSAGES } from '@/shared/constants/messages'
-import {
-  type ApplicantSchoolRow,
-} from '@/features/program/shared/model/applicant-institution'
+import { type ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import { useApplicantInstitutionDetailEdit } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import { useOrganizationMergeGroups } from '@/features/program/general/hooks/use-organization-merge-groups'
 import { saveOrganizationCombinedClassRemote } from '@/features/program/general/api/organization-merge-groups-service'
 import { shouldUseOrganizationMergeGroupsRemoteApi } from '@/features/program/general/api/organization-merge-groups-remote-capabilities'
-import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import {
+  generalApplicationsQueryKeys,
+  generalProgramProgressQueryKeys,
+} from '@/features/program/general/api/general-applications-query-keys'
 import { applyCombinedClassMergeToApplicantDetail } from '@/features/program/general/lib/apply-combined-class-merge-state'
 import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
-import { hasCompletedCombinedClassEducationSessions } from '@/features/program/general/lib/combined-class-edit-policy'
-import {
-  type CombinedClassLeadTeacherCandidate,
-} from '@/features/program/general/lib/combined-class-lead-teacher'
+import { type CombinedClassLeadTeacherCandidate } from '@/features/program/general/lib/combined-class-lead-teacher'
 import { InstitutionCombinedClassLeadTeacherModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-lead-teacher-modal'
 import { InstitutionCombinedClassCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-complete-modal'
 import {
@@ -31,9 +29,13 @@ import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/genera
 import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { useApplicantInstructorDetailEdit } from '@/features/program/general/hooks/use-applicant-instructor-detail-edit'
+import {
+  useInstructorApplicationDetailEnrichment,
+  useOrganizationApplicationDetailEnrichment,
+} from '@/features/program/general/hooks/use-application-form-detail-enrichment'
+import { updateInstructorApplicationManagerCommentRemote } from '@/features/program/general/api/applications-api-client'
 import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
 import {
-  patchApplicantInstructorDetail,
   type ApplicantInstructorRow,
 } from '@/features/program/shared/model/applicant-instructor'
 import {
@@ -350,9 +352,7 @@ function resolveApplicantHeaderItems(params: {
     ]
 
     if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit) {
-      items.push(
-        headerBtnWriteComment(onEnterAdminCommentEdit, isEditingInstitutionDetail)
-      )
+      items.push(headerBtnWriteComment(onEnterAdminCommentEdit, isEditingInstitutionDetail))
     }
 
     items.push(headerBtnPrivacy(onRevealPersonalInfo))
@@ -364,18 +364,12 @@ function resolveApplicantHeaderItems(params: {
 
     if (isGeneralIndividualEditEnabled && onEnterIndividualEdit && onSaveIndividualEdit) {
       items.push(
-        headerBtnEditInfo(
-          onEnterIndividualEdit,
-          onSaveIndividualEdit,
-          isEditingIndividualDetail
-        )
+        headerBtnEditInfo(onEnterIndividualEdit, onSaveIndividualEdit, isEditingIndividualDetail)
       )
     }
 
     if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit) {
-      items.push(
-        headerBtnWriteComment(onEnterAdminCommentEdit, isEditingIndividualDetail)
-      )
+      items.push(headerBtnWriteComment(onEnterAdminCommentEdit, isEditingIndividualDetail))
     }
 
     items.push(headerBtnPrivacy(onRevealPersonalInfo))
@@ -384,11 +378,7 @@ function resolveApplicantHeaderItems(params: {
   if (isApprovedInstructor) {
     const editButton =
       isGeneralInstructorEditEnabled && onEnterInstructorEdit && onSaveInstructorEdit
-        ? headerBtnEditInfo(
-            onEnterInstructorEdit,
-            onSaveInstructorEdit,
-            isEditingInstructorDetail
-          )
+        ? headerBtnEditInfo(onEnterInstructorEdit, onSaveInstructorEdit, isEditingInstructorDetail)
         : headerBtnEditInfoPreparing()
 
     const items: ApplicantHeaderActionItem[] = [
@@ -397,9 +387,7 @@ function resolveApplicantHeaderItems(params: {
     ]
 
     if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit) {
-      items.push(
-        headerBtnWriteComment(onEnterAdminCommentEdit, isEditingInstructorDetail)
-      )
+      items.push(headerBtnWriteComment(onEnterAdminCommentEdit, isEditingInstructorDetail))
     }
 
     items.push(headerBtnPrivacy(onRevealPersonalInfo))
@@ -439,9 +427,7 @@ interface ApplicantsDetailContentsProps {
   individualAdminCommentSaving?: boolean
   canUpdateIndividualAdminComment?: boolean
   /** 일반 개인 신청 전용 개인정보 원문 조회. 미지정 시 기존 회원/mock 흐름 유지 */
-  onRevealIndividualPersonalInfo?: (
-    reason: string
-  ) => Promise<GeneralIndividualApplicantRow>
+  onRevealIndividualPersonalInfo?: (reason: string) => Promise<GeneralIndividualApplicantRow>
   onIndividualPrivacyUnmasked?: (row: GeneralIndividualApplicantRow) => void
   showIndividualPrivacyReveal?: boolean
   /** 일반 개인 신청 전용 담당자 평가 저장. 미지정 시 기존 mock 저장 */
@@ -450,9 +436,7 @@ interface ApplicantsDetailContentsProps {
     evaluation: GeneralManagerEvaluation
   ) => void | Promise<void>
   onIndividualTeamRoleChange?: (
-    teamRole: NonNullable<
-      NonNullable<GeneralIndividualApplicantRow['detail']>['teamRole']
-    >
+    teamRole: NonNullable<NonNullable<GeneralIndividualApplicantRow['detail']>['teamRole']>
   ) => void | Promise<void>
   /** 일반 프로그램 강사 상세 수정 — 목록 동기화용 */
   onInstructorDetailSaved?: (row: ApplicantInstructorRow) => void
@@ -530,8 +514,14 @@ export function ApplicantsDetailContents({
     [searchParams, setSearchParams, type]
   )
 
-  const institutionData = isInstitution ? (data as ApplicantSchoolRow) : null
-  const instructorData = isInstructor ? (data as ApplicantInstructorRow) : null
+  const institutionRow = isInstitution ? (data as ApplicantSchoolRow) : null
+  const instructorRow = isInstructor ? (data as ApplicantInstructorRow) : null
+  const institutionData = useOrganizationApplicationDetailEnrichment(institutionRow, {
+    enabled: isGeneralDetail,
+  })
+  const instructorData = useInstructorApplicationDetailEnrichment(instructorRow, {
+    enabled: isGeneralDetail,
+  })
   const individualData = isIndividual ? (data as GeneralIndividualApplicantRow) : null
 
   /** 신청 기관(참여자) 승인 완료: [승인 취소], [정보 수정], [개인정보 상세보기] */
@@ -830,21 +820,34 @@ export function ApplicantsDetailContents({
     setIsInstructorAdminCommentModalOpen(true)
   }, [instructorDetailEdit.isEditing, instructorData?.managerComment])
 
-  const handleInstructorAdminCommentSave = useCallback(() => {
+  const handleInstructorAdminCommentSave = useCallback(async () => {
     if (!instructorData) return
-    const updated = patchApplicantInstructorDetail(instructorData.id, {
-      managerComment: instructorAdminCommentDraft,
-    })
-    if (!updated) {
+    try {
+      const response = await updateInstructorApplicationManagerCommentRemote(
+        instructorData.id,
+        { managerComment: instructorAdminCommentDraft.trim() || null }
+      )
+      onInstructorDetailSaved?.({
+        ...instructorData,
+        managerComment: response.managerComment ?? undefined,
+      })
+      await queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.instructorDetail(instructorData.id),
+      })
+      setIsInstructorAdminCommentModalOpen(false)
+    } catch {
       void showAlert({
         title: '안내',
         content: MESSAGES.error.save,
       })
-      return
     }
-    onInstructorDetailSaved?.(updated)
-    setIsInstructorAdminCommentModalOpen(false)
-  }, [instructorAdminCommentDraft, instructorData, onInstructorDetailSaved, showAlert])
+  }, [
+    instructorAdminCommentDraft,
+    instructorData,
+    onInstructorDetailSaved,
+    queryClient,
+    showAlert,
+  ])
 
   const handleInstructorAdminCommentModalCancel = useCallback(() => {
     setIsInstructorAdminCommentModalOpen(false)
@@ -972,8 +975,7 @@ export function ApplicantsDetailContents({
       },
       isAdminCommentWriteEnabled:
         isGeneralInstitutionEditEnabled ||
-        (isGeneralIndividualEditEnabled &&
-          (canUpdateIndividualAdminComment ?? true)) ||
+        (isGeneralIndividualEditEnabled && (canUpdateIndividualAdminComment ?? true)) ||
         isGeneralInstructorEditEnabled,
       onEnterAdminCommentEdit: isApprovedIndividual
         ? handleIndividualAdminCommentEditEnter
@@ -983,8 +985,7 @@ export function ApplicantsDetailContents({
     })
     if (!items) return null
     const visibleItems =
-      isIndividual &&
-      showIndividualPrivacyReveal === false
+      isIndividual && showIndividualPrivacyReveal === false
         ? items.filter(item => item.key !== 'privacy')
         : items
     return (
@@ -1064,11 +1065,10 @@ export function ApplicantsDetailContents({
           isTeacherOptionsLoading={institutionDetailEdit.isTeacherOptionsLoading}
           showEducationFormatField={institutionDetailEdit.showEducationFormatField}
           isCombinedClassProgramEligible={institutionDetailEdit.isCombinedClassProgramEligible}
-          isCombinedClassApplyRadioDisabled={institutionDetailEdit.isCombinedClassApplyRadioDisabled}
+          isCombinedClassApplyRadioDisabled={
+            institutionDetailEdit.isCombinedClassApplyRadioDisabled
+          }
           combinedClassReadOnly={institutionDetailEdit.combinedClassReadOnly}
-          showCombinedClassScheduleNotice={hasCompletedCombinedClassEducationSessions(
-            d.sessions
-          )}
           hideCombinedClass={isCombinedClassHidden}
           validationErrors={institutionDetailEdit.validationErrors}
           onResendNotificationClick={onResendNotification}

@@ -2,6 +2,16 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import {
+  mapInstructorApplicationDetailToApplicantRow,
+  mapOrganizationApplicationDetailToApplicantSchoolRow,
+  mapVolunteerApplicationDetailToApplicantRow,
+} from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  fetchInstructorApplicationDetailRemote,
+  fetchOrganizationApplicationDetailRemote,
+  fetchVolunteerApplicationDetailRemote,
+} from '@/features/program/general/api/applications-api-client'
+import {
   listAdminCommentsByTargetRemote,
   resolveLatestAdminCommentText,
   type AdminCommentTargetType,
@@ -96,6 +106,18 @@ export function useOrganizationApplicationDetailEnrichment(
 ): ApplicantSchoolRow | null {
   const programId = parseProgramId(row?.programId)
   const contextId = parseNumericId(row?.id)
+  const detailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.organizationDetail(String(contextId ?? '')),
+    queryFn: () => fetchOrganizationApplicationDetailRemote(String(contextId)),
+    enabled: Boolean(
+      options?.enabled !== false &&
+        row &&
+        shouldUseGeneralApplicationsRemoteApi() &&
+        contextId != null
+    ),
+    staleTime: 30_000,
+    retry: false,
+  })
   const { formResponse, adminComment } = useApplicationFormAndComments({
     enabled: Boolean(options?.enabled !== false && row),
     programId,
@@ -106,13 +128,16 @@ export function useOrganizationApplicationDetailEnrichment(
 
   return useMemo(() => {
     if (!row) return null
-    if (!formResponse && !adminComment) return row
+    const canonical = detailQuery.data
+      ? mapOrganizationApplicationDetailToApplicantSchoolRow(detailQuery.data, row)
+      : row
+    if (!formResponse && !adminComment) return canonical
     return hydrateOrganizationApplicationRowFromForm({
-      row,
+      row: canonical,
       formResponse,
       adminComment,
     })
-  }, [row, formResponse, adminComment])
+  }, [row, detailQuery.data, formResponse, adminComment])
 }
 
 /** 일반 강사 신청 상세 — form_response + admin_comment hydrate */
@@ -122,6 +147,18 @@ export function useInstructorApplicationDetailEnrichment(
 ): ApplicantInstructorRow | null {
   const programId = parseProgramId(row?.programId)
   const contextId = parseNumericId(row?.id)
+  const detailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.instructorDetail(String(contextId ?? '')),
+    queryFn: () => fetchInstructorApplicationDetailRemote(String(contextId)),
+    enabled: Boolean(
+      options?.enabled !== false &&
+        row &&
+        shouldUseGeneralApplicationsRemoteApi() &&
+        contextId != null
+    ),
+    staleTime: 30_000,
+    retry: false,
+  })
   const { formResponse, adminComment } = useApplicationFormAndComments({
     enabled: Boolean(options?.enabled !== false && row),
     programId,
@@ -132,13 +169,16 @@ export function useInstructorApplicationDetailEnrichment(
 
   return useMemo(() => {
     if (!row) return null
-    if (!formResponse && !adminComment) return row
+    const canonical = detailQuery.data
+      ? mapInstructorApplicationDetailToApplicantRow(detailQuery.data, row)
+      : row
+    if (!formResponse && !adminComment) return canonical
     return hydrateInstructorApplicationRowFromForm({
-      row,
+      row: canonical,
       formResponse,
       adminComment,
     })
-  }, [row, formResponse, adminComment])
+  }, [row, detailQuery.data, formResponse, adminComment])
 }
 
 /** 일반 봉사 신청 상세 — form_response hydrate (essay 등) */
@@ -148,6 +188,18 @@ export function useVolunteerApplicationDetailEnrichment(
 ): GeneralVolunteerApplicantRow | null {
   const programId = parseProgramId(row?.programId)
   const contextId = parseNumericId(row?.id)
+  const detailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.volunteerDetail(String(contextId ?? '')),
+    queryFn: () => fetchVolunteerApplicationDetailRemote(String(contextId)),
+    enabled: Boolean(
+      options?.enabled !== false &&
+        row &&
+        shouldUseGeneralApplicationsRemoteApi() &&
+        contextId != null
+    ),
+    staleTime: 30_000,
+    retry: false,
+  })
   const { formResponse, adminComment } = useApplicationFormAndComments({
     enabled: Boolean(options?.enabled !== false && row),
     programId,
@@ -158,11 +210,14 @@ export function useVolunteerApplicationDetailEnrichment(
 
   return useMemo(() => {
     if (!row) return null
-    if (!formResponse && !adminComment) return row
+    const canonical = detailQuery.data
+      ? mapVolunteerApplicationDetailToApplicantRow(detailQuery.data, row)
+      : row
+    if (!formResponse && !adminComment) return canonical
     return hydrateVolunteerApplicationRowFromForm({
-      row,
+      row: canonical,
       formResponse,
       adminComment,
     })
-  }, [row, formResponse, adminComment])
+  }, [row, detailQuery.data, formResponse, adminComment])
 }

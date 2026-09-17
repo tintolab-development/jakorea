@@ -191,6 +191,7 @@ export function ApplicantList({
     handleCancelApproval,
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,
+    resendInstructorNotification,
     handleCancelRejectInstitution,
     handleCancelApprovalIndividual,
     handleCancelRejectIndividual,
@@ -361,9 +362,7 @@ export function ApplicantList({
 
   /** 개인 참여자 — 면접 불필요 시 캘린더 우측 목록 상단 multi select 미노출 */
   const showCalendarEntityFilter =
-    menu !== 'individual-applications' ||
-    !program ||
-    getGeneralParticipantInterviewEnabled(program)
+    menu !== 'individual-applications' || !program || getGeneralParticipantInterviewEnabled(program)
 
   /** 1차 서류 심사 탭 — 리스트뷰만 (봉사자 doc1과 동일) */
   const isIndividualDoc1Screening =
@@ -609,9 +608,7 @@ export function ApplicantList({
     const el = institutionTableWrapRef.current
     if (!el) return
     // 열 합 기반 최소폭 — 하드코딩 1280/1600은 세션 열 숨김 시에도 가로스크롤을 강제함
-    const minW = resolveApplicantListTableMinScrollX(
-      columns as ColumnsType<unknown> | undefined
-    )
+    const minW = resolveApplicantListTableMinScrollX(columns as ColumnsType<unknown> | undefined)
     const update = () => {
       const w = Math.floor(el.getBoundingClientRect().width)
       if (w <= 0) return
@@ -1048,11 +1045,7 @@ export function ApplicantList({
             rejectionReason: payload.reason,
           }
           const run = async () => {
-            const remote = await applyRemoteInstitutionDecision(
-              [id],
-              'reject',
-              payload.reason
-            )
+            const remote = await applyRemoteInstitutionDecision([id], 'reject', payload.reason)
             if (remote === 'error') return
             if (remote === 'skipped') {
               notifyProgramApiUnavailable(
@@ -1122,9 +1115,7 @@ export function ApplicantList({
           if (!institutionCancelRejectTarget) return
           const { id, name } = institutionCancelRejectTarget
           const reason =
-            payload.variant === 'alreadySent'
-              ? payload.reason?.trim() || '반려 취소'
-              : '반려 취소'
+            payload.variant === 'alreadySent' ? payload.reason?.trim() || '반려 취소' : '반려 취소'
           setInstitutionCancelRejectTarget(null)
           void (async () => {
             const remote = await applyRemoteInstitutionCancelRejection(id, reason)
@@ -1200,14 +1191,8 @@ export function ApplicantList({
                     )
                   : null
                 if (patchedRow) {
-                  setIndividualList(prev =>
-                    prev.map(row => (row.id === id ? patchedRow : row))
-                  )
-                  if (
-                    selectedItem &&
-                    'applicantName' in selectedItem &&
-                    selectedItem.id === id
-                  ) {
+                  setIndividualList(prev => prev.map(row => (row.id === id ? patchedRow : row)))
+                  if (selectedItem && 'applicantName' in selectedItem && selectedItem.id === id) {
                     setSelectedItem(patchedRow)
                   }
                 }
@@ -1222,18 +1207,17 @@ export function ApplicantList({
                 ? (selectedItem as GeneralIndividualApplicantRow)
                 : null)
             const patchedRow = sourceRow
-              ? patchGeneralIndividualApplicantForApprovalStatus(sourceRow, 'approved', notifyOptions)
+              ? patchGeneralIndividualApplicantForApprovalStatus(
+                  sourceRow,
+                  'approved',
+                  notifyOptions
+                )
               : null
             setIndividualList(prev => {
               const next = prev.map(row => (row.id === id && patchedRow ? patchedRow : row))
               const updated = next.find(row => row.id === id)
               const current = selectedItem
-              if (
-                updated &&
-                current &&
-                'applicantName' in current &&
-                current.id === id
-              ) {
+              if (updated && current && 'applicantName' in current && current.id === id) {
                 setSelectedItem(updated)
               }
               return next
@@ -1280,14 +1264,8 @@ export function ApplicantList({
                     )
                   : null
                 if (patchedRow) {
-                  setIndividualList(prev =>
-                    prev.map(row => (row.id === id ? patchedRow : row))
-                  )
-                  if (
-                    selectedItem &&
-                    'applicantName' in selectedItem &&
-                    selectedItem.id === id
-                  ) {
+                  setIndividualList(prev => prev.map(row => (row.id === id ? patchedRow : row)))
+                  if (selectedItem && 'applicantName' in selectedItem && selectedItem.id === id) {
                     setSelectedItem(patchedRow)
                   }
                 }
@@ -1307,12 +1285,7 @@ export function ApplicantList({
               )
               const updated = next.find(row => row.id === id)
               const current = selectedItem
-              if (
-                updated &&
-                current &&
-                'applicantName' in current &&
-                current.id === id
-              ) {
+              if (updated && current && 'applicantName' in current && current.id === id) {
                 setSelectedItem(updated)
               }
               return next
@@ -1351,12 +1324,7 @@ export function ApplicantList({
             )
             const updated = next.find(row => row.id === id)
             const current = selectedItem
-            if (
-              updated &&
-              current &&
-              'applicantName' in current &&
-              current.id === id
-            ) {
+            if (updated && current && 'applicantName' in current && current.id === id) {
               setSelectedItem(updated)
             }
             return next
@@ -1392,12 +1360,7 @@ export function ApplicantList({
             )
             const updated = next.find(row => row.id === id)
             const current = selectedItem
-            if (
-              updated &&
-              current &&
-              'applicantName' in current &&
-              current.id === id
-            ) {
+            if (updated && current && 'applicantName' in current && current.id === id) {
               setSelectedItem(updated)
             }
             return next
@@ -1425,11 +1388,7 @@ export function ApplicantList({
           }
           const run = async () => {
             if (instructorRemoteEnabled) {
-              const remote = await applyRemoteInstructorDecision(
-                [id],
-                'reject',
-                payload.reason
-              )
+              const remote = await applyRemoteInstructorDecision([id], 'reject', payload.reason)
               if (remote === 'error') return
               if (remote === 'ok') {
                 setInstructorRejectTarget(null)
@@ -1441,12 +1400,7 @@ export function ApplicantList({
                   )
                   const updated = next.find(row => row.id === id)
                   const current = selectedItem
-                  if (
-                    updated &&
-                    current &&
-                    'instructorName' in current &&
-                    current.id === id
-                  ) {
+                  if (updated && current && 'instructorName' in current && current.id === id) {
                     setSelectedItem(updated)
                   }
                   return next
@@ -1499,6 +1453,18 @@ export function ApplicantList({
             manualNotifyAt: payload.manualNotifyAt,
             rejectionReason: payload.reason,
           }
+          if (detailVariant === 'general') {
+            void (async () => {
+              const success = await handleCancelApprovalInstructor(id, payload.reason)
+              if (!success) return
+              setInstructorCancelApprovalTarget(null)
+              setInstructorCancelApprovalComplete({
+                instructorName: name,
+                cancellationReason: payload.reason,
+              })
+            })()
+            return
+          }
           setInstructorCancelApprovalTarget(null)
           setInstructorList(prev => {
             const next = prev.map(row =>
@@ -1535,6 +1501,17 @@ export function ApplicantList({
             payload.variant === 'alreadySent'
               ? toInstructorCancelRejectionNotifyOptions(payload)
               : undefined
+          if (detailVariant === 'general') {
+            void (async () => {
+              const reason =
+                payload.variant === 'alreadySent' ? payload.reason : '반려 취소'
+              const success = await handleCancelRejectInstructor(id, reason)
+              if (!success) return
+              setInstructorCancelRejectTarget(null)
+              setInstructorCancelRejectComplete({ instructorName: name })
+            })()
+            return
+          }
           setInstructorCancelRejectTarget(null)
           setInstructorList(prev => {
             const next = prev.map(row =>
@@ -1570,6 +1547,16 @@ export function ApplicantList({
           setNotificationResendTarget(null)
 
           if (subjectKind === 'instructor') {
+            if (detailVariant === 'general') {
+              void resendInstructorNotification(id, {
+                timing: notifyOptions.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
+                scheduledAt:
+                  notifyOptions.notifyTiming === 'manual'
+                    ? notifyOptions.manualNotifyAt?.toISOString() ?? null
+                    : null,
+              })
+              return
+            }
             setInstructorList(prev => {
               const next = prev.map(row =>
                 row.id === id
@@ -1712,7 +1699,45 @@ export function ApplicantList({
           }
           const run = async () => {
             if (instructorRemoteEnabled) {
-              const remote = await applyRemoteInstructorDecision([id], 'approve')
+              const remoteAssignments = assignments.flatMap((assignment, index) => {
+                const scheduleId = Number(assignment.slotKey)
+                const organizationApplicationId = Number(assignment.schoolId)
+                if (!Number.isFinite(scheduleId) || scheduleId < 1) return []
+                return [
+                  {
+                    scheduleId,
+                    ...(Number.isFinite(organizationApplicationId) &&
+                    organizationApplicationId > 0
+                      ? { organizationApplicationId }
+                      : {}),
+                    scheduleLead: index === 0,
+                  },
+                ]
+              })
+              const remote = await applyRemoteInstructorDecision(
+                [id],
+                'approve',
+                undefined,
+                {
+                  assignments: remoteAssignments,
+                  feePolicy: {
+                    basisType: detail.lectureFeeBasisType,
+                    measure: detail.lectureFeeMeasure?.trim() || 'SESSION',
+                    amount: Number(detail.lectureFeeAmount?.replaceAll(',', '') ?? 0),
+                    instructorFeeGrade:
+                      detail.instructorFeeGradeLabel?.trim() ||
+                      instructorApprovalInstructor?.instructorFeeGradeLabel?.trim() ||
+                      '미지정',
+                  },
+                  notification: {
+                    timing: detail.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
+                    scheduledAt:
+                      detail.notifyTiming === 'manual'
+                        ? detail.manualNotifyAt?.toISOString() ?? null
+                        : null,
+                  },
+                }
+              )
               if (remote === 'error') return
               if (remote === 'ok') {
                 setInstructorApprovalTarget(null)
@@ -1743,165 +1768,165 @@ export function ApplicantList({
       />
       {!selectedItem && menu ? (
         <>
-        <FilterTableLayout
-          key={
-            menu === 'instructors' && instructorColumnPreset === 'general-detail'
-              ? `applicant-filter-${viewMode}`
-              : 'applicant-filter'
-          }
-          className={
-            isIndividualDoc1Screening
-              ? 'applicant-details__filter-table-layout general-participant-doc1-screening__filter-layout'
-              : 'applicant-details__filter-table-layout'
-          }
-          bordered={false}
-          contentVariant={displayViewMode === 'calendar' ? 'calendar' : 'table'}
-          fields={isIndividualDoc1Screening ? undefined : fields}
-          rows={individualDoc1FilterRows}
-          filterResponsiveWrap={isIndividualDoc1Screening ? false : undefined}
-          filters={pendingFilters}
-          onFilterChange={handleFilterChange}
-          onSearch={handleSearch}
-          title={title}
-          description={`${tableData.length}건`}
-          actions={
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <CmsButton
-                variant="delete"
-                size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
-                onClick={handleBulkRejectClick}
-              >
-                선택 반려
-              </CmsButton>
-              <CmsButton
-                variant="secondary"
-                size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
-                onClick={handleBulkApproveClick}
-              >
-                선택 승인
-              </CmsButton>
-              {showIndividualCalendarToggle && displayViewMode === 'table' && (
+          <FilterTableLayout
+            key={
+              menu === 'instructors' && instructorColumnPreset === 'general-detail'
+                ? `applicant-filter-${viewMode}`
+                : 'applicant-filter'
+            }
+            className={
+              isIndividualDoc1Screening
+                ? 'applicant-details__filter-table-layout general-participant-doc1-screening__filter-layout'
+                : 'applicant-details__filter-table-layout'
+            }
+            bordered={false}
+            contentVariant={displayViewMode === 'calendar' ? 'calendar' : 'table'}
+            fields={isIndividualDoc1Screening ? undefined : fields}
+            rows={individualDoc1FilterRows}
+            filterResponsiveWrap={isIndividualDoc1Screening ? false : undefined}
+            filters={pendingFilters}
+            onFilterChange={handleFilterChange}
+            onSearch={handleSearch}
+            title={title}
+            description={`${tableData.length}건`}
+            actions={
+              <div style={{ display: 'flex', gap: '8px' }}>
                 <CmsButton
-                  icon={<CalendarOutlined />}
-                  variant="secondary"
+                  variant="delete"
                   size="large"
-                  onClick={handleViewCalendar}
+                  className="cms-button--action"
+                  width={CMS_ACTION_BUTTON_WIDTH}
+                  onClick={handleBulkRejectClick}
                 >
-                  캘린더 뷰로 보기
+                  선택 반려
                 </CmsButton>
-              )}
-              {showIndividualCalendarToggle && displayViewMode === 'calendar' && (
                 <CmsButton
                   variant="secondary"
-                  icon={<UnorderedListOutlined />}
                   size="large"
-                  onClick={() => setViewMode('table')}
+                  className="cms-button--action"
+                  width={CMS_ACTION_BUTTON_WIDTH}
+                  onClick={handleBulkApproveClick}
                 >
-                  리스트 뷰로 보기
+                  선택 승인
                 </CmsButton>
-              )}
-            </div>
-          }
-          excelExport={{
-            columns,
-            data: tableData,
-          }}
-        >
-          {displayViewMode === 'table' ? (
-            <div
-              ref={usesInstitutionTableScroll ? institutionTableWrapRef : undefined}
-              className="applicant-details__table-wrap"
-            >
-              <Table<ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow>
-                rowKey="id"
-                columns={
-                  columns as ColumnsType<
-                    ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow
+                {showIndividualCalendarToggle && displayViewMode === 'table' && (
+                  <CmsButton
+                    icon={<CalendarOutlined />}
+                    variant="secondary"
+                    size="large"
+                    onClick={handleViewCalendar}
                   >
-                }
-                dataSource={tableData}
-                loading={applicationsLoading}
-                className="cms-data-table cms-data-table--fluid"
-                onRow={record => ({
-                  onClick: e => {
-                    const target = e.target as HTMLElement
-                    if (
-                      target.closest('.status-dropdown-cell__cell-status') ||
-                      target.closest('.status-dropdown-cell__status-trigger') ||
-                      target.closest('.ant-table-selection-column') ||
-                      target.closest('.ant-checkbox-wrapper')
-                    ) {
-                      return
-                    }
-                    if (menu === 'institutions' && 'schoolName' in record) {
-                      setSelectedItem(record)
-                    } else if (menu === 'instructors' && 'instructorName' in record) {
-                      setSelectedItem(record)
-                    } else if (menu === 'individual-applications' && 'applicantName' in record) {
-                      setSelectedItem(record)
-                    }
-                  },
-                  style: {
-                    cursor: 'pointer',
-                  },
-                })}
-                scroll={
-                  tableHorizontalScrollX != null ? { x: tableHorizontalScrollX } : undefined
-                }
-                pagination={false}
-                rowSelection={{
-                  selectedRowKeys,
-                  onChange: keys => setSelectedRowKeys(keys),
-                }}
-              />
-            </div>
-          ) : (
-            <div className="applicant-details__calendar-wrap">
-              <ApplicantCalendarView
-                useSplitCardPageScroll={detailVariant === 'general'}
-                events={mapApplicantDataToCalendarEvents(
-                  tableData as
-                    | ApplicantSchoolRow[]
-                    | ApplicantInstructorRow[]
-                    | GeneralIndividualApplicantRow[],
-                  menu
+                    캘린더 뷰로 보기
+                  </CmsButton>
                 )}
-                loading={applicationsLoading}
-                selectedRowKeys={selectedRowKeys}
-                onSelectionChange={setSelectedRowKeys}
-                onItemClick={item => {
-                  setSelectedItem(item)
-                }}
-                menu={menu}
-                showEntityFilter={showCalendarEntityFilter}
-                calendarGranularity={applicantsCalendarGranularity}
-                onCalendarGranularityChange={setApplicantsCalendarGranularity}
-                calendarVariant={
-                  instructorColumnPreset === 'general-detail' && menu === 'instructors'
-                    ? 'general-instructor'
-                    : useGeneralInstitutionCalendarVariant
-                      ? 'general-institution'
-                      : menu === 'individual-applications' && !showCalendarEntityFilter
-                        ? 'general-individual'
-                        : 'default'
-                }
-              />
-            </div>
-          )}
-          <div
-            ref={loadMoreRef}
-            aria-hidden
-            data-fetching={isFetchingNextPage || undefined}
-            style={{ height: 1 }}
-          />
-        </FilterTableLayout>
-        {isGeneralProgramCalendarView ? (
-          <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />
-        ) : null}
+                {showIndividualCalendarToggle && displayViewMode === 'calendar' && (
+                  <CmsButton
+                    variant="secondary"
+                    icon={<UnorderedListOutlined />}
+                    size="large"
+                    onClick={() => setViewMode('table')}
+                  >
+                    리스트 뷰로 보기
+                  </CmsButton>
+                )}
+              </div>
+            }
+            excelExport={{
+              columns,
+              data: tableData,
+            }}
+          >
+            {displayViewMode === 'table' ? (
+              <div
+                ref={usesInstitutionTableScroll ? institutionTableWrapRef : undefined}
+                className="applicant-details__table-wrap"
+              >
+                <Table<ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow>
+                  rowKey="id"
+                  columns={
+                    columns as ColumnsType<
+                      ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow
+                    >
+                  }
+                  dataSource={tableData}
+                  loading={applicationsLoading}
+                  className="cms-data-table cms-data-table--fluid"
+                  onRow={record => ({
+                    onClick: e => {
+                      const target = e.target as HTMLElement
+                      if (
+                        target.closest('.status-dropdown-cell__cell-status') ||
+                        target.closest('.status-dropdown-cell__status-trigger') ||
+                        target.closest('.ant-table-selection-column') ||
+                        target.closest('.ant-checkbox-wrapper')
+                      ) {
+                        return
+                      }
+                      if (menu === 'institutions' && 'schoolName' in record) {
+                        setSelectedItem(record)
+                      } else if (menu === 'instructors' && 'instructorName' in record) {
+                        setSelectedItem(record)
+                      } else if (menu === 'individual-applications' && 'applicantName' in record) {
+                        setSelectedItem(record)
+                      }
+                    },
+                    style: {
+                      cursor: 'pointer',
+                    },
+                  })}
+                  scroll={
+                    tableHorizontalScrollX != null ? { x: tableHorizontalScrollX } : undefined
+                  }
+                  pagination={false}
+                  rowSelection={{
+                    selectedRowKeys,
+                    onChange: keys => setSelectedRowKeys(keys),
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="applicant-details__calendar-wrap">
+                <ApplicantCalendarView
+                  useSplitCardPageScroll={detailVariant === 'general'}
+                  events={mapApplicantDataToCalendarEvents(
+                    tableData as
+                      | ApplicantSchoolRow[]
+                      | ApplicantInstructorRow[]
+                      | GeneralIndividualApplicantRow[],
+                    menu
+                  )}
+                  loading={applicationsLoading}
+                  selectedRowKeys={selectedRowKeys}
+                  onSelectionChange={setSelectedRowKeys}
+                  onItemClick={item => {
+                    setSelectedItem(item)
+                  }}
+                  menu={menu}
+                  showEntityFilter={showCalendarEntityFilter}
+                  calendarGranularity={applicantsCalendarGranularity}
+                  onCalendarGranularityChange={setApplicantsCalendarGranularity}
+                  calendarVariant={
+                    instructorColumnPreset === 'general-detail' && menu === 'instructors'
+                      ? 'general-instructor'
+                      : useGeneralInstitutionCalendarVariant
+                        ? 'general-institution'
+                        : menu === 'individual-applications' && !showCalendarEntityFilter
+                          ? 'general-individual'
+                          : 'default'
+                  }
+                />
+              </div>
+            )}
+            <div
+              ref={loadMoreRef}
+              aria-hidden
+              data-fetching={isFetchingNextPage || undefined}
+              style={{ height: 1 }}
+            />
+          </FilterTableLayout>
+          {isGeneralProgramCalendarView ? (
+            <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />
+          ) : null}
         </>
       ) : null}
     </div>

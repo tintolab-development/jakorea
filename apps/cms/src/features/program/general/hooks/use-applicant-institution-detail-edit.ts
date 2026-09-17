@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { Program } from '@/types/domain'
 import {
@@ -38,6 +39,9 @@ import {
 } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import { updateOrganizationApplicationRemote } from '@/features/program/general/api/applications-api-client'
+import { mapOrganizationApplicationDetailToApplicantSchoolRow } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 
 /**
  * 기관 신청자 상세 편집 — 합반은 organization-merge-groups remote만 저장.
@@ -82,6 +86,7 @@ export function useApplicantInstitutionDetailEdit({
   combinedClassReadOnly = false,
   onCombinedClassApplied,
 }: UseApplicantInstitutionDetailEditParams) {
+  const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [draft, setDraft] = useState<ApplicantInstitutionEditDraft | null>(null)
@@ -130,9 +135,8 @@ export function useApplicantInstitutionDetailEdit({
     }))
   }, [institution, institutionList, isCombinedClassProgramEligibleFlag, program?.id])
 
-  const isCombinedClassApplyRadioDisabled = resolveCombinedClassApplyRadioDisabled(
-    sameSchoolGradeOptions
-  )
+  const isCombinedClassApplyRadioDisabled =
+    resolveCombinedClassApplyRadioDisabled(sameSchoolGradeOptions)
 
   const showEducationFormatField = useMemo(
     () => shouldShowInstitutionApplicationEducationFormatField(program),
@@ -162,8 +166,7 @@ export function useApplicantInstitutionDetailEdit({
       const apiOptions = affiliatedTeachersQuery.data
         .filter(row => isSchoolAffiliatedTeacherRowSelectable(row.employmentStatus))
         .map(row => ({
-          value:
-            row.teacherMemberId != null ? String(row.teacherMemberId) : row.id,
+          value: row.teacherMemberId != null ? String(row.teacherMemberId) : row.id,
           label: row.name === '-' ? '' : row.name,
           mobile: row.phone === '-' ? '' : row.phone,
           email: row.email === '-' ? '' : row.email,
@@ -250,8 +253,34 @@ export function useApplicantInstitutionDetailEdit({
       return false
     }
 
-    if (!draftToSavePayload(normalizedDraft, institution, { showEducationFormatField })) {
+    const savePayload = draftToSavePayload(normalizedDraft, institution, {
+      showEducationFormatField,
+    })
+    if (!savePayload) {
       setValidationErrors({ form: '저장할 수 없습니다. 입력값을 확인해 주세요.' })
+      return false
+    }
+    const baselineDraft = rowToEditDraft(institution)
+    const unsupportedKeys = [
+      'adminComment',
+      'applicationReason',
+      'otherRequests',
+      'computerInRoom',
+      'waitingRoomAvailable',
+      'waitingRoomLocation',
+      'mealProvided',
+      'mealNotice',
+      'parkingInfo',
+    ] as const
+    if (
+      unsupportedKeys.some(
+        key => String(normalizedDraft[key] ?? '') !== String(baselineDraft[key] ?? '')
+      )
+    ) {
+      notifyProgramApiUnavailable(
+        'general-org-application-detail-unsupported-patch',
+        '일반 프로그램 · 기관 신청 안내 정보 수정'
+      )
       return false
     }
 
@@ -267,6 +296,7 @@ export function useApplicantInstitutionDetailEdit({
       )
 
       let savedCombinedClass = false
+      let remotelyUpdatedInstitution = institution
       if (
         partnersChanged &&
         onSaveCombinedClass &&
@@ -279,19 +309,46 @@ export function useApplicantInstitutionDetailEdit({
         })
         savedCombinedClass = true
       } else if (partnersChanged && !onSaveCombinedClass) {
-        notifyProgramApiUnavailable(
-          'general-org-merge-groups',
-          '일반 프로그램 · 기관 합반 신청'
-        )
+        notifyProgramApiUnavailable('general-org-merge-groups', '일반 프로그램 · 기관 합반 신청')
         return false
       }
 
       if (nonMergeChanged) {
-        notifyProgramApiUnavailable(
-          'general-org-application-detail-patch',
-          '일반 프로그램 · 기관 신청 상세 정보 수정'
+        const selectedTeacher = teacherOptions.find(
+          option => option.label === normalizedDraft.teacherName
         )
-        if (!savedCombinedClass) return false
+        const teacherMemberId = selectedTeacher ? Number(selectedTeacher.value) : undefined
+        const textbookId = Number(normalizedDraft.textbookId)
+        const response = await updateOrganizationApplicationRemote(institution.id, {
+          requestedGrade: normalizedDraft.educationGrade,
+          organizationAddressDetail: normalizedDraft.addressDetail.trim() || undefined,
+          requestedClassCount: savePayload.classCount,
+          requestedStudentCount: savePayload.studentCount,
+          requestedEducationFormat: showEducationFormatField
+            ? normalizedDraft.educationFormat.trim() || undefined
+            : undefined,
+          teacherMemberId:
+            teacherMemberId != null && Number.isFinite(teacherMemberId)
+              ? teacherMemberId
+              : institution.teacherMemberId,
+          teacherPhone:
+            normalizedDraft.teacherMobile.trim() ||
+            normalizedDraft.teacherPhone.trim() ||
+            undefined,
+          teacherEmail: normalizedDraft.teacherEmail.trim() || undefined,
+          textbookId: Number.isFinite(textbookId) ? textbookId : undefined,
+        })
+        remotelyUpdatedInstitution = mapOrganizationApplicationDetailToApplicantSchoolRow(
+          response,
+          institution
+        )
+        queryClient.setQueryData(
+          generalApplicationsQueryKeys.organizationDetail(institution.id),
+          response
+        )
+        void queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.organizationList(String(program?.id ?? '')),
+        })
       }
 
       if (!savedCombinedClass && !nonMergeChanged) {
@@ -320,9 +377,9 @@ export function useApplicantInstitutionDetailEdit({
           }
         }
         return {
-          ...row,
+          ...remotelyUpdatedInstitution,
           detail: {
-            ...row.detail,
+            ...remotelyUpdatedInstitution.detail,
             combinedClassApplication: normalizedDraft.combinedClassApplication,
             combinedClassPartnerApplicantIds:
               normalizedDraft.combinedClassApplication === '신청'
@@ -351,10 +408,7 @@ export function useApplicantInstitutionDetailEdit({
         )
         if (candidates.length > 0) {
           onCombinedClassApplied?.({
-            memberRowIds: [
-              institution.id,
-              ...normalizedDraft.combinedClassPartnerApplicantIds,
-            ],
+            memberRowIds: [institution.id, ...normalizedDraft.combinedClassPartnerApplicantIds],
             candidates,
           })
         }
@@ -376,8 +430,11 @@ export function useApplicantInstitutionDetailEdit({
     onCombinedClassApplied,
     onSaveCombinedClass,
     onSaved,
+    program?.id,
+    queryClient,
     resetEditState,
     showEducationFormatField,
+    teacherOptions,
   ])
 
   return {
@@ -392,7 +449,8 @@ export function useApplicantInstitutionDetailEdit({
     sameSchoolGradeOptions,
     classCountOptions,
     teacherOptions,
-    isTeacherOptionsLoading: canFetchAffiliatedTeachers && isEditing && affiliatedTeachersQuery.isLoading,
+    isTeacherOptionsLoading:
+      canFetchAffiliatedTeachers && isEditing && affiliatedTeachersQuery.isLoading,
     showEducationFormatField,
     canApplyCombinedClass,
     isCombinedClassProgramEligible: isCombinedClassProgramEligibleFlag,
