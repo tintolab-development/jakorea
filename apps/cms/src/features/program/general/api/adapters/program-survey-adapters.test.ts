@@ -8,6 +8,8 @@ import {
   mergeSurveysWithBindings,
   parseAnswerPreviewJson,
   resolveSatisfactionAudienceFromBinding,
+  resolveSurveyCreateBindingTemplateCode,
+  resolveSurveyShareClipboardUrl,
   surveyResponseNeedsDetail,
 } from './program-survey-adapters'
 
@@ -220,5 +222,45 @@ describe('classifyProgramFormBindings / mergeSurveysWithBindings', () => {
       title: '신규 설문조사 1',
       templateId: '200',
     })
+  })
+})
+
+describe('resolveSurveyCreateBindingTemplateCode', () => {
+  it('uses the duplicated template id, not the original selected template', () => {
+    expect(
+      resolveSurveyCreateBindingTemplateCode({
+        duplicatedTemplateId: 'tmpl-copied-9',
+        catalogTemplateCode: null,
+      })
+    ).toBe('tmpl-copied-9')
+    expect(
+      resolveSurveyCreateBindingTemplateCode({
+        duplicatedTemplateId: 'tmpl-copied-9',
+        catalogTemplateCode: 'tmpl-copied-9',
+      })
+    ).toBe('tmpl-copied-9')
+    expect(
+      resolveSurveyCreateBindingTemplateCode({
+        duplicatedTemplateId: 'tmpl-copied-9',
+        catalogTemplateCode: 'original-survey-template',
+      })
+    ).not.toBe('original-survey-template')
+  })
+})
+
+describe('resolveSurveyShareClipboardUrl', () => {
+  it('prefers formPath over hardcoded platform URLs', () => {
+    expect(
+      resolveSurveyShareClipboardUrl(
+        { formPath: '/forms/share/abc' },
+        'https://cms.example.com'
+      )
+    ).toBe('https://cms.example.com/forms/share/abc')
+    expect(
+      resolveSurveyShareClipboardUrl(
+        { formPath: 'https://platform.example.com/s/abc' },
+        'https://cms.example.com'
+      )
+    ).toBe('https://platform.example.com/s/abc')
   })
 })

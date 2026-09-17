@@ -49,6 +49,7 @@ import {
   putAdminProgramPostReactionRemote,
   createAdminProgramPostCommentRemote,
   submitAdminFormResponseRemote,
+  createAdminProgramSurveyShareLinkRemote,
   updateAdminProgramManagerRemote,
   updateAdminProgramRemote,
   updateAdminProgramPostRemote,
@@ -372,6 +373,12 @@ export async function deleteGeneralProgramFormBinding(programId: string, binding
   if (!shouldUseProgramsHttpRemoteApi()) return
   assertProgramsHttpRemoteReady()
   await deleteAdminProgramFormBindingRemote(programId, bindingId)
+}
+
+export async function createGeneralProgramSurveyShareLink(programId: string, bindingId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return createAdminProgramSurveyShareLinkRemote(programId, bindingId)
 }
 
 /** 강의평가 등 관리자 form response 제출. remote OFF면 null. */

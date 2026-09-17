@@ -484,6 +484,21 @@ export async function createAdminProgramFormBindingRemote(
   )
 }
 
+/** POST /api/admin/programs/{programId}/surveys/bindings/{bindingId}/share-link */
+export async function createAdminProgramSurveyShareLinkRemote(
+  programId: string,
+  bindingId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/surveyShareLinkResponse').SurveyShareLinkResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/surveys/bindings/${encodeURIComponent(bindingId)}/share-link`,
+      method: 'POST',
+    })
+  )
+}
+
 /** DELETE /api/admin/programs/{programId}/form-bindings/{bindingId} */
 export async function deleteAdminProgramFormBindingRemote(
   programId: string,
