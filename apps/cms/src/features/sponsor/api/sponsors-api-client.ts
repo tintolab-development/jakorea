@@ -69,12 +69,20 @@ export async function bulkDeleteSponsorsRemote(ids: string[]): Promise<void> {
 
 export async function bulkDeleteSponsorProgramHistoriesRemote(
   sponsorId: string,
-  historyIds: string[]
+  programIds: string[]
 ): Promise<void> {
-  await forEachBulkIdChunk(historyIds, async chunk => {
+  await forEachBulkIdChunk(programIds, async chunk => {
+    const numericProgramIds = chunk.map(Number)
+    if (
+      numericProgramIds.some(
+        programId => !Number.isSafeInteger(programId) || programId < 1
+      )
+    ) {
+      throw new Error('삭제할 프로그램 ID 형식이 올바르지 않습니다.')
+    }
     const result = unwrapApiBody<BulkActionResponse>(
       await dmApi.bulkDeleteProgramHistories(pathId(sponsorId), {
-        ids: toBulkNumericIds(chunk),
+        ids: numericProgramIds,
       })
     )
     assertBulkDeleteSucceeded(result, '후원사 프로그램 진행 이력 삭제에 실패했습니다.')

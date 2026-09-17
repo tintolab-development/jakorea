@@ -174,10 +174,10 @@ export async function deleteSponsors(ids: string[]): Promise<void> {
 
 export async function deleteSponsorProgramHistories(
   sponsorId: string,
-  historyIds: string[]
+  programIds: string[]
 ): Promise<void> {
   assertSponsorsRemoteReady()
-  await bulkDeleteSponsorProgramHistoriesRemote(sponsorId, historyIds)
+  await bulkDeleteSponsorProgramHistoriesRemote(sponsorId, programIds)
 }
 
 export async function endSponsorship(id: string): Promise<void> {

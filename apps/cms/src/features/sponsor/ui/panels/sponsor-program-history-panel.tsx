@@ -168,8 +168,7 @@ export function SponsorProgramHistoryPanel({
   }, [])
 
   const handleDeleteConfirm = useCallback(async (): Promise<void> => {
-    const ids = selectedKeys.map(k => String(k))
-    if (ids.length === 0) return
+    if (selectedRows.length === 0) return
 
     const hasInProgress = selectedRows.some(row =>
       isProgramHistoryDeleteBlockedByDisplayStatus(
@@ -182,8 +181,20 @@ export function SponsorProgramHistoryPanel({
       return
     }
 
+    const programIds = selectedRows.map(row => row.programId.trim()).filter(Boolean)
+    if (
+      programIds.length !== selectedRows.length ||
+      programIds.some(programId => !/^\d+$/.test(programId))
+    ) {
+      showAlert({
+        title: '안내',
+        content: '삭제할 프로그램 ID를 확인할 수 없습니다.',
+      })
+      return
+    }
+
     try {
-      await onRemoveProgramHistories(ids)
+      await onRemoveProgramHistories(programIds)
       setSelectedKeys([])
       setDeleteModalOpen(false)
     } catch (error) {
@@ -195,7 +206,7 @@ export function SponsorProgramHistoryPanel({
         ),
       })
     }
-  }, [onRemoveProgramHistories, selectedKeys, selectedRows, setSelectedKeys, showAlert])
+  }, [onRemoveProgramHistories, selectedRows, setSelectedKeys, showAlert])
 
   const programHistoryTableOnRow = useCallback(
     (record: SponsorProgramHistoryRow) => ({

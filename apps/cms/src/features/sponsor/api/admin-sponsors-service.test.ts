@@ -65,7 +65,7 @@ describe('deleteSponsorContacts', () => {
 })
 
 describe('deleteSponsorProgramHistories', () => {
-  it('후원사 id와 선택한 이력 id를 일괄 삭제 API에 전달한다', async () => {
+  it('후원사 id와 선택 이력의 programId를 일괄 삭제 API에 전달한다', async () => {
     bulkDeleteSponsorProgramHistoriesRemoteMock.mockResolvedValue()
 
     await deleteSponsorProgramHistories('10', ['101', '102'])
