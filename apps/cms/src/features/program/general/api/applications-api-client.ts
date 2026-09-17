@@ -213,7 +213,7 @@ export async function updateVolunteerDocumentEvaluationRemote(
   if (!Number.isSafeInteger(numericApplicationId)) {
     throw new Error('봉사자 신청 ID가 올바르지 않습니다.')
   }
-  return generalApplicationsDashboardApi.putVolunteerDocumentManagerEvaluation(
+  return generalApplicationsDashboardApi.recordVolunteerDocumentEvaluation(
     numericApplicationId,
     managerSlot,
     payload

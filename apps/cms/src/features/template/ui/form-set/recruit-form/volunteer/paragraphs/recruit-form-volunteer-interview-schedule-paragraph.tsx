@@ -9,12 +9,16 @@ export function RecruitFormVolunteerInterviewScheduleParagraph({
   onRemoveExceptionBlock,
   commonScheduleSeed,
   onCommonExclusionChange,
+  /** 템플릿 관리 기본 true — 프로그램 상세 편집만 false */
+  freezeUnavailableCalendar = true,
 }: {
   exceptionScheduleCount?: number
   exceptionBlockKeys?: number[]
   onRemoveExceptionBlock?: (key: number) => void
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
+  /** 템플릿 관리 화면 — 진행 불가일 모달 달력 샘플 고정 */
+  freezeUnavailableCalendar?: boolean
 }) {
   return (
     <VolunteerInterviewAvailableScheduleParagraph
@@ -25,6 +29,7 @@ export function RecruitFormVolunteerInterviewScheduleParagraph({
       onRemoveExceptionBlock={onRemoveExceptionBlock}
       commonScheduleSeed={commonScheduleSeed}
       onCommonExclusionChange={onCommonExclusionChange}
+      freezeUnavailableCalendar={freezeUnavailableCalendar}
     />
   )
 }

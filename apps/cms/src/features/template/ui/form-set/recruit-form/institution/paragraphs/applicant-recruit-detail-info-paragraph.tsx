@@ -4,17 +4,21 @@ export type ApplicantRecruitDetailInfoParagraphProps = {
   /** 학교·개인 모집 폼 등 템플릿 전환 시 에디터 인스턴스 구분용 */
   wysiwygResetKey?: string
   overlayKeyPrefix?: string
+  /** 텍스트 필드 컨트롤 — UJAT 참여 기관 모집 등은 `input` */
+  textFieldControl?: 'textarea' | 'input'
 }
 
 /** 프로그램 참여자 모집 폼 — 상세 정보 (`공지사항 등록` Toast UI 에디터 재사용) */
 export function ApplicantRecruitDetailInfoParagraph({
   wysiwygResetKey = 'applicant-recruit-institution-extra-body',
   overlayKeyPrefix = 'recruit.detailInfo',
+  textFieldControl = 'textarea',
 }: ApplicantRecruitDetailInfoParagraphProps = {}) {
   return (
     <RecruitDetailInfoParagraph
       wysiwygResetKey={wysiwygResetKey}
       overlayKeyPrefix={overlayKeyPrefix}
+      textFieldControl={textFieldControl}
       textFields={[
         { label: '프로그램 설명', placeholder: '프로그램 설명을 작성하세요' },
         { label: '모집 안내', placeholder: '모집 안내를 작성하세요' },

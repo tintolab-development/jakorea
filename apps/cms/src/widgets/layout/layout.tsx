@@ -19,6 +19,7 @@ import {
   isPermissionRequestsPath,
   isPermissionSettingsPath,
   isSecurityLogPath,
+  isTemplateManagementPath,
   resolveAdminRoleCodeFromUser,
   showAdminAccessDeniedAlert,
 } from '@/shared/lib/admin-role-policy'
@@ -46,8 +47,15 @@ function LayoutContent() {
     Boolean(user) &&
     isPermissionRequestsPath(location.pathname) &&
     !canAdminAction({ roleCode, action: 'view', screen: 'admin-permission-approval' })
+  const templateManagementBlocked =
+    Boolean(user) &&
+    isTemplateManagementPath(location.pathname) &&
+    !canAdminAction({ roleCode, action: 'view', screen: 'template-management' })
   const screenAccessBlocked =
-    securityLogBlocked || permissionSettingsBlocked || permissionRequestsBlocked
+    securityLogBlocked ||
+    permissionSettingsBlocked ||
+    permissionRequestsBlocked ||
+    templateManagementBlocked
   const deniedLogPathRef = useRef<string | null>(null)
 
   useEffect(() => {

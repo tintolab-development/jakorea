@@ -18,6 +18,7 @@ import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
+import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
 import { useUjatProgramRegistrationEditor } from '@/features/template/ui/form-set/registration-form/UJAT'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
 import {
@@ -42,6 +43,7 @@ type TemplatePreviewModalEditorProps = {
   systemTemplate?: boolean
   forceUserEditable?: boolean
   onTemplateDraftSaveConfirmed?: () => void
+  onTitleCommit?: (nextTitle: string) => void
   registrationUserMode?: boolean
   footerAction?: TemplateFullpageModalFooterAction
   generic: TemplateRendererContext['generic']
@@ -54,6 +56,7 @@ type TemplatePreviewModalShellProps = {
   description?: ReactNode
   onPreview: () => void
   onSave?: () => void
+  onTitleCommit?: (nextTitle: string) => void
   showDeleteButton?: boolean
   onDelete?: () => void
   deleteLoading?: boolean
@@ -70,6 +73,7 @@ function TemplatePreviewModalShell({
   description,
   onPreview,
   onSave,
+  onTitleCommit,
   showDeleteButton,
   onDelete,
   deleteLoading,
@@ -88,6 +92,7 @@ function TemplatePreviewModalShell({
       templateTabType="writing"
       onPreview={onPreview}
       onSave={onSave}
+      onTitleCommit={onTitleCommit}
       showDeleteButton={showDeleteButton}
       onDelete={onDelete}
       deleteLoading={deleteLoading}
@@ -494,18 +499,28 @@ function GenericTemplatePreviewEditor({
 /** `open === true`일 때만 마운트 — 활성 양식 에디터 훅 1개만 실행 */
 export function TemplatePreviewModalEditor(props: TemplatePreviewModalEditorProps) {
   const entry = props.registryEntry ?? lookupTemplateRegistry(props.templateId)
+  const templateCode = props.templateId?.trim() || entry?.id
+  const { displayName, commitTitle } = useFormTemplateModalTitle({
+    templateCode,
+    initialName: props.title,
+  })
+  const titledProps: TemplatePreviewModalEditorProps = {
+    ...props,
+    title: displayName,
+    onTitleCommit: commitTitle,
+  }
 
   if (entry && isRegistrationRegistryEntry(entry) && entry.registrationEditor === 'general') {
-    return <GeneralRegistrationTemplatePreviewEditor {...props} registryEntry={entry} />
+    return <GeneralRegistrationTemplatePreviewEditor {...titledProps} registryEntry={entry} />
   }
   if (entry?.registrationEditor === 'ujat') {
-    return <UjatRegistrationTemplatePreviewEditor {...props} registryEntry={entry} />
+    return <UjatRegistrationTemplatePreviewEditor {...titledProps} registryEntry={entry} />
   }
   if (entry && isParticipantApplicationRegistryEntry(entry)) {
-    return <ParticipantApplicationTemplatePreviewEditor {...props} registryEntry={entry} />
+    return <ParticipantApplicationTemplatePreviewEditor {...titledProps} registryEntry={entry} />
   }
   if (entry && isSurveyRegistryEntry(entry)) {
-    return <SurveyTemplatePreviewEditor {...props} registryEntry={entry} />
+    return <SurveyTemplatePreviewEditor {...titledProps} registryEntry={entry} />
   }
-  return <GenericTemplatePreviewEditor {...props} registryEntry={entry} />
+  return <GenericTemplatePreviewEditor {...titledProps} registryEntry={entry} />
 }

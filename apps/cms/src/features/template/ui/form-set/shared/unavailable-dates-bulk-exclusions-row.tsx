@@ -32,6 +32,10 @@ export type UnavailableDatesBulkExclusionsRowProps = {
    */
   canOpenDirectUnavailableModal?: boolean
   onDirectUnavailableModalBlocked?: () => void
+  /**
+   * 템플릿 편집 — 진행 불가일 모달 달력을 진입 월 샘플로 고정(미리보기와 동일)
+   */
+  freezeCalendarInteraction?: boolean
 }
 
 function resolveInitialExclusionState({
@@ -107,6 +111,7 @@ export function UnavailableDatesBulkExclusionsRow({
   defaultExcludeNone,
   exclusionState: controlledExclusionState,
   onExclusionChange,
+  freezeCalendarInteraction = false,
 }: UnavailableDatesBulkExclusionsRowProps) {
   const [internalExclusionState, setInternalExclusionState] = useState(() =>
     resolveInitialExclusionState({
@@ -188,6 +193,9 @@ export function UnavailableDatesBulkExclusionsRow({
         initialCalendarDate={initialCalendarDate}
         appliedDates={appliedDates}
         onApplyDatesChange={handleApplyDatesChange}
+        exclusionState={exclusionState}
+        onExclusionChange={updateExclusionState}
+        freezeCalendarInteraction={freezeCalendarInteraction}
         modalUnavailableDescriptionLead={modalUnavailableDescriptionLead}
         modalUnavailableDescriptionSecond={modalUnavailableDescriptionSecond}
         canOpenDirectUnavailableModal={canOpenDirectUnavailableModal}

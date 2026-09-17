@@ -61,7 +61,6 @@ import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/sch
 import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboard/schemas/volunteerFinalResultRequest'
 import type { GeneralSecondInterviewScreeningStatus } from '@/features/program/general/lib/volunteer-screening-constants'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
-import { DocumentManagerEvaluation } from '@/shared/api/generated/dashboard/schemas/documentManagerEvaluation'
 
 export const GENERAL_PROGRAM_DETAIL_PAGE_SIZE = 20
 
@@ -447,8 +446,8 @@ export async function updateGeneralVolunteerDocumentEvaluation(
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await updateVolunteerDocumentEvaluationRemote(applicationId, managerSlot, {
-    evaluation:
-      DocumentManagerEvaluation[evaluation.toUpperCase() as keyof typeof DocumentManagerEvaluation],
+    // BE pattern: PASS|NEUTRAL|FAIL|UNREVIEWED
+    evaluation: evaluation.toUpperCase(),
   })
 }
 

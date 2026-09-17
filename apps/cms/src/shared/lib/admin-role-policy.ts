@@ -26,6 +26,7 @@ export type AdminPolicyScreen =
   | 'security-logs'
   | 'admin-permission-approval'
   | 'permission-settings'
+  | 'template-management'
 
 export const ADMIN_ACCESS_DENIED_ALERT_TITLE = '접근 권한이 없습니다.'
 export const ADMIN_ACCESS_DENIED_ALERT_CONTENT =
@@ -122,6 +123,12 @@ export function isPermissionRequestsPath(pathname: string): boolean {
   )
 }
 
+/** 템플릿 관리(`/templates`, form-management·레거시 program-forms 등) */
+export function isTemplateManagementPath(pathname: string): boolean {
+  const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
+  return normalized === '/templates' || normalized.startsWith('/templates/')
+}
+
 export function resolveAdminPolicyScreen(pathname: string | undefined): AdminPolicyScreen {
   if (!pathname) return 'default'
   const normalized = pathname === '/' ? pathname : pathname.replace(/\/$/, '')
@@ -131,6 +138,9 @@ export function resolveAdminPolicyScreen(pathname: string | undefined): AdminPol
   }
   if (isPermissionRequestsPath(normalized)) {
     return 'admin-permission-approval'
+  }
+  if (isTemplateManagementPath(normalized)) {
+    return 'template-management'
   }
   return 'default'
 }
@@ -149,15 +159,20 @@ export function canAdminAction(input: {
       input.action === 'view' &&
       screen !== 'security-logs' &&
       screen !== 'permission-settings' &&
-      screen !== 'admin-permission-approval'
+      screen !== 'admin-permission-approval' &&
+      screen !== 'template-management'
     )
   }
 
   switch (input.action) {
     case 'view':
       if (screen === 'security-logs') return roleCode === 'MASTER'
-      // 관리자 권한 설정·회원 권한 승인: 뷰어는 화면 조회 자체 불가 (메뉴 클릭 시 권한 없음 모달)
-      if (screen === 'permission-settings' || screen === 'admin-permission-approval') {
+      // 관리자 권한 설정·회원 권한 승인·템플릿 관리: 뷰어는 화면 조회 자체 불가
+      if (
+        screen === 'permission-settings' ||
+        screen === 'admin-permission-approval' ||
+        screen === 'template-management'
+      ) {
         return roleCode !== 'VIEWER'
       }
       return true

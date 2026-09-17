@@ -106,6 +106,45 @@
   min-height: 0;
 }
 
+/* 템플릿 편집 샘플: 진입 월 고정 · 월 이동/날짜 클릭 차단 (disabled 룩 없음) */
+.direct-unavailable-date-modal__calendar--frozen-sample {
+  pointer-events: none;
+}
+
+/* 강사 배정 안내 캘린더 시각 조건 유지 · 모달 300px 슬롯에 맞춤 */
+.direct-unavailable-date-modal__calendar .ujat-volunteer-interview-assign-calendar-mini {
+  width: 300px;
+  max-width: 300px;
+}
+
+.direct-unavailable-date-modal__calendar
+  .ujat-volunteer-interview-assign-calendar-mini
+  .calendar-mini {
+  --calendar-mini-padding: 16px;
+  --calendar-mini-width: 300px;
+  --calendar-mini-height: 332px;
+  --calendar-mini-cell-size: min(30px, calc(var(--calendar-mini-row-height) - 13px));
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
+  height: var(--calendar-mini-height);
+  min-height: var(--calendar-mini-height);
+  max-height: var(--calendar-mini-height);
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 16px;
+  padding: var(--calendar-mini-padding);
+  box-sizing: border-box;
+}
+
+.direct-unavailable-date-modal__calendar
+  .ujat-volunteer-interview-assign-calendar-mini
+  .calendar-mini
+  .ant-picker-content
+  tbody
+  .ant-picker-cell {
+  padding-top: 13px;
+}
+
 .direct-unavailable-date-modal__selected {
   flex: 0 0 220px;
   width: 220px;

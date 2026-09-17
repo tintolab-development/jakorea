@@ -132,6 +132,7 @@
 | [programs-api-backend-gaps-consolidated.md](api/programs-api-backend-gaps-consolidated.md) | 프로그램 Cat1–6 **백엔드 통합 핸드오프** (API 부재·계약 미비·적용 가이드) |
 | [programs-seed-case-api-coverage-backend-handoff-2026-07-30.md](api/programs-seed-case-api-coverage-backend-handoff-2026-07-30.md) | **시드 CASE(166401…)** 기준 API 적용률 · 더미 잔존 BE 핸드오프 (2026-07-30) |
 | [**be-handoff-program-dummy-seeds/**](api/be-handoff-program-dummy-seeds/README-BE.md) | **프로그램 더미 시드 zip 패키지** — FE mock 기준 BE 시드 요청 (유형별 레시피) |
+| [**general-program-remote-db-full-graph-seed-backend-request-2026-09-16.md**](api/general-program-remote-db-full-graph-seed-backend-request-2026-09-16.md) | **일반 프로그램 remote DB 전그래프 시드** — 기존 프로그램 전수 보강 · 8종 갭 CREATE · 신청→진행 연결 · 회원 신규 생성 금지 |
 | [education-records-dummy-seed-backend-request.md](api/education-records-dummy-seed-backend-request.md) | **실적 관리**(`/education-records`) FE mock 30건 DB 시드 요청 |
 | [education-records-api-backend-cursor-prompt.md](api/education-records-api-backend-cursor-prompt.md) | **실적 관리** 목록·합계·엑셀 필터·집계 규칙 **BE Cursor 프롬프트** |
 | [dashboard-settings-dummy-seed-backend-request.md](api/dashboard-settings-dummy-seed-backend-request.md) | **대시보드 설정** FE mock 바로가기 27건·기본 layout DB 시드 요청 |

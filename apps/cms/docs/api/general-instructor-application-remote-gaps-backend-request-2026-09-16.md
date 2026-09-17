@@ -1,11 +1,12 @@
 # 일반 프로그램 강사 신청 — remote 보완 · 백엔드 요청
 
-**작성일:** 2026-09-16
-**최종 검토:** 2026-09-16 (OpenAPI `backend.openapi.json` 재대조)
-**우선순위:** P1
-**대상:** 일반 프로그램 상세 → 강사 신청 목록 · 강사 신청 상세
-**범위:** 일반 프로그램 기관·개인 참여 모드의 **강사 신청** (Gemini 강사 신청 API와 별도)
-**관련:** [programs-api-integration.md](./programs-api-integration.md)
+**작성일:** 2026-09-16  
+**최종 검토:** 2026-09-16 (OpenAPI `backend.openapi.json` 재대조)  
+**우선순위:** P1  
+**대상:** 일반 프로그램 상세 → 강사 신청 목록 · 강사 신청 상세  
+**범위:** 일반 프로그램 기관·개인 참여 모드의 **강사 신청** (Gemini 강사 신청 API와 별도)  
+**관련:** [programs-api-integration.md](./programs-api-integration.md)  
+**시드(별도 SSOT):** [general-program-remote-db-full-graph-seed-backend-request-2026-09-16.md](./general-program-remote-db-full-graph-seed-backend-request-2026-09-16.md)
 
 ---
 
@@ -18,7 +19,7 @@
 | 승인 `assignments[].scheduleId` ↔ 강의배정 모달 슬롯 매핑 | **P1 확인** | FE 슬롯에 `scheduleId`/`organizationApplicationId` 없으면 approve body에 배정 불가 |
 | 정보 수정(강의비·기본정보 전체 PATCH) | **필요 시 P2** | 현재 PATCH는 `managerComment`만 |
 
-**이전 문서의 「상세 GET / cancel-approval / cancel-rejection / 코멘트 API 부재」는 폐기.**
+**이전 문서의 「상세 GET / cancel-approval / cancel-rejection / 코멘트 API 부재」는 폐기.**  
 OpenAPI에 이미 존재하며 FE 미배선이 원인입니다.
 
 ---

@@ -6,6 +6,7 @@ import {
 } from '@/features/template/lib/certificate-form-settings'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
 import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
+import { useFormTemplateModalTitle } from '@/features/template/hooks/use-form-template-modal-title'
 import { persistWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import {
@@ -67,6 +68,10 @@ export function FormTemplateFullpageModal({
 }: FormTemplateFullpageModalProps) {
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
   const { showAlert } = useCmsAlert()
+  const { displayName: modalTitle, commitTitle: commitModalTitle } = useFormTemplateModalTitle({
+    templateCode,
+    initialName: title,
+  })
 
   const modalState = useCertificateTemplateModalState({
     open,
@@ -285,11 +290,12 @@ export function FormTemplateFullpageModal({
       className="form-template-fullpage-modal"
       open={open}
       onClose={onClose}
-      title={title}
+      title={modalTitle}
       description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
       templateTabType="issuance"
       onPreview={handlePreview}
       onSave={handleSave}
+      onTitleCommit={commitModalTitle}
       onDownloadDocument={() => {
         void handleDownloadDocument()
       }}

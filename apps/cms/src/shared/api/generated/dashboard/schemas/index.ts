@@ -582,7 +582,6 @@ export * from './logListPageResponseBugIssueLogFrontendResponse';
 export * from './logListPageResponseDownloadLogFrontendResponse';
 export * from './logListPageResponseMemberLoginLogFrontendResponse';
 export * from './logListPageResponsePersonalInfoAccessLogFrontendResponse';
-export * from './managerSlot';
 export * from './materialKitCalculationResponse';
 export * from './materialKitCurrentConfigRequest';
 export * from './materialKitCurrentConfigResponse';

@@ -412,6 +412,49 @@ export async function createWritingFormTemplateRemote(args: {
   return newCode
 }
 
+/**
+ * 템플릿 코드 기준 표시명(templateName) 변경.
+ * 목록 조회로 캐시된 templateId가 필요하며, 없으면 작성 양식 목록을 한 번 워밍한다.
+ */
+export async function renameFormTemplateByCode(
+  templateCode: string,
+  templateName: string
+): Promise<void> {
+  const nextName = templateName.trim()
+  if (nextName === '') {
+    throw new Error('템플릿 이름을 입력해 주세요.')
+  }
+
+  if (!shouldUseFormsSurveysRemoteApi()) {
+    return
+  }
+
+  assertFormsSurveysRemoteReady()
+
+  let cached = getFormTemplateVersionCacheEntry(templateCode)
+  if (cached?.templateId == null) {
+    try {
+      await getWritingFormSectionsRemote()
+    } catch {
+      /* issuance-only 등 — 아래 issuance 워밍 */
+    }
+    cached = getFormTemplateVersionCacheEntry(templateCode)
+  }
+  if (cached?.templateId == null) {
+    try {
+      await getIssuanceFormSectionsRemote()
+    } catch {
+      /* ignore */
+    }
+    cached = getFormTemplateVersionCacheEntry(templateCode)
+  }
+  if (cached?.templateId == null) {
+    throw new Error('이름 변경할 템플릿 ID를 찾을 수 없습니다. 목록을 먼저 조회해 주세요.')
+  }
+
+  await updateFormTemplateRemote(cached.templateId, { templateName: nextName })
+}
+
 export async function deleteFormTemplate(templateCode: string): Promise<void> {
   assertFormsSurveysRemoteReady()
 

@@ -30,11 +30,18 @@ export function InstructorCrimeRecordParagraph({
   const readOnly = isTemplateAuthoringMode || readOnlyPreview
 
   const fileUploadCell = (
-    <div className="program-application-form-instructor__file-cell">
+    <div
+      className={[
+        'program-application-form-instructor__file-cell',
+        // 활성 룩 유지 + 클릭만 차단 (disabled 스타일 금지 — 미리보기/템플릿 편집 동일)
+        readOnly && 'program-application-form-instructor__file-cell--readonly-preview',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <ParagraphFileUpload
         accept=".pdf"
         guideLines={[]}
-        disabled={readOnly}
         className="program-application-form-instructor__file-upload-trigger"
         onFilesChange={files => {
           if (readOnly) return

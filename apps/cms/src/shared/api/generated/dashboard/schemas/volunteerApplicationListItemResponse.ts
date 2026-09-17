@@ -5,12 +5,8 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
-import type { DocumentManagerEvaluation } from './documentManagerEvaluation';
 import type { InterviewEvaluationSummary } from './interviewEvaluationSummary';
 
-/**
- * 봉사자 신청 목록의 면접 배정, 담당자 A/B 서류평가 원장과 현재 관리자 편집 권한. 미평가는 UNREVIEWED이며 배열은 항상 []입니다.
- */
 export interface VolunteerApplicationListItemResponse {
   id?: number;
   programId?: number;
@@ -23,23 +19,22 @@ export interface VolunteerApplicationListItemResponse {
   memberName?: string;
   applicationStatus?: string;
   documentStatus?: string;
-  interviewStatus?: string | null;
+  interviewStatus?: string;
   finalResultStatus?: string;
   reserveRank?: number;
   isReparticipation?: boolean;
   giveUpYn?: boolean;
-  applicationFormResponseId?: number | null;
-  /** 지원 에세이 제출 여부. 목록에서는 원문 PII를 노출하지 않고 상세 응답 ID만 함께 제공합니다. */
-  essaySubmitted?: boolean | null;
-  interviewAssignmentId?: number | null;
-  interviewAssignmentStatus?: string | null;
-  assignedInterviewSlotId?: number | null;
-  assignedInterviewStartAt?: string | null;
-  assignedInterviewEndAt?: string | null;
+  applicationFormResponseId?: number;
+  essaySubmitted?: boolean;
+  interviewAssignmentId?: number;
+  interviewAssignmentStatus?: string;
+  assignedInterviewSlotId?: number;
+  assignedInterviewStartAt?: string;
+  assignedInterviewEndAt?: string;
   interviewEvaluations?: InterviewEvaluationSummary[];
   submittedAt?: string;
-  managerAEvaluation?: DocumentManagerEvaluation;
-  managerBEvaluation?: DocumentManagerEvaluation;
+  managerAEvaluation?: string;
+  managerBEvaluation?: string;
   canEditManagerAEvaluation?: boolean;
   canEditManagerBEvaluation?: boolean;
   availableActions?: string[];

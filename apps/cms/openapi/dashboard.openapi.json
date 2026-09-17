@@ -449,15 +449,16 @@
     "/api/admin/volunteer-applications/{applicationId}/document-evaluations/{managerSlot}": {
       "put": {
         "tags": [
-          "신청 및 프로그램 진행"
+          "신청/프로그램 워크플로우"
         ],
-        "operationId": "putVolunteerDocumentManagerEvaluation",
         "summary": "봉사자 담당자 A/B 서류 평가 저장",
-        "description": "APPLICATION_WRITE 권한과 프로그램 접근 범위가 필요합니다. MASTER와 대상 프로그램의 PM은 A/B 슬롯을 모두 수정할 수 있고 그 외 일반 관리자는 본인에게 배정된 슬롯만 멱등 갱신합니다. 최종 서류 결과가 확정되면 MASTER와 PM을 포함해 수정할 수 없으며 최종 documentStatus는 평가 저장으로 변경되지 않습니다.",
+        "description": "### 이 API가 하는 일\n- 봉사자 담당자 A/B 서류 평가 저장\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PUT /api/admin/volunteer-applications/{applicationId}/document-evaluations/{managerSlot}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: APPLICATION_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-09-16 general volunteer document evaluation contract",
+        "operationId": "recordVolunteerDocumentEvaluation",
         "parameters": [
           {
             "name": "applicationId",
             "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
             "required": true,
             "schema": {
               "type": "integer",
@@ -467,27 +468,28 @@
           {
             "name": "managerSlot",
             "in": "path",
+            "description": "경로 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
             "required": true,
             "schema": {
-              "$ref": "#/components/schemas/ManagerSlot"
+              "type": "string"
             }
           }
         ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/VolunteerDocumentEvaluationRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
-            "description": "저장 후 A/B 최신 평가",
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
             "content": {
-              "application/json": {
+              "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/VolunteerDocumentEvaluationResponse"
                 }
@@ -495,19 +497,19 @@
             }
           },
           "400": {
-            "description": "INVALID_REQUEST"
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
           },
           "403": {
-            "description": "FORBIDDEN_APPLICATION_ACTION"
-          },
-          "404": {
-            "description": "VOLUNTEER_APPLICATION_NOT_FOUND"
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
           },
           "409": {
-            "description": "DOCUMENT_EVALUATION_LOCKED"
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
           },
-          "422": {
-            "description": "INVALID_DOCUMENT_EVALUATION"
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
           }
         }
       }
@@ -2613,59 +2615,47 @@
       "VolunteerDocumentEvaluationRequest": {
         "type": "object",
         "description": "일반 프로그램 봉사자 담당자 A/B 서류 평가 저장 요청",
-        "required": [
-          "evaluation"
-        ],
         "properties": {
           "evaluation": {
-            "$ref": "#/components/schemas/DocumentManagerEvaluation"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "PASS|NEUTRAL|FAIL|UNREVIEWED"
           }
-        }
+        },
+        "required": [
+          "evaluation"
+        ]
       },
       "VolunteerDocumentEvaluationResponse": {
         "type": "object",
-        "description": "저장 직후 봉사자 A/B 평가 원장과 현재 관리자 편집 권한",
-        "required": [
-          "applicationId",
-          "managerSlot",
-          "evaluation",
-          "managerAEvaluation",
-          "managerBEvaluation",
-          "documentStatus",
-          "availableActions",
-          "canEditManagerAEvaluation",
-          "canEditManagerBEvaluation"
-        ],
+        "description": "일반 프로그램 봉사자 담당자 A/B 서류 평가 저장 결과",
         "properties": {
           "applicationId": {
             "type": "integer",
             "format": "int64"
           },
           "managerSlot": {
-            "$ref": "#/components/schemas/ManagerSlot"
+            "type": "string"
           },
           "evaluation": {
-            "$ref": "#/components/schemas/DocumentManagerEvaluation"
+            "type": "string"
           },
           "evaluatedByAdminId": {
             "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           },
           "evaluatedByAdminName": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "evaluatedAt": {
             "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "managerAEvaluation": {
-            "$ref": "#/components/schemas/DocumentManagerEvaluation"
+            "type": "string"
           },
           "managerBEvaluation": {
-            "$ref": "#/components/schemas/DocumentManagerEvaluation"
+            "type": "string"
           },
           "documentStatus": {
             "type": "string"
@@ -12293,10 +12283,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -18205,13 +18195,23 @@
         }
       },
       "DocumentManagerEvaluation": {
-        "type": "string",
-        "enum": [
-          "PASS",
-          "NEUTRAL",
-          "FAIL",
-          "UNREVIEWED"
-        ]
+        "type": "object",
+        "properties": {
+          "evaluation": {
+            "type": "string"
+          },
+          "evaluatedByAdminId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "evaluatedByAdminName": {
+            "type": "string"
+          },
+          "evaluatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "IndividualApplicationDetailResponse": {
         "type": "object",
@@ -30738,8 +30738,7 @@
             "type": "string"
           },
           "interviewStatus": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "finalResultStatus": {
             "type": "string"
@@ -30756,37 +30755,29 @@
           },
           "applicationFormResponseId": {
             "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           },
           "essaySubmitted": {
-            "type": "boolean",
-            "nullable": true,
-            "description": "지원 에세이 제출 여부. 목록에서는 원문 PII를 노출하지 않고 상세 응답 ID만 함께 제공합니다."
+            "type": "boolean"
           },
           "interviewAssignmentId": {
             "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           },
           "interviewAssignmentStatus": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "assignedInterviewSlotId": {
             "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           },
           "assignedInterviewStartAt": {
             "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "assignedInterviewEndAt": {
             "type": "string",
-            "format": "date-time",
-            "nullable": true
+            "format": "date-time"
           },
           "interviewEvaluations": {
             "type": "array",
@@ -30799,10 +30790,10 @@
             "format": "date-time"
           },
           "managerAEvaluation": {
-            "$ref": "#/components/schemas/DocumentManagerEvaluation"
+            "type": "string"
           },
           "managerBEvaluation": {
-            "$ref": "#/components/schemas/DocumentManagerEvaluation"
+            "type": "string"
           },
           "canEditManagerAEvaluation": {
             "type": "boolean"
@@ -30816,8 +30807,7 @@
               "type": "string"
             }
           }
-        },
-        "description": "봉사자 신청 목록의 면접 배정, 담당자 A/B 서류평가 원장과 현재 관리자 편집 권한. 미평가는 UNREVIEWED이며 배열은 항상 []입니다."
+        }
       },
       "OrganizationScheduleListResponse": {
         "type": "object",
@@ -35007,12 +34997,12 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "카탈로그 key = #{…} 안쪽 라벨. fail-closed 메시지 키와 동일.",
+            "description": "카탈로그 key = #{…} 안쪽 라벨",
             "example": "교육 진행 수업 시간"
           },
           "token": {
             "type": "string",
-            "description": "본문 삽입용 토큰. 예: #{교육 진행 수업 시간}. FE는 key가 아니라 token을 삽입.",
+            "description": "본문 삽입용 토큰",
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
@@ -35024,11 +35014,11 @@
           },
           "requiresProgram": {
             "type": "boolean",
-            "description": "true이면 programId 없이 enabled=false."
+            "description": "true면 programId 없이 enabled=false. 알림톡 피커 Option A에서도 동일"
           },
           "enabled": {
             "type": "boolean",
-            "description": "삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능."
+            "description": "삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT. FE 재계산 금지. 시스템 이벤트 전용 키는 기본 false. TEMP: local + ja.notification.qa.system-manual-send-enabled=true 이면 SYSTEM도 true. true여도 원천 데이터 없으면 발송 실패 가능(QA 모드에서는 서버가 SYSTEM 더미 enrich)"
           },
           "programGroups": {
             "type": "array",
@@ -35046,14 +35036,14 @@
           },
           "participantTypes": {
             "type": "array",
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
+            "description": "허용 참여 유형. 비면 제한 없음",
             "items": {
               "type": "string"
             }
           },
           "memberTypes": {
             "type": "array",
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
+            "description": "허용 회원 유형. 비면 제한 없음",
             "items": {
               "type": "string"
             }
@@ -35540,15 +35530,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
@@ -38907,13 +38897,6 @@
             "type": "string"
           }
         }
-      },
-      "ManagerSlot": {
-        "type": "string",
-        "enum": [
-          "A",
-          "B"
-        ]
       }
     },
     "responses": {

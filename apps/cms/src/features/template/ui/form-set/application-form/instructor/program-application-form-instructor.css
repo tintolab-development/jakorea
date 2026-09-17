@@ -8,6 +8,11 @@
   min-width: 0;
 }
 
+/* 템플릿 편집·미리보기: 버튼은 활성처럼 보이되 파일 선택 인터랙션만 차단 */
+.program-application-form-instructor__file-cell--readonly-preview {
+  pointer-events: none;
+}
+
 /* DetailInfoForm 값 칸 — edit/view 슬롯 flex 오버라이드 후에도 업로드 버튼이 보이도록 */
 .detail-info-form__field-content--edit > .program-application-form-instructor__file-cell,
 .detail-info-form__field-content--view > .program-application-form-instructor__file-cell {

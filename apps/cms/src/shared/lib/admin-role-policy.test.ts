@@ -9,6 +9,7 @@ import {
   isPermissionRequestsPath,
   isPermissionSettingsPath,
   isSecurityLogPath,
+  isTemplateManagementPath,
   parseAdminRoleCode,
   resolveAdminPolicyScreen,
   resolveAdminRoleCodeFromUser,
@@ -108,6 +109,7 @@ describe('resolveAdminPolicyScreen', () => {
     expect(resolveAdminPolicyScreen('/logs/member-login-history')).toBe('security-logs')
     expect(resolveAdminPolicyScreen('/admin/settings/permissions')).toBe('permission-settings')
     expect(resolveAdminPolicyScreen('/admin/permission-requests')).toBe('admin-permission-approval')
+    expect(resolveAdminPolicyScreen('/templates/form-management')).toBe('template-management')
     expect(resolveAdminPolicyScreen('/users/list')).toBe('default')
   })
 })
@@ -207,6 +209,20 @@ describe('canAdminAction 표 규칙', () => {
     expect(isPermissionRequestsPath('/admin/permission-requests')).toBe(true)
     expect(isPermissionRequestsPath('/admin/permission-requests/')).toBe(true)
     expect(isPermissionRequestsPath('/admin/settings/permissions')).toBe(false)
+  })
+
+  it('템플릿 관리 조회는 뷰어만 차단', () => {
+    expect(allowed('MASTER', 'view', 'template-management')).toBe(true)
+    expect(allowed('PM', 'view', 'template-management')).toBe(true)
+    expect(allowed('PARTNER', 'view', 'template-management')).toBe(true)
+    expect(allowed('VIEWER', 'view', 'template-management')).toBe(false)
+  })
+
+  it('isTemplateManagementPath는 템플릿 경로만 인식한다', () => {
+    expect(isTemplateManagementPath('/templates')).toBe(true)
+    expect(isTemplateManagementPath('/templates/form-management')).toBe(true)
+    expect(isTemplateManagementPath('/templates/program-forms')).toBe(true)
+    expect(isTemplateManagementPath('/admin/settings/permissions')).toBe(false)
   })
 
   it('강사 권한 승인은 뷰어만 차단', () => {

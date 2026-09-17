@@ -23,6 +23,7 @@ export function UjatRecruitDetailInfoParagraph(props: UjatRecruitParagraphProps 
         sectionTitle={props.sectionTitle ?? '상세 정보'}
         sectionDescription={UJAT_PARTICIPANT_DETAIL_INFO_DESCRIPTION}
         emptyReadDisplay="dash"
+        textFieldControl="input"
       />
     )
   }
@@ -30,6 +31,7 @@ export function UjatRecruitDetailInfoParagraph(props: UjatRecruitParagraphProps 
     <ApplicantRecruitDetailInfoParagraph
       wysiwygResetKey="ujat-recruit-institution-extra-body"
       overlayKeyPrefix="ujatRecruit.detailInfo"
+      textFieldControl="input"
     />
   )
 }
