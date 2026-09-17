@@ -17,6 +17,7 @@ import {
   isPermissionRequestsPath,
   isPermissionSettingsPath,
   isSecurityLogPath,
+  isTemplateManagementPath,
   showAdminAccessDeniedAlert,
 } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
@@ -213,6 +214,13 @@ export function Sidebar() {
             if (
               isPermissionRequestsPath(key) &&
               !canAdminAction({ roleCode, action: 'view', screen: 'admin-permission-approval' })
+            ) {
+              showAdminAccessDeniedAlert()
+              return
+            }
+            if (
+              isTemplateManagementPath(key) &&
+              !canAdminAction({ roleCode, action: 'view', screen: 'template-management' })
             ) {
               showAdminAccessDeniedAlert()
               return
