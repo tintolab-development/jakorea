@@ -1,7 +1,7 @@
 # BE 수정 요청 — 교육받은 교사 공통·모집 정보 수정 라운드트립 + 저장 시 API 폭주
 
 **작성일:** 2026-09-17  
-**상태:** ⏳ BE 확인·보강 요청 (FE 일부 보정 완료)  
+**상태:** ✅ BE 런타임 미러 반영 · FE KPI/venue top-level wire 정렬 · [OpenAPI additive 후속](./trained-teacher-kpi-venue-mirror-openapi-backend-request-2026-09-17.md)  
 **우선순위:** P0 (필드 저장 후 재조회 원복) · P1 (저장 시 목록/집계 N+1 완화)  
 **대상 화면:** CMS `/programs/trained-teachers?programId=…` 풀페이지 상세  
 - LNB **공통 정보** · **모집 정보**  
@@ -11,6 +11,8 @@
 **FE gate:** JWT + `VITE_REAL_API_MODULES`에 `programs` (+ trained-teacher surface)  
 **관련 문서:**
 - BE handoff: `JABACK/docs/frontend/trained-teacher-common-info-roundtrip-frontend-handoff-2026-09-17.md`
+- FE adapter prompt: `JABACK/docs/frontend/trained-teacher-common-recruit-edit-roundtrip-fe-adapter-prompt-2026-09-17.md`
+- [trained-teacher-kpi-venue-mirror-openapi-backend-request-2026-09-17.md](./trained-teacher-kpi-venue-mirror-openapi-backend-request-2026-09-17.md)
 - [programs-trained-teachers-api-backend-handoff.md](./programs-trained-teachers-api-backend-handoff.md)
 - [programs-trained-teachers-api-conversion-status.md](./programs-trained-teachers-api-conversion-status.md)
 - [trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md](./trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md)
@@ -181,8 +183,9 @@ overview 집계만 **size=1 × 5 parallel**입니다. FE는 detail mutation의 �
 
 ## FE 측 후속 (BE 응답 후)
 
-- [ ] overview-stages 단일 API 붙이면 `fetchTrainedTeacherOverviewStages` 5연타 제거
-- [ ] 모집 비고·교육 대상 상세: BE SSOT에 맞춰 form 키 재매핑 (`remarks` / `educationTargetDetail`)
+- [x] overview-stages 단일 API 붙이면 `fetchTrainedTeacherOverviewStages` 5연타 제거
+- [x] 모집 비고·교육 대상 상세: BE SSOT에 맞춰 form 키 재매핑 (`remarks` / `educationTargetDetail`)
+- [x] KPI `totalParticipants`/`educatedTeachers` → programs PATCH SSOT (detail PATCH 생략 가능 시)
 - [ ] `titleEn` 편집 필요 시 UI + PATCH 추가
 - [ ] OpenAPI 동기화 후 `ProgramUpdateRequest` alias codegen 반영
 
@@ -194,7 +197,7 @@ overview 집계만 **size=1 × 5 parallel**입니다. FE는 detail mutation의 �
 | `features/program/shared/model/program-detail-edit-schema.ts` | form ↔ Program patch |
 | `features/program/trained-teachers/api/adapters.ts` | `mapTrainedTeacherToUpdateRequest` |
 | `features/program/trained-teachers/api/hooks.ts` | mutation invalidate (overview/list) |
-| `features/program/trained-teachers/api/service.ts` | `fetchTrainedTeacherOverviewStages` (size=1 × 5) |
+| `features/program/trained-teachers/api/service.ts` | `fetchTrainedTeacherOverviewStages` → `GET …/overview-stages` |
 | `features/program/shared/ui/.../basic-info-section.tsx` | TT/1사1교 공통정보 UI |
 
 **Last updated:** 2026-09-17

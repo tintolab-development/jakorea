@@ -16,8 +16,11 @@ import type {
 import type { Status } from '@/types'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import {
-  decodeSponsorManagerContactRef,
+  encodeSponsorManagerContactRef,
+  buildProgramSponsorAssignmentsWire,
+  normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
+import type { AdminProgramSponsorAssignmentDto } from '@/features/program/general/api/programs-api-client'
 import { resolveProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   parseTrainedTeacherServiceDetailJson,
@@ -27,6 +30,55 @@ import {
 export const TRAINED_TEACHER_PROGRAM_API_TYPE = 'TRAINED_TEACHER'
 
 const DEFAULT_SPONSOR_ID = 'sponsor-default'
+
+/** BE `ProgramUpdateRequest` Integer — 초과 시 Jackson MALFORMED_REQUEST */
+const JAVA_INT_MAX = 2_147_483_647
+
+function toJavaInt(value: number | null | undefined): number | undefined {
+  if (value == null || !Number.isFinite(value)) return undefined
+  const n = Math.trunc(value)
+  if (n < 0) return undefined
+  return Math.min(n, JAVA_INT_MAX)
+}
+
+/** GET …/sponsors 배정을 Program 후원·담당자 필드로 병합 (contact∈sponsor 유지) */
+export function mergeTrainedTeacherSponsorAssignments(
+  program: Program,
+  assignments: readonly AdminProgramSponsorAssignmentDto[]
+): Program {
+  const valid = assignments.filter(
+    row => row.sponsorId != null && String(row.sponsorId).trim() !== ''
+  )
+  if (valid.length === 0) return program
+
+  const sponsorManagementIds = [
+    ...new Set(valid.map(row => String(row.sponsorId).trim())),
+  ]
+  const sponsorManagerContactIds = valid
+    .filter(
+      row => row.sponsorContactId != null && String(row.sponsorContactId).trim() !== ''
+    )
+    .map(row =>
+      encodeSponsorManagerContactRef(String(row.sponsorId), String(row.sponsorContactId))
+    )
+  const withContact = valid.find(
+    row => row.sponsorContactId != null && String(row.sponsorContactId).trim() !== ''
+  )
+  const managerName =
+    withContact?.sponsorContactName?.trim() || program.managerName
+
+  return {
+    ...program,
+    sponsorId: sponsorManagementIds[0] ?? program.sponsorId,
+    managerName,
+    generalCommonInfo: {
+      ...program.generalCommonInfo,
+      sponsorManagementIds,
+      sponsorManagerContactIds,
+      sponsorManagerContactId: sponsorManagerContactIds[0],
+    },
+  }
+}
 
 function toDate(value: Date | string | undefined): string | undefined {
   if (value instanceof Date) return value.toISOString()
@@ -103,12 +155,6 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
 }
 
 export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program {
-  const dtoExt = dto as ProgramResponse & {
-    remarks?: string
-    otherMatters?: string
-    contactName?: string
-    recruitmentTargetDetail?: string
-  }
   const title = dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
   const id = dto.id == null ? '' : String(dto.id)
   const now = new Date().toISOString()
@@ -121,7 +167,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   void _serviceDetailLifecycle
   void _serviceDetailStatus
 
-  const periodStatus = (dto as ProgramResponse & { periodStatus?: string }).periodStatus
+  const periodStatus = dto.periodStatus
   /** 1급 API 필드 우선, 없을 때만 serviceDetailJson fallback */
   const educationStructure =
     mapApiEducationStructureToDomain(dto.educationStructure) ??
@@ -131,12 +177,32 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   const participantRemarks = (
     details.generalCommonInfo?.participantRecruitmentInfo as { remarks?: string } | undefined
   )?.remarks
-  const otherNotes =
-    dtoExt.otherMatters?.trim() ||
-    dtoExt.remarks?.trim() ||
-    details.otherNotes?.trim() ||
-    participantRemarks?.trim() ||
+  /** otherNotes ≠ remarks — 모집 비고(remarks)와 분리 */
+  const otherNotes = dto.otherMatters?.trim() || details.otherNotes?.trim() || undefined
+  const remarks = dto.remarks?.trim() || participantRemarks?.trim() || undefined
+  const educationTargetDetail =
+    dto.educationTargetDetail?.trim() ||
+    (
+      details.generalCommonInfo?.participantRecruitmentInfo as
+        | { educationTargetDetail?: string }
+        | undefined
+    )?.educationTargetDetail?.trim() ||
+    (details as { educationTargetDetail?: string }).educationTargetDetail?.trim() ||
     undefined
+
+  const nestedKpi = details.generalCommonInfo?.kpi
+  const rootFinalSchools = toJavaInt(dto.finalSchools)
+  const rootFinalClasses = toJavaInt(dto.finalClasses)
+  const rootFinalParticipants = toJavaInt(dto.totalParticipants)
+  /** top-level KPI SSOT → nested kpi 표시 동기화 (BE는 root + generalCommonInfo.kpi 미러) */
+  const resolvedKpi = {
+    ...nestedKpi,
+    finalParticipants: rootFinalParticipants ?? nestedKpi?.finalParticipants ?? 0,
+    instructorCount: nestedKpi?.instructorCount ?? 0,
+    volunteerCount: nestedKpi?.volunteerCount ?? 0,
+    finalSchools: rootFinalSchools ?? nestedKpi?.finalSchools ?? details.participatingSchoolCount ?? 0,
+    finalClasses: rootFinalClasses ?? nestedKpi?.finalClasses ?? 0,
+  }
 
   return baseProgram({
     ...detailFields,
@@ -196,13 +262,15 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     educationProcess: dto.educationProcess,
     maleParticipants: dto.maleParticipants,
     femaleParticipants: dto.femaleParticipants,
-    totalParticipants: dto.totalParticipants,
+    totalParticipants: rootFinalParticipants ?? dto.totalParticipants,
+    participatingSchoolCount:
+      rootFinalSchools ?? details.participatingSchoolCount ?? resolvedKpi.finalSchools,
     generalTeachers: dto.generalTeachers,
     educatedTeachers: dto.educatedTeachers,
     /** TT Primary — 강사 Relation 없음. API null/0을 유지하고 UI에 노출하지 않음 */
     instructors: dto.instructors ?? 0,
     managerName: dto.managerName,
-    venue: dto.venue,
+    venue: dto.venue?.trim() || dto.venueDetail?.trim() || undefined,
     curriculum: dto.curriculum,
     contactEmail: dto.contactEmail,
     contactPhone: dto.contactPhone,
@@ -217,11 +285,36 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     attachmentFileNames: dto.attachmentFileNames,
     otherNotes,
     studentListRequired: details.studentListRequired,
+    remarks,
+    educationTargetDetail,
     generalParticipantTypes: ['school_institution'],
     generalProgramEducationStructure: educationStructure,
     generalCommonInfo: {
       ...details.generalCommonInfo,
       ...(detailedProgramName ? { detailedProgramName } : {}),
+      ...(dto.venueKind === 'inside' ||
+      dto.venueKind === 'outside' ||
+      dto.venueKind === 'other' ||
+      dto.venueKind === 'inside_school' ||
+      dto.venueKind === 'outside_school'
+        ? {
+            venueKind:
+              dto.venueKind === 'inside_school'
+                ? 'inside'
+                : dto.venueKind === 'outside_school'
+                  ? 'outside'
+                  : dto.venueKind === 'other'
+                    ? 'other'
+                    : dto.venueKind,
+          }
+        : {}),
+      ...(dto.venueDetail?.trim() ? { venueDetail: dto.venueDetail.trim() } : {}),
+      kpi: resolvedKpi,
+      participantRecruitmentInfo: {
+        ...details.generalCommonInfo?.participantRecruitmentInfo,
+        ...(remarks ? { remarks } : {}),
+        ...(educationTargetDetail ? { educationTargetDetail } : {}),
+      },
     },
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
@@ -253,28 +346,29 @@ export function mapTrainedTeacherToUpdateRequest(
     merged.generalCommonInfo?.announcementTitle?.trim() || merged.title?.trim()
   const detailedProgramName =
     merged.generalCommonInfo?.detailedProgramName?.trim() || merged.textbookName?.trim()
-  const sponsorContactRef = merged.generalCommonInfo?.sponsorManagerContactId?.trim()
-  const decodedContact = sponsorContactRef
-    ? decodeSponsorManagerContactRef(sponsorContactRef)
-    : null
+  const sponsorIdsFromForm = (
+    merged.generalCommonInfo?.sponsorManagementIds?.length
+      ? merged.generalCommonInfo.sponsorManagementIds
+      : merged.generalCommonInfo?.sponsorManagementId
+        ? [merged.generalCommonInfo.sponsorManagementId]
+        : merged.sponsorId
+          ? [merged.sponsorId]
+          : []
+  )
+    .map(id => String(id).trim())
+    .filter(Boolean)
+  const contactRefs = normalizeSponsorManagerContactIds({
+    ids: merged.generalCommonInfo?.sponsorManagerContactIds,
+    id: merged.generalCommonInfo?.sponsorManagerContactId,
+  })
+  const sponsors = buildProgramSponsorAssignmentsWire(sponsorIdsFromForm, contactRefs)
   const primarySponsorId =
-    merged.generalCommonInfo?.sponsorManagementIds?.[0] ||
-    decodedContact?.sponsorManagementId ||
+    sponsors.find(s => s.sponsorContactId)?.sponsorId ||
+    sponsors[0]?.sponsorId ||
     merged.sponsorId
-  const sponsors =
-    primarySponsorId != null && String(primarySponsorId).trim() !== ''
-      ? [
-          {
-            sponsorId: String(primarySponsorId),
-            ...(decodedContact?.contactId
-              ? { sponsorContactId: decodedContact.contactId }
-              : {}),
-          },
-        ]
-      : undefined
   return {
-    sponsorId: merged.sponsorId || primarySponsorId,
-    sponsors,
+    sponsorId: primarySponsorId,
+    sponsors: sponsors.length > 0 ? sponsors : undefined,
     title: announcementTitle || merged.title,
     type: merged.type,
     format: merged.format,
@@ -300,15 +394,17 @@ export function mapTrainedTeacherToUpdateRequest(
     partnerInvolvement: merged.partnerInvolvement,
     programCategory: merged.programCategory ?? undefined,
     programChannel: merged.programChannel ?? undefined,
-    educationTime: merged.educationTime,
+    educationTime: toJavaInt(merged.educationTime),
     teamDivision: merged.teamDivision,
     educationProcess: merged.educationProcess,
-    maleParticipants: merged.maleParticipants,
-    femaleParticipants: merged.femaleParticipants,
-    totalParticipants: merged.totalParticipants,
-    generalTeachers: merged.generalTeachers,
-    educatedTeachers: merged.educatedTeachers,
-    instructors: merged.instructors,
+    maleParticipants: toJavaInt(merged.maleParticipants),
+    femaleParticipants: toJavaInt(merged.femaleParticipants),
+    totalParticipants: toJavaInt(
+      merged.totalParticipants ?? merged.generalCommonInfo?.kpi?.finalParticipants
+    ),
+    generalTeachers: toJavaInt(merged.generalTeachers),
+    educatedTeachers: toJavaInt(merged.educatedTeachers),
+    instructors: toJavaInt(merged.instructors),
     managerName: merged.managerName,
     venue:
       merged.venue?.trim() ||
@@ -327,6 +423,15 @@ export function mapTrainedTeacherToUpdateRequest(
     attachmentFileNames: merged.attachmentFileNames,
     rounds: mapRounds(merged),
     serviceDetailJson: serializeTrainedTeacherServiceDetailJson(merged),
+    remarks: merged.remarks?.trim() || undefined,
+    educationTargetDetail: merged.educationTargetDetail?.trim() || undefined,
+    venueKind: merged.generalCommonInfo?.venueKind,
+    venueDetail: merged.generalCommonInfo?.venueDetail?.trim() || undefined,
+    studentListRequired: merged.studentListRequired,
+    finalSchools: toJavaInt(
+      merged.participatingSchoolCount ?? merged.generalCommonInfo?.kpi?.finalSchools
+    ),
+    finalClasses: toJavaInt(merged.generalCommonInfo?.kpi?.finalClasses),
   }
 }
 

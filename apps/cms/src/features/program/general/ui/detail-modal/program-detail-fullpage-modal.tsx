@@ -1571,7 +1571,7 @@ export function ProgramDetailFullPageModal({
                         await updateTrainedTeacherInfoDetailMutation.mutateAsync({
                           programId: displayProgram.id,
                           payload: {
-                            educatedTeachers: payload.educatedTeachers,
+                            // KPI SSOT = programs PATCH — detail에는 commonInfo만
                             commonInfo: {
                               ...displayProgram.generalCommonInfo,
                               ...payload.commonInfo,
