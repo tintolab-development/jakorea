@@ -1,4 +1,5 @@
 import type { ListParams } from './list-params'
+import type { UjatVolunteerRecruitHalf } from '../model/ujat-volunteer-screening-constants'
 
 export const queryKeys = {
   all: ['cms', 'programs', 'ujat'] as const,
@@ -8,4 +9,9 @@ export const queryKeys = {
   details: () => [...queryKeys.all, 'detail'] as const,
   detail: (scope: 'remote' | 'local', programId: string) =>
     [...queryKeys.details(), scope, programId] as const,
+  applications: () => [...queryKeys.all, 'applications'] as const,
+  organizationApplications: (programId: string) =>
+    [...queryKeys.applications(), 'organizations', programId] as const,
+  volunteerApplications: (programId: string, half: UjatVolunteerRecruitHalf) =>
+    [...queryKeys.applications(), 'volunteers', programId, { half }] as const,
 }

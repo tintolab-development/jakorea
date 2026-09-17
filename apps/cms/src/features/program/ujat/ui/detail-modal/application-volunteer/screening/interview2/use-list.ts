@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import dayjs, { type Dayjs } from 'dayjs'
 import {
   patchUjatVolunteerInterviewEvaluation,
@@ -7,7 +8,8 @@ import {
   type UjatVolunteerInterviewEvaluationPayload,
 } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
-import { listUjatVolunteerInterview2Applications } from '@/features/program/ujat/api/applications-service'
+import { listUjatVolunteerApplicationsPage } from '@/features/program/ujat/api/applications-service'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import type {
   UjatSecondInterviewScreeningStatus,
   UjatVolunteerRecruitHalf,
@@ -50,6 +52,13 @@ function filterInterview2Applicants(
 ): UjatVolunteerApplicantRow[] {
   const nameQ = filters.volunteerName.trim().toLowerCase()
   return rows.filter(row => {
+    if (row.documentScreeningStatus !== 'pass') return false
+    if (
+      row.interviewAssignmentStatus !== 'assigned' &&
+      row.interviewAssignmentStatus !== 'withdrawn'
+    ) {
+      return false
+    }
     if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
     if (
       filters.preferredRegion !== UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL &&
@@ -121,11 +130,22 @@ export function useUjatVolunteerInterview2({
   const [bulkPassModalOpen, setBulkPassModalOpen] = useState(false)
   const [now, setNow] = useState(() => dayjs())
 
+  const applicationsQuery = useInfiniteQuery({
+    queryKey: ujatQueryKeys.volunteerApplications(programId, half),
+    queryFn: ({ pageParam }) => listUjatVolunteerApplicationsPage(programId, half, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    enabled: Boolean(programId),
+    staleTime: 30_000,
+    retry: false,
+  })
+  const queriedRows = useMemo(
+    () => applicationsQuery.data?.pages.flatMap(page => page.rows) ?? [],
+    [applicationsQuery.data]
+  )
+
   useEffect(() => {
-    let cancelled = false
-    void listUjatVolunteerInterview2Applications(programId, half).then(rows => {
-      if (!cancelled) setList(rows)
-    })
+    setList([])
     setPendingFilters({ ...DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS })
     setAppliedFilters({ ...DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS })
     setViewMode('list')
@@ -134,10 +154,13 @@ export function useUjatVolunteerInterview2({
     setEvaluationTargetId(null)
     setBulkPassModalOpen(false)
     setNow(dayjs())
-    return () => {
-      cancelled = true
-    }
   }, [programId, half])
+
+  useEffect(() => {
+    setList(previous =>
+      queriedRows.map(row => previous.find(current => current.id === row.id) ?? row)
+    )
+  }, [queriedRows])
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(dayjs()), UJAT_INTERVIEW2_STATUS_POLL_MS)
@@ -160,6 +183,10 @@ export function useUjatVolunteerInterview2({
     const filtered = filterInterview2Applicants(list, appliedFilters, now)
     return sortUjatVolunteerInterview2Rows(filtered)
   }, [appliedFilters, list, now])
+  const infiniteScrollResetKey = useMemo(
+    () => `${programId}:${half}:${JSON.stringify(appliedFilters)}`,
+    [appliedFilters, half, programId]
+  )
 
   const calendarEvents = useMemo(
     () => mapUjatVolunteerAssignedInterviewToCalendarEvents(filteredSorted),
@@ -257,20 +284,23 @@ export function useUjatVolunteerInterview2({
     setWithdrawTargetId(null)
   }, [])
 
-  const confirmWithdrawActivity = useCallback((_payload: ActivityWithdrawScheduleModalPayload) => {
-    if (!withdrawTargetId) return
-    const row = list.find(item => item.id === withdrawTargetId)
-    if (!row) {
+  const confirmWithdrawActivity = useCallback(
+    (_payload: ActivityWithdrawScheduleModalPayload) => {
+      if (!withdrawTargetId) return
+      const row = list.find(item => item.id === withdrawTargetId)
+      if (!row) {
+        setWithdrawTargetId(null)
+        return
+      }
+      updateRow(withdrawTargetId, { interviewAssignmentStatus: 'withdrawn' })
+      showAlert({
+        title: '활동 포기',
+        content: `${row.name} 봉사자가 활동 포기 처리되었습니다.`,
+      })
       setWithdrawTargetId(null)
-      return
-    }
-    updateRow(withdrawTargetId, { interviewAssignmentStatus: 'withdrawn' })
-    showAlert({
-      title: '활동 포기',
-      content: `${row.name} 봉사자가 활동 포기 처리되었습니다.`,
-    })
-    setWithdrawTargetId(null)
-  }, [list, showAlert, updateRow, withdrawTargetId])
+    },
+    [list, showAlert, updateRow, withdrawTargetId]
+  )
 
   const withdrawTarget = useMemo(
     () => (withdrawTargetId ? list.find(row => row.id === withdrawTargetId) : undefined),
@@ -355,5 +385,9 @@ export function useUjatVolunteerInterview2({
     closeEvaluationModal,
     evaluationTarget,
     saveInterviewEvaluation,
+    fetchNextPage: applicationsQuery.fetchNextPage,
+    hasNextPage: applicationsQuery.hasNextPage,
+    isFetchingNextPage: applicationsQuery.isFetchingNextPage,
+    infiniteScrollResetKey,
   }
 }

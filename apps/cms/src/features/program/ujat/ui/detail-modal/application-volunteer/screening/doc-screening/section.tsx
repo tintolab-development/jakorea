@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, type MouseEvent } from 'react'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
@@ -10,11 +10,9 @@ import { buildUjatVolunteerDocScreeningFilterRows } from './filter-fields'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import { computeDocScreeningTableScrollX } from './columns'
 import { useUjatVolunteerDocScreening } from './use-list'
-import {
-  useApplicantDetail,
-  type ApplicantDetailMetaChangeHandler,
-} from '../applicant/use-detail'
+import { useApplicantDetail, type ApplicantDetailMetaChangeHandler } from '../applicant/use-detail'
 import { ApplicantDetailView } from '../applicant/detail-view'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import './section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
 
@@ -61,26 +59,32 @@ export function DocScreeningSection({
     setOpenManagerDropdown,
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    infiniteScrollResetKey,
   } = useUjatVolunteerDocScreening({
     programId,
     half,
   })
-
-  const {
-    selectedApplicant,
-    openApplicantDetail,
-    handleDocumentReject,
-    handleDocumentApprove,
-  } = useApplicantDetail({
-    programId,
-    half,
-    list,
-    detailVariant: 'doc_screening',
-    applyDocumentScreeningStatus,
-    onRegisterApplicantCloseHandler,
-    onVolunteerApplicantDetailMetaChange,
-    showDocumentScreeningConfirm,
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: infiniteScrollResetKey,
   })
+
+  const { selectedApplicant, openApplicantDetail, handleDocumentReject, handleDocumentApprove } =
+    useApplicantDetail({
+      programId,
+      half,
+      list,
+      detailVariant: 'doc_screening',
+      applyDocumentScreeningStatus,
+      onRegisterApplicantCloseHandler,
+      onVolunteerApplicantDetailMetaChange,
+      showDocumentScreeningConfirm,
+    })
 
   const handleRowClick = useCallback(
     (record: UjatVolunteerApplicantRow, e: MouseEvent) => {
@@ -190,6 +194,9 @@ export function DocScreeningSection({
                 style: { cursor: 'pointer' },
               })}
             />
+            <div ref={loadMoreRef} aria-hidden={!isFetchingNextPage} style={{ minHeight: 1 }}>
+              {isFetchingNextPage ? <Spin size="small" /> : null}
+            </div>
           </div>
         </FilterTableLayout>
       </div>

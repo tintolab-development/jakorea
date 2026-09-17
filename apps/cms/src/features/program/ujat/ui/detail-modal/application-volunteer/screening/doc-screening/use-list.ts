@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
 import type { UjatDocumentScreeningConfirmRequest } from './document-actions'
 import type { ColumnsType } from 'antd/es/table'
@@ -8,7 +9,8 @@ import {
   type UjatVolunteerApplicantRow,
 } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
-import { listUjatVolunteerApplications } from '@/features/program/ujat/api/applications-service'
+import { listUjatVolunteerApplicationsPage } from '@/features/program/ujat/api/applications-service'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import {
   UJAT_DOCUMENT_SCREENING_STATUS_LABELS,
   UJAT_MANAGER_EVALUATION_LABELS,
@@ -36,10 +38,7 @@ function filterApplicants(
   const nameQ = filters.volunteerName.trim().toLowerCase()
   return rows.filter(row => {
     if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
-    if (
-      filters.grade !== UJAT_VOLUNTEER_DOC_SCREENING_FILTER_ALL &&
-      row.grade !== filters.grade
-    ) {
+    if (filters.grade !== UJAT_VOLUNTEER_DOC_SCREENING_FILTER_ALL && row.grade !== filters.grade) {
       return false
     }
     if (
@@ -109,7 +108,11 @@ const EXPORT_COLUMNS_UJAT: ColumnsType<Record<string, string | number>> = [
   },
   { title: '담당자 A 평가', dataIndex: 'managerAEvaluationLabel', key: 'managerAEvaluationLabel' },
   { title: '담당자 B 평가', dataIndex: 'managerBEvaluationLabel', key: 'managerBEvaluationLabel' },
-  { title: '1차 서류 심사 현황', dataIndex: 'documentScreeningStatusLabel', key: 'documentScreeningStatusLabel' },
+  {
+    title: '1차 서류 심사 현황',
+    dataIndex: 'documentScreeningStatusLabel',
+    key: 'documentScreeningStatusLabel',
+  },
 ]
 
 function toExportRowUjat(row: UjatVolunteerApplicantRow): Record<string, string | number> {
@@ -134,7 +137,8 @@ function toExportRowUjat(row: UjatVolunteerApplicantRow): Record<string, string 
     ),
     managerAEvaluationLabel: UJAT_MANAGER_EVALUATION_LABELS[row.managerAEvaluation],
     managerBEvaluationLabel: UJAT_MANAGER_EVALUATION_LABELS[row.managerBEvaluation],
-    documentScreeningStatusLabel: UJAT_DOCUMENT_SCREENING_STATUS_LABELS[row.documentScreeningStatus],
+    documentScreeningStatusLabel:
+      UJAT_DOCUMENT_SCREENING_STATUS_LABELS[row.documentScreeningStatus],
   }
 }
 
@@ -166,18 +170,32 @@ export function useUjatVolunteerDocScreening({
     manager: 'A' | 'B'
   } | null>(null)
 
+  const applicationsQuery = useInfiniteQuery({
+    queryKey: ujatQueryKeys.volunteerApplications(programId, half),
+    queryFn: ({ pageParam }) => listUjatVolunteerApplicationsPage(programId, half, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    enabled: Boolean(programId),
+    staleTime: 30_000,
+    retry: false,
+  })
+  const queriedRows = useMemo(
+    () => applicationsQuery.data?.pages.flatMap(page => page.rows) ?? [],
+    [applicationsQuery.data]
+  )
+
   useEffect(() => {
-    let cancelled = false
-    void listUjatVolunteerApplications(programId, half).then(rows => {
-      if (!cancelled) setList(rows)
-    })
+    setList([])
     setPendingFilters({ ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS })
     setAppliedFilters({ ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS })
     setSelectedRowKeys([])
-    return () => {
-      cancelled = true
-    }
   }, [programId, half])
+
+  useEffect(() => {
+    setList(previous =>
+      queriedRows.map(row => previous.find(current => current.id === row.id) ?? row)
+    )
+  }, [queriedRows])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
     setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -191,6 +209,10 @@ export function useUjatVolunteerDocScreening({
     const filtered = filterApplicants(list, appliedFilters)
     return sortUjatVolunteerApplicants(filtered)
   }, [appliedFilters, list])
+  const infiniteScrollResetKey = useMemo(
+    () => `${programId}:${half}:${JSON.stringify(appliedFilters)}`,
+    [appliedFilters, half, programId]
+  )
 
   const exportRows = useMemo(() => filteredSorted.map(toExportRowUjat), [filteredSorted])
 
@@ -227,16 +249,16 @@ export function useUjatVolunteerDocScreening({
     setOpenManagerDropdown,
   })
 
-  const applyDocumentScreeningStatus = useCallback(
-    (ids: string[], status: 'pass' | 'fail') => {
-      setList(prev => patchUjatVolunteerDocumentScreeningStatus(prev, ids, status))
+  const applyDocumentScreeningStatus = useCallback((ids: string[], status: 'pass' | 'fail') => {
+    setList(prev => patchUjatVolunteerDocumentScreeningStatus(prev, ids, status))
+  }, [])
+
+  const showDocumentScreeningConfirm = useCallback(
+    (options: UjatDocumentScreeningConfirmRequest) => {
+      setDocumentScreeningConfirm(options)
     },
     []
   )
-
-  const showDocumentScreeningConfirm = useCallback((options: UjatDocumentScreeningConfirmRequest) => {
-    setDocumentScreeningConfirm(options)
-  }, [])
 
   const closeDocumentScreeningConfirm = useCallback(() => {
     setDocumentScreeningConfirm(null)
@@ -289,5 +311,9 @@ export function useUjatVolunteerDocScreening({
     setOpenManagerDropdown,
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
+    fetchNextPage: applicationsQuery.fetchNextPage,
+    hasNextPage: applicationsQuery.hasNextPage,
+    isFetchingNextPage: applicationsQuery.isFetchingNextPage,
+    infiniteScrollResetKey,
   }
 }
