@@ -398,8 +398,170 @@ export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailF
   }
 }
 
+// TODO(temp-mock): 열여라 참깨 — 학생 명단·강의 출석 내역 검증 후 삭제
+const TEMP_STUDENT_ID_PREFIX = 'temp-school-student-'
+
+type TempStudentFixture = {
+  name: string
+  gender: 'male' | 'female'
+  birthDate: string
+  gradeClass: string
+  contact: string
+  email: string
+  notes: string
+  statuses: LectureAttendanceStatusKey[]
+  hasAssignmentSubmission: boolean
+  satisfactionSurveyCompleted: boolean
+}
+
+const TEMP_STUDENT_FIXTURES: TempStudentFixture[] = [
+  {
+    name: '김서연',
+    gender: 'female',
+    birthDate: '2014. 03. 12.',
+    gradeClass: '4학년 1반',
+    contact: '010-1111-2001',
+    email: 'seoyeon.kim@school.example',
+    notes: '전 회차 출석',
+    statuses: ['attended', 'attended', 'attended', 'attended'],
+    hasAssignmentSubmission: true,
+    satisfactionSurveyCompleted: true,
+  },
+  {
+    name: '이도윤',
+    gender: 'male',
+    birthDate: '2014. 07. 05.',
+    gradeClass: '4학년 1반',
+    contact: '010-1111-2002',
+    email: 'doyun.lee@school.example',
+    notes: '지각 포함 전원 참여',
+    statuses: ['attended', 'late', 'attended', 'late'],
+    hasAssignmentSubmission: true,
+    satisfactionSurveyCompleted: true,
+  },
+  {
+    name: '박하준',
+    gender: 'male',
+    birthDate: '2013. 11. 21.',
+    gradeClass: '5학년 2반',
+    contact: '010-1111-2003',
+    email: 'hajun.park@school.example',
+    notes: '결석 2회',
+    statuses: ['attended', 'absent', 'attended', 'absent'],
+    hasAssignmentSubmission: false,
+    satisfactionSurveyCompleted: false,
+  },
+  {
+    name: '최지우',
+    gender: 'female',
+    birthDate: '2013. 01. 30.',
+    gradeClass: '5학년 2반',
+    contact: '010-1111-2004',
+    email: 'jiwoo.choi@school.example',
+    notes: '후반 회차 미진행',
+    statuses: ['attended', 'attended', 'not_held', 'not_held'],
+    hasAssignmentSubmission: true,
+    satisfactionSurveyCompleted: false,
+  },
+  {
+    name: '정민재',
+    gender: 'male',
+    birthDate: '2014. 09. 18.',
+    gradeClass: '4학년 3반',
+    contact: '010-1111-2005',
+    email: 'minjae.jung@school.example',
+    notes: '전 회차 결석',
+    statuses: ['absent', 'absent', 'absent', 'absent'],
+    hasAssignmentSubmission: false,
+    satisfactionSurveyCompleted: false,
+  },
+  {
+    name: '한소율',
+    gender: 'female',
+    birthDate: '2012. 05. 08.',
+    gradeClass: '6학년 1반',
+    contact: '010-1111-2006',
+    email: 'soyul.han@school.example',
+    notes: '전 회차 미진행',
+    statuses: ['not_held', 'not_held', 'not_held', 'not_held'],
+    hasAssignmentSubmission: false,
+    satisfactionSurveyCompleted: false,
+  },
+  {
+    name: '오시우',
+    gender: 'male',
+    birthDate: '2013. 12. 02.',
+    gradeClass: '5학년 1반',
+    contact: '010-1111-2007',
+    email: 'siwoo.oh@school.example',
+    notes: '지각·결석·출석 혼합',
+    statuses: ['late', 'absent', 'late', 'attended'],
+    hasAssignmentSubmission: true,
+    satisfactionSurveyCompleted: true,
+  },
+  {
+    name: '윤채원',
+    gender: 'female',
+    birthDate: '2014. 04. 25.',
+    gradeClass: '4학년 2반',
+    contact: '010-1111-2008',
+    email: 'chaewon.yoon@school.example',
+    notes: '전반 미진행 후 출석·지각',
+    statuses: ['not_held', 'not_held', 'attended', 'late'],
+    hasAssignmentSubmission: true,
+    satisfactionSurveyCompleted: true,
+  },
+]
+
+function buildTempStudentLectureAttendanceString(
+  statuses: LectureAttendanceStatusKey[]
+): string {
+  const attended = statuses.filter(s => s === 'attended' || s === 'late').length
+  return `${attended}/${statuses.length}`
+}
+
+function buildTemporarySchoolDetailStudents(schoolId: string): SchoolDetailStudentRow[] {
+  const n = TEMP_STUDENT_FIXTURES.length
+  return TEMP_STUDENT_FIXTURES.map((fixture, index) => ({
+    id: `${TEMP_STUDENT_ID_PREFIX}${schoolId}-${index + 1}`,
+    memberId: 980_001 + index,
+    no: n - index,
+    name: fixture.name,
+    gender: fixture.gender,
+    birthDate: fixture.birthDate,
+    gradeClass: fixture.gradeClass,
+    contact: fixture.contact,
+    email: fixture.email,
+    lectureAttendance: buildTempStudentLectureAttendanceString(fixture.statuses),
+    portraitConsentSubmission: null,
+    satisfactionSurveyCompleted: fixture.satisfactionSurveyCompleted,
+    hasAssignmentSubmission: fixture.hasAssignmentSubmission,
+    notes: fixture.notes,
+  }))
+}
+
+function getTemporaryStudentAttendanceSessions(
+  studentId: string
+): LectureAttendanceSession[] | null {
+  if (!studentId.startsWith(TEMP_STUDENT_ID_PREFIX)) return null
+  const match = studentId.match(/-(\d+)$/)
+  const sequence = match ? Number(match[1]) : NaN
+  if (!Number.isFinite(sequence) || sequence < 1 || sequence > TEMP_STUDENT_FIXTURES.length) {
+    return null
+  }
+  const fixture = TEMP_STUDENT_FIXTURES[sequence - 1]
+  return fixture.statuses.map((status, index) => ({
+    roundNumber: index + 1,
+    status,
+  }))
+}
+
 /** 해당 학교 학생 명단 — remote API 연동 전 빈 목록 */
-export function getSchoolDetailStudents(_schoolId: string, _count: number): SchoolDetailStudentRow[] {
+export function getSchoolDetailStudents(schoolId: string, _count: number): SchoolDetailStudentRow[] {
+  // TODO(temp-mock): 열여라 참깨 — 학생 명단·강의 출석 내역 검증 후 삭제
+  if (schoolId.startsWith('temp-textbook-status-')) {
+    return buildTemporarySchoolDetailStudents(schoolId)
+  }
   return []
 }
 
@@ -424,6 +586,12 @@ export function getLectureAttendanceDetail(
   student: SchoolDetailStudentRow,
   _schoolId: string
 ): LectureAttendanceDetail {
+  // TODO(temp-mock): 열여라 참깨 — 학생 명단·강의 출석 내역 검증 후 삭제
+  const temporarySessions = getTemporaryStudentAttendanceSessions(student.id)
+  if (temporarySessions) {
+    return buildLectureAttendanceDetailFromSessions(student.name, temporarySessions)
+  }
+
   const [attendedStr, totalStr] = (student.lectureAttendance ?? '0/0').split('/').map(s => s.trim())
   const attendedCount = Math.max(0, parseInt(attendedStr, 10) || 0)
   const totalRounds = Math.max(0, parseInt(totalStr, 10) || 0)

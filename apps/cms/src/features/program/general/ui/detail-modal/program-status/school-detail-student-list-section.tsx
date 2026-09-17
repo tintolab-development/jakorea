@@ -38,8 +38,10 @@ import type {
 import { STUDENT_GENDER_LABELS } from '../../../model/school-detail-types'
 import { getSchoolDetailStudents, getStudentLectureAttendanceSessions } from '../../../lib/school-detail'
 import {
+  buildStudentClassFilterOptionsFromRows,
   buildStudentGradeClassOptions,
   buildStudentListFilterFields,
+  matchesStudentListFilters,
 } from '../../../lib/student-list-filter-fields'
 import { lectureAttendanceStringFromSessions } from '../../../lib/lecture-attendance-from-sessions'
 import {
@@ -216,22 +218,10 @@ export function SchoolDetailStudentListSection({
     }
     return [...studentList.map(patchRow), ...addedStudents.map(patchRow)]
   }, [studentList, addedStudents, attendanceSessionsByStudentId])
-  const filteredStudentList = useMemo(() => {
-    return mergedStudentList.filter(row => {
-      const matchName =
-        !appliedFilters.studentName.trim() || row.name.includes(appliedFilters.studentName.trim())
-      const matchGender =
-        appliedFilters.studentGender === 'all' || row.gender === appliedFilters.studentGender
-      const matchClass =
-        appliedFilters.studentClass === 'all' || row.gradeClass === appliedFilters.studentClass
-      return matchName && matchGender && matchClass
-    })
-  }, [
-    mergedStudentList,
-    appliedFilters.studentName,
-    appliedFilters.studentGender,
-    appliedFilters.studentClass,
-  ])
+  const filteredStudentList = useMemo(
+    () => mergedStudentList.filter(row => matchesStudentListFilters(row, appliedFilters)),
+    [mergedStudentList, appliedFilters]
+  )
 
   const handleCertificateIssueClick = useCallback(() => {
     if (isStudentListEditMode) {
@@ -445,14 +435,21 @@ export function SchoolDetailStudentListSection({
     [pendingFilters]
   )
 
+  /** 학생 등록·수정 Select — 신청 학급 수 기준 */
   const gradeClassOptions = useMemo(
     () => buildStudentGradeClassOptions(classCount),
     [classCount]
   )
 
+  /** 필터 Select — 명단에 입력된 학급 종류만 */
+  const studentClassFilterOptions = useMemo(
+    () => buildStudentClassFilterOptionsFromRows(mergedStudentList),
+    [mergedStudentList]
+  )
+
   const studentListFilterFields = useMemo(
-    () => buildStudentListFilterFields(classCount),
-    [classCount]
+    () => buildStudentListFilterFields(studentClassFilterOptions),
+    [studentClassFilterOptions]
   )
 
   const studentListForm = useForm<StudentListFormValues>({
@@ -575,6 +572,7 @@ export function SchoolDetailStudentListSection({
         <>
           <ProgramEditInfoActions
             isEditing={isStudentListEditMode}
+            idleVariant="secondary"
             onEdit={handleEditInfoClick}
             onCancel={handleStudentListCancel}
             onSave={handleStudentListSave}
