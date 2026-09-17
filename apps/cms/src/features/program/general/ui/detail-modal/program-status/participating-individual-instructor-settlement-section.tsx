@@ -2,8 +2,8 @@
  * 참여 강사 상세 — 정산 현황 탭 (일반 프로그램 · 개인)
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Table } from 'antd'
+import { useCallback, useMemo, useState } from 'react'
+import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
@@ -22,30 +22,22 @@ import {
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import { participatingRowToApplicantFeeViewRow } from '@/features/program/general/lib/participating-instructor-detail-edit'
 import {
-  buildParticipatingInstructorPaymentStatementViewOptions,
-  buildPaymentStatementIssuancePreviewContext,
-  buildPaymentStatementIssuancePreviewFileName,
-  type PaymentStatementIssuancePreviewContext,
-} from '@/features/program/general/lib/participating-instructor-payment-statement-issuance-view'
-import {
   lectureProgressAccent,
   PARTICIPATING_INDIVIDUAL_INSTRUCTOR_LECTURE_PROGRESS_LABELS,
 } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-display'
 import { PARTICIPATING_INDIVIDUAL_INSTRUCTOR_SETTLEMENT_EXCEL_COLUMNS } from '@/features/program/general/lib/participating-individual-instructor-settlement-export'
 import {
   formatIndividualSettlementAmount,
-  isIndividualInstructorSettlementEligibleForPaymentStatementDownload,
   shouldShowIndividualSettlementDash,
 } from '@/features/program/general/lib/participating-individual-instructor-settlement-display'
+import type { ParticipatingInstructorSettlementApiRow } from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
+import { useParticipatingInstructorSettlementList } from '@/features/program/general/hooks/use-participating-instructor-settlement-list'
 import {
-  getParticipatingIndividualInstructorSettlementRows,
-  PARTICIPATING_INDIVIDUAL_INSTRUCTOR_PROGRAM_LECTURE_ROUND_TOTAL,
-} from '@/features/program/general/lib/participating-individual-instructor-settlement-rows'
-import type { ParticipatingIndividualInstructorSettlementRow } from '@/features/program/general/lib/participating-individual-instructor-settlement-types'
-import { downloadLectureReportPdfFiles } from '@/features/program/general/lib/download-lecture-reports-bulk-pdf'
-import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
-import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
-import { PaymentStatementIssuanceBulkPdfExportHost } from './payment-statement-issuance-bulk-pdf-export-host'
+  bulkDownloadParticipatingInstructorPaymentStatements,
+  filterParticipatingInstructorSettlementDownloadRows,
+  getParticipatingInstructorSettlementBulkDownloadErrorMessage,
+} from '@/features/program/general/lib/participating-instructor-settlement-download'
+import { useParticipatingInstructorPaymentStatementView } from '@/features/program/general/ui/detail-modal/program-status/participating-instructor-payment-statement-view-container'
 import './participating-instructor-settlement-section.css'
 
 export interface ParticipatingIndividualInstructorSettlementSectionProps {
@@ -58,113 +50,42 @@ export function ParticipatingIndividualInstructorSettlementSection({
   program,
 }: ParticipatingIndividualInstructorSettlementSectionProps) {
   const { showAlert } = useCmsAlert()
-  const rows = useMemo(
-    () => getParticipatingIndividualInstructorSettlementRows(instructor, program),
-    [instructor, program]
-  )
-
-  const tableData = useMemo(
-    () =>
-      rows.map((row, index) => ({
-        ...row,
-        no: rows.length - index,
-      })),
-    [rows]
-  )
-
+  const programId = program.id != null ? String(program.id) : ''
   const programTitle = program.mainTitle?.trim() || program.title?.trim() || '개인 프로그램'
 
-  const [paymentStatementViewOpen, setPaymentStatementViewOpen] = useState(false)
-  const [paymentStatementViewRow, setPaymentStatementViewRow] =
-    useState<ParticipatingIndividualInstructorSettlementRow | null>(null)
+  const { isLoading, rows, settlementItems, progressSummary, remoteEnabled } =
+    useParticipatingInstructorSettlementList({
+      programId,
+      instructor,
+    })
 
-  const [bulkExportQueue, setBulkExportQueue] = useState<PaymentStatementIssuancePreviewContext[]>(
-    []
-  )
-  const [bulkExportActive, setBulkExportActive] = useState(false)
-  const bulkExportResultsRef = useRef<Array<{ fileName: string; blob: Blob }>>([])
-  const bulkExportStartedRef = useRef(false)
+  const paymentStatementView = useParticipatingInstructorPaymentStatementView({
+    instructor,
+    settlementItems,
+    institutionNameOverride: programTitle,
+  })
+
+  const [bulkDownloadLoading, setBulkDownloadLoading] = useState(false)
 
   const downloadableRows = useMemo(
-    () => rows.filter(isIndividualInstructorSettlementEligibleForPaymentStatementDownload),
+    () => filterParticipatingInstructorSettlementDownloadRows(rows),
     [rows]
   )
-
-  const toSettlementContext = useCallback(
-    (row: ParticipatingIndividualInstructorSettlementRow) => ({
-      id: row.id,
-      schoolName: programTitle,
-      educationScheduleLabel: row.scheduleLabel,
-      scheduledSettlementAmount: row.scheduledSettlementAmount,
-    }),
-    [programTitle]
-  )
-
-  const paymentStatementViewOptions = useMemo(() => {
-    if (!paymentStatementViewRow) return undefined
-    return buildParticipatingInstructorPaymentStatementViewOptions(
-      instructor,
-      toSettlementContext(paymentStatementViewRow)
-    )
-  }, [instructor, paymentStatementViewRow, toSettlementContext])
-
-  const paymentStatementViewFileName = useMemo(() => {
-    if (!paymentStatementViewRow) return undefined
-    return buildPaymentStatementIssuancePreviewFileName(
-      buildPaymentStatementIssuancePreviewContext(
-        instructor,
-        toSettlementContext(paymentStatementViewRow)
-      )
-    )
-  }, [instructor, paymentStatementViewRow, toSettlementContext])
 
   const feeViewRow = useMemo(
     () => participatingRowToApplicantFeeViewRow(instructor) as ApplicantInstructorRow,
     [instructor]
   )
 
-  const completedLectureCount = useMemo(
-    () => rows.filter(row => row.lectureProgress === 'completed').length,
-    [rows]
-  )
-
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
     columns: PARTICIPATING_INDIVIDUAL_INSTRUCTOR_SETTLEMENT_EXCEL_COLUMNS,
-    data: tableData,
+    data: rows,
     filename: `정산내역_${instructor.instructorName}`,
   })
 
-  const handleOpenPaymentStatement = useCallback(
-    (row: ParticipatingIndividualInstructorSettlementRow) => {
-      setPaymentStatementViewRow(row)
-      setPaymentStatementViewOpen(true)
-    },
-    []
-  )
-
-  const handleClosePaymentStatementView = useCallback(() => {
-    setPaymentStatementViewOpen(false)
-    setPaymentStatementViewRow(null)
-  }, [])
-
-  const buildRowPreviewContext = useCallback(
-    (row: ParticipatingIndividualInstructorSettlementRow) =>
-      buildPaymentStatementIssuancePreviewContext(instructor, toSettlementContext(row)),
-    [instructor, toSettlementContext]
-  )
-
-  const handleBulkExportItemComplete = useCallback(
-    (result: { fileName: string; blob: Blob } | null) => {
-      if (result != null) {
-        bulkExportResultsRef.current.push(result)
-      }
-      setBulkExportQueue(prev => prev.slice(1))
-    },
-    []
-  )
-
-  const handleBulkDownloadPaymentStatements = useCallback(() => {
-    if (bulkExportActive) return
+  const handleBulkDownloadPaymentStatements = useCallback(async () => {
+    if (bulkDownloadLoading) return
+    if (!remoteEnabled) return
     if (downloadableRows.length === 0) {
       showAlert({
         title: '안내',
@@ -174,54 +95,32 @@ export function ParticipatingIndividualInstructorSettlementSection({
       return
     }
 
-    bulkExportResultsRef.current = []
-    bulkExportStartedRef.current = true
-    setBulkExportQueue(downloadableRows.map(buildRowPreviewContext))
-    setBulkExportActive(true)
-  }, [bulkExportActive, buildRowPreviewContext, downloadableRows, showAlert])
-
-  useEffect(() => {
-    if (!bulkExportActive || !bulkExportStartedRef.current || bulkExportQueue.length > 0) {
-      return
+    setBulkDownloadLoading(true)
+    try {
+      await bulkDownloadParticipatingInstructorPaymentStatements(
+        downloadableRows,
+        `지급조서_${instructor.instructorName}`
+      )
+    } catch (error) {
+      handleError(error, {
+        context: 'participatingIndividualInstructorSettlementSection.bulkDownloadPaymentStatements',
+      })
+      showAlert({
+        title: '안내',
+        content: getParticipatingInstructorSettlementBulkDownloadErrorMessage(error),
+      })
+    } finally {
+      setBulkDownloadLoading(false)
     }
-
-    bulkExportStartedRef.current = false
-    const files = bulkExportResultsRef.current
-
-    void (async () => {
-      try {
-        if (files.length === 0) {
-          showAlert({
-            title: '안내',
-            content: 'PDF 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-          })
-          return
-        }
-        await downloadLectureReportPdfFiles(files)
-      } catch (error) {
-        handleError(error, {
-          context: 'participatingIndividualInstructorSettlementSection.bulkDownloadPaymentStatements',
-        })
-        showAlert({
-          title: '안내',
-          content: '지급조서 일괄 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-        })
-      } finally {
-        bulkExportResultsRef.current = []
-        setBulkExportActive(false)
-      }
-    })()
-  }, [bulkExportActive, bulkExportQueue.length, showAlert])
-
-  const currentBulkExportContext = bulkExportQueue[0] ?? null
+  }, [bulkDownloadLoading, downloadableRows, instructor.instructorName, remoteEnabled, showAlert])
 
   const columns = useMemo(
-    (): ColumnsType<ParticipatingIndividualInstructorSettlementRow & { no: number }> => [
+    (): ColumnsType<ParticipatingInstructorSettlementApiRow> => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '교육 진행 일정',
-        dataIndex: 'scheduleLabel',
-        key: 'scheduleLabel',
+        dataIndex: 'educationScheduleLabel',
+        key: 'educationScheduleLabel',
         align: 'center',
         width: 400,
         render: (value: string | undefined) => renderProgramDetailPipeSeparated(value),
@@ -277,8 +176,8 @@ export function ParticipatingIndividualInstructorSettlementSection({
               variant="default"
               size="medium"
               width={140}
-              disabled={!record.canViewPaymentStatement}
-              onClick={() => handleOpenPaymentStatement(record)}
+              disabled={!record.canViewPaymentStatement || !remoteEnabled}
+              onClick={() => paymentStatementView.handleOpen(record)}
             >
               지급조서 보기
             </CmsButton>
@@ -286,12 +185,11 @@ export function ParticipatingIndividualInstructorSettlementSection({
         ),
       },
     ],
-    [handleOpenPaymentStatement]
+    [paymentStatementView.handleOpen, remoteEnabled]
   )
 
   return (
     <div className="school-detail-fullpage-view__instructor-section participating-instructor-settlement-section">
-      <FormCertificatePdfExportOverlay visible={bulkExportActive} />
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-settlement-section__summary">
         <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
           <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
@@ -303,8 +201,7 @@ export function ParticipatingIndividualInstructorSettlementSection({
                 </td>
                 <th scope="row">프로그램 진행 회차</th>
                 <td>
-                  {completedLectureCount} / {PARTICIPATING_INDIVIDUAL_INSTRUCTOR_PROGRAM_LECTURE_ROUND_TOTAL}건
-                  (강의 진행 회차 기준)
+                  {progressSummary.completed} / {progressSummary.total}건 (강의 진행 회차 기준)
                 </td>
               </tr>
               <tr>
@@ -333,40 +230,30 @@ export function ParticipatingIndividualInstructorSettlementSection({
             size="large"
             width={220}
             icon={<DownloadOutlined />}
-            disabled={bulkExportActive || downloadableRows.length === 0}
+            disabled={!remoteEnabled || bulkDownloadLoading || downloadableRows.length === 0}
             onClick={() => void handleBulkDownloadPaymentStatements()}
           >
             지급조서 일괄 다운로드
           </CmsButton>
-          <ExcelButton onClick={exportExcel} loading={isExcelExporting} />
+          <ExcelButton onClick={exportExcel} loading={isExcelExporting} disabled={rows.length === 0} />
         </div>
       </div>
 
       <div className="participating-institutions-section__table-wrap">
-        <Table<ParticipatingIndividualInstructorSettlementRow & { no: number }>
-          className="participating-institutions-section__table cms-data-table"
-          rowKey="id"
-          size="middle"
-          pagination={false}
-          scroll={{ x: 1200 }}
-          columns={columns}
-          dataSource={tableData}
-        />
+        <Spin spinning={isLoading}>
+          <Table<ParticipatingInstructorSettlementApiRow>
+            className="participating-institutions-section__table cms-data-table"
+            rowKey="id"
+            size="middle"
+            pagination={false}
+            scroll={{ x: 1200 }}
+            columns={columns}
+            dataSource={rows}
+          />
+        </Spin>
       </div>
 
-      <PaymentStatementIssuanceViewModal
-        open={paymentStatementViewOpen && Boolean(paymentStatementViewOptions)}
-        onClose={handleClosePaymentStatementView}
-        paragraphBodyOptions={paymentStatementViewOptions}
-        fileName={paymentStatementViewFileName}
-      />
-      {currentBulkExportContext != null ? (
-        <PaymentStatementIssuanceBulkPdfExportHost
-          key={currentBulkExportContext.settlementRow.id}
-          context={currentBulkExportContext}
-          onComplete={handleBulkExportItemComplete}
-        />
-      ) : null}
+      {paymentStatementView.modal}
     </div>
   )
 }

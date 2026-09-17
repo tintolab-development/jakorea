@@ -1,12 +1,12 @@
 /**
- * 참여 강사 상세 — 정산 현황 탭 (일반 프로그램 · 기관)
+ * 참여 봉사자 상세 — 정산 현황 탭 (일반 프로그램)
  */
 
 import { useCallback, useMemo, useState } from 'react'
 import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
-import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { Program } from '@/types/domain'
 import { StatusBadge } from '@/shared/components'
 import { CmsButton, ExcelButton } from '@/shared/ui'
@@ -15,106 +15,123 @@ import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { handleError } from '@/shared/utils/error-handler'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { getInstructorSettlementStatusLabel } from '@/shared/constants/instructor-settlement-status'
-import {
-  BusinessIncomeView,
-  LectureFeeBasisView,
-} from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-fee-fields'
+import { lectureProgressAccent } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-display'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
-import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
-import { participatingRowToApplicantFeeViewRow } from '@/features/program/general/lib/participating-instructor-detail-edit'
-import type { ParticipatingInstructorSettlementApiRow } from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
-import { useParticipatingInstructorSettlementList } from '@/features/program/general/hooks/use-participating-instructor-settlement-list'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
-  bulkDownloadParticipatingInstructorPaymentStatements,
-  filterParticipatingInstructorSettlementDownloadRows,
-  getParticipatingInstructorSettlementBulkDownloadErrorMessage,
-} from '@/features/program/general/lib/participating-instructor-settlement-download'
-import { useParticipatingInstructorPaymentStatementView } from '@/features/program/general/ui/detail-modal/program-status/participating-instructor-payment-statement-view-container'
-import './participating-instructor-settlement-section.css'
-
-const STATUS_ACCENT_DEFAULT = 'var(--default-BK, #3d3d3d)'
-const STATUS_ACCENT_SCHEDULED = 'var(--color-green, #1e8c29)'
-
-function lectureProgressAccent(
-  label: ParticipatingInstructorSettlementApiRow['lectureProgressLabel']
-): string {
-  return label === '진행 완료' ? STATUS_ACCENT_DEFAULT : STATUS_ACCENT_SCHEDULED
-}
+  shouldShowVolunteerSettlementDash,
+  type ParticipatingVolunteerSettlementApiRow,
+} from '@/features/program/general/lib/map-settlement-to-participating-volunteer-settlement-row'
+import { useParticipatingVolunteerSettlementList } from '@/features/program/general/hooks/use-participating-volunteer-settlement-list'
+import {
+  bulkDownloadParticipatingVolunteerPaymentStatements,
+  filterParticipatingVolunteerSettlementDownloadRows,
+  getParticipatingVolunteerSettlementBulkDownloadErrorMessage,
+} from '@/features/program/general/lib/participating-volunteer-settlement-download'
+import { useParticipatingVolunteerPaymentStatementView } from '@/features/program/general/ui/detail-modal/program-status/participating-volunteer-payment-statement-view-container'
+import './participating-volunteer-settlement-section.css'
 
 function formatSettlementAmount(amount: number | null): string {
   if (amount == null) return '-'
   return `${amount.toLocaleString('ko-KR')}원`
 }
 
-function renderPaymentStatementProcessingStatus(row: ParticipatingInstructorSettlementApiRow) {
-  if (row.lectureProgressLabel === '진행 예정' || !row.hasPaymentStatementApplication) {
-    return '-'
-  }
+function renderPaymentStatementProcessingStatus(row: ParticipatingVolunteerSettlementApiRow) {
+  if (shouldShowVolunteerSettlementDash(row)) return '-'
   return <InstructorSettlementStatusText status={row.paymentStatementStatus} />
 }
 
-function resolvePaymentStatementExportLabel(row: ParticipatingInstructorSettlementApiRow): string {
-  if (row.lectureProgressLabel === '진행 예정' || !row.hasPaymentStatementApplication) {
-    return '-'
-  }
+function resolvePaymentStatementExportLabel(row: ParticipatingVolunteerSettlementApiRow): string {
+  if (shouldShowVolunteerSettlementDash(row)) return '-'
   return getInstructorSettlementStatusLabel(row.paymentStatementStatus)
 }
 
-const settlementExportColumns: ColumnsType<ParticipatingInstructorSettlementApiRow> = [
+function resolveSettlementExportAmount(row: ParticipatingVolunteerSettlementApiRow): string {
+  if (shouldShowVolunteerSettlementDash(row)) return '-'
+  return formatSettlementAmount(row.scheduledSettlementAmount)
+}
+
+const settlementExportColumns: ColumnsType<ParticipatingVolunteerSettlementApiRow> = [
   { title: 'No.', dataIndex: 'no', key: 'no' },
   { title: '기관명', dataIndex: 'institutionName', key: 'institutionName' },
-  { title: '교육 학년', dataIndex: 'educationGrade', key: 'educationGrade' },
-  { title: '교육 진행 일정', dataIndex: 'educationScheduleLabel', key: 'educationScheduleLabel' },
-  { title: '강의 진행 여부', dataIndex: 'lectureProgressLabel', key: 'lectureProgressLabel' },
+  { title: '담당 학년', dataIndex: 'assignedGrade', key: 'assignedGrade' },
   {
-    title: '지급조서 처리현황',
+    title: '담당 봉사 진행 일정',
+    dataIndex: 'volunteerScheduleLabel',
+    key: 'volunteerScheduleLabel',
+  },
+  {
+    title: '봉사 진행 현황',
+    dataIndex: 'volunteerProgressLabel',
+    key: 'volunteerProgressLabel',
+  },
+  {
+    title: '지급조서 처리 현황',
     key: 'paymentStatementStatus',
     render: (_: unknown, record) => resolvePaymentStatementExportLabel(record),
   },
   {
     title: '정산 예정 금액',
     key: 'scheduledSettlementAmount',
-    render: (_: unknown, record) => formatSettlementAmount(record.scheduledSettlementAmount),
+    render: (_: unknown, record) => resolveSettlementExportAmount(record),
   },
 ]
 
-export interface ParticipatingInstructorSettlementSectionProps {
-  instructor: ParticipatingInstructorRow
-  program?: Program | null
+export interface ParticipatingVolunteerSettlementSectionProps {
+  volunteer: ParticipatingVolunteerRow
+  program: Program
 }
 
-export function ParticipatingInstructorSettlementSection({
-  instructor,
+export function ParticipatingVolunteerSettlementSection({
+  volunteer,
   program,
-}: ParticipatingInstructorSettlementSectionProps) {
+}: ParticipatingVolunteerSettlementSectionProps) {
   const { showAlert } = useCmsAlert()
   const programId = program?.id != null ? String(program.id) : ''
-  const { isLoading, rows, settlementItems, progressSummary, remoteEnabled } =
-    useParticipatingInstructorSettlementList({
-      programId,
-      instructor,
-    })
+  const isIndividual = isGeneralIndividualProgram(program)
+  const institutionNameOverride = isIndividual
+    ? program.mainTitle?.trim() || program.title?.trim() || undefined
+    : undefined
 
-  const paymentStatementView = useParticipatingInstructorPaymentStatementView({
-    instructor,
+  const {
+    isLoading,
+    rows,
     settlementItems,
+    progressSummary,
+    paymentStatementSummaryStatus,
+    remoteEnabled,
+  } = useParticipatingVolunteerSettlementList({
+    programId,
+    volunteer,
+  })
+
+  const displayRows = useMemo(() => {
+    if (!institutionNameOverride) return rows
+    return rows.map(row => ({
+      ...row,
+      institutionName:
+        !row.institutionName || row.institutionName === '-'
+          ? institutionNameOverride
+          : row.institutionName,
+    }))
+  }, [institutionNameOverride, rows])
+
+  const paymentStatementView = useParticipatingVolunteerPaymentStatementView({
+    volunteer,
+    settlementItems,
+    institutionNameOverride,
   })
 
   const [bulkDownloadLoading, setBulkDownloadLoading] = useState(false)
 
   const downloadableRows = useMemo(
-    () => filterParticipatingInstructorSettlementDownloadRows(rows),
-    [rows]
-  )
-
-  const feeViewRow = useMemo(
-    () => participatingRowToApplicantFeeViewRow(instructor) as ApplicantInstructorRow,
-    [instructor]
+    () => filterParticipatingVolunteerSettlementDownloadRows(displayRows),
+    [displayRows]
   )
 
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
     columns: settlementExportColumns,
-    data: rows,
+    data: displayRows,
     filename: '정산 내역',
   })
 
@@ -132,14 +149,14 @@ export function ParticipatingInstructorSettlementSection({
 
     setBulkDownloadLoading(true)
     try {
-      await bulkDownloadParticipatingInstructorPaymentStatements(downloadableRows)
+      await bulkDownloadParticipatingVolunteerPaymentStatements(downloadableRows)
     } catch (error) {
       handleError(error, {
-        context: 'participatingInstructorSettlementSection.bulkDownloadPaymentStatements',
+        context: 'participatingVolunteerSettlementSection.bulkDownloadPaymentStatements',
       })
       showAlert({
         title: '안내',
-        content: getParticipatingInstructorSettlementBulkDownloadErrorMessage(error),
+        content: getParticipatingVolunteerSettlementBulkDownloadErrorMessage(error),
       })
     } finally {
       setBulkDownloadLoading(false)
@@ -147,7 +164,7 @@ export function ParticipatingInstructorSettlementSection({
   }, [bulkDownloadLoading, downloadableRows, remoteEnabled, showAlert])
 
   const columns = useMemo(
-    (): ColumnsType<ParticipatingInstructorSettlementApiRow> => [
+    (): ColumnsType<ParticipatingVolunteerSettlementApiRow> => [
       { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
       {
         title: '기관명',
@@ -157,37 +174,37 @@ export function ParticipatingInstructorSettlementSection({
         align: 'center',
       },
       {
-        title: '교육 학년',
-        dataIndex: 'educationGrade',
-        key: 'educationGrade',
+        title: '담당 학년',
+        dataIndex: 'assignedGrade',
+        key: 'assignedGrade',
         width: 96,
         align: 'center',
       },
       {
-        title: '교육 진행 일정',
-        dataIndex: 'educationScheduleLabel',
-        key: 'educationScheduleLabel',
+        title: '담당 봉사 진행 일정',
+        dataIndex: 'volunteerScheduleLabel',
+        key: 'volunteerScheduleLabel',
         align: 'center',
         width: 320,
         render: (label: string) => renderProgramDetailPipeSeparated(label),
       },
       {
-        title: '강의 진행 여부',
-        dataIndex: 'lectureProgressLabel',
-        key: 'lectureProgressLabel',
+        title: '봉사 진행 현황',
+        dataIndex: 'volunteerProgressLabel',
+        key: 'volunteerProgressLabel',
         align: 'center',
         width: 120,
-        render: (label: ParticipatingInstructorSettlementApiRow['lectureProgressLabel']) => (
+        render: (_: unknown, record) => (
           <StatusBadge
             domain="custom"
-            label={label}
-            accentColor={lectureProgressAccent(label)}
+            label={record.volunteerProgressLabel}
+            accentColor={lectureProgressAccent(record.volunteerProgress)}
             variant="text"
           />
         ),
       },
       {
-        title: '지급조서 처리현황',
+        title: '지급조서 처리 현황',
         key: 'paymentStatementStatus',
         align: 'center',
         width: 160,
@@ -199,8 +216,8 @@ export function ParticipatingInstructorSettlementSection({
         align: 'center',
         width: 140,
         render: (_: unknown, record) => (
-          <span className="participating-instructor-settlement-section__amount-dash">
-            {formatSettlementAmount(record.scheduledSettlementAmount)}
+          <span className="participating-volunteer-settlement-section__amount-dash">
+            {resolveSettlementExportAmount(record)}
           </span>
         ),
       },
@@ -210,7 +227,7 @@ export function ParticipatingInstructorSettlementSection({
         align: 'center',
         width: 180,
         render: (_: unknown, record) => (
-          <div className="participating-instructor-settlement-section__payment-statement-cell-inner">
+          <div className="participating-volunteer-settlement-section__payment-statement-cell-inner">
             <CmsButton
               variant="default"
               size="medium"
@@ -228,29 +245,19 @@ export function ParticipatingInstructorSettlementSection({
   )
 
   return (
-    <div className="school-detail-fullpage-view__instructor-section participating-instructor-settlement-section">
-      <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-settlement-section__summary">
+    <div className="school-detail-fullpage-view__instructor-section participating-volunteer-settlement-section">
+      <div className="program-detail-fullpage-modal__info-tab-block participating-volunteer-settlement-section__summary">
         <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
           <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
             <tbody>
               <tr>
-                <th scope="row">지급조서 처리현황</th>
+                <th scope="row">지급조서 처리 현황</th>
                 <td>
-                  <InstructorSettlementStatusText status={instructor.settlementStatus} />
+                  <InstructorSettlementStatusText status={paymentStatementSummaryStatus} />
                 </td>
                 <th scope="row">프로그램 진행 회차</th>
                 <td>
-                  {progressSummary.completed} / {progressSummary.total}건 (강의 진행 회차 기준)
-                </td>
-              </tr>
-              <tr>
-                <th scope="row">강의비 책정 기준</th>
-                <td>
-                  <LectureFeeBasisView instructor={feeViewRow} />
-                </td>
-                <th scope="row">사업소득자 여부</th>
-                <td>
-                  <BusinessIncomeView instructor={feeViewRow} />
+                  {progressSummary.completed} / {progressSummary.total}건 (봉사 진행 회차 기준)
                 </td>
               </tr>
             </tbody>
@@ -261,7 +268,7 @@ export function ParticipatingInstructorSettlementSection({
       <div className="table-header-actions">
         <div className="table-header-title--wrapper">
           <span className="table-title">정산 내역</span>
-          <span className="table-description">{rows.length}건</span>
+          <span className="table-description">{displayRows.length}건</span>
         </div>
         <div className="info-section-buttons--wrapper">
           <CmsButton
@@ -274,20 +281,24 @@ export function ParticipatingInstructorSettlementSection({
           >
             지급조서 일괄 다운로드
           </CmsButton>
-          <ExcelButton onClick={exportExcel} loading={isExcelExporting} disabled={rows.length === 0} />
+          <ExcelButton
+            onClick={exportExcel}
+            loading={isExcelExporting}
+            disabled={displayRows.length === 0}
+          />
         </div>
       </div>
 
       <div className="participating-institutions-section__table-wrap">
         <Spin spinning={isLoading}>
-          <Table<ParticipatingInstructorSettlementApiRow>
+          <Table<ParticipatingVolunteerSettlementApiRow>
             className="participating-institutions-section__table cms-data-table"
             rowKey="id"
             size="middle"
             pagination={false}
             scroll={{ x: 1400 }}
             columns={columns}
-            dataSource={rows}
+            dataSource={displayRows}
           />
         </Spin>
       </div>

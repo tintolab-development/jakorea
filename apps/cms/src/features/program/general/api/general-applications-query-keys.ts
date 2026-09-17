@@ -55,8 +55,15 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'attendances', programId, scheduleId] as const,
   schedules: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'schedules', programId] as const,
-  lectureReports: (programId: string) =>
-    [...generalProgramProgressQueryKeys.all, 'lecture-reports', programId] as const,
+  lectureReports: (programId: string, instructorMemberId?: string | number | null) =>
+    [
+      ...generalProgramProgressQueryKeys.all,
+      'lecture-reports',
+      programId,
+      instructorMemberId != null && instructorMemberId !== ''
+        ? String(instructorMemberId)
+        : 'all',
+    ] as const,
   posts: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'posts', programId] as const,
   surveys: (programId: string) =>
@@ -69,6 +76,13 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'student-roster', organizationApplicationId] as const,
   instructorAssignments: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'instructor-assignments', programId] as const,
+  instructorSettlements: (programId: string, instructorMemberId: string) =>
+    [
+      ...generalProgramProgressQueryKeys.all,
+      'instructor-settlements',
+      programId,
+      instructorMemberId,
+    ] as const,
 }
 
 export const generalInterviewSlotsQueryKeys = {

@@ -90,6 +90,10 @@ export async function downloadPaymentStatementRemote(
   return unwrapApiBody(await settlementApi.downloadPaymentStatement(settlementId))
 }
 
+export async function fetchPaymentStatementRenderDataRemote(settlementId: number) {
+  return unwrapApiBody(await settlementApi.paymentStatementRenderData(settlementId))
+}
+
 /** settlement-api — PATCH .../statements/{statementId}/reject (notificationType OpenAPI 반영) */
 export async function rejectPaymentStatementRemote(
   statementId: number,
