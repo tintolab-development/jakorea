@@ -132,9 +132,7 @@ export function useProgressSchoolList({
   const isCompanySchoolSurface = useIsCompanySchoolProgramsSurface()
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
   const ttRemoteEnabled =
-    isTrainedTeachersSurface &&
-    shouldUseTrainedTeacherProgramsRemoteApi() &&
-    Boolean(programId)
+    isTrainedTeachersSurface && shouldUseTrainedTeacherProgramsRemoteApi() && Boolean(programId)
 
   useNotifyProgramApiUnavailableOnce(
     !remoteEnabled && !ttRemoteEnabled,
@@ -144,8 +142,7 @@ export function useProgressSchoolList({
 
   const remoteQuery = useInfiniteQuery({
     queryKey: generalProgramProgressQueryKeys.institutions(programId ?? ''),
-    queryFn: ({ pageParam }) =>
-      fetchGeneralParticipatingInstitutionsPage(programId!, pageParam),
+    queryFn: ({ pageParam }) => fetchGeneralParticipatingInstitutionsPage(programId!, pageParam),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled && !isTrainedTeachersSurface,
@@ -287,25 +284,27 @@ export function useProgressSchoolList({
     setSchoolList(prev => prev.filter(row => !keysToDelete.has(row.id)))
     setSelectedSchoolRowKeys([])
     setSchoolDeleteGuideOpen(false)
-    }, [selectedSchoolRowKeys])
+  }, [selectedSchoolRowKeys])
 
   /** 선택 삭제 확인 시: 선택된 참여 기관을 리스트에서 제거 */
   const handleBulkDeleteConfirm = useCallback(() => {
     const keysSet = new Set(selectedSchoolRowKeys.map(String))
     setSchoolList(prev => prev.filter(row => !keysSet.has(row.id)))
     setSelectedSchoolRowKeys([])
-    }, [selectedSchoolRowKeys])
+  }, [selectedSchoolRowKeys])
 
   /** 선택 승인 확인 시: 선택된 참여 기관 approvalStatus → approved */
   const handleBulkApproveConfirm = useCallback(() => {
     const keysSet = new Set(selectedSchoolRowKeys.map(String))
     setSchoolList(prev =>
       prev.map(row =>
-        keysSet.has(row.id) ? { ...row, approvalStatus: 'approved' as ParticipatingSchoolApprovalStatusKey } : row
+        keysSet.has(row.id)
+          ? { ...row, approvalStatus: 'approved' as ParticipatingSchoolApprovalStatusKey }
+          : row
       )
     )
     setSelectedSchoolRowKeys([])
-    }, [selectedSchoolRowKeys])
+  }, [selectedSchoolRowKeys])
 
   /** 학교 상세에서 승인 취소 확인 시: 해당 기관 approvalStatus → cancelled */
   const handleSchoolApprovalCancel = useCallback((schoolId: string) => {
@@ -316,7 +315,7 @@ export function useProgressSchoolList({
           : row
       )
     )
-    }, [])
+  }, [])
 
   /** 학교별 배정 강사 요약 (대표강사명 외 N명, 저장 패치 우선) */
   const getInstructorDisplayForSchool = useCallback(
@@ -366,9 +365,7 @@ export function useProgressSchoolList({
         : false,
     isRemoteDataSource: ttRemoteEnabled || remoteEnabled,
     hasNextPage:
-      remoteEnabled && !isTrainedTeachersSurface
-        ? (remoteQuery.hasNextPage ?? false)
-        : false,
+      remoteEnabled && !isTrainedTeachersSurface ? (remoteQuery.hasNextPage ?? false) : false,
     isFetchingNextPage: remoteQuery.isFetchingNextPage,
     fetchNextPage: remoteQuery.fetchNextPage,
   }

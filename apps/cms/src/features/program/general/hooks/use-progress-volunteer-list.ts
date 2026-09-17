@@ -1,12 +1,12 @@
 /**
  * 프로그램 진행현황 탭 — 참여 봉사자 목록
- * API 미연동 시 빈 목록 + alert
+ * remote only · mock/로컬 append 금지
+ * TODO(temp-mock): 열여라 참깨 — 참여 봉사자·정산 현황 검증 후 삭제 (임시 목록 append)
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { type ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
-import { buildParticipatingVolunteerRowFromMember } from '../lib/participating-volunteer-member-candidates'
 import { fetchGeneralParticipatingVolunteersPage } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
@@ -16,7 +16,7 @@ import {
   useIsTrainedTeachersProgramsSurface,
 } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 
-// TODO(temp-mock): 열여라 참깨 — 참여 봉사자·배정 현황 검증 후 삭제
+// TODO(temp-mock): 열여라 참깨 — 참여 봉사자·정산 현황 검증 후 삭제
 export const TEMP_PROGRESS_VOLUNTEER_PREFIX = 'temp-progress-volunteer-'
 
 const TEMP_VOLUNTEER_SCHOOLS = [
@@ -46,9 +46,6 @@ function buildTemporaryProgressVolunteers(programId: string): ParticipatingVolun
         classNum: `${round}교시`,
         timeRange: `${String(8 + round).padStart(2, '0')}:00 ~ ${String(9 + round).padStart(2, '0')}:50`,
         status: round === 1 ? 'completed' : 'pending',
-        requestedScheduleId: 988_000 + index * 10 + round,
-        resolvedScheduleId: 987_000 + index * 10 + round,
-        scheduleUnresolved: false,
       })),
       contact: `010-8000-${String(1000 + sequence)}`,
       email: `temp-volunteer-${sequence}@jakorea.example`,
@@ -61,7 +58,7 @@ function buildTemporaryProgressVolunteers(programId: string): ParticipatingVolun
       scheduleChangeCancelCount: index,
       hasJaVolunteerExperience: index % 2 === 1,
       applicationType: index % 2 === 0 ? 'new' : 'ujat-graduate',
-      adminComment: `${schoolName} 봉사 배정 현황 확인용 임시 데이터`,
+      adminComment: `${schoolName} 정산 현황 확인용 임시 봉사자`,
       activityWithdrawn: false,
       activityWithdrawStopSessionKey: '',
       performanceExcludedSessionKeys: [],
@@ -74,17 +71,23 @@ function buildTemporaryProgressVolunteers(programId: string): ParticipatingVolun
   })
 }
 
-export function useProgressVolunteerList(
-  programId?: string,
-  _program?: unknown
-) {
+export function useProgressVolunteerList(programId?: string, _program?: unknown) {
   void _program
   const isCompanySchoolSurface = useIsCompanySchoolProgramsSurface()
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
   const remoteEnabled = shouldUseGeneralProgramProgressRemoteApi() && Boolean(programId)
 
+  // TODO(temp-mock): 열여라 참깨 — 참여 봉사자·정산 현황 검증 후 삭제
+  const temporaryProgressVolunteers = useMemo(
+    () =>
+      programId && !isCompanySchoolSurface && !isTrainedTeachersSurface
+        ? buildTemporaryProgressVolunteers(programId)
+        : [],
+    [isCompanySchoolSurface, isTrainedTeachersSurface, programId]
+  )
+
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled,
+    !remoteEnabled && temporaryProgressVolunteers.length === 0,
     'general-progress-volunteers',
     '프로그램 진행 현황 · 봉사자'
   )
@@ -100,13 +103,6 @@ export function useProgressVolunteerList(
     retry: false,
   })
 
-  const temporaryProgressVolunteers = useMemo(
-    () =>
-      programId && !isCompanySchoolSurface && !isTrainedTeachersSurface
-        ? buildTemporaryProgressVolunteers(programId)
-        : [],
-    [isCompanySchoolSurface, isTrainedTeachersSurface, programId]
-  )
   const [volunteerList, setVolunteerList] = useState<ParticipatingVolunteerRow[]>(() => [])
 
   useEffect(() => {
@@ -120,24 +116,10 @@ export function useProgressVolunteerList(
       return
     }
     setVolunteerList(temporaryProgressVolunteers)
-  }, [remoteEnabled, remoteQuery.data, programId, temporaryProgressVolunteers])
-
-  const addVolunteerFromMember = useCallback(
-    async (memberId: string) => {
-      const nextNo = volunteerList.reduce((max, row) => Math.max(max, row.no), 0) + 1
-      const nextId = `participating-volunteer-added-${memberId}`
-      const row = await buildParticipatingVolunteerRowFromMember(memberId, nextNo, nextId)
-      if (row) {
-        setVolunteerList(prev => [...prev, row])
-      }
-      return row
-    },
-    [volunteerList]
-  )
+  }, [remoteEnabled, remoteQuery.data, temporaryProgressVolunteers])
 
   return {
     volunteerList,
-    addVolunteerFromMember,
     applicationsLoading: remoteEnabled
       ? remoteQuery.isFetching && remoteQuery.data === undefined
       : false,

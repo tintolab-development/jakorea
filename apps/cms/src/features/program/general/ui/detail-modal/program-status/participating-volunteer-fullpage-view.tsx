@@ -29,11 +29,12 @@ import { ParticipatingVolunteerApplicationInfo } from './participating-volunteer
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from './participating-volunteer-activity-certificate-preview-modal'
 import { ParticipatingVolunteerAssignmentSection } from './participating-volunteer-assignment-section'
 import { ParticipatingIndividualVolunteerAssignmentSection } from './participating-individual-volunteer-assignment-section'
+import { ParticipatingVolunteerSettlementSection } from './participating-volunteer-settlement-section'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import './school-detail-fullpage-view.css'
 import './participating-volunteer-fullpage-view.css'
 
-export const VOLUNTEER_DETAIL_TAB_KEYS = ['application', 'assignment'] as const
+export const VOLUNTEER_DETAIL_TAB_KEYS = ['application', 'assignment', 'settlement'] as const
 export type VolunteerDetailTabKey = (typeof VOLUNTEER_DETAIL_TAB_KEYS)[number]
 
 export function normalizeVolunteerDetailTab(tab: string | null | undefined): VolunteerDetailTabKey {
@@ -46,6 +47,7 @@ export function normalizeVolunteerDetailTab(tab: string | null | undefined): Vol
 const TAB_LABELS: Record<VolunteerDetailTabKey, string> = {
   application: '신청 정보',
   assignment: '봉사 배정 현황',
+  settlement: '정산 현황',
 }
 
 export interface ParticipatingVolunteerFullpageViewProps {
@@ -282,6 +284,13 @@ export function ParticipatingVolunteerFullpageView({
                 adminCommentError={adminCommentError}
               />
             </div>
+          </div>
+        ) : activeTab === 'settlement' ? (
+          <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
+            <ParticipatingVolunteerSettlementSection
+              program={program}
+              volunteer={mergedVolunteer}
+            />
           </div>
         ) : (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__instructor-tab">
