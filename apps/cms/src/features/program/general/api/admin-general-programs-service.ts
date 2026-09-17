@@ -50,6 +50,7 @@ import {
   createAdminProgramPostCommentRemote,
   submitAdminFormResponseRemote,
   createAdminProgramSurveyShareLinkRemote,
+  updateAdminProgramFormBindingRemote,
   updateAdminProgramManagerRemote,
   updateAdminProgramRemote,
   updateAdminProgramPostRemote,
@@ -367,6 +368,16 @@ export async function createGeneralProgramFormBinding(
   if (!shouldUseProgramsHttpRemoteApi()) return null
   assertProgramsHttpRemoteReady()
   return createAdminProgramFormBindingRemote(programId, payload)
+}
+
+export async function updateGeneralProgramFormBinding(
+  programId: string,
+  bindingId: string,
+  payload: ProgramFormBindingRequest
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return updateAdminProgramFormBindingRemote(programId, bindingId, payload)
 }
 
 export async function deleteGeneralProgramFormBinding(programId: string, bindingId: string) {
