@@ -117,6 +117,7 @@ import {
   buildTemporaryParticipatingInstitutionPostFiles,
   buildTemporaryParticipatingInstitutionPosts,
 } from '@/features/program/general/lib/participating-institution-temp-posts'
+import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
@@ -472,14 +473,14 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   // TODO(temp-mock): 열여라 참깨 — 참여 기관 상세 게시글 검증 후 삭제
   const temporarySchoolPosts = useMemo(
     () =>
-      detail.id.startsWith('temp-textbook-status-')
+      isGeneralProgramTempMockEnabled() && detail.id.startsWith('temp-textbook-status-')
         ? buildTemporaryParticipatingInstitutionPosts(String(program.id), detail.id)
         : [],
     [detail.id, program.id]
   )
   const temporarySchoolPostFiles = useMemo(
     () =>
-      detail.id.startsWith('temp-textbook-status-')
+      isGeneralProgramTempMockEnabled() && detail.id.startsWith('temp-textbook-status-')
         ? buildTemporaryParticipatingInstitutionPostFiles(String(program.id), detail.id)
         : [],
     [detail.id, program.id]

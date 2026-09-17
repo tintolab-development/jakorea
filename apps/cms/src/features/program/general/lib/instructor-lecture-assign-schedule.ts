@@ -83,90 +83,6 @@ export function formatIndividualLectureAssignTagLabel(date: Dayjs, timeRange: st
   return `${formatLectureAssignDateLabel(date)} ${timeRange}`
 }
 
-/** 시안용 2026년 3월 고정 슬롯 */
-const DEMO_MARCH_2026_SLOT_DEFS: Array<{
-  dateKey: string
-  schoolId: string
-  schoolName: string
-  region: string
-  sessionRound: number
-  sessionLabel: string
-  timeRange: string
-}> = [
-  {
-    dateKey: '2026-03-19',
-    schoolId: 'assign-school-gangseo',
-    schoolName: '강서초등학교',
-    region: '서울특별시',
-    sessionRound: 1,
-    sessionLabel: '1차시',
-    timeRange: '9:20 ~ 12:00',
-  },
-  {
-    dateKey: '2026-03-19',
-    schoolId: 'assign-school-1',
-    schoolName: '학교명 1',
-    region: '서울특별시',
-    sessionRound: 1,
-    sessionLabel: '1차시',
-    timeRange: '9:20 ~ 12:00',
-  },
-  {
-    dateKey: '2026-03-19',
-    schoolId: 'assign-school-2',
-    schoolName: '학교명 2',
-    region: '서울특별시',
-    sessionRound: 1,
-    sessionLabel: '1차시',
-    timeRange: '9:20 ~ 12:00',
-  },
-  {
-    dateKey: '2026-03-19',
-    schoolId: 'assign-school-3',
-    schoolName: '학교명 3',
-    region: '서울특별시',
-    sessionRound: 1,
-    sessionLabel: '1차시',
-    timeRange: '9:20 ~ 12:00',
-  },
-  {
-    dateKey: '2026-03-19',
-    schoolId: 'assign-school-4',
-    schoolName: '학교명 4',
-    region: '서울특별시',
-    sessionRound: 1,
-    sessionLabel: '1차시',
-    timeRange: '9:20 ~ 12:00',
-  },
-  {
-    dateKey: '2026-03-19',
-    schoolId: 'assign-school-gangseo',
-    schoolName: '강서초등학교',
-    region: '서울특별시',
-    sessionRound: 2,
-    sessionLabel: '2차시',
-    timeRange: '13:00 ~ 15:00',
-  },
-  {
-    dateKey: '2026-03-06',
-    schoolId: 'assign-school-gangseo',
-    schoolName: '강서초등학교',
-    region: '서울특별시',
-    sessionRound: 1,
-    sessionLabel: '1차시',
-    timeRange: '9:20 ~ 12:00',
-  },
-  {
-    dateKey: '2026-03-16',
-    schoolId: 'assign-school-gangseo',
-    schoolName: '강서초등학교',
-    region: '서울특별시',
-    sessionRound: 1,
-    sessionLabel: '1차시',
-    timeRange: '9:20 ~ 12:00',
-  },
-]
-
 export type ParsedInstructorLectureAssignSchedule = {
   slotsByDateKey: Map<string, InstructorLectureAssignSlot[]>
   clickableDateKeys: Set<string>
@@ -286,14 +202,6 @@ export function parseInstructorLectureAssignSchedule(
 ): ParsedInstructorLectureAssignSchedule {
   const institutions = getGeneralInstitutionApplicationsForProgram(programId)
   const slotMap = new Map<string, InstructorLectureAssignSlot>()
-
-  for (const def of DEMO_MARCH_2026_SLOT_DEFS) {
-    mergeSlot(slotMap, {
-      ...def,
-      key: buildSlotKey(def.dateKey, def.schoolId, def.sessionRound),
-      assignedCount: 0,
-    })
-  }
 
   for (const institution of institutions) {
     for (const session of institution.sessions ?? []) {

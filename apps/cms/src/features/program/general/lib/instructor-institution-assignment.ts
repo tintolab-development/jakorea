@@ -1,5 +1,5 @@
 /**
- * 참여 강사 풀페이지 — 기관 배정 현황 탭용 목 데이터
+ * 참여 강사 풀페이지 — 기관 배정 현황 탭
  */
 
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
@@ -12,31 +12,13 @@ import {
   buildParticipatingSchoolPreferredScheduleLines,
   buildParticipatingSchoolSessionLines,
 } from './participating-school-session-display'
-import { isGeneralInstitutionCaseProgramId } from './general-institution-case-roster'
+import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
 
 function hash(s: string): number {
   let h = 0
   for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i)
   return Math.abs(h)
 }
-
-function pick<T>(arr: T[], seed: number): T {
-  return arr[seed % arr.length]
-}
-
-const ASSIGNED_DISTANCES = ['3km', '5km', '7km', '4km', '6km', '8km']
-
-const WAITING_ASSIGNMENT_STATUSES = [
-  'waiting',
-  'assigned',
-  'waiting',
-  'assigned',
-  'cancelled',
-  'assigned',
-  'waiting',
-] as const
-
-const WAITING_DISTANCES = ['2km', '4km', '6km', '5km', '7km', '32km', '12km']
 
 export type InstructorWaitingAssignmentStatus = 'waiting' | 'cancelled' | 'assigned'
 
@@ -128,7 +110,7 @@ function scheduleGroupsForSchool(
   }))
 }
 
-/** 배정된 학교 3건 목업: 강사의 schoolName 학교 필수 포함 + 나머지 2교 */
+/** 배정된 학교 — instructor.schoolName / assignedOrganizationNames 에 실제 매칭되는 기관만 */
 export function buildInitialAssignedSchoolRows(
   instructor: ParticipatingInstructorRow,
   schools: ParticipatingSchoolRow[],
@@ -136,22 +118,25 @@ export function buildInitialAssignedSchoolRows(
 ): InstructorAssignedSchoolRow[] {
   if (schools.length === 0) return []
 
-  const seed = hash(instructor.id)
-  const primary =
-    schools.find(s => s.schoolName === instructor.schoolName) ?? schools[seed % schools.length]
-
-  const rest = schools.filter(s => s.id !== primary.id)
-  const sortedRest = [...rest].sort(
-    (a, b) => hash(a.id + instructor.id) - hash(b.id + instructor.id)
+  const assignedNames = new Set(
+    [instructor.schoolName, ...(instructor.assignedOrganizationNames ?? [])]
+      .map(name => name?.trim())
+      .filter((name): name is string => Boolean(name))
   )
+
+  let pickedSchools = schools.filter(school => assignedNames.has(school.schoolName))
+
   // TODO(temp-mock): 열여라 참깨 — 참여 강사·배정 현황 검증 후 삭제
-  const isTemporaryInstructor = instructor.id.startsWith('temp-progress-instructor-')
-  const pickedSchools = isGeneralInstitutionCaseProgramId(primary.programId) || isTemporaryInstructor
-    ? [primary]
-    : [primary, ...sortedRest.slice(0, 2)]
+  const isTemporaryInstructor =
+    isGeneralProgramTempMockEnabled() && instructor.id.startsWith('temp-progress-instructor-')
+  if (pickedSchools.length === 0 && isTemporaryInstructor) {
+    const seed = hash(instructor.id)
+    const primary =
+      schools.find(s => s.schoolName === instructor.schoolName) ?? schools[seed % schools.length]
+    pickedSchools = primary ? [primary] : []
+  }
 
   return pickedSchools.map((school, idx) => {
-    const rowSeed = hash(school.id + instructor.id)
     return {
       id: school.id,
       no: pickedSchools.length - idx,
@@ -159,7 +144,7 @@ export function buildInitialAssignedSchoolRows(
       schoolName: school.schoolName,
       educationGrade: school.educationGrade,
       region: school.region,
-      distanceFromHome: pick(ASSIGNED_DISTANCES, rowSeed + idx),
+      distanceFromHome: '-',
       educationScheduleLines: scheduleLinesForSchool(school),
     }
   })
@@ -181,21 +166,20 @@ export function buildWaitingSchoolRows(
 
   return sortWaitingRowsAssignedToBottom(
     slice.map((school, idx) => {
-      const rowSeed = hash(school.id + instructor.id)
       return {
         id: school.id,
         no: n - idx,
         schoolName: school.schoolName,
         desiredGrade: school.educationGrade,
         region: school.region,
-        distanceFromHome: pick(WAITING_DISTANCES, rowSeed + idx),
+        distanceFromHome: '-',
         educationScheduleLines: scheduleLinesForSchool(school),
         // TODO(temp-mock): 열여라 참깨 — 배정 대기/불가/완료 검증 후 삭제
-        assignmentStatus: instructor.id.startsWith('temp-progress-instructor-')
-          ? (['waiting', 'cancelled', 'assigned'] as const)[idx % 3]
-          : isGeneralInstitutionCaseProgramId(school.programId)
-          ? (['waiting', 'cancelled', 'assigned'] as const)[idx % 3]
-          : pick([...WAITING_ASSIGNMENT_STATUSES], rowSeed + idx),
+        assignmentStatus:
+          isGeneralProgramTempMockEnabled() &&
+          instructor.id.startsWith('temp-progress-instructor-')
+            ? (['waiting', 'cancelled', 'assigned'] as const)[idx % 3]
+            : ('waiting' as const),
         assignedInstructorCountLabel: instructorCountLabel(school.schoolName, instructorList),
       }
     })
@@ -204,7 +188,7 @@ export function buildWaitingSchoolRows(
 
 /** 1사1교 — 신청 기관 + 신청 일정별 배정 대기 행 */
 export function buildWaitingSchoolScheduleRows(
-  instructor: ParticipatingInstructorRow,
+  _instructor: ParticipatingInstructorRow,
   schools: ParticipatingSchoolRow[],
   instructorList: ParticipatingInstructorRow[],
   assignedSchoolIds: Set<string>
@@ -213,20 +197,10 @@ export function buildWaitingSchoolScheduleRows(
   const pool = schools.filter(s => !assignedSchoolIds.has(s.id))
 
   for (const school of pool) {
-    const rowSeed = hash(school.id + instructor.id + 'w-schedule')
     const groups = scheduleGroupsForSchool(school)
-    const sourceGroups =
-      groups.length > 0
-        ? groups
-        : [
-            {
-              scheduleKey: `${school.id}|fallback`,
-              sessions: [] as ParticipatingSchoolSession[],
-              line: scheduleLinesForSchool(school)[0] ?? '-',
-            },
-          ]
+    if (groups.length === 0) continue
 
-    sourceGroups.forEach((group, index) => {
+    groups.forEach(group => {
       rows.push({
         id: `${school.id}__${group.scheduleKey}`,
         schoolId: school.id,
@@ -236,9 +210,9 @@ export function buildWaitingSchoolScheduleRows(
         schoolName: school.schoolName,
         desiredGrade: school.educationGrade,
         region: school.region,
-        distanceFromHome: pick(WAITING_DISTANCES, rowSeed + index),
+        distanceFromHome: '-',
         educationScheduleLines: [group.line],
-        assignmentStatus: pick(['waiting', 'waiting', 'cancelled'] as const, rowSeed + index),
+        assignmentStatus: 'waiting',
         assignedInstructorCountLabel: instructorCountLabel(school.schoolName, instructorList),
       })
     })
@@ -249,13 +223,12 @@ export function buildWaitingSchoolScheduleRows(
 
 export function schoolRowToAssignedRow(
   school: ParticipatingSchoolRow,
-  instructor: ParticipatingInstructorRow,
+  _instructor: ParticipatingInstructorRow,
   _instructorList: ParticipatingInstructorRow[],
   no: number,
   role: InstructorRoleKey,
-  idx: number
+  _idx: number
 ): InstructorAssignedSchoolRow {
-  const rowSeed = hash(school.id + instructor.id)
   return {
     id: school.id,
     no,
@@ -263,26 +236,25 @@ export function schoolRowToAssignedRow(
     schoolName: school.schoolName,
     educationGrade: school.educationGrade,
     region: school.region,
-    distanceFromHome: pick(ASSIGNED_DISTANCES, rowSeed + idx),
+    distanceFromHome: '-',
     educationScheduleLines: scheduleLinesForSchool(school),
   }
 }
 
 export function createWaitingRowForSchool(
   school: ParticipatingSchoolRow,
-  instructor: ParticipatingInstructorRow,
+  _instructor: ParticipatingInstructorRow,
   instructorList: ParticipatingInstructorRow[],
   no: number,
   assignmentStatus: InstructorWaitingAssignmentStatus = 'waiting'
 ): InstructorWaitingSchoolRow {
-  const rowSeed = hash(school.id + instructor.id + 'back')
   return {
     id: school.id,
     no,
     schoolName: school.schoolName,
     desiredGrade: school.educationGrade,
     region: school.region,
-    distanceFromHome: pick(WAITING_DISTANCES, rowSeed),
+    distanceFromHome: '-',
     educationScheduleLines: scheduleLinesForSchool(school),
     assignmentStatus,
     assignedInstructorCountLabel: instructorCountLabel(school.schoolName, instructorList),

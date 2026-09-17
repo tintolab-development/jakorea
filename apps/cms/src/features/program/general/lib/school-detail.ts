@@ -32,19 +32,7 @@ import {
 } from './waiting-instructor-assignment'
 import { resolveOneSchoolPerDayAssignmentStatus } from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
 import type { Application } from '@/types/domain'
-
-const INSTRUCTOR_PHONES = ['010-2847-5913', '010-4523-9016', '010-6234-7805']
-const INSTRUCTOR_EMAILS = ['instructor0@example.com', 'instructor1@example.com', 'instructor2@example.com']
-
-function hash(s: string): number {
-  let h = 0
-  for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i)
-  return Math.abs(h)
-}
-
-function pick<T>(arr: T[], seed: number): T {
-  return arr[seed % arr.length]
-}
+import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
 
 /**
  * 참여 강사 행 → 학교 상세 모달용 강사 행 (모달·테이블 연동 시 재사용)
@@ -53,13 +41,12 @@ export function toDetailInstructor(
   row: ParticipatingInstructorRow,
   index: number
 ): SchoolDetailInstructorRow {
-  const seed = hash(row.id)
   return {
     id: row.id,
     role: index === 0 ? 'lead' : 'assistant',
     instructorName: row.instructorName,
-    contact: pick(INSTRUCTOR_PHONES, seed + index),
-    email: pick(INSTRUCTOR_EMAILS, seed + index),
+    contact: row.contact?.trim() || '-',
+    email: row.email?.trim() || '-',
     settlementStatus: row.settlementStatus as SettlementStatusKey,
   }
 }
@@ -78,31 +65,14 @@ export function getInstructorRowsForSchool(
   }
 
   // TODO(temp-mock): 열여라 참깨 — 원격 기관 강사 배정 현황 검증 후 삭제
+  if (!isGeneralProgramTempMockEnabled()) return []
   const temporaryInstructors = instructorRows
     .filter(r => r.id.startsWith('temp-progress-instructor-'))
     .slice(0, 2)
   return temporaryInstructors.map((r, i) => toDetailInstructor(r, i))
 }
 
-/** 배정된 강사 목록 테이블용 확장 필드 목 데이터 */
-const ASSIGNED_DISPLAY_HOME_ADDRESSES = [
-  '서울특별시 강서구 방화동',
-  '서울특별시 마포구 연남동',
-  '서울특별시 영등포구 당산동',
-  '서울특별시 서대문구 연희동',
-  '서울특별시 강남구 역삼동',
-  '경기도 성남시 분당구',
-]
-const ASSIGNED_DISPLAY_DISTANCES = ['3km', '5km', '7km', '4km', '6km', '8km']
-const ASSIGNED_DISPLAY_DATES = ['2026. 01. 09(금)', '2026. 01. 10(토)', '2026. 01. 11(일)']
-const ASSIGNED_DISPLAY_TIMES = [
-  '1교시 (9:20 ~ 10:10)',
-  '2교시 (10:20 ~ 11:10)',
-  '3교시 (11:20 ~ 12:10)',
-]
-const ASSIGNED_DISPLAY_SESSIONS = ['1차시', '2차시', '3차시', '4차시']
-
-/** 배정된 강사 목록 테이블용 행 (자택 주소·거리·담당 일정 등 목 데이터 연동) */
+/** 배정된 강사 목록 테이블용 행 */
 export interface AssignedInstructorDisplayRowMock extends SchoolDetailInstructorRow {
   no: number
   homeAddress?: string
@@ -116,34 +86,18 @@ export function getAssignedInstructorDisplayRows(
   instructors: SchoolDetailInstructorRow[]
 ): AssignedInstructorDisplayRowMock[] {
   const n = instructors.length
-  return instructors.map((inv, idx) => {
-    const seed = hash(inv.id)
-    return {
-      ...inv,
-      no: n - idx,
-      homeAddress: pick(ASSIGNED_DISPLAY_HOME_ADDRESSES, seed),
-      distanceToSchool: pick(ASSIGNED_DISPLAY_DISTANCES, seed + idx),
-      assignedDate: pick(ASSIGNED_DISPLAY_DATES, seed % 3),
-      assignedTime: pick(ASSIGNED_DISPLAY_TIMES, idx % 3),
-      assignedSession: pick(ASSIGNED_DISPLAY_SESSIONS, idx % 4),
-    }
-  })
+  return instructors.map((inv, idx) => ({
+    ...inv,
+    no: n - idx,
+    homeAddress: '-',
+    distanceToSchool: '-',
+    assignedDate: '-',
+    assignedTime: '-',
+    assignedSession: '-',
+  }))
 }
 
-/** 배정 대기 강사 목록용 희망 일정 목 데이터 */
-const WAITING_HOPE_DATES = ['2026.01.09(금)', '2026.01.16(금)', '2026.01.23(금)']
-const WAITING_HOPE_TIMES = ['09:20 ~ 11:20', '09:20 ~ 10:10', '10:20 ~ 11:10']
-const WAITING_HOPE_SESSIONS = ['1차시', '2차시']
-const WAITING_HOME_ADDRESSES = [
-  '서울특별시 강남구 역삼동',
-  '서울특별시 송파구 잠실동',
-  '서울특별시 노원구 상계동',
-  '경기도 수원시 영통구',
-  '인천시 남동구',
-]
-const WAITING_DISTANCES = ['2km', '4km', '6km', '5km', '7km']
-
-/** 배정 대기 강사 테이블용 행 (목 데이터) */
+/** 배정 대기 강사 테이블용 행 */
 export interface WaitingInstructorRowMock {
   id: string
   instructorId?: string
@@ -206,19 +160,19 @@ export function getWaitingInstructorRows(
   const n = slice.length
   return sortWaitingInstructorRowsUnavailableToBottom(
     slice.map((r, idx) => {
-      const seed = hash(r.id)
       const hopeFromSchool = hopeSchedulePool[idx % Math.max(hopeSchedulePool.length, 1)]
-      const hopeDate = hopeFromSchool?.hopeDate ?? pick(WAITING_HOPE_DATES, idx % 3)
-      const hopeTime = hopeFromSchool?.hopeTime ?? pick(WAITING_HOPE_TIMES, idx % 3)
-      const hopeSession = hopeFromSchool?.hopeSession ?? pick(WAITING_HOPE_SESSIONS, idx % 2)
+      const hopeDate = hopeFromSchool?.hopeDate ?? '-'
+      const hopeTime = hopeFromSchool?.hopeTime ?? '-'
+      const hopeSession = hopeFromSchool?.hopeSession ?? '-'
       const hopeSchedule = { hopeDate, hopeTime, hopeSession }
-      const isTemporaryInstructor = r.id.startsWith('temp-progress-instructor-')
+      const isTemporaryInstructor =
+        isGeneralProgramTempMockEnabled() && r.id.startsWith('temp-progress-instructor-')
       return {
         id: r.id,
         no: n - idx,
         instructorName: r.instructorName,
-        homeAddress: r.address ?? pick(WAITING_HOME_ADDRESSES, seed + idx),
-        distanceToSchool: pick(WAITING_DISTANCES, seed % 5),
+        homeAddress: r.address?.trim() || '-',
+        distanceToSchool: '-',
         // TODO(temp-mock): 열여라 참깨 — 배정 대기/불가 검증 후 삭제
         assignmentStatus: isTemporaryInstructor
           ? idx % 2 === 0
@@ -268,31 +222,13 @@ export function getCompanySchoolWaitingInstructorScheduleRows(
   )
 
   const rows: WaitingInstructorRowMock[] = []
-  notAssignedToThisSchool.slice(0, 12).forEach((r, instructorIndex) => {
-    const seed = hash(r.id)
-    const sourceGroups =
-      scheduleGroups.length > 0
-        ? scheduleGroups
-        : [
-            {
-              scheduleKey: `${r.id}|fallback`,
-              sessions: [] as ParticipatingSchoolSession[],
-              hopeScheduleLine: `${pick(WAITING_HOPE_DATES, instructorIndex % 3)} ${pick(
-                WAITING_HOPE_TIMES,
-                instructorIndex % 3
-              )} | ${pick(WAITING_HOPE_SESSIONS, instructorIndex % 2)}`,
-            },
-          ]
+  notAssignedToThisSchool.slice(0, 12).forEach(r => {
+    if (scheduleGroups.length === 0) return
 
-    sourceGroups.forEach((group, scheduleIndex) => {
+    scheduleGroups.forEach(group => {
       const session = group.sessions[0]
-      const hopeSchedule = session
-        ? participatingSchoolSessionToHopeSchedule(session)
-        : {
-            hopeDate: pick(WAITING_HOPE_DATES, scheduleIndex % 3),
-            hopeTime: pick(WAITING_HOPE_TIMES, scheduleIndex % 3),
-            hopeSession: pick(WAITING_HOPE_SESSIONS, scheduleIndex % 2),
-          }
+      if (!session) return
+      const hopeSchedule = participatingSchoolSessionToHopeSchedule(session)
 
       const assignmentStatus = useApiOccupiedDates
         ? resolveOneSchoolPerDayAssignmentStatus(
@@ -308,8 +244,8 @@ export function getCompanySchoolWaitingInstructorScheduleRows(
         scheduleKey: group.scheduleKey,
         no: 0,
         instructorName: r.instructorName,
-        homeAddress: r.address ?? pick(WAITING_HOME_ADDRESSES, seed + instructorIndex),
-        distanceToSchool: pick(WAITING_DISTANCES, seed + scheduleIndex),
+        homeAddress: r.address?.trim() || '-',
+        distanceToSchool: '-',
         assignmentStatus,
         hopeDate: hopeSchedule.hopeDate,
         hopeTime: hopeSchedule.hopeTime,
@@ -330,7 +266,7 @@ export function getCompanySchoolWaitingInstructorScheduleRows(
 export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailForModal {
   const sessionCount = row.sessions?.length ?? 0
   // TODO(temp-mock): 열여라 참깨 — 참여 기관 상세 필드 검증 후 삭제
-  if (row.id.startsWith('temp-textbook-status-')) {
+  if (isGeneralProgramTempMockEnabled() && row.id.startsWith('temp-textbook-status-')) {
     const textbookUsed = row.textbookStatus !== 'not_applicable'
     return {
       id: row.id,
@@ -559,7 +495,7 @@ function getTemporaryStudentAttendanceSessions(
 /** 해당 학교 학생 명단 — remote API 연동 전 빈 목록 */
 export function getSchoolDetailStudents(schoolId: string, _count: number): SchoolDetailStudentRow[] {
   // TODO(temp-mock): 열여라 참깨 — 학생 명단·강의 출석 내역 검증 후 삭제
-  if (schoolId.startsWith('temp-textbook-status-')) {
+  if (isGeneralProgramTempMockEnabled() && schoolId.startsWith('temp-textbook-status-')) {
     return buildTemporarySchoolDetailStudents(schoolId)
   }
   return []
@@ -587,7 +523,9 @@ export function getLectureAttendanceDetail(
   _schoolId: string
 ): LectureAttendanceDetail {
   // TODO(temp-mock): 열여라 참깨 — 학생 명단·강의 출석 내역 검증 후 삭제
-  const temporarySessions = getTemporaryStudentAttendanceSessions(student.id)
+  const temporarySessions = isGeneralProgramTempMockEnabled()
+    ? getTemporaryStudentAttendanceSessions(student.id)
+    : null
   if (temporarySessions) {
     return buildLectureAttendanceDetailFromSessions(student.name, temporarySessions)
   }
@@ -649,19 +587,12 @@ export function getLectureAttendanceDetailForApplication(
   const raw = application.lectureAttendance ?? '0/0'
   const [attendedStr, totalStr] = raw.split('/').map(s => s.trim())
   const attendedCount = Math.max(0, parseInt(attendedStr, 10) || 0)
-  const totalRounds = Math.max(1, parseInt(totalStr, 10) || 1)
-  const seed = hash(application.id)
-  const notHeldCount = Math.min(totalRounds - 1, seed % 3)
-  const heldCount = totalRounds - notHeldCount
+  const totalRounds = Math.max(0, parseInt(totalStr, 10) || 0)
+  const heldCount = Math.max(attendedCount, totalRounds)
   const absentCount = Math.max(0, heldCount - attendedCount)
   const statuses: LectureAttendanceStatusKey[] = []
   for (let i = 0; i < attendedCount; i++) statuses.push('attended')
   for (let i = 0; i < absentCount; i++) statuses.push('absent')
-  for (let i = 0; i < notHeldCount; i++) statuses.push('not_held')
-  for (let i = statuses.length - 1; i >= 1; i--) {
-    const j = (seed + i * 11) % (i + 1)
-    ;[statuses[i], statuses[j]] = [statuses[j], statuses[i]]
-  }
   const sessions: LectureAttendanceSession[] = statuses.map((status, i) => ({
     roundNumber: i + 1,
     status,

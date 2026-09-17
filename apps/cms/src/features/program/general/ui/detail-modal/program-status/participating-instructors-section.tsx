@@ -47,6 +47,7 @@ import type { ProgressFilters } from '../../../hooks/use-program-progress-params
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { AddParticipatingInstructorModal } from '../../add-participating-instructor-modal'
 import { ParticipatingInstructorAddConsentModal } from '../../participating-instructor-add-consent-modal'
 import {
@@ -176,6 +177,7 @@ export function ParticipatingInstructorsSection({
     instructorList,
     programId,
     program,
+    enabled: !(program != null && isGeneralIndividualProgram(program)),
   })
 
   /** 좌측 캘린더 학교 일정 태그와 동일: 참여 학교명 가나다순 → SCHEDULE_COLORS 순환 */

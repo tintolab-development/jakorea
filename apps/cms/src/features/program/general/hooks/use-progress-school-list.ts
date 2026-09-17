@@ -32,6 +32,7 @@ import {
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
 import type { Program } from '@/types/domain'
+import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
 
 // TODO(temp-mock): 열여라 참깨 — 참여 기관·강사 배정 현황 검증 후 삭제
 export const TEMP_TEXTBOOK_STATUS_SCHOOL_PREFIX = 'temp-textbook-status-'
@@ -120,6 +121,8 @@ export interface UseProgressSchoolListOptions {
   instructorList: ParticipatingInstructorRow[]
   programId?: string
   program?: Program | null
+  /** false면 기관 목록 API를 호출하지 않는다 (개인 프로그램 캘린더 mock 유입 방지) */
+  enabled?: boolean
 }
 
 export function useProgressSchoolList({
@@ -127,15 +130,20 @@ export function useProgressSchoolList({
   instructorList,
   programId,
   program: _program,
+  enabled = true,
 }: UseProgressSchoolListOptions) {
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
   const isCompanySchoolSurface = useIsCompanySchoolProgramsSurface()
-  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
+  const remoteEnabled =
+    enabled && useProgramProgressRemoteEnabledForSurface(programId)
   const ttRemoteEnabled =
-    isTrainedTeachersSurface && shouldUseTrainedTeacherProgramsRemoteApi() && Boolean(programId)
+    enabled &&
+    isTrainedTeachersSurface &&
+    shouldUseTrainedTeacherProgramsRemoteApi() &&
+    Boolean(programId)
 
   useNotifyProgramApiUnavailableOnce(
-    !remoteEnabled && !ttRemoteEnabled,
+    enabled && !remoteEnabled && !ttRemoteEnabled,
     'general-progress-schools',
     '프로그램 진행 현황 · 참여 기관'
   )
@@ -145,7 +153,7 @@ export function useProgressSchoolList({
     queryFn: ({ pageParam }) => fetchGeneralParticipatingInstitutionsPage(programId!, pageParam),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
-    enabled: remoteEnabled && !isTrainedTeachersSurface,
+    enabled: enabled && remoteEnabled && !isTrainedTeachersSurface,
     staleTime: 30_000,
     retry: false,
   })
@@ -165,10 +173,14 @@ export function useProgressSchoolList({
   )
   const temporaryProgressSchools = useMemo(
     () =>
-      programId && !isTrainedTeachersSurface && !isCompanySchoolSurface
+      enabled &&
+      isGeneralProgramTempMockEnabled() &&
+      programId &&
+      !isTrainedTeachersSurface &&
+      !isCompanySchoolSurface
         ? buildTemporaryProgressSchools(programId)
         : [],
-    [isCompanySchoolSurface, isTrainedTeachersSurface, programId]
+    [enabled, isCompanySchoolSurface, isTrainedTeachersSurface, programId]
   )
   const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>([])
 
