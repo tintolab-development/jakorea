@@ -18,4 +18,5 @@ export interface Screening {
   reserveRank?: number;
   giveUpYn?: boolean;
   giveUpReason?: string;
+  rejectReason?: string;
 }

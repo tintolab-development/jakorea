@@ -7,7 +7,7 @@
  */
 
 /**
- * 일반 프로그램 봉사자 담당자 A/B 서류 평가 저장 요청
+ * 봉사자 신청 담당자 A/B 서류 평가 저장 요청
  */
 export interface VolunteerDocumentEvaluationRequest {
   /**

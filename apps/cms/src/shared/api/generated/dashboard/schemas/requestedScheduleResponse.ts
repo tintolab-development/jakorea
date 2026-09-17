@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { RequestedSessionTimeResponse } from './requestedSessionTimeResponse';
 
 export interface RequestedScheduleResponse {
   id?: number;
@@ -13,6 +14,7 @@ export interface RequestedScheduleResponse {
   startPeriod?: number;
   sessionCount?: number;
   combinedClassYn?: boolean;
+  sessionTimes?: RequestedSessionTimeResponse[];
   resolvedScheduleId?: number;
   createdByActorType?: string;
   createdByActorId?: number;

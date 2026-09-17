@@ -23,10 +23,18 @@ const DASHBOARD_EXACT_PATHS = new Set([
   '/api/admin/notifications/read-all',
   '/api/admin/notifications/unread-count',
   '/api/admin/individual-applications/{applicationId}',
+  '/api/admin/individual-applications/document-results/bulk',
   '/api/admin/individual-applications/{applicationId}/notifications/resend',
   '/api/admin/individual-applications/{applicationId}/privacy/unmask',
   '/api/admin/individual-applications/{applicationId}/document-evaluations/{managerSlot}',
   '/api/admin/volunteer-applications/{applicationId}/document-evaluations/{managerSlot}',
+  '/api/admin/volunteer-applications/{applicationId}',
+  '/api/admin/organization-applications/{applicationId}',
+  '/api/admin/instructor-applications/{applicationId}',
+  '/api/admin/programs/{programId}/organization-applications',
+  '/api/admin/programs/{programId}/instructor-applications',
+  '/api/admin/programs/{programId}/individual-applications',
+  '/api/admin/programs/{programId}/volunteer-applications',
 ])
 
 function isDashboardSubsetPath(path) {

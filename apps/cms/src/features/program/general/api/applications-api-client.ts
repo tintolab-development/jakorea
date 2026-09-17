@@ -11,9 +11,12 @@ import type { BulkResultRequest } from '@/shared/api/generated/dashboard/schemas
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
+import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
+import type { OrganizationApplicationUpdateRequest } from '@/shared/api/generated/dashboard/schemas/organizationApplicationUpdateRequest'
 import type { PageResponseOrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseOrganizationApplicationListItemResponse'
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
+import type { VolunteerApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationDetailResponse'
 import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboard/schemas/volunteerFinalResultRequest'
 import type { IndividualApplicationUpdateRequest } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateRequest'
 import type { IndividualApplicationUpdateResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateResponse'
@@ -118,6 +121,30 @@ export async function fetchOrganizationApplicationsRemote(
   return fetchApplicationsPage<OrganizationApplicationListItemResponse>(
     `/api/admin/programs/${encodeURIComponent(programId)}/organization-applications`,
     params
+  )
+}
+
+export async function fetchOrganizationApplicationDetailRemote(
+  applicationId: string
+): Promise<OrganizationApplicationDetailResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function updateOrganizationApplicationRemote(
+  applicationId: string,
+  payload: OrganizationApplicationUpdateRequest
+): Promise<OrganizationApplicationDetailResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}`,
+      method: 'PATCH',
+      data: payload,
+    })
   )
 }
 
@@ -227,6 +254,17 @@ export async function fetchVolunteerApplicationsRemote(
   return fetchApplicationsPage<VolunteerApplicationListItemResponse>(
     `/api/admin/programs/${encodeURIComponent(programId)}/volunteer-applications`,
     params
+  )
+}
+
+export async function fetchVolunteerApplicationDetailRemote(
+  applicationId: string
+): Promise<VolunteerApplicationDetailResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}`,
+      method: 'GET',
+    })
   )
 }
 
@@ -566,6 +604,18 @@ export async function bulkVolunteerDocumentResultsRemote(
   return unwrapApiBody<BulkActionResponse>(
     await customInstance({
       url: '/api/admin/volunteer-applications/document-results/bulk',
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function bulkIndividualDocumentResultsRemote(
+  payload: BulkResultRequest
+): Promise<BulkActionResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: '/api/admin/individual-applications/document-results/bulk',
       method: 'POST',
       data: payload,
     })

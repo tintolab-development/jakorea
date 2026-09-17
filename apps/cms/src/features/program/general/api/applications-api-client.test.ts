@@ -11,6 +11,7 @@ vi.mock('@/shared/api/orval-mutator', () => ({
 
 import customInstance from '@/shared/api/orval-mutator'
 import {
+  bulkIndividualDocumentResultsRemote,
   updateIndividualApplication,
   updateIndividualDocumentEvaluationRemote,
   updateVolunteerDocumentEvaluationRemote,
@@ -86,6 +87,34 @@ describe('updateIndividualApplication', () => {
         },
       })
     )
+  })
+})
+
+describe('bulkIndividualDocumentResultsRemote', () => {
+  beforeEach(() => {
+    vi.mocked(customInstance).mockReset()
+  })
+
+  it('참여자 다건 서류 결과를 bulk API 한 번으로 전송한다', async () => {
+    vi.mocked(customInstance).mockResolvedValue({
+      requestedCount: 2,
+      successCount: 2,
+      failureCount: 0,
+    })
+
+    await bulkIndividualDocumentResultsRemote({
+      ids: [1690625, 1690626],
+      result: 'PASS',
+    })
+
+    expect(customInstance).toHaveBeenCalledWith({
+      url: '/api/admin/individual-applications/document-results/bulk',
+      method: 'POST',
+      data: {
+        ids: [1690625, 1690626],
+        result: 'PASS',
+      },
+    })
   })
 })
 

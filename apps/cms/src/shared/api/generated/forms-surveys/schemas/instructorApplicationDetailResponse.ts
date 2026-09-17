@@ -12,22 +12,16 @@ export interface InstructorApplicationDetailResponse {
   programId?: number;
   recruitmentId?: number;
   instructorMemberId?: number;
-  /** 강사 실명. 프로그램 관리에서는 마스킹하지 않습니다. */
   instructorName?: string;
   nameHanja?: string;
   nameEnglish?: string;
   birthDate?: string;
   gender?: string;
-  /** 마스킹 연락처. 예: 010-****-5678 */
   contact?: string;
-  /** 마스킹 이메일. 예: 0915***@naver.com */
   email?: string;
-  /** 자택 주소 라인. 동(읍/면/리) 또는 구/군 경계까지. 기관 주소 아님. */
   homeAddress?: string;
-  /** 상세주소 blur 자리표시자. 상세가 있으면 '*****', 없으면 null. FE가 CSS blur 적용. */
   homeAddressDetail?: string;
   educationLevel?: string;
-  /** 학력 학교명 마스킹. 예: **대학교 */
   educationSchoolName?: string;
   affiliation?: string;
   teachingExperience?: string;
@@ -48,4 +42,6 @@ export interface InstructorApplicationDetailResponse {
   rejectReason?: string;
   participantId?: number;
   availableActions?: string[];
+  privacyMaskingLevel?: string;
+  canRevealPersonalInfo?: boolean;
 }

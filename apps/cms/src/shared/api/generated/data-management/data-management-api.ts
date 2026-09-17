@@ -815,6 +815,7 @@ const end = (
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
  * - 검토 메모: Auto-synced from implemented controller route
+ * @deprecated
  * @summary 관리자 조회
  */
 const contacts = (

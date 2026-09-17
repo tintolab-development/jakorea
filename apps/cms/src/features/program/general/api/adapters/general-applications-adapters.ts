@@ -12,11 +12,13 @@ import type {
 } from '@/features/program/general/model/participating-schools'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
+import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 import type { IndividualApplicationListItemEnriched } from '@/features/program/general/api/individual-application-screening-api-types'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
+import type { VolunteerApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationDetailResponse'
 import type { RequestedScheduleResponse } from '@/shared/api/generated/dashboard/schemas/requestedScheduleResponse'
 import type { InterviewAvailabilitySlot } from '@/shared/api/generated/dashboard/schemas/interviewAvailabilitySlot'
 import type { PreferredEducationScheduleResponse } from '@/shared/api/generated/dashboard/schemas/preferredEducationScheduleResponse'
@@ -36,6 +38,22 @@ import {
 function toId(value: number | string | undefined): string {
   if (value == null) return ''
   return String(value)
+}
+
+type IndividualApplicationDetailEnriched = Omit<
+  IndividualApplicationDetailResponse,
+  'profile' | 'application'
+> & {
+  profile?: NonNullable<IndividualApplicationDetailResponse['profile']> & {
+    schoolEnrollmentStatus?: string
+    affiliationSchool?: string
+    affiliationGrade?: string
+    homeAddress?: string
+  }
+  application?: NonNullable<IndividualApplicationDetailResponse['application']> & {
+    selfIntroduction?: string
+    preferredEducationSchedules?: PreferredEducationScheduleResponse[]
+  }
 }
 
 export function mapApiApplicationStatusToApprovalStatus(
@@ -84,8 +102,8 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     teacherMemberId: dto.teacherMemberId,
     no: index + 1,
     schoolName: dto.organizationName?.trim() || '기관명 없음',
-    region: '',
-    educationGrade: '',
+    region: [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' '),
+    educationGrade: dto.grade?.trim() || '',
     classCount: dto.requestedClassCount ?? 0,
     studentCount: dto.requestedStudentCount ?? 0,
     teacherName: dto.teacherName?.trim() || '-',
@@ -94,6 +112,40 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     programId,
     sessions,
     desiredEducationPeriod,
+  }
+}
+
+export function mapOrganizationApplicationDetailToApplicantSchoolRow(
+  dto: OrganizationApplicationDetailResponse,
+  base: ApplicantSchoolRow
+): ApplicantSchoolRow {
+  return {
+    ...base,
+    id: toId(dto.id) || base.id,
+    organizationId: dto.organizationId ?? base.organizationId,
+    teacherMemberId: dto.teacherMemberId ?? base.teacherMemberId,
+    schoolName: dto.organizationName?.trim() || base.schoolName,
+    region: dto.organizationAddress?.trim() || base.region,
+    educationGrade: dto.requestedGrade?.trim() || base.educationGrade,
+    classCount: dto.requestedClassCount ?? base.classCount,
+    studentCount: dto.requestedStudentCount ?? base.studentCount,
+    teacherName: dto.teacherName?.trim() || base.teacherName,
+    contact: dto.teacherPhone?.trim() || base.contact,
+    appliedAt: dto.submittedAt ?? base.appliedAt,
+    approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    participationRejectionReason: dto.rejectReason?.trim() || base.participationRejectionReason,
+    detail: {
+      ...base.detail,
+      addressDetail: dto.organizationAddressDetail?.trim() || base.detail?.addressDetail,
+      educationType: dto.requestedEducationFormat?.trim() || base.detail?.educationType,
+      textbookId: toId(dto.textbookId) || base.detail?.textbookId,
+      textbookName: dto.textbookName?.trim() || base.detail?.textbookName,
+      teacherInfo:
+        [dto.teacherName, dto.teacherPhone, dto.teacherEmail]
+          .map(value => value?.trim())
+          .filter(Boolean)
+          .join(' | ') || base.detail?.teacherInfo,
+    },
   }
 }
 
@@ -257,6 +309,7 @@ function mapInterviewAvailabilitySlots(
 ): NonNullable<NonNullable<GeneralIndividualApplicantRow['detail']>['interviewAvailability']> {
   const grouped = new Map<string, string[]>()
   for (const slot of slots ?? []) {
+    if (!slot.startAt || !slot.endAt) continue
     const start = new Date(slot.startAt)
     const end = new Date(slot.endAt)
     if (
@@ -383,7 +436,7 @@ export function mapIndividualApplicationToApplicantRow(
 }
 
 export function mapIndividualApplicationDetailToApplicantRow(
-  dto: IndividualApplicationDetailResponse,
+  dto: IndividualApplicationDetailEnriched,
   base: GeneralIndividualApplicantRow
 ): GeneralIndividualApplicantRow {
   const profile = dto.profile
@@ -578,10 +631,10 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     memberId: dto.memberId,
     no: index + 1,
     name: dto.memberName?.trim() || '이름 없음',
-    contact: '-',
-    email: '-',
-    contactRaw: '',
-    emailRaw: '',
+    contact: dto.contact?.trim() || '-',
+    email: dto.email?.trim() || '-',
+    contactRaw: dto.contact?.trim() || '',
+    emailRaw: dto.email?.trim() || '',
     id1365: '',
     scheduleChangeCancelCount: 0,
     applicationType: dto.isReparticipation ? 'ujat-graduate' : 'new',
@@ -596,7 +649,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     canEditManagerBEvaluation: dto.canEditManagerBEvaluation === true,
     availableActions: dto.availableActions ?? [],
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(dto.documentStatus),
-    interviewSlotCount: 0,
+    interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
     interviewAssignmentStatus: mapApiInterviewStatusToAssignmentStatus(
       dto.interviewStatus,
       dto.giveUpYn
@@ -609,7 +662,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     universityName: '',
     major: '',
     applicationRoute: '',
-    interviewAvailability: [],
+    interviewAvailability: mapInterviewAvailabilitySlots(dto.interviewAvailability),
     interviewAssignmentId:
       enriched.interviewAssignmentId != null ? Number(enriched.interviewAssignmentId) : undefined,
     ...assigned,
@@ -617,6 +670,60 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
       dto.finalResultStatus,
       dto.reserveRank
     ),
+  }
+}
+
+export function mapVolunteerApplicationDetailToApplicantRow(
+  dto: VolunteerApplicationDetailResponse,
+  base: GeneralVolunteerApplicantRow
+): GeneralVolunteerApplicantRow {
+  const profile = dto.profile
+  const screening = dto.screening
+  const assigned = formatAssignedInterviewFromIso(
+    dto.assignedInterviewStartAt,
+    dto.assignedInterviewEndAt
+  )
+  const canEditEvaluation =
+    dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
+  return {
+    ...base,
+    id: toId(dto.id) || base.id,
+    memberId: dto.memberId ?? base.memberId,
+    name: profile?.name?.trim() || base.name,
+    contact: profile?.contact?.trim() || base.contact,
+    email: profile?.email?.trim() || base.email,
+    contactRaw: profile?.contact?.trim() || base.contactRaw,
+    emailRaw: profile?.email?.trim() || base.emailRaw,
+    id1365: profile?.external1365Id?.trim() || base.id1365,
+    scheduleChangeCancelCount:
+      dto.application?.scheduleChangeCancelCount ?? base.scheduleChangeCancelCount,
+    managerAEvaluation: mapManagerEvaluation(screening?.documentEvaluations?.managerA),
+    managerBEvaluation: mapManagerEvaluation(screening?.documentEvaluations?.managerB),
+    canEditManagerAEvaluation: dto.canEditManagerAEvaluation ?? canEditEvaluation,
+    canEditManagerBEvaluation: dto.canEditManagerBEvaluation ?? canEditEvaluation,
+    availableActions: dto.availableActions ?? base.availableActions,
+    documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
+    interviewSlotCount: dto.interviewAvailabilityCount ?? base.interviewSlotCount,
+    interviewAssignmentStatus: mapApiInterviewStatusToAssignmentStatus(
+      dto.assignedInterviewSlotId != null ? 'ASSIGNED' : 'WAITING_ASSIGNMENT',
+      screening?.giveUpYn
+    ),
+    programId: toId(dto.programId) || base.programId,
+    gender: profile?.gender?.trim() || base.gender,
+    birthDate: profile?.birthDate?.trim() || base.birthDate,
+    age: profile?.age ?? base.age,
+    interviewAvailability: mapInterviewAvailabilitySlots(dto.interviewAvailability),
+    interviewAssignmentId: dto.interviewAssignmentId ?? base.interviewAssignmentId,
+    secondInterviewScreeningStatus: mapApiFinalResultToSecondInterviewStatus(
+      screening?.finalResultStatus,
+      screening?.reserveRank
+    ),
+    totalScore: screening?.interviewTotalScore ?? base.totalScore,
+    interviewEvaluationRemark:
+      screening?.interviewEvaluationRemark ?? base.interviewEvaluationRemark,
+    assignedInterviewDateLabel:
+      assigned.assignedInterviewDateLabel ?? base.assignedInterviewDateLabel,
+    assignedInterviewTime: assigned.assignedInterviewTime ?? base.assignedInterviewTime,
   }
 }
 

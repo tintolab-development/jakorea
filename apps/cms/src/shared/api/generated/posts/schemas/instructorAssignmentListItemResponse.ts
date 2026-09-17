@@ -11,6 +11,8 @@ export interface InstructorAssignmentListItemResponse {
   programId?: number;
   scheduleId?: number;
   organizationApplicationId?: number;
+  /** 배정 대상 기관 신청이 참조하는 실제 기관 ID. 개인 출강지 배정이면 null */
+  organizationId?: number;
   instructorApplicationId?: number;
   instructorMemberId?: number;
   participantId?: number;

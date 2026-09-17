@@ -25,4 +25,6 @@ export interface VolunteerFinalResultRequest {
      * @maxLength 500
      */
   reason?: string;
+  /** 최종 결과 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL */
+  notifyTiming?: string;
 }

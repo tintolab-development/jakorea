@@ -6,25 +6,13 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 신청 시점 프로필 우선, 기존 데이터는 현재 회원 프로필 fallback
- */
 export interface Profile {
-  /** 신청자 실명. MASKED/UNMASKED 모두 평문(마스킹하지 않음). */
   name?: string;
   gender?: string;
   birthDate?: string;
   age?: number;
-  schoolEnrollmentStatus?: string;
-  /** MASKED 시 학교명 **대학교 형식 마스킹. UNMASKED 시 원문. */
-  affiliationSchool?: string;
-  affiliationGrade?: string;
-  /** MASKED 예: 010-****-5678. UNMASKED 시 원문. */
   contact?: string;
-  /** MASKED 예: 0915***@naver.com. UNMASKED 시 원문. */
   email?: string;
-  /** MASKED 자택 주소: 동까지 + ' *****' (FE blur). 기관 주소 아님. UNMASKED 시 원문. */
-  homeAddress?: string;
   external1365Id?: string;
   privacyState?: string;
 }
