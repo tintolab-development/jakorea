@@ -1,16 +1,21 @@
-import { useCallback, useState } from 'react'
-import { CmsButton, CmsInput, CmsRadio, CmsRadioGroup, ContentModal } from '@/shared/ui'
+import { useCallback, useEffect, useState } from 'react'
+import { useTextbookBusinessAreaSelectOptions } from '@/features/textbook/hooks/use-business-areas-query'
+import { CmsButton, CmsInput, CmsRadio, CmsRadioGroup, CmsSelect, ContentModal } from '@/shared/ui'
 import './detailed-program-add-item-modal.css'
 
 export type DetailedProgramAddItemValues = {
   name: string
   active: boolean
+  businessArea: string
 }
 
 export interface DetailedProgramAddItemModalProps {
   open: boolean
   onCancel: () => void
   onSubmit: (values: DetailedProgramAddItemValues) => void
+  /** API `TEXTBOOK_BUSINESS_AREA_NOT_FOUND` 등 businessArea 필드 에러 */
+  businessAreaError?: string | null
+  onBusinessAreaChange?: () => void
 }
 
 function coerceRadioBoolean(raw: unknown): boolean {
@@ -28,17 +33,29 @@ export function DetailedProgramAddItemModal({
   open,
   onCancel,
   onSubmit,
+  businessAreaError = null,
+  onBusinessAreaChange,
 }: DetailedProgramAddItemModalProps) {
   const [name, setName] = useState('')
   const [active, setActive] = useState(true)
+  const [businessArea, setBusinessArea] = useState('')
+  const { options: businessAreaOptions } = useTextbookBusinessAreaSelectOptions(open)
+
+  useEffect(() => {
+    if (!open) return
+    setName('')
+    setActive(true)
+    setBusinessArea('')
+  }, [open])
 
   const handleSubmit = useCallback(() => {
     const trimmed = name.trim()
-    if (!trimmed) {
+    const area = businessArea.trim()
+    if (!trimmed || !area) {
       return
     }
-    onSubmit({ name: trimmed, active })
-  }, [active, name, onSubmit])
+    onSubmit({ name: trimmed, active, businessArea: area })
+  }, [active, businessArea, name, onSubmit])
 
   const nameLabel = (
     <>
@@ -48,6 +65,17 @@ export function DetailedProgramAddItemModal({
       </span>
     </>
   )
+
+  const businessAreaLabel = (
+    <>
+      사업 분야
+      <span className="detailed-program-add-item-modal__required" aria-hidden>
+        *
+      </span>
+    </>
+  )
+
+  const canSubmit = Boolean(name.trim() && businessArea.trim())
 
   return (
     <ContentModal
@@ -66,7 +94,7 @@ export function DetailedProgramAddItemModal({
             variant="primary"
             size="large"
             type="button"
-            disabled={!name}
+            disabled={!canSubmit}
             onClick={handleSubmit}
           >
             등록
@@ -101,6 +129,27 @@ export function DetailedProgramAddItemModal({
             placeholder="세부 프로그램명을 입력해 주세요."
             maxLength={200}
           />
+        </div>
+        <div>
+          <span className="detailed-program-add-item-modal__label">{businessAreaLabel}</span>
+          <CmsSelect
+            inputSize="large"
+            placeholder="사업 분야를 선택해 주세요."
+            value={businessArea || undefined}
+            status={businessAreaError ? 'error' : undefined}
+            onChange={value => {
+              setBusinessArea(String(value ?? ''))
+              onBusinessAreaChange?.()
+            }}
+            options={businessAreaOptions}
+            style={{ width: '100%' }}
+            aria-invalid={Boolean(businessAreaError)}
+          />
+          {businessAreaError ? (
+            <p className="detailed-program-add-item-modal__field-error" role="alert">
+              {businessAreaError}
+            </p>
+          ) : null}
         </div>
       </div>
     </ContentModal>
