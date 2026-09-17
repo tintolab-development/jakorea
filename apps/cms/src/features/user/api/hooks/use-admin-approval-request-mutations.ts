@@ -7,6 +7,7 @@ import {
   bulkRejectAdminApprovalRequestsRemote,
   rejectAdminApprovalRequestRemote,
   cancelAdminApprovalRemote,
+  resetAdminApprovalRequestPendingRemote,
   resendAdminApprovalNotificationRemote,
 } from '@/features/user/api/members-api-client'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
@@ -96,7 +97,21 @@ export function useAdminApprovalRequestMutations() {
     },
   })
 
+  /** REJECTED 건 「반려 취소」 — reset-pending */
   const resetPendingMutation = useMutation({
+    mutationFn: async (input: { adminAccountId: number; reason: string }) => {
+      await resetAdminApprovalRequestPendingRemote(input.adminAccountId, {
+        reason: input.reason.trim() || 'CMS 관리자 권한 재검토',
+      })
+    },
+    onSuccess: async (_data, variables) => {
+      await invalidateLists()
+      await invalidateDetail(variables.adminAccountId)
+    },
+  })
+
+  /** APPROVED 건 「승인 취소」 — cancel-approval */
+  const cancelApprovalMutation = useMutation({
     mutationFn: async (input: { adminAccountId: number; reason: string }) => {
       await cancelAdminApprovalRemote(input.adminAccountId, {
         reason: input.reason.trim() || 'CMS 관리자 권한 승인 취소',
@@ -121,12 +136,15 @@ export function useAdminApprovalRequestMutations() {
     approveMutation,
     rejectMutation,
     resetPendingMutation,
+    cancelApprovalMutation,
     resendNotificationMutation,
     getApproveError: (error: unknown) =>
       getMemberApiErrorMessage(error, '관리자 권한 승인에 실패했습니다.'),
     getRejectError: (error: unknown) =>
       getMemberApiErrorMessage(error, '관리자 권한 반려에 실패했습니다.'),
     getResetPendingError: (error: unknown) =>
+      getMemberApiErrorMessage(error, '관리자 권한 반려 취소에 실패했습니다.'),
+    getCancelApprovalError: (error: unknown) =>
       getMemberApiErrorMessage(error, '관리자 권한 승인 취소에 실패했습니다.'),
     getResendNotificationError: (error: unknown) =>
       getMemberApiErrorMessage(error, '알림 재발송에 실패했습니다.'),

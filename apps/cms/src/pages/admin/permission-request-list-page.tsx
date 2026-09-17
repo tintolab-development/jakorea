@@ -183,10 +183,12 @@ export function PermissionRequestListPage() {
     approveMutation: adminApproveMutation,
     rejectMutation: adminRejectMutation,
     resetPendingMutation: adminResetPendingMutation,
+    cancelApprovalMutation: adminCancelApprovalMutation,
     resendNotificationMutation: adminResendNotificationMutation,
     getApproveError: getAdminApproveError,
     getRejectError: getAdminRejectError,
     getResetPendingError: getAdminResetPendingError,
+    getCancelApprovalError: getAdminCancelApprovalError,
     getResendNotificationError: getAdminResendNotificationError,
   } = useAdminApprovalRequestMutations()
 
@@ -681,7 +683,13 @@ export function PermissionRequestListPage() {
       const { userId, permissionRole, fromStatus } = permissionStatusResetConfirm
       const reason =
         payload.cancellationReason.trim() ||
-        (fromStatus === 'APPROVED' ? 'CMS 강사 권한 승인 취소' : 'CMS 강사 권한 재검토')
+        (fromStatus === 'APPROVED'
+          ? permissionRole === 'admin'
+            ? 'CMS 관리자 권한 승인 취소'
+            : 'CMS 강사 권한 승인 취소'
+          : permissionRole === 'admin'
+            ? 'CMS 관리자 권한 재검토'
+            : 'CMS 강사 권한 재검토')
 
       if (permissionRole === 'instructor' && instructorRemote) {
         if (fromStatus === 'APPROVED') {
@@ -745,13 +753,28 @@ export function PermissionRequestListPage() {
         const adminAccountId =
           detailUser?.adminAccountId ?? adminListRef.current?.getRequestIdForUser(userId)
         if (adminAccountId == null) {
-          handleError(new Error('승인 취소할 관리자 신청 ID를 찾지 못했습니다.'))
+          handleError(
+            new Error(
+              fromStatus === 'APPROVED'
+                ? '승인 취소할 관리자 신청 ID를 찾지 못했습니다.'
+                : '반려 취소할 관리자 신청 ID를 찾지 못했습니다.'
+            )
+          )
           return
         }
         try {
-          await adminResetPendingMutation.mutateAsync({ adminAccountId, reason })
+          if (fromStatus === 'APPROVED') {
+            await adminCancelApprovalMutation.mutateAsync({ adminAccountId, reason })
+          } else {
+            await adminResetPendingMutation.mutateAsync({ adminAccountId, reason })
+          }
         } catch (error) {
-          handleError(error, { defaultMessage: getAdminResetPendingError(error) })
+          handleError(error, {
+            defaultMessage:
+              fromStatus === 'APPROVED'
+                ? getAdminCancelApprovalError(error)
+                : getAdminResetPendingError(error),
+          })
           return
         }
       } else if (permissionRole === 'instructor') {
@@ -797,10 +820,12 @@ export function PermissionRequestListPage() {
       setPermissionStatusResetConfirm(null)
     },
     [
+      adminCancelApprovalMutation,
       adminRemote,
       adminResetPendingMutation,
       detailTargetRow,
       detailUser,
+      getAdminCancelApprovalError,
       getAdminResetPendingError,
       getResetPendingError,
       getRevokeError,
