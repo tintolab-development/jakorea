@@ -1,8 +1,8 @@
 # BE 수정 요청 — UJAT 프로그램 상세 LNB API 계약 보강
 
 **작성일:** 2026-09-17  
-**상태:** ✅ BE P0 반영 · FE P0 연동 (2026-09-17)  
-**우선순위:** P0(반기·임시배정 스키마) → P1(교육 진행 execution) → P2(OpenAPI 스키마 채우기)  
+**상태:** ✅ BE P0·P1 런타임 · FE P0·P1 연동 · ✅ BE P2 OpenAPI+반기 · FE P2 `semesterType` 연동  
+**우선순위:** ~~P0~~ → ~~P1~~ → ~~P2(OpenAPI·allocation-matrix 반기)~~  
 **대상 화면:** CMS `/programs/ujat?programId=…` 풀페이지 상세  
 **범위:** `features/program/ujat/**` only (일반·1사1교·Gemini 간섭 금지)  
 **FE gate:** JWT + `VITE_REAL_API_MODULES`에 `programs,ujatPrograms,applications` (+ 설문은 `formsSurveys` / programs surface remote)  
@@ -11,6 +11,23 @@
 - [programs-ujat-detail-api-conversion-status.md](./programs-ujat-detail-api-conversion-status.md)
 - [ujat-primary-case-fe-adapter-2026-09-15.md](./ujat-primary-case-fe-adapter-2026-09-15.md)
 - [programs-ujat-education-regions-api-backend-handoff.md](./programs-ujat-education-regions-api-backend-handoff.md)
+- [ujat-education-progress-p2-openapi-half-backend-request-2026-09-17.md](./ujat-education-progress-p2-openapi-half-backend-request-2026-09-17.md)
+- BE handoff: `JABACK/docs/frontend/ujat-education-progress-p2-openapi-half-frontend-handoff-2026-09-17.md`
+
+### P1 FE 연동 노트 (2026-09-17)
+
+- 클라이언트: `features/program/ujat/api/education-execution-api.ts` (OpenAPI rich이나 dashboard orval subset 미포함 → 수동 타입)
+- 어댑터: `allocation-matrix-adapters.ts` → 지역 테이블 / 출석 세션
+- 지역 탭: `GET …/allocation-matrix` hydrate · `POST …/partner-assignments:auto` · direct-assignment · unavailability · attendance-manager
+- 출석 탭: matrix columns + `GET …/schedules/{id}/attendances` · `POST …/attendances:bulk-upsert`
+- **과제 탭**은 homework API가 없어 P1 범위에서 제외(unavailable 유지)
+
+### P2 FE 연동 노트 (2026-09-17)
+
+- `GET allocation-matrix?semesterType=FIRST_HALF|SECOND_HALF` — `edu_h1_*` / `edu_h2_*` → `toUjatRecruitHalfApi(half)`
+- react-query key에 `semesterType` 포함 (h1/h2 캐시 분리)
+- `POST partner-assignments:auto` body에 `semesterType` 전달
+- `openapi/backend.openapi.json` BE 스냅샷 동기화 (codegen은 dashboard filter 범위 밖 → 수동 타입에 `semesterType` 반영)
 
 ---
 
@@ -113,11 +130,14 @@ FE는 mock 시드 없이 remote만 사용합니다. 아래 계약을 OpenAPI + �
 |------------|--------|------|
 | 기본 정보 · 담당자 · 모집 양식 | ✅ (programs CRUD / managers / templates) | 기존 |
 | 신청 기관 · 목록·상세·승인/반려·임시반려 | ✅ | `status`·`keyword` 서버 필터 |
-| 신청 기관 · 임시 배정 / 확인 | ⚠️ 목록 seed만 | PUT/GET schema 공백 → 배정 본문은 로컬 draft |
+| 신청 기관 · 임시 배정 / 확인 | ✅ | temporary-schedule GET/PUT (`slots[].scheduleId`) P0 |
 | 봉사자 상·하반기 · 서류1 / 합격자 / 면접2 | ✅ | 필터→API 재조회 · mutations remote |
 | 봉사자 · 면접 일정 배정 | ✅ | `assignGeneralVolunteerInterview` 재사용 |
-| 교육 진행 · 참여 기관 / 봉사자 | ⚠️ | APPROVED 신청으로 hydrate (execution 아님) |
-| 교육 진행 · 출석 / 배정 / 지역 / 요약 | ❌ | OpenAPI path thin stub · FE unavailable toast |
+| 교육 진행 · 참여 기관 / 봉사자 | ⚠️ | APPROVED 신청 + `recruitHalf` hydrate (execution 아님) |
+| 교육 진행 · 지역 배정 | ✅ P1+P2 | allocation-matrix + `semesterType` · auto/direct/unavailability/attendance-manager |
+| 교육 진행 · 출석 | ✅ P1+P2 | matrix(`semesterType`) + schedule attendances GET/bulk-upsert |
+| 교육 진행 · 과제 | ❌ | homework API 없음 · unavailable toast 유지 |
+| 교육 진행 · 요약 | ❌ | 미연동 |
 | 설문 관리 (설문·만족도·강의평가) | ✅ | 공통 surveys + form-bindings |
 
 게이트 OFF 시 mock 폴백 **없음** (`program-no-fe-mock`).
