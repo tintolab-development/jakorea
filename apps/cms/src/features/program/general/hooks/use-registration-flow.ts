@@ -31,6 +31,8 @@ import type { TemplateEditorVm } from '@/features/template/ui/template-renderers
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 import {
   clearRegistrationOperationalFormDrafts,
+  hydrateRegistrationOperationalOverlaysFromLocalDrafts,
+  persistRegistrationOperationalOverlaySnapshots,
   resolveRegistrationOperationalDraftStorageKey,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { hasIncompleteGeneralProgramRecruitmentRequiredFields } from '@/features/program/general/lib/registration-recruitment-required-fields'
@@ -110,8 +112,13 @@ export function useGeneralProgramRegistrationFlow(
   // 모집/신청 hydrate(useEffect)보다 먼저 비워, fresh 진입 시 이전 세션 캐시가 복원되지 않게 한다.
   // 유형별 storage key만 제거해 다른 프로그램 유형 draft는 유지한다.
   useLayoutEffect(() => {
-    if (!open || !skipDraftRestore) return
-    clearRegistrationOperationalFormDrafts(registrationFormVariant)
+    if (!open) return
+    if (skipDraftRestore) {
+      clearRegistrationOperationalFormDrafts(registrationFormVariant)
+      return
+    }
+    // 「이어서 작성」— 탭 진입 전에 모집/신청 overlay를 공유 스토어에 병합 복원
+    hydrateRegistrationOperationalOverlaysFromLocalDrafts(registrationFormVariant)
   }, [open, skipDraftRestore, registrationFormVariant])
 
   const registrationVm = useProgramRegistrationEditor(
@@ -378,12 +385,19 @@ export function useGeneralProgramRegistrationFlow(
   )
 
   const persistDraftSilent = useCallback(async () => {
-    if (isProgramStep) {
-      await registrationVm.handleSave({ silent: true })
-      return
+    // 공통 정보는 항상 저장 — 모집/신청 단계에서 저장해도 이어서 작성 시 공통이 비지 않게
+    await registrationVm.handleSave({ silent: true })
+    if (isParticipantStep) {
+      await participantVm.handleSave({ silent: true })
     }
-    await participantVm.handleSave({ silent: true })
-  }, [isProgramStep, registrationVm, participantVm])
+    // 공유 overlay(모집·신청)를 관련 operational draft 키에 일괄 기록
+    persistRegistrationOperationalOverlaySnapshots(registrationFormVariant)
+  }, [
+    isParticipantStep,
+    participantVm,
+    registrationFormVariant,
+    registrationVm,
+  ])
 
   const selectStep = useCallback(
     (key: GeneralProgramRegistrationStepKey) => {

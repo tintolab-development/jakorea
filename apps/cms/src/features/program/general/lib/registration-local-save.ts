@@ -38,6 +38,7 @@ import { readRegistrationOverlaySponsorId } from '@/features/template/ui/form-se
 import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
 export const COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'company-school-local-'
@@ -355,6 +356,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     ...args.editorExtras,
   })
 
+  flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
   const withRecruit = applyGeneralRecruitOverlayToProgram(
     withRegistration,
     {

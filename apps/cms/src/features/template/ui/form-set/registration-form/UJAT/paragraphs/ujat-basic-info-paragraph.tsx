@@ -146,6 +146,10 @@ export function UjatBasicInfoParagraph() {
     'ujat.basicInfo.sponsorContactId',
     UJAT_SPONSOR_ALL_VALUE
   )
+  const [sponsorContactIds, setSponsorContactIds] = useUjatProgramRegistrationOverlayKv<string[]>(
+    'ujat.basicInfo.sponsorContactIds',
+    []
+  )
   const [, setSponsorManagerName] = useUjatProgramRegistrationOverlayKv(
     'ujat.basicInfo.sponsorManagerName',
     ''
@@ -200,6 +204,29 @@ export function UjatBasicInfoParagraph() {
       label: c.name,
     }))
   }, [contactsQuery.data, sponsorId])
+
+  const selectedSponsorContactIds = useMemo(() => {
+    if (Array.isArray(sponsorContactIds) && sponsorContactIds.length > 0) {
+      return [...new Set(sponsorContactIds.map(String).map(id => id.trim()).filter(Boolean))]
+    }
+    if (sponsorContactId && sponsorContactId !== UJAT_SPONSOR_ALL_VALUE) return [sponsorContactId]
+    if (sponsorContactId === UJAT_SPONSOR_ALL_VALUE && sponsorId === UJAT_SPONSOR_ALL_VALUE) {
+      return [UJAT_SPONSOR_ALL_VALUE]
+    }
+    return []
+  }, [sponsorContactId, sponsorContactIds, sponsorId])
+
+  const applySponsorContactIds = (next: string[]) => {
+    const unique = [...new Set(next.map(String).map(id => id.trim()).filter(Boolean))]
+    setSponsorContactIds(unique)
+    const primary = unique[0] ?? (sponsorId === UJAT_SPONSOR_ALL_VALUE ? UJAT_SPONSOR_ALL_VALUE : '')
+    setSponsorContactId(primary)
+    const labels = unique
+      .filter(id => id !== UJAT_SPONSOR_ALL_VALUE)
+      .map(id => managerOptions.find(o => o.value === id)?.label ?? '')
+      .filter(Boolean)
+    setSponsorManagerName(labels.join(', '))
+  }
 
   const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
 
@@ -420,8 +447,9 @@ export function UjatBasicInfoParagraph() {
                   onChange={v => {
                     const next = String(v ?? '')
                     setSponsorId(next)
-                    setSponsorContactId(next === UJAT_SPONSOR_ALL_VALUE ? UJAT_SPONSOR_ALL_VALUE : '')
-                    setSponsorManagerName('')
+                    applySponsorContactIds(
+                      next === UJAT_SPONSOR_ALL_VALUE ? [UJAT_SPONSOR_ALL_VALUE] : []
+                    )
                   }}
                 />
               </div>
@@ -433,21 +461,19 @@ export function UjatBasicInfoParagraph() {
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
-                  withAllOption
+                  mode="multiple"
+                  withAllOption={false}
                   inputSize="medium"
                   placeholder="후원사 담당자를 선택하세요"
                   width={240}
+                  showSearch
+                  optionFilterProp="label"
                   options={managerOptions}
-                  value={sponsorContactId}
+                  value={selectedSponsorContactIds}
                   disabled={sponsorId !== UJAT_SPONSOR_ALL_VALUE && managerOptions.length === 0}
                   onChange={v => {
-                    const next = String(v ?? '')
-                    setSponsorContactId(next)
-                    const label =
-                      next === UJAT_SPONSOR_ALL_VALUE
-                        ? ''
-                        : (managerOptions.find(o => o.value === next)?.label ?? '')
-                    setSponsorManagerName(label)
+                    const next = Array.isArray(v) ? v.map(String) : []
+                    applySponsorContactIds(next)
                   }}
                 />
               </div>

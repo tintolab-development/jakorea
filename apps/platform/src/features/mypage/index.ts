@@ -42,7 +42,6 @@ export {
   MYPAGE_EDUCATION_PATH,
   MYPAGE_VOLUNTEER_PATH,
   educationApplicationDetailPath,
-  educationGuidanceEditPath,
   volunteerApplicationDetailPath,
 } from './lib/constants'
 export { navigateMypageLnb } from './lib/navigate-lnb'
@@ -60,7 +59,6 @@ export {
   getMockEducationApplications,
   getMockEducationApplicationsVersion,
   subscribeMockEducationApplications,
-  updateMockTeacherApplicationGuidance,
   filterEducationStatusApplications,
   filterVolunteerStatusApplications,
   isGeneralVolunteerApplication,

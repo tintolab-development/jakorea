@@ -185,6 +185,72 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(next.generalCommonInfo?.volunteerInterviewScheduleInfo).toBeUndefined()
   })
 
+  it('maps institution recruit settings into participantRecruitmentInfo', () => {
+    const inst = APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS
+    const overlay: Record<string, unknown> = {
+      [inst.announcementPublished]: 'published',
+      [inst.preguidanceRequired]: 'need',
+      [inst.studentListRequired]: 'none',
+      [inst.maxAssignableInstructors]: 3,
+      [inst.maxClassCount]: 4,
+      [inst.maxScheduleCount]: 2,
+      [inst.maxSessionsPerDay]: 2,
+      [inst.finalAnnounceIso]: '2026-04-01T00:00:00+09:00',
+      [inst.finalAnnounceMethod]: '홈페이지 공지',
+      [inst.notesNotApplicable]: true,
+      [inst.recruitRangeSeal]: {
+        start: '2026-03-01T00:00:00+09:00',
+        end: '2026-03-15T00:00:00+09:00',
+      },
+      [inst.inquiryContact]: 'JA Korea',
+    }
+
+    const next = applyGeneralRecruitOverlayToProgram(baseProgram(), overlay, {
+      preferOverlay: true,
+    })
+
+    const info = next.generalCommonInfo?.participantRecruitmentInfo
+    expect(info?.announcementPublished).toBe(true)
+    expect(info?.announcementPublishedLabel).toBe('게시')
+    expect(info?.preEducationNoticeRequired).toBe(true)
+    expect(info?.studentListRequired).toBe('not_required')
+    expect(info?.maxAssignableInstructors).toBe(3)
+    expect(info?.maxClassCount).toBe(4)
+    expect(info?.finalAnnouncementLabel).toContain('홈페이지 공지')
+    expect(info?.notesNotApplicable).toBe(true)
+    expect(next.studentListRequired).toBe('not_required')
+    expect(next.resultAnnouncementMethod).toBe('홈페이지 공지')
+  })
+
+  it('maps volunteer doc/interview/final into nested volunteerRecruitmentInfo', () => {
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const overlay: Record<string, unknown> = {
+      [keys.volunteer.interviewRequired]: 'yes',
+      [keys.volunteer.docDeadlineIso]: '2026-03-20T00:00:00+09:00',
+      [keys.volunteer.docAnnounceMethod]: '이메일',
+      [keys.volunteer.interviewRangeSeal]: {
+        start: '2026-03-25T00:00:00+09:00',
+        end: '2026-03-27T00:00:00+09:00',
+      },
+      [keys.volunteer.interviewMethod]: '온라인',
+      [keys.volunteer.finalAnnounceIso]: '2026-04-01T00:00:00+09:00',
+      [keys.volunteer.finalAnnounceMethod]: '문자',
+    }
+
+    const next = applyGeneralRecruitOverlayToProgram(baseProgram(), overlay, {
+      preferOverlay: true,
+    })
+
+    const info = next.generalCommonInfo?.volunteerRecruitmentInfo
+    expect(info?.documentPassAnnouncementDate).toBe('2026-03-20T00:00:00+09:00')
+    expect(info?.documentPassAnnouncementMethod).toBe('이메일')
+    expect(info?.interviewStartDate).toBe('2026-03-25T00:00:00+09:00')
+    expect(info?.interviewEndDate).toBe('2026-03-27T00:00:00+09:00')
+    expect(info?.interviewMethod).toBe('온라인')
+    expect(info?.finalPassAnnouncementDate).toBe('2026-04-01T00:00:00+09:00')
+    expect(info?.finalPassAnnouncementMethod).toBe('문자')
+  })
+
   it('keeps program values when preferOverlay is false and program is filled', () => {
     const overlay: Record<string, unknown> = {
       [GENERAL_RECRUIT_OVERLAY_KEYS.detailInfo.participantDescription]: '양식 설명',
@@ -201,5 +267,33 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
   it('returns program unchanged when overlay is empty', () => {
     const program = baseProgram()
     expect(applyGeneralRecruitOverlayToProgram(program, {})).toBe(program)
+  })
+
+  it('maps additionalContentHtml into nested + top-level program fields', () => {
+    const html = '<p>모집 추가 내용</p>'
+    const next = applyGeneralRecruitOverlayToProgram(
+      baseProgram(),
+      {
+        [GENERAL_RECRUIT_OVERLAY_KEYS.detailInfo.participantAdditionalHtml]: html,
+      },
+      { preferOverlay: true }
+    )
+
+    expect(next.additionalContentHtml).toBe(html)
+    expect(next.generalCommonInfo?.participantRecruitmentInfo?.additionalContentHtml).toBe(html)
+  })
+
+  it('reads economyRecruit.detailInfo.additionalContentHtml alias', () => {
+    const html = '<p>1사1교 추가</p>'
+    const next = applyGeneralRecruitOverlayToProgram(
+      baseProgram(),
+      {
+        'economyRecruit.detailInfo.additionalContentHtml': html,
+      },
+      { preferOverlay: true }
+    )
+
+    expect(next.additionalContentHtml).toBe(html)
+    expect(next.generalCommonInfo?.participantRecruitmentInfo?.additionalContentHtml).toBe(html)
   })
 })
