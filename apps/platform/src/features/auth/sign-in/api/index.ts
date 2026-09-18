@@ -1,5 +1,13 @@
 export { portalAuthPaths, portalMePaths } from './endpoints'
-export { postPortalLogin, getPortalMe, getPortalProfile, patchPortalProfile, postPortalPhoneIdentityConfirm, postPortalPasswordChange } from './client'
+export {
+  postPortalLogin,
+  getPortalMe,
+  getPortalProfile,
+  patchPortalProfile,
+  postPortalPhoneIdentityConfirm,
+  postPortalPasswordChange,
+  postPortalWithdrawal,
+} from './client'
 export { parseAuthTokenResponse, expiresAtFromExpiresInSeconds } from './parse-auth-token'
 export {
   parseHomepageMeResponse,
@@ -15,5 +23,7 @@ export type {
   PhoneIdentityConfirmRequest,
   PortalProfileResponse,
   PortalSchoolSelectionRequest,
+  PortalWithdrawalRequest,
+  PortalWithdrawalResponse,
   UpdatePortalProfileRequest,
 } from './types'

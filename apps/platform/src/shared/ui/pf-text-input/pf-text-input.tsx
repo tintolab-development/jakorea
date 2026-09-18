@@ -57,6 +57,7 @@ export function PFTextInput({
   onValueChange,
   className,
   style,
+  type,
   ...props
 }: PFTextInputProps) {
   const generatedId = useId()
@@ -64,7 +65,8 @@ export function PFTextInput({
   const isControlled = value !== undefined
   const [internalValue, setInternalValue] = useState(defaultValue?.toString() ?? '')
   const currentValue = isControlled ? value?.toString() ?? '' : internalValue
-  const shouldShowClearButton = !disabled && (currentValue.length > 0 || error)
+  const isPassword = type === 'password'
+  const shouldShowClearButton = !disabled && !isPassword && (currentValue.length > 0 || error)
   const isFormPage = variant === 'formPage'
   const rootStyle = { ...toWidthStyle(width), ...style }
 
@@ -131,6 +133,7 @@ export function PFTextInput({
           className={inputClassName}
           disabled={disabled}
           required={required}
+          type={type}
           {...props}
           value={currentValue}
           onChange={handleChange}

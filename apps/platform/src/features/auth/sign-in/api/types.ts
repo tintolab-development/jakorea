@@ -126,3 +126,18 @@ export type PhoneIdentityChangeResponse = {
   phone?: string
   changedAt?: string
 }
+
+/** POST /api/portal/me/withdrawals — OpenAPI `PortalWithdrawalRequest` */
+export type PortalWithdrawalRequest = {
+  currentPassword: string
+  reason: string
+  confirmationText: string
+}
+
+/** POST /api/portal/me/withdrawals — OpenAPI `PortalWithdrawalResponse` */
+export type PortalWithdrawalResponse = {
+  memberId?: number
+  status?: string
+  withdrawnAt?: string
+  message?: string
+}

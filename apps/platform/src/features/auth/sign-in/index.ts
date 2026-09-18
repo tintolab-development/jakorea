@@ -7,6 +7,7 @@ export {
   patchPortalProfile,
   postPortalPhoneIdentityConfirm,
   postPortalPasswordChange,
+  postPortalWithdrawal,
   parseAuthTokenResponse,
   expiresAtFromExpiresInSeconds,
   parseHomepageMeResponse,
@@ -22,6 +23,8 @@ export type {
   PhoneIdentityConfirmRequest,
   PortalProfileResponse,
   PortalSchoolSelectionRequest,
+  PortalWithdrawalRequest,
+  PortalWithdrawalResponse,
   UpdatePortalProfileRequest,
 } from './api'
 export { getLoginApiErrorMessage } from './lib'
@@ -32,4 +35,5 @@ export {
   usePortalProfileUpdateMutation,
   usePortalPhoneIdentityConfirmMutation,
   usePortalPasswordChangeMutation,
+  usePortalWithdrawalMutation,
 } from './hooks'
