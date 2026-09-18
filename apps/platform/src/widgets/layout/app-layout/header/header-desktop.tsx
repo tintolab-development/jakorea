@@ -18,6 +18,7 @@ type HeaderDesktopProps = {
   onLogout?: () => void
   transparent?: boolean
   inverse?: boolean
+  onDarkSurface?: boolean
 }
 
 function NavigationSubMenuItem({
@@ -85,6 +86,7 @@ export function HeaderDesktop({
   onLogout,
   transparent = false,
   inverse = false,
+  onDarkSurface = false,
 }: HeaderDesktopProps) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -111,6 +113,7 @@ export function HeaderDesktop({
     styles.header,
     transparent ? styles.headerTransparent : undefined,
     inverse ? styles.headerInverse : undefined,
+    onDarkSurface ? styles.headerOnDark : undefined,
     isNavOpen ? styles.headerNavOpen : undefined,
   ]
     .filter(Boolean)
@@ -174,7 +177,7 @@ export function HeaderDesktop({
                 <span className={styles.navigationButtonLabel}>
                   <PFText
                     typo="bd-lg-sb"
-                    color={isHighlighted ? 'primary-500' : inverse ? 'white' : 'black'}
+                    color="inherit"
                   >
                     {group.label}
                   </PFText>
@@ -220,7 +223,7 @@ export function HeaderDesktop({
                   key={action}
                   onClick={() => navigate(route)}
                 >
-                  <PFText typo="bd-md-rg" color={inverse ? 'white' : 'neutral-cool-600'}>
+                  <PFText typo="bd-md-rg" color="inherit">
                     {action}
                   </PFText>
                 </button>

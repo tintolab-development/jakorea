@@ -56,6 +56,7 @@ import { NoticeDetailPage, NoticesPage } from '@/pages/notices'
 import { ResultDetailPage, ResultsPage } from '@/pages/results'
 import { TextbooksPage } from '@/pages/education/textbooks'
 import { DirectionsPage } from '@/pages/about/directions'
+import { HistoryPage } from '@/pages/about/history'
 import { IntroductionPage } from '@/pages/about/introduction'
 import { PeoplePage } from '@/pages/about/people'
 import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transparency'
@@ -117,10 +118,14 @@ export const router = createBrowserRouter([
         path: '/about/transparency/audit-reports',
         element: <TransparencyReportsPage type="audit" />,
       },
-      { path: ABOUT_HISTORY_PATH, element: <TemporaryPage /> },
       { path: ABOUT_CAREERS_PATH, element: <TemporaryPage /> },
       { path: IMPACT_STORIES_PATH, element: <ImpactStoriesPage /> },
     ],
+  },
+  {
+    /* 어두운 히어로 위 inverse Header — 페이지 pathname 분기 없이 theme만 선언 */
+    element: <AppLayoutRoute layout="hero" headerTheme="inverse" />,
+    children: [{ path: ABOUT_HISTORY_PATH, element: <HistoryPage /> }],
   },
   {
     /* 기관소개 — ContentShell 없는 풀블리드 (support와 동일 계열) */

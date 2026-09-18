@@ -1,4 +1,10 @@
 .header {
+  --header-text-color: var(--color-neutral-black);
+  --header-active-color: var(--color-primary-500);
+  --header-indicator-color: var(--color-border-focus);
+  --header-utility-color: var(--color-neutral-cool-600);
+  --header-icon-color: var(--color-neutral-black);
+
   position: relative;
   z-index: 100;
   display: none;
@@ -22,9 +28,18 @@
   background: transparent;
 }
 
-/* 어두운 히어로 위 — 로고·아이콘 흰색 반전 (전용 흰색 에셋 수급 전 임시 filter) */
+/* 홈 등 기존 inverse — 기본 텍스트/아이콘만 흰색, active는 primary 유지 */
 .headerInverse {
+  --header-text-color: var(--color-neutral-white);
+  --header-utility-color: var(--color-neutral-white);
+  --header-icon-color: var(--color-neutral-white);
   border-bottom-color: transparent;
+}
+
+/* headerTheme=inverse — active/indicator까지 흰색 */
+.headerOnDark {
+  --header-active-color: var(--color-neutral-white);
+  --header-indicator-color: var(--color-neutral-white);
 }
 
 .headerInverse .logo,
@@ -112,6 +127,11 @@
   display: inline-flex;
   height: 100%;
   align-items: center;
+  color: var(--header-text-color);
+}
+
+.navigationButtonActive .navigationButtonLabel {
+  color: var(--header-active-color);
 }
 
 .navigationButtonLabel::after {
@@ -125,7 +145,7 @@
 }
 
 .navigationButtonActive .navigationButtonLabel::after {
-  background: var(--color-border-focus);
+  background: var(--header-indicator-color);
 }
 
 .dropdownPanel {
@@ -232,6 +252,7 @@
   padding: 0;
   border: 0;
   background: transparent;
+  color: var(--header-utility-color);
   text-align: right;
   white-space: nowrap;
   cursor: pointer;
