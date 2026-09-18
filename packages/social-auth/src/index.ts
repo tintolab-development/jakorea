@@ -39,6 +39,7 @@ export {
   createSignupSocialAdapter,
   createCompositeRemoteAdapter,
 } from './adapters'
+export { createPortalSsoAdapter } from './adapters/portal-sso-adapter'
 export { createMemberTokenAdapterStub } from './adapters/member-token-adapter.stub'
 export type {
   SocialAuthAdapter,
@@ -48,6 +49,7 @@ export type {
   CreateCompositeRemoteAdapterOptions,
   MockSocialAuthLoginResult,
 } from './adapters'
+export type { CreatePortalSsoAdapterOptions } from './adapters/portal-sso-adapter'
 
 export { unwrapApiData, unwrapAuthTokenResult, rethrowSocialAuthApiError } from './api-unwrap'
 
