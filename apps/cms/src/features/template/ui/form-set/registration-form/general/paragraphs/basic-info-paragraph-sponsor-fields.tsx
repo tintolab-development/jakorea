@@ -49,7 +49,8 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   onSponsorContactIdChange,
   trainedTeachersDefaults = false,
 }: ControlledSponsorProps) {
-  const allowMultipleSponsors = !trainedTeachersDefaults
+  // 일반·교육받은 교사 모두 Multi Select (기획: 후원사/담당자 Multi)
+  const allowMultipleSponsors = true
   const sponsorIdKey = trainedTeachersDefaults
     ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.sponsorId`
     : GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY
@@ -62,7 +63,8 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   const managerLineKey = trainedTeachersDefaults
     ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.sponsorManagerLine`
     : GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY
-  const allValueDefault = trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_ALL_VALUE : ''
+  // Multi Select에서는 「전체」 싱글 기본값을 쓰지 않음
+  const allValueDefault = ''
 
   const [localSponsorId, setLocalSponsorId] = useProgramRegistrationOverlayKv(
     sponsorIdKey,
@@ -315,10 +317,10 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
               options={managerOptions}
               value={managerContactId}
               disabled={
-                trainedTeachersDefaults
-                  ? !isAllSponsor && managerOptions.length === 0
-                  : allowMultipleSponsors
-                    ? sponsorIds.length === 0 || managerOptions.length === 0
+                allowMultipleSponsors
+                  ? sponsorIds.length === 0 || managerOptions.length === 0
+                  : trainedTeachersDefaults
+                    ? !isAllSponsor && managerOptions.length === 0
                     : !sponsorId || managerOptions.length === 0
               }
               onChange={v => setManagerContactId(String(v ?? ''))}

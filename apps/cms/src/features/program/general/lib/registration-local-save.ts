@@ -201,7 +201,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     isCompanySchool || generalProgramAudience === 'individual' ? 'not_required' : 'required'
 
   const isGeneralSchedule =
-    !isCompanySchool && !isTrainedTeachers && args.programType === 'schedule'
+    !isCompanySchool && args.programType === 'schedule'
   const scheduleDetails = isGeneralSchedule
     ? buildScheduleDetailsFromRegistrationOverlay(
         getProgramRegistrationOverlayRecord(),
@@ -211,14 +211,22 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   const scheduleDetailedProgramName = isGeneralSchedule
     ? resolveScheduleTypeDetailedProgramNameFromDetails(scheduleDetails)
     : undefined
-  const sponsorManagementIds =
-    !isCompanySchool && !isTrainedTeachers
-      ? (() => {
-          const fromOverlay = readGeneralRegistrationOverlaySponsorIds()
-          if (fromOverlay.length > 0) return fromOverlay
+  const sponsorManagementIds = !isCompanySchool
+    ? (() => {
+        if (isTrainedTeachers) {
+          const overlay = getProgramRegistrationOverlayRecord()
+          const raw = overlay['trainedTeachersRegistration.basicInfo.sponsorIds']
+          if (Array.isArray(raw)) {
+            const ids = raw.map(String).map(id => id.trim()).filter(Boolean)
+            if (ids.length > 0) return ids
+          }
           return sponsorId ? [sponsorId] : []
-        })()
-      : undefined
+        }
+        const fromOverlay = readGeneralRegistrationOverlaySponsorIds()
+        if (fromOverlay.length > 0) return fromOverlay
+        return sponsorId ? [sponsorId] : []
+      })()
+    : undefined
 
   const base: Program = {
     id: args.id,
@@ -260,11 +268,12 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     textbookName: scheduleDetailedProgramName,
     teamDivision: scheduleDetailedProgramName,
     generalProgramAudience,
-    generalProgramEducationStructure:
-      isCompanySchool || isTrainedTeachers ? 'curriculum' : args.programType,
-    generalProgramSessionRound:
-      isCompanySchool || isTrainedTeachers ? undefined : (args.sessionRoundType ?? 'single'),
-    generalCommonInfo: isCompanySchool || isTrainedTeachers
+    // 교육받은 교사 — 일반과 동일하게 등록 UI의 교육 진행 구조·회차 유형 반영 (1사1교만 curriculum 고정)
+    generalProgramEducationStructure: isCompanySchool ? 'curriculum' : args.programType,
+    generalProgramSessionRound: isCompanySchool
+      ? undefined
+      : (args.sessionRoundType ?? 'single'),
+    generalCommonInfo: isCompanySchool
       ? {
           educationScheduleMode: 'period',
           curriculumSessions: [
@@ -283,27 +292,25 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
           educationScheduleLines: [
             `${dayjs(`${y}-03-01`).format('YYYY. MM. DD')} ~ ${dayjs(`${y}-12-31`).format('YYYY. MM. DD')}`,
           ],
-          wageGradeRows: isCompanySchool
-            ? [
-                {
-                  grade: '1급 강사비',
-                  pricing: '1시간 당 | 기본 : 500,000원 | 장거리 : 500,000원',
-                },
-                {
-                  grade: '2급 강사비',
-                  pricing: '1시간 당 | 기본 : 400,000원 | 장거리 : 400,000원',
-                },
-                {
-                  grade: '3급 강사비',
-                  pricing: '1시간 당 | 기본 : 300,000원 | 장거리 : 300,000원',
-                },
-              ]
-            : undefined,
-          paymentItems: isCompanySchool ? '교통비(일사일교), 숙박비(일사일교)' : undefined,
-          deductionItems: isCompanySchool ? '일용근로자 원천징수세액' : undefined,
+          wageGradeRows: [
+            {
+              grade: '1급 강사비',
+              pricing: '1시간 당 | 기본 : 500,000원 | 장거리 : 500,000원',
+            },
+            {
+              grade: '2급 강사비',
+              pricing: '1시간 당 | 기본 : 400,000원 | 장거리 : 400,000원',
+            },
+            {
+              grade: '3급 강사비',
+              pricing: '1시간 당 | 기본 : 300,000원 | 장거리 : 300,000원',
+            },
+          ],
+          paymentItems: '교통비(일사일교), 숙박비(일사일교)',
+          deductionItems: '일용근로자 원천징수세액',
           participantRecruitmentInfo: {
             preEducationNoticeRequired: true,
-            maxAssignableInstructors: isCompanySchool ? 2 : undefined,
+            maxAssignableInstructors: 2,
             maxClassCount: 4,
             maxScheduleCount: 2,
             maxSessionsPerDay: 2,
@@ -340,15 +347,15 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   )
 
   const withRegistration = applyGeneralRegistrationOverlayToProgram(base, overlay, {
-    programType: isTrainedTeachers ? 'curriculum' : args.programType,
-    sessionRoundType: isTrainedTeachers ? 'single' : (args.sessionRoundType ?? 'single'),
+    programType: args.programType,
+    sessionRoundType: args.sessionRoundType ?? 'single',
     educationScheduleMode: args.educationScheduleMode,
     scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
     participantOrganization: isTrainedTeachers ? true : args.participant.organization,
     ...args.editorExtras,
   })
 
-  return applyGeneralRecruitOverlayToProgram(
+  const withRecruit = applyGeneralRecruitOverlayToProgram(
     withRegistration,
     {
       ...getApplicantRecruitInstitutionOverlayRecord(),
@@ -356,6 +363,47 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     },
     { preferOverlay: true }
   )
+
+  if (!isTrainedTeachers) return withRecruit
+
+  // BE 계약: teacherTrainingEnabled / educationJournalEnabled는 create 시 항상 명시
+  const journalRaw =
+    getProgramRegistrationOverlayRecord()[
+      'trainedTeachersRegistration.educationCurriculum.educationJournalEnabled'
+    ]
+  const educationJournalEnabled =
+    journalRaw === 'yes' || journalRaw === true
+      ? true
+      : journalRaw === 'no' || journalRaw === false
+        ? false
+        : (withRecruit.generalCommonInfo?.educationJournalEnabled ?? false)
+  const teacherTrainingEnabled =
+    args.editorExtras?.teacherTrainingEnabled ??
+    withRecruit.generalCommonInfo?.teacherTrainingEnabled ??
+    false
+
+  const recruitment = withRecruit.generalCommonInfo?.participantRecruitmentInfo
+  return {
+    ...withRecruit,
+    generalParticipantTypes: ['school_institution'],
+    generalProgramAudience: 'organization',
+    generalCommonInfo: {
+      ...withRecruit.generalCommonInfo,
+      teacherTrainingEnabled,
+      educationJournalEnabled,
+      participantRecruitmentInfo: recruitment
+        ? {
+            ...recruitment,
+            // TT: 강사 배정 수 UI 미사용 — BE echo 0/null
+            maxAssignableInstructors: 0,
+            preEducationNoticeRequired: false,
+          }
+        : {
+            maxAssignableInstructors: 0,
+            preEducationNoticeRequired: false,
+          },
+    },
+  }
 }
 
 export function readGeneralRegistrationLocalSaveRecords(): GeneralRegistrationLocalSaveRecord[] {

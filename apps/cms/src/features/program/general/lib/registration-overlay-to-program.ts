@@ -76,6 +76,8 @@ export type GeneralRegistrationEditorExtras = {
   scheduleCurriculumDetailCount?: number
   scheduleCurriculumPreEducation?: boolean
   participantOrganization?: boolean
+  /** 교육받은 교사 — 교육 연수 ON/OFF (create 시 항상 명시) */
+  teacherTrainingEnabled?: boolean
 }
 
 function overlayString(overlay: Record<string, unknown>, key: string): string {
@@ -192,6 +194,7 @@ export function normalizeRegistrationOverlayForApply(
   }
 
   copyWhenMissing(`${ttBasic}.sponsorId`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
+  copyWhenMissing(`${ttBasic}.sponsorIds`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY)
   copyWhenMissing(`${ttBasic}.managerContactId`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
   copyWhenMissing(`${ttBasic}.sponsorManagerLine`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY)
   copyWhenMissing(`${ttBasic}.programTitleKo`, GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
