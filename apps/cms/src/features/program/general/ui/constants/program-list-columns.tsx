@@ -250,9 +250,12 @@ export const capacityTableColumnsOverview = {
   align: 'center' as const,
   render: (_: unknown, record: Program) => {
     const cap = getCapacity(record)
-    const approved = record.approvedStudentCount ?? 0
-    if (cap !== undefined) return `${formatNumberDisplay(approved)} / ${formatNumberDisplay(cap)}`
-    return formatNumberDisplay(approved)
+    const approved = record.approvedStudentCount
+    if (cap == null && approved == null) return '-'
+    if (cap != null) {
+      return `${formatNumberDisplay(approved ?? 0)} / ${formatNumberDisplay(cap)}`
+    }
+    return formatNumberDisplay(approved ?? 0)
   },
 }
 

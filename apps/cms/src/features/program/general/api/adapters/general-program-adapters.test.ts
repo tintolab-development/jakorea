@@ -43,6 +43,36 @@ const sampleProgram: Program = {
 }
 
 describe('general-program-adapters', () => {
+  it('maps list targetLevel and recruitment counts from BE list fields', () => {
+    const program = mapAdminProgramListItemToProgram({
+      id: 186023,
+      title: '기관 교사/봉사자 전체 포함',
+      programType: 'GENERAL_ORGANIZATION',
+      targetLevel: 'middle',
+      participantRecruitmentCount: 120,
+      instructorRecruitmentCount: 51,
+      volunteerRecruitmentCount: 24,
+      participatingOrganizationCount: 2,
+      participatingStudentCount: 48,
+    })
+
+    expect(program.targetLevel).toBe('middle')
+    expect(program.participantCapacity).toBe(120)
+    expect(program.instructorCapacity).toBe(51)
+    expect(program.generalCommonInfo?.kpi?.volunteerCount).toBe(24)
+    expect(program.participatingSchoolCount).toBe(2)
+    expect(program.participatingStudentCount).toBe(48)
+  })
+
+  it('normalizes Korean targetLevel labels from list API', () => {
+    expect(
+      mapAdminProgramListItemToProgram({ id: 1, targetLevel: '중학생' }).targetLevel
+    ).toBe('middle')
+    expect(
+      mapAdminProgramListItemToProgram({ id: 2, targetLevel: '대학생' }).targetLevel
+    ).toBe('university')
+  })
+
   it('maps API list item to Program domain', () => {
     const program = mapAdminProgramListItemToProgram({
       id: 5001,
@@ -193,6 +223,59 @@ describe('general-program-adapters', () => {
     expect(create.autoApplyDefaultFormBindings).toBe(true)
     // audience 미설정 시 폼 기본값(organization)과 동일
     expect(create.applicationTargetMode).toBe('ORGANIZATION')
+    expect(create.recruitments).toEqual([
+      expect.objectContaining({
+        recruitmentType: 'PARTICIPANT',
+        targetType: 'ORGANIZATION',
+        status: 'ACTIVE',
+      }),
+    ])
+    expect(create.sponsors).toEqual([{ sponsorId: 'sponsor-1' }])
+  })
+
+  it('maps multi sponsor manager contact refs into create sponsors[]', () => {
+    const request = mapGeneralProgramToCreateRequest({
+      ...sampleProgram,
+      generalCommonInfo: {
+        sponsorManagementIds: ['1627251', '163302'],
+        sponsorManagerContactIds: ['1627251::1627253', '163302::111'],
+      },
+    })
+
+    expect(request.sponsors).toEqual([
+      { sponsorId: '1627251', sponsorContactId: '1627253' },
+      { sponsorId: '163302', sponsorContactId: '111' },
+    ])
+    expect(request.sponsorId).toBe('1627251')
+  })
+
+  it('includes ACTIVE VOLUNTEER recruitment when volunteer participant type is set', () => {
+    const request = mapGeneralProgramToCreateRequest({
+      ...sampleProgram,
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution', 'volunteer'],
+      volunteerApplicationStartDate: '2026-09-18T15:00:00.000Z',
+      volunteerApplicationEndDate: '2026-09-21T15:00:00.000Z',
+      generalVolunteers: 22,
+    })
+
+    expect(request.recruitments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          recruitmentType: 'PARTICIPANT',
+          targetType: 'ORGANIZATION',
+          status: 'ACTIVE',
+        }),
+        expect.objectContaining({
+          recruitmentType: 'VOLUNTEER',
+          targetType: 'COLLEGE_STUDENT',
+          status: 'ACTIVE',
+          startAt: '2026-09-18T15:00:00.000Z',
+          endAt: '2026-09-21T15:00:00.000Z',
+          maxCount: 22,
+        }),
+      ])
+    )
   })
 
   it('sends detailedProgramId and does not alias the name as textbookName', () => {

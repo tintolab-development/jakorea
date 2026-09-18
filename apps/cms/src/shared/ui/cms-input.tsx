@@ -7,10 +7,11 @@
  * affix + `width:100%` input 조합에서 클리어가 테두리에 잘리는 문제를 막기 위함.
  */
 
-import { forwardRef, useId, useState } from 'react'
+import { forwardRef, useContext, useId, useState } from 'react'
 import type { ChangeEvent, CSSProperties, ReactNode } from 'react'
-import { Form, Input } from 'antd'
+import { Input } from 'antd'
 import type { InputProps, InputRef } from 'antd'
+import { FormItemInputContext } from 'antd/es/form/context'
 import type { CmsControlSize } from './cms-control-size'
 import './cms-input.css'
 
@@ -107,7 +108,11 @@ export const CmsInput = forwardRef<InputRef, CmsInputProps>(
   ) => {
     const generatedId = useId()
     const inputId = id ?? generatedId
-    const { status: formStatus, errors: formErrors } = Form.Item.useStatus()
+    /**
+     * Form.Item 밖에서도 쓰는 공용 인풋이라 `Form.Item.useStatus()`는 쓰지 않는다.
+     * (그 훅은 Form.Item 컨텍스트가 없으면 개발 경고를 찍는다 — 내부 동작은 이 컨텍스트 읽기와 동일)
+     */
+    const { status: formStatus, errors: formErrors = [] } = useContext(FormItemInputContext)
 
     const isControlled = value !== undefined
     const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue ?? '')

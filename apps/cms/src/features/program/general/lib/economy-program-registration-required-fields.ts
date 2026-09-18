@@ -81,7 +81,12 @@ function hasIncompleteEconomyBasicInfo(
   if (!participant.organization && !participant.teacherInstructor) return true
   if (isEmptyText(readText(overlay, `${p}.businessField`, 'economy_finance'))) return true
   if (isEmptyText(readText(overlay, `${p}.sponsorId`, ALL))) return true
-  if (isEmptyText(readText(overlay, `${p}.managerContactId`, ALL))) return true
+  const managerIdsRaw = read(overlay, `${p}.managerContactIds`)
+  const managerIds = Array.isArray(managerIdsRaw)
+    ? managerIdsRaw.map(String).map(id => id.trim()).filter(Boolean)
+    : []
+  const managerPrimary = readText(overlay, `${p}.managerContactId`, ALL)
+  if (managerIds.length === 0 && isEmptyText(managerPrimary)) return true
   // 설문 — 전부 해제면 미완료 (기본값 전체 선택)
   const survey = read(overlay, `${p}.surveyItems`)
   if (survey != null && typeof survey === 'object') {

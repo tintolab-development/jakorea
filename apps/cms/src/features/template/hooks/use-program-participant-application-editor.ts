@@ -161,14 +161,15 @@ import {
 import {
   getGeneralRecruitOverlayRecord,
   getGeneralRecruitOverlayVersion,
-  replaceGeneralRecruitOverlay,
+  patchGeneralRecruitOverlay,
   resetGeneralRecruitOverlay,
   subscribeGeneralRecruitOverlay,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import { getRecruitVolunteerHiddenParagraphIds } from '@/features/template/ui/form-set/recruit-form/shared/recruit-volunteer-form-visibility'
 import {
   getGeneralApplicationOverlayRecord,
-  replaceGeneralApplicationOverlay,
+  patchGeneralApplicationOverlay,
   resetGeneralApplicationOverlay,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
@@ -395,13 +396,16 @@ function isRecruitmentEditorVariant(variant: ProgramParticipantApplicationEditor
 
 function restoreParticipantOverlayForVariant(
   variant: ProgramParticipantApplicationEditorVariant,
-  overlay: Record<string, unknown> | undefined
+  overlay: Record<string, unknown> | undefined,
+  options?: { resetIfMissing?: boolean }
 ): void {
+  const resetIfMissing = options?.resetIfMissing === true
   if (variant === 'gemini-recruit') {
     if (overlay) {
       replaceGeminiRecruitOverlay(overlay)
-      replaceGeneralRecruitOverlay(overlay)
-    } else {
+      // 공유 general recruit 스토어는 탭 간 키를 유지하도록 merge
+      patchGeneralRecruitOverlay(overlay)
+    } else if (resetIfMissing) {
       resetGeminiRecruitOverlay()
       resetGeneralRecruitOverlay()
     }
@@ -409,27 +413,28 @@ function restoreParticipantOverlayForVariant(
   }
   if (isApplicantRecruitInstitutionVariant(variant)) {
     if (overlay) replaceApplicantRecruitInstitutionOverlay(overlay)
-    else resetApplicantRecruitInstitutionOverlay()
+    else if (resetIfMissing) resetApplicantRecruitInstitutionOverlay()
     return
   }
   if (isGeneralRecruitOverlayVariant(variant)) {
-    if (overlay) replaceGeneralRecruitOverlay(overlay)
-    else resetGeneralRecruitOverlay()
+    // 개인·강사·봉사자 모집이 한 스토어를 공유 — replace 하면 다른 탭 입력이 사라짐
+    if (overlay) patchGeneralRecruitOverlay(overlay)
+    else if (resetIfMissing) resetGeneralRecruitOverlay()
     return
   }
   if (isGeneralApplicationOverlayVariant(variant)) {
-    if (overlay) replaceGeneralApplicationOverlay(overlay)
-    else resetGeneralApplicationOverlay()
+    if (overlay) patchGeneralApplicationOverlay(overlay)
+    else if (resetIfMissing) resetGeneralApplicationOverlay()
     return
   }
   if (variant === 'ujat-application-institution') {
     if (overlay) replaceUjatApplicationInstitutionOverlay(overlay)
-    else resetUjatApplicationInstitutionOverlay()
+    else if (resetIfMissing) resetUjatApplicationInstitutionOverlay()
     return
   }
   if (variant === 'ujat-application-volunteer') {
     if (overlay) replaceUjatApplicationVolunteerOverlay(overlay)
-    else resetUjatApplicationVolunteerOverlay()
+    else if (resetIfMissing) resetUjatApplicationVolunteerOverlay()
   }
 }
 
@@ -671,7 +676,9 @@ export function useProgramParticipantApplicationEditor(
     }
 
     const cached = sessionDraftCacheRef.current.get(hydrateKey)
-    if (cached) {
+    const cacheIsHydrated = storageHydratedTemplateIdsRef.current.has(hydrateKey)
+    // Strict Mode remount / 로드 전 cleanup이 시드+빈 overlay를 캐시해도 저장본 복원을 막지 않음
+    if (cached && cacheIsHydrated) {
       applyDraftNow(cached.draft)
       if (variant === 'ujat-recruit-institution') {
         replaceUjatRecruitInstitutionOverlay(cached.overlay ?? {})
@@ -691,22 +698,19 @@ export function useProgramParticipantApplicationEditor(
       }
       setIsDraftLoading(false)
     } else {
-      // 탭 전환 시 EMPTY/스피너 대신 시드를 즉시 그려 깜빡임 제거
+      // 탭 전환 시 EMPTY/스피너 대신 시드를 즉시 그려 깜빡임 제거.
+      // overlay는 비우지 않음 — 공유 스토어·이어서작성 hydrate 값을 유지한 채 저장본 merge.
       applyDraftNow(createSeedDraft())
       if (variant === 'ujat-recruit-institution') {
+        // UJAT 전용 스토어는 탭 단독 — 시드 표시 중에도 이전 값 잔존을 막기 위해 비움
         resetUjatRecruitInstitutionOverlay()
       } else if (variant === 'ujat-recruit-volunteer') {
         resetUjatRecruitVolunteerOverlay()
-      } else {
-        restoreParticipantOverlayForVariant(variant, undefined)
       }
       setIsDraftLoading(false)
     }
 
-    const preferSessionCache =
-      cached != null &&
-      (keepSessionCacheAcrossParticipantDeactivate ||
-        storageHydratedTemplateIdsRef.current.has(hydrateKey))
+    const preferSessionCache = cached != null && cacheIsHydrated
 
     const loadOptions = {
       localOnly: localOnlyDraftPersistence,
@@ -779,6 +783,8 @@ export function useProgramParticipantApplicationEditor(
 
     return () => {
       cancelled = true
+      // hydrate 완료 전 cleanup(Strict Mode 등)은 시드/빈 overlay로 캐시를 오염시키지 않음
+      if (!storageHydratedTemplateIdsRef.current.has(hydrateKey)) return
       if (draftRef.current.paragraphs.length === 0) return
       sessionDraftCacheRef.current.set(hydrateKey, {
         draft: draftRef.current,
@@ -802,7 +808,6 @@ export function useProgramParticipantApplicationEditor(
     active,
     createSeedDraft,
     forceSeedParagraphsRequired,
-    keepSessionCacheAcrossParticipantDeactivate,
     localOnlyDraftPersistence,
     persistTemplateVersionId,
     preferLocalDraft,
@@ -1418,6 +1423,7 @@ export function useProgramParticipantApplicationEditor(
           ujatApplicationGradeByBlockId,
           ujatGradeClassTimeBlockIds,
         })
+        flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
         const overlay = collectParticipantOverlayForVariant(variant)
         await persistWritingFormTemplateDraft({
           templateId,

@@ -16,6 +16,7 @@ import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/
 import {
   buildScheduleProgressTimeSummary,
   buildSessionIpsTypeSummary,
+  normalizeSponsorManagerContactIds,
   participationMethodLabelFromValue,
 } from '@/features/program/general/model/common-info-edit-schema'
 import {
@@ -50,6 +51,7 @@ import {
   GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
   GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY,
@@ -196,6 +198,7 @@ export function normalizeRegistrationOverlayForApply(
   copyWhenMissing(`${ttBasic}.sponsorId`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
   copyWhenMissing(`${ttBasic}.sponsorIds`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY)
   copyWhenMissing(`${ttBasic}.managerContactId`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+  copyWhenMissing(`${ttBasic}.managerContactIds`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY)
   copyWhenMissing(`${ttBasic}.sponsorManagerLine`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY)
   copyWhenMissing(`${ttBasic}.programTitleKo`, GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
 
@@ -211,7 +214,11 @@ export function normalizeRegistrationOverlayForApply(
   for (const [key] of Object.entries(overlay)) {
     if (!key.startsWith(`${ttBasic}.`)) continue
     const field = key.slice(ttBasic.length + 1)
-    if (['sponsorId', 'managerContactId', 'programTitleKo', 'sponsorManagerLine'].includes(field)) {
+    if (
+      ['sponsorId', 'sponsorIds', 'managerContactId', 'managerContactIds', 'programTitleKo', 'sponsorManagerLine'].includes(
+        field
+      )
+    ) {
       continue
     }
     copyWhenMissing(key, `${genBasic}.${field}`)
@@ -224,6 +231,15 @@ export function normalizeRegistrationOverlayForApply(
     normalized[GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY] === undefined
   ) {
     normalized[GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY] = [sponsorId]
+  }
+
+  const contactId = overlayString(normalized, GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+  if (
+    contactId &&
+    contactId !== TRAINED_TEACHERS_REGISTRATION_ALL_VALUE &&
+    normalized[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY] === undefined
+  ) {
+    normalized[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY] = [contactId]
   }
 
   return normalized
@@ -553,7 +569,13 @@ export function applyGeneralRegistrationOverlayToProgram(
     overlayString(overlay, GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY) ||
     program.sponsorId
 
-  const contactRef = overlayString(overlay, GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+  const contactRefs = normalizeSponsorManagerContactIds({
+    ids: Array.isArray(overlay[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY])
+      ? (overlay[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY] as unknown[]).map(String)
+      : undefined,
+    id: overlayString(overlay, GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY) || undefined,
+  }).filter(ref => ref !== TRAINED_TEACHERS_REGISTRATION_ALL_VALUE)
+  const contactRef = contactRefs[0] ?? ''
   const sponsorManagerLine =
     overlayString(overlay, GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY) ||
     // 레거시: ref가 아닌 표시 문구가 contact 키에 들어온 경우만 사용
@@ -715,6 +737,12 @@ export function applyGeneralRegistrationOverlayToProgram(
       venueDetail: venueDetail || program.generalCommonInfo?.venueDetail,
       sponsorManagementId: sponsorManagementIds?.[0] ?? program.generalCommonInfo?.sponsorManagementId,
       sponsorManagementIds: sponsorManagementIds ?? program.generalCommonInfo?.sponsorManagementIds,
+      sponsorManagerContactIds:
+        contactRefs.length > 0
+          ? contactRefs
+          : program.generalCommonInfo?.sponsorManagerContactIds,
+      sponsorManagerContactId:
+        contactRefs[0] ?? program.generalCommonInfo?.sponsorManagerContactId,
       sponsorManagerLine: sponsorManagerLine || undefined,
       educationScheduleMode:
         extras.educationScheduleMode ?? program.generalCommonInfo?.educationScheduleMode ?? 'date',

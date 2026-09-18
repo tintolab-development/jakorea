@@ -198,6 +198,8 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
     expect(next.textbookName).toBeUndefined()
     expect(next.generalCommonInfo?.paymentItems).toBe('교통비(일반), 숙박비')
     expect(next.generalCommonInfo?.sponsorManagerLine).toBe('김담당 팀장 | 010-1234-5678')
+    expect(next.generalCommonInfo?.sponsorManagerContactIds).toEqual(['1627251::1627253'])
+    expect(next.generalCommonInfo?.sponsorManagerContactId).toBe('1627251::1627253')
   })
 
   it('does not store contact ref as sponsorManagerLine', () => {
@@ -213,6 +215,33 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
       }
     )
     expect(next.generalCommonInfo?.sponsorManagerLine).toBeUndefined()
+    expect(next.generalCommonInfo?.sponsorManagerContactIds).toEqual(['1627251::1627253'])
+  })
+
+  it('maps multiple manager contact refs from overlay array', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      baseProgram(),
+      {
+        'generalRegistration.basicInfo.localSponsorIds': ['1627251', '163302'],
+        'generalRegistration.basicInfo.localManagerContactIds': [
+          '1627251::1627253',
+          '163302::111',
+        ],
+        'generalRegistration.basicInfo.sponsorManagerLine':
+          '김담당 팀장 | 010-1234-5678, 이담당 책임 | 010-9999-0000',
+      },
+      {
+        programType: 'curriculum',
+        sessionRoundType: 'single',
+        curriculumChartSessionCount: 1,
+      }
+    )
+    expect(next.generalCommonInfo?.sponsorManagementIds).toEqual(['1627251', '163302'])
+    expect(next.generalCommonInfo?.sponsorManagerContactIds).toEqual([
+      '1627251::1627253',
+      '163302::111',
+    ])
+    expect(next.generalCommonInfo?.sponsorManagerContactId).toBe('1627251::1627253')
   })
 })
 
@@ -239,5 +268,6 @@ describe('normalizeRegistrationOverlayForApply', () => {
     )
     expect(normalized['generalRegistration.typeSettings.educationForm']).toBe('offline')
     expect(normalized['generalRegistration.basicInfo.localSponsorIds']).toEqual(['42'])
+    expect(normalized['generalRegistration.basicInfo.localManagerContactIds']).toEqual(['99'])
   })
 })
