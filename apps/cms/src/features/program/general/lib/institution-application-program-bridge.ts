@@ -4,11 +4,15 @@
  */
 
 import { useSyncExternalStore } from 'react'
+import dayjs from 'dayjs'
 import { shouldShowInstitutionApplicationEducationFormatField } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import { shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph } from '@/features/program/general/lib/institution-application-form-visibility'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
-import { countUniqueEducationScheduleCalendarDays } from '@/features/template/lib/format-education-schedule-line'
+import {
+  countUniqueEducationScheduleCalendarDays,
+  parseEducationScheduleLineToRange,
+} from '@/features/template/lib/format-education-schedule-line'
 import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import type {
   GeneralProgramEducationStructure,
@@ -67,9 +71,66 @@ export function getInstitutionApplicationProgramBridge(): InstitutionApplication
   return bridgeState
 }
 
+function educationScheduleLinesEqual(
+  a: readonly string[] | undefined,
+  b: readonly string[] | undefined
+): boolean {
+  if (a === b) return true
+  if (a == null || b == null) return a == null && b == null
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false
+  }
+  return true
+}
+
+function educationScheduleRangeEqual(
+  a: InstitutionApplicationProgramBridge['educationScheduleRange'],
+  b: InstitutionApplicationProgramBridge['educationScheduleRange']
+): boolean {
+  if (a === b) return true
+  if (a == null || b == null) return a == null && b == null
+  return a.start === b.start && a.end === b.end
+}
+
+function bridgePartialEqualsCurrent(
+  partial: Partial<InstitutionApplicationProgramBridge>
+): boolean {
+  for (const key of Object.keys(partial) as Array<keyof InstitutionApplicationProgramBridge>) {
+    const next = partial[key]
+    const prev = bridgeState[key]
+    if (key === 'educationScheduleLines') {
+      if (
+        !educationScheduleLinesEqual(
+          prev as readonly string[] | undefined,
+          next as readonly string[] | undefined
+        )
+      ) {
+        return false
+      }
+      continue
+    }
+    if (key === 'educationScheduleRange') {
+      if (
+        !educationScheduleRangeEqual(
+          prev as InstitutionApplicationProgramBridge['educationScheduleRange'],
+          next as InstitutionApplicationProgramBridge['educationScheduleRange']
+        )
+      ) {
+        return false
+      }
+      continue
+    }
+    if (!Object.is(prev, next)) return false
+  }
+  return true
+}
+
 export function patchInstitutionApplicationProgramBridge(
   partial: Partial<InstitutionApplicationProgramBridge>
 ): void {
+  // 동일 값 재patch → emit 생략 (등록 폼 effect ↔ useSyncExternalStore 무한 루프 방지)
+  if (bridgePartialEqualsCurrent(partial)) return
   bridgeState = { ...bridgeState, ...partial }
   bridgeIsDefault = false
   emit()
@@ -90,6 +151,8 @@ export function resolveInstitutionApplicationProgramBridge(
 ): InstitutionApplicationProgramBridge {
   const commonInfo = program ? resolveGeneralProgramCommonInfo(program) : undefined
   const info = commonInfo?.participantRecruitmentInfo
+  const educationScheduleMode = commonInfo?.educationScheduleMode ?? 'date'
+  const educationScheduleLines = commonInfo?.educationScheduleLines
   return {
     preEducationNoticeRequired: info?.preEducationNoticeRequired ?? true,
     maxAssignableInstructors: info?.maxAssignableInstructors,
@@ -98,10 +161,74 @@ export function resolveInstitutionApplicationProgramBridge(
     maxSessionsPerDay: info?.maxSessionsPerDay,
     educationStructure: program?.generalProgramEducationStructure,
     sessionRound: program?.generalProgramSessionRound,
-    educationScheduleMode: commonInfo?.educationScheduleMode ?? 'date',
-    educationScheduleLines: commonInfo?.educationScheduleLines,
+    educationScheduleMode,
+    educationScheduleLines,
+    educationScheduleRange: resolveEducationScheduleRangeForBridge(
+      program,
+      commonInfo?.educationScheduleRange,
+      educationScheduleMode,
+      educationScheduleLines
+    ),
     showPreferredEducationForm: shouldShowInstitutionApplicationEducationFormatField(program),
   }
+}
+
+function isIsoScheduleRange(
+  value: { start?: string; end?: string } | null | undefined
+): value is { start: string; end: string } {
+  if (value == null || typeof value.start !== 'string' || typeof value.end !== 'string') {
+    return false
+  }
+  const start = dayjs(value.start)
+  const end = dayjs(value.end)
+  return start.isValid() && end.isValid()
+}
+
+/**
+ * 신청 캘린더 disabledDate 범위.
+ * 1) config/commonInfo `educationScheduleRange` 우선
+ * 2) 없으면 program 사업 운영 기간(startDate/endDate)
+ * 3) 기간 지정·등록 위저드 live: lines 파싱 (저장된 range 없을 때만)
+ */
+function resolveEducationScheduleRangeForBridge(
+  program: Program | null | undefined,
+  storedRange: { start?: string; end?: string } | null | undefined,
+  educationScheduleMode: InstitutionApplicationEducationScheduleMode,
+  educationScheduleLines: readonly string[] | undefined
+): { start: string; end: string } | undefined {
+  if (isIsoScheduleRange(storedRange)) {
+    return {
+      start: dayjs(storedRange.start).startOf('day').toISOString(),
+      end: dayjs(storedRange.end).endOf('day').toISOString(),
+    }
+  }
+
+  if (program?.startDate != null && program?.endDate != null) {
+    const start = dayjs(program.startDate as string | Date)
+    const end = dayjs(program.endDate as string | Date)
+    if (start.isValid() && end.isValid()) {
+      return {
+        start: start.startOf('day').toISOString(),
+        end: end.endOf('day').toISOString(),
+      }
+    }
+  }
+
+  if (educationScheduleMode === 'period' && educationScheduleLines?.length) {
+    for (let i = educationScheduleLines.length - 1; i >= 0; i -= 1) {
+      const range = parseEducationScheduleLineToRange(educationScheduleLines[i])
+      if (!range) continue
+      const [start, end] = range
+      if (!start.isSame(end, 'day')) {
+        return {
+          start: start.startOf('day').toISOString(),
+          end: end.endOf('day').toISOString(),
+        }
+      }
+    }
+  }
+
+  return undefined
 }
 
 /** 신청 폼 「희망 교육 형태」 — 등록 교육 형태가 「참여자 선택」일 때만 */

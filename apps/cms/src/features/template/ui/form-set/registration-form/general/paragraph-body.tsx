@@ -16,6 +16,7 @@ import {
   TrainedTeachersRegistrationEducationScheduleSettingsParagraph,
   TrainedTeachersRegistrationTypeSettingsParagraph,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers'
+import { TrainedTeachersEducationJournalSettingsRow } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/education-journal-settings-row'
 import { ProgramRegistrationBasicInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph'
 import { ProgramRegistrationBusinessKpiParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/business-kpi-paragraph'
 import { ProgramRegistrationEducationCurriculumParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-curriculum-paragraph'
@@ -89,7 +90,7 @@ export interface ProgramRegistrationParagraphBodyOptions {
   /** 카드 헤더 — 사전 교육 토글 (일정형·커리큘럼형) */
   scheduleCurriculumPreEducation: boolean
   onScheduleCurriculumPreEducationChange: (checked: boolean) => void
-  /** 교육받은 교사 — 카드 헤더 교사 연수 토글 */
+  /** 교육받은 교사 — 카드 헤더 교육 연수 토글 */
   trainedTeachersTeacherTrainingEnabled: boolean
   onTrainedTeachersTeacherTrainingEnabledChange: (checked: boolean) => void
   educationScheduleMode: ProgramRegistrationEducationScheduleMode
@@ -205,21 +206,26 @@ export function renderProgramRegistrationParagraphBody(
       return options == null ? null : options.programRegistrationFormVariant ===
         'trainedTeachers' ? (
         options.programType === 'schedule' ? (
-          <ProgramRegistrationEducationScheduleCurriculumParagraph
-            key={`tt-schedule-curriculum-${options.sessionRoundType}-${options.educationFormScheduleDetail}-${options.ipsScheduleDetail}`}
-            scheduleDetailCount={options.scheduleCurriculumDetailCount}
-            onDeleteScheduleCurriculumDetail={options.onDeleteScheduleCurriculumDetail}
-            scheduleGroupCount={options.scheduleCurriculumGroupCount}
-            onDeleteScheduleCurriculumGroup={options.onDeleteScheduleCurriculumGroup}
-            ipsPerSchedule={options.ipsScheduleDetail === 'perSchedule'}
-            sessionRoundType={options.sessionRoundType}
-            participantOrganization={options.participant.organization}
-            educationFormScheduleDetail={options.educationFormScheduleDetail}
-            participationScheduleDetail={options.participationScheduleDetail}
-            ipsScheduleDetail={options.ipsScheduleDetail}
-            scheduleCurriculumPreEducation={options.trainedTeachersTeacherTrainingEnabled}
-            preEducationBlockLabel="교사 연수"
-          />
+          <>
+            <TrainedTeachersEducationJournalSettingsRow />
+            <ProgramRegistrationEducationScheduleCurriculumParagraph
+              key={`tt-schedule-curriculum-${options.sessionRoundType}-${options.educationFormScheduleDetail}-${options.ipsScheduleDetail}`}
+              scheduleDetailCount={options.scheduleCurriculumDetailCount}
+              onDeleteScheduleCurriculumDetail={options.onDeleteScheduleCurriculumDetail}
+              scheduleGroupCount={options.scheduleCurriculumGroupCount}
+              onDeleteScheduleCurriculumGroup={options.onDeleteScheduleCurriculumGroup}
+              ipsPerSchedule={options.ipsScheduleDetail === 'perSchedule'}
+              sessionRoundType={options.sessionRoundType}
+              participantOrganization={options.participant.organization}
+              educationFormScheduleDetail={options.educationFormScheduleDetail}
+              participationScheduleDetail={options.participationScheduleDetail}
+              ipsScheduleDetail={options.ipsScheduleDetail}
+              scheduleCurriculumPreEducation={options.trainedTeachersTeacherTrainingEnabled}
+              preEducationBlockLabel="교육 연수"
+              preEducationDisplayMode="replaceFirst"
+              hideAssignmentSettings
+            />
+          </>
         ) : (
           <TrainedTeachersRegistrationEducationCurriculumParagraph
             teacherTrainingEnabled={options.trainedTeachersTeacherTrainingEnabled}

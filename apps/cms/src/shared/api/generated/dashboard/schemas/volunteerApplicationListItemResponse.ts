@@ -7,6 +7,7 @@
  */
 import type { InterviewAvailabilitySlot } from './interviewAvailabilitySlot';
 import type { InterviewEvaluationSummary } from './interviewEvaluationSummary';
+import type { VolunteerApplicationListItemResponseRecruitHalf } from './volunteerApplicationListItemResponseRecruitHalf';
 
 /**
  * 봉사자 신청 목록 항목
@@ -17,9 +18,14 @@ export interface VolunteerApplicationListItemResponse {
   programName?: string;
   programType?: string;
   recruitmentId?: number;
+  /**
+     * 상·하반기. VOLUNTEER 모집 시작일 순으로 FIRST_HALF|SECOND_HALF. 해당 없으면 null
+     * @nullable
+     */
+  recruitHalf?: VolunteerApplicationListItemResponseRecruitHalf;
   memberId?: number;
   /** 봉사자 회원에 DB로 연결된 기존 소속 학교/기관 ID. 저장된 소속이 없으면 null */
-  affiliationOrganizationId?: number | null;
+  affiliationOrganizationId?: number;
   memberName?: string;
   /** 목록용 마스킹 연락처 */
   contact?: string;
@@ -59,6 +65,4 @@ export interface VolunteerApplicationListItemResponse {
   canEditManagerAEvaluation?: boolean;
   canEditManagerBEvaluation?: boolean;
   availableActions?: string[];
-  /** UJAT 상·하반기 — VOLUNTEER 모집 순위 기준 */
-  recruitHalf?: 'FIRST_HALF' | 'SECOND_HALF' | null;
 }

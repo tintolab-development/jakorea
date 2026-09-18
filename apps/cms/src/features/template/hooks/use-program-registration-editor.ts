@@ -299,7 +299,8 @@ export function useProgramRegistrationEditor(
       }
       if (programRegistrationFormVariant === 'trainedTeachers') {
         patchInstitutionApplicationProgramBridge({
-          preEducationNoticeRequired: trainedTeachersTeacherTrainingEnabled,
+          // TT: 사전 안내 단락 비정책 — 교육 연수 토글과 혼용 금지
+          preEducationNoticeRequired: false,
           educationStructure: programType,
           sessionRound: sessionRoundType,
           educationScheduleMode,
@@ -330,11 +331,19 @@ export function useProgramRegistrationEditor(
     programType,
     sessionRoundType,
     educationScheduleMode,
-    trainedTeachersTeacherTrainingEnabled,
   ])
 
   const applyEditorStateSnapshot = useCallback((state: ProgramRegistrationEditorState) => {
-    setParticipant(state.participant)
+    setParticipant(
+      programRegistrationFormVariant === 'trainedTeachers'
+        ? {
+            individual: false,
+            organization: true,
+            teacherInstructor: false,
+            volunteer: false,
+          }
+        : state.participant
+    )
     setProgramType(state.programType)
     setSessionRoundType(state.sessionRoundType)
     setEducationFormScheduleDetail(state.educationFormScheduleDetail)
@@ -549,6 +558,15 @@ export function useProgramRegistrationEditor(
 
   const onIndividualChange = useCallback(
     (checked: boolean) => {
+      if (programRegistrationFormVariant === 'trainedTeachers') {
+        setParticipant({
+          individual: false,
+          organization: true,
+          teacherInstructor: false,
+          volunteer: false,
+        })
+        return
+      }
       const next = applyGeneralParticipantAudienceSelection('individual', checked)
       const nextParticipation = shouldResetParticipationScheduleDetailForAudience(next)
         ? 'common'
@@ -587,6 +605,17 @@ export function useProgramRegistrationEditor(
 
   const onOrganizationChange = useCallback(
     (checked: boolean) => {
+      // 교육받은 교사 — 학교/기관 고정 (해제·변경 불가)
+      if (programRegistrationFormVariant === 'trainedTeachers') {
+        setParticipant(prev => ({
+          ...prev,
+          individual: false,
+          organization: true,
+          teacherInstructor: false,
+          volunteer: false,
+        }))
+        return
+      }
       const next = applyGeneralParticipantAudienceSelection('organization', checked)
       const nextParticipation = shouldResetParticipationScheduleDetailForAudience(next)
         ? 'common'
@@ -623,13 +652,37 @@ export function useProgramRegistrationEditor(
     ]
   )
 
-  const onTeacherInstructorChange = useCallback((checked: boolean) => {
-    setParticipant(prev => ({ ...prev, teacherInstructor: checked }))
-  }, [])
+  const onTeacherInstructorChange = useCallback(
+    (checked: boolean) => {
+      if (programRegistrationFormVariant === 'trainedTeachers') {
+        setParticipant({
+          individual: false,
+          organization: true,
+          teacherInstructor: false,
+          volunteer: false,
+        })
+        return
+      }
+      setParticipant(prev => ({ ...prev, teacherInstructor: checked }))
+    },
+    [programRegistrationFormVariant]
+  )
 
-  const onVolunteerChange = useCallback((checked: boolean) => {
-    setParticipant(prev => ({ ...prev, volunteer: checked }))
-  }, [])
+  const onVolunteerChange = useCallback(
+    (checked: boolean) => {
+      if (programRegistrationFormVariant === 'trainedTeachers') {
+        setParticipant({
+          individual: false,
+          organization: true,
+          teacherInstructor: false,
+          volunteer: false,
+        })
+        return
+      }
+      setParticipant(prev => ({ ...prev, volunteer: checked }))
+    },
+    [programRegistrationFormVariant]
+  )
 
   const onSessionRoundTypeChange = useCallback(
     (value: ProgramRegistrationSessionRoundType) => {
@@ -1165,8 +1218,15 @@ export function useProgramRegistrationEditor(
             ipsScheduleDetail,
             curriculumSessionCount,
             curriculumChartSessionCount,
-            scheduleCurriculumPreEducation,
+            scheduleCurriculumPreEducation:
+              programRegistrationFormVariant === 'trainedTeachers'
+                ? trainedTeachersTeacherTrainingEnabled
+                : scheduleCurriculumPreEducation,
             participantOrganization: participant.organization,
+            teacherTrainingEnabled:
+              programRegistrationFormVariant === 'trainedTeachers'
+                ? trainedTeachersTeacherTrainingEnabled
+                : undefined,
           },
         })
         resetProgramRegistrationOverlay()
@@ -1204,8 +1264,8 @@ export function useProgramRegistrationEditor(
     scheduleCurriculumPreEducation,
     sessionRoundType,
     showAlert,
-    programRegistrationFormVariant,
     sponsorId,
+    trainedTeachersTeacherTrainingEnabled,
   ])
 
   const onSelectSingleItemListItem = useCallback((paragraphId: string, itemId: string | null) => {

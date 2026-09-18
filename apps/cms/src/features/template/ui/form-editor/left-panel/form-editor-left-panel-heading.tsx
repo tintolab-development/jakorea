@@ -230,7 +230,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
   if (pr.programRegistrationFormVariant === 'trainedTeachers') {
     const teacherTrainingToggle = (
       <CmsToggle
-        label="교사 연수"
+        label="교육 연수"
         checked={pr.trainedTeachersTeacherTrainingEnabled}
         onChange={pr.onTrainedTeachersTeacherTrainingEnabledChange}
       />

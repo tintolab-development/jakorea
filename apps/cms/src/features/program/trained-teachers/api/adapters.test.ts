@@ -6,6 +6,7 @@ import {
   mapDomainEducationStructureToApi,
   mapTrainedTeacherDetailToProgram,
   mapTrainedTeacherListItemToProgram,
+  mapTrainedTeacherToCreateRequest,
   mapTrainedTeacherToUpdateRequest,
 } from './adapters'
 import { serializeTrainedTeacherServiceDetailJson } from './service-detail-json'
@@ -258,5 +259,62 @@ describe('mapTrainedTeacherDetailToProgram KPI root echo', () => {
     expect(mapped.generalCommonInfo?.kpi?.finalParticipants).toBe(200)
     expect(mapped.generalCommonInfo?.kpi?.finalSchools).toBe(12)
     expect(mapped.generalCommonInfo?.kpi?.finalClasses).toBe(24)
+  })
+})
+
+describe('mapTrainedTeacherToCreateRequest BE registration contract', () => {
+  it('sets TRAINED_TEACHER, ORGANIZATION target, and autoApplyDefaultFormBindings', () => {
+    const program: Program = {
+      id: 'tmp',
+      sponsorId: '1627251',
+      title: 'TT create',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      startDate: '2026-01-01T00:00:00.000Z',
+      endDate: '2026-12-31T00:00:00.000Z',
+      applicationStartDate: '2026-01-01T00:00:00.000Z',
+      applicationEndDate: '2026-02-01T00:00:00.000Z',
+      status: 'pending',
+      lifecycleStatus: 'recruiting_students',
+      businessArea: '경제금융',
+      targetLevel: 'elementary',
+      approvedStudentCount: 0,
+      instructors: 0,
+      participatingSchoolCount: 0,
+      participatingStudentCount: 0,
+      generalParticipantTypes: ['school_institution'],
+      generalProgramAudience: 'organization',
+      generalProgramEducationStructure: 'curriculum',
+      generalProgramSessionRound: 'single',
+      generalCommonInfo: {
+        teacherTrainingEnabled: false,
+        educationJournalEnabled: false,
+        participantRecruitmentInfo: {
+          maxAssignableInstructors: 0,
+          maxClassCount: 1,
+        },
+      },
+      rounds: [],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    }
+
+    const request = mapTrainedTeacherToCreateRequest(program)
+    expect(request.programType).toBe('TRAINED_TEACHER')
+    expect(request.applicationTargetMode).toBe('ORGANIZATION')
+    expect(request.autoApplyDefaultFormBindings).toBe(true)
+    expect(request.educationStructure).toBe('CURRICULUM')
+
+    const detail = JSON.parse(String(request.serviceDetailJson)) as {
+      program?: { generalParticipantTypes?: string[]; generalCommonInfo?: {
+        teacherTrainingEnabled?: boolean
+        educationJournalEnabled?: boolean
+      } }
+    }
+    expect(detail.program?.generalParticipantTypes).toEqual(['school_institution'])
+    expect(detail.program?.generalCommonInfo?.teacherTrainingEnabled).toBe(false)
+    expect(detail.program?.generalCommonInfo?.educationJournalEnabled).toBe(false)
   })
 })

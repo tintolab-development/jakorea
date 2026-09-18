@@ -12,4 +12,9 @@ export interface AutoAssignmentRequest {
      * @maxLength 100
      */
   educationRegionCode?: string;
+  /**
+     * @minLength 0
+     * @maxLength 32
+     */
+  semesterType?: string;
 }

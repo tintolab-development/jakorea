@@ -1,10 +1,11 @@
-import type { Dayjs } from 'dayjs'
-import dayjs from 'dayjs'
+/**
+ * 교육받은 교사 — 교육 진행(커리큘럼)
+ * 교육 연수 ON: 첫 차시를 「교육 연수」로 치환 (별도 블록 prepend 금지)
+ * 교육일지: 있음/없음만
+ */
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
-import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import {
   ProgramRegistrationIpsTypeFields,
   type ProgramRegistrationIpsTypeValue,
@@ -13,7 +14,15 @@ import {
   updateProgramRegistrationOverlayKey,
   useProgramRegistrationOverlayKv,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { TrainedTeachersEducationJournalSettingsRow } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/education-journal-settings-row'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
+
+const TEACHER_TRAINING_HEADING = '교육 연수'
+const TEACHER_TRAINING_IPS: ProgramRegistrationIpsTypeValue = {
+  category: 'prepare',
+  detail: 'none',
+}
+const EMPTY_UNIT_BY_SESSION: Record<number, string> = {}
 
 type TrainedTeachersRegistrationEducationCurriculumParagraphProps = {
   teacherTrainingEnabled: boolean
@@ -21,102 +30,9 @@ type TrainedTeachersRegistrationEducationCurriculumParagraphProps = {
   onDeleteCurriculumSession: (sessionIndex: number) => void
 }
 
-function TrainedTeachersTeacherTrainingTable() {
-  const [trainingScheduleIso, setTrainingScheduleIso] = useProgramRegistrationOverlayKv<
-    string | null
-  >('trainedTeachersRegistration.educationCurriculum.trainingScheduleIso', null)
-  const trainingSchedule = trainingScheduleIso ? dayjs(trainingScheduleIso) : null
-  const setTrainingSchedule = (next: Dayjs | null) => {
-    setTrainingScheduleIso(next == null ? null : next.toISOString())
-  }
-
-  const [trainingEducationForm, setTrainingEducationForm] = useProgramRegistrationOverlayKv(
-    'trainedTeachersRegistration.educationCurriculum.trainingEducationForm',
-    'online'
-  )
-  const [trainingIpsType, setTrainingIpsType] =
-    useProgramRegistrationOverlayKv<ProgramRegistrationIpsTypeValue>(
-      'trainedTeachersRegistration.educationCurriculum.trainingIpsType',
-      {
-        category: 'prepare',
-        detail: 'none',
-      }
-    )
-
-  return (
-    <DetailInfoForm
-      title="교사 연수"
-      hideHeader
-      mode="edit"
-      className="program-registration-paragraph"
-    >
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="진행 일정"
-          fullRow
-          edit={
-            <ParagraphDatePicker
-              mode="single"
-              presetMode="schedule"
-              customizable={false}
-              suppressAutoTodayWhenEmpty
-              value={trainingSchedule}
-              onChange={setTrainingSchedule}
-              width={240}
-              placeholder="일정을 선택하세요"
-            />
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="교육 형태"
-          edit={
-            <CmsRadioGroup
-              size="large"
-              value={trainingEducationForm}
-              onChange={e => setTrainingEducationForm(String(e.target.value))}
-            >
-              <CmsRadio value="online">온라인</CmsRadio>
-              <CmsRadio value="offline">오프라인</CmsRadio>
-              <CmsRadio value="hybrid">온/오프라인</CmsRadio>
-            </CmsRadioGroup>
-          }
-          view="-"
-        />
-        <DetailInfoForm.Field
-          label="IPS 유형"
-          edit={
-            <ProgramRegistrationIpsTypeFields
-              layout="inline"
-              value={trainingIpsType}
-              onChange={setTrainingIpsType}
-              disabled
-            />
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-    </DetailInfoForm>
-  )
-}
-
-function TrainedTeachersTeacherTrainingSection({ enabled }: { enabled: boolean }) {
-  if (!enabled) return null
-
-  return (
-    <div className="program-registration-curriculum__session-block">
-      <div className="program-registration-curriculum__session-heading">■ 교사 연수</div>
-      <div className="program-registration-curriculum__session-row">
-        <TrainedTeachersTeacherTrainingTable />
-      </div>
-    </div>
-  )
-}
-
 function TrainedTeachersCurriculumSessionBlock({
   sessionIndex,
+  isTeacherTraining,
   onDelete,
   unitName,
   unitContent,
@@ -124,20 +40,23 @@ function TrainedTeachersCurriculumSessionBlock({
   onUnitContentChange,
 }: {
   sessionIndex: number
+  isTeacherTraining: boolean
   onDelete: (sessionIndex: number) => void
   unitName: string
   unitContent: string
   onUnitNameChange: (value: string) => void
   onUnitContentChange: (value: string) => void
 }) {
-  const showDelete = sessionIndex > 1
+  const showDelete = sessionIndex > 1 && !isTeacherTraining
+  const heading = isTeacherTraining ? TEACHER_TRAINING_HEADING : `${sessionIndex}차시`
+  const displayUnitName = isTeacherTraining ? TEACHER_TRAINING_HEADING : unitName
 
   return (
     <div className="program-registration-curriculum__session-block">
-      <div className="program-registration-curriculum__session-heading">■ {sessionIndex}차시</div>
+      <div className="program-registration-curriculum__session-heading">■ {heading}</div>
       <div className="program-registration-curriculum__session-row">
         <DetailInfoForm
-          title={`${sessionIndex}차시 커리큘럼`}
+          title={isTeacherTraining ? TEACHER_TRAINING_HEADING : `${sessionIndex}차시 커리큘럼`}
           hideHeader
           mode="edit"
           className="program-registration-paragraph"
@@ -153,8 +72,12 @@ function TrainedTeachersCurriculumSessionBlock({
                     placeholder="단원명을 입력하세요"
                     width="100%"
                     style={{ minWidth: 0, flex: '1 1 160px' }}
-                    value={unitName}
-                    onChange={event => onUnitNameChange(event.target.value)}
+                    value={displayUnitName}
+                    disabled={isTeacherTraining}
+                    onChange={event => {
+                      if (isTeacherTraining) return
+                      onUnitNameChange(event.target.value)
+                    }}
                   />
                   <DetailInfoForm.InputsSeparator />
                   <CmsInput
@@ -170,6 +93,25 @@ function TrainedTeachersCurriculumSessionBlock({
               view="-"
             />
           </DetailInfoForm.Row>
+          {isTeacherTraining ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="IPS 유형"
+                fullRow
+                edit={
+                  <ProgramRegistrationIpsTypeFields
+                    layout="inline"
+                    value={TEACHER_TRAINING_IPS}
+                    onChange={() => {
+                      /* Prepare 고정 */
+                    }}
+                    disabled
+                  />
+                }
+                view="-"
+              />
+            </DetailInfoForm.Row>
+          ) : null}
         </DetailInfoForm>
         {showDelete ? (
           <ItemDeleteButton
@@ -191,51 +133,26 @@ export function TrainedTeachersRegistrationEducationCurriculumParagraph({
   curriculumSessionCount,
   onDeleteCurriculumSession,
 }: TrainedTeachersRegistrationEducationCurriculumParagraphProps) {
-  const [educationJournalEnabled, setEducationJournalEnabled] = useProgramRegistrationOverlayKv<
-    'yes' | 'no'
-  >('trainedTeachersRegistration.educationCurriculum.educationJournalEnabled', 'yes')
   const [unitNameBySession] = useProgramRegistrationOverlayKv<Record<number, string>>(
     'trainedTeachersRegistration.educationCurriculum.unitNameBySession',
-    {}
+    EMPTY_UNIT_BY_SESSION
   )
   const [unitContentBySession] = useProgramRegistrationOverlayKv<Record<number, string>>(
     'trainedTeachersRegistration.educationCurriculum.unitContentBySession',
-    {}
+    EMPTY_UNIT_BY_SESSION
   )
 
   return (
     <div className="program-registration-curriculum__sessions">
-      <DetailInfoForm
-        title="교육 진행 (커리큘럼)"
-        hideHeader
-        mode="edit"
-        className="program-registration-paragraph"
-      >
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="교육일지 설정"
-            fullRow
-            edit={
-              <CmsRadioGroup
-                size="large"
-                value={educationJournalEnabled}
-                onChange={e => setEducationJournalEnabled(e.target.value as 'yes' | 'no')}
-              >
-                <CmsRadio value="yes">있음</CmsRadio>
-                <CmsRadio value="no">없음</CmsRadio>
-              </CmsRadioGroup>
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
-      </DetailInfoForm>
-      <TrainedTeachersTeacherTrainingSection enabled={teacherTrainingEnabled} />
+      <TrainedTeachersEducationJournalSettingsRow />
       {Array.from({ length: curriculumSessionCount }, (_, index) => {
         const sessionIndex = index + 1
+        const isTeacherTraining = teacherTrainingEnabled && sessionIndex === 1
         return (
           <TrainedTeachersCurriculumSessionBlock
             key={sessionIndex}
             sessionIndex={sessionIndex}
+            isTeacherTraining={isTeacherTraining}
             onDelete={onDeleteCurriculumSession}
             unitName={unitNameBySession[sessionIndex] ?? ''}
             unitContent={unitContentBySession[sessionIndex] ?? ''}

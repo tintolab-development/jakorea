@@ -122,8 +122,8 @@ export const TRAINED_TEACHER_PRIMARY_CASE_BY_ID: Record<
   },
 }
 
-/** 교사 연수 일정명 · IPS Prepare (디자인/BE SoT) */
-export const TRAINED_TEACHER_TRAINING_SCHEDULE_NAME = '교사 연수' as const
+/** 교육 연수 일정명 · IPS Prepare (BE SoT — `교사 연수`는 alias) */
+export const TRAINED_TEACHER_TRAINING_SCHEDULE_NAME = '교육 연수' as const
 
 export function isTrainedTeacherPrimaryProgramId(
   programId: string | null | undefined

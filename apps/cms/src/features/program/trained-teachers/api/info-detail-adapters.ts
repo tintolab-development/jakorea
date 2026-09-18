@@ -14,10 +14,22 @@ type InfoConfigJsonV1 = {
   schemaVersion: typeof TRAINED_TEACHER_INFO_CONFIG_JSON_VERSION
   educatedTeachers?: number
   generalCommonInfo?: NonNullable<Program['generalCommonInfo']>
+  /** BE may store schedule range at config root (not only nested commonInfo) */
+  educationScheduleRange?: { start: string; end: string }
+  educationScheduleMode?: 'date' | 'period'
+  educationScheduleLines?: string[]
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function parseIsoRange(value: unknown): { start: string; end: string } | undefined {
+  if (!isRecord(value)) return undefined
+  const start = typeof value.start === 'string' ? value.start : undefined
+  const end = typeof value.end === 'string' ? value.end : undefined
+  if (!start || !end) return undefined
+  return { start, end }
 }
 
 export function serializeTrainedTeacherInfoConfigJson(
@@ -27,6 +39,9 @@ export function serializeTrainedTeacherInfoConfigJson(
     schemaVersion: TRAINED_TEACHER_INFO_CONFIG_JSON_VERSION,
     educatedTeachers: payload.educatedTeachers,
     generalCommonInfo: payload.commonInfo,
+    educationScheduleRange: payload.commonInfo.educationScheduleRange,
+    educationScheduleMode: payload.commonInfo.educationScheduleMode,
+    educationScheduleLines: payload.commonInfo.educationScheduleLines,
   }
   return JSON.stringify(body)
 }
@@ -40,12 +55,31 @@ export function parseTrainedTeacherInfoConfigJson(raw?: string | null): {
     const parsed: unknown = JSON.parse(raw)
     if (!isRecord(parsed)) return {}
     if (parsed.schemaVersion !== TRAINED_TEACHER_INFO_CONFIG_JSON_VERSION) return {}
+    const nestedCommon = isRecord(parsed.generalCommonInfo)
+      ? (parsed.generalCommonInfo as NonNullable<Program['generalCommonInfo']>)
+      : undefined
+    const rootRange = parseIsoRange(parsed.educationScheduleRange)
+    const nestedRange = parseIsoRange(nestedCommon?.educationScheduleRange)
+    const educationScheduleRange = rootRange ?? nestedRange
+    const educationScheduleMode =
+      parsed.educationScheduleMode === 'date' || parsed.educationScheduleMode === 'period'
+        ? parsed.educationScheduleMode
+        : nestedCommon?.educationScheduleMode
+    const educationScheduleLines = Array.isArray(parsed.educationScheduleLines)
+      ? (parsed.educationScheduleLines.filter(line => typeof line === 'string') as string[])
+      : nestedCommon?.educationScheduleLines
     return {
       educatedTeachers:
         typeof parsed.educatedTeachers === 'number' ? parsed.educatedTeachers : undefined,
-      generalCommonInfo: isRecord(parsed.generalCommonInfo)
-        ? (parsed.generalCommonInfo as NonNullable<Program['generalCommonInfo']>)
-        : undefined,
+      generalCommonInfo:
+        nestedCommon || educationScheduleRange || educationScheduleMode || educationScheduleLines
+          ? {
+              ...nestedCommon,
+              ...(educationScheduleRange ? { educationScheduleRange } : {}),
+              ...(educationScheduleMode ? { educationScheduleMode } : {}),
+              ...(educationScheduleLines ? { educationScheduleLines } : {}),
+            }
+          : undefined,
     }
   } catch {
     return {}
@@ -115,6 +149,7 @@ export function mapTrainedTeacherInfoSaveToRequest(
     teacherTrainingEnabled: payload.commonInfo.teacherTrainingEnabled ?? false,
     educationJournalEnabled: payload.commonInfo.educationJournalEnabled ?? false,
     educationJournalRequired: false,
+    journalSubmissionLimitType: 'UNLIMITED',
     teacherTrainingScheduleName: payload.commonInfo.teacherTrainingEnabled
       ? TRAINED_TEACHER_TRAINING_SCHEDULE_NAME
       : undefined,

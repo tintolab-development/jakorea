@@ -215,6 +215,8 @@ const programDetailEditSchemaBase = z.object({
   curriculumSession2Title: z.string().optional(),
   curriculumSession2Description: z.string().optional(),
   educationScheduleLines: z.array(z.string()).optional(),
+  /** 교육받은 교사·공통정보 — 교육 진행 일정 유형 */
+  educationScheduleMode: z.enum(['date', 'period']).optional(),
   // 수강자 모집
   /** 결과 발표일 및 방법(공통 정보 수강자 모집 / 참여자 정보 참여자 모집) */
   resultAnnouncementDate: z.string().min(1, '결과 발표일을 선택해주세요'),
@@ -272,8 +274,20 @@ const programDetailEditSchemaBase = z.object({
   additionalContentHtml: z.string().optional(),
   // 공통 정보
   mainTitle: z.string().optional(),
+  /** 대표 프로그램명(영문) — 교육받은 교사 등 */
+  titleEn: z.string().optional(),
   announcementTitle: z.string().optional(),
   detailedProgramName: z.string().optional(),
+  /** 세부 프로그램 마스터 id — Select 저장용 */
+  detailedProgramId: z.string().optional(),
+  /** 교육받은 교사 프로그램 유형 설정 (opt-in) */
+  educationStructure: z.enum(['curriculum', 'schedule']).optional(),
+  sessionRound: z.enum(['single', 'multi']).optional(),
+  educationForm: z.string().optional(),
+  educationFormScheduleDetail: z.enum(['common', 'perSchedule']).optional(),
+  ipsScheduleDetail: z.enum(['common', 'perSchedule']).optional(),
+  ipsCategory: z.string().optional(),
+  ipsDetail: z.string().optional(),
   teamDivision: z.string().optional(),
   educationProcess: z.string().optional(),
   ipOwned: z.string().optional(),
@@ -609,13 +623,53 @@ export function programToDetailEditValues(
     curriculumSession2Title: program.generalCommonInfo?.curriculumSessions?.[1]?.title,
     curriculumSession2Description: program.generalCommonInfo?.curriculumSessions?.[1]?.description,
     educationScheduleLines: program.generalCommonInfo?.educationScheduleLines,
+    educationScheduleMode: program.generalCommonInfo?.educationScheduleMode ?? 'date',
     mainTitle: program.mainTitle ?? undefined,
+    titleEn: program.titleEn ?? undefined,
     announcementTitle: program.generalCommonInfo?.announcementTitle ?? program.title,
     detailedProgramName:
       program.generalCommonInfo?.detailedProgramName ??
       program.textbookName ??
       program.title ??
       undefined,
+    detailedProgramId: program.detailedProgramId ?? undefined,
+    educationStructure: (() => {
+      const raw = program.generalProgramEducationStructure
+      if (raw === 'curriculum' || raw === 'schedule') return raw
+      return undefined
+    })(),
+    sessionRound: (() => {
+      const raw = program.generalProgramSessionRound
+      if (raw === 'single' || raw === 'multi') return raw
+      return undefined
+    })(),
+    educationForm: (() => {
+      const label = program.generalCommonInfo?.educationFormLabel?.trim()
+      if (!label) return undefined
+      if (label.includes('참여자')) return 'participant_selection'
+      if (label.includes('온/오프') || label.includes('하이브리드')) return 'hybrid'
+      if (label.includes('오프라인')) return 'offline'
+      if (label.includes('온라인')) return 'online'
+      return undefined
+    })(),
+    educationFormScheduleDetail:
+      program.generalCommonInfo?.educationFormScheduleDetail ?? 'common',
+    ipsScheduleDetail: program.generalCommonInfo?.ipsScheduleDetail ?? (() => {
+      const summary = program.generalCommonInfo?.ipsTypeSummary ?? ''
+      return summary.includes('별') ? 'perSchedule' : 'common'
+    })(),
+    ipsCategory: (() => {
+      const summary = program.generalCommonInfo?.ipsTypeSummary ?? ''
+      if (/inspire/i.test(summary) || program.ips === 'Inspire') return 'inspire'
+      if (/succeed/i.test(summary) || program.ips === 'Succeed') return 'succeed'
+      if (/prepare/i.test(summary) || program.ips === 'Prepare') return 'prepare'
+      return undefined
+    })(),
+    ipsDetail: (() => {
+      const summary = program.generalCommonInfo?.ipsTypeSummary ?? ''
+      if (/prepare/i.test(summary) || program.ips === 'Prepare') return 'none'
+      return undefined
+    })(),
     teamDivision: program.teamDivision ?? undefined,
     educationProcess: program.educationProcess ?? undefined,
     ipOwned: program.ipOwned ?? undefined,
@@ -844,6 +898,49 @@ export function detailEditValuesToProgramPatch(
           : existing.generalCommonInfo?.curriculumSessions,
       educationScheduleLines:
         values.educationScheduleLines ?? existing.generalCommonInfo?.educationScheduleLines,
+      educationScheduleMode:
+        values.educationScheduleMode ?? existing.generalCommonInfo?.educationScheduleMode,
+      educationFormLabel: (() => {
+        if (values.educationForm == null) return existing.generalCommonInfo?.educationFormLabel
+        const map: Record<string, string> = {
+          online: '온라인',
+          offline: '오프라인',
+          hybrid: '온/오프라인',
+          participant_selection: '참여자 선택',
+        }
+        return map[values.educationForm] ?? values.educationForm
+      })(),
+      educationFormScheduleDetail:
+        values.educationFormScheduleDetail ??
+        existing.generalCommonInfo?.educationFormScheduleDetail,
+      ipsScheduleDetail:
+        values.ipsScheduleDetail ?? existing.generalCommonInfo?.ipsScheduleDetail,
+      ipsTypeSummary: (() => {
+        if (
+          values.ipsScheduleDetail == null &&
+          values.ipsCategory == null &&
+          values.ipsDetail == null
+        ) {
+          return existing.generalCommonInfo?.ipsTypeSummary
+        }
+        const scheduleLabel =
+          (values.ipsScheduleDetail ?? existing.generalCommonInfo?.ipsScheduleDetail) ===
+          'perSchedule'
+            ? '일정 별 상이'
+            : '일정 공통'
+        const category = values.ipsCategory ?? ''
+        const categoryLabel =
+          category === 'inspire'
+            ? 'Inspire'
+            : category === 'succeed'
+              ? 'Succeed'
+              : category === 'prepare'
+                ? 'Prepare'
+                : '-'
+        const detailLabel =
+          category === 'prepare' || !values.ipsDetail ? '해당없음' : values.ipsDetail
+        return `${scheduleLabel} | ${categoryLabel} | ${detailLabel}`
+      })(),
       paymentItems:
         values.wagePaymentItemIds != null
           ? programPaymentItemLabelsFromIds(values.wagePaymentItemIds) ||
@@ -990,12 +1087,22 @@ export function detailEditValuesToProgramPatch(
         : (values.otherNotes ?? existing.otherNotes),
     additionalContentHtml: values.additionalContentHtml ?? existing.additionalContentHtml,
     mainTitle: values.mainTitle ?? existing.mainTitle,
+    titleEn: values.titleEn ?? existing.titleEn,
+    detailedProgramId: values.detailedProgramId ?? existing.detailedProgramId,
+    generalProgramEducationStructure:
+      values.educationStructure ?? existing.generalProgramEducationStructure,
+    generalProgramSessionRound: values.sessionRound ?? existing.generalProgramSessionRound,
     teamDivision: values.teamDivision ?? existing.teamDivision,
     educationProcess: values.educationProcess ?? existing.educationProcess,
     ipOwned: values.ipOwned ?? existing.ipOwned,
     courseDeliveredBy: values.courseDeliveredBy ?? existing.courseDeliveredBy,
     partnerInvolvement: values.partnerInvolvement ?? existing.partnerInvolvement,
-    ips: values.ips ?? existing.ips,
+    ips: (() => {
+      if (values.ipsCategory === 'inspire') return 'Inspire'
+      if (values.ipsCategory === 'succeed') return 'Succeed'
+      if (values.ipsCategory === 'prepare') return 'Prepare'
+      return values.ips ?? existing.ips
+    })(),
     programCategory: values.programCategory ?? existing.programCategory,
     programChannel: values.programChannel ?? existing.programChannel,
   }

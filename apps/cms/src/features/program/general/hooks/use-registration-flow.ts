@@ -73,17 +73,23 @@ function resolveStepTemplateName(templateId: string): string {
   )
 }
 
+/** 1사1교·교육받은 교사 — 봉사자 탭 미노출 */
+function tabVisibilityForVariant(
+  variant: ProgramRegistrationFormVariant
+): { hideVolunteer: true } | undefined {
+  if (variant === 'economy' || variant === 'trainedTeachers') {
+    return { hideVolunteer: true as const }
+  }
+  return undefined
+}
+
 function coerceRegistrationStepForVariant(
   step: GeneralProgramRegistrationStepKey,
   flags: GeneralProgramRegistrationParticipantFlags,
   variant: ProgramRegistrationFormVariant
 ): GeneralProgramRegistrationStepKey {
-  const recruitOptions =
-    variant === 'economy' ? ({ hideVolunteer: true } as const) : undefined
-  const coercedStep = coerceGeneralProgramRegistrationStep(step, flags, recruitOptions)
-  if (variant !== 'trainedTeachers') return coercedStep
-  if (coercedStep === 'program') return coercedStep
-  return 'application-participant-school'
+  // 교육받은 교사 전용 step 강제 리다이렉트 없음 — 참여자 플래그 + hideVolunteer만 적용
+  return coerceGeneralProgramRegistrationStep(step, flags, tabVisibilityForVariant(variant))
 }
 
 export function useGeneralProgramRegistrationFlow(
@@ -130,12 +136,11 @@ export function useGeneralProgramRegistrationFlow(
 
   const participantFlags: GeneralProgramRegistrationParticipantFlags = registrationVm.participant
 
-  const recruitTabVisibility = useMemo(
-    () => (isCompanySchoolRegistration ? { hideVolunteer: true as const } : undefined),
-    [isCompanySchoolRegistration]
+  /** 모집·신청 탭 공통 (1사1교·교육받은 교사 봉사자 숨김) */
+  const tabVisibility = useMemo(
+    () => tabVisibilityForVariant(registrationFormVariant),
+    [registrationFormVariant]
   )
-  /** 모집·신청 탭 공통 (1사1교 봉사자 숨김) */
-  const tabVisibility = recruitTabVisibility
 
   const [activeStep, setActiveStep] = useState<GeneralProgramRegistrationStepKey>(() => {
     const initial = options?.initialStep
@@ -167,20 +172,16 @@ export function useGeneralProgramRegistrationFlow(
     tabVisibility,
   ])
 
+  // 참여자 유형 플래그 기반 (TT는 organization 고정 → 참여 기관 모집/신청만 노출)
   const visibleRecruitTabKeys = useMemo(
-    () =>
-      isTrainedTeachersRegistration
-        ? []
-        : getVisibleGeneralProgramRecruitTabKeys(participantFlags, tabVisibility),
-    [isTrainedTeachersRegistration, participantFlags, tabVisibility]
+    () => getVisibleGeneralProgramRecruitTabKeys(participantFlags, tabVisibility),
+    [participantFlags, tabVisibility]
   )
 
   const visibleApplicationTabKeys = useMemo(
     (): GeneralProgramRegistrationApplicationTabKey[] =>
-      isTrainedTeachersRegistration
-        ? ['application-participant-school']
-        : getVisibleGeneralProgramApplicationTabKeys(participantFlags, tabVisibility),
-    [isTrainedTeachersRegistration, participantFlags, tabVisibility]
+      getVisibleGeneralProgramApplicationTabKeys(participantFlags, tabVisibility),
+    [participantFlags, tabVisibility]
   )
 
   const coercedActiveStep = useMemo(
@@ -208,6 +209,13 @@ export function useGeneralProgramRegistrationFlow(
       if (isTrainedTeachersRegistration) {
         if (base.key === 'program') {
           return { ...base, templateId: 'registration-trained-teachers' }
+        }
+        if (base.key === 'recruit-participant-school') {
+          return {
+            ...base,
+            templateId: 'recruitment-trained-teachers',
+            editorVariant: 'trained-teachers-recruit-institution' as const,
+          }
         }
         if (base.key === 'application-participant-school') {
           return {
@@ -262,6 +270,7 @@ export function useGeneralProgramRegistrationFlow(
         registrationFormVariant,
         currentStepDef.templateId
       ),
+      registrationWizardOpen: open,
       participantOrganization: participantFlags.organization,
       /** 등록 위저드 신청 단계 — 기관 기본정보·강사/봉사자 일정 자동 반영 미리보기 */
       programLinkedInstitutionApplicationForm:
@@ -275,7 +284,11 @@ export function useGeneralProgramRegistrationFlow(
         participantVariant === 'volunteer' ||
         participantVariant === 'economy-application-institution' ||
         participantVariant === 'trained-teachers-application-institution',
-      applicantRecruitInstitutionLayoutVariant: isCompanySchoolRegistration ? 'economy' : undefined,
+      applicantRecruitInstitutionLayoutVariant: isCompanySchoolRegistration
+        ? 'economy'
+        : isTrainedTeachersRegistration
+          ? 'trainedTeachers'
+          : undefined,
       applicantRecruitInstitutionDefaults: isCompanySchoolRegistration
         ? {
             studentListRequired: 'none',
@@ -285,7 +298,14 @@ export function useGeneralProgramRegistrationFlow(
             maxScheduleCount: 2,
             maxSessionsPerDay: 2,
           }
-        : undefined,
+        : isTrainedTeachersRegistration
+          ? {
+              studentListRequired: 'need',
+              maxClassCount: 4,
+              maxScheduleCount: 3,
+              maxSessionsPerDay: 8,
+            }
+          : undefined,
       /** 1사1교 — 단락 타이틀 옆 필수(*) (공유 강사 모집 상세 등 선택 시드 포함) */
       forceSeedParagraphsRequired: isCompanySchoolRegistration,
     }
@@ -389,7 +409,9 @@ export function useGeneralProgramRegistrationFlow(
     (nextPhase: GeneralProgramRegistrationPhaseKey) => {
       const shouldCheckRequired =
         !SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK &&
-        (registrationFormVariant === 'general' || registrationFormVariant === 'economy')
+        (registrationFormVariant === 'general' ||
+          registrationFormVariant === 'economy' ||
+          registrationFormVariant === 'trainedTeachers')
 
       if (
         shouldCheckRequired &&
@@ -403,7 +425,13 @@ export function useGeneralProgramRegistrationFlow(
         })
         return
       }
-      if (shouldCheckRequired && phase === 'recruitment' && nextPhase === 'application') {
+      /** 모집→신청 필수 검사는 일반·1사1교만 — 교육받은 교사는 프로그램 단계 검사만 적용 */
+      if (
+        shouldCheckRequired &&
+        registrationFormVariant !== 'trainedTeachers' &&
+        phase === 'recruitment' &&
+        nextPhase === 'application'
+      ) {
         const recruitIncomplete =
           registrationFormVariant === 'economy'
             ? hasIncompleteEconomyProgramRecruitmentRequiredFields(participantFlags)
@@ -430,15 +458,10 @@ export function useGeneralProgramRegistrationFlow(
         selectStep(getDefaultGeneralProgramRecruitStep(participantFlags, tabVisibility))
         return
       }
-      selectStep(
-        isTrainedTeachersRegistration
-          ? 'application-participant-school'
-          : getDefaultGeneralProgramApplicationStep(participantFlags, tabVisibility)
-      )
+      selectStep(getDefaultGeneralProgramApplicationStep(participantFlags, tabVisibility))
     },
     [
       isProgramStep,
-      isTrainedTeachersRegistration,
       participantFlags,
       participantVm.volunteerExceptionScheduleCount,
       phase,

@@ -211,8 +211,15 @@ export type ProgramRegistrationEducationScheduleCurriculumParagraphProps = {
   ipsScheduleDetail: ProgramRegistrationScheduleDetailKind
   /** 카드 헤더「사전 교육」ON이면 일정 앞에 사전 교육 블록을 두고, 그 블록의 IPS만 Prepare로 고정 */
   scheduleCurriculumPreEducation?: boolean
-  /** 사전 교육/교사 연수 블록 헤딩 라벨 (기본: 사전 교육) */
+  /** 사전 교육/교육 연수 블록 헤딩 라벨 (기본: 사전 교육) */
   preEducationBlockLabel?: string
+  /**
+   * prepend: 별도 사전교육 블록을 앞에 추가 (일반 기본)
+   * replaceFirst: 첫 세부/행사 일정을 연수로 치환 (교육받은 교사)
+   */
+  preEducationDisplayMode?: 'prepend' | 'replaceFirst'
+  /** 교육받은 교사 — 과제 설정 비노출 (교육일지와 구분) */
+  hideAssignmentSettings?: boolean
 }
 
 export function ProgramRegistrationEducationScheduleCurriculumParagraph({
@@ -228,7 +235,13 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   ipsScheduleDetail,
   scheduleCurriculumPreEducation = false,
   preEducationBlockLabel = PRE_EDUCATION_SCHEDULE_LABEL,
+  preEducationDisplayMode = 'prepend',
+  hideAssignmentSettings = false,
 }: ProgramRegistrationEducationScheduleCurriculumParagraphProps) {
+  const replaceFirstTraining =
+    scheduleCurriculumPreEducation && preEducationDisplayMode === 'replaceFirst'
+  const prependTraining =
+    scheduleCurriculumPreEducation && preEducationDisplayMode === 'prepend'
   const detailCount = Math.max(1, scheduleDetailCount)
   const groupCount =
     sessionRoundType === 'multi'
@@ -530,9 +543,10 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
         }
       />
     )
+    const isTrainingDetail = replaceFirstTraining && detailIndex === 1
     const showEducation = eventExtraPlan.showEducation
-    const showIps = eventExtraPlan.showIps
-    const showAssignment = eventExtraPlan.showAssignment
+    const showIps = eventExtraPlan.showIps || isTrainingDetail
+    const showAssignment = eventExtraPlan.showAssignment && !hideAssignmentSettings
 
     if (showAssignment) {
       return (
@@ -551,6 +565,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
               return renderIpsFormField(detailIndex, {
                 fullRow: options.fullRow,
                 layout: options.layout,
+                disabled: isTrainingDetail,
               })
             }
             return renderParticipationField(detailIndex, { fullRow: options.fullRow })
@@ -564,7 +579,10 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
         {showEducation && showIps ? (
           <DetailInfoForm.Row type="double">
             {renderEducationFormField(detailIndex)}
-            {renderIpsFormField(detailIndex, { layout: 'inline' })}
+            {renderIpsFormField(detailIndex, {
+              layout: 'inline',
+              disabled: isTrainingDetail,
+            })}
           </DetailInfoForm.Row>
         ) : showEducation ? (
           <DetailInfoForm.Row type="single">
@@ -572,7 +590,10 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
           </DetailInfoForm.Row>
         ) : showIps ? (
           <DetailInfoForm.Row type="single">
-            {renderIpsFormField(detailIndex, { fullRow: true })}
+            {renderIpsFormField(detailIndex, {
+              fullRow: true,
+              disabled: isTrainingDetail,
+            })}
           </DetailInfoForm.Row>
         ) : null}
       </>
@@ -878,7 +899,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   }
 
   const renderPreEducationEventBlock = () =>
-    scheduleCurriculumPreEducation ? (
+    prependTraining ? (
       <div key="pre-education" className="program-registration-schedule-curriculum__block">
         <div className="program-registration-schedule-curriculum__session-heading">
           ■ {preEducationBlockLabel}
@@ -926,11 +947,18 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
         {renderPreEducationEventBlock()}
         {Array.from({ length: detailCount }, (_, i) => {
           const n = i + 1
+          const isTrainingDetail = replaceFirstTraining && n === 1
+          const eventHeading = isTrainingDetail
+            ? preEducationBlockLabel
+            : `행사 일정 ${pad2(n)}`
+          const eventNameValue = isTrainingDetail
+            ? preEducationBlockLabel
+            : (eventNameByDetail[n] ?? '')
           return (
             <div key={n} className="program-registration-schedule-curriculum__block">
-              {showEventHeadings ? (
+              {showEventHeadings || isTrainingDetail ? (
                 <div className="program-registration-schedule-curriculum__session-heading">
-                  ■ 행사 일정 {pad2(n)}
+                  ■ {eventHeading}
                 </div>
               ) : null}
               <div className="program-registration-curriculum__session-row">
@@ -950,13 +978,15 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                             placeholder="행사 일정명을 작성하세요"
                             width="100%"
                             style={{ minWidth: 0, flex: '1 1 0' }}
-                            value={eventNameByDetail[n] ?? ''}
-                            onChange={event =>
+                            value={eventNameValue}
+                            disabled={isTrainingDetail}
+                            onChange={event => {
+                              if (isTrainingDetail) return
                               updateProgramRegistrationOverlayKey<Record<number, string>>(
                                 'generalRegistration.educationScheduleCurriculum.eventNameByDetail',
                                 prev => ({ ...(prev ?? {}), [n]: event.target.value })
                               )
-                            }
+                            }}
                           />
                         }
                         view="-"
@@ -970,7 +1000,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                     {renderEventPerScheduleExtraRows(n)}
                   </DetailInfoForm>
                 </div>
-                {renderDetailDeleteButton(n, `행사 일정 ${pad2(n)}`)}
+                {isTrainingDetail ? null : renderDetailDeleteButton(n, `행사 일정 ${pad2(n)}`)}
               </div>
             </div>
           )
@@ -986,11 +1016,18 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
       {renderPreEducationEventBlock()}
       {Array.from({ length: detailCount }, (_, i) => {
         const n = i + 1
+        const isTrainingDetail = replaceFirstTraining && n === 1
+        const detailHeading = isTrainingDetail
+          ? preEducationBlockLabel
+          : `세부 일정 ${pad2(n)}`
+        const detailNameValue = isTrainingDetail
+          ? preEducationBlockLabel
+          : (eventNameByDetail[n] ?? '')
         return (
           <div key={n} className="program-registration-schedule-curriculum__block">
-            {detailCount > 1 || scheduleCurriculumPreEducation ? (
+            {detailCount > 1 || scheduleCurriculumPreEducation || isTrainingDetail ? (
               <div className="program-registration-schedule-curriculum__session-heading">
-                ■ 세부 일정 {pad2(n)}
+                ■ {detailHeading}
               </div>
             ) : null}
             <div className="program-registration-curriculum__session-row">
@@ -1014,13 +1051,15 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                               : '일정 상세 내용을 작성하세요'
                           }
                           width="100%"
-                          value={eventNameByDetail[n] ?? ''}
-                          onChange={event =>
+                          value={detailNameValue}
+                          disabled={isTrainingDetail}
+                          onChange={event => {
+                            if (isTrainingDetail) return
                             updateProgramRegistrationOverlayKey<Record<number, string>>(
                               'generalRegistration.educationScheduleCurriculum.eventNameByDetail',
                               prev => ({ ...(prev ?? {}), [n]: event.target.value })
                             )
-                          }
+                          }}
                         />
                       }
                       view="-"
@@ -1034,9 +1073,12 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                       view="-"
                     />
                   </DetailInfoForm.Row>
-                  {isSingleRound && ipsPerSchedule ? (
+                  {isSingleRound && (ipsPerSchedule || isTrainingDetail) ? (
                     <DetailInfoForm.Row type="single">
-                      {renderIpsFormField(n, { fullRow: true })}
+                      {renderIpsFormField(n, {
+                        fullRow: true,
+                        disabled: isTrainingDetail,
+                      })}
                     </DetailInfoForm.Row>
                   ) : null}
                   {!isSingleRound ? (
@@ -1047,7 +1089,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                   ) : null}
                 </DetailInfoForm>
               </div>
-              {renderDetailDeleteButton(n, `세부 일정 ${pad2(n)}`)}
+              {isTrainingDetail ? null : renderDetailDeleteButton(n, `세부 일정 ${pad2(n)}`)}
             </div>
           </div>
         )

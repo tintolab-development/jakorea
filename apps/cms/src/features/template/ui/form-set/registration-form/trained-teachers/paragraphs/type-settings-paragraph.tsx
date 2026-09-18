@@ -1,8 +1,9 @@
-import { type ReactNode } from 'react'
+import { type ReactNode, useEffect } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { RadioChangeEvent } from 'antd'
+import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import type {
   ProgramRegistrationScheduleDetailKind,
   ProgramRegistrationSessionRoundType,
@@ -16,6 +17,11 @@ import {
 import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { TYPE_SETTINGS_PER_SCHEDULE_HINT } from '@/features/template/ui/form-set/registration-form/shared/type-settings-copy'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
+
+const EMPTY_IPS_TYPE: ProgramRegistrationIpsTypeValue = {
+  category: '',
+  detail: '',
+}
 
 type TrainedTeachersRegistrationTypeSettingsParagraphProps = {
   programType: ProgramRegistrationType
@@ -96,13 +102,26 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
   )
   const [ipsType, setIpsType] = useProgramRegistrationOverlayKv<ProgramRegistrationIpsTypeValue>(
     'trainedTeachersRegistration.typeSettings.ipsType',
-    {
-      category: '',
-      detail: '',
-    }
+    EMPTY_IPS_TYPE
   )
 
   const educationFormOptions = getProgramRegistrationEducationFormOptions(true)
+
+  /** 일반과 동일 — 교육 형태 「참여자 선택」일 때만 신청 폼 「희망 교육 형태」 노출 */
+  useEffect(() => {
+    if (sessionRoundType === 'multi' && educationFormScheduleDetail === 'perSchedule') {
+      return
+    }
+    const form = sessionRoundType === 'multi' ? multiCommonEducationForm : educationForm
+    patchInstitutionApplicationProgramBridge({
+      showPreferredEducationForm: form === 'participant_selection',
+    })
+  }, [
+    sessionRoundType,
+    educationFormScheduleDetail,
+    educationForm,
+    multiCommonEducationForm,
+  ])
 
   return (
     <>

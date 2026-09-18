@@ -301,7 +301,7 @@ describe('general-applications-adapters', () => {
       {
         id: 55,
         programId: 5001,
-        affiliationOrganizationId: null,
+        affiliationOrganizationId: undefined,
         memberName: '김봉사',
         documentStatus: 'PASS',
         interviewStatus: 'ASSIGNED',
@@ -320,7 +320,7 @@ describe('general-applications-adapters', () => {
     )
 
     expect(row.id).toBe('55')
-    expect(row.affiliationOrganizationId).toBeNull()
+    expect(row.affiliationOrganizationId).toBeUndefined()
     expect(row.name).toBe('김봉사')
     expect(row.documentScreeningStatus).toBe('pass')
     expect(row.interviewAssignmentStatus).toBe('assigned')
