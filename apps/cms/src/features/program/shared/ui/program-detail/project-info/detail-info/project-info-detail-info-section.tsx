@@ -44,8 +44,6 @@ const ATTACHMENT_GUIDE_LINES = [
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
-const PLACEHOLDER_ADDITIONAL_IMAGE =
-  'https://via.placeholder.com/600x200/f0f0f0/999?text=추가+내용+이미지'
 const FALLBACK_ADDITIONAL_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='200' viewBox='0 0 600 200'%3E%3Crect fill='%23f5f5f5' width='600' height='200'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='14'%3E추가 내용 이미지%3C/text%3E%3C/svg%3E"
 
@@ -328,15 +326,17 @@ function AdditionalContentRow({
           '-'
         ) : (
           <div className="program-detail-info-tab__additional-content">
-            <div className="program-detail-info-tab__additional-image-wrap">
-              <Image
-                src={program.keyVisualImage || program.posterImage || PLACEHOLDER_ADDITIONAL_IMAGE}
-                alt="추가 내용"
-                className="program-detail-info-tab__additional-image"
-                preview={{ mask: '확대 보기' }}
-                fallback={FALLBACK_ADDITIONAL_SVG}
-              />
-            </div>
+            {program.keyVisualImage || program.posterImage ? (
+              <div className="program-detail-info-tab__additional-image-wrap">
+                <Image
+                  src={program.keyVisualImage || program.posterImage}
+                  alt="추가 내용"
+                  className="program-detail-info-tab__additional-image"
+                  preview={{ mask: '확대 보기' }}
+                  fallback={FALLBACK_ADDITIONAL_SVG}
+                />
+              </div>
+            ) : null}
             <RichTextViewer
               content={resolveAdditionalContentHtml(program, emptyReadDisplay)}
               contentFormat="html"

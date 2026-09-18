@@ -39,7 +39,6 @@ import {
   MypageInquiriesPage,
   MypageEducationPage,
   MypageEducationDetailPage,
-  MypageEducationGuidanceEditPage,
   MypageEducationSettlementConfirmPage,
   MypageEducationSettlementWritePage,
   MypageVolunteerPage,
@@ -236,10 +235,6 @@ export const router = createBrowserRouter([
       {
         path: '/mypage/education/:applicationId/settlement/confirm',
         element: <MypageEducationSettlementConfirmPage />,
-      },
-      {
-        path: '/mypage/education/:applicationId/guidance/edit',
-        element: <MypageEducationGuidanceEditPage />,
       },
       { path: '/design-system', element: <DesignSystemPage /> },
     ],

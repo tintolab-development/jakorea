@@ -14,6 +14,7 @@ import {
   getApplicantRecruitInstitutionOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import { buildVolunteerInterviewOverlayKey } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import {
   buildRecurringUnavailableLabel,
@@ -105,11 +106,34 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
   },
 } as const
 
+/** 1사1교·교육받은교사·Gemini·UJAT 등록 폼 — participant detailInfo prefix 별칭 */
+const PARTICIPANT_DETAIL_INFO_PREFIX_ALIASES = [
+  'economyRecruit.detailInfo',
+  'trainedTeachersRecruit.detailInfo',
+  'geminiRecruit.detailInfo',
+  'ujatRecruit.detailInfo',
+] as const
+
 function overlayString(overlay: Record<string, unknown>, key: string): string | undefined {
   const v = overlay[key]
   if (typeof v !== 'string') return undefined
   const trimmed = v.trim()
   return trimmed ? trimmed : undefined
+}
+
+/** 참여자(기관) 상세 필드 — canonical `recruit.detailInfo.*` + 유형별 prefix */
+function overlayParticipantDetailString(
+  overlay: Record<string, unknown>,
+  suffix: string,
+  canonicalKey: string
+): string | undefined {
+  const primary = overlayString(overlay, canonicalKey)
+  if (primary) return primary
+  for (const prefix of PARTICIPANT_DETAIL_INFO_PREFIX_ALIASES) {
+    const aliased = overlayString(overlay, `${prefix}.${suffix}`)
+    if (aliased) return aliased
+  }
+  return undefined
 }
 
 function overlayStringArray(overlay: Record<string, unknown>, key: string): string[] | undefined {
@@ -203,6 +227,54 @@ function overlayYesNoBool(
   if (raw === 'no') return false
   if (typeof raw === 'boolean') return raw
   return undefined
+}
+
+/** 기관 모집 — `need` / `none` → boolean */
+function overlayNeedNoneBool(
+  overlay: Record<string, unknown>,
+  key: string
+): boolean | undefined {
+  const raw = overlay[key]
+  if (raw === 'need') return true
+  if (raw === 'none') return false
+  if (typeof raw === 'boolean') return raw
+  return undefined
+}
+
+function overlayStudentListRequired(
+  overlay: Record<string, unknown>,
+  key: string
+): 'required' | 'not_required' | undefined {
+  const raw = overlay[key]
+  if (raw === 'need' || raw === 'required') return 'required'
+  if (raw === 'none' || raw === 'not_required') return 'not_required'
+  return undefined
+}
+
+function overlayFiniteNumber(
+  overlay: Record<string, unknown>,
+  key: string
+): number | undefined {
+  const raw = overlay[key]
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+  if (typeof raw === 'string' && raw.trim()) {
+    const n = Number(raw)
+    if (Number.isFinite(n)) return n
+  }
+  return undefined
+}
+
+function coalesceNumber(
+  programVal: number | undefined,
+  overlayVal: number | undefined,
+  preferOverlay: boolean
+): number | undefined {
+  if (preferOverlay) {
+    if (overlayVal !== undefined) return overlayVal
+    return programVal
+  }
+  if (programVal !== undefined) return programVal
+  return overlayVal
 }
 
 function formatFinalAnnouncementLabel(
@@ -357,28 +429,62 @@ export function applyGeneralRecruitOverlayToProgram(
 
   const description = coalesceString(
     program.description,
-    overlayString(overlay, keys.detailInfo.participantDescription) ??
+    overlayParticipantDetailString(
+      overlay,
+      'programDescription',
+      keys.detailInfo.participantDescription
+    ) ??
       overlayString(overlay, keys.detailInfo.instructorDescription) ??
       overlayString(overlay, keys.detailInfo.volunteerDescription),
     preferOverlay
   )
   const recruitmentGuide = coalesceString(
     program.recruitmentGuide,
-    overlayString(overlay, keys.detailInfo.participantGuide) ??
+    overlayParticipantDetailString(
+      overlay,
+      'recruitmentGuide',
+      keys.detailInfo.participantGuide
+    ) ??
       overlayString(overlay, keys.detailInfo.instructorGuide) ??
       overlayString(overlay, keys.detailInfo.volunteerGuide),
     preferOverlay
   )
   const applicationMethod = coalesceString(
     program.applicationMethod,
-    overlayString(overlay, keys.detailInfo.participantMethod) ??
+    overlayParticipantDetailString(
+      overlay,
+      'applicationMethod',
+      keys.detailInfo.participantMethod
+    ) ??
       overlayString(overlay, keys.detailInfo.instructorMethod) ??
       overlayString(overlay, keys.detailInfo.volunteerMethod),
     preferOverlay
   )
+  const learningSupportContent = coalesceString(
+    program.learningSupportContent,
+    overlayParticipantDetailString(
+      overlay,
+      'learningSupportContent',
+      keys.detailInfo.participantLearningSupport
+    ) ??
+      overlayString(overlay, keys.detailInfo.instructorLearningSupport) ??
+      overlayString(overlay, keys.detailInfo.volunteerLearningSupport),
+    preferOverlay
+  )
+  const additionalContentHtml = coalesceString(
+    program.additionalContentHtml,
+    overlayParticipantDetailString(
+      overlay,
+      'additionalContentHtml',
+      keys.detailInfo.participantAdditionalHtml
+    ) ??
+      overlayString(overlay, keys.detailInfo.instructorAdditionalHtml) ??
+      overlayString(overlay, keys.detailInfo.volunteerAdditionalHtml),
+    preferOverlay
+  )
   const otherNotes = coalesceString(
     program.otherNotes,
-    overlayString(overlay, keys.detailInfo.participantOtherNotes) ??
+    overlayParticipantDetailString(overlay, 'otherNotes', keys.detailInfo.participantOtherNotes) ??
       overlayString(overlay, keys.detailInfo.instructorOtherNotes) ??
       overlayString(overlay, keys.detailInfo.volunteerOtherNotes) ??
       overlayString(overlay, keys.instructor.notes) ??
@@ -472,11 +578,23 @@ export function applyGeneralRecruitOverlayToProgram(
       preferOverlay
     )
   }
-  const participantDescription = overlayString(overlay, keys.detailInfo.participantDescription)
-  const participantGuide = overlayString(overlay, keys.detailInfo.participantGuide)
-  const participantMethod = overlayString(overlay, keys.detailInfo.participantMethod)
+  const participantDescription = overlayParticipantDetailString(
+    overlay,
+    'programDescription',
+    keys.detailInfo.participantDescription
+  )
+  const participantGuide = overlayParticipantDetailString(
+    overlay,
+    'recruitmentGuide',
+    keys.detailInfo.participantGuide
+  )
+  const participantMethod = overlayParticipantDetailString(
+    overlay,
+    'applicationMethod',
+    keys.detailInfo.participantMethod
+  )
   const participantRemarks =
-    overlayString(overlay, keys.detailInfo.participantOtherNotes) ??
+    overlayParticipantDetailString(overlay, 'otherNotes', keys.detailInfo.participantOtherNotes) ??
     overlayString(overlay, keys.individual.notes) ??
     overlayString(overlay, inst.notes)
   if (participantDescription) {
@@ -500,8 +618,16 @@ export function applyGeneralRecruitOverlayToProgram(
       preferOverlay
     )
   }
-  const participantLearning = overlayString(overlay, keys.detailInfo.participantLearningSupport)
-  const participantAdditional = overlayString(overlay, keys.detailInfo.participantAdditionalHtml)
+  const participantLearning = overlayParticipantDetailString(
+    overlay,
+    'learningSupportContent',
+    keys.detailInfo.participantLearningSupport
+  )
+  const participantAdditional = overlayParticipantDetailString(
+    overlay,
+    'additionalContentHtml',
+    keys.detailInfo.participantAdditionalHtml
+  )
   if (participantLearning) {
     participantInfo.learningSupportContent = coalesceString(
       participantInfo.learningSupportContent,
@@ -518,6 +644,118 @@ export function applyGeneralRecruitOverlayToProgram(
   }
   if (participantRemarks) {
     participantInfo.remarks = coalesceString(participantInfo.remarks, participantRemarks, preferOverlay)
+  }
+
+  // ── 기관 모집 전용 (공고·사전안내·명단·상한·최종발표) ──────────────
+  const institutionAnnouncementPublished =
+    overlayAnnouncementPublished(overlay, inst.announcementPublished) ??
+    (participantRecruitRange || participantContact ? true : undefined)
+  const institutionPreguidance = overlayNeedNoneBool(overlay, inst.preguidanceRequired)
+  const institutionStudentList = overlayStudentListRequired(overlay, inst.studentListRequired)
+  const institutionCertificateRaw = overlayString(overlay, inst.certificateProvided)
+  const institutionCertificate =
+    institutionCertificateRaw === 'provided' || institutionCertificateRaw === 'yes'
+      ? true
+      : institutionCertificateRaw === 'not_provided' ||
+          institutionCertificateRaw === 'none' ||
+          institutionCertificateRaw === 'no'
+        ? false
+        : undefined
+  const institutionFinalAnnounceIso = overlayString(overlay, inst.finalAnnounceIso)
+  const institutionFinalAnnounceMethod = overlayString(overlay, inst.finalAnnounceMethod)
+  const institutionFinalAnnouncementLabel = formatFinalAnnouncementLabel(
+    institutionFinalAnnounceIso,
+    institutionFinalAnnounceMethod
+  )
+  const institutionMaxInstructors = overlayFiniteNumber(overlay, inst.maxAssignableInstructors)
+  const institutionMaxClassCount = overlayFiniteNumber(overlay, inst.maxClassCount)
+  const institutionMaxScheduleCount = overlayFiniteNumber(overlay, inst.maxScheduleCount)
+  const institutionMaxSessionsPerDay = overlayFiniteNumber(overlay, inst.maxSessionsPerDay)
+
+  if (institutionAnnouncementPublished !== undefined) {
+    const nextPublished = coalesceBool(
+      participantInfo.announcementPublished,
+      institutionAnnouncementPublished,
+      preferOverlay
+    )
+    if (nextPublished !== undefined) {
+      participantInfo.announcementPublished = nextPublished
+      participantInfo.announcementPublishedLabel = nextPublished ? '게시' : '미게시'
+    }
+  }
+  if (institutionPreguidance !== undefined) {
+    const nextPreguidance = coalesceBool(
+      participantInfo.preEducationNoticeRequired ?? participantInfo.advanceGuidanceRequired,
+      institutionPreguidance,
+      preferOverlay
+    )
+    if (nextPreguidance !== undefined) {
+      participantInfo.preEducationNoticeRequired = nextPreguidance
+      participantInfo.advanceGuidanceRequired = nextPreguidance
+      participantInfo.preEducationNoticeRequiredLabel = nextPreguidance ? '작성' : '해당없음'
+      participantInfo.advanceGuidanceRequiredLabel = nextPreguidance ? '작성' : '해당없음'
+    }
+  }
+  if (institutionStudentList !== undefined) {
+    if (preferOverlay || participantInfo.studentListRequired == null) {
+      participantInfo.studentListRequired = institutionStudentList
+      participantInfo.studentListRequiredLabel =
+        institutionStudentList === 'required' ? '제출 필요' : '제출 불필요'
+    }
+  }
+  if (institutionCertificate !== undefined) {
+    const nextCert = coalesceBool(
+      participantInfo.certificateIssuanceProvided,
+      institutionCertificate,
+      preferOverlay
+    )
+    if (nextCert !== undefined) {
+      participantInfo.certificateIssuanceProvided = nextCert
+    }
+  }
+  if (institutionMaxInstructors !== undefined) {
+    participantInfo.maxAssignableInstructors = coalesceNumber(
+      participantInfo.maxAssignableInstructors,
+      institutionMaxInstructors,
+      preferOverlay
+    )
+  }
+  if (institutionMaxClassCount !== undefined) {
+    participantInfo.maxClassCount = coalesceNumber(
+      participantInfo.maxClassCount,
+      institutionMaxClassCount,
+      preferOverlay
+    )
+  }
+  if (institutionMaxScheduleCount !== undefined) {
+    participantInfo.maxScheduleCount = coalesceNumber(
+      participantInfo.maxScheduleCount,
+      institutionMaxScheduleCount,
+      preferOverlay
+    )
+  }
+  if (institutionMaxSessionsPerDay !== undefined) {
+    participantInfo.maxSessionsPerDay = coalesceNumber(
+      participantInfo.maxSessionsPerDay,
+      institutionMaxSessionsPerDay,
+      preferOverlay
+    )
+  }
+  if (institutionFinalAnnouncementLabel) {
+    const nextFinal = coalesceString(
+      participantInfo.finalAnnouncementLabel ?? participantInfo.resultAnnouncementLabel,
+      institutionFinalAnnouncementLabel,
+      preferOverlay
+    )
+    if (nextFinal) {
+      participantInfo.finalAnnouncementLabel = nextFinal
+      participantInfo.resultAnnouncementLabel = nextFinal
+    }
+  }
+  if (overlay[inst.notesNotApplicable] === true) {
+    participantInfo.notesNotApplicable = true
+  } else if (overlay[inst.notesNotApplicable] === false && preferOverlay) {
+    participantInfo.notesNotApplicable = false
   }
 
   const instructorTargetLabel =
@@ -721,10 +959,6 @@ export function applyGeneralRecruitOverlayToProgram(
     volunteerInfo.notesNotApplicable = false
   }
 
-  const volunteerAnnouncementPublished = overlayAnnouncementPublished(
-    overlay,
-    keys.volunteer.announcementPublished
-  )
   const volunteerInterviewEnabled = overlayYesNoBool(overlay, keys.volunteer.interviewRequired)
   const volunteerDocDeadlineIso = overlayString(overlay, keys.volunteer.docDeadlineIso)
   const volunteerDocAnnounceMethod = overlayString(overlay, keys.volunteer.docAnnounceMethod)
@@ -736,6 +970,15 @@ export function applyGeneralRecruitOverlayToProgram(
     volunteerFinalAnnounceIso,
     volunteerFinalAnnounceMethod
   )
+  const volunteerAnnouncementPublished =
+    overlayAnnouncementPublished(overlay, keys.volunteer.announcementPublished) ??
+    // UI 기본값 `published` — 라디오를 안 건드리면 overlay 미기록
+    (volunteerInterviewEnabled !== undefined ||
+    volunteerFinalAnnouncementLabel ||
+    volunteerTargets?.length ||
+    volunteerContact
+      ? true
+      : undefined)
   const volunteerInterviewScheduleFromOverlay =
     volunteerInterviewEnabled === false
       ? undefined
@@ -774,6 +1017,65 @@ export function applyGeneralRecruitOverlayToProgram(
       volunteerInfo.finalAnnouncementLabel = nextFinal
       volunteerInfo.resultAnnouncementLabel = nextFinal
     }
+  }
+
+  // 서류·면접·최종 — nested에도 저장 (serviceDetailJson round-trip / 상세 표시 SSOT)
+  if (volunteerDocDeadlineIso) {
+    volunteerInfo.documentPassAnnouncementDate = coalesceString(
+      typeof volunteerInfo.documentPassAnnouncementDate === 'string'
+        ? volunteerInfo.documentPassAnnouncementDate
+        : undefined,
+      volunteerDocDeadlineIso,
+      preferOverlay
+    )
+  }
+  if (volunteerDocAnnounceMethod) {
+    volunteerInfo.documentPassAnnouncementMethod = coalesceString(
+      volunteerInfo.documentPassAnnouncementMethod,
+      volunteerDocAnnounceMethod,
+      preferOverlay
+    )
+  }
+  if (volunteerInterviewRange?.start) {
+    volunteerInfo.interviewStartDate = coalesceString(
+      typeof volunteerInfo.interviewStartDate === 'string'
+        ? volunteerInfo.interviewStartDate
+        : undefined,
+      volunteerInterviewRange.start,
+      preferOverlay
+    )
+  }
+  if (volunteerInterviewRange?.end) {
+    volunteerInfo.interviewEndDate = coalesceString(
+      typeof volunteerInfo.interviewEndDate === 'string'
+        ? volunteerInfo.interviewEndDate
+        : undefined,
+      volunteerInterviewRange.end,
+      preferOverlay
+    )
+  }
+  if (volunteerInterviewMethod) {
+    volunteerInfo.interviewMethod = coalesceString(
+      volunteerInfo.interviewMethod,
+      volunteerInterviewMethod,
+      preferOverlay
+    )
+  }
+  if (volunteerFinalAnnounceIso) {
+    volunteerInfo.finalPassAnnouncementDate = coalesceString(
+      typeof volunteerInfo.finalPassAnnouncementDate === 'string'
+        ? volunteerInfo.finalPassAnnouncementDate
+        : undefined,
+      volunteerFinalAnnounceIso,
+      preferOverlay
+    )
+  }
+  if (volunteerFinalAnnounceMethod) {
+    volunteerInfo.finalPassAnnouncementMethod = coalesceString(
+      volunteerInfo.finalPassAnnouncementMethod,
+      volunteerFinalAnnounceMethod,
+      preferOverlay
+    )
   }
 
   const nextVolunteerInterviewSchedule =
@@ -818,6 +1120,8 @@ export function applyGeneralRecruitOverlayToProgram(
     description: description ?? program.description,
     recruitmentGuide: recruitmentGuide ?? program.recruitmentGuide,
     applicationMethod: applicationMethod ?? program.applicationMethod,
+    learningSupportContent: learningSupportContent ?? program.learningSupportContent,
+    additionalContentHtml: additionalContentHtml ?? program.additionalContentHtml,
     otherNotes: otherNotes ?? program.otherNotes,
     oneLineIntroduction: coalesceString(
       program.oneLineIntroduction,
@@ -887,6 +1191,21 @@ export function applyGeneralRecruitOverlayToProgram(
       ) ?? program.endDate,
     contactPhone: contactPhone ?? program.contactPhone,
     contactEmail: contactEmail ?? program.contactEmail,
+    studentListRequired: coalesceString(
+      program.studentListRequired,
+      institutionStudentList,
+      preferOverlay
+    ) as Program['studentListRequired'],
+    resultAnnouncementDate: coalesceIso(
+      program.resultAnnouncementDate,
+      institutionFinalAnnounceIso ?? volunteerFinalAnnounceIso,
+      preferOverlay
+    ),
+    resultAnnouncementMethod: coalesceString(
+      program.resultAnnouncementMethod,
+      institutionFinalAnnounceMethod ?? volunteerFinalAnnounceMethod,
+      preferOverlay
+    ),
     documentPassAnnouncementDate: coalesceIso(
       program.documentPassAnnouncementDate,
       volunteerDocDeadlineIso,
@@ -944,6 +1263,7 @@ export function resolveGeneralRecruitDisplayProgram(
   program: Program,
   options?: ApplyGeneralRecruitOverlayOptions
 ): Program {
+  flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
   const overlay = {
     ...getApplicantRecruitInstitutionOverlayRecord(),
     ...getGeneralRecruitOverlayRecord(),

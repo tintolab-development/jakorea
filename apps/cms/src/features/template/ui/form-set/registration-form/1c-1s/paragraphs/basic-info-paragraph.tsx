@@ -135,6 +135,10 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     'economyRegistration.basicInfo.managerContactId',
     ALL_VALUE
   )
+  const [managerContactIds, setManagerContactIds] = useProgramRegistrationOverlayKv<string[]>(
+    'economyRegistration.basicInfo.managerContactIds',
+    []
+  )
   const [detailedProgramId, setDetailedProgramId] = useProgramRegistrationOverlayKv<string>(
     'economyRegistration.basicInfo.detailedProgramId',
     DETAILED_PROGRAM_MAIN_VALUE
@@ -179,6 +183,21 @@ export function OneCOneSRegistrationBasicInfoParagraph({
       label: c.name,
     }))
   }, [contactsQuery.data, sponsorId])
+
+  const selectedManagerContactIds = useMemo(() => {
+    if (Array.isArray(managerContactIds) && managerContactIds.length > 0) {
+      return [...new Set(managerContactIds.map(String).map(id => id.trim()).filter(Boolean))]
+    }
+    if (managerContactId && managerContactId !== ALL_VALUE) return [managerContactId]
+    if (managerContactId === ALL_VALUE && sponsorId === ALL_VALUE) return [ALL_VALUE]
+    return []
+  }, [managerContactId, managerContactIds, sponsorId])
+
+  const applyManagerContactIds = (next: string[]) => {
+    const unique = [...new Set(next.map(String).map(id => id.trim()).filter(Boolean))]
+    setManagerContactIds(unique)
+    setManagerContactId(unique[0] ?? (sponsorId === ALL_VALUE ? ALL_VALUE : ''))
+  }
 
   const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
 
@@ -355,7 +374,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   onChange={v => {
                     const next = String(v ?? '')
                     setSponsorId(next)
-                    setManagerContactId(next === ALL_VALUE ? ALL_VALUE : '')
+                    applyManagerContactIds(next === ALL_VALUE ? [ALL_VALUE] : [])
                   }}
                 />
               </div>
@@ -367,14 +386,20 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
+                  mode="multiple"
                   withAllOption={false}
                   inputSize="medium"
                   placeholder="후원사 담당자를 선택하세요"
                   width={240}
+                  showSearch
+                  optionFilterProp="label"
                   options={managerOptions}
-                  value={managerContactId}
+                  value={selectedManagerContactIds}
                   disabled={sponsorId !== ALL_VALUE && managerOptions.length === 0}
-                  onChange={v => setManagerContactId(String(v ?? ''))}
+                  onChange={v => {
+                    const next = Array.isArray(v) ? v.map(String) : []
+                    applyManagerContactIds(next)
+                  }}
                 />
               </div>
             }

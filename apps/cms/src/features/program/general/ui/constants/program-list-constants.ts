@@ -180,6 +180,7 @@ export const programListTargetLevelOptions = [
   { value: 'elementary', label: '초등학생' },
   { value: 'middle', label: '중학생' },
   { value: 'high', label: '고등학생' },
+  { value: 'university', label: '대학생' },
   { value: 'college', label: '대학생' },
   { value: 'adult', label: '성인' },
 ]
@@ -193,6 +194,8 @@ export function getProgramListTargetLevelLabel(value: string | undefined): strin
     초: '초등학생',
     중: '중학생',
     고: '고등학생',
+    university: '대학생',
+    college: '대학생',
   }
   return legacyShort[value] ?? value
 }

@@ -45,9 +45,10 @@ const WIDTH_PARTICIPATION_COUNT = 160
 
 function participantCountRender(_: unknown, record: Program) {
   const cap = getCapacity(record)
-  const approved = record.approvedStudentCount ?? 0
-  if (cap !== undefined) return `${approved} / ${cap}`
-  return `${approved}`
+  const approved = record.approvedStudentCount
+  if (cap == null && approved == null) return '-'
+  if (cap != null) return `${approved ?? 0} / ${cap}`
+  return `${approved ?? 0}`
 }
 
 function instructorRecruitRender(_: unknown, record: Program) {

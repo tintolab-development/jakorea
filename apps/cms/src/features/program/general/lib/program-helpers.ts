@@ -148,7 +148,9 @@ export function getCapacity(program: Program, roundId?: string): number | undefi
   const totalCapacity = program.rounds.reduce((sum, round) => {
     return sum + (round.capacity || 0)
   }, 0)
-  return totalCapacity > 0 ? totalCapacity : undefined
+  if (totalCapacity > 0) return totalCapacity
+  // 목록 API — rounds 없이 탑레벨 모집 정원만 오는 경우
+  return program.participantCapacity
 }
 
 /**

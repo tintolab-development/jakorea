@@ -15,6 +15,9 @@ export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY =
   'generalRegistration.basicInfo.localSponsorIds' as const
 export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY =
   'generalRegistration.basicInfo.localManagerContactId' as const
+/** 후원사 담당자 ref 다중 선택 (`sponsorManagementId::contactId`) */
+export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY =
+  'generalRegistration.basicInfo.localManagerContactIds' as const
 /** 후원사 담당자 표시 문구 (`직책 이름 | 연락처`) — create/상세 조회용 */
 export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY =
   'generalRegistration.basicInfo.sponsorManagerLine' as const
@@ -52,7 +55,17 @@ export function readGeneralRegistrationOverlaySponsorIds(): string[] {
 }
 
 export function readGeneralRegistrationOverlaySponsorContactId(): string {
-  return readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+  const ids = readGeneralRegistrationOverlaySponsorContactIds()
+  return ids[0] ?? readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+}
+
+export function readGeneralRegistrationOverlaySponsorContactIds(): string[] {
+  const raw = overlayState[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]
+  if (Array.isArray(raw)) {
+    return [...new Set(raw.map(String).map(id => id.trim()).filter(Boolean))]
+  }
+  const primary = readOverlayString(GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+  return primary ? [primary] : []
 }
 
 export function readGeneralRegistrationOverlayProgramTitleKo(): string {
@@ -63,6 +76,8 @@ const TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_ID_KEY =
   'trainedTeachersRegistration.basicInfo.sponsorId' as const
 const TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY =
   'trainedTeachersRegistration.basicInfo.managerContactId' as const
+const TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY =
+  'trainedTeachersRegistration.basicInfo.managerContactIds' as const
 const TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY =
   'trainedTeachersRegistration.basicInfo.programTitleKo' as const
 
@@ -72,8 +87,27 @@ export function readTrainedTeachersRegistrationOverlaySponsorId(): string {
 }
 
 export function readTrainedTeachersRegistrationOverlaySponsorContactId(): string {
+  const ids = readTrainedTeachersRegistrationOverlaySponsorContactIds()
+  if (ids[0]) return ids[0]
   const raw = readOverlayString(TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
   return raw === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE ? '' : raw
+}
+
+export function readTrainedTeachersRegistrationOverlaySponsorContactIds(): string[] {
+  const raw = overlayState[TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY]
+  if (Array.isArray(raw)) {
+    return [
+      ...new Set(
+        raw
+          .map(String)
+          .map(id => id.trim())
+          .filter(id => id && id !== TRAINED_TEACHERS_REGISTRATION_ALL_VALUE)
+      ),
+    ]
+  }
+  const primary = readOverlayString(TRAINED_TEACHERS_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+  if (!primary || primary === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE) return []
+  return [primary]
 }
 
 export function readTrainedTeachersRegistrationOverlayProgramTitleKo(): string {
@@ -96,6 +130,15 @@ export function readRegistrationOverlaySponsorContactId(
     return readTrainedTeachersRegistrationOverlaySponsorContactId()
   }
   return readGeneralRegistrationOverlaySponsorContactId()
+}
+
+export function readRegistrationOverlaySponsorContactIds(
+  variant: ProgramRegistrationFormVariant = 'general'
+): string[] {
+  if (variant === 'trainedTeachers') {
+    return readTrainedTeachersRegistrationOverlaySponsorContactIds()
+  }
+  return readGeneralRegistrationOverlaySponsorContactIds()
 }
 
 export function readRegistrationOverlayProgramTitleKo(

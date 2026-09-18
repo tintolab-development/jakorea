@@ -47,6 +47,23 @@ export interface AdminProgramListItemDto {
   approvedOrganizationApplicationCount?: number
   instructorApplicantCount?: number
   applicantCount?: number
+  /** 교육 대상 — enum 또는 한글 라벨 */
+  targetLevel?: string
+  targetLevels?: string[]
+  /** 참여자 모집 정원 (BE: `participantRecruitmentCount` 또는 handoff `participantCapacity`) */
+  participantRecruitmentCount?: number | null
+  participantCapacity?: number | null
+  participantApprovedCount?: number | null
+  instructorRecruitmentCount?: number | null
+  instructorCapacity?: number | null
+  instructorApprovedCount?: number | null
+  volunteerRecruitmentCount?: number | null
+  volunteerCapacity?: number | null
+  volunteerApprovedCount?: number | null
+  /** 총 참여 학교/기관 수 */
+  participatingOrganizationCount?: number | null
+  participatingSchoolCount?: number | null
+  participatingStudentCount?: number | null
   createdAt?: string
   updatedAt?: string
 }

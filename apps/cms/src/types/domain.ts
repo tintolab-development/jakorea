@@ -288,6 +288,16 @@ export interface GeneralProgramVolunteerRecruitmentInfo {
   recruitmentPeriodLabel?: string
   finalAnnouncementLabel?: string
   resultAnnouncementLabel?: string
+  /** 서류 합격자 발표 (ISO / 방법) — serviceDetailJson nested SSOT */
+  documentPassAnnouncementDate?: string
+  documentPassAnnouncementMethod?: string
+  /** 2차 면접 기간·방법 */
+  interviewStartDate?: string
+  interviewEndDate?: string
+  interviewMethod?: string
+  /** 최종 합격자 발표 날짜·방법 (라벨과 별도) */
+  finalPassAnnouncementDate?: string
+  finalPassAnnouncementMethod?: string
   contactOrganizationName?: string
   inquiryTel?: string
   inquiryEmail?: string
@@ -461,6 +471,8 @@ export interface Program {
   studentListRequired?: 'required' | 'not_required'
   /** 승인된 수강자 수 (표시: approvedStudentCount / capacity 건) */
   approvedStudentCount?: number
+  /** 참여자 모집 정원 — 목록 API `participantRecruitmentCount` / `participantCapacity` (`rounds` 비어 있을 때) */
+  participantCapacity?: number
   /** 강사 모집 정원 (표시: instructors / instructorCapacity 건) */
   instructorCapacity?: number
   /** 총 참여 학교 수 (경제 교육 진행 중 목록 등) */

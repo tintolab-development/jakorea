@@ -8,9 +8,25 @@ import { createApplicantRecruitFormInstitutionDraft } from '@/features/template/
 import { createProgramApplicationFormInstitutionDraft } from '@/features/template/model/program-application-form-institution-draft'
 import {
   clearRegistrationOperationalFormDrafts,
+  hydrateRegistrationOperationalOverlaysFromLocalDrafts,
   listRegistrationOperationalFormDraftStorageKeys,
+  persistRegistrationOperationalOverlaySnapshots,
   resolveRegistrationOperationalDraftStorageKey,
 } from './registration-operational-form-drafts'
+import {
+  getApplicantRecruitInstitutionOverlayRecord,
+  resetApplicantRecruitInstitutionOverlay,
+} from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import {
+  getGeneralRecruitOverlayRecord,
+  patchGeneralRecruitOverlay,
+  resetGeneralRecruitOverlay,
+} from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import {
+  getGeneralApplicationOverlayRecord,
+  patchGeneralApplicationOverlay,
+  resetGeneralApplicationOverlay,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 
 describe('clearRegistrationOperationalFormDrafts', () => {
   beforeEach(() => {
@@ -91,9 +107,13 @@ describe('clearRegistrationOperationalFormDrafts', () => {
     expect(loadWritingFormTemplateSave('recruitment-instructor')).not.toBeNull()
   })
 
-  it('trainedTeachers clear removes only its application draft', () => {
+  it('trainedTeachers clear removes only its recruit/application drafts', () => {
     persistWritingFormTemplateSave({
       templateId: 'application-trained-teachers',
+      draft: createProgramApplicationFormInstitutionDraft(),
+    })
+    persistWritingFormTemplateSave({
+      templateId: 'recruitment-trained-teachers',
       draft: createProgramApplicationFormInstitutionDraft(),
     })
     persistWritingFormTemplateSave({
@@ -108,6 +128,7 @@ describe('clearRegistrationOperationalFormDrafts', () => {
     clearRegistrationOperationalFormDrafts('trainedTeachers')
 
     expect(loadWritingFormTemplateSave('application-trained-teachers')).toBeNull()
+    expect(loadWritingFormTemplateSave('recruitment-trained-teachers')).toBeNull()
     expect(loadWritingFormTemplateSave('application-economy')).not.toBeNull()
     expect(loadWritingFormTemplateSave('application-participant-school')).not.toBeNull()
   })
@@ -127,6 +148,53 @@ describe('clearRegistrationOperationalFormDrafts', () => {
     expect(economy).not.toContain('recruitment-participant-school')
 
     const trained = listRegistrationOperationalFormDraftStorageKeys('trainedTeachers')
-    expect(trained).toEqual(['application-trained-teachers'])
+    expect(trained).toEqual(['recruitment-trained-teachers', 'application-trained-teachers'])
+  })
+})
+
+describe('registration operational overlay hydrate/persist', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    resetApplicantRecruitInstitutionOverlay()
+    resetGeneralRecruitOverlay()
+    resetGeneralApplicationOverlay()
+  })
+
+  it('hydrates recruit and application overlays from local drafts on continue', () => {
+    persistWritingFormTemplateSave({
+      templateId: 'recruitment-participant-school',
+      draft: createApplicantRecruitFormInstitutionDraft(),
+      overlay: { 'recruit.inquiryContact': '기관문의' },
+    })
+    persistWritingFormTemplateSave({
+      templateId: 'recruitment-volunteer',
+      draft: createApplicantRecruitFormInstitutionDraft(),
+      overlay: { 'recruit.volunteer.inquiryContact': '봉사문의' },
+    })
+    persistWritingFormTemplateSave({
+      templateId: 'application-instructor',
+      draft: createProgramApplicationFormInstitutionDraft(),
+      overlay: { 'application.instructor.note': '강사신청' },
+    })
+
+    hydrateRegistrationOperationalOverlaysFromLocalDrafts('general')
+
+    expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.inquiryContact']).toBe(
+      '기관문의'
+    )
+    expect(getGeneralRecruitOverlayRecord()['recruit.volunteer.inquiryContact']).toBe('봉사문의')
+    expect(getGeneralApplicationOverlayRecord()['application.instructor.note']).toBe('강사신청')
+  })
+
+  it('persists in-memory overlays into operational draft keys', () => {
+    patchGeneralRecruitOverlay({ 'recruit.instructor.inquiryContact': '강사문의' })
+    patchGeneralApplicationOverlay({ 'application.volunteer.essay': '지원동기' })
+
+    persistRegistrationOperationalOverlaySnapshots('general')
+
+    const instructor = loadWritingFormTemplateSave('recruitment-instructor')
+    expect(instructor?.overlay?.['recruit.instructor.inquiryContact']).toBe('강사문의')
+    const volunteerApp = loadWritingFormTemplateSave('application-volunteer')
+    expect(volunteerApp?.overlay?.['application.volunteer.essay']).toBe('지원동기')
   })
 })

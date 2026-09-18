@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import { RichTextEditor } from '@/shared/rich-text'
 import { ProgramThumbnailPlaceholder } from '@/features/program/shared/ui/program-thumbnail-placeholder'
@@ -7,6 +7,8 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import {
+  getGeneralRecruitOverlayRecord,
+  patchGeneralRecruitOverlay,
   useGeneralRecruitOverlayKv,
   updateGeneralRecruitOverlayKey,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
@@ -15,6 +17,10 @@ import {
   RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
   RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
+import {
+  recruitDetailAdditionalContentOverlayKey,
+  registerRecruitDetailAdditionalContentHtml,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import { resolveRecruitDetailTextFieldOverlayKey } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-text-field-keys'
 import {
   ADMIN_FILE_PURPOSE,
@@ -108,6 +114,11 @@ function RecruitDetailInfoTextFieldRows({
   )
 }
 
+function readOverlayAdditionalContentHtml(overlayKey: string): string {
+  const raw = getGeneralRecruitOverlayRecord()[overlayKey]
+  return typeof raw === 'string' ? raw : ''
+}
+
 export function RecruitDetailInfoParagraph({
   wysiwygResetKey,
   textFields,
@@ -120,6 +131,10 @@ export function RecruitDetailInfoParagraph({
   const thumbObjectUrlKey = `${overlayKeyPrefix}.thumbObjectUrl`
   const thumbFileNameKey = `${overlayKeyPrefix}.thumbFileName`
   const attachmentFileNamesKey = `${overlayKeyPrefix}.attachmentFileNames`
+  const additionalContentKey = recruitDetailAdditionalContentOverlayKey(overlayKeyPrefix)
+
+  // 마운트 시 overlay 스냅샷만 초기값 — flush로 overlay가 바뀌어도 에디터 remount 금지
+  const initialAdditionalHtmlRef = useRef(readOverlayAdditionalContentHtml(additionalContentKey))
 
   const [thumbObjectUrl, setThumbObjectUrl] = useGeneralRecruitOverlayKv<string | null>(
     thumbObjectUrlKey,
@@ -161,9 +176,30 @@ export function RecruitDetailInfoParagraph({
     [revokeThumb, thumbObjectUrl]
   )
 
-  const { editor, editorMinHeight } = useNoticeWysiwygEditor(true, '', wysiwygResetKey, {
-    placeholder: '내용을 작성하세요',
-  })
+  const { editor, editorMinHeight, getHTML } = useNoticeWysiwygEditor(
+    true,
+    initialAdditionalHtmlRef.current,
+    wysiwygResetKey,
+    {
+      placeholder: '내용을 작성하세요',
+      contentFormat: 'html',
+    }
+  )
+
+  const getHtmlRef = useRef(getHTML)
+  getHtmlRef.current = getHTML
+
+  useEffect(() => {
+    registerRecruitDetailAdditionalContentHtml(additionalContentKey, () => getHtmlRef.current())
+    return () => {
+      // 탭 전환 시에도 TipTap 본문을 overlay에 남겨 임시저장·등록에 포함
+      const html = getHtmlRef.current()
+      if (typeof html === 'string') {
+        patchGeneralRecruitOverlay({ [additionalContentKey]: html })
+      }
+      registerRecruitDetailAdditionalContentHtml(additionalContentKey, null)
+    }
+  }, [additionalContentKey])
 
   return (
     <div className="recruit-detail-info-paragraph__forms">
