@@ -95558,6 +95558,791 @@
             "type": "string"
           }
         }
+      },
+      "AllocationColumn": {
+        "type": "object",
+        "properties": {
+          "columnKey": {
+            "type": "string"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationName": {
+            "type": "string",
+            "nullable": true
+          },
+          "organizationRegion": {
+            "type": "string",
+            "nullable": true
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "classCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "AllocationCell": {
+        "type": "object",
+        "properties": {
+          "columnKey": {
+            "type": "string"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "assignmentGroupId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "attendanceManager": {
+            "type": "boolean"
+          },
+          "singleAssignment": {
+            "type": "boolean"
+          },
+          "unavailable": {
+            "type": "boolean"
+          },
+          "needsReassignment": {
+            "type": "boolean"
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "VolunteerRow": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "volunteerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "participantStatus": {
+            "type": "string",
+            "nullable": true
+          },
+          "giveUp": {
+            "type": "boolean"
+          },
+          "totalAssignedDays": {
+            "type": "integer"
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllocationCell"
+            }
+          }
+        }
+      },
+      "AllocationMatrixResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "semesterType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
+            "description": "요청 반기 필터 echo. 미지정 조회 시 null"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AllocationColumn"
+            }
+          },
+          "volunteers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VolunteerRow"
+            }
+          }
+        }
+      },
+      "DirectAssignmentCandidate": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "volunteerName": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalAssignedDays": {
+            "type": "integer"
+          },
+          "alreadyAssignedOnEducationDate": {
+            "type": "boolean"
+          },
+          "sourceAssignmentGroupId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "sourceEducationSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "sourceClassLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "sourcePartnerParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          }
+        }
+      },
+      "DirectAssignmentCandidatesResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "reallocationRequired": {
+            "type": "boolean"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DirectAssignmentCandidate"
+            }
+          }
+        }
+      },
+      "DirectAssignmentRequest": {
+        "type": "object",
+        "required": [
+          "participantId"
+        ],
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "UjatDgbongPartnerAssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "assignmentGroupId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "primaryParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "secondaryParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "attendanceManagerParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "cancelReason": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "DirectAssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "movedParticipantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "movedFromExistingPair": {
+            "type": "boolean"
+          },
+          "targetAssignment": {
+            "$ref": "#/components/schemas/UjatDgbongPartnerAssignmentResponse"
+          },
+          "remainingSourceAssignment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UjatDgbongPartnerAssignmentResponse"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "AutoAssignmentRequest": {
+        "type": "object",
+        "properties": {
+          "educationRegionCode": {
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true
+          },
+          "semesterType": {
+            "type": "string",
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "AutoAssignmentSlotResult": {
+        "type": "object",
+        "properties": {
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "result": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignmentGroupId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "primaryParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "secondaryParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "attendanceManagerParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AutoAssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "targetSlotCount": {
+            "type": "integer"
+          },
+          "pairAssignedCount": {
+            "type": "integer"
+          },
+          "singleAssignedCount": {
+            "type": "integer"
+          },
+          "unassignedCount": {
+            "type": "integer"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutoAssignmentSlotResult"
+            }
+          },
+          "capacityWarnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UjatCapacityWarning"
+            }
+          }
+        }
+      },
+      "VolunteerUnavailabilityRequest": {
+        "type": "object",
+        "required": [
+          "participantId"
+        ],
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "replacementParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "nullable": true
+          }
+        }
+      },
+      "VolunteerUnavailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "replacementParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "replacementApplied": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AttendanceManagerUpdateRequest": {
+        "type": "object",
+        "required": [
+          "participantId"
+        ],
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "UjatDgbongPartnerAssignmentConfirmRequest": {
+        "type": "object",
+        "properties": {
+          "primaryParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "secondaryParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "attendanceManagerParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "generatedByAdminId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "deprecated": true
+          }
+        }
+      },
+      "UjatDgbongPartnerCandidateResponse": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "memberName": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignedScheduleCount": {
+            "type": "integer",
+            "nullable": true
+          },
+          "samePartnerCount": {
+            "type": "integer",
+            "nullable": true
+          },
+          "attendanceManagerCount": {
+            "type": "integer",
+            "nullable": true
+          },
+          "rank": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "UjatDgbongPartnerPairRecommendationResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "primary": {
+            "$ref": "#/components/schemas/UjatDgbongPartnerCandidateResponse"
+          },
+          "secondary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UjatDgbongPartnerCandidateResponse"
+              }
+            ],
+            "nullable": true
+          },
+          "attendanceManager": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UjatDgbongPartnerCandidateResponse"
+              }
+            ],
+            "nullable": true
+          },
+          "rankedCandidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UjatDgbongPartnerCandidateResponse"
+            }
+          }
+        }
+      },
+      "AssignmentCancelRequest": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 500
+          }
+        }
+      },
+      "AttendanceItemResponse": {
+        "type": "object",
+        "properties": {
+          "attendanceId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "absenceReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "checkedByAdminId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "arrivalTime": {
+            "type": "string",
+            "format": "time",
+            "nullable": true
+          },
+          "internalLate": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "volunteer1365Minutes": {
+            "type": "integer",
+            "nullable": true
+          },
+          "volunteer1365DurationLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "checkedByMemberId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "memberCheckedInAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "checkInSource": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AttendanceItemRequest": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "absenceReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "arrivalTime": {
+            "type": "string",
+            "format": "time",
+            "nullable": true
+          }
+        }
+      },
+      "AttendanceBulkUpsertRequest": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttendanceItemRequest"
+            }
+          }
+        }
+      },
+      "AttendanceBulkUpsertResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "savedCount": {
+            "type": "integer"
+          },
+          "attendances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttendanceItemResponse"
+            }
+          }
+        }
       }
     },
     "responses": {

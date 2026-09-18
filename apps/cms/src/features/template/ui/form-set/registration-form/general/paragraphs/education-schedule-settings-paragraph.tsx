@@ -45,8 +45,9 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   overlayKeyPrefix = 'generalRegistration.educationScheduleSettings',
   autoFillFromScheduleGroupTimes = false,
   disablePeriodMode = false,
-  lockCalendarTogglesToScheduleMode = false,
+  lockCalendarTogglesToScheduleMode: _lockCalendarTogglesToScheduleMode = false,
 }: EducationScheduleSettingsProps) {
+  void _lockCalendarTogglesToScheduleMode
   const scheduleMode = educationScheduleMode
   const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
   const [singleDateIso, setSingleDateIso] = useProgramRegistrationOverlayKv<string | null>(
