@@ -108,6 +108,7 @@ import {
 } from '@/features/template/model/program-application-form-volunteer-draft'
 import {
   createProgramParticipantApplicationDraft,
+  migrateProgramParticipantApplicationParagraphs,
   PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-individual-draft'
 import {
@@ -126,6 +127,7 @@ import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-templa
 import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
+import { forceParagraphTitleRequired } from '@/features/template/lib/paragraph-required-mark'
 import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
@@ -289,8 +291,19 @@ export type UseProgramParticipantApplicationEditorOptions = {
    * 있으면 seed variant id 대신 이 code로 draft 로드/저장.
    */
   templateCode?: string
+  /**
+   * 프로그램 등록 위저드 — localOnly 저장 키를 catalog templateId와 분리할 때 사용.
+   * 구조 잠금·시드 해석은 variant/templateCode를 유지하고, localStorage 키만 유형별로 격리한다.
+   */
+  localOnlyDraftStorageKey?: string
   systemTemplate?: boolean
   forceUserEditable?: boolean
+  /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
+  localOnlyDraftPersistence?: boolean
+  /** 프로그램 form-binding `templateVersionId` — 카탈로그 code 대신 이 버전을 로드/저장 */
+  templateVersionId?: number
+  /** 바인딩 전용 version이 없을 때 등록 위저드 localStorage 초안을 우선 */
+  preferLocalDraft?: boolean
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
   /** 프로그램 등록 마법사 — 참여자 유형이 학교/기관일 때만 모집 최대값 필드 노출 */
   participantOrganization?: boolean
@@ -304,6 +317,17 @@ export type UseProgramParticipantApplicationEditorOptions = {
   programLinkedApplicationFormPreview?: boolean
   applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
+  /**
+   * true면 시드 단락 타이틀에 필수(*)를 강제 (`answerRequired`·`requiredMark`).
+   * 1사1교 등록 위저드에서 공유 강사 모집 폼 등 상세 단락이 선택인 시드를 쓸 때.
+   */
+  forceSeedParagraphsRequired?: boolean
+  /**
+   * 프로그램 등록 위저드가 열린 동안 true.
+   * 모집↔신청↔공통 단계 이동 시 세션 draft 캐시를 유지하고, 위저드 닫을 때만 비운다.
+   * (미전달 시 기존처럼 active=false에서 캐시 clear)
+   */
+  registrationWizardOpen?: boolean
 }
 
 function isApplicantRecruitInstitutionVariant(
@@ -314,6 +338,21 @@ function isApplicantRecruitInstitutionVariant(
     variant === 'economy-recruit-institution' ||
     variant === 'trained-teachers-recruit-institution'
   )
+}
+
+/** 시드 단락 타이틀 필수(*) — 필드 라벨이 아니라 단락 제목 옆 `answerRequired` */
+function withForcedSeedParagraphTitleRequired(
+  draft: WritingFormDraft,
+  seedParagraphIds: ReadonlySet<string>
+): WritingFormDraft {
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (!seedParagraphIds.has(paragraph.id)) return paragraph
+    const next = forceParagraphTitleRequired(paragraph)
+    if (next !== paragraph) changed = true
+    return next
+  })
+  return changed ? { ...draft, paragraphs } : draft
 }
 
 function isGeneralRecruitOverlayVariant(
@@ -428,6 +467,11 @@ export function useProgramParticipantApplicationEditor(
   editorOptions?: UseProgramParticipantApplicationEditorOptions
 ) {
   const onTemplateDraftSaveConfirmed = editorOptions?.onTemplateDraftSaveConfirmed
+  const localOnlyDraftPersistence = editorOptions?.localOnlyDraftPersistence === true
+  const persistTemplateVersionId = editorOptions?.templateVersionId
+  const preferLocalDraft = editorOptions?.preferLocalDraft === true
+  const registrationWizardOpen = editorOptions?.registrationWizardOpen
+  const keepSessionCacheAcrossParticipantDeactivate = registrationWizardOpen === true
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
 
@@ -437,11 +481,30 @@ export function useProgramParticipantApplicationEditor(
     return getTemplateIdForParticipantApplicationVariant(variant)
   }, [editorOptions?.templateCode, variant])
 
+  /** localOnly 저장/복원 키 — 유형별 격리 시 catalog id와 다를 수 있음 */
+  const resolveLocalDraftStorageKey = useCallback(() => {
+    const localKey = editorOptions?.localOnlyDraftStorageKey?.trim()
+    if (localOnlyDraftPersistence && localKey != null && localKey !== '') return localKey
+    return resolvePersistTemplateId()
+  }, [
+    editorOptions?.localOnlyDraftStorageKey,
+    localOnlyDraftPersistence,
+    resolvePersistTemplateId,
+  ])
+
   const isStructureLocked = isWritingFormTemplateStructureLocked({
     templateCode: resolvePersistTemplateId(),
     systemTemplate: editorOptions?.systemTemplate,
     forceUserEditable: editorOptions?.forceUserEditable,
   })
+  const forceSeedParagraphsRequired =
+    editorOptions?.forceSeedParagraphsRequired === true ||
+    variant === 'economy-recruit-institution' ||
+    variant === 'economy-application-institution' ||
+    variant === 'ujat-recruit-institution' ||
+    variant === 'ujat-recruit-volunteer' ||
+    variant === 'ujat-application-institution' ||
+    variant === 'ujat-application-volunteer'
 
   const seedParagraphIds = useMemo(() => {
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
@@ -563,13 +626,19 @@ export function useProgramParticipantApplicationEditor(
   useEffect(() => {
     if (!active) {
       setIsDraftLoading(false)
-      sessionDraftCacheRef.current.clear()
-      storageHydratedTemplateIdsRef.current.clear()
+      // 등록 위저드: 공통 단계로 잠깐 나가도 모집/신청 입력 유지. 위저드 종료 시에만 clear.
+      if (!keepSessionCacheAcrossParticipantDeactivate) {
+        sessionDraftCacheRef.current.clear()
+        storageHydratedTemplateIdsRef.current.clear()
+      }
       return
     }
     /* eslint-disable react-hooks/set-state-in-effect -- 풀페이지 미리보기 열림과 동기화해 시드·저장본을 반영 */
     let cancelled = false
-    const templateId = resolvePersistTemplateId()
+    const templateId = localOnlyDraftPersistence
+      ? resolveLocalDraftStorageKey()
+      : resolvePersistTemplateId()
+    const hydrateKey = `${templateId}::${persistTemplateVersionId ?? 'none'}::${localOnlyDraftPersistence ? 'local' : 'remote'}::${preferLocalDraft ? 'prefer-local' : 'bound'}`
 
     const applyDraftNow = (next: WritingFormDraft) => {
       const migrated =
@@ -585,18 +654,23 @@ export function useProgramParticipantApplicationEditor(
                   ? migrateProgramApplicationFormTrainedTeachersParagraphs(next)
                 : variant === 'institution'
                   ? migrateProgramApplicationFormInstitutionParagraphs(next)
+                  : variant === 'individual'
+                    ? migrateProgramParticipantApplicationParagraphs(next)
                   : variant === 'instructor'
                     ? migrateProgramApplicationFormInstructorParagraphs(next)
                     : variant === 'volunteer'
                       ? migrateProgramApplicationFormVolunteerParagraphs(next)
                       : next
-      const normalized = normalizeWritingFormDraft(migrated)
+      const withTitleRequired = forceSeedParagraphsRequired
+        ? withForcedSeedParagraphTitleRequired(migrated, seedParagraphIds)
+        : migrated
+      const normalized = normalizeWritingFormDraft(withTitleRequired)
       setDraft(normalized)
       setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
       setSingleItemListActiveItemId(null)
     }
 
-    const cached = sessionDraftCacheRef.current.get(templateId)
+    const cached = sessionDraftCacheRef.current.get(hydrateKey)
     if (cached) {
       applyDraftNow(cached.draft)
       if (variant === 'ujat-recruit-institution') {
@@ -630,10 +704,18 @@ export function useProgramParticipantApplicationEditor(
     }
 
     const preferSessionCache =
-      cached != null && storageHydratedTemplateIdsRef.current.has(templateId)
+      cached != null &&
+      (keepSessionCacheAcrossParticipantDeactivate ||
+        storageHydratedTemplateIdsRef.current.has(hydrateKey))
+
+    const loadOptions = {
+      localOnly: localOnlyDraftPersistence,
+      templateVersionId: persistTemplateVersionId,
+      preferLocal: preferLocalDraft,
+    }
 
     if (variant === 'ujat-recruit-institution' || variant === 'ujat-recruit-volunteer') {
-      void loadWritingFormTemplateDraft(templateId).then(saved => {
+      void loadWritingFormTemplateDraft(templateId, loadOptions).then(saved => {
         if (cancelled) return
         if (preferSessionCache) return
         if (saved?.draft) {
@@ -643,13 +725,15 @@ export function useProgramParticipantApplicationEditor(
           } else {
             replaceUjatRecruitVolunteerOverlay(saved.overlay ?? {})
           }
-          storageHydratedTemplateIdsRef.current.add(templateId)
+          storageHydratedTemplateIdsRef.current.add(hydrateKey)
           return
         }
         const legacy =
-          variant === 'ujat-recruit-institution'
-            ? loadUjatRecruitInstitutionTemplateSave()
-            : loadUjatRecruitVolunteerTemplateSave()
+          localOnlyDraftPersistence
+            ? variant === 'ujat-recruit-institution'
+              ? loadUjatRecruitInstitutionTemplateSave()
+              : loadUjatRecruitVolunteerTemplateSave()
+            : null
         if (legacy) {
           applyDraftNow(legacy.draft)
           if (variant === 'ujat-recruit-institution') {
@@ -658,10 +742,10 @@ export function useProgramParticipantApplicationEditor(
             replaceUjatRecruitVolunteerOverlay(legacy.overlay ?? {})
           }
         }
-        storageHydratedTemplateIdsRef.current.add(templateId)
+        storageHydratedTemplateIdsRef.current.add(hydrateKey)
       })
     } else {
-      void loadWritingFormTemplateDraft(templateId).then(saved => {
+      void loadWritingFormTemplateDraft(templateId, loadOptions).then(saved => {
         if (cancelled) return
         if (preferSessionCache) return
         if (saved?.draft) {
@@ -676,7 +760,7 @@ export function useProgramParticipantApplicationEditor(
             setUjatApplicationGradeByBlockId,
             setUjatGradeClassTimeBlockIds,
           })
-          storageHydratedTemplateIdsRef.current.add(templateId)
+          storageHydratedTemplateIdsRef.current.add(hydrateKey)
           return
         }
         if (variant === 'ujat-application-volunteer') {
@@ -687,7 +771,7 @@ export function useProgramParticipantApplicationEditor(
           setUjatApplicationGradeByBlockId({})
           setUjatGradeClassTimeBlockIds([crypto.randomUUID()])
         }
-        storageHydratedTemplateIdsRef.current.add(templateId)
+        storageHydratedTemplateIdsRef.current.add(hydrateKey)
       })
     }
 
@@ -696,7 +780,7 @@ export function useProgramParticipantApplicationEditor(
     return () => {
       cancelled = true
       if (draftRef.current.paragraphs.length === 0) return
-      sessionDraftCacheRef.current.set(templateId, {
+      sessionDraftCacheRef.current.set(hydrateKey, {
         draft: draftRef.current,
         overlay:
           variant === 'ujat-recruit-institution'
@@ -714,7 +798,26 @@ export function useProgramParticipantApplicationEditor(
         }),
       })
     }
-  }, [active, createSeedDraft, resolvePersistTemplateId, variant])
+  }, [
+    active,
+    createSeedDraft,
+    forceSeedParagraphsRequired,
+    keepSessionCacheAcrossParticipantDeactivate,
+    localOnlyDraftPersistence,
+    persistTemplateVersionId,
+    preferLocalDraft,
+    resolveLocalDraftStorageKey,
+    resolvePersistTemplateId,
+    seedParagraphIds,
+    variant,
+  ])
+
+  /** 등록 위저드 닫힘 → 세션 캐시 정리 (다음 신규 등록과 섞이지 않게) */
+  useEffect(() => {
+    if (registrationWizardOpen !== false) return
+    sessionDraftCacheRef.current.clear()
+    storageHydratedTemplateIdsRef.current.clear()
+  }, [registrationWizardOpen])
 
   useEffect(() => {
     if (!active) {
@@ -747,28 +850,36 @@ export function useProgramParticipantApplicationEditor(
     [seedParagraphIds]
   )
 
-  const onReorderMiddle = useCallback((dragId: string, overId: string) => {
-    setDraft(prev => ({
-      ...prev,
-      paragraphs: (() => {
-        const from = prev.paragraphs.findIndex(p => p.id === dragId)
-        const to = prev.paragraphs.findIndex(p => p.id === overId)
-        if (from < 0 || to < 0 || from === to) return prev.paragraphs
-        const next = [...prev.paragraphs]
-        const [moved] = next.splice(from, 1)
-        if (!moved) return prev.paragraphs
-        next.splice(to, 0, moved)
-        return next
-      })(),
-    }))
-  }, [])
+  const onReorderMiddle = useCallback(
+    (dragId: string, overId: string) => {
+      if (isStructureLocked) return
+      setDraft(prev => ({
+        ...prev,
+        paragraphs: (() => {
+          const from = prev.paragraphs.findIndex(p => p.id === dragId)
+          const to = prev.paragraphs.findIndex(p => p.id === overId)
+          if (from < 0 || to < 0 || from === to) return prev.paragraphs
+          const next = [...prev.paragraphs]
+          const [moved] = next.splice(from, 1)
+          if (!moved) return prev.paragraphs
+          next.splice(to, 0, moved)
+          return next
+        })(),
+      }))
+    },
+    [isStructureLocked]
+  )
 
-  const onTitleNumberingChange = useCallback((style: FormTitleNumberingStyle) => {
-    setDraft(prev => ({
-      ...prev,
-      formSettings: { ...prev.formSettings, titleNumbering: style },
-    }))
-  }, [])
+  const onTitleNumberingChange = useCallback(
+    (style: FormTitleNumberingStyle) => {
+      if (isStructureLocked) return
+      setDraft(prev => ({
+        ...prev,
+        formSettings: { ...prev.formSettings, titleNumbering: style },
+      }))
+    },
+    [isStructureLocked]
+  )
 
   const middleParagraphActions = useParticipantApplicationMiddleActions(
     setDraft,
@@ -788,6 +899,14 @@ export function useProgramParticipantApplicationEditor(
   const effectiveStructureLockedParagraphIds = isStructureLocked ? seedParagraphIds : undefined
   const allowAddAfterStructureLockedParagraphs =
     isStructureLocked && !isRecruitmentEditorVariant(variant)
+
+/**
+ * 프로그램 등록 위저드 신청 양식 — 시드 단락은 사용자 작성 영역이므로
+ * 동의/객관식 선택·신청자 fill 인풋은 막고, 타이틀·본문·텍스트형 TD는 템플릿 관리와 동일하게 편집.
+ * (모집 양식·양식 관리·프로그램 상세 수정은 기존 동작 유지)
+ */
+  const isRegistrationApplicationStructureEdit =
+    localOnlyDraftPersistence && !isRecruitmentEditorVariant(variant)
 
   const {
     horizontalTableRowSelectionsByParagraphId,
@@ -908,8 +1027,13 @@ export function useProgramParticipantApplicationEditor(
     }
   }, [draft.formSettings.titleNumbering, draft.paragraphs])
 
-  const programLinkedPreview = editorOptions?.programLinkedApplicationFormPreview === true
+  const programLinkedPreview =
+    !isRegistrationApplicationStructureEdit &&
+    editorOptions?.programLinkedApplicationFormPreview === true
   const linkedProgram = editorOptions?.program ?? null
+  const programLinkedInstitutionApplicationForm =
+    !isRegistrationApplicationStructureEdit &&
+    editorOptions?.programLinkedInstitutionApplicationForm === true
 
   const instructorScheduleSlots = useMemo(
     () =>
@@ -1097,7 +1221,15 @@ export function useProgramParticipantApplicationEditor(
       if (!active) return INACTIVE_LEFT_PANEL_PARAGRAPH_BODY_OPTIONS
       return {
       structureLockedParagraphIds: effectiveStructureLockedParagraphIds,
-      structureLockedAuthoringChoicePreview: isStructureLocked ? true : undefined,
+      structureLockedAuthoringChoicePreview: isRegistrationApplicationStructureEdit
+        ? false
+        : isStructureLocked
+          ? true
+          : undefined,
+      seedApplicantFillLocked: isRegistrationApplicationStructureEdit ? true : undefined,
+      structureLockedChoiceDisplayOnly: isRegistrationApplicationStructureEdit
+        ? true
+        : undefined,
       programApplicationFormInstitution: variant === 'institution',
       programApplicationFormEconomyInstitution:
         variant === 'economy-application-institution'
@@ -1156,7 +1288,9 @@ export function useProgramParticipantApplicationEditor(
       applicantRecruitInstitutionLayoutVariant:
         variant === 'economy-recruit-institution'
           ? 'economy'
-          : editorOptions?.applicantRecruitInstitutionLayoutVariant,
+          : variant === 'trained-teachers-recruit-institution'
+            ? 'trainedTeachers'
+            : editorOptions?.applicantRecruitInstitutionLayoutVariant,
       applicantRecruitInstitutionDefaults: editorOptions?.applicantRecruitInstitutionDefaults,
       applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
       recruitFormInstructor: variant === 'recruit-instructor',
@@ -1173,10 +1307,11 @@ export function useProgramParticipantApplicationEditor(
               ...programApplicationFormVolunteerOptions,
               enabled: true as const,
               isTemplateAuthoringMode: true as const,
+              // 템플릿 관리만 달력 고정 — 프로그램 등록(localOnly)은 진행 불가일 등 편집 가능
+              freezeUnavailableCalendar: !localOnlyDraftPersistence,
             }
           : programApplicationFormVolunteerOptions,
-      programLinkedInstitutionApplicationForm:
-        editorOptions?.programLinkedInstitutionApplicationForm === true,
+      programLinkedInstitutionApplicationForm,
     }
     },
     [
@@ -1185,16 +1320,18 @@ export function useProgramParticipantApplicationEditor(
       editorOptions?.applicantRecruitInstitutionDefaults,
       editorOptions?.applicantRecruitInstitutionLayoutVariant,
       editorOptions?.participantOrganization,
-      editorOptions?.programLinkedInstitutionApplicationForm,
       editorOptions?.ujatRecruitParagraphProps,
       economyApplicationHiddenParagraphIds,
       individualApplicationHiddenParagraphIds,
       institutionApplicationBridge,
       institutionApplicationFormVisibilityVersion,
       institutionApplicationHiddenParagraphIds,
+      isRegistrationApplicationStructureEdit,
       linkedProgram,
+      localOnlyDraftPersistence,
       programApplicationFormInstructorOptions,
       programApplicationFormVolunteerOptions,
+      programLinkedInstitutionApplicationForm,
       programLinkedPreview,
       recruitVolunteerHiddenParagraphIds,
       effectiveStructureLockedParagraphIds,
@@ -1231,23 +1368,47 @@ export function useProgramParticipantApplicationEditor(
 
   const handleSave = useCallback(async (options?: { silent?: boolean }) => {
     try {
-      const templateId = resolvePersistTemplateId()
+      const templateId = localOnlyDraftPersistence
+        ? resolveLocalDraftStorageKey()
+        : resolvePersistTemplateId()
       if (variant === 'ujat-recruit-institution') {
         const overlay = { ...getUjatRecruitInstitutionOverlayRecord() }
         await persistWritingFormTemplateDraft({
           templateId,
           draft,
           overlay,
+          localOnly:
+            localOnlyDraftPersistence ||
+            (preferLocalDraft && persistTemplateVersionId == null),
+          templateVersionId: persistTemplateVersionId,
         })
-        persistUjatRecruitInstitutionTemplateSave({ draft, overlay })
+        if (localOnlyDraftPersistence) {
+          persistUjatRecruitInstitutionTemplateSave({ draft, overlay })
+        } else {
+          const { rememberUjatRecruitTemplateSave, clearUjatRecruitTemplateLocalStorage } =
+            await import('@/features/program/ujat/lib/ujat-recruit-template-local-save')
+          clearUjatRecruitTemplateLocalStorage()
+          rememberUjatRecruitTemplateSave(templateId, { draft, overlay })
+        }
       } else if (variant === 'ujat-recruit-volunteer') {
         const overlay = { ...getUjatRecruitVolunteerOverlayRecord() }
         await persistWritingFormTemplateDraft({
           templateId,
           draft,
           overlay,
+          localOnly:
+            localOnlyDraftPersistence ||
+            (preferLocalDraft && persistTemplateVersionId == null),
+          templateVersionId: persistTemplateVersionId,
         })
-        persistUjatRecruitVolunteerTemplateSave({ draft, overlay })
+        if (localOnlyDraftPersistence) {
+          persistUjatRecruitVolunteerTemplateSave({ draft, overlay })
+        } else {
+          const { rememberUjatRecruitTemplateSave, clearUjatRecruitTemplateLocalStorage } =
+            await import('@/features/program/ujat/lib/ujat-recruit-template-local-save')
+          clearUjatRecruitTemplateLocalStorage()
+          rememberUjatRecruitTemplateSave(templateId, { draft, overlay })
+        }
       } else {
         const editorState = buildParticipantApplicationEditorState({
           variant,
@@ -1263,6 +1424,10 @@ export function useProgramParticipantApplicationEditor(
           draft,
           editorState,
           ...(overlay != null ? { overlay } : {}),
+          localOnly:
+            localOnlyDraftPersistence ||
+            (preferLocalDraft && persistTemplateVersionId == null),
+          templateVersionId: persistTemplateVersionId,
         })
       }
       if (options?.silent) return
@@ -1273,13 +1438,17 @@ export function useProgramParticipantApplicationEditor(
       console.debug('programParticipantApplicationEditor save failed', error)
       if (options?.silent) throw error
       if (isTemplateManagementSave) {
-        showSaveFailure()
+        showSaveFailure(error)
       }
     }
   }, [
     draft,
     isTemplateManagementSave,
+    localOnlyDraftPersistence,
     onTemplateDraftSaveConfirmed,
+    persistTemplateVersionId,
+    preferLocalDraft,
+    resolveLocalDraftStorageKey,
     resolvePersistTemplateId,
     showSaveFailure,
     showSaveSuccess,
@@ -1331,14 +1500,14 @@ export function useProgramParticipantApplicationEditor(
     applicantRecruitInstitutionLayoutVariant:
       editorOptions?.applicantRecruitInstitutionLayoutVariant,
     applicantRecruitInstitutionDefaults: editorOptions?.applicantRecruitInstitutionDefaults,
-    programLinkedInstitutionApplicationForm:
-      editorOptions?.programLinkedInstitutionApplicationForm === true,
+    programLinkedInstitutionApplicationForm,
     institutionApplicationHiddenParagraphIds,
     economyApplicationHiddenParagraphIds,
     volunteerApplicationHiddenParagraphIds,
     recruitVolunteerHiddenParagraphIds,
     individualApplicationHiddenParagraphIds,
     leftPanelParagraphBodyOptions,
+    volunteerExceptionScheduleCount,
   }
 }
 

@@ -1,21 +1,37 @@
 import { useEffect } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import {
   approveGeneralIndividualApplication,
   approveGeneralInstructorApplication,
   approveGeneralOrganizationApplication,
-  fetchGeneralIndividualApplications,
-  fetchGeneralInstructorApplications,
-  fetchGeneralOrganizationApplications,
+  bulkApproveGeneralInstructorApplications,
+  bulkApproveGeneralOrganizationApplications,
+  bulkRejectGeneralInstructorApplications,
+  bulkRejectGeneralOrganizationApplications,
+  cancelGeneralInstructorApplicationApproval,
+  cancelGeneralInstructorApplicationRejection,
+  cancelGeneralOrganizationApplicationApproval,
+  cancelGeneralOrganizationApplicationRejection,
+  fetchGeneralIndividualApplicationsPage,
+  fetchGeneralInstructorApplicationsPage,
+  fetchGeneralOrganizationApplicationsPage,
   rejectGeneralIndividualApplication,
   rejectGeneralInstructorApplication,
   rejectGeneralOrganizationApplication,
+  resendGeneralInstructorApplicationNotification,
+  submitGeneralIndividualDocumentResult,
+  submitGeneralIndividualDocumentResultBulk,
 } from '@/features/program/general/api/admin-applications-service'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useApplicationsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import {
+  getTempMockOrgApplicantInstructors,
+  getTempMockOrgApplicantSchools,
+} from '@/features/program/general/lib/temp-mock-org-program'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import { type ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { ApplicantListMenu } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-list-menu'
 
 type UseGeneralProgramApplicationsRemoteSyncOptions = {
@@ -40,67 +56,140 @@ export function useGeneralProgramApplicationsRemoteSync({
   setIndividualList,
 }: UseGeneralProgramApplicationsRemoteSyncOptions) {
   const queryClient = useQueryClient()
-  const remoteEnabled = useApplicationsRemoteEnabledForSurface(programId)
+  const surfaceRemoteEnabled = useApplicationsRemoteEnabledForSurface(programId)
+  /** FE 시드만 mock. 실제 등록 프로그램은 유형·면접 단계와 무관하게 remote. */
+  const instructorRemoteEnabled = surfaceRemoteEnabled
+  const individualRemoteEnabled = surfaceRemoteEnabled
+  const remoteEnabled = surfaceRemoteEnabled
 
-  const organizationQuery = useQuery({
+  const organizationQuery = useInfiniteQuery({
     queryKey: generalApplicationsQueryKeys.organizationList(programId ?? ''),
-    queryFn: () => fetchGeneralOrganizationApplications(programId!),
-    enabled:
-      remoteEnabled && menu === 'institutions' && usesProgramInstitutionApplications,
+    queryFn: ({ pageParam }) =>
+      fetchGeneralOrganizationApplicationsPage(programId!, { page: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    enabled: remoteEnabled && menu === 'institutions' && usesProgramInstitutionApplications,
     staleTime: 30_000,
     retry: false,
   })
 
-  const instructorQuery = useQuery({
+  const instructorQuery = useInfiniteQuery({
     queryKey: generalApplicationsQueryKeys.instructorList(programId ?? ''),
-    queryFn: () => fetchGeneralInstructorApplications(programId!),
-    enabled: remoteEnabled && menu === 'instructors' && instructorColumnPreset === 'general-detail',
+    queryFn: ({ pageParam }) =>
+      fetchGeneralInstructorApplicationsPage(programId!, { page: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    enabled:
+      instructorRemoteEnabled &&
+      menu === 'instructors' &&
+      instructorColumnPreset === 'general-detail',
     staleTime: 30_000,
     retry: false,
   })
 
-  const individualQuery = useQuery({
-    queryKey: generalApplicationsQueryKeys.individualList(programId ?? '', individualScreeningStage ?? null),
-    queryFn: () =>
-      fetchGeneralIndividualApplications(programId!, {
+  const individualQuery = useInfiniteQuery({
+    queryKey: generalApplicationsQueryKeys.individualList(
+      programId ?? '',
+      individualScreeningStage ?? null
+    ),
+    queryFn: ({ pageParam }) =>
+      fetchGeneralIndividualApplicationsPage(programId!, {
         doc1: individualScreeningStage === 'doc1',
+        query: { page: pageParam },
       }),
-    enabled: remoteEnabled && menu === 'individual-applications',
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    enabled: individualRemoteEnabled && menu === 'individual-applications',
     staleTime: 30_000,
     retry: false,
   })
 
   useEffect(() => {
-    if (organizationQuery.data) setInstitutionList(organizationQuery.data)
+    if (organizationQuery.data) {
+      setInstitutionList(organizationQuery.data.pages.flatMap(page => page.rows))
+    }
   }, [organizationQuery.data, setInstitutionList])
 
   useEffect(() => {
-    if (instructorQuery.data) setInstructorList(instructorQuery.data)
+    if (instructorQuery.data) {
+      setInstructorList(instructorQuery.data.pages.flatMap(page => page.rows))
+    }
   }, [instructorQuery.data, setInstructorList])
 
   useEffect(() => {
-    if (individualQuery.data) setIndividualList(individualQuery.data)
-  }, [individualQuery.data, setIndividualList])
+    if (!isGeneralProgramTempMockProgramId(programId)) return
+    setInstitutionList(getTempMockOrgApplicantSchools(programId))
+    setInstructorList(getTempMockOrgApplicantInstructors(programId))
+    setIndividualList([])
+  }, [programId, setIndividualList, setInstitutionList, setInstructorList])
+
+  useEffect(() => {
+    if (!individualRemoteEnabled || menu !== 'individual-applications') return
+    setIndividualList(individualQuery.data?.pages.flatMap(page => page.rows) ?? [])
+  }, [
+    individualQuery.data,
+    individualRemoteEnabled,
+    individualScreeningStage,
+    menu,
+    programId,
+    setIndividualList,
+  ])
 
   const invalidateApplications = async () => {
     await queryClient.invalidateQueries({ queryKey: generalApplicationsQueryKeys.all })
   }
 
+  const invalidateIndividualApplications = async () => {
+    if (!programId) return
+    await queryClient.invalidateQueries({
+      queryKey: generalApplicationsQueryKeys.individualLists(programId),
+    })
+  }
+
+  const activeQuery =
+    menu === 'institutions'
+      ? organizationQuery
+      : menu === 'instructors'
+        ? instructorQuery
+        : individualQuery
+
   return {
     remoteEnabled,
+    /** 강사 목록 승인/반려 — mock 프로그램에서는 false */
+    instructorRemoteEnabled,
+    /** 참여자 목록·승인·반려 — FE 시드는 false, 실제 프로그램은 true */
+    individualRemoteEnabled,
     applicationsLoading:
       (organizationQuery.isEnabled &&
-        (organizationQuery.isPending || organizationQuery.isFetching)) ||
+        (organizationQuery.isPending ||
+          (organizationQuery.isFetching && organizationQuery.data === undefined))) ||
       (instructorQuery.isEnabled &&
-        (instructorQuery.isPending || instructorQuery.isFetching)) ||
+        (instructorQuery.isPending ||
+          (instructorQuery.isFetching && instructorQuery.data === undefined))) ||
       (individualQuery.isEnabled &&
-        (individualQuery.isPending || individualQuery.isFetching)),
+        (individualQuery.isPending ||
+          (individualQuery.isFetching && individualQuery.data === undefined))),
+    hasNextPage: activeQuery.hasNextPage ?? false,
+    isFetchingNextPage: activeQuery.isFetchingNextPage,
+    fetchNextPage: activeQuery.fetchNextPage,
     approveOrganization: approveGeneralOrganizationApplication,
     rejectOrganization: rejectGeneralOrganizationApplication,
+    cancelOrganizationApproval: cancelGeneralOrganizationApplicationApproval,
+    cancelOrganizationRejection: cancelGeneralOrganizationApplicationRejection,
+    bulkApproveOrganization: bulkApproveGeneralOrganizationApplications,
+    bulkRejectOrganization: bulkRejectGeneralOrganizationApplications,
     approveInstructor: approveGeneralInstructorApplication,
     rejectInstructor: rejectGeneralInstructorApplication,
+    bulkApproveInstructor: bulkApproveGeneralInstructorApplications,
+    bulkRejectInstructor: bulkRejectGeneralInstructorApplications,
+    cancelInstructorApproval: cancelGeneralInstructorApplicationApproval,
+    cancelInstructorRejection: cancelGeneralInstructorApplicationRejection,
+    resendInstructorNotification: resendGeneralInstructorApplicationNotification,
     approveIndividual: approveGeneralIndividualApplication,
     rejectIndividual: rejectGeneralIndividualApplication,
+    submitIndividualDocumentResult: submitGeneralIndividualDocumentResult,
+    submitIndividualDocumentResultBulk: submitGeneralIndividualDocumentResultBulk,
     invalidateApplications,
+    invalidateIndividualApplications,
   }
 }

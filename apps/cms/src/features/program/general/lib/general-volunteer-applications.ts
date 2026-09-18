@@ -9,9 +9,6 @@ export const GENERAL_VOLUNTEER_APPLICATION_TABS = [
 
 export type GeneralVolunteerApplicationTab = (typeof GENERAL_VOLUNTEER_APPLICATION_TABS)[number]
 
-/** @see GENERAL_VOLUNTEER_APPLICATION_QA in `@/data/mock/general-programs` */
-export { GENERAL_VOLUNTEER_APPLICATION_QA } from '@/data/mock/general-programs'
-
 export function isGeneralVolunteerApplicantDetailRoute(
   lnb: GeneralDetailLnbKey,
   tab: string

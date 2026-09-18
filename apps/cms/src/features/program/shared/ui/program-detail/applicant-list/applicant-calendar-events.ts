@@ -1,8 +1,8 @@
 import dayjs from 'dayjs'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { ApplicantListMenu } from './applicant-list-menu'
 
 /** 강사 캘린더 집계 이벤트용 — `calendarInstitutionSummary` 있으면 팝오버는 기관·인원, 우측 목록은 `calendarInstitutionInstructors`로 강사별 행 */

@@ -3,3 +3,19 @@
   flex-direction: column;
   gap: 20px;
 }
+
+.template-form-tab__catalog-notice,
+.template-form-tab__catalog-error,
+.template-form-tab__loading {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.template-form-tab__catalog-notice {
+  color: var(--color-text-secondary, #666);
+}
+
+.template-form-tab__catalog-error {
+  color: var(--color-danger, #c0392b);
+}

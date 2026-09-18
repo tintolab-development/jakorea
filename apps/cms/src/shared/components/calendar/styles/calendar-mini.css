@@ -229,12 +229,21 @@
   color: rgba(61, 61, 61, 0.35);
 }
 
-.calendar-mini-cell--sunday:not(.calendar-mini-cell--selected):not(.calendar-mini-cell--other-month)
+/* 선택·기간(끝/단일/시작/중간)은 주말 색 대신 구간 스타일(흰/검정 글자) 유지 */
+.calendar-mini-cell--sunday:not(.calendar-mini-cell--selected):not(
+    .calendar-mini-cell--range-end
+  ):not(.calendar-mini-cell--range-single):not(.calendar-mini-cell--range-start):not(
+    .calendar-mini-cell--range-middle
+  ):not(.calendar-mini-cell--other-month)
   .calendar-mini-date {
   color: #c32f4a;
 }
 
-.calendar-mini-cell--saturday:not(.calendar-mini-cell--selected):not(.calendar-mini-cell--other-month)
+.calendar-mini-cell--saturday:not(.calendar-mini-cell--selected):not(
+    .calendar-mini-cell--range-end
+  ):not(.calendar-mini-cell--range-single):not(.calendar-mini-cell--range-start):not(
+    .calendar-mini-cell--range-middle
+  ):not(.calendar-mini-cell--other-month)
   .calendar-mini-date {
   color: #017eaf;
 }

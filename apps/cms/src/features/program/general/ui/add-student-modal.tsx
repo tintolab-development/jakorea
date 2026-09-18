@@ -32,7 +32,7 @@ export interface AddStudentModalProps {
   open: boolean
   onCancel: () => void
   onAdd: (values: AddStudentFormValues) => void
-  /** 미전달 시 옵션 없음 — 상위에서 `buildStudentGradeClassOptions(classCount)` 전달 */
+  /** 미전달 시 옵션 없음 — 상위에서 필터와 동일 학급 옵션 전달 */
   gradeClassOptions?: Array<{ label: string; value: string }>
 }
 
@@ -88,7 +88,7 @@ export function AddStudentModal({
       open={open}
       onCancel={onCancel}
       title="학생 추가 등록"
-      width={800}
+      width={600}
       footer={footer}
       className="add-student-modal"
       description="프로그램에 참여하는 학생 정보를 추가 등록합니다."
@@ -104,7 +104,10 @@ export function AddStudentModal({
         >
           <div className="add-student-modal__field">
             <label className="add-student-modal__label">
-              학생명 <span className="add-student-modal__required" aria-hidden>*</span>
+              학생명{' '}
+              <span className="add-student-modal__required" aria-hidden>
+                *
+              </span>
             </label>
             <Controller
               name="name"
@@ -125,7 +128,10 @@ export function AddStudentModal({
 
           <div className="add-student-modal__field">
             <label className="add-student-modal__label">
-              성별 <span className="add-student-modal__required" aria-hidden>*</span>
+              성별{' '}
+              <span className="add-student-modal__required" aria-hidden>
+                *
+              </span>
             </label>
             <Controller
               name="gender"
@@ -146,7 +152,10 @@ export function AddStudentModal({
 
           <div className="add-student-modal__field">
             <label className="add-student-modal__label">
-              생년월일 <span className="add-student-modal__required" aria-hidden>*</span>
+              생년월일{' '}
+              <span className="add-student-modal__required" aria-hidden>
+                *
+              </span>
             </label>
             <Controller
               name="birthDate"
@@ -166,13 +175,18 @@ export function AddStudentModal({
               )}
             />
             {errors.birthDate && (
-              <span className="add-student-modal__error">{fieldValidationHelp(errors.birthDate)}</span>
+              <span className="add-student-modal__error">
+                {fieldValidationHelp(errors.birthDate)}
+              </span>
             )}
           </div>
 
           <div className="add-student-modal__field">
             <label className="add-student-modal__label">
-              학급 <span className="add-student-modal__required" aria-hidden>*</span>
+              학급{' '}
+              <span className="add-student-modal__required" aria-hidden>
+                *
+              </span>
             </label>
             <Controller
               name="gradeClass"
@@ -191,7 +205,9 @@ export function AddStudentModal({
               )}
             />
             {errors.gradeClass && (
-              <span className="add-student-modal__error">{fieldValidationHelp(errors.gradeClass)}</span>
+              <span className="add-student-modal__error">
+                {fieldValidationHelp(errors.gradeClass)}
+              </span>
             )}
           </div>
 
@@ -211,7 +227,9 @@ export function AddStudentModal({
               )}
             />
             {errors.contact && (
-              <span className="add-student-modal__error">{fieldValidationHelp(errors.contact)}</span>
+              <span className="add-student-modal__error">
+                {fieldValidationHelp(errors.contact)}
+              </span>
             )}
           </div>
 

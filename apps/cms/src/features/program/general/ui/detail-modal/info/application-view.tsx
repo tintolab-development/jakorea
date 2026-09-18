@@ -47,7 +47,9 @@ export function GeneralProgramApplicationView({
         })}
         trailing={
           canWrite ? (
-            <CmsButton onClick={onEditForm}>양식 수정</CmsButton>
+            <CmsButton variant="secondary" size="large" onClick={onEditForm}>
+              양식 수정
+            </CmsButton>
           ) : null
         }
       />

@@ -1,5 +1,5 @@
 import '@/shared/ui/cross-table.css'
-import { getUjatEducationProgressVolunteerSummary } from '@/data/mock/ujat-education-progress-summary-mock'
+import { getUjatEducationProgressVolunteerSummary } from '@/features/program/ujat/model/ujat-education-progress'
 import {
   formatSummaryCellValue,
   summaryToneClassName,

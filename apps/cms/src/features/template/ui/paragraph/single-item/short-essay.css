@@ -10,6 +10,16 @@
   gap: 8px;
 }
 
+/* 행정정보 대상자 본인 — 작성(fill): 항목별 활성 박스 없이 입력만 */
+.short-essay-item-row--fill {
+  align-items: flex-start;
+}
+
+.short-essay-item-row--fill .short-essay-item-row__control {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .short-essay-item-row--read-only {
   min-height: 40px;
 }

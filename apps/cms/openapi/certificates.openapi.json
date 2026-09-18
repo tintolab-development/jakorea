@@ -198,6 +198,10 @@
     },
     {
       "name": "기타 API",
+      "description": "GENERAL_ORGANIZATION 동일 기관 신청 학년 합반 canonical API"
+    },
+    {
+      "name": "기타 API",
       "description": "GENERAL_ORGANIZATION 신청기관의 교육 일정/학급 canonical 임시배정"
     },
     {

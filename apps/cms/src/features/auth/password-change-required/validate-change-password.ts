@@ -4,41 +4,32 @@ import {
   REGISTER_PASSWORD_MISMATCH_MESSAGE,
 } from '@/features/auth/lib/validate-register-password'
 
-export type PasswordChangeRequiredField = 'current' | 'new' | 'confirm'
+export type PasswordChangeRequiredField = 'new' | 'confirm'
 
 export type PasswordChangeRequiredValidation = {
   field: PasswordChangeRequiredField
   message: string
 } | null
 
+/**
+ * 최초 로그인 비밀번호 변경 — 현재 비밀번호는 가입 이메일(임시비번)로 고정.
+ * UI에는 이메일(읽기전용) + 새 비밀번호 + 확인만 노출.
+ */
 export function validatePasswordChangeRequiredForm(input: {
-  currentPassword: string
   newPassword: string
   confirmPassword: string
-  /** 임시 비밀번호(가입 이메일) — 클라이언트 선검증용 */
+  /** 임시 비밀번호(가입 이메일) */
   initialPassword: string
 }): PasswordChangeRequiredValidation {
-  const currentPassword = input.currentPassword.trim()
   const newPassword = input.newPassword.trim()
   const confirmPassword = input.confirmPassword.trim()
   const initialPassword = input.initialPassword.trim()
-
-  if (!currentPassword) {
-    return { field: 'current', message: '현재 비밀번호를 입력해 주세요.' }
-  }
-
-  if (currentPassword.toLowerCase() !== initialPassword.toLowerCase()) {
-    return {
-      field: 'current',
-      message: '현재 비밀번호가 맞지 않아요. 다시 확인해 주세요.',
-    }
-  }
 
   if (!newPassword) {
     return { field: 'new', message: '새 비밀번호를 입력해 주세요.' }
   }
 
-  if (newPassword.toLowerCase() === currentPassword.toLowerCase()) {
+  if (newPassword.toLowerCase() === initialPassword.toLowerCase()) {
     return {
       field: 'new',
       message: '새 비밀번호가 기존 비밀번호와 같아요. 다른 비밀번호를 입력해 주세요.',

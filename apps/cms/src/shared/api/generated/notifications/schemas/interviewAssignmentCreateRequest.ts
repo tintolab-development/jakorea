@@ -6,7 +6,15 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 면접 배정/재배정 요청. volunteerApplicationId와 individualApplicationId는 상호 배타이며 둘 중 하나만 필수입니다.
+ */
 export interface InterviewAssignmentCreateRequest {
+  /** 봉사자 신청 ID. individualApplicationId와 상호 배타 */
   volunteerApplicationId?: number;
-  interviewSlotId?: number;
+  /** 개인 신청 ID. volunteerApplicationId와 상호 배타 */
+  individualApplicationId?: number;
+  /** 면접 슬롯 ID */
+  interviewSlotId: number;
+  individual?: boolean;
 }

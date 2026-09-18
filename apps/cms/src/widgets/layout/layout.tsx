@@ -16,8 +16,10 @@ import { canAccessPath } from '@/shared/config/menu-config'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 import {
   canAdminAction,
+  isPermissionRequestsPath,
   isPermissionSettingsPath,
   isSecurityLogPath,
+  isTemplateManagementPath,
   resolveAdminRoleCodeFromUser,
   showAdminAccessDeniedAlert,
 } from '@/shared/lib/admin-role-policy'
@@ -41,7 +43,19 @@ function LayoutContent() {
     Boolean(user) &&
     isPermissionSettingsPath(location.pathname) &&
     !canAdminAction({ roleCode, action: 'view', screen: 'permission-settings' })
-  const screenAccessBlocked = securityLogBlocked || permissionSettingsBlocked
+  const permissionRequestsBlocked =
+    Boolean(user) &&
+    isPermissionRequestsPath(location.pathname) &&
+    !canAdminAction({ roleCode, action: 'view', screen: 'admin-permission-approval' })
+  const templateManagementBlocked =
+    Boolean(user) &&
+    isTemplateManagementPath(location.pathname) &&
+    !canAdminAction({ roleCode, action: 'view', screen: 'template-management' })
+  const screenAccessBlocked =
+    securityLogBlocked ||
+    permissionSettingsBlocked ||
+    permissionRequestsBlocked ||
+    templateManagementBlocked
   const deniedLogPathRef = useRef<string | null>(null)
 
   useEffect(() => {

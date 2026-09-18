@@ -2,7 +2,7 @@ import { createContext, useContext, type MutableRefObject, type ReactNode } from
 import type { Application, UserHistory } from '@/types/domain'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import type { AffiliatedTeacherLinkTarget, SchoolTeacherEmploymentStatus, User } from '@/types/user'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { TabState } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
 import type { UseUserDetailModalsResult } from '@/features/user/detail/lib/use-user-detail-modals'
 import type { UserBasicInfoEntrySource } from '@/features/user/detail/ui/user-basic-info-section'

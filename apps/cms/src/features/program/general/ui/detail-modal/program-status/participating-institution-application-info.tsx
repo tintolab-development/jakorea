@@ -3,8 +3,9 @@
  */
 
 import { Fragment, type ReactNode } from 'react'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
+import { CmsButton } from '@/shared/ui'
 import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import { ParticipatingProgressScheduleRow } from './participating-progress-schedule-row'
@@ -26,7 +27,8 @@ import '@/features/program/general/ui/detail-modal/applications/applicant-detail
 import './participating-institution-application-info.css'
 
 export interface ParticipatingInstitutionApplicationInfoProps {
-  formError?: string
+  /** 정보 수정 모드 — 기본 정보 타이틀 `*` 표시 */
+  isBasicInfoEditing?: boolean
   showAdminComment?: boolean
   adminComment?: string
   /** 정보 수정과 분리 — 코멘트 작성 버튼으로만 편집 */
@@ -46,6 +48,7 @@ export interface ParticipatingInstitutionApplicationInfoProps {
   addressDetail: ReactNode
   classAndCount: ReactNode
   educationFormat: ReactNode
+  showEducationFormatField?: boolean
   teacherInfo: ReactNode
   applicationReason: ReactNode
   otherRequests: ReactNode
@@ -57,6 +60,7 @@ export interface ParticipatingInstitutionApplicationInfoProps {
   program: Program
   sessions: ParticipatingSchoolSession[]
   useCompanySchoolScheduleFormat?: boolean
+  onScheduleChangeClick?: () => void
 }
 
 function padScheduleTimePart(part: string): string {
@@ -149,7 +153,7 @@ function CompanySchoolProgressScheduleRows({ sessions }: { sessions: Participati
 }
 
 export function ParticipatingInstitutionApplicationInfo({
-  formError,
+  isBasicInfoEditing = false,
   showAdminComment = false,
   adminComment,
   isAdminCommentEditing = false,
@@ -168,6 +172,7 @@ export function ParticipatingInstitutionApplicationInfo({
   addressDetail,
   classAndCount,
   educationFormat,
+  showEducationFormatField = true,
   teacherInfo,
   applicationReason,
   otherRequests,
@@ -179,11 +184,10 @@ export function ParticipatingInstitutionApplicationInfo({
   program,
   sessions,
   useCompanySchoolScheduleFormat = false,
+  onScheduleChangeClick,
 }: ParticipatingInstitutionApplicationInfoProps) {
   return (
     <div className="institution-basic-info applicant-institution-basic-info participating-institution-application-info">
-      {formError ? <div className="institution-basic-info__form-error">{formError}</div> : null}
-
       {showAdminComment ? (
         <ApplicantAdminCommentSection
           adminComment={adminComment}
@@ -254,12 +258,19 @@ export function ParticipatingInstitutionApplicationInfo({
                   label2="상세 주소"
                   value2={addressDetail}
                 />
-                <InstitutionApplicationTableRowTwoCols
-                  label1="신청 학급 수 및 총 인원"
-                  value1={classAndCount}
-                  label2="교육 형태"
-                  value2={educationFormat}
-                />
+                {showEducationFormatField ? (
+                  <InstitutionApplicationTableRowTwoCols
+                    label1="신청 학급 수 및 총 인원"
+                    value1={classAndCount}
+                    label2="교육 형태"
+                    value2={educationFormat}
+                  />
+                ) : (
+                  <InstitutionApplicationTableRowSingleCol
+                    label="신청 학급 수 및 총 인원"
+                    value={classAndCount}
+                  />
+                )}
                 <InstitutionApplicationTableRowFullWidth label="담당 교사 정보" value={teacherInfo} />
                 <InstitutionApplicationTableRowFullWidth
                   label="신청 사유"
@@ -308,7 +319,19 @@ export function ParticipatingInstitutionApplicationInfo({
       </section>
 
       <section className="applicant-institution-basic-info__section">
-        <h3 className="applicant-institution-basic-info__title">교육 진행 일정</h3>
+        <div className="participating-institution-application-info__schedule-header">
+          <h3 className="applicant-institution-basic-info__title">교육 진행 일정</h3>
+          {isBasicInfoEditing && onScheduleChangeClick ? (
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              type="button"
+              onClick={onScheduleChangeClick}
+            >
+              일정 변경
+            </CmsButton>
+          ) : null}
+        </div>
         <div className="applicant-institution-basic-info__table-wrap">
           <table className="applicant-institution-basic-info__table">
             {useCompanySchoolScheduleFormat

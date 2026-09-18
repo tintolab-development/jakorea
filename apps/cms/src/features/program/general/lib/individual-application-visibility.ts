@@ -8,7 +8,7 @@ import {
   resolveInstitutionApplicationProgramBridge,
   shouldShowInstitutionApplicationScheduleParagraph,
 } from '@/features/program/general/lib/institution-application-program-bridge'
-import type { GeneralIndividualApplicantDetail } from '@/data/mock/general-individual-applications-mock'
+import type { GeneralIndividualApplicantDetail } from '@/features/program/general/model/individual-applicant'
 import type { Program } from '@/types/domain'
 
 const TEAM_PARTICIPATION_LABEL = '팀'

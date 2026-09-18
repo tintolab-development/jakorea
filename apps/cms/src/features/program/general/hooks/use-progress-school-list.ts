@@ -4,60 +4,101 @@
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolApprovalStatusKey,
   TextbookStatusKey,
-} from '@/data/mock/participating-schools'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+} from '@/features/program/general/model/participating-schools'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import { formatAssignedInstructorSummary } from '../lib/institution-assigned-instructor-count'
-import { getInstructorRowsForSchool } from '../lib/school-detail-mock'
+import { getInstructorRowsForSchool } from '../lib/school-detail'
 import type {
   SchoolDetailForModal,
   InstructorListFormInstructor,
 } from '../model/school-detail-types'
 import type { ProgressFilters } from './use-program-progress-params'
-import { fetchGeneralParticipatingInstitutions } from '@/features/program/general/api/admin-program-progress-service'
+import { fetchGeneralParticipatingInstitutionsPage } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import {
+  useIsCompanySchoolProgramsSurface,
   useIsTrainedTeachersProgramsSurface,
   useProgramProgressRemoteEnabledForSurface,
 } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherParticipatingInstitutions } from '@/features/program/trained-teachers/api/education-journals-hooks'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import {
+  notifyProgramApiUnavailable,
+  useNotifyProgramApiUnavailableOnce,
+} from '@/features/program/shared/lib/program-api-unavailable'
+import type { Program } from '@/types/domain'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { getTempMockOrgParticipatingSchools } from '@/features/program/general/lib/temp-mock-org-program'
 
 export interface UseProgressSchoolListOptions {
   appliedFilters: ProgressFilters
   instructorList: ParticipatingInstructorRow[]
   programId?: string
+  program?: Program | null
+  /** false면 기관 목록 API를 호출하지 않는다 (개인 프로그램 캘린더 mock 유입 방지) */
+  enabled?: boolean
 }
 
 export function useProgressSchoolList({
   appliedFilters,
   instructorList,
   programId,
+  program: _program,
+  enabled = true,
 }: UseProgressSchoolListOptions) {
   const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
-  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
+  const isCompanySchoolSurface = useIsCompanySchoolProgramsSurface()
+  const remoteEnabled =
+    enabled && useProgramProgressRemoteEnabledForSurface(programId)
   const ttRemoteEnabled =
+    enabled &&
     isTrainedTeachersSurface &&
     shouldUseTrainedTeacherProgramsRemoteApi() &&
     Boolean(programId)
-  const remoteQuery = useQuery({
+
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
+
+  useNotifyProgramApiUnavailableOnce(
+    enabled && !remoteEnabled && !ttRemoteEnabled && !isTempMockProgram,
+    'general-progress-schools',
+    '프로그램 진행 현황 · 참여 기관'
+  )
+
+  const remoteQuery = useInfiniteQuery({
     queryKey: generalProgramProgressQueryKeys.institutions(programId ?? ''),
-    queryFn: () => fetchGeneralParticipatingInstitutions(programId!),
-    enabled: remoteEnabled && !isTrainedTeachersSurface,
+    queryFn: ({ pageParam }) => fetchGeneralParticipatingInstitutionsPage(programId!, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+    enabled: enabled && remoteEnabled && !isTrainedTeachersSurface,
     staleTime: 30_000,
     retry: false,
   })
 
-  const ttParticipatingQuery = useTrainedTeacherParticipatingInstitutions(
-    programId,
-    ttRemoteEnabled
+  const ttListFilters = useMemo(
+    () => ({
+      schoolName: appliedFilters.schoolName,
+      teacherName: appliedFilters.teacherName,
+    }),
+    [appliedFilters.schoolName, appliedFilters.teacherName]
   )
 
-  /** API only — gate OFF면 빈 목록 (mock 폴백 없음) */
+  const ttParticipatingQuery = useTrainedTeacherParticipatingInstitutions(
+    programId,
+    ttRemoteEnabled,
+    ttListFilters
+  )
+  const temporaryProgressSchools = useMemo(
+    () =>
+      enabled && isTempMockProgram && !isTrainedTeachersSurface && !isCompanySchoolSurface
+        ? getTempMockOrgParticipatingSchools(programId)
+        : [],
+    [enabled, isCompanySchoolSurface, isTempMockProgram, isTrainedTeachersSurface, programId]
+  )
   const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>([])
 
   useEffect(() => {
@@ -65,16 +106,24 @@ export function useProgressSchoolList({
       if (ttParticipatingQuery.data) setSchoolList(ttParticipatingQuery.data)
       return
     }
+    if (isTempMockProgram) {
+      setSchoolList(temporaryProgressSchools)
+      return
+    }
     if (remoteEnabled) {
-      if (remoteQuery.data) setSchoolList(remoteQuery.data)
+      if (remoteQuery.data) {
+        setSchoolList(remoteQuery.data.pages.flatMap(page => page.rows))
+      }
       return
     }
     setSchoolList([])
   }, [
+    isTempMockProgram,
     remoteEnabled,
     remoteQuery.data,
     ttRemoteEnabled,
     ttParticipatingQuery.data,
+    temporaryProgressSchools,
   ])
 
   const [selectedSchoolRowKeys, setSelectedSchoolRowKeys] = useState<React.Key[]>([])
@@ -146,11 +195,18 @@ export function useProgressSchoolList({
 
   const handleTextbookStatusChange = useCallback(
     (recordId: string, status: TextbookStatusKey) => {
-      setSchoolList(prev =>
-        prev.map(row => (row.id === recordId ? { ...row, textbookStatus: status } : row))
+      if (isTempMockProgram) {
+        setSchoolList(prev =>
+          prev.map(row => (row.id === recordId ? { ...row, textbookStatus: status } : row))
+        )
+        return
+      }
+      notifyProgramApiUnavailable(
+        'general-participating-institution-textbook-delivery-status',
+        '참여 기관 · 교재 배송 현황 변경'
       )
     },
-    []
+    [isTempMockProgram]
   )
 
   const handleSchoolDeleteClick = useCallback(() => {
@@ -165,25 +221,27 @@ export function useProgressSchoolList({
     setSchoolList(prev => prev.filter(row => !keysToDelete.has(row.id)))
     setSelectedSchoolRowKeys([])
     setSchoolDeleteGuideOpen(false)
-    }, [selectedSchoolRowKeys])
+  }, [selectedSchoolRowKeys])
 
   /** 선택 삭제 확인 시: 선택된 참여 기관을 리스트에서 제거 */
   const handleBulkDeleteConfirm = useCallback(() => {
     const keysSet = new Set(selectedSchoolRowKeys.map(String))
     setSchoolList(prev => prev.filter(row => !keysSet.has(row.id)))
     setSelectedSchoolRowKeys([])
-    }, [selectedSchoolRowKeys])
+  }, [selectedSchoolRowKeys])
 
   /** 선택 승인 확인 시: 선택된 참여 기관 approvalStatus → approved */
   const handleBulkApproveConfirm = useCallback(() => {
     const keysSet = new Set(selectedSchoolRowKeys.map(String))
     setSchoolList(prev =>
       prev.map(row =>
-        keysSet.has(row.id) ? { ...row, approvalStatus: 'approved' as ParticipatingSchoolApprovalStatusKey } : row
+        keysSet.has(row.id)
+          ? { ...row, approvalStatus: 'approved' as ParticipatingSchoolApprovalStatusKey }
+          : row
       )
     )
     setSelectedSchoolRowKeys([])
-    }, [selectedSchoolRowKeys])
+  }, [selectedSchoolRowKeys])
 
   /** 학교 상세에서 승인 취소 확인 시: 해당 기관 approvalStatus → cancelled */
   const handleSchoolApprovalCancel = useCallback((schoolId: string) => {
@@ -194,7 +252,7 @@ export function useProgressSchoolList({
           : row
       )
     )
-    }, [])
+  }, [])
 
   /** 학교별 배정 강사 요약 (대표강사명 외 N명, 저장 패치 우선) */
   const getInstructorDisplayForSchool = useCallback(
@@ -243,5 +301,9 @@ export function useProgressSchoolList({
         ? remoteQuery.isFetching && remoteQuery.data === undefined
         : false,
     isRemoteDataSource: ttRemoteEnabled || remoteEnabled,
+    hasNextPage:
+      remoteEnabled && !isTrainedTeachersSurface ? (remoteQuery.hasNextPage ?? false) : false,
+    isFetchingNextPage: remoteQuery.isFetchingNextPage,
+    fetchNextPage: remoteQuery.fetchNextPage,
   }
 }

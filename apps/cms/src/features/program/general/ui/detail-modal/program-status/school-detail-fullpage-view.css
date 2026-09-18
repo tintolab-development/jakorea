@@ -117,9 +117,18 @@
   gap: 0;
 }
 
-/* 교육 일지 탭: 탭 ↔ 섹션 제목 32px */
+/* 교육 일지 탭: 탭 ↔ 섹션 제목 32px / 게시글 등록 버튼 수직 중앙 */
 .school-detail-fullpage-view .school-detail-fullpage-view__tabs-row.cms-text-tabs--detail .cms-text-tabs__row {
+  align-items: center;
   padding-bottom: 32px;
+}
+
+/* 게시글 등록 — 탭 행 우측, 시안 100×32 */
+.school-detail-fullpage-view__posts-register-btn {
+  width: 100px !important;
+  min-width: 100px !important;
+  height: 32px !important;
+  min-height: 32px !important;
 }
 
 .school-detail-fullpage-view__journal-tab {
@@ -130,6 +139,13 @@
   padding-left: 0;
   padding-right: 0;
   width: 100%;
+}
+
+.school-detail-fullpage-view__page-bottom-spacer {
+  display: block;
+  width: 100%;
+  height: var(--detail-fullpage-padding-bottom, 52px);
+  flex-shrink: 0;
 }
 
 .school-detail-fullpage-view:has(.school-detail-fullpage-view__posts-tab-wrap)
@@ -160,6 +176,12 @@
   min-height: 100%;
   max-height: none;
   align-self: stretch;
+}
+
+.school-detail-fullpage-view__posts-tab-wrap
+  .enrollment-program-detail-modal__posts-tab-body {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .school-detail-fullpage-view__posts-tab-wrap

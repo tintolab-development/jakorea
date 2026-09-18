@@ -158,6 +158,7 @@ export function VerticalTableParagraphBody({
   /** 카탈로그 고정 초상권 시드 표 — 위탁·고정 안내 행 읽기 전용. 사용자 복제본은 false */
   portraitSeedPresetLocked = false,
   bottomConsentInteractive: bottomConsentInteractiveProp,
+  bottomConsentDisplayOnly = false,
   consentFillMode = false,
 }: {
   paragraph: VerticalTableParagraph
@@ -178,6 +179,8 @@ export function VerticalTableParagraphBody({
   portraitSeedPresetLocked?: boolean
   /** preview fill — 하단 동의 라디오만 조작 허용 */
   bottomConsentInteractive?: boolean
+  /** 프로그램 등록 — disabled 스킨 없이 미선택·입력 불가 */
+  bottomConsentDisplayOnly?: boolean
   /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
   consentFillMode?: boolean
 }) {
@@ -324,11 +327,15 @@ export function VerticalTableParagraphBody({
     /** 초상권 1번 표 고정 문구 행 등 — 헤더·본문 모두 읽기 전용 텍스트 */
     forceStatic = false
   ) => {
-    const portraitNameRowInteractive =
-      isPortraitPersonalConsentTable &&
-      rowIdx === 0 &&
+    const isPortraitPersonalConsentNameRow =
+      isPortraitPersonalConsentTable && rowIdx === 0
+    /** 1번 표 1행 — 성명·소속 값(td)만 입력. th(성명/소속 라벨)는 시드 고정 */
+    const portraitNameRowBodyInteractive =
+      isPortraitPersonalConsentNameRow &&
       (portraitConsentResponseFieldsInteractive || isEditMode || portraitSeedPresetLocked)
-    const rowEditMode = forceStatic ? false : isEditMode || portraitNameRowInteractive
+    const rowBodyEditMode = forceStatic ? false : isEditMode || portraitNameRowBodyInteractive
+    const rowHeaderEditMode =
+      forceStatic ? false : isEditMode && !isPortraitPersonalConsentNameRow
     const isPortraitAffiliationStage =
       isPortraitPersonalConsentTable && rowIdx === 0 && stageIdx === 1
     const header = row.headers[stageIdx] ?? ''
@@ -499,7 +506,7 @@ export function VerticalTableParagraphBody({
               : undefined
           }
         >
-          {rowEditMode ? (
+          {rowHeaderEditMode ? (
             isTextTable && stageKind === 'text' ? (
               isTextCellEditing({ row: rowIdx, stage: stageIdx, part: 'header' }) ? (
                 <TextCellInput
@@ -594,13 +601,13 @@ export function VerticalTableParagraphBody({
                 size="large"
                 value={cell.trim() !== '' ? cell : undefined}
                 onChange={(e: RadioChangeEvent) => {
-                  if (!rowEditMode) return
+                  if (!rowBodyEditMode) return
                   setCell(rowIdx, stageIdx, e.target.value)
                 }}
                 onFocus={() => {
                   if (canvasInteractive) setSelectedRow(rowIdx)
                 }}
-                disabled={!rowEditMode}
+                disabled={!rowBodyEditMode}
               >
                 {choiceOpts.map((o, i) => (
                   <CmsRadio key={`${rowIdx}-${stageIdx}-${i}`} size="large" value={o}>
@@ -627,9 +634,9 @@ export function VerticalTableParagraphBody({
                       checkboxSize="large"
                       className="form-editor-horizontal-table__field-check-label"
                       checked={checked}
-                      disabled={!rowEditMode}
+                      disabled={!rowBodyEditMode}
                       onChange={e => {
-                        if (!rowEditMode) return
+                        if (!rowBodyEditMode) return
                         const cur = row.choiceMultipleSelections?.[stageIdx] ?? []
                         const s = new Set(cur)
                         if (e.target.checked) s.add(o)
@@ -646,7 +653,7 @@ export function VerticalTableParagraphBody({
                 })}
               </div>
             </div>
-          ) : rowEditMode && stageKind === 'subjective' ? (
+          ) : rowBodyEditMode && stageKind === 'subjective' ? (
             isPortraitAffiliationStage ? (
               <PortraitAffiliationBody
                 cell={cell}
@@ -681,7 +688,7 @@ export function VerticalTableParagraphBody({
                 />
               </div>
             )
-          ) : rowEditMode && isTextTable && stageKind === 'text' ? (
+          ) : rowBodyEditMode && isTextTable && stageKind === 'text' ? (
             isTextCellEditing({ row: rowIdx, stage: stageIdx, part: 'body' }) ? (
               <TextCellInput
                 variant="body"
@@ -702,7 +709,7 @@ export function VerticalTableParagraphBody({
                 <VerticalTableCellText value={cell} placeholder={cPh} variant="body" />
               </div>
             )
-          ) : rowEditMode ? (
+          ) : rowBodyEditMode ? (
             <div
               className={[
                 'form-editor-vertical-table__cell-input-shell',
@@ -778,14 +785,19 @@ export function VerticalTableParagraphBody({
               {
                 consentFillMode,
                 interactive: bottomConsentInteractive,
+                displayOnly: bottomConsentDisplayOnly,
               }
             )}
             onChange={e => {
-              if (!bottomConsentInteractive) return
+              if (bottomConsentDisplayOnly || !bottomConsentInteractive) return
               onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
             }}
-            disabled={!bottomConsentInteractive}
-            style={bottomConsentInteractive ? undefined : { pointerEvents: 'none' }}
+            disabled={bottomConsentDisplayOnly ? false : !bottomConsentInteractive}
+            style={
+              bottomConsentDisplayOnly || !bottomConsentInteractive
+                ? { pointerEvents: 'none' }
+                : undefined
+            }
           >
             <CmsRadio value="agree">동의</CmsRadio>
             <CmsRadio value="disagree">동의하지 않음</CmsRadio>

@@ -1,5 +1,5 @@
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 import { useSchoolDetailAttendance } from '../../../hooks/use-school-detail-attendance'
 import { SchoolDetailAttendanceSessionPanel } from './school-detail-attendance-session-panel'
@@ -22,6 +22,8 @@ export function SchoolDetailAttendanceSection({
     sessionGroups,
     saveSessionStudents,
     getSessionStudents,
+    loading,
+    isSaving,
   } = useSchoolDetailAttendance(row, program)
 
   return (
@@ -38,7 +40,9 @@ export function SchoolDetailAttendanceSection({
         showTitle={false}
         hideExcelDownload
       >
-        {sessionGroups.length === 0 ? (
+        {loading ? (
+          <div className="school-detail-attendance-section__empty">출석 정보를 불러오는 중…</div>
+        ) : sessionGroups.length === 0 ? (
           <div className="school-detail-attendance-section__empty">조회 결과가 없습니다.</div>
         ) : (
           <div className="school-detail-attendance-section__groups">
@@ -49,6 +53,7 @@ export function SchoolDetailAttendanceSection({
                 appliedFilters={appliedFilters}
                 getSessionStudents={getSessionStudents}
                 onSave={saveSessionStudents}
+                saving={isSaving}
               />
             ))}
           </div>

@@ -4,7 +4,7 @@
 
 import dayjs from 'dayjs'
 import type { ReactNode } from 'react'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import type { CalendarItem } from '@/shared/components/calendar'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'

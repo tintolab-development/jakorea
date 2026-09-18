@@ -1,8 +1,8 @@
-import { useCallback, type MouseEvent } from 'react'
+import { useCallback, type CSSProperties, type MouseEvent } from 'react'
 import { Spin, Table } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { GeneralVolunteerDocumentApproveCompleteModal } from './general-volunteer-document-approve-complete-modal'
 import { GeneralVolunteerDocumentApproveModal } from './general-volunteer-document-approve-modal'
 import { GeneralVolunteerDocumentBulkApproveCompleteModal } from './general-volunteer-document-bulk-approve-complete-modal'
@@ -14,8 +14,10 @@ import { GeneralVolunteerDocumentCancelRejectModal } from './general-volunteer-d
 import { GeneralVolunteerDocumentRejectCompleteModal } from './general-volunteer-document-reject-complete-modal'
 import { GeneralVolunteerDocumentRejectModal } from './general-volunteer-document-reject-modal'
 import { buildGeneralVolunteerDoc1FilterRows } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
+import type { Program } from '@/types/domain'
 import { GENERAL_DOC_SCREENING_TABLE_SCROLL_X } from './doc-screening-columns'
 import { useGeneralVolunteerDocScreening } from './use-doc-screening'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import {
   useGeneralVolunteerApplicantDetail,
   type GeneralVolunteerApplicantDetailMetaChangeHandler,
@@ -26,14 +28,17 @@ import './volunteer-screening.css'
 const FILTER_ROWS = buildGeneralVolunteerDoc1FilterRows()
 
 export function GeneralVolunteerDocScreeningSection({
-  programId,
+  program,
+  programId: programIdProp,
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: {
-  programId: string
+  program?: Program
+  programId?: string
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
+  const programId = program?.id ?? programIdProp ?? ''
   const {
     list,
     pendingFilters,
@@ -79,10 +84,20 @@ export function GeneralVolunteerDocScreeningSection({
     handleCancelRejectConfirm,
     openManagerDropdown,
     setOpenManagerDropdown,
+    updatingManagerEvaluation,
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
     applicationsLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
   } = useGeneralVolunteerDocScreening({ programId })
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: programId,
+  })
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
     programId,
@@ -201,6 +216,7 @@ export function GeneralVolunteerDocScreeningSection({
           applicant={selectedApplicant}
           openManagerDropdown={openManagerDropdown}
           setOpenManagerDropdown={setOpenManagerDropdown}
+          updatingManagerEvaluation={updatingManagerEvaluation}
           onManagerAEvaluationChange={onManagerAEvaluationChange}
           onManagerBEvaluationChange={onManagerBEvaluationChange}
           onDocumentReject={() => openRejectModal(selectedApplicant)}
@@ -260,7 +276,14 @@ export function GeneralVolunteerDocScreeningSection({
           }
           excelExport={excelExport}
         >
-          <div className="general-volunteer-screening__table-wrap">
+          <div
+            className="general-volunteer-screening__table-wrap"
+            style={
+              {
+                '--general-doc-screening-table-width': `${GENERAL_DOC_SCREENING_TABLE_SCROLL_X}px`,
+              } as CSSProperties
+            }
+          >
             <Table<GeneralVolunteerApplicantRow>
               rowKey="id"
               className="cms-data-table general-volunteer-screening__table clickable-table"
@@ -271,6 +294,7 @@ export function GeneralVolunteerDocScreeningSection({
               scroll={{ x: GENERAL_DOC_SCREENING_TABLE_SCROLL_X }}
               rowSelection={{
                 fixed: true,
+                columnWidth: 68,
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
               }}
@@ -280,6 +304,7 @@ export function GeneralVolunteerDocScreeningSection({
               })}
             />
           </div>
+          <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
         </FilterTableLayout>
       </div>
     </>

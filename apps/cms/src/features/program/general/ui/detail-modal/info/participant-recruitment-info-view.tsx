@@ -287,7 +287,12 @@ export function GeneralProgramParticipantRecruitmentInfoView({
 
   return (
     <section className="participant-recruitment-info-view" aria-label={recruitmentSectionTitle}>
-      <FormParagraphSectionHeader title={recruitmentSectionTitle} surface="responseEntry" titleAligned />
+      <FormParagraphSectionHeader
+        title={recruitmentSectionTitle}
+        surface="responseEntry"
+        titleAligned
+        required={isEdit}
+      />
       <div className="participant-recruitment-info-view__forms">
         <DetailInfoForm
           title="참여자 모집 정보(설정)"
@@ -522,7 +527,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
               edit={
                 isEdit && form ? (
                   <Controller
-                    name="district"
+                    name="educationTargetDetail"
                     control={form.control}
                     render={({ field }) => (
                       <CmsInput
@@ -643,7 +648,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                               const checked = e.target.checked
                               field.onChange(checked ? 'not_applicable' : 'applicable')
                               if (checked) {
-                                form.setValue('oneLineIntroduction', '', { shouldDirty: true })
+                                form.setValue('remarks', '', { shouldDirty: true })
                               }
                             }}
                           >
@@ -653,7 +658,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                       />
                       <DetailInfoForm.InputsSeparator />
                       <Controller
-                        name="oneLineIntroduction"
+                        name="remarks"
                         control={form.control}
                         render={({ field }) => (
                           <CmsInput
@@ -673,7 +678,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                     </div>
                   ) : (
                     <Controller
-                      name="oneLineIntroduction"
+                      name="remarks"
                       control={form.control}
                       render={({ field }) => (
                         <CmsInput

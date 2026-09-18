@@ -15,6 +15,10 @@ import type { ColumnsType } from 'antd/es/table'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import {
+  formatClassCountLabel,
+  formatTotalStudentCountLabel,
+} from '@/features/program/general/lib/detail-value-helpers'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import type {
   SchoolDetailForModal,
@@ -35,13 +39,12 @@ import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import {
   TEXTBOOK_STATUS_LABELS,
   TEXTBOOK_STATUS_OPTION_KEYS,
   type ParticipatingSchoolRow,
-} from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/participating-schools'
 import {
   SchoolDetailAddInstructorAssignModal,
 } from './school-detail-add-instructor-assign-modal'
@@ -106,7 +109,7 @@ export function SchoolDetailModal({
   onSaveInstructorInfo,
   participatingRow,
   programId = '',
-  participatingInstructorList = MOCK_PARTICIPATING_INSTRUCTORS,
+  participatingInstructorList = [],
   onCancelApproval,
 }: SchoolDetailModalProps) {
   const [unsavedCloseConfirmOpen, setUnsavedCloseConfirmOpen] = useState(false)
@@ -425,7 +428,7 @@ export function SchoolDetailModal({
       .join(' | ') || undefined
   )
   const classDisplay = renderDetailInfoPipeSeparated(
-    `${detail.classCount}개 학급 | 총 ${detail.studentCount}명`
+    `${formatClassCountLabel(detail.classCount)} | ${formatTotalStudentCountLabel(detail.studentCount)}`
   )
   const waitingDisplay =
     detail.waitingRoomAvailable && detail.waitingRoomLocation

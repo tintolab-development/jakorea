@@ -1,7 +1,7 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
-import { TEXTBOOK_STATUS_LABELS, TEXTBOOK_STATUS_OPTION_KEYS } from '@/data/mock/participating-schools'
+import { TEXTBOOK_STATUS_LABELS, TEXTBOOK_STATUS_OPTION_KEYS } from '@/features/program/general/model/participating-schools'
 
 const GRADE_OPTIONS = [
   { label: '전체', value: 'all' },

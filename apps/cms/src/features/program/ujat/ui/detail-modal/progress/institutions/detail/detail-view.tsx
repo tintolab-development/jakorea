@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Program } from '@/types/domain'
 import { CmsButton } from '@/shared/ui'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { useCmsAlert } from '@/shared/ui'
-import { PROGRAM_EDIT_INFO_BUTTON_PROPS } from '@/features/program/shared/lib/program-edit-info-button'
 import type { UjatEducationProgressInstitutionDetailTab } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import {
   UJAT_EDU_PROGRESS_INSTITUTION_DETAIL_TAB_LABELS,
@@ -196,6 +196,12 @@ export function UjatEducationProgressInstitutionDetailView({
     teacherContactDraft,
   ])
 
+  const handleApplicationInfoCancel = useCallback(() => {
+    setAddressDetailDraft(addressDetail)
+    setTeacherContactDraft(teacherContact)
+    setIsApplicationInfoEditing(false)
+  }, [addressDetail, teacherContact])
+
   const handleAdminCommentEditEnter = useCallback(() => {
     if (isApplicationInfoEditing) return
     setAdminCommentDraft(adminComment)
@@ -247,13 +253,12 @@ export function UjatEducationProgressInstitutionDetailView({
             >
               활동 포기
             </CmsButton>
-            <CmsButton
-              type="button"
-              {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-              onClick={handleApplicationInfoButtonClick}
-            >
-              {isApplicationInfoEditing ? '정보 저장' : '정보 수정'}
-            </CmsButton>
+            <ProgramEditInfoActions
+              isEditing={isApplicationInfoEditing}
+              onEdit={handleApplicationInfoButtonClick}
+              onCancel={handleApplicationInfoCancel}
+              onSave={handleApplicationInfoButtonClick}
+            />
             <CmsButton
               type="button"
               variant="primary"
@@ -288,8 +293,8 @@ export function UjatEducationProgressInstitutionDetailView({
             <CmsButton
               type="button"
               variant="primary"
-              size="large"
-              width={160}
+              size="medium"
+              className="ujat-education-progress-institution-detail__posts-register-btn"
               onClick={() => setPostWriteModalOpen(true)}
             >
               게시글 등록

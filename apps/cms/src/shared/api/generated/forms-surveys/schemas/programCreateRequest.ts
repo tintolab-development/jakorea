@@ -6,8 +6,11 @@
  * OpenAPI spec version: v9
  */
 import type { ProgramAdminAssignmentRequest } from './programAdminAssignmentRequest';
+import type { ProgramCreateRequestEducationStructure } from './programCreateRequestEducationStructure';
 import type { ProgramCreateRequestProgramType } from './programCreateRequestProgramType';
+import type { ProgramFormBindingRequest } from './programFormBindingRequest';
 import type { ProgramPeriodRequest } from './programPeriodRequest';
+import type { ProgramRecruitmentRequest } from './programRecruitmentRequest';
 import type { ProgramRoundRequest } from './programRoundRequest';
 import type { ProgramScheduleRequest } from './programScheduleRequest';
 import type { ProgramSettlementPaymentItemRequest } from './programSettlementPaymentItemRequest';
@@ -34,7 +37,13 @@ export interface ProgramCreateRequest {
   businessPeriod?: ProgramPeriodRequest;
   applicationStartDate?: string;
   applicationEndDate?: string;
+  /** 모집 유형별 canonical 설정. 지정 시 legacy applicationStartDate/applicationEndDate보다 우선 */
+  recruitments?: ProgramRecruitmentRequest[];
   businessArea?: string;
+  /** 세부 프로그램 마스터 ID. 일정형 등 해당없음인 경우 null */
+  detailedProgramId?: number;
+  /** 교육 진행 구조 */
+  educationStructure?: ProgramCreateRequestEducationStructure;
   titleEn?: string;
   mainTitle?: string;
   textbookName?: string;
@@ -70,6 +79,7 @@ export interface ProgramCreateRequest {
   keyVisualImage?: string;
   settlementRuleId?: string;
   applicationPathId?: string;
+  applicationTargetMode?: string;
   additionalContentHtml?: string;
   recruitmentGuide?: string;
   learningSupportContent?: string;
@@ -81,4 +91,8 @@ export interface ProgramCreateRequest {
   paymentItems?: ProgramSettlementPaymentItemRequest[];
   serviceDetailJson?: string;
   autoApplyDefaultFormBindings?: boolean;
+  /** 프로그램 등록 중 사용한 관리자 draft ID. formBindings 지정 시 필수 */
+  programDraftId?: number;
+  /** 일반 프로그램 등록과 같은 트랜잭션에서 publish/bind할 program-scoped form bindings */
+  formBindings?: ProgramFormBindingRequest[];
 }

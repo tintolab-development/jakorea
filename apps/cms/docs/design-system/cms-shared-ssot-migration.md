@@ -68,7 +68,7 @@ theme-provider (토큰) + shared/* (컴포넌트·colocated CSS)
 - [custom-ui-priority.md](../../.cursor/rules/coding/custom-ui-priority.md)
 - [program-type-isolation.mdc](../../.cursor/rules/process/program-type-isolation.mdc)
 - [styling-tokens.md](../../.cursor/rules/design/styling-tokens.md)
-- [numeric-input-ux-audit.md](./numeric-input-ux-audit.md)
+- [numeric-input-ux.mdc](../../.cursor/rules/design/numeric-input-ux.mdc)
 - [dashboard-widget-catalog-audit.md](./dashboard-widget-catalog-audit.md) — 대시보드 홈 카탈로그 / Not catalogued
 
 ## Phase 3 진행

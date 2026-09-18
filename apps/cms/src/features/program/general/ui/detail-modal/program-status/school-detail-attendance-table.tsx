@@ -2,23 +2,21 @@ import { useMemo } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import {
   STUDENT_GENDER_LABELS,
   type SchoolDetailAttendanceStudentRow,
   type SchoolSessionAttendanceStatusKey,
 } from '../../../model/school-detail-types'
 
-export const SCHOOL_DETAIL_ATTENDANCE_TABLE_SCROLL_X = 1074
+export const SCHOOL_DETAIL_ATTENDANCE_TABLE_SCROLL_X = 1110
 
 function maskContact(contact?: string): string {
-  if (!contact) return '-'
-  return MASKING_POLICY.phone(contact) || contact
+  return displayServerPiiAsIs(contact)
 }
 
 function maskEmail(email?: string): string {
-  if (!email) return '-'
-  return MASKING_POLICY.email(email) || email
+  return displayServerPiiAsIs(email)
 }
 
 function AttendanceStatusRadios({
@@ -76,15 +74,17 @@ export function SchoolDetailAttendanceTable({
         title: '학생명',
         dataIndex: 'name',
         key: 'name',
-        width: 120,
+        width: 88,
         align: 'center',
+        className: 'school-detail-attendance-table__col-name',
       },
       {
         title: '성별',
         dataIndex: 'gender',
         key: 'gender',
-        width: 80,
+        width: 72,
         align: 'center',
+        className: 'school-detail-attendance-table__col-gender',
         render: (value: SchoolDetailAttendanceStudentRow['gender']) =>
           value ? (STUDENT_GENDER_LABELS[value] ?? '-') : '-',
       },
@@ -124,8 +124,13 @@ export function SchoolDetailAttendanceTable({
         title: '출결 현황',
         dataIndex: 'status',
         key: 'status',
-        width: 260,
+        width: 320,
+        minWidth: 320,
         align: 'center',
+        ellipsis: false,
+        onHeaderCell: () => ({
+          className: 'school-detail-attendance-table__status-header',
+        }),
         onCell: () => ({ className: 'school-detail-attendance-table__status-cell' }),
         render: (status: SchoolSessionAttendanceStatusKey, record) => (
           <AttendanceStatusRadios

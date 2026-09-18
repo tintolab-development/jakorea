@@ -1417,11 +1417,6 @@ export function getBreadcrumbByPath(
         n === '/programs/general/student-recruitment'
       ) {
         thirdLabel = '수강자 모집'
-      } else if (
-        n === '/programs/education/instructor-recruitment' ||
-        n === '/programs/general/instructor-recruitment'
-      ) {
-        thirdLabel = '강의 신청 현황'
       } else if (n === '/programs/education/enrollment' || n === '/programs/general/enrollment') {
         thirdLabel = '수강 신청 현황'
       } else if (n === '/programs/education/schedule' || n === '/programs/general/schedule') {
@@ -1464,11 +1459,6 @@ export function getBreadcrumbByPath(
         n === '/programs/company-school/student-recruitment'
       ) {
         thirdLabel = '수강자 모집'
-      } else if (
-        n === '/programs/economy-education/instructor-recruitment' ||
-        n === '/programs/company-school/instructor-recruitment'
-      ) {
-        thirdLabel = '강의 신청 현황'
       } else if (
         n === '/programs/economy-education/enrollment' ||
         n === '/programs/company-school/enrollment'

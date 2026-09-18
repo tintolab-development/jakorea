@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
-import { formatUjatVolunteerApplicationType } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import { formatUjatVolunteerApplicationType } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import {
@@ -62,14 +62,8 @@ function formatBirthDateAndAge(birthDate: string, age: number): string {
   return `${formatted} (만 ${age}세)`
 }
 
-function formatUniversityDisplay(universityName: string, maskSensitive: boolean): string {
-  if (!maskSensitive) return universityName
-  if (universityName.startsWith('**')) return universityName
-  if (universityName.includes('대학교')) {
-    const idx = universityName.indexOf('대학교')
-    return `**${universityName.slice(idx)}`
-  }
-  return `**${universityName}`
+function formatUniversityDisplay(universityName: string, _maskSensitive?: boolean): string {
+  return universityName
 }
 
 export function UjatEducationProgressVolunteerDetailBasicInfo({

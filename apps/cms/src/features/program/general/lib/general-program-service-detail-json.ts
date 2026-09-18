@@ -1,5 +1,6 @@
 import type { Program } from '@/types/domain'
 import { pickDisplayValue } from '@/features/program/general/lib/detail-value-helpers'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 
 export const GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -63,6 +64,48 @@ function normalizeStudentListRequired(
   if (value === true) return 'required'
   if (value === false) return 'not_required'
   return undefined
+}
+
+function stripIndividualStudentRosterFromCommonInfo(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  const info = common?.participantRecruitmentInfo
+  if (!info) return common
+  if (info.studentListRequired !== 'required') {
+    return common
+  }
+  return {
+    ...common,
+    participantRecruitmentInfo: {
+      ...info,
+      studentListRequired: 'not_required',
+    },
+  }
+}
+
+/**
+ * 기관(학교/기관) 프로그램 — BE `GENERAL_ORGANIZATION_PARTICIPATION_METHOD_NOT_ALLOWED`
+ * 개인 전용 참여 방식 필드를 serviceDetailJson에서 제거한다.
+ */
+function stripOrganizationParticipationFromCommonInfo(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  if (!common) return common
+  const { participationMethod: _omitMethod, ...rest } = common
+  void _omitMethod
+  return {
+    ...rest,
+    curriculumSessions: rest.curriculumSessions?.map(session => {
+      const { participationMethodLabel: _omitLabel, ...sessionRest } = session
+      void _omitLabel
+      return sessionRest
+    }),
+    scheduleDetails: rest.scheduleDetails?.map(detail => {
+      const { participationMethodLabel: _omitLabel, ...detailRest } = detail
+      void _omitLabel
+      return detailRest
+    }),
+  }
 }
 
 /**
@@ -189,9 +232,13 @@ export function normalizeGeneralProgramServiceDetailParsed(
 }
 
 export function serializeGeneralProgramServiceDetailJson(program: Program): string | undefined {
+  const isIndividual = isGeneralIndividualProgram(program)
+  const generalCommonInfo = isIndividual
+    ? stripIndividualStudentRosterFromCommonInfo(program.generalCommonInfo)
+    : stripOrganizationParticipationFromCommonInfo(program.generalCommonInfo)
   const payload: GeneralProgramServiceDetailJsonV1 = {
     schemaVersion: GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION,
-    generalCommonInfo: program.generalCommonInfo,
+    generalCommonInfo,
     generalParticipantTypes: program.generalParticipantTypes,
     generalSurveyMenuKeys: program.generalSurveyMenuKeys,
     targetLevels: program.targetLevels,
@@ -204,7 +251,7 @@ export function serializeGeneralProgramServiceDetailJson(program: Program): stri
     volunteerApplicationEndDate: program.volunteerApplicationEndDate,
     resultAnnouncementDate: program.resultAnnouncementDate,
     resultAnnouncementMethod: program.resultAnnouncementMethod,
-    studentListRequired: program.studentListRequired,
+    studentListRequired: isIndividual ? 'not_required' : program.studentListRequired,
     generalParticipantInterviewEnabled: program.generalParticipantInterviewEnabled,
     generalVolunteerInterviewEnabled: program.generalVolunteerInterviewEnabled,
   }

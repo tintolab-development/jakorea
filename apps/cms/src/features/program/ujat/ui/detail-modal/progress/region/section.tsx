@@ -1,38 +1,36 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useRegionAssignment } from './use-region-assignment'
 import { DownloadOutlined } from '@ant-design/icons'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../../application-institution/list/region-tabs'
 import { UjatAssignmentAssignModal } from '../shared/assign-modal'
 import type { EducationProgressHalfKey } from '../tabs'
 import { RegionAssignmentTable } from './assignment-table'
-import { applyRegionBlockedDateSetting, applyRegionDirectAssignment } from './assignment-actions'
 import { RegionAssignmentDownloadModal } from './assignment-download-modal'
 import {
-  applyRegionAttendanceManagersFromData,
   getRegionAttendanceManagerScheduleItemsFromData,
   type RegionAttendanceManagerAssignments,
 } from './attendance-manager'
 import { RegionAttendanceManagerModal } from './attendance-manager-modal'
 import { RegionBlockedDateModal } from './blocked-date-modal'
-import { setRegionAssignmentTableData } from './region-assignment-store'
 import {
   getRegionBlockedDateSubstituteVolunteerOptionsFromData,
   getRegionBlockedDateVolunteerOptions,
   getRegionDirectAssignClassOptions,
   getRegionDirectAssignVolunteerOptions,
   getRegionEducationDateOptions,
-} from './mock'
+} from './region-assignment-options'
 import './section.css'
 
 export function UjatEducationProgressRegionAssignmentSection({
-  half: _half,
+  programId,
+  half,
 }: {
+  programId: string
   half: EducationProgressHalfKey
 }) {
-  const { showAlert } = useCmsAlert()
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
     getDefaultUjatEducationRegionKey
   )
@@ -41,16 +39,24 @@ export function UjatEducationProgressRegionAssignmentSection({
   const [attendanceManagerModalOpen, setAttendanceManagerModalOpen] = useState(false)
   const [downloadModalOpen, setDownloadModalOpen] = useState(false)
 
-  const { tableData, tableVersion, runAutoAssign, bump } = useRegionAssignment(activeRegion)
+  const {
+    tableData,
+    tableVersion,
+    runAutoAssign,
+    confirmDirectAssign,
+    confirmBlockedDate,
+    saveAttendanceManagers,
+    isMutating,
+  } = useRegionAssignment(programId, half, activeRegion)
 
   const directAssignClassOptions = useMemo(
     () => getRegionDirectAssignClassOptions(activeRegion),
-    [activeRegion]
+    [activeRegion, tableVersion]
   )
 
   const getDirectAssignVolunteerOptions = useCallback(
     (classSlotId: string) => getRegionDirectAssignVolunteerOptions(activeRegion, classSlotId),
-    [activeRegion]
+    [activeRegion, tableVersion]
   )
 
   const blockedDateVolunteerOptions = useMemo(
@@ -96,16 +102,10 @@ export function UjatEducationProgressRegionAssignmentSection({
 
   const handleConfirmDirectAssign = useCallback(
     (payload: { classSlotId: string; volunteerId: string }) => {
-      const next = applyRegionDirectAssignment(tableData, payload)
-      setRegionAssignmentTableData(activeRegion, next)
-      bump()
+      confirmDirectAssign(payload)
       setDirectAssignModalOpen(false)
-      showAlert({
-        title: '안내',
-        content: '교육일이 직접 배정되었습니다.',
-      })
     },
-    [activeRegion, bump, showAlert, tableData]
+    [confirmDirectAssign]
   )
 
   const handleOpenBlockedDateModal = useCallback(() => {
@@ -122,25 +122,15 @@ export function UjatEducationProgressRegionAssignmentSection({
       blockedDateLabels: string[]
       substituteVolunteerId: string
     }) => {
-      const next = applyRegionBlockedDateSetting(tableData, payload)
-      setRegionAssignmentTableData(activeRegion, next)
-      bump()
+      confirmBlockedDate(payload)
       setBlockedDateModalOpen(false)
-      showAlert({
-        title: '안내',
-        content: '배정 불가일이 설정되었습니다.',
-      })
     },
-    [activeRegion, bump, showAlert, tableData]
+    [confirmBlockedDate]
   )
 
   const handleAutoAssign = useCallback(() => {
     runAutoAssign()
-    showAlert({
-      title: '안내',
-      content: '교육일이 자동 배정되었습니다.',
-    })
-  }, [runAutoAssign, showAlert])
+  }, [runAutoAssign])
 
   const handleOpenAttendanceManagerModal = useCallback(() => {
     setAttendanceManagerModalOpen(true)
@@ -152,16 +142,10 @@ export function UjatEducationProgressRegionAssignmentSection({
 
   const handleSaveAttendanceManager = useCallback(
     (assignments: RegionAttendanceManagerAssignments) => {
-      const next = applyRegionAttendanceManagersFromData(tableData, assignments)
-      setRegionAssignmentTableData(activeRegion, next)
-      bump()
+      saveAttendanceManagers(assignments)
       setAttendanceManagerModalOpen(false)
-      showAlert({
-        title: '안내',
-        content: '출결 담당자가 저장되었습니다.',
-      })
     },
-    [activeRegion, bump, showAlert, tableData]
+    [saveAttendanceManagers]
   )
 
   return (
@@ -193,6 +177,7 @@ export function UjatEducationProgressRegionAssignmentSection({
             variant="delete"
             size="large"
             width={140}
+            disabled={isMutating}
             onClick={handleOpenBlockedDateModal}
           >
             배정 불가일 설정
@@ -202,6 +187,7 @@ export function UjatEducationProgressRegionAssignmentSection({
             variant="secondary"
             size="large"
             width={140}
+            disabled={isMutating}
             onClick={handleOpenAttendanceManagerModal}
           >
             출결 담당자 설정
@@ -211,6 +197,7 @@ export function UjatEducationProgressRegionAssignmentSection({
             variant="primary"
             size="large"
             width={140}
+            disabled={isMutating}
             onClick={handleOpenDirectAssignModal}
           >
             교육일 직접 배정
@@ -220,6 +207,7 @@ export function UjatEducationProgressRegionAssignmentSection({
             variant="primary"
             size="large"
             width={140}
+            disabled={isMutating}
             onClick={handleAutoAssign}
           >
             교육일 자동 배정

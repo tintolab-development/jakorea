@@ -9,18 +9,19 @@
 | 기관 **신청** 상세 | 프로그램 상세 → 참여자 신청 → 기관 행 | `institution-basic-info.tsx`, `use-applicant-institution-detail-edit.ts` |
 | **참여** 기관 상세 | 프로그램 진행 현황 → 참여 기관 → 신청 정보 탭 | `school-detail-fullpage-view.tsx`, `use-participating-institution-detail-edit.ts` |
 
-공통 편집 UI: `institution-combined-class-edit-cell.tsx`  
+공통 편집 UI: `institution-combined-class-edit-cell.tsx`
 정책 함수: `combined-class-edit-policy.ts`
+담당 교사 지정: `institution-combined-class-lead-teacher-modal.tsx`
 
 ## 프로그램 자격
 
-- **단일 회차 프로그램**(`resolveInstitutionApplicationProgramBridge(program).sessionRound === 'single'`)에서만 합반 신청 가능.
-- 다회차·비대상 프로그램: 조회·편집 모두 **「해당 없음」**, 저장 시 항상 **미신청**·파트너 ID 빈 배열.
+- **단일 회차 프로그램**(`sessionRound === 'single'`)에서만 합반 신청 가능.
+- 복수 회차·sessionRound 미설정·비대상 프로그램: 조회·편집 모두 **「해당 없음」**, 저장 시 항상 **미신청**·파트너 ID 빈 배열.
 
 ## 편집 UI (정보 수정 모드)
 
-1. **라디오** — `미신청` / `신청`, **기본값 미신청** (`size="large"`).
-2. **「신청」 선택 시** 라디오 **우측**에 **다중 선택 `CmsSelect`** 활성화.
+1. **라디오** — `신청` / `미신청`, **기본값 미신청** (`size="large"`).
+2. **「신청」 선택 시** 라디오 **우측**에 **단일 선택 `CmsSelect`** 활성화.
 3. **옵션** — 동일 프로그램·**동일 기관명**의 **타 학년** 신청(또는 참여) 건 목록.
    - 신청: `getSameSchoolApplicantGrades(programId, schoolName, excludeId)`
    - 참여: `getSameSchoolParticipatingGrades(schoolName, excludeId)` — 목록은 이미 동일 프로그램 범위.
@@ -31,16 +32,19 @@
 
 - **신청** 선택 시 파트너 학년 **1건 이상** 필수 (Zod).
 - **미신청** 또는 비대상 프로그램: 파트너 ID·학년 배열 초기화.
-- **신청 상세 mock:** `patchApplicantInstitutionDetailWithCombinedClass` — 선택한 타 학년 신청 건에도 **교재명·합반 신청 정보** 동기화.
+- **신청 상세:** remote `organization-merge-groups` + 로컬 목록 patch — 선택한 타 학년 신청 건에도 **교재명·합반 신청 정보** 동기화. **신청 학년·학급 수·인원·학생 명단은 유지**.
 - **참여 상세:** `participatingInstitutionEditDraftToDetailPatch` + `onSaveBasicInfo`; 합반 시 교재 선택 규칙은 [참여 기관 교재 spec](./participating-institution-textbook-spec.md) 참고.
+- **합반 「신청」 저장 성공 후:** 담당 교사 지정 모달 → 완료 안내 모달.
+  - 옵션 라벨: `교사명 (N학년 담당)`
+  - 지정 시 합반 멤버(본인+파트너) **담당 교사 정보**를 지정 교사로 통일 노출.
 
 ## 실적·교육 일정 (안내 카피)
 
-합반 처리 시 **다음 교육 일정부터** 반영. 이전 교육은 실적 개별 반영, 합반 이후는 **사용 교재 학년** 기준 취합.
+합반 처리 시 **다음 교육 일정부터** 반영. 이전 교육은 실적 개별 반영, 합반 이후는 **지정된 담당 교사가 신청한 학년** 기준 취합.
 
 ## 검증·테스트
 
 - 단위: `combined-class-edit-policy.test.ts`
 - mock 데모: 동일 기관·동일 프로그램 다학년 (`applicant-school-1/5/6` 진월초 등)
 
-**Last updated:** 2026-06-08
+**Last updated:** 2026-09-16

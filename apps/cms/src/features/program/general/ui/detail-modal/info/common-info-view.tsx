@@ -48,7 +48,6 @@ import {
   scheduleDetailsPreEducationSyncEqual,
   shouldAllowScheduleProgressGroupAdd,
   shouldDisableEducationSchedulePeriodMode,
-  shouldLockEducationScheduleCalendarToggles,
   PRE_EDUCATION_SCHEDULE_LABEL,
   type ScheduleEventPerScheduleExtraPlan,
 } from '@/features/program/general/lib/schedule-detail-form'
@@ -75,6 +74,7 @@ import {
   resolveProgramWageDeductionLabel,
   useProgramWagePaymentItemOptions,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import {
   GENERAL_PROGRAM_EDUCATION_STRUCTURE_LABELS,
   GENERAL_PROGRAM_SESSION_ROUND_LABELS,
@@ -83,6 +83,7 @@ import {
   encodeSponsorManagerContactRef,
   formatGeneralProgramVenueViewLine,
   formatSponsorManagerSelectLabel,
+  resolveSponsorManagerViewLine,
   getGeneralSurveyEditFieldsForAudience,
   getGeneralDetailedProgramSelectOptions,
   isGeneralProgramScheduleType,
@@ -94,21 +95,15 @@ import {
 } from '@/features/program/general/model/common-info-edit-schema'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsButton } from '@/shared/ui'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsToggle } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import {
-  TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
-  TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS,
-} from '@/features/template/lib/template-form-select-options'
+import { formatNumberDisplay } from '@/shared/utils'
+import { TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import {
   PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS,
   PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
@@ -223,6 +218,8 @@ function ProgramRegistrationDetailSection({
   editDescription,
   titleTrailing,
   isFormEdit = false,
+  /** 수정 모드 + 블록 내 입력 항목이 모두 필수일 때 타이틀 `*` */
+  required = false,
 }: {
   title: string
   children: ReactNode
@@ -231,6 +228,7 @@ function ProgramRegistrationDetailSection({
   editDescription?: string
   titleTrailing?: ReactNode
   isFormEdit?: boolean
+  required?: boolean
 }) {
   return (
     <section className="detail-common-info-view__section" aria-label={title}>
@@ -240,6 +238,7 @@ function ProgramRegistrationDetailSection({
         titleTrailing={titleTrailing}
         surface="responseEntry"
         titleAligned
+        required={isFormEdit && required}
       />
       <div
         className={['detail-common-info-view__section-body', bodyClassName]
@@ -274,7 +273,9 @@ function ProgramProgressView({ program }: { program: Program }) {
 }
 
 function KpiBoldNumber({ value }: { value: number }) {
-  return <span className="detail-common-info-view__kpi-number">{value}</span>
+  return (
+    <span className="detail-common-info-view__kpi-number">{formatNumberDisplay(value)}</span>
+  )
 }
 
 function BasicInfoSection({
@@ -368,13 +369,15 @@ function BasicInfoSection({
     } as unknown as UseFormReturn<GeneralProgramCommonInfoEditFormValues>)
 
   const watchedSponsorIds = isFormEdit ? (editForm.watch('sponsorManagementIds') ?? []) : []
-  const sponsorEditContext = useGeneralProgramSponsorEditContext(watchedSponsorIds)
+  const sponsorIdsForContacts =
+    isFormEdit && watchedSponsorIds.length > 0 ? watchedSponsorIds : sponsorManagementIds
+  const sponsorEditContext = useGeneralProgramSponsorEditContext(sponsorIdsForContacts)
   const selectedSponsors = useMemo(
     () =>
-      watchedSponsorIds
+      sponsorIdsForContacts
         .map(id => sponsorEditContext.sponsors.find(s => s.id === id))
         .filter((sponsor): sponsor is SponsorManagementRow => sponsor != null),
-    [watchedSponsorIds, sponsorEditContext.sponsors]
+    [sponsorIdsForContacts, sponsorEditContext.sponsors]
   )
   const managerOptions = useMemo(() => {
     const options: Array<{ value: string; label: string }> = []
@@ -387,7 +390,8 @@ function BasicInfoSection({
             sponsorName: sponsor.name,
             contactName: contact.name,
             position: contact.position,
-            multiSponsor: selectedSponsors.length > 1,
+            // 시안: 드롭다운은 항상 `후원사명 | 담당자명 직함`
+            multiSponsor: true,
           }),
         })
       }
@@ -395,31 +399,51 @@ function BasicInfoSection({
     return options
   }, [selectedSponsors, sponsorEditContext.contactsBySponsorId])
 
+  const sponsorManagerViewText = useMemo(
+    () =>
+      resolveSponsorManagerViewLine({
+        storedLine: commonInfo.sponsorManagerLine?.trim() || program.managerName || '-',
+        sponsors: selectedSponsors,
+        contactsBySponsorId: sponsorEditContext.contactsBySponsorId,
+      }),
+    [
+      commonInfo.sponsorManagerLine,
+      program.managerName,
+      selectedSponsors,
+      sponsorEditContext.contactsBySponsorId,
+    ]
+  )
+
   useEffect(() => {
     if (!isFormEdit) return
-    const currentManagerId = editForm.getValues('sponsorManagerContactId')
+    const currentIds = editForm.getValues('sponsorManagerContactIds') ?? []
     if (watchedSponsorIds.length === 0) {
-      if (currentManagerId) {
+      if (currentIds.length > 0) {
+        editForm.setValue('sponsorManagerContactIds', [], { shouldValidate: false })
         editForm.setValue('sponsorManagerContactId', '', { shouldValidate: false })
       }
       return
     }
     if (managerOptions.length === 0) {
-      if (currentManagerId) {
+      if (currentIds.length > 0) {
+        editForm.setValue('sponsorManagerContactIds', [], { shouldValidate: false })
         editForm.setValue('sponsorManagerContactId', '', { shouldValidate: false })
       }
       return
     }
-    if (!managerOptions.some(option => option.value === currentManagerId)) {
-      const next = managerOptions[0]?.value ?? ''
-      editForm.setValue('sponsorManagerContactId', next, {
-        shouldValidate: Boolean(next),
+    const optionValues = new Set(managerOptions.map(option => option.value))
+    const validIds = currentIds.filter(id => optionValues.has(id))
+    if (validIds.length !== currentIds.length) {
+      editForm.setValue('sponsorManagerContactIds', validIds, {
+        shouldValidate: validIds.length > 0,
         shouldDirty: true,
       })
-      if (next) editForm.clearErrors('sponsorManagerContactId')
-    } else if (currentManagerId) {
-      // 옵션 로드 후 유효 값이 있는데 저장 실패 에러가 남은 경우 빨간 글씨 방지
-      editForm.clearErrors('sponsorManagerContactId')
+      editForm.setValue('sponsorManagerContactId', validIds[0] ?? '', {
+        shouldValidate: false,
+      })
+      if (validIds.length > 0) editForm.clearErrors('sponsorManagerContactIds')
+    } else if (validIds.length > 0) {
+      editForm.clearErrors('sponsorManagerContactIds')
     }
   }, [editForm, isFormEdit, managerOptions, watchedSponsorIds])
 
@@ -451,6 +475,8 @@ function BasicInfoSection({
     <ProgramRegistrationDetailSection
       title="기본 정보"
       bodyClassName="detail-common-info-view__section-body--basic-info"
+      isFormEdit={isFormEdit}
+      required
     >
       <DetailInfoForm
         title="기본 정보 — 등록 이력"
@@ -692,7 +718,7 @@ function BasicInfoSection({
                       withAllOption={false}
                       placeholder="사업 분야를 선택하세요"
                       width="100%"
-                      options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
+                      options={[...BUSINESS_AREA_OPTIONS]}
                       value={field.value || undefined}
                       onChange={v => {
                         const next = String(v ?? '')
@@ -730,6 +756,7 @@ function BasicInfoSection({
                       onChange={v => {
                         const next = Array.isArray(v) ? v.map(String) : []
                         field.onChange(next)
+                        editForm.setValue('sponsorManagerContactIds', [])
                         editForm.setValue('sponsorManagerContactId', '')
                         if (next.length > 0) editForm.clearErrors('sponsorManagementIds')
                       }}
@@ -743,31 +770,35 @@ function BasicInfoSection({
           <DetailInfoForm.Field
             label="후원사 담당자"
             view={
-              <PipeSeparatedInlineView
-                text={commonInfo.sponsorManagerLine?.trim() || program.managerName || '-'}
-              />
+              <PipeSeparatedInlineView text={sponsorManagerViewText} />
             }
             edit={
               <Controller
-                name="sponsorManagerContactId"
+                name="sponsorManagerContactIds"
                 control={editForm.control}
                 render={({ field, fieldState }) => {
+                  const selected = Array.isArray(field.value) ? field.value : []
                   const hasValidSelection =
-                    Boolean(field.value) &&
-                    managerOptions.some(option => option.value === field.value)
+                    selected.length > 0 &&
+                    selected.every(id => managerOptions.some(option => option.value === id))
                   return (
                     <CmsSelect
+                      mode="multiple"
                       placeholder="후원사 담당자를 선택하세요"
                       width="100%"
+                      showSearch
+                      optionFilterProp="label"
                       options={managerOptions}
-                      value={field.value || undefined}
+                      value={selected}
                       disabled={watchedSponsorIds.length === 0 || managerOptions.length === 0}
                       onChange={v => {
-                        const next = String(v ?? '')
-                        field.onChange(next)
-                        if (next) editForm.clearErrors('sponsorManagerContactId')
+                        const ids = Array.isArray(v) ? v.map(String) : []
+                        field.onChange(ids)
+                        editForm.setValue('sponsorManagerContactId', ids[0] ?? '', {
+                          shouldDirty: true,
+                        })
+                        if (ids.length > 0) editForm.clearErrors('sponsorManagerContactIds')
                       }}
-                      // 유효 선택값이 있으면 error status 금지 (Ant가 선택 라벨을 빨간색으로 칠함)
                       status={
                         fieldState.error && !hasValidSelection ? 'error' : undefined
                       }
@@ -1021,7 +1052,7 @@ function KpiSection({
   const formMode = isFormEdit ? 'edit' : 'view'
 
   return (
-    <ProgramRegistrationDetailSection title="사업 KPI 목표">
+    <ProgramRegistrationDetailSection title="사업 KPI 목표" isFormEdit={isFormEdit} required>
       <DetailInfoForm title="사업 KPI 목표" hideHeader mode={formMode} className="program-registration-paragraph">
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -1226,7 +1257,8 @@ function WageSection({
     : []
   const deductionLabel = isFormEdit
     ? resolveProgramWageDeductionLabel(watchedPaymentItemIds)
-    : (commonInfo.deductionItems ?? resolveProgramWageDeductionLabel([]))
+    : (mapSettlementDeductionTypeToLabel(commonInfo.deductionItems) ??
+      resolveProgramWageDeductionLabel([]))
 
   const wageFields = [
     { label: '1급 강사비', name: 'wageGrade1Amount' as const, max: 500_000, maxHint: '500,000' },
@@ -1239,6 +1271,7 @@ function WageSection({
       title={PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.title}
       isFormEdit={isFormEdit}
       editDescription={PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.editDescription}
+      required
     >
       <DetailInfoForm title="임금 정보" hideHeader mode={formMode} className="program-registration-paragraph">
         {wageFields.map(({ label, name, max, maxHint }, index) => {
@@ -1595,6 +1628,7 @@ function TypeSettingsSection({
       isFormEdit={isFormEdit}
       editDescription={PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.editDescription}
       bodyClassName="detail-common-info-view__section-body--type-settings"
+      required
     >
       <DetailInfoForm
         title="프로그램 유형 설정"
@@ -2778,8 +2812,9 @@ function CurriculumSection({
 
   return (
     <ProgramRegistrationDetailSection
-      title={isFormEdit ? `${curriculumMeta.title}*` : curriculumMeta.title}
+      title={curriculumMeta.title}
       isFormEdit={isFormEdit}
+      required
       editDescription={
         isMultiRoundCurriculum
           ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.editDescriptionMultiRound
@@ -4012,8 +4047,9 @@ function ScheduleProgressEditSection({
 
   return (
     <ProgramRegistrationDetailSection
-      title={`${scheduleMeta.title}*`}
+      title={scheduleMeta.title}
       isFormEdit
+      required
       editDescription={editDescription}
       titleTrailing={
         <div
@@ -4311,10 +4347,6 @@ function ScheduleSettingsEditFields({
     participantOrganization: Boolean(participantOrganization),
     sessionRound: sessionRound === 'multi' ? 'multi' : 'single',
   })
-  const lockCalendarTogglesToScheduleMode = shouldLockEducationScheduleCalendarToggles({
-    participantOrganization: Boolean(participantOrganization),
-    educationStructure: educationStructure === 'schedule' ? 'schedule' : 'curriculum',
-  })
   const lockDateMode = disablePeriodMode || autoFillFromScheduleGroupTimes
   const autoFillDatePicker = autoFillFromScheduleGroupTimes && scheduleMode === 'date'
   const groupTimeSlotsKey = JSON.stringify(
@@ -4443,9 +4475,9 @@ function ScheduleSettingsEditFields({
                 mode="single"
                 presetMode={autoFillDatePicker ? 'date' : 'schedule'}
                 customizable={false}
+                showPeriodToggle={false}
                 showTimeToggle={!autoFillDatePicker}
-                showPeriodToggle={!lockDateMode && !lockCalendarTogglesToScheduleMode}
-                lockTimeToggleOn={lockCalendarTogglesToScheduleMode && !autoFillDatePicker}
+                lockTimeToggleOn={!autoFillDatePicker}
                 suppressAutoTodayWhenEmpty
                 value={singleDate}
                 onChange={handleDateApply}
@@ -4457,8 +4489,8 @@ function ScheduleSettingsEditFields({
                 mode="single"
                 presetMode="period"
                 customizable={false}
-                showTimeToggle={!lockCalendarTogglesToScheduleMode}
-                lockPeriodToggleOn={lockCalendarTogglesToScheduleMode}
+                showTimeToggle={false}
+                showPeriodToggle={false}
                 suppressAutoTodayWhenEmpty
                 value={periodDate}
                 onChange={setPeriodDate}
@@ -4528,9 +4560,10 @@ function ScheduleSettingsSection({
 
   return (
     <ProgramRegistrationDetailSection
-      title={isFormEdit ? `${scheduleMeta.title}*` : scheduleMeta.title}
+      title={scheduleMeta.title}
       isFormEdit={isFormEdit}
       editDescription={scheduleMeta.editDescription}
+      required
     >
       {isFormEdit ? (
         <ScheduleSettingsEditFields form={editForm} />
@@ -4561,6 +4594,7 @@ export interface GeneralProgramDetailCommonInfoViewProps {
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
   canWrite?: boolean
   onEdit?: () => void
+  onCancel?: () => void
   onSave?: () => void
 }
 
@@ -4571,6 +4605,7 @@ export function GeneralProgramDetailCommonInfoView({
   form,
   canWrite = false,
   onEdit,
+  onCancel,
   onSave,
 }: GeneralProgramDetailCommonInfoViewProps) {
   const v = programToDetailEditValues(program)
@@ -4581,16 +4616,12 @@ export function GeneralProgramDetailCommonInfoView({
     <div className="detail-common-info-view program-detail-fullpage-modal__info-tab">
       {(canWrite || isEditMode) && (
         <div className="detail-common-info-view__header">
-          <CmsButton
-            {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-            onClick={resolveProgramEditInfoClick(isEditMode, {
-              onEnterEdit: onEdit ?? (() => {}),
-              onSaveEdit: onSave ?? (() => {}),
-            })}
-            aria-label={PROGRAM_EDIT_INFO_BUTTON_LABEL}
-          >
-            {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-          </CmsButton>
+          <ProgramEditInfoActions
+            isEditing={isEditMode}
+            onEdit={onEdit ?? (() => {})}
+            onCancel={onCancel ?? (() => {})}
+            onSave={onSave ?? (() => {})}
+          />
         </div>
       )}
 

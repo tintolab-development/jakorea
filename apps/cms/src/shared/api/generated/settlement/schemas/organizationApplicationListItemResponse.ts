@@ -5,6 +5,8 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { OrganizationApplicationListItemResponseRecruitHalf } from './organizationApplicationListItemResponseRecruitHalf';
+import type { Session } from './session';
 
 export interface OrganizationApplicationListItemResponse {
   id?: number;
@@ -12,11 +14,21 @@ export interface OrganizationApplicationListItemResponse {
   programName?: string;
   programType?: string;
   recruitmentId?: number;
+  /**
+     * 상·하반기. 학교 모집은 연 1회라 null. 봉사 모집과 동일 규칙이 적용되는 경우만 FIRST_HALF|SECOND_HALF
+     * @nullable
+     */
+  recruitHalf?: OrganizationApplicationListItemResponseRecruitHalf;
   organizationId?: number;
   organizationName?: string;
   teacherMemberId?: number;
   teacherName?: string;
   applicationStatus?: string;
+  /**
+     * UJAT 임시배정 워크플로 상태. TEMP_ASSIGNED|TEMP_REJECTED 등. 미사용 프로그램은 null
+     * @nullable
+     */
+  temporaryAssignmentStatus?: string | null;
   requestedStudentCount?: number;
   requestedClassCount?: number;
   submittedAt?: string;
@@ -28,4 +40,11 @@ export interface OrganizationApplicationListItemResponse {
   defaultScheduleName?: string;
   ujatPartnerAssignmentsPath?: string;
   ujatPartnerRecommendationPath?: string;
+  grade?: string;
+  regionSido?: string;
+  regionSigungu?: string;
+  sessions?: Session[];
+  mergeGroupId?: number;
+  mergeStatus?: string;
+  mergeLead?: boolean;
 }

@@ -6,6 +6,7 @@ export type GeneralVolunteerInterviewAssignCompleteModalProps = {
   applicantName: string
   mode: 'assign' | 'reassign'
   payload: GeneralInterviewAssignConfirmPayload
+  subjectNoun?: string
   onClose: () => void
 }
 
@@ -15,6 +16,7 @@ export function GeneralVolunteerInterviewAssignCompleteModal({
   applicantName,
   mode,
   payload,
+  subjectNoun = '봉사자',
   onClose,
 }: GeneralVolunteerInterviewAssignCompleteModalProps) {
   return (
@@ -23,6 +25,7 @@ export function GeneralVolunteerInterviewAssignCompleteModal({
       applicantName={applicantName}
       mode={mode}
       payload={payload}
+      subjectNoun={subjectNoun}
       onClose={onClose}
     />
   )

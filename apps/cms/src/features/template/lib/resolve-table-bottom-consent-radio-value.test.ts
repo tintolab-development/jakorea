@@ -37,4 +37,13 @@ describe('resolveTableBottomConsentRadioValue', () => {
       })
     ).toBe('agree')
   })
+
+  it('forces null in displayOnly even when stored value exists', () => {
+    expect(
+      resolveTableBottomConsentRadioValue('agree', {
+        displayOnly: true,
+        interactive: false,
+      })
+    ).toBeNull()
+  })
 })

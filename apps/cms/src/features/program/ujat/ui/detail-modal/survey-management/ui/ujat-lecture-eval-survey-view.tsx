@@ -16,7 +16,7 @@ import {
   UJAT_LECTURE_EVAL_TABS,
   type UjatLectureEvalTabKey,
 } from '../lib/ujat-lecture-eval-survey'
-import type { UjatSurveyPollRawResponse } from '@/data/mock/ujat-survey-poll-responses-mock'
+import type { UjatSurveyPollRawResponse } from '@/features/program/ujat/model/ujat-survey-poll'
 import type { UjatRegisteredSurvey } from '../lib/ujat-satisfaction-survey'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { canDownloadSurveyResults } from './ujat-survey-registered-actions'

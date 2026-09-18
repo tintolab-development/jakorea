@@ -1,6 +1,6 @@
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import dayjs from 'dayjs'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { User } from '@/types/user'
 import {
   isInstructorSchoolTeacherProfile,

@@ -12,7 +12,9 @@ import {
   DeleteGuideModal,
   ProgramHistoryDeleteBlockedModal,
   buildProgramProgressHistoryDeleteGuide,
+  useCmsAlert,
 } from '@/shared/ui'
+import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
@@ -100,8 +102,7 @@ const programHistoryFilterFields: FilterFieldConfig[] = [
 export type SponsorProgramHistoryPanelProps = UseProgramHistoryFilterReturn & {
   columns: ColumnsType<SponsorProgramHistoryRow>
   canWrite: boolean
-  onRemoveProgramHistories: (ids: string[]) => void
-  /** 실 API 모드 — 삭제 API 없음 */
+  onRemoveProgramHistories: (ids: string[]) => Promise<void>
   deleteDisabled?: boolean
   totalCount?: number
   loading?: boolean
@@ -125,6 +126,7 @@ export function SponsorProgramHistoryPanel({
   loading = false,
 }: SponsorProgramHistoryPanelProps) {
   const navigate = useNavigate()
+  const { showAlert } = useCmsAlert()
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteBlockedModalOpen, setDeleteBlockedModalOpen] = useState(false)
 
@@ -150,17 +152,23 @@ export function SponsorProgramHistoryPanel({
   }, [canWrite, selectedKeys, setSelectedKeys])
 
   const handleDeleteProgramHistory = useCallback((): void => {
-    if (!canWrite || selectedKeys.length === 0 || deleteDisabled) return
+    if (!canWrite || deleteDisabled) return
+    if (selectedKeys.length === 0) {
+      showAlert({
+        title: '항목 선택 안내',
+        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+      })
+      return
+    }
     setDeleteModalOpen(true)
-  }, [canWrite, deleteDisabled, selectedKeys.length])
+  }, [canWrite, deleteDisabled, selectedKeys.length, showAlert])
 
   const handleDeleteCancel = useCallback((): void => {
     setDeleteModalOpen(false)
   }, [])
 
-  const handleDeleteConfirm = useCallback((): void => {
-    const ids = selectedKeys.map(k => String(k))
-    if (ids.length === 0) return
+  const handleDeleteConfirm = useCallback(async (): Promise<void> => {
+    if (selectedRows.length === 0) return
 
     const hasInProgress = selectedRows.some(row =>
       isProgramHistoryDeleteBlockedByDisplayStatus(
@@ -173,10 +181,32 @@ export function SponsorProgramHistoryPanel({
       return
     }
 
-    onRemoveProgramHistories(ids)
-    setSelectedKeys([])
-    setDeleteModalOpen(false)
-  }, [onRemoveProgramHistories, selectedKeys, selectedRows, setSelectedKeys])
+    const programIds = selectedRows.map(row => row.programId.trim()).filter(Boolean)
+    if (
+      programIds.length !== selectedRows.length ||
+      programIds.some(programId => !/^\d+$/.test(programId))
+    ) {
+      showAlert({
+        title: '안내',
+        content: '삭제할 프로그램 ID를 확인할 수 없습니다.',
+      })
+      return
+    }
+
+    try {
+      await onRemoveProgramHistories(programIds)
+      setSelectedKeys([])
+      setDeleteModalOpen(false)
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: getDataManagementApiErrorMessage(
+          error,
+          '프로그램 진행 이력 삭제에 실패했습니다.'
+        ),
+      })
+    }
+  }, [onRemoveProgramHistories, selectedRows, setSelectedKeys, showAlert])
 
   const programHistoryTableOnRow = useCallback(
     (record: SponsorProgramHistoryRow) => ({
@@ -220,8 +250,8 @@ export function SponsorProgramHistoryPanel({
           <CmsButton
             variant="delete"
             onClick={handleDeleteProgramHistory}
-            disabled={selectedKeys.length === 0 || deleteDisabled}
-            title={deleteDisabled ? '실 API 연동 시 프로그램 진행 이력 삭제는 지원되지 않습니다.' : undefined}
+            disabled={!canWrite || deleteDisabled}
+            loading={deleteDisabled}
           >
             이력 삭제
           </CmsButton>
@@ -254,6 +284,7 @@ export function SponsorProgramHistoryPanel({
           confirmVariant="delete"
           requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
           confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+          confirmLoading={deleteDisabled}
         />
       )}
       {deleteBlockedModalOpen ? (

@@ -1,5 +1,5 @@
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
-import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
+import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 
 /** UJAT 면접일 배정 모달이 요구하는 필드만 겹치므로 general row를 모달용으로 변환 */
 export function toInterviewAssignModalApplicant(

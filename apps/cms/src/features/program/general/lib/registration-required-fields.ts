@@ -42,10 +42,9 @@ function readOverlay(overlay: Record<string, unknown>, key: string): unknown {
 
 function isIpsIncomplete(value: unknown): boolean {
   if (value == null || typeof value !== 'object') return true
-  const row = value as { category?: unknown; detail?: unknown }
-  if (isEmptyText(row.category)) return true
-  if (row.category === 'prepare') return false
-  return isEmptyText(row.detail)
+  const row = value as { category?: unknown }
+  // 2차(detail) 미선택·none은 create 요약「해당 없음」과 동일 — 1차 IPS 유형만 필수
+  return isEmptyText(row.category)
 }
 
 function isRecord(value: unknown): value is Record<number, unknown> {
@@ -99,11 +98,14 @@ function hasIncompleteBasicInfo(
     return true
   }
   // 일정형: 세부 프로그램명「해당없음」고정 — 선택 검증 생략(실적에서는 일정명 반영)
-  if (
-    ctx.programType !== 'schedule' &&
-    isEmptyText(readOverlay(overlay, 'generalRegistration.basicInfo.detailedProgramId'))
-  ) {
-    return true
+  if (ctx.programType !== 'schedule') {
+    const detailedId = readOverlay(overlay, 'generalRegistration.basicInfo.detailedProgramId')
+    const detailedName = readOverlay(overlay, 'generalRegistration.basicInfo.detailedProgramName')
+    const hasDetailedId =
+      (typeof detailedId === 'number' && Number.isFinite(detailedId) && detailedId > 0) ||
+      (typeof detailedId === 'string' && detailedId.trim() !== '')
+    const hasDetailedName = typeof detailedName === 'string' && detailedName.trim() !== ''
+    if (!hasDetailedId && !hasDetailedName) return true
   }
   const operationRange = readOverlay(overlay, 'generalRegistration.basicInfo.operationRangeSeal')
   if (operationRange == null || typeof operationRange !== 'object') return true
@@ -116,10 +118,7 @@ function hasIncompleteBasicInfo(
   if (isEmptyText(readOverlay(overlay, 'generalRegistration.basicInfo.educationVenueDetail'))) {
     return true
   }
-  const surveyItems = readOverlay(overlay, 'generalRegistration.basicInfo.surveyItems')
-  if (surveyItems == null || typeof surveyItems !== 'object') return true
-  const surveyOn = Object.values(surveyItems as Record<string, unknown>).some(v => v === true)
-  if (!surveyOn) return true
+  // 설문 진행 항목 — 0개 선택도 완료 (선택)
   if (isEmptyText(readOverlay(overlay, 'generalRegistration.basicInfo.educationCourse'))) return true
   if (isEmptyText(readOverlay(overlay, 'generalRegistration.basicInfo.ipOwned'))) return true
   if (isEmptyText(readOverlay(overlay, 'generalRegistration.basicInfo.courseDeliveredBy'))) {
@@ -225,10 +224,6 @@ function hasIncompleteCurriculum(
     overlay,
     'generalRegistration.educationCurriculum.roundContentByRound'
   )
-  const educationFormBySession = readIndexRecord(
-    overlay,
-    'generalRegistration.educationCurriculum.educationFormBySession'
-  )
   const participationBySession = readIndexRecord(
     overlay,
     'generalRegistration.educationCurriculum.participationBySession'
@@ -241,12 +236,6 @@ function hasIncompleteCurriculum(
     if (isEmptyText(progressByRound[index])) return true
     if (isEmptyText(roundContents[index])) return true
     if (
-      ctx.educationFormScheduleDetail === 'perSchedule' &&
-      isEmptyText(educationFormBySession[index])
-    ) {
-      return true
-    }
-    if (
       !ctx.participant.organization &&
       ctx.participationScheduleDetail === 'perSchedule' &&
       isEmptyText(participationBySession[index])
@@ -256,14 +245,18 @@ function hasIncompleteCurriculum(
     if (ctx.ipsScheduleDetail === 'perSchedule' && isIpsIncomplete(ipsBySession[index])) {
       return true
     }
-    if (isAssignmentIncomplete(assignmentByRound[index])) return true
-  }
-  if (ctx.scheduleCurriculumPreEducation) {
-    if (
-      isEmptyText(readOverlay(overlay, 'generalRegistration.educationCurriculum.preEducationScheduleName'))
-    ) {
+    // 학교/기관 대상은 과제 UI 비노출 — 잔존 overlay로 미완료 처리하지 않음 (일정형과 동일)
+    if (!ctx.participant.organization && isAssignmentIncomplete(assignmentByRound[index])) {
       return true
     }
+  }
+  if (ctx.scheduleCurriculumPreEducation) {
+    // UI 기본값「사전 교육」은 overlay 미기록일 수 있음 — 명시적으로 비운 경우만 미완료
+    const preEducationName = readOverlay(
+      overlay,
+      'generalRegistration.educationCurriculum.preEducationScheduleName'
+    )
+    if (preEducationName !== undefined && isEmptyText(preEducationName)) return true
     if (
       isEmptyText(readOverlay(overlay, 'generalRegistration.educationCurriculum.preEducationScheduleLine'))
     ) {
@@ -337,13 +330,12 @@ function hasIncompleteScheduleCurriculum(
     }
   }
   if (ctx.scheduleCurriculumPreEducation) {
-    if (
-      isEmptyText(
-        readOverlay(overlay, 'generalRegistration.educationScheduleCurriculum.preEducationName')
-      )
-    ) {
-      return true
-    }
+    // UI 기본값「사전 교육」은 overlay 미기록일 수 있음 — 명시적으로 비운 경우만 미완료
+    const preEducationName = readOverlay(
+      overlay,
+      'generalRegistration.educationScheduleCurriculum.preEducationName'
+    )
+    if (preEducationName !== undefined && isEmptyText(preEducationName)) return true
   }
   return false
 }

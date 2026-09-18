@@ -3,20 +3,16 @@ import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { CmsButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { clearUjatVolunteerApplicantsMockCache } from '@/data/mock/ujat-volunteer-applicants-mock'
+import { clearUjatVolunteerApplicantsMockCache } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import {
   parseEducationProgressVolunteerProfileId,
   patchUjatVolunteerMockProfilePreferredRegion,
-} from '@/data/mock/ujat-volunteer-mock-profiles'
+} from '@/features/program/ujat/model/ujat-volunteer-profile'
 import {
   UJAT_EDU_PROGRESS_VOLUNTEER_DETAIL_TAB_LABELS,
   type UjatEducationProgressVolunteerDetailTab,
@@ -31,13 +27,13 @@ import {
   buildActivityCertificateVolunteerFromUjatDetail,
   buildStudentCertificateContextFromUjatVolunteer,
 } from '../activity-certificate'
-import type { UjatEducationProgressVolunteerDetail } from './detail-mock'
+import type { UjatEducationProgressVolunteerDetail } from './volunteer-detail-data'
 import { UjatEducationProgressVolunteerApplicationTab } from './application-tab'
 import {
   UjatEducationProgressActivityWithdrawModal,
   type UjatEducationProgressActivityWithdrawPayload,
 } from '../../shared/activity-withdraw-modal'
-import { getVolunteerActivityWithdrawScheduleOptions } from './assignment-mock'
+import { getVolunteerActivityWithdrawScheduleOptions } from './volunteer-assignment-data'
 import {
   UjatEducationProgressVolunteerAssignmentProgressTab,
 } from './assignment-progress-tab'
@@ -165,6 +161,11 @@ export function UjatEducationProgressVolunteerDetailView({
     })
   }
 
+  const handleCancelEdit = () => {
+    setPreferredRegionDraft(detail.applicant.preferredRegion)
+    setIsEditing(false)
+  }
+
   const handleAdminCommentEditEnter = useCallback(() => {
     if (isEditing) return
     setAdminCommentDraft(adminComment)
@@ -251,16 +252,12 @@ export function UjatEducationProgressVolunteerDetailView({
       >
         수료증/참여인증서 발급
       </CmsButton>
-      <CmsButton
-        type="button"
-        {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-        onClick={resolveProgramEditInfoClick(isEditing, {
-          onEnterEdit: handleEnterEdit,
-          onSaveEdit: handleSaveEdit,
-        })}
-      >
-        {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-      </CmsButton>
+      <ProgramEditInfoActions
+        isEditing={isEditing}
+        onEdit={handleEnterEdit}
+        onCancel={handleCancelEdit}
+        onSave={handleSaveEdit}
+      />
       <CmsButton
         type="button"
         variant="primary"

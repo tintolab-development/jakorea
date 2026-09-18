@@ -1,11 +1,9 @@
 import dayjs, { type Dayjs } from 'dayjs'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
-import { getGeneralProgramById } from '@/data/mock/general-programs'
-import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications-mock'
-import { MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES } from '@/features/program/general/lib/individual-lecture-assign-demo'
-import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
+import { resolveGeneralProgramLocalById } from '@/features/program/general/lib/general-program-local-cache'
+import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications'
 import type { Program } from '@/types/domain'
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
@@ -36,19 +34,6 @@ export type InstructorLectureAssignItem = {
 
 /** 개인 프로그램 강의 배정 — 기관 ID 대체값 */
 export const INDIVIDUAL_PROGRAM_LECTURE_SCHOOL_ID = 'individual-program'
-
-export { MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES } from '@/features/program/general/lib/individual-lecture-assign-demo'
-
-/** 슬롯별 기존 배정 강사 수 (mock seed) */
-const MOCK_SLOT_ASSIGNMENT_COUNTS: Record<string, number> = {
-  '2026-03-19|assign-school-gangseo|1': 3,
-  '2026-03-19|assign-school-1|1': 2,
-  '2026-03-19|assign-school-2|1': 1,
-  '2026-03-19|assign-school-3|1': 0,
-  '2026-03-19|assign-school-4|1': 2,
-  '2026-04-20|individual-program|1': 2,
-  '2026-04-27|individual-program|2': 2,
-}
 
 function parseEducationScheduleLine(
   line: string
@@ -97,90 +82,6 @@ export function formatIndividualLectureAssignSlotLabel(
 export function formatIndividualLectureAssignTagLabel(date: Dayjs, timeRange: string): string {
   return `${formatLectureAssignDateLabel(date)} ${timeRange}`
 }
-
-/** 시안용 2026년 3월 고정 슬롯 */
-const DEMO_MARCH_2026_SLOT_DEFS: Array<{
-  dateKey: string
-  schoolId: string
-  schoolName: string
-  region: string
-  sessionRound: number
-  sessionLabel: string
-  timeRange: string
-}> = [
-  {
-    dateKey: '2026-03-19',
-    schoolId: 'assign-school-gangseo',
-    schoolName: '강서초등학교',
-    region: '서울특별시',
-    sessionRound: 1,
-    sessionLabel: '1차시',
-    timeRange: '9:20 ~ 12:00',
-  },
-  {
-    dateKey: '2026-03-19',
-    schoolId: 'assign-school-1',
-    schoolName: '학교명 1',
-    region: '서울특별시',
-    sessionRound: 1,
-    sessionLabel: '1차시',
-    timeRange: '9:20 ~ 12:00',
-  },
-  {
-    dateKey: '2026-03-19',
-    schoolId: 'assign-school-2',
-    schoolName: '학교명 2',
-    region: '서울특별시',
-    sessionRound: 1,
-    sessionLabel: '1차시',
-    timeRange: '9:20 ~ 12:00',
-  },
-  {
-    dateKey: '2026-03-19',
-    schoolId: 'assign-school-3',
-    schoolName: '학교명 3',
-    region: '서울특별시',
-    sessionRound: 1,
-    sessionLabel: '1차시',
-    timeRange: '9:20 ~ 12:00',
-  },
-  {
-    dateKey: '2026-03-19',
-    schoolId: 'assign-school-4',
-    schoolName: '학교명 4',
-    region: '서울특별시',
-    sessionRound: 1,
-    sessionLabel: '1차시',
-    timeRange: '9:20 ~ 12:00',
-  },
-  {
-    dateKey: '2026-03-19',
-    schoolId: 'assign-school-gangseo',
-    schoolName: '강서초등학교',
-    region: '서울특별시',
-    sessionRound: 2,
-    sessionLabel: '2차시',
-    timeRange: '13:00 ~ 15:00',
-  },
-  {
-    dateKey: '2026-03-06',
-    schoolId: 'assign-school-gangseo',
-    schoolName: '강서초등학교',
-    region: '서울특별시',
-    sessionRound: 1,
-    sessionLabel: '1차시',
-    timeRange: '9:20 ~ 12:00',
-  },
-  {
-    dateKey: '2026-03-16',
-    schoolId: 'assign-school-gangseo',
-    schoolName: '강서초등학교',
-    region: '서울특별시',
-    sessionRound: 1,
-    sessionLabel: '1차시',
-    timeRange: '9:20 ~ 12:00',
-  },
-]
 
 export type ParsedInstructorLectureAssignSchedule = {
   slotsByDateKey: Map<string, InstructorLectureAssignSlot[]>
@@ -302,14 +203,6 @@ export function parseInstructorLectureAssignSchedule(
   const institutions = getGeneralInstitutionApplicationsForProgram(programId)
   const slotMap = new Map<string, InstructorLectureAssignSlot>()
 
-  for (const def of DEMO_MARCH_2026_SLOT_DEFS) {
-    mergeSlot(slotMap, {
-      ...def,
-      key: buildSlotKey(def.dateKey, def.schoolId, def.sessionRound),
-      assignedCount: 0,
-    })
-  }
-
   for (const institution of institutions) {
     for (const session of institution.sessions ?? []) {
       const slot = slotFromInstitutionSession(institution, session)
@@ -379,7 +272,7 @@ export function countLectureSlotAssignments(
   instructors: ApplicantInstructorRow[],
   excludeInstructorId?: string
 ): number {
-  let count = MOCK_SLOT_ASSIGNMENT_COUNTS[slotKey] ?? 0
+  let count = 0
   for (const row of instructors) {
     if (excludeInstructorId && row.id === excludeInstructorId) continue
     const lectures = row.assignedLectures ?? []
@@ -463,15 +356,11 @@ export function resolveIndividualProgramEducationScheduleLines(program: Program)
     []
   if (direct.length > 0) return direct
 
-  const seeded = getGeneralProgramById(String(program.id))
+  const seeded = resolveGeneralProgramLocalById(String(program.id))
   const fromSeed =
     seeded?.generalCommonInfo?.educationScheduleLines?.map(line => line.trim()).filter(Boolean) ??
     []
   if (fromSeed.length > 0) return fromSeed
-
-  if (isGeneralIndividualProgram(program) || (seeded != null && isGeneralIndividualProgram(seeded))) {
-    return [...MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES]
-  }
 
   return []
 }
@@ -480,7 +369,7 @@ export function resolveProgramForIndividualLectureAssign(
   program: Program | null | undefined,
   programId: string
 ): Program {
-  const seeded = getGeneralProgramById(programId)
+  const seeded = resolveGeneralProgramLocalById(programId)
   if (program && seeded) {
     const scheduleLines = resolveIndividualProgramEducationScheduleLines({
       ...seeded,
@@ -527,9 +416,9 @@ export function resolveProgramForIndividualLectureAssign(
     id: programId,
     generalProgramAudience: 'individual',
     generalCommonInfo: {
-      educationScheduleLines: [...MINIMAL_INDIVIDUAL_LECTURE_ASSIGN_SCHEDULE_LINES],
+      educationScheduleLines: [] as string[],
     },
-  } as Program
+  } as unknown as Program
 }
 
 export function parseIndividualInstructorLectureAssignSchedule(

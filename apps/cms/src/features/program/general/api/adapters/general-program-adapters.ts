@@ -11,11 +11,16 @@ import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/sche
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
+import { programMatchesProgressPhase } from '@/features/program/general/ui/constants/program-list-constants'
 import {
   parseGeneralProgramServiceDetailJson,
   serializeGeneralProgramServiceDetailJson,
 } from '@/features/program/general/lib/general-program-service-detail-json'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import {
+  omitIfDetailedProgramNameAlias,
+  parseDetailedProgramMasterId,
+} from '@/features/program/general/lib/detailed-program-request-id'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 
 /**
@@ -63,6 +68,83 @@ export function resolveGeneralProgramCreateProgramType(
   if (mode === 'INDIVIDUAL') return 'GENERAL_INDIVIDUAL'
   if (mode === 'ORGANIZATION') return 'GENERAL_ORGANIZATION'
   return 'GENERAL'
+}
+
+/**
+ * BE `programType` / `applicationTargetMode` → CMS 대분류(학교/기관·개인).
+ * 목록·상세 모두 category·audience hydrate에 사용한다.
+ */
+export type GeneralProgramAudienceFromApi = {
+  audience: NonNullable<Program['generalProgramAudience']>
+  category: Extract<ProgramCategory, 'school' | 'individual'>
+}
+
+export function mapApplicationTargetModeToAudience(
+  mode: string | undefined | null
+): GeneralProgramAudienceFromApi | null {
+  const normalized = mode?.trim().toUpperCase()
+  if (normalized === 'INDIVIDUAL') {
+    return { audience: 'individual', category: 'individual' }
+  }
+  if (normalized === 'ORGANIZATION') {
+    return { audience: 'organization', category: 'school' }
+  }
+  return null
+}
+
+export function mapGeneralApiProgramTypeToAudience(
+  programType: string | undefined | null
+): GeneralProgramAudienceFromApi | null {
+  const normalized = programType?.trim().toUpperCase()
+  if (normalized === 'GENERAL_INDIVIDUAL') {
+    return { audience: 'individual', category: 'individual' }
+  }
+  if (normalized === 'GENERAL_ORGANIZATION') {
+    return { audience: 'organization', category: 'school' }
+  }
+  return null
+}
+
+function resolveAudienceFromApiFields(args: {
+  programType?: string | null
+  applicationTargetMode?: string | null
+  category?: string | null
+  audience?: Program['generalProgramAudience']
+  participantTypes?: Program['generalParticipantTypes']
+}): GeneralProgramAudienceFromApi | null {
+  if (args.audience === 'individual') {
+    return { audience: 'individual', category: 'individual' }
+  }
+  if (args.audience === 'organization') {
+    return { audience: 'organization', category: 'school' }
+  }
+
+  // BE 대분류 — category가 school로 고정되어 와도 programType을 우선한다.
+  const fromProgramType = mapGeneralApiProgramTypeToAudience(args.programType)
+  if (fromProgramType) return fromProgramType
+
+  const fromTargetMode = mapApplicationTargetModeToAudience(args.applicationTargetMode)
+  if (fromTargetMode) return fromTargetMode
+
+  const types = args.participantTypes ?? []
+  if (types.length > 0) {
+    const hasIndividual = types.includes('individual')
+    const hasOrg = types.includes('school_institution')
+    if (hasIndividual && !hasOrg) {
+      return { audience: 'individual', category: 'individual' }
+    }
+    if (hasOrg && !hasIndividual) {
+      return { audience: 'organization', category: 'school' }
+    }
+  }
+
+  if (args.category === 'individual') {
+    return { audience: 'individual', category: 'individual' }
+  }
+  if (args.category === 'school') {
+    return { audience: 'organization', category: 'school' }
+  }
+  return null
 }
 
 const DEFAULT_SPONSOR_ID = 'sponsor-default'
@@ -115,6 +197,12 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
   const title =
     dto.nameKo?.trim() || dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
   const lifecycleStatus = resolveListLifecycleStatus(dto)
+  const audienceFromApi = resolveAudienceFromApiFields({
+    programType: dto.programType,
+    applicationTargetMode: (
+      dto as AdminProgramListItemDto & { applicationTargetMode?: string }
+    ).applicationTargetMode,
+  })
 
   return baseProgramDefaults({
     id: toProgramId(dto.id ?? dto.uuid),
@@ -128,27 +216,40 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
     instructors: dto.instructorApplicantCount,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
+    ...(audienceFromApi
+      ? {
+          category: audienceFromApi.category,
+          generalProgramAudience: audienceFromApi.audience,
+        }
+      : {}),
   })
 }
 
 export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
-  const dtoWithNameKo = dto as ProgramResponse & {
+  const dtoWithExtras = dto as ProgramResponse & {
     nameKo?: string
     contactName?: string
     remarks?: string
     otherMatters?: string
     recruitmentTargetDetail?: string
+    applicationTargetMode?: string
   }
   const title =
     dto.title?.trim() ||
     dto.mainTitle?.trim() ||
-    dtoWithNameKo.nameKo?.trim() ||
+    dtoWithExtras.nameKo?.trim() ||
     '제목 없음'
   const id = toProgramId(dto.id)
   const now = new Date().toISOString()
   const serviceDetail = parseGeneralProgramServiceDetailJson(dto.serviceDetailJson)
+  const dtoDetailedProgramName = dto.detailedProgramName?.trim()
   const generalCommonInfo = applySettlementPolicyToCommonInfo(
-    serviceDetail.generalCommonInfo,
+    {
+      ...serviceDetail.generalCommonInfo,
+      ...(dtoDetailedProgramName
+        ? { detailedProgramName: dtoDetailedProgramName }
+        : {}),
+    },
     dto.settlementPolicy
   )
   const participantRemarks = (
@@ -157,10 +258,17 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
       | undefined
   )?.remarks
   const otherNotes =
-    dtoWithNameKo.otherMatters?.trim() ||
-    dtoWithNameKo.remarks?.trim() ||
+    dtoWithExtras.otherMatters?.trim() ||
+    dtoWithExtras.remarks?.trim() ||
     participantRemarks?.trim() ||
     undefined
+  const audienceFromApi = resolveAudienceFromApiFields({
+    audience: serviceDetail.generalProgramAudience,
+    programType: dto.programType,
+    applicationTargetMode: dtoWithExtras.applicationTargetMode,
+    participantTypes: serviceDetail.generalParticipantTypes,
+    category: dto.category,
+  })
 
   return baseProgramDefaults({
     id,
@@ -169,7 +277,8 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     mainTitle: dto.mainTitle ?? title,
     type: (dto.type as ProgramType | undefined) ?? 'offline',
     format: (dto.format as ProgramFormat | undefined) ?? 'workshop',
-    category: (dto.category as ProgramCategory | undefined) ?? 'school',
+    category:
+      audienceFromApi?.category ?? (dto.category as ProgramCategory | undefined) ?? 'school',
     description: dto.description,
     rounds:
       dto.rounds?.map((round, index) => ({
@@ -231,10 +340,20 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     updatedAt: dto.updatedAt,
     ...serviceDetail,
     generalCommonInfo,
+    detailedProgramId:
+      dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
     targetLevel: serviceDetail.targetLevels?.[0] ?? (dto.targetLevel as Program['targetLevel']),
     // typed lifecycleStatus SSOT — serviceDetailJson 값으로 덮지 않음
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus: toTypedProgramLifecycleStatus(dto.lifecycleStatus) ?? undefined,
+    // serviceDetail 스프레드 이후에도 programType 기반 대분류를 유지
+    ...(audienceFromApi
+      ? {
+          category: audienceFromApi.category,
+          generalProgramAudience:
+            serviceDetail.generalProgramAudience ?? audienceFromApi.audience,
+        }
+      : {}),
   })
 }
 
@@ -243,33 +362,7 @@ export function filterGeneralProgramsByOverviewStatus(
   statusFilter: GeneralProgramOverviewStatusFilter | null
 ): Program[] {
   if (!statusFilter) return programs
-
-  if (statusFilter === 'scheduled') {
-    return programs.filter(program =>
-      [
-        'scheduled',
-        'planned',
-        'recruiting_students',
-        'recruiting_instructors',
-        'matching_completed',
-        'education_before_textbook',
-      ].includes(program.lifecycleStatus || '')
-    )
-  }
-
-  if (statusFilter === 'in_progress') {
-    return programs.filter(program =>
-      ['in_progress', 'education_after_textbook', 'education_in_progress'].includes(
-        program.lifecycleStatus || ''
-      )
-    )
-  }
-
-  return programs.filter(program =>
-    ['completed', 'education_completed', 'document_processing_completed'].includes(
-      program.lifecycleStatus || ''
-    )
-  )
+  return programs.filter(program => programMatchesProgressPhase(program, statusFilter))
 }
 
 function mapProgramRoundsToRequest(program: Program): ProgramCreateRequest['rounds'] {
@@ -291,6 +384,7 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     program.generalProgramAudience,
     program.generalParticipantTypes
   )
+  const detailedProgramName = program.generalCommonInfo?.detailedProgramName
 
   return {
     sponsorId: program.sponsorId,
@@ -304,9 +398,10 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     applicationStartDate: toRequestDate(program.applicationStartDate),
     applicationEndDate: toRequestDate(program.applicationEndDate),
     businessArea: program.businessArea,
+    detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,
-    textbookName: program.textbookName,
+    textbookName: omitIfDetailedProgramNameAlias(program.textbookName, detailedProgramName),
     textbookNameEn: program.textbookNameEn,
     schoolId: program.schoolId,
     district: program.district,
@@ -319,11 +414,14 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     programCategory: program.programCategory ?? undefined,
     programChannel: program.programChannel ?? undefined,
     educationTime: program.educationTime,
-    teamDivision: program.teamDivision,
+    teamDivision: omitIfDetailedProgramNameAlias(program.teamDivision, detailedProgramName),
     educationProcess: program.educationProcess,
     maleParticipants: program.maleParticipants,
     femaleParticipants: program.femaleParticipants,
-    totalParticipants: program.totalParticipants,
+    totalParticipants:
+      program.totalParticipants ??
+      program.approvedStudentCount ??
+      program.generalCommonInfo?.kpi?.finalParticipants,
     generalVolunteers: program.generalVolunteers,
     staffVolunteers: program.staffVolunteers,
     returningVolunteers: program.returningVolunteers,
@@ -347,6 +445,11 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     applicationTargetMode,
     rounds: mapProgramRoundsToRequest(program),
     serviceDetailJson: serializeGeneralProgramServiceDetailJson(program),
+    finalSchools:
+      program.participatingSchoolCount ?? program.generalCommonInfo?.kpi?.finalSchools,
+    finalClasses: program.generalCommonInfo?.kpi?.finalClasses,
+    venueKind: program.generalCommonInfo?.venueKind,
+    venueDetail: program.generalCommonInfo?.venueDetail?.trim() || undefined,
   }
 }
 
@@ -423,9 +526,17 @@ function mapProgramPatchFieldsToRequest(
     body.applicationEndDate = toRequestDate(merged.applicationEndDate)
   }
   if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('detailedProgramId') || has('generalCommonInfo')) {
+    body.detailedProgramId = parseDetailedProgramMasterId(merged.detailedProgramId)
+  }
   if (has('titleEn')) body.titleEn = merged.titleEn
   if (has('mainTitle')) body.mainTitle = merged.mainTitle ?? merged.title
-  if (has('textbookName')) body.textbookName = merged.textbookName
+  if (has('textbookName')) {
+    body.textbookName = omitIfDetailedProgramNameAlias(
+      merged.textbookName,
+      merged.generalCommonInfo?.detailedProgramName
+    )
+  }
   if (has('textbookNameEn')) body.textbookNameEn = merged.textbookNameEn
   if (has('schoolId')) body.schoolId = merged.schoolId
   if (has('district')) body.district = merged.district
@@ -440,11 +551,30 @@ function mapProgramPatchFieldsToRequest(
   if (has('programCategory')) body.programCategory = merged.programCategory ?? undefined
   if (has('programChannel')) body.programChannel = merged.programChannel ?? undefined
   if (has('educationTime')) body.educationTime = merged.educationTime
-  if (has('teamDivision')) body.teamDivision = merged.teamDivision
+  if (has('teamDivision')) {
+    body.teamDivision = omitIfDetailedProgramNameAlias(
+      merged.teamDivision,
+      merged.generalCommonInfo?.detailedProgramName
+    )
+  }
   if (has('educationProcess')) body.educationProcess = merged.educationProcess
   if (has('maleParticipants')) body.maleParticipants = merged.maleParticipants
   if (has('femaleParticipants')) body.femaleParticipants = merged.femaleParticipants
-  if (has('totalParticipants')) body.totalParticipants = merged.totalParticipants
+  if (has('totalParticipants') || has('approvedStudentCount') || has('generalCommonInfo')) {
+    body.totalParticipants =
+      merged.totalParticipants ??
+      merged.approvedStudentCount ??
+      merged.generalCommonInfo?.kpi?.finalParticipants
+  }
+  if (has('participatingSchoolCount') || has('generalCommonInfo')) {
+    body.finalSchools =
+      merged.participatingSchoolCount ?? merged.generalCommonInfo?.kpi?.finalSchools
+  }
+  if (has('generalCommonInfo')) {
+    body.finalClasses = merged.generalCommonInfo?.kpi?.finalClasses
+    body.venueKind = merged.generalCommonInfo?.venueKind
+    body.venueDetail = merged.generalCommonInfo?.venueDetail?.trim() || undefined
+  }
   if (has('generalVolunteers')) body.generalVolunteers = merged.generalVolunteers
   if (has('staffVolunteers')) body.staffVolunteers = merged.staffVolunteers
   if (has('returningVolunteers')) body.returningVolunteers = merged.returningVolunteers

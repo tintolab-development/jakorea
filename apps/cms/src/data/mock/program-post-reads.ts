@@ -9,7 +9,7 @@ import { mockProgramPosts, mockProgramPostsMap } from './program-posts'
 import { mockSchoolsMap } from './schools'
 import { mockUsers } from './users'
 import { mockInstructorsMap } from './instructors'
-import { MOCK_PARTICIPATING_SCHOOLS } from './participating-schools'
+import { MOCK_PARTICIPATING_SCHOOLS } from '@/features/program/general/model/participating-schools'
 
 const usersById = new Map(mockUsers.map(u => [u.id, u]))
 

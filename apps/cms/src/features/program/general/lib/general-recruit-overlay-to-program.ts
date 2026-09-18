@@ -3,13 +3,28 @@
  * (UJAT applyUjatRecruit*TemplateDefaults 와 동일 역할)
  */
 
-import type { Program, TargetLevel } from '@/types/domain'
+import dayjs from 'dayjs'
+import type {
+  GeneralProgramVolunteerInterviewScheduleInfo,
+  Program,
+  TargetLevel,
+} from '@/types/domain'
 import {
   APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
   getApplicantRecruitInstitutionOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { buildVolunteerInterviewOverlayKey } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import {
+  buildRecurringUnavailableLabel,
+  type UnavailableDatesExclusionState,
+} from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
+import {
+  announcementPublishedFromFormValue,
+  type ParticipantRecruitmentAnnouncementPublishedValue,
+} from '@/features/program/shared/lib/participant-recruitment-form-options'
+import {
+  formatDateOnly,
   formatDateRange,
   formatInstructorTargetsLabel,
   formatTargetLevelsLabel,
@@ -54,6 +69,14 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
     programRangeSeal: 'recruit.volunteer.programRangeSeal',
     volunteerTargets: 'recruit.volunteer.volunteerTargets',
     volunteerTargetDetail: 'recruit.volunteer.volunteerTargetDetail',
+    announcementPublished: 'recruit.volunteer.announcementPublished',
+    interviewRequired: 'recruit.volunteer.interviewRequired',
+    docDeadlineIso: 'recruit.volunteer.docDeadlineIso',
+    docAnnounceMethod: 'recruit.volunteer.docAnnounceMethod',
+    interviewRangeSeal: 'recruit.volunteer.interviewRangeSeal',
+    interviewMethod: 'recruit.volunteer.interviewMethod',
+    finalAnnounceIso: 'recruit.volunteer.finalAnnounceIso',
+    finalAnnounceMethod: 'recruit.volunteer.finalAnnounceMethod',
     inquiryContact: 'recruit.volunteer.inquiryContact',
     inquiryTel: 'recruit.volunteer.inquiryTel',
     inquiryEmail: 'recruit.volunteer.inquiryEmail',
@@ -138,10 +161,134 @@ function coalesceIso(
   return overlayIso
 }
 
+function coalesceBool(
+  programVal: boolean | undefined,
+  overlayVal: boolean | undefined,
+  preferOverlay: boolean
+): boolean | undefined {
+  if (preferOverlay) {
+    if (overlayVal !== undefined) return overlayVal
+    return programVal
+  }
+  if (programVal !== undefined) return programVal
+  return overlayVal
+}
+
 function parseTargetLevels(raw: string[] | undefined): TargetLevel[] | undefined {
   if (!raw?.length) return undefined
   const levels = raw.filter((item): item is TargetLevel => TARGET_LEVEL_VALUES.has(item))
   return levels.length > 0 ? levels : undefined
+}
+
+function overlayAnnouncementPublished(
+  overlay: Record<string, unknown>,
+  key: string
+): boolean | undefined {
+  const raw = overlay[key]
+  if (raw === 'published' || raw === 'unpublished') {
+    return announcementPublishedFromFormValue(
+      raw as ParticipantRecruitmentAnnouncementPublishedValue
+    )
+  }
+  if (typeof raw === 'boolean') return raw
+  return undefined
+}
+
+function overlayYesNoBool(
+  overlay: Record<string, unknown>,
+  key: string
+): boolean | undefined {
+  const raw = overlay[key]
+  if (raw === 'yes') return true
+  if (raw === 'no') return false
+  if (typeof raw === 'boolean') return raw
+  return undefined
+}
+
+function formatFinalAnnouncementLabel(
+  iso: string | undefined,
+  method: string | undefined
+): string | undefined {
+  if (!iso?.trim() || !method?.trim()) return undefined
+  const datePart = formatDateOnly(iso)
+  if (datePart === '-') return undefined
+  return `${datePart} | ${method.trim()}`
+}
+
+function formatAvailableTimeSlotsFromSelectedKeys(keys: unknown): string | undefined {
+  if (!Array.isArray(keys) || keys.length === 0) return undefined
+  const labels = keys
+    .map(key => {
+      if (typeof key !== 'string' || !key.trim()) return null
+      const match = /^(\d+)-(\d+)$/.exec(key.trim())
+      if (!match) return null
+      const start = dayjs(Number(match[1]))
+      const end = dayjs(Number(match[2]))
+      if (!start.isValid() || !end.isValid()) return null
+      return `${start.format('HH:mm')} ~ ${end.format('HH:mm')}`
+    })
+    .filter((label): label is string => label != null)
+  return labels.length > 0 ? labels.join(', ') : undefined
+}
+
+function formatSpecificUnavailableDateLabel(isos: string[]): string | undefined {
+  if (isos.length === 0) return undefined
+  const labels = isos.map(iso => {
+    const formatted = formatDateOnly(iso)
+    return formatted === '-' ? iso : formatted
+  })
+  return labels.join(', ')
+}
+
+function readExclusionState(
+  overlay: Record<string, unknown>,
+  key: string
+): UnavailableDatesExclusionState | undefined {
+  const raw = overlay[key]
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  const row = raw as Partial<UnavailableDatesExclusionState>
+  return {
+    excludeNone: row.excludeNone === true,
+    excludeSaturday: row.excludeSaturday === true,
+    excludeSunday: row.excludeSunday === true,
+    excludeHoliday: row.excludeHoliday === true,
+  }
+}
+
+function buildVolunteerInterviewScheduleFromOverlay(
+  overlay: Record<string, unknown>
+): GeneralProgramVolunteerInterviewScheduleInfo | undefined {
+  const key = (suffix: string) => buildVolunteerInterviewOverlayKey('recruit', suffix)
+  const exclusion = readExclusionState(overlay, key('exclusionState'))
+  const appliedDatesRaw = overlay[key('appliedUnavailableDates')]
+  const specificUnavailableDateIsos = Array.isArray(appliedDatesRaw)
+    ? appliedDatesRaw.map(String).map(s => s.trim()).filter(Boolean)
+    : []
+  const recurringUnavailable = exclusion
+    ? buildRecurringUnavailableLabel(exclusion)
+    : undefined
+  const availableTimeSlots = formatAvailableTimeSlotsFromSelectedKeys(
+    overlay[key('selectedSlotKeys')]
+  )
+  const specificUnavailableDates = formatSpecificUnavailableDateLabel(
+    specificUnavailableDateIsos
+  )
+
+  if (
+    !recurringUnavailable &&
+    !specificUnavailableDates &&
+    !specificUnavailableDateIsos.length &&
+    !availableTimeSlots
+  ) {
+    return undefined
+  }
+
+  return {
+    ...(recurringUnavailable ? { recurringUnavailable } : {}),
+    ...(specificUnavailableDates ? { specificUnavailableDates } : {}),
+    ...(specificUnavailableDateIsos.length > 0 ? { specificUnavailableDateIsos } : {}),
+    ...(availableTimeSlots ? { availableTimeSlots } : {}),
+  }
 }
 
 export type ApplyGeneralRecruitOverlayOptions = {
@@ -568,6 +715,71 @@ export function applyGeneralRecruitOverlayToProgram(
   if (volunteerRemarks) {
     volunteerInfo.remarks = coalesceString(volunteerInfo.remarks, volunteerRemarks, preferOverlay)
   }
+  if (overlay[keys.volunteer.notesNotApplicable] === true) {
+    volunteerInfo.notesNotApplicable = true
+  } else if (overlay[keys.volunteer.notesNotApplicable] === false && preferOverlay) {
+    volunteerInfo.notesNotApplicable = false
+  }
+
+  const volunteerAnnouncementPublished = overlayAnnouncementPublished(
+    overlay,
+    keys.volunteer.announcementPublished
+  )
+  const volunteerInterviewEnabled = overlayYesNoBool(overlay, keys.volunteer.interviewRequired)
+  const volunteerDocDeadlineIso = overlayString(overlay, keys.volunteer.docDeadlineIso)
+  const volunteerDocAnnounceMethod = overlayString(overlay, keys.volunteer.docAnnounceMethod)
+  const volunteerInterviewRange = readRangeSeal(overlay, keys.volunteer.interviewRangeSeal)
+  const volunteerInterviewMethod = overlayString(overlay, keys.volunteer.interviewMethod)
+  const volunteerFinalAnnounceIso = overlayString(overlay, keys.volunteer.finalAnnounceIso)
+  const volunteerFinalAnnounceMethod = overlayString(overlay, keys.volunteer.finalAnnounceMethod)
+  const volunteerFinalAnnouncementLabel = formatFinalAnnouncementLabel(
+    volunteerFinalAnnounceIso,
+    volunteerFinalAnnounceMethod
+  )
+  const volunteerInterviewScheduleFromOverlay =
+    volunteerInterviewEnabled === false
+      ? undefined
+      : buildVolunteerInterviewScheduleFromOverlay(overlay)
+
+  if (volunteerAnnouncementPublished !== undefined) {
+    const nextPublished = coalesceBool(
+      volunteerInfo.announcementPublished,
+      volunteerAnnouncementPublished,
+      preferOverlay
+    )
+    if (nextPublished !== undefined) {
+      volunteerInfo.announcementPublished = nextPublished
+      volunteerInfo.announcementPublishedLabel = nextPublished ? '게시' : '미게시'
+    }
+  }
+  if (volunteerInterviewEnabled !== undefined) {
+    const nextInterview = coalesceBool(
+      volunteerInfo.volunteerInterviewEnabled ?? volunteerInfo.generalVolunteerInterviewEnabled,
+      volunteerInterviewEnabled,
+      preferOverlay
+    )
+    if (nextInterview !== undefined) {
+      volunteerInfo.volunteerInterviewEnabled = nextInterview
+      volunteerInfo.generalVolunteerInterviewEnabled = nextInterview
+      volunteerInfo.volunteerInterviewEnabledLabel = nextInterview ? '면접 있음' : '면접 없음'
+    }
+  }
+  if (volunteerFinalAnnouncementLabel) {
+    const nextFinal = coalesceString(
+      volunteerInfo.finalAnnouncementLabel ?? volunteerInfo.resultAnnouncementLabel,
+      volunteerFinalAnnouncementLabel,
+      preferOverlay
+    )
+    if (nextFinal) {
+      volunteerInfo.finalAnnouncementLabel = nextFinal
+      volunteerInfo.resultAnnouncementLabel = nextFinal
+    }
+  }
+
+  const nextVolunteerInterviewSchedule =
+    preferOverlay && volunteerInterviewScheduleFromOverlay
+      ? volunteerInterviewScheduleFromOverlay
+      : common.volunteerInterviewScheduleInfo ?? volunteerInterviewScheduleFromOverlay
 
   const contactPhone = coalesceString(
     typeof program.contactPhone === 'string' ? program.contactPhone : undefined,
@@ -675,11 +887,54 @@ export function applyGeneralRecruitOverlayToProgram(
       ) ?? program.endDate,
     contactPhone: contactPhone ?? program.contactPhone,
     contactEmail: contactEmail ?? program.contactEmail,
+    documentPassAnnouncementDate: coalesceIso(
+      program.documentPassAnnouncementDate,
+      volunteerDocDeadlineIso,
+      preferOverlay
+    ),
+    documentPassAnnouncementMethod: coalesceString(
+      program.documentPassAnnouncementMethod,
+      volunteerDocAnnounceMethod,
+      preferOverlay
+    ),
+    interviewStartDate: coalesceIso(
+      program.interviewStartDate,
+      volunteerInterviewRange?.start,
+      preferOverlay
+    ),
+    interviewEndDate: coalesceIso(
+      program.interviewEndDate,
+      volunteerInterviewRange?.end,
+      preferOverlay
+    ),
+    interviewMethod: coalesceString(
+      program.interviewMethod,
+      volunteerInterviewMethod,
+      preferOverlay
+    ),
+    finalPassAnnouncementDate: coalesceIso(
+      program.finalPassAnnouncementDate,
+      volunteerFinalAnnounceIso,
+      preferOverlay
+    ),
+    finalPassAnnouncementMethod: coalesceString(
+      program.finalPassAnnouncementMethod,
+      volunteerFinalAnnounceMethod,
+      preferOverlay
+    ),
+    generalVolunteerInterviewEnabled: coalesceBool(
+      program.generalVolunteerInterviewEnabled,
+      volunteerInterviewEnabled,
+      preferOverlay
+    ),
     generalCommonInfo: {
       ...common,
       participantRecruitmentInfo: participantInfo,
       instructorRecruitmentInfo: instructorInfo,
       volunteerRecruitmentInfo: volunteerInfo,
+      ...(nextVolunteerInterviewSchedule
+        ? { volunteerInterviewScheduleInfo: nextVolunteerInterviewSchedule }
+        : {}),
     },
   }
 }

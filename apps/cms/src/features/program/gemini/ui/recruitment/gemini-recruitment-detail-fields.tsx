@@ -13,6 +13,7 @@ import {
   programFileOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
+import { GeminiRecruitmentAdditionalContentEditor } from './gemini-recruitment-additional-content-editor'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 
@@ -27,8 +28,12 @@ export type GeminiRecruitmentDetailFieldsProps = {
   mode: 'view' | 'edit'
   values: GeminiRecruitmentFormFieldValues
   onChange?: (patch: Partial<GeminiRecruitmentFormFieldValues>) => void
+  /** 추가 폼 등 — 이미 마운트된 TipTap 인스턴스를 넘길 때 */
   editor?: Editor | null
   editorMinHeight?: string | number
+  /** 모집 정보 수정 — 조회 모드에선 TipTap을 만들지 않도록 이 경로만 사용 */
+  recruitmentIdForEditor?: string
+  registerGetAdditionalContentMarkdown?: (getMarkdown: () => string) => void
   readOnlyUpload?: boolean
 }
 
@@ -38,6 +43,8 @@ export function GeminiRecruitmentDetailFields({
   onChange,
   editor = null,
   editorMinHeight,
+  recruitmentIdForEditor,
+  registerGetAdditionalContentMarkdown,
   readOnlyUpload = false,
 }: GeminiRecruitmentDetailFieldsProps) {
   const isEdit = mode === 'edit' && onChange != null
@@ -174,11 +181,19 @@ export function GeminiRecruitmentDetailFields({
           view={additionalContentView}
           edit={
             isEdit ? (
-              <div className="notice-register-modal__section notice-register-modal__section--editor gemini-recruitment-info-tab__editor">
-                <div className="notice-register-modal__editor-host">
-                  <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+              recruitmentIdForEditor && registerGetAdditionalContentMarkdown ? (
+                <GeminiRecruitmentAdditionalContentEditor
+                  recruitmentId={recruitmentIdForEditor}
+                  initialMarkdown={values.additionalContentMarkdown}
+                  registerGetMarkdown={registerGetAdditionalContentMarkdown}
+                />
+              ) : (
+                <div className="notice-register-modal__section notice-register-modal__section--editor gemini-recruitment-info-tab__editor">
+                  <div className="notice-register-modal__editor-host">
+                    <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+                  </div>
                 </div>
-              </div>
+              )
             ) : undefined
           }
         />

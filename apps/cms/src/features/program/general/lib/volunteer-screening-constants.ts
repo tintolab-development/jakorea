@@ -3,6 +3,10 @@
  */
 
 import type { SecondInterviewScreeningStatus } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
+import {
+  buildApplicationProcessedSelectionAlert,
+  buildInterview2ProcessedSelectionAlert,
+} from '@/features/program/general/lib/application-processed-selection-alert'
 
 export const GENERAL_VOLUNTEER_APPLICATION_LIST_TITLE = '봉사자 신청 현황'
 
@@ -49,8 +53,8 @@ export const GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS: Record<
   GeneralInterviewAssignmentStatus,
   string
 > = {
-  waiting: '면접일 배정 전',
-  assigned: '면접일 배정 완료',
+  waiting: '배정 대기',
+  assigned: '배정 완료',
   withdrawn: '활동 포기',
 }
 
@@ -59,7 +63,7 @@ export const GENERAL_INTERVIEW_ASSIGNMENT_STATUS_CALENDAR_LIST_TAG_LABELS: Recor
   GeneralInterviewAssignmentStatus,
   string
 > = {
-  waiting: '배정 전',
+  waiting: '배정 대기',
   assigned: '배정 완료',
   withdrawn: '활동 포기',
 }
@@ -102,10 +106,10 @@ export const GENERAL_VOLUNTEER_ESSAY_COLUMN_TITLES: Record<GeneralEssayColumnKey
 }
 
 export const GENERAL_ESSAY_COLUMN_DEFAULT_WIDTHS: Record<GeneralEssayColumnKey, number> = {
-  essayIntro: 734,
-  essayEducationExperience: 734,
-  essayNecessity: 734,
-  essayJaExperience: 734,
+  essayIntro: 700,
+  essayEducationExperience: 700,
+  essayNecessity: 700,
+  essayJaExperience: 740,
 }
 
 /** 면접 심사 결과 — 미배정·미진행 */
@@ -177,3 +181,11 @@ export const GENERAL_VOLUNTEER_DOC_SCREENING_SELECT_ONE_REJECT_ALERT = {
   title: '항목 선택 안내',
   content: '반려할 항목을 선택해 주세요.',
 } as const
+
+/** @deprecated `buildApplicationProcessedSelectionAlert('volunteer')` 사용 */
+export const GENERAL_VOLUNTEER_DOC_SCREENING_PROCESSED_SELECTION_ALERT =
+  buildApplicationProcessedSelectionAlert('volunteer')
+
+/** @deprecated `buildInterview2ProcessedSelectionAlert('volunteer')` 사용 */
+export const GENERAL_VOLUNTEER_INTERVIEW2_PROCESSED_SELECTION_ALERT =
+  buildInterview2ProcessedSelectionAlert('volunteer')

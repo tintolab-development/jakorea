@@ -135,11 +135,11 @@ OpenAPI subset 필터: `/api/admin/form-templates*`, `/api/admin/form-template-v
 
 | 단계 | 동작 |
 |------|------|
-| mock | `writing-form-template-local-save.ts` only |
-| remote + cache | localStorage 유지 + API PUT (fire-and-forget) |
-| remote load | `loadFormTemplateVersionDraft` 우선, 없으면 localStorage |
+| **양식 관리 (현재)** | remote GET/PUT SSOT. localStorage **미사용**. load 실패 → seed. save 실패 → UI 실패 |
+| Dev fallback | `VITE_FORM_TEMPLATE_LOCAL_FALLBACK=1` 때만 load 시 local 허용 |
+| 프로그램 등록 | `localOnly: true` → `cms.jakorea.writingFormTemplateSaves.v1` ([program-draft-local-storage-follow-up.md](./program-draft-local-storage-follow-up.md)) |
 
-키: `cms.jakorea.writingFormTemplateSaves.v1` — API 전환 후에도 오프라인·롤백용 캐시로 유지.
+상세: [form-template-remote-ssot.md](./form-template-remote-ssot.md)
 
 ---
 

@@ -18,6 +18,12 @@
   margin-bottom: 10px;
 }
 
+/* 타이틀 하단 description → 본문 블록 16px (모집 상세 정보 수정 모드 등) */
+.detail-info-form__header:has(.detail-info-form__description--below) {
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
 .detail-info-form__header-lead {
   display: flex;
   flex-direction: row;
@@ -26,6 +32,13 @@
   min-width: 0;
   flex: 1 1 auto;
   height: 40px;
+}
+
+.detail-info-form__header:has(.detail-info-form__description--below) .detail-info-form__header-lead {
+  height: auto;
+  min-height: 0;
+  align-items: flex-start;
+  row-gap: 2px;
 }
 
 .detail-info-form__header-lead--stack {
@@ -47,8 +60,12 @@
   text-align: right;
 }
 
-.detail-info-form__header-trailing:has(.cms-button) {
+/* 텍스트 note용 max-width — 액션 버튼/토글 묶음은 한 줄 유지 */
+.detail-info-form__header-trailing:has(.cms-button),
+.detail-info-form__header-trailing:has(.program-registration-paragraph__card-title-actions),
+.detail-info-form__header-trailing:has(.volunteer-interview-available-schedule__card-title-actions) {
   opacity: 1;
+  max-width: none;
 }
 
 .detail-info-form__title {

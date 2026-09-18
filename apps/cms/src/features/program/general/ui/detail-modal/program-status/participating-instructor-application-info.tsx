@@ -4,9 +4,8 @@
  */
 
 import type { Program } from '@/types/domain'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import {
@@ -35,6 +34,7 @@ import {
   HomeAddressDisplay,
   InstructorBasicInfoDetailForm,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/instructor-basic-info-detail-form'
+import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-basic-info.css'
 import './participating-instructor-application-info.css'
 
@@ -135,17 +135,9 @@ export function ParticipatingInstructorApplicationInfo({
   const lectureExperienceDisplay =
     instructor.lectureExperienceYears != null ? `${instructor.lectureExperienceYears}년` : '-'
 
-  const contactDisplay = instructor.contact
-    ? privacyMasked
-      ? MASKING_POLICY.phone(instructor.contact.replace(/\s/g, '')) || instructor.contact
-      : instructor.contact
-    : '-'
+  const contactDisplay = displayServerPiiAsIs(instructor.contact)
 
-  const emailDisplay = instructor.email
-    ? privacyMasked
-      ? MASKING_POLICY.email(instructor.email)
-      : instructor.email
-    : '-'
+  const emailDisplay = displayServerPiiAsIs(instructor.email)
 
   const statusRows = isEditMode ? (
     <>

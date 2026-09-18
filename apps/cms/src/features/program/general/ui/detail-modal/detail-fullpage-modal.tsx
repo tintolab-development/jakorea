@@ -25,6 +25,7 @@ import {
   getGeneralProgressMenuItems,
   getGeneralSurveyMenuItems,
   getGeneralVolunteerInterviewEnabled,
+  getVisibleGeneralProgressMenuItems,
   hasGeneralInstructorApplications,
   hasGeneralParticipantApplications,
   hasGeneralVolunteerApplications,
@@ -80,7 +81,7 @@ import {
   programParticipantRecruitmentSaveSchema,
   programVolunteerRecruitmentSaveSchema,
 } from '@/features/program/general/lib/program-recruitment-save-fields'
-import { saveGeneralProgramDetailSnapshot } from '@/data/mock/general-programs'
+import { saveGeneralProgramDetailSnapshot } from '@/features/program/general/lib/general-program-local-cache'
 import { GeneralProgramDetailSidebar } from './detail-sidebar'
 import { GeneralProgramDetailCommonInfoView } from './info/common-info-view'
 import { GeneralProgramRecruitmentView } from './info/recruitment-view'
@@ -111,7 +112,10 @@ import { resolveGeneralApplicantDetailMetaFromUrl } from '@/features/program/gen
 import { resolveGeneralApplicantDetailModalTitle } from '@/features/program/general/lib/screening-subject-kind'
 import type { GeneralVolunteerApplicantDetailMeta } from './applications/volunteer-screening/use-detail'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
-import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
+import {
+  APPLICANT_ID_PARAM,
+  DETAIL_TAB_PARAM,
+} from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
 import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
@@ -453,7 +457,10 @@ export function GeneralProgramDetailFullPageModal({
     program?.id ?? programIdHint ?? searchParams.get('programId') ?? undefined
 
   const { updateProgram, setSelectedProgram } = useProgramStore()
-  const remoteEnabled = useGeneralProgramsRemoteEnabled(open && Boolean(programId))
+  const remoteEnabled = useGeneralProgramsRemoteEnabled(
+    open && Boolean(programId),
+    programId
+  )
   const updateGeneralProgramMutation = useUpdateGeneralProgram()
   const {
     program: detailProgram,
@@ -465,10 +472,12 @@ export function GeneralProgramDetailFullPageModal({
     initialProgram: program,
     enabled: open,
   })
-  const { disabledLnbKeys } = useGeneralProgramNavigation(open ? programId : undefined, open)
+  const { disabledLnbKeys, capabilities: navigationCapabilities } =
+    useGeneralProgramNavigation(open ? programId : undefined, open)
   const { showAlert } = useCmsAlert()
   const displayProgram = useMemo(() => {
-    // remote: 상세 GET만 본문에 사용 (목록 행·resolve 시드 선표시 금지)
+    // remote(API id): 상세 GET만 본문에 사용 (목록 행·resolve 시드 선표시 금지)
+    // FE 시드(`general-prog-*`): remoteEnabled=false → resolve 폴백
     if (remoteEnabled) {
       return detailProgram ? applyGeneralProgramDetailSession(detailProgram) : null
     }
@@ -540,13 +549,13 @@ export function GeneralProgramDetailFullPageModal({
     : false
   const showParticipantApplications = displayProgram
     ? hasGeneralParticipantApplications(displayProgram) &&
-      !disabledLnbKeys.has('institution_applications')
+      !(isIndividualProgram
+        ? disabledLnbKeys.has('participant_applications')
+        : disabledLnbKeys.has('institution_applications'))
     : false
+  const showManagers = !disabledLnbKeys.has('managers')
   const progressMenuItemsFiltered = useMemo(
-    () =>
-      disabledLnbKeys.has('progress')
-        ? []
-        : progressMenuItems,
+    () => getVisibleGeneralProgressMenuItems(progressMenuItems, disabledLnbKeys.has('progress')),
     [disabledLnbKeys, progressMenuItems]
   )
   const surveyItemsFiltered = useMemo(
@@ -744,6 +753,11 @@ export function GeneralProgramDetailFullPageModal({
     }
     setEditMode(null)
   }, [infoForm, infoTriggerSave, setEditMode, showAlert])
+
+  const handleInfoCancel = useCallback(() => {
+    infoResetToProgram()
+    setEditMode(null)
+  }, [infoResetToProgram, setEditMode])
 
   const recruitSubTab = useMemo((): GeneralRecruitTabKey => {
     if (activeLnb !== 'info' || activeTab !== 'recruitment') return 'institutions'
@@ -958,9 +972,28 @@ export function GeneralProgramDetailFullPageModal({
     showAlert,
   ])
 
-  // TODO: X는 바깥 모달 닫기로 통일됨. breadcrumb/목록 복귀 외 용도가 없으면 등록부 제거 검토.
+  const handleRecruitmentCancel = useCallback(() => {
+    if (recruitSubTab === 'institutions') institutionsResetToProgram()
+    else if (recruitSubTab === 'instructors') instructorsResetToProgram()
+    else volunteersResetToProgram()
+    setEditMode(null)
+  }, [
+    recruitSubTab,
+    institutionsResetToProgram,
+    instructorsResetToProgram,
+    volunteersResetToProgram,
+    setEditMode,
+  ])
+
+  // 신청 상세 중첩 — 헤더 X 시 목록 복귀용 (handleHeaderClose에서 호출)
   const applicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
   const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
+  const registerApplicantCloseHandler = useCallback((fn: (() => boolean) | null) => {
+    applicantCloseHandlerRef.current = fn
+  }, [])
+  const registerVolunteerApplicantCloseHandler = useCallback((fn: (() => boolean) | null) => {
+    volunteerApplicantCloseHandlerRef.current = fn
+  }, [])
   const [volunteerApplicantDetailMeta, setVolunteerApplicantDetailMeta] =
     useState<GeneralVolunteerApplicantDetailMeta | null>(null)
   const [listApplicantDetailMeta, setListApplicantDetailMeta] =
@@ -1209,6 +1242,62 @@ export function GeneralProgramDetailFullPageModal({
     },
     [setSearchParams]
   )
+
+  /**
+   * 헤더 X / ESC — 중첩 상세(강사·기관·참여자·봉사자·진행 현황)면 목록만 복귀.
+   * 프로그램 상세 전체 닫기는 breadcrumb「프로그램 목록」또는 중첩이 없을 때만.
+   */
+  const handleHeaderClose = useCallback(() => {
+    if (applicantCloseHandlerRef.current?.()) return
+    if (volunteerApplicantCloseHandlerRef.current?.()) return
+    if (applicantIdFromUrl) {
+      setSearchParams(
+        prev => {
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+          if (!prev.has(APPLICANT_ID_PARAM)) return prev
+          const next = new URLSearchParams(prev)
+          next.delete(APPLICANT_ID_PARAM)
+          next.delete(DETAIL_TAB_PARAM)
+          preserveGeneralProgramDetailProgramId(prev, next)
+          return next
+        },
+        { replace: true }
+      )
+      return
+    }
+    if (activeLnb === 'progress') {
+      if (schoolIdFromUrl) {
+        setSchoolId(null)
+        return
+      }
+      if (instructorIdFromUrl) {
+        setInstructorId(null)
+        return
+      }
+      if (volunteerIdFromUrl) {
+        setVolunteerId(null)
+        return
+      }
+      if (participantIdFromUrl) {
+        setParticipantId(null)
+        return
+      }
+    }
+    handleRequestClose()
+  }, [
+    activeLnb,
+    applicantIdFromUrl,
+    handleRequestClose,
+    instructorIdFromUrl,
+    participantIdFromUrl,
+    schoolIdFromUrl,
+    setInstructorId,
+    setParticipantId,
+    setSchoolId,
+    setSearchParams,
+    setVolunteerId,
+    volunteerIdFromUrl,
+  ])
 
   const setSchoolTab = useCallback(
     (tab: ParticipatingInstitutionDetailTabKey) => {
@@ -1667,6 +1756,7 @@ export function GeneralProgramDetailFullPageModal({
       <DetailFullPageModal
         open={open}
         onClose={handleRequestClose}
+        onHeaderClose={handleHeaderClose}
         zIndex={GENERAL_PROGRAM_DETAIL_FULLPAGE_MODAL_Z_INDEX}
         title={modalTitle}
         closeAriaLabel="닫기"
@@ -1681,6 +1771,7 @@ export function GeneralProgramDetailFullPageModal({
               showParticipantApplications={showParticipantApplications}
               showInstructorApplications={showInstructorApplications}
               showVolunteerApplications={showVolunteerApplications}
+              showManagers={showManagers}
               participantInterviewEnabled={participantInterviewEnabled}
               volunteerInterviewEnabled={volunteerInterviewEnabled}
               progressMenuItems={progressMenuItemsFiltered}
@@ -1705,6 +1796,7 @@ export function GeneralProgramDetailFullPageModal({
                 form={infoForm}
                 canWrite={canWrite}
                 onEdit={handleInfoEdit}
+                onCancel={handleInfoCancel}
                 onSave={handleInfoSave}
               />
             ) : activeLnb === 'info' && activeTab === 'recruitment' ? (
@@ -1725,6 +1817,7 @@ export function GeneralProgramDetailFullPageModal({
                 volunteersForm={isEditModeVolunteers ? volunteersForm : undefined}
                 registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
                 onEdit={handleRecruitmentEdit}
+                onCancel={handleRecruitmentCancel}
                 onSave={handleRecruitmentSave}
                 onOpenRecruitmentPreview={handleOpenRecruitmentPreview}
               />
@@ -1752,9 +1845,7 @@ export function GeneralProgramDetailFullPageModal({
                   activeTab={activeTab}
                   listTitle={participantApplicationsLnbLabel}
                   interviewEnabled={participantInterviewEnabled}
-                  onRegisterApplicantCloseHandler={fn => {
-                    applicantCloseHandlerRef.current = fn
-                  }}
+                  onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
                   onApplicantDetailMetaChange={setListApplicantDetailMeta}
                 />
               </div>
@@ -1762,9 +1853,7 @@ export function GeneralProgramDetailFullPageModal({
               <div className="program-detail-fullpage-modal__info-tab">
                 <GeneralInstructorApplicationsView
                   program={displayProgram}
-                  onRegisterApplicantCloseHandler={fn => {
-                    applicantCloseHandlerRef.current = fn
-                  }}
+                  onRegisterApplicantCloseHandler={registerApplicantCloseHandler}
                   onApplicantDetailMetaChange={setListApplicantDetailMeta}
                 />
               </div>
@@ -1786,6 +1875,7 @@ export function GeneralProgramDetailFullPageModal({
                   <ParticipatingInstitutionsSection
                     programId={displayProgram.id}
                     program={displayProgram}
+                    navigationCapabilities={navigationCapabilities}
                     schoolIdFromUrl={schoolIdFromUrl}
                     schoolTabFromUrl={activeSchoolTab}
                     onSchoolTabChange={setSchoolTab}
@@ -1851,9 +1941,7 @@ export function GeneralProgramDetailFullPageModal({
                   program={displayProgram}
                   activeTab={activeTab}
                   interviewEnabled={volunteerInterviewEnabled}
-                  onRegisterApplicantCloseHandler={fn => {
-                    volunteerApplicantCloseHandlerRef.current = fn
-                  }}
+                  onRegisterApplicantCloseHandler={registerVolunteerApplicantCloseHandler}
                   onVolunteerApplicantDetailMetaChange={setVolunteerApplicantDetailMeta}
                 />
               </div>

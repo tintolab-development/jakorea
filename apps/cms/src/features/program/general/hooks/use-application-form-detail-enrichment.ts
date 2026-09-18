@@ -1,0 +1,314 @@
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import {
+  mapInstructorApplicationDetailToApplicantRow,
+  mapOrganizationApplicationDetailToApplicantSchoolRow,
+  mapVolunteerApplicationDetailToApplicantRow,
+} from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  fetchIndividualApplicationDetailRemote,
+  fetchInstructorApplicationDetailRemote,
+  fetchOrganizationApplicationDetailRemote,
+  fetchVolunteerApplicationDetailRemote,
+} from '@/features/program/general/api/applications-api-client'
+import {
+  listAdminCommentsByTargetRemote,
+  resolveLatestAdminCommentText,
+  type AdminCommentTargetType,
+} from '@/features/program/general/api/admin-comments-api-client'
+import {
+  fetchLatestFormResponseByContextRemote,
+  type FormResponseContextType,
+} from '@/features/program/general/api/form-responses-api-client'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { hydrateOrganizationApplicationRowFromForm } from '@/features/program/general/api/adapters/organization-application-form-adapters'
+import {
+  hydrateInstructorApplicationRowFromForm,
+  hydrateVolunteerApplicationRowFromForm,
+} from '@/features/program/general/api/adapters/application-form-detail-adapters'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import {
+  mapInstructorApplicationDetailToParticipatingRow,
+  mergeInstructorApplicationIntoParticipatingRow,
+  participatingRowToInstructorApplicationSeed,
+} from '@/features/program/general/lib/participating-instructor-application-detail'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
+import { mapIndividualApplicationDetailToParticipatingRow } from '@/features/program/general/lib/participating-individual-application-detail'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
+
+function parseNumericId(id: string | undefined): number | null {
+  if (!id?.trim()) return null
+  const n = Number(id)
+  return Number.isFinite(n) ? n : null
+}
+
+function parseProgramId(programId: string | number | undefined | null): number | null {
+  if (programId == null) return null
+  const n = typeof programId === 'number' ? programId : Number(String(programId).trim())
+  return Number.isFinite(n) ? n : null
+}
+
+function useApplicationFormAndComments(input: {
+  enabled: boolean
+  programId: number | null
+  contextType: FormResponseContextType
+  contextId: number | null
+  targetType: AdminCommentTargetType
+}) {
+  const remote = shouldUseGeneralApplicationsRemoteApi()
+  const enabled =
+    input.enabled &&
+    remote &&
+    input.programId != null &&
+    input.contextId != null
+
+  const formQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.formByContext(
+      String(input.programId ?? ''),
+      input.contextType,
+      String(input.contextId ?? '')
+    ),
+    queryFn: () =>
+      fetchLatestFormResponseByContextRemote({
+        programId: input.programId!,
+        contextType: input.contextType,
+        contextId: input.contextId!,
+      }),
+    enabled,
+    staleTime: 30_000,
+  })
+
+  const commentsQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.commentsByTarget(
+      input.targetType,
+      String(input.contextId ?? '')
+    ),
+    queryFn: () =>
+      listAdminCommentsByTargetRemote({
+        targetType: input.targetType,
+        targetId: input.contextId!,
+      }),
+    enabled,
+    staleTime: 30_000,
+  })
+
+  const adminComment = useMemo(
+    () => resolveLatestAdminCommentText(commentsQuery.data),
+    [commentsQuery.data]
+  )
+
+  return {
+    formResponse: formQuery.data ?? null,
+    adminComment,
+    isLoading: enabled && (formQuery.isLoading || commentsQuery.isLoading),
+    isFetching: formQuery.isFetching || commentsQuery.isFetching,
+  }
+}
+
+/** 일반 기관 신청 상세 — form_response + admin_comment hydrate */
+export function useOrganizationApplicationDetailEnrichment(
+  row: ApplicantSchoolRow | null | undefined,
+  options?: { enabled?: boolean }
+): ApplicantSchoolRow | null {
+  const programId = parseProgramId(row?.programId)
+  const contextId = parseNumericId(row?.id)
+  const detailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.organizationDetail(String(contextId ?? '')),
+    queryFn: () => fetchOrganizationApplicationDetailRemote(String(contextId)),
+    enabled: Boolean(
+      options?.enabled !== false &&
+        row &&
+        shouldUseGeneralApplicationsRemoteApi() &&
+        contextId != null
+    ),
+    staleTime: 30_000,
+    retry: false,
+  })
+  const { formResponse, adminComment } = useApplicationFormAndComments({
+    enabled: Boolean(options?.enabled !== false && row),
+    programId,
+    contextType: 'ORGANIZATION_APPLICATION',
+    contextId,
+    targetType: 'ORGANIZATION_APPLICATION',
+  })
+
+  return useMemo(() => {
+    if (!row) return null
+    const canonical = detailQuery.data
+      ? mapOrganizationApplicationDetailToApplicantSchoolRow(detailQuery.data, row)
+      : row
+    if (!formResponse && !adminComment) return canonical
+    return hydrateOrganizationApplicationRowFromForm({
+      row: canonical,
+      formResponse,
+      adminComment,
+    })
+  }, [row, detailQuery.data, formResponse, adminComment])
+}
+
+/** 일반 강사 신청 상세 — form_response + admin_comment hydrate */
+export function useInstructorApplicationDetailEnrichment(
+  row: ApplicantInstructorRow | null | undefined,
+  options?: { enabled?: boolean }
+): ApplicantInstructorRow | null {
+  const programId = parseProgramId(row?.programId)
+  const contextId = parseNumericId(row?.id)
+  const detailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.instructorDetail(String(contextId ?? '')),
+    queryFn: () => fetchInstructorApplicationDetailRemote(String(contextId)),
+    enabled: Boolean(
+      options?.enabled !== false &&
+        row &&
+        shouldUseGeneralApplicationsRemoteApi() &&
+        contextId != null
+    ),
+    staleTime: 30_000,
+    retry: false,
+  })
+  const { formResponse, adminComment } = useApplicationFormAndComments({
+    enabled: Boolean(options?.enabled !== false && row),
+    programId,
+    contextType: 'INSTRUCTOR_APPLICATION',
+    contextId,
+    targetType: 'INSTRUCTOR_APPLICATION',
+  })
+
+  return useMemo(() => {
+    if (!row) return null
+    const canonical = detailQuery.data
+      ? mapInstructorApplicationDetailToApplicantRow(detailQuery.data, row)
+      : row
+    if (!formResponse && !adminComment) return canonical
+    return hydrateInstructorApplicationRowFromForm({
+      row: canonical,
+      formResponse,
+      adminComment,
+    })
+  }, [row, detailQuery.data, formResponse, adminComment])
+}
+
+/** 참여 강사 상세 — 신청 정보 탭 (instructor-applications GET + form_response hydrate) */
+export function useParticipatingInstructorApplicationDetailEnrichment(
+  row: ParticipatingInstructorRow | null | undefined,
+  programId: string,
+  options?: { enabled?: boolean }
+): ParticipatingInstructorRow | null {
+  const applicationId = parseNumericId(row?.instructorApplicationId)
+  const detailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.instructorDetail(String(applicationId ?? '')),
+    queryFn: () => fetchInstructorApplicationDetailRemote(String(applicationId)),
+    enabled: Boolean(
+      options?.enabled !== false &&
+        row &&
+        shouldUseGeneralApplicationsRemoteApi() &&
+        applicationId != null
+    ),
+    staleTime: 30_000,
+    retry: false,
+  })
+  const parsedProgramId = parseProgramId(programId)
+  const { formResponse, adminComment } = useApplicationFormAndComments({
+    enabled: Boolean(options?.enabled !== false && row && applicationId != null),
+    programId: parsedProgramId,
+    contextType: 'INSTRUCTOR_APPLICATION',
+    contextId: applicationId,
+    targetType: 'INSTRUCTOR_APPLICATION',
+  })
+
+  return useMemo(() => {
+    if (!row) return null
+    if (!detailQuery.data) {
+      if (!formResponse && !adminComment) return row
+      const seed = participatingRowToInstructorApplicationSeed(row, programId)
+      const hydrated = hydrateInstructorApplicationRowFromForm({
+        row: seed,
+        formResponse,
+        adminComment,
+      })
+      return mergeInstructorApplicationIntoParticipatingRow(row, hydrated)
+    }
+    const canonical = mapInstructorApplicationDetailToParticipatingRow(
+      detailQuery.data,
+      row,
+      programId
+    )
+    if (!formResponse && !adminComment) return canonical
+    const seed = participatingRowToInstructorApplicationSeed(canonical, programId)
+    const hydrated = hydrateInstructorApplicationRowFromForm({
+      row: seed,
+      formResponse,
+      adminComment,
+    })
+    return mergeInstructorApplicationIntoParticipatingRow(canonical, hydrated)
+  }, [row, programId, detailQuery.data, formResponse, adminComment])
+}
+
+/** 참여자(개인) 상세 — 신청 정보 탭 (individual-applications GET) */
+export function useParticipatingIndividualApplicationDetailEnrichment(
+  row: ParticipatingIndividualParticipantRow | null | undefined,
+  options?: { enabled?: boolean }
+): ParticipatingIndividualParticipantRow | null {
+  const applicationId = parseNumericId(row?.individualApplicationId)
+  const detailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.individualDetail(String(applicationId ?? '')),
+    queryFn: () => fetchIndividualApplicationDetailRemote(String(applicationId)),
+    enabled: Boolean(
+      options?.enabled !== false &&
+        row &&
+        shouldUseGeneralApplicationsRemoteApi() &&
+        applicationId != null
+    ),
+    staleTime: 30_000,
+    retry: false,
+  })
+
+  return useMemo(() => {
+    if (!row) return null
+    if (!detailQuery.data) return row
+    return mapIndividualApplicationDetailToParticipatingRow(detailQuery.data, row)
+  }, [row, detailQuery.data])
+}
+
+/** 일반 봉사 신청 상세 — form_response hydrate (essay 등) */
+export function useVolunteerApplicationDetailEnrichment(
+  row: GeneralVolunteerApplicantRow | null | undefined,
+  options?: { enabled?: boolean }
+): GeneralVolunteerApplicantRow | null {
+  const programId = parseProgramId(row?.programId)
+  const contextId = parseNumericId(row?.id)
+  const detailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.volunteerDetail(String(contextId ?? '')),
+    queryFn: () => fetchVolunteerApplicationDetailRemote(String(contextId)),
+    enabled: Boolean(
+      options?.enabled !== false &&
+        row &&
+        shouldUseGeneralApplicationsRemoteApi() &&
+        contextId != null
+    ),
+    staleTime: 30_000,
+    retry: false,
+  })
+  const { formResponse, adminComment } = useApplicationFormAndComments({
+    enabled: Boolean(options?.enabled !== false && row),
+    programId,
+    contextType: 'VOLUNTEER_APPLICATION',
+    contextId,
+    targetType: 'VOLUNTEER_APPLICATION',
+  })
+
+  return useMemo(() => {
+    if (!row) return null
+    const canonical = detailQuery.data
+      ? mapVolunteerApplicationDetailToApplicantRow(detailQuery.data, row)
+      : row
+    if (!formResponse && !adminComment) return canonical
+    return hydrateVolunteerApplicationRowFromForm({
+      row: canonical,
+      formResponse,
+      adminComment,
+    })
+  }, [row, detailQuery.data, formResponse, adminComment])
+}

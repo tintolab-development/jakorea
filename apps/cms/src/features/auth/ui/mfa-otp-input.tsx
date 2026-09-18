@@ -77,11 +77,7 @@ export function MfaOtpInput({
   return (
     <Form.Item
       name="otpCode"
-      rules={[
-        { required: true },
-        { len: OTP_LENGTH },
-        { pattern: /^\d+$/ },
-      ]}
+      rules={[{ required: true }, { len: OTP_LENGTH }, { pattern: /^\d+$/ }]}
       validateStatus=""
       help=""
       className="mfa-otp-input-field"
@@ -110,9 +106,8 @@ export function MfaOtpInput({
               </div>
               {failedAttempts > 0 && !disabled ? (
                 <p className="mfa-otp-input__failure">
-                  잘못된 코드를 입력하였습니다. (실패{' '}
-                  {clampMfaFailedAttempts(failedAttempts)}회 / 최대{' '}
-                  {OTP_POLICY.maxFailedAttempts}회)
+                  잘못된 코드를 입력하였습니다. (실패 횟수 {clampMfaFailedAttempts(failedAttempts)}{' '}
+                  / {OTP_POLICY.maxFailedAttempts})
                 </p>
               ) : null}
               {errors && errors.length > 0 && failedAttempts === 0 ? (

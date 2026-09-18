@@ -58,3 +58,23 @@
   border-radius: 8px;
   background: var(--color-bg-subtle, #fafafa);
 }
+
+.trained-teachers-education-journal-view__preview-frame {
+  width: 100%;
+  min-height: 420px;
+  border: none;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.trained-teachers-education-journal-view__preview-image {
+  max-width: 100%;
+  max-height: 480px;
+  object-fit: contain;
+}
+
+.trained-teachers-education-journal-view__preview-fallback {
+  margin: 0;
+  text-align: center;
+  color: var(--color-text-secondary, #666);
+}

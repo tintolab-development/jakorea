@@ -12,7 +12,7 @@ import type { FilledDocumentRequest } from '@/shared/api/generated/members/schem
 import type { FilledDocumentRequestSchemaJson } from '@/shared/api/generated/members/schemas/filledDocumentRequestSchemaJson'
 import type { PaymentStatementBasicInfo } from '@/shared/api/generated/members/schemas/paymentStatementBasicInfo'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
-import { PAYMENT_STATEMENT_DEFAULT_PURPOSE } from '@jakorea/form-schema/consent'
+import { ensurePaymentStatementDefaultPurpose } from '@jakorea/form-schema/consent'
 import { normalizeNoticeIdTypeResidentInputInDraft } from '@/features/template/model/writing-form-draft.schema'
 import {
   getFileStatus,
@@ -72,6 +72,9 @@ export function mapPaymentBasicInfo(
   values?: Partial<PaymentStatementBasicInfoAutofillValues>
 ): PaymentStatementBasicInfo | undefined {
   if (values == null) return undefined
+  const { paymentPurpose } = ensurePaymentStatementDefaultPurpose({
+    paymentPurpose: values.paymentPurpose,
+  })
   const mapped: PaymentStatementBasicInfo = {
     nameKo: trimText(values.nameKo),
     nameEn: trimText(values.nameEn),
@@ -84,7 +87,7 @@ export function mapPaymentBasicInfo(
     bankName: trimText(values.bankName),
     accountNumber: trimText(values.accountNumber),
     accountHolder: trimText(values.accountHolder),
-    paymentPurpose: trimText(values.paymentPurpose) ?? PAYMENT_STATEMENT_DEFAULT_PURPOSE,
+    paymentPurpose,
   }
   return mapped
 }
@@ -102,6 +105,17 @@ export function mapAgreementSnapshotToFilledDocument(
     request.paymentBasicInfo = mapPaymentBasicInfo(snapshot.paymentBasicInfo)
   }
   return request
+}
+
+export function isCrimeConsentReadyForSubmit(
+  snapshot: MemberConsentCrimeDraftSnapshot | undefined | null
+): boolean {
+  if (snapshot == null) return false
+  const existingObjectId = snapshot.evidenceFileObjectId
+  if (existingObjectId != null && Number.isFinite(existingObjectId) && existingObjectId >= 1) {
+    return true
+  }
+  return resolveCrimeEvidenceFile(snapshot) != null
 }
 
 export function resolveCrimeEvidenceFile(

@@ -30,8 +30,9 @@ export function shouldShowCmsMemberInfoEditButton(user: UserLike): boolean {
 
 /**
  * 어드민 등록 강사·교사겸강사(`instructor_only` / `instructor_dual`) —
- * [정보 수정]은 노출하되 **강사비 등급만** 수정 가능한 대상인지.
- * (본인인증 완료 후에도 동일. 순수 교사 `school_teacher`는 대상 아님.)
+ * [정보 수정]은 노출하되 **본인인증 완료 후**에는 강사비 등급·JA만 수정 가능한 대상인지.
+ * (미본인인증은 `shouldShowCmsMemberInfoEditButton` + `profile` scope로 기본정보 전체.
+ *  순수 교사 `school_teacher`는 대상 아님.)
  */
 export function isCmsInstructorFeeJaRestrictedEditTarget(
   user: InstructorRestrictedEditUserLike
@@ -60,7 +61,7 @@ export function shouldShowCmsMemberInfoEditButtonOrInstructorRestricted(
   if (user.role === 'SCHOOL') {
     return shouldShowCmsSchoolInfoEditButton(user)
   }
-  // 순수 교사: 기본정보·강사비 수정 없음. 강사·겸직만 강사비 등급 제한 수정.
+  // 순수 교사: 수정 없음. 강사·겸직: 미본인인증=전체 / 본인인증 후=강사비·JA만.
   if (user.role === 'INSTRUCTOR') {
     if (resolveInstructorMemberProfile(user) === 'school_teacher') return false
     return (
@@ -70,13 +71,20 @@ export function shouldShowCmsMemberInfoEditButtonOrInstructorRestricted(
   return shouldShowCmsMemberInfoEditButton(user)
 }
 
-/** 기본 정보 폼 — 역할별 CMS 편집 가능 여부 (강사·교사는 강사비 등급만 → 여기선 false) */
-export function shouldShowCmsBasicProfileFieldsEdit(user: SchoolUserLike & UserLike): boolean {
+/**
+ * 기본 정보 폼 — CMS 인라인 편집 가능 여부.
+ * 강사·겸직은 미본인인증(admin-provisioned)일 때만 true. 본인인증 후·순수 교사는 false
+ * (후자는 `instructor_fee_ja` scope로 강사비만).
+ */
+export function shouldShowCmsBasicProfileFieldsEdit(
+  user: InstructorRestrictedEditUserLike & SchoolUserLike
+): boolean {
   if (user.role === 'SCHOOL') {
     return shouldShowCmsSchoolInfoEditButton(user)
   }
   if (user.role === 'INSTRUCTOR') {
-    return false
+    if (resolveInstructorMemberProfile(user) === 'school_teacher') return false
+    return shouldShowCmsMemberInfoEditButton(user)
   }
   return shouldShowCmsMemberInfoEditButton(user)
 }

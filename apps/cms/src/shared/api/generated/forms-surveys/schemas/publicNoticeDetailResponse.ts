@@ -18,6 +18,6 @@ export interface PublicNoticeDetailResponse {
   attachments?: PublicNoticeAttachmentResponse[];
   /** 공개 가시성 기준 */
   visibility?: string;
-  /** 이번 요청에서 조회 수가 증가했는지 여부 */
+  /** 이번 공개 상세 조회 요청에서 조회 수가 증가했는지 여부. 쿠키 기준 동일 이용자의 동일 공지 조회는 1일 1회만 증가합니다. */
   viewCountIncremented?: boolean;
 }

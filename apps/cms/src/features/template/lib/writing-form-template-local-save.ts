@@ -1,7 +1,9 @@
 /**
- * 폼 양식 관리 — 작성 양식 템플릿 localStorage 영속화 (API 연동 전).
- * UJAT 전용 키(`ujat-registration-local-save`, `ujat-recruit-template-local-save`)와 병행해
- * 그 외 등록·모집·신청·설문 양식 draft·부가 상태를 저장한다.
+ * 브라우저 localStorage — **프로그램 상세 임시저장** (`localOnly: true`) 및
+ * 레거시 키 정리용. 양식 관리 draft SSOT는 remote API
+ * (`saveFormTemplateVersionDraft` / `loadFormTemplateVersionDraft`).
+ *
+ * 프로그램 코드에서는 `@/features/program/shared/lib/program-draft-local-save` 를 선호한다.
  */
 import {
   normalizeWritingFormDraft,
@@ -43,6 +45,21 @@ function readFile(): LocalSaveFile {
 }
 function writeFile(file: LocalSaveFile): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(file))
+}
+
+/** QuotaExceededError / 용량 부족 — 임시저장 UI 실패 문구 분기용 */
+export function isLocalStorageQuotaExceededError(error: unknown): boolean {
+  if (error == null || typeof error !== 'object') return false
+  const name = 'name' in error && typeof error.name === 'string' ? error.name : ''
+  const code = 'code' in error ? error.code : undefined
+  const message = 'message' in error && typeof error.message === 'string' ? error.message : ''
+  return (
+    name === 'QuotaExceededError' ||
+    name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+    code === 22 ||
+    code === 1014 ||
+    /quotaexceeded|quota.?exceeded|exceeded the quota/i.test(message)
+  )
 }
 export function loadWritingFormTemplateSave(
   templateId: string
@@ -95,14 +112,38 @@ export function removeWritingFormTemplateSave(templateId: string): void {
   }
 }
 
-/** localStorage 우선 저장 + formsSurveys API 동기화(활성 시 fire-and-forget) */
+/**
+ * `localOnly: true` — 프로그램 등록 임시저장 (양식 버전 API와 분리).
+ * 그 외 — 양식 관리용 remote draft API (`saveFormTemplateVersionDraft`).
+ */
 export async function persistWritingFormTemplateDraft(args: {
   templateId: string
   draft: WritingFormDraft
   overlay?: Record<string, unknown>
   editorState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
+  /** 프로그램 등록·모집 임시저장 전용. 양식 관리에서는 사용하지 않는다. */
+  localOnly?: boolean
+  /** 프로그램 form-binding 전용 version — 카탈로그 code PUT을 건너뛴다 */
+  templateVersionId?: number
 }): Promise<void> {
+  if (args.localOnly) {
+    persistWritingFormTemplateSave(args)
+    return
+  }
+  if (args.templateVersionId != null) {
+    const { saveFormTemplateVersionDraftByVersionId } = await import(
+      '@/features/template/api/admin-form-templates-service'
+    )
+    await saveFormTemplateVersionDraftByVersionId({
+      versionId: args.templateVersionId,
+      draft: args.draft,
+      overlay: args.overlay,
+      editorState: args.editorState,
+      settingsJson: args.settingsJson,
+    })
+    return
+  }
   const { saveFormTemplateVersionDraft } = await import(
     '@/features/template/api/admin-form-templates-service'
   )
@@ -115,10 +156,27 @@ export async function persistWritingFormTemplateDraft(args: {
   })
 }
 
-/** API draft 우선, 실패·미활성 시 localStorage */
+/**
+ * `localOnly: true` — 프로그램 localStorage만.
+ * `preferLocal: true` — local 초안이 있으면 사용, 없으면 remote.
+ * `templateVersionId` — 프로그램 binding version payload.
+ * 그 외 — remote draft GET (dev fallback: `VITE_FORM_TEMPLATE_LOCAL_FALLBACK=1`).
+ */
 export async function loadWritingFormTemplateDraft(
-  templateId: string
+  templateId: string,
+  options?: { localOnly?: boolean; templateVersionId?: number; preferLocal?: boolean }
 ): Promise<WritingFormTemplateSaveRecord | null> {
+  if (options?.localOnly) return loadWritingFormTemplateSave(templateId)
+  if (options?.preferLocal) {
+    const local = loadWritingFormTemplateSave(templateId)
+    if (local?.draft != null) return local
+  }
+  if (options?.templateVersionId != null) {
+    const { loadFormTemplateVersionDraftByVersionId } = await import(
+      '@/features/template/api/admin-form-templates-service'
+    )
+    return loadFormTemplateVersionDraftByVersionId(templateId, options.templateVersionId)
+  }
   const { loadFormTemplateVersionDraft } = await import(
     '@/features/template/api/admin-form-templates-service'
   )

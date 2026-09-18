@@ -1,6 +1,6 @@
 import { getUserById, getUsers } from '@/entities/user/api/user-service'
-import { INSTRUCTOR_SCHOOL_OPTIONS } from '@/data/mock/participating-instructors'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import { INSTRUCTOR_SCHOOL_OPTIONS } from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 
 export type ParticipatingInstructorMemberCandidate = {
   memberId: string

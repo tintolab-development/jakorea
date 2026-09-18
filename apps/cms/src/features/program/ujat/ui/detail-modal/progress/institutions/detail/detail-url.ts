@@ -1,4 +1,3 @@
-import { getUjatEducationProgressInstitutions } from '@/data/mock/ujat-education-progress-institutions-mock'
 import type { EducationProgressHalfKey } from '../../tabs'
 import {
   UJAT_DETAIL_LNB_PARAM,
@@ -23,12 +22,11 @@ export function resolveSourceInstitutionIdFromProgressRowId(rowId: string): stri
 
 export function isUjatEducationProgressInstitutionInList(
   programId: string,
-  half: EducationProgressHalfKey,
+  _half: EducationProgressHalfKey,
   institutionId: string
 ): boolean {
-  return getUjatEducationProgressInstitutions(programId, half).some(
-    row => row.sourceInstitutionId === institutionId
-  )
+  void _half
+  return Boolean(programId && institutionId)
 }
 
 export function buildUjatEducationProgressInstitutionDetailUrl(

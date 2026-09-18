@@ -4,8 +4,8 @@
  */
 
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
-import type { TextbookStatusKey } from '@/data/mock/participating-schools'
-import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
+import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
+import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
 import type { StudentPortraitConsentSubmission } from '../lib/student-portrait-consent'
 
 export type InstructorRoleKey = 'lead' | 'assistant'
@@ -88,6 +88,8 @@ export interface SchoolDetailForModal {
   activityWithdrawStopSessionKey?: string
   /** 활동 포기 기준 교육 일정 표시 라벨 */
   activityWithdrawStopScheduleLabel?: string
+  /** BE participant availableActions — 상세 포기 버튼 게이트 */
+  availableActions?: string[]
   /** 프로그램 참여 신청일 — 수료증/참여인증서 발급 가능 기한(3년) 산정 기준 */
   participationAppliedAt?: string
   instructors: SchoolDetailInstructorRow[]
@@ -103,6 +105,10 @@ export const STUDENT_GENDER_LABELS: Record<StudentGenderKey, string> = {
 
 export interface SchoolDetailStudentRow {
   id: string
+  /** BE 회원 ID — 참여자 PK와 구분 */
+  memberId?: number
+  /** 진행 출석 API용 participant PK */
+  participantId?: number
   no: number
   name: string
   /** 성별: '남' | '여' 표시용 */
@@ -165,6 +171,8 @@ export type LectureAttendanceStatusKey = 'attended' | 'absent' | 'late' | 'not_h
 export interface LectureAttendanceSession {
   roundNumber: number
   status: LectureAttendanceStatusKey
+  /** 진행 출석 정정용 schedule PK */
+  scheduleId?: number
 }
 
 export interface LectureAttendanceDetail {
@@ -278,6 +286,8 @@ export interface SchoolDetailAttendanceStudentRow {
   contact?: string
   email?: string
   status: SchoolSessionAttendanceStatusKey
+  /** schedule attendances / bulk-upsert 키 — roster `participantId` */
+  participantId?: number | null
 }
 
 export interface SchoolDetailAttendanceSessionGroup {
@@ -285,6 +295,8 @@ export interface SchoolDetailAttendanceSessionGroup {
   round: number
   /** 필터 Select value (ISO date 또는 session id) */
   filterValue: string
+  /** program_schedule id — 없으면 출석 GET/저장 불가 */
+  scheduleId?: number | null
   /** 회차/일정 선행 라벨 (커리큘럼: 1회차·1차시, 일정형: 일정명) */
   sessionLeadLabel: string
   /** 회차 헤더 — table-title (예: 1회차 : 2026. 01. 09(금)) */

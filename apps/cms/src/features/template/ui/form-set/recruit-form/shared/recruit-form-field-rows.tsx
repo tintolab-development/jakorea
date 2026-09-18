@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 
 export const RECRUIT_FORM_MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 
@@ -19,6 +20,7 @@ export function RecruitInquiryContactRow({
   onInquiryTelChange,
   inquiryEmail,
   onInquiryEmailChange,
+  required = false,
 }: {
   inquiryContact: string
   onInquiryContactChange: (next: string) => void
@@ -26,11 +28,13 @@ export function RecruitInquiryContactRow({
   onInquiryTelChange: (next: string) => void
   inquiryEmail: string
   onInquiryEmailChange: (next: string) => void
+  required?: boolean
 }) {
   return (
     <DetailInfoForm.Row type="single">
       <DetailInfoForm.Field
         label="문의처"
+        required={required}
         fullRow
         edit={
           <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
@@ -46,6 +50,7 @@ export function RecruitInquiryContactRow({
               placeholder="문의처 전화번호"
               value={inquiryTel}
               onChange={onInquiryTelChange}
+              phone
             />
             <DetailInfoForm.InputsSeparator />
             <InquiryContactColumn
@@ -116,18 +121,21 @@ function InquiryContactColumn({
   placeholder,
   value,
   onChange,
+  phone,
 }: {
   label: string
   placeholder: string
   value: string
   onChange: (next: string) => void
+  phone?: boolean
 }) {
+  const InputComponent = phone ? CmsPhoneInput : CmsInput
   return (
     <div style={inquiryColumnStyle}>
       <span className="nowrap" style={{ flexShrink: 0 }}>
         {label}
       </span>
-      <CmsInput
+      <InputComponent
         inputSize="medium"
         width={240}
         placeholder={placeholder}

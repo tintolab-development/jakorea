@@ -1,20 +1,27 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import type { TrainedTeacherOrganizationApplicationResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationApplicationResponse'
+import type { TrainedTeacherOrganizationApplicationsListQuery } from './organization-applications-list-query'
 
 function listUrl(programId: string): string {
   return `/api/admin/programs/${encodeURIComponent(programId)}/trained-teacher/organization-applications`
 }
 
 export async function fetchTrainedTeacherOrganizationApplicationsRemote(
-  programId: string
+  programId: string,
+  query: TrainedTeacherOrganizationApplicationsListQuery = {}
 ): Promise<TrainedTeacherOrganizationApplicationResponse[]> {
+  const params: Record<string, string> = {}
+  if (query.keyword?.trim()) params.keyword = query.keyword.trim()
+  if (query.status?.trim()) params.status = query.status.trim()
+
   const body = await unwrapApiBody<
     TrainedTeacherOrganizationApplicationResponse[] | { content?: TrainedTeacherOrganizationApplicationResponse[] }
   >(
     await customInstance({
       url: listUrl(programId),
       method: 'GET',
+      ...(Object.keys(params).length > 0 ? { params } : {}),
     })
   )
   if (Array.isArray(body)) return body

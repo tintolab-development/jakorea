@@ -22,6 +22,8 @@ export type ProgramApplicationFormVolunteerBodyOptions = {
   onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
   /** 모집 폼·프로그램에 등록된 면접 일정 시드 — 미지정 시 mock fallback */
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
+  /** 템플릿 관리만 true — 진행 불가일 모달 달력 월 이동·선택 고정 */
+  freezeUnavailableCalendar?: boolean
   /** 봉사 진행 가능 일정 슬롯 (프로그램 상세 연동) */
   activityScheduleSlots?: readonly InstructorAvailableScheduleSlot[]
   hideActivityScheduleCalendar?: boolean

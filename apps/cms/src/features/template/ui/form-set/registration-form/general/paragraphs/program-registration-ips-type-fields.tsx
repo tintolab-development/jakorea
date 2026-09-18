@@ -34,8 +34,8 @@ export function ProgramRegistrationIpsTypeFields({
   const handleCategoryChange = (v: unknown) => {
     if (disabled) return
     const nextCategory = String(v ?? '') as ProgramRegistrationIpsCategory | ''
-    const nextDetail = nextCategory === 'prepare' ? 'none' : ''
-    onChange({ category: nextCategory, detail: nextDetail })
+    // 2차 기본값「해당 없음」— 미선택(빈 문자열)과 create 요약 fallback 불일치 방지
+    onChange({ category: nextCategory, detail: nextCategory ? 'none' : '' })
   }
 
   const handleDetailChange = (v: unknown) => {

@@ -11,7 +11,8 @@ import type {
   GeneralProgramSurveyMenuKey,
   Program,
 } from '@/types/domain'
-import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
+import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
+import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 import {
   buildScheduleProgressTimeSummary,
   buildSessionIpsTypeSummary,
@@ -38,12 +39,12 @@ import type { ProgramRegistrationIpsTypeValue } from '@/features/template/ui/for
 import type { ProgramRegistrationMultiRoundAssignmentValue } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-multi-round-assignment-fields'
 import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import {
-  TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
   TEMPLATE_FORM_IP_OWNED_OPTIONS,
 } from '@/features/template/lib/template-form-select-options'
+import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY,
   GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
@@ -75,6 +76,8 @@ export type GeneralRegistrationEditorExtras = {
   scheduleCurriculumDetailCount?: number
   scheduleCurriculumPreEducation?: boolean
   participantOrganization?: boolean
+  /** 교육받은 교사 — 교육 연수 ON/OFF (create 시 항상 명시) */
+  teacherTrainingEnabled?: boolean
 }
 
 function overlayString(overlay: Record<string, unknown>, key: string): string {
@@ -119,8 +122,7 @@ function readOperationRangeSeal(
 }
 
 function businessAreaToProgramValue(formValue: string): string {
-  if (!formValue) return ''
-  return TEMPLATE_FORM_BUSINESS_AREA_OPTIONS.find(o => o.value === formValue)?.label ?? formValue
+  return normalizeProgramBusinessAreaValue(formValue)
 }
 
 function educationProcessToProgramValue(formValue: string): string | undefined {
@@ -160,11 +162,71 @@ function buildWageGradePricing(amount: number | undefined): string {
   return `1시간 당 | 기본 : ${amount.toLocaleString('ko-KR')}원`
 }
 
-function resolveDetailedProgramName(detailedProgramId: string): string | undefined {
+function resolveDetailedProgramName(
+  overlay: Record<string, unknown>,
+  detailedProgramId: string
+): string | undefined {
+  const fromOverlay = overlayString(overlay, `${BASIC}.detailedProgramName`)
+  if (fromOverlay) return fromOverlay
   if (!detailedProgramId || detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) {
     return undefined
   }
-  return mockDetailedProgramManagementListRows.find(row => row.id === detailedProgramId)?.name
+  return undefined
+}
+
+const TRAINED_TEACHERS_REGISTRATION_PREFIX = 'trainedTeachersRegistration' as const
+
+/** 교육받은 교사 등록 overlay 키 → generalRegistration 키 (applyGeneralRegistrationOverlayToProgram 재사용) */
+export function normalizeRegistrationOverlayForApply(
+  overlay: Record<string, unknown>,
+  variant: ProgramRegistrationFormVariant
+): Record<string, unknown> {
+  if (variant !== 'trainedTeachers') return overlay
+
+  const normalized: Record<string, unknown> = { ...overlay }
+  const ttBasic = `${TRAINED_TEACHERS_REGISTRATION_PREFIX}.basicInfo`
+  const genBasic = `${BASIC}`
+
+  const copyWhenMissing = (fromKey: string, toKey: string) => {
+    if (overlay[fromKey] === undefined) return
+    if (normalized[toKey] !== undefined) return
+    normalized[toKey] = overlay[fromKey]
+  }
+
+  copyWhenMissing(`${ttBasic}.sponsorId`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
+  copyWhenMissing(`${ttBasic}.sponsorIds`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY)
+  copyWhenMissing(`${ttBasic}.managerContactId`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY)
+  copyWhenMissing(`${ttBasic}.sponsorManagerLine`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY)
+  copyWhenMissing(`${ttBasic}.programTitleKo`, GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
+
+  for (const [key, value] of Object.entries(overlay)) {
+    if (!key.startsWith(`${TRAINED_TEACHERS_REGISTRATION_PREFIX}.`)) continue
+    const suffix = key.slice(TRAINED_TEACHERS_REGISTRATION_PREFIX.length)
+    const targetKey = `generalRegistration${suffix}`
+    if (normalized[targetKey] === undefined) {
+      normalized[targetKey] = value
+    }
+  }
+
+  for (const [key] of Object.entries(overlay)) {
+    if (!key.startsWith(`${ttBasic}.`)) continue
+    const field = key.slice(ttBasic.length + 1)
+    if (['sponsorId', 'managerContactId', 'programTitleKo', 'sponsorManagerLine'].includes(field)) {
+      continue
+    }
+    copyWhenMissing(key, `${genBasic}.${field}`)
+  }
+
+  const sponsorId = overlayString(normalized, GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
+  if (
+    sponsorId &&
+    sponsorId !== TRAINED_TEACHERS_REGISTRATION_ALL_VALUE &&
+    normalized[GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY] === undefined
+  ) {
+    normalized[GENERAL_REGISTRATION_OVERLAY_SPONSOR_IDS_KEY] = [sponsorId]
+  }
+
+  return normalized
 }
 
 function buildIpsTypeSummaryFull(
@@ -234,6 +296,7 @@ function buildCurriculumSessions(
   const partDetail = extras.participationScheduleDetail ?? 'common'
   const ipsDetail = extras.ipsScheduleDetail ?? 'common'
   const hideAssignment = extras.participantOrganization === true || !isMulti
+  const hideParticipation = extras.participantOrganization === true
 
   const sessions: GeneralProgramCurriculumSessionRow[] = []
 
@@ -272,7 +335,7 @@ function buildCurriculumSessions(
             ? educationFormLabelFromValue(educationFormBySession[i] ?? 'online')
             : undefined,
         participationMethodLabel:
-          partDetail === 'perSchedule'
+          !hideParticipation && partDetail === 'perSchedule'
             ? participationMethodLabelFromValue(
                 (participationBySession[i] as 'individual' | 'team' | undefined) ?? 'individual'
               )
@@ -302,7 +365,7 @@ function buildCurriculumSessions(
           ? educationFormLabelFromValue(educationFormBySession[i] ?? 'online')
           : undefined,
       participationMethodLabel:
-        partDetail === 'perSchedule'
+        !hideParticipation && partDetail === 'perSchedule'
           ? participationMethodLabelFromValue(
               (participationBySession[i] as 'individual' | 'team' | undefined) ?? 'individual'
             )
@@ -376,6 +439,7 @@ function buildEnrichedScheduleDetails(
   const partDetail = extras.participationScheduleDetail ?? 'common'
   const ipsDetailKind = extras.ipsScheduleDetail ?? 'common'
   const hideAssignment = extras.participantOrganization === true || extras.sessionRoundType === 'single'
+  const hideParticipation = extras.participantOrganization === true
 
   const rows: GeneralProgramScheduleDetailRow[] = base.map((row, index) => {
     const n = index + 1
@@ -395,7 +459,7 @@ function buildEnrichedScheduleDetails(
           ? educationFormLabelFromValue(educationFormByDetail[n] ?? 'online')
           : undefined,
       participationMethodLabel:
-        partDetail === 'perSchedule'
+        !hideParticipation && partDetail === 'perSchedule'
           ? participationMethodLabelFromValue(
               (participationByDetail[n] as 'individual' | 'team' | undefined) ?? 'individual'
             )
@@ -559,10 +623,12 @@ export function applyGeneralRegistrationOverlayToProgram(
     overlayString(overlay, `${TYPE}.multiCommonEducationForm`) ||
     overlayString(overlay, `${TYPE}.singleEducationForm`) ||
     'online'
-  const commonParticipation =
-    (overlayString(overlay, `${TYPE}.multiCommonParticipation`) ||
-      overlayString(overlay, `${TYPE}.singleParticipation`) ||
-      'individual') as 'individual' | 'team'
+  const hideParticipation = extras.participantOrganization === true
+  const commonParticipation = hideParticipation
+    ? undefined
+    : ((overlayString(overlay, `${TYPE}.multiCommonParticipation`) ||
+        overlayString(overlay, `${TYPE}.singleParticipation`) ||
+        'individual') as 'individual' | 'team')
 
   const programTypeFromForm =
     commonEducationForm === 'online'
@@ -588,7 +654,7 @@ export function applyGeneralRegistrationOverlayToProgram(
     : detailedProgramNameFromOverlay ||
       (detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
         ? '해당없음'
-        : resolveDetailedProgramName(detailedProgramId))
+        : resolveDetailedProgramName(overlay, detailedProgramId))
 
   const scheduleLinesRaw = overlay[GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]
   const educationScheduleLines = Array.isArray(scheduleLinesRaw)
@@ -629,8 +695,12 @@ export function applyGeneralRegistrationOverlayToProgram(
     ips: ipsCapitalized,
     programCategory,
     programChannel,
-    textbookName: detailedProgramName ?? program.textbookName,
-    teamDivision: detailedProgramName ?? program.teamDivision,
+    detailedProgramId:
+      isSchedule ||
+      !detailedProgramId ||
+      detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+        ? undefined
+        : detailedProgramId,
     approvedStudentCount: kpi.finalParticipants,
     instructors: kpi.instructorCount,
     instructorCapacity: kpi.instructorCount,
@@ -654,7 +724,9 @@ export function applyGeneralRegistrationOverlayToProgram(
       ipsScheduleDetail: ipsDetailKind,
       educationFormLabel:
         eduDetail === 'common' ? educationFormLabelFromValue(commonEducationForm) : undefined,
-      participationMethod: partDetail === 'common' ? commonParticipation : undefined,
+      /** 기관(학교/기관) 대상 — BE `GENERAL_ORGANIZATION_PARTICIPATION_METHOD_NOT_ALLOWED` */
+      participationMethod:
+        hideParticipation || partDetail !== 'common' ? undefined : commonParticipation,
       ipsTypeSummary: buildIpsTypeSummaryFull(ipsDetailKind, ipsCategory, ipsType.detail),
       scheduleCurriculumPreEducation: extras.scheduleCurriculumPreEducation ?? false,
       curriculumSessions,

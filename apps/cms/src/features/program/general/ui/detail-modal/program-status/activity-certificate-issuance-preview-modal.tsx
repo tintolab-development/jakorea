@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import {
   ACTIVITY_CERTIFICATE_DOCUMENT_TITLE,
   buildActivityCertificateFileName,

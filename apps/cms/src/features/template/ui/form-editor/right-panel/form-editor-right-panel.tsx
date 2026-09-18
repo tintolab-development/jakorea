@@ -24,9 +24,12 @@ export type { FormEditorRightPanelProps } from '@/features/template/ui/form-edit
 export function FormEditorTitleNumberingField({
   value,
   onChange,
+  disabled = false,
 }: {
   value: FormTitleNumberingStyle
   onChange: (style: FormTitleNumberingStyle) => void
+  /** 시스템 설정 양식 — 타이틀 번호 변경 불가 */
+  disabled?: boolean
 }) {
   return (
     <div className="form-editor-right-panel__field">
@@ -37,6 +40,7 @@ export function FormEditorTitleNumberingField({
         value={value}
         options={TITLE_NUMBERING_OPTIONS}
         withAllOption={false}
+        disabled={disabled}
         onChange={v => onChange(v as FormTitleNumberingStyle)}
       />
     </div>
@@ -93,6 +97,7 @@ export function FormEditorRightPanel({
           <FormEditorTitleNumberingField
             value={draft.formSettings.titleNumbering}
             onChange={onTitleNumberingChange}
+            disabled={structureLockedParagraphIds != null}
           />
         ) : null}
         {/* 시드·고정 단락: 유형 셀렉트 숨김. 명시적으로 노출할 때만 StructureLocked 안내 */}
@@ -120,6 +125,7 @@ export function FormEditorRightPanel({
         <FormEditorTitleNumberingField
           value={draft.formSettings.titleNumbering}
           onChange={onTitleNumberingChange}
+          disabled={structureLockedParagraphIds != null}
         />
       ) : null}
 

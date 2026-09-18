@@ -136,20 +136,6 @@ export {
   type SchoolEnrollmentHistorySeedCase,
   type AdminProgramRoleSeedCase,
 } from './member-detail-history-seed-catalog'
-export { getVolunteerPrograms, mockVolunteerProgramsMap } from './volunteer-programs'
-export { getEducationPrograms, mockEducationProgramsMap } from './education-programs'
-export {
-  getCompanySchoolPrograms,
-  getCompanySchoolProgramById,
-  getEconomyPrograms,
-  getEconomyProgramById,
-} from './economy-programs'
-export { getGeneralPrograms, getGeneralProgramById } from './general-programs'
-export {
-  getTrainedTeachersPrograms,
-  getTrainedTeachersProgramById,
-  invalidateTrainedTeachersProgramsCache,
-} from './trained-teachers-programs'
 export {
   isGeminiProgram,
   getGeneralEducationPrograms,
@@ -159,8 +145,6 @@ export {
   PROGRAM_SCHEDULE_WIDGET_KEYS,
   type ProgramScheduleKind,
 } from './program-schedule-categories'
-export { getStudentEnrolledPrograms } from './student-enrollments'
-export { getFormTemplateByProgramId, formTemplatesByProgramId } from './form-templates'
 export {
   mockProgramProgressByTab,
   PROGRAM_PROGRESS_TAB_LABELS,

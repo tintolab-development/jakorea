@@ -19,7 +19,7 @@ function listItem(
 }
 
 describe('buildWritingFormSectionsFromApiItems', () => {
-  it('groups writing templates by category and merges API names', () => {
+  it('groups writing templates by category without mock merge', () => {
     const sections = buildWritingFormSectionsFromApiItems([
       listItem({
         templateCode: 'registration-general',
@@ -37,12 +37,50 @@ describe('buildWritingFormSectionsFromApiItems', () => {
     expect(registration?.rows.find(row => row.id === 'registration-general')?.templateName).toBe(
       '일반 프로그램 등록 폼 (API)'
     )
-    expect(registration?.rows.some(row => row.id === 'registration-economy')).toBe(true)
+    expect(registration?.rows.some(row => row.id === 'registration-economy')).toBe(false)
+    expect(registration?.rows).toHaveLength(1)
+  })
+
+  it('hides program-scoped application/recruitment copies from management list', () => {
+    const sections = buildWritingFormSectionsFromApiItems([
+      listItem({
+        templateCode: 'application-participant-individual',
+        templateName: '참여자 신청 (카탈로그)',
+        category: 'APPLICATION',
+      }),
+      listItem({
+        templateCode: 'application-participant-individual-copy-99',
+        templateName: '참여자 신청 (프로그램)',
+        category: 'APPLICATION',
+        systemTemplate: false,
+        activeBindingCount: 1,
+      }),
+      listItem({
+        templateCode: 'recruitment-instructor-copy-1',
+        templateName: '강사 모집 (프로그램)',
+        category: 'RECRUITMENT',
+        systemTemplate: false,
+      }),
+      listItem({
+        templateCode: 'survey-custom-01',
+        templateName: '커스텀 설문',
+        category: 'SURVEY',
+        systemTemplate: false,
+      }),
+    ])
+
+    const applicationForm = sections.find(section => section.key === 'application_form')
+    const recruitment = sections.find(section => section.key === 'application')
+    const survey = sections.find(section => section.key === 'survey')
+
+    expect(applicationForm?.rows.map(row => row.id)).toEqual(['application-participant-individual'])
+    expect(recruitment?.rows.some(row => row.id.includes('copy'))).toBe(false)
+    expect(survey?.rows.some(row => row.id === 'survey-custom-01')).toBe(true)
   })
 })
 
 describe('buildIssuanceFormSectionsFromApiItems', () => {
-  it('groups issuance templates into report and document sections', () => {
+  it('groups issuance templates into report and document sections without mock merge', () => {
     const sections = buildIssuanceFormSectionsFromApiItems([
       listItem({
         templateCode: 'issuance-3',
@@ -61,14 +99,14 @@ describe('buildIssuanceFormSectionsFromApiItems', () => {
 
     expect(report?.rows.find(row => row.id === 'issuance-3')?.templateName).toBe('강의보고서 (API)')
     expect(report?.rows.some(row => row.id === 'issuance-1')).toBe(false)
-    expect(report?.rows.some(row => row.id === 'issuance-2')).toBe(true)
+    expect(report?.rows.some(row => row.id === 'issuance-2')).toBe(false)
+    expect(report?.rows).toHaveLength(1)
     expect(document?.rows.find(row => row.id === 'document-3')?.templateName).toBe('수료증 (API)')
-    expect(document?.rows.some(row => row.id === 'document-payment-order-issue')).toBe(true)
-    expect(document?.rows.some(row => row.id === 'document-1')).toBe(false)
-    expect(document?.rows.some(row => row.id === 'document-payment-order-pre-consent')).toBe(false)
+    expect(document?.rows.some(row => row.id === 'document-payment-order-issue')).toBe(false)
+    expect(document?.rows).toHaveLength(1)
   })
 
-  it('hides Notion-excluded issuance catalog codes from the list merge', () => {
+  it('hides Notion-excluded issuance catalog codes from the list', () => {
     const sections = buildIssuanceFormSectionsFromApiItems([
       listItem({
         templateCode: 'issuance-1',

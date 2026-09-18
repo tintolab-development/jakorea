@@ -1,9 +1,9 @@
 import dayjs, { type Dayjs } from 'dayjs'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
-} from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/participating-schools'
 import { parseParticipatingSessionTimeRange } from '../ui/detail-modal/program-status/participating-institutions-calendar-day-list'
 import type { CalendarMainEventInput } from '@/shared/components/calendar/model/calendar-main-event-input'
 
@@ -38,10 +38,15 @@ export function buildParticipatingInstructorCalendarEvents(
   const events: ParticipatingInstructorCalendarEvent[] = []
 
   for (const instructor of instructors) {
-    const school = schoolByName.get(instructor.schoolName)
-    if (!school?.sessions?.length) continue
+    const assignedSchoolNames =
+      instructor.assignedOrganizationNames?.filter(Boolean) ??
+      (instructor.schoolName?.trim() ? [instructor.schoolName.trim()] : [])
 
-    for (const session of school.sessions) {
+    for (const schoolName of assignedSchoolNames) {
+      const school = schoolByName.get(schoolName)
+      if (!school?.sessions?.length) continue
+
+      for (const session of school.sessions) {
       const sessionDate = parseSessionDate(session.date)
       const times = parseParticipatingSessionTimeRange(session.timeRange)
       const timeRangeDisplay = session.timeRange.replace(/\s*~\s*/g, ' ~ ')
@@ -67,6 +72,7 @@ export function buildParticipatingInstructorCalendarEvents(
           desiredEducationPeriod: periodStr,
         },
       })
+      }
     }
   }
 

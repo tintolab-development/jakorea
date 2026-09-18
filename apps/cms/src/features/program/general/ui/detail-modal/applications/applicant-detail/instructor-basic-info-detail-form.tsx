@@ -19,7 +19,10 @@ import {
   ProgramDetailTdSegmentWrap,
   withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
+import { HomeAddressDisplay } from '@/features/program/shared/lib/program-pii-display'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
+
+export { HomeAddressDisplay }
 
 const AFFILIATION_EMPLOYMENT_BADGE_CELL_STYLE = {
   ...SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
@@ -33,60 +36,6 @@ export function formatBirthDateAndAge(birthDate?: string, age?: number): string 
   if (formatted) return formatted
   if (age != null) return `만 ${age}세`
   return '-'
-}
-
-function splitAddressAfterDong(address: string): { head: string; tail: string } | null {
-  const re = /(?:^|\s)([가-힣]{2,12}동)(?=\s|$)/u
-  const m = address.match(re)
-  if (!m) return null
-  const dong = m[1]
-  const i = address.indexOf(dong)
-  if (i === -1) return null
-  const end = i + dong.length
-  return { head: address.slice(0, end), tail: address.slice(end) }
-}
-
-function splitAddressAfterGu(address: string): { head: string; tail: string } | null {
-  const re = /(?:^|\s)([가-힣]{1,12}구)(?=\s|$)/u
-  const m = address.match(re)
-  if (!m) return null
-  const gu = m[1]
-  const i = address.indexOf(gu)
-  if (i === -1) return null
-  const end = i + gu.length
-  return { head: address.slice(0, end), tail: address.slice(end) }
-}
-
-function splitAddressForPrivacyBlur(address: string): { head: string; tail: string } | null {
-  return splitAddressAfterDong(address) ?? splitAddressAfterGu(address)
-}
-
-export function HomeAddressDisplay({ address, mask }: { address: string | undefined; mask: boolean }) {
-  if (!address?.trim()) return <>-</>
-  if (!mask) return <>{address}</>
-
-  const split = splitAddressForPrivacyBlur(address)
-  if (!split) {
-    return (
-      <span className="applicant-general-instructor-basic-info__address-blur" aria-hidden="true">
-        {address}
-      </span>
-    )
-  }
-
-  const { head, tail } = split
-  if (!tail.trim()) {
-    return <>{head}</>
-  }
-
-  return (
-    <>
-      {head}
-      <span className="applicant-general-instructor-basic-info__address-blur" aria-hidden="true">
-        {tail}
-      </span>
-    </>
-  )
 }
 
 export type AccountDisplayFields = {
@@ -200,16 +149,16 @@ export function InstructorBasicInfoProfileGrid({
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field label="연락처" view={profile.contactDisplay} readOnlyDisplay />
+        <DetailInfoForm.Field label="이메일" view={profile.emailDisplay} readOnlyDisplay />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field label="소속" view={profile.affiliationCell} readOnlyDisplay />
         <DetailInfoForm.Field
           label="강사 경력"
           view={profile.lectureExperienceDisplay}
           readOnlyDisplay
         />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field label="연락처" view={profile.contactDisplay} readOnlyDisplay />
-        <DetailInfoForm.Field label="이메일" view={profile.emailDisplay} readOnlyDisplay />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field label="자택 주소지" view={profile.homeAddressDisplay} readOnlyDisplay />

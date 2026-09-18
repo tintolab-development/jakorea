@@ -6,8 +6,10 @@ import {
   adminRoleCodeToLegacyAdminLevel,
   canAdminAction,
   isAdminAccessDeniedAlert,
+  isPermissionRequestsPath,
   isPermissionSettingsPath,
   isSecurityLogPath,
+  isTemplateManagementPath,
   parseAdminRoleCode,
   resolveAdminPolicyScreen,
   resolveAdminRoleCodeFromUser,
@@ -103,9 +105,11 @@ describe('resolveAdminRoleCodeFromUser', () => {
 })
 
 describe('resolveAdminPolicyScreen', () => {
-  it('로그·권한 설정 경로를 매핑한다', () => {
+  it('로그·권한 설정·회원 권한 승인 경로를 매핑한다', () => {
     expect(resolveAdminPolicyScreen('/logs/member-login-history')).toBe('security-logs')
     expect(resolveAdminPolicyScreen('/admin/settings/permissions')).toBe('permission-settings')
+    expect(resolveAdminPolicyScreen('/admin/permission-requests')).toBe('admin-permission-approval')
+    expect(resolveAdminPolicyScreen('/templates/form-management')).toBe('template-management')
     expect(resolveAdminPolicyScreen('/users/list')).toBe('default')
   })
 })
@@ -141,6 +145,25 @@ describe('canAdminAction 표 규칙', () => {
     expect(allowed('PARTNER', 'dashboardWrite')).toBe(false)
   })
 
+  it('후원사 담당자 CRUD는 파트너 이상 허용, 뷰어는 조회만', () => {
+    expect(allowed('MASTER', 'sponsorContactWrite')).toBe(true)
+    expect(allowed('PM', 'sponsorContactWrite')).toBe(true)
+    expect(allowed('PARTNER', 'sponsorContactWrite')).toBe(true)
+    expect(allowed('VIEWER', 'sponsorContactWrite')).toBe(false)
+    expect(canAdminAction({ roleCode: null, action: 'sponsorContactWrite' })).toBe(false)
+    expect(allowed('VIEWER', 'download')).toBe(false)
+  })
+
+  it('후원사 기본정보·후원상태 수정은 파트너 이상 허용, 뷰어는 수정·다운로드 차단', () => {
+    expect(allowed('MASTER', 'sponsorWrite')).toBe(true)
+    expect(allowed('PM', 'sponsorWrite')).toBe(true)
+    expect(allowed('PARTNER', 'sponsorWrite')).toBe(true)
+    expect(allowed('VIEWER', 'sponsorWrite')).toBe(false)
+    expect(canAdminAction({ roleCode: null, action: 'sponsorWrite' })).toBe(false)
+    expect(allowed('VIEWER', 'download')).toBe(false)
+    expect(allowed('PARTNER', 'download')).toBe(true)
+  })
+
   it('일반 개인정보 열람은 뷰어만 차단', () => {
     expect(allowed('MASTER', 'pii')).toBe(true)
     expect(allowed('PM', 'pii')).toBe(true)
@@ -171,6 +194,13 @@ describe('canAdminAction 표 규칙', () => {
     expect(allowed('VIEWER', 'approve', 'admin-permission-approval')).toBe(false)
   })
 
+  it('회원 권한 승인 조회는 뷰어만 차단', () => {
+    expect(allowed('MASTER', 'view', 'admin-permission-approval')).toBe(true)
+    expect(allowed('PM', 'view', 'admin-permission-approval')).toBe(true)
+    expect(allowed('PARTNER', 'view', 'admin-permission-approval')).toBe(true)
+    expect(allowed('VIEWER', 'view', 'admin-permission-approval')).toBe(false)
+  })
+
   it('권한 설정 조회·저장은 뷰어만 차단, 승인·반려는 마스터만', () => {
     expect(allowed('MASTER', 'view', 'permission-settings')).toBe(true)
     expect(allowed('PM', 'view', 'permission-settings')).toBe(true)
@@ -192,6 +222,26 @@ describe('canAdminAction 표 규칙', () => {
     expect(isPermissionSettingsPath('/admin/settings/permissions')).toBe(true)
     expect(isPermissionSettingsPath('/admin/settings/permissions/')).toBe(true)
     expect(isPermissionSettingsPath('/admin/permission-requests')).toBe(false)
+  })
+
+  it('isPermissionRequestsPath는 회원 권한 승인 경로만 인식한다', () => {
+    expect(isPermissionRequestsPath('/admin/permission-requests')).toBe(true)
+    expect(isPermissionRequestsPath('/admin/permission-requests/')).toBe(true)
+    expect(isPermissionRequestsPath('/admin/settings/permissions')).toBe(false)
+  })
+
+  it('템플릿 관리 조회는 뷰어만 차단', () => {
+    expect(allowed('MASTER', 'view', 'template-management')).toBe(true)
+    expect(allowed('PM', 'view', 'template-management')).toBe(true)
+    expect(allowed('PARTNER', 'view', 'template-management')).toBe(true)
+    expect(allowed('VIEWER', 'view', 'template-management')).toBe(false)
+  })
+
+  it('isTemplateManagementPath는 템플릿 경로만 인식한다', () => {
+    expect(isTemplateManagementPath('/templates')).toBe(true)
+    expect(isTemplateManagementPath('/templates/form-management')).toBe(true)
+    expect(isTemplateManagementPath('/templates/program-forms')).toBe(true)
+    expect(isTemplateManagementPath('/admin/settings/permissions')).toBe(false)
   })
 
   it('강사 권한 승인은 뷰어만 차단', () => {

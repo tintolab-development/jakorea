@@ -3,7 +3,6 @@
 > 작성: 2026-09-09 · 갱신: BE handoff OpenAPI 반영 후  
 > 대상: CMS Admin 메일·문자 변수 패널 / 발송 실패 UX  
 > SSOT: [`CMS_FE_PROMPT_TEMPLATE_VARIABLES_ENABLED_ENRICH_2026-09-09.md`](./CMS_FE_PROMPT_TEMPLATE_VARIABLES_ENABLED_ENRICH_2026-09-09.md)  
-> BE handoff: [`CMS_FE_BE_HANDOFF_TEMPLATE_VARIABLES_OPENAPI_2026-09-09.md`](./CMS_FE_BE_HANDOFF_TEMPLATE_VARIABLES_OPENAPI_2026-09-09.md)
 
 ---
 
@@ -19,7 +18,7 @@
 | OpenAPI path/스키마 (BE) | ✅ `NotificationTemplateVariableCatalogResponse` 등 | merge 스크립트로 FE `backend.openapi.json` 병합 |
 | Orval 재생성 | ✅ `listNotificationTemplateVariables` | typecheck 통과 유지 |
 | Envelope | ✅ catalog **직접** 반환 | `unwrapApiBody` passthrough · curl은 `.categories` |
-| CreateRequest `programId` optional | ⏳ BE | [`notification-send-program-optional-backend-cursor-prompt.md`](./notification-send-program-optional-backend-cursor-prompt.md) |
+| CreateRequest `programId` optional | ✅ BE·FE 반영 | programId 미선택 시 전체 회원 후보 조회 |
 | QA 픽스처 수동 검증 | ⏳ 로컬 BE+시드 | 본 문서 §3 체크리스트 |
 | 배치 상세 `recipients[].failureCode` UI | ⏳ 전용 화면 없음 | 발송조회 `failedReason`이 동일 문자열·포맷 사용 |
 

@@ -1,8 +1,10 @@
 import dayjs, { type Dayjs } from 'dayjs'
 import type { Program } from '@/types/domain'
 import type { GeneralInterviewSlotListItem } from '@/features/program/general/api/admin-applications-service'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { resolveGeneralProgramForDetail } from '@/features/program/general/lib/detail-meta'
 import { resolveGeneralProgramVolunteerInterviewScheduleDisplay } from '@/features/program/general/lib/volunteer-interview-schedule-display'
-import { DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK } from '@/data/mock/general-volunteer-interview-schedule-mock'
+import { DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK, GENERAL_INTERVIEW_MOCK_RANGE } from '@/features/program/general/model/volunteer-interview-schedule'
 import {
   formatDisplayTimeRange,
   getMockHolidayDateKeys,
@@ -13,6 +15,22 @@ import {
 } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 
 export type { InterviewAssignSlot, ParsedInterviewSchedule }
+
+/**
+ * 면접일 배정 캘린더 remote 여부.
+ * - mock 카탈로그·로컬 등록 프로그램 → 항상 mock
+ * - 신청 목록이 mock인 화면(참여자 등) → mock (`applicationsUseRemote=false`)
+ * - remote 실제 프로그램 + 신청 remote ON → interview-slots API
+ */
+export function shouldUseRemoteInterviewSchedule(
+  programId: string,
+  options?: { applicationsUseRemote?: boolean }
+): boolean {
+  if (!programId.trim()) return false
+  if (options?.applicationsUseRemote === false) return false
+  if (resolveGeneralProgramForDetail(programId) != null) return false
+  return shouldUseGeneralApplicationsRemoteApi()
+}
 
 type GeneralInterviewScheduleSource = {
   recurringUnavailable: string
@@ -74,18 +92,8 @@ function buildParsedInterviewSchedule(
     cursor = cursor.add(1, 'day')
   }
 
-  const disabledDate = (date: Dayjs) => {
-    if (date.isBefore(rangeStart, 'month') || date.isAfter(rangeEnd, 'month')) {
-      return false
-    }
-
-    const dateKey = date.format('YYYY-MM-DD')
-    if (blockSaturday && date.day() === 6) return true
-    if (blockSunday && date.day() === 0) return true
-    if (unavailableKeys.has(dateKey)) return true
-
-    return !clickableDateKeys.has(dateKey)
-  }
+  /** 면접 기간·슬롯 없는 날·토/일·지정 불가일 → 클릭 비활성(캘린더 opacity 0.5) */
+  const disabledDate = (date: Dayjs) => !clickableDateKeys.has(date.format('YYYY-MM-DD'))
 
   return {
     slotsByDateKey,
@@ -147,12 +155,8 @@ export function parseGeneralInterviewScheduleFromRemoteSlots(
   const rangeStart = (minDate ?? dayjs()).startOf('month')
   const rangeEnd = (maxDate ?? dayjs()).endOf('month')
 
-  const disabledDate = (date: Dayjs) => {
-    if (date.isBefore(rangeStart, 'month') || date.isAfter(rangeEnd, 'month')) {
-      return false
-    }
-    return !clickableDateKeys.has(date.format('YYYY-MM-DD'))
-  }
+  /** 면접 슬롯이 없는 날(기간 외 포함) → 클릭 비활성 */
+  const disabledDate = (date: Dayjs) => !clickableDateKeys.has(date.format('YYYY-MM-DD'))
 
   return {
     slotsByDateKey,
@@ -165,30 +169,41 @@ export function parseGeneralInterviewScheduleFromRemoteSlots(
   }
 }
 
+/** 목록 availability·배정 팝업 정합용 — 2026.09~10 DEFAULT mock 스케줄 */
+export function parseGeneralInterviewScheduleFromDefaultMock(): ParsedInterviewSchedule {
+  return buildParsedInterviewSchedule(
+    DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK,
+    dayjs(GENERAL_INTERVIEW_MOCK_RANGE.startIso),
+    dayjs(GENERAL_INTERVIEW_MOCK_RANGE.endIso)
+  )
+}
+
 /**
- * 면접 캘린더 가용 슬롯 표시 (remote OFF / GET 실패 폴백).
- * remote ON은 `parseGeneralInterviewScheduleFromRemoteSlots` + `listGeneralInterviewSlots`.
- * 배정 mutation은 `assignGeneralVolunteerInterview`(slot create + assign).
+ * mock 프로그램 면접 캘린더 — 프로그램에 등록된 면접 일정, 없으면 DEFAULT mock(2026.09~10).
+ * remote 프로그램은 `parseGeneralInterviewScheduleFromRemoteSlots`만 사용(빈 배열도 그대로).
  */
 export function parseGeneralInterviewScheduleFromProgram(program: Program): ParsedInterviewSchedule {
   const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
-  const hasSchedule =
-    display.availableTimeSlots !== '-' ||
-    display.recurringUnavailable !== '-' ||
-    display.specificUnavailableDates !== '-'
-  const scheduleSource = hasSchedule
-    ? display
-    : DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK
-  const rangeStart = dayjs('2026-03-01')
-  const rangeEnd = dayjs('2026-03-31')
-
+  const parsedSlots = parseTimeSlotsString(
+    display.availableTimeSlots === '-' ? '' : display.availableTimeSlots
+  )
+  /** 시간대가 파싱되지 않으면 mock 폴백 — 빈 스케줄로 팝업이 비는 것 방지 */
+  if (parsedSlots.length === 0) {
+    return parseGeneralInterviewScheduleFromDefaultMock()
+  }
   return buildParsedInterviewSchedule(
     {
-      recurringUnavailable: scheduleSource.recurringUnavailable,
-      specificUnavailableDates: scheduleSource.specificUnavailableDates,
-      availableTimeSlots: scheduleSource.availableTimeSlots,
+      recurringUnavailable:
+        display.recurringUnavailable === '-'
+          ? DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.recurringUnavailable
+          : display.recurringUnavailable,
+      specificUnavailableDates:
+        display.specificUnavailableDates === '-'
+          ? DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.specificUnavailableDates
+          : display.specificUnavailableDates,
+      availableTimeSlots: display.availableTimeSlots,
     },
-    rangeStart,
-    rangeEnd
+    dayjs(GENERAL_INTERVIEW_MOCK_RANGE.startIso),
+    dayjs(GENERAL_INTERVIEW_MOCK_RANGE.endIso)
   )
 }

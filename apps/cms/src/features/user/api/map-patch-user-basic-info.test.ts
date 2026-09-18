@@ -305,7 +305,7 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     })
   })
 
-  it('강사 상세 저장은 draft JA 등급으로 profile.defaultJaGrade를 덮어쓴다', () => {
+  it('강사 상세 저장 PATCH에는 JA 등급을 넣지 않는다 (평가 모달 전용)', () => {
     const draft = applyJaEvaluationGradeToInstructorDraft(
       instructorDraft({
         jaEvaluationGrade: 'A',
@@ -327,12 +327,13 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     const patch = draftToAdminProvisionedInstructorBasicInfoPatch(draft)
     const body = mapPatchUserBasicInfoToApiRequest(patch)
 
+    // draft UI 상태는 평가 모달 반영값을 유지하되, basic-info 저장 wire에는 실리지 않음
     expect(draft.jaEvaluationGrade).toBe('S')
     expect(draft.instructorCmsProfile?.defaultJaGrade).toBe('S')
-    expect(patch.listMetrics?.jaEvaluationGrade).toBe('S')
-    expect(patch.instructorCmsProfile?.defaultJaGrade).toBe('S')
-    expect(body.profile?.defaultJaGrade).toBe('S')
-    expect(body.listMetrics?.jaEvaluationGrade).toBe('S')
+    expect(patch.listMetrics?.jaEvaluationGrade).toBeUndefined()
+    expect(patch.instructorCmsProfile?.defaultJaGrade).toBeUndefined()
+    expect(body.profile?.defaultJaGrade).toBeUndefined()
+    expect(body.listMetrics?.jaEvaluationGrade).toBeUndefined()
   })
 
   it('강사 상세 저장은 draft 강사비 등급으로 profile.defaultFeeGrade·feeGrade를 덮어쓴다', () => {
@@ -407,7 +408,7 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     expect(body.feeGrade).toBe('1')
   })
 
-  it('강사비 제한 수정도 profile.defaultFeeGrade와 feeGrade를 보낸다', () => {
+  it('강사비 제한 수정도 profile.defaultFeeGrade와 feeGrade를 보내고 JA 등급은 제외한다', () => {
     const patch = draftToInstructorFeeAndJaGradePatch(
       instructorDraft({
         instructorFeeGrade: '3급 강사비',
@@ -423,6 +424,7 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
           awards: [],
           essays: {},
           defaultFeeGrade: '2급 강사비',
+          defaultJaGrade: 'A',
         },
       })
     )
@@ -431,6 +433,7 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     expect(body.listMetrics?.instructorFeeGradeLabel).toBe('3급 강사비')
     expect(body.listMetrics?.jaEvaluationGrade).toBeUndefined()
     expect(body.profile?.defaultFeeGrade).toBe('3')
+    expect(body.profile?.defaultJaGrade).toBeUndefined()
     expect(body.feeGrade).toBe('3')
   })
 })

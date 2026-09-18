@@ -6,7 +6,7 @@ import { EmptyState } from '@/shared/ui'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
-} from '@/data/mock/participating-schools'
+} from '@/features/program/general/model/participating-schools'
 import { formatInstitutionRegionForCalendarListDisplay } from '@/shared/lib/format-institution-region-display'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 

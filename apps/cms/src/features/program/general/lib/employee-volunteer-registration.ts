@@ -1,4 +1,4 @@
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type {
   EmployeeVolunteerSessionRow,
   EmployeeVolunteerSessionRowId,

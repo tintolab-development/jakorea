@@ -1,0 +1,6 @@
+/* 자택 주소 `*****` 토큰 전용 — 서버 `*` 마스킹(전화·메일)과 시각 구분 */
+.program-pii-address-blur {
+  filter: blur(5px);
+  -webkit-filter: blur(5px);
+  user-select: none;
+}

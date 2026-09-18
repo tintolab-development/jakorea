@@ -9,8 +9,8 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 import type { ApplicantSessionLineInput } from './applicants-detail-session-format'
 import { GeneralDetailSessionLine } from './general-detail-session-line'

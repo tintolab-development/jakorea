@@ -10,7 +10,6 @@ import type {
   InstitutionType,
   Program,
 } from '@/types/domain'
-import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
 import type { SponsorContactRow, SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
   resolveGeneralProgramCommonInfo,
@@ -38,10 +37,10 @@ import {
   shouldDisableEducationSchedulePeriodMode,
 } from '@/features/program/general/lib/schedule-detail-form'
 import {
-  TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   withDetailedProgramNoneOption,
 } from '@/features/template/lib/template-form-select-options'
+import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS,
   PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
@@ -98,19 +97,35 @@ const participantTypeSchema = z.object({
   participantVolunteer: z.boolean(),
 })
 
+function isBlankText(value: string | undefined | null): boolean {
+  return value == null || value.trim() === ''
+}
+
+function isIpsTypeIncomplete(category: string | undefined, detail: string | undefined): boolean {
+  if (isBlankText(category)) return true
+  if (category === 'prepare') return false
+  return isBlankText(detail)
+}
+
+/**
+ * 일반 프로그램 공통 정보 — 등록(`registration-required-fields`)과 동일하게
+ * 화면에 노출되는 입력은 모두 필수. 조건부 필드는 superRefine에서 검사.
+ */
 export const generalProgramCommonInfoEditSchema = z
   .object({
     mainTitle: z.string().trim().min(1, '대표 프로그램명(국문)을 입력해주세요'),
-    titleEn: z.string().optional(),
+    titleEn: z.string().trim().min(1, '대표 프로그램명(영문)을 입력해주세요'),
     announcementTitle: z.string().trim().min(1, '공고용 프로그램명을 입력해주세요'),
-    detailedProgramId: z.string().optional(),
+    detailedProgramId: z.string(),
     startDate: z.string().min(1, '사업 운영 기간을 선택해주세요'),
     endDate: z.string().min(1, '사업 운영 기간을 선택해주세요'),
     businessArea: z.string().min(1, '사업 분야를 선택해주세요'),
     sponsorManagementIds: z.array(z.string()).min(1, '후원사를 선택해주세요'),
-    sponsorManagerContactId: z.string().min(1, '후원사 담당자를 선택해주세요'),
+    sponsorManagerContactIds: z.array(z.string()).min(1, '후원사 담당자를 선택해주세요'),
+    /** @deprecated 레거시 단일 — seed 호환용, 검증은 ids 사용 */
+    sponsorManagerContactId: z.string().optional(),
     venueKind: z.enum(['inside', 'outside', 'other']),
-    venueDetail: z.string().optional(),
+    venueDetail: z.string().trim().min(1, '교육 장소를 입력해주세요'),
     surveySurvey: z.boolean(),
     surveySatisfaction: z.boolean(),
     surveyLectureEvaluation: z.boolean(),
@@ -118,29 +133,39 @@ export const generalProgramCommonInfoEditSchema = z
     ipOwned: z.string().min(1, 'IP Owned를 선택해주세요'),
     courseDeliveredBy: z.string().min(1, 'Course Delivered By를 선택해주세요'),
     partnerInvolvement: z.enum(['yes', 'no']),
-    kpiFinalParticipants: z.coerce.number().min(0).optional(),
-    kpiInstructorCount: z.coerce.number().min(0).optional(),
-    kpiVolunteerCount: z.coerce.number().min(0).optional(),
-    kpiFinalSchools: z.coerce.number().min(0).optional(),
-    kpiFinalClasses: z.coerce.number().min(0).optional(),
-    wageGrade1Amount: z.string().optional(),
-    wageGrade2Amount: z.string().optional(),
-    wageGrade3Amount: z.string().optional(),
-    wagePaymentItemIds: z.array(z.string()).optional(),
+    kpiFinalParticipants: z.coerce.number({
+      invalid_type_error: '참여자 최종 인원을 입력해주세요',
+    }),
+    kpiInstructorCount: z.coerce.number({
+      invalid_type_error: '강사 인원을 입력해주세요',
+    }),
+    kpiVolunteerCount: z.coerce.number({
+      invalid_type_error: '봉사자 인원을 입력해주세요',
+    }),
+    kpiFinalSchools: z.coerce.number({
+      invalid_type_error: '파견 학교 수를 입력해주세요',
+    }),
+    kpiFinalClasses: z.coerce.number({
+      invalid_type_error: '파견 학급 수를 입력해주세요',
+    }),
+    wageGrade1Amount: z.string().trim().min(1, '1급 강사비를 입력해주세요'),
+    wageGrade2Amount: z.string().trim().min(1, '2급 강사비를 입력해주세요'),
+    wageGrade3Amount: z.string().trim().min(1, '3급 강사비를 입력해주세요'),
+    wagePaymentItemIds: z.array(z.string()).min(1, '지급 항목을 선택해주세요'),
     wageDeductionItems: z.string().optional(),
     educationStructure: z.enum(['curriculum', 'schedule']),
     sessionRound: z.enum(['single', 'multi']),
-    educationForm: z.string().optional(),
-    educationFormScheduleDetail: z.enum(['common', 'perSchedule']).optional(),
-    participationScheduleDetail: z.enum(['common', 'perSchedule']).optional(),
+    educationForm: z.string(),
+    educationFormScheduleDetail: z.enum(['common', 'perSchedule']),
+    participationScheduleDetail: z.enum(['common', 'perSchedule']),
     ipsScheduleDetail: z.enum(['common', 'perSchedule']),
     ipsCategory: z.enum(['inspire', 'prepare', 'succeed', '']),
-    ipsDetail: z.string().optional(),
-    participationMethod: z.enum(['individual', 'team']).optional(),
+    ipsDetail: z.string(),
+    participationMethod: z.enum(['individual', 'team']),
     curriculumSessions: z.array(curriculumSessionSchema),
     scheduleGroupCount: z.coerce.number().min(1).max(4).default(1),
     scheduleDetails: z.array(scheduleDetailFormSchema),
-    scheduleCurriculumPreEducation: z.boolean().optional(),
+    scheduleCurriculumPreEducation: z.boolean(),
     educationScheduleMode: z.enum(['date', 'period']).default('date'),
     educationScheduleLines: z.array(z.string()),
   })
@@ -157,6 +182,289 @@ export const generalProgramCommonInfoEditSchema = z
         message: '참여자 유형을 선택해주세요',
         path: ['participantOrganization'],
       })
+    }
+
+    if (
+      data.educationStructure !== 'schedule' &&
+      (isBlankText(data.detailedProgramId) ||
+        data.detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '세부 프로그램명을 선택해주세요',
+        path: ['detailedProgramId'],
+      })
+    }
+
+    // 설문 진행 항목 — 0개 선택도 완료 (등록 필수 검사와 동일)
+
+    const isIndividualTarget = isGeneralIndividualParticipantSelection(
+      data.participantIndividual,
+      data.participantOrganization
+    )
+    if (!Number.isFinite(data.kpiFinalParticipants) || data.kpiFinalParticipants < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '참여자 최종 인원을 입력해주세요',
+        path: ['kpiFinalParticipants'],
+      })
+    }
+    if (data.participantTeacherInstructor) {
+      if (!Number.isFinite(data.kpiInstructorCount) || data.kpiInstructorCount < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '강사 인원을 입력해주세요',
+          path: ['kpiInstructorCount'],
+        })
+      }
+    }
+    if (data.participantVolunteer) {
+      if (!Number.isFinite(data.kpiVolunteerCount) || data.kpiVolunteerCount < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '봉사자 인원을 입력해주세요',
+          path: ['kpiVolunteerCount'],
+        })
+      }
+    }
+    if (!isIndividualTarget) {
+      if (!Number.isFinite(data.kpiFinalSchools) || data.kpiFinalSchools < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '파견 학교 수를 입력해주세요',
+          path: ['kpiFinalSchools'],
+        })
+      }
+      if (!Number.isFinite(data.kpiFinalClasses) || data.kpiFinalClasses < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '파견 학급 수를 입력해주세요',
+          path: ['kpiFinalClasses'],
+        })
+      }
+    }
+
+    const showParticipation = !data.participantOrganization
+    const educationFormDetail = data.educationFormScheduleDetail
+    const participationDetail = data.participationScheduleDetail
+
+    if (data.sessionRound === 'multi') {
+      if (educationFormDetail === 'common' && isBlankText(data.educationForm)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '교육 형태를 선택해주세요',
+          path: ['educationForm'],
+        })
+      }
+      if (
+        showParticipation &&
+        participationDetail === 'common' &&
+        data.participationMethod !== 'individual' &&
+        data.participationMethod !== 'team'
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '참여 방식을 선택해주세요',
+          path: ['participationMethod'],
+        })
+      }
+    } else if (isBlankText(data.educationForm)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '교육 형태를 선택해주세요',
+        path: ['educationForm'],
+      })
+    }
+
+    if (data.ipsScheduleDetail === 'common' && isIpsTypeIncomplete(data.ipsCategory, data.ipsDetail)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'IPS Type을 선택해주세요',
+        path: ['ipsCategory'],
+      })
+    }
+
+    if (data.educationStructure === 'curriculum') {
+      if (data.curriculumSessions.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '교육 진행(커리큘럼) 차시를 추가해주세요',
+          path: ['curriculumSessions'],
+        })
+      }
+      data.curriculumSessions.forEach((session, index) => {
+        const isPre = isPreEducationCurriculumSession(session)
+        if (isBlankText(session.title)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: isPre ? '사전 교육명을 입력해주세요' : '차시명을 입력해주세요',
+            path: ['curriculumSessions', index, 'title'],
+          })
+        }
+        if (!isPre && isBlankText(session.description)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '차시 내용을 입력해주세요',
+            path: ['curriculumSessions', index, 'description'],
+          })
+        }
+        if (isPre && isBlankText(session.scheduleDate)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '사전 교육 일정을 입력해주세요',
+            path: ['curriculumSessions', index, 'scheduleDate'],
+          })
+        }
+        if (
+          educationFormDetail === 'perSchedule' &&
+          !isPre &&
+          isBlankText(session.educationForm)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '교육 형태를 선택해주세요',
+            path: ['curriculumSessions', index, 'educationForm'],
+          })
+        }
+        if (
+          showParticipation &&
+          participationDetail === 'perSchedule' &&
+          !isPre &&
+          session.participationMethod !== 'individual' &&
+          session.participationMethod !== 'team'
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '참여 방식을 선택해주세요',
+            path: ['curriculumSessions', index, 'participationMethod'],
+          })
+        }
+        if (
+          data.ipsScheduleDetail === 'perSchedule' &&
+          !isPre &&
+          isIpsTypeIncomplete(session.ipsCategory, session.ipsDetail)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'IPS Type을 선택해주세요',
+            path: ['curriculumSessions', index, 'ipsCategory'],
+          })
+        }
+        if (!isPre && session.assignmentEnabled === true && isBlankText(session.assignmentPeriod)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '과제 제출 기간을 입력해주세요',
+            path: ['curriculumSessions', index, 'assignmentPeriod'],
+          })
+        }
+      })
+    }
+
+    if (data.educationStructure === 'schedule') {
+      if (data.scheduleDetails.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '교육 진행(일정형) 세부 일정을 추가해주세요',
+          path: ['scheduleDetails'],
+        })
+      }
+      const groupCount =
+        data.sessionRound === 'multi' ? 1 : Math.max(1, data.scheduleGroupCount ?? 1)
+      data.scheduleDetails.forEach((detail, index) => {
+        const isPre = detail.blockKind === 'preEducation'
+        if (isBlankText(detail.name)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: isPre ? '사전 교육명을 입력해주세요' : '일정 상세를 입력해주세요',
+            path: ['scheduleDetails', index, 'name'],
+          })
+        }
+        const useEventDate =
+          data.sessionRound === 'multi' && educationFormDetail === 'perSchedule'
+        if (useEventDate || isPre || detail.blockKind === 'event') {
+          if (useEventDate && isBlankText(detail.scheduleDate)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: '일정을 선택해주세요',
+              path: ['scheduleDetails', index, 'scheduleDate'],
+            })
+          }
+        } else {
+          const slots = detail.groupTimes ?? []
+          if (slots.length < groupCount) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: '진행 시간을 입력해주세요',
+              path: ['scheduleDetails', index, 'groupTimes'],
+            })
+          } else {
+            for (let g = 0; g < groupCount; g += 1) {
+              const slot = slots[g]
+              if (isBlankText(slot?.startTime) || isBlankText(slot?.endTime)) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: '진행 시간을 입력해주세요',
+                  path: ['scheduleDetails', index, 'groupTimes', g],
+                })
+              }
+            }
+          }
+        }
+        if (educationFormDetail === 'perSchedule' && isBlankText(detail.educationForm)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '교육 형태를 선택해주세요',
+            path: ['scheduleDetails', index, 'educationForm'],
+          })
+        }
+        if (
+          showParticipation &&
+          participationDetail === 'perSchedule' &&
+          detail.participationMethod !== 'individual' &&
+          detail.participationMethod !== 'team'
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '참여 방식을 선택해주세요',
+            path: ['scheduleDetails', index, 'participationMethod'],
+          })
+        }
+        if (
+          data.ipsScheduleDetail === 'perSchedule' &&
+          !isPre &&
+          isIpsTypeIncomplete(detail.ipsCategory, detail.ipsDetail)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'IPS Type을 선택해주세요',
+            path: ['scheduleDetails', index, 'ipsCategory'],
+          })
+        }
+        if (
+          showParticipation &&
+          detail.assignmentEnabled === true &&
+          isBlankText(detail.assignmentPeriod)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '과제 제출 기간을 입력해주세요',
+            path: ['scheduleDetails', index, 'assignmentPeriod'],
+          })
+        }
+      })
+    }
+
+    const hideEducationSchedule =
+      data.educationStructure === 'schedule' && data.sessionRound === 'multi'
+    if (!hideEducationSchedule) {
+      const hasLine = data.educationScheduleLines.some(line => !isBlankText(line))
+      if (!hasLine) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '교육 진행 일정을 입력해주세요',
+          path: ['educationScheduleLines'],
+        })
+      }
     }
   })
 
@@ -287,11 +595,7 @@ function toIso(d: string | Date | undefined): string {
 }
 
 function resolveBusinessAreaFormValue(businessArea: string | undefined): string {
-  if (!businessArea?.trim()) return ''
-  const byValue = TEMPLATE_FORM_BUSINESS_AREA_OPTIONS.find(o => o.value === businessArea)
-  if (byValue) return byValue.value
-  const byLabel = TEMPLATE_FORM_BUSINESS_AREA_OPTIONS.find(o => o.label === businessArea)
-  return byLabel?.value ?? businessArea
+  return normalizeProgramBusinessAreaValue(businessArea)
 }
 
 function resolveEducationProcessFormValue(value: string | undefined): string {
@@ -347,9 +651,7 @@ function courseDeliveredToProgramValue(formValue: string): 'JA' | 'Jointly' | 'P
 }
 
 function businessAreaToProgramValue(formValue: string): string {
-  return (
-    TEMPLATE_FORM_BUSINESS_AREA_OPTIONS.find(o => o.value === formValue)?.label ?? formValue
-  )
+  return normalizeProgramBusinessAreaValue(formValue)
 }
 
 export function isGeneralProgramScheduleType(program: Program): boolean {
@@ -366,10 +668,14 @@ export function isGeneralProgramScheduleType(program: Program): boolean {
 
 function resolveDetailedProgramId(
   program: Program,
-  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+  catalog: readonly { id: string; name: string }[] = []
 ): string {
   if (isGeneralProgramScheduleType(program)) {
     return TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+  }
+  const storedId = program.detailedProgramId?.trim()
+  if (storedId && storedId !== TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) {
+    return storedId
   }
   const commonInfo = resolveGeneralProgramCommonInfo(program)
   const name =
@@ -390,9 +696,11 @@ export const GENERAL_PROGRAM_VENUE_KIND_LABELS: Record<GeneralProgramVenueKind, 
 }
 
 export function resolveVenueKind(program: Program): GeneralProgramVenueKind {
+  const nested = program.generalCommonInfo?.venueKind
+  if (nested === 'inside' || nested === 'outside' || nested === 'other') return nested
   if (program.institutionType === 'inside_school') return 'inside'
   if (program.institutionType === 'outside_school') return 'outside'
-  if (program.venue?.trim()) return 'other'
+  if (program.venue?.trim() || program.generalCommonInfo?.venueDetail?.trim()) return 'other'
   return 'inside'
 }
 
@@ -426,10 +734,64 @@ export function decodeSponsorManagerContactRef(
   }
 }
 
+/** 단일/배열 담당자 ref 를 배열로 정규화 */
+export function normalizeSponsorManagerContactIds(input: {
+  ids?: readonly string[] | null
+  id?: string | null
+}): string[] {
+  if (input.ids != null && input.ids.length > 0) {
+    return [...new Set(input.ids.map(v => v.trim()).filter(Boolean))]
+  }
+  const single = input.id?.trim()
+  return single ? [single] : []
+}
+
+/**
+ * 후원사 id + 담당자 ref[] → PATCH `sponsors[]`.
+ * BE는 후원사당 contact 1개 — 동일 후원사에 여러 ref면 마지막 값 사용.
+ */
+export function buildProgramSponsorAssignmentsWire(
+  sponsorManagementIds: readonly string[],
+  contactRefs: readonly string[]
+): Array<{ sponsorId: string; sponsorContactId?: string }> {
+  const contactBySponsor = new Map<string, string>()
+  for (const ref of contactRefs) {
+    const decoded = decodeSponsorManagerContactRef(ref.trim())
+    if (!decoded?.sponsorManagementId || !decoded.contactId) continue
+    contactBySponsor.set(decoded.sponsorManagementId, decoded.contactId)
+  }
+  const sponsorIds = [
+    ...new Set(
+      [...sponsorManagementIds, ...contactBySponsor.keys()]
+        .map(id => String(id).trim())
+        .filter(Boolean)
+    ),
+  ]
+  return sponsorIds.map(sponsorId => {
+    const contactId = contactBySponsor.get(sponsorId)
+    return contactId
+      ? { sponsorId, sponsorContactId: contactId }
+      : { sponsorId }
+  })
+}
+
+/**
+ * 후원사 담당자 이름(+직함) — `이름 직함`, 직함 없으면 `이름`
+ */
+export function formatSponsorManagerPersonLabel(input: {
+  contactName: string
+  position?: string | null
+}): string {
+  const name = input.contactName.trim()
+  const position = input.position?.trim() ?? ''
+  if (!name) return position || '-'
+  return position ? `${name} ${position}` : name
+}
+
 /**
  * 후원사 담당자 셀렉트 라벨
- * - 복수 후원사: `소속 | 이름 직함` (직함 없으면 생략) — 예: `스타벅스 | 이가원 책임`
- * - 단일 후원사: `이름 직함` / `이름`
+ * - multiSponsor(시안 기본): `소속 | 이름 직함` (직함 없으면 생략) — 예: `스타벅스 | 이가원 책임`
+ * - 단일 표시만 필요할 때: `이름 직함` / `이름`
  */
 export function formatSponsorManagerSelectLabel(input: {
   sponsorName: string
@@ -437,13 +799,57 @@ export function formatSponsorManagerSelectLabel(input: {
   position?: string | null
   multiSponsor: boolean
 }): string {
-  const name = input.contactName.trim()
-  const position = input.position?.trim() ?? ''
-  const nameWithPosition = position ? `${name} ${position}` : name
-  if (!input.multiSponsor) return nameWithPosition || '-'
+  const nameWithPosition = formatSponsorManagerPersonLabel({
+    contactName: input.contactName,
+    position: input.position,
+  })
+  if (!input.multiSponsor) return nameWithPosition
   const sponsorName = input.sponsorName.trim()
-  if (!sponsorName) return nameWithPosition || '-'
+  if (!sponsorName) return nameWithPosition
   return `${sponsorName} | ${nameWithPosition}`
+}
+
+/**
+ * view/저장용 담당자 한 줄 — `이름 직함 | 연락처` (직함·연락처 없으면 생략)
+ */
+export function formatSponsorManagerDisplayLine(input: {
+  contactName: string
+  position?: string | null
+  phone?: string | null
+}): string {
+  return [formatSponsorManagerPersonLabel(input), input.phone?.trim()]
+    .filter(Boolean)
+    .join(' | ')
+}
+
+/**
+ * view 모드 — 저장된 문구에서 담당자명을 매칭해 `이름 직함`(복수 시 `소속 | …`)으로 재구성.
+ * 매칭 실패 시 stored 원문 반환.
+ */
+export function resolveSponsorManagerViewLine(input: {
+  storedLine?: string | null
+  sponsors: ReadonlyArray<{ id: string; name: string }>
+  contactsBySponsorId: Record<string, ReadonlyArray<{ name: string; position?: string | null; phone?: string | null }>>
+}): string {
+  const stored = input.storedLine?.trim() ?? ''
+  if (!stored || stored === '-') return stored || '-'
+  const multiSponsor = input.sponsors.length > 1
+  for (const sponsor of input.sponsors) {
+    const contacts = input.contactsBySponsorId[sponsor.id] ?? []
+    for (const contact of contacts) {
+      const name = contact.name?.trim() ?? ''
+      if (!name || !stored.includes(name)) continue
+      const label = formatSponsorManagerSelectLabel({
+        sponsorName: sponsor.name,
+        contactName: contact.name,
+        position: contact.position,
+        multiSponsor,
+      })
+      const phone = contact.phone?.trim()
+      return phone ? `${label} | ${phone}` : label
+    }
+  }
+  return stored
 }
 
 export type GeneralProgramSponsorEditContext = {
@@ -490,40 +896,53 @@ export function resolveSponsorManagementIds(
   return sponsors[0] ? [sponsors[0].id] : []
 }
 
-function resolveSponsorManagerContactId(
+function resolveSponsorManagerContactIds(
   program: Program,
   sponsorManagementIds: string[],
   context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
-): string {
-  const primarySponsorId = sponsorManagementIds[0]
-  if (!primarySponsorId) return ''
-  const contacts = context.contactsBySponsorId[primarySponsorId] ?? []
+): string[] {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
-  const line = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
-  if (!line) {
-    const first = contacts[0]
-    return first ? encodeSponsorManagerContactRef(primarySponsorId, first.id) : ''
+  const stored = normalizeSponsorManagerContactIds({
+    ids: commonInfo.sponsorManagerContactIds,
+    id: commonInfo.sponsorManagerContactId,
+  })
+  if (stored.length > 0) return stored
+
+  // 후원사별 1명씩 시드 (이름·전화 매칭, 없으면 첫 연락처)
+  const refs: string[] = []
+  for (const sponsorId of sponsorManagementIds) {
+    const contacts = context.contactsBySponsorId[sponsorId] ?? []
+    if (contacts.length === 0) continue
+    const line = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
+    const namePart = line.split('|')[0]?.trim() ?? line
+    const matched = line
+      ? contacts.find(
+          c => c.name === namePart || line.includes(c.name) || (c.phone && line.includes(c.phone))
+        )
+      : undefined
+    const contact = matched ?? contacts[0]
+    if (contact) refs.push(encodeSponsorManagerContactRef(sponsorId, contact.id))
   }
-  const namePart = line.split('|')[0]?.trim() ?? line
-  const matched = contacts.find(
-    c => c.name === namePart || line.includes(c.name) || (c.phone && line.includes(c.phone))
-  )
-  const contact = matched ?? contacts[0]
-  return contact ? encodeSponsorManagerContactRef(primarySponsorId, contact.id) : ''
+  return refs
 }
 
 function resolveManagerFromFormValues(
   values: GeneralProgramCommonInfoEditFormValues,
   context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
 ) {
-  const decoded = decodeSponsorManagerContactRef(values.sponsorManagerContactId)
+  const refs = normalizeSponsorManagerContactIds({
+    ids: values.sponsorManagerContactIds,
+    id: values.sponsorManagerContactId,
+  })
+  const primaryRef = refs[0] ?? ''
+  const decoded = primaryRef ? decodeSponsorManagerContactRef(primaryRef) : null
   const sponsorManagementId = decoded?.sponsorManagementId ?? values.sponsorManagementIds[0]
-  const contactId = decoded?.contactId ?? values.sponsorManagerContactId
+  const contactId = decoded?.contactId ?? primaryRef
   if (!sponsorManagementId || !contactId) {
-    return { manager: undefined, sponsorManagementId }
+    return { manager: undefined, sponsorManagementId, contactRefs: refs }
   }
   const manager = context.contactsBySponsorId[sponsorManagementId]?.find(c => c.id === contactId)
-  return { manager, sponsorManagementId }
+  return { manager, sponsorManagementId, contactRefs: refs }
 }
 
 function participantFlagsFromProgram(program: Program): Pick<
@@ -703,24 +1122,41 @@ function parseIpsTypeSummary(summary: string | undefined): {
   return { ipsScheduleDetail, ipsCategory, ipsDetail }
 }
 
+function resolveIpsCategoryFromProgramIps(
+  ips: string | undefined
+): ProgramRegistrationIpsCategory | '' {
+  const raw = ips?.trim() ?? ''
+  if (!raw) return ''
+  const lower = raw.toLowerCase()
+  if (lower === 'inspire' || lower === 'prepare' || lower === 'succeed') return lower
+  if (/inspire/i.test(raw)) return 'inspire'
+  if (/prepare/i.test(raw)) return 'prepare'
+  if (/succeed/i.test(raw)) return 'succeed'
+  return ''
+}
+
 function parseIpsTypeSummaryFromProgram(
   program: Program,
   summary: string | undefined
 ): ReturnType<typeof parseIpsTypeSummary> {
   const parsed = parseIpsTypeSummary(summary)
-  if (!parsed.ipsCategory && program.ips) {
-    parsed.ipsCategory = program.ips.toLowerCase() as ProgramRegistrationIpsCategory
-    if (parsed.ipsCategory === 'prepare') parsed.ipsDetail = 'none'
+  if (!parsed.ipsCategory) {
+    parsed.ipsCategory = resolveIpsCategoryFromProgramIps(program.ips)
+    if (parsed.ipsCategory === 'prepare') parsed.ipsDetail = parsed.ipsDetail || 'none'
     else if (parsed.ipsCategory === 'succeed' && program.programCategory) {
       parsed.ipsDetail =
         PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS.find(
-          o => o.label === program.programCategory
-        )?.value ?? 'none'
+          o => o.label === program.programCategory || o.value === program.programCategory
+        )?.value ||
+        parsed.ipsDetail ||
+        'none'
     } else if (parsed.ipsCategory === 'inspire' && program.programChannel) {
       parsed.ipsDetail =
         PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS.find(
-          o => o.label === program.programChannel
-        )?.value ?? 'none'
+          o => o.label === program.programChannel || o.value === program.programChannel
+        )?.value ||
+        parsed.ipsDetail ||
+        'none'
     }
   }
   return parsed
@@ -834,7 +1270,7 @@ function resolveWageFromProgram(program: Program): Pick<
 export function programToGeneralCommonInfoEditValues(
   program: Program,
   context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT,
-  detailedProgramCatalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+  detailedProgramCatalog: readonly { id: string; name: string }[] = []
 ): GeneralProgramCommonInfoEditFormValues {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
   const sponsorManagementIds = resolveSponsorManagementIds(program, context)
@@ -852,6 +1288,11 @@ export function programToGeneralCommonInfoEditValues(
     PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS[0]?.value ||
     'ja'
   const participantFlags = participantFlagsFromProgram(program)
+  const sponsorManagerContactIds = resolveSponsorManagerContactIds(
+    program,
+    sponsorManagementIds,
+    context
+  )
 
   return {
     mainTitle: program.mainTitle?.trim() ?? '',
@@ -862,7 +1303,8 @@ export function programToGeneralCommonInfoEditValues(
     endDate: toIso(program.endDate),
     businessArea: resolveBusinessAreaFormValue(program.businessArea),
     sponsorManagementIds,
-    sponsorManagerContactId: resolveSponsorManagerContactId(program, sponsorManagementIds, context),
+    sponsorManagerContactIds,
+    sponsorManagerContactId: sponsorManagerContactIds[0],
     venueKind: resolveVenueKind(program),
     venueDetail: commonInfo.venueDetail?.trim() || program.venue?.trim() || '',
     ...participantFlags,
@@ -936,7 +1378,7 @@ function institutionTypeFromVenueKind(
 
 function resolveDetailedProgramName(
   detailedProgramId: string | undefined,
-  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+  catalog: readonly { id: string; name: string }[] = []
 ): string | undefined {
   if (!detailedProgramId || detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) {
     return undefined
@@ -948,7 +1390,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
   values: GeneralProgramCommonInfoEditFormValues,
   existing: Program,
   context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT,
-  detailedProgramCatalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows,
+  detailedProgramCatalog: readonly { id: string; name: string }[] = [],
   paymentItemOptions?: readonly { value: string; label: string }[]
 ): Partial<Program> {
   const sponsorRows = values.sponsorManagementIds
@@ -971,9 +1413,11 @@ export function generalCommonInfoEditValuesToProgramPatch(
   const existingCommon = resolveGeneralProgramCommonInfo(existing)
 
   const managerLine = manager
-    ? [manager.position ? `${manager.position} ${manager.name}` : manager.name, manager.phone]
-        .filter(Boolean)
-        .join(' | ')
+    ? formatSponsorManagerDisplayLine({
+        contactName: manager.name,
+        position: manager.position,
+        phone: manager.phone,
+      })
     : existingCommon.sponsorManagerLine
 
   const ipsCategory = values.ipsCategory as ProgramRegistrationIpsCategory | ''
@@ -1046,8 +1490,11 @@ export function generalCommonInfoEditValuesToProgramPatch(
     generalSurveyMenuKeys: surveyKeysFromFlags(values),
     institutionType: institutionTypeFromVenueKind(values.venueKind),
     venue: values.venueKind === 'other' ? values.venueDetail?.trim() || undefined : undefined,
-    textbookName: detailedProgramName ?? existing.textbookName,
-    teamDivision: detailedProgramName ?? existing.teamDivision,
+    detailedProgramId: isScheduleType
+      ? undefined
+      : values.detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+        ? undefined
+        : values.detailedProgramId.trim() || undefined,
     educationProcess: educationProcessToProgramValue(values.educationProcess),
     ipOwned: ipOwnedToProgramValue(values.ipOwned),
     courseDeliveredBy: courseDeliveredToProgramValue(values.courseDeliveredBy),
@@ -1057,6 +1504,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
     programCategory,
     programChannel,
     approvedStudentCount: values.kpiFinalParticipants ?? existing.approvedStudentCount,
+    totalParticipants: values.kpiFinalParticipants ?? existing.totalParticipants,
     instructors: values.kpiInstructorCount ?? existing.instructors,
     instructorCapacity: values.kpiInstructorCount ?? existing.instructorCapacity,
     generalVolunteers: values.kpiVolunteerCount ?? existing.generalVolunteers,
@@ -1077,6 +1525,14 @@ export function generalCommonInfoEditValuesToProgramPatch(
         sponsorRows.map(row => row.name).join(', ') || existingCommon.sponsorDisplayName,
       sponsorManagementId: values.sponsorManagementIds[0] ?? existingCommon.sponsorManagementId,
       sponsorManagementIds: values.sponsorManagementIds,
+      sponsorManagerContactIds: normalizeSponsorManagerContactIds({
+        ids: values.sponsorManagerContactIds,
+        id: values.sponsorManagerContactId,
+      }),
+      sponsorManagerContactId: normalizeSponsorManagerContactIds({
+        ids: values.sponsorManagerContactIds,
+        id: values.sponsorManagerContactId,
+      })[0],
       sponsorManagerLine: managerLine,
       venueDetail: values.venueDetail?.trim() || existingCommon.venueDetail,
       educationFormLabel:
@@ -1085,8 +1541,9 @@ export function generalCommonInfoEditValuesToProgramPatch(
           : undefined,
       educationFormScheduleDetail: values.educationFormScheduleDetail ?? 'common',
       participationScheduleDetail: values.participationScheduleDetail ?? 'common',
-      participationMethod:
-        values.participationScheduleDetail === 'perSchedule'
+      participationMethod: values.participantOrganization
+        ? undefined
+        : values.participationScheduleDetail === 'perSchedule'
           ? undefined
           : (values.participationMethod ?? existingCommon.participationMethod ?? 'individual'),
       ipsScheduleDetail: values.ipsScheduleDetail,
@@ -1132,7 +1589,9 @@ export function generalCommonInfoEditValuesToProgramPatch(
               ? educationFormLabelFromValue(s.educationForm)
               : undefined,
           participationMethodLabel:
-            values.participationScheduleDetail === 'perSchedule' && s.participationMethod
+            !values.participantOrganization &&
+            values.participationScheduleDetail === 'perSchedule' &&
+            s.participationMethod
               ? participationMethodLabelFromValue(s.participationMethod)
               : undefined,
           ipsTypeSummary:
@@ -1192,7 +1651,9 @@ export function generalCommonInfoEditValuesToProgramPatch(
                       ? educationFormLabelFromValue(d.educationForm)
                       : undefined,
                   participationMethodLabel:
-                    values.participationScheduleDetail === 'perSchedule' && d.participationMethod
+                    !values.participantOrganization &&
+                    values.participationScheduleDetail === 'perSchedule' &&
+                    d.participationMethod
                       ? participationMethodLabelFromValue(d.participationMethod)
                       : undefined,
                   ipsTypeSummary:
@@ -1212,7 +1673,9 @@ export function generalCommonInfoEditValuesToProgramPatch(
                     ? educationFormLabelFromValue(d.educationForm)
                     : undefined,
                 participationMethodLabel:
-                  values.participationScheduleDetail === 'perSchedule' && d.participationMethod
+                  !values.participantOrganization &&
+                  values.participationScheduleDetail === 'perSchedule' &&
+                  d.participationMethod
                     ? participationMethodLabelFromValue(d.participationMethod)
                     : undefined,
                 ipsTypeSummary:
@@ -1247,7 +1710,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
 }
 
 export function getGeneralDetailedProgramSelectOptions(
-  catalog: readonly { id: string; name: string }[] = mockDetailedProgramManagementListRows
+  catalog: readonly { id: string; name: string }[] = []
 ) {
   return withDetailedProgramNoneOption(
     catalog.map(row => ({ value: row.id, label: row.name }))

@@ -26,8 +26,11 @@ import {
 export interface UseProgramDetailEditFormOptions {
   program: Program | null
   isEditMode: boolean
-  /** 기본: `programDetailEditSchema` — 참여자 정보 탭은 `programDetailInstitutionsEditSchema` */
-  schema?: z.ZodType<ProgramDetailEditFormValues>
+  /**
+   * 기본: `programDetailEditSchema`
+   * 참여자/TT 등 완화 스키마는 preprocess·optional 확장으로 _input 타입이 달라질 수 있어 ZodTypeAny 허용
+   */
+  schema?: z.ZodTypeAny
 }
 
 export function useProgramDetailEditForm({

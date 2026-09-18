@@ -19,7 +19,7 @@ export function buildInstitutionRejectCompleteDescription(
 ): string {
   const trimmedName = schoolName.trim() || '기관'
   const trimmedReason = rejectionReason.trim() || '-'
-  return `[${trimmedName}]의 프로그램 참여가 반려 되었습니다.\n(사유 : ${trimmedReason})`
+  return `**[${trimmedName}]**의 프로그램 참여가 반려 되었습니다.\n(사유 : ${trimmedReason})`
 }
 
 export function InstitutionRejectCompleteModal({

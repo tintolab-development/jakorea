@@ -113,34 +113,52 @@
   background: var(--status-hover-bg);
 }
 
+/*
+ * 날짜 뱃지 — 셀 내용(이벤트·「외 N개」)과 무관하게 고정 크기·상단 정렬.
+ * flex-shrink 허용 시 높이 오버플로에서 원이 타원으로 찌그러진다.
+ */
 .calendar-cell-date {
   color: var(--default-BK, #3d3d3d);
   font-family: Outfit, sans-serif;
   font-size: 14px;
   font-weight: 500;
-  line-height: 130%;
   text-align: left;
   align-self: flex-start;
+  flex: 0 0 25px;
   display: inline-flex;
+  box-sizing: border-box;
   width: 25px !important;
   height: 25px !important;
+  min-width: 25px;
+  min-height: 25px;
+  max-width: 25px;
+  max-height: 25px;
+  aspect-ratio: 1 / 1;
   padding: 0;
   justify-content: center;
   align-items: center;
   line-height: 1;
   border-radius: 50%;
+  overflow: hidden;
 }
 
 .calendar-cell-events {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 2px;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+/* 이벤트 strip 래퍼 — 날짜 원 대신 여기서 높이 소비·클리핑 */
+.calendar-cell-events > div {
   flex: 0 0 auto;
   min-width: 0;
-  overflow: hidden;
-  min-height: 0;
-  margin-top: 6px;
+  width: 100%;
 }
 
 .calendar-cell--selected .calendar-cell-date {
@@ -148,22 +166,14 @@
   color: var(--default-WT) !important;
 }
 
-.calendar-cell-date {
-  font-size: 14px;
-}
-
-.calendar-cell-events {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 /* event */
 .calendar-event {
   display: flex;
   align-items: center;
+  flex: 0 0 auto;
   height: 24px;
   min-height: 24px;
+  max-height: 24px;
   padding: 0 8px;
   box-sizing: border-box;
   border: none;
@@ -229,9 +239,11 @@
 }
 
 .calendar-event-more {
+  flex: 0 0 auto;
   overflow: hidden;
   color: var(--main-BK, #3d3d3d);
   text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 12px;
   font-style: normal;
   font-weight: 500;

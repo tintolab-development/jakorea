@@ -13,9 +13,10 @@ import { useGeneralProgramRegistrationFlow } from '@/features/program/general/ho
 import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general/ui/registration/registration-body-header'
 import {
   peekWritingFormDraftOverwrite,
-  REGISTRATION_DRAFT_MODE_FRESH,
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
   clearRegistrationDraftForFreshStart,
+  shouldRemoveRegistrationDraftAfterCompletion,
+  shouldSkipRegistrationDraftRestore,
   type ProgramRegistrationDraftTemplateCode,
 } from '@/features/program/shared/lib/registration-draft-notice'
 import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
@@ -23,14 +24,26 @@ import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
 import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import { useCmsAlert } from '@/shared/ui'
-import { removeWritingFormTemplateSave } from '@/features/template/lib/writing-form-template-local-save'
+import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
+import {
+  clearRegistrationOperationalFormDrafts,
+  resolveRegistrationOperationalDraftStorageKey,
+} from '@/features/program/general/lib/registration-operational-form-drafts'
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
 const TRAINED_TEACHERS_REGISTRATION_MODAL_TITLE = '교육받은 교사 프로그램 등록'
 
-const DRAFT_SAVE_FAILURE_MESSAGE =
+const DRAFT_SAVE_FAILURE_QUOTA_MESSAGE =
   '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
+const DRAFT_SAVE_FAILURE_GENERIC_MESSAGE =
+  '임시 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.'
+
+function draftSaveFailureMessage(error: unknown): string {
+  return isLocalStorageQuotaExceededError(error)
+    ? DRAFT_SAVE_FAILURE_QUOTA_MESSAGE
+    : DRAFT_SAVE_FAILURE_GENERIC_MESSAGE
+}
 
 export type GeneralProgramRegistrationFullpageModalProps = {
   open: boolean
@@ -55,8 +68,15 @@ export function GeneralProgramRegistrationFullpageModal({
   const [completeSuccessOpen, setCompleteSuccessOpen] = useState(false)
   const pendingCreatedProgramRef = useRef<Program | undefined>(undefined)
 
-  const skipDraftRestore =
-    searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY) === REGISTRATION_DRAFT_MODE_FRESH
+  // 안내 팝업에서 「이어서 작성」을 명시한 경우만 복원한다.
+  // mode 누락(직접 URL 진입 포함)은 새 폼으로 시작해 저장본이 조용히 노출되지 않게 한다.
+  const skipDraftRestore = shouldSkipRegistrationDraftRestore(
+    searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+  )
+  const shouldRemoveSavedDraftAfterCompletion =
+    shouldRemoveRegistrationDraftAfterCompletion(
+      searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+    )
 
   const initialStep = useMemo(() => {
     const raw = searchParams.get(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
@@ -127,14 +147,21 @@ export function GeneralProgramRegistrationFullpageModal({
       console.debug('generalProgramRegistration draft save failed', error)
       showAlert({
         title: '임시 저장 실패',
-        content: DRAFT_SAVE_FAILURE_MESSAGE,
+        content: draftSaveFailureMessage(error),
       })
     }
   }, [flow, showAlert])
 
   const handleSaveClick = useCallback(() => {
-    const templateId = flow.currentStepDef.templateId
-    const existing = peekWritingFormDraftOverwrite(templateId, {
+    const catalogTemplateId = flow.currentStepDef.templateId
+    const storageKey =
+      flow.phase === 'program'
+        ? catalogTemplateId
+        : resolveRegistrationOperationalDraftStorageKey(
+            registrationFormVariant,
+            catalogTemplateId
+          )
+    const existing = peekWritingFormDraftOverwrite(storageKey, {
       titleFallbackTemplateIds: [flow.registrationTemplateId],
     })
     if (existing != null) {
@@ -143,7 +170,13 @@ export function GeneralProgramRegistrationFullpageModal({
       return
     }
     void runDraftSave()
-  }, [flow.currentStepDef.templateId, flow.registrationTemplateId, runDraftSave])
+  }, [
+    flow.currentStepDef.templateId,
+    flow.phase,
+    flow.registrationTemplateId,
+    registrationFormVariant,
+    runDraftSave,
+  ])
 
   const handleOverwriteConfirm = useCallback(() => {
     void (async () => {
@@ -156,7 +189,7 @@ export function GeneralProgramRegistrationFullpageModal({
         console.debug('generalProgramRegistration draft overwrite save failed', error)
         showAlert({
           title: '임시 저장 실패',
-          content: DRAFT_SAVE_FAILURE_MESSAGE,
+          content: draftSaveFailureMessage(error),
         })
       } finally {
         setOverwriteSaving(false)
@@ -168,11 +201,20 @@ export function GeneralProgramRegistrationFullpageModal({
     const created = pendingCreatedProgramRef.current
     pendingCreatedProgramRef.current = undefined
     setCompleteSuccessOpen(false)
-    const registrationTemplateCode = flow.registrationTemplateId as ProgramRegistrationDraftTemplateCode
-    clearRegistrationDraftForFreshStart(registrationTemplateCode)
-    removeWritingFormTemplateSave(flow.currentStepDef.templateId)
+    // 모집·신청 초안은 등록 완료 후 해당 유형만 제거 (다음 신규 등록에 잔존하지 않도록)
+    clearRegistrationOperationalFormDrafts(registrationFormVariant)
+    if (shouldRemoveSavedDraftAfterCompletion) {
+      const registrationTemplateCode =
+        flow.registrationTemplateId as ProgramRegistrationDraftTemplateCode
+      clearRegistrationDraftForFreshStart(registrationTemplateCode)
+    }
     onProgramRegistrationSaved?.(created)
-  }, [flow.currentStepDef.templateId, flow.registrationTemplateId, onProgramRegistrationSaved])
+  }, [
+    flow.registrationTemplateId,
+    onProgramRegistrationSaved,
+    registrationFormVariant,
+    shouldRemoveSavedDraftAfterCompletion,
+  ])
 
   const footerActions = useMemo((): TemplateFullpageModalFooterAction[] | undefined => {
     if (flow.phase === 'program') {
@@ -182,7 +224,10 @@ export function GeneralProgramRegistrationFullpageModal({
             label: '모집 정보 작성하기',
             variant: 'primary',
             showArrow: true,
-            onClick: () => flow.goToPhase('recruitment'),
+            onClick: () => {
+              flow.registrationVm.logCurrentRegistrationPayload()
+              flow.goToPhase('recruitment')
+            },
           },
         ]
       }

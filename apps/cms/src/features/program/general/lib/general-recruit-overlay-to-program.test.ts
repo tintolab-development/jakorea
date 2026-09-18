@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
 import {
   applyGeneralRecruitOverlayToProgram,
@@ -102,6 +103,86 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(volunteerInfo?.contactOrganizationName).toBe('봉사자 문의처')
     expect(volunteerInfo?.recruitmentTarget).toBe('대학(원)생')
     expect(next.description).toBe('강사 모집 설명')
+  })
+
+  it('maps volunteer announcement, interview flags, final announce, and interview schedule', () => {
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const slotStart = dayjs().startOf('day').hour(9).minute(0).second(0).millisecond(0)
+    const slotEnd = slotStart.add(30, 'minute')
+    const overlay: Record<string, unknown> = {
+      [keys.volunteer.announcementPublished]: 'published',
+      [keys.volunteer.interviewRequired]: 'yes',
+      [keys.volunteer.docDeadlineIso]: '2026-03-20T00:00:00+09:00',
+      [keys.volunteer.docAnnounceMethod]: '이메일',
+      [keys.volunteer.interviewRangeSeal]: {
+        start: '2026-03-25T00:00:00+09:00',
+        end: '2026-03-27T00:00:00+09:00',
+      },
+      [keys.volunteer.interviewMethod]: '온라인',
+      [keys.volunteer.finalAnnounceIso]: '2026-04-01T00:00:00+09:00',
+      [keys.volunteer.finalAnnounceMethod]: '홈페이지 공지',
+      [keys.volunteer.notesNotApplicable]: true,
+      'recruit.volunteer.interview.exclusionState': {
+        excludeNone: false,
+        excludeSaturday: true,
+        excludeSunday: true,
+        excludeHoliday: true,
+      },
+      'recruit.volunteer.interview.appliedUnavailableDates': ['2026-03-26'],
+      'recruit.volunteer.interview.selectedSlotKeys': [
+        `${slotStart.valueOf()}-${slotEnd.valueOf()}`,
+      ],
+    }
+
+    const next = applyGeneralRecruitOverlayToProgram(baseProgram(), overlay, {
+      preferOverlay: true,
+    })
+
+    const volunteerInfo = next.generalCommonInfo?.volunteerRecruitmentInfo
+    expect(volunteerInfo?.announcementPublished).toBe(true)
+    expect(volunteerInfo?.announcementPublishedLabel).toBe('게시')
+    expect(volunteerInfo?.volunteerInterviewEnabled).toBe(true)
+    expect(volunteerInfo?.generalVolunteerInterviewEnabled).toBe(true)
+    expect(volunteerInfo?.volunteerInterviewEnabledLabel).toBe('면접 있음')
+    expect(volunteerInfo?.finalAnnouncementLabel).toContain('2026')
+    expect(volunteerInfo?.finalAnnouncementLabel).toContain('홈페이지 공지')
+    expect(volunteerInfo?.notesNotApplicable).toBe(true)
+
+    expect(next.generalVolunteerInterviewEnabled).toBe(true)
+    expect(next.documentPassAnnouncementDate).toBe('2026-03-20T00:00:00+09:00')
+    expect(next.documentPassAnnouncementMethod).toBe('이메일')
+    expect(next.interviewStartDate).toBe('2026-03-25T00:00:00+09:00')
+    expect(next.interviewEndDate).toBe('2026-03-27T00:00:00+09:00')
+    expect(next.interviewMethod).toBe('온라인')
+    expect(next.finalPassAnnouncementDate).toBe('2026-04-01T00:00:00+09:00')
+    expect(next.finalPassAnnouncementMethod).toBe('홈페이지 공지')
+
+    const schedule = next.generalCommonInfo?.volunteerInterviewScheduleInfo
+    expect(schedule?.recurringUnavailable).toBe('토요일, 일요일, 공휴일')
+    expect(schedule?.specificUnavailableDateIsos).toEqual(['2026-03-26'])
+    expect(schedule?.availableTimeSlots).toBe('09:00 ~ 09:30')
+  })
+
+  it('skips volunteer interview schedule when interview is disabled', () => {
+    const keys = GENERAL_RECRUIT_OVERLAY_KEYS
+    const overlay: Record<string, unknown> = {
+      [keys.volunteer.announcementPublished]: 'unpublished',
+      [keys.volunteer.interviewRequired]: 'no',
+      [keys.volunteer.finalAnnounceIso]: '2026-04-01T00:00:00+09:00',
+      [keys.volunteer.finalAnnounceMethod]: '문자',
+      'recruit.volunteer.interview.selectedSlotKeys': ['1-2'],
+    }
+
+    const next = applyGeneralRecruitOverlayToProgram(baseProgram(), overlay, {
+      preferOverlay: true,
+    })
+
+    const volunteerInfo = next.generalCommonInfo?.volunteerRecruitmentInfo
+    expect(volunteerInfo?.announcementPublished).toBe(false)
+    expect(volunteerInfo?.volunteerInterviewEnabled).toBe(false)
+    expect(volunteerInfo?.finalAnnouncementLabel).toContain('문자')
+    expect(next.generalVolunteerInterviewEnabled).toBe(false)
+    expect(next.generalCommonInfo?.volunteerInterviewScheduleInfo).toBeUndefined()
   })
 
   it('keeps program values when preferOverlay is false and program is filled', () => {

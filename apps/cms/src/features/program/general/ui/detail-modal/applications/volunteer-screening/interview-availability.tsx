@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { isAssignedInterviewSlot, mergeAssignedInterviewIntoAvailability } from '@/features/program/general/lib/interview-availability-utils'
 import {
   formatDisplayTimeRange,
@@ -10,6 +10,7 @@ import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
+import '@/features/user/detail/ui/instructor-resume/resume.css'
 
 export interface GeneralVolunteerApplicantInterviewAvailabilityProps {
   applicant: GeneralVolunteerApplicantRow
@@ -41,9 +42,9 @@ export function GeneralVolunteerApplicantInterviewAvailability({
       <DetailInfoForm title="면접 진행 가능 일정" mode="view">
         {days.length === 0 ? (
           <DetailInfoForm.Row type="custom">
-            <p className="general-volunteer-applicant-interview-availability__empty">
-              등록된 일정이 없습니다.
-            </p>
+            <div className="instructor-resume-free-writing-card">
+              <p className="instructor-resume-free-writing-text">등록된 일정이 없습니다.</p>
+            </div>
           </DetailInfoForm.Row>
         ) : (
           days.map(day => (

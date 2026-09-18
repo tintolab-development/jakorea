@@ -23,6 +23,7 @@ export {
   getMockEducationApplications,
   getMockEducationApplicationsVersion,
   subscribeMockEducationApplications,
+  updateMockTeacherApplicationGuidance,
   filterEducationStatusApplications,
   filterVolunteerStatusApplications,
   isGeneralVolunteerApplication,

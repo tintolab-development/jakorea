@@ -1,11 +1,14 @@
 /**
- * 일반 프로그램 상세 표시 — null/빈값만 "-", false·enum·0·[]는 의미 있는 라벨로.
+ * 일반 프로그램 상세 표시 — null/빈 문자열만 "-", false·enum·0은 의미 있는 라벨로.
+ * 빈 배열([])은 결측이 아님 — pickDisplayValue에서 skip하지 않고 호출부에서 「없음」 UI로 처리.
  */
+import { formatNumberDisplay } from '@/shared/utils'
 
 export function isBlankDisplayValue(value: unknown): boolean {
   if (value == null) return true
   if (typeof value === 'string') return value.trim() === ''
-  if (Array.isArray(value)) return value.length === 0
+  // [] is intentional empty (handoff: do not treat as missing)
+  if (Array.isArray(value)) return false
   return false
 }
 
@@ -41,5 +44,24 @@ export function labelEnum(
 
 export function formatCountLabel(value: number | null | undefined, suffix: string): string {
   if (value == null || Number.isNaN(value)) return '-'
-  return `${value}${suffix}`
+  return `${formatNumberDisplay(value)}${suffix}`
+}
+
+/** 기관·학교 상세 td — `N개 학급` / `총 N명` (천단위 콤마) */
+export function formatClassCountLabel(classCount: number | null | undefined): string {
+  if (classCount == null || Number.isNaN(classCount)) return '-'
+  return `${formatNumberDisplay(classCount)}개 학급`
+}
+
+export function formatTotalStudentCountLabel(studentCount: number | null | undefined): string {
+  if (studentCount == null || Number.isNaN(studentCount)) return '-'
+  return `총 ${formatNumberDisplay(studentCount)}명`
+}
+
+/** DetailInfoForm 세그먼트용 — 학급수·인원 한 쌍 */
+export function formatClassStudentCountSegments(
+  classCount: number | null | undefined,
+  studentCount: number | null | undefined
+): [string, string] {
+  return [formatClassCountLabel(classCount), formatTotalStudentCountLabel(studentCount)]
 }

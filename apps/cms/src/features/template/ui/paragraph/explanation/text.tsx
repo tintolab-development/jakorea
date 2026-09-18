@@ -20,6 +20,7 @@ export function ExplanationText({
   isEditMode,
   bodyDisplayMode = 'input',
   bottomConsentInteractive,
+  bottomConsentDisplayOnly = false,
   consentFillMode = false,
 }: {
   paragraph: AgreementExplanationTextParagraph
@@ -32,6 +33,8 @@ export function ExplanationText({
    * 미지정 시 `isEditMode`와 동일. 구조 잠금 작성 미리체크는 true를 넘긴다.
    */
   bottomConsentInteractive?: boolean
+  /** 프로그램 등록 — disabled 스킨 없이 미선택·입력 불가 */
+  bottomConsentDisplayOnly?: boolean
   /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
   consentFillMode?: boolean
 }) {
@@ -45,16 +48,19 @@ export function ExplanationText({
       value={resolveTableBottomConsentRadioValue(paragraph.bottomConsent, {
         consentFillMode,
         interactive: consentInteractive,
+        displayOnly: bottomConsentDisplayOnly,
       })}
       onChange={e => {
-        if (!consentInteractive) return
+        if (bottomConsentDisplayOnly || !consentInteractive) return
         onChange({
           ...paragraph,
           bottomConsent: e.target.value as TableBottomConsent,
         })
       }}
-      disabled={!consentInteractive}
-      style={consentInteractive ? undefined : { pointerEvents: 'none' }}
+      disabled={bottomConsentDisplayOnly ? false : !consentInteractive}
+      style={
+        bottomConsentDisplayOnly || !consentInteractive ? { pointerEvents: 'none' } : undefined
+      }
     >
       <CmsRadio value="agree">동의</CmsRadio>
       <CmsRadio value="disagree">동의하지 않음</CmsRadio>

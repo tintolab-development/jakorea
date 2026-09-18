@@ -1,4 +1,4 @@
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import {
   LECTURE_REPORT_ISSUANCE_PARAGRAPH_IDS,
   createLectureReportIssuanceDraft,

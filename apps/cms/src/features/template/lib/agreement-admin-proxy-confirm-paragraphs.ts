@@ -1,6 +1,7 @@
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
+  DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
 } from '@/features/template/model/writing-form-draft.schema'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
@@ -12,6 +13,7 @@ export const AGREEMENT_ADMIN_PROXY_CONFIRM_HOST_IDS = new Set<string>([
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.violationClosing,
   PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine,
   PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm,
+  DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.closing,
 ])
 
 /**
@@ -40,6 +42,10 @@ export const AGREEMENT_ADMIN_PROXY_CONFIRM_HIDDEN_IDS_BY_HOST: Readonly<
   [PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm]: [
     PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailDate,
     PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature,
+  ],
+  [DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.closing]: [
+    DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.systemDate,
+    DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.systemSignature,
   ],
 }
 
@@ -121,4 +127,12 @@ export function getAgreementNoticeAdminProxyHiddenIds(): Set<string> {
 /** 교육진행자 동의 서약서 authoring — system 날짜·서명 숨김 */
 export function getEducatorFacilitatorPledgeAdminProxyHiddenIds(): Set<string> {
   return resolveAgreementAdminProxyConfirmHiddenIds('agreement-expense')
+}
+
+/** 직접 등록 신규 동의 양식 — closing에 날짜·서명 합침 */
+export function getDirectAgreementAdminProxyHiddenIds(): Set<string> {
+  return new Set(
+    AGREEMENT_ADMIN_PROXY_CONFIRM_HIDDEN_IDS_BY_HOST[DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.closing] ??
+      []
+  )
 }

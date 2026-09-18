@@ -4,6 +4,7 @@ import {
   createSponsor,
   deleteSponsor,
   deleteSponsorContacts,
+  deleteSponsorProgramHistories,
   deleteSponsors,
   endSponsorship,
   updateSponsorBasicInfo,
@@ -161,6 +162,27 @@ export function useSponsorMutations() {
     },
   })
 
+  const deleteProgramHistoriesMutation = useMutation({
+    mutationFn: ({ sponsorId, ids }: { sponsorId: string; ids: string[] }) =>
+      deleteSponsorProgramHistories(sponsorId, ids),
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: dataManagementQueryKeys.sponsors.programHistoriesAll(
+            variables.sponsorId
+          ),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: dataManagementQueryKeys.sponsors.detail(variables.sponsorId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: dataManagementQueryKeys.sponsors.listAll(),
+        }),
+      ])
+    },
+    retry: false,
+  })
+
   const updateStatusMutation = useMutation({
     mutationFn: ({
       sponsorId,
@@ -271,6 +293,7 @@ export function useSponsorMutations() {
     createMutation,
     deleteMutation,
     bulkDeleteMutation,
+    deleteProgramHistoriesMutation,
     updateStatusMutation,
     updateBasicInfoMutation,
     endSponsorshipMutation,

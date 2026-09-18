@@ -1,6 +1,6 @@
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
-import { buildInitialAssignedSchoolRows } from './instructor-institution-assignment-mock'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
+import { buildInitialAssignedSchoolRows } from './instructor-institution-assignment'
 
 /** 자택 주소지 — 시/도·시/군/구까지 표시 */
 export function formatParticipatingInstructorHomeAddress(address?: string): string {
@@ -10,12 +10,28 @@ export function formatParticipatingInstructorHomeAddress(address?: string): stri
   return `${parts[0]} ${parts[1]}`
 }
 
+export type ParticipatingInstructorAssignedSchoolNamesOptions = {
+  assignedOrganizationNamesByMemberId?: Map<string, string[]>
+  /** false면 instructor-assignments·participants enrich 없을 때 mock 합성 금지 */
+  allowMockFallback?: boolean
+}
+
 /** 참여 강사 상세 배정 탭과 동일한 배정 기관명 목록 */
 export function getParticipatingInstructorAssignedSchoolNames(
   instructor: ParticipatingInstructorRow,
   schoolRows: ParticipatingSchoolRow[],
-  instructorList: ParticipatingInstructorRow[]
+  instructorList: ParticipatingInstructorRow[],
+  options?: ParticipatingInstructorAssignedSchoolNamesOptions
 ): string[] {
+  if (instructor.assignedOrganizationNames?.length) {
+    return instructor.assignedOrganizationNames
+  }
+  if (options?.assignedOrganizationNamesByMemberId && instructor.memberId) {
+    const fromAssignments = options.assignedOrganizationNamesByMemberId.get(instructor.memberId)
+    if (fromAssignments?.length) return fromAssignments
+    if (options.assignedOrganizationNamesByMemberId.has(instructor.memberId)) return []
+  }
+  if (options?.allowMockFallback === false) return []
   return buildInitialAssignedSchoolRows(instructor, schoolRows, instructorList).map(
     row => row.schoolName
   )

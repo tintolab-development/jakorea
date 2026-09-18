@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import type { RadioChangeEvent } from 'antd'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -317,6 +317,13 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     'generalRegistration.educationCurriculum.preEducationScheduleName',
     PRE_EDUCATION_SCHEDULE_LABEL
   )
+
+  useEffect(() => {
+    if (!scheduleCurriculumPreEducation) return
+    setPreEducationScheduleName(
+      preEducationScheduleName.trim() ? preEducationScheduleName : PRE_EDUCATION_SCHEDULE_LABEL
+    )
+  }, [scheduleCurriculumPreEducation]) // eslint-disable-line react-hooks/exhaustive-deps -- seed when toggle on
 
   const educationFormForSession = (sessionIndex: number) =>
     educationFormBySession[sessionIndex] ?? 'online'

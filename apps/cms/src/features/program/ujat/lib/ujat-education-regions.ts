@@ -5,6 +5,7 @@
 import { getUjatEducationRegionsRemoteSnapshot } from '@/features/program/ujat/api/education-regions/service'
 import { shouldUseUjatEducationRegionsRemoteApi } from '@/features/program/ujat/api/education-regions/capabilities'
 import {
+  clearUjatEducationRegionsLocalStorage,
   readActiveUjatEducationRegionsOrdered,
   readUjatEducationRegions,
 } from '@/features/program/ujat/lib/education-region-store'
@@ -42,16 +43,21 @@ function mapDefaultRegions(): UjatEducationRegionOption[] {
 
 function readActiveRowsOrdered() {
   if (shouldUseUjatEducationRegionsRemoteApi()) {
+    clearUjatEducationRegionsLocalStorage()
     const remote = getUjatEducationRegionsRemoteSnapshot()
     if (remote) return remote.filter(row => row.active)
+    // remote ON · 스냅샷 전 — localStorage로 내려가지 않음 (기본 8지역)
+    return []
   }
   return readActiveUjatEducationRegionsOrdered()
 }
 
 function readAllRows() {
   if (shouldUseUjatEducationRegionsRemoteApi()) {
+    clearUjatEducationRegionsLocalStorage()
     const remote = getUjatEducationRegionsRemoteSnapshot()
     if (remote) return remote
+    return []
   }
   return readUjatEducationRegions()
 }

@@ -6,16 +6,17 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 프로그램 모집 유형별 canonical 설정 응답
+ */
 export interface ProgramRecruitmentResponse {
   id?: number;
-  programId?: number;
   recruitmentType?: string;
   targetType?: string;
   status?: string;
   startAt?: string;
   endAt?: string;
-  minCount?: number;
   maxCount?: number;
-  applicationFormTemplateId?: number;
+  minCount?: number;
   selectionMethod?: string;
 }

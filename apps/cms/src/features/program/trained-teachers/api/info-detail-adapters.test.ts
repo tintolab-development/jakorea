@@ -41,15 +41,47 @@ describe('trained-teacher info detail adapters', () => {
     })
     expect(request.teacherTrainingEnabled).toBe(true)
     expect(request.educationJournalEnabled).toBe(false)
-    expect(request.teacherTrainingScheduleName).toBe('교사 연수')
+    expect(request.educationJournalRequired).toBe(false)
+    expect(request.journalSubmissionLimitType).toBe('UNLIMITED')
+    expect(request.teacherTrainingScheduleName).toBe('교육 연수')
     expect(request.configJson).toContain('"educatedTeachers":3')
   })
 
-  it('merges GET detail into program', () => {
+  it('reads educationScheduleRange from configJson root', () => {
+    const patch = mapTrainedTeacherInfoDetailToProgramPatch({
+      teacherTrainingEnabled: true,
+      configJson: JSON.stringify({
+        schemaVersion: 1,
+        educationScheduleMode: 'period',
+        educationScheduleRange: {
+          start: '2026-04-01T00:00:00.000Z',
+          end: '2026-11-30T00:00:00.000Z',
+        },
+      }),
+    })
+    expect(patch.generalCommonInfo?.educationScheduleMode).toBe('period')
+    expect(patch.generalCommonInfo?.educationScheduleRange).toEqual({
+      start: '2026-04-01T00:00:00.000Z',
+      end: '2026-11-30T00:00:00.000Z',
+    })
+  })
+
+  it('merges GET detail into program without wiping programs KPI', () => {
     const program = {
       id: '1',
       title: 't',
-      generalCommonInfo: { educationJournalEnabled: false },
+      totalParticipants: 100,
+      educatedTeachers: 12,
+      generalCommonInfo: {
+        educationJournalEnabled: false,
+        kpi: {
+          finalParticipants: 100,
+          instructorCount: 0,
+          volunteerCount: 0,
+          finalSchools: 8,
+          finalClasses: 12,
+        },
+      },
     } as Program
     const merged = mergeTrainedTeacherInfoDetailIntoProgram(program, {
       teacherTrainingEnabled: true,
@@ -67,10 +99,13 @@ describe('trained-teacher info detail adapters', () => {
         },
       }),
     })
-    expect(merged.educatedTeachers).toBe(7)
+    // programs PATCH SSOT — configJson 옛 kpi 로 덮지 않음
+    expect(merged.educatedTeachers).toBe(12)
+    expect(merged.totalParticipants).toBe(100)
     expect(merged.generalCommonInfo?.teacherTrainingEnabled).toBe(true)
     expect(merged.generalCommonInfo?.educationJournalEnabled).toBe(true)
-    expect(merged.generalCommonInfo?.kpi?.finalSchools).toBe(1)
+    expect(merged.generalCommonInfo?.kpi?.finalParticipants).toBe(100)
+    expect(merged.generalCommonInfo?.kpi?.finalSchools).toBe(8)
   })
 
   it('prefers DTO flags over configJson when both present', () => {

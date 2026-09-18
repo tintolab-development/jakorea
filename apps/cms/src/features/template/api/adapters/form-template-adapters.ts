@@ -9,9 +9,10 @@ import {
   type IssuanceFormCategory,
   type WritingFormCategory,
 } from '@/features/template/api/form-template-catalog'
-import { resolveWritingFormTemplateDeletable } from '@/features/template/lib/form-template-delete-policy'
-import { issuanceFormSections } from '@/features/template/model/issuance-form.schema'
-import { writingSections } from '@/features/template/model/template.schema'
+import {
+  isProgramScopedOperationalWritingTemplate,
+  resolveWritingFormTemplateDeletable,
+} from '@/features/template/lib/form-template-delete-policy'
 import type { TemplateRow, TemplateSection } from '@/features/template/model/template.schema'
 import type { FormTemplateListItemResponse } from '@/shared/api/generated/forms-surveys/schemas'
 
@@ -54,26 +55,9 @@ export function mapFormTemplateListItemToRow(
   }
 }
 
-function mergeSectionRows(apiRows: TemplateRow[], mockRows: TemplateRow[]): TemplateRow[] {
-  if (apiRows.length === 0) return mockRows
-  const apiById = new Map(apiRows.map(row => [row.id, row]))
-  const merged: TemplateRow[] = []
-  const seen = new Set<string>()
-
-  for (const mockRow of mockRows) {
-    const apiRow = apiById.get(mockRow.id)
-    merged.push(apiRow ?? mockRow)
-    seen.add(mockRow.id)
-  }
-
-  for (const apiRow of apiRows) {
-    if (!seen.has(apiRow.id)) {
-      merged.push(apiRow)
-      seen.add(apiRow.id)
-    }
-  }
-
-  return merged.map((row, index) => ({ ...row, no: index + 1 }))
+/** API 행만 노출 — mock 카탈로그 merge 없음 (remote SSOT). */
+function renumberRows(apiRows: TemplateRow[]): TemplateRow[] {
+  return apiRows.map((row, index) => ({ ...row, no: index + 1 }))
 }
 
 function groupItemsByCategory(
@@ -83,6 +67,8 @@ function groupItemsByCategory(
   for (const item of items) {
     const code = item.templateCode?.trim()
     if (code == null || code === '') continue
+    // 프로그램 종속 등록/모집/신청 copy — 양식 관리 비노출
+    if (isProgramScopedOperationalWritingTemplate(item)) continue
     const category = resolveWritingFormCategory(code, item.category)
     if (category == null) continue
     const list = grouped.get(category) ?? []
@@ -98,7 +84,6 @@ export function buildWritingFormSectionsFromApiItems(
   const grouped = groupItemsByCategory(items)
 
   return WRITING_FORM_SECTION_CATALOG.map(section => {
-    const mockSection = writingSections.find(s => s.key === section.key)
     const categoryItems = grouped.get(section.category) ?? []
     const apiRows = categoryItems
       .map((item, index) =>
@@ -110,7 +95,7 @@ export function buildWritingFormSectionsFromApiItems(
       key: section.key,
       title: section.title,
       description: section.description,
-      rows: mergeSectionRows(apiRows, mockSection?.rows ?? []),
+      rows: renumberRows(apiRows),
     }
   })
 }
@@ -161,7 +146,6 @@ export function buildIssuanceFormSectionsFromApiItems(
   const grouped = groupIssuanceItemsByCategory(items)
 
   return ISSUANCE_FORM_SECTION_CATALOG.map(section => {
-    const mockSection = issuanceFormSections.find(s => s.key === section.key)
     const categoryItems = grouped.get(section.category) ?? []
     const apiRows = categoryItems
       .map((item, index) =>
@@ -173,7 +157,7 @@ export function buildIssuanceFormSectionsFromApiItems(
       key: section.key,
       title: section.title,
       description: section.description,
-      rows: mergeSectionRows(apiRows, mockSection?.rows ?? []),
+      rows: renumberRows(apiRows),
     }
   })
 }

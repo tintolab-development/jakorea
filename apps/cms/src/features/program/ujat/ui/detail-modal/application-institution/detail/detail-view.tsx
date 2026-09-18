@@ -1,4 +1,5 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { formatNumberDisplay } from '@/shared/utils'
 import { UjatInstitutionApplicationStatusBadge } from '../list/status-badge'
 import {
   HomeAddressPrivacyValue,
@@ -73,13 +74,13 @@ export function UjatInstitutionApplicationDetailView({
         {detail.gradeBlocks.map((block, blockIndex) => (
           <DetailInfoForm.Row key={`${block.gradeLabel}-${blockIndex}`} type="single">
             <DetailInfoForm.Field
-              label={`${block.gradeLabel} (${block.classCount}학급)`}
+              label={`${block.gradeLabel} (${formatNumberDisplay(block.classCount)}학급)`}
               fullRow
               view={
                 <PipeSeparatedValues
                   parts={block.classes.map(classRow => (
                     <span key={classRow.classNo}>
-                      {classRow.classNo}반 : {classRow.studentCount}명
+                      {classRow.classNo}반 : {formatNumberDisplay(classRow.studentCount)}명
                     </span>
                   ))}
                 />

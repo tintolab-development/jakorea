@@ -76,8 +76,13 @@ const sponsorContext: GeneralProgramSponsorEditContext = {
 
 describe('generalCommonInfoEditValuesToProgramPatch', () => {
   it('참여 방식(팀) 저장 후 다시 로드하면 팀으로 유지된다', () => {
-    const program = baseProgram()
+    const program = baseProgram({
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+    })
     const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.participantOrganization = false
+    values.participantIndividual = true
     values.participationMethod = 'team'
     const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
     expect(patch.generalCommonInfo?.participationMethod).toBe('team')
@@ -94,10 +99,23 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     expect(reloaded.participationMethod).toBe('team')
   })
 
+  it('기관 프로그램은 participationMethod를 저장하지 않는다', () => {
+    const program = baseProgram()
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.participantOrganization = true
+    values.participantIndividual = false
+    values.participationMethod = 'individual'
+    const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+    expect(patch.generalCommonInfo?.participationMethod).toBeUndefined()
+  })
+
   it('후원사 선택 시 sponsorId를 1순위 관리 id로 동기화한다', () => {
     const program = baseProgram()
     const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
     values.sponsorManagementIds = ['sponsor-new']
+    values.sponsorManagerContactIds = [
+      encodeSponsorManagerContactRef('sponsor-new', 'contact-1'),
+    ]
     values.sponsorManagerContactId = encodeSponsorManagerContactRef('sponsor-new', 'contact-1')
     const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
     expect(patch.sponsorId).toBe('sponsor-new')
@@ -114,6 +132,7 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
       sponsors: sponsorContext.sponsors,
       contactsBySponsorId: {},
     })
+    values.sponsorManagerContactIds = []
     values.sponsorManagerContactId = ''
     const patch = generalCommonInfoEditValuesToProgramPatch(values, program, {
       sponsors: sponsorContext.sponsors,

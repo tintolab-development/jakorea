@@ -9,9 +9,15 @@ import {
   fetchGeneralProgramsRemoteListPage,
   type GeneralProgramsRemoteListPage,
 } from '@/features/program/general/api/admin-general-programs-service'
-import type { GeneralProgramListTableFilters } from '@/features/program/general/api/general-program-list-filter-params'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
+import {
+  clientFilterGeneralPrograms,
+  type GeneralProgramListTableFilters,
+} from '@/features/program/general/api/general-program-list-filter-params'
+import { getTempMockOrgProgram } from '@/features/program/general/lib/temp-mock-org-program'
+import { isGeneralProgramTempMockEnabled } from '@/features/program/general/api/temp-mock-capabilities'
+import { programMatchesProgressPhase } from '@/features/program/general/ui/constants/program-list-constants'
 import {
   GENERAL_PROGRAM_OVERVIEW_STATUS_VALUES,
   type GeneralProgramOverviewStatusFilter,
@@ -106,14 +112,34 @@ export function useGeneralProgramListFilters() {
     retry: false,
   })
 
-  const filteredPrograms = useMemo(() => {
+  const remotePrograms = useMemo(() => {
     if (!remoteEnabled) return []
     return remoteListQuery.data?.pages.flatMap(page => page.programs) ?? []
   }, [remoteEnabled, remoteListQuery.data])
 
-  const totalElements = remoteEnabled
-    ? (remoteListQuery.data?.pages[0]?.totalElements ?? filteredPrograms.length)
-    : 0
+  // TODO(temp-mock): 열여라 참깨 — FE 전용 기관 프로그램 목록 주입. 원격 행과 섞지 않음.
+  const mockProgram = useMemo(() => {
+    if (!isGeneralProgramTempMockEnabled()) return null
+    const program = getTempMockOrgProgram()
+    if (!program) return null
+    if (statusFilter && !programMatchesProgressPhase(program, statusFilter)) return null
+    const titleKeyword = tableFilters.title?.trim()
+    if (titleKeyword && !program.title.includes(titleKeyword)) return null
+    return clientFilterGeneralPrograms([program], tableFilters)[0] ?? null
+  }, [statusFilter, tableFilters])
+
+  const filteredPrograms = useMemo(() => {
+    if (!mockProgram) return remotePrograms
+    if (remotePrograms.some(program => program.id === mockProgram.id)) return remotePrograms
+    return [mockProgram, ...remotePrograms]
+  }, [mockProgram, remotePrograms])
+
+  const totalElements = useMemo(() => {
+    const remoteTotal = remoteEnabled
+      ? (remoteListQuery.data?.pages[0]?.totalElements ?? remotePrograms.length)
+      : 0
+    return remoteTotal + (mockProgram ? 1 : 0)
+  }, [mockProgram, remoteEnabled, remoteListQuery.data, remotePrograms.length])
 
   const refetchPrograms = useCallback(() => {
     if (!remoteEnabled) return

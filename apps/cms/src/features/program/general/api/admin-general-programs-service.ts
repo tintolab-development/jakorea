@@ -14,7 +14,10 @@ import {
   shouldUseGeneralProgramsRemoteApi,
   shouldUseProgramsHttpRemoteApi,
 } from '@/features/program/general/api/general-programs-remote-capabilities'
-import { mapProgramManagerResponsesToRows } from '@/features/program/general/api/adapters/program-managers-adapters'
+import {
+  mapProgramManagerResponsesToRows,
+  toProgramManagerApiRole,
+} from '@/features/program/general/api/adapters/program-managers-adapters'
 import {
   addAdminProgramManagerRemote,
   bulkDeleteAdminProgramsRemote,
@@ -25,17 +28,29 @@ import {
   deleteAdminProgramManagerRemote,
   deleteAdminProgramRemote,
   deleteAdminProgramPostRemote,
+  deleteAdminProgramPostReactionRemote,
   fetchAdminProgramByIdRemote,
   fetchAdminProgramFormBindingsRemote,
   fetchAdminProgramManagersRemote,
   fetchAdminProgramNavigationRemote,
+  fetchAdminProgramPostAttachmentsRemote,
+  fetchAdminProgramPostCommentsRemote,
+  fetchAdminProgramPostDetailRemote,
+  fetchAdminProgramPostReactionsRemote,
+  fetchAdminProgramPostReadsRemote,
   fetchAdminProgramPostsRemote,
+  createAdminProgramPostUnreadReminderRemote,
   fetchAdminProgramsRemote,
   fetchAdminProgramSurveyResponseDetailRemote,
   fetchAdminProgramSurveyResponsesRemote,
   fetchAdminProgramSurveySummaryRemote,
   fetchAdminProgramSurveysRemote,
+  putAdminProgramPostAttachmentsRemote,
+  putAdminProgramPostReactionRemote,
+  createAdminProgramPostCommentRemote,
   submitAdminFormResponseRemote,
+  createAdminProgramSurveyShareLinkRemote,
+  updateAdminProgramFormBindingRemote,
   updateAdminProgramManagerRemote,
   updateAdminProgramRemote,
   updateAdminProgramPostRemote,
@@ -62,20 +77,6 @@ function assertProgramsHttpRemoteReady(): void {
       '프로그램 API가 활성화되지 않았습니다. API 로그인 후 programs 모듈(및 1사1교 opt-in)을 확인해 주세요.'
     )
   }
-}
-
-export function getGeneralProgramsMockList(
-  _statusFilter: GeneralProgramOverviewStatusFilter | null
-): Program[] {
-  throw new Error(
-    '일반 프로그램 mock 목록은 제거되었습니다. programs 모듈·API 로그인을 사용해 주세요.'
-  )
-}
-
-export function getGeneralProgramMockById(_programId: string): Program | null {
-  throw new Error(
-    '일반 프로그램 mock 상세는 제거되었습니다. GET /api/admin/programs/{id}를 사용해 주세요.'
-  )
 }
 
 export type GeneralProgramsRemoteListPage = {
@@ -128,6 +129,7 @@ export async function fetchGeneralProgramsRemoteList(
 /**
  * 상단 4카드 건수.
  * remote: GET /programs?periodStatus=* 의 totalElements (목록과 동일 periodStatus 계약)
+ * 예정 = `RECRUITING`(예정 버킷 별칭). BE가 버킷을 배타로 유지 — FE에서 합을 강제 정규화하지 않음.
  * mock: lifecycle 버킷 집계 (목록 filterGeneralProgramsByOverviewStatus 와 동일)
  *
  * 별도 count API 불필요 — 기존 목록 API로 충분. (목록 페이징과 무관, totalElements가 SSOT)
@@ -243,6 +245,84 @@ export async function deleteGeneralProgramPost(programId: string, postId: string
   await deleteAdminProgramPostRemote(programId, postId)
 }
 
+export async function fetchGeneralProgramPostDetail(programId: string, postId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return fetchAdminProgramPostDetailRemote(programId, postId)
+}
+
+export async function fetchGeneralProgramPostComments(programId: string, postId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return []
+  assertProgramsHttpRemoteReady()
+  const page = await fetchAdminProgramPostCommentsRemote(programId, postId)
+  return page.items ?? []
+}
+
+export async function createGeneralProgramPostComment(
+  programId: string,
+  postId: string,
+  content: string
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return createAdminProgramPostCommentRemote(programId, postId, { content })
+}
+
+export async function fetchGeneralProgramPostReactions(programId: string, postId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return fetchAdminProgramPostReactionsRemote(programId, postId)
+}
+
+export async function putGeneralProgramPostReaction(
+  programId: string,
+  postId: string,
+  reactionType: string
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return putAdminProgramPostReactionRemote(programId, postId, { reactionType })
+}
+
+export async function deleteGeneralProgramPostReaction(programId: string, postId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return
+  assertProgramsHttpRemoteReady()
+  await deleteAdminProgramPostReactionRemote(programId, postId)
+}
+
+export async function fetchGeneralProgramPostAttachments(programId: string, postId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return []
+  assertProgramsHttpRemoteReady()
+  const page = await fetchAdminProgramPostAttachmentsRemote(programId, postId)
+  return page.items ?? []
+}
+
+export async function putGeneralProgramPostAttachments(
+  programId: string,
+  postId: string,
+  fileObjectIds: number[]
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return putAdminProgramPostAttachmentsRemote(programId, postId, { fileObjectIds })
+}
+
+export async function fetchGeneralProgramPostReads(programId: string, postId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return fetchAdminProgramPostReadsRemote(programId, postId)
+}
+
+export async function createGeneralProgramPostUnreadReminder(
+  programId: string,
+  postId: string,
+  payload: { message?: string; memberIds?: number[] }
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return createAdminProgramPostUnreadReminderRemote(programId, postId, payload)
+}
+
 export async function fetchGeneralProgramSurveyResponses(
   programId: string,
   templateVersionId: string
@@ -290,10 +370,26 @@ export async function createGeneralProgramFormBinding(
   return createAdminProgramFormBindingRemote(programId, payload)
 }
 
+export async function updateGeneralProgramFormBinding(
+  programId: string,
+  bindingId: string,
+  payload: ProgramFormBindingRequest
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return updateAdminProgramFormBindingRemote(programId, bindingId, payload)
+}
+
 export async function deleteGeneralProgramFormBinding(programId: string, bindingId: string) {
   if (!shouldUseProgramsHttpRemoteApi()) return
   assertProgramsHttpRemoteReady()
   await deleteAdminProgramFormBindingRemote(programId, bindingId)
+}
+
+export async function createGeneralProgramSurveyShareLink(programId: string, bindingId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return createAdminProgramSurveyShareLinkRemote(programId, bindingId)
 }
 
 /** 강의평가 등 관리자 form response 제출. remote OFF면 null. */
@@ -305,10 +401,12 @@ export async function submitGeneralProgramFormResponse(
   return submitAdminFormResponseRemote(payload)
 }
 
-export async function fetchGeneralProgramManagers(programId: string) {
-  if (!shouldUseProgramsHttpRemoteApi()) return []
+export async function fetchGeneralProgramManagers(
+  programId: string,
+  query: { keyword?: string; role?: string } = {}
+) {
   assertProgramsHttpRemoteReady()
-  const items = await fetchAdminProgramManagersRemote(programId)
+  const items = await fetchAdminProgramManagersRemote(programId, query)
   return mapProgramManagerResponsesToRows(items)
 }
 
@@ -316,11 +414,10 @@ export async function addGeneralProgramManager(
   programId: string,
   payload: { adminId: number; role: ProgramRole }
 ) {
-  if (!shouldUseProgramsHttpRemoteApi()) return null
   assertProgramsHttpRemoteReady()
   return addAdminProgramManagerRemote(programId, {
     adminId: payload.adminId,
-    role: payload.role,
+    role: toProgramManagerApiRole(payload.role),
   })
 }
 
@@ -329,13 +426,14 @@ export async function updateGeneralProgramManager(
   assignmentId: string,
   payload: { role?: ProgramRole; adminId?: number }
 ) {
-  if (!shouldUseProgramsHttpRemoteApi()) return null
   assertProgramsHttpRemoteReady()
-  return updateAdminProgramManagerRemote(programId, assignmentId, payload)
+  return updateAdminProgramManagerRemote(programId, assignmentId, {
+    adminId: payload.adminId,
+    ...(payload.role != null ? { role: toProgramManagerApiRole(payload.role) } : {}),
+  })
 }
 
 export async function deleteGeneralProgramManager(programId: string, assignmentId: string) {
-  if (!shouldUseProgramsHttpRemoteApi()) return
   assertProgramsHttpRemoteReady()
   await deleteAdminProgramManagerRemote(programId, assignmentId)
 }

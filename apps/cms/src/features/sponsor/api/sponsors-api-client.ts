@@ -67,6 +67,28 @@ export async function bulkDeleteSponsorsRemote(ids: string[]): Promise<void> {
   })
 }
 
+export async function bulkDeleteSponsorProgramHistoriesRemote(
+  sponsorId: string,
+  programIds: string[]
+): Promise<void> {
+  await forEachBulkIdChunk(programIds, async chunk => {
+    const numericProgramIds = chunk.map(Number)
+    if (
+      numericProgramIds.some(
+        programId => !Number.isSafeInteger(programId) || programId < 1
+      )
+    ) {
+      throw new Error('삭제할 프로그램 ID 형식이 올바르지 않습니다.')
+    }
+    const result = unwrapApiBody<BulkActionResponse>(
+      await dmApi.bulkDeleteProgramHistories(pathId(sponsorId), {
+        ids: numericProgramIds,
+      })
+    )
+    assertBulkDeleteSucceeded(result, '후원사 프로그램 진행 이력 삭제에 실패했습니다.')
+  })
+}
+
 export async function endSponsorRemote(id: string): Promise<void> {
   await dmApi.end(pathId(id))
 }
@@ -141,7 +163,15 @@ export async function addYearlyBusinessRemote(
   sponsorId: string,
   body: SponsorYearlyBusinessRequest
 ): Promise<SponsorYearlyBusinessResponse> {
-  return unwrapApiBody(await dmApi.addYearlyBusiness(pathId(sponsorId), body))
+  // OpenAPI subset currently omits POST; keep runtime path used by CMS sponsor UI.
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/sponsors/${pathId(sponsorId)}/yearly-businesses`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
+  )
 }
 
 export async function updateYearlyBusinessRemote(

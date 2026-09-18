@@ -3,10 +3,12 @@ import {
   getGeneralParticipantDoc1Applicants,
   getGeneralParticipantDocPassedApplicants,
   getGeneralParticipantInterview2Applicants,
-} from '@/data/mock/general-individual-applications-mock'
-import { getApplicantInstructorsByProgramId } from '@/data/mock/applicant-instructors'
-import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications-mock'
+} from '@/features/program/general/model/individual-applicant'
+import { getApplicantInstructorsByProgramId } from '@/features/program/shared/model/applicant-instructor'
+import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { getTempMockOrgApplicantInstructors } from '@/features/program/general/lib/temp-mock-org-program'
 import type { GeneralDetailLnbKey } from '@/features/program/general/lib/detail-url'
 import { resolveGeneralParticipantApplicantDetailTitle } from '@/features/program/general/lib/screening-subject-kind'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
@@ -41,14 +43,14 @@ export function resolveGeneralApplicantDetailMetaFromUrl(params: {
   const { programId, activeLnb, activeTab, applicantId } = params
   if (!applicantId) return null
 
-  if (shouldUseGeneralApplicationsRemoteApi()) {
+  if (shouldUseGeneralApplicationsRemoteApi() && !isGeneralProgramTempMockProgramId(programId)) {
     return null
   }
 
   if (activeLnb === 'instructor_applications') {
-    const instructor = getApplicantInstructorsByProgramId(programId).find(
-      row => row.id === applicantId
-    )
+    const instructor = getTempMockOrgApplicantInstructors(programId)
+      .concat(getApplicantInstructorsByProgramId(programId))
+      .find(row => row.id === applicantId)
     if (!instructor) return null
     return {
       title: `강사 신청 상세 (${instructor.instructorName})`,

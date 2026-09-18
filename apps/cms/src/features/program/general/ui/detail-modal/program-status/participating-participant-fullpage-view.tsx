@@ -4,31 +4,44 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
-import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
-import {
-  patchGeneralIndividualApplicantDetail,
-  type GeneralIndividualApplicantRow,
-} from '@/data/mock/general-individual-applications-mock'
+import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
+import type {
+  GeneralIndividualApplicantRow,
+} from '@/features/program/general/model/individual-applicant'
 import { CmsButton, ExcelButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
 import { MESSAGES } from '@/shared/constants/messages'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
+import {
+  saveIndividualApplicationAdminCommentRemote,
+  saveIndividualApplicationDetailRemote,
+} from '@/features/program/general/api/individual-application-update-helpers'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import { useParticipatingIndividualApplicationDetailEnrichment } from '@/features/program/general/hooks/use-application-form-detail-enrichment'
+import {
+  buildProgramApiUnavailableSaveContent,
+  notifyProgramApiUnavailable,
+  PROGRAM_API_UNAVAILABLE_TITLE,
+} from '@/features/program/shared/lib/program-api-unavailable'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { buildParticipatingParticipantCertificateContext } from '@/features/program/general/lib/participating-individual-participant-certificate'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
-import { getParticipatingInstitutionActivityWithdrawScheduleOptions } from '@/features/program/general/lib/participating-institution-activity-withdraw'
+import {
+  getParticipatingInstitutionActivityWithdrawScheduleOptions,
+  buildParticipatingSchoolSessionKey,
+} from '@/features/program/general/lib/participating-institution-activity-withdraw'
 import { screeningWithdrawCompleteContent } from '@/features/program/general/lib/screening-subject-kind'
 import { isWithinStudentCertificateIssuancePeriod } from '@/features/program/general/lib/resolve-student-certificate-kind'
 import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
@@ -81,6 +94,8 @@ export function ParticipatingParticipantFullpageView({
   onClearParticipantId: _onClearParticipantId,
 }: ParticipatingParticipantFullpageViewProps) {
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
+  const progressRemoteEnabled = shouldUseGeneralProgramProgressRemoteApi()
   const attendanceSectionRef = useRef<ParticipatingIndividualParticipantAttendanceSectionHandle>(null)
   const assignmentSectionRef = useRef<ParticipatingIndividualParticipantAssignmentSectionHandle>(null)
   const [participantPatches, setParticipantPatches] = useState<
@@ -90,15 +105,24 @@ export function ParticipatingParticipantFullpageView({
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
+  const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
   const [certificateIssueModalOpen, setCertificateIssueModalOpen] = useState(false)
   const [certificateExportContext, setCertificateExportContext] =
     useState<StudentCertificateDownloadContext | null>(null)
   const [certificateExportActive, setCertificateExportActive] = useState(false)
 
-  const mergedParticipant = useMemo(
-    () => ({ ...initialParticipant, ...participantPatches }),
-    [initialParticipant, participantPatches]
+  const enrichedParticipant = useParticipatingIndividualApplicationDetailEnrichment(
+    initialParticipant
   )
+  const baseParticipant = enrichedParticipant ?? initialParticipant
+
+  const mergedParticipant = useMemo(
+    () => ({ ...baseParticipant, ...participantPatches }),
+    [baseParticipant, participantPatches]
+  )
+
+  const individualApplicationId = mergedParticipant.individualApplicationId?.trim() || ''
+  const hasIndividualApplicationId = individualApplicationId !== ''
 
   const sessions = mergedParticipant.sessions ?? []
   const isActivityWithdrawn = mergedParticipant.activityWithdrawn === true
@@ -153,24 +177,32 @@ export function ParticipatingParticipantFullpageView({
     validationErrors,
     textbookOptions,
     enterEdit: enterApplicationInfoEdit,
+    cancelEdit: cancelApplicationInfoEdit,
     saveEdit: saveApplicationInfoEdit,
     updateDraft,
   } = useApplicantIndividualDetailEdit({
     applicant: mergedParticipant,
     program,
     onSaved: handleParticipantSaved,
+    saveApplicant: async payload => {
+      if (!shouldUseGeneralApplicationsRemoteApi() || !hasIndividualApplicationId) {
+        return null
+      }
+      return saveIndividualApplicationDetailRemote(mergedParticipant, payload)
+    },
   })
 
   useEffect(() => {
     setParticipantPatches({})
-    setSavedAdminComment(initialParticipant.adminComment ?? '')
+    setSavedAdminComment(baseParticipant.adminComment ?? '')
     setAdminCommentModalOpen(false)
     setAdminCommentDraft('')
     setActivityWithdrawModalOpen(false)
+    setActivityWithdrawSubmitting(false)
     setCertificateIssueModalOpen(false)
     setCertificateExportContext(null)
     setCertificateExportActive(false)
-  }, [initialParticipant.id, initialParticipant.adminComment])
+  }, [initialParticipant.id, baseParticipant.adminComment])
 
   const setActiveTab = (key: string) => {
     onTabChange?.(normalizeParticipantDetailTab(key))
@@ -201,20 +233,70 @@ export function ParticipatingParticipantFullpageView({
   ])
 
   const handleConfirmActivityWithdraw = useCallback(
-    (payload: { stopSessionKey: string; stopScheduleLabel: string }) => {
-      setParticipantPatches(prev => ({
-        ...prev,
-        activityWithdrawn: true,
-        activityWithdrawStopSessionKey: payload.stopSessionKey,
-        activityWithdrawStopScheduleLabel: payload.stopScheduleLabel,
-      }))
-      setActivityWithdrawModalOpen(false)
-      showAlert({
-        title: '활동 포기',
-        content: screeningWithdrawCompleteContent('participant', mergedParticipant.applicantName),
-      })
+    async (payload: { stopSessionKey: string; stopScheduleLabel: string }) => {
+      const reason =
+        [mergedParticipant.applicantName, payload.stopScheduleLabel].filter(Boolean).join(' · ') ||
+        payload.stopScheduleLabel ||
+        '활동 포기'
+      const matched = sessions
+        .map((session, index) => ({
+          session,
+          key: buildParticipatingSchoolSessionKey(session, index),
+        }))
+        .find(({ key }) => key === payload.stopSessionKey)
+      const stopScheduleIdRaw = matched?.session.resolvedScheduleId
+      const stopScheduleIdNum =
+        stopScheduleIdRaw != null ? Number(stopScheduleIdRaw) : Number.NaN
+
+      if (progressRemoteEnabled) {
+        setActivityWithdrawSubmitting(true)
+        try {
+          await giveUpGeneralParticipatingInstitution(program.id, mergedParticipant.id, reason, {
+            stopScheduleId: Number.isFinite(stopScheduleIdNum) ? stopScheduleIdNum : undefined,
+          })
+          setParticipantPatches(prev => ({
+            ...prev,
+            activityWithdrawn: true,
+            activityWithdrawStopSessionKey: payload.stopSessionKey,
+            activityWithdrawStopScheduleLabel: payload.stopScheduleLabel,
+          }))
+          await queryClient.invalidateQueries({
+            queryKey: generalProgramProgressQueryKeys.participants(program.id, 'INDIVIDUAL'),
+          })
+          setActivityWithdrawModalOpen(false)
+          showAlert({
+            title: '활동 포기',
+            content: screeningWithdrawCompleteContent('participant', mergedParticipant.applicantName),
+          })
+        } catch (error) {
+          const message =
+            error instanceof Error && error.message.trim()
+              ? error.message
+              : '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          showAlert({
+            title: '활동 포기 실패',
+            content: message,
+          })
+        } finally {
+          setActivityWithdrawSubmitting(false)
+        }
+        return
+      }
+
+      notifyProgramApiUnavailable(
+        'general-participating-individual-give-up',
+        '일반 프로그램 · 참여자 활동 포기'
+      )
     },
-    [mergedParticipant.applicantName, showAlert]
+    [
+      mergedParticipant.applicantName,
+      mergedParticipant.id,
+      program.id,
+      progressRemoteEnabled,
+      queryClient,
+      sessions,
+      showAlert,
+    ]
   )
 
   const handleCertificateIssueClick = useCallback(() => {
@@ -266,22 +348,33 @@ export function ParticipatingParticipantFullpageView({
     setAdminCommentModalOpen(true)
   }, [isApplicationInfoEditing, savedAdminComment])
 
-  const handleAdminCommentSave = useCallback(() => {
+  const handleAdminCommentSave = useCallback(async () => {
     const trimmed = adminCommentDraft.trim()
-    const updated = patchGeneralIndividualApplicantDetail(mergedParticipant.id, {
-      adminComment: trimmed,
-    })
-    if (!updated) {
-      void showAlert({
-        title: '안내',
-        content: MESSAGES.error.save,
-      })
-      return
+    if (shouldUseGeneralApplicationsRemoteApi() && hasIndividualApplicationId) {
+      try {
+        const updated = await saveIndividualApplicationAdminCommentRemote(
+          mergedParticipant,
+          trimmed
+        )
+        setSavedAdminComment(updated.adminComment ?? '')
+        setParticipantPatches(prev => ({ ...prev, adminComment: updated.adminComment }))
+        setAdminCommentModalOpen(false)
+        return
+      } catch {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
     }
-    setSavedAdminComment(trimmed)
-    setParticipantPatches(prev => ({ ...prev, adminComment: updated.adminComment }))
-    setAdminCommentModalOpen(false)
-  }, [adminCommentDraft, mergedParticipant.id, showAlert])
+    void showAlert({
+      title: PROGRAM_API_UNAVAILABLE_TITLE,
+      content: hasIndividualApplicationId
+        ? buildProgramApiUnavailableSaveContent('참여자 관리자 코멘트')
+        : '개인 신청 ID가 없어 코멘트를 저장할 수 없습니다. participants API에 sourceApplicationId 매핑이 필요합니다.',
+    })
+  }, [adminCommentDraft, hasIndividualApplicationId, mergedParticipant, showAlert])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)
@@ -316,6 +409,7 @@ export function ParticipatingParticipantFullpageView({
                 disabled={
                   isActivityWithdrawn ||
                   isApplicationInfoEditing ||
+                  activityWithdrawSubmitting ||
                   activityWithdrawScheduleOptions.length === 0
                 }
                 onClick={handleRequestActivityWithdraw}
@@ -338,15 +432,14 @@ export function ParticipatingParticipantFullpageView({
               >
                 수료증/참여인증서 발급
               </CmsButton>
-              <CmsButton
-                {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
-                  onEnterEdit: enterApplicationInfoEdit,
-                  onSaveEdit: () => saveApplicationInfoEdit(),
-                })}
-              >
-                {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-              </CmsButton>
+              <ProgramEditInfoActions
+                isEditing={isApplicationInfoEditing}
+                onEdit={enterApplicationInfoEdit}
+                onCancel={cancelApplicationInfoEdit}
+                onSave={() => {
+                  void saveApplicationInfoEdit()
+                }}
+              />
               <CmsButton
                 variant="primary"
                 size="large"

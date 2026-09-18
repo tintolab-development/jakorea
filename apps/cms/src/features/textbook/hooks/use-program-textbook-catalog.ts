@@ -10,19 +10,22 @@ import { dataManagementQueryKeys } from '@/features/data-management/api/data-man
 import { useDataManagementRemoteEnabled } from '@/features/data-management/hooks/use-data-management-remote-enabled'
 import type { Program } from '@/types/domain'
 
-export function useProgramTextbookCatalog(program: Program | null | undefined) {
+export function useProgramTextbookCatalog(
+  program: Program | null | undefined,
+  educationGrade?: string
+) {
   const remoteEnabled = useDataManagementRemoteEnabled('textbooks', program != null)
-  const catalogKey = program ? serializeProgramTextbookCatalogKey(program) : ''
+  const catalogKey = program ? serializeProgramTextbookCatalogKey(program, educationGrade) : ''
 
   const mockCatalog = useMemo(
-    () => (program ? listMockTextbookCatalogForProgram(program) : []),
-    [program]
+    () => (program ? listMockTextbookCatalogForProgram(program, educationGrade) : []),
+    [educationGrade, program]
   )
 
   const query = useQuery({
     queryKey: dataManagementQueryKeys.textbooks.matches(catalogKey),
-    queryFn: () => getProgramTextbookCatalog(program!),
-    enabled: remoteEnabled,
+    queryFn: () => getProgramTextbookCatalog(program!, educationGrade),
+    enabled: remoteEnabled && program != null,
     staleTime: 60_000,
     retry: false,
   })

@@ -4,20 +4,43 @@ import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { ProgramRegistrationEducationScheduleMode } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { formatEducationScheduleLineFromRange } from '@/features/template/lib/format-education-schedule-line'
+import {
+  formatEducationScheduleLineFromRange,
+  parseEducationScheduleLineToRange,
+} from '@/features/template/lib/format-education-schedule-line'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { EducationSchedulePreviewLines } from '@/features/template/ui/shared/education-schedule-preview-lines'
+import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
   updateProgramRegistrationOverlayKey,
   useProgramRegistrationOverlayKv,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
+const EMPTY_SCHEDULE_LINES: string[] = []
+
 type TrainedTeachersRegistrationEducationScheduleSettingsParagraphProps = {
   educationScheduleMode: ProgramRegistrationEducationScheduleMode
   onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
   /** Overlay key prefix (default: 'trainedTeachersRegistration.educationScheduleSettings') */
   overlayKeyPrefix?: string
+}
+
+function resolvePeriodRangeFromLines(
+  lines: readonly string[]
+): { start: string; end: string } | undefined {
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const range = parseEducationScheduleLineToRange(lines[i])
+    if (!range) continue
+    const [start, end] = range
+    if (!start.isSame(end, 'day')) {
+      return {
+        start: start.startOf('day').toISOString(),
+        end: end.endOf('day').toISOString(),
+      }
+    }
+  }
+  return undefined
 }
 
 export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
@@ -35,7 +58,7 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
   )
   const [scheduleLines] = useProgramRegistrationOverlayKv<string[]>(
     `${overlayKeyPrefix}.scheduleLines`,
-    []
+    EMPTY_SCHEDULE_LINES
   )
   const scheduleLinesKey = `${overlayKeyPrefix}.scheduleLines`
 
@@ -57,33 +80,63 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
     [scheduleLinesKey]
   )
 
+  const syncBridgeFromLines = useCallback(
+    (lines: string[], mode: ProgramRegistrationEducationScheduleMode) => {
+      const trimmedLines = lines.map(line => line.trim()).filter(Boolean)
+      patchInstitutionApplicationProgramBridge({
+        educationScheduleMode: mode,
+        educationScheduleLines: trimmedLines,
+        educationScheduleRange:
+          mode === 'period' ? resolvePeriodRangeFromLines(trimmedLines) : undefined,
+      })
+    },
+    []
+  )
+
   const handleScheduleRangeApply = useCallback(
     (range: [Dayjs, Dayjs]) => {
       appendLineIfNew(formatEducationScheduleLineFromRange(range))
       setSingleDate(null)
       setPeriodDate(null)
+      if (educationScheduleMode === 'period') {
+        patchInstitutionApplicationProgramBridge({
+          educationScheduleMode: 'period',
+          educationScheduleRange: {
+            start: range[0].startOf('day').toISOString(),
+            end: range[1].endOf('day').toISOString(),
+          },
+        })
+      }
     },
-    [appendLineIfNew]
+    [appendLineIfNew, educationScheduleMode]
   )
 
   const removeLine = useCallback(
     (index: number) => {
-      updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev =>
-        (prev ?? []).filter((_, i) => i !== index)
-      )
+      updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev => {
+        const next = (prev ?? []).filter((_, i) => i !== index)
+        syncBridgeFromLines(next, educationScheduleMode)
+        return next
+      })
     },
-    [scheduleLinesKey]
+    [educationScheduleMode, scheduleLinesKey, syncBridgeFromLines]
   )
 
   useEffect(() => {
     if (educationScheduleMode !== 'date') return
-    setPeriodDate(null)
-  }, [educationScheduleMode])
+    if (periodDateIso == null) return
+    setPeriodDateIso(null)
+  }, [educationScheduleMode, periodDateIso, setPeriodDateIso])
 
   useEffect(() => {
     if (educationScheduleMode !== 'period') return
-    setSingleDate(null)
-  }, [educationScheduleMode])
+    if (singleDateIso == null) return
+    setSingleDateIso(null)
+  }, [educationScheduleMode, singleDateIso, setSingleDateIso])
+
+  useEffect(() => {
+    syncBridgeFromLines(scheduleLines, educationScheduleMode)
+  }, [educationScheduleMode, scheduleLines, syncBridgeFromLines])
 
   return (
     <DetailInfoForm
@@ -119,6 +172,8 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
                 mode="single"
                 presetMode="schedule"
                 customizable={false}
+                showPeriodToggle={false}
+                lockTimeToggleOn
                 suppressAutoTodayWhenEmpty
                 value={singleDate}
                 onChange={setSingleDate}
@@ -131,6 +186,7 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
                 mode="single"
                 presetMode="period"
                 customizable={false}
+                showTimeToggle={false}
                 suppressAutoTodayWhenEmpty
                 value={periodDate}
                 onChange={setPeriodDate}

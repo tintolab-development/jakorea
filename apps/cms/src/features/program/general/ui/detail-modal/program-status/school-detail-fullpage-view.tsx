@@ -11,11 +11,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
-import {
-  PROGRAM_EDIT_INFO_BUTTON_LABEL,
-  PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
-} from '@/features/program/shared/lib/program-edit-info-button'
+import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
@@ -26,12 +25,15 @@ import type {
   InstructorRoleKey,
 } from '../../../model/school-detail-types'
 import { INSTRUCTOR_ROLE_LABELS } from '../../../model/school-detail-types'
-import type { ParticipatingSchoolRow, TextbookStatusKey } from '@/data/mock/participating-schools'
-import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/data/mock/participating-schools'
+import type {
+  ParticipatingSchoolRow,
+  TextbookStatusKey,
+} from '@/features/program/general/model/participating-schools'
+import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/features/program/general/model/participating-schools'
 import type {
   ParticipatingInstructorRow,
   SettlementStatusKey,
-} from '@/data/mock/participating-instructors'
+} from '@/features/program/general/model/participating-instructors'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import type { InstructorListFormInstructor } from '../../../model/school-detail-types'
@@ -40,7 +42,7 @@ import {
   getAssignedInstructorDisplayRows,
   getWaitingInstructorRows,
   type WaitingInstructorRowMock,
-} from '../../../lib/school-detail-mock'
+} from '../../../lib/school-detail'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '../../../lib/waiting-instructor-assignment'
 import {
   isWaitingInstructorProgramApproved,
@@ -48,10 +50,9 @@ import {
   resolveWaitingInstructorFeeGradeLabel,
 } from '../../../lib/school-add-instructor-assign'
 import {
-  maskEmailLocalAfterTwoChars,
-  maskMobilePhoneMiddleStars,
-} from '../../../lib/teacher-contact-display-mask'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+  displayServerPiiAsIs,
+  PrivacyHomeAddressDisplay,
+} from '@/features/program/shared/lib/program-pii-display'
 import {
   INSTRUCTOR_ASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_SELECT_UNAPPROVED_SINGLE_ONLY_ALERT_MESSAGE,
@@ -74,10 +75,11 @@ import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-b
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { shouldUseCompanySchoolProgramProgressRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { companySchoolQueryKeys } from '@/features/program/1c-1s/api/query-keys'
+import { fetchCompanySchoolAssignmentBoard } from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
 import {
-  fetchCompanySchoolAssignmentBoard,
+  fetchGeneralInstructorAssignmentBoard,
   findScheduleIdForLectureDate,
-} from '@/features/program/1c-1s/api/instructor-assignment-conflict-service'
+} from '@/features/program/general/api/instructor-assignment-board-service'
 import {
   buildCompanySchoolWaitingInstructorRows,
   buildCompanySchoolAssignedInstructorRows,
@@ -87,15 +89,14 @@ import {
   createInstructorAssignmentRemote,
   putRepresentativeInstructorRemote,
 } from '@/features/program/general/api/instructor-assignments-api-client'
+import type { SchoolAddInstructorAssignOption } from '../../../lib/school-add-instructor-assign'
 import {
   isOneSchoolPerDayConflictErrorCode,
   ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE,
 } from '@/features/program/1c-1s/lib/one-school-per-day-conflict'
 import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
 import { SchoolDetailAttendanceSection } from './school-detail-attendance-section'
-import {
-  SchoolDetailAddInstructorAssignModal,
-} from './school-detail-add-instructor-assign-modal'
+import { SchoolDetailAddInstructorAssignModal } from './school-detail-add-instructor-assign-modal'
 import { SchoolDetailSelectAssignConfirmModal } from './school-detail-select-assign-confirm-modal'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
@@ -112,20 +113,53 @@ import {
 } from '@/shared/constants/status'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { useGeneralProgramPosts } from '@/features/program/general/hooks/use-general-program-posts-surveys'
+import {
+  buildTemporaryParticipatingInstitutionPostFiles,
+  buildTemporaryParticipatingInstitutionPosts,
+} from '@/features/program/general/lib/participating-institution-temp-posts'
+import {
+  isGeneralProgramTempMockEnabled,
+  isGeneralProgramTempMockProgramId,
+} from '@/features/program/general/api/temp-mock-capabilities'
+import { isTempMockOrgSchoolRowId } from '@/features/program/general/lib/temp-mock-org-program'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import {
   InstitutionAddressDetailEdit,
+  InstitutionClassAndStudentCountEdit,
   InstitutionComputerInRoomEdit,
   InstitutionEducationFormatRadios,
+  InstitutionGradeSelectEdit,
   InstitutionMealEdit,
   InstitutionMultilineEdit,
+  InstitutionReadonlyInput,
   InstitutionTeacherEdit,
   InstitutionWaitingRoomEdit,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
+import {
+  buildInstitutionClassCountOptions,
+  resolveProgramParticipantMaxClassCount,
+} from '@/features/template/lib/participant-recruitment-institution-limits'
 import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
 import { isCombinedClassProgramEligible } from '@/features/program/general/lib/combined-class-edit-policy'
+import { type CombinedClassLeadTeacherCandidate } from '@/features/program/general/lib/combined-class-lead-teacher'
+import { InstitutionCombinedClassLeadTeacherModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-lead-teacher-modal'
+import { InstitutionCombinedClassCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-complete-modal'
+import {
+  buildProgramApiUnavailableSaveContent,
+  notifyProgramApiUnavailable,
+  PROGRAM_API_UNAVAILABLE_TITLE,
+} from '@/features/program/shared/lib/program-api-unavailable'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import {
+  listAdminCommentsByTargetRemote,
+  resolveLatestAdminCommentText,
+  upsertAdminCommentByTargetRemote,
+} from '@/features/program/general/api/admin-comments-api-client'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
+import { MESSAGES } from '@/shared/constants/messages'
 import { formatParticipatingCombinedClassDisplay } from '@/features/program/general/lib/participating-institution-detail-edit'
 import { InstitutionCombinedClassEditCell } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-combined-class-edit-cell'
 import {
@@ -134,11 +168,13 @@ import {
   renderProgramDetailPipeSeparated,
   renderDetailInfoPipeSeparated,
 } from '@/features/program/shared/ui/program-detail-td-divider'
+import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import './participating-institutions-section.css'
 import './instructor-assignment-status-text.css'
 import { ParticipatingInstitutionApplicationInfo } from './participating-institution-application-info'
+import { ParticipatingInstitutionScheduleChangeModal } from './participating-institution-schedule-change-modal'
 import {
   getParticipatingInstitutionActivityWithdrawScheduleOptions,
   resolveParticipatingInstitutionActivityWithdrawPatch,
@@ -158,6 +194,7 @@ import {
   type GeneralParticipatingInstitutionDetailTabKey,
   type ParticipatingInstitutionDetailTabKey,
 } from '../../../lib/participating-institution-detail-tabs'
+import type { GeneralProgramNavigationCapabilities } from '../../../hooks/use-general-program-navigation'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { TrainedTeachersParticipatingInstitutionDetailView } from '@/features/program/trained-teachers/ui/institution-detail/participating-institution-detail-view'
 
@@ -256,21 +293,14 @@ function buildCombinedClassViewValue(
   if (!programEligible) return '해당 없음'
   const display = formatParticipatingCombinedClassDisplay(detail)
   if (display === '미신청') return display
-  const parts = display.split(' | ').map(part => part.trim()).filter(Boolean)
+  const parts = display
+    .split(' | ')
+    .map(part => part.trim())
+    .filter(Boolean)
   if (parts.length <= 1) return parts[0] ?? display
   return (
-    <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider(parts)}
-    </ProgramDetailTdSegmentWrap>
+    <ProgramDetailTdSegmentWrap>{withProgramDetailTdDivider(parts)}</ProgramDetailTdSegmentWrap>
   )
-}
-
-/** 자택 주소 컬럼 표시: 개인정보 마스킹 대신 앞 두 단위(공백 기준)까지만 노출 */
-function formatHomeAddressToSecondUnit(address?: string): string {
-  if (!address) return '-'
-  const parts = address.trim().split(/\s+/).filter(Boolean)
-  if (parts.length <= 2) return parts.join(' ')
-  return `${parts[0]} ${parts[1]}`
 }
 
 function formatAssignedInstructorScheduleExport(row: AssignedInstructorDisplayRow): string {
@@ -278,12 +308,7 @@ function formatAssignedInstructorScheduleExport(row: AssignedInstructorDisplayRo
   const date = row.assignedDate ?? '-'
   const time = row.assignedTime ?? '-'
   if (date === '-' && time === '-') return '-'
-  const dateTime =
-    date !== '-' && time !== '-'
-      ? `${date} ${time}`
-      : date !== '-'
-        ? date
-        : time
+  const dateTime = date !== '-' && time !== '-' ? `${date} ${time}` : date !== '-' ? date : time
   if (row.assignedSession) return `${dateTime} | ${row.assignedSession}`
   return dateTime
 }
@@ -315,12 +340,7 @@ function formatWaitingInstructorHopeScheduleExport(row: WaitingInstructorRow): s
   const time = row.hopeTime ?? '-'
   const session = row.hopeSession
   if (date === '-' && time === '-') return '-'
-  const dateTime =
-    date !== '-' && time !== '-'
-      ? `${date} ${time}`
-      : date !== '-'
-        ? date
-        : time
+  const dateTime = date !== '-' && time !== '-' ? `${date} ${time}` : date !== '-' ? date : time
   if (!session) return dateTime
   return `${dateTime} | ${session}`
 }
@@ -329,6 +349,7 @@ export interface SchoolDetailFullpageViewProps {
   program: Program
   detail: SchoolDetailForModal
   row: ParticipatingSchoolRow
+  navigationCapabilities?: GeneralProgramNavigationCapabilities
   /** 합반 대상 lookup — 동일 프로그램 참여 기관 전체 목록 */
   participatingSchoolList?: ParticipatingSchoolRow[]
   /** URL 쿼리 파라미터와 연동 시 활성 탭 (제공 시 controlled) */
@@ -337,6 +358,11 @@ export interface SchoolDetailFullpageViewProps {
   onTabChange?: (key: SchoolDetailTabKey) => void
   onClearSchoolId: () => void
   onSaveBasicInfo?: (patch: Partial<SchoolDetailForModal> & { id: string }) => void
+  onSaveCombinedClass?: (params: {
+    combinedClassApplication: '신청' | '미신청'
+    combinedClassPartnerSchoolIds: string[]
+  }) => Promise<void>
+  combinedClassReadOnly?: boolean
   onSaveInstructorInfo?: (schoolId: string, instructors: InstructorListFormInstructor[]) => void
   savedBasicPatches?: Record<string, Partial<SchoolDetailForModal>>
   savedInstructorPatches?: Record<string, InstructorListFormInstructor[]>
@@ -351,9 +377,7 @@ export interface SchoolDetailFullpageViewProps {
   // posts: EnrollmentProgramDetailPostsTab + createGeneralProgramPost (invalidate는 부모에서 연결).
 }
 
-export function GeneralParticipatingInstitutionDetailView(
-  props: SchoolDetailFullpageViewProps
-) {
+export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFullpageViewProps) {
   if (isTrainedTeachersDetailProgram(props.program)) {
     return <TrainedTeachersParticipatingInstitutionDetailView {...props} />
   }
@@ -362,11 +386,14 @@ export function GeneralParticipatingInstitutionDetailView(
     program,
     detail,
     row,
+    navigationCapabilities,
     participatingSchoolList = [],
     activeTab: activeTabFromUrl,
     onTabChange,
     onClearSchoolId: _onClearSchoolId,
     onSaveBasicInfo,
+    onSaveCombinedClass,
+    combinedClassReadOnly = false,
     onSaveInstructorInfo,
     savedBasicPatches = {},
     savedInstructorPatches = {},
@@ -380,20 +407,31 @@ export function GeneralParticipatingInstitutionDetailView(
   const { showAlert } = useCmsAlert()
   const [internalTab, setInternalTab] = useState<SchoolDetailTabKey>('application')
   const visibleDetailTabs = useMemo(
-    () => getGeneralParticipatingInstitutionDetailTabKeys(program),
-    [program]
+    () =>
+      getGeneralParticipatingInstitutionDetailTabKeys(
+        program,
+        navigationCapabilities?.studentRosterEnabled
+      ),
+    [navigationCapabilities?.studentRosterEnabled, program]
   )
-  const activeTab = normalizeSchoolDetailTab(
+  const normalizedActiveTab = normalizeSchoolDetailTab(
     activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab,
     program
   )
+  const activeTab = visibleDetailTabs.includes(
+    normalizedActiveTab as GeneralParticipatingInstitutionDetailTabKey
+  )
+    ? normalizedActiveTab
+    : 'application'
   const setActiveTab = (key: SchoolDetailTabKey) => {
     if (onTabChange) onTabChange(key)
     else setInternalTab(key)
   }
   const [selectedAssignedKeys, setSelectedAssignedKeys] = useState<React.Key[]>([])
   const [selectedWaitingKeys, setSelectedWaitingKeys] = useState<React.Key[]>([])
-  const [completedWaitingRowKeys, setCompletedWaitingRowKeys] = useState<Set<string>>(() => new Set())
+  const [completedWaitingRowKeys, setCompletedWaitingRowKeys] = useState<Set<string>>(
+    () => new Set()
+  )
   const [disabledWaitingInstructorIds, setDisabledWaitingInstructorIds] = useState<Set<string>>(
     () => new Set()
   )
@@ -431,9 +469,42 @@ export function GeneralParticipatingInstitutionDetailView(
   } | null>(null)
   const [textbookStatusDropdownOpen, setTextbookStatusDropdownOpen] = useState(false)
   const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
-  const { posts: remotePosts, isRemoteDataSource: postsRemote, invalidatePosts } =
-    useGeneralProgramPosts(program.id)
+  const {
+    posts: remotePosts,
+    files: remotePostFiles,
+    isRemoteDataSource: postsRemote,
+    invalidatePosts,
+  } = useGeneralProgramPosts(program.id)
+  // TODO(temp-mock): 열여라 참깨 — 참여 기관 상세 게시글 검증 후 삭제
+  const temporarySchoolPosts = useMemo(
+    () =>
+      isGeneralProgramTempMockEnabled() && isTempMockOrgSchoolRowId(detail.id)
+        ? buildTemporaryParticipatingInstitutionPosts(String(program.id), detail.id)
+        : [],
+    [detail.id, program.id]
+  )
+  const temporarySchoolPostFiles = useMemo(
+    () =>
+      isGeneralProgramTempMockEnabled() && isTempMockOrgSchoolRowId(detail.id)
+        ? buildTemporaryParticipatingInstitutionPostFiles(String(program.id), detail.id)
+        : [],
+    [detail.id, program.id]
+  )
+  const postsForTab = useMemo(() => {
+    if (temporarySchoolPosts.length === 0) {
+      return postsRemote ? remotePosts : null
+    }
+    return [...temporarySchoolPosts, ...(remotePosts ?? [])]
+  }, [postsRemote, remotePosts, temporarySchoolPosts])
+  const filesForTab = useMemo(() => {
+    if (temporarySchoolPostFiles.length === 0) {
+      return postsRemote ? remotePostFiles : null
+    }
+    return [...temporarySchoolPostFiles, ...(remotePostFiles ?? [])]
+  }, [postsRemote, remotePostFiles, temporarySchoolPostFiles])
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
+  const [scheduleChangeModalOpen, setScheduleChangeModalOpen] = useState(false)
+  const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
@@ -452,31 +523,118 @@ export function GeneralParticipatingInstitutionDetailView(
     setAdminCommentDraft('')
     setAdminCommentError(undefined)
     setActivityWithdrawModalOpen(false)
+    setScheduleChangeModalOpen(false)
   }, [detail.id, detail.adminComment, savedBasicPatches[detail.id]?.adminComment])
 
-  const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
+  const organizationApplicationId = Number(row.organizationApplicationId)
+  const hasOrganizationApplicationId = Number.isFinite(organizationApplicationId)
+  const adminCommentQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.commentsByTarget(
+      'ORGANIZATION_APPLICATION',
+      hasOrganizationApplicationId ? String(organizationApplicationId) : ''
+    ),
+    queryFn: () =>
+      listAdminCommentsByTargetRemote({
+        targetType: 'ORGANIZATION_APPLICATION',
+        targetId: organizationApplicationId,
+        screenCode: 'ORGANIZATION_APPLICATION',
+      }),
+    enabled:
+      showAdminCommentSection &&
+      shouldUseGeneralApplicationsRemoteApi() &&
+      hasOrganizationApplicationId,
+    staleTime: 30_000,
+  })
+  const remoteAdminComment = resolveLatestAdminCommentText(adminCommentQuery.data)
+  const mergedDetail = {
+    ...detail,
+    ...(adminCommentQuery.data ? { adminComment: remoteAdminComment } : {}),
+    ...savedBasicPatches[detail.id],
+  }
   const sessions = row.sessions ?? []
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
+  const availableActions = mergedDetail.availableActions ?? row.availableActions
+  const canRequestActivityWithdraw =
+    !isActivityWithdrawn && (availableActions == null || availableActions.includes('GIVE_UP'))
+  const showActivityWithdrawButton =
+    isActivityWithdrawn || availableActions == null || availableActions.includes('GIVE_UP')
   const isCompanySchool = isCompanySchoolProgram(program)
   const requiredInstructorCount = resolveRequiredInstructorCount(program)
   const programId = String(program.id)
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
+  const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
   const companySchoolAssignmentConflictsEnabled =
     isCompanySchool && shouldUseCompanySchoolProgramProgressRemoteApi()
+  /** 1사1교 conflicts ON 또는 일반 progress remote ON */
+  const assignmentBoardRemoteEnabled =
+    companySchoolAssignmentConflictsEnabled || (!isCompanySchool && progressRemoteEnabled)
 
   const occupiedLectureDatesQuery = useQuery({
-    queryKey: companySchoolQueryKeys.instructorAssignmentConflicts(programId),
-    queryFn: () => fetchCompanySchoolAssignmentBoard(programId),
-    enabled: companySchoolAssignmentConflictsEnabled,
+    queryKey: isCompanySchool
+      ? companySchoolQueryKeys.instructorAssignmentConflicts(programId)
+      : generalProgramProgressQueryKeys.instructorAssignments(programId),
+    queryFn: () =>
+      isCompanySchool
+        ? fetchCompanySchoolAssignmentBoard(programId)
+        : fetchGeneralInstructorAssignmentBoard(programId),
+    enabled: assignmentBoardRemoteEnabled,
     staleTime: 30_000,
   })
   const assignmentBoard = occupiedLectureDatesQuery.data
   const occupiedLectureDatesByInstructorId = assignmentBoard?.occupiedLectureDatesByInstructorId
   const queryClient = useQueryClient()
 
+  const invalidateAssignmentBoard = useCallback(async () => {
+    if (isCompanySchool) {
+      await queryClient.invalidateQueries({
+        queryKey: companySchoolQueryKeys.instructorAssignmentConflicts(programId),
+      })
+      return
+    }
+    await queryClient.invalidateQueries({
+      queryKey: generalProgramProgressQueryKeys.instructorAssignments(programId),
+    })
+  }, [isCompanySchool, programId, queryClient])
+
+  const addAssignInstructorOptions = useMemo((): SchoolAddInstructorAssignOption[] | undefined => {
+    if (!assignmentBoardRemoteEnabled || !assignmentBoard) return undefined
+    const assignedNames = new Set(
+      (assignmentBoard.assignments ?? [])
+        .filter(a => {
+          if (a.organizationApplicationId == null || !row.organizationApplicationId) return false
+          return String(a.organizationApplicationId) === String(row.organizationApplicationId)
+        })
+        .map(a => a.instructorName?.trim())
+        .filter((name): name is string => Boolean(name))
+    )
+    return assignmentBoard.approvedInstructorApplications
+      .filter(app => {
+        if (app.instructorMemberId == null) return false
+        const name = app.instructorName?.trim()
+        if (!name || assignedNames.has(name)) return false
+        return true
+      })
+      .map(app => ({
+        value: String(app.instructorMemberId),
+        label: app.instructorName?.trim() || '이름 없음',
+        initialApproval: true,
+      }))
+  }, [
+    assignmentBoard,
+    assignmentBoardRemoteEnabled,
+    row.organizationApplicationId,
+  ])
+
   const activityWithdrawScheduleOptions = useMemo(
     () => getParticipatingInstitutionActivityWithdrawScheduleOptions(program, sessions),
     [program, sessions]
   )
+
+  const [combinedClassLeadTeacherModal, setCombinedClassLeadTeacherModal] = useState<{
+    memberRowIds: string[]
+    candidates: CombinedClassLeadTeacherCandidate[]
+  } | null>(null)
+  const [combinedClassCompleteLabel, setCombinedClassCompleteLabel] = useState<string | null>(null)
 
   const applicationInfoEdit = useParticipatingInstitutionDetailEdit({
     detail: mergedDetail,
@@ -484,20 +642,27 @@ export function GeneralParticipatingInstitutionDetailView(
     program,
     participatingSchoolList,
     onSaveBasicInfo,
+    onSaveCombinedClass,
+    combinedClassReadOnly,
+    onCombinedClassApplied: params => {
+      setCombinedClassLeadTeacherModal(params)
+    },
   })
 
   const {
     isEditing: isApplicationInfoEditing,
     draft: applicationInfoDraft,
-    validationErrors: applicationInfoValidationErrors,
     textbookOptions,
     textbookDisplay,
     usesTextbook,
     canEditTextbook,
     sameSchoolGradeOptions,
+    teacherOptions,
+    isTeacherOptionsLoading,
     isCombinedClassProgramEligible: isCombinedClassProgramEligibleFlag,
     isCombinedClassApplyRadioDisabled,
     enterEdit: enterApplicationInfoEdit,
+    cancelEdit: cancelApplicationInfoEdit,
     saveEdit: saveApplicationInfoEdit,
     updateDraft: updateApplicationInfoDraft,
   } = applicationInfoEdit
@@ -511,6 +676,28 @@ export function GeneralParticipatingInstitutionDetailView(
     () => mergedDetail.schoolName ?? row.schoolName ?? '학교 상세 정보',
     [mergedDetail.schoolName, row.schoolName]
   )
+  const revealInstitutionTeacherPersonalInfo = useCallback(
+    async (reason: string) => {
+      if (row.teacherMemberId == null) {
+        throw new Error('담당 교사 회원 ID가 없습니다.')
+      }
+      return fetchMemberRolePrivacyUnmask(row.teacherMemberId, reason, 'SCHOOL')
+    },
+    [row.teacherMemberId]
+  )
+  const applyInstitutionTeacherPersonalInfo = useCallback(
+    (payload: unknown) => {
+      if (payload == null || typeof payload !== 'object') return
+      const privacy = payload as { name?: unknown; phone?: unknown; email?: unknown }
+      onSaveBasicInfo?.({
+        id: detail.id,
+        ...(typeof privacy.name === 'string' ? { teacherName: privacy.name } : {}),
+        ...(typeof privacy.phone === 'string' ? { teacherMobile: privacy.phone } : {}),
+        ...(typeof privacy.email === 'string' ? { teacherEmail: privacy.email } : {}),
+      })
+    },
+    [detail.id, onSaveBasicInfo]
+  )
 
   const {
     personalInfoRevealed,
@@ -518,6 +705,8 @@ export function GeneralParticipatingInstitutionDetailView(
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolvePersonalInfoAccessItem,
+    revealPersonalInfo: revealInstitutionTeacherPersonalInfo,
+    onPrivacyUnmasked: applyInstitutionTeacherPersonalInfo,
     resetDeps: [detail.id],
     controlMode: 'toggleRemask',
   })
@@ -531,12 +720,64 @@ export function GeneralParticipatingInstitutionDetailView(
     setAdminCommentModalOpen(true)
   }, [isApplicationInfoEditing, mergedDetail.adminComment])
 
-  const handleAdminCommentSave = useCallback(() => {
+  const handleAdminCommentSave = useCallback(async () => {
     const trimmed = adminCommentDraft.trim()
-    onSaveBasicInfo?.({ id: detail.id, adminComment: trimmed || undefined })
-    setAdminCommentModalOpen(false)
-    setAdminCommentError(undefined)
-  }, [adminCommentDraft, detail.id, onSaveBasicInfo])
+    if (shouldUseGeneralApplicationsRemoteApi()) {
+      if (!hasOrganizationApplicationId) {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+      try {
+        const result = await upsertAdminCommentByTargetRemote({
+          targetType: 'ORGANIZATION_APPLICATION',
+          targetId: organizationApplicationId,
+          screenCode: 'ORGANIZATION_APPLICATION',
+          comment: trimmed,
+        })
+        onSaveBasicInfo?.({
+          id: detail.id,
+          adminComment: result.commentText,
+        })
+        void queryClient.invalidateQueries({
+          queryKey: generalApplicationsQueryKeys.commentsByTarget(
+            'ORGANIZATION_APPLICATION',
+            String(organizationApplicationId)
+          ),
+        })
+        setAdminCommentModalOpen(false)
+        setAdminCommentError(undefined)
+        return
+      } catch {
+        void showAlert({
+          title: '안내',
+          content: MESSAGES.error.save,
+        })
+        return
+      }
+    }
+    if (isTempMockProgram) {
+      onSaveBasicInfo?.({ id: detail.id, adminComment: trimmed })
+      setAdminCommentModalOpen(false)
+      setAdminCommentError(undefined)
+      return
+    }
+    void showAlert({
+      title: PROGRAM_API_UNAVAILABLE_TITLE,
+      content: buildProgramApiUnavailableSaveContent('참여 기관 관리자 코멘트'),
+    })
+  }, [
+    adminCommentDraft,
+    detail.id,
+    hasOrganizationApplicationId,
+    isTempMockProgram,
+    onSaveBasicInfo,
+    organizationApplicationId,
+    queryClient,
+    showAlert,
+  ])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)
@@ -556,16 +797,17 @@ export function GeneralParticipatingInstitutionDetailView(
       })
       return
     }
-    if (isApplicationInfoEditing) return
+    if (!canRequestActivityWithdraw || isApplicationInfoEditing) return
     setActivityWithdrawModalOpen(true)
-  }, [isActivityWithdrawn, isApplicationInfoEditing, showAlert])
+  }, [canRequestActivityWithdraw, isActivityWithdrawn, isApplicationInfoEditing, showAlert])
 
   const handleCancelActivityWithdraw = useCallback(() => {
+    if (activityWithdrawSubmitting) return
     setActivityWithdrawModalOpen(false)
-  }, [])
+  }, [activityWithdrawSubmitting])
 
   const handleConfirmActivityWithdraw = useCallback(
-    (payload: ActivityWithdrawScheduleModalPayload) => {
+    async (payload: ActivityWithdrawScheduleModalPayload) => {
       const patch = resolveParticipatingInstitutionActivityWithdrawPatch(
         program,
         sessions,
@@ -573,10 +815,58 @@ export function GeneralParticipatingInstitutionDetailView(
       )
       if (!patch) return
 
-      onSaveBasicInfo?.({ id: detail.id, ...patch })
-      setActivityWithdrawModalOpen(false)
+      const reason =
+        [mergedDetail.schoolName, payload.stopScheduleLabel].filter(Boolean).join(' · ') ||
+        payload.stopScheduleLabel ||
+        '활동 포기'
+
+      if (progressRemoteEnabled || isTempMockProgram) {
+        setActivityWithdrawSubmitting(true)
+        try {
+          if (progressRemoteEnabled) {
+            await giveUpGeneralParticipatingInstitution(programId, detail.id, reason)
+            await queryClient.invalidateQueries({
+              queryKey: generalProgramProgressQueryKeys.institutions(programId),
+            })
+          }
+          onSaveBasicInfo?.({ id: detail.id, ...patch })
+          setActivityWithdrawModalOpen(false)
+          showAlert({
+            title: '활동 포기',
+            content: `${mergedDetail.schoolName} 기관이 활동 포기 처리되었습니다.`,
+          })
+        } catch (error) {
+          const message =
+            error instanceof Error && error.message.trim()
+              ? error.message
+              : '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+          showAlert({
+            title: '활동 포기 실패',
+            content: message,
+          })
+        } finally {
+          setActivityWithdrawSubmitting(false)
+        }
+        return
+      }
+
+      notifyProgramApiUnavailable(
+        'general-participating-institution-give-up',
+        '일반 프로그램 · 참여 기관 활동 포기'
+      )
     },
-    [detail.id, onSaveBasicInfo, program, sessions]
+    [
+      detail.id,
+      mergedDetail.schoolName,
+      onSaveBasicInfo,
+      program,
+      programId,
+      isTempMockProgram,
+      progressRemoteEnabled,
+      queryClient,
+      sessions,
+      showAlert,
+    ]
   )
 
   const instructors =
@@ -594,26 +884,13 @@ export function GeneralParticipatingInstitutionDetailView(
 
   /** 담당 교사 정보: 담당 교사 : 이름 | Tel : … | M : … | E-mail : … */
   const teacherDisplaySegments = [
-    mergedDetail.teacherName &&
-      `담당 교사 : ${
-        privacyMasked ? MASKING_POLICY.name(mergedDetail.teacherName) : mergedDetail.teacherName
-      }`,
+    mergedDetail.teacherName && `담당 교사 : ${mergedDetail.teacherName}`,
     mergedDetail.teacherPhone &&
-      `Tel : ${
-        privacyMasked ? MASKING_POLICY.phone(mergedDetail.teacherPhone) : mergedDetail.teacherPhone
-      }`,
+      `Tel : ${displayServerPiiAsIs(mergedDetail.teacherPhone, mergedDetail.teacherPhone)}`,
     mergedDetail.teacherMobile &&
-      `M : ${
-        privacyMasked
-          ? maskMobilePhoneMiddleStars(mergedDetail.teacherMobile)
-          : mergedDetail.teacherMobile
-      }`,
+      `M : ${displayServerPiiAsIs(mergedDetail.teacherMobile, mergedDetail.teacherMobile)}`,
     mergedDetail.teacherEmail &&
-      `E-mail : ${
-        privacyMasked
-          ? maskEmailLocalAfterTwoChars(mergedDetail.teacherEmail)
-          : mergedDetail.teacherEmail
-      }`,
+      `E-mail : ${displayServerPiiAsIs(mergedDetail.teacherEmail, mergedDetail.teacherEmail)}`,
   ].filter((v): v is string => Boolean(v))
   const mealDisplay =
     mergedDetail.mealNotice === '가능'
@@ -633,122 +910,139 @@ export function GeneralParticipatingInstitutionDetailView(
     if (parts.length <= 1) return parts[0] ?? '-'
     return withTdDivider(parts)
   }
-  /** 배정된 강사 테이블용 행 — 1사1교는 assignment API */
-  const assignedRows: AssignedInstructorDisplayRow[] = useMemo(
-    () => {
-      if (isCompanySchool && assignmentBoard) {
-        const orgAppId = row.organizationApplicationId ?? ''
-        if (!orgAppId) return []
-        const apiRows = buildCompanySchoolAssignedInstructorRows({
-          assignments: assignmentBoard.assignments,
-          organizationApplicationId: orgAppId,
-          instructorNameByMemberId: assignmentBoard.instructorNameByMemberId,
-          scheduleLabelById: assignmentBoard.scheduleLabelById,
-        })
-        return apiRows.map(r => ({
-          id: r.id,
-          no: r.no,
-          role: r.role,
-          instructorName: r.instructorName,
-          contact: '',
-          email: '',
-          settlementStatus: 'none' as SettlementStatusKey,
-          homeAddress: r.homeAddress,
-          distanceToSchool: r.distanceToSchool,
-          assignedDate: r.assignedDate,
-          assignedTime: r.assignedTime,
-          assignedSession: r.assignedSession,
-          assignedScheduleLine: [r.assignedDate, r.assignedTime, r.assignedSession]
-            .filter(Boolean)
-            .join(' '),
-          assignmentId: r.assignmentId,
-          instructorMemberId: r.instructorMemberId,
-          scheduleId: r.scheduleId,
-        }))
-      }
-      const rows = getAssignedInstructorDisplayRows(instructors)
-      if (!isCompanySchool) return rows
-      const defaultScheduleLine = buildParticipatingSchoolPreferredScheduleLines(row.sessions)[0]
-      return rows.map(assignedRow => ({
-        ...assignedRow,
-        assignedScheduleLine:
-          assignedScheduleLinesByInstructorId[assignedRow.id] ?? defaultScheduleLine,
+  /** 배정된 강사 테이블용 행 — assignment board remote 시 API */
+  const assignedRows: AssignedInstructorDisplayRow[] = useMemo(() => {
+    if (assignmentBoardRemoteEnabled) {
+      if (!assignmentBoard) return []
+      const orgAppId = row.organizationApplicationId ?? ''
+      if (!orgAppId) return []
+      const apiRows = buildCompanySchoolAssignedInstructorRows({
+        assignments: assignmentBoard.assignments,
+        organizationApplicationId: orgAppId,
+        instructorNameByMemberId: assignmentBoard.instructorNameByMemberId,
+        scheduleLabelById: assignmentBoard.scheduleLabelById,
+      })
+      return apiRows.map(r => ({
+        id: r.id,
+        no: r.no,
+        role: r.role,
+        instructorName: r.instructorName,
+        contact: '',
+        email: '',
+        settlementStatus: 'none' as SettlementStatusKey,
+        homeAddress: r.homeAddress,
+        distanceToSchool: r.distanceToSchool,
+        assignedDate: r.assignedDate,
+        assignedTime: r.assignedTime,
+        assignedSession: r.assignedSession,
+        assignedScheduleLine: [r.assignedDate, r.assignedTime, r.assignedSession]
+          .filter(Boolean)
+          .join(' '),
+        assignmentId: r.assignmentId,
+        instructorMemberId: r.instructorMemberId,
+        scheduleId: r.scheduleId,
       }))
-    },
-    [
-      instructors,
-      isCompanySchool,
-      row.sessions,
-      row.organizationApplicationId,
-      assignedScheduleLinesByInstructorId,
-      assignmentBoard,
-    ]
-  )
-
-  /** 배정 대기 — 1사1교는 승인 강사신청 + 희망일정 API (가짜 일정 금지) */
-  const waitingRows: WaitingInstructorRow[] = useMemo(
-    () => {
-      if (isCompanySchool) {
-        if (!assignmentBoard) return []
-        const assignedMemberIds = new Set<string>()
-        for (const a of assignmentBoard.assignments) {
-          if (a.organizationApplicationId == null) continue
-          if (
-            row.organizationApplicationId &&
-            String(a.organizationApplicationId) === row.organizationApplicationId
-          ) {
-            if (a.instructorMemberId != null) assignedMemberIds.add(String(a.instructorMemberId))
+    }
+    // 일반 remote OFF — FE mock 프로그램만 로컬 시드
+    if (!isCompanySchool && !isTempMockProgram) return []
+    const rows = getAssignedInstructorDisplayRows(instructors)
+    const defaultScheduleLine = buildParticipatingSchoolPreferredScheduleLines(row.sessions)[0]
+    return rows.map(assignedRow => ({
+      ...assignedRow,
+      assignedScheduleLine:
+        assignedScheduleLinesByInstructorId[assignedRow.id] ?? defaultScheduleLine,
+      ...(isTempMockProgram
+        ? {
+            homeAddress:
+              instructorList.find(item => item.id === assignedRow.id)?.address?.trim() || '-',
+            distanceToSchool: `${(assignedRow.no % 4) + 1}.${(assignedRow.no % 9) + 1}km`,
+            assignedDate: row.sessions?.[0]?.date ?? '-',
+            assignedTime: row.sessions?.[0]?.timeRange ?? '-',
+            assignedSession: row.sessions?.[0]?.classNum ?? '-',
           }
-        }
-        return buildCompanySchoolWaitingInstructorRows({
-          schoolName: row.schoolName,
-          sessions: row.sessions,
-          approvedInstructors: assignmentBoard.approvedInstructorApplications,
-          assignedInstructorMemberIds: assignedMemberIds,
-          occupiedLectureDatesByInstructorId,
-        })
-          .filter(waitingRow => !completedWaitingRowKeys.has(waitingRow.id))
-          .map(waitingRow => {
-            const instructorId = getWaitingInstructorRowInstructorId(waitingRow)
-            if (
-              disabledWaitingInstructorIds.has(instructorId) &&
-              waitingRow.assignmentStatus === 'waiting'
-            ) {
-              return { ...waitingRow, assignmentStatus: 'unavailable' as const }
-            }
-            return waitingRow
-          })
-      }
+        : {}),
+    }))
+  }, [
+    instructors,
+    isCompanySchool,
+    isTempMockProgram,
+    assignmentBoardRemoteEnabled,
+    instructorList,
+    row.sessions,
+    row.organizationApplicationId,
+    assignedScheduleLinesByInstructorId,
+    assignmentBoard,
+  ])
 
-      return getWaitingInstructorRows(row.schoolName, instructorList, participatingSchoolList).filter(
-        waitingRow => !assignedInstructorIdSet.has(getWaitingInstructorRowInstructorId(waitingRow))
-      )
-    },
-    [
-      row.schoolName,
-      row.sessions,
-      row.organizationApplicationId,
-      instructorList,
-      participatingSchoolList,
-      isCompanySchool,
-      occupiedLectureDatesByInstructorId,
-      completedWaitingRowKeys,
-      disabledWaitingInstructorIds,
-      assignedInstructorIdSet,
-      assignmentBoard,
-    ]
-  )
+  /** 배정 대기 — remote 시 승인 강사신청 × 기관 sessions 합성 (전용 waiting API 없음) */
+  const waitingRows: WaitingInstructorRow[] = useMemo(() => {
+    if (assignmentBoardRemoteEnabled) {
+      if (!assignmentBoard) return []
+      if (!row.organizationApplicationId) return []
+      const assignedMemberIds = new Set<string>()
+      for (const a of assignmentBoard.assignments) {
+        if (a.organizationApplicationId == null) continue
+        if (String(a.organizationApplicationId) === String(row.organizationApplicationId)) {
+          if (a.instructorMemberId != null) assignedMemberIds.add(String(a.instructorMemberId))
+        }
+      }
+      return buildCompanySchoolWaitingInstructorRows({
+        schoolName: row.schoolName,
+        sessions: row.sessions,
+        approvedInstructors: assignmentBoard.approvedInstructorApplications,
+        assignedInstructorMemberIds: assignedMemberIds,
+        occupiedLectureDatesByInstructorId,
+      })
+        .filter(waitingRow => !completedWaitingRowKeys.has(waitingRow.id))
+        .map(waitingRow => {
+          const instructorId = getWaitingInstructorRowInstructorId(waitingRow)
+          if (
+            disabledWaitingInstructorIds.has(instructorId) &&
+            waitingRow.assignmentStatus === 'waiting'
+          ) {
+            return { ...waitingRow, assignmentStatus: 'unavailable' as const }
+          }
+          return waitingRow
+        })
+    }
+
+    // 일반 remote OFF — FE mock 프로그램만 로컬 시드
+    if (!isCompanySchool && !isTempMockProgram) return []
+
+    return getWaitingInstructorRows(row.schoolName, instructorList, participatingSchoolList).filter(
+      waitingRow => !assignedInstructorIdSet.has(getWaitingInstructorRowInstructorId(waitingRow))
+    )
+  }, [
+    row.schoolName,
+    row.sessions,
+    row.organizationApplicationId,
+    instructorList,
+    participatingSchoolList,
+    isCompanySchool,
+    isTempMockProgram,
+    assignmentBoardRemoteEnabled,
+    occupiedLectureDatesByInstructorId,
+    completedWaitingRowKeys,
+    disabledWaitingInstructorIds,
+    assignedInstructorIdSet,
+    assignmentBoard,
+  ])
 
   const assignedInstructorNames = useMemo(
-    () => instructors.map(i => i.instructorName),
-    [instructors]
+    () =>
+      assignmentBoardRemoteEnabled
+        ? assignedRows.map(i => i.instructorName)
+        : instructors.map(i => i.instructorName),
+    [assignmentBoardRemoteEnabled, assignedRows, instructors]
   )
 
-  /** 1사1교는 assignment API 행 수, 그 외는 로컬 instructors */
-  const currentAssignedCount = isCompanySchool ? assignedRows.length : instructors.length
+  /** assignment board remote 시 API 행 수, 그 외(1사1교 local)는 instructors */
+  const currentAssignedCount = assignmentBoardRemoteEnabled
+    ? assignedRows.length
+    : instructors.length
 
   const currentLeadName =
-    (isCompanySchool
+    (assignmentBoardRemoteEnabled
       ? assignedRows.find(i => i.role === 'lead')?.instructorName
       : instructors.find((i: { role: InstructorRoleKey }) => i.role === 'lead')?.instructorName) ??
     null
@@ -761,12 +1055,12 @@ export function GeneralParticipatingInstitutionDetailView(
     [waitingRows, selectedWaitingKeys]
   )
 
-  /** 선택 배정 — 1사1교는 API create, 그 외는 기존 로컬 반영 */
+  /** 선택 배정 — assignment board remote 시 API create, 일반 remote OFF는 unavailable */
   const finalizeSelectAssign = useCallback(
     async (rows: WaitingInstructorRow[], showApprovalAlarmSection: boolean) => {
       if (rows.length === 0) return
 
-      if (isCompanySchool && companySchoolAssignmentConflictsEnabled) {
+      if (assignmentBoardRemoteEnabled) {
         const orgAppId = row.organizationApplicationId
         if (!orgAppId) {
           showAlert({
@@ -777,7 +1071,10 @@ export function GeneralParticipatingInstitutionDetailView(
           return
         }
         if (!assignmentBoard) {
-          showAlert({ title: '안내', content: '배정 데이터를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.' })
+          showAlert({
+            title: '안내',
+            content: '배정 데이터를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.',
+          })
           return
         }
 
@@ -841,9 +1138,7 @@ export function GeneralParticipatingInstitutionDetailView(
             })
             leadAssigned = true
           }
-          await queryClient.invalidateQueries({
-            queryKey: companySchoolQueryKeys.instructorAssignmentConflicts(programId),
-          })
+          await invalidateAssignmentBoard()
           setSelectAssignConfirmOpen(false)
           setSelectAssignNewGuideOpen(false)
           setSelectAssignFeeApprovalOpen(false)
@@ -880,6 +1175,14 @@ export function GeneralParticipatingInstitutionDetailView(
         return
       }
 
+      if (!isCompanySchool && !isTempMockProgram) {
+        void showAlert({
+          title: PROGRAM_API_UNAVAILABLE_TITLE,
+          content: buildProgramApiUnavailableSaveContent('강사 배정'),
+        })
+        return
+      }
+
       const existingFormList: InstructorListFormInstructor[] = instructors.map(
         ({ id, role, instructorName, contact, email }) => ({
           id,
@@ -889,24 +1192,25 @@ export function GeneralParticipatingInstitutionDetailView(
           email,
         })
       )
-      const newFormList: InstructorListFormInstructor[] = rows
-        .reduce<InstructorListFormInstructor[]>((acc, w) => {
-          const instructorId = getWaitingInstructorRowInstructorId(w)
-          if (acc.some(item => item.id === instructorId)) return acc
-          const fromList = instructorList.find(r => r.id === instructorId)
-          if (!fromList) return acc
-          acc.push({
-            id: fromList.id,
-            role:
-              instructors.length === 0 && acc.length === 0
-                ? ('lead' as InstructorRoleKey)
-                : ('assistant' as InstructorRoleKey),
-            instructorName: fromList.instructorName,
-            contact: fromList.contact ?? '',
-            email: fromList.email ?? '',
-          })
-          return acc
-        }, [])
+      const newFormList: InstructorListFormInstructor[] = rows.reduce<
+        InstructorListFormInstructor[]
+      >((acc, w) => {
+        const instructorId = getWaitingInstructorRowInstructorId(w)
+        if (acc.some(item => item.id === instructorId)) return acc
+        const fromList = instructorList.find(r => r.id === instructorId)
+        if (!fromList) return acc
+        acc.push({
+          id: fromList.id,
+          role:
+            instructors.length === 0 && acc.length === 0
+              ? ('lead' as InstructorRoleKey)
+              : ('assistant' as InstructorRoleKey),
+          instructorName: fromList.instructorName,
+          contact: fromList.contact ?? '',
+          email: fromList.email ?? '',
+        })
+        return acc
+      }, [])
 
       if (newFormList.length === 0) return
 
@@ -929,7 +1233,8 @@ export function GeneralParticipatingInstitutionDetailView(
       setAssignedScheduleLinesByInstructorId(prev => {
         const next = { ...prev }
         rows.forEach(waitingRow => {
-          const scheduleLine = waitingRow.hopeScheduleLine ?? formatWaitingInstructorHopeScheduleExport(waitingRow)
+          const scheduleLine =
+            waitingRow.hopeScheduleLine ?? formatWaitingInstructorHopeScheduleExport(waitingRow)
           if (scheduleLine && scheduleLine !== '-') {
             next[getWaitingInstructorRowInstructorId(waitingRow)] = scheduleLine
           }
@@ -958,12 +1263,12 @@ export function GeneralParticipatingInstitutionDetailView(
       row.schoolName,
       row.organizationApplicationId,
       isCompanySchool,
-      companySchoolAssignmentConflictsEnabled,
+      assignmentBoardRemoteEnabled,
       assignmentBoard,
       assignedRows,
       currentAssignedCount,
       programId,
-      queryClient,
+      invalidateAssignmentBoard,
       showAlert,
     ]
   )
@@ -975,7 +1280,10 @@ export function GeneralParticipatingInstitutionDetailView(
 
   const handleUnassignClick = useCallback(() => {
     if (selectedAssignedKeys.length === 0) {
-      showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE })
+      showAlert({
+        title: '안내',
+        content: INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE,
+      })
       return
     }
     setUnassignConfirmOpen(true)
@@ -988,7 +1296,9 @@ export function GeneralParticipatingInstitutionDetailView(
     }
 
     const unapprovedRows = selectedWaitingRows.filter(w => {
-      const participating = instructorList.find(r => r.id === getWaitingInstructorRowInstructorId(w))
+      const participating = instructorList.find(
+        r => r.id === getWaitingInstructorRowInstructorId(w)
+      )
       return !isWaitingInstructorProgramApproved(w.instructorName, participating, programId)
     })
 
@@ -1027,16 +1337,14 @@ export function GeneralParticipatingInstitutionDetailView(
       const removedRows = assignedRows.filter(r => selectedAssignedKeys.includes(r.id))
       const removedInstructorNames = removedRows.map(r => r.instructorName)
 
-      if (isCompanySchool && companySchoolAssignmentConflictsEnabled) {
+      if (assignmentBoardRemoteEnabled) {
         try {
           for (const removed of removedRows) {
             const assignmentId = removed.assignmentId ?? removed.id
             if (!assignmentId) continue
             await cancelInstructorAssignmentRemote(String(assignmentId))
           }
-          await queryClient.invalidateQueries({
-            queryKey: companySchoolQueryKeys.instructorAssignmentConflicts(programId),
-          })
+          await invalidateAssignmentBoard()
         } catch {
           showAlert({
             title: '배정 취소 실패',
@@ -1044,6 +1352,12 @@ export function GeneralParticipatingInstitutionDetailView(
           })
           return
         }
+      } else if (!isCompanySchool && !isTempMockProgram) {
+        void showAlert({
+          title: PROGRAM_API_UNAVAILABLE_TITLE,
+          content: buildProgramApiUnavailableSaveContent('강사 배정 취소'),
+        })
+        return
       } else {
         const newFormList: InstructorListFormInstructor[] = instructors
           .filter(inv => !selectedAssignedKeys.includes(inv.id))
@@ -1080,28 +1394,29 @@ export function GeneralParticipatingInstitutionDetailView(
       onSaveInstructorInfo,
       row.schoolName,
       isCompanySchool,
-      companySchoolAssignmentConflictsEnabled,
-      programId,
-      queryClient,
+      assignmentBoardRemoteEnabled,
+      invalidateAssignmentBoard,
       showAlert,
     ]
   )
 
   const applyRoleChange = useCallback(
     async (instructorId: string, newRole: InstructorRoleKey) => {
-      if (
-        isCompanySchool &&
-        companySchoolAssignmentConflictsEnabled &&
-        newRole === 'lead'
-      ) {
+      if (assignmentBoardRemoteEnabled && newRole === 'lead') {
         const target = assignedRows.find(r => r.id === instructorId)
         const memberId = Number(target?.instructorMemberId)
         const orgAppId = Number(row.organizationApplicationId)
         const scheduleId = Number(target?.scheduleId)
-        if (!Number.isFinite(memberId) || memberId <= 0 || !Number.isFinite(orgAppId) || orgAppId <= 0) {
+        if (
+          !Number.isFinite(memberId) ||
+          memberId <= 0 ||
+          !Number.isFinite(orgAppId) ||
+          orgAppId <= 0
+        ) {
           showAlert({
             title: '안내',
-            content: '대표 강사 변경에 필요한 instructorMemberId / organizationApplicationId가 없습니다.',
+            content:
+              '대표 강사 변경에 필요한 instructorMemberId / organizationApplicationId가 없습니다.',
           })
           return
         }
@@ -1111,9 +1426,7 @@ export function GeneralParticipatingInstitutionDetailView(
             organizationApplicationId: orgAppId,
             ...(Number.isFinite(scheduleId) && scheduleId > 0 ? { scheduleId } : {}),
           })
-          await queryClient.invalidateQueries({
-            queryKey: companySchoolQueryKeys.instructorAssignmentConflicts(programId),
-          })
+          await invalidateAssignmentBoard()
           setOpenRoleDropdownId(null)
           return
         } catch {
@@ -1123,6 +1436,14 @@ export function GeneralParticipatingInstitutionDetailView(
           })
           return
         }
+      }
+
+      if (!isCompanySchool && !isTempMockProgram) {
+        void showAlert({
+          title: PROGRAM_API_UNAVAILABLE_TITLE,
+          content: buildProgramApiUnavailableSaveContent('대표 강사 변경'),
+        })
+        return
       }
 
       const updated = instructors.map(inv => ({
@@ -1146,17 +1467,17 @@ export function GeneralParticipatingInstitutionDetailView(
       detail.id,
       onSaveInstructorInfo,
       isCompanySchool,
-      companySchoolAssignmentConflictsEnabled,
+      assignmentBoardRemoteEnabled,
       assignedRows,
       row.organizationApplicationId,
       programId,
-      queryClient,
+      invalidateAssignmentBoard,
       showAlert,
     ]
   )
   const handleRoleChange = useCallback(
     (instructorId: string, newRole: InstructorRoleKey) => {
-      const roleSource = isCompanySchool ? assignedRows : instructors
+      const roleSource = assignmentBoardRemoteEnabled ? assignedRows : instructors
       if (newRole === 'lead') {
         const currentLead = roleSource.find(inv => inv.role === 'lead')
         const target = roleSource.find(inv => inv.id === instructorId)
@@ -1171,7 +1492,7 @@ export function GeneralParticipatingInstitutionDetailView(
       }
       void applyRoleChange(instructorId, newRole)
     },
-    [instructors, assignedRows, isCompanySchool, applyRoleChange]
+    [instructors, assignedRows, assignmentBoardRemoteEnabled, applyRoleChange]
   )
 
   const assignedInstructorColumns: ColumnsType<AssignedInstructorDisplayRow> = useMemo(
@@ -1211,14 +1532,16 @@ export function GeneralParticipatingInstitutionDetailView(
         dataIndex: 'instructorName',
         key: 'instructorName',
         width: 100,
-        render: (v: string | undefined) => (v ? (privacyMasked ? MASKING_POLICY.name(v) : v) : '-'),
+        render: (v: string | undefined) => (v ? v : '-'),
       },
       {
         title: '자택 주소지',
         dataIndex: 'homeAddress',
         key: 'homeAddress',
         width: 160,
-        render: (v: string | undefined) => formatHomeAddressToSecondUnit(v),
+        render: (v: string | undefined) => (
+          <PrivacyHomeAddressDisplay address={v} revealed={!privacyMasked} />
+        ),
       },
       {
         title: '기관과의 거리',
@@ -1272,14 +1595,16 @@ export function GeneralParticipatingInstitutionDetailView(
         dataIndex: 'instructorName',
         key: 'instructorName',
         width: 100,
-        render: (v: string | undefined) => (v ? (privacyMasked ? MASKING_POLICY.name(v) : v) : '-'),
+        render: (v: string | undefined) => (v ? v : '-'),
       },
       {
         title: '자택 주소지',
         dataIndex: 'homeAddress',
         key: 'homeAddress',
         width: 160,
-        render: (v: string | undefined) => formatHomeAddressToSecondUnit(v),
+        render: (v: string | undefined) => (
+          <PrivacyHomeAddressDisplay address={v} revealed={!privacyMasked} />
+        ),
       },
       {
         title: '기관과의 거리',
@@ -1304,11 +1629,7 @@ export function GeneralParticipatingInstitutionDetailView(
           const session = record.hopeSession
           if (date === '-' && time === '-') return '-'
           const dateTime =
-            date !== '-' && time !== '-'
-              ? `${date} ${time}`
-              : date !== '-'
-                ? date
-                : time
+            date !== '-' && time !== '-' ? `${date} ${time}` : date !== '-' ? date : time
           if (!session) return dateTime
           return (
             <span className="school-detail-fullpage-view__assigned-datetime-cell">
@@ -1383,7 +1704,7 @@ export function GeneralParticipatingInstitutionDetailView(
         no: row.no,
         role: INSTRUCTOR_ROLE_LABELS[row.role],
         instructorName: row.instructorName,
-        homeAddress: formatHomeAddressToSecondUnit(row.homeAddress),
+        homeAddress: displayServerPiiAsIs(row.homeAddress),
         distanceToSchool: row.distanceToSchool ?? '-',
         assignedSchedule: formatAssignedInstructorScheduleExport(row),
         settlementStatus: getInstructorSettlementStatusLabel(row.settlementStatus),
@@ -1396,7 +1717,7 @@ export function GeneralParticipatingInstitutionDetailView(
       waitingRows.map(row => ({
         no: row.no,
         instructorName: row.instructorName,
-        homeAddress: formatHomeAddressToSecondUnit(row.homeAddress),
+        homeAddress: displayServerPiiAsIs(row.homeAddress),
         distanceToSchool: row.distanceToSchool ?? '-',
         hopeSchedule: formatWaitingInstructorHopeScheduleExport(row),
         assignmentStatus: WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[row.assignmentStatus],
@@ -1442,8 +1763,10 @@ export function GeneralParticipatingInstitutionDetailView(
     )
 
   const hasSelectedTextbook =
-    (mergedDetail.textbookId?.trim() ?? '') !== '' || (mergedDetail.textbookName?.trim() ?? '') !== ''
-  const textbookNameView = isCompanySchool && !hasSelectedTextbook ? '미정' : textbookDisplay.textbookName
+    (mergedDetail.textbookId?.trim() ?? '') !== '' ||
+    (mergedDetail.textbookName?.trim() ?? '') !== ''
+  const textbookNameView =
+    isCompanySchool && !hasSelectedTextbook ? '미정' : textbookDisplay.textbookName
   const kitsAndQty =
     hasSelectedTextbook && textbookDisplay.textbookKits > 0
       ? `${textbookDisplay.textbookKits}키트 (${textbookDisplay.textbookQuantity}권)`
@@ -1469,13 +1792,6 @@ export function GeneralParticipatingInstitutionDetailView(
             })
           }}
         />
-        {applicationInfoValidationErrors?.textbookId ||
-        applicationInfoValidationErrors?.textbookName ? (
-          <span className="institution-basic-info__field-error">
-            {applicationInfoValidationErrors.textbookId ??
-              applicationInfoValidationErrors.textbookName}
-          </span>
-        ) : null}
       </div>
     ) : null
 
@@ -1511,19 +1827,30 @@ export function GeneralParticipatingInstitutionDetailView(
         sameSchoolGradeOptions={sameSchoolGradeOptions}
         isProgramEligible={combinedClassProgramEligible}
         isApplyRadioDisabled={isCombinedClassApplyRadioDisabled}
-        validationError={applicationInfoValidationErrors?.combinedClassPartnerSchoolIds}
+        readOnly={combinedClassReadOnly}
       />
     ) : (
       buildCombinedClassViewValue(mergedDetail, combinedClassProgramEligible)
     )
 
-  const isApplicationDetailEditing =
-    isApplicationInfoEditing && applicationInfoDraft != null
+  const isApplicationDetailEditing = isApplicationInfoEditing && applicationInfoDraft != null
 
-  const classAndCountDisplay = withProgramDetailTdDivider([
-    `${mergedDetail.classCount}개 학급`,
-    `총 ${mergedDetail.studentCount}명`,
-  ])
+  const classCountOptions = useMemo(
+    () => buildInstitutionClassCountOptions(resolveProgramParticipantMaxClassCount(program)),
+    [program]
+  )
+  const classAndCountDisplay = isApplicationDetailEditing ? (
+    <InstitutionClassAndStudentCountEdit
+      classCount={applicationInfoDraft.classCount}
+      studentCount={applicationInfoDraft.studentCount}
+      classCountOptions={classCountOptions}
+      onChange={patch => updateApplicationInfoDraft(patch)}
+    />
+  ) : (
+    withProgramDetailTdDivider(
+      formatClassStudentCountSegments(mergedDetail.classCount, mergedDetail.studentCount)
+    )
+  )
 
   return (
     <div className="school-detail-fullpage-view">
@@ -1540,24 +1867,30 @@ export function GeneralParticipatingInstitutionDetailView(
         trailing={
           activeTab === 'application' ? (
             <>
-              <CmsButton
-                variant="delete"
-                size="large"
-                width={140}
-                disabled={isActivityWithdrawn || isApplicationInfoEditing}
-                onClick={handleRequestActivityWithdraw}
-              >
-                활동 포기
-              </CmsButton>
-              <CmsButton
-                {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
-                  onEnterEdit: enterApplicationInfoEdit,
-                  onSaveEdit: () => saveApplicationInfoEdit(),
-                })}
-              >
-                {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-              </CmsButton>
+              {showActivityWithdrawButton ? (
+                <CmsButton
+                  variant="delete"
+                  size="large"
+                  width={140}
+                  disabled={
+                    !canRequestActivityWithdraw ||
+                    isApplicationInfoEditing ||
+                    activityWithdrawSubmitting
+                  }
+                  onClick={handleRequestActivityWithdraw}
+                >
+                  활동 포기
+                </CmsButton>
+              ) : null}
+              <ProgramEditInfoActions
+                isEditing={isApplicationInfoEditing}
+                idleVariant="secondary"
+                onEdit={enterApplicationInfoEdit}
+                onCancel={cancelApplicationInfoEdit}
+                onSave={() => {
+                  void saveApplicationInfoEdit()
+                }}
+              />
               {showAdminCommentSection ? (
                 <CmsButton
                   variant="primary"
@@ -1577,7 +1910,12 @@ export function GeneralParticipatingInstitutionDetailView(
               />
             </>
           ) : activeTab === 'posts' ? (
-            <CmsButton variant="primary" size="large" width={160} onClick={() => setPostWriteModalOpen(true)}>
+            <CmsButton
+              variant="primary"
+              size="medium"
+              className="school-detail-fullpage-view__posts-register-btn"
+              onClick={() => setPostWriteModalOpen(true)}
+            >
               게시글 등록
             </CmsButton>
           ) : null
@@ -1588,31 +1926,49 @@ export function GeneralParticipatingInstitutionDetailView(
         {activeTab === 'application' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__application-tab">
             <ParticipatingInstitutionApplicationInfo
-              formError={applicationInfoValidationErrors?.form}
+              isBasicInfoEditing={isApplicationInfoEditing}
               showAdminComment={showAdminCommentSection}
               adminComment={mergedDetail.adminComment}
               isAdminCommentEditing={false}
               adminCommentError={adminCommentError}
-              programProgressCell={
-                <ProgramEnrollmentStatusText status={programProgressStatus} />
-              }
+              programProgressCell={<ProgramEnrollmentStatusText status={programProgressStatus} />}
               textbookCell={textbookCell}
               combinedClassCell={combinedClassCell}
               usesTextbook={isCompanySchool || usesTextbook}
               textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
               hideCombinedClass={isCompanySchool}
-              schoolName={mergedDetail.schoolName}
-              educationGrade={mergedDetail.educationGrade}
-              region={mergedDetail.region}
+              schoolName={
+                isApplicationDetailEditing ? (
+                  <InstitutionReadonlyInput value={mergedDetail.schoolName ?? ''} />
+                ) : (
+                  mergedDetail.schoolName
+                )
+              }
+              educationGrade={
+                isApplicationDetailEditing ? (
+                  <InstitutionGradeSelectEdit
+                    value={applicationInfoDraft.educationGrade}
+                    onChange={value => updateApplicationInfoDraft({ educationGrade: value })}
+                  />
+                ) : (
+                  mergedDetail.educationGrade
+                )
+              }
+              region={
+                isApplicationDetailEditing ? (
+                  <InstitutionReadonlyInput value={mergedDetail.region ?? ''} />
+                ) : (
+                  mergedDetail.region
+                )
+              }
               addressDetail={
                 isApplicationDetailEditing ? (
                   <InstitutionAddressDetailEdit
                     value={applicationInfoDraft.addressDetail}
                     onChange={value => updateApplicationInfoDraft({ addressDetail: value })}
-                    error={applicationInfoValidationErrors?.addressDetail}
                   />
                 ) : (
-                  mergedDetail.addressDetail ?? '-'
+                  (mergedDetail.addressDetail ?? '-')
                 )
               }
               classAndCount={classAndCountDisplay}
@@ -1621,10 +1977,9 @@ export function GeneralParticipatingInstitutionDetailView(
                   <InstitutionEducationFormatRadios
                     value={applicationInfoDraft.educationFormat}
                     onChange={value => updateApplicationInfoDraft({ educationFormat: value })}
-                    error={applicationInfoValidationErrors?.educationFormat}
                   />
                 ) : (
-                  mergedDetail.educationFormat ?? '-'
+                  (mergedDetail.educationFormat ?? '-')
                 )
               }
               teacherInfo={
@@ -1634,8 +1989,9 @@ export function GeneralParticipatingInstitutionDetailView(
                     phone={applicationInfoDraft.teacherPhone}
                     mobile={applicationInfoDraft.teacherMobile}
                     email={applicationInfoDraft.teacherEmail}
+                    teacherOptions={teacherOptions}
+                    isTeacherOptionsLoading={isTeacherOptionsLoading}
                     onChange={patch => updateApplicationInfoDraft(patch)}
-                    errors={applicationInfoValidationErrors}
                   />
                 ) : teacherDisplaySegments.length > 0 ? (
                   withProgramDetailTdDivider(teacherDisplaySegments)
@@ -1649,10 +2005,9 @@ export function GeneralParticipatingInstitutionDetailView(
                     value={applicationInfoDraft.applicationReason}
                     onChange={value => updateApplicationInfoDraft({ applicationReason: value })}
                     placeholder="신청 사유를 입력해 주세요."
-                    error={applicationInfoValidationErrors?.applicationReason}
                   />
                 ) : (
-                  mergedDetail.applicationReason ?? '-'
+                  (mergedDetail.applicationReason ?? '-')
                 )
               }
               otherRequests={
@@ -1661,10 +2016,9 @@ export function GeneralParticipatingInstitutionDetailView(
                     value={applicationInfoDraft.otherRequests}
                     onChange={value => updateApplicationInfoDraft({ otherRequests: value })}
                     placeholder="기타 요청사항을 입력해 주세요."
-                    error={applicationInfoValidationErrors?.otherRequests}
                   />
                 ) : (
-                  mergedDetail.otherRequests ?? '-'
+                  (mergedDetail.otherRequests ?? '-')
                 )
               }
               computerInRoom={
@@ -1672,10 +2026,9 @@ export function GeneralParticipatingInstitutionDetailView(
                   <InstitutionComputerInRoomEdit
                     value={applicationInfoDraft.computerInRoom}
                     onChange={value => updateApplicationInfoDraft({ computerInRoom: value })}
-                    error={applicationInfoValidationErrors?.computerInRoom}
                   />
                 ) : (
-                  mergedDetail.computerInRoom ?? '-'
+                  (mergedDetail.computerInRoom ?? '-')
                 )
               }
               waitingPlace={
@@ -1684,10 +2037,9 @@ export function GeneralParticipatingInstitutionDetailView(
                     available={applicationInfoDraft.waitingRoomAvailable}
                     location={applicationInfoDraft.waitingRoomLocation}
                     onChange={patch => updateApplicationInfoDraft(patch)}
-                    error={applicationInfoValidationErrors?.waitingRoomLocation}
                   />
                 ) : (
-                  mergedDetail.waitingRoomLocation ?? '-'
+                  (mergedDetail.waitingRoomLocation ?? '-')
                 )
               }
               mealInfo={
@@ -1696,7 +2048,6 @@ export function GeneralParticipatingInstitutionDetailView(
                     provided={applicationInfoDraft.mealProvided}
                     notice={applicationInfoDraft.mealNotice}
                     onChange={patch => updateApplicationInfoDraft(patch)}
-                    error={applicationInfoValidationErrors?.mealNotice}
                   />
                 ) : (
                   mealDisplay
@@ -1708,16 +2059,16 @@ export function GeneralParticipatingInstitutionDetailView(
                     value={applicationInfoDraft.parkingInfo}
                     onChange={value => updateApplicationInfoDraft({ parkingInfo: value })}
                     placeholder="주차, 전달사항 등을 입력해 주세요."
-                    error={applicationInfoValidationErrors?.parkingInfo}
                   />
                 ) : (
-                  mergedDetail.parkingInfo ?? '-'
+                  (mergedDetail.parkingInfo ?? '-')
                 )
               }
               criminalCheck={formatGuidanceSegmentValue(mergedDetail.criminalCheckRequest)}
               program={program}
               sessions={sessions}
               useCompanySchoolScheduleFormat={isCompanySchool}
+              onScheduleChangeClick={() => setScheduleChangeModalOpen(true)}
             />
           </div>
         )}
@@ -1730,16 +2081,15 @@ export function GeneralParticipatingInstitutionDetailView(
               classCount={mergedDetail.classCount}
               schoolName={mergedDetail.schoolName ?? row.schoolName ?? ''}
               educationGrade={mergedDetail.educationGrade ?? ''}
+              organizationApplicationId={row.organizationApplicationId}
               programId={program.id}
               programTitle={program.mainTitle ?? program.title ?? ''}
               programStartDate={program.startDate}
               programEndDate={program.endDate}
               participationAppliedAt={mergedDetail.participationAppliedAt}
-              hasStudentSatisfactionSurvey={
-                normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys ?? []).includes(
-                  'satisfaction'
-                )
-              }
+              hasStudentSatisfactionSurvey={normalizeGeneralSurveyMenuKeys(
+                program.generalSurveyMenuKeys ?? []
+              ).includes('satisfaction')}
               readOnly={false}
               onViewDetail={() => {}}
               onSaveEdit={() => {}}
@@ -1753,23 +2103,17 @@ export function GeneralParticipatingInstitutionDetailView(
             <div className="school-detail-fullpage-view__instructor-section">
               <div className="table-header-actions">
                 <div className="table-header-title--wrapper">
-                  <span className="table-title">
-                    배정된 강사 목록
-                  </span>
+                  <span className="table-title">배정된 강사 목록</span>
                   <span className="table-description">
                     {currentAssignedCount} / {requiredInstructorCount}명
                   </span>
                 </div>
                 <div className="info-section-buttons--wrapper">
-                  <CmsButton
-                    variant="delete"
-                    size="large"
-                    onClick={handleUnassignClick}
-                  >
+                  <CmsButton variant="delete" size="large" onClick={handleUnassignClick}>
                     배정 취소
                   </CmsButton>
                   <CmsButton
-                    variant="primary"
+                    variant="secondary"
                     size="large"
                     className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
                     onClick={() => {
@@ -1811,16 +2155,12 @@ export function GeneralParticipatingInstitutionDetailView(
             <div className="school-detail-fullpage-view__instructor-section school-detail-fullpage-view__instructor-section--waiting">
               <div className="table-header-actions">
                 <div className="table-header-title--wrapper">
-                  <span className="table-title">
-                    배정 대기 강사 목록
-                  </span>
-                  <span className="table-description">
-                    {waitingRows.length}건
-                  </span>
+                  <span className="table-title">배정 대기 강사 목록</span>
+                  <span className="table-description">{waitingRows.length}건</span>
                 </div>
                 <div className="info-section-buttons--wrapper">
                   <CmsButton
-                    variant="primary"
+                    variant="secondary"
                     size="large"
                     className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
                     onClick={handleSelectAssignClick}
@@ -1884,48 +2224,185 @@ export function GeneralParticipatingInstitutionDetailView(
               participatingInstructorList={instructorList}
               participatingSchoolList={participatingSchoolList}
               assignedInstructorNames={assignedInstructorNames}
+              instructorOptions={addAssignInstructorOptions}
               currentLeadInstructorName={currentLeadName}
               currentAssignedCount={currentAssignedCount}
               requiredInstructorCount={requiredInstructorCount}
               overflowAlreadyConfirmed={addModalOpenedFromOverflow}
               onAdd={(_instructorId, role, option, _meta) => {
-                const nextRole: InstructorRoleKey = instructors.length === 0 ? 'lead' : role
-                const existingFormList: InstructorListFormInstructor[] = instructors.map(
-                  ({ id, role: r, instructorName, contact, email }) => ({
-                    id,
-                    role: nextRole === 'lead' ? 'assistant' : r,
-                    instructorName,
-                    contact,
-                    email,
+                void (async () => {
+                  if (assignmentBoardRemoteEnabled) {
+                    const orgAppId = row.organizationApplicationId
+                    if (!orgAppId) {
+                      showAlert({
+                        title: '안내',
+                        content:
+                          '기관 신청 ID가 없어 배정할 수 없습니다. 참여 기관 API에 organizationApplicationId(sourceApplicationId) 매핑이 필요합니다.',
+                      })
+                      return
+                    }
+                    if (!assignmentBoard) {
+                      showAlert({
+                        title: '안내',
+                        content: '배정 데이터를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.',
+                      })
+                      return
+                    }
+
+                    const memberId = Number(option.value)
+                    if (!Number.isFinite(memberId) || memberId <= 0) {
+                      showAlert({
+                        title: '안내',
+                        content: `강사 memberId가 없어 배정할 수 없습니다. (${option.label})`,
+                      })
+                      return
+                    }
+
+                    const sessionIds = _meta?.sessionIds ?? []
+                    const selectedSessions = (row.sessions ?? []).filter(session =>
+                      sessionIds.includes(
+                        buildSchoolAddInstructorSessionSlotKey(row.id, session)
+                      )
+                    )
+                    if (selectedSessions.length === 0) {
+                      showAlert({
+                        title: '안내',
+                        content: '배정할 교육 일정을 선택해 주세요.',
+                      })
+                      return
+                    }
+
+                    const applicationIdRaw = assignmentBoard.approvedInstructorApplications.find(
+                      app =>
+                        app.instructorMemberId != null &&
+                        String(app.instructorMemberId) === String(memberId)
+                    )?.id
+
+                    try {
+                      let leadAssigned =
+                        currentAssignedCount > 0 && assignedRows.some(i => i.role === 'lead')
+                      const wantLead = role === 'lead' || currentAssignedCount === 0
+                      for (const session of selectedSessions) {
+                        if (session.scheduleUnresolved) {
+                          showAlert({
+                            title: '안내',
+                            content: `희망일에 대응하는 program schedule이 없습니다. (일정 미생성)`,
+                          })
+                          return
+                        }
+                        let scheduleId: number | undefined =
+                          typeof session.resolvedScheduleId === 'number' &&
+                          session.resolvedScheduleId > 0
+                            ? session.resolvedScheduleId
+                            : undefined
+                        const requestedScheduleId = session.requestedScheduleId
+                        if (scheduleId == null && requestedScheduleId == null) {
+                          scheduleId =
+                            findScheduleIdForLectureDate(
+                              assignmentBoard.schedules,
+                              session.date
+                            ) ?? undefined
+                        }
+                        if (scheduleId == null && requestedScheduleId == null) {
+                          showAlert({
+                            title: '안내',
+                            content:
+                              '희망일에 대응하는 program schedule이 없습니다. requestedScheduleId 또는 schedule 매핑이 필요합니다.',
+                          })
+                          return
+                        }
+                        await createInstructorAssignmentRemote(programId, {
+                          instructorMemberId: memberId,
+                          ...(scheduleId != null ? { scheduleId } : {}),
+                          ...(requestedScheduleId != null ? { requestedScheduleId } : {}),
+                          organizationApplicationId: Number(orgAppId),
+                          instructorApplicationId:
+                            applicationIdRaw != null ? Number(applicationIdRaw) : undefined,
+                          scheduleLead: wantLead && !leadAssigned,
+                        })
+                        leadAssigned = true
+                      }
+                      await invalidateAssignmentBoard()
+                      setAddAssignModalOpen(false)
+                      setAddModalOpenedFromOverflow(false)
+                      setAssignCompleteModal({
+                        instructorName: option.label,
+                        schoolName: row.schoolName,
+                        currentCount: currentAssignedCount + 1,
+                        showApprovalAlarmSection: _meta?.isNewApproval ?? false,
+                      })
+                    } catch (error) {
+                      const code =
+                        error && typeof error === 'object' && 'response' in error
+                          ? String(
+                              (
+                                error as {
+                                  response?: {
+                                    data?: { error?: { code?: string }; code?: string }
+                                  }
+                                }
+                              ).response?.data?.error?.code ??
+                                (error as { response?: { data?: { code?: string } } }).response
+                                  ?.data?.code ??
+                                ''
+                            )
+                          : ''
+                      showAlert({
+                        title: '배정 실패',
+                        content: isOneSchoolPerDayConflictErrorCode(code)
+                          ? ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE
+                          : '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+                      })
+                    }
+                    return
+                  }
+
+                  if (!isCompanySchool) {
+                    void showAlert({
+                      title: PROGRAM_API_UNAVAILABLE_TITLE,
+                      content: buildProgramApiUnavailableSaveContent('강사 배정'),
+                    })
+                    return
+                  }
+
+                  const nextRole: InstructorRoleKey = instructors.length === 0 ? 'lead' : role
+                  const existingFormList: InstructorListFormInstructor[] = instructors.map(
+                    ({ id, role: r, instructorName, contact, email }) => ({
+                      id,
+                      role: nextRole === 'lead' ? 'assistant' : r,
+                      instructorName,
+                      contact,
+                      email,
+                    })
+                  )
+                  const newInstructor: InstructorListFormInstructor = {
+                    id: option.value,
+                    role: nextRole,
+                    instructorName: option.label,
+                    contact: option.contact ?? '',
+                    email: option.email ?? '',
+                  }
+                  onSaveInstructorInfo?.(detail.id, [...existingFormList, newInstructor])
+                  const scheduleLine = buildAssignedScheduleLineFromSessionIds(
+                    row.id,
+                    row.sessions,
+                    _meta?.sessionIds
+                  )
+                  if (scheduleLine) {
+                    setAssignedScheduleLinesByInstructorId(prev => ({
+                      ...prev,
+                      [option.value]: scheduleLine,
+                    }))
+                  }
+                  setAddAssignModalOpen(false)
+                  setAddModalOpenedFromOverflow(false)
+                  setAssignCompleteModal({
+                    instructorName: option.label,
+                    schoolName: row.schoolName,
+                    currentCount: instructors.length + 1,
+                    showApprovalAlarmSection: _meta?.isNewApproval ?? false,
                   })
-                )
-                const newInstructor: InstructorListFormInstructor = {
-                  id: option.value,
-                  role: nextRole,
-                  instructorName: option.label,
-                  contact: option.contact ?? '',
-                  email: option.email ?? '',
-                }
-                onSaveInstructorInfo?.(detail.id, [...existingFormList, newInstructor])
-                const scheduleLine = buildAssignedScheduleLineFromSessionIds(
-                  row.id,
-                  row.sessions,
-                  _meta?.sessionIds
-                )
-                if (scheduleLine) {
-                  setAssignedScheduleLinesByInstructorId(prev => ({
-                    ...prev,
-                    [option.value]: scheduleLine,
-                  }))
-                }
-                setAddAssignModalOpen(false)
-                setAddModalOpenedFromOverflow(false)
-                setAssignCompleteModal({
-                  instructorName: option.label,
-                  schoolName: row.schoolName,
-                  currentCount: instructors.length + 1,
-                  showApprovalAlarmSection: _meta?.isNewApproval ?? false,
-                })
+                })()
               }}
             />
             <SchoolDetailSelectAssignConfirmModal
@@ -1972,9 +2449,7 @@ export function GeneralParticipatingInstitutionDetailView(
               }}
               onConfirm={() => {
                 if (!selectAssignPendingInstructor) return
-                const rowToAssign = waitingRows.find(
-                  r => r.id === selectAssignPendingInstructor.id
-                )
+                const rowToAssign = waitingRows.find(r => r.id === selectAssignPendingInstructor.id)
                 if (!rowToAssign) {
                   setSelectAssignFeeApprovalOpen(false)
                   setSelectAssignPendingInstructor(null)
@@ -2061,7 +2536,8 @@ export function GeneralParticipatingInstitutionDetailView(
               showWriteButtonInSection={false}
               writeModalOpen={postWriteModalOpen}
               onWriteModalOpenChange={setPostWriteModalOpen}
-              postsOverride={postsRemote ? remotePosts : null}
+              postsOverride={postsForTab}
+              filesOverride={filesForTab}
               onPostWriteSuccess={() => {
                 void invalidatePosts()
               }}
@@ -2070,13 +2546,36 @@ export function GeneralParticipatingInstitutionDetailView(
         )}
       </div>
 
+      <div className="school-detail-fullpage-view__page-bottom-spacer" aria-hidden />
+
       {personalInfoRevealModal}
 
       <ActivityWithdrawScheduleModal
         open={activityWithdrawModalOpen}
         scheduleOptions={activityWithdrawScheduleOptions}
+        confirming={activityWithdrawSubmitting}
         onCancel={handleCancelActivityWithdraw}
         onConfirm={handleConfirmActivityWithdraw}
+      />
+      <ParticipatingInstitutionScheduleChangeModal
+        open={scheduleChangeModalOpen}
+        program={program}
+        sessions={sessions}
+        onCancel={() => setScheduleChangeModalOpen(false)}
+        onConfirm={() => {
+          setScheduleChangeModalOpen(false)
+          if (isTempMockProgram) {
+            showAlert({
+              title: '일정 변경',
+              content: '교육 진행 일정 변경이 저장되었습니다. (temp mock)',
+            })
+            return
+          }
+          notifyProgramApiUnavailable(
+            'general-participating-institution-schedule-change',
+            '일반 프로그램 · 참여 기관 교육 진행 일정 변경'
+          )
+        }}
       />
       <MemberAdminCommentModal
         open={adminCommentModalOpen}
@@ -2084,6 +2583,23 @@ export function GeneralParticipatingInstitutionDetailView(
         onChange={handleAdminCommentDraftChange}
         onCancel={handleAdminCommentModalCancel}
         onConfirm={handleAdminCommentSave}
+      />
+      <InstitutionCombinedClassLeadTeacherModal
+        open={combinedClassLeadTeacherModal != null}
+        candidates={combinedClassLeadTeacherModal?.candidates ?? []}
+        onCancel={() => setCombinedClassLeadTeacherModal(null)}
+        onConfirm={() => {
+          notifyProgramApiUnavailable(
+            'general-org-merge-lead-teacher-progress',
+            '일반 프로그램 · 합반 담당 교사 지정'
+          )
+          setCombinedClassLeadTeacherModal(null)
+        }}
+      />
+      <InstitutionCombinedClassCompleteModal
+        open={combinedClassCompleteLabel != null}
+        teacherLabel={combinedClassCompleteLabel ?? ''}
+        onClose={() => setCombinedClassCompleteLabel(null)}
       />
     </div>
   )

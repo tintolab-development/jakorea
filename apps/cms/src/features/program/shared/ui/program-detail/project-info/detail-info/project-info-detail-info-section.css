@@ -6,3 +6,21 @@
   overflow: visible;
   background: transparent;
 }
+
+/* 수정 모드 하단 description ↔ 테이블 블록 16px
+ * (패키지 dist 미반영 시에도 CMS에서 보장; lead height:40px 해제) */
+.project-info-detail-info-section__frame > .detail-info-form__header:has(
+  .detail-info-form__description--below
+) {
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.project-info-detail-info-section__frame
+  > .detail-info-form__header:has(.detail-info-form__description--below)
+  .detail-info-form__header-lead {
+  height: auto;
+  min-height: 0;
+  align-items: flex-start;
+  row-gap: 2px;
+}

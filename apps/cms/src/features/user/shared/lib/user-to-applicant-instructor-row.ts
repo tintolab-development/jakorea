@@ -1,4 +1,4 @@
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { User } from '@/types/user'
 import { composeUserDetailAddressLine } from '@/features/user/detail/ui/user-basic-info/display'
 import { formatDate } from '@/shared/utils'

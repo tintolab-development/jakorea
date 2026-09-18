@@ -20,7 +20,7 @@ setup('어드민 로그인·MFA 후 세션 저장', async ({ page }) => {
   } else {
     const loginPage = new LoginPage(page)
     await loginPage.goto()
-    await loginPage.loginWithAdminAutoFillAndMfa()
+    await loginPage.loginWithAdminAutoFillAndMfa(process.env.E2E_MFA_CODE)
   }
 
   await expect(page).toHaveURL('/')

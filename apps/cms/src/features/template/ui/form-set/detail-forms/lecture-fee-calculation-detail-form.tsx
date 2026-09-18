@@ -7,6 +7,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { formatNumberDisplay } from '@/shared/utils'
 import './lecture-fee-calculation-detail-form.css'
 
 /** 강의비 산출 정보 — 교육 진행 차시 제외 필드 인풋 너비(px), 높이는 medium(40px) */
@@ -56,9 +57,26 @@ function textOrDash(value: string): string {
   return value.trim() || '-'
 }
 
+function formatAmountView(value: string, unit: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return '-'
+  const formatted = formatNumberDisplay(trimmed)
+  return formatted === '-' ? '-' : `${formatted}${unit}`
+}
+
 function joinText(parts: string[], separator = ' · '): string {
   const text = parts.filter(part => part.trim().length > 0).join(separator)
   return textOrDash(text)
+}
+
+function formatSessionProgressView(sessionCount: string, sessionHours: string): string {
+  const count = sessionCount.trim()
+  const hours = sessionHours.trim()
+  const parts = [
+    count ? formatNumberDisplay(count) : '',
+    hours ? formatNumberDisplay(hours) : '',
+  ].map(part => (part === '-' ? '' : part))
+  return joinText(parts)
 }
 
 function InlineTextPair({ left, right }: { left: string; right: string }) {
@@ -119,7 +137,7 @@ export function LectureFeeCalculationDetailForm({
         />
         <DetailInfoForm.Field
           label="교육 진행 차시"
-          view={joinText([v.sessionCount, v.sessionHours])}
+          view={formatSessionProgressView(v.sessionCount, v.sessionHours)}
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap lecture-fee-calculation-detail-form__session">
               <CmsInput
@@ -162,7 +180,7 @@ export function LectureFeeCalculationDetailForm({
           />
           <DetailInfoForm.Field
             label="총 학생 수"
-            view={textOrDash(v.totalStudents ? `${v.totalStudents}명` : '')}
+            view={formatAmountView(v.totalStudents, '명')}
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap lecture-fee-calculation-detail-form__student-count">
                 <CmsInput
@@ -183,7 +201,7 @@ export function LectureFeeCalculationDetailForm({
         <DetailInfoForm.Field
           label="총 강의비"
           colSpan={2}
-          view={textOrDash(v.totalLectureFee ? `${v.totalLectureFee}원` : '')}
+          view={formatAmountView(v.totalLectureFee, '원')}
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap lecture-fee-calculation-detail-form__total-fee">
               <CmsInput

@@ -1,53 +1,15 @@
 import type { GeminiRecruitmentAddFormSnapshot } from '../../lib/recruitment/add-local-save'
 import { removeGeminiRecruitmentAddDraft } from '../../lib/recruitment/add-local-save'
-import {
-  assignRecruitmentDisplayNumbers,
-  createRecruitmentMockRows,
-} from './mock'
+import { assignRecruitmentDisplayNumbers } from './recruitment-display-numbers'
 import {
   GEMINI_RECRUITMENT_DRAFT_ROW_ID,
   type GeminiRecruitmentRow,
 } from './types'
 
-const STORAGE_KEY = 'gemini-recruitment-records'
-
 type Listener = () => void
 
-let rows: GeminiRecruitmentRow[] = loadInitialRows()
+let rows: GeminiRecruitmentRow[] = []
 const listeners = new Set<Listener>()
-
-function loadInitialRows(): GeminiRecruitmentRow[] {
-  if (typeof window === 'undefined') {
-    return createRecruitmentMockRows()
-  }
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return createRecruitmentMockRows()
-    const parsed = JSON.parse(raw) as GeminiRecruitmentRow[]
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      return createRecruitmentMockRows()
-    }
-    const withoutFormDraftRows = parsed.filter(
-      row => !row.isDraft && row.id !== GEMINI_RECRUITMENT_DRAFT_ROW_ID
-    )
-    if (withoutFormDraftRows.length === 0) {
-      return createRecruitmentMockRows()
-    }
-    const numbered = assignRecruitmentDisplayNumbers(withoutFormDraftRows)
-    if (withoutFormDraftRows.length !== parsed.length) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(numbered))
-    }
-    return numbered
-  } catch {
-    return createRecruitmentMockRows()
-  }
-}
-
-function persist(): void {
-  if (typeof window === 'undefined') return
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rows))
-}
 
 function notify(): void {
   listeners.forEach(listener => listener())
@@ -55,7 +17,6 @@ function notify(): void {
 
 function setRows(nextRows: GeminiRecruitmentRow[]): void {
   rows = assignRecruitmentDisplayNumbers(nextRows)
-  persist()
   notify()
 }
 
@@ -101,8 +62,4 @@ export function registerGeminiRecruitmentFromSnapshot(
   setRows([newRow, ...withoutDraft])
   removeGeminiRecruitmentAddDraft()
   return newRow
-}
-
-export function resetGeminiRecruitmentRowsToMock(): void {
-  setRows(createRecruitmentMockRows())
 }

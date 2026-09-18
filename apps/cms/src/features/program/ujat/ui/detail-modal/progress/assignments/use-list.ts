@@ -3,7 +3,8 @@ import {
   getUjatEducationProgressAssignmentDateOptions,
   getUjatEducationProgressAssignmentInstitutionOptions,
   getUjatEducationProgressAssignmentSessions,
-} from '@/data/mock/ujat-education-progress-assignments-mock'
+} from '@/features/program/ujat/model/ujat-education-progress'
+import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import type { EducationProgressHalfKey } from '../tabs'
 import {
@@ -79,6 +80,12 @@ export function useUjatEducationProgressAssignments(
   half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ) {
+  useNotifyProgramApiUnavailableOnce(
+    true,
+    'ujat-progress-assignments',
+    'UJAT 진행 현황 · 과제'
+  )
+
   const [pendingFilters, setPendingFilters] = useState<UjatAssignmentFilters>(
     () => ({ ...EMPTY_UJAT_ASSIGNMENT_FILTERS })
   )

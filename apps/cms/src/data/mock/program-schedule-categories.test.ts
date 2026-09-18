@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { User } from '@/types/user'
-import {
-  getGeneralEducationPrograms,
-  getProgramScheduleKindsForAdminUser,
-} from './program-schedule-categories'
+import { getProgramScheduleKindsForAdminUser } from './program-schedule-categories'
 
 function adminUser(
   overrides: Partial<Omit<User, 'password'>>
@@ -14,8 +11,8 @@ function adminUser(
     name: '관리자',
     role: 'ADMIN',
     isActive: true,
-    createdAt: '2026-01-01T00:00:00Z',
-    updatedAt: '2026-01-01T00:00:00Z',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
   }
 }
@@ -27,17 +24,15 @@ describe('getProgramScheduleKindsForAdminUser', () => {
     ).toEqual(['general', 'company_school', 'ujat', 'gemini'])
   })
 
-  it('담당 프로그램이 있는 유형의 위젯만 노출한다', () => {
-    const generalId = getGeneralEducationPrograms()[0]?.id
-    expect(generalId).toBeTruthy()
+  it('일반 관리자도 mock 카탈로그 없이 4유형 위젯 슬롯을 노출한다', () => {
     expect(
       getProgramScheduleKindsForAdminUser(
         adminUser({
           adminLevel: 'GENERAL',
-          programRoles: generalId ? { [generalId]: 'OWNER' } : {},
+          programRoles: {},
         })
       )
-    ).toEqual(['general'])
+    ).toEqual(['general', 'company_school', 'ujat', 'gemini'])
   })
 
   it('ADMIN이 아니면 빈 목록이다', () => {

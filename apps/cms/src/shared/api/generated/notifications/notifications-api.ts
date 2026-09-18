@@ -31,7 +31,7 @@ import type {
   CategoryUpdateRequest,
   CreateRequest,
   EmailAttachmentBindRequest,
-  List4Params,
+  List5Params,
   ListNotificationDeliveriesParams,
   ListNotificationTemplateVariablesParams,
   ListNotificationTemplatesParams,
@@ -711,8 +711,8 @@ const syncSenderProfiles = (
  * - 검토 메모: V55 batch aggregate state derived from outbox/delivery
  * @summary CMS 알림 실발송 배치 목록 조회
  */
-const list4 = (
-    params?: List4Params,
+const list5 = (
+    params?: List5Params,
  options?: SecondParameter<typeof customInstance<BatchPageResponse>>,) => {
       return customInstance<BatchPageResponse>(
       {url: `/api/admin/notification-send-batches`, method: 'GET',
@@ -764,7 +764,7 @@ const list4 = (
  * - 검토 메모: V55 active provider-configured template + required Idempotency-Key + actor/direct recipient snapshot + durable outbox; direct AD blocked
  * @summary CMS 알림 실발송 배치 생성
  */
-const create7 = (
+const create8 = (
     createRequest: CreateRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseCreateResponse>>,) => {
       return customInstance<ApiResponseCreateResponse>(
@@ -1886,7 +1886,7 @@ const unbindEmailAttachment = (
       options);
     }
 
-return {updateNotificationEventCatalog,upsertNotificationEventChannelTemplate,listNotificationTemplates,createNotificationTemplate,moveTemplate,bindEmailAttachment,syncTemplates,bulkArchiveNotificationTemplates,createCategory,moveCategory,syncSenderProfiles,list4,create7,retryFailed,cancel3,confirmNotificationDelivery,cancelNotificationDelivery,testSendNotification,getTemplate,archiveNotificationTemplate,updateNotificationTemplate,deleteCategory,updateCategory,previewTemplate,categoryTree,listSenderProfiles,detail3,listNotificationTemplateVariables,recipientCandidates,notificationEventCatalog,notificationEventChannelTemplates,listNotificationDeliveries,getNotificationDelivery,unbindEmailAttachment}};
+return {updateNotificationEventCatalog,upsertNotificationEventChannelTemplate,listNotificationTemplates,createNotificationTemplate,moveTemplate,bindEmailAttachment,syncTemplates,bulkArchiveNotificationTemplates,createCategory,moveCategory,syncSenderProfiles,list5,create8,retryFailed,cancel3,confirmNotificationDelivery,cancelNotificationDelivery,testSendNotification,getTemplate,archiveNotificationTemplate,updateNotificationTemplate,deleteCategory,updateCategory,previewTemplate,categoryTree,listSenderProfiles,detail3,listNotificationTemplateVariables,recipientCandidates,notificationEventCatalog,notificationEventChannelTemplates,listNotificationDeliveries,getNotificationDelivery,unbindEmailAttachment}};
 export type UpdateNotificationEventCatalogResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['updateNotificationEventCatalog']>>>
 export type UpsertNotificationEventChannelTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['upsertNotificationEventChannelTemplate']>>>
 export type ListNotificationTemplatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['listNotificationTemplates']>>>
@@ -1898,8 +1898,8 @@ export type BulkArchiveNotificationTemplatesResult = NonNullable<Awaited<ReturnT
 export type CreateCategoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['createCategory']>>>
 export type MoveCategoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['moveCategory']>>>
 export type SyncSenderProfilesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['syncSenderProfiles']>>>
-export type List4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['list4']>>>
-export type Create7Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['create7']>>>
+export type List5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['list5']>>>
+export type Create8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['create8']>>>
 export type RetryFailedResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['retryFailed']>>>
 export type Cancel3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['cancel3']>>>
 export type ConfirmNotificationDeliveryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['confirmNotificationDelivery']>>>

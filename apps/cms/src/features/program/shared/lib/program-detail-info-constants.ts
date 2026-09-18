@@ -199,12 +199,33 @@ export const CATEGORY_OPTIONS = [
   { value: 'individual', label: '개인' },
 ]
 
+/** BE `textbook_business_area.name` 정확 일치 — `경제`/`진로`/`기타` 는 마스터에 없어 400 */
 export const BUSINESS_AREA_OPTIONS = [
+  { value: '경제금융', label: '경제금융' },
+  { value: '진로취업', label: '진로취업' },
   { value: '기업가정신', label: '기업가정신' },
-  { value: '경제', label: '경제' },
-  { value: '진로', label: '진로' },
-  { value: '기타', label: '기타' },
+  { value: '디지털리터러시', label: '디지털리터러시' },
 ]
+
+/** 등록 폼 코드·띄어쓰기 변형 → BE 마스터명 */
+const BUSINESS_AREA_VALUE_ALIASES: Record<string, string> = {
+  economy_finance: '경제금융',
+  career_employment: '진로취업',
+  entrepreneurship: '기업가정신',
+  digital_literacy: '디지털리터러시',
+  '디지털 리터러시': '디지털리터러시',
+}
+
+/** 폼·API 혼용값을 BE `textbook_business_area.name`으로 정규화 */
+export function normalizeProgramBusinessAreaValue(value: string | undefined | null): string {
+  const trimmed = value?.trim() ?? ''
+  if (!trimmed) return ''
+  const aliased =
+    BUSINESS_AREA_VALUE_ALIASES[trimmed] ?? BUSINESS_AREA_VALUE_ALIASES[trimmed.toLowerCase()]
+  if (aliased) return aliased
+  const matched = BUSINESS_AREA_OPTIONS.find(o => o.value === trimmed || o.label === trimmed)
+  return matched?.value ?? trimmed
+}
 
 export const TYPE_LABEL: Record<string, string> = {
   online: '온라인',
@@ -266,13 +287,62 @@ const TARGET_LEVEL_VALUES = new Set<string>([
   'adult',
 ])
 
+/** API·serviceDetailJson 한글 라벨 → 도메인 enum */
+const TARGET_LEVEL_ALIASES: Record<string, TargetLevel> = {
+  elementary: 'elementary',
+  elementary_school: 'elementary',
+  초: 'elementary',
+  초등: 'elementary',
+  초등학생: 'elementary',
+  초등학교: 'elementary',
+  middle: 'middle',
+  middle_school: 'middle',
+  중: 'middle',
+  중등: 'middle',
+  중학생: 'middle',
+  중학교: 'middle',
+  high: 'high',
+  high_school: 'high',
+  고: 'high',
+  고등: 'high',
+  고등학생: 'high',
+  고등학교: 'high',
+  university: 'university',
+  college: 'university',
+  대학: 'university',
+  대학생: 'university',
+  대학생원: 'university',
+  '대학(원)생': 'university',
+  adult: 'adult',
+  adults: 'adult',
+  성인: 'adult',
+}
+
+/** 단일 교육 대상 값을 도메인 enum으로 정규화. 알 수 없으면 undefined */
+export function normalizeTargetLevelValue(raw: unknown): TargetLevel | undefined {
+  if (raw == null) return undefined
+  const trimmed = String(raw).trim()
+  if (!trimmed) return undefined
+  if (TARGET_LEVEL_VALUES.has(trimmed)) return trimmed as TargetLevel
+  const key = trimmed.toLowerCase().replace(/[\s-]+/g, '_')
+  if (TARGET_LEVEL_VALUES.has(key)) return key as TargetLevel
+  return TARGET_LEVEL_ALIASES[trimmed] ?? TARGET_LEVEL_ALIASES[key]
+}
+
 export function resolveProgramTargetLevels(program: {
-  targetLevels?: TargetLevel[]
-  targetLevel?: TargetLevel
+  targetLevels?: Array<TargetLevel | string>
+  targetLevel?: TargetLevel | string
 }): TargetLevel[] {
-  if (program.targetLevels?.length) return program.targetLevels
-  if (program.targetLevel) return [program.targetLevel]
-  return []
+  const raw =
+    program.targetLevels?.length
+      ? program.targetLevels
+      : program.targetLevel
+        ? [program.targetLevel]
+        : []
+  const levels = raw
+    .map(normalizeTargetLevelValue)
+    .filter((level): level is TargetLevel => level != null)
+  return [...new Set(levels)]
 }
 
 export function formatTargetLevelsLabel(
@@ -286,9 +356,9 @@ export function formatTargetLevelsLabel(
 export function parseTargetLevelsSelectValue(value: unknown): TargetLevel[] | undefined {
   if (!Array.isArray(value)) return undefined
   const levels = value
-    .map(String)
-    .filter((item): item is TargetLevel => TARGET_LEVEL_VALUES.has(item))
-  return levels.length > 0 ? levels : undefined
+    .map(normalizeTargetLevelValue)
+    .filter((item): item is TargetLevel => item != null)
+  return levels.length > 0 ? [...new Set(levels)] : undefined
 }
 
 export const LIFECYCLE_OPTIONS = PROGRAM_LIFECYCLE_STATUS_SELECT_ORDER.map(status => ({

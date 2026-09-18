@@ -5,7 +5,7 @@
 
 import { useState, useMemo, useEffect, useId } from 'react'
 import { flushSync } from 'react-dom'
-import { Popover } from 'antd'
+import { Dropdown, Popover, type MenuProps } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import {
   CmsButton,
@@ -17,6 +17,7 @@ import {
 import type { ProgramPost, ProgramFile } from '@/types/domain'
 import dayjs from 'dayjs'
 import { ProfileAvatarIcon } from '@/shared/ui/icons'
+import { RichTextViewer } from '@/shared/rich-text'
 import {
   getCommentsByPostId,
   getReactionsByPostId,
@@ -32,6 +33,8 @@ import {
 import { downloadFile } from '@/shared/lib/file-download'
 import { PostReadStatusPopoverContent } from '../post-read-status-popover'
 import { formatProgramPostAudienceBadgeLabel } from '../../lib/post-audience-display'
+import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
+import { useGeneralProgramPostDetail } from '@/features/program/general/hooks/use-general-program-posts-surveys'
 import './post-detail-modal.css'
 
 function formatKoDate(date: string | Date): string {
@@ -88,6 +91,19 @@ function CommentIcon() {
   )
 }
 
+function PostManageMenuIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden>
+      <g opacity="0.5">
+        <path
+          d="M15 24.0872C14.4844 24.0872 14.043 23.9035 13.6759 23.5363C13.3086 23.1692 13.125 22.7278 13.125 22.2122C13.125 21.6966 13.3086 21.2551 13.6759 20.8878C14.043 20.5207 14.4844 20.3372 15 20.3372C15.5156 20.3372 15.957 20.5207 16.3241 20.8878C16.6914 21.2551 16.875 21.6966 16.875 22.2122C16.875 22.7278 16.6914 23.1692 16.3241 23.5363C15.957 23.9035 15.5156 24.0872 15 24.0872ZM15 16.8756C14.4844 16.8756 14.043 16.692 13.6759 16.3247C13.3086 15.9576 13.125 15.5163 13.125 15.0006C13.125 14.485 13.3086 14.0436 13.6759 13.6766C14.043 13.3093 14.4844 13.1256 15 13.1256C15.5156 13.1256 15.957 13.3093 16.3241 13.6766C16.6914 14.0436 16.875 14.485 16.875 15.0006C16.875 15.5163 16.6914 15.9576 16.3241 16.3247C15.957 16.692 15.5156 16.8756 15 16.8756ZM15 9.66406C14.4844 9.66406 14.043 9.48052 13.6759 9.11344C13.3086 8.74615 13.125 8.30469 13.125 7.78906C13.125 7.27344 13.3086 6.83208 13.6759 6.465C14.043 6.09771 14.4844 5.91406 15 5.91406C15.5156 5.91406 15.957 6.09771 16.3241 6.465C16.6914 6.83208 16.875 7.27344 16.875 7.78906C16.875 8.30469 16.6914 8.74615 16.3241 9.11344C15.957 9.48052 15.5156 9.66406 15 9.66406Z"
+          fill="#3D3D3D"
+        />
+      </g>
+    </svg>
+  )
+}
+
 // ── 컴포넌트 ─────────────────────────────────────────
 
 export interface PostDetailModalProps {
@@ -101,6 +117,10 @@ export interface PostDetailModalProps {
   commentAuthorRoleLabel?: string
   /** mock 반응/댓글 수 변경 시 상위(게시글 목록 카드 등) 카운트 갱신용 */
   onPostStatsChanged?: () => void
+  /** 본인 작성글 — 공개 태그 옆 ⋮(수정/삭제) 표시 */
+  canManage?: boolean
+  onEdit?: () => void
+  onDelete?: () => void
 }
 
 export function PostDetailModal({
@@ -111,6 +131,9 @@ export function PostDetailModal({
   commentAuthorName,
   commentAuthorRoleLabel,
   onPostStatsChanged,
+  canManage = false,
+  onEdit,
+  onDelete,
 }: PostDetailModalProps) {
   const eyeIconMaskId = useId().replace(/:/g, '')
   const [commentInput, setCommentInput] = useState('')
@@ -122,32 +145,60 @@ export function PostDetailModal({
   const [commentsVersion, setCommentsVersion] = useState(0)
   const [reactionsVersion, setReactionsVersion] = useState(0)
 
+  const remoteEnabled = shouldUseGeneralProgramsRemoteApi()
+  const remoteDetail = useGeneralProgramPostDetail(
+    post?.programId,
+    post?.id,
+    open && remoteEnabled && Boolean(post?.id)
+  )
+  const useRemote = remoteEnabled
+
+  const displayPost = (useRemote && remoteDetail.post) || post
+  const displayFiles =
+    useRemote && remoteDetail.files.length > 0
+      ? remoteDetail.files
+      : files
+
   const comments = useMemo(
-    () => (post ? getCommentsByPostId(post.id) : []),
-    [post?.id, commentsVersion]
+    () => {
+      if (useRemote) return remoteDetail.comments
+      return post ? getCommentsByPostId(post.id) : []
+    },
+    [post?.id, commentsVersion, remoteDetail.comments, useRemote]
   )
   const reactions = useMemo(
-    () =>
-      post
+    () => {
+      if (useRemote) return remoteDetail.reactions
+      return post
         ? getReactionsByPostId(post.id).sort((a, b) => b.count - a.count)
-        : [],
-    [post?.id, reactionsVersion]
+        : []
+    },
+    [post?.id, reactionsVersion, remoteDetail.reactions, useRemote]
   )
   const reactionTotalCount = useMemo(
-    () => (post ? getReactionTotalCountByPostId(post.id) : 0),
-    [post?.id, reactionsVersion]
+    () => {
+      if (useRemote) return remoteDetail.reactionTotalCount
+      return post ? getReactionTotalCountByPostId(post.id) : 0
+    },
+    [post?.id, reactionsVersion, remoteDetail.reactionTotalCount, useRemote]
   )
   const viewReadCount = useMemo(
-    () => (post ? getPostViewCountByPostId(post.id) : 0),
-    [post?.id]
+    () => {
+      if (useRemote && displayPost) return displayPost.viewCount
+      return post ? getPostViewCountByPostId(post.id) : 0
+    },
+    [displayPost, post?.id, useRemote]
   )
   const reactionUsers = useMemo(
-    () => (post ? getReactionUsersByPostId(post.id) : []),
-    [post?.id, reactionsVersion]
+    () => {
+      if (useRemote) return remoteDetail.reactionUsers
+      return post ? getReactionUsersByPostId(post.id) : []
+    },
+    [post?.id, reactionsVersion, remoteDetail.reactionUsers, useRemote]
   )
   useEffect(() => {
-    if (open && post) markPostAsRead(post.id)
-  }, [open, post?.id])
+    if (open && post && !useRemote) markPostAsRead(post.id)
+  }, [open, post?.id, useRemote])
 
   useEffect(() => {
     if (!open) {
@@ -177,6 +228,10 @@ export function PostDetailModal({
 
   const handleRemoveOwnReaction = (reactionUserId: string) => {
     if (!post) return
+    if (useRemote) {
+      void remoteDetail.removeReaction().then(() => onPostStatsChanged?.())
+      return
+    }
     const ok = removeProgramPostReactionUser(post.id, reactionUserId)
     if (!ok) return
     setReactionsVersion(v => v + 1)
@@ -192,6 +247,22 @@ export function PostDetailModal({
     }
     const emojiType =
       selectedEmojiIndex != null ? getReactionEmojiTypeForBarIndex(selectedEmojiIndex) : undefined
+
+    if (useRemote) {
+      void (async () => {
+        if (emojiType) {
+          await remoteDetail.putReaction(emojiType)
+        }
+        if (trimmed) {
+          await remoteDetail.createComment(trimmed)
+        }
+        setCommentInput('')
+        setSelectedEmojiIndex(null)
+        onPostStatsChanged?.()
+      })()
+      return
+    }
+
     if (!trimmed && emojiType) {
       addProgramPostReaction(post.id, commentAuthorName ?? '나', emojiType, {
         roleLabel: viewerRoleLabel,
@@ -213,14 +284,26 @@ export function PostDetailModal({
     onPostStatsChanged?.()
   }
 
-  if (!post) return null
+  if (!displayPost) return null
 
-  const dateStr = formatKoDate(post.publishedAt)
+  const dateStr = formatKoDate(displayPost.publishedAt)
   const postTypeLabel =
-    post.postType === 'notice' ? '[공지사항]' :
-    post.postType === 'schedule' ? '[일정 알림]' :
+    displayPost.postType === 'notice' ? '[공지사항]' :
+    displayPost.postType === 'schedule' ? '[일정 알림]' :
     null
-  const audienceBadgeLabel = formatProgramPostAudienceBadgeLabel(post.audience)
+  const audienceBadgeLabel = formatProgramPostAudienceBadgeLabel(displayPost.audience)
+  const manageMenuItems: MenuProps['items'] = [
+    {
+      key: 'delete',
+      label: '삭제',
+      onClick: () => onDelete?.(),
+    },
+    {
+      key: 'edit',
+      label: '수정',
+      onClick: () => onEdit?.(),
+    },
+  ]
 
   return (
     <ContentModal
@@ -245,7 +328,7 @@ export function PostDetailModal({
                 <div className="post-detail-modal__card-header-main">
                   <ProfileAvatarIcon className="post-detail-modal__avatar" />
                   <div className="post-detail-modal__author-info">
-                    <span className="post-detail-modal__author-name">{post.authorName}</span>
+                    <span className="post-detail-modal__author-name">{displayPost.authorName}</span>
                     <div className="post-detail-modal__author-meta">
                     <span className="post-detail-modal__date">{dateStr}</span>
                     <span className="post-detail-modal__meta-divider">|</span>
@@ -261,11 +344,11 @@ export function PostDetailModal({
                         trigger.closest('.post-detail-modal__card') ?? document.body
                       }
                       content={
-                        post ? (
+                        displayPost ? (
                           <PostReadStatusPopoverContent
-                            postId={post.id}
-                            programId={post.programId}
-                            postSchoolId={post.schoolId}
+                            postId={displayPost.id}
+                            programId={displayPost.programId}
+                            postSchoolId={displayPost.schoolId}
                           />
                         ) : null
                       }
@@ -306,23 +389,40 @@ export function PostDetailModal({
                       </button>
                     </Popover>
                     <span className="post-detail-modal__meta-item">
-                      <CommentIcon /> {post.commentCount}
+                      <CommentIcon /> {useRemote ? comments.length : displayPost.commentCount}
                     </span>
                   </div>
                 </div>
                 </div>
-                <span className="post-detail-modal__audience-badge">{audienceBadgeLabel}</span>
+                <div className="post-detail-modal__header-actions">
+                  <span className="post-detail-modal__audience-badge">{audienceBadgeLabel}</span>
+                  {canManage ? (
+                    <Dropdown
+                      menu={{ items: manageMenuItems }}
+                      trigger={['click']}
+                      placement="bottomRight"
+                    >
+                      <button
+                        type="button"
+                        className="post-detail-modal__manage-menu-btn"
+                        aria-label="게시글 메뉴"
+                      >
+                        <PostManageMenuIcon />
+                      </button>
+                    </Dropdown>
+                  ) : null}
+                </div>
               </div>
 
               <div className="post-detail-modal__content">
                 {postTypeLabel && (
                   <span className="post-detail-modal__type-tag">{postTypeLabel}</span>
                 )}
-                {post.content}
+                <RichTextViewer content={displayPost.content} contentFormat="markdown" />
               </div>
 
               <AttachmentDownloadList
-                items={files.map(file => ({
+                items={displayFiles.map(file => ({
                   id: file.id,
                   fileName: file.fileName,
                   fileUrl: file.fileUrl,

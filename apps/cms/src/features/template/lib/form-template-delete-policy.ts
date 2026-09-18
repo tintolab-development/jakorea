@@ -38,6 +38,38 @@ export function isDuplicateWritingTemplateCode(
   return /-copy(?:-\d+)?$/i.test(code)
 }
 
+const PROGRAM_SCOPED_OPERATIONAL_CATEGORIES = new Set([
+  'REGISTRATION',
+  'RECRUITMENT',
+  'APPLICATION',
+])
+
+/**
+ * 프로그램 등록·상세에만 묶인 운영 양식(등록/모집/신청 copy).
+ * 양식 관리의 등록·모집·신청 섹션은 **카탈로그 고정 code만** 노출한다.
+ * (프로그램 form-binding 전용본·복제본은 여기 두지 않음. 설문/동의 사용자 복제는 유지.)
+ */
+export function isProgramScopedOperationalWritingTemplate(item: {
+  templateCode?: string | null
+  category?: string | null
+}): boolean {
+  const code = item.templateCode?.trim() ?? ''
+  if (code === '') return false
+  if (isCatalogFixedWritingFormTemplateCode(code)) return false
+
+  const category = (item.category ?? '').trim().toUpperCase()
+  const resolved =
+    category ||
+    (code.startsWith('registration-')
+      ? 'REGISTRATION'
+      : code.startsWith('recruitment-')
+        ? 'RECRUITMENT'
+        : code.startsWith('application-')
+          ? 'APPLICATION'
+          : '')
+  return PROGRAM_SCOPED_OPERATIONAL_CATEGORIES.has(resolved)
+}
+
 /** 단락 구조·본문 편집 잠금 여부 — 고정 카탈로그 양식만 true (설문 양식 제외) */
 export function isWritingFormTemplateStructureLocked(
   target: WritingFormTemplateStructureLockTarget

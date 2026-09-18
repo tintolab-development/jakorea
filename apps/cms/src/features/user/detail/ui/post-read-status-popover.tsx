@@ -7,6 +7,10 @@ import type { UUID } from '@/types'
 import { ProfileAvatarIcon } from '@/shared/ui/icons'
 import { getPostReadRows, getReadUnreadCountsForPost } from '@/data/mock'
 import { truncateDisplayNameForList } from '@/shared/lib/truncate-display-name'
+import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { useGeneralProgramPostReads } from '@/features/program/general/hooks/use-general-program-posts-surveys'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import './post-read-status-popover.css'
 
 export type PostReadStatusTab = 'read' | 'unread'
@@ -28,18 +32,30 @@ export function PostReadStatusPopoverContent({
 }: PostReadStatusPopoverContentProps) {
   const [tab, setTab] = useState<PostReadStatusTab>('read')
   const [selectedUnreadIds, setSelectedUnreadIds] = useState<string[]>([])
+  const [sendingReminder, setSendingReminder] = useState(false)
 
   const schoolScope = tabSchoolId ?? postSchoolId ?? null
+  const remoteEnabled = useProgramsReadsRemoteEnabledForSurface(programId)
+  const remoteReads = useGeneralProgramPostReads(programId, postId, remoteEnabled)
 
-  const rows = useMemo(
-    () => getPostReadRows(postId, programId, schoolScope),
-    [postId, programId, schoolScope]
-  )
+  const rows = useMemo(() => {
+    if (remoteEnabled) return remoteReads.rows
+    return getPostReadRows(postId, programId, schoolScope)
+  }, [postId, programId, remoteEnabled, remoteReads.rows, schoolScope])
 
-  const { read: readN, unread: unreadN } = useMemo(
-    () => getReadUnreadCountsForPost(postId, programId, schoolScope),
-    [postId, programId, schoolScope]
-  )
+  const { read: readN, unread: unreadN } = useMemo(() => {
+    if (remoteEnabled) {
+      return { read: remoteReads.readCount, unread: remoteReads.unreadCount }
+    }
+    return getReadUnreadCountsForPost(postId, programId, schoolScope)
+  }, [
+    postId,
+    programId,
+    remoteEnabled,
+    remoteReads.readCount,
+    remoteReads.unreadCount,
+    schoolScope,
+  ])
 
   const readRows = useMemo(() => rows.filter(r => r.hasRead), [rows])
   const unreadRows = useMemo(() => rows.filter(r => !r.hasRead), [rows])
@@ -51,6 +67,30 @@ export function PostReadStatusPopoverContent({
       if (checked) return prev.includes(id) ? prev : [...prev, id]
       return prev.filter(x => x !== id)
     })
+  }
+
+  const handleSendReminder = async () => {
+    if (selectedUnreadIds.length === 0 || sendingReminder) return
+    if (!remoteEnabled) {
+      window.alert('준비 중입니다.')
+      return
+    }
+    setSendingReminder(true)
+    try {
+      await remoteReads.sendUnreadReminder(selectedUnreadIds)
+      setSelectedUnreadIds([])
+      cmsAlertModal.show({
+        title: '알림 발송',
+        content: '미읽음 대상에게 알림을 발송했습니다.',
+      })
+    } catch (error) {
+      cmsAlertModal.show({
+        title: '알림 발송 실패',
+        content: getGeneralProgramApiErrorMessage(error, '미읽음 알림을 발송하지 못했습니다.'),
+      })
+    } finally {
+      setSendingReminder(false)
+    }
   }
 
   return (
@@ -112,14 +152,18 @@ export function PostReadStatusPopoverContent({
                 <button
                   type="button"
                   className="post-read-status-popup__action-btn post-read-status-popup__action-btn--primary"
-                  disabled={selectedUnreadIds.length === 0}
-                  onClick={() => window.alert('준비 중입니다.')}
+                  disabled={selectedUnreadIds.length === 0 || sendingReminder}
+                  onClick={() => {
+                    void handleSendReminder()
+                  }}
                 >
                   알림 발송
                 </button>
               </div>
             ) : null}
-            {list.length === 0 ? (
+            {remoteEnabled && remoteReads.loading ? (
+              <div className="post-read-status-popup__empty">불러오는 중…</div>
+            ) : list.length === 0 ? (
               <div className="post-read-status-popup__empty">표시할 인원이 없습니다.</div>
             ) : (
               list.map(row => (

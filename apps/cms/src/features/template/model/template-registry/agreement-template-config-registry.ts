@@ -7,7 +7,9 @@ import {
   AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS,
   createAgreementNoticeDraft,
   createAgreementPortraitDraft,
+  createDefaultDirectAgreementDraft,
   createEducatorFacilitatorPledgeDraft,
+  DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS,
   EDUCATOR_FACILITATOR_PLEDGE_HIDDEN_DRAG_HANDLE_IDS,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
   EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS,
@@ -44,6 +46,7 @@ import { EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_BODY_OPTIONS } from '@/features/t
 import type { AgreementWritingFormShellProps } from '@/features/template/ui/form-set/editors/new-agreement-form'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import { TEMPLATE_FORM_MODAL_DESCRIPTION } from './template-registry'
+import { DIRECT_AGREEMENT_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/agreement-direct/paragraph-config'
 
 export type AgreementTemplateConfigKey =
   | 'agreement-expense'
@@ -145,10 +148,34 @@ export function stripAgreementWritingFormStructureLocks(
   const {
     structureLockedParagraphIds: _structureLockedParagraphIds,
     hideDragHandleForParagraphIds: _hideDragHandleForParagraphIds,
-    paragraphBodyOptions: _paragraphBodyOptions,
+    paragraphBodyOptions,
     ...editable
   } = config
-  return editable
+  /** 구조 잠금 해제 후에도 확인 카드(마무리+날짜+서명) 옵션은 유지 */
+  const preservedBodyOptions = preserveAgreementConfirmBodyOptions(paragraphBodyOptions)
+  return preservedBodyOptions != null
+    ? { ...editable, paragraphBodyOptions: preservedBodyOptions }
+    : editable
+}
+
+/** 구조 잠금 해제 시에도 유지할 확인 카드·숨김 단락 옵션 */
+function preserveAgreementConfirmBodyOptions(
+  options: AgreementWritingFormConfig['paragraphBodyOptions']
+): AgreementWritingFormConfig['paragraphBodyOptions'] {
+  if (options == null) return undefined
+  if (
+    options.agreementAdminProxyConfirm !== true &&
+    (options.hiddenParagraphIds == null || options.hiddenParagraphIds.size === 0)
+  ) {
+    return undefined
+  }
+  return {
+    agreementAdminProxyConfirm: options.agreementAdminProxyConfirm,
+    hiddenParagraphIds: options.hiddenParagraphIds,
+    agreementSystemParticipantName: options.agreementSystemParticipantName,
+    agreementSystemNow: options.agreementSystemNow,
+    agreementSystemDisplayMode: options.agreementSystemDisplayMode,
+  }
 }
 
 export function resolveAgreementWritingFormConfig(
@@ -164,4 +191,19 @@ export function resolveAgreementWritingFormConfig(
   if (baseKey == null) return null
   const factory = AGREEMENT_TEMPLATE_CONFIG_REGISTRY[baseKey]
   return factory != null ? stripAgreementWritingFormStructureLocks(factory()) : null
+}
+
+/** 직접 등록·사용자 생성 동의 양식 — 카탈로그 키 없는 templateCode용 */
+export function createDirectAgreementWritingFormConfig(
+  modalTitle = '동의 양식 신규 폼'
+): AgreementWritingFormConfig {
+  return {
+    initialDraft: createDefaultDirectAgreementDraft,
+    defaultActiveParagraphId: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.title,
+    modalTitle,
+    modalDescription:
+      '* 등록 시 최소 1개의 단락은 존재해야 하며, 제목, 마무리글, 날짜, 서명란을 제외하고 최소 1개의 단락은 존재해야합니다.',
+    writingPreviewHeaderTitle: modalTitle,
+    paragraphBodyOptions: DIRECT_AGREEMENT_PARAGRAPH_BODY_OPTIONS,
+  }
 }

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
-import { getUjatInstitutionApplicationRowById } from '@/data/mock/ujat-institution-application-mock'
+import { getUjatInstitutionApplicationRowById } from '@/features/program/ujat/model/ujat-institution-application'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
 import {
   toGradeClassSectionValue,

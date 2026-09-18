@@ -24,6 +24,7 @@ export function renderRecruitFormVolunteerParagraphBody(
           exceptionScheduleCount={volunteerOptions?.exceptionScheduleCount ?? 0}
           commonScheduleSeed={volunteerOptions?.commonScheduleSeed}
           onCommonExclusionChange={volunteerOptions?.onCommonExclusionChange}
+          freezeUnavailableCalendar={volunteerOptions?.freezeUnavailableCalendar === true}
         />
       )
     default:

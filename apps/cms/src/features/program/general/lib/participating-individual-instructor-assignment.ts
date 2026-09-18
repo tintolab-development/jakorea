@@ -1,0 +1,246 @@
+/**
+ * 참여 강사 상세 — 교육 배정 현황 탭 (일반 프로그램 · 개인) mock
+ */
+
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import type { InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
+import {
+  countLectureSlotAssignments,
+  getApprovedInstitutionLectureScheduleSlots,
+  type InstructorLectureAssignSlot,
+} from '@/features/program/general/lib/instructor-lecture-assign-schedule'
+import {
+  buildWaitingInstructorScheduleSlotKey,
+  resolveWaitingInstructorAssignmentStatus,
+  sortWaitingInstructorRowsUnavailableToBottom,
+  type WaitingInstructorHopeSchedule,
+} from '@/features/program/general/lib/waiting-instructor-assignment'
+import {
+  formatIndividualInstructorAssignmentScheduleLabel,
+  formatIndividualInstructorLectureLocation,
+} from '@/features/program/general/lib/participating-individual-instructor-assignment-display'
+import type {
+  ParticipatingIndividualInstructorAssignedScheduleRow,
+  ParticipatingIndividualInstructorWaitingScheduleRow,
+} from '@/features/program/general/lib/participating-individual-instructor-assignment-types'
+import type { Program } from '@/types/domain'
+
+function slotToHopeSchedule(slot: InstructorLectureAssignSlot): WaitingInstructorHopeSchedule {
+  const datePart = slot.dateKey.replace(/^(\d{4})-(\d{2})-(\d{2})$/, (_, y, m, d) => {
+    const date = `${y.slice(-2)}.${m}.${d}`
+    const weekday = ['일', '월', '화', '수', '목', '금', '토'][
+      new Date(`${y}-${m}-${d}T12:00:00`).getDay()
+    ]
+    return `${date}(${weekday})`
+  })
+  return {
+    hopeDate: datePart,
+    hopeTime: slot.timeRange,
+    hopeSession: slot.sessionLabel,
+  }
+}
+
+function formatHopeDate(dateKey: string): string {
+  const weekday = ['일', '월', '화', '수', '목', '금', '토'][
+    new Date(`${dateKey}T12:00:00`).getDay()
+  ]
+  const [y, m, d] = dateKey.split('-')
+  return `${y!.slice(-2)}.${m}.${d}(${weekday})`
+}
+
+export function buildOccupiedHopeSlotKeys(
+  assignedRows: ParticipatingIndividualInstructorAssignedScheduleRow[]
+): Set<string> {
+  const occupied = new Set<string>()
+  for (const row of assignedRows) {
+    const [dateKey, , sessionRoundRaw] = row.slotKey.split('|')
+    if (!dateKey) continue
+    const sessionRound = Number.parseInt(sessionRoundRaw ?? '1', 10) || 1
+    const timeMatch = row.scheduleLabel.match(/(\d{2}:\d{2}\s*~\s*\d{2}:\d{2})/)
+    const hopeSchedule: WaitingInstructorHopeSchedule = {
+      hopeDate: formatHopeDate(dateKey),
+      hopeTime: timeMatch?.[1] ?? '',
+      hopeSession: `${sessionRound}회차`,
+    }
+    occupied.add(buildWaitingInstructorScheduleSlotKey(hopeSchedule))
+  }
+  return occupied
+}
+
+function instructorCountLabel(
+  slotKey: string,
+  overrideCount?: number
+): string {
+  if (overrideCount != null) return `${overrideCount}명`
+  return `${countLectureSlotAssignments(slotKey, [])}명`
+}
+
+function buildWaitingRowFromDef(
+  def: {
+    id: string
+    slotKey: string
+    schoolId: string
+    region: string
+    distanceFromHome: string
+    dateKey: string
+    timeRange: string
+    sessionRound: number
+    sessionName?: string
+    forceUnavailable?: boolean
+    assignedInstructorCount?: number
+  },
+  no: number,
+  program: Program,
+  occupiedHopeSlots: Set<string>
+): ParticipatingIndividualInstructorWaitingScheduleRow {
+  const hopeSchedule: WaitingInstructorHopeSchedule = {
+    hopeDate: formatHopeDate(def.dateKey),
+    hopeTime: def.timeRange,
+    hopeSession: def.sessionName ?? `${def.sessionRound}회차`,
+  }
+
+  const assignmentStatus = def.forceUnavailable
+    ? 'unavailable'
+    : resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedHopeSlots)
+
+  return {
+    id: def.id,
+    no,
+    slotKey: def.slotKey,
+    schoolId: def.schoolId,
+    lectureLocation: formatIndividualInstructorLectureLocation(def.region),
+    distanceFromHome: def.distanceFromHome,
+    scheduleLabel: formatIndividualInstructorAssignmentScheduleLabel(program, {
+      dateKey: def.dateKey,
+      timeRange: def.timeRange,
+      sessionRound: def.sessionRound,
+      sessionName: def.sessionName,
+    }),
+    assignmentStatus,
+    assignedInstructorCountLabel: instructorCountLabel(def.slotKey, def.assignedInstructorCount),
+  }
+}
+
+export function buildInitialIndividualInstructorAssignedScheduleRows(
+  _instructor: ParticipatingInstructorRow,
+  _program: Program
+): ParticipatingIndividualInstructorAssignedScheduleRow[] {
+  return []
+}
+
+function buildWaitingFromProgramSlots(
+  program: Program,
+  _instructor: ParticipatingInstructorRow,
+  assignedSlotKeys: Set<string>,
+  occupiedHopeSlots: Set<string>
+): ParticipatingIndividualInstructorWaitingScheduleRow[] {
+  const slots = getApprovedInstitutionLectureScheduleSlots(String(program.id))
+  const candidates = slots.filter(slot => !assignedSlotKeys.has(slot.key))
+  if (candidates.length === 0) return []
+
+  const expanded = candidates.map(slot => {
+    const hopeSchedule = slotToHopeSchedule(slot)
+    return buildWaitingRowFromDef(
+      {
+        id: `ia-program-w-${slot.key}`,
+        slotKey: slot.key,
+        schoolId: slot.schoolId,
+        region: slot.region || slot.schoolName,
+        distanceFromHome: '-',
+        dateKey: slot.dateKey,
+        timeRange: slot.timeRange,
+        sessionRound: slot.sessionRound,
+        sessionName: slot.sessionLabel,
+        forceUnavailable:
+          resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedHopeSlots) ===
+          'unavailable',
+        assignedInstructorCount: countLectureSlotAssignments(slot.key, []),
+      },
+      0,
+      program,
+      occupiedHopeSlots
+    )
+  })
+
+  const n = expanded.length
+  return sortWaitingInstructorRowsUnavailableToBottom(
+    expanded.map((row, idx) => ({ ...row, no: n - idx }))
+  )
+}
+
+export function buildIndividualInstructorWaitingScheduleRows(
+  instructor: ParticipatingInstructorRow,
+  program: Program,
+  assignedRows: ParticipatingIndividualInstructorAssignedScheduleRow[]
+): ParticipatingIndividualInstructorWaitingScheduleRow[] {
+  const assignedSlotKeys = new Set(assignedRows.map(r => r.slotKey))
+  const occupiedHopeSlots = buildOccupiedHopeSlotKeys(assignedRows)
+
+  return buildWaitingFromProgramSlots(
+    program,
+    instructor,
+    assignedSlotKeys,
+    occupiedHopeSlots
+  )
+}
+
+export function individualWaitingRowToAssignedRow(
+  waitingRow: ParticipatingIndividualInstructorWaitingScheduleRow,
+  role: InstructorRoleKey,
+  no: number,
+  _program: Program
+): ParticipatingIndividualInstructorAssignedScheduleRow {
+  return {
+    id: `ia-as-${waitingRow.slotKey}`,
+    no,
+    role,
+    slotKey: waitingRow.slotKey,
+    schoolId: waitingRow.schoolId,
+    lectureLocation: waitingRow.lectureLocation,
+    distanceFromHome: waitingRow.distanceFromHome,
+    scheduleLabel: waitingRow.scheduleLabel,
+  }
+}
+
+export function createIndividualWaitingRowFromAssigned(
+  assignedRow: ParticipatingIndividualInstructorAssignedScheduleRow,
+  no: number,
+  _program: Program,
+  occupiedHopeSlots: Set<string>
+): ParticipatingIndividualInstructorWaitingScheduleRow {
+  const [dateKey, , sessionRoundRaw] = assignedRow.slotKey.split('|')
+  const sessionRound = Number.parseInt(sessionRoundRaw ?? '1', 10) || 1
+  const timeMatch = assignedRow.scheduleLabel.match(/(\d{2}:\d{2}\s*~\s*\d{2}:\d{2})/)
+  const hopeSchedule: WaitingInstructorHopeSchedule = {
+    hopeDate: dateKey ? formatHopeDate(dateKey) : '',
+    hopeTime: timeMatch?.[1] ?? '',
+    hopeSession: `${sessionRound}회차`,
+  }
+
+  return {
+    id: `ia-w-back-${assignedRow.slotKey}`,
+    no,
+    slotKey: assignedRow.slotKey,
+    schoolId: assignedRow.schoolId,
+    lectureLocation: assignedRow.lectureLocation,
+    distanceFromHome: assignedRow.distanceFromHome,
+    scheduleLabel: assignedRow.scheduleLabel,
+    assignmentStatus: resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedHopeSlots),
+    assignedInstructorCountLabel: instructorCountLabel(assignedRow.slotKey),
+  }
+}
+
+export function renumberIndividualAssignedScheduleRows(
+  rows: ParticipatingIndividualInstructorAssignedScheduleRow[]
+): ParticipatingIndividualInstructorAssignedScheduleRow[] {
+  const n = rows.length
+  return rows.map((r, i) => ({ ...r, no: n - i }))
+}
+
+export function renumberIndividualWaitingScheduleRows(
+  rows: ParticipatingIndividualInstructorWaitingScheduleRow[]
+): ParticipatingIndividualInstructorWaitingScheduleRow[] {
+  const sorted = sortWaitingInstructorRowsUnavailableToBottom(rows)
+  const n = sorted.length
+  return sorted.map((r, i) => ({ ...r, no: n - i }))
+}

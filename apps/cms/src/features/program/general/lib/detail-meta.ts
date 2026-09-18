@@ -8,11 +8,12 @@ import type {
   Program,
   ProgramCategory,
 } from '@/types/domain'
-import { getGeneralProgramById, getGeneralPrograms } from '@/data/mock/general-programs'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import {
   findGeneralRegistrationLocalSaveProgramById,
   GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
 } from '@/features/program/general/lib/registration-local-save'
+import { getTempMockOrgProgramIfId } from '@/features/program/general/lib/temp-mock-org-program'
 import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
@@ -40,29 +41,29 @@ const CATEGORY_TO_PARTICIPANT: Record<ProgramCategory, GeneralProgramParticipant
 
 export function isGeneralProgramId(programId: string, knownPrograms?: readonly Program[]): boolean {
   if (knownPrograms?.some(p => p.id === programId)) return true
-  return (
-    getGeneralPrograms().some(p => p.id === programId) ||
-    programId.startsWith(GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)
-  )
+  if (isGeneralProgramTempMockProgramId(programId)) return true
+  return programId.startsWith(GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)
 }
 
 export function resolveGeneralProgramForDetail(programId: string): Program | undefined {
-  return getGeneralProgramById(programId) ?? findGeneralRegistrationLocalSaveProgramById(programId)
+  return (
+    getTempMockOrgProgramIfId(programId) ?? findGeneralRegistrationLocalSaveProgramById(programId)
+  )
 }
 
 export function getGeneralParticipantTypes(program: Program): GeneralProgramParticipantType[] {
   if (program.generalParticipantTypes?.length) return [...program.generalParticipantTypes]
+  if (program.generalProgramAudience === 'individual') return ['individual']
+  if (program.generalProgramAudience === 'organization') return ['school_institution']
   return [CATEGORY_TO_PARTICIPANT[program.category]]
 }
 
 export function hasGeneralInstructorApplications(program: Program): boolean {
-  if (getGeneralParticipantTypes(program).includes('teacher_instructor')) return true
-  return program.generalCommonInfo?.instructorRecruitmentInfo != null
+  return getGeneralParticipantTypes(program).includes('teacher_instructor')
 }
 
 export function hasGeneralVolunteerApplications(program: Program): boolean {
-  if (getGeneralParticipantTypes(program).includes('volunteer')) return true
-  return program.generalCommonInfo?.volunteerRecruitmentInfo != null
+  return getGeneralParticipantTypes(program).includes('volunteer')
 }
 
 /** 참여자(개인)·기관 신청 목록 LNB — school_institution 또는 individual 포함 시 */
@@ -163,4 +164,12 @@ export function getGeneralProgressMenuItems(program: Program): GeneralProgressMe
   }
 
   return items
+}
+
+/** 상위 navigation 비활성 또는 실제 하위 메뉴 없음이면 빈 LNB 카테고리를 만들지 않는다. */
+export function getVisibleGeneralProgressMenuItems(
+  items: readonly GeneralProgressMenuItem[],
+  progressDisabled: boolean
+): GeneralProgressMenuItem[] {
+  return progressDisabled ? [] : [...items]
 }

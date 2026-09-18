@@ -24,6 +24,98 @@ export type ClassifiedFormBinding = {
   survey: RegisteredSurvey
 }
 
+/** 설문 관리 탭에서 create/delete 시 사용하는 binding formType */
+const PROGRAM_SURVEY_MANAGEMENT_FORM_TYPES = new Set([
+  'SURVEY',
+  'SATISFACTION',
+  'LECTURE_EVALUATION',
+])
+
+/** autoApplyDefaultFormBindings 등 프로그램 운영용 binding — 설문 목록에서 제외 */
+const PROGRAM_OPERATIONAL_FORM_BINDING_TYPES = new Set([
+  'REGISTRATION',
+  'RECRUITMENT',
+  'APPLICATION',
+  'AGREEMENT',
+  'ISSUANCE',
+  'CERTIFICATE',
+  'PROGRAM',
+])
+
+function normalizeProgramFormBindingType(formType: string | undefined): string {
+  return formType?.trim().toUpperCase() ?? ''
+}
+
+function isOperationalFormBindingByTemplateName(templateName: string | undefined): boolean {
+  const name = (templateName ?? '').trim().toLowerCase()
+  if (!name) return false
+  if (name.includes('만족도') || name.includes('satisfaction')) return false
+  if (name.includes('강의평가') || name.includes('lecture eval')) return false
+  if (name.includes('설문조사') || name.includes('survey-default')) return false
+
+  return (
+    name.includes('등록') ||
+    name.includes('registration') ||
+    name.includes('모집') ||
+    name.includes('recruitment') ||
+    name.includes('신청') ||
+    name.includes('application') ||
+    name.includes('동의') ||
+    name.includes('agreement') ||
+    name.includes('발급') ||
+    name.includes('issuance')
+  )
+}
+
+/** 설문 관리(설문조사·만족도·강의평가) 대상 binding인지 */
+export function isProgramSurveyManagementFormBinding(
+  binding: ProgramFormBindingResponse
+): boolean {
+  const formType = normalizeProgramFormBindingType(binding.formType)
+  if (formType && PROGRAM_SURVEY_MANAGEMENT_FORM_TYPES.has(formType)) {
+    return true
+  }
+  if (formType && PROGRAM_OPERATIONAL_FORM_BINDING_TYPES.has(formType)) {
+    return false
+  }
+  if (isOperationalFormBindingByTemplateName(binding.templateName)) {
+    return false
+  }
+  return true
+}
+
+/** 설문 등록 form-binding은 복제된 템플릿 ID를 쓴다. 원본 selectedTemplateId 사용 금지. */
+export function resolveSurveyCreateBindingTemplateCode(params: {
+  duplicatedTemplateId: string
+  catalogTemplateCode?: string | null
+}): string {
+  const duplicated = params.duplicatedTemplateId.trim()
+  if (duplicated) return duplicated
+  return params.catalogTemplateCode?.trim() || ''
+}
+
+export function resolveSurveyShareClipboardUrl(
+  response: {
+    formPath?: string | null
+    submitPath?: string | null
+    shareToken?: string | null
+  },
+  origin: string
+): string | null {
+  const absoluteOrJoin = (path: string) => {
+    if (/^https?:\/\//i.test(path)) return path
+    const normalizedOrigin = origin.replace(/\/$/, '')
+    return `${normalizedOrigin}${path.startsWith('/') ? '' : '/'}${path}`
+  }
+  const formPath = response.formPath?.trim()
+  if (formPath) return absoluteOrJoin(formPath)
+  const submitPath = response.submitPath?.trim()
+  if (submitPath) return absoluteOrJoin(submitPath)
+  const token = response.shareToken?.trim()
+  if (token) return `${origin.replace(/\/$/, '')}/surveys/share/${encodeURIComponent(token)}`
+  return null
+}
+
 function resolveSurveyStatusFromBinding(
   binding: ProgramFormBindingResponse | undefined
 ): SurveyProgressStatus {
@@ -110,7 +202,7 @@ export function classifyProgramFormBindings(
   bindings: ProgramFormBindingResponse[]
 ): ClassifiedFormBinding[] {
   return bindings
-    .filter(b => b.active !== false)
+    .filter(b => b.active !== false && isProgramSurveyManagementFormBinding(b))
     .map((binding, index) => {
       const kind = classifyFormBindingByTemplateId(binding)
       return {
@@ -205,10 +297,13 @@ export function mergeSurveysWithBindings(
   surveys: ProgramSurveyResponse[],
   bindings: ProgramFormBindingResponse[]
 ): RegisteredSurvey[] {
+  const surveyBindings = bindings.filter(
+    binding => binding.active !== false && isProgramSurveyManagementFormBinding(binding)
+  )
+
   const bindingByVersion = new Map<string, ProgramFormBindingResponse>()
   const bindingByTemplate = new Map<string, ProgramFormBindingResponse>()
-  for (const binding of bindings) {
-    if (binding.active === false) continue
+  for (const binding of surveyBindings) {
     if (binding.templateVersionId != null) {
       bindingByVersion.set(String(binding.templateVersionId), binding)
     }
@@ -217,20 +312,22 @@ export function mergeSurveysWithBindings(
     }
   }
 
-  const fromSurveys = surveys.map((dto, index) => {
-    const binding =
-      (dto.templateVersionId != null
-        ? bindingByVersion.get(String(dto.templateVersionId))
-        : undefined) ??
-      (dto.templateId != null ? bindingByTemplate.get(String(dto.templateId)) : undefined)
-    return mapProgramSurveyToRegisteredSurvey(dto, index, binding)
-  })
+  const fromSurveys = surveys
+    .map((dto, index) => {
+      const binding =
+        (dto.templateVersionId != null
+          ? bindingByVersion.get(String(dto.templateVersionId))
+          : undefined) ??
+        (dto.templateId != null ? bindingByTemplate.get(String(dto.templateId)) : undefined)
+      return mapProgramSurveyToRegisteredSurvey(dto, index, binding)
+    })
+    .filter(row => !isOperationalFormBindingByTemplateName(row.title))
 
   // surveys에 없고 binding만 있는 poll 항목 보강
   const seenVersions = new Set(fromSurveys.map(s => s.id))
   const seenTemplates = new Set(fromSurveys.map(s => s.templateId).filter(Boolean))
   const extras: RegisteredSurvey[] = []
-  for (const classified of classifyProgramFormBindings(bindings)) {
+  for (const classified of classifyProgramFormBindings(surveyBindings)) {
     if (classified.kind !== 'poll') continue
     const versionId = String(classified.binding.templateVersionId ?? '')
     const templateId = String(classified.binding.templateId ?? '')

@@ -4,7 +4,9 @@ import type {
   FormResponseFeedbackCreateRequest,
   FormResponseFeedbackResponse,
   FormTemplateCreateRequest,
+  FormTemplateLatestPayloadResponse,
   FormTemplateResponse,
+  FormTemplateUpdateRequest,
   FormTemplateVersionCopyRequest,
   FormTemplateVersionPublishRequest,
   FormTemplateVersionResponse,
@@ -21,6 +23,12 @@ export async function fetchFormTemplatesRemote(
   params?: ListTemplatesParams
 ): Promise<PageResponseFormTemplateListItemResponse> {
   return unwrapApiBody(await formsSurveysApi.listTemplates(params))
+}
+
+export async function fetchFormTemplatePayloadByCodeRemote(
+  templateCode: string
+): Promise<FormTemplateLatestPayloadResponse> {
+  return unwrapApiBody(await formsSurveysApi.getTemplatePayloadByCode(templateCode))
 }
 
 export async function fetchFormTemplateVersionRemote(
@@ -54,6 +62,13 @@ export async function createFormTemplateRemote(
   body: FormTemplateCreateRequest
 ): Promise<FormTemplateResponse> {
   return unwrapApiBody(await formsSurveysApi.createTemplate2(body))
+}
+
+export async function updateFormTemplateRemote(
+  templateId: number,
+  body: FormTemplateUpdateRequest
+): Promise<FormTemplateResponse> {
+  return unwrapApiBody(await formsSurveysApi.updateTemplate(templateId, body))
 }
 
 export async function fetchFormTemplateVersionsRemote(

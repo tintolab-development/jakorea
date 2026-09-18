@@ -7,7 +7,7 @@ import {
   findUjatRegistrationLocalSaveProgramById,
   UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
 } from '@/features/program/ujat/lib/ujat-registration-local-save'
-import { mockUjatElementaryListProgramsMap } from '@/data/mock/ujat-programs-list-mock'
+import { mockUjatElementaryListProgramsMap } from '@/features/program/ujat/model/ujat-programs-list'
 import { resolveUjatProgramDisplayProgram } from '@/features/program/ujat/lib/ujat-program-display-program'
 import {
   resolveUjatSurveyMenuItems,

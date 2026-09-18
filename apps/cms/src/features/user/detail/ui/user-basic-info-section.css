@@ -124,6 +124,20 @@
   white-space: pre;
 }
 
+/* 순수 강사 수정 — 소속 입력 + 「소속 없음」(등록 양식과 동일) */
+.user-basic-info-section__affiliation-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.user-basic-info-section__affiliation-row > .cms-input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 /* 권한 승인 현황(상세) — 목록·회원 권한 승인 페이지와 동일 색/타이포 */
 .user-basic-info-section__permission-approval-status,
 .user-basic-info-section__permission-approval-status-list-tone {

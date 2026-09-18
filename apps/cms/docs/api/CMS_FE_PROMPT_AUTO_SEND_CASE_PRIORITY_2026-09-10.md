@@ -2,7 +2,6 @@
 
 > 원본 BE/Ops handoff: `JABACK/docs/frontend/CMS_FE_BE_HANDOFF_AUTO_SEND_CASE_PRIORITY_2026-09-10.md`  
 > 시트 SSOT: `[tinto lab] JA Korea_알림발송 채널 별 문구 체크리스트_260831`  
-> 관련 FE: [`CMS_FE_PROMPT_ALIMTALK_PICKER_VARIABLES_OPTION_A_2026-09-10.md`](./CMS_FE_PROMPT_ALIMTALK_PICKER_VARIABLES_OPTION_A_2026-09-10.md)  
 > 갱신: 2026-09-10 — BE Wave **1–4 완료** 반영 (V108–V110)
 
 ## FE 영향 요약

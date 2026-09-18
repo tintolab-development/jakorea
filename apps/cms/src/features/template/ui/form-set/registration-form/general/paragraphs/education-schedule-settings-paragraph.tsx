@@ -148,6 +148,8 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
     })
   }, [autoFillDatePicker, groupTimeSlotsKey, scheduleLinesKey])
 
+  const lockTimeOnDateMode = lockCalendarTogglesToScheduleMode || !autoFillDatePicker
+
   return (
     <DetailInfoForm
       title="교육 진행 일정 설정"
@@ -186,9 +188,9 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 mode="single"
                 presetMode={autoFillDatePicker ? 'date' : 'schedule'}
                 customizable={false}
+                showPeriodToggle={false}
                 showTimeToggle={!autoFillDatePicker}
-                showPeriodToggle={!lockDateMode && !lockCalendarTogglesToScheduleMode}
-                lockTimeToggleOn={lockCalendarTogglesToScheduleMode && !autoFillDatePicker}
+                lockTimeToggleOn={lockTimeOnDateMode && !autoFillDatePicker}
                 suppressAutoTodayWhenEmpty
                 value={singleDate}
                 onChange={handleDateApply}
@@ -200,7 +202,8 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
                 mode="single"
                 presetMode="period"
                 customizable={false}
-                showTimeToggle={!lockCalendarTogglesToScheduleMode}
+                showTimeToggle={false}
+                showPeriodToggle={false}
                 lockPeriodToggleOn={lockCalendarTogglesToScheduleMode}
                 suppressAutoTodayWhenEmpty
                 value={periodDate}

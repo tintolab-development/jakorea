@@ -9,4 +9,6 @@
 export interface FormTemplateVersionCopyRequest {
   sourceVersionId?: number;
   versionLabel?: string;
+  /** 프로그램 등록 중 copy 소유 draft. 지정 시 해당 관리자 draft에 귀속 */
+  ownerProgramDraftId?: number;
 }

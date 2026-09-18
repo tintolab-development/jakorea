@@ -49,6 +49,18 @@ export function useSponsorProgramHistoryFilter(
     () => JSON.stringify(programHistoriesParamsFromFilters(appliedFilters)),
     [appliedFilters]
   )
+  /**
+   * BE educationTarget 필터는 복수 대상 문자열에서 일치하지 않는 경우가 있어,
+   * 조회는 동일 조건의 전체 교육 대상을 받고 정규화된 응답으로 FE에서 포함 매칭한다.
+   * query key에는 선택값을 유지해 필터별 캐시가 섞이지 않게 한다.
+   */
+  const serverFilters = useMemo<SponsorProgramHistoryFilters>(
+    () => ({
+      ...appliedFilters,
+      educationTarget: SPONSOR_PROGRAM_HISTORY_FILTER_ALL,
+    }),
+    [appliedFilters]
+  )
 
   const remoteEnabled = useDataManagementRemoteEnabled(
     'sponsors',
@@ -57,7 +69,7 @@ export function useSponsorProgramHistoryFilter(
 
   const query = useQuery({
     queryKey: dataManagementQueryKeys.sponsors.programHistories(sponsorId, paramsKey),
-    queryFn: () => getSponsorProgramHistories(sponsorId, appliedFilters),
+    queryFn: () => getSponsorProgramHistories(sponsorId, serverFilters),
     enabled: remoteEnabled && enabled && Boolean(sponsorId),
     staleTime: 30_000,
     retry: false,
@@ -65,7 +77,7 @@ export function useSponsorProgramHistoryFilter(
 
   const filteredRows = useMemo((): SponsorProgramHistoryRow[] => {
     const items = query.data?.items ?? []
-    // participantType 등 BE 미지원 키는 클라 보조 매칭
+    // educationTarget 복수 대상 및 BE 미지원·불완전 키는 클라이언트 보조 매칭
     return items.filter(row => matchesProgramHistoryFilter(row, appliedFilters))
   }, [appliedFilters, query.data?.items])
 

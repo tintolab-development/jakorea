@@ -94,17 +94,205 @@ export async function fetchProgramSchedulesViaDashboardRemote(
 }
 
 /** GET /api/admin/programs/{programId}/lecture-reports */
+export interface ProgramLectureReportsPageDto {
+  items?: unknown[]
+  page?: number
+  size?: number
+  totalElements?: number
+  totalPages?: number
+}
+
 export async function fetchProgramLectureReportsRemote(
   programId: string,
-  params?: { page?: number; size?: number }
-): Promise<unknown[]> {
-  const body = await unwrapApiBody<unknown[] | { items?: unknown[] }>(
+  params?: { page?: number; size?: number; instructorMemberId?: number }
+): Promise<ProgramLectureReportsPageDto> {
+  const body = await unwrapApiBody<unknown[] | ProgramLectureReportsPageDto>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/lecture-reports`,
       method: 'GET',
       params,
     })
   )
+  if (Array.isArray(body)) {
+    return {
+      items: body,
+      page: params?.page ?? 0,
+      size: params?.size ?? body.length,
+      totalElements: body.length,
+      totalPages: 1,
+    }
+  }
+  return body
+}
+
+/**
+ * GET /api/admin/programs/{programId}/lecture-reports/download
+ * OpenAPI 응답 스키마 미정 — 회원 일괄과 동일하게 `FileDownloadJobResponse`(`downloadUrl`) 가정.
+ * `downloadEndpoint` additive 도 수용.
+ */
+export async function downloadProgramLectureReportsRemote(
+  programId: string,
+  params?: { instructorMemberId?: number }
+): Promise<{
+  downloadUrl?: string
+  downloadEndpoint?: string
+  fileObjectId?: number
+  status?: string
+}> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/lecture-reports/download`,
+      method: 'GET',
+      params,
+    })
+  )
+}
+
+export type ProgramParticipantGiveUpRequest = {
+  reason: string
+  /** BE 보완 — §G-8 활동 포기 중단일 (resolvedScheduleId) */
+  stopScheduleId?: number
+}
+
+/**
+ * POST /api/admin/programs/{programId}/participants/{participantId}/give-up
+ * ORGANIZATION(참여 기관) 등 participant 활동 포기.
+ * organization-applications/{id}/give-up 는 없음(의도적).
+ */
+export async function giveUpProgramParticipantRemote(
+  programId: string,
+  participantId: string,
+  payload: ProgramParticipantGiveUpRequest
+): Promise<void> {
+  await customInstance({
+    url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/give-up`,
+    method: 'POST',
+    data: payload,
+  })
+}
+
+export type ParticipantEducationScopeResponse = {
+  programId?: number
+  participantId?: number
+  revision?: number
+  configured?: boolean
+  scheduleIds?: number[]
+}
+
+export type ParticipantEducationScopeUpdateRequest = {
+  scheduleIds: number[]
+  expectedRevision: number
+  reason: string
+}
+
+/** GET /api/admin/programs/{programId}/participants/{participantId}/education-scope */
+export async function fetchParticipantEducationScopeRemote(
+  programId: string,
+  participantId: string
+): Promise<ParticipantEducationScopeResponse> {
+  return unwrapApiBody<ParticipantEducationScopeResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/education-scope`,
+      method: 'GET',
+    })
+  )
+}
+
+/** PUT /api/admin/programs/{programId}/participants/{participantId}/education-scope */
+export async function putParticipantEducationScopeRemote(
+  programId: string,
+  participantId: string,
+  payload: ParticipantEducationScopeUpdateRequest
+): Promise<ParticipantEducationScopeResponse> {
+  return unwrapApiBody<ParticipantEducationScopeResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/education-scope`,
+      method: 'PUT',
+      data: payload,
+    })
+  )
+}
+
+export type ParticipantSubmissionTeamRole = 'LEADER' | 'MEMBER' | 'INDIVIDUAL'
+
+export type ParticipantSubmissionTeamResponse = {
+  teamId?: number | null
+  teamName?: string
+  name?: string
+  role?: ParticipantSubmissionTeamRole
+  revision?: number
+  expectedRevision?: number
+}
+
+export type ParticipantSubmissionTeamUpdateRequest = {
+  teamId?: number | null
+  role: ParticipantSubmissionTeamRole
+  expectedRevision: number
+  reason: string
+}
+
+export type ProgramSubmissionTeamItem = {
+  teamId?: number
+  id?: number
+  teamName?: string
+  name?: string
+  revision?: number
+}
+
+/** GET /api/admin/programs/{programId}/participants/{participantId}/submission-team */
+export async function fetchParticipantSubmissionTeamRemote(
+  programId: string,
+  participantId: string
+): Promise<ParticipantSubmissionTeamResponse> {
+  return unwrapApiBody<ParticipantSubmissionTeamResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/submission-team`,
+      method: 'GET',
+    })
+  )
+}
+
+/** PUT /api/admin/programs/{programId}/participants/{participantId}/submission-team */
+export async function putParticipantSubmissionTeamRemote(
+  programId: string,
+  participantId: string,
+  payload: ParticipantSubmissionTeamUpdateRequest
+): Promise<ParticipantSubmissionTeamResponse> {
+  return unwrapApiBody<ParticipantSubmissionTeamResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/participants/${encodeURIComponent(participantId)}/submission-team`,
+      method: 'PUT',
+      data: payload,
+    })
+  )
+}
+
+/** GET /api/admin/programs/{programId}/submission-teams */
+export async function fetchProgramSubmissionTeamsRemote(
+  programId: string
+): Promise<ProgramSubmissionTeamItem[]> {
+  const body = await unwrapApiBody<
+    ProgramSubmissionTeamItem[] | { items?: ProgramSubmissionTeamItem[] }
+  >(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/submission-teams`,
+      method: 'GET',
+    })
+  )
   if (Array.isArray(body)) return body
   return body.items ?? []
+}
+
+/** POST /api/admin/programs/{programId}/submission-teams */
+export async function createProgramSubmissionTeamRemote(
+  programId: string,
+  payload: { teamName: string }
+): Promise<ProgramSubmissionTeamItem> {
+  return unwrapApiBody<ProgramSubmissionTeamItem>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/submission-teams`,
+      method: 'POST',
+      data: payload,
+    })
+  )
 }

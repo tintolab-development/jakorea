@@ -1,8 +1,8 @@
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import {
   patchApplicantSchoolForCancelApproval,
   type ApplicantSchoolApprovalNotifyOptions,
-} from '@/data/mock/applicant-institutions'
+} from '@/features/program/shared/model/applicant-institution'
 import {
   formatModalBoldPhrase,
   formatModalBracketedSubjectName,

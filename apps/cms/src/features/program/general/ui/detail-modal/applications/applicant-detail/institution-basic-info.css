@@ -41,10 +41,22 @@
 
 .institution-basic-info__combined-class-edit {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.institution-basic-info__combined-class-edit-row {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 0;
   width: 100%;
+}
+
+.institution-basic-info__combined-class-edit .program-detail-td-divider {
+  margin: 0 12px;
 }
 
 .institution-basic-info__combined-class-unavailable {
@@ -60,12 +72,7 @@
   gap: 12px;
 }
 
-.institution-basic-info__combined-class-select {
-  flex: 1 1 180px;
-  min-width: 180px;
-}
-
-.institution-basic-info .cms-select,
+.institution-basic-info .cms-select:not(.cms-select--explicit-width),
 .institution-basic-info .ant-input,
 .institution-basic-info .ant-input-number {
   max-width: 100%;

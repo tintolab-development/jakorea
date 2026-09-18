@@ -77,11 +77,11 @@ function getParagraphTitle(paragraphs: WritingFormParagraph[], paragraph: Writin
   return getFormNavDisplayLine(paragraphs, paragraph, 'q123')
 }
 
-export function buildSurveyPollResultSections(
+export async function buildSurveyPollResultSections(
   templateId: string,
   responses: SurveyPollRawResponse[]
-): SurveyPollResultSection[] {
-  const draft = resolveSurveyWritingDraft(templateId)
+): Promise<SurveyPollResultSection[]> {
+  const draft = await resolveSurveyWritingDraft(templateId)
   const sections: SurveyPollResultSection[] = []
 
   for (const paragraph of draft.paragraphs) {

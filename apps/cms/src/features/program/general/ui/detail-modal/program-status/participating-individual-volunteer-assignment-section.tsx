@@ -3,10 +3,11 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Table, Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
-import type { ParticipatingVolunteerRow } from '@/data/mock/participating-volunteers'
+import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import {
   VOLUNTEER_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
@@ -23,14 +24,8 @@ import {
   PARTICIPATING_INDIVIDUAL_VOLUNTEER_WAITING_SCHEDULE_EXCEL_COLUMNS,
 } from '@/features/program/general/lib/participating-individual-volunteer-assignment-export'
 import {
-  buildIndividualVolunteerWaitingScheduleRows,
-  buildInitialIndividualVolunteerAssignedScheduleRows,
-  buildOccupiedVolunteerHopeSlotKeys,
-  createIndividualVolunteerWaitingRowFromAssigned,
-  individualVolunteerWaitingRowToAssignedRow,
-  renumberIndividualVolunteerAssignedScheduleRows,
-  renumberIndividualVolunteerWaitingScheduleRows,
-} from '@/features/program/general/lib/participating-individual-volunteer-assignment-mock'
+  buildIndividualVolunteerAssignmentRowsFromEducationScope,
+} from '@/features/program/general/lib/participating-individual-volunteer-assignment'
 import type {
   ParticipatingIndividualVolunteerAssignedScheduleRow,
   ParticipatingIndividualVolunteerWaitingScheduleRow,
@@ -38,6 +33,17 @@ import type {
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
 import { ParticipatingVolunteerUnassignConfirmModal } from './participating-volunteer-unassign-confirm-modal'
 import { ParticipatingVolunteerUnassignCompleteModal } from './participating-volunteer-unassign-complete-modal'
+import {
+  fetchGeneralParticipantEducationScope,
+  fetchGeneralProgressAttendanceBundle,
+  saveGeneralParticipantEducationScope,
+} from '@/features/program/general/api/admin-program-progress-service'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import {
+  notifyProgramApiUnavailable,
+  useNotifyProgramApiUnavailableOnce,
+} from '@/features/program/shared/lib/program-api-unavailable'
 import './instructor-assignment-status-text.css'
 import './participating-individual-volunteer-assignment-section.css'
 
@@ -73,6 +79,44 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
   volunteer,
 }: ParticipatingIndividualVolunteerAssignmentSectionProps) {
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
+  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
+
+  useNotifyProgramApiUnavailableOnce(
+    !remoteEnabled,
+    'general-individual-volunteer-education-scope',
+    '참여 봉사자 상세 · 봉사 배정'
+  )
+
+  const scopeQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.educationScope(program.id, volunteer.id),
+    queryFn: () => fetchGeneralParticipantEducationScope(program.id, volunteer.id),
+    enabled: remoteEnabled,
+    staleTime: 15_000,
+    retry: false,
+  })
+
+  const schedulesQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.schedules(String(program.id)),
+    queryFn: () => fetchGeneralProgressAttendanceBundle(String(program.id)),
+    enabled: remoteEnabled,
+    staleTime: 15_000,
+    retry: false,
+  })
+
+  const remoteRows = useMemo(() => {
+    if (!remoteEnabled || schedulesQuery.data == null) {
+      return { assigned: [], waiting: [] }
+    }
+    const assignedScheduleIds =
+      scopeQuery.data?.configured === false ? [] : (scopeQuery.data?.scheduleIds ?? [])
+    return buildIndividualVolunteerAssignmentRowsFromEducationScope({
+      program,
+      assignedScheduleIds,
+      schedules: schedulesQuery.data.schedules,
+    })
+  }, [program, remoteEnabled, schedulesQuery.data, scopeQuery.data])
+
   const [assignedSchedules, setAssignedSchedules] = useState<
     ParticipatingIndividualVolunteerAssignedScheduleRow[]
   >([])
@@ -92,12 +136,11 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
   const [addAssignWaitingRowId, setAddAssignWaitingRowId] = useState<string | null>(null)
 
   useEffect(() => {
-    const assigned = buildInitialIndividualVolunteerAssignedScheduleRows(volunteer, program)
-    setAssignedSchedules(assigned)
-    setWaitingSchedules(buildIndividualVolunteerWaitingScheduleRows(volunteer, program, assigned))
+    setAssignedSchedules(remoteRows.assigned)
+    setWaitingSchedules(remoteRows.waiting)
     setSelectedAssignedKeys([])
     setSelectedWaitingKeys([])
-  }, [volunteer.id, program.id, program, volunteer])
+  }, [remoteRows, volunteer.id, program.id])
 
   const assignedColumns: ColumnsType<ParticipatingIndividualVolunteerAssignedScheduleRow> =
     useMemo(
@@ -195,6 +238,36 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
       filename: '배정 대기 봉사 일정',
     })
 
+  const persistAssignedScheduleIds = useCallback(
+    async (nextIds: number[], reason: string) => {
+      if (!remoteEnabled) {
+        notifyProgramApiUnavailable(
+          'general-individual-volunteer-education-scope-save',
+          '참여 봉사자 상세 · 봉사 배정'
+        )
+        return false
+      }
+      try {
+        await saveGeneralParticipantEducationScope(program.id, volunteer.id, {
+          scheduleIds: nextIds,
+          expectedRevision: scopeQuery.data?.revision ?? 0,
+          reason,
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.educationScope(program.id, volunteer.id),
+        })
+        return true
+      } catch {
+        showAlert({
+          title: '안내',
+          content: '봉사 배정 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+        return false
+      }
+    },
+    [program.id, queryClient, remoteEnabled, scopeQuery.data?.revision, showAlert, volunteer.id]
+  )
+
   const handleUnassignClick = useCallback(() => {
     if (selectedAssignedKeys.length === 0) {
       showAlert({ title: '안내', content: VOLUNTEER_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
@@ -216,84 +289,65 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
   }, [selectedWaitingKeys, waitingSchedules, showAlert])
 
   const handleUnassignConfirm = useCallback(
-    (payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload) => {
       if (selectedAssignedKeys.length === 0) return
       const removedRows = assignedSchedules.filter(r => selectedAssignedKeys.includes(r.id))
-      const removedLabels = removedRows.map(r => r.scheduleLabel)
-      const removedSlotKeys = new Set(removedRows.map(r => r.slotKey))
-      const toRemove = new Set(selectedAssignedKeys.map(String))
-
-      setAssignedSchedules(prev =>
-        renumberIndividualVolunteerAssignedScheduleRows(prev.filter(r => !toRemove.has(r.id)))
-      )
-      setWaitingSchedules(prev => {
-        const occupiedHopeSlots = buildOccupiedVolunteerHopeSlotKeys(
-          assignedSchedules.filter(r => !toRemove.has(r.id))
-        )
-        const restored = removedRows.map((row, idx) =>
-          createIndividualVolunteerWaitingRowFromAssigned(row, idx + 1, occupiedHopeSlots)
-        )
-        const next = prev.filter(w => !removedSlotKeys.has(w.slotKey))
-        return renumberIndividualVolunteerWaitingScheduleRows([...restored, ...next])
-      })
+      const nextIds = assignedSchedules
+        .filter(r => !selectedAssignedKeys.includes(r.id) && r.scheduleId != null)
+        .map(r => r.scheduleId as number)
+      const ok = await persistAssignedScheduleIds(nextIds, payload.reason.trim() || '봉사 배정 해제')
+      if (!ok) return
       setUnassignConfirmOpen(false)
       setSelectedAssignedKeys([])
       setUnassignCompleteModal({
         volunteerNames: [volunteer.volunteerName],
-        targetNames: removedLabels,
+        targetNames: removedRows.map(r => r.scheduleLabel),
         reason: payload.reason,
       })
     },
-    [selectedAssignedKeys, assignedSchedules, volunteer.volunteerName]
+    [
+      assignedSchedules,
+      persistAssignedScheduleIds,
+      selectedAssignedKeys,
+      volunteer.volunteerName,
+    ]
   )
 
-  const handleSelectAssignConfirm = useCallback(() => {
+  const handleSelectAssignConfirm = useCallback(async () => {
     const selectedRows = waitingSchedules.filter(
       w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting'
     )
     if (selectedRows.length === 0) return
-
-    const ids = new Set(selectedRows.map(r => r.id))
-    setWaitingSchedules(prev =>
-      renumberIndividualVolunteerWaitingScheduleRows(prev.filter(w => !ids.has(w.id)))
-    )
-
-    setAssignedSchedules(prev => {
-      const existingSlotKeys = new Set(prev.map(r => r.slotKey))
-      const next = [...prev]
-      let idx = next.length
-      for (const waitingRow of selectedRows) {
-        if (existingSlotKeys.has(waitingRow.slotKey)) continue
-        next.push(individualVolunteerWaitingRowToAssignedRow(waitingRow, 0))
-        existingSlotKeys.add(waitingRow.slotKey)
-        idx += 1
-      }
-      return renumberIndividualVolunteerAssignedScheduleRows(next)
-    })
-
+    const nextIds = [
+      ...assignedSchedules.map(r => r.scheduleId).filter((id): id is number => id != null),
+      ...selectedRows.map(r => r.scheduleId).filter((id): id is number => id != null),
+    ]
+    const ok = await persistAssignedScheduleIds(Array.from(new Set(nextIds)), '봉사 일정 배정')
+    if (!ok) return
     setSelectAssignConfirmOpen(false)
     setSelectedWaitingKeys([])
-  }, [selectedWaitingKeys, waitingSchedules])
+  }, [
+    assignedSchedules,
+    persistAssignedScheduleIds,
+    selectedWaitingKeys,
+    waitingSchedules,
+  ])
 
-  const handleAddAssignConfirm = useCallback(() => {
+  const handleAddAssignConfirm = useCallback(async () => {
     if (!addAssignWaitingRowId) return
     const waitingRow = waitingSchedules.find(w => w.id === addAssignWaitingRowId)
-    if (!waitingRow || waitingRow.assignmentStatus !== 'waiting') return
-
-    setWaitingSchedules(prev =>
-      renumberIndividualVolunteerWaitingScheduleRows(prev.filter(w => w.id !== addAssignWaitingRowId))
-    )
-    setAssignedSchedules(prev => {
-      if (prev.some(r => r.slotKey === waitingRow.slotKey)) return prev
-      const next = [
-        ...prev,
-        individualVolunteerWaitingRowToAssignedRow(waitingRow, 0),
-      ]
-      return renumberIndividualVolunteerAssignedScheduleRows(next)
-    })
+    if (!waitingRow || waitingRow.assignmentStatus !== 'waiting' || waitingRow.scheduleId == null) {
+      return
+    }
+    const nextIds = [
+      ...assignedSchedules.map(r => r.scheduleId).filter((id): id is number => id != null),
+      waitingRow.scheduleId,
+    ]
+    const ok = await persistAssignedScheduleIds(Array.from(new Set(nextIds)), '봉사 일정 추가 배정')
+    if (!ok) return
     setAddAssignModalOpen(false)
     setAddAssignWaitingRowId(null)
-  }, [addAssignWaitingRowId, waitingSchedules])
+  }, [addAssignWaitingRowId, assignedSchedules, persistAssignedScheduleIds, waitingSchedules])
 
   const addAssignOptions = useMemo(
     () =>

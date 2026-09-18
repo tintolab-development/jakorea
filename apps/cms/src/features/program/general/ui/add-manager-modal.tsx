@@ -1,22 +1,24 @@
 /**
  * 담당자 등록 모달
  * 프로그램 상세 > 담당자 정보 탭 > 등록 버튼
- * ContentModal 레이아웃(패딩 28/30/34) · 권한 설정 Radio · 담당자명 Select
+ * ContentModal 레이아웃(패딩 28/30/34) · 권한 설정 CmsRadio · 담당자명 CmsSelect
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import { Form, Select, Spin } from 'antd'
+import { Form } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { ActionResultModal } from '@/shared/ui/action-result-modal'
-import { CmsButton, CmsRadio } from '@/shared/ui'
+import { CmsButton, CmsRadio, CmsSelect } from '@/shared/ui'
 import type { ProgramRole } from '@/types/user'
 import {
   PROGRAM_ROLE_LABELS,
-  getAssignableManagerCandidates,
   type ProgramManagerRow,
-} from '@/data/mock/program-managers'
+} from '@/features/program/general/model/program-managers'
 import {
   canAddProgramPmFromPmCount,
+  canAssignProgramRoleToCmsAdmin,
+  CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE,
+  isCmsViewerAdminRole,
   PROGRAM_PM_ROLE_LIMIT_MESSAGE,
 } from '@/entities/program/lib/program-pm-role-policy'
 import type { AssignableManagerCandidate } from '@/features/program/general/hooks/use-program-managers'
@@ -40,6 +42,7 @@ export interface AddManagerFormValues {
   role: ProgramRole
   /** remote POST용 admin account id */
   adminId?: number
+  cmsRoleCode?: string
 }
 
 interface AddManagerModalProps {
@@ -61,20 +64,31 @@ export function AddManagerModal({
   open,
   onCancel,
   currentOwnerCount,
-  excludeManagerNames = [],
+  excludeManagerNames: _excludeManagerNames = [],
   candidates,
   candidatesLoading = false,
   confirmLoading = false,
   onAdd,
 }: AddManagerModalProps) {
   const [form] = Form.useForm<AddManagerModalFormValues>()
-  const [showOwnerLimitModal, setShowOwnerLimitModal] = useState(false)
-
+  const [blockMessage, setBlockMessage] = useState<string | null>(null)
   const assignablePool = useMemo((): AssignableManagerCandidate[] => {
-    if (candidates) return candidates
-    // mock 후보는 adminId 없음 — remote 후보와 동일 shape로 맞춤
-    return getAssignableManagerCandidates(excludeManagerNames).map(c => ({ ...c }))
-  }, [candidates, excludeManagerNames])
+    return candidates ?? []
+  }, [candidates])
+  const managerSelectOptions = useMemo(
+    () =>
+      assignablePool.map(m => ({
+        value: m.id,
+        label: isCmsViewerAdminRole(m.cmsRoleCode) ? `${m.name} (조회 전용)` : m.name,
+      })),
+    [assignablePool]
+  )
+  const selectedManagerId = Form.useWatch('managerPreset', form)
+  const selectedCandidate = useMemo(
+    () => assignablePool.find(m => m.id === selectedManagerId),
+    [assignablePool, selectedManagerId]
+  )
+  const viewerSelected = isCmsViewerAdminRole(selectedCandidate?.cmsRoleCode)
 
   useEffect(() => {
     if (!open) return
@@ -85,15 +99,24 @@ export function AddManagerModal({
   }, [open, form, currentOwnerCount])
 
   useEffect(() => {
-    if (!open) setShowOwnerLimitModal(false)
+    if (!open) setBlockMessage(null)
   }, [open])
+
+  useEffect(() => {
+    if (!open || !viewerSelected) return
+    form.setFieldsValue({ role: 'ASSISTANT' })
+  }, [form, open, viewerSelected])
 
   const handleSubmit = async (values: AddManagerModalFormValues) => {
     const picked = assignablePool.find(m => m.id === values.managerPreset)
     if (!picked) return
 
     if (values.role === 'OWNER' && !canAddProgramPmFromPmCount(currentOwnerCount)) {
-      setShowOwnerLimitModal(true)
+      setBlockMessage(PROGRAM_PM_ROLE_LIMIT_MESSAGE)
+      return
+    }
+    if (!canAssignProgramRoleToCmsAdmin(picked.cmsRoleCode, values.role)) {
+      setBlockMessage(CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE)
       return
     }
 
@@ -103,6 +126,7 @@ export function AddManagerModal({
       phone: picked.phone,
       role: values.role,
       adminId: picked.adminId,
+      cmsRoleCode: picked.cmsRoleCode,
     })
     if (result === false) return
     form.resetFields()
@@ -151,14 +175,20 @@ export function AddManagerModal({
             initialValues={{ managerPreset: undefined, role: 'OWNER' }}
             requiredMark={false}
           >
-            <Form.Item name="role" label="권한 설정" className="add-manager-modal__field">
+            <Form.Item
+              name="role"
+              label="권한 설정"
+              className="add-manager-modal__field"
+              extra={viewerSelected ? CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE : undefined}
+            >
               <CmsRadio.Group className="add-manager-modal__role-radios" size="large">
                 {ROLE_OPTIONS.map(opt => (
                   <CmsRadio
                     key={opt.value}
                     value={opt.value}
                     disabled={
-                      opt.value === 'OWNER' && !canAddProgramPmFromPmCount(currentOwnerCount)
+                      (opt.value === 'OWNER' && !canAddProgramPmFromPmCount(currentOwnerCount)) ||
+                      (viewerSelected && opt.value !== 'ASSISTANT')
                     }
                   >
                     {opt.label}
@@ -167,23 +197,22 @@ export function AddManagerModal({
               </CmsRadio.Group>
             </Form.Item>
 
-            <Form.Item name="managerPreset" label="담당자명" className="add-manager-modal__field">
-              <Select
-                placeholder="담당자를 선택하세요"
-                size="large"
-                allowClear
+            <Form.Item
+              name="managerPreset"
+              label="담당자 추가"
+              className="add-manager-modal__field"
+            >
+              <CmsSelect
+                placeholder="담당자로 추가할 관리자를 선택하세요"
+                width="100%"
+                withAllOption={false}
                 loading={candidatesLoading}
                 className="add-manager-modal__select"
-                options={assignablePool.map(m => ({
-                  value: m.id,
-                  label: m.name,
-                }))}
+                options={managerSelectOptions}
                 notFoundContent={
-                  candidatesLoading ? (
-                    <Spin size="small" />
-                  ) : assignablePool.length === 0 ? (
-                    '등록 가능한 담당자가 없습니다'
-                  ) : undefined
+                  assignablePool.length === 0 && !candidatesLoading
+                    ? '등록 가능한 담당자가 없습니다'
+                    : undefined
                 }
                 getPopupContainer={() => document.body}
               />
@@ -193,10 +222,10 @@ export function AddManagerModal({
       </ContentModal>
 
       <ActionResultModal
-        open={showOwnerLimitModal}
-        onClose={() => setShowOwnerLimitModal(false)}
+        open={Boolean(blockMessage)}
+        onClose={() => setBlockMessage(null)}
         title="설정 불가"
-        body={PROGRAM_PM_ROLE_LIMIT_MESSAGE}
+        body={blockMessage ?? ''}
         zIndex={2010}
       />
     </>
@@ -228,5 +257,6 @@ export function buildManagerRowFromForm(
     email: values.email,
     registeredAt: formatRegisteredAt(new Date()),
     adminId: values.adminId,
+    cmsRoleCode: values.cmsRoleCode,
   }
 }

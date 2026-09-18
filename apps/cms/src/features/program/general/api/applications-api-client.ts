@@ -1,20 +1,61 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
+import { getJAKoreaCMSBackendAPIDashboardSubset } from '@/shared/api/generated/dashboard/dashboard-api'
 import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
-import type { IndividualApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationListItemResponse'
+import type { ApplicationDecisionCancelRequest } from '@/shared/api/generated/dashboard/schemas/applicationDecisionCancelRequest'
+import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
+import type { BulkDecisionRequest } from '@/shared/api/generated/dashboard/schemas/bulkDecisionRequest'
+import type { BulkIdsRequest } from '@/shared/api/generated/dashboard/schemas/bulkIdsRequest'
+import type { BulkResultRequest } from '@/shared/api/generated/dashboard/schemas/bulkResultRequest'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
+import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
+import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
+import type { OrganizationApplicationUpdateRequest } from '@/shared/api/generated/dashboard/schemas/organizationApplicationUpdateRequest'
 import type { PageResponseOrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseOrganizationApplicationListItemResponse'
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
+import type { VolunteerApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationDetailResponse'
 import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboard/schemas/volunteerFinalResultRequest'
+import type { IndividualApplicationUpdateRequest } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateRequest'
+import type { IndividualApplicationUpdateResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateResponse'
+import type { IndividualApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationDetailResponse'
+import type { IndividualDocumentEvaluationRequest } from '@/shared/api/generated/dashboard/schemas/individualDocumentEvaluationRequest'
+import type { IndividualDocumentEvaluationResponse } from '@/shared/api/generated/dashboard/schemas/individualDocumentEvaluationResponse'
+import type { VolunteerDocumentEvaluationRequest } from '@/shared/api/generated/dashboard/schemas/volunteerDocumentEvaluationRequest'
+import type { VolunteerDocumentEvaluationResponse } from '@/shared/api/generated/dashboard/schemas/volunteerDocumentEvaluationResponse'
+import type {
+  IndividualApplicationListItemEnriched,
+  InterviewAssignmentCreateRequestEnriched,
+  InterviewAssignmentResponseEnriched,
+} from '@/features/program/general/api/individual-application-screening-api-types'
 
 export type ApplicationsListQuery = {
   status?: string
   page?: number
   size?: number
+  /** 봉사자명 등 부분 검색 (`GET …/volunteer-applications`) */
+  keyword?: string
+  /** 서류 상태. PASS/FAIL 별칭 허용 */
+  documentStatus?: string
+  /** 면접 상태 */
+  interviewStatus?: string
+  /** 최종 결과 상태. APPROVED/REJECTED 별칭 허용 */
+  finalResultStatus?: string
+  /** JA 봉사 재참여 여부 */
+  isReparticipation?: boolean
+  /** 담당자 A 평가 — PASS/NEUTRAL/FAIL/UNREVIEWED */
+  managerAEvaluation?: string
+  /** 담당자 B 평가 — PASS/NEUTRAL/FAIL/UNREVIEWED */
+  managerBEvaluation?: string
+  /** UJAT 상·하반기 — FIRST_HALF | SECOND_HALF (별칭 H1/H2 허용) */
+  recruitHalf?: string
+  /** 모집 ID 직접 지정 (선택) */
+  recruitmentId?: number | string
 }
+
+const generalApplicationsDashboardApi = getJAKoreaCMSBackendAPIDashboardSubset()
 
 export interface ApplicationsPageDto<T> {
   items?: T[]
@@ -22,6 +63,60 @@ export interface ApplicationsPageDto<T> {
   size?: number
   totalElements?: number
   totalPages?: number
+}
+
+export type IndividualApplicationNotificationResendRequest = {
+  timing: 'IMMEDIATE' | 'SCHEDULED'
+  scheduledAt: string | null
+  reason: string | null
+}
+
+/** OpenAPI `Notification` — 강사 신청 승인/반려/취소/재발송 공통 */
+export type InstructorApplicationNotificationRequest = {
+  timing: 'IMMEDIATE' | 'SCHEDULED' | string
+  scheduledAt?: string | null
+}
+
+/** OpenAPI `FeePolicy` */
+export type InstructorApplicationFeePolicyRequest = {
+  basisType: string
+  measure: string
+  amount: number
+  instructorFeeGrade: string
+}
+
+/** OpenAPI `Assignment` */
+export type InstructorApplicationAssignmentRequest = {
+  scheduleId: number
+  organizationApplicationId?: number
+  scheduleLead?: boolean
+}
+
+/** OpenAPI `Approval` */
+export type InstructorApplicationApprovalRequest = {
+  assignments?: InstructorApplicationAssignmentRequest[]
+  feePolicy?: InstructorApplicationFeePolicyRequest
+  notification?: InstructorApplicationNotificationRequest
+}
+
+/** OpenAPI `Rejection` / `Cancellation` */
+export type InstructorApplicationDecisionWithReasonRequest = {
+  reason: string
+  notification?: InstructorApplicationNotificationRequest
+}
+
+export type InstructorApplicationUpdatePayload = {
+  managerComment?: string | null
+}
+
+export type IndividualApplicationUpdatePayload = Omit<
+  IndividualApplicationUpdateRequest,
+  'textbookId' | 'teamName' | 'teamRole' | 'managerComment'
+> & {
+  textbookId?: number | null
+  teamName?: string | null
+  teamRole?: 'LEADER' | 'MEMBER'
+  managerComment?: string | null
 }
 
 async function fetchApplicationsPage<T>(
@@ -47,6 +142,41 @@ export async function fetchOrganizationApplicationsRemote(
   )
 }
 
+/**
+ * 기관 신청 상세 — OpenAPI `OrganizationApplicationDetailResponse` +
+ * UJAT hydrate용 보조 필드(목록·레거시 호환).
+ */
+export type OrganizationApplicationDetailDto = OrganizationApplicationDetailResponse & {
+  managerComment?: string | null
+  regionSido?: string | null
+  regionSigungu?: string | null
+  grade?: string | null
+}
+
+export async function fetchOrganizationApplicationDetailRemote(
+  applicationId: string
+): Promise<OrganizationApplicationDetailDto> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function updateOrganizationApplicationRemote(
+  applicationId: string,
+  payload: OrganizationApplicationUpdateRequest
+): Promise<OrganizationApplicationDetailResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}`,
+      method: 'PATCH',
+      data: payload,
+    })
+  )
+}
+
 export async function fetchInstructorApplicationsRemote(
   programId: string,
   params?: ApplicationsListQuery
@@ -57,13 +187,92 @@ export async function fetchInstructorApplicationsRemote(
   )
 }
 
+export async function fetchInstructorApplicationDetailRemote(
+  applicationId: string
+): Promise<InstructorApplicationDetailResponse> {
+  return unwrapApiBody<InstructorApplicationDetailResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function updateInstructorApplication(
+  applicationId: string,
+  payload: InstructorApplicationUpdatePayload
+): Promise<InstructorApplicationDetailResponse> {
+  return unwrapApiBody<InstructorApplicationDetailResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}`,
+      method: 'PATCH',
+      data: payload,
+    })
+  )
+}
+
 export async function fetchIndividualApplicationsRemote(
   programId: string,
   params?: ApplicationsListQuery
-): Promise<ApplicationsPageDto<IndividualApplicationListItemResponse>> {
-  return fetchApplicationsPage<IndividualApplicationListItemResponse>(
+): Promise<ApplicationsPageDto<IndividualApplicationListItemEnriched>> {
+  return fetchApplicationsPage<IndividualApplicationListItemEnriched>(
     `/api/admin/programs/${encodeURIComponent(programId)}/individual-applications`,
     params
+  )
+}
+
+export async function fetchIndividualApplicationDetailRemote(
+  applicationId: string
+): Promise<IndividualApplicationDetailResponse> {
+  return unwrapApiBody<IndividualApplicationDetailResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function unmaskIndividualApplicationPrivacyRemote(
+  applicationId: string,
+  reason: string
+): Promise<IndividualApplicationDetailResponse> {
+  return unwrapApiBody<IndividualApplicationDetailResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/privacy/unmask`,
+      method: 'POST',
+      data: { reason },
+      headers: { 'Cache-Control': 'no-store' },
+    })
+  )
+}
+
+export async function updateIndividualDocumentEvaluationRemote(
+  applicationId: string,
+  managerSlot: 'A' | 'B',
+  payload: IndividualDocumentEvaluationRequest
+): Promise<IndividualDocumentEvaluationResponse> {
+  return unwrapApiBody<IndividualDocumentEvaluationResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/document-evaluations/${managerSlot}`,
+      method: 'PUT',
+      data: payload,
+    })
+  )
+}
+
+export async function updateVolunteerDocumentEvaluationRemote(
+  applicationId: string,
+  managerSlot: 'A' | 'B',
+  payload: VolunteerDocumentEvaluationRequest
+): Promise<VolunteerDocumentEvaluationResponse> {
+  const numericApplicationId = Number(applicationId)
+  if (!Number.isSafeInteger(numericApplicationId)) {
+    throw new Error('봉사자 신청 ID가 올바르지 않습니다.')
+  }
+  return generalApplicationsDashboardApi.recordVolunteerDocumentEvaluation(
+    numericApplicationId,
+    managerSlot,
+    payload
   )
 }
 
@@ -74,6 +283,17 @@ export async function fetchVolunteerApplicationsRemote(
   return fetchApplicationsPage<VolunteerApplicationListItemResponse>(
     `/api/admin/programs/${encodeURIComponent(programId)}/volunteer-applications`,
     params
+  )
+}
+
+export async function fetchVolunteerApplicationDetailRemote(
+  applicationId: string
+): Promise<VolunteerApplicationDetailResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}`,
+      method: 'GET',
+    })
   )
 }
 
@@ -101,26 +321,180 @@ export async function rejectOrganizationApplicationRemote(
   )
 }
 
+export async function cancelOrganizationApplicationApprovalRemote(
+  applicationId: string,
+  payload: ApplicationDecisionCancelRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}/cancel-approval`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function cancelOrganizationApplicationRejectionRemote(
+  applicationId: string,
+  payload: ApplicationDecisionCancelRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/organization-applications/${encodeURIComponent(applicationId)}/cancel-rejection`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
 export async function approveInstructorApplicationRemote(
-  applicationId: string
+  applicationId: string,
+  payload?: InstructorApplicationApprovalRequest
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
       url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/approve`,
       method: 'POST',
+      ...(payload ? { data: payload } : {}),
     })
   )
 }
 
 export async function rejectInstructorApplicationRemote(
   applicationId: string,
-  payload: ApplicationRejectRequest
+  payload: ApplicationRejectRequest | InstructorApplicationDecisionWithReasonRequest
 ): Promise<ApplicationDecisionResponse> {
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
       url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/reject`,
       method: 'POST',
       data: payload,
+    })
+  )
+}
+
+export async function cancelInstructorApplicationApprovalRemote(
+  applicationId: string,
+  payload: InstructorApplicationDecisionWithReasonRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/cancel-approval`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function cancelInstructorApplicationRejectionRemote(
+  applicationId: string,
+  payload: InstructorApplicationDecisionWithReasonRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/cancel-rejection`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function resendInstructorApplicationNotification(
+  applicationId: string,
+  payload: InstructorApplicationNotificationRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}/notifications/resend`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/**
+ * PATCH /api/admin/instructor-applications/{applicationId}
+ * OpenAPI summary: 강사 신청 관리자 코멘트 수정
+ * null 또는 trim 후 빈 문자열은 코멘트 삭제로 처리.
+ */
+export type InstructorApplicationManagerCommentUpdatePayload = {
+  managerComment: string | null
+}
+
+export type InstructorApplicationManagerCommentUpdateResponse = {
+  applicationId?: number
+  managerComment?: string | null
+  updatedAt?: string
+}
+
+export async function updateInstructorApplicationManagerCommentRemote(
+  applicationId: string,
+  payload: InstructorApplicationManagerCommentUpdatePayload
+): Promise<InstructorApplicationManagerCommentUpdateResponse> {
+  return unwrapApiBody<InstructorApplicationManagerCommentUpdateResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/${encodeURIComponent(applicationId)}`,
+      method: 'PATCH',
+      data: payload,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  )
+}
+
+/** POST /api/admin/organization-applications/bulk-approve */
+export async function bulkApproveOrganizationApplicationsRemote(
+  ids: number[]
+): Promise<BulkActionResponse> {
+  const body: BulkIdsRequest = { ids }
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: `/api/admin/organization-applications/bulk-approve`,
+      method: 'POST',
+      data: body,
+    })
+  )
+}
+
+/** POST /api/admin/organization-applications/bulk-reject */
+export async function bulkRejectOrganizationApplicationsRemote(
+  ids: number[],
+  reason: string
+): Promise<BulkActionResponse> {
+  const body: BulkDecisionRequest = { ids, reason }
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: `/api/admin/organization-applications/bulk-reject`,
+      method: 'POST',
+      data: body,
+    })
+  )
+}
+
+/** POST /api/admin/instructor-applications/bulk-approve */
+export async function bulkApproveInstructorApplicationsRemote(
+  ids: number[]
+): Promise<BulkActionResponse> {
+  const body: BulkIdsRequest = { ids }
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/bulk-approve`,
+      method: 'POST',
+      data: body,
+    })
+  )
+}
+
+/** POST /api/admin/instructor-applications/bulk-reject */
+export async function bulkRejectInstructorApplicationsRemote(
+  ids: number[],
+  reason: string
+): Promise<BulkActionResponse> {
+  const body: BulkDecisionRequest = { ids, reason }
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: `/api/admin/instructor-applications/bulk-reject`,
+      method: 'POST',
+      data: body,
     })
   )
 }
@@ -149,6 +523,109 @@ export async function rejectIndividualApplicationRemote(
   )
 }
 
+export async function cancelIndividualApplicationRejectionRemote(
+  applicationId: string,
+  payload: ApplicationDecisionCancelRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/cancel-rejection`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/**
+ * OpenAPI operationId: resendIndividualApplicationNotification
+ * 로컬 codegen은 BE 재기동 후 교체한다.
+ */
+export async function resendIndividualApplicationNotification(
+  applicationId: string,
+  payload: IndividualApplicationNotificationResendRequest,
+  idempotencyKey: string
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/notifications/resend`,
+      method: 'POST',
+      data: payload,
+      headers: {
+        'Idempotency-Key': idempotencyKey,
+      },
+    })
+  )
+}
+
+/**
+ * OpenAPI operationId: updateIndividualApplication
+ * 코멘트 모달에서는 managerComment만 전송한다.
+ */
+export async function updateIndividualApplication(
+  applicationId: string,
+  payload: IndividualApplicationUpdatePayload
+): Promise<IndividualApplicationUpdateResponse> {
+  return unwrapApiBody<IndividualApplicationUpdateResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}`,
+      method: 'PATCH',
+      data: payload,
+    })
+  )
+}
+
+export async function giveUpIndividualApplicationRemote(
+  applicationId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/applicationGiveUpRequest').ApplicationGiveUpRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/give-up`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function giveUpVolunteerApplicationRemote(
+  applicationId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/applicationGiveUpRequest').ApplicationGiveUpRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/give-up`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function submitIndividualDocumentResultRemote(
+  applicationId: string,
+  payload: DocumentResultRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/document-result`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function submitIndividualFinalResultRemote(
+  applicationId: string,
+  payload: VolunteerFinalResultRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/final-result`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
 export async function submitVolunteerDocumentResultRemote(
   applicationId: string,
   payload: DocumentResultRequest
@@ -162,6 +639,31 @@ export async function submitVolunteerDocumentResultRemote(
   )
 }
 
+/** POST /api/admin/volunteer-applications/document-results/bulk */
+export async function bulkVolunteerDocumentResultsRemote(
+  payload: BulkResultRequest
+): Promise<BulkActionResponse> {
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: '/api/admin/volunteer-applications/document-results/bulk',
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function bulkIndividualDocumentResultsRemote(
+  payload: BulkResultRequest
+): Promise<BulkActionResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: '/api/admin/individual-applications/document-results/bulk',
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
 export async function submitVolunteerFinalResultRemote(
   applicationId: string,
   payload: VolunteerFinalResultRequest
@@ -169,6 +671,35 @@ export async function submitVolunteerFinalResultRemote(
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
       url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/final-result`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/** POST /api/admin/volunteer-applications/final-results/bulk */
+export async function bulkVolunteerFinalResultsRemote(
+  payload: BulkResultRequest
+): Promise<BulkActionResponse> {
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: '/api/admin/volunteer-applications/final-results/bulk',
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/** POST /api/admin/interview-assignments/{assignmentId}/evaluations */
+export async function submitInterviewAssignmentEvaluationRemote(
+  assignmentId: string | number,
+  payload: import('@/shared/api/generated/dashboard/schemas/interviewEvaluationRequest').InterviewEvaluationRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/interviewEvaluationResponse').InterviewEvaluationResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/interview-assignments/${encodeURIComponent(String(assignmentId))}/evaluations`,
       method: 'POST',
       data: payload,
     })
@@ -216,11 +747,13 @@ export async function listInterviewSlotsRemote(
   return body.items ?? []
 }
 
+/**
+ * Canonical 면접 배정.
+ * volunteerApplicationId ↔ individualApplicationId 상호 배타.
+ */
 export async function createInterviewAssignmentRemote(
-  payload: import('@/shared/api/generated/dashboard/schemas/interviewAssignmentCreateRequest').InterviewAssignmentCreateRequest
-): Promise<
-  import('@/shared/api/generated/dashboard/schemas/interviewAssignmentResponse').InterviewAssignmentResponse
-> {
+  payload: InterviewAssignmentCreateRequestEnriched
+): Promise<InterviewAssignmentResponseEnriched> {
   return unwrapApiBody(
     await customInstance({
       url: '/api/admin/interview-assignments',

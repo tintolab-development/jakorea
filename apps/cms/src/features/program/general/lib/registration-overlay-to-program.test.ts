@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import dayjs from 'dayjs'
-import { applyGeneralRegistrationOverlayToProgram } from './registration-overlay-to-program'
+import {
+  applyGeneralRegistrationOverlayToProgram,
+  normalizeRegistrationOverlayForApply,
+} from './registration-overlay-to-program'
 import type { Program } from '@/types/domain'
 
 function baseProgram(): Program {
@@ -134,9 +137,32 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
       description: '내용1',
     })
     expect(next.generalCommonInfo?.educationFormLabel).toBeTruthy()
-    expect(next.generalCommonInfo?.participationMethod).toBe('team')
+    expect(next.generalCommonInfo?.participationMethod).toBeUndefined()
     expect(next.type).toBe('offline')
     expect(next.ips).toBe('Prepare')
+  })
+
+  it('keeps participationMethod for individual audience programs', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      {
+        ...baseProgram(),
+        generalProgramAudience: 'individual',
+        generalParticipantTypes: ['individual'],
+      },
+      {
+        'generalRegistration.typeSettings.singleParticipation': 'team',
+      },
+      {
+        programType: 'curriculum',
+        sessionRoundType: 'single',
+        educationFormScheduleDetail: 'common',
+        participationScheduleDetail: 'common',
+        ipsScheduleDetail: 'common',
+        curriculumChartSessionCount: 1,
+        participantOrganization: false,
+      }
+    )
+    expect(next.generalCommonInfo?.participationMethod).toBe('team')
   })
 
   it('defaults partner yes and payment 해당없음 when overlay keys are missing', () => {
@@ -154,9 +180,10 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
       baseProgram(),
       {
         'generalRegistration.basicInfo.partnerInvolvement': 'no',
+        'generalRegistration.basicInfo.detailedProgramId': '163006',
         'generalRegistration.basicInfo.detailedProgramName': '특별한 JOB담',
         'generalRegistration.wageInfo.paymentItemLabels': '교통비(일반), 숙박비',
-        'generalRegistration.basicInfo.sponsorManagerLine': '팀장 김담당 | 010-1234-5678',
+        'generalRegistration.basicInfo.sponsorManagerLine': '김담당 팀장 | 010-1234-5678',
         'generalRegistration.basicInfo.localManagerContactId': '1627251::1627253',
       },
       {
@@ -167,9 +194,10 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
     )
     expect(next.partnerInvolvement).toBe(false)
     expect(next.generalCommonInfo?.detailedProgramName).toBe('특별한 JOB담')
-    expect(next.textbookName).toBe('특별한 JOB담')
+    expect(next.detailedProgramId).toBe('163006')
+    expect(next.textbookName).toBeUndefined()
     expect(next.generalCommonInfo?.paymentItems).toBe('교통비(일반), 숙박비')
-    expect(next.generalCommonInfo?.sponsorManagerLine).toBe('팀장 김담당 | 010-1234-5678')
+    expect(next.generalCommonInfo?.sponsorManagerLine).toBe('김담당 팀장 | 010-1234-5678')
   })
 
   it('does not store contact ref as sponsorManagerLine', () => {
@@ -185,5 +213,31 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
       }
     )
     expect(next.generalCommonInfo?.sponsorManagerLine).toBeUndefined()
+  })
+})
+
+describe('normalizeRegistrationOverlayForApply', () => {
+  it('maps trainedTeachersRegistration overlay keys to generalRegistration keys', () => {
+    const normalized = normalizeRegistrationOverlayForApply(
+      {
+        'trainedTeachersRegistration.basicInfo.sponsorId': '42',
+        'trainedTeachersRegistration.basicInfo.managerContactId': '99',
+        'trainedTeachersRegistration.basicInfo.programTitleKo': '교육받은 교사 프로그램',
+        'trainedTeachersRegistration.basicInfo.detailedProgramName': '1사1교 경제금융교육',
+        'trainedTeachersRegistration.typeSettings.educationForm': 'offline',
+      },
+      'trainedTeachers'
+    )
+
+    expect(normalized['generalRegistration.basicInfo.localSponsorId']).toBe('42')
+    expect(normalized['generalRegistration.basicInfo.localManagerContactId']).toBe('99')
+    expect(normalized['generalRegistration.basicInfo.localProgramTitleKo']).toBe(
+      '교육받은 교사 프로그램'
+    )
+    expect(normalized['generalRegistration.basicInfo.detailedProgramName']).toBe(
+      '1사1교 경제금융교육'
+    )
+    expect(normalized['generalRegistration.typeSettings.educationForm']).toBe('offline')
+    expect(normalized['generalRegistration.basicInfo.localSponsorIds']).toEqual(['42'])
   })
 })

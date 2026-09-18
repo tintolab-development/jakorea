@@ -6,10 +6,8 @@ import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { Table, Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
-import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
-import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
-import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
+import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
+import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import {
   INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
   INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_SCHOOL_ALERT_MESSAGE,
@@ -36,19 +34,21 @@ import {
   PARTICIPATING_INDIVIDUAL_INSTRUCTOR_ASSIGNED_SCHEDULE_EXCEL_COLUMNS,
   PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_SCHEDULE_EXCEL_COLUMNS,
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-export'
-import {
-  buildIndividualInstructorWaitingScheduleRows,
-  buildInitialIndividualInstructorAssignedScheduleRows,
-  buildOccupiedHopeSlotKeys,
-  createIndividualWaitingRowFromAssigned,
-  individualWaitingRowToAssignedRow,
-  renumberIndividualAssignedScheduleRows,
-  renumberIndividualWaitingScheduleRows,
-} from '@/features/program/general/lib/participating-individual-instructor-assignment-mock'
 import type {
   ParticipatingIndividualInstructorAssignedScheduleRow,
   ParticipatingIndividualInstructorWaitingScheduleRow,
 } from '@/features/program/general/lib/participating-individual-instructor-assignment-types'
+import { useParticipatingInstructorInstitutionAssignment } from '@/features/program/general/hooks/use-participating-instructor-institution-assignment'
+import {
+  cancelInstructorAssignmentRemote,
+  createInstructorAssignmentRemote,
+  putRepresentativeInstructorRemote,
+} from '@/features/program/general/api/instructor-assignments-api-client'
+import {
+  fetchGeneralInstructorAssignmentBoard,
+  findScheduleIdForLectureDate,
+} from '@/features/program/general/api/instructor-assignment-board-service'
+import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
@@ -88,8 +88,8 @@ export interface ParticipatingIndividualInstructorAssignmentSectionProps {
 export function ParticipatingIndividualInstructorAssignmentSection({
   program,
   instructor,
-  schoolRows: _schoolRows = MOCK_PARTICIPATING_SCHOOLS,
-  instructorList: _instructorList = MOCK_PARTICIPATING_INSTRUCTORS,
+  schoolRows = [],
+  instructorList = [],
 }: ParticipatingIndividualInstructorAssignmentSectionProps) {
   const { showAlert } = useCmsAlert()
   const [assignedSchedules, setAssignedSchedules] = useState<
@@ -111,33 +111,73 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   const [addAssignModalOpen, setAddAssignModalOpen] = useState(false)
   const [addAssignWaitingRowId, setAddAssignWaitingRowId] = useState<string | null>(null)
 
+  const assignment = useParticipatingInstructorInstitutionAssignment({
+    programId: program.id,
+    instructor,
+    schoolRows,
+    instructorList,
+    isCompanySchool: false,
+    enabled: true,
+  })
+
   useEffect(() => {
-    const assigned = buildInitialIndividualInstructorAssignedScheduleRows(instructor, program)
-    setAssignedSchedules(assigned)
-    setWaitingSchedules(buildIndividualInstructorWaitingScheduleRows(instructor, program, assigned))
+    setAssignedSchedules(assignment.assignedSchedules)
+    setWaitingSchedules(assignment.waitingSchedules)
     setSelectedAssignedKeys([])
     setSelectedWaitingKeys([])
     setOpenRoleDropdownId(null)
-  }, [instructor.id, program.id, program])
+  }, [instructor.id, assignment.assignedSchedules, assignment.waitingSchedules])
 
-  const handleRoleChange = useCallback((rowId: string, newRole: InstructorRoleKey) => {
-    setAssignedSchedules(prev => {
-      const target = prev.find(row => row.id === rowId)
-      if (!target) return prev
-
-      const updated = prev.map(row => {
-        if (row.id === rowId) {
-          return { ...row, role: newRole }
-        }
-        if (newRole === 'lead' && row.slotKey === target.slotKey && row.role === 'lead') {
-          return { ...row, role: 'assistant' as InstructorRoleKey }
-        }
-        return row
-      })
-      return renumberIndividualAssignedScheduleRows(updated)
-    })
-    setOpenRoleDropdownId(null)
-  }, [])
+  const handleRoleChange = useCallback(
+    async (rowId: string, newRole: InstructorRoleKey) => {
+      setOpenRoleDropdownId(null)
+      if (newRole !== 'lead') {
+        notifyProgramApiUnavailable(
+          'general-individual-instructor-role-demote',
+          '참여 강사 · 일반 강사 변경'
+        )
+        return
+      }
+      if (!assignment.remoteEnabled) {
+        notifyProgramApiUnavailable(
+          'general-individual-instructor-role-change',
+          '참여 강사 · 대표 강사 변경'
+        )
+        return
+      }
+      const target = assignedSchedules.find(row => row.id === rowId)
+      const memberId = Number(target?.instructorMemberId ?? instructor.memberId)
+      const orgAppId = Number(target?.organizationApplicationId)
+      const scheduleId = Number(target?.scheduleId)
+      if (
+        !Number.isFinite(memberId) ||
+        memberId <= 0 ||
+        !Number.isFinite(orgAppId) ||
+        orgAppId <= 0
+      ) {
+        showAlert({
+          title: '안내',
+          content:
+            '대표 강사 변경에 필요한 instructorMemberId / organizationApplicationId가 없습니다.',
+        })
+        return
+      }
+      try {
+        await putRepresentativeInstructorRemote(program.id, {
+          instructorMemberId: memberId,
+          organizationApplicationId: orgAppId,
+          ...(Number.isFinite(scheduleId) && scheduleId > 0 ? { scheduleId } : {}),
+        })
+        await assignment.invalidate()
+      } catch {
+        showAlert({
+          title: '대표 강사 변경 실패',
+          content: '대표 강사 지정에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      }
+    },
+    [assignedSchedules, assignment, instructor.memberId, program.id, showAlert]
+  )
 
   const assignedColumns: ColumnsType<ParticipatingIndividualInstructorAssignedScheduleRow> =
     useMemo(
@@ -316,86 +356,160 @@ export function ParticipatingIndividualInstructorAssignmentSection({
     setSelectAssignConfirmOpen(true)
   }, [selectedWaitingKeys, waitingSchedules, showAlert])
 
-  const handleUnassignConfirm = useCallback(
-    (payload: PermissionModalPayload) => {
-      if (selectedAssignedKeys.length === 0) return
-
-      const removedRows = assignedSchedules.filter(r => selectedAssignedKeys.includes(r.id))
-      const removedLabels = removedRows.map(r => r.scheduleLabel)
-      const toRemove = new Set(selectedAssignedKeys.map(String))
-
-      setAssignedSchedules(prev =>
-        renumberIndividualAssignedScheduleRows(prev.filter(r => !toRemove.has(r.id)))
-      )
-
-      setWaitingSchedules(prev => {
-        const remainingAssigned = assignedSchedules.filter(r => !toRemove.has(r.id))
-        const occupiedHopeSlots = buildOccupiedHopeSlotKeys(remainingAssigned)
-        const added = removedRows.map((row, idx) =>
-          createIndividualWaitingRowFromAssigned(row, prev.length + idx + 1, program, occupiedHopeSlots)
+  const createAssignmentsFromWaiting = useCallback(
+    async (selectedRows: ParticipatingIndividualInstructorWaitingScheduleRow[]) => {
+      if (!assignment.remoteEnabled) {
+        notifyProgramApiUnavailable(
+          'general-individual-instructor-assign',
+          '참여 강사 · 교육 일정 배정'
         )
-        return renumberIndividualWaitingScheduleRows([...prev, ...added])
-      })
-
-      setUnassignConfirmOpen(false)
-      setSelectedAssignedKeys([])
-      setUnassignCompleteModal({
-        instructorNames: [instructor.instructorName],
-        targetNames: removedLabels,
-        reason: payload.reason,
-      })
+        return false
+      }
+      const memberId = Number(instructor.memberId)
+      if (!Number.isFinite(memberId) || memberId <= 0) {
+        showAlert({
+          title: '안내',
+          content: '강사 memberId가 없어 배정할 수 없습니다.',
+        })
+        return false
+      }
+      try {
+        const board = await fetchGeneralInstructorAssignmentBoard(program.id)
+        let leadAssigned = assignedSchedules.some(row => row.role === 'lead')
+        for (const waitingRow of selectedRows) {
+          const orgAppId = Number(waitingRow.organizationApplicationId)
+          if (!Number.isFinite(orgAppId) || orgAppId <= 0) {
+            showAlert({
+              title: '안내',
+              content: `${waitingRow.lectureLocation} — organizationApplicationId가 없어 배정할 수 없습니다.`,
+            })
+            return false
+          }
+          if (waitingRow.scheduleUnresolved) {
+            showAlert({
+              title: '안내',
+              content: `${waitingRow.lectureLocation} — 희망일에 대응하는 program schedule이 없습니다.`,
+            })
+            return false
+          }
+          let scheduleId: number | undefined =
+            typeof waitingRow.resolvedScheduleId === 'number' &&
+            waitingRow.resolvedScheduleId > 0
+              ? waitingRow.resolvedScheduleId
+              : undefined
+          const requestedScheduleId = waitingRow.requestedScheduleId
+          if (scheduleId == null && requestedScheduleId == null) {
+            scheduleId =
+              findScheduleIdForLectureDate(board.schedules, waitingRow.scheduleLabel) ??
+              undefined
+          }
+          if (scheduleId == null && requestedScheduleId == null) {
+            showAlert({
+              title: '안내',
+              content:
+                '희망일에 대응하는 program schedule이 없습니다. requestedScheduleId 또는 schedule 매핑이 필요합니다.',
+            })
+            return false
+          }
+          await createInstructorAssignmentRemote(program.id, {
+            instructorMemberId: memberId,
+            ...(scheduleId != null ? { scheduleId } : {}),
+            ...(requestedScheduleId != null ? { requestedScheduleId } : {}),
+            organizationApplicationId: orgAppId,
+            instructorApplicationId: waitingRow.instructorApplicationId
+              ? Number(waitingRow.instructorApplicationId)
+              : instructor.instructorApplicationId
+                ? Number(instructor.instructorApplicationId)
+                : undefined,
+            scheduleLead: !leadAssigned,
+          })
+          leadAssigned = true
+        }
+        await assignment.invalidate()
+        return true
+      } catch (error) {
+        const message =
+          error instanceof Error && error.message.trim()
+            ? error.message
+            : '배정에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+        showAlert({ title: '배정 실패', content: message })
+        return false
+      }
     },
-    [selectedAssignedKeys, assignedSchedules, instructor.instructorName, program]
+    [
+      assignedSchedules,
+      assignment,
+      instructor.instructorApplicationId,
+      instructor.memberId,
+      program.id,
+      showAlert,
+    ]
   )
 
-  const handleSelectAssignConfirm = useCallback(() => {
+  const handleUnassignConfirm = useCallback(
+    async (payload: PermissionModalPayload) => {
+      if (selectedAssignedKeys.length === 0) return
+      const removedRows = assignedSchedules.filter(r => selectedAssignedKeys.includes(r.id))
+      const removedLabels = removedRows.map(r => r.scheduleLabel)
+
+      if (!assignment.remoteEnabled) {
+        notifyProgramApiUnavailable(
+          'general-individual-instructor-unassign',
+          '참여 강사 · 배정 취소'
+        )
+        return
+      }
+      try {
+        for (const row of removedRows) {
+          const assignmentId = row.assignmentId ?? row.id
+          if (!assignmentId) continue
+          await cancelInstructorAssignmentRemote(String(assignmentId))
+        }
+        await assignment.invalidate()
+        setUnassignConfirmOpen(false)
+        setSelectedAssignedKeys([])
+        setUnassignCompleteModal({
+          instructorNames: [instructor.instructorName],
+          targetNames: removedLabels,
+          reason: payload.reason,
+        })
+      } catch (error) {
+        const message =
+          error instanceof Error && error.message.trim()
+            ? error.message
+            : '배정 취소에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+        showAlert({ title: '배정 취소 실패', content: message })
+      }
+    },
+    [
+      selectedAssignedKeys,
+      assignedSchedules,
+      assignment,
+      instructor.instructorName,
+      showAlert,
+    ]
+  )
+
+  const handleSelectAssignConfirm = useCallback(async () => {
     const selectedRows = waitingSchedules.filter(
       w => selectedWaitingKeys.includes(w.id) && w.assignmentStatus === 'waiting'
     )
     if (selectedRows.length === 0) return
-
-    const ids = new Set(selectedRows.map(r => r.id))
-    setWaitingSchedules(prev => renumberIndividualWaitingScheduleRows(prev.filter(w => !ids.has(w.id))))
-
-    setAssignedSchedules(prev => {
-      const next = [...prev]
-      let idx = next.length
-      for (const waitingRow of selectedRows) {
-        const hasLeadAtSlot = next.some(r => r.slotKey === waitingRow.slotKey && r.role === 'lead')
-        const role: InstructorRoleKey = hasLeadAtSlot ? 'assistant' : 'lead'
-        next.push(individualWaitingRowToAssignedRow(waitingRow, role, 0, program))
-        idx += 1
-      }
-      return renumberIndividualAssignedScheduleRows(next)
-    })
-
+    const ok = await createAssignmentsFromWaiting(selectedRows)
+    if (!ok) return
     setSelectAssignConfirmOpen(false)
     setSelectedWaitingKeys([])
-  }, [selectedWaitingKeys, waitingSchedules, program])
+  }, [selectedWaitingKeys, waitingSchedules, createAssignmentsFromWaiting])
 
-  const handleAddAssignConfirm = useCallback(() => {
+  const handleAddAssignConfirm = useCallback(async () => {
     if (!addAssignWaitingRowId) return
     const waitingRow = waitingSchedules.find(w => w.id === addAssignWaitingRowId)
     if (!waitingRow || waitingRow.assignmentStatus !== 'waiting') return
-
-    setWaitingSchedules(prev =>
-      renumberIndividualWaitingScheduleRows(prev.filter(w => w.id !== addAssignWaitingRowId))
-    )
-
-    setAssignedSchedules(prev => {
-      if (prev.some(r => r.slotKey === waitingRow.slotKey)) return prev
-      const hasLeadAtSlot = prev.some(r => r.slotKey === waitingRow.slotKey && r.role === 'lead')
-      const role: InstructorRoleKey = hasLeadAtSlot ? 'assistant' : 'lead'
-      const next = [
-        ...prev,
-        individualWaitingRowToAssignedRow(waitingRow, role, prev.length, program),
-      ]
-      return renumberIndividualAssignedScheduleRows(next)
-    })
-
+    const ok = await createAssignmentsFromWaiting([waitingRow])
+    if (!ok) return
     setAddAssignModalOpen(false)
     setAddAssignWaitingRowId(null)
-  }, [addAssignWaitingRowId, waitingSchedules, program])
+  }, [addAssignWaitingRowId, waitingSchedules, createAssignmentsFromWaiting])
 
   const addAssignOptions = useMemo(
     () =>

@@ -1,88 +1,11 @@
-.general-volunteer-doc-passed {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  overflow-x: visible;
-  box-sizing: border-box;
-}
-
 /*
- * 필터 2필드(신청 봉사자명·면접일 배정 현황) + 조회 — 기관 프로그램 240px 칸 규격
+ * 필터 그리드 — volunteer-screening.css
+ * (fields-row-with-action / 240px 칸 · 1차 서류 심사 대상자와 동일)
+ * 구형 .table-filter-group__container + display:contents 오버라이드는
+ * 라벨·컨트롤이 분리되어 깨지므로 여기서 두지 않는다.
  */
-.filter-table-layout.general-volunteer-doc-passed__filter-layout {
-  --filter-field-gap: 12px;
-  --table-filter-field-gap: 12px;
-  --general-doc-passed-filter-col-width: min(
-    var(--filter-control-max-width, 240px),
-    calc((100% - var(--filter-field-gap)) / 2)
-  );
-  background: transparent;
-  box-shadow: none;
-  border-radius: 0;
-  margin-bottom: 0;
-  padding: 0;
-}
-
 .filter-table-layout.general-volunteer-doc-passed__filter-layout .filter-table-layout__divider {
   padding: 32px 0;
-}
-
-.filter-table-layout.general-volunteer-doc-passed__filter-layout .table-filter-group__container {
-  display: grid !important;
-  width: 100%;
-  box-sizing: border-box;
-  gap: var(--table-filter-field-gap);
-  align-items: end;
-  justify-content: start;
-  grid-template-columns:
-    repeat(2, minmax(0, var(--general-doc-passed-filter-col-width))) minmax(0, 1fr) 160px !important;
-}
-
-.filter-table-layout.general-volunteer-doc-passed__filter-layout .table-filter-group__fields-container {
-  display: contents;
-}
-
-.filter-table-layout.general-volunteer-doc-passed__filter-layout .table-filter-group__fields-inner.ant-row {
-  display: contents;
-}
-
-.filter-table-layout.general-volunteer-doc-passed__filter-layout
-  .table-filter-group__fields-inner.ant-row
-  > .ant-col {
-  min-width: 0;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.filter-table-layout.general-volunteer-doc-passed__filter-layout .table-filter-group__fields-shell {
-  grid-column: 4;
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
-  justify-self: end;
-}
-
-.filter-table-layout.general-volunteer-doc-passed__filter-layout
-  .table-filter-group__grid-cell,
-.filter-table-layout.general-volunteer-doc-passed__filter-layout
-  .table-filter-group__fields-inner.ant-row
-  > .ant-col
-  .table-filter-group__field,
-.filter-table-layout.general-volunteer-doc-passed__filter-layout
-  .table-filter-group__fields-inner.ant-row
-  > .ant-col
-  .labeled-search-input,
-.filter-table-layout.general-volunteer-doc-passed__filter-layout
-  .table-filter-group__fields-inner.ant-row
-  > .ant-col
-  .cms-select,
-.filter-table-layout.general-volunteer-doc-passed__filter-layout
-  .table-filter-group__fields-inner.ant-row
-  > .ant-col
-  .ant-select {
-  width: 100% !important;
-  max-width: 100% !important;
 }
 
 .general-volunteer-doc-passed__table-wrap {

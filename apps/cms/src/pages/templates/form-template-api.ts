@@ -1,6 +1,9 @@
 import type { FileUploadResult } from '@/entities/application/api/file-upload-service'
 
-/** 양식 모달 — 저장 페이로드(로고 업로드 URL 등). 실제 연동 시 API 스키마에 맞게 조정 */
+/**
+ * @deprecated 인증서 설정은 `persistWritingFormTemplateDraft` → version PUT `settingsJson`만 사용.
+ * 이 스텁은 호출부가 남아 있지 않으며, 신규 코드에서 쓰지 않는다.
+ */
 export interface FormTemplateSavePayload {
   orgLogo?: FileUploadResult
   orgLogo02?: FileUploadResult
@@ -9,14 +12,12 @@ export interface FormTemplateSavePayload {
 }
 
 /**
- * 양식 설정 저장 (모의)
- * 실제 환경에서는 템플릿/양식 PATCH 등으로 교체
+ * @deprecated No-op. Use certificate modal `persistWritingFormTemplateDraft` + remote PUT.
  */
-export async function saveFormTemplateSettings(payload: FormTemplateSavePayload): Promise<void> {
-  await new Promise<void>(resolve => {
-    setTimeout(resolve, 350)
-  })
+export async function saveFormTemplateSettings(_payload: FormTemplateSavePayload): Promise<void> {
   if (import.meta.env.DEV) {
-    console.info('[form-template] save', payload)
+    console.warn(
+      '[form-template] saveFormTemplateSettings is deprecated; settingsJson is saved via form-template version API'
+    )
   }
 }

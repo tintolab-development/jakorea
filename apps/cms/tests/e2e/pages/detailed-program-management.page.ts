@@ -18,7 +18,7 @@ import {
   waitForAdminGet,
 } from './data-management-helpers'
 import { DATA_MANAGEMENT_NAME_PREFIX } from './data-management-seed-titles'
-import { fillByPlaceholder } from './form-helpers'
+import { fillByPlaceholder, selectByPlaceholder } from './form-helpers'
 
 const LIST_COLUMNS = ['No.', '사용 여부', '세부 프로그램명', '등록자명', '등록일시'] as const
 
@@ -95,6 +95,7 @@ export class DetailedProgramManagementPage {
     await expect(modal).toBeVisible()
     await modal.getByRole('radio', { name: '사용' }).check({ force: true })
     await fillByPlaceholder(modal, '세부 프로그램명을 입력해 주세요.', this.uniqueName)
+    await selectByPlaceholder(this.page, '사업 분야를 선택해 주세요.', '경제금융')
 
     const createPromise = this.page.waitForResponse(
       res => isAdminMutation(res, 'POST', /\/api\/admin\/detailed-programs\/?$/),

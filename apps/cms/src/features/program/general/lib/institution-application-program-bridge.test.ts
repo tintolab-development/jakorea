@@ -22,6 +22,56 @@ describe('resolveInstitutionApplicationProgramBridge', () => {
       '26년 4월 27일(월) 13:00 ~ 15:50',
     ])
   })
+
+  it('educationScheduleRange를 commonInfo에서 우선한다', () => {
+    const bridge = resolveInstitutionApplicationProgramBridge({
+      id: 'tt-range',
+      startDate: '2026-01-01T00:00:00+09:00',
+      endDate: '2026-12-31T00:00:00+09:00',
+      generalProgramEducationStructure: 'curriculum',
+      generalProgramSessionRound: 'single',
+      generalCommonInfo: {
+        educationScheduleMode: 'period',
+        educationScheduleRange: {
+          start: '2026-04-01T00:00:00.000Z',
+          end: '2026-06-30T00:00:00.000Z',
+        },
+      },
+    } as Parameters<typeof resolveInstitutionApplicationProgramBridge>[0])
+
+    expect(bridge.educationScheduleRange).toBeDefined()
+    expect(
+      new Date(bridge.educationScheduleRange!.start).toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Seoul',
+      })
+    ).toBe('2026-04-01')
+    expect(
+      new Date(bridge.educationScheduleRange!.end).toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Seoul',
+      })
+    ).toBe('2026-06-30')
+  })
+
+  it('range 없으면 program 사업 운영 기간을 쓴다', () => {
+    const bridge = resolveInstitutionApplicationProgramBridge({
+      id: 'tt-business',
+      startDate: '2026-03-01T00:00:00+09:00',
+      endDate: '2026-09-30T00:00:00+09:00',
+      generalProgramEducationStructure: 'curriculum',
+      generalProgramSessionRound: 'single',
+      generalCommonInfo: {
+        educationScheduleMode: 'period',
+      },
+    } as Parameters<typeof resolveInstitutionApplicationProgramBridge>[0])
+
+    expect(bridge.educationScheduleRange).toBeDefined()
+    const start = new Date(bridge.educationScheduleRange!.start)
+    const end = new Date(bridge.educationScheduleRange!.end)
+    expect(start.getTime()).toBeLessThan(end.getTime())
+    // +09:00 자정 → UTC 전날 15:00 — 로컬 달력일 기준으로 3월/9월
+    expect(start.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })).toBe('2026-03-01')
+    expect(end.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })).toBe('2026-09-30')
+  })
 })
 
 describe('shouldShowInstitutionApplicationScheduleParagraph', () => {

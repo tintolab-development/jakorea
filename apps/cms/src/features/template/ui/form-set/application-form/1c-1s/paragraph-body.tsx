@@ -12,6 +12,8 @@ import { ProgramApplicationFormInstitutionSexOffenseConsentSubmissionParagraph }
 export type EconomyProgramApplicationParagraphBodyOptions = {
   enabled: boolean
   isTemplateAuthoringMode?: boolean
+  /** 프로그램 등록 — disabled 스킨 없이 미선택·입력 불가 */
+  choiceDisplayOnly?: boolean
   sponsorId?: string
   sponsorDisplayName?: string
 }
@@ -45,9 +47,17 @@ export function renderEconomyProgramApplicationParagraphBody(
     case PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance:
       return <EconomyProgramApplicationGuidanceParagraph />
     case PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentSubmissionRequest:
-      return <ProgramApplicationFormInstitutionSexOffenseConsentSubmissionParagraph />
+      return (
+        <ProgramApplicationFormInstitutionSexOffenseConsentSubmissionParagraph
+          choiceDisplayOnly={resolved.choiceDisplayOnly === true}
+        />
+      )
     case PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentInquiryMethod:
-      return <ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagraph />
+      return (
+        <ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagraph
+          choiceDisplayOnly={resolved.choiceDisplayOnly === true}
+        />
+      )
     case PROGRAM_APPLICATION_FORM_ECONOMY_IDS.lessonReply:
       return (
         <EconomyProgramApplicationLessonReplyParagraph

@@ -1,5 +1,5 @@
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
+import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { TabKey } from '@/features/program/general/ui/detail-modal/program-detail-nav-types'
 
 export function filterApplicantsTableData(

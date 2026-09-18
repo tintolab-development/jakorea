@@ -263,7 +263,12 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
 
   return (
     <section className="volunteer-recruitment-info-view" aria-label="봉사자 모집 정보">
-      <FormParagraphSectionHeader title="봉사자 모집 정보" surface="responseEntry" titleAligned />
+      <FormParagraphSectionHeader
+        title="봉사자 모집 정보"
+        surface="responseEntry"
+        titleAligned
+        required={isEdit}
+      />
       <div className="volunteer-recruitment-info-view__forms">
         <DetailInfoForm
           title="봉사자 모집 정보(설정)"

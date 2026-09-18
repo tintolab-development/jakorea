@@ -22,6 +22,9 @@ export function useUpdateGeneralProgram() {
       void queryClient.invalidateQueries({
         queryKey: generalProgramQueryKeys.detail(variables.programId),
       })
+      void queryClient.invalidateQueries({
+        queryKey: generalProgramQueryKeys.navigation(variables.programId),
+      })
     },
   })
 }

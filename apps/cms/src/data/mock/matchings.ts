@@ -133,40 +133,44 @@ function createTestMatchingForInstructor1(index: number): Matching {
   }
 }
 
-export const mockMatchings: Matching[] = [
-  // instructor-1-fixed-id-for-testing용 테스트 매칭 3개 추가 (정산 제출 테스트용)
-  createTestMatchingForInstructor1(0),
-  createTestMatchingForInstructor1(1),
-  createTestMatchingForInstructor1(2),
-  ...Array.from({ length: 35 }, (_, index) => {
-    const programIndex = Math.floor(Math.random() * mockPrograms.length)
-    const program = mockPrograms[programIndex]
-    const hasRound = program.rounds.length > 0 && Math.random() > 0.3
-    const roundIndex = hasRound ? Math.floor(Math.random() * program.rounds.length) : null
-    const instructorIndex = Math.floor(Math.random() * mockInstructors.length)
-    const hasSchedule = Math.random() > 0.3
-    const scheduleIndex = hasSchedule ? Math.floor(Math.random() * mockSchedules.length) : null
-    const status = statuses[Math.floor(Math.random() * statuses.length)]
-    const daysAgo = Math.floor(Math.random() * 30) + 1
-    const isCancelled = status === 'cancelled'
-    const cancelledDaysAgo = isCancelled ? Math.floor(Math.random() * daysAgo) : undefined
-    const cancellationReason = isCancelled
-      ? cancellationReasons[Math.floor(Math.random() * cancellationReasons.length)]
-      : undefined
+// 프로그램 mock 시드 제거(실제 API) — 파생 매칭 mock도 비움
+export const mockMatchings: Matching[] =
+  mockPrograms.length === 0
+    ? []
+    : [
+        // instructor-1-fixed-id-for-testing용 테스트 매칭 3개 추가 (정산 제출 테스트용)
+        createTestMatchingForInstructor1(0),
+        createTestMatchingForInstructor1(1),
+        createTestMatchingForInstructor1(2),
+        ...Array.from({ length: 35 }, (_, index) => {
+          const programIndex = Math.floor(Math.random() * mockPrograms.length)
+          const program = mockPrograms[programIndex]
+          const hasRound = program.rounds.length > 0 && Math.random() > 0.3
+          const roundIndex = hasRound ? Math.floor(Math.random() * program.rounds.length) : null
+          const instructorIndex = Math.floor(Math.random() * mockInstructors.length)
+          const hasSchedule = Math.random() > 0.3
+          const scheduleIndex = hasSchedule ? Math.floor(Math.random() * mockSchedules.length) : null
+          const status = statuses[Math.floor(Math.random() * statuses.length)]
+          const daysAgo = Math.floor(Math.random() * 30) + 1
+          const isCancelled = status === 'cancelled'
+          const cancelledDaysAgo = isCancelled ? Math.floor(Math.random() * daysAgo) : undefined
+          const cancellationReason = isCancelled
+            ? cancellationReasons[Math.floor(Math.random() * cancellationReasons.length)]
+            : undefined
 
-    return createMatching(
-      `match-${String(index + 1).padStart(3, '0')}`,
-      programIndex,
-      roundIndex,
-      instructorIndex,
-      scheduleIndex,
-      status,
-      daysAgo,
-      cancelledDaysAgo,
-      cancellationReason
-    )
-  }),
-]
+          return createMatching(
+            `match-${String(index + 1).padStart(3, '0')}`,
+            programIndex,
+            roundIndex,
+            instructorIndex,
+            scheduleIndex,
+            status,
+            daysAgo,
+            cancelledDaysAgo,
+            cancellationReason
+          )
+        }),
+      ]
 
 export const mockMatchingsMap = new Map<UUID, Matching>()
 mockMatchings.forEach(matching => {

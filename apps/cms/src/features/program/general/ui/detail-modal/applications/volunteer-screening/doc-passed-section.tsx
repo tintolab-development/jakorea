@@ -5,7 +5,7 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import type { Program } from '@/types/domain'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { buildGeneralVolunteerDocPassedFilterRows } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 import {
   screeningDocPassedListTitle,
@@ -21,7 +21,10 @@ import { GeneralVolunteerApplicantDetailView } from './detail-view'
 import { GeneralVolunteerInterviewAssignModals } from './general-volunteer-interview-assign-modals'
 import { GeneralVolunteerDocPassedCalendarView } from './general-volunteer-doc-passed-calendar-view'
 import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
+import { mapVolunteerScreeningRowToParticipant } from '@/features/program/general/lib/participant-volunteer-row-adapter'
+import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
 import { useGeneralVolunteerDocPassed } from './use-doc-passed'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import './doc-passed-section.css'
 import './volunteer-screening.css'
@@ -70,13 +73,24 @@ export function GeneralVolunteerDocPassedSection({
     confirmWithdrawActivity,
     withdrawTarget,
     applicationsLoading,
+    isRemoteDataSource,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
   } = useGeneralVolunteerDocPassed({ programId, subjectKind })
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: `${programId}:${subjectKind}:${viewMode}`,
+  })
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
     programId,
     list,
     variant: 'doc_passed',
     subjectKind,
+    loading: applicationsLoading,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailMetaChange,
   })
@@ -90,6 +104,20 @@ export function GeneralVolunteerDocPassedSection({
     if (!selectedApplicant) return
     requestWithdrawActivity(selectedApplicant)
   }, [requestWithdrawActivity, selectedApplicant])
+
+  const handleParticipantDetailMetaChange = useCallback(
+    (meta: ApplicantDetailMeta) => {
+      if (!meta) {
+        onVolunteerApplicantDetailMetaChange?.(null)
+        return
+      }
+      onVolunteerApplicantDetailMetaChange?.({
+        title: meta.title,
+        breadcrumbLabel: meta.breadcrumbLabel,
+      })
+    },
+    [onVolunteerApplicantDetailMetaChange]
+  )
 
   const handleRowClick = useCallback(
     (record: GeneralVolunteerApplicantRow, e: MouseEvent) => {
@@ -115,6 +143,8 @@ export function GeneralVolunteerDocPassedSection({
       program={program}
       list={list}
       assignFlow={assignFlow}
+      applicationsUseRemote={isRemoteDataSource}
+      subjectKind={subjectKind}
       onClosePick={closeAssignModal}
       onConfirmPick={confirmAssignInterview}
       onCloseComplete={closeAssignCompleteModal}
@@ -154,17 +184,12 @@ export function GeneralVolunteerDocPassedSection({
             program={program}
             applicantId={selectedApplicant.id}
             screeningStage="doc_passed"
+            applicant={
+              selectedApplicant.participantApplicant ??
+              mapVolunteerScreeningRowToParticipant(selectedApplicant)
+            }
             onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
-            onApplicantDetailMetaChange={meta => {
-              if (!meta) {
-                onVolunteerApplicantDetailMetaChange?.(null)
-                return
-              }
-              onVolunteerApplicantDetailMetaChange?.({
-                title: meta.title,
-                breadcrumbLabel: meta.breadcrumbLabel,
-              })
-            }}
+            onApplicantDetailMetaChange={handleParticipantDetailMetaChange}
           />
           {assignModals}
         </>
@@ -206,6 +231,7 @@ export function GeneralVolunteerDocPassedSection({
         bordered={false}
         contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         className="general-volunteer-doc-passed__filter-layout applicant-details__filter-table-layout"
+        filterResponsiveWrap={false}
         rows={filterRows}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
@@ -249,6 +275,7 @@ export function GeneralVolunteerDocPassedSection({
             />
           </div>
         )}
+        <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
       {viewMode === 'calendar' ? (
         <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />

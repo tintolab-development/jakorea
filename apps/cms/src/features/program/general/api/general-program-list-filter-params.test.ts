@@ -63,4 +63,22 @@ describe('general-program-list-filter-params', () => {
       clientFilterGeneralPrograms(programs, { lifecycleStatus: 'in_progress' })
     ).toHaveLength(1)
   })
+
+  it('matches typed lifecycleStatus values in progress phase filter', () => {
+    const programs = [
+      { ...baseProgram, id: '1', lifecycleStatus: 'scheduled' as const },
+      { ...baseProgram, id: '2', lifecycleStatus: 'in_progress' as const },
+      { ...baseProgram, id: '3', lifecycleStatus: 'completed' as const },
+    ]
+
+    expect(
+      clientFilterGeneralPrograms(programs, { lifecycleStatus: 'scheduled' }).map(p => p.id)
+    ).toEqual(['1'])
+    expect(
+      clientFilterGeneralPrograms(programs, { lifecycleStatus: 'in_progress' }).map(p => p.id)
+    ).toEqual(['2'])
+    expect(
+      clientFilterGeneralPrograms(programs, { lifecycleStatus: 'completed' }).map(p => p.id)
+    ).toEqual(['3'])
+  })
 })

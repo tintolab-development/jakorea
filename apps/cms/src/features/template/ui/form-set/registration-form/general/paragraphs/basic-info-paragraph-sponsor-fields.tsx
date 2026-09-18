@@ -8,6 +8,7 @@ import {
   encodeSponsorManagerContactRef,
   decodeSponsorManagerContactRef,
   formatSponsorManagerSelectLabel,
+  formatSponsorManagerDisplayLine,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
@@ -41,16 +42,6 @@ function normalizeSponsorIds(value: unknown, fallbackPrimary = ''): string[] {
   return primary ? [primary] : []
 }
 
-function formatSponsorManagerDisplayLine(contact: {
-  name: string
-  phone?: string | null
-  position?: string | null
-}): string {
-  return [contact.position ? `${contact.position} ${contact.name}` : contact.name, contact.phone]
-    .filter(Boolean)
-    .join(' | ')
-}
-
 function ProgramRegistrationBasicInfoSponsorFieldsInner({
   sponsorId: sponsorIdProp,
   onSponsorIdChange,
@@ -58,7 +49,8 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   onSponsorContactIdChange,
   trainedTeachersDefaults = false,
 }: ControlledSponsorProps) {
-  const allowMultipleSponsors = !trainedTeachersDefaults
+  // 일반·교육받은 교사 모두 Multi Select (기획: 후원사/담당자 Multi)
+  const allowMultipleSponsors = true
   const sponsorIdKey = trainedTeachersDefaults
     ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.sponsorId`
     : GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY
@@ -71,7 +63,8 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   const managerLineKey = trainedTeachersDefaults
     ? `${TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX}.sponsorManagerLine`
     : GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY
-  const allValueDefault = trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_ALL_VALUE : ''
+  // Multi Select에서는 「전체」 싱글 기본값을 쓰지 않음
+  const allValueDefault = ''
 
   const [localSponsorId, setLocalSponsorId] = useProgramRegistrationOverlayKv(
     sponsorIdKey,
@@ -195,6 +188,28 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     sponsorId,
   ])
 
+  const managerContactsReady = allowMultipleSponsors
+    ? sponsorIds.length === 0 ||
+      sponsorIds.every(id => multiSponsorContext.contactsBySponsorId[id] != null)
+    : isAllSponsor || singleContactsQuery.isSuccess
+
+  // 담당자 API 로드 후 옵션에 없는 overlay 값(이전 mock id 등)만 선택 해제
+  useEffect(() => {
+    if (!managerContactsReady || !managerContactId) return
+    if (isAllSponsor && managerContactId === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE) return
+    const optionValues = new Set(managerOptions.map(option => option.value))
+    if (optionValues.has(managerContactId)) return
+    setManagerContactId(
+      isAllSponsor ? TRAINED_TEACHERS_REGISTRATION_ALL_VALUE : ''
+    )
+  }, [
+    isAllSponsor,
+    managerContactId,
+    managerContactsReady,
+    managerOptions,
+    setManagerContactId,
+  ])
+
   // contact ref → 표시용 `이름 | 연락처` (create 시 id::id 노출 방지)
   useEffect(() => {
     if (
@@ -215,14 +230,26 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
         c => c.id === decoded.contactId
       )
       patchProgramRegistrationOverlay({
-        [managerLineKey]: contact ? formatSponsorManagerDisplayLine(contact) : '',
+        [managerLineKey]: contact
+          ? formatSponsorManagerDisplayLine({
+              contactName: contact.name,
+              position: contact.position,
+              phone: contact.phone,
+            })
+          : '',
       })
       return
     }
 
     const contact = (singleContactsQuery.data ?? []).find(c => c.id === managerContactId)
     patchProgramRegistrationOverlay({
-      [managerLineKey]: contact ? formatSponsorManagerDisplayLine(contact) : '',
+      [managerLineKey]: contact
+        ? formatSponsorManagerDisplayLine({
+            contactName: contact.name,
+            position: contact.position,
+            phone: contact.phone,
+          })
+        : '',
     })
   }, [
     allowMultipleSponsors,
@@ -283,16 +310,17 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
         edit={
           <div className="detail-info-form-inputs-wrapper-no-gap">
             <CmsSelect
+              withAllOption={false}
               inputSize="medium"
               placeholder="후원사 담당자를 선택하세요"
               width={240}
               options={managerOptions}
               value={managerContactId}
               disabled={
-                trainedTeachersDefaults
-                  ? !isAllSponsor && managerOptions.length === 0
-                  : allowMultipleSponsors
-                    ? sponsorIds.length === 0 || managerOptions.length === 0
+                allowMultipleSponsors
+                  ? sponsorIds.length === 0 || managerOptions.length === 0
+                  : trainedTeachersDefaults
+                    ? !isAllSponsor && managerOptions.length === 0
                     : !sponsorId || managerOptions.length === 0
               }
               onChange={v => setManagerContactId(String(v ?? ''))}

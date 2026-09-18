@@ -17,7 +17,6 @@ import {
   applyGeminiInstructorAssignment,
   resetGeminiInstructorAssignmentToPending,
 } from '../../model/approved/instructor-application-assignment'
-import { getGeminiInstructorApplicationRows } from '../../model/approved/instructor-application-mock'
 import type {
   GeminiInstructorApplicationApprovalStatus,
   GeminiInstructorApplicationRow,
@@ -132,13 +131,13 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
-  const [rows, setRows] = useState(() => getGeminiInstructorApplicationRows(approvedTrainingId))
+  const [rows, setRows] = useState<GeminiInstructorApplicationRow[]>(() => [])
   const [confirmModal, setConfirmModal] = useState<
     { mode: 'approve'; target: GeminiInstructorApplicationRow } | { mode: 'change' } | null
   >(null)
 
   useEffect(() => {
-    setRows(getGeminiInstructorApplicationRows(approvedTrainingId))
+    setRows([])
     setSelectedRowKeys([])
     setPendingFilters(INITIAL_PENDING_FILTERS)
     setAppliedFilters(INITIAL_PENDING_FILTERS)

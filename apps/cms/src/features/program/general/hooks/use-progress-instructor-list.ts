@@ -1,62 +1,134 @@
 /**
- * 프로그램 진행현황 탭 - 참여 강사 목록 (API only, mock/localStorage 폴백 없음)
+ * 프로그램 진행현황 탭 - 참여 강사 목록
+ * remote OFF → 빈 목록 + API 미연동 alert; remote ON → participants + instructor-assignments 조인
+ * 교육받은 교사(TT): 강사 Relation 없음 — alert/remote 호출 없음
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import type {
   ParticipatingInstructorRow,
   SettlementStatusKey,
-} from '@/data/mock/participating-instructors'
-import { buildParticipatingInstructorRowFromMember } from '../lib/participating-instructor-member-candidates'
-import {
-  buildInstructorRowFromForm,
-  type AddInstructorFormValues,
-} from '../ui/add-instructor-modal'
+} from '@/features/program/general/model/participating-instructors'
 import type { ProgressFilters } from './use-program-progress-params'
-import { fetchGeneralParticipatingInstructors } from '@/features/program/general/api/admin-program-progress-service'
+import { fetchGeneralParticipatingInstructorsPage } from '@/features/program/general/api/admin-program-progress-service'
+import { fetchGeneralInstructorAssignmentBoard } from '@/features/program/general/api/instructor-assignment-board-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import {
+  useIsTrainedTeachersProgramsSurface,
+  useProgramProgressRemoteEnabledForSurface,
+} from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import {
+  notifyProgramApiUnavailable,
+  useNotifyProgramApiUnavailableOnce,
+} from '@/features/program/shared/lib/program-api-unavailable'
+import { buildAssignedOrganizationNamesByMemberId } from '@/features/program/general/lib/participating-instructor-assigned-institutions'
+import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
+import { getTempMockOrgProgressInstructors } from '@/features/program/general/lib/temp-mock-org-program'
+import type { Program } from '@/types/domain'
+
+function mergeInstructorRowsWithAssignments(
+  rows: ParticipatingInstructorRow[],
+  assignedByMemberId: Map<string, string[]>
+): ParticipatingInstructorRow[] {
+  return rows.map(row => {
+    if (row.assignedOrganizationNames?.length) return row
+    if (!row.memberId) return row
+    const assigned = assignedByMemberId.get(row.memberId)
+    if (!assigned?.length) return row
+    return {
+      ...row,
+      assignedOrganizationNames: assigned,
+      schoolName: assigned[0] ?? row.schoolName,
+    }
+  })
+}
 
 export interface UseProgressInstructorListOptions {
   appliedFilters: ProgressFilters
-  /** @deprecated mock 제거 — 무시됨 */
-  preferMock?: boolean
   programId?: string
+  program?: Program | null
 }
 
 export function useProgressInstructorList({
   appliedFilters,
   programId,
 }: UseProgressInstructorListOptions) {
-  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
-  const remoteQuery = useQuery({
+  const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
+  const isTempMockProgram = isGeneralProgramTempMockProgramId(programId)
+  const remoteEnabled =
+    useProgramProgressRemoteEnabledForSurface(programId) && !isTempMockProgram
+
+  useNotifyProgramApiUnavailableOnce(
+    !remoteEnabled && !isTrainedTeachersSurface && !isTempMockProgram,
+    'general-progress-instructors',
+    '프로그램 진행 현황 · 강사'
+  )
+
+  const remoteQuery = useInfiniteQuery({
     queryKey: generalProgramProgressQueryKeys.instructors(programId ?? ''),
-    queryFn: () => fetchGeneralParticipatingInstructors(programId!),
+    queryFn: ({ pageParam }) =>
+      fetchGeneralParticipatingInstructorsPage(programId!, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled: remoteEnabled,
     staleTime: 30_000,
     retry: false,
   })
 
-  const [instructorList, setInstructorList] = useState<ParticipatingInstructorRow[]>([])
+  const assignmentsQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.instructorAssignments(programId ?? ''),
+    queryFn: () => fetchGeneralInstructorAssignmentBoard(programId!),
+    enabled: remoteEnabled && Boolean(programId),
+    staleTime: 30_000,
+    retry: false,
+  })
 
-  useEffect(() => {
-    if (remoteEnabled) {
-      if (remoteQuery.data) setInstructorList(remoteQuery.data)
-      return
-    }
-    setInstructorList([])
-  }, [remoteEnabled, remoteQuery.data])
+  const assignedOrganizationNamesByMemberId = useMemo(
+    () => buildAssignedOrganizationNamesByMemberId(assignmentsQuery.data?.assignments ?? []),
+    [assignmentsQuery.data?.assignments]
+  )
+
+  const remoteInstructorRows = useMemo(() => {
+    if (!remoteQuery.data) return []
+    return remoteQuery.data.pages.flatMap(page => page.rows)
+  }, [remoteQuery.data])
+
+  const instructorList = useMemo(() => {
+    if (isTempMockProgram) return getTempMockOrgProgressInstructors(programId)
+    if (!remoteEnabled) return []
+    return mergeInstructorRowsWithAssignments(
+      remoteInstructorRows,
+      assignedOrganizationNamesByMemberId
+    )
+  }, [
+    assignedOrganizationNamesByMemberId,
+    isTempMockProgram,
+    programId,
+    remoteEnabled,
+    remoteInstructorRows,
+  ])
 
   const [selectedInstructorRowKeys, setSelectedInstructorRowKeys] = useState<React.Key[]>([])
-  const [selectedInstructorForDetail, setSelectedInstructorForDetail] =
-    useState<ParticipatingInstructorRow | null>(null)
-  const [instructorDetailModalOpen, setInstructorDetailModalOpen] = useState(false)
   const [addInstructorModalOpen, setAddInstructorModalOpen] = useState(false)
   const [instructorDeleteGuideOpen, setInstructorDeleteGuideOpen] = useState(false)
+  const [tempMockInstructorList, setTempMockInstructorList] = useState<
+    ParticipatingInstructorRow[] | null
+  >(null)
+
+  useEffect(() => {
+    if (!isTempMockProgram) {
+      setTempMockInstructorList(null)
+    }
+  }, [isTempMockProgram, programId])
+
+  const resolvedInstructorList = useMemo(() => {
+    if (!isTempMockProgram) return instructorList
+    return tempMockInstructorList ?? instructorList
+  }, [instructorList, isTempMockProgram, tempMockInstructorList])
 
   const filteredInstructors = useMemo(() => {
-    return instructorList.filter(row => {
+    return resolvedInstructorList.filter(row => {
       if (
         appliedFilters.educationGrade &&
         appliedFilters.educationGrade !== 'all' &&
@@ -86,69 +158,85 @@ export function useProgressInstructorList({
       }
       return true
     })
-  }, [instructorList, appliedFilters])
+  }, [appliedFilters, resolvedInstructorList])
 
   const instructorNamesToDelete = useMemo(() => {
     const keysSet = new Set(selectedInstructorRowKeys.map(String))
-    return instructorList.filter(row => keysSet.has(row.id)).map(row => row.instructorName)
-  }, [selectedInstructorRowKeys, instructorList])
+    return resolvedInstructorList.filter(row => keysSet.has(row.id)).map(row => row.instructorName)
+  }, [resolvedInstructorList, selectedInstructorRowKeys])
 
-  const handleAddInstructor = useCallback(
-    (values: AddInstructorFormValues) => {
-      const nextNo =
-        instructorList.length > 0 ? Math.max(...instructorList.map(r => r.no)) + 1 : 1
-      const nextId = `instructor-new-${Date.now()}`
-      const newRow = buildInstructorRowFromForm(values, nextNo, nextId)
-      setInstructorList(prev => [newRow, ...prev])
-    },
-    [instructorList]
-  )
+  const notifyInstructorRegisterUnavailable = useCallback(() => {
+    notifyProgramApiUnavailable(
+      'general-progress-instructor-register',
+      '참여 강사 등록'
+    )
+  }, [])
 
-  const handleAddInstructorByMemberId = useCallback(
-    async (memberId: string): Promise<boolean> => {
-      const nextNo =
-        instructorList.length > 0 ? Math.max(...instructorList.map(r => r.no)) + 1 : 1
-      const nextId = `instructor-added-${memberId}-${Date.now()}`
-      const newRow = await buildParticipatingInstructorRowFromMember(memberId, nextNo, nextId)
-      if (!newRow) return false
-      setInstructorList(prev => [newRow, ...prev])
-      return true
-    },
-    [instructorList]
-  )
+  const handleAddInstructorByMemberId = useCallback(async (_memberId: string): Promise<boolean> => {
+    if (isTempMockProgram) return true
+    notifyInstructorRegisterUnavailable()
+    return false
+  }, [isTempMockProgram, notifyInstructorRegisterUnavailable])
+
+  const handleAddInstructor = useCallback((_values: unknown) => {
+    void _values
+    if (isTempMockProgram) return
+    notifyInstructorRegisterUnavailable()
+  }, [isTempMockProgram, notifyInstructorRegisterUnavailable])
 
   const handleSettlementStatusChange = useCallback(
     (recordId: string, status: SettlementStatusKey) => {
-      setInstructorList(prev =>
-        prev.map(row => (row.id === recordId ? { ...row, settlementStatus: status } : row))
+      if (isTempMockProgram) {
+        setTempMockInstructorList(prev =>
+          (prev ?? getTempMockOrgProgressInstructors(programId)).map(row =>
+            row.id === recordId ? { ...row, settlementStatus: status } : row
+          )
+        )
+        return
+      }
+      notifyProgramApiUnavailable(
+        'general-progress-instructor-settlement',
+        '참여 강사 정산 현황 변경'
       )
     },
-    []
+    [isTempMockProgram, programId]
   )
 
   const handleInstructorDeleteClick = useCallback(() => {
-    if (selectedInstructorRowKeys.length === 0) {
+    if (selectedInstructorRowKeys.length === 0) return
+    if (isTempMockProgram) {
+      setInstructorDeleteGuideOpen(true)
       return
     }
-    setInstructorDeleteGuideOpen(true)
-  }, [selectedInstructorRowKeys])
+    notifyProgramApiUnavailable(
+      'general-progress-instructor-delete',
+      '참여 강사 삭제'
+    )
+  }, [isTempMockProgram, selectedInstructorRowKeys.length])
 
   const handleInstructorDeleteConfirm = useCallback(() => {
-    const keysToDelete = new Set(selectedInstructorRowKeys.map(String))
-    setInstructorList(prev => prev.filter(row => !keysToDelete.has(row.id)))
-    setSelectedInstructorRowKeys([])
+    if (isTempMockProgram) {
+      const keysToDelete = new Set(selectedInstructorRowKeys.map(String))
+      setTempMockInstructorList(prev =>
+        (prev ?? getTempMockOrgProgressInstructors(programId)).filter(
+          row => !keysToDelete.has(row.id)
+        )
+      )
+      setSelectedInstructorRowKeys([])
+    }
     setInstructorDeleteGuideOpen(false)
-  }, [selectedInstructorRowKeys])
+  }, [isTempMockProgram, programId, selectedInstructorRowKeys])
+
+  useEffect(() => {
+    setSelectedInstructorRowKeys(prev =>
+      prev.filter(key => resolvedInstructorList.some(row => row.id === String(key)))
+    )
+  }, [resolvedInstructorList])
 
   return {
-    instructorList,
-    setInstructorList,
+    instructorList: resolvedInstructorList,
     selectedInstructorRowKeys,
     setSelectedInstructorRowKeys,
-    selectedInstructorForDetail,
-    setSelectedInstructorForDetail,
-    instructorDetailModalOpen,
-    setInstructorDetailModalOpen,
     addInstructorModalOpen,
     setAddInstructorModalOpen,
     instructorDeleteGuideOpen,
@@ -160,9 +248,14 @@ export function useProgressInstructorList({
     handleSettlementStatusChange,
     handleInstructorDeleteClick,
     handleInstructorDeleteConfirm,
-    applicationsLoading: remoteEnabled
-      ? remoteQuery.isFetching && remoteQuery.data === undefined
-      : false,
+    assignedOrganizationNamesByMemberId,
+    applicationsLoading:
+      remoteEnabled &&
+      ((remoteQuery.isFetching && remoteQuery.data === undefined) ||
+        (assignmentsQuery.isFetching && assignmentsQuery.data === undefined)),
     isRemoteDataSource: remoteEnabled,
+    hasNextPage: remoteQuery.hasNextPage ?? false,
+    isFetchingNextPage: remoteQuery.isFetchingNextPage,
+    fetchNextPage: remoteQuery.fetchNextPage,
   }
 }

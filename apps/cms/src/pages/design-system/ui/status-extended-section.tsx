@@ -24,8 +24,8 @@ import {
   type UjatManagerEvaluation,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
-import type { TextbookStatusKey } from '@/data/mock/participating-schools'
-import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/data/mock/participating-schools'
+import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
+import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/features/program/general/model/participating-schools'
 import { EditableStatusBadge } from '@/shared/components/editable-status-badge'
 import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'

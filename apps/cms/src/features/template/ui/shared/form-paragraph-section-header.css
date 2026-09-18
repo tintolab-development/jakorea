@@ -5,6 +5,14 @@
 
 .form-paragraph-section-header.detail-info-form__header {
   align-items: flex-start;
+  flex-wrap: nowrap;
+}
+
+/* description 있을 때 — description ↔ 본문 블록 16px (공통정보·모집정보 수정 모드 동일) */
+.form-paragraph-section-header.detail-info-form__header:has(
+  .form-paragraph-section-header__description
+) {
+  margin-bottom: 16px;
 }
 
 .form-paragraph-section-header__lead.detail-info-form__header-lead {
@@ -14,6 +22,14 @@
   /* DetailInfoForm 한 줄 헤더용 height:40px 해제 — 타이틀↔폼은 header margin-bottom 10px만 */
   height: auto;
   min-height: 0;
+}
+
+/* 우측 액션(토글·버튼) — note용 360px·opacity 해제, 타이틀 행에 맞춤 */
+.form-paragraph-section-header .detail-info-form__header-trailing {
+  align-self: flex-start;
+  flex-shrink: 0;
+  max-width: none;
+  opacity: 1;
 }
 
 .form-paragraph-section-header__description {

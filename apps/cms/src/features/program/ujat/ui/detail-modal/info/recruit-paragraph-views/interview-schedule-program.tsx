@@ -89,6 +89,7 @@ export function UjatRecruitInterviewScheduleProgramView({
           onCommonExclusionChange={(state: UnavailableDatesExclusionState) =>
             setExceptionScheduleAddDisabled(state.excludeNone)
           }
+          freezeUnavailableCalendar={false}
         />
       ) : (
         <UjatVolunteerInterviewScheduleReadonly data={display} />

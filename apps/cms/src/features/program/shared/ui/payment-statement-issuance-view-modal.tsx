@@ -43,6 +43,9 @@ export interface PaymentStatementIssuanceViewModalProps {
   fileName?: string
   /** 풀페이지 모달 위 겹침 — 기본 1400 */
   zIndex?: number
+  /** 전달 시 서버 PDF 등 외부 다운로드 핸들러 사용 */
+  onDownloadPdf?: () => Promise<void>
+  downloadLoading?: boolean
 }
 
 function PreviewPagePrevIcon() {
@@ -99,10 +102,13 @@ export function PaymentStatementIssuanceViewModal({
   paragraphBodyOptions,
   fileName: fileNameProp,
   zIndex = 1400,
+  onDownloadPdf,
+  downloadLoading: downloadLoadingProp = false,
 }: PaymentStatementIssuanceViewModalProps) {
   const { showAlert } = useCmsAlert()
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
-  const [pdfLoading, setPdfLoading] = useState(false)
+  const [clientPdfLoading, setClientPdfLoading] = useState(false)
+  const pdfLoading = downloadLoadingProp || clientPdfLoading
   const pdfHostRef = useRef<HTMLDivElement>(null)
 
   const draft = useMemo(
@@ -162,9 +168,15 @@ export function PaymentStatementIssuanceViewModal({
   }, [open, fileName])
 
   const handleDownloadPdf = useCallback(async () => {
+    if (pdfLoading) return
+    if (onDownloadPdf) {
+      await onDownloadPdf()
+      return
+    }
+
     const root = pdfHostRef.current
-    if (!root || pdfLoading) return
-    setPdfLoading(true)
+    if (!root) return
+    setClientPdfLoading(true)
     try {
       const pageEls = collectFormDocumentPdfPageElements(root)
       await downloadFormDocumentPdfFromPageElements(pageEls, `${fileName}.pdf`)
@@ -172,9 +184,9 @@ export function PaymentStatementIssuanceViewModal({
       handleError(e, { context: 'paymentStatementIssuanceViewModal.downloadPdf' })
       showAlert({ title: '안내', content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.' })
     } finally {
-      setPdfLoading(false)
+      setClientPdfLoading(false)
     }
-  }, [fileName, pdfLoading, showAlert])
+  }, [fileName, onDownloadPdf, pdfLoading, showAlert])
 
   if (!open) return null
 

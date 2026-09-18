@@ -1,5 +1,4 @@
-import type { ReactNode } from 'react'
-import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
+import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/features/program/shared/model/program-wage-info'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -20,7 +19,7 @@ import {
   type ApplicantInstructorBusinessIncomeStatus,
   type ApplicantInstructorLectureFeeBasisType,
 } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
-import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 
 function FieldError({ message }: { message?: string }) {
   if (!message?.trim()) return null
@@ -31,42 +30,16 @@ function FieldError({ message }: { message?: string }) {
 
 export function LectureFeeBasisView({ instructor }: { instructor: ApplicantInstructorRow }) {
   const fee = resolveLectureFeeBasisFromRow(instructor)
-  const display = instructor.lectureFeeBasisDisplay?.trim()
-
-  if (fee.type === 'program') {
-    const amountLabel = formatLectureFeeAmountWon(fee.amount)
-    if (!amountLabel) {
-      return <span>{lectureFeeBasisTypeLabel('program')}</span>
-    }
-    return (
-      <ProgramDetailTdSegmentWrap>
-        {withProgramDetailTdDivider([lectureFeeBasisTypeLabel('program'), amountLabel])}
-      </ProgramDetailTdSegmentWrap>
-    )
-  }
-
-  const segments: ReactNode[] = [lectureFeeBasisTypeLabel(fee.type)]
-  if (fee.measure.trim()) {
-    segments.push(fee.measure.trim())
-  }
+  const categoryLabel = lectureFeeBasisTypeLabel(fee.type)
   const amountLabel = formatLectureFeeAmountWon(fee.amount)
-  if (amountLabel) {
-    segments.push(amountLabel)
-  }
 
-  if (segments.length === 1 && display) {
-    return (
-      <ProgramDetailTdSegmentWrap>
-        {display.includes('|')
-          ? withProgramDetailTdDivider(display.split('|').map(s => s.trim()))
-          : display}
-      </ProgramDetailTdSegmentWrap>
-    )
+  if (!amountLabel) {
+    return <span>{categoryLabel}</span>
   }
 
   return (
     <ProgramDetailTdSegmentWrap>
-      {segments.length === 1 ? segments[0] : withProgramDetailTdDivider(segments)}
+      {withProgramDetailTdDivider([categoryLabel, amountLabel])}
     </ProgramDetailTdSegmentWrap>
   )
 }

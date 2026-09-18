@@ -1,3 +1,12 @@
+import { useEffect, useMemo } from 'react'
+import {
+  shouldShowInstitutionApplicationPreferredEducationForm,
+  useInstitutionApplicationProgramBridge,
+} from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  DEFAULT_INSTITUTION_APPLICATION_MAX_CLASS_COUNT,
+  buildInstitutionClassCountOptions,
+} from '@/features/template/lib/participant-recruitment-institution-limits'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -8,11 +17,6 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 const APPLICATION_GRADE_OPTIONS = Array.from({ length: 6 }, (_, i) => ({
   value: String(i + 1),
   label: `${i + 1}학년`,
-}))
-
-const CLASS_COUNT_OPTIONS = Array.from({ length: 20 }, (_, i) => ({
-  value: String(i + 1),
-  label: String(i + 1),
 }))
 
 const EDUCATION_FORMAT_OPTIONS = [
@@ -27,16 +31,6 @@ const EDUCATION_PLACE_OPTIONS = [
   { value: 'custom', label: '기타(직접입력)' },
 ] as const
 
-/** 미리보기·프로그램 연동 — 신청 교사/기관 자동 반영 예시 */
-const PREVIEW_AUTO_USER_INFO_SAMPLE = {
-  institutionName: '진일초등학교',
-  institutionAddress: '광주광역시 남구 광복마을4길 40',
-  teacherName: '홍길동',
-  tel: '',
-  mobile: '',
-  email: '',
-} as const
-
 const inlineChoiceStyle = { display: 'flex', flexWrap: 'wrap' as const, gap: 16 }
 
 /** 교육받은 교사 프로그램 참여자 신청 폼 — 기본 정보 */
@@ -45,6 +39,16 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
 }: {
   isTemplateAuthoringMode?: boolean
 }) {
+  const bridge = useInstitutionApplicationProgramBridge()
+  const classCountOptions = useMemo(
+    () =>
+      buildInstitutionClassCountOptions(
+        bridge.maxClassCount ?? DEFAULT_INSTITUTION_APPLICATION_MAX_CLASS_COUNT
+      ),
+    [bridge.maxClassCount]
+  )
+  const showPreferredEducationForm = shouldShowInstitutionApplicationPreferredEducationForm(bridge)
+
   const [applicationGrade, setApplicationGrade] = useGeneralApplicationOverlayKv<string>(
     'application.trainedTeachers.basicInfo.applicationGrade',
     ''
@@ -75,15 +79,15 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
   )
   const [teacherTel, setTeacherTel] = useGeneralApplicationOverlayKv<string>(
     'application.trainedTeachers.basicInfo.teacherTel',
-    PREVIEW_AUTO_USER_INFO_SAMPLE.tel
+    ''
   )
   const [teacherMobile, setTeacherMobile] = useGeneralApplicationOverlayKv<string>(
     'application.trainedTeachers.basicInfo.teacherMobile',
-    PREVIEW_AUTO_USER_INFO_SAMPLE.mobile
+    ''
   )
   const [teacherEmail, setTeacherEmail] = useGeneralApplicationOverlayKv<string>(
     'application.trainedTeachers.basicInfo.teacherEmail',
-    PREVIEW_AUTO_USER_INFO_SAMPLE.email
+    ''
   )
   const [applicationReason, setApplicationReason] = useGeneralApplicationOverlayKv<string>(
     'application.trainedTeachers.basicInfo.applicationReason',
@@ -94,11 +98,22 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
     ''
   )
 
+  useEffect(() => {
+    if (classCount === '') return
+    const selected = parseInt(classCount, 10)
+    const max = bridge.maxClassCount
+    if (max != null && max > 0 && (Number.isNaN(selected) || selected > max)) {
+      setClassCount('')
+    }
+  }, [bridge.maxClassCount, classCount, setClassCount])
+
+  /** 로그인·소속 기관 자동 반영 — 값 없으면 placeholder (샘플 학교명 금지) */
   const autoFilledInstitutionName = (
     <CmsInput
       inputSize="medium"
       width="100%"
-      value={PREVIEW_AUTO_USER_INFO_SAMPLE.institutionName}
+      value=""
+      placeholder="로그인 교사의 소속 학교"
       disabled
       readOnly
     />
@@ -108,7 +123,8 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
     <CmsInput
       inputSize="medium"
       width="100%"
-      value={PREVIEW_AUTO_USER_INFO_SAMPLE.institutionAddress}
+      value=""
+      placeholder="기관 등록 주소"
       disabled
       readOnly
     />
@@ -120,7 +136,8 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
       <CmsInput
         inputSize="medium"
         width={120}
-        value={PREVIEW_AUTO_USER_INFO_SAMPLE.teacherName}
+        value=""
+        placeholder="교사명"
         disabled
         readOnly
       />
@@ -200,9 +217,10 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
         />
       </DetailInfoForm.Row>
 
-      <DetailInfoForm.Row type="double">
+      <DetailInfoForm.Row type={showPreferredEducationForm ? 'double' : 'single'}>
         <DetailInfoForm.Field
           label="신청 학급 수 및 총 인원"
+          fullRow={!showPreferredEducationForm}
           edit={
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
               <CmsSelect
@@ -212,7 +230,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
                 placeholder="신청 학급"
                 value={classCount === '' ? undefined : classCount}
                 onChange={value => setClassCount(String(value ?? ''))}
-                options={CLASS_COUNT_OPTIONS}
+                options={classCountOptions}
               />
               <span>개 학급</span>
               <DetailInfoForm.InputsSeparator />
@@ -229,24 +247,26 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           }
           view="-"
         />
-        <DetailInfoForm.Field
-          label="희망 교육 형태"
-          edit={
-            <CmsRadioGroup
-              size="large"
-              value={educationFormat}
-              onChange={event => setEducationFormat(event.target.value)}
-              style={inlineChoiceStyle}
-            >
-              {EDUCATION_FORMAT_OPTIONS.map(option => (
-                <CmsRadio key={option.value} value={option.value}>
-                  {option.label}
-                </CmsRadio>
-              ))}
-            </CmsRadioGroup>
-          }
-          view="-"
-        />
+        {showPreferredEducationForm ? (
+          <DetailInfoForm.Field
+            label="희망 교육 형태"
+            edit={
+              <CmsRadioGroup
+                size="large"
+                value={educationFormat}
+                onChange={event => setEducationFormat(event.target.value)}
+                style={inlineChoiceStyle}
+              >
+                {EDUCATION_FORMAT_OPTIONS.map(option => (
+                  <CmsRadio key={option.value} value={option.value}>
+                    {option.label}
+                  </CmsRadio>
+                ))}
+              </CmsRadioGroup>
+            }
+            view="-"
+          />
+        ) : null}
       </DetailInfoForm.Row>
 
       <DetailInfoForm.Row type="single">

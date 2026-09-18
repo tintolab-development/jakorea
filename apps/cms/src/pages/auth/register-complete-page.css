@@ -5,7 +5,6 @@
 
 .auth-card.auth-card--register-complete {
   height: auto;
-  min-height: 580px;
   padding: 60px 0;
   justify-content: flex-start;
   align-items: stretch;
@@ -57,13 +56,13 @@
 
 .register-complete__description {
   margin: 12px 0 0;
-  color: var(--Color-netural-cool-500, #85969d);
+  color: var(--Color-primary-boundless_blue, #285f74);
   text-align: center;
-  font-family: Pretendard, system-ui, sans-serif;
+  font-family: Pretendard;
   font-size: 18px;
   font-style: normal;
   font-weight: 400;
-  line-height: 150%;
+  line-height: 150%; /* 27px */
   letter-spacing: -0.18px;
 }
 

@@ -78,11 +78,14 @@ VITE_REAL_API_MODULES=adminAuth,formsSurveys,programs,ujatPrograms
 | LNB | 라벨 | FE 상태 |
 |-----|------|---------|
 | `info` | 프로그램 정보 | hybrid 가능(CRUD) / 등록 overlay mock 잔여 |
-| `institution_applications` | 학교(기관) 신청 | mock |
-| `volunteer_h1` / `volunteer_h2` | 봉사자 상·하반기 | mock |
-| `education_progress` | 교육 진행(상·하반기 탭) | mock |
-| `survey` | 설문 관리 | mock |
-| managers(해당 시) | 담당자 | mock |
+| `institution_applications` | 학교(기관) 신청 | ✅ 목록·상세·TEMP_* 필터 remote · 임시배정 GET/PUT P0 |
+| `volunteer_h1` / `volunteer_h2` | 봉사자 상·하반기 | ✅ `recruitHalf` 서버 필터 · 서류/면접 mutation remote |
+| `education_progress` | 교육 진행(상·하반기 탭) | ⚠️ 기관/봉사 APPROVED+recruitHalf · ✅ 지역/출석 P1+P2(`semesterType`) · ❌ 과제/요약 |
+| `survey` | 설문 관리 | ✅ surveys + form-bindings remote |
+| managers(해당 시) | 담당자 | ✅ 공통 managers remote |
+
+**P0/P1 handoff (2026-09-17):** [ujat-detail-remaining-api-gaps-backend-request-2026-09-17.md](./ujat-detail-remaining-api-gaps-backend-request-2026-09-17.md) · BE handoff `JABACK/docs/frontend/ujat-detail-remaining-api-gaps-frontend-handoff-2026-09-17.md`  
+**P2:** [ujat-education-progress-p2-openapi-half-backend-request-2026-09-17.md](./ujat-education-progress-p2-openapi-half-backend-request-2026-09-17.md) · BE handoff `ujat-education-progress-p2-openapi-half-frontend-handoff-2026-09-17.md` · FE `semesterType` 연동 완료
 
 ---
 
@@ -92,10 +95,11 @@ VITE_REAL_API_MODULES=adminAuth,formsSurveys,programs,ujatPrograms
 |------|----------------|-----|------|
 | programs CRUD | `/api/admin/programs?programType=UJAT` | hybrid 코드 · gate OFF | handoff §3 |
 | 등록 binding | create `autoApplyDefaultFormBindings` | FE 전송 | seeds·원자성 BE |
-| 기관 신청 | 공통 applications (UJAT scope 검증 필요) | mock | |
-| 봉사자 선발 | applications + UJAT 전용 평가 | mock | |
-| partner-assignments | `…/schedules/{id}/ujat/partner-assignments` | 미연결 | scheduleId 갭 |
-| 출석·1365·수료 | UJAT execution APIs | mock | handoff §9 |
+| 기관 신청 | 공통 applications + `recruitHalf`·`TEMP_*` | ✅ list/detail/mutations |
+| 봉사자 선발 | applications + `recruitHalf` + 평가 mutations | ✅ |
+| 임시 일정 배정 | `…/temporary-schedule` GET/PUT (`slots[].scheduleId`) | ✅ P0 |
+| partner-assignments / allocation-matrix | `…/ujat/allocation-matrix?semesterType=` · auto/direct/unavailability | ✅ P1+P2 (수동 타입 · OpenAPI sync) |
+| 출석 | `…/schedules/{id}/attendances` · bulk-upsert | ✅ P1+P2 |
 
 ---
 
@@ -105,7 +109,8 @@ VITE_REAL_API_MODULES=adminAuth,formsSurveys,programs,ujatPrograms
 |----|------|------|
 | 스테이징 DB/validation이 `UJAT` 미수용 가능 | gate 금지 | handoff §2 스테이징 체크 |
 | UJAT template seeds / binding scope | 등록 후 신청 진입 실패 | BE seeds |
-| `schedules[]` vs `rounds[]` | partner-assignment 불가 | Phase 7 계약 |
+| execution path OpenAPI | ✅ P2 BE fill | CMS `openapi/backend.openapi.json` sync · dashboard orval subset 미포함으로 수동 타입 유지 |
+| allocation-matrix half 필터 | ✅ P2 `semesterType` | FE `toUjatRecruitHalfApi` |
 | 교육 지역 master | 신청 탭 key | **Cat 3** |
 
 ---
@@ -138,4 +143,6 @@ VITE_REAL_API_MODULES=adminAuth,formsSurveys,programs,ujatPrograms
 
 | 날짜 | 내용 |
 |------|------|
+| 2026-09-17 | P2: allocation-matrix `semesterType` + OpenAPI sync · 지역/출석 half 분리 |
+| 2026-09-17 | P1: 지역 allocation-matrix + 출석 attendances remote (수동 타입) |
 | 2026-07-16 | 초안 — Cat2 Phase · 코어 DoD · LNB mock 매트릭스 |

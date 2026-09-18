@@ -1,11 +1,4 @@
-import type {
-  ParticipatingInstructorEducationScheduleRow,
-  ParticipatingInstructorRow,
-} from '@/data/mock/participating-instructors'
-import {
-  getParticipatingInstructorEducationSchedules,
-  patchParticipatingInstructorActivityWithdraw as patchMock,
-} from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorEducationScheduleRow } from '@/features/program/general/model/participating-instructors'
 
 export type ParticipatingInstructorActivityWithdrawReason = 'institution'
 
@@ -19,13 +12,13 @@ export interface ParticipatingInstructorActivityWithdrawScheduleOption {
   label: string
 }
 
-/** 활동 포기 모달 — 활동 중단일 선택지 (이미 포기 처리된 일정 제외) */
+/** 활동 포기 모달 — 활동 중단일 선택지 (participants sessions enrich) */
 export function getParticipatingInstructorActivityWithdrawScheduleOptions(
-  instructorId: string,
+  schedules: ReadonlyArray<ParticipatingInstructorEducationScheduleRow> = [],
   excludedScheduleIds: ReadonlyArray<string> = []
 ): ParticipatingInstructorActivityWithdrawScheduleOption[] {
   const excluded = new Set(excludedScheduleIds)
-  return getParticipatingInstructorEducationSchedules(instructorId)
+  return schedules
     .filter(row => !excluded.has(row.id))
     .map(row => ({
       value: row.id,
@@ -54,22 +47,3 @@ export function resolveParticipatingInstructorPerformanceIncludedScheduleIds(
   return schedules.slice(0, stopIndex + 1).map(row => row.id)
 }
 
-export function applyParticipatingInstructorActivityWithdraw(
-  instructorId: string,
-  payload: ParticipatingInstructorActivityWithdrawPayload
-): ParticipatingInstructorRow | null {
-  const schedules = getParticipatingInstructorEducationSchedules(instructorId)
-  const stopSchedule = payload.stopScheduleId
-    ? schedules.find(row => row.id === payload.stopScheduleId)
-    : undefined
-
-  return patchMock(instructorId, {
-    reason: payload.reason,
-    stopScheduleId: payload.stopScheduleId,
-    stopScheduleLabel: stopSchedule?.scheduleLabel,
-    performanceIncludedScheduleIds: resolveParticipatingInstructorPerformanceIncludedScheduleIds(
-      schedules,
-      payload.stopScheduleId
-    ),
-  })
-}

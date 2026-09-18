@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import {
   computeGeneralInterviewTotalScore,
   formatGeneralAssignedInterviewScheduleDisplay,

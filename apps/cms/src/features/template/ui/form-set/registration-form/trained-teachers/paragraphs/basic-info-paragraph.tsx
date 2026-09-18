@@ -1,6 +1,6 @@
 /**
  * 교육받은 교사 프로그램 등록 폼 — 기본 정보
- * (참여자 유형: 학교/기관 기본 선택·편집 가능, 나머지 비활성. 프로그램명·후원사·IPS 등 스크린 기본값)
+ * (참여자 유형: 학교/기관 checked·disabled 고정. IPS는 유형 설정에서만 관리)
  */
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { ProgramRegistrationBasicInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph'
@@ -22,32 +22,37 @@ function participantTypeLabel(
 }
 
 export function TrainedTeachersRegistrationBasicInfoParagraph({
-  participant,
+  participant: _participant,
   onIndividualChange,
-  onOrganizationChange,
+  onOrganizationChange: _onOrganizationChange,
   onTeacherInstructorChange,
   onVolunteerChange,
 }: TrainedTeachersRegistrationBasicInfoParagraphProps) {
+  // 학교/기관 고정 — UI·form state 모두 organization=true 유지
+  const lockedParticipant: ProgramRegistrationParticipantState = {
+    individual: false,
+    organization: true,
+    teacherInstructor: false,
+    volunteer: false,
+  }
+
   return (
     <ProgramRegistrationBasicInfoParagraph
-      participant={participant}
+      participant={lockedParticipant}
       onIndividualChange={onIndividualChange}
-      onOrganizationChange={onOrganizationChange}
+      onOrganizationChange={() => {
+        /* TT: 학교/기관 해제 불가 */
+      }}
       onTeacherInstructorChange={onTeacherInstructorChange}
       onVolunteerChange={onVolunteerChange}
       hideEducationPlace
-      includeFooterIpsType
       trainedTeachersDefaults
       participantTypesEdit={
         <div className="detail-info-form-inputs-wrapper">
           <CmsCheckbox checkboxSize="large" checked={false} disabled>
             {participantTypeLabel('individual')}
           </CmsCheckbox>
-          <CmsCheckbox
-            checkboxSize="large"
-            checked={participant.organization}
-            onChange={e => onOrganizationChange(e.target.checked)}
-          >
+          <CmsCheckbox checkboxSize="large" checked disabled>
             {participantTypeLabel('school_institution')}
           </CmsCheckbox>
           <CmsCheckbox checkboxSize="large" checked={false} disabled>

@@ -43,7 +43,8 @@
   min-width: 0;
   width: auto;
   max-width: 100%;
-  overflow: hidden;
+  /* 타이틀 옆 필수(*)가 overflow로 잘리지 않도록 */
+  overflow: visible;
 }
 
 .paragraph-card__header-title-row > .paragraph-card__action-slot-wrap {
@@ -89,7 +90,7 @@
 .paragraph-card__title-main {
   flex: 1 1 0%;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .paragraph-card__title-trailing {
@@ -107,6 +108,29 @@
   white-space: nowrap;
 }
 
+/* 타이틀 + 필수(*) — 본문은 내용 너비(짧으면 *가 바로 옆), 길면 ellipsis·* 유지 */
+.paragraph-card__title-block .paragraph-input--title .paragraph-input__main,
+.paragraph-card__title-main .paragraph-input--title .paragraph-input__main {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: baseline;
+}
+
+.paragraph-card__title-block .paragraph-input--title .paragraph-input__view-text,
+.paragraph-card__title-block .paragraph-input--title .paragraph-input__placeholder,
+.paragraph-card__title-main .paragraph-input--title .paragraph-input__view-text,
+.paragraph-card__title-main .paragraph-input--title .paragraph-input__placeholder {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.paragraph-card__title-block .paragraph-input--title .paragraph-input__required,
+.paragraph-card__title-main .paragraph-input--title .paragraph-input__required {
+  flex: 0 0 auto;
+}
+
 .paragraph-card__slot {
   display: flex;
   flex-direction: column;
@@ -115,6 +139,18 @@
   width: 100%;
   min-width: 0;
   margin-top: 16px;
+}
+
+/** 프로그램 등록 신청 양식 — 시드 단락의 신청자 fill UI만 잠금(표 텍스트 TD·헤더는 유지) */
+.paragraph-card--seed-fill-locked .paragraph-card__slot .detail-info-form,
+.paragraph-card--seed-fill-locked .paragraph-card__slot .program-application-form-institution__paragraph,
+.paragraph-card--seed-fill-locked
+  .paragraph-card__slot
+  .program-application-form-instructor__available-schedule,
+.paragraph-card--seed-fill-locked .paragraph-card__slot .form-editor-table--field,
+.paragraph-card--seed-fill-locked .paragraph-card__slot .institution-guidance-fields {
+  pointer-events: none;
+  user-select: none;
 }
 
 .paragraph-card__footer {

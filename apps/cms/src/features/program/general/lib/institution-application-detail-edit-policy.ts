@@ -1,4 +1,3 @@
-import { mockUsers } from '@/data/mock/users'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import type { InstitutionApplicationDetailEditFields } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 import type { Program } from '@/types/domain'
@@ -39,38 +38,40 @@ export function shouldShowInstitutionApplicationEducationFormatField(
 }
 
 export function getInstitutionAffiliatedTeacherOptions(
-  schoolName?: string,
+  _schoolName?: string,
   currentTeacherName?: string
 ): InstitutionAffiliatedTeacherOption[] {
-  const normalizedSchool = schoolName?.trim()
-  if (!normalizedSchool) return []
-
-  const schoolUser = mockUsers.find(
-    user =>
-      user.role === 'SCHOOL' && user.schoolInfo?.schoolName?.trim() === normalizedSchool
-  )
-  const teachers =
-    schoolUser?.schoolInfo?.affiliatedTeachers?.filter(row => row.employmentStatus === 'ACTIVE') ??
-    []
-
-  const options: InstitutionAffiliatedTeacherOption[] = teachers.map(row => ({
-    value: row.id,
-    label: row.name,
-    mobile: row.phone,
-    email: row.email,
-  }))
-
   const currentName = currentTeacherName?.trim()
-  if (currentName && !options.some(option => option.label === currentName)) {
-    options.unshift({
+  if (!currentName) return []
+
+  return [
+    {
       value: `legacy:${currentName}`,
       label: currentName,
       mobile: '',
       email: '',
-    })
-  }
+    },
+  ]
+}
 
-  return options
+/** API 소속 교사 목록 + 현재 담당 교사(목록에 없을 때 legacy) 병합 */
+export function mergeInstitutionAffiliatedTeacherOptions(
+  apiOptions: InstitutionAffiliatedTeacherOption[],
+  currentTeacherName?: string
+): InstitutionAffiliatedTeacherOption[] {
+  const currentName = currentTeacherName?.trim()
+  if (!currentName || apiOptions.some(option => option.label === currentName)) {
+    return apiOptions
+  }
+  return [
+    {
+      value: `legacy:${currentName}`,
+      label: currentName,
+      mobile: '',
+      email: '',
+    },
+    ...apiOptions,
+  ]
 }
 
 export function parseInstitutionTeacherInfoFromDetail(

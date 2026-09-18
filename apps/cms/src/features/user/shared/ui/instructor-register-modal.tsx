@@ -22,6 +22,7 @@ import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
+import { isCrimeConsentReadyForSubmit } from '@/features/user/api/attach-filled-documents'
 import { collectCmsInstructorRegisterValidation } from '@/features/user/shared/lib/validate-cms-instructor-register'
 import { JaGradeEvaluationModal } from '@/features/user/detail/ui/modal/ja-grade-evaluation-modal'
 import {
@@ -49,6 +50,9 @@ const INSTRUCTOR_REGISTER_REQUIRED_CONSENT_FIELDS = [
   { key: 'consentTermsOfService', label: '서비스 이용약관' },
   { key: 'consentPersonal', label: '개인정보 수집·이용 동의' },
 ] as const
+
+const CRIME_CONSENT_EVIDENCE_REQUIRED_ALERT_MESSAGE =
+  '성범죄 경력조회 동의서 파일을 첨부해 주세요.'
 
 export interface InstructorRegisterModalProps {
   open: boolean
@@ -151,6 +155,14 @@ export function InstructorRegisterModal({
           buildRequiredConsentDisagreeAlertMessage(disagreedRequiredLabels),
           REQUIRED_CONSENT_DISAGREE_ALERT_TITLE
         )
+        return
+      }
+
+      if (
+        values.consentSexOffenseCheck === 'agree' &&
+        !isCrimeConsentReadyForSubmit(consentWriteSnapshots.crimeByFieldKey.consentSexOffenseCheck)
+      ) {
+        showRegisterAlert(showAlert, CRIME_CONSENT_EVIDENCE_REQUIRED_ALERT_MESSAGE)
         return
       }
 

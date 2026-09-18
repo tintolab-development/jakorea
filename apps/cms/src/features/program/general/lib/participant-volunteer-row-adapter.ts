@@ -2,8 +2,8 @@
  * 개인 참여자 심사 mock → 봉사자 심사 UI(합격자·2차 면접) 재사용용 어댑터
  */
 
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
-import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
+import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { countInterviewAvailabilitySlots } from '@/features/program/general/lib/interview-availability-utils'
 
 function maskContact(contact: string): string {
@@ -28,6 +28,8 @@ export function mapParticipantToVolunteerScreeningRow(
   const emailRaw = row.detail?.email?.trim() || '-'
   const interviewAvailability = row.detail?.interviewAvailability ?? []
 
+  const memberIdNum = row.memberId != null ? Number(row.memberId) : NaN
+
   return {
     id: row.id,
     no: row.no,
@@ -46,12 +48,15 @@ export function mapParticipantToVolunteerScreeningRow(
     essayJaExperience: '-',
     managerAEvaluation: row.managerAEvaluation ?? 'unreviewed',
     managerBEvaluation: row.managerBEvaluation ?? 'unreviewed',
+    canEditManagerAEvaluation: row.canEditManagerAEvaluation === true,
+    canEditManagerBEvaluation: row.canEditManagerBEvaluation === true,
+    availableActions: row.availableActions ?? [],
     documentScreeningStatus: row.documentScreeningStatus ?? 'pending',
-    interviewSlotCount:
-      row.interviewSlotCount ??
-      (interviewAvailability.length > 0 ? countInterviewAvailabilitySlots(interviewAvailability) : 0),
+    /** 목록 숫자 = detail availability 슬롯 수 (배정 팝업 연민트·슬롯과 동일 SSOT) */
+    interviewSlotCount: countInterviewAvailabilitySlots(interviewAvailability),
     interviewAssignmentStatus: row.interviewAssignmentStatus ?? 'waiting',
     programId: row.programId ?? '',
+    memberId: Number.isFinite(memberIdNum) ? memberIdNum : undefined,
     englishName: row.applicantName,
     gender: row.detail?.gender ?? '-',
     birthDate: row.detail?.birthDate ?? '-',
@@ -67,6 +72,7 @@ export function mapParticipantToVolunteerScreeningRow(
     managerAScore: row.managerAScore,
     managerBScore: row.managerBScore,
     interviewEvaluationRemark: row.interviewEvaluationRemark,
+    participantApplicant: row,
   }
 }
 
@@ -74,4 +80,44 @@ export function mapParticipantsToVolunteerScreeningRows(
   rows: GeneralIndividualApplicantRow[]
 ): GeneralVolunteerApplicantRow[] {
   return rows.map(mapParticipantToVolunteerScreeningRow)
+}
+
+/** 합격자·2차 면접 목록 row → 참여자 상세 뷰용 (목록 전달, mock 재조회 방지) */
+export function mapVolunteerScreeningRowToParticipant(
+  row: GeneralVolunteerApplicantRow
+): GeneralIndividualApplicantRow {
+  return {
+    id: row.id,
+    no: row.no,
+    applicantName: row.name,
+    affiliation: row.universityName,
+    educationGrade: row.major,
+    homeAddress: '',
+    approvalStatus: 'pending',
+    memberId: row.memberId != null ? String(row.memberId) : undefined,
+    programId: row.programId,
+    managerAEvaluation: row.managerAEvaluation,
+    managerBEvaluation: row.managerBEvaluation,
+    documentScreeningStatus: row.documentScreeningStatus,
+    interviewSlotCount: row.interviewSlotCount,
+    interviewAssignmentStatus: row.interviewAssignmentStatus,
+    assignedInterviewDateLabel: row.assignedInterviewDateLabel,
+    assignedInterviewTime: row.assignedInterviewTime,
+    secondInterviewScreeningStatus: row.secondInterviewScreeningStatus,
+    totalScore: row.totalScore,
+    managerAScore: row.managerAScore,
+    managerBScore: row.managerBScore,
+    interviewEvaluationRemark: row.interviewEvaluationRemark,
+    detail: {
+      contact: row.contactRaw,
+      email: row.emailRaw,
+      gender: row.gender,
+      birthDate: row.birthDate,
+      age: row.age,
+      id1365: row.id1365,
+      scheduleChangeCancelCount: row.scheduleChangeCancelCount,
+      selfIntroduction: row.essayIntro,
+      interviewAvailability: row.interviewAvailability,
+    },
+  }
 }

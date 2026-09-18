@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest'
 import {
   classifyFormBindingByTemplateId,
   classifyProgramFormBindings,
+  isProgramSurveyManagementFormBinding,
   mapSurveyAnswersToRecord,
   mapSurveyResponseListItemToPollResponse,
   mergeSurveysWithBindings,
   parseAnswerPreviewJson,
   resolveSatisfactionAudienceFromBinding,
+  resolveSurveyCreateBindingTemplateCode,
+  resolveSurveyShareClipboardUrl,
   surveyResponseNeedsDetail,
 } from './program-survey-adapters'
 
@@ -83,6 +86,63 @@ describe('classifyFormBindingByTemplateId', () => {
   })
 })
 
+describe('isProgramSurveyManagementFormBinding', () => {
+  it('excludes registration, recruitment, and application bindings', () => {
+    expect(
+      isProgramSurveyManagementFormBinding({
+        formType: 'REGISTRATION',
+        templateName: '일반 프로그램 등록 폼',
+      })
+    ).toBe(false)
+    expect(
+      isProgramSurveyManagementFormBinding({
+        formType: 'RECRUITMENT',
+        templateName: '프로그램 참여자 모집 폼 (학교)',
+      })
+    ).toBe(false)
+    expect(
+      isProgramSurveyManagementFormBinding({
+        formType: 'APPLICATION',
+        templateName: '프로그램 참여자 신청 폼 (학교)',
+      })
+    ).toBe(false)
+  })
+
+  it('includes survey management bindings', () => {
+    expect(
+      isProgramSurveyManagementFormBinding({
+        formType: 'SURVEY',
+        templateName: '설문조사 1',
+      })
+    ).toBe(true)
+    expect(
+      isProgramSurveyManagementFormBinding({
+        formType: 'SATISFACTION',
+        templateName: '교사 만족도조사',
+      })
+    ).toBe(true)
+    expect(
+      isProgramSurveyManagementFormBinding({
+        formType: 'LECTURE_EVALUATION',
+        templateName: '강의 평가 (관리자용)',
+      })
+    ).toBe(true)
+  })
+
+  it('falls back to templateName when formType is missing', () => {
+    expect(
+      isProgramSurveyManagementFormBinding({
+        templateName: '일반 프로그램 등록 폼',
+      })
+    ).toBe(false)
+    expect(
+      isProgramSurveyManagementFormBinding({
+        templateName: '일반 설문',
+      })
+    ).toBe(true)
+  })
+})
+
 describe('classifyProgramFormBindings / mergeSurveysWithBindings', () => {
   it('filters inactive and classifies', () => {
     const classified = classifyProgramFormBindings([
@@ -101,6 +161,7 @@ describe('classifyProgramFormBindings / mergeSurveysWithBindings', () => {
           bindingId: 1,
           templateId: 1,
           templateVersionId: 10,
+          formType: 'SURVEY',
           submissionStartAt: '2020-01-01T00:00:00Z',
           submissionEndAt: '2099-01-01T00:00:00Z',
           submittedCount: 3,
@@ -115,5 +176,91 @@ describe('classifyProgramFormBindings / mergeSurveysWithBindings', () => {
       status: 'in_progress',
       responseCount: 3,
     })
+  })
+
+  it('does not merge operational form bindings into survey poll list', () => {
+    const rows = mergeSurveysWithBindings(
+      [],
+      [
+        {
+          bindingId: 1,
+          templateId: 100,
+          templateVersionId: 1000,
+          formType: 'REGISTRATION',
+          templateName: '일반 프로그램 등록 폼',
+          active: true,
+        },
+        {
+          bindingId: 2,
+          templateId: 101,
+          templateVersionId: 1001,
+          formType: 'RECRUITMENT',
+          templateName: '프로그램 참여자 모집 폼 (학교)',
+          active: true,
+        },
+        {
+          bindingId: 3,
+          templateId: 102,
+          templateVersionId: 1002,
+          formType: 'APPLICATION',
+          templateName: '프로그램 참여자 신청 폼 (학교)',
+          active: true,
+        },
+        {
+          bindingId: 4,
+          templateId: 200,
+          templateVersionId: 2000,
+          formType: 'SURVEY',
+          templateName: '신규 설문조사 1',
+          active: true,
+        },
+      ]
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({
+      id: '2000',
+      title: '신규 설문조사 1',
+      templateId: '200',
+    })
+  })
+})
+
+describe('resolveSurveyCreateBindingTemplateCode', () => {
+  it('uses the duplicated template id, not the original selected template', () => {
+    expect(
+      resolveSurveyCreateBindingTemplateCode({
+        duplicatedTemplateId: 'tmpl-copied-9',
+        catalogTemplateCode: null,
+      })
+    ).toBe('tmpl-copied-9')
+    expect(
+      resolveSurveyCreateBindingTemplateCode({
+        duplicatedTemplateId: 'tmpl-copied-9',
+        catalogTemplateCode: 'tmpl-copied-9',
+      })
+    ).toBe('tmpl-copied-9')
+    expect(
+      resolveSurveyCreateBindingTemplateCode({
+        duplicatedTemplateId: 'tmpl-copied-9',
+        catalogTemplateCode: 'original-survey-template',
+      })
+    ).not.toBe('original-survey-template')
+  })
+})
+
+describe('resolveSurveyShareClipboardUrl', () => {
+  it('prefers formPath over hardcoded platform URLs', () => {
+    expect(
+      resolveSurveyShareClipboardUrl(
+        { formPath: '/forms/share/abc' },
+        'https://cms.example.com'
+      )
+    ).toBe('https://cms.example.com/forms/share/abc')
+    expect(
+      resolveSurveyShareClipboardUrl(
+        { formPath: 'https://platform.example.com/s/abc' },
+        'https://cms.example.com'
+      )
+    ).toBe('https://platform.example.com/s/abc')
   })
 })

@@ -3505,22 +3505,21 @@ export function paragraphsAreOnlyTableLayoutParagraphs(
   return paragraphs.length > 0 && paragraphs.every(isTableLayoutParagraph)
 }
 
-/** 직접 등록 — 신규 동의 양식 기본 단락 id (제목형·텍스트형·주관식형·테이블 세로·가로·시스템 2종·마무리글형) */
+/** 직접 등록 — 신규 동의 양식 기본 단락 id (제목·텍스트·개인정보 항목·가로표+동의·마무리·날짜·서명) */
 export const DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS = {
   title: 'agreement-direct-paragraph-title',
   explanationText: 'agreement-direct-paragraph-explanation-text',
   shortEssay: 'agreement-direct-paragraph-short-essay',
-  verticalTableText: 'agreement-direct-paragraph-vertical-table-text',
   horizontalTable: 'agreement-direct-paragraph-horizontal-table',
+  closing: 'agreement-direct-paragraph-closing',
   systemDate: 'agreement-direct-paragraph-system-date',
   systemSignature: 'agreement-direct-paragraph-system-signature',
-  closing: 'agreement-direct-paragraph-closing',
 } as const
 
 export function createDefaultDirectAgreementDraft(): WritingFormDraft {
   return {
     schemaVersion: 1,
-    formSettings: { titleNumbering: 'numeric' },
+    formSettings: { titleNumbering: 'none' },
     paragraphs: [
       {
         id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.title,
@@ -3545,7 +3544,7 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
-        bodyPlaceholder: '한 줄 안내를 입력해 주세요',
+        bodyPlaceholder: '텍스트를 작성해 주세요',
         bodyText: '',
         answerRequired: true,
       },
@@ -3582,11 +3581,17 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         bodyPlaceholder: '각 항목에 내용을 입력해 주세요',
         bodyText: '',
       },
-      createVerticalTableParagraph(
-        DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.verticalTableText,
-        'text'
-      ),
       createHorizontalTableParagraph(DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.horizontalTable),
+      {
+        id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.closing,
+        kind: 'description',
+        variant: 'closing',
+        requiredMark: false,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        body: '내용을 자세히 검토하신 후 동의 여부를 결정하여 주시기 바랍니다.',
+      },
       {
         id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.systemDate,
         kind: 'description',
@@ -3606,16 +3611,6 @@ export function createDefaultDirectAgreementDraft(): WritingFormDraft {
         paragraphTitle: '서명란 유형',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
-      },
-      {
-        id: DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS.closing,
-        kind: 'description',
-        variant: 'closing',
-        requiredMark: false,
-        paragraphTitle: '',
-        paragraphDescription: '',
-        participatesInTitleNumbering: false,
-        body: '내용을 자세히 검토하신 후 동의 여부를 결정하여 주시기 바랍니다.',
       },
     ],
   }
@@ -3978,6 +3973,112 @@ function createDefaultSurveyShortEssayParagraph(
   }
 }
 
+/**
+ * 템플릿 관리 > 설문 양식 「신규 등록」 편집기 초안.
+ * 시드(`createDefaultSurveyDraft`)와 분리 — 빈 제목·척도 1·주관식 1의 시작 구조.
+ */
+export function createNewSurveyDraft(): WritingFormDraft {
+  return {
+    schemaVersion: 1,
+    formSettings: { titleNumbering: 'q123' },
+    paragraphs: [
+      {
+        id: DEFAULT_SURVEY_PARAGRAPH_IDS.title,
+        kind: 'description',
+        variant: 'survey_title_with_period',
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        surveyTitle: '',
+        surveyDescription: '',
+        periodMode: 'immediate',
+        startPeriodMode: 'immediate',
+        endPeriodMode: 'immediate',
+        startAt: null,
+        endAt: null,
+        startPeriodPresetLabel: null,
+        endPeriodPresetLabel: null,
+        showWritingPeriodOnForm: true,
+      },
+      {
+        id: DEFAULT_SURVEY_PARAGRAPH_IDS.user,
+        kind: 'single_item',
+        variant: 'user_info',
+        answerRequired: true,
+        requiredMark: true,
+        paragraphTitle: '설문자 정보',
+        paragraphDescription: '선택한 항목을 자동으로 불러옵니다.',
+        participatesInTitleNumbering: true,
+        userFields: [
+          { key: 'name', label: '이름' },
+          { key: 'gender', label: '성별' },
+          { key: 'birthDate', label: '생년월일' },
+          { key: 'phone', label: '연락처' },
+          { key: 'email', label: '이메일' },
+          { key: 'addressRegion', label: '자택 주소지(지역)' },
+          { key: 'addressDetail', label: '자택 주소지(상세)' },
+          { key: 'affiliation', label: '소속' },
+          { key: 'applicantType', label: '신청자 유형' },
+          { key: 'programName', label: '프로그램명' },
+          { key: 'period', label: '교육 진행 일정(진행 기간)' },
+          { key: 'institutionName', label: '기관명' },
+          { key: 'institutionRegion', label: '기관 소재지(시군구)' },
+          { key: 'educationTarget', label: '교육 대상(담당 대상)' },
+          { key: 'educationGrade', label: '교육 학년(담당 학년)' },
+          { key: 'teamName', label: '팀 명' },
+          { key: 'teamPartnerName', label: '팀원/파트너 명' },
+        ],
+        selectedUserFieldKeys: ['name', 'addressRegion'],
+      },
+      {
+        id: DEFAULT_SURVEY_PARAGRAPH_IDS.score,
+        kind: 'single_item',
+        variant: 'scale_type',
+        answerRequired: true,
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        items: createDefaultScaleTypeItems(),
+        selectedPreviewItemId: 'scale-type-item-5',
+      },
+      {
+        id: DEFAULT_SURVEY_PARAGRAPH_IDS.subjective,
+        kind: 'single_item',
+        variant: 'short_essay',
+        answerRequired: true,
+        requiredMark: true,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: true,
+        showItemTitle: false,
+        items: [
+          {
+            id: 'survey-short-essay-item-1',
+            label: 'Title 01',
+            placeholder: '답변을 입력해 주세요',
+            bodyText: '',
+          },
+        ],
+        bodyPlaceholder: '답변을 입력해 주세요',
+        bodyText: '',
+      },
+      {
+        id: DEFAULT_SURVEY_PARAGRAPH_IDS.closing,
+        kind: 'description',
+        variant: 'closing',
+        requiredMark: false,
+        paragraphTitle: '',
+        paragraphDescription: '',
+        participatesInTitleNumbering: false,
+        body: '설문에 참여해 주셔서 감사합니다.',
+      },
+    ],
+  }
+}
+
+/** 카탈로그 시드·강의평가 등 — 프로그램 평가 문항이 채워진 기본 설문 */
 export function createDefaultSurveyDraft(): WritingFormDraft {
   return {
     schemaVersion: 1,

@@ -14,6 +14,7 @@ import { buildInstructorAvailableScheduleSlotsFromProgram } from '@/features/pro
 import { resolveGeneralApplicationEditorVariant } from '@/features/program/general/lib/application-tabs'
 import type { GeneralApplicationTabKey } from '@/features/program/general/lib/application-tabs'
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
+import { useProgramApplicationFormLoadSource } from '@/features/program/general/hooks/use-application-form-load-source'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
 import {
   WRITING_FORM_TEMPLATE_SAVE_EVENT,
@@ -44,6 +45,9 @@ export function ApplicationFormPreviewPanel({
     () => getTemplateIdForParticipantApplicationVariant(variant),
     [variant]
   )
+  const formSource = useProgramApplicationFormLoadSource(program, variant, {
+    attachLocalDrafts: active,
+  })
   const [editorActive, setEditorActive] = useState(false)
 
   useEffect(() => {
@@ -51,15 +55,22 @@ export function ApplicationFormPreviewPanel({
       setEditorActive(false)
       return
     }
+    if (formSource.bindingsLoading) {
+      setEditorActive(false)
+      return
+    }
     setEditorActive(true)
-  }, [active, variant, reloadKey])
+  }, [active, variant, reloadKey, formSource.bindingsLoading, formSource.templateVersionId])
 
   useEffect(() => {
     if (!active) {
       resetInstitutionApplicationProgramBridge()
       resetInstitutionApplicationFormVisibility()
-      return
     }
+  }, [active])
+
+  useEffect(() => {
+    if (!active) return
     if (variant === 'institution' || variant === 'individual') {
       patchInstitutionApplicationProgramBridge(resolveInstitutionApplicationProgramBridge(program))
     }
@@ -67,6 +78,8 @@ export function ApplicationFormPreviewPanel({
 
   const vm = useProgramParticipantApplicationEditor(editorActive, templateName, variant, {
     participantOrganization: variant === 'institution',
+    templateVersionId: formSource.templateVersionId,
+    preferLocalDraft: formSource.preferLocalDraft,
   })
 
   useEffect(() => {

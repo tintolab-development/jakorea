@@ -3,8 +3,10 @@ import type { Program } from '@/types/domain'
 import {
   getGeneralParticipantApplicationsLnbLabel,
   getGeneralProgressMenuItems,
+  getVisibleGeneralProgressMenuItems,
   hasGeneralInstructorApplications,
   hasGeneralParticipantApplications,
+  hasGeneralVolunteerApplications,
 } from './detail-meta'
 import {
   getDefaultGeneralSatisfactionAudience,
@@ -17,7 +19,7 @@ import {
 } from './survey-audience'
 import { getGeneralSurveyMenuItems } from './detail-meta'
 import { getGeneralSurveyEditFieldsForAudience } from '@/features/program/general/model/common-info-edit-schema'
-import { buildGeneralSurveyMockState } from '@/features/program/general/ui/detail-modal/survey-management/survey-mock'
+import { buildGeneralSurveyEmptyState } from '@/features/program/general/ui/detail-modal/survey-management/survey-empty-state'
 
 function program(overrides: Partial<Program>): Program {
   return {
@@ -175,6 +177,10 @@ describe('general survey audience', () => {
     expect(items.map(item => item.label)).toEqual(['참여 기관', '참여 강사', '참여 봉사자'])
   })
 
+  it('상위 진행 현황이 활성이어도 실제 하위 메뉴 대상이 없으면 빈 목록을 반환한다', () => {
+    expect(getVisibleGeneralProgressMenuItems([], false)).toEqual([])
+  })
+
   it('강사 신청 목록 LNB는 teacher_instructor 포함 시에만 노출한다', () => {
     expect(
       hasGeneralInstructorApplications(
@@ -190,6 +196,33 @@ describe('general survey audience', () => {
     ).toBe(true)
     expect(
       hasGeneralInstructorApplications(program({ generalParticipantTypes: ['individual'] }))
+    ).toBe(false)
+    expect(
+      hasGeneralInstructorApplications(
+        program({
+          generalParticipantTypes: ['individual'],
+          generalCommonInfo: { instructorRecruitmentInfo: {} },
+        })
+      )
+    ).toBe(false)
+  })
+
+  it('봉사자 신청 목록 LNB는 volunteer 포함 시에만 노출한다', () => {
+    expect(
+      hasGeneralVolunteerApplications(program({ generalParticipantTypes: ['individual'] }))
+    ).toBe(false)
+    expect(
+      hasGeneralVolunteerApplications(
+        program({ generalParticipantTypes: ['individual', 'volunteer'] })
+      )
+    ).toBe(true)
+    expect(
+      hasGeneralVolunteerApplications(
+        program({
+          generalParticipantTypes: ['school_institution'],
+          generalCommonInfo: { volunteerRecruitmentInfo: {} },
+        })
+      )
     ).toBe(false)
   })
 
@@ -265,7 +298,7 @@ describe('general survey audience', () => {
       secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.',
       registerButton: '만족도조사 등록',
     })
-    expect(buildGeneralSurveyMockState(companySchool).satisfactionSurveysByAudience).toEqual({})
+    expect(buildGeneralSurveyEmptyState(companySchool).satisfactionSurveysByAudience).toEqual({})
   })
 
   it('교육받은 교사 프로그램은 1사1교와 동일한 교사용 만족도조사만 제공한다', () => {
@@ -286,7 +319,7 @@ describe('general survey audience', () => {
       secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.',
       registerButton: '만족도조사 등록',
     })
-    expect(buildGeneralSurveyMockState(trainedTeachers).satisfactionSurveysByAudience).toEqual({})
+    expect(buildGeneralSurveyEmptyState(trainedTeachers).satisfactionSurveysByAudience).toEqual({})
   })
 
   it('설문 수정 항목은 공통 3종을 제공한다', () => {

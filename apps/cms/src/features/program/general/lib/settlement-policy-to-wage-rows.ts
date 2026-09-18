@@ -7,6 +7,10 @@ import type { ProgramSettlementPaymentItemResponse } from '@/shared/api/generate
 import type { ProgramSettlementPolicyResponse } from '@/shared/api/generated/logs/schemas/programSettlementPolicyResponse'
 import type { ProgramWagePolicyResponse } from '@/shared/api/generated/logs/schemas/programWagePolicyResponse'
 import type { Program } from '@/types/domain'
+import {
+  PROGRAM_WAGE_DEDUCTION_LABEL,
+  PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
+} from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 
 const FEE_GRADE_LABEL: Record<string, string> = {
   GRADE_1: '1급 강사비',
@@ -22,6 +26,14 @@ const PAYMENT_ITEM_LABEL: Record<string, string> = {
   LODGING: '숙박비',
   ACTIVITY: '활동비',
   MEAL: '식비',
+}
+
+/** settlementPolicy.deductionType → 화면 한글 라벨 */
+const DEDUCTION_TYPE_LABEL: Record<string, string> = {
+  NONE: PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
+  'N/A': PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
+  NA: PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
+  DAILY_WORKER_WITHHOLDING: PROGRAM_WAGE_DEDUCTION_LABEL,
 }
 
 function formatWon(amount: number | undefined): string | undefined {
@@ -106,9 +118,17 @@ export function mapSettlementDeductionTypeToLabel(
   deductionType: string | undefined
 ): string | undefined {
   if (deductionType == null || deductionType.trim() === '') return undefined
-  const normalized = deductionType.trim().toUpperCase()
-  if (normalized === 'NONE' || normalized === 'N/A' || normalized === 'NA') return '해당없음'
-  return deductionType.trim()
+  const raw = deductionType.trim()
+  const normalized = raw.toUpperCase().replace(/[\s-]+/g, '_')
+  if (DEDUCTION_TYPE_LABEL[normalized]) return DEDUCTION_TYPE_LABEL[normalized]
+  if (raw === PROGRAM_WAGE_DEDUCTION_LABEL || raw === PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL) {
+    return raw
+  }
+  // 이미 저장된 영문 enum이 commonInfo.deductionItems에 들어온 경우
+  if (normalized.includes('DAILY_WORKER') || normalized.includes('WITHHOLDING')) {
+    return PROGRAM_WAGE_DEDUCTION_LABEL
+  }
+  return raw
 }
 
 export function applySettlementPolicyToCommonInfo(

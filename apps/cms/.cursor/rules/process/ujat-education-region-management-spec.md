@@ -69,9 +69,9 @@ category: ui-spec
 
 ---
 
-## 데이터 (mock)
+## 데이터
 
-- localStorage: `cms.jakorea.ujatEducationRegions.v1`
-- 시드 8지역 — 서울(사용 이력·삭제 불가 데모), 경기(남부), 인천, 대전, 대구, 부산, 광주, 전북(전주)
+- **remote ON** (`ujatEducationRegions` + JWT): API + 메모리 스냅샷 SSOT. 레거시 키 `cms.jakorea.ujatEducationRegions.v1`는 list/동기화 시 삭제. 조회만으로 localStorage에 쓰지 않음.
+- **remote OFF**: localStorage `cms.jakorea.ujatEducationRegions.v1` (CRUD 시에만 영속). 시드 8지역은 메모리 기본값 — 서울(사용 이력·삭제 불가 데모), 경기(남부), 인천, 대전, 대구, 부산, 광주, 전북(전주)
 
-**Last updated:** 2026-07-16
+**Last updated:** 2026-09-17
