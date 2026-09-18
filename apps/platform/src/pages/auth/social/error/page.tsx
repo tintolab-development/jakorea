@@ -1,3 +1,11 @@
+import type { ReactNode } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import type { SocialProvider } from '@jakorea/social-auth'
+import { SocialAuthApiError } from '@jakorea/social-auth'
+import {
+  isPortalSocialAuthLoginRemoteEnabled,
+  platformSocialAuthClient,
+} from '@/features/auth/social-auth'
 import {
   GoogleSocialLoginIcon,
   KakaoSocialLoginIcon,
@@ -8,16 +16,36 @@ import {
 import illustSquareUrl from '@/shared/assets/illustration/illust-square.svg'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
-import { useNavigate } from 'react-router-dom'
 
-const socialLoginItems = [
-  { label: 'Google 로그인', icon: <GoogleSocialLoginIcon /> },
-  { label: '네이버 로그인', icon: <NaverSocialLoginIcon /> },
-  { label: '카카오 로그인', icon: <KakaoSocialLoginIcon /> },
+const socialLoginItems: Array<{
+  provider: SocialProvider
+  label: string
+  icon: ReactNode
+}> = [
+  { provider: 'google', label: 'Google 로그인', icon: <GoogleSocialLoginIcon /> },
+  { provider: 'naver', label: '네이버 로그인', icon: <NaverSocialLoginIcon /> },
+  { provider: 'kakao', label: '카카오 로그인', icon: <KakaoSocialLoginIcon /> },
 ]
+
+function resolveErrorCopy(reason: string | null): { title: string; description: string } {
+  if (reason === 'already-linked') {
+    return {
+      title: '이미 연결된 소셜 계정이에요',
+      description: '이 소셜 계정은 다른 JA Korea 계정에 연결되어 있어요.',
+    }
+  }
+  return {
+    title: '연결된 소셜 계정이 없어요',
+    description: '이 소셜 계정과 연결된 JA Korea 계정을 찾을 수 없어요.',
+  }
+}
 
 export function SocialErrorPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const reason = searchParams.get('reason')
+  const copy = resolveErrorCopy(reason)
+
   const handleSignIn = () => {
     navigate('/auth/sign-in')
   }
@@ -26,67 +54,82 @@ export function SocialErrorPage() {
     navigate('/auth/sign-up')
   }
 
-  const handleSocialRetry = () => {
-    navigate('/auth/social/error?reason=not-linked')
+  const handleSocialRetry = (provider: SocialProvider) => {
+    if (!isPortalSocialAuthLoginRemoteEnabled()) {
+      navigate('/auth/sign-in?socialError=' + encodeURIComponent('API 서버가 설정되지 않았어요.'))
+      return
+    }
+
+    void platformSocialAuthClient
+      .startLogin({ provider, intent: 'login' })
+      .then(url => {
+        if (!url?.trim()) {
+          throw new SocialAuthApiError('INVALID_RESPONSE', '소셜 로그인 URL을 받지 못했습니다.')
+        }
+        window.location.assign(url)
+      })
+      .catch(() => {
+        navigate('/auth/sign-in?socialError=' + encodeURIComponent('소셜 로그인을 시작하지 못했어요.'))
+      })
   }
 
   return (
     <section>
-        <div className={styles.intro}>
-          <img className={styles.illustration} src={illustSquareUrl} alt="" aria-hidden="true" />
-          <PFText as="div" typo="hd-md" color="black" className={authPageCopyClass('title')}>
-            연결된 소셜 계정이 없어요
+      <div className={styles.intro}>
+        <img className={styles.illustration} src={illustSquareUrl} alt="" aria-hidden="true" />
+        <PFText as="div" typo="hd-md" color="black" className={authPageCopyClass('title')}>
+          {copy.title}
+        </PFText>
+        <PFText as="p" typo="bd-lg-rg" color="primary-700" className={authPageCopyClass('description')}>
+          {copy.description}
+        </PFText>
+      </div>
+
+      <div className={styles.guide}>
+        <PFText as="p" typo="bd-sm-rg" color="black">
+          먼저 이메일로 로그인한 뒤, 마이페이지에서 소셜 계정을 연결해 주세요.
+          <br />
+          회원가입이 처음이라면 이메일로 가입한 뒤 소셜 계정을 연결할 수 있어요.
+        </PFText>
+      </div>
+
+      <div className={styles.actions}>
+        <PFButton size="xlarge" className={styles.actionButton} onClick={handleSignIn}>
+          이메일로 로그인
+        </PFButton>
+        <PFButton
+          size="xlarge"
+          variant="secondary"
+          className={styles.actionButton}
+          onClick={handleSignUp}
+        >
+          회원가입하기
+        </PFButton>
+      </div>
+
+      <div className={styles.socialSection}>
+        <div className={styles.socialDivider}>
+          <span className={styles.socialDividerLine} />
+          <PFText typo="caption-rg" color="neutral-cool-500">
+            다른 소셜 계정으로 시도
           </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="primary-700" className={authPageCopyClass('description')}>
-            이 소셜 계정과 연결된 JA Korea 계정을 찾을 수 없어요.
-          </PFText>
+          <span className={styles.socialDividerLine} />
         </div>
 
-        <div className={styles.guide}>
-          <PFText as="p" typo="bd-sm-rg" color="black">
-            먼저 이메일로 로그인한 뒤, 마이페이지에서 소셜 계정을 연결해 주세요.
-            <br />
-            회원가입이 처음이라면 이메일로 가입한 뒤 소셜 계정을 연결할 수 있어요.
-          </PFText>
+        <div className={styles.socialIcons}>
+          {socialLoginItems.map(({ provider, label, icon }) => (
+            <button
+              className={styles.socialButton}
+              type="button"
+              aria-label={label}
+              key={provider}
+              onClick={() => handleSocialRetry(provider)}
+            >
+              {icon}
+            </button>
+          ))}
         </div>
-
-        <div className={styles.actions}>
-          <PFButton size="xlarge" className={styles.actionButton} onClick={handleSignIn}>
-            이메일로 로그인
-          </PFButton>
-          <PFButton
-            size="xlarge"
-            variant="secondary"
-            className={styles.actionButton}
-            onClick={handleSignUp}
-          >
-            회원가입하기
-          </PFButton>
-        </div>
-
-        <div className={styles.socialSection}>
-          <div className={styles.socialDivider}>
-            <span className={styles.socialDividerLine} />
-            <PFText typo="caption-rg" color="neutral-cool-500">
-              다른 소셜 계정으로 시도
-            </PFText>
-            <span className={styles.socialDividerLine} />
-          </div>
-
-          <div className={styles.socialIcons}>
-            {socialLoginItems.map(({ label, icon }) => (
-              <button
-                className={styles.socialButton}
-                type="button"
-                aria-label={label}
-                key={label}
-                onClick={handleSocialRetry}
-              >
-                {icon}
-              </button>
-            ))}
-          </div>
-        </div>
+      </div>
     </section>
   )
 }

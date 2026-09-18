@@ -1,5 +1,5 @@
 import type { GenderType } from '@/features/auth/sign-up'
-import { isValidEmailId, normalizeEmailId } from '@/shared/lib/email-id'
+import { normalizeEmailId } from '@/shared/lib/email-id'
 import { setAdminOnboardingRequired } from '@/shared/lib/admin-onboarding-session'
 import { MOCK_ADMIN_REGISTERED_BIRTH_DATE, MOCK_ADMIN_REGISTERED_EMAIL } from './constants'
 import {
@@ -38,18 +38,6 @@ export function getAdminRegisteredSignUpChangePasswordPath() {
   return canSkipAdminRegisteredBirthStep()
     ? '/auth/admin-registered/change-password'
     : '/auth/admin-registered/birth'
-}
-
-/** API 연동 전: 이메일·비밀번호가 동일하면 관리자 등록 회원 최초 로그인으로 취급 */
-export function isMockAdminRegisteredFirstLogin(email: string, password: string) {
-  const normalizedEmail = normalizeEmailId(email)
-  const normalizedPassword = password.trim().toLowerCase()
-
-  if (!isValidEmailId(normalizedEmail)) {
-    return false
-  }
-
-  return normalizedEmail === normalizedPassword
 }
 
 export function canSkipAdminRegisteredBirthStep() {

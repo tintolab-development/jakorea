@@ -20,6 +20,14 @@ interface ImportMetaEnv {
   readonly VITE_NGROK_SKIP_BROWSER_WARNING?: string
   /** 리프레시 토큰 POST 경로. 기본 `/api/portal/auth/refresh` */
   readonly VITE_AUTH_REFRESH_PATH?: string
+  /** OAuth frontendReturnUrl origin (로그인 완료·가입 연결 복귀) */
+  readonly VITE_OAUTH_REDIRECT_ORIGIN?: string
+  /** IdP redirect_uri용 백엔드 public origin */
+  readonly VITE_OAUTH_BACKEND_ORIGIN?: string
+  /** mock 전용 — remote Portal SSO는 BE가 client 보유 */
+  readonly VITE_GOOGLE_CLIENT_ID?: string
+  readonly VITE_KAKAO_CLIENT_ID?: string
+  readonly VITE_NAVER_CLIENT_ID?: string
 }
 
 interface ImportMeta {

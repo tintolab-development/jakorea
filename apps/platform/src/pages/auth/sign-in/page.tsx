@@ -1,8 +1,9 @@
-import type { FormEvent } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import type { SocialProvider } from '@jakorea/social-auth'
+import { SocialAuthApiError } from '@jakorea/social-auth'
 import {
-  isMockAdminRegisteredFirstLogin,
   requiresAdminRegisteredOnboarding,
   resolveAdminProvisionedOnboardingEntryPath,
   syncAdminRegisteredOnboardingSession,
@@ -13,12 +14,16 @@ import {
   getLoginApiErrorMessage,
   usePortalLoginMutation,
 } from '@/features/auth/sign-in'
-import type { PlatformMemberProfile } from '@/features/mypage'
+import {
+  isPortalSocialAuthLoginRemoteEnabled,
+  platformSocialAuthClient,
+  resolveBackendApiOrigin,
+} from '@/features/auth/social-auth'
+import { portalSocialAuthPaths } from '@/features/auth/social-auth/paths'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { useMediaQuery } from '@/shared/hooks'
 import {
   clearAuthTokens,
-  DEV_MEMBER_PROFILE_OPTIONS,
   isRemoteApiConfigured,
   platformMediaQueries,
   queryClient,
@@ -45,10 +50,14 @@ const accountLinkItems: Array<{ label: string; href?: string }> = [
   { label: '회원가입 하기', href: '/auth/sign-up' },
 ]
 
-const socialLoginItems = [
-  { label: 'Google 로그인', icon: <GoogleSocialLoginIcon /> },
-  { label: '네이버 로그인', icon: <NaverSocialLoginIcon /> },
-  { label: '카카오 로그인', icon: <KakaoSocialLoginIcon /> },
+const socialLoginItems: Array<{
+  provider: SocialProvider
+  label: string
+  icon: ReactNode
+}> = [
+  { provider: 'google', label: 'Google 로그인', icon: <GoogleSocialLoginIcon /> },
+  { provider: 'naver', label: '네이버 로그인', icon: <NaverSocialLoginIcon /> },
+  { provider: 'kakao', label: '카카오 로그인', icon: <KakaoSocialLoginIcon /> },
 ]
 
 export function SignInPage() {
@@ -57,24 +66,20 @@ export function SignInPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [emailError, setEmailError] = useState<string | null>(null)
-  const [formError, setFormError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(() => {
+    const socialError = searchParams.get('socialError')
+    if (!socialError) return null
+    if (socialError === 'mfa' || socialError === 'unexpected') {
+      return '소셜 로그인에 실패했어요. 다시 시도해 주세요.'
+    }
+    return socialError
+  })
+  const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
   const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
   const remoteApi = isRemoteApiConfigured()
   const loginMutation = usePortalLoginMutation()
 
   const resolveRedirectPath = () => searchParams.get('redirect') ?? '/'
-
-  const completeDevSignIn = (profile?: PlatformMemberProfile) => {
-    // mock 로그인: 실 API 토큰이 남아 있으면 remote 세션으로 오인 → mock 데이터가 안 나옴
-    clearAuthTokens()
-    queryClient.removeQueries({ queryKey: platformQueryKeys.auth.me() })
-    queryClient.removeQueries({ queryKey: platformQueryKeys.auth.memberProfile() })
-    if (profile) {
-      setDevMemberProfile(profile)
-    }
-    setDevAuthLoggedIn(true)
-    navigate(resolveRedirectPath())
-  }
 
   const handleEmailChange = (value: string) => {
     setEmail(value)
@@ -90,10 +95,7 @@ export function SignInPage() {
     accessToken: string
     refreshToken: string
     expiresInSeconds?: number
-    /** false면 토큰만 보관(온보딩 API용). 헤더·마이페이지는 비로그인 */
-    markLoggedIn?: boolean
   }) => {
-    // 이전 세션 회원 캐시 제거 후 새 토큰 저장 (mock 프로필 잔여와 분리)
     queryClient.removeQueries({ queryKey: platformQueryKeys.auth.me() })
     queryClient.removeQueries({ queryKey: platformQueryKeys.auth.memberProfile() })
     setAuthTokens({
@@ -102,7 +104,6 @@ export function SignInPage() {
       expiresAt: expiresAtFromExpiresInSeconds(input.expiresInSeconds),
     })
     setDevMemberProfile('individual')
-    // remote 실세션은 토큰만으로 헤더 로그인 유지. mock 카탈로그 플래그는 켜지 않음.
     setDevAuthLoggedIn(false)
   }
 
@@ -122,12 +123,7 @@ export function SignInPage() {
     }
 
     if (!remoteApi) {
-      if (isMockAdminRegisteredFirstLogin(validation.normalized, password)) {
-        syncAdminRegisteredOnboardingSession(validation.normalized, { registeredByAdmin: true })
-        navigate('/auth/admin-registered/notice')
-        return
-      }
-      completeDevSignIn()
+      setFormError('API 서버가 설정되지 않아 로그인할 수 없어요.')
       return
     }
 
@@ -143,7 +139,6 @@ export function SignInPage() {
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
           expiresInSeconds: tokens.expiresInSeconds,
-          markLoggedIn: false,
         })
         const target =
           resolveAdminProvisionedOnboardingEntryPath(tokens) ?? ADMIN_REGISTERED_NOTICE_PATH
@@ -166,15 +161,44 @@ export function SignInPage() {
     }
   }
 
-  const handleMockProfileSignIn = (profile: PlatformMemberProfile) => {
-    completeDevSignIn(profile)
+  const handleSocialLogin = (provider: SocialProvider) => {
+    if (!isPortalSocialAuthLoginRemoteEnabled()) {
+      setFormError('API 서버가 설정되지 않아 소셜 로그인을 시작할 수 없어요.')
+      return
+    }
+
+    setFormError(null)
+    setLoadingProvider(provider)
+
+    void platformSocialAuthClient
+      .startLogin({ provider, intent: 'login' })
+      .then(url => {
+        if (!url?.trim()) {
+          throw new SocialAuthApiError('INVALID_RESPONSE', '소셜 로그인 URL을 받지 못했습니다.')
+        }
+        window.location.assign(url)
+      })
+      .catch((error: unknown) => {
+        if (import.meta.env.DEV) {
+          try {
+            const backendBase = resolveBackendApiOrigin()
+            console.info(
+              `[social-auth] IdP Redirect URI(BE callback): ${backendBase}${portalSocialAuthPaths.ssoProviderCallback(provider)}`
+            )
+          } catch {
+            console.info(
+              '[social-auth] VITE_OAUTH_BACKEND_ORIGIN 또는 VITE_API_SERVER를 설정하세요.'
+            )
+          }
+        }
+        setFormError(
+          getLoginApiErrorMessage(error, '소셜 로그인을 시작하지 못했어요. 다시 시도해 주세요.'),
+        )
+        setLoadingProvider(null)
+      })
   }
 
-  const handleSocialLogin = () => {
-    navigate('/auth/social/error?reason=not-linked')
-  }
-
-  const isSubmitting = loginMutation.isPending
+  const isSubmitting = loginMutation.isPending || loadingProvider !== null
 
   return (
     <section>
@@ -240,7 +264,7 @@ export function SignInPage() {
           className={styles.submitButton}
           disabled={isSubmitting}
         >
-          {isSubmitting ? '로그인 중…' : '로그인하기'}
+          {loginMutation.isPending ? '로그인 중…' : '로그인하기'}
         </PFButton>
       </form>
 
@@ -277,44 +301,20 @@ export function SignInPage() {
         </div>
 
         <div className={styles.socialIcons}>
-          {socialLoginItems.map(({ label, icon }) => (
+          {socialLoginItems.map(({ provider, label, icon }) => (
             <button
               className={styles.socialButton}
               type="button"
               aria-label={label}
-              key={label}
-              onClick={handleSocialLogin}
+              key={provider}
+              disabled={isSubmitting}
+              onClick={() => handleSocialLogin(provider)}
             >
               {icon}
             </button>
           ))}
         </div>
       </div>
-
-      {import.meta.env.DEV ? (
-        <div className={styles.mockSection}>
-          <div className={styles.socialDivider}>
-            <span className={styles.socialDividerLine} />
-            <PFText typo="caption-rg" color="neutral-cool-500">
-              Mock 로그인 (개발용)
-            </PFText>
-            <span className={styles.socialDividerLine} />
-          </div>
-          <div className={styles.mockLoginColumn}>
-            {DEV_MEMBER_PROFILE_OPTIONS.map(option => (
-              <PFButton
-                key={option.value}
-                type="button"
-                size="xlarge"
-                className={styles.submitButton}
-                onClick={() => handleMockProfileSignIn(option.value)}
-              >
-                {option.label} 로그인
-              </PFButton>
-            ))}
-          </div>
-        </div>
-      ) : null}
     </section>
   )
 }

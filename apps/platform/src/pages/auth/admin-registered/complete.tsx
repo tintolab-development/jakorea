@@ -4,7 +4,7 @@ import {
   finishAdminRegisteredOnboardingToSignIn,
 } from '@/features/auth/admin-registered'
 import { MYPAGE_PATH } from '@/features/mypage'
-import { isRemoteApiConfigured, setAdminOnboardingRequired, setDevAuthLoggedIn } from '@/shared/lib'
+import { isRemoteApiConfigured, setAdminOnboardingRequired } from '@/shared/lib'
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
@@ -20,7 +20,6 @@ export function AdminRegisteredCompletePage() {
     }
     setAdminOnboardingRequired(false)
     clearAdminRegisteredWizardState()
-    setDevAuthLoggedIn(true)
   }, [navigate])
 
   const handleStart = () => {

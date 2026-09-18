@@ -27,6 +27,7 @@ export {
   SignUpSocialConnectPage,
   SignUpSocialConnectCompletePage,
   SignUpSocialConnectErrorPage,
+  SignUpSocialConnectCallbackPage,
 } from './sign-up'
 export {
   SignUpIdentityCallbackPage,
@@ -37,4 +38,4 @@ export {
   FindEmailIdentityMockNicePage,
 } from './sign-up/identity-pages'
 export { RequiredPage } from './required'
-export { SocialErrorPage } from './social'
+export { SocialErrorPage, SocialLoginCompletePage } from './social'

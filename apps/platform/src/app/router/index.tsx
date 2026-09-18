@@ -28,8 +28,10 @@ import {
   FindEmailIdentityMockNicePage,
   SignUpSocialConnectCompletePage,
   SignUpSocialConnectErrorPage,
+  SignUpSocialConnectCallbackPage,
   SignUpSocialConnectPage,
   SocialErrorPage,
+  SocialLoginCompletePage,
 } from '@/pages/auth'
 import { HomePage } from '@/pages/home'
 import {
@@ -178,10 +180,15 @@ export const router = createBrowserRouter([
       { path: '/auth/sign-up/complete', element: <SignUpCompletePage /> },
       { path: '/auth/sign-up/social-connect', element: <SignUpSocialConnectPage /> },
       {
+        path: '/auth/sign-up/social-connect/callback',
+        element: <SignUpSocialConnectCallbackPage />,
+      },
+      {
         path: '/auth/sign-up/social-connect/complete',
         element: <SignUpSocialConnectCompletePage />,
       },
       { path: '/auth/sign-up/social-connect/error', element: <SignUpSocialConnectErrorPage /> },
+      { path: '/auth/social/complete', element: <SocialLoginCompletePage /> },
       { path: '/auth/social/error', element: <SocialErrorPage /> },
     ],
   },
