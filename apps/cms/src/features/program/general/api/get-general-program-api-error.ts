@@ -9,10 +9,26 @@ const BUSINESS_START_LOCK_PATTERN =
 
 const SPONSOR_INVALID_PATTERN = /sponsor|후원사|program_sponsor|sponsorId/i
 
+/** Portal 희망 교육 일정 서버 검증 — BE 회신 2026-09-18 */
+const PREFERRED_SCHEDULE_ERROR_MESSAGES: Record<string, string> = {
+  PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE:
+    '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.',
+  PREFERRED_SCHEDULE_EXCEEDS_MAX_SCHEDULE_COUNT:
+    '희망 교육 일정 지망 수가 모집 상한을 초과했습니다.',
+  PREFERRED_SCHEDULE_EXCEEDS_MAX_SESSIONS_PER_DAY:
+    '하루 희망 차시 수가 모집 상한을 초과했습니다.',
+}
+
 export function getGeneralProgramApiErrorMessage(error: unknown, fallback: string): string {
   const code = extractApiErrorCode(error)
   if (code === 'INVALID_PROGRAM_ASSIGNMENT_ROLE') {
     return CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE
+  }
+  if (code && PREFERRED_SCHEDULE_ERROR_MESSAGES[code]) {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    // 서버가 동일/구체 메시지를 주면 우선, code만 오면 FE 매핑
+    if (raw && raw !== code) return raw
+    return PREFERRED_SCHEDULE_ERROR_MESSAGES[code]
   }
   const raw = extractRawApiMessage(error)
   if (raw && BUSINESS_START_LOCK_PATTERN.test(raw)) {

@@ -6,7 +6,6 @@ import { RecruitDetailInfoParagraph } from '@/features/template/ui/form-set/recr
 
 const TRAINED_TEACHERS_RECRUIT_DEFAULTS = {
   studentListRequired: 'need' as const,
-  maxAssignableInstructors: 2,
   maxClassCount: 4,
   maxScheduleCount: 3,
   maxSessionsPerDay: 8,

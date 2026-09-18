@@ -310,6 +310,12 @@ export type UseProgramParticipantApplicationEditorOptions = {
   programLinkedApplicationFormPreview?: boolean
   applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
+  /**
+   * 프로그램 등록 위저드가 열린 동안 true.
+   * 모집↔신청↔공통 단계 이동 시 세션 draft 캐시를 유지하고, 위저드 닫을 때만 비운다.
+   * (미전달 시 기존처럼 active=false에서 캐시 clear)
+   */
+  registrationWizardOpen?: boolean
 }
 
 function isApplicantRecruitInstitutionVariant(
@@ -437,6 +443,8 @@ export function useProgramParticipantApplicationEditor(
   const localOnlyDraftPersistence = editorOptions?.localOnlyDraftPersistence === true
   const persistTemplateVersionId = editorOptions?.templateVersionId
   const preferLocalDraft = editorOptions?.preferLocalDraft === true
+  const registrationWizardOpen = editorOptions?.registrationWizardOpen
+  const keepSessionCacheAcrossParticipantDeactivate = registrationWizardOpen === true
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
 
@@ -572,8 +580,11 @@ export function useProgramParticipantApplicationEditor(
   useEffect(() => {
     if (!active) {
       setIsDraftLoading(false)
-      sessionDraftCacheRef.current.clear()
-      storageHydratedTemplateIdsRef.current.clear()
+      // 등록 위저드: 공통 단계로 잠깐 나가도 모집/신청 입력 유지. 위저드 종료 시에만 clear.
+      if (!keepSessionCacheAcrossParticipantDeactivate) {
+        sessionDraftCacheRef.current.clear()
+        storageHydratedTemplateIdsRef.current.clear()
+      }
       return
     }
     /* eslint-disable react-hooks/set-state-in-effect -- 풀페이지 미리보기 열림과 동기화해 시드·저장본을 반영 */
@@ -640,7 +651,9 @@ export function useProgramParticipantApplicationEditor(
     }
 
     const preferSessionCache =
-      cached != null && storageHydratedTemplateIdsRef.current.has(hydrateKey)
+      cached != null &&
+      (keepSessionCacheAcrossParticipantDeactivate ||
+        storageHydratedTemplateIdsRef.current.has(hydrateKey))
 
     const loadOptions = {
       localOnly: localOnlyDraftPersistence,
@@ -735,12 +748,20 @@ export function useProgramParticipantApplicationEditor(
   }, [
     active,
     createSeedDraft,
+    keepSessionCacheAcrossParticipantDeactivate,
     localOnlyDraftPersistence,
     persistTemplateVersionId,
     preferLocalDraft,
     resolvePersistTemplateId,
     variant,
   ])
+
+  /** 등록 위저드 닫힘 → 세션 캐시 정리 (다음 신규 등록과 섞이지 않게) */
+  useEffect(() => {
+    if (registrationWizardOpen !== false) return
+    sessionDraftCacheRef.current.clear()
+    storageHydratedTemplateIdsRef.current.clear()
+  }, [registrationWizardOpen])
 
   useEffect(() => {
     if (!active) {
@@ -1190,7 +1211,9 @@ export function useProgramParticipantApplicationEditor(
       applicantRecruitInstitutionLayoutVariant:
         variant === 'economy-recruit-institution'
           ? 'economy'
-          : editorOptions?.applicantRecruitInstitutionLayoutVariant,
+          : variant === 'trained-teachers-recruit-institution'
+            ? 'trainedTeachers'
+            : editorOptions?.applicantRecruitInstitutionLayoutVariant,
       applicantRecruitInstitutionDefaults: editorOptions?.applicantRecruitInstitutionDefaults,
       applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
       recruitFormInstructor: variant === 'recruit-instructor',

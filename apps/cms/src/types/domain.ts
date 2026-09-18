@@ -183,6 +183,11 @@ export interface GeneralProgramCommonInfoExtension {
   volunteerInterviewScheduleInfo?: GeneralProgramVolunteerInterviewScheduleInfo
   /** 교육 진행 일정 설정 — `date` 날짜 지정 · `period` 기간 지정(기획: 날짜 선택(기간)) */
   educationScheduleMode?: 'date' | 'period'
+  /**
+   * 기간 지정 — 신청 희망일 선택 가능 범위 (ISO start/end).
+   * TT: `trained-teacher/detail` configJson 안 · programs nested commonInfo.
+   */
+  educationScheduleRange?: { start: string; end: string }
   /** 교육받은 교사 — 교육일지 설정 (있음/없음) */
   educationJournalEnabled?: boolean
   /** 교육받은 교사 — 교육 연수 토글. ON이면 첫 진행 항목 타이틀·일정명이 교육 연수로 치환(IPS Prepare 고정) */
