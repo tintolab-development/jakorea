@@ -3,7 +3,7 @@
  * SSOT: apps/cms/src/data/mock/notices.ts (`mockProgramResultNotices`)
  */
 
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { shouldUsePlatformContentSeed } from '@/shared/lib/dev-auth'
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import type { ResultAttachment, ResultDetail, ResultListItem } from '../model/types'
 import { filterAndSortResults } from './filter-results'
@@ -242,18 +242,18 @@ const MOCK_RESULT_DETAILS = CMS_PROGRAM_RESULT_NOTICE_SEED.map(mapNoticeToResult
 )
 
 export function getMockResults(): ResultListItem[] {
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return MOCK_RESULT_DETAILS.map(toListItem)
 }
 
 export function getMockResultById(id: string): ResultListItem | null {
-  if (!shouldUsePlatformMockData()) return null
+  if (!shouldUsePlatformContentSeed()) return null
   const found = MOCK_RESULT_DETAILS.find(item => item.id === id)
   return found ? toListItem(found) : null
 }
 
 export function getMockResultDetailById(id: string): ResultDetail | null {
-  if (!shouldUsePlatformMockData()) return null
+  if (!shouldUsePlatformContentSeed()) return null
   const found = MOCK_RESULT_DETAILS.find(item => item.id === id)
   return found
     ? {

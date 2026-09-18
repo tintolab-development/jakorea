@@ -5,7 +5,7 @@
 
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import type { NoticeAttachment, NoticeDetail, NoticeListItem } from '../model/types'
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { shouldUsePlatformContentSeed } from '@/shared/lib/dev-auth'
 import { filterAndSortNotices } from './filter-notices'
 
 type CmsNoticeSeed = {
@@ -328,7 +328,7 @@ const MOCK_NOTICE_DETAILS: NoticeDetail[] = (() => {
 export type NoticeCatalogItem = NoticeListItem & { content: string }
 
 export function getMockNotices(): NoticeCatalogItem[] {
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return MOCK_NOTICE_DETAILS.map(detail => ({
     ...toListItem(detail),
     content: detail.content,
@@ -336,13 +336,13 @@ export function getMockNotices(): NoticeCatalogItem[] {
 }
 
 export function getMockNoticeById(id: string): NoticeListItem | null {
-  if (!shouldUsePlatformMockData()) return null
+  if (!shouldUsePlatformContentSeed()) return null
   const found = MOCK_NOTICE_DETAILS.find(item => item.id === id)
   return found ? toListItem(found) : null
 }
 
 export function getMockNoticeDetailById(id: string): NoticeDetail | null {
-  if (!shouldUsePlatformMockData()) return null
+  if (!shouldUsePlatformContentSeed()) return null
   const found = MOCK_NOTICE_DETAILS.find(item => item.id === id)
   return found
     ? {

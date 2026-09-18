@@ -1,4 +1,4 @@
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { shouldUsePlatformContentSeed } from '@/shared/lib/dev-auth'
 import type { DirectionsInfo } from '../model/types'
 
 /**
@@ -80,6 +80,6 @@ export const MOCK_DIRECTIONS: DirectionsInfo = {
 }
 
 export function getMockDirections(): DirectionsInfo | null {
-  if (!shouldUsePlatformMockData()) return null
+  if (!shouldUsePlatformContentSeed()) return null
   return MOCK_DIRECTIONS
 }

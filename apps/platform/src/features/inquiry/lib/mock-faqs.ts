@@ -1,4 +1,4 @@
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { shouldUsePlatformContentSeed } from '@/shared/lib/dev-auth'
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import type { FaqItem } from '../model/types'
 
@@ -99,6 +99,6 @@ export const MOCK_FAQS: FaqItem[] = [
 
 export function useMockFaqsCatalog(): FaqItem[] {
   useShouldUsePlatformMockData()
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return MOCK_FAQS
 }

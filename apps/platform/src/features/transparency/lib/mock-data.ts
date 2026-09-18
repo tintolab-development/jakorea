@@ -1,4 +1,4 @@
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { shouldUsePlatformContentSeed } from '@/shared/lib/dev-auth'
 import type {
   ExpenseDetailGroup,
   FinanceSummary,
@@ -214,26 +214,26 @@ const EMPTY_FINANCE_SUMMARY: FinanceSummary = {
 }
 
 export function getMockTransparencyPrinciples(): readonly TransparencyPrinciple[] {
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return MOCK_TRANSPARENCY_PRINCIPLES
 }
 
 export function getMockRevenueSummary(): FinanceSummary {
-  if (!shouldUsePlatformMockData()) return EMPTY_FINANCE_SUMMARY
+  if (!shouldUsePlatformContentSeed()) return EMPTY_FINANCE_SUMMARY
   return MOCK_REVENUE_SUMMARY
 }
 
 export function getMockExpenseSummary(): FinanceSummary {
-  if (!shouldUsePlatformMockData()) return EMPTY_FINANCE_SUMMARY
+  if (!shouldUsePlatformContentSeed()) return EMPTY_FINANCE_SUMMARY
   return MOCK_EXPENSE_SUMMARY
 }
 
 export function getMockRevenueTableOrder(): readonly string[] {
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return MOCK_REVENUE_TABLE_ORDER
 }
 
 export function getMockExpenseDetailGroups(): readonly ExpenseDetailGroup[] {
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return MOCK_EXPENSE_DETAIL_GROUPS
 }

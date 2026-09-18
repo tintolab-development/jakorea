@@ -15,7 +15,7 @@ import {
 } from '@/features/program/lib/apply-form-schedule'
 import { ApplyPreferredSchedule } from '@/features/program/ui/apply-preferred-schedule/apply-preferred-schedule'
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
-import { getDevAuthLoggedIn, resolveLoginRequiredPath, shouldUsePlatformMockData } from '@/shared/lib'
+import { getDevAuthLoggedIn, resolveLoginRequiredPath, shouldUsePlatformContentSeed } from '@/shared/lib'
 import { PFButton, PFCheckbox, PFText, PFTextarea, PFTextInput } from '@/shared/ui'
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
@@ -43,7 +43,7 @@ export function ProgramApplyPage() {
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
 
   useEffect(() => {
-    if (!program || !shouldUsePlatformMockData()) {
+    if (!program || !shouldUsePlatformContentSeed()) {
       setDraft(null)
       return
     }
