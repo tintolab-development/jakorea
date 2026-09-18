@@ -23,7 +23,8 @@ CMS `/programs/trained-teachers` FE 전환용 BE 계약입니다.
 | `POST` | `/api/admin/programs` | `programType=TRAINED_TEACHER`, `autoApplyDefaultFormBindings` |
 | `PATCH` / `DELETE` | 동일 | type 보존 · 2xx |
 
-템플릿: `registration-trained-teachers`, `application-trained-teachers` (forms-surveys seeds).
+템플릿: `registration-trained-teachers`, `recruitment-trained-teachers`, `application-trained-teachers` (forms-surveys seeds).  
+신규 등록 플로우 FE↔BE 정렬: [trained-teacher-registration-flow-backend-prompt-2026-09-18.md](./trained-teacher-registration-flow-backend-prompt-2026-09-18.md)
 
 ---
 
@@ -82,3 +83,4 @@ VITE_REAL_API_MODULES=adminAuth,formsSurveys,programs,trainedTeacherPrograms
 |------|------|
 | 2026-07-16 | 초안 |
 | 2026-09-16 | approve/reject TT 전용 path로 정정 · journals/completions · 미확인 갭 문서 링크 |
+| 2026-09-18 | 등록 플로우 3종 템플릿(모집 포함) · [등록 BE 프롬프트](./trained-teacher-registration-flow-backend-prompt-2026-09-18.md) |
