@@ -28,6 +28,7 @@ export interface UserDetailFullpageShellValue {
   onNavigateToLinkedUser?: (target: AffiliatedTeacherLinkTarget) => void
   modals: UseUserDetailModalsResult
   withdrawConfirmOpen: boolean
+  withdrawConfirmLoading: boolean
   /** 학교(기관) 상세 — 소속 교사가 있을 때 삭제 시도 시 목록과 동일한 불가 안내 */
   institutionDeleteBlockedOpen: boolean
   onCloseInstitutionDeleteBlocked: () => void
@@ -54,7 +55,7 @@ export interface UserDetailFullpageShellValue {
   ) => void | Promise<void>
   progressStatusReadOnly: boolean
   onWithdrawModalCancel: () => void
-  onWithdrawModalConfirm: () => void
+  onWithdrawModalConfirm: (currentPassword?: string) => void | Promise<void>
   basicInfoEditing: boolean
   basicInfoEditScope: BasicInfoEditScope
   basicInfoDraft: AdminProvisionedMemberBasicInfoDraft | null

@@ -61,7 +61,7 @@ export interface UserDetailFullPageModalProps {
   open: boolean
   user: Omit<User, 'password'> | null
   onClose: () => void
-  onWithdraw?: (user: Omit<User, 'password'>) => void
+  onWithdraw?: (user: Omit<User, 'password'>, currentPassword?: string) => void | Promise<void>
   basicInfoEntrySource?: UserBasicInfoEntrySource
   mode?: UserDetailFullPageModalMode
   permissionRole?: UserDetailPermissionRole
@@ -150,6 +150,7 @@ export function UserDetailFullPageModal({
       onNavigateToLinkedUser,
       modals,
       withdrawConfirmOpen: state.withdrawConfirmOpen,
+      withdrawConfirmLoading: state.withdrawConfirmLoading,
       institutionDeleteBlockedOpen: state.institutionDeleteBlockedOpen,
       onCloseInstitutionDeleteBlocked: actions.closeInstitutionDeleteBlocked,
       onProgressStatusChange: actions.handleProgressStatusChange,
@@ -203,6 +204,7 @@ export function UserDetailFullPageModal({
     state.volunteerHistoriesLoading,
     state.personalInfoRevealed,
     state.withdrawConfirmOpen,
+    state.withdrawConfirmLoading,
     state.institutionDeleteBlockedOpen,
     state.basicInfoEditing,
     state.basicInfoEditScope,

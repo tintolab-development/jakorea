@@ -50,9 +50,9 @@ import type { MemberRegisterConsentWriteSnapshots } from '@/features/user/shared
 import { useInfiniteUserList } from '@/features/user/shared/hooks/use-infinite-user-list'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
+  DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
-  WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
 import { useUserStore, selectSelectedUser } from '@/features/user/shared/model/user-store'
 import type { User, AffiliatedTeacherLinkTarget } from '@/types/user'
@@ -256,7 +256,7 @@ export function UserListPage() {
   // 삭제 확인 모달 상태
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deletingUser, setDeletingUser] = useState<Omit<User, 'password'> | null>(null)
-  const [, setDeleteLoading] = useState(false)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   /**
    * 상세 GET 완료 후 동기 보관(목록 시드 선표시용 아님).
@@ -343,7 +343,15 @@ export function UserListPage() {
       resolvedMemberListKind
     )
     const title = deleteTargets.length >= 2 ? domain.bulkTitle : domain.singleTitle
-    return { title, lines, confirmText: domain.confirmText }
+    /** 회원·통합 삭제 API만 currentPassword — 관리자/학교 계정 삭제는 문구 확인 유지 */
+    const usesAdminPasswordConfirm =
+      resolvedMemberListKind !== 'admins' && resolvedMemberListKind !== 'institutions'
+    return {
+      title,
+      lines,
+      confirmText: domain.confirmText,
+      confirmInputMode: usesAdminPasswordConfirm ? ('password' as const) : ('phrase' as const),
+    }
   }, [deleteTargets, resolvedMemberListKind])
 
   const userListFilterFields = useMemo(
@@ -1057,14 +1065,19 @@ export function UserListPage() {
     setDeleteModalOpen(true)
   }
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = async (currentPassword?: string) => {
     const bulk = bulkDeleteUsers && bulkDeleteUsers.length > 0
     const toDelete = bulk ? bulkDeleteUsers! : deletingUser ? [deletingUser] : []
     if (toDelete.length === 0) return
 
     setDeleteLoading(true)
     try {
-      await deleteUsersByListKind(toDelete, resolvedMemberListKind)
+      await deleteUsersByListKind(
+        toDelete,
+        resolvedMemberListKind,
+        undefined,
+        currentPassword
+      )
       setDeleteModalOpen(false)
       setDeletingUser(null)
       setBulkDeleteUsers(null)
@@ -1086,14 +1099,14 @@ export function UserListPage() {
 
   /** 회원 상세 > 탈퇴 확인 모달 확정 — 성공 시에만 상세 닫고 목록으로 */
   const handleWithdrawFromDetail = useCallback(
-    async (u: Omit<User, 'password'>) => {
+    async (u: Omit<User, 'password'>, currentPassword?: string) => {
       if (!guardAdminAction({ roleCode, action: 'delete' })) return
       setDeleteLoading(true)
       try {
         await deleteUser(u.id, {
           ...resolveDeleteUserOptions(u),
           reason: 'CMS 관리자 회원 탈퇴',
-          confirmationText: WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
+          currentPassword,
         })
         setSelectedRowKeys(prev => prev.filter(key => key !== u.id))
         invalidateList()
@@ -1101,6 +1114,7 @@ export function UserListPage() {
         showDeleteCompletedAlert()
       } catch (error) {
         handleError(error, { defaultMessage: '회원 탈퇴 처리에 실패했습니다.' })
+        throw error
       } finally {
         setDeleteLoading(false)
       }
@@ -1356,8 +1370,18 @@ export function UserListPage() {
           lines={memberDeleteGuide.lines}
           confirmText={memberDeleteGuide.confirmText}
           confirmVariant="delete"
-          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
-          confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+          confirmInputMode={memberDeleteGuide.confirmInputMode}
+          requiredConfirmInput={
+            memberDeleteGuide.confirmInputMode === 'phrase'
+              ? DELETE_GUIDE_TYPED_CONFIRM_VALUE
+              : undefined
+          }
+          confirmInputPlaceholder={
+            memberDeleteGuide.confirmInputMode === 'password'
+              ? DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER
+              : DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER
+          }
+          confirmLoading={deleteLoading}
         />
       )}
 

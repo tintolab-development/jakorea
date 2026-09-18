@@ -27,6 +27,7 @@ export function UserDetailFullpageModalsStack() {
     modals,
     displayUser,
     withdrawConfirmOpen,
+    withdrawConfirmLoading,
     onWithdrawModalCancel,
     onWithdrawModalConfirm,
     institutionDeleteBlockedOpen,
@@ -160,6 +161,7 @@ export function UserDetailFullpageModalsStack() {
               ? displayUser.schoolInfo?.schoolName?.trim() || displayUser.name
               : displayUser.name
           }
+          confirmLoading={withdrawConfirmLoading}
         />
       )}
       <InstructorPermissionRevokeModal

@@ -57,4 +57,21 @@ describe('getMemberApiErrorMessage', () => {
     }
     expect(getMemberApiErrorMessage(error, 'fallback')).toContain('참여 중인 프로그램')
   })
+
+  it('maps CMS_MEMBER_DELETE_CURRENT_PASSWORD_INVALID', () => {
+    const error = {
+      response: {
+        status: 400,
+        data: {
+          success: false,
+          error: {
+            code: 'CMS_MEMBER_DELETE_CURRENT_PASSWORD_INVALID',
+            field: 'currentPassword',
+            message: '현재 비밀번호를 확인해 주세요.',
+          },
+        },
+      },
+    }
+    expect(getMemberApiErrorMessage(error, 'fallback')).toBe('현재 비밀번호를 확인해 주세요.')
+  })
 })

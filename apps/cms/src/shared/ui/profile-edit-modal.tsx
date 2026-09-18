@@ -321,7 +321,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
     setWithdrawModalOpen(false)
   }
 
-  const handleWithdraw = async () => {
+  const handleWithdraw = async (_confirmInput?: string) => {
     if (!user) {
       return
     }
@@ -329,7 +329,9 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
     setWithdrawing(true)
     try {
       if (isMembersRemoteEnabled()) {
-        await withdrawAdminSelfRemote({ confirmationText: '탈퇴' })
+        await withdrawAdminSelfRemote({
+          confirmationText: '탈퇴',
+        })
       } else {
         updateUser({ isActive: false })
       }
@@ -632,7 +634,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
       <MemberWithdrawGuideModal
         open={withdrawModalOpen}
         onCancel={handleCloseWithdrawModal}
-        onConfirm={() => void handleWithdraw()}
+        onConfirm={value => void handleWithdraw(value)}
         variant="self_withdraw"
         confirmLoading={withdrawing}
       />

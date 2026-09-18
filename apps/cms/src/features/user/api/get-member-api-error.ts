@@ -17,6 +17,8 @@ const MEMBER_ERROR_CODE_MESSAGES: Record<string, string> = {
   /** 강사 권한 박탈·승인 취소 — 진행/배정 중 프로그램이 있으면 BE 409 */
   INSTRUCTOR_REVOKE_BLOCKED_BY_ACTIVE_PROGRAM:
     '참여 중인 프로그램이 있어 권한을 취소할 수 없습니다.',
+  /** CMS 회원 삭제 — 관리자 현재 비밀번호 불일치 */
+  CMS_MEMBER_DELETE_CURRENT_PASSWORD_INVALID: '현재 비밀번호를 확인해 주세요.',
 }
 
 export function getMemberApiErrorMessage(error: unknown, fallback: string): string {

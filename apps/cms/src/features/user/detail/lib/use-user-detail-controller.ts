@@ -172,7 +172,7 @@ export interface UseUserDetailControllerParams {
   mode: UserDetailControllerModalMode
   programsChildQueryKey: string
   basicInfoEntrySource?: UserBasicInfoEntrySource
-  onWithdraw?: (user: Omit<User, 'password'>) => void
+  onWithdraw?: (user: Omit<User, 'password'>, currentPassword?: string) => void | Promise<void>
   modals: UseUserDetailModalsResult
   patchMemberBasicInfo?: (
     userId: string,
@@ -443,6 +443,7 @@ export function useUserDetailController({
     ? remoteVolunteerHistoriesLoading
     : mockVolunteerHistoriesLoading
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false)
+  const [withdrawConfirmLoading, setWithdrawConfirmLoading] = useState(false)
   const [institutionDeleteBlockedOpen, setInstitutionDeleteBlockedOpen] = useState(false)
   const [basicInfoEditing, setBasicInfoEditing] = useState(false)
   const [basicInfoEditScope, setBasicInfoEditScope] = useState<BasicInfoEditScope>('none')
@@ -844,12 +845,19 @@ export function useUserDetailController({
     setInstitutionDeleteBlockedOpen(false)
   }, [])
 
-  const handleWithdrawConfirm = useCallback(() => {
-    if (displayUser && onWithdraw) {
-      onWithdraw(displayUser)
-      setWithdrawConfirmOpen(false)
-    }
-  }, [displayUser, onWithdraw])
+  const handleWithdrawConfirm = useCallback(
+    async (currentPassword?: string) => {
+      if (!displayUser || !onWithdraw) return
+      setWithdrawConfirmLoading(true)
+      try {
+        await onWithdraw(displayUser, currentPassword)
+        setWithdrawConfirmOpen(false)
+      } finally {
+        setWithdrawConfirmLoading(false)
+      }
+    },
+    [displayUser, onWithdraw]
+  )
 
   const focusDetailInfoTab = useCallback(() => {
     setTabState({ lnb: 'detail-info' })
@@ -1647,6 +1655,7 @@ export function useUserDetailController({
       volunteerHistories,
       volunteerHistoriesLoading,
       withdrawConfirmOpen,
+      withdrawConfirmLoading,
       institutionDeleteBlockedOpen,
       personalInfoRevealed,
       personalInfoRevealConfirmOpen,
