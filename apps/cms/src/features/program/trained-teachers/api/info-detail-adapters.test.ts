@@ -41,8 +41,29 @@ describe('trained-teacher info detail adapters', () => {
     })
     expect(request.teacherTrainingEnabled).toBe(true)
     expect(request.educationJournalEnabled).toBe(false)
-    expect(request.teacherTrainingScheduleName).toBe('교사 연수')
+    expect(request.educationJournalRequired).toBe(false)
+    expect(request.journalSubmissionLimitType).toBe('UNLIMITED')
+    expect(request.teacherTrainingScheduleName).toBe('교육 연수')
     expect(request.configJson).toContain('"educatedTeachers":3')
+  })
+
+  it('reads educationScheduleRange from configJson root', () => {
+    const patch = mapTrainedTeacherInfoDetailToProgramPatch({
+      teacherTrainingEnabled: true,
+      configJson: JSON.stringify({
+        schemaVersion: 1,
+        educationScheduleMode: 'period',
+        educationScheduleRange: {
+          start: '2026-04-01T00:00:00.000Z',
+          end: '2026-11-30T00:00:00.000Z',
+        },
+      }),
+    })
+    expect(patch.generalCommonInfo?.educationScheduleMode).toBe('period')
+    expect(patch.generalCommonInfo?.educationScheduleRange).toEqual({
+      start: '2026-04-01T00:00:00.000Z',
+      end: '2026-11-30T00:00:00.000Z',
+    })
   })
 
   it('merges GET detail into program without wiping programs KPI', () => {

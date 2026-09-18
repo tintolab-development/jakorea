@@ -80,6 +80,10 @@ import { TrainedTeachersApplicationInfoView } from '@/features/program/trained-t
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { handleError } from '@/shared/utils/error-handler'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  canGeneralProgramCommonInfoEdit,
+  getGeneralProgramCommonInfoEditBlockedAlertMessage,
+} from '@/features/program/general/lib/common-info-edit-policy'
 import { useGeneralProgramNavigation } from '@/features/program/general/hooks/use-general-program-navigation'
 import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
 import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
@@ -1267,6 +1271,17 @@ export function ProgramDetailFullPageModal({
     // 교육받은 교사·1사1교 프로그램 정보 LNB — 탭별 수정 모드 (실패 시 목록으로 navigate 하지 않음)
     if (isOverviewProgramDetail && activeLnb === 'info') {
       if (activeTab === 'info') {
+        // 교육받은 교사 공통정보 — 진행 전(scheduled)까지만 수정 가능
+        if (
+          isTrainedTeachersDetail &&
+          !canGeneralProgramCommonInfoEdit(displayProgram)
+        ) {
+          void showAlert({
+            title: '안내',
+            content: getGeneralProgramCommonInfoEditBlockedAlertMessage(displayProgram),
+          })
+          return
+        }
         infoResetToProgram()
         setEditMode('info')
         return
@@ -1539,6 +1554,9 @@ export function ProgramDetailFullPageModal({
               onEdit={handleInfoEdit}
               onCancel={handleEditCancel}
               onSave={() => setEditMode(null)}
+              editDisabled={
+                !!displayProgram && !canGeneralProgramCommonInfoEdit(displayProgram)
+              }
               persistPending={updateTrainedTeacherInfoDetailMutation.isPending}
               onBeforePersist={async () => {
                 const values = infoForm.getValues()

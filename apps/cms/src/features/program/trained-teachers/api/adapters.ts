@@ -439,6 +439,7 @@ export function mapTrainedTeacherToCreateRequest(program: Program): ProgramCreat
   return {
     ...mapTrainedTeacherToUpdateRequest(program),
     programType: TRAINED_TEACHER_PROGRAM_API_TYPE,
+    applicationTargetMode: 'ORGANIZATION',
     businessStartDate: toDate(program.startDate),
     businessEndDate: toDate(program.endDate),
     autoApplyDefaultFormBindings: true,
