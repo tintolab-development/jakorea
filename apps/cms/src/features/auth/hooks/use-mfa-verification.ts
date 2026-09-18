@@ -57,7 +57,22 @@ export function useMfaVerification({
   const [otpResetToken, setOtpResetToken] = useState(0)
   const verifyInFlightRef = useRef(false)
   const remoteFailedAttemptsRef = useRef(0)
+  /** <Form form={form}> 가 한 번이라도 마운트됐는지. 모달 body는 최초 open 전까지 렌더되지 않는다. */
+  const formConnectedRef = useRef(false)
   const isBusy = verifying || remoteVerifying
+
+  useEffect(() => {
+    if (open) formConnectedRef.current = true
+  }, [open])
+
+  /** Form 미연결 상태에서 form 인스턴스를 만지면 antd가 경고를 찍으므로 연결 이후에만 실행한다. */
+  const runOnForm = useCallback(
+    (action: (formInstance: FormInstance) => void) => {
+      if (!formConnectedRef.current) return
+      action(form)
+    },
+    [form]
+  )
 
   const isRemoteMfa = Boolean(mfaState?.challengeUuid)
   const isLocalTestMfa =
@@ -70,15 +85,13 @@ export function useMfaVerification({
   const displayLockUntil = isRemoteMfa ? remoteLockUntil : lockUntil
 
   const clearOtpInput = useCallback(() => {
-    try {
-      form.setFields([{ name: 'otpCode', errors: [] }])
-      form.setFieldsValue({ otpCode: '' })
-    } catch {
-      console.debug('Form not connected, skipping clearOtpInput')
-    }
+    runOnForm(formInstance => {
+      formInstance.setFields([{ name: 'otpCode', errors: [] }])
+      formInstance.setFieldsValue({ otpCode: '' })
+    })
     setOtpCode('')
     setOtpResetToken(token => token + 1)
-  }, [form])
+  }, [runOnForm])
 
   const resetRemoteLockState = useCallback(() => {
     remoteFailedAttemptsRef.current = 0
@@ -167,24 +180,11 @@ export function useMfaVerification({
       setOtpCode('')
       resetVerification()
       const frameId = requestAnimationFrame(() => {
-        if (!open) {
-          try {
-            if (form && typeof form.resetFields === 'function') {
-              try {
-                form.getFieldsValue()
-                form.resetFields()
-              } catch {
-                console.debug('Form not connected, skipping resetFields')
-              }
-            }
-          } catch {
-            console.debug('Form not connected, skipping resetFields')
-          }
-        }
+        runOnForm(formInstance => formInstance.resetFields())
       })
       return () => cancelAnimationFrame(frameId)
     }
-  }, [open, form, resetVerification])
+  }, [open, runOnForm, resetVerification])
 
   const verifyAndComplete = useCallback(
     async (codeToVerify: string) => {
@@ -200,22 +200,20 @@ export function useMfaVerification({
         }
 
         if (codeToVerify.length !== OTP_LENGTH) {
-          try {
-            form.setFields([
+          runOnForm(formInstance =>
+            formInstance.setFields([
               { name: 'otpCode', errors: [`인증번호는 ${OTP_LENGTH}자리입니다.`] },
             ])
-          } catch {
-            console.debug('Form not connected, skipping setFields (otp length)')
-          }
+          )
           return
         }
 
         if (!/^\d+$/.test(codeToVerify)) {
-          try {
-            form.setFields([{ name: 'otpCode', errors: ['인증번호는 숫자만 입력 가능합니다.'] }])
-          } catch {
-            console.debug('Form not connected, skipping setFields (otp digits)')
-          }
+          runOnForm(formInstance =>
+            formInstance.setFields([
+              { name: 'otpCode', errors: ['인증번호는 숫자만 입력 가능합니다.'] },
+            ])
+          )
           return
         }
 
@@ -234,11 +232,7 @@ export function useMfaVerification({
               if (response.verified && response.tokens) {
                 resetRemoteLockState()
                 completeAdminAuth(response.tokens)
-                try {
-                  form.resetFields()
-                } catch {
-                  console.debug('Form not connected, skipping resetFields')
-                }
+                runOnForm(formInstance => formInstance.resetFields())
                 setOtpCode('')
                 return
               }
@@ -267,11 +261,7 @@ export function useMfaVerification({
 
           if (verified) {
             setMfaVerified()
-            try {
-              form.resetFields()
-            } catch {
-              console.debug('Form not connected, skipping resetFields')
-            }
+            runOnForm(formInstance => formInstance.resetFields())
             setOtpCode('')
           } else {
             clearOtpInput()
@@ -280,11 +270,9 @@ export function useMfaVerification({
           const errMsg = unknownErrorText(error, '인증에 실패했습니다.')
           clearOtpInput()
           if (!displayIsLocked && !errMsg.includes('인증 시도 횟수')) {
-            try {
-              form.setFields([{ name: 'otpCode', errors: [errMsg] }])
-            } catch {
-              console.debug('Form not connected, skipping setFields (verify error)')
-            }
+            runOnForm(formInstance =>
+              formInstance.setFields([{ name: 'otpCode', errors: [errMsg] }])
+            )
           }
         }
       } finally {
@@ -298,7 +286,7 @@ export function useMfaVerification({
       verifyTotpCode,
       completeAdminAuth,
       setMfaVerified,
-      form,
+      runOnForm,
       clearOtpInput,
       displayIsLocked,
       ensureRemoteNotLocked,
@@ -326,7 +314,7 @@ export function useMfaVerification({
 
   const handleVerify = useCallback(
     async (values?: { otpCode?: string }) => {
-      if (!user) {
+      if (!user || !formConnectedRef.current) {
         return
       }
 

@@ -171,6 +171,17 @@ export function loadGeminiRecruitmentAddDraft(): GeminiRecruitmentAddDraftSaveRe
   }
 }
 
+/** 「임시저장」 덮어쓰기 확인용 — 사용자 작성 draft가 있으면 제목·savedAt 반환 */
+export function peekGeminiRecruitmentAddDraftOverwrite(): {
+  title: string
+  savedAt: string
+} | null {
+  const saved = loadGeminiRecruitmentAddDraft()
+  if (saved == null) return null
+  const title = saved.form.title.trim() || '제목 없음'
+  return { title, savedAt: saved.savedAt }
+}
+
 export function persistGeminiRecruitmentAddDraft(form: GeminiRecruitmentAddFormSnapshot): boolean {
   try {
     const file = readFile()

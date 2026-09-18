@@ -118,7 +118,9 @@ export function TrainedTeachersApplicationInfoView({
         items={[{ key: 'institutions', label: '참여 기관 신청 정보' }]}
         trailing={
           canWrite ? (
-            <CmsButton onClick={handleEditFormClick}>양식 수정</CmsButton>
+            <CmsButton variant="secondary" size="large" onClick={handleEditFormClick}>
+              양식 수정
+            </CmsButton>
           ) : null
         }
       />

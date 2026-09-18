@@ -293,6 +293,7 @@ function buildCurriculumSessions(
   const partDetail = extras.participationScheduleDetail ?? 'common'
   const ipsDetail = extras.ipsScheduleDetail ?? 'common'
   const hideAssignment = extras.participantOrganization === true || !isMulti
+  const hideParticipation = extras.participantOrganization === true
 
   const sessions: GeneralProgramCurriculumSessionRow[] = []
 
@@ -331,7 +332,7 @@ function buildCurriculumSessions(
             ? educationFormLabelFromValue(educationFormBySession[i] ?? 'online')
             : undefined,
         participationMethodLabel:
-          partDetail === 'perSchedule'
+          !hideParticipation && partDetail === 'perSchedule'
             ? participationMethodLabelFromValue(
                 (participationBySession[i] as 'individual' | 'team' | undefined) ?? 'individual'
               )
@@ -361,7 +362,7 @@ function buildCurriculumSessions(
           ? educationFormLabelFromValue(educationFormBySession[i] ?? 'online')
           : undefined,
       participationMethodLabel:
-        partDetail === 'perSchedule'
+        !hideParticipation && partDetail === 'perSchedule'
           ? participationMethodLabelFromValue(
               (participationBySession[i] as 'individual' | 'team' | undefined) ?? 'individual'
             )
@@ -435,6 +436,7 @@ function buildEnrichedScheduleDetails(
   const partDetail = extras.participationScheduleDetail ?? 'common'
   const ipsDetailKind = extras.ipsScheduleDetail ?? 'common'
   const hideAssignment = extras.participantOrganization === true || extras.sessionRoundType === 'single'
+  const hideParticipation = extras.participantOrganization === true
 
   const rows: GeneralProgramScheduleDetailRow[] = base.map((row, index) => {
     const n = index + 1
@@ -454,7 +456,7 @@ function buildEnrichedScheduleDetails(
           ? educationFormLabelFromValue(educationFormByDetail[n] ?? 'online')
           : undefined,
       participationMethodLabel:
-        partDetail === 'perSchedule'
+        !hideParticipation && partDetail === 'perSchedule'
           ? participationMethodLabelFromValue(
               (participationByDetail[n] as 'individual' | 'team' | undefined) ?? 'individual'
             )
@@ -618,10 +620,12 @@ export function applyGeneralRegistrationOverlayToProgram(
     overlayString(overlay, `${TYPE}.multiCommonEducationForm`) ||
     overlayString(overlay, `${TYPE}.singleEducationForm`) ||
     'online'
-  const commonParticipation =
-    (overlayString(overlay, `${TYPE}.multiCommonParticipation`) ||
-      overlayString(overlay, `${TYPE}.singleParticipation`) ||
-      'individual') as 'individual' | 'team'
+  const hideParticipation = extras.participantOrganization === true
+  const commonParticipation = hideParticipation
+    ? undefined
+    : ((overlayString(overlay, `${TYPE}.multiCommonParticipation`) ||
+        overlayString(overlay, `${TYPE}.singleParticipation`) ||
+        'individual') as 'individual' | 'team')
 
   const programTypeFromForm =
     commonEducationForm === 'online'
@@ -717,7 +721,9 @@ export function applyGeneralRegistrationOverlayToProgram(
       ipsScheduleDetail: ipsDetailKind,
       educationFormLabel:
         eduDetail === 'common' ? educationFormLabelFromValue(commonEducationForm) : undefined,
-      participationMethod: partDetail === 'common' ? commonParticipation : undefined,
+      /** 기관(학교/기관) 대상 — BE `GENERAL_ORGANIZATION_PARTICIPATION_METHOD_NOT_ALLOWED` */
+      participationMethod:
+        hideParticipation || partDetail !== 'common' ? undefined : commonParticipation,
       ipsTypeSummary: buildIpsTypeSummaryFull(ipsDetailKind, ipsCategory, ipsType.detail),
       scheduleCurriculumPreEducation: extras.scheduleCurriculumPreEducation ?? false,
       curriculumSessions,

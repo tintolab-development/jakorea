@@ -174,6 +174,9 @@ function PinnedFormCardInner({
     paragraphBodyOptions
   )
   const adminProxyConfirmCard = isAgreementAdminProxyConfirmCard(paragraph, paragraphBodyOptions)
+  const seedFillLocked =
+    paragraphBodyOptions?.seedApplicantFillLocked === true &&
+    (structureLockedParagraphIds?.has(paragraph.id) ?? false)
 
   return (
     <ParagraphCard
@@ -187,6 +190,7 @@ function PinnedFormCardInner({
           ? 'paragraph-card--scale-type'
           : '',
         adminProxyConfirmCard ? 'agreement-admin-proxy-confirm-card' : '',
+        seedFillLocked ? 'paragraph-card--seed-fill-locked' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -356,6 +360,9 @@ function SortableMiddleFormCardInner({
     paragraphBodyOptions
   )
   const adminProxyConfirmCard = isAgreementAdminProxyConfirmCard(paragraph, paragraphBodyOptions)
+  const seedFillLocked =
+    paragraphBodyOptions?.seedApplicantFillLocked === true &&
+    (structureLockedParagraphIds?.has(paragraph.id) ?? false)
 
   return (
     <div
@@ -386,6 +393,7 @@ function SortableMiddleFormCardInner({
             ? 'paragraph-card--scale-type'
             : '',
           adminProxyConfirmCard ? 'agreement-admin-proxy-confirm-card' : '',
+          seedFillLocked ? 'paragraph-card--seed-fill-locked' : '',
         ]
           .filter(Boolean)
           .join(' ')}

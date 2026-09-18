@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useCreateProgram } from '@/features/program/ujat/api/queries'
 import type { Program } from '@/types/domain'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
@@ -10,6 +10,7 @@ import { useProgramParticipantApplicationEditor } from '@/features/template/hook
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 import { useUjatProgramRegistrationEditor } from '@/features/template/ui/form-set/registration-form/UJAT/use-ujat-program-registration-editor'
+import { clearUjatRegistrationOperationalFormDrafts } from '@/features/program/ujat/lib/ujat-registration-operational-form-drafts'
 import {
   UJAT_PROGRAM_REGISTRATION_DEFAULT_APPLICATION_STEP,
   UJAT_PROGRAM_REGISTRATION_DEFAULT_RECRUIT_STEP,
@@ -55,6 +56,13 @@ export function useUjatProgramRegistrationFlow(
   const createProgramMutation = useCreateProgram()
   const completionPromiseRef = useRef<Promise<Program> | null>(null)
   const idempotencyKeyRef = useRef(createRegistrationIdempotencyKey())
+  const skipDraftRestore = options?.skipDraftRestore === true
+
+  // 모집/신청 hydrate보다 먼저 비워, fresh 진입 시 이전 세션 캐시가 복원되지 않게 한다.
+  useLayoutEffect(() => {
+    if (!open || !skipDraftRestore) return
+    clearUjatRegistrationOperationalFormDrafts()
+  }, [open, skipDraftRestore])
 
   useEffect(() => {
     if (open) return
@@ -105,7 +113,7 @@ export function useUjatProgramRegistrationFlow(
 
   // 공통 정보 overlay는 모집·신청 단계로 이동한 뒤 완료할 때까지 유지되어야 한다.
   const registrationVm = useUjatProgramRegistrationEditor(open, programTemplateName, {
-    skipDraftRestore: options?.skipDraftRestore === true,
+    skipDraftRestore,
     // 프로그램 임시저장 — remote 전환: docs/api/program-draft-local-storage-follow-up.md
     localOnlyDraftPersistence: true,
   })
@@ -114,7 +122,12 @@ export function useUjatProgramRegistrationFlow(
     open && isParticipantStep,
     participantTemplateName,
     participantVariant,
-    { ujatRecruitParagraphProps, localOnlyDraftPersistence: true }
+    {
+      ujatRecruitParagraphProps,
+      localOnlyDraftPersistence: true,
+      /** UJAT 등록 위저드 — 단락 타이틀 옆 필수(*) */
+      forceSeedParagraphsRequired: true,
+    }
   )
 
   const registryEntry = useMemo(
@@ -201,6 +214,14 @@ export function useUjatProgramRegistrationFlow(
     participantVm.handleSave()
   }, [isProgramStep, registrationVm, participantVm])
 
+  const persistDraftSilent = useCallback(async () => {
+    if (isProgramStep) {
+      await registrationVm.handleSave({ silent: true })
+      return
+    }
+    await participantVm.handleSave({ silent: true })
+  }, [isProgramStep, registrationVm, participantVm])
+
   const handleCompleteRegistration = useCallback(() => {
     if (completionPromiseRef.current) return completionPromiseRef.current
 
@@ -236,6 +257,7 @@ export function useUjatProgramRegistrationFlow(
     isDraftLoading,
     handlePreview,
     handleSave,
+    persistDraftSilent,
     handleCompleteRegistration,
     registrationVm,
     participantVm,

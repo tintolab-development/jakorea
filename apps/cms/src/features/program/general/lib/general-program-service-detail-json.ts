@@ -84,6 +84,31 @@ function stripIndividualStudentRosterFromCommonInfo(
 }
 
 /**
+ * 기관(학교/기관) 프로그램 — BE `GENERAL_ORGANIZATION_PARTICIPATION_METHOD_NOT_ALLOWED`
+ * 개인 전용 참여 방식 필드를 serviceDetailJson에서 제거한다.
+ */
+function stripOrganizationParticipationFromCommonInfo(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  if (!common) return common
+  const { participationMethod: _omitMethod, ...rest } = common
+  void _omitMethod
+  return {
+    ...rest,
+    curriculumSessions: rest.curriculumSessions?.map(session => {
+      const { participationMethodLabel: _omitLabel, ...sessionRest } = session
+      void _omitLabel
+      return sessionRest
+    }),
+    scheduleDetails: rest.scheduleDetails?.map(detail => {
+      const { participationMethodLabel: _omitLabel, ...detailRest } = detail
+      void _omitLabel
+      return detailRest
+    }),
+  }
+}
+
+/**
  * Primary 8 / TT alias를 generalCommonInfo.*RecruitmentInfo로 정규화하고
  * 탑레벨 Program hydrate 필드를 채운다.
  */
@@ -210,7 +235,7 @@ export function serializeGeneralProgramServiceDetailJson(program: Program): stri
   const isIndividual = isGeneralIndividualProgram(program)
   const generalCommonInfo = isIndividual
     ? stripIndividualStudentRosterFromCommonInfo(program.generalCommonInfo)
-    : program.generalCommonInfo
+    : stripOrganizationParticipationFromCommonInfo(program.generalCommonInfo)
   const payload: GeneralProgramServiceDetailJsonV1 = {
     schemaVersion: GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION,
     generalCommonInfo,

@@ -434,6 +434,8 @@ export function HorizontalTableParagraphBody({
   allowDisclaimerBottomTextEdit = false,
   /** 구조 잠금 작성 중에도 하단 동의 라디오만 조작 가능 */
   bottomConsentPreviewInAuthoring = false,
+  /** 프로그램 등록 — disabled 스킨 없이 미선택·입력 불가 */
+  bottomConsentDisplayOnly = false,
   /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
   consentFillMode = false,
   tableRowSelection: controlledSelection,
@@ -481,6 +483,8 @@ export function HorizontalTableParagraphBody({
   lockedBodyColumnIndexes?: ReadonlySet<number>
   allowDisclaimerBottomTextEdit?: boolean
   bottomConsentPreviewInAuthoring?: boolean
+  /** 프로그램 등록 — disabled 스킨 없이 미선택·입력 불가 */
+  bottomConsentDisplayOnly?: boolean
   /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
   consentFillMode?: boolean
   /** 있으면 상위(우측 패널)와 행 선택 동기화 */
@@ -682,6 +686,7 @@ export function HorizontalTableParagraphBody({
       ? {
           commonScheduleSeed: programApplicationFormVolunteer.commonScheduleSeed,
           onCommonExclusionChange: programApplicationFormVolunteer.onCommonExclusionChange,
+          freezeUnavailableCalendar: programApplicationFormVolunteer.freezeUnavailableCalendar,
         }
       : undefined
   )
@@ -723,6 +728,7 @@ export function HorizontalTableParagraphBody({
             isTemplateAuthoringMode:
               paragraphInteractionMode === 'authoring' &&
               programLinkedInstitutionApplicationForm !== true,
+            choiceDisplayOnly: bottomConsentDisplayOnly,
             paragraph: p,
             onParagraphChange: next => onChange(next),
           }
@@ -732,7 +738,23 @@ export function HorizontalTableParagraphBody({
 
   const economyProgramApplicationBody = renderEconomyProgramApplicationParagraphBody(
     p,
-    programApplicationFormEconomyInstitution,
+    programApplicationFormEconomyInstitution === true
+      ? {
+          enabled: true,
+          isTemplateAuthoringMode:
+            paragraphInteractionMode === 'authoring' &&
+            programLinkedInstitutionApplicationForm !== true,
+          choiceDisplayOnly: bottomConsentDisplayOnly,
+        }
+      : programApplicationFormEconomyInstitution === false ||
+          programApplicationFormEconomyInstitution == null
+        ? undefined
+        : {
+            ...programApplicationFormEconomyInstitution,
+            choiceDisplayOnly:
+              programApplicationFormEconomyInstitution.choiceDisplayOnly === true ||
+              bottomConsentDisplayOnly,
+          },
     paragraphInteractionMode === 'authoring' &&
       programLinkedInstitutionApplicationForm !== true
   )
@@ -1255,14 +1277,19 @@ export function HorizontalTableParagraphBody({
                 {
                   consentFillMode,
                   interactive: bottomConsentInteractive,
+                  displayOnly: bottomConsentDisplayOnly,
                 }
               )}
               onChange={e => {
-                if (!bottomConsentInteractive) return
+                if (bottomConsentDisplayOnly || !bottomConsentInteractive) return
                 onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
               }}
-              disabled={!bottomConsentInteractive}
-              style={bottomConsentInteractive ? undefined : { pointerEvents: 'none' }}
+              disabled={bottomConsentDisplayOnly ? false : !bottomConsentInteractive}
+              style={
+                bottomConsentDisplayOnly || !bottomConsentInteractive
+                  ? { pointerEvents: 'none' }
+                  : undefined
+              }
             >
               <CmsRadio value="agree">동의</CmsRadio>
               <CmsRadio value="disagree">동의하지 않음</CmsRadio>

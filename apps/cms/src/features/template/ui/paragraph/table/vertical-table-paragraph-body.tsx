@@ -158,6 +158,7 @@ export function VerticalTableParagraphBody({
   /** 카탈로그 고정 초상권 시드 표 — 위탁·고정 안내 행 읽기 전용. 사용자 복제본은 false */
   portraitSeedPresetLocked = false,
   bottomConsentInteractive: bottomConsentInteractiveProp,
+  bottomConsentDisplayOnly = false,
   consentFillMode = false,
 }: {
   paragraph: VerticalTableParagraph
@@ -178,6 +179,8 @@ export function VerticalTableParagraphBody({
   portraitSeedPresetLocked?: boolean
   /** preview fill — 하단 동의 라디오만 조작 허용 */
   bottomConsentInteractive?: boolean
+  /** 프로그램 등록 — disabled 스킨 없이 미선택·입력 불가 */
+  bottomConsentDisplayOnly?: boolean
   /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
   consentFillMode?: boolean
 }) {
@@ -782,14 +785,19 @@ export function VerticalTableParagraphBody({
               {
                 consentFillMode,
                 interactive: bottomConsentInteractive,
+                displayOnly: bottomConsentDisplayOnly,
               }
             )}
             onChange={e => {
-              if (!bottomConsentInteractive) return
+              if (bottomConsentDisplayOnly || !bottomConsentInteractive) return
               onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
             }}
-            disabled={!bottomConsentInteractive}
-            style={bottomConsentInteractive ? undefined : { pointerEvents: 'none' }}
+            disabled={bottomConsentDisplayOnly ? false : !bottomConsentInteractive}
+            style={
+              bottomConsentDisplayOnly || !bottomConsentInteractive
+                ? { pointerEvents: 'none' }
+                : undefined
+            }
           >
             <CmsRadio value="agree">동의</CmsRadio>
             <CmsRadio value="disagree">동의하지 않음</CmsRadio>

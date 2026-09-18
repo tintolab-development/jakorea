@@ -3,6 +3,7 @@ import {
   buildLocalDuplicateWritingTemplateCode,
   isCatalogFixedWritingFormTemplateCode,
   isDuplicateWritingTemplateCode,
+  isProgramScopedOperationalWritingTemplate,
   isUserCreatedWritingFormTemplateRow,
   isWritingFormTemplateStructureLocked,
   resolveWritingFormTemplateDeletable,
@@ -82,6 +83,33 @@ describe('form-template-delete-policy', () => {
     expect(buildLocalDuplicateWritingTemplateCode('agreement-portrait')).toMatch(
       /^agreement-portrait-copy-\d+$/
     )
+  })
+
+  it('hides program-scoped operational copies from template management', () => {
+    expect(
+      isProgramScopedOperationalWritingTemplate({
+        templateCode: 'application-participant-individual-copy-1735689600123',
+        category: 'APPLICATION',
+      })
+    ).toBe(true)
+    expect(
+      isProgramScopedOperationalWritingTemplate({
+        templateCode: 'recruitment-instructor-copy-1',
+        category: 'RECRUITMENT',
+      })
+    ).toBe(true)
+    expect(
+      isProgramScopedOperationalWritingTemplate({
+        templateCode: 'application-participant-individual',
+        category: 'APPLICATION',
+      })
+    ).toBe(false)
+    expect(
+      isProgramScopedOperationalWritingTemplate({
+        templateCode: 'survey-custom-20260824-01',
+        category: 'SURVEY',
+      })
+    ).toBe(false)
   })
   it('treats system templates as non-deletable', () => {
     expect(

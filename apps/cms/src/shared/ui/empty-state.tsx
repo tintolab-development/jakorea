@@ -22,7 +22,7 @@ export function EmptyState({ description, image, cta }: EmptyStateProps) {
     <Empty
       description={description}
       image={image || Empty.PRESENTED_IMAGE_SIMPLE}
-      imageStyle={{ height: 60 }}
+      styles={{ image: { height: 60 } }}
     >
       {cta && (
         <SingleCTA

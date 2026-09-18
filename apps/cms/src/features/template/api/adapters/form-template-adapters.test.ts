@@ -40,6 +40,43 @@ describe('buildWritingFormSectionsFromApiItems', () => {
     expect(registration?.rows.some(row => row.id === 'registration-economy')).toBe(false)
     expect(registration?.rows).toHaveLength(1)
   })
+
+  it('hides program-scoped application/recruitment copies from management list', () => {
+    const sections = buildWritingFormSectionsFromApiItems([
+      listItem({
+        templateCode: 'application-participant-individual',
+        templateName: '참여자 신청 (카탈로그)',
+        category: 'APPLICATION',
+      }),
+      listItem({
+        templateCode: 'application-participant-individual-copy-99',
+        templateName: '참여자 신청 (프로그램)',
+        category: 'APPLICATION',
+        systemTemplate: false,
+        activeBindingCount: 1,
+      }),
+      listItem({
+        templateCode: 'recruitment-instructor-copy-1',
+        templateName: '강사 모집 (프로그램)',
+        category: 'RECRUITMENT',
+        systemTemplate: false,
+      }),
+      listItem({
+        templateCode: 'survey-custom-01',
+        templateName: '커스텀 설문',
+        category: 'SURVEY',
+        systemTemplate: false,
+      }),
+    ])
+
+    const applicationForm = sections.find(section => section.key === 'application_form')
+    const recruitment = sections.find(section => section.key === 'application')
+    const survey = sections.find(section => section.key === 'survey')
+
+    expect(applicationForm?.rows.map(row => row.id)).toEqual(['application-participant-individual'])
+    expect(recruitment?.rows.some(row => row.id.includes('copy'))).toBe(false)
+    expect(survey?.rows.some(row => row.id === 'survey-custom-01')).toBe(true)
+  })
 })
 
 describe('buildIssuanceFormSectionsFromApiItems', () => {

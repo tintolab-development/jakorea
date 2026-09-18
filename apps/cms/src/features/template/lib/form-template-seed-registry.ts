@@ -21,7 +21,10 @@ import {
   createProgramApplicationFormVolunteerDraft,
   migrateProgramApplicationFormVolunteerParagraphs,
 } from '@/features/template/model/program-application-form-volunteer-draft'
-import { createProgramParticipantApplicationDraft } from '@/features/template/model/program-application-form-individual-draft'
+import {
+  createProgramParticipantApplicationDraft,
+  migrateProgramParticipantApplicationParagraphs,
+} from '@/features/template/model/program-application-form-individual-draft'
 import { createProgramRegistrationDraft } from '@/features/template/model/program-registration-draft'
 import { createRecruitFormInstructorDraft } from '@/features/template/model/recruit-form-instructor-draft'
 import { createRecruitFormVolunteerDraft } from '@/features/template/model/recruit-form-volunteer-draft'
@@ -133,6 +136,9 @@ export function normalizeWritingFormDraftFromApi(
     }
     if (templateCode === 'application-volunteer') {
       return migrateProgramApplicationFormVolunteerParagraphs(draft)
+    }
+    if (templateCode === 'application-participant-individual') {
+      return migrateProgramParticipantApplicationParagraphs(draft)
     }
     if (templateCode === 'application-trained-teachers') {
       return migrateProgramApplicationFormTrainedTeachersParagraphs(draft)

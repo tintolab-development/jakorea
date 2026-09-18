@@ -1,14 +1,14 @@
 /**
  * 담당자 등록 모달
  * 프로그램 상세 > 담당자 정보 탭 > 등록 버튼
- * ContentModal 레이아웃(패딩 28/30/34) · 권한 설정 Radio · 담당자명 Select
+ * ContentModal 레이아웃(패딩 28/30/34) · 권한 설정 CmsRadio · 담당자명 CmsSelect
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import { Form, Select, Spin } from 'antd'
+import { Form } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { ActionResultModal } from '@/shared/ui/action-result-modal'
-import { CmsButton, CmsRadio } from '@/shared/ui'
+import { CmsButton, CmsRadio, CmsSelect } from '@/shared/ui'
 import type { ProgramRole } from '@/types/user'
 import {
   PROGRAM_ROLE_LABELS,
@@ -75,6 +75,14 @@ export function AddManagerModal({
   const assignablePool = useMemo((): AssignableManagerCandidate[] => {
     return candidates ?? []
   }, [candidates])
+  const managerSelectOptions = useMemo(
+    () =>
+      assignablePool.map(m => ({
+        value: m.id,
+        label: isCmsViewerAdminRole(m.cmsRoleCode) ? `${m.name} (조회 전용)` : m.name,
+      })),
+    [assignablePool]
+  )
   const selectedManagerId = Form.useWatch('managerPreset', form)
   const selectedCandidate = useMemo(
     () => assignablePool.find(m => m.id === selectedManagerId),
@@ -189,25 +197,22 @@ export function AddManagerModal({
               </CmsRadio.Group>
             </Form.Item>
 
-            <Form.Item name="managerPreset" label="담당자명" className="add-manager-modal__field">
-              <Select
-                placeholder="담당자를 선택하세요"
-                size="large"
-                allowClear
+            <Form.Item
+              name="managerPreset"
+              label="담당자 추가"
+              className="add-manager-modal__field"
+            >
+              <CmsSelect
+                placeholder="담당자로 추가할 관리자를 선택하세요"
+                width="100%"
+                withAllOption={false}
                 loading={candidatesLoading}
                 className="add-manager-modal__select"
-                options={assignablePool.map(m => ({
-                  value: m.id,
-                  label: isCmsViewerAdminRole(m.cmsRoleCode)
-                    ? `${m.name} (조회 전용)`
-                    : m.name,
-                }))}
+                options={managerSelectOptions}
                 notFoundContent={
-                  candidatesLoading ? (
-                    <Spin size="small" />
-                  ) : assignablePool.length === 0 ? (
-                    '등록 가능한 담당자가 없습니다'
-                  ) : undefined
+                  assignablePool.length === 0 && !candidatesLoading
+                    ? '등록 가능한 담당자가 없습니다'
+                    : undefined
                 }
                 getPopupContainer={() => document.body}
               />

@@ -137,9 +137,32 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
       description: '내용1',
     })
     expect(next.generalCommonInfo?.educationFormLabel).toBeTruthy()
-    expect(next.generalCommonInfo?.participationMethod).toBe('team')
+    expect(next.generalCommonInfo?.participationMethod).toBeUndefined()
     expect(next.type).toBe('offline')
     expect(next.ips).toBe('Prepare')
+  })
+
+  it('keeps participationMethod for individual audience programs', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      {
+        ...baseProgram(),
+        generalProgramAudience: 'individual',
+        generalParticipantTypes: ['individual'],
+      },
+      {
+        'generalRegistration.typeSettings.singleParticipation': 'team',
+      },
+      {
+        programType: 'curriculum',
+        sessionRoundType: 'single',
+        educationFormScheduleDetail: 'common',
+        participationScheduleDetail: 'common',
+        ipsScheduleDetail: 'common',
+        curriculumChartSessionCount: 1,
+        participantOrganization: false,
+      }
+    )
+    expect(next.generalCommonInfo?.participationMethod).toBe('team')
   })
 
   it('defaults partner yes and payment 해당없음 when overlay keys are missing', () => {

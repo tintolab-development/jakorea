@@ -1,4 +1,4 @@
-import { Fragment, useMemo, type ReactNode } from 'react'
+import { Fragment, useEffect, useMemo, type ReactNode } from 'react'
 import type { RadioChangeEvent } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -280,6 +280,12 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     'generalRegistration.educationScheduleCurriculum.preEducationName',
     preEducationBlockLabel
   )
+
+  // UI 기본 일정명을 overlay에 기록 — 미터치 시에도 등록 완료·검증에 반영
+  useEffect(() => {
+    if (!scheduleCurriculumPreEducation) return
+    setPreEducationName(preEducationName.trim() ? preEducationName : preEducationBlockLabel)
+  }, [scheduleCurriculumPreEducation]) // eslint-disable-line react-hooks/exhaustive-deps -- seed when toggle on
 
   const setIpsForDetail = (detailIndex: number, next: ProgramRegistrationIpsTypeValue) => {
     updateProgramRegistrationOverlayKey<Record<number, ProgramRegistrationIpsTypeValue>>(

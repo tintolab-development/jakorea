@@ -468,7 +468,7 @@
 .paragraph-date-picker__popover-calendar-mini
   .calendar-mini-cell--range-single
   .calendar-mini-date {
-  color: var(--main-WT, #fff);
+  color: var(--main-WT, #fff) !important;
 }
 
 /* 일정 배경과 겹칠 때도 구간 스타일 우선 */
@@ -524,7 +524,7 @@
 }
 
 .paragraph-date-picker__popover-calendar-mini .calendar-mini-cell--selected .calendar-mini-date {
-  color: var(--main-WT, #fff);
+  color: var(--main-WT, #fff) !important;
 }
 
 /* 설문 제목형 작성 기간 — 듀얼 240×44 트리거 + ~ (바깥 셸은 투명, 셀별 테두리) */

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useCmsAlert } from '@/shared/ui'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -29,6 +29,15 @@ import type { ProgramRegistrationFormVariant } from '@/features/template/model/p
 import type { Program } from '@/types/domain'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
+import {
+  clearRegistrationOperationalFormDrafts,
+  resolveRegistrationOperationalDraftStorageKey,
+} from '@/features/program/general/lib/registration-operational-form-drafts'
+import { hasIncompleteGeneralProgramRecruitmentRequiredFields } from '@/features/program/general/lib/registration-recruitment-required-fields'
+import {
+  hasIncompleteEconomyProgramApplicationRequiredFields,
+  hasIncompleteEconomyProgramRecruitmentRequiredFields,
+} from '@/features/program/general/lib/economy-program-registration-required-fields'
 
 /** 일반프로그램 등록 필수 항목 미입력 검사 — `hasIncompleteGeneralProgramRegistrationRequiredFields` */
 const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = false
@@ -90,13 +99,22 @@ export function useGeneralProgramRegistrationFlow(
     : isTrainedTeachersRegistration
       ? 'registration-trained-teachers'
       : 'registration-general'
+  const skipDraftRestore = options?.skipDraftRestore === true
+
+  // 모집/신청 hydrate(useEffect)보다 먼저 비워, fresh 진입 시 이전 세션 캐시가 복원되지 않게 한다.
+  // 유형별 storage key만 제거해 다른 프로그램 유형 draft는 유지한다.
+  useLayoutEffect(() => {
+    if (!open || !skipDraftRestore) return
+    clearRegistrationOperationalFormDrafts(registrationFormVariant)
+  }, [open, skipDraftRestore, registrationFormVariant])
+
   const registrationVm = useProgramRegistrationEditor(
     open,
     resolveStepTemplateName(registrationTemplateId),
     {
       programRegistrationFormVariant: registrationFormVariant,
       onRegistrationSaved: options?.onProgramRegistrationSaved,
-      skipDraftRestore: options?.skipDraftRestore === true,
+      skipDraftRestore,
       // 프로그램 임시저장 — remote 전환: docs/api/program-draft-local-storage-follow-up.md
       localOnlyDraftPersistence: true,
       templateCode:
@@ -239,6 +257,11 @@ export function useGeneralProgramRegistrationFlow(
     participantVariant,
     {
       localOnlyDraftPersistence: true,
+      /** 1사1교·교육받은 교사 — 공유 카탈로그 id를 유형별 storage key로 격리 */
+      localOnlyDraftStorageKey: resolveRegistrationOperationalDraftStorageKey(
+        registrationFormVariant,
+        currentStepDef.templateId
+      ),
       participantOrganization: participantFlags.organization,
       /** 등록 위저드 신청 단계 — 기관 기본정보·강사/봉사자 일정 자동 반영 미리보기 */
       programLinkedInstitutionApplicationForm:
@@ -263,6 +286,8 @@ export function useGeneralProgramRegistrationFlow(
             maxSessionsPerDay: 2,
           }
         : undefined,
+      /** 1사1교 — 단락 타이틀 옆 필수(*) (공유 강사 모집 상세 등 선택 시드 포함) */
+      forceSeedParagraphsRequired: isCompanySchoolRegistration,
     }
   )
 
@@ -362,9 +387,12 @@ export function useGeneralProgramRegistrationFlow(
 
   const goToPhase = useCallback(
     (nextPhase: GeneralProgramRegistrationPhaseKey) => {
-      if (
+      const shouldCheckRequired =
         !SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK &&
-        registrationFormVariant === 'general' &&
+        (registrationFormVariant === 'general' || registrationFormVariant === 'economy')
+
+      if (
+        shouldCheckRequired &&
         nextPhase !== 'program' &&
         isProgramStep &&
         registrationVm.hasIncompleteRequiredFields()
@@ -374,6 +402,25 @@ export function useGeneralProgramRegistrationFlow(
           content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
         })
         return
+      }
+      if (shouldCheckRequired && phase === 'recruitment' && nextPhase === 'application') {
+        const recruitIncomplete =
+          registrationFormVariant === 'economy'
+            ? hasIncompleteEconomyProgramRecruitmentRequiredFields(participantFlags)
+            : hasIncompleteGeneralProgramRecruitmentRequiredFields({
+                participant: participantFlags,
+                programType: registrationVm.programType,
+                sessionRoundType: registrationVm.sessionRoundType,
+                educationScheduleMode: registrationVm.educationScheduleMode,
+                volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
+              })
+        if (recruitIncomplete) {
+          showAlert({
+            title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+            content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          })
+          return
+        }
       }
       if (nextPhase === 'program') {
         selectStep('program')
@@ -393,6 +440,8 @@ export function useGeneralProgramRegistrationFlow(
       isProgramStep,
       isTrainedTeachersRegistration,
       participantFlags,
+      participantVm.volunteerExceptionScheduleCount,
+      phase,
       registrationFormVariant,
       registrationVm,
       selectStep,
@@ -422,6 +471,18 @@ export function useGeneralProgramRegistrationFlow(
       void registrationVm.handleCompleteRegistration()
       return
     }
+    if (
+      !SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK &&
+      registrationFormVariant === 'economy' &&
+      phase === 'application' &&
+      hasIncompleteEconomyProgramApplicationRequiredFields()
+    ) {
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
     void (async () => {
       try {
         await participantVm.handleSave({ silent: true })
@@ -437,7 +498,14 @@ export function useGeneralProgramRegistrationFlow(
       }
       void registrationVm.handleCompleteRegistration()
     })()
-  }, [isProgramStep, registrationVm, participantVm, showAlert])
+  }, [
+    isProgramStep,
+    phase,
+    registrationFormVariant,
+    registrationVm,
+    participantVm,
+    showAlert,
+  ])
 
   const hasRecruitmentPhase = visibleRecruitTabKeys.length > 0
   const hasApplicationPhase = visibleApplicationTabKeys.length > 0

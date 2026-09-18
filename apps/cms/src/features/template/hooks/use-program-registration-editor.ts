@@ -44,7 +44,13 @@ import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
-import { persistGeneralProgramRegistration } from '@/features/program/general/lib/registration-local-save'
+import {
+  buildGeneralProgramListRowFromRegistrationSnapshot,
+  persistGeneralProgramRegistration,
+} from '@/features/program/general/lib/registration-local-save'
+import { mapGeneralProgramToCreateRequest } from '@/features/program/general/api/adapters/general-program-adapters'
+import { mapCompanySchoolToCreateRequest } from '@/features/program/1c-1s/api/adapters'
+import { mapTrainedTeacherToCreateRequest } from '@/features/program/trained-teachers/api/adapters'
 import type { Program } from '@/types/domain'
 import {
   applyProgramRegistrationEditorState,
@@ -52,6 +58,7 @@ import {
   type ProgramRegistrationEditorState,
 } from '@/features/template/lib/program-registration-editor-state'
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
+import { forceParagraphTitleRequired } from '@/features/template/lib/paragraph-required-mark'
 import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
@@ -81,6 +88,7 @@ import {
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { useCmsAlert } from '@/shared/ui'
 import { hasIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
+import { hasIncompleteEconomyRegistrationFromStore } from '@/features/program/general/lib/economy-program-registration-required-fields'
 
 export type ProgramRegistrationParticipantSelection = {
   individual: boolean
@@ -118,6 +126,21 @@ function filterProgramRegistrationDraftForVariant(
       paragraph => paragraph.id !== PROGRAM_REGISTRATION_IDS.businessKpi
     ),
   }
+}
+
+/** 시드 단락 타이틀 필수(*) — 필드 라벨이 아니라 단락 제목 (`answerRequired`) */
+function withForcedProgramRegistrationSeedTitleRequired(
+  draft: WritingFormDraft,
+  seedParagraphIds: ReadonlySet<string>
+): WritingFormDraft {
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (!seedParagraphIds.has(paragraph.id)) return paragraph
+    const next = forceParagraphTitleRequired(paragraph)
+    if (next !== paragraph) changed = true
+    return next
+  })
+  return changed ? { ...draft, paragraphs } : draft
 }
 
 function createDefaultRegistrationEditorState(
@@ -356,10 +379,14 @@ export function useProgramRegistrationEditor(
 
   const resetRegistrationEditorToSeed = useCallback(() => {
     resetProgramRegistrationOverlay()
-    const next = filterProgramRegistrationDraftForVariant(
+    const seeded = filterProgramRegistrationDraftForVariant(
       normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant)),
       programRegistrationFormVariant
     )
+    const next =
+      programRegistrationFormVariant === 'economy'
+        ? withForcedProgramRegistrationSeedTitleRequired(seeded, seedParagraphIds)
+        : seeded
     startTransition(() => {
       setDraft(next)
       setActiveParagraphId(next.paragraphs[0]?.id ?? null)
@@ -368,7 +395,7 @@ export function useProgramRegistrationEditor(
         createDefaultRegistrationEditorState(programRegistrationFormVariant)
       )
     })
-  }, [applyEditorStateSnapshot, programRegistrationFormVariant])
+  }, [applyEditorStateSnapshot, programRegistrationFormVariant, seedParagraphIds])
 
   useEffect(() => {
     if (!active) {
@@ -398,10 +425,14 @@ export function useProgramRegistrationEditor(
           if (cancelled) return
           if (saved?.draft) {
             replaceProgramRegistrationOverlay(saved.overlay ?? {})
-            const normalized = filterProgramRegistrationDraftForVariant(
+            const normalizedBase = filterProgramRegistrationDraftForVariant(
               normalizeWritingFormDraft(saved.draft),
               programRegistrationFormVariant
             )
+            const normalized =
+              programRegistrationFormVariant === 'economy'
+                ? withForcedProgramRegistrationSeedTitleRequired(normalizedBase, seedParagraphIds)
+                : normalizedBase
             const restored = applyProgramRegistrationEditorState(saved.editorState, defaults)
             startTransition(() => {
               setDraft(normalized)
@@ -431,6 +462,7 @@ export function useProgramRegistrationEditor(
     applyEditorStateSnapshot,
     programRegistrationFormVariant,
     resetRegistrationEditorToSeed,
+    seedParagraphIds,
     skipDraftRestore,
     templateCode,
     usesTemplateDraftApi,
@@ -1031,6 +1063,61 @@ export function useProgramRegistrationEditor(
     ]
   )
 
+  /** 모집 정보 작성하기 — create payload console.log */
+  const logCurrentRegistrationPayload = useCallback((): void => {
+    const variant = programRegistrationFormVariant
+    const resolvedSponsorId =
+      sponsorId.trim() || readRegistrationOverlaySponsorId(variant)
+    const program = buildGeneralProgramListRowFromRegistrationSnapshot({
+      id: 'debug',
+      participant,
+      programType,
+      variant,
+      sponsorId: resolvedSponsorId || undefined,
+      title: resolveProgramTitleKo() || undefined,
+      sessionRoundType,
+      educationScheduleMode,
+      educationScheduleLines:
+        programType === 'schedule' && sessionRoundType === 'multi'
+          ? []
+          : readGeneralRegistrationOverlayScheduleLines(),
+      scheduleCurriculumDetailCount: scheduleCurriculumDetailCount,
+      editorExtras: {
+        educationFormScheduleDetail,
+        participationScheduleDetail,
+        ipsScheduleDetail,
+        curriculumSessionCount,
+        curriculumChartSessionCount,
+        scheduleCurriculumPreEducation,
+        participantOrganization: participant.organization,
+      },
+    })
+    if (variant === 'economy') {
+      console.log(mapCompanySchoolToCreateRequest(program))
+      return
+    }
+    if (variant === 'trainedTeachers') {
+      console.log(mapTrainedTeacherToCreateRequest(program))
+      return
+    }
+    console.log(mapGeneralProgramToCreateRequest(program))
+  }, [
+    curriculumChartSessionCount,
+    curriculumSessionCount,
+    educationFormScheduleDetail,
+    educationScheduleMode,
+    ipsScheduleDetail,
+    participant,
+    participationScheduleDetail,
+    programRegistrationFormVariant,
+    programType,
+    resolveProgramTitleKo,
+    scheduleCurriculumDetailCount,
+    scheduleCurriculumPreEducation,
+    sessionRoundType,
+    sponsorId,
+  ])
+
   /** 등록 완료 — 프로그램 생성 POST 1회 */
   const handleCompleteRegistration = useCallback((): Promise<void> => {
     if (completionPromiseRef.current) return completionPromiseRef.current
@@ -1085,7 +1172,6 @@ export function useProgramRegistrationEditor(
         resetProgramRegistrationOverlay()
         onRegistrationSaved(createdProgram)
       } catch (error) {
-        console.debug('programRegistrationEditor complete registration failed', error)
         showAlert({
           title: '등록 실패',
           content: getGeneralProgramApiErrorMessage(
@@ -1128,6 +1214,9 @@ export function useProgramRegistrationEditor(
   }, [])
 
   const hasIncompleteRequiredFields = useCallback(() => {
+    if (programRegistrationFormVariant === 'economy') {
+      return hasIncompleteEconomyRegistrationFromStore(participant)
+    }
     if (programRegistrationFormVariant !== 'general') return false
     const resolvedSponsorId =
       sponsorId.trim() || readGeneralRegistrationOverlaySponsorId()
@@ -1197,6 +1286,7 @@ export function useProgramRegistrationEditor(
     handlePreview,
     handleSave,
     handleCompleteRegistration,
+    logCurrentRegistrationPayload,
     onSelectSingleItemListItem,
     paragraphBodyOptions,
     participant,

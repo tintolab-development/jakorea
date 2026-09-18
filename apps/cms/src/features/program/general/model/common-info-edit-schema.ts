@@ -196,13 +196,7 @@ export const generalProgramCommonInfoEditSchema = z
       })
     }
 
-    if (!data.surveySurvey && !data.surveySatisfaction && !data.surveyLectureEvaluation) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: '설문 진행 항목을 선택해주세요',
-        path: ['surveySurvey'],
-      })
-    }
+    // 설문 진행 항목 — 0개 선택도 완료 (등록 필수 검사와 동일)
 
     const isIndividualTarget = isGeneralIndividualParticipantSelection(
       data.participantIndividual,
@@ -1547,8 +1541,9 @@ export function generalCommonInfoEditValuesToProgramPatch(
           : undefined,
       educationFormScheduleDetail: values.educationFormScheduleDetail ?? 'common',
       participationScheduleDetail: values.participationScheduleDetail ?? 'common',
-      participationMethod:
-        values.participationScheduleDetail === 'perSchedule'
+      participationMethod: values.participantOrganization
+        ? undefined
+        : values.participationScheduleDetail === 'perSchedule'
           ? undefined
           : (values.participationMethod ?? existingCommon.participationMethod ?? 'individual'),
       ipsScheduleDetail: values.ipsScheduleDetail,
@@ -1594,7 +1589,9 @@ export function generalCommonInfoEditValuesToProgramPatch(
               ? educationFormLabelFromValue(s.educationForm)
               : undefined,
           participationMethodLabel:
-            values.participationScheduleDetail === 'perSchedule' && s.participationMethod
+            !values.participantOrganization &&
+            values.participationScheduleDetail === 'perSchedule' &&
+            s.participationMethod
               ? participationMethodLabelFromValue(s.participationMethod)
               : undefined,
           ipsTypeSummary:
@@ -1654,7 +1651,9 @@ export function generalCommonInfoEditValuesToProgramPatch(
                       ? educationFormLabelFromValue(d.educationForm)
                       : undefined,
                   participationMethodLabel:
-                    values.participationScheduleDetail === 'perSchedule' && d.participationMethod
+                    !values.participantOrganization &&
+                    values.participationScheduleDetail === 'perSchedule' &&
+                    d.participationMethod
                       ? participationMethodLabelFromValue(d.participationMethod)
                       : undefined,
                   ipsTypeSummary:
@@ -1674,7 +1673,9 @@ export function generalCommonInfoEditValuesToProgramPatch(
                     ? educationFormLabelFromValue(d.educationForm)
                     : undefined,
                 participationMethodLabel:
-                  values.participationScheduleDetail === 'perSchedule' && d.participationMethod
+                  !values.participantOrganization &&
+                  values.participationScheduleDetail === 'perSchedule' &&
+                  d.participationMethod
                     ? participationMethodLabelFromValue(d.participationMethod)
                     : undefined,
                 ipsTypeSummary:

@@ -212,6 +212,16 @@ export type RenderFormParagraphBodyOptions = {
    * 프로그램 참여자 신청 폼 등 고정 단락 템플릿용.
    */
   structureLockedAuthoringChoicePreview?: boolean
+  /**
+   * 프로그램 등록 위저드 신청 양식 — 시드 단락의 신청자 fill(DetailInfoForm·필드형 표 등)만 잠금.
+   * 타이틀·설명·텍스트형 TD는 템플릿 관리와 동일하게 편집 가능.
+   */
+  seedApplicantFillLocked?: boolean
+  /**
+   * 구조 잠금 시드 — 동의/객관식 라디오를 disabled 스킨 없이 미선택·입력 불가로 표시.
+   * (프로그램 등록 신청 양식)
+   */
+  structureLockedChoiceDisplayOnly?: boolean
   /** 초상권 동의 fill — 1번 표 성명·소속 응답 입력만 허용 */
   portraitConsentResponseFieldsInteractive?: boolean
   /**
@@ -278,6 +288,11 @@ export function renderFormParagraphBody(
       (paragraphInteractionMode === 'user' && consentFillBodyReadOnly))
   const lockedAuthoringChoicePreview =
     structureLockedConsentChoiceInteractive && paragraphInteractionMode === 'authoring'
+  /** 프로그램 등록 신청 — 시드 선택 UI는 일반 스킨·미선택·입력 불가 */
+  const structureLockedChoiceDisplayOnly =
+    structureLocked &&
+    options?.structureLockedChoiceDisplayOnly === true &&
+    paragraphInteractionMode === 'authoring'
   switch (p.variant) {
     case 'survey_title_with_period':
       if (!isCardSelected && !isUserLikeVisible) return null
@@ -383,6 +398,7 @@ export function renderFormParagraphBody(
           isEditMode={isAgreementNoticeExplanationEditMode || isBodyInteractive}
           bodyDisplayMode={explanationBodyDisplayMode}
           bottomConsentInteractive={isBodyInteractive || structureLockedConsentChoiceInteractive}
+          bottomConsentDisplayOnly={structureLockedChoiceDisplayOnly}
           consentFillMode={consentFillBodyReadOnly}
         />
       )
@@ -436,6 +452,7 @@ export function renderFormParagraphBody(
             structureLockedPartialTextEdit && isStructureLockedPartialDisclaimerEdit(hp.id)
           }
           bottomConsentPreviewInAuthoring={structureLockedConsentChoiceInteractive}
+          bottomConsentDisplayOnly={structureLockedChoiceDisplayOnly}
           consentFillMode={consentFillBodyReadOnly}
           tableRowSelection={options?.horizontalTableRowSelection}
           onTableRowSelectionChange={options?.onHorizontalTableRowSelectionChange}
@@ -579,6 +596,7 @@ export function renderFormParagraphBody(
           }
           portraitSeedPresetLocked={structureLocked}
           bottomConsentInteractive={structureLockedConsentChoiceInteractive}
+          bottomConsentDisplayOnly={structureLockedChoiceDisplayOnly}
           consentFillMode={consentFillBodyReadOnly}
         />
       )
@@ -697,7 +715,10 @@ export function renderFormParagraphBody(
         isUjatProgramApplicationInstitutionApplicationRegionMultipleChoiceSeed(p.id)
       ) {
         return (
-          <UjatProgramApplicationApplicationRegionParagraph readOnlyPreview={isPreviewReadonly} />
+          <UjatProgramApplicationApplicationRegionParagraph
+            readOnlyPreview={isPreviewReadonly}
+            choiceDisplayOnly={structureLockedChoiceDisplayOnly}
+          />
         )
       }
       const ujatVolunteerRecruitCohort =
@@ -742,6 +763,7 @@ export function renderFormParagraphBody(
           }
           paragraphInteractionMode={paragraphInteractionMode}
           preservePreviewSelectionOnCardBlur={structureLockedConsentChoiceInteractive}
+          choiceDisplayOnly={structureLockedChoiceDisplayOnly}
           itemsEditActive={itemsEditActive}
           onActivateItemsEditor={
             usesMcItemsFocus

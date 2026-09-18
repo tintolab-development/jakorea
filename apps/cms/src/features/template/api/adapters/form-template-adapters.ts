@@ -9,7 +9,10 @@ import {
   type IssuanceFormCategory,
   type WritingFormCategory,
 } from '@/features/template/api/form-template-catalog'
-import { resolveWritingFormTemplateDeletable } from '@/features/template/lib/form-template-delete-policy'
+import {
+  isProgramScopedOperationalWritingTemplate,
+  resolveWritingFormTemplateDeletable,
+} from '@/features/template/lib/form-template-delete-policy'
 import type { TemplateRow, TemplateSection } from '@/features/template/model/template.schema'
 import type { FormTemplateListItemResponse } from '@/shared/api/generated/forms-surveys/schemas'
 
@@ -64,6 +67,8 @@ function groupItemsByCategory(
   for (const item of items) {
     const code = item.templateCode?.trim()
     if (code == null || code === '') continue
+    // 프로그램 종속 등록/모집/신청 copy — 양식 관리 비노출
+    if (isProgramScopedOperationalWritingTemplate(item)) continue
     const category = resolveWritingFormCategory(code, item.category)
     if (category == null) continue
     const list = grouped.get(category) ?? []

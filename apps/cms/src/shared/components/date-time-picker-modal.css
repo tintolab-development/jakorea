@@ -265,7 +265,7 @@
 
 .date-time-picker-popover__calendar-mini .calendar-mini-cell--range-end .calendar-mini-date,
 .date-time-picker-popover__calendar-mini .calendar-mini-cell--range-single .calendar-mini-date {
-  color: var(--main-WT, #fff);
+  color: var(--main-WT, #fff) !important;
 }
 
 .date-time-picker-popover__calendar-mini
@@ -403,7 +403,7 @@
 }
 
 .date-time-picker-popover__calendar-mini .calendar-mini-cell--selected .calendar-mini-date {
-  color: var(--main-WT, #fff);
+  color: var(--main-WT, #fff) !important;
 }
 
 .date-time-picker-popover__footer {

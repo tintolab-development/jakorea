@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
+import { forceParagraphTitleRequired } from '@/features/template/lib/paragraph-required-mark'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
 import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
 import {
@@ -30,6 +31,18 @@ import {
 } from '@/features/program/ujat/lib/ujat-registration-template-local-save'
 
 export const UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE = 'registration-ujat' as const
+
+/** 시드 단락 타이틀 필수(*) — 필드 라벨이 아니라 단락 제목 (`answerRequired`) */
+function withForcedUjatRegistrationSeedTitleRequired(draft: WritingFormDraft): WritingFormDraft {
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (!UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(paragraph.id)) return paragraph
+    const next = forceParagraphTitleRequired(paragraph)
+    if (next !== paragraph) changed = true
+    return next
+  })
+  return changed ? { ...draft, paragraphs } : draft
+}
 
 export type UseUjatProgramRegistrationEditorOptions = {
   /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
@@ -75,7 +88,9 @@ export function useUjatProgramRegistrationEditor(
 
   const resetToSeed = useCallback(() => {
     resetUjatProgramRegistrationOverlay()
-    const next = normalizeWritingFormDraft(createUjatProgramRegistrationDraft())
+    const next = withForcedUjatRegistrationSeedTitleRequired(
+      normalizeWritingFormDraft(createUjatProgramRegistrationDraft())
+    )
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)
@@ -109,7 +124,9 @@ export function useUjatProgramRegistrationEditor(
           if (saved.overlay && Object.keys(saved.overlay).length > 0) {
             patchUjatProgramRegistrationOverlay(saved.overlay)
           }
-          const next = normalizeWritingFormDraft(saved.draft)
+          const next = withForcedUjatRegistrationSeedTitleRequired(
+            normalizeWritingFormDraft(saved.draft)
+          )
           setDraft(next)
           setActiveParagraphId(next.paragraphs[0]?.id ?? null)
           setSingleItemListActiveItemId(null)
@@ -120,7 +137,9 @@ export function useUjatProgramRegistrationEditor(
         if (legacy?.overlay && Object.keys(legacy.overlay).length > 0) {
           patchUjatProgramRegistrationOverlay(legacy.overlay)
         }
-        const next = normalizeWritingFormDraft(legacy?.draft ?? createUjatProgramRegistrationDraft())
+        const next = withForcedUjatRegistrationSeedTitleRequired(
+          normalizeWritingFormDraft(legacy?.draft ?? createUjatProgramRegistrationDraft())
+        )
         setDraft(next)
         setActiveParagraphId(next.paragraphs[0]?.id ?? null)
         setSingleItemListActiveItemId(null)
@@ -268,15 +287,17 @@ export function useUjatProgramRegistrationEditor(
     return { draft, overlay }
   }, [draft, localOnlyDraftPersistence, templateCode])
 
-  const handleSave = useCallback(() => {
-    void (async () => {
+  const handleSave = useCallback((options?: { silent?: boolean }) => {
+    return (async () => {
       try {
         await persistDraft()
+        if (options?.silent) return
         if (isTemplateManagementSave) {
           showSaveSuccess(onTemplateDraftSaveConfirmed)
         }
       } catch (error) {
         console.debug('ujatProgramRegistrationEditor save failed', error)
+        if (options?.silent) throw error
         if (isTemplateManagementSave) {
           showSaveFailure(error)
         }

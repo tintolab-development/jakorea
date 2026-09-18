@@ -9,8 +9,8 @@ export function RecruitFormVolunteerInterviewScheduleParagraph({
   onRemoveExceptionBlock,
   commonScheduleSeed,
   onCommonExclusionChange,
-  /** 템플릿 관리 기본 true — 프로그램 상세 편집만 false */
-  freezeUnavailableCalendar = true,
+  /** 템플릿 관리만 true — 프로그램 등록·상세 편집은 false */
+  freezeUnavailableCalendar = false,
 }: {
   exceptionScheduleCount?: number
   exceptionBlockKeys?: number[]

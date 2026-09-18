@@ -449,7 +449,7 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
   return (
     <div className="program-progress-tab">
       {/* 전체(탭·필터·테이블)를 배경 #fff 카드 래퍼 하나로 감쌈. 탭/필터는 카드가 아닌 카드 내부 상단. 디바이더로 테이블과 구분 */}
-      <Card className="program-progress-tab__card" bordered={false}>
+      <Card className="program-progress-tab__card" variant="borderless">
         <div className="program-progress-tab__top">
           <div className="program-progress-tab__bar-inner">
             <SegmentedTab

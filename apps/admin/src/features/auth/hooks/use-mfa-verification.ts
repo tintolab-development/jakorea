@@ -49,6 +49,21 @@ export function useMfaVerification({
   const [verifying, setVerifying] = useState(false)
   const [failedAttempts, setFailedAttempts] = useState(0)
   const verifyInFlightRef = useRef(false)
+  /** <Form form={form}> 가 한 번이라도 마운트됐는지. 모달 body는 최초 open 전까지 렌더되지 않는다. */
+  const formConnectedRef = useRef(false)
+
+  useEffect(() => {
+    if (open) formConnectedRef.current = true
+  }, [open])
+
+  /** Form 미연결 상태에서 form 인스턴스를 만지면 antd가 경고를 찍으므로 연결 이후에만 실행한다. */
+  const runOnForm = useCallback(
+    (action: (formInstance: FormInstance) => void) => {
+      if (!formConnectedRef.current) return
+      action(form)
+    },
+    [form]
+  )
 
   const isLocalTestMfa =
     Boolean(mfaState?.challengeUuid) &&
@@ -57,14 +72,12 @@ export function useMfaVerification({
     !provisioningLoading
 
   const clearOtpInput = useCallback(() => {
-    try {
-      form.setFields([{ name: 'otpCode', errors: [] }])
-      form.setFieldsValue({ otpCode: '' })
-    } catch {
-      // form 미연결
-    }
+    runOnForm(formInstance => {
+      formInstance.setFields([{ name: 'otpCode', errors: [] }])
+      formInstance.setFieldsValue({ otpCode: '' })
+    })
     setOtpCode('')
-  }, [form])
+  }, [runOnForm])
 
   const refreshProvisioning = useCallback(async () => {
     if (!user?.email) return
@@ -110,15 +123,11 @@ export function useMfaVerification({
     if (!open) {
       setOtpCode('')
       const frameId = requestAnimationFrame(() => {
-        try {
-          form.resetFields()
-        } catch {
-          // form 미연결
-        }
+        runOnForm(formInstance => formInstance.resetFields())
       })
       return () => cancelAnimationFrame(frameId)
     }
-  }, [open, form])
+  }, [open, runOnForm])
 
   const verifyAndComplete = useCallback(
     async (codeToVerify: string) => {
@@ -128,21 +137,29 @@ export function useMfaVerification({
         if (!user?.email) return
 
         if (codeToVerify.length !== OTP_LENGTH) {
-          form.setFields([
-            { name: 'otpCode', errors: [`인증번호는 ${OTP_LENGTH}자리입니다.`] },
-          ])
+          runOnForm(formInstance =>
+            formInstance.setFields([
+              { name: 'otpCode', errors: [`인증번호는 ${OTP_LENGTH}자리입니다.`] },
+            ])
+          )
           return
         }
 
         if (!/^\d+$/.test(codeToVerify)) {
-          form.setFields([{ name: 'otpCode', errors: ['인증번호는 숫자만 입력 가능합니다.'] }])
+          runOnForm(formInstance =>
+            formInstance.setFields([
+              { name: 'otpCode', errors: ['인증번호는 숫자만 입력 가능합니다.'] },
+            ])
+          )
           return
         }
 
         if (!mfaState?.challengeUuid) {
-          form.setFields([
-            { name: 'otpCode', errors: ['MFA challenge가 없습니다. 로그인부터 다시 시도하세요.'] },
-          ])
+          runOnForm(formInstance =>
+            formInstance.setFields([
+              { name: 'otpCode', errors: ['MFA challenge가 없습니다. 로그인부터 다시 시도하세요.'] },
+            ])
+          )
           return
         }
 
@@ -155,14 +172,16 @@ export function useMfaVerification({
           if (response.verified && response.tokens) {
             setFailedAttempts(0)
             completeAdminAuth(response.tokens)
-            form.resetFields()
+            runOnForm(formInstance => formInstance.resetFields())
             setOtpCode('')
             return
           }
 
           setFailedAttempts(prev => prev + 1)
           const errMsg = response.detail || '인증에 실패했습니다.'
-          form.setFields([{ name: 'otpCode', errors: [errMsg] }])
+          runOnForm(formInstance =>
+            formInstance.setFields([{ name: 'otpCode', errors: [errMsg] }])
+          )
           clearOtpInput()
         } finally {
           setVerifying(false)
@@ -171,7 +190,7 @@ export function useMfaVerification({
         verifyInFlightRef.current = false
       }
     },
-    [user, mfaState?.challengeUuid, completeAdminAuth, form, clearOtpInput]
+    [user, mfaState?.challengeUuid, completeAdminAuth, runOnForm, clearOtpInput]
   )
 
   const onOtpCodeChange = useCallback(
@@ -186,7 +205,7 @@ export function useMfaVerification({
 
   const handleVerify = useCallback(
     async (values?: { otpCode?: string }) => {
-      if (!user) return
+      if (!user || !formConnectedRef.current) return
 
       try {
         await form.validateFields(['otpCode'])

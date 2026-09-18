@@ -106,6 +106,7 @@ export async function fetchAdminProgramSponsorsRemote(
 export async function createAdminProgramRemote(
   payload: import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest
 ): Promise<ProgramResponse> {
+  console.log(payload)
   return unwrapApiBody<ProgramResponse>(
     await customInstance({
       url: '/api/admin/programs',

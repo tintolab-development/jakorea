@@ -13,7 +13,10 @@ import {
   pickOperationalFormBinding,
   type OperationalFormSpec,
 } from '@/features/program/general/lib/operational-form-bindings'
-import { copyFormTemplateVersionRemote } from '@/features/template/api/form-templates-api-client'
+import {
+  copyFormTemplateVersionRemote,
+  updateFormTemplateRemote,
+} from '@/features/template/api/form-templates-api-client'
 import {
   publishFormTemplateVersionById,
   resolveFormTemplateCatalogIds,
@@ -110,6 +113,19 @@ async function attachLocalDraftToBinding(args: {
 
   // form-bindings는 PUBLISHED version만 허용
   const publishedVersionId = await publishFormTemplateVersionById(templateVersionId)
+
+  // 양식 관리 목록(useYn:true)에 프로그램 전용본이 쌓이지 않도록 숨김
+  if (templateId !== args.catalogTemplateId) {
+    try {
+      await updateFormTemplateRemote(templateId, {
+        useYn: false,
+        description: `program-scoped:${args.programId}`,
+      })
+    } catch (error) {
+      console.warn('[program-form-bindings] hide program-scoped template failed', error)
+    }
+  }
+
   const ids = { templateId, templateVersionId: publishedVersionId }
   if (existing?.bindingId != null) {
     await updateGeneralProgramFormBinding(
