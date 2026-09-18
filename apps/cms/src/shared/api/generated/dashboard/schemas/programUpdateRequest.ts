@@ -59,42 +59,25 @@ export interface ProgramUpdateRequest {
   educationProcess?: string;
   maleParticipants?: number;
   femaleParticipants?: number;
-  /** 참여자 최종 인원. Mirrored to kpi.finalParticipants + generalCommonInfo */
   totalParticipants?: number;
-  /** Write alias for totalParticipants */
-  finalParticipants?: number;
   generalVolunteers?: number;
   staffVolunteers?: number;
   returningVolunteers?: number;
   generalTeachers?: number;
   educatedTeachers?: number;
   instructors?: number;
-  /** 최종 파견 학교 수. Mirrored to kpi + generalCommonInfo.kpi */
   finalSchools?: number;
-  /** Write alias for finalSchools */
-  schoolCount?: number;
-  /** 최종 파견 학급 수. Mirrored to kpi + generalCommonInfo.kpi */
   finalClasses?: number;
-  /** Write alias for finalClasses */
-  classCount?: number;
   managerName?: string;
-  /** 교육 장소. Always mirrored to generalCommonInfo.venue */
   venue?: string;
   curriculum?: string;
   contactEmail?: string;
   contactPhone?: string;
   oneLineIntroduction?: string;
-  /** Write alias for oneLineIntroduction */
-  summary?: string;
-  /** 모집 비고 SSOT (≠ oneLineIntroduction) */
   remarks?: string;
-  /** 모집/교육 대상 상세. district와 분리. */
   educationTargetDetail?: string;
-  /** 교육 장소 기타 직접입력. */
   venueDetail?: string;
-  /** 교육 장소 유형: inside | outside | other (legacy inside_school/outside_school) */
   venueKind?: string;
-  /** 명단 제출 필요 여부 등 (serviceDetail / 모집 설정) */
   studentListRequired?: string;
   keyVisualImage?: string;
   settlementRuleId?: string;

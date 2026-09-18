@@ -13157,10 +13157,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -15029,6 +15029,11 @@
           "educationRegionCode": {
             "type": "string",
             "maxLength": 100,
+            "minLength": 0
+          },
+          "semesterType": {
+            "type": "string",
+            "maxLength": 32,
             "minLength": 0
           }
         }
@@ -19905,8 +19910,29 @@
           "status": {
             "type": "string"
           },
+          "periodStatus": {
+            "type": "string",
+            "description": "프로그램 진행 단계(카드/필터 축). SCHEDULED·RECRUITING(예정)·IN_PROGRESS·COMPLETED는 상호 배타.",
+            "enum": [
+              "SCHEDULED",
+              "RECRUITING",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "CANCELLED",
+              "NOT_PROCEEDED"
+            ]
+          },
           "lifecycleStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "typed 진행 현황. periodStatus와 동일 UI 버킷을 가리킨다.",
+            "enum": [
+              "scheduled",
+              "recruiting_students",
+              "in_progress",
+              "completed",
+              "cancelled",
+              "not_proceeded"
+            ]
           },
           "businessArea": {
             "type": "string"
@@ -20014,6 +20040,14 @@
             "type": "integer",
             "format": "int32"
           },
+          "finalSchools": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "finalClasses": {
+            "type": "integer",
+            "format": "int32"
+          },
           "managerName": {
             "type": "string"
           },
@@ -20060,6 +20094,18 @@
             "type": "string"
           },
           "recruitmentTargetDetail": {
+            "type": "string"
+          },
+          "educationTargetDetail": {
+            "type": "string"
+          },
+          "venueDetail": {
+            "type": "string"
+          },
+          "venueKind": {
+            "type": "string"
+          },
+          "studentListRequired": {
             "type": "string"
           },
           "serviceDetailJson": {
@@ -24253,6 +24299,14 @@
             "type": "integer",
             "format": "int32"
           },
+          "finalSchools": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "finalClasses": {
+            "type": "integer",
+            "format": "int32"
+          },
           "managerName": {
             "type": "string"
           },
@@ -24269,6 +24323,21 @@
             "type": "string"
           },
           "oneLineIntroduction": {
+            "type": "string"
+          },
+          "remarks": {
+            "type": "string"
+          },
+          "educationTargetDetail": {
+            "type": "string"
+          },
+          "venueDetail": {
+            "type": "string"
+          },
+          "venueKind": {
+            "type": "string"
+          },
+          "studentListRequired": {
             "type": "string"
           },
           "keyVisualImage": {
@@ -31565,6 +31634,17 @@
             "type": "integer",
             "format": "int64"
           },
+          "recruitHalf": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "상·하반기. VOLUNTEER 모집 시작일 순으로 FIRST_HALF|SECOND_HALF. 해당 없으면 null",
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ]
+          },
           "memberId": {
             "type": "integer",
             "format": "int64"
@@ -32909,6 +32989,17 @@
             "type": "integer",
             "format": "int64"
           },
+          "recruitHalf": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "상·하반기. 학교 모집은 연 1회라 null. 봉사 모집과 동일 규칙이 적용되는 경우만 FIRST_HALF|SECOND_HALF",
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ]
+          },
           "organizationId": {
             "type": "integer",
             "format": "int64"
@@ -32925,6 +33016,13 @@
           },
           "applicationStatus": {
             "type": "string"
+          },
+          "temporaryAssignmentStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UJAT 임시배정 워크플로 상태. TEMP_ASSIGNED|TEMP_REJECTED 등. 미사용 프로그램은 null"
           },
           "requestedStudentCount": {
             "type": "integer",
@@ -33739,6 +33837,61 @@
           }
         }
       },
+      "ApiResponseProgramOverviewStagesResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/ProgramOverviewStagesResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "ProgramOverviewStagesResponse": {
+        "type": "object",
+        "description": "프로그램 목록 상단 stage 카드 건수. periodStatus 필터와 동일 버킷을 1회 조회한다.",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduled": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recruiting": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "inProgress": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completed": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "MaterialMatchCandidateResponse": {
         "type": "object",
         "properties": {
@@ -33957,6 +34110,9 @@
             "format": "int64"
           },
           "educationRegionCode": {
+            "type": "string"
+          },
+          "semesterType": {
             "type": "string"
           },
           "columns": {

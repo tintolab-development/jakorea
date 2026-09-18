@@ -8,6 +8,8 @@
 import type { ProgramAdminAssignmentResponse } from './programAdminAssignmentResponse';
 import type { ProgramRecruitmentResponse } from './programRecruitmentResponse';
 import type { ProgramResponseEducationStructure } from './programResponseEducationStructure';
+import type { ProgramResponseLifecycleStatus } from './programResponseLifecycleStatus';
+import type { ProgramResponsePeriodStatus } from './programResponsePeriodStatus';
 import type { ProgramResponseProgramType } from './programResponseProgramType';
 import type { ProgramRoundResponse } from './programRoundResponse';
 import type { ProgramScheduleResponse } from './programScheduleResponse';
@@ -29,7 +31,10 @@ export interface ProgramResponse {
   applicationStartDate?: string;
   applicationEndDate?: string;
   status?: string;
-  lifecycleStatus?: string;
+  /** 프로그램 진행 단계(카드/필터 축). SCHEDULED·RECRUITING(예정)·IN_PROGRESS·COMPLETED는 상호 배타. */
+  periodStatus?: ProgramResponsePeriodStatus;
+  /** typed 진행 현황. periodStatus와 동일 UI 버킷을 가리킨다. */
+  lifecycleStatus?: ProgramResponseLifecycleStatus;
   businessArea?: string;
   /** 교육 진행 구조 */
   educationStructure?: ProgramResponseEducationStructure;
@@ -61,6 +66,8 @@ export interface ProgramResponse {
   generalTeachers?: number;
   educatedTeachers?: number;
   instructors?: number;
+  finalSchools?: number;
+  finalClasses?: number;
   managerName?: string;
   venue?: string;
   curriculum?: string;
@@ -77,6 +84,10 @@ export interface ProgramResponse {
   otherMatters?: string;
   remarks?: string;
   recruitmentTargetDetail?: string;
+  educationTargetDetail?: string;
+  venueDetail?: string;
+  venueKind?: string;
+  studentListRequired?: string;
   serviceDetailJson?: string;
   attachmentFileNames?: string[];
   adminAssignments?: ProgramAdminAssignmentResponse[];
