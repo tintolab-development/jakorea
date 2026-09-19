@@ -20,6 +20,13 @@ export function volunteerApplicationDetailPath(applicationId: string): string {
   return `${MYPAGE_VOLUNTEER_PATH}/${applicationId}`
 }
 
+/** 마이페이지 — 강의현황(강사·강사겸교사 전용) */
+export const MYPAGE_LECTURE_PATH = '/mypage/lectures'
+
+export function lectureApplicationDetailPath(applicationId: string): string {
+  return `${MYPAGE_LECTURE_PATH}/${applicationId}`
+}
+
 /** 마이페이지 LNB — 강사 역할 신청 양식 */
 export const INSTRUCTOR_APPLY_PATH = '/mypage/instructor-apply'
 

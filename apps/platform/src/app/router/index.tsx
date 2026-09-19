@@ -28,8 +28,10 @@ import {
   FindEmailIdentityMockNicePage,
   SignUpSocialConnectCompletePage,
   SignUpSocialConnectErrorPage,
+  SignUpSocialConnectCallbackPage,
   SignUpSocialConnectPage,
   SocialErrorPage,
+  SocialLoginCompletePage,
 } from '@/pages/auth'
 import { HomePage } from '@/pages/home'
 import {
@@ -43,6 +45,8 @@ import {
   MypageEducationSettlementWritePage,
   MypageVolunteerPage,
   MypageVolunteerDetailPage,
+  MypageLecturePage,
+  MypageLectureDetailPage,
   MypageSettingsPage,
 } from '@/pages/mypage'
 import {
@@ -145,6 +149,7 @@ export const router = createBrowserRouter([
       { path: '/mypage/settings', element: <MypageSettingsPage /> },
       { path: '/mypage/education', element: <MypageEducationPage /> },
       { path: '/mypage/volunteer', element: <MypageVolunteerPage /> },
+      { path: '/mypage/lectures', element: <MypageLecturePage /> },
       { path: '/mypage/inquiries', element: <MypageInquiriesPage /> },
     ],
   },
@@ -178,10 +183,15 @@ export const router = createBrowserRouter([
       { path: '/auth/sign-up/complete', element: <SignUpCompletePage /> },
       { path: '/auth/sign-up/social-connect', element: <SignUpSocialConnectPage /> },
       {
+        path: '/auth/sign-up/social-connect/callback',
+        element: <SignUpSocialConnectCallbackPage />,
+      },
+      {
         path: '/auth/sign-up/social-connect/complete',
         element: <SignUpSocialConnectCompletePage />,
       },
       { path: '/auth/sign-up/social-connect/error', element: <SignUpSocialConnectErrorPage /> },
+      { path: '/auth/social/complete', element: <SocialLoginCompletePage /> },
       { path: '/auth/social/error', element: <SocialErrorPage /> },
     ],
   },
@@ -218,6 +228,7 @@ export const router = createBrowserRouter([
       { path: '/programs/:programId/apply', element: <ProgramApplyPage /> },
       { path: '/mypage/education/:applicationId', element: <MypageEducationDetailPage /> },
       { path: '/mypage/volunteer/:applicationId', element: <MypageVolunteerDetailPage /> },
+      { path: '/mypage/lectures/:applicationId', element: <MypageLectureDetailPage /> },
       { path: '/mypage/instructor-apply', element: <MypageInstructorApplyPage /> },
       {
         path: '/mypage/instructor-apply/consent/:consentKey',
