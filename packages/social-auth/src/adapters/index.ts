@@ -316,6 +316,9 @@ export function createAdminSsoAdapter(options: CreateAdminSsoAdapterOptions): So
   }
 }
 
+export { createPortalSsoAdapter } from './portal-sso-adapter'
+export type { CreatePortalSsoAdapterOptions } from './portal-sso-adapter'
+
 export interface CreateSignupSocialAdapterOptions {
   http: SocialAuthHttpClient
   paths: SocialAuthPaths

@@ -21,8 +21,12 @@ export interface SocialAuthPaths {
   /** 가입 직후 public 소셜 연결 session consume */
   signupSsoLinkSessionConsume?: () => string
   ssoError?: () => string
-  /** 회원(Platform) 확장용 */
+  /**
+   * Portal SSO login start — `POST /api/portal/auth/sso/login/{provider}/start`
+   * provider path segment는 보통 소문자(kakao|naver|google)
+   */
   loginStart?: (provider: string) => string
+  /** @deprecated Portal은 createPortalSsoAdapter + loginStart / socialAccounts 사용 */
   memberSocialLogin?: () => string
   memberSocialAccounts?: () => string
   memberSocialAccount?: (providerCode: string) => string

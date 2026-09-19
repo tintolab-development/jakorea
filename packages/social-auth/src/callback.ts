@@ -92,14 +92,13 @@ export async function processSocialLoginSessionReturn(
     }
   }
 
-  // OpenAPI AdminSsoSessionConsumeRequest: adminSsoSessionId.
-  // socialLoginSessionId는 구버전/포털 네이밍 하위 호환.
-  const adminSsoSessionId =
-    searchParams.get('adminSsoSessionId') ?? searchParams.get('socialLoginSessionId')
-  if (!adminSsoSessionId) {
+  // OpenAPI: Admin → adminSsoSessionId, Portal → socialLoginSessionId
+  const adminSsoSessionId = searchParams.get('adminSsoSessionId')
+  const socialLoginSessionId = searchParams.get('socialLoginSessionId')
+  if (!adminSsoSessionId && !socialLoginSessionId) {
     return {
       kind: 'failed',
-      message: 'adminSsoSessionId가 없어 로그인을 완료할 수 없습니다.',
+      message: '소셜 로그인 세션 ID가 없어 로그인을 완료할 수 없습니다.',
     }
   }
 
@@ -114,7 +113,8 @@ export async function processSocialLoginSessionReturn(
     const tokens = await client.completeCallback({
       provider,
       intent: 'login',
-      adminSsoSessionId,
+      adminSsoSessionId: adminSsoSessionId ?? undefined,
+      socialLoginSessionId: socialLoginSessionId ?? undefined,
     })
     return { kind: 'authenticated', tokens }
   } catch (err) {

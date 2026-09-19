@@ -343,6 +343,9 @@ importers:
       '@jakorea/rich-text':
         specifier: workspace:*
         version: link:../../packages/rich-text
+      '@jakorea/social-auth':
+        specifier: workspace:*
+        version: link:../../packages/social-auth
       '@jakorea/ui':
         specifier: workspace:*
         version: link:../../packages/ui

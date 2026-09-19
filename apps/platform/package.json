@@ -6,7 +6,7 @@
   "scripts": {
     "predev": "pnpm run build:workspace-deps",
     "prebuild": "pnpm run build:workspace-deps",
-    "build:workspace-deps": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/rich-text --filter @jakorea/location --filter @jakorea/domain --filter @jakorea/form-schema --filter @jakorea/form-template-runtime --filter @jakorea/identity-verification build",
+    "build:workspace-deps": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/rich-text --filter @jakorea/location --filter @jakorea/domain --filter @jakorea/form-schema --filter @jakorea/form-template-runtime --filter @jakorea/identity-verification --filter @jakorea/social-auth build",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --max-warnings=-1",
@@ -22,6 +22,7 @@
     "@jakorea/identity-verification": "workspace:*",
     "@jakorea/location": "workspace:*",
     "@jakorea/rich-text": "workspace:*",
+    "@jakorea/social-auth": "workspace:*",
     "@jakorea/ui": "workspace:*",
     "@jakorea/utils": "workspace:*",
     "@tanstack/react-query": "^5.62.2",
