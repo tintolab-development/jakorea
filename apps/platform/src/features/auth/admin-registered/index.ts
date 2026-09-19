@@ -43,7 +43,6 @@ export {
   getAdminRegisteredSignUpChangePasswordPath,
   getAdminRegisteredPasswordChangeRequired,
   isMockAdminRegisteredEmail,
-  isMockAdminRegisteredFirstLogin,
   isMockAdminRegisteredIdentityMatch,
   requiresAdminRegisteredOnboarding,
   requiresAdminRegisteredPasswordChange,

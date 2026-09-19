@@ -68,7 +68,6 @@ export {
   useAdminRegisteredProfileHydration,
   useAdminRegisteredNoticeRedirect,
   setAdminRegisteredPasswordChangeRequired,
-  isMockAdminRegisteredFirstLogin,
   requiresAdminRegisteredOnboarding,
   clearAdminRegisteredWizardState,
 } from './admin-registered'

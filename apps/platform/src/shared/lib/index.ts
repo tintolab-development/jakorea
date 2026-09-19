@@ -22,7 +22,9 @@ export {
   DEV_AUTH_CHANGE_EVENT,
   getDevAuthLoggedIn,
   setDevAuthLoggedIn,
+  shouldUsePlatformContentSeed,
   shouldUsePlatformMockData,
+  withPlatformContentSeed,
   withPlatformMockData,
 } from './dev-auth'
 export {

@@ -20,6 +20,8 @@ export const portalMePaths = {
   phoneIdentityConfirm: () => '/api/portal/me/phone/identity/confirm',
   instructorRoleRequests: () => '/api/portal/me/instructor-role-requests',
   instructorRoleRequestCurrent: () => '/api/portal/me/instructor-role-requests/current',
+  /** POST /api/portal/me/withdrawals — OpenAPI `withdraw` */
+  withdrawals: () => '/api/portal/me/withdrawals',
   /** GET /api/portal/me/form-responses/{formResponseId}/feedback — Wave11 ISSUANCE 포함 */
   formResponseFeedback: (formResponseId: number) =>
     `/api/portal/me/form-responses/${formResponseId}/feedback`,
