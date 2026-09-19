@@ -24,3 +24,12 @@
 .englishName {
   margin: 0;
 }
+
+@media (--bp-below-pc) {
+  .nameRow .name {
+    font-size: 28px;
+  }
+  .affiliation {
+    margin-bottom: var(--spacing-8);
+  }
+}

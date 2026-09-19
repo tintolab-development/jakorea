@@ -967,6 +967,146 @@ export const GENERAL_VOLUNTEER_STATUS_FIXTURES: CmsRegistrationFixture[] = [
   }),
 ]
 
+function buildGeneralInstructorFixture(args: {
+  id: string
+  title: string
+  index: number
+  educationFormLabel: string
+}): CmsRegistrationFixture {
+  const dates = periodBundle('recruiting', 'recruiting', args.index)
+  const commonInfo = buildGeneralCommonInfo('curriculum', 'multi', args.educationFormLabel)
+  commonInfo.announcementTitle = args.title
+  commonInfo.educationTargetDetailLabel = '고등학생'
+
+  return {
+    registrationCase: 'general-org-curriculum-multi',
+    registrationKind: 'general',
+    id: args.id,
+    title: args.title,
+    mainTitle: args.title,
+    description: '경제·금융 교육 현장에 강사로 참여해 수업을 진행하는 프로그램입니다.',
+    type: args.educationFormLabel === '온라인' ? 'online' : 'offline',
+    category: 'school',
+    ...dates,
+    lifecycleStatus: 'recruiting_instructors',
+    businessArea: '경제금융',
+    targetLevel: 'high',
+    district: '서울특별시 강서구',
+    generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+    generalProgramAudience: 'organization',
+    generalProgramEducationStructure: 'curriculum',
+    generalProgramSessionRound: 'multi',
+    instructorApplicationStartDate: dates.applicationStartDate,
+    instructorApplicationEndDate: dates.applicationEndDate,
+    interviewEnabled: true,
+    contactPhone: '02-6085-6028',
+    contactEmail: 'instructor@jakorea.org',
+    recruitmentGuide: '1. 신청 자격: 경제교육 강의 경험자\n2. 신청 방법: 홈페이지 온라인 신청',
+    otherNotes: '강의료는 회당 실비 정산이며, 사전 오리엔테이션 참석은 필수입니다.',
+    applicationMethod: '홈페이지 온라인 신청',
+    generalCommonInfo: commonInfo,
+  }
+}
+
+export const GENERAL_INSTRUCTOR_STATUS_IDS = {
+  applied: 'general-prog-instructor-applied',
+  progress: 'general-prog-instructor-progress',
+  done: 'general-prog-instructor-done',
+  rejected: 'general-prog-instructor-rejected',
+} as const
+
+/** 마이페이지 강의현황 mock 전용(일반 강사 모집) — 공개 30건 카탈로그와 분리 */
+export const GENERAL_INSTRUCTOR_STATUS_FIXTURES: CmsRegistrationFixture[] = [
+  buildGeneralInstructorFixture({
+    id: GENERAL_INSTRUCTOR_STATUS_IDS.applied,
+    title: 'JA 고등 진로경제교실 강사 모집',
+    index: 11,
+    educationFormLabel: '오프라인',
+  }),
+  buildGeneralInstructorFixture({
+    id: GENERAL_INSTRUCTOR_STATUS_IDS.progress,
+    title: 'JA 청소년 금융리더십 강사 모집',
+    index: 12,
+    educationFormLabel: '온라인',
+  }),
+  buildGeneralInstructorFixture({
+    id: GENERAL_INSTRUCTOR_STATUS_IDS.done,
+    title: 'JA 고등 창업교육 강사 모집 (종료)',
+    index: 13,
+    educationFormLabel: '오프라인',
+  }),
+  buildGeneralInstructorFixture({
+    id: GENERAL_INSTRUCTOR_STATUS_IDS.rejected,
+    title: 'JA 특별 진로캠프 강사 모집',
+    index: 14,
+    educationFormLabel: '온라인',
+  }),
+]
+
+function buildEconomyInstructorFixture(args: {
+  id: string
+  title: string
+  index: number
+}): CmsRegistrationFixture {
+  const dates = periodBundle('recruiting', 'recruiting', args.index)
+  return {
+    registrationCase: 'economy-company-school',
+    registrationKind: 'economy',
+    id: args.id,
+    title: args.title,
+    mainTitle: args.title,
+    description: args.title,
+    type: 'offline',
+    category: 'school',
+    ...dates,
+    lifecycleStatus: 'recruiting_instructors',
+    businessArea: '경제금융',
+    targetLevel: 'elementary',
+    district: '전국',
+    generalParticipantTypes: [...COMPANY_SCHOOL_PARTICIPANTS],
+    generalProgramAudience: 'organization',
+    generalProgramEducationStructure: 'curriculum',
+    generalProgramSessionRound: 'single',
+    instructorApplicationStartDate: dates.applicationStartDate,
+    instructorApplicationEndDate: dates.applicationEndDate,
+    contactPhone: '02-6085-6028',
+    contactEmail: 'instructor@jakorea.org',
+    recruitmentGuide: '1. 신청 자격: 1사1교 강사 등록 대상\n2. 신청 방법: 홈페이지 온라인 신청',
+    applicationMethod: '홈페이지 온라인 신청',
+    generalCommonInfo: {
+      announcementTitle: args.title,
+      educationFormLabel: '오프라인',
+      sponsorDisplayName: 'JA Korea',
+      educationScheduleLines: ['2026. 03. 01 ~ 2026. 12. 30'],
+      curriculumSessions: sharedCurriculumSessions(
+        '1단원 나를 알리는 기술',
+        '채용 공고 읽기, 이력서 작성하기 등 취업에 필요한 단계들을 알아봅니다.',
+        '2단원 나를 보여주는 기술',
+        '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.'
+      ),
+    },
+  }
+}
+
+export const ECONOMY_INSTRUCTOR_STATUS_IDS = {
+  progress: 'economy-prog-instructor-progress',
+  done: 'economy-prog-instructor-done',
+} as const
+
+/** 마이페이지 강의현황 mock 전용(1사1교 강사 모집) — 공개 30건 카탈로그와 분리 */
+export const ECONOMY_INSTRUCTOR_STATUS_FIXTURES: CmsRegistrationFixture[] = [
+  buildEconomyInstructorFixture({
+    id: ECONOMY_INSTRUCTOR_STATUS_IDS.progress,
+    title: '1사1교 강사 모집 (진행중)',
+    index: 15,
+  }),
+  buildEconomyInstructorFixture({
+    id: ECONOMY_INSTRUCTOR_STATUS_IDS.done,
+    title: '1사1교 강사 모집 (종료)',
+    index: 16,
+  }),
+]
+
 /** 홈 목록 mock: 일반 16 + 1사1교 2 + 교육받은 교사 8 + Gemini 2 + UJAT 2 = 30 */
 export const CMS_PLATFORM_PROGRAM_FIXTURES: CmsRegistrationFixture[] = [
   ...GENERAL_REGISTRATION_FIXTURES,
@@ -982,7 +1122,9 @@ export function getCmsRegistrationFixtureById(
 ): CmsRegistrationFixture | undefined {
   return (
     CMS_PLATFORM_PROGRAM_FIXTURES.find(fixture => fixture.id === id) ??
-    GENERAL_VOLUNTEER_STATUS_FIXTURES.find(fixture => fixture.id === id)
+    GENERAL_VOLUNTEER_STATUS_FIXTURES.find(fixture => fixture.id === id) ??
+    GENERAL_INSTRUCTOR_STATUS_FIXTURES.find(fixture => fixture.id === id) ??
+    ECONOMY_INSTRUCTOR_STATUS_FIXTURES.find(fixture => fixture.id === id)
   )
 }
 

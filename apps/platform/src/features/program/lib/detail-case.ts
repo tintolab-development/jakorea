@@ -56,7 +56,6 @@ export function resolveProgramDetailCase(
     if (types.length === 1 && types[0] === 'teacher_instructor') return 'instructor'
     return 'gemini'
   }
-  if (program.registrationKind === 'trainedTeachers') return 'instructor'
   if (program.registrationKind === 'ujat') {
     if (program.ujatProgressStatus === 'VOLUNTEER_RECRUITING') return 'ujat-volunteer'
     if (program.ujatProgressStatus === 'PARTICIPANT_RECRUITING') return 'ujat-participant'

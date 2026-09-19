@@ -4,7 +4,7 @@ import { isPeoplePath } from './lib/routes'
 import { MOCK_PEOPLE_SECTIONS, getMockPeopleSections } from './lib/mock-data'
 import { MemberCard } from './ui/member-card'
 import { MemberSection } from './ui/member-section'
-import orgChartUrl from './image/illustration/org-chart.png'
+import orgChartUrl from './image/illustration/org-chart.svg'
 
 export type { PeopleMember, PeopleMemberSection, PeopleSectionColumns }
 export { PEOPLE_PATH, isPeoplePath, MOCK_PEOPLE_SECTIONS, getMockPeopleSections, MemberCard, MemberSection, orgChartUrl }

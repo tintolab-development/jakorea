@@ -102,11 +102,10 @@
   border: none;
   background: transparent;
   color: var(--color-neutral-cool-300);
-  opacity: 0;
 }
 
 .consentCheckVisible {
-  opacity: 1;
+  color: var(--color-primary-500);
 }
 
 .consentInput:focus-visible + .consentCheck {
@@ -245,7 +244,26 @@
 
 @media (--bp-below-pc) {
   .inner {
+    gap: var(--spacing-24);
     padding-inline: var(--page-padding-x);
+  }
+  .title {
+    font-size: 22px;
+  }
+  .copy {
+    gap: var(--spacing-24);
+  }
+  .consentText {
+    font-size: 14px;
+  }
+  .field {
+    padding: 0 var(--spacing-16);
+    gap: var(--spacing-16);
+  }
+  .fieldLabel,
+  .fieldInput,
+  .fieldInput::placeholder {
+    font-size: 14px;
   }
 }
 

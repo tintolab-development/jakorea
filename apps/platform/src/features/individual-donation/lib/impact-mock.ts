@@ -1,4 +1,4 @@
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { shouldUsePlatformContentSeed } from '@/shared/lib/dev-auth'
 import whyImage01Url from '../image/why-image-01.png'
 import whyImage02Url from '../image/why-image-02.png'
 import ctaImageUrl from '../image/cta-image.png'
@@ -81,6 +81,6 @@ export const DONATION_IMPACT_ITEMS: readonly DonationImpactItem[] = [
 ]
 
 export function getDonationImpactItems(): readonly DonationImpactItem[] {
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return DONATION_IMPACT_ITEMS
 }

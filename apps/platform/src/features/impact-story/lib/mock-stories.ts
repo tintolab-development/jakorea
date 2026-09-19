@@ -1,4 +1,4 @@
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { shouldUsePlatformContentSeed } from '@/shared/lib/dev-auth'
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import type {
   ImpactStoryCategoryKey,
@@ -228,12 +228,12 @@ function toDetail(seed: SeedStory): ImpactStoryDetail {
 const MOCK_DETAILS: readonly ImpactStoryDetail[] = SEED.map(toDetail)
 
 export function getMockImpactStories(): ImpactStoryListItem[] {
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return MOCK_STORIES.map(item => ({ ...item }))
 }
 
 export function getFeaturedImpactStories(): ImpactStoryListItem[] {
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return MOCK_STORIES.filter(item => item.isFeatured).map(item => ({ ...item }))
 }
 
@@ -243,12 +243,12 @@ export function useMockImpactStories(): ImpactStoryListItem[] {
 }
 
 export function getMockImpactStoryById(id: string): ImpactStoryListItem | null {
-  if (!shouldUsePlatformMockData()) return null
+  if (!shouldUsePlatformContentSeed()) return null
   return MOCK_STORIES.find(item => item.id === id) ?? null
 }
 
 export function getMockImpactStoryDetailById(id: string): ImpactStoryDetail | null {
-  if (!shouldUsePlatformMockData()) return null
+  if (!shouldUsePlatformContentSeed()) return null
   const detail = MOCK_DETAILS.find(item => item.id === id)
   return detail ? { ...detail, blocks: detail.blocks.map(block => ({ ...block })) } : null
 }

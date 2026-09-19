@@ -134,6 +134,27 @@
     width: 100%;
     height: auto;
   }
+  .content {
+    min-height: auto;
+    gap: var(--spacing-16);
+  }
+  .carousel {
+    padding: var(--spacing-20) var(--spacing-16);
+  }
+  .title {
+    min-height: auto;
+    font-size: 20px;
+  }
+  .date {
+    font-size: 14px;
+  }
+  .summary {
+    min-height: auto;
+    font-size: 16px;
+  }
+  .controls {
+    margin-top: var(--spacing-16);
+  }
 }
 
 @media (--bp-pc-up) {

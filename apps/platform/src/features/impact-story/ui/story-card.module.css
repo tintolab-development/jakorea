@@ -80,4 +80,11 @@
     width: 100%;
     height: auto;
   }
+  .title {
+    min-height: auto;
+    font-size: 18px;
+  }
+  .date {
+    font-size: 14px;
+  }
 }

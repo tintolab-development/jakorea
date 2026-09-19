@@ -35,3 +35,9 @@
   flex-direction: column;
   gap: 40px;
 }
+
+.empty {
+  margin: 0;
+  padding: var(--spacing-80) 0;
+  text-align: center;
+}

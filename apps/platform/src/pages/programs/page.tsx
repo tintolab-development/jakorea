@@ -168,15 +168,21 @@ export function ProgramsPage() {
         }
       >
         <div className={styles.list}>
-          {pageItems.map(program => (
-            <ProgramListItemRow
-              key={program.id}
-              program={program}
-              onClick={() =>
-                navigate(programDetailPath(program.id, getProgramsListReturnPath()))
-              }
-            />
-          ))}
+          {pageItems.length === 0 ? (
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
+              등록된 프로그램이 없습니다.
+            </PFText>
+          ) : (
+            pageItems.map(program => (
+              <ProgramListItemRow
+                key={program.id}
+                program={program}
+                onClick={() =>
+                  navigate(programDetailPath(program.id, getProgramsListReturnPath()))
+                }
+              />
+            ))
+          )}
         </div>
       </SearchListLayout>
     </section>

@@ -5,7 +5,7 @@
  * 실 API 연동 시 portal notice-categories로 교체.
  */
 
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { shouldUsePlatformContentSeed } from '@/shared/lib/dev-auth'
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import type { NoticeCategory } from '../model/types'
 import type { PFTabItem } from '@/shared/ui'
@@ -59,7 +59,7 @@ export function resolveResultCategoryFilterId(tabKey: string): string {
 }
 
 export function getMockNoticeCategories(): NoticeCategory[] {
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return CMS_NOTICE_CATEGORY_SEED.map(row => ({ ...row }))
 }
 

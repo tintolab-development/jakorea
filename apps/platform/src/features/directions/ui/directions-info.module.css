@@ -50,6 +50,9 @@
 }
 
 @media (--bp-below-pc) {
+  .root {
+    gap: var(--spacing-40);
+  }
   .contacts {
     grid-template-columns: 1fr;
     gap: var(--spacing-20);
@@ -57,5 +60,15 @@
 
   .contactItem {
     padding-top: var(--spacing-20);
+  }
+
+  .orgName {
+    font-size: 16px;
+  }
+  .addressKo {
+    font-size: 20px;
+  }
+  .addressEn {
+    font-size: 14px;
   }
 }

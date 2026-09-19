@@ -65,11 +65,9 @@ import {
   EDUCATION_LEVEL_HEX,
   EDUCATION_LEVEL_KEYS,
   EDUCATION_LEVEL_LABELS,
-  getDevAuthLoggedIn,
   getDevMemberProfile,
   getEducationLevelColor,
   platformBreakpoints,
-  setDevAuthLoggedIn,
   setDevMemberProfile,
 } from '@/shared/lib'
 import {
@@ -638,11 +636,11 @@ const authGuideSections: { title: string; scenarios: readonly AuthGuideScenario[
     title: '로그인 (/auth/sign-in)',
     scenarios: [
       {
-        title: '일반 로그인 (dev mock)',
+        title: '일반 로그인 (Portal API)',
         steps: [
           '유효한 이메일 형식 입력 후 로그인하기 클릭 (validateEmailId 통과 필요)',
           '형식·금칙어·공백 오류 시 정책 안내 문구 표시 (예: admin@test.com, user name@test.com)',
-          '통과 시 localStorage 로그인 처리 (platform:dev:is-logged-in = true)',
+          'VITE_API_SERVER 설정 후 Portal 로그인 API로 토큰 발급 → localStorage 토큰 저장',
           'URL에 ?redirect= 경로가 있으면 해당 경로로, 없으면 / 로 이동',
         ],
         href: '/auth/sign-in',
@@ -651,10 +649,10 @@ const authGuideSections: { title: string; scenarios: readonly AuthGuideScenario[
       {
         title: '관리자 등록 회원 — 최초 로그인',
         steps: [
-          '유효한 이메일 형식에서 이메일과 비밀번호를 동일하게 입력 (예: test@gmail.com / test@gmail.com)',
-          '로그인 처리 없이 /auth/admin-registered/notice (최초 로그인 전용 UI)로 이동',
+          'Portal 로그인 응답의 registeredByAdmin 등 온보딩 플래그로 분기',
+          '/auth/admin-registered/notice (최초 로그인 전용 UI)로 이동',
           '본인인증 후 비밀번호 변경하기 → birth → identity → change-password → confirm → (edit) → complete',
-          'complete에서 dev 로그인 처리 후 wizard state 초기화',
+          'complete에서 온보딩 세션 종료 후 로그인 화면으로 이동',
         ],
         href: '/auth/sign-in',
         buttonLabel: '로그인 화면',
@@ -824,7 +822,6 @@ export function DesignSystemPage() {
   const [devMemberProfile, setDevMemberProfileState] = useState<PlatformMemberProfile>(() =>
     getDevMemberProfile()
   )
-  const [devIsLoggedIn, setDevIsLoggedInState] = useState(() => getDevAuthLoggedIn())
   const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth)
   const [viewportPreset, setViewportPreset] = useState<ViewportPresetKey>('live')
   const [isViewportPreview] = useState(() => isViewportPreviewEmbed())
@@ -838,11 +835,6 @@ export function DesignSystemPage() {
   const handleDevMemberProfileChange = (profile: PlatformMemberProfile) => {
     setDevMemberProfile(profile)
     setDevMemberProfileState(profile)
-  }
-
-  const handleDevLoginToggle = (loggedIn: boolean) => {
-    setDevAuthLoggedIn(loggedIn)
-    setDevIsLoggedInState(loggedIn)
   }
 
   const activeViewportPreset =
@@ -888,22 +880,6 @@ export function DesignSystemPage() {
             {' · '}
             {activeViewportPreset.description}
           </PFText>
-        </div>
-        <div className={styles.viewportToolbarActions}>
-          <PFButton
-            size="small"
-            variant={devIsLoggedIn ? 'primary' : 'tertiary'}
-            onClick={() => handleDevLoginToggle(true)}
-          >
-            로그인 ON
-          </PFButton>
-          <PFButton
-            size="small"
-            variant={!devIsLoggedIn ? 'primary' : 'tertiary'}
-            onClick={() => handleDevLoginToggle(false)}
-          >
-            로그인 OFF
-          </PFButton>
         </div>
       </div>
       <PFTabs
@@ -2556,7 +2532,8 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
           Mypage Dev Tools
         </PFText>
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          마이페이지 유형 분기·로그인 게이트를 localStorage mock으로 확인합니다.
+          마이페이지 유형 분기를 localStorage 프로필 mock으로 확인합니다. 로그인은 Portal API 토큰 세션만
+          사용합니다.
         </PFText>
 
         <div className={styles.guideBlock}>
@@ -2574,28 +2551,6 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
                 {option.label}
               </PFButton>
             ))}
-          </div>
-        </div>
-
-        <div className={styles.guideBlock}>
-          <PFText as="div" typo="bd-md-sb" color="black">
-            dev 로그인 상태
-          </PFText>
-          <div className={styles.guideLinkRow}>
-            <PFButton
-              size="medium"
-              variant={devIsLoggedIn ? 'primary' : 'tertiary'}
-              onClick={() => handleDevLoginToggle(true)}
-            >
-              로그인 ON
-            </PFButton>
-            <PFButton
-              size="medium"
-              variant={!devIsLoggedIn ? 'primary' : 'tertiary'}
-              onClick={() => handleDevLoginToggle(false)}
-            >
-              로그인 OFF
-            </PFButton>
             <PFButton
               size="medium"
               variant="secondary"
@@ -2690,11 +2645,11 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
 
         <div className={styles.guideNote}>
           <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
-            dev 로그인 상태: localStorage{' '}
+            로그인 상태: Portal access token (
             <PFText as="span" typo="bd-sm-sb" color="black">
-              platform:dev:is-logged-in
+              platform_auth_token
             </PFText>
-            . 마이페이지 프로필:{' '}
+            ). 마이페이지 프로필:{' '}
             <PFText as="span" typo="bd-sm-sb" color="black">
               platform:dev:member-profile
             </PFText>
@@ -2702,8 +2657,7 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
             <PFText as="span" typo="bd-sm-sb" color="black">
               platform:dev:admin-registered-wizard
             </PFText>
-            . API 연동 후 mock 함수(isMockAdminRegisteredFirstLogin,
-            isMockAdminRegisteredIdentityMatch 등)를 API 응답으로 교체합니다.
+            .
           </PFText>
         </div>
       </div>
