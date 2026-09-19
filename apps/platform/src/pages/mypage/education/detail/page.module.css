@@ -15,6 +15,13 @@
   margin-bottom: var(--spacing-56);
 }
 
+@media (--bp-below-pc) {
+  .tabs {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+}
+
 .empty {
   margin: var(--spacing-40) 0 var(--spacing-24);
 }
@@ -38,11 +45,13 @@
   }
 }
 
+/* 모바일 — 상 40 / 하 48 · 좌우는 --page-padding-x 한 겹만 (max-width 480 제거: margin+padding 이중 거터 방지) */
 @media (--bp-below-pc) {
   .page {
     width: 100%;
-    min-width: 375px;
-    max-width: 480px;
-    margin-inline: auto;
+    max-width: none;
+    margin-inline: 0;
+    padding-top: var(--spacing-40);
+    padding-bottom: var(--spacing-48);
   }
 }

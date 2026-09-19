@@ -17,10 +17,12 @@ import {
   type SettingsProfileInput,
 } from '@/features/mypage'
 import { ProgramBackButton } from '@/features/program'
+import { useMediaQuery } from '@/shared/hooks'
 import {
   getAccessToken,
   getDevAuthLoggedIn,
   isRemoteApiConfigured,
+  platformMediaQueries,
   resolveLoginRequiredPath,
 } from '@/shared/lib'
 import { PFText } from '@/shared/ui'
@@ -45,6 +47,7 @@ export function MypageSettingsPage() {
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const { isRemoteSession, isLoading, isError, profile, guardian } = useSettingsView()
   const member = useMypageMember()
+  const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
   const effectiveProfile = localProfile ?? profile
   const isTeacher = isSchoolTeacherMypageProfile(member.profile)
   const view = mapPortalProfileToSettingsView(effectiveProfile, guardian, {
@@ -85,24 +88,33 @@ export function MypageSettingsPage() {
     }
   }
 
+  const pageHeader = (
+    <>
+      <div className={styles.backLink}>
+        <ProgramBackButton
+          size="small"
+          label="마이페이지로"
+          onClick={() => navigate(MYPAGE_PATH)}
+        />
+      </div>
+      <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
+        {pageTitle}
+      </PFText>
+    </>
+  )
+
   const wrap = (children: ReactNode) => (
     <MypageLayout
       variant="subpage"
+      mobileStack={isBelowPc ? 'headingFirst' : 'default'}
       lnbItems={lnbItems}
+      lnbAppearance={isBelowPc ? 'category' : undefined}
       lnbAriaLabel="회원정보 설정 메뉴"
+      contentHeading={isBelowPc ? pageHeader : undefined}
       onLnbItemSelect={handleLnbItemSelect}
     >
       <div className={styles.body}>
-        <div className={styles.backLink}>
-          <ProgramBackButton
-            size="small"
-            label="마이페이지로"
-            onClick={() => navigate(MYPAGE_PATH)}
-          />
-        </div>
-        <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
-          {pageTitle}
-        </PFText>
+        {isBelowPc ? null : pageHeader}
         {children}
       </div>
     </MypageLayout>

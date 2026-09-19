@@ -335,14 +335,37 @@ export function MypageVolunteerDetailPage() {
       const surveyAvailability = getEducationSurveyMockAvailability({
         displayStatus: application.displayStatus,
         withdrawalPhase: application.withdrawalPhase,
-        surveyConfigured: program.surveyConfigured,
+        configured: program.surveyConfigured,
       })
       if (surveyAvailability === 'active') {
-        return <EducationSurveyFillPanel programTitle={program.title} />
+        return (
+          <EducationSurveyFillPanel
+            kind="survey"
+            programTitle={program.title}
+            educationScheduleLines={program.educationScheduleLines}
+            educationTargetLabel={program.educationTargetDetailLabel}
+          />
+        )
       }
       return <EducationSurveyEmptyPanel kind="survey" />
     }
     if (active === 'satisfaction') {
+      const satisfactionAvailability = getEducationSurveyMockAvailability({
+        displayStatus: application.displayStatus,
+        withdrawalPhase: application.withdrawalPhase,
+        configured: program.satisfactionConfigured,
+      })
+      if (satisfactionAvailability === 'active') {
+        return (
+          <EducationSurveyFillPanel
+            kind="satisfaction"
+            satisfactionAudience="student"
+            programTitle={program.title}
+            educationScheduleLines={program.educationScheduleLines}
+            educationTargetLabel={program.educationTargetDetailLabel}
+          />
+        )
+      }
       return <EducationSurveyEmptyPanel kind="satisfaction" />
     }
     if (active === 'settlement') {
