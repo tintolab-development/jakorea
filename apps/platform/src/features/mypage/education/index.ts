@@ -12,6 +12,7 @@ export type {
   EducationWithdrawalPhase,
   EducationActivitySection,
   EducationDetailTabItem,
+  ApplicationRole,
 } from './applications'
 export {
   EDUCATION_APPLICATION_PAGE_SIZE,
@@ -24,8 +25,11 @@ export {
   getMockEducationApplicationsVersion,
   subscribeMockEducationApplications,
   filterEducationStatusApplications,
+  filterLectureStatusApplications,
   filterVolunteerStatusApplications,
-  isGeneralVolunteerApplication,
+  isInstructorRoleApplication,
+  isVolunteerRoleApplication,
+  resolveApplicationRole,
   compareEducationApplicationItems,
   listEducationApplications,
   matchesEducationApplicationTab,

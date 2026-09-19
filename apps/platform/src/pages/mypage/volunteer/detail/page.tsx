@@ -18,7 +18,7 @@ import {
   DocumentPassBanner,
   getEducationSurveyMockAvailability,
   getMockEducationApplicationById,
-  isGeneralVolunteerApplication,
+  isVolunteerRoleApplication,
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
   MYPAGE_VOLUNTEER_PATH,
@@ -174,7 +174,7 @@ export function MypageVolunteerDetailPage() {
   }, [applicationId, navigate])
 
   useEffect(() => {
-    if (application && !isGeneralVolunteerApplication(application)) {
+    if (application && !isVolunteerRoleApplication(application)) {
       navigate(`${educationApplicationDetailPath(application.id)}${location.search}`, {
         replace: true,
       })
@@ -255,7 +255,7 @@ export function MypageVolunteerDetailPage() {
     return null
   }
 
-  if (!application || !isGeneralVolunteerApplication(application)) {
+  if (!application || !isVolunteerRoleApplication(application)) {
     return (
       <section className={styles.page}>
         <EducationDetailBack label="봉사현황" onClick={handleBack} />

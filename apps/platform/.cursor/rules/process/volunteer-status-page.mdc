@@ -6,16 +6,18 @@ alwaysApply: false
 
 # 봉사현황 (Platform Mypage)
 
-`apps/platform` **마이페이지 → 봉사현황** (일반회원). 교육현황과 동일 셸·상태·탭이며 아래만 예외.
+`apps/platform` **마이페이지 → 봉사현황** (일반회원 + 강사·강사겸교사). 교육현황과 동일 셸·상태·탭이며 아래만 예외.
 
-형제 SSOT: [`education-status-page.mdc`](education-status-page.mdc)
+형제 SSOT: [`education-status-page.mdc`](education-status-page.mdc), [`lecture-status-page.mdc`](lecture-status-page.mdc)
+
+**교육현황과의 관계**: 교육현황은 역할 무관 전체 노출(슈퍼셋). 봉사현황은 그중 **봉사 역할 신청만** 뽑은 서브셋 뷰 — 동일 신청 건이 교육현황·봉사현황에 **동시에** 노출될 수 있다(배타적 파티션 아님).
 
 ## 목록 (`/mypage/volunteer`)
 
-- 일반 봉사 신청만 (`detailCase === 'volunteer'`). UJAT 봉사 제외
+- 봉사 역할 신청 **통합** (`detailCase === 'volunteer'` **또는** `'ujat-volunteer'`). 역할 판정: `resolveApplicationRole` (`isVolunteerRoleApplication`)
 - 탭·정렬·페이지네이션은 교육현황과 동일
 - Mock: 교육 신청 스토어 + `filterVolunteerStatusApplications`
-- 시드: [`GENERAL_VOLUNTEER_STATUS_FIXTURES`](apps/platform/src/features/program/lib/cms-registration-fixtures.ts)
+- 시드: [`GENERAL_VOLUNTEER_STATUS_FIXTURES`](apps/platform/src/features/program/lib/cms-registration-fixtures.ts), UJAT 봉사는 [`UJAT_VOLUNTEER_FIXTURE`](apps/platform/src/features/program/lib/cms-registration-fixtures.ts)
 - 배정현황 확인용: 기관 `orgProgress`(진행중) · `orgDone`(종료) / 개인 `indProgress`(진행중) · `indDone`(종료)
 
 ## 상세 (`/mypage/volunteer/:applicationId`)

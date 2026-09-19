@@ -18,6 +18,7 @@ export type EducationDetailTabItem = {
  * 교육 일정 탭 라벨.
  * - 봉사: 배정현황
  * - UJAT: 배정 및 출결 현황
+ * - 강사: 강의 일정
  * - 그 외: 교육일정
  */
 export function resolveEducationScheduleTabLabel(detailCase: ProgramDetailCase): string {
@@ -27,6 +28,8 @@ export function resolveEducationScheduleTabLabel(detailCase: ProgramDetailCase):
     case 'ujat-volunteer':
     case 'ujat-participant':
       return '배정 및 출결 현황'
+    case 'instructor':
+      return '강의 일정'
     default:
       return '교육일정'
   }

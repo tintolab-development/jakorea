@@ -32,9 +32,13 @@ export {
 } from './lib/mock-applications'
 export {
   filterEducationStatusApplications,
+  filterLectureStatusApplications,
   filterVolunteerStatusApplications,
-  isGeneralVolunteerApplication,
+  isInstructorRoleApplication,
+  isVolunteerRoleApplication,
+  resolveApplicationRole,
 } from './lib/application-kind'
+export type { ApplicationRole } from './lib/application-kind'
 export {
   compareEducationApplicationItems,
   listEducationApplications,

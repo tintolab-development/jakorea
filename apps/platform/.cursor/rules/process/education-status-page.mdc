@@ -10,10 +10,10 @@ alwaysApply: false
 
 ## 목록 (`/mypage/education`)
 
-- 로그인 회원이 **신청한 교육 프로그램**만 노출
-- **일반 봉사**(`detailCase === 'volunteer'`) 신청은 제외 → 마이페이지 **봉사현황**. UJAT 봉사는 교육현황에 남김
+- 로그인 회원이 **신청한 교육 프로그램**을 **역할 무관 전체(슈퍼셋)** 노출
+- **역할 기반 서브셋 메뉴** — 강사·강사겸교사만: 봉사 역할(일반 봉사 + UJAT 봉사)은 마이페이지 **봉사현황**에도, 강사 역할(Gemini 강사 모집 제외)은 **강의현황**에도 **동시에** 노출됨(중복 노출 허용, 배타적 파티션 아님). 역할 판정: `resolveApplicationRole` — 관련: [`volunteer-status-page.mdc`](volunteer-status-page.mdc), [`lecture-status-page.mdc`](lecture-status-page.mdc)
 - API: `GET /api/portal/me/program-applications` (연동 시 `statusGroup`, `page`, `size`)
-- Mock: [`mock-applications.ts`](apps/platform/src/features/mypage/education/applications/lib/mock-applications.ts) · 필터 `filterEducationStatusApplications`
+- Mock: [`mock-applications.ts`](apps/platform/src/features/mypage/education/applications/lib/mock-applications.ts) · 필터 `filterEducationStatusApplications`(전체 반환)
 
 ### 정렬
 
@@ -97,6 +97,7 @@ alwaysApply: false
 - **교육 일정** 라벨 (`resolveEducationScheduleTabLabel`):
   - 봉사(`volunteer`) → **배정현황**
   - UJAT(`ujat-volunteer` / `ujat-participant`) → **배정 및 출결 현황**
+  - 강사(`instructor`) → **강의 일정**
   - 그 외 → **교육일정**
 - 구현: [`detail-tabs.ts`](apps/platform/src/features/mypage/education/applications/lib/detail-tabs.ts)
 
@@ -288,5 +289,6 @@ mock draft: [`createEducationSurveyMockDraft`](apps/platform/src/features/mypage
 - 안내사항: `EducationInProgressNoticePanel` · `EducationInProgressNoticeDetailModal` · `EducationNoticeStats` · `EducationProgramInfoModal` · `EducationApplicationInfoModal`
 - 교육일정: `EducationSchedulePanel` · `resolveEducationAssignmentGuide` · `filterItemsUpToLastParticipatedSession`
 - 설문·만족도: `EducationSurveyFillPanel` (active) · `EducationSurveyEmptyPanel` (empty)
+- 역할 판정: [`application-kind.ts`](apps/platform/src/features/mypage/education/applications/lib/application-kind.ts) — `resolveApplicationRole` / `isVolunteerRoleApplication` / `isInstructorRoleApplication`
 
-**Last updated:** 2026-09-02 (설문 mock fill UI)
+**Last updated:** 2026-09-19 (교육/봉사/강의현황 역할 기반 슈퍼셋+서브셋 재구조화)

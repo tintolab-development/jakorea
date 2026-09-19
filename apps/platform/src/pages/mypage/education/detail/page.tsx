@@ -25,10 +25,12 @@ import {
   getEducationSurveyMockAvailability,
   getMockEducationApplicationById,
   hasTeacherAssignmentAsideContent,
-  isGeneralVolunteerApplication,
+  isInstructorRoleApplication,
   isSchoolTeacherMypageProfile,
+  isVolunteerRoleApplication,
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
+  lectureApplicationDetailPath,
   MYPAGE_EDUCATION_PATH,
   resolveEducationListBackPath,
   volunteerApplicationDetailPath,
@@ -189,8 +191,15 @@ export function MypageEducationDetailPage() {
   }, [applicationId, navigate])
 
   useEffect(() => {
-    if (application && isGeneralVolunteerApplication(application)) {
+    if (!application) return
+    if (isVolunteerRoleApplication(application)) {
       navigate(`${volunteerApplicationDetailPath(application.id)}${location.search}`, {
+        replace: true,
+      })
+      return
+    }
+    if (isInstructorRoleApplication(application)) {
+      navigate(`${lectureApplicationDetailPath(application.id)}${location.search}`, {
         replace: true,
       })
     }

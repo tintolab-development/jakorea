@@ -1,14 +1,21 @@
 import {
   educationApplicationDetailPath,
+  lectureApplicationDetailPath,
   volunteerApplicationDetailPath,
 } from '../../../lib/constants'
 import { getMockEducationApplicationById } from '../../applications/lib/mock-applications'
-import { isGeneralVolunteerApplication } from '../../applications/lib/application-kind'
+import {
+  isInstructorRoleApplication,
+  isVolunteerRoleApplication,
+} from '../../applications/lib/application-kind'
 
 function resolveApplicationDetailPath(applicationId: string): string {
   const application = getMockEducationApplicationById(applicationId)
-  if (application && isGeneralVolunteerApplication(application)) {
+  if (application && isVolunteerRoleApplication(application)) {
     return volunteerApplicationDetailPath(applicationId)
+  }
+  if (application && isInstructorRoleApplication(application)) {
+    return lectureApplicationDetailPath(applicationId)
   }
   return educationApplicationDetailPath(applicationId)
 }
