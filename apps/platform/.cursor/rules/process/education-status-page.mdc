@@ -67,8 +67,11 @@ alwaysApply: false
 
 ### 공통 헤더
 
-- 뒤로가기: 라벨 `교육현황`, 아이콘 `chevron-left-gray7A`, gap 14px, `hl-sm` — [`EducationDetailBack`](apps/platform/src/features/mypage/education/applications/ui/detail-back.tsx)
-- 페이지 상단 여백 100px
+- 뒤로가기: [`EducationDetailBack`](apps/platform/src/features/mypage/education/applications/ui/detail-back.tsx)
+  - **PC**: 회색 chevron + 라벨 `hl-sm` (gap 14)
+  - **모바일(~1079)**: [`ProgramBackButton`](apps/platform/src/features/program/ui/back-button.tsx) 원형 쉐브론 + 라벨
+  - 라벨 기본 `교육현황` · 봉사 `봉사현황` · 강의 `강의현황`
+- 페이지 상단 여백: PC **100px** · 모바일(~1079) **상 40 / 하 48** · 좌우 `--page-padding-x`(**20**) 한 겹(full-width, max-width 없음)
 - 프로그램명: 공고용 프로그램명 (`ProgramDetail.title`), `hl-lg`, mt 30 / mb 4
 - 진행 상태: `hd-lg`
   - **진행중**: JA send 아이콘(`ja-send-mint`) + `--color-primary-500`
@@ -210,17 +213,31 @@ alwaysApply: false
 | survey | 진행 중인 설문조사가 없어요 | 참여할 프로그램의 설문조사가 생기면 이곳에서 확인할 수 있어요 |
 | satisfaction | 진행 중인 만족도조사가 없어요 | 참여할 프로그램의 만족도조사가 생기면 이곳에서 확인할 수 있어요 |
 
-### 설문 mock fill (active)
+### 설문·만족도 fill (active)
 
 컴포넌트: [`EducationSurveyFillPanel`](apps/platform/src/features/mypage/education/surveys/ui/fill-panel.tsx)  
-mock draft: [`createEducationSurveyMockDraft`](apps/platform/src/features/mypage/education/surveys/lib/mock-survey-draft.ts) — CMS `WritingFormDraft` · 설문 단락 8종 + 제목·설문자정보·마무리.
+`kind: 'survey' | 'satisfaction'` · satisfaction은 `satisfactionAudience: 'student' | 'teacher'`.
 
-**노출 분기** [`getEducationSurveyMockAvailability`](apps/platform/src/features/mypage/education/surveys/lib/mock-survey-availability.ts):
+시드: [`createEducationSurveySeedDraft`](apps/platform/src/features/mypage/education/surveys/lib/seed-survey-draft.ts) — CMS `createDefaultSurveyDraft()`(14단락) + catalog `templateName` 주입.
+
+| kind / audience | surveyTitle |
+|-----------------|-------------|
+| survey | 설문조사 |
+| satisfaction + student (교육/봉사) | 만족도조사 (학생용) |
+| satisfaction + teacher (강의) | 만족도조사 (교사용) |
+
+단락: 제목·설문자정보(name·addressRegion 등 CMS 선택 키) · 객관식 1 · 척도 6 · 주관식 3 · 별점 · closing. date/time/file은 시드에 없음(커스텀 양식용 field UI만 유지).
+
+**설문자 정보**: CMS에서 선택한 항목은 작성 요청이 아니라 **로그인 회원·프로그램 정보를 비활성 `PFTextInput`으로 노출** ([`resolve-user-info-values.ts`](apps/platform/src/features/mypage/education/surveys/lib/resolve-user-info-values.ts)). 섹션 타이틀은 라벨만 (`이름을 입력해 주세요` 아님).
+
+**2건 이상 목록 레이아웃** (PC `--bp-pc-up`): 좌측 설문목록 240px · 아이템 gap 8 · 본문과 간격 60px · 우측 본문 `flex:1; min-width:0`으로 폭 축소. mock: [`getMockEducationSurveyList`](apps/platform/src/features/mypage/education/surveys/lib/mock-survey-list.ts) — **설문조사 1건** / **만족도조사 다건**. ≤1079 모바일 목록 UI는 후속(당분간 목록 숨김·본문만).
+
+**노출 분기** [`getEducationSurveyMockAvailability`](apps/platform/src/features/mypage/education/surveys/lib/mock-survey-availability.ts) — `configured`에 `surveyConfigured` / `satisfactionConfigured` 전달:
 
 | 조건 | UI |
 |------|-----|
 | `in_progress` / `completed` / 교육 중 포기 | fill |
-| `surveyConfigured === false` 또는 그 외 | empty |
+| `configured === false` 또는 그 외 | empty |
 
 목록·응답 API 후속.
 
@@ -265,7 +282,7 @@ mock draft: [`createEducationSurveyMockDraft`](apps/platform/src/features/mypage
 | ProgramInfoBody 재사용 + 취소 확인·이력 제거(mock) | 취소 API 연동 |
 | 빈 필드·첨부·지원방법 비노출 / 교육 커리큘럼 라벨 | 교육 일정·설문·만족도 탭 |
 | 신청 내용 (결과 대기·서류 합격) mock UI | 신청 내용 API 연동 |
-| 안내사항 · 프로그램/신청 정보 팝업 · 교육일정 목록 · **설문 mock fill / 빈 상태** | 결석/과제/피드백 팝업 · 설문 목록 UI · 정산 · API |
+| 안내사항 · 프로그램/신청 정보 팝업 · 교육일정 목록 · **설문·만족도 CMS 시드 fill / 빈 상태** | 결석/과제/피드백 팝업 · 설문 목록 UI · 정산 · API |
 | **활동 포기** 상세 분기(교육 전/중) · 탭 SSOT | 교육일정·설문 UI + 회차 필터 연동 |
 | 비-applied 상태 placeholder | 진행 완료 안내사항 탭 |
 
@@ -288,7 +305,7 @@ mock draft: [`createEducationSurveyMockDraft`](apps/platform/src/features/mypage
 - 활동 포기: `withdrawalPhase` · `lastParticipatedSession` · `isWithdrawnBeforeEducation` · `isWithdrawnDuringEducation`
 - 안내사항: `EducationInProgressNoticePanel` · `EducationInProgressNoticeDetailModal` · `EducationNoticeStats` · `EducationProgramInfoModal` · `EducationApplicationInfoModal`
 - 교육일정: `EducationSchedulePanel` · `resolveEducationAssignmentGuide` · `filterItemsUpToLastParticipatedSession`
-- 설문·만족도: `EducationSurveyFillPanel` (active) · `EducationSurveyEmptyPanel` (empty)
+- 설문·만족도: `EducationSurveyFillPanel` (active, CMS `createDefaultSurveyDraft` 시드) · `EducationSurveyEmptyPanel` (empty)
 - 역할 판정: [`application-kind.ts`](apps/platform/src/features/mypage/education/applications/lib/application-kind.ts) — `resolveApplicationRole` / `isVolunteerRoleApplication` / `isInstructorRoleApplication`
 
 **Last updated:** 2026-09-19 (교육/봉사/강의현황 역할 기반 슈퍼셋+서브셋 재구조화)

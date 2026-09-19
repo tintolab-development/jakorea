@@ -111,14 +111,18 @@ export {
   EducationScheduleRow,
 } from './schedules'
 export type {
+  CreateEducationSurveySeedDraftOptions,
+  EducationSatisfactionAudience,
   EducationSurveyEmptyKind,
   EducationSurveyFillPanelProps,
   EducationSurveyMockAvailability,
+  EducationSurveySeedKind,
 } from './surveys'
 export {
   EducationSurveyEmptyPanel,
   EducationSurveyFillPanel,
-  createEducationSurveyMockDraft,
+  createEducationSurveySeedDraft,
+  EDUCATION_SURVEY_SEED_CREATED_AT,
   getEducationSurveyMockAvailability,
 } from './surveys'
 export type {

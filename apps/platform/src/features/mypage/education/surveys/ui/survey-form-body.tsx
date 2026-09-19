@@ -20,6 +20,8 @@ export type EducationSurveyFormBodyProps = {
   onUpdateParagraph: FormUpdateParagraph
   sidecar: SurveySidecarState
   onSidecarChange: (next: SurveySidecarState) => void
+  /** 설문자 정보 fieldKey → 표시값 */
+  userInfoValues?: Record<string, string>
 }
 
 function isBodyOnlyParagraph(paragraph: WritingFormParagraph): boolean {
@@ -39,6 +41,7 @@ export function EducationSurveyFormBody({
   onUpdateParagraph,
   sidecar,
   onSidecarChange,
+  userInfoValues,
 }: EducationSurveyFormBodyProps) {
   return (
     <div className={styles.form}>
@@ -65,6 +68,7 @@ export function EducationSurveyFormBody({
                   sidecar={sidecar}
                   onSidecarChange={onSidecarChange}
                   userInfoWriteField={entry}
+                  userInfoDisplayValue={userInfoValues?.[entry.key]}
                 />
               </PFFormSection>
             )

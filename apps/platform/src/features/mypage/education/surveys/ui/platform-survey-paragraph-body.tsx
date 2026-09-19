@@ -6,7 +6,6 @@ import type {
   ShortEssayParagraph,
   StarRateParagraph,
   TimeParagraph,
-  UserInfoParagraph,
   WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
@@ -29,6 +28,8 @@ export type PlatformSurveyParagraphBodyProps = {
   sidecar: SurveySidecarState
   onSidecarChange: (next: SurveySidecarState) => void
   userInfoWriteField?: { key: string; label: string }
+  /** 설문자 정보 필드 표시값 (로그인·프로그램 컨텍스트) */
+  userInfoDisplayValue?: string
 }
 
 export function PlatformSurveyParagraphBody({
@@ -37,17 +38,14 @@ export function PlatformSurveyParagraphBody({
   sidecar,
   onSidecarChange,
   userInfoWriteField,
+  userInfoDisplayValue,
 }: PlatformSurveyParagraphBodyProps) {
   if (paragraph.kind === 'single_item' && paragraph.variant === 'user_info') {
     if (userInfoWriteField == null) return null
     return (
       <SurveyUserInfoField
-        paragraph={paragraph as UserInfoParagraph}
-        fieldKey={userInfoWriteField.key}
         label={userInfoWriteField.label}
-        onUpdateParagraph={onUpdateParagraph}
-        sidecar={sidecar}
-        onSidecarChange={onSidecarChange}
+        value={userInfoDisplayValue ?? ''}
       />
     )
   }

@@ -1,59 +1,24 @@
-import {
-  formatUserInfoWritePlaceholder,
-  type UserInfoParagraph,
-} from '@jakorea/form-schema/writing-form'
-import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
-import { PFTextarea } from '@/shared/ui'
+import { PFTextInput } from '@/shared/ui'
 import styles from '../survey-fields.module.css'
-import type { SurveySidecarState } from '../../lib/survey-sidecar'
 
 type SurveyUserInfoFieldProps = {
-  paragraph: UserInfoParagraph
-  fieldKey: string
   label: string
-  onUpdateParagraph: FormUpdateParagraph
-  sidecar: SurveySidecarState
-  onSidecarChange: (next: SurveySidecarState) => void
+  /** 로그인·프로그램 컨텍스트에서 해석된 표시값 */
+  value: string
 }
 
-export function SurveyUserInfoField({
-  paragraph,
-  fieldKey,
-  label,
-  onUpdateParagraph,
-  sidecar,
-  onSidecarChange,
-}: SurveyUserInfoFieldProps) {
-  const sidecarValue = sidecar.userInfoAnswers[paragraph.id]?.[fieldKey]
-  const value = sidecarValue ?? paragraph.fieldAnswers?.[fieldKey] ?? ''
-
+/** 설문자 정보 — 작성 요청이 아니라 로그인 사용자 정보를 비활성 input으로 노출 */
+export function SurveyUserInfoField({ label, value }: SurveyUserInfoFieldProps) {
   return (
     <div className={styles.surveyFields}>
-      <PFTextarea
+      <PFTextInput
         variant="formPage"
-        placeholder={formatUserInfoWritePlaceholder(label)}
+        size="xlarge"
+        width="100%"
         value={value}
-        onValueChange={next => {
-          onSidecarChange({
-            ...sidecar,
-            userInfoAnswers: {
-              ...sidecar.userInfoAnswers,
-              [paragraph.id]: {
-                ...sidecar.userInfoAnswers[paragraph.id],
-                [fieldKey]: next,
-              },
-            },
-          })
-          onUpdateParagraph(paragraph.id, current => {
-            if (current.kind !== 'single_item' || current.variant !== 'user_info') {
-              return current
-            }
-            return {
-              ...current,
-              fieldAnswers: { ...current.fieldAnswers, [fieldKey]: next },
-            }
-          })
-        }}
+        disabled
+        readOnly
+        aria-label={label}
       />
     </div>
   )

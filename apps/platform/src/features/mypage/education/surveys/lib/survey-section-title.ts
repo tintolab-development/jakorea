@@ -4,10 +4,7 @@ import type {
   WritingFormDraft,
   WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
-import {
-  formatUserInfoWriteQuestionTitle,
-  getSurveyWriteTitleNumberPrefix,
-} from '@jakorea/form-schema/writing-form'
+import { getSurveyWriteTitleNumberPrefix } from '@jakorea/form-schema/writing-form'
 
 export function resolveEducationSurveySectionTitle(
   draft: WritingFormDraft,
@@ -22,7 +19,8 @@ export function resolveEducationSurveySectionTitle(
   const prefix = getSurveyWriteTitleNumberPrefix(draft.paragraphs, slot, style)
 
   if (userInfoField != null) {
-    const base = formatUserInfoWriteQuestionTitle(userInfoField.label)
+    // Platform fill: 설문자 정보는 작성 요청이 아니라 로그인 정보 노출 → 라벨만
+    const base = userInfoField.label
     return prefix ? `${prefix}${base}` : base
   }
 
