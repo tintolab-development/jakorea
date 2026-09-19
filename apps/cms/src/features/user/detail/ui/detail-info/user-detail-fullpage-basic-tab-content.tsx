@@ -53,10 +53,7 @@ import { deleteUser } from '@/entities/user/api/user-service'
 import { MemberWithdrawGuideModal } from '@/features/user/shared/ui/member-withdraw-guide-modal'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { buildMemberWithdrawMessageLines } from '@/features/user/shared/lib/member-withdraw-delete-guide'
-import {
-  WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
-  WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
-} from '@/shared/constants'
+import { DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER } from '@/shared/constants'
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -234,43 +231,46 @@ export function UserDetailFullpageBasicTabContent({
     setAffiliatedTeacherWithdrawTargets([])
   }, [])
 
-  const handleAffiliatedTeacherWithdrawConfirm = useCallback(async () => {
-    if (affiliatedTeacherWithdrawTargets.length === 0) return
-    setAffiliatedTeacherWithdrawLoading(true)
-    try {
-      for (const row of affiliatedTeacherWithdrawTargets) {
-        const userId = row.linkedUserId?.trim()
-        if (!userId) continue
-        await deleteUser(userId, 'CMS 관리자 회원 탈퇴', {
-          memberId: row.teacherMemberId,
-          confirmationText: WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
-        })
+  const handleAffiliatedTeacherWithdrawConfirm = useCallback(
+    async (currentPassword?: string) => {
+      if (affiliatedTeacherWithdrawTargets.length === 0) return
+      setAffiliatedTeacherWithdrawLoading(true)
+      try {
+        for (const row of affiliatedTeacherWithdrawTargets) {
+          const userId = row.linkedUserId?.trim()
+          if (!userId) continue
+          await deleteUser(userId, 'CMS 관리자 회원 탈퇴', {
+            memberId: row.teacherMemberId,
+            currentPassword,
+          })
+        }
+        if (user.memberId != null) {
+          await queryClient.invalidateQueries({
+            queryKey: memberQueryKeys.affiliatedTeachers(user.memberId),
+          })
+        }
+        if (schoolOrganizationId != null) {
+          await queryClient.invalidateQueries({
+            queryKey: memberQueryKeys.schoolTeachers(schoolOrganizationId),
+          })
+        }
+        await onAffiliatedTeachersChanged?.()
+        handleAffiliatedTeacherWithdrawCancel()
+      } catch (error) {
+        handleError(error, { defaultMessage: '교사 회원 탈퇴 처리에 실패했습니다.' })
+      } finally {
+        setAffiliatedTeacherWithdrawLoading(false)
       }
-      if (user.memberId != null) {
-        await queryClient.invalidateQueries({
-          queryKey: memberQueryKeys.affiliatedTeachers(user.memberId),
-        })
-      }
-      if (schoolOrganizationId != null) {
-        await queryClient.invalidateQueries({
-          queryKey: memberQueryKeys.schoolTeachers(schoolOrganizationId),
-        })
-      }
-      await onAffiliatedTeachersChanged?.()
-      handleAffiliatedTeacherWithdrawCancel()
-    } catch (error) {
-      handleError(error, { defaultMessage: '교사 회원 탈퇴 처리에 실패했습니다.' })
-    } finally {
-      setAffiliatedTeacherWithdrawLoading(false)
-    }
-  }, [
-    affiliatedTeacherWithdrawTargets,
-    handleAffiliatedTeacherWithdrawCancel,
-    onAffiliatedTeachersChanged,
-    queryClient,
-    schoolOrganizationId,
-    user.memberId,
-  ])
+    },
+    [
+      affiliatedTeacherWithdrawTargets,
+      handleAffiliatedTeacherWithdrawCancel,
+      onAffiliatedTeachersChanged,
+      queryClient,
+      schoolOrganizationId,
+      user.memberId,
+    ]
+  )
 
   const handleEmploymentStatusChange = useCallback(
     async (teacherId: string, status: SchoolTeacherEmploymentStatus) => {
@@ -486,8 +486,8 @@ export function UserDetailFullpageBasicTabContent({
           lines={affiliatedTeacherWithdrawGuideLines}
           confirmText="회원 탈퇴"
           confirmVariant="delete"
-          requiredConfirmInput={WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE}
-          confirmInputPlaceholder={WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+          confirmInputMode="password"
+          confirmInputPlaceholder={DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER}
           confirmLoading={affiliatedTeacherWithdrawLoading}
         />
       ) : null}

@@ -888,7 +888,12 @@ export async function submitInstructorJaEvaluationRemote(
 }
 
 export async function withdrawAdminSelfRemote(body: AdminSelfWithdrawalRequest): Promise<void> {
-  await membersApi.withdrawMe(body)
+  await customInstance({
+    url: '/api/admin/me/withdrawals',
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
+  })
 }
 
 /**

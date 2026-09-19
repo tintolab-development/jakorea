@@ -12,10 +12,10 @@ export type DeleteUserOptions = {
   /** 기본: `CMS 관리자 회원 삭제` */
   reason?: string
   /**
-   * `POST …/users/{id}/delete` confirmationText.
-   * 목록 삭제 = `삭제`, 상세·소속교사 탈퇴 = `탈퇴` (모달 입력과 동일).
+   * `POST …/users/{id}/delete` 등 회원 삭제 API — 현재 로그인 관리자 비밀번호.
+   * 학교/관리자 계정 삭제 API에는 전달되지 않음.
    */
-  confirmationText?: string
+  currentPassword?: string
 }
 
 /** 목록·상세 User → deleteUser API 옵션 (memberId·adminAccountId·organizationId 힌트 보강) */
