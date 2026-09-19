@@ -79,8 +79,11 @@ export function PFTextarea({
   const isFormPage = variant === 'formPage'
   const rootStyle = { ...toWidthStyle(width), ...style }
 
+  const isRows1 = rows === 1
+
   const fieldClassName = [
     styles.field,
+    isRows1 ? styles.fieldRows1 : undefined,
     error ? styles.error : undefined,
     disabled ? styles.disabled : undefined,
   ]
@@ -90,6 +93,7 @@ export function PFTextarea({
   const textareaClassName = [
     styles.textarea,
     size !== 'medium' ? styles.textareaLarge : undefined,
+    isRows1 ? styles.textareaRows1 : undefined,
     isFormPage ? styles.formPageTextarea : sizeTypographyClassMap[size],
   ]
     .filter(Boolean)

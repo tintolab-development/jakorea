@@ -413,7 +413,7 @@
     max-width: 520px;
     min-width: min(100%, 375px);
     gap: 0;
-    padding-inline: 20px;
+    padding-inline: var(--page-padding-x);
   }
 
   .back {

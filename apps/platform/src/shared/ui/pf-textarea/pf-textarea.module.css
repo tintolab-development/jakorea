@@ -47,6 +47,13 @@
   background: var(--color-neutral-white);
 }
 
+/* rows=1 — PFTextInput large(44px)와 비슷한 한 줄 박스. 리사이즈로 확장 가능 */
+.fieldRows1 {
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 14px;
+}
+
 .field:hover:not(.disabled),
 .field:focus-within:not(.disabled) {
   border-color: var(--color-border-focus);
@@ -92,6 +99,20 @@
   min-height: calc(4 * 1.5em);
 }
 
+/* rows=1 — 초기 1줄 높이 (리사이즈 핸들로 확장 가능) */
+.textareaRows1 {
+  min-height: 1.5em;
+  height: 1.5em;
+  padding: 0 20px 0 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.textareaLarge.textareaRows1 {
+  min-height: 1.5em;
+  height: 1.5em;
+}
+
 /* Platform 양식 페이지 전용 — 타이포만 분기 (.field radius-16 유지) */
 
 .formPageTextarea {
@@ -103,6 +124,16 @@
   font-style: normal;
   font-weight: 500 !important;
   line-height: 150%;
+}
+
+.formPageTextarea.textareaRows1 {
+  min-height: 1.5em;
+  height: 1.5em;
+}
+
+.fieldRows1 .resizeHandle {
+  right: 10px;
+  bottom: 14px;
 }
 
 .formPageTextarea::placeholder {

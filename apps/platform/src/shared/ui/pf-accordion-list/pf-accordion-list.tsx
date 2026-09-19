@@ -56,14 +56,16 @@ export function PFAccordionList({
               aria-controls={panelId}
               onClick={() => handleToggle(item.id)}
             >
-              <div className={styles.badgeContainer}>
-                <PFCategoryBadge size="small" variant="secondary" className={styles.badge}>
-                  {item.categoryLabel}
-                </PFCategoryBadge>
+              <div className={styles.content}>
+                <div className={styles.badgeContainer}>
+                  <PFCategoryBadge size="small" variant="secondary" className={styles.badge}>
+                    {item.categoryLabel}
+                  </PFCategoryBadge>
+                </div>
+                <PFText as="span" typo="hl-sm" color="black" className={styles.title}>
+                  {item.title}
+                </PFText>
               </div>
-              <PFText as="span" typo="hl-sm" color="black" className={styles.title}>
-                {item.title}
-              </PFText>
               <img
                 className={[styles.chevron, isExpanded ? styles.chevronExpanded : undefined]
                   .filter(Boolean)

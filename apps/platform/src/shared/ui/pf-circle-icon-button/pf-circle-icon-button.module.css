@@ -79,6 +79,19 @@
   display: block;
 }
 
+@media (--bp-below-pc) {
+  .refresh {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+  }
+
+  .refresh .icon {
+    width: 14.5px;
+    height: 14.5px;
+  }
+}
+
 /* 4) delete — 48px */
 .delete {
   width: 48px;
