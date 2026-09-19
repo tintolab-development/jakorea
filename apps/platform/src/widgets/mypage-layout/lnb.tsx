@@ -4,9 +4,13 @@ import { InstructorApplyCta } from './instructor-apply-cta'
 import { getLnbIconUrl } from './lnb-icon-map'
 import styles from './lnb.module.css'
 
+export type LnbAppearance = 'default' | 'category'
+
 type LnbProps = {
   items: MypageLnbItem[]
   showInstructorApply?: boolean
+  /** category: 모바일 필 탭 스타일 (회원정보 설정 등). PC는 default와 동일 */
+  appearance?: LnbAppearance
   ariaLabel?: string
   onItemSelect?: (key: MypageLnbItemKey) => void
 }
@@ -14,11 +18,17 @@ type LnbProps = {
 export function Lnb({
   items,
   showInstructorApply = false,
+  appearance = 'default',
   ariaLabel = '마이페이지 메뉴',
   onItemSelect,
 }: LnbProps) {
+  const isCategory = appearance === 'category'
+  const lnbClassName = [styles.lnb, isCategory ? styles.lnbCategory : undefined]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <nav className={styles.lnb} aria-label={ariaLabel}>
+    <nav className={lnbClassName} aria-label={ariaLabel}>
       <div className={styles.menu}>
         {items.map(item => {
           const itemClassName = [
@@ -49,7 +59,13 @@ export function Lnb({
                 <PFText
                   as="span"
                   typo="bd-md-md"
-                  color={item.active ? 'primary-700' : 'neutral-cool-600'}
+                  color={
+                    isCategory
+                      ? 'inherit'
+                      : item.active
+                        ? 'primary-700'
+                        : 'neutral-cool-600'
+                  }
                   className={item.active ? styles.labelActive : styles.label}
                 >
                   {item.label}
