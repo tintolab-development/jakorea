@@ -2,7 +2,6 @@ import type { FormEvent } from 'react'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  isMockAdminRegisteredFirstLogin,
   requiresAdminRegisteredOnboarding,
   resolveAdminProvisionedOnboardingEntryPath,
   syncAdminRegisteredOnboardingSession,
@@ -122,12 +121,11 @@ export function SignInPage() {
     }
 
     if (!remoteApi) {
-      if (isMockAdminRegisteredFirstLogin(validation.normalized, password)) {
-        syncAdminRegisteredOnboardingSession(validation.normalized, { registeredByAdmin: true })
-        navigate('/auth/admin-registered/notice')
-        return
-      }
-      completeDevSignIn()
+      setFormError(
+        import.meta.env.DEV
+          ? '개발 환경에서는 Mock 로그인 버튼을 이용해 주세요.'
+          : '로그인 API가 설정되지 않았습니다.',
+      )
       return
     }
 
