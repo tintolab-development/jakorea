@@ -14,3 +14,13 @@
   justify-content: center;
   margin-top: var(--spacing-100);
 }
+
+@media (--bp-below-pc) {
+  .filters {
+    margin-bottom: var(--spacing-16);
+  }
+
+  .pagination {
+    margin-top: var(--spacing-28);
+  }
+}

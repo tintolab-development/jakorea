@@ -16,3 +16,9 @@
   justify-content: center;
   margin-top: var(--spacing-100);
 }
+
+@media (--bp-below-pc) {
+  .pagination {
+    margin-top: var(--spacing-28);
+  }
+}
