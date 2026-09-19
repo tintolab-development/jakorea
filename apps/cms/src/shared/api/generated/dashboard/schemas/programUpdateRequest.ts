@@ -59,7 +59,10 @@ export interface ProgramUpdateRequest {
   educationProcess?: string;
   maleParticipants?: number;
   femaleParticipants?: number;
+  /** 참여자 최종 인원. Mirrored to kpi.finalParticipants + generalCommonInfo */
   totalParticipants?: number;
+  /** Write alias for totalParticipants */
+  finalParticipants?: number;
   generalVolunteers?: number;
   staffVolunteers?: number;
   returningVolunteers?: number;
@@ -69,6 +72,7 @@ export interface ProgramUpdateRequest {
   finalSchools?: number;
   finalClasses?: number;
   managerName?: string;
+  /** 교육 장소. Always mirrored to generalCommonInfo.venue */
   venue?: string;
   curriculum?: string;
   contactEmail?: string;

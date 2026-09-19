@@ -22,9 +22,9 @@ export interface AccountDirectoryBulkDeleteRequest {
      */
   reason?: string;
   /**
-     * CMS 삭제 확인 문구. 허용값: "삭제" (exact match after Java String.trim()). 본인 탈퇴의 "탈퇴"와 구분합니다.
-     * @minLength 0
-     * @maxLength 30
+     * 현재 로그인 관리자 비밀번호 (MemberDeletionConfirmationPolicy.requireCurrentAdminPassword)
+     * @minLength 1
+     * @maxLength 100
      */
-  confirmationText: string;
+  currentPassword: string;
 }

@@ -59,7 +59,10 @@ export interface ProgramResponse {
   educationProcess?: string;
   maleParticipants?: number;
   femaleParticipants?: number;
+  /** 참여자 최종 인원. dual-read totalParticipants|finalParticipants */
   totalParticipants?: number;
+  /** Write alias for totalParticipants (dual-read) */
+  finalParticipants?: number;
   generalVolunteers?: number;
   staffVolunteers?: number;
   returningVolunteers?: number;
@@ -82,6 +85,7 @@ export interface ProgramResponse {
   recruitmentGuide?: string;
   learningSupportContent?: string;
   otherMatters?: string;
+  /** 모집 비고 SSOT. oneLineIntroduction과 분리. */
   remarks?: string;
   recruitmentTargetDetail?: string;
   educationTargetDetail?: string;
