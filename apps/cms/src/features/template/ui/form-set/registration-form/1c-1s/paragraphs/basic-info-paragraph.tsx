@@ -1,6 +1,6 @@
 /**
  * 1사 1교 프로그램 등록 폼 — 기본 정보
- * (상단: 일반 프로그램 정보 / 하단: 교육 과정·IP·Partner·IPS — 스크린 구성 기준)
+ * (참여자 유형: 학교/기관·강사 checked·disabled 고정. 상단: 일반 프로그램 정보 / 하단: 교육 과정·IP·Partner·IPS)
  */
 import { useMemo } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
@@ -41,6 +41,8 @@ const REP_EN = '1 Company 1 School Economics and Finance Education'
 const PROGRAM_PROGRESS_STATIC_VIEW = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
 
 const ALL_VALUE = '__all__'
+const EMPTY_MANAGER_CONTACT_IDS: string[] = []
+const ECONOMY_SURVEY_ITEMS_DEFAULT = initialProgramRegistrationSurveyItems(true)
 
 const DETAILED_PROGRAM_MAIN_VALUE = '__economy_1c1s_main__'
 const DETAILED_PROGRAM_MAIN_OPTION = {
@@ -67,10 +69,10 @@ export type OneCOneSRegistrationBasicInfoParagraphProps = {
 }
 
 export function OneCOneSRegistrationBasicInfoParagraph({
-  participant,
+  participant: _participant,
   onIndividualChange: _onIndividualChange,
-  onOrganizationChange,
-  onTeacherInstructorChange,
+  onOrganizationChange: _onOrganizationChange,
+  onTeacherInstructorChange: _onTeacherInstructorChange,
 }: OneCOneSRegistrationBasicInfoParagraphProps) {
   const [repKo, setRepKo] = useProgramRegistrationOverlayKv('economyRegistration.basicInfo.repKo', REP_KO)
   const [repEn, setRepEn] = useProgramRegistrationOverlayKv('economyRegistration.basicInfo.repEn', REP_EN)
@@ -137,7 +139,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
   )
   const [managerContactIds, setManagerContactIds] = useProgramRegistrationOverlayKv<string[]>(
     'economyRegistration.basicInfo.managerContactIds',
-    []
+    EMPTY_MANAGER_CONTACT_IDS
   )
   const [detailedProgramId, setDetailedProgramId] = useProgramRegistrationOverlayKv<string>(
     'economyRegistration.basicInfo.detailedProgramId',
@@ -150,13 +152,13 @@ export function OneCOneSRegistrationBasicInfoParagraph({
 
   const [surveyItems] = useProgramRegistrationOverlayKv<
     Record<ProgramRegistrationSurveyItemId, boolean>
-  >('economyRegistration.basicInfo.surveyItems', initialProgramRegistrationSurveyItems(true))
+  >('economyRegistration.basicInfo.surveyItems', ECONOMY_SURVEY_ITEMS_DEFAULT)
 
   const toggleSurveyItem = (id: ProgramRegistrationSurveyItemId) => (e: CheckboxChangeEvent) => {
     updateProgramRegistrationOverlayKey<Record<ProgramRegistrationSurveyItemId, boolean>>(
       'economyRegistration.basicInfo.surveyItems',
       prev => ({
-        ...(prev ?? initialProgramRegistrationSurveyItems(true)),
+        ...(prev ?? ECONOMY_SURVEY_ITEMS_DEFAULT),
         [id]: e.target.checked,
       })
     )
@@ -320,18 +322,11 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsCheckbox checkboxSize="large" checked={false} disabled>
                   개인
                 </CmsCheckbox>
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={participant.organization}
-                  onChange={e => onOrganizationChange(e.target.checked)}
-                >
+                {/* 1사1교 — 학교/기관·강사 고정 (해제 불가) */}
+                <CmsCheckbox checkboxSize="large" checked disabled>
                   학교/기관
                 </CmsCheckbox>
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={participant.teacherInstructor === true}
-                  onChange={e => onTeacherInstructorChange(e.target.checked)}
-                >
+                <CmsCheckbox checkboxSize="large" checked disabled>
                   강사
                 </CmsCheckbox>
                 <CmsCheckbox checkboxSize="large" checked={false} disabled>

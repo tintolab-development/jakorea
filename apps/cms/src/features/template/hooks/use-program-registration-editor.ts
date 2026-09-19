@@ -342,7 +342,14 @@ export function useProgramRegistrationEditor(
             teacherInstructor: false,
             volunteer: false,
           }
-        : state.participant
+        : programRegistrationFormVariant === 'economy'
+          ? {
+              individual: false,
+              organization: true,
+              teacherInstructor: true,
+              volunteer: false,
+            }
+          : state.participant
     )
     setProgramType(state.programType)
     setSessionRoundType(state.sessionRoundType)
@@ -406,6 +413,15 @@ export function useProgramRegistrationEditor(
     })
   }, [applyEditorStateSnapshot, programRegistrationFormVariant, seedParagraphIds])
 
+  // hydrate는 active·복원 옵션·유형이 바뀔 때만. 콜백/Set identity 변경으로
+  // overlay를 통째로 reset 하면 다른 단락 입력이 사라진다.
+  const applyEditorStateSnapshotRef = useRef(applyEditorStateSnapshot)
+  applyEditorStateSnapshotRef.current = applyEditorStateSnapshot
+  const resetRegistrationEditorToSeedRef = useRef(resetRegistrationEditorToSeed)
+  resetRegistrationEditorToSeedRef.current = resetRegistrationEditorToSeed
+  const seedParagraphIdsRef = useRef(seedParagraphIds)
+  seedParagraphIdsRef.current = seedParagraphIds
+
   useEffect(() => {
     if (!active) {
       setIsDraftLoading(false)
@@ -416,7 +432,7 @@ export function useProgramRegistrationEditor(
 
     if (skipDraftRestore) {
       setIsDraftLoading(false)
-      resetRegistrationEditorToSeed()
+      resetRegistrationEditorToSeedRef.current()
       return
     }
 
@@ -426,6 +442,7 @@ export function useProgramRegistrationEditor(
       setDraft(EMPTY_WRITING_FORM_DRAFT)
       setActiveParagraphId(null)
       const defaults = createDefaultRegistrationEditorState(programRegistrationFormVariant)
+      const variant = programRegistrationFormVariant
 
       void loadWritingFormTemplateDraft(templateCode, {
         localOnly: localOnlyDraftPersistence,
@@ -436,16 +453,19 @@ export function useProgramRegistrationEditor(
             replaceProgramRegistrationOverlay(saved.overlay ?? {})
             const normalizedBase = filterProgramRegistrationDraftForVariant(
               normalizeWritingFormDraft(saved.draft),
-              programRegistrationFormVariant
+              variant
             )
             const normalized =
-              programRegistrationFormVariant === 'economy'
-                ? withForcedProgramRegistrationSeedTitleRequired(normalizedBase, seedParagraphIds)
+              variant === 'economy'
+                ? withForcedProgramRegistrationSeedTitleRequired(
+                    normalizedBase,
+                    seedParagraphIdsRef.current
+                  )
                 : normalizedBase
             const restored = applyProgramRegistrationEditorState(saved.editorState, defaults)
             startTransition(() => {
               setDraft(normalized)
-              applyEditorStateSnapshot(restored)
+              applyEditorStateSnapshotRef.current(restored)
               setActiveParagraphId(
                 restored.activeParagraphId ?? normalized.paragraphs[0]?.id ?? null
               )
@@ -453,7 +473,7 @@ export function useProgramRegistrationEditor(
             })
             return
           }
-          resetRegistrationEditorToSeed()
+          resetRegistrationEditorToSeedRef.current()
         })
         .finally(() => {
           if (!cancelled) setIsDraftLoading(false)
@@ -465,13 +485,10 @@ export function useProgramRegistrationEditor(
     }
 
     setIsDraftLoading(false)
-    resetRegistrationEditorToSeed()
+    resetRegistrationEditorToSeedRef.current()
   }, [
     active,
-    applyEditorStateSnapshot,
     programRegistrationFormVariant,
-    resetRegistrationEditorToSeed,
-    seedParagraphIds,
     skipDraftRestore,
     templateCode,
     usesTemplateDraftApi,
@@ -567,6 +584,15 @@ export function useProgramRegistrationEditor(
         })
         return
       }
+      if (programRegistrationFormVariant === 'economy') {
+        setParticipant({
+          individual: false,
+          organization: true,
+          teacherInstructor: true,
+          volunteer: false,
+        })
+        return
+      }
       const next = applyGeneralParticipantAudienceSelection('individual', checked)
       const nextParticipation = shouldResetParticipationScheduleDetailForAudience(next)
         ? 'common'
@@ -616,6 +642,16 @@ export function useProgramRegistrationEditor(
         }))
         return
       }
+      // 1사1교 — 학교/기관·강사 고정 (해제·변경 불가)
+      if (programRegistrationFormVariant === 'economy') {
+        setParticipant({
+          individual: false,
+          organization: true,
+          teacherInstructor: true,
+          volunteer: false,
+        })
+        return
+      }
       const next = applyGeneralParticipantAudienceSelection('organization', checked)
       const nextParticipation = shouldResetParticipationScheduleDetailForAudience(next)
         ? 'common'
@@ -663,6 +699,15 @@ export function useProgramRegistrationEditor(
         })
         return
       }
+      if (programRegistrationFormVariant === 'economy') {
+        setParticipant({
+          individual: false,
+          organization: true,
+          teacherInstructor: true,
+          volunteer: false,
+        })
+        return
+      }
       setParticipant(prev => ({ ...prev, teacherInstructor: checked }))
     },
     [programRegistrationFormVariant]
@@ -675,6 +720,15 @@ export function useProgramRegistrationEditor(
           individual: false,
           organization: true,
           teacherInstructor: false,
+          volunteer: false,
+        })
+        return
+      }
+      if (programRegistrationFormVariant === 'economy') {
+        setParticipant({
+          individual: false,
+          organization: true,
+          teacherInstructor: true,
           volunteer: false,
         })
         return

@@ -1,4 +1,4 @@
-import { useCallback, useSyncExternalStore } from 'react'
+import { useCallback, useRef, useSyncExternalStore } from 'react'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 
@@ -243,14 +243,21 @@ export function resetProgramRegistrationOverlay(): void {
   notifyOverlayListeners()
 }
 
-/** `useSyncExternalStore`용 — 변경된 overlay 키만 구독한다. */
+/**
+ * `useSyncExternalStore`용 — 변경된 overlay 키만 구독한다.
+ *
+ * `defaultValue`는 `useRef`로 고정한다. 호출부가 `[]` / `{}` / 매 렌더 새 객체를
+ * 넘기면 getSnapshot이 매번 다른 참조를 반환해 React가 store가 바뀐 것으로 오인하고
+ * 리렌더 루프·형제 단락 입력 소실이 난다 (모집/신청 overlay의 defaultRef 패턴과 동일).
+ */
 export function useProgramRegistrationOverlayKv<T>(
   key: string,
   defaultValue: T
 ): [T, (next: T) => void] {
+  const defaultRef = useRef(defaultValue)
   const getSnapshot = useCallback(
-    () => readOverlayKeyValue(key, defaultValue),
-    [defaultValue, key]
+    () => readOverlayKeyValue(key, defaultRef.current),
+    [key]
   )
 
   const value = useSyncExternalStore(
