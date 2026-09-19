@@ -35,6 +35,7 @@ import {
   updateAdminMarketingConsent,
 } from '@/features/auth/api/fetch-admin-me'
 import { applyAdminMeToSessionUser } from '@/features/auth/lib/apply-admin-me-to-session-user'
+import { fetchCurrentTermsDocumentMeta } from '@/features/user/api/fetch-current-terms-document'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import {
@@ -124,6 +125,33 @@ function syncMarketingConsentState(
     consent: marketing.agreed ? 'agree' : 'disagree',
     agreedAt: marketing.agreedAtDisplay,
   }
+}
+
+function findMarketingTermsRow(
+  termsAgreements: TermsAgreementRow[] | undefined
+): TermsAgreementRow | undefined {
+  return termsAgreements?.find(item => {
+    const type = item.termsType?.trim().toUpperCase()
+    return type != null && TERMS_TYPE_TO_KIND[type] === 'MARKETING'
+  })
+}
+
+/** PUT /api/admin/me/marketing-consent 필수 `version` — 기존 이력 → MARKETING current → SERVICE_TERMS current */
+async function resolveMarketingConsentVersion(
+  termsAgreements: TermsAgreementRow[] | undefined
+): Promise<string> {
+  const fromRow = findMarketingTermsRow(termsAgreements)?.termsVersion?.trim()
+  if (fromRow) return fromRow
+
+  const marketingMeta = await fetchCurrentTermsDocumentMeta('MARKETING')
+  const fromMarketing = marketingMeta?.version?.trim()
+  if (fromMarketing) return fromMarketing
+
+  const serviceMeta = await fetchCurrentTermsDocumentMeta('SERVICE_TERMS')
+  const fromService = serviceMeta?.version?.trim()
+  if (fromService) return fromService
+
+  throw new Error('약관 버전을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
 }
 
 function ConsentValueDisplay({ value }: { value: ReactNode }) {
@@ -377,16 +405,20 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
 
     setMarketingConsentUpdating(true)
     try {
-      const response = await updateAdminMarketingConsent({ agreed: next === 'agree' })
+      const previousTerms = profileTermsAgreements ?? user.termsAgreements ?? []
+      const version = await resolveMarketingConsentVersion(previousTerms)
+      const response = await updateAdminMarketingConsent({
+        agreed: next === 'agree',
+        version,
+      })
       const agreed = response.agreed === true
       const agreedAtDisplay = formatTermsAgreedAt(
         response.agreedAt,
         agreed ? SAMPLE_AGREED_AT : '-'
       )
-      const previousTerms = profileTermsAgreements ?? user.termsAgreements ?? []
       const marketingRow: TermsAgreementRow = {
         termsType: response.consentType?.trim() || 'MARKETING',
-        termsVersion: response.version?.trim() || undefined,
+        termsVersion: response.version?.trim() || version,
         required: false,
         agreed,
         agreedAt: response.agreedAt,

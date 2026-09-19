@@ -548,6 +548,8 @@ export function useUserDetailController({
       return displayUser?.id
     },
     resolveMemberRole: () => displayUser?.role,
+    resolveInstructorMemberProfile: () =>
+      displayUser ? resolveInstructorMemberProfile(displayUser) : null,
     resolveAdminAccountId: () => {
       if (displayUser?.adminAccountId != null) return displayUser.adminAccountId
       const id = displayUser?.id
@@ -560,6 +562,8 @@ export function useUserDetailController({
       displayUser?.id,
       displayUser?.memberId,
       displayUser?.role,
+      displayUser?.roles,
+      displayUser?.instructorMemberProfile,
       displayUser?.instructorRoleRequestId,
       displayUser?.adminAccountId,
     ],

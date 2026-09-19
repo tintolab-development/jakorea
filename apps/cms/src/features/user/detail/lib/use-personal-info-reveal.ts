@@ -27,6 +27,7 @@ import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/mo
 import { queryClient } from '@/shared/lib/query-client'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import type { UserRole } from '@/types/user'
+import type { InstructorMemberProfile } from '@/types/user'
 import { guardAdminAction, resolveAdminRoleCodeFromUser } from '@/shared/lib/admin-role-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 
@@ -41,6 +42,10 @@ export interface UsePersonalInfoRevealOptions {
   resolveMemberId?: () => string | undefined
   /** 회원 관리 역할별 unmask path 분기 */
   resolveMemberRole?: () => UserRole | undefined
+  /**
+   * INSTRUCTOR 세부 프로필 — 상세 GET과 동일하게 `school_teacher`면 instructor unmask 회피.
+   */
+  resolveInstructorMemberProfile?: () => InstructorMemberProfile | null | undefined
   /** ADMIN unmask — `adminAccountId`(숫자). `User.id`의 `admin-account-*`와 별개 */
   resolveAdminAccountId?: () => number | undefined
   /** 강사 권한 신청 상세 unmask — `instructor-role-requests/{requestId}/privacy/unmask` */
@@ -85,7 +90,8 @@ async function revealPersonalInfoWithAudit(
   reason: string,
   resolveMemberRole?: () => UserRole | undefined,
   resolveAdminAccountId?: () => number | undefined,
-  resolveInstructorRoleRequestId?: () => number | undefined
+  resolveInstructorRoleRequestId?: () => number | undefined,
+  resolveInstructorMemberProfile?: () => InstructorMemberProfile | null | undefined
 ): Promise<{ ok: true; payload?: unknown; role?: UserRole } | { ok: false }> {
   const memberIdRaw = resolveMemberId?.()?.trim()
   const memberIdNum = memberIdRaw != null ? Number(memberIdRaw) : NaN
@@ -129,7 +135,9 @@ async function revealPersonalInfoWithAudit(
 
   if (isMembersRemoteEnabled() && Number.isFinite(memberIdNum)) {
     try {
-      const payload = await fetchMemberRolePrivacyUnmask(memberIdNum, reason, role)
+      const payload = await fetchMemberRolePrivacyUnmask(memberIdNum, reason, role, {
+        instructorMemberProfile: resolveInstructorMemberProfile?.() ?? undefined,
+      })
       void queryClient.invalidateQueries({ queryKey: logsQueryKeys.privacyAccessAll() })
       return { ok: true, payload, role }
     } catch (error) {
@@ -165,6 +173,7 @@ export function usePersonalInfoReveal({
   resolveAccessItem,
   resolveMemberId,
   resolveMemberRole,
+  resolveInstructorMemberProfile,
   resolveAdminAccountId,
   resolveInstructorRoleRequestId,
   revealPersonalInfo,
@@ -218,7 +227,8 @@ export function usePersonalInfoReveal({
         reason,
         resolveMemberRole,
         resolveAdminAccountId,
-        resolveInstructorRoleRequestId
+        resolveInstructorRoleRequestId,
+        resolveInstructorMemberProfile
       )
       if (!result.ok) return { ok: false }
       if (result.payload !== undefined) {
@@ -233,6 +243,7 @@ export function usePersonalInfoReveal({
       resolveAccessItem,
       resolveMemberId,
       resolveMemberRole,
+      resolveInstructorMemberProfile,
       resolveAdminAccountId,
       resolveInstructorRoleRequestId,
       revealPersonalInfo,

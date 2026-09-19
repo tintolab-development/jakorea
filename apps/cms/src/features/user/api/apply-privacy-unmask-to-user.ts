@@ -17,6 +17,7 @@ import {
 } from '@/features/user/api/map-member-detail-to-user'
 import { mapInstructorRoleRequestDetailToUser } from '@/features/user/api/map-instructor-role-request-detail-to-user'
 import { mergeListUserWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 
 /**
  * 관리자 권한 승인 상세 GET 캐시에 privacy unmask 원문 필드를 병합한다.
@@ -105,6 +106,26 @@ export function applyPrivacyUnmaskResponseToUser(
     }
 
     if (role === 'INSTRUCTOR') {
+      // 순수 교사: legacy `…/privacy/unmask` → MemberDetailResponse (강사 상세 DTO 아님)
+      if (resolveInstructorMemberProfile(current) === 'school_teacher') {
+        const mapped = mapMemberDetailToUser(unmaskPayload as MemberDetailResponse, null, {
+          fallbackRole: 'INSTRUCTOR',
+        })
+        return withPreferred1365Id(
+          mergeListUserWithFetchedDetail(current, {
+            ...mapped,
+            role: 'INSTRUCTOR',
+            instructorMemberProfile: current.instructorMemberProfile ?? 'school_teacher',
+            roles: current.roles ?? mapped.roles,
+            affiliatedSchoolName: current.affiliatedSchoolName ?? mapped.affiliatedSchoolName,
+            organizationId: current.organizationId ?? mapped.organizationId,
+            affiliation: current.affiliation ?? mapped.affiliation,
+            listMetrics: current.listMetrics ?? mapped.listMetrics,
+          }),
+          unmaskPayload,
+          current
+        )
+      }
       const mapped = mapInstructorMemberDetailToUser(
         unmaskPayload as InstructorMemberDetailResponse,
         { fallbackRole: 'INSTRUCTOR' }
