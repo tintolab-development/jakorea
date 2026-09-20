@@ -15,8 +15,9 @@ import { markdownToHtml } from '@/shared/rich-text'
 import type { BulkDeleteRequest } from '@/shared/api/generated/impact-story/schemas/bulkDeleteRequest'
 import type { CategoryCreateRequest } from '@/shared/api/generated/impact-story/schemas/categoryCreateRequest'
 import type { CategoryResponse } from '@/shared/api/generated/impact-story/schemas/categoryResponse'
+import type { CategoryPayloadRow } from './category-payload'
 import type { CategoryUpdateRequest } from '@/shared/api/generated/impact-story/schemas/categoryUpdateRequest'
-import type { List7Params } from '@/shared/api/generated/impact-story/schemas/list7Params'
+import type { List6Params } from '@/shared/api/generated/impact-story/schemas/list6Params'
 import type { PublishedToggleRequest } from '@/shared/api/generated/impact-story/schemas/publishedToggleRequest'
 import type { StoryCreateRequest } from '@/shared/api/generated/impact-story/schemas/storyCreateRequest'
 import type { StoryListItem } from '@/shared/api/generated/impact-story/schemas/storyListItem'
@@ -44,15 +45,19 @@ export function toApiStoryBody(content: string): string {
 }
 
 export function mapCategoryResponseToDomain(
-  row: CategoryResponse,
+  row: CategoryResponse | CategoryPayloadRow,
   sortOrder = 0,
 ): ImpactStoryCategory {
+  const storyCount =
+    typeof row.storyCount === 'number' && Number.isFinite(row.storyCount)
+      ? row.storyCount
+      : undefined
   return {
     id: row.id != null ? String(row.id) : '',
     name: row.name ?? '',
     sortOrder,
     version: row.version ?? 0,
-    storyCount: row.storyCount ?? 0,
+    ...(storyCount != null ? { storyCount } : {}),
   }
 }
 
@@ -127,8 +132,8 @@ export function mapStoryResponseToDomain(row: StoryResponse): ImpactStory {
 /**
  * applied 필터 → list GET query (list-filter-query-api.mdc)
  */
-export function toStoryListParams(filter?: ImpactStoryListFilter): List7Params {
-  const params: List7Params = {
+export function toStoryListParams(filter?: ImpactStoryListFilter): List6Params {
+  const params: List6Params = {
     page: filter?.page ?? 0,
     size: LIST_PAGE_SIZE,
   }

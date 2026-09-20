@@ -54,3 +54,14 @@ export async function uploadImpactStoryAttachmentAsset(file: File): Promise<numb
 
   return assetId
 }
+
+export async function uploadImpactStoryInlineImage(file: File): Promise<string> {
+  const assetId = await uploadImpactStoryAttachmentAsset(file)
+  const assetsApi = getJAKoreaHomepageAdminAPIAssetsSubset()
+  const asset = await assetsApi.getAsset(assetId)
+  const url = asset.publicUrl?.trim()
+  if (!url) {
+    throw new Error('이미지 주소를 받지 못했습니다.')
+  }
+  return url
+}

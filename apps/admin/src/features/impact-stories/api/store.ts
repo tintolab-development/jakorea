@@ -12,7 +12,7 @@ import type {
 } from '@/entities/impact-stories/model/types'
 import { IMPACT_STORY_PIN_MAX, PinLimitError } from '@/features/impact-stories/lib/pin-limits'
 
-const STORIES_KEY = 'admin.jakorea.impactStories.v1'
+const STORIES_KEY = 'admin.jakorea.impactStories.v2'
 const CATEGORIES_KEY = 'admin.jakorea.impactStoryCategories.v1'
 export const IMPACT_STORIES_CHANGED_EVENT = 'jakorea:impact-stories-changed' as const
 
@@ -109,62 +109,165 @@ function samplePng(): ImpactStoryAttachment {
   }
 }
 
-function samplePng2(): ImpactStoryAttachment {
-  return {
-    id: 'att-seed-2',
-    name: '(2026) JA Korea 경제금융교육 커리큘럼_02.pdf',
-    mime: 'image/png',
-    dataUrl:
-      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
-  }
-}
-
 function buildSeedStories(categories: ImpactStoryCategory[]): ImpactStory[] {
-  const titles = [
-    '14년 만에 심사위원으로! 민재님이 JA와 함께하는 이유',
-    'JA Korea - 시립은평청소년미래진로센터(궁리하다) 업무 협약',
-    '창업놀이 페스티벌 2022 최종 선정팀 결과발표',
-    '경제금융교육 커리큘럼 개편 안내',
-    '연례 후원자 보고회 하이라이트',
-    '청소년 금융 리터러시 캠페인 참여 기관 모집 (비공개)',
-    'FedEx/JA International Trade Challenge 후기',
-    '신규 지회 개소식 스토리',
-    '자원봉사자 인터뷰 — 함께 성장하는 한 해',
-    '언론보도 스크랩 — JA 교육 프로그램',
-    '분기 보고서 발간 안내',
-    '영상 콘텐츠: JA 캠퍼스 투어',
+  const nameToId = new Map(categories.map(c => [c.name, c.id]))
+  const seeds: Array<{
+    categoryName: string
+    title: string
+    summary: string
+    publishedAt: string
+    pinned: boolean
+  }> = [
+    {
+      categoryName: '스토리',
+      title: '메트라이프생명 사회공헌재단과 JA Korea의 여름과 겨울 “금융교육”',
+      summary:
+        '지난 5월 16~17일 열린 Better Ground DAY 1박2일 캠프 현장에 반가운 얼굴이 나타났습니다. 바로 ‘Better Ground 1기’로 참여했던 이...',
+      publishedAt: '2026-08-15T00:00:00.000Z',
+      pinned: true,
+    },
+    {
+      categoryName: '스토리',
+      title: '14년 만에 심사위원으로! 민재님이 JA와 함께하는 이유',
+      summary:
+        '2012년 고등학생 신분이었던 민재님은 친구들과 함께 FedEx/JA International Trade Challenge에 도전했습니다. 14년이 지난 지금...',
+      publishedAt: '2026-08-08T00:00:00.000Z',
+      pinned: true,
+    },
+    {
+      categoryName: '언론보도',
+      title: 'JA Korea - 시립은평청소년미래진로센터(궁리하다) 업무 협약',
+      summary:
+        'JA Korea와 시립은평청소년미래진로센터가 청소년 진로·금융교육 확산을 위한 업무 협약을 체결했습니다.',
+      publishedAt: '2026-08-01T00:00:00.000Z',
+      pinned: true,
+    },
+    {
+      categoryName: '스토리',
+      title: '창업놀이 페스티벌 2026 최종 선정팀 결과발표',
+      summary: '창업놀이 페스티벌에 참여한 청소년 팀들의 열정과 아이디어를 소개합니다.',
+      publishedAt: '2026-07-28T00:00:00.000Z',
+      pinned: false,
+    },
+    {
+      categoryName: '보고서',
+      title: '경제금융교육 커리큘럼 개편 안내',
+      summary: '현장 피드백을 반영한 경제금융교육 커리큘럼 개편 내용을 공유합니다.',
+      publishedAt: '2026-07-20T00:00:00.000Z',
+      pinned: false,
+    },
+    {
+      categoryName: '뉴스레터',
+      title: '연례 후원자 보고회 하이라이트',
+      summary: '한 해 동안의 교육 성과와 후원 성과를 나누는 보고회 소식을 전합니다.',
+      publishedAt: '2026-07-12T00:00:00.000Z',
+      pinned: false,
+    },
+    {
+      categoryName: '스토리',
+      title: 'FedEx/JA International Trade Challenge 후기',
+      summary: '국제 무역 챌린지에 도전한 학생들의 생생한 현장 이야기를 담았습니다.',
+      publishedAt: '2026-07-05T00:00:00.000Z',
+      pinned: false,
+    },
+    {
+      categoryName: '언론보도',
+      title: '언론보도 스크랩 — JA 교육 프로그램',
+      summary: '최근 언론에 소개된 JA Korea 교육 프로그램 소식을 모아 보았습니다.',
+      publishedAt: '2026-06-28T00:00:00.000Z',
+      pinned: false,
+    },
+    {
+      categoryName: '보고서',
+      title: '분기 보고서 발간 안내',
+      summary: '2026년 2분기 활동과 성과를 담은 보고서를 공개합니다.',
+      publishedAt: '2026-06-20T00:00:00.000Z',
+      pinned: false,
+    },
+    {
+      categoryName: '영상',
+      title: '영상 콘텐츠: JA 캠퍼스 투어',
+      summary: 'JA Korea 교육 현장을 영상으로 만나보세요.',
+      publishedAt: '2026-06-12T00:00:00.000Z',
+      pinned: false,
+    },
+    {
+      categoryName: '스토리',
+      title: '자원봉사자 인터뷰 — 함께 성장하는 한 해',
+      summary: '교육 현장에서 청소년과 함께한 자원봉사자들의 이야기를 소개합니다.',
+      publishedAt: '2026-06-05T00:00:00.000Z',
+      pinned: false,
+    },
+    {
+      categoryName: '뉴스레터',
+      title: 'JA Korea 6월 뉴스레터',
+      summary: '이번 달 주요 프로그램과 참여 소식을 뉴스레터로 전해 드립니다.',
+      publishedAt: '2026-05-28T00:00:00.000Z',
+      pinned: false,
+    },
+    {
+      categoryName: '스토리',
+      title: '신규 지회 개소식 스토리',
+      summary: '새롭게 문을 연 지회에서 청소년들과 나눈 첫 만남 이야기입니다.',
+      publishedAt: '2026-05-20T00:00:00.000Z',
+      pinned: false,
+    },
+    {
+      categoryName: '언론보도',
+      title: '청소년 금융 리터러시 캠페인 참여 기관 모집',
+      summary: '금융 리터러시 확산을 위한 캠페인에 함께할 기관을 모집합니다.',
+      publishedAt: '2026-05-12T00:00:00.000Z',
+      pinned: false,
+    },
+    {
+      categoryName: '영상',
+      title: 'Better Ground DAY 하이라이트 영상',
+      summary: '1박2일 캠프의 열기와 배움의 순간을 영상으로 담았습니다.',
+      publishedAt: '2026-05-08T00:00:00.000Z',
+      pinned: false,
+    },
+    {
+      categoryName: '보고서',
+      title: '2025 연차보고서 하이라이트',
+      summary: '한 해의 교육 임팩트를 한눈에 볼 수 있는 연차보고서 핵심을 소개합니다.',
+      publishedAt: '2026-04-30T00:00:00.000Z',
+      pinned: false,
+    },
+    {
+      categoryName: '스토리',
+      title: '교실 속 기업가정신 — 선생님과 학생의 이야기',
+      summary: '기업가정신 수업을 통해 달라진 교실의 풍경을 전합니다.',
+      publishedAt: '2026-04-22T00:00:00.000Z',
+      pinned: false,
+    },
+    {
+      categoryName: '뉴스레터',
+      title: 'JA Korea 봄호 뉴스레터',
+      summary: '봄을 맞아 새롭게 열린 프로그램과 참여 안내를 모았습니다.',
+      publishedAt: '2026-04-15T00:00:00.000Z',
+      pinned: false,
+    },
   ]
-  const catIds = categories.map(c => c.id)
-  const base = new Date('2026-01-15T12:00:32.000Z')
+  const authors = ['홍길동', '김지은', '이준호'] as const
+  const fallbackCategoryId = categories[0]?.id ?? ''
 
-  return titles.map((title, i) => {
-    const published = new Date(base.getTime() - i * 86_400_000 * 2)
-    const isPinned = i < 3
-    const isPublic = i !== 5
-    const categoryId = catIds[i % catIds.length] ?? catIds[0]!
-    const hasAtt = i === 0
+  return seeds.map((seed, i) => {
+    const publishedAt = seed.publishedAt
+    const createdAt = new Date(new Date(publishedAt).getTime() - 3_600_000).toISOString()
     return normalizeStory(
       {
-        id: `is-${100 + titles.length - i}`,
-        categoryId,
-        title,
-        contentMarkdown: [
-          `## ${title}`,
-          '',
-          '안녕하세요, JA Korea입니다.',
-          '',
-          '2012년, 고등학생 신분이었던 민재님은 친구들과 함께 FedEx/JA International Trade Challenge에 도전했습니다.',
-          '',
-          '14년이 지난 2026년, 민재님은 심사위원으로 돌아와 후배 참가자들을 응원했습니다.',
-        ].join('\n'),
-        isPublic,
-        isPinned,
-        authorName: i % 3 === 0 ? '홍길동' : i % 3 === 1 ? '김지은' : '이준호',
-        publishedAt: published.toISOString(),
-        createdAt: new Date(published.getTime() - 3_600_000).toISOString(),
-        updatedAt: published.toISOString(),
-        viewCount: isPinned ? 9150000 + i * 1000 : 915 + i * 37,
-        attachments: hasAtt ? [samplePng(), samplePng2()] : [],
+        id: `is-${118 - i}`,
+        categoryId: nameToId.get(seed.categoryName) ?? fallbackCategoryId,
+        title: seed.title,
+        contentMarkdown: [`## ${seed.title}`, '', seed.summary].join('\n'),
+        isPublic: true,
+        isPinned: seed.pinned,
+        authorName: authors[i % authors.length],
+        publishedAt,
+        createdAt,
+        updatedAt: publishedAt,
+        viewCount: 800 + (i + 1) * 137,
+        attachments: i === 1 ? [samplePng()] : [],
       },
       i
     )

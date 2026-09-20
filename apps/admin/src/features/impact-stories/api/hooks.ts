@@ -6,7 +6,10 @@ import type {
   ImpactStoryListFilter,
   ImpactStoryUpdateInput,
 } from '@/entities/impact-stories/model/types'
-import { shouldUseImpactStoriesRemoteApi } from './capabilities'
+import {
+  shouldUseImpactStoryCategoriesRemoteApi,
+  shouldUseImpactStoriesRemoteApi,
+} from './capabilities'
 import { impactStoriesQueryKeys } from './query-keys'
 import {
   countPinnedStoriesService,
@@ -23,6 +26,10 @@ import {
 
 function source(): 'remote' | 'local' {
   return shouldUseImpactStoriesRemoteApi() ? 'remote' : 'local'
+}
+
+function categorySource(): 'remote' | 'local' {
+  return shouldUseImpactStoryCategoriesRemoteApi() ? 'remote' : 'local'
 }
 
 function filterKey(filter: ImpactStoryListFilter): string {
@@ -123,7 +130,7 @@ export function useImpactStoryDetail(id: string | undefined, enabled = true) {
 }
 
 export function useImpactStoryCategories(enabled = true) {
-  const dataSource = source()
+  const dataSource = categorySource()
   return useQuery({
     queryKey: impactStoriesQueryKeys.categories(dataSource),
     queryFn: () => listCategoriesService(),
@@ -138,13 +145,14 @@ export function useSaveImpactStoryCategories() {
   return useMutation({
     mutationFn: (items: ImpactStoryCategory[]) => {
       const cached = queryClient.getQueryData<ImpactStoryCategory[]>(
-        impactStoriesQueryKeys.categories(source()),
+        impactStoriesQueryKeys.categories(categorySource()),
       )
       return saveCategoriesService(items, cached)
     },
     retry: false,
     onSuccess: data => {
-      queryClient.setQueryData(impactStoriesQueryKeys.categories(source()), data)
+      queryClient.setQueryData(impactStoriesQueryKeys.categories(categorySource()), data)
+      invalidateStoryLists(queryClient)
     },
   })
 }

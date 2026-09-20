@@ -25,6 +25,7 @@ import {
 import { impactStoriesQueryKeys } from '@/features/impact-stories/api/query-keys'
 import { IMPACT_STORIES_CHANGED_EVENT } from '@/features/impact-stories/api/store'
 import { isPinLimitError } from '@/features/impact-stories/lib/pin-limits'
+import { impactStoryMutationFailureAlert } from '@/features/impact-stories/lib/mutation-failure-alert'
 import { CategoryManagementModal } from '@/features/impact-stories/ui/category-management-modal'
 import {
   StoryFormModal,
@@ -331,10 +332,13 @@ export function ImpactStoriesPage() {
           })
           return
         }
-        showAlert({
-          title: formMode === 'edit' ? '저장 실패' : '등록 실패',
-          content: '요청을 처리하지 못했습니다. 다시 시도해 주세요.',
-        })
+        showAlert(
+          impactStoryMutationFailureAlert(
+            error,
+            '요청을 처리하지 못했습니다. 다시 시도해 주세요.',
+            formMode === 'edit' ? '저장 실패' : '등록 실패',
+          ),
+        )
       }
     },
     [createMutation, editing, formMode, showAlert, updateMutation]
