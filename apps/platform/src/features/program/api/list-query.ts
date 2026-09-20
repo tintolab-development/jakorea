@@ -71,8 +71,9 @@ export function toPortalProgramListQuery(
   }
 }
 
+/** 홈 캐러셀 — GET /api/portal/programs?featuredOnHome=true&size=8 (옵션 A). sort 없음. */
 export const HOME_PORTAL_PROGRAMS_QUERY: PortalProgramListQuery = {
-  sort: 'LATEST',
+  featuredOnHome: true,
   page: 0,
   size: 8,
 }

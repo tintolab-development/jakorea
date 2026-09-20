@@ -5,7 +5,8 @@ import { HOME_PORTAL_PROGRAMS_QUERY, toPortalProgramListQuery } from './list-que
 const home = HOME_PORTAL_PROGRAMS_QUERY
 assert.equal(home.page, 0)
 assert.equal(home.size, 8)
-assert.equal(home.sort, 'LATEST')
+assert.equal(home.featuredOnHome, true)
+assert.equal(home.sort, undefined)
 
 const all = toPortalProgramListQuery({ ...DEFAULT_PROGRAMS_LIST_PARAMS }, 10)
 assert.equal(all.page, 0)
@@ -39,5 +40,6 @@ assert.equal(filtered.operatingFrom, '2026-09-01')
 assert.equal(filtered.operatingTo, '2026-12-31')
 assert.equal(filtered.sort, 'CLOSING_SOON')
 assert.equal(filtered.page, 2)
+assert.equal(filtered.featuredOnHome, undefined)
 
 console.log('program portal list-query.selfcheck: ok')

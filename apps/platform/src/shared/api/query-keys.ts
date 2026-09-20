@@ -101,7 +101,7 @@ export const platformQueryKeys = {
         params.page,
         params.size,
       ] as const,
-    /** 홈 캐러셀 8건 — GET /api/portal/programs page=0 size=8 sort=LATEST */
+    /** 홈 캐러셀 — GET /api/portal/programs?featuredOnHome=true&size=8 (Class C) */
     homePreview: () => [...platformQueryKeys.program.all(), 'home-preview'] as const,
     /** 공개 상세 — GET /api/portal/programs/{programId} (Class D, CMS 8080) */
     detail: (id: string) => [...platformQueryKeys.program.all(), 'detail', id] as const,

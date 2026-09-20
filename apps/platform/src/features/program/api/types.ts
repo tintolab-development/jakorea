@@ -51,7 +51,7 @@ export type PortalAttachment = {
   fileSize?: number
 }
 
-/** GET /api/portal/programs 목록 행 (런타임 계약. OpenAPI ProgramSummary와 다름) */
+/** GET /api/portal/programs 목록 행 (OpenAPI PortalProgramListItem) */
 export type PortalProgramListItem = {
   programId?: number
   programUuid?: string
@@ -73,6 +73,8 @@ export type PortalProgramListItem = {
   canApply?: boolean
   thumbnailFileObjectId?: number
   educationTarget?: string
+  featuredOnHome?: boolean
+  homeDisplayOrder?: number
 }
 
 export type PortalProgramListPage = {
@@ -93,6 +95,7 @@ export type PortalProgramListQuery = {
   operatingFrom?: string
   operatingTo?: string
   sort?: string
+  featuredOnHome?: boolean
   page: number
   size: number
 }

@@ -64,8 +64,8 @@ export type HomePortalProgramsQuery = {
 }
 
 /**
- * 홈 캐러셀 — GET /api/portal/programs?page=0&size=8&sort=LATEST
- * 실패·빈 목록이면 mock을 되살리지 않는다.
+ * 홈 캐러셀 — GET /api/portal/programs?featuredOnHome=true&size=8
+ * 실패·빈 목록이면 mock을 되살리지 않는다. 서버가 최대 8건을 내려도 FE에서 한 번 더 자른다.
  */
 export function useHomePortalPrograms(): HomePortalProgramsQuery {
   const remote = isRemoteApiConfigured()
@@ -91,10 +91,12 @@ export function useHomePortalPrograms(): HomePortalProgramsQuery {
     return { items: [], isPending: false, isError: true, isRemoteEnabled: true }
   }
 
-  const items = (query.data?.items ?? []).flatMap(row => {
-    const mapped = mapPortalProgramListItem(row)
-    return mapped ? [mapped] : []
-  })
+  const items = (query.data?.items ?? [])
+    .flatMap(row => {
+      const mapped = mapPortalProgramListItem(row)
+      return mapped ? [mapped] : []
+    })
+    .slice(0, HOME_PORTAL_PROGRAMS_QUERY.size)
 
   return { items, isPending: false, isError: false, isRemoteEnabled: true }
 }

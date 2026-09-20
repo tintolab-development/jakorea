@@ -14,8 +14,9 @@
 
 | Method | Path | 화면 |
 |--------|------|------|
-| GET | `/api/portal/programs` | 홈 8건(`page=0&size=8&sort=LATEST`) · `/programs` 필터·페이징 |
-| GET | `/api/portal/programs/{programId}` | `/programs/{id}` 상세. 정수 id만. |
+| GET | `/api/portal/programs?featuredOnHome=true&size=8` | 홈 캐러셀. 옵션 A. `sort` 없음. 최대 8, 빈 배열 허용, mock 채우기 없음 |
+| GET | `/api/portal/programs` | `/programs` 필터·페이징 (`size=10`) |
+| GET | `/api/portal/programs/{programId}` | `/programs/{id}` 상세. 정수 id만. 없으면 404 |
 | GET | `/api/portal/public/files/{fileObjectId}/content` | 썸네일 |
 | GET | `/api/portal/public/files/{fileObjectId}/download` | 첨부 다운로드 |
 
@@ -25,6 +26,7 @@
 
 | Platform | query |
 |----------|-------|
+| 홈 카드 | `featuredOnHome=true` `size=8` `page=0`. `sort` 생략 → `homeDisplayOrder` 오름차순 |
 | 탭 청소년·기관·강사 | `portalTab=YOUTH_YOUNG\|ORGANIZATION\|INSTRUCTOR` |
 | 검색 | `keyword` |
 | 모집 예정/중/완료 | `recruitmentStatus=UPCOMING\|OPEN\|CLOSED` |
@@ -33,6 +35,18 @@
 | 운영기간 | `operatingFrom` `operatingTo` |
 | 최신/이름/마감임박 | `sort=LATEST\|NAME\|CLOSING_SOON` |
 | 페이지 | `page` 0-base, 목록 `size=10` |
+
+서버 별칭(목록 필터, 홈이 아님): `recruitmentStatus=SCHEDULED` → `UPCOMING`, `RECRUITING` → `OPEN`. `sort=DEADLINE` → `CLOSING_SOON`, `TITLE` → `NAME`. Platform 목록 UI는 정규 값만 보낸다.
+
+목록 행 스키마는 OpenAPI `PortalProgramListItem` + `PageResponse`. `MemberPortalProgramSummary`는 교육현황 nested용이며 홈/목록 행이 아니다.
+
+배지 표시는 `recruitmentStatus`만 본다. `periodStatus=SCHEDULED` 이고 `recruitmentStatus=OPEN` 이면 **모집 중**.
+
+| 값 | 배지 |
+|----|------|
+| `OPEN` 또는 `RECRUITING` | 모집 중 |
+| `UPCOMING` 또는 `SCHEDULED` | 모집 예정 |
+| `CLOSED` | 모집 완료 |
 
 ## Fallback
 
@@ -47,7 +61,7 @@
 
 캐시: 목록·홈 Class C (`staleTime` 30s, `gcTime` 15m). 상세 Class D (2m / 15m). 재시도는 Platform `query-retry`.
 
-백엔드 갭(홈 고정 8건 선정, OpenAPI 목록 스키마, `SCHEDULED` 별칭):  
-[portal-platform-programs-backend-cursor-prompt-2026-09-20.md](../../../cms/docs/api/portal-platform-programs-backend-cursor-prompt-2026-09-20.md)
+BE 핸드오프: `docs/frontend/portal-platform-programs-home-list-frontend-handoff-2026-09-20.md` (JABACK).  
+BE 요청 원문: [portal-platform-programs-backend-cursor-prompt-2026-09-20.md](../../../cms/docs/api/portal-platform-programs-backend-cursor-prompt-2026-09-20.md)
 
 **Last updated:** 2026-09-20
