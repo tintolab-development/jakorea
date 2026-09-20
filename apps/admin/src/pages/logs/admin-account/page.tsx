@@ -19,6 +19,12 @@ import {
 } from '@/features/admin-account-log/api/hooks'
 import { downloadCsv } from '@/features/logs/shared/lib/export-csv'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
+import {
+  logListRowNumber,
+  logTablePagination,
+  parseLogListPage,
+  setLogListPageParam,
+} from '@/features/logs/shared/lib/list-page'
 import { LogResultToolbar } from '@/features/logs/shared/ui/log-result-toolbar'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -80,6 +86,7 @@ function parseApplied(searchParams: URLSearchParams): AdminAccountListFilter {
   const to = searchParams.get('aa_to')
   if (from) filter.from = from
   if (to) filter.to = to
+  filter.page = parseLogListPage(searchParams.get('aa_page'))
   return filter
 }
 
@@ -141,10 +148,14 @@ export function AdminAccountLogPage() {
     setPendingFilters,
     applied: appliedFilter,
     applySearch,
+    patchSearchParams,
   } = useListFilterUrl<PendingFilters, AdminAccountListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
     parseApplied,
+    afterApplyParams: nextParams => {
+      nextParams.delete('aa_page')
+    },
     syncPendingFromUrl: ({ searchParams, setPendingFilters: setPending }) => {
       const name = searchParams.get('aa_name') ?? ''
       const loginId = searchParams.get('aa_id') ?? ''
@@ -178,26 +189,34 @@ export function AdminAccountLogPage() {
   const exportMutation = useExportAdminAccountLogs()
   const rows = listQuery.data?.rows ?? []
   const total = listQuery.data?.total ?? 0
+  const page = appliedFilter.page ?? 0
   const loading = listQuery.isLoading || listQuery.isFetching
+
+  const handlePageChange = useCallback(
+    (nextPage: number) => {
+      patchSearchParams(next => setLogListPageParam(next, 'aa_page', nextPage))
+    },
+    [patchSearchParams],
+  )
 
   const handleExcel = useCallback(() => {
     void exportMutation
       .mutateAsync(appliedFilter)
-      .then(mode => {
-        if (mode === 'use-local-csv') {
-          downloadCsv({
-            filenameBase: '관리자_계정_처리_이력',
-            headers: ['No.', '관리자명', '아이디', '내역', '처리일시', 'IP'],
-            rows: rows.map((row, index) => [
-              total - index,
-              row.name,
-              row.loginId,
-              ADMIN_ACCOUNT_ACTION_LABELS[row.actionType],
-              formatLogDateTime(row.processedAt),
-              row.ip,
-            ]),
-          })
-        }
+      .then(result => {
+        if (result === 'remote-downloaded') return
+        const all = result.rows
+        downloadCsv({
+          filenameBase: '관리자_계정_처리_이력',
+          headers: ['No.', '관리자명', '아이디', '내역', '처리일시', 'IP'],
+          rows: all.map((row, index) => [
+            all.length - index,
+            row.name,
+            row.loginId,
+            ADMIN_ACCOUNT_ACTION_LABELS[row.actionType],
+            formatLogDateTime(row.processedAt),
+            row.ip,
+          ]),
+        })
       })
       .catch(() => {
         showAlert({
@@ -205,7 +224,7 @@ export function AdminAccountLogPage() {
           content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
         })
       })
-  }, [appliedFilter, exportMutation, rows, showAlert, total])
+  }, [appliedFilter, exportMutation, showAlert])
 
   const columns = useMemo<ColumnsType<AdminAccountLog>>(
     () => [
@@ -214,7 +233,7 @@ export function AdminAccountLogPage() {
         key: 'no',
         width: COL.no,
         className: CMS_TABLE_NO_COL_CLASS,
-        render: (_v, _r, index) => total - index,
+        render: (_v, _r, index) => logListRowNumber(total, page, index),
       },
       {
         title: '관리자명',
@@ -251,7 +270,7 @@ export function AdminAccountLogPage() {
         width: COL.ip,
       },
     ],
-    [total]
+    [total, page]
   )
 
   return (
@@ -336,7 +355,7 @@ export function AdminAccountLogPage() {
           title="관리자 계정 처리 이력"
           total={total}
           onExcelDownload={handleExcel}
-          excelDisabled={rows.length === 0}
+          excelDisabled={total === 0}
         />
 
         <Table<AdminAccountLog>
@@ -345,7 +364,7 @@ export function AdminAccountLogPage() {
           columns={columns}
           dataSource={rows}
           loading={loading}
-          pagination={false}
+          pagination={logTablePagination({ page, total, onChange: handlePageChange })}
           locale={{ emptyText: EMPTY_TEXT }}
           scroll={{
             x:

@@ -16,6 +16,12 @@ import {
 } from '@/features/pii-access-log/api/hooks'
 import { downloadCsv } from '@/features/logs/shared/lib/export-csv'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
+import {
+  logListRowNumber,
+  logTablePagination,
+  parseLogListPage,
+  setLogListPageParam,
+} from '@/features/logs/shared/lib/list-page'
 import { LogResultToolbar } from '@/features/logs/shared/ui/log-result-toolbar'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -64,6 +70,7 @@ function parseApplied(searchParams: URLSearchParams): PiiAccessListFilter {
   const to = searchParams.get('pii_to')
   if (from) filter.from = from
   if (to) filter.to = to
+  filter.page = parseLogListPage(searchParams.get('pi_page'))
   return filter
 }
 
@@ -121,10 +128,14 @@ export function PiiAccessLogPage() {
     setPendingFilters,
     applied: appliedFilter,
     applySearch,
+    patchSearchParams,
   } = useListFilterUrl<PendingFilters, PiiAccessListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
     parseApplied,
+    afterApplyParams: nextParams => {
+      nextParams.delete('pi_page')
+    },
     syncPendingFromUrl: ({ searchParams, setPendingFilters: setPending }) => {
       const targetName = searchParams.get('pii_target') ?? ''
       const purpose = searchParams.get('pii_purpose') ?? ''
@@ -158,33 +169,41 @@ export function PiiAccessLogPage() {
   const exportMutation = useExportPiiAccessLogs()
   const rows = listQuery.data?.rows ?? []
   const total = listQuery.data?.total ?? 0
+  const page = appliedFilter.page ?? 0
   const loading = listQuery.isLoading || listQuery.isFetching
+
+  const handlePageChange = useCallback(
+    (nextPage: number) => {
+      patchSearchParams(next => setLogListPageParam(next, 'pi_page', nextPage))
+    },
+    [patchSearchParams],
+  )
 
   const handleExcel = useCallback(() => {
     void exportMutation
       .mutateAsync(appliedFilter)
-      .then(mode => {
-        if (mode === 'use-local-csv') {
-          downloadCsv({
-            filenameBase: '개인정보_조회_이력',
-            headers: [
-              'No.',
-              '조회 대상',
-              '조회 목적',
-              '조회자명',
-              '조회 일시',
-              'IP',
-            ],
-            rows: rows.map((row, index) => [
-              total - index,
-              row.targetName,
-              row.purpose,
-              row.accessorName,
-              formatLogDateTime(row.accessedAt),
-              row.ip,
-            ]),
-          })
-        }
+      .then(result => {
+        if (result === 'remote-downloaded') return
+        const all = result.rows
+        downloadCsv({
+          filenameBase: '개인정보_조회_이력',
+          headers: [
+            'No.',
+            '조회 대상',
+            '조회 목적',
+            '조회자명',
+            '조회 일시',
+            'IP',
+          ],
+          rows: all.map((row, index) => [
+            all.length - index,
+            row.targetName,
+            row.purpose,
+            row.accessorName,
+            formatLogDateTime(row.accessedAt),
+            row.ip,
+          ]),
+        })
       })
       .catch(() => {
         showAlert({
@@ -192,7 +211,7 @@ export function PiiAccessLogPage() {
           content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
         })
       })
-  }, [appliedFilter, exportMutation, rows, showAlert, total])
+  }, [appliedFilter, exportMutation, showAlert])
 
   const columns = useMemo<ColumnsType<PiiAccessLog>>(
     () => [
@@ -201,7 +220,7 @@ export function PiiAccessLogPage() {
         key: 'no',
         width: COL.no,
         className: CMS_TABLE_NO_COL_CLASS,
-        render: (_v, _r, index) => total - index,
+        render: (_v, _r, index) => logListRowNumber(total, page, index),
       },
       {
         title: '조회 대상',
@@ -238,7 +257,7 @@ export function PiiAccessLogPage() {
         width: COL.ip,
       },
     ],
-    [total]
+    [total, page]
   )
 
   return (
@@ -325,7 +344,7 @@ export function PiiAccessLogPage() {
           title="개인정보 조회 이력"
           total={total}
           onExcelDownload={handleExcel}
-          excelDisabled={rows.length === 0}
+          excelDisabled={total === 0}
         />
 
         <Table<PiiAccessLog>
@@ -334,7 +353,7 @@ export function PiiAccessLogPage() {
           columns={columns}
           dataSource={rows}
           loading={loading}
-          pagination={false}
+          pagination={logTablePagination({ page, total, onChange: handlePageChange })}
           locale={{ emptyText: EMPTY_TEXT }}
           scroll={{
             x:

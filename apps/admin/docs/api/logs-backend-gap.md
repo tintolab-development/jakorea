@@ -19,8 +19,11 @@
 
 - privacy / file-download → [`logs-dummy-seed-backend-request.md`](./logs-dummy-seed-backend-request.md) · `seed_logs_local.sql`
 - member / account / issues → `JAHOMEADMINBACK/scripts/seed_logs_admin_screens_local.sql`
+- **2026-09-20:** 더미 시드는 실제 이력을 가리므로 prefix 삭제 + 자동 재시드 금지 — [`logs-history-write-seed-backend-cursor-prompt-2026-09-20.md`](./logs-history-write-seed-backend-cursor-prompt-2026-09-20.md)
 
 요청 이력(구현 전): [`logs-homepage-admin-api-backend-request.md`](./logs-homepage-admin-api-backend-request.md)
+
+write·시드 초기화 Cursor 프롬프트: [`logs-history-write-seed-backend-cursor-prompt-2026-09-20.md`](./logs-history-write-seed-backend-cursor-prompt-2026-09-20.md)
 
 ## 아직 mock only
 
@@ -28,4 +31,4 @@
 |------|------|
 | 교육 · 프로그램 소개 (`/education/programs`) | write API 없음 — [`education-program-intro-backend-gap.md`](./education-program-intro-backend-gap.md) |
 
-**Last updated:** 2026-08-13
+**Last updated:** 2026-09-20

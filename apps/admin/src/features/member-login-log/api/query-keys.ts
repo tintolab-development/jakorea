@@ -12,5 +12,6 @@ export const memberLoginLogQueryKeys = {
       filter.loginId ?? '',
       filter.from ?? '',
       filter.to ?? '',
+      filter.page ?? 0,
     ] as const,
 }

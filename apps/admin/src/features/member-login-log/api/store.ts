@@ -12,6 +12,7 @@ import {
   includesIgnoreCase,
   isIsoInDateRange,
 } from '@/features/logs/shared/lib/filter-date-range'
+import { paginateLogRows } from '@/features/logs/shared/lib/list-page'
 
 const NAMES = [
   '홍길동',
@@ -68,9 +69,7 @@ function buildSeed(): MemberLoginLog[] {
 
 const SEED = buildSeed()
 
-export function listMemberLoginLogs(
-  filter: MemberLoginListFilter
-): MemberLoginListResult {
+function filterMemberLoginLogs(filter: MemberLoginListFilter): MemberLoginLog[] {
   let rows = SEED.filter(r => r.audience === filter.audience)
   if (filter.name) {
     rows = rows.filter(r => includesIgnoreCase(r.name, filter.name!))
@@ -79,8 +78,17 @@ export function listMemberLoginLogs(
     rows = rows.filter(r => includesIgnoreCase(r.loginId, filter.loginId!))
   }
   rows = rows.filter(r => isIsoInDateRange(r.loggedAt, filter.from, filter.to))
-  rows = [...rows].sort(
+  return [...rows].sort(
     (a, b) => new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime()
   )
-  return { rows, total: rows.length }
+}
+
+export function listMemberLoginLogsAll(filter: MemberLoginListFilter): MemberLoginLog[] {
+  return filterMemberLoginLogs(filter)
+}
+
+export function listMemberLoginLogs(
+  filter: MemberLoginListFilter
+): MemberLoginListResult {
+  return paginateLogRows(filterMemberLoginLogs(filter), filter.page ?? 0)
 }

@@ -12,5 +12,6 @@ export const adminAccountLogQueryKeys = {
       filter.actionType ?? '',
       filter.from ?? '',
       filter.to ?? '',
+      filter.page ?? 0,
     ] as const,
 }

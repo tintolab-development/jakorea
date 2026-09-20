@@ -23,6 +23,20 @@ docker exec -i jakorea-postgres \
 
 (append-only · `trace_id` idempotent)
 
+## 시드 초기화 (2026-09-20) — 실제 이력이 남게
+
+더미 SQL은 개발 채움용이다. **초기화 후에는 재실행하지 않는다.**  
+실제 로그인·계정 처리·다운로드·PII·이슈는 BE가 append-only로 남긴다.
+
+1. `seed-pii-*` / `seed-dl-*` / `seed-login-*` / `seed-admin-acct-*` / `seed-bug-*` **prefix 행만** DELETE.
+2. 테이블 `TRUNCATE` 금지 — prefix 없는 행은 실제 이력이다.
+3. 로컬 부팅·마이그레이션에서 위 두 SQL **자동 재실행 금지.**
+4. 더미가 다시 필요하면 opt-in 스크립트만. prod Flyway에 더미 INSERT 금지.
+
+상세 계약: [`logs-history-write-seed-backend-cursor-prompt-2026-09-20.md`](./logs-history-write-seed-backend-cursor-prompt-2026-09-20.md)
+
+FE mock seed(~130)는 **Mock 로그인 전용**. 실이력은 API 로그인 + Homepage DB.
+
 ## 시드 건수
 
 | 대상 | 건수 | trace_id prefix |
@@ -37,4 +51,4 @@ docker exec -i jakorea-postgres \
 
 privacy/file + admin screens 시드 모두 적용됨.
 
-**Last updated:** 2026-08-13
+**Last updated:** 2026-09-20

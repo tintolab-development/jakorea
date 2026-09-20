@@ -1,6 +1,7 @@
 import type {
   AdminAccountListFilter,
   AdminAccountListResult,
+  AdminAccountLog,
 } from '@/entities/admin-account-log/model/types'
 import {
   defaultXlsxFilename,
@@ -14,7 +15,7 @@ import {
   toAdminAccountActionsExportParams,
   toAdminAccountActionsParams,
 } from './mappers'
-import { listAdminAccountLogs } from './store'
+import { listAdminAccountLogs, listAdminAccountLogsAll } from './store'
 
 function logsApi() {
   return getJAKoreaHomepageAdminAPILogsSubset()
@@ -34,8 +35,10 @@ export async function listAdminAccountLogsService(
 
 export async function exportAdminAccountLogsService(
   filter: AdminAccountListFilter,
-): Promise<'remote-downloaded' | 'use-local-csv'> {
-  if (!shouldUseAdminAccountLogRemoteApi()) return 'use-local-csv'
+): Promise<'remote-downloaded' | { source: 'local'; rows: AdminAccountLog[] }> {
+  if (!shouldUseAdminAccountLogRemoteApi()) {
+    return { source: 'local', rows: listAdminAccountLogsAll(filter) }
+  }
 
   const response = await axiosInstance.get<ArrayBuffer>(
     '/api/admin/logs/admin-account-actions/export',

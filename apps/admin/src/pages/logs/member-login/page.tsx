@@ -17,6 +17,12 @@ import {
 } from '@/features/member-login-log/api/hooks'
 import { downloadCsv } from '@/features/logs/shared/lib/export-csv'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
+import {
+  logListRowNumber,
+  logTablePagination,
+  parseLogListPage,
+  setLogListPageParam,
+} from '@/features/logs/shared/lib/list-page'
 import { LogResultToolbar } from '@/features/logs/shared/ui/log-result-toolbar'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -75,6 +81,7 @@ function parseApplied(searchParams: URLSearchParams): MemberLoginListFilter {
   const to = searchParams.get('ml_to')
   if (from) filter.from = from
   if (to) filter.to = to
+  filter.page = parseLogListPage(searchParams.get('ml_page'))
   return filter
 }
 
@@ -136,10 +143,14 @@ export function MemberLoginLogPage() {
     applied: appliedFilter,
     applySearch,
     setSearchParams,
+    patchSearchParams,
   } = useListFilterUrl<PendingFilters, MemberLoginListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
     parseApplied,
+    afterApplyParams: nextParams => {
+      nextParams.delete('ml_page')
+    },
     syncPendingFromUrl: ({ searchParams, setPendingFilters: setPending }) => {
       const audience = parseAudience(searchParams.get('ml_aud'))
       const name = searchParams.get('ml_name') ?? ''
@@ -174,6 +185,7 @@ export function MemberLoginLogPage() {
   const exportMutation = useExportMemberLoginLogs()
   const rows = listQuery.data?.rows ?? []
   const total = listQuery.data?.total ?? 0
+  const page = appliedFilter.page ?? 0
   const loading = listQuery.isLoading || listQuery.isFetching
 
   const nameLabel = audience === 'admin' ? '관리자명' : '사용자명'
@@ -199,23 +211,30 @@ export function MemberLoginLogPage() {
     [setPendingFilters, setSearchParams]
   )
 
+  const handlePageChange = useCallback(
+    (nextPage: number) => {
+      patchSearchParams(next => setLogListPageParam(next, 'ml_page', nextPage))
+    },
+    [patchSearchParams],
+  )
+
   const handleExcel = useCallback(() => {
     void exportMutation
       .mutateAsync(appliedFilter)
-      .then(mode => {
-        if (mode === 'use-local-csv') {
-          downloadCsv({
-            filenameBase: '회원_로그인_이력',
-            headers: ['No.', nameLabel, '아이디', '로그인 일시', 'IP'],
-            rows: rows.map((row, index) => [
-              total - index,
-              row.name,
-              row.loginId,
-              formatLogDateTime(row.loggedAt),
-              row.ip,
-            ]),
-          })
-        }
+      .then(result => {
+        if (result === 'remote-downloaded') return
+        const all = result.rows
+        downloadCsv({
+          filenameBase: '회원_로그인_이력',
+          headers: ['No.', nameLabel, '아이디', '로그인 일시', 'IP'],
+          rows: all.map((row, index) => [
+            all.length - index,
+            row.name,
+            row.loginId,
+            formatLogDateTime(row.loggedAt),
+            row.ip,
+          ]),
+        })
       })
       .catch(() => {
         showAlert({
@@ -223,7 +242,7 @@ export function MemberLoginLogPage() {
           content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
         })
       })
-  }, [appliedFilter, exportMutation, nameLabel, rows, showAlert, total])
+  }, [appliedFilter, exportMutation, nameLabel, showAlert])
 
   const columns = useMemo<ColumnsType<MemberLoginLog>>(
     () => [
@@ -232,7 +251,7 @@ export function MemberLoginLogPage() {
         key: 'no',
         width: COL.no,
         className: CMS_TABLE_NO_COL_CLASS,
-        render: (_v, _r, index) => total - index,
+        render: (_v, _r, index) => logListRowNumber(total, page, index),
       },
       {
         title: nameLabel,
@@ -262,7 +281,7 @@ export function MemberLoginLogPage() {
         width: COL.ip,
       },
     ],
-    [total, nameLabel]
+    [total, page, nameLabel]
   )
 
   return (
@@ -339,7 +358,7 @@ export function MemberLoginLogPage() {
           title="회원 로그인 이력"
           total={total}
           onExcelDownload={handleExcel}
-          excelDisabled={rows.length === 0}
+          excelDisabled={total === 0}
         />
 
         <Table<MemberLoginLog>
@@ -348,7 +367,7 @@ export function MemberLoginLogPage() {
           columns={columns}
           dataSource={rows}
           loading={loading}
-          pagination={false}
+          pagination={logTablePagination({ page, total, onChange: handlePageChange })}
           locale={{ emptyText: EMPTY_TEXT }}
           scroll={{ x: COL.no + COL.name + COL.loginId + COL.loggedAt + COL.ip }}
         />

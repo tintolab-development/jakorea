@@ -16,6 +16,12 @@ import {
 } from '@/features/file-download-log/api/hooks'
 import { downloadCsv } from '@/features/logs/shared/lib/export-csv'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
+import {
+  logListRowNumber,
+  logTablePagination,
+  parseLogListPage,
+  setLogListPageParam,
+} from '@/features/logs/shared/lib/list-page'
 import { LogResultToolbar } from '@/features/logs/shared/ui/log-result-toolbar'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -60,6 +66,7 @@ function parseApplied(searchParams: URLSearchParams): FileDownloadListFilter {
   const to = searchParams.get('fd_to')
   if (from) filter.from = from
   if (to) filter.to = to
+  filter.page = parseLogListPage(searchParams.get('fd_page'))
   return filter
 }
 
@@ -109,10 +116,14 @@ export function FileDownloadLogPage() {
     setPendingFilters,
     applied: appliedFilter,
     applySearch,
+    patchSearchParams,
   } = useListFilterUrl<PendingFilters, FileDownloadListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
     parseApplied,
+    afterApplyParams: nextParams => {
+      nextParams.delete('fd_page')
+    },
     syncPendingFromUrl: ({ searchParams, setPendingFilters: setPending }) => {
       const fileName = searchParams.get('fd_file') ?? ''
       const userName = searchParams.get('fd_user') ?? ''
@@ -144,25 +155,33 @@ export function FileDownloadLogPage() {
   const exportMutation = useExportFileDownloadLogs()
   const rows = listQuery.data?.rows ?? []
   const total = listQuery.data?.total ?? 0
+  const page = appliedFilter.page ?? 0
   const loading = listQuery.isLoading || listQuery.isFetching
+
+  const handlePageChange = useCallback(
+    (nextPage: number) => {
+      patchSearchParams(next => setLogListPageParam(next, 'fd_page', nextPage))
+    },
+    [patchSearchParams],
+  )
 
   const handleExcel = useCallback(() => {
     void exportMutation
       .mutateAsync(appliedFilter)
-      .then(mode => {
-        if (mode === 'use-local-csv') {
-          downloadCsv({
-            filenameBase: '파일_다운로드_이력',
-            headers: ['No.', '다운로드 파일명', '사용자명', '다운로드 일시', 'IP'],
-            rows: rows.map((row, index) => [
-              total - index,
-              row.fileName,
-              row.userName,
-              formatLogDateTime(row.downloadedAt),
-              row.ip,
-            ]),
-          })
-        }
+      .then(result => {
+        if (result === 'remote-downloaded') return
+        const all = result.rows
+        downloadCsv({
+          filenameBase: '파일_다운로드_이력',
+          headers: ['No.', '다운로드 파일명', '사용자명', '다운로드 일시', 'IP'],
+          rows: all.map((row, index) => [
+            all.length - index,
+            row.fileName,
+            row.userName,
+            formatLogDateTime(row.downloadedAt),
+            row.ip,
+          ]),
+        })
       })
       .catch(() => {
         showAlert({
@@ -170,7 +189,7 @@ export function FileDownloadLogPage() {
           content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
         })
       })
-  }, [appliedFilter, exportMutation, rows, showAlert, total])
+  }, [appliedFilter, exportMutation, showAlert])
 
   const columns = useMemo<ColumnsType<FileDownloadLog>>(
     () => [
@@ -179,7 +198,7 @@ export function FileDownloadLogPage() {
         key: 'no',
         width: COL.no,
         className: CMS_TABLE_NO_COL_CLASS,
-        render: (_v, _r, index) => total - index,
+        render: (_v, _r, index) => logListRowNumber(total, page, index),
       },
       {
         title: '다운로드 파일명',
@@ -209,7 +228,7 @@ export function FileDownloadLogPage() {
         width: COL.ip,
       },
     ],
-    [total]
+    [total, page]
   )
 
   return (
@@ -277,7 +296,7 @@ export function FileDownloadLogPage() {
           title="파일 다운로드 이력"
           total={total}
           onExcelDownload={handleExcel}
-          excelDisabled={rows.length === 0}
+          excelDisabled={total === 0}
         />
 
         <Table<FileDownloadLog>
@@ -286,7 +305,7 @@ export function FileDownloadLogPage() {
           columns={columns}
           dataSource={rows}
           loading={loading}
-          pagination={false}
+          pagination={logTablePagination({ page, total, onChange: handlePageChange })}
           locale={{ emptyText: EMPTY_TEXT }}
           scroll={{
             x: COL.no + COL.fileName + COL.userName + COL.downloadedAt + COL.ip,

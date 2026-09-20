@@ -16,6 +16,12 @@ import {
 } from '@/features/bug-issue-log/api/hooks'
 import { downloadCsv } from '@/features/logs/shared/lib/export-csv'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
+import {
+  logListRowNumber,
+  logTablePagination,
+  parseLogListPage,
+  setLogListPageParam,
+} from '@/features/logs/shared/lib/list-page'
 import { LogResultToolbar } from '@/features/logs/shared/ui/log-result-toolbar'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -56,6 +62,7 @@ function parseApplied(searchParams: URLSearchParams): BugIssueListFilter {
   const to = searchParams.get('bg_to')
   if (from) filter.from = from
   if (to) filter.to = to
+  filter.page = parseLogListPage(searchParams.get('bg_page'))
   return filter
 }
 
@@ -97,10 +104,14 @@ export function BugIssueLogPage() {
     setPendingFilters,
     applied: appliedFilter,
     applySearch,
+    patchSearchParams,
   } = useListFilterUrl<PendingFilters, BugIssueListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
     parseApplied,
+    afterApplyParams: nextParams => {
+      nextParams.delete('bg_page')
+    },
     syncPendingFromUrl: ({ searchParams, setPendingFilters: setPending }) => {
       const userName = searchParams.get('bg_user') ?? ''
       const from = searchParams.get('bg_from')
@@ -130,24 +141,32 @@ export function BugIssueLogPage() {
   const exportMutation = useExportBugIssueLogs()
   const rows = listQuery.data?.rows ?? []
   const total = listQuery.data?.total ?? 0
+  const page = appliedFilter.page ?? 0
   const loading = listQuery.isLoading || listQuery.isFetching
+
+  const handlePageChange = useCallback(
+    (nextPage: number) => {
+      patchSearchParams(next => setLogListPageParam(next, 'bg_page', nextPage))
+    },
+    [patchSearchParams],
+  )
 
   const handleExcel = useCallback(() => {
     void exportMutation
       .mutateAsync(appliedFilter)
-      .then(mode => {
-        if (mode === 'use-local-csv') {
-          downloadCsv({
-            filenameBase: '버그_이슈_이력',
-            headers: ['No.', '에러 메시지', '사용자명', '발생일시'],
-            rows: rows.map((row, index) => [
-              total - index,
-              row.errorMessage,
-              row.userName,
-              formatLogDateTime(row.occurredAt),
-            ]),
-          })
-        }
+      .then(result => {
+        if (result === 'remote-downloaded') return
+        const all = result.rows
+        downloadCsv({
+          filenameBase: '버그_이슈_이력',
+          headers: ['No.', '에러 메시지', '사용자명', '발생일시'],
+          rows: all.map((row, index) => [
+            all.length - index,
+            row.errorMessage,
+            row.userName,
+            formatLogDateTime(row.occurredAt),
+          ]),
+        })
       })
       .catch(() => {
         showAlert({
@@ -155,7 +174,7 @@ export function BugIssueLogPage() {
           content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
         })
       })
-  }, [appliedFilter, exportMutation, rows, showAlert, total])
+  }, [appliedFilter, exportMutation, showAlert])
 
   const columns = useMemo<ColumnsType<BugIssueLog>>(
     () => [
@@ -164,7 +183,7 @@ export function BugIssueLogPage() {
         key: 'no',
         width: COL.no,
         className: CMS_TABLE_NO_COL_CLASS,
-        render: (_v, _r, index) => total - index,
+        render: (_v, _r, index) => logListRowNumber(total, page, index),
       },
       {
         title: '에러 메시지',
@@ -189,7 +208,7 @@ export function BugIssueLogPage() {
         render: (v: string) => formatLogDateTime(v),
       },
     ],
-    [total]
+    [total, page]
   )
 
   return (
@@ -244,7 +263,7 @@ export function BugIssueLogPage() {
           title="버그/이슈 이력"
           total={total}
           onExcelDownload={handleExcel}
-          excelDisabled={rows.length === 0}
+          excelDisabled={total === 0}
         />
 
         <Table<BugIssueLog>
@@ -253,7 +272,7 @@ export function BugIssueLogPage() {
           columns={columns}
           dataSource={rows}
           loading={loading}
-          pagination={false}
+          pagination={logTablePagination({ page, total, onChange: handlePageChange })}
           locale={{ emptyText: EMPTY_TEXT }}
           scroll={{
             x: COL.no + COL.errorMessage + COL.userName + COL.occurredAt,
