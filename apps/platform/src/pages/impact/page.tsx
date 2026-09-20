@@ -1,15 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   FeaturedCarousel,
   NewsletterSection,
   StoryCard,
   buildImpactStoriesListPath,
-  filterImpactStories,
-  getFeaturedImpactStories,
   getImpactStoryCategoryTabItems,
-  IMPACT_STORIES_PAGE_SIZE,
   readImpactStoriesListParams,
-  useMockImpactStories,
+  useFeaturedImpactStories,
+  useImpactStoriesList,
   type ImpactStoriesListParams,
 } from '@/features/impact-story'
 import { PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
@@ -19,8 +17,8 @@ const CATEGORY_TAB_ITEMS = getImpactStoryCategoryTabItems()
 
 export function ImpactStoriesPage() {
   const [params, setParams] = useState(readImpactStoriesListParams)
-  const stories = useMockImpactStories()
-  const featuredStories = getFeaturedImpactStories()
+  const list = useImpactStoriesList(params)
+  const featuredStories = useFeaturedImpactStories()
 
   useEffect(() => {
     const onPopState = () => {
@@ -39,18 +37,6 @@ export function ImpactStoriesPage() {
       window.history.pushState(null, '', nextPath)
     }
   }
-
-  const filteredStories = useMemo(
-    () => filterImpactStories(stories, params),
-    [stories, params]
-  )
-
-  const totalPages = Math.max(1, Math.ceil(filteredStories.length / IMPACT_STORIES_PAGE_SIZE))
-  const currentPage = Math.min(params.page, totalPages)
-  const pageItems = filteredStories.slice(
-    (currentPage - 1) * IMPACT_STORIES_PAGE_SIZE,
-    currentPage * IMPACT_STORIES_PAGE_SIZE
-  )
 
   const activeTab = CATEGORY_TAB_ITEMS.some(item => item.key === params.category)
     ? params.category
@@ -100,13 +86,17 @@ export function ImpactStoriesPage() {
           </div>
         </div>
 
-        {pageItems.length === 0 ? (
+        {list.isPending ? (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
+            임팩트 스토리를 불러오는 중입니다.
+          </PFText>
+        ) : list.items.length === 0 ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
             검색 결과가 없습니다.
           </PFText>
         ) : (
           <div className={styles.grid}>
-            {pageItems.map(story => (
+            {list.items.map(story => (
               <StoryCard key={story.id} story={story} />
             ))}
           </div>
@@ -114,8 +104,8 @@ export function ImpactStoriesPage() {
 
         <div className={styles.pagination}>
           <PFPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
+            currentPage={list.currentPage}
+            totalPages={list.totalPages}
             onPageChange={page => updateParams({ page })}
           />
         </div>

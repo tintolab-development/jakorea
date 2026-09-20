@@ -1,11 +1,23 @@
 import type { ImpactStoryListCategory, ImpactStoriesListParams } from '../model/types'
 import type { PFTabItem } from '@/shared/ui'
+import { IMPACT_STORY_CATEGORY_LABEL } from './category'
+
+export {
+  IMPACT_STORY_CATEGORY_LABEL,
+  IMPACT_STORY_PLACEHOLDER_COLORS,
+  categoryIdFromKey,
+  categoryKeyFromName,
+  parsePublicStoryId,
+} from './category'
 
 export const IMPACT_STORIES_PATH = '/impact'
 
 export const impactStoryDetailPath = (id: string) => `${IMPACT_STORIES_PATH}/${id}`
 
 export const IMPACT_STORIES_PAGE_SIZE = 9
+
+/** 캐러셀·인접글·홈 서브카드용 preview. 시드 18건을 한 페이지에 담는다. */
+export const IMPACT_STORIES_PREVIEW_SIZE = 20
 
 export const DEFAULT_IMPACT_STORIES_LIST_PARAMS = {
   category: 'all',
@@ -15,11 +27,11 @@ export const DEFAULT_IMPACT_STORIES_LIST_PARAMS = {
 
 export const IMPACT_STORY_CATEGORY_TAB_ITEMS: readonly PFTabItem[] = [
   { key: 'all', label: '전체' },
-  { key: 'story', label: '스토리' },
-  { key: 'press', label: '언론보도' },
-  { key: 'report', label: '보고서' },
-  { key: 'video', label: '영상' },
-  { key: 'newsletter', label: '뉴스레터' },
+  { key: 'story', label: IMPACT_STORY_CATEGORY_LABEL.story },
+  { key: 'press', label: IMPACT_STORY_CATEGORY_LABEL.press },
+  { key: 'report', label: IMPACT_STORY_CATEGORY_LABEL.report },
+  { key: 'video', label: IMPACT_STORY_CATEGORY_LABEL.video },
+  { key: 'newsletter', label: IMPACT_STORY_CATEGORY_LABEL.newsletter },
 ]
 
 const CATEGORY_KEYS = new Set<ImpactStoryListCategory>([
