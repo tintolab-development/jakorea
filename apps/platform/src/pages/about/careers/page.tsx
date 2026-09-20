@@ -77,7 +77,7 @@ export function CareersPage() {
               {CAREERS_HERO.label}
             </PFText>
 
-            <PFText as="h1" typo="page-title" color="black" className={styles.heroTitle}>
+            <PFText as="h1" typo="page-title-md" color="black" className={styles.heroTitle}>
               {CAREERS_HERO.titleLines.map(line => (
                 <span key={line} className={styles.heroTitleLine}>
                   {line}
@@ -116,7 +116,7 @@ export function CareersPage() {
           <PFText
             as="h2"
             id="careers-join-title"
-            typo="page-title-md"
+            typo="page-title-sm"
             color="black"
             className={styles.joinTitle}
           >

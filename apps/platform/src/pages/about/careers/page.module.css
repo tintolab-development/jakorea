@@ -111,9 +111,8 @@
   font-family: Montserrat, var(--font-family-base);
   font-size: 22px;
   font-weight: 400;
-  line-height: 1.5;
-  letter-spacing: -0.02em;
-  word-break: keep-all;
+  line-height: 1.6;
+  letter-spacing: -0.22px;
 }
 
 .talentForm {
@@ -335,5 +334,11 @@
 
   .heroCopy {
     max-width: 580px;
+  }
+
+  .heroKo {
+    font-size: 26px;
+    line-height: 1.6;
+    letter-spacing: -0.26px;
   }
 }

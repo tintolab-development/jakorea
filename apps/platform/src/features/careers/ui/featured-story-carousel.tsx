@@ -65,15 +65,25 @@ export function FeaturedStoryCarousel({ stories }: FeaturedStoryCarouselProps) {
 
         <div className={styles.content}>
           <div className={styles.header}>
-            <PFText as="span" typo="hl-lg" color="primary-500" className={styles.category}>
-              {story.categoryLabel}
-            </PFText>
+            <div className={styles.heading}>
+              <PFText as="span" typo="hl-lg" color="primary-500" className={styles.category}>
+                {story.categoryLabel}
+              </PFText>
 
-            <PFText as="h2" typo="hd-sm" color="black" className={styles.title}>
-              {story.title}
-            </PFText>
+              <PFText as="h2" typo="page-title-sm" color="black" className={styles.title}>
+                {story.titleLines ? (
+                  story.titleLines.map(line => (
+                    <span key={line} className={styles.titleLine}>
+                      {line}
+                    </span>
+                  ))
+                ) : (
+                  story.title
+                )}
+              </PFText>
+            </div>
 
-            <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600" className={styles.date}>
+            <PFText as="p" typo="hl-lg" color="black" className={styles.date}>
               {story.publishedAtLabel}
             </PFText>
           </div>
