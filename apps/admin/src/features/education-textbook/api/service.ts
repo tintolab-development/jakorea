@@ -32,7 +32,7 @@ function educationApi() {
 async function listRemote(
   filter?: EducationTextbookListFilter,
 ): Promise<EducationTextbook[]> {
-  const response = await educationApi().list9(toTextbookListParams(filter))
+  const response = await educationApi().list8(toTextbookListParams(filter))
   return (response.items ?? []).map(mapTextbookListItemToDomain)
 }
 

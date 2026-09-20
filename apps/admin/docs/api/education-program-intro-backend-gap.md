@@ -36,4 +36,6 @@ docker exec -i jakorea-postgres \
 프로그램 소개 편집을 Admin에서 영속화하려면 BE에 전용 설정 테이블 + `GET/PUT` (또는 CMS 연동 write) 스펙이 필요합니다.  
 스펙 확정 후 별도 phase로 FE remote 전환.
 
-**Last updated:** 2026-08-13
+백엔드 Cursor 프롬프트(신설 path·시드 값·검수): [education-platform-seed-backend-cursor-prompt-2026-09-20.md](./education-platform-seed-backend-cursor-prompt-2026-09-20.md)
+
+**Last updated:** 2026-09-20

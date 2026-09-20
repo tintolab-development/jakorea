@@ -9,7 +9,7 @@ import type {
   EducationTextbookUpdateInput,
 } from '@/entities/education-textbook/model/types'
 
-const STORAGE_KEY = 'admin.jakorea.educationTextbooks.v1'
+const STORAGE_KEY = 'admin.jakorea.educationTextbooks.v2'
 
 export const EDUCATION_TEXTBOOKS_CHANGED_EVENT =
   'jakorea:education-textbooks-changed' as const
@@ -33,7 +33,7 @@ export const DEFAULT_TEXTBOOK_THUMBNAIL =
   )
 
 type StoreFile = {
-  version: 1
+  version: 2
   items: EducationTextbook[]
 }
 
@@ -62,24 +62,38 @@ const SEED_ROWS: readonly SeedOmit[] = [
     educationEffect: '읽기, 쓰기',
     title: '우리들의 경제생활',
     description:
-      '일상 속 경제 활동을 통해 화폐와 교환·소비의 개념을 익히고, 합리적인 선택의 기초를 쌓습니다.',
+      '유아, 유치원생을 대상으로 경제교육을 하는 교재입니다. 동화를 통해 경제 개념을 쉽게 이해할 수 있도록 구성되어 있습니다.',
     thumbnailUrl: DEFAULT_TEXTBOOK_THUMBNAIL,
     thumbnailFileName: 'text.jpg',
     unitCount: 4,
     unitSessionText: '30분 수업기준 4차시 교육',
     unitIntroMarkdown:
-      '**1단원 로비의 농장 여행**\n\n농장 이야기 속에서 생산과 소비를 경험합니다.\n\n**2단원 동네 가게 탐험**\n\n가게 놀이를 통해 교환과 가격을 이해합니다.\n\n**3단원 알뜰한 소비**\n\n필요와 욕구를 구분하며 현명한 선택을 연습합니다.',
+      '**1단원 로비의 농장 여행**\n\n농장 이야기 속에서 생산과 소비를 경험합니다.\n\n**2단원 로비의 시장 여행**\n\n가게 놀이를 통해 교환과 가격을 이해합니다.',
     authorName: DEFAULT_TEXTBOOK_AUTHOR,
   },
   {
     isActive: true,
-    businessFieldId: FIELD_IDS.entrepreneurship,
-    educationTargetIds: [TARGET_IDS.elementary],
-    educationEffect: '읽기, 쓰기, 수학능력',
-    title: '우리들의 경제생활',
-    description: '초등 대상 경제생활 기초 교재입니다.',
+    businessFieldId: FIELD_IDS.career,
+    educationTargetIds: [TARGET_IDS.middle],
+    educationEffect: '진로 탐색, 협업',
+    title: '우주여행',
+    description:
+      '중학생을 대상으로 진로·미래 직업을 탐구하는 교재입니다. 우주 탐사를 소재로 진로 탐색과 협업 역량을 기릅니다.',
     thumbnailUrl: DEFAULT_TEXTBOOK_THUMBNAIL,
-    thumbnailFileName: 'text.jpg',
+    unitCount: 3,
+    unitSessionText: '45분 수업기준 6차시 교육',
+    unitIntroMarkdown: '',
+    authorName: DEFAULT_TEXTBOOK_AUTHOR,
+  },
+  {
+    isActive: true,
+    businessFieldId: FIELD_IDS.economy,
+    educationTargetIds: [TARGET_IDS.elementary],
+    educationEffect: '합리적 소비, 저축',
+    title: '경제 탐험대',
+    description:
+      '초등학생을 위한 경제·금융 입문 교재입니다. 생활 속 경제 이야기를 통해 합리적 소비와 저축을 배웁니다.',
+    thumbnailUrl: DEFAULT_TEXTBOOK_THUMBNAIL,
     unitCount: 5,
     unitSessionText: '40분 수업기준 5차시 교육',
     unitIntroMarkdown: '',
@@ -88,62 +102,37 @@ const SEED_ROWS: readonly SeedOmit[] = [
   {
     isActive: true,
     businessFieldId: FIELD_IDS.career,
-    educationTargetIds: [TARGET_IDS.middle, TARGET_IDS.high],
-    educationEffect: '진로 탐색, 의사소통',
-    title: '나의 진로 찾기',
-    description: '중·고등 대상 진로 탐색 프로그램 교재입니다.',
+    educationTargetIds: [TARGET_IDS.high],
+    educationEffect: '자기이해, 직업 탐색',
+    title: '직업의 세계',
+    description: '고등학생이 다양한 직업 세계를 탐색하고 자기 이해를 넓히는 진로 교재입니다.',
     thumbnailUrl: DEFAULT_TEXTBOOK_THUMBNAIL,
-    unitCount: 6,
-    unitSessionText: '45분 수업기준 6차시 교육',
-    unitIntroMarkdown: '**1단원 나를 이해하기**\n\n흥미·강점·가치관을 탐색합니다.',
+    unitCount: 4,
+    unitSessionText: '50분 수업기준 8차시 교육',
+    unitIntroMarkdown: '',
     authorName: DEFAULT_TEXTBOOK_AUTHOR,
   },
   {
     isActive: true,
     businessFieldId: FIELD_IDS.entrepreneurship,
     educationTargetIds: [TARGET_IDS.high],
-    educationEffect: '창의성, 협업, 문제해결',
-    title: '스타트업 챌린지',
-    description: '아이디어 발굴부터 피치까지 기업가 정신 실습 교재입니다.',
+    educationEffect: '창의성, 문제해결',
+    title: '창업 씨앗 키우기',
+    description: '청소년·청년의 기업가정신을 키우는 실습형 교재입니다.',
     thumbnailUrl: DEFAULT_TEXTBOOK_THUMBNAIL,
-    unitCount: 8,
-    unitSessionText: '50분 수업기준 8차시 교육',
+    unitCount: 6,
+    unitSessionText: '50분 수업기준 12차시 교육',
     unitIntroMarkdown: '',
     authorName: DEFAULT_TEXTBOOK_AUTHOR,
   },
   {
-    isActive: false,
+    isActive: true,
     businessFieldId: FIELD_IDS.digital,
-    educationTargetIds: [TARGET_IDS.elementary, TARGET_IDS.middle],
-    educationEffect: '미디어 리터러시, 정보 판별',
-    title: '스마트 디지털 시민',
-    description: '미사용 상태 mock — 어드민에서만 조회됩니다.',
-    thumbnailUrl: DEFAULT_TEXTBOOK_THUMBNAIL,
-    unitCount: 3,
-    unitSessionText: '40분 수업기준 3차시 교육',
-    unitIntroMarkdown: '',
-    authorName: DEFAULT_TEXTBOOK_AUTHOR,
-  },
-  {
-    isActive: true,
-    businessFieldId: FIELD_IDS.economy,
-    educationTargetIds: [TARGET_IDS.high, TARGET_IDS.adult],
-    educationEffect: '재무 관리, 의사결정',
-    title: '생활 금융 마스터',
-    description: '생활 속에서 쓰이는 금융 개념과 실천 습관을 다룹니다.',
-    thumbnailUrl: DEFAULT_TEXTBOOK_THUMBNAIL,
-    unitCount: 7,
-    unitSessionText: '50분 수업기준 7차시 교육',
-    unitIntroMarkdown: '',
-    authorName: DEFAULT_TEXTBOOK_AUTHOR,
-  },
-  {
-    isActive: true,
-    businessFieldId: FIELD_IDS.career,
     educationTargetIds: [TARGET_IDS.elementary],
-    educationEffect: '자기이해, 직업 탐색',
-    title: '꿈 키우기 워크북',
-    description: '초등 저·중학년용 꿈 탐색 활동 교재입니다.',
+    educationEffect: '미디어 리터러시, 정보 판별',
+    title: '디지털 시민 되기',
+    description:
+      '초·중학생을 위한 디지털 리터러시 기초 교재입니다. 온라인 예절과 정보 비판 능력을 다룹니다.',
     thumbnailUrl: DEFAULT_TEXTBOOK_THUMBNAIL,
     unitCount: 4,
     unitSessionText: '40분 수업기준 4차시 교육',
@@ -152,14 +141,27 @@ const SEED_ROWS: readonly SeedOmit[] = [
   },
   {
     isActive: true,
-    businessFieldId: FIELD_IDS.entrepreneurship,
-    educationTargetIds: [TARGET_IDS.middle],
-    educationEffect: '리더십, 팀워크',
-    title: '미니 기업가 교실',
-    description: '소규모 프로젝트로 기업가 정신을 체험합니다.',
+    businessFieldId: FIELD_IDS.economy,
+    educationTargetIds: [TARGET_IDS.adult],
+    educationEffect: '재무 관리, 의사결정',
+    title: '성인을 위한 금융 리터러시',
+    description: '성인 학습자를 위한 실용 금융 교육 콘텐츠입니다.',
     thumbnailUrl: DEFAULT_TEXTBOOK_THUMBNAIL,
     unitCount: 5,
-    unitSessionText: '45분 수업기준 5차시 교육',
+    unitSessionText: '60분 수업기준 5차시 교육',
+    unitIntroMarkdown: '',
+    authorName: DEFAULT_TEXTBOOK_AUTHOR,
+  },
+  {
+    isActive: true,
+    businessFieldId: FIELD_IDS.economy,
+    educationTargetIds: [TARGET_IDS.adult],
+    educationEffect: '안내',
+    title: '교육 콘텐츠 이용 안내',
+    description: '교재 신청·활용 전 확인이 필요한 공통 안내사항입니다.',
+    thumbnailUrl: DEFAULT_TEXTBOOK_THUMBNAIL,
+    unitCount: 0,
+    unitSessionText: '차시 없음',
     unitIntroMarkdown: '',
     authorName: DEFAULT_TEXTBOOK_AUTHOR,
   },
@@ -217,18 +219,18 @@ function readFile(): StoreFile {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) {
-      return { version: 1, items: buildSeedTextbooks() }
+      return { version: 2, items: buildSeedTextbooks() }
     }
     const parsed = JSON.parse(raw) as StoreFile
-    if (parsed?.version !== 1 || !Array.isArray(parsed.items)) {
-      return { version: 1, items: buildSeedTextbooks() }
+    if (parsed?.version !== 2 || !Array.isArray(parsed.items)) {
+      return { version: 2, items: buildSeedTextbooks() }
     }
     return {
-      version: 1,
+      version: 2,
       items: parsed.items.map((item, i) => normalizeItem(item, `edu-textbook-migrated-${i}`)),
     }
   } catch {
-    return { version: 1, items: buildSeedTextbooks() }
+    return { version: 2, items: buildSeedTextbooks() }
   }
 }
 
@@ -315,7 +317,7 @@ export function createEducationTextbook(
     createdAt: now,
     updatedAt: now,
   }
-  writeFile({ version: 1, items: [item, ...file.items] })
+  writeFile({ version: 2, items: [item, ...file.items] })
   return item
 }
 
@@ -345,14 +347,14 @@ export function updateEducationTextbook(
   }
   const items = [...file.items]
   items[index] = next
-  writeFile({ version: 1, items })
+  writeFile({ version: 2, items })
   return next
 }
 
 export function removeEducationTextbooks(ids: string[]): void {
   const idSet = new Set(ids)
   const file = readFile()
-  writeFile({ version: 1, items: file.items.filter(row => !idSet.has(row.id)) })
+  writeFile({ version: 2, items: file.items.filter(row => !idSet.has(row.id)) })
 }
 
 export function setEducationTextbookActive(
@@ -371,6 +373,6 @@ export function setEducationTextbookActive(
   }
   const items = [...file.items]
   items[index] = next
-  writeFile({ version: 1, items })
+  writeFile({ version: 2, items })
   return next
 }

@@ -10,7 +10,7 @@ import type {
 } from '@/entities/education-textbook/model/types'
 import { markdownToHtml } from '@/shared/rich-text'
 import type { EnabledToggleRequest } from '@/shared/api/generated/education/schemas/enabledToggleRequest'
-import type { List9Params } from '@/shared/api/generated/education/schemas/list9Params'
+import type { List8Params } from '@/shared/api/generated/education/schemas/list8Params'
 import type { TextbookBulkDeleteRequest } from '@/shared/api/generated/education/schemas/textbookBulkDeleteRequest'
 import type { TextbookCreateRequest } from '@/shared/api/generated/education/schemas/textbookCreateRequest'
 import type { TextbookListItem } from '@/shared/api/generated/education/schemas/textbookListItem'
@@ -78,8 +78,8 @@ export function mapTextbookResponseToDomain(row: TextbookResponse): EducationTex
 
 export function toTextbookListParams(
   filter?: EducationTextbookListFilter,
-): List9Params {
-  const params: List9Params = {
+): List8Params {
+  const params: List8Params = {
     page: 0,
     size: LIST_PAGE_SIZE,
   }

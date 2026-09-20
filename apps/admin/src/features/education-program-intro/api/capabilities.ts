@@ -1,7 +1,8 @@
 /**
- * 프로그램 소개 — remote API opt-in stub.
- * 백엔드 연동 전까지 항상 local mock을 사용한다.
+ * 프로그램 소개 — Homepage JWT면 OpenAPI program-intros
  */
+import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
+
 export function shouldUseEducationProgramIntroRemoteApi(): boolean {
-  return false
+  return shouldUseHomepageRemoteApi()
 }

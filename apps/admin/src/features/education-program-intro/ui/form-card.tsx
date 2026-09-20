@@ -19,6 +19,7 @@ import {
   PROGRAM_INTRO_IMAGE_SLOTS,
   type ProgramIntroImageSlot,
 } from '@/features/education-program-intro/lib/image-slots'
+import { educationProgramIntroMutationFailureAlert } from '@/features/education-program-intro/lib/mutation-failure-alert'
 import { CmsButton, CmsInput, CmsTextArea, FileSelectField, useCmsAlert } from '@/shared/ui'
 
 import './form-card.css'
@@ -108,10 +109,11 @@ type ImageFieldProps = {
   isEditing: boolean
   image: ProgramIntroImage
   slot: ProgramIntroImageSlot
+  sortOrder: number
   onChange: (next: ProgramIntroImage) => void
 }
 
-function ImageFieldControl({ isEditing, image, slot, onChange }: ImageFieldProps) {
+function ImageFieldControl({ isEditing, image, slot, sortOrder, onChange }: ImageFieldProps) {
   const { showAlert } = useCmsAlert()
 
   const handleFilesChange = useCallback(
@@ -134,7 +136,15 @@ function ImageFieldControl({ isEditing, image, slot, onChange }: ImageFieldProps
       }
       try {
         const dataUrl = await readFileAsDataUrl(file)
-        onChange({ fileName: file.name, fileUrl: dataUrl })
+        onChange({
+          fileName: file.name,
+          fileUrl: dataUrl,
+          alt: image?.alt?.trim() || file.name,
+          sortOrder: image?.sortOrder && image.sortOrder > 0 ? image.sortOrder : sortOrder,
+          width: image?.width,
+          height: image?.height,
+          file,
+        })
       } catch {
         showAlert({
           title: '파일 읽기 실패',
@@ -142,7 +152,7 @@ function ImageFieldControl({ isEditing, image, slot, onChange }: ImageFieldProps
         })
       }
     },
-    [onChange, showAlert]
+    [image, onChange, showAlert, sortOrder],
   )
 
   if (!isEditing) {
@@ -166,7 +176,7 @@ function ImageFieldControl({ isEditing, image, slot, onChange }: ImageFieldProps
 }
 
 type ProgramSectionProps = {
-  index: 0 | 1 | 2
+  index: number
   title: string
   isEditing: boolean
   item: ProgramIntroItem
@@ -184,11 +194,12 @@ function ProgramSection({
   onChange,
   onImageChange,
 }: ProgramSectionProps) {
-  const slots = PROGRAM_INTRO_IMAGE_SLOTS[index]!
+  const slots = PROGRAM_INTRO_IMAGE_SLOTS[index] ?? []
   const display = isEditing ? draftItem : item
 
   const renderImageField = (imageIndex: number) => {
-    const slot = slots[imageIndex]!
+    const slot = slots[imageIndex]
+    if (!slot) return null
     return (
       <DetailInfoForm.Field
         key={slot.label}
@@ -199,6 +210,7 @@ function ProgramSection({
             isEditing={isEditing}
             image={display.images[imageIndex] ?? null}
             slot={slot}
+            sortOrder={imageIndex + 1}
             onChange={next => onImageChange(imageIndex, next)}
           />
         }
@@ -255,18 +267,18 @@ function ProgramSection({
           />
         </DetailInfoForm.Row>
 
-        {index === 0 ? (
+        {slots.length === 1 ? (
+          <DetailInfoForm.Row type="single">{renderImageField(0)}</DetailInfoForm.Row>
+        ) : null}
+
+        {slots.length === 2 ? (
           <DetailInfoForm.Row type="double">
             {renderImageField(0)}
             {renderImageField(1)}
           </DetailInfoForm.Row>
         ) : null}
 
-        {index === 1 ? (
-          <DetailInfoForm.Row type="single">{renderImageField(0)}</DetailInfoForm.Row>
-        ) : null}
-
-        {index === 2 ? (
+        {slots.length >= 3 ? (
           <>
             <DetailInfoForm.Row type="single">{renderImageField(0)}</DetailInfoForm.Row>
             <DetailInfoForm.Row type="double">
@@ -349,7 +361,7 @@ export function ProgramIntroFormCard({ data, onEditingChange }: Props) {
   const saveMutation = useSaveProgramIntroCategory()
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<ProgramIntroCategoryDocument>(() =>
-    cloneProgramIntroDocument(data)
+    cloneProgramIntroDocument(data),
   )
 
   useEffect(() => {
@@ -378,16 +390,14 @@ export function ProgramIntroFormCard({ data, onEditingChange }: Props) {
   const handleSave = useCallback(async () => {
     try {
       await saveMutation.mutateAsync({
-        categoryKey: draft.categoryKey,
+        fieldCode: draft.fieldCode,
         mainText: draft.mainText,
-        programs: draft.programs,
+        version: draft.version,
+        sections: draft.sections,
       })
       setIsEditing(false)
-    } catch {
-      showAlert({
-        title: '저장 실패',
-        content: '프로그램 소개 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(educationProgramIntroMutationFailureAlert(error))
     }
   }, [draft, saveMutation, showAlert])
 
@@ -395,34 +405,32 @@ export function ProgramIntroFormCard({ data, onEditingChange }: Props) {
     setDraft(prev => ({ ...prev, mainText: value }))
   }, [])
 
-  const updateProgram = useCallback((index: 0 | 1 | 2, patch: Partial<ProgramIntroItem>) => {
+  const updateSection = useCallback((index: number, patch: Partial<ProgramIntroItem>) => {
     setDraft(prev => {
-      const programs = [...prev.programs] as [
-        ProgramIntroItem,
-        ProgramIntroItem,
-        ProgramIntroItem,
-      ]
-      programs[index] = { ...programs[index], ...patch }
-      return { ...prev, programs }
+      const sections = [...prev.sections]
+      const current = sections[index]
+      if (!current) return prev
+      sections[index] = { ...current, ...patch }
+      return { ...prev, sections }
     })
   }, [])
 
-  const updateProgramImage = useCallback(
-    (programIndex: 0 | 1 | 2, imageIndex: number, next: ProgramIntroImage) => {
+  const updateSectionImage = useCallback(
+    (sectionIndex: number, imageIndex: number, next: ProgramIntroImage) => {
       setDraft(prev => {
-        const programs = [...prev.programs] as [
-          ProgramIntroItem,
-          ProgramIntroItem,
-          ProgramIntroItem,
-        ]
-        const images = [...programs[programIndex].images]
+        const sections = [...prev.sections]
+        const current = sections[sectionIndex]
+        if (!current) return prev
+        const images = [...current.images]
         images[imageIndex] = next
-        programs[programIndex] = { ...programs[programIndex], images }
-        return { ...prev, programs }
+        sections[sectionIndex] = { ...current, images }
+        return { ...prev, sections }
       })
     },
-    []
+    [],
   )
+
+  const displaySections = isEditing ? draft.sections : data.sections
 
   return (
     <div className="admin-list-card program-intro-card">
@@ -491,33 +499,18 @@ export function ProgramIntroFormCard({ data, onEditingChange }: Props) {
           </DetailInfoForm>
         </section>
 
-        <ProgramSection
-          index={0}
-          title="프로그램 01"
-          isEditing={isEditing}
-          item={data.programs[0]}
-          draftItem={draft.programs[0]}
-          onChange={patch => updateProgram(0, patch)}
-          onImageChange={(imageIndex, next) => updateProgramImage(0, imageIndex, next)}
-        />
-        <ProgramSection
-          index={1}
-          title="프로그램 02"
-          isEditing={isEditing}
-          item={data.programs[1]}
-          draftItem={draft.programs[1]}
-          onChange={patch => updateProgram(1, patch)}
-          onImageChange={(imageIndex, next) => updateProgramImage(1, imageIndex, next)}
-        />
-        <ProgramSection
-          index={2}
-          title="프로그램 03"
-          isEditing={isEditing}
-          item={data.programs[2]}
-          draftItem={draft.programs[2]}
-          onChange={patch => updateProgram(2, patch)}
-          onImageChange={(imageIndex, next) => updateProgramImage(2, imageIndex, next)}
-        />
+        {displaySections.map((section, index) => (
+          <ProgramSection
+            key={section.sectionKey || `section-${index}`}
+            index={index}
+            title={`프로그램 ${String(index + 1).padStart(2, '0')}`}
+            isEditing={isEditing}
+            item={data.sections[index] ?? section}
+            draftItem={draft.sections[index] ?? section}
+            onChange={patch => updateSection(index, patch)}
+            onImageChange={(imageIndex, next) => updateSectionImage(index, imageIndex, next)}
+          />
+        ))}
       </div>
     </div>
   )
