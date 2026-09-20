@@ -28,6 +28,8 @@ export {
   useMockTextbookCatalog,
   useMockThemeSections,
 } from './lib/mock-data'
+export { usePublicTextbookCatalog } from './api/hooks'
+export { resolveTextbookContent } from './api/mappers'
 export { DirectoryListItem } from './ui/directory-list-item'
 export { ThemeSection } from './ui/theme-section'
 export { ContentListItem } from './ui/content-list-item'

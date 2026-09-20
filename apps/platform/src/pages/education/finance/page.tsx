@@ -1,18 +1,33 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   DEFAULT_EDUCATION_FINANCE_TAB,
   EDUCATION_FINANCE_HERO,
-  EDUCATION_FINANCE_TAB_ITEMS,
   ProgramSection,
   getEducationFinancePrograms,
   type FinanceProgramId,
 } from '@/features/education-finance'
+import { useEducationProgramIntroView } from '@/features/education-intro/api/hooks'
 import { PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function EducationFinancePage() {
+  const { titleLines, programs } = useEducationProgramIntroView({
+    fieldCode: 'ECONOMICS_FINANCE',
+    fallbackTitleLines: EDUCATION_FINANCE_HERO.titleLines,
+    fallbackPrograms: getEducationFinancePrograms(),
+  })
   const [activeTab, setActiveTab] = useState<FinanceProgramId>(DEFAULT_EDUCATION_FINANCE_TAB)
-  const programs = getEducationFinancePrograms()
+
+  useEffect(() => {
+    if (programs.some(section => section.id === activeTab)) return
+    const first = programs[0]?.id
+    if (first) setActiveTab(first)
+  }, [activeTab, programs])
+
+  const tabItems = useMemo(
+    () => programs.map(section => ({ key: section.id, label: section.title })),
+    [programs],
+  )
 
   const handleTabChange = (key: string) => {
     const next = key as FinanceProgramId
@@ -31,7 +46,7 @@ export function EducationFinancePage() {
             {EDUCATION_FINANCE_HERO.label}
           </PFText>
           <PFText as="h1" typo="page-title-md" color="black" className={styles.heroTitle}>
-            {EDUCATION_FINANCE_HERO.titleLines.map(line => (
+            {titleLines.map(line => (
               <span key={line} className={styles.heroTitleLine}>
                 {line}
               </span>
@@ -41,7 +56,7 @@ export function EducationFinancePage() {
 
         <div className={styles.tabs}>
           <PFTabs
-            items={EDUCATION_FINANCE_TAB_ITEMS}
+            items={tabItems}
             value={activeTab}
             onChange={handleTabChange}
             variant="category"

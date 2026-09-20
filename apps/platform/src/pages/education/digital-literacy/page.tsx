@@ -1,20 +1,35 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   DEFAULT_EDUCATION_DIGITAL_LITERACY_TAB,
   EDUCATION_DIGITAL_LITERACY_HERO,
-  EDUCATION_DIGITAL_LITERACY_TAB_ITEMS,
   ProgramSection,
   getEducationDigitalLiteracyPrograms,
   type DigitalLiteracyProgramId,
 } from '@/features/education-digital-literacy'
+import { useEducationProgramIntroView } from '@/features/education-intro/api/hooks'
 import { PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function EducationDigitalLiteracyPage() {
+  const { titleLines, programs } = useEducationProgramIntroView({
+    fieldCode: 'DIGITAL_LITERACY',
+    fallbackTitleLines: EDUCATION_DIGITAL_LITERACY_HERO.titleLines,
+    fallbackPrograms: getEducationDigitalLiteracyPrograms(),
+  })
   const [activeTab, setActiveTab] = useState<DigitalLiteracyProgramId>(
     DEFAULT_EDUCATION_DIGITAL_LITERACY_TAB,
   )
-  const programs = getEducationDigitalLiteracyPrograms()
+
+  useEffect(() => {
+    if (programs.some(section => section.id === activeTab)) return
+    const first = programs[0]?.id
+    if (first) setActiveTab(first)
+  }, [activeTab, programs])
+
+  const tabItems = useMemo(
+    () => programs.map(section => ({ key: section.id, label: section.title })),
+    [programs],
+  )
 
   const handleTabChange = (key: string) => {
     const next = key as DigitalLiteracyProgramId
@@ -33,7 +48,7 @@ export function EducationDigitalLiteracyPage() {
             {EDUCATION_DIGITAL_LITERACY_HERO.label}
           </PFText>
           <PFText as="h1" typo="page-title-md" color="black" className={styles.heroTitle}>
-            {EDUCATION_DIGITAL_LITERACY_HERO.titleLines.map(line => (
+            {titleLines.map(line => (
               <span key={line} className={styles.heroTitleLine}>
                 {line}
               </span>
@@ -43,7 +58,7 @@ export function EducationDigitalLiteracyPage() {
 
         <div className={styles.tabs}>
           <PFTabs
-            items={EDUCATION_DIGITAL_LITERACY_TAB_ITEMS}
+            items={tabItems}
             value={activeTab}
             onChange={handleTabChange}
             variant="category"

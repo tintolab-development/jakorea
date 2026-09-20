@@ -1,18 +1,33 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   DEFAULT_EDUCATION_CAREER_TAB,
   EDUCATION_CAREER_HERO,
-  EDUCATION_CAREER_TAB_ITEMS,
   ProgramSection,
   getEducationCareerPrograms,
   type CareerProgramId,
 } from '@/features/education-career'
+import { useEducationProgramIntroView } from '@/features/education-intro/api/hooks'
 import { PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function EducationCareerPage() {
+  const { titleLines, programs } = useEducationProgramIntroView({
+    fieldCode: 'CAREER_EMPLOYMENT',
+    fallbackTitleLines: EDUCATION_CAREER_HERO.titleLines,
+    fallbackPrograms: getEducationCareerPrograms(),
+  })
   const [activeTab, setActiveTab] = useState<CareerProgramId>(DEFAULT_EDUCATION_CAREER_TAB)
-  const programs = getEducationCareerPrograms()
+
+  useEffect(() => {
+    if (programs.some(section => section.id === activeTab)) return
+    const first = programs[0]?.id
+    if (first) setActiveTab(first)
+  }, [activeTab, programs])
+
+  const tabItems = useMemo(
+    () => programs.map(section => ({ key: section.id, label: section.title })),
+    [programs],
+  )
 
   const handleTabChange = (key: string) => {
     const next = key as CareerProgramId
@@ -31,7 +46,7 @@ export function EducationCareerPage() {
             {EDUCATION_CAREER_HERO.label}
           </PFText>
           <PFText as="h1" typo="page-title-md" color="black" className={styles.heroTitle}>
-            {EDUCATION_CAREER_HERO.titleLines.map(line => (
+            {titleLines.map(line => (
               <span key={line} className={styles.heroTitleLine}>
                 {line}
               </span>
@@ -41,7 +56,7 @@ export function EducationCareerPage() {
 
         <div className={styles.tabs}>
           <PFTabs
-            items={EDUCATION_CAREER_TAB_ITEMS}
+            items={tabItems}
             value={activeTab}
             onChange={handleTabChange}
             variant="category"

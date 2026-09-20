@@ -1,20 +1,35 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   DEFAULT_EDUCATION_ENTREPRENEURSHIP_TAB,
   EDUCATION_ENTREPRENEURSHIP_HERO,
-  EDUCATION_ENTREPRENEURSHIP_TAB_ITEMS,
   ProgramSection,
   getEducationEntrepreneurshipPrograms,
   type EntrepreneurshipProgramId,
 } from '@/features/education-entrepreneurship'
+import { useEducationProgramIntroView } from '@/features/education-intro/api/hooks'
 import { PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function EducationEntrepreneurshipPage() {
+  const { titleLines, programs } = useEducationProgramIntroView({
+    fieldCode: 'ENTREPRENEURSHIP',
+    fallbackTitleLines: EDUCATION_ENTREPRENEURSHIP_HERO.titleLines,
+    fallbackPrograms: getEducationEntrepreneurshipPrograms(),
+  })
   const [activeTab, setActiveTab] = useState<EntrepreneurshipProgramId>(
     DEFAULT_EDUCATION_ENTREPRENEURSHIP_TAB,
   )
-  const programs = getEducationEntrepreneurshipPrograms()
+
+  useEffect(() => {
+    if (programs.some(section => section.id === activeTab)) return
+    const first = programs[0]?.id
+    if (first) setActiveTab(first)
+  }, [activeTab, programs])
+
+  const tabItems = useMemo(
+    () => programs.map(section => ({ key: section.id, label: section.title })),
+    [programs],
+  )
 
   const handleTabChange = (key: string) => {
     const next = key as EntrepreneurshipProgramId
@@ -33,7 +48,7 @@ export function EducationEntrepreneurshipPage() {
             {EDUCATION_ENTREPRENEURSHIP_HERO.label}
           </PFText>
           <PFText as="h1" typo="page-title-md" color="black" className={styles.heroTitle}>
-            {EDUCATION_ENTREPRENEURSHIP_HERO.titleLines.map(line => (
+            {titleLines.map(line => (
               <span key={line} className={styles.heroTitleLine}>
                 {line}
               </span>
@@ -43,7 +58,7 @@ export function EducationEntrepreneurshipPage() {
 
         <div className={styles.tabs}>
           <PFTabs
-            items={EDUCATION_ENTREPRENEURSHIP_TAB_ITEMS}
+            items={tabItems}
             value={activeTab}
             onChange={handleTabChange}
             variant="category"

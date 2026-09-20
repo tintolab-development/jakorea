@@ -3,15 +3,15 @@ import {
   buildTextbooksListPath,
   DetailModal,
   filterAndSortTextbooks,
-  getMockTextbookById,
   ContentListItem,
   readTextbooksListParams,
   TEXTBOOK_CATEGORY_TAB_ITEMS,
   TEXTBOOKS_PAGE_SIZE,
   ThemeSection,
   TextbookSort,
-  useMockTextbookCatalog,
   useMockThemeSections,
+  usePublicTextbookCatalog,
+  resolveTextbookContent,
   type TextbookCategoryFilter,
   type TextbookSortKey,
   type TextbooksListParams,
@@ -22,7 +22,7 @@ import styles from './page.module.css'
 export function TextbooksPage() {
   const [params, setParams] = useState(readTextbooksListParams)
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const contents = useMockTextbookCatalog()
+  const { items: contents } = usePublicTextbookCatalog()
   const themeSections = useMockThemeSections()
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export function TextbooksPage() {
     ? params.category
     : 'all'
 
-  const selectedContent = selectedId ? (getMockTextbookById(selectedId) ?? null) : null
+  const selectedContent = resolveTextbookContent(selectedId, contents)
 
   const openDetail = (contentId: string) => {
     setSelectedId(contentId)
