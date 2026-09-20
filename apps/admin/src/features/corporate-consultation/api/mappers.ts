@@ -10,7 +10,7 @@ import type {
 import type { BulkRequest } from '@/shared/api/generated/sponsorship/schemas/bulkRequest'
 import type { ConsultationDetailResponse } from '@/shared/api/generated/sponsorship/schemas/consultationDetailResponse'
 import type { ConsultationListItem } from '@/shared/api/generated/sponsorship/schemas/consultationListItem'
-import type { List12Params } from '@/shared/api/generated/sponsorship/schemas/list12Params'
+import type { List11Params } from '@/shared/api/generated/sponsorship/schemas/list11Params'
 import type { StatusUpdateRequest } from '@/shared/api/generated/sponsorship/schemas/statusUpdateRequest'
 import { StatusUpdateRequestStatus } from '@/shared/api/generated/sponsorship/schemas/statusUpdateRequestStatus'
 
@@ -74,8 +74,8 @@ export function mapConsultationDetailToDomain(
 
 export function toConsultationListParams(
   filter: CorporateConsultationListFilter = {},
-): List12Params {
-  const params: List12Params = {
+): List11Params {
+  const params: List11Params = {
     page: 0,
     size: LIST_PAGE_SIZE,
   }

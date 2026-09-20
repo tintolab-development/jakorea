@@ -200,6 +200,7 @@
               "JA_NOTICE_ATTACHMENT",
               "IMPACT_STORY_ATTACHMENT",
               "EDUCATION_TEXTBOOK_THUMBNAIL",
+              "EDUCATION_PROGRAM_INTRO_IMAGE",
               "SPONSORSHIP_BANNER_IMAGE",
               "SPONSOR_LOGO",
               "CORPORATE_CONSULTATION_ATTACHMENT"
@@ -892,6 +893,27 @@
           "version"
         ]
       },
+      "ApiErrorResponse": {
+        "type": "object",
+        "description": "Homepage API error envelope. Clients read `code`.",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "ENABLED_LIMIT"
+          },
+          "message": {
+            "type": "string",
+            "example": "팝업은 최대 4개까지 동시 사용 가능합니다."
+          },
+          "traceId": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "StripResponse": {
         "type": "object",
         "properties": {
@@ -1025,31 +1047,6 @@
         "required": [
           "items"
         ]
-      },
-      "SocialResponse": {
-        "type": "object",
-        "properties": {
-          "channelCode": {
-            "type": "string"
-          },
-          "channelName": {
-            "type": "string"
-          },
-          "externalUrl": {
-            "type": "string"
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "displayOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
       },
       "PopupUpdateRequest": {
         "type": "object",
@@ -1198,49 +1195,6 @@
           "version"
         ]
       },
-      "HeroResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "displayOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "image": {
-            "$ref": "#/components/schemas/AssetResponse"
-          },
-          "topText": {
-            "type": "string"
-          },
-          "mainTitle": {
-            "type": "string"
-          },
-          "bottomText": {
-            "type": "string"
-          },
-          "linkUrl": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
       "PerformanceUpdateRequest": {
         "type": "object",
         "properties": {
@@ -1284,37 +1238,6 @@
           "youthBeneficiaryCount"
         ]
       },
-      "PerformanceResponse": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string"
-          },
-          "networkDistributionCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "partnerOrganizationCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "educatorCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "youthBeneficiaryCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "bottomText": {
-            "type": "string"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
       "ImpactUpdateRequest": {
         "type": "object",
         "properties": {
@@ -1342,50 +1265,6 @@
           "version"
         ]
       },
-      "ImpactResponse": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string"
-          },
-          "youtubeUrl": {
-            "type": "string"
-          },
-          "featuredStoryId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "featuredStoryOptions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MainStoryOption"
-            }
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "MainStoryOption": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "title": {
-            "type": "string"
-          },
-          "categoryName": {
-            "type": "string"
-          },
-          "publishAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
       "EducationUpdateRequest": {
         "type": "object",
         "properties": {
@@ -1403,74 +1282,6 @@
           "title",
           "version"
         ]
-      },
-      "EducationResponse": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string"
-          },
-          "programs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProgramSummary"
-            }
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ProgramSummary": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "uuid": {
-            "type": "string"
-          },
-          "programCode": {
-            "type": "string"
-          },
-          "programType": {
-            "type": "string"
-          },
-          "periodStatus": {
-            "type": "string"
-          },
-          "nameKo": {
-            "type": "string"
-          },
-          "nameEn": {
-            "type": "string"
-          },
-          "summary": {
-            "type": "string"
-          },
-          "businessYear": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "businessStartDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "businessEndDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
       },
       "DonationUpdateRequest": {
         "type": "object",
@@ -1509,30 +1320,6 @@
           "title",
           "version"
         ]
-      },
-      "DonationResponse": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string"
-          },
-          "cta1Label": {
-            "type": "string"
-          },
-          "cta1Url": {
-            "type": "string"
-          },
-          "cta2Label": {
-            "type": "string"
-          },
-          "cta2Url": {
-            "type": "string"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
       },
       "WorldwideLinkUpdateItem": {
         "type": "object",
@@ -3033,7 +2820,6 @@
         "required": [
           "businessFieldId",
           "description",
-          "educationEffect",
           "enabled",
           "sessionDescription",
           "targetIds",
@@ -3208,6 +2994,207 @@
           "targetName",
           "version"
         ]
+      },
+      "ProgramIntroImageWrite": {
+        "type": "object",
+        "properties": {
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 3,
+            "minimum": 1
+          },
+          "alt": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "width": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "height": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "assetId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "alt",
+          "assetId",
+          "sortOrder"
+        ]
+      },
+      "ProgramIntroSectionWrite": {
+        "type": "object",
+        "properties": {
+          "sectionKey": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 0
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 3,
+            "minimum": 1
+          },
+          "programType": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "typeDescription": {
+            "type": "string",
+            "maxLength": 20000,
+            "minLength": 0
+          },
+          "representativeProgram": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 0
+          },
+          "sponsorName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "representativeDescription": {
+            "type": "string",
+            "maxLength": 20000,
+            "minLength": 0
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramIntroImageWrite"
+            },
+            "maxItems": 3,
+            "minItems": 1
+          }
+        },
+        "required": [
+          "images",
+          "programType",
+          "sectionKey",
+          "sortOrder",
+          "typeDescription"
+        ]
+      },
+      "ProgramIntroUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "heroText": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramIntroSectionWrite"
+            },
+            "maxItems": 3,
+            "minItems": 1
+          }
+        },
+        "required": [
+          "heroText",
+          "sections",
+          "version"
+        ]
+      },
+      "ProgramIntroImageResponse": {
+        "type": "object",
+        "properties": {
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "alt": {
+            "type": "string"
+          },
+          "width": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "height": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "publicUrl": {
+            "type": "string"
+          },
+          "assetId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ProgramIntroResponse": {
+        "type": "object",
+        "properties": {
+          "fieldCode": {
+            "type": "string"
+          },
+          "heroText": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramIntroSectionResponse"
+            }
+          }
+        }
+      },
+      "ProgramIntroSectionResponse": {
+        "type": "object",
+        "properties": {
+          "sectionKey": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "programType": {
+            "type": "string"
+          },
+          "typeDescription": {
+            "type": "string"
+          },
+          "representativeProgram": {
+            "type": "string"
+          },
+          "sponsorName": {
+            "type": "string"
+          },
+          "representativeDescription": {
+            "type": "string"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramIntroImageResponse"
+            }
+          }
+        }
       },
       "BusinessCatalogUpdateRequest": {
         "type": "object",
@@ -3699,6 +3686,49 @@
           "imageAssetId"
         ]
       },
+      "HeroResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "image": {
+            "$ref": "#/components/schemas/AssetResponse"
+          },
+          "topText": {
+            "type": "string"
+          },
+          "mainTitle": {
+            "type": "string"
+          },
+          "bottomText": {
+            "type": "string"
+          },
+          "linkUrl": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "SystemIssueCreateRequest": {
         "type": "object",
         "properties": {
@@ -4110,7 +4140,6 @@
         "required": [
           "businessFieldId",
           "description",
-          "educationEffect",
           "enabled",
           "sessionDescription",
           "targetIds",
@@ -4152,6 +4181,7 @@
               "JA_NOTICE_ATTACHMENT",
               "IMPACT_STORY_ATTACHMENT",
               "EDUCATION_TEXTBOOK_THUMBNAIL",
+              "EDUCATION_PROGRAM_INTRO_IMAGE",
               "SPONSORSHIP_BANNER_IMAGE",
               "SPONSOR_LOGO",
               "CORPORATE_CONSULTATION_ATTACHMENT"
@@ -4618,6 +4648,56 @@
           }
         }
       },
+      "ProgramSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uuid": {
+            "type": "string"
+          },
+          "programCode": {
+            "type": "string"
+          },
+          "programType": {
+            "type": "string"
+          },
+          "periodStatus": {
+            "type": "string"
+          },
+          "nameKo": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "businessStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "businessEndDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "PublicDonationResponse": {
         "type": "object",
         "properties": {
@@ -4807,6 +4887,14 @@
           "altText": {
             "type": "string"
           },
+          "displayStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "displayEndDate": {
+            "type": "string",
+            "format": "date"
+          },
           "linkUrl": {
             "type": "string"
           }
@@ -4843,6 +4931,14 @@
           },
           "bannerText": {
             "type": "string"
+          },
+          "displayStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "displayEndDate": {
+            "type": "string",
+            "format": "date"
           },
           "linkUrl": {
             "type": "string"
@@ -6280,6 +6376,31 @@
           }
         }
       },
+      "SocialResponse": {
+        "type": "object",
+        "properties": {
+          "channelCode": {
+            "type": "string"
+          },
+          "channelName": {
+            "type": "string"
+          },
+          "externalUrl": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "PopupListResponse": {
         "type": "object",
         "properties": {
@@ -6324,6 +6445,123 @@
           },
           "donation": {
             "$ref": "#/components/schemas/DonationResponse"
+          }
+        }
+      },
+      "DonationResponse": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "cta1Label": {
+            "type": "string"
+          },
+          "cta1Url": {
+            "type": "string"
+          },
+          "cta2Label": {
+            "type": "string"
+          },
+          "cta2Url": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "EducationResponse": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "programs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramSummary"
+            }
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ImpactResponse": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "youtubeUrl": {
+            "type": "string"
+          },
+          "featuredStoryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "featuredStoryOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MainStoryOption"
+            }
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "MainStoryOption": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "publishAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PerformanceResponse": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "networkDistributionCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "partnerOrganizationCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educatorCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "youthBeneficiaryCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bottomText": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -6536,6 +6774,7 @@
               "JA_NOTICE_ATTACHMENT",
               "IMPACT_STORY_ATTACHMENT",
               "EDUCATION_TEXTBOOK_THUMBNAIL",
+              "EDUCATION_PROGRAM_INTRO_IMAGE",
               "SPONSORSHIP_BANNER_IMAGE",
               "SPONSOR_LOGO",
               "CORPORATE_CONSULTATION_ATTACHMENT"

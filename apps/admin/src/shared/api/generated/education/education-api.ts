@@ -9,10 +9,12 @@ import type {
   BusinessCatalogResponse,
   BusinessCatalogUpdateRequest,
   EnabledToggleRequest,
-  List9Params,
+  List8Params,
   PageResponseProgramSummary,
   PageResponsePublicTextbookListItem,
   PageResponseTextbookListItem,
+  ProgramIntroResponse,
+  ProgramIntroUpdateRequest,
   Programs1Params,
   ProgramsParams,
   PublicEducationOverviewResponse,
@@ -74,6 +76,33 @@ const updateTargets = (
       options);
     }
 
+/**
+ * @summary Get education program introduction for one business field
+ */
+const get4 = (
+    fieldCode: string,
+ options?: SecondParameter<typeof customInstance<ProgramIntroResponse>>,) => {
+      return customInstance<ProgramIntroResponse>(
+      {url: `/api/admin/education/program-intros/${fieldCode}`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * @summary Replace education program introduction for one business field
+ */
+const update13 = (
+    fieldCode: string,
+    programIntroUpdateRequest: ProgramIntroUpdateRequest,
+ options?: SecondParameter<typeof customInstance<ProgramIntroResponse>>,) => {
+      return customInstance<ProgramIntroResponse>(
+      {url: `/api/admin/education/program-intros/${fieldCode}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: programIntroUpdateRequest
+    },
+      options);
+    }
+
 const businessCatalog = (
 
  options?: SecondParameter<typeof customInstance<BusinessCatalogResponse>>,) => {
@@ -94,8 +123,8 @@ const updateBusinessCatalog = (
       options);
     }
 
-const list9 = (
-    params?: List9Params,
+const list8 = (
+    params?: List8Params,
  options?: SecondParameter<typeof customInstance<PageResponseTextbookListItem>>,) => {
       return customInstance<PageResponseTextbookListItem>(
       {url: `/api/admin/education/textbooks`, method: 'GET',
@@ -167,6 +196,15 @@ const programs = (
       options);
     }
 
+const programIntro = (
+    fieldCode: string,
+ options?: SecondParameter<typeof customInstance<ProgramIntroResponse>>,) => {
+      return customInstance<ProgramIntroResponse>(
+      {url: `/api/public/education/program-intros/${fieldCode}`, method: 'GET'
+    },
+      options);
+    }
+
 const overview = (
 
  options?: SecondParameter<typeof customInstance<PublicEducationOverviewResponse>>,) => {
@@ -186,19 +224,22 @@ const programs1 = (
       options);
     }
 
-return {detail2,update12,targets,updateTargets,businessCatalog,updateBusinessCatalog,list9,create8,bulkDelete5,toggle4,textbooks,textbook,programs,overview,programs1}};
+return {detail2,update12,targets,updateTargets,get4,update13,businessCatalog,updateBusinessCatalog,list8,create8,bulkDelete5,toggle4,textbooks,textbook,programs,programIntro,overview,programs1}};
 export type Detail2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['detail2']>>>
 export type Update12Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['update12']>>>
 export type TargetsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['targets']>>>
 export type UpdateTargetsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['updateTargets']>>>
+export type Get4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['get4']>>>
+export type Update13Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['update13']>>>
 export type BusinessCatalogResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['businessCatalog']>>>
 export type UpdateBusinessCatalogResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['updateBusinessCatalog']>>>
-export type List9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['list9']>>>
+export type List8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['list8']>>>
 export type Create8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['create8']>>>
 export type BulkDelete5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['bulkDelete5']>>>
 export type Toggle4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['toggle4']>>>
 export type TextbooksResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['textbooks']>>>
 export type TextbookResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['textbook']>>>
 export type ProgramsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['programs']>>>
+export type ProgramIntroResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['programIntro']>>>
 export type OverviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['overview']>>>
 export type Programs1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['programs1']>>>

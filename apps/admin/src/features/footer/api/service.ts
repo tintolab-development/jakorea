@@ -40,7 +40,7 @@ function siteApi() {
 
 export async function getFooterAdminService(): Promise<FooterAdminDoc> {
   if (shouldUseFooterRemoteApi()) {
-    return mapFooterAdminResponseToDomain(await siteApi().get8())
+    return mapFooterAdminResponseToDomain(await siteApi().get9())
   }
   return {
     topMenus: readFooterTopMenus(),

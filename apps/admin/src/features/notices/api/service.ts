@@ -32,7 +32,7 @@ function jaKoreaApi() {
 }
 
 async function listRemoteNotices(filter?: NoticeListFilter): Promise<Notice[]> {
-  const response = await jaKoreaApi().list6(toNoticeListParams(filter))
+  const response = await jaKoreaApi().list5(toNoticeListParams(filter))
   return (response.items ?? []).map(mapNoticeResponseToDomain)
 }
 

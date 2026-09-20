@@ -41,8 +41,8 @@ import type {
   HistoryUpdateRequest,
   IntroductionResponse,
   IntroductionUpdateRequest,
-  List11Params,
-  List6Params,
+  List10Params,
+  List5Params,
   NoticeCreateRequest,
   NoticeResponse,
   NoticeUpdateRequest,
@@ -505,8 +505,8 @@ const deleteBoardMembers = (
       options);
     }
 
-const list6 = (
-    params?: List6Params,
+const list5 = (
+    params?: List5Params,
  options?: SecondParameter<typeof customInstance<PageResponseNoticeResponse>>,) => {
       return customInstance<PageResponseNoticeResponse>(
       {url: `/api/admin/ja-korea/notices`, method: 'GET',
@@ -767,8 +767,8 @@ const organization = (
       options);
     }
 
-const list11 = (
-    params?: List11Params,
+const list10 = (
+    params?: List10Params,
  options?: SecondParameter<typeof customInstance<PageResponsePublicNoticeListItem>>,) => {
       return customInstance<PageResponsePublicNoticeListItem>(
       {url: `/api/public/ja-korea/notices`, method: 'GET',
@@ -786,7 +786,7 @@ const directions = (
       options);
     }
 
-return {worldwide,updateWorldwide,report,updateReport,principles,updatePrinciples,finance,updateFinance,createFinance,disclosure,updateDisclosure,organizationChart,updateOrganizationChart,boardMembers,updateBoardMembers,createBoardMember,detail,update8,introduction,updateIntroduction,historyDetail,updateHistory,deleteHistory,globalValues,updateGlobalValues,get3,update9,certificationDetail,updateCertification,deleteCertification,bi,updateBi,awardDetail,updateAward,deleteAward,reports,createReport,deleteReports,deleteFinance,deleteBoardMembers,list6,create5,bulkDelete3,history,createHistory,deleteHistoryBulk,certifications,createCertification,deleteCertifications,awards,createAward,deleteAwards,toggleBoardMember,togglePublished,toggleHistory,toggleCertification,toggleAward,download,downloadHead,detail3,detailHead,transparency,reports1,people,organization,list11,directions}};
+return {worldwide,updateWorldwide,report,updateReport,principles,updatePrinciples,finance,updateFinance,createFinance,disclosure,updateDisclosure,organizationChart,updateOrganizationChart,boardMembers,updateBoardMembers,createBoardMember,detail,update8,introduction,updateIntroduction,historyDetail,updateHistory,deleteHistory,globalValues,updateGlobalValues,get3,update9,certificationDetail,updateCertification,deleteCertification,bi,updateBi,awardDetail,updateAward,deleteAward,reports,createReport,deleteReports,deleteFinance,deleteBoardMembers,list5,create5,bulkDelete3,history,createHistory,deleteHistoryBulk,certifications,createCertification,deleteCertifications,awards,createAward,deleteAwards,toggleBoardMember,togglePublished,toggleHistory,toggleCertification,toggleAward,download,downloadHead,detail3,detailHead,transparency,reports1,people,organization,list10,directions}};
 export type WorldwideResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['worldwide']>>>
 export type UpdateWorldwideResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['updateWorldwide']>>>
 export type ReportResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['report']>>>
@@ -827,7 +827,7 @@ export type CreateReportResult = NonNullable<Awaited<ReturnType<ReturnType<typeo
 export type DeleteReportsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['deleteReports']>>>
 export type DeleteFinanceResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['deleteFinance']>>>
 export type DeleteBoardMembersResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['deleteBoardMembers']>>>
-export type List6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['list6']>>>
+export type List5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['list5']>>>
 export type Create5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['create5']>>>
 export type BulkDelete3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['bulkDelete3']>>>
 export type HistoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['history']>>>
@@ -852,5 +852,5 @@ export type TransparencyResult = NonNullable<Awaited<ReturnType<ReturnType<typeo
 export type Reports1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['reports1']>>>
 export type PeopleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['people']>>>
 export type OrganizationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['organization']>>>
-export type List11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['list11']>>>
+export type List10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['list10']>>>
 export type DirectionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['directions']>>>

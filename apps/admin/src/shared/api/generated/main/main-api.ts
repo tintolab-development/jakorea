@@ -8,22 +8,16 @@
 import type {
   AdminContentResponse,
   BulkDeleteRequest,
-  DonationResponse,
   DonationUpdateRequest,
-  EducationResponse,
   EducationUpdateRequest,
   HeroCreateRequest,
   HeroListResponse,
   HeroResponse,
   HeroUpdateRequest,
-  ImpactResponse,
   ImpactUpdateRequest,
   List3Params,
-  List4Params,
-  PerformanceResponse,
   PerformanceUpdateRequest,
   PopupCreateRequest,
-  PopupListResponse,
   PopupResponse,
   PopupUpdateRequest,
   PublicMainResponse,
@@ -78,8 +72,8 @@ const list1 = (
 
 const update5 = (
     socialUpdateRequest: SocialUpdateRequest,
- options?: SecondParameter<typeof customInstance<SocialResponse[]>>,) => {
-      return customInstance<SocialResponse[]>(
+ options?: SecondParameter<typeof customInstance<unknown>>,) => {
+      return customInstance<unknown>(
       {url: `/api/admin/main/social-links`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: socialUpdateRequest
@@ -113,8 +107,8 @@ const reorder1 = (
 const update7 = (
     id: number,
     heroUpdateRequest: HeroUpdateRequest,
- options?: SecondParameter<typeof customInstance<HeroResponse>>,) => {
-      return customInstance<HeroResponse>(
+ options?: SecondParameter<typeof customInstance<unknown>>,) => {
+      return customInstance<unknown>(
       {url: `/api/admin/main/heroes/${id}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: heroUpdateRequest
@@ -124,8 +118,8 @@ const update7 = (
 
 const reorder2 = (
     reorderRequest: ReorderRequest,
- options?: SecondParameter<typeof customInstance<HeroResponse[]>>,) => {
-      return customInstance<HeroResponse[]>(
+ options?: SecondParameter<typeof customInstance<unknown>>,) => {
+      return customInstance<unknown>(
       {url: `/api/admin/main/heroes/order`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: reorderRequest
@@ -135,8 +129,8 @@ const reorder2 = (
 
 const updatePerformance = (
     performanceUpdateRequest: PerformanceUpdateRequest,
- options?: SecondParameter<typeof customInstance<PerformanceResponse>>,) => {
-      return customInstance<PerformanceResponse>(
+ options?: SecondParameter<typeof customInstance<unknown>>,) => {
+      return customInstance<unknown>(
       {url: `/api/admin/main/content/performance`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: performanceUpdateRequest
@@ -146,8 +140,8 @@ const updatePerformance = (
 
 const updateImpact = (
     impactUpdateRequest: ImpactUpdateRequest,
- options?: SecondParameter<typeof customInstance<ImpactResponse>>,) => {
-      return customInstance<ImpactResponse>(
+ options?: SecondParameter<typeof customInstance<unknown>>,) => {
+      return customInstance<unknown>(
       {url: `/api/admin/main/content/impact`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: impactUpdateRequest
@@ -157,8 +151,8 @@ const updateImpact = (
 
 const updateEducation = (
     educationUpdateRequest: EducationUpdateRequest,
- options?: SecondParameter<typeof customInstance<EducationResponse>>,) => {
-      return customInstance<EducationResponse>(
+ options?: SecondParameter<typeof customInstance<unknown>>,) => {
+      return customInstance<unknown>(
       {url: `/api/admin/main/content/education`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: educationUpdateRequest
@@ -168,8 +162,8 @@ const updateEducation = (
 
 const updateDonation = (
     donationUpdateRequest: DonationUpdateRequest,
- options?: SecondParameter<typeof customInstance<DonationResponse>>,) => {
-      return customInstance<DonationResponse>(
+ options?: SecondParameter<typeof customInstance<unknown>>,) => {
+      return customInstance<unknown>(
       {url: `/api/admin/main/content/donation`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: donationUpdateRequest
@@ -210,11 +204,10 @@ const bulkDelete = (
     }
 
 const list4 = (
-    params?: List4Params,
- options?: SecondParameter<typeof customInstance<PopupListResponse>>,) => {
-      return customInstance<PopupListResponse>(
-      {url: `/api/admin/main/popups`, method: 'GET',
-        params
+
+ options?: SecondParameter<typeof customInstance<HeroListResponse>>,) => {
+      return customInstance<HeroListResponse>(
+      {url: `/api/admin/main/heroes`, method: 'GET'
     },
       options);
     }
@@ -237,15 +230,6 @@ const bulkDelete1 = (
       {url: `/api/admin/main/popups/bulk-delete`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: bulkDeleteRequest
-    },
-      options);
-    }
-
-const list5 = (
-
- options?: SecondParameter<typeof customInstance<HeroListResponse>>,) => {
-      return customInstance<HeroListResponse>(
-      {url: `/api/admin/main/heroes`, method: 'GET'
     },
       options);
     }
@@ -299,8 +283,8 @@ const toggle2 = (
 const toggle3 = (
     id: number,
     toggleRequest: ToggleRequest,
- options?: SecondParameter<typeof customInstance<HeroResponse>>,) => {
-      return customInstance<HeroResponse>(
+ options?: SecondParameter<typeof customInstance<unknown>>,) => {
+      return customInstance<unknown>(
       {url: `/api/admin/main/heroes/${id}/enabled`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: toggleRequest
@@ -308,7 +292,7 @@ const toggle3 = (
       options);
     }
 
-const get7 = (
+const get8 = (
 
  options?: SecondParameter<typeof customInstance<PublicMainResponse>>,) => {
       return customInstance<PublicMainResponse>(
@@ -317,7 +301,7 @@ const get7 = (
       options);
     }
 
-const get9 = (
+const get10 = (
 
  options?: SecondParameter<typeof customInstance<AdminContentResponse>>,) => {
       return customInstance<AdminContentResponse>(
@@ -326,7 +310,7 @@ const get9 = (
       options);
     }
 
-return {update4,reorder,list1,update5,update6,reorder1,update7,reorder2,updatePerformance,updateImpact,updateEducation,updateDonation,list3,create2,bulkDelete,list4,create3,bulkDelete1,list5,create4,bulkDelete2,toggle1,toggle2,toggle3,get7,get9}};
+return {update4,reorder,list1,update5,update6,reorder1,update7,reorder2,updatePerformance,updateImpact,updateEducation,updateDonation,list3,create2,bulkDelete,list4,create3,bulkDelete1,create4,bulkDelete2,toggle1,toggle2,toggle3,get8,get10}};
 export type Update4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['update4']>>>
 export type ReorderResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['reorder']>>>
 export type List1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['list1']>>>
@@ -345,11 +329,10 @@ export type BulkDeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof 
 export type List4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['list4']>>>
 export type Create3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['create3']>>>
 export type BulkDelete1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['bulkDelete1']>>>
-export type List5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['list5']>>>
 export type Create4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['create4']>>>
 export type BulkDelete2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['bulkDelete2']>>>
 export type Toggle1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['toggle1']>>>
 export type Toggle2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['toggle2']>>>
 export type Toggle3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['toggle3']>>>
-export type Get7Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['get7']>>>
-export type Get9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['get9']>>>
+export type Get8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['get8']>>>
+export type Get10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['get10']>>>

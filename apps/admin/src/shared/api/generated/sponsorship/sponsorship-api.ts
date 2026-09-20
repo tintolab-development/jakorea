@@ -21,7 +21,7 @@ import type {
   DonationButtonResponse,
   DonationUrlUpdateRequest,
   FixedTextUpdateRequest,
-  List12Params,
+  List11Params,
   List2Params,
   PageResponseConsultationListItem,
   PageResponseSponsorListItem,
@@ -254,7 +254,7 @@ const corporate = (
       options);
     }
 
-const list10 = (
+const list9 = (
 
  options?: SecondParameter<typeof customInstance<PublicSponsorResponse[]>>,) => {
       return customInstance<PublicSponsorResponse[]>(
@@ -281,8 +281,8 @@ const corporate1 = (
       options);
     }
 
-const list12 = (
-    params?: List12Params,
+const list11 = (
+    params?: List11Params,
  options?: SecondParameter<typeof customInstance<PageResponseConsultationListItem>>,) => {
       return customInstance<PageResponseConsultationListItem>(
       {url: `/api/admin/sponsorship/corporate-consultations`, method: 'GET',
@@ -320,7 +320,7 @@ const attachmentDownload = (
       options);
     }
 
-return {updatePersonalUsage,updateDonationUrl,updatePersonalBanner,updateCorporateSteps,get,update,updateCorporateMetrics,updateCorporateBanner,create,confirm,prepare,list2,create1,delete1,bulkConfirm,toggle,updateStatus,personal,corporate,list10,personal1,corporate1,list12,bulkDelete6,detail5,attachmentDownload}};
+return {updatePersonalUsage,updateDonationUrl,updatePersonalBanner,updateCorporateSteps,get,update,updateCorporateMetrics,updateCorporateBanner,create,confirm,prepare,list2,create1,delete1,bulkConfirm,toggle,updateStatus,personal,corporate,list9,personal1,corporate1,list11,bulkDelete6,detail5,attachmentDownload}};
 export type UpdatePersonalUsageResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updatePersonalUsage']>>>
 export type UpdateDonationUrlResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateDonationUrl']>>>
 export type UpdatePersonalBannerResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updatePersonalBanner']>>>
@@ -340,10 +340,10 @@ export type ToggleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJ
 export type UpdateStatusResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateStatus']>>>
 export type PersonalResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['personal']>>>
 export type CorporateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['corporate']>>>
-export type List10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list10']>>>
+export type List9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list9']>>>
 export type Personal1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['personal1']>>>
 export type Corporate1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['corporate1']>>>
-export type List12Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list12']>>>
+export type List11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list11']>>>
 export type BulkDelete6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['bulkDelete6']>>>
 export type Detail5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['detail5']>>>
 export type AttachmentDownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownload']>>>

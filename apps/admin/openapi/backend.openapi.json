@@ -593,11 +593,21 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Updated",
             "content": {
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/StripResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ENABLED_LIMIT or OPTIMISTIC_LOCK_CONFLICT",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -623,7 +633,7 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Reordered",
             "content": {
               "*/*": {
                 "schema": {
@@ -631,6 +641,16 @@
                   "items": {
                     "$ref": "#/components/schemas/StripResponse"
                   }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "OPTIMISTIC_LOCK_CONFLICT",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -676,15 +696,12 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK",
+          "409": {
+            "description": "OPTIMISTIC_LOCK_CONFLICT",
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SocialResponse"
-                  }
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -721,11 +738,21 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Updated",
             "content": {
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/PopupResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ENABLED_LIMIT or OPTIMISTIC_LOCK_CONFLICT",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -751,7 +778,7 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Reordered",
             "content": {
               "*/*": {
                 "schema": {
@@ -759,6 +786,16 @@
                   "items": {
                     "$ref": "#/components/schemas/PopupResponse"
                   }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "OPTIMISTIC_LOCK_CONFLICT",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -794,12 +831,12 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK",
+          "409": {
+            "description": "OPTIMISTIC_LOCK_CONFLICT",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/HeroResponse"
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -824,15 +861,12 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK",
+          "409": {
+            "description": "OPTIMISTIC_LOCK_CONFLICT",
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/HeroResponse"
-                  }
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -857,12 +891,12 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK",
+          "409": {
+            "description": "OPTIMISTIC_LOCK_CONFLICT",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PerformanceResponse"
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -887,12 +921,12 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK",
+          "409": {
+            "description": "OPTIMISTIC_LOCK_CONFLICT",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ImpactResponse"
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -917,12 +951,12 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK",
+          "409": {
+            "description": "OPTIMISTIC_LOCK_CONFLICT",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/EducationResponse"
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -947,12 +981,12 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK",
+          "409": {
+            "description": "OPTIMISTIC_LOCK_CONFLICT",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/DonationResponse"
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -2326,6 +2360,86 @@
         }
       }
     },
+    "/api/admin/education/program-intros/{fieldCode}": {
+      "get": {
+        "tags": [
+          "education-program-intro-admin-controller"
+        ],
+        "summary": "Get education program introduction for one business field",
+        "operationId": "get_4",
+        "parameters": [
+          {
+            "name": "fieldCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramIntroResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "education-program-intro-admin-controller"
+        ],
+        "summary": "Replace education program introduction for one business field",
+        "operationId": "update_13",
+        "parameters": [
+          {
+            "name": "fieldCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProgramIntroUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramIntroResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "OPTIMISTIC_LOCK_CONFLICT",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/education/business-catalog": {
       "get": {
         "tags": [
@@ -2756,6 +2870,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "ENABLED_LIMIT when enabling would exceed 2 concurrent strip banners",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -2788,6 +2912,8 @@
         "tags": [
           "main-popup-admin-controller"
         ],
+        "summary": "List admin popups",
+        "description": "Returns the full popup list. popupName and altText are case-insensitive contains matches; blank values are ignored. Filters are AND.",
         "operationId": "list_4",
         "parameters": [
           {
@@ -2801,6 +2927,15 @@
           {
             "name": "popupName",
             "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "altText",
+            "in": "query",
+            "description": "Case-insensitive partial match on alternative text. Blank is ignored.",
             "required": false,
             "schema": {
               "type": "string"
@@ -2863,6 +2998,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "ENABLED_LIMIT when enabling would exceed 4 concurrent popups; OPTIMISTIC_LOCK_CONFLICT is not used on create.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -2895,7 +3040,7 @@
         "tags": [
           "main-hero-admin-controller"
         ],
-        "operationId": "list_5",
+        "operationId": "list_4",
         "responses": {
           "200": {
             "description": "OK",
@@ -3032,6 +3177,8 @@
         "tags": [
           "homepage-log-admin-controller"
         ],
+        "summary": "Ingest Homepage system-issue evidence",
+        "description": "Internal ingest for collectors (JA CMS / Platform / Homepage services). Admin log list screens must not POST. Writes are append-only. Homepage 5xx failures are also appended internally by GlobalExceptionHandler. Not used by Admin list UI. Detail PATCH is out of scope.",
         "operationId": "createSystemIssue",
         "requestBody": {
           "content": {
@@ -3137,6 +3284,8 @@
         "tags": [
           "homepage-log-admin-controller"
         ],
+        "summary": "Ingest member/admin login evidence",
+        "description": "Internal ingest for collectors (JA CMS / Platform / Homepage services). Admin log list screens must not POST. Writes are append-only. Homepage Admin JWT success is also appended internally (audience=ADMIN). Use this POST for Platform USER logins (and tests). Not used by Admin list UI.",
         "operationId": "createMemberLogin",
         "requestBody": {
           "content": {
@@ -3242,6 +3391,8 @@
         "tags": [
           "homepage-log-admin-controller"
         ],
+        "summary": "Ingest admin account-processing evidence",
+        "description": "Internal ingest for collectors (JA CMS / Platform / Homepage services). Admin log list screens must not POST. Writes are append-only. Homepage does not own account APIs; JA CMS should POST after create/deactivate/profile/permission/password changes. Not used by Admin list UI.",
         "operationId": "createAdminAccountAction",
         "requestBody": {
           "content": {
@@ -3511,7 +3662,7 @@
         "tags": [
           "ja-notice-admin-controller"
         ],
-        "operationId": "list_6",
+        "operationId": "list_5",
         "parameters": [
           {
             "name": "published",
@@ -4154,7 +4305,7 @@
         "tags": [
           "impact-story-admin-controller"
         ],
-        "operationId": "list_7",
+        "operationId": "list_6",
         "parameters": [
           {
             "name": "published",
@@ -4317,7 +4468,7 @@
         "tags": [
           "impact-story-category-admin-controller"
         ],
-        "operationId": "list_8",
+        "operationId": "list_7",
         "responses": {
           "200": {
             "description": "OK",
@@ -4368,7 +4519,7 @@
         "tags": [
           "education-textbook-admin-controller"
         ],
-        "operationId": "list_9",
+        "operationId": "list_8",
         "parameters": [
           {
             "name": "enabled",
@@ -4692,11 +4843,21 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Toggled",
             "content": {
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/StripResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ENABLED_LIMIT when turning a third strip banner on; OPTIMISTIC_LOCK_CONFLICT on stale version",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -4733,11 +4894,21 @@
         },
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Toggled",
             "content": {
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/PopupResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ENABLED_LIMIT when turning a fifth popup on; OPTIMISTIC_LOCK_CONFLICT on stale version",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -4773,12 +4944,12 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK",
+          "409": {
+            "description": "OPTIMISTIC_LOCK_CONFLICT",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/HeroResponse"
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }
@@ -5274,7 +5445,7 @@
         "tags": [
           "corporate-sponsor-public-controller"
         ],
-        "operationId": "list_10",
+        "operationId": "list_9",
         "responses": {
           "200": {
             "description": "OK",
@@ -5297,7 +5468,7 @@
         "tags": [
           "site-settings-public-controller"
         ],
-        "operationId": "get_4",
+        "operationId": "get_5",
         "responses": {
           "200": {
             "description": "OK",
@@ -5317,7 +5488,7 @@
         "tags": [
           "gnb-public-controller"
         ],
-        "operationId": "get_5",
+        "operationId": "get_6",
         "responses": {
           "200": {
             "description": "OK",
@@ -5340,7 +5511,7 @@
         "tags": [
           "footer-public-controller"
         ],
-        "operationId": "get_6",
+        "operationId": "get_7",
         "responses": {
           "200": {
             "description": "OK",
@@ -5383,7 +5554,7 @@
         "tags": [
           "main-public-controller"
         ],
-        "operationId": "get_7",
+        "operationId": "get_8",
         "responses": {
           "200": {
             "description": "OK",
@@ -5517,7 +5688,7 @@
         "tags": [
           "ja-notice-public-controller"
         ],
-        "operationId": "list_11",
+        "operationId": "list_10",
         "parameters": [
           {
             "name": "page",
@@ -5776,6 +5947,36 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/PageResponseProgramSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/education/program-intros/{fieldCode}": {
+      "get": {
+        "tags": [
+          "education-public-controller"
+        ],
+        "operationId": "programIntro",
+        "parameters": [
+          {
+            "name": "fieldCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramIntroResponse"
                 }
               }
             }
@@ -6066,7 +6267,7 @@
         "tags": [
           "corporate-consultation-admin-controller"
         ],
-        "operationId": "list_12",
+        "operationId": "list_11",
         "parameters": [
           {
             "name": "status",
@@ -6263,7 +6464,7 @@
         "tags": [
           "footer-admin-controller"
         ],
-        "operationId": "get_8",
+        "operationId": "get_9",
         "responses": {
           "200": {
             "description": "OK",
@@ -6310,7 +6511,7 @@
         "tags": [
           "main-content-admin-controller"
         ],
-        "operationId": "get_9",
+        "operationId": "get_10",
         "responses": {
           "200": {
             "description": "OK",
@@ -6670,6 +6871,7 @@
                 "JA_NOTICE_ATTACHMENT",
                 "IMPACT_STORY_ATTACHMENT",
                 "EDUCATION_TEXTBOOK_THUMBNAIL",
+                "EDUCATION_PROGRAM_INTRO_IMAGE",
                 "SPONSORSHIP_BANNER_IMAGE",
                 "SPONSOR_LOGO",
                 "CORPORATE_CONSULTATION_ATTACHMENT"
@@ -6779,6 +6981,7 @@
                 "JA_NOTICE_ATTACHMENT",
                 "IMPACT_STORY_ATTACHMENT",
                 "EDUCATION_TEXTBOOK_THUMBNAIL",
+                "EDUCATION_PROGRAM_INTRO_IMAGE",
                 "SPONSORSHIP_BANNER_IMAGE",
                 "SPONSOR_LOGO",
                 "CORPORATE_CONSULTATION_ATTACHMENT"
@@ -7157,6 +7360,7 @@
               "JA_NOTICE_ATTACHMENT",
               "IMPACT_STORY_ATTACHMENT",
               "EDUCATION_TEXTBOOK_THUMBNAIL",
+              "EDUCATION_PROGRAM_INTRO_IMAGE",
               "SPONSORSHIP_BANNER_IMAGE",
               "SPONSOR_LOGO",
               "CORPORATE_CONSULTATION_ATTACHMENT"
@@ -7849,6 +8053,27 @@
           "version"
         ]
       },
+      "ApiErrorResponse": {
+        "type": "object",
+        "description": "Homepage API error envelope. Clients read `code`.",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "ENABLED_LIMIT"
+          },
+          "message": {
+            "type": "string",
+            "example": "팝업은 최대 4개까지 동시 사용 가능합니다."
+          },
+          "traceId": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "StripResponse": {
         "type": "object",
         "properties": {
@@ -7982,31 +8207,6 @@
         "required": [
           "items"
         ]
-      },
-      "SocialResponse": {
-        "type": "object",
-        "properties": {
-          "channelCode": {
-            "type": "string"
-          },
-          "channelName": {
-            "type": "string"
-          },
-          "externalUrl": {
-            "type": "string"
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "displayOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
       },
       "PopupUpdateRequest": {
         "type": "object",
@@ -8155,49 +8355,6 @@
           "version"
         ]
       },
-      "HeroResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "displayOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "image": {
-            "$ref": "#/components/schemas/AssetResponse"
-          },
-          "topText": {
-            "type": "string"
-          },
-          "mainTitle": {
-            "type": "string"
-          },
-          "bottomText": {
-            "type": "string"
-          },
-          "linkUrl": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
       "PerformanceUpdateRequest": {
         "type": "object",
         "properties": {
@@ -8241,37 +8398,6 @@
           "youthBeneficiaryCount"
         ]
       },
-      "PerformanceResponse": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string"
-          },
-          "networkDistributionCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "partnerOrganizationCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "educatorCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "youthBeneficiaryCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "bottomText": {
-            "type": "string"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
       "ImpactUpdateRequest": {
         "type": "object",
         "properties": {
@@ -8299,50 +8425,6 @@
           "version"
         ]
       },
-      "ImpactResponse": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string"
-          },
-          "youtubeUrl": {
-            "type": "string"
-          },
-          "featuredStoryId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "featuredStoryOptions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MainStoryOption"
-            }
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "MainStoryOption": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "title": {
-            "type": "string"
-          },
-          "categoryName": {
-            "type": "string"
-          },
-          "publishAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
       "EducationUpdateRequest": {
         "type": "object",
         "properties": {
@@ -8360,74 +8442,6 @@
           "title",
           "version"
         ]
-      },
-      "EducationResponse": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string"
-          },
-          "programs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProgramSummary"
-            }
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ProgramSummary": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "uuid": {
-            "type": "string"
-          },
-          "programCode": {
-            "type": "string"
-          },
-          "programType": {
-            "type": "string"
-          },
-          "periodStatus": {
-            "type": "string"
-          },
-          "nameKo": {
-            "type": "string"
-          },
-          "nameEn": {
-            "type": "string"
-          },
-          "summary": {
-            "type": "string"
-          },
-          "businessYear": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "businessStartDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "businessEndDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
       },
       "DonationUpdateRequest": {
         "type": "object",
@@ -8466,30 +8480,6 @@
           "title",
           "version"
         ]
-      },
-      "DonationResponse": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string"
-          },
-          "cta1Label": {
-            "type": "string"
-          },
-          "cta1Url": {
-            "type": "string"
-          },
-          "cta2Label": {
-            "type": "string"
-          },
-          "cta2Url": {
-            "type": "string"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
       },
       "WorldwideLinkUpdateItem": {
         "type": "object",
@@ -9990,7 +9980,6 @@
         "required": [
           "businessFieldId",
           "description",
-          "educationEffect",
           "enabled",
           "sessionDescription",
           "targetIds",
@@ -10165,6 +10154,207 @@
           "targetName",
           "version"
         ]
+      },
+      "ProgramIntroImageWrite": {
+        "type": "object",
+        "properties": {
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 3,
+            "minimum": 1
+          },
+          "alt": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "width": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "height": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "assetId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "alt",
+          "assetId",
+          "sortOrder"
+        ]
+      },
+      "ProgramIntroSectionWrite": {
+        "type": "object",
+        "properties": {
+          "sectionKey": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 0
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 3,
+            "minimum": 1
+          },
+          "programType": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "typeDescription": {
+            "type": "string",
+            "maxLength": 20000,
+            "minLength": 0
+          },
+          "representativeProgram": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 0
+          },
+          "sponsorName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "representativeDescription": {
+            "type": "string",
+            "maxLength": 20000,
+            "minLength": 0
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramIntroImageWrite"
+            },
+            "maxItems": 3,
+            "minItems": 1
+          }
+        },
+        "required": [
+          "images",
+          "programType",
+          "sectionKey",
+          "sortOrder",
+          "typeDescription"
+        ]
+      },
+      "ProgramIntroUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "heroText": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 0
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramIntroSectionWrite"
+            },
+            "maxItems": 3,
+            "minItems": 1
+          }
+        },
+        "required": [
+          "heroText",
+          "sections",
+          "version"
+        ]
+      },
+      "ProgramIntroImageResponse": {
+        "type": "object",
+        "properties": {
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "alt": {
+            "type": "string"
+          },
+          "width": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "height": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "publicUrl": {
+            "type": "string"
+          },
+          "assetId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ProgramIntroResponse": {
+        "type": "object",
+        "properties": {
+          "fieldCode": {
+            "type": "string"
+          },
+          "heroText": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramIntroSectionResponse"
+            }
+          }
+        }
+      },
+      "ProgramIntroSectionResponse": {
+        "type": "object",
+        "properties": {
+          "sectionKey": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "programType": {
+            "type": "string"
+          },
+          "typeDescription": {
+            "type": "string"
+          },
+          "representativeProgram": {
+            "type": "string"
+          },
+          "sponsorName": {
+            "type": "string"
+          },
+          "representativeDescription": {
+            "type": "string"
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramIntroImageResponse"
+            }
+          }
+        }
       },
       "BusinessCatalogUpdateRequest": {
         "type": "object",
@@ -10656,6 +10846,49 @@
           "imageAssetId"
         ]
       },
+      "HeroResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "image": {
+            "$ref": "#/components/schemas/AssetResponse"
+          },
+          "topText": {
+            "type": "string"
+          },
+          "mainTitle": {
+            "type": "string"
+          },
+          "bottomText": {
+            "type": "string"
+          },
+          "linkUrl": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "SystemIssueCreateRequest": {
         "type": "object",
         "properties": {
@@ -11067,7 +11300,6 @@
         "required": [
           "businessFieldId",
           "description",
-          "educationEffect",
           "enabled",
           "sessionDescription",
           "targetIds",
@@ -11109,6 +11341,7 @@
               "JA_NOTICE_ATTACHMENT",
               "IMPACT_STORY_ATTACHMENT",
               "EDUCATION_TEXTBOOK_THUMBNAIL",
+              "EDUCATION_PROGRAM_INTRO_IMAGE",
               "SPONSORSHIP_BANNER_IMAGE",
               "SPONSOR_LOGO",
               "CORPORATE_CONSULTATION_ATTACHMENT"
@@ -11575,6 +11808,56 @@
           }
         }
       },
+      "ProgramSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uuid": {
+            "type": "string"
+          },
+          "programCode": {
+            "type": "string"
+          },
+          "programType": {
+            "type": "string"
+          },
+          "periodStatus": {
+            "type": "string"
+          },
+          "nameKo": {
+            "type": "string"
+          },
+          "nameEn": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "businessStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "businessEndDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "PublicDonationResponse": {
         "type": "object",
         "properties": {
@@ -11764,6 +12047,14 @@
           "altText": {
             "type": "string"
           },
+          "displayStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "displayEndDate": {
+            "type": "string",
+            "format": "date"
+          },
           "linkUrl": {
             "type": "string"
           }
@@ -11800,6 +12091,14 @@
           },
           "bannerText": {
             "type": "string"
+          },
+          "displayStartDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "displayEndDate": {
+            "type": "string",
+            "format": "date"
           },
           "linkUrl": {
             "type": "string"
@@ -13237,6 +13536,31 @@
           }
         }
       },
+      "SocialResponse": {
+        "type": "object",
+        "properties": {
+          "channelCode": {
+            "type": "string"
+          },
+          "channelName": {
+            "type": "string"
+          },
+          "externalUrl": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "PopupListResponse": {
         "type": "object",
         "properties": {
@@ -13281,6 +13605,123 @@
           },
           "donation": {
             "$ref": "#/components/schemas/DonationResponse"
+          }
+        }
+      },
+      "DonationResponse": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "cta1Label": {
+            "type": "string"
+          },
+          "cta1Url": {
+            "type": "string"
+          },
+          "cta2Label": {
+            "type": "string"
+          },
+          "cta2Url": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "EducationResponse": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "programs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramSummary"
+            }
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ImpactResponse": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "youtubeUrl": {
+            "type": "string"
+          },
+          "featuredStoryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "featuredStoryOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MainStoryOption"
+            }
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "MainStoryOption": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "categoryName": {
+            "type": "string"
+          },
+          "publishAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PerformanceResponse": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "networkDistributionCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "partnerOrganizationCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educatorCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "youthBeneficiaryCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bottomText": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -13493,6 +13934,7 @@
               "JA_NOTICE_ATTACHMENT",
               "IMPACT_STORY_ATTACHMENT",
               "EDUCATION_TEXTBOOK_THUMBNAIL",
+              "EDUCATION_PROGRAM_INTRO_IMAGE",
               "SPONSORSHIP_BANNER_IMAGE",
               "SPONSOR_LOGO",
               "CORPORATE_CONSULTATION_ATTACHMENT"

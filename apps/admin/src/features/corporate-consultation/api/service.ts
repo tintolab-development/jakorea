@@ -26,7 +26,7 @@ function sponsorshipApi() {
 async function listRemoteConsultations(
   filter: CorporateConsultationListFilter = {},
 ): Promise<CorporateConsultationListResult> {
-  const response = await sponsorshipApi().list12(toConsultationListParams(filter))
+  const response = await sponsorshipApi().list11(toConsultationListParams(filter))
   return {
     items: (response.items ?? []).map(mapConsultationListItemToDomain),
     totalCount: response.totalCount ?? response.items?.length ?? 0,
