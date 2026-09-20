@@ -122,22 +122,30 @@
 }
 
 .yellow {
-  background: #ffffdf;
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
+    linear-gradient(180deg, #eef170 0%, #f3f2b3 100%);
   color: #5c6b1f;
 }
 
 .mint {
-  background: linear-gradient(160deg, #c1f6cb 0%, #ddf8e3 100%);
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
+    linear-gradient(180deg, #c1f6cb 0%, #ddf8e3 100%);
   color: #209182;
 }
 
 .sky {
-  background: linear-gradient(160deg, #9af3ef 0%, #d4faf8 100%);
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
+    linear-gradient(180deg, #b7f5f2 0%, #d9fbfa 100%);
   color: #007d88;
 }
 
 .lime {
-  background: #f3fce8;
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
+    linear-gradient(180deg, #aedb7b 0%, #d5efb8 100%);
   color: #3d6b28;
 }
 
@@ -150,6 +158,10 @@
   gap: var(--spacing-20);
   padding-right: var(--spacing-16);
   padding-bottom: var(--spacing-48);
+}
+
+.cardBodyExpanded {
+  gap: var(--spacing-40);
 }
 
 .cardTitle {
@@ -166,13 +178,13 @@
 .cardSummary,
 .cardSummaryExpanded,
 .cardDetail {
+  display: flex;
   margin: 0;
+  flex-direction: column;
   word-break: keep-all;
 }
 
 .cardSummary {
-  color: inherit;
-  font-family: var(--font-family-base);
   font-size: 22px;
   font-weight: 500;
   line-height: 1.4;
@@ -180,22 +192,22 @@
 }
 
 .cardSummaryExpanded {
-  color: inherit;
-  font-family: var(--font-family-base);
   font-size: 22px;
-  font-weight: 700;
-  line-height: 1.4;
-  letter-spacing: -0.02em;
 }
 
 .cardDetail {
-  color: var(--color-neutral-cool-700);
-  font-family: var(--font-family-base);
   font-size: 16px;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 1.6;
   letter-spacing: -0.01em;
-  white-space: pre-line;
+}
+
+.copyLine {
+  display: inline;
+}
+
+.copyLine:not(:last-child)::after {
+  content: ' ';
 }
 
 .more {
@@ -211,7 +223,7 @@
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: rgb(255 255 255 / 70%);
+  background: var(--color-neutral-white);
   cursor: pointer;
 }
 
@@ -222,8 +234,7 @@
 
 .moreIcon {
   display: block;
-  width: 32px;
-  height: 32px;
+  flex-shrink: 0;
 }
 
 @media (--bp-pc-up) {
@@ -268,13 +279,25 @@
     font-size: 60px;
   }
 
-  .cardSummary,
+  .cardSummary {
+    font-size: 38px;
+  }
+
   .cardSummaryExpanded {
     font-size: 38px;
   }
 
   .cardDetail {
     font-size: 26px;
+    letter-spacing: -0.26px;
+  }
+
+  .copyLine {
+    display: block;
+  }
+
+  .copyLine:not(:last-child)::after {
+    content: none;
   }
 
   .yellow {

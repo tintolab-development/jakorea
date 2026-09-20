@@ -3,6 +3,7 @@ import addIconUrl from '../image/icon/add.svg'
 import closeIconUrl from '../image/icon/close.svg'
 import { THRIVE_DECORATION_URL, THRIVE_TITLE } from '../lib/mock-data'
 import type { ThriveValue, ThriveValueId } from '../model/types'
+import { PFText } from '@/shared/ui'
 import styles from './thrive-section.module.css'
 
 export type ThriveSectionProps = {
@@ -14,6 +15,18 @@ const ORDER_CLASS: Record<ThriveValueId, string> = {
   learn: styles.orderLearn,
   speak: styles.orderSpeak,
   help: styles.orderHelp,
+}
+
+function CopyLines({ lines }: { lines: readonly string[] }) {
+  return (
+    <>
+      {lines.map(line => (
+        <span key={line} className={styles.copyLine}>
+          {line}
+        </span>
+      ))}
+    </>
+  )
 }
 
 function ThriveMoreButton({
@@ -66,12 +79,24 @@ function ThriveCard({
         alt=""
         aria-hidden="true"
       />
-      <div className={styles.cardBody}>
-        {expanded ? null : <h3 className={styles.cardTitle}>{value.title}</h3>}
-        <p className={expanded ? styles.cardSummaryExpanded : styles.cardSummary}>
-          {value.summary}
-        </p>
-        {expanded ? <p className={styles.cardDetail}>{value.detail}</p> : null}
+      <div className={[styles.cardBody, expanded ? styles.cardBodyExpanded : null].filter(Boolean).join(' ')}>
+        {expanded ? null : (
+          <h3 className={styles.cardTitle}>{value.title}</h3>
+        )}
+        {expanded ? (
+          <PFText as="p" typo="hd-lg" color="black" className={styles.cardSummaryExpanded}>
+            <CopyLines lines={value.summaryLines} />
+          </PFText>
+        ) : (
+          <PFText as="p" typo="hd-lg" color="inherit" className={styles.cardSummary}>
+            {value.summary}
+          </PFText>
+        )}
+        {expanded ? (
+          <PFText as="p" color="black" className={styles.cardDetail}>
+            <CopyLines lines={value.detailLines} />
+          </PFText>
+        ) : null}
       </div>
       <ThriveMoreButton expanded={expanded} title={value.summary} onClick={onToggle} />
     </article>
