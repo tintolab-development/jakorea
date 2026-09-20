@@ -419,7 +419,7 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
   const appStart = toDate(remote.recruitmentStartAt)
   const appEnd = toDate(remote.recruitmentEndAt)
   const recruitmentStatus = mapRecruitmentStatus(
-    remote.periodStatus,
+    undefined,
     remote.recruitmentStatus,
     undefined,
   )

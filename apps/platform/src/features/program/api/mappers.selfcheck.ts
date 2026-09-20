@@ -95,6 +95,23 @@ assert.equal(listed.id, '186012')
 assert.equal(listed.recruitmentStatus, 'recruiting')
 assert.equal(listed.educationTargetLabel, '대학(원)생')
 
+const recruitingAlias = mapPortalProgramListItem({
+  programId: 3,
+  title: '모집 중 별칭',
+  recruitmentStatus: 'RECRUITING',
+  periodStatus: 'SCHEDULED',
+})
+assert.ok(recruitingAlias)
+assert.equal(recruitingAlias.recruitmentStatus, 'recruiting')
+
+const scheduledAlias = mapPortalProgramListItem({
+  programId: 4,
+  title: '모집 예정 별칭',
+  recruitmentStatus: 'SCHEDULED',
+})
+assert.ok(scheduledAlias)
+assert.equal(scheduledAlias.recruitmentStatus, 'scheduled')
+
 const upcoming = mapPortalProgramListItem({
   programId: 2,
   title: '예정',
