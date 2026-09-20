@@ -23,6 +23,11 @@ export type UseRichTextEditorOptions = {
   extraExtensions?: Extensions
   onReady?: (api: RichTextEditorApi) => void
   /**
+   * 드롭·붙여넣기 이미지 src. 없으면 data URL.
+   * 콜백 참조가 바뀌어도 에디터는 리마운트하지 않는다.
+   */
+  resolveImageSrc?: (file: File) => Promise<string>
+  /**
    * TipTap `useEditor` 트랜잭션마다 React 리렌더 여부.
    * 기본 `false` — 툴바는 `useEditorState`로 구독하고, 부모 폼 전체 리렌더를 막는다.
    */

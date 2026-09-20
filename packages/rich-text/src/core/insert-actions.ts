@@ -58,11 +58,27 @@ export function promptYoutubeUrl(): string | null {
   return trimmed
 }
 
-export function insertImageFromUrl(editor: Editor, src: string): void {
-  editor.chain().focus().setImage({ src }).run()
+function applyImageSrc(editor: Editor, src: string, alt?: string): boolean {
+  if (editor.isDestroyed) return false
+  const attrs = { src, alt: alt ?? '' }
+  const ok =
+    editor.chain().focus().setImage(attrs).run() ||
+    editor.chain().focus().insertContent({ type: 'image', attrs }).run()
+  if (!ok) {
+    window.alert('이미지를 삽입할 수 없습니다. 커서를 본문에 두고 다시 시도해 주세요.')
+  }
+  return ok
 }
 
-export function insertImageFromFile(editor: Editor, file: File): void {
+export function insertImageFromUrl(editor: Editor, src: string): void {
+  applyImageSrc(editor, src)
+}
+
+export function insertImageFromFile(
+  editor: Editor,
+  file: File,
+  resolveSrc?: (file: File) => Promise<string>,
+): void {
   if (!IMAGE_ACCEPT.split(',').some(type => file.type === type.trim())) {
     window.alert('JPG, PNG, GIF, WebP 이미지만 삽입할 수 있습니다.')
     return
@@ -71,8 +87,30 @@ export function insertImageFromFile(editor: Editor, file: File): void {
     window.alert('이미지는 10MB 이하만 삽입할 수 있습니다.')
     return
   }
+
+  const insertResolved = (src: string) => {
+    applyImageSrc(editor, src, file.name)
+  }
+
+  if (resolveSrc) {
+    void resolveSrc(file)
+      .then(src => {
+        const trimmed = src.trim()
+        if (!trimmed || trimmed.startsWith('data:')) {
+          window.alert('이미지 주소를 받지 못했습니다. 다시 시도해 주세요.')
+          return
+        }
+        insertResolved(trimmed)
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message.trim() : ''
+        window.alert(message || '이미지를 업로드하지 못했습니다. 다시 시도해 주세요.')
+      })
+    return
+  }
+
   // blob: URL은 세션 한정 — 저장 후 뷰어에서 깨져 alt(파일명)만 보인다.
-  // data URL로 넣어 본문에 영속화한다 (ImageResize allowBase64: true).
+  // data URL은 본문이 쉽게 10만자를 넘어 API 검증에 실패한다. remote는 resolveSrc로 올린다.
   const reader = new FileReader()
   reader.onload = () => {
     const src = typeof reader.result === 'string' ? reader.result : ''
@@ -80,7 +118,7 @@ export function insertImageFromFile(editor: Editor, file: File): void {
       window.alert('이미지를 읽을 수 없습니다. 다시 시도해 주세요.')
       return
     }
-    editor.chain().focus().setImage({ src, alt: file.name }).run()
+    insertResolved(src)
   }
   reader.onerror = () => {
     window.alert('이미지를 읽을 수 없습니다. 다시 시도해 주세요.')

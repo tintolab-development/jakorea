@@ -14,7 +14,7 @@ import { DEFAULT_AUTHOR } from '@/features/impact-stories/api/store'
 import { shouldUseImpactStoriesRemoteApi } from '@/features/impact-stories/api/capabilities'
 import { useStoryWysiwygEditor } from '@/features/impact-stories/hooks/use-story-wysiwyg-editor'
 import { IMPACT_STORY_PIN_MAX } from '@/features/impact-stories/lib/pin-limits'
-import { RichTextEditor } from '@/shared/rich-text'
+import { getRemoteRichTextBodyError, RichTextEditor } from '@/shared/rich-text'
 import {
   CmsButton,
   CmsDatePicker,
@@ -129,7 +129,7 @@ export function StoryFormModal({
     [open, mode, initial?.id, editorContentFormat]
   )
 
-  const { editor, editorMinHeight, getMarkdown, getHTML } = useStoryWysiwygEditor(
+  const { editor, editorMinHeight, getMarkdown, getHTML, resolveImageSrc } = useStoryWysiwygEditor(
     open,
     initialMarkdown,
     editorResetKey,
@@ -246,6 +246,13 @@ export function StoryFormModal({
       showAlert({ title: '입력 확인', content: '게시글 내용을 입력해 주세요.' })
       return
     }
+    if (shouldUseImpactStoriesRemoteApi()) {
+      const bodyError = getRemoteRichTextBodyError(contentMarkdown)
+      if (bodyError) {
+        showAlert({ title: '입력 확인', content: bodyError })
+        return
+      }
+    }
     if (isPinned && pinnedCountExcludingSelf >= IMPACT_STORY_PIN_MAX) {
       showAlert({
         title: '상단 고정 제한',
@@ -344,7 +351,7 @@ export function StoryFormModal({
                   placeholder="게시일시를 선택하세요"
                 />
               </div>
-              <div className="story-form-modal__filter-field">
+              <div className="story-form-modal__filter-field story-form-modal__filter-field--category">
                 <FieldLabel required>카테고리</FieldLabel>
                 <CmsSelect
                   inputSize="large"
@@ -406,6 +413,7 @@ export function StoryFormModal({
                 editor={editor}
                 minHeight={editorMinHeight}
                 allowInlineMedia
+                resolveImageSrc={resolveImageSrc}
               />
             </div>
           </div>

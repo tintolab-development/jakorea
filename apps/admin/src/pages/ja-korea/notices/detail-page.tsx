@@ -16,6 +16,7 @@ import {
 } from '@/features/notices/api/hooks'
 import { noticesQueryKeys } from '@/features/notices/api/query-keys'
 import { NOTICES_CHANGED_EVENT } from '@/features/notices/api/store'
+import { noticeMutationFailureAlert } from '@/features/notices/lib/mutation-failure-alert'
 import {
   NoticeFormModal,
   type NoticeFormValues,
@@ -89,11 +90,13 @@ export function NoticeDetailPage() {
         await updateMutation.mutateAsync({ ...values, id })
         setEditOpen(false)
         void detailQuery.refetch()
-      } catch {
-        showAlert({
-          title: '저장 실패',
-          content: '공지 저장에 실패했습니다. 다시 시도해 주세요.',
-        })
+      } catch (error) {
+        showAlert(
+          noticeMutationFailureAlert(
+            error,
+            '공지 저장에 실패했습니다. 다시 시도해 주세요.',
+          ),
+        )
       }
     },
     [detailQuery, id, showAlert, updateMutation]

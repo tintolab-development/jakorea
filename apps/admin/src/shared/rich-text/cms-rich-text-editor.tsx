@@ -14,6 +14,7 @@ type CmsRichTextEditorProps = Omit<RichTextEditorProps, 'toolbar'> & {
   toolbar?: RichTextEditorProps['toolbar']
   /** 인라인 이미지·YouTube 삽입 (기본 true) */
   allowInlineMedia?: boolean
+  resolveImageSrc?: (file: File) => Promise<string>
 }
 
 /** CMS RichText 에디터 — Ant Design 툴바 기본 포함 */
@@ -22,13 +23,18 @@ export function CmsRichTextEditor({
   showToolbar = true,
   toolbar,
   allowInlineMedia = true,
+  resolveImageSrc,
   className,
   ...rest
 }: CmsRichTextEditorProps) {
   const toolbarNode =
     toolbar ??
     (showToolbar ? (
-      <RichTextToolbar editor={editor} allowInlineMedia={allowInlineMedia} />
+      <RichTextToolbar
+        editor={editor}
+        allowInlineMedia={allowInlineMedia}
+        resolveImageSrc={resolveImageSrc}
+      />
     ) : null)
 
   return (

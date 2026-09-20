@@ -17,6 +17,7 @@ import {
 } from '@/features/notices/api/hooks'
 import { noticesQueryKeys } from '@/features/notices/api/query-keys'
 import { NOTICES_CHANGED_EVENT } from '@/features/notices/api/store'
+import { noticeMutationFailureAlert } from '@/features/notices/lib/mutation-failure-alert'
 import {
   NoticeFormModal,
   type NoticeFormValues,
@@ -294,11 +295,14 @@ export function NoticesPage() {
         }
         setFormOpen(false)
         setEditing(null)
-      } catch {
-        showAlert({
-          title: formMode === 'edit' ? '저장 실패' : '등록 실패',
-          content: '요청을 처리하지 못했습니다. 다시 시도해 주세요.',
-        })
+      } catch (error) {
+        showAlert(
+          noticeMutationFailureAlert(
+            error,
+            '요청을 처리하지 못했습니다. 다시 시도해 주세요.',
+            formMode === 'edit' ? '저장 실패' : '등록 실패',
+          ),
+        )
       }
     },
     [createMutation, editing, formMode, showAlert, updateMutation]

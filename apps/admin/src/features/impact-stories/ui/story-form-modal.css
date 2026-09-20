@@ -144,7 +144,7 @@
 .story-form-modal__filter-inner {
   display: flex;
   flex-wrap: nowrap;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: flex-start;
   gap: 16px;
   width: 100%;
@@ -157,7 +157,7 @@
 }
 
 .story-form-modal__filter-inner--with-category .story-form-modal__filter-field {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
 }
 
 .story-form-modal__filter-field {
@@ -178,9 +178,19 @@
   max-width: 280px;
 }
 
+.story-form-modal__filter-field--category {
+  width: 200px;
+  max-width: 200px;
+}
+
 .story-form-modal__filter-field--radio {
   width: 200px;
   max-width: 200px;
+}
+
+/* 라벨은 상단 정렬, 라디오는 large 입력(44px)과 세로 중앙 */
+.story-form-modal__filter-field--radio .app-radio-group {
+  min-height: 44px;
 }
 
 /* 제목 → 내용 24px */

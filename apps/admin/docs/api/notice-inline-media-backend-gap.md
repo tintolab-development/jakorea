@@ -1,5 +1,8 @@
 # 공지·임팩트 스토리 본문 — 에디터 인라인 이미지·YouTube BE 수정 요청
 
+> **2026-09-20:** Admin FE는 파일 삽입을 **asset upload → `publicUrl`** 로 바꿨다. data URL은 remote 저장에 보내지 않는다.  
+> 백엔드 Cursor 프롬프트(복사본): [notice-story-inline-media-backend-cursor-prompt-2026-09-20.md](./notice-story-inline-media-backend-cursor-prompt-2026-09-20.md)
+
 | 항목 | 값 |
 |------|-----|
 | **작성일** | 2026-08-13 |
