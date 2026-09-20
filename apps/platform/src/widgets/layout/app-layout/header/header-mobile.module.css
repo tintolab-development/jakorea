@@ -24,16 +24,6 @@
   border-bottom-color: var(--color-border-default);
 }
 
-.headerInverse {
-  border-bottom-color: var(--color-border-default);
-}
-
-/* inverse prop이 와도 모바일은 컬러 로고·아이콘 유지 */
-.headerInverse .logo,
-.headerInverse .menuIcon {
-  filter: none;
-}
-
 .logoLink {
   display: inline-flex;
   flex-shrink: 0;
@@ -43,9 +33,11 @@
 
 .logo {
   display: block;
-  width: 84.5px;
-  height: 26px;
+  /* 시안: JA Korea + Member of JA Worldwide 한 줄 — 195 뷰박스 비율 유지 */
+  width: min(168px, 52vw);
+  height: auto;
   flex-shrink: 0;
+  aspect-ratio: 195 / 60;
   object-fit: contain;
   object-position: left center;
 }
