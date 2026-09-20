@@ -41,6 +41,81 @@ export const platformQueryKeys = {
       ] as const,
   },
 
+  home: {
+    all: () => [...platformQueryKeys.all, 'home'] as const,
+    /** 공개 메인 화면 — GET /api/public/main (Class B + 홈 마운트 시 1분 재조회) */
+    publicMain: () => [...platformQueryKeys.home.all(), 'public-main'] as const,
+  },
+
+  impactStory: {
+    all: () => [...platformQueryKeys.all, 'impact-story'] as const,
+    /** 공개 카테고리 — GET /api/public/impact-story/categories (Class B) */
+    categories: () => [...platformQueryKeys.impactStory.all(), 'categories'] as const,
+    /**
+     * 공개 목록 — GET /api/public/impact-story/stories
+     * Class C. `categoryId`/`q`/`page`/`size` 가 바뀌면 다른 키.
+     */
+    list: (params: { categoryId: number | null; q: string; page: number; size: number }) =>
+      [
+        ...platformQueryKeys.impactStory.all(),
+        'list',
+        params.categoryId,
+        params.q,
+        params.page,
+        params.size,
+      ] as const,
+    /** pinned 캐러셀·홈 서브카드·인접글용 preview (`size=20`, page 0) */
+    preview: () => [...platformQueryKeys.impactStory.all(), 'preview'] as const,
+    /** 공개 상세 — GET /api/public/impact-story/stories/{id} (Class D) */
+    detail: (id: string) => [...platformQueryKeys.impactStory.all(), 'detail', id] as const,
+  },
+
+  program: {
+    all: () => [...platformQueryKeys.all, 'program'] as const,
+    /** 공개 목록 — GET /api/portal/programs (Class C, CMS 8080) */
+    list: (params: {
+      keyword: string
+      portalTab: string
+      recruitmentStatus: string
+      recruitmentTarget: string
+      educationTarget: string
+      educationMethod: string
+      operatingFrom: string
+      operatingTo: string
+      sort: string
+      page: number
+      size: number
+    }) =>
+      [
+        ...platformQueryKeys.program.all(),
+        'list',
+        params.keyword,
+        params.portalTab,
+        params.recruitmentStatus,
+        params.recruitmentTarget,
+        params.educationTarget,
+        params.educationMethod,
+        params.operatingFrom,
+        params.operatingTo,
+        params.sort,
+        params.page,
+        params.size,
+      ] as const,
+    /** 홈 캐러셀 8건 — GET /api/portal/programs page=0 size=8 sort=LATEST */
+    homePreview: () => [...platformQueryKeys.program.all(), 'home-preview'] as const,
+    /** 공개 상세 — GET /api/portal/programs/{programId} (Class D, CMS 8080) */
+    detail: (id: string) => [...platformQueryKeys.program.all(), 'detail', id] as const,
+  },
+
+  education: {
+    all: () => [...platformQueryKeys.all, 'education'] as const,
+    /** 공개 프로그램 소개 — GET /api/public/education/program-intros/{fieldCode} (Class D) */
+    programIntro: (fieldCode: string) =>
+      [...platformQueryKeys.education.all(), 'program-intro', fieldCode] as const,
+    /** 공개 교재 목록 — GET /api/public/education/textbooks (Class C, items) */
+    textbooks: () => [...platformQueryKeys.education.all(), 'textbooks'] as const,
+  },
+
   mypage: {
     all: () => [...platformQueryKeys.all, 'mypage'] as const,
     /** 내 강사 권한 신청 상태 — GET /api/portal/me/instructor-role-requests/current */

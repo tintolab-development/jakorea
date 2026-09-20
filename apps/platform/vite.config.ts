@@ -1,18 +1,56 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import type { ProxyOptions } from 'vite'
 import postcssCustomMedia from 'postcss-custom-media'
 import postcssGlobalData from '@csstools/postcss-global-data'
 import { mockProgramCatalogApiPlugin } from '../../tools/mock-program-catalog/vite-plugin'
 
+function withNgrokSkip(
+  target: string,
+  skipHeader: string | undefined,
+): ProxyOptions {
+  const normalized = target.replace(/\/$/, '')
+  const isNgrokTarget = /ngrok/i.test(normalized)
+  return {
+    target: normalized,
+    changeOrigin: true,
+    secure: false,
+    ws: true,
+    configure(proxy) {
+      proxy.on('proxyReq', proxyReq => {
+        if (skipHeader || isNgrokTarget) {
+          proxyReq.setHeader('ngrok-skip-browser-warning', skipHeader || '69420')
+        }
+      })
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, path.resolve(__dirname), '')
-  /** 로컬에서 `/api` → 백엔드(배포 서버·ngrok 등). CMS와 동일: `VITE_API_SERVER` */
-  const proxyTarget =
+  /** CMS/Portal — 로그인·회원가입·세션 (`/api/portal`) */
+  const cmsTarget =
     env.VITE_API_SERVER?.trim() ||
     env.VITE_DEV_PROXY_TARGET?.trim() ||
     env.VITE_NGROK_SERVER?.trim()
+  /** Homepage Admin (JAHOMEADMINBACK) — `/api/public/main` 등. 미설정 시 8081 */
+  const homepageTarget =
+    env.VITE_HOMEPAGE_API_SERVER?.trim() || 'http://localhost:8081'
+  const ngrokSkip = env.VITE_NGROK_SKIP_BROWSER_WARNING?.trim()
+
+  const proxy: Record<string, ProxyOptions> | undefined = (() => {
+    if (!cmsTarget && !homepageTarget) return undefined
+    const entries: Record<string, ProxyOptions> = {}
+    if (cmsTarget) {
+      entries['/api/portal'] = withNgrokSkip(cmsTarget, ngrokSkip)
+    }
+    if (homepageTarget) {
+      entries['/api'] = withNgrokSkip(homepageTarget, ngrokSkip)
+    }
+    return entries
+  })()
 
   return {
     plugins: [
@@ -51,25 +89,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       strictPort: true,
-      proxy: proxyTarget
-        ? {
-            '/api': {
-              target: proxyTarget.replace(/\/$/, ''),
-              changeOrigin: true,
-              secure: false,
-              ws: true,
-              configure(proxy) {
-                proxy.on('proxyReq', proxyReq => {
-                  const skip = env.VITE_NGROK_SKIP_BROWSER_WARNING?.trim()
-                  const isNgrokTarget = /ngrok/i.test(proxyTarget)
-                  if (skip || isNgrokTarget) {
-                    proxyReq.setHeader('ngrok-skip-browser-warning', skip || '69420')
-                  }
-                })
-              },
-            },
-          }
-        : undefined,
+      proxy,
     },
   }
 })
