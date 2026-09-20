@@ -58,6 +58,11 @@ import {
 import { NoticeDetailPage, NoticesPage } from '@/pages/notices'
 import { ResultDetailPage, ResultsPage } from '@/pages/results'
 import { TextbooksPage } from '@/pages/education/textbooks'
+import { EducationCareerPage } from '@/pages/education/career'
+import { EducationDigitalLiteracyPage } from '@/pages/education/digital-literacy'
+import { EducationEntrepreneurshipPage } from '@/pages/education/entrepreneurship'
+import { EducationFinancePage } from '@/pages/education/finance'
+import { CareersPage } from '@/pages/about/careers'
 import { DirectionsPage } from '@/pages/about/directions'
 import { HistoryPage } from '@/pages/about/history'
 import { IntroductionPage } from '@/pages/about/introduction'
@@ -69,20 +74,17 @@ import { CorporateDonationPage } from '@/pages/support/corporate'
 import { IndividualDonationPage } from '@/pages/support/individual'
 import { TalentDonationPage } from '@/pages/support/talent'
 import { TalentDonationApplyPage } from '@/pages/support/talent/apply'
-import { TemporaryPage } from '@/pages/temporary'
+import { CAREERS_PATH } from '@/features/careers'
+import { EDUCATION_CAREER_PATH } from '@/features/education-career'
+import { EDUCATION_DIGITAL_LITERACY_PATH } from '@/features/education-digital-literacy'
+import { EDUCATION_ENTREPRENEURSHIP_PATH } from '@/features/education-entrepreneurship'
+import { EDUCATION_FINANCE_PATH } from '@/features/education-finance'
 import { CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
 import { IMPACT_STORIES_PATH } from '@/features/impact-story'
 import { INTRODUCTION_PATH } from '@/features/introduction'
 import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
 import { TALENT_DONATION_APPLY_PATH, TALENT_DONATION_PATH } from '@/features/talent-donation'
-import {
-  ABOUT_CAREERS_PATH,
-  ABOUT_HISTORY_PATH,
-  EDUCATION_CAREER_PATH,
-  EDUCATION_DIGITAL_LITERACY_PATH,
-  EDUCATION_ENTREPRENEURSHIP_PATH,
-  EDUCATION_FINANCE_PATH,
-} from '@/shared/config/gnb-temporary-paths'
+import { ABOUT_HISTORY_PATH } from '@/shared/config/gnb-temporary-paths'
 import { AppLayoutRoute } from './app-layout-route'
 
 export const router = createBrowserRouter([
@@ -106,10 +108,10 @@ export const router = createBrowserRouter([
       { path: '/results', element: <ResultsPage /> },
       { path: '/notices', element: <NoticesPage /> },
       { path: '/education/textbooks', element: <TextbooksPage /> },
-      { path: EDUCATION_CAREER_PATH, element: <TemporaryPage /> },
-      { path: EDUCATION_FINANCE_PATH, element: <TemporaryPage /> },
-      { path: EDUCATION_ENTREPRENEURSHIP_PATH, element: <TemporaryPage /> },
-      { path: EDUCATION_DIGITAL_LITERACY_PATH, element: <TemporaryPage /> },
+      { path: EDUCATION_CAREER_PATH, element: <EducationCareerPage /> },
+      { path: EDUCATION_FINANCE_PATH, element: <EducationFinancePage /> },
+      { path: EDUCATION_ENTREPRENEURSHIP_PATH, element: <EducationEntrepreneurshipPage /> },
+      { path: EDUCATION_DIGITAL_LITERACY_PATH, element: <EducationDigitalLiteracyPage /> },
       { path: '/about/people', element: <PeoplePage /> },
       { path: '/about/directions', element: <DirectionsPage /> },
       { path: '/about/transparency', element: <TransparencyPage /> },
@@ -121,7 +123,7 @@ export const router = createBrowserRouter([
         path: '/about/transparency/audit-reports',
         element: <TransparencyReportsPage type="audit" />,
       },
-      { path: ABOUT_CAREERS_PATH, element: <TemporaryPage /> },
+      { path: CAREERS_PATH, element: <CareersPage /> },
       { path: IMPACT_STORIES_PATH, element: <ImpactStoriesPage /> },
     ],
   },

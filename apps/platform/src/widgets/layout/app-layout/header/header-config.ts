@@ -1,3 +1,9 @@
+import { CAREERS_PATH, isCareersPath } from '@/features/careers'
+import { isHistoryPath } from '@/features/history'
+import { EDUCATION_CAREER_PATH } from '@/features/education-career'
+import { EDUCATION_DIGITAL_LITERACY_PATH } from '@/features/education-digital-literacy'
+import { EDUCATION_ENTREPRENEURSHIP_PATH } from '@/features/education-entrepreneurship'
+import { EDUCATION_FINANCE_PATH } from '@/features/education-finance'
 import { isNoticesPath, NOTICES_PATH } from '@/features/notice'
 import { isDirectionsPath, DIRECTIONS_PATH } from '@/features/directions'
 import { IMPACT_STORIES_PATH, isImpactStoriesPath } from '@/features/impact-story'
@@ -11,15 +17,7 @@ import { CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
 import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
 import { TALENT_DONATION_PATH } from '@/features/talent-donation'
 import { MYPAGE_PATH } from '@/features/mypage'
-import {
-  ABOUT_CAREERS_PATH,
-  ABOUT_HISTORY_PATH,
-  EDUCATION_CAREER_PATH,
-  EDUCATION_DIGITAL_LITERACY_PATH,
-  EDUCATION_ENTREPRENEURSHIP_PATH,
-  EDUCATION_FINANCE_PATH,
-  isTemporaryPagePath,
-} from '@/shared/config/gnb-temporary-paths'
+import { ABOUT_HISTORY_PATH, isTemporaryPagePath } from '@/shared/config/gnb-temporary-paths'
 import { getDevAuthLoggedIn, resolveLoginRequiredPath } from '@/shared/lib'
 import logOutIconUrl from '../image/icon/log-out.svg'
 import notificationsIconUrl from '../image/icon/notifications.svg'
@@ -48,7 +46,7 @@ export const navigationGroups = [
       { label: '오시는 길', href: DIRECTIONS_PATH },
       { label: '공지사항', href: NOTICES_PATH },
       { label: 'JA History', href: ABOUT_HISTORY_PATH },
-      { label: '채용', href: ABOUT_CAREERS_PATH },
+      { label: '채용', href: CAREERS_PATH },
     ],
   },
   {
@@ -139,6 +137,8 @@ export function getActiveNavigationItem(pathname: string): NavigationItemLabel |
     isDirectionsPath(pathname) ||
     isTransparencyPath(pathname) ||
     isIntroductionPath(pathname) ||
+    isCareersPath(pathname) ||
+    isHistoryPath(pathname) ||
     isTemporaryPagePath(pathname)
   ) {
     return 'JA Korea'
