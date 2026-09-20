@@ -1,0 +1,346 @@
+.form {
+  display: flex;
+  width: 100%;
+  max-width: 480px;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-60);
+  margin-inline: auto;
+}
+
+.step {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-32);
+}
+
+.stepHeader {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  padding-top: var(--spacing-16);
+  border-top: 2px solid var(--color-border-focus);
+}
+
+.stepTitle {
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-neutral-black);
+  text-overflow: ellipsis;
+}
+
+.fields {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-20);
+}
+
+.field {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  overflow: hidden;
+  color: var(--color-neutral-warm-500);
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  opacity: 1;
+}
+
+.fieldLabel {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin: 0;
+  padding: 0 var(--spacing-8);
+  overflow: hidden;
+}
+
+.fieldLabelText {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-neutral-warm-600);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.requiredMark {
+  flex-shrink: 0;
+}
+
+.control {
+  width: 100%;
+  min-width: 0;
+}
+
+.jobGrid {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.jobRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  gap: var(--spacing-12);
+}
+
+.jobOption {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.jobOptionButton {
+  width: 100%;
+}
+
+.addressBlock {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.addressSearchRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-end;
+  gap: var(--spacing-12);
+}
+
+.addressSearchField {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.addressSearchButton {
+  flex-shrink: 0;
+  width: 160px;
+}
+
+.textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 174px;
+  padding: var(--spacing-12) var(--spacing-16);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  resize: vertical;
+  overflow: hidden;
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  color: var(--color-neutral-black);
+  text-overflow: ellipsis;
+  background: var(--color-neutral-white);
+}
+
+.textarea::placeholder {
+  overflow: hidden;
+  color: var(--color-neutral-warm-500);
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  opacity: 1;
+}
+
+.textarea:focus {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: -1px;
+}
+
+.textareaError {
+  border-color: var(--color-status-error-default);
+}
+
+.radioGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-16);
+  align-items: center;
+  padding: 0 var(--spacing-8);
+  min-height: 54px;
+}
+
+.radioOption {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  cursor: pointer;
+  color: var(--color-neutral-black);
+}
+
+.radioOption input {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  accent-color: var(--color-primary-500);
+}
+
+.fileUpload {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-12);
+}
+
+.filePickButton {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 480px;
+  height: 53px;
+  min-width: 160px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-4);
+  padding: 13px var(--spacing-28);
+  border-radius: var(--radius-16);
+  border: 1px solid var(--color-primary-500);
+  background:
+    linear-gradient(0deg, var(--color-element-hover) 0%, var(--color-element-hover) 100%),
+    var(--color-neutral-white);
+  color: var(--color-primary-500);
+  text-align: center;
+  font-family: var(--font-family-base);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.18px;
+}
+
+.fileGuideBox {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 53px;
+  align-items: center;
+  padding: var(--spacing-12) var(--spacing-16);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white);
+  box-sizing: border-box;
+}
+
+.fileGuide {
+  margin: 0;
+  width: 100%;
+  word-break: break-all;
+}
+
+.visuallyHiddenFile {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.privacyContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-20);
+}
+
+.privacyBox {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  max-height: 300px;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  padding: var(--spacing-16) var(--spacing-20);
+  overflow-y: auto;
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+  box-sizing: border-box;
+}
+
+.privacyHeading {
+  display: block;
+  margin: 0;
+}
+
+.privacyParagraph {
+  margin: 0;
+}
+
+.agreementBar {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  padding: var(--spacing-16) var(--spacing-20);
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-cool-50);
+  box-sizing: border-box;
+}
+
+.agreementBarChecked {
+  background: var(--color-element-hover);
+}
+
+.agreementError {
+  outline: 1px solid var(--color-status-error-default);
+}
+
+.fieldErrorText {
+  margin: 0;
+  padding: 0 var(--spacing-8);
+}
+
+.submit {
+  width: 100%;
+}
+
+@media (--bp-below-pc) {
+  .form {
+    max-width: 100%;
+  }
+
+  .addressSearchRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .addressSearchButton {
+    width: 100%;
+  }
+}
