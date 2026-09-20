@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { usePrefersReducedMotion } from '@/shared/hooks/use-prefers-reduced-motion'
+import { useHomeMain } from '../api/use-home-main'
 import { HOME_HERO_AUTOPLAY_MS, type HomeHeroSlide } from '../lib/mock'
 import styles from './hero-carousel.module.css'
 
 export type HeroCarouselProps = {
-  slides: readonly HomeHeroSlide[]
+  slides?: readonly HomeHeroSlide[]
   autoplayMs?: number
 }
 
@@ -25,7 +26,9 @@ function PlayIcon() {
   )
 }
 
-export function HeroCarousel({ slides, autoplayMs = HOME_HERO_AUTOPLAY_MS }: HeroCarouselProps) {
+export function HeroCarousel({ slides: slidesProp, autoplayMs = HOME_HERO_AUTOPLAY_MS }: HeroCarouselProps) {
+  const { heroes, source } = useHomeMain()
+  const slides = slidesProp ?? heroes
   const prefersReducedMotion = usePrefersReducedMotion()
   const [index, setIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(true)
@@ -43,6 +46,14 @@ export function HeroCarousel({ slides, autoplayMs = HOME_HERO_AUTOPLAY_MS }: Her
 
     return () => window.clearInterval(timer)
   }, [shouldAutoplay, autoplayMs, total])
+
+  if (source === 'pending' && !slidesProp) {
+    return (
+      <section className={styles.hero} aria-busy="true" aria-label="메인 배너" data-home-hero="">
+        <div className={styles.skeleton} />
+      </section>
+    )
+  }
 
   if (total === 0) {
     return null

@@ -1,40 +1,54 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   IMPACT_STORIES_PATH,
-  getFeaturedImpactStories,
-  getMockImpactStories,
   impactStoryDetailPath,
   type ImpactStoryListItem,
-  useMockImpactStories,
+  useHomeImpactSubStories,
 } from '@/features/impact-story'
+import cardMinjaeUrl from '@/features/impact-story/image/illustration/card-minjae.png'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
+import { useHomeMain } from '../api/use-home-main'
+import { FALLBACK_IMPACT_TITLE } from '../lib/view'
 import styles from './story-section.module.css'
 
-const SUB_STORY_COUNT = 3
+function TitleLines({ title }: { title: string }) {
+  const lines = title.split(/\r?\n/).filter(Boolean)
+  return (
+    <>
+      {lines.map((line, index) => (
+        <span key={`${line}-${index}`}>
+          {index > 0 ? <br /> : null}
+          {line}
+        </span>
+      ))}
+    </>
+  )
+}
 
 function FeaturedStory({ story }: { story: ImpactStoryListItem }) {
+  const remoteSrc = story.featuredImageUrl || story.imageUrl || cardMinjaeUrl
+  const [src, setSrc] = useState(remoteSrc)
+
+  useEffect(() => {
+    setSrc(remoteSrc)
+  }, [remoteSrc, story.id])
+
   return (
     <Link
       className={styles.featured}
       to={impactStoryDetailPath(story.id)}
       aria-label={`${story.title} 상세 보기`}
     >
-      <div
-        className={styles.featuredMedia}
-        style={
-          story.featuredImageUrl || story.imageUrl
-            ? undefined
-            : { backgroundColor: story.placeholderColor }
-        }
-        aria-hidden="true"
-      >
-        {story.featuredImageUrl || story.imageUrl ? (
-          <img
-            className={styles.featuredImage}
-            src={story.featuredImageUrl ?? story.imageUrl}
-            alt=""
-          />
-        ) : null}
+      <div className={styles.featuredMedia} aria-hidden="true">
+        <img
+          className={styles.featuredImage}
+          src={src}
+          alt=""
+          onError={() => {
+            if (src !== cardMinjaeUrl) setSrc(cardMinjaeUrl)
+          }}
+        />
       </div>
       <div className={styles.featuredBody}>
         <PFText as="p" typo="hl-lg" color="primary-500" className={styles.featuredCategory}>
@@ -77,14 +91,10 @@ function SubStoryCard({ story }: { story: ImpactStoryListItem }) {
 }
 
 export function StorySection() {
-  useMockImpactStories()
-  const featuredStories = getFeaturedImpactStories()
-  const mainStory = featuredStories[0] ?? getMockImpactStories()[0] ?? null
-  const rest = getMockImpactStories()
-    .filter(story => story.id !== mainStory?.id)
-    .slice(0, SUB_STORY_COUNT)
-  const featured = mainStory
-  const subStories = rest
+  const { featuredStory, impactTitle } = useHomeMain()
+  const featured = featuredStory
+  const subStories = useHomeImpactSubStories(featured?.id ?? null)
+  const mobileTitle = impactTitle.trim() || FALLBACK_IMPACT_TITLE
 
   if (!featured) {
     return null
@@ -94,9 +104,7 @@ export function StorySection() {
     <section className={styles.section}>
       <div className={styles.inner}>
         <h2 className={styles.mobileTitle}>
-          JA Korea와 함께
-          <br />
-          청소년의 가능성을 넓혀주세요
+          <TitleLines title={mobileTitle} />
         </h2>
 
         <FeaturedStory story={featured} />

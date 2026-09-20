@@ -1,34 +1,45 @@
 import {
   AchievementSection,
+  FALLBACK_IMPACT_TITLE,
   HeroCarousel,
-  HOME_HERO_SLIDES,
-  HOME_YOUTUBE_URL,
   PartnerMarqueeSection,
   ProgramCarouselSection,
   SocialRail,
   StorySection,
+  useHomeMain,
 } from '@/features/home'
 import { ScrollRevealYoutubeVideo } from '@/shared/ui'
 import styles from './home-page.module.css'
 
+function TitleLines({ title }: { title: string }) {
+  const lines = title.split(/\r?\n/).filter(Boolean)
+  return (
+    <>
+      {lines.map((line, index) => (
+        <span key={`${line}-${index}`}>
+          {index > 0 ? <br /> : null}
+          {line}
+        </span>
+      ))}
+    </>
+  )
+}
+
 export function HomePage() {
+  const { youtubeUrl, impactTitle } = useHomeMain()
+  const videoTitle = impactTitle.trim() || FALLBACK_IMPACT_TITLE
+
   return (
     <div className={styles.page}>
-      <HeroCarousel slides={HOME_HERO_SLIDES} />
+      <HeroCarousel />
 
       <ProgramCarouselSection />
 
       {/* YouTube + 스토리: 시안상 동일 패턴 배경 밴드 */}
       <div className={styles.youtubeStoryBand}>
         <ScrollRevealYoutubeVideo
-          youtubeUrl={HOME_YOUTUBE_URL}
-          title={
-            <>
-              JA Korea와 함께
-              <br />
-              청소년의 가능성을 넓혀주세요
-            </>
-          }
+          youtubeUrl={youtubeUrl}
+          title={<TitleLines title={videoTitle} />}
           iframeTitle="JA Korea 소개 영상"
           animateOnce
           className={styles.youtubeReveal}

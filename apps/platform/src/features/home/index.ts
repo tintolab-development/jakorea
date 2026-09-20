@@ -10,6 +10,11 @@ export {
 } from './lib/mock'
 export type { HomeAchievementStat, HomeHeroSlide, HomePartnerLogo } from './lib/mock'
 
+export { HOME_MAIN_FALLBACK, getHomeMainFallback } from './lib/fallback'
+export { FALLBACK_IMPACT_TITLE } from './lib/view'
+export type { HomeMainQuery, HomeMainView } from './lib/view'
+export { homePublicMainQueryOptions, useHomeMain } from './api/use-home-main'
+
 export { AchievementSection } from './ui/achievement-section'
 export { HeroCarousel } from './ui/hero-carousel'
 export type { HeroCarouselProps } from './ui/hero-carousel'
