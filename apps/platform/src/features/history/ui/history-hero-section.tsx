@@ -11,12 +11,13 @@ import styles from './history-hero-section.module.css'
 export function HistoryHeroSection() {
   return (
     <section className={styles.hero} aria-labelledby="history-hero-title">
-      <div
-        className={styles.background}
-        style={{ backgroundImage: `url(${HISTORY_HERO_IMAGE_URL})` }}
-        aria-hidden="true"
-      />
-      <div className={styles.tint} aria-hidden="true" />
+      <div className={styles.background} aria-hidden="true">
+        <img
+          className={styles.photo}
+          src={HISTORY_HERO_IMAGE_URL}
+          alt=""
+        />
+      </div>
       <div className={styles.gradient} aria-hidden="true" />
 
       <div className={styles.inner}>

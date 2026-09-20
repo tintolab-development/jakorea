@@ -1,0 +1,102 @@
+.section {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: var(--spacing-56) var(--page-padding-x);
+  text-align: center;
+}
+
+.yearMark {
+  position: absolute;
+  top: 12%;
+  left: 50%;
+  z-index: 0;
+  display: block;
+  width: min(100%, 335px);
+  max-width: 100%;
+  height: auto;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.copy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  max-width: 727px;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-24);
+}
+
+.headings {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.english,
+.korean,
+.body {
+  margin: 0;
+  max-width: 100%;
+}
+
+.english,
+.korean {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 140%;
+  letter-spacing: -0.44px;
+}
+
+.korean {
+  font-family: var(--font-family-base);
+}
+
+.body {
+  max-width: 688px;
+  font-size: 16px;
+  line-height: 160%;
+  opacity: 0.7;
+}
+
+@media (--bp-pc-up) {
+  .section {
+    min-height: min(100vh, 1080px);
+    padding-block: var(--spacing-120);
+  }
+
+  .yearMark {
+    top: 12%;
+    width: min(72%, 995px);
+  }
+
+  .copy {
+    gap: var(--spacing-40);
+  }
+
+  .headings {
+    gap: 0;
+  }
+
+  .english,
+  .korean {
+    font-size: 40px;
+    letter-spacing: -0.8px;
+  }
+
+  .body {
+    font-size: 20px;
+  }
+}

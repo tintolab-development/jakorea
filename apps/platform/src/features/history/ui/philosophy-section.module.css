@@ -1,0 +1,227 @@
+.section {
+  display: flex;
+  width: min(100%, var(--content-shell-max-width));
+  min-width: 0;
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: var(--spacing-56);
+  margin-inline: auto;
+  padding: var(--spacing-56) var(--page-padding-x);
+}
+
+.header {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-20);
+}
+
+.headings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.title,
+.lead,
+.cardTitle,
+.cardBody {
+  margin: 0;
+}
+
+.title {
+  font-size: 28px;
+}
+
+.lead {
+  font-size: 16px;
+  line-height: 150%;
+}
+
+.cards {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--spacing-16);
+  list-style: none;
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-24);
+  aspect-ratio: 335 / 214;
+  background: var(--color-primary-800);
+}
+
+.photo {
+  position: absolute;
+  display: block;
+  max-width: none;
+  object-fit: cover;
+  opacity: 0.5;
+}
+
+.practice .photo {
+  top: calc(-7 / 214 * 100%);
+  left: 0;
+  width: calc(383 / 335 * 100%);
+  height: calc(222 / 214 * 100%);
+}
+
+.roleModel .photo {
+  top: calc(50% - 5.5 / 214 * 100%);
+  left: 0;
+  width: calc(354 / 335 * 100%);
+  height: calc(225 / 214 * 100%);
+  transform: translateY(-50%);
+}
+
+.mindset .photo {
+  top: calc(50% + 0.5 / 214 * 100%);
+  left: 50%;
+  width: calc(351 / 335 * 100%);
+  height: calc(219 / 214 * 100%);
+  transform: translate(-50%, -50%);
+}
+
+.support .photo {
+  top: calc(-22 / 214 * 100%);
+  left: calc(-24 / 335 * 100%);
+  width: calc(359 / 335 * 100%);
+  height: calc(289 / 214 * 100%);
+}
+
+.overlay {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 52%;
+  background: linear-gradient(180deg, rgb(34 64 77 / 0%) 0%, rgb(34 64 77 / 70%) 100%);
+  pointer-events: none;
+}
+
+.cardCopy {
+  position: absolute;
+  right: var(--spacing-24);
+  bottom: var(--spacing-24);
+  left: var(--spacing-24);
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.cardTitle {
+  color: var(--color-neutral-cool-50);
+  font-size: 20px;
+}
+
+.cardBody {
+  font-size: 14px;
+  line-height: 150%;
+}
+
+@media (--bp-pc-up) {
+  .section {
+    gap: var(--spacing-80);
+    padding-block: var(--spacing-120);
+  }
+
+  .header {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--spacing-40);
+  }
+
+  .headings {
+    flex: 0 1 350px;
+    gap: var(--spacing-12);
+  }
+
+  .eyebrow {
+    font-size: 20px;
+  }
+
+  .title {
+    font-size: 48px;
+  }
+
+  .lead {
+    flex: 1 1 480px;
+    max-width: 791px;
+    font-size: 20px;
+    text-align: left;
+  }
+
+  .cards {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--spacing-8);
+  }
+
+  .card {
+    aspect-ratio: 354 / 480;
+  }
+
+  .practice .photo {
+    top: 0;
+    left: calc(50% + 63 / 354 * 100%);
+    width: calc(828 / 354 * 100%);
+    height: 100%;
+    transform: translateX(-50%);
+  }
+
+  .roleModel .photo {
+    top: 50%;
+    left: calc(50% + 94 / 354 * 100%);
+    width: calc(866 / 354 * 100%);
+    height: calc(550 / 480 * 100%);
+    transform: translate(-50%, -50%);
+  }
+
+  .mindset .photo {
+    top: calc(50% + 47.5 / 480 * 100%);
+    left: calc(50% - 75.5 / 354 * 100%);
+    width: calc(1033 / 354 * 100%);
+    height: calc(643 / 480 * 100%);
+    transform: translate(-50%, -50%);
+  }
+
+  .support .photo {
+    top: calc(50% + 0.5 / 480 * 100%);
+    left: calc(50% - 19.5 / 354 * 100%);
+    width: calc(597 / 354 * 100%);
+    height: calc(479 / 480 * 100%);
+    transform: translate(-50%, -50%);
+  }
+
+  .cardCopy {
+    right: var(--spacing-32);
+    bottom: var(--spacing-32);
+    left: var(--spacing-32);
+    gap: var(--spacing-16);
+  }
+
+  .card:first-child .cardCopy {
+    gap: var(--spacing-12);
+  }
+
+  .cardTitle {
+    font-size: 24px;
+  }
+
+  .cardBody {
+    font-size: 18px;
+  }
+}
