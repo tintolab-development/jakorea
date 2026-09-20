@@ -3,6 +3,7 @@ import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { DonationSection } from '@/entities/main-content/model/types'
 import { useSaveDonationSection } from '@/features/main-content/api/hooks'
+import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
 import { CtaNestedTable } from '@/features/main-content/ui/nested-tables'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
 import { CmsTextArea, useCmsAlert } from '@/shared/ui'
@@ -38,11 +39,8 @@ export function DonationSectionCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
-    } catch {
-      showAlert({
-        title: '저장 실패',
-        content: '정기후원 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(mainContentSaveFailureAlert(error, '정기후원'))
     }
   }, [draft, saveMutation, showAlert])
 

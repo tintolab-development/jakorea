@@ -3,6 +3,7 @@ import type {
   DonationSection,
   EducationSection,
   ImpactStorySection,
+  MainContents,
   PerformanceSection,
 } from '@/entities/main-content/model/types'
 import { shouldUseMainContentRemoteApi } from './capabilities'
@@ -18,6 +19,12 @@ import {
 
 function source(): 'remote' | 'local' {
   return shouldUseMainContentRemoteApi() ? 'remote' : 'local'
+}
+
+function cachedContents(
+  queryClient: ReturnType<typeof useQueryClient>,
+): MainContents | undefined {
+  return queryClient.getQueryData<MainContents>(mainContentQueryKeys.detail(source()))
 }
 
 export function useMainContents(enabled = true) {
@@ -51,45 +58,52 @@ export function useImpactStoryOptions(enabled = true) {
   return localQuery
 }
 
-function useInvalidateMainContents() {
+function useApplyMainContents() {
   const queryClient = useQueryClient()
-  return (data: Awaited<ReturnType<typeof getMainContentsService>>) => {
+  return (data: MainContents) => {
     queryClient.setQueryData(mainContentQueryKeys.detail(source()), data)
-    void queryClient.invalidateQueries({ queryKey: mainContentQueryKeys.all })
   }
 }
 
 export function useSaveEducationSection() {
-  const apply = useInvalidateMainContents()
+  const queryClient = useQueryClient()
+  const apply = useApplyMainContents()
   return useMutation({
-    mutationFn: (section: EducationSection) => saveEducationSectionService(section),
+    mutationFn: (section: EducationSection) =>
+      saveEducationSectionService(section, cachedContents(queryClient)),
     retry: false,
     onSuccess: apply,
   })
 }
 
 export function useSaveImpactStorySection() {
-  const apply = useInvalidateMainContents()
+  const queryClient = useQueryClient()
+  const apply = useApplyMainContents()
   return useMutation({
-    mutationFn: (section: ImpactStorySection) => saveImpactStorySectionService(section),
+    mutationFn: (section: ImpactStorySection) =>
+      saveImpactStorySectionService(section, cachedContents(queryClient)),
     retry: false,
     onSuccess: apply,
   })
 }
 
 export function useSavePerformanceSection() {
-  const apply = useInvalidateMainContents()
+  const queryClient = useQueryClient()
+  const apply = useApplyMainContents()
   return useMutation({
-    mutationFn: (section: PerformanceSection) => savePerformanceSectionService(section),
+    mutationFn: (section: PerformanceSection) =>
+      savePerformanceSectionService(section, cachedContents(queryClient)),
     retry: false,
     onSuccess: apply,
   })
 }
 
 export function useSaveDonationSection() {
-  const apply = useInvalidateMainContents()
+  const queryClient = useQueryClient()
+  const apply = useApplyMainContents()
   return useMutation({
-    mutationFn: (section: DonationSection) => saveDonationSectionService(section),
+    mutationFn: (section: DonationSection) =>
+      saveDonationSectionService(section, cachedContents(queryClient)),
     retry: false,
     onSuccess: apply,
   })
