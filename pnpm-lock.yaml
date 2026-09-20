@@ -358,12 +358,30 @@ importers:
       '@tiptap/core':
         specifier: ^3.25.0
         version: 3.27.1(@tiptap/pm@3.27.1)
+      '@tiptap/extension-dropcursor':
+        specifier: ^3.25.0
+        version: 3.27.1(@tiptap/extensions@3.27.1(@tiptap/core@3.27.1(@tiptap/pm@3.27.1))(@tiptap/pm@3.27.1))
+      '@tiptap/extension-emoji':
+        specifier: ^3.25.0
+        version: 3.27.1(@tiptap/core@3.27.1(@tiptap/pm@3.27.1))(@tiptap/pm@3.27.1)(@tiptap/suggestion@3.27.1(@floating-ui/dom@1.7.6)(@tiptap/core@3.27.1(@tiptap/pm@3.27.1))(@tiptap/pm@3.27.1))(emojibase@17.0.0)
+      '@tiptap/extension-file-handler':
+        specifier: ^3.25.0
+        version: 3.27.1(@tiptap/core@3.27.1(@tiptap/pm@3.27.1))(@tiptap/extension-text-style@3.25.0(@tiptap/core@3.27.1(@tiptap/pm@3.27.1)))(@tiptap/pm@3.27.1)
+      '@tiptap/extension-superscript':
+        specifier: ^3.25.0
+        version: 3.27.1(@tiptap/core@3.27.1(@tiptap/pm@3.27.1))(@tiptap/pm@3.27.1)
+      '@tiptap/markdown':
+        specifier: ^3.25.0
+        version: 3.27.1(@tiptap/core@3.27.1(@tiptap/pm@3.27.1))(@tiptap/pm@3.27.1)
       '@tiptap/pm':
         specifier: ^3.25.0
         version: 3.27.1
       '@tiptap/react':
         specifier: ^3.25.0
         version: 3.27.1(@floating-ui/dom@1.7.6)(@tiptap/core@3.27.1(@tiptap/pm@3.27.1))(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@tiptap/starter-kit':
+        specifier: ^3.25.0
+        version: 3.27.1
       antd:
         specifier: ^5.28.0
         version: 5.29.2(date-fns@4.1.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
