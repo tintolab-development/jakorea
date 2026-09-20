@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import styles from './pf-category-badge.module.css'
 
 export type PFCategoryBadgeSize = 'large' | 'small'
-export type PFCategoryBadgeVariant = 'primary' | 'secondary' | 'closed'
+export type PFCategoryBadgeVariant = 'primary' | 'secondary' | 'closed' | 'deep'
 export type PFCategoryBadgeIconVariant = 'primary' | 'secondary'
 
 export type PFCategoryBadgeProps = {
