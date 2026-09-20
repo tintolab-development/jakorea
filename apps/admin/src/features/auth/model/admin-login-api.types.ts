@@ -40,11 +40,18 @@ export interface AdminMfaVerifyRequestBody {
   verificationCode: string
 }
 
+/** POST /api/admin/auth/mfa/verify · refresh 200 */
 export interface AuthTokenResponse {
   accessToken: string
   refreshToken: string
   tokenType?: string
   expiresInSeconds?: number
+  /** 관리자 발급 임시 비밀번호 변경 필요 */
+  passwordChangeRequired?: boolean
+  adminProvisionedOnboardingRequired?: boolean
+  adminProvisionedOnboardingStep?: string
+  registeredByAdmin?: boolean
+  identitySelfSignupCompletedAfterAdminRegistration?: boolean
 }
 
 export interface RefreshTokenRequestBody {

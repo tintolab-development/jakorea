@@ -30,6 +30,7 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
     isLocked,
     handleVerify,
     lockMessage,
+    otpResetToken,
   } = useMfaVerification({ open })
 
   if (!user || user.role !== 'ADMIN') {
@@ -52,6 +53,7 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
       width={600}
       centered
       className="mfa-verification-modal"
+      wrapClassName="mfa-verification-modal-wrap"
       styles={{
         content: {
           padding: 0,
@@ -101,8 +103,8 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
                 src={provisioning.qrDataUrl}
                 alt="TOTP QR"
                 className="mfa-verification-modal__qr-image"
-                width={220}
-                height={220}
+                width={160}
+                height={160}
               />
             ) : provisioningError ? null : (
               <Spin tip="QR 코드 생성 중…" />
@@ -120,6 +122,7 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
             onChange={onOtpCodeChange}
             disabled={isLocked}
             failedAttempts={failedAttempts}
+            resetToken={otpResetToken}
           />
           {failedAttempts === 0 ? <MfaOtpStatus /> : null}
         </Form>
