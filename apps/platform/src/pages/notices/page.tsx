@@ -4,8 +4,10 @@ import {
   filterAndSortNotices,
   noticeDetailPath,
   NoticeListItemRow,
+  NOTICES_LIST_RETURN_STATE_KEY,
   NOTICES_PAGE_SIZE,
   readNoticesListParams,
+  rememberNoticesListReturnPath,
   useMockNoticesCatalog,
   type NoticesListParams,
 } from '@/features/notice'
@@ -19,6 +21,7 @@ export function NoticesPage() {
   const notices = useMockNoticesCatalog()
 
   useEffect(() => {
+    rememberNoticesListReturnPath()
     const onPopState = () => {
       setParams(readNoticesListParams())
     }
@@ -34,6 +37,7 @@ export function NoticesPage() {
     if (nextPath !== currentPath) {
       window.history.pushState(null, '', nextPath)
     }
+    rememberNoticesListReturnPath(nextPath)
   }
 
   const filteredNotices = useMemo(
@@ -88,7 +92,13 @@ export function NoticesPage() {
               <NoticeListItemRow
                 key={item.id}
                 item={item}
-                onClick={() => navigate(noticeDetailPath(item.id))}
+                onClick={() => {
+                  const returnPath = `${window.location.pathname}${window.location.search}`
+                  rememberNoticesListReturnPath(returnPath)
+                  navigate(noticeDetailPath(item.id), {
+                    state: { [NOTICES_LIST_RETURN_STATE_KEY]: returnPath },
+                  })
+                }}
               />
             ))
           )}

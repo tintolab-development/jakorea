@@ -1,6 +1,8 @@
 export type {
   NoticeAttachment,
+  NoticeContentFormat,
   NoticeDetail,
+  NoticeDetailStatus,
   NoticeListItem,
   NoticesListParams,
 } from './model/types'
@@ -20,11 +22,22 @@ export {
   type AdjacentNotices,
   type NoticeCatalogItem,
 } from './lib/mock-notices'
+export { useNoticeDetail, type NoticeDetailQuery } from './lib/use-detail'
+export {
+  mapPublicNoticeDetailToView,
+  toNoticeDetailView,
+  type PublicNoticeDetailSource,
+} from './lib/map-detail'
 export { filterAndSortNotices } from './lib/filter-notices'
 export {
   buildNoticesListPath,
+  canNavigateBackInApp,
   getNoticesListReturnPath,
+  isNoticesListReturnPath,
+  NOTICES_LIST_RETURN_STATE_KEY,
   readNoticesListParams,
+  rememberNoticesListReturnPath,
+  resolveNoticesListReturnPath,
 } from './lib/list-params'
 export {
   getNoticeIdFromPath,

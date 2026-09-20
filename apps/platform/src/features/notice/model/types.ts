@@ -3,8 +3,14 @@ export type NoticesListParams = {
   page: number
 }
 
+export type NoticeContentFormat = 'html' | 'markdown'
+
 export type NoticeAttachment = {
+  id: string
   name: string
+  mime?: string
+  size?: number
+  /** 다운로드 URL. 식별자와 분리 — 서명 URL·파일 ID 다운로드에 대비 */
   fileUrl?: string
 }
 
@@ -20,12 +26,15 @@ export type NoticeListItem = {
   publishedAtLabel: string
 }
 
-/** 공지 상세 — CMS Notice 상세 필드와 동기 */
+/** 공지 상세 — 홈페이지 어드민 공개 공지 필드와 대응. 배열 첨부는 화면 모델이며 API 계약을 확정하지 않음 */
 export type NoticeDetail = NoticeListItem & {
   content: string
+  contentFormat: NoticeContentFormat
   author: string
   viewCount: number
-  /** 상세 메타용 — 예: 2026년 05월 08일(월) */
+  /** 상세 메타용 — 예: 2026년 01월 15일 오후 3:00 */
   publishedAtDetailLabel: string
   attachments: NoticeAttachment[]
 }
+
+export type NoticeDetailStatus = 'loading' | 'ready' | 'not-found' | 'error' | 'unavailable'
