@@ -1,0 +1,1 @@
+export { EducationCareerPage } from './page'
