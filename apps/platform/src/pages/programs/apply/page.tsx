@@ -7,7 +7,7 @@ import {
   ProgramBackButton,
   programApplyCompletePath,
   programDetailPath,
-  useMockProgramById,
+  useProgramDetail,
 } from '@/features/program'
 import {
   isApplyScheduleChoiceParagraphId,
@@ -25,7 +25,7 @@ export function ProgramApplyPage() {
   const navigate = useNavigate()
   const [isReady, setIsReady] = useState(false)
   const programId = getProgramIdFromPath()
-  const { program, isLoading } = useMockProgramById(programId)
+  const { program, isLoading } = useProgramDetail(programId)
 
   useEffect(() => {
     if (!programId) {

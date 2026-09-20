@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ProgramCategory, ProgramsListParams } from '@/features/program'
 import {
   buildProgramsListPath,
   DEFAULT_PROGRAMS_LIST_PARAMS,
-  filterAndSortPrograms,
   getProgramsListReturnPath,
   PROGRAM_CATEGORY_ITEMS,
   PROGRAM_FILTER_KEYS,
@@ -11,7 +10,7 @@ import {
   ProgramListItemRow,
   ProgramSort,
   readProgramsListParams,
-  useMockProgramsCatalog,
+  usePortalProgramsList,
 } from '@/features/program'
 import {
   educationFormFilterOptions,
@@ -33,8 +32,6 @@ import { SearchListLayout } from '@/widgets/search-list-layout'
 import styles from './page.module.css'
 import { useNavigate } from 'react-router-dom'
 
-const PAGE_SIZE = 10
-
 const AUDIENCE_VALUES = new Set<ProgramCategory>(['all', 'youth', 'institution', 'instructor'])
 
 function parseAudienceValue(value: string): ProgramCategory {
@@ -46,9 +43,10 @@ function parseAudienceValue(value: string): ProgramCategory {
 export function ProgramsPage() {
   const navigate = useNavigate()
   const [params, setParams] = useState(readProgramsListParams)
-  const programs = useMockProgramsCatalog()
+  const { items: pageItems, totalCount, totalPages, currentPage, isPending, isError } =
+    usePortalProgramsList(params)
 
-  /** 탭·필터는 soft navigation — full reload 없이 URL·state만 동기화 (카탈로그 재요청 방지) */
+  /** 탭·필터는 soft navigation — URL·state만 동기화 */
   useEffect(() => {
     const onPopState = () => {
       setParams(readProgramsListParams())
@@ -88,15 +86,6 @@ export function ProgramsPage() {
       page: 1,
     })
   }
-
-  const filteredPrograms = useMemo(
-    () => filterAndSortPrograms(programs, params),
-    [programs, params]
-  )
-
-  const totalPages = Math.max(1, Math.ceil(filteredPrograms.length / PAGE_SIZE))
-  const currentPage = Math.min(params.page, totalPages)
-  const pageItems = filteredPrograms.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   return (
     <section className={styles.page}>
@@ -157,7 +146,7 @@ export function ProgramsPage() {
           </>
         }
         onFilterReset={reset}
-        toolbarTitle={`총 ${filteredPrograms.length}개 프로그램`}
+        toolbarTitle={`총 ${totalCount}개 프로그램`}
         sort={<ProgramSort {...bindSort('sort')} />}
         pagination={
           <PFPagination
@@ -168,7 +157,15 @@ export function ProgramsPage() {
         }
       >
         <div className={styles.list}>
-          {pageItems.length === 0 ? (
+          {isPending ? (
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
+              프로그램을 불러오는 중입니다.
+            </PFText>
+          ) : isError ? (
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
+              프로그램을 불러오지 못했습니다.
+            </PFText>
+          ) : pageItems.length === 0 ? (
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
               등록된 프로그램이 없습니다.
             </PFText>

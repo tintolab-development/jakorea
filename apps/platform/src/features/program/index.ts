@@ -51,6 +51,17 @@ export {
 export { mergeSeedAndCatalogPrograms } from './lib/merge-seed-catalog'
 export { useMockProgramById, useMockProgramsCatalog } from './lib/use-mock-programs-catalog'
 export {
+  useHomePortalPrograms,
+  usePortalProgramsList,
+  useProgramDetail,
+} from './api/hooks'
+export type {
+  HomePortalProgramsQuery,
+  PortalProgramsListQuery,
+  ProgramDetailQuery,
+  ProgramDetailStatus,
+} from './api/hooks'
+export {
   mapBasicInfoFields,
   mapApplicationWindowToRecruitmentStatus,
   mapCmsProgramToPlatformDetail,

@@ -6,7 +6,7 @@ import {
   programApplyPath,
   programApplyRequiredPath,
   PROGRAMS_PATH,
-  useMockProgramById,
+  useProgramDetail,
 } from '@/features/program'
 import { getDevAuthLoggedIn } from '@/shared/lib'
 import { PFButton, PFText } from '@/shared/ui'
@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom'
 export function ProgramDetailPage() {
   const navigate = useNavigate()
   const programId = getProgramIdFromPath()
-  const { program, isLoading } = useMockProgramById(programId)
+  const { program, isLoading } = useProgramDetail(programId)
   const searchParams = new URLSearchParams(window.location.search)
   const fromPath = searchParams.get('from')
 

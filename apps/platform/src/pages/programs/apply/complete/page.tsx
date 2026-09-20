@@ -2,7 +2,7 @@ import {
   getProgramIdFromPath,
   programDetailPath,
   PROGRAMS_PATH,
-  useMockProgramById,
+  useProgramDetail,
 } from '@/features/program'
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom'
 export function ProgramApplyCompletePage() {
   const navigate = useNavigate()
   const programId = getProgramIdFromPath()
-  const { program, isLoading } = useMockProgramById(programId)
+  const { program, isLoading } = useProgramDetail(programId)
 
   if (isLoading && !program) {
     return null
