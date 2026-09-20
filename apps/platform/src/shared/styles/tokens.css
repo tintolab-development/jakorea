@@ -59,7 +59,8 @@
   --content-shell-max-width: 1440px;
   --content-outer-max-width: var(--content-shell-max-width);
   --content-padding-block: var(--spacing-74);
-  --page-padding-x: 16px;
+  /* 모바일(~1079) 좌우 거터 — Platform 전역 20 고정 */
+  --page-padding-x: var(--spacing-20);
   --page-padding-y: 24px;
   --section-gap: 16px;
 

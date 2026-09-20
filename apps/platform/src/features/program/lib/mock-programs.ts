@@ -7,6 +7,8 @@ import programThumbnail03Url from '../image/illustration/program-thumbnail-03.pn
 import type { ProgramDetail, ProgramListItem } from '../model/types'
 import {
   CMS_PLATFORM_PROGRAM_FIXTURES,
+  ECONOMY_INSTRUCTOR_STATUS_FIXTURES,
+  GENERAL_INSTRUCTOR_STATUS_FIXTURES,
   GENERAL_VOLUNTEER_STATUS_FIXTURES,
 } from './cms-registration-fixtures'
 import { mapCmsProgramsToPlatformDetails } from './map-from-cms'
@@ -55,7 +57,12 @@ function pickMockImagePair(programId: string): {
  * 일반 16 + 1사1교 2 + 교육받은 교사 8 + Gemini 2 + UJAT 2
  */
 const SEED_PROGRAMS: ProgramDetail[] = mapCmsProgramsToPlatformDetails(
-  [...CMS_PLATFORM_PROGRAM_FIXTURES, ...GENERAL_VOLUNTEER_STATUS_FIXTURES],
+  [
+    ...CMS_PLATFORM_PROGRAM_FIXTURES,
+    ...GENERAL_VOLUNTEER_STATUS_FIXTURES,
+    ...GENERAL_INSTRUCTOR_STATUS_FIXTURES,
+    ...ECONOMY_INSTRUCTOR_STATUS_FIXTURES,
+  ],
   pickMockImagePair
 )
 

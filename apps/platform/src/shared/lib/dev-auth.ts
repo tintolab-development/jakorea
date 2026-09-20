@@ -3,16 +3,21 @@ import { isRemoteApiConfigured } from './api-remote-env'
 import { getAccessToken, PLATFORM_AUTH_TOKEN_KEY } from './auth-token'
 import { DEV_AUTH_CHANGE_EVENT, emitDevAuthChange } from './auth-session-event'
 
-/** @deprecated mock 로그인 제거 후 레거시 키 정리용 */
-const LEGACY_DEV_AUTH_STORAGE_KEY = 'platform:dev:is-logged-in'
+/** DEV mock 로그인 세션 — `sign-in` Mock 버튼 전용 */
+const DEV_AUTH_STORAGE_KEY = 'platform:dev:is-logged-in'
 export { DEV_AUTH_CHANGE_EVENT }
 
 export function getDevAuthLoggedIn() {
   if (typeof window === 'undefined') return false
   // 관리자 등록 온보딩 미완료: 토큰이 있어도 정상 로그인 UI로 취급하지 않음
   if (isAdminOnboardingRequired()) return false
-  // 실로그인 토큰만으로 로그인 판정
-  return Boolean(window.localStorage.getItem(PLATFORM_AUTH_TOKEN_KEY))
+  // 실로그인 토큰이 있으면 로그인으로 간주 (헤더·마이페이지 가드 호환)
+  if (window.localStorage.getItem(PLATFORM_AUTH_TOKEN_KEY)) return true
+  // DEV mock 로그인 — access token 없이 마이페이지 mock 진입
+  if (import.meta.env.DEV) {
+    return window.localStorage.getItem(DEV_AUTH_STORAGE_KEY) === 'true'
+  }
+  return false
 }
 
 /**
@@ -46,10 +51,20 @@ export function withPlatformContentSeed<T>(value: T, empty: T): T {
 }
 
 /**
- * 로그인 상태 변경 알림. 실세션은 토큰이 SSOT이므로 `true`는 무시하고 레거시 mock 플래그만 정리한다.
+ * 로그인 상태 변경 알림.
+ * - 실세션: access token이 SSOT
+ * - DEV mock: `platform:dev:is-logged-in` (sign-in Mock 버튼)
  */
-export function setDevAuthLoggedIn(_isLoggedIn: boolean) {
+export function setDevAuthLoggedIn(isLoggedIn: boolean) {
   if (typeof window === 'undefined') return
-  window.localStorage.removeItem(LEGACY_DEV_AUTH_STORAGE_KEY)
+  if (import.meta.env.DEV) {
+    if (isLoggedIn) {
+      window.localStorage.setItem(DEV_AUTH_STORAGE_KEY, 'true')
+    } else {
+      window.localStorage.removeItem(DEV_AUTH_STORAGE_KEY)
+    }
+  } else if (!isLoggedIn) {
+    window.localStorage.removeItem(DEV_AUTH_STORAGE_KEY)
+  }
   emitDevAuthChange(getDevAuthLoggedIn())
 }

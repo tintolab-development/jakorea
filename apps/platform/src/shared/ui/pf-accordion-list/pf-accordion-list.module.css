@@ -4,6 +4,7 @@
   width: 100%;
   min-width: 0;
   border-top: 2px solid var(--color-border-strong);
+  border-bottom: 1px solid var(--color-border-default);
 }
 
 .item {
@@ -11,6 +12,10 @@
   flex-direction: column;
   width: 100%;
   min-width: 0;
+}
+
+.item:first-child .trigger {
+  border-top: 0;
 }
 
 .trigger {
@@ -33,8 +38,17 @@
   outline-offset: -2px;
 }
 
+.content {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--spacing-48);
+}
+
 .badgeContainer {
   width: 73px;
+  flex-shrink: 0;
 }
 
 .badge {
@@ -105,8 +119,55 @@
   text-align: center;
 }
 
+/* ── Mobile · 배지 위 / 제목·쉐브론 아래 ── */
 @media (--bp-below-pc) {
+  .trigger {
+    gap: var(--spacing-12);
+    padding: var(--spacing-20) 0;
+  }
+
+  .content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-8);
+  }
+
+  .badgeContainer {
+    width: auto;
+  }
+
+  .title {
+    flex: none;
+    width: 100%;
+    color: var(--color-neutral-black);
+    font-family: var(--font-family-base);
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 145%;
+    letter-spacing: 0;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  .chevron {
+    width: 20px;
+    height: 20px;
+  }
+
   .panelRow {
-    padding: var(--spacing-40) var(--spacing-32) var(--spacing-40) var(--spacing-56);
+    padding: var(--spacing-24) var(--spacing-16);
+    gap: var(--spacing-16);
+  }
+
+  .label {
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
   }
 }

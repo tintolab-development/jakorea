@@ -110,7 +110,7 @@ Design the **layout roles in markup**, then adapt with CSS. Do not invent extra 
    - `shared/ui` — fluid primitives only; avoid page-band forks unless the primitive is layout chrome
 2. **One DOM tree** — stack ↔ row, drawer ↔ sidebar, 1-col ↔ multi-col via CSS. Do not mount duplicate mobile/desktop trees unless interaction truly differs (e.g. separate desktop nav component already in the codebase).
 3. **Class names = layout roles** (`shell`, `main`, `aside`, `toolbar`, `content`, `actions`) so media queries change composition, not random visual patches.
-4. **Fluid metrics first** — `width: min(...)`, `clamp()`, token gutters (`--page-padding-x`), `minmax`, `auto-fit` should absorb most size variance inside a band before adding another `@media`.
+4. **Fluid metrics first** — `width: min(...)`, `clamp()`, token gutters (`--page-padding-x`: 모바일 **20** / PC **32**), `minmax`, `auto-fit` should absorb most size variance inside a band before adding another `@media`.
 
 ### Breakpoint bands (Platform 3-tier only)
 
@@ -193,7 +193,7 @@ Mobile-first example (Platform aliases — not 768):
 
 Auth routes (sign-in, sign-up, find-email/password, admin-registered, etc.) are wrapped by `AuthPageShell` in `AppLayout`:
 
-- Outer: full width, centered, `padding-inline: var(--auth-page-padding-x)` (20px)
+- Outer: full width, centered, `padding-inline: var(--auth-page-padding-x)` (**20px 전 구간 고정**, `--page-padding-x`와 별개)
 - Inner: `max-width: var(--width-page-sm)` (480px), `width: 100%`; below PC: `padding-top: 40px`, `padding-bottom: 56px` (PC: `padding-block: 100px`)
 - Page intro copy: `authPageCopyClass('title' | 'description')` in [`auth-page-copy.module.css`](apps/platform/src/widgets/layout/auth-page-shell/auth-page-copy.module.css)
   - Title margin: PC top 48 / bottom 16; mobile top 40 / bottom 8

@@ -25,10 +25,12 @@ import {
   getEducationSurveyMockAvailability,
   getMockEducationApplicationById,
   hasTeacherAssignmentAsideContent,
-  isGeneralVolunteerApplication,
+  isInstructorRoleApplication,
   isSchoolTeacherMypageProfile,
+  isVolunteerRoleApplication,
   isWithdrawnBeforeEducation,
   isWithdrawnDuringEducation,
+  lectureApplicationDetailPath,
   MYPAGE_EDUCATION_PATH,
   resolveEducationListBackPath,
   volunteerApplicationDetailPath,
@@ -189,8 +191,15 @@ export function MypageEducationDetailPage() {
   }, [applicationId, navigate])
 
   useEffect(() => {
-    if (application && isGeneralVolunteerApplication(application)) {
+    if (!application) return
+    if (isVolunteerRoleApplication(application)) {
       navigate(`${volunteerApplicationDetailPath(application.id)}${location.search}`, {
+        replace: true,
+      })
+      return
+    }
+    if (isInstructorRoleApplication(application)) {
+      navigate(`${lectureApplicationDetailPath(application.id)}${location.search}`, {
         replace: true,
       })
     }
@@ -366,14 +375,37 @@ export function MypageEducationDetailPage() {
       const surveyAvailability = getEducationSurveyMockAvailability({
         displayStatus: application.displayStatus,
         withdrawalPhase: application.withdrawalPhase,
-        surveyConfigured: program.surveyConfigured,
+        configured: program.surveyConfigured,
       })
       if (surveyAvailability === 'active') {
-        return <EducationSurveyFillPanel programTitle={program.title} />
+        return (
+          <EducationSurveyFillPanel
+            kind="survey"
+            programTitle={program.title}
+            educationScheduleLines={program.educationScheduleLines}
+            educationTargetLabel={program.educationTargetDetailLabel}
+          />
+        )
       }
       return <EducationSurveyEmptyPanel kind="survey" />
     }
     if (active === 'satisfaction') {
+      const satisfactionAvailability = getEducationSurveyMockAvailability({
+        displayStatus: application.displayStatus,
+        withdrawalPhase: application.withdrawalPhase,
+        configured: program.satisfactionConfigured,
+      })
+      if (satisfactionAvailability === 'active') {
+        return (
+          <EducationSurveyFillPanel
+            kind="satisfaction"
+            satisfactionAudience="student"
+            programTitle={program.title}
+            educationScheduleLines={program.educationScheduleLines}
+            educationTargetLabel={program.educationTargetDetailLabel}
+          />
+        )
+      }
       return <EducationSurveyEmptyPanel kind="satisfaction" />
     }
     if (active === 'settlement') {

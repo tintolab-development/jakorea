@@ -17,6 +17,7 @@ export type {
   EducationWithdrawalPhase,
   EducationActivitySection,
   EducationDetailTabItem,
+  ApplicationRole,
   EducationInProgressFile,
   EducationInProgressNotice,
   EducationNoticeComment,
@@ -41,8 +42,10 @@ export {
   MYPAGE_SETTINGS_PATH,
   MYPAGE_EDUCATION_PATH,
   MYPAGE_VOLUNTEER_PATH,
+  MYPAGE_LECTURE_PATH,
   educationApplicationDetailPath,
   volunteerApplicationDetailPath,
+  lectureApplicationDetailPath,
 } from './lib/constants'
 export { navigateMypageLnb } from './lib/navigate-lnb'
 export {
@@ -60,8 +63,11 @@ export {
   getMockEducationApplicationsVersion,
   subscribeMockEducationApplications,
   filterEducationStatusApplications,
+  filterLectureStatusApplications,
   filterVolunteerStatusApplications,
-  isGeneralVolunteerApplication,
+  isInstructorRoleApplication,
+  isVolunteerRoleApplication,
+  resolveApplicationRole,
   getMockEducationInProgressFiles,
   getMockEducationInProgressNotices,
   compareEducationApplicationItems,
@@ -130,6 +136,10 @@ export {
   buildVolunteerApplicationListPath,
   resolveVolunteerListBackPath,
 } from './volunteer'
+export {
+  buildLectureApplicationListPath,
+  resolveLectureListBackPath,
+} from './lecture'
 export {
   getSettingsLnbItems,
   mapPortalProfileToSettingsView,

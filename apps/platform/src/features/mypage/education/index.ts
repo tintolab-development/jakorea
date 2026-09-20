@@ -12,6 +12,7 @@ export type {
   EducationWithdrawalPhase,
   EducationActivitySection,
   EducationDetailTabItem,
+  ApplicationRole,
 } from './applications'
 export {
   EDUCATION_APPLICATION_PAGE_SIZE,
@@ -24,8 +25,11 @@ export {
   getMockEducationApplicationsVersion,
   subscribeMockEducationApplications,
   filterEducationStatusApplications,
+  filterLectureStatusApplications,
   filterVolunteerStatusApplications,
-  isGeneralVolunteerApplication,
+  isInstructorRoleApplication,
+  isVolunteerRoleApplication,
+  resolveApplicationRole,
   compareEducationApplicationItems,
   listEducationApplications,
   matchesEducationApplicationTab,
@@ -107,14 +111,18 @@ export {
   EducationScheduleRow,
 } from './schedules'
 export type {
+  CreateEducationSurveySeedDraftOptions,
+  EducationSatisfactionAudience,
   EducationSurveyEmptyKind,
   EducationSurveyFillPanelProps,
   EducationSurveyMockAvailability,
+  EducationSurveySeedKind,
 } from './surveys'
 export {
   EducationSurveyEmptyPanel,
   EducationSurveyFillPanel,
-  createEducationSurveyMockDraft,
+  createEducationSurveySeedDraft,
+  EDUCATION_SURVEY_SEED_CREATED_AT,
   getEducationSurveyMockAvailability,
 } from './surveys'
 export type {

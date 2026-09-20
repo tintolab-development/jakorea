@@ -123,6 +123,7 @@ function testVolunteer() {
     PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousJaProgram,
     PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.freeTextItems,
     PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule,
+    PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.activitySchedule,
   ])
 }
 
@@ -229,8 +230,8 @@ function testInstructorGemini() {
   assert.equal(applyCase, 'instructor-gemini')
   assert.equal(templateCode, 'application-gemini-visiting-training-instructor')
   assert.deepEqual(ids, [
-    GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
     GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.officialDocument,
+    GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.availableSchedule,
   ])
 }
 
