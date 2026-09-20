@@ -114,6 +114,21 @@ export function useSetPopupActive() {
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       setPopupActiveService(id, isActive, collectCachedRows(queryClient)),
     retry: false,
+    onMutate: async ({ id, isActive }) => {
+      await queryClient.cancelQueries({ queryKey: popupQueryKeys.lists() })
+      const previous = queryClient.getQueriesData<Popup[]>({
+        queryKey: popupQueryKeys.lists(),
+      })
+      queryClient.setQueriesData<Popup[]>({ queryKey: popupQueryKeys.lists() }, old =>
+        old?.map(row => (row.id === id ? { ...row, isActive } : row)),
+      )
+      return { previous }
+    },
+    onError: (_error, _vars, context) => {
+      context?.previous.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data)
+      })
+    },
     onSuccess: data => {
       patchPopupInLists(queryClient, data)
     },

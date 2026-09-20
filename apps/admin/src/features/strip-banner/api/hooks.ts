@@ -128,6 +128,22 @@ export function useSetStripBannerActive() {
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       setStripBannerActiveService(id, isActive, collectCachedRows(queryClient)),
     retry: false,
+    onMutate: async ({ id, isActive }) => {
+      await queryClient.cancelQueries({ queryKey: stripBannerQueryKeys.lists() })
+      const previous = queryClient.getQueriesData<StripBanner[]>({
+        queryKey: stripBannerQueryKeys.lists(),
+      })
+      queryClient.setQueriesData<StripBanner[]>(
+        { queryKey: stripBannerQueryKeys.lists() },
+        old => old?.map(row => (row.id === id ? { ...row, isActive } : row)),
+      )
+      return { previous }
+    },
+    onError: (_error, _vars, context) => {
+      context?.previous.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data)
+      })
+    },
     onSuccess: data => {
       patchStripInLists(queryClient, data)
     },

@@ -8,7 +8,6 @@ import { Image, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   MAX_ACTIVE_POPUPS,
-  PopupActiveLimitError,
   type Popup,
   type PopupListFilter,
 } from '@/entities/popup/model/types'
@@ -22,6 +21,7 @@ import {
 } from '@/features/popup/api/hooks'
 import { popupQueryKeys } from '@/features/popup/api/query-keys'
 import { listPopupsService } from '@/features/popup/api/service'
+import { popupMutationFailureAlert } from '@/features/popup/lib/mutation-failure-alert'
 import { POPUPS_CHANGED_EVENT } from '@/features/popup/api/store'
 import {
   PopupFormModal,
@@ -181,6 +181,7 @@ export function PopupsPage() {
   const removeMutation = useRemovePopups()
   const reorderMutation = useReorderPopups()
   const setActiveMutation = useSetPopupActive()
+  const listBusy = setActiveMutation.isPending || reorderMutation.isPending
 
   const {
     pendingFilters,
@@ -254,11 +255,14 @@ export function PopupsPage() {
 
         try {
           await reorderMutation.mutateAsync(mergedIds)
-        } catch {
-          showAlert({
-            title: '순서 변경 실패',
-            content: '팝업 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
-          })
+        } catch (error) {
+          showAlert(
+            popupMutationFailureAlert(
+              error,
+              '팝업 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
+              '순서 변경 실패',
+            ),
+          )
           void listQuery.refetch()
         }
       })()
@@ -269,17 +273,13 @@ export function PopupsPage() {
   const handleToggleActive = useCallback(
     (id: string, isActive: boolean) => {
       void setActiveMutation.mutateAsync({ id, isActive }).catch(error => {
-        if (error instanceof PopupActiveLimitError || error?.name === 'PopupActiveLimitError') {
-          showAlert({
-            title: '사용 제한',
-            content: `팝업은 최대 ${MAX_ACTIVE_POPUPS}개까지 동시 사용 가능합니다.`,
-          })
-        } else {
-          showAlert({
-            title: '사용 여부 변경 실패',
-            content: '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
-          })
-        }
+        showAlert(
+          popupMutationFailureAlert(
+            error,
+            '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
+            '사용 여부 변경 실패',
+          ),
+        )
         void listQuery.refetch()
       })
     },
@@ -309,20 +309,15 @@ export function PopupsPage() {
         setFormOpen(false)
         setEditingPopup(null)
       } catch (error) {
-        if (error instanceof PopupActiveLimitError || (error as Error)?.name === 'PopupActiveLimitError') {
-          showAlert({
-            title: '사용 제한',
-            content: `팝업은 최대 ${MAX_ACTIVE_POPUPS}개까지 동시 사용 가능합니다.`,
-          })
-          return
-        }
-        showAlert({
-          title: formVariant === 'detail' ? '수정 실패' : '등록 실패',
-          content:
+        showAlert(
+          popupMutationFailureAlert(
+            error,
             formVariant === 'detail'
               ? '팝업 수정에 실패했습니다. 다시 시도해 주세요.'
               : '팝업 등록에 실패했습니다. 다시 시도해 주세요.',
-        })
+            formVariant === 'detail' ? '수정 실패' : '등록 실패',
+          ),
+        )
       }
     },
     [createMutation, editingPopup, formVariant, showAlert, updateMutation]
@@ -335,11 +330,14 @@ export function PopupsPage() {
       setFormOpen(false)
       setEditingPopup(null)
       setSelectedRowKeys(keys => keys.filter(key => String(key) !== editingPopup.id))
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '팝업 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(
+        popupMutationFailureAlert(
+          error,
+          '팝업 삭제에 실패했습니다. 다시 시도해 주세요.',
+          '삭제 실패',
+        ),
+      )
     }
   }, [editingPopup, removeMutation, showAlert])
 
@@ -360,11 +358,14 @@ export function PopupsPage() {
       await removeMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '팝업 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(
+        popupMutationFailureAlert(
+          error,
+          '팝업 삭제에 실패했습니다. 다시 시도해 주세요.',
+          '삭제 실패',
+        ),
+      )
     }
   }, [removeMutation, selectedRowKeys, showAlert])
 
@@ -395,6 +396,7 @@ export function PopupsPage() {
         render: (_value, record) => (
           <Switch
             checked={record.isActive}
+            disabled={listBusy}
             onChange={checked => handleToggleActive(record.id, checked)}
             aria-label={`${record.name || '팝업'} 사용 여부`}
           />
@@ -463,7 +465,7 @@ export function PopupsPage() {
         ),
       },
     ],
-    [handleToggleActive, openDetail]
+    [handleToggleActive, listBusy, openDetail]
   )
 
   const totalCount = rows.length
@@ -576,6 +578,7 @@ export function PopupsPage() {
             rows={rows}
             columns={columns}
             loading={listQuery.isLoading}
+            dragDisabled={listBusy}
             onRowsReorder={handleRowsReorder}
             rowSelection={{
               selectedRowKeys,

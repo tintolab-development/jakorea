@@ -7,10 +7,7 @@ import { Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import type { StripBanner } from '@/entities/strip-banner/model/types'
-import {
-  MAX_ACTIVE_STRIP_BANNERS,
-  StripBannerActiveLimitError,
-} from '@/entities/strip-banner/model/types'
+import { MAX_ACTIVE_STRIP_BANNERS } from '@/entities/strip-banner/model/types'
 import {
   useCreateStripBanner,
   useRemoveStripBanners,
@@ -22,6 +19,7 @@ import {
 } from '@/features/strip-banner/api/hooks'
 import { stripBannerQueryKeys } from '@/features/strip-banner/api/query-keys'
 import { listStripBannersService } from '@/features/strip-banner/api/service'
+import { stripBannerMutationFailureAlert } from '@/features/strip-banner/lib/mutation-failure-alert'
 import { STRIP_BANNERS_CHANGED_EVENT } from '@/features/strip-banner/api/store'
 import { formatDateDot } from '@/shared/lib/format-display'
 import {
@@ -204,6 +202,7 @@ export function StripBannersPage() {
   const removeMutation = useRemoveStripBanners()
   const reorderMutation = useReorderStripBanners()
   const setActiveMutation = useSetStripBannerActive()
+  const listBusy = setActiveMutation.isPending || reorderMutation.isPending
 
   const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
@@ -238,11 +237,14 @@ export function StripBannersPage() {
 
         try {
           await reorderMutation.mutateAsync(mergedIds)
-        } catch {
-          showAlert({
-            title: '순서 변경 실패',
-            content: '배너 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
-          })
+        } catch (error) {
+          showAlert(
+            stripBannerMutationFailureAlert(
+              error,
+              '배너 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
+              '순서 변경 실패',
+            ),
+          )
           void listQuery.refetch()
         }
       })()
@@ -253,20 +255,13 @@ export function StripBannersPage() {
   const handleToggleActive = useCallback(
     (id: string, isActive: boolean) => {
       void setActiveMutation.mutateAsync({ id, isActive }).catch(error => {
-        if (
-          error instanceof StripBannerActiveLimitError ||
-          (error as Error)?.name === 'StripBannerActiveLimitError'
-        ) {
-          showAlert({
-            title: '사용 제한',
-            content: `배너는 최대 ${MAX_ACTIVE_STRIP_BANNERS}개까지 동시 사용 가능합니다.`,
-          })
-        } else {
-          showAlert({
-            title: '사용 여부 변경 실패',
-            content: '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
-          })
-        }
+        showAlert(
+          stripBannerMutationFailureAlert(
+            error,
+            '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
+            '사용 여부 변경 실패',
+          ),
+        )
         void listQuery.refetch()
       })
     },
@@ -296,23 +291,15 @@ export function StripBannersPage() {
         setFormOpen(false)
         setEditingBanner(null)
       } catch (error) {
-        if (
-          error instanceof StripBannerActiveLimitError ||
-          (error as Error)?.name === 'StripBannerActiveLimitError'
-        ) {
-          showAlert({
-            title: '사용 제한',
-            content: `배너는 최대 ${MAX_ACTIVE_STRIP_BANNERS}개까지 동시 사용 가능합니다.`,
-          })
-          return
-        }
-        showAlert({
-          title: formVariant === 'detail' ? '수정 실패' : '등록 실패',
-          content:
+        showAlert(
+          stripBannerMutationFailureAlert(
+            error,
             formVariant === 'detail'
               ? '배너 수정에 실패했습니다. 다시 시도해 주세요.'
               : '배너 등록에 실패했습니다. 다시 시도해 주세요.',
-        })
+            formVariant === 'detail' ? '수정 실패' : '등록 실패',
+          ),
+        )
       }
     },
     [createMutation, editingBanner, formVariant, showAlert, updateMutation]
@@ -325,11 +312,14 @@ export function StripBannersPage() {
       setFormOpen(false)
       setEditingBanner(null)
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== editingBanner.id))
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '배너 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(
+        stripBannerMutationFailureAlert(
+          error,
+          '배너 삭제에 실패했습니다. 다시 시도해 주세요.',
+          '삭제 실패',
+        ),
+      )
     }
   }, [editingBanner, removeMutation, showAlert])
 
@@ -342,7 +332,7 @@ export function StripBannersPage() {
       return
     }
     setDeleteConfirmOpen(true)
-  }, [selectedRowKeys.length, showAlert])
+  }, [selectedRowKeys, showAlert])
 
   const handleDeleteConfirm = useCallback(async () => {
     const ids = selectedRowKeys.map(String)
@@ -350,11 +340,14 @@ export function StripBannersPage() {
       await removeMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '배너 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(
+        stripBannerMutationFailureAlert(
+          error,
+          '배너 삭제에 실패했습니다. 다시 시도해 주세요.',
+          '삭제 실패',
+        ),
+      )
     }
   }, [removeMutation, selectedRowKeys, showAlert])
 
@@ -387,6 +380,7 @@ export function StripBannersPage() {
         render: (_value, record) => (
           <Switch
             checked={record.isActive}
+            disabled={listBusy}
             onChange={checked => handleToggleActive(record.id, checked)}
             aria-label={`${record.text || '배너'} 사용 여부`}
           />
@@ -434,7 +428,7 @@ export function StripBannersPage() {
         ),
       },
     ],
-    [handleToggleActive, openDetail]
+    [handleToggleActive, listBusy, openDetail]
   )
 
   const formLoading =
@@ -535,6 +529,7 @@ export function StripBannersPage() {
             rows={rows}
             columns={columns}
             loading={listQuery.isLoading}
+            dragDisabled={listBusy}
             onRowsReorder={handleRowsReorder}
             rowSelection={{
               selectedRowKeys,

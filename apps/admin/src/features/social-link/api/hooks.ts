@@ -47,6 +47,20 @@ export function useSetSocialLinkActive() {
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       setSocialLinkActiveService(id, isActive, cachedList(queryClient)),
     retry: false,
+    onMutate: async ({ id, isActive }) => {
+      const key = socialLinkQueryKeys.list(source())
+      await queryClient.cancelQueries({ queryKey: key })
+      const previous = queryClient.getQueryData<SocialLink[]>(key)
+      queryClient.setQueryData<SocialLink[]>(key, old =>
+        old?.map(row => (row.id === id ? { ...row, isActive } : row)),
+      )
+      return { previous }
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(socialLinkQueryKeys.list(source()), context.previous)
+      }
+    },
     onSuccess: rows => {
       queryClient.setQueryData(socialLinkQueryKeys.list(source()), rows)
     },

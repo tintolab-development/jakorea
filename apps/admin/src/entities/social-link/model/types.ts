@@ -29,3 +29,13 @@ export type SocialLinkUrlPatch = {
   id: string
   linkUrl: string
 }
+
+/** 소셜 레일은 최소 1채널 사용 */
+export const MIN_ACTIVE_SOCIAL_LINKS = 1
+
+export class SocialLinkMinActiveError extends Error {
+  constructor() {
+    super(`소셜 링크는 최소 ${MIN_ACTIVE_SOCIAL_LINKS}개 이상 사용해야 합니다.`)
+    this.name = 'SocialLinkMinActiveError'
+  }
+}

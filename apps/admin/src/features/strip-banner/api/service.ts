@@ -82,8 +82,9 @@ export async function removeStripBannersService(
 ): Promise<void> {
   if (shouldUseStripBannerRemoteApi()) {
     if (ids.length === 0) return
+    const currentRows = await resolveCurrentRows(cachedRows)
     const idSet = new Set(ids)
-    const rows = (await resolveCurrentRows(cachedRows)).filter(row => idSet.has(row.id))
+    const rows = currentRows.filter(row => idSet.has(row.id))
     if (rows.length === 0) return
     await mainApi().bulkDelete(toBulkDeleteRequest(rows))
     return

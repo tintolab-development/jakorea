@@ -12,7 +12,7 @@
   display: inline-flex;
   width: 200px;
   height: 112.5px;
-  flex: 1 0 0;
+  flex: 0 0 auto;
   aspect-ratio: 16 / 9;
   border-radius: 4px;
   overflow: hidden;
@@ -39,6 +39,10 @@
 /* 사용 여부 Switch — DS mint-01 (#01A1AF) */
 .hero-banners-page .ant-switch-checked {
   background: var(--color-mint-01, #01a1af) !important;
+}
+
+.hero-banners-page .ant-switch {
+  min-width: 44px;
 }
 
 .hero-banner-table .ant-table-tbody > tr > td {

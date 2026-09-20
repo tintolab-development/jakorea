@@ -2,11 +2,16 @@
  * 히어로 배너 — localStorage mock (API 연동 전)
  */
 
-import type {
-  HeroBanner,
-  HeroBannerCreateInput,
-  HeroBannerUpdateInput,
+import {
+  HeroBannerMinActiveError,
+  type HeroBanner,
+  type HeroBannerCreateInput,
+  type HeroBannerUpdateInput,
 } from '@/entities/hero-banner/model/types'
+import {
+  isLastActiveToggleOff,
+  wouldRemoveLastActive,
+} from '@/shared/lib/min-active-guard'
 
 const STORAGE_KEY = 'admin.jakorea.heroBanners.v1'
 
@@ -187,6 +192,9 @@ export function updateHeroBanner(id: string, patch: HeroBannerUpdateInput): Hero
     throw new Error(`Hero banner not found: ${id}`)
   }
   const prev = file.items[index]!
+  if (patch.isActive === false && isLastActiveToggleOff(file.items, id, false)) {
+    throw new HeroBannerMinActiveError()
+  }
   const next: HeroBanner = {
     ...prev,
     ...(patch.isActive !== undefined ? { isActive: patch.isActive } : {}),
@@ -206,8 +214,11 @@ export function updateHeroBanner(id: string, patch: HeroBannerUpdateInput): Hero
 
 export function removeHeroBanners(ids: string[]): void {
   if (ids.length === 0) return
-  const idSet = new Set(ids)
   const file = readFile()
+  if (wouldRemoveLastActive(file.items, ids)) {
+    throw new HeroBannerMinActiveError()
+  }
+  const idSet = new Set(ids)
   const items = normalizeSortOrders(file.items.filter(row => !idSet.has(row.id)))
   writeFile({ version: 1, items })
 }
