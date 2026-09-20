@@ -1,11 +1,42 @@
 import { shouldUsePlatformContentSeed } from '@/shared/lib/dev-auth'
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
+import featuredMetlifeUrl from '../image/illustration/featured-metlife.png'
+import cardMetlifeUrl from '../image/illustration/card-metlife.png'
+import cardMinjaeUrl from '../image/illustration/card-minjae.png'
+import cardDreamStageUrl from '../image/illustration/card-dream-stage.png'
+import cardArcheryUrl from '../image/illustration/card-archery.png'
+import cardKidsFinanceUrl from '../image/illustration/card-kids-finance.png'
+import cardMenteeSupporterUrl from '../image/illustration/card-mentee-supporter.png'
+import cardSamilClassUrl from '../image/illustration/card-samil-class.png'
+import cardSamilTeacherUrl from '../image/illustration/card-samil-teacher.png'
+import cardCoyUrl from '../image/illustration/card-coy.png'
 import type {
   ImpactStoryCategoryKey,
   ImpactStoryContentBlock,
   ImpactStoryDetail,
   ImpactStoryListItem,
 } from '../model/types'
+
+const STORY_IMAGE_URLS = [
+  cardMetlifeUrl,
+  cardMinjaeUrl,
+  cardDreamStageUrl,
+  cardArcheryUrl,
+  cardKidsFinanceUrl,
+  cardMenteeSupporterUrl,
+  cardSamilClassUrl,
+  cardSamilTeacherUrl,
+  cardCoyUrl,
+] as const
+
+const STORY_IMAGE_BY_ID: Partial<Record<string, string>> = {
+  'impact-1': cardMetlifeUrl,
+  'impact-2': cardMinjaeUrl,
+}
+
+const FEATURED_IMAGE_BY_ID: Partial<Record<string, string>> = {
+  'impact-1': featuredMetlifeUrl,
+}
 
 const CATEGORY_LABEL: Record<ImpactStoryCategoryKey, string> = {
   story: '스토리',
@@ -200,7 +231,11 @@ const SEED: readonly SeedStory[] = [
   },
 ]
 
-function toListItem(seed: SeedStory): ImpactStoryListItem {
+function imageUrlForSeed(seed: SeedStory, index: number): string {
+  return STORY_IMAGE_BY_ID[seed.id] ?? STORY_IMAGE_URLS[index % STORY_IMAGE_URLS.length]
+}
+
+function toListItem(seed: SeedStory, index: number): ImpactStoryListItem {
   return {
     id: seed.id,
     category: seed.category,
@@ -211,14 +246,16 @@ function toListItem(seed: SeedStory): ImpactStoryListItem {
     publishedAtLabel: formatPublishedAtLabel(seed.publishedAt),
     isFeatured: seed.isFeatured ?? false,
     placeholderColor: PLACEHOLDER_COLORS[seed.category],
+    imageUrl: imageUrlForSeed(seed, index),
+    featuredImageUrl: FEATURED_IMAGE_BY_ID[seed.id],
   }
 }
 
 const MOCK_STORIES: readonly ImpactStoryListItem[] = SEED.map(toListItem)
 
-function toDetail(seed: SeedStory): ImpactStoryDetail {
+function toDetail(seed: SeedStory, index: number): ImpactStoryDetail {
   return {
-    ...toListItem(seed),
+    ...toListItem(seed, index),
     publishedAtDetailLabel: formatPublishedAtDetailLabel(seed.publishedAt),
     viewCount: viewCountFromId(seed.id),
     blocks: buildDetailBlocks(seed),

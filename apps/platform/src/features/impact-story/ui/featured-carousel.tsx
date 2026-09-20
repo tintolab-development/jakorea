@@ -34,7 +34,25 @@ export function FeaturedCarousel({ stories }: FeaturedCarouselProps) {
         className={styles.mediaLink}
         aria-label={`${story.title} 상세 보기`}
       >
-        <div className={styles.media} aria-hidden="true" />
+        <div
+          className={styles.media}
+          style={
+            story.featuredImageUrl || story.imageUrl
+              ? undefined
+              : { backgroundColor: story.placeholderColor }
+          }
+          aria-hidden="true"
+        >
+          {story.featuredImageUrl || story.imageUrl ? (
+            <img
+              className={styles.image}
+              src={story.featuredImageUrl ?? story.imageUrl}
+              alt=""
+              width={630}
+              height={355}
+            />
+          ) : null}
+        </div>
       </Link>
 
       <div className={styles.content}>

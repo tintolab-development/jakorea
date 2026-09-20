@@ -21,9 +21,21 @@ function FeaturedStory({ story }: { story: ImpactStoryListItem }) {
     >
       <div
         className={styles.featuredMedia}
-        style={{ backgroundColor: story.placeholderColor }}
+        style={
+          story.featuredImageUrl || story.imageUrl
+            ? undefined
+            : { backgroundColor: story.placeholderColor }
+        }
         aria-hidden="true"
-      />
+      >
+        {story.featuredImageUrl || story.imageUrl ? (
+          <img
+            className={styles.featuredImage}
+            src={story.featuredImageUrl ?? story.imageUrl}
+            alt=""
+          />
+        ) : null}
+      </div>
       <div className={styles.featuredBody}>
         <PFText as="p" typo="hl-lg" color="primary-500" className={styles.featuredCategory}>
           {story.categoryLabel}
@@ -48,8 +60,11 @@ function SubStoryCard({ story }: { story: ImpactStoryListItem }) {
     >
       <div
         className={styles.subCardMedia}
-        style={{ backgroundColor: story.placeholderColor }}
+        style={story.imageUrl ? undefined : { backgroundColor: story.placeholderColor }}
       >
+        {story.imageUrl ? (
+          <img className={styles.subCardImage} src={story.imageUrl} alt="" />
+        ) : null}
         <PFCategoryBadge size="small" variant="primary" className={styles.subCardBadge}>
           {story.categoryLabel}
         </PFCategoryBadge>

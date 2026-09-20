@@ -14,9 +14,18 @@ export function StoryCard({ story }: StoryCardProps) {
       <article className={styles.card}>
         <div
           className={styles.thumbnail}
-          style={{ backgroundColor: story.placeholderColor }}
+          style={story.imageUrl ? undefined : { backgroundColor: story.placeholderColor }}
           aria-hidden="true"
         >
+          {story.imageUrl ? (
+            <img
+              className={styles.image}
+              src={story.imageUrl}
+              alt=""
+              width={461}
+              height={256}
+            />
+          ) : null}
           <div className={styles.badge}>
             <PFCategoryBadge size="large" variant="primary">
               {story.categoryLabel}

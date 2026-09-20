@@ -12,17 +12,38 @@
   box-sizing: border-box;
   overflow: hidden;
   transform: translateX(-50%);
-  /**
-   * 상단 순백 → 하단 cool-80 (진해짐)
-   * 상단을 충분히 흰색으로 유지해 위 콘텐츠와 보더처럼 갈라지지 않게 함
-   */
   border: none;
   box-shadow: none;
+  background-color: var(--color-neutral-warm-80);
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  /* Figma Layer_1: left 50% / top calc(50% + 15.5px), scaleY(-1) */
+  top: calc(50% + 15.5px);
+  left: 50%;
+  z-index: 0;
+  width: 2768px;
+  height: 1734px;
+  pointer-events: none;
+  background-image: url('../image/background/newsletter-pattern.svg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 2768px 1734px;
+  transform: translate(-50%, -50%) scaleY(-1);
+}
+
+.section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
   background: linear-gradient(
-    180deg,
-    #fff 0%,
-    #fff 28%,
-    var(--color-neutral-cool-80) 100%
+    181deg,
+    #fff 5.88%,
+    rgb(255 255 255 / 0%) 51.61%
   );
 }
 

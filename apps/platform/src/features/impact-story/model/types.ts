@@ -20,6 +20,10 @@ export type ImpactStoryListItem = {
   isFeatured: boolean
   /** 썸네일 플레이스홀더 배경색 */
   placeholderColor: string
+  /** 목록 카드 썸네일(461×256). 없으면 placeholderColor만 표시 */
+  imageUrl?: string
+  /** 피처드 캐러셀 전용 크롭(630×355). 없으면 imageUrl 사용 */
+  featuredImageUrl?: string
 }
 
 /** 본문 블록 — 이미지는 플레이스홀더만 (실제 에셋 없음) */
