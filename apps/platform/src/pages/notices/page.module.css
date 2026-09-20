@@ -8,7 +8,8 @@
 }
 
 /**
- * 공지 목록 히어로 배경 — result_gradient.png (1920×1000)
+ * 공지 목록 히어로 배경 — Figma 4389:10099 (1920×1000)
+ * cover 대신 시안 1920 전체를 가로로 맞춰 좌우 블롭이 잘리지 않게 함
  * 헤더 영역까지 확장 (transparent header / layout: hero)
  */
 .pageBackground {
@@ -20,10 +21,11 @@
   height: 1000px;
   pointer-events: none;
   background-color: transparent;
-  background-image: url('../../assets/background_gradient/result_gradient.png');
+  background-image: url('../../assets/background_gradient/notices-gradient.png');
   background-repeat: no-repeat;
   background-position: center top;
-  background-size: cover;
+  /* 시안 1920 전체를 뷰포트 너비에 맞춰 보여 좌우 블롭이 cover로 잘리지 않게 함 */
+  background-size: 100% 100%;
   transform: translateX(-50%);
 }
 
