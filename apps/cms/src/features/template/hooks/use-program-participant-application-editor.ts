@@ -160,10 +160,9 @@ import {
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import {
   getGeneralRecruitOverlayRecord,
-  getGeneralRecruitOverlayVersion,
   patchGeneralRecruitOverlay,
   resetGeneralRecruitOverlay,
-  subscribeGeneralRecruitOverlay,
+  subscribeGeneralRecruitOverlayKey,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import { getRecruitVolunteerHiddenParagraphIds } from '@/features/template/ui/form-set/recruit-form/shared/recruit-volunteer-form-visibility'
@@ -201,6 +200,20 @@ import { resolveGeneralProgramVolunteerInterviewScheduleEditSeed } from '@/featu
 import { getUjatVolunteerRound } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-program-round'
 import { resolveUjatVolunteerHiddenParagraphIds } from '@/features/template/lib/ujat-volunteer-application-form-visibility'
 import type { Program } from '@/types/domain'
+
+const VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY = 'recruit.volunteer.interviewRequired'
+
+function subscribeNoop(_listener: () => void): () => void {
+  return () => {}
+}
+
+function subscribeVolunteerInterviewRequiredOverlay(listener: () => void): () => void {
+  return subscribeGeneralRecruitOverlayKey(VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY, listener)
+}
+
+function getVolunteerInterviewRequiredSnapshot(): unknown {
+  return getGeneralRecruitOverlayRecord()[VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY]
+}
 
 function useParticipantApplicationMiddleActions(
   setDraft: Dispatch<SetStateAction<WritingFormDraft>>,
@@ -1200,17 +1213,16 @@ export function useProgramParticipantApplicationEditor(
     })
   }, [variant, draft.paragraphs, linkedProgram])
 
-  const generalRecruitOverlayVersion = useSyncExternalStore(
-    subscribeGeneralRecruitOverlay,
-    getGeneralRecruitOverlayVersion,
-    getGeneralRecruitOverlayVersion
+  const volunteerInterviewRequired = useSyncExternalStore(
+    variant === 'recruit-volunteer' ? subscribeVolunteerInterviewRequiredOverlay : subscribeNoop,
+    getVolunteerInterviewRequiredSnapshot,
+    getVolunteerInterviewRequiredSnapshot
   )
 
   const recruitVolunteerHiddenParagraphIds = useMemo(() => {
-    void generalRecruitOverlayVersion
     if (variant !== 'recruit-volunteer') return undefined
     return getRecruitVolunteerHiddenParagraphIds()
-  }, [variant, generalRecruitOverlayVersion])
+  }, [variant, volunteerInterviewRequired])
 
   const individualApplicationHiddenParagraphIds = useMemo(() => {
     if (variant !== 'individual') return undefined

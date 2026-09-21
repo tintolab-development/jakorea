@@ -10,6 +10,7 @@ import {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -143,7 +144,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
       />
       <DetailInfoForm.InputsSeparator />
       <span className="mr-6">Tel</span>
-      <CmsInput
+      <CmsPhoneInput
         inputSize="medium"
         width={240}
         placeholder="담당 교사의 내선 번호(직통 번호)"
@@ -152,7 +153,7 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
       />
       <DetailInfoForm.InputsSeparator />
       <span className="mr-6">M</span>
-      <CmsInput
+      <CmsPhoneInput
         inputSize="medium"
         width={240}
         placeholder="담당 교사의 휴대폰 번호"
