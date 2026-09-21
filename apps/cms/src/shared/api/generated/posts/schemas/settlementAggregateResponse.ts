@@ -18,12 +18,12 @@ export interface SettlementAggregateResponse {
   instructorName?: string;
   instructorCount?: number;
   participationCount?: number;
-  /** WAITING_CONFIRM+REAPPLICATION 건수 */
+  /** REQUESTED+REAPPLICATION 건수 */
   pendingPaymentSettlementItemCount?: number;
   /** 총액. REJECTED·CORRECTION_REQUESTED 제외 */
   estimatedAmount?: number;
   settlementRelevantAttendanceDates?: string[];
-  /** CONFIRMED | WAITING_CONFIRM | REAPPLICATION | PARTIAL | CORRECTION_REQUESTED | REJECTED */
+  /** CONFIRMED | REQUESTED | REAPPLICATION | PARTIAL | CORRECTION_REQUESTED | REJECTED */
   aggregateStatus?: SettlementAggregateResponseAggregateStatus;
   /** aggregateStatus와 동일. FE 호환 필드 */
   processingStatus?: string;

@@ -5,7 +5,6 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { ProgramSponsorContactResponse } from './programSponsorContactResponse';
 
 export interface ProgramSponsorAssignmentResponse {
   id?: string;
@@ -13,7 +12,6 @@ export interface ProgramSponsorAssignmentResponse {
   sponsorName?: string;
   sponsorContactId?: string;
   sponsorContactName?: string;
-  sponsorContacts?: ProgramSponsorContactResponse[];
   sponsorYear?: number;
   contributionAmountSnapshot?: number;
   displayOrder?: number;

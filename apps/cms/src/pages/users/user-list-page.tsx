@@ -50,6 +50,7 @@ import type { MemberRegisterConsentWriteSnapshots } from '@/features/user/shared
 import { useInfiniteUserList } from '@/features/user/shared/hooks/use-infinite-user-list'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
+  DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
@@ -342,11 +343,13 @@ export function UserListPage() {
       resolvedMemberListKind
     )
     const title = deleteTargets.length >= 2 ? domain.bulkTitle : domain.singleTitle
+    const usesAdminPassword =
+      resolvedMemberListKind !== 'institutions' && resolvedMemberListKind !== 'admins'
     return {
       title,
       lines,
       confirmText: domain.confirmText,
-      confirmInputMode: 'phrase' as const,
+      confirmInputMode: usesAdminPassword ? ('password' as const) : ('phrase' as const),
     }
   }, [deleteTargets, resolvedMemberListKind])
 
@@ -1367,8 +1370,16 @@ export function UserListPage() {
           confirmText={memberDeleteGuide.confirmText}
           confirmVariant="delete"
           confirmInputMode={memberDeleteGuide.confirmInputMode}
-          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
-          confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+          requiredConfirmInput={
+            memberDeleteGuide.confirmInputMode === 'phrase'
+              ? DELETE_GUIDE_TYPED_CONFIRM_VALUE
+              : undefined
+          }
+          confirmInputPlaceholder={
+            memberDeleteGuide.confirmInputMode === 'password'
+              ? DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER
+              : DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER
+          }
           confirmLoading={deleteLoading}
         />
       )}

@@ -9,8 +9,6 @@ import type { MergeMemberRequest } from './mergeMemberRequest';
 
 export interface CreateMergeRequest {
   leadApplicationId: number;
-  /** 합반 담당 교사. 생략하면 lead 신청의 담당 교사를 사용합니다. */
-  leadTeacherMemberId?: number;
   /** @minItems 1 */
   members: MergeMemberRequest[];
   changeReason?: string;

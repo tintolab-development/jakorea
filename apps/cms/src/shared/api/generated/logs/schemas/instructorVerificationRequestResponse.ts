@@ -15,4 +15,6 @@ export interface InstructorVerificationRequestResponse {
   requestedByAdminId?: number;
   requestedAt?: string;
   completedAt?: string;
+  resultSummary?: string;
+  resultOriginalFileId?: number;
 }

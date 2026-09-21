@@ -21,9 +21,9 @@ export interface AdminMemberBulkDeleteRequest {
      */
   reason: string;
   /**
-     * CMS 삭제 확인 문구. 허용값: "삭제" (exact match after Java String.trim()). 본인 탈퇴의 "탈퇴"와 구분합니다.
+     * 현재 로그인 관리자 비밀번호. 회원 삭제/익명화 전 서버에서 검증합니다.
      * @minLength 0
-     * @maxLength 30
+     * @maxLength 200
      */
-  confirmationText: string;
+  currentPassword: string;
 }

@@ -16,8 +16,6 @@ export interface ProgramRecruitmentResponse {
   status?: string;
   startAt?: string;
   endAt?: string;
-  operationStartDate?: string;
-  operationEndDate?: string;
   maxCount?: number;
   minCount?: number;
   selectionMethod?: string;

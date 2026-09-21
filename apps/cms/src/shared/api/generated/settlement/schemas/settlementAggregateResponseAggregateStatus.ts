@@ -7,13 +7,13 @@
  */
 
 /**
- * CONFIRMED | WAITING_CONFIRM | REAPPLICATION | PARTIAL | CORRECTION_REQUESTED | REJECTED
+ * CONFIRMED | REQUESTED | REAPPLICATION | PARTIAL | CORRECTION_REQUESTED | REJECTED
  */
 export type SettlementAggregateResponseAggregateStatus = typeof SettlementAggregateResponseAggregateStatus[keyof typeof SettlementAggregateResponseAggregateStatus];
 
 
 export const SettlementAggregateResponseAggregateStatus = {
-  WAITING_CONFIRM: 'WAITING_CONFIRM',
+  REQUESTED: 'REQUESTED',
   REAPPLICATION: 'REAPPLICATION',
   PARTIAL: 'PARTIAL',
   CONFIRMED: 'CONFIRMED',

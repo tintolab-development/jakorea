@@ -9,5 +9,4 @@
 export interface ProgramSponsorAssignmentRequest {
   sponsorId?: string;
   sponsorContactId?: string;
-  sponsorContactIds?: string[];
 }

@@ -10,6 +10,4 @@ export interface ProgramPostUpsertRequest {
   title?: string;
   content?: string;
   visibilityType?: string;
-  /** 특정 참여 기관 게시글이면 기관 신청 ID. null이면 프로그램 전체 게시글 */
-  organizationApplicationId?: number;
 }
