@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  describeIncompleteGeneralProgramRegistrationRequiredFields,
   hasIncompleteGeneralProgramRegistrationRequiredFields,
   type GeneralProgramRegistrationRequiredFieldContext,
 } from './registration-required-fields'
@@ -403,6 +404,31 @@ it('개인·복수회차 — 과제 ON·기간 비어 있으면 미완료이다'
   ).toBe(true)
 })
 
+it('기관·복수회차·일정 공통 — 교육 형태 overlay가 비어도 기본 온라인으로 완료이다', () => {
+  expect(
+    hasIncompleteGeneralProgramRegistrationRequiredFields(
+      filledOverlay({
+        'generalRegistration.kpi.dispatchedSchool': 33,
+        'generalRegistration.kpi.dispatchedClass': 33,
+        'generalRegistration.kpi.volunteer': 22,
+        'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '2', 2: '2' },
+        'generalRegistration.educationCurriculum.roundContentByRound': { 1: 'ㅇㅇ', 2: 'ㄹㄹㄹㄹ' },
+      }),
+      ctx({
+        participant: {
+          individual: false,
+          organization: true,
+          teacherInstructor: false,
+          volunteer: true,
+        },
+        sessionRoundType: 'multi',
+        curriculumSessionCount: 2,
+        educationFormScheduleDetail: 'common',
+      })
+    )
+  ).toBe(false)
+})
+
 it('IPS 1차 미선택이면 일정 공통에서도 미완료이다', () => {
   expect(
     hasIncompleteGeneralProgramRegistrationRequiredFields(
@@ -426,7 +452,24 @@ it('커리큘럼 — 세부 프로그램 id·name 모두 없으면 미완료이�
   ).toBe(true)
 })
 
-it('일정형·교육형태 일정별 — overlay 미기록이면 미완료이다(커리큘럼과 비대칭 유지)', () => {
+it('개인·복수회차·일정 공통 — 참여 방식 overlay가 비어도 기본 개인으로 완료이다', () => {
+  expect(
+    hasIncompleteGeneralProgramRegistrationRequiredFields(
+      filledOverlay({
+        'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '1', 2: '1' },
+        'generalRegistration.educationCurriculum.roundContentByRound': { 1: '내용1', 2: '내용2' },
+      }),
+      ctx({
+        sessionRoundType: 'multi',
+        curriculumSessionCount: 2,
+        educationFormScheduleDetail: 'common',
+        participationScheduleDetail: 'common',
+      })
+    )
+  ).toBe(false)
+})
+
+it('일정형·교육형태 일정별 — overlay 미기록이면 UI 기본 온라인으로 완료이다', () => {
   expect(
     hasIncompleteGeneralProgramRegistrationRequiredFields(
       filledOverlay({
@@ -456,5 +499,105 @@ it('일정형·교육형태 일정별 — overlay 미기록이면 미완료이�
         scheduleCurriculumGroupCount: 1,
       })
     )
-  ).toBe(true)
+  ).toBe(false)
+})
+
+const AUDIENCES = [
+  {
+    name: '개인',
+    participant: {
+      individual: true,
+      organization: false,
+      teacherInstructor: false,
+      volunteer: false,
+    },
+  },
+  {
+    name: '기관',
+    participant: {
+      individual: false,
+      organization: true,
+      teacherInstructor: false,
+      volunteer: false,
+    },
+  },
+  {
+    name: '개인+강사',
+    participant: {
+      individual: true,
+      organization: false,
+      teacherInstructor: true,
+      volunteer: false,
+    },
+  },
+  {
+    name: '개인+봉사',
+    participant: {
+      individual: true,
+      organization: false,
+      teacherInstructor: false,
+      volunteer: true,
+    },
+  },
+  {
+    name: '기관+봉사',
+    participant: {
+      individual: false,
+      organization: true,
+      teacherInstructor: false,
+      volunteer: true,
+    },
+  },
+] as const
+
+describe('유형 매트릭스 — UI 기본값 overlay 미기록은 typeSettings 미입력으로 보지 않는다', () => {
+  for (const audience of AUDIENCES) {
+    for (const programType of ['curriculum', 'schedule'] as const) {
+      for (const sessionRoundType of ['single', 'multi'] as const) {
+        it(`${audience.name} · ${programType} · ${sessionRoundType} — 교육형태/참여방식 기본값`, () => {
+          const overlay = filledOverlay({
+            ...(audience.participant.teacherInstructor
+              ? { 'generalRegistration.kpi.instructor': 1 }
+              : {}),
+            ...(audience.participant.volunteer ? { 'generalRegistration.kpi.volunteer': 2 } : {}),
+            ...(!audience.participant.individual
+              ? {
+                  'generalRegistration.kpi.dispatchedSchool': 3,
+                  'generalRegistration.kpi.dispatchedClass': 4,
+                }
+              : {}),
+            ...(programType === 'curriculum' && sessionRoundType === 'multi'
+              ? {
+                  'generalRegistration.educationCurriculum.progressSessionByRound': { 1: '1' },
+                  'generalRegistration.educationCurriculum.roundContentByRound': { 1: '내용' },
+                }
+              : {}),
+            ...(programType === 'schedule'
+              ? {
+                  'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+                    1: '세부 일정',
+                  },
+                  'generalRegistration.educationScheduleCurriculum.groupTimesByDetail': {
+                    1: [{ startTime: '08:00', endTime: '09:00' }],
+                  },
+                }
+              : {}),
+          })
+          const reason = describeIncompleteGeneralProgramRegistrationRequiredFields(
+            overlay,
+            ctx({
+              participant: { ...audience.participant },
+              programType,
+              sessionRoundType,
+              educationFormScheduleDetail: 'common',
+              participationScheduleDetail: 'common',
+            })
+          )
+          expect(reason).not.toBe('typeSettings.multiCommonEducationForm')
+          expect(reason).not.toBe('typeSettings.multiCommonParticipation')
+          expect(reason).toBeNull()
+        })
+      }
+    }
+  }
 })

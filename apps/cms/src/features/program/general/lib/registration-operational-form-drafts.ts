@@ -18,6 +18,11 @@ import {
   patchGeneralRecruitOverlay,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import {
+  mergeRecruitDetailInfoFromGeneralStore,
+  recruitDetailInfoOverlayPrefixForCatalogId,
+  restoreRecruitDetailInfoIntoGeneralStore,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
 import { createApplicantRecruitFormIndividualDraft } from '@/features/template/model/applicant-recruit-form-individual-draft'
 import { createApplicantRecruitFormInstitutionDraft } from '@/features/template/model/applicant-recruit-form-institution-draft'
 import { createEconomyRecruitFormInstitutionDraft } from '@/features/template/model/economy-recruit-form-institution-draft'
@@ -46,6 +51,7 @@ import {
   peekRegistrationProgramDraftId,
 } from '@/features/program/general/lib/registration-program-draft-session'
 import {
+  ensureDraftOwnedFormVersionWithBaseline,
   loadDraftOwnedFormVersionRecord,
   persistDraftOwnedFormVersion,
 } from '@/features/program/general/lib/registration-draft-form-versions'
@@ -225,12 +231,31 @@ export function createSeedDraftForOperationalCatalogId(
   }
 }
 
-function overlayRecordForKind(kind: OperationalOverlayKind): Record<string, unknown> {
-  if (kind === 'institution-recruit') return { ...getApplicantRecruitInstitutionOverlayRecord() }
+function overlayRecordForKind(
+  kind: OperationalOverlayKind,
+  catalogTemplateId: string
+): Record<string, unknown> {
+  const detailPrefix = recruitDetailInfoOverlayPrefixForCatalogId(catalogTemplateId)
+  if (kind === 'institution-recruit') {
+    return mergeRecruitDetailInfoFromGeneralStore(
+      { ...getApplicantRecruitInstitutionOverlayRecord() },
+      detailPrefix
+    )
+  }
   if (kind === 'general-recruit') return { ...getGeneralRecruitOverlayRecord() }
   if (kind === 'general-application') return { ...getGeneralApplicationOverlayRecord() }
-  if (kind === 'ujat-recruit-institution') return { ...getUjatRecruitInstitutionOverlayRecord() }
-  if (kind === 'ujat-recruit-volunteer') return { ...getUjatRecruitVolunteerOverlayRecord() }
+  if (kind === 'ujat-recruit-institution') {
+    return mergeRecruitDetailInfoFromGeneralStore(
+      { ...getUjatRecruitInstitutionOverlayRecord() },
+      detailPrefix
+    )
+  }
+  if (kind === 'ujat-recruit-volunteer') {
+    return mergeRecruitDetailInfoFromGeneralStore(
+      { ...getUjatRecruitVolunteerOverlayRecord() },
+      detailPrefix
+    )
+  }
   if (kind === 'ujat-application-institution') return { ...getUjatApplicationInstitutionOverlayRecord() }
   return { ...getUjatApplicationVolunteerOverlayRecord() }
 }
@@ -240,13 +265,19 @@ export function collectOperationalOverlayForCatalogId(
 ): Record<string, unknown> | null {
   const kind = resolveOperationalOverlayKind(catalogTemplateId)
   if (kind == null) return null
-  return overlayRecordForKind(kind)
+  return overlayRecordForKind(kind, catalogTemplateId)
 }
 
-function applyOverlayRecord(kind: OperationalOverlayKind, overlay: Record<string, unknown>): void {
+function applyOverlayRecord(
+  kind: OperationalOverlayKind,
+  overlay: Record<string, unknown>,
+  catalogTemplateId: string
+): void {
   if (Object.keys(overlay).length === 0) return
+  const detailPrefix = recruitDetailInfoOverlayPrefixForCatalogId(catalogTemplateId)
   if (kind === 'institution-recruit') {
     patchApplicantRecruitInstitutionOverlay(overlay)
+    restoreRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix)
     return
   }
   if (kind === 'general-recruit') {
@@ -259,10 +290,12 @@ function applyOverlayRecord(kind: OperationalOverlayKind, overlay: Record<string
   }
   if (kind === 'ujat-recruit-institution') {
     patchUjatRecruitInstitutionOverlay(overlay)
+    restoreRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix)
     return
   }
   if (kind === 'ujat-recruit-volunteer') {
     patchUjatRecruitVolunteerOverlay(overlay)
+    restoreRecruitDetailInfoIntoGeneralStore(overlay, detailPrefix)
     return
   }
   if (kind === 'ujat-application-institution') {
@@ -292,7 +325,7 @@ export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
     if (overlay == null || Object.keys(overlay).length === 0) continue
     const kind = resolveOperationalOverlayKind(catalogId)
     if (kind == null) continue
-    applyOverlayRecord(kind, overlay)
+    applyOverlayRecord(kind, overlay, catalogId)
   }
 }
 
@@ -311,25 +344,57 @@ export async function persistRegistrationOperationalOverlaySnapshots(
     const overlay = collectOperationalOverlayForCatalogId(catalogId)
     if (overlay == null || Object.keys(overlay).length === 0) continue
 
-    const existing = await loadDraftOwnedFormVersionRecord({
+    const { owned, baseline } = await ensureDraftOwnedFormVersionWithBaseline({
       programDraftId,
       templateCode: catalogId,
     })
-    const draft = existing?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
+    const draft = baseline?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
     if (draft == null) continue
 
     await persistDraftOwnedFormVersion({
       programDraftId,
       templateCode: catalogId,
+      owned,
+      baseline,
       draft,
       overlay,
-      editorState: existing?.editorState,
-      baseline: existing,
+      editorState: baseline?.editorState,
     })
   }
 }
 
-/** localStorage 삭제는 registration-wizard-form-draft에서 유형별로 일괄 처리한다. */
+/**
+ * 「임시 저장」— 현재 메모리 overlay를 모든 모집/신청 양식 localStorage에 기록.
+ * 현재 단계 handleSave만 하면 다른 탭 상세 정보가 빠진다.
+ */
+export async function persistRegistrationOperationalOverlaysToLocal(
+  programType: string,
+  variant: ProgramRegistrationFormVariant
+): Promise<void> {
+  flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
+  const { loadRegistrationWizardFormDraft, persistRegistrationWizardFormDraft } = await import(
+    '@/features/program/general/lib/registration-wizard-form-draft'
+  )
+  for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant)) {
+    const catalogId = catalogTemplateIdFromOperationalStorageKey(storageKey)
+    const overlay = collectOperationalOverlayForCatalogId(catalogId)
+    if (overlay == null || Object.keys(overlay).length === 0) continue
+    const saved = await loadRegistrationWizardFormDraft({
+      programType,
+      templateCode: catalogId,
+    })
+    const draft = saved?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
+    if (draft == null) continue
+    await persistRegistrationWizardFormDraft({
+      programType,
+      templateCode: catalogId,
+      draft,
+      overlay: { ...(saved?.overlay ?? {}), ...overlay },
+      editorState: saved?.editorState,
+    })
+  }
+}
+
 export function clearRegistrationOperationalFormDrafts(
   _variant: ProgramRegistrationFormVariant
 ): void {
