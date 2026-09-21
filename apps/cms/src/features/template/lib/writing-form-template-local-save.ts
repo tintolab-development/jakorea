@@ -112,6 +112,26 @@ export function removeWritingFormTemplateSave(templateId: string): void {
   }
 }
 
+/** 프로그램 등록 위저드처럼 접두사로 격리된 localStorage 초안을 일괄 제거한다. */
+export function removeWritingFormTemplateSavesByPrefix(prefix: string): void {
+  const file = readFile()
+  const templateIds = Object.keys(file.byTemplateId).filter(templateId =>
+    templateId.startsWith(prefix)
+  )
+  if (templateIds.length === 0) return
+  for (const templateId of templateIds) {
+    delete file.byTemplateId[templateId]
+  }
+  writeFile(file)
+  if (typeof window !== 'undefined') {
+    for (const templateId of templateIds) {
+      window.dispatchEvent(
+        new CustomEvent(WRITING_FORM_TEMPLATE_SAVE_EVENT, { detail: { templateId } })
+      )
+    }
+  }
+}
+
 /**
  * `localOnly: true` — 프로그램 등록 임시저장 (양식 버전 API와 분리).
  * 그 외 — 양식 관리용 remote draft API (`saveFormTemplateVersionDraft`).

@@ -150,6 +150,22 @@ export function readRegistrationOverlayProgramTitleKo(
   return readGeneralRegistrationOverlayProgramTitleKo()
 }
 
+/** controlled 제목 state → overlay 동기화 (임시저장 programTitleKo SSOT) */
+export function patchRegistrationOverlayProgramTitleKo(
+  variant: ProgramRegistrationFormVariant,
+  title: string
+): void {
+  if (variant === 'trainedTeachers') {
+    patchProgramRegistrationOverlay({
+      [TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY]: title,
+    })
+    return
+  }
+  patchProgramRegistrationOverlay({
+    [GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY]: title,
+  })
+}
+
 export function readGeneralRegistrationOverlayScheduleLines(): string[] {
   const raw = overlayState[GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]
   if (!Array.isArray(raw)) return []

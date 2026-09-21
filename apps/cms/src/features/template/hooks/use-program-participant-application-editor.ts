@@ -301,8 +301,10 @@ export type UseProgramParticipantApplicationEditorOptions = {
   forceUserEditable?: boolean
   /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
   localOnlyDraftPersistence?: boolean
-  /** 등록 위저드 — draft-owned form version PUT/GET (program-draft SSOT) */
+  /** 등록 위저드 임시저장 — programType별 localStorage 격리 키 */
   registrationWizardProgramType?: string
+  /** fresh 신규 등록 — 기존 위저드 localStorage 초안을 복원하지 않음 */
+  skipDraftRestore?: boolean
   /** 프로그램 form-binding `templateVersionId` — 카탈로그 code 대신 이 버전을 로드/저장 */
   templateVersionId?: number
   /** 바인딩 전용 version이 없을 때 등록 위저드 localStorage 초안을 우선 */
@@ -440,7 +442,7 @@ function restoreParticipantOverlayForVariant(
   }
 }
 
-function collectParticipantOverlayForVariant(
+export function collectParticipantOverlayForVariant(
   variant: ProgramParticipantApplicationEditorVariant
 ): Record<string, unknown> | undefined {
   if (variant === 'gemini-recruit') {
@@ -457,6 +459,12 @@ function collectParticipantOverlayForVariant(
   }
   if (isGeneralApplicationOverlayVariant(variant)) {
     return { ...getGeneralApplicationOverlayRecord() }
+  }
+  if (variant === 'ujat-recruit-institution') {
+    return { ...getUjatRecruitInstitutionOverlayRecord() }
+  }
+  if (variant === 'ujat-recruit-volunteer') {
+    return { ...getUjatRecruitVolunteerOverlayRecord() }
   }
   if (variant === 'ujat-application-institution') {
     return { ...getUjatApplicationInstitutionOverlayRecord() }
@@ -478,6 +486,7 @@ export function useProgramParticipantApplicationEditor(
   const registrationWizardProgramType = editorOptions?.registrationWizardProgramType
   const usesRegistrationWizardDraft =
     registrationWizardProgramType != null && registrationWizardProgramType !== ''
+  const skipDraftRestore = editorOptions?.skipDraftRestore === true
   const persistTemplateVersionId = editorOptions?.templateVersionId
   const preferLocalDraft = editorOptions?.preferLocalDraft === true
   const registrationWizardOpen = editorOptions?.registrationWizardOpen
@@ -725,14 +734,16 @@ export function useProgramParticipantApplicationEditor(
       preferLocal: preferLocalDraft,
     }
 
-    const loadDraftPromise = usesRegistrationWizardDraft
-      ? import('@/features/program/general/lib/registration-wizard-form-draft').then(m =>
-          m.loadRegistrationWizardFormDraft({
-            programType: registrationWizardProgramType!,
-            templateCode: templateId,
-          })
-        )
-      : loadWritingFormTemplateDraft(templateId, loadOptions)
+    const loadDraftPromise = skipDraftRestore
+      ? Promise.resolve(null)
+      : usesRegistrationWizardDraft
+        ? import('@/features/program/general/lib/registration-wizard-form-draft').then(m =>
+            m.loadRegistrationWizardFormDraft({
+              programType: registrationWizardProgramType!,
+              templateCode: templateId,
+            })
+          )
+        : loadWritingFormTemplateDraft(templateId, loadOptions)
 
     if (variant === 'ujat-recruit-institution' || variant === 'ujat-recruit-volunteer') {
       void loadDraftPromise.then(saved => {
@@ -831,6 +842,7 @@ export function useProgramParticipantApplicationEditor(
     resolveLocalDraftStorageKey,
     resolvePersistTemplateId,
     seedParagraphIds,
+    skipDraftRestore,
     usesRegistrationWizardDraft,
     variant,
   ])
