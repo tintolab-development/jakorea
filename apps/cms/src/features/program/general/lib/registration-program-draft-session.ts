@@ -62,12 +62,15 @@ export async function ensureRegistrationProgramDraftId(programType: string): Pro
     return existing.draftId
   }
 
-  const saved = await upsertMyProgramDraftRemote({
-    programType,
-    draftPayload: createRegistrationProgramDraftPayload({
-      registrationTemplateCode: registrationTemplateCodeForProgramType(programType),
-    }),
-  })
+  const saved = await upsertMyProgramDraftRemote(
+    {
+      programType,
+      draftPayload: createRegistrationProgramDraftPayload({
+        registrationTemplateCode: registrationTemplateCodeForProgramType(programType),
+      }),
+    },
+    { skipGlobalErrorAlert: true }
+  )
   const draftId = saved.draftId
   if (draftId == null) {
     throw new Error('프로그램 등록 draft ID를 받지 못했습니다.')
