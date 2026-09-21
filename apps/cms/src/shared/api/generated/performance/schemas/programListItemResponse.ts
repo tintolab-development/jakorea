@@ -20,6 +20,8 @@ export interface ProgramListItemResponse {
   businessYear?: number;
   businessStartDate?: string;
   businessEndDate?: string;
+  operationStartDate?: string;
+  operationEndDate?: string;
   periodStatus?: string;
   recruitmentStatus?: string;
   recruitmentStartAt?: string;

@@ -7,7 +7,7 @@
  */
 
 /**
- * 승인된 기관 신청의 수정 허용 항목 부분 수정 요청. 누락 필드는 기존값을 유지합니다.
+ * 승인된 기관 신청 정보를 부분 수정합니다. 생략한 항목은 현재 운영 스냅샷 값을 유지합니다.
  */
 export interface OrganizationApplicationUpdateRequest {
   requestedGrade?: string;
@@ -19,4 +19,15 @@ export interface OrganizationApplicationUpdateRequest {
   teacherPhone?: string;
   teacherEmail?: string;
   textbookId?: number;
+  applicationReason?: string;
+  otherRequests?: string;
+  computerInRoom?: string;
+  waitingRoomAvailable?: boolean;
+  waitingRoomLocation?: string;
+  mealProvided?: boolean;
+  mealNotice?: string;
+  parkingInfo?: string;
+  textbookGrade?: string;
+  textbookKits?: number;
+  textbookQuantity?: number;
 }

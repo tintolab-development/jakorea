@@ -11,7 +11,6 @@ import type { VolunteerRow } from './volunteerRow';
 export interface AllocationMatrixResponse {
   programId?: number;
   educationRegionCode?: string;
-  semesterType?: string;
   columns?: AllocationColumn[];
   volunteers?: VolunteerRow[];
 }

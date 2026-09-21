@@ -369,8 +369,8 @@ const replaceFaqInlineImages = (
 /**
  * ### 이 API가 하는 일
  * - 문의 카테고리 목록
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `GET /api/admin/inquiry-categories`
  *
@@ -424,8 +424,8 @@ const inquiryCategories = (
 /**
  * ### 이 API가 하는 일
  * - 문의 카테고리 등록
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `POST /api/admin/inquiry-categories`
  *
@@ -480,8 +480,8 @@ const createInquiryCategory = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `GET /api/admin/inquiries/{inquiryId}/answers`
  *
@@ -534,8 +534,8 @@ const answers = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/inquiries/{inquiryId}/answers
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `POST /api/admin/inquiries/{inquiryId}/answers`
  *
@@ -645,8 +645,8 @@ const bulkDelete2 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `GET /api/admin/content/notices`
  *
@@ -700,8 +700,8 @@ const notices = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/content/notices
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `POST /api/admin/content/notices`
  *
@@ -810,8 +810,8 @@ const bulkDeleteNotices = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `GET /api/admin/content/notice-categories`
  *
@@ -865,8 +865,8 @@ const noticeCategories = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/content/notice-categories
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `POST /api/admin/content/notice-categories`
  *
@@ -921,8 +921,8 @@ const createNoticeCategory = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `GET /api/admin/content/faqs`
  *
@@ -976,8 +976,8 @@ const faqs = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/content/faqs
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `POST /api/admin/content/faqs`
  *
@@ -1086,8 +1086,8 @@ const bulkDeleteFaqs = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `GET /api/admin/content/faq-categories`
  *
@@ -1141,8 +1141,8 @@ const faqCategories = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/content/faq-categories
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `POST /api/admin/content/faq-categories`
  *
@@ -1197,8 +1197,8 @@ const createFaqCategory = (
 /**
  * ### 이 API가 하는 일
  * - 문의 카테고리 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `DELETE /api/admin/inquiry-categories/{categoryId}`
  *
@@ -1251,8 +1251,8 @@ const deleteInquiryCategory = (
 /**
  * ### 이 API가 하는 일
  * - 문의 카테고리 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `PATCH /api/admin/inquiry-categories/{categoryId}`
  *
@@ -1308,8 +1308,8 @@ const updateInquiryCategory = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `GET /api/admin/content/notices/{noticeId}`
  *
@@ -1362,8 +1362,8 @@ const notice = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `DELETE /api/admin/content/notices/{noticeId}`
  *
@@ -1416,8 +1416,8 @@ const deleteNotice = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `PATCH /api/admin/content/notices/{noticeId}`
  *
@@ -1473,8 +1473,8 @@ const updateNotice = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `DELETE /api/admin/content/notice-categories/{categoryId}`
  *
@@ -1527,8 +1527,8 @@ const deleteNoticeCategory = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `PATCH /api/admin/content/notice-categories/{categoryId}`
  *
@@ -1584,8 +1584,8 @@ const updateNoticeCategory = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `GET /api/admin/content/faqs/{faqId}`
  *
@@ -1638,8 +1638,8 @@ const faq = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `DELETE /api/admin/content/faqs/{faqId}`
  *
@@ -1692,8 +1692,8 @@ const deleteFaq = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `PATCH /api/admin/content/faqs/{faqId}`
  *
@@ -1749,8 +1749,8 @@ const updateFaq = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `DELETE /api/admin/content/faq-categories/{categoryId}`
  *
@@ -1803,8 +1803,8 @@ const deleteFaqCategory = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `PATCH /api/admin/content/faq-categories/{categoryId}`
  *
@@ -1860,8 +1860,8 @@ const updateFaqCategory = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `GET /api/admin/inquiries`
  *
@@ -1915,8 +1915,8 @@ const inquiries1 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`null`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `GET /api/admin/inquiries/{inquiryId}`
  *
