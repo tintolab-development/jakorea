@@ -7,7 +7,11 @@ function paragraphMap(paragraphs: readonly WritingFormParagraph[]): Map<string, 
 
 /**
  * program-scoped copy PUT — baseline(서버 copy GET) 위에 user draft를 merge.
- * protected seed paragraph id·variant·kind는 baseline 유지, 카피성 필드만 user 반영.
+ * protected seed paragraph id·variant·kind·순서는 baseline 유지, 카피성 필드만 user 반영.
+ * baseline에 없는(=신규 추가) 단락은 userDraft에서 **바로 앞에 있던 baseline 단락**
+ * 뒤에 끼워 넣는다 — 편집기에서 중간에 삽입한 단락이 항상 맨 끝으로 밀리지 않게 한다.
+ * (앞에 매칭되는 baseline 단락이 아예 없으면 기존처럼 맨 끝에 붙인다 — id 탬퍼링 등
+ * baseline과 매칭이 끊긴 항목이 보호된 baseline 슬롯을 밀어내지 않도록 하는 안전장치.)
  */
 export function coalesceScopedFormDraftForPut(
   baseline: WritingFormDraft,
@@ -31,9 +35,22 @@ export function coalesceScopedFormDraftForPut(
     } as WritingFormParagraph
   })
 
-  for (const userParagraph of userDraft.paragraphs) {
-    if (baseById.has(userParagraph.id)) continue
-    mergedParagraphs.push(userParagraph)
+  // baseline id → mergedParagraphs 상 현재 index (신규 단락을 끼워 넣을 때마다 갱신)
+  const indexById = new Map<string, number>()
+  baseline.paragraphs.forEach((p, index) => indexById.set(p.id, index))
+
+  let insertAt: number | null = null
+  for (const paragraph of userDraft.paragraphs) {
+    if (baseById.has(paragraph.id)) {
+      insertAt = (indexById.get(paragraph.id) ?? mergedParagraphs.length - 1) + 1
+      continue
+    }
+    const at: number = insertAt ?? mergedParagraphs.length
+    mergedParagraphs.splice(at, 0, paragraph)
+    for (const [id, idx] of indexById) {
+      if (idx >= at) indexById.set(id, idx + 1)
+    }
+    insertAt = at + 1
   }
 
   return normalizeWritingFormDraft({

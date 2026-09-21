@@ -155,12 +155,18 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
 
   const resultDate = program.resultAnnouncementDate
   const resultMethod = program.resultAnnouncementMethod?.trim()
+  // 날짜·방법 중 하나만 입력돼도 표시해야 함 — 날짜 없다고 방법까지 통째로 버리지 않는다.
+  // (버그: resultDate가 없으면 resultMethod가 있어도 전체가 undefined → '-' 로 노출되던 문제)
+  const finalAnnouncementLabelFromProgram = [
+    resultDate ? formatDateOnly(resultDate) : undefined,
+    resultMethod || undefined,
+  ]
+    .filter((part): part is string => Boolean(part))
+    .join(' | ')
   const finalAnnouncementLabel = pickDisplayString(
     info?.finalAnnouncementLabel,
     info?.resultAnnouncementLabel,
-    resultDate
-      ? `${formatDateOnly(resultDate)}${resultMethod ? ` | ${resultMethod}` : ''}`
-      : undefined
+    finalAnnouncementLabelFromProgram || undefined
   )
 
   const certificateIssuanceLabel =
