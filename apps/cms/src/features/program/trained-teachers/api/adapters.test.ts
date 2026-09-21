@@ -225,23 +225,19 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
     }
     const request = mapTrainedTeacherToUpdateRequest(program)
     expect(request.totalParticipants).toBe(120)
-    expect(request.finalSchools).toBe(8)
-    expect(request.finalClasses).toBe(15)
-    expect(request.venueKind).toBe('other')
-    expect(request.venueDetail).toBe('별관 301호')
     expect(request.venue).toBe('별관 301호')
+    expect(request.serviceDetailJson).toContain('"finalSchools":8')
+    expect(request.serviceDetailJson).toContain('"venueKind":"other"')
   })
 })
 
 describe('mapTrainedTeacherDetailToProgram KPI root echo', () => {
-  it('prefers top-level finalSchools / finalClasses over nested kpi', () => {
+  it('prefers totalParticipants over nested kpi finalParticipants', () => {
     const mapped = mapTrainedTeacherDetailToProgram({
       id: '186005',
       title: 'TT',
       sponsorId: 'sponsor-1',
       totalParticipants: 200,
-      finalSchools: 12,
-      finalClasses: 24,
       serviceDetailJson: JSON.stringify({
         generalCommonInfo: {
           kpi: {
@@ -255,10 +251,10 @@ describe('mapTrainedTeacherDetailToProgram KPI root echo', () => {
       }),
     })
     expect(mapped.totalParticipants).toBe(200)
-    expect(mapped.participatingSchoolCount).toBe(12)
+    expect(mapped.participatingSchoolCount).toBe(1)
     expect(mapped.generalCommonInfo?.kpi?.finalParticipants).toBe(200)
-    expect(mapped.generalCommonInfo?.kpi?.finalSchools).toBe(12)
-    expect(mapped.generalCommonInfo?.kpi?.finalClasses).toBe(24)
+    expect(mapped.generalCommonInfo?.kpi?.finalSchools).toBe(1)
+    expect(mapped.generalCommonInfo?.kpi?.finalClasses).toBe(1)
   })
 })
 

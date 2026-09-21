@@ -50,7 +50,6 @@ import type { MemberRegisterConsentWriteSnapshots } from '@/features/user/shared
 import { useInfiniteUserList } from '@/features/user/shared/hooks/use-infinite-user-list'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
-  DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
@@ -343,14 +342,11 @@ export function UserListPage() {
       resolvedMemberListKind
     )
     const title = deleteTargets.length >= 2 ? domain.bulkTitle : domain.singleTitle
-    /** 회원·통합 삭제 API만 currentPassword — 관리자/학교 계정 삭제는 문구 확인 유지 */
-    const usesAdminPasswordConfirm =
-      resolvedMemberListKind !== 'admins' && resolvedMemberListKind !== 'institutions'
     return {
       title,
       lines,
       confirmText: domain.confirmText,
-      confirmInputMode: usesAdminPasswordConfirm ? ('password' as const) : ('phrase' as const),
+      confirmInputMode: 'phrase' as const,
     }
   }, [deleteTargets, resolvedMemberListKind])
 
@@ -1371,16 +1367,8 @@ export function UserListPage() {
           confirmText={memberDeleteGuide.confirmText}
           confirmVariant="delete"
           confirmInputMode={memberDeleteGuide.confirmInputMode}
-          requiredConfirmInput={
-            memberDeleteGuide.confirmInputMode === 'phrase'
-              ? DELETE_GUIDE_TYPED_CONFIRM_VALUE
-              : undefined
-          }
-          confirmInputPlaceholder={
-            memberDeleteGuide.confirmInputMode === 'password'
-              ? DELETE_GUIDE_PASSWORD_CONFIRM_PLACEHOLDER
-              : DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER
-          }
+          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+          confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
           confirmLoading={deleteLoading}
         />
       )}

@@ -167,7 +167,6 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   void _serviceDetailLifecycle
   void _serviceDetailStatus
 
-  const periodStatus = dto.periodStatus
   /** 1급 API 필드 우선, 없을 때만 serviceDetailJson fallback */
   const educationStructure =
     mapApiEducationStructureToDomain(dto.educationStructure) ??
@@ -181,7 +180,6 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   const otherNotes = dto.otherMatters?.trim() || details.otherNotes?.trim() || undefined
   const remarks = dto.remarks?.trim() || participantRemarks?.trim() || undefined
   const educationTargetDetail =
-    dto.educationTargetDetail?.trim() ||
     (
       details.generalCommonInfo?.participantRecruitmentInfo as
         | { educationTargetDetail?: string }
@@ -191,18 +189,18 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     undefined
 
   const nestedKpi = details.generalCommonInfo?.kpi
-  const rootFinalSchools = toJavaInt(dto.finalSchools)
-  const rootFinalClasses = toJavaInt(dto.finalClasses)
   const rootFinalParticipants = toJavaInt(dto.totalParticipants)
-  /** top-level KPI SSOT → nested kpi 표시 동기화 (BE는 root + generalCommonInfo.kpi 미러) */
+  /** KPI는 serviceDetailJson nested kpi SSOT — top-level finalSchools/venueKind 등은 OpenAPI v9에서 제거 */
   const resolvedKpi = {
     ...nestedKpi,
     finalParticipants: rootFinalParticipants ?? nestedKpi?.finalParticipants ?? 0,
     instructorCount: nestedKpi?.instructorCount ?? 0,
     volunteerCount: nestedKpi?.volunteerCount ?? 0,
-    finalSchools: rootFinalSchools ?? nestedKpi?.finalSchools ?? details.participatingSchoolCount ?? 0,
-    finalClasses: rootFinalClasses ?? nestedKpi?.finalClasses ?? 0,
+    finalSchools: nestedKpi?.finalSchools ?? details.participatingSchoolCount ?? 0,
+    finalClasses: nestedKpi?.finalClasses ?? 0,
   }
+  const nestedVenueKind = details.generalCommonInfo?.venueKind
+  const nestedVenueDetail = details.generalCommonInfo?.venueDetail?.trim()
 
   return baseProgram({
     ...detailFields,
@@ -232,9 +230,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
-    lifecycleStatus:
-      toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
-      toTypedProgramLifecycleStatus(periodStatus),
+    lifecycleStatus: toTypedProgramLifecycleStatus(dto.lifecycleStatus),
     businessArea: dto.businessArea,
     titleEn: dto.titleEn,
     textbookName: dto.textbookName,
@@ -264,13 +260,13 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     femaleParticipants: dto.femaleParticipants,
     totalParticipants: rootFinalParticipants ?? dto.totalParticipants,
     participatingSchoolCount:
-      rootFinalSchools ?? details.participatingSchoolCount ?? resolvedKpi.finalSchools,
+      details.participatingSchoolCount ?? resolvedKpi.finalSchools,
     generalTeachers: dto.generalTeachers,
     educatedTeachers: dto.educatedTeachers,
     /** TT Primary — 강사 Relation 없음. API null/0을 유지하고 UI에 노출하지 않음 */
     instructors: dto.instructors ?? 0,
     managerName: dto.managerName,
-    venue: dto.venue?.trim() || dto.venueDetail?.trim() || undefined,
+    venue: dto.venue?.trim() || nestedVenueDetail || undefined,
     curriculum: dto.curriculum,
     contactEmail: dto.contactEmail,
     contactPhone: dto.contactPhone,
@@ -292,23 +288,8 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     generalCommonInfo: {
       ...details.generalCommonInfo,
       ...(detailedProgramName ? { detailedProgramName } : {}),
-      ...(dto.venueKind === 'inside' ||
-      dto.venueKind === 'outside' ||
-      dto.venueKind === 'other' ||
-      dto.venueKind === 'inside_school' ||
-      dto.venueKind === 'outside_school'
-        ? {
-            venueKind:
-              dto.venueKind === 'inside_school'
-                ? 'inside'
-                : dto.venueKind === 'outside_school'
-                  ? 'outside'
-                  : dto.venueKind === 'other'
-                    ? 'other'
-                    : dto.venueKind,
-          }
-        : {}),
-      ...(dto.venueDetail?.trim() ? { venueDetail: dto.venueDetail.trim() } : {}),
+      ...(nestedVenueKind ? { venueKind: nestedVenueKind } : {}),
+      ...(nestedVenueDetail ? { venueDetail: nestedVenueDetail } : {}),
       kpi: resolvedKpi,
       participantRecruitmentInfo: {
         ...details.generalCommonInfo?.participantRecruitmentInfo,
@@ -423,15 +404,6 @@ export function mapTrainedTeacherToUpdateRequest(
     attachmentFileNames: merged.attachmentFileNames,
     rounds: mapRounds(merged),
     serviceDetailJson: serializeTrainedTeacherServiceDetailJson(merged),
-    remarks: merged.remarks?.trim() || undefined,
-    educationTargetDetail: merged.educationTargetDetail?.trim() || undefined,
-    venueKind: merged.generalCommonInfo?.venueKind,
-    venueDetail: merged.generalCommonInfo?.venueDetail?.trim() || undefined,
-    studentListRequired: merged.studentListRequired,
-    finalSchools: toJavaInt(
-      merged.participatingSchoolCount ?? merged.generalCommonInfo?.kpi?.finalSchools
-    ),
-    finalClasses: toJavaInt(merged.generalCommonInfo?.kpi?.finalClasses),
   }
 }
 

@@ -28,7 +28,7 @@ function mapUiProcessingStatusToStatementStatus(
     case 'partial':
       return 'PARTIAL'
     default:
-      return 'REQUESTED'
+      return 'WAITING_CONFIRM'
   }
 }
 
