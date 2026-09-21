@@ -201,6 +201,10 @@ export function normalizeRegistrationOverlayForApply(
   copyWhenMissing(`${ttBasic}.managerContactIds`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY)
   copyWhenMissing(`${ttBasic}.sponsorManagerLine`, GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY)
   copyWhenMissing(`${ttBasic}.programTitleKo`, GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
+  copyWhenMissing(
+    `${TRAINED_TEACHERS_REGISTRATION_PREFIX}.typeSettings.educationForm`,
+    `${TYPE}.singleEducationForm`
+  )
 
   for (const [key, value] of Object.entries(overlay)) {
     if (!key.startsWith(`${TRAINED_TEACHERS_REGISTRATION_PREFIX}.`)) continue
@@ -317,20 +321,27 @@ function buildCurriculumSessions(
   const sessions: GeneralProgramCurriculumSessionRow[] = []
 
   if (extras.scheduleCurriculumPreEducation) {
-    const preName = overlayString(overlay, `${CURRICULUM}.preEducationScheduleName`) || '사전 교육'
+    const isTeacherTraining = extras.teacherTrainingEnabled === true
+    const preName =
+      overlayString(overlay, `${CURRICULUM}.preEducationScheduleName`) ||
+      (isTeacherTraining ? '교육 연수' : '사전 교육')
     const preLine = overlayString(overlay, `${CURRICULUM}.preEducationScheduleLine`)
+    const teacherTrainingForm = overlayString(overlay, `${CURRICULUM}.teacherTrainingEducationForm`)
     sessions.push({
-      sessionLabel: '사전 교육',
+      sessionLabel: isTeacherTraining ? '교육 연수' : '사전 교육',
       title: preName,
       description: '',
       scheduleDateLabel: preLine || undefined,
       assignmentEnabled: false,
-      educationFormLabel:
-        eduDetail === 'perSchedule'
+      educationFormLabel: isTeacherTraining
+        ? educationFormLabelFromValue(teacherTrainingForm || 'online')
+        : eduDetail === 'perSchedule'
           ? educationFormLabelFromValue(educationFormBySession[0] ?? 'online')
           : undefined,
       ipsTypeSummary:
-        ipsDetail === 'perSchedule' ? buildSessionIpsTypeSummary('prepare', 'none') : undefined,
+        isTeacherTraining || ipsDetail === 'perSchedule'
+          ? buildSessionIpsTypeSummary('prepare', 'none')
+          : undefined,
     })
   }
 
@@ -491,10 +502,12 @@ function buildEnrichedScheduleDetails(
   })
 
   if (extras.scheduleCurriculumPreEducation) {
+    const isTeacherTraining = extras.teacherTrainingEnabled === true
     const preName =
-      overlayString(overlay, `${SCHEDULE_CURRICULUM}.preEducationName`) || '사전 교육'
+      overlayString(overlay, `${SCHEDULE_CURRICULUM}.preEducationName`) ||
+      (isTeacherTraining ? '교육 연수' : '사전 교육')
     rows.unshift({
-      scheduleLabel: '사전 교육',
+      scheduleLabel: isTeacherTraining ? '교육 연수' : '사전 교육',
       name: preName,
       assignmentEnabled: false,
     })
@@ -644,6 +657,7 @@ export function applyGeneralRegistrationOverlayToProgram(
   const commonEducationForm =
     overlayString(overlay, `${TYPE}.multiCommonEducationForm`) ||
     overlayString(overlay, `${TYPE}.singleEducationForm`) ||
+    overlayString(overlay, `${TYPE}.educationForm`) ||
     'online'
   const hideParticipation = extras.participantOrganization === true
   const commonParticipation = hideParticipation
@@ -757,6 +771,9 @@ export function applyGeneralRegistrationOverlayToProgram(
         hideParticipation || partDetail !== 'common' ? undefined : commonParticipation,
       ipsTypeSummary: buildIpsTypeSummaryFull(ipsDetailKind, ipsCategory, ipsType.detail),
       scheduleCurriculumPreEducation: extras.scheduleCurriculumPreEducation ?? false,
+      ...(typeof extras.teacherTrainingEnabled === 'boolean'
+        ? { teacherTrainingEnabled: extras.teacherTrainingEnabled }
+        : {}),
       curriculumSessions,
       scheduleDetails,
       wageGradeRows,

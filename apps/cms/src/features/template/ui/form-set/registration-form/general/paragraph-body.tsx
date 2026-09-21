@@ -292,13 +292,12 @@ export function renderProgramRegistrationParagraphBody(
           />
         )
       }
+      /** 교육받은 교사 — 시안처럼 일정 설정 단락을 항상 노출. 일반 일정형+복수는 위에서 숨김 */
       return options.programRegistrationFormVariant === 'trainedTeachers' ? (
-        options.programType === 'schedule' && options.sessionRoundType === 'multi' ? null : (
-          <TrainedTeachersRegistrationEducationScheduleSettingsParagraph
-            educationScheduleMode={options.educationScheduleMode}
-            onEducationScheduleModeChange={options.onEducationScheduleModeChange}
-          />
-        )
+        <TrainedTeachersRegistrationEducationScheduleSettingsParagraph
+          educationScheduleMode={options.educationScheduleMode}
+          onEducationScheduleModeChange={options.onEducationScheduleModeChange}
+        />
       ) : options.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationEducationScheduleSettingsParagraph
           educationScheduleMode={options.educationScheduleMode}

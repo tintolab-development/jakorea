@@ -16,14 +16,12 @@ import {
   TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX,
   TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION,
   TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE,
-  TRAINED_TEACHERS_REGISTRATION_REP_EN,
-  TRAINED_TEACHERS_REGISTRATION_REP_KO,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 
 type ControlledTitleProps = {
   programTitleKo?: string
   onProgramTitleKoChange?: (title: string) => void
-  /** 교육받은 교사 등록 폼 — overlay 키·기본값 분리 */
+  /** 교육받은 교사 등록 폼 — overlay 키 분리. 신규는 빈 값+플레이스홀더, 수정은 overlay 복원 */
   trainedTeachersDefaults?: boolean
   /**
    * 일반 일정형 — 세부 프로그램명 셀렉트를「해당없음」으로 고정.
@@ -56,11 +54,11 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
 
   const [localProgramTitleKo, setLocalProgramTitleKo] = useProgramRegistrationOverlayKv(
     titleKoKey,
-    trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_REP_KO : ''
+    ''
   )
   const [programTitleEn, setProgramTitleEn] = useProgramRegistrationOverlayKv(
     titleEnKey,
-    trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_REP_EN : ''
+    ''
   )
   const [publicProgramTitle, setPublicProgramTitle] = useProgramRegistrationOverlayKv(
     publicTitleKey,
@@ -68,7 +66,7 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
   )
   const [detailedProgramId, setDetailedProgramId] = useProgramRegistrationOverlayKv<string>(
     detailedIdKey,
-    trainedTeachersDefaults ? TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE : ''
+    ''
   )
 
   const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
@@ -147,7 +145,7 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
           edit={
             <CmsInput
               inputSize="medium"
-              placeholder="상세 프로그램명을 입력하세요"
+              placeholder="대표 프로그램명을 입력하세요"
               width="100%"
               value={programTitleEn}
               onChange={e => setProgramTitleEn(e.target.value)}
