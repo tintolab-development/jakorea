@@ -9,6 +9,11 @@ import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { ProgramHistoryDeleteBlockedModal } from '@/shared/ui/program-history-delete-blocked-modal'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { TermsViewModal } from '@/features/auth/ui/terms-view-modal'
+import {
+  TERMS_VIEW_TYPES,
+  type TermsViewType,
+} from '@/features/auth/lib/terms-view-config'
 import {
   ALL_MODAL_CATALOG_ENTRIES,
   MODAL_CATALOG_CONSOLIDATE,
@@ -30,6 +35,10 @@ type PreviewKey =
   | 'cms-modal'
   | 'history-blocked'
   | null
+
+function isTermsViewType(value: string): value is TermsViewType {
+  return (TERMS_VIEW_TYPES as readonly string[]).includes(value)
+}
 
 function usageClass(usage: ModalCatalogUsage): string {
   if (usage === 'in-use' || usage === 'api-only') return 'ds-coverage-legend__item--current'
@@ -106,6 +115,8 @@ function CatalogTable({
 export function ModalCatalogSection() {
   const { showAlert } = useCmsAlert()
   const [preview, setPreview] = useState<PreviewKey>(null)
+  const [termsViewType, setTermsViewType] = useState<TermsViewType | null>(null)
+  const [termsAgreed, setTermsAgreed] = useState(false)
 
   const openPreview = (id: string) => {
     if (id === 'alert') {
@@ -115,10 +126,23 @@ export function ModalCatalogSection() {
       })
       return
     }
+    if (id.startsWith('terms-view:')) {
+      const type = id.slice('terms-view:'.length)
+      if (isTermsViewType(type)) {
+        setTermsAgreed(false)
+        setTermsViewType(type)
+      }
+      return
+    }
     setPreview(id as PreviewKey)
   }
 
   const close = () => setPreview(null)
+
+  const closeTermsView = () => {
+    setTermsAgreed(false)
+    setTermsViewType(null)
+  }
 
   return (
     <DsSection
@@ -235,6 +259,16 @@ export function ModalCatalogSection() {
         open={preview === 'history-blocked'}
         onClose={close}
       />
+
+      {termsViewType != null ? (
+        <TermsViewModal
+          open
+          type={termsViewType}
+          agreed={termsAgreed}
+          onAgreedChange={setTermsAgreed}
+          onClose={closeTermsView}
+        />
+      ) : null}
     </DsSection>
   )
 }
