@@ -10,7 +10,17 @@ import { useProgramParticipantApplicationEditor } from '@/features/template/hook
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 import { useUjatProgramRegistrationEditor } from '@/features/template/ui/form-set/registration-form/UJAT/use-ujat-program-registration-editor'
-import { clearUjatRegistrationOperationalFormDrafts } from '@/features/program/ujat/lib/ujat-registration-operational-form-drafts'
+import {
+  assertRegistrationWizardRemoteReady,
+  shouldUseRegistrationCreateFormBindings,
+} from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
+import {
+  deleteRegistrationProgramDraftRemote,
+  ensureRegistrationProgramDraftId,
+  hydrateRegistrationProgramDraft,
+  syncRegistrationProgramDraft,
+} from '@/features/program/general/lib/registration-program-draft-session'
+import { PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE } from '@/features/program/shared/lib/registration-draft-notice'
 import {
   UJAT_PROGRAM_REGISTRATION_DEFAULT_APPLICATION_STEP,
   UJAT_PROGRAM_REGISTRATION_DEFAULT_RECRUIT_STEP,
@@ -57,12 +67,40 @@ export function useUjatProgramRegistrationFlow(
   const completionPromiseRef = useRef<Promise<Program> | null>(null)
   const idempotencyKeyRef = useRef(createRegistrationIdempotencyKey())
   const skipDraftRestore = options?.skipDraftRestore === true
+  const programType = 'UJAT' as const
 
-  // 모집/신청 hydrate보다 먼저 비워, fresh 진입 시 이전 세션 캐시가 복원되지 않게 한다.
   useLayoutEffect(() => {
-    if (!open || !skipDraftRestore) return
-    clearUjatRegistrationOperationalFormDrafts()
-  }, [open, skipDraftRestore])
+    if (!open || !skipDraftRestore || !shouldUseRegistrationCreateFormBindings()) return
+    void deleteRegistrationProgramDraftRemote(programType).catch(error => {
+      console.warn('[registration-program-draft] UJAT fresh delete failed', error)
+    })
+  }, [open, skipDraftRestore, programType])
+
+  useEffect(() => {
+    if (!open || !shouldUseRegistrationCreateFormBindings()) return
+    try {
+      assertRegistrationWizardRemoteReady()
+    } catch (error) {
+      console.warn('[registration-program-draft] UJAT remote not ready', error)
+      return
+    }
+    if (skipDraftRestore) {
+      void ensureRegistrationProgramDraftId(programType).catch(error => {
+        console.warn('[registration-program-draft] UJAT ensure draft failed', error)
+      })
+      return
+    }
+    void hydrateRegistrationProgramDraft(programType)
+      .then(payload => {
+        if (payload?.activeStep == null) return
+        const restored = normalizeUjatProgramRegistrationStepKey(payload.activeStep)
+        setActiveStep(restored)
+        options?.onStepChange?.(restored)
+      })
+      .catch(error => {
+        console.warn('[registration-program-draft] UJAT hydrate failed', error)
+      })
+  }, [open, skipDraftRestore, programType, options])
 
   useEffect(() => {
     if (open) return
@@ -114,8 +152,7 @@ export function useUjatProgramRegistrationFlow(
   // 공통 정보 overlay는 모집·신청 단계로 이동한 뒤 완료할 때까지 유지되어야 한다.
   const registrationVm = useUjatProgramRegistrationEditor(open, programTemplateName, {
     skipDraftRestore,
-    // 프로그램 임시저장 — remote 전환: docs/api/program-draft-local-storage-follow-up.md
-    localOnlyDraftPersistence: true,
+    registrationWizardProgramType: programType,
   })
 
   const participantVm = useProgramParticipantApplicationEditor(
@@ -124,7 +161,8 @@ export function useUjatProgramRegistrationFlow(
     participantVariant,
     {
       ujatRecruitParagraphProps,
-      localOnlyDraftPersistence: true,
+      registrationWizardProgramType: programType,
+      registrationWizardOpen: open,
       /** UJAT 등록 위저드 — 단락 타이틀 옆 필수(*) */
       forceSeedParagraphsRequired: true,
     }
@@ -179,8 +217,17 @@ export function useUjatProgramRegistrationFlow(
     (key: UjatProgramRegistrationStepKey) => {
       setActiveStep(key)
       options?.onStepChange?.(key)
+      if (shouldUseRegistrationCreateFormBindings()) {
+        void syncRegistrationProgramDraft({
+          programType,
+          registrationTemplateCode: PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
+          activeStep: key,
+        }).catch(error => {
+          console.warn('[registration-program-draft] UJAT step sync failed', error)
+        })
+      }
     },
-    [options]
+    [options, programType]
   )
 
   const goToPhase = useCallback(
@@ -217,10 +264,15 @@ export function useUjatProgramRegistrationFlow(
   const persistDraftSilent = useCallback(async () => {
     if (isProgramStep) {
       await registrationVm.handleSave({ silent: true })
-      return
+    } else {
+      await participantVm.handleSave({ silent: true })
     }
-    await participantVm.handleSave({ silent: true })
-  }, [isProgramStep, registrationVm, participantVm])
+    await syncRegistrationProgramDraft({
+      programType,
+      registrationTemplateCode: PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
+      activeStep,
+    })
+  }, [activeStep, isProgramStep, participantVm, programType, registrationVm])
 
   const handleCompleteRegistration = useCallback(() => {
     if (completionPromiseRef.current) return completionPromiseRef.current

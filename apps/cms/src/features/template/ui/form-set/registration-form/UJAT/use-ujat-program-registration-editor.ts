@@ -55,6 +55,8 @@ export type UseUjatProgramRegistrationEditorOptions = {
   skipDraftRestore?: boolean
   /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
   localOnlyDraftPersistence?: boolean
+  /** 등록 위저드 — draft-owned form version PUT/GET (program-draft SSOT) */
+  registrationWizardProgramType?: string
 }
 
 export function useUjatProgramRegistrationEditor(
@@ -65,6 +67,9 @@ export function useUjatProgramRegistrationEditor(
   const onTemplateDraftSaveConfirmed = options?.onTemplateDraftSaveConfirmed
   const skipDraftRestore = options?.skipDraftRestore === true
   const localOnlyDraftPersistence = options?.localOnlyDraftPersistence === true
+  const registrationWizardProgramType = options?.registrationWizardProgramType
+  const usesRegistrationWizardDraft =
+    registrationWizardProgramType != null && registrationWizardProgramType !== ''
   const templateCode = options?.templateCode?.trim() || UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE
   const isStructureLocked = isWritingFormTemplateStructureLocked({
     templateCode,
@@ -115,9 +120,18 @@ export function useUjatProgramRegistrationEditor(
     setDraft(EMPTY_WRITING_FORM_DRAFT)
     setActiveParagraphId(null)
 
-    void loadWritingFormTemplateDraft(templateCode, {
-      localOnly: localOnlyDraftPersistence,
-    })
+    const loadDraft = usesRegistrationWizardDraft
+      ? import('@/features/program/general/lib/registration-wizard-form-draft').then(m =>
+          m.loadRegistrationWizardFormDraft({
+            programType: registrationWizardProgramType!,
+            templateCode,
+          })
+        )
+      : loadWritingFormTemplateDraft(templateCode, {
+          localOnly: localOnlyDraftPersistence,
+        })
+
+    void loadDraft
       .then(saved => {
         if (cancelled) return
         if (saved?.draft) {
@@ -151,7 +165,15 @@ export function useUjatProgramRegistrationEditor(
     return () => {
       cancelled = true
     }
-  }, [active, localOnlyDraftPersistence, resetToSeed, skipDraftRestore, templateCode])
+  }, [
+    active,
+    localOnlyDraftPersistence,
+    registrationWizardProgramType,
+    resetToSeed,
+    skipDraftRestore,
+    templateCode,
+    usesRegistrationWizardDraft,
+  ])
 
   useEffect(() => {
     if (!active) {
@@ -270,22 +292,40 @@ export function useUjatProgramRegistrationEditor(
 
   const persistDraft = useCallback(async () => {
     const overlay = { ...getUjatProgramRegistrationOverlayRecord() }
-    await persistWritingFormTemplateDraft({
-      templateId: templateCode,
-      draft,
-      overlay,
-      localOnly: localOnlyDraftPersistence,
-    })
-    if (localOnlyDraftPersistence) {
-      persistUjatRegistrationTemplateSave({ draft, overlay })
-    } else {
-      const { clearUjatRegistrationTemplateLocalStorage } = await import(
-        '@/features/program/ujat/lib/ujat-registration-template-local-save'
+    if (usesRegistrationWizardDraft) {
+      const { persistRegistrationWizardFormDraft } = await import(
+        '@/features/program/general/lib/registration-wizard-form-draft'
       )
-      clearUjatRegistrationTemplateLocalStorage()
+      await persistRegistrationWizardFormDraft({
+        programType: registrationWizardProgramType!,
+        templateCode,
+        draft,
+        overlay,
+      })
+    } else {
+      await persistWritingFormTemplateDraft({
+        templateId: templateCode,
+        draft,
+        overlay,
+        localOnly: localOnlyDraftPersistence,
+      })
+      if (localOnlyDraftPersistence) {
+        persistUjatRegistrationTemplateSave({ draft, overlay })
+      } else {
+        const { clearUjatRegistrationTemplateLocalStorage } = await import(
+          '@/features/program/ujat/lib/ujat-registration-template-local-save'
+        )
+        clearUjatRegistrationTemplateLocalStorage()
+      }
     }
     return { draft, overlay }
-  }, [draft, localOnlyDraftPersistence, templateCode])
+  }, [
+    draft,
+    localOnlyDraftPersistence,
+    registrationWizardProgramType,
+    templateCode,
+    usesRegistrationWizardDraft,
+  ])
 
   const handleSave = useCallback((options?: { silent?: boolean }) => {
     return (async () => {

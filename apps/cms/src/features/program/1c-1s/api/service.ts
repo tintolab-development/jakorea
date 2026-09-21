@@ -4,7 +4,6 @@ import {
 } from '@/features/program/general/lib/registration-local-save'
 import {
   bulkDeleteAdminProgramsRemote,
-  createAdminProgramRemote,
   deleteAdminProgramRemote,
   fetchAdminProgramByIdRemote,
   fetchAdminProgramsRemote,
@@ -162,7 +161,13 @@ export async function getCompanySchoolProgram(programId: string): Promise<Progra
 
 export async function createCompanySchoolProgram(program: Program): Promise<Program> {
   assertRemoteReady()
-  const dto = await createAdminProgramRemote(mapCompanySchoolToCreateRequest(program))
+  const { createAdminProgramRemoteWithRegistrationForms } = await import(
+    '@/features/program/general/api/create-admin-program-remote-with-registration-forms'
+  )
+  const dto = await createAdminProgramRemoteWithRegistrationForms(
+    program,
+    mapCompanySchoolToCreateRequest(program)
+  )
   return mapCompanySchoolDetailToProgram(dto)
 }
 

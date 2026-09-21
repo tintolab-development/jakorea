@@ -10,12 +10,14 @@ import {
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
 import { useUjatProgramRegistrationFlow } from '@/features/program/ujat/hooks/use-ujat-program-registration-flow'
 import { UjatProgramRegistrationBodyHeader } from '@/features/program/ujat/ui/registration/ujat-program-registration-body-header'
-import { clearUjatRegistrationOperationalFormDrafts } from '@/features/program/ujat/lib/ujat-registration-operational-form-drafts'
+import {
+  deleteRegistrationProgramDraftRemote,
+  peekRegistrationProgramDraftPayload,
+} from '@/features/program/general/lib/registration-program-draft-session'
 import type { Program } from '@/types/domain'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   clearRegistrationDraftForFreshStart,
-  peekWritingFormDraftOverwrite,
   PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
   shouldRemoveRegistrationDraftAfterCompletion,
@@ -133,17 +135,14 @@ export function UjatProgramRegistrationFullpageModal({
   }, [flow, showAlert])
 
   const handleSaveClick = useCallback(() => {
-    const templateId = flow.currentStepDef.templateId
-    const existing = peekWritingFormDraftOverwrite(templateId, {
-      titleFallbackTemplateIds: [PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE],
-    })
-    if (existing != null) {
-      setOverwriteTitle(existing.title)
+    const payload = peekRegistrationProgramDraftPayload('UJAT')
+    if (payload != null && (payload.programTitleKo?.trim() || payload.savedAt)) {
+      setOverwriteTitle(payload.programTitleKo?.trim() || '제목 없음')
       setOverwriteOpen(true)
       return
     }
     void runDraftSave()
-  }, [flow.currentStepDef.templateId, runDraftSave])
+  }, [runDraftSave])
 
   const handleOverwriteConfirm = useCallback(() => {
     void (async () => {
@@ -206,10 +205,9 @@ export function UjatProgramRegistrationFullpageModal({
             void flow
               .handleCompleteRegistration()
               .then(() => {
-                // 모집·신청 초안은 등록 완료 후 항상 제거
-                clearUjatRegistrationOperationalFormDrafts()
+                void deleteRegistrationProgramDraftRemote('UJAT')
                 if (!shouldRemoveSavedDraftAfterCompletion) return
-                clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE)
+                void clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE)
               })
               .catch(error => {
                 console.debug('UJAT program registration completion failed', error)
