@@ -311,6 +311,8 @@ GET responses에 **404 제거**, empty 예시 추가.
 | `ownerProgramDraftId` ≠ `programDraftId` | FE copy 시 draftId 불일치 | 400 + field |
 | `formType: REGISTRATION` 미지원 | BE | enum·validator에 REGISTRATION 추가 |
 | BE create formBindings 트랜잭션 미구현 | BE | 400 대신 **501/명시 code** 또는 구현 |
+| **[FE 버그, 수정 완료]** FE가 scoped copy 직후 `PATCH /form-templates/{templateId} {useYn:false}`로 "양식 관리 목록에서 숨김" 처리 → BE의 create/binding 검증 쿼리(`... AND COALESCE(t.use_yn,true)=true`)가 이 행을 "존재하지 않음/비활성"으로 판정 → `templateVersionId does not exist or is inactive` 400 | **FE** | scoped(program-draft/program 소유) 복사본은 실제 프로그램이 계속 참조하는 **활성 버전**이므로 `useYn:false`로 숨기지 않음. FE는 `description`만 남기는 방식으로 수정(2026-09-21). "양식 관리" 목록에서 scoped 복사본을 숨기는 요구가 여전히 있다면, **`use_yn`이 아니라 `ownerProgramDraftId`/program-scope 존재 여부로 목록 쿼리를 필터링**해 달라는 BE 변경이 필요 — `use_yn`을 목록 숨김과 "존재/활성" 판정에 동시에 재사용하지 말 것을 권장 |
+| **[BE 확인 요청 중]** 위 useYn 수정 후 재시도 → `400 GENERAL_PROGRAM_APPLICATION_FORM_BINDING_REQUIRED` (`일반 프로그램에는 발행된 신청 양식 연결이 필요합니다`). formBindings에 `{formType:"APPLICATION", templateId, templateVersionId(발행 완료), active:true, required:false, targetRole:"INDIVIDUAL"}`가 이미 포함된 상태에서도 발생 | **미확정** | FE가 보내는 값 중 BE 검증이 실제로 보는 필드가 무엇인지 확인 필요 — (1) `targetType`(FE는 안 보냄, `targetRole`만 보냄) 매칭 여부, (2) `required:true` 요구 여부(FE는 모든 binding에 `required:false` 고정), (3) publish 응답의 `templateVersionId` 에코 정확성. `GeneralProgramFormFinalizeService.java`의 해당 throw 조건문 확인 요청 |
 
 ### 9.4 성공 시 기대
 
