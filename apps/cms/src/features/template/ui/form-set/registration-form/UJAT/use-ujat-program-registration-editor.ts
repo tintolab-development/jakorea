@@ -120,16 +120,17 @@ export function useUjatProgramRegistrationEditor(
     setDraft(EMPTY_WRITING_FORM_DRAFT)
     setActiveParagraphId(null)
 
-    const loadDraft = usesRegistrationWizardDraft
-      ? import('@/features/program/general/lib/registration-wizard-form-draft').then(m =>
-          m.loadRegistrationWizardFormDraft({
-            programType: registrationWizardProgramType!,
-            templateCode,
-          })
-        )
-      : loadWritingFormTemplateDraft(templateCode, {
-          localOnly: localOnlyDraftPersistence,
-        })
+      const loadDraft =
+        usesRegistrationWizardDraft && !localOnlyDraftPersistence
+          ? import('@/features/program/general/lib/registration-wizard-form-draft').then(m =>
+              m.loadRegistrationWizardFormDraft({
+                programType: registrationWizardProgramType!,
+                templateCode,
+              })
+            )
+          : loadWritingFormTemplateDraft(templateCode, {
+              localOnly: localOnlyDraftPersistence,
+            })
 
     void loadDraft
       .then(saved => {
@@ -292,6 +293,16 @@ export function useUjatProgramRegistrationEditor(
 
   const persistDraft = useCallback(async () => {
     const overlay = { ...getUjatProgramRegistrationOverlayRecord() }
+    if (localOnlyDraftPersistence) {
+      await persistWritingFormTemplateDraft({
+        templateId: templateCode,
+        draft,
+        overlay,
+        localOnly: true,
+      })
+      persistUjatRegistrationTemplateSave({ draft, overlay })
+      return { draft, overlay }
+    }
     if (usesRegistrationWizardDraft) {
       const { persistRegistrationWizardFormDraft } = await import(
         '@/features/program/general/lib/registration-wizard-form-draft'

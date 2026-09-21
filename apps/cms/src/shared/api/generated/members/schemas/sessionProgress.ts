@@ -8,9 +8,6 @@
 
 export interface SessionProgress {
   scheduleId?: number;
-  requestedScheduleId?: number;
-  resolvedScheduleId?: number;
-  scheduleUnresolved?: boolean;
   sessionNo?: number;
   scheduleName?: string;
   startAt?: string;

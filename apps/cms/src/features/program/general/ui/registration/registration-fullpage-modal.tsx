@@ -14,6 +14,7 @@ import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general
 import {
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
   clearRegistrationDraftForFreshStart,
+  peekRegistrationDraftNotice,
   registrationProgramTypeForTemplateCode,
   shouldRemoveRegistrationDraftAfterCompletion,
   shouldSkipRegistrationDraftRestore,
@@ -23,10 +24,7 @@ import {
   assertRegistrationWizardRemoteReady,
   shouldUseRegistrationCreateFormBindings,
 } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
-import {
-  deleteRegistrationProgramDraftRemote,
-  peekRegistrationProgramDraftPayload,
-} from '@/features/program/general/lib/registration-program-draft-session'
+import { deleteRegistrationProgramDraftRemote } from '@/features/program/general/lib/registration-program-draft-session'
 import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
@@ -170,12 +168,11 @@ export function GeneralProgramRegistrationFullpageModal({
   }, [flow, showAlert])
 
   const handleSaveClick = useCallback(() => {
-    const programType = registrationProgramTypeForTemplateCode(
+    const existing = peekRegistrationDraftNotice(
       flow.registrationTemplateId as ProgramRegistrationDraftTemplateCode
     )
-    const payload = peekRegistrationProgramDraftPayload(programType)
-    if (payload != null && (payload.programTitleKo?.trim() || payload.savedAt)) {
-      setOverwriteTitle(payload.programTitleKo?.trim() || '제목 없음')
+    if (existing != null) {
+      setOverwriteTitle(existing.title)
       setOverwriteOpen(true)
       return
     }

@@ -20,7 +20,7 @@ export interface SaveApplicationRequest {
   answers?: SaveApplicationRequestAnswers;
   /**
      * @minItems 0
-     * @maxItems 3
+     * @maxItems 2
      */
   requestedSchedules?: RequestedScheduleRequest[];
   requestedClassCount?: number;

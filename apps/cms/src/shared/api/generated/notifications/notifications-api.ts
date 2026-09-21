@@ -31,7 +31,7 @@ import type {
   CategoryUpdateRequest,
   CreateRequest,
   EmailAttachmentBindRequest,
-  List6Params,
+  List5Params,
   ListNotificationDeliveriesParams,
   ListNotificationTemplateVariablesParams,
   ListNotificationTemplatesParams,
@@ -68,7 +68,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * ### 이 API가 하는 일
  * - PUT /api/admin/notification-event-catalog/{eventType}
  * - API 분류: 시스템 진단/운영 검증 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PUT /api/admin/notification-event-catalog/{eventType}`
  *
@@ -180,8 +180,8 @@ const upsertNotificationEventChannelTemplate = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notification-templates`
  *
@@ -235,8 +235,8 @@ const listNotificationTemplates = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/notification-templates
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `POST /api/admin/notification-templates`
  *
@@ -711,8 +711,8 @@ const syncSenderProfiles = (
  * - 검토 메모: V55 batch aggregate state derived from outbox/delivery
  * @summary CMS 알림 실발송 배치 목록 조회
  */
-const list6 = (
-    params?: List6Params,
+const list5 = (
+    params?: List5Params,
  options?: SecondParameter<typeof customInstance<BatchPageResponse>>,) => {
       return customInstance<BatchPageResponse>(
       {url: `/api/admin/notification-send-batches`, method: 'GET',
@@ -764,7 +764,7 @@ const list6 = (
  * - 검토 메모: V55 active provider-configured template + required Idempotency-Key + actor/direct recipient snapshot + durable outbox; direct AD blocked
  * @summary CMS 알림 실발송 배치 생성
  */
-const create9 = (
+const create8 = (
     createRequest: CreateRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseCreateResponse>>,) => {
       return customInstance<ApiResponseCreateResponse>(
@@ -986,8 +986,8 @@ const cancelNotificationDelivery = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/notification-deliveries/test-send
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `POST /api/admin/notification-deliveries/test-send`
  *
@@ -1147,8 +1147,8 @@ const archiveNotificationTemplate = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notification-templates/{templateId}`
  *
@@ -1622,7 +1622,7 @@ const recipientCandidates = (
  * ### 이 API가 하는 일
  * - 알림 조회
  * - API 분류: 시스템 진단/운영 검증 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notification-event-catalog`
  *
@@ -1727,8 +1727,8 @@ const notificationEventChannelTemplates = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notification-deliveries`
  *
@@ -1782,8 +1782,8 @@ const listNotificationDeliveries = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notification-deliveries/{deliveryId}`
  *
@@ -1886,7 +1886,7 @@ const unbindEmailAttachment = (
       options);
     }
 
-return {updateNotificationEventCatalog,upsertNotificationEventChannelTemplate,listNotificationTemplates,createNotificationTemplate,moveTemplate,bindEmailAttachment,syncTemplates,bulkArchiveNotificationTemplates,createCategory,moveCategory,syncSenderProfiles,list6,create9,retryFailed,cancel3,confirmNotificationDelivery,cancelNotificationDelivery,testSendNotification,getTemplate,archiveNotificationTemplate,updateNotificationTemplate,deleteCategory,updateCategory,previewTemplate,categoryTree,listSenderProfiles,detail3,listNotificationTemplateVariables,recipientCandidates,notificationEventCatalog,notificationEventChannelTemplates,listNotificationDeliveries,getNotificationDelivery,unbindEmailAttachment}};
+return {updateNotificationEventCatalog,upsertNotificationEventChannelTemplate,listNotificationTemplates,createNotificationTemplate,moveTemplate,bindEmailAttachment,syncTemplates,bulkArchiveNotificationTemplates,createCategory,moveCategory,syncSenderProfiles,list5,create8,retryFailed,cancel3,confirmNotificationDelivery,cancelNotificationDelivery,testSendNotification,getTemplate,archiveNotificationTemplate,updateNotificationTemplate,deleteCategory,updateCategory,previewTemplate,categoryTree,listSenderProfiles,detail3,listNotificationTemplateVariables,recipientCandidates,notificationEventCatalog,notificationEventChannelTemplates,listNotificationDeliveries,getNotificationDelivery,unbindEmailAttachment}};
 export type UpdateNotificationEventCatalogResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['updateNotificationEventCatalog']>>>
 export type UpsertNotificationEventChannelTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['upsertNotificationEventChannelTemplate']>>>
 export type ListNotificationTemplatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['listNotificationTemplates']>>>
@@ -1898,8 +1898,8 @@ export type BulkArchiveNotificationTemplatesResult = NonNullable<Awaited<ReturnT
 export type CreateCategoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['createCategory']>>>
 export type MoveCategoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['moveCategory']>>>
 export type SyncSenderProfilesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['syncSenderProfiles']>>>
-export type List6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['list6']>>>
-export type Create9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['create9']>>>
+export type List5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['list5']>>>
+export type Create8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['create8']>>>
 export type RetryFailedResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['retryFailed']>>>
 export type Cancel3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['cancel3']>>>
 export type ConfirmNotificationDeliveryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['confirmNotificationDelivery']>>>

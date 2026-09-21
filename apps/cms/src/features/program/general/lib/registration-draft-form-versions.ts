@@ -236,6 +236,7 @@ export async function persistDraftOwnedFormVersion(args: {
     overlay: args.overlay,
     editorState: args.editorState,
     settingsJson: args.settingsJson,
+    templateCode: args.templateCode,
   })
 
   return owned

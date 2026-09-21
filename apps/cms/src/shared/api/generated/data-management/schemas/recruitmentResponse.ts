@@ -13,8 +13,6 @@ export interface RecruitmentResponse {
   status?: string;
   startAt?: string;
   endAt?: string;
-  operationStartDate?: string;
-  operationEndDate?: string;
   minCount?: number;
   maxCount?: number;
   selectionMethod?: string;

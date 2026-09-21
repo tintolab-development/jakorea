@@ -29,6 +29,7 @@ import {
 import {
   PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS,
   PROGRAM_REGISTRATION_IDS,
+  PROGRAM_REGISTRATION_TRAINED_TEACHERS_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-registration-draft'
 import { PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-economy-draft'
 import {
@@ -202,6 +203,7 @@ function usesPlaceholderDescriptionValue(paragraphId: string): boolean {
     GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     GEMINI_VISITING_TRAINING_RECRUIT_FORM_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    PROGRAM_REGISTRATION_TRAINED_TEACHERS_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     ECONOMY_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
@@ -239,6 +241,8 @@ export function withProgramRegistrationCurriculumTitleTrailing(
   if (pr.programRegistrationFormVariant === 'economy') {
     return heading
   }
+  const displayTitle =
+    pr.programType === 'schedule' ? '교육 진행 (일정형)' : '교육 진행 (커리큘럼)'
   if (pr.programRegistrationFormVariant === 'trainedTeachers') {
     const teacherTrainingToggle = (
       <CmsToggle
@@ -273,6 +277,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
 
       return {
         ...heading,
+        titleValue: displayTitle,
         descriptionValue: scheduleDescription,
         titleTrailing: (
           <div
@@ -335,6 +340,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
       pr.curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
     return {
       ...heading,
+      titleValue: displayTitle,
       titleTrailing: (
         <div
           className="program-registration-paragraph__card-title-actions"
@@ -389,6 +395,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
     if (isScheduleEventLayout) {
       return {
         ...heading,
+        titleValue: displayTitle,
         descriptionValue: scheduleDescription,
         titleTrailing: (
           <div
@@ -424,6 +431,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
     if (pr.sessionRoundType === 'multi' || !allowProgressGroupAdd) {
       return {
         ...heading,
+        titleValue: displayTitle,
         descriptionValue: scheduleDescription,
         titleTrailing: (
           <div
@@ -453,6 +461,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
 
     return {
       ...heading,
+      titleValue: displayTitle,
       descriptionValue: scheduleDescription,
       titleTrailing: (
         <div
@@ -508,6 +517,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
     !isMulti && pr.curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
   return {
     ...heading,
+    titleValue: displayTitle,
     titleTrailing: (
       <div
         className="program-registration-paragraph__card-title-actions"

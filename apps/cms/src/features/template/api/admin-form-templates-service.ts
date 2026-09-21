@@ -11,7 +11,10 @@ import {
   writingFormDraftToSchemaJson,
 } from '@/features/template/api/adapters/form-template-draft-adapters'
 import { ISSUANCE_FORM_TYPE, WRITING_FORM_TYPE } from '@/features/template/api/form-template-catalog'
-import { buildLocalDuplicateWritingTemplateCode } from '@/features/template/lib/form-template-delete-policy'
+import {
+  buildLocalDuplicateWritingTemplateCode,
+  shouldOmitImmutableFormSchemaJson,
+} from '@/features/template/lib/form-template-delete-policy'
 import {
   getFormTemplateVersionCacheEntry,
   removeFormTemplateVersionCacheEntry,
@@ -313,17 +316,20 @@ function buildVersionUpdateBody(args: {
   editorState?: Record<string, unknown>
   uiState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
+  omitSchemaJson?: boolean
 }): {
-  schemaJson: string
+  schemaJson?: string
   extensionJson?: string
   settingsJson?: string
 } {
   const body: {
-    schemaJson: string
+    schemaJson?: string
     extensionJson?: string
     settingsJson?: string
-  } = {
-    schemaJson: writingFormDraftToSchemaJson(args.draft),
+  } = {}
+
+  if (args.omitSchemaJson !== true) {
+    body.schemaJson = writingFormDraftToSchemaJson(args.draft)
   }
 
   if (
@@ -353,9 +359,18 @@ export async function saveFormTemplateVersionDraftByVersionId(args: {
   editorState?: Record<string, unknown>
   uiState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
+  templateCode?: string
+  omitSchemaJson?: boolean
 }): Promise<void> {
   assertFormsSurveysRemoteReady()
-  await updateFormTemplateVersionRemote(args.versionId, buildVersionUpdateBody(args))
+  await updateFormTemplateVersionRemote(
+    args.versionId,
+    buildVersionUpdateBody({
+      ...args,
+      omitSchemaJson:
+        args.omitSchemaJson === true || shouldOmitImmutableFormSchemaJson(args.templateCode),
+    })
+  )
 }
 
 /**
@@ -381,7 +396,13 @@ export async function saveFormTemplateVersionDraft(args: {
     throw new Error('저장할 템플릿 버전 ID를 찾을 수 없습니다. 작성 양식 목록을 먼저 조회해 주세요.')
   }
 
-  await updateFormTemplateVersionRemote(versionId, buildVersionUpdateBody(args))
+  await updateFormTemplateVersionRemote(
+    versionId,
+    buildVersionUpdateBody({
+      ...args,
+      omitSchemaJson: shouldOmitImmutableFormSchemaJson(args.templateCode),
+    })
+  )
 }
 
 export async function publishFormTemplateVersion(templateCode: string): Promise<void> {

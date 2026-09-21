@@ -19,6 +19,17 @@ function isMissingProgramDraftError(error: unknown): boolean {
   return false
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+}
+
+/** GET 래퍼·에러 봉투를 draft 아이템으로 정규화. 없거나 실패면 null */
+export function readProgramDraftItemResponse(payload: unknown): ProgramDraftItemResponse | null {
+  if (!isRecord(payload)) return null
+  if (payload.success === false) return null
+  return normalizeProgramDraftItem(payload)
+}
+
 export async function fetchMyProgramDraftRemote(
   programType: string
 ): Promise<ProgramDraftItemResponse | null> {
@@ -31,7 +42,7 @@ export async function fetchMyProgramDraftRemote(
       },
       PROGRAM_DRAFT_QUIET_OPTIONS
     )
-    return normalizeProgramDraftItem(payload)
+    return readProgramDraftItemResponse(payload)
   } catch (error) {
     if (isMissingProgramDraftError(error)) return null
     throw error
@@ -39,13 +50,17 @@ export async function fetchMyProgramDraftRemote(
 }
 
 export async function upsertMyProgramDraftRemote(
-  body: ProgramDraftUpsertRequest
+  body: ProgramDraftUpsertRequest,
+  options?: { skipGlobalErrorAlert?: boolean }
 ): Promise<ProgramDraftSaveResponse> {
-  const payload = await customInstance<unknown>({
-    url: '/api/admin/program-draft',
-    method: 'PUT',
-    data: body,
-  })
+  const payload = await customInstance<unknown>(
+    {
+      url: '/api/admin/program-draft',
+      method: 'PUT',
+      data: body,
+    },
+    options?.skipGlobalErrorAlert === true ? PROGRAM_DRAFT_QUIET_OPTIONS : undefined
+  )
 
   const normalized = normalizeProgramDraftSaveResponse(payload)
   const unwrapped = unwrapApiBody<ProgramDraftSaveResponse>(payload)

@@ -9,9 +9,6 @@
 export interface ProgramPostListItemResponse {
   postId?: number;
   programId?: number;
-  organizationApplicationId?: number;
-  organizationId?: number;
-  organizationName?: string;
   title?: string;
   content?: string;
   visibilityType?: string;

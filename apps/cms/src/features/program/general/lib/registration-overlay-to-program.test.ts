@@ -267,7 +267,50 @@ describe('normalizeRegistrationOverlayForApply', () => {
       '1사1교 경제금융교육'
     )
     expect(normalized['generalRegistration.typeSettings.educationForm']).toBe('offline')
+    expect(normalized['generalRegistration.typeSettings.singleEducationForm']).toBe('offline')
     expect(normalized['generalRegistration.basicInfo.localSponsorIds']).toEqual(['42'])
     expect(normalized['generalRegistration.basicInfo.localManagerContactIds']).toEqual(['99'])
+  })
+})
+
+describe('trained teacher curriculum overlay', () => {
+  it('prepends 교육 연수 without replacing 1차시', () => {
+    const overlay = normalizeRegistrationOverlayForApply(
+      {
+        'trainedTeachersRegistration.educationCurriculum.preEducationScheduleName': '교육 연수',
+        'trainedTeachersRegistration.educationCurriculum.preEducationScheduleLine':
+          '26년 4월 20일(월) 9:30 ~ 12:20',
+        'trainedTeachersRegistration.educationCurriculum.teacherTrainingEducationForm': 'offline',
+        'trainedTeachersRegistration.educationCurriculum.unitNameBySession': {
+          1: '단원1',
+          2: '단원2',
+        },
+        'trainedTeachersRegistration.educationCurriculum.unitContentBySession': {
+          1: '내용1',
+          2: '내용2',
+        },
+      },
+      'trainedTeachers'
+    )
+    const next = applyGeneralRegistrationOverlayToProgram(baseProgram(), overlay, {
+      programType: 'curriculum',
+      sessionRoundType: 'single',
+      curriculumChartSessionCount: 2,
+      scheduleCurriculumPreEducation: true,
+      teacherTrainingEnabled: true,
+      participantOrganization: true,
+    })
+
+    expect(next.generalCommonInfo?.teacherTrainingEnabled).toBe(true)
+    expect(next.generalCommonInfo?.curriculumSessions).toEqual([
+      expect.objectContaining({
+        sessionLabel: '교육 연수',
+        title: '교육 연수',
+        scheduleDateLabel: '26년 4월 20일(월) 9:30 ~ 12:20',
+        educationFormLabel: '오프라인',
+      }),
+      expect.objectContaining({ sessionLabel: '1차시', title: '단원1', description: '내용1' }),
+      expect.objectContaining({ sessionLabel: '2차시', title: '단원2', description: '내용2' }),
+    ])
   })
 })

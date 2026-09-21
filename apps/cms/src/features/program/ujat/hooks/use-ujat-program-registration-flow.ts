@@ -157,6 +157,7 @@ export function useUjatProgramRegistrationFlow(
       registrationWizardProgramType: programType,
       registrationWizardOpen: open,
       skipDraftRestore,
+      localOnlyDraftPersistence: true,
       /** UJAT 등록 위저드 — 단락 타이틀 옆 필수(*) */
       forceSeedParagraphsRequired: true,
     }

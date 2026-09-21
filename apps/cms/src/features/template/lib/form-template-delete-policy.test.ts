@@ -7,6 +7,7 @@ import {
   isUserCreatedWritingFormTemplateRow,
   isWritingFormTemplateStructureLocked,
   resolveWritingFormTemplateDeletable,
+  shouldOmitImmutableFormSchemaJson,
   shouldShowWritingFormTemplateDeleteButton,
 } from '@/features/template/lib/form-template-delete-policy'
 import {
@@ -15,6 +16,14 @@ import {
 } from '@/features/template/model/template-registry/agreement-template-config-registry'
 
 describe('form-template-delete-policy', () => {
+  it('omits schemaJson for registration and recruitment PUT', () => {
+    expect(shouldOmitImmutableFormSchemaJson('registration-trained-teachers')).toBe(true)
+    expect(shouldOmitImmutableFormSchemaJson('registration-trained-teachers-copy-1')).toBe(true)
+    expect(shouldOmitImmutableFormSchemaJson('recruitment-participant-school')).toBe(true)
+    expect(shouldOmitImmutableFormSchemaJson('application-participant-school')).toBe(false)
+    expect(shouldOmitImmutableFormSchemaJson('agreement-portrait')).toBe(false)
+  })
+
   it('identifies catalog-fixed template codes', () => {
     expect(isCatalogFixedWritingFormTemplateCode('agreement-portrait')).toBe(true)
     expect(isCatalogFixedWritingFormTemplateCode('agreement-portrait-copy-01')).toBe(false)

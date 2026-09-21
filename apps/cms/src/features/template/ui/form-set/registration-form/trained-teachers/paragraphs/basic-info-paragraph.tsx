@@ -1,6 +1,7 @@
 /**
  * 교육받은 교사 프로그램 등록 폼 — 기본 정보
- * (참여자 유형: 학교/기관 checked·disabled 고정. IPS는 유형 설정에서만 관리)
+ * (참여자 유형: 학교/기관 checked·disabled 고정.
+ *  기본 정보 footer IPS와 유형 설정 IPS는 별도 overlay 키)
  */
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { ProgramRegistrationBasicInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph'
@@ -46,6 +47,7 @@ export function TrainedTeachersRegistrationBasicInfoParagraph({
       onTeacherInstructorChange={onTeacherInstructorChange}
       onVolunteerChange={onVolunteerChange}
       hideEducationPlace
+      includeFooterIpsType
       trainedTeachersDefaults
       participantTypesEdit={
         <div className="detail-info-form-inputs-wrapper">

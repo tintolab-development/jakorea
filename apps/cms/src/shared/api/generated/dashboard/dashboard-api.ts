@@ -43,7 +43,7 @@ import type {
   IndividualDocumentEvaluationResponse,
   InstructorApplicationDetailResponse,
   InstructorApplicationsParams,
-  List11Params,
+  List10Params,
   ListAssignmentsParams,
   NotificationCasePage,
   NotificationUnreadCountResponse,
@@ -137,8 +137,8 @@ const recordVolunteerDocumentEvaluation = (
 /**
  * ### 이 API가 하는 일
  * - UJAT 기관 임시배정 상세
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: UJAT/대경봉 배정 관리 (`SCR_UJAT_DGBONG_ASSIGNMENT`)
  * - 프론트 담당 영역: 프로그램_execution (`program_execution`)
  * - 호출 방식: `GET /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule`
  *
@@ -193,8 +193,8 @@ const getTemporarySchedule = (
 /**
  * ### 이 API가 하는 일
  * - UJAT 신청기관 임시 일정/학급 배정 저장
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: UJAT/대경봉 배정 관리 (`SCR_UJAT_DGBONG_ASSIGNMENT`)
  * - 프론트 담당 영역: 프로그램_execution (`program_execution`)
  * - 호출 방식: `PUT /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule`
  *
@@ -521,8 +521,8 @@ const recordIndividualDocumentEvaluation = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/widgets/{widgetKey}/program-filters`
  *
@@ -575,8 +575,8 @@ const getWidgetProgramFilters = (
 /**
  * ### 이 API가 하는 일
  * - PUT /api/admin/dashboard/widgets/{widgetKey}/program-필터
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `PUT /api/admin/dashboard/widgets/{widgetKey}/program-filters`
  *
@@ -632,8 +632,8 @@ const saveWidgetProgramFilters = (
 /**
  * ### 이 API가 하는 일
  * - PUT /api/admin/dashboard/widgets/layout
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `PUT /api/admin/dashboard/widgets/layout`
  *
@@ -688,8 +688,8 @@ const saveDashboardWidgetLayout = (
 /**
  * ### 이 API가 하는 일
  * - PUT /api/admin/dashboard/shortcuts/visibility
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `PUT /api/admin/dashboard/shortcuts/visibility`
  *
@@ -744,8 +744,8 @@ const saveDashboardShortcutVisibility = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 관리자 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 관리자 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/preferences`
  *
@@ -798,8 +798,8 @@ const dashboardPreferences = (
 /**
  * ### 이 API가 하는 일
  * - PUT /api/admin/dashboard/preferences
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 관리자 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 관리자 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `PUT /api/admin/dashboard/preferences`
  *
@@ -854,8 +854,8 @@ const saveDashboardPreferences1 = (
 /**
  * ### 이 API가 하는 일
  * - UJAT 기관 일정 수정 요청
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: UJAT/대경봉 배정 관리 (`SCR_UJAT_DGBONG_ASSIGNMENT`)
  * - 프론트 담당 영역: 프로그램_execution (`program_execution`)
  * - 호출 방식: `POST /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/schedule-change-request`
  *
@@ -1244,8 +1244,8 @@ const updateOrganizationApplication = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notifications/{recipientId}/read`
  *
@@ -1298,8 +1298,8 @@ const markRead2 = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notifications/{recipientId}/hidden`
  *
@@ -1352,8 +1352,8 @@ const hide1 = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notifications/{recipientId}/clicked`
  *
@@ -1406,8 +1406,8 @@ const markClicked1 = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notifications/read-all`
  *
@@ -1731,8 +1731,8 @@ const volunteerApplicationDetail = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 봉사자/UJAT/면접 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 봉사자/UJAT/면접 (`SCR_VOLUNTEER`)
  * - 프론트 담당 영역: volunteer-interviews (`volunteer-interviews`)
  * - 호출 방식: `GET /api/admin/programs/{programId}/volunteer-applications`
  *
@@ -1788,8 +1788,8 @@ const volunteerApplications = (
 /**
  * ### 이 API가 하는 일
  * - UJAT 기관 일정/학급 배정 목록
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: UJAT/대경봉 배정 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: UJAT/대경봉 배정 관리 (`SCR_UJAT_DGBONG_ASSIGNMENT`)
  * - 프론트 담당 영역: 프로그램_execution (`program_execution`)
  * - 호출 방식: `GET /api/admin/programs/{programId}/ujat/organization-schedule-assignments`
  *
@@ -1845,8 +1845,8 @@ const listAssignments = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 기관/개인/강사 신청 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 기관/개인/강사 신청 (`SCR_APPLICATION`)
  * - 프론트 담당 영역: applications (`applications`)
  * - 호출 방식: `GET /api/admin/programs/{programId}/organization-applications`
  *
@@ -1902,8 +1902,8 @@ const organizationApplications1 = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 기관/개인/강사 신청 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 기관/개인/강사 신청 (`SCR_APPLICATION`)
  * - 프론트 담당 영역: applications (`applications`)
  * - 호출 방식: `GET /api/admin/programs/{programId}/instructor-applications`
  *
@@ -1959,8 +1959,8 @@ const instructorApplications = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 기관/개인/강사 신청 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 기관/개인/강사 신청 (`SCR_APPLICATION`)
  * - 프론트 담당 영역: applications (`applications`)
  * - 호출 방식: `GET /api/admin/programs/{programId}/individual-applications`
  *
@@ -2016,8 +2016,8 @@ const individualApplications = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notifications`
  *
@@ -2071,8 +2071,8 @@ const notifications1 = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notifications/unread-count`
  *
@@ -2165,8 +2165,8 @@ const unreadNotificationCount = (
  * - 검토 메모: 2026-08-22 CMS/portal/NEIS/Stibee cross-review aligned API
  * @summary 알림 발송 정책 케이스 목록 조회
  */
-const list11 = (
-    params?: List11Params,
+const list10 = (
+    params?: List10Params,
  options?: SecondParameter<typeof customInstance<NotificationCasePage>>,) => {
       return customInstance<NotificationCasePage>(
       {url: `/api/admin/notifications/cases`, method: 'GET',
@@ -2230,8 +2230,8 @@ const getDashboardShortcutBadges = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/widgets`
  *
@@ -2284,8 +2284,8 @@ const dashboardWidgets = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/shortcuts`
  *
@@ -2338,8 +2338,8 @@ const dashboardShortcuts = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/recruitments`
  *
@@ -2393,8 +2393,8 @@ const dashboardRecruitments = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/program-schedules`
  *
@@ -2448,8 +2448,8 @@ const dashboardProgramSchedules = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 공지/FAQ/문의 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
  * - 호출 방식: `GET /api/admin/dashboard/program-inquiries`
  *
@@ -2503,8 +2503,8 @@ const dashboardProgramInquiries = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 알림/발송관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/dashboard/notifications/count`
  *
@@ -2557,8 +2557,8 @@ const dashboardNotificationCount = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/kpi-progress`
  *
@@ -2612,8 +2612,8 @@ const dashboardKpiProgress = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 대시보드 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
  * - 호출 방식: `GET /api/admin/dashboard/home`
  *
@@ -2663,7 +2663,7 @@ const dashboardHome = (
       options);
     }
 
-return {recordVolunteerDocumentEvaluation,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list11,getDashboardShortcutBadges,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome}};
+return {recordVolunteerDocumentEvaluation,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list10,getDashboardShortcutBadges,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome}};
 export type RecordVolunteerDocumentEvaluationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['recordVolunteerDocumentEvaluation']>>>
 export type GetTemporaryScheduleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getTemporarySchedule']>>>
 export type SaveTemporaryScheduleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveTemporarySchedule']>>>
@@ -2701,7 +2701,7 @@ export type InstructorApplicationsResult = NonNullable<Awaited<ReturnType<Return
 export type IndividualApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['individualApplications']>>>
 export type Notifications1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['notifications1']>>>
 export type UnreadNotificationCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['unreadNotificationCount']>>>
-export type List11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['list11']>>>
+export type List10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['list10']>>>
 export type GetDashboardShortcutBadgesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getDashboardShortcutBadges']>>>
 export type DashboardWidgetsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardWidgets']>>>
 export type DashboardShortcutsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardShortcuts']>>>

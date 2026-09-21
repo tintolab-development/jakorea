@@ -25,6 +25,11 @@ export function toValidDayjs(value: unknown, fallback: Dayjs = dayjs()): Dayjs {
   return toValidDayjsOrNull(value) ?? fallback
 }
 
+/** overlay 문자열·invalid dayjs가 들어와도 Dayjs를 반환한다. */
+export function toPickerDayjs(value: unknown): Dayjs {
+  return toValidDayjs(value)
+}
+
 export function findNextEnabledDate(date: Dayjs, disabledDate?: (date: Dayjs) => boolean): Dayjs {
   const start = toValidDayjs(date)
   if (!disabledDate?.(start)) return start

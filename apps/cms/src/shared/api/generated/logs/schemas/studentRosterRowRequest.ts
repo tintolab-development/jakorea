@@ -7,8 +7,6 @@
  */
 
 export interface StudentRosterRowRequest {
-  rosterId?: number;
-  memberId?: number;
   /**
      * @minLength 0
      * @maxLength 100
@@ -41,9 +39,4 @@ export interface StudentRosterRowRequest {
      * @maxLength 255
      */
   email?: string;
-  /**
-     * @minLength 0
-     * @maxLength 200
-     */
-  notes?: string;
 }
