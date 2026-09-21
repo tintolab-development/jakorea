@@ -10,7 +10,7 @@ alwaysApply: false
 
 형제 SSOT: [`education-status-page.mdc`](education-status-page.mdc), [`volunteer-status-page.mdc`](volunteer-status-page.mdc)
 
-**교육현황과의 관계**: 교육현황은 역할 무관 전체 노출(슈퍼셋). 강의현황은 그중 **강사 역할 신청만** 뽑은 서브셋 뷰 — 동일 신청 건이 교육현황·강의현황에 **동시에** 노출될 수 있다(배타적 파티션 아님).
+**교육현황과의 관계**: 교육현황(수강 역할) / 봉사현황(봉사 역할) / 강의현황(강사 역할)은 서로 **겹치지 않는 배타적 파티션**이다. 강사 역할로 판정된 신청 건은 **강의현황에만** 노출되고 교육현황에는 노출되지 않는다. 단, **Gemini 강사 모집은 이번 범위에서 강의현황 제외 대상**이라 `resolveApplicationRole`이 `participant`로 판정하므로 교육현황에 남는다(별도 기획 예정 전까지).
 
 ## 목록 (`/mypage/lectures`)
 

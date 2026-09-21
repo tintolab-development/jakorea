@@ -10,10 +10,12 @@ alwaysApply: false
 
 ## 목록 (`/mypage/education`)
 
-- 로그인 회원이 **신청한 교육 프로그램**을 **역할 무관 전체(슈퍼셋)** 노출
-- **역할 기반 서브셋 메뉴** — 강사·강사겸교사만: 봉사 역할(일반 봉사 + UJAT 봉사)은 마이페이지 **봉사현황**에도, 강사 역할(Gemini 강사 모집 제외)은 **강의현황**에도 **동시에** 노출됨(중복 노출 허용, 배타적 파티션 아님). 역할 판정: `resolveApplicationRole` — 관련: [`volunteer-status-page.mdc`](volunteer-status-page.mdc), [`lecture-status-page.mdc`](lecture-status-page.mdc)
+- 로그인 회원이 **신청한 교육 프로그램** 중 **수강(참여) 역할** 신청만 노출
+- **역할 기반 배타적 파티션** — 교육현황(수강) / 봉사현황(봉사) / 강의현황(강사, 강사·강사겸교사만)은 서로 **겹치지 않는다**. 봉사 역할(일반 봉사 + UJAT 봉사) 신청은 봉사현황에**만**, 강사 역할(Gemini 강사 모집 제외) 신청은 강의현황에**만** 노출된다. 역할 판정: `resolveApplicationRole` — 관련: [`volunteer-status-page.mdc`](volunteer-status-page.mdc), [`lecture-status-page.mdc`](lecture-status-page.mdc)
+  - **교육받은 교사**(`trainedTeachers`)는 본인이 학생을 대신 신청하고 본인이 가르치는 구조라도 강사 모집 절차가 없으므로 **교육현황에만** 노출(수강=참여 역할로 분류)
+  - **일반(기관)**: 담당 교사가 학생을 대표로 신청하는 경우도 수강 역할로 분류되어 교육현황에 노출
 - API: `GET /api/portal/me/program-applications` (연동 시 `statusGroup`, `page`, `size`)
-- Mock: [`mock-applications.ts`](apps/platform/src/features/mypage/education/applications/lib/mock-applications.ts) · 필터 `filterEducationStatusApplications`(전체 반환)
+- Mock: [`mock-applications.ts`](apps/platform/src/features/mypage/education/applications/lib/mock-applications.ts) · 필터 `filterEducationStatusApplications`(`isParticipantRoleApplication`만 반환)
 
 ### 정렬
 
@@ -306,6 +308,6 @@ alwaysApply: false
 - 안내사항: `EducationInProgressNoticePanel` · `EducationInProgressNoticeDetailModal` · `EducationNoticeStats` · `EducationProgramInfoModal` · `EducationApplicationInfoModal`
 - 교육일정: `EducationSchedulePanel` · `resolveEducationAssignmentGuide` · `filterItemsUpToLastParticipatedSession`
 - 설문·만족도: `EducationSurveyFillPanel` (active, CMS `createDefaultSurveyDraft` 시드) · `EducationSurveyEmptyPanel` (empty)
-- 역할 판정: [`application-kind.ts`](apps/platform/src/features/mypage/education/applications/lib/application-kind.ts) — `resolveApplicationRole` / `isVolunteerRoleApplication` / `isInstructorRoleApplication`
+- 역할 판정: [`application-kind.ts`](apps/platform/src/features/mypage/education/applications/lib/application-kind.ts) — `resolveApplicationRole` / `isParticipantRoleApplication` / `isVolunteerRoleApplication` / `isInstructorRoleApplication`
 
-**Last updated:** 2026-09-19 (교육/봉사/강의현황 역할 기반 슈퍼셋+서브셋 재구조화)
+**Last updated:** 2026-09-21 (교육/봉사/강의현황 역할 기반 배타적 파티션으로 재구조화 — 교육현황은 수강 역할만)

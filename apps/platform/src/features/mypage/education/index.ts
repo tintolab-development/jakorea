@@ -28,6 +28,7 @@ export {
   filterLectureStatusApplications,
   filterVolunteerStatusApplications,
   isInstructorRoleApplication,
+  isParticipantRoleApplication,
   isVolunteerRoleApplication,
   resolveApplicationRole,
   compareEducationApplicationItems,

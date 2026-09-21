@@ -26,6 +26,11 @@ export function resolveApplicationRole(item: EducationApplicationListItem): Appl
   return 'participant'
 }
 
+/** 교육현황 대상. 수강(참여) 역할 신청 — 봉사·강사 역할은 제외(배타적 파티션) */
+export function isParticipantRoleApplication(item: EducationApplicationListItem): boolean {
+  return resolveApplicationRole(item) === 'participant'
+}
+
 /** 봉사현황 대상. 일반 봉사 + UJAT 봉사 통합 */
 export function isVolunteerRoleApplication(item: EducationApplicationListItem): boolean {
   return resolveApplicationRole(item) === 'volunteer'
@@ -36,11 +41,14 @@ export function isInstructorRoleApplication(item: EducationApplicationListItem):
   return resolveApplicationRole(item) === 'instructor'
 }
 
-/** 교육현황 — 전체 신청 노출(역할 무관, 슈퍼셋). 봉사·강의현황과 중복 노출 허용 */
+/**
+ * 교육현황 — 수강(참여) 역할 신청만. 봉사·강사 역할 신청은 각각 봉사현황·강의현황에서만
+ * 노출한다(배타적 파티션 — 세 메뉴는 서로 겹치지 않음).
+ */
 export function filterEducationStatusApplications(
   items: EducationApplicationListItem[],
 ): EducationApplicationListItem[] {
-  return items
+  return items.filter(isParticipantRoleApplication)
 }
 
 /** 봉사현황 — 일반 봉사 + UJAT 봉사 통합 */
