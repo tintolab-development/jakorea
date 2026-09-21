@@ -192,6 +192,8 @@ export interface GeneralProgramCommonInfoExtension {
   educationJournalEnabled?: boolean
   /** 교육받은 교사 — 교육 연수 토글. ON이면 첫 진행 항목 타이틀·일정명이 교육 연수로 치환(IPS Prepare 고정) */
   teacherTrainingEnabled?: boolean
+  /** 교육받은 교사 — GET teacherTrainingScheduleName. OFF면 빈 문자열 */
+  teacherTrainingScheduleName?: string
   /** 일반 프로그램 캘린더 — 설문조사 시작/종료 등 */
   calendarSurveySchedules?: GeneralProgramCalendarScheduleRow[]
   /** 일반 프로그램 캘린더 — 과제 제출 마감 등 */

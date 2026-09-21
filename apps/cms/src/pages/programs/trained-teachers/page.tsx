@@ -146,10 +146,12 @@ function TrainedTeachersProgramPageContent() {
       setSelectedProgramForFullPageModal(detailQuery.data)
       return
     }
+    // 목록 행은 rounds:[] 경량 — 상세 GET 전에 공통정보를 빈 일정처럼 덮지 않음
+    if (detailQuery.isFetching || detailQuery.isLoading) return
     if (filteredPrograms.length === 0) return
     const program = filteredPrograms.find(item => item.id === programIdFromUrl)
     if (program) setSelectedProgramForFullPageModal(program)
-  }, [detailQuery.data, filteredPrograms, programIdFromUrl, searchParams])
+  }, [detailQuery.data, detailQuery.isFetching, detailQuery.isLoading, filteredPrograms, programIdFromUrl, searchParams])
 
   useEffect(() => {
     if (!listQuery.isError || listQuery.isFetching) return

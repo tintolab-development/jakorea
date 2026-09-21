@@ -26,6 +26,24 @@ import {
   parseTrainedTeacherServiceDetailJson,
   serializeTrainedTeacherServiceDetailJson,
 } from './service-detail-json'
+import { clearTeacherTrainingScheduleIfOff } from '../lib/teacher-training-schedule'
+
+/** 목록 GET echo (상세와 동일 컬럼). 일반 프로그램 DTO에는 없을 수 있음. */
+type TrainedTeacherListItemDto = AdminProgramListItemDto & {
+  textbookName?: string | null
+  detailedProgramName?: string | null
+  /** 후원사 담당자명 — 생성 관리자가 아님 */
+  managerName?: string | null
+  venue?: string | null
+  contactEmail?: string | null
+  contactPhone?: string | null
+  educationProcess?: string | null
+  ipOwned?: string | null
+  courseDeliveredBy?: string | null
+  institutionType?: string | null
+  teamDivision?: string | null
+  district?: string | null
+}
 
 export const TRAINED_TEACHER_PROGRAM_API_TYPE = 'TRAINED_TEACHER'
 
@@ -138,19 +156,41 @@ function baseProgram(
 }
 
 export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto): Program {
+  const item = dto as TrainedTeacherListItemDto
   const title =
-    dto.nameKo?.trim() || dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
+    item.nameKo?.trim() || item.title?.trim() || item.mainTitle?.trim() || '제목 없음'
+  const textbookName = item.textbookName?.trim() || item.detailedProgramName?.trim() || undefined
+  const managerName = item.managerName?.trim() || undefined
+  const venue = item.venue?.trim() || undefined
   return baseProgram({
-    id: dto.id == null ? '' : String(dto.id),
+    id: item.id == null ? '' : String(item.id),
     title,
-    mainTitle: dto.mainTitle?.trim() || title,
-    startDate: dto.businessStartDate ?? dto.startDate,
-    endDate: dto.businessEndDate ?? dto.endDate,
-    lifecycleStatus: resolveListLifecycleStatus(dto),
-    approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
-    participatingSchoolCount: dto.organizationApplicationCount,
-    createdAt: dto.createdAt,
-    updatedAt: dto.updatedAt,
+    mainTitle: item.mainTitle?.trim() || title,
+    startDate: item.businessStartDate ?? item.startDate,
+    endDate: item.businessEndDate ?? item.endDate,
+    lifecycleStatus: resolveListLifecycleStatus(item),
+    approvedStudentCount: item.approvedOrganizationApplicationCount ?? item.applicantCount,
+    participatingSchoolCount: item.organizationApplicationCount,
+    textbookName,
+    managerName,
+    venue,
+    contactEmail: item.contactEmail?.trim() || undefined,
+    contactPhone: item.contactPhone?.trim() || undefined,
+    educationProcess: item.educationProcess?.trim() || undefined,
+    ipOwned: item.ipOwned?.trim() || undefined,
+    courseDeliveredBy: item.courseDeliveredBy as Program['courseDeliveredBy'],
+    institutionType: item.institutionType as Program['institutionType'],
+    teamDivision: item.teamDivision?.trim() || undefined,
+    district: item.district?.trim() || undefined,
+    // 목록 GET `rounds: []` 는 경량 계약 — 저장 실패가 아님. 상세 GET 전 커리큘럼 원복으로 쓰지 말 것.
+    rounds: [],
+    generalCommonInfo: textbookName
+      ? {
+          detailedProgramName: textbookName,
+        }
+      : undefined,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
   })
 }
 
@@ -285,7 +325,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     educationTargetDetail,
     generalParticipantTypes: ['school_institution'],
     generalProgramEducationStructure: educationStructure,
-    generalCommonInfo: {
+    generalCommonInfo: clearTeacherTrainingScheduleIfOff({
       ...details.generalCommonInfo,
       ...(detailedProgramName ? { detailedProgramName } : {}),
       ...(nestedVenueKind ? { venueKind: nestedVenueKind } : {}),
@@ -296,7 +336,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
         ...(remarks ? { remarks } : {}),
         ...(educationTargetDetail ? { educationTargetDetail } : {}),
       },
-    },
+    }),
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
   })

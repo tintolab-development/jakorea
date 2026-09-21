@@ -23,6 +23,22 @@ describe('listAllRegistrationCreateFormSpecs', () => {
     expect(specs[0]?.templateCode).toBe('registration-trained-teachers')
   })
 
+  it('uses trained-teachers copy codes for wizard pending id (not registration-general)', () => {
+    const program = {
+      id: 'trained-teachers-local-pending-registration',
+      generalParticipantTypes: ['school_institution'],
+    } as Program
+    const specs = listAllRegistrationCreateFormSpecs(program)
+    expect(specs.map(spec => spec.templateCode)).toEqual(
+      expect.arrayContaining([
+        'registration-trained-teachers',
+        'recruitment-trained-teachers',
+        'application-trained-teachers',
+      ])
+    )
+    expect(specs.some(spec => spec.templateCode.includes('-general'))).toBe(false)
+  })
+
   it('uses registration-ujat for UJAT', () => {
     const program = { id: '182101' } as Program
     const specs = listAllRegistrationCreateFormSpecs(program)

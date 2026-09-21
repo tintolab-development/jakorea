@@ -46,7 +46,9 @@ import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/ca
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import {
   buildGeneralProgramListRowFromRegistrationSnapshot,
+  COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
   persistGeneralProgramRegistration,
+  TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
 } from '@/features/program/general/lib/registration-local-save'
 import { mapGeneralProgramToCreateRequest } from '@/features/program/general/api/adapters/general-program-adapters'
 import { mapCompanySchoolToCreateRequest } from '@/features/program/1c-1s/api/adapters'
@@ -1295,8 +1297,14 @@ export function useProgramRegistrationEditor(
     }
     const completion = (async () => {
       try {
+        const registrationSnapshotId =
+          programRegistrationFormVariant === 'economy'
+            ? `${COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}pending-registration`
+            : programRegistrationFormVariant === 'trainedTeachers'
+              ? `${TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}pending-registration`
+              : 'pending-registration'
         const registrationSnapshotArgs = {
-          id: 'pending-registration',
+          id: registrationSnapshotId,
           participant,
           programType,
           variant: programRegistrationFormVariant,
@@ -1332,6 +1340,9 @@ export function useProgramRegistrationEditor(
         )
         const usesRemoteFormBindings =
           shouldUseRegistrationCreateFormBindings() &&
+          (programRegistrationFormVariant === 'general' ||
+            programRegistrationFormVariant === 'trainedTeachers' ||
+            programRegistrationFormVariant === 'economy') &&
           usesRegistrationWizardDraft &&
           registrationWizardProgramType != null &&
           isRemoteCreate

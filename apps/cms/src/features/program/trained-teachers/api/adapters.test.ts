@@ -23,6 +23,29 @@ describe('mapTrainedTeacherListItemToProgram periodStatus', () => {
       'completed'
     )
   })
+
+  it('echoes detail textbookName / managerName / venue from list GET', () => {
+    const mapped = mapTrainedTeacherListItemToProgram({
+      id: 186034,
+      title: '교육받은교사(수정)',
+      textbookName: '사회공헌 프로젝트',
+      managerName: '문디지털',
+      venue: '교육받은교사(수정)',
+      contactEmail: 'tt@example.com',
+      contactPhone: '010-1630-0003',
+      educationProcess: 'Digital (Computer)',
+      institutionType: 'inside_school',
+    } as Parameters<typeof mapTrainedTeacherListItemToProgram>[0])
+    expect(mapped.textbookName).toBe('사회공헌 프로젝트')
+    expect(mapped.managerName).toBe('문디지털')
+    expect(mapped.venue).toBe('교육받은교사(수정)')
+    expect(mapped.contactEmail).toBe('tt@example.com')
+    expect(mapped.contactPhone).toBe('010-1630-0003')
+    expect(mapped.educationProcess).toBe('Digital (Computer)')
+    expect(mapped.institutionType).toBe('inside_school')
+    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
+    expect(mapped.rounds).toEqual([])
+  })
 })
 
 describe('mapApiEducationStructureToDomain', () => {
@@ -229,6 +252,42 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
     expect(request.serviceDetailJson).toContain('"finalSchools":8')
     expect(request.serviceDetailJson).toContain('"venueKind":"other"')
   })
+
+  it('writes a single program envelope and drops stale nested textbook/sponsor mirrors', () => {
+    const program = {
+      id: '186034',
+      sponsorId: '163302',
+      title: '교육받은교사(수정)',
+      textbookName: '사회공헌 프로젝트',
+      type: 'offline' as const,
+      format: 'workshop' as const,
+      category: 'school' as const,
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending' as const,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      generalCommonInfo: {
+        detailedProgramName: '사회공헌 프로젝트',
+        sponsorManagementIds: ['163302'],
+        sponsorManagementId: '1627251',
+        textbookName: 'UJAT 사전교육',
+        title: '구제목',
+      } as Program['generalCommonInfo'],
+    }
+    const request = mapTrainedTeacherToUpdateRequest(program)
+    const detail = JSON.parse(String(request.serviceDetailJson)) as {
+      program?: { generalCommonInfo?: Record<string, unknown> }
+      generalCommonInfo?: unknown
+    }
+    expect(detail.generalCommonInfo).toBeUndefined()
+    expect(detail.program?.generalCommonInfo?.sponsorManagementId).toBe('163302')
+    expect(detail.program?.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
+    expect(detail.program?.generalCommonInfo).not.toHaveProperty('textbookName')
+    expect(detail.program?.generalCommonInfo).not.toHaveProperty('title')
+  })
 })
 
 describe('mapTrainedTeacherDetailToProgram KPI root echo', () => {
@@ -304,13 +363,22 @@ describe('mapTrainedTeacherToCreateRequest BE registration contract', () => {
     expect(request.educationStructure).toBe('CURRICULUM')
 
     const detail = JSON.parse(String(request.serviceDetailJson)) as {
-      program?: { generalParticipantTypes?: string[]; generalCommonInfo?: {
-        teacherTrainingEnabled?: boolean
-        educationJournalEnabled?: boolean
-      } }
+      program?: {
+        generalParticipantTypes?: string[]
+        generalCommonInfo?: {
+          teacherTrainingEnabled?: boolean
+          educationJournalEnabled?: boolean
+          sponsorManagementId?: string
+          textbookName?: string
+        }
+      }
+      generalCommonInfo?: unknown
     }
     expect(detail.program?.generalParticipantTypes).toEqual(['school_institution'])
     expect(detail.program?.generalCommonInfo?.teacherTrainingEnabled).toBe(false)
     expect(detail.program?.generalCommonInfo?.educationJournalEnabled).toBe(false)
+    expect(detail.program?.generalCommonInfo?.sponsorManagementId).toBe('1627251')
+    expect(detail.program?.generalCommonInfo).not.toHaveProperty('textbookName')
+    expect(detail).not.toHaveProperty('generalCommonInfo')
   })
 })

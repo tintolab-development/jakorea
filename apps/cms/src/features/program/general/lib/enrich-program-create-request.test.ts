@@ -4,6 +4,7 @@ import { enrichProgramCreateRequestWithRegistrationFormBindings } from './enrich
 
 vi.mock('./registration-create-form-bindings-capabilities', () => ({
   shouldUseRegistrationCreateFormBindings: vi.fn(() => true),
+  shouldAttachInlineFormBindingsOnProgramCreate: vi.fn(() => true),
 }))
 
 vi.mock('./build-registration-create-form-bindings', () => ({
@@ -67,5 +68,70 @@ describe('enrichProgramCreateRequestWithRegistrationFormBindings', () => {
     expect(buildRegistrationCreateFormBindings).not.toHaveBeenCalled()
     expect(result.programDraftId).toBe(7)
     expect(result.formBindings).toHaveLength(1)
+  })
+
+  it('merges inline formBindings for TRAINED_TEACHER', async () => {
+    const program = { id: 'trained-teachers-local-test' } as Program
+    const base = {
+      title: 'tt',
+      autoApplyDefaultFormBindings: true,
+      programType: 'TRAINED_TEACHER' as const,
+    }
+    const prepared = {
+      programDraftId: 42,
+      formBindings: [
+        {
+          formType: 'REGISTRATION' as const,
+          templateId: 1,
+          templateVersionId: 2,
+          active: true,
+        },
+      ],
+    }
+
+    const result = await enrichProgramCreateRequestWithRegistrationFormBindings(
+      program,
+      base,
+      prepared
+    )
+
+    expect(result.autoApplyDefaultFormBindings).toBe(false)
+    expect(result.programDraftId).toBe(42)
+    expect(result.formBindings).toEqual(prepared.formBindings)
+    expect(result.programType).toBe('TRAINED_TEACHER')
+  })
+
+  it('skips enrich when inline formBindings are not allowed (Gemini / Volunteer)', async () => {
+    const { shouldAttachInlineFormBindingsOnProgramCreate } = await import(
+      './registration-create-form-bindings-capabilities'
+    )
+    const { buildRegistrationCreateFormBindings } = await import(
+      './build-registration-create-form-bindings'
+    )
+    vi.mocked(shouldAttachInlineFormBindingsOnProgramCreate).mockReturnValueOnce(false)
+
+    const program = { id: 'gemini-local-test' } as Program
+    const base = {
+      title: 'gemini',
+      autoApplyDefaultFormBindings: true,
+    }
+
+    const result = await enrichProgramCreateRequestWithRegistrationFormBindings(program, base, {
+      programDraftId: 42,
+      formBindings: [
+        {
+          formType: 'REGISTRATION',
+          templateId: 1,
+          templateVersionId: 2,
+          active: true,
+        },
+      ],
+    })
+
+    expect(result).toEqual(base)
+    expect(result.formBindings).toBeUndefined()
+    expect(result.programDraftId).toBeUndefined()
+    expect(result.autoApplyDefaultFormBindings).toBe(true)
+    expect(buildRegistrationCreateFormBindings).not.toHaveBeenCalled()
   })
 })
