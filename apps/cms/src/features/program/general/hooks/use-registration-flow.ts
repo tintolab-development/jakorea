@@ -11,7 +11,10 @@ import {
 import { resetApplicantRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { resetGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { resetGeneralApplicationOverlay } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
-import { resetProgramRegistrationOverlay } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  readRegistrationOverlayProgramTitleKo,
+  resetProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import {
   lookupTemplateRegistry,
@@ -30,11 +33,23 @@ import type { Program } from '@/types/domain'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 import {
-  clearRegistrationOperationalFormDrafts,
   hydrateRegistrationOperationalOverlaysFromLocalDrafts,
   persistRegistrationOperationalOverlaySnapshots,
-  resolveRegistrationOperationalDraftStorageKey,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
+import {
+  assertRegistrationWizardRemoteReady,
+  shouldUseRegistrationCreateFormBindings,
+} from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
+import {
+  deleteRegistrationProgramDraftRemote,
+  ensureRegistrationProgramDraftId,
+  hydrateRegistrationProgramDraft,
+  syncRegistrationProgramDraft,
+} from '@/features/program/general/lib/registration-program-draft-session'
+import {
+  registrationProgramTypeForTemplateCode,
+  type ProgramRegistrationDraftTemplateCode,
+} from '@/features/program/shared/lib/registration-draft-notice'
 import { hasIncompleteGeneralProgramRecruitmentRequiredFields } from '@/features/program/general/lib/registration-recruitment-required-fields'
 import {
   hasIncompleteEconomyProgramApplicationRequiredFields,
@@ -108,18 +123,19 @@ export function useGeneralProgramRegistrationFlow(
       ? 'registration-trained-teachers'
       : 'registration-general'
   const skipDraftRestore = options?.skipDraftRestore === true
+  const programType = registrationProgramTypeForTemplateCode(
+    registrationTemplateId as ProgramRegistrationDraftTemplateCode
+  )
 
-  // 모집/신청 hydrate(useEffect)보다 먼저 비워, fresh 진입 시 이전 세션 캐시가 복원되지 않게 한다.
-  // 유형별 storage key만 제거해 다른 프로그램 유형 draft는 유지한다.
   useLayoutEffect(() => {
     if (!open) return
+    if (!shouldUseRegistrationCreateFormBindings()) return
     if (skipDraftRestore) {
-      clearRegistrationOperationalFormDrafts(registrationFormVariant)
-      return
+      void deleteRegistrationProgramDraftRemote(programType).catch(error => {
+        console.warn('[registration-program-draft] fresh delete failed', error)
+      })
     }
-    // 「이어서 작성」— 탭 진입 전에 모집/신청 overlay를 공유 스토어에 병합 복원
-    hydrateRegistrationOperationalOverlaysFromLocalDrafts(registrationFormVariant)
-  }, [open, skipDraftRestore, registrationFormVariant])
+  }, [open, skipDraftRestore, programType])
 
   const registrationVm = useProgramRegistrationEditor(
     open,
@@ -128,8 +144,7 @@ export function useGeneralProgramRegistrationFlow(
       programRegistrationFormVariant: registrationFormVariant,
       onRegistrationSaved: options?.onProgramRegistrationSaved,
       skipDraftRestore,
-      // 프로그램 임시저장 — remote 전환: docs/api/program-draft-local-storage-follow-up.md
-      localOnlyDraftPersistence: true,
+      registrationWizardProgramType: programType,
       templateCode:
         registrationFormVariant === 'general'
           ? PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
@@ -158,6 +173,52 @@ export function useGeneralProgramRegistrationFlow(
       registrationFormVariant
     )
   })
+
+  useEffect(() => {
+    if (!open || !shouldUseRegistrationCreateFormBindings()) return
+    try {
+      assertRegistrationWizardRemoteReady()
+    } catch (error) {
+      console.warn('[registration-program-draft] remote not ready', error)
+      return
+    }
+    if (skipDraftRestore) {
+      void ensureRegistrationProgramDraftId(programType).catch(err => {
+        console.warn('[registration-program-draft] ensure draft failed', err)
+      })
+      return
+    }
+    void (async () => {
+      const payload = await hydrateRegistrationProgramDraft(programType)
+      await hydrateRegistrationOperationalOverlaysFromLocalDrafts(
+        programType,
+        registrationFormVariant
+      )
+      if (payload?.activeStep != null) {
+        const restored = coerceRegistrationStepForVariant(
+          normalizeGeneralProgramRegistrationStepKey(
+            payload.activeStep,
+            participantFlags,
+            tabVisibility
+          ),
+          participantFlags,
+          registrationFormVariant
+        )
+        setActiveStep(restored)
+        options?.onStepChange?.(restored)
+      }
+    })().catch(error => {
+      console.warn('[registration-program-draft] hydrate failed', error)
+    })
+  }, [
+    open,
+    skipDraftRestore,
+    programType,
+    registrationFormVariant,
+    participantFlags,
+    tabVisibility,
+    options,
+  ])
 
   useEffect(() => {
     if (!open) return
@@ -271,12 +332,7 @@ export function useGeneralProgramRegistrationFlow(
     participantTemplateName,
     participantVariant,
     {
-      localOnlyDraftPersistence: true,
-      /** 1사1교·교육받은 교사 — 공유 카탈로그 id를 유형별 storage key로 격리 */
-      localOnlyDraftStorageKey: resolveRegistrationOperationalDraftStorageKey(
-        registrationFormVariant,
-        currentStepDef.templateId
-      ),
+      registrationWizardProgramType: programType,
       registrationWizardOpen: open,
       participantOrganization: participantFlags.organization,
       /** 등록 위저드 신청 단계 — 기관 기본정보·강사/봉사자 일정 자동 반영 미리보기 */
@@ -385,18 +441,24 @@ export function useGeneralProgramRegistrationFlow(
   )
 
   const persistDraftSilent = useCallback(async () => {
-    // 공통 정보는 항상 저장 — 모집/신청 단계에서 저장해도 이어서 작성 시 공통이 비지 않게
     await registrationVm.handleSave({ silent: true })
     if (isParticipantStep) {
       await participantVm.handleSave({ silent: true })
     }
-    // 공유 overlay(모집·신청)를 관련 operational draft 키에 일괄 기록
-    persistRegistrationOperationalOverlaySnapshots(registrationFormVariant)
+    await persistRegistrationOperationalOverlaySnapshots(programType, registrationFormVariant)
+    await syncRegistrationProgramDraft({
+      programType,
+      registrationTemplateCode: registrationTemplateId,
+      activeStep: coercedActiveStep,
+      programTitleKo: readRegistrationOverlayProgramTitleKo(registrationFormVariant),
+    })
   }, [
+    coercedActiveStep,
     isParticipantStep,
     participantVm,
+    programType,
     registrationFormVariant,
-    registrationVm,
+    registrationTemplateId,
   ])
 
   const selectStep = useCallback(
@@ -410,12 +472,24 @@ export function useGeneralProgramRegistrationFlow(
       // 탭 전환은 편집 중 React state만 유지한다. 임시저장은 명시적 저장 버튼에서만 수행.
       setActiveStep(next)
       options?.onStepChange?.(next)
+      if (shouldUseRegistrationCreateFormBindings()) {
+        void syncRegistrationProgramDraft({
+          programType,
+          registrationTemplateCode: registrationTemplateId,
+          activeStep: next,
+          programTitleKo: readRegistrationOverlayProgramTitleKo(registrationFormVariant),
+        }).catch(error => {
+          console.warn('[registration-program-draft] step sync failed', error)
+        })
+      }
     },
     [
       coercedActiveStep,
       options,
       participantFlags,
+      programType,
       registrationFormVariant,
+      registrationTemplateId,
     ]
   )
 

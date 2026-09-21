@@ -109,7 +109,7 @@ function isIpsTypeIncomplete(category: string | undefined, detail: string | unde
 
 /**
  * 일반 프로그램 공통 정보 — 등록(`registration-required-fields`)과 동일하게
- * 화면에 노출되는 입력은 모두 필수. 조건부 필드는 superRefine에서 검사.
+ * 화면에 노출되는 입력은 기본적으로 필수. 조건부 필드(교육 장소 상세 등)는 superRefine.
  */
 export const generalProgramCommonInfoEditSchema = z
   .object({
@@ -125,7 +125,8 @@ export const generalProgramCommonInfoEditSchema = z
     /** @deprecated 레거시 단일 — seed 호환용, 검증은 ids 사용 */
     sponsorManagerContactId: z.string().optional(),
     venueKind: z.enum(['inside', 'outside', 'other']),
-    venueDetail: z.string().trim().min(1, '교육 장소를 입력해주세요'),
+    /** 「기타(직접입력)」일 때만 필수 — superRefine */
+    venueDetail: z.string(),
     surveySurvey: z.boolean(),
     surveySatisfaction: z.boolean(),
     surveyLectureEvaluation: z.boolean(),
@@ -197,6 +198,15 @@ export const generalProgramCommonInfoEditSchema = z
     }
 
     // 설문 진행 항목 — 0개 선택도 완료 (등록 필수 검사와 동일)
+
+    // 교육 장소 상세 — 「기타(직접입력)」선택 시에만 필수
+    if (data.venueKind === 'other' && isBlankText(data.venueDetail)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '교육 장소를 입력해주세요',
+        path: ['venueDetail'],
+      })
+    }
 
     const isIndividualTarget = isGeneralIndividualParticipantSelection(
       data.participantIndividual,

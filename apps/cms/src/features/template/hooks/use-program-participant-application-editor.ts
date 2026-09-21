@@ -301,6 +301,8 @@ export type UseProgramParticipantApplicationEditorOptions = {
   forceUserEditable?: boolean
   /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
   localOnlyDraftPersistence?: boolean
+  /** 등록 위저드 — draft-owned form version PUT/GET (program-draft SSOT) */
+  registrationWizardProgramType?: string
   /** 프로그램 form-binding `templateVersionId` — 카탈로그 code 대신 이 버전을 로드/저장 */
   templateVersionId?: number
   /** 바인딩 전용 version이 없을 때 등록 위저드 localStorage 초안을 우선 */
@@ -473,6 +475,9 @@ export function useProgramParticipantApplicationEditor(
 ) {
   const onTemplateDraftSaveConfirmed = editorOptions?.onTemplateDraftSaveConfirmed
   const localOnlyDraftPersistence = editorOptions?.localOnlyDraftPersistence === true
+  const registrationWizardProgramType = editorOptions?.registrationWizardProgramType
+  const usesRegistrationWizardDraft =
+    registrationWizardProgramType != null && registrationWizardProgramType !== ''
   const persistTemplateVersionId = editorOptions?.templateVersionId
   const preferLocalDraft = editorOptions?.preferLocalDraft === true
   const registrationWizardOpen = editorOptions?.registrationWizardOpen
@@ -640,10 +645,12 @@ export function useProgramParticipantApplicationEditor(
     }
     /* eslint-disable react-hooks/set-state-in-effect -- 풀페이지 미리보기 열림과 동기화해 시드·저장본을 반영 */
     let cancelled = false
-    const templateId = localOnlyDraftPersistence
-      ? resolveLocalDraftStorageKey()
-      : resolvePersistTemplateId()
-    const hydrateKey = `${templateId}::${persistTemplateVersionId ?? 'none'}::${localOnlyDraftPersistence ? 'local' : 'remote'}::${preferLocalDraft ? 'prefer-local' : 'bound'}`
+    const templateId = usesRegistrationWizardDraft
+      ? resolvePersistTemplateId()
+      : localOnlyDraftPersistence
+        ? resolveLocalDraftStorageKey()
+        : resolvePersistTemplateId()
+    const hydrateKey = `${templateId}::${persistTemplateVersionId ?? 'none'}::${usesRegistrationWizardDraft ? 'wizard' : localOnlyDraftPersistence ? 'local' : 'remote'}::${preferLocalDraft ? 'prefer-local' : 'bound'}`
 
     const applyDraftNow = (next: WritingFormDraft) => {
       const migrated =
@@ -718,8 +725,17 @@ export function useProgramParticipantApplicationEditor(
       preferLocal: preferLocalDraft,
     }
 
+    const loadDraftPromise = usesRegistrationWizardDraft
+      ? import('@/features/program/general/lib/registration-wizard-form-draft').then(m =>
+          m.loadRegistrationWizardFormDraft({
+            programType: registrationWizardProgramType!,
+            templateCode: templateId,
+          })
+        )
+      : loadWritingFormTemplateDraft(templateId, loadOptions)
+
     if (variant === 'ujat-recruit-institution' || variant === 'ujat-recruit-volunteer') {
-      void loadWritingFormTemplateDraft(templateId, loadOptions).then(saved => {
+      void loadDraftPromise.then(saved => {
         if (cancelled) return
         if (preferSessionCache) return
         if (saved?.draft) {
@@ -749,7 +765,7 @@ export function useProgramParticipantApplicationEditor(
         storageHydratedTemplateIdsRef.current.add(hydrateKey)
       })
     } else {
-      void loadWritingFormTemplateDraft(templateId, loadOptions).then(saved => {
+      void loadDraftPromise.then(saved => {
         if (cancelled) return
         if (preferSessionCache) return
         if (saved?.draft) {
@@ -811,9 +827,11 @@ export function useProgramParticipantApplicationEditor(
     localOnlyDraftPersistence,
     persistTemplateVersionId,
     preferLocalDraft,
+    registrationWizardProgramType,
     resolveLocalDraftStorageKey,
     resolvePersistTemplateId,
     seedParagraphIds,
+    usesRegistrationWizardDraft,
     variant,
   ])
 
@@ -1373,10 +1391,33 @@ export function useProgramParticipantApplicationEditor(
 
   const handleSave = useCallback(async (options?: { silent?: boolean }) => {
     try {
-      const templateId = localOnlyDraftPersistence
-        ? resolveLocalDraftStorageKey()
-        : resolvePersistTemplateId()
-      if (variant === 'ujat-recruit-institution') {
+      const templateId = usesRegistrationWizardDraft
+        ? resolvePersistTemplateId()
+        : localOnlyDraftPersistence
+          ? resolveLocalDraftStorageKey()
+          : resolvePersistTemplateId()
+      if (usesRegistrationWizardDraft) {
+        flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
+        const editorState = buildParticipantApplicationEditorState({
+          variant,
+          volunteerExceptionScheduleCount,
+          ujatVolunteerApplicationType,
+          ujatGradeApplicationBlockIds,
+          ujatApplicationGradeByBlockId,
+          ujatGradeClassTimeBlockIds,
+        })
+        const overlay = collectParticipantOverlayForVariant(variant)
+        const { persistRegistrationWizardFormDraft } = await import(
+          '@/features/program/general/lib/registration-wizard-form-draft'
+        )
+        await persistRegistrationWizardFormDraft({
+          programType: registrationWizardProgramType!,
+          templateCode: templateId,
+          draft,
+          editorState,
+          ...(overlay != null ? { overlay } : {}),
+        })
+      } else if (variant === 'ujat-recruit-institution') {
         const overlay = { ...getUjatRecruitInstitutionOverlayRecord() }
         await persistWritingFormTemplateDraft({
           templateId,
@@ -1443,9 +1484,8 @@ export function useProgramParticipantApplicationEditor(
     } catch (error) {
       console.debug('programParticipantApplicationEditor save failed', error)
       if (options?.silent) throw error
-      if (isTemplateManagementSave) {
-        showSaveFailure(error)
-      }
+      showSaveFailure(error)
+      throw error
     }
   }, [
     draft,
@@ -1454,10 +1494,12 @@ export function useProgramParticipantApplicationEditor(
     onTemplateDraftSaveConfirmed,
     persistTemplateVersionId,
     preferLocalDraft,
+    registrationWizardProgramType,
     resolveLocalDraftStorageKey,
     resolvePersistTemplateId,
     showSaveFailure,
     showSaveSuccess,
+    usesRegistrationWizardDraft,
     ujatApplicationGradeByBlockId,
     ujatGradeApplicationBlockIds,
     ujatGradeClassTimeBlockIds,

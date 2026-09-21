@@ -75,7 +75,7 @@ export function GeneralProgramApplicationTemplateEditModal({
   }, [open, program, variant])
 
   const formSource = useProgramApplicationFormLoadSource(program, variant, {
-    attachLocalDrafts: open,
+    ensureScopedBinding: open,
   })
 
   const vm = useProgramParticipantApplicationEditor(
@@ -124,10 +124,14 @@ export function GeneralProgramApplicationTemplateEditModal({
     [registryEntry, editorVm]
   )
 
-  const handleSave = useCallback(() => {
-    vm.handleSave()
-    showAlert({ title: '안내', content: '양식이 저장되었습니다.' })
-    onSaved?.()
+  const handleSave = useCallback(async () => {
+    try {
+      await vm.handleSave()
+      showAlert({ title: '안내', content: '양식이 저장되었습니다.' })
+      onSaved?.()
+    } catch {
+      // useProgramParticipantApplicationEditor / form-template-save-feedback에서 안내
+    }
   }, [onSaved, showAlert, vm])
 
   if (registryEntry == null) return null

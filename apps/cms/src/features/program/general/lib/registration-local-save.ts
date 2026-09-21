@@ -560,6 +560,12 @@ export async function persistGeneralProgramRegistration(args: {
     'programType' | 'sessionRoundType' | 'educationScheduleMode' | 'scheduleCurriculumDetailCount'
   >
 }): Promise<Program> {
+  const { shouldUseRegistrationCreateFormBindings, assertRegistrationWizardRemoteReady } =
+    await import('@/features/program/general/lib/registration-create-form-bindings-capabilities')
+  if (!shouldUseRegistrationCreateFormBindings()) {
+    assertRegistrationWizardRemoteReady()
+  }
+
   const variant = args.variant ?? 'general'
   const id =
     variant === 'economy'
@@ -601,14 +607,6 @@ export async function persistGeneralProgramRegistration(args: {
     shouldUseGeneralProgramsRemoteApi()
   ) {
     const created = await createGeneralProgram(program)
-    try {
-      const { attachRegistrationFormDraftsToProgram } = await import(
-        '@/features/program/general/lib/sync-registration-form-bindings'
-      )
-      await attachRegistrationFormDraftsToProgram(created)
-    } catch (error) {
-      console.warn('[general-program] attach registration form drafts failed', error)
-    }
     return created
   }
 

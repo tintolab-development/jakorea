@@ -198,6 +198,8 @@ export type UseProgramRegistrationEditorOptions = {
   skipDraftRestore?: boolean
   /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
   localOnlyDraftPersistence?: boolean
+  /** 등록 위저드 — draft-owned form version PUT/GET (program-draft SSOT) */
+  registrationWizardProgramType?: string
 }
 
 export function useProgramRegistrationEditor(
@@ -214,6 +216,9 @@ export function useProgramRegistrationEditor(
   const templateCode = editorOptions?.templateCode
   const skipDraftRestore = editorOptions?.skipDraftRestore === true
   const localOnlyDraftPersistence = editorOptions?.localOnlyDraftPersistence === true
+  const registrationWizardProgramType = editorOptions?.registrationWizardProgramType
+  const usesRegistrationWizardDraft =
+    registrationWizardProgramType != null && registrationWizardProgramType !== ''
   const isStructureLocked = isWritingFormTemplateStructureLocked({
     templateCode,
     systemTemplate: editorOptions?.systemTemplate,
@@ -444,9 +449,18 @@ export function useProgramRegistrationEditor(
       const defaults = createDefaultRegistrationEditorState(programRegistrationFormVariant)
       const variant = programRegistrationFormVariant
 
-      void loadWritingFormTemplateDraft(templateCode, {
-        localOnly: localOnlyDraftPersistence,
-      })
+      const loadDraft = usesRegistrationWizardDraft
+        ? import('@/features/program/general/lib/registration-wizard-form-draft').then(m =>
+            m.loadRegistrationWizardFormDraft({
+              programType: registrationWizardProgramType!,
+              templateCode,
+            })
+          )
+        : loadWritingFormTemplateDraft(templateCode, {
+            localOnly: localOnlyDraftPersistence,
+          })
+
+      void loadDraft
         .then(saved => {
           if (cancelled) return
           if (saved?.draft) {
@@ -493,6 +507,8 @@ export function useProgramRegistrationEditor(
     templateCode,
     usesTemplateDraftApi,
     localOnlyDraftPersistence,
+    registrationWizardProgramType,
+    usesRegistrationWizardDraft,
   ])
 
   useEffect(() => {
@@ -1077,31 +1093,46 @@ export function useProgramRegistrationEditor(
       sponsorContactId.trim() ||
       readRegistrationOverlaySponsorContactId(programRegistrationFormVariant)
     const resolvedProgramTitleKo = resolveProgramTitleKo()
-    await persistWritingFormTemplateDraft({
-      templateId: templateCode,
-      draft,
-      overlay: { ...getProgramRegistrationOverlayRecord() },
-      editorState: buildProgramRegistrationEditorState({
-        participant,
-        programType,
-        sessionRoundType,
-        educationFormScheduleDetail,
-        participationScheduleDetail,
-        ipsScheduleDetail,
-        curriculumSessionCount,
-        curriculumChartSessionCount,
-        scheduleCurriculumDetailCount,
-        scheduleCurriculumGroupCount,
-        scheduleCurriculumPreEducation,
-        trainedTeachersTeacherTrainingEnabled,
-        educationScheduleMode,
-        sponsorId: resolvedSponsorId,
-        sponsorContactId: resolvedContactId,
-        programTitleKo: resolvedProgramTitleKo,
-        activeParagraphId,
-      }),
-      localOnly: localOnlyDraftPersistence,
+    const overlay = { ...getProgramRegistrationOverlayRecord() }
+    const editorState = buildProgramRegistrationEditorState({
+      participant,
+      programType,
+      sessionRoundType,
+      educationFormScheduleDetail,
+      participationScheduleDetail,
+      ipsScheduleDetail,
+      curriculumSessionCount,
+      curriculumChartSessionCount,
+      scheduleCurriculumDetailCount,
+      scheduleCurriculumGroupCount,
+      scheduleCurriculumPreEducation,
+      trainedTeachersTeacherTrainingEnabled,
+      educationScheduleMode,
+      sponsorId: resolvedSponsorId,
+      sponsorContactId: resolvedContactId,
+      programTitleKo: resolvedProgramTitleKo,
+      activeParagraphId,
     })
+    if (usesRegistrationWizardDraft) {
+      const { persistRegistrationWizardFormDraft } = await import(
+        '@/features/program/general/lib/registration-wizard-form-draft'
+      )
+      await persistRegistrationWizardFormDraft({
+        programType: registrationWizardProgramType!,
+        templateCode,
+        draft,
+        overlay,
+        editorState,
+      })
+    } else {
+      await persistWritingFormTemplateDraft({
+        templateId: templateCode,
+        draft,
+        overlay,
+        editorState,
+        localOnly: localOnlyDraftPersistence,
+      })
+    }
   }, [
     activeParagraphId,
     curriculumChartSessionCount,
@@ -1125,6 +1156,8 @@ export function useProgramRegistrationEditor(
     programRegistrationFormVariant,
     usesTemplateDraftApi,
     localOnlyDraftPersistence,
+    registrationWizardProgramType,
+    usesRegistrationWizardDraft,
   ])
 
   /** 중간 저장 — template draft만. 프로그램 POST는 handleCompleteRegistration에서만. */
@@ -1252,6 +1285,15 @@ export function useProgramRegistrationEditor(
     const completion = (async () => {
       try {
         await persistTemplateDraftIfNeeded()
+        if (usesRegistrationWizardDraft && registrationWizardProgramType) {
+          const { persistRegistrationOperationalOverlaySnapshots } = await import(
+            '@/features/program/general/lib/registration-operational-form-drafts'
+          )
+          await persistRegistrationOperationalOverlaySnapshots(
+            registrationWizardProgramType,
+            programRegistrationFormVariant
+          )
+        }
         const createdProgram = await persistGeneralProgramRegistration({
           draft,
           participant,
