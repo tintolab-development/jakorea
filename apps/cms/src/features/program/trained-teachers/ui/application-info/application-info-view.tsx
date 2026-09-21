@@ -10,6 +10,7 @@ import {
   resetInstitutionApplicationProgramBridge,
   resolveInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import { useProgramApplicationFormLoadSource } from '@/features/program/general/hooks/use-application-form-load-source'
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
 import { isTrainedTeachersApplicationFormEditable } from '@/features/program/trained-teachers/lib/application-form-edit-policy'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
@@ -41,10 +42,18 @@ function TrainedTeachersApplicationFormPreviewPanel({ program }: { program: Prog
     }
   }, [program])
 
+  const formSource = useProgramApplicationFormLoadSource(program, TRAINED_TEACHERS_APPLICATION_VARIANT)
+
   const vm = useProgramParticipantApplicationEditor(
-    editorActive,
+    editorActive && !formSource.bindingsLoading,
     templateName,
-    TRAINED_TEACHERS_APPLICATION_VARIANT
+    TRAINED_TEACHERS_APPLICATION_VARIANT,
+    {
+      program,
+      programLinkedApplicationFormPreview: true,
+      templateVersionId: formSource.templateVersionId,
+      preferLocalDraft: formSource.preferLocalDraft,
+    }
   )
 
   useEffect(() => {

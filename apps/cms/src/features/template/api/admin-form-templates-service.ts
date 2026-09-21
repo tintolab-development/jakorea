@@ -212,6 +212,8 @@ function buildSaveRecordFromVersionResponse(args: {
   extensionJson?: string | Record<string, unknown> | null
   settingsJson?: string | Record<string, unknown> | null
   updatedAt?: string
+  /** program-scoped version GET — seed migration으로 PUT diff 유발 방지 */
+  skipSeedMigration?: boolean
 }): WritingFormTemplateSaveRecord | null {
   const extension = extensionJsonToExtensionPayload(args.extensionJson)
   const settings = settingsJsonToSettingsPayload(args.settingsJson)
@@ -220,6 +222,8 @@ function buildSaveRecordFromVersionResponse(args: {
   if (draft == null) {
     if (settings == null) return null
     draft = EMPTY_SCHEMA_DRAFT
+  } else if (args.skipSeedMigration) {
+    draft = normalizeWritingFormDraft(draft)
   } else {
     draft = normalizeWritingFormDraftFromApi(args.templateCode, draft)
   }
@@ -299,6 +303,7 @@ export async function loadFormTemplateVersionDraftByVersionId(
     extensionJson: version.extensionJson,
     settingsJson: version.settingsJson,
     updatedAt: version.updatedAt,
+    skipSeedMigration: true,
   })
 }
 

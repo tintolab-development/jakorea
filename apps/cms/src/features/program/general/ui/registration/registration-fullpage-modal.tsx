@@ -12,23 +12,27 @@ import {
 import { useGeneralProgramRegistrationFlow } from '@/features/program/general/hooks/use-registration-flow'
 import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general/ui/registration/registration-body-header'
 import {
-  peekWritingFormDraftOverwrite,
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
   clearRegistrationDraftForFreshStart,
+  registrationProgramTypeForTemplateCode,
   shouldRemoveRegistrationDraftAfterCompletion,
   shouldSkipRegistrationDraftRestore,
   type ProgramRegistrationDraftTemplateCode,
 } from '@/features/program/shared/lib/registration-draft-notice'
+import {
+  assertRegistrationWizardRemoteReady,
+  shouldUseRegistrationCreateFormBindings,
+} from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
+import {
+  deleteRegistrationProgramDraftRemote,
+  peekRegistrationProgramDraftPayload,
+} from '@/features/program/general/lib/registration-program-draft-session'
 import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
 import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import { useCmsAlert } from '@/shared/ui'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
-import {
-  clearRegistrationOperationalFormDrafts,
-  resolveRegistrationOperationalDraftStorageKey,
-} from '@/features/program/general/lib/registration-operational-form-drafts'
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
@@ -94,6 +98,19 @@ export function GeneralProgramRegistrationFullpageModal({
 
   useEffect(() => {
     if (!open) return
+    if (!shouldUseRegistrationCreateFormBindings()) {
+      try {
+        assertRegistrationWizardRemoteReady()
+      } catch {
+        showAlert({
+          title: '프로그램 등록 불가',
+          content:
+            '프로그램 등록은 forms-surveys·programs remote API가 활성화된 환경에서만 이용할 수 있습니다.',
+          onConfirm: onClose,
+        })
+      }
+      return
+    }
     if (searchParams.has(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)) return
     const next = new URLSearchParams(searchParams)
     next.set(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
@@ -153,30 +170,17 @@ export function GeneralProgramRegistrationFullpageModal({
   }, [flow, showAlert])
 
   const handleSaveClick = useCallback(() => {
-    const catalogTemplateId = flow.currentStepDef.templateId
-    const storageKey =
-      flow.phase === 'program'
-        ? catalogTemplateId
-        : resolveRegistrationOperationalDraftStorageKey(
-            registrationFormVariant,
-            catalogTemplateId
-          )
-    const existing = peekWritingFormDraftOverwrite(storageKey, {
-      titleFallbackTemplateIds: [flow.registrationTemplateId],
-    })
-    if (existing != null) {
-      setOverwriteTitle(existing.title)
+    const programType = registrationProgramTypeForTemplateCode(
+      flow.registrationTemplateId as ProgramRegistrationDraftTemplateCode
+    )
+    const payload = peekRegistrationProgramDraftPayload(programType)
+    if (payload != null && (payload.programTitleKo?.trim() || payload.savedAt)) {
+      setOverwriteTitle(payload.programTitleKo?.trim() || '제목 없음')
       setOverwriteOpen(true)
       return
     }
     void runDraftSave()
-  }, [
-    flow.currentStepDef.templateId,
-    flow.phase,
-    flow.registrationTemplateId,
-    registrationFormVariant,
-    runDraftSave,
-  ])
+  }, [flow.registrationTemplateId, runDraftSave])
 
   const handleOverwriteConfirm = useCallback(() => {
     void (async () => {
@@ -201,12 +205,13 @@ export function GeneralProgramRegistrationFullpageModal({
     const created = pendingCreatedProgramRef.current
     pendingCreatedProgramRef.current = undefined
     setCompleteSuccessOpen(false)
-    // 모집·신청 초안은 등록 완료 후 해당 유형만 제거 (다음 신규 등록에 잔존하지 않도록)
-    clearRegistrationOperationalFormDrafts(registrationFormVariant)
+    const registrationTemplateCode =
+      flow.registrationTemplateId as ProgramRegistrationDraftTemplateCode
+    void deleteRegistrationProgramDraftRemote(
+      registrationProgramTypeForTemplateCode(registrationTemplateCode)
+    )
     if (shouldRemoveSavedDraftAfterCompletion) {
-      const registrationTemplateCode =
-        flow.registrationTemplateId as ProgramRegistrationDraftTemplateCode
-      clearRegistrationDraftForFreshStart(registrationTemplateCode)
+      void clearRegistrationDraftForFreshStart(registrationTemplateCode)
     }
     onProgramRegistrationSaved?.(created)
   }, [

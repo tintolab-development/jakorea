@@ -45,9 +45,7 @@ export function ApplicationFormPreviewPanel({
     () => getTemplateIdForParticipantApplicationVariant(variant),
     [variant]
   )
-  const formSource = useProgramApplicationFormLoadSource(program, variant, {
-    attachLocalDrafts: active,
-  })
+  const formSource = useProgramApplicationFormLoadSource(program, variant)
   const [editorActive, setEditorActive] = useState(false)
 
   useEffect(() => {

@@ -454,21 +454,29 @@ export async function deleteMemberApplicationHistoryRemote(
   await membersApi.deleteApplicationHistory(memberId, applicationId, params)
 }
 
-/** Swagger `deleteProgramHistory` — DELETE program-history/{participantId} */
+/** Members subset Orval에서 제외 — DELETE program-history/{participantId} */
 export async function deleteMemberProgramHistoryRemote(
   memberId: number,
   participantId: number
 ): Promise<void> {
-  await membersApi.deleteProgramHistory(memberId, participantId)
+  await customInstance<void>({
+    url: `/api/admin/users/${memberId}/program-history/${participantId}`,
+    method: 'DELETE',
+  })
 }
 
-/** Swagger `bulkDeleteProgramHistory` — POST program-history/bulk-delete */
+/** Members subset Orval에서 제외 — POST program-history/bulk-delete */
 export async function bulkDeleteProgramHistoryRemote(
   memberId: number,
   body: BulkDecisionRequest
 ): Promise<MembersBulkActionResponse> {
   const result = unwrapApiBody<MembersBulkActionResponse>(
-    await membersApi.bulkDeleteProgramHistory(memberId, body)
+    await customInstance<MembersBulkActionResponse>({
+      url: `/api/admin/users/${memberId}/program-history/bulk-delete`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: body,
+    })
   )
   assertBulkActionSucceeded(result, '프로그램 이력 일괄 삭제에 실패했습니다.')
   return result

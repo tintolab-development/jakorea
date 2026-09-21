@@ -20,6 +20,10 @@ export interface ProgramRecruitmentRequest {
   status?: ProgramRecruitmentRequestStatus;
   startAt?: string;
   endAt?: string;
+  /** 해당 모집 유형의 프로그램 운영 시작일. 수정 시 미전송하면 기존 값을 보존하고, 최초 생성에만 사업 운영 시작일을 fallback */
+  operationStartDate?: string;
+  /** 해당 모집 유형의 프로그램 운영 종료일. 수정 시 미전송하면 기존 값을 보존하고, 최초 생성에만 사업 운영 종료일을 fallback */
+  operationEndDate?: string;
   /** 최대 모집 인원. null이면 제한 없음 */
   maxCount?: number;
   /** 최소 모집 인원. null이면 미설정 */

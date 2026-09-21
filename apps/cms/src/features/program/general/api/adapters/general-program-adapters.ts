@@ -635,11 +635,6 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     applicationTargetMode,
     rounds: mapProgramRoundsToRequest(program),
     serviceDetailJson: serializeGeneralProgramServiceDetailJson(program),
-    finalSchools:
-      program.participatingSchoolCount ?? program.generalCommonInfo?.kpi?.finalSchools,
-    finalClasses: program.generalCommonInfo?.kpi?.finalClasses,
-    venueKind: program.generalCommonInfo?.venueKind,
-    venueDetail: program.generalCommonInfo?.venueDetail?.trim() || undefined,
   }
 }
 
@@ -661,6 +656,9 @@ export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreat
 
 const SERVICE_DETAIL_PROGRAM_KEYS = [
   'generalCommonInfo',
+  'participatingSchoolCount',
+  'approvedStudentCount',
+  'totalParticipants',
   'generalParticipantTypes',
   'generalSurveyMenuKeys',
   'targetLevels',
@@ -773,15 +771,6 @@ function mapProgramPatchFieldsToRequest(
       merged.totalParticipants ??
       merged.approvedStudentCount ??
       merged.generalCommonInfo?.kpi?.finalParticipants
-  }
-  if (has('participatingSchoolCount') || has('generalCommonInfo')) {
-    body.finalSchools =
-      merged.participatingSchoolCount ?? merged.generalCommonInfo?.kpi?.finalSchools
-  }
-  if (has('generalCommonInfo')) {
-    body.finalClasses = merged.generalCommonInfo?.kpi?.finalClasses
-    body.venueKind = merged.generalCommonInfo?.venueKind
-    body.venueDetail = merged.generalCommonInfo?.venueDetail?.trim() || undefined
   }
   if (has('generalVolunteers')) body.generalVolunteers = merged.generalVolunteers
   if (has('staffVolunteers')) body.staffVolunteers = merged.staffVolunteers

@@ -6,6 +6,11 @@ import type { IdentityVerificationHookStatus } from '@/features/auth/identity-ve
 
 import './register-identity-status-panel.css'
 
+/** 통신사 본인인증 모듈 영역 — idle 타이틀·수신 필드 안내 (가입·찾기·비번변경 공통) */
+export const IDENTITY_MODULE_IDLE_TITLE = '통신사 본인인증 모듈 영역'
+export const IDENTITY_MODULE_IDLE_DESCRIPTION =
+  '수신: 이름·휴대폰번호·생년월일·CI/DI·인증토큰·인증일시'
+
 interface RegisterIdentityStatusPanelProps {
   status: IdentityVerificationHookStatus
   errorMessage?: string | null
@@ -31,19 +36,9 @@ export function RegisterIdentityStatusPanel({
   verifiedName,
   verifiedPhone,
   className,
-  idleTitle = '휴대폰 본인인증',
-  idleDescription,
+  idleTitle = IDENTITY_MODULE_IDLE_TITLE,
+  idleDescription = IDENTITY_MODULE_IDLE_DESCRIPTION,
 }: RegisterIdentityStatusPanelProps) {
-  const defaultIdleDescription = (
-    <>
-      버튼을 누르면 인증 창이 열립니다.
-      <br />
-      인증이 완료되면 다음 단계로 이동할 수 있어요.
-    </>
-  )
-  const resolvedIdleDescription =
-    idleDescription === undefined ? defaultIdleDescription : idleDescription
-
   const rootClass = className ? `register-identity-module ${className}` : 'register-identity-module'
 
   if (status === 'error' && errorMessage) {
@@ -89,8 +84,8 @@ export function RegisterIdentityStatusPanel({
   return (
     <div className={rootClass} role="region" aria-label="통신사 본인인증 안내">
       <p className="register-identity-module__title">{idleTitle}</p>
-      {resolvedIdleDescription != null ? (
-        <p className="register-identity-module__meta">{resolvedIdleDescription}</p>
+      {idleDescription != null ? (
+        <p className="register-identity-module__meta">{idleDescription}</p>
       ) : null}
     </div>
   )

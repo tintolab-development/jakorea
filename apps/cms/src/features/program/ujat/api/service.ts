@@ -1,5 +1,5 @@
+import { createAdminProgramRemoteWithRegistrationForms } from '@/features/program/general/api/create-admin-program-remote-with-registration-forms'
 import {
-  createAdminProgramRemote,
   deleteAdminProgramRemote,
   fetchAdminProgramByIdRemote,
   fetchAdminProgramsRemote,
@@ -78,7 +78,12 @@ export async function create(input: CreateInput): Promise<Program> {
     id: `ujat-pending-${input.idempotencyKey}`,
     overlay: input.overlay,
   })
-  return fromDetail(await createAdminProgramRemote(toCreateRequest(pending, input)))
+  return fromDetail(
+    await createAdminProgramRemoteWithRegistrationForms(
+      pending,
+      toCreateRequest(pending, input)
+    )
+  )
 }
 
 export async function update(

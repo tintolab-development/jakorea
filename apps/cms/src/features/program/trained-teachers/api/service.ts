@@ -1,6 +1,5 @@
 import {
   bulkDeleteAdminProgramsRemote,
-  createAdminProgramRemote,
   deleteAdminProgramRemote,
   fetchAdminProgramByIdRemote,
   fetchAdminProgramSponsorsRemote,
@@ -156,7 +155,13 @@ export async function getTrainedTeacherProgram(programId: string): Promise<Progr
 
 export async function createTrainedTeacherProgram(program: Program): Promise<Program> {
   assertRemoteReady()
-  const dto = await createAdminProgramRemote(mapTrainedTeacherToCreateRequest(program))
+  const { createAdminProgramRemoteWithRegistrationForms } = await import(
+    '@/features/program/general/api/create-admin-program-remote-with-registration-forms'
+  )
+  const dto = await createAdminProgramRemoteWithRegistrationForms(
+    program,
+    mapTrainedTeacherToCreateRequest(program)
+  )
   const mapped = mapTrainedTeacherDetailToProgram(dto)
   if (remoteIdSnapshot) remoteIdSnapshot.add(mapped.id)
   else remoteIdSnapshot = new Set([mapped.id])

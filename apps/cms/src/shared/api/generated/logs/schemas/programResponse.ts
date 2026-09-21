@@ -8,8 +8,6 @@
 import type { ProgramAdminAssignmentResponse } from './programAdminAssignmentResponse';
 import type { ProgramRecruitmentResponse } from './programRecruitmentResponse';
 import type { ProgramResponseEducationStructure } from './programResponseEducationStructure';
-import type { ProgramResponseLifecycleStatus } from './programResponseLifecycleStatus';
-import type { ProgramResponsePeriodStatus } from './programResponsePeriodStatus';
 import type { ProgramResponseProgramType } from './programResponseProgramType';
 import type { ProgramRoundResponse } from './programRoundResponse';
 import type { ProgramScheduleResponse } from './programScheduleResponse';
@@ -31,10 +29,7 @@ export interface ProgramResponse {
   applicationStartDate?: string;
   applicationEndDate?: string;
   status?: string;
-  /** 프로그램 진행 단계(카드/필터 축). SCHEDULED·RECRUITING(예정)·IN_PROGRESS·COMPLETED는 상호 배타. */
-  periodStatus?: ProgramResponsePeriodStatus;
-  /** typed 진행 현황. periodStatus와 동일 UI 버킷을 가리킨다. */
-  lifecycleStatus?: ProgramResponseLifecycleStatus;
+  lifecycleStatus?: string;
   businessArea?: string;
   /** 교육 진행 구조 */
   educationStructure?: ProgramResponseEducationStructure;
@@ -59,18 +54,13 @@ export interface ProgramResponse {
   educationProcess?: string;
   maleParticipants?: number;
   femaleParticipants?: number;
-  /** 참여자 최종 인원. dual-read totalParticipants|finalParticipants */
   totalParticipants?: number;
-  /** Write alias for totalParticipants (dual-read) */
-  finalParticipants?: number;
   generalVolunteers?: number;
   staffVolunteers?: number;
   returningVolunteers?: number;
   generalTeachers?: number;
   educatedTeachers?: number;
   instructors?: number;
-  finalSchools?: number;
-  finalClasses?: number;
   managerName?: string;
   venue?: string;
   curriculum?: string;
@@ -85,13 +75,8 @@ export interface ProgramResponse {
   recruitmentGuide?: string;
   learningSupportContent?: string;
   otherMatters?: string;
-  /** 모집 비고 SSOT. oneLineIntroduction과 분리. */
   remarks?: string;
   recruitmentTargetDetail?: string;
-  educationTargetDetail?: string;
-  venueDetail?: string;
-  venueKind?: string;
-  studentListRequired?: string;
   serviceDetailJson?: string;
   attachmentFileNames?: string[];
   adminAssignments?: ProgramAdminAssignmentResponse[];
@@ -100,7 +85,7 @@ export interface ProgramResponse {
   settlementPolicy?: ProgramSettlementPolicyResponse;
   createdAt?: string;
   updatedAt?: string;
-  businessStartDate?: string;
   businessEndDate?: string;
   businessYear?: number;
+  businessStartDate?: string;
 }

@@ -115,7 +115,12 @@ function hasIncompleteBasicInfo(
   if (isEmptyText(readOverlay(overlay, 'generalRegistration.basicInfo.businessField'))) return true
   if (isEmptyText(ctx.sponsorId)) return true
   if (isEmptyText(ctx.sponsorContactId)) return true
-  if (isEmptyText(readOverlay(overlay, 'generalRegistration.basicInfo.educationVenueDetail'))) {
+  // 교육 장소 상세 텍스트 — 「기타(직접입력)」선택 시에만 필수
+  const venueKind = readOverlay(overlay, 'generalRegistration.basicInfo.educationVenueKind')
+  if (
+    venueKind === 'other' &&
+    isEmptyText(readOverlay(overlay, 'generalRegistration.basicInfo.educationVenueDetail'))
+  ) {
     return true
   }
   // 설문 진행 항목 — 0개 선택도 완료 (선택)

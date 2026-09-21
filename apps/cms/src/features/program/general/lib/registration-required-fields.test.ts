@@ -122,6 +122,45 @@ describe('hasIncompleteGeneralProgramRegistrationRequiredFields', () => {
     ).toBe(false)
   })
 
+  it('교육 장소 상세는 기타(직접입력)일 때만 필수이다', () => {
+    expect(
+      hasIncompleteGeneralProgramRegistrationRequiredFields(
+        filledOverlay({
+          'generalRegistration.basicInfo.educationVenueKind': 'inside',
+          'generalRegistration.basicInfo.educationVenueDetail': '',
+        }),
+        ctx()
+      )
+    ).toBe(false)
+    expect(
+      hasIncompleteGeneralProgramRegistrationRequiredFields(
+        filledOverlay({
+          'generalRegistration.basicInfo.educationVenueKind': 'outside',
+          'generalRegistration.basicInfo.educationVenueDetail': '   ',
+        }),
+        ctx()
+      )
+    ).toBe(false)
+    expect(
+      hasIncompleteGeneralProgramRegistrationRequiredFields(
+        filledOverlay({
+          'generalRegistration.basicInfo.educationVenueKind': 'other',
+          'generalRegistration.basicInfo.educationVenueDetail': '',
+        }),
+        ctx()
+      )
+    ).toBe(true)
+    expect(
+      hasIncompleteGeneralProgramRegistrationRequiredFields(
+        filledOverlay({
+          'generalRegistration.basicInfo.educationVenueKind': 'other',
+          'generalRegistration.basicInfo.educationVenueDetail': '외부 교육장',
+        }),
+        ctx()
+      )
+    ).toBe(false)
+  })
+
   it('일정형·사전 교육 ON — 일정명 overlay 미기록(UI 기본값)이어도 완료이다', () => {
     const overlay = filledOverlay({
       'generalRegistration.basicInfo.detailedProgramId': undefined,

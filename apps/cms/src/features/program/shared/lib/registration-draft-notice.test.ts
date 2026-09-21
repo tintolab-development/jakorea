@@ -1,12 +1,6 @@
 /** @vitest-environment jsdom */
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  loadWritingFormTemplateSave,
-  persistWritingFormTemplateSave,
-} from '@/features/template/lib/writing-form-template-local-save'
-import { createProgramRegistrationDraft } from '@/features/template/model/program-registration-draft'
-import {
-  clearRegistrationDraftForFreshStart,
   REGISTRATION_DRAFT_MODE_CONTINUE,
   REGISTRATION_DRAFT_MODE_FRESH,
   PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
@@ -14,21 +8,29 @@ import {
   shouldSkipRegistrationDraftRestore,
 } from './registration-draft-notice'
 
+vi.mock('@/features/program/general/lib/registration-program-draft-session', () => ({
+  deleteRegistrationProgramDraftRemote: vi.fn(async () => undefined),
+}))
+
+vi.mock('@/features/program/general/lib/registration-create-form-bindings-capabilities', () => ({
+  shouldUseRegistrationCreateFormBindings: vi.fn(() => true),
+  assertRegistrationWizardRemoteReady: vi.fn(),
+}))
+
 describe('clearRegistrationDraftForFreshStart', () => {
   beforeEach(() => {
-    localStorage.clear()
+    vi.clearAllMocks()
   })
 
-  it('removes only the local draft synchronously', () => {
-    persistWritingFormTemplateSave({
-      templateId: PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
-      draft: createProgramRegistrationDraft('general'),
-      editorState: { programTitleKo: '임시 프로그램' },
-    })
+  it('deletes remote program-draft', async () => {
+    const { deleteRegistrationProgramDraftRemote } = await import(
+      '@/features/program/general/lib/registration-program-draft-session'
+    )
+    const { clearRegistrationDraftForFreshStart } = await import('./registration-draft-notice')
 
-    clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
+    await clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
 
-    expect(loadWritingFormTemplateSave(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)).toBeNull()
+    expect(deleteRegistrationProgramDraftRemote).toHaveBeenCalledWith('GENERAL')
   })
 })
 

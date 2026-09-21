@@ -1,14 +1,9 @@
 /**
- * 등록 위저드 모집/신청 양식 localStorage 초안 — 프로그램 유형(variant)별로 격리.
- * 「이어서 작성」이 아니면 해당 유형의 모집/신청 초안만 시드로 리셋한다.
+ * 등록 위저드 모집/신청 양식 — draft-owned form version SSOT (program-draft 세션).
  */
 
 import { GENERAL_PROGRAM_REGISTRATION_STEPS } from '@/features/program/general/model/registration-flow'
-import {
-  loadWritingFormTemplateSave,
-  persistWritingFormTemplateSave,
-  removeWritingFormTemplateSave,
-} from '@/features/template/lib/writing-form-template-local-save'
+import type { WritingFormTemplateSaveRecord } from '@/features/template/lib/writing-form-template-local-save'
 import {
   getGeneralApplicationOverlayRecord,
   patchGeneralApplicationOverlay,
@@ -26,9 +21,7 @@ import { createApplicantRecruitFormIndividualDraft } from '@/features/template/m
 import { createApplicantRecruitFormInstitutionDraft } from '@/features/template/model/applicant-recruit-form-institution-draft'
 import { createEconomyRecruitFormInstitutionDraft } from '@/features/template/model/economy-recruit-form-institution-draft'
 import { createProgramApplicationFormEconomyDraft } from '@/features/template/model/program-application-form-economy-draft'
-import {
-  createProgramParticipantApplicationDraft,
-} from '@/features/template/model/program-application-form-individual-draft'
+import { createProgramParticipantApplicationDraft } from '@/features/template/model/program-application-form-individual-draft'
 import { createProgramApplicationFormInstitutionDraft } from '@/features/template/model/program-application-form-institution-draft'
 import { createProgramApplicationFormInstructorDraft } from '@/features/template/model/program-application-form-instructor-draft'
 import { createProgramApplicationFormTrainedTeachersDraft } from '@/features/template/model/program-application-form-trained-teachers-draft'
@@ -38,6 +31,20 @@ import { createRecruitFormVolunteerDraft } from '@/features/template/model/recru
 import { createTrainedTeachersRecruitFormInstitutionDraft } from '@/features/template/model/trained-teachers-recruit-form-institution-draft'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
+import type { Program } from '@/types/domain'
+import {
+  resolveProgramOperationalBindingKind,
+  type ProgramOperationalBindingKind,
+} from '@/features/program/general/lib/program-operational-binding-profile'
+import {
+  ensureRegistrationProgramDraftId,
+  peekRegistrationProgramDraftId,
+} from '@/features/program/general/lib/registration-program-draft-session'
+import {
+  loadDraftOwnedFormVersionRecord,
+  persistDraftOwnedFormVersion,
+} from '@/features/program/general/lib/registration-draft-form-versions'
+import { resolveProgramApiTypeForDraft } from '@/features/program/general/lib/resolve-program-api-type-for-draft'
 
 /** 1사1교 전용 카탈로그 id (일반 모집/신청 id와 분리) */
 const ECONOMY_OWNED_OPERATIONAL_TEMPLATE_IDS = [
@@ -51,39 +58,13 @@ const TRAINED_TEACHERS_OWNED_OPERATIONAL_TEMPLATE_IDS = [
   'application-trained-teachers',
 ] as const
 
-/**
- * 1사1교 위저드가 기관 외 탭에서 쓰는 공유 카탈로그 id.
- * 일반과 키가 겹치지 않도록 `reg-draft:economy:` 접두로 저장한다.
- */
-const ECONOMY_SHARED_OPERATIONAL_TEMPLATE_IDS = [
-  'recruitment-participant-individual',
-  'recruitment-instructor',
-  'application-participant-individual',
-  'application-instructor',
-] as const
-
 const REG_DRAFT_PREFIX = 'reg-draft:' as const
 
 export function resolveRegistrationOperationalDraftStorageKey(
-  variant: ProgramRegistrationFormVariant,
+  _variant: ProgramRegistrationFormVariant,
   templateId: string
 ): string {
   if (templateId.startsWith('registration-')) return templateId
-  if (variant === 'general') return templateId
-  if (variant === 'economy') {
-    if ((ECONOMY_OWNED_OPERATIONAL_TEMPLATE_IDS as readonly string[]).includes(templateId)) {
-      return templateId
-    }
-    return `${REG_DRAFT_PREFIX}economy:${templateId}`
-  }
-  if (variant === 'trainedTeachers') {
-    if (
-      (TRAINED_TEACHERS_OWNED_OPERATIONAL_TEMPLATE_IDS as readonly string[]).includes(templateId)
-    ) {
-      return templateId
-    }
-    return `${REG_DRAFT_PREFIX}trainedTeachers:${templateId}`
-  }
   return templateId
 }
 
@@ -98,9 +79,10 @@ export function listRegistrationOperationalFormDraftStorageKeys(
   if (variant === 'economy') {
     return [
       ...ECONOMY_OWNED_OPERATIONAL_TEMPLATE_IDS,
-      ...ECONOMY_SHARED_OPERATIONAL_TEMPLATE_IDS.map(id =>
-        resolveRegistrationOperationalDraftStorageKey('economy', id)
-      ),
+      'recruitment-participant-individual',
+      'recruitment-instructor',
+      'application-participant-individual',
+      'application-instructor',
     ]
   }
   if (variant === 'trainedTeachers') {
@@ -109,7 +91,7 @@ export function listRegistrationOperationalFormDraftStorageKeys(
   return []
 }
 
-/** storage key → 카탈로그 templateId (`reg-draft:economy:recruitment-instructor` → `recruitment-instructor`) */
+/** storage key → 카탈로그 templateId */
 export function catalogTemplateIdFromOperationalStorageKey(storageKey: string): string {
   if (storageKey.startsWith(`${REG_DRAFT_PREFIX}economy:`)) {
     return storageKey.slice(`${REG_DRAFT_PREFIX}economy:`.length)
@@ -118,6 +100,36 @@ export function catalogTemplateIdFromOperationalStorageKey(storageKey: string): 
     return storageKey.slice(`${REG_DRAFT_PREFIX}trainedTeachers:`.length)
   }
   return storageKey
+}
+
+function registrationVariantForBindingKind(
+  kind: ProgramOperationalBindingKind
+): ProgramRegistrationFormVariant | null {
+  if (kind === 'COMPANY_SCHOOL') return 'economy'
+  if (kind === 'TRAINED_TEACHER') return 'trainedTeachers'
+  return null
+}
+
+/** attach 시 draft-owned version lookup — catalog templateCode 그대로 */
+export function resolveOperationalDraftStorageKey(
+  program: Program,
+  catalogTemplateCode: string
+): string {
+  const kind = resolveProgramOperationalBindingKind(program)
+  const variant = registrationVariantForBindingKind(kind)
+  if (variant == null) return catalogTemplateCode
+  return resolveRegistrationOperationalDraftStorageKey(variant, catalogTemplateCode)
+}
+
+export async function loadOperationalFormDraftForProgram(
+  program: Program,
+  catalogTemplateCode: string
+): Promise<WritingFormTemplateSaveRecord | null> {
+  const programType = resolveProgramApiTypeForDraft(program)
+  const programDraftId =
+    peekRegistrationProgramDraftId(programType) ??
+    (await ensureRegistrationProgramDraftId(programType))
+  return loadDraftOwnedFormVersionRecord({ programDraftId, templateCode: catalogTemplateCode })
 }
 
 type OperationalOverlayKind = 'institution-recruit' | 'general-recruit' | 'general-application'
@@ -190,17 +202,21 @@ function applyOverlayRecord(kind: OperationalOverlayKind, overlay: Record<string
 }
 
 /**
- * 「이어서 작성」 진입 시 — 모집/신청 localStorage overlay를 공유 스토어에 병합 복원.
- * (탭을 열기 전에도 값이 보이게 하고, 탭별 부분 스냅샷이 서로를 지우지 않게 한다.)
+ * 「이어서 작성」 진입 시 — draft-owned version overlay를 공유 스토어에 병합 복원.
  */
-export function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
+export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
+  programType: string,
   variant: ProgramRegistrationFormVariant
-): void {
+): Promise<void> {
+  const programDraftId = await ensureRegistrationProgramDraftId(programType)
   for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant)) {
-    const saved = loadWritingFormTemplateSave(storageKey)
+    const catalogId = catalogTemplateIdFromOperationalStorageKey(storageKey)
+    const saved = await loadDraftOwnedFormVersionRecord({
+      programDraftId,
+      templateCode: catalogId,
+    })
     const overlay = saved?.overlay
     if (overlay == null || Object.keys(overlay).length === 0) continue
-    const catalogId = catalogTemplateIdFromOperationalStorageKey(storageKey)
     const kind = resolveOperationalOverlayKind(catalogId)
     if (kind == null) continue
     applyOverlayRecord(kind, overlay)
@@ -208,14 +224,14 @@ export function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
 }
 
 /**
- * 임시저장 시 — 메모리상 모집/신청 overlay를 유형별 operational draft에 기록.
- * 현재 탭만이 아니라 공유 스토어 전체를 각 관련 template 키에 남겨, 이어서 작성 시 복원되게 한다.
+ * 임시저장 시 — 메모리상 모집/신청 overlay를 draft-owned version에 PUT.
  */
-export function persistRegistrationOperationalOverlaySnapshots(
+export async function persistRegistrationOperationalOverlaySnapshots(
+  programType: string,
   variant: ProgramRegistrationFormVariant
-): void {
-  // TipTap「추가 내용」은 저장 직전에만 overlay로 flush
+): Promise<void> {
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
+  const programDraftId = await ensureRegistrationProgramDraftId(programType)
   for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant)) {
     const catalogId = catalogTemplateIdFromOperationalStorageKey(storageKey)
     const kind = resolveOperationalOverlayKind(catalogId)
@@ -223,12 +239,16 @@ export function persistRegistrationOperationalOverlaySnapshots(
     const overlay = overlayRecordForKind(kind)
     if (Object.keys(overlay).length === 0) continue
 
-    const existing = loadWritingFormTemplateSave(storageKey)
+    const existing = await loadDraftOwnedFormVersionRecord({
+      programDraftId,
+      templateCode: catalogId,
+    })
     const draft = existing?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
     if (draft == null) continue
 
-    persistWritingFormTemplateSave({
-      templateId: storageKey,
+    await persistDraftOwnedFormVersion({
+      programDraftId,
+      templateCode: catalogId,
       draft,
       overlay,
       editorState: existing?.editorState,
@@ -236,13 +256,11 @@ export function persistRegistrationOperationalOverlaySnapshots(
   }
 }
 
-/** 해당 유형 fresh 진입·등록 완료 시 — 그 유형의 모집/신청 임시저장본만 제거 */
+/** fresh 진입·등록 완료 시 — program-draft DELETE가 form version session도 정리 */
 export function clearRegistrationOperationalFormDrafts(
-  variant: ProgramRegistrationFormVariant
+  _variant: ProgramRegistrationFormVariant
 ): void {
-  for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant)) {
-    removeWritingFormTemplateSave(storageKey)
-  }
+  // no-op — draft-owned versions는 program-draft DELETE/clearRegistrationProgramDraftSession에서 정리
 }
 
 /** @deprecated `clearRegistrationOperationalFormDrafts('general')` 사용 */

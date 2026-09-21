@@ -26,12 +26,13 @@ import {
   formatUjatVolunteerHalfRecruitment,
 } from '@/features/program/ujat/lib/ujat-program-list-display'
 import {
-  peekRegistrationDraftNotice,
+  fetchRegistrationDraftNotice,
   PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
   REGISTRATION_DRAFT_MODE_CONTINUE,
   REGISTRATION_DRAFT_MODE_FRESH,
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
 } from '@/features/program/shared/lib/registration-draft-notice'
+import { assertRegistrationWizardRemoteReady } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 import {
   RegistrationDraftNoticeModal,
   type RegistrationDraftNoticeChoice,
@@ -350,15 +351,26 @@ function UjatProgramListPageContent() {
   )
 
   const handleProgramCreateClick = useCallback(() => {
-    const draft = peekRegistrationDraftNotice(PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE)
-    if (draft != null) {
-      setDraftNoticeTitle(draft.title)
-      setDraftNoticeOpen(true)
-      return
-    }
-    // 안내할 임시저장본이 없으면 복원 없이 항상 빈 신규 폼으로 시작
-    openNewRegistration('fresh')
-  }, [openNewRegistration])
+    void (async () => {
+      try {
+        assertRegistrationWizardRemoteReady()
+      } catch {
+        showAlert({
+          title: '프로그램 등록 불가',
+          content:
+            '프로그램 등록은 forms-surveys·programs remote API가 활성화된 환경에서만 이용할 수 있습니다.',
+        })
+        return
+      }
+      const draft = await fetchRegistrationDraftNotice(PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE)
+      if (draft != null) {
+        setDraftNoticeTitle(draft.title)
+        setDraftNoticeOpen(true)
+        return
+      }
+      openNewRegistration('fresh')
+    })()
+  }, [openNewRegistration, showAlert])
 
   const handleDraftNoticeConfirm = useCallback(
     (choice: RegistrationDraftNoticeChoice) => {

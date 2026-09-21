@@ -7,6 +7,7 @@ import {
   updateGeneralProgramFormBinding,
 } from '@/features/program/general/api/admin-general-programs-service'
 import { shouldUseProgramsHttpRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
+import { shouldUseRemoteApi as shouldUseUjatProgramsRemoteApi } from '@/features/program/ujat/api/capabilities'
 import {
   getOperationalFormSpec,
   listVisibleOperationalFormSpecs,
@@ -18,17 +19,24 @@ import {
   updateFormTemplateRemote,
 } from '@/features/template/api/form-templates-api-client'
 import {
+  loadFormTemplateVersionDraftByVersionId,
   publishFormTemplateVersionById,
   resolveFormTemplateCatalogIds,
   saveFormTemplateVersionDraftByVersionId,
   shouldUseFormsSurveysRemoteApi,
 } from '@/features/template/api/admin-form-templates-service'
-import { loadWritingFormTemplateSave } from '@/features/template/lib/writing-form-template-local-save'
+import { coalesceScopedFormDraftForPut } from '@/features/program/general/lib/coalesce-scoped-form-draft-for-put'
+import { loadOperationalFormDraftForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
+import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 
 type RememberedBinding = { templateId: number; templateVersionId: number }
 
 const rememberedByProgram = new Map<string, Map<string, RememberedBinding>>()
 const inflightByProgram = new Map<string, Promise<void>>()
+
+function shouldUseProgramFormBindingsRemoteApi(): boolean {
+  return shouldUseProgramsHttpRemoteApi() || shouldUseUjatProgramsRemoteApi()
+}
 
 export function getRememberedProgramOperationalFormBinding(
   programId: string,
@@ -67,13 +75,14 @@ function bindingToUpdatePayload(
 }
 
 async function attachLocalDraftToBinding(args: {
-  programId: string
+  program: Program
   spec: OperationalFormSpec
   bindings: ProgramFormBindingResponse[]
   catalogTemplateId: number
   catalogVersionId: number
 }): Promise<void> {
-  const local = loadWritingFormTemplateSave(args.spec.templateCode)
+  const programId = args.program.id
+  const local = await loadOperationalFormDraftForProgram(args.program, args.spec.templateCode)
   if (local?.draft == null) return
 
   const existing = pickOperationalFormBinding(args.bindings, {
@@ -86,7 +95,7 @@ async function attachLocalDraftToBinding(args: {
     existing.templateId !== args.catalogTemplateId
 
   if (alreadyScoped) {
-    rememberProgramOperationalFormBinding(args.programId, args.spec.templateCode, {
+    rememberProgramOperationalFormBinding(programId, args.spec.templateCode, {
       templateId: existing.templateId!,
       templateVersionId: existing.templateVersionId!,
     })
@@ -95,7 +104,7 @@ async function attachLocalDraftToBinding(args: {
 
   const copied = await copyFormTemplateVersionRemote(args.catalogTemplateId, {
     sourceVersionId: existing?.templateVersionId ?? args.catalogVersionId,
-    versionLabel: `program-${args.programId}`,
+    versionLabel: `program-${programId}`,
   })
   const templateId = copied.templateId ?? args.catalogTemplateId
   const templateVersionId = copied.templateVersionId
@@ -103,9 +112,18 @@ async function attachLocalDraftToBinding(args: {
     throw new Error('프로그램 전용 양식 버전을 만들지 못했습니다.')
   }
 
+  const baseline = await loadFormTemplateVersionDraftByVersionId(
+    args.spec.templateCode,
+    templateVersionId
+  )
+  const draftForPut =
+    baseline?.draft != null
+      ? coalesceScopedFormDraftForPut(baseline.draft, local.draft)
+      : local.draft
+
   await saveFormTemplateVersionDraftByVersionId({
     versionId: templateVersionId,
-    draft: local.draft,
+    draft: draftForPut,
     overlay: local.overlay,
     editorState: local.editorState,
     settingsJson: local.settingsJson,
@@ -119,7 +137,7 @@ async function attachLocalDraftToBinding(args: {
     try {
       await updateFormTemplateRemote(templateId, {
         useYn: false,
-        description: `program-scoped:${args.programId}`,
+        description: `program-scoped:${programId}`,
       })
     } catch (error) {
       console.warn('[program-form-bindings] hide program-scoped template failed', error)
@@ -127,33 +145,125 @@ async function attachLocalDraftToBinding(args: {
   }
 
   const ids = { templateId, templateVersionId: publishedVersionId }
-  if (existing?.bindingId != null) {
-    await updateGeneralProgramFormBinding(
-      args.programId,
-      String(existing.bindingId),
-      bindingToUpdatePayload(existing, ids, args.spec)
-    )
-  } else {
-    await createGeneralProgramFormBinding(args.programId, {
-      formType: args.spec.formType,
-      templateId,
-      templateVersionId: publishedVersionId,
-      targetRole: args.spec.targetRole,
-      active: true,
-      required: false,
-    })
+  const createPayload: ProgramFormBindingRequest = {
+    formType: args.spec.formType,
+    templateId,
+    templateVersionId: publishedVersionId,
+    active: true,
+    required: false,
   }
-  rememberProgramOperationalFormBinding(args.programId, args.spec.templateCode, ids)
+  if (args.spec.targetRole != null && args.spec.targetRole !== '') {
+    createPayload.targetRole = args.spec.targetRole
+  }
+
+  const bindingInactive = existing?.active === false
+  if (existing?.bindingId == null || bindingInactive) {
+    await createGeneralProgramFormBinding(programId, createPayload)
+  } else {
+    try {
+      await updateGeneralProgramFormBinding(
+        programId,
+        String(existing.bindingId),
+        bindingToUpdatePayload(existing, ids, args.spec)
+      )
+    } catch (error) {
+      if (getApiErrorCode(error) === 'OPERATION_NOT_ALLOWED') {
+        throw error
+      }
+      throw error
+    }
+  }
+  rememberProgramOperationalFormBinding(programId, args.spec.templateCode, ids)
+}
+
+async function promoteCatalogBindingToProgramScoped(args: {
+  program: Program
+  spec: OperationalFormSpec
+  bindings: ProgramFormBindingResponse[]
+  catalogTemplateId: number
+  catalogVersionId: number
+}): Promise<RememberedBinding | undefined> {
+  const programId = args.program.id
+  const existing = pickOperationalFormBinding(args.bindings, {
+    ...args.spec,
+    catalogTemplateId: args.catalogTemplateId,
+  })
+  if (
+    existing?.templateId != null &&
+    existing.templateVersionId != null &&
+    existing.templateId !== args.catalogTemplateId
+  ) {
+    const ids = {
+      templateId: existing.templateId,
+      templateVersionId: existing.templateVersionId,
+    }
+    rememberProgramOperationalFormBinding(programId, args.spec.templateCode, ids)
+    return ids
+  }
+
+  const copied = await copyFormTemplateVersionRemote(args.catalogTemplateId, {
+    sourceVersionId: existing?.templateVersionId ?? args.catalogVersionId,
+    versionLabel: `program-${programId}`,
+  })
+  const templateId = copied.templateId ?? args.catalogTemplateId
+  const templateVersionId = copied.templateVersionId
+  if (templateVersionId == null) {
+    throw new Error('프로그램 전용 양식 버전을 만들지 못했습니다.')
+  }
+
+  const publishedVersionId = await publishFormTemplateVersionById(templateVersionId)
+  if (templateId !== args.catalogTemplateId) {
+    try {
+      await updateFormTemplateRemote(templateId, {
+        useYn: false,
+        description: `program-scoped:${programId}`,
+      })
+    } catch (error) {
+      console.warn('[program-form-bindings] hide program-scoped template failed', error)
+    }
+  }
+
+  const ids = { templateId, templateVersionId: publishedVersionId }
+  const createPayload: ProgramFormBindingRequest = {
+    formType: args.spec.formType,
+    templateId,
+    templateVersionId: publishedVersionId,
+    active: true,
+    required: false,
+  }
+  if (args.spec.targetRole != null && args.spec.targetRole !== '') {
+    createPayload.targetRole = args.spec.targetRole
+  }
+
+  const bindingInactive = existing?.active === false
+  if (existing?.bindingId == null || bindingInactive) {
+    await createGeneralProgramFormBinding(programId, createPayload)
+  } else {
+    try {
+      await updateGeneralProgramFormBinding(
+        programId,
+        String(existing.bindingId),
+        bindingToUpdatePayload(existing, ids, args.spec)
+      )
+    } catch (error) {
+      if (getApiErrorCode(error) === 'OPERATION_NOT_ALLOWED') {
+        throw error
+      }
+      throw error
+    }
+  }
+  rememberProgramOperationalFormBinding(programId, args.spec.templateCode, ids)
+  return ids
 }
 
 async function attachRegistrationFormDrafts(program: Program): Promise<void> {
-  if (!shouldUseProgramsHttpRemoteApi() || !shouldUseFormsSurveysRemoteApi()) return
+  if (!shouldUseProgramFormBindingsRemoteApi() || !shouldUseFormsSurveysRemoteApi()) return
   const specs = listVisibleOperationalFormSpecs(program)
   if (specs.length === 0) return
 
   const bindings = await fetchGeneralProgramFormBindings(program.id)
   for (const spec of specs) {
-    const local = loadWritingFormTemplateSave(spec.templateCode)
+    const local = await loadOperationalFormDraftForProgram(program, spec.templateCode)
     if (local?.draft == null) continue
     try {
       const catalog = await resolveFormTemplateCatalogIds(spec.templateCode)
@@ -165,7 +275,7 @@ async function attachRegistrationFormDrafts(program: Program): Promise<void> {
         continue
       }
       await attachLocalDraftToBinding({
-        programId: program.id,
+        program,
         spec,
         bindings,
         catalogTemplateId: catalog.templateId,
@@ -190,6 +300,73 @@ export async function attachRegistrationFormDraftsToProgram(program: Program): P
   })
   inflightByProgram.set(program.id, run)
   return run
+}
+
+/** form-bindings GET + resolve만 (조회·미리보기용, PATCH/PUT 없음) */
+export async function resolveProgramOperationalFormLoadSource(
+  program: Program,
+  templateCode: string
+): Promise<{ templateVersionId?: number; preferLocalDraft: boolean }> {
+  if (!shouldUseProgramFormBindingsRemoteApi() || !shouldUseFormsSurveysRemoteApi()) {
+    return { preferLocalDraft: true }
+  }
+  const catalog = await resolveFormTemplateCatalogIds(templateCode)
+  const bindings = await fetchGeneralProgramFormBindings(program.id)
+  return resolveApplicationFormLoadSource({
+    programId: program.id,
+    templateCode,
+    bindings,
+    catalogTemplateId: catalog?.templateId,
+  })
+}
+
+/** catalog binding → program-scoped copy (양식 수정 모달·저장 SSOT) */
+export async function ensureProgramScopedOperationalBinding(
+  program: Program,
+  templateCode: string
+): Promise<{ templateVersionId?: number; preferLocalDraft: boolean }> {
+  if (!shouldUseProgramFormBindingsRemoteApi() || !shouldUseFormsSurveysRemoteApi()) {
+    return { preferLocalDraft: true }
+  }
+  const spec = getOperationalFormSpec(templateCode)
+  if (spec == null) return { preferLocalDraft: true }
+
+  const catalog = await resolveFormTemplateCatalogIds(templateCode)
+  const bindings = await fetchGeneralProgramFormBindings(program.id)
+  const initial = resolveApplicationFormLoadSource({
+    programId: program.id,
+    templateCode,
+    bindings,
+    catalogTemplateId: catalog?.templateId,
+  })
+  if (!initial.preferLocalDraft) return initial
+
+  const local = await loadOperationalFormDraftForProgram(program, templateCode)
+  if (local?.draft != null && catalog != null) {
+    await attachLocalDraftToBinding({
+      program,
+      spec,
+      bindings,
+      catalogTemplateId: catalog.templateId,
+      catalogVersionId: catalog.templateVersionId,
+    })
+  } else if (catalog != null) {
+    await promoteCatalogBindingToProgramScoped({
+      program,
+      spec,
+      bindings,
+      catalogTemplateId: catalog.templateId,
+      catalogVersionId: catalog.templateVersionId,
+    })
+  }
+
+  const nextBindings = await fetchGeneralProgramFormBindings(program.id)
+  return resolveApplicationFormLoadSource({
+    programId: program.id,
+    templateCode,
+    bindings: nextBindings,
+    catalogTemplateId: catalog?.templateId,
+  })
 }
 
 export function resolveApplicationFormLoadSource(args: {
