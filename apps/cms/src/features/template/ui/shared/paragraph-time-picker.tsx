@@ -9,6 +9,7 @@ import {
   from24h,
   parseNum,
 } from '@/shared/components/date-time-picker-modal'
+import { toValidDayjsOrNull } from '@/shared/components/date-time-picker-shared'
 import type { CmsControlSize } from '@/shared/ui/cms-control-size'
 import '@/shared/ui/cms-datepicker.css'
 import './paragraph-time-picker.css'
@@ -62,6 +63,7 @@ export function ParagraphTimePicker({
   const rootRef = useRef<HTMLSpanElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelId = useId()
+  const resolvedValue = toValidDayjsOrNull(value)
 
   const [open, setOpen] = useState(false)
   const [endTimeOn, setEndTimeOn] = useState(endTimeAlwaysOn)
@@ -85,18 +87,18 @@ export function ParagraphTimePicker({
   const triggerDisplay =
     surfaceTimeRange != null
       ? `${surfaceTimeRange[0].format('HH:mm')} ~ ${surfaceTimeRange[1].format('HH:mm')}`
-      : value != null
-        ? value.format('HH:mm')
+      : resolvedValue != null
+        ? resolvedValue.format('HH:mm')
         : null
   const triggerIsPlaceholder = triggerDisplay == null
 
   const initialStartMs = initialTimeRange?.[0]?.valueOf()
   const initialEndMs = initialTimeRange?.[1]?.valueOf()
-  const valueMs = value?.valueOf()
+  const valueMs = resolvedValue?.valueOf()
   const initialTimeRangeRef = useRef(initialTimeRange)
-  const valueRef = useRef(value)
+  const valueRef = useRef(resolvedValue)
   initialTimeRangeRef.current = initialTimeRange
-  valueRef.current = value
+  valueRef.current = resolvedValue
 
   useEffect(() => {
     if (endTimeAlwaysOn) {
@@ -158,7 +160,7 @@ export function ParagraphTimePicker({
       setEndTimeOn(true)
       setFocusPhase('start')
     } else {
-      populateDraftFromInstant(value ?? dayjs())
+      populateDraftFromInstant(resolvedValue ?? dayjs())
       setEndTimeOn(endTimeAlwaysOn)
       setFocusPhase(endTimeAlwaysOn ? 'start' : 'single')
     }
@@ -166,7 +168,7 @@ export function ParagraphTimePicker({
   }
 
   const handleApply = () => {
-    const base = value ?? dayjs()
+    const base = resolvedValue ?? dayjs()
     const sh = parseNum(sHour, 12)
     const sm = parseNum(sMin, 0)
     const start = buildTime(base, sh, sm, sMer)
@@ -191,7 +193,7 @@ export function ParagraphTimePicker({
   }
 
   const handleEndTimeToggleOn = () => {
-    const base = value ?? dayjs()
+    const base = resolvedValue ?? dayjs()
     const { h12, mer } = from24h(base.hour())
     setSHour(String(h12))
     setSMin(String(base.minute()))

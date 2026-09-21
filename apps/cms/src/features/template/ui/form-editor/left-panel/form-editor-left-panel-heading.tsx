@@ -36,7 +36,10 @@ import {
   PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS,
   shouldHideMultipleChoiceAllowMultipleTitleHint,
 } from '@/features/template/model/program-application-form-individual-draft'
-import { PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-institution-draft'
+import {
+  PROGRAM_APPLICATION_FORM_INSTITUTION_IDS,
+  PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/program-application-form-institution-draft'
 import { APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS } from '@/features/template/model/applicant-recruit-form-individual-draft'
 import { APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/applicant-recruit-form-institution-draft'
 import { ECONOMY_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/economy-recruit-form-institution-draft'
@@ -57,6 +60,15 @@ import {
   shouldUseScheduleEventBlockLayout,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { resolveProgramRegistrationScheduleCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
+import { getInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  resolveInstitutionPreferredScheduleDescription,
+  shouldUseInstitutionPreferredScheduleCardCopy,
+} from '@/features/template/lib/institution-application-schedule-copy'
+import {
+  InstitutionPreferredScheduleCardDescription,
+  InstitutionPreferredScheduleCardTitleTrailing,
+} from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-preferred-schedule-paragraph'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
 import {
@@ -610,6 +622,34 @@ export function withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrai
         수업 진행 시간 추가
       </CmsButton>
     ),
+  }
+}
+
+/** 일반 참여 기관 신청 — 진행 희망 교육 일정(커리큘럼 복수+기간): 시안 설명·제목 줄 추가 버튼 */
+export function withInstitutionApplicationPreferredScheduleHeading(
+  heading: ParagraphCardEditableHeading,
+  paragraph: WritingFormParagraph,
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+): ParagraphCardEditableHeading {
+  if (
+    paragraphBodyOptions?.programApplicationFormInstitution !== true ||
+    paragraph.id !== PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice
+  ) {
+    return heading
+  }
+  const bridge = getInstitutionApplicationProgramBridge()
+  if (!shouldUseInstitutionPreferredScheduleCardCopy(bridge)) {
+    return heading
+  }
+  const description = resolveInstitutionPreferredScheduleDescription(bridge)
+  const readOnly = paragraphBodyOptions.paragraphInteractionMode === 'preview'
+  return {
+    ...heading,
+    descriptionValue: description,
+    descriptionIsEditMode: false,
+    showDescription: true,
+    descriptionViewContent: <InstitutionPreferredScheduleCardDescription />,
+    titleTrailing: <InstitutionPreferredScheduleCardTitleTrailing readOnly={readOnly} />,
   }
 }
 

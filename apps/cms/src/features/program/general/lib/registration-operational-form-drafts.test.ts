@@ -2,11 +2,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Program } from '@/types/domain'
 
-const loadDraftOwnedFormVersionRecord = vi.fn()
-const persistDraftOwnedFormVersion = vi.fn()
+const ensureDraftOwnedFormVersionWithBaseline = vi.fn()
 const loadRegistrationWizardFormDraft = vi.fn()
+const persistDraftOwnedFormVersion = vi.fn()
 vi.mock('@/features/program/general/lib/registration-draft-form-versions', () => ({
-  loadDraftOwnedFormVersionRecord: (...args: unknown[]) => loadDraftOwnedFormVersionRecord(...args),
+  ensureDraftOwnedFormVersionWithBaseline: (...args: unknown[]) =>
+    ensureDraftOwnedFormVersionWithBaseline(...args),
   persistDraftOwnedFormVersion: (...args: unknown[]) => persistDraftOwnedFormVersion(...args),
 }))
 
@@ -32,6 +33,7 @@ import {
   resetApplicantRecruitInstitutionOverlay,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import {
+  getGeneralRecruitOverlayRecord,
   patchGeneralRecruitOverlay,
   resetGeneralRecruitOverlay,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
@@ -67,20 +69,40 @@ describe('registration operational draft-owned helpers', () => {
   })
 
   it('hydrates overlays from local registration drafts', async () => {
-    loadRegistrationWizardFormDraft.mockResolvedValueOnce({
-      overlay: { 'recruit.inquiryContact': '기관문의' },
-    })
+    loadRegistrationWizardFormDraft.mockImplementation(
+      async (args: { templateCode: string }) => {
+        if (args.templateCode === 'recruitment-participant-school') {
+          return {
+            overlay: {
+              'recruit.inquiryContact': '기관문의',
+              'recruit.detailInfo.programDescription': '프로그램 설명',
+              'recruit.detailInfo.additionalContentHtml': '<p>에디터</p>',
+            },
+          }
+        }
+        return null
+      }
+    )
 
     await hydrateRegistrationOperationalOverlaysFromLocalDrafts('GENERAL', 'general')
 
     expect(loadRegistrationWizardFormDraft).toHaveBeenCalled()
     expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.inquiryContact']).toBe('기관문의')
+    expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.programDescription']).toBe(
+      '프로그램 설명'
+    )
+    expect(getGeneralRecruitOverlayRecord()['recruit.detailInfo.additionalContentHtml']).toBe(
+      '<p>에디터</p>'
+    )
   })
 
   it('persists only visible operational overlays for individual general program', async () => {
     patchGeneralRecruitOverlay({ 'recruit.instructor.inquiryContact': '강사문의' })
     patchGeneralApplicationOverlay({ 'application.volunteer.essay': '에세이' })
-    loadDraftOwnedFormVersionRecord.mockResolvedValue(null)
+    ensureDraftOwnedFormVersionWithBaseline.mockResolvedValue({
+      owned: { templateCode: 'recruitment-participant-individual', templateId: 1, draftVersionId: 10 },
+      baseline: null,
+    })
     persistDraftOwnedFormVersion.mockResolvedValue(undefined)
 
     const program = {
@@ -92,7 +114,7 @@ describe('registration operational draft-owned helpers', () => {
     await persistRegistrationOperationalOverlaySnapshots(program)
 
     expect(persistDraftOwnedFormVersion).toHaveBeenCalled()
-    type PersistCallArg = { templateCode?: string; baseline?: unknown }
+    type PersistCallArg = { templateCode?: string; baseline?: unknown; owned?: unknown }
     const templateCodes = persistDraftOwnedFormVersion.mock.calls.map(
       (call: PersistCallArg[]) => call[0]?.templateCode
     )
@@ -101,7 +123,8 @@ describe('registration operational draft-owned helpers', () => {
     expect(templateCodes).toContain('recruitment-participant-individual')
     expect(
       persistDraftOwnedFormVersion.mock.calls.every(
-        (call: PersistCallArg[]) => call[0]?.baseline !== undefined
+        (call: PersistCallArg[]) =>
+          call[0]?.owned != null && call[0]?.baseline !== undefined
       )
     ).toBe(true)
   })

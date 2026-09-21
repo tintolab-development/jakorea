@@ -209,7 +209,7 @@ const EMPTY_SCHEMA_DRAFT: WritingFormDraft = normalizeWritingFormDraft({
   paragraphs: [],
 })
 
-function buildSaveRecordFromVersionResponse(args: {
+export function buildSaveRecordFromVersionResponse(args: {
   templateCode: string
   schemaJson?: string | Record<string, unknown> | null
   extensionJson?: string | Record<string, unknown> | null

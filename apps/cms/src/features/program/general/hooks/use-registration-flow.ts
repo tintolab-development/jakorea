@@ -33,7 +33,10 @@ import type { ProgramRegistrationFormVariant } from '@/features/template/model/p
 import type { Program } from '@/types/domain'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
-import { hydrateRegistrationOperationalOverlaysFromLocalDrafts } from '@/features/program/general/lib/registration-operational-form-drafts'
+import {
+  hydrateRegistrationOperationalOverlaysFromLocalDrafts,
+  persistRegistrationOperationalOverlaysToLocal,
+} from '@/features/program/general/lib/registration-operational-form-drafts'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 import {
   hydrateRegistrationProgramDraft,
@@ -131,7 +134,6 @@ export function useGeneralProgramRegistrationFlow(
       programRegistrationFormVariant: registrationFormVariant,
       onRegistrationSaved: options?.onProgramRegistrationSaved,
       skipDraftRestore,
-      localOnlyDraftPersistence: true,
       registrationWizardProgramType: programType,
       templateCode:
         registrationFormVariant === 'general'
@@ -317,7 +319,6 @@ export function useGeneralProgramRegistrationFlow(
       registrationWizardProgramType: programType,
       registrationWizardOpen: open,
       skipDraftRestore,
-      localOnlyDraftPersistence: true,
       participantOrganization: participantFlags.organization,
       /** 등록 위저드 신청 단계 — 기관 기본정보·강사/봉사자 일정 자동 반영 미리보기 */
       programLinkedInstitutionApplicationForm:
@@ -431,6 +432,7 @@ export function useGeneralProgramRegistrationFlow(
     if (!isProgramStep && isParticipantStep) {
       await participantVm.handleSave({ silent: true })
     }
+    await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant)
     syncRegistrationProgramDraftSession({
       programType,
       registrationTemplateCode: registrationTemplateId,
@@ -443,6 +445,7 @@ export function useGeneralProgramRegistrationFlow(
     isProgramStep,
     participantVm,
     programType,
+    registrationFormVariant,
     registrationTemplateId,
     registrationVm,
   ])
@@ -476,6 +479,11 @@ export function useGeneralProgramRegistrationFlow(
         isProgramStep &&
         registrationVm.hasIncompleteRequiredFields()
       ) {
+        // 진단용 — 어떤 항목이 비어 있다고 판정됐는지 콘솔에서 즉시 확인 가능 (UI 문구에는 노출 안 함)
+        console.debug(
+          '[registration] 공통정보 필수항목 미입력:',
+          registrationVm.getIncompleteRequiredFieldsReason?.()
+        )
         showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
           content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,

@@ -3,6 +3,10 @@ import {
   applyEducationFormTypeSettingsModeChange,
   EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE,
   resolveEducationFormTypeSettingsMode,
+  resolveGeneralRegistrationCommonEducationForm,
+  resolveGeneralRegistrationCommonParticipation,
+  resolveIndexedEducationForm,
+  resolveIndexedParticipation,
   shouldShowEducationFormParticipantSelectionRadio,
 } from './program-registration-education-form-options'
 
@@ -72,13 +76,13 @@ describe('resolveEducationFormTypeSettingsMode', () => {
 })
 
 describe('applyEducationFormTypeSettingsModeChange', () => {
-  it('참여자 선택 → 일정 공통이면 드롭다운을 비운다', () => {
+  it('참여자 선택 → 일정 공통이면 단일 회차와 같은 기본 온라인으로 되돌린다', () => {
     expect(
       applyEducationFormTypeSettingsModeChange({
         next: 'common',
         currentForm: EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE,
       })
-    ).toEqual({ educationFormScheduleDetail: 'common', educationForm: '' })
+    ).toEqual({ educationFormScheduleDetail: 'common', educationForm: 'online' })
   })
 
   it('참여자 선택으로 바꾸면 일정 공통 + participant_selection', () => {
@@ -109,5 +113,65 @@ describe('applyEducationFormTypeSettingsModeChange', () => {
         currentForm: 'offline',
       })
     ).toEqual({ educationFormScheduleDetail: 'perSchedule', educationForm: 'offline' })
+  })
+})
+
+describe('resolveGeneralRegistrationCommonEducationForm', () => {
+  it('복수회차 키를 우선한다', () => {
+    expect(
+      resolveGeneralRegistrationCommonEducationForm({
+        'generalRegistration.typeSettings.multiCommonEducationForm': 'hybrid',
+        'generalRegistration.typeSettings.singleEducationForm': 'offline',
+      })
+    ).toBe('hybrid')
+  })
+
+  it('복수회차 키가 비면 단일 회차 값으로 본다', () => {
+    expect(
+      resolveGeneralRegistrationCommonEducationForm({
+        'generalRegistration.typeSettings.multiCommonEducationForm': '',
+        'generalRegistration.typeSettings.singleEducationForm': 'offline',
+      })
+    ).toBe('offline')
+  })
+
+  it('둘 다 없으면 단일 회차 기본값 online', () => {
+    expect(resolveGeneralRegistrationCommonEducationForm({})).toBe('online')
+  })
+})
+
+describe('resolveGeneralRegistrationCommonParticipation', () => {
+  it('복수회차 키를 우선한다', () => {
+    expect(
+      resolveGeneralRegistrationCommonParticipation({
+        'generalRegistration.typeSettings.multiCommonParticipation': 'team',
+        'generalRegistration.typeSettings.singleParticipation': 'individual',
+      })
+    ).toBe('team')
+  })
+
+  it('복수회차 키가 비면 단일 회차 값으로 본다', () => {
+    expect(
+      resolveGeneralRegistrationCommonParticipation({
+        'generalRegistration.typeSettings.multiCommonParticipation': '',
+        'generalRegistration.typeSettings.singleParticipation': 'team',
+      })
+    ).toBe('team')
+  })
+
+  it('둘 다 없으면 단일 회차 기본값 individual', () => {
+    expect(resolveGeneralRegistrationCommonParticipation({})).toBe('individual')
+  })
+})
+
+describe('resolveIndexed education/participation defaults', () => {
+  it('미기록은 UI 기본값이다', () => {
+    expect(resolveIndexedEducationForm(undefined)).toBe('online')
+    expect(resolveIndexedParticipation(undefined)).toBe('individual')
+  })
+
+  it('값이 있으면 그대로 쓴다', () => {
+    expect(resolveIndexedEducationForm('hybrid')).toBe('hybrid')
+    expect(resolveIndexedParticipation('team')).toBe('team')
   })
 })

@@ -27,6 +27,7 @@ import {
 } from '@/features/template/api/admin-form-templates-service'
 import { coalesceScopedFormDraftForPut } from '@/features/program/general/lib/coalesce-scoped-form-draft-for-put'
 import { loadOperationalFormDraftForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
+import { resolveFormBindingTargetType } from '@/features/program/general/lib/resolve-form-binding-target-type'
 import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 
 type RememberedBinding = { templateId: number; templateVersionId: number }
@@ -133,15 +134,17 @@ async function attachLocalDraftToBinding(args: {
   // form-bindings는 PUBLISHED version만 허용
   const publishedVersionId = await publishFormTemplateVersionById(templateVersionId)
 
-  // 양식 관리 목록(useYn:true)에 프로그램 전용본이 쌓이지 않도록 숨김
+  // 주의: `useYn:false`로 숨기지 않는다 — BE의 form-binding 검증이 `use_yn=true`를
+  // "존재/활성" 판정에 그대로 쓰므로, false로 두면 이후 binding 조회·수정이
+  // `templateVersionId does not exist or is inactive`로 거절될 수 있다(2026-09-21 BE 확인).
+  // description만 남겨 어떤 program이 소유한 복사본인지 추적한다.
   if (templateId !== args.catalogTemplateId) {
     try {
       await updateFormTemplateRemote(templateId, {
-        useYn: false,
         description: `program-scoped:${programId}`,
       })
     } catch (error) {
-      console.warn('[program-form-bindings] hide program-scoped template failed', error)
+      console.warn('[program-form-bindings] label program-scoped template failed', error)
     }
   }
 
@@ -155,6 +158,7 @@ async function attachLocalDraftToBinding(args: {
   }
   if (args.spec.targetRole != null && args.spec.targetRole !== '') {
     createPayload.targetRole = args.spec.targetRole
+    createPayload.targetType = resolveFormBindingTargetType(args.spec.targetRole)
   }
 
   const bindingInactive = existing?.active === false
@@ -213,14 +217,14 @@ async function promoteCatalogBindingToProgramScoped(args: {
   }
 
   const publishedVersionId = await publishFormTemplateVersionById(templateVersionId)
+  // 주의: `useYn:false`로 숨기지 않는다 — 사유는 위 `attachLocalDraftToBinding` 주석과 동일.
   if (templateId !== args.catalogTemplateId) {
     try {
       await updateFormTemplateRemote(templateId, {
-        useYn: false,
         description: `program-scoped:${programId}`,
       })
     } catch (error) {
-      console.warn('[program-form-bindings] hide program-scoped template failed', error)
+      console.warn('[program-form-bindings] label program-scoped template failed', error)
     }
   }
 
@@ -234,6 +238,7 @@ async function promoteCatalogBindingToProgramScoped(args: {
   }
   if (args.spec.targetRole != null && args.spec.targetRole !== '') {
     createPayload.targetRole = args.spec.targetRole
+    createPayload.targetType = resolveFormBindingTargetType(args.spec.targetRole)
   }
 
   const bindingInactive = existing?.active === false

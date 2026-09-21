@@ -81,6 +81,67 @@ export function applyEducationFormTypeSettingsModeChange(input: {
   return {
     educationFormScheduleDetail: 'common',
     educationForm:
-      input.currentForm === EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE ? '' : input.currentForm,
+      input.currentForm === EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE
+        ? 'online'
+        : input.currentForm || 'online',
   }
+}
+
+/** 단일 회차 라디오·일정별 블록 UI와 create 매핑이 공유하는 기본값 */
+export const DEFAULT_REGISTRATION_EDUCATION_FORM = 'online' as const
+export const DEFAULT_REGISTRATION_PARTICIPATION = 'individual' as const
+
+const MULTI_COMMON_EDUCATION_FORM_KEY =
+  'generalRegistration.typeSettings.multiCommonEducationForm' as const
+const SINGLE_EDUCATION_FORM_KEY =
+  'generalRegistration.typeSettings.singleEducationForm' as const
+const MULTI_COMMON_PARTICIPATION_KEY =
+  'generalRegistration.typeSettings.multiCommonParticipation' as const
+const SINGLE_PARTICIPATION_KEY =
+  'generalRegistration.typeSettings.singleParticipation' as const
+
+function overlayNonEmptyText(overlay: Record<string, unknown>, key: string): string {
+  const raw = overlay[key]
+  if (typeof raw === 'string' && raw.trim()) return raw.trim()
+  return ''
+}
+
+/**
+ * 일정 공통 교육 형태 — create 매핑·필수 검사 동일 해석.
+ * 복수회차 키가 비면 단일 회차 값, 둘 다 없으면 UI 기본값 `online`.
+ */
+export function resolveGeneralRegistrationCommonEducationForm(
+  overlay: Record<string, unknown>
+): string {
+  return (
+    overlayNonEmptyText(overlay, MULTI_COMMON_EDUCATION_FORM_KEY) ||
+    overlayNonEmptyText(overlay, SINGLE_EDUCATION_FORM_KEY) ||
+    DEFAULT_REGISTRATION_EDUCATION_FORM
+  )
+}
+
+/**
+ * 일정 공통 참여 방식 — create 매핑·필수 검사 동일 해석.
+ * 복수회차 키가 비면 단일 회차 값, 둘 다 없으면 UI 기본값 `individual`.
+ */
+export function resolveGeneralRegistrationCommonParticipation(
+  overlay: Record<string, unknown>
+): string {
+  return (
+    overlayNonEmptyText(overlay, MULTI_COMMON_PARTICIPATION_KEY) ||
+    overlayNonEmptyText(overlay, SINGLE_PARTICIPATION_KEY) ||
+    DEFAULT_REGISTRATION_PARTICIPATION
+  )
+}
+
+/** 회차/세부 일정 블록 교육 형태 — UI `?? 'online'` 과 동일 */
+export function resolveIndexedEducationForm(value: unknown): string {
+  if (typeof value === 'string' && value.trim()) return value.trim()
+  return DEFAULT_REGISTRATION_EDUCATION_FORM
+}
+
+/** 회차/세부 일정 블록 참여 방식 — UI `?? 'individual'` 과 동일 */
+export function resolveIndexedParticipation(value: unknown): string {
+  if (typeof value === 'string' && value.trim()) return value.trim()
+  return DEFAULT_REGISTRATION_PARTICIPATION
 }

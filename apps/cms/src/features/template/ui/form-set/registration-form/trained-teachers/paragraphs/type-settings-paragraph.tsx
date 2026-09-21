@@ -98,7 +98,7 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
   )
   const [multiCommonEducationForm, setMultiCommonEducationForm] = useProgramRegistrationOverlayKv(
     'trainedTeachersRegistration.typeSettings.multiCommonEducationForm',
-    ''
+    'online'
   )
   const [ipsType, setIpsType] = useProgramRegistrationOverlayKv<ProgramRegistrationIpsTypeValue>(
     'trainedTeachersRegistration.typeSettings.ipsType',
@@ -121,6 +121,18 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
     educationFormScheduleDetail,
     educationForm,
     multiCommonEducationForm,
+  ])
+
+  useEffect(() => {
+    if (sessionRoundType !== 'multi' || educationFormScheduleDetail !== 'common') return
+    if (multiCommonEducationForm.trim()) return
+    setMultiCommonEducationForm(educationForm.trim() || 'online')
+  }, [
+    educationForm,
+    educationFormScheduleDetail,
+    multiCommonEducationForm,
+    sessionRoundType,
+    setMultiCommonEducationForm,
   ])
 
   return (

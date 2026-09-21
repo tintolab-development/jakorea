@@ -10,26 +10,28 @@ export function dayjsTimeParts(d: Dayjs): { h: string; m: string; mer: 'AM' | 'P
   return { h: String(h12), m: String(d.minute()), mer }
 }
 
+/** overlay JSON 왕복 등으로 Dayjs가 ISO string이 된 값을 복원한다. */
+export function toValidDayjsOrNull(value: unknown): Dayjs | null {
+  if (value == null || value === '') return null
+  if (dayjs.isDayjs(value)) return value.isValid() ? value : null
+  if (typeof value === 'string' || typeof value === 'number' || value instanceof Date) {
+    const parsed = dayjs(value)
+    return parsed.isValid() ? parsed : null
+  }
+  return null
+}
+
+export function toValidDayjs(value: unknown, fallback: Dayjs = dayjs()): Dayjs {
+  return toValidDayjsOrNull(value) ?? fallback
+}
+
 /** overlay 문자열·invalid dayjs가 들어와도 Dayjs를 반환한다. */
 export function toPickerDayjs(value: unknown): Dayjs {
-  if (dayjs.isDayjs(value) && value.isValid()) return value
-  if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    const parsed = dayjs(value)
-    if (parsed.isValid()) return parsed
-  }
-  if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = dayjs(value)
-    if (parsed.isValid()) return parsed
-  }
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    const parsed = dayjs(value)
-    if (parsed.isValid()) return parsed
-  }
-  return dayjs()
+  return toValidDayjs(value)
 }
 
 export function findNextEnabledDate(date: Dayjs, disabledDate?: (date: Dayjs) => boolean): Dayjs {
-  const start = toPickerDayjs(date)
+  const start = toValidDayjs(date)
   if (!disabledDate?.(start)) return start
   for (let offset = 1; offset <= 366; offset += 1) {
     const next = start.add(offset, 'day')

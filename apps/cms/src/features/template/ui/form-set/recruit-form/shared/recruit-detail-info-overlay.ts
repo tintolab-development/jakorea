@@ -1,0 +1,92 @@
+import {
+  getGeneralRecruitOverlayRecord,
+  patchGeneralRecruitOverlay,
+} from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+
+/**
+ * 상세 정보 단락은 general-recruit 스토어에 쓰이지만,
+ * 기관·UJAT 모집은 전용 overlay만 persist 해서 임시저장 후 설명이 사라졌다.
+ */
+
+export const RECRUIT_DETAIL_INFO_OVERLAY_PREFIX = {
+  institution: 'recruit.detailInfo',
+  economy: 'economyRecruit.detailInfo',
+  trainedTeachers: 'trainedTeachersRecruit.detailInfo',
+  ujatInstitution: 'ujatRecruit.detailInfo',
+  volunteer: 'recruitVolunteer.detailInfo',
+} as const
+
+export function recruitDetailInfoOverlayPrefixForCatalogId(
+  catalogTemplateId: string
+): string | null {
+  switch (catalogTemplateId) {
+    case 'recruitment-participant-school':
+      return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.institution
+    case 'recruitment-economy':
+      return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.economy
+    case 'recruitment-trained-teachers':
+      return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.trainedTeachers
+    case 'recruitment-ujat-school':
+      return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution
+    case 'recruitment-ujat-volunteer':
+      return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer
+    default:
+      return null
+  }
+}
+
+export function recruitDetailInfoOverlayPrefixForEditorVariant(
+  variant: string
+): string | null {
+  switch (variant) {
+    case 'applicant-recruit-institution':
+      return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.institution
+    case 'economy-recruit-institution':
+      return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.economy
+    case 'trained-teachers-recruit-institution':
+      return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.trainedTeachers
+    case 'ujat-recruit-institution':
+      return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution
+    case 'ujat-recruit-volunteer':
+      return RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer
+    default:
+      return null
+  }
+}
+
+export function pickOverlayKeysByPrefix(
+  record: Record<string, unknown>,
+  prefix: string
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  const needle = prefix.endsWith('.') ? prefix : `${prefix}.`
+  for (const [key, value] of Object.entries(record)) {
+    if (key === prefix || key.startsWith(needle)) out[key] = value
+  }
+  return out
+}
+
+export function pickRecruitDetailInfoFromGeneralStore(prefix: string): Record<string, unknown> {
+  return pickOverlayKeysByPrefix(getGeneralRecruitOverlayRecord(), prefix)
+}
+
+export function mergeRecruitDetailInfoFromGeneralStore(
+  overlay: Record<string, unknown>,
+  prefix: string | null
+): Record<string, unknown> {
+  if (prefix == null) return overlay
+  return {
+    ...pickRecruitDetailInfoFromGeneralStore(prefix),
+    ...overlay,
+  }
+}
+
+export function restoreRecruitDetailInfoIntoGeneralStore(
+  overlay: Record<string, unknown> | undefined,
+  prefix: string | null
+): void {
+  if (overlay == null || prefix == null) return
+  const detail = pickOverlayKeysByPrefix(overlay, prefix)
+  if (Object.keys(detail).length === 0) return
+  patchGeneralRecruitOverlay(detail)
+}

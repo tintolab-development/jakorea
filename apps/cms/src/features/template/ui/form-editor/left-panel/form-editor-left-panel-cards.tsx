@@ -16,9 +16,11 @@ import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agre
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
 import { renderFormEditorParagraphBody } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-paragraph-body'
+import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import {
   isTitleWithPeriodParagraph,
   paragraphEditableHeading,
+  withInstitutionApplicationPreferredScheduleHeading,
   withProgramApplicationFormVolunteerTitleTrailing,
   withProgramRegistrationCurriculumTitleTrailing,
   withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing,
@@ -122,6 +124,7 @@ function PinnedFormCardInner({
   surveyWriteNumbering = false,
   userInfoWriteField,
 }: PinnedCardProps) {
+  useInstitutionApplicationProgramBridge()
   const isSelected = selectedCardId === paragraph.id
   const hideDragHandle =
     (hideDragHandleForParagraphIds?.has(paragraph.id) ?? false) ||
@@ -153,11 +156,15 @@ function PinnedFormCardInner({
     !showEditorChrome
   )
   const editableHeading = withAgreementAdminProxyConfirmHeading(
-    withProgramApplicationFormVolunteerTitleTrailing(
-      withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
-        withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
-          withProgramRegistrationCurriculumTitleTrailing(
-            editableHeadingBase as ParagraphCardEditableHeading,
+    withInstitutionApplicationPreferredScheduleHeading(
+      withProgramApplicationFormVolunteerTitleTrailing(
+        withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+          withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+            withProgramRegistrationCurriculumTitleTrailing(
+              editableHeadingBase as ParagraphCardEditableHeading,
+              paragraph,
+              paragraphBodyOptions
+            ),
             paragraph,
             paragraphBodyOptions
           ),
@@ -298,6 +305,7 @@ function SortableMiddleFormCardInner({
   surveyWriteNumbering = false,
   userInfoWriteField,
 }: SortableMiddleCardProps) {
+  useInstitutionApplicationProgramBridge()
   const hideDragHandle =
     (hideDragHandleForParagraphIds?.has(paragraph.id) ?? false) ||
     (editorKind === 'horizontal_table' && structureLockedParagraphIds != null)
@@ -339,11 +347,15 @@ function SortableMiddleFormCardInner({
     !showEditorChrome
   )
   const editableHeading = withAgreementAdminProxyConfirmHeading(
-    withProgramApplicationFormVolunteerTitleTrailing(
-      withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
-        withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
-          withProgramRegistrationCurriculumTitleTrailing(
-            editableHeadingBase as ParagraphCardEditableHeading,
+    withInstitutionApplicationPreferredScheduleHeading(
+      withProgramApplicationFormVolunteerTitleTrailing(
+        withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+          withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+            withProgramRegistrationCurriculumTitleTrailing(
+              editableHeadingBase as ParagraphCardEditableHeading,
+              paragraph,
+              paragraphBodyOptions
+            ),
             paragraph,
             paragraphBodyOptions
           ),

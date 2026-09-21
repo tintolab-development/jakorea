@@ -38,7 +38,11 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import type { ProgramRegistrationIpsTypeValue } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
 import type { ProgramRegistrationMultiRoundAssignmentValue } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-multi-round-assignment-fields'
-import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
+import {
+  getProgramRegistrationEducationFormOptions,
+  resolveGeneralRegistrationCommonEducationForm,
+  resolveGeneralRegistrationCommonParticipation,
+} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import {
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
@@ -655,16 +659,13 @@ export function applyGeneralRegistrationOverlayToProgram(
   const ipsDetailKind = extras.ipsScheduleDetail ?? 'common'
 
   const commonEducationForm =
-    overlayString(overlay, `${TYPE}.multiCommonEducationForm`) ||
-    overlayString(overlay, `${TYPE}.singleEducationForm`) ||
+    resolveGeneralRegistrationCommonEducationForm(overlay) ||
     overlayString(overlay, `${TYPE}.educationForm`) ||
     'online'
   const hideParticipation = extras.participantOrganization === true
   const commonParticipation = hideParticipation
     ? undefined
-    : ((overlayString(overlay, `${TYPE}.multiCommonParticipation`) ||
-        overlayString(overlay, `${TYPE}.singleParticipation`) ||
-        'individual') as 'individual' | 'team')
+    : (resolveGeneralRegistrationCommonParticipation(overlay) as 'individual' | 'team')
 
   const programTypeFromForm =
     commonEducationForm === 'online'

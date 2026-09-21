@@ -35,6 +35,7 @@ export {
   filterLectureStatusApplications,
   filterVolunteerStatusApplications,
   isInstructorRoleApplication,
+  isParticipantRoleApplication,
   isVolunteerRoleApplication,
   resolveApplicationRole,
 } from './lib/application-kind'

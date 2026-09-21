@@ -1,10 +1,12 @@
 import type { WritingFormTemplateSaveRecord } from '@/features/template/lib/writing-form-template-local-save'
+import type { FormTemplateVersionResponse } from '@/shared/api/generated/forms-surveys/schemas/formTemplateVersionResponse'
 import {
   copyFormTemplateVersionRemote,
   fetchFormTemplateVersionRemote,
   updateFormTemplateRemote,
 } from '@/features/template/api/form-templates-api-client'
 import {
+  buildSaveRecordFromVersionResponse,
   loadFormTemplateVersionDraftByVersionId,
   resolveFormTemplateCatalogIds,
   saveFormTemplateVersionDraftByVersionId,
@@ -64,33 +66,28 @@ export function clearDraftOwnedFormVersions(programDraftId?: number): void {
   versionsByDraftId.clear()
 }
 
-/**
- * 캐시된 scoped 버전이 여전히 DRAFT(수정 가능)인지 확인한다.
- * 이전 등록 시도에서 이미 발행(PUBLISHED)·보관(ARCHIVED)된 버전을 재사용하면
- * BE가 `FORM_VERSION_IMMUTABLE`로 거절하므로, 재시도 시 새 scoped 복사본을 받아야 한다.
- * 상태 조회 자체가 실패하면(네트워크 등) 기존 캐시를 신뢰하고 그대로 진행한다(fail-open).
- */
-async function isDraftOwnedVersionMutable(versionId: number): Promise<boolean> {
-  try {
-    const version = await fetchFormTemplateVersionRemote(versionId)
-    return version.versionStatus == null || version.versionStatus === 'DRAFT'
-  } catch {
-    return true
-  }
+function isVersionMutable(version: FormTemplateVersionResponse): boolean {
+  return version.versionStatus == null || version.versionStatus === 'DRAFT'
 }
 
-export async function ensureDraftOwnedFormVersion(args: {
+function baselineFromVersionResponse(
+  templateCode: string,
+  version: FormTemplateVersionResponse
+): WritingFormTemplateSaveRecord | null {
+  return buildSaveRecordFromVersionResponse({
+    templateCode,
+    schemaJson: version.schemaJson,
+    extensionJson: version.extensionJson,
+    settingsJson: version.settingsJson,
+    updatedAt: version.updatedAt,
+    skipSeedMigration: true,
+  })
+}
+
+async function copyFreshDraftOwnedFormVersion(args: {
   programDraftId: number
   templateCode: string
 }): Promise<DraftOwnedFormVersion> {
-  const cached = getDraftOwnedFormVersion(args.programDraftId, args.templateCode)
-  if (cached) {
-    const mutable = await isDraftOwnedVersionMutable(cached.draftVersionId)
-    if (mutable) return cached
-    // 발행/보관됨 — 캐시 무효화 후 카탈로그에서 새 scoped DRAFT 복사본을 받는다.
-    draftMap(args.programDraftId).delete(args.templateCode)
-  }
-
   const catalog = await resolveFormTemplateCatalogIds(args.templateCode)
   if (catalog == null) {
     throw new Error(`카탈로그 양식을 찾을 수 없습니다: ${args.templateCode}`)
@@ -108,14 +105,17 @@ export async function ensureDraftOwnedFormVersion(args: {
     throw new Error(`프로그램 등록 draft copy 실패: ${args.templateCode}`)
   }
 
+  // 주의: `useYn:false`로 숨기지 않는다 — BE의 program create/binding 검증(`COALESCE(t.use_yn,true)=true`)이
+  // 이 scoped 복사본을 "존재/활성" 판정에 그대로 쓰므로, false로 두면 발행 후 create 시
+  // `templateVersionId does not exist or is inactive`로 거절된다(2026-09-21 BE 확인).
+  // description만 남겨 어떤 program-draft가 소유한 복사본인지 추적한다.
   if (templateId !== catalog.templateId) {
     try {
       await updateFormTemplateRemote(templateId, {
-        useYn: false,
         description: `program-draft:${args.programDraftId}`,
       })
     } catch (error) {
-      console.warn('[registration-draft-form-versions] hide scoped template failed', error)
+      console.warn('[registration-draft-form-versions] label scoped template failed', error)
     }
   }
 
@@ -128,12 +128,75 @@ export async function ensureDraftOwnedFormVersion(args: {
   return ref
 }
 
+/**
+ * 캐시된 scoped 버전이 여전히 DRAFT(수정 가능)인지 확인한다.
+ * publish-only 경로 — baseline GET 없음.
+ */
+export async function ensureDraftOwnedFormVersion(args: {
+  programDraftId: number
+  templateCode: string
+}): Promise<DraftOwnedFormVersion> {
+  const cached = getDraftOwnedFormVersion(args.programDraftId, args.templateCode)
+  if (cached) {
+    try {
+      const version = await fetchFormTemplateVersionRemote(cached.draftVersionId)
+      if (isVersionMutable(version)) return cached
+    } catch {
+      return cached
+    }
+    draftMap(args.programDraftId).delete(args.templateCode)
+  }
+
+  return copyFreshDraftOwnedFormVersion(args)
+}
+
+/**
+ * ensure + baseline — version GET 1회로 mutable 확인과 coalesce baseline을 함께 처리.
+ */
+export async function ensureDraftOwnedFormVersionWithBaseline(args: {
+  programDraftId: number
+  templateCode: string
+}): Promise<{
+  owned: DraftOwnedFormVersion
+  baseline: WritingFormTemplateSaveRecord | null
+}> {
+  const cached = getDraftOwnedFormVersion(args.programDraftId, args.templateCode)
+  if (cached) {
+    let version: FormTemplateVersionResponse
+    try {
+      version = await fetchFormTemplateVersionRemote(cached.draftVersionId)
+    } catch {
+      return {
+        owned: cached,
+        baseline: await loadFormTemplateVersionDraftByVersionId(
+          args.templateCode,
+          cached.draftVersionId
+        ),
+      }
+    }
+    if (isVersionMutable(version)) {
+      return {
+        owned: cached,
+        baseline: baselineFromVersionResponse(args.templateCode, version),
+      }
+    }
+    draftMap(args.programDraftId).delete(args.templateCode)
+  }
+
+  const owned = await copyFreshDraftOwnedFormVersion(args)
+  const version = await fetchFormTemplateVersionRemote(owned.draftVersionId)
+  return {
+    owned,
+    baseline: baselineFromVersionResponse(args.templateCode, version),
+  }
+}
+
 export async function loadDraftOwnedFormVersionRecord(args: {
   programDraftId: number
   templateCode: string
 }): Promise<WritingFormTemplateSaveRecord | null> {
-  const owned = await ensureDraftOwnedFormVersion(args)
-  return loadFormTemplateVersionDraftByVersionId(args.templateCode, owned.draftVersionId)
+  const { baseline } = await ensureDraftOwnedFormVersionWithBaseline(args)
+  return baseline
 }
 
 export async function persistDraftOwnedFormVersion(args: {
@@ -143,13 +206,17 @@ export async function persistDraftOwnedFormVersion(args: {
   overlay?: Record<string, unknown>
   editorState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
+  /** 호출측에서 이미 resolve한 owned — ensure/mutable GET 생략 */
+  owned?: DraftOwnedFormVersion
   /** 호출측에서 이미 GET한 baseline — 재조회 생략 */
   baseline?: WritingFormTemplateSaveRecord | null
 }): Promise<DraftOwnedFormVersion> {
-  const owned = await ensureDraftOwnedFormVersion({
-    programDraftId: args.programDraftId,
-    templateCode: args.templateCode,
-  })
+  const owned =
+    args.owned ??
+    (await ensureDraftOwnedFormVersion({
+      programDraftId: args.programDraftId,
+      templateCode: args.templateCode,
+    }))
 
   const baseline =
     args.baseline !== undefined

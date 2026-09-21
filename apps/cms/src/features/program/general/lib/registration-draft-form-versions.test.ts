@@ -10,13 +10,19 @@ const copyFormTemplateVersionRemote = vi.fn()
 const updateFormTemplateRemote = vi.fn()
 const fetchFormTemplateVersionRemote = vi.fn()
 
-vi.mock('@/features/template/api/admin-form-templates-service', () => ({
-  loadFormTemplateVersionDraftByVersionId: (...args: unknown[]) =>
-    loadFormTemplateVersionDraftByVersionId(...args),
-  saveFormTemplateVersionDraftByVersionId: (...args: unknown[]) =>
-    saveFormTemplateVersionDraftByVersionId(...args),
-  resolveFormTemplateCatalogIds: (...args: unknown[]) => resolveFormTemplateCatalogIds(...args),
-}))
+vi.mock('@/features/template/api/admin-form-templates-service', async importOriginal => {
+  const actual = await importOriginal<
+    typeof import('@/features/template/api/admin-form-templates-service')
+  >()
+  return {
+    ...actual,
+    loadFormTemplateVersionDraftByVersionId: (...args: unknown[]) =>
+      loadFormTemplateVersionDraftByVersionId(...args),
+    saveFormTemplateVersionDraftByVersionId: (...args: unknown[]) =>
+      saveFormTemplateVersionDraftByVersionId(...args),
+    resolveFormTemplateCatalogIds: (...args: unknown[]) => resolveFormTemplateCatalogIds(...args),
+  }
+})
 
 vi.mock('@/features/template/api/form-templates-api-client', () => ({
   copyFormTemplateVersionRemote: (...args: unknown[]) => copyFormTemplateVersionRemote(...args),
@@ -27,6 +33,7 @@ vi.mock('@/features/template/api/form-templates-api-client', () => ({
 import {
   clearDraftOwnedFormVersions,
   ensureDraftOwnedFormVersion,
+  ensureDraftOwnedFormVersionWithBaseline,
   getDraftOwnedFormVersion,
   persistDraftOwnedFormVersion,
   rememberDraftOwnedFormVersion,
@@ -48,7 +55,7 @@ describe('persistDraftOwnedFormVersion baseline dedup', () => {
     fetchFormTemplateVersionRemote.mockResolvedValue({ versionStatus: 'DRAFT' })
   })
 
-  it('skips baseline GET when baseline is passed from caller', async () => {
+  it('skips baseline GET when baseline and owned are passed from caller', async () => {
     const userDraft = createApplicantRecruitFormIndividualDraft()
     const baseline: WritingFormTemplateSaveRecord = {
       version: 1,
@@ -57,15 +64,22 @@ describe('persistDraftOwnedFormVersion baseline dedup', () => {
       draft: createApplicantRecruitFormIndividualDraft(),
       overlay: {},
     }
+    const owned = {
+      templateCode: 'recruitment-instructor',
+      templateId: 10,
+      draftVersionId: 100,
+    }
 
     await persistDraftOwnedFormVersion({
       programDraftId: 1,
       templateCode: 'recruitment-instructor',
+      owned,
       draft: userDraft,
       overlay: { 'recruit.instructor.inquiryContact': 'test' },
       baseline,
     })
 
+    expect(fetchFormTemplateVersionRemote).not.toHaveBeenCalled()
     expect(loadFormTemplateVersionDraftByVersionId).not.toHaveBeenCalled()
     expect(saveFormTemplateVersionDraftByVersionId).toHaveBeenCalledTimes(1)
   })
@@ -112,14 +126,49 @@ describe('ensureDraftOwnedFormVersion re-copy on stale (published) cache', () =>
   })
 
   it('reuses the cached version when it is still DRAFT', async () => {
-    fetchFormTemplateVersionRemote.mockResolvedValue({ versionStatus: 'DRAFT' })
+    fetchFormTemplateVersionRemote.mockResolvedValue({
+      versionStatus: 'DRAFT',
+      schemaJson: '{}',
+    })
 
     const owned = await ensureDraftOwnedFormVersion({
       programDraftId: 1,
       templateCode: 'recruitment-instructor',
     })
 
+    expect(fetchFormTemplateVersionRemote).toHaveBeenCalledTimes(1)
     expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
     expect(owned.draftVersionId).toBe(100)
+  })
+})
+
+describe('ensureDraftOwnedFormVersionWithBaseline', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    clearDraftOwnedFormVersions()
+    rememberDraftOwnedFormVersion(1, {
+      templateCode: 'recruitment-instructor',
+      templateId: 10,
+      draftVersionId: 100,
+    })
+    saveFormTemplateVersionDraftByVersionId.mockResolvedValue(undefined)
+    fetchFormTemplateVersionRemote.mockResolvedValue({
+      versionStatus: 'DRAFT',
+      schemaJson: JSON.stringify(createApplicantRecruitFormIndividualDraft()),
+      extensionJson: '{}',
+    })
+  })
+
+  it('uses a single version GET for mutable check and baseline on cache hit', async () => {
+    const { owned, baseline } = await ensureDraftOwnedFormVersionWithBaseline({
+      programDraftId: 1,
+      templateCode: 'recruitment-instructor',
+    })
+
+    expect(fetchFormTemplateVersionRemote).toHaveBeenCalledTimes(1)
+    expect(fetchFormTemplateVersionRemote).toHaveBeenCalledWith(100)
+    expect(loadFormTemplateVersionDraftByVersionId).not.toHaveBeenCalled()
+    expect(owned.draftVersionId).toBe(100)
+    expect(baseline?.draft).toBeDefined()
   })
 })

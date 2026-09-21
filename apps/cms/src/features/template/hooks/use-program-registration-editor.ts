@@ -88,7 +88,7 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { useCmsAlert } from '@/shared/ui'
-import { hasIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
+import { describeIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
 import { hasIncompleteEconomyRegistrationFromStore } from '@/features/program/general/lib/economy-program-registration-required-fields'
 
 export type ProgramRegistrationParticipantSelection = {
@@ -1448,16 +1448,14 @@ export function useProgramRegistrationEditor(
     setSingleItemListActiveItemId(itemId)
   }, [])
 
-  const hasIncompleteRequiredFields = useCallback(() => {
-    if (programRegistrationFormVariant === 'economy') {
-      return hasIncompleteEconomyRegistrationFromStore(participant)
-    }
-    if (programRegistrationFormVariant !== 'general') return false
+  /** general variant 필수 필드 진단 reason — 콘솔 디버깅용 (`null`=완료, 'economy'/그 외 variant는 미지원=null) */
+  const getIncompleteRequiredFieldsReason = useCallback((): string | null => {
+    if (programRegistrationFormVariant !== 'general') return null
     const resolvedSponsorId =
       sponsorId.trim() || readGeneralRegistrationOverlaySponsorId()
     const resolvedContactId =
       sponsorContactId.trim() || readGeneralRegistrationOverlaySponsorContactId()
-    return hasIncompleteGeneralProgramRegistrationRequiredFields(
+    return describeIncompleteGeneralProgramRegistrationRequiredFields(
       getProgramRegistrationOverlayRecord(),
       {
         participant,
@@ -1490,11 +1488,18 @@ export function useProgramRegistrationEditor(
     resolveProgramTitleKo,
     scheduleCurriculumDetailCount,
     scheduleCurriculumGroupCount,
-    scheduleCurriculumPreEducation,
     sessionRoundType,
     sponsorContactId,
     sponsorId,
   ])
+
+  const hasIncompleteRequiredFields = useCallback(() => {
+    if (programRegistrationFormVariant === 'economy') {
+      return hasIncompleteEconomyRegistrationFromStore(participant)
+    }
+    if (programRegistrationFormVariant !== 'general') return false
+    return getIncompleteRequiredFieldsReason() != null
+  }, [getIncompleteRequiredFieldsReason, participant, programRegistrationFormVariant])
 
   return {
     draft,
@@ -1529,6 +1534,7 @@ export function useProgramRegistrationEditor(
     sessionRoundType,
     educationScheduleMode,
     hasIncompleteRequiredFields,
+    getIncompleteRequiredFieldsReason,
     resolveProgramTitleKo,
   }
 }
