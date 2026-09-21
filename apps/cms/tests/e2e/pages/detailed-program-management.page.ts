@@ -9,7 +9,6 @@ import { expectAuthenticatedShell } from '../helpers/authenticated-shell'
 import {
   clickSearch,
   expectColumnTitles,
-  fillTypedDeleteConfirm,
   filterField,
   isAdminMutation,
   selectRowCheckbox,
@@ -18,7 +17,7 @@ import {
   waitForAdminGet,
 } from './data-management-helpers'
 import { DATA_MANAGEMENT_NAME_PREFIX } from './data-management-seed-titles'
-import { fillByPlaceholder, selectByPlaceholder } from './form-helpers'
+import { fillByPlaceholder } from './form-helpers'
 
 const LIST_COLUMNS = ['No.', '사용 여부', '세부 프로그램명', '등록자명', '등록일시'] as const
 
@@ -95,7 +94,6 @@ export class DetailedProgramManagementPage {
     await expect(modal).toBeVisible()
     await modal.getByRole('radio', { name: '사용' }).check({ force: true })
     await fillByPlaceholder(modal, '세부 프로그램명을 입력해 주세요.', this.uniqueName)
-    await selectByPlaceholder(this.page, '사업 분야를 선택해 주세요.', '경제금융')
 
     const createPromise = this.page.waitForResponse(
       res => isAdminMutation(res, 'POST', /\/api\/admin\/detailed-programs\/?$/),
@@ -110,6 +108,11 @@ export class DetailedProgramManagementPage {
       )
     }
     await expect(modal).toBeHidden({ timeout: 15_000 })
+
+    const done = this.page.getByRole('dialog').filter({ hasText: '등록 완료' })
+    await expect(done).toBeVisible({ timeout: 15_000 })
+    await done.getByRole('button', { name: '확인' }).click()
+    await expect(done).toBeHidden({ timeout: 10_000 })
   }
 
   async expectInList(name: string) {
@@ -161,7 +164,8 @@ export class DetailedProgramManagementPage {
     await this.page.getByRole('button', { name: '항목 삭제' }).click()
     const guide = this.page.getByRole('dialog').filter({ hasText: '세부 프로그램 삭제' })
     await expect(guide).toBeVisible()
-    await fillTypedDeleteConfirm(guide)
+    await expect(guide.getByText('해당 세부 프로그램을 삭제하시겠습니까?')).toBeVisible()
+    await expect(guide.getByText('삭제된 정보는 되돌릴 수 없습니다.')).toBeVisible()
 
     const deletePromise = this.page.waitForResponse(
       res => isAdminMutation(res, 'POST', /\/api\/admin\/detailed-programs\/bulk-delete\/?$/),
