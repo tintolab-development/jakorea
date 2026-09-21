@@ -15,6 +15,7 @@ import {
 import {
   dayjsTimeParts,
   findNextEnabledDate,
+  toPickerDayjs,
 } from '@/shared/components/date-time-picker-shared'
 import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import type { CmsControlSize } from '@/shared/ui/cms-control-size'
@@ -245,9 +246,12 @@ function ParagraphDatePickerSingleInner({
   useEffect(() => {
     onOpenChangeRef.current?.(open)
   }, [open])
-  const [draft, setDraft] = useState<Dayjs>(() => findNextEnabledDate(value ?? dayjs(), disabledDate))
+  const valueDayjs =
+    value == null ? null : dayjs.isDayjs(value) && value.isValid() ? value : toPickerDayjs(value)
+  const pickerAnchor = valueDayjs ?? dayjs()
+  const [draft, setDraft] = useState<Dayjs>(() => findNextEnabledDate(pickerAnchor, disabledDate))
   const [calendarMonth, setCalendarMonth] = useState<Dayjs>(() =>
-    findNextEnabledDate(value ?? dayjs(), disabledDate).startOf('month')
+    findNextEnabledDate(pickerAnchor, disabledDate).startOf('month')
   )
   const [periodOn, setPeriodOn] = useState(
     presetMode === 'period' || (lockPeriodToggleOn && showPeriodToggle)
@@ -262,10 +266,10 @@ function ParagraphDatePickerSingleInner({
     setPeriodOn(false)
   }, [showPeriodToggle, presetMode])
   const [rangeStart, setRangeStart] = useState<Dayjs>(() =>
-    findNextEnabledDate(value ?? dayjs(), disabledDate)
+    findNextEnabledDate(pickerAnchor, disabledDate)
   )
   const [rangeEnd, setRangeEnd] = useState<Dayjs>(() =>
-    findNextEnabledDate(findNextEnabledDate(value ?? dayjs(), disabledDate).add(1, 'day'), disabledDate)
+    findNextEnabledDate(findNextEnabledDate(pickerAnchor, disabledDate).add(1, 'day'), disabledDate)
   )
   const [rangeFocus, setRangeFocus] = useState<'start' | 'end'>('start')
   /** [설정]으로 확정된 기간 — 트리거에 시작/종료 UI 표시 */
@@ -420,7 +424,7 @@ function ParagraphDatePickerSingleInner({
       setTimeOn(false)
     }
 
-    const d = findNextEnabledDate(value ?? dayjs(), disabledDate)
+    const d = findNextEnabledDate(pickerAnchor, disabledDate)
     setDraft(d)
     setCalendarMonth(d.startOf('month'))
 
