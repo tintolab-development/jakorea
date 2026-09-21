@@ -225,6 +225,7 @@ export function GeminiRecruitmentDetailFullPageModal({
                   {canWrite ? (
                     <ProgramEditInfoActions
                       isEditing={isEditModeInfo}
+                      idleVariant="secondary"
                       onEdit={handleInfoEditClick}
                       onCancel={handleInfoCancel}
                       onSave={handleInfoSaveClick}

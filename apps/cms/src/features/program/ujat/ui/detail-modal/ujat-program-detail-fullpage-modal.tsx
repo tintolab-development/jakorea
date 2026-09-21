@@ -2034,6 +2034,7 @@ export function UjatProgramDetailFullPageModal({
                 <div className="program-detail-fullpage-modal__header-actions">
                   <ProgramEditInfoActions
                     isEditing={isEditModeInfo}
+                    idleVariant="secondary"
                     disabled={!canEditInfo && !isEditModeInfo}
                     onEdit={handleInfoEdit}
                     onCancel={handleInfoCancel}

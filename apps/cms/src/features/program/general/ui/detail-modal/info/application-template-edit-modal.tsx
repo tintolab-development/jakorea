@@ -67,7 +67,13 @@ export function GeneralProgramApplicationTemplateEditModal({
 
   useEffect(() => {
     if (!open) return
-    if (variant !== 'institution' && variant !== 'trained-teachers-application-institution') return
+    if (
+      variant !== 'institution' &&
+      variant !== 'economy-application-institution' &&
+      variant !== 'trained-teachers-application-institution'
+    ) {
+      return
+    }
     patchInstitutionApplicationProgramBridge(resolveInstitutionApplicationProgramBridge(program))
     return () => {
       resetInstitutionApplicationProgramBridge()
@@ -84,12 +90,14 @@ export function GeneralProgramApplicationTemplateEditModal({
     variant,
     {
     participantOrganization: variant === 'institution',
-    programLinkedInstitutionApplicationForm: variant === 'institution',
+    programLinkedInstitutionApplicationForm:
+      variant === 'institution' || variant === 'economy-application-institution',
     program,
     programLinkedApplicationFormPreview:
       variant === 'institution' ||
       variant === 'instructor' ||
       variant === 'volunteer' ||
+      variant === 'economy-application-institution' ||
       variant === 'trained-teachers-application-institution',
     templateVersionId: formSource.templateVersionId,
     preferLocalDraft: formSource.preferLocalDraft,

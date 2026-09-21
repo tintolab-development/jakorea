@@ -15,6 +15,7 @@ export type { CmsModalProps, CmsModalButton } from './cms-modal'
 export { cmsAlertModal, isCmsAlertModalReady } from './cms-alert-modal-api'
 export type { CmsAlertModalShowOptions } from './cms-alert-modal-api'
 export { showDeleteCompletedAlert } from './show-delete-completed-alert'
+export { showRegisterCompletedAlert } from './show-register-completed-alert'
 export { CmsAlertModalProvider, useCmsAlert } from './cms-alert-modal-provider'
 export type { CmsAlertModalContextValue } from './cms-alert-modal-provider'
 export {

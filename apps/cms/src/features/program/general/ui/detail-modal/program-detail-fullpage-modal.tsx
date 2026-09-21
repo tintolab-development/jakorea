@@ -58,11 +58,9 @@ import { ParticipatingInstructorsSection } from './program-status/participating-
 import { ApplicantList } from '../../../shared/ui/program-detail/applicant-list/applicant-list'
 import { generalOrganizationApplicationFilterFields } from '@/features/program/general/lib/application-filter-fields'
 import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/project-info/project-info-detail'
-import {
-  CompanySchoolApplicationInfoView,
-  type CompanySchoolApplicationInfoTabKey,
-} from './info/company-school-application-info-view'
+import { GeneralProgramApplicationView } from './info/application-view'
 import { GeneralProgramApplicationTemplateEditModal } from './info/application-template-edit-modal'
+import type { GeneralApplicationTabKey } from '@/features/program/general/lib/application-tabs'
 import { GeneralProgramRecruitmentView } from './info/recruitment-view'
 import { GeneralSurveyManagementView } from './survey-management/survey-management-view'
 import type { Program } from '@/types/domain'
@@ -1056,6 +1054,11 @@ export function ProgramDetailFullPageModal({
   /** 교육받은 교사 — 신청 정보 양식 수정 모달·미리보기 갱신 키 */
   const [trainedTeachersFormEditOpen, setTrainedTeachersFormEditOpen] = useState(false)
   const [trainedTeachersFormPreviewReloadKey, setTrainedTeachersFormPreviewReloadKey] = useState(0)
+  /** 1사1교 — 신청 정보 양식 수정 모달·미리보기 갱신 키 */
+  const [companySchoolApplicationFormEditOpen, setCompanySchoolApplicationFormEditOpen] =
+    useState(false)
+  const [companySchoolApplicationPreviewReloadKey, setCompanySchoolApplicationPreviewReloadKey] =
+    useState(0)
 
   useEffect(() => {
     if (!schoolIdFromUrl) setSchoolDetailTitle(null)
@@ -1433,9 +1436,9 @@ export function ProgramDetailFullPageModal({
     isOverviewProgramDetail && activeLnb === 'info' && activeTab === 'instructors'
   const isTrainedTeachersApplicationInfoTab =
     isTrainedTeachersDetail && isCompanySchoolApplicationInfoTab
-  const activeCompanySchoolApplicationTab: CompanySchoolApplicationInfoTabKey =
+  const activeCompanySchoolApplicationTab: GeneralApplicationTabKey =
     searchParams.get(SUB_TAB_PARAM) === 'instructors' ? 'instructors' : 'institutions'
-  const handleCompanySchoolApplicationTabChange = (tab: CompanySchoolApplicationInfoTabKey) => {
+  const handleCompanySchoolApplicationTabChange = (tab: GeneralApplicationTabKey) => {
     const next = new URLSearchParams(searchParams)
     next.set(LNB_PARAM, 'info')
     next.set(TAB_PARAM, 'instructors')
@@ -1536,9 +1539,15 @@ export function ProgramDetailFullPageModal({
           {activeLnb === 'info' &&
             isCompanySchoolApplicationInfoTab &&
             !isTrainedTeachersApplicationInfoTab && (
-            <CompanySchoolApplicationInfoView
-              activeTab={activeCompanySchoolApplicationTab}
-              onTabChange={handleCompanySchoolApplicationTabChange}
+            <GeneralProgramApplicationView
+              program={displayProgram}
+              activeApplicationTab={activeCompanySchoolApplicationTab}
+              onApplicationTabChange={handleCompanySchoolApplicationTabChange}
+              showInstructorTab
+              showVolunteerTab={false}
+              canWrite
+              onEditForm={() => setCompanySchoolApplicationFormEditOpen(true)}
+              previewReloadKey={companySchoolApplicationPreviewReloadKey}
             />
           )}
 
@@ -1758,6 +1767,21 @@ export function ProgramDetailFullPageModal({
             setTrainedTeachersFormPreviewReloadKey(key => key + 1)
           }}
           onSaved={() => setTrainedTeachersFormPreviewReloadKey(key => key + 1)}
+        />
+      ) : null}
+      {isCompanySchoolDetail &&
+      !isTrainedTeachersDetail &&
+      displayProgram &&
+      companySchoolApplicationFormEditOpen ? (
+        <GeneralProgramApplicationTemplateEditModal
+          open
+          program={displayProgram}
+          applicationTab={activeCompanySchoolApplicationTab}
+          onClose={() => {
+            setCompanySchoolApplicationFormEditOpen(false)
+            setCompanySchoolApplicationPreviewReloadKey(key => key + 1)
+          }}
+          onSaved={() => setCompanySchoolApplicationPreviewReloadKey(key => key + 1)}
         />
       ) : null}
     </>

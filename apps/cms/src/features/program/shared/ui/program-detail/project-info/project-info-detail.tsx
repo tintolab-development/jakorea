@@ -180,6 +180,7 @@ function ProjectInfoDetailTabsRow({
   const editInfoButton = (isEditing: boolean, onSave: () => void) => (
     <ProgramEditInfoActions
       isEditing={isEditing}
+      idleVariant="secondary"
       onEdit={onInfoEdit}
       onCancel={onCancel}
       onSave={onSave}
@@ -233,6 +234,7 @@ function ProjectInfoHiddenTabsInfoActions({
     <div className="project-info-detail__hidden-tabs-info-actions">
       <ProgramEditInfoActions
         isEditing={isEditModeInfo}
+        idleVariant="secondary"
         onEdit={onInfoEdit}
         onCancel={onCancel}
         onSave={onInfoSave}
