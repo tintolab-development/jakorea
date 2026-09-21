@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from 'react'
 import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { from24h } from '@/shared/components/date-time-picker-time-selects'
 
 export const DATE_TIME_PICKER_POPOVER_GAP = 6
@@ -9,13 +10,29 @@ export function dayjsTimeParts(d: Dayjs): { h: string; m: string; mer: 'AM' | 'P
   return { h: String(h12), m: String(d.minute()), mer }
 }
 
+/** overlay JSON 왕복 등으로 Dayjs가 ISO string이 된 값을 복원한다. */
+export function toValidDayjsOrNull(value: unknown): Dayjs | null {
+  if (value == null || value === '') return null
+  if (dayjs.isDayjs(value)) return value.isValid() ? value : null
+  if (typeof value === 'string' || typeof value === 'number' || value instanceof Date) {
+    const parsed = dayjs(value)
+    return parsed.isValid() ? parsed : null
+  }
+  return null
+}
+
+export function toValidDayjs(value: unknown, fallback: Dayjs = dayjs()): Dayjs {
+  return toValidDayjsOrNull(value) ?? fallback
+}
+
 export function findNextEnabledDate(date: Dayjs, disabledDate?: (date: Dayjs) => boolean): Dayjs {
-  if (!disabledDate?.(date)) return date
+  const start = toValidDayjs(date)
+  if (!disabledDate?.(start)) return start
   for (let offset = 1; offset <= 366; offset += 1) {
-    const next = date.add(offset, 'day')
+    const next = start.add(offset, 'day')
     if (!disabledDate(next)) return next
   }
-  return date
+  return start
 }
 
 export function useDateTimePickerPopoverLayer({

@@ -201,6 +201,16 @@ export function RecruitDetailInfoParagraph({
     }
   }, [additionalContentKey])
 
+  const [overlayAdditionalHtml] = useGeneralRecruitOverlayKv<string>(additionalContentKey, '')
+  useEffect(() => {
+    if (editor == null) return
+    const incoming = overlayAdditionalHtml.trim()
+    if (incoming === '') return
+    const current = getHtmlRef.current().replace(/<p><\/p>/gi, '').trim()
+    if (current !== '') return
+    editor.commands.setContent(incoming, { emitUpdate: false, contentType: 'html' })
+  }, [editor, overlayAdditionalHtml])
+
   return (
     <div className="recruit-detail-info-paragraph__forms">
       <DetailInfoForm title="상세 정보" hideHeader mode="edit">

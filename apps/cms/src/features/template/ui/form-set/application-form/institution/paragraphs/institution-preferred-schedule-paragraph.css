@@ -1,19 +1,15 @@
 .institution-preferred-schedule-paragraph {
+  --detail-info-label-w: 120px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.institution-preferred-schedule-paragraph__header {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
 }
 
 .institution-preferred-schedule-paragraph__block-row {
   display: flex;
   align-items: stretch;
   gap: 8px;
+  min-width: 0;
 }
 
 .institution-preferred-schedule-paragraph__block-body {
@@ -33,10 +29,50 @@
   align-self: stretch;
 }
 
+.institution-preferred-schedule-paragraph .detail-info-form__row--double {
+  flex-wrap: nowrap;
+}
+
+.institution-preferred-schedule-paragraph .detail-info-form__row--double > .detail-info-form__field:first-of-type {
+  flex: 0 1 36%;
+  max-width: 42%;
+}
+
+.institution-preferred-schedule-paragraph .detail-info-form__row--double > .detail-info-form__field:last-of-type {
+  flex: 1 1 64%;
+  min-width: 0;
+}
+
+.institution-preferred-schedule-paragraph__date-picker {
+  flex: 0 0 220px;
+  width: 220px;
+  max-width: 100%;
+}
+
 .institution-preferred-schedule-paragraph__time-inputs {
-  flex-wrap: wrap;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  gap: 0;
+}
+
+.institution-preferred-schedule-paragraph__time-inputs > .cms-select {
+  flex: 0 0 120px;
+  width: 120px;
+}
+
+.institution-preferred-schedule-paragraph__time-inputs.detail-info-form-inputs-wrapper-no-gap
+  > .cms-datepicker {
+  flex: 1 1 140px;
+  width: auto !important;
+  min-width: 140px !important;
+  max-width: 168px;
 }
 
 .institution-preferred-schedule-paragraph__tilde {
   color: var(--text-secondary, #757575);
+  flex-shrink: 0;
+  margin: 0 8px;
 }

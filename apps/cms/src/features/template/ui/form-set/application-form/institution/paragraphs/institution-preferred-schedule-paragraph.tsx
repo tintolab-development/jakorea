@@ -1,13 +1,16 @@
-import { useMemo, type ReactNode } from 'react'
+import { useEffect, useMemo, type ReactNode } from 'react'
 import type { Dayjs } from 'dayjs'
+import { buildInstitutionSessionCountOptions } from '@/features/template/lib/participant-recruitment-institution-limits'
 import {
-  buildInstitutionSessionCountOptions,
-  clampInstitutionScheduleBlockCount,
-} from '@/features/template/lib/participant-recruitment-institution-limits'
-import {
+  getInstitutionApplicationProgramBridge,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  resolveInstitutionPreferredScheduleDescription,
+  resolveInstitutionPreferredScheduleInitialBlockCount,
+  resolveInstitutionPreferredScheduleMaxBlocks,
+} from '@/features/template/lib/institution-application-schedule-copy'
 import {
   useGeneralApplicationOverlayKv,
   updateGeneralApplicationOverlayKey,
@@ -16,6 +19,8 @@ import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-butt
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { toValidDayjsOrNull } from '@/shared/components/date-time-picker-shared'
+import { FormEditorPlusIcon } from '@/features/template/ui/shared/form-editor-plus-icon'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
@@ -34,6 +39,15 @@ function createEmptyBlockState(): ScheduleBlockState {
     session: undefined,
     start: null,
     end: null,
+  }
+}
+
+function coerceScheduleBlock(block: ScheduleBlockState): ScheduleBlockState {
+  return {
+    date: toValidDayjsOrNull(block.date),
+    session: block.session,
+    start: toValidDayjsOrNull(block.start),
+    end: toValidDayjsOrNull(block.end),
   }
 }
 
@@ -62,8 +76,9 @@ function PreferenceScheduleFields({
               placeholder="희망 교육 날짜를 선택하세요"
               value={block.date}
               onChange={next => onPatch({ date: next })}
-              width={240}
-              style={{ flex: '0 0 240px', width: 240 }}
+              width={220}
+              className="institution-preferred-schedule-paragraph__date-picker"
+              style={{ flex: '0 0 220px', width: 220 }}
             />
           }
           view="-"
@@ -71,7 +86,7 @@ function PreferenceScheduleFields({
         <DetailInfoForm.Field
           label="희망 교육 시간"
           edit={
-            <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap institution-preferred-schedule-paragraph__time-inputs">
+            <div className="detail-info-form-inputs-wrapper-no-gap institution-preferred-schedule-paragraph__time-inputs">
               {showSessionSelect ? (
                 <>
                   <CmsSelect
@@ -92,7 +107,7 @@ function PreferenceScheduleFields({
                 value={block.start}
                 onChange={next => onPatch({ start: next, end: next == null ? null : block.end })}
                 placeholder="수업 시작"
-                width={168}
+                width={140}
                 showEndTimeToggle={false}
               />
               <span className="institution-preferred-schedule-paragraph__tilde">~</span>
@@ -100,7 +115,7 @@ function PreferenceScheduleFields({
                 value={block.end}
                 onChange={next => onPatch({ end: next })}
                 placeholder="수업 종료"
-                width={168}
+                width={140}
                 showEndTimeToggle={false}
                 disabled={block.start == null}
               />
@@ -150,6 +165,62 @@ function ScheduleBlock({
   )
 }
 
+export const INSTITUTION_PREFERRED_SCHEDULES_OVERLAY_KEY =
+  'application.institution.preferredSchedules' as const
+
+function isBlankScheduleBlock(block: ScheduleBlockState): boolean {
+  return block.date == null && block.session == null && block.start == null && block.end == null
+}
+
+export function addInstitutionPreferredScheduleBlock(): void {
+  const maxBlocks = resolveInstitutionPreferredScheduleMaxBlocks(
+    getInstitutionApplicationProgramBridge()
+  )
+  updateGeneralApplicationOverlayKey<ScheduleBlockState[]>(
+    INSTITUTION_PREFERRED_SCHEDULES_OVERLAY_KEY,
+    prev => {
+      const current = (prev ?? []) as ScheduleBlockState[]
+      return current.length >= maxBlocks ? current : [...current, createEmptyBlockState()]
+    }
+  )
+}
+
+/** 카드 제목 줄 — 커리큘럼 복수+기간 희망 일정 설명 */
+export function InstitutionPreferredScheduleCardDescription() {
+  const bridge = useInstitutionApplicationProgramBridge()
+  return <>{resolveInstitutionPreferredScheduleDescription(bridge)}</>
+}
+
+/** 카드 제목 우측 — 「+ 희망 교육 일정 추가」 */
+export function InstitutionPreferredScheduleCardTitleTrailing({
+  readOnly = false,
+}: {
+  readOnly?: boolean
+}) {
+  const bridge = useInstitutionApplicationProgramBridge()
+  const [blocks] = useGeneralApplicationOverlayKv<ScheduleBlockState[]>(
+    INSTITUTION_PREFERRED_SCHEDULES_OVERLAY_KEY,
+    []
+  )
+  const maxBlocks = resolveInstitutionPreferredScheduleMaxBlocks(bridge)
+  if (readOnly || blocks.length >= maxBlocks) return null
+  return (
+    <CmsButton
+      type="button"
+      variant="secondary"
+      size="medium"
+      className="cms-button--no-label-ellipsis"
+      icon={<FormEditorPlusIcon />}
+      onClick={event => {
+        event.stopPropagation()
+        addInstitutionPreferredScheduleBlock()
+      }}
+    >
+      희망 교육 일정 추가
+    </CmsButton>
+  )
+}
+
 /** 일반 프로그램 참여자 신청(학교·기관) — 희망 교육 일정 (모집 설정 상한·유형 연동) */
 export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
   readOnlyPreview = false,
@@ -157,7 +228,8 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
   readOnlyPreview?: boolean
 }) {
   const bridge = useInstitutionApplicationProgramBridge()
-  const maxBlocks = clampInstitutionScheduleBlockCount(bridge.maxScheduleCount)
+  const maxBlocks = resolveInstitutionPreferredScheduleMaxBlocks(bridge)
+  const initialBlockCount = resolveInstitutionPreferredScheduleInitialBlockCount(bridge)
   const showSessionSelect = shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge)
   const sessionOptions = useMemo(
     () => buildInstitutionSessionCountOptions(bridge.maxSessionsPerDay),
@@ -165,25 +237,41 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
   )
 
   const [blocks] = useGeneralApplicationOverlayKv<ScheduleBlockState[]>(
-    'application.institution.preferredSchedules',
+    INSTITUTION_PREFERRED_SCHEDULES_OVERLAY_KEY,
     []
   )
 
-  useMemo(() => {
-    if (blocks.length === 0) {
-      updateGeneralApplicationOverlayKey<ScheduleBlockState[]>(
-        'application.institution.preferredSchedules',
-        () => Array.from({ length: 1 }, () => createEmptyBlockState())
-      )
-    }
-  }, [blocks.length])
+  useEffect(() => {
+    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>(
+      INSTITUTION_PREFERRED_SCHEDULES_OVERLAY_KEY,
+      prev => {
+        const current = (prev ?? []) as ScheduleBlockState[]
+        if (current.length >= initialBlockCount) return current
+        if (current.length > 0 && !current.every(isBlankScheduleBlock)) return current
+        return [
+          ...current,
+          ...Array.from({ length: initialBlockCount - current.length }, () =>
+            createEmptyBlockState()
+          ),
+        ]
+      }
+    )
+  }, [
+    initialBlockCount,
+    bridge.educationStructure,
+    bridge.sessionRound,
+    bridge.educationScheduleMode,
+    bridge.maxScheduleCount,
+  ])
 
-  const visibleBlockCount = Math.min(Math.max(blocks.length, 1), maxBlocks)
-  const displayBlocks = blocks.slice(0, visibleBlockCount)
+  const displayBlocks =
+    blocks.length === 0
+      ? Array.from({ length: initialBlockCount }, () => createEmptyBlockState())
+      : blocks.slice(0, maxBlocks).map(coerceScheduleBlock)
 
   const patchBlock = (index: number, patch: Partial<ScheduleBlockState>) => {
     updateGeneralApplicationOverlayKey<ScheduleBlockState[]>(
-      'application.institution.preferredSchedules',
+      INSTITUTION_PREFERRED_SCHEDULES_OVERLAY_KEY,
       prev => {
         const current = (prev ?? []) as ScheduleBlockState[]
         return current.map((b, i) => (i === index ? { ...b, ...patch } : b))
@@ -193,7 +281,7 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
 
   const removeBlock = (index: number) => {
     updateGeneralApplicationOverlayKey<ScheduleBlockState[]>(
-      'application.institution.preferredSchedules',
+      INSTITUTION_PREFERRED_SCHEDULES_OVERLAY_KEY,
       prev => {
         const current = (prev ?? []) as ScheduleBlockState[]
         if (current.length <= 1) return [createEmptyBlockState()]
@@ -202,24 +290,8 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
     )
   }
 
-  const addBlock = () => {
-    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.institution.preferredSchedules', prev => {
-      const current = (prev ?? []) as ScheduleBlockState[]
-      return current.length >= maxBlocks ? current : [...current, createEmptyBlockState()]
-    })
-  }
-
   return (
     <div className="program-registration-paragraph institution-preferred-schedule-paragraph">
-      <div className="institution-preferred-schedule-paragraph__header">
-        {readOnlyPreview || displayBlocks.length >= maxBlocks ? (
-          <span />
-        ) : (
-          <CmsButton size="small" onClick={addBlock}>
-            + 희망 교육 일정 추가
-          </CmsButton>
-        )}
-      </div>
       {displayBlocks.map((block, index) => (
         <ScheduleBlock
           key={index}

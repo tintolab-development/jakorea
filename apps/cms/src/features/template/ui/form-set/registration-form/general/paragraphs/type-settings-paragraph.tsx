@@ -167,11 +167,11 @@ export function ProgramRegistrationTypeSettingsParagraph({
   )
   const [multiCommonEducationForm, setMultiCommonEducationForm] = useProgramRegistrationOverlayKv(
     'generalRegistration.typeSettings.multiCommonEducationForm',
-    ''
+    'online'
   )
   const [multiCommonParticipation, setMultiCommonParticipation] = useProgramRegistrationOverlayKv(
     'generalRegistration.typeSettings.multiCommonParticipation',
-    ''
+    'individual'
   )
   /** 단일 회차 — 교육 형태·참여 방식 (교육 진행 구조는 별도 고정) */
   const [singleEducationForm, setSingleEducationForm] = useProgramRegistrationOverlayKv(
@@ -211,6 +211,33 @@ export function ProgramRegistrationTypeSettingsParagraph({
       showPreferredEducationForm: form === 'participant_selection',
     })
   }, [sessionRoundType, educationFormScheduleDetail, singleEducationForm, multiCommonEducationForm])
+
+  /** 복수회차·일정 공통 — 빈 값은 단일 회차와 같은 기본값으로 채운다 */
+  useEffect(() => {
+    if (sessionRoundType !== 'multi' || educationFormScheduleDetail !== 'common') return
+    if (multiCommonEducationForm.trim()) return
+    setMultiCommonEducationForm(singleEducationForm.trim() || 'online')
+  }, [
+    educationFormScheduleDetail,
+    multiCommonEducationForm,
+    sessionRoundType,
+    setMultiCommonEducationForm,
+    singleEducationForm,
+  ])
+
+  useEffect(() => {
+    if (participantOrganization) return
+    if (sessionRoundType !== 'multi' || participationScheduleDetail !== 'common') return
+    if (multiCommonParticipation.trim()) return
+    setMultiCommonParticipation(singleParticipation.trim() || 'individual')
+  }, [
+    multiCommonParticipation,
+    participantOrganization,
+    participationScheduleDetail,
+    sessionRoundType,
+    setMultiCommonParticipation,
+    singleParticipation,
+  ])
 
   return (
     <>

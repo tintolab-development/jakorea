@@ -15,6 +15,7 @@ import {
 import {
   dayjsTimeParts,
   findNextEnabledDate,
+  toValidDayjsOrNull,
 } from '@/shared/components/date-time-picker-shared'
 import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import type { CmsControlSize } from '@/shared/ui/cms-control-size'
@@ -30,10 +31,11 @@ function formatParagraphDatePickerTriggerDisplay(
   surfaceRange: [Dayjs, Dayjs] | null,
   surfaceAppliedWithTime: boolean
 ): string | null {
-  const empty = value == null && surfaceRange == null && !surfaceAppliedWithTime
+  const resolvedValue = toValidDayjsOrNull(value)
+  const empty = resolvedValue == null && surfaceRange == null && !surfaceAppliedWithTime
   if (empty) return null
 
-  const eff = value ?? dayjs()
+  const eff = resolvedValue ?? dayjs()
 
   if (surfaceRange != null && surfaceAppliedWithTime) {
     const [a, b] = surfaceRange
@@ -237,6 +239,7 @@ function ParagraphDatePickerSingleInner({
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
+  const resolvedValue = toValidDayjsOrNull(value)
 
   const [open, setOpen] = useState(false)
   const onOpenChangeRef = useRef(onOpenChange)
@@ -245,9 +248,11 @@ function ParagraphDatePickerSingleInner({
   useEffect(() => {
     onOpenChangeRef.current?.(open)
   }, [open])
-  const [draft, setDraft] = useState<Dayjs>(() => findNextEnabledDate(value ?? dayjs(), disabledDate))
+  const [draft, setDraft] = useState<Dayjs>(() =>
+    findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate)
+  )
   const [calendarMonth, setCalendarMonth] = useState<Dayjs>(() =>
-    findNextEnabledDate(value ?? dayjs(), disabledDate).startOf('month')
+    findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate).startOf('month')
   )
   const [periodOn, setPeriodOn] = useState(
     presetMode === 'period' || (lockPeriodToggleOn && showPeriodToggle)
@@ -262,10 +267,13 @@ function ParagraphDatePickerSingleInner({
     setPeriodOn(false)
   }, [showPeriodToggle, presetMode])
   const [rangeStart, setRangeStart] = useState<Dayjs>(() =>
-    findNextEnabledDate(value ?? dayjs(), disabledDate)
+    findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate)
   )
   const [rangeEnd, setRangeEnd] = useState<Dayjs>(() =>
-    findNextEnabledDate(findNextEnabledDate(value ?? dayjs(), disabledDate).add(1, 'day'), disabledDate)
+    findNextEnabledDate(
+      findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate).add(1, 'day'),
+      disabledDate
+    )
   )
   const [rangeFocus, setRangeFocus] = useState<'start' | 'end'>('start')
   /** [설정]으로 확정된 기간 — 트리거에 시작/종료 UI 표시 */
@@ -317,22 +325,22 @@ function ParagraphDatePickerSingleInner({
    * `suppressAutoTodayWhenEmpty`면 null 유지.
    */
   useEffect(() => {
-    if (value != null) return
+    if (resolvedValue != null) return
     if (presetMode === 'period' && !customizable) return
     if (suppressAutoTodayWhenEmpty) return
     onChange(dayjs())
-  }, [value, onChange, presetMode, customizable, suppressAutoTodayWhenEmpty])
+  }, [resolvedValue, onChange, presetMode, customizable, suppressAutoTodayWhenEmpty])
 
   const hasExternalSurfaceControl = appliedSurfaceRange !== undefined
 
   /** 교육 진행 일정 등 — 추가 후 부모가 value를 null로 비우면 트리거 표면도 초기화 */
   useEffect(() => {
-    if (value != null) return
+    if (resolvedValue != null) return
     if (!suppressAutoTodayWhenEmpty) return
     if (hasExternalSurfaceControl) return
     setSurfaceRange(null)
     setSurfaceAppliedWithTime(false)
-  }, [value, suppressAutoTodayWhenEmpty, hasExternalSurfaceControl])
+  }, [resolvedValue, suppressAutoTodayWhenEmpty, hasExternalSurfaceControl])
 
   const appliedSurfaceSyncKey = useMemo(() => {
     if (!hasExternalSurfaceControl) return 'uncontrolled'
@@ -382,7 +390,7 @@ function ParagraphDatePickerSingleInner({
   const effectivePlaceholder = placeholder ?? PARAGRAPH_DATE_PRESET_PLACEHOLDERS[presetMode]
 
   const triggerDisplayText = formatParagraphDatePickerTriggerDisplay(
-    value,
+    resolvedValue,
     surfaceRange,
     surfaceAppliedWithTime
   )
@@ -420,7 +428,7 @@ function ParagraphDatePickerSingleInner({
       setTimeOn(false)
     }
 
-    const d = findNextEnabledDate(value ?? dayjs(), disabledDate)
+    const d = findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate)
     setDraft(d)
     setCalendarMonth(d.startOf('month'))
 
@@ -771,7 +779,8 @@ function ParagraphDatePickerRangeBridge({
   const valueRef = useRef(value)
   valueRef.current = value
 
-  const [start, end] = value
+  const start = toValidDayjsOrNull(value[0])
+  const end = toValidDayjsOrNull(value[1])
   const anchor = start ?? end ?? null
   const appliedSurfaceRange =
     start != null && end != null && start.isValid() && end.isValid()
