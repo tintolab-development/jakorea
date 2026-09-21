@@ -19,7 +19,7 @@ export const EDUCATION_FINANCE_PROGRAMS: readonly FinanceProgramSection[] = [
         alt: '교실에서 교육자가 학생들에게 경제교육을 진행하는 모습',
         width: 960,
         height: 540,
-        layer: { frameW: 960, frameH: 540, layerW: 960, layerH: 640, x: -54, y: -11 },
+        layer: { frameW: 960, frameH: 540, layerW: 960, layerH: 540, x: 0, y: 0 },
       },
       {
         src: ujatRightUrl,
