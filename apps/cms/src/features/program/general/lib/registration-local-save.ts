@@ -559,6 +559,7 @@ export async function persistGeneralProgramRegistration(args: {
     GeneralRegistrationEditorExtras,
     'programType' | 'sessionRoundType' | 'educationScheduleMode' | 'scheduleCurriculumDetailCount'
   >
+  preparedFormBindings?: import('@/features/program/general/lib/build-registration-create-form-bindings').RegistrationCreateFormBindingsPayload | null
 }): Promise<Program> {
   const { shouldUseRegistrationCreateFormBindings, assertRegistrationWizardRemoteReady } =
     await import('@/features/program/general/lib/registration-create-form-bindings-capabilities')
@@ -591,14 +592,14 @@ export async function persistGeneralProgramRegistration(args: {
     const { createCompanySchoolProgram } = await import(
       '@/features/program/1c-1s/api/service'
     )
-    return createCompanySchoolProgram(program)
+    return createCompanySchoolProgram(program, args.preparedFormBindings)
   }
 
   if (variant === 'trainedTeachers' && shouldUseTrainedTeacherProgramsRemoteApi()) {
     const { createTrainedTeacherProgram } = await import(
       '@/features/program/trained-teachers/api/service'
     )
-    return createTrainedTeacherProgram(program)
+    return createTrainedTeacherProgram(program, args.preparedFormBindings)
   }
 
   if (
@@ -606,7 +607,7 @@ export async function persistGeneralProgramRegistration(args: {
     variant !== 'trainedTeachers' &&
     shouldUseGeneralProgramsRemoteApi()
   ) {
-    const created = await createGeneralProgram(program)
+    const created = await createGeneralProgram(program, args.preparedFormBindings)
     return created
   }
 

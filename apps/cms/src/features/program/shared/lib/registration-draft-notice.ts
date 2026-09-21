@@ -1,8 +1,6 @@
 /**
- * 프로그램 등록 임시저장 이력 안내 — **브라우저 localStorage**.
+ * 프로그램 등록 임시저장 이력 안내 — 브라우저 localStorage SSOT
  * (일반 / 1사1교 / 교육받은 교사 / UJAT 공통)
- *
- * 등록 완료 시 form-bindings용 program-draft API와는 분리한다.
  */
 
 import {
@@ -10,13 +8,10 @@ import {
   PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
 } from '@/features/template/lib/program-registration-editor-state'
 import {
-  loadWritingFormTemplateSave,
-  removeWritingFormTemplateSave,
-  type WritingFormTemplateSaveRecord,
-} from '@/features/program/shared/lib/program-draft-local-save'
-import { listRegistrationOperationalFormDraftStorageKeys } from '@/features/program/general/lib/registration-operational-form-drafts'
-import { deleteRegistrationProgramDraftRemote } from '@/features/program/general/lib/registration-program-draft-session'
-import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
+  clearRegistrationProgramDraftLocal,
+  peekRegistrationProgramDraftPayload,
+} from '@/features/program/general/lib/registration-program-draft-session'
+import type { RegistrationProgramDraftPayloadV1 } from '@/features/program/general/lib/registration-program-draft-payload'
 
 export {
   PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE,
@@ -60,12 +55,6 @@ export type RegistrationDraftNoticeInfo = {
 
 const FALLBACK_TITLE = '제목 없음'
 
-const LOCAL_TITLE_OVERLAY_KEYS = [
-  'trainedTeachersRegistration.basicInfo.programTitleKo',
-  'generalRegistration.basicInfo.localProgramTitleKo',
-  'generalRegistration.basicInfo.programTitleKo',
-] as const
-
 export function registrationProgramTypeForTemplateCode(
   templateCode: ProgramRegistrationDraftTemplateCode
 ): RegistrationProgramTypeKey {
@@ -75,52 +64,48 @@ export function registrationProgramTypeForTemplateCode(
   return 'GENERAL'
 }
 
-function variantForTemplateCode(
-  templateCode: ProgramRegistrationDraftTemplateCode
-): ProgramRegistrationFormVariant | null {
-  if (templateCode === PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE) return null
-  if (templateCode === PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE) return 'economy'
-  if (templateCode === PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE) {
-    return 'trainedTeachers'
-  }
-  return 'general'
+/**
+ * 사용자 「임시 저장」여부.
+ * - persistDraftSilent는 항상 activeStep을 넣음(공통정보 `program` 포함) → true
+ */
+function payloadHasUserDraft(payload: RegistrationProgramDraftPayloadV1): boolean {
+  if (payload.programTitleKo?.trim()) return true
+  // 공통정보에서만 저장해도 안내 팝업이 떠야 함 (`!== 'program'`이면 누락됨)
+  if (payload.activeStep != null) return true
+  return Object.keys(payload.formVersions).length > 0
 }
 
-function titleFromLocalDraftRecord(record: WritingFormTemplateSaveRecord): string {
-  const fromEditor = record.editorState?.programTitleKo
-  if (typeof fromEditor === 'string' && fromEditor.trim() !== '') return fromEditor.trim()
-  const overlay = record.overlay ?? {}
-  for (const key of LOCAL_TITLE_OVERLAY_KEYS) {
-    const value = overlay[key]
-    if (typeof value === 'string' && value.trim() !== '') return value.trim()
-  }
-  return FALLBACK_TITLE
-}
-
-function noticeFromLocalSave(
+function noticeFromPayload(
   templateCode: ProgramRegistrationDraftTemplateCode,
-  record: WritingFormTemplateSaveRecord
+  payload: RegistrationProgramDraftPayloadV1
 ): RegistrationDraftNoticeInfo {
   return {
     templateCode,
-    title: titleFromLocalDraftRecord(record),
-    savedAt: record.savedAt,
+    title: payload.programTitleKo?.trim() || FALLBACK_TITLE,
+    savedAt: payload.savedAt,
   }
 }
 
-/** 등록 중 localStorage 임시저장이 있으면 안내 정보 반환 */
+/**
+ * 등록 중 localStorage 임시저장이 있으면 안내 정보 반환.
+ */
 export async function fetchRegistrationDraftNotice(
   templateCode: ProgramRegistrationDraftTemplateCode
 ): Promise<RegistrationDraftNoticeInfo | null> {
-  return peekRegistrationDraftNotice(templateCode)
+  const programType = registrationProgramTypeForTemplateCode(templateCode)
+  const local = peekRegistrationProgramDraftPayload(programType)
+  if (local == null || !payloadHasUserDraft(local)) return null
+  return noticeFromPayload(templateCode, local)
 }
 
+/** @deprecated fetchRegistrationDraftNotice 사용 */
 export function peekRegistrationDraftNotice(
   templateCode: ProgramRegistrationDraftTemplateCode
 ): RegistrationDraftNoticeInfo | null {
-  const record = loadWritingFormTemplateSave(templateCode)
-  if (record == null) return null
-  return noticeFromLocalSave(templateCode, record)
+  const programType = registrationProgramTypeForTemplateCode(templateCode)
+  const payload = peekRegistrationProgramDraftPayload(programType)
+  if (payload == null || !payloadHasUserDraft(payload)) return null
+  return noticeFromPayload(templateCode, payload)
 }
 
 export type WritingFormDraftOverwriteInfo = {
@@ -129,17 +114,10 @@ export type WritingFormDraftOverwriteInfo = {
   savedAt: string
 }
 
-/** 이어서 작성본 등록 완료 후 — local 임시저장 삭제 (+ 잔여 remote draft 정리) */
+/** 저장본 삭제 — localStorage만 제거하며 서버 API를 호출하지 않는다. */
 export async function clearRegistrationDraftForFreshStart(
   templateCode: ProgramRegistrationDraftTemplateCode
 ): Promise<void> {
-  removeWritingFormTemplateSave(templateCode)
-  const variant = variantForTemplateCode(templateCode)
-  if (variant != null) {
-    for (const key of listRegistrationOperationalFormDraftStorageKeys(variant)) {
-      removeWritingFormTemplateSave(key)
-    }
-  }
   const programType = registrationProgramTypeForTemplateCode(templateCode)
-  await deleteRegistrationProgramDraftRemote(programType)
+  await clearRegistrationProgramDraftLocal(programType)
 }

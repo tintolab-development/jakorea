@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCmsAlert } from '@/shared/ui'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -17,7 +17,11 @@ import {
   lookupTemplateRegistry,
   resolvePreviewHeaderTitle,
 } from '@/features/template/model/template-registry/template-registry'
-import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
+import {
+  collectParticipantOverlayForVariant,
+  useProgramParticipantApplicationEditor,
+} from '@/features/template/hooks/use-program-participant-application-editor'
+import { buildParticipantApplicationEditorState } from '@/features/template/lib/participant-application-editor-state'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
 import {
   PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE,
@@ -29,10 +33,12 @@ import type { ProgramRegistrationFormVariant } from '@/features/template/model/p
 import type { Program } from '@/types/domain'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
+import { hydrateRegistrationOperationalOverlaysFromLocalDrafts } from '@/features/program/general/lib/registration-operational-form-drafts'
+import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 import {
-  hydrateRegistrationOperationalOverlaysFromLocalDrafts,
-  persistRegistrationOperationalOverlaySnapshots,
-} from '@/features/program/general/lib/registration-operational-form-drafts'
+  hydrateRegistrationProgramDraft,
+  syncRegistrationProgramDraftSession,
+} from '@/features/program/general/lib/registration-program-draft-session'
 import {
   registrationProgramTypeForTemplateCode,
   type ProgramRegistrationDraftTemplateCode,
@@ -114,6 +120,10 @@ export function useGeneralProgramRegistrationFlow(
     registrationTemplateId as ProgramRegistrationDraftTemplateCode
   )
 
+  const onStepChangeRef = useRef(options?.onStepChange)
+  onStepChangeRef.current = options?.onStepChange
+  const continueHydratedRef = useRef(false)
+
   const registrationVm = useProgramRegistrationEditor(
     open,
     resolveStepTemplateName(registrationTemplateId),
@@ -153,18 +163,43 @@ export function useGeneralProgramRegistrationFlow(
   })
 
   useEffect(() => {
-    if (!open || skipDraftRestore) return
-    void hydrateRegistrationOperationalOverlaysFromLocalDrafts(
-      programType,
-      registrationFormVariant
-    ).catch(error => {
-      console.warn('[registration-program-draft] operational hydrate failed', error)
+    if (!open) continueHydratedRef.current = false
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    if (skipDraftRestore) return
+    if (continueHydratedRef.current) return
+    continueHydratedRef.current = true
+    void (async () => {
+      const payload = await hydrateRegistrationProgramDraft(programType)
+      await hydrateRegistrationOperationalOverlaysFromLocalDrafts(
+        programType,
+        registrationFormVariant
+      )
+      if (payload?.activeStep != null) {
+        const restored = coerceRegistrationStepForVariant(
+          normalizeGeneralProgramRegistrationStepKey(
+            payload.activeStep,
+            participantFlags,
+            tabVisibility
+          ),
+          participantFlags,
+          registrationFormVariant
+        )
+        setActiveStep(restored)
+        onStepChangeRef.current?.(restored)
+      }
+    })().catch(error => {
+      console.warn('[registration-program-draft] hydrate failed', error)
     })
   }, [
     open,
     skipDraftRestore,
     programType,
     registrationFormVariant,
+    participantFlags,
+    tabVisibility,
   ])
 
   useEffect(() => {
@@ -279,9 +314,10 @@ export function useGeneralProgramRegistrationFlow(
     participantTemplateName,
     participantVariant,
     {
-      localOnlyDraftPersistence: true,
       registrationWizardProgramType: programType,
       registrationWizardOpen: open,
+      skipDraftRestore,
+      localOnlyDraftPersistence: true,
       participantOrganization: participantFlags.organization,
       /** 등록 위저드 신청 단계 — 기관 기본정보·강사/봉사자 일정 자동 반영 미리보기 */
       programLinkedInstitutionApplicationForm:
@@ -388,15 +424,28 @@ export function useGeneralProgramRegistrationFlow(
     [registryEntry, editorVm]
   )
 
+  /** 「임시 저장」— 현재 양식과 메타를 localStorage에만 저장한다. */
   const persistDraftSilent = useCallback(async () => {
+    // 공통정보는 다른 단계에서도 React state에 유지되므로 항상 함께 저장한다.
     await registrationVm.handleSave({ silent: true })
-    if (isParticipantStep) {
+    if (!isProgramStep && isParticipantStep) {
       await participantVm.handleSave({ silent: true })
     }
-    await persistRegistrationOperationalOverlaySnapshots(programType, registrationFormVariant, {
-      localOnly: true,
+    syncRegistrationProgramDraftSession({
+      programType,
+      registrationTemplateCode: registrationTemplateId,
+      activeStep: coercedActiveStep,
+      programTitleKo: registrationVm.resolveProgramTitleKo(),
     })
-  }, [isParticipantStep, participantVm, programType, registrationFormVariant, registrationVm])
+  }, [
+    coercedActiveStep,
+    isParticipantStep,
+    isProgramStep,
+    participantVm,
+    programType,
+    registrationTemplateId,
+    registrationVm,
+  ])
 
   const selectStep = useCallback(
     (key: GeneralProgramRegistrationStepKey) => {
@@ -406,7 +455,7 @@ export function useGeneralProgramRegistrationFlow(
         registrationFormVariant
       )
       if (next === coercedActiveStep) return
-      // 탭 전환은 편집 중 React state만 유지한다. 임시저장은 명시적 저장 버튼에서만 수행.
+      // 탭/단계 전환은 React state만 유지. 세션·서버 임시저장은 「임시 저장」버튼에서만.
       setActiveStep(next)
       options?.onStepChange?.(next)
     },
@@ -515,26 +564,55 @@ export function useGeneralProgramRegistrationFlow(
       return
     }
     void (async () => {
-      try {
-        await participantVm.handleSave({ silent: true })
-      } catch (error) {
-        console.debug('generalProgramRegistration complete: participant draft save failed', error)
-        showAlert({
-          title: '임시 저장 실패',
-          content: isLocalStorageQuotaExceededError(error)
-            ? '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
-            : '임시 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
-        })
+      const completeWithBindings = shouldUseRegistrationCreateFormBindings()
+      if (!completeWithBindings) {
+        try {
+          await participantVm.handleSave({ silent: true })
+        } catch (error) {
+          console.debug('generalProgramRegistration complete: participant draft save failed', error)
+          showAlert({
+            title: '임시 저장 실패',
+            content: isLocalStorageQuotaExceededError(error)
+              ? '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
+              : '임시 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+          })
+          return
+        }
+        void registrationVm.handleCompleteRegistration()
         return
       }
-      void registrationVm.handleCompleteRegistration()
+
+      const overlay = collectParticipantOverlayForVariant(participantVariant)
+      const editorState = buildParticipantApplicationEditorState({
+        variant: participantVariant,
+        volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
+        ujatVolunteerApplicationType: participantVm.ujatVolunteerApplicationType,
+        ujatGradeApplicationBlockIds:
+          participantVm.ujatProgramApplicationGradeInfo?.applicationGradeBlockIds ?? [],
+        ujatApplicationGradeByBlockId:
+          participantVm.ujatProgramApplicationGradeInfo?.applicationGradeByBlockId ?? {},
+        ujatGradeClassTimeBlockIds:
+          participantVm.ujatProgramApplicationGradeClassTime?.classTimeBlockIds ?? [],
+      })
+      void registrationVm.handleCompleteRegistration({
+        operationalOverrides: [
+          {
+            templateCode: currentStepDef.templateId,
+            draft: participantVm.draft,
+            ...(overlay != null ? { overlay } : {}),
+            ...(editorState != null ? { editorState } : {}),
+          },
+        ],
+      })
     })()
   }, [
+    currentStepDef.templateId,
     isProgramStep,
+    participantVariant,
+    participantVm,
     phase,
     registrationFormVariant,
     registrationVm,
-    participantVm,
     showAlert,
   ])
 

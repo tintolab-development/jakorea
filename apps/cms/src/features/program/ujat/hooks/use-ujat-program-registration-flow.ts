@@ -6,10 +6,22 @@ import {
   lookupTemplateRegistry,
   resolvePreviewHeaderTitle,
 } from '@/features/template/model/template-registry/template-registry'
-import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
+import {
+  collectParticipantOverlayForVariant,
+  useProgramParticipantApplicationEditor,
+} from '@/features/template/hooks/use-program-participant-application-editor'
+import { buildParticipantApplicationEditorState } from '@/features/template/lib/participant-application-editor-state'
+import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 import { useUjatProgramRegistrationEditor } from '@/features/template/ui/form-set/registration-form/UJAT/use-ujat-program-registration-editor'
+import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
+import {
+  hydrateRegistrationProgramDraft,
+  syncRegistrationProgramDraftSession,
+} from '@/features/program/general/lib/registration-program-draft-session'
+import { PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE } from '@/features/program/shared/lib/registration-draft-notice'
 import {
   UJAT_PROGRAM_REGISTRATION_DEFAULT_APPLICATION_STEP,
   UJAT_PROGRAM_REGISTRATION_DEFAULT_RECRUIT_STEP,
@@ -55,8 +67,33 @@ export function useUjatProgramRegistrationFlow(
   const createProgramMutation = useCreateProgram()
   const completionPromiseRef = useRef<Promise<Program> | null>(null)
   const idempotencyKeyRef = useRef(createRegistrationIdempotencyKey())
+  const onStepChangeRef = useRef(options?.onStepChange)
+  onStepChangeRef.current = options?.onStepChange
+  const continueHydratedRef = useRef(false)
   const skipDraftRestore = options?.skipDraftRestore === true
   const programType = 'UJAT' as const
+
+  useEffect(() => {
+    if (!open) {
+      continueHydratedRef.current = false
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open || skipDraftRestore) return
+    if (continueHydratedRef.current) return
+    continueHydratedRef.current = true
+    void hydrateRegistrationProgramDraft(programType)
+      .then(payload => {
+        if (payload?.activeStep == null) return
+        const restored = normalizeUjatProgramRegistrationStepKey(payload.activeStep)
+        setActiveStep(restored)
+        onStepChangeRef.current?.(restored)
+      })
+      .catch(error => {
+        console.warn('[registration-program-draft] UJAT hydrate failed', error)
+      })
+  }, [open, skipDraftRestore, programType])
 
   useEffect(() => {
     if (open) return
@@ -108,7 +145,6 @@ export function useUjatProgramRegistrationFlow(
   // 공통 정보 overlay는 모집·신청 단계로 이동한 뒤 완료할 때까지 유지되어야 한다.
   const registrationVm = useUjatProgramRegistrationEditor(open, programTemplateName, {
     skipDraftRestore,
-    localOnlyDraftPersistence: true,
     registrationWizardProgramType: programType,
   })
 
@@ -118,9 +154,10 @@ export function useUjatProgramRegistrationFlow(
     participantVariant,
     {
       ujatRecruitParagraphProps,
-      localOnlyDraftPersistence: true,
       registrationWizardProgramType: programType,
       registrationWizardOpen: open,
+      skipDraftRestore,
+      localOnlyDraftPersistence: true,
       /** UJAT 등록 위저드 — 단락 타이틀 옆 필수(*) */
       forceSeedParagraphsRequired: true,
     }
@@ -173,6 +210,7 @@ export function useUjatProgramRegistrationFlow(
 
   const selectStep = useCallback(
     (key: UjatProgramRegistrationStepKey) => {
+      // 탭/단계 전환은 React state만 유지. 세션 임시저장은 「임시 저장」버튼에서만.
       setActiveStep(key)
       options?.onStepChange?.(key)
     },
@@ -210,38 +248,116 @@ export function useUjatProgramRegistrationFlow(
     participantVm.handleSave()
   }, [isProgramStep, registrationVm, participantVm])
 
+  /** 「임시 저장」— 현재 양식과 메타를 localStorage에만 저장한다. */
   const persistDraftSilent = useCallback(async () => {
-    if (isProgramStep) {
-      await registrationVm.handleSave({ silent: true })
-    } else {
+    await registrationVm.handleSave({ silent: true })
+    if (!isProgramStep && isParticipantStep) {
       await participantVm.handleSave({ silent: true })
     }
-  }, [isProgramStep, participantVm, registrationVm])
+    syncRegistrationProgramDraftSession({
+      programType,
+      registrationTemplateCode: PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
+      activeStep,
+      programTitleKo: buildUjatProgramListRowFromRegistrationSnapshot({
+        id: 'ujat-local-draft',
+        overlay: { ...getUjatProgramRegistrationOverlayRecord() },
+      }).title,
+    })
+  }, [
+    activeStep,
+    isParticipantStep,
+    isProgramStep,
+    participantVm,
+    programType,
+    registrationVm,
+  ])
 
   const handleCompleteRegistration = useCallback(() => {
     if (completionPromiseRef.current) return completionPromiseRef.current
 
-    participantVm.handleSave()
-    const completion = registrationVm
-      .persistDraft()
-      .then(snapshot =>
-        createProgramMutation.mutateAsync({
-          ...snapshot,
-          idempotencyKey: idempotencyKeyRef.current,
+    const completion = (async () => {
+      const registrationOverlay = { ...getUjatProgramRegistrationOverlayRecord() }
+      const registrationSnapshot = {
+        draft: registrationVm.draft,
+        overlay: registrationOverlay,
+      }
+
+      if (shouldUseRegistrationCreateFormBindings()) {
+        const program = buildUjatProgramListRowFromRegistrationSnapshot({
+          id: `ujat-pending-${idempotencyKeyRef.current}`,
+          overlay: registrationOverlay,
         })
-      )
-      .then(program => {
-        options?.onProgramRegistrationSaved?.(program)
-        return program
+
+        const operationalOverrides = []
+        if (isParticipantStep) {
+          const participantOverlay = collectParticipantOverlayForVariant(participantVariant)
+          const editorState = buildParticipantApplicationEditorState({
+            variant: participantVariant,
+            volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
+            ujatVolunteerApplicationType: participantVm.ujatVolunteerApplicationType,
+            ujatGradeApplicationBlockIds:
+              participantVm.ujatProgramApplicationGradeInfo?.applicationGradeBlockIds ?? [],
+            ujatApplicationGradeByBlockId:
+              participantVm.ujatProgramApplicationGradeInfo?.applicationGradeByBlockId ?? {},
+            ujatGradeClassTimeBlockIds:
+              participantVm.ujatProgramApplicationGradeClassTime?.classTimeBlockIds ?? [],
+          })
+          operationalOverrides.push({
+            templateCode: currentStepDef.templateId,
+            draft: participantVm.draft,
+            ...(participantOverlay != null ? { overlay: participantOverlay } : {}),
+            ...(editorState != null ? { editorState } : {}),
+          })
+        }
+
+        const { prepareRegistrationCreateFormBindings } = await import(
+          '@/features/program/general/lib/prepare-registration-create-form-bindings'
+        )
+        const preparedFormBindings = await prepareRegistrationCreateFormBindings({
+          program,
+          registration: {
+            templateCode: PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
+            draft: registrationVm.draft,
+            overlay: registrationOverlay,
+          },
+          operationalOverrides,
+        })
+
+        const createdProgram = await createProgramMutation.mutateAsync({
+          ...registrationSnapshot,
+          idempotencyKey: idempotencyKeyRef.current,
+          preparedFormBindings,
+        })
+        options?.onProgramRegistrationSaved?.(createdProgram)
+        return createdProgram
+      }
+
+      if (isParticipantStep) {
+        await participantVm.handleSave()
+      }
+      const snapshot = await registrationVm.persistDraft()
+      const program = await createProgramMutation.mutateAsync({
+        ...snapshot,
+        idempotencyKey: idempotencyKeyRef.current,
       })
-      .catch(error => {
-        completionPromiseRef.current = null
-        throw error
-      })
+      options?.onProgramRegistrationSaved?.(program)
+      return program
+    })().catch(error => {
+      completionPromiseRef.current = null
+      throw error
+    })
 
     completionPromiseRef.current = completion
     return completion
-  }, [createProgramMutation, options, participantVm, registrationVm])
+  }, [
+    createProgramMutation,
+    currentStepDef.templateId,
+    isParticipantStep,
+    options,
+    participantVariant,
+    participantVm,
+    registrationVm,
+  ])
 
   return {
     activeStep,

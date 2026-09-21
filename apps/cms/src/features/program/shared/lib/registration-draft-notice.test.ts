@@ -1,90 +1,34 @@
 /** @vitest-environment jsdom */
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import {
+  fetchRegistrationDraftNotice,
   REGISTRATION_DRAFT_MODE_CONTINUE,
   REGISTRATION_DRAFT_MODE_FRESH,
   PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
-  PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE,
+  clearRegistrationDraftForFreshStart,
   shouldRemoveRegistrationDraftAfterCompletion,
   shouldSkipRegistrationDraftRestore,
 } from './registration-draft-notice'
-import { persistWritingFormTemplateSave } from '@/features/program/shared/lib/program-draft-local-save'
-import { createProgramRegistrationDraft } from '@/features/template/model/program-registration-draft'
-
-vi.mock('@/features/program/general/lib/registration-program-draft-session', () => ({
-  deleteRegistrationProgramDraftRemote: vi.fn(async () => undefined),
-}))
-
-function stubLocalStorage() {
-  const store: Record<string, string> = {}
-  vi.stubGlobal('localStorage', {
-    getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, value: string) => {
-      store[key] = String(value)
-    },
-    removeItem: (key: string) => {
-      delete store[key]
-    },
-    clear: () => {
-      for (const key of Object.keys(store)) delete store[key]
-    },
-    key: (index: number) => Object.keys(store)[index] ?? null,
-    get length() {
-      return Object.keys(store).length
-    },
-  })
-}
+import {
+  peekRegistrationProgramDraftPayload,
+  syncRegistrationProgramDraftSession,
+} from '@/features/program/general/lib/registration-program-draft-session'
 
 describe('clearRegistrationDraftForFreshStart', () => {
   beforeEach(() => {
-    stubLocalStorage()
-    vi.clearAllMocks()
+    localStorage.clear()
   })
 
-  it('removes localStorage draft and leftover remote program-draft', async () => {
-    const { deleteRegistrationProgramDraftRemote } = await import(
-      '@/features/program/general/lib/registration-program-draft-session'
-    )
-    const { clearRegistrationDraftForFreshStart, fetchRegistrationDraftNotice } = await import(
-      './registration-draft-notice'
-    )
-
-    persistWritingFormTemplateSave({
-      templateId: PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
-      draft: createProgramRegistrationDraft('general'),
-      editorState: { programTitleKo: '로컬제목' },
+  it('deletes only the local program draft', async () => {
+    syncRegistrationProgramDraftSession({
+      programType: 'GENERAL',
+      registrationTemplateCode: PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
+      activeStep: 'program',
     })
 
     await clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
 
-    expect(deleteRegistrationProgramDraftRemote).toHaveBeenCalledWith('GENERAL')
-    await expect(
-      fetchRegistrationDraftNotice(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
-    ).resolves.toBeNull()
-  })
-})
-
-describe('fetchRegistrationDraftNotice', () => {
-  beforeEach(() => {
-    stubLocalStorage()
-  })
-
-  it('reads title from localStorage, not program-draft API', async () => {
-    const { fetchRegistrationDraftNotice } = await import('./registration-draft-notice')
-    persistWritingFormTemplateSave({
-      templateId: PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE,
-      draft: createProgramRegistrationDraft('trainedTeachers'),
-      editorState: { programTitleKo: '가나다(교육받은교사)' },
-    })
-
-    await expect(
-      fetchRegistrationDraftNotice(PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE)
-    ).resolves.toEqual(
-      expect.objectContaining({
-        templateCode: PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE,
-        title: '가나다(교육받은교사)',
-      })
-    )
+    expect(peekRegistrationProgramDraftPayload('GENERAL')).toBeUndefined()
   })
 })
 
@@ -105,5 +49,33 @@ describe('shouldRemoveRegistrationDraftAfterCompletion', () => {
       false
     )
     expect(shouldRemoveRegistrationDraftAfterCompletion(null)).toBe(false)
+  })
+})
+
+describe('fetchRegistrationDraftNotice', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it('treats program-step temp save as user draft', async () => {
+    syncRegistrationProgramDraftSession({
+      programType: 'GENERAL',
+      registrationTemplateCode: 'registration-general',
+      activeStep: 'program',
+    })
+
+    const notice = await fetchRegistrationDraftNotice(
+      PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
+    )
+
+    expect(notice?.templateCode).toBe(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
+    expect(notice?.title).toBe('제목 없음')
+    expect(notice?.savedAt).toBeTruthy()
+  })
+
+  it('returns null without a local temp save', async () => {
+    await expect(
+      fetchRegistrationDraftNotice(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
+    ).resolves.toBeNull()
   })
 })

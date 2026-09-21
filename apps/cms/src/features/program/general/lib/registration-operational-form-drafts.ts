@@ -1,5 +1,6 @@
 /**
- * 등록 위저드 모집/신청 양식 — draft-owned form version SSOT (program-draft 세션).
+ * 등록 위저드 모집/신청 양식.
+ * 임시저장·복원은 localStorage, 등록 완료 시 form binding 준비만 remote를 사용한다.
  */
 
 import { GENERAL_PROGRAM_REGISTRATION_STEPS } from '@/features/program/general/model/registration-flow'
@@ -29,6 +30,10 @@ import { createProgramApplicationFormVolunteerDraft } from '@/features/template/
 import { createRecruitFormInstructorDraft } from '@/features/template/model/recruit-form-instructor-draft'
 import { createRecruitFormVolunteerDraft } from '@/features/template/model/recruit-form-volunteer-draft'
 import { createTrainedTeachersRecruitFormInstitutionDraft } from '@/features/template/model/trained-teachers-recruit-form-institution-draft'
+import { createUjatProgramApplicationFormInstitutionDraft } from '@/features/template/model/ujat-program-application-form-institution-draft'
+import { createUjatProgramApplicationFormVolunteerDraft } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
+import { createUjatRecruitFormInstitutionDraft } from '@/features/template/model/ujat-recruit-form-institution-draft'
+import { createUjatRecruitFormVolunteerDraft } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import type { Program } from '@/types/domain'
@@ -44,11 +49,24 @@ import {
   loadDraftOwnedFormVersionRecord,
   persistDraftOwnedFormVersion,
 } from '@/features/program/general/lib/registration-draft-form-versions'
+import { listVisibleOperationalFormSpecs } from '@/features/program/general/lib/operational-form-bindings'
+import { resolveRegistrationProgramDraftProgramType } from '@/features/program/general/lib/resolve-program-api-type-for-draft'
 import {
-  loadWritingFormTemplateDraft,
-  persistWritingFormTemplateDraft,
-} from '@/features/program/shared/lib/program-draft-local-save'
-import { resolveProgramApiTypeForDraft } from '@/features/program/general/lib/resolve-program-api-type-for-draft'
+  getUjatApplicationInstitutionOverlayRecord,
+  patchUjatApplicationInstitutionOverlay,
+} from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
+import {
+  getUjatApplicationVolunteerOverlayRecord,
+  patchUjatApplicationVolunteerOverlay,
+} from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
+import {
+  getUjatRecruitInstitutionOverlayRecord,
+  patchUjatRecruitInstitutionOverlay,
+} from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
+import {
+  getUjatRecruitVolunteerOverlayRecord,
+  patchUjatRecruitVolunteerOverlay,
+} from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 
 /** 1사1교 전용 카탈로그 id (일반 모집/신청 id와 분리) */
 const ECONOMY_OWNED_OPERATIONAL_TEMPLATE_IDS = [
@@ -129,16 +147,27 @@ export async function loadOperationalFormDraftForProgram(
   program: Program,
   catalogTemplateCode: string
 ): Promise<WritingFormTemplateSaveRecord | null> {
-  const programType = resolveProgramApiTypeForDraft(program)
+  const programDraftType = resolveRegistrationProgramDraftProgramType(program)
   const programDraftId =
-    peekRegistrationProgramDraftId(programType) ??
-    (await ensureRegistrationProgramDraftId(programType))
+    peekRegistrationProgramDraftId(programDraftType) ??
+    (await ensureRegistrationProgramDraftId(programDraftType))
   return loadDraftOwnedFormVersionRecord({ programDraftId, templateCode: catalogTemplateCode })
 }
 
-type OperationalOverlayKind = 'institution-recruit' | 'general-recruit' | 'general-application'
+type OperationalOverlayKind =
+  | 'institution-recruit'
+  | 'general-recruit'
+  | 'general-application'
+  | 'ujat-recruit-institution'
+  | 'ujat-recruit-volunteer'
+  | 'ujat-application-institution'
+  | 'ujat-application-volunteer'
 
 function resolveOperationalOverlayKind(catalogTemplateId: string): OperationalOverlayKind | null {
+  if (catalogTemplateId === 'recruitment-ujat-school') return 'ujat-recruit-institution'
+  if (catalogTemplateId === 'recruitment-ujat-volunteer') return 'ujat-recruit-volunteer'
+  if (catalogTemplateId === 'application-ujat-school') return 'ujat-application-institution'
+  if (catalogTemplateId === 'application-ujat-volunteer') return 'ujat-application-volunteer'
   if (
     catalogTemplateId === 'recruitment-participant-school' ||
     catalogTemplateId === 'recruitment-economy' ||
@@ -155,7 +184,9 @@ function resolveOperationalOverlayKind(catalogTemplateId: string): OperationalOv
   return null
 }
 
-function createSeedDraftForOperationalCatalogId(catalogTemplateId: string): WritingFormDraft | null {
+export function createSeedDraftForOperationalCatalogId(
+  catalogTemplateId: string
+): WritingFormDraft | null {
   switch (catalogTemplateId) {
     case 'recruitment-participant-school':
       return createApplicantRecruitFormInstitutionDraft()
@@ -181,6 +212,14 @@ function createSeedDraftForOperationalCatalogId(catalogTemplateId: string): Writ
       return createProgramApplicationFormInstructorDraft()
     case 'application-volunteer':
       return createProgramApplicationFormVolunteerDraft()
+    case 'recruitment-ujat-school':
+      return createUjatRecruitFormInstitutionDraft()
+    case 'recruitment-ujat-volunteer':
+      return createUjatRecruitFormVolunteerDraft()
+    case 'application-ujat-school':
+      return createUjatProgramApplicationFormInstitutionDraft()
+    case 'application-ujat-volunteer':
+      return createUjatProgramApplicationFormVolunteerDraft()
     default:
       return null
   }
@@ -189,7 +228,19 @@ function createSeedDraftForOperationalCatalogId(catalogTemplateId: string): Writ
 function overlayRecordForKind(kind: OperationalOverlayKind): Record<string, unknown> {
   if (kind === 'institution-recruit') return { ...getApplicantRecruitInstitutionOverlayRecord() }
   if (kind === 'general-recruit') return { ...getGeneralRecruitOverlayRecord() }
-  return { ...getGeneralApplicationOverlayRecord() }
+  if (kind === 'general-application') return { ...getGeneralApplicationOverlayRecord() }
+  if (kind === 'ujat-recruit-institution') return { ...getUjatRecruitInstitutionOverlayRecord() }
+  if (kind === 'ujat-recruit-volunteer') return { ...getUjatRecruitVolunteerOverlayRecord() }
+  if (kind === 'ujat-application-institution') return { ...getUjatApplicationInstitutionOverlayRecord() }
+  return { ...getUjatApplicationVolunteerOverlayRecord() }
+}
+
+export function collectOperationalOverlayForCatalogId(
+  catalogTemplateId: string
+): Record<string, unknown> | null {
+  const kind = resolveOperationalOverlayKind(catalogTemplateId)
+  if (kind == null) return null
+  return overlayRecordForKind(kind)
 }
 
 function applyOverlayRecord(kind: OperationalOverlayKind, overlay: Record<string, unknown>): void {
@@ -202,19 +253,41 @@ function applyOverlayRecord(kind: OperationalOverlayKind, overlay: Record<string
     patchGeneralRecruitOverlay(overlay)
     return
   }
-  patchGeneralApplicationOverlay(overlay)
+  if (kind === 'general-application') {
+    patchGeneralApplicationOverlay(overlay)
+    return
+  }
+  if (kind === 'ujat-recruit-institution') {
+    patchUjatRecruitInstitutionOverlay(overlay)
+    return
+  }
+  if (kind === 'ujat-recruit-volunteer') {
+    patchUjatRecruitVolunteerOverlay(overlay)
+    return
+  }
+  if (kind === 'ujat-application-institution') {
+    patchUjatApplicationInstitutionOverlay(overlay)
+    return
+  }
+  patchUjatApplicationVolunteerOverlay(overlay)
 }
 
 /**
  * 「이어서 작성」 진입 시 — localStorage overlay를 공유 스토어에 병합 복원.
  */
 export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
-  _programType: string,
+  programType: string,
   variant: ProgramRegistrationFormVariant
 ): Promise<void> {
+  const { loadRegistrationWizardFormDraft } = await import(
+    '@/features/program/general/lib/registration-wizard-form-draft'
+  )
   for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant)) {
     const catalogId = catalogTemplateIdFromOperationalStorageKey(storageKey)
-    const saved = await loadWritingFormTemplateDraft(catalogId, { localOnly: true })
+    const saved = await loadRegistrationWizardFormDraft({
+      programType,
+      templateCode: catalogId,
+    })
     const overlay = saved?.overlay
     if (overlay == null || Object.keys(overlay).length === 0) continue
     const kind = resolveOperationalOverlayKind(catalogId)
@@ -224,55 +297,39 @@ export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
 }
 
 /**
- * 임시저장 시 — 메모리상 모집/신청 overlay를 localStorage 또는 draft-owned version에 저장.
+ * 등록 완료 직전 — visible operational spec overlay를 draft-owned version에 PUT.
+ * @deprecated `prepareRegistrationCreateFormBindings` 사용. 하위 호환용.
  */
 export async function persistRegistrationOperationalOverlaySnapshots(
-  programType: string,
-  variant: ProgramRegistrationFormVariant,
-  options?: { localOnly?: boolean }
+  program: Program
 ): Promise<void> {
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-  const localOnly = options?.localOnly === true
-  const programDraftId = localOnly ? null : await ensureRegistrationProgramDraftId(programType)
-  for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant)) {
-    const catalogId = catalogTemplateIdFromOperationalStorageKey(storageKey)
-    const kind = resolveOperationalOverlayKind(catalogId)
-    if (kind == null) continue
-    const overlay = overlayRecordForKind(kind)
-    if (Object.keys(overlay).length === 0) continue
-
-    if (localOnly) {
-      const existing = await loadWritingFormTemplateDraft(catalogId, { localOnly: true })
-      const draft = existing?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
-      if (draft == null) continue
-      await persistWritingFormTemplateDraft({
-        templateId: catalogId,
-        draft,
-        overlay,
-        editorState: existing?.editorState,
-        localOnly: true,
-      })
-      continue
-    }
+  const programDraftType = resolveRegistrationProgramDraftProgramType(program)
+  const programDraftId = await ensureRegistrationProgramDraftId(programDraftType)
+  for (const spec of listVisibleOperationalFormSpecs(program)) {
+    const catalogId = spec.templateCode
+    const overlay = collectOperationalOverlayForCatalogId(catalogId)
+    if (overlay == null || Object.keys(overlay).length === 0) continue
 
     const existing = await loadDraftOwnedFormVersionRecord({
-      programDraftId: programDraftId!,
+      programDraftId,
       templateCode: catalogId,
     })
     const draft = existing?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
     if (draft == null) continue
 
     await persistDraftOwnedFormVersion({
-      programDraftId: programDraftId!,
+      programDraftId,
       templateCode: catalogId,
       draft,
       overlay,
       editorState: existing?.editorState,
+      baseline: existing,
     })
   }
 }
 
-/** fresh 진입·등록 완료 시 — program-draft DELETE가 form version session도 정리 */
+/** localStorage 삭제는 registration-wizard-form-draft에서 유형별로 일괄 처리한다. */
 export function clearRegistrationOperationalFormDrafts(
   _variant: ProgramRegistrationFormVariant
 ): void {

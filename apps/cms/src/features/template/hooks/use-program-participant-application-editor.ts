@@ -301,8 +301,10 @@ export type UseProgramParticipantApplicationEditorOptions = {
   forceUserEditable?: boolean
   /** 프로그램 등록 임시저장 — localStorage만 (`localOnlyDraftPersistence`). 양식 관리는 remote SSOT. */
   localOnlyDraftPersistence?: boolean
-  /** 등록 위저드 — draft-owned form version PUT/GET (program-draft SSOT) */
+  /** 등록 위저드 임시저장 — programType별 localStorage 격리 키 */
   registrationWizardProgramType?: string
+  /** fresh 신규 등록 — 기존 위저드 localStorage 초안을 복원하지 않음 */
+  skipDraftRestore?: boolean
   /** 프로그램 form-binding `templateVersionId` — 카탈로그 code 대신 이 버전을 로드/저장 */
   templateVersionId?: number
   /** 바인딩 전용 version이 없을 때 등록 위저드 localStorage 초안을 우선 */
@@ -440,7 +442,7 @@ function restoreParticipantOverlayForVariant(
   }
 }
 
-function collectParticipantOverlayForVariant(
+export function collectParticipantOverlayForVariant(
   variant: ProgramParticipantApplicationEditorVariant
 ): Record<string, unknown> | undefined {
   if (variant === 'gemini-recruit') {
@@ -457,6 +459,12 @@ function collectParticipantOverlayForVariant(
   }
   if (isGeneralApplicationOverlayVariant(variant)) {
     return { ...getGeneralApplicationOverlayRecord() }
+  }
+  if (variant === 'ujat-recruit-institution') {
+    return { ...getUjatRecruitInstitutionOverlayRecord() }
+  }
+  if (variant === 'ujat-recruit-volunteer') {
+    return { ...getUjatRecruitVolunteerOverlayRecord() }
   }
   if (variant === 'ujat-application-institution') {
     return { ...getUjatApplicationInstitutionOverlayRecord() }
@@ -478,6 +486,7 @@ export function useProgramParticipantApplicationEditor(
   const registrationWizardProgramType = editorOptions?.registrationWizardProgramType
   const usesRegistrationWizardDraft =
     registrationWizardProgramType != null && registrationWizardProgramType !== ''
+  const skipDraftRestore = editorOptions?.skipDraftRestore === true
   const persistTemplateVersionId = editorOptions?.templateVersionId
   const preferLocalDraft = editorOptions?.preferLocalDraft === true
   const registrationWizardOpen = editorOptions?.registrationWizardOpen
@@ -645,16 +654,12 @@ export function useProgramParticipantApplicationEditor(
     }
     /* eslint-disable react-hooks/set-state-in-effect -- 풀페이지 미리보기 열림과 동기화해 시드·저장본을 반영 */
     let cancelled = false
-    const templateId = localOnlyDraftPersistence
-      ? resolveLocalDraftStorageKey()
-      : resolvePersistTemplateId()
-    const hydrateKey = `${templateId}::${persistTemplateVersionId ?? 'none'}::${
-      localOnlyDraftPersistence
-        ? 'local'
-        : usesRegistrationWizardDraft
-          ? 'wizard'
-          : 'remote'
-    }::${preferLocalDraft ? 'prefer-local' : 'bound'}`
+    const templateId = usesRegistrationWizardDraft
+      ? resolvePersistTemplateId()
+      : localOnlyDraftPersistence
+        ? resolveLocalDraftStorageKey()
+        : resolvePersistTemplateId()
+    const hydrateKey = `${templateId}::${persistTemplateVersionId ?? 'none'}::${usesRegistrationWizardDraft ? 'wizard' : localOnlyDraftPersistence ? 'local' : 'remote'}::${preferLocalDraft ? 'prefer-local' : 'bound'}`
 
     const applyDraftNow = (next: WritingFormDraft) => {
       const migrated =
@@ -729,8 +734,9 @@ export function useProgramParticipantApplicationEditor(
       preferLocal: preferLocalDraft,
     }
 
-    const loadDraftPromise =
-      usesRegistrationWizardDraft && !localOnlyDraftPersistence
+    const loadDraftPromise = skipDraftRestore
+      ? Promise.resolve(null)
+      : usesRegistrationWizardDraft
         ? import('@/features/program/general/lib/registration-wizard-form-draft').then(m =>
             m.loadRegistrationWizardFormDraft({
               programType: registrationWizardProgramType!,
@@ -836,6 +842,7 @@ export function useProgramParticipantApplicationEditor(
     resolveLocalDraftStorageKey,
     resolvePersistTemplateId,
     seedParagraphIds,
+    skipDraftRestore,
     usesRegistrationWizardDraft,
     variant,
   ])
@@ -1396,28 +1403,12 @@ export function useProgramParticipantApplicationEditor(
 
   const handleSave = useCallback(async (options?: { silent?: boolean }) => {
     try {
-      const templateId = localOnlyDraftPersistence
-        ? resolveLocalDraftStorageKey()
-        : resolvePersistTemplateId()
-      if (localOnlyDraftPersistence) {
-        flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-        const editorState = buildParticipantApplicationEditorState({
-          variant,
-          volunteerExceptionScheduleCount,
-          ujatVolunteerApplicationType,
-          ujatGradeApplicationBlockIds,
-          ujatApplicationGradeByBlockId,
-          ujatGradeClassTimeBlockIds,
-        })
-        const overlay = collectParticipantOverlayForVariant(variant)
-        await persistWritingFormTemplateDraft({
-          templateId,
-          draft,
-          editorState,
-          ...(overlay != null ? { overlay } : {}),
-          localOnly: true,
-        })
-      } else if (usesRegistrationWizardDraft) {
+      const templateId = usesRegistrationWizardDraft
+        ? resolvePersistTemplateId()
+        : localOnlyDraftPersistence
+          ? resolveLocalDraftStorageKey()
+          : resolvePersistTemplateId()
+      if (usesRegistrationWizardDraft) {
         flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
         const editorState = buildParticipantApplicationEditorState({
           variant,

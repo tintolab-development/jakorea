@@ -97,7 +97,7 @@ export function useCreateCompanySchoolProgram() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationKey: companySchoolQueryKeys.mutations.create(),
-    mutationFn: createCompanySchoolProgram,
+    mutationFn: (program: Program) => createCompanySchoolProgram(program),
     retry: false,
     onSuccess: program => {
       queryClient.setQueryData(companySchoolQueryKeys.detail(program.id), program)

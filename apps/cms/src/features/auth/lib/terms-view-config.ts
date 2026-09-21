@@ -14,7 +14,7 @@ export const TERMS_VIEW_TYPES: readonly TermsViewType[] = [
 
 /** 모달 헤더 타이틀 */
 export const TERMS_VIEW_TITLES: Record<TermsViewType, string> = {
-  termsOfService: '서비스 이용약관 약관',
+  termsOfService: '서비스 이용약관',
   privacyPolicy: '개인정보 수집·이용 동의 약관',
   mfaSetup: '2단계 인증(MFA) 설정 동의 약관',
   marketingConsent: '마케팅 정보 수신 동의 약관',

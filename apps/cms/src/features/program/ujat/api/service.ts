@@ -21,6 +21,7 @@ import {
 
 export type CreateInput = RegistrationSnapshot & {
   idempotencyKey: string
+  preparedFormBindings?: import('@/features/program/general/lib/build-registration-create-form-bindings').RegistrationCreateFormBindingsPayload | null
 }
 
 function assertRemoteReady(): void {
@@ -81,7 +82,8 @@ export async function create(input: CreateInput): Promise<Program> {
   return fromDetail(
     await createAdminProgramRemoteWithRegistrationForms(
       pending,
-      toCreateRequest(pending, input)
+      toCreateRequest(pending, input),
+      input.preparedFormBindings
     )
   )
 }
