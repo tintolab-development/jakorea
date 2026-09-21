@@ -1,6 +1,9 @@
 import type { ProgramCreateRequest } from '@/shared/api/generated/forms-surveys/schemas/programCreateRequest'
 import type { Program } from '@/types/domain'
-import { buildRegistrationCreateFormBindings } from '@/features/program/general/lib/build-registration-create-form-bindings'
+import {
+  buildRegistrationCreateFormBindings,
+  type RegistrationCreateFormBindingsPayload,
+} from '@/features/program/general/lib/build-registration-create-form-bindings'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 
 /**
@@ -9,13 +12,15 @@ import { shouldUseRegistrationCreateFormBindings } from '@/features/program/gene
  */
 export async function enrichProgramCreateRequestWithRegistrationFormBindings(
   program: Program,
-  baseRequest: ProgramCreateRequest
+  baseRequest: ProgramCreateRequest,
+  prepared?: RegistrationCreateFormBindingsPayload | null
 ): Promise<ProgramCreateRequest> {
   if (!shouldUseRegistrationCreateFormBindings()) {
     return baseRequest
   }
 
-  const bindingPayload = await buildRegistrationCreateFormBindings(program)
+  const bindingPayload =
+    prepared !== undefined ? prepared : await buildRegistrationCreateFormBindings(program)
   if (bindingPayload == null) {
     return baseRequest
   }

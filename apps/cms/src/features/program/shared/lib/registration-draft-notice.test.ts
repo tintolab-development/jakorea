@@ -1,36 +1,34 @@
 /** @vitest-environment jsdom */
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import {
+  fetchRegistrationDraftNotice,
   REGISTRATION_DRAFT_MODE_CONTINUE,
   REGISTRATION_DRAFT_MODE_FRESH,
   PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
+  clearRegistrationDraftForFreshStart,
   shouldRemoveRegistrationDraftAfterCompletion,
   shouldSkipRegistrationDraftRestore,
 } from './registration-draft-notice'
-
-vi.mock('@/features/program/general/lib/registration-program-draft-session', () => ({
-  deleteRegistrationProgramDraftRemote: vi.fn(async () => undefined),
-}))
-
-vi.mock('@/features/program/general/lib/registration-create-form-bindings-capabilities', () => ({
-  shouldUseRegistrationCreateFormBindings: vi.fn(() => true),
-  assertRegistrationWizardRemoteReady: vi.fn(),
-}))
+import {
+  peekRegistrationProgramDraftPayload,
+  syncRegistrationProgramDraftSession,
+} from '@/features/program/general/lib/registration-program-draft-session'
 
 describe('clearRegistrationDraftForFreshStart', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    localStorage.clear()
   })
 
-  it('deletes remote program-draft', async () => {
-    const { deleteRegistrationProgramDraftRemote } = await import(
-      '@/features/program/general/lib/registration-program-draft-session'
-    )
-    const { clearRegistrationDraftForFreshStart } = await import('./registration-draft-notice')
+  it('deletes only the local program draft', async () => {
+    syncRegistrationProgramDraftSession({
+      programType: 'GENERAL',
+      registrationTemplateCode: PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
+      activeStep: 'program',
+    })
 
     await clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
 
-    expect(deleteRegistrationProgramDraftRemote).toHaveBeenCalledWith('GENERAL')
+    expect(peekRegistrationProgramDraftPayload('GENERAL')).toBeUndefined()
   })
 })
 
@@ -51,5 +49,33 @@ describe('shouldRemoveRegistrationDraftAfterCompletion', () => {
       false
     )
     expect(shouldRemoveRegistrationDraftAfterCompletion(null)).toBe(false)
+  })
+})
+
+describe('fetchRegistrationDraftNotice', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it('treats program-step temp save as user draft', async () => {
+    syncRegistrationProgramDraftSession({
+      programType: 'GENERAL',
+      registrationTemplateCode: 'registration-general',
+      activeStep: 'program',
+    })
+
+    const notice = await fetchRegistrationDraftNotice(
+      PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
+    )
+
+    expect(notice?.templateCode).toBe(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
+    expect(notice?.title).toBe('제목 없음')
+    expect(notice?.savedAt).toBeTruthy()
+  })
+
+  it('returns null without a local temp save', async () => {
+    await expect(
+      fetchRegistrationDraftNotice(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
+    ).resolves.toBeNull()
   })
 })

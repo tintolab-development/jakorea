@@ -3,6 +3,7 @@ import {
   fetchMyProgramDraftRemote,
   upsertMyProgramDraftRemote,
 } from '@/features/program/general/api/program-draft-api-client'
+import type { ProgramDraftItemResponse } from '@/shared/api/generated/forms-surveys/schemas/programDraftItemResponse'
 import {
   createRegistrationProgramDraftPayload,
   parseRegistrationProgramDraftPayload,
@@ -16,6 +17,39 @@ import {
 
 const draftIdByProgramType = new Map<string, number>()
 const lastPayloadByProgramType = new Map<string, RegistrationProgramDraftPayloadV1>()
+const REGISTRATION_DRAFT_LOCAL_STORAGE_KEY =
+  'cms.jakorea.registrationProgramDrafts.v1'
+
+type RegistrationDraftLocalFile = {
+  version: 1
+  byProgramType: Record<string, RegistrationProgramDraftPayloadV1>
+}
+
+function readRegistrationDraftLocalFile(): RegistrationDraftLocalFile {
+  try {
+    const raw = localStorage.getItem(REGISTRATION_DRAFT_LOCAL_STORAGE_KEY)
+    if (!raw) return { version: 1, byProgramType: {} }
+    const parsed = JSON.parse(raw) as RegistrationDraftLocalFile
+    if (parsed?.version !== 1 || typeof parsed.byProgramType !== 'object') {
+      return { version: 1, byProgramType: {} }
+    }
+    return parsed
+  } catch {
+    return { version: 1, byProgramType: {} }
+  }
+}
+
+function writeRegistrationProgramDraftLocal(
+  programType: string,
+  payload: RegistrationProgramDraftPayloadV1
+): void {
+  const file = readRegistrationDraftLocalFile()
+  file.byProgramType[programType] = payload
+  localStorage.setItem(REGISTRATION_DRAFT_LOCAL_STORAGE_KEY, JSON.stringify(file))
+}
+
+const ensureInflightByProgramType = new Map<string, Promise<number>>()
+const fetchInflightByProgramType = new Map<string, Promise<ProgramDraftItemResponse | null>>()
 
 export function peekRegistrationProgramDraftId(programType: string): number | undefined {
   return draftIdByProgramType.get(programType)
@@ -24,7 +58,7 @@ export function peekRegistrationProgramDraftId(programType: string): number | un
 export function peekRegistrationProgramDraftPayload(
   programType: string
 ): RegistrationProgramDraftPayloadV1 | undefined {
-  return lastPayloadByProgramType.get(programType)
+  return readRegistrationDraftLocalFile().byProgramType[programType]
 }
 
 export function rememberRegistrationProgramDraftId(programType: string, draftId: number): void {
@@ -46,34 +80,82 @@ export function clearRegistrationProgramDraftSession(programType?: string): void
   lastPayloadByProgramType.clear()
 }
 
-/** 등록 위저드 — BE program-draft SSOT (copy ownerProgramDraftId) */
-export async function ensureRegistrationProgramDraftId(programType: string): Promise<number> {
+/** 사용자 임시저장본(localStorage)과 유형별 양식 초안을 함께 제거한다. */
+export async function clearRegistrationProgramDraftLocal(programType: string): Promise<void> {
+  const file = readRegistrationDraftLocalFile()
+  delete file.byProgramType[programType]
+  localStorage.setItem(REGISTRATION_DRAFT_LOCAL_STORAGE_KEY, JSON.stringify(file))
+  const { clearRegistrationWizardFormDrafts } = await import(
+    '@/features/program/general/lib/registration-wizard-form-draft'
+  )
+  clearRegistrationWizardFormDrafts(programType)
+}
+
+async function fetchProgramDraftDeduped(
+  programType: string
+): Promise<ProgramDraftItemResponse | null> {
+  const inflight = fetchInflightByProgramType.get(programType)
+  if (inflight) return inflight
+
+  const run = fetchMyProgramDraftRemote(programType).finally(() => {
+    fetchInflightByProgramType.delete(programType)
+  })
+  fetchInflightByProgramType.set(programType, run)
+  return run
+}
+
+function applyRemoteProgramDraft(
+  programType: string,
+  existing: ProgramDraftItemResponse
+): number | null {
+  if (existing.draftId == null) return null
+  rememberRegistrationProgramDraftId(programType, existing.draftId)
+  const payload = parseRegistrationProgramDraftPayload(existing.draftPayload)
+  if (payload != null) {
+    lastPayloadByProgramType.set(programType, payload)
+    hydrateDraftOwnedFormVersions(existing.draftId, payload.formVersions)
+  }
+  return existing.draftId
+}
+
+/** 등록 완료 직전 form binding 준비용 서버 draft ID. 임시저장에서는 호출하지 않는다. */
+export async function ensureRegistrationProgramDraftId(
+  programType: string,
+  options?: { skipRemoteFetch?: boolean }
+): Promise<number> {
   const cached = draftIdByProgramType.get(programType)
   if (cached != null) return cached
 
-  const existing = await fetchMyProgramDraftRemote(programType)
-  if (existing?.draftId != null) {
-    rememberRegistrationProgramDraftId(programType, existing.draftId)
-    const payload = parseRegistrationProgramDraftPayload(existing.draftPayload)
-    if (payload != null) {
-      lastPayloadByProgramType.set(programType, payload)
-      hydrateDraftOwnedFormVersions(existing.draftId, payload.formVersions)
-    }
-    return existing.draftId
-  }
+  const inflight = ensureInflightByProgramType.get(programType)
+  if (inflight) return inflight
 
-  const saved = await upsertMyProgramDraftRemote({
-    programType,
-    draftPayload: createRegistrationProgramDraftPayload({
-      registrationTemplateCode: registrationTemplateCodeForProgramType(programType),
-    }),
+  const run = (async () => {
+    if (!options?.skipRemoteFetch) {
+      const existing = await fetchProgramDraftDeduped(programType)
+      if (existing?.draftId != null) {
+        const draftId = applyRemoteProgramDraft(programType, existing)
+        if (draftId != null) return draftId
+      }
+    }
+
+    const saved = await upsertMyProgramDraftRemote({
+      programType,
+      draftPayload: createRegistrationProgramDraftPayload({
+        registrationTemplateCode: registrationTemplateCodeForProgramType(programType),
+      }),
+    })
+    const draftId = saved.draftId
+    if (draftId == null) {
+      throw new Error('프로그램 등록 draft ID를 받지 못했습니다.')
+    }
+    rememberRegistrationProgramDraftId(programType, draftId)
+    return draftId
+  })().finally(() => {
+    ensureInflightByProgramType.delete(programType)
   })
-  const draftId = saved.draftId
-  if (draftId == null) {
-    throw new Error('프로그램 등록 draft ID를 받지 못했습니다.')
-  }
-  rememberRegistrationProgramDraftId(programType, draftId)
-  return draftId
+
+  ensureInflightByProgramType.set(programType, run)
+  return run
 }
 
 function registrationTemplateCodeForProgramType(programType: string): string {
@@ -83,43 +165,47 @@ function registrationTemplateCodeForProgramType(programType: string): string {
   return 'registration-general'
 }
 
-export async function syncRegistrationProgramDraft(args: {
+function buildRegistrationProgramDraftPayloadForSession(args: {
   programType: string
   registrationTemplateCode: string
   activeStep?: string
   programTitleKo?: string
-}): Promise<void> {
-  const draftId = await ensureRegistrationProgramDraftId(args.programType)
-  const formVersions = Object.fromEntries(
-    listDraftOwnedFormVersions(draftId).map(ref => [
-      ref.templateCode,
-      { templateId: ref.templateId, draftVersionId: ref.draftVersionId },
-    ])
-  )
-  const payload = createRegistrationProgramDraftPayload({
+}): RegistrationProgramDraftPayloadV1 {
+  const draftId = draftIdByProgramType.get(args.programType)
+  const formVersions =
+    draftId != null
+      ? Object.fromEntries(
+          listDraftOwnedFormVersions(draftId).map(ref => [
+            ref.templateCode,
+            { templateId: ref.templateId, draftVersionId: ref.draftVersionId },
+          ])
+        )
+      : {}
+  return createRegistrationProgramDraftPayload({
     registrationTemplateCode: args.registrationTemplateCode,
     activeStep: args.activeStep,
     formVersions,
     programTitleKo: args.programTitleKo,
   })
+}
+
+/** 「임시 저장」 메타 — localStorage 전용. remote API 호출 없음. */
+export function syncRegistrationProgramDraftSession(args: {
+  programType: string
+  registrationTemplateCode: string
+  activeStep?: string
+  programTitleKo?: string
+}): void {
+  const payload = buildRegistrationProgramDraftPayloadForSession(args)
   lastPayloadByProgramType.set(args.programType, payload)
-  await upsertMyProgramDraftRemote({
-    programType: args.programType,
-    draftPayload: payload,
-  })
+  writeRegistrationProgramDraftLocal(args.programType, payload)
 }
 
 export async function hydrateRegistrationProgramDraft(
-  programType: string
+  programType: string,
+  _options?: { forceRemote?: boolean }
 ): Promise<RegistrationProgramDraftPayloadV1 | null> {
-  const existing = await fetchMyProgramDraftRemote(programType)
-  if (existing?.draftId == null) return null
-  rememberRegistrationProgramDraftId(programType, existing.draftId)
-  const payload = parseRegistrationProgramDraftPayload(existing.draftPayload)
-  if (payload == null) return null
-  lastPayloadByProgramType.set(programType, payload)
-  hydrateDraftOwnedFormVersions(existing.draftId, payload.formVersions)
-  return payload
+  return peekRegistrationProgramDraftPayload(programType) ?? null
 }
 
 export async function deleteRegistrationProgramDraftRemote(programType: string): Promise<void> {
