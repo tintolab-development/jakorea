@@ -21,6 +21,8 @@ import {
   persistRegistrationOperationalOverlaySnapshots,
   resolveOperationalDraftStorageKey,
 } from './registration-operational-form-drafts'
+import { persistWritingFormTemplateSave } from '@/features/program/shared/lib/program-draft-local-save'
+import { createApplicantRecruitFormInstitutionDraft } from '@/features/template/model/applicant-recruit-form-institution-draft'
 import {
   getApplicantRecruitInstitutionOverlayRecord,
   resetApplicantRecruitInstitutionOverlay,
@@ -34,8 +36,29 @@ import {
   resetGeneralApplicationOverlay,
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 
+function stubLocalStorage() {
+  const store: Record<string, string> = {}
+  vi.stubGlobal('localStorage', {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => {
+      store[key] = String(value)
+    },
+    removeItem: (key: string) => {
+      delete store[key]
+    },
+    clear: () => {
+      for (const key of Object.keys(store)) delete store[key]
+    },
+    key: (index: number) => Object.keys(store)[index] ?? null,
+    get length() {
+      return Object.keys(store).length
+    },
+  })
+}
+
 describe('registration operational draft-owned helpers', () => {
   beforeEach(() => {
+    stubLocalStorage()
     vi.clearAllMocks()
     resetApplicantRecruitInstitutionOverlay()
     resetGeneralRecruitOverlay()
@@ -60,14 +83,16 @@ describe('registration operational draft-owned helpers', () => {
     )
   })
 
-  it('hydrates overlays from draft-owned records', async () => {
-    loadDraftOwnedFormVersionRecord.mockResolvedValueOnce({
+  it('hydrates overlays from localStorage', async () => {
+    persistWritingFormTemplateSave({
+      templateId: 'recruitment-participant-school',
+      draft: createApplicantRecruitFormInstitutionDraft(),
       overlay: { 'recruit.inquiryContact': '기관문의' },
     })
 
     await hydrateRegistrationOperationalOverlaysFromLocalDrafts('GENERAL', 'general')
 
-    expect(loadDraftOwnedFormVersionRecord).toHaveBeenCalled()
+    expect(loadDraftOwnedFormVersionRecord).not.toHaveBeenCalled()
     expect(getApplicantRecruitInstitutionOverlayRecord()['recruit.inquiryContact']).toBe('기관문의')
   })
 

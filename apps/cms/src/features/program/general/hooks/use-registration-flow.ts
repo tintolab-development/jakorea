@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useCmsAlert } from '@/shared/ui'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -11,10 +11,7 @@ import {
 import { resetApplicantRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { resetGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { resetGeneralApplicationOverlay } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
-import {
-  readRegistrationOverlayProgramTitleKo,
-  resetProgramRegistrationOverlay,
-} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { resetProgramRegistrationOverlay } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import {
   lookupTemplateRegistry,
@@ -36,16 +33,6 @@ import {
   hydrateRegistrationOperationalOverlaysFromLocalDrafts,
   persistRegistrationOperationalOverlaySnapshots,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
-import {
-  assertRegistrationWizardRemoteReady,
-  shouldUseRegistrationCreateFormBindings,
-} from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
-import {
-  deleteRegistrationProgramDraftRemote,
-  ensureRegistrationProgramDraftId,
-  hydrateRegistrationProgramDraft,
-  syncRegistrationProgramDraft,
-} from '@/features/program/general/lib/registration-program-draft-session'
 import {
   registrationProgramTypeForTemplateCode,
   type ProgramRegistrationDraftTemplateCode,
@@ -127,16 +114,6 @@ export function useGeneralProgramRegistrationFlow(
     registrationTemplateId as ProgramRegistrationDraftTemplateCode
   )
 
-  useLayoutEffect(() => {
-    if (!open) return
-    if (!shouldUseRegistrationCreateFormBindings()) return
-    if (skipDraftRestore) {
-      void deleteRegistrationProgramDraftRemote(programType).catch(error => {
-        console.warn('[registration-program-draft] fresh delete failed', error)
-      })
-    }
-  }, [open, skipDraftRestore, programType])
-
   const registrationVm = useProgramRegistrationEditor(
     open,
     resolveStepTemplateName(registrationTemplateId),
@@ -144,6 +121,7 @@ export function useGeneralProgramRegistrationFlow(
       programRegistrationFormVariant: registrationFormVariant,
       onRegistrationSaved: options?.onProgramRegistrationSaved,
       skipDraftRestore,
+      localOnlyDraftPersistence: true,
       registrationWizardProgramType: programType,
       templateCode:
         registrationFormVariant === 'general'
@@ -175,49 +153,18 @@ export function useGeneralProgramRegistrationFlow(
   })
 
   useEffect(() => {
-    if (!open || !shouldUseRegistrationCreateFormBindings()) return
-    try {
-      assertRegistrationWizardRemoteReady()
-    } catch (error) {
-      console.warn('[registration-program-draft] remote not ready', error)
-      return
-    }
-    if (skipDraftRestore) {
-      void ensureRegistrationProgramDraftId(programType).catch(err => {
-        console.warn('[registration-program-draft] ensure draft failed', err)
-      })
-      return
-    }
-    void (async () => {
-      const payload = await hydrateRegistrationProgramDraft(programType)
-      await hydrateRegistrationOperationalOverlaysFromLocalDrafts(
-        programType,
-        registrationFormVariant
-      )
-      if (payload?.activeStep != null) {
-        const restored = coerceRegistrationStepForVariant(
-          normalizeGeneralProgramRegistrationStepKey(
-            payload.activeStep,
-            participantFlags,
-            tabVisibility
-          ),
-          participantFlags,
-          registrationFormVariant
-        )
-        setActiveStep(restored)
-        options?.onStepChange?.(restored)
-      }
-    })().catch(error => {
-      console.warn('[registration-program-draft] hydrate failed', error)
+    if (!open || skipDraftRestore) return
+    void hydrateRegistrationOperationalOverlaysFromLocalDrafts(
+      programType,
+      registrationFormVariant
+    ).catch(error => {
+      console.warn('[registration-program-draft] operational hydrate failed', error)
     })
   }, [
     open,
     skipDraftRestore,
     programType,
     registrationFormVariant,
-    participantFlags,
-    tabVisibility,
-    options,
   ])
 
   useEffect(() => {
@@ -332,6 +279,7 @@ export function useGeneralProgramRegistrationFlow(
     participantTemplateName,
     participantVariant,
     {
+      localOnlyDraftPersistence: true,
       registrationWizardProgramType: programType,
       registrationWizardOpen: open,
       participantOrganization: participantFlags.organization,
@@ -445,21 +393,10 @@ export function useGeneralProgramRegistrationFlow(
     if (isParticipantStep) {
       await participantVm.handleSave({ silent: true })
     }
-    await persistRegistrationOperationalOverlaySnapshots(programType, registrationFormVariant)
-    await syncRegistrationProgramDraft({
-      programType,
-      registrationTemplateCode: registrationTemplateId,
-      activeStep: coercedActiveStep,
-      programTitleKo: readRegistrationOverlayProgramTitleKo(registrationFormVariant),
+    await persistRegistrationOperationalOverlaySnapshots(programType, registrationFormVariant, {
+      localOnly: true,
     })
-  }, [
-    coercedActiveStep,
-    isParticipantStep,
-    participantVm,
-    programType,
-    registrationFormVariant,
-    registrationTemplateId,
-  ])
+  }, [isParticipantStep, participantVm, programType, registrationFormVariant, registrationVm])
 
   const selectStep = useCallback(
     (key: GeneralProgramRegistrationStepKey) => {
@@ -472,25 +409,8 @@ export function useGeneralProgramRegistrationFlow(
       // 탭 전환은 편집 중 React state만 유지한다. 임시저장은 명시적 저장 버튼에서만 수행.
       setActiveStep(next)
       options?.onStepChange?.(next)
-      if (shouldUseRegistrationCreateFormBindings()) {
-        void syncRegistrationProgramDraft({
-          programType,
-          registrationTemplateCode: registrationTemplateId,
-          activeStep: next,
-          programTitleKo: readRegistrationOverlayProgramTitleKo(registrationFormVariant),
-        }).catch(error => {
-          console.warn('[registration-program-draft] step sync failed', error)
-        })
-      }
     },
-    [
-      coercedActiveStep,
-      options,
-      participantFlags,
-      programType,
-      registrationFormVariant,
-      registrationTemplateId,
-    ]
+    [coercedActiveStep, options, participantFlags, registrationFormVariant]
   )
 
   const goToPhase = useCallback(

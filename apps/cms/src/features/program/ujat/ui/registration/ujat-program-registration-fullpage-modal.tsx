@@ -10,14 +10,12 @@ import {
 } from '@/features/program/ujat/model/ujat-program-registration-flow'
 import { useUjatProgramRegistrationFlow } from '@/features/program/ujat/hooks/use-ujat-program-registration-flow'
 import { UjatProgramRegistrationBodyHeader } from '@/features/program/ujat/ui/registration/ujat-program-registration-body-header'
-import {
-  deleteRegistrationProgramDraftRemote,
-  peekRegistrationProgramDraftPayload,
-} from '@/features/program/general/lib/registration-program-draft-session'
 import type { Program } from '@/types/domain'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { deleteRegistrationProgramDraftRemote } from '@/features/program/general/lib/registration-program-draft-session'
 import {
   clearRegistrationDraftForFreshStart,
+  peekRegistrationDraftNotice,
   PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
   shouldRemoveRegistrationDraftAfterCompletion,
@@ -135,9 +133,9 @@ export function UjatProgramRegistrationFullpageModal({
   }, [flow, showAlert])
 
   const handleSaveClick = useCallback(() => {
-    const payload = peekRegistrationProgramDraftPayload('UJAT')
-    if (payload != null && (payload.programTitleKo?.trim() || payload.savedAt)) {
-      setOverwriteTitle(payload.programTitleKo?.trim() || '제목 없음')
+    const existing = peekRegistrationDraftNotice(PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE)
+    if (existing != null) {
+      setOverwriteTitle(existing.title)
       setOverwriteOpen(true)
       return
     }

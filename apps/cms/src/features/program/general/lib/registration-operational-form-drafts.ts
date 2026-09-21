@@ -44,6 +44,10 @@ import {
   loadDraftOwnedFormVersionRecord,
   persistDraftOwnedFormVersion,
 } from '@/features/program/general/lib/registration-draft-form-versions'
+import {
+  loadWritingFormTemplateDraft,
+  persistWritingFormTemplateDraft,
+} from '@/features/program/shared/lib/program-draft-local-save'
 import { resolveProgramApiTypeForDraft } from '@/features/program/general/lib/resolve-program-api-type-for-draft'
 
 /** 1사1교 전용 카탈로그 id (일반 모집/신청 id와 분리) */
@@ -202,19 +206,15 @@ function applyOverlayRecord(kind: OperationalOverlayKind, overlay: Record<string
 }
 
 /**
- * 「이어서 작성」 진입 시 — draft-owned version overlay를 공유 스토어에 병합 복원.
+ * 「이어서 작성」 진입 시 — localStorage overlay를 공유 스토어에 병합 복원.
  */
 export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
-  programType: string,
+  _programType: string,
   variant: ProgramRegistrationFormVariant
 ): Promise<void> {
-  const programDraftId = await ensureRegistrationProgramDraftId(programType)
   for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant)) {
     const catalogId = catalogTemplateIdFromOperationalStorageKey(storageKey)
-    const saved = await loadDraftOwnedFormVersionRecord({
-      programDraftId,
-      templateCode: catalogId,
-    })
+    const saved = await loadWritingFormTemplateDraft(catalogId, { localOnly: true })
     const overlay = saved?.overlay
     if (overlay == null || Object.keys(overlay).length === 0) continue
     const kind = resolveOperationalOverlayKind(catalogId)
@@ -224,14 +224,16 @@ export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
 }
 
 /**
- * 임시저장 시 — 메모리상 모집/신청 overlay를 draft-owned version에 PUT.
+ * 임시저장 시 — 메모리상 모집/신청 overlay를 localStorage 또는 draft-owned version에 저장.
  */
 export async function persistRegistrationOperationalOverlaySnapshots(
   programType: string,
-  variant: ProgramRegistrationFormVariant
+  variant: ProgramRegistrationFormVariant,
+  options?: { localOnly?: boolean }
 ): Promise<void> {
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-  const programDraftId = await ensureRegistrationProgramDraftId(programType)
+  const localOnly = options?.localOnly === true
+  const programDraftId = localOnly ? null : await ensureRegistrationProgramDraftId(programType)
   for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant)) {
     const catalogId = catalogTemplateIdFromOperationalStorageKey(storageKey)
     const kind = resolveOperationalOverlayKind(catalogId)
@@ -239,15 +241,29 @@ export async function persistRegistrationOperationalOverlaySnapshots(
     const overlay = overlayRecordForKind(kind)
     if (Object.keys(overlay).length === 0) continue
 
+    if (localOnly) {
+      const existing = await loadWritingFormTemplateDraft(catalogId, { localOnly: true })
+      const draft = existing?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
+      if (draft == null) continue
+      await persistWritingFormTemplateDraft({
+        templateId: catalogId,
+        draft,
+        overlay,
+        editorState: existing?.editorState,
+        localOnly: true,
+      })
+      continue
+    }
+
     const existing = await loadDraftOwnedFormVersionRecord({
-      programDraftId,
+      programDraftId: programDraftId!,
       templateCode: catalogId,
     })
     const draft = existing?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
     if (draft == null) continue
 
     await persistDraftOwnedFormVersion({
-      programDraftId,
+      programDraftId: programDraftId!,
       templateCode: catalogId,
       draft,
       overlay,

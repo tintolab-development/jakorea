@@ -21,7 +21,6 @@ import {
 import {
   normalizeWritingFormDraft,
   type FormTitleNumberingStyle,
-  type HorizontalTableParagraph,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -35,10 +34,6 @@ import type {
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
-import {
-  resolveProgramRegistrationCurriculumEditDescription,
-  resolveProgramRegistrationScheduleCurriculumEditDescription,
-} from '@/features/template/lib/program-registration-curriculum-description'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
@@ -164,20 +159,6 @@ function createDefaultRegistrationEditorState(
     sponsorContactId: '',
     programTitleKo: '',
     activeParagraphId: null,
-  }
-}
-
-function patchEducationCurriculumParagraph(
-  draft: WritingFormDraft,
-  patch: { paragraphTitle?: string; paragraphDescription: string }
-): WritingFormDraft {
-  return {
-    ...draft,
-    paragraphs: draft.paragraphs.map(p => {
-      if (p.id !== PROGRAM_REGISTRATION_IDS.educationCurriculum) return p
-      if (p.kind !== 'single_item' || p.variant !== 'horizontal_table') return p
-      return { ...(p as HorizontalTableParagraph), ...patch }
-    }),
   }
 }
 
@@ -449,16 +430,17 @@ export function useProgramRegistrationEditor(
       const defaults = createDefaultRegistrationEditorState(programRegistrationFormVariant)
       const variant = programRegistrationFormVariant
 
-      const loadDraft = usesRegistrationWizardDraft
-        ? import('@/features/program/general/lib/registration-wizard-form-draft').then(m =>
-            m.loadRegistrationWizardFormDraft({
-              programType: registrationWizardProgramType!,
-              templateCode,
+      const loadDraft =
+        usesRegistrationWizardDraft && !localOnlyDraftPersistence
+          ? import('@/features/program/general/lib/registration-wizard-form-draft').then(m =>
+              m.loadRegistrationWizardFormDraft({
+                programType: registrationWizardProgramType!,
+                templateCode,
+              })
+            )
+          : loadWritingFormTemplateDraft(templateCode, {
+              localOnly: localOnlyDraftPersistence,
             })
-          )
-        : loadWritingFormTemplateDraft(templateCode, {
-            localOnly: localOnlyDraftPersistence,
-          })
 
       void loadDraft
         .then(saved => {
@@ -487,6 +469,11 @@ export function useProgramRegistrationEditor(
             })
             return
           }
+          resetRegistrationEditorToSeedRef.current()
+        })
+        .catch(error => {
+          if (cancelled) return
+          console.warn('[registration-program-draft] wizard form draft load failed', error)
           resetRegistrationEditorToSeedRef.current()
         })
         .finally(() => {
@@ -610,9 +597,6 @@ export function useProgramRegistrationEditor(
         return
       }
       const next = applyGeneralParticipantAudienceSelection('individual', checked)
-      const nextParticipation = shouldResetParticipationScheduleDetailForAudience(next)
-        ? 'common'
-        : participationScheduleDetail
       if (shouldResetParticipationScheduleDetailForAudience(next)) {
         setParticipationScheduleDetail('common')
       }
@@ -621,28 +605,8 @@ export function useProgramRegistrationEditor(
         individual: next.individual,
         organization: next.organization,
       }))
-      if (programRegistrationFormVariant === 'general' && programType === 'schedule') {
-        setDraft(prev =>
-          patchEducationCurriculumParagraph(prev, {
-            paragraphDescription: resolveProgramRegistrationScheduleCurriculumEditDescription({
-              sessionRoundType,
-              participantOrganization: next.organization,
-              educationFormScheduleDetail,
-              participationScheduleDetail: nextParticipation,
-              ipsScheduleDetail,
-            }),
-          })
-        )
-      }
     },
-    [
-      educationFormScheduleDetail,
-      ipsScheduleDetail,
-      participationScheduleDetail,
-      programRegistrationFormVariant,
-      programType,
-      sessionRoundType,
-    ]
+    [participationScheduleDetail, programRegistrationFormVariant]
   )
 
   const onOrganizationChange = useCallback(
@@ -669,9 +633,6 @@ export function useProgramRegistrationEditor(
         return
       }
       const next = applyGeneralParticipantAudienceSelection('organization', checked)
-      const nextParticipation = shouldResetParticipationScheduleDetailForAudience(next)
-        ? 'common'
-        : participationScheduleDetail
       if (shouldResetParticipationScheduleDetailForAudience(next)) {
         setParticipationScheduleDetail('common')
       }
@@ -680,28 +641,8 @@ export function useProgramRegistrationEditor(
         individual: next.individual,
         organization: next.organization,
       }))
-      if (programRegistrationFormVariant === 'general' && programType === 'schedule') {
-        setDraft(prev =>
-          patchEducationCurriculumParagraph(prev, {
-            paragraphDescription: resolveProgramRegistrationScheduleCurriculumEditDescription({
-              sessionRoundType,
-              participantOrganization: next.organization,
-              educationFormScheduleDetail,
-              participationScheduleDetail: nextParticipation,
-              ipsScheduleDetail,
-            }),
-          })
-        )
-      }
     },
-    [
-      educationFormScheduleDetail,
-      ipsScheduleDetail,
-      participationScheduleDetail,
-      programRegistrationFormVariant,
-      programType,
-      sessionRoundType,
-    ]
+    [participationScheduleDetail, programRegistrationFormVariant]
   )
 
   const onTeacherInstructorChange = useCallback(
@@ -754,38 +695,11 @@ export function useProgramRegistrationEditor(
     [programRegistrationFormVariant]
   )
 
-  const onSessionRoundTypeChange = useCallback(
-    (value: ProgramRegistrationSessionRoundType) => {
-      setSessionRoundType(value)
-      if (value === 'multi') setCurriculumSessionCount(1)
-      if (value === 'single') setCurriculumChartSessionCount(1)
-
-      if (programRegistrationFormVariant !== 'general') return
-      setDraft(prev =>
-        patchEducationCurriculumParagraph(prev, {
-          paragraphDescription:
-            programType === 'schedule'
-              ? resolveProgramRegistrationScheduleCurriculumEditDescription({
-                  sessionRoundType: value,
-                  participantOrganization: participant.organization,
-                  educationFormScheduleDetail,
-                  participationScheduleDetail,
-                  ipsScheduleDetail,
-                })
-              : resolveProgramRegistrationCurriculumEditDescription(value),
-        })
-      )
-    },
-    [
-      educationFormScheduleDetail,
-      ipsScheduleDetail,
-      participant.organization,
-      participationScheduleDetail,
-      programRegistrationFormVariant,
-      programType,
-      restrictCurriculumSessionStructure,
-    ]
-  )
+  const onSessionRoundTypeChange = useCallback((value: ProgramRegistrationSessionRoundType) => {
+    setSessionRoundType(value)
+    if (value === 'multi') setCurriculumSessionCount(1)
+    if (value === 'single') setCurriculumChartSessionCount(1)
+  }, [])
 
   const onEducationFormScheduleDetailChange = useCallback(
     (value: ProgramRegistrationScheduleDetailKind) => {
@@ -854,33 +768,8 @@ export function useProgramRegistrationEditor(
           () => TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
         )
       }
-      setDraft(prev =>
-        patchEducationCurriculumParagraph(prev, {
-          paragraphTitle:
-            next === 'schedule' ? '교육 진행 (일정형)' : '교육 진행 (커리큘럼)',
-          paragraphDescription:
-            next === 'schedule'
-              ? resolveProgramRegistrationScheduleCurriculumEditDescription({
-                  sessionRoundType,
-                  participantOrganization: participant.organization,
-                  educationFormScheduleDetail,
-                  participationScheduleDetail,
-                  ipsScheduleDetail,
-                })
-              : programRegistrationFormVariant === 'general'
-                ? resolveProgramRegistrationCurriculumEditDescription(sessionRoundType)
-                : '차시 별 정보를 입력해 주세요',
-        })
-      )
     },
-    [
-      educationFormScheduleDetail,
-      ipsScheduleDetail,
-      participant.organization,
-      participationScheduleDetail,
-      programRegistrationFormVariant,
-      sessionRoundType,
-    ]
+    [programRegistrationFormVariant]
   )
 
   const onAddScheduleCurriculumDetail = useCallback(() => {
@@ -1085,7 +974,8 @@ export function useProgramRegistrationEditor(
     openWritingUserPreview(writingPreviewSession)
   }, [openWritingUserPreview, writingPreviewSession])
 
-  const persistTemplateDraftIfNeeded = useCallback(async () => {
+  const persistTemplateDraftIfNeeded = useCallback(
+    async (intent: 'draft' | 'complete' = 'draft') => {
     if (!usesTemplateDraftApi || !templateCode) return
     const resolvedSponsorId =
       sponsorId.trim() || readRegistrationOverlaySponsorId(programRegistrationFormVariant)
@@ -1113,6 +1003,21 @@ export function useProgramRegistrationEditor(
       programTitleKo: resolvedProgramTitleKo,
       activeParagraphId,
     })
+    const persistLocal = () =>
+      persistWritingFormTemplateDraft({
+        templateId: templateCode,
+        draft,
+        overlay,
+        editorState,
+        localOnly: true,
+      })
+    if (localOnlyDraftPersistence && intent === 'draft') {
+      await persistLocal()
+      return
+    }
+    if (localOnlyDraftPersistence && intent === 'complete') {
+      await persistLocal()
+    }
     if (usesRegistrationWizardDraft) {
       const { persistRegistrationWizardFormDraft } = await import(
         '@/features/program/general/lib/registration-wizard-form-draft'
@@ -1124,15 +1029,15 @@ export function useProgramRegistrationEditor(
         overlay,
         editorState,
       })
-    } else {
-      await persistWritingFormTemplateDraft({
-        templateId: templateCode,
-        draft,
-        overlay,
-        editorState,
-        localOnly: localOnlyDraftPersistence,
-      })
+      return
     }
+    await persistWritingFormTemplateDraft({
+      templateId: templateCode,
+      draft,
+      overlay,
+      editorState,
+      localOnly: localOnlyDraftPersistence,
+    })
   }, [
     activeParagraphId,
     curriculumChartSessionCount,
@@ -1284,7 +1189,7 @@ export function useProgramRegistrationEditor(
     }
     const completion = (async () => {
       try {
-        await persistTemplateDraftIfNeeded()
+        await persistTemplateDraftIfNeeded('complete')
         if (usesRegistrationWizardDraft && registrationWizardProgramType) {
           const { persistRegistrationOperationalOverlaySnapshots } = await import(
             '@/features/program/general/lib/registration-operational-form-drafts'
