@@ -127,6 +127,7 @@ async function attachLocalDraftToBinding(args: {
     overlay: local.overlay,
     editorState: local.editorState,
     settingsJson: local.settingsJson,
+    templateCode: args.spec.templateCode,
   })
 
   // form-bindings는 PUBLISHED version만 허용

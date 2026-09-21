@@ -45,6 +45,18 @@ const PROGRAM_SCOPED_OPERATIONAL_CATEGORIES = new Set([
 ])
 
 /**
+ * 등록·모집 시스템 양식 PUT — BE `FORM_SCHEMA_IMMUTABLE`.
+ * 일정형 제목 등 표시용 schema 변경은 보내지 않고 extensionJson만 갱신한다.
+ */
+export function shouldOmitImmutableFormSchemaJson(
+  templateCode: string | undefined | null
+): boolean {
+  const code = templateCode?.trim() ?? ''
+  if (code === '') return false
+  return code.startsWith('registration-') || code.startsWith('recruitment-')
+}
+
+/**
  * 프로그램 등록·상세에만 묶인 운영 양식(등록/모집/신청 copy).
  * 양식 관리의 등록·모집·신청 섹션은 **카탈로그 고정 code만** 노출한다.
  * (프로그램 form-binding 전용본·복제본은 여기 두지 않음. 설문/동의 사용자 복제는 유지.)

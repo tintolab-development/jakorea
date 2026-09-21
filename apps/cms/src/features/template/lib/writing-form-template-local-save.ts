@@ -141,6 +141,7 @@ export async function persistWritingFormTemplateDraft(args: {
       overlay: args.overlay,
       editorState: args.editorState,
       settingsJson: args.settingsJson,
+      templateCode: args.templateId,
     })
     return
   }
