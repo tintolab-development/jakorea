@@ -159,14 +159,18 @@ export async function getCompanySchoolProgram(programId: string): Promise<Progra
   return mapCompanySchoolDetailToProgram(await fetchAdminProgramByIdRemote(programId))
 }
 
-export async function createCompanySchoolProgram(program: Program): Promise<Program> {
+export async function createCompanySchoolProgram(
+  program: Program,
+  prepared?: import('@/features/program/general/lib/build-registration-create-form-bindings').RegistrationCreateFormBindingsPayload | null
+): Promise<Program> {
   assertRemoteReady()
   const { createAdminProgramRemoteWithRegistrationForms } = await import(
     '@/features/program/general/api/create-admin-program-remote-with-registration-forms'
   )
   const dto = await createAdminProgramRemoteWithRegistrationForms(
     program,
-    mapCompanySchoolToCreateRequest(program)
+    mapCompanySchoolToCreateRequest(program),
+    prepared
   )
   return mapCompanySchoolDetailToProgram(dto)
 }

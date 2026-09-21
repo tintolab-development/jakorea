@@ -103,7 +103,7 @@ export function useCreateTrainedTeacherProgram() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationKey: trainedTeacherQueryKeys.mutations.create(),
-    mutationFn: createTrainedTeacherProgram,
+    mutationFn: (program: Program) => createTrainedTeacherProgram(program),
     retry: false,
     onSuccess: program => {
       queryClient.setQueryData(trainedTeacherQueryKeys.detail(program.id), program)

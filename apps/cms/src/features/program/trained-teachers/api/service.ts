@@ -153,14 +153,18 @@ export async function getTrainedTeacherProgram(programId: string): Promise<Progr
   }
 }
 
-export async function createTrainedTeacherProgram(program: Program): Promise<Program> {
+export async function createTrainedTeacherProgram(
+  program: Program,
+  prepared?: import('@/features/program/general/lib/build-registration-create-form-bindings').RegistrationCreateFormBindingsPayload | null
+): Promise<Program> {
   assertRemoteReady()
   const { createAdminProgramRemoteWithRegistrationForms } = await import(
     '@/features/program/general/api/create-admin-program-remote-with-registration-forms'
   )
   const dto = await createAdminProgramRemoteWithRegistrationForms(
     program,
-    mapTrainedTeacherToCreateRequest(program)
+    mapTrainedTeacherToCreateRequest(program),
+    prepared
   )
   const mapped = mapTrainedTeacherDetailToProgram(dto)
   if (remoteIdSnapshot) remoteIdSnapshot.add(mapped.id)
