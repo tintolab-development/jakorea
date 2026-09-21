@@ -4618,6 +4618,7 @@ export function GeneralProgramDetailCommonInfoView({
         <div className="detail-common-info-view__header">
           <ProgramEditInfoActions
             isEditing={isEditMode}
+            idleVariant="secondary"
             onEdit={onEdit ?? (() => {})}
             onCancel={onCancel ?? (() => {})}
             onSave={onSave ?? (() => {})}

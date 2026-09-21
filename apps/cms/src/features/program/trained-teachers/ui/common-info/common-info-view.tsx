@@ -1928,6 +1928,7 @@ export function TrainedTeachersCommonInfoView({
       <div className="trained-teachers-common-info__header">
         <ProgramEditInfoActions
           isEditing={isEditMode}
+          idleVariant="secondary"
           onEdit={onEdit ?? (() => {})}
           onCancel={onCancel ?? (() => {})}
           onSave={handleSave}

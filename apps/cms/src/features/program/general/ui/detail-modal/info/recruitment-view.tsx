@@ -180,6 +180,7 @@ export function GeneralProgramRecruitmentView({
                 {canWrite || isEditMode ? (
                   <ProgramEditInfoActions
                     isEditing={isEditMode}
+                    idleVariant="secondary"
                     onEdit={onEdit}
                     onCancel={onCancel}
                     onSave={onSave}
