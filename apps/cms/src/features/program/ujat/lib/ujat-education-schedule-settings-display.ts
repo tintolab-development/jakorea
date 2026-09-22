@@ -9,7 +9,6 @@ import {
   ujatEducationScheduleSettingsOverlayKeys,
   type UjatEducationScheduleSettingsExclusionOverlay,
 } from '@/features/program/ujat/lib/ujat-education-schedule-settings-types'
-import { buildUjatHalfEducationScheduleOverlayDefaults } from '@/features/program/ujat/lib/ujat-half-education-schedule-display'
 import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import { buildRecurringUnavailableLabel } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { createDefaultUnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
@@ -69,7 +68,7 @@ function readUnavailableDates(overlay: Record<string, unknown>, key: string): st
 function readExclusion(
   overlay: Record<string, unknown>,
   key: string,
-  unavailableDates: string[]
+  _unavailableDates: string[]
 ): UjatEducationScheduleSettingsExclusionOverlay {
   const raw = overlay[key]
   if (raw && typeof raw === 'object') {
@@ -81,19 +80,18 @@ function readExclusion(
       excludeHoliday: Boolean(o.excludeHoliday),
     }
   }
-  if (unavailableDates.length > 0) {
-    return createDefaultUnavailableDatesExclusionState({ excludeNone: false, excludeHoliday: true })
-  }
-  return createDefaultUnavailableDatesExclusionState({ excludeNone: false, excludeHoliday: true })
+  // 버그 수정: 저장된 값이 없는 신규 등록 폼에서는 「공휴일 제외」가 미리 체크되어
+  // 노출되지 않도록 중립(모두 미선택) 상태로 둔다.
+  return createDefaultUnavailableDatesExclusionState({ excludeNone: false, excludeHoliday: false })
 }
 
 export function resolveUjatEducationScheduleSettingsSemesterDisplay(
   half: UjatHalfSemesterKey,
   overlayInput?: Record<string, unknown>
 ): UjatEducationScheduleSettingsSemesterDisplay {
+  // 버그 수정: 신규 등록 폼 진입 시 이 단락에 목업 기본값(교육 진행 일정·진행 불가일)이
+  // 미리 채워져 노출되던 문제 — 실제 저장된 overlay 값만 사용하고, 없으면 빈 값으로 둔다.
   const overlay = {
-    ...buildUjatHalfEducationScheduleOverlayDefaults(half),
-    ...buildUjatEducationScheduleSettingsOverlayDefaults(half),
     ...(overlayInput ?? resolveUjatRegistrationBasicInfoOverlay()),
   }
   const eventKeys = ujatHalfScheduleOverlayKeys(half)
@@ -122,21 +120,14 @@ export function resolveUjatEducationScheduleSettingsSemesterDisplay(
 export function buildUjatEducationScheduleSettingsOverlayDefaults(
   half: UjatHalfSemesterKey
 ): Record<string, unknown> {
+  // 버그 수정: 신규 등록 폼에 목업 진행 불가일·제외 옵션이 미리 채워져 노출되던 문제 —
+  // 기본값은 빈 상태로 두고, 실제 사용자가 선택한 값만 반영한다.
   const keys = ujatEducationScheduleSettingsOverlayKeys(half)
-  if (half === 'h1') {
-    return {
-      [keys.unavailableDates]: ['2026-05-15', '2026-06-12'],
-      [keys.exclusion]: createDefaultUnavailableDatesExclusionState({
-        excludeNone: false,
-        excludeHoliday: true,
-      }),
-    }
-  }
   return {
-    [keys.unavailableDates]: ['2026-10-23', '2026-10-30'],
+    [keys.unavailableDates]: [],
     [keys.exclusion]: createDefaultUnavailableDatesExclusionState({
       excludeNone: false,
-      excludeHoliday: true,
+      excludeHoliday: false,
     }),
   }
 }
