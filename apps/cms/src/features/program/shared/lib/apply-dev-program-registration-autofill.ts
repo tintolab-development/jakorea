@@ -19,6 +19,7 @@ import type { ProgramRegistrationFormVariant } from '@/features/template/model/p
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
+  TEMPLATE_FORM_DETAILED_PROGRAM_NONE_OPTION,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
   TEMPLATE_FORM_IP_OWNED_OPTIONS,
@@ -53,6 +54,17 @@ import { ujatEducationScheduleSettingsOverlayKeys } from '@/features/program/uja
 import { getMockHolidayDateKeys } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
+import {
+  pickUjatRecruitInstitutionOverlay,
+  UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS,
+} from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
+import {
+  pickUjatRecruitVolunteerOverlay,
+  UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS,
+} from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
+import { UJAT_VOLUNTEER_NOTICE_EXPOSURE_VALUES } from '@/features/template/lib/ujat-volunteer-notice-exposure'
+import { patchUjatRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
+import { patchUjatRecruitVolunteerOverlay } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import {
   UJAT_REGION_CAPACITY_OVERLAY_KEY,
   type UjatRegionCapacityBySemesterState,
@@ -447,6 +459,69 @@ function patchRecruitDatePlan(
   })
 }
 
+function buildUjatRecruitInfoOverlay(
+  plan: ReturnType<typeof buildRegistrationDatePlan>,
+  titleKo: string
+): Record<string, unknown> {
+  const programSeal = { ...plan.program }
+  const recruitSeal = { ...plan.recruit }
+  const interviewSeal = { ...plan.interview }
+  const educationTargets = pickSome(EDUCATION_TARGET_OPTIONS, pickInt(1, 2))
+  const volunteerTargets = pickSome(EDUCATION_TARGET_OPTIONS, pickInt(1, 2))
+  const institutionKeys = UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS
+  const volunteerKeys = UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS
+  const contact = {
+    name: pick(RECRUIT_CONTACTS),
+    phone: pick(RECRUIT_PHONES),
+    email: pick(RECRUIT_EMAILS),
+  }
+  const announceMethod = pick(RECRUIT_ANNOUNCE_METHODS)
+  return {
+    [institutionKeys.announcementPublished]: true,
+    [institutionKeys.publicTitle]: `${titleKo} 참여 기관 모집`,
+    [institutionKeys.programRange]: programSeal,
+    [institutionKeys.targetLevels]: educationTargets.map(option => option.value),
+    [institutionKeys.district]: educationTargets
+      .map(option => EDUCATION_TARGET_DETAIL[option.value] ?? option.label)
+      .join(', '),
+    [institutionKeys.recruitRange]: recruitSeal,
+    [institutionKeys.resultAnnounce]: { date: recruitSeal.end, method: announceMethod },
+    [institutionKeys.contact]: contact,
+    [institutionKeys.notes]: pick(RECRUIT_NOTES),
+    [institutionKeys.description]: `${titleKo}는 학교 현장에서 경제·금융 기초를 익히는 참여형 교육입니다.`,
+    [institutionKeys.recruitmentGuide]: '신청서 제출 후 담당자 확인을 거쳐 참여 학교를 확정합니다.',
+    [institutionKeys.learningSupportContent]:
+      '교재와 활동지를 제공하고, 수업 전 강사 사전 연수를 진행합니다.',
+    [volunteerKeys.announcementPublished]: true,
+    [volunteerKeys.noticeExposure]: pick(UJAT_VOLUNTEER_NOTICE_EXPOSURE_VALUES),
+    [volunteerKeys.publicTitle]: `${titleKo} 봉사자 모집`,
+    [volunteerKeys.programRange]: programSeal,
+    [volunteerKeys.volunteerTargets]: volunteerTargets.map(option => option.label),
+    [volunteerKeys.targetDetail]: volunteerTargets
+      .map(option => VOLUNTEER_TARGET_DETAIL[option.label] ?? `${option.label} 대상`)
+      .join(', '),
+    [volunteerKeys.recruitRange]: recruitSeal,
+    [volunteerKeys.recruitRangeH1]: recruitSeal,
+    [volunteerKeys.recruitRangeH2]: recruitSeal,
+    [volunteerKeys.activityTermH1]: String(pickInt(1, 8)),
+    [volunteerKeys.activityTermH2]: String(pickInt(9, 16)),
+    [volunteerKeys.docAnnounce]: { date: recruitSeal.start, method: pick(RECRUIT_ANNOUNCE_METHODS) },
+    [volunteerKeys.interviewRange]: interviewSeal,
+    [volunteerKeys.interviewMethod]: pick(INTERVIEW_METHOD_OPTIONS).value,
+    [volunteerKeys.finalAnnounce]: { date: recruitSeal.end, method: announceMethod },
+    [volunteerKeys.contact]: {
+      name: pick(RECRUIT_CONTACTS),
+      phone: pick(RECRUIT_PHONES),
+      email: pick(RECRUIT_EMAILS),
+    },
+    [volunteerKeys.notes]: pick(RECRUIT_NOTES),
+    [volunteerKeys.otherNotes]: pick(RECRUIT_NOTES),
+    [volunteerKeys.description]: `${titleKo} 봉사단과 함께 학교 교육을 진행합니다.`,
+    [volunteerKeys.recruitmentGuide]: '서류 심사 후 면접을 진행합니다.',
+    [volunteerKeys.applicationMethod]: '온라인 신청서 작성 후 제출해 주세요.',
+  }
+}
+
 function buildDevAutofillSample(): DevAutofillSample {
   const program = pick(PROGRAM_SAMPLES)
   const venueKind = pick(VENUE_KINDS)
@@ -521,6 +596,8 @@ function buildDevAutofillSample(): DevAutofillSample {
 /** 1사1교 폼에 고정으로 노출되는 「전체」 옵션 값 */
 const ECONOMY_ALL_VALUE = '__all__' as const
 const ECONOMY_DETAILED_PROGRAM_MAIN_VALUE = '__economy_1c1s_main__' as const
+/** 1사1교·교육받은 교사 select에 고정 노출되는 대표 세부 프로그램 라벨 (basic-info-defaults.ts REP_KO와 동일) */
+const ECONOMY_DETAILED_PROGRAM_MAIN_LABEL = '1사1교 경제금융교육' as const
 
 function ipsDetailForCategory(category: DevAutofillSample['ipsCategory']): string {
   const options =
@@ -570,20 +647,29 @@ async function resolveSponsorAndContact(allowAllSentinel: boolean): Promise<{
   }
 }
 
-async function resolveDetailedProgramId(extraValues: readonly string[] = []): Promise<string> {
-  const pool = [...extraValues]
+/**
+ * 버그 수정: 기존엔 id만 무작위로 골라 overlay `detailedProgramId`에만 넣고
+ * `detailedProgramName`은 비워둬서, 실제 선택 라벨(예: 세부 프로그램 관리에 남아있는
+ * 테스트용 「삭제 가능 샘플」)과 저장되는 이름이 어긋나 보이는 문제가 있었다.
+ * id·name을 항상 짝지어 반환해 `setDetailedProgramSelection`과 동일하게 동기화한다.
+ */
+async function resolveDetailedProgram(
+  extraOptions: readonly { value: string; label: string }[] = []
+): Promise<{ id: string; name: string }> {
+  const pool: { value: string; label: string }[] = [...extraOptions]
   try {
     const rows = await getDetailedProgramOptionsList()
     for (const row of rows) {
-      if (row.id) pool.push(row.id)
+      if (row.id) pool.push({ value: row.id, label: row.name ?? '' })
     }
   } catch {
     /* remote 미연동·실패 시 고정 옵션만 */
   }
-  if (!pool.includes(TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE)) {
-    pool.push(TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE)
+  if (!pool.some(option => option.value === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE)) {
+    pool.push({ ...TEMPLATE_FORM_DETAILED_PROGRAM_NONE_OPTION })
   }
-  return pick(pool)
+  const picked = pick(pool)
+  return { id: picked.value, name: picked.label }
 }
 
 function pickPaymentItemValues(): string[] {
@@ -763,6 +849,7 @@ function buildGeneralLikeOverlay(
     sponsorId: string
     contactId: string
     detailedProgramId: string
+    detailedProgramName: string
     paymentItemValues: string[]
   }
 ): Record<string, unknown> {
@@ -779,6 +866,9 @@ function buildGeneralLikeOverlay(
     [`${basicPrefix}.programTitleEn`]: sample.titleEn,
     [`${basicPrefix}.publicProgramTitle`]: sample.publicTitle,
     [`${basicPrefix}.detailedProgramId`]: resolved.detailedProgramId,
+    // 버그 수정: id만 넣고 name을 비워두면 실제 저장되는 세부 프로그램명이
+    // 선택된 id와 어긋나 보일 수 있다 — 항상 짝지어 넣는다.
+    [`${basicPrefix}.detailedProgramName`]: resolved.detailedProgramName,
     [`${basicPrefix}.operationRangeSeal`]: { ...sample.operationRange },
     [`${basicPrefix}.businessField`]: sample.businessField,
     [`${basicPrefix}.educationVenueKind`]: sample.venueKind,
@@ -870,7 +960,12 @@ function buildGeneralLikeOverlay(
 
 function buildEconomyOverlay(
   sample: DevAutofillSample,
-  resolved: { sponsorId: string; contactId: string; detailedProgramId: string }
+  resolved: {
+    sponsorId: string
+    contactId: string
+    detailedProgramId: string
+    detailedProgramName: string
+  }
 ): Record<string, unknown> {
   const p = 'economyRegistration.basicInfo'
   const sponsorId = resolved.sponsorId || ECONOMY_ALL_VALUE
@@ -880,6 +975,7 @@ function buildEconomyOverlay(
     [`${p}.repEn`]: sample.titleEn,
     [`${p}.publicProgramTitle`]: sample.publicTitle,
     [`${p}.detailedProgramId`]: resolved.detailedProgramId,
+    [`${p}.detailedProgramName`]: resolved.detailedProgramName,
     [`${p}.operationRangeSeal`]: { ...sample.operationRange },
     [`${p}.businessField`]: sample.businessField,
     [`${p}.sponsorId`]: sponsorId,
@@ -1076,6 +1172,7 @@ function buildUjatOverlay(
     [UJAT_REGION_CAPACITY_OVERLAY_KEY]: buildUjatRegionCapacity(),
     ...buildUjatHalfSchedule('h1', sample, getUjatProgramRegistrationOverlayRecord()),
     ...buildUjatHalfSchedule('h2', sample, getUjatProgramRegistrationOverlayRecord()),
+    ...buildUjatRecruitInfoOverlay(sample.recruitDates, sample.titleKo),
   }
 }
 
@@ -1110,9 +1207,10 @@ export async function applyDevProgramRegistrationAutofill(
       resolved.contactId,
       false
     )
-    patchUjatProgramRegistrationOverlay(
-      buildUjatOverlay(sample, { ...resolved, contactId: contactSelectId })
-    )
+    const ujatOverlay = buildUjatOverlay(sample, { ...resolved, contactId: contactSelectId })
+    patchUjatProgramRegistrationOverlay(ujatOverlay)
+    patchUjatRecruitInstitutionOverlay(pickUjatRecruitInstitutionOverlay(ujatOverlay))
+    patchUjatRecruitVolunteerOverlay(pickUjatRecruitVolunteerOverlay(ujatOverlay))
     return {
       programTitleKo: sample.titleKo,
       sponsorId: resolved.sponsorId,
@@ -1121,9 +1219,11 @@ export async function applyDevProgramRegistrationAutofill(
   }
 
   if (variant === 'economy') {
-    const [sponsorContact, detailedProgramId] = await Promise.all([
+    const [sponsorContact, detailedProgram] = await Promise.all([
       resolveSponsorAndContact(true),
-      resolveDetailedProgramId([ECONOMY_DETAILED_PROGRAM_MAIN_VALUE]),
+      resolveDetailedProgram([
+        { value: ECONOMY_DETAILED_PROGRAM_MAIN_VALUE, label: ECONOMY_DETAILED_PROGRAM_MAIN_LABEL },
+      ]),
     ])
     const contactSelectId = toSponsorContactSelectValue(
       sponsorContact.sponsorId,
@@ -1134,7 +1234,8 @@ export async function applyDevProgramRegistrationAutofill(
       ...buildEconomyOverlay(sample, {
         ...sponsorContact,
         contactId: contactSelectId,
-        detailedProgramId,
+        detailedProgramId: detailedProgram.id,
+        detailedProgramName: detailedProgram.name,
       }),
       'generalRegistration.typeSettings.ipsType': {
         category: sample.ipsCategory,
@@ -1153,16 +1254,19 @@ export async function applyDevProgramRegistrationAutofill(
     }
   }
 
-  const [sponsorContact, detailedProgramId] = await Promise.all([
+  const [sponsorContact, detailedProgram] = await Promise.all([
     resolveSponsorAndContact(false),
-    resolveDetailedProgramId(
-      variant === 'trainedTeachers' ? [ECONOMY_DETAILED_PROGRAM_MAIN_VALUE] : []
+    resolveDetailedProgram(
+      variant === 'trainedTeachers'
+        ? [{ value: ECONOMY_DETAILED_PROGRAM_MAIN_VALUE, label: ECONOMY_DETAILED_PROGRAM_MAIN_LABEL }]
+        : []
     ),
   ])
   const resolved = {
     ...sponsorContact,
     contactId: toSponsorContactSelectValue(sponsorContact.sponsorId, sponsorContact.contactId, true),
-    detailedProgramId,
+    detailedProgramId: detailedProgram.id,
+    detailedProgramName: detailedProgram.name,
     paymentItemValues: pickPaymentItemValues(),
   }
 
