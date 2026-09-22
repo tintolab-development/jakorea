@@ -13,7 +13,7 @@ interface ImportMetaEnv {
   readonly VITE_CAREEAR_NET_API_KEY?: string
   /** 브라우저에서 직접 호출할 백엔드 오리진 (크로스 오리진). 로컬 프록시 쓸 때는 비움. */
   readonly VITE_API_BASE_URL?: string
-  /** 로컬 Vite `/api/portal` → CMS(8080) 로그인·회원 */
+  /** 로컬 Vite `/api/portal`, `/api/auth` → CMS(8080) 로그인·회원·NICE */
   readonly VITE_API_SERVER?: string
   /** 로컬 Vite `/api` → JAHOMEADMINBACK(8081). 미설정 시 http://localhost:8081 */
   readonly VITE_HOMEPAGE_API_SERVER?: string

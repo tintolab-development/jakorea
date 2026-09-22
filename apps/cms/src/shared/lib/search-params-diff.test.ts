@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { applySearchParamUpdates, searchWithUpdatesDiffersFromLocation } from './search-params-diff'
+import {
+  applySearchParamUpdates,
+  nextSearchParamsIfChanged,
+  searchWithUpdatesDiffersFromLocation,
+} from './search-params-diff'
 
 describe('applySearchParamUpdates', () => {
   it('빈 값·undefined는 삭제로 처리한다', () => {
@@ -41,5 +45,34 @@ describe('searchWithUpdatesDiffersFromLocation', () => {
         '?id=x&programsChild=enrollment'
       )
     ).toBe(true)
+  })
+})
+
+describe('nextSearchParamsIfChanged', () => {
+  it('recipe가 identity면 쓰기를 생략한다', () => {
+    expect(nextSearchParamsIfChanged(prev => prev, '?status=in_progress&title=연수')).toBeNull()
+  })
+
+  it('주소창에 programId가 있으면 stale prev 반환도 쓰기로 취급하지 않는다', () => {
+    expect(
+      nextSearchParamsIfChanged(prev => {
+        if (!prev.get('programId')) return prev
+        return prev
+      }, '?status=in_progress&programId=186001&lnb=info&tab=info')
+    ).toBeNull()
+  })
+
+  it('목록 필터를 유지한 채 programId를 추가하면 next를 반환한다', () => {
+    const next = nextSearchParamsIfChanged(prev => {
+      const patched = new URLSearchParams(prev)
+      patched.set('programId', '186001')
+      patched.set('lnb', 'info')
+      patched.set('tab', 'info')
+      return patched
+    }, '?status=in_progress&title=연수')
+
+    expect(next?.get('programId')).toBe('186001')
+    expect(next?.get('status')).toBe('in_progress')
+    expect(next?.get('title')).toBe('연수')
   })
 })

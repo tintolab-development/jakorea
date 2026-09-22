@@ -2,9 +2,10 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   getAdminRegisteredSignUpChangePasswordPath,
+  getAdminRegisteredWizardState,
   isAdminRegisteredSignUpEntry,
   requiresAdminRegisteredOnboarding,
-  resolveAdminProvisionedOnboardingEntryPath,
+  resolveAdminProvisionedNoticeCta,
   syncAdminRegisteredOnboardingSession,
 } from '@/features/auth/admin-registered'
 import { usePortalMeQuery } from '@/features/auth/sign-in'
@@ -14,40 +15,103 @@ import { isRemoteApiConfigured } from '@/shared/lib'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './notice.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import sharedStyles from './shared.module.css'
+
+const SIGN_IN_FROM_NOTICE = '/auth/sign-in?redirect=/auth/admin-registered/notice'
 
 function AdminRegisteredFirstLoginNotice() {
   const navigate = useNavigate()
   const remote = isRemoteApiConfigured()
+  const hasToken = Boolean(getAccessToken())
   const meQuery = usePortalMeQuery({
-    enabled: remote && Boolean(getAccessToken()),
+    enabled: remote && hasToken,
   })
+  const me = meQuery.data
+  const isLoadingMe = remote && hasToken && meQuery.isPending && !me
+  const wizardStep = getAdminRegisteredWizardState()?.adminProvisionedOnboardingStep
+  const cta = resolveAdminProvisionedNoticeCta(
+    me ?? {
+      registeredByAdmin: true,
+      adminProvisionedOnboardingRequired: true,
+      adminProvisionedOnboardingStep: wizardStep,
+    },
+  )
 
   useEffect(() => {
     if (!remote) return
-    if (meQuery.isPending && !meQuery.data) return
-    const me = meQuery.data
-    if (!me || !requiresAdminRegisteredOnboarding(me)) return
+    if (isLoadingMe) return
 
-    if (me.email?.trim()) {
+    if (me?.email?.trim()) {
       syncAdminRegisteredOnboardingSession(me.email, me, 'first-login')
     }
 
-    const target = resolveAdminProvisionedOnboardingEntryPath(me)
-    if (target && target !== '/auth/admin-registered/notice') {
-      navigate(target, { replace: true })
-    }
-  }, [meQuery.data, meQuery.isPending, navigate, remote])
-
-  const handleChangePassword = () => {
-    if (remote && meQuery.data) {
-      const target = resolveAdminProvisionedOnboardingEntryPath(meQuery.data)
-      if (target) {
-        navigate(target)
+    if (me) {
+      if (!requiresAdminRegisteredOnboarding(me)) {
+        navigate('/', { replace: true })
         return
       }
+      const next = resolveAdminProvisionedNoticeCta(me)
+      if (next) {
+        navigate(next.path, { replace: true })
+      }
+      return
     }
-    navigate('/auth/admin-registered/birth')
+
+    if (!hasToken) return
+    if (meQuery.isError && !getAdminRegisteredWizardState()?.email) {
+      navigate(SIGN_IN_FROM_NOTICE, { replace: true })
+    }
+  }, [hasToken, isLoadingMe, me, meQuery.isError, navigate, remote])
+
+  const handleContinue = () => {
+    if (isLoadingMe) return
+
+    if (me?.email?.trim()) {
+      syncAdminRegisteredOnboardingSession(me.email, me, 'first-login')
+    }
+
+    const next =
+      resolveAdminProvisionedNoticeCta(
+        me ?? {
+          registeredByAdmin: true,
+          adminProvisionedOnboardingRequired: true,
+          adminProvisionedOnboardingStep:
+            getAdminRegisteredWizardState()?.adminProvisionedOnboardingStep,
+        },
+      ) ?? cta
+
+    if (next) {
+      if (!getAdminRegisteredWizardState()?.email) {
+        navigate(SIGN_IN_FROM_NOTICE)
+        return
+      }
+      navigate(next.path)
+      return
+    }
+
+    if (me && !requiresAdminRegisteredOnboarding(me)) {
+      navigate('/')
+      return
+    }
+
+    navigate(
+      hasToken && getAdminRegisteredWizardState()?.email
+        ? '/auth/admin-registered/birth'
+        : SIGN_IN_FROM_NOTICE,
+    )
   }
+
+  if (isLoadingMe) {
+    return (
+      <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={sharedStyles.statusMessage}>
+        가입 절차를 확인하는 중…
+      </PFText>
+    )
+  }
+
+  const description = cta?.description
+    ?? '안전한 이용을 위해 본인인증 후 비밀번호를 변경해 주세요.'
+  const buttonLabel = cta?.buttonLabel ?? '본인인증 후 비밀번호 변경하기'
 
   return (
     <section>
@@ -59,13 +123,13 @@ function AdminRegisteredFirstLoginNotice() {
         <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
           현재 비밀번호는 가입된 이메일 주소와 동일합니다.
           <br />
-          안전한 이용을 위해 본인인증 후 비밀번호를 변경해 주세요.
+          {description}
         </PFText>
       </div>
 
       <div className={styles.actions}>
-        <PFButton size="xlarge" width="100%" onClick={handleChangePassword}>
-          본인인증 후 비밀번호 변경하기
+        <PFButton size="xlarge" width="100%" onClick={handleContinue}>
+          {buttonLabel}
         </PFButton>
       </div>
     </section>

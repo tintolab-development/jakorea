@@ -16,6 +16,7 @@ import type { ProgramListProgramMode } from '../model/program-list-program-mode'
 import {
   isProgramProgressPhaseFilter,
   programMatchesProgressPhase,
+  programMatchesTargetLevelFilter,
   resolveProgramListAudienceFilterValue,
   resolveProgramListParticipantTypeFilterValue,
   type ProgramProgressPhaseFilter,
@@ -37,6 +38,8 @@ export type ProgramTableContext = {
   tableType?: 'student' | 'instructor'
   effectiveLifecycleStatus?: ProgramLifecycleStatus | null
   columnPreset?: ProgramListColumnPreset
+  /** true면 overview 클라 보조 필터 스킵. 기본 false (일반 목록 유지) */
+  serverSideOverviewFilters?: boolean
 }
 
 const tanstackColumns: ColumnDef<Program>[] = [
@@ -297,6 +300,7 @@ export function getProgramTablePageConfig(
               title.trim() !== '' ||
               hasLifecycleFilter ||
               Boolean(searchParams.get('participantType')) ||
+              Boolean(searchParams.get('targetLevel')) ||
               hasOperationPeriod
           )
         }
@@ -360,6 +364,10 @@ export function getProgramTablePageConfig(
     },
 
     filterFn: ({ context: ctx, data, searchParams }) => {
+      if (ctx.mode === 'overview' && ctx.serverSideOverviewFilters) {
+        return { dataForTable: data, filteredData: data }
+      }
+
       const operationPeriodRange = parseDateRange(
         searchParams,
         'operationStartDate',
@@ -420,7 +428,7 @@ export function getProgramTablePageConfig(
         })
       }
       if (targetLevelFilter) {
-        result = result.filter(p => p.targetLevel === targetLevelFilter)
+        result = result.filter(p => programMatchesTargetLevelFilter(p, targetLevelFilter))
       }
 
       return { dataForTable: result, filteredData }

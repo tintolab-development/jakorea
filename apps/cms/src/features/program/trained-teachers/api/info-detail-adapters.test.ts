@@ -47,6 +47,20 @@ describe('trained-teacher info detail adapters', () => {
     expect(request.configJson).toContain('"educatedTeachers":3')
   })
 
+  it('does not copy sponsor or textbook fields into a narrow info-detail PATCH', () => {
+    const request = mapTrainedTeacherInfoSaveToRequest({
+      commonInfo: {
+        teacherTrainingEnabled: false,
+        educationJournalEnabled: true,
+        curriculumSessions: [{ sessionLabel: '1차시', title: '신 차시', description: '' }],
+      },
+    })
+    expect(request.configJson).not.toContain('sponsorManagementIds')
+    expect(request.configJson).not.toContain('textbookName')
+    expect(request.configJson).not.toContain('detailedProgramName')
+    expect(request.configJson).toContain('"title":"신 차시"')
+  })
+
   it('reads educationScheduleRange from configJson root', () => {
     const patch = mapTrainedTeacherInfoDetailToProgramPatch({
       teacherTrainingEnabled: true,
@@ -108,18 +122,110 @@ describe('trained-teacher info detail adapters', () => {
     expect(merged.generalCommonInfo?.kpi?.finalSchools).toBe(8)
   })
 
-  it('prefers DTO flags over configJson when both present', () => {
-    const patch = mapTrainedTeacherInfoDetailToProgramPatch({
+  it('prefers detail configJson curriculum over stale programs nested copy', () => {
+    const program = {
+      id: '186034',
+      title: 't',
+      generalCommonInfo: {
+        curriculumSessions: [{ sessionLabel: '1차시', title: '구 차시', description: '' }],
+        scheduleDetails: [{ scheduleLabel: '세부 일정 01', name: '구 일정' }],
+      },
+    } as Program
+    const merged = mergeTrainedTeacherInfoDetailIntoProgram(program, {
       teacherTrainingEnabled: false,
-      educationJournalEnabled: true,
+      educationJournalEnabled: false,
       configJson: serializeTrainedTeacherInfoConfigJson({
         commonInfo: {
-          teacherTrainingEnabled: true,
-          educationJournalEnabled: false,
+          curriculumSessions: [{ sessionLabel: '1차시', title: '신 차시', description: '새 내용' }],
+          scheduleDetails: [{ scheduleLabel: '세부 일정 01', name: '신 일정' }],
+        },
+      }),
+    })
+    expect(merged.generalCommonInfo?.curriculumSessions).toEqual([
+      { sessionLabel: '1차시', title: '신 차시', description: '새 내용' },
+    ])
+    expect(merged.generalCommonInfo?.scheduleDetails).toEqual([
+      { scheduleLabel: '세부 일정 01', name: '신 일정' },
+    ])
+  })
+
+  it('prefers program.generalCommonInfo over stale root copy in configJson', () => {
+    const parsed = parseTrainedTeacherInfoConfigJson(
+      JSON.stringify({
+        schemaVersion: 1,
+        generalCommonInfo: {
+          sponsorManagementIds: ['1627251'],
+          sponsorManagerContactIds: ['1627251::1627253'],
+          detailedProgramName: '구값',
+        },
+        program: {
+          generalCommonInfo: {
+            sponsorManagementIds: ['163302'],
+            sponsorManagerContactIds: ['163302::163323'],
+            detailedProgramName: '사회공헌 프로젝트',
+          },
+        },
+      })
+    )
+    expect(parsed.generalCommonInfo?.sponsorManagementIds).toEqual(['163302'])
+    expect(parsed.generalCommonInfo?.sponsorManagerContactIds).toEqual(['163302::163323'])
+    expect(parsed.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
+  })
+
+  it('keeps programs GET sponsor ids when merging stale configJson root', () => {
+    const program = {
+      id: '186034',
+      title: 't',
+      sponsorId: '163302',
+      generalCommonInfo: {
+        sponsorManagementIds: ['163302'],
+        sponsorManagerContactIds: ['163302::163323'],
+        detailedProgramName: '사회공헌 프로젝트',
+      },
+    } as Program
+    const merged = mergeTrainedTeacherInfoDetailIntoProgram(program, {
+      teacherTrainingEnabled: false,
+      educationJournalEnabled: false,
+      configJson: JSON.stringify({
+        schemaVersion: 1,
+        generalCommonInfo: {
+          sponsorManagementIds: ['1627251'],
+          sponsorManagerContactIds: ['1627251::1627253'],
+          detailedProgramName: '구값',
+        },
+      }),
+    })
+    expect(merged.generalCommonInfo?.sponsorManagementIds).toEqual(['163302'])
+    expect(merged.generalCommonInfo?.sponsorManagerContactIds).toEqual(['163302::163323'])
+    expect(merged.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
+  })
+
+  it('sends empty teacherTrainingScheduleName when training is off', () => {
+    const request = mapTrainedTeacherInfoSaveToRequest({
+      commonInfo: {
+        teacherTrainingEnabled: false,
+        educationJournalEnabled: false,
+      },
+    })
+    expect(request.teacherTrainingEnabled).toBe(false)
+    expect(request.teacherTrainingScheduleName).toBe('')
+  })
+
+  it('clears leftover 교육 연수 when GET schedule name is empty', () => {
+    const patch = mapTrainedTeacherInfoDetailToProgramPatch({
+      teacherTrainingEnabled: false,
+      teacherTrainingScheduleName: '',
+      configJson: JSON.stringify({
+        schemaVersion: 1,
+        generalCommonInfo: {
+          teacherTrainingEnabled: false,
+          teacherTrainingScheduleName: '교육 연수',
+          scheduleDetails: [{ scheduleLabel: '행사 일정 01', name: '교육 연수' }],
         },
       }),
     })
     expect(patch.generalCommonInfo?.teacherTrainingEnabled).toBe(false)
-    expect(patch.generalCommonInfo?.educationJournalEnabled).toBe(true)
+    expect(patch.generalCommonInfo?.teacherTrainingScheduleName).toBe('')
+    expect(patch.generalCommonInfo?.scheduleDetails?.[0]?.name).toBe('')
   })
 })

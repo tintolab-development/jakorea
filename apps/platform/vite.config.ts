@@ -30,7 +30,7 @@ function withNgrokSkip(
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, path.resolve(__dirname), '')
-  /** CMS/Portal — 로그인·회원가입·세션 (`/api/portal`) */
+  /** CMS/Portal — `/api/portal` 로그인·회원가입, `/api/auth` NICE 본인인증 */
   const cmsTarget =
     env.VITE_API_SERVER?.trim() ||
     env.VITE_DEV_PROXY_TARGET?.trim() ||
@@ -45,6 +45,8 @@ export default defineConfig(({ mode }) => {
     const entries: Record<string, ProxyOptions> = {}
     if (cmsTarget) {
       entries['/api/portal'] = withNgrokSkip(cmsTarget, ngrokSkip)
+      // CMS shared auth (NICE start is public). Must beat the catch-all `/api` → 8081.
+      entries['/api/auth'] = withNgrokSkip(cmsTarget, ngrokSkip)
     }
     if (homepageTarget) {
       entries['/api'] = withNgrokSkip(homepageTarget, ngrokSkip)

@@ -115,6 +115,42 @@ export function resolveAdminProvisionedOnboardingEntryPath(
   return resolveAdminProvisionedOnboardingPath(step) ?? ADMIN_REGISTERED_NOTICE_PATH
 }
 
+export type AdminProvisionedNoticeCta = {
+  path: string
+  buttonLabel: string
+  description: string
+}
+
+/** notice CTA — 본인인증이 끝난 단계에서는 비밀번호·정보 확인만 안내한다. */
+export function resolveAdminProvisionedNoticeCta(
+  flags: AdminProvisionedOnboardingFlags,
+): AdminProvisionedNoticeCta | null {
+  const path = resolveAdminProvisionedOnboardingEntryPath(flags)
+  if (!path) return null
+
+  const step = resolveEffectiveAdminProvisionedOnboardingStep(flags)
+  if (step === 'PASSWORD') {
+    return {
+      path,
+      buttonLabel: '비밀번호 변경하기',
+      description: '안전한 이용을 위해 비밀번호를 변경해 주세요.',
+    }
+  }
+  if (step === 'PROFILE_REVIEW') {
+    return {
+      path,
+      buttonLabel: '가입 정보 확인하기',
+      description: '가입된 정보를 확인해 주세요.',
+    }
+  }
+
+  return {
+    path,
+    buttonLabel: '본인인증 후 비밀번호 변경하기',
+    description: '안전한 이용을 위해 본인인증 후 비밀번호를 변경해 주세요.',
+  }
+}
+
 export function shouldRedirectAdminProvisionedOnboardingStep(input: {
   pathname: string
   flags: AdminProvisionedOnboardingFlags

@@ -42,6 +42,28 @@ describe('general-program-detail-route', () => {
     expect(next.get('edit')).toBeNull()
   })
 
+  it('opens trained-teachers detail from list without dropping widget/table filters', () => {
+    const source = new URLSearchParams(
+      'status=in_progress&title=연수&targetLevel=elementary&lifecycleStatus=in_progress'
+    )
+    const next = patchGeneralProgramDetailLnbTab(source, {
+      programId: '186001',
+      lnb: 'info',
+      tab: 'info',
+    })
+    next.delete('subTab')
+
+    expect(next.get('programId')).toBe('186001')
+    expect(next.get('lnb')).toBe('info')
+    expect(next.get('tab')).toBe('info')
+    expect(next.get('status')).toBe('in_progress')
+    expect(next.get('title')).toBe('연수')
+    expect(next.get('targetLevel')).toBe('elementary')
+    expect(next.get('lifecycleStatus')).toBe('in_progress')
+    expect(next.get('schoolId')).toBeNull()
+    expect(next.get('applicantId')).toBeNull()
+  })
+
   it('preserveGeneralProgramDetailProgramId keeps programId only when prev already has it', () => {
     const withProgram = new URLSearchParams('status=scheduled&programId=general-prog-1&tab=info')
     const withoutProgram = new URLSearchParams('status=scheduled&tab=info')

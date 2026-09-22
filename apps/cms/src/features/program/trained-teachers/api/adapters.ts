@@ -30,6 +30,24 @@ import {
   parseTrainedTeacherServiceDetailJson,
   serializeTrainedTeacherServiceDetailJson,
 } from './service-detail-json'
+import { clearTeacherTrainingScheduleIfOff } from '../lib/teacher-training-schedule'
+
+/** 목록 GET echo (상세와 동일 컬럼). 일반 프로그램 DTO에는 없을 수 있음. */
+type TrainedTeacherListItemDto = AdminProgramListItemDto & {
+  textbookName?: string | null
+  detailedProgramName?: string | null
+  /** 후원사 담당자명 — 생성 관리자가 아님 */
+  managerName?: string | null
+  venue?: string | null
+  contactEmail?: string | null
+  contactPhone?: string | null
+  educationProcess?: string | null
+  ipOwned?: string | null
+  courseDeliveredBy?: string | null
+  institutionType?: string | null
+  teamDivision?: string | null
+  district?: string | null
+}
 
 export const TRAINED_TEACHER_PROGRAM_API_TYPE = 'TRAINED_TEACHER'
 
@@ -141,20 +159,63 @@ function baseProgram(
   }
 }
 
+function toOptionalNumber(value: unknown): number | undefined {
+  if (value == null || value === '') return undefined
+  const n = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(n) ? n : undefined
+}
+
 export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto): Program {
+  const item = dto as TrainedTeacherListItemDto
   const title =
-    dto.nameKo?.trim() || dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
+    item.nameKo?.trim() || item.title?.trim() || item.mainTitle?.trim() || '제목 없음'
+  const textbookName = item.textbookName?.trim() || item.detailedProgramName?.trim() || undefined
+  const managerName = item.managerName?.trim() || undefined
+  const venue = item.venue?.trim() || undefined
+  const targetLevels = resolveProgramTargetLevels({
+    targetLevel: item.targetLevel,
+    targetLevels: item.targetLevels,
+  })
   return baseProgram({
-    id: dto.id == null ? '' : String(dto.id),
+    id: item.id == null ? '' : String(item.id),
     title,
-    mainTitle: dto.mainTitle?.trim() || title,
-    startDate: dto.businessStartDate ?? dto.startDate,
-    endDate: dto.businessEndDate ?? dto.endDate,
-    lifecycleStatus: resolveListLifecycleStatus(dto),
-    approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
-    participatingSchoolCount: dto.organizationApplicationCount,
-    createdAt: dto.createdAt,
-    updatedAt: dto.updatedAt,
+    mainTitle: item.mainTitle?.trim() || title,
+    startDate: item.businessStartDate ?? item.startDate,
+    endDate: item.businessEndDate ?? item.endDate,
+    lifecycleStatus: resolveListLifecycleStatus(item),
+    targetLevel: targetLevels[0],
+    targetLevels: targetLevels.length > 0 ? targetLevels : undefined,
+    approvedStudentCount:
+      toOptionalNumber(item.participantApprovedCount) ??
+      toOptionalNumber(item.approvedOrganizationApplicationCount) ??
+      toOptionalNumber(item.applicantCount),
+    participantCapacity:
+      toOptionalNumber(item.participantCapacity) ??
+      toOptionalNumber(item.participantRecruitmentCount),
+    participatingSchoolCount:
+      toOptionalNumber(item.participatingSchoolCount) ??
+      toOptionalNumber(item.participatingOrganizationCount),
+    participatingStudentCount: toOptionalNumber(item.participatingStudentCount),
+    textbookName,
+    managerName,
+    venue,
+    contactEmail: item.contactEmail?.trim() || undefined,
+    contactPhone: item.contactPhone?.trim() || undefined,
+    educationProcess: item.educationProcess?.trim() || undefined,
+    ipOwned: item.ipOwned?.trim() || undefined,
+    courseDeliveredBy: item.courseDeliveredBy as Program['courseDeliveredBy'],
+    institutionType: item.institutionType as Program['institutionType'],
+    teamDivision: item.teamDivision?.trim() || undefined,
+    district: item.district?.trim() || undefined,
+    // 목록 GET `rounds: []` 는 경량 계약 — 저장 실패가 아님. 상세 GET 전 커리큘럼 원복으로 쓰지 말 것.
+    rounds: [],
+    generalCommonInfo: textbookName
+      ? {
+          detailedProgramName: textbookName,
+        }
+      : undefined,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
   })
 }
 
@@ -175,8 +236,14 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   const educationStructure =
     mapApiEducationStructureToDomain(dto.educationStructure) ??
     details.generalProgramEducationStructure
+  /** 공고용 — top-level title SSOT. nested announcementTitle 구값으로 헤더만 바뀐 것처럼 보이지 않게 */
+  const announcementTitle =
+    dto.title?.trim() || details.generalCommonInfo?.announcementTitle
+  /** 세부명 — PATCH는 textbookName. nested detailedProgramName 구값이 신 컬럼을 가리지 않게 */
   const detailedProgramName =
-    dto.detailedProgramName?.trim() || details.generalCommonInfo?.detailedProgramName
+    dto.detailedProgramName?.trim() ||
+    dto.textbookName?.trim() ||
+    details.generalCommonInfo?.detailedProgramName
   const participantRemarks = (
     details.generalCommonInfo?.participantRecruitmentInfo as { remarks?: string } | undefined
   )?.remarks
@@ -205,6 +272,19 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   }
   const nestedVenueKind = details.generalCommonInfo?.venueKind
   const nestedVenueDetail = details.generalCommonInfo?.venueDetail?.trim()
+  const venueDetail = dto.venue?.trim() || nestedVenueDetail
+  const venueKind =
+    dto.institutionType === 'inside_school'
+      ? ('inside' as const)
+      : dto.institutionType === 'outside_school'
+        ? ('outside' as const)
+        : nestedVenueKind === 'inside' ||
+            nestedVenueKind === 'outside' ||
+            nestedVenueKind === 'other'
+          ? nestedVenueKind
+          : venueDetail
+            ? ('other' as const)
+            : undefined
 
   return baseProgram({
     ...detailFields,
@@ -291,18 +371,19 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     educationTargetDetail,
     generalParticipantTypes: ['school_institution'],
     generalProgramEducationStructure: educationStructure,
-    generalCommonInfo: {
+    generalCommonInfo: clearTeacherTrainingScheduleIfOff({
       ...details.generalCommonInfo,
+      ...(announcementTitle ? { announcementTitle } : {}),
       ...(detailedProgramName ? { detailedProgramName } : {}),
-      ...(nestedVenueKind ? { venueKind: nestedVenueKind } : {}),
-      ...(nestedVenueDetail ? { venueDetail: nestedVenueDetail } : {}),
+      ...(venueKind ? { venueKind } : {}),
+      ...(venueDetail ? { venueDetail } : {}),
       kpi: resolvedKpi,
       participantRecruitmentInfo: {
         ...details.generalCommonInfo?.participantRecruitmentInfo,
         ...(remarks ? { remarks } : {}),
         ...(educationTargetDetail ? { educationTargetDetail } : {}),
       },
-    },
+    }),
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
   })

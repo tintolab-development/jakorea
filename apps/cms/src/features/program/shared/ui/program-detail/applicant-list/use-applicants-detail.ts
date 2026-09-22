@@ -417,6 +417,7 @@ export function useApplicantsDetail({
       searchParams,
       setSearchParams,
       context: EMPTY_TABLE_PAGE_CONTEXT,
+      disableUrlSync: true,
     }
   )
 

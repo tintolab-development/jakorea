@@ -4,6 +4,7 @@ import { queryClient } from '@/shared/lib'
 import type { AdminProvisionedOnboardingResponse } from '../api/types'
 import type { AdminRegisteredEntrySource } from '../model/wizard-state'
 import {
+  getAdminRegisteredWizardState,
   initAdminRegisteredWizardState,
   updateAdminRegisteredWizardState,
 } from '../model/wizard-state'
@@ -20,7 +21,13 @@ export function syncAdminRegisteredOnboardingSession(
   flags: AdminProvisionedOnboardingFlags,
   entrySource: AdminRegisteredEntrySource = 'first-login',
 ) {
-  initAdminRegisteredWizardState(email, entrySource)
+  const trimmed = email.trim()
+  const current = getAdminRegisteredWizardState()
+  if (!current?.email || current.email !== trimmed) {
+    initAdminRegisteredWizardState(trimmed, entrySource)
+  } else if (current.entrySource !== entrySource) {
+    updateAdminRegisteredWizardState({ entrySource })
+  }
 
   const step = normalizeAdminProvisionedOnboardingStep(flags.adminProvisionedOnboardingStep)
   if (step) {

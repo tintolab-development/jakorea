@@ -32,8 +32,14 @@ export interface ResolveEducationColumnsParams {
   columnPreset?: ProgramListColumnPreset
 }
 
-function removeInstructorRecruitmentColumn(columns: ColumnsType<Program>): ColumnsType<Program> {
-  return columns.filter(column => column.key !== 'instructorRecruitment')
+const TRAINED_TEACHERS_OMITTED_COLUMN_KEYS = new Set([
+  'participantType',
+  'instructorRecruitment',
+  'volunteerRecruitment',
+])
+
+function omitTrainedTeachersColumns(columns: ColumnsType<Program>): ColumnsType<Program> {
+  return columns.filter(column => !TRAINED_TEACHERS_OMITTED_COLUMN_KEYS.has(String(column.key)))
 }
 
 const WIDTH_NO = TABLE_COLUMN_WIDTHS.index
@@ -442,7 +448,7 @@ export function resolveEducationColumns(params: ResolveEducationColumnsParams) {
 
     const columns = resolveColumns() as ColumnsType<Program>
     if (columnPreset === 'trainedTeachers') {
-      return removeInstructorRecruitmentColumn(columns)
+      return omitTrainedTeachersColumns(columns)
     }
     return columns
   }

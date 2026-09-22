@@ -2,6 +2,7 @@ import type { Program } from '@/types/domain'
 import type { TrainedTeacherProgramDetailRequest } from '@/shared/api/generated/dashboard/schemas/trainedTeacherProgramDetailRequest'
 import type { TrainedTeacherProgramDetailResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherProgramDetailResponse'
 import { TRAINED_TEACHER_TRAINING_SCHEDULE_NAME } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
+import { clearTeacherTrainingScheduleIfOff } from '@/features/program/trained-teachers/lib/teacher-training-schedule'
 
 export const TRAINED_TEACHER_INFO_CONFIG_JSON_VERSION = 1 as const
 
@@ -32,6 +33,21 @@ function parseIsoRange(value: unknown): { start: string; end: string } | undefin
   return { start, end }
 }
 
+function commonInfoFromConfigJson(
+  parsed: Record<string, unknown>
+): NonNullable<Program['generalCommonInfo']> | undefined {
+  const fromProgram =
+    isRecord(parsed.program) && isRecord(parsed.program.generalCommonInfo)
+      ? (parsed.program.generalCommonInfo as NonNullable<Program['generalCommonInfo']>)
+      : undefined
+  const fromRoot = isRecord(parsed.generalCommonInfo)
+    ? (parsed.generalCommonInfo as NonNullable<Program['generalCommonInfo']>)
+    : undefined
+  // BE가 serviceDetailJson 전체를 configJson에 미러하면 루트 generalCommonInfo는 구값일 수 있음.
+  // FE write SSOT는 program.generalCommonInfo.
+  return fromProgram ?? fromRoot
+}
+
 export function serializeTrainedTeacherInfoConfigJson(
   payload: TrainedTeachersCommonInfoSavePayload
 ): string {
@@ -55,19 +71,22 @@ export function parseTrainedTeacherInfoConfigJson(raw?: string | null): {
     const parsed: unknown = JSON.parse(raw)
     if (!isRecord(parsed)) return {}
     if (parsed.schemaVersion !== TRAINED_TEACHER_INFO_CONFIG_JSON_VERSION) return {}
-    const nestedCommon = isRecord(parsed.generalCommonInfo)
-      ? (parsed.generalCommonInfo as NonNullable<Program['generalCommonInfo']>)
-      : undefined
-    const rootRange = parseIsoRange(parsed.educationScheduleRange)
+    const nestedCommon = commonInfoFromConfigJson(parsed)
     const nestedRange = parseIsoRange(nestedCommon?.educationScheduleRange)
-    const educationScheduleRange = rootRange ?? nestedRange
+    const rootRange = parseIsoRange(parsed.educationScheduleRange)
+    const educationScheduleRange = nestedRange ?? rootRange
     const educationScheduleMode =
-      parsed.educationScheduleMode === 'date' || parsed.educationScheduleMode === 'period'
-        ? parsed.educationScheduleMode
-        : nestedCommon?.educationScheduleMode
-    const educationScheduleLines = Array.isArray(parsed.educationScheduleLines)
-      ? (parsed.educationScheduleLines.filter(line => typeof line === 'string') as string[])
-      : nestedCommon?.educationScheduleLines
+      nestedCommon?.educationScheduleMode === 'date' ||
+      nestedCommon?.educationScheduleMode === 'period'
+        ? nestedCommon.educationScheduleMode
+        : parsed.educationScheduleMode === 'date' || parsed.educationScheduleMode === 'period'
+          ? parsed.educationScheduleMode
+          : undefined
+    const educationScheduleLines = Array.isArray(nestedCommon?.educationScheduleLines)
+      ? nestedCommon.educationScheduleLines
+      : Array.isArray(parsed.educationScheduleLines)
+        ? (parsed.educationScheduleLines.filter(line => typeof line === 'string') as string[])
+        : undefined
     return {
       educatedTeachers:
         typeof parsed.educatedTeachers === 'number' ? parsed.educatedTeachers : undefined,
@@ -94,13 +113,18 @@ export function mapTrainedTeacherInfoDetailToProgramPatch(
   const baseCommon = fromConfig.generalCommonInfo ?? {}
   return {
     educatedTeachers: fromConfig.educatedTeachers,
-    generalCommonInfo: {
-      ...baseCommon,
-      teacherTrainingEnabled:
-        dto.teacherTrainingEnabled ?? baseCommon.teacherTrainingEnabled,
-      educationJournalEnabled:
-        dto.educationJournalEnabled ?? baseCommon.educationJournalEnabled,
-    },
+    generalCommonInfo: clearTeacherTrainingScheduleIfOff(
+      {
+        ...baseCommon,
+        educationJournalEnabled:
+          dto.educationJournalEnabled ?? baseCommon.educationJournalEnabled,
+      },
+      {
+        teacherTrainingEnabled: dto.teacherTrainingEnabled ?? baseCommon.teacherTrainingEnabled,
+        teacherTrainingScheduleName:
+          dto.teacherTrainingScheduleName ?? baseCommon.teacherTrainingScheduleName,
+      }
+    ),
     updatedAt: dto.updatedAt,
   }
 }
@@ -110,29 +134,57 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
   dto: TrainedTeacherProgramDetailResponse
 ): Program {
   const patch = mapTrainedTeacherInfoDetailToProgramPatch(dto)
-  const programKpi = program.generalCommonInfo?.kpi
-  const patchKpi = patch.generalCommonInfo?.kpi
+  const programCommon = program.generalCommonInfo
+  const patchCommon = patch.generalCommonInfo
+  const programKpi = programCommon?.kpi
+  const patchKpi = patchCommon?.kpi
   return {
     ...program,
     ...patch,
-    generalCommonInfo: {
-      ...program.generalCommonInfo,
-      ...patch.generalCommonInfo,
-      // KPI SSOT = programs PATCH / serviceDetailJson — configJson 이 옛 kpi 로 덮지 않음
-      kpi: {
-        ...patchKpi,
-        ...programKpi,
-        finalParticipants:
-          program.totalParticipants ??
-          programKpi?.finalParticipants ??
-          patchKpi?.finalParticipants ??
-          0,
-        finalSchools: programKpi?.finalSchools ?? patchKpi?.finalSchools ?? 0,
-        finalClasses: programKpi?.finalClasses ?? patchKpi?.finalClasses ?? 0,
-        instructorCount: programKpi?.instructorCount ?? patchKpi?.instructorCount ?? 0,
-        volunteerCount: programKpi?.volunteerCount ?? patchKpi?.volunteerCount ?? 0,
+    generalCommonInfo: clearTeacherTrainingScheduleIfOff(
+      {
+        ...patchCommon,
+        ...programCommon,
+        educationJournalEnabled:
+          dto.educationJournalEnabled ??
+          programCommon?.educationJournalEnabled ??
+          patchCommon?.educationJournalEnabled,
+        // 커리큘럼/일정 쓰기 SSOT = trained-teacher/detail configJson.
+        // programs serviceDetailJson 이 구값을 다시 실으면 화면이 원복됨.
+        curriculumSessions: patchCommon?.curriculumSessions ?? programCommon?.curriculumSessions,
+        scheduleDetails: patchCommon?.scheduleDetails ?? programCommon?.scheduleDetails,
+        educationScheduleLines:
+          programCommon?.educationScheduleLines ?? patchCommon?.educationScheduleLines,
+        educationScheduleMode:
+          programCommon?.educationScheduleMode ?? patchCommon?.educationScheduleMode,
+        educationScheduleRange:
+          programCommon?.educationScheduleRange ?? patchCommon?.educationScheduleRange,
+        // KPI SSOT = programs PATCH / serviceDetailJson — configJson 이 옛 kpi 로 덮지 않음
+        kpi: {
+          ...patchKpi,
+          ...programKpi,
+          finalParticipants:
+            program.totalParticipants ??
+            programKpi?.finalParticipants ??
+            patchKpi?.finalParticipants ??
+            0,
+          finalSchools: programKpi?.finalSchools ?? patchKpi?.finalSchools ?? 0,
+          finalClasses: programKpi?.finalClasses ?? patchKpi?.finalClasses ?? 0,
+          instructorCount: programKpi?.instructorCount ?? patchKpi?.instructorCount ?? 0,
+          volunteerCount: programKpi?.volunteerCount ?? patchKpi?.volunteerCount ?? 0,
+        },
       },
-    },
+      {
+        teacherTrainingEnabled:
+          dto.teacherTrainingEnabled ??
+          programCommon?.teacherTrainingEnabled ??
+          patchCommon?.teacherTrainingEnabled,
+        teacherTrainingScheduleName:
+          dto.teacherTrainingScheduleName ??
+          programCommon?.teacherTrainingScheduleName ??
+          patchCommon?.teacherTrainingScheduleName,
+      }
+    ),
     educatedTeachers: program.educatedTeachers ?? patch.educatedTeachers,
     totalParticipants: program.totalParticipants,
     participatingSchoolCount:
@@ -152,7 +204,7 @@ export function mapTrainedTeacherInfoSaveToRequest(
     journalSubmissionLimitType: 'UNLIMITED',
     teacherTrainingScheduleName: payload.commonInfo.teacherTrainingEnabled
       ? TRAINED_TEACHER_TRAINING_SCHEDULE_NAME
-      : undefined,
+      : '',
     configJson: serializeTrainedTeacherInfoConfigJson(payload),
   }
 }

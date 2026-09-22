@@ -51,6 +51,73 @@ function trainedTeacherConstraints(partial: Partial<Program>): Partial<Program> 
   }
 }
 
+/** BE가 commonInfo에 미러하는 Program 컬럼 — 저장 시 제거 (구값 잔존 방지) */
+const TRAINED_TEACHER_COMMON_INFO_PROGRAM_MIRROR_KEYS = [
+  'title',
+  'titleEn',
+  'mainTitle',
+  'representativeProgramNameKo',
+  'textbookName',
+  'sponsorId',
+  'businessArea',
+  'educationStructure',
+  'district',
+  'targetLevel',
+  'institutionType',
+  'ipOwned',
+  'courseDeliveredBy',
+  'partnerInvolvement',
+  'teamDivision',
+  'educationProcess',
+  'totalParticipants',
+  'instructors',
+  'contactEmail',
+  'contactPhone',
+  'additionalContentHtml',
+  'recruitmentGuide',
+  'learningSupportContent',
+  'venue',
+  'applicationPathId',
+  'managerName',
+  'teacherTrainingScheduleName',
+] as const
+
+function sanitizeTrainedTeacherCommonInfo(
+  common: Program['generalCommonInfo'] | undefined,
+  program: Program
+): Program['generalCommonInfo'] | undefined {
+  if (!common) return undefined
+  const stripped = { ...common } as Record<string, unknown>
+  for (const key of TRAINED_TEACHER_COMMON_INFO_PROGRAM_MIRROR_KEYS) {
+    delete stripped[key]
+  }
+  const sponsorManagementIds = (
+    common.sponsorManagementIds?.length
+      ? common.sponsorManagementIds
+      : common.sponsorManagementId
+        ? [common.sponsorManagementId]
+        : program.sponsorId
+          ? [program.sponsorId]
+          : []
+  )
+    .map(id => String(id).trim())
+    .filter(Boolean)
+  const detailedProgramName =
+    common.detailedProgramName?.trim() || program.textbookName?.trim() || undefined
+  return {
+    ...(stripped as NonNullable<Program['generalCommonInfo']>),
+    ...(sponsorManagementIds.length > 0
+      ? {
+          sponsorManagementIds,
+          sponsorManagementId: sponsorManagementIds[0],
+        }
+      : {}),
+    ...(detailedProgramName ? { detailedProgramName } : {}),
+    announcementTitle:
+      common.announcementTitle?.trim() || program.title?.trim() || common.announcementTitle,
+  }
+}
+
 function trainedTeacherDetails(program: Program): Partial<Program> {
   return trainedTeacherConstraints({
     posterImage: program.posterImage,
@@ -72,7 +139,7 @@ function trainedTeacherDetails(program: Program): Partial<Program> {
     generalProgramAudience: program.generalProgramAudience,
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
-    generalCommonInfo: program.generalCommonInfo,
+    generalCommonInfo: sanitizeTrainedTeacherCommonInfo(program.generalCommonInfo, program),
     scheduleTimeEnabled: program.scheduleTimeEnabled,
     startTime: program.startTime,
     endTime: program.endTime,

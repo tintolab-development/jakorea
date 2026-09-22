@@ -1395,6 +1395,9 @@ export function useProgramRegistrationEditor(
         )
         const usesRemoteFormBindings =
           shouldUseRegistrationCreateFormBindings() &&
+          (programRegistrationFormVariant === 'general' ||
+            programRegistrationFormVariant === 'trainedTeachers' ||
+            programRegistrationFormVariant === 'economy') &&
           usesRegistrationWizardDraft &&
           registrationWizardProgramType != null &&
           isRemoteCreate
