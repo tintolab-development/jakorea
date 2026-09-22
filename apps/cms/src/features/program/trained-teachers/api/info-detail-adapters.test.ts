@@ -47,6 +47,20 @@ describe('trained-teacher info detail adapters', () => {
     expect(request.configJson).toContain('"educatedTeachers":3')
   })
 
+  it('does not copy sponsor or textbook fields into a narrow info-detail PATCH', () => {
+    const request = mapTrainedTeacherInfoSaveToRequest({
+      commonInfo: {
+        teacherTrainingEnabled: false,
+        educationJournalEnabled: true,
+        curriculumSessions: [{ sessionLabel: '1차시', title: '신 차시', description: '' }],
+      },
+    })
+    expect(request.configJson).not.toContain('sponsorManagementIds')
+    expect(request.configJson).not.toContain('textbookName')
+    expect(request.configJson).not.toContain('detailedProgramName')
+    expect(request.configJson).toContain('"title":"신 차시"')
+  })
+
   it('reads educationScheduleRange from configJson root', () => {
     const patch = mapTrainedTeacherInfoDetailToProgramPatch({
       teacherTrainingEnabled: true,
@@ -106,6 +120,33 @@ describe('trained-teacher info detail adapters', () => {
     expect(merged.generalCommonInfo?.educationJournalEnabled).toBe(true)
     expect(merged.generalCommonInfo?.kpi?.finalParticipants).toBe(100)
     expect(merged.generalCommonInfo?.kpi?.finalSchools).toBe(8)
+  })
+
+  it('prefers detail configJson curriculum over stale programs nested copy', () => {
+    const program = {
+      id: '186034',
+      title: 't',
+      generalCommonInfo: {
+        curriculumSessions: [{ sessionLabel: '1차시', title: '구 차시', description: '' }],
+        scheduleDetails: [{ scheduleLabel: '세부 일정 01', name: '구 일정' }],
+      },
+    } as Program
+    const merged = mergeTrainedTeacherInfoDetailIntoProgram(program, {
+      teacherTrainingEnabled: false,
+      educationJournalEnabled: false,
+      configJson: serializeTrainedTeacherInfoConfigJson({
+        commonInfo: {
+          curriculumSessions: [{ sessionLabel: '1차시', title: '신 차시', description: '새 내용' }],
+          scheduleDetails: [{ scheduleLabel: '세부 일정 01', name: '신 일정' }],
+        },
+      }),
+    })
+    expect(merged.generalCommonInfo?.curriculumSessions).toEqual([
+      { sessionLabel: '1차시', title: '신 차시', description: '새 내용' },
+    ])
+    expect(merged.generalCommonInfo?.scheduleDetails).toEqual([
+      { scheduleLabel: '세부 일정 01', name: '신 일정' },
+    ])
   })
 
   it('prefers program.generalCommonInfo over stale root copy in configJson', () => {

@@ -9,8 +9,8 @@
  *   trigger 를 건너뛰거나 수동으로 patch 만내면 스키마와 UI 불일치 가능.
  *
  * ─── 병합 시 주의 ───────────────────────────────────────────────────────────
- * - 저장 페이로드는 `detailEditValuesToProgramPatch(form.getValues(), program)` 만 사용.
- *   patch 에 없는 폼 필드는 API 로 전달되지 않음 (`program-detail-edit-schema.ts` 주석 참고).
+ * - 기본 저장 페이로드는 `detailEditValuesToProgramPatch(form.getValues(), program)`.
+ * - 교육받은 교사 커리큘럼/일정 테이블은 폼에 없어 `triggerSave(extraCommonInfo)` 로 합친다.
  */
 
 import { useCallback, useRef } from 'react'
@@ -32,6 +32,10 @@ export interface UseProgramDetailInfoSaveOptions {
   validateSchema?: z.ZodType<unknown>
 }
 
+export type ProgramDetailInfoSaveExtraCommon = Partial<
+  NonNullable<Program['generalCommonInfo']>
+>
+
 export function useProgramDetailInfoSave({
   form,
   program,
@@ -45,36 +49,53 @@ export function useProgramDetailInfoSave({
     getAdditionalContentHtmlRef.current = getter
   }, [])
 
-  const triggerSave = useCallback(async (): Promise<boolean> => {
-    if (savingRef.current || !onSaveEdit || !program) return false
-    savingRef.current = true
-    try {
-      const isValid =
-        validateSchema != null
-          ? validateSchema.safeParse(form.getValues()).success
-          : await form.trigger()
-      if (!isValid) return false
-      const values = form.getValues()
-      const patch = detailEditValuesToProgramPatch(values, program)
-      const html = getAdditionalContentHtmlRef.current?.()
-      const htmlPatch =
-        typeof html === 'string' ? { additionalContentHtml: html } : undefined
-      const remotePatch: Partial<Program> = {
-        ...patch,
-        ...htmlPatch,
+  const triggerSave = useCallback(
+    async (extraCommonInfo?: ProgramDetailInfoSaveExtraCommon): Promise<boolean> => {
+      if (savingRef.current || !onSaveEdit || !program) return false
+      savingRef.current = true
+      try {
+        const isValid =
+          validateSchema != null
+            ? validateSchema.safeParse(form.getValues()).success
+            : await form.trigger()
+        if (!isValid) return false
+        const values = form.getValues()
+        const patch = detailEditValuesToProgramPatch(values, program)
+        const html = getAdditionalContentHtmlRef.current?.()
+        const htmlPatch =
+          typeof html === 'string' ? { additionalContentHtml: html } : undefined
+        const extraDefined = extraCommonInfo
+          ? Object.fromEntries(
+              Object.entries(extraCommonInfo).filter(([, value]) => value !== undefined)
+            )
+          : undefined
+        const generalCommonInfo =
+          extraDefined && Object.keys(extraDefined).length > 0
+            ? { ...patch.generalCommonInfo, ...extraDefined }
+            : patch.generalCommonInfo
+        const remotePatch: Partial<Program> = {
+          ...patch,
+          ...htmlPatch,
+          ...(generalCommonInfo ? { generalCommonInfo } : {}),
+        }
+        const draftToSave: Program = {
+          ...program,
+          ...remotePatch,
+          generalCommonInfo: {
+            ...program.generalCommonInfo,
+            ...remotePatch.generalCommonInfo,
+          },
+        }
+        await onSaveEdit(draftToSave, remotePatch)
+        return true
+      } catch {
+        return false
+      } finally {
+        savingRef.current = false
       }
-      const draftToSave: Program = {
-        ...program,
-        ...remotePatch,
-      }
-      await onSaveEdit(draftToSave, remotePatch)
-      return true
-    } catch {
-      return false
-    } finally {
-      savingRef.current = false
-    }
-  }, [form, program, onSaveEdit, validateSchema])
+    },
+    [form, program, onSaveEdit, validateSchema]
+  )
 
   const resetToProgram = useCallback(() => {
     if (program) {

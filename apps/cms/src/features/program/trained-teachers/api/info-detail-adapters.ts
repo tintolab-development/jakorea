@@ -149,8 +149,10 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
           dto.educationJournalEnabled ??
           programCommon?.educationJournalEnabled ??
           patchCommon?.educationJournalEnabled,
-        curriculumSessions: programCommon?.curriculumSessions ?? patchCommon?.curriculumSessions,
-        scheduleDetails: programCommon?.scheduleDetails ?? patchCommon?.scheduleDetails,
+        // 커리큘럼/일정 쓰기 SSOT = trained-teacher/detail configJson.
+        // programs serviceDetailJson 이 구값을 다시 실으면 화면이 원복됨.
+        curriculumSessions: patchCommon?.curriculumSessions ?? programCommon?.curriculumSessions,
+        scheduleDetails: patchCommon?.scheduleDetails ?? programCommon?.scheduleDetails,
         educationScheduleLines:
           programCommon?.educationScheduleLines ?? patchCommon?.educationScheduleLines,
         educationScheduleMode:

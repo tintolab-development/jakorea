@@ -46,6 +46,42 @@ describe('mapTrainedTeacherListItemToProgram periodStatus', () => {
     expect(mapped.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
     expect(mapped.rounds).toEqual([])
   })
+
+  it('maps list widget fields: targetLevel, capacity, school/student counts', () => {
+    const mapped = mapTrainedTeacherListItemToProgram({
+      id: 186005,
+      title: 'TT list',
+      targetLevel: 'elementary',
+      targetLevels: ['elementary'],
+      participantApprovedCount: 10,
+      participantCapacity: 30,
+      participatingSchoolCount: 12,
+      participatingStudentCount: 240,
+      organizationApplicationCount: 99,
+    })
+    expect(mapped.targetLevel).toBe('elementary')
+    expect(mapped.targetLevels).toEqual(['elementary'])
+    expect(mapped.approvedStudentCount).toBe(10)
+    expect(mapped.participantCapacity).toBe(30)
+    expect(mapped.participatingSchoolCount).toBe(12)
+    expect(mapped.participatingStudentCount).toBe(240)
+  })
+
+  it('does not use organizationApplicationCount as participatingSchoolCount', () => {
+    const mapped = mapTrainedTeacherListItemToProgram({
+      id: 186006,
+      organizationApplicationCount: 7,
+    })
+    expect(mapped.participatingSchoolCount).toBeUndefined()
+  })
+
+  it('uses participatingOrganizationCount as school count alias', () => {
+    const mapped = mapTrainedTeacherListItemToProgram({
+      id: 186007,
+      participatingOrganizationCount: 12,
+    })
+    expect(mapped.participatingSchoolCount).toBe(12)
+  })
 })
 
 describe('mapApiEducationStructureToDomain', () => {
@@ -131,6 +167,71 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
       detailedProgramName: '세부 프로그램',
     })
     expect(mapped.generalCommonInfo?.detailedProgramName).toBe('세부 프로그램')
+  })
+
+  it('prefers GET title over stale nested announcementTitle', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      ...baseDto,
+      title: '교육받은교사(수정2)',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          generalCommonInfo: {
+            announcementTitle: '교육받은교사(수정)',
+          },
+        },
+      }),
+    })
+    expect(mapped.title).toBe('교육받은교사(수정2)')
+    expect(mapped.generalCommonInfo?.announcementTitle).toBe('교육받은교사(수정2)')
+  })
+
+  it('prefers textbookName over stale nested detailedProgramName', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      ...baseDto,
+      textbookName: '사회공헌 프로젝트',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          generalCommonInfo: {
+            detailedProgramName: 'UJAT 사전교육',
+          },
+        },
+      }),
+    })
+    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
+  })
+
+  it('display fields follow top-level columns when JSON has dual copies', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      ...baseDto,
+      title: '교육받은교사(수정2)',
+      mainTitle: '교육받은교사(수정)',
+      textbookName: '사회공헌 프로젝트',
+      venue: '별관 301호',
+      institutionType: 'inside_school',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        generalCommonInfo: {
+          announcementTitle: '구 공고',
+          detailedProgramName: 'UJAT 사전교육',
+          venueKind: 'other',
+          venueDetail: '옛 장소',
+        },
+        program: {
+          generalCommonInfo: {
+            announcementTitle: '교육받은교사(수정)',
+            detailedProgramName: 'UJAT 사전교육',
+            venueKind: 'other',
+            venueDetail: '옛 장소',
+          },
+        },
+      }),
+    })
+    expect(mapped.generalCommonInfo?.announcementTitle).toBe('교육받은교사(수정2)')
+    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
+    expect(mapped.generalCommonInfo?.venueKind).toBe('inside')
+    expect(mapped.generalCommonInfo?.venueDetail).toBe('별관 301호')
   })
 })
 
@@ -287,6 +388,34 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
     expect(detail.program?.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
     expect(detail.program?.generalCommonInfo).not.toHaveProperty('textbookName')
     expect(detail.program?.generalCommonInfo).not.toHaveProperty('title')
+  })
+
+  it('writes curriculumSessions from patch into serviceDetailJson', () => {
+    const program = {
+      id: '186034',
+      sponsorId: '163302',
+      title: 'TT',
+      type: 'offline' as const,
+      format: 'workshop' as const,
+      category: 'school' as const,
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending' as const,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      generalCommonInfo: {
+        curriculumSessions: [{ sessionLabel: '1차시', title: '구 차시', description: '' }],
+      },
+    } as Program
+    const request = mapTrainedTeacherToUpdateRequest(program, {
+      generalCommonInfo: {
+        curriculumSessions: [{ sessionLabel: '1차시', title: '신 차시', description: '새 내용' }],
+      },
+    })
+    expect(request.serviceDetailJson).toContain('"title":"신 차시"')
+    expect(request.serviceDetailJson).not.toContain('구 차시')
   })
 })
 

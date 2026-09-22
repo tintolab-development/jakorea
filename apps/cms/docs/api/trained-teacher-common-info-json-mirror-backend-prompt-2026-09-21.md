@@ -1,6 +1,7 @@
 # BE 전달 프롬프트 — 교육받은 교사 공통 정보 `serviceDetailJson`/`configJson` 이중 카피 + 목록 미러 누락
 
 **작성일:** 2026-09-21  
+**후속 (상세 라운드트립 계약 갱신):** [trained-teacher-common-info-field-roundtrip-backend-prompt-2026-09-22.md](./trained-teacher-common-info-field-roundtrip-backend-prompt-2026-09-22.md) — 필드별 구값 잔존·FE write 이원화. **구현은 후속 문서를 우선**  
 **우선순위:** P0 (JSON 이중 카피 · PATCH 후 구값 잔존) · P1 (목록 프로젝션 · 교육 연수 일정명 clear)  
 **대상 화면:** CMS `/programs/trained-teachers?programId=186034` LNB **공통 정보**  
 **범위:** `programType=TRAINED_TEACHER` 의  

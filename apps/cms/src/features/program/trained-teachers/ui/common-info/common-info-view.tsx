@@ -1704,8 +1704,10 @@ export interface TrainedTeachersCommonInfoViewProps {
   onEdit?: () => void
   onCancel?: () => void
   onSave?: () => void
-  /** programs PATCH 등 — onPersist / local overlay 전에 호출 */
-  onBeforePersist?: () => Promise<void>
+  /** programs PATCH 등 — onPersist / local overlay 전에 호출. 커리큘럼/일정 draft를 A 페이로드에 실음 */
+  onBeforePersist?: (
+    progressTables?: Pick<TrainedTeachersCommonInfo, 'curriculumSessions' | 'scheduleDetails'>
+  ) => Promise<void>
   /** remote 저장 — 제공 시 local overlay 대신 호출 */
   onPersist?: (payload: {
     educatedTeachers?: number
@@ -1848,35 +1850,42 @@ export function TrainedTeachersCommonInfoView({
           })
         }
 
+        const scheduleDetails =
+          draft && educationStructure === 'schedule'
+            ? draft.scheduleDetails.map((detail, index) => ({
+                ...detail,
+                progressTimeSummary:
+                  sessionRound === 'single'
+                    ? joinProgressGroups(draft.progressGroupsByDetail[index] ?? [''])
+                    : detail.progressTimeSummary,
+              }))
+            : draft
+              ? commonInfo.scheduleDetails
+              : undefined
+        const curriculumSessions =
+          draft && educationStructure === 'curriculum'
+            ? draft.curriculumSessions
+            : draft
+              ? commonInfo.curriculumSessions
+              : undefined
+
         if (onBeforePersist) {
-          await onBeforePersist()
+          await onBeforePersist(
+            draft
+              ? {
+                  ...(curriculumSessions != null ? { curriculumSessions } : {}),
+                  ...(scheduleDetails != null ? { scheduleDetails } : {}),
+                }
+              : undefined
+          )
         }
 
         if (draft) {
           const commonInfoPayload: Partial<TrainedTeachersCommonInfo> = {
-            kpi: {
-              finalParticipants: clampKpiDraftValue(draft.kpiFinalParticipants) ?? 0,
-              instructorCount: 0,
-              volunteerCount: 0,
-              finalSchools: clampKpiDraftValue(draft.kpiFinalSchools) ?? 0,
-              finalClasses: clampKpiDraftValue(draft.kpiFinalClasses) ?? 0,
-            },
             educationJournalEnabled: draft.educationJournalEnabled,
             teacherTrainingEnabled: draft.teacherTrainingEnabled,
-            curriculumSessions:
-              educationStructure === 'curriculum'
-                ? draft.curriculumSessions
-                : commonInfo.curriculumSessions,
-            scheduleDetails:
-              educationStructure === 'schedule'
-                ? draft.scheduleDetails.map((detail, index) => ({
-                    ...detail,
-                    progressTimeSummary:
-                      sessionRound === 'single'
-                        ? joinProgressGroups(draft.progressGroupsByDetail[index] ?? [''])
-                        : detail.progressTimeSummary,
-                  }))
-                : commonInfo.scheduleDetails,
+            curriculumSessions,
+            scheduleDetails,
           }
 
           const needsInfoDetailPatch =
@@ -1889,16 +1898,27 @@ export function TrainedTeachersCommonInfoView({
               JSON.stringify(commonInfoPayload.scheduleDetails) !==
                 JSON.stringify(commonInfo.scheduleDetails ?? []))
 
+          const kpiOverride = {
+            finalParticipants: clampKpiDraftValue(draft.kpiFinalParticipants) ?? 0,
+            instructorCount: 0,
+            volunteerCount: 0,
+            finalSchools: clampKpiDraftValue(draft.kpiFinalSchools) ?? 0,
+            finalClasses: clampKpiDraftValue(draft.kpiFinalClasses) ?? 0,
+          }
+
           if (needsInfoDetailPatch) {
             if (onPersist) {
-              // KPI는 programs PATCH만 — detail PATCH에 educatedTeachers 미포함
+              // KPI는 programs PATCH만 — detail PATCH에 educatedTeachers·kpi 미포함
               await onPersist({
                 commonInfo: commonInfoPayload as NonNullable<Program['generalCommonInfo']>,
               })
             } else {
               setSavedOverride({
                 educatedTeachers: draft.kpiEducatedTeachers,
-                commonInfo: commonInfoPayload,
+                commonInfo: {
+                  ...commonInfoPayload,
+                  kpi: kpiOverride,
+                },
               })
             }
           } else {
@@ -1907,7 +1927,9 @@ export function TrainedTeachersCommonInfoView({
               educatedTeachers: draft.kpiEducatedTeachers,
               commonInfo: {
                 ...commonInfo,
-                kpi: commonInfoPayload.kpi,
+                kpi: kpiOverride,
+                curriculumSessions,
+                scheduleDetails,
               },
             })
           }

@@ -14,7 +14,7 @@
  */
 
 import { useMemo, useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
-import { useLocation, useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -26,6 +26,7 @@ import {
   buildSearchParams,
   makeBreadcrumbItem,
 } from '@/shared/lib/detail-fullpage-query-stack'
+import { nextSearchParamsIfChanged } from '@/shared/lib/search-params-diff'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
 import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-form'
@@ -112,6 +113,9 @@ export interface ProgramDetailFullPageModalProps {
   externalLoading?: boolean
   /** remote detail 로드 실패 (empty-flash 전에 표시) */
   externalError?: boolean
+  /** 목록 페이지와 동일한 searchParams 인스턴스 — LNB 라우팅 충돌 방지 */
+  searchParams?: URLSearchParams
+  setSearchParams?: SetURLSearchParams
   onUpdateProgram?: (
     programId: string,
     program: Program,
@@ -219,10 +223,26 @@ export function ProgramDetailFullPageModal({
   programVariant,
   externalLoading = false,
   externalError = false,
+  searchParams: searchParamsProp,
+  setSearchParams: setSearchParamsProp,
   onUpdateProgram,
 }: ProgramDetailFullPageModalProps) {
   const location = useLocation()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [routerSearchParams, routerSetSearchParams] = useSearchParams()
+  const searchParams = searchParamsProp ?? routerSearchParams
+  const rawSetSearchParams = setSearchParamsProp ?? routerSetSearchParams
+  const setSearchParams = useCallback<SetURLSearchParams>((nextInit, navigateOpts) => {
+    if (typeof nextInit === 'function') {
+      const next = nextSearchParamsIfChanged(prev => {
+        const result = nextInit(prev)
+        return result instanceof URLSearchParams ? result : new URLSearchParams(result as string)
+      })
+      if (next == null) return
+      rawSetSearchParams(next, navigateOpts)
+      return
+    }
+    rawSetSearchParams(nextInit, navigateOpts)
+  }, [rawSetSearchParams])
   const { showAlert } = useCmsAlert()
   const programId = program?.id
   const {
@@ -454,7 +474,6 @@ export function ProgramDetailFullPageModal({
     isTrainedTeachersDetail,
     isOverviewProgramDetail,
     surveyMenuItems,
-    searchParams,
     setSearchParams,
   ])
 
@@ -593,96 +612,125 @@ export function ProgramDetailFullPageModal({
 
   const setLnb = (key: LnbKey, childTab?: TabKey) => {
     setEditingTab(null)
-    const next = new URLSearchParams(searchParams)
-    next.set(LNB_PARAM, key)
-    next.delete(EDIT_PARAM)
-    if (key === 'info') {
-      const tab = searchParams.get(TAB_PARAM)
-      if (isOverviewProgramDetail) {
-        const nextTab = childTab ?? tab
-        next.set(
-          TAB_PARAM,
-          nextTab && ['info', 'institutions', 'instructors'].includes(nextTab) ? nextTab : 'info'
-        )
-      } else {
-        next.set(TAB_PARAM, tab && (TAB_KEYS as readonly string[]).includes(tab) ? tab : 'info')
-      }
-    } else if (key === 'applicants') {
-      if (isOverviewProgramDetail) {
-        next.set(TAB_PARAM, 'institutions')
-      } else {
-        const tab = childTab ?? searchParams.get(TAB_PARAM)
-        next.set(
-          TAB_PARAM,
-          tab && ['institutions', 'instructors', 'volunteers'].includes(tab)
+    setSearchParams(
+      prev => {
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        const next = new URLSearchParams(prev)
+        next.set(LNB_PARAM, key)
+        next.delete(EDIT_PARAM)
+        if (key === 'info') {
+          const tab = prev.get(TAB_PARAM)
+          if (isOverviewProgramDetail) {
+            const nextTab = childTab ?? tab
+            next.set(
+              TAB_PARAM,
+              nextTab && ['info', 'institutions', 'instructors'].includes(nextTab) ? nextTab : 'info'
+            )
+          } else {
+            next.set(TAB_PARAM, tab && (TAB_KEYS as readonly string[]).includes(tab) ? tab : 'info')
+          }
+        } else if (key === 'applicants') {
+          if (isOverviewProgramDetail) {
+            next.set(TAB_PARAM, 'institutions')
+          } else {
+            const tab = childTab ?? prev.get(TAB_PARAM)
+            next.set(
+              TAB_PARAM,
+              tab && ['institutions', 'instructors', 'volunteers'].includes(tab)
+                ? tab
+                : 'institutions'
+            )
+          }
+        } else if (key === 'applicant_instructors') {
+          next.set(TAB_PARAM, 'instructors')
+        } else if (key === 'progress') {
+          if (isTrainedTeachersDetail) {
+            next.set(TAB_PARAM, 'institutions')
+            next.delete(SUB_TAB_PARAM)
+          } else {
+            const tab = childTab ?? prev.get(TAB_PARAM)
+            const progressTabValue = tab && ['institutions', 'instructors'].includes(tab)
+              ? tab
+              : !isCompanySchoolDetail && tab === 'volunteers'
+                ? tab
+                : 'institutions'
+            next.set(TAB_PARAM, progressTabValue)
+            if (progressTabValue === 'instructors') next.set(SUB_TAB_PARAM, 'instructors')
+            else next.delete(SUB_TAB_PARAM)
+          }
+        } else if (key === 'survey') {
+          const tab = prev.get(TAB_PARAM)
+          const surveyTab = surveyMenuItems.some(item => item.key === tab)
             ? tab
-            : 'institutions'
-        )
-      }
-    } else if (key === 'applicant_instructors') {
-      next.set(TAB_PARAM, 'instructors')
-    } else if (key === 'progress') {
-      if (isTrainedTeachersDetail) {
-        next.set(TAB_PARAM, 'institutions')
-        next.delete(SUB_TAB_PARAM)
-      } else {
-      const tab = childTab ?? searchParams.get(TAB_PARAM)
-      const progressTabValue = tab && ['institutions', 'instructors'].includes(tab)
-        ? tab
-        : !isCompanySchoolDetail && tab === 'volunteers'
-          ? tab
-          : 'institutions'
-      next.set(TAB_PARAM, progressTabValue)
-      if (progressTabValue === 'instructors') next.set(SUB_TAB_PARAM, 'instructors')
-      else next.delete(SUB_TAB_PARAM)
-      }
-    } else if (key === 'survey') {
-      const tab = searchParams.get(TAB_PARAM)
-      const surveyTab = surveyMenuItems.some(item => item.key === tab)
-        ? tab
-        : surveyMenuItems[0]?.key
-      if (surveyTab) next.set(TAB_PARAM, surveyTab)
-    }
-    setSearchParams(next, { replace: true })
+            : surveyMenuItems[0]?.key
+          if (surveyTab) next.set(TAB_PARAM, surveyTab)
+        }
+        preserveGeneralProgramDetailProgramId(prev, next)
+        if (next.toString() === prev.toString()) return prev
+        return next
+      },
+      { replace: true }
+    )
   }
 
   const setApplicantsChild = (tab: TabKey) => {
-    const next = new URLSearchParams(searchParams)
-    next.set(LNB_PARAM, 'applicants')
-    next.set(TAB_PARAM, tab)
-    if (programId) next.set('programId', programId)
-    setSearchParams(next, { replace: true })
+    setSearchParams(
+      prev => {
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        const next = new URLSearchParams(prev)
+        next.set(LNB_PARAM, 'applicants')
+        next.set(TAB_PARAM, tab)
+        preserveGeneralProgramDetailProgramId(prev, next)
+        if (next.toString() === prev.toString()) return prev
+        return next
+      },
+      { replace: true }
+    )
   }
 
   const setProgressChild = (tab: TabKey) => {
-    const next = new URLSearchParams(searchParams)
-    next.set(LNB_PARAM, 'progress')
-    next.set(TAB_PARAM, tab)
-    if (tab === 'instructors') next.set(SUB_TAB_PARAM, 'instructors')
-    else next.delete(SUB_TAB_PARAM)
-    if (programId) next.set('programId', programId)
-    next.delete(SCHOOL_ID_PARAM)
-    next.delete(SCHOOL_TAB_PARAM)
-    next.delete(INSTRUCTOR_ID_PARAM)
-    next.delete(INSTRUCTOR_TAB_PARAM)
-    next.delete(VOLUNTEER_ID_PARAM)
-    next.delete(VOLUNTEER_TAB_PARAM)
-    setSearchParams(next, { replace: true })
+    setSearchParams(
+      prev => {
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        const next = new URLSearchParams(prev)
+        next.set(LNB_PARAM, 'progress')
+        next.set(TAB_PARAM, tab)
+        if (tab === 'instructors') next.set(SUB_TAB_PARAM, 'instructors')
+        else next.delete(SUB_TAB_PARAM)
+        next.delete(SCHOOL_ID_PARAM)
+        next.delete(SCHOOL_TAB_PARAM)
+        next.delete(INSTRUCTOR_ID_PARAM)
+        next.delete(INSTRUCTOR_TAB_PARAM)
+        next.delete(VOLUNTEER_ID_PARAM)
+        next.delete(VOLUNTEER_TAB_PARAM)
+        preserveGeneralProgramDetailProgramId(prev, next)
+        if (next.toString() === prev.toString()) return prev
+        return next
+      },
+      { replace: true }
+    )
   }
 
   const setSurveyChild = (tab: GeneralSurveyNavKey) => {
-    const next = new URLSearchParams(searchParams)
-    next.set(LNB_PARAM, 'survey')
-    next.set(TAB_PARAM, tab)
-    if (programId) next.set('programId', programId)
-    next.delete(EDIT_PARAM)
-    next.delete(SCHOOL_ID_PARAM)
-    next.delete(SCHOOL_TAB_PARAM)
-    next.delete(INSTRUCTOR_ID_PARAM)
-    next.delete(INSTRUCTOR_TAB_PARAM)
-    next.delete(VOLUNTEER_ID_PARAM)
-    next.delete(VOLUNTEER_TAB_PARAM)
-    setSearchParams(next, { replace: true })
+    setSearchParams(
+      prev => {
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        const next = new URLSearchParams(prev)
+        next.set(LNB_PARAM, 'survey')
+        next.set(TAB_PARAM, tab)
+        next.delete(EDIT_PARAM)
+        next.delete(SCHOOL_ID_PARAM)
+        next.delete(SCHOOL_TAB_PARAM)
+        next.delete(INSTRUCTOR_ID_PARAM)
+        next.delete(INSTRUCTOR_TAB_PARAM)
+        next.delete(VOLUNTEER_ID_PARAM)
+        next.delete(VOLUNTEER_TAB_PARAM)
+        preserveGeneralProgramDetailProgramId(prev, next)
+        if (next.toString() === prev.toString()) return prev
+        return next
+      },
+      { replace: true }
+    )
   }
 
   const programSidebarItems = useMemo<DetailModalSidebarNavItem[]>(
@@ -1008,12 +1056,20 @@ export function ProgramDetailFullPageModal({
 
   const setActiveTab = (key: TabKey) => {
     setEditingTab(null)
-    const next = new URLSearchParams(searchParams)
-    next.set(LNB_PARAM, 'info')
-    next.set(TAB_PARAM, key)
-    next.delete(SUB_TAB_PARAM)
-    next.delete(EDIT_PARAM)
-    setSearchParams(next, { replace: true })
+    setSearchParams(
+      prev => {
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        const next = new URLSearchParams(prev)
+        next.set(LNB_PARAM, 'info')
+        next.set(TAB_PARAM, key)
+        next.delete(SUB_TAB_PARAM)
+        next.delete(EDIT_PARAM)
+        preserveGeneralProgramDetailProgramId(prev, next)
+        if (next.toString() === prev.toString()) return prev
+        return next
+      },
+      { replace: true }
+    )
   }
 
   const setEditMode = (tab: TabKey | null) => {
@@ -1567,7 +1623,7 @@ export function ProgramDetailFullPageModal({
                 !!displayProgram && !canGeneralProgramCommonInfoEdit(displayProgram)
               }
               persistPending={updateTrainedTeacherInfoDetailMutation.isPending}
-              onBeforePersist={async () => {
+              onBeforePersist={async progressTables => {
                 const values = infoForm.getValues()
                 if (!values.sponsorId?.trim() && values.sponsorManagementIds?.[0]) {
                   infoForm.setValue('sponsorId', values.sponsorManagementIds[0], {
@@ -1585,7 +1641,7 @@ export function ProgramDetailFullPageModal({
                   })
                   throw new Error('trainedTeacherBasicInfoValidationFailed')
                 }
-                const basicOk = await infoTriggerSave()
+                const basicOk = await infoTriggerSave(progressTables)
                 if (!basicOk) {
                   // API 오류는 onSaveEdit → handleError 에서 이미 안내
                   throw new Error('trainedTeacherBasicInfoSaveFailed')
@@ -1598,11 +1654,8 @@ export function ProgramDetailFullPageModal({
                         await updateTrainedTeacherInfoDetailMutation.mutateAsync({
                           programId: displayProgram.id,
                           payload: {
-                            // KPI SSOT = programs PATCH — detail에는 commonInfo만
-                            commonInfo: {
-                              ...displayProgram.generalCommonInfo,
-                              ...payload.commonInfo,
-                            },
+                            // 교육일지·연수·커리큘럼만. 후원·교재명 등 programs 구값을 configJson에 재주입하지 않음
+                            commonInfo: payload.commonInfo,
                           },
                         })
                       } catch (error) {

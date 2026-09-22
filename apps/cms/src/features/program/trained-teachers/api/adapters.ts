@@ -155,6 +155,12 @@ function baseProgram(
   }
 }
 
+function toOptionalNumber(value: unknown): number | undefined {
+  if (value == null || value === '') return undefined
+  const n = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(n) ? n : undefined
+}
+
 export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto): Program {
   const item = dto as TrainedTeacherListItemDto
   const title =
@@ -162,6 +168,10 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
   const textbookName = item.textbookName?.trim() || item.detailedProgramName?.trim() || undefined
   const managerName = item.managerName?.trim() || undefined
   const venue = item.venue?.trim() || undefined
+  const targetLevels = resolveProgramTargetLevels({
+    targetLevel: item.targetLevel,
+    targetLevels: item.targetLevels,
+  })
   return baseProgram({
     id: item.id == null ? '' : String(item.id),
     title,
@@ -169,8 +179,19 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
     startDate: item.businessStartDate ?? item.startDate,
     endDate: item.businessEndDate ?? item.endDate,
     lifecycleStatus: resolveListLifecycleStatus(item),
-    approvedStudentCount: item.approvedOrganizationApplicationCount ?? item.applicantCount,
-    participatingSchoolCount: item.organizationApplicationCount,
+    targetLevel: targetLevels[0],
+    targetLevels: targetLevels.length > 0 ? targetLevels : undefined,
+    approvedStudentCount:
+      toOptionalNumber(item.participantApprovedCount) ??
+      toOptionalNumber(item.approvedOrganizationApplicationCount) ??
+      toOptionalNumber(item.applicantCount),
+    participantCapacity:
+      toOptionalNumber(item.participantCapacity) ??
+      toOptionalNumber(item.participantRecruitmentCount),
+    participatingSchoolCount:
+      toOptionalNumber(item.participatingSchoolCount) ??
+      toOptionalNumber(item.participatingOrganizationCount),
+    participatingStudentCount: toOptionalNumber(item.participatingStudentCount),
     textbookName,
     managerName,
     venue,
@@ -211,8 +232,14 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   const educationStructure =
     mapApiEducationStructureToDomain(dto.educationStructure) ??
     details.generalProgramEducationStructure
+  /** 공고용 — top-level title SSOT. nested announcementTitle 구값으로 헤더만 바뀐 것처럼 보이지 않게 */
+  const announcementTitle =
+    dto.title?.trim() || details.generalCommonInfo?.announcementTitle
+  /** 세부명 — PATCH는 textbookName. nested detailedProgramName 구값이 신 컬럼을 가리지 않게 */
   const detailedProgramName =
-    dto.detailedProgramName?.trim() || details.generalCommonInfo?.detailedProgramName
+    dto.detailedProgramName?.trim() ||
+    dto.textbookName?.trim() ||
+    details.generalCommonInfo?.detailedProgramName
   const participantRemarks = (
     details.generalCommonInfo?.participantRecruitmentInfo as { remarks?: string } | undefined
   )?.remarks
@@ -241,6 +268,19 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   }
   const nestedVenueKind = details.generalCommonInfo?.venueKind
   const nestedVenueDetail = details.generalCommonInfo?.venueDetail?.trim()
+  const venueDetail = dto.venue?.trim() || nestedVenueDetail
+  const venueKind =
+    dto.institutionType === 'inside_school'
+      ? ('inside' as const)
+      : dto.institutionType === 'outside_school'
+        ? ('outside' as const)
+        : nestedVenueKind === 'inside' ||
+            nestedVenueKind === 'outside' ||
+            nestedVenueKind === 'other'
+          ? nestedVenueKind
+          : venueDetail
+            ? ('other' as const)
+            : undefined
 
   return baseProgram({
     ...detailFields,
@@ -327,9 +367,10 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     generalProgramEducationStructure: educationStructure,
     generalCommonInfo: clearTeacherTrainingScheduleIfOff({
       ...details.generalCommonInfo,
+      ...(announcementTitle ? { announcementTitle } : {}),
       ...(detailedProgramName ? { detailedProgramName } : {}),
-      ...(nestedVenueKind ? { venueKind: nestedVenueKind } : {}),
-      ...(nestedVenueDetail ? { venueDetail: nestedVenueDetail } : {}),
+      ...(venueKind ? { venueKind } : {}),
+      ...(venueDetail ? { venueDetail } : {}),
       kpi: resolvedKpi,
       participantRecruitmentInfo: {
         ...details.generalCommonInfo?.participantRecruitmentInfo,
