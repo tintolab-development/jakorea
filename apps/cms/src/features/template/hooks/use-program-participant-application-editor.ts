@@ -138,6 +138,9 @@ import {
   persistUjatRecruitInstitutionTemplateSave,
   persistUjatRecruitVolunteerTemplateSave,
 } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
+import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import { pickUjatRecruitInstitutionOverlay } from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
+import { pickUjatRecruitVolunteerOverlay } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import {
   getUjatRecruitInstitutionOverlayRecord,
   replaceUjatRecruitInstitutionOverlay,
@@ -488,13 +491,19 @@ export function collectParticipantOverlayForVariant(
   }
   if (variant === 'ujat-recruit-institution') {
     return mergeRecruitDetailInfoFromGeneralStore(
-      { ...getUjatRecruitInstitutionOverlayRecord() },
+      {
+        ...pickUjatRecruitInstitutionOverlay(getUjatProgramRegistrationOverlayRecord()),
+        ...getUjatRecruitInstitutionOverlayRecord(),
+      },
       recruitDetailInfoOverlayPrefixForEditorVariant(variant)
     )
   }
   if (variant === 'ujat-recruit-volunteer') {
     return mergeRecruitDetailInfoFromGeneralStore(
-      { ...getUjatRecruitVolunteerOverlayRecord() },
+      {
+        ...pickUjatRecruitVolunteerOverlay(getUjatProgramRegistrationOverlayRecord()),
+        ...getUjatRecruitVolunteerOverlayRecord(),
+      },
       recruitDetailInfoOverlayPrefixForEditorVariant(variant)
     )
   }

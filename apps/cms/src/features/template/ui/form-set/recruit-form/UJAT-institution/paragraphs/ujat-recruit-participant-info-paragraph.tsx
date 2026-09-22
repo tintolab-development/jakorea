@@ -1,7 +1,6 @@
-import { useMemo } from 'react'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import { UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/program/ujat/lib/ujat-institution-recruit-template-preview-program'
-import { resolveUjatRecruitDisplayProgram } from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import { useUjatRecruitTemplateProgram } from '@/features/program/ujat/lib/use-ujat-recruit-template-program'
 import type { UjatRecruitParagraphProps } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
 import {
   isUjatRecruitProgramContext,
@@ -10,9 +9,9 @@ import {
 import { UjatRecruitParticipantInfoProgramView } from '@/features/program/ujat/ui/detail-modal/info/recruit-paragraph-views/participant-info-program'
 
 function UjatRecruitParticipantInfoTemplateEditor() {
-  const previewProgram = useMemo(
-    () => resolveUjatRecruitDisplayProgram(UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM),
-    []
+  const previewProgram = useUjatRecruitTemplateProgram(
+    UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+    'institution'
   )
   const form = useProgramDetailEditForm({ program: previewProgram, isEditMode: true })
 
