@@ -25,6 +25,7 @@ import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/share
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
 import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import { applyDevProgramRegistrationAutofill } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
+import { UjatRegistrationRequiredFieldsIncompleteError } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 
 const UJAT_REGISTRATION_MODAL_TITLE = 'UJAT 프로그램 등록'
@@ -210,6 +211,7 @@ export function UjatProgramRegistrationFullpageModal({
                 void clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE)
               })
               .catch(error => {
+                if (error instanceof UjatRegistrationRequiredFieldsIncompleteError) return
                 console.debug('UJAT program registration completion failed', error)
                 showAlert({
                   title: '프로그램 등록 실패',

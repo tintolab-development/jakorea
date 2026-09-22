@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { useCreateProgram } from '@/features/program/ujat/api/queries'
+import {
+  describeIncompleteUjatProgramRegistrationRequiredFields,
+  describeIncompleteUjatProgramRecruitmentRequiredFields,
+  describeIncompleteUjatProgramRegistrationWizardRequiredFields,
+  hasIncompleteUjatProgramRegistrationRequiredFields,
+  hasIncompleteUjatProgramRecruitmentRequiredFields,
+  UjatRegistrationRequiredFieldsIncompleteError,
+} from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
 import type { Program } from '@/types/domain'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import {
@@ -70,6 +83,7 @@ export function useUjatProgramRegistrationFlow(
     const initial = options?.initialStep
     return initial != null ? normalizeUjatProgramRegistrationStepKey(initial) : 'program'
   })
+  const { showAlert } = useCmsAlert()
   const createProgramMutation = useCreateProgram()
   const completionPromiseRef = useRef<Promise<Program> | null>(null)
   const idempotencyKeyRef = useRef(createRegistrationIdempotencyKey())
@@ -244,6 +258,36 @@ export function useUjatProgramRegistrationFlow(
 
   const goToPhase = useCallback(
     (nextPhase: UjatProgramRegistrationPhaseKey) => {
+      if (
+        nextPhase !== 'program' &&
+        phase === 'program' &&
+        hasIncompleteUjatProgramRegistrationRequiredFields()
+      ) {
+        console.debug(
+          '[registration] UJAT 공통정보 필수항목 미입력:',
+          describeIncompleteUjatProgramRegistrationRequiredFields()
+        )
+        showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
+        return
+      }
+      if (
+        phase === 'recruitment' &&
+        nextPhase === 'application' &&
+        hasIncompleteUjatProgramRecruitmentRequiredFields()
+      ) {
+        console.debug(
+          '[registration] UJAT 모집정보 필수항목 미입력:',
+          describeIncompleteUjatProgramRecruitmentRequiredFields()
+        )
+        showAlert({
+          title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+          content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        })
+        return
+      }
       if (nextPhase === 'program') {
         selectStep('program')
         return
@@ -254,7 +298,7 @@ export function useUjatProgramRegistrationFlow(
       }
       selectStep(UJAT_PROGRAM_REGISTRATION_DEFAULT_APPLICATION_STEP)
     },
-    [selectStep]
+    [phase, selectStep, showAlert]
   )
 
   const handlePreview = useCallback(() => {
@@ -299,6 +343,18 @@ export function useUjatProgramRegistrationFlow(
 
   const handleCompleteRegistration = useCallback(() => {
     if (completionPromiseRef.current) return completionPromiseRef.current
+
+    if (describeIncompleteUjatProgramRegistrationWizardRequiredFields() != null) {
+      console.debug(
+        '[registration] UJAT 등록 완료 필수항목 미입력:',
+        describeIncompleteUjatProgramRegistrationWizardRequiredFields()
+      )
+      showAlert({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return Promise.reject(new UjatRegistrationRequiredFieldsIncompleteError())
+    }
 
     const registrationOverlayForLog = { ...getUjatProgramRegistrationOverlayRecord() }
     const programForLog = buildUjatProgramListRowFromRegistrationSnapshot({
@@ -416,6 +472,7 @@ export function useUjatProgramRegistrationFlow(
     participantVariant,
     participantVm,
     registrationVm,
+    showAlert,
   ])
 
   return {

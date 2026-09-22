@@ -7,7 +7,7 @@
  *
  * 1사1교는 `economy-program-registration-required-fields`가 같은 정책(readText fallback).
  * 교육받은 교사는 KPI·임금 단락이 없어 이 함수로 검사하지 않는다.
- * UJAT 등록 위저드는 단계 이동 시 필수 검사를 하지 않는다.
+ * UJAT 등록 위저드는 `ujat-program-registration-required-fields`를 사용한다.
  */
 import type { ProgramRegistrationParticipantSelection } from '@/features/template/lib/program-registration-editor-state'
 import type {
