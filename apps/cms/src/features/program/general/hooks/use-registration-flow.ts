@@ -51,6 +51,7 @@ import {
   hasIncompleteEconomyProgramApplicationRequiredFields,
   hasIncompleteEconomyProgramRecruitmentRequiredFields,
 } from '@/features/program/general/lib/economy-program-registration-required-fields'
+import { formatRegistrationStepTransitionLabel } from '@/features/program/shared/lib/log-program-registration-create-payload'
 
 /** 일반프로그램 등록 필수 항목 미입력 검사 — `hasIncompleteGeneralProgramRegistrationRequiredFields` */
 const SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK = false
@@ -458,11 +459,18 @@ export function useGeneralProgramRegistrationFlow(
         registrationFormVariant
       )
       if (next === coercedActiveStep) return
+      const fromPhase = getGeneralProgramRegistrationPhase(coercedActiveStep)
+      const toPhase = getGeneralProgramRegistrationPhase(next)
+      if (fromPhase !== toPhase) {
+        registrationVm.logCurrentRegistrationPayload(
+          formatRegistrationStepTransitionLabel(fromPhase, toPhase)
+        )
+      }
       // 탭/단계 전환은 React state만 유지. 세션·서버 임시저장은 「임시 저장」버튼에서만.
       setActiveStep(next)
       options?.onStepChange?.(next)
     },
-    [coercedActiveStep, options, participantFlags, registrationFormVariant]
+    [coercedActiveStep, options, participantFlags, registrationFormVariant, registrationVm]
   )
 
   const goToPhase = useCallback(
@@ -559,6 +567,7 @@ export function useGeneralProgramRegistrationFlow(
       void registrationVm.handleCompleteRegistration()
       return
     }
+    registrationVm.logCurrentRegistrationPayload('등록 완료')
     if (
       !SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK &&
       registrationFormVariant === 'economy' &&
