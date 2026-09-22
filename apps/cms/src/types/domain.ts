@@ -150,6 +150,8 @@ export interface GeneralProgramCommonInfoExtension {
   sponsorManagerContactId?: string
   /** 후원사 담당자 선택 ref — 다중 선택 (후원사 멀티와 동일 UX) */
   sponsorManagerContactIds?: string[]
+  /** GET sponsors 의 담당자 표시명. ref → 이름. 저장 SSOT 아님 */
+  sponsorManagerContactNames?: Record<string, string>
   educationFormLabel?: string
   /** 참여 방식 — 개인 대상 · 일정 공통 (등록 폼·상세 조회 mock) */
   participationMethod?: 'individual' | 'team'
@@ -194,6 +196,15 @@ export interface GeneralProgramCommonInfoExtension {
   teacherTrainingEnabled?: boolean
   /** 교육받은 교사 — GET teacherTrainingScheduleName. OFF면 빈 문자열 */
   teacherTrainingScheduleName?: string
+  /**
+   * 교육 과정 · IP Owned · Course Delivered By · Partner Involvement.
+   * TRAINED_TEACHER programs PATCH 는 올린 serviceDetailJson 으로 config 를 교체하고,
+   * 최상위 컬럼 미러를 JSON 에 다시 쓰지 않는다. 화면 값은 여기 둔다.
+   */
+  educationProcess?: string
+  ipOwned?: string
+  courseDeliveredBy?: 'JA' | 'Jointly' | 'Partner'
+  partnerInvolvement?: boolean
   /** 일반 프로그램 캘린더 — 설문조사 시작/종료 등 */
   calendarSurveySchedules?: GeneralProgramCalendarScheduleRow[]
   /** 일반 프로그램 캘린더 — 과제 제출 마감 등 */

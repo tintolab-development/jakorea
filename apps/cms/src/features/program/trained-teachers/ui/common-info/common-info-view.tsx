@@ -18,7 +18,7 @@
  * remote ON 시 `onPersist` → `PATCH …/trained-teacher/detail` (+ `onBeforePersist`).
  */
 
-import { Fragment, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import { Controller } from 'react-hook-form'
 import { PlusOutlined } from '@ant-design/icons'
@@ -29,13 +29,18 @@ import type {
   Program,
 } from '@/types/domain'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsButton, CmsToggle } from '@/shared/ui'
+import { CmsButton, CmsToggle, useCmsAlert } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { BasicInfoSection } from '@/features/program/shared/ui/program-detail/project-info/common-info/basic-info-section'
-import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import {
+  detailEditValuesToProgramPatch,
+  resolveStoredEducationFormLabel,
+  resolveStoredIpsTypeSummary,
+  type ProgramDetailEditFormValues,
+} from '@/features/program/shared/model/program-detail-edit-schema'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import {
@@ -68,6 +73,7 @@ import '@/features/template/ui/form-set/registration-form/general/paragraphs/pro
 import '@/features/template/ui/shared/paragraph-date-picker.css'
 import '@/features/template/ui/shared/paragraph-time-picker.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
+import { validateTrainedTeachersCommonInfoDraft } from '@/features/program/trained-teachers/lib/validate-trained-teachers-common-info-draft'
 import './common-info-view.css'
 
 /** 교육 연수 — IPS Prepare 고정 표기 */
@@ -153,7 +159,7 @@ function clampKpiDraftValue(value: number | null | undefined): number | undefine
   return Math.min(n, JAVA_INT_MAX)
 }
 
-function seedDraft(
+export function seedDraft(
   commonInfo: TrainedTeachersCommonInfo,
   educatedTeachers: number | undefined,
   totals: { totalParticipants?: number; participatingSchoolCount?: number } | undefined,
@@ -323,10 +329,10 @@ function TrainedTeachersTypeSettingsSection({
     <>
       일정 공통
       <DetailInfoForm.InputsSeparator />
-      {commonInfo.educationFormLabel ?? '-'}
+      {resolveStoredEducationFormLabel(commonInfo) || '-'}
     </>
   ) : (
-    (commonInfo.educationFormLabel ?? '-')
+    (resolveStoredEducationFormLabel(commonInfo) || '-')
   )
 
   const ipsCategory = (isFormEdit ? form.watch('ipsCategory') : undefined) as
@@ -519,7 +525,7 @@ function TrainedTeachersTypeSettingsSection({
                     render={({ field }) => (
                       <CmsRadioGroup
                         size="large"
-                        value={field.value || 'online'}
+                        value={field.value || undefined}
                         onChange={e => field.onChange(String(e.target.value))}
                       >
                         {educationFormOptions.map(option => (
@@ -592,7 +598,9 @@ function TrainedTeachersTypeSettingsSection({
               <DetailInfoForm.Field
                 label="IPS 유형"
                 fullRow
-                view={<PipeSeparatedInlineView text={commonInfo.ipsTypeSummary} />}
+                view={
+                  <PipeSeparatedInlineView text={resolveStoredIpsTypeSummary(commonInfo)} />
+                }
               />
             </DetailInfoForm.Row>
           </>
@@ -1731,6 +1739,7 @@ export function TrainedTeachersCommonInfoView({
   persistPending = false,
   editDisabled = false,
 }: TrainedTeachersCommonInfoViewProps) {
+  const { showAlert } = useCmsAlert()
   const baseCommonInfo = resolveGeneralProgramCommonInfo(program)
 
   // mock 저장 오버레이 — onPersist 없을 때만 세션 범위로 반영
@@ -1756,13 +1765,22 @@ export function TrainedTeachersCommonInfoView({
     [program, savedOverride, commonInfo]
   )
 
-  const { educationStructure: baseEducationStructure, sessionRound: baseSessionRound } =
-    resolveEffectiveGeneralProgramTypeFields({
-      generalProgramAudience: program.generalProgramAudience,
-      generalProgramEducationStructure: program.generalProgramEducationStructure,
-      generalProgramSessionRound: program.generalProgramSessionRound,
-      curriculumSessions: commonInfo.curriculumSessions,
-    })
+  const resolvedTypeFields = resolveEffectiveGeneralProgramTypeFields({
+    generalProgramAudience: program.generalProgramAudience,
+    generalProgramEducationStructure: program.generalProgramEducationStructure,
+    generalProgramSessionRound: program.generalProgramSessionRound,
+    curriculumSessions: commonInfo.curriculumSessions,
+  })
+  const hasScheduleRows = (commonInfo.scheduleDetails?.length ?? 0) > 0
+  const hasCurriculumRows = (commonInfo.curriculumSessions?.length ?? 0) > 0
+  const baseEducationStructure =
+    program.generalProgramEducationStructure === 'curriculum' ||
+    program.generalProgramEducationStructure === 'schedule'
+      ? resolvedTypeFields.educationStructure
+      : hasScheduleRows && !hasCurriculumRows
+        ? 'schedule'
+        : resolvedTypeFields.educationStructure
+  const baseSessionRound = resolvedTypeFields.sessionRound
 
   // 수정 모드 — 유형 설정 라디오 변경 시 교육 진행 UI를 즉시 전환
   const educationStructure =
@@ -1802,6 +1820,17 @@ export function TrainedTeachersCommonInfoView({
     // savedOverride는 시드 시점 값만 필요 — isEditMode 전환 시에만 실행
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, program])
+
+  // 폼 reset은 부모 layout effect가 나중에 돌 수 있다. 구조 값이 비어 있으면 화면에 보인 유형을 폼에 넣는다.
+  useEffect(() => {
+    if (!isEditMode || !form) return
+    if (!form.getValues('educationStructure')) {
+      form.setValue('educationStructure', baseEducationStructure, { shouldDirty: false })
+    }
+    if (!form.getValues('sessionRound')) {
+      form.setValue('sessionRound', baseSessionRound, { shouldDirty: false })
+    }
+  }, [isEditMode, form, baseEducationStructure, baseSessionRound])
 
   // 유형 설정(교육 구조/회차) 변경 시 — 빈 테이블이면 최소 1행 보장 (기존 값 유지)
   useLayoutEffect(() => {
@@ -1869,6 +1898,23 @@ export function TrainedTeachersCommonInfoView({
               ? commonInfo.curriculumSessions
               : undefined
 
+        if (draft) {
+          const draftValidationMessage = validateTrainedTeachersCommonInfoDraft({
+            educationStructure,
+            sessionRound,
+            scheduleDetails: draft.scheduleDetails,
+            progressGroupsByDetail: draft.progressGroupsByDetail,
+            educationScheduleLines: form?.getValues('educationScheduleLines'),
+          })
+          if (draftValidationMessage) {
+            void showAlert({
+              title: '입력 확인',
+              content: draftValidationMessage,
+            })
+            return
+          }
+        }
+
         if (onBeforePersist) {
           await onBeforePersist(
             draft
@@ -1881,11 +1927,20 @@ export function TrainedTeachersCommonInfoView({
         }
 
         if (draft) {
+          const formCommonInfo = form
+            ? detailEditValuesToProgramPatch(form.getValues(), program).generalCommonInfo
+            : undefined
           const commonInfoPayload: Partial<TrainedTeachersCommonInfo> = {
+            ...commonInfo,
+            ...formCommonInfo,
             educationJournalEnabled: draft.educationJournalEnabled,
             teacherTrainingEnabled: draft.teacherTrainingEnabled,
-            curriculumSessions,
-            scheduleDetails,
+            ...(educationStructure === 'curriculum'
+              ? { curriculumSessions: draft.curriculumSessions }
+              : {
+                  curriculumSessions: commonInfo.curriculumSessions,
+                  scheduleDetails,
+                }),
           }
 
           const needsInfoDetailPatch =

@@ -72,18 +72,18 @@ export function mergeTrainedTeacherSponsorAssignments(
   const sponsorManagementIds = [
     ...new Set(valid.map(row => String(row.sponsorId).trim())),
   ]
-  const sponsorManagerContactIds = valid
-    .filter(
-      row => row.sponsorContactId != null && String(row.sponsorContactId).trim() !== ''
-    )
-    .map(row =>
-      encodeSponsorManagerContactRef(String(row.sponsorId), String(row.sponsorContactId))
-    )
-  const withContact = valid.find(
-    row => row.sponsorContactId != null && String(row.sponsorContactId).trim() !== ''
-  )
+  const sponsorManagerContactIds: string[] = []
+  const sponsorManagerContactNames: Record<string, string> = {}
+  for (const row of valid) {
+    const contactId = row.sponsorContactId != null ? String(row.sponsorContactId).trim() : ''
+    if (!contactId) continue
+    const ref = encodeSponsorManagerContactRef(String(row.sponsorId).trim(), contactId)
+    if (!sponsorManagerContactIds.includes(ref)) sponsorManagerContactIds.push(ref)
+    const contactName = row.sponsorContactName?.trim()
+    if (contactName) sponsorManagerContactNames[ref] = contactName
+  }
   const managerName =
-    withContact?.sponsorContactName?.trim() || program.managerName
+    Object.values(sponsorManagerContactNames)[0] || program.managerName
 
   return {
     ...program,
@@ -94,6 +94,7 @@ export function mergeTrainedTeacherSponsorAssignments(
       sponsorManagementIds,
       sponsorManagerContactIds,
       sponsorManagerContactId: sponsorManagerContactIds[0],
+      sponsorManagerContactNames,
     },
   }
 }
@@ -269,18 +270,22 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   const nestedVenueKind = details.generalCommonInfo?.venueKind
   const nestedVenueDetail = details.generalCommonInfo?.venueDetail?.trim()
   const venueDetail = dto.venue?.trim() || nestedVenueDetail
+  const explicitVenueKind =
+    nestedVenueKind === 'inside' ||
+    nestedVenueKind === 'outside' ||
+    nestedVenueKind === 'other'
+      ? nestedVenueKind
+      : undefined
+  // 기타(직접입력)는 institutionType 컬럼에 없다. nested venueKind가 있으면 그 선택을 유지한다.
   const venueKind =
-    dto.institutionType === 'inside_school'
+    explicitVenueKind ??
+    (dto.institutionType === 'inside_school'
       ? ('inside' as const)
       : dto.institutionType === 'outside_school'
         ? ('outside' as const)
-        : nestedVenueKind === 'inside' ||
-            nestedVenueKind === 'outside' ||
-            nestedVenueKind === 'other'
-          ? nestedVenueKind
-          : venueDetail
-            ? ('other' as const)
-            : undefined
+        : venueDetail
+          ? ('other' as const)
+          : undefined)
 
   return baseProgram({
     ...detailFields,
@@ -327,7 +332,14 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
       targetLevels: details.targetLevels,
       targetLevel: details.targetLevels?.[0] ?? dto.targetLevel,
     }),
-    institutionType: dto.institutionType as Program['institutionType'],
+    institutionType:
+      venueKind === 'other'
+        ? undefined
+        : venueKind === 'outside'
+          ? 'outside_school'
+          : venueKind === 'inside'
+            ? 'inside_school'
+            : (dto.institutionType as Program['institutionType']),
     ipOwned: dto.ipOwned,
     courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
     partnerInvolvement: dto.partnerInvolvement,

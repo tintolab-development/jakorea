@@ -33,6 +33,24 @@ function parseIsoRange(value: unknown): { start: string; end: string } | undefin
   return { start, end }
 }
 
+function mergeDetailRows<T extends object>(
+  programRows: T[] | undefined,
+  patchRows: T[] | undefined
+): T[] | undefined {
+  if (!patchRows?.length) return programRows
+  if (!programRows?.length) return patchRows
+  const length = Math.max(programRows.length, patchRows.length)
+  return Array.from({ length }, (_, index) => {
+    const base = (programRows[index] ?? {}) as Record<string, unknown>
+    const overlay = (patchRows[index] ?? {}) as Record<string, unknown>
+    const merged: Record<string, unknown> = { ...base }
+    for (const [key, value] of Object.entries(overlay)) {
+      if (value !== undefined && value !== null && value !== '') merged[key] = value
+    }
+    return merged as T
+  })
+}
+
 function commonInfoFromConfigJson(
   parsed: Record<string, unknown>
 ): NonNullable<Program['generalCommonInfo']> | undefined {
@@ -48,16 +66,45 @@ function commonInfoFromConfigJson(
   return fromProgram ?? fromRoot
 }
 
+/**
+ * B `configJson.generalCommonInfo` 는 이 키만. 공고명·세부명·후원·장소·KPI 는 A envelope.
+ * GET detail `configJson` 에 announcementTitle / sponsorManagementIds / textbookName 이 있으면 실패.
+ * 여기 없는 키는 B가 지우지 않는다 (overlay).
+ */
+const TRAINED_TEACHER_INFO_CONFIG_OVERLAY_KEYS = [
+  'curriculumSessions',
+  'scheduleDetails',
+  'educationScheduleLines',
+  'educationScheduleMode',
+  'educationScheduleRange',
+] as const
+
+function narrowTrainedTeacherInfoConfigCommonInfo(
+  commonInfo: NonNullable<Program['generalCommonInfo']>
+): NonNullable<Program['generalCommonInfo']> {
+  const trainingEnabled = commonInfo.teacherTrainingEnabled === true
+  const cleared = clearTeacherTrainingScheduleIfOff(commonInfo, {
+    teacherTrainingEnabled: trainingEnabled,
+    teacherTrainingScheduleName: trainingEnabled ? TRAINED_TEACHER_TRAINING_SCHEDULE_NAME : '',
+  })
+  const source = cleared as Record<string, unknown>
+  const next: Record<string, unknown> = {
+    educationJournalEnabled: cleared.educationJournalEnabled === true,
+    teacherTrainingEnabled: trainingEnabled,
+    teacherTrainingScheduleName: trainingEnabled ? TRAINED_TEACHER_TRAINING_SCHEDULE_NAME : '',
+  }
+  for (const key of TRAINED_TEACHER_INFO_CONFIG_OVERLAY_KEYS) {
+    if (source[key] !== undefined) next[key] = source[key]
+  }
+  return next as NonNullable<Program['generalCommonInfo']>
+}
+
 export function serializeTrainedTeacherInfoConfigJson(
   payload: TrainedTeachersCommonInfoSavePayload
 ): string {
   const body: InfoConfigJsonV1 = {
     schemaVersion: TRAINED_TEACHER_INFO_CONFIG_JSON_VERSION,
-    educatedTeachers: payload.educatedTeachers,
-    generalCommonInfo: payload.commonInfo,
-    educationScheduleRange: payload.commonInfo.educationScheduleRange,
-    educationScheduleMode: payload.commonInfo.educationScheduleMode,
-    educationScheduleLines: payload.commonInfo.educationScheduleLines,
+    generalCommonInfo: narrowTrainedTeacherInfoConfigCommonInfo(payload.commonInfo),
   }
   return JSON.stringify(body)
 }
@@ -149,10 +196,15 @@ export function mergeTrainedTeacherInfoDetailIntoProgram(
           dto.educationJournalEnabled ??
           programCommon?.educationJournalEnabled ??
           patchCommon?.educationJournalEnabled,
-        // 커리큘럼/일정 쓰기 SSOT = trained-teacher/detail configJson.
-        // programs serviceDetailJson 이 구값을 다시 실으면 화면이 원복됨.
-        curriculumSessions: patchCommon?.curriculumSessions ?? programCommon?.curriculumSessions,
-        scheduleDetails: patchCommon?.scheduleDetails ?? programCommon?.scheduleDetails,
+        // 한쪽 JSON이 일정명·진행 시간을 빼도 다른 쪽 값을 남긴다.
+        curriculumSessions: mergeDetailRows(
+          programCommon?.curriculumSessions,
+          patchCommon?.curriculumSessions
+        ),
+        scheduleDetails: mergeDetailRows(
+          programCommon?.scheduleDetails,
+          patchCommon?.scheduleDetails
+        ),
         educationScheduleLines:
           programCommon?.educationScheduleLines ?? patchCommon?.educationScheduleLines,
         educationScheduleMode:

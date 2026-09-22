@@ -758,30 +758,34 @@ export function normalizeSponsorManagerContactIds(input: {
 
 /**
  * 후원사 id + 담당자 ref[] → PATCH `sponsors[]`.
- * BE는 후원사당 contact 1개 — 동일 후원사에 여러 ref면 마지막 값 사용.
+ * 후원사·담당자 모두 복수. 같은 후원사의 담당자가 여러 명이면 행을 나눈다.
  */
 export function buildProgramSponsorAssignmentsWire(
   sponsorManagementIds: readonly string[],
   contactRefs: readonly string[]
 ): Array<{ sponsorId: string; sponsorContactId?: string }> {
-  const contactBySponsor = new Map<string, string>()
+  const contactsBySponsor = new Map<string, string[]>()
   for (const ref of contactRefs) {
     const decoded = decodeSponsorManagerContactRef(ref.trim())
     if (!decoded?.sponsorManagementId || !decoded.contactId) continue
-    contactBySponsor.set(decoded.sponsorManagementId, decoded.contactId)
+    const sponsorId = decoded.sponsorManagementId.trim()
+    const contactId = decoded.contactId.trim()
+    if (!sponsorId || !contactId) continue
+    const list = contactsBySponsor.get(sponsorId) ?? []
+    if (!list.includes(contactId)) list.push(contactId)
+    contactsBySponsor.set(sponsorId, list)
   }
   const sponsorIds = [
     ...new Set(
-      [...sponsorManagementIds, ...contactBySponsor.keys()]
+      [...sponsorManagementIds, ...contactsBySponsor.keys()]
         .map(id => String(id).trim())
         .filter(Boolean)
     ),
   ]
-  return sponsorIds.map(sponsorId => {
-    const contactId = contactBySponsor.get(sponsorId)
-    return contactId
-      ? { sponsorId, sponsorContactId: contactId }
-      : { sponsorId }
+  return sponsorIds.flatMap(sponsorId => {
+    const contactIds = contactsBySponsor.get(sponsorId) ?? []
+    if (contactIds.length === 0) return [{ sponsorId }]
+    return contactIds.map(sponsorContactId => ({ sponsorId, sponsorContactId }))
   })
 }
 

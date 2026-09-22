@@ -25,10 +25,14 @@ describe('trained-teacher info detail adapters', () => {
       },
     }
     const raw = serializeTrainedTeacherInfoConfigJson(payload)
-    expect(parseTrainedTeacherInfoConfigJson(raw)).toEqual({
-      educatedTeachers: 12,
-      generalCommonInfo: payload.commonInfo,
+    expect(raw).not.toContain('educatedTeachers')
+    expect(raw).not.toContain('finalParticipants')
+    expect(parseTrainedTeacherInfoConfigJson(raw).generalCommonInfo).toMatchObject({
+      educationJournalEnabled: true,
+      teacherTrainingEnabled: true,
+      teacherTrainingScheduleName: '교육 연수',
     })
+    expect(parseTrainedTeacherInfoConfigJson(raw).generalCommonInfo).not.toHaveProperty('kpi')
   })
 
   it('maps save payload to PATCH request flags + configJson', () => {
@@ -44,21 +48,48 @@ describe('trained-teacher info detail adapters', () => {
     expect(request.educationJournalRequired).toBe(false)
     expect(request.journalSubmissionLimitType).toBe('UNLIMITED')
     expect(request.teacherTrainingScheduleName).toBe('교육 연수')
-    expect(request.configJson).toContain('"educatedTeachers":3')
+    expect(request.configJson).not.toContain('educatedTeachers')
+    expect(request.configJson).toContain('"teacherTrainingScheduleName":"교육 연수"')
   })
 
-  it('does not copy sponsor or textbook fields into a narrow info-detail PATCH', () => {
+  it('sends schedule name and time only, and omits announcement, sponsors, and kpi', () => {
     const request = mapTrainedTeacherInfoSaveToRequest({
+      educatedTeachers: 9,
       commonInfo: {
         teacherTrainingEnabled: false,
         educationJournalEnabled: true,
-        curriculumSessions: [{ sessionLabel: '1차시', title: '신 차시', description: '' }],
-      },
+        announcementTitle: '교육받은교사(수정2)',
+        detailedProgramName: '사회공헌 프로젝트2',
+        sponsorManagementIds: ['163302'],
+        title: '구제목',
+        textbookName: '교재 마스터',
+        sponsorId: '163302',
+        kpi: {
+          finalParticipants: 1,
+          instructorCount: 0,
+          volunteerCount: 0,
+          finalSchools: 1,
+          finalClasses: 1,
+        },
+        scheduleDetails: [
+          {
+            scheduleLabel: '세부 일정 01',
+            name: '교육받은교사(수정3)',
+            progressTimeSummary: '15:43 ~ 16:43',
+          },
+        ],
+      } as NonNullable<Program['generalCommonInfo']>,
     })
+    expect(request.configJson).not.toContain('announcementTitle')
     expect(request.configJson).not.toContain('sponsorManagementIds')
-    expect(request.configJson).not.toContain('textbookName')
     expect(request.configJson).not.toContain('detailedProgramName')
-    expect(request.configJson).toContain('"title":"신 차시"')
+    expect(request.configJson).not.toContain('finalParticipants')
+    expect(request.configJson).toContain('교육받은교사(수정3)')
+    expect(request.configJson).toContain('15:43 ~ 16:43')
+    expect(request.configJson).not.toContain('교재 마스터')
+    expect(request.configJson).not.toContain('"title":"구제목"')
+    expect(request.configJson).not.toContain('educatedTeachers')
+    expect(request.configJson).toContain('"teacherTrainingScheduleName":""')
   })
 
   it('reads educationScheduleRange from configJson root', () => {
@@ -209,6 +240,39 @@ describe('trained-teacher info detail adapters', () => {
     })
     expect(request.teacherTrainingEnabled).toBe(false)
     expect(request.teacherTrainingScheduleName).toBe('')
+  })
+
+  it('keeps progress time when detail JSON omits it but programs JSON has it', () => {
+    const program = {
+      id: '186034',
+      title: '교육받은교사(수정4)',
+      generalCommonInfo: {
+        announcementTitle: '교육받은교사(수정4)',
+        scheduleDetails: [
+          {
+            scheduleLabel: '세부 일정 01',
+            name: '구 일정명',
+            progressTimeSummary: '15:43 ~ 16:43',
+          },
+        ],
+      },
+    } as Program
+    const merged = mergeTrainedTeacherInfoDetailIntoProgram(program, {
+      teacherTrainingEnabled: false,
+      educationJournalEnabled: false,
+      teacherTrainingScheduleName: '',
+      configJson: JSON.stringify({
+        schemaVersion: 1,
+        generalCommonInfo: {
+          scheduleDetails: [{ scheduleLabel: '세부 일정 01', name: '교육받은교사(수정3)' }],
+        },
+      }),
+    })
+    expect(merged.generalCommonInfo?.scheduleDetails?.[0]).toMatchObject({
+      name: '교육받은교사(수정3)',
+      progressTimeSummary: '15:43 ~ 16:43',
+    })
+    expect(merged.generalCommonInfo?.announcementTitle).toBe('교육받은교사(수정4)')
   })
 
   it('clears leftover 교육 연수 when GET schedule name is empty', () => {

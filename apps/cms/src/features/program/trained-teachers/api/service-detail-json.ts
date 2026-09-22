@@ -51,7 +51,11 @@ function trainedTeacherConstraints(partial: Partial<Program>): Partial<Program> 
   }
 }
 
-/** BE가 commonInfo에 미러하는 Program 컬럼 — 저장 시 제거 (구값 잔존 방지) */
+/**
+ * BE가 commonInfo에 미러하는 Program 컬럼 — 저장 시 제거 (구값 잔존 방지).
+ * educationProcess · partnerInvolvement · ipOwned · courseDeliveredBy 는 빼지 않는다.
+ * TRAINED_TEACHER PATCH 는 정규화본이 아니라 이 JSON 으로 config 를 교체한다.
+ */
 const TRAINED_TEACHER_COMMON_INFO_PROGRAM_MIRROR_KEYS = [
   'title',
   'titleEn',
@@ -64,11 +68,7 @@ const TRAINED_TEACHER_COMMON_INFO_PROGRAM_MIRROR_KEYS = [
   'district',
   'targetLevel',
   'institutionType',
-  'ipOwned',
-  'courseDeliveredBy',
-  'partnerInvolvement',
   'teamDivision',
-  'educationProcess',
   'totalParticipants',
   'instructors',
   'contactEmail',
@@ -80,13 +80,36 @@ const TRAINED_TEACHER_COMMON_INFO_PROGRAM_MIRROR_KEYS = [
   'applicationPathId',
   'managerName',
   'teacherTrainingScheduleName',
+  'sponsorManagerContactNames',
 ] as const
+
+function trainedTeacherEducationSelection(
+  program: Program
+): Pick<
+  NonNullable<Program['generalCommonInfo']>,
+  'educationProcess' | 'ipOwned' | 'courseDeliveredBy' | 'partnerInvolvement'
+> {
+  const educationProcess = program.educationProcess?.trim()
+  const ipOwned = program.ipOwned?.trim()
+  const courseDeliveredBy = program.courseDeliveredBy
+  return {
+    ...(educationProcess ? { educationProcess } : {}),
+    ...(ipOwned ? { ipOwned } : {}),
+    ...(courseDeliveredBy ? { courseDeliveredBy } : {}),
+    ...(program.partnerInvolvement != null
+      ? { partnerInvolvement: program.partnerInvolvement }
+      : {}),
+  }
+}
 
 function sanitizeTrainedTeacherCommonInfo(
   common: Program['generalCommonInfo'] | undefined,
   program: Program
 ): Program['generalCommonInfo'] | undefined {
-  if (!common) return undefined
+  const educationSelection = trainedTeacherEducationSelection(program)
+  if (!common) {
+    return Object.keys(educationSelection).length > 0 ? educationSelection : undefined
+  }
   const stripped = { ...common } as Record<string, unknown>
   for (const key of TRAINED_TEACHER_COMMON_INFO_PROGRAM_MIRROR_KEYS) {
     delete stripped[key]
@@ -106,6 +129,7 @@ function sanitizeTrainedTeacherCommonInfo(
     common.detailedProgramName?.trim() || program.textbookName?.trim() || undefined
   return {
     ...(stripped as NonNullable<Program['generalCommonInfo']>),
+    ...educationSelection,
     ...(sponsorManagementIds.length > 0
       ? {
           sponsorManagementIds,

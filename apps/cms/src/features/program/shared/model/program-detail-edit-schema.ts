@@ -37,6 +37,11 @@ import {
   announcementPublishedToFormValue,
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { resolveVenueKind } from '@/features/program/general/model/common-info-edit-schema'
+import {
+  PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS,
+  PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS,
+} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
+import { formatZodIssuesForUser } from '@/features/program/shared/lib/format-zod-validation-message'
 import type { TargetLevel } from '@/types/domain'
 
 const roundStatusEnum = z.enum(['active', 'inactive', 'pending', 'completed', 'cancelled'])
@@ -94,6 +99,9 @@ function clampJavaInt(value: number | null | undefined): number | undefined {
 const optionalNonNegNumberMessage = (message: string) =>
   z.preprocess(nullToUndefined, z.number().min(0, message).optional())
 
+/** API/RHF optional boolean — null 은 undefined 로 (Expected boolean, received null 방지) */
+const optionalBoolean = z.preprocess(nullToUndefined, z.boolean().optional())
+
 const COURSE_DELIVERED_BY_VALUES = new Set(['JA', 'Jointly', 'Partner'] as const)
 type CourseDeliveredByFormValue = 'JA' | 'Jointly' | 'Partner'
 
@@ -115,6 +123,67 @@ function normalizeCourseDeliveredByFormValue(
 
 const IPS_FORM_VALUES = new Set(['Inspire', 'Prepare', 'Succeed'] as const)
 type IpsFormValue = 'Inspire' | 'Prepare' | 'Succeed'
+
+function sharedFilledText(values: Array<string | null | undefined>): string | undefined {
+  const filled = values.map(value => value?.trim()).filter((value): value is string => Boolean(value))
+  if (filled.length === 0) return undefined
+  return new Set(filled).size === 1 ? filled[0] : undefined
+}
+
+/** 조회에 보이는 IPS 문구. 루트가 비면 행 값이 모두 같을 때만 그 문구를 쓴다. */
+export function resolveStoredIpsTypeSummary(input: {
+  ipsTypeSummary?: string | null
+  scheduleDetails?: Array<{ ipsTypeSummary?: string | null }> | null
+  curriculumSessions?: Array<{ ipsTypeSummary?: string | null }> | null
+}): string {
+  const root = input.ipsTypeSummary?.trim()
+  if (root) return root
+  return (
+    sharedFilledText([
+      ...(input.scheduleDetails ?? []).map(row => row.ipsTypeSummary),
+      ...(input.curriculumSessions ?? []).map(row => row.ipsTypeSummary),
+    ]) ?? ''
+  )
+}
+
+export function resolveStoredEducationFormLabel(input: {
+  educationFormLabel?: string | null
+  scheduleDetails?: Array<{ educationFormLabel?: string | null }> | null
+  curriculumSessions?: Array<{ educationFormLabel?: string | null }> | null
+}): string {
+  const root = input.educationFormLabel?.trim()
+  if (root) return root
+  return (
+    sharedFilledText([
+      ...(input.scheduleDetails ?? []).map(row => row.educationFormLabel),
+      ...(input.curriculumSessions ?? []).map(row => row.educationFormLabel),
+    ]) ?? ''
+  )
+}
+
+function educationFormValueFromLabel(
+  label: string
+): 'participant_selection' | 'hybrid' | 'offline' | 'online' | undefined {
+  if (!label) return undefined
+  if (label.includes('참여자')) return 'participant_selection'
+  if (label.includes('온/오프') || label.includes('하이브리드')) return 'hybrid'
+  if (label.includes('오프라인')) return 'offline'
+  if (label.includes('온라인')) return 'online'
+  return undefined
+}
+
+function ipsDetailValueFromSummary(
+  category: 'inspire' | 'succeed' | 'prepare' | undefined,
+  summary: string
+): string | undefined {
+  if (!category) return undefined
+  if (category === 'prepare') return 'none'
+  const options =
+    category === 'inspire'
+      ? PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS
+      : PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS
+  return options.find(option => option.value !== 'none' && summary.includes(option.label))?.value
+}
 
 function normalizeIpsFormValue(raw: unknown): IpsFormValue | undefined {
   if (raw == null || raw === '') return undefined
@@ -292,13 +361,13 @@ const programDetailEditSchemaBase = z.object({
   educationProcess: z.string().optional(),
   ipOwned: z.string().optional(),
   courseDeliveredBy: courseDeliveredByFormSchema,
-  partnerInvolvement: z.boolean().optional(),
+  partnerInvolvement: optionalBoolean,
   ips: ipsFormSchema,
   programCategory: z.string().optional(),
   programChannel: z.string().optional(),
-  surveySurvey: z.boolean().optional(),
-  surveySatisfaction: z.boolean().optional(),
-  surveyLectureEvaluation: z.boolean().optional(),
+  surveySurvey: optionalBoolean,
+  surveySatisfaction: optionalBoolean,
+  surveyLectureEvaluation: optionalBoolean,
   // 임금 정보
   wageType: z.string().optional(),
   wagePricingTimeUnit: z.string().optional(),
@@ -376,7 +445,7 @@ export function getProgramDetailEditValidationMessage(
 ): string {
   const result = schema.safeParse(values)
   if (result.success) return '입력값을 확인해 주세요.'
-  return result.error.issues[0]?.message ?? '입력값을 확인해 주세요.'
+  return formatZodIssuesForUser(result.error.issues)
 }
 
 const COMPANY_SCHOOL_WAGE_GRADE_ROWS = [
@@ -628,9 +697,8 @@ export function programToDetailEditValues(
     titleEn: program.titleEn ?? undefined,
     announcementTitle: program.generalCommonInfo?.announcementTitle ?? program.title,
     detailedProgramName:
-      program.generalCommonInfo?.detailedProgramName ??
-      program.textbookName ??
-      program.title ??
+      program.generalCommonInfo?.detailedProgramName?.trim() ||
+      program.textbookName?.trim() ||
       undefined,
     detailedProgramId: program.detailedProgramId ?? undefined,
     educationStructure: (() => {
@@ -643,30 +711,46 @@ export function programToDetailEditValues(
       if (raw === 'single' || raw === 'multi') return raw
       return undefined
     })(),
-    educationForm: (() => {
-      const label = program.generalCommonInfo?.educationFormLabel?.trim()
-      if (!label) return undefined
-      if (label.includes('참여자')) return 'participant_selection'
-      if (label.includes('온/오프') || label.includes('하이브리드')) return 'hybrid'
-      if (label.includes('오프라인')) return 'offline'
-      if (label.includes('온라인')) return 'online'
-      return undefined
-    })(),
+    educationForm: educationFormValueFromLabel(
+      resolveStoredEducationFormLabel({
+        educationFormLabel: program.generalCommonInfo?.educationFormLabel,
+        scheduleDetails: program.generalCommonInfo?.scheduleDetails,
+        curriculumSessions: program.generalCommonInfo?.curriculumSessions,
+      })
+    ),
     educationFormScheduleDetail:
       program.generalCommonInfo?.educationFormScheduleDetail ?? 'common',
     ipsScheduleDetail: program.generalCommonInfo?.ipsScheduleDetail ?? (() => {
-      const summary = program.generalCommonInfo?.ipsTypeSummary ?? ''
+      const summary = resolveStoredIpsTypeSummary({
+        ipsTypeSummary: program.generalCommonInfo?.ipsTypeSummary,
+        scheduleDetails: program.generalCommonInfo?.scheduleDetails,
+        curriculumSessions: program.generalCommonInfo?.curriculumSessions,
+      })
       return summary.includes('별') ? 'perSchedule' : 'common'
     })(),
     ipsCategory: (() => {
-      const summary = program.generalCommonInfo?.ipsTypeSummary ?? ''
+      const summary = resolveStoredIpsTypeSummary({
+        ipsTypeSummary: program.generalCommonInfo?.ipsTypeSummary,
+        scheduleDetails: program.generalCommonInfo?.scheduleDetails,
+        curriculumSessions: program.generalCommonInfo?.curriculumSessions,
+      })
       if (/inspire/i.test(summary) || program.ips === 'Inspire') return 'inspire'
       if (/succeed/i.test(summary) || program.ips === 'Succeed') return 'succeed'
       if (/prepare/i.test(summary) || program.ips === 'Prepare') return 'prepare'
       return undefined
     })(),
     ipsDetail: (() => {
-      const summary = program.generalCommonInfo?.ipsTypeSummary ?? ''
+      const summary = resolveStoredIpsTypeSummary({
+        ipsTypeSummary: program.generalCommonInfo?.ipsTypeSummary,
+        scheduleDetails: program.generalCommonInfo?.scheduleDetails,
+        curriculumSessions: program.generalCommonInfo?.curriculumSessions,
+      })
+      if (/inspire/i.test(summary) || program.ips === 'Inspire') {
+        return ipsDetailValueFromSummary('inspire', summary)
+      }
+      if (/succeed/i.test(summary) || program.ips === 'Succeed') {
+        return ipsDetailValueFromSummary('succeed', summary)
+      }
       if (/prepare/i.test(summary) || program.ips === 'Prepare') return 'none'
       return undefined
     })(),
@@ -674,7 +758,7 @@ export function programToDetailEditValues(
     educationProcess: program.educationProcess ?? undefined,
     ipOwned: program.ipOwned ?? undefined,
     courseDeliveredBy: normalizeCourseDeliveredByFormValue(program.courseDeliveredBy),
-    partnerInvolvement: program.partnerInvolvement,
+    partnerInvolvement: program.partnerInvolvement ?? false,
     ips: normalizeIpsFormValue(program.ips),
     programCategory: program.programCategory ?? undefined,
     programChannel: program.programChannel ?? undefined,
@@ -866,36 +950,43 @@ export function detailEditValuesToProgramPatch(
       })(),
       venueDetail: values.venueDetail ?? existing.generalCommonInfo?.venueDetail,
       venueKind: values.venueKind ?? existing.generalCommonInfo?.venueKind,
-      curriculumSessions:
-        values.curriculumSession1Title != null ||
-        values.curriculumSession1Description != null ||
-        values.curriculumSession2Title != null ||
-        values.curriculumSession2Description != null
-          ? [
-              {
-                sessionLabel: '1차시',
-                title:
-                  values.curriculumSession1Title ??
-                  existing.generalCommonInfo?.curriculumSessions?.[0]?.title ??
-                  '',
-                description:
-                  values.curriculumSession1Description ??
-                  existing.generalCommonInfo?.curriculumSessions?.[0]?.description ??
-                  '',
-              },
-              {
-                sessionLabel: '2차시',
-                title:
-                  values.curriculumSession2Title ??
-                  existing.generalCommonInfo?.curriculumSessions?.[1]?.title ??
-                  '',
-                description:
-                  values.curriculumSession2Description ??
-                  existing.generalCommonInfo?.curriculumSessions?.[1]?.description ??
-                  '',
-              },
-            ]
-          : existing.generalCommonInfo?.curriculumSessions,
+      curriculumSessions: (() => {
+        const existingSessions = existing.generalCommonInfo?.curriculumSessions
+        const hasSlotEdit =
+          values.curriculumSession1Title != null ||
+          values.curriculumSession1Description != null ||
+          values.curriculumSession2Title != null ||
+          values.curriculumSession2Description != null
+        if (!hasSlotEdit) return existingSessions
+        const slot = (index: number, title: string | undefined, description: string | undefined) => {
+          const current = existingSessions?.[index]
+          return {
+            sessionLabel: current?.sessionLabel ?? (index === 0 ? '1차시' : '2차시'),
+            title: title ?? current?.title ?? '',
+            description: description ?? current?.description ?? '',
+            ...(current?.assignmentEnabled != null
+              ? { assignmentEnabled: current.assignmentEnabled }
+              : {}),
+            ...(current?.assignmentPeriod ? { assignmentPeriod: current.assignmentPeriod } : {}),
+            ...(current?.educationFormLabel
+              ? { educationFormLabel: current.educationFormLabel }
+              : {}),
+            ...(current?.ipsTypeSummary ? { ipsTypeSummary: current.ipsTypeSummary } : {}),
+            ...(current?.scheduleDateLabel
+              ? { scheduleDateLabel: current.scheduleDateLabel }
+              : {}),
+          }
+        }
+        const edited = [
+          slot(0, values.curriculumSession1Title, values.curriculumSession1Description),
+          slot(1, values.curriculumSession2Title, values.curriculumSession2Description),
+        ]
+        // 폼은 1·2차시만 가진다. 동적으로 추가된 3차시 이후는 유지.
+        if ((existingSessions?.length ?? 0) > 2) {
+          return [...edited, ...existingSessions!.slice(2)]
+        }
+        return edited
+      })(),
       educationScheduleLines:
         values.educationScheduleLines ?? existing.generalCommonInfo?.educationScheduleLines,
       educationScheduleMode:

@@ -35,6 +35,7 @@ import {
   programDetailInstitutionsEditSchema,
   programDetailTrainedTeachersCommonInfoEditSchema,
 } from '@/features/program/shared/model/program-detail-edit-schema'
+import { formatZodIssuesForUser } from '@/features/program/shared/lib/format-zod-validation-message'
 import {
   programInstructorRecruitmentSaveSchema,
   programParticipantRecruitmentSaveSchema,
@@ -1461,7 +1462,7 @@ export function ProgramDetailFullPageModal({
       if (!validation.success) {
         void showAlert({
           title: '입력 확인',
-          content: validation.error.issues[0]?.message ?? '입력값을 확인해 주세요.',
+          content: formatZodIssuesForUser(validation.error.issues),
         })
         return
       }
@@ -1476,7 +1477,7 @@ export function ProgramDetailFullPageModal({
     if (!validation.success) {
       void showAlert({
         title: '입력 확인',
-        content: validation.error.issues[0]?.message ?? '입력값을 확인해 주세요.',
+        content: formatZodIssuesForUser(validation.error.issues),
       })
       return
     }
@@ -1636,8 +1637,7 @@ export function ProgramDetailFullPageModal({
                 if (!validation.success) {
                   void showAlert({
                     title: '입력 확인',
-                    content:
-                      validation.error.issues[0]?.message ?? '입력값을 확인해 주세요.',
+                    content: formatZodIssuesForUser(validation.error.issues),
                   })
                   throw new Error('trainedTeacherBasicInfoValidationFailed')
                 }
@@ -1654,7 +1654,7 @@ export function ProgramDetailFullPageModal({
                         await updateTrainedTeacherInfoDetailMutation.mutateAsync({
                           programId: displayProgram.id,
                           payload: {
-                            // 교육일지·연수·커리큘럼만. 후원·교재명 등 programs 구값을 configJson에 재주입하지 않음
+                            // serializer가 일지·연수·커리큘럼·일정만 남긴다. 공고·세부·후원은 A가 쓴다.
                             commonInfo: payload.commonInfo,
                           },
                         })

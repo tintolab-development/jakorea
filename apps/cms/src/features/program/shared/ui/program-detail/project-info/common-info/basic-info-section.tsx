@@ -20,18 +20,25 @@ import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-co
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
+import {
+  DetailInfoForm,
+  DetailInfoFormTdDivider,
+} from '@/shared/components/detail-info-form/detail-info-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import {
   decodeSponsorManagerContactRef,
   encodeSponsorManagerContactRef,
+  formatSponsorManagerPersonLabel,
   formatSponsorManagerSelectLabel,
   normalizeSponsorManagerContactIds,
   resolveVenueKind,
 } from '@/features/program/general/model/common-info-edit-schema'
-import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
+import type {
+  SponsorContactRow,
+  SponsorManagementRow,
+} from '@/features/sponsor/model/sponsor-management.types'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import {
   PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
@@ -126,6 +133,76 @@ function formatCompanySchoolSurveyItems(program: Program): string {
   return labels.length > 0 ? labels.join(', ') : '-'
 }
 
+function SponsorManagerView({
+  program,
+  sponsorRows,
+  contactsBySponsorId,
+}: {
+  program: Program
+  sponsorRows: readonly SponsorManagementRow[]
+  contactsBySponsorId: Record<string, readonly SponsorContactRow[] | undefined>
+}) {
+  const refs = program.generalCommonInfo?.sponsorManagerContactIds ?? []
+  const multi = refs.length > 1 || sponsorRows.length > 1
+  const lines: string[][] = []
+  for (const ref of refs) {
+    const decoded = decodeSponsorManagerContactRef(ref)
+    if (!decoded) continue
+    const sponsor = sponsorRows.find(row => row.id === decoded.sponsorManagementId)
+    const contact = contactsBySponsorId[decoded.sponsorManagementId]?.find(
+      row => row.id === decoded.contactId
+    )
+    const storedName = program.generalCommonInfo?.sponsorManagerContactNames?.[ref]?.trim()
+    const contactName = contact?.name?.trim() || storedName
+    if (!contactName) continue
+    const personLabel = formatSponsorManagerPersonLabel({
+      contactName,
+      position: contact?.position,
+    })
+    const parts = [
+      multi ? sponsor?.name?.trim() : '',
+      personLabel,
+      contact?.phone?.trim(),
+    ].filter((part): part is string => Boolean(part))
+    if (parts.length > 0) lines.push(parts)
+  }
+  if (lines.length > 0) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: 4,
+          width: '100%',
+        }}
+      >
+        {lines.map(parts => (
+          <div
+            key={parts.join('-')}
+            style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}
+          >
+            {parts.map((part, partIndex) => (
+              <span key={`${part}-${partIndex}`}>
+                {partIndex > 0 ? <DetailInfoFormTdDivider /> : null}
+                {part}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    )
+  }
+  if (!program.managerName && !program.contactPhone) return <>-</>
+  return (
+    <>
+      {program.managerName ?? ''}
+      {program.managerName && program.contactPhone ? <DetailInfoForm.InputsSeparator /> : null}
+      {program.contactPhone ? <span>{program.contactPhone}</span> : null}
+    </>
+  )
+}
+
 function formatCompanySchoolVenue(program: Program): string {
   const kind = resolveVenueKind(program)
   const kindLabel =
@@ -183,14 +260,20 @@ export function BasicInfoSection({
         .filter((row): row is SponsorManagementRow => row != null),
     [sponsorEditContext.sponsors, sponsorManagementIds]
   )
-  const sponsorManagementOptions = useMemo(
-    () =>
-      sponsorEditContext.sponsors.map(row => ({
-        value: row.id,
-        label: row.name,
-      })),
-    [sponsorEditContext.sponsors]
-  )
+  const sponsorManagementOptions = useMemo(() => {
+    const options = sponsorEditContext.sponsors.map(row => ({
+      value: row.id,
+      label: row.name,
+    }))
+    for (const id of sponsorManagementIds) {
+      if (!id || options.some(option => option.value === id)) continue
+      options.push({
+        value: id,
+        label: (sponsorManagementIds.length === 1 ? sponsorName?.trim() : '') || id,
+      })
+    }
+    return options
+  }, [sponsorEditContext.sponsors, sponsorManagementIds, sponsorName])
   const sponsorManagerOptions = useMemo(() => {
     const options: Array<{
       value: string
@@ -226,14 +309,23 @@ export function BasicInfoSection({
     if (!isFormEdit || !form || sponsorManagerOptions.length === 0) return
 
     const optionValues = new Set(sponsorManagerOptions.map(o => o.value))
+    const loadedSponsorIds = new Set(
+      Object.entries(sponsorEditContext.contactsBySponsorId)
+        .filter(([, contacts]) => contacts.length > 0)
+        .map(([id]) => id)
+    )
     const currentIds = normalizeSponsorManagerContactIds({
       ids: form.getValues('sponsorManagerContactIds'),
       id: form.getValues('sponsorManagerContactId'),
     })
-    const validIds = currentIds.filter(id => optionValues.has(id))
+    const validIds = currentIds.filter(id => {
+      if (optionValues.has(id)) return true
+      const decoded = decodeSponsorManagerContactRef(id)
+      return decoded != null && !loadedSponsorIds.has(decoded.sponsorManagementId)
+    })
 
     if (validIds.length > 0) {
-      if (validIds.length !== currentIds.length) {
+      if (validIds.length !== currentIds.length || validIds.some((id, index) => id !== currentIds[index])) {
         form.setValue('sponsorManagerContactIds', validIds, { shouldDirty: false })
       }
       form.setValue('sponsorManagerContactId', validIds[0], { shouldDirty: false })
@@ -265,6 +357,8 @@ export function BasicInfoSection({
       }
       return
     }
+
+    if (currentIds.length > 0) return
 
     const managerName = form.getValues('managerName')?.trim()
     const phone = form.getValues('contactPhone')?.trim()
@@ -313,8 +407,9 @@ export function BasicInfoSection({
   if (companySchoolLayout) {
     const commonInfo = program.generalCommonInfo
     const announcementTitle = commonInfo?.announcementTitle ?? program.title
-    const detailedProgramName =
-      commonInfo?.detailedProgramName ?? program.textbookName ?? program.title ?? '-'
+    const detailedProgramName = useDetailedProgramSelect
+      ? commonInfo?.detailedProgramName?.trim() || program.textbookName?.trim() || '-'
+      : commonInfo?.detailedProgramName ?? program.textbookName ?? program.title ?? '-'
     const educationProcessLabel = optionLabel(EDUCATION_PROCESS_OPTIONS, program.educationProcess)
     const ipOwnedLabel = optionLabel(IP_OWNED_OPTIONS, program.ipOwned ?? 'JA')
     const courseDeliveredByLabel = optionLabel(
@@ -418,22 +513,33 @@ export function BasicInfoSection({
                     name="detailedProgramId"
                     control={commonInfoForm.control}
                     render={({ field }) => {
+                      const savedDetailedName = (
+                        commonInfoForm.watch('detailedProgramName')?.trim() ||
+                        (detailedProgramName && detailedProgramName !== '-'
+                          ? detailedProgramName.trim()
+                          : '')
+                      )
+                      const byName = detailedProgramOptions.find(o => o.label === savedDetailedName)
+                      const savedDetailedValue = savedDetailedName
+                        ? `__saved_detailed__:${savedDetailedName}`
+                        : undefined
                       const selectOptions = [
                         {
                           value: TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
                           label: '해당없음',
                         },
                         ...detailedProgramOptions,
+                        ...(savedDetailedName && !byName && savedDetailedValue
+                          ? [{ value: savedDetailedValue, label: savedDetailedName }]
+                          : []),
                       ]
-                      const byName = detailedProgramOptions.find(
-                        o => o.label === (commonInfoForm.watch('detailedProgramName') ?? detailedProgramName)
-                      )
+                      const knownId = selectOptions.some(option => option.value === field.value)
+                        ? field.value
+                        : undefined
                       const value =
-                        field.value ||
+                        knownId ||
                         byName?.value ||
-                        (detailedProgramName && detailedProgramName !== '-'
-                          ? detailedProgramOptions.find(o => o.label === detailedProgramName)?.value
-                          : undefined)
+                        (savedDetailedName ? savedDetailedValue : undefined)
                       return (
                         <CmsSelect
                           withAllOption={false}
@@ -445,7 +551,8 @@ export function BasicInfoSection({
                           value={value || undefined}
                           onChange={next => {
                             const id = next == null ? undefined : String(next)
-                            field.onChange(id)
+                            const isSavedLabel = id?.startsWith('__saved_detailed__:') === true
+                            field.onChange(isSavedLabel ? undefined : id)
                             const label =
                               selectOptions.find(o => o.value === id)?.label?.trim() || ''
                             commonInfoForm.setValue(
@@ -622,17 +729,11 @@ export function BasicInfoSection({
             <DetailInfoForm.Field
               label="후원사 담당자"
               view={
-                program.managerName || program.contactPhone ? (
-                  <>
-                    {program.managerName ?? ''}
-                    {program.managerName && program.contactPhone ? (
-                      <DetailInfoForm.InputsSeparator />
-                    ) : null}
-                    {program.contactPhone ? <span>{program.contactPhone}</span> : null}
-                  </>
-                ) : (
-                  '-'
-                )
+                <SponsorManagerView
+                  program={program}
+                  sponsorRows={selectedSponsorManagementRows}
+                  contactsBySponsorId={sponsorEditContext.contactsBySponsorId}
+                />
               }
               edit={
                 <Controller
@@ -640,6 +741,23 @@ export function BasicInfoSection({
                   control={commonInfoForm.control}
                   render={({ field }) => {
                     const selectedIds = field.value ?? []
+                    const savedManagerName = program.managerName?.trim()
+                    const showSavedManager = selectedIds.length === 0 && Boolean(savedManagerName)
+                    const savedManagerOption = showSavedManager
+                      ? {
+                          value: '__saved_manager__',
+                          label: [savedManagerName, program.contactPhone?.trim()]
+                            .filter(Boolean)
+                            .join(' · '),
+                          sponsorId: program.sponsorId ?? '',
+                          contactId: '',
+                          name: savedManagerName ?? '',
+                          phone: program.contactPhone ?? '',
+                        }
+                      : undefined
+                    const managerOptions = savedManagerOption
+                      ? [savedManagerOption, ...sponsorManagerOptions]
+                      : sponsorManagerOptions
                     const selectedManagers = selectedIds
                       .map(id => sponsorManagerOptions.find(option => option.value === id))
                       .filter(
@@ -656,11 +774,13 @@ export function BasicInfoSection({
                           width="100%"
                           showSearch
                           optionFilterProp="label"
-                          options={sponsorManagerOptions}
-                          value={selectedIds}
-                          disabled={sponsorManagerOptions.length === 0}
+                          options={managerOptions}
+                          value={showSavedManager ? ['__saved_manager__'] : selectedIds}
+                          disabled={managerOptions.length === 0}
                           onChange={next => {
-                            const ids = Array.isArray(next) ? next.map(String) : []
+                            const ids = (Array.isArray(next) ? next.map(String) : []).filter(
+                              id => id !== '__saved_manager__'
+                            )
                             field.onChange(ids)
                             commonInfoForm.setValue('sponsorManagerContactId', ids[0], {
                               shouldDirty: true,
