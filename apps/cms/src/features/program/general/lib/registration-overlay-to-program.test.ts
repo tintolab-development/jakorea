@@ -356,4 +356,24 @@ describe('trained teacher schedule-type detailedProgramName (버그 수정)', ()
     expect(next.generalCommonInfo?.detailedProgramName).not.toBe('실제 선택한 세부 프로그램명')
     expect(next.detailedProgramId).toBeUndefined()
   })
+
+  it('커리큘럼형 — 수동 선택한 세부 프로그램명이 그대로 반영된다', () => {
+    const overlay = normalizeRegistrationOverlayForApply(
+      {
+        'trainedTeachersRegistration.basicInfo.detailedProgramId': '163006',
+        'trainedTeachersRegistration.basicInfo.detailedProgramName': '실제 선택한 세부 프로그램명',
+      },
+      'trainedTeachers'
+    )
+
+    const next = applyGeneralRegistrationOverlayToProgram(baseProgram(), overlay, {
+      programType: 'curriculum',
+      sessionRoundType: 'single',
+      isTrainedTeachers: true,
+    })
+
+    expect(next.generalCommonInfo?.detailedProgramName).toBe('실제 선택한 세부 프로그램명')
+    expect(next.detailedProgramId).toBe('163006')
+    expect(next.textbookName).toBeUndefined()
+  })
 })

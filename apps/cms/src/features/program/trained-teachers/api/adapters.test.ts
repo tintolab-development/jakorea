@@ -231,6 +231,75 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
   })
 })
 
+describe('mapTrainedTeacherToUpdateRequest detailedProgramId (일반 프로그램과 동일 계약, 버그 수정 확인)', () => {
+  const baseProgram = {
+    id: '186005',
+    sponsorId: '163302',
+    title: 'TT',
+    type: 'offline' as const,
+    format: 'workshop' as const,
+    category: 'school' as const,
+    description: '',
+    rounds: [],
+    startDate: '2026-01-01',
+    endDate: '2026-12-31',
+    status: 'pending' as const,
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+  }
+
+  it('sends detailedProgramId as a real numeric master id and omits it from textbookName', () => {
+    const program = {
+      ...baseProgram,
+      detailedProgramId: '163006',
+      generalCommonInfo: { detailedProgramName: '실제 선택한 세부 프로그램명' },
+    }
+    const request = mapTrainedTeacherToUpdateRequest(program)
+    expect(request.detailedProgramId).toBe(163006)
+    expect(request.textbookName).toBeUndefined()
+    expect(request.teamDivision).toBeUndefined()
+
+    const createRequest = mapTrainedTeacherToCreateRequest(program)
+    expect(createRequest.detailedProgramId).toBe(163006)
+    expect(createRequest.textbookName).toBeUndefined()
+  })
+
+  it('detailedProgramId가 없거나 sentinel(해당없음)이면 null(undefined)로 보낸다', () => {
+    const program = {
+      ...baseProgram,
+      generalCommonInfo: { detailedProgramName: '해당없음' },
+    }
+    const request = mapTrainedTeacherToUpdateRequest(program)
+    expect(request.detailedProgramId).toBeUndefined()
+  })
+
+  it('진짜 교재명(textbookName)은 detailedProgramName과 다르면 그대로 보존한다', () => {
+    const program = {
+      ...baseProgram,
+      detailedProgramId: '163006',
+      textbookName: '진짜 교재명',
+      generalCommonInfo: { detailedProgramName: '실제 선택한 세부 프로그램명' },
+    }
+    const request = mapTrainedTeacherToUpdateRequest(program)
+    expect(request.detailedProgramId).toBe(163006)
+    expect(request.textbookName).toBe('진짜 교재명')
+  })
+})
+
+describe('mapTrainedTeacherDetailToProgram detailedProgramId round-trip', () => {
+  it('reads numeric detailedProgramId from API response into Program', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '186005',
+      title: 'TT',
+      sponsorId: 'sponsor-1',
+      detailedProgramId: 163006,
+      detailedProgramName: '실제 선택한 세부 프로그램명',
+    })
+    expect(mapped.detailedProgramId).toBe('163006')
+    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('실제 선택한 세부 프로그램명')
+  })
+})
+
 describe('mapTrainedTeacherDetailToProgram KPI root echo', () => {
   it('prefers totalParticipants over nested kpi finalParticipants', () => {
     const mapped = mapTrainedTeacherDetailToProgram({
