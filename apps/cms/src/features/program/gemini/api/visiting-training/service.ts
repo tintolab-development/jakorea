@@ -131,9 +131,9 @@ export async function createGeminiRecruitment(
   snapshot: GeminiRecruitmentAddFormSnapshot
 ): Promise<{ id: string }> {
   assertRemoteReady()
-  const created = await createGeminiRecruitmentRemote(
-    mapGeminiRecruitmentSnapshotToCreateRequest(snapshot)
-  )
+  const request = mapGeminiRecruitmentSnapshotToCreateRequest(snapshot)
+  console.log('[program registration create] 등록 완료', request)
+  const created = await createGeminiRecruitmentRemote(request)
   return { id: String(created.id ?? '') }
 }
 
