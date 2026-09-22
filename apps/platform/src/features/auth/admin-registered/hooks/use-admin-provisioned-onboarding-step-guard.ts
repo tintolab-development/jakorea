@@ -8,10 +8,11 @@ import {
   shouldRedirectAdminProvisionedOnboardingStep,
   type AdminProvisionedOnboardingFlags,
 } from '../lib/onboarding-step'
-import { updateAdminRegisteredWizardState } from '../model/wizard-state'
-import { normalizeAdminProvisionedOnboardingStep } from '../lib/onboarding-step'
+import { getAdminRegisteredWizardState } from '../model/wizard-state'
+import { syncAdminRegisteredOnboardingSession } from '../lib/sync-onboarding-session'
 
 function toOnboardingFlags(data: {
+  email?: string
   registeredByAdmin?: boolean
   adminProvisionedOnboardingRequired?: boolean
   adminProvisionedOnboardingStep?: string
@@ -24,6 +25,18 @@ function toOnboardingFlags(data: {
     identitySelfSignupCompletedAfterAdminRegistration:
       data.identitySelfSignupCompletedAfterAdminRegistration,
   }
+}
+
+function ensureWizardFromMe(me: {
+  email?: string
+  registeredByAdmin?: boolean
+  adminProvisionedOnboardingRequired?: boolean
+  adminProvisionedOnboardingStep?: string
+  identitySelfSignupCompletedAfterAdminRegistration?: boolean
+}) {
+  const email = me.email?.trim()
+  if (!email) return
+  syncAdminRegisteredOnboardingSession(email, toOnboardingFlags(me), 'first-login')
 }
 
 /**
@@ -39,23 +52,34 @@ export function useAdminProvisionedOnboardingStepGuard() {
   const enabled = remote && hasToken && pageStep != null
 
   const meQuery = usePortalMeQuery({ enabled })
+  const me = meQuery.data
 
-  const isChecking = enabled && meQuery.isPending && !meQuery.data
+  if (me) {
+    ensureWizardFromMe(me)
+  }
+
+  const isChecking = enabled && meQuery.isPending && !me
+  const hasWizard = Boolean(getAdminRegisteredWizardState()?.email)
 
   useEffect(() => {
-    if (!enabled) return
-    if (meQuery.isPending && !meQuery.data) return
-    if (meQuery.isError && !meQuery.data) return
+    if (!remote) return
+    if (isChecking) return
 
-    const me = meQuery.data
+    if (!hasToken && !hasWizard) {
+      navigate('/auth/sign-in', { replace: true })
+      return
+    }
+
+    if (!enabled) return
+    if (meQuery.isError && !me) {
+      if (!hasWizard) {
+        navigate('/auth/sign-in', { replace: true })
+      }
+      return
+    }
     if (!me) return
 
     const flags = toOnboardingFlags(me)
-    const step = normalizeAdminProvisionedOnboardingStep(me.adminProvisionedOnboardingStep)
-    if (step) {
-      updateAdminRegisteredWizardState({ adminProvisionedOnboardingStep: step })
-    }
-
     const target = shouldRedirectAdminProvisionedOnboardingStep({
       pathname: location.pathname,
       flags,
@@ -66,11 +90,14 @@ export function useAdminProvisionedOnboardingStepGuard() {
     }
   }, [
     enabled,
+    hasToken,
+    hasWizard,
+    isChecking,
     location.pathname,
-    meQuery.data,
+    me,
     meQuery.isError,
-    meQuery.isPending,
     navigate,
+    remote,
   ])
 
   return { isChecking, pageStep }

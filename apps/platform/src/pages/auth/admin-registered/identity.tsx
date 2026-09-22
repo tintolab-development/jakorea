@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   applyAdminProvisionedOnboardingResponse,
+  canStartAdminProvisionedIdentityVerification,
   clearAdminProvisionedIdentityConfirmPending,
   getAdminRegisteredWizardState,
   markAdminProvisionedIdentityConfirmPending,
@@ -10,6 +11,7 @@ import {
   resolveAdminProvisionedOnboardingPath,
   updateAdminRegisteredWizardState,
   useAdminProvisionedIdentityConfirmMutation,
+  useAdminRegisteredProfileHydration,
 } from '@/features/auth/admin-registered'
 import {
   useAdminProvisionedIdentityVerification,
@@ -27,28 +29,36 @@ const IDENTITY_MISMATCH_MESSAGE =
 
 export function AdminRegisteredIdentityPage() {
   const navigate = useNavigate()
-  const wizardState = requireAdminRegisteredWizardState()
+  const initialWizardState = useRef(requireAdminRegisteredWizardState()).current
+  const { wizardState } = useAdminRegisteredProfileHydration(initialWizardState)
   const birthDate = wizardState?.birthDate ?? ''
   const gender = wizardState?.gender ?? null
-  const canVerify = Boolean(wizardState?.birthDate && wizardState.gender)
+  const remote = isRemoteApiConfigured()
+  const hasBirthAndGender = Boolean(wizardState?.birthDate && wizardState.gender)
   const [confirmError, setConfirmError] = useState<string | null>(null)
   const identityConfirmMutation = useAdminProvisionedIdentityConfirmMutation()
   const confirmIdentity = identityConfirmMutation.mutateAsync
   const isConfirming = identityConfirmMutation.isPending
 
   useEffect(() => {
+    if (!initialWizardState) {
+      navigate('/auth/sign-in', { replace: true })
+      return
+    }
     if (!wizardState) return
-    if (!isRemoteApiConfigured() && (!wizardState.birthDate || !wizardState.gender)) {
+    if (!remote && (!wizardState.birthDate || !wizardState.gender)) {
       navigate('/auth/admin-registered/birth', { replace: true })
     }
-  }, [navigate, wizardState])
+  }, [initialWizardState, navigate, remote, wizardState])
 
   const handleSuccess = useCallback(
     (result: IdentityChallengeCompleteResult) => {
       void (async () => {
         setConfirmError(null)
 
-        const expectedDigits = normalizeBirthDateDigits(birthDate)
+        const expectedDigits = normalizeBirthDateDigits(
+          getAdminRegisteredWizardState()?.birthDate ?? birthDate,
+        )
         const verifiedDigits = normalizeBirthDateDigits(result.verifiedBirthDate)
         if (expectedDigits && verifiedDigits && expectedDigits !== verifiedDigits) {
           clearAdminProvisionedIdentityConfirmPending()
@@ -120,9 +130,14 @@ export function AdminRegisteredIdentityPage() {
   })
 
   const handleVerify = () => {
-    if (!canVerify || isConfirming) return
+    const canStart = canStartAdminProvisionedIdentityVerification({
+      isConfirming,
+      isRemote: remote,
+      hasBirthAndGender,
+    })
+    if (!canStart) return
     setConfirmError(null)
-    if (isRemoteApiConfigured()) {
+    if (remote) {
       markAdminProvisionedIdentityConfirmPending()
     }
     void verify()
@@ -133,7 +148,7 @@ export function AdminRegisteredIdentityPage() {
     navigate('/auth/admin-registered/birth')
   }
 
-  if (!wizardState || (!isRemoteApiConfigured() && !canVerify)) {
+  if (!initialWizardState || (!remote && !hasBirthAndGender)) {
     return null
   }
 

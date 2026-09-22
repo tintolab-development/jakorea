@@ -3,7 +3,7 @@
  * CMS `apps/cms/src/shared/lib/api-remote-env.ts`와 동일 규칙 + Homepage 이중 프록시.
  *
  * - `VITE_API_BASE_URL`: 브라우저가 직접 호출할 오리진 (크로스 오리진 — 백엔드 CORS)
- * - `VITE_API_SERVER`: 로컬 Vite `/api/portal` → CMS(8080) 로그인·회원
+ * - `VITE_API_SERVER`: 로컬 Vite `/api/portal`, `/api/auth` → CMS(8080) 로그인·회원·NICE
  * - `VITE_HOMEPAGE_API_SERVER`: 로컬 Vite `/api` → JAHOMEADMINBACK(8081) 공개 홈
  */
 
