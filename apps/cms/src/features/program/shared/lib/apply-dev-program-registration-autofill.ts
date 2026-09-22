@@ -39,13 +39,24 @@ import {
   PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import { formatEducationScheduleLineFromRange } from '@/features/template/lib/format-education-schedule-line'
-import { patchUjatProgramRegistrationOverlay } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import {
+  getUjatProgramRegistrationOverlayRecord,
+  patchUjatProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import {
   ujatHalfScheduleOverlayKeys,
   type UjatEducationDelivery,
+  type UjatHalfMultiScheduleBundle,
   type UjatHalfSemesterKey,
 } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
+import { ujatEducationScheduleSettingsOverlayKeys } from '@/features/program/ujat/lib/ujat-education-schedule-settings-types'
+import { getMockHolidayDateKeys } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
+import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
+import {
+  UJAT_REGION_CAPACITY_OVERLAY_KEY,
+  type UjatRegionCapacityBySemesterState,
+} from '@/features/program/ujat/lib/ujat-region-capacity-types'
 import { encodeSponsorManagerContactRef } from '@/features/program/general/model/common-info-edit-schema'
 import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import { EDUCATION_TARGET_OPTIONS } from '@jakorea/domain/recruitment/education-target'
@@ -898,35 +909,138 @@ function buildEconomyOverlay(
   }
 }
 
+function existingUjatScheduleRowIds(overlay: Record<string, unknown>, key: string): number[] {
+  const raw = overlay[key]
+  if (!raw || typeof raw !== 'object') return [0]
+  const rowIds = (raw as { rowIds?: unknown }).rowIds
+  if (!Array.isArray(rowIds) || rowIds.length === 0) return [0]
+  const ids = rowIds.map(id => Number(id)).filter(id => Number.isFinite(id))
+  return ids.length > 0 ? ids : [0]
+}
+
+function dateInsideSpan(start: Dayjs, end: Dayjs, index: number): string {
+  const lo = start.startOf('day')
+  const hi = end.startOf('day')
+  const span = Math.max(0, hi.diff(lo, 'day'))
+  const offset = span === 0 ? 0 : (index * 3) % (span + 1)
+  return lo.add(offset, 'day').toISOString()
+}
+
+function buildFilledScheduleBundle(
+  rowIds: number[],
+  start: Dayjs,
+  end: Dayjs
+): UjatHalfMultiScheduleBundle {
+  const regions = [...listUjatEducationRegionsActive()].sort(() => Math.random() - 0.5)
+  const regionByRow: Record<string, string[]> = {}
+  const dateByRow: Record<string, string | null> = {}
+  rowIds.forEach((id, index) => {
+    const region = regions[index % Math.max(regions.length, 1)]
+    regionByRow[String(id)] = region ? [region.key] : []
+    dateByRow[String(id)] = dateInsideSpan(start, end, index)
+  })
+  return { rowIds, regionByRow, dateByRow }
+}
+
+function fridaysInsideEducationRange(
+  start: Dayjs,
+  end: Dayjs,
+  blockedDateKeys: ReadonlySet<string>
+): string[] {
+  const lo = start.startOf('day')
+  const hi = end.startOf('day')
+  const from = lo.isAfter(hi, 'day') ? hi : lo
+  const to = lo.isAfter(hi, 'day') ? lo : hi
+  const dates: string[] = []
+  let cursor = from
+  while (cursor.day() !== 5 && !cursor.isAfter(to, 'day')) cursor = cursor.add(1, 'day')
+  for (; !cursor.isAfter(to, 'day'); cursor = cursor.add(7, 'day')) {
+    const key = cursor.format('YYYY-MM-DD')
+    if (blockedDateKeys.has(key)) continue
+    dates.push(key)
+  }
+  return dates
+}
+
+/** 없음 / 토·일·공휴일 조합. 직접 지정일은 교육 진행 기간 안 금요일이고, 체크된 제외일과 겹치지 않는다. */
+function buildUjatUnavailableSelection(
+  start: Dayjs,
+  end: Dayjs
+): { exclusion: UnavailableDatesExclusionState; dates: string[] } {
+  if (Math.random() < 0.25) {
+    return {
+      exclusion: {
+        excludeNone: true,
+        excludeSaturday: false,
+        excludeSunday: false,
+        excludeHoliday: false,
+      },
+      dates: [],
+    }
+  }
+
+  const exclusion: UnavailableDatesExclusionState = {
+    excludeNone: false,
+    excludeSaturday: Math.random() < 0.5,
+    excludeSunday: Math.random() < 0.5,
+    excludeHoliday: Math.random() < 0.5,
+  }
+  const blocked = exclusion.excludeHoliday ? getMockHolidayDateKeys() : new Set<string>()
+  const fridays = fridaysInsideEducationRange(start, end, blocked)
+  const count = Math.min(pickInt(0, 3), fridays.length)
+  const dates = [...fridays].sort(() => Math.random() - 0.5).slice(0, count).sort()
+  return { exclusion, dates }
+}
+
 function buildUjatHalfSchedule(
   half: UjatHalfSemesterKey,
-  sample: DevAutofillSample
+  sample: DevAutofillSample,
+  overlay: Record<string, unknown>
 ): Record<string, unknown> {
   const keys = ujatHalfScheduleOverlayKeys(half)
-  const regionKey = pick(listUjatEducationRegionsActive()).key
+  const settingsKeys = ujatEducationScheduleSettingsOverlayKeys(half)
   const delivery = pick(EDUCATION_DELIVERIES)
   const shiftWeeks = half === 'h2' ? 20 : 0
-  const preDate = dayjs(sample.periodRange.start).add(shiftWeeks, 'week').toISOString()
-  const closingDate = dayjs(sample.periodRange.end).add(shiftWeeks, 'week').toISOString()
-  const eventStart = dayjs(sample.periodRange.start).add(shiftWeeks, 'week').toISOString()
-  const eventEnd = dayjs(sample.periodRange.end).add(shiftWeeks, 'week').toISOString()
-  const multi = (date: string) => ({
-    rowIds: [0],
-    regionByRow: { '0': [regionKey] },
-    dateByRow: { '0': date },
-  })
+  const eventStart = dayjs(sample.periodRange.start).add(shiftWeeks, 'week')
+  const eventEnd = dayjs(sample.periodRange.end).add(shiftWeeks, 'week')
+  const unavailable = buildUjatUnavailableSelection(eventStart, eventEnd)
   return {
     [keys.preName]: half === 'h1' ? '상반기 발대식' : '하반기 발대식',
     [keys.preDelivery]: delivery,
     [keys.preTextbookMode]: 'ja',
-    [keys.preMulti]: multi(preDate),
+    [keys.preMulti]: buildFilledScheduleBundle(
+      existingUjatScheduleRowIds(overlay, keys.preMulti),
+      eventStart,
+      eventEnd
+    ),
     [keys.eventName]: sample.eventNames[half === 'h1' ? 0 : 1],
-    [keys.eventRange]: { start: eventStart, end: eventEnd },
+    [keys.eventRange]: { start: eventStart.toISOString(), end: eventEnd.toISOString() },
     [keys.eventDelivery]: delivery,
     [keys.closingName]: half === 'h1' ? '상반기 해단식' : '하반기 해단식',
     [keys.closingDelivery]: pick(EDUCATION_DELIVERIES),
-    [keys.closingMulti]: multi(closingDate),
+    [keys.closingMulti]: buildFilledScheduleBundle(
+      existingUjatScheduleRowIds(overlay, keys.closingMulti),
+      eventStart,
+      eventEnd
+    ),
+    [settingsKeys.exclusion]: unavailable.exclusion,
+    [settingsKeys.unavailableDates]: unavailable.dates,
   }
+}
+
+function buildUjatRegionCapacity(): UjatRegionCapacityBySemesterState {
+  const labels = listUjatEducationRegionsActive().map(row => row.label)
+  const semester = () =>
+    Object.fromEntries(
+      labels.map(label => [
+        label,
+        {
+          classCount: String(pickInt(4, 18)),
+          volunteerCount: String(pickInt(6, 24)),
+        },
+      ])
+    )
+  return { h1: semester(), h2: semester() }
 }
 
 function buildUjatOverlay(
@@ -959,8 +1073,9 @@ function buildUjatOverlay(
     'ujat.kpi.volunteer': sample.kpi.volunteer,
     'ujat.kpi.dispatchedSchool': sample.kpi.school,
     'ujat.kpi.dispatchedClass': sample.kpi.classCount,
-    ...buildUjatHalfSchedule('h1', sample),
-    ...buildUjatHalfSchedule('h2', sample),
+    [UJAT_REGION_CAPACITY_OVERLAY_KEY]: buildUjatRegionCapacity(),
+    ...buildUjatHalfSchedule('h1', sample, getUjatProgramRegistrationOverlayRecord()),
+    ...buildUjatHalfSchedule('h2', sample, getUjatProgramRegistrationOverlayRecord()),
   }
 }
 
