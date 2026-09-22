@@ -76,6 +76,10 @@ import {
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import {
+  normalizeSponsorContactUnselectedSelection,
+  withSponsorContactUnselectedOption,
+} from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import {
   GENERAL_PROGRAM_EDUCATION_STRUCTURE_LABELS,
   GENERAL_PROGRAM_SESSION_ROUND_LABELS,
 } from '@/features/program/general/lib/variant'
@@ -396,8 +400,24 @@ function BasicInfoSection({
         })
       }
     }
+    if (
+      isFormEdit &&
+      watchedSponsorIds.length > 0 &&
+      watchedSponsorIds.every(
+        id =>
+          selectedSponsors.some(sponsor => sponsor.id === id) &&
+          sponsorEditContext.contactsBySponsorId[id] != null
+      )
+    ) {
+      return withSponsorContactUnselectedOption(options)
+    }
     return options
-  }, [selectedSponsors, sponsorEditContext.contactsBySponsorId])
+  }, [
+    isFormEdit,
+    selectedSponsors,
+    sponsorEditContext.contactsBySponsorId,
+    watchedSponsorIds,
+  ])
 
   const sponsorManagerViewText = useMemo(
     () =>
@@ -424,13 +444,10 @@ function BasicInfoSection({
       }
       return
     }
-    if (managerOptions.length === 0) {
-      if (currentIds.length > 0) {
-        editForm.setValue('sponsorManagerContactIds', [], { shouldValidate: false })
-        editForm.setValue('sponsorManagerContactId', '', { shouldValidate: false })
-      }
-      return
-    }
+    const contactsReady = watchedSponsorIds.every(
+      id => sponsorEditContext.contactsBySponsorId[id] != null
+    )
+    if (!contactsReady || managerOptions.length === 0) return
     const optionValues = new Set(managerOptions.map(option => option.value))
     const validIds = currentIds.filter(id => optionValues.has(id))
     if (validIds.length !== currentIds.length) {
@@ -445,7 +462,13 @@ function BasicInfoSection({
     } else if (validIds.length > 0) {
       editForm.clearErrors('sponsorManagerContactIds')
     }
-  }, [editForm, isFormEdit, managerOptions, watchedSponsorIds])
+  }, [
+    editForm,
+    isFormEdit,
+    managerOptions,
+    sponsorEditContext.contactsBySponsorId,
+    watchedSponsorIds,
+  ])
 
   const participantIndividual = isFormEdit ? editForm.watch('participantIndividual') : false
   const participantOrganization = isFormEdit ? editForm.watch('participantOrganization') : false
@@ -792,7 +815,10 @@ function BasicInfoSection({
                       value={selected}
                       disabled={watchedSponsorIds.length === 0 || managerOptions.length === 0}
                       onChange={v => {
-                        const ids = Array.isArray(v) ? v.map(String) : []
+                        const ids = normalizeSponsorContactUnselectedSelection(
+                          Array.isArray(v) ? v.map(String) : [],
+                          selected
+                        )
                         field.onChange(ids)
                         editForm.setValue('sponsorManagerContactId', ids[0] ?? '', {
                           shouldDirty: true,
@@ -1042,6 +1068,16 @@ function KpiSection({
     editForm.setValue('kpiFinalSchools', 0)
     editForm.setValue('kpiFinalClasses', 0)
   }, [editForm, isFormEdit, isIndividualTarget])
+
+  useEffect(() => {
+    if (!isFormEdit || hasInstructor) return
+    editForm.setValue('kpiInstructorCount', 0)
+  }, [editForm, hasInstructor, isFormEdit])
+
+  useEffect(() => {
+    if (!isFormEdit || hasVolunteer) return
+    editForm.setValue('kpiVolunteerCount', 0)
+  }, [editForm, hasVolunteer, isFormEdit])
 
   if (!kpi && !isEditMode) return null
 

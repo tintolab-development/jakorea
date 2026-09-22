@@ -29,6 +29,10 @@ import {
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
+import {
+  formatKoreanPhoneNumber,
+  isValidKoreanPhoneNumber,
+} from '@jakorea/domain/shared/korean-phone'
 
 /**
  * BE `applicationTargetMode` — OpenAPI codegen에 아직 없음.
@@ -561,6 +565,14 @@ function mapProgramSponsorAssignments(program: Program) {
   return buildProgramSponsorAssignmentsWire(sponsorIdsFromForm, contactRefs)
 }
 
+/** BE 전화번호 검증은 하이픈 포함 형식만 통과한다. */
+function toRequestPhone(value: string | null | undefined): string | undefined {
+  const trimmed = value?.trim()
+  if (!trimmed) return undefined
+  if (!isValidKoreanPhoneNumber(trimmed)) return trimmed
+  return formatKoreanPhoneNumber(trimmed)
+}
+
 function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBody {
   const targetLevel = program.targetLevels?.[0] ?? program.targetLevel
   const applicationTargetMode = mapAudienceToApplicationTargetMode(
@@ -622,7 +634,7 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     venue: program.venue,
     curriculum: program.curriculum,
     contactEmail: program.contactEmail,
-    contactPhone: program.contactPhone,
+    contactPhone: toRequestPhone(program.contactPhone),
     oneLineIntroduction: program.oneLineIntroduction,
     keyVisualImage: program.keyVisualImage ?? program.posterImage,
     settlementRuleId: program.settlementRuleId,
@@ -787,7 +799,7 @@ function mapProgramPatchFieldsToRequest(
     body.contactEmail = merged.contactEmail
   }
   if (has('contactPhone') && !looksMaskedProgramPii(merged.contactPhone)) {
-    body.contactPhone = merged.contactPhone
+    body.contactPhone = toRequestPhone(merged.contactPhone)
   }
   if (has('oneLineIntroduction')) body.oneLineIntroduction = merged.oneLineIntroduction
   if (has('keyVisualImage') || has('posterImage')) {
