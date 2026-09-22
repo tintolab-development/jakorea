@@ -21,7 +21,10 @@ import {
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { AdminProgramSponsorAssignmentDto } from '@/features/program/general/api/programs-api-client'
-import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
+import {
+  omitIfDetailedProgramNameAlias,
+  parseDetailedProgramMasterId,
+} from '@/features/program/general/lib/detailed-program-request-id'
 import { resolveProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   parseTrainedTeacherServiceDetailJson,
@@ -294,6 +297,8 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
     title,
     mainTitle: dto.mainTitle ?? title,
+    // 세부 프로그램 마스터 id — 일반 프로그램 어댑터와 동일하게 top-level 필드로 읽어온다.
+    detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
     type: (dto.type as ProgramType | undefined) ?? 'offline',
     format: (dto.format as ProgramFormat | undefined) ?? 'workshop',
     category: (dto.category as ProgramCategory | undefined) ?? 'school',
@@ -425,8 +430,7 @@ export function mapTrainedTeacherToUpdateRequest(
       : parseDetailedProgramMasterId(merged.detailedProgramId)
   const announcementTitle =
     merged.generalCommonInfo?.announcementTitle?.trim() || merged.title?.trim()
-  const detailedProgramName =
-    merged.generalCommonInfo?.detailedProgramName?.trim() || merged.textbookName?.trim()
+  const detailedProgramName = merged.generalCommonInfo?.detailedProgramName
   const sponsorIdsFromForm = (
     merged.generalCommonInfo?.sponsorManagementIds?.length
       ? merged.generalCommonInfo.sponsorManagementIds
@@ -460,11 +464,13 @@ export function mapTrainedTeacherToUpdateRequest(
     applicationStartDate: toDate(merged.applicationStartDate),
     applicationEndDate: toDate(merged.applicationEndDate),
     businessArea: merged.businessArea,
+    // 일정형은 id 를 생략한다. 커리큘럼형은 숫자 마스터 id 만 보낸다.
+    // 교재명·팀구분에 detailedProgramName 을 복제한 값이면 omit.
     educationStructure,
     detailedProgramId,
     titleEn: merged.titleEn,
     mainTitle: merged.mainTitle ?? merged.title,
-    textbookName: detailedProgramName || merged.textbookName,
+    textbookName: omitIfDetailedProgramNameAlias(merged.textbookName, detailedProgramName),
     textbookNameEn: merged.textbookNameEn,
     schoolId: merged.schoolId,
     district: merged.district,
@@ -477,7 +483,7 @@ export function mapTrainedTeacherToUpdateRequest(
     programCategory: merged.programCategory ?? undefined,
     programChannel: merged.programChannel ?? undefined,
     educationTime: toJavaInt(merged.educationTime),
-    teamDivision: merged.teamDivision,
+    teamDivision: omitIfDetailedProgramNameAlias(merged.teamDivision, detailedProgramName),
     educationProcess: merged.educationProcess,
     maleParticipants: toJavaInt(merged.maleParticipants),
     femaleParticipants: toJavaInt(merged.femaleParticipants),

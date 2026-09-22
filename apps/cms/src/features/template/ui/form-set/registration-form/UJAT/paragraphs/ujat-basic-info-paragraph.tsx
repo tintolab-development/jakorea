@@ -15,6 +15,11 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import {
+  isSponsorContactUnselected,
+  normalizeSponsorContactUnselectedSelection,
+  withSponsorContactUnselectedOption,
+} from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
@@ -84,6 +89,10 @@ export function UjatBasicInfoParagraph() {
     'ujat.basicInfo.detailedProgramId',
     UJAT_DETAILED_PROGRAM_UJAT_VALUE
   )
+  const [, setDetailedProgramName] = useUjatProgramRegistrationOverlayKv<string>(
+    'ujat.basicInfo.detailedProgramName',
+    UJAT_DETAILED_PROGRAM_UJAT_LABEL
+  )
 
   const [operationAnchorIso, setOperationAnchorIso] = useUjatProgramRegistrationOverlayKv<string | null>(
     'ujat.basicInfo.operationAnchorIso',
@@ -116,11 +125,13 @@ export function UjatBasicInfoParagraph() {
     [operationRange]
   )
 
+  // UJAT는 참여자 유형이 「학교/기관」·「봉사자」로 고정된 프로그램이므로
+  // 4개 체크박스 모두 비활성화하고 값도 수정할 수 없게 한다.
   const [individualChecked] = useUjatProgramRegistrationOverlayKv(
     'ujat.basicInfo.participant.individual',
     false
   )
-  const [organizationChecked, setOrganizationChecked] = useUjatProgramRegistrationOverlayKv(
+  const [organizationChecked] = useUjatProgramRegistrationOverlayKv(
     'ujat.basicInfo.participant.organization',
     true
   )
@@ -128,7 +139,7 @@ export function UjatBasicInfoParagraph() {
     'ujat.basicInfo.participant.teacher',
     false
   )
-  const [volunteerChecked, setVolunteerChecked] = useUjatProgramRegistrationOverlayKv(
+  const [volunteerChecked] = useUjatProgramRegistrationOverlayKv(
     'ujat.basicInfo.participant.volunteer',
     true
   )
@@ -196,14 +207,18 @@ export function UjatBasicInfoParagraph() {
 
   const managerOptions = useMemo(() => {
     if (sponsorId === UJAT_SPONSOR_ALL_VALUE) {
-      return [{ value: UJAT_SPONSOR_ALL_VALUE, label: '전체' }]
+      return withSponsorContactUnselectedOption([
+        { value: UJAT_SPONSOR_ALL_VALUE, label: '전체' },
+      ])
     }
     if (!sponsorId) return []
-    return (contactsQuery.data ?? []).map(c => ({
+    const contacts = (contactsQuery.data ?? []).map(c => ({
       value: c.id,
       label: c.name,
     }))
-  }, [contactsQuery.data, sponsorId])
+    if (!contactsQuery.isSuccess && !contactsQuery.isError) return contacts
+    return withSponsorContactUnselectedOption(contacts)
+  }, [contactsQuery.data, contactsQuery.isError, contactsQuery.isSuccess, sponsorId])
 
   const selectedSponsorContactIds = useMemo(() => {
     if (Array.isArray(sponsorContactIds) && sponsorContactIds.length > 0) {
@@ -217,12 +232,12 @@ export function UjatBasicInfoParagraph() {
   }, [sponsorContactId, sponsorContactIds, sponsorId])
 
   const applySponsorContactIds = (next: string[]) => {
-    const unique = [...new Set(next.map(String).map(id => id.trim()).filter(Boolean))]
+    const unique = normalizeSponsorContactUnselectedSelection(next, selectedSponsorContactIds)
     setSponsorContactIds(unique)
     const primary = unique[0] ?? (sponsorId === UJAT_SPONSOR_ALL_VALUE ? UJAT_SPONSOR_ALL_VALUE : '')
     setSponsorContactId(primary)
     const labels = unique
-      .filter(id => id !== UJAT_SPONSOR_ALL_VALUE)
+      .filter(id => id !== UJAT_SPONSOR_ALL_VALUE && !isSponsorContactUnselected(id))
       .map(id => managerOptions.find(o => o.value === id)?.label ?? '')
       .filter(Boolean)
     setSponsorManagerName(labels.join(', '))
@@ -237,6 +252,14 @@ export function UjatBasicInfoParagraph() {
     ],
     [remoteDetailedProgramOptions]
   )
+
+  // id만 저장하고 name을 갱신하지 않으면 실제 반영되는 세부 프로그램명이 어긋날 수 있다 —
+  // id 변경 시 라벨도 항상 함께 저장한다.
+  const setDetailedProgramSelection = (nextId: string) => {
+    setDetailedProgramId(nextId)
+    const label = detailedProgramOptions.find(o => o.value === nextId)?.label?.trim() || ''
+    setDetailedProgramName(label)
+  }
 
   const toggleSurveyItem = (id: UjatSurveyRowId) => (e: CheckboxChangeEvent) => {
     updateUjatProgramRegistrationOverlayKey<Record<string, boolean>>(
@@ -326,7 +349,7 @@ export function UjatBasicInfoParagraph() {
                   width="100%"
                   options={detailedProgramOptions}
                   value={detailedProgramId}
-                  onChange={v => setDetailedProgramId(String(v ?? ''))}
+                  onChange={v => setDetailedProgramSelection(String(v ?? ''))}
                 />
               </div>
             }
@@ -392,7 +415,7 @@ export function UjatBasicInfoParagraph() {
                 <CmsCheckbox
                   checkboxSize="large"
                   checked={organizationChecked}
-                  onChange={e => setOrganizationChecked(e.target.checked)}
+                  disabled
                 >
                   {participantTypeLabel('school_institution')}
                 </CmsCheckbox>
@@ -406,7 +429,7 @@ export function UjatBasicInfoParagraph() {
                 <CmsCheckbox
                   checkboxSize="large"
                   checked={volunteerChecked}
-                  onChange={e => setVolunteerChecked(e.target.checked)}
+                  disabled
                 >
                   {participantTypeLabel('volunteer')}
                 </CmsCheckbox>
@@ -470,7 +493,12 @@ export function UjatBasicInfoParagraph() {
                   optionFilterProp="label"
                   options={managerOptions}
                   value={selectedSponsorContactIds}
-                  disabled={sponsorId !== UJAT_SPONSOR_ALL_VALUE && managerOptions.length === 0}
+                  disabled={
+                    !sponsorId ||
+                    (sponsorId !== UJAT_SPONSOR_ALL_VALUE &&
+                      !contactsQuery.isSuccess &&
+                      !contactsQuery.isError)
+                  }
                   onChange={v => {
                     const next = Array.isArray(v) ? v.map(String) : []
                     applySponsorContactIds(next)

@@ -19,6 +19,22 @@ import {
   getUjatProgramRegistrationOverlayRecord,
   patchUjatProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import { TEMPLATE_FORM_BUSINESS_AREA_OPTIONS } from '@/features/template/lib/template-form-select-options'
+import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
+
+function reverseBusinessField(value: string | undefined): string {
+  const defaults = createUjatRegistrationBasicInfoOverlayDefaults()
+  const trimmed = value?.trim()
+  if (!trimmed) return defaults.businessField
+  const alreadyFormKey = TEMPLATE_FORM_BUSINESS_AREA_OPTIONS.some(option => option.value === trimmed)
+  if (alreadyFormKey) return trimmed
+  const normalized = normalizeProgramBusinessAreaValue(trimmed)
+  return (
+    TEMPLATE_FORM_BUSINESS_AREA_OPTIONS.find(
+      option => normalizeProgramBusinessAreaValue(option.label) === normalized
+    )?.value ?? defaults.businessField
+  )
+}
 
 function reverseIpOwned(value: string | undefined): string {
   if (value === 'JA') return 'ja'
@@ -43,9 +59,16 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
 ): Record<string, unknown> {
   const defaults = createUjatRegistrationBasicInfoOverlayDefaults()
   const detailedProgramId =
-    program.teamDivision?.trim() === UJAT_DETAILED_PROGRAM_UJAT_LABEL
+    program.detailedProgramId?.trim() ||
+    (program.teamDivision?.trim() === UJAT_DETAILED_PROGRAM_UJAT_LABEL
       ? UJAT_DETAILED_PROGRAM_UJAT_VALUE
-      : defaults.detailedProgramId
+      : defaults.detailedProgramId)
+  // id만 복원하고 name을 비워두면 편집 재개 시 세부 프로그램명이 어긋날 수 있다 — 항상 짝지어 복원한다.
+  const detailedProgramName =
+    program.generalCommonInfo?.detailedProgramName?.trim() ||
+    (detailedProgramId === UJAT_DETAILED_PROGRAM_UJAT_VALUE
+      ? UJAT_DETAILED_PROGRAM_UJAT_LABEL
+      : undefined)
 
   const operationRangeSeal =
     program.startDate && program.endDate
@@ -60,8 +83,9 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
       program.generalCommonInfo?.announcementTitle?.trim() ||
       UJAT_BASIC_INFO_PUBLIC_TITLE_DEFAULT,
     'ujat.basicInfo.detailedProgramId': detailedProgramId,
+    'ujat.basicInfo.detailedProgramName': detailedProgramName,
     'ujat.basicInfo.operationRangeSeal': operationRangeSeal,
-    'ujat.basicInfo.businessField': program.businessArea ?? defaults.businessField,
+    'ujat.basicInfo.businessField': reverseBusinessField(program.businessArea),
     'ujat.basicInfo.sponsorId': program.sponsorId ?? defaults.sponsorId,
     'ujat.basicInfo.sponsorContactId': defaults.sponsorContactId,
     'ujat.basicInfo.sponsorManagerName': program.generalCommonInfo?.sponsorManagerLine ?? '',
@@ -90,9 +114,10 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
 }
 
 export function seedUjatRegistrationBasicInfoOverlayFromProgram(program: Program): void {
-  const saved = resolveUjatRegistrationBasicInfoOverlay()
+  const saved = resolveUjatRegistrationBasicInfoOverlay(program.ujatRegistrationOverlay)
   const fromProgram = buildUjatRegistrationBasicInfoOverlayFromProgram(program)
-  patchUjatProgramRegistrationOverlay({ ...saved, ...fromProgram })
+  // API overlay·세션 값이 1차 컬럼 기본값(일정·정원 목업)을 덮어쓴다.
+  patchUjatProgramRegistrationOverlay({ ...fromProgram, ...saved })
 }
 
 export function readUjatRegistrationBasicInfoOverlayForSave(): Record<string, unknown> {

@@ -2,6 +2,7 @@ import type {
   AdminProgramListItemDto,
 } from '@/features/program/general/api/programs-api-client'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
+import { ProgramCreateRequestEducationStructure } from '@/shared/api/generated/dashboard/schemas/programCreateRequestEducationStructure'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import type {
@@ -17,7 +18,9 @@ import {
   mapPeriodStatusToLifecycle,
   resolveUjatProgressStatus,
 } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
+import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import {
+  parseRegistrationOverlay,
   parseServiceDetail,
   parseUjatServiceDetailExtras,
   serializeServiceDetail,
@@ -30,6 +33,8 @@ const DEFAULT_SPONSOR_ID = 'sponsor-default'
 export type UjatProgramWithExtras = Program & {
   /** Primary serviceDetail extras — Semester 자식 없이 FULL_YEAR */
   ujatServiceDetailExtras?: UjatServiceDetailExtras
+  /** 등록 폼 overlay — 상세 화면 SSOT. 세션 기본값으로 대체하지 않는다. */
+  ujatRegistrationOverlay?: Record<string, unknown>
   periodStatus?: string
 }
 
@@ -43,6 +48,16 @@ function idOf(value: string | number | undefined): string {
 
 function dateValue(value: Date | string | undefined): string | undefined {
   return value instanceof Date ? value.toISOString() : value
+}
+
+/** UJAT는 상·하반기 교육 일정 구조. BE create는 educationStructure 필수. */
+function resolveUjatEducationStructure(
+  program: Program
+): ProgramCreateRequestEducationStructure {
+  if (program.generalProgramEducationStructure === 'curriculum') {
+    return ProgramCreateRequestEducationStructure.CURRICULUM
+  }
+  return ProgramCreateRequestEducationStructure.SCHEDULE
 }
 
 function baseProgram(partial: Partial<Program> & Pick<Program, 'id' | 'title'>): Program {
@@ -72,6 +87,7 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
     ujatProgressStatus?: string
   }
   const fromJson = parseServiceDetail(dtoExt.serviceDetailJson)
+  const registrationOverlay = parseRegistrationOverlay(dtoExt.serviceDetailJson)
   const ujatProgressStatus = resolveUjatProgressStatus({
     ujatProgressStatus: fromJson.ujatProgressStatus ?? dtoExt.ujatProgressStatus,
     periodStatus: dto.periodStatus,
@@ -99,6 +115,9 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
     ...fromJson,
+    ...(Object.keys(registrationOverlay).length > 0
+      ? { ujatRegistrationOverlay: registrationOverlay }
+      : {}),
   })
 }
 
@@ -130,9 +149,16 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     extras.surveyMenuKeys ??
     undefined
 
+  // BE가 숫자 id로 조회해 내려주는 detailedProgramName을 우선 반영 (다른 유형과 동일 계약).
+  const generalCommonInfo =
+    dto.detailedProgramName?.trim()
+      ? { ...details.generalCommonInfo, detailedProgramName: dto.detailedProgramName.trim() }
+      : details.generalCommonInfo
+
   return {
     ...baseProgram({
       ...details,
+      generalCommonInfo,
       id,
       sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
       title,
@@ -162,6 +188,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       lifecycleStatus,
       ujatProgressStatus,
       businessArea: dto.businessArea,
+      detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
       titleEn: dto.titleEn,
       textbookName: dto.textbookName,
       textbookNameEn: dto.textbookNameEn,
@@ -208,6 +235,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       ...extras,
       semesterType: extras.semesterType ?? 'FULL_YEAR',
     },
+    ujatRegistrationOverlay: parseRegistrationOverlay(dto.serviceDetailJson),
     periodStatus,
   }
 }
@@ -234,9 +262,13 @@ function coreRequest(
     description: program.description,
     startDate: dateValue(program.startDate),
     endDate: dateValue(program.endDate),
+    educationStructure: resolveUjatEducationStructure(program),
     applicationStartDate: dateValue(program.applicationStartDate),
     applicationEndDate: dateValue(program.applicationEndDate),
     businessArea: program.businessArea,
+    // UJAT은 실제 카탈로그를 쓰지 않는 고정형이지만, 다른 유형과 동일하게 id·name을
+    // 항상 함께 반영한다 (name은 teamDivision/generalCommonInfo.detailedProgramName에 실림).
+    detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,
     textbookName: program.textbookName,
@@ -315,6 +347,9 @@ function patchRequest(
     body.applicationEndDate = dateValue(merged.applicationEndDate)
   }
   if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('detailedProgramId') || has('generalCommonInfo')) {
+    body.detailedProgramId = parseDetailedProgramMasterId(merged.detailedProgramId)
+  }
   if (has('titleEn')) body.titleEn = merged.titleEn
   if (has('mainTitle')) body.mainTitle = merged.mainTitle ?? merged.title
   if (has('textbookName')) body.textbookName = merged.textbookName

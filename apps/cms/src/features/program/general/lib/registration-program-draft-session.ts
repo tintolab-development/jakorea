@@ -118,6 +118,16 @@ function applyRemoteProgramDraft(
   return existing.draftId
 }
 
+/** 응답에 programType이 없으면 통과. 있으면 요청 유형과 같아야 재사용한다. */
+function draftProgramTypeMatches(
+  storedProgramType: string | undefined,
+  requestedProgramType: string
+): boolean {
+  const stored = storedProgramType?.trim()
+  if (!stored) return true
+  return stored === requestedProgramType
+}
+
 /** 등록 완료 직전 form binding 준비용 서버 draft ID. 임시저장에서는 호출하지 않는다. */
 export async function ensureRegistrationProgramDraftId(
   programType: string,
@@ -132,7 +142,9 @@ export async function ensureRegistrationProgramDraftId(
   const run = (async () => {
     if (!options?.skipRemoteFetch) {
       const existing = await fetchProgramDraftDeduped(programType)
-      if (existing?.draftId != null) {
+      // 조회된 draft의 programType이 요청 유형과 다르면 재사용하지 않는다.
+      // (다른 유형 draft id를 create에 실으면 BE PROGRAM_DRAFT_TYPE_MISMATCH)
+      if (existing?.draftId != null && draftProgramTypeMatches(existing.programType, programType)) {
         const draftId = applyRemoteProgramDraft(programType, existing)
         if (draftId != null) return draftId
       }
@@ -147,6 +159,11 @@ export async function ensureRegistrationProgramDraftId(
     const draftId = saved.draftId
     if (draftId == null) {
       throw new Error('프로그램 등록 draft ID를 받지 못했습니다.')
+    }
+    if (!draftProgramTypeMatches(saved.programType, programType)) {
+      throw new Error(
+        `프로그램 임시저장 유형이 요청 유형과 다릅니다. (요청 ${programType}, 저장 ${saved.programType})`
+      )
     }
     rememberRegistrationProgramDraftId(programType, draftId)
     return draftId

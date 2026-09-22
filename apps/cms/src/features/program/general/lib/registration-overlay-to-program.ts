@@ -13,6 +13,7 @@ import type {
 } from '@/types/domain'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
+import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   buildScheduleProgressTimeSummary,
   buildSessionIpsTypeSummary,
@@ -84,6 +85,12 @@ export type GeneralRegistrationEditorExtras = {
   participantOrganization?: boolean
   /** 교육받은 교사 — 교육 연수 ON/OFF (create 시 항상 명시) */
   teacherTrainingEnabled?: boolean
+  /**
+   * 교육받은 교사 등록 — 일정형(schedule)이어도 「세부 프로그램명」 select 잠금이 없다
+   * (`lockDetailedProgramToNone`은 일반 일정형에만 적용). isSchedule만으로 세부
+   * 프로그램명·id를 스케줄 상세명/undefined로 덮어쓰면 사용자가 고른 값이 사라진다.
+   */
+  isTrainedTeachers?: boolean
 }
 
 function overlayString(overlay: Record<string, unknown>, key: string): string {
@@ -591,7 +598,9 @@ export function applyGeneralRegistrationOverlayToProgram(
       ? (overlay[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY] as unknown[]).map(String)
       : undefined,
     id: overlayString(overlay, GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY) || undefined,
-  }).filter(ref => ref !== TRAINED_TEACHERS_REGISTRATION_ALL_VALUE)
+  }).filter(
+    ref => ref !== TRAINED_TEACHERS_REGISTRATION_ALL_VALUE && !isSponsorContactUnselected(ref)
+  )
   const contactRef = contactRefs[0] ?? ''
   const sponsorManagerLine =
     overlayString(overlay, GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY) ||
@@ -684,9 +693,15 @@ export function applyGeneralRegistrationOverlayToProgram(
     ? buildCurriculumSessions(overlay, extras)
     : undefined
 
+  // 버그 수정: 일반 일정형은 「세부 프로그램명」select가 잠겨 있어(해당없음) 일정 상세명으로
+  // 대체해도 되지만, 교육받은 교사는 일정형이어도 select 잠금이 없어 사용자가 실제로
+  // 세부 프로그램명을 고를 수 있다 — isSchedule만으로 무조건 덮어쓰면 그 선택값이
+  // 스케줄 상세명(또는 undefined)으로 사라진다.
+  const lockDetailedProgramToSchedule = isSchedule && !extras.isTrainedTeachers
+
   const detailedProgramId = overlayString(overlay, `${BASIC}.detailedProgramId`)
   const detailedProgramNameFromOverlay = overlayString(overlay, `${BASIC}.detailedProgramName`)
-  const detailedProgramName = isSchedule
+  const detailedProgramName = lockDetailedProgramToSchedule
     ? resolveScheduleTypeDetailedProgramNameFromDetails(scheduleDetails) ?? '해당없음'
     : detailedProgramNameFromOverlay ||
       (detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
@@ -733,7 +748,7 @@ export function applyGeneralRegistrationOverlayToProgram(
     programCategory,
     programChannel,
     detailedProgramId:
-      isSchedule ||
+      lockDetailedProgramToSchedule ||
       !detailedProgramId ||
       detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
         ? undefined

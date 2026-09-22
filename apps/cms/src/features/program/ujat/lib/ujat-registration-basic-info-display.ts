@@ -20,7 +20,11 @@ import {
   ujatPaymentItemLabelsFromIds,
 } from '@/features/program/ujat/lib/ujat-wage-info-display'
 import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
-import { formatDateRange } from '@/features/program/shared/lib/program-detail-info-constants'
+import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
+import {
+  formatDateRange,
+  normalizeProgramBusinessAreaValue,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
@@ -200,7 +204,10 @@ export function resolveUjatRegistrationBasicInfoDisplay(
   sponsors: readonly SponsorManagementRow[] = []
 ): UjatRegistrationBasicInfoDisplay {
   const defaults = createUjatRegistrationBasicInfoOverlayDefaults(sponsors)
-  const overlay = resolveUjatRegistrationBasicInfoOverlay(overlayInput)
+  const overlay = resolveUjatRegistrationBasicInfoOverlay({
+    ...readUjatRegistrationOverlayFromProgram(program),
+    ...overlayInput,
+  })
 
   const repKo = overlayString(overlay, 'ujat.basicInfo.repKo')?.trim() || defaults.repKo
   const repEn = overlayString(overlay, 'ujat.basicInfo.repEn')?.trim() || defaults.repEn
@@ -268,8 +275,9 @@ export function applyUjatRegistrationOverlayToProgram(
   const title =
     overlayString(overlayInput, 'ujat.basicInfo.programManagementName')?.trim() ||
     defaults.programManagementName
-  const businessArea =
+  const businessArea = normalizeProgramBusinessAreaValue(
     overlayString(overlayInput, 'ujat.basicInfo.businessField') ?? defaults.businessField
+  )
   const sponsorRaw = overlayString(overlayInput, 'ujat.basicInfo.sponsorId') ?? defaults.sponsorId
   const sponsorId = sponsorRaw && sponsorRaw !== UJAT_SPONSOR_ALL_VALUE ? sponsorRaw : program.sponsorId
   const ipOwned = overlayString(overlayInput, 'ujat.basicInfo.ipOwned') ?? defaults.ipOwned
@@ -303,6 +311,12 @@ export function applyUjatRegistrationOverlayToProgram(
 
   const detailedProgramId =
     overlayString(overlayInput, 'ujat.basicInfo.detailedProgramId') ?? defaults.detailedProgramId
+  // 버그 수정: id만 저장되고 name은 화면표시용으로만 파생되어 실제 Program 객체(요청 페이로드)에는
+  // 세부 프로그램명이 전혀 실리지 않았다 — id·name을 항상 짝지어 Program에 반영한다
+  // (다른 프로그램 유형과 동일한 detailedProgramId + generalCommonInfo.detailedProgramName 계약).
+  const detailedProgramName =
+    overlayString(overlayInput, 'ujat.basicInfo.detailedProgramName')?.trim() ||
+    resolveDetailedProgramName(detailedProgramId)
   const teamDivision =
     detailedProgramId === UJAT_DETAILED_PROGRAM_UJAT_VALUE
       ? UJAT_DETAILED_PROGRAM_UJAT_LABEL
@@ -333,6 +347,8 @@ export function applyUjatRegistrationOverlayToProgram(
     titleEn: repEn,
     title,
     teamDivision,
+    // 무관 여부와 상관없이 id·name을 둘 다 Program에 반영 — 일반/TT/1사1교와 동일한 계약.
+    detailedProgramId,
     businessArea,
     sponsorId,
     ipOwned: ipOwnedValue,
@@ -344,6 +360,7 @@ export function applyUjatRegistrationOverlayToProgram(
     endDate,
     generalCommonInfo: {
       ...program.generalCommonInfo,
+      detailedProgramName,
       paymentItems: paymentItemsLabel,
       deductionItems: deductionItemsLabel,
       announcementTitle,
@@ -369,7 +386,9 @@ export function resolveUjatAnnouncementTitle(program: Program): string {
 }
 
 export function applyUjatRegistrationTemplateDefaults(program: Program): Program {
-  const overlay = resolveUjatRegistrationBasicInfoOverlay()
+  const overlay = resolveUjatRegistrationBasicInfoOverlay(
+    readUjatRegistrationOverlayFromProgram(program)
+  )
   if (Object.keys(overlay).length === 0) return program
   return applyUjatRegistrationOverlayToProgram(program, overlay)
 }

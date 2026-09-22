@@ -2,7 +2,7 @@
  * UJAT 프로그램 상세 풀페이지 모달 — `/programs/ujat?programId=…&lnb=…&tab=…`
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -77,6 +77,11 @@ import {
   type UjatSurveyMenuItem,
 } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import { resolveUjatProgramDisplayProgram } from '@/features/program/ujat/lib/ujat-program-display-program'
+import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
+import {
+  patchUjatProgramRegistrationOverlay,
+  resetUjatProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { UjatProgramDetailSidebar } from './ujat-program-detail-sidebar'
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
 import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
@@ -584,6 +589,18 @@ export function UjatProgramDetailFullPageModal({
     const base = onUpdateProgram ? program : (program ?? detailProgram ?? null)
     return base ? resolveUjatProgramDisplayProgram(base) : null
   }, [detailProgram, program, onUpdateProgram, externalLoading])
+
+  const overlayHydrateStampRef = useRef<string | null>(null)
+  useLayoutEffect(() => {
+    if (!displayProgram) return
+    const overlay = readUjatRegistrationOverlayFromProgram(displayProgram)
+    const stamp = `${displayProgram.id}:${Object.keys(overlay).length}`
+    if (overlayHydrateStampRef.current === stamp) return
+    overlayHydrateStampRef.current = stamp
+    if (Object.keys(overlay).length === 0) return
+    resetUjatProgramRegistrationOverlay()
+    patchUjatProgramRegistrationOverlay(overlay)
+  }, [displayProgram])
 
   const interviewEnabled = displayProgram ? getUjatVolunteerInterviewEnabled(displayProgram) : true
   const surveyItems = useMemo(

@@ -57,10 +57,30 @@ describe('company-school adapters', () => {
     const request = mapCompanySchoolToCreateRequest(program)
 
     expect(request.programType).toBe(COMPANY_SCHOOL_PROGRAM_API_TYPE)
-    expect(request.businessStartDate).toBe(program.startDate)
-    expect(request.businessEndDate).toBe(program.endDate)
+    expect(request.businessStartDate).toBe('2025-12-31T15:00:00.000Z')
+    expect(request.businessEndDate).toBe('2026-12-31T14:59:59.999Z')
     expect(request.generalVolunteers).toBe(0)
     expect(request.autoApplyDefaultFormBindings).toBe(true)
+  })
+
+  it('keeps program operation dates but sends Seoul calendar-year business period', () => {
+    const partial: Program = {
+      ...program,
+      startDate: '2026-11-26T15:00:00.000Z',
+      endDate: '2026-12-08T15:00:00.000Z',
+    }
+    const request = mapCompanySchoolToCreateRequest(partial)
+
+    expect(request.startDate).toBe(partial.startDate)
+    expect(request.endDate).toBe(partial.endDate)
+    expect(request.businessStartDate).toBe('2025-12-31T15:00:00.000Z')
+    expect(request.businessEndDate).toBe('2026-12-31T14:59:59.999Z')
+    expect(
+      new Date(request.businessStartDate!).toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })
+    ).toBe('2026-01-01')
+    expect(
+      new Date(request.businessEndDate!).toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })
+    ).toBe('2026-12-31')
   })
 
   it('round-trips school, instructor, wage and payment details without volunteers', () => {
@@ -191,6 +211,47 @@ describe('company-school adapters', () => {
     expect(request.contactPhone).toBeUndefined()
     expect(request.curriculum).toBeUndefined()
     expect(request.oneLineIntroduction).toBeUndefined()
+  })
+
+  it('세부 프로그램명 — detailedProgramId(숫자 마스터 id)로 보내고, textbookName엔 복제하지 않는다 (버그 수정 확인)', () => {
+    // 일반 프로그램 어댑터와 동일한 계약: 세부 프로그램명은 detailedProgramId(top-level, 숫자)로
+    // 전송하고, textbookName(교재명)은 별개 필드이므로 detailedProgramName과 같은 값이면 omit한다.
+    const withDetailedProgramName: Program = {
+      ...program,
+      detailedProgramId: '163010',
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        detailedProgramName: '실제 선택한 세부 프로그램명',
+      },
+    }
+
+    const createRequest = mapCompanySchoolToCreateRequest(withDetailedProgramName)
+    expect(createRequest.detailedProgramId).toBe(163010)
+    expect(createRequest.textbookName).toBeUndefined()
+
+    const fullUpdateRequest = mapCompanySchoolToUpdateRequest(withDetailedProgramName)
+    expect(fullUpdateRequest.detailedProgramId).toBe(163010)
+    expect(fullUpdateRequest.textbookName).toBeUndefined()
+
+    const patchRequest = mapCompanySchoolToUpdateRequest(withDetailedProgramName, {
+      detailedProgramId: withDetailedProgramName.detailedProgramId,
+      generalCommonInfo: withDetailedProgramName.generalCommonInfo,
+    })
+    expect(patchRequest.detailedProgramId).toBe(163010)
+
+    // textbookName이 detailedProgramName과 무관한 실제 교재명이면 그대로 보존된다.
+    const withRealTextbookName: Program = {
+      ...program,
+      detailedProgramId: '163010',
+      textbookName: '진짜 교재명',
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        detailedProgramName: '실제 선택한 세부 프로그램명',
+      },
+    }
+    const requestWithRealTextbook = mapCompanySchoolToCreateRequest(withRealTextbookName)
+    expect(requestWithRealTextbook.detailedProgramId).toBe(163010)
+    expect(requestWithRealTextbook.textbookName).toBe('진짜 교재명')
   })
 
   it('maps typed lifecycleStatus from detail and ignores serviceDetailJson lifecycle', () => {

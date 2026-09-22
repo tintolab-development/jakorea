@@ -102,7 +102,26 @@ describe('economy recruitment required fields', () => {
     resetGeneralRecruitOverlay()
   })
 
-  it('기관 모집+상세를 채우면 완료', () => {
+  it('기관 모집만 채우면 완료 (상세 정보·썸네일 미입력 허용)', () => {
+    replaceApplicantRecruitInstitutionOverlay({
+      [RK.announcementPublished]: 'published',
+      [RK.maxAssignableInstructors]: 2,
+      [RK.maxClassCount]: 4,
+      [RK.programRangeSeal]: RANGE,
+      [RK.targetLevels]: ['elementary'],
+      [RK.targetLevelDetail]: '초등',
+      [RK.recruitRangeSeal]: RANGE,
+      [RK.finalAnnounceIso]: '2026-10-01T00:00:00.000Z',
+      [RK.finalAnnounceMethod]: '홈페이지',
+      [RK.inquiryContact]: '담당',
+      [RK.inquiryTel]: '010-0000-0000',
+      [RK.inquiryEmail]: 'a@b.com',
+      [RK.notesNotApplicable]: true,
+    })
+    expect(hasIncompleteEconomyProgramRecruitmentRequiredFields(ORG)).toBe(false)
+  })
+
+  it('dev autofill처럼 상세 썸네일이 null이어도 기관 모집만 채우면 완료', () => {
     replaceApplicantRecruitInstitutionOverlay({
       [RK.announcementPublished]: 'published',
       [RK.maxAssignableInstructors]: 2,
@@ -123,35 +142,9 @@ describe('economy recruitment required fields', () => {
       'economyRecruit.detailInfo.recruitmentGuide': '안내',
       'economyRecruit.detailInfo.applicationMethod': '지원',
       'economyRecruit.detailInfo.learningSupportContent': '학습지원',
-      'economyRecruit.detailInfo.thumbFileName': 'thumb.png',
+      'economyRecruit.detailInfo.thumbFileName': null,
     })
     expect(hasIncompleteEconomyProgramRecruitmentRequiredFields(ORG)).toBe(false)
-  })
-
-  it('상세 프로그램 설명 비면 미완료', () => {
-    replaceApplicantRecruitInstitutionOverlay({
-      [RK.announcementPublished]: 'published',
-      [RK.maxAssignableInstructors]: 2,
-      [RK.maxClassCount]: 4,
-      [RK.programRangeSeal]: RANGE,
-      [RK.targetLevels]: ['elementary'],
-      [RK.targetLevelDetail]: '초등',
-      [RK.recruitRangeSeal]: RANGE,
-      [RK.finalAnnounceIso]: '2026-10-01T00:00:00.000Z',
-      [RK.finalAnnounceMethod]: '홈페이지',
-      [RK.inquiryContact]: '담당',
-      [RK.inquiryTel]: '010-0000-0000',
-      [RK.inquiryEmail]: 'a@b.com',
-      [RK.notesNotApplicable]: true,
-    })
-    replaceGeneralRecruitOverlay({
-      'economyRecruit.detailInfo.programDescription': '',
-      'economyRecruit.detailInfo.recruitmentGuide': '안내',
-      'economyRecruit.detailInfo.applicationMethod': '지원',
-      'economyRecruit.detailInfo.learningSupportContent': '학습지원',
-      'economyRecruit.detailInfo.thumbFileName': 'thumb.png',
-    })
-    expect(hasIncompleteEconomyProgramRecruitmentRequiredFields(ORG)).toBe(true)
   })
 })
 

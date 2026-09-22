@@ -39,10 +39,25 @@ import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/
 import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
 export const COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'company-school-local-'
 export const TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'trained-teachers-local-'
+
+/**
+ * 등록 완료 직전 스냅샷 id.
+ * 유형 판별은 id prefix·제목 휴리스틱이라, 공통 id `pending-registration` + 제목에
+ * 「1사1교」가 없으면 GENERAL draft가 COMPANY_SCHOOL create에 붙어
+ * `PROGRAM_DRAFT_TYPE_MISMATCH`가 난다. variant별 prefix를 붙인다.
+ */
+export function registrationPendingSnapshotId(variant: ProgramRegistrationFormVariant): string {
+  if (variant === 'economy') return `${COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}pending`
+  if (variant === 'trainedTeachers') {
+    return `${TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}pending`
+  }
+  return 'pending-registration'
+}
 
 const STORAGE_KEY = 'cms.jakorea.generalRegistrationLocalSaves.v1'
 
@@ -201,8 +216,13 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   const studentListRequired: Program['studentListRequired'] =
     isCompanySchool || generalProgramAudience === 'individual' ? 'not_required' : 'required'
 
+  // 버그 수정: 교육받은 교사는 일정형이어도 「세부 프로그램명」select 잠금이 없어
+  // 사용자가 실제 값을 고를 수 있다 (basic-info-paragraph-title-fields.tsx
+  // lockDetailedProgramToNone과 동일 조건). 여기서 isGeneralSchedule에 TT를 포함시키면
+  // 아래 textbookName/teamDivision이 스케줄 상세명(세션 제목 등)으로 고정돼, 사용자가
+  // 고른 세부 프로그램명이 요청 시 다시 스케줄 상세명으로 덮어써진다.
   const isGeneralSchedule =
-    !isCompanySchool && args.programType === 'schedule'
+    !isCompanySchool && !isTrainedTeachers && args.programType === 'schedule'
   const scheduleDetails = isGeneralSchedule
     ? buildScheduleDetailsFromRegistrationOverlay(
         getProgramRegistrationOverlayRecord(),
@@ -340,7 +360,24 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     updatedAt: now,
   }
 
-  if (isCompanySchool) return base
+  if (isCompanySchool) {
+    // 버그 수정: 예전엔 여기서 바로 `base`(하드코딩 목업 커리큘럼·강사비)를 반환해
+    // 등록 위저드 「공통정보」·「모집」에 실제로 입력한 값이 생성된 프로그램에 전혀 반영되지 않았다.
+    const registrationOverlay = getProgramRegistrationOverlayRecord()
+    const withEconomyRegistration = applyEconomyRegistrationOverlayToProgram(
+      base,
+      registrationOverlay
+    )
+    flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
+    return applyGeneralRecruitOverlayToProgram(
+      withEconomyRegistration,
+      {
+        ...getApplicantRecruitInstitutionOverlayRecord(),
+        ...getGeneralRecruitOverlayRecord(),
+      },
+      { preferOverlay: true }
+    )
+  }
 
   const overlay = normalizeRegistrationOverlayForApply(
     getProgramRegistrationOverlayRecord(),
@@ -353,6 +390,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     educationScheduleMode: args.educationScheduleMode,
     scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
     participantOrganization: isTrainedTeachers ? true : args.participant.organization,
+    isTrainedTeachers,
     ...args.editorExtras,
   })
 

@@ -12,6 +12,7 @@ import './ujat-half-education-schedule.css'
 
 /** 프로그램 상세 — 등록 양식과 동일 블록(외곽 테두리 없음) */
 export function UjatHalfEducationScheduleProgramView({
+  program,
   half,
   isEdit = false,
   display: displayInput,
@@ -21,7 +22,9 @@ export function UjatHalfEducationScheduleProgramView({
   isEdit?: boolean
   display?: UjatHalfEducationScheduleDisplay
 }) {
-  const display = displayInput ?? resolveUjatHalfEducationScheduleDisplay(half)
+  const display =
+    displayInput ??
+    resolveUjatHalfEducationScheduleDisplay(half, program.ujatRegistrationOverlay)
   const mode = isEdit ? 'edit' : 'view'
 
   return (

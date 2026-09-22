@@ -46,13 +46,13 @@ import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/ca
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import {
   buildGeneralProgramListRowFromRegistrationSnapshot,
-  COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
+  registrationPendingSnapshotId,
   persistGeneralProgramRegistration,
-  TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
 } from '@/features/program/general/lib/registration-local-save'
-import { mapGeneralProgramToCreateRequest } from '@/features/program/general/api/adapters/general-program-adapters'
-import { mapCompanySchoolToCreateRequest } from '@/features/program/1c-1s/api/adapters'
-import { mapTrainedTeacherToCreateRequest } from '@/features/program/trained-teachers/api/adapters'
+import {
+  logProgramRegistrationCreatePayload,
+  logRegistrationStepTransitionPayload,
+} from '@/features/program/shared/lib/log-program-registration-create-payload'
 import type { Program } from '@/types/domain'
 import {
   applyProgramRegistrationEditorState,
@@ -91,7 +91,11 @@ import {
 import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { useCmsAlert } from '@/shared/ui'
 import { describeIncompleteGeneralProgramRegistrationRequiredFields } from '@/features/program/general/lib/registration-required-fields'
-import { hasIncompleteEconomyRegistrationFromStore } from '@/features/program/general/lib/economy-program-registration-required-fields'
+import {
+  describeIncompleteEconomyProgramRegistrationRequiredFields,
+  hasIncompleteEconomyRegistrationFromStore,
+} from '@/features/program/general/lib/economy-program-registration-required-fields'
+import { applyDevProgramRegistrationAutofill } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
 
 export type ProgramRegistrationParticipantSelection = {
   individual: boolean
@@ -1214,8 +1218,8 @@ export function useProgramRegistrationEditor(
     ]
   )
 
-  /** 모집 정보 작성하기 — create payload console.log */
-  const logCurrentRegistrationPayload = useCallback((): void => {
+  /** 단계 전환 — base create payload (formBindings 미포함) */
+  const logCurrentRegistrationPayload = useCallback((stepLabel: string): void => {
     const variant = programRegistrationFormVariant
     const resolvedSponsorId =
       sponsorId.trim() || readRegistrationOverlaySponsorId(variant)
@@ -1241,17 +1245,13 @@ export function useProgramRegistrationEditor(
         curriculumChartSessionCount,
         scheduleCurriculumPreEducation,
         participantOrganization: participant.organization,
+        teacherTrainingEnabled:
+          programRegistrationFormVariant === 'trainedTeachers'
+            ? trainedTeachersTeacherTrainingEnabled
+            : undefined,
       },
     })
-    if (variant === 'economy') {
-      console.log(mapCompanySchoolToCreateRequest(program))
-      return
-    }
-    if (variant === 'trainedTeachers') {
-      console.log(mapTrainedTeacherToCreateRequest(program))
-      return
-    }
-    console.log(mapGeneralProgramToCreateRequest(program))
+    logRegistrationStepTransitionPayload({ program, variant, stepLabel })
   }, [
     curriculumChartSessionCount,
     curriculumSessionCount,
@@ -1267,6 +1267,67 @@ export function useProgramRegistrationEditor(
     scheduleCurriculumPreEducation,
     sessionRoundType,
     sponsorId,
+    trainedTeachersTeacherTrainingEnabled,
+  ])
+
+  /** 개발용 — 공통정보 overlay·controlled 필드 샘플 채움 (`import.meta.env.DEV`에서만 UI 노출) */
+  const applyDevAutofill = useCallback(async () => {
+    const patch = await applyDevProgramRegistrationAutofill(programRegistrationFormVariant, {
+      curriculumSessionCount,
+      curriculumChartSessionCount,
+      scheduleCurriculumDetailCount,
+      scheduleCurriculumGroupCount,
+      participantOrganization: participant.organization,
+      programType,
+      sessionRoundType,
+    })
+    setProgramTitleKo(patch.programTitleKo)
+    if (patch.sponsorId) setSponsorId(patch.sponsorId)
+    if (patch.sponsorContactId) setSponsorContactId(patch.sponsorContactId)
+
+    const typeSettings = patch.typeSettings
+    if (typeSettings == null) return
+    const nextProgramType =
+      programRegistrationFormVariant === 'economy' ? 'curriculum' : typeSettings.programType
+    setProgramType(nextProgramType)
+    setSessionRoundType(typeSettings.sessionRoundType)
+    setEducationScheduleMode(typeSettings.educationScheduleMode)
+    setEducationFormScheduleDetail(typeSettings.educationFormScheduleDetail)
+    setParticipationScheduleDetail(typeSettings.participationScheduleDetail)
+    setIpsScheduleDetail(typeSettings.ipsScheduleDetail)
+    if (programRegistrationFormVariant === 'general' && nextProgramType === 'schedule') {
+      updateProgramRegistrationOverlayKey(
+        'generalRegistration.basicInfo.detailedProgramId',
+        () => TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+      )
+    }
+    setDraft(prev =>
+      patchEducationCurriculumParagraph(prev, {
+        paragraphTitle:
+          nextProgramType === 'schedule' ? '교육 진행 (일정형)' : '교육 진행 (커리큘럼)',
+        paragraphDescription:
+          nextProgramType === 'schedule'
+            ? resolveProgramRegistrationScheduleCurriculumEditDescription({
+                sessionRoundType: typeSettings.sessionRoundType,
+                participantOrganization: participant.organization,
+                educationFormScheduleDetail: typeSettings.educationFormScheduleDetail,
+                participationScheduleDetail: typeSettings.participationScheduleDetail,
+                ipsScheduleDetail: typeSettings.ipsScheduleDetail,
+              })
+            : programRegistrationFormVariant === 'general'
+              ? resolveProgramRegistrationCurriculumEditDescription(typeSettings.sessionRoundType)
+              : '차시 별 정보를 입력해 주세요',
+      })
+    )
+  }, [
+    curriculumChartSessionCount,
+    curriculumSessionCount,
+    participant.organization,
+    programRegistrationFormVariant,
+    programType,
+    scheduleCurriculumDetailCount,
+    scheduleCurriculumGroupCount,
+    sessionRoundType,
   ])
 
   /** 등록 완료 — 프로그램 생성 POST 1회 */
@@ -1297,14 +1358,8 @@ export function useProgramRegistrationEditor(
     }
     const completion = (async () => {
       try {
-        const registrationSnapshotId =
-          programRegistrationFormVariant === 'economy'
-            ? `${COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}pending-registration`
-            : programRegistrationFormVariant === 'trainedTeachers'
-              ? `${TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}pending-registration`
-              : 'pending-registration'
         const registrationSnapshotArgs = {
-          id: registrationSnapshotId,
+          id: registrationPendingSnapshotId(programRegistrationFormVariant),
           participant,
           programType,
           variant: programRegistrationFormVariant,
@@ -1395,6 +1450,17 @@ export function useProgramRegistrationEditor(
           }
         }
 
+        const programForCreate = buildGeneralProgramListRowFromRegistrationSnapshot({
+          ...registrationSnapshotArgs,
+          id: registrationSnapshotArgs.id,
+        })
+        await logProgramRegistrationCreatePayload({
+          program: programForCreate,
+          variant: programRegistrationFormVariant,
+          preparedFormBindings: preparedFormBindings ?? null,
+          stepLabel: '등록 완료',
+        })
+
         const createdProgram = await persistGeneralProgramRegistration({
           draft,
           participant,
@@ -1459,8 +1525,14 @@ export function useProgramRegistrationEditor(
     setSingleItemListActiveItemId(itemId)
   }, [])
 
-  /** general variant 필수 필드 진단 reason — 콘솔 디버깅용 (`null`=완료, 'economy'/그 외 variant는 미지원=null) */
+  /** 필수 필드 진단 reason — 콘솔 디버깅용 (`null`=완료, general·economy만 지원) */
   const getIncompleteRequiredFieldsReason = useCallback((): string | null => {
+    if (programRegistrationFormVariant === 'economy') {
+      return describeIncompleteEconomyProgramRegistrationRequiredFields(
+        getProgramRegistrationOverlayRecord(),
+        participant
+      )
+    }
     if (programRegistrationFormVariant !== 'general') return null
     const resolvedSponsorId =
       sponsorId.trim() || readGeneralRegistrationOverlaySponsorId()
@@ -1538,6 +1610,7 @@ export function useProgramRegistrationEditor(
     handleSave,
     handleCompleteRegistration,
     logCurrentRegistrationPayload,
+    applyDevAutofill,
     onSelectSingleItemListItem,
     paragraphBodyOptions,
     participant,

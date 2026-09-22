@@ -24,6 +24,10 @@ import {
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
 import {
+  isSponsorContactUnselected,
+  SPONSOR_CONTACT_UNSELECTED_LABEL,
+} from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import {
   isGeneralIndividualParticipantSelection,
   isGeneralIndividualProgram,
 } from '@/features/program/general/lib/survey-audience'
@@ -766,6 +770,7 @@ export function buildProgramSponsorAssignmentsWire(
 ): Array<{ sponsorId: string; sponsorContactId?: string }> {
   const contactsBySponsor = new Map<string, string[]>()
   for (const ref of contactRefs) {
+    if (isSponsorContactUnselected(ref)) continue
     const decoded = decodeSponsorManagerContactRef(ref.trim())
     if (!decoded?.sponsorManagementId || !decoded.contactId) continue
     const sponsorId = decoded.sponsorManagementId.trim()
@@ -922,12 +927,15 @@ function resolveSponsorManagerContactIds(
   })
   if (stored.length > 0) return stored
 
+  const storedLine = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
+  if (storedLine === SPONSOR_CONTACT_UNSELECTED_LABEL) return []
+
   // 후원사별 1명씩 시드 (이름·전화 매칭, 없으면 첫 연락처)
   const refs: string[] = []
   for (const sponsorId of sponsorManagementIds) {
     const contacts = context.contactsBySponsorId[sponsorId] ?? []
     if (contacts.length === 0) continue
-    const line = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
+    const line = storedLine
     const namePart = line.split('|')[0]?.trim() ?? line
     const matched = line
       ? contacts.find(
@@ -947,7 +955,7 @@ function resolveManagerFromFormValues(
   const refs = normalizeSponsorManagerContactIds({
     ids: values.sponsorManagerContactIds,
     id: values.sponsorManagerContactId,
-  })
+  }).filter(ref => !isSponsorContactUnselected(ref))
   const primaryRef = refs[0] ?? ''
   const decoded = primaryRef ? decodeSponsorManagerContactRef(primaryRef) : null
   const sponsorManagementId = decoded?.sponsorManagementId ?? values.sponsorManagementIds[0]
@@ -1411,6 +1419,13 @@ export function generalCommonInfoEditValuesToProgramPatch(
     .map(id => context.sponsors.find(row => row.id === id))
     .filter((row): row is SponsorManagementRow => row != null)
   const { manager } = resolveManagerFromFormValues(values, context)
+  const selectedContactIds = normalizeSponsorManagerContactIds({
+    ids: values.sponsorManagerContactIds,
+    id: values.sponsorManagerContactId,
+  })
+  const sponsorContactUnselectedOnly =
+    selectedContactIds.length > 0 &&
+    selectedContactIds.every(id => isSponsorContactUnselected(id))
   const participantTypes = participantTypesFromFlags(values)
   const primaryCategory =
     participantTypes.includes('individual') && !participantTypes.includes('school_institution')
@@ -1426,13 +1441,15 @@ export function generalCommonInfoEditValuesToProgramPatch(
     : resolveDetailedProgramName(values.detailedProgramId, detailedProgramCatalog)
   const existingCommon = resolveGeneralProgramCommonInfo(existing)
 
-  const managerLine = manager
-    ? formatSponsorManagerDisplayLine({
-        contactName: manager.name,
-        position: manager.position,
-        phone: manager.phone,
-      })
-    : existingCommon.sponsorManagerLine
+  const managerLine = sponsorContactUnselectedOnly
+    ? SPONSOR_CONTACT_UNSELECTED_LABEL
+    : manager
+      ? formatSponsorManagerDisplayLine({
+          contactName: manager.name,
+          position: manager.position,
+          phone: manager.phone,
+        })
+      : existingCommon.sponsorManagerLine
 
   const ipsCategory = values.ipsCategory as ProgramRegistrationIpsCategory | ''
   const ipsCapitalized =

@@ -45,6 +45,11 @@ interface TemplateFullpageModalProps {
   subHeader?: ReactNode
   /** `full-page-modal__body-header` 좌측(닫기·미리보기·임시저장과 동일 행) */
   bodyHeaderLeading?: ReactNode
+  /**
+   * writing 헤더 액션(닫기/미리보기/임시저장) **앞**에 붙는 슬롯.
+   * 프로그램 등록 개발용 자동입력 등.
+   */
+  headerActionsLeading?: ReactNode
   /** 프로그램 상세 등 다른 풀페이지 모달 위에 겹칠 때 스택 순서 */
   zIndex?: number
 }
@@ -96,6 +101,7 @@ export function TemplateFullpageModal({
   footerActions,
   subHeader,
   bodyHeaderLeading,
+  headerActionsLeading,
   zIndex,
 }: TemplateFullpageModalProps) {
   const resolvedFooterActions =
@@ -121,6 +127,7 @@ export function TemplateFullpageModal({
   const headerActions =
     templateTabType === 'writing' ? (
       <>
+        {headerActionsLeading}
         {showDeleteButton ? (
           <CmsButton variant="delete" onClick={onDelete} loading={deleteLoading} disabled={deleteLoading}>
             삭제
@@ -139,6 +146,7 @@ export function TemplateFullpageModal({
       </>
     ) : (
       <>
+        {headerActionsLeading}
         <CmsButton
           variant="secondary"
           icon={<DownloadOutlined />}

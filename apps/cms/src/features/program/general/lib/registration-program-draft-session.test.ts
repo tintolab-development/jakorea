@@ -40,6 +40,26 @@ describe('registration-program-draft-session', () => {
     expect(upsertMyProgramDraftRemote).toHaveBeenCalledTimes(1)
   })
 
+  it('다른 유형 draft는 재사용하지 않고 요청 유형으로 다시 upsert한다', async () => {
+    fetchMyProgramDraftRemote.mockResolvedValue({
+      draftId: 49,
+      programType: 'GENERAL',
+    })
+    upsertMyProgramDraftRemote.mockResolvedValue({
+      draftId: 50,
+      programType: 'COMPANY_SCHOOL',
+      saved: true,
+    })
+    const { ensureRegistrationProgramDraftId } = await import('./registration-program-draft-session')
+
+    const draftId = await ensureRegistrationProgramDraftId('COMPANY_SCHOOL')
+
+    expect(draftId).toBe(50)
+    expect(upsertMyProgramDraftRemote).toHaveBeenCalledWith(
+      expect.objectContaining({ programType: 'COMPANY_SCHOOL' })
+    )
+  })
+
   it('syncRegistrationProgramDraftSession writes localStorage without any remote call', async () => {
     const { syncRegistrationProgramDraftSession, peekRegistrationProgramDraftPayload } =
       await import('./registration-program-draft-session')

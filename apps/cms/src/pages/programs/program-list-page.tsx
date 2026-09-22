@@ -225,7 +225,9 @@ function ProgramListPageContent() {
   const companySchoolProgramIdFromUrl = useMemo(() => {
     if (!isCompanySchoolPath) return undefined
     const pid = searchParams.get('programId')?.trim()
-    if (!pid || isUjatProgramId(pid)) return undefined
+    // 1사1교 목록의 programId는 이 경로의 프로그램이다. 숫자 id(18xxxx)를
+    // UJAT 휴리스틱으로 버리면 상세 모달이 안 열리고 아래 effect가 UJAT로 보낸다.
+    if (!pid) return undefined
     return pid
   }, [isCompanySchoolPath, searchParams])
 
@@ -275,12 +277,14 @@ function ProgramListPageContent() {
 
   useEffect(() => {
     if (!isFullPageModalPath) return
+    // 1사1교 목록에서 연 상세는 이 경로에 둔다. BE 숫자 id가 18xxxx여도 UJAT가 아니다.
+    if (isCompanySchoolPath) return
     const pid = searchParams.get('programId')
     if (!pid || !isUjatProgramId(pid)) return
     const ujatLnb = resolveUjatDetailLnbFromSearchParams(searchParams) ?? 'info'
     const tab = searchParams.get('tab') ?? 'info'
     navigate(buildUjatProgramDetailUrl(pid, ujatLnb, tab), { replace: true })
-  }, [isFullPageModalPath, navigate, searchParams])
+  }, [isCompanySchoolPath, isFullPageModalPath, navigate, searchParams])
 
   // 루트 `/programs?programId=…` — 목록에 없으면 모달이 안 열림 → 유형별 목록 URL로 정규화
   useEffect(() => {
@@ -332,7 +336,7 @@ function ProgramListPageContent() {
       setSelectedProgramForFullPageModal(null)
       return
     }
-    if (isUjatProgramId(programIdFromUrl)) return
+    if (!isCompanySchoolPath && isUjatProgramId(programIdFromUrl)) return
 
     // 1사1교: 목록·detail 캐시에 있으면 동기화. 없어도 URL id로 모달 오픈(아래 open 조건).
     if (isCompanySchoolPath) {

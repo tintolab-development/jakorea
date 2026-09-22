@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import type { Program } from '@/types/domain'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
-import { resolveUjatRecruitDisplayProgram } from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import { useUjatRecruitTemplateProgram } from '@/features/program/ujat/lib/use-ujat-recruit-template-program'
 import { UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/program/ujat/lib/ujat-volunteer-recruit-template-preview-program'
 import type { UjatRecruitParagraphProps } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
 import {
@@ -10,20 +10,41 @@ import {
 import { UjatRecruitVolunteerInfoProgramView } from '@/features/program/ujat/ui/detail-modal/info/recruit-paragraph-views/volunteer-info-program'
 import '@/features/program/ujat/ui/detail-modal/info/recruit-paragraph-views/volunteer-info-program.css'
 
-function UjatRecruitVolunteerInfoTemplateEditor() {
-  const previewProgram = useMemo(
-    () => resolveUjatRecruitDisplayProgram(UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM),
-    []
+function UjatRecruitVolunteerInfoTemplateEditor({
+  volunteerHalf = 'h2',
+}: {
+  volunteerHalf?: 'h1' | 'h2'
+}) {
+  const { program, revision } = useUjatRecruitTemplateProgram(
+    UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+    'volunteer'
   )
-  const form = useProgramDetailEditForm({ program: previewProgram, isEditMode: true })
+  return (
+    <UjatRecruitVolunteerInfoTemplateEditorForm
+      key={`${revision}-${volunteerHalf}`}
+      program={program}
+      volunteerHalf={volunteerHalf}
+    />
+  )
+}
+
+function UjatRecruitVolunteerInfoTemplateEditorForm({
+  program,
+  volunteerHalf,
+}: {
+  program: Program
+  volunteerHalf: 'h1' | 'h2'
+}) {
+  const form = useProgramDetailEditForm({ program, isEditMode: true })
 
   return (
     <UjatRecruitVolunteerInfoProgramView
-      program={previewProgram}
+      program={program}
+      sponsorName={program.managerName}
       form={form}
       isEdit
-      volunteerHalf="h2"
-      showNoticeExposure
+      volunteerHalf={volunteerHalf}
+      showNoticeExposure={volunteerHalf === 'h2'}
       hideSectionHeader
       isTemplateAuthoring
     />
@@ -47,5 +68,5 @@ export function UjatRecruitVolunteerInfoParagraph(props: UjatRecruitParagraphPro
       />
     )
   }
-  return <UjatRecruitVolunteerInfoTemplateEditor />
+  return <UjatRecruitVolunteerInfoTemplateEditor volunteerHalf={props.volunteerHalf ?? 'h2'} />
 }

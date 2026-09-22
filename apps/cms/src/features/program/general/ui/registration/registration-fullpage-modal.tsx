@@ -28,6 +28,7 @@ import { deleteRegistrationProgramDraftRemote } from '@/features/program/general
 import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
 import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
+import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import { useCmsAlert } from '@/shared/ui'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
@@ -226,10 +227,7 @@ export function GeneralProgramRegistrationFullpageModal({
             label: '모집 정보 작성하기',
             variant: 'primary',
             showArrow: true,
-            onClick: () => {
-              flow.registrationVm.logCurrentRegistrationPayload()
-              flow.goToPhase('recruitment')
-            },
+            onClick: () => flow.goToPhase('recruitment'),
           },
         ]
       }
@@ -312,6 +310,11 @@ export function GeneralProgramRegistrationFullpageModal({
             visibleRecruitTabKeys={flow.visibleRecruitTabKeys}
             visibleApplicationTabKeys={flow.visibleApplicationTabKeys}
             onSelectStep={flow.selectStep}
+          />
+        }
+        headerActionsLeading={
+          <RegistrationDevAutofillButton
+            onClick={() => void flow.registrationVm.applyDevAutofill()}
           />
         }
         footerActions={footerActions}

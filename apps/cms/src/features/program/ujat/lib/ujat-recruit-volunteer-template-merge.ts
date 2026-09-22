@@ -8,12 +8,18 @@ import { loadUjatRecruitVolunteerTemplateSave } from '@/features/program/ujat/li
 type RangeSeal = { start: string | null; end: string | null }
 type ResultSeal = { date: string | null; method: string }
 type ContactSeal = { name: string; phone: string; email: string }
-const KEYS = {
+export const UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS = {
+  announcementPublished: 'ujat.recruit.volunteer.announcementPublished',
   noticeExposure: 'ujat.recruit.volunteer.noticeExposure',
   publicTitle: 'ujat.recruit.volunteer.publicTitle',
   programRange: 'ujat.recruit.volunteer.programRange',
+  volunteerTargets: 'ujat.recruit.volunteer.volunteerTargets',
   targetDetail: 'ujat.recruit.volunteer.targetDetail',
   recruitRange: 'ujat.recruit.volunteer.recruitRange',
+  recruitRangeH1: 'ujat.recruit.volunteer.h1.recruitRange',
+  recruitRangeH2: 'ujat.recruit.volunteer.h2.recruitRange',
+  activityTermH1: 'ujat.recruit.volunteer.h1.activityTerm',
+  activityTermH2: 'ujat.recruit.volunteer.h2.activityTerm',
   docAnnounce: 'ujat.recruit.volunteer.docAnnounce',
   interviewRange: 'ujat.recruit.volunteer.interviewRange',
   interviewMethod: 'ujat.recruit.volunteer.interviewMethod',
@@ -25,7 +31,10 @@ const KEYS = {
   applicationMethod: 'ujat.recruit.volunteer.applicationMethod',
   otherNotes: 'ujat.recruit.volunteer.otherNotes',
   additionalContentHtml: 'ujat.recruit.volunteer.additionalContentHtml',
-  attachmentFileNames: 'ujat.recruit.volunteer.attachmentFileNames' } as const
+  attachmentFileNames: 'ujat.recruit.volunteer.attachmentFileNames',
+} as const
+
+const KEYS = UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS
 function overlayString(overlay: Record<string, unknown>, key: string): string | undefined {
   const v = overlay[key]
   return typeof v === 'string' ? v : undefined
@@ -48,6 +57,145 @@ function readRangeSeal(overlay: Record<string, unknown>, key: string): RangeSeal
   const v = overlay[key]
   if (!v || typeof v !== 'object') return undefined
   return v as RangeSeal
+}
+
+function overlayStringList(overlay: Record<string, unknown>, key: string): string[] | undefined {
+  const v = overlay[key]
+  if (!Array.isArray(v)) return undefined
+  const list = v.filter((item): item is string => typeof item === 'string' && item.trim() !== '')
+  return list.length > 0 ? list : undefined
+}
+
+export function pickUjatRecruitVolunteerOverlay(
+  record: Record<string, unknown>
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const key of Object.values(KEYS)) {
+    if (record[key] !== undefined) out[key] = record[key]
+  }
+  return out
+}
+
+function applyRoundOverlay(
+  rounds: Program['rounds'],
+  index: number,
+  range: RangeSeal | undefined,
+  curriculum: string | undefined
+): Program['rounds'] {
+  if (!rounds?.length) return rounds
+  return rounds.map((round, roundIndex) => {
+    if (roundIndex !== index) return round
+    return {
+      ...round,
+      startDate: range?.start?.trim() ? range.start : round.startDate,
+      endDate: range?.end?.trim() ? range.end : round.endDate,
+      curriculum: curriculum?.trim() ? curriculum : round.curriculum,
+    }
+  })
+}
+
+/** 오버레이에 값이 있으면 프로그램 필드를 덮어쓴다. */
+export function applyUjatRecruitVolunteerOverlayOntoProgram(
+  program: Program,
+  overlay: Record<string, unknown>
+): Program {
+  if (Object.keys(overlay).length === 0) return program
+  const programRange = readRangeSeal(overlay, KEYS.programRange)
+  const recruitRange = readRangeSeal(overlay, KEYS.recruitRange)
+  const recruitRangeH1 = readRangeSeal(overlay, KEYS.recruitRangeH1) ?? recruitRange
+  const recruitRangeH2 = readRangeSeal(overlay, KEYS.recruitRangeH2) ?? recruitRange
+  const interviewRange = readRangeSeal(overlay, KEYS.interviewRange)
+  const docAnnounce = overlay[KEYS.docAnnounce] as ResultSeal | undefined
+  const finalAnnounce = overlay[KEYS.finalAnnounce] as ResultSeal | undefined
+  const contact = overlay[KEYS.contact] as ContactSeal | undefined
+  const attachments = overlay[KEYS.attachmentFileNames]
+  const attachmentFileNames = Array.isArray(attachments)
+    ? attachments.filter((x): x is string => typeof x === 'string')
+    : undefined
+  const publicTitle = overlayString(overlay, KEYS.publicTitle)
+  const volunteerTargets = overlayStringList(overlay, KEYS.volunteerTargets)
+  const announcementPublished = overlay[KEYS.announcementPublished]
+  const noticeExposure = overlay[KEYS.noticeExposure]
+  const notes =
+    overlayString(overlay, KEYS.notes) ?? overlayString(overlay, KEYS.otherNotes)
+  return {
+    ...program,
+    mainTitle: publicTitle ?? program.mainTitle,
+    title: publicTitle ?? program.title,
+    startDate: programRange?.start?.trim() ? programRange.start : program.startDate,
+    endDate: programRange?.end?.trim() ? programRange.end : program.endDate,
+    volunteerTarget: volunteerTargets?.join(', ') ?? program.volunteerTarget,
+    volunteerTargets: volunteerTargets ?? program.volunteerTargets,
+    volunteerTargetDetail:
+      overlayString(overlay, KEYS.targetDetail) ?? program.volunteerTargetDetail,
+    volunteerApplicationStartDate: recruitRangeH1?.start?.trim()
+      ? recruitRangeH1.start
+      : program.volunteerApplicationStartDate,
+    volunteerApplicationEndDate: recruitRangeH1?.end?.trim()
+      ? recruitRangeH1.end
+      : program.volunteerApplicationEndDate,
+    documentPassAnnouncementDate: docAnnounce?.date?.trim()
+      ? docAnnounce.date
+      : program.documentPassAnnouncementDate,
+    documentPassAnnouncementMethod: docAnnounce?.method?.trim()
+      ? docAnnounce.method
+      : program.documentPassAnnouncementMethod,
+    interviewStartDate: interviewRange?.start?.trim()
+      ? interviewRange.start
+      : program.interviewStartDate,
+    interviewEndDate: interviewRange?.end?.trim()
+      ? interviewRange.end
+      : program.interviewEndDate,
+    interviewMethod:
+      overlayString(overlay, KEYS.interviewMethod) ?? program.interviewMethod,
+    finalPassAnnouncementDate: finalAnnounce?.date?.trim()
+      ? finalAnnounce.date
+      : program.finalPassAnnouncementDate,
+    finalPassAnnouncementMethod: finalAnnounce?.method?.trim()
+      ? finalAnnounce.method
+      : program.finalPassAnnouncementMethod,
+    managerName: contact?.name?.trim() ? contact.name : program.managerName,
+    contactPhone: contact?.phone?.trim() ? contact.phone : program.contactPhone,
+    contactEmail: contact?.email?.trim() ? contact.email : program.contactEmail,
+    otherNotes: notes ?? program.otherNotes,
+    description: overlayString(overlay, KEYS.description) ?? program.description,
+    recruitmentGuide:
+      overlayString(overlay, KEYS.recruitmentGuide) ?? program.recruitmentGuide,
+    applicationMethod:
+      overlayString(overlay, KEYS.applicationMethod) ?? program.applicationMethod,
+    additionalContentHtml:
+      overlayString(overlay, KEYS.additionalContentHtml) ?? program.additionalContentHtml,
+    attachmentFileNames: attachmentFileNames ?? program.attachmentFileNames,
+    rounds: applyRoundOverlay(
+      applyRoundOverlay(
+        program.rounds,
+        0,
+        recruitRangeH1,
+        overlayString(overlay, KEYS.activityTermH1)
+      ),
+      1,
+      recruitRangeH2,
+      overlayString(overlay, KEYS.activityTermH2)
+    ),
+    generalCommonInfo: {
+      ...program.generalCommonInfo,
+      announcementTitle: publicTitle ?? program.generalCommonInfo?.announcementTitle,
+      volunteerRecruitmentInfo: {
+        ...program.generalCommonInfo?.volunteerRecruitmentInfo,
+        announcementPublished:
+          typeof announcementPublished === 'boolean'
+            ? announcementPublished
+            : program.generalCommonInfo?.volunteerRecruitmentInfo?.announcementPublished,
+        noticeExposureTiming: (() => {
+          const raw = typeof noticeExposure === 'string' ? noticeExposure : undefined
+          return isUjatVolunteerNoticeExposureValue(raw)
+            ? raw
+            : program.generalCommonInfo?.volunteerRecruitmentInfo?.noticeExposureTiming
+        })(),
+        notesNotApplicable: false,
+      },
+    },
+  }
 }
 export function getUjatRecruitVolunteerNoticeExposureFromTemplate(): UjatVolunteerNoticeExposureValue | undefined {
   const saved = loadUjatRecruitVolunteerTemplateSave()
