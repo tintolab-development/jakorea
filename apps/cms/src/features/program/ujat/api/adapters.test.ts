@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type { Program } from '@/types/domain'
+import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
 import { fromDetail, toCreateRequest, toUpdateRequest } from './adapters'
 import { shouldRetryQuery } from './errors'
 import { toRemoteListParams } from './list-params'
@@ -48,6 +49,7 @@ describe('UJAT program adapters', () => {
     }
 
     expect(request.programType).toBe('UJAT')
+    expect(request.educationStructure).toBe('SCHEDULE')
     expect(request.businessStartDate).toBe(program.startDate)
     expect(detail.version).toBe(1)
     expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBe(
@@ -89,6 +91,116 @@ describe('UJAT program adapters', () => {
     expect(updated.title).toBe('수정된 UJAT')
     expect(updated.rounds).toBeUndefined()
     expect(updated.managerName).toBeUndefined()
+  })
+})
+
+describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 버그 수정 확인)', () => {
+  it('detailedProgramId를 숫자로 요청에 실어 보낸다 (실제 카탈로그를 고른 경우)', () => {
+    const withCatalog: Program = {
+      ...program,
+      detailedProgramId: '163006',
+      generalCommonInfo: { detailedProgramName: '실제 선택한 세부 프로그램명' },
+    }
+    const request = toCreateRequest(withCatalog)
+    expect(request.detailedProgramId).toBe(163006)
+  })
+
+  it('UJAT 고정 sentinel(카탈로그 미사용)이면 detailedProgramId는 null이지만 name은 보존된다', () => {
+    const withSentinel: Program = {
+      ...program,
+      detailedProgramId: '__ujat_volunteer_core__',
+      teamDivision: '대학생경제교육봉사단',
+      generalCommonInfo: { detailedProgramName: '대학생경제교육봉사단' },
+    }
+    const request = toCreateRequest(withSentinel)
+    expect(request.detailedProgramId).toBeUndefined()
+
+    const detail = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      program?: { generalCommonInfo?: { detailedProgramName?: string } }
+    }
+    expect(detail.program?.generalCommonInfo?.detailedProgramName).toBe('대학생경제교육봉사단')
+  })
+
+  it('상세 serviceDetailJson.registration.overlay를 화면용으로 붙인다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      sponsorId: program.sponsorId,
+      title: program.title,
+      startDate: String(program.startDate),
+      endDate: String(program.endDate),
+      serviceDetailJson: JSON.stringify({
+        version: 1,
+        program: {},
+        registration: {
+          draft: draft,
+          overlay: {
+            'ujat.basicInfo.repEn': 'Local Spending and Saving',
+            'ujat.kpi.participantCount': 61,
+          },
+        },
+      }),
+    })
+    expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.repEn']).toBe(
+      'Local Spending and Saving'
+    )
+    expect(mapped.ujatRegistrationOverlay?.['ujat.kpi.participantCount']).toBe(61)
+  })
+
+  it('응답의 detailedProgramId·detailedProgramName을 Program에 round-trip 한다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      sponsorId: program.sponsorId,
+      title: program.title,
+      startDate: String(program.startDate),
+      endDate: String(program.endDate),
+      detailedProgramId: 163006,
+      detailedProgramName: '실제 선택한 세부 프로그램명',
+    })
+    expect(mapped.detailedProgramId).toBe('163006')
+    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('실제 선택한 세부 프로그램명')
+  })
+})
+
+describe('UJAT create — overlay 1차 컬럼 반영 (버그 수정 확인)', () => {
+  it('등록 스냅샷 create 요청에 영문명·사업분야·IP·모집기간을 실어 보낸다', () => {
+    const created = buildUjatProgramListRowFromRegistrationSnapshot({
+      id: 'ujat-pending-1',
+      overlay: {
+        'ujat.basicInfo.repKo': '우리 동네 소비와 저축',
+        'ujat.basicInfo.repEn': 'Local Spending and Saving',
+        'ujat.basicInfo.programManagementName': '우리 동네 소비와 저축 운영',
+        'ujat.basicInfo.businessField': 'digital_literacy',
+        'ujat.basicInfo.ipOwned': 'jointly',
+        'ujat.basicInfo.courseDeliveredBy': 'ja',
+        'ujat.basicInfo.partnerInvolvement': 'yes',
+        'ujat.basicInfo.educationCourse': 'digital_computer',
+        'ujat.recruit.institution.recruitRange': {
+          start: '2026-11-10T15:00:00.000Z',
+          end: '2026-11-24T15:00:00.000Z',
+        },
+        'ujat.recruit.institution.contact': {
+          name: '정민재',
+          phone: '031-234-5678',
+          email: 'edu.team@jakorea.org',
+        },
+      },
+    })
+    const request = toCreateRequest(created, {
+      draft,
+      overlay: { 'ujat.basicInfo.repEn': 'Local Spending and Saving' },
+    })
+
+    expect(request.titleEn).toBe('Local Spending and Saving')
+    expect(request.businessArea).toBe('디지털리터러시')
+    expect(request.ipOwned).toBe('Jointly')
+    expect(request.courseDeliveredBy).toBe('JA')
+    expect(request.partnerInvolvement).toBe(true)
+    expect(request.educationProcess).toBe('digital_computer')
+    expect(request.applicationStartDate).toBe('2026-11-10T15:00:00.000Z')
+    expect(request.applicationEndDate).toBe('2026-11-24T15:00:00.000Z')
+    expect(request.managerName).toBe('정민재')
+    expect(request.contactPhone).toBe('031-234-5678')
+    expect(request.contactEmail).toBe('edu.team@jakorea.org')
   })
 })
 

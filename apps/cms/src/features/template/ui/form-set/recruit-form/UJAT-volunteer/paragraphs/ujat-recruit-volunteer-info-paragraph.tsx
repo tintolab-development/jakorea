@@ -1,3 +1,4 @@
+import type { Program } from '@/types/domain'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import { useUjatRecruitTemplateProgram } from '@/features/program/ujat/lib/use-ujat-recruit-template-program'
 import { UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/program/ujat/lib/ujat-volunteer-recruit-template-preview-program'
@@ -14,15 +15,32 @@ function UjatRecruitVolunteerInfoTemplateEditor({
 }: {
   volunteerHalf?: 'h1' | 'h2'
 }) {
-  const previewProgram = useUjatRecruitTemplateProgram(
+  const { program, revision } = useUjatRecruitTemplateProgram(
     UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
     'volunteer'
   )
-  const form = useProgramDetailEditForm({ program: previewProgram, isEditMode: true })
+  return (
+    <UjatRecruitVolunteerInfoTemplateEditorForm
+      key={`${revision}-${volunteerHalf}`}
+      program={program}
+      volunteerHalf={volunteerHalf}
+    />
+  )
+}
+
+function UjatRecruitVolunteerInfoTemplateEditorForm({
+  program,
+  volunteerHalf,
+}: {
+  program: Program
+  volunteerHalf: 'h1' | 'h2'
+}) {
+  const form = useProgramDetailEditForm({ program, isEditMode: true })
 
   return (
     <UjatRecruitVolunteerInfoProgramView
-      program={previewProgram}
+      program={program}
+      sponsorName={program.managerName}
       form={form}
       isEdit
       volunteerHalf={volunteerHalf}

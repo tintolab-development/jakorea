@@ -658,7 +658,8 @@ export function HorizontalTableParagraphBody({
 
   const ujatRecruitFormInstitutionBody = renderUjatRecruitFormInstitutionParagraphBody(
     p,
-    ujatRecruitFormInstitution
+    ujatRecruitFormInstitution,
+    ujatRecruitParagraphProps
   )
   if (ujatRecruitFormInstitutionBody != null) return ujatRecruitFormInstitutionBody
 

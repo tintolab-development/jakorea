@@ -202,6 +202,30 @@ export function parseUjatServiceDetailExtras(
 }
 
 /** PATCH 전에 기존 등록 draft/overlay를 다시 포함하기 위한 보존용 파서 */
+/** 상세 화면용 — draft 없어도 overlay만 있으면 읽는다. */
+export function parseRegistrationOverlay(
+  value: string | undefined
+): Record<string, unknown> {
+  if (!value) return {}
+  try {
+    const parsed: unknown = JSON.parse(value)
+    if (!isRecord(parsed) || !isRecord(parsed.registration) || !isRecord(parsed.registration.overlay)) {
+      return {}
+    }
+    return parsed.registration.overlay
+  } catch {
+    return {}
+  }
+}
+
+export function readUjatRegistrationOverlayFromProgram(
+  program?: { ujatRegistrationOverlay?: unknown } | null
+): Record<string, unknown> {
+  const overlay = program?.ujatRegistrationOverlay
+  if (!overlay || typeof overlay !== 'object' || Array.isArray(overlay)) return {}
+  return overlay as Record<string, unknown>
+}
+
 export function parseRegistrationSnapshot(
   value: string | undefined
 ): RegistrationSnapshot | undefined {

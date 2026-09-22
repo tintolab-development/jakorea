@@ -6,6 +6,7 @@ import {
 import { UjatEducationScheduleSettingsSection } from '@/features/program/ujat/ui/detail-modal/info/ujat-education-schedule-settings-section'
 
 export function UjatEducationScheduleSettingsProgramView({
+  program,
   isEdit = false,
   h1Display: h1DisplayInput,
   h2Display: h2DisplayInput,
@@ -15,8 +16,11 @@ export function UjatEducationScheduleSettingsProgramView({
   h1Display?: UjatEducationScheduleSettingsSemesterDisplay
   h2Display?: UjatEducationScheduleSettingsSemesterDisplay
 }) {
-  const h1Display = h1DisplayInput ?? resolveUjatEducationScheduleSettingsSemesterDisplay('h1')
-  const h2Display = h2DisplayInput ?? resolveUjatEducationScheduleSettingsSemesterDisplay('h2')
+  const overlay = program.ujatRegistrationOverlay
+  const h1Display =
+    h1DisplayInput ?? resolveUjatEducationScheduleSettingsSemesterDisplay('h1', overlay)
+  const h2Display =
+    h2DisplayInput ?? resolveUjatEducationScheduleSettingsSemesterDisplay('h2', overlay)
   const mode = isEdit ? 'edit' : 'view'
 
   return (

@@ -6,6 +6,15 @@
 import dayjs from 'dayjs'
 import type { Program, ProgramRound } from '@/types/domain'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import { applyUjatRegistrationOverlayToProgram } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import {
+  applyUjatRecruitInstitutionOverlayOntoProgram,
+  pickUjatRecruitInstitutionOverlay,
+} from '@/features/program/ujat/lib/ujat-recruit-institution-template-merge'
+import {
+  applyUjatRecruitVolunteerOverlayOntoProgram,
+  pickUjatRecruitVolunteerOverlay,
+} from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 export const UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'ujat-local-'
 
 const STORAGE_KEY = 'cms.jakorea.ujatRegistrationLocalSaves.v1'
@@ -90,7 +99,7 @@ export function buildUjatProgramListRowFromRegistrationSnapshot(args: {
     deliveryType: 'offline',
   }
 
-  return {
+  const base: Program = {
     id,
     sponsorId,
     title,
@@ -113,6 +122,48 @@ export function buildUjatProgramListRowFromRegistrationSnapshot(args: {
     mainTitle: repKo,
     createdAt: now,
     updatedAt: now,
+  }
+
+  // 버그 수정: 예전엔 제목·기간만 있는 뼈대를 그대로 create에 써서
+  // 등록 실입력(영문명·사업분야·IP·KPI 등)이 1차 컬럼에 안 실렸다.
+  return applyUjatRegistrationCreateOverlaysToProgram(base, args.overlay)
+}
+
+/** 등록 공통정보가 운영 식별·기간 SSOT. 모집 overlay는 담당자·모집기간만 얹는다. */
+function applyUjatRegistrationCreateOverlaysToProgram(
+  program: Program,
+  overlay: Record<string, unknown>
+): Program {
+  const withRegistration = applyUjatRegistrationOverlayToProgram(program, overlay)
+  const withInstitution = applyUjatRecruitInstitutionOverlayOntoProgram(
+    withRegistration,
+    pickUjatRecruitInstitutionOverlay(overlay)
+  )
+  const withVolunteer = applyUjatRecruitVolunteerOverlayOntoProgram(
+    withInstitution,
+    pickUjatRecruitVolunteerOverlay(overlay)
+  )
+
+  return {
+    ...withVolunteer,
+    title: withRegistration.title,
+    mainTitle: withRegistration.mainTitle,
+    titleEn: withRegistration.titleEn,
+    startDate: withRegistration.startDate,
+    endDate: withRegistration.endDate,
+    detailedProgramId: withRegistration.detailedProgramId,
+    businessArea: withRegistration.businessArea,
+    teamDivision: withRegistration.teamDivision,
+    rounds: withRegistration.rounds,
+    generalCommonInfo: {
+      ...withVolunteer.generalCommonInfo,
+      detailedProgramName: withRegistration.generalCommonInfo?.detailedProgramName,
+      announcementTitle: withRegistration.generalCommonInfo?.announcementTitle,
+      kpi: withRegistration.generalCommonInfo?.kpi,
+      paymentItems: withRegistration.generalCommonInfo?.paymentItems,
+      deductionItems: withRegistration.generalCommonInfo?.deductionItems,
+      sponsorManagerLine: withRegistration.generalCommonInfo?.sponsorManagerLine,
+    },
   }
 }
 

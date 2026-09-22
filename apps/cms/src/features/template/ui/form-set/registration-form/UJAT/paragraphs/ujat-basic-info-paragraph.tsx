@@ -89,6 +89,10 @@ export function UjatBasicInfoParagraph() {
     'ujat.basicInfo.detailedProgramId',
     UJAT_DETAILED_PROGRAM_UJAT_VALUE
   )
+  const [, setDetailedProgramName] = useUjatProgramRegistrationOverlayKv<string>(
+    'ujat.basicInfo.detailedProgramName',
+    UJAT_DETAILED_PROGRAM_UJAT_LABEL
+  )
 
   const [operationAnchorIso, setOperationAnchorIso] = useUjatProgramRegistrationOverlayKv<string | null>(
     'ujat.basicInfo.operationAnchorIso',
@@ -249,6 +253,14 @@ export function UjatBasicInfoParagraph() {
     [remoteDetailedProgramOptions]
   )
 
+  // id만 저장하고 name을 갱신하지 않으면 실제 반영되는 세부 프로그램명이 어긋날 수 있다 —
+  // id 변경 시 라벨도 항상 함께 저장한다.
+  const setDetailedProgramSelection = (nextId: string) => {
+    setDetailedProgramId(nextId)
+    const label = detailedProgramOptions.find(o => o.value === nextId)?.label?.trim() || ''
+    setDetailedProgramName(label)
+  }
+
   const toggleSurveyItem = (id: UjatSurveyRowId) => (e: CheckboxChangeEvent) => {
     updateUjatProgramRegistrationOverlayKey<Record<string, boolean>>(
       'ujat.basicInfo.surveyItems',
@@ -337,7 +349,7 @@ export function UjatBasicInfoParagraph() {
                   width="100%"
                   options={detailedProgramOptions}
                   value={detailedProgramId}
-                  onChange={v => setDetailedProgramId(String(v ?? ''))}
+                  onChange={v => setDetailedProgramSelection(String(v ?? ''))}
                 />
               </div>
             }

@@ -101,6 +101,7 @@ export function applyUjatRecruitInstitutionOverlayOntoProgram(
     resultAnnouncementMethod: result?.method?.trim()
       ? result.method
       : program.resultAnnouncementMethod,
+    managerName: contact?.name?.trim() ? contact.name : program.managerName,
     contactPhone: contact?.phone?.trim() ? contact.phone : program.contactPhone,
     contactEmail: contact?.email?.trim() ? contact.email : program.contactEmail,
     oneLineIntroduction: notes ?? program.oneLineIntroduction,

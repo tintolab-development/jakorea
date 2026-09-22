@@ -52,7 +52,8 @@ export function resolveUjatPaymentItemIdsFromProgram(
   program: Program,
   overlayInput?: Record<string, unknown>
 ): string[] {
-  const fromOverlay = overlayInput ? readPaymentItemIdsFromOverlay(overlayInput) : undefined
+  const overlay = overlayInput ?? program.ujatRegistrationOverlay
+  const fromOverlay = overlay ? readPaymentItemIdsFromOverlay(overlay) : undefined
   if (fromOverlay?.length) return fromOverlay
 
   const labels = program.generalCommonInfo?.paymentItems?.trim() || ''

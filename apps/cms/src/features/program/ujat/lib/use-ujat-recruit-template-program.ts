@@ -28,7 +28,7 @@ import {
 export function useUjatRecruitTemplateProgram(
   preview: Program,
   kind: 'institution' | 'volunteer'
-): Program {
+): { program: Program; revision: number } {
   const programVersion = useSyncExternalStore(
     subscribeUjatProgramRegistrationOverlay,
     getUjatProgramRegistrationOverlayVersion,
@@ -45,7 +45,7 @@ export function useUjatRecruitTemplateProgram(
     getUjatRecruitVolunteerOverlayVersion
   )
 
-  return useMemo(() => {
+  const program = useMemo(() => {
     const programOverlay = getUjatProgramRegistrationOverlayRecord()
     const institutionOverlay = {
       ...pickUjatRecruitInstitutionOverlay(programOverlay),
@@ -62,4 +62,9 @@ export function useUjatRecruitTemplateProgram(
     }
     return next
   }, [kind, preview, programVersion, institutionVersion, volunteerVersion])
+
+  return {
+    program,
+    revision: programVersion * 1_000_000 + institutionVersion * 1_000 + volunteerVersion,
+  }
 }
