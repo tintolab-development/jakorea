@@ -13,6 +13,7 @@ import type {
 } from '@/types/domain'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { TRAINED_TEACHERS_REGISTRATION_ALL_VALUE } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
+import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   buildScheduleProgressTimeSummary,
   buildSessionIpsTypeSummary,
@@ -591,7 +592,9 @@ export function applyGeneralRegistrationOverlayToProgram(
       ? (overlay[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_IDS_KEY] as unknown[]).map(String)
       : undefined,
     id: overlayString(overlay, GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY) || undefined,
-  }).filter(ref => ref !== TRAINED_TEACHERS_REGISTRATION_ALL_VALUE)
+  }).filter(
+    ref => ref !== TRAINED_TEACHERS_REGISTRATION_ALL_VALUE && !isSponsorContactUnselected(ref)
+  )
   const contactRef = contactRefs[0] ?? ''
   const sponsorManagerLine =
     overlayString(overlay, GENERAL_REGISTRATION_OVERLAY_SPONSOR_MANAGER_LINE_KEY) ||

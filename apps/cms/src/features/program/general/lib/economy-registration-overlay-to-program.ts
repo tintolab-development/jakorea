@@ -1,0 +1,155 @@
+/**
+ * 1사1교(economy) 프로그램 등록 overlay → Program.generalCommonInfo.
+ *
+ * 버그 수정: 기존에는 `buildGeneralProgramListRowFromRegistrationSnapshot`가
+ * `isCompanySchool`일 때 이 매핑 없이 하드코딩된 목업(커리큘럼·강사비 등)을 그대로 반환해,
+ * 관리자가 등록 위저드 「공통정보」에 실제로 입력한 값이 생성된 프로그램에 전혀 반영되지 않았다.
+ * 이 함수는 `economy-program-registration-required-fields.ts`가 검사하는 것과 **동일한 overlay 키**를 읽어
+ * 실입력을 `generalCommonInfo`에 반영하고, overlay가 비어 있으면(=UI 기본값만 두고 안 건드림) 기존 목업 값으로 폴백한다.
+ */
+
+import dayjs from 'dayjs'
+import type { Program } from '@/types/domain'
+import {
+  PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
+  programPaymentItemLabelsFromIds,
+  resolveProgramWageDeductionLabel,
+} from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+
+const CURRICULUM = 'economyRegistration.educationCurriculum' as const
+const SCHEDULE = 'economyRegistration.educationScheduleSettings' as const
+const WAGE = 'economyRegistration.wageInfo' as const
+
+const WAGE_GRADE_LABELS = ['1급 강사비', '2급 강사비', '3급 강사비'] as const
+
+const DEFAULT_CURRICULUM_SESSIONS = [
+  {
+    sessionLabel: '1차시',
+    title: '1단원 나를 알리는 기술',
+    description: '채용 공고 읽기, 이력서 작성하기 등 취업에 필요한 단계들을 알아봅니다.',
+  },
+  {
+    sessionLabel: '2차시',
+    title: '2단원 나를 보여주는 기술',
+    description: '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.',
+  },
+] as const
+
+function overlayString(overlay: Record<string, unknown>, key: string): string {
+  const raw = overlay[key]
+  if (typeof raw === 'string') return raw.trim()
+  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
+  return ''
+}
+
+function overlayNullableNumber(overlay: Record<string, unknown>, key: string): number | undefined {
+  const raw = overlay[key]
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+  if (typeof raw === 'string' && raw.trim()) {
+    const n = Number(raw.replace(/,/g, ''))
+    return Number.isFinite(n) ? n : undefined
+  }
+  return undefined
+}
+
+function readRangeSeal(
+  overlay: Record<string, unknown>,
+  key: string
+): { start: string; end: string } | undefined {
+  const raw = overlay[key]
+  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  const start = (raw as { start?: unknown }).start
+  const end = (raw as { end?: unknown }).end
+  if (typeof start !== 'string' || typeof end !== 'string') return undefined
+  if (!start.trim() || !end.trim()) return undefined
+  return { start, end }
+}
+
+function buildEconomyCurriculumSessions(
+  overlay: Record<string, unknown>
+): Array<{ sessionLabel: string; title: string; description: string }> {
+  return DEFAULT_CURRICULUM_SESSIONS.map((fallback, index) => {
+    const n = index + 1
+    const title = overlayString(overlay, `${CURRICULUM}.session${n}.title`) || fallback.title
+    const description =
+      overlayString(overlay, `${CURRICULUM}.session${n}.description`) || fallback.description
+    return { sessionLabel: fallback.sessionLabel, title, description }
+  })
+}
+
+function buildEconomyEducationScheduleLines(overlay: Record<string, unknown>): string[] {
+  const range = readRangeSeal(overlay, `${SCHEDULE}.dateRangeSeal`)
+  if (!range) return []
+  const start = dayjs(range.start)
+  const end = dayjs(range.end)
+  if (!start.isValid() || !end.isValid()) return []
+  return [`${start.format('YYYY. MM. DD')} ~ ${end.format('YYYY. MM. DD')}`]
+}
+
+function buildEconomyWageGradePricing(
+  fee: number | undefined,
+  distanceFee: number | undefined
+): string {
+  const feeLabel = fee != null && Number.isFinite(fee) ? `${fee.toLocaleString('ko-KR')}원` : '-'
+  const distanceLabel =
+    distanceFee != null && Number.isFinite(distanceFee)
+      ? `${distanceFee.toLocaleString('ko-KR')}원`
+      : feeLabel
+  return `1시간 당 | 기본 : ${feeLabel} | 장거리 : ${distanceLabel}`
+}
+
+/**
+ * 1사1교 등록 위저드 「공통정보」(임금 정보·교육 진행·교육 진행 일정 설정) overlay를
+ * `Program.generalCommonInfo`에 반영. 참여자 모집 정보(`participantRecruitmentInfo`)는
+ * `applyGeneralRecruitOverlayToProgram`(모집 overlay)이 별도로 처리한다.
+ */
+export function applyEconomyRegistrationOverlayToProgram(
+  base: Program,
+  overlay: Record<string, unknown>
+): Program {
+  const baseCommon = base.generalCommonInfo
+
+  const curriculumSessions = buildEconomyCurriculumSessions(overlay)
+  const educationScheduleLinesFromOverlay = buildEconomyEducationScheduleLines(overlay)
+  const educationScheduleLines =
+    educationScheduleLinesFromOverlay.length > 0
+      ? educationScheduleLinesFromOverlay
+      : baseCommon?.educationScheduleLines ?? []
+
+  const gradeFees = [1, 2, 3].map(n => overlayNullableNumber(overlay, `${WAGE}.grade${n}Fee`))
+  const gradeDistanceFees = [1, 2, 3].map(n =>
+    overlayNullableNumber(overlay, `${WAGE}.grade${n}DistanceFee`)
+  )
+  const hasAnyWageOverlay = gradeFees.some(v => v != null) || gradeDistanceFees.some(v => v != null)
+  const wageGradeRows = hasAnyWageOverlay
+    ? WAGE_GRADE_LABELS.map((grade, index) => ({
+        grade,
+        pricing: buildEconomyWageGradePricing(gradeFees[index], gradeDistanceFees[index]),
+      }))
+    : baseCommon?.wageGradeRows ?? []
+
+  const paymentItemIdsRaw = overlay[`${WAGE}.paymentItemValues`]
+  const paymentItemIds = Array.isArray(paymentItemIdsRaw)
+    ? paymentItemIdsRaw.map(String)
+    : undefined
+  const paymentItemsFromIds = paymentItemIds ? programPaymentItemLabelsFromIds(paymentItemIds) : ''
+  const paymentItems =
+    paymentItemsFromIds ||
+    baseCommon?.paymentItems ||
+    PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
+  const deductionItems = paymentItemIds
+    ? resolveProgramWageDeductionLabel(paymentItemIds)
+    : baseCommon?.deductionItems ?? PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
+
+  return {
+    ...base,
+    generalCommonInfo: {
+      ...baseCommon,
+      curriculumSessions,
+      educationScheduleLines,
+      wageGradeRows,
+      paymentItems,
+      deductionItems,
+    },
+  }
+}

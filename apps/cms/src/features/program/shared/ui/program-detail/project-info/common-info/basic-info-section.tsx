@@ -32,6 +32,13 @@ import {
   resolveVenueKind,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
+import {
+  isSponsorContactUnselected,
+  normalizeSponsorContactUnselectedSelection,
+  SPONSOR_CONTACT_UNSELECTED_LABEL,
+  SPONSOR_CONTACT_UNSELECTED_VALUE,
+  withSponsorContactUnselectedOption,
+} from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import {
   PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
@@ -218,8 +225,25 @@ export function BasicInfoSection({
         })
       }
     }
-    return options
-  }, [selectedSponsorManagementRows, sponsorEditContext.contactsBySponsorId])
+    const contactsReady =
+      sponsorManagementIds.length > 0 &&
+      sponsorManagementIds.every(
+        id =>
+          selectedSponsorManagementRows.some(row => row.id === id) &&
+          sponsorEditContext.contactsBySponsorId[id] != null
+      )
+    if (!contactsReady) return options
+    return withSponsorContactUnselectedOption(options, {
+      sponsorId: '',
+      contactId: '',
+      name: '',
+      phone: '',
+    })
+  }, [
+    selectedSponsorManagementRows,
+    sponsorEditContext.contactsBySponsorId,
+    sponsorManagementIds,
+  ])
 
   // 담당자 옵션 로드 후 — API/저장된 contactId[] 우선. 없는 사람 강제 선택 금지
   useEffect(() => {
@@ -238,7 +262,7 @@ export function BasicInfoSection({
       }
       form.setValue('sponsorManagerContactId', validIds[0], { shouldDirty: false })
       const primary = sponsorManagerOptions.find(o => o.value === validIds[0])
-      if (primary) {
+      if (primary && !isSponsorContactUnselected(primary.value)) {
         form.setValue('managerName', primary.name, { shouldDirty: false })
         if (primary.phone) {
           form.setValue('contactPhone', primary.phone, { shouldDirty: false })
@@ -645,7 +669,8 @@ export function BasicInfoSection({
                       .filter(
                         (
                           option
-                        ): option is (typeof sponsorManagerOptions)[number] => option != null
+                        ): option is (typeof sponsorManagerOptions)[number] =>
+                          option != null && !isSponsorContactUnselected(option.value)
                       )
                     return (
                       <div className="detail-info-form-inputs-wrapper" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
@@ -658,9 +683,14 @@ export function BasicInfoSection({
                           optionFilterProp="label"
                           options={sponsorManagerOptions}
                           value={selectedIds}
-                          disabled={sponsorManagerOptions.length === 0}
+                          disabled={
+                            sponsorManagementIds.length === 0 || sponsorManagerOptions.length === 0
+                          }
                           onChange={next => {
-                            const ids = Array.isArray(next) ? next.map(String) : []
+                            const ids = normalizeSponsorContactUnselectedSelection(
+                              Array.isArray(next) ? next.map(String) : [],
+                              selectedIds
+                            )
                             field.onChange(ids)
                             commonInfoForm.setValue('sponsorManagerContactId', ids[0], {
                               shouldDirty: true,
@@ -668,8 +698,18 @@ export function BasicInfoSection({
                             const primary = sponsorManagerOptions.find(
                               option => option.value === ids[0]
                             )
-                            commonInfoForm.setValue('managerName', primary?.name ?? '')
-                            commonInfoForm.setValue('contactPhone', primary?.phone)
+                            const unselectedOnly =
+                              ids.length > 0 && ids.every(id => isSponsorContactUnselected(id))
+                            commonInfoForm.setValue(
+                              'managerName',
+                              unselectedOnly
+                                ? SPONSOR_CONTACT_UNSELECTED_LABEL
+                                : (primary?.name ?? '')
+                            )
+                            commonInfoForm.setValue(
+                              'contactPhone',
+                              unselectedOnly ? undefined : primary?.phone
+                            )
                           }}
                         />
                         {selectedManagers.length > 0 ? (
@@ -1105,22 +1145,52 @@ export function BasicInfoSection({
                           const currentName = field.value ?? ''
                           const currentPhone = commonInfoForm.watch('contactPhone') ?? ''
                           const selectedIndex =
-                            managers.length > 0
-                              ? managers.findIndex(
-                                  m => m.name === currentName || m.phone === currentPhone
-                                )
-                              : -1
+                            currentName === SPONSOR_CONTACT_UNSELECTED_LABEL
+                              ? -1
+                              : managers.length > 0
+                                ? managers.findIndex(
+                                    m => m.name === currentName || m.phone === currentPhone
+                                  )
+                                : -1
+                          const contactOptions =
+                            contactsQuery.isSuccess || contactsQuery.isError
+                              ? [
+                                ...managers.map((m, i) => ({
+                                  value: i,
+                                  label: m.name,
+                                })),
+                                {
+                                  value: SPONSOR_CONTACT_UNSELECTED_VALUE,
+                                  label: SPONSOR_CONTACT_UNSELECTED_LABEL,
+                                },
+                              ]
+                            : managers.map((m, i) => ({
+                                value: i,
+                                label: m.name,
+                              }))
                           return (
                             <CmsSelect
                               placeholder="담당자 선택"
-                              value={selectedIndex >= 0 ? selectedIndex : undefined}
-                              options={managers.map((m, i) => ({
-                                value: i,
-                                label: m.name,
-                              }))}
+                              value={
+                                selectedIndex >= 0
+                                  ? selectedIndex
+                                  : currentName === SPONSOR_CONTACT_UNSELECTED_LABEL
+                                    ? SPONSOR_CONTACT_UNSELECTED_VALUE
+                                    : undefined
+                              }
+                              options={contactOptions}
+                              disabled={!watchedSponsorId || contactsQuery.isLoading}
                               onChange={idx => {
-                                if (idx === '' || idx == null) {
-                                  commonInfoForm.setValue('managerName', '')
+                                if (
+                                  idx === '' ||
+                                  idx == null ||
+                                  idx === SPONSOR_CONTACT_UNSELECTED_VALUE
+                                ) {
+                                  field.onChange(
+                                    idx === SPONSOR_CONTACT_UNSELECTED_VALUE
+                                      ? SPONSOR_CONTACT_UNSELECTED_LABEL
+                                      : ''
+                                  )
                                   commonInfoForm.setValue('contactPhone', undefined)
                                   return
                                 }

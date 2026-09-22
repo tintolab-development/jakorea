@@ -10,7 +10,6 @@ import {
   APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS as RK,
   getApplicantRecruitInstitutionOverlayRecord,
 } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
-import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { getGeneralApplicationOverlayRecord } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   getInstitutionSexOffenseConsentSubmissionRequest,
@@ -67,80 +66,107 @@ function isDayjsLikeEmpty(value: unknown): boolean {
 
 /** ——— 공통정보 (registration-economy) ——— */
 
-function hasIncompleteEconomyBasicInfo(
+/** 어느 필수 항목이 비어 있는지 진단용 reason 문자열 (null = 완료). 콘솔 디버깅·문의 대응용. */
+function findIncompleteEconomyBasicInfoReason(
   overlay: Record<string, unknown>,
   participant: ProgramRegistrationParticipantSelection
-): boolean {
+): string | null {
   const p = 'economyRegistration.basicInfo'
-  if (isEmptyText(readText(overlay, `${p}.repKo`, '1사1교 경제금융교육'))) return true
+  if (isEmptyText(readText(overlay, `${p}.repKo`, '1사1교 경제금융교육'))) return 'basicInfo.repKo'
   if (isEmptyText(readText(overlay, `${p}.repEn`, '1 Company 1 School Economics and Finance Education')))
-    return true
-  if (isEmptyText(read(overlay, `${p}.publicProgramTitle`))) return true
-  if (isEmptyText(readText(overlay, `${p}.detailedProgramId`, DETAILED_MAIN))) return true
-  if (isRangeSealIncomplete(read(overlay, `${p}.operationRangeSeal`))) return true
-  if (!participant.organization && !participant.teacherInstructor) return true
-  if (isEmptyText(readText(overlay, `${p}.businessField`, 'economy_finance'))) return true
-  if (isEmptyText(readText(overlay, `${p}.sponsorId`, ALL))) return true
+    return 'basicInfo.repEn'
+  if (isEmptyText(read(overlay, `${p}.publicProgramTitle`))) return 'basicInfo.publicProgramTitle'
+  if (isEmptyText(readText(overlay, `${p}.detailedProgramId`, DETAILED_MAIN)))
+    return 'basicInfo.detailedProgramId'
+  if (isRangeSealIncomplete(read(overlay, `${p}.operationRangeSeal`)))
+    return 'basicInfo.operationRangeSeal'
+  if (!participant.organization && !participant.teacherInstructor) return 'basicInfo.audience'
+  if (isEmptyText(readText(overlay, `${p}.businessField`, 'economy_finance')))
+    return 'basicInfo.businessField'
+  if (isEmptyText(readText(overlay, `${p}.sponsorId`, ALL))) return 'basicInfo.sponsorId'
   const managerIdsRaw = read(overlay, `${p}.managerContactIds`)
   const managerIds = Array.isArray(managerIdsRaw)
     ? managerIdsRaw.map(String).map(id => id.trim()).filter(Boolean)
     : []
   const managerPrimary = readText(overlay, `${p}.managerContactId`, ALL)
-  if (managerIds.length === 0 && isEmptyText(managerPrimary)) return true
+  if (managerIds.length === 0 && isEmptyText(managerPrimary)) return 'basicInfo.managerContact'
   // 설문 — 전부 해제면 미완료 (기본값 전체 선택)
   const survey = read(overlay, `${p}.surveyItems`)
   if (survey != null && typeof survey === 'object') {
     const row = survey as Record<string, unknown>
     const any =
       row.survey === true || row.satisfaction === true || row.lecture_evaluation === true
-    if (!any) return true
+    if (!any) return 'basicInfo.surveyItems'
   }
-  if (isEmptyText(readText(overlay, `${p}.educationCourse`, ALL))) return true
-  if (isEmptyText(readText(overlay, `${p}.ipOwned`, 'ja'))) return true
-  if (isEmptyText(readText(overlay, `${p}.courseDeliveredBy`, 'ja'))) return true
-  if (isEmptyText(readText(overlay, `${p}.partnerInvolvement`, 'no'))) return true
-  if (isEmptyText(readText(overlay, `${p}.ipsCategory`, 'prepare'))) return true
-  return false
+  if (isEmptyText(readText(overlay, `${p}.educationCourse`, ALL))) return 'basicInfo.educationCourse'
+  if (isEmptyText(readText(overlay, `${p}.ipOwned`, 'ja'))) return 'basicInfo.ipOwned'
+  if (isEmptyText(readText(overlay, `${p}.courseDeliveredBy`, 'ja')))
+    return 'basicInfo.courseDeliveredBy'
+  if (isEmptyText(readText(overlay, `${p}.partnerInvolvement`, 'no')))
+    return 'basicInfo.partnerInvolvement'
+  if (isEmptyText(readText(overlay, `${p}.ipsCategory`, 'prepare'))) return 'basicInfo.ipsCategory'
+  return null
 }
 
-function hasIncompleteEconomyKpi(overlay: Record<string, unknown>): boolean {
+function findIncompleteEconomyKpiReason(overlay: Record<string, unknown>): string | null {
   const p = 'economyRegistration.kpi'
-  if (isEmptyNumber(read(overlay, `${p}.participantCount`))) return true
-  if (isEmptyNumber(read(overlay, `${p}.instructor`))) return true
-  if (isEmptyNumber(read(overlay, `${p}.dispatchedSchool`))) return true
-  if (isEmptyNumber(read(overlay, `${p}.dispatchedClass`))) return true
-  return false
+  if (isEmptyNumber(read(overlay, `${p}.participantCount`))) return 'kpi.participantCount'
+  if (isEmptyNumber(read(overlay, `${p}.instructor`))) return 'kpi.instructor'
+  if (isEmptyNumber(read(overlay, `${p}.dispatchedSchool`))) return 'kpi.dispatchedSchool'
+  if (isEmptyNumber(read(overlay, `${p}.dispatchedClass`))) return 'kpi.dispatchedClass'
+  return null
 }
 
-function hasIncompleteEconomyWage(overlay: Record<string, unknown>): boolean {
+function findIncompleteEconomyWageReason(overlay: Record<string, unknown>): string | null {
   const p = 'economyRegistration.wageInfo'
   for (const n of [1, 2, 3] as const) {
-    if (isEmptyNumber(read(overlay, `${p}.grade${n}Fee`))) return true
-    if (isEmptyNumber(read(overlay, `${p}.grade${n}DistanceFee`))) return true
+    if (isEmptyNumber(read(overlay, `${p}.grade${n}Fee`))) return `wage.grade${n}Fee`
+    if (isEmptyNumber(read(overlay, `${p}.grade${n}DistanceFee`))) return `wage.grade${n}DistanceFee`
   }
   const payment = read(overlay, `${p}.paymentItemValues`)
-  if (payment === undefined) return false // 기본 [p-1, p-7]
-  if (!Array.isArray(payment) || payment.length === 0) return true
-  return false
+  if (payment === undefined) return null // 기본 [p-1, p-7]
+  if (!Array.isArray(payment) || payment.length === 0) return 'wage.paymentItemValues'
+  return null
 }
 
-function hasIncompleteEconomyCurriculum(overlay: Record<string, unknown>): boolean {
+function findIncompleteEconomyCurriculumReason(overlay: Record<string, unknown>): string | null {
   for (const n of [1, 2] as const) {
     if (isEmptyText(read(overlay, `economyRegistration.educationCurriculum.session${n}.title`))) {
-      return true
+      return `curriculum.session${n}.title`
     }
     if (
       isEmptyText(read(overlay, `economyRegistration.educationCurriculum.session${n}.description`))
     ) {
-      return true
+      return `curriculum.session${n}.description`
     }
   }
-  return false
+  return null
 }
 
-function hasIncompleteEconomySchedule(overlay: Record<string, unknown>): boolean {
+function findIncompleteEconomyScheduleReason(overlay: Record<string, unknown>): string | null {
   return isRangeSealIncomplete(
     read(overlay, 'economyRegistration.educationScheduleSettings.dateRangeSeal')
+  )
+    ? 'schedule.dateRangeSeal'
+    : null
+}
+
+/**
+ * 1사1교(economy) 프로그램 등록 공통정보 — 어느 필수 필드가 비어 있는지 진단용 reason.
+ * `null`이면 완료. 값이 있으면 `<section>.<field>` 형태의 진단 키.
+ * 콘솔 디버깅·문의 대응용 — UI 문구에는 노출하지 않는다.
+ */
+export function describeIncompleteEconomyProgramRegistrationRequiredFields(
+  overlay: Record<string, unknown>,
+  participant: ProgramRegistrationParticipantSelection
+): string | null {
+  return (
+    findIncompleteEconomyBasicInfoReason(overlay, participant) ??
+    findIncompleteEconomyKpiReason(overlay) ??
+    findIncompleteEconomyWageReason(overlay) ??
+    findIncompleteEconomyCurriculumReason(overlay) ??
+    findIncompleteEconomyScheduleReason(overlay) ??
+    null
   )
 }
 
@@ -148,15 +174,13 @@ export function hasIncompleteEconomyProgramRegistrationRequiredFields(
   overlay: Record<string, unknown>,
   participant: ProgramRegistrationParticipantSelection
 ): boolean {
-  if (hasIncompleteEconomyBasicInfo(overlay, participant)) return true
-  if (hasIncompleteEconomyKpi(overlay)) return true
-  if (hasIncompleteEconomyWage(overlay)) return true
-  if (hasIncompleteEconomyCurriculum(overlay)) return true
-  if (hasIncompleteEconomySchedule(overlay)) return true
-  return false
+  return describeIncompleteEconomyProgramRegistrationRequiredFields(overlay, participant) != null
 }
 
-/** ——— 모집 (recruitment-economy + 강사 탭) ——— */
+/** ——— 모집 (recruitment-economy + 강사 탭) ———
+ * 「상세 정보」단락(economyRecruit.detailInfo)은 schema `requiredMark: false` — phase gate에서 제외.
+ * 일반 프로그램 `registration-recruitment-required-fields`와 동일 정책.
+ */
 
 function hasIncompleteEconomyInstitutionRecruit(overlay: Record<string, unknown>): boolean {
   if (isEmptyText(readText(overlay, RK.announcementPublished, 'published'))) return true
@@ -186,18 +210,6 @@ function hasIncompleteEconomyInstitutionRecruit(overlay: Record<string, unknown>
   return false
 }
 
-function hasIncompleteEconomyRecruitDetail(overlay: Record<string, unknown>): boolean {
-  const p = 'economyRecruit.detailInfo'
-  if (isEmptyText(read(overlay, `${p}.programDescription`))) return true
-  if (isEmptyText(read(overlay, `${p}.recruitmentGuide`))) return true
-  if (isEmptyText(read(overlay, `${p}.applicationMethod`))) return true
-  if (isEmptyText(read(overlay, `${p}.learningSupportContent`))) return true
-  const thumb =
-    read(overlay, `${p}.thumbFileName`) ?? read(overlay, `${p}.thumbObjectUrl`)
-  if (isEmptyText(thumb)) return true
-  return false
-}
-
 export function hasIncompleteEconomyProgramRecruitmentRequiredFields(
   participant: ProgramRegistrationParticipantSelection
 ): boolean {
@@ -205,8 +217,6 @@ export function hasIncompleteEconomyProgramRecruitmentRequiredFields(
     if (hasIncompleteEconomyInstitutionRecruit(getApplicantRecruitInstitutionOverlayRecord())) {
       return true
     }
-    // 상세 정보는 general-recruit overlay에 economyRecruit.detailInfo 키로 저장
-    if (hasIncompleteEconomyRecruitDetail(getGeneralRecruitOverlayRecord())) return true
   }
   if (participant.teacherInstructor || participant.individual || participant.volunteer) {
     // 강사·개인·봉사 탭은 일반 모집 필수 검사 재사용 (economy는 봉사 숨김이 일반적)

@@ -26,6 +26,12 @@ import {
   TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX,
   normalizeTrainedTeachersAllSelectValue,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
+import {
+  isSponsorContactUnselected,
+  normalizeSponsorContactUnselectedSelection,
+  SPONSOR_CONTACT_UNSELECTED_LABEL,
+  withSponsorContactUnselectedOption,
+} from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
 type ControlledSponsorProps = {
   sponsorId?: string
@@ -131,7 +137,10 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   }
 
   const setManagerContactIds = (next: string[]) => {
-    const unique = normalizeSponsorManagerContactIds({ ids: next })
+    const unique = normalizeSponsorContactUnselectedSelection(
+      normalizeSponsorManagerContactIds({ ids: next }),
+      managerContactIds
+    )
     setLocalManagerContactIds(unique)
     const primary = unique[0] ?? ''
     setManagerContactId(primary)
@@ -189,6 +198,12 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
 
   const sponsorOptions = sponsorApiOptions
 
+  const managerContactsReady = allowMultipleSponsors
+    ? sponsorIds.length === 0 ||
+      (sponsorIds.every(id => multiSponsorContext.sponsors.some(row => row.id === id)) &&
+        sponsorIds.every(id => multiSponsorContext.contactsBySponsorId[id] != null))
+    : isAllSponsor || singleContactsQuery.isSuccess || singleContactsQuery.isError
+
   const selectedSponsors = useMemo(() => {
     if (!allowMultipleSponsors) return [] as SponsorManagementRow[]
     return sponsorIds
@@ -232,10 +247,19 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     sponsorId,
   ])
 
-  const managerContactsReady = allowMultipleSponsors
-    ? sponsorIds.length === 0 ||
-      sponsorIds.every(id => multiSponsorContext.contactsBySponsorId[id] != null)
-    : isAllSponsor || singleContactsQuery.isSuccess
+  const managerSelectOptions = useMemo(() => {
+    const sponsorChosen =
+      isAllSponsor || (allowMultipleSponsors ? sponsorIds.length > 0 : Boolean(sponsorId))
+    if (!sponsorChosen || !managerContactsReady) return managerOptions
+    return withSponsorContactUnselectedOption(managerOptions)
+  }, [
+    allowMultipleSponsors,
+    isAllSponsor,
+    managerContactsReady,
+    managerOptions,
+    sponsorId,
+    sponsorIds.length,
+  ])
 
   // 담당자 API 로드 후 옵션에 없는 overlay 값(이전 mock id 등)만 선택 해제
   useEffect(() => {
@@ -247,7 +271,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     ) {
       return
     }
-    const optionValues = new Set(managerOptions.map(option => option.value))
+    const optionValues = new Set(managerSelectOptions.map(option => option.value))
     const kept = managerContactIds.filter(id => optionValues.has(id))
     if (kept.length === managerContactIds.length) return
     setManagerContactIds(kept)
@@ -255,7 +279,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     isAllSponsor,
     managerContactIds,
     managerContactsReady,
-    managerOptions,
+    managerSelectOptions,
     setManagerContactIds,
   ])
 
@@ -263,6 +287,10 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   useEffect(() => {
     if (managerContactIds.length === 0) {
       patchProgramRegistrationOverlay({ [managerLineKey]: '' })
+      return
+    }
+    if (managerContactIds.every(id => isSponsorContactUnselected(id))) {
+      patchProgramRegistrationOverlay({ [managerLineKey]: SPONSOR_CONTACT_UNSELECTED_LABEL })
       return
     }
     if (
@@ -276,6 +304,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
 
     const lines: string[] = []
     for (const ref of managerContactIds) {
+      if (isSponsorContactUnselected(ref)) continue
       if (allowMultipleSponsors) {
         const decoded = decodeSponsorManagerContactRef(ref)
         if (!decoded) continue
@@ -371,14 +400,12 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
               width={240}
               showSearch
               optionFilterProp="label"
-              options={managerOptions}
+              options={managerSelectOptions}
               value={managerContactIds}
               disabled={
                 allowMultipleSponsors
-                  ? sponsorIds.length === 0 || managerOptions.length === 0
-                  : trainedTeachersDefaults
-                    ? !isAllSponsor && managerOptions.length === 0
-                    : !sponsorId || managerOptions.length === 0
+                  ? sponsorIds.length === 0 || !managerContactsReady
+                  : !sponsorId || !managerContactsReady
               }
               onChange={v => {
                 const next = Array.isArray(v) ? v.map(String) : []

@@ -39,6 +39,7 @@ import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/
 import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
 export const COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'company-school-local-'
@@ -340,7 +341,24 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     updatedAt: now,
   }
 
-  if (isCompanySchool) return base
+  if (isCompanySchool) {
+    // 버그 수정: 예전엔 여기서 바로 `base`(하드코딩 목업 커리큘럼·강사비)를 반환해
+    // 등록 위저드 「공통정보」·「모집」에 실제로 입력한 값이 생성된 프로그램에 전혀 반영되지 않았다.
+    const registrationOverlay = getProgramRegistrationOverlayRecord()
+    const withEconomyRegistration = applyEconomyRegistrationOverlayToProgram(
+      base,
+      registrationOverlay
+    )
+    flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
+    return applyGeneralRecruitOverlayToProgram(
+      withEconomyRegistration,
+      {
+        ...getApplicantRecruitInstitutionOverlayRecord(),
+        ...getGeneralRecruitOverlayRecord(),
+      },
+      { preferOverlay: true }
+    )
+  }
 
   const overlay = normalizeRegistrationOverlayForApply(
     getProgramRegistrationOverlayRecord(),

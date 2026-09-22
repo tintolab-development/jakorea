@@ -14,6 +14,10 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import {
+  normalizeSponsorContactUnselectedSelection,
+  withSponsorContactUnselectedOption,
+} from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
@@ -177,14 +181,16 @@ export function OneCOneSRegistrationBasicInfoParagraph({
 
   const managerOptions = useMemo(() => {
     if (sponsorId === ALL_VALUE) {
-      return [{ value: ALL_VALUE, label: '전체' }]
+      return withSponsorContactUnselectedOption([{ value: ALL_VALUE, label: '전체' }])
     }
     if (!sponsorId) return []
-    return (contactsQuery.data ?? []).map(c => ({
+    const contacts = (contactsQuery.data ?? []).map(c => ({
       value: c.id,
       label: c.name,
     }))
-  }, [contactsQuery.data, sponsorId])
+    if (!contactsQuery.isSuccess && !contactsQuery.isError) return contacts
+    return withSponsorContactUnselectedOption(contacts)
+  }, [contactsQuery.data, contactsQuery.isError, contactsQuery.isSuccess, sponsorId])
 
   const selectedManagerContactIds = useMemo(() => {
     if (Array.isArray(managerContactIds) && managerContactIds.length > 0) {
@@ -196,7 +202,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
   }, [managerContactId, managerContactIds, sponsorId])
 
   const applyManagerContactIds = (next: string[]) => {
-    const unique = [...new Set(next.map(String).map(id => id.trim()).filter(Boolean))]
+    const unique = normalizeSponsorContactUnselectedSelection(next, selectedManagerContactIds)
     setManagerContactIds(unique)
     setManagerContactId(unique[0] ?? (sponsorId === ALL_VALUE ? ALL_VALUE : ''))
   }
@@ -390,7 +396,10 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   optionFilterProp="label"
                   options={managerOptions}
                   value={selectedManagerContactIds}
-                  disabled={sponsorId !== ALL_VALUE && managerOptions.length === 0}
+                  disabled={
+                    !sponsorId ||
+                    (sponsorId !== ALL_VALUE && !contactsQuery.isSuccess && !contactsQuery.isError)
+                  }
                   onChange={v => {
                     const next = Array.isArray(v) ? v.map(String) : []
                     applyManagerContactIds(next)
