@@ -185,6 +185,20 @@ export const programListTargetLevelOptions = [
   { value: 'adult', label: '성인' },
 ]
 
+/** 목록「교육 대상」필터 — `targetLevels` 중 하나 또는 단일 `targetLevel`과 일치 */
+export function programMatchesTargetLevelFilter(
+  program: Pick<Program, 'targetLevel' | 'targetLevels'>,
+  filter: string
+): boolean {
+  if (!filter) return true
+  const levels = program.targetLevels?.length
+    ? program.targetLevels
+    : program.targetLevel
+      ? [program.targetLevel]
+      : []
+  return levels.includes(filter as TargetLevel)
+}
+
 /** 프로그램 목록 교육 대상 표기 (필터 옵션과 동일, `초등` 등 단축 라벨과 구분) */
 export function getProgramListTargetLevelLabel(value: string | undefined): string {
   if (value == null || value === '') return '-'

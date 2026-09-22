@@ -6,10 +6,58 @@ export const TRAINED_TEACHER_PROGRAM_LIST_PAGE_SIZE = GENERAL_PROGRAM_LIST_PAGE_
 
 export type TrainedTeacherOverviewStatusFilter = 'scheduled' | 'in_progress' | 'completed'
 
+const PROGRESS_PHASES = new Set<TrainedTeacherOverviewStatusFilter>([
+  'scheduled',
+  'in_progress',
+  'completed',
+])
+
+const TARGET_LEVEL_QUERY_CODES = new Set([
+  'elementary',
+  'middle',
+  'high',
+  'university',
+  'adult',
+  'college',
+])
+
 export interface TrainedTeacherListFilters {
   keyword?: string
   periodStatus?: string
   businessYear?: number
+  targetLevel?: string
+  /** 전체 탭만. `periodStatus`와 같이 보내지 않음 */
+  progressPhase?: string
+  operationStartDate?: string
+  operationEndDate?: string
+}
+
+export interface TrainedTeacherListTableFilters {
+  title?: string
+  businessYear?: number
+  targetLevel?: string
+  /** URL `lifecycleStatus` — 전체 탭 진행 현황 3버킷 */
+  lifecycleStatus?: string
+  operationStartDate?: string
+  operationEndDate?: string
+}
+
+function isIsoDate(value: string | undefined): value is string {
+  return Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value))
+}
+
+function normalizeTargetLevelQuery(value: string | undefined): string | undefined {
+  const code = value?.trim()
+  if (!code || !TARGET_LEVEL_QUERY_CODES.has(code)) return undefined
+  return code === 'college' ? 'university' : code
+}
+
+function normalizeProgressPhase(value: string | undefined): string | undefined {
+  const phase = value?.trim()
+  if (!phase || !PROGRESS_PHASES.has(phase as TrainedTeacherOverviewStatusFilter)) {
+    return undefined
+  }
+  return phase
 }
 
 /** BE TRAINED_TEACHER Primary: SCHEDULED | IN_PROGRESS | COMPLETED (RECRUITING 아님) */
@@ -38,6 +86,10 @@ export function trainedTeacherListParams(
     keyword: filters.keyword?.trim() || undefined,
     periodStatus: filters.periodStatus,
     businessYear: filters.businessYear,
+    targetLevel: filters.targetLevel?.trim() || undefined,
+    progressPhase: filters.progressPhase,
+    operationStartDate: filters.operationStartDate,
+    operationEndDate: filters.operationEndDate,
     page: pageParam,
     size: TRAINED_TEACHER_PROGRAM_LIST_PAGE_SIZE,
   }
@@ -46,11 +98,23 @@ export function trainedTeacherListParams(
 /** URL 위젯 status → GET /api/admin/programs 쿼리 */
 export function trainedTeacherListParamsFromOverviewStatus(
   statusFilter: TrainedTeacherOverviewStatusFilter | null | undefined,
-  tableFilters: { title?: string; businessYear?: number } = {}
+  tableFilters: TrainedTeacherListTableFilters = {}
 ): TrainedTeacherListFilters {
+  const isAllTab = statusFilter == null
+  const isScheduled = statusFilter === 'scheduled'
   return {
     keyword: tableFilters.title?.trim() || undefined,
     periodStatus: mapOverviewStatusToPeriodStatus(statusFilter),
     businessYear: tableFilters.businessYear,
+    targetLevel: normalizeTargetLevelQuery(tableFilters.targetLevel),
+    progressPhase: isAllTab ? normalizeProgressPhase(tableFilters.lifecycleStatus) : undefined,
+    operationStartDate:
+      isScheduled && isIsoDate(tableFilters.operationStartDate)
+        ? tableFilters.operationStartDate
+        : undefined,
+    operationEndDate:
+      isScheduled && isIsoDate(tableFilters.operationEndDate)
+        ? tableFilters.operationEndDate
+        : undefined,
   }
 }

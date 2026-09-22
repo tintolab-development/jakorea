@@ -8,6 +8,18 @@ export type AdminProgramsListQuery = {
   programType?: string
   periodStatus?: string
   businessYear?: number
+  /** 교육 대상 — `elementary` \| `middle` \| `high` \| `university` \| `adult` */
+  targetLevel?: string
+  /**
+   * 전체 탭「프로그램 진행 현황」3버킷.
+   * `periodStatus`(4카드)와 별축 — 전체 탭에서만 붙이고 periodStatus는 생략.
+   */
+  progressPhase?: string
+  /** `progressPhase` 별칭. 둘 다 있으면 BE는 progressPhase 우선 */
+  lifecycleStatus?: string
+  /** 예정 탭 사업 운영 기간 overlap (YYYY-MM-DD) */
+  operationStartDate?: string
+  operationEndDate?: string
   page?: number
   size?: number
 }
