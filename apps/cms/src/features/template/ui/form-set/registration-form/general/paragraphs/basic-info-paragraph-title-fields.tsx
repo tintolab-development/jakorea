@@ -14,7 +14,6 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import {
   TRAINED_TEACHERS_REGISTRATION_BASIC_INFO_PREFIX,
-  TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION,
   TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/basic-info-defaults'
 
@@ -79,19 +78,24 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
   }, [detailedNameKey, detailedProgramId, lockDetailedProgramToNone, setDetailedProgramId])
 
   useEffect(() => {
-    if (trainedTeachersDefaults && detailedProgramId === TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE) {
-      patchProgramRegistrationOverlay({
-        [detailedNameKey]: TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION.label,
-      })
-    }
-  }, [detailedNameKey, detailedProgramId, trainedTeachersDefaults])
+    if (!trainedTeachersDefaults || lockDetailedProgramToNone) return
+    if (detailedProgramId !== TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE) return
+    // 1사1교용 가짜 id 는 세부 프로그램 마스터가 아니라 커리큘럼 등록이 거절된다.
+    setDetailedProgramId('')
+    patchProgramRegistrationOverlay({ [detailedNameKey]: '' })
+  }, [
+    detailedNameKey,
+    detailedProgramId,
+    lockDetailedProgramToNone,
+    setDetailedProgramId,
+    trainedTeachersDefaults,
+  ])
 
   const detailedProgramOptions = useMemo(() => {
     const withNone = withDetailedProgramNoneOption(remoteDetailedProgramOptions)
-    return trainedTeachersDefaults
-      ? [TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_OPTION, ...withNone]
-      : withNone
-  }, [remoteDetailedProgramOptions, trainedTeachersDefaults])
+    if (!trainedTeachersDefaults || lockDetailedProgramToNone) return withNone
+    return remoteDetailedProgramOptions
+  }, [lockDetailedProgramToNone, remoteDetailedProgramOptions, trainedTeachersDefaults])
 
   const setDetailedProgramSelection = (nextId: string) => {
     setDetailedProgramId(nextId)

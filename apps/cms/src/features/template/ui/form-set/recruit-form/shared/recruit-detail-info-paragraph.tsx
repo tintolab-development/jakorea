@@ -140,11 +140,26 @@ const RecruitDetailAdditionalContentEditor = memo(function RecruitDetailAddition
 
   const getHtmlRef = useRef(getHTML)
   getHtmlRef.current = getHTML
+  const latestHtmlRef = useRef(initialAdditionalHtmlRef.current)
 
   useEffect(() => {
-    registerRecruitDetailAdditionalContentHtml(additionalContentKey, () => getHtmlRef.current())
+    if (editor == null) return
+    const remember = () => {
+      latestHtmlRef.current = editor.getHTML()
+    }
+    remember()
+    editor.on('update', remember)
     return () => {
-      const html = getHtmlRef.current()
+      remember()
+      editor.off('update', remember)
+    }
+  }, [editor])
+
+  useEffect(() => {
+    const readHtml = () => latestHtmlRef.current || getHtmlRef.current()
+    registerRecruitDetailAdditionalContentHtml(additionalContentKey, readHtml)
+    return () => {
+      const html = readHtml()
       if (typeof html === 'string') {
         patchGeneralRecruitOverlay({ [additionalContentKey]: html })
       }

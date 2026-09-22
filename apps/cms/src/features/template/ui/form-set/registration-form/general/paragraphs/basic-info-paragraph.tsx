@@ -209,7 +209,7 @@ export function ProgramRegistrationBasicInfoParagraph({
           programTitleKo={programTitleKoProp}
           onProgramTitleKoChange={onProgramTitleKoChange}
           trainedTeachersDefaults={trainedTeachersDefaults}
-          lockDetailedProgramToNone={!trainedTeachersDefaults && programType === 'schedule'}
+          lockDetailedProgramToNone={programType === 'schedule'}
         />
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field

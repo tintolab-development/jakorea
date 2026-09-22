@@ -21,6 +21,7 @@ import {
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { AdminProgramSponsorAssignmentDto } from '@/features/program/general/api/programs-api-client'
+import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import { resolveProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   parseTrainedTeacherServiceDetailJson,
@@ -416,6 +417,12 @@ export function mapTrainedTeacherToUpdateRequest(
   const educationStructure = mapDomainEducationStructureToApi(
     merged.generalProgramEducationStructure
   )
+  // 일정형은 id 를 보내면 BE 가 거절한다. 커리큘럼형은 마스터 id 가 없으면
+  // CURRICULUM_PROGRAM_DETAILED_PROGRAM_REQUIRED.
+  const detailedProgramId =
+    educationStructure === 'SCHEDULE'
+      ? undefined
+      : parseDetailedProgramMasterId(merged.detailedProgramId)
   const announcementTitle =
     merged.generalCommonInfo?.announcementTitle?.trim() || merged.title?.trim()
   const detailedProgramName =
@@ -454,6 +461,7 @@ export function mapTrainedTeacherToUpdateRequest(
     applicationEndDate: toDate(merged.applicationEndDate),
     businessArea: merged.businessArea,
     educationStructure,
+    detailedProgramId,
     titleEn: merged.titleEn,
     mainTitle: merged.mainTitle ?? merged.title,
     textbookName: detailedProgramName || merged.textbookName,

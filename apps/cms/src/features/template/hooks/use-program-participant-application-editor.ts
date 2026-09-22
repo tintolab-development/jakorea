@@ -865,6 +865,8 @@ export function useProgramParticipantApplicationEditor(
       // hydrate 완료 전 cleanup(Strict Mode 등)은 시드/빈 overlay로 캐시를 오염시키지 않음
       if (!storageHydratedTemplateIdsRef.current.has(hydrateKey)) return
       if (draftRef.current.paragraphs.length === 0) return
+      // 추가 내용 에디터는 키 입력마다 overlay에 안 쓴다. 단계 캐시보다 먼저 넣는다.
+      flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
       sessionDraftCacheRef.current.set(hydrateKey, {
         draft: draftRef.current,
         overlay:

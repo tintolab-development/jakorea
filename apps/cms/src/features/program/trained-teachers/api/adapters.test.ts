@@ -257,6 +257,46 @@ describe('mapTrainedTeacherToUpdateRequest educationStructure', () => {
     }
     const request = mapTrainedTeacherToUpdateRequest(program)
     expect(request.educationStructure).toBe('CURRICULUM')
+    expect(request.detailedProgramId).toBeUndefined()
+  })
+
+  it('sends a numeric detailed program id for curriculum and omits schedule and synthetic ids', () => {
+    const base = {
+      id: '186002',
+      sponsorId: 'sponsor-1',
+      title: 'TT',
+      type: 'offline' as const,
+      format: 'workshop' as const,
+      category: 'school' as const,
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending' as const,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+    }
+    expect(
+      mapTrainedTeacherToUpdateRequest({
+        ...base,
+        generalProgramEducationStructure: 'curriculum',
+        detailedProgramId: '163006',
+      }).detailedProgramId
+    ).toBe(163006)
+    expect(
+      mapTrainedTeacherToUpdateRequest({
+        ...base,
+        generalProgramEducationStructure: 'curriculum',
+        detailedProgramId: '__economy_1c1s_main__',
+      }).detailedProgramId
+    ).toBeUndefined()
+    expect(
+      mapTrainedTeacherToUpdateRequest({
+        ...base,
+        generalProgramEducationStructure: 'schedule',
+        detailedProgramId: '163006',
+      }).detailedProgramId
+    ).toBeUndefined()
   })
 })
 
@@ -605,6 +645,7 @@ describe('mapTrainedTeacherToCreateRequest BE registration contract', () => {
       generalParticipantTypes: ['school_institution'],
       generalProgramAudience: 'organization',
       generalProgramEducationStructure: 'curriculum',
+      detailedProgramId: '163006',
       generalProgramSessionRound: 'single',
       generalCommonInfo: {
         teacherTrainingEnabled: false,
@@ -624,6 +665,7 @@ describe('mapTrainedTeacherToCreateRequest BE registration contract', () => {
     expect(request.applicationTargetMode).toBe('ORGANIZATION')
     expect(request.autoApplyDefaultFormBindings).toBe(true)
     expect(request.educationStructure).toBe('CURRICULUM')
+    expect(request.detailedProgramId).toBe(163006)
 
     const detail = JSON.parse(String(request.serviceDetailJson)) as {
       program?: {
