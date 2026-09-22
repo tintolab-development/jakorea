@@ -1,4 +1,3 @@
-import dayjs from 'dayjs'
 import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
@@ -12,6 +11,10 @@ import type {
 } from '@/types/domain'
 import type { Status } from '@/types'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import {
+  omitIfDetailedProgramNameAlias,
+  parseDetailedProgramMasterId,
+} from '@/features/program/general/lib/detailed-program-request-id'
 import {
   parseCompanySchoolServiceDetailJson,
   serializeCompanySchoolServiceDetailJson,
@@ -27,26 +30,30 @@ function toDate(value: Date | string | undefined): string | undefined {
   return value
 }
 
+const SEOUL_TIME_ZONE = 'Asia/Seoul'
+
+function toSeoulCalendarDate(value: Date | string | undefined): string | null {
+  if (value == null) return null
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleDateString('en-CA', { timeZone: SEOUL_TIME_ZONE })
+}
+
 /**
  * BE `COMPANY_SCHOOL_BUSINESS_PERIOD_MUST_BE_CALENDAR_YEAR` —
- * 사업 운영 기간(businessStartDate/businessEndDate)은 program.startDate/endDate(프로그램 운영)와 별도로
- * 동일 연도 1월 1일~12월 31일이어야 한다.
+ * 사업 운영 기간은 program.startDate/endDate(프로그램 운영)와 별도이며,
+ * Asia/Seoul 달력으로 같은 해 1월 1일 00:00 ~ 12월 31일 23:59:59 이어야 한다.
+ * UTC `…T23:59:59.999Z` 는 서울에서 다음 해 1월 1일이 되므로 쓰면 안 된다.
  */
 export function resolveCompanySchoolBusinessCalendarYearPeriod(
   program: Pick<Program, 'startDate' | 'endDate'>
 ): { start: string; end: string } {
-  const startAnchor = program.startDate ? dayjs(program.startDate) : null
-  const endAnchor = program.endDate ? dayjs(program.endDate) : null
-  const anchor =
-    startAnchor?.isValid() === true
-      ? startAnchor
-      : endAnchor?.isValid() === true
-        ? endAnchor
-        : dayjs()
-  const year = anchor.year()
+  const startDate = toSeoulCalendarDate(program.startDate)
+  const endDate = toSeoulCalendarDate(program.endDate)
+  const year = Number((startDate ?? endDate ?? toSeoulCalendarDate(new Date()))?.slice(0, 4))
   return {
-    start: `${year}-01-01T00:00:00.000Z`,
-    end: `${year}-12-31T23:59:59.999Z`,
+    start: new Date(`${year}-01-01T00:00:00+09:00`).toISOString(),
+    end: new Date(`${year}-12-31T23:59:59.999+09:00`).toISOString(),
   }
 }
 
@@ -126,10 +133,17 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
   } = details
   void _serviceDetailLifecycle
   void _serviceDetailStatus
-  const generalCommonInfo = applySettlementPolicyToCommonInfo(
+  const generalCommonInfoWithSettlement = applySettlementPolicyToCommonInfo(
     details.generalCommonInfo,
     dto.settlementPolicy
   )
+  // BE가 숫자 id로 조회해 내려주는 detailedProgramName을 우선 — serviceDetailJson 캐시가
+  // 낡았을 때도(id만 바뀌고 상세 JSON이 안 갱신된 경우 등) 화면에 최신 이름이 보이게 한다.
+  const generalCommonInfo = {
+    ...generalCommonInfoWithSettlement,
+    detailedProgramName:
+      dto.detailedProgramName?.trim() || generalCommonInfoWithSettlement?.detailedProgramName,
+  }
   const otherNotes =
     dtoExt.otherMatters?.trim() ||
     dtoExt.remarks?.trim() ||
@@ -172,6 +186,8 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus,
     businessArea: dto.businessArea,
+    // 세부 프로그램 마스터 id — 일반 프로그램 어댑터와 동일하게 top-level 필드로 읽어온다.
+    detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
     titleEn: dto.titleEn,
     textbookName: dto.textbookName,
     textbookNameEn: dto.textbookNameEn,
@@ -293,6 +309,10 @@ function looksMaskedProgramPii(value: string | null | undefined): boolean {
 }
 
 function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateRequest {
+  // 버그 수정: 1사1교는 등록 폼에서 고른 「세부 프로그램명」이 요청에 전혀 실리지 않고 무시됐다 —
+  // 일반 프로그램 어댑터와 동일하게 detailedProgramId(숫자 마스터 id)로 보낸다. textbookName(교재명)에
+  // 이름을 강제로 밀어넣는 방식은 general 어댑터의 계약과 달랐다(중복되면 omit).
+  const detailedProgramName = program.generalCommonInfo?.detailedProgramName
   return {
     sponsorId: program.sponsorId,
     title: program.title,
@@ -305,9 +325,10 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     applicationStartDate: toDate(program.applicationStartDate),
     applicationEndDate: toDate(program.applicationEndDate),
     businessArea: program.businessArea,
+    detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,
-    textbookName: program.textbookName,
+    textbookName: omitIfDetailedProgramNameAlias(program.textbookName, detailedProgramName),
     textbookNameEn: program.textbookNameEn,
     schoolId: program.schoolId,
     district: program.district,
@@ -320,7 +341,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     programCategory: program.programCategory ?? undefined,
     programChannel: program.programChannel ?? undefined,
     educationTime: program.educationTime,
-    teamDivision: program.teamDivision,
+    teamDivision: omitIfDetailedProgramNameAlias(program.teamDivision, detailedProgramName),
     educationProcess: program.educationProcess,
     maleParticipants: program.maleParticipants,
     femaleParticipants: program.femaleParticipants,
@@ -377,9 +398,20 @@ function mapCompanySchoolPatchFieldsToRequest(
     body.applicationEndDate = toDate(merged.applicationEndDate)
   }
   if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('detailedProgramId') || has('generalCommonInfo')) {
+    body.detailedProgramId = parseDetailedProgramMasterId(merged.detailedProgramId)
+  }
   if (has('titleEn')) body.titleEn = merged.titleEn
   if (has('mainTitle')) body.mainTitle = merged.mainTitle ?? merged.title
-  if (has('textbookName')) body.textbookName = merged.textbookName
+  if (has('textbookName') || has('generalCommonInfo')) {
+    // 버그 수정: 세부 프로그램명 patch는 generalCommonInfo.detailedProgramName으로 들어오므로
+    // textbookName 키 유무만 보면 갱신이 누락된다 — generalCommonInfo 변경 시에도 동기화한다.
+    // (교재명에 세부 프로그램명을 그대로 복제한 값이면 omit — general 어댑터와 동일 계약)
+    body.textbookName = omitIfDetailedProgramNameAlias(
+      merged.textbookName,
+      merged.generalCommonInfo?.detailedProgramName
+    )
+  }
   if (has('textbookNameEn')) body.textbookNameEn = merged.textbookNameEn
   if (has('schoolId')) body.schoolId = merged.schoolId
   if (has('district')) body.district = merged.district
@@ -394,7 +426,12 @@ function mapCompanySchoolPatchFieldsToRequest(
   if (has('programCategory')) body.programCategory = merged.programCategory ?? undefined
   if (has('programChannel')) body.programChannel = merged.programChannel ?? undefined
   if (has('educationTime')) body.educationTime = merged.educationTime
-  if (has('teamDivision')) body.teamDivision = merged.teamDivision
+  if (has('teamDivision')) {
+    body.teamDivision = omitIfDetailedProgramNameAlias(
+      merged.teamDivision,
+      merged.generalCommonInfo?.detailedProgramName
+    )
+  }
   if (has('educationProcess')) body.educationProcess = merged.educationProcess
   if (has('maleParticipants')) body.maleParticipants = merged.maleParticipants
   if (has('femaleParticipants')) body.femaleParticipants = merged.femaleParticipants

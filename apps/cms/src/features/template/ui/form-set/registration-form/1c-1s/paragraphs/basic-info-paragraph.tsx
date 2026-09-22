@@ -149,6 +149,10 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     'economyRegistration.basicInfo.detailedProgramId',
     DETAILED_PROGRAM_MAIN_VALUE
   )
+  const [, setDetailedProgramName] = useProgramRegistrationOverlayKv<string>(
+    'economyRegistration.basicInfo.detailedProgramName',
+    DETAILED_PROGRAM_MAIN_OPTION.label
+  )
   const [publicProgramTitle, setPublicProgramTitle] = useProgramRegistrationOverlayKv(
     'economyRegistration.basicInfo.publicProgramTitle',
     ''
@@ -217,6 +221,14 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     [remoteDetailedProgramOptions]
   )
 
+  // 버그 수정: id만 저장하고 name을 갱신하지 않아, 선택한 세부 프로그램명이
+  // generalCommonInfo에 전혀 반영되지 않던 문제 — id 변경 시 라벨도 함께 저장한다.
+  const setDetailedProgramSelection = (nextId: string) => {
+    setDetailedProgramId(nextId)
+    const label = detailedProgramOptions.find(o => o.value === nextId)?.label?.trim() || ''
+    setDetailedProgramName(label)
+  }
+
   return (
     <>
       <DetailInfoForm
@@ -279,7 +291,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   width="100%"
                   options={detailedProgramOptions}
                   value={detailedProgramId}
-                  onChange={v => setDetailedProgramId(String(v ?? ''))}
+                  onChange={v => setDetailedProgramSelection(String(v ?? ''))}
                 />
               </div>
             }

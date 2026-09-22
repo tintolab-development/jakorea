@@ -85,4 +85,110 @@ describe('applyEconomyRegistrationOverlayToProgram', () => {
     // 실제 라벨 매핑은 설정 데이터에 의존 — 최소한 기존 목업 텍스트로 되돌아가지 않는지만 확인
     expect(result.generalCommonInfo?.paymentItems).not.toBe(undefined)
   })
+
+  it('세부 프로그램명 — 선택한 값이 generalCommonInfo에 반영된다 (버그 수정 확인)', () => {
+    // 버그: 기존엔 이 overlay 키를 전혀 읽지 않아, 수동 선택·자동 채우기로 고른
+    // 세부 프로그램명이 항상 무시되고 generalCommonInfo.detailedProgramName이 비어 있었다.
+    const overlay: Record<string, unknown> = {
+      'economyRegistration.basicInfo.detailedProgramId': 'dp-42',
+      'economyRegistration.basicInfo.detailedProgramName': '실제 선택한 세부 프로그램명',
+    }
+    const result = applyEconomyRegistrationOverlayToProgram(baseProgram(), overlay)
+    expect(result.generalCommonInfo?.detailedProgramName).toBe('실제 선택한 세부 프로그램명')
+  })
+
+  it('세부 프로그램명 — overlay가 비어 있으면 기존 값을 유지한다', () => {
+    const withExisting = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        detailedProgramName: '기존 값',
+      },
+    }
+    const result = applyEconomyRegistrationOverlayToProgram(withExisting, {})
+    expect(result.generalCommonInfo?.detailedProgramName).toBe('기존 값')
+  })
+
+  it('세부 프로그램명 — id(detailedProgramId)도 Program top-level에 함께 반영된다 (버그 수정 확인)', () => {
+    // 버그: name(generalCommonInfo.detailedProgramName)만 반영되고 top-level
+    // Program.detailedProgramId는 세팅된 적이 없어, 실제 요청에서 항상 빠졌다
+    // (BE는 id로 조회 → "세부 프로그램명 없음" 오류로 이어짐).
+    const overlay: Record<string, unknown> = {
+      'economyRegistration.basicInfo.detailedProgramId': '163050',
+      'economyRegistration.basicInfo.detailedProgramName': '여름방학 집중 캠프',
+    }
+    const result = applyEconomyRegistrationOverlayToProgram(baseProgram(), overlay)
+    expect(result.detailedProgramId).toBe('163050')
+    expect(result.generalCommonInfo?.detailedProgramName).toBe('여름방학 집중 캠프')
+  })
+
+  it('Course Delivered By·Partner Involvement — overlay에 없어도 폼 기본값을 1차 컬럼에 넣는다', () => {
+    // 셀렉트 기본값(JA, No)은 화면만 채우고 overlay에는 안 남는다. 그대로 두면 create body가 비어 BE가 null로 저장한다.
+    const result = applyEconomyRegistrationOverlayToProgram(baseProgram(), {})
+    expect(result.courseDeliveredBy).toBe('JA')
+    expect(result.partnerInvolvement).toBe(false)
+    expect(result.ipOwned).toBe('JA')
+    expect(result.ips).toBe('Prepare')
+  })
+
+  it('공통정보 overlay를 create 1차 컬럼(titleEn·ipOwned·KPI 등)에 올린다', () => {
+    // BE는 body에 온 1차 컬럼만 저장한다. overlay에만 있으면 컬럼은 null로 남는다.
+    const overlay: Record<string, unknown> = {
+      'economyRegistration.basicInfo.repKo': '디지털 리터러시 교실',
+      'economyRegistration.basicInfo.repEn': 'Digital Literacy Classroom',
+      'economyRegistration.basicInfo.publicProgramTitle': '공고용 디지털 리터러시',
+      'economyRegistration.basicInfo.businessField': 'career_employment',
+      'economyRegistration.basicInfo.ipOwned': 'partner',
+      'economyRegistration.basicInfo.courseDeliveredBy': 'ja',
+      'economyRegistration.basicInfo.educationCourse': 'digital_computer',
+      'economyRegistration.basicInfo.partnerInvolvement': 'yes',
+      'economyRegistration.basicInfo.ipsCategory': 'succeed',
+      'economyRegistration.basicInfo.operationRangeSeal': {
+        start: '2026-11-21T15:00:00.000Z',
+        end: '2026-12-22T15:00:00.000Z',
+      },
+      'economyRegistration.basicInfo.surveyItems': {
+        survey: true,
+        satisfaction: false,
+        lecture_evaluation: true,
+      },
+      'economyRegistration.kpi.participantCount': 120,
+      'economyRegistration.kpi.instructor': 8,
+      'economyRegistration.kpi.dispatchedSchool': 6,
+      'economyRegistration.kpi.dispatchedClass': 14,
+    }
+    const result = applyEconomyRegistrationOverlayToProgram(
+      { ...baseProgram(), rounds: [{ id: 'r1', programId: 'p', roundNumber: 1, startDate: '', endDate: '', capacity: 30, status: 'active' }] },
+      overlay
+    )
+    expect(result.title).toBe('디지털 리터러시 교실')
+    expect(result.mainTitle).toBe('디지털 리터러시 교실')
+    expect(result.titleEn).toBe('Digital Literacy Classroom')
+    expect(result.businessArea).toBe('진로취업')
+    expect(result.ipOwned).toBe('Partner')
+    expect(result.courseDeliveredBy).toBe('JA')
+    expect(result.educationProcess).toBe('Digital (Computer)')
+    expect(result.partnerInvolvement).toBe(true)
+    expect(result.ips).toBe('Succeed')
+    expect(result.approvedStudentCount).toBe(120)
+    expect(result.instructors).toBe(8)
+    expect(result.instructorCapacity).toBe(8)
+    expect(result.participatingSchoolCount).toBe(6)
+    expect(result.generalCommonInfo?.kpi).toMatchObject({
+      finalParticipants: 120,
+      instructorCount: 8,
+      finalSchools: 6,
+      finalClasses: 14,
+    })
+    expect(result.generalCommonInfo?.announcementTitle).toBe('공고용 디지털 리터러시')
+    expect(result.generalSurveyMenuKeys).toEqual(['survey', 'lecture_evaluation'])
+    expect(result.startDate).toContain('2026-11-2')
+    expect(result.rounds?.[0]?.startDate).toBe(result.startDate)
+  })
+
+  it('detailedProgramId — overlay가 비어 있으면 기존 Program 값을 유지한다', () => {
+    const withExisting = { ...baseProgram(), detailedProgramId: '163099' }
+    const result = applyEconomyRegistrationOverlayToProgram(withExisting, {})
+    expect(result.detailedProgramId).toBe('163099')
+  })
 })

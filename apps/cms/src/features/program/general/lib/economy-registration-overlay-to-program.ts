@@ -9,16 +9,31 @@
  */
 
 import dayjs from 'dayjs'
-import type { Program } from '@/types/domain'
+import type { GeneralProgramSurveyMenuKey, Program } from '@/types/domain'
 import {
   PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
   programPaymentItemLabelsFromIds,
   resolveProgramWageDeductionLabel,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
+  TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
+  TEMPLATE_FORM_IP_OWNED_OPTIONS,
+} from '@/features/template/lib/template-form-select-options'
 
+const BASIC = 'economyRegistration.basicInfo' as const
+const KPI = 'economyRegistration.kpi' as const
 const CURRICULUM = 'economyRegistration.educationCurriculum' as const
 const SCHEDULE = 'economyRegistration.educationScheduleSettings' as const
 const WAGE = 'economyRegistration.wageInfo' as const
+const UNSELECTED = '__all__'
+
+/** 등록 폼 셀렉트 기본값. overlay에 키가 없어도 화면에는 이 값이 보인다. */
+const FORM_DEFAULT_IP_OWNED = 'ja'
+const FORM_DEFAULT_COURSE_DELIVERED_BY = 'ja'
+const FORM_DEFAULT_PARTNER_INVOLVEMENT = 'no'
+const FORM_DEFAULT_IPS_CATEGORY = 'prepare'
 
 const WAGE_GRADE_LABELS = ['1급 강사비', '2급 강사비', '3급 강사비'] as const
 
@@ -86,6 +101,58 @@ function buildEconomyEducationScheduleLines(overlay: Record<string, unknown>): s
   return [`${start.format('YYYY. MM. DD')} ~ ${end.format('YYYY. MM. DD')}`]
 }
 
+function skipUnselected(value: string): string {
+  if (!value || value === UNSELECTED) return ''
+  return value
+}
+
+function ipOwnedToProgramValue(formValue: string): Program['ipOwned'] | undefined {
+  const value = skipUnselected(formValue)
+  if (!value) return undefined
+  const label = TEMPLATE_FORM_IP_OWNED_OPTIONS.find(o => o.value === value)?.label ?? value
+  if (label === 'Jointly') return 'Jointly'
+  if (label === 'Partner') return 'Partner'
+  return 'JA'
+}
+
+function courseDeliveredToProgramValue(
+  formValue: string
+): Program['courseDeliveredBy'] | undefined {
+  const value = skipUnselected(formValue)
+  if (!value) return undefined
+  const label =
+    TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS.find(o => o.value === value)?.label ?? value
+  if (label === 'Jointly') return 'Jointly'
+  if (label === 'Partner') return 'Partner'
+  return 'JA'
+}
+
+function educationProcessToProgramValue(formValue: string): string | undefined {
+  const value = skipUnselected(formValue)
+  if (!value) return undefined
+  return TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS.find(o => o.value === value)?.label ?? value
+}
+
+function ipsToProgramValue(formValue: string): Program['ips'] | undefined {
+  if (formValue === 'inspire') return 'Inspire'
+  if (formValue === 'succeed') return 'Succeed'
+  if (formValue === 'prepare') return 'Prepare'
+  return undefined
+}
+
+function surveyKeysFromOverlay(
+  overlay: Record<string, unknown>
+): GeneralProgramSurveyMenuKey[] | undefined {
+  const raw = overlay[`${BASIC}.surveyItems`]
+  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  const items = raw as Record<string, unknown>
+  const keys: GeneralProgramSurveyMenuKey[] = []
+  if (items.survey === true) keys.push('survey')
+  if (items.satisfaction === true) keys.push('satisfaction')
+  if (items.lecture_evaluation === true) keys.push('lecture_evaluation')
+  return keys.length > 0 ? keys : undefined
+}
+
 function buildEconomyWageGradePricing(
   fee: number | undefined,
   distanceFee: number | undefined
@@ -108,6 +175,18 @@ export function applyEconomyRegistrationOverlayToProgram(
   overlay: Record<string, unknown>
 ): Program {
   const baseCommon = base.generalCommonInfo
+
+  // 버그 수정: 「세부 프로그램명」select에서 고른 값이 generalCommonInfo에 전혀
+  // 매핑되지 않아, 수동 선택·자동 채우기 모두 무시되고 항상 기존 값(빈 값)으로 남았다.
+  const detailedProgramNameFromOverlay = overlayString(overlay, `${BASIC}.detailedProgramName`)
+  const detailedProgramName =
+    detailedProgramNameFromOverlay || baseCommon?.detailedProgramName
+
+  // 버그 수정: name(generalCommonInfo.detailedProgramName)만 반영되고 id(top-level
+  // Program.detailedProgramId)는 여기서 세팅된 적이 없어, 요청 시 항상 빠졌다(BE는 id로
+  // 조회하므로 "세부 프로그램명 없음" 오류) — id도 항상 함께 반영한다.
+  const detailedProgramIdFromOverlay = overlayString(overlay, `${BASIC}.detailedProgramId`)
+  const detailedProgramId = detailedProgramIdFromOverlay || base.detailedProgramId
 
   const curriculumSessions = buildEconomyCurriculumSessions(overlay)
   const educationScheduleLinesFromOverlay = buildEconomyEducationScheduleLines(overlay)
@@ -141,15 +220,91 @@ export function applyEconomyRegistrationOverlayToProgram(
     ? resolveProgramWageDeductionLabel(paymentItemIds)
     : baseCommon?.deductionItems ?? PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
 
+  // BE는 create body 1차 컬럼에 온 값만 저장한다. overlay에만 있으면 컬럼은 null로 남는다.
+  // 일반 프로그램 create와 같이 공통정보 overlay를 Program 필드로 올린다.
+  const repKo = overlayString(overlay, `${BASIC}.repKo`)
+  const repEn = overlayString(overlay, `${BASIC}.repEn`)
+  const publicProgramTitle = overlayString(overlay, `${BASIC}.publicProgramTitle`)
+  const businessArea =
+    normalizeProgramBusinessAreaValue(overlayString(overlay, `${BASIC}.businessField`)) ||
+    base.businessArea
+  // 화면 기본값(JA / No / Prepare)은 사용자가 건드리지 않으면 overlay에 기록되지 않는다.
+  // 키가 없으면 그 기본값을 1차 컬럼에 넣는다. 안 넣으면 BE는 null로 저장한다.
+  const ipOwned =
+    ipOwnedToProgramValue(
+      overlayString(overlay, `${BASIC}.ipOwned`) || FORM_DEFAULT_IP_OWNED
+    ) ?? base.ipOwned
+  const courseDeliveredBy =
+    courseDeliveredToProgramValue(
+      overlayString(overlay, `${BASIC}.courseDeliveredBy`) || FORM_DEFAULT_COURSE_DELIVERED_BY
+    ) ?? base.courseDeliveredBy
+  const educationProcess =
+    educationProcessToProgramValue(overlayString(overlay, `${BASIC}.educationCourse`)) ??
+    base.educationProcess
+  const partnerRaw =
+    overlayString(overlay, `${BASIC}.partnerInvolvement`) || FORM_DEFAULT_PARTNER_INVOLVEMENT
+  const partnerInvolvement = partnerRaw === 'yes'
+  const ips =
+    ipsToProgramValue(overlayString(overlay, `${BASIC}.ipsCategory`) || FORM_DEFAULT_IPS_CATEGORY) ??
+    base.ips
+
+  const operationRange = readRangeSeal(overlay, `${BASIC}.operationRangeSeal`)
+  const startDate = operationRange
+    ? dayjs(operationRange.start).startOf('day').toISOString()
+    : base.startDate
+  const endDate = operationRange
+    ? dayjs(operationRange.end).endOf('day').toISOString()
+    : base.endDate
+  const rounds =
+    operationRange && base.rounds?.length
+      ? base.rounds.map((round, index) =>
+          index === 0 ? { ...round, startDate, endDate } : round
+        )
+      : base.rounds
+
+  const participantCount = overlayNullableNumber(overlay, `${KPI}.participantCount`)
+  const instructorCount = overlayNullableNumber(overlay, `${KPI}.instructor`)
+  const dispatchedSchool = overlayNullableNumber(overlay, `${KPI}.dispatchedSchool`)
+  const dispatchedClass = overlayNullableNumber(overlay, `${KPI}.dispatchedClass`)
+  const prevKpi = baseCommon?.kpi
+  const surveyKeys = surveyKeysFromOverlay(overlay)
+
   return {
     ...base,
+    title: repKo || base.title,
+    mainTitle: repKo || base.mainTitle,
+    titleEn: repEn || base.titleEn,
+    businessArea,
+    ipOwned,
+    courseDeliveredBy,
+    educationProcess,
+    partnerInvolvement,
+    ips,
+    startDate,
+    endDate,
+    rounds,
+    detailedProgramId,
+    approvedStudentCount: participantCount ?? base.approvedStudentCount,
+    instructors: instructorCount ?? base.instructors,
+    instructorCapacity: instructorCount ?? base.instructorCapacity,
+    participatingSchoolCount: dispatchedSchool ?? base.participatingSchoolCount,
+    generalSurveyMenuKeys: surveyKeys ?? base.generalSurveyMenuKeys,
     generalCommonInfo: {
       ...baseCommon,
+      announcementTitle: publicProgramTitle || baseCommon?.announcementTitle,
+      detailedProgramName,
       curriculumSessions,
       educationScheduleLines,
       wageGradeRows,
       paymentItems,
       deductionItems,
+      kpi: {
+        finalParticipants: participantCount ?? prevKpi?.finalParticipants ?? 0,
+        instructorCount: instructorCount ?? prevKpi?.instructorCount ?? 0,
+        volunteerCount: prevKpi?.volunteerCount ?? 0,
+        finalSchools: dispatchedSchool ?? prevKpi?.finalSchools ?? 0,
+        finalClasses: dispatchedClass ?? prevKpi?.finalClasses ?? 0,
+      },
     },
   }
 }
