@@ -12,6 +12,7 @@ import {
   shouldUseSponsorsRemoteApi,
 } from '@/features/sponsor/api/admin-sponsors-service'
 import {
+  UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
   UJAT_SPONSOR_ALL_VALUE,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
@@ -507,7 +508,7 @@ function buildUjatRecruitInfoOverlay(
     [volunteerKeys.activityTermH2]: String(pickInt(9, 16)),
     [volunteerKeys.docAnnounce]: { date: recruitSeal.start, method: pick(RECRUIT_ANNOUNCE_METHODS) },
     [volunteerKeys.interviewRange]: interviewSeal,
-    [volunteerKeys.interviewMethod]: pick(INTERVIEW_METHOD_OPTIONS).value,
+    [volunteerKeys.interviewMethod]: pick(['온라인', '오프라인'] as const),
     [volunteerKeys.finalAnnounce]: { date: recruitSeal.end, method: announceMethod },
     [volunteerKeys.contact]: {
       name: pick(RECRUIT_CONTACTS),
@@ -1038,19 +1039,19 @@ function buildFilledScheduleBundle(
   return { rowIds, regionByRow, dateByRow }
 }
 
-function fridaysInsideEducationRange(
+function daysInsideRange(
   start: Dayjs,
   end: Dayjs,
-  blockedDateKeys: ReadonlySet<string>
+  blockedDateKeys: ReadonlySet<string>,
+  weekday?: number
 ): string[] {
   const lo = start.startOf('day')
   const hi = end.startOf('day')
   const from = lo.isAfter(hi, 'day') ? hi : lo
   const to = lo.isAfter(hi, 'day') ? lo : hi
   const dates: string[] = []
-  let cursor = from
-  while (cursor.day() !== 5 && !cursor.isAfter(to, 'day')) cursor = cursor.add(1, 'day')
-  for (; !cursor.isAfter(to, 'day'); cursor = cursor.add(7, 'day')) {
+  for (let cursor = from; !cursor.isAfter(to, 'day'); cursor = cursor.add(1, 'day')) {
+    if (weekday != null && cursor.day() !== weekday) continue
     const key = cursor.format('YYYY-MM-DD')
     if (blockedDateKeys.has(key)) continue
     dates.push(key)
@@ -1058,10 +1059,19 @@ function fridaysInsideEducationRange(
   return dates
 }
 
-/** 없음 / 토·일·공휴일 조합. 직접 지정일은 교육 진행 기간 안 금요일이고, 체크된 제외일과 겹치지 않는다. */
-function buildUjatUnavailableSelection(
+function fridaysInsideEducationRange(
   start: Dayjs,
-  end: Dayjs
+  end: Dayjs,
+  blockedDateKeys: ReadonlySet<string>
+): string[] {
+  return daysInsideRange(start, end, blockedDateKeys, 5)
+}
+
+/** 없음 / 토·일·공휴일 조합. 직접 지정일은 picker 결과 중 체크된 제외일과 겹치지 않는다. */
+function buildUnavailableSelection(
+  start: Dayjs,
+  end: Dayjs,
+  picker: (start: Dayjs, end: Dayjs, blocked: ReadonlySet<string>) => string[]
 ): { exclusion: UnavailableDatesExclusionState; dates: string[] } {
   if (Math.random() < 0.25) {
     return {
@@ -1081,11 +1091,32 @@ function buildUjatUnavailableSelection(
     excludeSunday: Math.random() < 0.5,
     excludeHoliday: Math.random() < 0.5,
   }
-  const blocked = exclusion.excludeHoliday ? getMockHolidayDateKeys() : new Set<string>()
-  const fridays = fridaysInsideEducationRange(start, end, blocked)
-  const count = Math.min(pickInt(0, 3), fridays.length)
-  const dates = [...fridays].sort(() => Math.random() - 0.5).slice(0, count).sort()
+  const blocked = new Set<string>(
+    exclusion.excludeHoliday ? [...getMockHolidayDateKeys()] : []
+  )
+  const candidates = picker(start, end, blocked).filter(key => {
+    const day = dayjs(key).day()
+    if (exclusion.excludeSaturday && day === 6) return false
+    if (exclusion.excludeSunday && day === 0) return false
+    return true
+  })
+  const count = Math.min(pickInt(0, 3), candidates.length)
+  const dates = [...candidates].sort(() => Math.random() - 0.5).slice(0, count).sort()
   return { exclusion, dates }
+}
+
+function buildUjatUnavailableSelection(
+  start: Dayjs,
+  end: Dayjs
+): { exclusion: UnavailableDatesExclusionState; dates: string[] } {
+  return buildUnavailableSelection(start, end, fridaysInsideEducationRange)
+}
+
+function buildInterviewUnavailableSelection(
+  start: Dayjs,
+  end: Dayjs
+): { exclusion: UnavailableDatesExclusionState; dates: string[] } {
+  return buildUnavailableSelection(start, end, daysInsideRange)
 }
 
 function buildUjatHalfSchedule(
@@ -1152,6 +1183,8 @@ function buildUjatOverlay(
     'ujat.basicInfo.publicProgramTitle': sample.publicTitle,
     'ujat.basicInfo.programManagementName': `${sample.titleKo} 운영`,
     'ujat.basicInfo.detailedProgramId': UJAT_DETAILED_PROGRAM_UJAT_VALUE,
+    // id만 넣고 name을 비워두면 실제 저장되는 세부 프로그램명이 어긋날 수 있다 — 항상 짝지어 넣는다.
+    'ujat.basicInfo.detailedProgramName': UJAT_DETAILED_PROGRAM_UJAT_LABEL,
     'ujat.basicInfo.operationRangeSeal': { ...sample.operationRange },
     'ujat.basicInfo.businessField': sample.businessField,
     'ujat.basicInfo.educationCourse': sample.educationCourse,
@@ -1211,6 +1244,15 @@ export async function applyDevProgramRegistrationAutofill(
     patchUjatProgramRegistrationOverlay(ujatOverlay)
     patchUjatRecruitInstitutionOverlay(pickUjatRecruitInstitutionOverlay(ujatOverlay))
     patchUjatRecruitVolunteerOverlay(pickUjatRecruitVolunteerOverlay(ujatOverlay))
+    const interviewUnavailable = buildInterviewUnavailableSelection(
+      dayjs(sample.recruitDates.interview.start),
+      dayjs(sample.recruitDates.interview.end)
+    )
+    patchGeneralRecruitOverlay({
+      'recruit.volunteer.interviewRangeSeal': { ...sample.recruitDates.interview },
+      'recruit.volunteer.interview.exclusionState': interviewUnavailable.exclusion,
+      'recruit.volunteer.interview.appliedUnavailableDates': interviewUnavailable.dates,
+    })
     return {
       programTitleKo: sample.titleKo,
       sponsorId: resolved.sponsorId,
