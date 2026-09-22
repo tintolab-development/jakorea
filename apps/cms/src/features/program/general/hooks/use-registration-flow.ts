@@ -47,10 +47,7 @@ import {
   type ProgramRegistrationDraftTemplateCode,
 } from '@/features/program/shared/lib/registration-draft-notice'
 import { hasIncompleteGeneralProgramRecruitmentRequiredFields } from '@/features/program/general/lib/registration-recruitment-required-fields'
-import {
-  hasIncompleteEconomyProgramApplicationRequiredFields,
-  hasIncompleteEconomyProgramRecruitmentRequiredFields,
-} from '@/features/program/general/lib/economy-program-registration-required-fields'
+import { hasIncompleteEconomyProgramRecruitmentRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
 import { formatRegistrationStepTransitionLabel } from '@/features/program/shared/lib/log-program-registration-create-payload'
 
 /** 일반프로그램 등록 필수 항목 미입력 검사 — `hasIncompleteGeneralProgramRegistrationRequiredFields` */
@@ -568,18 +565,6 @@ export function useGeneralProgramRegistrationFlow(
       return
     }
     registrationVm.logCurrentRegistrationPayload('등록 완료')
-    if (
-      !SKIP_GENERAL_REGISTRATION_REQUIRED_FIELDS_CHECK &&
-      registrationFormVariant === 'economy' &&
-      phase === 'application' &&
-      hasIncompleteEconomyProgramApplicationRequiredFields()
-    ) {
-      showAlert({
-        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
-      })
-      return
-    }
     void (async () => {
       const completeWithBindings = shouldUseRegistrationCreateFormBindings()
       if (!completeWithBindings) {
@@ -627,8 +612,6 @@ export function useGeneralProgramRegistrationFlow(
     isProgramStep,
     participantVariant,
     participantVm,
-    phase,
-    registrationFormVariant,
     registrationVm,
     showAlert,
   ])

@@ -240,7 +240,10 @@ export function hasIncompleteEconomyProgramRecruitmentRequiredFields(
   return false
 }
 
-/** ——— 신청 (application-economy) ——— */
+/** ——— 신청 (application-economy) ———
+ * 지원자 신청서 fill overlay 검사용. 프로그램 **등록** 위저드 신청 단계는 양식(template) 편집이므로
+ * `use-registration-flow` complete gate에 사용하지 않는다 — 일반 프로그램과 동일.
+ */
 
 function isScheduleBlockIncomplete(block: unknown): boolean {
   if (block == null || typeof block !== 'object') return true
