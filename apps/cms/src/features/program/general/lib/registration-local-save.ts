@@ -202,8 +202,13 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   const studentListRequired: Program['studentListRequired'] =
     isCompanySchool || generalProgramAudience === 'individual' ? 'not_required' : 'required'
 
+  // 버그 수정: 교육받은 교사는 일정형이어도 「세부 프로그램명」select 잠금이 없어
+  // 사용자가 실제 값을 고를 수 있다 (basic-info-paragraph-title-fields.tsx
+  // lockDetailedProgramToNone과 동일 조건). 여기서 isGeneralSchedule에 TT를 포함시키면
+  // 아래 textbookName/teamDivision이 스케줄 상세명(세션 제목 등)으로 고정돼, 사용자가
+  // 고른 세부 프로그램명이 요청 시 다시 스케줄 상세명으로 덮어써진다.
   const isGeneralSchedule =
-    !isCompanySchool && args.programType === 'schedule'
+    !isCompanySchool && !isTrainedTeachers && args.programType === 'schedule'
   const scheduleDetails = isGeneralSchedule
     ? buildScheduleDetailsFromRegistrationOverlay(
         getProgramRegistrationOverlayRecord(),
@@ -371,6 +376,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     educationScheduleMode: args.educationScheduleMode,
     scheduleCurriculumDetailCount: args.scheduleCurriculumDetailCount,
     participantOrganization: isTrainedTeachers ? true : args.participant.organization,
+    isTrainedTeachers,
     ...args.editorExtras,
   })
 

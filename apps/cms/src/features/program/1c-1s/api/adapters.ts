@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import type { AdminProgramListItemDto } from '@/features/program/general/api/programs-api-client'
 import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
@@ -24,6 +25,29 @@ const DEFAULT_SPONSOR_ID = 'sponsor-default'
 function toDate(value: Date | string | undefined): string | undefined {
   if (value instanceof Date) return value.toISOString()
   return value
+}
+
+/**
+ * BE `COMPANY_SCHOOL_BUSINESS_PERIOD_MUST_BE_CALENDAR_YEAR` —
+ * 사업 운영 기간(businessStartDate/businessEndDate)은 program.startDate/endDate(프로그램 운영)와 별도로
+ * 동일 연도 1월 1일~12월 31일이어야 한다.
+ */
+export function resolveCompanySchoolBusinessCalendarYearPeriod(
+  program: Pick<Program, 'startDate' | 'endDate'>
+): { start: string; end: string } {
+  const startAnchor = program.startDate ? dayjs(program.startDate) : null
+  const endAnchor = program.endDate ? dayjs(program.endDate) : null
+  const anchor =
+    startAnchor?.isValid() === true
+      ? startAnchor
+      : endAnchor?.isValid() === true
+        ? endAnchor
+        : dayjs()
+  const year = anchor.year()
+  return {
+    start: `${year}-01-01T00:00:00.000Z`,
+    end: `${year}-12-31T23:59:59.999Z`,
+  }
 }
 
 function resolveCompanySchoolListLifecycle(
@@ -431,11 +455,12 @@ export function mapCompanySchoolToUpdateRequest(
 }
 
 export function mapCompanySchoolToCreateRequest(program: Program): ProgramCreateRequest {
+  const businessPeriod = resolveCompanySchoolBusinessCalendarYearPeriod(program)
   return {
     ...mapCompanySchoolToUpdateRequest(program),
     programType: COMPANY_SCHOOL_PROGRAM_API_TYPE,
-    businessStartDate: toDate(program.startDate),
-    businessEndDate: toDate(program.endDate),
+    businessStartDate: businessPeriod.start,
+    businessEndDate: businessPeriod.end,
     autoApplyDefaultFormBindings: true,
   }
 }

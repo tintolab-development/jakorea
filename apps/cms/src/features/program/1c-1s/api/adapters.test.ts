@@ -57,10 +57,24 @@ describe('company-school adapters', () => {
     const request = mapCompanySchoolToCreateRequest(program)
 
     expect(request.programType).toBe(COMPANY_SCHOOL_PROGRAM_API_TYPE)
-    expect(request.businessStartDate).toBe(program.startDate)
-    expect(request.businessEndDate).toBe(program.endDate)
+    expect(request.businessStartDate).toBe('2026-01-01T00:00:00.000Z')
+    expect(request.businessEndDate).toBe('2026-12-31T23:59:59.999Z')
     expect(request.generalVolunteers).toBe(0)
     expect(request.autoApplyDefaultFormBindings).toBe(true)
+  })
+
+  it('keeps program operation dates but sends calendar-year business period', () => {
+    const partial: Program = {
+      ...program,
+      startDate: '2026-11-26T15:00:00.000Z',
+      endDate: '2026-12-08T15:00:00.000Z',
+    }
+    const request = mapCompanySchoolToCreateRequest(partial)
+
+    expect(request.startDate).toBe(partial.startDate)
+    expect(request.endDate).toBe(partial.endDate)
+    expect(request.businessStartDate).toBe('2026-01-01T00:00:00.000Z')
+    expect(request.businessEndDate).toBe('2026-12-31T23:59:59.999Z')
   })
 
   it('round-trips school, instructor, wage and payment details without volunteers', () => {
