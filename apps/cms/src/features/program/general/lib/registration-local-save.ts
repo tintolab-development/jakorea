@@ -45,6 +45,20 @@ export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
 export const COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'company-school-local-'
 export const TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'trained-teachers-local-'
 
+/**
+ * 등록 완료 직전 스냅샷 id.
+ * 유형 판별은 id prefix·제목 휴리스틱이라, 공통 id `pending-registration` + 제목에
+ * 「1사1교」가 없으면 GENERAL draft가 COMPANY_SCHOOL create에 붙어
+ * `PROGRAM_DRAFT_TYPE_MISMATCH`가 난다. variant별 prefix를 붙인다.
+ */
+export function registrationPendingSnapshotId(variant: ProgramRegistrationFormVariant): string {
+  if (variant === 'economy') return `${COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}pending`
+  if (variant === 'trainedTeachers') {
+    return `${TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}pending`
+  }
+  return 'pending-registration'
+}
+
 const STORAGE_KEY = 'cms.jakorea.generalRegistrationLocalSaves.v1'
 
 type LocalSaveFile = {

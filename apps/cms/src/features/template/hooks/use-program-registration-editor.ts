@@ -46,6 +46,7 @@ import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/ca
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import {
   buildGeneralProgramListRowFromRegistrationSnapshot,
+  registrationPendingSnapshotId,
   persistGeneralProgramRegistration,
 } from '@/features/program/general/lib/registration-local-save'
 import {
@@ -1358,7 +1359,7 @@ export function useProgramRegistrationEditor(
     const completion = (async () => {
       try {
         const registrationSnapshotArgs = {
-          id: 'pending-registration',
+          id: registrationPendingSnapshotId(programRegistrationFormVariant),
           participant,
           programType,
           variant: programRegistrationFormVariant,
