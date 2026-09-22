@@ -23,6 +23,8 @@ import {
 } from '@/features/program/shared/lib/registration-draft-notice'
 import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
+import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
+import { applyDevProgramRegistrationAutofill } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
 
 const UJAT_REGISTRATION_MODAL_TITLE = 'UJAT 프로그램 등록'
@@ -236,6 +238,13 @@ export function UjatProgramRegistrationFullpageModal({
           <UjatProgramRegistrationBodyHeader
             activeStep={flow.activeStep}
             onSelectStep={flow.selectStep}
+          />
+        }
+        headerActionsLeading={
+          <RegistrationDevAutofillButton
+            onClick={() => {
+              void applyDevProgramRegistrationAutofill('ujat')
+            }}
           />
         }
         footerActions={flow.isDraftLoading ? undefined : footerActions}
