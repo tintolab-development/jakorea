@@ -14,6 +14,7 @@ import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import { useDetailedProgramOptionsQuery } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { useProgramWagePaymentItemOptions } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { showUpdateCompletedAlert } from '@/shared/ui'
 
 export type GeneralProgramCommonInfoSaveResult =
   | { ok: true }
@@ -67,6 +68,7 @@ export function useGeneralProgramCommonInfoSave({
         },
       }
       await onSaveEdit(draftToSave, patch)
+      showUpdateCompletedAlert()
       return { ok: true }
     } catch (error) {
       return { ok: false, kind: 'api', error }
