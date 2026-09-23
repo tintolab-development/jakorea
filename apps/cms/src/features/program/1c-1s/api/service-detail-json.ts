@@ -165,6 +165,245 @@ export function serializeCompanySchoolServiceDetailJson(program: Program): strin
   return JSON.stringify(payload)
 }
 
+type GeneralCommonInfo = NonNullable<Program['generalCommonInfo']>
+
+const RECRUITMENT_GENERAL_COMMON_INFO_KEYS = new Set<keyof GeneralCommonInfo>([
+  'participantRecruitmentInfo',
+  'instructorRecruitmentInfo',
+  'volunteerRecruitmentInfo',
+  'volunteerInterviewScheduleInfo',
+])
+
+const PARTICIPANT_RECRUITMENT_PATCH_KEYS = [
+  'applicationStartDate',
+  'applicationEndDate',
+  'resultAnnouncementDate',
+  'resultAnnouncementMethod',
+  'studentListRequired',
+  'recruitmentGuide',
+  'learningSupportContent',
+  'additionalContentHtml',
+  'remarks',
+  'generalParticipantInterviewEnabled',
+] as const satisfies ReadonlyArray<keyof Program>
+
+const INSTRUCTOR_RECRUITMENT_PATCH_KEYS = [
+  'instructorApplicationStartDate',
+  'instructorApplicationEndDate',
+  'documentPassAnnouncementDate',
+  'documentPassAnnouncementMethod',
+  'interviewStartDate',
+  'interviewEndDate',
+  'interviewMethod',
+  'finalPassAnnouncementDate',
+  'finalPassAnnouncementMethod',
+  'instructorTarget',
+  'instructorTargets',
+  'instructorTargetDetail',
+  'instructorCapacity',
+  'applicationMethod',
+] as const satisfies ReadonlyArray<keyof Program>
+
+const VOLUNTEER_RECRUITMENT_PATCH_KEYS = [
+  'volunteerApplicationStartDate',
+  'volunteerApplicationEndDate',
+  'volunteerTarget',
+  'volunteerTargets',
+  'volunteerTargetDetail',
+  'generalVolunteerInterviewEnabled',
+  'otherNotes',
+] as const satisfies ReadonlyArray<keyof Program>
+
+const PARTICIPANT_RECRUITMENT_PROGRAM_SLICE_KEYS = [
+  'studentListRequired',
+  'resultAnnouncementDate',
+  'resultAnnouncementMethod',
+  'applicationMethod',
+  'generalParticipantInterviewEnabled',
+] as const satisfies ReadonlyArray<keyof Program>
+
+const INSTRUCTOR_RECRUITMENT_PROGRAM_SLICE_KEYS = [
+  'instructorApplicationStartDate',
+  'instructorApplicationEndDate',
+  'documentPassAnnouncementDate',
+  'documentPassAnnouncementMethod',
+  'interviewStartDate',
+  'interviewEndDate',
+  'interviewMethod',
+  'finalPassAnnouncementDate',
+  'finalPassAnnouncementMethod',
+  'instructorTarget',
+  'instructorTargets',
+  'instructorTargetDetail',
+  'instructorCapacity',
+] as const satisfies ReadonlyArray<keyof Program>
+
+const VOLUNTEER_RECRUITMENT_PROGRAM_SLICE_KEYS = [
+  'volunteerApplicationStartDate',
+  'volunteerApplicationEndDate',
+  'volunteerTarget',
+  'volunteerTargets',
+  'volunteerTargetDetail',
+  'generalVolunteerInterviewEnabled',
+  'otherNotes',
+] as const satisfies ReadonlyArray<keyof Program>
+
+const SERVICE_DETAIL_PROGRAM_SLICE_KEYS = [
+  'posterImage',
+  'targetLevels',
+  'approvedStudentCount',
+  'instructorCapacity',
+  'participatingSchoolCount',
+  'participatingStudentCount',
+  'instructorApplicationStartDate',
+  'instructorApplicationEndDate',
+  'documentPassAnnouncementDate',
+  'documentPassAnnouncementMethod',
+  'interviewStartDate',
+  'interviewEndDate',
+  'interviewMethod',
+  'finalPassAnnouncementDate',
+  'finalPassAnnouncementMethod',
+  'instructorTarget',
+  'instructorTargets',
+  'instructorTargetDetail',
+  'applicationMethod',
+  'otherNotes',
+  'resultAnnouncementDate',
+  'resultAnnouncementMethod',
+  'studentListRequired',
+  'applicationFormTemplateId',
+  'surveyFormTemplateId',
+  'satisfactionFormTemplateId',
+  'lectureReportFormTemplateId',
+  'generalParticipantTypes',
+  'generalVolunteerInterviewEnabled',
+  'generalParticipantInterviewEnabled',
+  'generalSurveyMenuKeys',
+  'generalProgramAudience',
+  'generalProgramEducationStructure',
+  'generalProgramSessionRound',
+  'scheduleTimeEnabled',
+  'startTime',
+  'endTime',
+  'createdByName',
+  'updatedByName',
+  'generalVolunteers',
+  'staffVolunteers',
+  'returningVolunteers',
+] as const satisfies ReadonlyArray<keyof Program>
+
+function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
+  return Object.prototype.hasOwnProperty.call(patch, key)
+}
+
+function patchTouchesParticipantRecruitment(patch: Partial<Program>): boolean {
+  if (PARTICIPANT_RECRUITMENT_PATCH_KEYS.some(key => patchHasKey(patch, key))) return true
+  const gci = patch.generalCommonInfo
+  return gci != null && Object.prototype.hasOwnProperty.call(gci, 'participantRecruitmentInfo')
+}
+
+function patchTouchesInstructorRecruitment(patch: Partial<Program>): boolean {
+  if (INSTRUCTOR_RECRUITMENT_PATCH_KEYS.some(key => patchHasKey(patch, key))) return true
+  const gci = patch.generalCommonInfo
+  return gci != null && Object.prototype.hasOwnProperty.call(gci, 'instructorRecruitmentInfo')
+}
+
+function patchTouchesVolunteerRecruitment(patch: Partial<Program>): boolean {
+  if (VOLUNTEER_RECRUITMENT_PATCH_KEYS.some(key => patchHasKey(patch, key))) return true
+  const gci = patch.generalCommonInfo
+  return (
+    gci != null &&
+    (Object.prototype.hasOwnProperty.call(gci, 'volunteerRecruitmentInfo') ||
+      Object.prototype.hasOwnProperty.call(gci, 'volunteerInterviewScheduleInfo'))
+  )
+}
+
+function shouldIncludeProgramSliceKey(key: keyof Program, patch: Partial<Program>): boolean {
+  if (
+    !patchTouchesParticipantRecruitment(patch) &&
+    (PARTICIPANT_RECRUITMENT_PROGRAM_SLICE_KEYS as readonly string[]).includes(key)
+  ) {
+    return false
+  }
+  if (
+    !patchTouchesInstructorRecruitment(patch) &&
+    (INSTRUCTOR_RECRUITMENT_PROGRAM_SLICE_KEYS as readonly string[]).includes(key)
+  ) {
+    return false
+  }
+  if (
+    !patchTouchesVolunteerRecruitment(patch) &&
+    (VOLUNTEER_RECRUITMENT_PROGRAM_SLICE_KEYS as readonly string[]).includes(key)
+  ) {
+    return false
+  }
+  return true
+}
+
+function generalCommonInfoForUpdatePatch(
+  merged: Program,
+  patch: Partial<Program>
+): GeneralCommonInfo | undefined {
+  if (!patchHasKey(patch, 'generalCommonInfo') || !patch.generalCommonInfo) return undefined
+
+  const next: Record<string, unknown> = {}
+  for (const key of Object.keys(patch.generalCommonInfo) as (keyof GeneralCommonInfo)[]) {
+    if (RECRUITMENT_GENERAL_COMMON_INFO_KEYS.has(key)) continue
+    const value = merged.generalCommonInfo?.[key] ?? patch.generalCommonInfo[key]
+    if (value !== undefined) {
+      next[key] = value
+    }
+  }
+  return Object.keys(next).length > 0 ? (next as GeneralCommonInfo) : undefined
+}
+
+function buildProgramSliceForUpdatePatch(merged: Program, patch: Partial<Program>): Partial<Program> {
+  const slice: Record<string, unknown> = {}
+
+  for (const key of SERVICE_DETAIL_PROGRAM_SLICE_KEYS) {
+    if (!patchHasKey(patch, key)) continue
+    if (!shouldIncludeProgramSliceKey(key, patch)) continue
+    slice[key] = merged[key]
+  }
+
+  const commonInfo = generalCommonInfoForUpdatePatch(merged, patch)
+  if (commonInfo) {
+    slice.generalCommonInfo = commonInfo
+  }
+
+  return companySchoolVolunteerOff(slice as Partial<Program>)
+}
+
+/**
+ * 부분 PATCH용 — patch에 실린 serviceDetail 키만 JSON에 담고,
+ * 모집 탭을 건드리지 않았으면 참여자/강사/봉사 모집 블록·registration overlay 를 제외한다.
+ */
+export function serializeCompanySchoolServiceDetailJsonForUpdatePatch(
+  merged: Program,
+  patch: Partial<Program>
+): string {
+  const payload: CompanySchoolServiceDetailJsonV1 = {
+    schemaVersion: COMPANY_SCHOOL_SERVICE_DETAIL_JSON_VERSION,
+    program: buildProgramSliceForUpdatePatch(merged, patch),
+  }
+
+  if (
+    patchHasKey(patch, 'registrationOverlay') ||
+    patchHasKey(patch, 'ujatRegistrationOverlay')
+  ) {
+    const registrationOverlay = persistScheduleEducationFormByDetailOverlay(
+      buildRegistrationOverlayForPersist(merged),
+      merged.generalCommonInfo?.scheduleDetails
+    )
+    if (registrationOverlay) {
+      payload.registration = { overlay: registrationOverlay }
+    }
+  }
+
+  return JSON.stringify(payload)
+}
+
 export function parseCompanySchoolServiceDetailJson(raw?: unknown): Partial<Program> {
   const parsed = coerceServiceDetailObject(raw)
   if (!parsed) return {}

@@ -345,12 +345,48 @@ describe('company-school adapters', () => {
     expect(request.mainTitle).toBe('공통정보만')
     expect(request.serviceDetailJson).toBeTruthy()
     const parsed = JSON.parse(request.serviceDetailJson!) as {
-      program?: { generalCommonInfo?: Record<string, unknown> }
+      program?: {
+        generalCommonInfo?: Record<string, unknown>
+        studentListRequired?: string
+        resultAnnouncementDate?: string
+      }
+      registration?: unknown
     }
     expect(parsed.program?.generalCommonInfo?.participantRecruitmentInfo).toBeUndefined()
     expect(parsed.program?.generalCommonInfo?.instructorRecruitmentInfo).toBeUndefined()
     expect(parsed.program?.generalCommonInfo?.volunteerRecruitmentInfo).toBeUndefined()
     expect(parsed.program?.generalCommonInfo?.wageGradeRows).toBeTruthy()
+    expect(parsed.program?.studentListRequired).toBeUndefined()
+    expect(parsed.program?.resultAnnouncementDate).toBeUndefined()
+    expect(parsed.registration).toBeUndefined()
+  })
+
+  it('title-only common-info patch does not resend recruitment or registration overlay', () => {
+    const loaded: Program = {
+      ...program,
+      studentListRequired: 'required',
+      resultAnnouncementDate: '2026-10-06T15:00:00.000Z',
+      registrationOverlay: {
+        'economyRegistration.basicInfo.repKo': '등록 제목',
+        'economyRegistration.wageInfo.paymentItemValues': ['p-166201'],
+      },
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        participantRecruitmentInfo: {
+          recruitmentPeriodLabel: '2026. 10. 03 ~ 2026. 10. 07',
+          preEducationNoticeRequired: true,
+        },
+      },
+    }
+    const request = mapCompanySchoolToUpdateRequest(loaded, {
+      title: '우리 동네 소비와 저축11',
+      mainTitle: '우리 동네 소비와 저축11',
+    })
+
+    expect(request.title).toBe('우리 동네 소비와 저축11')
+    expect(request.applicationStartDate).toBeUndefined()
+    expect(request.serviceDetailJson).toBeUndefined()
+    expect(request.rounds).toBeUndefined()
   })
 
   it('common-info style patch does not dump rounds or masked manager fields', () => {

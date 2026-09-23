@@ -20,6 +20,7 @@ import {
   extractCompanySchoolWageSidecar,
   parseCompanySchoolServiceDetailJson,
   serializeCompanySchoolServiceDetailJson,
+  serializeCompanySchoolServiceDetailJsonForUpdatePatch,
 } from './service-detail-json'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
@@ -345,119 +346,6 @@ function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
   return Object.prototype.hasOwnProperty.call(patch, key)
 }
 
-const PARTICIPANT_RECRUITMENT_PATCH_KEYS = [
-  'applicationStartDate',
-  'applicationEndDate',
-  'resultAnnouncementDate',
-  'resultAnnouncementMethod',
-  'studentListRequired',
-  'recruitmentGuide',
-  'learningSupportContent',
-  'additionalContentHtml',
-  'remarks',
-  'generalParticipantInterviewEnabled',
-] as const satisfies ReadonlyArray<keyof Program>
-
-const INSTRUCTOR_RECRUITMENT_PATCH_KEYS = [
-  'instructorApplicationStartDate',
-  'instructorApplicationEndDate',
-  'documentPassAnnouncementDate',
-  'documentPassAnnouncementMethod',
-  'interviewStartDate',
-  'interviewEndDate',
-  'interviewMethod',
-  'finalPassAnnouncementDate',
-  'finalPassAnnouncementMethod',
-  'instructorTarget',
-  'instructorTargets',
-  'instructorTargetDetail',
-  'instructorCapacity',
-  'applicationMethod',
-] as const satisfies ReadonlyArray<keyof Program>
-
-const VOLUNTEER_RECRUITMENT_PATCH_KEYS = [
-  'volunteerApplicationStartDate',
-  'volunteerApplicationEndDate',
-  'volunteerTarget',
-  'volunteerTargets',
-  'volunteerTargetDetail',
-  'generalVolunteerInterviewEnabled',
-  'otherNotes',
-] as const satisfies ReadonlyArray<keyof Program>
-
-function patchTouchesParticipantRecruitment(patch: Partial<Program>): boolean {
-  if (PARTICIPANT_RECRUITMENT_PATCH_KEYS.some(key => patchHasKey(patch, key))) return true
-  const gci = patch.generalCommonInfo
-  return gci != null && Object.prototype.hasOwnProperty.call(gci, 'participantRecruitmentInfo')
-}
-
-function patchTouchesInstructorRecruitment(patch: Partial<Program>): boolean {
-  if (INSTRUCTOR_RECRUITMENT_PATCH_KEYS.some(key => patchHasKey(patch, key))) return true
-  const gci = patch.generalCommonInfo
-  return gci != null && Object.prototype.hasOwnProperty.call(gci, 'instructorRecruitmentInfo')
-}
-
-function patchTouchesVolunteerRecruitment(patch: Partial<Program>): boolean {
-  if (VOLUNTEER_RECRUITMENT_PATCH_KEYS.some(key => patchHasKey(patch, key))) return true
-  const gci = patch.generalCommonInfo
-  return (
-    gci != null &&
-    (Object.prototype.hasOwnProperty.call(gci, 'volunteerRecruitmentInfo') ||
-      Object.prototype.hasOwnProperty.call(gci, 'volunteerInterviewScheduleInfo'))
-  )
-}
-
-/** 부분 PATCH 시 모집 탭을 건드리지 않았으면 serviceDetailJson 에 모집 블록을 실지 않는다 */
-function programForPartialServiceDetailJson(merged: Program, patch: Partial<Program>): Program {
-  let next: Program = merged
-  if (!patchTouchesParticipantRecruitment(patch)) {
-    next = {
-      ...next,
-      generalCommonInfo: next.generalCommonInfo
-        ? { ...next.generalCommonInfo, participantRecruitmentInfo: undefined }
-        : next.generalCommonInfo,
-    }
-  }
-  if (!patchTouchesInstructorRecruitment(patch)) {
-    next = {
-      ...next,
-      instructorApplicationStartDate: undefined,
-      instructorApplicationEndDate: undefined,
-      documentPassAnnouncementDate: undefined,
-      documentPassAnnouncementMethod: undefined,
-      interviewStartDate: undefined,
-      interviewEndDate: undefined,
-      interviewMethod: undefined,
-      finalPassAnnouncementDate: undefined,
-      finalPassAnnouncementMethod: undefined,
-      instructorTarget: undefined,
-      instructorTargets: undefined,
-      instructorTargetDetail: undefined,
-      generalCommonInfo: next.generalCommonInfo
-        ? { ...next.generalCommonInfo, instructorRecruitmentInfo: undefined }
-        : next.generalCommonInfo,
-    }
-  }
-  if (!patchTouchesVolunteerRecruitment(patch)) {
-    next = {
-      ...next,
-      volunteerApplicationStartDate: undefined,
-      volunteerApplicationEndDate: undefined,
-      volunteerTarget: undefined,
-      volunteerTargets: undefined,
-      volunteerTargetDetail: undefined,
-      generalCommonInfo: next.generalCommonInfo
-        ? {
-            ...next.generalCommonInfo,
-            volunteerRecruitmentInfo: undefined,
-            volunteerInterviewScheduleInfo: undefined,
-          }
-        : next.generalCommonInfo,
-    }
-  }
-  return next
-}
-
 /** GET 마스킹 값(`김*원`, `010-****-1234`)을 PATCH로 되쓰지 않기 위함 */
 function looksMaskedProgramPii(value: string | null | undefined): boolean {
   if (value == null) return false
@@ -642,9 +530,7 @@ function mapCompanySchoolPatchFieldsToRequest(
 
   const touchesServiceDetail = SERVICE_DETAIL_PROGRAM_KEYS.some(key => has(key))
   if (touchesServiceDetail) {
-    body.serviceDetailJson = serializeCompanySchoolServiceDetailJson(
-      programForPartialServiceDetailJson(merged, patch)
-    )
+    body.serviceDetailJson = serializeCompanySchoolServiceDetailJsonForUpdatePatch(merged, patch)
   }
 
   return body

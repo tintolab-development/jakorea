@@ -9,6 +9,7 @@ import {
   programDetailTrainedTeachersCommonInfoEditSchema,
   programToDetailEditValues,
 } from './program-detail-edit-schema'
+import { mapCompanySchoolToUpdateRequest } from '@/features/program/1c-1s/api/adapters'
 
 const program = {
   id: 'program-1',
@@ -37,6 +38,56 @@ const program = {
 } as Program
 
 describe('narrowProgramDetailPatchForCommonInfoSave', () => {
+  it('공통정보 저장 patch → update request 에 모집 JSON 이 실리지 않는다', () => {
+    const loaded = {
+      ...program,
+      id: '186024',
+      title: '우리 동네 소비와 저축',
+      mainTitle: '우리 동네 소비와 저축',
+      applicationStartDate: '2026-10-03',
+      applicationEndDate: '2026-10-07',
+      studentListRequired: 'required',
+      registrationOverlay: {
+        'economyRegistration.wageInfo.paymentItemValues': ['p-166201', 'p-166204'],
+      },
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          recruitmentPeriodLabel: '2026. 10. 03 ~ 2026. 10. 07',
+          preEducationNoticeRequired: true,
+        },
+        kpi: {
+          finalParticipants: 36,
+          instructorCount: 7,
+          volunteerCount: 0,
+          finalSchools: 9,
+          finalClasses: 13,
+        },
+        wageGradeRows: [{ grade: '1급 강사비', pricing: '기본 140,000원' }],
+      },
+    } as Program
+    const values = {
+      ...programToDetailEditValues(loaded),
+      mainTitle: '우리 동네 소비와 저축11',
+    }
+    const patch = narrowProgramDetailPatchForCommonInfoSave(
+      detailEditValuesToProgramPatch(values, loaded)
+    )
+    const request = mapCompanySchoolToUpdateRequest({ ...loaded, ...patch, id: loaded.id }, patch)
+    const parsed =
+      request.serviceDetailJson != null
+        ? (JSON.parse(request.serviceDetailJson) as {
+            program?: { generalCommonInfo?: Record<string, unknown> }
+            registration?: unknown
+          })
+        : null
+
+    expect(request.applicationStartDate).toBeUndefined()
+    expect(request.applicationEndDate).toBeUndefined()
+    expect(request.rounds).toBeUndefined()
+    expect(parsed?.program?.generalCommonInfo?.participantRecruitmentInfo).toBeUndefined()
+    expect(parsed?.registration).toBeUndefined()
+  })
+
   it('모집·회차 필드를 remote patch 에서 제외한다', () => {
     const patch = detailEditValuesToProgramPatch(
       {
