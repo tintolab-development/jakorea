@@ -23,6 +23,7 @@ const FEE_GRADE_LABEL: Record<string, string> = {
 
 const PAYMENT_ITEM_LABEL: Record<string, string> = {
   TRANSPORTATION: '교통비',
+  LONG_DISTANCE_TRANSPORTATION: '장거리 교통비',
   LODGING: '숙박비',
   ACTIVITY: '활동비',
   MEAL: '식비',
