@@ -32,6 +32,9 @@ import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by
 import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-save'
 import {
+  getProgramDetailEditValidationMessage,
+  programDetailCompanySchoolCommonInfoEditSchema,
+  programDetailEditSchema,
   programDetailInstitutionsEditSchema,
   programDetailTrainedTeachersCommonInfoEditSchema,
 } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -1250,20 +1253,26 @@ export function ProgramDetailFullPageModal({
 
   /** 공통정보 탭 수정 모드: 이 때만 `infoForm` 을 자식에 넘김 (RHF + Zod 단일 스키마) */
   const isEditModeInfo = activeTab === 'info' && editTab === 'info' && !!displayProgram
+  const commonInfoEditSchema = useMemo(
+    () =>
+      isTrainedTeachersDetail
+        ? programDetailTrainedTeachersCommonInfoEditSchema
+        : isCompanySchoolDetail
+          ? programDetailCompanySchoolCommonInfoEditSchema
+          : undefined,
+    [isTrainedTeachersDetail, isCompanySchoolDetail]
+  )
   const infoForm = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeInfo,
-    schema: isTrainedTeachersDetail
-      ? programDetailTrainedTeachersCommonInfoEditSchema
-      : undefined,
+    schema: commonInfoEditSchema,
   })
   const { triggerSave: infoTriggerSave, resetToProgram: infoResetToProgram } =
     useProgramDetailInfoSave({
       form: infoForm,
       program: displayProgram ?? ({} as Program),
-      validateSchema: isTrainedTeachersDetail
-        ? programDetailTrainedTeachersCommonInfoEditSchema
-        : undefined,
+      validateSchema: commonInfoEditSchema,
+      commonInfoPatchOnly: isCompanySchoolDetail || isTrainedTeachersDetail,
       onSaveEdit:
         displayProgram
           ? async (draft, patch) => {
@@ -1276,6 +1285,21 @@ export function ProgramDetailFullPageModal({
             }
           : undefined,
     })
+
+  const handleInfoSave = useCallback(async () => {
+    const ok = await infoTriggerSave()
+    if (!ok) {
+      void showAlert({
+        title: '입력 확인',
+        content: getProgramDetailEditValidationMessage(
+          infoForm.getValues(),
+          commonInfoEditSchema ?? programDetailEditSchema
+        ),
+      })
+      return
+    }
+    setEditMode(null)
+  }, [commonInfoEditSchema, infoForm, infoTriggerSave, showAlert])
 
   const isEditModeInstitutions =
     activeTab === 'institutions' && editTab === 'institutions' && !!displayProgram
@@ -1337,12 +1361,16 @@ export function ProgramDetailFullPageModal({
         : undefined,
   })
 
-  const handleInfoEdit = () => {
+  const handleInfoEdit = async () => {
     if (!displayProgram) return
 
     // 교육받은 교사·1사1교 프로그램 정보 LNB — 탭별 수정 모드 (실패 시 목록으로 navigate 하지 않음)
     if (isOverviewProgramDetail && activeLnb === 'info') {
       if (activeTab === 'info') {
+        if (editTab === 'info') {
+          await handleInfoSave()
+          return
+        }
         // 교육받은 교사 공통정보 — 진행 전(scheduled)까지만 수정 가능
         if (
           isTrainedTeachersDetail &&
@@ -1376,6 +1404,10 @@ export function ProgramDetailFullPageModal({
     }
 
     if (activeTab === 'info') {
+      if (editTab === 'info') {
+        void handleInfoSave()
+        return
+      }
       infoResetToProgram()
       setEditMode('info')
       return
@@ -1399,13 +1431,6 @@ export function ProgramDetailFullPageModal({
       volunteersResetToProgram()
       setEditMode('volunteers')
     }
-  }
-
-  /** 공통정보 「정보 수정」저장 — form triggerSave 후 edit 해제 (TT KPI/커리큘럼은 onPersist가 별도) */
-  const handleInfoSave = async () => {
-    const ok = await infoTriggerSave()
-    if (!ok) return
-    setEditMode(null)
   }
 
   const handleEditCancel = () => {
@@ -1700,6 +1725,7 @@ export function ProgramDetailFullPageModal({
               sponsorName={sponsorName}
               isBodyLoading={loading && !displayProgram}
               hideTabsRow={isOverviewProgramDetail}
+              forceCompanySchoolLayout={isCompanySchoolDetail}
               activeTab={activeTab}
               onSelectTab={setActiveTab}
               isEditModeInfo={isEditModeInfo}

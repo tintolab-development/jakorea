@@ -14,10 +14,17 @@ import {
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
-import { getProgramWagePaymentItemOptions } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import {
+  getProgramWagePaymentItemOptions,
+  programPaymentItemLabelsFromIds,
+  resolveProgramPaymentItemIdsFromLabels,
+} from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { parseCompanySchoolWageAmountFromPricing } from '@/features/program/shared/lib/company-school-wage-pricing'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 import type { Program } from '@/types/domain'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { useTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 export interface ProgramWageInfoSectionProps {
@@ -25,6 +32,7 @@ export interface ProgramWageInfoSectionProps {
   program?: Program
   isEditMode?: boolean
   form?: UseFormReturn<ProgramDetailEditFormValues>
+  forceCompanySchoolLayout?: boolean
 }
 
 const WAGE_COMPARE_RADIO_OPTIONS = [
@@ -33,15 +41,19 @@ const WAGE_COMPARE_RADIO_OPTIONS = [
   { value: 'under' as const, label: '이하' },
 ]
 
-const COMPANY_SCHOOL_WAGE_DEDUCTION_VIEW = '일용근로자 원천징수세액'
 const COMPANY_SCHOOL_PAYMENT_ID_TRANSPORT = 'p-1'
 const COMPANY_SCHOOL_PAYMENT_ID_LODGING = 'p-7'
+
+const PAYMENT_LABEL_TRANSPORT_CATALOG = '강사 교통비'
+const PAYMENT_LABEL_LODGING_CATALOG = '숙박비 (1사1교)'
+const PAYMENT_LABEL_TRANSPORT_1C1S = '교통비(일사일교)'
+const PAYMENT_LABEL_LODGING_1C1S = '숙박비(일사일교)'
 
 const COMPANY_SCHOOL_WAGE_ROWS = [
   {
     gradeLabel: '1급',
-    regularLabel: '1급 강사비 책정',
-    longDistanceLabel: '1급 강사 장거리비 책정',
+    regularLabel: '1급 강사비',
+    longDistanceLabel: '1급 장거리비',
     regularField: 'wageGrade1Amount' as const,
     longDistanceField: 'wageGrade1LongDistanceAmount' as const,
     regularValue: '500,000',
@@ -51,8 +63,8 @@ const COMPANY_SCHOOL_WAGE_ROWS = [
   },
   {
     gradeLabel: '2급',
-    regularLabel: '2급 강사비 책정',
-    longDistanceLabel: '2급 강사 장거리비 책정',
+    regularLabel: '2급 강사비',
+    longDistanceLabel: '2급 장거리비',
     regularField: 'wageGrade2Amount' as const,
     longDistanceField: 'wageGrade2LongDistanceAmount' as const,
     regularValue: '400,000',
@@ -62,8 +74,8 @@ const COMPANY_SCHOOL_WAGE_ROWS = [
   },
   {
     gradeLabel: '3급',
-    regularLabel: '3급 강사비 책정',
-    longDistanceLabel: '3급 강사 장거리비 책정',
+    regularLabel: '3급 강사비',
+    longDistanceLabel: '3급 장거리비',
     regularField: 'wageGrade3Amount' as const,
     longDistanceField: 'wageGrade3LongDistanceAmount' as const,
     regularValue: '300,000',
@@ -81,19 +93,23 @@ function isCompanySchoolProgramId(programId: string): boolean {
   )
 }
 
-function getCompanySchoolPaymentItemOptions(): CmsSelectMultipleOption[] {
-  return getProgramWagePaymentItemOptions().map(opt => {
-    if (opt.value === COMPANY_SCHOOL_PAYMENT_ID_TRANSPORT) {
-      return { ...opt, label: '교통비(일사일교)' }
+function remapCompanySchoolPaymentItemOptions(
+  options: CmsSelectMultipleOption[]
+): CmsSelectMultipleOption[] {
+  return options.map(opt => {
+    const label = opt.label.trim()
+    if (label === PAYMENT_LABEL_TRANSPORT_CATALOG || opt.value === COMPANY_SCHOOL_PAYMENT_ID_TRANSPORT) {
+      return { ...opt, label: PAYMENT_LABEL_TRANSPORT_1C1S }
     }
-    if (opt.value === COMPANY_SCHOOL_PAYMENT_ID_LODGING) {
-      return { ...opt, label: '숙박비(일사일교)' }
+    if (label === PAYMENT_LABEL_LODGING_CATALOG || opt.value === COMPANY_SCHOOL_PAYMENT_ID_LODGING) {
+      return { ...opt, label: PAYMENT_LABEL_LODGING_1C1S }
     }
     return opt
   })
 }
 
-function companySchoolWageView(amount: string, maxText: string) {
+function companySchoolWageView(amount: string | undefined, maxText: string) {
+  if (!amount?.trim()) return '-'
   return (
     <>
       1시간 당
@@ -134,32 +150,39 @@ function companySchoolWageEdit(
   )
 }
 
-function parseCompanySchoolWageAmount(
-  pricing: string | undefined,
-  kind: 'regular' | 'longDistance'
-): string | undefined {
-  if (!pricing?.trim()) return undefined
-  const parts = pricing.split(/\s*\|\s*/).map(part => part.trim())
-  const target = parts.find(part =>
-    kind === 'regular'
-      ? part.includes('기본') || !part.includes('장거리')
-      : part.includes('장거리')
-  )
-  return target?.match(/([\d,]+)\s*원/)?.[1]
-}
-
 function resolveCompanySchoolWageRows(program: Program | undefined) {
   const savedRows = program?.generalCommonInfo?.wageGradeRows ?? []
   return COMPANY_SCHOOL_WAGE_ROWS.map(row => {
     const saved = savedRows.find(savedRow => savedRow.grade.startsWith(row.gradeLabel))
     return {
       ...row,
-      regularValue:
-        parseCompanySchoolWageAmount(saved?.pricing, 'regular') ?? row.regularValue,
-      longDistanceValue:
-        parseCompanySchoolWageAmount(saved?.pricing, 'longDistance') ?? row.longDistanceValue,
+      regularValue: parseCompanySchoolWageAmountFromPricing(saved?.pricing, 'regular'),
+      longDistanceValue: parseCompanySchoolWageAmountFromPricing(saved?.pricing, 'longDistance'),
     }
   })
+}
+
+function formatCompanySchoolPaymentItemsView(
+  paymentItems: string | undefined,
+  options: CmsSelectMultipleOption[]
+): string {
+  if (!paymentItems?.trim()) return '-'
+  const tokens = paymentItems
+    .split(',')
+    .map(part => part.trim())
+    .filter(Boolean)
+  if (tokens.length === 0) return '-'
+  const labels = tokens.map(token => {
+    const matched = options.find(option => option.value === token || option.label === token)
+    if (matched?.label) return matched.label
+    if (token === 'LONG_DISTANCE_TRANSPORTATION') return '장거리 교통비'
+    return token
+  })
+  const resolvedIds = resolveProgramPaymentItemIdsFromLabels(paymentItems)
+  if (labels.every(label => /^p-\d+$/i.test(label)) && resolvedIds.length > 0) {
+    return programPaymentItemLabelsFromIds(resolvedIds) || labels.join(', ')
+  }
+  return labels.join(', ')
 }
 
 function WageValueParts({ text }: { text: string }) {
@@ -250,10 +273,21 @@ export function ProgramWageInfoSection({
   program,
   isEditMode = false,
   form,
+  forceCompanySchoolLayout = false,
 }: ProgramWageInfoSectionProps) {
   const data = useMemo(() => EMPTY_PROGRAM_WAGE_INFO, [])
-  const isCompanySchool = isCompanySchoolProgramId(programId)
-  const companySchoolPaymentItemOptions = useMemo(() => getCompanySchoolPaymentItemOptions(), [])
+  const isCompanySchool =
+    forceCompanySchoolLayout ||
+    (program != null && isCompanySchoolProgram(program)) ||
+    isCompanySchoolProgramId(programId)
+  const remotePaymentOptions = useTemplateRegistrationPaymentItemOptions()
+  const companySchoolPaymentItemOptions = useMemo(
+    () =>
+      remapCompanySchoolPaymentItemOptions(
+        remotePaymentOptions.length > 0 ? remotePaymentOptions : getProgramWagePaymentItemOptions()
+      ),
+    [remotePaymentOptions]
+  )
   const isFormEdit = isEditMode && form
   const parsedPricing = useMemo(
     () => parsePricingDisplay(data.pricingDisplay),
@@ -284,23 +318,45 @@ export function ProgramWageInfoSection({
   useEffect(() => {
     if (!isCompanySchool || !isFormEdit || !form) return
     const current = form.getValues()
-    for (const row of COMPANY_SCHOOL_WAGE_ROWS) {
-      if (!current[row.regularField]) form.setValue(row.regularField, row.regularValue)
-      if (!current[row.longDistanceField]) {
-        form.setValue(row.longDistanceField, row.longDistanceValue)
+    const apiRows = resolveCompanySchoolWageRows(program)
+    for (const [index, row] of COMPANY_SCHOOL_WAGE_ROWS.entries()) {
+      const apiRow = apiRows[index]
+      if (!current[row.regularField] && apiRow?.regularValue) {
+        form.setValue(row.regularField, apiRow.regularValue)
+      }
+      if (!current[row.longDistanceField] && apiRow?.longDistanceValue) {
+        form.setValue(row.longDistanceField, apiRow.longDistanceValue)
       }
     }
     if (!current.wagePaymentItemIds?.length) {
-      form.setValue('wagePaymentItemIds', [
-        COMPANY_SCHOOL_PAYMENT_ID_TRANSPORT,
-        COMPANY_SCHOOL_PAYMENT_ID_LODGING,
-      ])
+      const savedTokens = program?.generalCommonInfo?.paymentItems
+        ?.split(',')
+        .map(part => part.trim())
+        .filter(Boolean)
+      const matchedIds = (savedTokens ?? [])
+        .map(
+          token =>
+            companySchoolPaymentItemOptions.find(
+              opt => opt.value === token || opt.label === token
+            )?.value
+        )
+        .filter((id): id is string => Boolean(id))
+      if (matchedIds.length > 0) {
+        form.setValue('wagePaymentItemIds', matchedIds)
+      }
     }
-  }, [isCompanySchool, isFormEdit, form])
+  }, [isCompanySchool, isFormEdit, form, program, companySchoolPaymentItemOptions])
 
   if (isCompanySchool) {
     const wageRows = resolveCompanySchoolWageRows(program)
-    const paymentItemsView = '교통비(일사일교), 숙박비(일사일교)'
+    const paymentItemsView = formatCompanySchoolPaymentItemsView(
+      program?.generalCommonInfo?.paymentItems,
+      companySchoolPaymentItemOptions
+    )
+    const deductionItemsView =
+      mapSettlementDeductionTypeToLabel(program?.generalCommonInfo?.deductionItems) ??
+      program?.generalCommonInfo?.deductionItems?.trim() ??
+      '-'
 
     return (
       <DetailInfoForm
@@ -348,7 +404,7 @@ export function ProgramWageInfoSection({
               ) : undefined
             }
           />
-          <DetailInfoForm.Field label="공제 항목" view={COMPANY_SCHOOL_WAGE_DEDUCTION_VIEW} />
+          <DetailInfoForm.Field label="공제 항목" view={deductionItemsView} />
         </DetailInfoForm.Row>
       </DetailInfoForm>
     )

@@ -42,6 +42,7 @@ import type {
 import {
   isSponsorContactUnselected,
   isSponsorContactUnselectedLabel,
+  isProgramSponsorManagerUnselected,
   normalizeSponsorContactUnselectedSelection,
   SPONSOR_CONTACT_UNSELECTED_LABEL,
   SPONSOR_CONTACT_UNSELECTED_VALUE,
@@ -71,7 +72,45 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
-import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
+import {
+  TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+  TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
+} from '@/features/template/lib/template-form-select-options'
+
+const ECONOMY_ALL_VALUE = '__all__'
+
+const ECONOMY_EDUCATION_PROCESS_OPTIONS = [
+  { value: ECONOMY_ALL_VALUE, label: '전체' },
+  ...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS.map(option => ({
+    value: option.label,
+    label: option.label,
+  })),
+]
+
+const ECONOMY_IP_OWNED_OPTIONS = [
+  { value: 'JA', label: 'JA' },
+  { value: 'Partner', label: 'Partner' },
+  { value: 'Jointly', label: 'Jointly' },
+]
+
+function CompanySchoolFixedParticipantTypes() {
+  return (
+    <div className="detail-info-form-inputs-wrapper">
+      <CmsCheckbox checkboxSize="large" checked={false} disabled>
+        개인
+      </CmsCheckbox>
+      <CmsCheckbox checkboxSize="large" checked disabled>
+        학교/기관
+      </CmsCheckbox>
+      <CmsCheckbox checkboxSize="large" checked disabled>
+        강사
+      </CmsCheckbox>
+      <CmsCheckbox checkboxSize="large" checked={false} disabled>
+        봉사자
+      </CmsCheckbox>
+    </div>
+  )
+}
 
 function ProgramProgressReadonlyCell({ status }: { status: ProgramLifecycleStatus }) {
   return <ProgramLifecycleEnrollmentStatusText lifecycleStatus={status} />
@@ -151,6 +190,17 @@ function SponsorManagerView({
   sponsorRows: readonly SponsorManagementRow[]
   contactsBySponsorId: Record<string, readonly SponsorContactRow[] | undefined>
 }) {
+  if (
+    isProgramSponsorManagerUnselected({
+      sponsorManagerContactIds: program.generalCommonInfo?.sponsorManagerContactIds,
+      sponsorManagerContactId: program.generalCommonInfo?.sponsorManagerContactId,
+      managerLine: program.generalCommonInfo?.sponsorManagerLine,
+      managerName: program.managerName,
+    })
+  ) {
+    return <>{SPONSOR_CONTACT_UNSELECTED_LABEL}</>
+  }
+
   const refs = program.generalCommonInfo?.sponsorManagerContactIds ?? []
   const multi = refs.length > 1 || sponsorRows.length > 1
   const lines: string[][] = []
@@ -202,12 +252,17 @@ function SponsorManagerView({
       </div>
     )
   }
-  if (!program.managerName && !program.contactPhone) return <>-</>
+  const managerName = program.managerName?.trim()
+  if (!managerName || isSponsorContactUnselectedLabel(managerName)) return <>-</>
   return (
     <>
-      {program.managerName ?? ''}
-      {program.managerName && program.contactPhone ? <DetailInfoForm.InputsSeparator /> : null}
-      {program.contactPhone ? <span>{program.contactPhone}</span> : null}
+      {managerName}
+      {program.contactPhone ? (
+        <>
+          <DetailInfoForm.InputsSeparator />
+          <span>{program.contactPhone}</span>
+        </>
+      ) : null}
     </>
   )
 }
@@ -249,9 +304,14 @@ export function BasicInfoSection({
 }: BasicInfoSectionProps) {
   const isFormEdit = isEditMode && form
   const companySchoolLayout = forceCompanySchoolLayout || isCompanySchoolProgram(program)
+  /** 1사1교만. 교육받은 교사는 hideIpsTypeField / fixedParticipantTypeLabel 로 구분 */
+  const isEconomyCommonInfo =
+    companySchoolLayout && !hideIpsTypeField && !fixedParticipantTypeLabel
+  const enableEconomyTitleEn = enableTitleEnEdit || isEconomyCommonInfo
+  const enableEconomyDetailedProgramSelect = useDetailedProgramSelect || isEconomyCommonInfo
   const { options: sponsorOptions } = useSponsorSelectOptions(Boolean(isFormEdit || program.sponsorId))
   const { options: detailedProgramOptions } = useDetailedProgramSelectOptions(
-    Boolean(isFormEdit && useDetailedProgramSelect)
+    Boolean(isFormEdit && enableEconomyDetailedProgramSelect)
   )
   const watchedSponsorId = isFormEdit ? form?.watch('sponsorId') : program.sponsorId
   const contactsQuery = useSponsorContactsQuery(watchedSponsorId, Boolean(isFormEdit))
@@ -444,8 +504,16 @@ export function BasicInfoSection({
     const commonInfo = program.generalCommonInfo
     const announcementTitle = resolvePublicProgramTitleDisplay(program)
     const detailedProgramName = commonInfo?.detailedProgramName?.trim() || '-'
-    const educationProcessLabel = optionLabel(EDUCATION_PROCESS_OPTIONS, program.educationProcess)
-    const ipOwnedLabel = optionLabel(IP_OWNED_OPTIONS, program.ipOwned ?? 'JA')
+    const educationProcessLabel = isEconomyCommonInfo
+      ? optionLabel(
+          ECONOMY_EDUCATION_PROCESS_OPTIONS,
+          program.educationProcess?.trim() || ECONOMY_ALL_VALUE
+        )
+      : optionLabel(EDUCATION_PROCESS_OPTIONS, program.educationProcess)
+    const ipOwnedLabel = optionLabel(
+      isEconomyCommonInfo ? ECONOMY_IP_OWNED_OPTIONS : IP_OWNED_OPTIONS,
+      program.ipOwned ?? 'JA'
+    )
     const courseDeliveredByLabel = optionLabel(
       COURSE_DELIVERED_BY_OPTIONS,
       program.courseDeliveredBy ?? 'JA'
@@ -502,7 +570,7 @@ export function BasicInfoSection({
               label="대표 프로그램명 (영문)"
               view={program.titleEn ?? '-'}
               edit={
-                enableTitleEnEdit ? (
+                enableEconomyTitleEn ? (
                   <Controller
                     name="titleEn"
                     control={commonInfoForm.control}
@@ -510,7 +578,7 @@ export function BasicInfoSection({
                       <CmsInput
                         {...field}
                         value={field.value ?? ''}
-                        placeholder="대표 프로그램명(영문)을 입력하세요"
+                        placeholder="대표 프로그램명을 입력하세요"
                         width="100%"
                       />
                     )}
@@ -542,7 +610,7 @@ export function BasicInfoSection({
               label="세부 프로그램명"
               view={detailedProgramName}
               edit={
-                useDetailedProgramSelect ? (
+                enableEconomyDetailedProgramSelect ? (
                   <Controller
                     name="detailedProgramId"
                     control={commonInfoForm.control}
@@ -558,10 +626,14 @@ export function BasicInfoSection({
                         ? `__saved_detailed__:${savedDetailedName}`
                         : undefined
                       const selectOptions = [
-                        {
-                          value: TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
-                          label: '해당없음',
-                        },
+                        ...(isEconomyCommonInfo
+                          ? []
+                          : [
+                              {
+                                value: TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+                                label: '해당없음',
+                              },
+                            ]),
                         ...detailedProgramOptions,
                         ...(savedDetailedName && !byName && savedDetailedValue
                           ? [{ value: savedDetailedValue, label: savedDetailedName }]
@@ -669,8 +741,13 @@ export function BasicInfoSection({
             <DetailInfoForm.Field
               label="참여자 유형"
               view={
-                fixedParticipantTypeLabel ?? formatCompanySchoolParticipantTypes(program)
+                isEconomyCommonInfo ? (
+                  <CompanySchoolFixedParticipantTypes />
+                ) : (
+                  (fixedParticipantTypeLabel ?? formatCompanySchoolParticipantTypes(program))
+                )
               }
+              edit={isEconomyCommonInfo ? <CompanySchoolFixedParticipantTypes /> : undefined}
             />
             <DetailInfoForm.Field
               label="사업 분야"
@@ -866,6 +943,7 @@ export function BasicInfoSection({
               }
             />
           </DetailInfoForm.Row>
+          {isEconomyCommonInfo ? null : (
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="교육 장소"
@@ -907,6 +985,7 @@ export function BasicInfoSection({
               }
             />
           </DetailInfoForm.Row>
+          )}
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="설문 진행 항목"
@@ -955,10 +1034,22 @@ export function BasicInfoSection({
                     <CmsSelect
                       withAllOption={false}
                       placeholder="교육 과정을 선택하세요"
-                      width="100%"
-                      options={[...EDUCATION_PROCESS_OPTIONS]}
-                      value={field.value ?? undefined}
-                      onChange={next => field.onChange(next == null ? undefined : String(next))}
+                      width={240}
+                      options={
+                        isEconomyCommonInfo
+                          ? [...ECONOMY_EDUCATION_PROCESS_OPTIONS]
+                          : [...EDUCATION_PROCESS_OPTIONS]
+                      }
+                      value={
+                        isEconomyCommonInfo
+                          ? (field.value?.trim() || ECONOMY_ALL_VALUE)
+                          : (field.value ?? undefined)
+                      }
+                      onChange={next =>
+                        field.onChange(
+                          next == null || next === ECONOMY_ALL_VALUE ? undefined : String(next)
+                        )
+                      }
                     />
                   )}
                 />
@@ -974,9 +1065,13 @@ export function BasicInfoSection({
                   render={({ field }) => (
                     <CmsSelect
                       withAllOption={false}
-                      placeholder="IP Owned를 선택하세요"
-                      width="100%"
-                      options={[...IP_OWNED_OPTIONS]}
+                      placeholder="전체"
+                      width={240}
+                      options={
+                        isEconomyCommonInfo
+                          ? [...ECONOMY_IP_OWNED_OPTIONS]
+                          : [...IP_OWNED_OPTIONS]
+                      }
                       value={field.value ?? 'JA'}
                       onChange={next => field.onChange(next == null ? undefined : String(next))}
                     />
@@ -996,8 +1091,8 @@ export function BasicInfoSection({
                   render={({ field }) => (
                     <CmsSelect
                       withAllOption={false}
-                      placeholder="Course Delivered By를 선택하세요"
-                      width="100%"
+                      placeholder="전체"
+                      width={240}
                       options={[...COURSE_DELIVERED_BY_OPTIONS]}
                       value={field.value ?? 'JA'}
                       onChange={next =>
@@ -1019,16 +1114,27 @@ export function BasicInfoSection({
                 <Controller
                   name="partnerInvolvement"
                   control={commonInfoForm.control}
-                  render={({ field }) => (
-                    <CmsSelect
-                      withAllOption={false}
-                      placeholder="Partner Involvement를 선택하세요"
-                      width="100%"
-                      options={PARTNER_INVOLVEMENT_SELECT_OPTIONS}
-                      value={field.value ? 'yes' : 'no'}
-                      onChange={next => field.onChange(next === 'yes')}
-                    />
-                  )}
+                  render={({ field }) =>
+                    isEconomyCommonInfo ? (
+                      <CmsRadio.Group
+                        size="large"
+                        value={field.value ? 'yes' : 'no'}
+                        onChange={event => field.onChange(event.target.value === 'yes')}
+                      >
+                        <CmsRadio value="yes">Yes</CmsRadio>
+                        <CmsRadio value="no">No</CmsRadio>
+                      </CmsRadio.Group>
+                    ) : (
+                      <CmsSelect
+                        withAllOption={false}
+                        placeholder="Partner Involvement를 선택하세요"
+                        width="100%"
+                        options={PARTNER_INVOLVEMENT_SELECT_OPTIONS}
+                        value={field.value ? 'yes' : 'no'}
+                        onChange={next => field.onChange(next === 'yes')}
+                      />
+                    )
+                  }
                 />
               }
             />
@@ -1251,13 +1357,22 @@ export function BasicInfoSection({
           label="후원사 담당자"
           required
           view={
-            program.managerName || program.contactPhone ? (
+            isProgramSponsorManagerUnselected({
+              sponsorManagerContactIds: program.generalCommonInfo?.sponsorManagerContactIds,
+              sponsorManagerContactId: program.generalCommonInfo?.sponsorManagerContactId,
+              managerLine: program.generalCommonInfo?.sponsorManagerLine,
+              managerName: program.managerName,
+            }) ? (
+              SPONSOR_CONTACT_UNSELECTED_LABEL
+            ) : program.managerName?.trim() ? (
               <>
-                {program.managerName ?? ''}
-                {program.managerName && program.contactPhone ? (
-                  <DetailInfoForm.InputsSeparator />
+                {program.managerName}
+                {program.contactPhone ? (
+                  <>
+                    <DetailInfoForm.InputsSeparator />
+                    <span>{program.contactPhone}</span>
+                  </>
                 ) : null}
-                {program.contactPhone ? <span>{program.contactPhone}</span> : null}
               </>
             ) : (
               '-'
