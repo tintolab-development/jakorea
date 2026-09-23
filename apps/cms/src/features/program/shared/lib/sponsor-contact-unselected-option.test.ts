@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  isProgramSponsorManagerUnselected,
   normalizeSponsorContactUnselectedSelection,
   resolveSponsorContactIdsForEdit,
   SPONSOR_CONTACT_UNSELECTED_VALUE,
@@ -32,6 +33,21 @@ describe('sponsor contact unselected option', () => {
         [SPONSOR_CONTACT_UNSELECTED_VALUE]
       )
     ).toEqual(['c1'])
+  })
+
+  it('저장 id가 미선택이면 담당자 미선택으로 판별한다', () => {
+    expect(
+      isProgramSponsorManagerUnselected({
+        sponsorManagerContactIds: [SPONSOR_CONTACT_UNSELECTED_VALUE],
+        managerName: null,
+      })
+    ).toBe(true)
+    expect(
+      isProgramSponsorManagerUnselected({
+        sponsorManagerContactIds: ['1627251::1627253'],
+        managerName: '김담당',
+      })
+    ).toBe(false)
   })
 
   it('저장된 라벨이 미선택이면 수정 폼에 미선택 값을 넣는다', () => {

@@ -11,6 +11,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value)
 }
 
+function coerceServiceDetailObject(raw: unknown): Record<string, unknown> | null {
+  if (raw == null) return null
+  if (isRecord(raw)) return raw
+  if (typeof raw !== 'string') return null
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+  try {
+    let parsed: unknown = JSON.parse(trimmed)
+    if (typeof parsed === 'string') parsed = JSON.parse(parsed)
+    return isRecord(parsed) ? parsed : null
+  } catch {
+    return null
+  }
+}
+
 function normalizeTitle(value?: string | null): string {
   return value?.trim() ?? ''
 }
@@ -36,18 +51,13 @@ export function isRepresentativeTitleAlias(
 }
 
 export function parseRegistrationOverlayFromServiceDetailJson(
-  raw?: string | null
+  raw?: unknown
 ): Record<string, unknown> {
-  if (!raw?.trim()) return {}
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (!isRecord(parsed) || !isRecord(parsed.registration) || !isRecord(parsed.registration.overlay)) {
-      return {}
-    }
-    return parsed.registration.overlay
-  } catch {
+  const parsed = coerceServiceDetailObject(raw)
+  if (!parsed || !isRecord(parsed.registration) || !isRecord(parsed.registration.overlay)) {
     return {}
   }
+  return parsed.registration.overlay
 }
 
 function readAnnouncementTitleFromCommon(common: unknown): string | undefined {
@@ -57,22 +67,17 @@ function readAnnouncementTitleFromCommon(common: unknown): string | undefined {
 }
 
 export function collectAnnouncementTitleCandidatesFromServiceDetail(
-  raw?: string | null
+  raw?: unknown
 ): string[] {
-  if (!raw?.trim()) return []
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (!isRecord(parsed)) return []
-    const candidates = [
-      readAnnouncementTitleFromCommon(parsed.generalCommonInfo),
-      isRecord(parsed.program)
-        ? readAnnouncementTitleFromCommon(parsed.program.generalCommonInfo)
-        : undefined,
-    ]
-    return candidates.filter((value): value is string => Boolean(value))
-  } catch {
-    return []
-  }
+  const parsed = coerceServiceDetailObject(raw)
+  if (!parsed) return []
+  const candidates = [
+    readAnnouncementTitleFromCommon(parsed.generalCommonInfo),
+    isRecord(parsed.program)
+      ? readAnnouncementTitleFromCommon(parsed.program.generalCommonInfo)
+      : undefined,
+  ]
+  return candidates.filter((value): value is string => Boolean(value))
 }
 
 export function resolvePublicProgramTitle(input: {
@@ -139,7 +144,7 @@ export function applyResolvedAnnouncementTitle<
 >(
   program: T,
   extra?: {
-    serviceDetailJson?: string | null
+    serviceDetailJson?: unknown
     overlay?: Record<string, unknown>
   }
 ): T {
