@@ -3,3 +3,7 @@ export type TermsViewType =
   | 'privacyCollection'
   | 'mfaSetup'
   | 'marketing'
+  | 'portrait'
+  | 'teacherInfo'
+  | 'guardianLegal'
+  | 'privacyNotice'

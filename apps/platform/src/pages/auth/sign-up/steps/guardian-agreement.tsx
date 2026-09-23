@@ -1,4 +1,9 @@
+import { TermsViewModal, useTermsViewModal } from '@/features/auth'
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
+import {
+  agreementKeyToTermsView,
+  termsViewToGuardianAgreementKey,
+} from '@/features/auth/sign-up/lib/agreement/terms-view-map'
 import { PFButton, PFText, PFToggle } from '@/shared/ui'
 import { SignUpLayout } from '../layout/shell'
 import { SignUpStepLayout } from '../layout/sign-up-step-layout'
@@ -11,11 +16,13 @@ type GuardianAgreementStepProps = {
 export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
   const { step, guardian } = signUp
   const agreement = guardian.agreement
+  const terms = useTermsViewModal()
+  const openAgreementKey = terms.openType ? termsViewToGuardianAgreementKey(terms.openType) : null
 
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <SignUpStepLayout
-        title="보호자님의 동의가 완료되면 가입을 계속할 수 있어요"
+        title={'보호자님의 동의가 완료되면\n가입을 계속할 수 있어요'}
         description="필수 항목인 서비스 이용과 개인정보 동의 내용을 확인해 주세요."
         actionsVariant="terms"
         actions={
@@ -73,18 +80,17 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
                     </PFText>
                   </span>
                 </PFToggle>
-                <button className={styles.termsViewButton} type="button">
+                <button
+                  className={styles.termsViewButton}
+                  type="button"
+                  onClick={() => terms.open(agreementKeyToTermsView(item.key))}
+                >
                   <PFText typo="bd-sm-md" color="inherit">
                     보기
                   </PFText>
                 </button>
                 {item.guide ? (
-                  <PFText
-                    as="p"
-                    typo="caption-rg"
-                    color="error"
-                    className={styles.agreementGuide}
-                  >
+                  <PFText as="p" typo="caption-rg" color="error" className={styles.agreementGuide}>
                     {item.guide}
                   </PFText>
                 ) : null}
@@ -92,15 +98,19 @@ export function GuardianAgreementStep({ signUp }: GuardianAgreementStepProps) {
             ))}
           </div>
 
-          <PFText
-            as="p"
-            typo="bd-sm-rg"
-            color="neutral-warm-500"
-            className={styles.optionalGuide}
-          >
+          <PFText as="p" typo="bd-sm-rg" color="neutral-warm-500" className={styles.optionalGuide}>
             선택 항목에 동의하지 않아도 회원가입은 가능해요.
           </PFText>
         </div>
+        {openAgreementKey && terms.openType ? (
+          <TermsViewModal
+            open={terms.isOpen}
+            type={terms.openType}
+            agreed={agreement.state[openAgreementKey]}
+            onAgreedChange={agreed => agreement.set(openAgreementKey, agreed)}
+            onClose={terms.close}
+          />
+        ) : null}
       </SignUpStepLayout>
     </SignUpLayout>
   )

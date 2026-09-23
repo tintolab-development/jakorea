@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { TermsViewModal, useTermsViewModal } from '@/features/auth'
 import { DIRECTIONS_PATH } from '@/features/directions'
 import jaLogoGrayUrl from '@/shared/assets/brand/ja-logo-gray.svg'
 import chevronDownGrayUrl from '@/shared/assets/icons/chevron-down-gray.svg'
@@ -53,6 +54,7 @@ const partnerLogos = [
 const copyrightYear = new Date().getFullYear()
 
 export function Footer() {
+  const privacyNotice = useTermsViewModal()
   const relatedSitesListId = useId()
   const relatedSitesRef = useRef<HTMLDivElement>(null)
   const relatedSitesTriggerRef = useRef<HTMLButtonElement>(null)
@@ -136,7 +138,16 @@ export function Footer() {
                   {item.label}
                 </Link>
               ) : (
-                <button className={styles.navigationButton} type="button" key={item.label}>
+                <button
+                  className={styles.navigationButton}
+                  type="button"
+                  key={item.label}
+                  onClick={
+                    item.label === '개인정보처리방침'
+                      ? () => privacyNotice.open('privacyNotice')
+                      : undefined
+                  }
+                >
                   {item.label}
                 </button>
               )
@@ -261,6 +272,13 @@ export function Footer() {
           </div>
         </div>
       </div>
+      <TermsViewModal
+        open={privacyNotice.isOpen}
+        type="privacyNotice"
+        actionLabel="확인"
+        actionVariant="primary"
+        onClose={privacyNotice.close}
+      />
     </footer>
   )
 }
