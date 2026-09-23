@@ -99,6 +99,7 @@ import {
   relabelScheduleDetailFormRows,
   buildSessionIpsTypeSummary,
   resolveScheduleDetailIpsTypeSummaryForView,
+  resolveScheduleDetailEducationFormLabelForView,
   overlayIpsIndexForScheduleDetail,
   resolveSponsorManagementIds,
   type GeneralProgramCommonInfoEditFormValues,
@@ -4370,11 +4371,17 @@ function ScheduleProgressSection({
           .length
         const isEventSchedule =
           isPreEducationBlock || useEventLayout || detailBlockKind === 'event'
+        const overlayIndex = overlayIpsIndexForScheduleDetail(scheduleDetailsView, index)
         const ipsTypeSummary = resolveScheduleDetailIpsTypeSummaryForView({
           ipsPerSchedule,
           ipsTypeSummary: detail.ipsTypeSummary,
           overlay: program.registrationOverlay,
-          overlayIndex: overlayIpsIndexForScheduleDetail(scheduleDetailsView, index),
+          overlayIndex,
+        })
+        const educationFormLabel = resolveScheduleDetailEducationFormLabelForView({
+          educationFormLabel: detail.educationFormLabel,
+          overlay: program.registrationOverlay,
+          overlayIndex,
         })
         if (isEventSchedule) {
           return (
@@ -4392,7 +4399,7 @@ function ScheduleProgressSection({
               assignmentEnabled={detail.assignmentEnabled}
               assignmentPeriod={detail.assignmentPeriod}
               extraPlan={eventExtraPlan}
-              educationFormLabel={detail.educationFormLabel}
+              educationFormLabel={educationFormLabel}
               participationMethodLabel={detail.participationMethodLabel}
               ipsTypeSummary={ipsTypeSummary}
               showHeading={scheduleDetailsView.length > 1 || isPreEducationBlock}

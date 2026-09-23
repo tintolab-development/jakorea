@@ -1,6 +1,7 @@
 import type { Program } from '@/types/domain'
 import { pickDisplayValue } from '@/features/program/general/lib/detail-value-helpers'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
 import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 
@@ -240,10 +241,13 @@ export function serializeGeneralProgramServiceDetailJson(program: Program): stri
   const generalCommonInfo = isIndividual
     ? stripIndividualStudentRosterFromCommonInfo(program.generalCommonInfo)
     : stripOrganizationParticipationFromCommonInfo(program.generalCommonInfo)
-  const persistedOverlay = buildRegistrationOverlayForPersist({
-    ...program,
-    generalCommonInfo,
-  })
+  const persistedOverlay = persistScheduleEducationFormByDetailOverlay(
+    buildRegistrationOverlayForPersist({
+      ...program,
+      generalCommonInfo,
+    }),
+    generalCommonInfo?.scheduleDetails
+  )
   const scheduleLines = generalCommonInfo?.educationScheduleLines
     ?.map(line => line.trim())
     .filter(Boolean)
