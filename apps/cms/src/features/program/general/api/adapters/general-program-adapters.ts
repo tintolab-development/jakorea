@@ -20,11 +20,14 @@ import {
   serializeGeneralProgramServiceDetailJson,
 } from '@/features/program/general/lib/general-program-service-detail-json'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import {
+  derivedTextbookNameAliases,
   omitIfDetailedProgramNameAlias,
   parseDetailedProgramMasterId,
 } from '@/features/program/general/lib/detailed-program-request-id'
 import {
+  applyResolvedVenueKindToCommonInfo,
   buildProgramSponsorAssignmentsWire,
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
@@ -330,14 +333,17 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
   const now = new Date().toISOString()
   const serviceDetail = parseGeneralProgramServiceDetailJson(dto.serviceDetailJson)
   const dtoDetailedProgramName = dto.detailedProgramName?.trim()
-  const generalCommonInfo = applySettlementPolicyToCommonInfo(
-    {
-      ...serviceDetail.generalCommonInfo,
-      ...(dtoDetailedProgramName
-        ? { detailedProgramName: dtoDetailedProgramName }
-        : {}),
-    },
-    dto.settlementPolicy
+  const generalCommonInfo = applyResolvedVenueKindToCommonInfo(
+    applySettlementPolicyToCommonInfo(
+      {
+        ...serviceDetail.generalCommonInfo,
+        ...(dtoDetailedProgramName
+          ? { detailedProgramName: dtoDetailedProgramName }
+          : {}),
+      },
+      dto.settlementPolicy
+    ),
+    { institutionType: dto.institutionType as Program['institutionType'], venue: dto.venue }
   )
   const participantRemarks = (
     serviceDetail.generalCommonInfo?.participantRecruitmentInfo as
@@ -357,7 +363,7 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     category: dto.category,
   })
 
-  return baseProgramDefaults({
+  const mapped = baseProgramDefaults({
     id,
     sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
     title,
@@ -442,6 +448,14 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
         }
       : {}),
   })
+
+  return applyResolvedAnnouncementTitle(
+    mapped,
+    {
+      serviceDetailJson: dto.serviceDetailJson,
+      overlay: serviceDetail.registrationOverlay,
+    }
+  )
 }
 
 export function filterGeneralProgramsByOverviewStatus(
@@ -603,7 +617,11 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,
-    textbookName: omitIfDetailedProgramNameAlias(program.textbookName, detailedProgramName),
+    textbookName: omitIfDetailedProgramNameAlias(
+      program.textbookName,
+      detailedProgramName,
+      derivedTextbookNameAliases(program)
+    ),
     textbookNameEn: program.textbookNameEn,
     schoolId: program.schoolId,
     district: program.district,
@@ -752,7 +770,8 @@ function mapProgramPatchFieldsToRequest(
   if (has('textbookName')) {
     body.textbookName = omitIfDetailedProgramNameAlias(
       merged.textbookName,
-      merged.generalCommonInfo?.detailedProgramName
+      merged.generalCommonInfo?.detailedProgramName,
+      derivedTextbookNameAliases(merged)
     )
   }
   if (has('textbookNameEn')) body.textbookNameEn = merged.textbookNameEn
@@ -762,7 +781,9 @@ function mapProgramPatchFieldsToRequest(
   if (has('targetLevel') || has('targetLevels')) {
     body.targetLevel = merged.targetLevels?.[0] ?? merged.targetLevel
   }
-  if (has('institutionType')) body.institutionType = merged.institutionType
+  if (has('institutionType') || has('generalCommonInfo')) {
+    body.institutionType = merged.institutionType
+  }
   if (has('ipOwned')) body.ipOwned = merged.ipOwned
   if (has('courseDeliveredBy')) body.courseDeliveredBy = merged.courseDeliveredBy
   if (has('partnerInvolvement')) body.partnerInvolvement = merged.partnerInvolvement
@@ -793,7 +814,7 @@ function mapProgramPatchFieldsToRequest(
   if (has('managerName') && !looksMaskedProgramPii(merged.managerName)) {
     body.managerName = merged.managerName
   }
-  if (has('venue')) body.venue = merged.venue
+  if (has('venue') || has('generalCommonInfo')) body.venue = merged.venue
   if (has('curriculum')) body.curriculum = merged.curriculum
   if (has('contactEmail') && !looksMaskedProgramPii(merged.contactEmail)) {
     body.contactEmail = merged.contactEmail

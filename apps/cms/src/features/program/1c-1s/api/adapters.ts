@@ -12,6 +12,7 @@ import type {
 import type { Status } from '@/types'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import {
+  derivedTextbookNameAliases,
   omitIfDetailedProgramNameAlias,
   parseDetailedProgramMasterId,
 } from '@/features/program/general/lib/detailed-program-request-id'
@@ -20,6 +21,8 @@ import {
   serializeCompanySchoolServiceDetailJson,
 } from './service-detail-json'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
+import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
+import { applyResolvedVenueKindToCommonInfo } from '@/features/program/general/model/common-info-edit-schema'
 
 export const COMPANY_SCHOOL_PROGRAM_API_TYPE = 'COMPANY_SCHOOL'
 
@@ -139,11 +142,14 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
   )
   // BE가 숫자 id로 조회해 내려주는 detailedProgramName을 우선 — serviceDetailJson 캐시가
   // 낡았을 때도(id만 바뀌고 상세 JSON이 안 갱신된 경우 등) 화면에 최신 이름이 보이게 한다.
-  const generalCommonInfo = {
-    ...generalCommonInfoWithSettlement,
-    detailedProgramName:
-      dto.detailedProgramName?.trim() || generalCommonInfoWithSettlement?.detailedProgramName,
-  }
+  const generalCommonInfo = applyResolvedVenueKindToCommonInfo(
+    {
+      ...generalCommonInfoWithSettlement,
+      detailedProgramName:
+        dto.detailedProgramName?.trim() || generalCommonInfoWithSettlement?.detailedProgramName,
+    },
+    { institutionType: dto.institutionType as Program['institutionType'], venue: dto.venue }
+  )
   const otherNotes =
     dtoExt.otherMatters?.trim() ||
     dtoExt.remarks?.trim() ||
@@ -156,7 +162,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     toTypedProgramLifecycleStatus(periodStatus) ??
     undefined
 
-  return baseProgram({
+  const mapped = baseProgram({
     ...detailFields,
     id,
     sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
@@ -233,8 +239,13 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     generalCommonInfo,
     generalSurveyMenuKeys: details.generalSurveyMenuKeys,
     generalProgramAudience: details.generalProgramAudience ?? 'organization',
+    registrationOverlay: details.registrationOverlay,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
+  })
+  return applyResolvedAnnouncementTitle(mapped, {
+    serviceDetailJson: dto.serviceDetailJson,
+    overlay: details.registrationOverlay,
   })
 }
 
@@ -328,7 +339,11 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,
-    textbookName: omitIfDetailedProgramNameAlias(program.textbookName, detailedProgramName),
+    textbookName: omitIfDetailedProgramNameAlias(
+      program.textbookName,
+      detailedProgramName,
+      derivedTextbookNameAliases(program)
+    ),
     textbookNameEn: program.textbookNameEn,
     schoolId: program.schoolId,
     district: program.district,
@@ -409,7 +424,8 @@ function mapCompanySchoolPatchFieldsToRequest(
     // (교재명에 세부 프로그램명을 그대로 복제한 값이면 omit — general 어댑터와 동일 계약)
     body.textbookName = omitIfDetailedProgramNameAlias(
       merged.textbookName,
-      merged.generalCommonInfo?.detailedProgramName
+      merged.generalCommonInfo?.detailedProgramName,
+      derivedTextbookNameAliases(merged)
     )
   }
   if (has('textbookNameEn')) body.textbookNameEn = merged.textbookNameEn
@@ -419,7 +435,9 @@ function mapCompanySchoolPatchFieldsToRequest(
   if (has('targetLevel') || has('targetLevels')) {
     body.targetLevel = merged.targetLevels?.[0] ?? merged.targetLevel
   }
-  if (has('institutionType')) body.institutionType = merged.institutionType
+  if (has('institutionType') || has('generalCommonInfo')) {
+    body.institutionType = merged.institutionType
+  }
   if (has('ipOwned')) body.ipOwned = merged.ipOwned
   if (has('courseDeliveredBy')) body.courseDeliveredBy = merged.courseDeliveredBy
   if (has('partnerInvolvement')) body.partnerInvolvement = merged.partnerInvolvement
@@ -445,7 +463,7 @@ function mapCompanySchoolPatchFieldsToRequest(
   if (has('managerName') && !looksMaskedProgramPii(merged.managerName)) {
     body.managerName = merged.managerName
   }
-  if (has('venue')) body.venue = merged.venue
+  if (has('venue') || has('generalCommonInfo')) body.venue = merged.venue
   if (has('curriculum')) body.curriculum = merged.curriculum
   if (has('contactEmail') && !looksMaskedProgramPii(merged.contactEmail)) {
     body.contactEmail = merged.contactEmail

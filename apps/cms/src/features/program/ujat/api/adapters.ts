@@ -19,6 +19,7 @@ import {
   resolveUjatProgressStatus,
 } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
 import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
+import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import {
   parseRegistrationOverlay,
   parseServiceDetail,
@@ -155,7 +156,9 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       ? { ...details.generalCommonInfo, detailedProgramName: dto.detailedProgramName.trim() }
       : details.generalCommonInfo
 
-  return {
+  const overlay = parseRegistrationOverlay(dto.serviceDetailJson)
+  const mapped = applyResolvedAnnouncementTitle(
+    {
     ...baseProgram({
       ...details,
       generalCommonInfo,
@@ -231,11 +234,20 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     }),
+    ujatRegistrationOverlay: overlay,
+  },
+    {
+      serviceDetailJson: dto.serviceDetailJson,
+      overlay,
+    }
+  )
+  return {
+    ...mapped,
     ujatServiceDetailExtras: {
       ...extras,
       semesterType: extras.semesterType ?? 'FULL_YEAR',
     },
-    ujatRegistrationOverlay: parseRegistrationOverlay(dto.serviceDetailJson),
+    ujatRegistrationOverlay: overlay,
     periodStatus,
   }
 }

@@ -7,12 +7,14 @@
 
 import type { Program } from '@/types/domain'
 import { normalizeGeneralProgramServiceDetailParsed } from '@/features/program/general/lib/general-program-service-detail-json'
+import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
 
 export const TRAINED_TEACHER_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
 export interface TrainedTeacherServiceDetailJsonV1 {
   schemaVersion: typeof TRAINED_TEACHER_SERVICE_DETAIL_JSON_VERSION
   program: Partial<Program>
+  registration?: { overlay?: Record<string, unknown> }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -125,8 +127,7 @@ function sanitizeTrainedTeacherCommonInfo(
   )
     .map(id => String(id).trim())
     .filter(Boolean)
-  const detailedProgramName =
-    common.detailedProgramName?.trim() || program.textbookName?.trim() || undefined
+  const detailedProgramName = common.detailedProgramName?.trim() || undefined
   return {
     ...(stripped as NonNullable<Program['generalCommonInfo']>),
     ...educationSelection,
@@ -137,8 +138,7 @@ function sanitizeTrainedTeacherCommonInfo(
         }
       : {}),
     ...(detailedProgramName ? { detailedProgramName } : {}),
-    announcementTitle:
-      common.announcementTitle?.trim() || program.title?.trim() || common.announcementTitle,
+    announcementTitle: common.announcementTitle?.trim() || undefined,
   }
 }
 
@@ -173,9 +173,11 @@ function trainedTeacherDetails(program: Program): Partial<Program> {
 }
 
 export function serializeTrainedTeacherServiceDetailJson(program: Program): string {
+  const registrationOverlay = buildRegistrationOverlayForPersist(program)
   const payload: TrainedTeacherServiceDetailJsonV1 = {
     schemaVersion: TRAINED_TEACHER_SERVICE_DETAIL_JSON_VERSION,
     program: trainedTeacherDetails(program),
+    ...(registrationOverlay ? { registration: { overlay: registrationOverlay } } : {}),
   }
   return JSON.stringify(payload)
 }
@@ -187,6 +189,11 @@ export function parseTrainedTeacherServiceDetailJson(raw?: string | null): Parti
     const parsed: unknown = JSON.parse(raw)
     if (!isRecord(parsed)) return {}
 
+    const registrationOverlay =
+      isRecord(parsed.registration) && isRecord(parsed.registration.overlay)
+        ? parsed.registration.overlay
+        : undefined
+
     // FE write envelope
     if (isRecord(parsed.program)) {
       if (
@@ -195,7 +202,10 @@ export function parseTrainedTeacherServiceDetailJson(raw?: string | null): Parti
       ) {
         return {}
       }
-      return trainedTeacherConstraints(parsed.program as Partial<Program>)
+      return {
+        ...trainedTeacherConstraints(parsed.program as Partial<Program>),
+        ...(registrationOverlay ? { registrationOverlay } : {}),
+      }
     }
 
     // Primary seed flat config (generalCommonInfo / participantRecruitment / axes)
@@ -211,7 +221,10 @@ export function parseTrainedTeacherServiceDetailJson(raw?: string | null): Parti
     const normalized = normalizeGeneralProgramServiceDetailParsed(
       parsed as Parameters<typeof normalizeGeneralProgramServiceDetailParsed>[0]
     )
-    return trainedTeacherConstraints(normalized)
+    return {
+      ...trainedTeacherConstraints(normalized),
+      ...(registrationOverlay ? { registrationOverlay } : {}),
+    }
   } catch {
     return {}
   }

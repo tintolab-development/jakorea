@@ -135,6 +135,27 @@ describe('general-program-adapters', () => {
     expect(program.category).toBe('individual')
   })
 
+  it('공고용명은 overlay를 쓰고 대표명 alias는 버린다', () => {
+    const program = mapAdminProgramDetailToProgram({
+      id: '168012',
+      title: '대표 프로그램명',
+      mainTitle: '대표 프로그램명',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        generalCommonInfo: {
+          announcementTitle: '대표 프로그램명',
+        },
+        registration: {
+          overlay: {
+            'generalRegistration.basicInfo.publicProgramTitle': '실제 공고용 프로그램명',
+          },
+        },
+      }),
+    } as ProgramResponse)
+    expect(program.mainTitle).toBe('대표 프로그램명')
+    expect(program.generalCommonInfo?.announcementTitle).toBe('실제 공고용 프로그램명')
+  })
+
   it('mapGeneralApiProgramTypeToAudience covers GENERAL_* values', () => {
     expect(mapGeneralApiProgramTypeToAudience('GENERAL_INDIVIDUAL')).toEqual({
       audience: 'individual',

@@ -24,15 +24,40 @@ export function isDetailedProgramMasterId(value: unknown): boolean {
   return parseDetailedProgramMasterId(value) !== undefined
 }
 
-/** 세부 프로그램명을 교재/팀구분 필드에 복사한 값이면 요청에서 제외 */
+/** 등록 양식에 교재명 입력란이 없어, 세부명·일정/차시 제목이 textbookName으로 들어간 값 */
+export function derivedTextbookNameAliases(program: {
+  generalCommonInfo?: {
+    detailedProgramName?: string
+    scheduleDetails?: Array<{ name?: string; scheduleLabel?: string }>
+    curriculumSessions?: Array<{ title?: string }>
+  }
+}): string[] {
+  const common = program.generalCommonInfo
+  const scheduleJoined = (common?.scheduleDetails ?? [])
+    .map(detail => detail.name?.trim() || detail.scheduleLabel?.trim())
+    .filter(Boolean)
+    .join(', ')
+  const curriculumJoined = (common?.curriculumSessions ?? [])
+    .map(session => session.title?.trim())
+    .filter(Boolean)
+    .join(', ')
+  return [common?.detailedProgramName, scheduleJoined || undefined, curriculumJoined || undefined]
+    .map(value => value?.trim())
+    .filter((value): value is string => Boolean(value))
+}
+
+/** 세부 프로그램명·일정/차시 제목을 교재 필드에 복사한 값이면 요청에서 제외 */
 export function omitIfDetailedProgramNameAlias(
   value: string | undefined,
-  detailedProgramName: string | undefined
+  detailedProgramName: string | undefined,
+  extraAliases: readonly (string | undefined)[] = []
 ): string | undefined {
   const field = value?.trim()
-  const alias = detailedProgramName?.trim()
   if (!field) return undefined
-  if (alias && field === alias) return undefined
   if (field === '해당없음') return undefined
+  const aliases = [detailedProgramName, ...extraAliases]
+    .map(alias => alias?.trim())
+    .filter((alias): alias is string => Boolean(alias))
+  if (aliases.includes(field)) return undefined
   return value
 }

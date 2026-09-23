@@ -1,6 +1,8 @@
 import type { Program } from '@/types/domain'
 import { pickDisplayValue } from '@/features/program/general/lib/detail-value-helpers'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
+import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 
 export const GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -25,6 +27,8 @@ export interface GeneralProgramServiceDetailJsonV1 {
   studentListRequired?: Program['studentListRequired']
   generalParticipantInterviewEnabled?: Program['generalParticipantInterviewEnabled']
   generalVolunteerInterviewEnabled?: Program['generalVolunteerInterviewEnabled']
+  /** 등록 폼 overlay — 공고용명 등 BE가 title로 덮어쓴 announcementTitle 복원 */
+  registration?: { overlay?: Record<string, unknown> }
   /** TT / Primary seed alias — nested로 승격 */
   participantRecruitment?: NonNullable<Program['generalCommonInfo']>['participantRecruitmentInfo']
   instructorRecruitment?: NonNullable<Program['generalCommonInfo']>['instructorRecruitmentInfo']
@@ -236,6 +240,20 @@ export function serializeGeneralProgramServiceDetailJson(program: Program): stri
   const generalCommonInfo = isIndividual
     ? stripIndividualStudentRosterFromCommonInfo(program.generalCommonInfo)
     : stripOrganizationParticipationFromCommonInfo(program.generalCommonInfo)
+  const persistedOverlay = buildRegistrationOverlayForPersist({
+    ...program,
+    generalCommonInfo,
+  })
+  const scheduleLines = generalCommonInfo?.educationScheduleLines
+    ?.map(line => line.trim())
+    .filter(Boolean)
+  const registrationOverlay =
+    scheduleLines && scheduleLines.length > 0
+      ? {
+          ...(persistedOverlay ?? {}),
+          [GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]: scheduleLines,
+        }
+      : persistedOverlay
   const payload: GeneralProgramServiceDetailJsonV1 = {
     schemaVersion: GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION,
     generalCommonInfo,
@@ -254,6 +272,7 @@ export function serializeGeneralProgramServiceDetailJson(program: Program): stri
     studentListRequired: isIndividual ? 'not_required' : program.studentListRequired,
     generalParticipantInterviewEnabled: program.generalParticipantInterviewEnabled,
     generalVolunteerInterviewEnabled: program.generalVolunteerInterviewEnabled,
+    ...(registrationOverlay ? { registration: { overlay: registrationOverlay } } : {}),
   }
 
   const hasContent = Object.entries(payload).some(([key, value]) => {
@@ -268,13 +287,34 @@ export function serializeGeneralProgramServiceDetailJson(program: Program): stri
   return JSON.stringify(payload)
 }
 
+function isServiceDetailRecord(value: unknown): value is Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function unwrapGeneralServiceDetailRoot(
+  parsed: GeneralProgramServiceDetailJsonV1 & Record<string, unknown>
+): GeneralProgramServiceDetailJsonV1 {
+  if (!isServiceDetailRecord(parsed.program)) return parsed
+  const nested = parsed.program as GeneralProgramServiceDetailJsonV1 & Record<string, unknown>
+  return {
+    ...parsed,
+    ...nested,
+    generalCommonInfo: {
+      ...(isServiceDetailRecord(parsed.generalCommonInfo) ? parsed.generalCommonInfo : {}),
+      ...(isServiceDetailRecord(nested.generalCommonInfo) ? nested.generalCommonInfo : {}),
+    },
+  }
+}
+
 export function parseGeneralProgramServiceDetailJson(
   raw?: string | null
 ): Partial<Program> {
   if (!raw?.trim()) return {}
 
   try {
-    const parsed = JSON.parse(raw) as GeneralProgramServiceDetailJsonV1
+    const parsed = unwrapGeneralServiceDetailRoot(
+      JSON.parse(raw) as GeneralProgramServiceDetailJsonV1 & Record<string, unknown>
+    )
     const version = parsed?.schemaVersion
     const hasGeneralShape =
       parsed?.generalCommonInfo != null ||
@@ -292,7 +332,15 @@ export function parseGeneralProgramServiceDetailJson(
       return {}
     }
 
-    return normalizeGeneralProgramServiceDetailParsed(parsed)
+    const registrationOverlay = isServiceDetailRecord(parsed.registration) &&
+      isServiceDetailRecord(parsed.registration.overlay)
+      ? parsed.registration.overlay
+      : undefined
+
+    return {
+      ...normalizeGeneralProgramServiceDetailParsed(parsed),
+      ...(registrationOverlay ? { registrationOverlay } : {}),
+    }
   } catch {
     return {}
   }
