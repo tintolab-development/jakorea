@@ -220,10 +220,6 @@ export function RecruitDetailInfoParagraph({
       if (!image) return
       setThumbFileName(image.name)
       setThumbObjectUrl(URL.createObjectURL(image))
-      void uploadAdminFileMaybeMock({
-        file: image,
-        owner: programFileOwner(1, ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL),
-      }).catch(() => undefined)
     },
     [setThumbFileName, setThumbObjectUrl]
   )
