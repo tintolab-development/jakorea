@@ -244,12 +244,12 @@ export function UjatRecruitVolunteerInfoProgramView({
             edit={
               isEdit && form ? (
                 <Controller
-                  name="mainTitle"
+                  name="announcementTitle"
                   control={form.control}
                   render={({ field }) => (
                     <CmsInput
                       {...field}
-                      value={field.value ?? (isTemplateAuthoring ? '' : (program.title ?? ''))}
+                      value={field.value ?? (isTemplateAuthoring ? '' : '')}
                       inputSize="medium"
                       width="100%"
                       placeholder="공고용 프로그램명"
