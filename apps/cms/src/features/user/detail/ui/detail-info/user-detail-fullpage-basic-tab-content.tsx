@@ -353,6 +353,7 @@ export function UserDetailFullpageBasicTabContent({
       const draft = memberInfoDraftRef.current
       onMemberInfoDraftChange({
         termsAgreements: upsertEditableTermsAgreementInDraft(draft?.termsAgreements, label, agreed),
+        consentTermsDirty: true,
         ...(!agreed && fieldKey
           ? {
               consentWriteSnapshots: clearConsentWriteSnapshot(
@@ -377,6 +378,7 @@ export function UserDetailFullpageBasicTabContent({
           fieldKey,
           snapshot
         ),
+        consentTermsDirty: true,
       })
     },
     [onMemberInfoDraftChange]
@@ -393,6 +395,7 @@ export function UserDetailFullpageBasicTabContent({
           fieldKey,
           snapshot
         ),
+        consentTermsDirty: true,
       })
     },
     [onMemberInfoDraftChange]
