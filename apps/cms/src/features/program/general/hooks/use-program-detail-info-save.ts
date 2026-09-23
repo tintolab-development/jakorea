@@ -20,6 +20,7 @@ import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   detailEditValuesToProgramPatch,
+  narrowProgramDetailPatchForCommonInfoSave,
   programToDetailEditValues,
 } from '@/features/program/shared/model/program-detail-edit-schema'
 import { showUpdateCompletedAlert } from '@/shared/ui'
@@ -31,6 +32,8 @@ export interface UseProgramDetailInfoSaveOptions {
   onSaveEdit?: (draft: Program, patch: Partial<Program>) => Promise<void>
   /** 지정 시 해당 스키마로만 검증 — 모집 정보 탭 부분 저장용 */
   validateSchema?: z.ZodType<unknown>
+  /** true면 remote PATCH 에서 모집·회차 필드 제외 (1사1교·교육받은 교사 공통정보 탭) */
+  commonInfoPatchOnly?: boolean
 }
 
 export type ProgramDetailInfoSaveExtraCommon = Partial<
@@ -42,6 +45,7 @@ export function useProgramDetailInfoSave({
   program,
   onSaveEdit,
   validateSchema,
+  commonInfoPatchOnly = false,
 }: UseProgramDetailInfoSaveOptions) {
   const savingRef = useRef(false)
   const getAdditionalContentHtmlRef = useRef<() => string>(() => '')
@@ -74,10 +78,13 @@ export function useProgramDetailInfoSave({
           extraDefined && Object.keys(extraDefined).length > 0
             ? { ...patch.generalCommonInfo, ...extraDefined }
             : patch.generalCommonInfo
-        const remotePatch: Partial<Program> = {
+        let remotePatch: Partial<Program> = {
           ...patch,
           ...htmlPatch,
           ...(generalCommonInfo ? { generalCommonInfo } : {}),
+        }
+        if (commonInfoPatchOnly) {
+          remotePatch = narrowProgramDetailPatchForCommonInfoSave(remotePatch)
         }
         const draftToSave: Program = {
           ...program,
@@ -96,7 +103,7 @@ export function useProgramDetailInfoSave({
         savingRef.current = false
       }
     },
-    [form, program, onSaveEdit, validateSchema]
+    [commonInfoPatchOnly, form, program, onSaveEdit, validateSchema]
   )
 
   const resetToProgram = useCallback(() => {
