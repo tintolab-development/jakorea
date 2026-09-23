@@ -17,12 +17,12 @@ CMS **프로그램 상세 → 공통 정보 → 대표 프로그램명 (국문)*
 
 | CMS 라벨 | 1차 컬럼 | 등록 시 FE | 상세 수정 시 FE |
 |----------|----------|------------|-----------------|
-| 대표 프로그램명 (국문) | **`mainTitle`** | `mainTitle` + `title`에 동일 값 | **`mainTitle`만** PATCH |
+| 대표 프로그램명 (국문) | **`mainTitle`** | `mainTitle` + `title`에 동일 값 | **`mainTitle` + `title`에 동일 값** PATCH |
 | 대표 프로그램명 (영문) | `titleEn` | `titleEn` | `titleEn` PATCH |
 | 공고용 프로그램명 | 1차 컬럼 없음 | `serviceDetailJson.generalCommonInfo.announcementTitle` | JSON `announcementTitle` |
 | (내부) 관리/레거시 제목 | `title` | 등록 때 대표명과 같게 보냄 | **보내지 않음** |
 
-FE 목록은 `title` → 없으면 `mainTitle` 순으로 표시합니다. 등록 직후에는 두 값이 같아서 목록이 맞습니다. **상세에서 대표명만 고치면 `mainTitle`만 갱신되고, 목록은 예전 `title`을 그대로 씁니다.**
+CMS에서 대표 프로그램명 (국문) = 목록 「프로그램명」 = 상세 모달 타이틀입니다. FE는 이 값을 `mainTitle`과 `title`에 같이 넣고, 목록·모달은 `mainTitle`을 우선 표시합니다.
 
 ---
 
@@ -66,10 +66,11 @@ FE 목록은 `title` → 없으면 `mainTitle` 순으로 표시합니다. 등록
 
 ## 4. FE PATCH 계약 (공통 정보 저장)
 
-FE는 변경된 도메인 키만 보냅니다. 대표 국문을 고치면 **`mainTitle`은 있고 `title`은 없습니다.**
+대표 국문을 고치면 **`title`과 `mainTitle`을 같은 값으로** 보냅니다. 목록·상세 모달 타이틀이 이 값입니다.
 
 ```json
 {
+  "title": "수정1",
   "mainTitle": "수정1",
   "titleEn": "수정1",
   "serviceDetailJson": "{ ... generalCommonInfo.announcementTitle, registration.overlay ... }"
@@ -77,8 +78,8 @@ FE는 변경된 도메인 키만 보냅니다. 대표 국문을 고치면 **`mai
 ```
 
 매퍼: `mapProgramPatchFieldsToRequest`  
-`has('mainTitle')` → `body.mainTitle = merged.mainTitle`  
-`has('title')`가 아니면 `title`을 보내지 않습니다.
+`has('title')` → `body.title = merged.title`  
+`has('mainTitle')` → `body.mainTitle = merged.mainTitle`
 
 상세 저장 후 FE는 목록을 다시 GET 합니다. 클라가 목록 캐시에 대표명을 직접 쓰지 않습니다. **목록 응답이 맞아야 화면이 맞습니다.**
 
@@ -95,16 +96,9 @@ FE는 변경된 도메인 키만 보냅니다. 대표 국문을 고치면 **`mai
 
 목록 「프로그램명」= **대표 프로그램명 (국문)** = `mainTitle`.
 
-지금 FE는 목록 DTO의 `title`을 먼저 그립니다. 등록 때 `title`과 `mainTitle`을 같게 보내서 그동안 맞아 보였습니다.
+FE는 이제 `PATCH`에 `title`과 `mainTitle`을 같이 보내고, 목록은 `mainTitle`을 우선 그립니다.
 
-아래 **하나만** 하면 됩니다. 둘 다 하면 더 안전합니다.
-
-| 선택 | 내용 |
-|------|------|
-| **A (권장)** | `PATCH mainTitle` 시 목록이 읽는 `title`도 같은 값으로 갱신. 일반 프로그램에서 `title`은 대표명과 같이 시작함 |
-| **B** | 목록 `mainTitle`만 정확히 내리고, FE가 `mainTitle` 우선 표시로 바꿈. 이 경우 회신에 B를 적어 주세요 |
-
-`title`을 관리용 고정값으로 둘 계획이면 **반드시 B**이고, 목록 `mainTitle`은 상세와 같아야 합니다. 지금처럼 목록 `mainTitle`까지 `title`로 덮으면 안 됩니다.
+서버는 **둘 다 같은 대표명으로 저장**하고, 목록 GET의 `title`·`mainTitle`이 상세와 같아야 합니다. 목록 `mainTitle`을 예전 `title`로 덮지 마세요.
 
 ### 5.3 검색
 
