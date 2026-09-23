@@ -1,4 +1,4 @@
-import { getFileDownload } from '@/shared/lib/admin-file-upload'
+import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { downloadFile } from '@/shared/lib/file-download'
 import type { MailSendHistoryAttachment } from '@/features/notifications/model/mail-send-history/types'
 
@@ -32,37 +32,7 @@ export async function downloadMailSendHistoryAttachment(
     return
   }
 
-  const resolved = await getFileDownload(fileObjectId)
-  const downloadUrl = resolved.downloadUrl?.trim()
-  if (!downloadUrl) {
-    throw new Error('첨부파일 다운로드 URL을 받지 못했습니다.')
-  }
-  const requiredHeaders = resolved.requiredHeaders ?? {}
-  const extraHeaders = Object.entries(requiredHeaders).filter(([, value]) => Boolean(value))
-  if (extraHeaders.length === 0) {
-    await downloadFile(fileName, downloadUrl)
-    return
-  }
-  const headers = new Headers()
-  for (const [key, value] of extraHeaders) {
-    headers.set(key, value)
-  }
-  const response = await fetch(downloadUrl, {
-    method: 'GET',
-    headers,
-    credentials: 'omit',
-    mode: 'cors',
-  })
-  if (!response.ok) {
-    throw new Error(`첨부파일 다운로드에 실패했습니다. (${response.status})`)
-  }
-  const blob = await response.blob()
-  const objectUrl = URL.createObjectURL(blob)
-  try {
-    await downloadFile(fileName, objectUrl)
-  } finally {
-    URL.revokeObjectURL(objectUrl)
-  }
+  await downloadAdminFile({ fileObjectId, fileName })
 }
 
 /** @deprecated use downloadMailSendHistoryAttachment */

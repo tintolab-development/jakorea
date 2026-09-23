@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { TermsViewModal, useTermsViewModal } from '@/features/auth'
-import { DIRECTIONS_PATH } from '@/features/directions'
+import { useSiteFooter, type SiteFooterPartner } from '@/features/site-shell'
 import jaLogoGrayUrl from '@/shared/assets/brand/ja-logo-gray.svg'
 import chevronDownGrayUrl from '@/shared/assets/icons/chevron-down-gray.svg'
 import facebookIconUrl from '@/shared/assets/icons/sns-facebook.svg'
@@ -12,16 +12,11 @@ import taxLogoUrl from './image/logo/footer-logo-2.svg'
 import rightsLogoUrl from './image/logo/footer-logo-3.svg'
 import styles from './footer.module.css'
 
-const footerNavItems = [
-  { label: '이용약관' },
-  { label: '개인정보처리방침' },
-  { label: '오시는길', href: DIRECTIONS_PATH },
-  { label: '국세청 공시 및 공개 내역' },
-  { label: '국세청 탈세 제보' },
-  { label: '후원하기' },
-  { label: '기부금영수증' },
-  { label: '온라인 학습관리' },
-] as const
+const LOCAL_PARTNER_LOGOS: Record<number, { logoUrl: string; logoClassName: string }> = {
+  1: { logoUrl: ministryLogoUrl, logoClassName: styles.partnerLogoMinistry },
+  2: { logoUrl: taxLogoUrl, logoClassName: styles.partnerLogoTax },
+  3: { logoUrl: rightsLogoUrl, logoClassName: styles.partnerLogoRights },
+}
 
 const relatedSites = [
   { label: 'JA Worldwide', href: 'https://www.jaworldwide.org/' },
@@ -36,24 +31,67 @@ const relatedSites = [
 const RELATED_SITES_SCROLL_THUMB_HEIGHT = 24
 const RELATED_SITES_SCROLLBAR_INSET = 8
 
-const companyAddress =
-  '사단법인 제이에이코리아 서울특별시 강서구 마곡중앙로 171 마곡나루역 프라이빗타워2차 714호'
-
 const socialLinks = [
   { label: 'JA Korea 유튜브', iconUrl: youtubeIconUrl },
   { label: 'JA Korea 인스타그램', iconUrl: instagramIconUrl },
   { label: 'JA Korea 페이스북', iconUrl: facebookIconUrl },
 ] as const
 
-const partnerLogos = [
-  { label: '기획재정부', logoUrl: ministryLogoUrl, logoClassName: styles.partnerLogoMinistry },
-  { label: '국세청', logoUrl: taxLogoUrl, logoClassName: styles.partnerLogoTax },
-  { label: '국민권익위원회', logoUrl: rightsLogoUrl, logoClassName: styles.partnerLogoRights },
-] as const
-
 const copyrightYear = new Date().getFullYear()
 
+function OrgLogo({ logoUrl }: { logoUrl: string | null }) {
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    setFailed(false)
+  }, [logoUrl])
+
+  const src = !failed && logoUrl ? logoUrl : jaLogoGrayUrl
+  return (
+    <img
+      className={styles.jaLogo}
+      src={src}
+      alt="JA Korea"
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
+function PartnerLogoImage({
+  partner,
+  allowLocal,
+}: {
+  partner: SiteFooterPartner
+  allowLocal: boolean
+}) {
+  const local = LOCAL_PARTNER_LOGOS[partner.partnerId]
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    setFailed(false)
+  }, [partner.logoUrl, partner.partnerId])
+
+  const remoteSrc = partner.logoUrl && !failed ? partner.logoUrl : null
+  const localSrc = local && (allowLocal || failed) ? local.logoUrl : null
+  const src = remoteSrc ?? localSrc
+  if (!src) return null
+
+  return (
+    <img
+      className={[styles.partnerLogo, remoteSrc ? styles.partnerLogoRemote : local?.logoClassName]
+        .filter(Boolean)
+        .join(' ')}
+      src={src}
+      alt={partner.name}
+      onError={() => {
+        if (local) setFailed(true)
+      }}
+    />
+  )
+}
+
 export function Footer() {
+  const footer = useSiteFooter()
   const privacyNotice = useTermsViewModal()
   const relatedSitesListId = useId()
   const relatedSitesRef = useRef<HTMLDivElement>(null)
@@ -132,26 +170,44 @@ export function Footer() {
       <div className={styles.navigationArea}>
         <div className={styles.shell}>
           <nav className={styles.navigation} aria-label="하단 메뉴">
-            {footerNavItems.map(item =>
-              'href' in item && item.href ? (
-                <Link className={styles.navigationButton} to={item.href} key={item.label}>
-                  {item.label}
-                </Link>
-              ) : (
+            {footer.menus.map(item => {
+              if (item.kind === 'directions') {
+                return (
+                  <Link className={styles.navigationButton} to={item.href} key={item.key}>
+                    {item.label}
+                  </Link>
+                )
+              }
+              if (item.kind === 'external') {
+                return (
+                  <a
+                    className={styles.navigationButton}
+                    href={item.href}
+                    key={item.key}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {item.label}
+                  </a>
+                )
+              }
+              return (
                 <button
                   className={styles.navigationButton}
                   type="button"
-                  key={item.label}
+                  key={item.key}
                   onClick={
-                    item.label === '개인정보처리방침'
+                    item.kind === 'privacy'
                       ? () => privacyNotice.open('privacyNotice')
-                      : undefined
+                      : item.kind === 'terms'
+                        ? () => privacyNotice.open('serviceTerms')
+                        : undefined
                   }
                 >
                   {item.label}
                 </button>
               )
-            )}
+            })}
           </nav>
           <div className={styles.relatedSitesRoot} ref={relatedSitesRef}>
             <button
@@ -217,44 +273,47 @@ export function Footer() {
       <div className={styles.contentArea}>
         <div className={styles.shell}>
           <div className={styles.logoRow}>
-            <img className={styles.jaLogo} src={jaLogoGrayUrl} alt="JA Korea" />
+            <OrgLogo logoUrl={footer.organizationLogoUrl} />
             <div className={styles.partnerLogos}>
-              {partnerLogos.map(({ label, logoUrl, logoClassName }) => (
-                <img
-                  className={[styles.partnerLogo, logoClassName].join(' ')}
-                  src={logoUrl}
-                  alt={label}
-                  key={label}
+              {footer.partners.map(partner => (
+                <PartnerLogoImage
+                  partner={partner}
+                  allowLocal={footer.source === 'fallback'}
+                  key={partner.partnerId}
                 />
               ))}
             </div>
           </div>
 
           <div className={styles.infoArea}>
-            <p className={styles.address}>{companyAddress}</p>
+            <p className={styles.address}>{footer.addressLine}</p>
 
             <p className={styles.companyInfoLine}>
-              <span className={styles.infoDetail}>우편번호 : 07788</span>
-              <span className={styles.infoDetail}>대표 : 이은형</span>
-              <span className={styles.infoDetail}>사업자번호 : 107-82-10367</span>
+              <span className={styles.infoDetail}>우편번호 : {footer.postalCode}</span>
+              <span className={styles.infoDetail}>대표 : {footer.representativeName}</span>
+              <span className={styles.infoDetail}>
+                사업자번호 : {footer.businessRegistrationNumber}
+              </span>
             </p>
 
             <p className={styles.companyInfoLine}>
-              <span className={styles.infoDetail}>대표전화 : 02-783-2367</span>
-              <span className={styles.infoDetail}>팩스 : 070-4275-5115</span>
+              <span className={styles.infoDetail}>대표전화 : {footer.phone}</span>
+              <span className={styles.infoDetail}>팩스 : {footer.fax}</span>
             </p>
 
             <p className={[styles.infoDetail, styles.companyInfoEmailOnly].join(' ')}>
-              이메일 : jakorea@jakorea.org
+              이메일 : {footer.email}
             </p>
 
             <p className={styles.companyInfoLineDesktop}>
-              <span className={styles.infoDetail}>우편번호 : 07788</span>
-              <span className={styles.infoDetail}>대표 : 이은형</span>
-              <span className={styles.infoDetail}>사업자번호 : 107-82-10367</span>
-              <span className={styles.infoDetail}>대표전화 : 02-783-2367</span>
-              <span className={styles.infoDetail}>팩스 : 070-4275-5115</span>
-              <span className={styles.infoDetail}>이메일 : jakorea@jakorea.org</span>
+              <span className={styles.infoDetail}>우편번호 : {footer.postalCode}</span>
+              <span className={styles.infoDetail}>대표 : {footer.representativeName}</span>
+              <span className={styles.infoDetail}>
+                사업자번호 : {footer.businessRegistrationNumber}
+              </span>
+              <span className={styles.infoDetail}>대표전화 : {footer.phone}</span>
+              <span className={styles.infoDetail}>팩스 : {footer.fax}</span>
+              <span className={styles.infoDetail}>이메일 : {footer.email}</span>
             </p>
           </div>
 
@@ -274,9 +333,9 @@ export function Footer() {
       </div>
       <TermsViewModal
         open={privacyNotice.isOpen}
-        type="privacyNotice"
-        actionLabel="확인"
-        actionVariant="primary"
+        type={privacyNotice.openType ?? 'privacyNotice'}
+        actionLabel={privacyNotice.openType === 'serviceTerms' ? '닫기' : '확인'}
+        actionVariant={privacyNotice.openType === 'serviceTerms' ? 'outline' : 'primary'}
         onClose={privacyNotice.close}
       />
     </footer>

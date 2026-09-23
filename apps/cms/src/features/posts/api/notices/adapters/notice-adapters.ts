@@ -28,10 +28,21 @@ function parseCategoryId(dto: NoticeResponse): number | undefined {
   return undefined
 }
 
+function parseResourceId(dto: NoticeResponse): number | undefined {
+  const raw = (dto as NoticeResponse & { resourceId?: number | string }).resourceId
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw >= 1) return raw
+  if (typeof raw === 'string' && /^\d+$/.test(raw.trim())) {
+    const parsed = Number(raw.trim())
+    return parsed >= 1 ? parsed : undefined
+  }
+  return undefined
+}
+
 export function mapNoticeResponse(dto: NoticeResponse): Notice {
   const createdAt = dto.createdAt ?? new Date().toISOString()
   return {
     id: dto.id != null ? String(dto.id) : '',
+    resourceId: parseResourceId(dto),
     title: dto.title ?? '',
     content: dto.content ?? '',
     category: dto.category ?? '',

@@ -9,13 +9,13 @@ import notificationsIconUrl from '../image/icon/notifications.svg'
 import {
   getLoggedInActionRoute,
   guestUserActionRoutes,
-  navigationGroups,
-  type NavigationItemLabel,
+  type NavigationGroup,
   type NavigationSubItem,
 } from './header-config'
 import styles from './header-mobile-menu.module.css'
 
 type HeaderMobileMenuProps = {
+  groups: readonly NavigationGroup[]
   open: boolean
   onClose: () => void
   isLoggedIn?: boolean
@@ -82,13 +82,14 @@ function MobileChildMenuItem({
 }
 
 export function HeaderMobileMenu({
+  groups,
   open,
   onClose,
   isLoggedIn = false,
   onLogout,
 }: HeaderMobileMenuProps) {
   const navigate = useNavigate()
-  const [expandedGroup, setExpandedGroup] = useState<NavigationItemLabel | null>(null)
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -208,17 +209,19 @@ export function HeaderMobileMenu({
         </div>
 
         <nav className={styles.menuList} aria-label="주요 메뉴">
-          {navigationGroups.map(group => {
-            const isExpanded = expandedGroup === group.label
+          {groups.map(group => {
+            const isExpanded = expandedGroup === group.groupCode
 
             return (
-              <div className={styles.menuGroup} key={group.label}>
+              <div className={styles.menuGroup} key={group.groupCode}>
                 <button
                   className={[styles.menuTrigger, 'typo-bd-lg-sb'].join(' ')}
                   type="button"
                   aria-expanded={isExpanded}
                   onClick={() => {
-                    setExpandedGroup(current => (current === group.label ? null : group.label))
+                    setExpandedGroup(current =>
+                      current === group.groupCode ? null : group.groupCode,
+                    )
                   }}
                 >
                   <span className={styles.menuTriggerLabel}>{group.label}</span>
@@ -235,7 +238,7 @@ export function HeaderMobileMenu({
                     {group.children.map(item => (
                       <MobileChildMenuItem
                         item={item}
-                        key={item.label}
+                        key={item.menuCode}
                         onNavigate={handleNavigate}
                       />
                     ))}

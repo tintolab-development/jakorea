@@ -1,8 +1,12 @@
 import type { Notice, NoticeAttachment } from '@/data/mock/notices'
 import {
-  createFileAttachment,
+  fetchNoticeAttachmentsRemote,
+  replaceNoticeAttachmentsRemote,
+} from '@/features/posts/api/notices/notices-api-client'
+import type { NoticeAttachmentResponse } from '@/shared/api/generated/posts/schemas'
+import {
   deleteFileObject,
-  getFileDownload,
+  downloadAdminFile,
   listFileAttachments,
   parseOwnerResourceId,
 } from '@/shared/lib/admin-file-upload/attachments'
@@ -13,7 +17,6 @@ import {
   uploadAdminFile,
 } from '@/shared/lib/admin-file-upload'
 import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload/types'
-import { downloadFile } from '@/shared/lib/file-download'
 
 /** CMS 공지 첨부의 files-domain owner. OpenAPI example은 PROGRAM/APPLICATION이라 공지 전용 값을 둔다. */
 export const NOTICE_FILE_OWNER_DOMAIN = 'CONTENT'
@@ -49,13 +52,46 @@ function toNoticeAttachment(
   }
 }
 
-export async function listNoticeAttachments(noticeId: number): Promise<NoticeAttachment[]> {
+function mapNoticeAttachmentResponse(row: NoticeAttachmentResponse): NoticeAttachment | null {
+  const fileObjectId = parseOwnerResourceId(row.fileObjectId)
+  const name = row.originalFileName?.trim() || (fileObjectId != null ? `첨부파일-${fileObjectId}` : '')
+  if (!name) return null
+  if (fileObjectId == null) {
+    return {
+      name,
+      attachmentId: row.attachmentId,
+      fileUrl: row.downloadPath,
+    }
+  }
+  return toNoticeAttachment(fileObjectId, name, {
+    attachmentId: row.attachmentId,
+    fileUrl: row.downloadPath,
+  })
+}
+
+export async function listNoticeAttachments(noticeId: string): Promise<NoticeAttachment[]> {
+  const rows = await fetchNoticeAttachmentsRemote(noticeId)
+  return rows
+    .map(mapNoticeAttachmentResponse)
+    .filter((row): row is NoticeAttachment => row != null)
+}
+
+export async function linkNoticeAttachments(
+  noticeId: string,
+  fileObjectIds: number[]
+): Promise<NoticeAttachment[]> {
+  const rows = await replaceNoticeAttachmentsRemote(noticeId, fileObjectIds)
+  return rows
+    .map(mapNoticeAttachmentResponse)
+    .filter((row): row is NoticeAttachment => row != null)
+}
+
+async function listLegacyFileAttachments(noticeId: number): Promise<NoticeAttachment[]> {
   const rows = await listFileAttachments(noticeFileOwner(noticeId))
   return rows
     .map(row => {
       const fileObjectId = parseOwnerResourceId(row.fileObjectId)
       if (fileObjectId == null) return null
-      // FileAttachmentResponse에 originalFileName이 없음 — 파일별 GET status N+1 금지
       return toNoticeAttachment(fileObjectId, `첨부파일-${fileObjectId}`, {
         attachmentId: row.attachmentId,
       })
@@ -63,44 +99,47 @@ export async function listNoticeAttachments(noticeId: number): Promise<NoticeAtt
     .filter((row): row is NoticeAttachment => row != null)
 }
 
+export function noticeUploadOwnerId(notice: Pick<Notice, 'id' | 'resourceId'>): number | null {
+  if (notice.resourceId != null && notice.resourceId >= 1) return notice.resourceId
+  return parseNoticeOwnerId(notice.id)
+}
+
 export async function hydrateNoticeAttachments(notice: Notice): Promise<Notice> {
-  const ownerId = parseNoticeOwnerId(notice.id)
-  if (ownerId == null) return notice
-  // hasAttachment=false면 attachments API/상태 조회를 생략
-  if (!notice.hasAttachment && !(notice.attachments && notice.attachments.length > 0)) {
-    return notice
-  }
-  const attachments = await listNoticeAttachments(ownerId)
-  return {
-    ...notice,
-    attachments,
-    hasAttachment: attachments.length > 0 || notice.hasAttachment,
+  if (!notice.id) return notice
+  try {
+    const linked = await listNoticeAttachments(notice.id)
+    if (linked.length > 0) {
+      return {
+        ...notice,
+        attachments: linked,
+        hasAttachment: true,
+      }
+    }
+    const ownerId = noticeUploadOwnerId(notice)
+    if (ownerId == null) return { ...notice, attachments: [], hasAttachment: false }
+    const legacy = await listLegacyFileAttachments(ownerId)
+    if (legacy.length === 0) return { ...notice, attachments: [], hasAttachment: false }
+    return {
+      ...notice,
+      attachments: legacy,
+      hasAttachment: true,
+    }
+  } catch {
+    return { ...notice, attachments: notice.attachments ?? [], hasAttachment: false }
   }
 }
 
 export async function uploadAndAttachNoticeFiles(
   noticeId: number,
-  files: File[],
-  displayOrderStart = 1
+  files: File[]
 ): Promise<NoticeAttachment[]> {
   const owner = noticeFileOwner(noticeId)
   const uploaded: NoticeAttachment[] = []
-  for (let index = 0; index < files.length; index += 1) {
-    const file = files[index]
+  for (const file of files) {
     if (!file) continue
-    // 공지 저장은 confirm + attachment 연결까지. CLEAN 폴링은 저장을 막고 files/{id} 과호출을 만든다.
-    const result = await uploadAdminFile({ file, owner, waitUntilAvailable: false })
-    const attached = await createFileAttachment({
-      fileObjectId: result.fileObjectId,
-      owner,
-      attachmentType: NOTICE_FILE_ATTACHMENT_TYPE,
-      displayOrder: displayOrderStart + index,
-    })
-    uploaded.push(
-      toNoticeAttachment(result.fileObjectId, file.name, {
-        attachmentId: attached.attachmentId,
-      })
-    )
+    // notice_attachment 연결은 CLEAN + AVAILABLE 이후만 가능하다.
+    const result = await uploadAdminFile({ file, owner, waitUntilAvailable: true })
+    uploaded.push(toNoticeAttachment(result.fileObjectId, file.name))
   }
   return uploaded
 }
@@ -111,38 +150,19 @@ export async function removeNoticeFileObjects(fileObjectIds: number[]): Promise<
   }
 }
 
+function fileObjectIdFromDownloadPath(path?: string): number | null {
+  const match = /\/files\/(\d+)\/download(?:\?|$)/.exec(path?.trim() ?? '')
+  if (!match) return null
+  return parseOwnerResourceId(match[1])
+}
+
 export async function downloadNoticeAttachment(attachment: NoticeAttachment): Promise<void> {
-  const fileObjectId = attachment.fileObjectId
+  const fileObjectId = attachment.fileObjectId ?? fileObjectIdFromDownloadPath(attachment.fileUrl)
   if (fileObjectId == null) {
-    await downloadFile(attachment.name, attachment.fileUrl)
-    return
+    throw new Error('다운로드할 첨부파일 정보가 없습니다.')
   }
-  const resolved = await getFileDownload(fileObjectId)
-  const downloadUrl = resolved.downloadUrl?.trim()
-  if (!downloadUrl) {
-    throw new Error('첨부파일 다운로드 URL을 받지 못했습니다.')
-  }
-  const requiredHeaders = resolved.requiredHeaders ?? {}
-  const extraHeaders = Object.entries(requiredHeaders).filter(([, value]) => Boolean(value))
-  if (extraHeaders.length === 0) {
-    await downloadFile(attachment.name, downloadUrl)
-    return
-  }
-  const headers = new Headers()
-  for (const [key, value] of extraHeaders) {
-    headers.set(key, value)
-  }
-  const response = await fetch(downloadUrl, {
-    method: 'GET',
-    headers,
-    credentials: 'omit',
-    mode: 'cors',
+  await downloadAdminFile({
+    fileObjectId,
+    fileName: attachment.name,
   })
-  if (!response.ok) {
-    throw new Error(`첨부파일 다운로드에 실패했습니다. (${response.status})`)
-  }
-  const blob = await response.blob()
-  const objectUrl = URL.createObjectURL(blob)
-  await downloadFile(attachment.name, objectUrl)
-  URL.revokeObjectURL(objectUrl)
 }

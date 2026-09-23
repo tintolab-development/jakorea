@@ -7,6 +7,7 @@ import {
   mapNoticeListResponse,
   mapNoticeResponse,
   toNoticeRequestFromForm,
+  toNoticeRequestFromNotice,
 } from '@/features/posts/api/notices/adapters/notice-adapters'
 import { noticesParamsFromSearchParams } from '@/features/posts/api/notices/notice-filter-params'
 import {
@@ -26,7 +27,8 @@ import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import {
   hydrateNoticeAttachments,
-  parseNoticeOwnerId,
+  linkNoticeAttachments,
+  noticeUploadOwnerId,
   uploadAndAttachNoticeFiles,
 } from '@/features/posts/api/notices/notice-attachments'
 
@@ -55,15 +57,43 @@ export async function getNoticeDetail(id: string): Promise<Notice> {
   return hydrateNoticeAttachments(mapNoticeResponse(dto))
 }
 
-async function attachNewNoticeFiles(notice: Notice, files: File[] | undefined): Promise<Notice> {
+async function rethrowAfterRollback(error: unknown, rollback: () => Promise<unknown>): Promise<never> {
+  try {
+    await rollback()
+  } catch {
+    // 되돌리기 실패보다 첨부 업로드 실패를 전달한다.
+  }
+  throw error
+}
+
+function fileObjectIdsOf(attachments: Notice['attachments']): number[] {
+  return (attachments ?? []).flatMap(item =>
+    item.fileObjectId != null ? [item.fileObjectId] : []
+  )
+}
+
+function sameFileObjectIds(left: number[], right: number[]): boolean {
+  return left.length === right.length && left.every((id, index) => id === right[index])
+}
+
+async function attachNewNoticeFiles(
+  notice: Notice,
+  files: File[] | undefined,
+  retainedFileObjectIds?: number[]
+): Promise<Notice> {
   const newFiles = files?.filter(file => file.size > 0) ?? []
-  if (newFiles.length === 0) return notice
-  const ownerId = parseNoticeOwnerId(notice.id)
-  if (ownerId == null) {
+  const ownerId = noticeUploadOwnerId(notice)
+  const previousIds = fileObjectIdsOf(notice.attachments)
+  const retainedIds = retainedFileObjectIds ?? previousIds
+  if (newFiles.length === 0 && sameFileObjectIds(retainedIds, previousIds)) return notice
+  if (!notice.id || (newFiles.length > 0 && ownerId == null)) {
     throw new Error('공지 ID를 확인하지 못해 첨부 파일을 업로드할 수 없습니다.')
   }
-  const uploaded = await uploadAndAttachNoticeFiles(ownerId, newFiles)
-  const attachments = [...(notice.attachments ?? []), ...uploaded]
+  const uploaded = newFiles.length > 0 && ownerId != null
+    ? await uploadAndAttachNoticeFiles(ownerId, newFiles)
+    : []
+  const uploadedIds = fileObjectIdsOf(uploaded)
+  const attachments = await linkNoticeAttachments(notice.id, [...retainedIds, ...uploadedIds])
   return {
     ...notice,
     attachments,
@@ -75,14 +105,21 @@ export async function createNotice(params: BuildNoticeBodyParams): Promise<Notic
   assertNoticesRemoteReady()
   const dto = await createNoticeRemote(toNoticeRequestFromForm(params))
   const created = mapNoticeResponse(dto)
-  return attachNewNoticeFiles(
-    {
-      ...created,
-      category: created.category || params.category,
-      categoryId: created.categoryId ?? params.categoryId,
-    },
-    params.newFiles
-  )
+  try {
+    return await attachNewNoticeFiles(
+      {
+        ...created,
+        category: created.category || params.category,
+        categoryId: created.categoryId ?? params.categoryId,
+      },
+      params.newFiles,
+      params.retainedFileObjectIds
+    )
+  } catch (error) {
+    return rethrowAfterRollback(error, async () => {
+      if (created.id) await deleteNoticeRemote(created.id)
+    })
+  }
 }
 
 export async function updateNotice(
@@ -93,15 +130,22 @@ export async function updateNotice(
   assertNoticesRemoteReady()
   const dto = await updateNoticeRemote(id, toNoticeRequestFromForm(params))
   const updated = mapNoticeResponse(dto)
-  return attachNewNoticeFiles(
-    {
-      ...updated,
-      category: updated.category || params.category,
-      categoryId: updated.categoryId ?? params.categoryId,
-      attachments: updated.attachments?.length ? updated.attachments : existing.attachments,
-    },
-    params.newFiles
-  )
+  try {
+    return await attachNewNoticeFiles(
+      {
+        ...updated,
+        category: updated.category || params.category,
+        categoryId: updated.categoryId ?? params.categoryId,
+        attachments: updated.attachments?.length ? updated.attachments : existing.attachments,
+      },
+      params.newFiles,
+      params.retainedFileObjectIds ?? fileObjectIdsOf(existing.attachments)
+    )
+  } catch (error) {
+    return rethrowAfterRollback(error, () =>
+      updateNoticeRemote(id, toNoticeRequestFromNotice(existing))
+    )
+  }
 }
 
 export async function deleteNotice(id: string): Promise<void> {

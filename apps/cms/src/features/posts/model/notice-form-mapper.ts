@@ -39,6 +39,8 @@ export type BuildNoticeBodyParams = {
   attachmentNames: string[]
   /** 실 API 업로드용 실제 파일. 파일명만 보내면 S3 PUT이 수행되지 않는다. */
   newFiles?: File[]
+  /** 수정 시 화면에 남겨 둔 기존 첨부. 없으면 기존 첨부를 유지한다. */
+  retainedFileObjectIds?: number[]
   author: string
 }
 

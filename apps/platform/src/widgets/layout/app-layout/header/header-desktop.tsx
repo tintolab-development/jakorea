@@ -4,16 +4,17 @@ import { PFText } from '@/shared/ui'
 import logoUrl from '@/shared/assets/brand/ja-logo.svg'
 import externalLinkIconUrl from '@/shared/assets/icons/arrow-diagonal-black.svg'
 import {
-  getActiveNavigationItem,
+  getActiveNavigationGroupCode,
   getLoggedInActionRoute,
   guestUserActionRoutes,
   loggedInActions,
-  navigationGroups,
+  type NavigationGroup,
   type NavigationSubItem,
 } from './header-config'
 import styles from './header-desktop.module.css'
 
 type HeaderDesktopProps = {
+  groups: readonly NavigationGroup[]
   isLoggedIn?: boolean
   onLogout?: () => void
   transparent?: boolean
@@ -82,6 +83,7 @@ function NavigationSubMenuItem({
 }
 
 export function HeaderDesktop({
+  groups,
   isLoggedIn = false,
   onLogout,
   transparent = false,
@@ -90,23 +92,21 @@ export function HeaderDesktop({
 }: HeaderDesktopProps) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const [activeNavigationItem, setActiveNavigationItem] = useState<
-    ReturnType<typeof getActiveNavigationItem>
-  >(() => getActiveNavigationItem(pathname))
-  const [hoveredNavigationItem, setHoveredNavigationItem] = useState<
-    ReturnType<typeof getActiveNavigationItem>
-  >(null)
+  const [activeGroupCode, setActiveGroupCode] = useState<string | null>(() =>
+    getActiveNavigationGroupCode(pathname),
+  )
+  const [hoveredGroupCode, setHoveredGroupCode] = useState<string | null>(null)
   const [isNavOpen, setIsNavOpen] = useState(false)
 
   useEffect(() => {
-    setActiveNavigationItem(getActiveNavigationItem(pathname))
-    setHoveredNavigationItem(null)
+    setActiveGroupCode(getActiveNavigationGroupCode(pathname))
+    setHoveredGroupCode(null)
     setIsNavOpen(false)
   }, [pathname])
 
   const closeNav = () => {
     setIsNavOpen(false)
-    setHoveredNavigationItem(null)
+    setHoveredGroupCode(null)
   }
 
   const headerClassName = [
@@ -123,14 +123,14 @@ export function HeaderDesktop({
     .filter(Boolean)
     .join(' ')
 
-  const highlightedNavigationItem = hoveredNavigationItem ?? activeNavigationItem
+  const highlightedGroupCode = hoveredGroupCode ?? activeGroupCode
 
   return (
     <header
       className={headerClassName}
       onMouseLeave={() => {
         setIsNavOpen(false)
-        setHoveredNavigationItem(null)
+        setHoveredGroupCode(null)
       }}
     >
       <div className={styles.inner}>
@@ -146,9 +146,9 @@ export function HeaderDesktop({
             setIsNavOpen(true)
           }}
         >
-          {navigationGroups.map(group => {
-            const isHighlighted = group.label === highlightedNavigationItem
-            const isRouteActive = group.label === activeNavigationItem
+          {groups.map(group => {
+            const isHighlighted = group.groupCode === highlightedGroupCode
+            const isRouteActive = group.groupCode === activeGroupCode
             const buttonClassName = [
               styles.navigationButton,
               isHighlighted ? styles.navigationButtonActive : undefined,
@@ -161,12 +161,12 @@ export function HeaderDesktop({
                 className={buttonClassName}
                 type="button"
                 aria-pressed={isRouteActive}
-                key={group.label}
+                key={group.groupCode}
                 onMouseEnter={() => {
-                  setHoveredNavigationItem(group.label)
+                  setHoveredGroupCode(group.groupCode)
                 }}
                 onClick={() => {
-                  setActiveNavigationItem(group.label)
+                  setActiveGroupCode(group.groupCode)
                   const href = 'href' in group ? group.href : undefined
                   if (href) {
                     closeNav()
@@ -244,20 +244,20 @@ export function HeaderDesktop({
         <div className={styles.dropdownInner}>
           <div className={styles.dropdownLogoSpacer} aria-hidden="true" />
           <div className={styles.dropdownColumns}>
-            {navigationGroups.map(group => (
+            {groups.map(group => (
               <div
                 className={styles.menuGroup}
                 role="group"
                 aria-label={group.label}
-                key={group.label}
+                key={group.groupCode}
                 onMouseEnter={() => {
-                  setHoveredNavigationItem(group.label)
+                  setHoveredGroupCode(group.groupCode)
                 }}
               >
                 {group.children.map(item => (
                   <NavigationSubMenuItem
                     item={item}
-                    key={item.label}
+                    key={item.menuCode}
                     onNavigate={closeNav}
                   />
                 ))}
