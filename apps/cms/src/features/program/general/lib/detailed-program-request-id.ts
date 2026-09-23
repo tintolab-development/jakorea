@@ -15,6 +15,15 @@ export function parseDetailedProgramMasterId(
   return parsed > 0 ? parsed : undefined
 }
 
+/**
+ * 커리큘럼형 등록 필수 검증용 — 요청 body에 `detailedProgramId`로 실릴 수 있는 값인지.
+ * 「해당없음」·1사1교/UJAT 가짜 sentinel·빈 값은 false.
+ */
+export function isDetailedProgramMasterId(value: unknown): boolean {
+  if (typeof value !== 'string' && typeof value !== 'number') return false
+  return parseDetailedProgramMasterId(value) !== undefined
+}
+
 /** 세부 프로그램명을 교재/팀구분 필드에 복사한 값이면 요청에서 제외 */
 export function omitIfDetailedProgramNameAlias(
   value: string | undefined,

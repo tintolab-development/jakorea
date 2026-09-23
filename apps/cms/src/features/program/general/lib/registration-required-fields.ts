@@ -24,6 +24,7 @@ import {
   GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY,
   GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { isDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 
 export type GeneralProgramRegistrationRequiredFieldContext = {
   participant: ProgramRegistrationParticipantSelection
@@ -116,14 +117,11 @@ function findIncompleteBasicInfoReason(
     return 'basicInfo.publicProgramTitle'
   }
   // 일정형: 세부 프로그램명「해당없음」고정 — 선택 검증 생략(실적에서는 일정명 반영)
+  // 커리큘럼형: BE가 세부 프로그램 마스터 id(숫자)를 요구한다 — 「해당없음」 sentinel·name-only 는 미완료.
   if (ctx.programType !== 'schedule') {
-    const detailedId = readOverlay(overlay, 'generalRegistration.basicInfo.detailedProgramId')
-    const detailedName = readOverlay(overlay, 'generalRegistration.basicInfo.detailedProgramName')
-    const hasDetailedId =
-      (typeof detailedId === 'number' && Number.isFinite(detailedId) && detailedId > 0) ||
-      (typeof detailedId === 'string' && detailedId.trim() !== '')
-    const hasDetailedName = typeof detailedName === 'string' && detailedName.trim() !== ''
-    if (!hasDetailedId && !hasDetailedName) return 'basicInfo.detailedProgram'
+    if (!isDetailedProgramMasterId(readOverlay(overlay, 'generalRegistration.basicInfo.detailedProgramId'))) {
+      return 'basicInfo.detailedProgram'
+    }
   }
   const operationRange = readOverlay(overlay, 'generalRegistration.basicInfo.operationRangeSeal')
   if (operationRange == null || typeof operationRange !== 'object') {

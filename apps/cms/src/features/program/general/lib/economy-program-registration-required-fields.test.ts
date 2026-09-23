@@ -33,7 +33,7 @@ function filledRegistration(): Record<string, unknown> {
     'economyRegistration.basicInfo.repKo': '1사1교 경제금융교육',
     'economyRegistration.basicInfo.repEn': '1 Company 1 School',
     'economyRegistration.basicInfo.publicProgramTitle': '공고용',
-    'economyRegistration.basicInfo.detailedProgramId': '__economy_1c1s_main__',
+    'economyRegistration.basicInfo.detailedProgramId': '1',
     'economyRegistration.basicInfo.operationRangeSeal': RANGE,
     'economyRegistration.basicInfo.businessField': 'economy_finance',
     'economyRegistration.basicInfo.sponsorId': '__all__',
@@ -87,6 +87,24 @@ describe('economy registration required fields', () => {
         volunteer: false,
       })
     ).toBe(true)
+  })
+
+  it('세부 프로그램이 과거 가짜 대표 sentinel 이면 미완료 (BE 마스터 id 필수)', () => {
+    const row = filledRegistration()
+    row['economyRegistration.basicInfo.detailedProgramId'] = '__economy_1c1s_main__'
+    expect(hasIncompleteEconomyProgramRegistrationRequiredFields(row, ORG)).toBe(true)
+  })
+
+  it('세부 프로그램이「해당없음」이면 미완료', () => {
+    const row = filledRegistration()
+    row['economyRegistration.basicInfo.detailedProgramId'] = '__detailed_program_none__'
+    expect(hasIncompleteEconomyProgramRegistrationRequiredFields(row, ORG)).toBe(true)
+  })
+
+  it('세부 프로그램 미기록이면 미완료 (기본값 없음)', () => {
+    const row = filledRegistration()
+    delete row['economyRegistration.basicInfo.detailedProgramId']
+    expect(hasIncompleteEconomyProgramRegistrationRequiredFields(row, ORG)).toBe(true)
   })
 
   it('커리큘럼 단원명 비면 미완료', () => {

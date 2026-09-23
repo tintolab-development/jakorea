@@ -2,7 +2,7 @@
  * 1사 1교 프로그램 등록 폼 — 기본 정보
  * (참여자 유형: 학교/기관·강사 checked·disabled 고정. 상단: 일반 프로그램 정보 / 하단: 교육 과정·IP·Partner·IPS)
  */
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
@@ -26,7 +26,7 @@ import {
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
   TEMPLATE_FORM_IP_OWNED_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
-  withDetailedProgramNoneOption,
+  TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
 } from '@/features/template/lib/template-form-select-options'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
@@ -37,7 +37,11 @@ import {
   PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
   type ProgramRegistrationSurveyItemId,
 } from '@/features/template/lib/program-registration-survey-items'
-import { useProgramRegistrationOverlayKv, updateProgramRegistrationOverlayKey } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  patchProgramRegistrationOverlay,
+  useProgramRegistrationOverlayKv,
+  updateProgramRegistrationOverlayKey,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 
 const REP_KO = '1사1교 경제금융교육'
 const REP_EN = '1 Company 1 School Economics and Finance Education'
@@ -48,11 +52,19 @@ const ALL_VALUE = '__all__'
 const EMPTY_MANAGER_CONTACT_IDS: string[] = []
 const ECONOMY_SURVEY_ITEMS_DEFAULT = initialProgramRegistrationSurveyItems(true)
 
-const DETAILED_PROGRAM_MAIN_VALUE = '__economy_1c1s_main__'
-const DETAILED_PROGRAM_MAIN_OPTION = {
-  value: DETAILED_PROGRAM_MAIN_VALUE,
-  label: '1사1교 경제금융교육',
-} as const
+/**
+ * 과거 셀렉트 기본값이던 가짜 id. 1사1교는 BE에 CURRICULUM 으로 전송되어 세부 프로그램 마스터 id(숫자)가
+ * 필수이므로 옵션에서 제거했고, 잔존 overlay 값 판별용으로만 남긴다.
+ */
+const LEGACY_DETAILED_PROGRAM_MAIN_VALUE = '__economy_1c1s_main__'
+/** 카탈로그에서 기본 선택할 세부 프로그램 라벨 (basic-info-defaults REP_KO 와 동일) */
+const DETAILED_PROGRAM_MAIN_LABEL = '1사1교 경제금융교육'
+
+function isLegacyDetailedProgramValue(value: string): boolean {
+  return (
+    value === LEGACY_DETAILED_PROGRAM_MAIN_VALUE || value === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+  )
+}
 
 const IPS_PREPARE_DEFAULT = 'prepare'
 
@@ -147,11 +159,11 @@ export function OneCOneSRegistrationBasicInfoParagraph({
   )
   const [detailedProgramId, setDetailedProgramId] = useProgramRegistrationOverlayKv<string>(
     'economyRegistration.basicInfo.detailedProgramId',
-    DETAILED_PROGRAM_MAIN_VALUE
+    ''
   )
   const [, setDetailedProgramName] = useProgramRegistrationOverlayKv<string>(
     'economyRegistration.basicInfo.detailedProgramName',
-    DETAILED_PROGRAM_MAIN_OPTION.label
+    ''
   )
   const [publicProgramTitle, setPublicProgramTitle] = useProgramRegistrationOverlayKv(
     'economyRegistration.basicInfo.publicProgramTitle',
@@ -211,15 +223,11 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     setManagerContactId(unique[0] ?? (sponsorId === ALL_VALUE ? ALL_VALUE : ''))
   }
 
-  const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
+  const { options: remoteDetailedProgramOptions, isSuccess: detailedProgramOptionsLoaded } =
+    useDetailedProgramSelectOptions(true)
 
-  const detailedProgramOptions = useMemo(
-    () => [
-      DETAILED_PROGRAM_MAIN_OPTION,
-      ...withDetailedProgramNoneOption(remoteDetailedProgramOptions),
-    ],
-    [remoteDetailedProgramOptions]
-  )
+  // 1사1교는 항상 커리큘럼형 → 카탈로그(숫자 마스터 id)만 노출. 「해당없음」·가짜 대표 옵션은 BE가 거절한다.
+  const detailedProgramOptions = remoteDetailedProgramOptions
 
   // 버그 수정: id만 저장하고 name을 갱신하지 않아, 선택한 세부 프로그램명이
   // generalCommonInfo에 전혀 반영되지 않던 문제 — id 변경 시 라벨도 함께 저장한다.
@@ -228,6 +236,30 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     const label = detailedProgramOptions.find(o => o.value === nextId)?.label?.trim() || ''
     setDetailedProgramName(label)
   }
+
+  // 기본 선택: 미선택 또는 과거 sentinel 잔존이면 카탈로그에서 「1사1교 경제금융교육」을 찾아 실제 id 로 채운다.
+  // 카탈로그에 없으면 비워 둔다 → 필수 검증에서 미완료.
+  useEffect(() => {
+    if (!detailedProgramOptionsLoaded) return
+    const current = detailedProgramId.trim()
+    if (current && !isLegacyDetailedProgramValue(current)) return
+    const main = remoteDetailedProgramOptions.find(
+      o => o.label.trim() === DETAILED_PROGRAM_MAIN_LABEL
+    )
+    if (main) {
+      patchProgramRegistrationOverlay({
+        'economyRegistration.basicInfo.detailedProgramId': main.value,
+        'economyRegistration.basicInfo.detailedProgramName': main.label.trim(),
+      })
+      return
+    }
+    if (current) {
+      patchProgramRegistrationOverlay({
+        'economyRegistration.basicInfo.detailedProgramId': '',
+        'economyRegistration.basicInfo.detailedProgramName': '',
+      })
+    }
+  }, [detailedProgramId, detailedProgramOptionsLoaded, remoteDetailedProgramOptions])
 
   return (
     <>

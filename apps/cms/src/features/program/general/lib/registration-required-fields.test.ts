@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import {
   describeIncompleteGeneralProgramRegistrationRequiredFields,
   hasIncompleteGeneralProgramRegistrationRequiredFields,
@@ -37,7 +38,7 @@ function filledOverlay(patch?: Record<string, unknown>): Record<string, unknown>
   return {
     'generalRegistration.basicInfo.programTitleEn': 'Test Program',
     'generalRegistration.basicInfo.publicProgramTitle': '공고용 프로그램',
-    'generalRegistration.basicInfo.detailedProgramId': 'detail-1',
+    'generalRegistration.basicInfo.detailedProgramId': '163001',
     'generalRegistration.basicInfo.operationRangeSeal': {
       start: '2026-03-01T00:00:00.000Z',
       end: '2026-12-31T00:00:00.000Z',
@@ -280,7 +281,7 @@ it('reproduce org multi curriculum volunteer preEdu', () => {
   const overlay = filledOverlay({
     'generalRegistration.basicInfo.programTitleEn': 'ㅇㅇㅇㅇ',
     'generalRegistration.basicInfo.publicProgramTitle': 'ㅏㅏㅏㅏ',
-    'generalRegistration.basicInfo.detailedProgramId': '163xxx',
+    'generalRegistration.basicInfo.detailedProgramId': '163007',
     'generalRegistration.basicInfo.detailedProgramName': '대학생 멘토링',
     'generalRegistration.basicInfo.businessField': 'economy',
     'generalRegistration.basicInfo.educationVenueDetail': 'ㅋㅋㅋ',
@@ -336,7 +337,7 @@ it('기관·복수회차 — 과제 overlay 잔존해도 완료이다', () => {
   expect(
     hasIncompleteGeneralProgramRegistrationRequiredFields(
       filledOverlay({
-        'generalRegistration.basicInfo.detailedProgramId': '',
+        'generalRegistration.basicInfo.detailedProgramId': '163007',
         'generalRegistration.basicInfo.detailedProgramName': '대학생 멘토링',
         'generalRegistration.kpi.volunteer': 22,
         'generalRegistration.kpi.dispatchedSchool': 12,
@@ -450,6 +451,66 @@ it('커리큘럼 — 세부 프로그램 id·name 모두 없으면 미완료이�
       ctx()
     )
   ).toBe(true)
+})
+
+it('커리큘럼 — 세부 프로그램「해당없음」sentinel 은 미완료이다 (BE 마스터 id 필수)', () => {
+  expect(
+    describeIncompleteGeneralProgramRegistrationRequiredFields(
+      filledOverlay({
+        'generalRegistration.basicInfo.detailedProgramId': TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+        'generalRegistration.basicInfo.detailedProgramName': '해당없음',
+      }),
+      ctx()
+    )
+  ).toBe('basicInfo.detailedProgram')
+})
+
+it('커리큘럼 — 세부 프로그램 name 만 있고 id 가 비면 미완료이다', () => {
+  expect(
+    describeIncompleteGeneralProgramRegistrationRequiredFields(
+      filledOverlay({
+        'generalRegistration.basicInfo.detailedProgramId': '',
+        'generalRegistration.basicInfo.detailedProgramName': '대학생 멘토링',
+      }),
+      ctx()
+    )
+  ).toBe('basicInfo.detailedProgram')
+})
+
+it('커리큘럼 — 숫자 마스터 id 면 완료이다', () => {
+  expect(
+    describeIncompleteGeneralProgramRegistrationRequiredFields(
+      filledOverlay({ 'generalRegistration.basicInfo.detailedProgramId': '163006' }),
+      ctx()
+    )
+  ).toBeNull()
+})
+
+it('일정형 — 세부 프로그램「해당없음」sentinel 이어도 완료이다', () => {
+  expect(
+    hasIncompleteGeneralProgramRegistrationRequiredFields(
+      filledOverlay({
+        'generalRegistration.basicInfo.detailedProgramId': TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+        'generalRegistration.basicInfo.detailedProgramName': '해당없음',
+        'generalRegistration.kpi.dispatchedSchool': 10,
+        'generalRegistration.kpi.dispatchedClass': 5,
+        'generalRegistration.educationScheduleCurriculum.eventNameByDetail': { 1: '세부 일정' },
+        'generalRegistration.educationScheduleCurriculum.groupTimesByDetail': {
+          1: [{ startTime: '08:00', endTime: '09:00' }],
+        },
+      }),
+      ctx({
+        participant: {
+          individual: false,
+          organization: true,
+          teacherInstructor: false,
+          volunteer: false,
+        },
+        programType: 'schedule',
+        sessionRoundType: 'single',
+      })
+    )
+  ).toBe(false)
 })
 
 it('개인·복수회차·일정 공통 — 참여 방식 overlay가 비어도 기본 개인으로 완료이다', () => {

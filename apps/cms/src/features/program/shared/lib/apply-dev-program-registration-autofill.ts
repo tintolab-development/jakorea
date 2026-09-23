@@ -21,7 +21,6 @@ import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_OPTION,
-  TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
   TEMPLATE_FORM_IP_OWNED_OPTIONS,
   TEMPLATE_FORM_PARTNER_INVOLVEMENT_OPTIONS,
@@ -596,8 +595,7 @@ function buildDevAutofillSample(): DevAutofillSample {
 
 /** 1사1교 폼에 고정으로 노출되는 「전체」 옵션 값 */
 const ECONOMY_ALL_VALUE = '__all__' as const
-const ECONOMY_DETAILED_PROGRAM_MAIN_VALUE = '__economy_1c1s_main__' as const
-/** 1사1교·교육받은 교사 select에 고정 노출되는 대표 세부 프로그램 라벨 (basic-info-defaults.ts REP_KO와 동일) */
+/** 1사1교·교육받은 교사 대표 세부 프로그램 라벨 — 카탈로그에서 이 라벨의 실제 마스터 id 를 우선 선택 (basic-info-defaults.ts REP_KO와 동일) */
 const ECONOMY_DETAILED_PROGRAM_MAIN_LABEL = '1사1교 경제금융교육' as const
 
 function ipsDetailForCategory(category: DevAutofillSample['ipsCategory']): string {
@@ -648,27 +646,44 @@ async function resolveSponsorAndContact(allowAllSentinel: boolean): Promise<{
   }
 }
 
+type ResolveDetailedProgramOptions = {
+  /**
+   * 「해당없음」을 후보에 포함할지. BE는 커리큘럼형에 세부 프로그램 마스터 id(숫자)를 요구하므로
+   * 일반 일정형에서만 true.
+   */
+  includeNone: boolean
+  /** 카탈로그에 같은 라벨이 있으면 무작위 대신 그 항목을 우선 선택 (1사1교·교육받은 교사 대표 프로그램) */
+  preferLabel?: string
+}
+
 /**
  * 버그 수정: 기존엔 id만 무작위로 골라 overlay `detailedProgramId`에만 넣고
  * `detailedProgramName`은 비워둬서, 실제 선택 라벨(예: 세부 프로그램 관리에 남아있는
  * 테스트용 「삭제 가능 샘플」)과 저장되는 이름이 어긋나 보이는 문제가 있었다.
  * id·name을 항상 짝지어 반환해 `setDetailedProgramSelection`과 동일하게 동기화한다.
+ *
+ * 가짜 sentinel(`__economy_1c1s_main__` 등)은 후보에 넣지 않는다 — 요청 body에서 빠져 커리큘럼형 등록이 거절된다.
  */
 async function resolveDetailedProgram(
-  extraOptions: readonly { value: string; label: string }[] = []
+  options: ResolveDetailedProgramOptions
 ): Promise<{ id: string; name: string }> {
-  const pool: { value: string; label: string }[] = [...extraOptions]
+  const pool: { value: string; label: string }[] = []
   try {
     const rows = await getDetailedProgramOptionsList()
     for (const row of rows) {
       if (row.id) pool.push({ value: row.id, label: row.name ?? '' })
     }
   } catch {
-    /* remote 미연동·실패 시 고정 옵션만 */
+    /* remote 미연동·실패 시 빈 후보 */
   }
-  if (!pool.some(option => option.value === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE)) {
-    pool.push({ ...TEMPLATE_FORM_DETAILED_PROGRAM_NONE_OPTION })
+  const preferLabel = options.preferLabel?.trim()
+  if (preferLabel) {
+    const preferred = pool.find(option => option.label.trim() === preferLabel)
+    if (preferred) return { id: preferred.value, name: preferred.label }
   }
+  if (options.includeNone) pool.push({ ...TEMPLATE_FORM_DETAILED_PROGRAM_NONE_OPTION })
+  // 커리큘럼형인데 카탈로그가 비어 있으면 채울 수 있는 값이 없다 — 미선택으로 두고 필수 검증에 맡긴다.
+  if (pool.length === 0) return { id: '', name: '' }
   const picked = pick(pool)
   return { id: picked.value, name: picked.label }
 }
@@ -1263,9 +1278,8 @@ export async function applyDevProgramRegistrationAutofill(
   if (variant === 'economy') {
     const [sponsorContact, detailedProgram] = await Promise.all([
       resolveSponsorAndContact(true),
-      resolveDetailedProgram([
-        { value: ECONOMY_DETAILED_PROGRAM_MAIN_VALUE, label: ECONOMY_DETAILED_PROGRAM_MAIN_LABEL },
-      ]),
+      // 1사1교는 항상 커리큘럼형 → 「해당없음」 불가, 카탈로그의 대표 프로그램 우선
+      resolveDetailedProgram({ includeNone: false, preferLabel: ECONOMY_DETAILED_PROGRAM_MAIN_LABEL }),
     ])
     const contactSelectId = toSponsorContactSelectValue(
       sponsorContact.sponsorId,
@@ -1298,10 +1312,11 @@ export async function applyDevProgramRegistrationAutofill(
 
   const [sponsorContact, detailedProgram] = await Promise.all([
     resolveSponsorAndContact(false),
+    // 「해당없음」은 일반 일정형에서만 유효. 교육받은 교사는 카탈로그의 대표 프로그램 우선.
     resolveDetailedProgram(
       variant === 'trainedTeachers'
-        ? [{ value: ECONOMY_DETAILED_PROGRAM_MAIN_VALUE, label: ECONOMY_DETAILED_PROGRAM_MAIN_LABEL }]
-        : []
+        ? { includeNone: false, preferLabel: ECONOMY_DETAILED_PROGRAM_MAIN_LABEL }
+        : { includeNone: typeSettings.programType === 'schedule' }
     ),
   ])
   const resolved = {

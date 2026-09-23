@@ -90,7 +90,7 @@ describe('applyEconomyRegistrationOverlayToProgram', () => {
     // 버그: 기존엔 이 overlay 키를 전혀 읽지 않아, 수동 선택·자동 채우기로 고른
     // 세부 프로그램명이 항상 무시되고 generalCommonInfo.detailedProgramName이 비어 있었다.
     const overlay: Record<string, unknown> = {
-      'economyRegistration.basicInfo.detailedProgramId': 'dp-42',
+      'economyRegistration.basicInfo.detailedProgramId': '163042',
       'economyRegistration.basicInfo.detailedProgramName': '실제 선택한 세부 프로그램명',
     }
     const result = applyEconomyRegistrationOverlayToProgram(baseProgram(), overlay)

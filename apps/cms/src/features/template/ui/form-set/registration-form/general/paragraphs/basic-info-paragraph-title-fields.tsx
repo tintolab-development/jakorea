@@ -78,9 +78,14 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
   }, [detailedNameKey, detailedProgramId, lockDetailedProgramToNone, setDetailedProgramId])
 
   useEffect(() => {
-    if (!trainedTeachersDefaults || lockDetailedProgramToNone) return
-    if (detailedProgramId !== TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE) return
-    // 1사1교용 가짜 id 는 세부 프로그램 마스터가 아니라 커리큘럼 등록이 거절된다.
+    if (lockDetailedProgramToNone) return
+    const isStaleNone = detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+    const isFakeTrainedTeachersId =
+      trainedTeachersDefaults &&
+      detailedProgramId === TRAINED_TEACHERS_REGISTRATION_DETAILED_PROGRAM_VALUE
+    if (!isStaleNone && !isFakeTrainedTeachersId) return
+    // 커리큘럼형은 BE가 세부 프로그램 마스터 id(숫자)를 요구한다.
+    // 일정형에서 넘어온「해당없음」잔존값·1사1교용 가짜 id 는 비워서 재선택을 유도한다.
     setDetailedProgramId('')
     patchProgramRegistrationOverlay({ [detailedNameKey]: '' })
   }, [
@@ -91,11 +96,14 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
     trainedTeachersDefaults,
   ])
 
-  const detailedProgramOptions = useMemo(() => {
-    const withNone = withDetailedProgramNoneOption(remoteDetailedProgramOptions)
-    if (!trainedTeachersDefaults || lockDetailedProgramToNone) return withNone
-    return remoteDetailedProgramOptions
-  }, [lockDetailedProgramToNone, remoteDetailedProgramOptions, trainedTeachersDefaults])
+  // 「해당없음」은 일정형(잠금)에서만 유효 — 커리큘럼형·TT 옵션에는 노출하지 않는다.
+  const detailedProgramOptions = useMemo(
+    () =>
+      lockDetailedProgramToNone
+        ? withDetailedProgramNoneOption(remoteDetailedProgramOptions)
+        : remoteDetailedProgramOptions,
+    [lockDetailedProgramToNone, remoteDetailedProgramOptions]
+  )
 
   const setDetailedProgramSelection = (nextId: string) => {
     setDetailedProgramId(nextId)

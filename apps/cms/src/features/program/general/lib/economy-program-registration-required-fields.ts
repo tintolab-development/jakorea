@@ -16,9 +16,9 @@ import {
   shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph,
 } from '@/features/program/general/lib/institution-application-form-visibility'
 import { hasIncompleteGeneralProgramRecruitmentRequiredFields } from '@/features/program/general/lib/registration-recruitment-required-fields'
+import { isDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 
 const ALL = '__all__'
-const DETAILED_MAIN = '__economy_1c1s_main__'
 
 function isEmptyText(value: unknown): boolean {
   return typeof value !== 'string' || value.trim() === ''
@@ -76,7 +76,8 @@ function findIncompleteEconomyBasicInfoReason(
   if (isEmptyText(readText(overlay, `${p}.repEn`, '1 Company 1 School Economics and Finance Education')))
     return 'basicInfo.repEn'
   if (isEmptyText(read(overlay, `${p}.publicProgramTitle`))) return 'basicInfo.publicProgramTitle'
-  if (isEmptyText(readText(overlay, `${p}.detailedProgramId`, DETAILED_MAIN)))
+  // 1사1교는 BE에 CURRICULUM 으로 전송 → 세부 프로그램 마스터 id(숫자) 필수. sentinel·「해당없음」은 미완료.
+  if (!isDetailedProgramMasterId(read(overlay, `${p}.detailedProgramId`)))
     return 'basicInfo.detailedProgramId'
   if (isRangeSealIncomplete(read(overlay, `${p}.operationRangeSeal`)))
     return 'basicInfo.operationRangeSeal'

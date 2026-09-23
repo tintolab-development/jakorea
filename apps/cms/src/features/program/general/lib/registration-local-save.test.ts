@@ -60,7 +60,7 @@ describe('buildGeneralProgramListRowFromRegistrationSnapshot — 세부 프로�
 
   it('1사1교 — 수동 선택한 세부 프로그램명이 그대로 저장된다 (1사1교는 커리큘럼형 고정)', () => {
     replaceProgramRegistrationOverlay({
-      'economyRegistration.basicInfo.detailedProgramId': 'dp-3',
+      'economyRegistration.basicInfo.detailedProgramId': '163003',
       'economyRegistration.basicInfo.detailedProgramName': '1사1교 실제 선택 세부 프로그램명',
     })
 
@@ -75,7 +75,7 @@ describe('buildGeneralProgramListRowFromRegistrationSnapshot — 세부 프로�
     expect(program.generalCommonInfo?.detailedProgramName).toBe('1사1교 실제 선택 세부 프로그램명')
     // 버그 수정 확인: name만 반영되고 top-level detailedProgramId는 세팅되지 않아
     // 실제 요청에서 항상 빠지던 문제 (BE가 id로 조회 → "세부 프로그램명 없음" 오류)
-    expect(program.detailedProgramId).toBe('dp-3')
+    expect(program.detailedProgramId).toBe('163003')
     // 1사1교는 「교육 진행 구조」 선택 자체가 없다 — 항상 curriculum으로 고정된다
     expect(program.generalProgramEducationStructure).toBe('curriculum')
   })
