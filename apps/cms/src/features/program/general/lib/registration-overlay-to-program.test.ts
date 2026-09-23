@@ -110,6 +110,7 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
     expect(next.businessArea).toBe('진로취업')
     expect(next.partnerInvolvement).toBe(true)
     expect(next.institutionType).toBe('outside_school')
+    expect(next.generalCommonInfo?.venueKind).toBe('outside')
     expect(next.generalCommonInfo?.venueDetail).toBe('강의실 A')
     expect(next.partnerInvolvement).toBe(true)
     expect(next.generalCommonInfo?.paymentItems).toBe('해당없음')
@@ -140,6 +141,10 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
     expect(next.generalCommonInfo?.participationMethod).toBeUndefined()
     expect(next.type).toBe('offline')
     expect(next.ips).toBe('Prepare')
+    expect(next.generalCommonInfo?.educationScheduleLines).toEqual([
+      '26년 9월 16일(수) 9:22 ~ 10:22',
+      '26년 9월 24일(목) 9:19 ~ 10:19',
+    ])
   })
 
   it('keeps participationMethod for individual audience programs', () => {

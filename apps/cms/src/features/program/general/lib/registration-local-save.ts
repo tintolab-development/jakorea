@@ -286,7 +286,6 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     startTime: '09:00',
     endTime: '18:00',
     studentListRequired,
-    textbookName: scheduleDetailedProgramName,
     teamDivision: scheduleDetailedProgramName,
     generalProgramAudience,
     // 교육받은 교사 — 일반과 동일하게 등록 UI의 교육 진행 구조·회차 유형 반영 (1사1교만 curriculum 고정)
@@ -369,14 +368,17 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
       registrationOverlay
     )
     flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-    return applyGeneralRecruitOverlayToProgram(
-      withEconomyRegistration,
-      {
-        ...getApplicantRecruitInstitutionOverlayRecord(),
-        ...getGeneralRecruitOverlayRecord(),
-      },
-      { preferOverlay: true }
-    )
+    return {
+      ...applyGeneralRecruitOverlayToProgram(
+        withEconomyRegistration,
+        {
+          ...getApplicantRecruitInstitutionOverlayRecord(),
+          ...getGeneralRecruitOverlayRecord(),
+        },
+        { preferOverlay: true }
+      ),
+      registrationOverlay,
+    }
   }
 
   const overlay = normalizeRegistrationOverlayForApply(
@@ -404,7 +406,12 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     { preferOverlay: true }
   )
 
-  if (!isTrainedTeachers) return withRecruit
+  if (!isTrainedTeachers) {
+    return {
+      ...withRecruit,
+      registrationOverlay: getProgramRegistrationOverlayRecord(),
+    }
+  }
 
   // BE 계약: teacherTrainingEnabled / educationJournalEnabled는 create 시 항상 명시
   const journalRaw =
@@ -425,6 +432,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   const recruitment = withRecruit.generalCommonInfo?.participantRecruitmentInfo
   return {
     ...withRecruit,
+    registrationOverlay: getProgramRegistrationOverlayRecord(),
     generalParticipantTypes: ['school_institution'],
     generalProgramAudience: 'organization',
     generalCommonInfo: {

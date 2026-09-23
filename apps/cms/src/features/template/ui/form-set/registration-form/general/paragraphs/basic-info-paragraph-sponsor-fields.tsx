@@ -272,7 +272,9 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
       return
     }
     const optionValues = new Set(managerSelectOptions.map(option => option.value))
-    const kept = managerContactIds.filter(id => optionValues.has(id))
+    const kept = managerContactIds.filter(
+      id => optionValues.has(id) || isSponsorContactUnselected(id)
+    )
     if (kept.length === managerContactIds.length) return
     setManagerContactIds(kept)
   }, [

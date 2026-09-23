@@ -26,6 +26,14 @@ import {
   TEMPLATE_FORM_PARTNER_INVOLVEMENT_OPTIONS,
 } from '@/features/template/lib/template-form-select-options'
 import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
+import { PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import {
+  getSettlementConfigRemote,
+  type SettlementConfigQueryData,
+} from '@/features/settlement-management/api/settlement-configs/admin-settlement-configs-service'
+import { settlementQueryKeys } from '@/features/settlement-management/api/settlement-query-keys'
+import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
+import { queryClient } from '@/shared/lib/query-client'
 import {
   GENERAL_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
   GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
@@ -688,12 +696,46 @@ async function resolveDetailedProgram(
   return { id: picked.value, name: picked.label }
 }
 
-function pickPaymentItemValues(): string[] {
-  const options = getTemplateRegistrationPaymentItemOptions()
-  if (options.length === 0) return []
+/**
+ * 폼 셀렉트와 같은 소스에서 지급 항목을 고른다.
+ * remote 정산 설정이 켜져 있으면 API 카탈로그(캐시 우선), 아니면 mock.
+ * mock id(`p-1`)를 remote 옵션에 넣으면 셀렉트가 옵션 밖 값으로 보인다.
+ */
+async function resolvePaymentItemOptions(): Promise<{ value: string; label: string }[]> {
+  if (shouldUseSettlementRemote('settlementConfigs')) {
+    try {
+      const cached = queryClient.getQueryData<SettlementConfigQueryData>(
+        settlementQueryKeys.settlementConfigs.current()
+      )
+      if (cached?.sections?.length) {
+        const fromCache = getTemplateRegistrationPaymentItemOptions(cached.sections)
+        if (fromCache.length > 0) return fromCache
+      }
+      const { sections } = await getSettlementConfigRemote()
+      if (sections.length > 0) {
+        const fromRemote = getTemplateRegistrationPaymentItemOptions(sections)
+        if (fromRemote.length > 0) return fromRemote
+      }
+    } catch {
+      /* remote 실패 시 mock 폴백 */
+    }
+  }
+  return getTemplateRegistrationPaymentItemOptions()
+}
+
+async function pickPaymentItemSelection(): Promise<{ ids: string[]; labels: string }> {
+  const options = await resolvePaymentItemOptions()
+  if (options.length === 0) return { ids: [], labels: '' }
   const count = Math.min(options.length, pickInt(1, 2))
   const shuffled = [...options].sort(() => Math.random() - 0.5)
-  return shuffled.slice(0, count).map(option => option.value)
+  const picked = shuffled.slice(0, count)
+  return {
+    ids: picked.map(option => option.value),
+    labels: picked
+      .map(option => option.label.trim())
+      .filter(Boolean)
+      .join(', '),
+  }
 }
 
 const EDUCATION_FORM_VALUES = ['online', 'offline', 'hybrid'] as const
@@ -867,6 +909,7 @@ function buildGeneralLikeOverlay(
     detailedProgramId: string
     detailedProgramName: string
     paymentItemValues: string[]
+    paymentItemLabels: string
   }
 ): Record<string, unknown> {
   const detailCount = rowCount(layout.scheduleCurriculumDetailCount)
@@ -903,6 +946,8 @@ function buildGeneralLikeOverlay(
     'generalRegistration.wageInfo.grade2Fee': sample.wages.grade2,
     'generalRegistration.wageInfo.grade3Fee': sample.wages.grade3,
     'generalRegistration.wageInfo.paymentItemValues': resolved.paymentItemValues,
+    'generalRegistration.wageInfo.paymentItemLabels':
+      resolved.paymentItemLabels || PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
     [`${typeSettingsPrefix}.ipsType`]: {
       category: sample.ipsCategory,
       detail: sample.ipsDetail,
@@ -981,6 +1026,7 @@ function buildEconomyOverlay(
     contactId: string
     detailedProgramId: string
     detailedProgramName: string
+    paymentItemValues: string[]
   }
 ): Record<string, unknown> {
   const p = 'economyRegistration.basicInfo'
@@ -1018,6 +1064,7 @@ function buildEconomyOverlay(
     'economyRegistration.wageInfo.grade2DistanceFee': sample.wages.grade2Distance,
     'economyRegistration.wageInfo.grade3Fee': sample.wages.grade3,
     'economyRegistration.wageInfo.grade3DistanceFee': sample.wages.grade3Distance,
+    'economyRegistration.wageInfo.paymentItemValues': resolved.paymentItemValues,
   }
 }
 
@@ -1276,10 +1323,11 @@ export async function applyDevProgramRegistrationAutofill(
   }
 
   if (variant === 'economy') {
-    const [sponsorContact, detailedProgram] = await Promise.all([
+    const [sponsorContact, detailedProgram, paymentItems] = await Promise.all([
       resolveSponsorAndContact(true),
       // 1사1교는 항상 커리큘럼형 → 「해당없음」 불가, 카탈로그의 대표 프로그램 우선
       resolveDetailedProgram({ includeNone: false, preferLabel: ECONOMY_DETAILED_PROGRAM_MAIN_LABEL }),
+      pickPaymentItemSelection(),
     ])
     const contactSelectId = toSponsorContactSelectValue(
       sponsorContact.sponsorId,
@@ -1292,6 +1340,7 @@ export async function applyDevProgramRegistrationAutofill(
         contactId: contactSelectId,
         detailedProgramId: detailedProgram.id,
         detailedProgramName: detailedProgram.name,
+        paymentItemValues: paymentItems.ids,
       }),
       'generalRegistration.typeSettings.ipsType': {
         category: sample.ipsCategory,
@@ -1310,7 +1359,7 @@ export async function applyDevProgramRegistrationAutofill(
     }
   }
 
-  const [sponsorContact, detailedProgram] = await Promise.all([
+  const [sponsorContact, detailedProgram, paymentItems] = await Promise.all([
     resolveSponsorAndContact(false),
     // 「해당없음」은 일반 일정형에서만 유효. 교육받은 교사는 카탈로그의 대표 프로그램 우선.
     resolveDetailedProgram(
@@ -1318,13 +1367,15 @@ export async function applyDevProgramRegistrationAutofill(
         ? { includeNone: false, preferLabel: ECONOMY_DETAILED_PROGRAM_MAIN_LABEL }
         : { includeNone: typeSettings.programType === 'schedule' }
     ),
+    pickPaymentItemSelection(),
   ])
   const resolved = {
     ...sponsorContact,
     contactId: toSponsorContactSelectValue(sponsorContact.sponsorId, sponsorContact.contactId, true),
     detailedProgramId: detailedProgram.id,
     detailedProgramName: detailedProgram.name,
-    paymentItemValues: pickPaymentItemValues(),
+    paymentItemValues: paymentItems.ids,
+    paymentItemLabels: paymentItems.labels,
   }
 
   if (variant === 'trainedTeachers') {

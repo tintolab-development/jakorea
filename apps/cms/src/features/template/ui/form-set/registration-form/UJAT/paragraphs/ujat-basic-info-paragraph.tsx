@@ -16,7 +16,10 @@ import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import {
   isSponsorContactUnselected,
+  isSponsorContactUnselectedLabel,
   normalizeSponsorContactUnselectedSelection,
+  SPONSOR_CONTACT_UNSELECTED_LABEL,
+  SPONSOR_CONTACT_UNSELECTED_VALUE,
   withSponsorContactUnselectedOption,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
@@ -161,7 +164,7 @@ export function UjatBasicInfoParagraph() {
     'ujat.basicInfo.sponsorContactIds',
     []
   )
-  const [, setSponsorManagerName] = useUjatProgramRegistrationOverlayKv(
+  const [sponsorManagerName, setSponsorManagerName] = useUjatProgramRegistrationOverlayKv(
     'ujat.basicInfo.sponsorManagerName',
     ''
   )
@@ -221,15 +224,29 @@ export function UjatBasicInfoParagraph() {
   }, [contactsQuery.data, contactsQuery.isError, contactsQuery.isSuccess, sponsorId])
 
   const selectedSponsorContactIds = useMemo(() => {
-    if (Array.isArray(sponsorContactIds) && sponsorContactIds.length > 0) {
-      return [...new Set(sponsorContactIds.map(String).map(id => id.trim()).filter(Boolean))]
+    const stored = [
+      ...new Set(
+        [
+          ...(Array.isArray(sponsorContactIds) ? sponsorContactIds : []),
+          sponsorContactId,
+        ]
+          .map(id => String(id ?? '').trim())
+          .filter(Boolean)
+      ),
+    ]
+    if (stored.some(id => isSponsorContactUnselected(id))) {
+      return [SPONSOR_CONTACT_UNSELECTED_VALUE]
     }
+    if (isSponsorContactUnselectedLabel(sponsorManagerName)) {
+      return [SPONSOR_CONTACT_UNSELECTED_VALUE]
+    }
+    if (stored.length > 0 && stored.every(id => id !== UJAT_SPONSOR_ALL_VALUE)) return stored
     if (sponsorContactId && sponsorContactId !== UJAT_SPONSOR_ALL_VALUE) return [sponsorContactId]
     if (sponsorContactId === UJAT_SPONSOR_ALL_VALUE && sponsorId === UJAT_SPONSOR_ALL_VALUE) {
       return [UJAT_SPONSOR_ALL_VALUE]
     }
     return []
-  }, [sponsorContactId, sponsorContactIds, sponsorId])
+  }, [sponsorContactId, sponsorContactIds, sponsorId, sponsorManagerName])
 
   const applySponsorContactIds = (next: string[]) => {
     const unique = normalizeSponsorContactUnselectedSelection(next, selectedSponsorContactIds)
@@ -240,7 +257,11 @@ export function UjatBasicInfoParagraph() {
       .filter(id => id !== UJAT_SPONSOR_ALL_VALUE && !isSponsorContactUnselected(id))
       .map(id => managerOptions.find(o => o.value === id)?.label ?? '')
       .filter(Boolean)
-    setSponsorManagerName(labels.join(', '))
+    setSponsorManagerName(
+      unique.length > 0 && unique.every(id => isSponsorContactUnselected(id))
+        ? SPONSOR_CONTACT_UNSELECTED_LABEL
+        : labels.join(', ')
+    )
   }
 
   const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)

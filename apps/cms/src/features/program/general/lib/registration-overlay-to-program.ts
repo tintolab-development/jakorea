@@ -543,8 +543,7 @@ export function applyGeneralRegistrationOverlayToProgram(
   const titleEn = overlayString(overlay, `${BASIC}.programTitleEn`) || program.titleEn
   const announcementTitle =
     overlayString(overlay, `${BASIC}.publicProgramTitle`) ||
-    program.generalCommonInfo?.announcementTitle ||
-    titleKo
+    program.generalCommonInfo?.announcementTitle
 
   const seal = readOperationRangeSeal(overlay)
   let startDate = program.startDate
@@ -562,7 +561,11 @@ export function applyGeneralRegistrationOverlayToProgram(
   const partnerInvolvement =
     partnerRaw === 'no' ? false : partnerRaw === 'yes' ? true : true
 
-  const venueKind = overlayString(overlay, `${BASIC}.educationVenueKind`) || 'inside'
+  const rawVenueKind = overlayString(overlay, `${BASIC}.educationVenueKind`)
+  const venueKind =
+    rawVenueKind === 'outside' || rawVenueKind === 'other' || rawVenueKind === 'inside'
+      ? rawVenueKind
+      : 'inside'
   const venueDetail = overlayString(overlay, `${BASIC}.educationVenueDetail`)
   const institutionType =
     venueKind === 'inside'
@@ -709,9 +712,16 @@ export function applyGeneralRegistrationOverlayToProgram(
         : resolveDetailedProgramName(overlay, detailedProgramId))
 
   const scheduleLinesRaw = overlay[GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]
-  const educationScheduleLines = Array.isArray(scheduleLinesRaw)
-    ? scheduleLinesRaw.filter((line): line is string => typeof line === 'string').map(s => s.trim()).filter(Boolean)
-    : program.generalCommonInfo?.educationScheduleLines
+  const overlayScheduleLines = Array.isArray(scheduleLinesRaw)
+    ? scheduleLinesRaw
+        .filter((line): line is string => typeof line === 'string')
+        .map(s => s.trim())
+        .filter(Boolean)
+    : []
+  const educationScheduleLines =
+    overlayScheduleLines.length > 0
+      ? overlayScheduleLines
+      : program.generalCommonInfo?.educationScheduleLines
 
   const rounds =
     seal && program.rounds?.length
@@ -764,6 +774,7 @@ export function applyGeneralRegistrationOverlayToProgram(
       ...program.generalCommonInfo,
       announcementTitle,
       detailedProgramName,
+      venueKind,
       venueDetail: venueDetail || program.generalCommonInfo?.venueDetail,
       sponsorManagementId: sponsorManagementIds?.[0] ?? program.generalCommonInfo?.sponsorManagementId,
       sponsorManagementIds: sponsorManagementIds ?? program.generalCommonInfo?.sponsorManagementIds,
