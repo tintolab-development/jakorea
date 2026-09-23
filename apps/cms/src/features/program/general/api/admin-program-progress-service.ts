@@ -280,10 +280,8 @@ export async function downloadGeneralProgramLectureReports(
   const { downloadFromBulkEndpoint } = await import(
     '@/features/user/api/download-bulk-endpoint'
   )
-  const { getFileDownload, fetchFileContentBlob } = await import(
-    '@/shared/lib/admin-file-upload'
-  )
-  const { downloadBlob, generateFilename } = await import('@/shared/utils/file-download')
+  const { downloadAdminFile } = await import('@/shared/lib/admin-file-upload')
+  const { generateFilename } = await import('@/shared/utils/file-download')
 
   const job = await downloadProgramLectureReportsRemote(programId, {
     instructorMemberId: options?.instructorMemberId,
@@ -294,18 +292,10 @@ export async function downloadGeneralProgramLectureReports(
     return
   }
   if (job.fileObjectId != null) {
-    try {
-      const resolved = await getFileDownload(job.fileObjectId)
-      const url = resolved.downloadUrl?.trim()
-      if (url) {
-        await downloadFromBulkEndpoint(url, '강의보고서_일괄', 'zip')
-        return
-      }
-    } catch {
-      /* fall through to content blob */
-    }
-    const blob = await fetchFileContentBlob(job.fileObjectId)
-    await downloadBlob(blob, generateFilename('강의보고서_일괄', 'zip'))
+    await downloadAdminFile({
+      fileObjectId: job.fileObjectId,
+      fileName: generateFilename('강의보고서_일괄', 'zip'),
+    })
     return
   }
   throw new Error('강의보고서 다운로드 URL이 없습니다.')
@@ -321,28 +311,15 @@ export async function downloadGeneralProgramLectureReportFiles(
   if (ids.length === 0) {
     throw new Error('다운로드할 강의보고서 파일이 없습니다.')
   }
-  const { getFileDownload, fetchFileContentBlob } = await import(
-    '@/shared/lib/admin-file-upload'
-  )
-  const { downloadFromBulkEndpoint } = await import(
-    '@/features/user/api/download-bulk-endpoint'
-  )
-  const { downloadBlob, generateFilename } = await import('@/shared/utils/file-download')
+  const { downloadAdminFile } = await import('@/shared/lib/admin-file-upload')
+  const { generateFilename } = await import('@/shared/utils/file-download')
 
   for (const [index, fileObjectId] of ids.entries()) {
     const prefix = ids.length > 1 ? `${filenamePrefix}_${index + 1}` : filenamePrefix
-    try {
-      const resolved = await getFileDownload(fileObjectId)
-      const url = resolved.downloadUrl?.trim()
-      if (url) {
-        await downloadFromBulkEndpoint(url, prefix, 'pdf')
-        continue
-      }
-    } catch {
-      /* fall through */
-    }
-    const blob = await fetchFileContentBlob(fileObjectId)
-    await downloadBlob(blob, generateFilename(prefix, 'pdf'))
+    await downloadAdminFile({
+      fileObjectId,
+      fileName: generateFilename(prefix, 'pdf'),
+    })
   }
 }
 
