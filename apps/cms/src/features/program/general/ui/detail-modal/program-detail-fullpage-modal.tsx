@@ -39,6 +39,7 @@ import { formatZodIssuesForUser } from '@/features/program/shared/lib/format-zod
 import {
   programInstructorRecruitmentSaveSchema,
   programParticipantRecruitmentSaveSchema,
+  programTrainedTeachersRecruitmentSaveSchema,
 } from '@/features/program/general/lib/program-recruitment-save-fields'
 import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
 import {
@@ -1291,7 +1292,9 @@ export function ProgramDetailFullPageModal({
     form: institutionsForm,
     program: displayProgram ?? ({} as Program),
     // 모집 탭은 공통정보 필수값(설명·후원사 등) 검증 제외 — 일반 상세와 동일
-    validateSchema: programParticipantRecruitmentSaveSchema,
+    validateSchema: isTrainedTeachersDetail
+      ? programTrainedTeachersRecruitmentSaveSchema
+      : programParticipantRecruitmentSaveSchema,
     onSaveEdit:
       displayProgram
         ? async (draft, patch) => {
@@ -1480,9 +1483,10 @@ export function ProgramDetailFullPageModal({
       setEditMode(null)
       return
     }
-    const validation = programParticipantRecruitmentSaveSchema.safeParse(
-      institutionsForm.getValues()
-    )
+    const recruitSaveSchema = isTrainedTeachersDetail
+      ? programTrainedTeachersRecruitmentSaveSchema
+      : programParticipantRecruitmentSaveSchema
+    const validation = recruitSaveSchema.safeParse(institutionsForm.getValues())
     if (!validation.success) {
       void showAlert({
         title: '입력 확인',

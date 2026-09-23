@@ -20,6 +20,9 @@
  */
 
 import {
+  formatDateOnly,
+  formatDateRange,
+  formatTargetLevelsLabel,
   normalizeTargetLevelValue,
   resolveProgramInstructorTargets,
   resolveProgramTargetLevels,
@@ -44,6 +47,7 @@ import {
   PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import { formatZodIssuesForUser } from '@/features/program/shared/lib/format-zod-validation-message'
+import { looksLikeTrainedTeacherProgramId } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
 import type { TargetLevel } from '@/types/domain'
 
 const roundStatusEnum = z.enum(['active', 'inactive', 'pending', 'completed', 'cancelled'])
@@ -271,6 +275,8 @@ const programDetailEditSchemaBase = z.object({
   remarks: z.string().optional(),
   /** 교육 대상 상세 (BE educationTargetDetail) — district 와 분리 */
   educationTargetDetail: z.string().optional(),
+  /** 참여자 모집 문의처 기관명 (nested contactOrganizationName) */
+  recruitmentContactOrganizationName: z.string().optional(),
   keyVisualImage: z.string().optional(),
   posterImage: z.string().optional(),
   description: z.string().min(1, '프로그램 설명을 입력해주세요'),
@@ -479,6 +485,28 @@ function parseWageAmountFromPricing(pricing: string | undefined, kind: 'regular'
   return target?.match(/([\d,]+)\s*원/)?.[1]
 }
 
+function periodLabelFromRange(
+  start: string | Date | undefined,
+  end: string | Date | undefined
+): string | undefined {
+  const startText = typeof start === 'string' ? start.trim() : start
+  const endText = typeof end === 'string' ? end.trim() : end
+  if (!startText || !endText) return undefined
+  const label = formatDateRange(startText, endText)
+  return label === '-' ? undefined : label
+}
+
+function finalAnnouncementLabelFromParts(
+  dateIso: string | Date | undefined,
+  method: string | undefined
+): string | undefined {
+  const parts = [
+    dateIso ? formatDateOnly(dateIso) : undefined,
+    method?.trim() || undefined,
+  ].filter((part): part is string => Boolean(part) && part !== '-')
+  return parts.length > 0 ? parts.join(' | ') : undefined
+}
+
 function formatCompanySchoolWageAmount(amount: string | number | undefined): string {
   if (amount == null || amount === '') return ''
   const num = typeof amount === 'number' ? amount : Number(String(amount).replace(/,/g, ''))
@@ -565,10 +593,21 @@ export function programToDetailEditValues(
         '',
     })[0],
     managerName: program.managerName ?? '',
-    contactPhone: program.contactPhone
-      ? formatKoreanPhoneNumber(program.contactPhone)
-      : undefined,
-    contactEmail: program.contactEmail ?? undefined,
+    contactPhone: (() => {
+      const raw =
+        program.contactPhone?.trim() ||
+        program.generalCommonInfo?.participantRecruitmentInfo?.inquiryTel?.trim() ||
+        program.generalCommonInfo?.participantRecruitmentInfo?.contactPhone?.trim()
+      return raw ? formatKoreanPhoneNumber(raw) : undefined
+    })(),
+    contactEmail:
+      program.contactEmail?.trim() ||
+      program.generalCommonInfo?.participantRecruitmentInfo?.inquiryEmail?.trim() ||
+      program.generalCommonInfo?.participantRecruitmentInfo?.contactEmail?.trim() ||
+      undefined,
+    recruitmentContactOrganizationName:
+      program.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName?.trim() ||
+      undefined,
     venueKind: resolveVenueKind(program),
     venueDetail:
       program.generalCommonInfo?.venueDetail?.trim() ||
@@ -851,27 +890,58 @@ export function detailEditValuesToProgramPatch(
   const representativeTitleKo = values.mainTitle ?? existing.mainTitle ?? existing.title
   const isUjat =
     existing.ujatProgressStatus != null || existing.ujatRegistrationOverlay != null
+
+  const announcementPublished =
+    announcementPublishedFromFormValue(values.participantRecruitmentAnnouncementPublished) ??
+    existing.generalCommonInfo?.participantRecruitmentInfo?.announcementPublished
+  const studentListRequired =
+    values.studentListRequired ?? existing.studentListRequired
+  const startDate = values.startDate ?? existing.startDate
+  const endDate = values.endDate ?? existing.endDate
+  const applicationStartDate = values.applicationStartDate
+  const applicationEndDate = values.applicationEndDate
+  const resultAnnouncementDate =
+    values.resultAnnouncementDate ?? existing.resultAnnouncementDate
+  const resultAnnouncementMethod =
+    values.resultAnnouncementMethod ?? existing.resultAnnouncementMethod
+  const targetLabel =
+    values.targetLevels && values.targetLevels.length > 0
+      ? formatTargetLevelsLabel(values.targetLevels)
+      : undefined
+  const recruitmentPeriodLabel =
+    periodLabelFromRange(applicationStartDate, applicationEndDate) ??
+    existing.generalCommonInfo?.participantRecruitmentInfo?.recruitmentPeriodLabel
+  const operationPeriodLabel =
+    periodLabelFromRange(startDate, endDate) ??
+    existing.generalCommonInfo?.participantRecruitmentInfo?.operationPeriodLabel
+  const contactPhone = values.contactPhone ?? existing.contactPhone
+  const contactEmail = values.contactEmail ?? existing.contactEmail
+  const isTrainedTeacherProgram = looksLikeTrainedTeacherProgramId(existing.id)
+  const contactOrganizationName =
+    values.recruitmentContactOrganizationName?.trim() ||
+    existing.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName
+
   return {
     title: isUjat ? existing.title : representativeTitleKo,
     textbookName: existing.textbookName,
-    startDate: values.startDate ?? existing.startDate,
-    endDate: values.endDate ?? existing.endDate,
+    startDate,
+    endDate,
     category: values.category,
     targetLevels: values.targetLevels?.length ? values.targetLevels : undefined,
     targetLevel: values.targetLevels?.[0],
     district: values.district,
     type: values.type,
     lifecycleStatus: values.lifecycleStatus ?? existing.lifecycleStatus,
-    applicationStartDate: values.applicationStartDate,
-    applicationEndDate: values.applicationEndDate,
+    applicationStartDate,
+    applicationEndDate,
     businessArea: values.businessArea,
     sponsorId:
       values.sponsorId ||
       values.sponsorManagementIds?.[0] ||
       existing.sponsorId,
     managerName: values.managerName,
-    contactPhone: values.contactPhone,
-    contactEmail: values.contactEmail,
+    contactPhone,
+    contactEmail,
     institutionType:
       values.venueKind === 'outside'
         ? 'outside_school'
@@ -894,9 +964,9 @@ export function detailEditValuesToProgramPatch(
     learningSupportContent: values.learningSupportContent,
     attachmentFileNames: values.attachmentFileNames,
     rounds: values.rounds as ProgramRound[],
-    resultAnnouncementDate: values.resultAnnouncementDate ?? existing.resultAnnouncementDate,
-    resultAnnouncementMethod: values.resultAnnouncementMethod ?? existing.resultAnnouncementMethod,
-    studentListRequired: values.studentListRequired ?? existing.studentListRequired,
+    resultAnnouncementDate,
+    resultAnnouncementMethod,
+    studentListRequired,
     totalParticipants: clampJavaInt(
       values.kpiFinalParticipants ?? existing.totalParticipants
     ),
@@ -1071,11 +1141,23 @@ export function detailEditValuesToProgramPatch(
       },
       participantRecruitmentInfo: {
         ...existing.generalCommonInfo?.participantRecruitmentInfo,
-        announcementPublished:
-          announcementPublishedFromFormValue(values.participantRecruitmentAnnouncementPublished) ??
-          existing.generalCommonInfo?.participantRecruitmentInfo?.announcementPublished,
-        preEducationNoticeRequired:
-          values.participantRecruitmentPreEducationRequired === 'required'
+        announcementPublished,
+        announcementPublishedLabel:
+          announcementPublished === true
+            ? '게시'
+            : announcementPublished === false
+              ? '미게시'
+              : existing.generalCommonInfo?.participantRecruitmentInfo?.announcementPublishedLabel,
+        studentListRequired,
+        studentListRequiredLabel:
+          studentListRequired === 'required'
+            ? '제출 필요'
+            : studentListRequired === 'not_required'
+              ? '제출 불필요'
+              : existing.generalCommonInfo?.participantRecruitmentInfo?.studentListRequiredLabel,
+        preEducationNoticeRequired: isTrainedTeacherProgram
+          ? false
+          : values.participantRecruitmentPreEducationRequired === 'required'
             ? true
             : values.participantRecruitmentPreEducationRequired === 'not_required'
               ? false
@@ -1086,9 +1168,10 @@ export function detailEditValuesToProgramPatch(
             : values.participantRecruitmentCertificateProvided === 'not_provided'
               ? false
               : existing.generalCommonInfo?.participantRecruitmentInfo?.certificateIssuanceProvided,
-        maxAssignableInstructors:
-          values.participantRecruitmentMaxInstructors ??
-          existing.generalCommonInfo?.participantRecruitmentInfo?.maxAssignableInstructors,
+        maxAssignableInstructors: isTrainedTeacherProgram
+          ? 0
+          : values.participantRecruitmentMaxInstructors ??
+            existing.generalCommonInfo?.participantRecruitmentInfo?.maxAssignableInstructors,
         maxClassCount:
           values.participantRecruitmentMaxClassCount ??
           existing.generalCommonInfo?.participantRecruitmentInfo?.maxClassCount,
@@ -1110,9 +1193,33 @@ export function detailEditValuesToProgramPatch(
             ? undefined
             : (values.remarks?.trim() ||
               existing.generalCommonInfo?.participantRecruitmentInfo?.remarks),
+        educationTarget:
+          targetLabel && targetLabel !== '-'
+            ? targetLabel
+            : existing.generalCommonInfo?.participantRecruitmentInfo?.educationTarget,
+        recruitmentTarget:
+          targetLabel && targetLabel !== '-'
+            ? targetLabel
+            : existing.generalCommonInfo?.participantRecruitmentInfo?.recruitmentTarget,
         educationTargetDetail:
           values.educationTargetDetail?.trim() ||
           existing.generalCommonInfo?.participantRecruitmentInfo?.educationTargetDetail,
+        recruitmentPeriodLabel,
+        operationPeriodLabel,
+        resultAnnouncementLabel: finalAnnouncementLabelFromParts(
+          resultAnnouncementDate,
+          resultAnnouncementMethod
+        ),
+        finalAnnouncementLabel: finalAnnouncementLabelFromParts(
+          resultAnnouncementDate,
+          resultAnnouncementMethod
+        ),
+        inquiryTel: contactPhone?.trim() || existing.generalCommonInfo?.participantRecruitmentInfo?.inquiryTel,
+        inquiryEmail:
+          contactEmail?.trim() || existing.generalCommonInfo?.participantRecruitmentInfo?.inquiryEmail,
+        contactPhone: contactPhone?.trim() || existing.generalCommonInfo?.participantRecruitmentInfo?.contactPhone,
+        contactEmail: contactEmail?.trim() || existing.generalCommonInfo?.participantRecruitmentInfo?.contactEmail,
+        contactOrganizationName,
       },
       instructorRecruitmentInfo: {
         ...existing.generalCommonInfo?.instructorRecruitmentInfo,

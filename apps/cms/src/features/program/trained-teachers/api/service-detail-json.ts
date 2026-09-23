@@ -128,7 +128,15 @@ function sanitizeTrainedTeacherCommonInfo(
   )
     .map(id => String(id).trim())
     .filter(Boolean)
-  const detailedProgramName = common.detailedProgramName?.trim() || undefined
+  const detailedProgramName =
+    common.detailedProgramName?.trim() || program.textbookName?.trim() || undefined
+  const participantRecruitmentInfo = common.participantRecruitmentInfo
+    ? {
+        ...common.participantRecruitmentInfo,
+        maxAssignableInstructors: 0,
+        preEducationNoticeRequired: false,
+      }
+    : undefined
   return {
     ...(stripped as NonNullable<Program['generalCommonInfo']>),
     ...educationSelection,
@@ -139,6 +147,7 @@ function sanitizeTrainedTeacherCommonInfo(
         }
       : {}),
     ...(detailedProgramName ? { detailedProgramName } : {}),
+    ...(participantRecruitmentInfo ? { participantRecruitmentInfo } : {}),
     announcementTitle: common.announcementTitle?.trim() || undefined,
   }
 }
@@ -152,6 +161,8 @@ function trainedTeacherDetails(program: Program): Partial<Program> {
     participatingStudentCount: program.participatingStudentCount,
     applicationMethod: program.applicationMethod,
     otherNotes: program.otherNotes,
+    remarks: program.remarks,
+    educationTargetDetail: program.educationTargetDetail,
     resultAnnouncementDate: program.resultAnnouncementDate,
     resultAnnouncementMethod: program.resultAnnouncementMethod,
     studentListRequired: program.studentListRequired,

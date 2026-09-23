@@ -275,6 +275,41 @@ describe('trained-teacher info detail adapters', () => {
     expect(merged.generalCommonInfo?.announcementTitle).toBe('교육받은교사(수정4)')
   })
 
+  it('keeps participantRecruitmentInfo when GET detail omits it', () => {
+    const program = {
+      id: '186005',
+      title: 'TT',
+      remarks: '모집 비고 신값',
+      generalCommonInfo: {
+        announcementTitle: 'TT',
+        participantRecruitmentInfo: {
+          remarks: '모집 비고 신값',
+          educationTargetDetail: '초등학교 5~6학년',
+          contactOrganizationName: '수정문의처',
+          maxClassCount: 4,
+        },
+      },
+    } as Program
+    const merged = mergeTrainedTeacherInfoDetailIntoProgram(program, {
+      teacherTrainingEnabled: false,
+      educationJournalEnabled: false,
+      configJson: JSON.stringify({
+        schemaVersion: 1,
+        generalCommonInfo: {
+          teacherTrainingEnabled: false,
+          educationJournalEnabled: false,
+        },
+      }),
+    })
+    expect(merged.generalCommonInfo?.participantRecruitmentInfo).toMatchObject({
+      remarks: '모집 비고 신값',
+      educationTargetDetail: '초등학교 5~6학년',
+      contactOrganizationName: '수정문의처',
+      maxClassCount: 4,
+    })
+    expect(merged.remarks).toBe('모집 비고 신값')
+  })
+
   it('clears leftover 교육 연수 when GET schedule name is empty', () => {
     const patch = mapTrainedTeacherInfoDetailToProgramPatch({
       teacherTrainingEnabled: false,

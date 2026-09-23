@@ -249,3 +249,97 @@ describe('program detail title edit fields', () => {
     expect(patch.mainTitle).toBe('수정한 대표명')
   })
 })
+
+describe('trained teachers recruitment edit round-trip', () => {
+  const ttProgram = {
+    ...program,
+    id: '186005',
+    generalParticipantTypes: ['school_institution'],
+    generalProgramAudience: 'organization',
+    studentListRequired: 'not_required',
+    applicationStartDate: '2026-08-01T00:00:00.000Z',
+    applicationEndDate: '2026-08-31T00:00:00.000Z',
+    startDate: '2026-09-01T00:00:00.000Z',
+    endDate: '2026-11-30T00:00:00.000Z',
+    resultAnnouncementDate: '2026-08-31T00:00:00.000Z',
+    resultAnnouncementMethod: '담당교사 개별 안내',
+    contactPhone: '010-8681-6741',
+    contactEmail: 'bjh1234@tinto.co.kr',
+    targetLevels: ['elementary'],
+    educationTargetDetail: '초등학교 5~6학년',
+    remarks: 'TCH-05 로컬 데모',
+    generalCommonInfo: {
+      participantRecruitmentInfo: {
+        announcementPublished: true,
+        announcementPublishedLabel: '게시',
+        studentListRequired: 'not_required',
+        studentListRequiredLabel: '제출 불필요',
+        maxAssignableInstructors: 0,
+        maxClassCount: 1,
+        maxScheduleCount: 3,
+        maxSessionsPerDay: 8,
+        operationPeriodLabel: '2026-09-01 ~ 2026-11-30',
+        recruitmentPeriodLabel: '2026-08-01 ~ 2026-08-31',
+        finalAnnouncementLabel: '2026-08-31 | 담당교사 개별 안내',
+        educationTarget: '초등',
+        educationTargetDetail: '초등학교 5~6학년',
+        inquiryTel: '010-8681-6741',
+        inquiryEmail: 'bjh1234@tinto.co.kr',
+        remarks: 'TCH-05 로컬 데모',
+      },
+    },
+  } as Program
+
+  it('수정 가능한 모집 필드를 조회 SSOT(participantRecruitmentInfo)에 반영한다', async () => {
+    const { resolveGeneralProgramParticipantRecruitmentDisplay } = await import(
+      '@/features/program/general/lib/participant-recruitment-display'
+    )
+    const values = {
+      ...programToDetailEditValues(ttProgram),
+      participantRecruitmentAnnouncementPublished: 'unpublished' as const,
+      studentListRequired: 'required' as const,
+      participantRecruitmentMaxClassCount: 6,
+      participantRecruitmentMaxScheduleCount: 5,
+      participantRecruitmentMaxSessionsPerDay: 4,
+      applicationStartDate: '2026-10-01T00:00:00.000Z',
+      applicationEndDate: '2026-10-31T00:00:00.000Z',
+      startDate: '2026-11-01T00:00:00.000Z',
+      endDate: '2026-12-15T00:00:00.000Z',
+      targetLevels: ['middle' as const],
+      educationTargetDetail: '중학교 2학년',
+      resultAnnouncementDate: '2026-11-02T00:00:00.000Z',
+      resultAnnouncementMethod: '이메일 안내',
+      contactPhone: '010-1111-2222',
+      contactEmail: 'updated@tinto.co.kr',
+      recruitmentContactOrganizationName: '수정문의처',
+      remarks: '수정된 비고',
+    }
+
+    const patch = detailEditValuesToProgramPatch(values, ttProgram)
+    const draft = {
+      ...ttProgram,
+      ...patch,
+      generalCommonInfo: {
+        ...ttProgram.generalCommonInfo,
+        ...patch.generalCommonInfo,
+      },
+    } as Program
+
+    const display = resolveGeneralProgramParticipantRecruitmentDisplay(draft)
+    expect(display.announcementPublishedLabel).toBe('미게시')
+    expect(display.studentListLabel).toBe('제출 필요')
+    expect(display.maxClassLabel).toBe('6개')
+    expect(display.maxScheduleCountLabel).toBe('5개')
+    expect(display.maxSessionsPerDayLabel).toBe('4차시')
+    expect(display.recruitmentPeriodLabel).toContain('2026. 10. 01')
+    expect(display.operationPeriodLabel).toContain('2026. 11. 01')
+    expect(display.targetLabel).toBe('중학교')
+    expect(display.targetDetailLabel).toBe('중학교 2학년')
+    expect(display.finalAnnouncementLabel).toContain('이메일 안내')
+    expect(display.contactPhone).toBe('010-1111-2222')
+    expect(display.contactEmail).toBe('updated@tinto.co.kr')
+    expect(display.contactOrganizationName).toBe('수정문의처')
+    expect(display.notes).toBe('수정된 비고')
+    expect(draft.generalCommonInfo?.participantRecruitmentInfo?.maxAssignableInstructors).toBe(0)
+  })
+})

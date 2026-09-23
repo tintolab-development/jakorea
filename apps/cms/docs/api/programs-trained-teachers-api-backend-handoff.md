@@ -24,7 +24,8 @@ CMS `/programs/trained-teachers` FE 전환용 BE 계약입니다.
 | `PATCH` / `DELETE` | 동일 | type 보존 · 2xx |
 
 템플릿: `registration-trained-teachers`, `recruitment-trained-teachers`, `application-trained-teachers` (forms-surveys seeds).  
-신규 등록 플로우 FE↔BE 정렬: [trained-teacher-registration-flow-backend-prompt-2026-09-18.md](./trained-teacher-registration-flow-backend-prompt-2026-09-18.md)
+신규 등록 플로우 FE↔BE 정렬: [trained-teacher-registration-flow-backend-prompt-2026-09-18.md](./trained-teacher-registration-flow-backend-prompt-2026-09-18.md)  
+모집 정보 수정 라운드트립: [trained-teacher-recruitment-info-edit-roundtrip-backend-prompt-2026-09-23.md](./trained-teacher-recruitment-info-edit-roundtrip-backend-prompt-2026-09-23.md)
 
 ---
 
@@ -84,3 +85,4 @@ VITE_REAL_API_MODULES=adminAuth,formsSurveys,programs,trainedTeacherPrograms
 | 2026-07-16 | 초안 |
 | 2026-09-16 | approve/reject TT 전용 path로 정정 · journals/completions · 미확인 갭 문서 링크 |
 | 2026-09-18 | 등록 플로우 3종 템플릿(모집 포함) · [등록 BE 프롬프트](./trained-teacher-registration-flow-backend-prompt-2026-09-18.md) |
+| 2026-09-23 | 모집 정보 수정 라운드트립 BE 프롬프트 ([문서](./trained-teacher-recruitment-info-edit-roundtrip-backend-prompt-2026-09-23.md)). BE 회신 반영: PATCH overlay + B가 모집 JSON을 지우지 않음 |
