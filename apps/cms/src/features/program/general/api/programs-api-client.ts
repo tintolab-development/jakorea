@@ -40,9 +40,12 @@ export interface AdminProgramListItemDto {
   status?: string
   /** OpenAPI 예시 필드 — 일부 BE는 미설정 */
   nameKo?: string
-  /** 실제 목록 응답에서 주로 사용 (ProgramResponse와 동일) */
+  /** 실제 목록 응답에서 주로 사용 (ProgramResponse와 동일). 생성/관리명 */
   title?: string
+  /** 상세와 같은 대표 프로그램명(국문). 없으면 title로 폴백 */
   mainTitle?: string
+  /** 상세와 같은 대표 프로그램명(영문) */
+  titleEn?: string
   /**
    * typed 테이블「프로그램 진행 현황」축.
    * BE는 `periodStatus`와 동일 UI 버킷으로 내려줌.

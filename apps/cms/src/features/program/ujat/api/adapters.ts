@@ -121,6 +121,7 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
     id,
     title,
     mainTitle,
+    titleEn: dto.titleEn?.trim() || undefined,
     ...resolveBusinessPeriodDates(dto),
     lifecycleStatus,
     ujatProgressStatus,

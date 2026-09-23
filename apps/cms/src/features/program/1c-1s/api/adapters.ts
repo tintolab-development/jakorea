@@ -110,12 +110,13 @@ function baseProgram(
 }
 
 export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto): Program {
-  const title =
-    dto.mainTitle?.trim() || dto.nameKo?.trim() || dto.title?.trim() || '제목 없음'
+  const title = dto.title?.trim() || dto.nameKo?.trim() || '제목 없음'
+  const mainTitle = dto.mainTitle?.trim() || title
   return baseProgram({
     id: dto.id == null ? '' : String(dto.id),
     title,
-    mainTitle: dto.mainTitle?.trim() || title,
+    mainTitle,
+    titleEn: dto.titleEn?.trim() || undefined,
     ...resolveCompanySchoolOperationDates(dto),
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus: resolveCompanySchoolListLifecycle(dto),

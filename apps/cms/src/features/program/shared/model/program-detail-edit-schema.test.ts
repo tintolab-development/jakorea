@@ -312,7 +312,7 @@ describe('program detail title edit fields', () => {
     expect(values.detailedProgramName).toBeUndefined()
   })
 
-  it('대표 프로그램명 변경 시 title도 같은 값으로 보낸다', () => {
+  it('대표 프로그램명 변경은 mainTitle만 바꾸고 관리명(title)은 유지한다', () => {
     const values = {
       ...programToDetailEditValues({
         ...program,
@@ -328,7 +328,7 @@ describe('program detail title edit fields', () => {
       mainTitle: '생성 당시명',
     } as Program)
 
-    expect(patch.title).toBe('수정1')
+    expect(patch.title).toBe('생성 당시명')
     expect(patch.mainTitle).toBe('수정1')
   })
 

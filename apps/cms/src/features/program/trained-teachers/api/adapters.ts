@@ -177,8 +177,8 @@ function toOptionalNumber(value: unknown): number | undefined {
 
 export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto): Program {
   const item = dto as TrainedTeacherListItemDto
-  const title =
-    item.mainTitle?.trim() || item.nameKo?.trim() || item.title?.trim() || '제목 없음'
+  const title = item.title?.trim() || item.nameKo?.trim() || '제목 없음'
+  const mainTitle = item.mainTitle?.trim() || title
   const textbookName = item.textbookName?.trim() || undefined
   const detailedProgramName = item.detailedProgramName?.trim() || undefined
   const managerName = item.managerName?.trim() || undefined
@@ -190,7 +190,8 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
   return baseProgram({
     id: item.id == null ? '' : String(item.id),
     title,
-    mainTitle: item.mainTitle?.trim() || title,
+    mainTitle,
+    titleEn: item.titleEn?.trim() || undefined,
     ...resolveBusinessPeriodDates(item),
     lifecycleStatus: resolveListLifecycleStatus(item),
     targetLevel: targetLevels[0],

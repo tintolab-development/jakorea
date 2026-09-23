@@ -448,7 +448,10 @@ export function MypageEducationDetailPage() {
         }
         aside={
           showTeacherAssignment && application.teacherAssignment ? (
-            <TeacherEducationAssignmentAside assignment={application.teacherAssignment} />
+            <TeacherEducationAssignmentAside
+              applicationId={application.id}
+              assignment={application.teacherAssignment}
+            />
           ) : undefined
         }
       />

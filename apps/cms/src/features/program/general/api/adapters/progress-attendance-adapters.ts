@@ -127,17 +127,25 @@ export function buildProgressAttendanceSessionsFromRemote(params: {
     })
 }
 
+export type AttendanceItemWriteRequest = AttendanceItemRequest & {
+  /** 결석·사유 정정 증빙. 없거나 빈 배열이면 이번 정정에 증빙 없음 */
+  fileObjectIds?: number[]
+}
+
 export function buildAttendanceItemRequest(params: {
   participantId: string
   attendanceStatus: ParticipatingIndividualProgressAttendanceStatus
   lateTime?: string
   remark?: string
-}): AttendanceItemRequest {
+  fileObjectIds?: number[]
+}): AttendanceItemWriteRequest {
   const participantIdNum = Number(params.participantId)
+  const status = mapUiAttendanceStatusToApi(params.attendanceStatus)
   return {
     participantId: Number.isFinite(participantIdNum) ? participantIdNum : undefined,
-    status: mapUiAttendanceStatusToApi(params.attendanceStatus),
+    status,
     absenceReason: params.remark,
     arrivalTime: params.lateTime || undefined,
+    ...(params.fileObjectIds !== undefined ? { fileObjectIds: params.fileObjectIds } : {}),
   }
 }

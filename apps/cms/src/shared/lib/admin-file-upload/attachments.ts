@@ -121,6 +121,26 @@ export function sameOriginRawDownloadPath(downloadUrl: string, apiBaseUrl: strin
   }
 }
 
+/** 로컬 백엔드가 준 절대 `/api` 주소를 페이지 출처 경로로 되돌린다. */
+export function toSameOriginApiPath(downloadUrl: string, apiBaseUrl: string): string | null {
+  if (apiBaseUrl.trim() || !/^https?:\/\//i.test(downloadUrl)) return null
+  try {
+    const url = new URL(downloadUrl)
+    if (!url.pathname.startsWith('/api/')) return null
+    return `${url.pathname}${url.search}`
+  } catch {
+    return null
+  }
+}
+
+/** `/api/admin/files/{id}/content|download` 에서 파일 id를 읽는다. */
+export function fileObjectIdFromAdminFileUrl(fileUrl: string): number | null {
+  const match = fileUrl.match(/\/api\/admin\/files\/(\d+)\/(?:content|download)(?:[/?#]|$)/)
+  if (!match) return null
+  const id = Number(match[1])
+  return Number.isFinite(id) && id > 0 ? id : null
+}
+
 async function readDownloadBlob(downloadUrl: string, headers: Record<string, string>): Promise<Blob> {
   const proxiedPath = sameOriginRawDownloadPath(downloadUrl, getApiBaseUrl())
   if (proxiedPath) {

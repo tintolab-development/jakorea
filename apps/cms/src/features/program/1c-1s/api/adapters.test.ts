@@ -4,6 +4,7 @@ import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/progra
 import {
   COMPANY_SCHOOL_PROGRAM_API_TYPE,
   mapCompanySchoolDetailToProgram,
+  mapCompanySchoolListItemToProgram,
   mapCompanySchoolToCreateRequest,
   mapCompanySchoolToUpdateRequest,
   resolveCompanySchoolBusinessCalendarYearPeriod,
@@ -475,5 +476,17 @@ describe('company-school adapters', () => {
     })
     expect(detail.lifecycleStatus).toBe('in_progress')
     expect(detail.status).toBe('active')
+  })
+
+  it('목록은 관리명(title)을 유지하고 대표명(mainTitle)·titleEn을 그대로 둔다', () => {
+    const mapped = mapCompanySchoolListItemToProgram({
+      id: 170010,
+      title: '생성 당시명',
+      mainTitle: '수정1',
+      titleEn: 'Revised',
+    })
+    expect(mapped.title).toBe('생성 당시명')
+    expect(mapped.mainTitle).toBe('수정1')
+    expect(mapped.titleEn).toBe('Revised')
   })
 })

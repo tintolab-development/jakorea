@@ -237,6 +237,17 @@ describe('UJAT create — overlay 1차 컬럼 반영 (버그 수정 확인)', ()
     expect(mapped.title).toBe('프로그램 관리명')
     expect(mapped.mainTitle).toBe('우리 동네 소비와 저축')
   })
+
+  it('목록 titleEn은 상세와 같은 값을 유지한다', () => {
+    const mapped = fromListItem({
+      id: 186101,
+      title: '프로그램 관리명',
+      mainTitle: '우리 동네 소비와 저축',
+      titleEn: 'Local Spending',
+    })
+
+    expect(mapped.titleEn).toBe('Local Spending')
+  })
 })
 
 describe('UJAT API policy', () => {

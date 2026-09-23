@@ -15,6 +15,17 @@ export type ProgramAttendanceCorrectionInitialValue =
   | { kind: 'excused_absence' }
   | { kind: 'dash' }
 
+export function parseAttendanceScheduleOwnerId(
+  value: string | number | null | undefined
+): number | null {
+  if (typeof value === 'number' && Number.isInteger(value) && value > 0) return value
+  if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
+    const parsed = Number(value.trim())
+    return parsed > 0 ? parsed : null
+  }
+  return null
+}
+
 export type ProgramAttendanceCorrectionConfirmPayload = {
   status: ProgramAttendanceCorrectionStatus
   attendanceTime: string | null

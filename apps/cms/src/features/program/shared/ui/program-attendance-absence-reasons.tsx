@@ -5,6 +5,8 @@ export type ProgramAttendanceAbsenceReasonItem = {
   dateLabel: string
   reason: string
   fileName?: string | null
+  fileObjectIds?: number[]
+  originalFileNames?: Array<string | null>
 }
 
 const DEFAULT_EMPTY_MESSAGE = '사유 기재 후 불참한 이력이 없습니다.'

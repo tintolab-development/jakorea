@@ -55,6 +55,8 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'attendances', programId, scheduleId] as const,
   schedules: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'schedules', programId] as const,
+  absenceReasons: (programId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'absence-reasons', programId] as const,
   lectureReports: (programId: string, instructorMemberId?: string | number | null) =>
     [
       ...generalProgramProgressQueryKeys.all,

@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 import type { Program } from '@/types/domain'
+import { resolveGeneralProgramListTitle } from '@/features/program/general/lib/detail-common-info-display'
 import {
   CalendarMain,
   CalendarMini,
@@ -61,14 +62,16 @@ function useProgramCalendarFilter(items: Program[]) {
 
   const programFilterOptions = useMemo(() => {
     const keywordFiltered = normalizedKeyword
-      ? items.filter(program => (program.title ?? '').toLowerCase().includes(normalizedKeyword))
+      ? items.filter(program =>
+          resolveGeneralProgramListTitle(program).toLowerCase().includes(normalizedKeyword)
+        )
       : items
     const sortedPrograms = [...keywordFiltered].sort((a, b) =>
-      (a.title ?? '').localeCompare(b.title ?? '', 'ko')
+      resolveGeneralProgramListTitle(a).localeCompare(resolveGeneralProgramListTitle(b), 'ko')
     )
     return sortedPrograms.map(program => ({
       id: String(program.id),
-      title: program.title?.trim() || '이름 없음',
+      title: resolveGeneralProgramListTitle(program),
     }))
   }, [items, normalizedKeyword])
 
@@ -79,7 +82,9 @@ function useProgramCalendarFilter(items: Program[]) {
 
   const filteredPrograms = useMemo(() => {
     const keywordFiltered = normalizedKeyword
-      ? items.filter(program => (program.title ?? '').toLowerCase().includes(normalizedKeyword))
+      ? items.filter(program =>
+          resolveGeneralProgramListTitle(program).toLowerCase().includes(normalizedKeyword)
+        )
       : items
     if (calendarProgramSelection === null) return keywordFiltered
     if (calendarProgramSelection.length === 0) return []

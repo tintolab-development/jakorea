@@ -21,6 +21,10 @@ import {
   programFileOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
+import {
+  fetchProgramThumbnail,
+  putProgramThumbnail,
+} from '@/features/program/shared/api/program-thumbnail'
 import { useTemplateEditor } from '@/features/template/hooks/use-template-editor'
 import { RichTextEditor, RichTextViewer } from '@/shared/rich-text'
 import {
@@ -91,6 +95,10 @@ function useDetailInfoEditorBlock(
   const [editorOpen, setEditorOpen] = useState(false)
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
   const [thumbnailPreviewBlobUrl, setThumbnailPreviewBlobUrl] = useState<string | null>(null)
+  const [linkedThumbnail, setLinkedThumbnail] = useState<{
+    url: string
+    fileName: string
+  } | null>(null)
 
   useEffect(() => {
     if (!isEditMode) {
@@ -131,12 +139,42 @@ function useDetailInfoEditorBlock(
     ? (form!.watch('attachmentFileNames') ?? [])
     : (program.attachmentFileNames ?? [])
 
-  const thumbnailUrl =
+  useEffect(() => {
+    const programId = parseFileObjectId(program.id)
+    if (programId == null) {
+      setLinkedThumbnail(null)
+      return
+    }
+    let cancelled = false
+    void fetchProgramThumbnail(programId)
+      .then(thumbnail => {
+        if (cancelled) return
+        if (thumbnail.fileObjectId == null) {
+          setLinkedThumbnail(null)
+          return
+        }
+        setLinkedThumbnail({
+          url: contentUrlForFileObjectId(thumbnail.fileObjectId),
+          fileName: thumbnail.originalFileName?.trim() || '',
+        })
+      })
+      .catch(() => {
+        if (!cancelled) setLinkedThumbnail(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [program.id])
+
+  const formThumbnailUrl =
     isFormEdit && form
       ? (form.watch('keyVisualImage') ?? form.watch('posterImage') ?? '') || undefined
-      : program.keyVisualImage || program.posterImage
+      : undefined
+  const thumbnailUrl =
+    formThumbnailUrl || linkedThumbnail?.url || program.keyVisualImage || program.posterImage
   const displayThumbnailUrl = thumbnailPreviewBlobUrl ?? thumbnailUrl
-  const thumbnailFilename = thumbnailUrl ? getThumbnailFilename(thumbnailUrl) : ''
+  const thumbnailFilename =
+    linkedThumbnail?.fileName || (thumbnailUrl ? getThumbnailFilename(thumbnailUrl) : '')
 
   return {
     editorOpen,
@@ -145,6 +183,7 @@ function useDetailInfoEditorBlock(
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
+    setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
     displayThumbnailUrl,
@@ -175,6 +214,7 @@ function ThumbnailImageRow({
   uploadingThumbnail,
   setUploadingThumbnail,
   setThumbnailPreviewBlobUrl,
+  setLinkedThumbnail,
   displayThumbnailUrl,
   thumbnailFilename,
   guideLines,
@@ -187,6 +227,9 @@ function ThumbnailImageRow({
   uploadingThumbnail: boolean
   setUploadingThumbnail: (v: boolean) => void
   setThumbnailPreviewBlobUrl: React.Dispatch<React.SetStateAction<string | null>>
+  setLinkedThumbnail: React.Dispatch<
+    React.SetStateAction<{ url: string; fileName: string } | null>
+  >
   displayThumbnailUrl: string | undefined
   thumbnailFilename: string
   guideLines: string[]
@@ -238,17 +281,24 @@ function ThumbnailImageRow({
                         setThumbnailPreviewBlobUrl(blobUrl)
                         setUploadingThumbnail(true)
                         try {
-                          const programId = parseFileObjectId(program.id) ?? 1
+                          const programId = parseFileObjectId(program.id)
+                          if (programId == null) {
+                            throw new Error('프로그램 번호가 없어 대표 이미지를 저장할 수 없습니다.')
+                          }
                           const uploaded = await uploadAdminFileMaybeMock({
                             file,
-                            owner: programFileOwner(
-                              programId,
-                              ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL
-                            ),
+                            owner: {
+                              ownerDomain: 'PROGRAM_CONTENT',
+                              ownerType: 'PROGRAM',
+                              ownerId: programId,
+                              filePurpose: ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL,
+                            },
                           })
+                          await putProgramThumbnail(programId, uploaded.fileObjectId)
                           const url = contentUrlForFileObjectId(uploaded.fileObjectId)
                           form.setValue('keyVisualImage', url)
                           form.setValue('posterImage', url)
+                          setLinkedThumbnail({ url, fileName: file.name })
                         } catch (e) {
                           URL.revokeObjectURL(blobUrl)
                           setThumbnailPreviewBlobUrl(null)
@@ -269,6 +319,11 @@ function ThumbnailImageRow({
                           form.setValue('keyVisualImage', undefined)
                           form.setValue('posterImage', undefined)
                         }
+                        const programId = parseFileObjectId(program.id)
+                        if (programId != null) {
+                          void putProgramThumbnail(programId, null)
+                        }
+                        setLinkedThumbnail(null)
                       }
                     : undefined
                 }
@@ -474,6 +529,7 @@ export function DetailInfoSection({
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
+    setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
     displayThumbnailUrl,
@@ -513,6 +569,7 @@ export function DetailInfoSection({
               uploadingThumbnail={uploadingThumbnail}
               setUploadingThumbnail={setUploadingThumbnail}
               setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
+              setLinkedThumbnail={setLinkedThumbnail}
               displayThumbnailUrl={displayThumbnailUrl}
               thumbnailFilename={thumbnailFilename}
               guideLines={THUMBNAIL_GUIDE_LINES}
@@ -620,6 +677,7 @@ export function InstructorDetailInfoSection({
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
+    setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
     displayThumbnailUrl,
@@ -665,6 +723,7 @@ export function InstructorDetailInfoSection({
             uploadingThumbnail={uploadingThumbnail}
             setUploadingThumbnail={setUploadingThumbnail}
             setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
+            setLinkedThumbnail={setLinkedThumbnail}
             displayThumbnailUrl={displayThumbnailUrl}
             thumbnailFilename={thumbnailFilename}
             guideLines={THUMBNAIL_GUIDE_LINES}
@@ -770,6 +829,7 @@ export function VolunteerDetailInfoSection({
     uploadingThumbnail,
     setUploadingThumbnail,
     setThumbnailPreviewBlobUrl,
+    setLinkedThumbnail,
     isFormEdit,
     displayFileNames,
     displayThumbnailUrl,
@@ -817,6 +877,7 @@ export function VolunteerDetailInfoSection({
             uploadingThumbnail={uploadingThumbnail}
             setUploadingThumbnail={setUploadingThumbnail}
             setThumbnailPreviewBlobUrl={setThumbnailPreviewBlobUrl}
+            setLinkedThumbnail={setLinkedThumbnail}
             displayThumbnailUrl={displayThumbnailUrl}
             thumbnailFilename={thumbnailFilename}
             guideLines={THUMBNAIL_GUIDE_LINES}

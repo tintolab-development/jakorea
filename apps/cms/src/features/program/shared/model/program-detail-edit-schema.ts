@@ -900,10 +900,6 @@ export function detailEditValuesToProgramPatch(
   existing: import('@/types/domain').Program
 ): Partial<import('@/types/domain').Program> {
   type ProgramRound = import('@/types/domain').ProgramRound
-  const representativeTitleKo = values.mainTitle ?? existing.mainTitle ?? existing.title
-  const isUjat =
-    existing.ujatProgressStatus != null || existing.ujatRegistrationOverlay != null
-
   const announcementPublished =
     announcementPublishedFromFormValue(values.participantRecruitmentAnnouncementPublished) ??
     existing.generalCommonInfo?.participantRecruitmentInfo?.announcementPublished
@@ -935,7 +931,7 @@ export function detailEditValuesToProgramPatch(
     existing.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName
 
   return {
-    title: isUjat ? existing.title : representativeTitleKo,
+    title: existing.title,
     textbookName: existing.textbookName,
     startDate,
     endDate,

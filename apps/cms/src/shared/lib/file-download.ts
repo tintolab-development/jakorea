@@ -4,6 +4,14 @@
  * - 이력 기록 성공 후에만 저장
  */
 import { recordFileDownload } from '@/entities/download-log/api/download-log-service'
+import {
+  downloadAdminFile,
+  fileObjectIdFromAdminFileUrl,
+  toSameOriginApiPath,
+} from '@/shared/lib/admin-file-upload/attachments'
+import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
+import { customInstance } from '@/shared/api/orval-mutator'
+import { downloadBlob } from '@/shared/utils/file-download'
 import { guardAdminDownload } from '@/shared/lib/session-admin-role'
 
 type RuntimeAuthUser = {
@@ -39,7 +47,33 @@ async function trackDownload(fileName: string): Promise<void> {
  */
 export async function downloadFile(fileName: string, fileUrl?: string): Promise<void> {
   if (!guardAdminDownload()) return
+
+  const storedFileId = fileUrl ? fileObjectIdFromAdminFileUrl(fileUrl) : null
+  if (storedFileId != null) {
+    await downloadAdminFile({ fileObjectId: storedFileId, fileName })
+    return
+  }
+
   await trackDownload(fileName)
+
+  if (fileUrl?.startsWith('blob:')) {
+    const response = await fetch(fileUrl)
+    if (!response.ok) {
+      throw new Error('첨부파일 다운로드에 실패했습니다.')
+    }
+    await downloadBlob(await response.blob(), fileName, { skipAccessLog: true })
+    return
+  }
+
+  const sameOriginPath = fileUrl ? toSameOriginApiPath(fileUrl, getApiBaseUrl()) : null
+  if (sameOriginPath) {
+    const blob = await customInstance<Blob>(
+      { url: sameOriginPath, method: 'GET', responseType: 'blob' },
+      { skipGlobalErrorAlert: true, skipAuth: true }
+    )
+    await downloadBlob(blob, fileName, { skipAccessLog: true })
+    return
+  }
 
   const isRealUrl =
     fileUrl &&

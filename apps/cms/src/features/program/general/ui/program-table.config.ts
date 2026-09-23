@@ -408,9 +408,11 @@ export function getProgramTablePageConfig(
       if (title.trim()) {
         const q = title.trim().toLowerCase()
         result = result.filter(p => {
+          const representativeTitle = p.mainTitle?.trim() || ''
           const programTitle = p.title?.trim() || ''
           const announcementTitle = p.generalCommonInfo?.announcementTitle?.trim() || ''
           return (
+            representativeTitle.toLowerCase().includes(q) ||
             programTitle.toLowerCase().includes(q) ||
             announcementTitle.toLowerCase().includes(q)
           )

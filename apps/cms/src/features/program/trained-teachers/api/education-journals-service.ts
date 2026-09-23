@@ -1,7 +1,9 @@
 import type { TrainedTeachersEducationJournalEntry } from '@/features/program/trained-teachers/model/institution-detail'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { downloadFile } from '@/shared/lib/file-download'
+import { downloadBlob } from '@/shared/utils/file-download'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { mapEducationJournalResponseToEntry } from './education-journals-adapters'
 import {
@@ -22,12 +24,7 @@ function assertRemoteReady(): void {
 }
 
 function triggerBlobDownload(fileName: string, blob: Blob): void {
-  const objectUrl = URL.createObjectURL(blob)
-  try {
-    void downloadFile(fileName, objectUrl)
-  } finally {
-    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1_000)
-  }
+  void downloadBlob(blob, fileName)
 }
 
 async function downloadFromEndpoint(fileName: string, endpoint?: string): Promise<void> {
@@ -83,6 +80,10 @@ export async function downloadTrainedTeacherEducationJournal(
 ): Promise<void> {
   assertRemoteReady()
   const meta = await fetchTrainedTeacherEducationJournalDownloadRemote(programId, entry.id)
+  if (meta.fileObjectId != null && meta.fileObjectId > 0) {
+    await downloadAdminFile({ fileObjectId: meta.fileObjectId, fileName: entry.fileName })
+    return
+  }
   await downloadFromEndpoint(entry.fileName, meta.downloadEndpoint)
 }
 

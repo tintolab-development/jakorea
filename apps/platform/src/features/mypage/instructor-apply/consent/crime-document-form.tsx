@@ -2,13 +2,15 @@ import { type ChangeEvent, useCallback, useRef, useState } from 'react'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import { CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE } from './catalog'
 import { downloadCrimeConsentFormDocument } from './crime-consent-form-document'
+import { saveCrimeEvidenceFileObjectId } from './crime-evidence-file'
 import { markInstructorApplyConsentAgreed } from './form-persist'
+import { uploadMemberPortalFile } from '../api/member-file-upload'
 import styles from './consent-form.module.css'
 
-const CRIME_CONSENT_UPLOAD_ACCEPT = 'application/pdf,image/*,.pdf,.jpg,.jpeg,.png,.gif,.webp'
+const CRIME_CONSENT_UPLOAD_ACCEPT = 'application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp'
 const CRIME_CONSENT_FILE_TYPE_ALERT_MESSAGE = 'PDF 또는 이미지 파일만 업로드할 수 있습니다.'
 const PDF_FILE_NAME_PATTERN = /\.pdf$/i
-const IMAGE_FILE_NAME_PATTERN = /\.(jpe?g|png|gif|webp|bmp|heic|heif)$/i
+const IMAGE_FILE_NAME_PATTERN = /\.(jpe?g|png|webp)$/i
 
 async function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -27,7 +29,9 @@ async function readFileAsDataUrl(file: File): Promise<string> {
 
 function isCrimeConsentUploadFile(file: File): boolean {
   const mime = file.type.trim().toLowerCase()
-  if (mime === 'application/pdf' || mime.startsWith('image/')) return true
+  if (mime === 'application/pdf' || mime === 'image/jpeg' || mime === 'image/png' || mime === 'image/webp') {
+    return true
+  }
   return PDF_FILE_NAME_PATTERN.test(file.name) || IMAGE_FILE_NAME_PATTERN.test(file.name)
 }
 
@@ -52,6 +56,7 @@ export function CrimeConsentDocumentForm({
   const [previewSrc, setPreviewSrc] = useState<string | null>(null)
   const [previewFileName, setPreviewFileName] = useState<string | null>(null)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
 
   const handlePickDocument = () => {
     fileInputRef.current?.click()
@@ -71,11 +76,27 @@ export function CrimeConsentDocumentForm({
       setAlertMessage(CRIME_CONSENT_FILE_TYPE_ALERT_MESSAGE)
       return
     }
-    void readFileAsDataUrl(file).then(dataUrl => {
-      setPreviewSrc(dataUrl)
-      setPreviewFileName(file.name)
-      onUploadedChange(true)
-    })
+    if (file.size > 20 * 1024 * 1024) {
+      setAlertMessage('파일은 20MB 이하만 업로드할 수 있습니다.')
+      return
+    }
+    setUploading(true)
+    void uploadMemberPortalFile({ file, filePurpose: 'CRIMINAL_HISTORY_EVIDENCE' })
+      .then(async fileObjectId => {
+        const dataUrl = await readFileAsDataUrl(file)
+        saveCrimeEvidenceFileObjectId(fileObjectId)
+        setPreviewSrc(dataUrl)
+        setPreviewFileName(file.name)
+        onUploadedChange(true)
+      })
+      .catch(() => {
+        saveCrimeEvidenceFileObjectId(null)
+        onUploadedChange(false)
+        setAlertMessage('증빙 서류 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+      })
+      .finally(() => {
+        setUploading(false)
+      })
   }
 
   const handleSubmit = () => {
@@ -98,8 +119,14 @@ export function CrimeConsentDocumentForm({
           <PFButton size="large" variant="secondary" type="button" onClick={handleDownloadForm}>
             양식 다운로드
           </PFButton>
-          <PFButton size="large" variant="secondary" type="button" onClick={handlePickDocument}>
-            문서 업로드
+          <PFButton
+            size="large"
+            variant="secondary"
+            type="button"
+            disabled={uploading}
+            onClick={handlePickDocument}
+          >
+            {uploading ? '업로드 중' : '문서 업로드'}
           </PFButton>
           {uploaded ? (
             <PFText as="span" typo="bd-sm-rg" color="primary-500">

@@ -134,5 +134,8 @@ export const platformQueryKeys = {
     /** 내 폼 응답 피드백 — GET /api/portal/me/form-responses/{id}/feedback (Class D) */
     formResponseFeedback: (formResponseId: number) =>
       [...platformQueryKeys.mypage.all(), 'form-response-feedback', formResponseId] as const,
+    /** 교사회원 배정 강사 동의서 — GET .../assigned-instructors (Class D) */
+    assignedInstructors: (applicationId: number) =>
+      [...platformQueryKeys.mypage.all(), 'assigned-instructors', 'ORGANIZATION', applicationId] as const,
   },
 } as const
