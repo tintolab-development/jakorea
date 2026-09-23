@@ -53,6 +53,23 @@ export function withSponsorContactUnselectedOption<T extends { value: string; la
  * 미선택과 실제 담당자는 같이 두지 않는다.
  * 미선택을 새로 고르면 미선택만, 담당자를 고르면 미선택을 뺀다.
  */
+/** 저장·조회 데이터 기준 후원사 담당자가 명시적으로 미선택인지 */
+export function isProgramSponsorManagerUnselected(input: {
+  sponsorManagerContactIds?: readonly string[] | null
+  sponsorManagerContactId?: string | null
+  managerLine?: string | null
+  managerName?: string | null
+}): boolean {
+  return resolveSponsorContactIdsForEdit({
+    ids: input.sponsorManagerContactIds,
+    id: input.sponsorManagerContactId,
+    managerLine:
+      input.managerLine?.trim() ||
+      input.managerName?.trim() ||
+      '',
+  }).some(id => isSponsorContactUnselected(id))
+}
+
 export function normalizeSponsorContactUnselectedSelection(
   next: readonly string[],
   previous: readonly string[] = []

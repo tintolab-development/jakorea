@@ -33,6 +33,7 @@ import {
   resolveProgramPaymentItemIdsFromLabels,
   resolveProgramWageDeductionLabel,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import { parseCompanySchoolWageAmountFromPricing } from '@/features/program/shared/lib/company-school-wage-pricing'
 import { z } from 'zod'
 import { formatKoreanPhoneNumber, isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import {
@@ -40,7 +41,10 @@ import {
   announcementPublishedToFormValue,
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { resolveVenueKind } from '@/features/program/general/model/common-info-edit-schema'
-import { resolveSponsorContactIdsForEdit } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import {
+  isSponsorContactUnselected,
+  resolveSponsorContactIdsForEdit,
+} from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import { resolvePublicProgramTitle } from '@/features/program/shared/lib/public-program-title'
 import {
   PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS,
@@ -445,6 +449,10 @@ export const programDetailTrainedTeachersCommonInfoEditSchema = programDetailEdi
     }
   })
 
+/** 1사1교 공통 정보 — 공통정보 탭에 없는 모집 필수값 완화 (교육받은 교사와 동일) */
+export const programDetailCompanySchoolCommonInfoEditSchema =
+  programDetailTrainedTeachersCommonInfoEditSchema
+
 export type ProgramDetailEditFormValues = z.infer<typeof programDetailEditSchema>
 
 export function getProgramDetailEditValidationMessage(
@@ -475,14 +483,7 @@ const COMPANY_SCHOOL_WAGE_GRADE_ROWS = [
 ] as const
 
 function parseWageAmountFromPricing(pricing: string | undefined, kind: 'regular' | 'longDistance') {
-  if (!pricing?.trim()) return undefined
-  const parts = pricing.split(/\s*\|\s*/).map(part => part.trim())
-  const target = parts.find(part =>
-    kind === 'regular'
-      ? part.includes('기본') || !part.includes('장거리')
-      : part.includes('장거리')
-  )
-  return target?.match(/([\d,]+)\s*원/)?.[1]
+  return parseCompanySchoolWageAmountFromPricing(pricing, kind)
 }
 
 function periodLabelFromRange(
@@ -594,6 +595,18 @@ export function programToDetailEditValues(
     })[0],
     managerName: program.managerName ?? '',
     contactPhone: (() => {
+      if (
+        resolveSponsorContactIdsForEdit({
+          ids: program.generalCommonInfo?.sponsorManagerContactIds,
+          id: program.generalCommonInfo?.sponsorManagerContactId,
+          managerLine:
+            program.generalCommonInfo?.sponsorManagerLine?.trim() ||
+            program.managerName?.trim() ||
+            '',
+        }).some(isSponsorContactUnselected)
+      ) {
+        return undefined
+      }
       const raw =
         program.contactPhone?.trim() ||
         program.generalCommonInfo?.participantRecruitmentInfo?.inquiryTel?.trim() ||
@@ -1301,5 +1314,65 @@ export function detailEditValuesToProgramPatch(
     })(),
     programCategory: values.programCategory ?? existing.programCategory,
     programChannel: values.programChannel ?? existing.programChannel,
+  }
+}
+
+/**
+ * 공통정보 탭 저장 — remote PATCH 에서 모집·회차 필드를 제외한다.
+ * (모집 기간 종료 후 BE `PROGRAM_PARTICIPANT_RECRUITMENT_EDIT_PERIOD_ENDED` 충돌 방지)
+ */
+export function narrowProgramDetailPatchForCommonInfoSave(
+  patch: Partial<import('@/types/domain').Program>
+): Partial<import('@/types/domain').Program> {
+  const {
+    applicationStartDate: _applicationStartDate,
+    applicationEndDate: _applicationEndDate,
+    resultAnnouncementDate: _resultAnnouncementDate,
+    resultAnnouncementMethod: _resultAnnouncementMethod,
+    studentListRequired: _studentListRequired,
+    recruitmentGuide: _recruitmentGuide,
+    learningSupportContent: _learningSupportContent,
+    additionalContentHtml: _additionalContentHtml,
+    remarks: _remarks,
+    rounds: _rounds,
+    generalParticipantInterviewEnabled: _generalParticipantInterviewEnabled,
+    generalVolunteerInterviewEnabled: _generalVolunteerInterviewEnabled,
+    instructorCapacity: _instructorCapacity,
+    instructorApplicationStartDate: _instructorApplicationStartDate,
+    instructorApplicationEndDate: _instructorApplicationEndDate,
+    documentPassAnnouncementDate: _documentPassAnnouncementDate,
+    documentPassAnnouncementMethod: _documentPassAnnouncementMethod,
+    interviewStartDate: _interviewStartDate,
+    interviewEndDate: _interviewEndDate,
+    interviewMethod: _interviewMethod,
+    finalPassAnnouncementDate: _finalPassAnnouncementDate,
+    finalPassAnnouncementMethod: _finalPassAnnouncementMethod,
+    instructorTarget: _instructorTarget,
+    instructorTargets: _instructorTargets,
+    instructorTargetDetail: _instructorTargetDetail,
+    volunteerApplicationStartDate: _volunteerApplicationStartDate,
+    volunteerApplicationEndDate: _volunteerApplicationEndDate,
+    volunteerTarget: _volunteerTarget,
+    volunteerTargets: _volunteerTargets,
+    volunteerTargetDetail: _volunteerTargetDetail,
+    applicationMethod: _applicationMethod,
+    otherNotes: _otherNotes,
+    educationTargetDetail: _educationTargetDetail,
+    ...rest
+  } = patch
+
+  if (!rest.generalCommonInfo) return rest
+
+  const {
+    participantRecruitmentInfo: _participantRecruitmentInfo,
+    instructorRecruitmentInfo: _instructorRecruitmentInfo,
+    volunteerRecruitmentInfo: _volunteerRecruitmentInfo,
+    volunteerInterviewScheduleInfo: _volunteerInterviewScheduleInfo,
+    ...commonRest
+  } = rest.generalCommonInfo
+
+  return {
+    ...rest,
+    generalCommonInfo: commonRest,
   }
 }

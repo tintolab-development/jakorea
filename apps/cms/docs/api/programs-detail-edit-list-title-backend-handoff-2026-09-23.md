@@ -1,11 +1,24 @@
-# 프로그램 상세 정보 수정 후 목록 프로그램명 미반영 · BE 수정 요청
+# Programs API · 2026-09-23 BE 수정 요청
 
 **작성일:** 2026-09-23  
 **우선순위:** P1  
-**요청 대상:** Programs API · `PATCH /api/admin/programs/{id}` · `GET /api/admin/programs` (목록) · `GET /api/admin/programs/{id}` (상세)  
-**대상 유형:** 일반(`GENERAL_INDIVIDUAL` / `GENERAL_ORGANIZATION`). 동일 `title`/`mainTitle` 컬럼을 쓰는 UJAT · 1사1교 · 교육받은 교사도 같은 규칙으로 맞춰 주세요.  
-**관측 프로그램:** `id=186020` (`GENERAL_INDIVIDUAL`)  
+**요청 대상:** Programs API · `POST /api/admin/programs` · `PATCH /api/admin/programs/{id}` · `GET /api/admin/programs` · `GET /api/admin/programs/{id}`  
 **이 문서만으로 구현·검수할 수 있다.**
+
+오늘 전달. **요청 A**는 목록 프로그램명. **요청 B**는 사업 운영 기간(달력연도 고정 제거 · 연도 걸침 허용 · 전 유형 공통). **요청 C**는 1사1교 임금↔정산 테이블 (별도 문서).
+
+| # | 요약 | 유형 |
+|---|------|------|
+| A | 상세에서 고친 대표 프로그램명(국문)이 목록에 안 나옴 | 일반 관측. UJAT · 1사1교 · 교육받은 교사도 동일 |
+| B | 사업 운영 기간을 1/1~12/31·같은 해로 강제하지 말 것. 선택값을 그대로 저장 | **전 유형 공통** |
+| C | 1사1교 등록 임금이 `settlementPolicy`에 안 남고 기본 50만원. JSON 루트 미러 | **`COMPANY_SCHOOL`만** · [company-school-wage-settlement-json-backend-handoff-2026-09-23.md](./company-school-wage-settlement-json-backend-handoff-2026-09-23.md) |
+
+---
+
+## 요청 A. 상세 수정 후 목록 프로그램명 미반영
+
+**관측 프로그램:** `id=186020` (`GENERAL_INDIVIDUAL`)  
+**대상 유형:** 일반(`GENERAL_INDIVIDUAL` / `GENERAL_ORGANIZATION`). 동일 `title`/`mainTitle` 컬럼을 쓰는 UJAT · 1사1교 · 교육받은 교사도 같은 규칙으로 맞춰 주세요.
 
 ---
 
@@ -134,8 +147,170 @@ FE는 이제 `PATCH`에 `title`과 `mainTitle`을 같이 보내고, 목록은 `m
 
 ---
 
-## 8. 회신 부탁
+## 8. 회신 부탁 (요청 A)
 
 1. 목록 프로그램명을 **A(`title` 동기화)** / **B(목록 `mainTitle` SSOT)** 중 무엇으로 할지  
 2. 수정 대상 API (`PATCH` persist / 목록 쿼리 / 둘 다)  
 3. UJAT · 1사1교 · 교육받은 교사 동일 적용 여부  
+
+---
+
+## 요청 B. 사업 운영 기간 — 달력연도 고정 제거 · 연도 걸침 허용 (전 유형)
+
+**우선순위:** P1  
+**관측:** 1사1교 등록 `POST /api/admin/programs` · `2026-09-23`  
+**에러:** `COMPANY_SCHOOL_BUSINESS_PERIOD_MUST_BE_CALENDAR_YEAR`  
+**필드:** `businessStartDate`  
+**대상 유형:** 일반 · 1사1교(`COMPANY_SCHOOL`) · UJAT · 교육받은 교사 · Gemini 포함 **프로그램 전 유형**. 유형별 분기를 두지 마세요.
+
+---
+
+## 9. 무엇을 바꾸는가
+
+CMS 「사업 운영 기간」은 관리자가 **임의 기간**을 고릅니다. **다른 해로 넘어가도 됩니다.**  
+예: `2026-06-01` ~ `2027-03-31`.
+
+서버는 그 값을 `startDate`/`endDate`와 `businessStartDate`/`businessEndDate`에 **그대로** 저장·검증·응답해야 합니다.
+
+| 하면 안 됨 | 해야 함 |
+|------------|---------|
+| 같은 해 1월 1일~12월 31일로 강제 | 클라이언트가 보낸 시작·종료를 그대로 persist |
+| 연도가 다르면 거절 | 연도 걸침 허용 (26년 6월 ~ 27년 3월) |
+| 1사1교만 달력연도, 다른 유형은 자유 | **전 유형 동일 규칙** |
+| 들어온 기간을 그해 1/1~12/31로 rewrite | GET도 저장한 기간 그대로 |
+
+허용해도 되는 검증은 **시작 ≤ 종료**, 필수값 누락뿐입니다. 「한 해의 1/1~12/31」은 검증이 아닙니다.
+
+---
+
+## 10. 재현 (1사1교, 2026-09-23)
+
+폼에서 사업 운영 기간을 **2026-11-26 ~ 2026-12-17** 로 두고 등록.
+
+`POST /api/admin/programs` body (해당 필드만):
+
+```json
+{
+  "programType": "COMPANY_SCHOOL",
+  "startDate": "2026-11-25T15:00:00.000Z",
+  "endDate": "2026-12-17T14:59:59.999Z",
+  "businessStartDate": "2026-11-25T15:00:00.000Z",
+  "businessEndDate": "2026-12-17T14:59:59.999Z"
+}
+```
+
+**실제 응답**
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "COMPANY_SCHOOL_BUSINESS_PERIOD_MUST_BE_CALENDAR_YEAR",
+    "message": "1사1교 사업 운영 기간은 같은 연도의 1월 1일부터 12월 31일까지여야 합니다.",
+    "field": "businessStartDate"
+  }
+}
+```
+
+**기대:** `201`/`200`. 위 기간을 그대로 저장. 달력연도 에러 없음.
+
+같은 규칙으로 아래도 성공해야 합니다 (전 유형).
+
+```json
+{
+  "startDate": "2026-05-31T15:00:00.000Z",
+  "endDate": "2027-03-30T14:59:59.999Z",
+  "businessStartDate": "2026-05-31T15:00:00.000Z",
+  "businessEndDate": "2027-03-30T14:59:59.999Z"
+}
+```
+
+(서울 `2026-06-01` 00:00 ~ `2027-03-31` 23:59:59.999)
+
+---
+
+## 11. API
+
+| # | Method | Path | 화면 |
+|---|--------|------|------|
+| D | `POST` | `/api/admin/programs` | 프로그램 등록 완료 |
+| E | `PATCH` | `/api/admin/programs/{id}` | 상세 공통 정보 · 기간 수정 |
+| F | `GET` | `/api/admin/programs/{id}` | 상세 |
+| G | `GET` | `/api/admin/programs` | 목록 |
+
+권한: 관리자 · 프로그램 생성/수정/조회.
+
+---
+
+## 12. 필드 계약
+
+CMS 「사업 운영 기간」 한 칸입니다. FE는 같은 값을 두 쌍으로 보냅니다.
+
+| CMS | 1차 컬럼 |
+|-----|----------|
+| 사업 운영 기간 시작 | `startDate` = `businessStartDate` |
+| 사업 운영 기간 종료 | `endDate` = `businessEndDate` |
+
+- `business*`만 달력연도이고 `start`/`end`만 폼 값인 분기를 두지 마세요.
+- 1사1교라고 `business*`를 그해 1/1~12/31로 바꾸지 마세요.
+- 타임존: Asia/Seoul. UTC `…T23:59:59.999Z`를 서울 다음날로 해석해 연도를 올리며 거절하지 마세요.
+
+**지울 검증**
+
+- 에러 코드 `COMPANY_SCHOOL_BUSINESS_PERIOD_MUST_BE_CALENDAR_YEAR` (및 동일 의미의 유형별 코드)
+- “같은 연도여야 한다”
+- “1월 1일부터 12월 31일까지여야 한다”
+- 연도 걸침 거부
+
+**남겨도 되는 검증**
+
+- `businessStartDate` / `startDate` 필수
+- `businessEndDate` / `endDate` 필수
+- 시작 ≤ 종료
+
+등록·수정·목록·상세 모두 같은 기간이 나와야 합니다.
+
+---
+
+## 13. 서버가 할 일
+
+### 13.1 달력연도 검증 삭제
+
+`COMPANY_SCHOOL` create/update에서 사업 기간이 그해 1/1~12/31인지 검사하지 마세요.  
+다른 `programType`에도 같은 검사를 넣지 마세요.
+
+### 13.2 연도 걸침 허용
+
+시작 연도와 종료 연도가 달라도 persist 합니다. 예: 2026-06 ~ 2027-03.
+
+### 13.3 전 유형 동일
+
+`GENERAL_INDIVIDUAL` · `GENERAL_ORGANIZATION` · `COMPANY_SCHOOL` · UJAT · 교육받은 교사 · Gemini.  
+유형별 “사업연도 = 캘린더 연” 규칙을 두지 마세요.
+
+### 13.4 GET
+
+저장한 `startDate`/`endDate`/`businessStartDate`/`businessEndDate`를 rewrite 없이 그대로 내립니다.  
+목록 기간 표시·필터도 이 값을 씁니다.
+
+---
+
+## 14. 검수
+
+아래를 **유형마다** 한 번씩:
+
+- [ ] 같은 해 일부 기간(예: 2026-11-26 ~ 2026-12-17) create 성공. `COMPANY_SCHOOL_BUSINESS_PERIOD_MUST_BE_CALENDAR_YEAR` 없음
+- [ ] 연도 걸침(2026-06-01 ~ 2027-03-31) create 성공
+- [ ] 상세 GET의 `startDate`/`endDate`/`businessStartDate`/`businessEndDate`가 요청과 같음 (1/1~12/31로 바뀌지 않음)
+- [ ] 목록 GET 해당 row 기간이 상세와 같음
+- [ ] 상세에서 기간을 연도 걸침으로 PATCH → GET 반영
+- [ ] 시작 > 종료만 4xx. 달력연도 메시지 없음
+
+---
+
+## 15. 회신 부탁 (요청 B)
+
+1. `COMPANY_SCHOOL_BUSINESS_PERIOD_MUST_BE_CALENDAR_YEAR` 삭제 일정  
+2. 동일 제약을 다른 유형에도 쓰는지. 있으면 같이 삭제  
+3. 연도 걸침 persist 확인 (2026-06 ~ 2027-03)  
+4. `startDate`/`endDate`와 `business*`를 계속 같은 값으로 둘지, 나중에 필드를 하나로 줄일지  

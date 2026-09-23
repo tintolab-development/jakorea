@@ -181,12 +181,15 @@ export async function updateCompanySchoolProgram(
   patch?: Partial<Program>
 ): Promise<Program> {
   assertRemoteReady()
-  const mergedPatch = patch ?? program
+  const merged = { ...program, ...(patch ?? {}), id: programId }
   // 등록 중 로컬 임시저장 키와 충돌하지 않도록 remote 성공 후 로컬 잔여만 정리
-  updateCompanySchoolRegistrationLocalSaveProgram(programId, mergedPatch)
+  updateCompanySchoolRegistrationLocalSaveProgram(programId, patch ?? program)
   const dto = await updateAdminProgramRemote(
     programId,
-    mapCompanySchoolToUpdateRequest({ ...program, ...mergedPatch, id: programId })
+    mapCompanySchoolToUpdateRequest(
+      merged,
+      patch && Object.keys(patch).length > 0 ? patch : undefined
+    )
   )
   return mapCompanySchoolDetailToProgram(dto)
 }

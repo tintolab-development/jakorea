@@ -58,6 +58,23 @@ describe('buildGeneralProgramListRowFromRegistrationSnapshot — 세부 프로�
     expect(program.detailedProgramId).toBe('dp-2')
   })
 
+  it('1사1교 — 후원사 overlay를 sponsorId에 반영한다', () => {
+    replaceProgramRegistrationOverlay({
+      'economyRegistration.basicInfo.sponsorId': '163388',
+    })
+
+    const program = buildGeneralProgramListRowFromRegistrationSnapshot({
+      id: 'company-school-local-test-sponsor',
+      participant: organizationOnlyParticipant,
+      programType: 'curriculum',
+      variant: 'economy',
+      sessionRoundType: 'single',
+    })
+
+    expect(program.sponsorId).toBe('163388')
+    expect(program.generalCommonInfo?.sponsorManagementIds).toEqual(['163388'])
+  })
+
   it('1사1교 — 수동 선택한 세부 프로그램명이 그대로 저장된다 (1사1교는 커리큘럼형 고정)', () => {
     replaceProgramRegistrationOverlay({
       'economyRegistration.basicInfo.detailedProgramId': '163003',

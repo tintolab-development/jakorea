@@ -189,7 +189,9 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   const capacity = 30
   const overlaySponsorId = isTrainedTeachers
     ? readRegistrationOverlaySponsorId('trainedTeachers')
-    : readRegistrationOverlaySponsorId('general')
+    : isCompanySchool
+      ? readRegistrationOverlaySponsorId('economy')
+      : readRegistrationOverlaySponsorId('general')
   const sponsorId =
     args.sponsorId?.trim() || overlaySponsorId || (isTrainedTeachers ? '' : resolveDefaultSponsorId())
 
@@ -232,8 +234,9 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   const scheduleDetailedProgramName = isGeneralSchedule
     ? resolveScheduleTypeDetailedProgramNameFromDetails(scheduleDetails)
     : undefined
-  const sponsorManagementIds = !isCompanySchool
-    ? (() => {
+  const sponsorManagementIds = isCompanySchool
+    ? (sponsorId ? [sponsorId] : undefined)
+    : (() => {
         if (isTrainedTeachers) {
           const overlay = getProgramRegistrationOverlayRecord()
           const raw = overlay['trainedTeachersRegistration.basicInfo.sponsorIds']
@@ -247,7 +250,6 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
         if (fromOverlay.length > 0) return fromOverlay
         return sponsorId ? [sponsorId] : []
       })()
-    : undefined
 
   const base: Program = {
     id: args.id,

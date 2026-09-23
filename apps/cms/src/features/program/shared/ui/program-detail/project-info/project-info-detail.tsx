@@ -270,6 +270,8 @@ export interface ProjectInfoDetailPanelsProps {
   onInstructorsSave: () => void
   onVolunteersSave: () => void
   onPreview: () => void
+  /** 1사1교 상세 — 원격 숫자 id·제목에 「1사1교」가 없어도 등록폼과 같은 공통정보 레이아웃 */
+  forceCompanySchoolLayout?: boolean
 }
 
 export function ProjectInfoDetailPanels({
@@ -297,7 +299,9 @@ export function ProjectInfoDetailPanels({
   onInstructorsSave,
   onVolunteersSave,
   onPreview,
+  forceCompanySchoolLayout = false,
 }: ProjectInfoDetailPanelsProps) {
+  const companySchoolSections = forceCompanySchoolLayout || isCompanySchoolProgram(program)
   return (
     <>
       {!hideTabsRow ? (
@@ -341,10 +345,12 @@ export function ProjectInfoDetailPanels({
                 lifecycleStatus={program.lifecycleStatus ?? undefined}
                 isEditMode={isEditModeInfo}
                 form={isEditModeInfo ? infoForm : undefined}
+                forceCompanySchoolLayout={companySchoolSections}
               />
               <ProgramKpiTargetSection // 사업 KPI 목표
                 programId={program.id}
-                showVolunteerKpi={!isCompanySchoolProgram(program)}
+                program={program}
+                showVolunteerKpi={!companySchoolSections}
                 isEditMode={isEditModeInfo}
                 form={isEditModeInfo ? infoForm : undefined}
               />
@@ -353,16 +359,19 @@ export function ProjectInfoDetailPanels({
                 program={program}
                 isEditMode={isEditModeInfo}
                 form={isEditModeInfo ? infoForm : undefined}
+                forceCompanySchoolLayout={companySchoolSections}
               />
               <CurriculumSection // 교육 커리큘럼
                 program={program}
                 isEditMode={isEditModeInfo}
                 form={isEditModeInfo ? infoForm : undefined}
+                forceCompanySchoolLayout={companySchoolSections}
               />
               <EducationScheduleSettingsSection
                 program={program}
                 isEditMode={isEditModeInfo}
                 form={isEditModeInfo ? infoForm : undefined}
+                forceCompanySchoolLayout={companySchoolSections}
               />
             </div>
           )}

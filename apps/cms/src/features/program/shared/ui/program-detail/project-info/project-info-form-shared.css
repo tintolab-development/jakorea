@@ -64,13 +64,6 @@
   gap: 16px;
 }
 
-.project-info-company-school-curriculum > .detail-info-form__body {
-  border: none;
-  border-radius: 0;
-  overflow: visible;
-  background: transparent;
-}
-
 .project-info-detail__hidden-tabs-info-actions {
   display: flex;
   justify-content: flex-end;

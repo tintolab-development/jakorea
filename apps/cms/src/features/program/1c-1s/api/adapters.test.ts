@@ -7,6 +7,7 @@ import {
   mapCompanySchoolListItemToProgram,
   mapCompanySchoolToCreateRequest,
   mapCompanySchoolToUpdateRequest,
+  resolveCompanySchoolBusinessCalendarYearPeriod,
 } from './adapters'
 import {
   parseCompanySchoolServiceDetailJson,
@@ -55,22 +56,26 @@ const program: Program = {
 }
 
 describe('company-school adapters', () => {
-  it('creates with COMPANY_SCHOOL type and business period from 사업 운영 기간', () => {
+  it('creates with COMPANY_SCHOOL type and calendar-year business period', () => {
     const request = mapCompanySchoolToCreateRequest(program)
+    const year = resolveCompanySchoolBusinessCalendarYearPeriod(program)
 
     expect(request.programType).toBe(COMPANY_SCHOOL_PROGRAM_API_TYPE)
-    expect(request.businessStartDate).toBe(program.startDate)
-    expect(request.businessEndDate).toBe(program.endDate)
+    expect(request.startDate).toBe(program.startDate)
+    expect(request.endDate).toBe(program.endDate)
+    expect(request.businessStartDate).toBe(year.start)
+    expect(request.businessEndDate).toBe(year.end)
     expect(request.generalVolunteers).toBe(0)
     expect(request.autoApplyDefaultFormBindings).toBe(true)
   })
 
-  it('등록·수정 사업 기간은 선택한 start/end를 businessStartDate/EndDate로 보낸다', () => {
+  it('등록·수정 사업 기간은 달력연도(1/1~12/31, Seoul)를 businessStartDate/EndDate로 보낸다', () => {
     const partial: Program = {
       ...program,
-      startDate: '2026-11-26T15:00:00.000Z',
-      endDate: '2026-12-08T15:00:00.000Z',
+      startDate: '2026-11-25T15:00:00.000Z',
+      endDate: '2026-12-17T14:59:59.999Z',
     }
+    const year = resolveCompanySchoolBusinessCalendarYearPeriod(partial)
     const created = mapCompanySchoolToCreateRequest(partial)
     const updated = mapCompanySchoolToUpdateRequest(partial, {
       startDate: partial.startDate,
@@ -79,23 +84,140 @@ describe('company-school adapters', () => {
 
     expect(created.startDate).toBe(partial.startDate)
     expect(created.endDate).toBe(partial.endDate)
-    expect(created.businessStartDate).toBe(partial.startDate)
-    expect(created.businessEndDate).toBe(partial.endDate)
-    expect(updated.businessStartDate).toBe(partial.startDate)
-    expect(updated.businessEndDate).toBe(partial.endDate)
+    expect(created.businessStartDate).toBe(year.start)
+    expect(created.businessEndDate).toBe(year.end)
+    expect(updated.businessStartDate).toBe(year.start)
+    expect(updated.businessEndDate).toBe(year.end)
+    expect(year.start).toBe('2025-12-31T15:00:00.000Z')
+    expect(year.end).toBe('2026-12-31T14:59:59.999Z')
   })
 
-  it('상세 사업 기간은 businessStartDate/EndDate를 쓴다', () => {
+  it('상세 운영 기간은 startDate/endDate를 쓰고 business(달력연도)로 덮지 않는다', () => {
     const mapped = mapCompanySchoolDetailToProgram({
       id: '186100',
       startDate: '2026-10-21',
       endDate: '2026-11-01',
-      businessStartDate: '2026-10-14',
-      businessEndDate: '2026-11-07',
+      businessStartDate: '2026-01-01',
+      businessEndDate: '2026-12-31',
     } as ProgramResponse)
 
-    expect(mapped.startDate).toBe('2026-10-14')
-    expect(mapped.endDate).toBe('2026-11-07')
+    expect(mapped.startDate).toBe('2026-10-21')
+    expect(mapped.endDate).toBe('2026-11-01')
+  })
+
+  it('상세 임금은 serviceDetailJson wageGradeRows를 쓰고 settlementPolicy 기본값으로 덮지 않는다', () => {
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '186200',
+      title: '1사1교 임금 조회',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          generalCommonInfo: {
+            wageGradeRows: [
+              { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 120,000원 | 장거리 : 60,000원' },
+            ],
+            paymentItems: 'p-166201, p-166202',
+            deductionItems: '일용근로자 원천징수세액',
+          },
+        },
+      }),
+      settlementPolicy: {
+        wagePolicies: [
+          { feeGrade: 'GRADE_1', feeKind: 'NORMAL', amount: 500000 },
+          { feeGrade: 'GRADE_1', feeKind: 'LONG_DISTANCE', amount: 500000 },
+        ],
+        paymentItems: [{ itemType: 'TRANSPORTATION', useYn: true }],
+      },
+    } as ProgramResponse)
+
+    expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).toContain('120,000원')
+    expect(mapped.generalCommonInfo?.paymentItems).toBe('p-166201, p-166202')
+  })
+
+  it('186014처럼 object serviceDetailJson + 루트 generalCommonInfo(임금 없음)여도 program 쪽 임금을 쓴다', () => {
+    const dualEnvelope = {
+      schemaVersion: 1,
+      program: {
+        generalCommonInfo: {
+          wageGradeRows: [
+            { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 170,000원 | 장거리 : 30,000원' },
+            { grade: '2급 강사비', pricing: '1시간 당 | 기본 : 150,000원 | 장거리 : 20,000원' },
+            { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 130,000원 | 장거리 : 10,000원' },
+          ],
+          paymentItems: '교통비(일사일교), 숙박비(일사일교)',
+          deductionItems: '일용근로자 원천징수세액',
+        },
+      },
+      generalCommonInfo: {
+        title: '기업가정신 스타트업 체험',
+        sponsorId: '163384',
+      },
+    }
+
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '186014',
+      title: '기업가정신 스타트업 체험',
+      serviceDetailJson: dualEnvelope as unknown as string,
+      settlementPolicy: {
+        wagePolicies: [
+          { feeGrade: 'GRADE_1', feeKind: 'NORMAL', amount: 500000, maxAmount: 500000 },
+          { feeGrade: 'GRADE_1', feeKind: 'LONG_DISTANCE', amount: 500000, maxAmount: 500000 },
+          { feeGrade: 'GRADE_2', feeKind: 'NORMAL', amount: 400000, maxAmount: 400000 },
+          { feeGrade: 'GRADE_2', feeKind: 'LONG_DISTANCE', amount: 400000, maxAmount: 400000 },
+          { feeGrade: 'GRADE_3', feeKind: 'NORMAL', amount: 300000, maxAmount: 300000 },
+          { feeGrade: 'GRADE_3', feeKind: 'LONG_DISTANCE', amount: 300000, maxAmount: 300000 },
+        ],
+        paymentItems: [
+          { itemType: 'TRANSPORTATION', useYn: true },
+          { itemType: 'LONG_DISTANCE_TRANSPORTATION', useYn: true },
+          { itemType: 'LODGING', useYn: true },
+        ],
+      },
+    } as ProgramResponse)
+
+    expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).toContain('170,000원')
+    expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).toContain('30,000원')
+    expect(mapped.generalCommonInfo?.paymentItems).toBe('교통비(일사일교), 숙박비(일사일교)')
+    expect(mapped.generalCommonInfo?.paymentItems).not.toContain('LONG_DISTANCE')
+    expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).not.toContain('500,000')
+  })
+
+  it('186014 string serviceDetailJson + 루트 generalCommonInfo여도 program 쪽 임금을 쓴다', () => {
+    const dualEnvelope = {
+      schemaVersion: 1,
+      program: {
+        generalCommonInfo: {
+          wageGradeRows: [
+            { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 170,000원 | 장거리 : 30,000원' },
+          ],
+          paymentItems: '교통비(일사일교), 숙박비(일사일교)',
+          deductionItems: '일용근로자 원천징수세액',
+        },
+      },
+      generalCommonInfo: {
+        title: '기업가정신 스타트업 체험',
+      },
+    }
+
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '186014',
+      title: '기업가정신 스타트업 체험',
+      serviceDetailJson: JSON.stringify(dualEnvelope),
+      settlementPolicy: {
+        wagePolicies: [
+          { feeGrade: 'GRADE_1', feeKind: 'NORMAL', amount: 500000, maxAmount: 500000 },
+          { feeGrade: 'GRADE_1', feeKind: 'LONG_DISTANCE', amount: 500000, maxAmount: 500000 },
+        ],
+        paymentItems: [
+          { itemType: 'TRANSPORTATION', useYn: true },
+          { itemType: 'LONG_DISTANCE_TRANSPORTATION', useYn: true },
+          { itemType: 'LODGING', useYn: true },
+        ],
+      },
+    } as ProgramResponse)
+
+    expect(mapped.generalCommonInfo?.wageGradeRows?.[0]?.pricing).toContain('170,000원')
+    expect(mapped.generalCommonInfo?.paymentItems).toBe('교통비(일사일교), 숙박비(일사일교)')
   })
 
   it('round-trips school, instructor, wage and payment details without volunteers', () => {
@@ -194,6 +316,78 @@ describe('company-school adapters', () => {
     expect(request.managerName).toBeUndefined()
     expect(request.contactPhone).toBeUndefined()
     expect(request.contactEmail).toBeUndefined()
+  })
+
+  it('common-info patch omits participant recruitment from serviceDetailJson', () => {
+    const withRecruitment: Program = {
+      ...program,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        participantRecruitmentInfo: {
+          recruitmentPeriodLabel: '2026. 10. 03 ~ 2026. 10. 07',
+          contactOrganizationName: '담당자',
+        },
+        instructorRecruitmentInfo: {
+          recruitmentTarget: '성인',
+        },
+        volunteerRecruitmentInfo: {
+          recruitmentTarget: '일반인',
+        },
+      },
+    }
+    const request = mapCompanySchoolToUpdateRequest(withRecruitment, {
+      mainTitle: '공통정보만',
+      generalCommonInfo: {
+        educationScheduleMode: 'period',
+        wageGradeRows: [{ grade: '1급 강사비', pricing: '기본 140,000원' }],
+      },
+    })
+
+    expect(request.mainTitle).toBe('공통정보만')
+    expect(request.serviceDetailJson).toBeTruthy()
+    const parsed = JSON.parse(request.serviceDetailJson!) as {
+      program?: {
+        generalCommonInfo?: Record<string, unknown>
+        studentListRequired?: string
+        resultAnnouncementDate?: string
+      }
+      registration?: unknown
+    }
+    expect(parsed.program?.generalCommonInfo?.participantRecruitmentInfo).toBeUndefined()
+    expect(parsed.program?.generalCommonInfo?.instructorRecruitmentInfo).toBeUndefined()
+    expect(parsed.program?.generalCommonInfo?.volunteerRecruitmentInfo).toBeUndefined()
+    expect(parsed.program?.generalCommonInfo?.wageGradeRows).toBeTruthy()
+    expect(parsed.program?.studentListRequired).toBeUndefined()
+    expect(parsed.program?.resultAnnouncementDate).toBeUndefined()
+    expect(parsed.registration).toBeUndefined()
+  })
+
+  it('title-only common-info patch does not resend recruitment or registration overlay', () => {
+    const loaded: Program = {
+      ...program,
+      studentListRequired: 'required',
+      resultAnnouncementDate: '2026-10-06T15:00:00.000Z',
+      registrationOverlay: {
+        'economyRegistration.basicInfo.repKo': '등록 제목',
+        'economyRegistration.wageInfo.paymentItemValues': ['p-166201'],
+      },
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        participantRecruitmentInfo: {
+          recruitmentPeriodLabel: '2026. 10. 03 ~ 2026. 10. 07',
+          preEducationNoticeRequired: true,
+        },
+      },
+    }
+    const request = mapCompanySchoolToUpdateRequest(loaded, {
+      title: '우리 동네 소비와 저축11',
+      mainTitle: '우리 동네 소비와 저축11',
+    })
+
+    expect(request.title).toBe('우리 동네 소비와 저축11')
+    expect(request.applicationStartDate).toBeUndefined()
+    expect(request.serviceDetailJson).toBeUndefined()
+    expect(request.rounds).toBeUndefined()
   })
 
   it('common-info style patch does not dump rounds or masked manager fields', () => {

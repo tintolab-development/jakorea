@@ -3,9 +3,13 @@ import type { Program } from '@/types/domain'
 import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   detailEditValuesToProgramPatch,
+  narrowProgramDetailPatchForCommonInfoSave,
+  programDetailCompanySchoolCommonInfoEditSchema,
+  programDetailEditSchema,
   programDetailTrainedTeachersCommonInfoEditSchema,
   programToDetailEditValues,
 } from './program-detail-edit-schema'
+import { mapCompanySchoolToUpdateRequest } from '@/features/program/1c-1s/api/adapters'
 
 const program = {
   id: 'program-1',
@@ -32,6 +36,107 @@ const program = {
     detailedProgramName: '기존 세부명',
   },
 } as Program
+
+describe('narrowProgramDetailPatchForCommonInfoSave', () => {
+  it('공통정보 저장 patch → update request 에 모집 JSON 이 실리지 않는다', () => {
+    const loaded = {
+      ...program,
+      id: '186024',
+      title: '우리 동네 소비와 저축',
+      mainTitle: '우리 동네 소비와 저축',
+      applicationStartDate: '2026-10-03',
+      applicationEndDate: '2026-10-07',
+      studentListRequired: 'required',
+      registrationOverlay: {
+        'economyRegistration.wageInfo.paymentItemValues': ['p-166201', 'p-166204'],
+      },
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          recruitmentPeriodLabel: '2026. 10. 03 ~ 2026. 10. 07',
+          preEducationNoticeRequired: true,
+        },
+        kpi: {
+          finalParticipants: 36,
+          instructorCount: 7,
+          volunteerCount: 0,
+          finalSchools: 9,
+          finalClasses: 13,
+        },
+        wageGradeRows: [{ grade: '1급 강사비', pricing: '기본 140,000원' }],
+      },
+    } as Program
+    const values = {
+      ...programToDetailEditValues(loaded),
+      mainTitle: '우리 동네 소비와 저축11',
+    }
+    const patch = narrowProgramDetailPatchForCommonInfoSave(
+      detailEditValuesToProgramPatch(values, loaded)
+    )
+    const request = mapCompanySchoolToUpdateRequest({ ...loaded, ...patch, id: loaded.id }, patch)
+    const parsed =
+      request.serviceDetailJson != null
+        ? (JSON.parse(request.serviceDetailJson) as {
+            program?: { generalCommonInfo?: Record<string, unknown> }
+            registration?: unknown
+          })
+        : null
+
+    expect(request.applicationStartDate).toBeUndefined()
+    expect(request.applicationEndDate).toBeUndefined()
+    expect(request.rounds).toBeUndefined()
+    expect(parsed?.program?.generalCommonInfo?.participantRecruitmentInfo).toBeUndefined()
+    expect(parsed?.registration).toBeUndefined()
+  })
+
+  it('모집·회차 필드를 remote patch 에서 제외한다', () => {
+    const patch = detailEditValuesToProgramPatch(
+      {
+        ...programToDetailEditValues(program),
+        mainTitle: '수정 제목',
+      },
+      program
+    )
+    const narrowed = narrowProgramDetailPatchForCommonInfoSave(patch)
+
+    expect(narrowed.mainTitle).toBe('수정 제목')
+    expect(narrowed.applicationStartDate).toBeUndefined()
+    expect(narrowed.applicationEndDate).toBeUndefined()
+    expect(narrowed.rounds).toBeUndefined()
+    expect(narrowed.generalCommonInfo?.participantRecruitmentInfo).toBeUndefined()
+    expect(narrowed.generalCommonInfo?.instructorRecruitmentInfo).toBeUndefined()
+    expect(narrowed.generalCommonInfo?.volunteerRecruitmentInfo).toBeUndefined()
+    expect(narrowed.generalCommonInfo?.kpi).toBeTruthy()
+  })
+})
+
+describe('programDetailCompanySchoolCommonInfoEditSchema', () => {
+  it('공통정보 탭에 없는 managerName·모집 필드 없어도 후원사만 있으면 저장 검증을 통과한다', () => {
+    const values = {
+      ...programToDetailEditValues({
+        ...program,
+        managerName: undefined,
+        description: undefined,
+        learningSupportContent: undefined,
+        applicationStartDate: undefined,
+        applicationEndDate: undefined,
+        resultAnnouncementDate: undefined,
+        resultAnnouncementMethod: undefined,
+      } as unknown as Program),
+      managerName: '',
+      description: '',
+      learningSupportContent: '',
+      applicationStartDate: '',
+      applicationEndDate: '',
+      resultAnnouncementDate: '',
+      resultAnnouncementMethod: '',
+      sponsorId: '163384',
+      sponsorManagementIds: ['163384'],
+    }
+
+    expect(programDetailCompanySchoolCommonInfoEditSchema.safeParse(values).success).toBe(true)
+    expect(programDetailEditSchema.safeParse(values).success).toBe(false)
+  })
+})
 
 describe('program detail trained teachers boolean fields', () => {
   it('partnerInvolvement null 을 허용한다', () => {

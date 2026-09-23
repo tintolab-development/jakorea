@@ -17,12 +17,13 @@ import {
   parseDetailedProgramMasterId,
 } from '@/features/program/general/lib/detailed-program-request-id'
 import {
+  extractCompanySchoolWageSidecar,
   parseCompanySchoolServiceDetailJson,
   serializeCompanySchoolServiceDetailJson,
+  serializeCompanySchoolServiceDetailJsonForUpdatePatch,
 } from './service-detail-json'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
-import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import { applyResolvedVenueKindToCommonInfo } from '@/features/program/general/model/common-info-edit-schema'
 
 export const COMPANY_SCHOOL_PROGRAM_API_TYPE = 'COMPANY_SCHOOL'
@@ -32,6 +33,46 @@ const DEFAULT_SPONSOR_ID = 'sponsor-default'
 function toDate(value: Date | string | undefined): string | undefined {
   if (value instanceof Date) return value.toISOString()
   return value
+}
+
+const SEOUL_TIME_ZONE = 'Asia/Seoul'
+
+function seoulCalendarYear(value: Date | string | undefined): number | null {
+  if (value == null) return null
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  const year = Number(date.toLocaleString('en-US', { timeZone: SEOUL_TIME_ZONE, year: 'numeric' }))
+  return Number.isFinite(year) ? year : null
+}
+
+/**
+ * BE `COMPANY_SCHOOL_BUSINESS_PERIOD_MUST_BE_CALENDAR_YEAR` —
+ * 사업 운영 기간은 program.startDate/endDate(프로그램 운영)와 별도이며,
+ * Asia/Seoul 달력으로 같은 해 1월 1일 00:00 ~ 12월 31일 23:59:59 이어야 한다.
+ * UTC `…T23:59:59.999Z` 는 서울에서 다음 해 1월 1일이 되므로 쓰면 안 된다.
+ */
+export function resolveCompanySchoolBusinessCalendarYearPeriod(program: Pick<Program, 'startDate' | 'endDate'>): {
+  start: string
+  end: string
+} {
+  const year = seoulCalendarYear(program.startDate) ?? seoulCalendarYear(program.endDate) ?? new Date().getFullYear()
+  return {
+    start: new Date(`${year}-01-01T00:00:00+09:00`).toISOString(),
+    end: new Date(`${year}-12-31T23:59:59.999+09:00`).toISOString(),
+  }
+}
+
+/** GET — 운영 기간은 start/end. business* 는 달력연도라 표시용으로 쓰지 않는다. */
+function resolveCompanySchoolOperationDates(dto: {
+  startDate?: string | null
+  endDate?: string | null
+  businessStartDate?: string | null
+  businessEndDate?: string | null
+}): { startDate: string | undefined; endDate: string | undefined } {
+  return {
+    startDate: dto.startDate ?? dto.businessStartDate ?? undefined,
+    endDate: dto.endDate ?? dto.businessEndDate ?? undefined,
+  }
 }
 
 function resolveCompanySchoolListLifecycle(
@@ -76,7 +117,7 @@ export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto):
     title,
     mainTitle,
     titleEn: dto.titleEn?.trim() || undefined,
-    ...resolveBusinessPeriodDates(dto),
+    ...resolveCompanySchoolOperationDates(dto),
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus: resolveCompanySchoolListLifecycle(dto),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
@@ -110,10 +151,30 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
   } = details
   void _serviceDetailLifecycle
   void _serviceDetailStatus
-  const generalCommonInfoWithSettlement = applySettlementPolicyToCommonInfo(
-    details.generalCommonInfo,
-    dto.settlementPolicy
-  )
+  const wageSidecar = extractCompanySchoolWageSidecar(dto.serviceDetailJson)
+  const fromJson = {
+    ...details.generalCommonInfo,
+    ...(wageSidecar?.wageGradeRows?.length ? { wageGradeRows: wageSidecar.wageGradeRows } : {}),
+    ...(wageSidecar?.paymentItems?.trim() ? { paymentItems: wageSidecar.paymentItems } : {}),
+    ...(wageSidecar?.deductionItems?.trim() ? { deductionItems: wageSidecar.deductionItems } : {}),
+  }
+  const mergedSettlement = applySettlementPolicyToCommonInfo(fromJson, dto.settlementPolicy)
+  // 등록 시 넣은 serviceDetailJson 임금이 있으면 그걸 화면 SSOT로 쓴다.
+  // settlementPolicy 기본값(500,000 등)이 JSON을 덮어 상세와 GET body가 달라지는 것을 막는다.
+  const generalCommonInfoWithSettlement = mergedSettlement
+    ? {
+        ...mergedSettlement,
+        wageGradeRows: fromJson.wageGradeRows?.length
+          ? fromJson.wageGradeRows
+          : mergedSettlement.wageGradeRows,
+        paymentItems: fromJson.paymentItems?.trim()
+          ? fromJson.paymentItems
+          : mergedSettlement.paymentItems,
+        deductionItems: fromJson.deductionItems?.trim()
+          ? fromJson.deductionItems
+          : mergedSettlement.deductionItems,
+      }
+    : fromJson
   // BE가 숫자 id로 조회해 내려주는 detailedProgramName을 우선 — serviceDetailJson 캐시가
   // 낡았을 때도(id만 바뀌고 상세 JSON이 안 갱신된 경우 등) 화면에 최신 이름이 보이게 한다.
   const generalCommonInfo = applyResolvedVenueKindToCommonInfo(
@@ -159,7 +220,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
         curriculum: round.curriculum,
         deliveryType: round.deliveryType as Program['rounds'][number]['deliveryType'],
       })) ?? [],
-    ...resolveBusinessPeriodDates(dto),
+    ...resolveCompanySchoolOperationDates(dto),
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
@@ -297,6 +358,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
   // 일반 프로그램 어댑터와 동일하게 detailedProgramId(숫자 마스터 id)로 보낸다. textbookName(교재명)에
   // 이름을 강제로 밀어넣는 방식은 general 어댑터의 계약과 달랐다(중복되면 omit).
   const detailedProgramName = program.generalCommonInfo?.detailedProgramName
+  const businessPeriod = resolveCompanySchoolBusinessCalendarYearPeriod(program)
   return {
     sponsorId: program.sponsorId,
     title: program.title,
@@ -306,8 +368,8 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     description: program.description,
     startDate: toDate(program.startDate),
     endDate: toDate(program.endDate),
-    businessStartDate: toDate(program.startDate),
-    businessEndDate: toDate(program.endDate),
+    businessStartDate: businessPeriod.start,
+    businessEndDate: businessPeriod.end,
     applicationStartDate: toDate(program.applicationStartDate),
     applicationEndDate: toDate(program.applicationEndDate),
     businessArea: program.businessArea,
@@ -382,8 +444,9 @@ function mapCompanySchoolPatchFieldsToRequest(
   if (has('startDate') || has('endDate')) {
     body.startDate = toDate(merged.startDate)
     body.endDate = toDate(merged.endDate)
-    body.businessStartDate = toDate(merged.startDate)
-    body.businessEndDate = toDate(merged.endDate)
+    const businessPeriod = resolveCompanySchoolBusinessCalendarYearPeriod(merged)
+    body.businessStartDate = businessPeriod.start
+    body.businessEndDate = businessPeriod.end
   }
   if (has('applicationStartDate')) {
     body.applicationStartDate = toDate(merged.applicationStartDate)
@@ -468,7 +531,7 @@ function mapCompanySchoolPatchFieldsToRequest(
 
   const touchesServiceDetail = SERVICE_DETAIL_PROGRAM_KEYS.some(key => has(key))
   if (touchesServiceDetail) {
-    body.serviceDetailJson = serializeCompanySchoolServiceDetailJson(merged)
+    body.serviceDetailJson = serializeCompanySchoolServiceDetailJsonForUpdatePatch(merged, patch)
   }
 
   return body
@@ -489,11 +552,12 @@ export function mapCompanySchoolToUpdateRequest(
 }
 
 export function mapCompanySchoolToCreateRequest(program: Program): ProgramCreateRequest {
+  const businessPeriod = resolveCompanySchoolBusinessCalendarYearPeriod(program)
   return {
     ...mapCompanySchoolToUpdateRequest(program),
     programType: COMPANY_SCHOOL_PROGRAM_API_TYPE,
-    businessStartDate: toDate(program.startDate),
-    businessEndDate: toDate(program.endDate),
+    businessStartDate: businessPeriod.start,
+    businessEndDate: businessPeriod.end,
     autoApplyDefaultFormBindings: true,
   }
 }
