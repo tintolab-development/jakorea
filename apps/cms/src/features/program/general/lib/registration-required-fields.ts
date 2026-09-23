@@ -6,7 +6,7 @@
  * IPS 1차·직접 입력 텍스트·금액처럼 기본값이 없는 항목만 비어 있으면 막는다.
  *
  * 1사1교는 `economy-program-registration-required-fields`가 같은 정책(readText fallback).
- * 교육받은 교사는 KPI·임금 단락이 없어 이 함수로 검사하지 않는다.
+ * 교육받은 교사는 `omitKpiAndWage` + `preEducationDisplayMode` 로 이 함수를 재사용한다.
  * UJAT 등록 위저드는 `ujat-program-registration-required-fields`를 사용한다.
  */
 import type { ProgramRegistrationParticipantSelection } from '@/features/template/lib/program-registration-editor-state'
@@ -42,6 +42,15 @@ export type GeneralProgramRegistrationRequiredFieldContext = {
   sponsorId: string
   sponsorContactId: string
   programTitleKo: string
+  /** 교육받은 교사 — KPI·임금 단락 없음 */
+  omitKpiAndWage?: boolean
+  /** 후원사 「전체」 허용 (교육받은 교사) */
+  allowEmptySponsor?: boolean
+  /**
+   * 사전 교육/교육 연수 블록.
+   * prepend=일반 사전 교육(index 0), replaceFirst=교육받은 교사 일정형 교육 연수(첫 세부 일정)
+   */
+  preEducationDisplayMode?: 'prepend' | 'replaceFirst'
 }
 
 function isEmptyText(value: unknown): boolean {
@@ -133,8 +142,14 @@ function findIncompleteBasicInfoReason(
   if (isEmptyText(readOverlay(overlay, 'generalRegistration.basicInfo.businessField'))) {
     return 'basicInfo.businessField'
   }
-  if (isEmptyText(ctx.sponsorId)) return 'basicInfo.sponsorId'
-  if (isEmptyText(ctx.sponsorContactId)) return 'basicInfo.sponsorContactId'
+  if (ctx.allowEmptySponsor) {
+    if (!isEmptyText(ctx.sponsorId) && isEmptyText(ctx.sponsorContactId)) {
+      return 'basicInfo.sponsorContactId'
+    }
+  } else {
+    if (isEmptyText(ctx.sponsorId)) return 'basicInfo.sponsorId'
+    if (isEmptyText(ctx.sponsorContactId)) return 'basicInfo.sponsorContactId'
+  }
   // 교육 장소 상세 텍스트 — 「기타(직접입력)」선택 시에만 필수
   const venueKind = readOverlay(overlay, 'generalRegistration.basicInfo.educationVenueKind')
   if (
@@ -160,6 +175,7 @@ function findIncompleteKpiReason(
   overlay: Record<string, unknown>,
   ctx: GeneralProgramRegistrationRequiredFieldContext
 ): string | null {
+  if (ctx.omitKpiAndWage) return null
   if (isEmptyNumber(readOverlay(overlay, 'generalRegistration.kpi.participantCount'))) {
     return 'kpi.participantCount'
   }
@@ -186,7 +202,11 @@ function findIncompleteKpiReason(
   return null
 }
 
-function findIncompleteWageReason(overlay: Record<string, unknown>): string | null {
+function findIncompleteWageReason(
+  overlay: Record<string, unknown>,
+  ctx: GeneralProgramRegistrationRequiredFieldContext
+): string | null {
+  if (ctx.omitKpiAndWage) return null
   if (isEmptyNumber(readOverlay(overlay, 'generalRegistration.wageInfo.grade1Fee'))) {
     return 'wage.grade1Fee'
   }
@@ -255,31 +275,30 @@ function findIncompleteCurriculumReason(
         return `curriculum.ips[${index}]`
       }
     }
-    return null
-  }
-
-  const roundCount = Math.max(1, ctx.curriculumSessionCount)
-  const progressByRound = readIndexRecord(
-    overlay,
-    'generalRegistration.educationCurriculum.progressSessionByRound'
-  )
-  const roundContents = readIndexRecord(
-    overlay,
-    'generalRegistration.educationCurriculum.roundContentByRound'
-  )
-  const assignmentByRound = readIndexRecord(
-    overlay,
-    'generalRegistration.educationCurriculum.assignmentByRound'
-  )
-  for (let index = 1; index <= roundCount; index += 1) {
-    if (isEmptyText(progressByRound[index])) return `curriculum.progressSession[${index}]`
-    if (isEmptyText(roundContents[index])) return `curriculum.roundContent[${index}]`
-    if (ctx.ipsScheduleDetail === 'perSchedule' && isIpsIncomplete(ipsBySession[index])) {
-      return `curriculum.ips[${index}]`
-    }
-    // 학교/기관 대상은 과제 UI 비노출 — 잔존 overlay로 미완료 처리하지 않음 (일정형과 동일)
-    if (!ctx.participant.organization && isAssignmentIncomplete(assignmentByRound[index])) {
-      return `curriculum.assignment[${index}]`
+  } else {
+    const roundCount = Math.max(1, ctx.curriculumSessionCount)
+    const progressByRound = readIndexRecord(
+      overlay,
+      'generalRegistration.educationCurriculum.progressSessionByRound'
+    )
+    const roundContents = readIndexRecord(
+      overlay,
+      'generalRegistration.educationCurriculum.roundContentByRound'
+    )
+    const assignmentByRound = readIndexRecord(
+      overlay,
+      'generalRegistration.educationCurriculum.assignmentByRound'
+    )
+    for (let index = 1; index <= roundCount; index += 1) {
+      if (isEmptyText(progressByRound[index])) return `curriculum.progressSession[${index}]`
+      if (isEmptyText(roundContents[index])) return `curriculum.roundContent[${index}]`
+      if (ctx.ipsScheduleDetail === 'perSchedule' && isIpsIncomplete(ipsBySession[index])) {
+        return `curriculum.ips[${index}]`
+      }
+      // 학교/기관 대상은 과제 UI 비노출 — 잔존 overlay로 미완료 처리하지 않음 (일정형과 동일)
+      if (!ctx.participant.organization && isAssignmentIncomplete(assignmentByRound[index])) {
+        return `curriculum.assignment[${index}]`
+      }
     }
   }
   if (ctx.scheduleCurriculumPreEducation) {
@@ -326,9 +345,18 @@ function findIncompleteScheduleCurriculumReason(
   const groupCount =
     ctx.sessionRoundType === 'multi' ? 1 : Math.max(1, ctx.scheduleCurriculumGroupCount)
 
+  const replaceFirstTraining =
+    ctx.scheduleCurriculumPreEducation && ctx.preEducationDisplayMode === 'replaceFirst'
+  const useEventScheduleDate =
+    ctx.sessionRoundType === 'multi' &&
+    (ctx.educationFormScheduleDetail === 'perSchedule' || replaceFirstTraining)
+
   for (let index = 1; index <= detailCount; index += 1) {
-    if (isEmptyText(eventNames[index])) return `scheduleCurriculum.eventName[${index}]`
-    if (ctx.sessionRoundType === 'multi' && ctx.educationFormScheduleDetail === 'perSchedule') {
+    const skipFixedTrainingName = replaceFirstTraining && index === 1
+    if (!skipFixedTrainingName && isEmptyText(eventNames[index])) {
+      return `scheduleCurriculum.eventName[${index}]`
+    }
+    if (useEventScheduleDate) {
       if (isEmptyText(scheduleDates[index])) return `scheduleCurriculum.scheduleDate[${index}]`
     } else {
       const slots = groupTimes[index]
@@ -346,7 +374,7 @@ function findIncompleteScheduleCurriculumReason(
       return `scheduleCurriculum.assignment[${index}]`
     }
   }
-  if (ctx.scheduleCurriculumPreEducation) {
+  if (ctx.scheduleCurriculumPreEducation && !replaceFirstTraining) {
     // UI 기본값「사전 교육」은 overlay 미기록일 수 있음 — 명시적으로 비운 경우만 미완료
     const preEducationName = readOverlay(
       overlay,
@@ -354,6 +382,9 @@ function findIncompleteScheduleCurriculumReason(
     )
     if (preEducationName !== undefined && isEmptyText(preEducationName)) {
       return 'scheduleCurriculum.preEducationName'
+    }
+    if (isEmptyText(scheduleDates[0])) {
+      return 'scheduleCurriculum.preEducationScheduleDate'
     }
   }
   return null
@@ -392,7 +423,7 @@ export function describeIncompleteGeneralProgramRegistrationRequiredFields(
   return (
     findIncompleteBasicInfoReason(overlay, ctx) ??
     findIncompleteKpiReason(overlay, ctx) ??
-    findIncompleteWageReason(overlay) ??
+    findIncompleteWageReason(overlay, ctx) ??
     findIncompleteTypeSettingsReason(overlay, ctx) ??
     findIncompleteCurriculumReason(overlay, ctx) ??
     findIncompleteScheduleCurriculumReason(overlay, ctx) ??

@@ -218,6 +218,9 @@ describe('hasIncompleteGeneralProgramRegistrationRequiredFields', () => {
             1: [{ startTime: '08:46', endTime: '09:46' }],
           },
           'generalRegistration.educationScheduleCurriculum.preEducationName': '   ',
+          'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': {
+            0: '2026-09-18 08:46-09:46',
+          },
           'generalRegistration.educationScheduleSettings.scheduleLines': [
             '2026-09-18(금) 08:46 ~ 09:46',
           ],
@@ -235,6 +238,88 @@ describe('hasIncompleteGeneralProgramRegistrationRequiredFields', () => {
         })
       )
     ).toBe(true)
+  })
+
+  it('일정형·사전 교육 ON — 진행 일정이 없으면 미완료이다', () => {
+    const overlay = filledOverlay({
+      'generalRegistration.basicInfo.detailedProgramId': undefined,
+      'generalRegistration.kpi.dispatchedSchool': 10,
+      'generalRegistration.kpi.dispatchedClass': 5,
+      'generalRegistration.typeSettings.ipsType': { category: 'succeed', detail: 'conference' },
+      'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+        1: '세부 일정 내용',
+      },
+      'generalRegistration.educationScheduleCurriculum.groupTimesByDetail': {
+        1: [{ startTime: '08:46', endTime: '09:46' }],
+      },
+      'generalRegistration.educationScheduleSettings.scheduleLines': [
+        '2026-09-18(금) 08:46 ~ 09:46',
+      ],
+    })
+
+    expect(
+      describeIncompleteGeneralProgramRegistrationRequiredFields(
+        overlay,
+        ctx({
+          participant: {
+            individual: false,
+            organization: true,
+            teacherInstructor: false,
+            volunteer: false,
+          },
+          programType: 'schedule',
+          sessionRoundType: 'single',
+          scheduleCurriculumPreEducation: true,
+          scheduleCurriculumDetailCount: 1,
+          scheduleCurriculumGroupCount: 1,
+        })
+      )
+    ).toBe('scheduleCurriculum.preEducationScheduleDate')
+  })
+
+  it('일정형·replaceFirst(교육 연수) — 첫 세부 진행 일정이 없으면 미완료이다', () => {
+    expect(
+      describeIncompleteGeneralProgramRegistrationRequiredFields(
+        filledOverlay({
+          'generalRegistration.basicInfo.detailedProgramId': undefined,
+          'generalRegistration.kpi.dispatchedSchool': 10,
+          'generalRegistration.kpi.dispatchedClass': 5,
+          'generalRegistration.typeSettings.ipsType': { category: 'succeed', detail: 'conference' },
+          'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+            1: '교육 연수',
+          },
+          'generalRegistration.educationScheduleSettings.scheduleLines': [
+            '2026-09-18(금) 08:46 ~ 09:46',
+          ],
+        }),
+        ctx({
+          participant: {
+            individual: false,
+            organization: true,
+            teacherInstructor: false,
+            volunteer: false,
+          },
+          programType: 'schedule',
+          sessionRoundType: 'multi',
+          scheduleCurriculumPreEducation: true,
+          preEducationDisplayMode: 'replaceFirst',
+          omitKpiAndWage: true,
+          allowEmptySponsor: true,
+          scheduleCurriculumDetailCount: 1,
+        })
+      )
+    ).toBe('scheduleCurriculum.scheduleDate[1]')
+  })
+
+  it('커리큘럼·단일회차·사전 교육 ON — 진행 일정이 없으면 미완료이다', () => {
+    expect(
+      describeIncompleteGeneralProgramRegistrationRequiredFields(
+        filledOverlay(),
+        ctx({
+          scheduleCurriculumPreEducation: true,
+        })
+      )
+    ).toBe('curriculum.preEducationScheduleLine')
   })
 })
 

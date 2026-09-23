@@ -167,10 +167,11 @@ function findIncompleteUjatHalfScheduleReason(
   half: UjatHalfSemesterKey
 ): string | null {
   const keys = ujatHalfScheduleOverlayKeys(half)
-  if (isEmptyText(read(overlay, keys.preName))) return `${half}.pre.name`
+  // UI 기본값「사전교육(발대식)」은 overlay 미기록일 수 있음 — 진행 일정은 항상 필수
+  if (isEmptyText(readText(overlay, keys.preName, '사전교육(발대식)'))) return `${half}.pre.name`
+  if (isMultiScheduleBundleIncomplete(read(overlay, keys.preMulti))) return `${half}.pre.schedule`
   if (isEmptyText(read(overlay, keys.eventName))) return `${half}.event.name`
   if (isRangeSealIncomplete(read(overlay, keys.eventRange))) return `${half}.event.range`
-  if (isMultiScheduleBundleIncomplete(read(overlay, keys.preMulti))) return `${half}.pre.multi`
   if (isMultiScheduleBundleIncomplete(read(overlay, keys.closingMulti))) return `${half}.closing.multi`
   return null
 }

@@ -382,3 +382,34 @@ describe('trained teacher schedule-type detailedProgramName (버그 수정)', ()
     expect(next.textbookName).toBeUndefined()
   })
 })
+
+describe('일정형 사전 교육 overlay 교육 형태', () => {
+  it('educationFormByDetail 0을 사전 교육 행에 넣는다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      baseProgram(),
+      {
+        'generalRegistration.educationScheduleCurriculum.preEducationName': '사전 교육',
+        'generalRegistration.educationScheduleCurriculum.educationFormByDetail': {
+          0: 'offline',
+        },
+        'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+          1: '오리엔테이션',
+        },
+      },
+      {
+        programType: 'schedule',
+        sessionRoundType: 'single',
+        scheduleCurriculumPreEducation: true,
+        scheduleCurriculumDetailCount: 1,
+        educationFormScheduleDetail: 'common',
+      }
+    )
+
+    expect(next.generalCommonInfo?.scheduleDetails?.[0]).toEqual(
+      expect.objectContaining({
+        scheduleLabel: '사전 교육',
+        educationFormLabel: '오프라인',
+      })
+    )
+  })
+})
