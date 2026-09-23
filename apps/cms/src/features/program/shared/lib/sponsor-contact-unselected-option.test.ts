@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   normalizeSponsorContactUnselectedSelection,
+  resolveSponsorContactIdsForEdit,
   SPONSOR_CONTACT_UNSELECTED_VALUE,
   withSponsorContactUnselectedOption,
 } from './sponsor-contact-unselected-option'
@@ -31,5 +32,26 @@ describe('sponsor contact unselected option', () => {
         [SPONSOR_CONTACT_UNSELECTED_VALUE]
       )
     ).toEqual(['c1'])
+  })
+
+  it('저장된 라벨이 미선택이면 수정 폼에 미선택 값을 넣는다', () => {
+    expect(
+      resolveSponsorContactIdsForEdit({
+        ids: [],
+        managerLine: '미선택',
+      })
+    ).toEqual([SPONSOR_CONTACT_UNSELECTED_VALUE])
+    expect(
+      resolveSponsorContactIdsForEdit({
+        ids: [SPONSOR_CONTACT_UNSELECTED_VALUE],
+        managerLine: '',
+      })
+    ).toEqual([SPONSOR_CONTACT_UNSELECTED_VALUE])
+    expect(
+      resolveSponsorContactIdsForEdit({
+        ids: ['1627251::1627253'],
+        managerLine: '김담당',
+      })
+    ).toEqual(['1627251::1627253'])
   })
 })
