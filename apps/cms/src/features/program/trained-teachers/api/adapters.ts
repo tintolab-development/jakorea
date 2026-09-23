@@ -63,6 +63,12 @@ function toJavaInt(value: number | null | undefined): number | undefined {
   return Math.min(n, JAVA_INT_MAX)
 }
 
+function toStudentListRequired(
+  value: string | undefined
+): Program['studentListRequired'] {
+  return value === 'required' || value === 'not_required' ? value : undefined
+}
+
 /** GET …/sponsors 배정을 Program 후원·담당자 필드로 병합 (contact∈sponsor 유지) */
 export function mergeTrainedTeacherSponsorAssignments(
   program: Program,
@@ -252,6 +258,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   const otherNotes = dto.otherMatters?.trim() || details.otherNotes?.trim() || undefined
   const remarks = dto.remarks?.trim() || participantRemarks?.trim() || undefined
   const educationTargetDetail =
+    dto.educationTargetDetail?.trim() ||
     (
       details.generalCommonInfo?.participantRecruitmentInfo as
         | { educationTargetDetail?: string }
@@ -366,8 +373,32 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     managerName: dto.managerName,
     venue: dto.venue?.trim() || nestedVenueDetail || undefined,
     curriculum: dto.curriculum,
-    contactEmail: dto.contactEmail,
-    contactPhone: dto.contactPhone,
+    contactEmail:
+      dto.contactEmail?.trim() ||
+      (
+        details.generalCommonInfo?.participantRecruitmentInfo as
+          | { inquiryEmail?: string; contactEmail?: string }
+          | undefined
+      )?.inquiryEmail?.trim() ||
+      (
+        details.generalCommonInfo?.participantRecruitmentInfo as
+          | { inquiryEmail?: string; contactEmail?: string }
+          | undefined
+      )?.contactEmail?.trim() ||
+      undefined,
+    contactPhone:
+      dto.contactPhone?.trim() ||
+      (
+        details.generalCommonInfo?.participantRecruitmentInfo as
+          | { inquiryTel?: string; contactPhone?: string }
+          | undefined
+      )?.inquiryTel?.trim() ||
+      (
+        details.generalCommonInfo?.participantRecruitmentInfo as
+          | { inquiryTel?: string; contactPhone?: string }
+          | undefined
+      )?.contactPhone?.trim() ||
+      undefined,
     oneLineIntroduction: dto.oneLineIntroduction,
     keyVisualImage: dto.keyVisualImage,
     posterImage: details.posterImage ?? dto.keyVisualImage,
@@ -378,7 +409,10 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     learningSupportContent: dto.learningSupportContent,
     attachmentFileNames: dto.attachmentFileNames,
     otherNotes,
-    studentListRequired: details.studentListRequired,
+    studentListRequired:
+      toStudentListRequired(dto.studentListRequired) ??
+      details.studentListRequired ??
+      details.generalCommonInfo?.participantRecruitmentInfo?.studentListRequired,
     remarks,
     educationTargetDetail,
     generalParticipantTypes: ['school_institution'],
@@ -501,6 +535,9 @@ export function mapTrainedTeacherToUpdateRequest(
     curriculum: merged.curriculum,
     contactEmail: merged.contactEmail,
     contactPhone: merged.contactPhone,
+    remarks: merged.remarks,
+    educationTargetDetail: merged.educationTargetDetail,
+    studentListRequired: merged.studentListRequired,
     oneLineIntroduction: merged.oneLineIntroduction,
     keyVisualImage: merged.keyVisualImage ?? merged.posterImage,
     settlementRuleId: merged.settlementRuleId,

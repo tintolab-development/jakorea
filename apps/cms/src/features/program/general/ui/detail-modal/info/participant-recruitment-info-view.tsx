@@ -158,6 +158,16 @@ export function GeneralProgramParticipantRecruitmentInfoView({
 
   const formMode = isEdit && form ? 'edit' : 'view'
   const showLimits = display.showInstitutionApplicationLimits
+  const contactOrg = display.contactOrganizationName
+  const isIndividual = isGeneralIndividualProgram(program)
+  const isCompanySchool = isCompanySchoolRecruitmentProgram(program)
+  // 교육받은 교사 — 공고 게시|학생 명단 1행, 사전 안내·수료증 비노출 (기존 유형 렌더 불변)
+  const isTrainedTeachers = isTrainedTeachersDetailProgram(program)
+  const isGeneralOrg = !isIndividual && !isCompanySchool && !isTrainedTeachers
+  const recruitmentSectionTitle = isGeneralOrg ? '참여 기관 모집 정보' : '참여자 모집 정보'
+  // 교육받은 교사 등록 폼과 동일 — 최대 일정/1일 차시 상시 노출
+  const showMaxScheduleCountField = display.showMaxScheduleCountField || isTrainedTeachers
+  const showMaxSessionsPerDayField = display.showMaxSessionsPerDayField || isTrainedTeachers
   const lifecycle = display.recruitmentStatusLifecycle
   const statusView = lifecycle ? (
     <span
@@ -168,14 +178,6 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   ) : (
     display.recruitmentStatusLabel
   )
-
-  const contactOrg = display.contactOrganizationName
-  const isIndividual = isGeneralIndividualProgram(program)
-  const isCompanySchool = isCompanySchoolRecruitmentProgram(program)
-  // 교육받은 교사 — 공고 게시|학생 명단 1행, 사전 안내·수료증 비노출 (기존 유형 렌더 불변)
-  const isTrainedTeachers = isTrainedTeachersDetailProgram(program)
-  const isGeneralOrg = !isIndividual && !isCompanySchool && !isTrainedTeachers
-  const recruitmentSectionTitle = isGeneralOrg ? '참여 기관 모집 정보' : '참여자 모집 정보'
 
   const studentListField = (
     <DetailInfoForm.Field
@@ -353,23 +355,26 @@ export function GeneralProgramParticipantRecruitmentInfoView({
 
           {showLimits ? (
             <>
-              <DetailInfoForm.Row type="double">
-                <DetailInfoForm.Field
-                  label="배정 가능 최대 강사 수"
-                  view={display.maxInstructorsLabel}
-                  edit={
-                    isEdit && form ? (
-                      <NumberWithSuffixEdit
-                        form={form}
-                        name="participantRecruitmentMaxInstructors"
-                        placeholder="최대값 입력"
-                        suffix="명"
-                      />
-                    ) : undefined
-                  }
-                />
+              <DetailInfoForm.Row type={isTrainedTeachers ? 'single' : 'double'}>
+                {isTrainedTeachers ? null : (
+                  <DetailInfoForm.Field
+                    label="배정 가능 최대 강사 수"
+                    view={display.maxInstructorsLabel}
+                    edit={
+                      isEdit && form ? (
+                        <NumberWithSuffixEdit
+                          form={form}
+                          name="participantRecruitmentMaxInstructors"
+                          placeholder="최대값 입력"
+                          suffix="명"
+                        />
+                      ) : undefined
+                    }
+                  />
+                )}
                 <DetailInfoForm.Field
                   label="신청 가능 최대 학급 수"
+                  fullRow={isTrainedTeachers}
                   view={display.maxClassLabel}
                   edit={
                     isEdit && form ? (
@@ -384,19 +389,16 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                 />
               </DetailInfoForm.Row>
 
-              {!isCompanySchool &&
-              (display.showMaxScheduleCountField || display.showMaxSessionsPerDayField) ? (
+              {!isCompanySchool && (showMaxScheduleCountField || showMaxSessionsPerDayField) ? (
                 <DetailInfoForm.Row
                   type={
-                    display.showMaxScheduleCountField && display.showMaxSessionsPerDayField
-                      ? 'double'
-                      : 'single'
+                    showMaxScheduleCountField && showMaxSessionsPerDayField ? 'double' : 'single'
                   }
                 >
-                  {display.showMaxScheduleCountField ? (
+                  {showMaxScheduleCountField ? (
                     <DetailInfoForm.Field
                       label="신청 가능 최대 일정 수"
-                      fullRow={!display.showMaxSessionsPerDayField}
+                      fullRow={!showMaxSessionsPerDayField}
                       view={display.maxScheduleCountLabel}
                       edit={
                         isEdit && form ? (
@@ -410,10 +412,10 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                       }
                     />
                   ) : null}
-                  {display.showMaxSessionsPerDayField ? (
+                  {showMaxSessionsPerDayField ? (
                     <DetailInfoForm.Field
                       label="신청 가능 1일 최대 차시"
-                      fullRow={!display.showMaxScheduleCountField}
+                      fullRow={!showMaxScheduleCountField}
                       view={display.maxSessionsPerDayLabel}
                       edit={
                         isEdit && form ? (
@@ -574,13 +576,29 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                   <div className="program-detail-info-tab__contact-inputs program-detail-info-tab__contact-inputs--even">
                     <div className="program-detail-info-tab__contact-group">
                       <span className="program-detail-info-tab__contact-label">문의처</span>
-                      <CmsInput
-                        placeholder="담당 문의처"
-                        value={contactOrg}
-                        readOnly
-                        inputSize="medium"
-                        className="program-detail-info-tab__contact-name-input"
-                      />
+                      {isTrainedTeachers ? (
+                        <Controller
+                          name="recruitmentContactOrganizationName"
+                          control={form.control}
+                          render={({ field }) => (
+                            <CmsInput
+                              {...field}
+                              value={field.value ?? ''}
+                              placeholder="담당 문의처"
+                              inputSize="medium"
+                              className="program-detail-info-tab__contact-name-input"
+                            />
+                          )}
+                        />
+                      ) : (
+                        <CmsInput
+                          placeholder="담당 문의처"
+                          value={contactOrg}
+                          readOnly
+                          inputSize="medium"
+                          className="program-detail-info-tab__contact-name-input"
+                        />
+                      )}
                     </div>
                     <DividerVertical
                       height={13}

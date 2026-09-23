@@ -756,3 +756,171 @@ describe('mapTrainedTeacherToCreateRequest BE registration contract', () => {
     expect(detail).not.toHaveProperty('generalCommonInfo')
   })
 })
+
+describe('serializeTrainedTeacherServiceDetailJson recruitment constraints', () => {
+  it('forces maxAssignableInstructors 0 and hides pre-education on write', () => {
+    const json = serializeTrainedTeacherServiceDetailJson({
+      id: '186005',
+      title: 'TT',
+      sponsorId: 'sponsor-1',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending',
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          maxAssignableInstructors: 4,
+          preEducationNoticeRequired: true,
+          maxClassCount: 6,
+        },
+      },
+    } as Program)
+    const parsed = JSON.parse(json) as {
+      program?: {
+        generalCommonInfo?: {
+          participantRecruitmentInfo?: {
+            maxAssignableInstructors?: number
+            preEducationNoticeRequired?: boolean
+            maxClassCount?: number
+          }
+        }
+      }
+    }
+    expect(parsed.program?.generalCommonInfo?.participantRecruitmentInfo).toMatchObject({
+      maxAssignableInstructors: 0,
+      preEducationNoticeRequired: false,
+      maxClassCount: 6,
+    })
+  })
+})
+
+describe('mapTrainedTeacherToUpdateRequest recruitment columns (BE 2026-09-23 handoff)', () => {
+  it('sends top-level remarks / educationTargetDetail / studentListRequired with nested labels', () => {
+    const program = {
+      id: '186005',
+      sponsorId: '163302',
+      title: 'TT',
+      type: 'offline' as const,
+      format: 'workshop' as const,
+      category: 'school' as const,
+      description: '',
+      rounds: [],
+      startDate: '2026-09-01',
+      endDate: '2026-11-30',
+      applicationStartDate: '2026-08-01T00:00:00.000Z',
+      applicationEndDate: '2026-08-31T00:00:00.000Z',
+      status: 'pending' as const,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      remarks: '모집 비고 신값',
+      educationTargetDetail: '초등학교 5~6학년',
+      studentListRequired: 'not_required' as const,
+      contactPhone: '02-1234-5678',
+      contactEmail: 'new@jakorea.org',
+      oneLineIntroduction: '한줄소개는 비고가 아님',
+      district: '서울 강남구',
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          remarks: '모집 비고 신값',
+          educationTargetDetail: '초등학교 5~6학년',
+          studentListRequired: 'not_required',
+          maxClassCount: 4,
+          maxScheduleCount: 6,
+          maxSessionsPerDay: 3,
+          contactOrganizationName: '수정문의처',
+          inquiryTel: '02-1234-5678',
+          inquiryEmail: 'new@jakorea.org',
+        },
+      },
+    } as Program
+
+    const request = mapTrainedTeacherToUpdateRequest(program)
+    expect(request.remarks).toBe('모집 비고 신값')
+    expect(request.educationTargetDetail).toBe('초등학교 5~6학년')
+    expect(request.studentListRequired).toBe('not_required')
+    expect(request.contactPhone).toBe('02-1234-5678')
+    expect(request.contactEmail).toBe('new@jakorea.org')
+    expect(request.oneLineIntroduction).toBe('한줄소개는 비고가 아님')
+    expect(request.district).toBe('서울 강남구')
+
+    const envelope = JSON.parse(String(request.serviceDetailJson)) as {
+      program?: {
+        remarks?: string
+        educationTargetDetail?: string
+        studentListRequired?: string
+        generalCommonInfo?: {
+          participantRecruitmentInfo?: {
+            remarks?: string
+            educationTargetDetail?: string
+            contactOrganizationName?: string
+            maxAssignableInstructors?: number
+          }
+        }
+      }
+    }
+    expect(envelope.program?.remarks).toBe('모집 비고 신값')
+    expect(envelope.program?.educationTargetDetail).toBe('초등학교 5~6학년')
+    expect(envelope.program?.studentListRequired).toBe('not_required')
+    expect(envelope.program?.generalCommonInfo?.participantRecruitmentInfo).toMatchObject({
+      remarks: '모집 비고 신값',
+      educationTargetDetail: '초등학교 5~6학년',
+      contactOrganizationName: '수정문의처',
+      maxAssignableInstructors: 0,
+    })
+  })
+})
+
+describe('mapTrainedTeacherDetailToProgram recruitment columns (BE 2026-09-23 handoff)', () => {
+  it('prefers GET columns over nested and does not mix remarks with oneLineIntroduction', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '186005',
+      title: 'TT',
+      remarks: '모집 비고 신값',
+      educationTargetDetail: '초등학교 5~6학년',
+      studentListRequired: 'not_required',
+      contactPhone: '02-1234-5678',
+      contactEmail: 'new@jakorea.org',
+      oneLineIntroduction: '한줄소개',
+      otherMatters: '기타사항',
+      district: '서울 강남구',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: {
+          remarks: '구 비고',
+          educationTargetDetail: '구 상세',
+          studentListRequired: 'required',
+          oneLineIntroduction: '구 한줄소개',
+          otherNotes: '구 기타',
+          generalCommonInfo: {
+            participantRecruitmentInfo: {
+              remarks: '구 nested 비고',
+              educationTargetDetail: '구 nested 상세',
+              studentListRequired: 'required',
+              contactOrganizationName: '수정문의처',
+            },
+          },
+        },
+      }),
+    } as ProgramResponse)
+
+    expect(mapped.remarks).toBe('모집 비고 신값')
+    expect(mapped.educationTargetDetail).toBe('초등학교 5~6학년')
+    expect(mapped.studentListRequired).toBe('not_required')
+    expect(mapped.oneLineIntroduction).toBe('한줄소개')
+    expect(mapped.otherNotes).toBe('기타사항')
+    expect(mapped.district).toBe('서울 강남구')
+    expect(mapped.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBe('모집 비고 신값')
+    expect(mapped.generalCommonInfo?.participantRecruitmentInfo?.educationTargetDetail).toBe(
+      '초등학교 5~6학년'
+    )
+    expect(mapped.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName).toBe(
+      '수정문의처'
+    )
+  })
+})

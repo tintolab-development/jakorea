@@ -1,7 +1,7 @@
 # BE 수정 요청 — 교육받은 교사 공통·모집 정보 수정 라운드트립 + 저장 시 API 폭주
 
 **작성일:** 2026-09-17  
-**상태:** ✅ BE 런타임 미러 반영 · FE KPI/venue top-level wire 정렬 · [OpenAPI additive 후속](./trained-teacher-kpi-venue-mirror-openapi-backend-request-2026-09-17.md)  
+**상태:** 모집 탭 계약은 [trained-teacher-recruitment-info-edit-roundtrip-backend-prompt-2026-09-23.md](./trained-teacher-recruitment-info-edit-roundtrip-backend-prompt-2026-09-23.md) 가 갱신본. 본 문서는 공통·KPI·overview 맥락 유지.  
 **우선순위:** P0 (필드 저장 후 재조회 원복) · P1 (저장 시 목록/집계 N+1 완화)  
 **대상 화면:** CMS `/programs/trained-teachers?programId=…` 풀페이지 상세  
 - LNB **공통 정보** · **모집 정보**  
