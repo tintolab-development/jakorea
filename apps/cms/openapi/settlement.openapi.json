@@ -17645,10 +17645,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -17978,7 +17978,7 @@
           },
           "formBindings": {
             "type": "array",
-            "description": "일반 프로그램 등록과 같은 트랜잭션에서 publish/bind할 program-scoped form bindings",
+            "description": "프로그램 등록과 같은 트랜잭션에서 publish/bind할 program-scoped form bindings. GENERAL / TRAINED_TEACHER / COMPANY_SCHOOL / UJAT에서 허용. 공용 카탈로그 version id는 거부하고 draft-owned COPY만 받는다.",
             "items": {
               "$ref": "#/components/schemas/ProgramFormBindingRequest"
             }
@@ -18013,7 +18013,8 @@
             "format": "int64"
           },
           "required": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Optional. Omitted or false stores required_yn=false. Create does not force true."
           },
           "active": {
             "type": "boolean"
@@ -28886,7 +28887,8 @@
             }
           },
           "serviceDetailJson": {
-            "type": "string"
+            "type": "string",
+            "description": "TRAINED_TEACHER: persist as-is (replace, no RFC-7396 merge, no root generalCommonInfo mirror). GENERAL and other types keep nested merge + editor mirrors."
           },
           "clearFields": {
             "type": "array",
@@ -28946,7 +28948,8 @@
             "type": "boolean"
           },
           "teacherTrainingScheduleName": {
-            "type": "string"
+            "type": "string",
+            "description": "교육 연수 일정명. teacherTrainingEnabled=false 이고 빈 문자열이거나 생략이면 빈 값으로 clear. true이면 기본 '교육 연수'."
           },
           "educationJournalEnabled": {
             "type": "boolean"
@@ -28958,7 +28961,8 @@
             "type": "string"
           },
           "configJson": {
-            "type": "string"
+            "type": "string",
+            "description": "TT detail 전용 opaque JSON. programs serviceDetailJson 통짜 복사가 아님."
           }
         }
       },
@@ -41084,15 +41088,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },

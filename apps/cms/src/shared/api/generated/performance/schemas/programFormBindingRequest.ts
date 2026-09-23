@@ -14,6 +14,7 @@ export interface ProgramFormBindingRequest {
   targetRole?: string;
   targetScope?: string;
   targetScopeId?: number;
+  /** Optional. Omitted or false stores required_yn=false. Create does not force true. */
   required?: boolean;
   active?: boolean;
   completionRequired?: boolean;

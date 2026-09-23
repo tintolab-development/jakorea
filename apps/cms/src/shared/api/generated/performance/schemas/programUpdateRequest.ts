@@ -92,6 +92,7 @@ export interface ProgramUpdateRequest {
   schedules?: ProgramScheduleRequest[];
   wagePolicies?: ProgramWagePolicyRequest[];
   paymentItems?: ProgramSettlementPaymentItemRequest[];
+  /** TRAINED_TEACHER: persist as-is (replace, no RFC-7396 merge, no root generalCommonInfo mirror). GENERAL and other types keep nested merge + editor mirrors. */
   serviceDetailJson?: string;
   /** PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지 */
   clearFields?: string[];
