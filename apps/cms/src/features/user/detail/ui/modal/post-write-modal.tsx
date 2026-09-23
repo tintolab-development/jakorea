@@ -175,7 +175,7 @@ export function PostWriteModal({
           owner,
           attachmentType: ADMIN_FILE_PURPOSE.PROGRAM_POST_ATTACHMENT,
           displayOrder: uploadResults.length + 1,
-        }).catch(() => undefined)
+        })
         uploadResults.push({
           fileName: file.name,
           fileUrl: contentUrlForFileObjectId(uploaded.fileObjectId),
