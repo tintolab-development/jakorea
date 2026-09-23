@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { EducationTeacherAssignedInstructor } from '../../model/types'
 import downloadIconUrl from '@/shared/assets/icons/file-download-gray.svg'
+import { downloadAttachment, needsEmptyAttachmentFallback } from '@/shared/lib/download-attachment'
 import { PFPageButton, PFText } from '@/shared/ui'
 import styles from './assigned-instructor-card.module.css'
 
@@ -23,21 +24,17 @@ function ConsentList({ instructor }: { instructor: EducationTeacherAssignedInstr
               {consent.title}
             </PFText>
             {consent.fileUrl ? (
-              <a
+              <button
+                type="button"
                 className={styles.downloadButton}
-                href={consent.fileUrl}
-                download={consent.fileUrl !== '#'}
-                target={consent.fileUrl.startsWith('http') ? '_blank' : undefined}
-                rel={consent.fileUrl.startsWith('http') ? 'noopener noreferrer' : undefined}
                 aria-label={`${consent.title} 다운로드`}
-                onClick={event => {
-                  if (consent.fileUrl === '#') {
-                    event.preventDefault()
-                  }
+                onClick={() => {
+                  if (needsEmptyAttachmentFallback(consent.fileUrl)) return
+                  void downloadAttachment(consent.title, consent.fileUrl)
                 }}
               >
                 <img src={downloadIconUrl} alt="" width={20} height={20} aria-hidden="true" />
-              </a>
+              </button>
             ) : (
               <span className={styles.downloadButton} aria-hidden="true">
                 <img src={downloadIconUrl} alt="" width={20} height={20} />
