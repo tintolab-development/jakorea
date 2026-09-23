@@ -1,3 +1,9 @@
+import {
+  getFileDownload,
+  loadAdminFileBlob,
+  toSameOriginApiPath,
+} from '@/shared/lib/admin-file-upload/attachments'
+import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import customInstance from '@/shared/api/orval-mutator'
 
 export type ProgramThumbnailResponse = {
@@ -26,6 +32,24 @@ export async function fetchProgramThumbnail(programId: number): Promise<ProgramT
       method: 'GET',
     })
   )
+}
+
+/** img에 넣을 주소. 바이트를 받으면 blob, 아니면 서명된 downloadUrl. `/content`는 쓰지 않는다. */
+export async function loadProgramThumbnailPreviewUrl(fileObjectId: number): Promise<string> {
+  try {
+    const blob = await loadAdminFileBlob(fileObjectId)
+    if (blob.size > 0 && blob.type !== 'application/json') {
+      return URL.createObjectURL(blob)
+    }
+  } catch {
+    /* 서명 주소로 표시 */
+  }
+  const resolved = await getFileDownload(fileObjectId)
+  const downloadUrl = resolved.downloadUrl?.trim()
+  if (!downloadUrl) {
+    throw new Error('대표 이미지 주소를 받지 못했습니다.')
+  }
+  return toSameOriginApiPath(downloadUrl, getApiBaseUrl()) ?? downloadUrl
 }
 
 /** PUT /api/admin/programs/{programId}/thumbnail — null 이면 대표 이미지를 지운다 */

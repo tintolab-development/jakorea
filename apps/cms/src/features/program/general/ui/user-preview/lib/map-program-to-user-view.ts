@@ -52,6 +52,8 @@ export type ParticipantRecruitmentUserViewModel = {
   applicationPeriodLabel: string
   attachmentFileNames: string[]
   contactLines: string[]
+  /** 대표 이미지. 없으면 기본 포스터 */
+  posterImageUrl?: string
 }
 
 /** 모집 탭별 사용자 미리보기 — ViewModel 형상은 동일 */

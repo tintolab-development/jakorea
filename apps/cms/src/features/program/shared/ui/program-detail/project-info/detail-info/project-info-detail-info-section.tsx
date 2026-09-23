@@ -15,7 +15,6 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
 import {
   ADMIN_FILE_PURPOSE,
-  contentUrlForFileObjectId,
   createFileAttachment,
   parseFileObjectId,
   programFileOwner,
@@ -23,8 +22,10 @@ import {
 } from '@/shared/lib/admin-file-upload'
 import {
   fetchProgramThumbnail,
+  loadProgramThumbnailPreviewUrl,
   putProgramThumbnail,
 } from '@/features/program/shared/api/program-thumbnail'
+import { useCmsAlert } from '@/shared/ui'
 import { useTemplateEditor } from '@/features/template/hooks/use-template-editor'
 import { RichTextEditor, RichTextViewer } from '@/shared/rich-text'
 import {
@@ -52,6 +53,24 @@ const FALLBACK_ADDITIONAL_SVG =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='200' viewBox='0 0 600 200'%3E%3Crect fill='%23f5f5f5' width='600' height='200'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='14'%3E추가 내용 이미지%3C/text%3E%3C/svg%3E"
 
 export type DetailInfoEmptyReadDisplay = 'mock-default' | 'dash'
+
+function revokeBlobUrl(url: string | null | undefined) {
+  if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
+}
+
+/** `/content` 경로는 대표 이미지를 열지 못한다. http(s)·blob 만 미리보기로 쓴다. */
+function readableThumbnailUrl(value: string | null | undefined): string | undefined {
+  const trimmed = value?.trim()
+  if (!trimmed || trimmed.includes('/api/admin/files/')) return undefined
+  if (
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('data:') ||
+    /^https?:\/\//i.test(trimmed)
+  ) {
+    return trimmed
+  }
+  return undefined
+}
 
 function resolveTextReadContent(
   raw: string | undefined,
@@ -146,35 +165,57 @@ function useDetailInfoEditorBlock(
       return
     }
     let cancelled = false
-    void fetchProgramThumbnail(programId)
-      .then(thumbnail => {
-        if (cancelled) return
-        if (thumbnail.fileObjectId == null) {
-          setLinkedThumbnail(null)
-          return
+    let createdUrl: string | null = null
+    void (async () => {
+      const thumbnail = await fetchProgramThumbnail(programId)
+      if (cancelled || thumbnail.fileObjectId == null) {
+        if (!cancelled) {
+          setLinkedThumbnail(prev => {
+            revokeBlobUrl(prev?.url)
+            return null
+          })
         }
-        setLinkedThumbnail({
-          url: contentUrlForFileObjectId(thumbnail.fileObjectId),
+        return
+      }
+      const nextUrl = await loadProgramThumbnailPreviewUrl(thumbnail.fileObjectId)
+      if (cancelled) {
+        revokeBlobUrl(nextUrl)
+        return
+      }
+      createdUrl = nextUrl
+      setLinkedThumbnail(prev => {
+        if (prev?.url !== nextUrl) revokeBlobUrl(prev?.url)
+        return {
+          url: nextUrl,
           fileName: thumbnail.originalFileName?.trim() || '',
+        }
+      })
+    })().catch(() => {
+      if (!cancelled) {
+        setLinkedThumbnail(prev => {
+          revokeBlobUrl(prev?.url)
+          return null
         })
-      })
-      .catch(() => {
-        if (!cancelled) setLinkedThumbnail(null)
-      })
+      }
+    })
     return () => {
       cancelled = true
+      revokeBlobUrl(createdUrl)
     }
   }, [program.id])
 
-  const formThumbnailUrl =
-    isFormEdit && form
-      ? (form.watch('keyVisualImage') ?? form.watch('posterImage') ?? '') || undefined
-      : undefined
-  const thumbnailUrl =
-    formThumbnailUrl || linkedThumbnail?.url || program.keyVisualImage || program.posterImage
-  const displayThumbnailUrl = thumbnailPreviewBlobUrl ?? thumbnailUrl
+  const legacyThumbnailUrl = readableThumbnailUrl(
+    (isFormEdit && form
+      ? form.watch('keyVisualImage') || form.watch('posterImage')
+      : undefined) ||
+      program.keyVisualImage ||
+      program.posterImage
+  )
+  const displayThumbnailUrl =
+    thumbnailPreviewBlobUrl || linkedThumbnail?.url || legacyThumbnailUrl
   const thumbnailFilename =
-    linkedThumbnail?.fileName || (thumbnailUrl ? getThumbnailFilename(thumbnailUrl) : '')
+    linkedThumbnail?.fileName ||
+    (legacyThumbnailUrl ? getThumbnailFilename(legacyThumbnailUrl) : '')
 
   return {
     editorOpen,
@@ -235,6 +276,7 @@ function ThumbnailImageRow({
   guideLines: string[]
   showRequiredStar: boolean
 }) {
+  const { showAlert } = useCmsAlert()
   return (
     <tr>
       <th>
@@ -295,13 +337,25 @@ function ThumbnailImageRow({
                             },
                           })
                           await putProgramThumbnail(programId, uploaded.fileObjectId)
-                          const url = contentUrlForFileObjectId(uploaded.fileObjectId)
-                          form.setValue('keyVisualImage', url)
-                          form.setValue('posterImage', url)
-                          setLinkedThumbnail({ url, fileName: file.name })
-                        } catch (e) {
+                          let previewUrl = blobUrl
+                          try {
+                            previewUrl = await loadProgramThumbnailPreviewUrl(uploaded.fileObjectId)
+                            if (previewUrl !== blobUrl) URL.revokeObjectURL(blobUrl)
+                          } catch {
+                            previewUrl = blobUrl
+                          }
+                          setLinkedThumbnail(prev => {
+                            if (prev?.url !== previewUrl) revokeBlobUrl(prev?.url)
+                            return { url: previewUrl, fileName: file.name }
+                          })
+                          setThumbnailPreviewBlobUrl(null)
+                        } catch {
                           URL.revokeObjectURL(blobUrl)
                           setThumbnailPreviewBlobUrl(null)
+                          showAlert({
+                            title: '안내',
+                            content: '대표 이미지를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                          })
                         } finally {
                           setUploadingThumbnail(false)
                         }
@@ -320,10 +374,18 @@ function ThumbnailImageRow({
                           form.setValue('posterImage', undefined)
                         }
                         const programId = parseFileObjectId(program.id)
+                        setLinkedThumbnail(prev => {
+                          revokeBlobUrl(prev?.url)
+                          return null
+                        })
                         if (programId != null) {
-                          void putProgramThumbnail(programId, null)
+                          void putProgramThumbnail(programId, null).catch(() => {
+                            showAlert({
+                              title: '안내',
+                              content: '대표 이미지를 지우지 못했습니다. 잠시 후 다시 시도해 주세요.',
+                            })
+                          })
                         }
-                        setLinkedThumbnail(null)
                       }
                     : undefined
                 }
