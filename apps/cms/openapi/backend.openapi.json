@@ -14232,7 +14232,7 @@
           {
             "name": "keyword",
             "in": "query",
-            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "description": "프로그램명(name_ko)·영문명·프로그램 코드·대표 프로그램명(mainTitle) 부분일치",
             "required": false,
             "schema": {
               "type": "string"
@@ -75642,7 +75642,8 @@
             "type": "string"
           },
           "mainTitle": {
-            "type": "string"
+            "type": "string",
+            "description": "대표 프로그램명. 목록은 상세와 같이 service detail 대표명을 우선하고 없으면 title. aliases: representativeProgramNameKo, mainProgramNameKo"
           },
           "textbookName": {
             "type": "string"

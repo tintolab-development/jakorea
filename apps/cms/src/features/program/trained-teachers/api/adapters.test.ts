@@ -76,6 +76,18 @@ describe('mapTrainedTeacherListItemToProgram periodStatus', () => {
     expect(mapped.participatingSchoolCount).toBeUndefined()
   })
 
+  it('목록은 관리명(title)을 유지하고 대표명(mainTitle)·titleEn을 그대로 둔다', () => {
+    const mapped = mapTrainedTeacherListItemToProgram({
+      id: 186005,
+      title: '생성 당시명',
+      mainTitle: '수정1',
+      titleEn: 'Revised',
+    })
+    expect(mapped.title).toBe('생성 당시명')
+    expect(mapped.mainTitle).toBe('수정1')
+    expect(mapped.titleEn).toBe('Revised')
+  })
+
   it('uses participatingOrganizationCount as school count alias', () => {
     const mapped = mapTrainedTeacherListItemToProgram({
       id: 186007,

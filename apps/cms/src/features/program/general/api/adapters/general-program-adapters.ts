@@ -250,9 +250,9 @@ function baseProgramDefaults(partial: Partial<Program> & Pick<Program, 'id' | 't
 }
 
 export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): Program {
-  // 목록 「프로그램명」= 대표 프로그램명 (국문) = mainTitle
-  const title =
-    dto.mainTitle?.trim() || dto.nameKo?.trim() || dto.title?.trim() || '제목 없음'
+  // title = 생성/관리명. 목록 「프로그램명」표시는 mainTitle(대표명)을 쓴다.
+  const title = dto.title?.trim() || dto.nameKo?.trim() || '제목 없음'
+  const mainTitle = dto.mainTitle?.trim() || title
   const lifecycleStatus = resolveListLifecycleStatus(dto)
   const audienceFromApi = resolveAudienceFromApiFields({
     programType: dto.programType,
@@ -267,7 +267,8 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
   return baseProgramDefaults({
     id: toProgramId(dto.id ?? dto.uuid),
     title,
-    mainTitle: dto.mainTitle?.trim() || title,
+    mainTitle,
+    titleEn: dto.titleEn?.trim() || undefined,
     ...resolveBusinessPeriodDates(dto),
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus,

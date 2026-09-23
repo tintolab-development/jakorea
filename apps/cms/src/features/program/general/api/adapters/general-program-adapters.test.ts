@@ -7,6 +7,7 @@ import {
   mapGeneralProgramToCreateRequest,
   mapGeneralProgramToUpdateRequest,
 } from '@/features/program/general/api/adapters/general-program-adapters'
+import { resolveGeneralProgramListTitle } from '@/features/program/general/lib/detail-common-info-display'
 import type { Program } from '@/types/domain'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 
@@ -239,15 +240,29 @@ describe('general-program-adapters', () => {
     expect(program.lifecycleStatus).toBe('recruiting_students')
   })
 
-  it('목록 프로그램명은 title보다 mainTitle(대표명)을 우선한다', () => {
+  it('목록은 관리명(title)을 유지하고 프로그램명은 mainTitle(대표명)을 쓴다', () => {
     const program = mapAdminProgramListItemToProgram({
       id: 186020,
       title: '세부프로그램명 경제리터러시기초',
       mainTitle: '수정1',
+      titleEn: '수정1',
     })
 
-    expect(program.title).toBe('수정1')
+    expect(program.title).toBe('세부프로그램명 경제리터러시기초')
     expect(program.mainTitle).toBe('수정1')
+    expect(program.titleEn).toBe('수정1')
+    expect(resolveGeneralProgramListTitle(program)).toBe('수정1')
+  })
+
+  it('목록 mainTitle이 없으면 title로 폴백한다', () => {
+    const program = mapAdminProgramListItemToProgram({
+      id: 186021,
+      title: '생성 당시명',
+    })
+
+    expect(program.title).toBe('생성 당시명')
+    expect(program.mainTitle).toBe('생성 당시명')
+    expect(resolveGeneralProgramListTitle(program)).toBe('생성 당시명')
   })
 
   it('filters overview status like mock list', () => {

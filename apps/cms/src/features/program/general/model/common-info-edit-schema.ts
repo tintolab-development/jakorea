@@ -1651,7 +1651,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
 
   const representativeTitleKo = values.mainTitle.trim()
   return {
-    title: representativeTitleKo,
+    title: existing.title,
     mainTitle: representativeTitleKo,
     titleEn: values.titleEn?.trim() || undefined,
     startDate: values.startDate,
