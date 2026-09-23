@@ -45,10 +45,14 @@ export type EducationTeacherAssignmentConsent = {
   id: string
   title: string
   fileUrl?: string
+  documentId?: number
+  originalFileName?: string
 }
 
 export type EducationTeacherAssignedInstructor = {
   id: string
+  /** 배정 강사 회원 번호. 동의서 download-requests 경로 */
+  instructorMemberId?: number
   name: string
   /**
    * 기관이 JA 시스템에서 동의서 확인을 요청한 경우에만 true.
