@@ -11,6 +11,7 @@ import {
   resolveLatestMemberAdminCommentDetail,
 } from '@/features/user/api/map-member-comments'
 import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
+import { loadSensitiveAdminFileBlob } from '@/shared/lib/admin-file-upload'
 import { customInstance } from '@/shared/api/orval-mutator'
 import type { SchoolMemberDetailResponse } from '@/shared/api/generated/members/schemas/schoolMemberDetailResponse'
 import type { AdminPreRegisterSchoolRequest } from '@/shared/api/generated/members/schemas/adminPreRegisterSchoolRequest'
@@ -536,57 +537,39 @@ export async function fetchConsentFilledDocumentRemote(
   )
 }
 
-/** 성범죄 첨부 다운로드. presigned가 아니면 감사 사유를 다시 실어 릴레이한다. */
+function mimeFromEvidenceFileName(fileName: string | null | undefined): string | null {
+  const name = fileName?.trim().toLowerCase() ?? ''
+  if (name.endsWith('.pdf')) return 'application/pdf'
+  if (name.endsWith('.png')) return 'image/png'
+  if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'image/jpeg'
+  if (name.endsWith('.webp')) return 'image/webp'
+  return null
+}
+
+/** 스트림이 octet-stream이면 img·PDF 미리보기가 파일을 열지 못한다. */
+function blobWithEvidenceMime(blob: Blob, fileName: string | null | undefined): Blob {
+  if (blob.type && blob.type !== 'application/octet-stream') return blob
+  const mime = mimeFromEvidenceFileName(fileName)
+  if (!mime) return blob
+  return new Blob([blob], { type: mime })
+}
+
+/** 성범죄 첨부. claim으로 relayToken을 받은 뒤 stream으로 바이트를 받는다. */
 export async function fetchConsentEvidenceBlobRemote(
   filled: FilledDocumentResponse,
   reason: string
 ): Promise<Blob | null> {
-  const endpoint = filled.evidenceDownloadEndpoint?.trim()
-  if (endpoint) {
-    try {
-      const payload = await customInstance<Blob>(
-        {
-          url: endpoint,
-          method: 'GET',
-          responseType: 'blob',
-        },
-        { skipGlobalErrorAlert: true }
-      )
-      if (payload instanceof Blob && payload.size > 0 && payload.type !== 'application/json') {
-        return payload
-      }
-    } catch {
-      /* POST 릴레이 시도 */
-    }
-    try {
-      const payload = await customInstance<Blob>(
-        {
-          url: endpoint,
-          method: 'POST',
-          data: { reason },
-          responseType: 'blob',
-        },
-        { skipGlobalErrorAlert: true }
-      )
-      if (payload instanceof Blob && payload.size > 0 && payload.type !== 'application/json') {
-        return payload
-      }
-    } catch {
-      /* fileObjectId 폴백 */
-    }
-  }
-
   if (filled.evidenceFileObjectId == null) return null
-  const payload = await customInstance<Blob>(
-    {
-      url: `/api/admin/files/${filled.evidenceFileObjectId}/sensitive-downloads/stream`,
-      method: 'POST',
-      data: { reason },
-      responseType: 'blob',
-    },
-    { skipGlobalErrorAlert: true }
-  )
-  return payload instanceof Blob ? payload : null
+  try {
+    const blob = await loadSensitiveAdminFileBlob({
+      fileObjectId: filled.evidenceFileObjectId,
+      reason,
+      claimPath: filled.evidenceDownloadEndpoint,
+    })
+    return blobWithEvidenceMime(blob, filled.evidenceOriginalFileName)
+  } catch {
+    return null
+  }
 }
 
 export async function fetchMemberExternalIdentifiersRemote(

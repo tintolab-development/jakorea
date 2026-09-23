@@ -177,6 +177,65 @@ async function readDownloadBlob(downloadUrl: string, headers: Record<string, str
   )
 }
 
+type SensitiveRelayClaim = {
+  relayToken?: string | null
+  streamUrl?: string | null
+}
+
+/**
+ * 민감 파일은 claim(`POST .../sensitive-downloads`)으로 relayToken을 받은 뒤
+ * stream에 reason과 토큰을 함께 실어야 바이트가 온다.
+ */
+export async function loadSensitiveAdminFileBlob(input: {
+  fileObjectId: number
+  reason: string
+  claimPath?: string | null
+}): Promise<Blob> {
+  const claimPath =
+    input.claimPath?.trim() || `/api/admin/files/${input.fileObjectId}/sensitive-downloads`
+  const claim = unwrapApiBody<SensitiveRelayClaim>(
+    await customInstance(
+      {
+        url: claimPath,
+        method: 'POST',
+        data: { reason: input.reason },
+      },
+      { skipGlobalErrorAlert: true }
+    )
+  )
+  const relayToken = claim.relayToken?.trim()
+  if (!relayToken) {
+    throw new Error('민감 파일 다운로드 토큰을 받지 못했습니다.')
+  }
+  const rawStreamUrl =
+    claim.streamUrl?.trim() ||
+    `/api/admin/files/${input.fileObjectId}/sensitive-downloads/stream`
+  const streamUrl = toSameOriginApiPath(rawStreamUrl, getApiBaseUrl()) ?? rawStreamUrl
+  const payload = await customInstance<Blob>(
+    {
+      url: streamUrl,
+      method: 'POST',
+      data: { reason: input.reason, relayToken },
+      responseType: 'blob',
+    },
+    { skipGlobalErrorAlert: true }
+  )
+  if (!(payload instanceof Blob) || payload.size < 1 || payload.type === 'application/json') {
+    throw new Error('민감 파일을 불러오지 못했습니다.')
+  }
+  return payload
+}
+
+/** 인증이 필요한 파일을 img에 넣지 않고 blob으로 미리본다. */
+export async function loadAdminFileBlob(fileObjectId: number): Promise<Blob> {
+  const resolved = await getFileDownload(fileObjectId)
+  const downloadUrl = resolved.downloadUrl?.trim()
+  if (!downloadUrl) {
+    throw new Error('첨부파일 다운로드 URL을 받지 못했습니다.')
+  }
+  return readDownloadBlob(downloadUrl, headerRecord(resolved.requiredHeaders))
+}
+
 /** 파일 다운로드 API가 준 주소로 원본 파일을 저장한다. */
 export async function downloadAdminFile(input: {
   fileObjectId: number

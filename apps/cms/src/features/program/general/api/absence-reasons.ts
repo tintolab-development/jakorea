@@ -1,5 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
+import { loadSensitiveAdminFileBlob } from '@/shared/lib/admin-file-upload'
 import { downloadBlob } from '@/shared/utils/file-download'
 
 export type ProgramAbsenceReasonItem = {
@@ -36,21 +37,16 @@ export async function fetchProgramAbsenceReasons(
 }
 
 /**
- * 민감 증빙은 POST sensitive-downloads/stream 으로만 받는다.
+ * 민감 증빙은 claim 후 stream으로만 받는다.
  * GET /api/admin/files/{id}/download 는 SENSITIVE_FILE_RELAY_REQUIRED 이다.
  */
 export async function downloadAbsenceEvidenceFile(
   fileObjectId: number,
   fileName: string
 ): Promise<void> {
-  const blob = await customInstance<Blob>(
-    {
-      url: `/api/admin/files/${fileObjectId}/sensitive-downloads/stream`,
-      method: 'POST',
-      data: { reason: '프로그램 출결 증빙 서류 확인' },
-      responseType: 'blob',
-    },
-    { skipGlobalErrorAlert: true }
-  )
+  const blob = await loadSensitiveAdminFileBlob({
+    fileObjectId,
+    reason: '프로그램 출결 증빙 서류 확인',
+  })
   await downloadBlob(blob, fileName.trim() || `증빙서류-${fileObjectId}`)
 }
