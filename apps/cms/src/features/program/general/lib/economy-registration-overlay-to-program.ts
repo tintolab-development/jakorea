@@ -268,9 +268,19 @@ export function applyEconomyRegistrationOverlayToProgram(
   const dispatchedClass = overlayNullableNumber(overlay, `${KPI}.dispatchedClass`)
   const prevKpi = baseCommon?.kpi
   const surveyKeys = surveyKeysFromOverlay(overlay)
+  const sponsorIdFromOverlay = skipUnselected(overlayString(overlay, `${BASIC}.sponsorId`))
+  const sponsorId = sponsorIdFromOverlay || base.sponsorId
+  const managerContactIdsRaw = overlay[`${BASIC}.managerContactIds`]
+  const managerContactIds = Array.isArray(managerContactIdsRaw)
+    ? managerContactIdsRaw
+        .map(String)
+        .map(id => id.trim())
+        .filter(id => id && id !== UNSELECTED)
+    : []
 
   return {
     ...base,
+    sponsorId,
     title: repKo || base.title,
     mainTitle: repKo || base.mainTitle,
     titleEn: repEn || base.titleEn,
@@ -298,6 +308,14 @@ export function applyEconomyRegistrationOverlayToProgram(
       wageGradeRows,
       paymentItems,
       deductionItems,
+      sponsorManagementId: sponsorId || baseCommon?.sponsorManagementId,
+      sponsorManagementIds: sponsorId
+        ? [sponsorId]
+        : baseCommon?.sponsorManagementIds,
+      sponsorManagerContactIds:
+        managerContactIds.length > 0
+          ? managerContactIds
+          : baseCommon?.sponsorManagerContactIds,
       kpi: {
         finalParticipants: participantCount ?? prevKpi?.finalParticipants ?? 0,
         instructorCount: instructorCount ?? prevKpi?.instructorCount ?? 0,

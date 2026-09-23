@@ -114,11 +114,23 @@ export function readTrainedTeachersRegistrationOverlayProgramTitleKo(): string {
   return readOverlayString(TRAINED_TEACHERS_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY)
 }
 
+const ECONOMY_REGISTRATION_OVERLAY_SPONSOR_ID_KEY =
+  'economyRegistration.basicInfo.sponsorId' as const
+const ECONOMY_REGISTRATION_ALL_VALUE = '__all__'
+
+export function readEconomyRegistrationOverlaySponsorId(): string {
+  const raw = readOverlayString(ECONOMY_REGISTRATION_OVERLAY_SPONSOR_ID_KEY)
+  return !raw || raw === ECONOMY_REGISTRATION_ALL_VALUE ? '' : raw
+}
+
 export function readRegistrationOverlaySponsorId(
   variant: ProgramRegistrationFormVariant = 'general'
 ): string {
   if (variant === 'trainedTeachers') {
     return readTrainedTeachersRegistrationOverlaySponsorId()
+  }
+  if (variant === 'economy') {
+    return readEconomyRegistrationOverlaySponsorId()
   }
   return readGeneralRegistrationOverlaySponsorId()
 }

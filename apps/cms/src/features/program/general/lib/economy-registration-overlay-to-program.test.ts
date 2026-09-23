@@ -186,6 +186,17 @@ describe('applyEconomyRegistrationOverlayToProgram', () => {
     expect(result.rounds?.[0]?.startDate).toBe(result.startDate)
   })
 
+  it('후원사·담당자 overlay를 Program.sponsorId와 generalCommonInfo에 반영한다', () => {
+    const overlay: Record<string, unknown> = {
+      'economyRegistration.basicInfo.sponsorId': '163388',
+      'economyRegistration.basicInfo.managerContactIds': ['contact-1', '__all__'],
+    }
+    const result = applyEconomyRegistrationOverlayToProgram(baseProgram(), overlay)
+    expect(result.sponsorId).toBe('163388')
+    expect(result.generalCommonInfo?.sponsorManagementIds).toEqual(['163388'])
+    expect(result.generalCommonInfo?.sponsorManagerContactIds).toEqual(['contact-1'])
+  })
+
   it('detailedProgramId — overlay가 비어 있으면 기존 Program 값을 유지한다', () => {
     const withExisting = { ...baseProgram(), detailedProgramId: '163099' }
     const result = applyEconomyRegistrationOverlayToProgram(withExisting, {})
