@@ -47,6 +47,16 @@ export const platformQueryKeys = {
     publicMain: () => [...platformQueryKeys.home.all(), 'public-main'] as const,
   },
 
+  site: {
+    all: () => [...platformQueryKeys.all, 'site'] as const,
+    /** GET /api/public/site/settings — Class B-shell */
+    settings: () => [...platformQueryKeys.site.all(), 'settings'] as const,
+    /** GET /api/public/site/gnb — Class B-shell */
+    gnb: () => [...platformQueryKeys.site.all(), 'gnb'] as const,
+    /** GET /api/public/site/footer — Class B-shell */
+    footer: () => [...platformQueryKeys.site.all(), 'footer'] as const,
+  },
+
   impactStory: {
     all: () => [...platformQueryKeys.all, 'impact-story'] as const,
     /** 공개 카테고리 — GET /api/public/impact-story/categories (Class B) */

@@ -10,6 +10,7 @@ import {
   getRefreshToken,
   setDevAuthLoggedIn,
 } from '@/shared/lib'
+import { SiteDocumentHead } from '@/features/site-shell'
 import type { HeaderTheme } from '@/widgets/layout/header-theme'
 import type { LayoutVariant } from '@/widgets/layout/layout-variant'
 import { AuthPageShell } from '@/widgets/layout/auth-page-shell'
@@ -95,6 +96,7 @@ export function AppLayout({
 
   return (
     <div className={styles.layout}>
+      <SiteDocumentHead />
       <ScrollRestoration />
       {isHome ? <TopBannerStrip /> : null}
       <Header

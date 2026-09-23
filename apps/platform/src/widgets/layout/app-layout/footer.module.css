@@ -248,6 +248,13 @@
   width: 36px;
 }
 
+.partnerLogoRemote {
+  width: auto;
+  height: 28px;
+  max-width: 72px;
+  object-fit: contain;
+}
+
 .infoArea {
   display: flex;
   flex-direction: column;
@@ -417,6 +424,11 @@
   .partnerLogoRights {
     width: auto;
     height: 60px;
+  }
+
+  .partnerLogoRemote {
+    height: 60px;
+    max-width: 120px;
   }
 
   .companyInfoLine {

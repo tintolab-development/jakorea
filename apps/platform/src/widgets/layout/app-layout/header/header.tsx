@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSiteGnb } from '@/features/site-shell'
 import { HeaderDesktop } from './header-desktop'
 import { HeaderMobile } from './header-mobile'
 import { HeaderMobileMenu } from './header-mobile-menu'
@@ -21,6 +22,7 @@ export function Header({
   onDarkSurface,
 }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const gnb = useSiteGnb()
 
   return (
     <>
@@ -30,6 +32,7 @@ export function Header({
         onMenuOpen={() => setIsMobileMenuOpen(true)}
       />
       <HeaderDesktop
+        groups={gnb.groups}
         isLoggedIn={isLoggedIn}
         onLogout={onLogout}
         transparent={transparent}
@@ -37,6 +40,7 @@ export function Header({
         onDarkSurface={onDarkSurface}
       />
       <HeaderMobileMenu
+        groups={gnb.groups}
         open={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
         isLoggedIn={isLoggedIn}

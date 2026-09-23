@@ -54,7 +54,7 @@ export function setAuthTokens(input: {
 
 /**
  * 토큰 제거. 기본으로 TanStack Query `['platform']` 캐시도 비운다.
- * 공개 홈(`home`)은 비로그인이라 유지한다.
+ * 공개 홈(`home`)과 사이트 셸(`site`)은 비로그인이라 유지한다.
  */
 export function clearAuthTokens(options?: { clearQueryCache?: boolean }) {
   if (canUseStorage()) {
@@ -68,7 +68,7 @@ export function clearAuthTokens(options?: { clearQueryCache?: boolean }) {
   if (options?.clearQueryCache !== false) {
     queryClient.removeQueries({
       queryKey: ['platform'],
-      predicate: query => query.queryKey[1] !== 'home',
+      predicate: query => query.queryKey[1] !== 'home' && query.queryKey[1] !== 'site',
     })
   }
 

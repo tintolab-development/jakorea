@@ -12,17 +12,17 @@
 | 홈 프로그램 카드 | `GET /api/portal/programs?featuredOnHome=true&size=8` (CMS `:8080`) | CMS `featured_on_home` 시드 최대 8 | **포함** (Homepage `education.programs` 미사용) |
 | 상단 띠배너 | `TopBannerStrip` | `/main/strip-banners` · `stripBanners[]` | **포함** (홈 전용) |
 | 팝업 | **UI 없음** | `/main/popups` · `popups[]` (동시 최대 4) | **제외** — DB 시드만 유지, 렌더하지 않음 |
-| GNB | [`header-config.ts`](../../src/widgets/layout/app-layout/header/header-config.ts) 하드코딩 | `/site/gnb` · `GET /api/public/site/gnb` | **제외** |
-| 푸터 | [`footer.tsx`](../../src/widgets/layout/app-layout/footer.tsx) 주소·메뉴·유관로고 3 SVG. SNS `href="/"` | `/site/footer` · `GET /api/public/site/footer` | **제외** |
-| 사이트 OG/파비콘 | 미연동 | `/site/info` · `GET /api/public/site/settings` | **제외** |
+| GNB | `GET /api/public/site/gnb` + [`header-config.ts`](../../src/widgets/layout/app-layout/header/header-config.ts) fallback | `/site/gnb` · `GET /api/public/site/gnb` | **포함** |
+| 푸터 | `GET /api/public/site/footer` + [`footer.tsx`](../../src/widgets/layout/app-layout/footer.tsx) fallback. SNS·관련 사이트는 로컬 | `/site/footer` · `GET /api/public/site/footer` | **포함** |
+| 사이트 OG/파비콘 | `GET /api/public/site/settings` → `SiteDocumentHead` | `/site/info` · `GET /api/public/site/settings` | **포함** |
 | 공지 | 홈 미노출 (`/notices` 별도) | `/ja-korea/notices` · `GET /api/public/ja-korea/notices` | **제외** |
 
 ## 권장 다음 순서
 
 1. **팝업** — 홈 전용 오버레이. public `popups[]`는 이미 `GET /api/public/main`에 실려 오므로 렌더러만 추가하면 된다. 기간·동시 4건·닫기(오늘 하루 보지 않기) UX를 먼저 정한다. Platform 기본 에셋은 없다.
-2. **GNB** — `GET /api/public/site/gnb`. Admin은 고정 20행의 하위명·사용여부·순서만. Platform `header-config` 트리·경로를 fallback SSOT로 두고 덮어쓴다. 홈 본문과 쿼리를 섞지 않는다.
-3. **푸터** — `GET /api/public/site/footer`. 주소·메뉴·유관로고. Admin 시드 로고 4 vs Platform SVG 3 — 에셋 정책을 맞춘 뒤 연동. SNS는 홈 소셜 레일(`main_social_link`)과 출처가 다를 수 있다.
-4. **사이트 설정** — OG/파비콘 `GET /api/public/site/settings`. 홈 본문과 무관.
+2. **GNB** — `GET /api/public/site/gnb`. 라벨·순서·사용 여부는 원격, 경로는 `menu-routes` fallback. **연동됨.**
+3. **푸터** — `GET /api/public/site/footer`. 메뉴 7 + 로컬 `온라인 학습관리`. 관련 사이트·SNS는 로컬. **연동됨.**
+4. **사이트 설정** — `GET /api/public/site/settings` → 문서 헤드. **연동됨.**
 5. **공지** — 홈 블록을 새로 넣을 때만. 지금은 `/notices` 목록만.
 
 ## 하지 말 것
