@@ -1361,6 +1361,7 @@ export function narrowProgramDetailPatchForCommonInfoSave(
     volunteerTargetDetail: _volunteerTargetDetail,
     applicationMethod: _applicationMethod,
     otherNotes: _otherNotes,
+    educationTargetDetail: _educationTargetDetail,
     ...rest
   } = patch
 
