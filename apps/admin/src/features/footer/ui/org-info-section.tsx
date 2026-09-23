@@ -43,6 +43,7 @@ function cloneOrg(data: FooterOrgInfo): FooterOrgInfoSaveInput {
     phone: data.phone,
     fax: data.fax,
     email: data.email,
+    organizationDescription: data.organizationDescription,
     logoUrl: data.logoUrl,
     logoFileName: data.logoFileName,
     logoAssetId: data.logoAssetId,

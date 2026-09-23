@@ -200,6 +200,10 @@ function normalizeOrgInfo(raw: Partial<FooterOrgInfo> | null | undefined): Foote
     phone: asString(raw.phone, seed.phone),
     fax: asString(raw.fax, seed.fax),
     email: asString(raw.email, seed.email),
+    organizationDescription:
+      typeof raw.organizationDescription === 'string'
+        ? raw.organizationDescription
+        : seed.organizationDescription,
     logoUrl: asString(raw.logoUrl, seed.logoUrl),
     logoFileName: typeof raw.logoFileName === 'string' ? raw.logoFileName : seed.logoFileName,
     logoAssetId: typeof raw.logoAssetId === 'number' ? raw.logoAssetId : undefined,
