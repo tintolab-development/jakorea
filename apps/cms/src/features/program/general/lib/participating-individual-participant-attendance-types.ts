@@ -49,6 +49,8 @@ export type ParticipatingIndividualParticipantAbsenceReason = {
   dateLabel: string
   reason: string
   fileName?: string | null
+  fileObjectIds?: number[]
+  originalFileNames?: Array<string | null>
 }
 
 export type ParticipatingIndividualParticipantAttendanceBundle = {

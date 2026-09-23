@@ -30,12 +30,17 @@ function mapCorrectionPayloadToAttendancePatch(
   attendanceStatus: ParticipatingIndividualProgressAttendanceStatus
   lateTime?: string
   remark?: string
+  evidenceFileObjectIds?: number[]
 } {
   if (payload.status === 'late') {
     return { attendanceStatus: 'late', lateTime: '9:05' }
   }
   if (payload.status === 'excused_absence') {
-    return { attendanceStatus: 'excused_absence', remark: payload.reason.trim() }
+    return {
+      attendanceStatus: 'excused_absence',
+      remark: payload.reason.trim(),
+      evidenceFileObjectIds: payload.evidenceFileObjectIds ?? [],
+    }
   }
   if (payload.status === 'absence') {
     return { attendanceStatus: 'absent' }
@@ -154,6 +159,7 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
       <ParticipatingIndividualProgressAttendanceCorrectionModal
         open={correctionModalOpen}
         sessionLabel={session.headerTitle}
+        scheduleId={session.id}
         participantOptions={participantCorrectionOptions}
         onCancel={() => setCorrectionModalOpen(false)}
         onConfirm={handleConfirmCorrection}

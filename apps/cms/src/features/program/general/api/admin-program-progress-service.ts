@@ -179,7 +179,7 @@ export async function fetchGeneralScheduleAttendances(programId: string, schedul
 
 export async function saveGeneralScheduleAttendances(
   scheduleId: string,
-  attendances: import('@/shared/api/generated/dashboard/schemas/attendanceItemRequest').AttendanceItemRequest[]
+  attendances: import('@/features/program/general/api/adapters/progress-attendance-adapters').AttendanceItemWriteRequest[]
 ) {
   assertProgramProgressRemoteReady()
   await putScheduleAttendancesRemote(scheduleId, { attendances })
