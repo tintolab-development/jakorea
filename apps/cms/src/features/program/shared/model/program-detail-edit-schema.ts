@@ -848,8 +848,11 @@ export function detailEditValuesToProgramPatch(
   existing: import('@/types/domain').Program
 ): Partial<import('@/types/domain').Program> {
   type ProgramRound = import('@/types/domain').ProgramRound
+  const representativeTitleKo = values.mainTitle ?? existing.mainTitle ?? existing.title
+  const isUjat =
+    existing.ujatProgressStatus != null || existing.ujatRegistrationOverlay != null
   return {
-    title: existing.title,
+    title: isUjat ? existing.title : representativeTitleKo,
     textbookName: existing.textbookName,
     startDate: values.startDate ?? existing.startDate,
     endDate: values.endDate ?? existing.endDate,

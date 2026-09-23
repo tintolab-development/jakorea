@@ -63,7 +63,14 @@ import {
 } from '@/features/program/general/lib/general-program-detail-route'
 import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/hooks/use-common-info-edit-form'
 import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hooks/use-common-info-save'
-import { getGeneralCommonInfoEditValidationMessage } from '@/features/program/general/model/common-info-edit-schema'
+import {
+  getGeneralCommonInfoEditValidationMessage,
+  PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE,
+} from '@/features/program/general/model/common-info-edit-schema'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import {
   canGeneralProgramCommonInfoEdit,
@@ -736,10 +743,17 @@ export function GeneralProgramDetailFullPageModal({
     if (!result.ok) {
       if (result.kind === 'validation') {
         const message = getGeneralCommonInfoEditValidationMessage(infoForm.getValues())
-        void showAlert({
-          title: '입력 확인',
-          content: message ?? '입력값을 확인해 주세요.',
-        })
+        if (message === PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE) {
+          void showAlert({
+            title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+            content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          })
+        } else {
+          void showAlert({
+            title: '입력 확인',
+            content: message ?? '입력값을 확인해 주세요.',
+          })
+        }
       } else {
         void showAlert({
           title: '저장 실패',

@@ -22,8 +22,8 @@ import {
 } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import {
   formatUjatDispatchedSchoolCount,
-  formatUjatProgramManagementName,
   formatUjatVolunteerHalfRecruitment,
+  resolveUjatProgramDisplayTitle,
 } from '@/features/program/ujat/lib/ujat-program-list-display'
 import {
   fetchRegistrationDraftNotice,
@@ -300,7 +300,7 @@ function UjatProgramListPageContent() {
         key: 'title',
         ellipsis: true,
         align: 'center',
-        render: (_value, record) => formatUjatProgramManagementName(record),
+        render: (_value, record) => resolveUjatProgramDisplayTitle(record),
       },
       {
         title: '프로그램 진행 현황',

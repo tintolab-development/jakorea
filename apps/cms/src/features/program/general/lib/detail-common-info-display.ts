@@ -528,9 +528,9 @@ function buildCurriculumSessionsFromRounds(
   }))
 }
 
-/** 목록·상세 헤더·breadcrumb — `Program.title` (유형 mock은 `일반 프로그램 (기관)_…` 형식) */
+/** 목록·상세 헤더·breadcrumb — 대표 프로그램명 (국문) */
 export function resolveGeneralProgramDisplayTitle(program: Program): string {
-  return program.title?.trim() || '프로그램 상세'
+  return program.mainTitle?.trim() || program.title?.trim() || '프로그램 상세'
 }
 
 export function resolveGeneralProgramListTitle(program: Program): string {

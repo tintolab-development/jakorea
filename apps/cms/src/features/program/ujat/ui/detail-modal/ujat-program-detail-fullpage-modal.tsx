@@ -77,6 +77,7 @@ import {
   type UjatSurveyMenuItem,
 } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import { resolveUjatProgramDisplayProgram } from '@/features/program/ujat/lib/ujat-program-display-program'
+import { resolveUjatProgramDisplayTitle } from '@/features/program/ujat/lib/ujat-program-list-display'
 import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
 import {
   patchUjatProgramRegistrationOverlay,
@@ -1468,7 +1469,10 @@ export function UjatProgramDetailFullPageModal({
           }
           await exportLectureEvalResultsPdf(
             root,
-            buildUjatSurveyPollResultsPdfFileName(displayProgram.title, activeRegisteredSurvey.title)
+            buildUjatSurveyPollResultsPdfFileName(
+              resolveUjatProgramDisplayTitle(displayProgram),
+              activeRegisteredSurvey.title
+            )
           )
         } else {
           await exportSurveyResultsExcel({
@@ -1653,7 +1657,7 @@ export function UjatProgramDetailFullPageModal({
           await exportLectureEvalResultsPdf(
             root,
             buildUjatSatisfactionResultsPdfFileName(
-              displayProgram.title,
+              resolveUjatProgramDisplayTitle(displayProgram),
               activeSatisfactionSurvey.title
             )
           )
@@ -1860,7 +1864,7 @@ export function UjatProgramDetailFullPageModal({
           }
           await exportLectureEvalResultsPdf(
             root,
-            buildLectureEvalResultsPdfFileName(displayProgram.title)
+            buildLectureEvalResultsPdfFileName(resolveUjatProgramDisplayTitle(displayProgram))
           )
         } else {
           await exportSurveyResultsExcel({
@@ -1925,7 +1929,9 @@ export function UjatProgramDetailFullPageModal({
 
   if (!open) return null
 
-  const programTitle = displayProgram?.title ?? '프로그램 상세'
+  const programTitle = displayProgram
+    ? resolveUjatProgramDisplayTitle(displayProgram)
+    : '프로그램 상세'
   const title =
     volAddMemberId
       ? '봉사자 추가 등록'
@@ -1994,7 +2000,7 @@ export function UjatProgramDetailFullPageModal({
         })
       : null
 
-    items.push(makeBreadcrumbItem(displayProgram.title, location.pathname, programParams))
+    items.push(makeBreadcrumbItem(programTitle, location.pathname, programParams))
 
     if (!childLabel) {
       items.push(

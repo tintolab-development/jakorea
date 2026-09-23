@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   resolveGeneralProgramDetailedProgramNameDisplay,
+  resolveGeneralProgramDisplayTitle,
   resolveScheduleTypeDetailedProgramNameFromDetails,
 } from './detail-common-info-display'
 import type { Program } from '@/types/domain'
@@ -18,6 +19,19 @@ function baseProgram(overrides: Partial<Program> = {}): Program {
     ...overrides,
   } as Program
 }
+
+describe('resolveGeneralProgramDisplayTitle', () => {
+  it('목록·모달 타이틀은 대표 프로그램명(mainTitle)을 쓴다', () => {
+    expect(
+      resolveGeneralProgramDisplayTitle(
+        baseProgram({
+          title: '생성 당시명',
+          mainTitle: '수정1',
+        })
+      )
+    ).toBe('수정1')
+  })
+})
 
 describe('resolveScheduleTypeDetailedProgramNameFromDetails', () => {
   it('일정명을 쉼표로 연결한다', () => {

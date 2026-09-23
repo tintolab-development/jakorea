@@ -154,6 +154,7 @@ describe('program detail title edit fields', () => {
     } as Program)
 
     expect(patch.title).toBe('대표명')
+    expect(patch.mainTitle).toBe('대표명')
     expect(patch.textbookName).toBe('진짜 교재명')
     expect(patch.generalCommonInfo?.announcementTitle).toBe('수정 공고명')
     expect(patch.generalCommonInfo?.detailedProgramName).toBe('수정 세부명')
@@ -204,5 +205,47 @@ describe('program detail title edit fields', () => {
 
     expect(values.announcementTitle).toBeUndefined()
     expect(values.detailedProgramName).toBeUndefined()
+  })
+
+  it('대표 프로그램명 변경 시 title도 같은 값으로 보낸다', () => {
+    const values = {
+      ...programToDetailEditValues({
+        ...program,
+        title: '생성 당시명',
+        mainTitle: '생성 당시명',
+      } as Program),
+      mainTitle: '수정1',
+    }
+
+    const patch = detailEditValuesToProgramPatch(values, {
+      ...program,
+      title: '생성 당시명',
+      mainTitle: '생성 당시명',
+    } as Program)
+
+    expect(patch.title).toBe('수정1')
+    expect(patch.mainTitle).toBe('수정1')
+  })
+
+  it('UJAT는 대표명을 바꿔도 관리명(title)을 덮지 않는다', () => {
+    const values = {
+      ...programToDetailEditValues({
+        ...program,
+        title: '프로그램 관리명',
+        mainTitle: '생성 당시 대표명',
+        ujatProgressStatus: 'VOLUNTEER_RECRUITING',
+      } as Program),
+      mainTitle: '수정한 대표명',
+    }
+
+    const patch = detailEditValuesToProgramPatch(values, {
+      ...program,
+      title: '프로그램 관리명',
+      mainTitle: '생성 당시 대표명',
+      ujatProgressStatus: 'VOLUNTEER_RECRUITING',
+    } as Program)
+
+    expect(patch.title).toBe('프로그램 관리명')
+    expect(patch.mainTitle).toBe('수정한 대표명')
   })
 })
