@@ -33,6 +33,7 @@ import {
 } from './service-detail-json'
 import { clearTeacherTrainingScheduleIfOff } from '../lib/teacher-training-schedule'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
+import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 
 /** 목록 GET echo (상세와 동일 컬럼). 일반 프로그램 DTO에는 없을 수 있음. */
 type TrainedTeacherListItemDto = AdminProgramListItemDto & {
@@ -171,7 +172,7 @@ function toOptionalNumber(value: unknown): number | undefined {
 export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto): Program {
   const item = dto as TrainedTeacherListItemDto
   const title =
-    item.nameKo?.trim() || item.title?.trim() || item.mainTitle?.trim() || '제목 없음'
+    item.mainTitle?.trim() || item.nameKo?.trim() || item.title?.trim() || '제목 없음'
   const textbookName = item.textbookName?.trim() || undefined
   const detailedProgramName = item.detailedProgramName?.trim() || undefined
   const managerName = item.managerName?.trim() || undefined
@@ -184,8 +185,7 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
     id: item.id == null ? '' : String(item.id),
     title,
     mainTitle: item.mainTitle?.trim() || title,
-    startDate: item.businessStartDate ?? item.startDate,
-    endDate: item.businessEndDate ?? item.endDate,
+    ...resolveBusinessPeriodDates(item),
     lifecycleStatus: resolveListLifecycleStatus(item),
     targetLevel: targetLevels[0],
     targetLevels: targetLevels.length > 0 ? targetLevels : undefined,
@@ -314,8 +314,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
         curriculum: round.curriculum,
         deliveryType: round.deliveryType as Program['rounds'][number]['deliveryType'],
       })) ?? [],
-    startDate: dto.startDate,
-    endDate: dto.endDate,
+    ...resolveBusinessPeriodDates(dto),
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
@@ -461,6 +460,8 @@ export function mapTrainedTeacherToUpdateRequest(
     description: merged.description,
     startDate: toDate(merged.startDate),
     endDate: toDate(merged.endDate),
+    businessStartDate: toDate(merged.startDate),
+    businessEndDate: toDate(merged.endDate),
     applicationStartDate: toDate(merged.applicationStartDate),
     applicationEndDate: toDate(merged.applicationEndDate),
     businessArea: merged.businessArea,

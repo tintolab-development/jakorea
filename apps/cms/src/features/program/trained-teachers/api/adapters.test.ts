@@ -111,6 +111,18 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
     sponsorId: 'sponsor-1',
   }
 
+  it('상세 사업 기간은 businessStartDate/EndDate를 쓴다', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      ...baseDto,
+      startDate: '2026-10-21',
+      endDate: '2026-11-01',
+      businessStartDate: '2026-10-14',
+      businessEndDate: '2026-11-07',
+    })
+    expect(mapped.startDate).toBe('2026-10-14')
+    expect(mapped.endDate).toBe('2026-11-07')
+  })
+
   it('prefers API educationStructure over serviceDetailJson', () => {
     const programWithSchedule: Program = {
       id: 'tmp',
@@ -738,6 +750,8 @@ describe('mapTrainedTeacherToCreateRequest BE registration contract', () => {
     expect(request.programType).toBe('TRAINED_TEACHER')
     expect(request.applicationTargetMode).toBe('ORGANIZATION')
     expect(request.autoApplyDefaultFormBindings).toBe(true)
+    expect(request.businessStartDate).toBe(program.startDate)
+    expect(request.businessEndDate).toBe(program.endDate)
     expect(request.educationStructure).toBe('CURRICULUM')
     expect(request.detailedProgramId).toBe(163006)
 

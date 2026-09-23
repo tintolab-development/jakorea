@@ -22,6 +22,7 @@ import {
 } from './service-detail-json'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
+import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import { applyResolvedVenueKindToCommonInfo } from '@/features/program/general/model/common-info-edit-schema'
 
 export const COMPANY_SCHOOL_PROGRAM_API_TYPE = 'COMPANY_SCHOOL'
@@ -31,33 +32,6 @@ const DEFAULT_SPONSOR_ID = 'sponsor-default'
 function toDate(value: Date | string | undefined): string | undefined {
   if (value instanceof Date) return value.toISOString()
   return value
-}
-
-const SEOUL_TIME_ZONE = 'Asia/Seoul'
-
-function toSeoulCalendarDate(value: Date | string | undefined): string | null {
-  if (value == null) return null
-  const date = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  return date.toLocaleDateString('en-CA', { timeZone: SEOUL_TIME_ZONE })
-}
-
-/**
- * BE `COMPANY_SCHOOL_BUSINESS_PERIOD_MUST_BE_CALENDAR_YEAR` —
- * 사업 운영 기간은 program.startDate/endDate(프로그램 운영)와 별도이며,
- * Asia/Seoul 달력으로 같은 해 1월 1일 00:00 ~ 12월 31일 23:59:59 이어야 한다.
- * UTC `…T23:59:59.999Z` 는 서울에서 다음 해 1월 1일이 되므로 쓰면 안 된다.
- */
-export function resolveCompanySchoolBusinessCalendarYearPeriod(
-  program: Pick<Program, 'startDate' | 'endDate'>
-): { start: string; end: string } {
-  const startDate = toSeoulCalendarDate(program.startDate)
-  const endDate = toSeoulCalendarDate(program.endDate)
-  const year = Number((startDate ?? endDate ?? toSeoulCalendarDate(new Date()))?.slice(0, 4))
-  return {
-    start: new Date(`${year}-01-01T00:00:00+09:00`).toISOString(),
-    end: new Date(`${year}-12-31T23:59:59.999+09:00`).toISOString(),
-  }
 }
 
 function resolveCompanySchoolListLifecycle(
@@ -96,13 +70,12 @@ function baseProgram(
 
 export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto): Program {
   const title =
-    dto.nameKo?.trim() || dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
+    dto.mainTitle?.trim() || dto.nameKo?.trim() || dto.title?.trim() || '제목 없음'
   return baseProgram({
     id: dto.id == null ? '' : String(dto.id),
     title,
     mainTitle: dto.mainTitle?.trim() || title,
-    startDate: dto.businessStartDate ?? dto.startDate,
-    endDate: dto.businessEndDate ?? dto.endDate,
+    ...resolveBusinessPeriodDates(dto),
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus: resolveCompanySchoolListLifecycle(dto),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
@@ -185,8 +158,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
         curriculum: round.curriculum,
         deliveryType: round.deliveryType as Program['rounds'][number]['deliveryType'],
       })) ?? [],
-    startDate: dto.startDate ?? dto.businessStartDate,
-    endDate: dto.endDate ?? dto.businessEndDate,
+    ...resolveBusinessPeriodDates(dto),
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
@@ -333,6 +305,8 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     description: program.description,
     startDate: toDate(program.startDate),
     endDate: toDate(program.endDate),
+    businessStartDate: toDate(program.startDate),
+    businessEndDate: toDate(program.endDate),
     applicationStartDate: toDate(program.applicationStartDate),
     applicationEndDate: toDate(program.applicationEndDate),
     businessArea: program.businessArea,
@@ -404,8 +378,12 @@ function mapCompanySchoolPatchFieldsToRequest(
   if (has('format')) body.format = merged.format
   if (has('category')) body.category = merged.category
   if (has('description')) body.description = merged.description
-  if (has('startDate')) body.startDate = toDate(merged.startDate)
-  if (has('endDate')) body.endDate = toDate(merged.endDate)
+  if (has('startDate') || has('endDate')) {
+    body.startDate = toDate(merged.startDate)
+    body.endDate = toDate(merged.endDate)
+    body.businessStartDate = toDate(merged.startDate)
+    body.businessEndDate = toDate(merged.endDate)
+  }
   if (has('applicationStartDate')) {
     body.applicationStartDate = toDate(merged.applicationStartDate)
   }
@@ -510,12 +488,11 @@ export function mapCompanySchoolToUpdateRequest(
 }
 
 export function mapCompanySchoolToCreateRequest(program: Program): ProgramCreateRequest {
-  const businessPeriod = resolveCompanySchoolBusinessCalendarYearPeriod(program)
   return {
     ...mapCompanySchoolToUpdateRequest(program),
     programType: COMPANY_SCHOOL_PROGRAM_API_TYPE,
-    businessStartDate: businessPeriod.start,
-    businessEndDate: businessPeriod.end,
+    businessStartDate: toDate(program.startDate),
+    businessEndDate: toDate(program.endDate),
     autoApplyDefaultFormBindings: true,
   }
 }

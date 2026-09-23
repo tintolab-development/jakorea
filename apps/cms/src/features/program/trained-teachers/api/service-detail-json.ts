@@ -7,6 +7,7 @@
 
 import type { Program } from '@/types/domain'
 import { normalizeGeneralProgramServiceDetailParsed } from '@/features/program/general/lib/general-program-service-detail-json'
+import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
 
 export const TRAINED_TEACHER_SERVICE_DETAIL_JSON_VERSION = 1 as const
@@ -173,7 +174,10 @@ function trainedTeacherDetails(program: Program): Partial<Program> {
 }
 
 export function serializeTrainedTeacherServiceDetailJson(program: Program): string {
-  const registrationOverlay = buildRegistrationOverlayForPersist(program)
+  const registrationOverlay = persistScheduleEducationFormByDetailOverlay(
+    buildRegistrationOverlayForPersist(program),
+    program.generalCommonInfo?.scheduleDetails
+  )
   const payload: TrainedTeacherServiceDetailJsonV1 = {
     schemaVersion: TRAINED_TEACHER_SERVICE_DETAIL_JSON_VERSION,
     program: trainedTeacherDetails(program),

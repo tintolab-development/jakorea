@@ -135,6 +135,30 @@ describe('general-program-adapters', () => {
     expect(program.category).toBe('individual')
   })
 
+  it('상세 사업 운영 기간은 businessStartDate/EndDate를 쓴다', () => {
+    const program = mapAdminProgramDetailToProgram({
+      id: '186022',
+      startDate: '2026-10-21',
+      endDate: '2026-11-01',
+      businessStartDate: '2026-10-14',
+      businessEndDate: '2026-11-07',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        registration: {
+          overlay: {
+            'generalRegistration.basicInfo.operationRangeSeal': {
+              start: '2026-10-13T15:00:00.000Z',
+              end: '2026-11-06T15:00:00.000Z',
+            },
+          },
+        },
+      }),
+    } as ProgramResponse)
+
+    expect(program.startDate).toBe('2026-10-14')
+    expect(program.endDate).toBe('2026-11-07')
+  })
+
   it('공고용명은 overlay를 쓰고 대표명 alias는 버린다', () => {
     const program = mapAdminProgramDetailToProgram({
       id: '168012',
@@ -213,6 +237,17 @@ describe('general-program-adapters', () => {
     expect(program.title).toBe('테스트(mrssl5qf)')
     expect(program.mainTitle).toBe('테스트(mrssl5qf)')
     expect(program.lifecycleStatus).toBe('recruiting_students')
+  })
+
+  it('목록 프로그램명은 title보다 mainTitle(대표명)을 우선한다', () => {
+    const program = mapAdminProgramListItemToProgram({
+      id: 186020,
+      title: '세부프로그램명 경제리터러시기초',
+      mainTitle: '수정1',
+    })
+
+    expect(program.title).toBe('수정1')
+    expect(program.mainTitle).toBe('수정1')
   })
 
   it('filters overview status like mock list', () => {
@@ -392,8 +427,17 @@ describe('general-program-adapters', () => {
     const request = mapGeneralProgramToUpdateRequest(sampleProgram)
     expect(request).not.toHaveProperty('programType')
     expect(request).not.toHaveProperty('autoApplyDefaultFormBindings')
-    expect(request).not.toHaveProperty('businessStartDate')
-    expect(request).not.toHaveProperty('businessEndDate')
+    expect(request.businessStartDate).toBe(sampleProgram.startDate)
+    expect(request.businessEndDate).toBe(sampleProgram.endDate)
+  })
+
+  it('기간 수정 시 businessStartDate/EndDate를 같이 보낸다', () => {
+    const request = mapGeneralProgramToUpdateRequest(sampleProgram, {
+      startDate: '2026-10-14',
+      endDate: '2026-11-07',
+    })
+    expect(request.businessStartDate).toBe('2026-10-14')
+    expect(request.businessEndDate).toBe('2026-11-07')
   })
 
   it('maps Program patch to update request with only patched keys', () => {

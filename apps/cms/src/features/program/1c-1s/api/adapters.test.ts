@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
+import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import {
   COMPANY_SCHOOL_PROGRAM_API_TYPE,
   mapCompanySchoolDetailToProgram,
@@ -53,34 +54,47 @@ const program: Program = {
 }
 
 describe('company-school adapters', () => {
-  it('creates with COMPANY_SCHOOL type and a full-year business period', () => {
+  it('creates with COMPANY_SCHOOL type and business period from 사업 운영 기간', () => {
     const request = mapCompanySchoolToCreateRequest(program)
 
     expect(request.programType).toBe(COMPANY_SCHOOL_PROGRAM_API_TYPE)
-    expect(request.businessStartDate).toBe('2025-12-31T15:00:00.000Z')
-    expect(request.businessEndDate).toBe('2026-12-31T14:59:59.999Z')
+    expect(request.businessStartDate).toBe(program.startDate)
+    expect(request.businessEndDate).toBe(program.endDate)
     expect(request.generalVolunteers).toBe(0)
     expect(request.autoApplyDefaultFormBindings).toBe(true)
   })
 
-  it('keeps program operation dates but sends Seoul calendar-year business period', () => {
+  it('등록·수정 사업 기간은 선택한 start/end를 businessStartDate/EndDate로 보낸다', () => {
     const partial: Program = {
       ...program,
       startDate: '2026-11-26T15:00:00.000Z',
       endDate: '2026-12-08T15:00:00.000Z',
     }
-    const request = mapCompanySchoolToCreateRequest(partial)
+    const created = mapCompanySchoolToCreateRequest(partial)
+    const updated = mapCompanySchoolToUpdateRequest(partial, {
+      startDate: partial.startDate,
+      endDate: partial.endDate,
+    })
 
-    expect(request.startDate).toBe(partial.startDate)
-    expect(request.endDate).toBe(partial.endDate)
-    expect(request.businessStartDate).toBe('2025-12-31T15:00:00.000Z')
-    expect(request.businessEndDate).toBe('2026-12-31T14:59:59.999Z')
-    expect(
-      new Date(request.businessStartDate!).toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })
-    ).toBe('2026-01-01')
-    expect(
-      new Date(request.businessEndDate!).toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })
-    ).toBe('2026-12-31')
+    expect(created.startDate).toBe(partial.startDate)
+    expect(created.endDate).toBe(partial.endDate)
+    expect(created.businessStartDate).toBe(partial.startDate)
+    expect(created.businessEndDate).toBe(partial.endDate)
+    expect(updated.businessStartDate).toBe(partial.startDate)
+    expect(updated.businessEndDate).toBe(partial.endDate)
+  })
+
+  it('상세 사업 기간은 businessStartDate/EndDate를 쓴다', () => {
+    const mapped = mapCompanySchoolDetailToProgram({
+      id: '186100',
+      startDate: '2026-10-21',
+      endDate: '2026-11-01',
+      businessStartDate: '2026-10-14',
+      businessEndDate: '2026-11-07',
+    } as ProgramResponse)
+
+    expect(mapped.startDate).toBe('2026-10-14')
+    expect(mapped.endDate).toBe('2026-11-07')
   })
 
   it('round-trips school, instructor, wage and payment details without volunteers', () => {
