@@ -65,18 +65,27 @@ function extractInlineImageFileObjectIds(text: string | undefined): number[] {
 
 async function syncFaqInlineImages(faqId: string, answer: string | undefined): Promise<void> {
   const fileObjectIds = extractInlineImageFileObjectIds(answer)
+  await replaceFaqInlineImagesRemote(faqId, fileObjectIds)
+}
+
+async function rethrowAfterRollback(error: unknown, rollback: () => Promise<unknown>): Promise<never> {
   try {
-    await replaceFaqInlineImagesRemote(faqId, fileObjectIds)
+    await rollback()
   } catch {
-    /* 인라인 이미지 바인딩 실패는 FAQ 본문 저장을 막지 않음 */
+    // 되돌리기 실패보다 이미지 바인딩 실패를 전달한다.
   }
+  throw error
 }
 
 export async function createFaq(payload: FaqCreatePayload): Promise<AdminFaq> {
   assertFaqsRemoteReady()
   const dto = await createFaqRemote(toFaqRequest(payload))
   const mapped = mapFaqResponse(dto)
-  await syncFaqInlineImages(mapped.id, payload.answer)
+  try {
+    await syncFaqInlineImages(mapped.id, payload.answer)
+  } catch (error) {
+    return rethrowAfterRollback(error, () => deleteFaqRemote(mapped.id))
+  }
   return mapped
 }
 
@@ -94,7 +103,11 @@ export async function updateFaq(id: string, patch: FaqUpdatePayload): Promise<Ad
     })
   )
   const mapped = mapFaqResponse(dto)
-  await syncFaqInlineImages(id, patch.answer ?? existing.answer)
+  try {
+    await syncFaqInlineImages(id, patch.answer ?? existing.answer)
+  } catch (error) {
+    return rethrowAfterRollback(error, () => updateFaqRemote(id, toFaqRequest(existing)))
+  }
   return mapped
 }
 

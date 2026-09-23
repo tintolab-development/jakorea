@@ -10,7 +10,6 @@ import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
 import { AttachmentDownloadIcon } from '@/shared/ui'
 import { downloadNoticeAttachment } from '@/features/posts/api/notices/notice-attachments'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
-import { shouldUseNoticesRemoteApi } from '@/features/posts/api/notices/admin-notices-service'
 import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
 import { useLeaveDeletedDetail } from '@/features/posts/hooks/use-leave-deleted-detail'
 import { useNoticeDetailQuery } from '@/features/posts/hooks/use-notice-detail-query'
@@ -27,7 +26,6 @@ export function AdminNoticeDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
-  const remoteEnabled = shouldUseNoticesRemoteApi()
   const { detailEnabled, goList, leaveToList, runDeleteThenLeave } = useLeaveDeletedDetail(
     '/admin/posts/notices',
     id ? postsQueryKeys.notices.detail(id) : undefined
@@ -73,12 +71,7 @@ export function AdminNoticeDetailPage() {
     })
   }, [])
 
-  const attachmentItems = useMemo(() => {
-    if (notice?.attachments?.length) return notice.attachments
-    if (!notice?.hasAttachment) return []
-    if (remoteEnabled) return []
-    return [{ name: '첨부파일.pdf' }]
-  }, [notice?.attachments, notice?.hasAttachment, remoteEnabled])
+  const attachmentItems = useMemo(() => notice?.attachments ?? [], [notice?.attachments])
 
   if (detailQuery.isLoading) {
     return (
@@ -191,14 +184,6 @@ export function AdminNoticeDetailPage() {
                   </li>
                 ))}
               </ul>
-            </div>
-          ) : notice.hasAttachment && remoteEnabled ? (
-            <div className="admin-notice-detail-page__attachments">
-              <div className="admin-notice-detail-page__attachments-head">
-                <PaperClipOutlined className="admin-notice-detail-page__clip" aria-hidden />
-                <span>첨부파일</span>
-              </div>
-              <p className="admin-notice-detail-page__attachment-hint">첨부파일이 있습니다.</p>
             </div>
           ) : null}
           <div className="admin-notice-detail-page__body">

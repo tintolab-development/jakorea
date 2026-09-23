@@ -14,6 +14,8 @@ export interface NoticeAttachment {
 
 export interface Notice {
   id: string
+  /** 파일 업로드 ownerId. 응답 id가 public id여도 이 숫자로 파일을 연결한다. */
+  resourceId?: number
   title: string
   content: string
   /** 표시용 카테고리명 (목록·상세). 생성/수정 API에는 categoryId 사용 */

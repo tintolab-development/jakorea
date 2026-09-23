@@ -1,4 +1,5 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { customInstance } from '@/shared/api/orval-mutator'
 import { getJAKoreaCMSBackendAPIPostsSubset } from '@/shared/api/generated/posts/posts-api'
 import type {
   CategoryRequest,
@@ -59,8 +60,17 @@ export async function deleteFaqCategoryRemote(categoryId: string): Promise<void>
   await postsApi.deleteFaqCategory(pathId(categoryId))
 }
 
+function faqInlineImagePath(faqId: string): string {
+  return `/api/admin/content/faqs/${encodeURIComponent(faqId)}/inline-images`
+}
+
 export async function fetchFaqInlineImagesRemote(faqId: string): Promise<unknown> {
-  return unwrapApiBody(await postsApi.faqInlineImages(Number(faqId)))
+  return unwrapApiBody(
+    await customInstance({
+      url: faqInlineImagePath(faqId),
+      method: 'GET',
+    })
+  )
 }
 
 export async function replaceFaqInlineImagesRemote(
@@ -68,6 +78,10 @@ export async function replaceFaqInlineImagesRemote(
   fileObjectIds: number[]
 ): Promise<unknown> {
   return unwrapApiBody(
-    await postsApi.replaceFaqInlineImages(Number(faqId), { fileObjectIds })
+    await customInstance({
+      url: faqInlineImagePath(faqId),
+      method: 'PUT',
+      data: { fileObjectIds },
+    })
   )
 }

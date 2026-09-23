@@ -8,8 +8,7 @@ import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
 import { useInquiryDetailQuery } from '@/features/posts/hooks/use-inquiry-detail-query'
 import { useInquiryMutations } from '@/features/posts/hooks/use-inquiry-mutations'
 import { usePostsRemoteEnabled } from '@/features/posts/hooks/use-posts-remote-enabled'
-import { getFileDownload } from '@/shared/lib/admin-file-upload'
-import { downloadFile } from '@/shared/lib/file-download'
+import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { RichTextViewer } from '@/shared/rich-text'
 import { ActionResultModal, CmsButton, ContentModal } from '@/shared/ui'
 import './admin-inquiry-detail-modal.css'
@@ -46,12 +45,7 @@ export function AdminInquiryDetailModal({
   const attachments = attachmentsQuery.data ?? []
 
   const handleDownloadAttachment = useCallback(async (fileObjectId: number, fileName: string) => {
-    const resolved = await getFileDownload(fileObjectId)
-    const url = resolved.downloadUrl?.trim()
-    if (!url) {
-      throw new Error('첨부파일 다운로드 URL이 없습니다.')
-    }
-    await downloadFile(fileName, url)
+    await downloadAdminFile({ fileObjectId, fileName })
   }, [])
 
   const [answerText, setAnswerText] = useState('')
