@@ -547,6 +547,8 @@ export interface Program {
   generalCommonInfo?: GeneralProgramCommonInfoExtension
   /** UJAT 등록 폼 overlay — 상세 화면 SSOT (`serviceDetailJson.registration.overlay`) */
   ujatRegistrationOverlay?: Record<string, unknown>
+  /** 일반·1사1교·TT 등록 폼 overlay — 공고용명 등 SSOT (`serviceDetailJson.registration.overlay`) */
+  registrationOverlay?: Record<string, unknown>
   /** 일반 프로그램 캘린더 — 시간대 사용 여부 (false면 종일) */
   scheduleTimeEnabled?: boolean
   /** 일반 프로그램 캘린더 — 일정 시작·종료 시각 (HH:mm) */

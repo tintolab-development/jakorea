@@ -15,6 +15,7 @@ import {
   resolveGeneralProgramCommonInfo,
   resolveScheduleTypeDetailedProgramNameFromDetails,
 } from '@/features/program/general/lib/detail-common-info-display'
+import { resolvePublicProgramTitle } from '@/features/program/shared/lib/public-program-title'
 import {
   isProgramPaymentNoneOnly,
   PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
@@ -25,7 +26,9 @@ import {
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
 import {
   isSponsorContactUnselected,
+  resolveSponsorContactIdsForEdit,
   SPONSOR_CONTACT_UNSELECTED_LABEL,
+  SPONSOR_CONTACT_UNSELECTED_VALUE,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   isGeneralIndividualParticipantSelection,
@@ -692,10 +695,7 @@ function resolveDetailedProgramId(
     return storedId
   }
   const commonInfo = resolveGeneralProgramCommonInfo(program)
-  const name =
-    commonInfo.detailedProgramName?.trim() ||
-    program.textbookName?.trim() ||
-    program.teamDivision?.trim()
+  const name = commonInfo.detailedProgramName?.trim()
   if (!name) return ''
   const matched = catalog.find(row => row.name === name)
   return matched?.id ?? ''
@@ -716,6 +716,24 @@ export function resolveVenueKind(program: Program): GeneralProgramVenueKind {
   if (program.institutionType === 'outside_school') return 'outside'
   if (program.venue?.trim() || program.generalCommonInfo?.venueDetail?.trim()) return 'other'
   return 'inside'
+}
+
+/** GET 매핑 — 1차 컬럼(institutionType/venue)과 nested 를 한 세트로 맞춤 */
+export function applyResolvedVenueKindToCommonInfo(
+  common: Program['generalCommonInfo'],
+  source: Pick<Program, 'institutionType' | 'venue'>
+): Program['generalCommonInfo'] {
+  const venueKind = resolveVenueKind({
+    institutionType: source.institutionType,
+    venue: source.venue,
+    generalCommonInfo: common,
+  } as Program)
+  const venueDetail = common?.venueDetail?.trim() || source.venue?.trim() || undefined
+  return {
+    ...common,
+    venueKind,
+    ...(venueDetail ? { venueDetail } : {}),
+  }
 }
 
 /** 조회 모드 — 라디오 선택 · 상세 입력 (`|` 구분) */
@@ -921,14 +939,17 @@ function resolveSponsorManagerContactIds(
   context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
 ): string[] {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
-  const stored = normalizeSponsorManagerContactIds({
+  const stored = resolveSponsorContactIdsForEdit({
     ids: commonInfo.sponsorManagerContactIds,
     id: commonInfo.sponsorManagerContactId,
+    managerLine: commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || '',
   })
   if (stored.length > 0) return stored
 
   const storedLine = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
-  if (storedLine === SPONSOR_CONTACT_UNSELECTED_LABEL) return []
+  if (storedLine === SPONSOR_CONTACT_UNSELECTED_LABEL) {
+    return [SPONSOR_CONTACT_UNSELECTED_VALUE]
+  }
 
   // 후원사별 1명씩 시드 (이름·전화 매칭, 없으면 첫 연락처)
   const refs: string[] = []
@@ -1106,6 +1127,63 @@ export function buildSessionIpsTypeSummary(
   const full = buildIpsTypeSummary('common', ipsCategory, ipsDetail)
   const parts = full.split(/\s*\|\s*/)
   return `${parts[1]?.trim() ?? '-'} | ${parts[2]?.trim() ?? '해당없음'}`
+}
+
+/** 일정형 회차별 조회 — `일정 공통/별` 접두를 제거하고 `카테고리 | 세부`만 노출 */
+export function displaySessionIpsTypeSummary(summary: string | undefined): string {
+  const parsed = parseSessionIpsTypeSummary(summary)
+  if (!parsed.ipsCategory) return summary?.trim() || '-'
+  return buildSessionIpsTypeSummary(parsed.ipsCategory, parsed.ipsDetail)
+}
+
+const SCHEDULE_CURRICULUM_IPS_BY_DETAIL_KEY =
+  'generalRegistration.educationScheduleCurriculum.ipsByDetailIndex'
+
+/** 등록 overlay `ipsByDetailIndex` — 사전 교육=0, 본 일정은 1부터 */
+export function overlayIpsIndexForScheduleDetail(
+  details: Array<{ scheduleLabel?: string }>,
+  index: number
+): number {
+  const row = details[index]
+  if (row && inferScheduleDetailBlockKind(row.scheduleLabel ?? '') === 'preEducation') {
+    return 0
+  }
+  return (
+    details
+      .slice(0, index)
+      .filter(d => inferScheduleDetailBlockKind(d.scheduleLabel ?? '') !== 'preEducation')
+      .length + 1
+  )
+}
+
+function overlayIpsTypeAtIndex(
+  overlay: Record<string, unknown> | undefined,
+  overlayIndex: number
+): { category?: string; detail?: string } | undefined {
+  const raw = overlay?.[SCHEDULE_CURRICULUM_IPS_BY_DETAIL_KEY]
+  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  const map = raw as Record<string | number, { category?: string; detail?: string }>
+  return map[overlayIndex] ?? map[String(overlayIndex)]
+}
+
+/** 일정형 조회 — 행 요약이 없으면 overlay 일정별 IPS로 보완 */
+export function resolveScheduleDetailIpsTypeSummaryForView(input: {
+  ipsPerSchedule: boolean
+  ipsTypeSummary?: string
+  overlay?: Record<string, unknown>
+  overlayIndex: number
+}): string | undefined {
+  if (!input.ipsPerSchedule) return undefined
+  const fromRow = displaySessionIpsTypeSummary(input.ipsTypeSummary)
+  if (fromRow !== '-') return fromRow
+  const overlayIps = overlayIpsTypeAtIndex(input.overlay, input.overlayIndex)
+  if (overlayIps?.category) {
+    return buildSessionIpsTypeSummary(
+      overlayIps.category as ProgramRegistrationIpsCategory,
+      overlayIps.detail
+    )
+  }
+  return '-'
 }
 
 function parseIpsTypeSummary(summary: string | undefined): {
@@ -1319,7 +1397,13 @@ export function programToGeneralCommonInfoEditValues(
   return {
     mainTitle: program.mainTitle?.trim() ?? '',
     titleEn: program.titleEn?.trim() ?? '',
-    announcementTitle: commonInfo.announcementTitle?.trim() || program.title?.trim() || '',
+    announcementTitle:
+      resolvePublicProgramTitle({
+        announcementTitle: commonInfo.announcementTitle,
+        overlay: program.ujatRegistrationOverlay ?? program.registrationOverlay,
+        mainTitle: program.mainTitle,
+        title: program.title,
+      }) || '',
     detailedProgramId: resolveDetailedProgramId(program, detailedProgramCatalog),
     startDate: toIso(program.startDate),
     endDate: toIso(program.endDate),
@@ -1565,6 +1649,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
         id: values.sponsorManagerContactId,
       })[0],
       sponsorManagerLine: managerLine,
+      venueKind: values.venueKind,
       venueDetail: values.venueDetail?.trim() || existingCommon.venueDetail,
       educationFormLabel:
         values.educationFormScheduleDetail === 'common'

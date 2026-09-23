@@ -14,7 +14,7 @@ import {
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
-import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
+import { getProgramWagePaymentItemOptions } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 import type { Program } from '@/types/domain'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
@@ -82,7 +82,7 @@ function isCompanySchoolProgramId(programId: string): boolean {
 }
 
 function getCompanySchoolPaymentItemOptions(): CmsSelectMultipleOption[] {
-  return getTemplateRegistrationPaymentItemOptions().map(opt => {
+  return getProgramWagePaymentItemOptions().map(opt => {
     if (opt.value === COMPANY_SCHOOL_PAYMENT_ID_TRANSPORT) {
       return { ...opt, label: '교통비(일사일교)' }
     }

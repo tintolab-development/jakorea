@@ -65,6 +65,7 @@ import {
   resolveGeneralProgramCommonInfo,
   resolveGeneralProgramDetailedProgramNameDisplay,
 } from '@/features/program/general/lib/detail-common-info-display'
+import { resolvePublicProgramTitleDisplay } from '@/features/program/shared/lib/public-program-title'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
 import { applyGeneralParticipantAudienceToEditForm } from '@/features/program/general/lib/participant-audience-selection'
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
@@ -76,7 +77,10 @@ import {
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import {
+  isSponsorContactUnselected,
+  isSponsorContactUnselectedLabel,
   normalizeSponsorContactUnselectedSelection,
+  SPONSOR_CONTACT_UNSELECTED_VALUE,
   withSponsorContactUnselectedOption,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
@@ -94,6 +98,8 @@ import {
   padScheduleDetailLabel,
   relabelScheduleDetailFormRows,
   buildSessionIpsTypeSummary,
+  resolveScheduleDetailIpsTypeSummaryForView,
+  overlayIpsIndexForScheduleDetail,
   resolveSponsorManagementIds,
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
@@ -320,7 +326,10 @@ function BasicInfoSection({
     [sponsorRows]
   )
 
-  const announcementTitle = commonInfo.announcementTitle ?? program.title
+  const announcementTitle = resolvePublicProgramTitleDisplay({
+    ...program,
+    generalCommonInfo: commonInfo,
+  })
   const detailedName = resolveGeneralProgramDetailedProgramNameDisplay(program, commonInfo)
   const sponsorManagementIds = resolveSponsorManagementIds(program, viewSponsorContext)
   const sponsorDisplayEntries = sponsorManagementIds
@@ -449,7 +458,21 @@ function BasicInfoSection({
     )
     if (!contactsReady || managerOptions.length === 0) return
     const optionValues = new Set(managerOptions.map(option => option.value))
-    const validIds = currentIds.filter(id => optionValues.has(id))
+    const validIds = currentIds.filter(
+      id => optionValues.has(id) || isSponsorContactUnselected(id)
+    )
+    if (currentIds.length === 0) {
+      const storedLine = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
+      if (isSponsorContactUnselectedLabel(storedLine)) {
+        editForm.setValue('sponsorManagerContactIds', [SPONSOR_CONTACT_UNSELECTED_VALUE], {
+          shouldValidate: false,
+        })
+        editForm.setValue('sponsorManagerContactId', SPONSOR_CONTACT_UNSELECTED_VALUE, {
+          shouldValidate: false,
+        })
+      }
+      return
+    }
     if (validIds.length !== currentIds.length) {
       editForm.setValue('sponsorManagerContactIds', validIds, {
         shouldValidate: validIds.length > 0,
@@ -463,9 +486,11 @@ function BasicInfoSection({
       editForm.clearErrors('sponsorManagerContactIds')
     }
   }, [
+    commonInfo.sponsorManagerLine,
     editForm,
     isFormEdit,
     managerOptions,
+    program.managerName,
     sponsorEditContext.contactsBySponsorId,
     watchedSponsorIds,
   ])
@@ -1120,10 +1145,18 @@ function KpiSection({
             view={
               <div className="detail-info-form-inputs-wrapper">
                 <span className="detail-info-form--text">강사 :</span>
-                <KpiBoldNumber value={kpi?.instructorCount ?? 0} />
+                {hasInstructor ? (
+                  <KpiBoldNumber value={kpi?.instructorCount ?? 0} />
+                ) : (
+                  <span className="detail-info-form--text">해당 없음</span>
+                )}
                 <DetailInfoForm.InputsSeparator />
                 <span className="detail-info-form--text">봉사자 :</span>
-                <KpiBoldNumber value={kpi?.volunteerCount ?? 0} />
+                {hasVolunteer ? (
+                  <KpiBoldNumber value={kpi?.volunteerCount ?? 0} />
+                ) : (
+                  <span className="detail-info-form--text">해당 없음</span>
+                )}
               </div>
             }
             edit={
@@ -2934,10 +2967,14 @@ function ScheduleDetailViewBlock({
   scheduleLabel,
   name,
   progressTimeSummary,
+  ipsPerSchedule = false,
+  ipsTypeSummary,
 }: {
   scheduleLabel: string
   name: string
   progressTimeSummary?: string
+  ipsPerSchedule?: boolean
+  ipsTypeSummary?: string
 }) {
   return (
     <div className="program-registration-schedule-curriculum__block">
@@ -2961,6 +2998,15 @@ function ScheduleDetailViewBlock({
               view={<PipeSeparatedInlineView text={progressTimeSummary ?? '-'} />}
             />
           </DetailInfoForm.Row>
+          {ipsPerSchedule ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="IPS 유형"
+                fullRow
+                view={<PipeSeparatedInlineView text={ipsTypeSummary} />}
+              />
+            </DetailInfoForm.Row>
+          ) : null}
         </DetailInfoForm>
       </div>
     </div>
@@ -4292,12 +4338,14 @@ function ScheduleProgressSection({
     )
   }
 
+  const ipsScheduleDetail =
+    commonInfo.ipsScheduleDetail ??
+    (commonInfo.ipsTypeSummary?.includes('별') ? 'perSchedule' : 'common')
+  const ipsPerSchedule = ipsScheduleDetail === 'perSchedule'
   const eventExtraPlan = getScheduleEventPerScheduleExtraPlan({
     educationFormScheduleDetail: commonInfo.educationFormScheduleDetail ?? 'common',
     participationScheduleDetail: commonInfo.participationScheduleDetail ?? 'common',
-    ipsScheduleDetail:
-      commonInfo.ipsScheduleDetail ??
-      (commonInfo.ipsTypeSummary?.includes('별') ? 'perSchedule' : 'common'),
+    ipsScheduleDetail,
     participantOrganization: program.generalProgramAudience === 'organization',
   })
   const useEventLayout = shouldUseScheduleEventBlockLayout({
@@ -4305,9 +4353,7 @@ function ScheduleProgressSection({
     participantOrganization: program.generalProgramAudience === 'organization',
     educationFormScheduleDetail: commonInfo.educationFormScheduleDetail ?? 'common',
     participationScheduleDetail: commonInfo.participationScheduleDetail ?? 'common',
-    ipsScheduleDetail:
-      commonInfo.ipsScheduleDetail ??
-      (commonInfo.ipsTypeSummary?.includes('별') ? 'perSchedule' : 'common'),
+    ipsScheduleDetail,
   })
 
   return (
@@ -4324,6 +4370,12 @@ function ScheduleProgressSection({
           .length
         const isEventSchedule =
           isPreEducationBlock || useEventLayout || detailBlockKind === 'event'
+        const ipsTypeSummary = resolveScheduleDetailIpsTypeSummaryForView({
+          ipsPerSchedule,
+          ipsTypeSummary: detail.ipsTypeSummary,
+          overlay: program.registrationOverlay,
+          overlayIndex: overlayIpsIndexForScheduleDetail(scheduleDetailsView, index),
+        })
         if (isEventSchedule) {
           return (
             <ScheduleEventDetailViewBlock
@@ -4342,7 +4394,7 @@ function ScheduleProgressSection({
               extraPlan={eventExtraPlan}
               educationFormLabel={detail.educationFormLabel}
               participationMethodLabel={detail.participationMethodLabel}
-              ipsTypeSummary={detail.ipsTypeSummary}
+              ipsTypeSummary={ipsTypeSummary}
               showHeading={scheduleDetailsView.length > 1 || isPreEducationBlock}
               isPreEducationBlock={isPreEducationBlock}
             />
@@ -4354,6 +4406,8 @@ function ScheduleProgressSection({
             scheduleLabel={detail.scheduleLabel}
             name={detail.name}
             progressTimeSummary={detail.progressTimeSummary ?? '-'}
+            ipsPerSchedule={ipsPerSchedule}
+            ipsTypeSummary={ipsTypeSummary}
           />
         )
       })}

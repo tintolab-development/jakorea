@@ -41,11 +41,13 @@ import type {
 } from '@/features/sponsor/model/sponsor-management.types'
 import {
   isSponsorContactUnselected,
+  isSponsorContactUnselectedLabel,
   normalizeSponsorContactUnselectedSelection,
   SPONSOR_CONTACT_UNSELECTED_LABEL,
   SPONSOR_CONTACT_UNSELECTED_VALUE,
   withSponsorContactUnselectedOption,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import { resolvePublicProgramTitleDisplay } from '@/features/program/shared/lib/public-program-title'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import {
   PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
@@ -343,6 +345,7 @@ export function BasicInfoSection({
       id: form.getValues('sponsorManagerContactId'),
     })
     const validIds = currentIds.filter(id => {
+      if (isSponsorContactUnselected(id)) return true
       if (optionValues.has(id)) return true
       const decoded = decodeSponsorManagerContactRef(id)
       return decoded != null && !loadedSponsorIds.has(decoded.sponsorManagementId)
@@ -385,6 +388,15 @@ export function BasicInfoSection({
     if (currentIds.length > 0) return
 
     const managerName = form.getValues('managerName')?.trim()
+    if (isSponsorContactUnselectedLabel(managerName)) {
+      form.setValue('sponsorManagerContactIds', [SPONSOR_CONTACT_UNSELECTED_VALUE], {
+        shouldDirty: false,
+      })
+      form.setValue('sponsorManagerContactId', SPONSOR_CONTACT_UNSELECTED_VALUE, {
+        shouldDirty: false,
+      })
+      return
+    }
     const phone = form.getValues('contactPhone')?.trim()
     const matched = sponsorManagerOptions.find(
       option =>
@@ -430,10 +442,8 @@ export function BasicInfoSection({
 
   if (companySchoolLayout) {
     const commonInfo = program.generalCommonInfo
-    const announcementTitle = commonInfo?.announcementTitle ?? program.title
-    const detailedProgramName = useDetailedProgramSelect
-      ? commonInfo?.detailedProgramName?.trim() || program.textbookName?.trim() || '-'
-      : commonInfo?.detailedProgramName ?? program.textbookName ?? program.title ?? '-'
+    const announcementTitle = resolvePublicProgramTitleDisplay(program)
+    const detailedProgramName = commonInfo?.detailedProgramName?.trim() || '-'
     const educationProcessLabel = optionLabel(EDUCATION_PROCESS_OPTIONS, program.educationProcess)
     const ipOwnedLabel = optionLabel(IP_OWNED_OPTIONS, program.ipOwned ?? 'JA')
     const courseDeliveredByLabel = optionLabel(
@@ -766,7 +776,10 @@ export function BasicInfoSection({
                   render={({ field }) => {
                     const selectedIds = field.value ?? []
                     const savedManagerName = program.managerName?.trim()
-                    const showSavedManager = selectedIds.length === 0 && Boolean(savedManagerName)
+                    const showSavedManager =
+                      selectedIds.length === 0 &&
+                      Boolean(savedManagerName) &&
+                      !isSponsorContactUnselectedLabel(savedManagerName)
                     const savedManagerOption = showSavedManager
                       ? {
                           value: '__saved_manager__',
@@ -1106,18 +1119,18 @@ export function BasicInfoSection({
         <DetailInfoForm.Field
           label="세부 프로그램명"
           required
-          view={program.title}
+          view={program.generalCommonInfo?.detailedProgramName?.trim() || '-'}
           edit={
             <>
               <Controller
-                name="title"
+                name="detailedProgramName"
                 control={commonInfoForm.control}
                 render={({ field }) => (
                   <CmsInput
                     {...field}
                     value={field.value ?? ''}
                     placeholder="세부 프로그램명"
-                    status={commonInfoForm.formState.errors.title ? 'error' : undefined}
+                    status={commonInfoForm.formState.errors.detailedProgramName ? 'error' : undefined}
                     width={'100%'}
                   />
                 )}

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
+import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   detailEditValuesToProgramPatch,
   programDetailTrainedTeachersCommonInfoEditSchema,
@@ -113,21 +114,95 @@ describe('programToDetailEditValues keeps stored common info in edit fields', ()
     expect(values.ipsCategory).toBe('inspire')
     expect(values.ipsDetail).toBe('kick_off_event')
   })
+
+  it('저장된 담당자가 미선택이면 수정 폼에도 미선택이 체크된다', () => {
+    const values = programToDetailEditValues({
+      ...program,
+      managerName: '미선택',
+      generalCommonInfo: {
+        sponsorManagerContactIds: [],
+        sponsorManagerLine: '미선택',
+      },
+    } as Program)
+
+    expect(values.sponsorManagerContactIds).toEqual([SPONSOR_CONTACT_UNSELECTED_VALUE])
+    expect(values.sponsorManagerContactId).toBe(SPONSOR_CONTACT_UNSELECTED_VALUE)
+  })
 })
 
 describe('program detail title edit fields', () => {
-  it('공고용 프로그램명과 세부 프로그램명을 독립적으로 패치한다', () => {
+  it('공고용 프로그램명과 세부 프로그램명을 title/textbookName과 섞지 않는다', () => {
     const values = {
-      ...programToDetailEditValues(program),
+      ...programToDetailEditValues({
+        ...program,
+        title: '대표명',
+        mainTitle: '대표명',
+        textbookName: '진짜 교재명',
+        generalCommonInfo: {
+          announcementTitle: '기존 공고명',
+          detailedProgramName: '기존 세부명',
+        },
+      } as Program),
       announcementTitle: '수정 공고명',
       detailedProgramName: '수정 세부명',
     }
 
-    const patch = detailEditValuesToProgramPatch(values, program)
+    const patch = detailEditValuesToProgramPatch(values, {
+      ...program,
+      title: '대표명',
+      textbookName: '진짜 교재명',
+    } as Program)
 
-    expect(patch.title).toBe('수정 공고명')
-    expect(patch.textbookName).toBe('수정 세부명')
+    expect(patch.title).toBe('대표명')
+    expect(patch.textbookName).toBe('진짜 교재명')
     expect(patch.generalCommonInfo?.announcementTitle).toBe('수정 공고명')
     expect(patch.generalCommonInfo?.detailedProgramName).toBe('수정 세부명')
+  })
+
+  it('교육 장소 라디오(venueKind)를 generalCommonInfo에 저장하고 다시 로드한다', () => {
+    const values = {
+      ...programToDetailEditValues({
+        ...program,
+        institutionType: 'inside_school',
+        generalCommonInfo: {
+          ...program.generalCommonInfo,
+          venueKind: 'inside',
+          venueDetail: '본관',
+        },
+      }),
+      venueKind: 'outside' as const,
+      venueDetail: '외부 강의실',
+    }
+    const patch = detailEditValuesToProgramPatch(values, {
+      ...program,
+      institutionType: 'inside_school',
+    })
+    expect(patch.institutionType).toBe('outside_school')
+    expect(patch.generalCommonInfo?.venueKind).toBe('outside')
+    expect(patch.generalCommonInfo?.venueDetail).toBe('외부 강의실')
+
+    const reloaded = programToDetailEditValues({
+      ...program,
+      ...patch,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        ...patch.generalCommonInfo,
+      },
+    } as Program)
+    expect(reloaded.venueKind).toBe('outside')
+    expect(reloaded.venueDetail).toBe('외부 강의실')
+  })
+
+  it('공고용명·세부명은 title/textbookName으로 채우지 않는다', () => {
+    const values = programToDetailEditValues({
+      ...program,
+      title: '대표 프로그램명',
+      mainTitle: '대표 프로그램명',
+      textbookName: '필요와 욕구, 현명한 소비',
+      generalCommonInfo: {},
+    } as Program)
+
+    expect(values.announcementTitle).toBeUndefined()
+    expect(values.detailedProgramName).toBeUndefined()
   })
 })

@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
+import { SPONSOR_CONTACT_UNSELECTED_VALUE } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
+  displaySessionIpsTypeSummary,
   encodeSponsorManagerContactRef,
   generalCommonInfoEditValuesToProgramPatch,
+  overlayIpsIndexForScheduleDetail,
   programToGeneralCommonInfoEditValues,
+  resolveScheduleDetailIpsTypeSummaryForView,
   type GeneralProgramSponsorEditContext,
 } from './common-info-edit-schema'
 
@@ -121,6 +125,23 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     expect(patch.sponsorId).toBe('sponsor-new')
     expect(patch.managerName).toBe('김담당')
     expect(patch.contactPhone).toBe('010-0000-0000')
+  })
+
+  it('저장된 담당자가 미선택이면 수정 폼에도 미선택이 체크된다', () => {
+    const program = baseProgram({
+      managerName: '미선택',
+      generalCommonInfo: {
+        announcementTitle: '공고 프로그램명',
+        sponsorManagementIds: ['sponsor-old'],
+        sponsorManagementId: 'sponsor-old',
+        sponsorManagerContactIds: [],
+        sponsorManagerLine: '미선택',
+        participationMethod: 'individual',
+      },
+    })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    expect(values.sponsorManagerContactIds).toEqual([SPONSOR_CONTACT_UNSELECTED_VALUE])
+    expect(values.sponsorManagerContactId).toBe(SPONSOR_CONTACT_UNSELECTED_VALUE)
   })
 
   it('담당자 미해석 시 GET 마스킹 managerName/contactPhone을 patch에 넣지 않는다', () => {
@@ -401,6 +422,53 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     expect(saved?.assignmentPeriod).toBeUndefined()
   })
 
+  it('교육 장소 라디오(venueKind)를 generalCommonInfo에 저장하고 다시 로드한다', () => {
+    const program = baseProgram({
+      institutionType: 'inside_school',
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        venueKind: 'inside',
+        venueDetail: '본관 3층',
+      },
+    })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.venueKind = 'outside'
+    values.venueDetail = '외부 강의실'
+    const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+    expect(patch.institutionType).toBe('outside_school')
+    expect(patch.generalCommonInfo?.venueKind).toBe('outside')
+    expect(patch.generalCommonInfo?.venueDetail).toBe('외부 강의실')
+
+    const merged: Program = {
+      ...program,
+      ...patch,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        ...patch.generalCommonInfo,
+      },
+    }
+    const reloaded = programToGeneralCommonInfoEditValues(merged, sponsorContext)
+    expect(reloaded.venueKind).toBe('outside')
+    expect(reloaded.venueDetail).toBe('외부 강의실')
+  })
+
+  it('교육 장소 라디오만 바꿔도 기존 venueKind 잔존값에 덮어쓰지 않는다', () => {
+    const program = baseProgram({
+      institutionType: 'inside_school',
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        venueKind: 'inside',
+        venueDetail: '본관 3층',
+      },
+    })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.venueKind = 'other'
+    const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+    expect(patch.institutionType).toBeUndefined()
+    expect(patch.generalCommonInfo?.venueKind).toBe('other')
+    expect(patch.generalCommonInfo?.venueDetail).toBe('본관 3층')
+  })
+
   it('지급 항목은 옵션 라벨로 저장되고 비어 있으면 해당없음이다', () => {
     const program = baseProgram()
     const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
@@ -420,5 +488,64 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     values.wagePaymentItemIds = []
     const emptyPatch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
     expect(emptyPatch.generalCommonInfo?.paymentItems).toBe('해당없음')
+  })
+})
+
+describe('일정형 일정별 IPS 조회 표시', () => {
+  it('일정 공통/별 접두를 제거하고 카테고리 | 세부만 남긴다', () => {
+    expect(
+      displaySessionIpsTypeSummary('일정 별 상이 | Inspire | Kick-Off event (킥오프 행사)')
+    ).toBe('Inspire | Kick-Off event (킥오프 행사)')
+    expect(displaySessionIpsTypeSummary('Prepare | 해당없음')).toBe('Prepare | 해당없음')
+    expect(displaySessionIpsTypeSummary(undefined)).toBe('-')
+  })
+
+  it('사전 교육은 overlay 0, 본 일정은 1부터다', () => {
+    expect(
+      overlayIpsIndexForScheduleDetail(
+        [{ scheduleLabel: '세부 일정 01' }, { scheduleLabel: '세부 일정 02' }],
+        0
+      )
+    ).toBe(1)
+    expect(
+      overlayIpsIndexForScheduleDetail(
+        [{ scheduleLabel: '사전 교육' }, { scheduleLabel: '세부 일정 01' }],
+        0
+      )
+    ).toBe(0)
+    expect(
+      overlayIpsIndexForScheduleDetail(
+        [{ scheduleLabel: '사전 교육' }, { scheduleLabel: '세부 일정 01' }],
+        1
+      )
+    ).toBe(1)
+  })
+
+  it('행 요약이 없으면 overlay 일정별 IPS로 보완한다', () => {
+    expect(
+      resolveScheduleDetailIpsTypeSummaryForView({
+        ipsPerSchedule: false,
+        ipsTypeSummary: 'Prepare | 해당없음',
+        overlayIndex: 1,
+      })
+    ).toBeUndefined()
+    expect(
+      resolveScheduleDetailIpsTypeSummaryForView({
+        ipsPerSchedule: true,
+        ipsTypeSummary: '일정 별 상이 | Succeed | Competition (대회+시상)',
+        overlayIndex: 1,
+      })
+    ).toBe('Succeed | Competition (대회+시상)')
+    expect(
+      resolveScheduleDetailIpsTypeSummaryForView({
+        ipsPerSchedule: true,
+        overlay: {
+          'generalRegistration.educationScheduleCurriculum.ipsByDetailIndex': {
+            1: { category: 'inspire', detail: 'kick_off_event' },
+          },
+        },
+        overlayIndex: 1,
+      })
+    ).toBe('Inspire | Kick-Off event (킥오프 행사)')
   })
 })

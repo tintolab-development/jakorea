@@ -8,7 +8,7 @@ import type {
   Program,
   ProgramCategory,
 } from '@/types/domain'
-import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
+import { resolveEducationScheduleLinesForView } from '@/features/program/general/lib/education-schedule-lines-display'
 import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/general/lib/wage-info-constants'
 import {
   buildGeneralProgramVariantTitle,
@@ -575,32 +575,46 @@ export function resolveScheduleTypeDetailedProgramNameFromDetails(
 
 /** 공통 정보 — 세부 프로그램명 조회 표시 */
 export function resolveGeneralProgramDetailedProgramNameDisplay(
-  program: Program,
+  _program: Program,
   commonInfo: NonNullable<Program['generalCommonInfo']>
 ): string {
-  const { educationStructure } = resolveEffectiveGeneralProgramTypeFields({
-    generalProgramAudience: program.generalProgramAudience,
-    generalProgramEducationStructure: program.generalProgramEducationStructure,
-    generalProgramSessionRound: program.generalProgramSessionRound,
-    curriculumSessions: commonInfo.curriculumSessions,
-  })
+  return commonInfo.detailedProgramName?.trim() || '-'
+}
 
-  if (educationStructure === 'schedule') {
-    return resolveScheduleTypeDetailedProgramNameFromDetails(commonInfo.scheduleDetails)
-  }
-
+function shouldAutoFillEducationScheduleFromGroupTimes(program: Program): boolean {
   return (
-    commonInfo.detailedProgramName?.trim() ||
-    program.textbookName?.trim() ||
-    program.teamDivision?.trim() ||
-    '-'
+    program.generalProgramEducationStructure === 'schedule' &&
+    program.generalProgramSessionRound === 'single' &&
+    program.generalProgramAudience === 'individual'
   )
+}
+
+function withResolvedEducationScheduleLines(
+  commonInfo: NonNullable<Program['generalCommonInfo']>,
+  program: Program
+): NonNullable<Program['generalCommonInfo']> {
+  const educationScheduleLines = resolveEducationScheduleLinesForView({
+    educationScheduleLines: commonInfo.educationScheduleLines,
+    overlay: program.registrationOverlay,
+    autoFillFromScheduleGroupTimes: shouldAutoFillEducationScheduleFromGroupTimes(program),
+    scheduleDetails: commonInfo.scheduleDetails,
+  })
+  if (
+    educationScheduleLines.length === (commonInfo.educationScheduleLines?.length ?? 0) &&
+    educationScheduleLines.every((line, index) => line === commonInfo.educationScheduleLines?.[index])
+  ) {
+    return commonInfo
+  }
+  return { ...commonInfo, educationScheduleLines }
 }
 
 export function resolveGeneralProgramCommonInfo(
   program: Program
 ): NonNullable<Program['generalCommonInfo']> {
-  if (program.generalCommonInfo) return program.generalCommonInfo
+  const overlay = program.registrationOverlay
+  if (program.generalCommonInfo) {
+    return withResolvedEducationScheduleLines(program.generalCommonInfo, program)
+  }
 
   if (program.id === GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID) {
     return GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK
@@ -659,7 +673,10 @@ export function resolveGeneralProgramCommonInfo(
         : buildCurriculumSessionsFromRounds(program, variant),
     scheduleDetails: variant?.educationStructure === 'schedule' ? [] : undefined,
     educationScheduleMode: 'date',
-    educationScheduleLines: [...DEFAULT_GENERAL_EDUCATION_SCHEDULE_LINES_MOCK],
+    educationScheduleLines: resolveEducationScheduleLinesForView({
+      overlay,
+      autoFillFromScheduleGroupTimes: shouldAutoFillEducationScheduleFromGroupTimes(program),
+    }),
     wageGradeRows: [
       { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 240,000원' },
     ],
