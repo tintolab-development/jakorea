@@ -4,7 +4,7 @@ import type { FileDownloadResolveResponse } from '@/shared/api/generated/posts/s
 import type { FilePageResponseFileAttachmentResponse } from '@/shared/api/generated/posts/schemas/filePageResponseFileAttachmentResponse'
 import { customInstance } from '@/shared/api/orval-mutator'
 import { downloadBlob } from '@/shared/utils/file-download'
-import { guardAdminDownload } from '@/shared/lib/session-admin-role'
+import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { parseFileObjectId } from '@/shared/lib/admin-file-upload/upload'
 import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload/types'
 
@@ -104,7 +104,36 @@ function headerRecord(
   return headers
 }
 
+/**
+ * 로컬 서명 URL은 백엔드가 `http://localhost:8080/...`처럼 절대 주소로 준다.
+ * CMS는 Vite 프록시라 API는 페이지와 같은 출처인데, 이 주소만 다른 출처라
+ * CORS에 없는 포트·IP에서는 blob 요청이 실패하고 새 창이 이미지를 그대로 연다.
+ * 같은 출처 `/api` 경로로 바꾸면 프록시를 타고 저장된다. S3 등 외부 주소는 그대로 둔다.
+ */
+export function sameOriginRawDownloadPath(downloadUrl: string, apiBaseUrl: string): string | null {
+  if (apiBaseUrl.trim()) return null
+  try {
+    const url = new URL(downloadUrl, 'http://localhost')
+    if (!url.pathname.startsWith('/api/') || !url.pathname.includes('/downloads/raw/')) return null
+    return `${url.pathname}${url.search}`
+  } catch {
+    return null
+  }
+}
+
 async function readDownloadBlob(downloadUrl: string, headers: Record<string, string>): Promise<Blob> {
+  const proxiedPath = sameOriginRawDownloadPath(downloadUrl, getApiBaseUrl())
+  if (proxiedPath) {
+    return customInstance<Blob>(
+      {
+        url: proxiedPath,
+        method: 'GET',
+        responseType: 'blob',
+        headers,
+      },
+      { skipGlobalErrorAlert: true, skipAuth: true }
+    )
+  }
   if (/^https?:\/\//i.test(downloadUrl)) {
     const response = await fetch(downloadUrl, {
       method: 'GET',
@@ -117,22 +146,15 @@ async function readDownloadBlob(downloadUrl: string, headers: Record<string, str
     }
     return response.blob()
   }
-  return customInstance<Blob>({
-    url: downloadUrl,
-    method: 'GET',
-    responseType: 'blob',
-    headers,
-  })
-}
-
-function openDownloadUrl(downloadUrl: string): void {
-  const anchor = document.createElement('a')
-  anchor.href = downloadUrl
-  anchor.target = '_blank'
-  anchor.rel = 'noopener noreferrer'
-  document.body.appendChild(anchor)
-  anchor.click()
-  anchor.remove()
+  return customInstance<Blob>(
+    {
+      url: downloadUrl,
+      method: 'GET',
+      responseType: 'blob',
+      headers,
+    },
+    { skipGlobalErrorAlert: true, skipAuth: true }
+  )
 }
 
 /** 파일 다운로드 API가 준 주소로 원본 파일을 저장한다. */
@@ -154,9 +176,7 @@ export async function downloadAdminFile(input: {
     if (error instanceof Error && error.message.startsWith('첨부파일 다운로드에 실패했습니다.')) {
       throw error
     }
-    if (!guardAdminDownload()) return
-    openDownloadUrl(downloadUrl)
-    return
+    throw new Error('첨부파일 다운로드에 실패했습니다.')
   }
   await downloadBlob(blob, fileName)
 }
