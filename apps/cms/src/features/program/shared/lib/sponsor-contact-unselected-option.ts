@@ -7,6 +7,36 @@ export function isSponsorContactUnselected(value: string | null | undefined): bo
   return value === SPONSOR_CONTACT_UNSELECTED_VALUE
 }
 
+export function isSponsorContactUnselectedLabel(value: string | null | undefined): boolean {
+  return value?.trim() === SPONSOR_CONTACT_UNSELECTED_LABEL
+}
+
+/**
+ * 저장된 담당자가 미선택이면 수정 폼에 미선택 값을 넣는다.
+ * 저장 시 contact id는 빼고 라벨만 `미선택`으로 남는 계약을 되돌린다.
+ */
+export function resolveSponsorContactIdsForEdit(input: {
+  ids?: readonly string[] | null
+  id?: string | null
+  managerLine?: string | null
+}): string[] {
+  const stored = [
+    ...new Set(
+      [...(input.ids ?? []), input.id ?? '']
+        .map(value => value.trim())
+        .filter(Boolean)
+    ),
+  ]
+  if (stored.some(id => isSponsorContactUnselected(id))) {
+    return [SPONSOR_CONTACT_UNSELECTED_VALUE]
+  }
+  if (stored.length > 0) return stored
+  if (isSponsorContactUnselectedLabel(input.managerLine)) {
+    return [SPONSOR_CONTACT_UNSELECTED_VALUE]
+  }
+  return []
+}
+
 export function withSponsorContactUnselectedOption<T extends { value: string; label: string }>(
   options: readonly T[],
   extra?: Omit<T, 'value' | 'label'>

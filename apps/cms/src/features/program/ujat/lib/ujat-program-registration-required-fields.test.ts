@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  describeIncompleteUjatProgramRegistrationRequiredFields,
   hasIncompleteUjatProgramRecruitmentRequiredFields,
   hasIncompleteUjatProgramRegistrationRequiredFields,
 } from './ujat-program-registration-required-fields'
@@ -85,6 +86,17 @@ describe('hasIncompleteUjatProgramRegistrationRequiredFields', () => {
 
   it('필수 채우면 완료', () => {
     expect(hasIncompleteUjatProgramRegistrationRequiredFields(filledRegistration())).toBe(false)
+  })
+
+  it('사전 교육 진행 일정이 없으면 미완료', () => {
+    const overlay = filledRegistration()
+    overlay['ujat.h1.pre.multi'] = {
+      rowIds: [0],
+      regionByRow: { '0': ['seoul'] },
+      dateByRow: { '0': null },
+    }
+    expect(describeIncompleteUjatProgramRegistrationRequiredFields(overlay)).toBe('h1.pre.schedule')
+    expect(hasIncompleteUjatProgramRegistrationRequiredFields(overlay)).toBe(true)
   })
 })
 

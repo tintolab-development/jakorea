@@ -22,6 +22,7 @@ import {
 } from '@/features/program/general/model/common-info-edit-schema'
 import type { AdminProgramSponsorAssignmentDto } from '@/features/program/general/api/programs-api-client'
 import {
+  derivedTextbookNameAliases,
   omitIfDetailedProgramNameAlias,
   parseDetailedProgramMasterId,
 } from '@/features/program/general/lib/detailed-program-request-id'
@@ -31,6 +32,8 @@ import {
   serializeTrainedTeacherServiceDetailJson,
 } from './service-detail-json'
 import { clearTeacherTrainingScheduleIfOff } from '../lib/teacher-training-schedule'
+import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
+import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 
 /** 목록 GET echo (상세와 동일 컬럼). 일반 프로그램 DTO에는 없을 수 있음. */
 type TrainedTeacherListItemDto = AdminProgramListItemDto & {
@@ -175,8 +178,9 @@ function toOptionalNumber(value: unknown): number | undefined {
 export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto): Program {
   const item = dto as TrainedTeacherListItemDto
   const title =
-    item.nameKo?.trim() || item.title?.trim() || item.mainTitle?.trim() || '제목 없음'
-  const textbookName = item.textbookName?.trim() || item.detailedProgramName?.trim() || undefined
+    item.mainTitle?.trim() || item.nameKo?.trim() || item.title?.trim() || '제목 없음'
+  const textbookName = item.textbookName?.trim() || undefined
+  const detailedProgramName = item.detailedProgramName?.trim() || undefined
   const managerName = item.managerName?.trim() || undefined
   const venue = item.venue?.trim() || undefined
   const targetLevels = resolveProgramTargetLevels({
@@ -187,8 +191,7 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
     id: item.id == null ? '' : String(item.id),
     title,
     mainTitle: item.mainTitle?.trim() || title,
-    startDate: item.businessStartDate ?? item.startDate,
-    endDate: item.businessEndDate ?? item.endDate,
+    ...resolveBusinessPeriodDates(item),
     lifecycleStatus: resolveListLifecycleStatus(item),
     targetLevel: targetLevels[0],
     targetLevels: targetLevels.length > 0 ? targetLevels : undefined,
@@ -216,9 +219,9 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
     district: item.district?.trim() || undefined,
     // 목록 GET `rounds: []` 는 경량 계약 — 저장 실패가 아님. 상세 GET 전 커리큘럼 원복으로 쓰지 말 것.
     rounds: [],
-    generalCommonInfo: textbookName
+    generalCommonInfo: detailedProgramName
       ? {
-          detailedProgramName: textbookName,
+          detailedProgramName,
         }
       : undefined,
     createdAt: item.createdAt,
@@ -243,14 +246,9 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
   const educationStructure =
     mapApiEducationStructureToDomain(dto.educationStructure) ??
     details.generalProgramEducationStructure
-  /** 공고용 — top-level title SSOT. nested announcementTitle 구값으로 헤더만 바뀐 것처럼 보이지 않게 */
-  const announcementTitle =
-    dto.title?.trim() || details.generalCommonInfo?.announcementTitle
-  /** 세부명 — PATCH는 textbookName. nested detailedProgramName 구값이 신 컬럼을 가리지 않게 */
+  const announcementTitle = details.generalCommonInfo?.announcementTitle?.trim()
   const detailedProgramName =
-    dto.detailedProgramName?.trim() ||
-    dto.textbookName?.trim() ||
-    details.generalCommonInfo?.detailedProgramName
+    dto.detailedProgramName?.trim() || details.generalCommonInfo?.detailedProgramName
   const participantRemarks = (
     details.generalCommonInfo?.participantRecruitmentInfo as { remarks?: string } | undefined
   )?.remarks
@@ -298,7 +296,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
           ? ('other' as const)
           : undefined)
 
-  return baseProgram({
+  const mapped = baseProgram({
     ...detailFields,
     id,
     sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
@@ -323,8 +321,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
         curriculum: round.curriculum,
         deliveryType: round.deliveryType as Program['rounds'][number]['deliveryType'],
       })) ?? [],
-    startDate: dto.startDate,
-    endDate: dto.endDate,
+    ...resolveBusinessPeriodDates(dto),
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
@@ -433,6 +430,10 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
   })
+  return applyResolvedAnnouncementTitle(mapped, {
+    serviceDetailJson: dto.serviceDetailJson,
+    overlay: details.registrationOverlay,
+  })
 }
 
 function mapRounds(program: Program): ProgramUpdateRequest['rounds'] {
@@ -462,8 +463,6 @@ export function mapTrainedTeacherToUpdateRequest(
     educationStructure === 'SCHEDULE'
       ? undefined
       : parseDetailedProgramMasterId(merged.detailedProgramId)
-  const announcementTitle =
-    merged.generalCommonInfo?.announcementTitle?.trim() || merged.title?.trim()
   const detailedProgramName = merged.generalCommonInfo?.detailedProgramName
   const sponsorIdsFromForm = (
     merged.generalCommonInfo?.sponsorManagementIds?.length
@@ -488,13 +487,15 @@ export function mapTrainedTeacherToUpdateRequest(
   return {
     sponsorId: primarySponsorId,
     sponsors: sponsors.length > 0 ? sponsors : undefined,
-    title: announcementTitle || merged.title,
+    title: merged.title,
     type: merged.type,
     format: merged.format,
     category: merged.category,
     description: merged.description,
     startDate: toDate(merged.startDate),
     endDate: toDate(merged.endDate),
+    businessStartDate: toDate(merged.startDate),
+    businessEndDate: toDate(merged.endDate),
     applicationStartDate: toDate(merged.applicationStartDate),
     applicationEndDate: toDate(merged.applicationEndDate),
     businessArea: merged.businessArea,
@@ -504,7 +505,11 @@ export function mapTrainedTeacherToUpdateRequest(
     detailedProgramId,
     titleEn: merged.titleEn,
     mainTitle: merged.mainTitle ?? merged.title,
-    textbookName: omitIfDetailedProgramNameAlias(merged.textbookName, detailedProgramName),
+    textbookName: omitIfDetailedProgramNameAlias(
+      merged.textbookName,
+      detailedProgramName,
+      derivedTextbookNameAliases(merged)
+    ),
     textbookNameEn: merged.textbookNameEn,
     schoolId: merged.schoolId,
     district: merged.district,

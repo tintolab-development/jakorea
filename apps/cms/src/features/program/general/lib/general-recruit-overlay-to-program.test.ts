@@ -283,6 +283,30 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(next.generalCommonInfo?.participantRecruitmentInfo?.additionalContentHtml).toBe(html)
   })
 
+  it('모집 사업 운영 기간은 공통정보 startDate/endDate를 덮지 않는다', () => {
+    const inst = APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS
+    const next = applyGeneralRecruitOverlayToProgram(
+      {
+        ...baseProgram(),
+        startDate: '2026-10-13T15:00:00.000Z',
+        endDate: '2026-11-07T14:59:59.999Z',
+      },
+      {
+        [inst.programRangeSeal]: {
+          start: '2026-10-21T00:00:00+09:00',
+          end: '2026-11-01T00:00:00+09:00',
+        },
+      },
+      { preferOverlay: true }
+    )
+
+    expect(next.startDate).toBe('2026-10-13T15:00:00.000Z')
+    expect(next.endDate).toBe('2026-11-07T14:59:59.999Z')
+    expect(next.generalCommonInfo?.participantRecruitmentInfo?.operationPeriodLabel).toContain(
+      '2026. 10. 21'
+    )
+  })
+
   it('reads economyRecruit.detailInfo.additionalContentHtml alias', () => {
     const html = '<p>1사1교 추가</p>'
     const next = applyGeneralRecruitOverlayToProgram(

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type { Program } from '@/types/domain'
 import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
-import { fromDetail, toCreateRequest, toUpdateRequest } from './adapters'
+import { fromDetail, fromListItem, toCreateRequest, toUpdateRequest } from './adapters'
 import { shouldRetryQuery } from './errors'
 import { toRemoteListParams } from './list-params'
 import { parseRegistrationSnapshot } from './service-detail'
@@ -91,6 +91,30 @@ describe('UJAT program adapters', () => {
     expect(updated.title).toBe('수정된 UJAT')
     expect(updated.rounds).toBeUndefined()
     expect(updated.managerName).toBeUndefined()
+  })
+
+  it('상세 사업 기간은 businessStartDate/EndDate를 쓴다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      startDate: '2026-10-21',
+      endDate: '2026-11-01',
+      businessStartDate: '2026-10-14',
+      businessEndDate: '2026-11-07',
+    })
+    expect(mapped.startDate).toBe('2026-10-14')
+    expect(mapped.endDate).toBe('2026-11-07')
+  })
+
+  it('등록·수정 사업 기간은 businessStartDate/EndDate로 보낸다', () => {
+    const created = toCreateRequest(program)
+    const updated = toUpdateRequest(program, {
+      startDate: '2026-10-14',
+      endDate: '2026-11-07',
+    })
+    expect(created.businessStartDate).toBe(program.startDate)
+    expect(created.businessEndDate).toBe(program.endDate)
+    expect(updated.businessStartDate).toBe('2026-10-14')
+    expect(updated.businessEndDate).toBe('2026-11-07')
   })
 })
 
@@ -201,6 +225,17 @@ describe('UJAT create — overlay 1차 컬럼 반영 (버그 수정 확인)', ()
     expect(request.managerName).toBe('정민재')
     expect(request.contactPhone).toBe('031-234-5678')
     expect(request.contactEmail).toBe('edu.team@jakorea.org')
+  })
+
+  it('목록은 관리명(title)과 대표명(mainTitle)을 구분한다', () => {
+    const mapped = fromListItem({
+      id: 186100,
+      title: '프로그램 관리명',
+      mainTitle: '우리 동네 소비와 저축',
+    })
+
+    expect(mapped.title).toBe('프로그램 관리명')
+    expect(mapped.mainTitle).toBe('우리 동네 소비와 저축')
   })
 })
 

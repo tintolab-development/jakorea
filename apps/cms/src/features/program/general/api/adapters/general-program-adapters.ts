@@ -20,11 +20,15 @@ import {
   serializeGeneralProgramServiceDetailJson,
 } from '@/features/program/general/lib/general-program-service-detail-json'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
+import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import {
+  derivedTextbookNameAliases,
   omitIfDetailedProgramNameAlias,
   parseDetailedProgramMasterId,
 } from '@/features/program/general/lib/detailed-program-request-id'
 import {
+  applyResolvedVenueKindToCommonInfo,
   buildProgramSponsorAssignmentsWire,
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
@@ -246,9 +250,9 @@ function baseProgramDefaults(partial: Partial<Program> & Pick<Program, 'id' | 't
 }
 
 export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): Program {
-  // 목록 OpenAPI 예시는 nameKo, 실제 BE 응답은 title/mainTitle을 내려준다.
+  // 목록 「프로그램명」= 대표 프로그램명 (국문) = mainTitle
   const title =
-    dto.nameKo?.trim() || dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
+    dto.mainTitle?.trim() || dto.nameKo?.trim() || dto.title?.trim() || '제목 없음'
   const lifecycleStatus = resolveListLifecycleStatus(dto)
   const audienceFromApi = resolveAudienceFromApiFields({
     programType: dto.programType,
@@ -264,8 +268,7 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
     id: toProgramId(dto.id ?? dto.uuid),
     title,
     mainTitle: dto.mainTitle?.trim() || title,
-    startDate: dto.businessStartDate ?? dto.startDate ?? undefined,
-    endDate: dto.businessEndDate ?? dto.endDate ?? undefined,
+    ...resolveBusinessPeriodDates(dto),
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus,
     targetLevel: resolveListTargetLevel(dto),
@@ -330,14 +333,17 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
   const now = new Date().toISOString()
   const serviceDetail = parseGeneralProgramServiceDetailJson(dto.serviceDetailJson)
   const dtoDetailedProgramName = dto.detailedProgramName?.trim()
-  const generalCommonInfo = applySettlementPolicyToCommonInfo(
-    {
-      ...serviceDetail.generalCommonInfo,
-      ...(dtoDetailedProgramName
-        ? { detailedProgramName: dtoDetailedProgramName }
-        : {}),
-    },
-    dto.settlementPolicy
+  const generalCommonInfo = applyResolvedVenueKindToCommonInfo(
+    applySettlementPolicyToCommonInfo(
+      {
+        ...serviceDetail.generalCommonInfo,
+        ...(dtoDetailedProgramName
+          ? { detailedProgramName: dtoDetailedProgramName }
+          : {}),
+      },
+      dto.settlementPolicy
+    ),
+    { institutionType: dto.institutionType as Program['institutionType'], venue: dto.venue }
   )
   const participantRemarks = (
     serviceDetail.generalCommonInfo?.participantRecruitmentInfo as
@@ -357,7 +363,7 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     category: dto.category,
   })
 
-  return baseProgramDefaults({
+  const mapped = baseProgramDefaults({
     id,
     sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
     title,
@@ -380,8 +386,7 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
         curriculum: round.curriculum,
         deliveryType: round.deliveryType as Program['rounds'][number]['deliveryType'],
       })) ?? DEFAULT_ROUNDS,
-    startDate: dto.startDate,
-    endDate: dto.endDate,
+    ...resolveBusinessPeriodDates(dto),
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
     businessArea: dto.businessArea,
@@ -441,6 +446,11 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
             serviceDetail.generalProgramAudience ?? audienceFromApi.audience,
         }
       : {}),
+  })
+
+  return applyResolvedAnnouncementTitle(mapped, {
+    serviceDetailJson: dto.serviceDetailJson,
+    overlay: serviceDetail.registrationOverlay,
   })
 }
 
@@ -596,6 +606,8 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     description: program.description,
     startDate: toRequestDate(program.startDate),
     endDate: toRequestDate(program.endDate),
+    businessStartDate: toRequestDate(program.startDate),
+    businessEndDate: toRequestDate(program.endDate),
     applicationStartDate: toRequestDate(program.applicationStartDate),
     applicationEndDate: toRequestDate(program.applicationEndDate),
     recruitments: mapGeneralProgramRecruitmentsToRequest(program),
@@ -603,7 +615,11 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,
-    textbookName: omitIfDetailedProgramNameAlias(program.textbookName, detailedProgramName),
+    textbookName: omitIfDetailedProgramNameAlias(
+      program.textbookName,
+      detailedProgramName,
+      derivedTextbookNameAliases(program)
+    ),
     textbookNameEn: program.textbookNameEn,
     schoolId: program.schoolId,
     district: program.district,
@@ -722,8 +738,12 @@ function mapProgramPatchFieldsToRequest(
   if (has('format')) body.format = merged.format
   if (has('category')) body.category = merged.category
   if (has('description')) body.description = merged.description
-  if (has('startDate')) body.startDate = toRequestDate(merged.startDate)
-  if (has('endDate')) body.endDate = toRequestDate(merged.endDate)
+  if (has('startDate') || has('endDate')) {
+    body.startDate = toRequestDate(merged.startDate)
+    body.endDate = toRequestDate(merged.endDate)
+    body.businessStartDate = toRequestDate(merged.startDate)
+    body.businessEndDate = toRequestDate(merged.endDate)
+  }
   if (has('applicationStartDate')) {
     body.applicationStartDate = toRequestDate(merged.applicationStartDate)
   }
@@ -752,7 +772,8 @@ function mapProgramPatchFieldsToRequest(
   if (has('textbookName')) {
     body.textbookName = omitIfDetailedProgramNameAlias(
       merged.textbookName,
-      merged.generalCommonInfo?.detailedProgramName
+      merged.generalCommonInfo?.detailedProgramName,
+      derivedTextbookNameAliases(merged)
     )
   }
   if (has('textbookNameEn')) body.textbookNameEn = merged.textbookNameEn
@@ -762,7 +783,9 @@ function mapProgramPatchFieldsToRequest(
   if (has('targetLevel') || has('targetLevels')) {
     body.targetLevel = merged.targetLevels?.[0] ?? merged.targetLevel
   }
-  if (has('institutionType')) body.institutionType = merged.institutionType
+  if (has('institutionType') || has('generalCommonInfo')) {
+    body.institutionType = merged.institutionType
+  }
   if (has('ipOwned')) body.ipOwned = merged.ipOwned
   if (has('courseDeliveredBy')) body.courseDeliveredBy = merged.courseDeliveredBy
   if (has('partnerInvolvement')) body.partnerInvolvement = merged.partnerInvolvement
@@ -793,7 +816,7 @@ function mapProgramPatchFieldsToRequest(
   if (has('managerName') && !looksMaskedProgramPii(merged.managerName)) {
     body.managerName = merged.managerName
   }
-  if (has('venue')) body.venue = merged.venue
+  if (has('venue') || has('generalCommonInfo')) body.venue = merged.venue
   if (has('curriculum')) body.curriculum = merged.curriculum
   if (has('contactEmail') && !looksMaskedProgramPii(merged.contactEmail)) {
     body.contactEmail = merged.contactEmail

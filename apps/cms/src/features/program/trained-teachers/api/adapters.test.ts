@@ -44,7 +44,7 @@ describe('mapTrainedTeacherListItemToProgram periodStatus', () => {
     expect(mapped.contactPhone).toBe('010-1630-0003')
     expect(mapped.educationProcess).toBe('Digital (Computer)')
     expect(mapped.institutionType).toBe('inside_school')
-    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
+    expect(mapped.generalCommonInfo?.detailedProgramName).toBeUndefined()
     expect(mapped.rounds).toEqual([])
   })
 
@@ -111,6 +111,18 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
     sponsorId: 'sponsor-1',
   }
 
+  it('상세 사업 기간은 businessStartDate/EndDate를 쓴다', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      ...baseDto,
+      startDate: '2026-10-21',
+      endDate: '2026-11-01',
+      businessStartDate: '2026-10-14',
+      businessEndDate: '2026-11-07',
+    })
+    expect(mapped.startDate).toBe('2026-10-14')
+    expect(mapped.endDate).toBe('2026-11-07')
+  })
+
   it('prefers API educationStructure over serviceDetailJson', () => {
     const programWithSchedule: Program = {
       id: 'tmp',
@@ -170,27 +182,29 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
     expect(mapped.generalCommonInfo?.detailedProgramName).toBe('세부 프로그램')
   })
 
-  it('prefers GET title over stale nested announcementTitle', () => {
+  it('공고용명은 nested announcementTitle을 쓰고 title(대표명)로 덮지 않는다', () => {
     const mapped = mapTrainedTeacherDetailToProgram({
       ...baseDto,
       title: '교육받은교사(수정2)',
+      mainTitle: '교육받은교사(수정2)',
       serviceDetailJson: JSON.stringify({
         schemaVersion: 1,
         program: {
           generalCommonInfo: {
-            announcementTitle: '교육받은교사(수정)',
+            announcementTitle: '공고용 프로그램명',
           },
         },
       }),
     })
     expect(mapped.title).toBe('교육받은교사(수정2)')
-    expect(mapped.generalCommonInfo?.announcementTitle).toBe('교육받은교사(수정2)')
+    expect(mapped.generalCommonInfo?.announcementTitle).toBe('공고용 프로그램명')
   })
 
-  it('prefers textbookName over stale nested detailedProgramName', () => {
+  it('세부 프로그램명에 textbookName(교재명)을 쓰지 않는다', () => {
     const mapped = mapTrainedTeacherDetailToProgram({
       ...baseDto,
-      textbookName: '사회공헌 프로젝트',
+      textbookName: '필요와 욕구, 현명한 소비, 저축 목표 세우기, 직업 세계 탐색',
+      detailedProgramName: '실제 선택한 세부 프로그램명',
       serviceDetailJson: JSON.stringify({
         schemaVersion: 1,
         program: {
@@ -200,10 +214,11 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
         },
       }),
     })
-    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
+    expect(mapped.textbookName).toBe('필요와 욕구, 현명한 소비, 저축 목표 세우기, 직업 세계 탐색')
+    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('실제 선택한 세부 프로그램명')
   })
 
-  it('display fields follow top-level columns when JSON has dual copies', () => {
+  it('display fields keep announcement/detailed names off title and textbookName', () => {
     const mapped = mapTrainedTeacherDetailToProgram({
       ...baseDto,
       title: '교육받은교사(수정2)',
@@ -229,8 +244,9 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
         },
       }),
     })
-    expect(mapped.generalCommonInfo?.announcementTitle).toBe('교육받은교사(수정2)')
-    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('사회공헌 프로젝트')
+    expect(mapped.generalCommonInfo?.announcementTitle).toBe('구 공고')
+    expect(mapped.generalCommonInfo?.detailedProgramName).toBe('UJAT 사전교육')
+    expect(mapped.textbookName).toBe('사회공헌 프로젝트')
     expect(mapped.generalCommonInfo?.venueKind).toBe('other')
     expect(mapped.generalCommonInfo?.venueDetail).toBe('별관 301호')
     expect(mapped.institutionType).toBeUndefined()
@@ -566,6 +582,7 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
       createdAt: '2026-01-01',
       updatedAt: '2026-01-01',
       generalCommonInfo: {
+        announcementTitle: '교육받은교사(수정4)',
         educationJournalEnabled: false,
         teacherTrainingEnabled: false,
         scheduleDetails: [
@@ -733,6 +750,8 @@ describe('mapTrainedTeacherToCreateRequest BE registration contract', () => {
     expect(request.programType).toBe('TRAINED_TEACHER')
     expect(request.applicationTargetMode).toBe('ORGANIZATION')
     expect(request.autoApplyDefaultFormBindings).toBe(true)
+    expect(request.businessStartDate).toBe(program.startDate)
+    expect(request.businessEndDate).toBe(program.endDate)
     expect(request.educationStructure).toBe('CURRICULUM')
     expect(request.detailedProgramId).toBe(163006)
 

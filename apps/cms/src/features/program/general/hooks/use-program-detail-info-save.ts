@@ -22,6 +22,7 @@ import {
   detailEditValuesToProgramPatch,
   programToDetailEditValues,
 } from '@/features/program/shared/model/program-detail-edit-schema'
+import { showUpdateCompletedAlert } from '@/shared/ui'
 
 export interface UseProgramDetailInfoSaveOptions {
   form: UseFormReturn<ProgramDetailEditFormValues>
@@ -87,6 +88,7 @@ export function useProgramDetailInfoSave({
           },
         }
         await onSaveEdit(draftToSave, remotePatch)
+        showUpdateCompletedAlert()
         return true
       } catch {
         return false

@@ -17,6 +17,7 @@ import {
   GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID,
 } from '@/features/program/general/lib/detail-common-info-display'
 import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
+import { resolvePublicProgramTitle } from '@/features/program/shared/lib/public-program-title'
 
 export const RECRUITMENT_USER_PREVIEW_DESIGN_WIDTH = 1920
 export const RECRUITMENT_USER_PREVIEW_PAGE_HEIGHT =
@@ -111,7 +112,12 @@ function resolveCategoryLabel(program: Program): string {
 }
 
 function resolveTitle(program: Program): string {
-  const announcementTitle = program.generalCommonInfo?.announcementTitle?.trim()
+  const announcementTitle = resolvePublicProgramTitle({
+    announcementTitle: program.generalCommonInfo?.announcementTitle,
+    overlay: program.registrationOverlay ?? program.ujatRegistrationOverlay,
+    mainTitle: program.mainTitle,
+    title: program.title,
+  })
   if (announcementTitle) return announcementTitle
   return program.title?.trim() || '프로그램 모집 안내'
 }

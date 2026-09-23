@@ -40,6 +40,8 @@ import {
   announcementPublishedToFormValue,
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { resolveVenueKind } from '@/features/program/general/model/common-info-edit-schema'
+import { resolveSponsorContactIdsForEdit } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
+import { resolvePublicProgramTitle } from '@/features/program/shared/lib/public-program-title'
 import {
   PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS,
   PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS,
@@ -574,16 +576,22 @@ export function programToDetailEditValues(
           : program.sponsorId
             ? [program.sponsorId]
             : [],
-    sponsorManagerContactIds: (() => {
-      const ids = program.generalCommonInfo?.sponsorManagerContactIds
-      if (ids?.length) return [...ids]
-      const single = program.generalCommonInfo?.sponsorManagerContactId?.trim()
-      return single ? [single] : []
-    })(),
-    sponsorManagerContactId:
-      program.generalCommonInfo?.sponsorManagerContactIds?.[0] ??
-      program.generalCommonInfo?.sponsorManagerContactId ??
-      undefined,
+    sponsorManagerContactIds: resolveSponsorContactIdsForEdit({
+      ids: program.generalCommonInfo?.sponsorManagerContactIds,
+      id: program.generalCommonInfo?.sponsorManagerContactId,
+      managerLine:
+        program.generalCommonInfo?.sponsorManagerLine?.trim() ||
+        program.managerName?.trim() ||
+        '',
+    }),
+    sponsorManagerContactId: resolveSponsorContactIdsForEdit({
+      ids: program.generalCommonInfo?.sponsorManagerContactIds,
+      id: program.generalCommonInfo?.sponsorManagerContactId,
+      managerLine:
+        program.generalCommonInfo?.sponsorManagerLine?.trim() ||
+        program.managerName?.trim() ||
+        '',
+    })[0],
     managerName: program.managerName ?? '',
     contactPhone: (() => {
       const raw =
@@ -734,11 +742,14 @@ export function programToDetailEditValues(
     educationScheduleMode: program.generalCommonInfo?.educationScheduleMode ?? 'date',
     mainTitle: program.mainTitle ?? undefined,
     titleEn: program.titleEn ?? undefined,
-    announcementTitle: program.generalCommonInfo?.announcementTitle ?? program.title,
-    detailedProgramName:
-      program.generalCommonInfo?.detailedProgramName?.trim() ||
-      program.textbookName?.trim() ||
-      undefined,
+    announcementTitle:
+      resolvePublicProgramTitle({
+        announcementTitle: program.generalCommonInfo?.announcementTitle,
+        overlay: program.ujatRegistrationOverlay ?? program.registrationOverlay,
+        mainTitle: program.mainTitle,
+        title: program.title,
+      }) || undefined,
+    detailedProgramName: program.generalCommonInfo?.detailedProgramName?.trim() || undefined,
     detailedProgramId: program.detailedProgramId ?? undefined,
     educationStructure: (() => {
       const raw = program.generalProgramEducationStructure
@@ -876,17 +887,9 @@ export function detailEditValuesToProgramPatch(
   existing: import('@/types/domain').Program
 ): Partial<import('@/types/domain').Program> {
   type ProgramRound = import('@/types/domain').ProgramRound
-  // TT·1사1교 레이아웃: 공고용/세부명은 폼 필드가 announcementTitle·detailedProgramName.
-  // BE handoff는 top-level title / textbookName(또는 detailedProgramName) 라운드트립을 기대.
-  const announcementTitle =
-    values.announcementTitle?.trim() ||
-    values.title?.trim() ||
-    existing.generalCommonInfo?.announcementTitle ||
-    existing.title
-  const detailedProgramName =
-    values.detailedProgramName?.trim() ||
-    existing.generalCommonInfo?.detailedProgramName ||
-    existing.textbookName
+  const representativeTitleKo = values.mainTitle ?? existing.mainTitle ?? existing.title
+  const isUjat =
+    existing.ujatProgressStatus != null || existing.ujatRegistrationOverlay != null
 
   const announcementPublished =
     announcementPublishedFromFormValue(values.participantRecruitmentAnnouncementPublished) ??
@@ -919,8 +922,8 @@ export function detailEditValuesToProgramPatch(
     existing.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName
 
   return {
-    title: announcementTitle || existing.title,
-    textbookName: detailedProgramName || existing.textbookName,
+    title: isUjat ? existing.title : representativeTitleKo,
+    textbookName: existing.textbookName,
     startDate,
     endDate,
     category: values.category,

@@ -134,6 +134,19 @@ function readOperationRangeSeal(
   return { start, end }
 }
 
+/** 공통정보 「사업 운영 기간」overlay → program.startDate/endDate */
+export function resolveProgramDatesFromOperationRangeSeal(
+  overlay: Record<string, unknown> | undefined
+): { startDate: string; endDate: string } | null {
+  if (overlay == null) return null
+  const seal = readOperationRangeSeal(overlay)
+  if (!seal) return null
+  return {
+    startDate: dayjs(seal.start).startOf('day').toISOString(),
+    endDate: dayjs(seal.end).endOf('day').toISOString(),
+  }
+}
+
 function businessAreaToProgramValue(formValue: string): string {
   return normalizeProgramBusinessAreaValue(formValue)
 }
@@ -517,10 +530,19 @@ function buildEnrichedScheduleDetails(
     const preName =
       overlayString(overlay, `${SCHEDULE_CURRICULUM}.preEducationName`) ||
       (isTeacherTraining ? '교육 연수' : '사전 교육')
+    const preEducationForm = educationFormByDetail[0]
     rows.unshift({
       scheduleLabel: isTeacherTraining ? '교육 연수' : '사전 교육',
       name: preName,
       assignmentEnabled: false,
+      scheduleDateLabel: formatScheduleDateLabel(dates[0]),
+      educationFormLabel: preEducationForm
+        ? educationFormLabelFromValue(preEducationForm)
+        : undefined,
+      ipsTypeSummary:
+        isTeacherTraining || ipsDetailKind === 'perSchedule'
+          ? buildSessionIpsTypeSummary('prepare', 'none')
+          : undefined,
     })
   }
 
@@ -543,16 +565,12 @@ export function applyGeneralRegistrationOverlayToProgram(
   const titleEn = overlayString(overlay, `${BASIC}.programTitleEn`) || program.titleEn
   const announcementTitle =
     overlayString(overlay, `${BASIC}.publicProgramTitle`) ||
-    program.generalCommonInfo?.announcementTitle ||
-    titleKo
+    program.generalCommonInfo?.announcementTitle
 
-  const seal = readOperationRangeSeal(overlay)
-  let startDate = program.startDate
-  let endDate = program.endDate
-  if (seal) {
-    startDate = dayjs(seal.start).startOf('day').toISOString()
-    endDate = dayjs(seal.end).endOf('day').toISOString()
-  }
+  const sealDates = resolveProgramDatesFromOperationRangeSeal(overlay)
+  const startDate = sealDates?.startDate ?? program.startDate
+  const endDate = sealDates?.endDate ?? program.endDate
+  const seal = sealDates != null
 
   const businessField = overlayString(overlay, `${BASIC}.businessField`)
   const businessArea = businessAreaToProgramValue(businessField) || program.businessArea
@@ -562,7 +580,11 @@ export function applyGeneralRegistrationOverlayToProgram(
   const partnerInvolvement =
     partnerRaw === 'no' ? false : partnerRaw === 'yes' ? true : true
 
-  const venueKind = overlayString(overlay, `${BASIC}.educationVenueKind`) || 'inside'
+  const rawVenueKind = overlayString(overlay, `${BASIC}.educationVenueKind`)
+  const venueKind =
+    rawVenueKind === 'outside' || rawVenueKind === 'other' || rawVenueKind === 'inside'
+      ? rawVenueKind
+      : 'inside'
   const venueDetail = overlayString(overlay, `${BASIC}.educationVenueDetail`)
   const institutionType =
     venueKind === 'inside'
@@ -709,9 +731,16 @@ export function applyGeneralRegistrationOverlayToProgram(
         : resolveDetailedProgramName(overlay, detailedProgramId))
 
   const scheduleLinesRaw = overlay[GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY]
-  const educationScheduleLines = Array.isArray(scheduleLinesRaw)
-    ? scheduleLinesRaw.filter((line): line is string => typeof line === 'string').map(s => s.trim()).filter(Boolean)
-    : program.generalCommonInfo?.educationScheduleLines
+  const overlayScheduleLines = Array.isArray(scheduleLinesRaw)
+    ? scheduleLinesRaw
+        .filter((line): line is string => typeof line === 'string')
+        .map(s => s.trim())
+        .filter(Boolean)
+    : []
+  const educationScheduleLines =
+    overlayScheduleLines.length > 0
+      ? overlayScheduleLines
+      : program.generalCommonInfo?.educationScheduleLines
 
   const rounds =
     seal && program.rounds?.length
@@ -764,6 +793,7 @@ export function applyGeneralRegistrationOverlayToProgram(
       ...program.generalCommonInfo,
       announcementTitle,
       detailedProgramName,
+      venueKind,
       venueDetail: venueDetail || program.generalCommonInfo?.venueDetail,
       sponsorManagementId: sponsorManagementIds?.[0] ?? program.generalCommonInfo?.sponsorManagementId,
       sponsorManagementIds: sponsorManagementIds ?? program.generalCommonInfo?.sponsorManagementIds,

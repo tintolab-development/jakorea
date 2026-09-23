@@ -6,12 +6,15 @@
 
 import type { Program } from '@/types/domain'
 import { normalizeGeneralProgramServiceDetailParsed } from '@/features/program/general/lib/general-program-service-detail-json'
+import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
+import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
 
 export const COMPANY_SCHOOL_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
 export interface CompanySchoolServiceDetailJsonV1 {
   schemaVersion: typeof COMPANY_SCHOOL_SERVICE_DETAIL_JSON_VERSION
   program: Partial<Program>
+  registration?: { overlay?: Record<string, unknown> }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -81,9 +84,14 @@ function companySchoolDetails(program: Program): Partial<Program> {
 }
 
 export function serializeCompanySchoolServiceDetailJson(program: Program): string {
+  const registrationOverlay = persistScheduleEducationFormByDetailOverlay(
+    buildRegistrationOverlayForPersist(program),
+    program.generalCommonInfo?.scheduleDetails
+  )
   const payload: CompanySchoolServiceDetailJsonV1 = {
     schemaVersion: COMPANY_SCHOOL_SERVICE_DETAIL_JSON_VERSION,
     program: companySchoolDetails(program),
+    ...(registrationOverlay ? { registration: { overlay: registrationOverlay } } : {}),
   }
   return JSON.stringify(payload)
 }
@@ -95,6 +103,11 @@ export function parseCompanySchoolServiceDetailJson(raw?: string | null): Partia
     const parsed: unknown = JSON.parse(raw)
     if (!isRecord(parsed)) return {}
 
+    const registrationOverlay =
+      isRecord(parsed.registration) && isRecord(parsed.registration.overlay)
+        ? parsed.registration.overlay
+        : undefined
+
     // FE write envelope
     if (isRecord(parsed.program)) {
       if (
@@ -103,7 +116,10 @@ export function parseCompanySchoolServiceDetailJson(raw?: string | null): Partia
       ) {
         return {}
       }
-      return companySchoolVolunteerOff(parsed.program as Partial<Program>)
+      return {
+        ...companySchoolVolunteerOff(parsed.program as Partial<Program>),
+        ...(registrationOverlay ? { registrationOverlay } : {}),
+      }
     }
 
     // Primary seed flat config (generalCommonInfo / generalParticipantTypes / axes)
@@ -119,7 +135,10 @@ export function parseCompanySchoolServiceDetailJson(raw?: string | null): Partia
     const normalized = normalizeGeneralProgramServiceDetailParsed(
       parsed as Parameters<typeof normalizeGeneralProgramServiceDetailParsed>[0]
     )
-    return companySchoolVolunteerOff(normalized)
+    return {
+      ...companySchoolVolunteerOff(normalized),
+      ...(registrationOverlay ? { registrationOverlay } : {}),
+    }
   } catch {
     return {}
   }

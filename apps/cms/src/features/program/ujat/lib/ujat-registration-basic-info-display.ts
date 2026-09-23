@@ -25,6 +25,7 @@ import {
   formatDateRange,
   normalizeProgramBusinessAreaValue,
 } from '@/features/program/shared/lib/program-detail-info-constants'
+import { resolvePublicProgramTitle } from '@/features/program/shared/lib/public-program-title'
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
@@ -215,8 +216,15 @@ export function resolveUjatRegistrationBasicInfoDisplay(
     overlayString(overlay, 'ujat.basicInfo.programManagementName')?.trim() ||
     defaults.programManagementName
   const publicProgramTitle =
-    overlayString(overlay, 'ujat.basicInfo.publicProgramTitle')?.trim() ||
-    defaults.publicProgramTitle
+    resolvePublicProgramTitle({
+      announcementTitle: program.generalCommonInfo?.announcementTitle,
+      overlay,
+      mainTitle:
+        overlayString(overlay, 'ujat.basicInfo.repKo')?.trim() || program.mainTitle,
+      title:
+        overlayString(overlay, 'ujat.basicInfo.programManagementName')?.trim() ||
+        program.title,
+    }) || '-'
   const detailedProgramId =
     overlayString(overlay, 'ujat.basicInfo.detailedProgramId') ?? defaults.detailedProgramId
   const businessField =
@@ -327,8 +335,7 @@ export function applyUjatRegistrationOverlayToProgram(
   const deductionItemsLabel = resolveUjatWageDeductionLabel(paymentItemIds)
   const announcementTitle =
     overlayString(overlayInput, 'ujat.basicInfo.publicProgramTitle')?.trim() ||
-    program.generalCommonInfo?.announcementTitle?.trim() ||
-    title
+    program.generalCommonInfo?.announcementTitle?.trim()
   const sponsorManagerLine =
     overlayString(overlayInput, 'ujat.basicInfo.sponsorManagerName')?.trim() ||
     program.generalCommonInfo?.sponsorManagerLine
@@ -376,12 +383,17 @@ export function applyUjatRegistrationOverlayToProgram(
   }
 }
 
-/** 모집 공고용 프로그램명 — 등록 폼 `공고용 프로그램명` 우선 */
+/** 모집 공고용 프로그램명 — 등록 폼 `공고용 프로그램명` 우선, 대표명 alias 제외 */
 export function resolveUjatAnnouncementTitle(program: Program): string {
   return (
-    program.generalCommonInfo?.announcementTitle?.trim() ||
-    program.mainTitle?.trim() ||
-    program.title
+    resolvePublicProgramTitle({
+      announcementTitle: program.generalCommonInfo?.announcementTitle,
+      overlay: resolveUjatRegistrationBasicInfoOverlay(
+        readUjatRegistrationOverlayFromProgram(program)
+      ),
+      mainTitle: program.mainTitle,
+      title: program.title,
+    }) || '-'
   )
 }
 

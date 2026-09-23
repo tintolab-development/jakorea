@@ -19,6 +19,8 @@ import {
   resolveUjatProgressStatus,
 } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
 import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
+import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
+import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import {
   parseRegistrationOverlay,
   parseServiceDetail,
@@ -44,6 +46,11 @@ function now(): string {
 
 function idOf(value: string | number | undefined): string {
   return value == null ? '' : String(value)
+}
+
+function overlayText(overlay: Record<string, unknown>, key: string): string | undefined {
+  const value = overlay[key]
+  return typeof value === 'string' ? value.trim() || undefined : undefined
 }
 
 function dateValue(value: Date | string | undefined): string | undefined {
@@ -80,14 +87,23 @@ function baseProgram(partial: Partial<Program> & Pick<Program, 'id' | 'title'>):
 
 export function fromListItem(dto: AdminProgramListItemDto): Program {
   const id = idOf(dto.id ?? dto.uuid)
-  const title =
-    dto.nameKo?.trim() || dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
   const dtoExt = dto as AdminProgramListItemDto & {
     serviceDetailJson?: string
     ujatProgressStatus?: string
   }
   const fromJson = parseServiceDetail(dtoExt.serviceDetailJson)
   const registrationOverlay = parseRegistrationOverlay(dtoExt.serviceDetailJson)
+  const title =
+    overlayText(registrationOverlay, 'ujat.basicInfo.programManagementName') ||
+    dto.title?.trim() ||
+    dto.nameKo?.trim() ||
+    overlayText(registrationOverlay, 'ujat.basicInfo.repKo') ||
+    dto.mainTitle?.trim() ||
+    '제목 없음'
+  const mainTitle =
+    dto.mainTitle?.trim() ||
+    overlayText(registrationOverlay, 'ujat.basicInfo.repKo') ||
+    title
   const ujatProgressStatus = resolveUjatProgressStatus({
     ujatProgressStatus: fromJson.ujatProgressStatus ?? dtoExt.ujatProgressStatus,
     periodStatus: dto.periodStatus,
@@ -104,9 +120,8 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
   return baseProgram({
     id,
     title,
-    mainTitle: dto.mainTitle?.trim() || title,
-    startDate: dto.businessStartDate ?? dto.startDate,
-    endDate: dto.businessEndDate ?? dto.endDate,
+    mainTitle,
+    ...resolveBusinessPeriodDates(dto),
     lifecycleStatus,
     ujatProgressStatus,
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount ?? 0,
@@ -128,8 +143,14 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     periodStatus?: string
     remarks?: string
   }
+  const overlay = parseRegistrationOverlay(dto.serviceDetailJson)
   const title =
-    dto.title?.trim() || dto.mainTitle?.trim() || dtoExt.nameKo?.trim() || '제목 없음'
+    overlayText(overlay, 'ujat.basicInfo.programManagementName') ||
+    dto.title?.trim() ||
+    dtoExt.nameKo?.trim() ||
+    overlayText(overlay, 'ujat.basicInfo.repKo') ||
+    dto.mainTitle?.trim() ||
+    '제목 없음'
   const timestamp = now()
   const details = parseServiceDetail(dto.serviceDetailJson)
   const extras = parseUjatServiceDetailExtras(dto.serviceDetailJson)
@@ -155,14 +176,16 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       ? { ...details.generalCommonInfo, detailedProgramName: dto.detailedProgramName.trim() }
       : details.generalCommonInfo
 
-  return {
+  const mapped = applyResolvedAnnouncementTitle(
+    {
     ...baseProgram({
       ...details,
       generalCommonInfo,
       id,
       sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
       title,
-      mainTitle: dto.mainTitle ?? title,
+      mainTitle:
+        dto.mainTitle?.trim() || overlayText(overlay, 'ujat.basicInfo.repKo') || title,
       type: (dto.type as ProgramType | undefined) ?? 'offline',
       format: (dto.format as ProgramFormat | undefined) ?? 'course',
       category: (dto.category as ProgramCategory | undefined) ?? 'school',
@@ -180,8 +203,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
           curriculum: round.curriculum,
           deliveryType: round.deliveryType as Program['rounds'][number]['deliveryType'],
         })) ?? [],
-      startDate: dto.startDate ?? dto.businessStartDate,
-      endDate: dto.endDate ?? dto.businessEndDate,
+      ...resolveBusinessPeriodDates(dto),
       applicationStartDate: dto.applicationStartDate,
       applicationEndDate: dto.applicationEndDate,
       status: (dto.status as Status | undefined) ?? 'pending',
@@ -231,11 +253,20 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     }),
+    ujatRegistrationOverlay: overlay,
+  },
+    {
+      serviceDetailJson: dto.serviceDetailJson,
+      overlay,
+    }
+  )
+  return {
+    ...mapped,
     ujatServiceDetailExtras: {
       ...extras,
       semesterType: extras.semesterType ?? 'FULL_YEAR',
     },
-    ujatRegistrationOverlay: parseRegistrationOverlay(dto.serviceDetailJson),
+    ujatRegistrationOverlay: overlay,
     periodStatus,
   }
 }
@@ -262,6 +293,8 @@ function coreRequest(
     description: program.description,
     startDate: dateValue(program.startDate),
     endDate: dateValue(program.endDate),
+    businessStartDate: dateValue(program.startDate),
+    businessEndDate: dateValue(program.endDate),
     educationStructure: resolveUjatEducationStructure(program),
     applicationStartDate: dateValue(program.applicationStartDate),
     applicationEndDate: dateValue(program.applicationEndDate),
@@ -338,8 +371,12 @@ function patchRequest(
   if (has('format')) body.format = merged.format
   if (has('category')) body.category = merged.category
   if (has('description')) body.description = merged.description
-  if (has('startDate')) body.startDate = dateValue(merged.startDate)
-  if (has('endDate')) body.endDate = dateValue(merged.endDate)
+  if (has('startDate') || has('endDate')) {
+    body.startDate = dateValue(merged.startDate)
+    body.endDate = dateValue(merged.endDate)
+    body.businessStartDate = dateValue(merged.startDate)
+    body.businessEndDate = dateValue(merged.endDate)
+  }
   if (has('applicationStartDate')) {
     body.applicationStartDate = dateValue(merged.applicationStartDate)
   }

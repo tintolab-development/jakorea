@@ -1173,22 +1173,8 @@ export function applyGeneralRecruitOverlayToProgram(
       volunteerRecruitRange?.end,
       preferOverlay
     ),
-    startDate:
-      coalesceIso(
-        program.startDate,
-        participantProgramRange?.start ??
-          instructorProgramRange?.start ??
-          volunteerProgramRange?.start,
-        preferOverlay
-      ) ?? program.startDate,
-    endDate:
-      coalesceIso(
-        program.endDate,
-        participantProgramRange?.end ??
-          instructorProgramRange?.end ??
-          volunteerProgramRange?.end,
-        preferOverlay
-      ) ?? program.endDate,
+    // 모집 단락 「사업 운영 기간」은 operationPeriodLabel 전용.
+    // 공통정보 operationRangeSeal → startDate/endDate/business* 를 덮지 않는다.
     contactPhone: contactPhone ?? program.contactPhone,
     contactEmail: contactEmail ?? program.contactEmail,
     studentListRequired: coalesceString(

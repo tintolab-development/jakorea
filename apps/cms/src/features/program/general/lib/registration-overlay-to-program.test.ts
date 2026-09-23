@@ -110,6 +110,7 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
     expect(next.businessArea).toBe('진로취업')
     expect(next.partnerInvolvement).toBe(true)
     expect(next.institutionType).toBe('outside_school')
+    expect(next.generalCommonInfo?.venueKind).toBe('outside')
     expect(next.generalCommonInfo?.venueDetail).toBe('강의실 A')
     expect(next.partnerInvolvement).toBe(true)
     expect(next.generalCommonInfo?.paymentItems).toBe('해당없음')
@@ -140,6 +141,10 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
     expect(next.generalCommonInfo?.participationMethod).toBeUndefined()
     expect(next.type).toBe('offline')
     expect(next.ips).toBe('Prepare')
+    expect(next.generalCommonInfo?.educationScheduleLines).toEqual([
+      '26년 9월 16일(수) 9:22 ~ 10:22',
+      '26년 9월 24일(목) 9:19 ~ 10:19',
+    ])
   })
 
   it('keeps participationMethod for individual audience programs', () => {
@@ -375,5 +380,36 @@ describe('trained teacher schedule-type detailedProgramName (버그 수정)', ()
     expect(next.generalCommonInfo?.detailedProgramName).toBe('실제 선택한 세부 프로그램명')
     expect(next.detailedProgramId).toBe('163006')
     expect(next.textbookName).toBeUndefined()
+  })
+})
+
+describe('일정형 사전 교육 overlay 교육 형태', () => {
+  it('educationFormByDetail 0을 사전 교육 행에 넣는다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      baseProgram(),
+      {
+        'generalRegistration.educationScheduleCurriculum.preEducationName': '사전 교육',
+        'generalRegistration.educationScheduleCurriculum.educationFormByDetail': {
+          0: 'offline',
+        },
+        'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+          1: '오리엔테이션',
+        },
+      },
+      {
+        programType: 'schedule',
+        sessionRoundType: 'single',
+        scheduleCurriculumPreEducation: true,
+        scheduleCurriculumDetailCount: 1,
+        educationFormScheduleDetail: 'common',
+      }
+    )
+
+    expect(next.generalCommonInfo?.scheduleDetails?.[0]).toEqual(
+      expect.objectContaining({
+        scheduleLabel: '사전 교육',
+        educationFormLabel: '오프라인',
+      })
+    )
   })
 })

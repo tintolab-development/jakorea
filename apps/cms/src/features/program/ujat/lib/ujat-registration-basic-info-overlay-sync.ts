@@ -21,6 +21,13 @@ import {
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { TEMPLATE_FORM_BUSINESS_AREA_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  isSponsorContactUnselected,
+  isSponsorContactUnselectedLabel,
+  resolveSponsorContactIdsForEdit,
+  SPONSOR_CONTACT_UNSELECTED_LABEL,
+  SPONSOR_CONTACT_UNSELECTED_VALUE,
+} from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 
 function reverseBusinessField(value: string | undefined): string {
   const defaults = createUjatRegistrationBasicInfoOverlayDefaults()
@@ -74,6 +81,13 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
     program.startDate && program.endDate
       ? { start: String(program.startDate), end: String(program.endDate) }
       : defaults.operationRangeSeal
+  const sponsorManagerLine =
+    program.generalCommonInfo?.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
+  const sponsorContactIds = resolveSponsorContactIdsForEdit({
+    ids: program.generalCommonInfo?.sponsorManagerContactIds,
+    id: program.generalCommonInfo?.sponsorManagerContactId,
+    managerLine: sponsorManagerLine,
+  })
 
   return {
     'ujat.basicInfo.repKo': program.mainTitle?.trim() || defaults.repKo,
@@ -87,8 +101,9 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
     'ujat.basicInfo.operationRangeSeal': operationRangeSeal,
     'ujat.basicInfo.businessField': reverseBusinessField(program.businessArea),
     'ujat.basicInfo.sponsorId': program.sponsorId ?? defaults.sponsorId,
-    'ujat.basicInfo.sponsorContactId': defaults.sponsorContactId,
-    'ujat.basicInfo.sponsorManagerName': program.generalCommonInfo?.sponsorManagerLine ?? '',
+    'ujat.basicInfo.sponsorContactIds': sponsorContactIds,
+    'ujat.basicInfo.sponsorContactId': sponsorContactIds[0] ?? defaults.sponsorContactId,
+    'ujat.basicInfo.sponsorManagerName': sponsorManagerLine,
     'ujat.basicInfo.ipOwned': reverseIpOwned(program.ipOwned),
     'ujat.basicInfo.courseDeliveredBy': reverseIpOwned(program.courseDeliveredBy),
     'ujat.basicInfo.ipsCategory': reverseIps(program.ips),
@@ -117,7 +132,32 @@ export function seedUjatRegistrationBasicInfoOverlayFromProgram(program: Program
   const saved = resolveUjatRegistrationBasicInfoOverlay(program.ujatRegistrationOverlay)
   const fromProgram = buildUjatRegistrationBasicInfoOverlayFromProgram(program)
   // API overlay·세션 값이 1차 컬럼 기본값(일정·정원 목업)을 덮어쓴다.
-  patchUjatProgramRegistrationOverlay({ ...fromProgram, ...saved })
+  const merged = { ...fromProgram, ...saved }
+  const overlayManagerLine =
+    (typeof merged['ujat.basicInfo.sponsorManagerName'] === 'string'
+      ? merged['ujat.basicInfo.sponsorManagerName'].trim()
+      : '') ||
+    program.generalCommonInfo?.sponsorManagerLine?.trim() ||
+    program.managerName?.trim() ||
+    ''
+  const restoredContacts = resolveSponsorContactIdsForEdit({
+    ids: Array.isArray(merged['ujat.basicInfo.sponsorContactIds'])
+      ? (merged['ujat.basicInfo.sponsorContactIds'] as unknown[]).map(String)
+      : [],
+    id: typeof merged['ujat.basicInfo.sponsorContactId'] === 'string'
+      ? merged['ujat.basicInfo.sponsorContactId']
+      : '',
+    managerLine: overlayManagerLine,
+  })
+  if (
+    restoredContacts.some(id => isSponsorContactUnselected(id)) ||
+    isSponsorContactUnselectedLabel(overlayManagerLine)
+  ) {
+    merged['ujat.basicInfo.sponsorContactIds'] = [SPONSOR_CONTACT_UNSELECTED_VALUE]
+    merged['ujat.basicInfo.sponsorContactId'] = SPONSOR_CONTACT_UNSELECTED_VALUE
+    merged['ujat.basicInfo.sponsorManagerName'] = SPONSOR_CONTACT_UNSELECTED_LABEL
+  }
+  patchUjatProgramRegistrationOverlay(merged)
 }
 
 export function readUjatRegistrationBasicInfoOverlayForSave(): Record<string, unknown> {

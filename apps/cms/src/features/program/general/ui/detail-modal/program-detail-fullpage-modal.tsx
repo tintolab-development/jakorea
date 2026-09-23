@@ -77,8 +77,14 @@ import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teach
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { useUpdateTrainedTeacherProgramInfoDetail } from '@/features/program/trained-teachers/api/hooks'
 import { TrainedTeachersCommonInfoView } from '@/features/program/trained-teachers/ui/common-info/common-info-view'
+import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/lib/detail-common-info-display'
 import { TrainedTeachersApplicationInfoView } from '@/features/program/trained-teachers/ui/application-info/application-info-view'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
+import {
+  FEATURE_COMING_SOON_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
+import { PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE } from '@/features/program/general/model/common-info-edit-schema'
 import { handleError } from '@/shared/utils/error-handler'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
@@ -1130,6 +1136,9 @@ export function ProgramDetailFullPageModal({
     if (!volunteerIdFromUrl) setVolunteerDetailTitle(null)
   }, [volunteerIdFromUrl])
 
+  const programDisplayTitle = displayProgram
+    ? resolveGeneralProgramDisplayTitle(displayProgram)
+    : '프로그램 상세'
   const title =
     schoolIdFromUrl && schoolDetailTitle
       ? `참여 기관 상세 (${schoolDetailTitle})`
@@ -1138,10 +1147,10 @@ export function ProgramDetailFullPageModal({
         : volunteerIdFromUrl && volunteerDetailTitle
           ? `참여 봉사자 상세 (${volunteerDetailTitle})`
       : schoolDetailTitle != null && displayProgram
-        ? `${displayProgram.title}_${schoolDetailTitle}`
+        ? `${programDisplayTitle}_${schoolDetailTitle}`
       : instructorDetailTitle != null && displayProgram
-        ? `${displayProgram.title}_${instructorDetailTitle}`
-        : (displayProgram?.title ?? '프로그램 상세')
+        ? `${programDisplayTitle}_${instructorDetailTitle}`
+        : programDisplayTitle
 
   const headerBreadcrumbItems = (() => {
     const listParams = buildSearchParams(searchParams, {
@@ -1202,11 +1211,11 @@ export function ProgramDetailFullPageModal({
       : null
 
     if (!activeLnbItem) {
-      items.push({ label: displayProgram.title })
+      items.push({ label: programDisplayTitle })
       return items
     }
 
-    items.push(makeBreadcrumbItem(displayProgram.title, location.pathname, programParams))
+    items.push(makeBreadcrumbItem(programDisplayTitle, location.pathname, programParams))
 
     if (!activeChildItem) {
       items.push(
@@ -1639,10 +1648,18 @@ export function ProgramDetailFullPageModal({
                   infoForm.getValues()
                 )
                 if (!validation.success) {
-                  void showAlert({
-                    title: '입력 확인',
-                    content: formatZodIssuesForUser(validation.error.issues),
-                  })
+                  const message = formatZodIssuesForUser(validation.error.issues)
+                  if (message === PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE) {
+                    void showAlert({
+                      title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+                      content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+                    })
+                  } else {
+                    void showAlert({
+                      title: '입력 확인',
+                      content: message,
+                    })
+                  }
                   throw new Error('trainedTeacherBasicInfoValidationFailed')
                 }
                 const basicOk = await infoTriggerSave(progressTables)

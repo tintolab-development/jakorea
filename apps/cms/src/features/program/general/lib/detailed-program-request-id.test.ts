@@ -40,5 +40,12 @@ describe('omitIfDetailedProgramNameAlias', () => {
     expect(omitIfDetailedProgramNameAlias('성공하는 경제생활', '사회공헌 프로젝트')).toBe(
       '성공하는 경제생활'
     )
+    expect(
+      omitIfDetailedProgramNameAlias(
+        '필요와 욕구, 현명한 소비',
+        '해당없음',
+        ['필요와 욕구, 현명한 소비']
+      )
+    ).toBeUndefined()
   })
 })

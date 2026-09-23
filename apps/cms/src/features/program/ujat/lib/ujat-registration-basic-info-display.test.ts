@@ -52,6 +52,18 @@ describe('resolveUjatRegistrationBasicInfoDisplay — 상세 overlay (세션 기
     expect(display.publicProgramTitle).toBe('고등학생 기업가정신 캠프 참가자 모집')
     expect(display.businessField).toBe('경제금융')
   })
+
+  it('announcementTitle이 대표명이면 공고용으로 쓰지 않는다', () => {
+    const display = resolveUjatRegistrationBasicInfoDisplay({
+      ...baseProgram(),
+      mainTitle: '청소년 경제금융 탐험',
+      title: '청소년 경제금융 탐험 운영',
+      generalCommonInfo: {
+        announcementTitle: '청소년 경제금융 탐험',
+      },
+    })
+    expect(display.publicProgramTitle).toBe('-')
+  })
 })
 
 describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 버그 수정 확인)', () => {
