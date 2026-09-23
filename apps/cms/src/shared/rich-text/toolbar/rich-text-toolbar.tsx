@@ -18,7 +18,7 @@ import {
   RICH_TEXT_IMAGE_ACCEPT,
   TextSelection,
 } from '@jakorea/rich-text'
-import { fetchFileContentBlob, uploadAdminFile } from '@/shared/lib/admin-file-upload'
+import { contentUrlForFileObjectId, uploadAdminFile } from '@/shared/lib/admin-file-upload'
 import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload/types'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import {
@@ -323,9 +323,7 @@ export function RichTextToolbar({ editor, fileUploadOwner }: RichTextToolbarProp
             owner: fileUploadOwner,
             waitUntilAvailable: true,
           })
-          const blob = await fetchFileContentBlob(uploaded.fileObjectId)
-          const objectUrl = URL.createObjectURL(blob)
-          insertImageFromUrl(editor, objectUrl)
+          insertImageFromUrl(editor, contentUrlForFileObjectId(uploaded.fileObjectId))
         } catch {
           insertImageFromFile(editor, file)
         }
