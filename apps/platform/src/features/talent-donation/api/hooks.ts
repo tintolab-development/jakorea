@@ -69,6 +69,9 @@ export function useCreatePublicTalentApplication() {
       body: PublicTalentApplicationCreateRequest
       attachmentFile?: File | null
     }) => {
+      if (!isHomepageApiConfigured()) {
+        throw new Error('신청 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.')
+      }
       let attachmentAssetId = input.body.attachmentAssetId
       if (input.attachmentFile) {
         attachmentAssetId = await uploadTalentApplicationAttachment(input.attachmentFile)
@@ -76,6 +79,7 @@ export function useCreatePublicTalentApplication() {
       return createPublicTalentApplication({
         ...input.body,
         ...(attachmentAssetId != null ? { attachmentAssetId } : {}),
+        privacyAgreed: true,
       })
     },
     retry: false,
