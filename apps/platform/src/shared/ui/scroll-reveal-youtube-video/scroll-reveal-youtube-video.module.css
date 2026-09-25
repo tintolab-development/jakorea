@@ -44,6 +44,8 @@
   width: var(--reveal-mask-width);
   height: var(--reveal-mask-height);
   margin: 0 auto;
+  /* width 커튼이 트랙 밖으로 레이아웃을 밀지 않게 */
+  contain: layout paint;
 }
 
 .mask {

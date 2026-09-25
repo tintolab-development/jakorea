@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePrefersReducedMotion } from '@/shared/hooks/use-prefers-reduced-motion'
 import { useHomeMain } from '../api/use-home-main'
 import { HOME_HERO_AUTOPLAY_MS, type HomeHeroSlide } from '../lib/mock'
 import styles from './hero-carousel.module.css'
+
+/** hero-carousel.module.css `.slide` opacity transition과 맞춘다 */
+const HERO_FADE_MS = 700
 
 export type HeroCarouselProps = {
   slides?: readonly HomeHeroSlide[]
@@ -26,26 +29,98 @@ function PlayIcon() {
   )
 }
 
+function HeroSlide({
+  slide,
+  active,
+  appear,
+}: {
+  slide: HomeHeroSlide
+  active: boolean
+  appear: boolean
+}) {
+  const [visible, setVisible] = useState(active && !appear)
+
+  useEffect(() => {
+    if (!active) {
+      setVisible(false)
+      return
+    }
+    if (!appear) {
+      setVisible(true)
+      return
+    }
+
+    let inner = 0
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => setVisible(true))
+    })
+    return () => {
+      cancelAnimationFrame(outer)
+      cancelAnimationFrame(inner)
+    }
+  }, [active, appear])
+
+  return (
+    <div
+      className={[styles.slide, visible ? styles.slideActive : ''].filter(Boolean).join(' ')}
+      style={slide.imageUrl ? undefined : { background: slide.placeholderBackground }}
+      aria-hidden={!active}
+    >
+      {slide.imageUrl ? (
+        <img
+          className={styles.slideImage}
+          src={slide.imageUrl}
+          alt=""
+          decoding="async"
+          fetchPriority={active ? 'high' : 'low'}
+        />
+      ) : null}
+    </div>
+  )
+}
+
 export function HeroCarousel({ slides: slidesProp, autoplayMs = HOME_HERO_AUTOPLAY_MS }: HeroCarouselProps) {
   const { heroes, source } = useHomeMain()
   const slides = slidesProp ?? heroes
   const prefersReducedMotion = usePrefersReducedMotion()
   const [index, setIndex] = useState(0)
+  const [outgoingIndex, setOutgoingIndex] = useState<number | null>(null)
   const [isPlaying, setIsPlaying] = useState(true)
+  const indexRef = useRef(0)
 
   const total = slides.length
   const shouldAutoplay = isPlaying && !prefersReducedMotion && total > 1
+  const imageUrls = slides.map(slide => slide.imageUrl ?? '').join('\n')
+
+  indexRef.current = index
+
+  useEffect(() => {
+    const urls = new Set(imageUrls.split('\n').filter(Boolean))
+    for (const url of urls) {
+      const image = new Image()
+      image.decoding = 'async'
+      image.src = url
+    }
+  }, [imageUrls])
 
   useEffect(() => {
     if (!shouldAutoplay) return
 
     const timer = window.setInterval(() => {
       if (document.hidden) return
-      setIndex(current => (current + 1) % total)
+      const current = indexRef.current
+      setOutgoingIndex(current)
+      setIndex((current + 1) % total)
     }, autoplayMs)
 
     return () => window.clearInterval(timer)
   }, [shouldAutoplay, autoplayMs, total])
+
+  useEffect(() => {
+    if (outgoingIndex == null) return
+    const timer = window.setTimeout(() => setOutgoingIndex(null), HERO_FADE_MS)
+    return () => window.clearTimeout(timer)
+  }, [outgoingIndex])
 
   if (source === 'pending' && !slidesProp) {
     return (
@@ -61,6 +136,11 @@ export function HeroCarousel({ slides: slidesProp, autoplayMs = HOME_HERO_AUTOPL
 
   const safeIndex = index % total
   const activeSlide = slides[safeIndex]!
+  const paintIndexes = [
+    ...new Set(
+      [outgoingIndex, safeIndex].filter((value): value is number => value != null && value < total),
+    ),
+  ]
 
   return (
     <section
@@ -69,21 +149,13 @@ export function HeroCarousel({ slides: slidesProp, autoplayMs = HOME_HERO_AUTOPL
       aria-label="메인 배너"
       data-home-hero=""
     >
-      {slides.map((slide, slideIndex) => (
-        <div
-          className={[styles.slide, slideIndex === safeIndex ? styles.slideActive : '']
-            .filter(Boolean)
-            .join(' ')}
-          style={
-            slide.imageUrl ? undefined : { background: slide.placeholderBackground }
-          }
-          aria-hidden={slideIndex !== safeIndex}
-          key={slide.id}
-        >
-          {slide.imageUrl ? (
-            <img className={styles.slideImage} src={slide.imageUrl} alt="" />
-          ) : null}
-        </div>
+      {paintIndexes.map(slideIndex => (
+        <HeroSlide
+          key={slides[slideIndex]!.id}
+          slide={slides[slideIndex]!}
+          active={slideIndex === safeIndex}
+          appear={outgoingIndex != null && slideIndex === safeIndex}
+        />
       ))}
 
       <div className={styles.scrim} aria-hidden="true" />

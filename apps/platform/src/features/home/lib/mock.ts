@@ -15,7 +15,7 @@ import partnerLogo09Url from '@/features/corporate-donation/image/partner-logo-0
 import partnerLogo10Url from '@/features/corporate-donation/image/partner-logo-10.svg'
 import partnerLogo11Url from '@/features/corporate-donation/image/partner-logo-11.svg'
 import partnerLogo12Url from '@/features/corporate-donation/image/partner-logo-12.svg'
-import heroClassroomUrl from '../image/background/hero-classroom.png'
+import heroClassroomUrl from '../image/background/hero-classroom.jpg'
 
 export type HomeHeroSlide = {
   id: string

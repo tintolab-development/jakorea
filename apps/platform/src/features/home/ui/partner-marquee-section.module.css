@@ -130,6 +130,11 @@
   max-width: none;
   gap: var(--marquee-gap);
   animation: marquee 36s linear infinite;
+  animation-play-state: paused;
+}
+
+.marqueePlaying .marqueeTrack {
+  animation-play-state: running;
 }
 
 .marqueeTrackReverse {

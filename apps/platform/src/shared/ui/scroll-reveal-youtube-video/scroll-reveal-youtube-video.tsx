@@ -35,12 +35,24 @@ export function ScrollRevealYoutubeVideo({
     rootMargin: '0px 0px -10% 0px',
     enabled: Boolean(videoId),
   })
+  const isNearView = useIntersectionObserver(sectionRef, {
+    threshold: 0,
+    rootMargin: '480px 0px',
+    enabled: Boolean(videoId),
+  })
+  const [embedReady, setEmbedReady] = useState(false)
 
   useEffect(() => {
     if (isInView) {
       setHasAnimated(true)
     }
   }, [isInView])
+
+  useEffect(() => {
+    if (isNearView) {
+      setEmbedReady(true)
+    }
+  }, [isNearView])
 
   if (!videoId || !embedSrc) {
     return null
@@ -66,16 +78,18 @@ export function ScrollRevealYoutubeVideo({
 
       <div className={styles.maskTrack}>
         <div className={styles.mask}>
-          <div className={styles.iframeWrap}>
-            <iframe
-              className={styles.iframe}
-              src={embedSrc}
-              title={iframeTitle}
-              allow="autoplay; encrypted-media; picture-in-picture"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-            />
-          </div>
+          {embedReady ? (
+            <div className={styles.iframeWrap}>
+              <iframe
+                className={styles.iframe}
+                src={embedSrc}
+                title={iframeTitle}
+                allow="autoplay; encrypted-media; picture-in-picture"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
+          ) : null}
         </div>
       </div>
     </section>

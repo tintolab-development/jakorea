@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PFText } from '@/shared/ui'
 import jaArrowCtaMintUrl from '../image/icon/ja-arrow-cta-mint.svg'
@@ -67,6 +67,20 @@ export function PartnerMarqueeSection() {
   )
   const donationTitleLines = donationTitle.split(/\r?\n/).filter(Boolean)
   const hasLogos = flatLogos.length > 0
+  const [marqueeNode, setMarqueeNode] = useState<HTMLDivElement | null>(null)
+  const [marqueeInView, setMarqueeInView] = useState(false)
+
+  useEffect(() => {
+    if (!marqueeNode) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setMarqueeInView(entry?.isIntersecting ?? false)
+      },
+      { threshold: 0, rootMargin: '120px 0px' },
+    )
+    observer.observe(marqueeNode)
+    return () => observer.disconnect()
+  }, [marqueeNode])
 
   return (
     <section className={styles.section}>
@@ -89,7 +103,13 @@ export function PartnerMarqueeSection() {
             ))}
           </ul>
 
-          <div className={styles.marqueeArea} aria-label="후원 기업 로고">
+          <div
+            ref={setMarqueeNode}
+            className={[styles.marqueeArea, marqueeInView ? styles.marqueePlaying : '']
+              .filter(Boolean)
+              .join(' ')}
+            aria-label="후원 기업 로고"
+          >
             {partnerRows.map((row, rowIndex) => (
               <div className={styles.marqueeRow} key={rowIndex}>
                 <div
