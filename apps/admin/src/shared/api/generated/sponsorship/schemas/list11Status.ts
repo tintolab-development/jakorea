@@ -10,6 +10,6 @@ export type List11Status = typeof List11Status[keyof typeof List11Status];
 
 
 export const List11Status = {
-  PENDING: 'PENDING',
-  CONFIRMED: 'CONFIRMED',
+  pending: 'pending',
+  confirmed: 'confirmed',
 } as const;

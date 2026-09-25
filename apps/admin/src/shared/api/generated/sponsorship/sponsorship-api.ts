@@ -22,9 +22,11 @@ import type {
   DonationUrlUpdateRequest,
   FixedTextUpdateRequest,
   List11Params,
+  List12Params,
   List2Params,
   PageResponseConsultationListItem,
   PageResponseSponsorListItem,
+  PageResponseTalentApplicationListItem,
   PersonalAdminResponse,
   PersonalUsageResponse,
   PrepareRequest,
@@ -38,7 +40,21 @@ import type {
   SponsorCreateRequest,
   SponsorResponse,
   SponsorUpdateRequest,
-  StatusUpdateRequest
+  StatusUpdateRequest,
+  TalentApplicationAttachmentDownloadResponse,
+  TalentApplicationCreateRequest,
+  TalentApplicationCreateResponse,
+  TalentApplicationDetailResponse,
+  TalentApplicationListItem,
+  TalentApplicationStatusUpdateRequest,
+  TalentSponsorshipAdminResponse,
+  TalentSponsorshipBannerResponse,
+  TalentSponsorshipBannerUpdateRequest,
+  TalentSponsorshipHowItemResponse,
+  TalentSponsorshipHowItemsUpdateRequest,
+  TalentSponsorshipInterviewResponse,
+  TalentSponsorshipInterviewUpdateRequest,
+  TalentSponsorshipPublicResponse
 } from './schemas';
 
 import { customInstance } from '../../orval-mutator';
@@ -48,6 +64,40 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
   export const getJAKoreaHomepageAdminAPISponsorshipSubset = () => {
+const updateInterview = (
+    slotId: string,
+    talentSponsorshipInterviewUpdateRequest: TalentSponsorshipInterviewUpdateRequest,
+ options?: SecondParameter<typeof customInstance<TalentSponsorshipInterviewResponse>>,) => {
+      return customInstance<TalentSponsorshipInterviewResponse>(
+      {url: `/api/admin/sponsorship/talent/interviews/${slotId}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: talentSponsorshipInterviewUpdateRequest
+    },
+      options);
+    }
+
+const updateHowItems = (
+    talentSponsorshipHowItemsUpdateRequest: TalentSponsorshipHowItemsUpdateRequest,
+ options?: SecondParameter<typeof customInstance<TalentSponsorshipHowItemResponse[]>>,) => {
+      return customInstance<TalentSponsorshipHowItemResponse[]>(
+      {url: `/api/admin/sponsorship/talent/how-items`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: talentSponsorshipHowItemsUpdateRequest
+    },
+      options);
+    }
+
+const updateBanner = (
+    talentSponsorshipBannerUpdateRequest: TalentSponsorshipBannerUpdateRequest,
+ options?: SecondParameter<typeof customInstance<TalentSponsorshipBannerResponse>>,) => {
+      return customInstance<TalentSponsorshipBannerResponse>(
+      {url: `/api/admin/sponsorship/talent/banner`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: talentSponsorshipBannerUpdateRequest
+    },
+      options);
+    }
+
 const updatePersonalUsage = (
     fixedTextUpdateRequest: FixedTextUpdateRequest,
  options?: SecondParameter<typeof customInstance<PersonalUsageResponse[]>>,) => {
@@ -136,6 +186,40 @@ const updateCorporateBanner = (
     }
 
 const create = (
+    talentApplicationCreateRequest: TalentApplicationCreateRequest,
+ options?: SecondParameter<typeof customInstance<TalentApplicationCreateResponse>>,) => {
+      return customInstance<TalentApplicationCreateResponse>(
+      {url: `/api/public/sponsorship/talent-applications`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: talentApplicationCreateRequest
+    },
+      options);
+    }
+
+const confirm = (
+    assetId: number,
+    confirmRequest: ConfirmRequest,
+ options?: SecondParameter<typeof customInstance<ConfirmResponse>>,) => {
+      return customInstance<ConfirmResponse>(
+      {url: `/api/public/sponsorship/talent-applications/attachments/${assetId}/confirm`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: confirmRequest
+    },
+      options);
+    }
+
+const prepare = (
+    prepareRequest: PrepareRequest,
+ options?: SecondParameter<typeof customInstance<PrepareResponse>>,) => {
+      return customInstance<PrepareResponse>(
+      {url: `/api/public/sponsorship/talent-applications/attachments/upload-requests`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: prepareRequest
+    },
+      options);
+    }
+
+const create1 = (
     publicConsultationCreateRequest: PublicConsultationCreateRequest,
  options?: SecondParameter<typeof customInstance<PublicConsultationCreateResponse>>,) => {
       return customInstance<PublicConsultationCreateResponse>(
@@ -146,7 +230,7 @@ const create = (
       options);
     }
 
-const confirm = (
+const confirm1 = (
     assetId: number,
     confirmRequest: ConfirmRequest,
  options?: SecondParameter<typeof customInstance<ConfirmResponse>>,) => {
@@ -158,7 +242,7 @@ const confirm = (
       options);
     }
 
-const prepare = (
+const prepare1 = (
     prepareRequest: PrepareRequest,
  options?: SecondParameter<typeof customInstance<PrepareResponse>>,) => {
       return customInstance<PrepareResponse>(
@@ -179,7 +263,7 @@ const list2 = (
       options);
     }
 
-const create1 = (
+const create2 = (
     sponsorCreateRequest: SponsorCreateRequest,
  options?: SecondParameter<typeof customInstance<SponsorResponse>>,) => {
       return customInstance<SponsorResponse>(
@@ -212,6 +296,18 @@ const bulkConfirm = (
       options);
     }
 
+const updateStatus = (
+    id: number,
+    talentApplicationStatusUpdateRequest: TalentApplicationStatusUpdateRequest,
+ options?: SecondParameter<typeof customInstance<TalentApplicationListItem>>,) => {
+      return customInstance<TalentApplicationListItem>(
+      {url: `/api/admin/sponsorship/talent-applications/${id}/status`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: talentApplicationStatusUpdateRequest
+    },
+      options);
+    }
+
 const toggle = (
     id: number,
     publishedToggleRequest: PublishedToggleRequest,
@@ -224,7 +320,7 @@ const toggle = (
       options);
     }
 
-const updateStatus = (
+const updateStatus1 = (
     id: number,
     statusUpdateRequest: StatusUpdateRequest,
  options?: SecondParameter<typeof customInstance<ConsultationListItem>>,) => {
@@ -232,6 +328,15 @@ const updateStatus = (
       {url: `/api/admin/sponsorship/corporate-consultations/${id}/status`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: statusUpdateRequest
+    },
+      options);
+    }
+
+const get5 = (
+
+ options?: SecondParameter<typeof customInstance<TalentSponsorshipPublicResponse>>,) => {
+      return customInstance<TalentSponsorshipPublicResponse>(
+      {url: `/api/public/sponsorship/talent`, method: 'GET'
     },
       options);
     }
@@ -263,6 +368,54 @@ const list9 = (
       options);
     }
 
+const get10 = (
+
+ options?: SecondParameter<typeof customInstance<TalentSponsorshipAdminResponse>>,) => {
+      return customInstance<TalentSponsorshipAdminResponse>(
+      {url: `/api/admin/sponsorship/talent`, method: 'GET'
+    },
+      options);
+    }
+
+const list11 = (
+    params?: List11Params,
+ options?: SecondParameter<typeof customInstance<PageResponseTalentApplicationListItem>>,) => {
+      return customInstance<PageResponseTalentApplicationListItem>(
+      {url: `/api/admin/sponsorship/talent-applications`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+const delete2 = (
+    delete2Body: number[],
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/admin/sponsorship/talent-applications`, method: 'DELETE',
+      headers: {'Content-Type': 'application/json', },
+      data: delete2Body
+    },
+      options);
+    }
+
+const detail5 = (
+    id: number,
+ options?: SecondParameter<typeof customInstance<TalentApplicationDetailResponse>>,) => {
+      return customInstance<TalentApplicationDetailResponse>(
+      {url: `/api/admin/sponsorship/talent-applications/${id}`, method: 'GET'
+    },
+      options);
+    }
+
+const attachmentDownload = (
+    id: number,
+ options?: SecondParameter<typeof customInstance<TalentApplicationAttachmentDownloadResponse>>,) => {
+      return customInstance<TalentApplicationAttachmentDownloadResponse>(
+      {url: `/api/admin/sponsorship/talent-applications/${id}/attachment-download`, method: 'GET'
+    },
+      options);
+    }
+
 const personal1 = (
 
  options?: SecondParameter<typeof customInstance<PersonalAdminResponse>>,) => {
@@ -281,8 +434,8 @@ const corporate1 = (
       options);
     }
 
-const list11 = (
-    params?: List11Params,
+const list12 = (
+    params?: List12Params,
  options?: SecondParameter<typeof customInstance<PageResponseConsultationListItem>>,) => {
       return customInstance<PageResponseConsultationListItem>(
       {url: `/api/admin/sponsorship/corporate-consultations`, method: 'GET',
@@ -302,7 +455,7 @@ const bulkDelete6 = (
       options);
     }
 
-const detail5 = (
+const detail6 = (
     id: number,
  options?: SecondParameter<typeof customInstance<ConsultationDetailResponse>>,) => {
       return customInstance<ConsultationDetailResponse>(
@@ -311,7 +464,7 @@ const detail5 = (
       options);
     }
 
-const attachmentDownload = (
+const attachmentDownload1 = (
     id: number,
  options?: SecondParameter<typeof customInstance<AttachmentDownloadResponse>>,) => {
       return customInstance<AttachmentDownloadResponse>(
@@ -320,7 +473,10 @@ const attachmentDownload = (
       options);
     }
 
-return {updatePersonalUsage,updateDonationUrl,updatePersonalBanner,updateCorporateSteps,get,update,updateCorporateMetrics,updateCorporateBanner,create,confirm,prepare,list2,create1,delete1,bulkConfirm,toggle,updateStatus,personal,corporate,list9,personal1,corporate1,list11,bulkDelete6,detail5,attachmentDownload}};
+return {updateInterview,updateHowItems,updateBanner,updatePersonalUsage,updateDonationUrl,updatePersonalBanner,updateCorporateSteps,get,update,updateCorporateMetrics,updateCorporateBanner,create,confirm,prepare,create1,confirm1,prepare1,list2,create2,delete1,bulkConfirm,updateStatus,toggle,updateStatus1,get5,personal,corporate,list9,get10,list11,delete2,detail5,attachmentDownload,personal1,corporate1,list12,bulkDelete6,detail6,attachmentDownload1}};
+export type UpdateInterviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateInterview']>>>
+export type UpdateHowItemsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateHowItems']>>>
+export type UpdateBannerResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateBanner']>>>
 export type UpdatePersonalUsageResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updatePersonalUsage']>>>
 export type UpdateDonationUrlResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateDonationUrl']>>>
 export type UpdatePersonalBannerResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updatePersonalBanner']>>>
@@ -332,18 +488,28 @@ export type UpdateCorporateBannerResult = NonNullable<Awaited<ReturnType<ReturnT
 export type CreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['create']>>>
 export type ConfirmResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['confirm']>>>
 export type PrepareResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['prepare']>>>
-export type List2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list2']>>>
 export type Create1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['create1']>>>
+export type Confirm1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['confirm1']>>>
+export type Prepare1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['prepare1']>>>
+export type List2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list2']>>>
+export type Create2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['create2']>>>
 export type Delete1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['delete1']>>>
 export type BulkConfirmResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['bulkConfirm']>>>
-export type ToggleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['toggle']>>>
 export type UpdateStatusResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateStatus']>>>
+export type ToggleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['toggle']>>>
+export type UpdateStatus1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['updateStatus1']>>>
+export type Get5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['get5']>>>
 export type PersonalResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['personal']>>>
 export type CorporateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['corporate']>>>
 export type List9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list9']>>>
-export type Personal1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['personal1']>>>
-export type Corporate1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['corporate1']>>>
+export type Get10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['get10']>>>
 export type List11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list11']>>>
-export type BulkDelete6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['bulkDelete6']>>>
+export type Delete2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['delete2']>>>
 export type Detail5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['detail5']>>>
 export type AttachmentDownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownload']>>>
+export type Personal1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['personal1']>>>
+export type Corporate1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['corporate1']>>>
+export type List12Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['list12']>>>
+export type BulkDelete6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['bulkDelete6']>>>
+export type Detail6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['detail6']>>>
+export type AttachmentDownload1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISponsorshipSubset>['attachmentDownload1']>>>

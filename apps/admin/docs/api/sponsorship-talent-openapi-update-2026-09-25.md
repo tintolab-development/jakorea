@@ -3,6 +3,9 @@
 **필요 여부:** talent path·`TalentApplication*` / `TalentSponsorship*` schema가 스냅샷에 **없으면 YES.**  
 2026-09-25 이후 fetch·generate를 한 번 반영했다면 재실행은 백엔드 계약 변경 시에만.
 
+**백엔드 준비됨 (2026-09-25):** 로컬 `:8081` Swagger에 talent path 12개·`Talent*` schema가 확인됨.  
+FE 적용 오케스트레이션: [`sponsorship-talent-backend-ready-frontend-cursor-prompt-2026-09-25.md`](./sponsorship-talent-backend-ready-frontend-cursor-prompt-2026-09-25.md)
+
 관련 연동 프롬프트:  
 [`sponsorship-talent-admin-frontend-cursor-prompt-2026-09-25.md`](./sponsorship-talent-admin-frontend-cursor-prompt-2026-09-25.md)  
 시드: [`sponsorship-talent-platform-seed-backend-cursor-prompt-2026-09-25.md`](./sponsorship-talent-platform-seed-backend-cursor-prompt-2026-09-25.md)

@@ -115,7 +115,7 @@ const updateMenus = (
       options);
     }
 
-const get5 = (
+const get6 = (
 
  options?: SecondParameter<typeof customInstance<PublicSiteSettingsResponse>>,) => {
       return customInstance<PublicSiteSettingsResponse>(
@@ -124,7 +124,7 @@ const get5 = (
       options);
     }
 
-const get6 = (
+const get7 = (
 
  options?: SecondParameter<typeof customInstance<PublicGnbGroupResponse[]>>,) => {
       return customInstance<PublicGnbGroupResponse[]>(
@@ -133,7 +133,7 @@ const get6 = (
       options);
     }
 
-const get7 = (
+const get8 = (
 
  options?: SecondParameter<typeof customInstance<PublicFooterResponse>>,) => {
       return customInstance<PublicFooterResponse>(
@@ -142,7 +142,7 @@ const get7 = (
       options);
     }
 
-const get9 = (
+const get11 = (
 
  options?: SecondParameter<typeof customInstance<FooterAdminResponse>>,) => {
       return customInstance<FooterAdminResponse>(
@@ -151,7 +151,7 @@ const get9 = (
       options);
     }
 
-return {get1,update1,get2,update2,updatePartner,reorderPartners,updateOrganization,updateMenus,get5,get6,get7,get9}};
+return {get1,update1,get2,update2,updatePartner,reorderPartners,updateOrganization,updateMenus,get6,get7,get8,get11}};
 export type Get1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get1']>>>
 export type Update1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['update1']>>>
 export type Get2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get2']>>>
@@ -160,7 +160,7 @@ export type UpdatePartnerResult = NonNullable<Awaited<ReturnType<ReturnType<type
 export type ReorderPartnersResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['reorderPartners']>>>
 export type UpdateOrganizationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['updateOrganization']>>>
 export type UpdateMenusResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['updateMenus']>>>
-export type Get5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get5']>>>
 export type Get6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get6']>>>
 export type Get7Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get7']>>>
-export type Get9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get9']>>>
+export type Get8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get8']>>>
+export type Get11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get11']>>>

@@ -5,15 +5,17 @@
  * Filtered for Homepage Admin sponsorship Orval codegen.
  * OpenAPI spec version: v1
  */
+import type { List11JaParticipation } from './list11JaParticipation';
 import type { List11Status } from './list11Status';
 
 export type List11Params = {
 status?: List11Status;
-companyName?: string;
-contactName?: string;
-departmentTitle?: string;
-createdFrom?: string;
-createdTo?: string;
+applicantName?: string;
+phone?: string;
+email?: string;
+jaParticipation?: List11JaParticipation;
+appliedFrom?: string;
+appliedTo?: string;
 confirmedFrom?: string;
 confirmedTo?: string;
 page?: number;

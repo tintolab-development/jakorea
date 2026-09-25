@@ -181,7 +181,7 @@ const list3 = (
       options);
     }
 
-const create2 = (
+const create3 = (
     stripCreateRequest: StripCreateRequest,
  options?: SecondParameter<typeof customInstance<StripResponse>>,) => {
       return customInstance<StripResponse>(
@@ -212,7 +212,7 @@ const list4 = (
       options);
     }
 
-const create3 = (
+const create4 = (
     popupCreateRequest: PopupCreateRequest,
  options?: SecondParameter<typeof customInstance<PopupResponse>>,) => {
       return customInstance<PopupResponse>(
@@ -234,7 +234,7 @@ const bulkDelete1 = (
       options);
     }
 
-const create4 = (
+const create5 = (
     heroCreateRequest: HeroCreateRequest,
  options?: SecondParameter<typeof customInstance<HeroResponse>>,) => {
       return customInstance<HeroResponse>(
@@ -292,7 +292,7 @@ const toggle3 = (
       options);
     }
 
-const get8 = (
+const get9 = (
 
  options?: SecondParameter<typeof customInstance<PublicMainResponse>>,) => {
       return customInstance<PublicMainResponse>(
@@ -301,7 +301,7 @@ const get8 = (
       options);
     }
 
-const get10 = (
+const get12 = (
 
  options?: SecondParameter<typeof customInstance<AdminContentResponse>>,) => {
       return customInstance<AdminContentResponse>(
@@ -310,7 +310,7 @@ const get10 = (
       options);
     }
 
-return {update4,reorder,list1,update5,update6,reorder1,update7,reorder2,updatePerformance,updateImpact,updateEducation,updateDonation,list3,create2,bulkDelete,list4,create3,bulkDelete1,create4,bulkDelete2,toggle1,toggle2,toggle3,get8,get10}};
+return {update4,reorder,list1,update5,update6,reorder1,update7,reorder2,updatePerformance,updateImpact,updateEducation,updateDonation,list3,create3,bulkDelete,list4,create4,bulkDelete1,create5,bulkDelete2,toggle1,toggle2,toggle3,get9,get12}};
 export type Update4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['update4']>>>
 export type ReorderResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['reorder']>>>
 export type List1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['list1']>>>
@@ -324,15 +324,15 @@ export type UpdateImpactResult = NonNullable<Awaited<ReturnType<ReturnType<typeo
 export type UpdateEducationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['updateEducation']>>>
 export type UpdateDonationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['updateDonation']>>>
 export type List3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['list3']>>>
-export type Create2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['create2']>>>
+export type Create3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['create3']>>>
 export type BulkDeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['bulkDelete']>>>
 export type List4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['list4']>>>
-export type Create3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['create3']>>>
-export type BulkDelete1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['bulkDelete1']>>>
 export type Create4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['create4']>>>
+export type BulkDelete1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['bulkDelete1']>>>
+export type Create5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['create5']>>>
 export type BulkDelete2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['bulkDelete2']>>>
 export type Toggle1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['toggle1']>>>
 export type Toggle2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['toggle2']>>>
 export type Toggle3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['toggle3']>>>
-export type Get8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['get8']>>>
-export type Get10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['get10']>>>
+export type Get9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['get9']>>>
+export type Get12Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIMainSubset>['get12']>>>

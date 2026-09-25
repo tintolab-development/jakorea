@@ -515,7 +515,7 @@ const list5 = (
       options);
     }
 
-const create5 = (
+const create6 = (
     noticeCreateRequest: NoticeCreateRequest,
  options?: SecondParameter<typeof customInstance<NoticeResponse>>,) => {
       return customInstance<NoticeResponse>(
@@ -786,7 +786,7 @@ const directions = (
       options);
     }
 
-return {worldwide,updateWorldwide,report,updateReport,principles,updatePrinciples,finance,updateFinance,createFinance,disclosure,updateDisclosure,organizationChart,updateOrganizationChart,boardMembers,updateBoardMembers,createBoardMember,detail,update8,introduction,updateIntroduction,historyDetail,updateHistory,deleteHistory,globalValues,updateGlobalValues,get3,update9,certificationDetail,updateCertification,deleteCertification,bi,updateBi,awardDetail,updateAward,deleteAward,reports,createReport,deleteReports,deleteFinance,deleteBoardMembers,list5,create5,bulkDelete3,history,createHistory,deleteHistoryBulk,certifications,createCertification,deleteCertifications,awards,createAward,deleteAwards,toggleBoardMember,togglePublished,toggleHistory,toggleCertification,toggleAward,download,downloadHead,detail3,detailHead,transparency,reports1,people,organization,list10,directions}};
+return {worldwide,updateWorldwide,report,updateReport,principles,updatePrinciples,finance,updateFinance,createFinance,disclosure,updateDisclosure,organizationChart,updateOrganizationChart,boardMembers,updateBoardMembers,createBoardMember,detail,update8,introduction,updateIntroduction,historyDetail,updateHistory,deleteHistory,globalValues,updateGlobalValues,get3,update9,certificationDetail,updateCertification,deleteCertification,bi,updateBi,awardDetail,updateAward,deleteAward,reports,createReport,deleteReports,deleteFinance,deleteBoardMembers,list5,create6,bulkDelete3,history,createHistory,deleteHistoryBulk,certifications,createCertification,deleteCertifications,awards,createAward,deleteAwards,toggleBoardMember,togglePublished,toggleHistory,toggleCertification,toggleAward,download,downloadHead,detail3,detailHead,transparency,reports1,people,organization,list10,directions}};
 export type WorldwideResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['worldwide']>>>
 export type UpdateWorldwideResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['updateWorldwide']>>>
 export type ReportResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['report']>>>
@@ -828,7 +828,7 @@ export type DeleteReportsResult = NonNullable<Awaited<ReturnType<ReturnType<type
 export type DeleteFinanceResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['deleteFinance']>>>
 export type DeleteBoardMembersResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['deleteBoardMembers']>>>
 export type List5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['list5']>>>
-export type Create5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['create5']>>>
+export type Create6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['create6']>>>
 export type BulkDelete3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['bulkDelete3']>>>
 export type HistoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['history']>>>
 export type CreateHistoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['createHistory']>>>
