@@ -1,5 +1,5 @@
 /**
- * 재능기부 소개 관리 — localStorage mock (API 연동 전)
+ * 재능기부 소개 관리 — localStorage fallback (JWT 없을 때)
  */
 
 import type {
@@ -31,18 +31,21 @@ const FIXED_HOW: ReadonlyArray<{
 }> = [
   {
     id: 1,
-    defaultTitle: '교육·멘토링',
-    defaultDescription: '전문 지식과 현장 경험을 청소년 눈높이에 맞게 전달합니다.',
+    defaultTitle: '교육 · 멘토링',
+    defaultDescription:
+      '전문 지식과 현장 경험을\n청소년의 눈높이에 맞춰 전합니다.',
   },
   {
     id: 2,
-    defaultTitle: '심사·자문',
-    defaultDescription: '청소년의 아이디어와 발표에 전문적인 피드백을 더합니다.',
+    defaultTitle: '심사 · 자문',
+    defaultDescription:
+      '청소년의 아이디어와\n발표에 전문적인 피드백을 더합니다.',
   },
   {
     id: 3,
-    defaultTitle: '프로그램 협력',
-    defaultDescription: '운영 지원, 교육 공간, 네트워킹 등 자원을 제공합니다.',
+    defaultTitle: '프로그램 운영 지원',
+    defaultDescription:
+      '교육 공간 제공, 네트워크 연결 등\n프로그램에 필요한 자원을 제공합니다.',
   },
 ]
 
@@ -55,31 +58,28 @@ const FIXED_INTERVIEWS: ReadonlyArray<{
 }> = [
   {
     id: 'interview_01',
-    defaultMain: '받은 기회를 다음 세대에게 돌려주는 일',
+    defaultMain: '받은 기회를\n다음 세대에게 돌려주는 일',
     defaultSub:
-      '“학창 시절 JA 프로그램을 통해 진로를 구체화할 수 있었습니다. 이제 그 경험을 다음 세대에게 나누고 싶습니다.”',
-    defaultButton: '임민제님의 이야기 살펴보기',
-    defaultStoryTitle:
-      "'멘티에서 서포터로' 미래 게임 기획자의 성장기 - 이제윤님의 이야기",
+      '14년 전 JA에서 얻은 도전의 경험은 지금의 진로를 선택하는 데 큰 힘이 되었습니다. 이제는 멘토와 심사위원으로 돌아와 제가 받았던 자극과 응원을 후배들에게 전할 수 있어 뜻깊습니다.',
+    defaultButton: '임민재님의 이야기 살펴보기',
+    defaultStoryTitle: '',
   },
   {
     id: 'interview_02',
-    defaultMain: 'JA 네트워크 안에서 함께 성장하는 경험',
+    defaultMain: 'JA 네트워크 안에서\n함께 성장하는 경험',
     defaultSub:
-      '“대학생 봉사자로 시작해 프로그램과 함께 성장했고, 이제는 사회인 후원자로 다음 세대를 응원합니다.”',
-    defaultButton: '이대완님의 이야기 살펴보기',
-    defaultStoryTitle: '봉사에서 시작된 변화의 여정: 대학생 봉사자에서 사회인 후원자로',
+      '대학생 때 경제교육 봉사자로 JA Korea와 인연을 맺었습니다. 봉사활동을 통해 의사 표현에 자신감을 갖게 됐고, 사람들 앞에서 논리정연하게 이야기할 수 있는 리더십을 갖게 되었습니다.',
+    defaultButton: '이대한님의 이야기 살펴보기',
+    defaultStoryTitle: '',
   },
 ]
 
 function buildSeedBanner(): TalentDonationBanner {
   return {
-    imageUrl:
-      'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&h=560&fit=crop',
-    imageFileName: 'talent-banner-seed.jpg',
-    mainText: '당신의 경험이 청소년의 가능성으로',
+    imageUrl: '',
+    mainText: '당신의 경험이\n청소년의 가능성으로',
     subText:
-      '전문 지식과 경험을 JA Korea와 나누면,\n청소년은 진로를 그리고 사회는 더 단단해집니다.',
+      '현장에서 쌓은 지식과 경험은\n청소년에게 살아 있는 교육이 됩니다.\nJA Korea와 함께 청소년이 더 넓은 세상을 배우고,\n자신의 미래를 주도적으로 준비할 수 있도록\n여러분의 경험과 전문성을 나눠주세요.',
     version: 0,
   }
 }
@@ -99,12 +99,9 @@ function buildSeedInterviews(): InterviewSlot[] {
     mainText: item.defaultMain,
     subText: item.defaultSub,
     buttonLabel: item.defaultButton,
-    linkedStoryId: item.id === 'interview_01' ? 'is-111' : 'is-103',
+    linkedStoryId: null,
     linkedStoryTitle: item.defaultStoryTitle,
-    thumbnailUrl:
-      item.id === 'interview_01'
-        ? 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=280&fit=crop'
-        : 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=400&h=280&fit=crop',
+    thumbnailUrl: '',
     version: 0,
   }))
 }

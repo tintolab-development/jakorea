@@ -130,10 +130,17 @@ export function useConfirmTalentDonationApplications(
     retry: false,
     onSuccess: updatedRows => {
       for (const row of updatedRows) {
-        queryClient.setQueryData(
-          talentDonationApplicationQueryKeys.detail(source(), row.id),
-          row,
-        )
+        // status PATCH 응답은 list item shape — 상세 PII를 덮어쓰지 않는다
+        const detailKey = talentDonationApplicationQueryKeys.detail(source(), row.id)
+        const existing = queryClient.getQueryData<TalentDonationApplication>(detailKey)
+        if (existing) {
+          queryClient.setQueryData(detailKey, {
+            ...existing,
+            status: row.status,
+            confirmedAt: row.confirmedAt,
+            confirmedByName: row.confirmedByName ?? existing.confirmedByName,
+          })
+        }
         patchApplicationInLists(queryClient, row)
       }
       if (updatedRows.length === 0) {

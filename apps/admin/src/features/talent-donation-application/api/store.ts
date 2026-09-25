@@ -1,5 +1,5 @@
 /**
- * 재능기부 신청 — localStorage mock
+ * 재능기부 신청 — localStorage fallback (JWT 없을 때)
  */
 
 import type {
