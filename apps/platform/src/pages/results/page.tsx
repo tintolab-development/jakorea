@@ -7,6 +7,7 @@ import {
   resultDetailPath,
   ResultListItemRow,
   useMockResultsCatalog,
+  useProgramResultsList,
   type ResultsListParams,
 } from '@/features/result'
 import { PFDivider, PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
@@ -21,6 +22,7 @@ export function ResultsPage() {
   const navigate = useNavigate()
   const [params, setParams] = useState(readResultsListParams)
   const results = useMockResultsCatalog()
+  const remoteList = useProgramResultsList(params)
 
   useEffect(() => {
     const onPopState = () => {
@@ -41,13 +43,19 @@ export function ResultsPage() {
   }
 
   const filteredResults = useMemo(
-    () => filterAndSortResults(results, params),
-    [results, params]
+    () => (remoteList.isRemoteEnabled ? remoteList.items : filterAndSortResults(results, params)),
+    [remoteList.isRemoteEnabled, remoteList.items, results, params]
   )
 
-  const totalPages = Math.max(1, Math.ceil(filteredResults.length / PAGE_SIZE))
-  const currentPage = Math.min(params.page, totalPages)
-  const pageItems = filteredResults.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+  const totalPages = remoteList.isRemoteEnabled
+    ? remoteList.totalPages
+    : Math.max(1, Math.ceil(filteredResults.length / PAGE_SIZE))
+  const currentPage = remoteList.isRemoteEnabled
+    ? remoteList.currentPage
+    : Math.min(params.page, totalPages)
+  const pageItems = remoteList.isRemoteEnabled
+    ? filteredResults
+    : filteredResults.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   const activeTab =
     CATEGORY_TAB_ITEMS.some(item => item.key === params.category) ? params.category : 'all'
@@ -89,9 +97,17 @@ export function ResultsPage() {
         <PFDivider variant="focus" />
 
         <div className={styles.list}>
-          {pageItems.length === 0 ? (
+          {remoteList.isPending ? (
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-              검색 결과가 없습니다.
+              결과를 불러오는 중이에요.
+            </PFText>
+          ) : remoteList.isError ? (
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
+              결과를 불러오지 못했어요.
+            </PFText>
+          ) : pageItems.length === 0 ? (
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
+              {params.q.trim() ? '검색 결과가 없습니다.' : '등록된 결과가 없습니다.'}
             </PFText>
           ) : (
             pageItems.map(item => (

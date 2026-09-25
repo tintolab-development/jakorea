@@ -117,6 +117,32 @@ export const platformQueryKeys = {
     detail: (id: string) => [...platformQueryKeys.program.all(), 'detail', id] as const,
   },
 
+  programResult: {
+    all: () => [...platformQueryKeys.all, 'program-result'] as const,
+    /** 허용 카테고리 — 목록 응답 `categories` (Class B) */
+    categories: () => [...platformQueryKeys.programResult.all(), 'categories'] as const,
+    /** 공개 목록 — GET /api/portal/public/program-results (Class C) */
+    list: (params: {
+      categoryId: number | null
+      keyword: string
+      sort: string
+      page: number
+      size: number
+    }) =>
+      [
+        ...platformQueryKeys.programResult.all(),
+        'list',
+        params.categoryId,
+        params.keyword,
+        params.sort,
+        params.page,
+        params.size,
+      ] as const,
+    /** 공개 상세 — GET /api/portal/public/program-results/{resultId} (Class D) */
+    detail: (id: string, sort: string) =>
+      [...platformQueryKeys.programResult.all(), 'detail', id, sort] as const,
+  },
+
   education: {
     all: () => [...platformQueryKeys.all, 'education'] as const,
     /** 공개 프로그램 소개 — GET /api/public/education/program-intros/{fieldCode} (Class D) */
