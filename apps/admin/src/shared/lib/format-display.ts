@@ -10,6 +10,11 @@ import dayjs from 'dayjs'
 function parseDisplayDate(value: Date | string | number) {
   if (typeof value === 'string') {
     const trimmed = value.trim()
+    // ISO-8601 (`2026-09-20T01:00:00Z`) — 아래 날짜 정규식이 `T` 앞만 잘라
+    // `2026-09-20 T01:00:00Z` 로 합치면 dayjs가 invalid가 된다.
+    if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) {
+      return dayjs(trimmed)
+    }
     const dotted = /^(\d{4})[.-](\d{1,2})[.-](\d{1,2})/.exec(trimmed)
     if (dotted) {
       const iso = `${dotted[1]}-${dotted[2].padStart(2, '0')}-${dotted[3].padStart(2, '0')}`
