@@ -52,7 +52,7 @@ import {
 import {
   CmsButton,
   CmsDateRangePicker,
-  CmsInput,
+  AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
@@ -186,6 +186,7 @@ export function PopupsPage() {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
   } = useListFilterUrl<PopupPendingFilters, PopupListFilter>({
@@ -498,23 +499,23 @@ export function PopupsPage() {
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <span className="admin-filter-area__label">팝업명</span>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="팝업명 검색"
               value={pendingFilters.name}
-              onChange={e => setPendingFilters(prev => ({ ...prev, name: e.target.value }))}
+              onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
               onPressEnter={handleSearch}
             />
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <span className="admin-filter-area__label">대체 텍스트</span>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="대체 텍스트 검색"
               value={pendingFilters.altText}
-              onChange={e => setPendingFilters(prev => ({ ...prev, altText: e.target.value }))}
+              onChange={value => patchPendingFilters(prev => ({ ...prev, altText: value }))}
               onPressEnter={handleSearch}
             />
           </div>

@@ -2,7 +2,7 @@
  * 후원사 등록·수정 모달
  */
 
-import { useCallback, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type {
@@ -33,6 +33,49 @@ const IMAGE_GUIDE_LINES = [
 /** Notion / 시안 description */
 const MODAL_DESCRIPTION =
   '후원사 목록으로 노출할 기업의 이름과 로고 이미지, 노출 순서를 설정해 주세요.'
+
+const PartnerNameField = memo(function PartnerNameField({
+  initialValue,
+  error,
+  onValueChange,
+}: {
+  initialValue: string
+  error?: string
+  onValueChange: (value: string) => void
+}) {
+  const [value, setValue] = useState(initialValue)
+
+  useEffect(() => {
+    setValue(initialValue)
+  }, [initialValue])
+
+  return (
+    <div>
+      <CmsInput
+        inputSize="large"
+        width="100%"
+        placeholder="기업명을 입력하세요"
+        value={value}
+        onChange={e => {
+          const next = e.target.value
+          setValue(next)
+          onValueChange(next)
+        }}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? 'corporate-partner-name-error' : undefined}
+      />
+      {error ? (
+        <p
+          id="corporate-partner-name-error"
+          className="corporate-partner-form-modal__field-error"
+          role="alert"
+        >
+          {error}
+        </p>
+      ) : null}
+    </div>
+  )
+})
 
 function coerceRadioBoolean(raw: unknown): boolean {
   if (raw === true || raw === 1) return true
@@ -119,15 +162,22 @@ function CorporatePartnerFormBody({
   const [logoFileName, setLogoFileName] = useState(() =>
     mode === 'edit' && initial ? (initial.logoFileName ?? '') : ''
   )
-  const [name, setName] = useState(() =>
-    mode === 'edit' && initial ? initial.name : ''
-  )
+  const initialName = mode === 'edit' && initial ? initial.name : ''
+  const nameRef = useRef(initialName)
   const [sortOrder, setSortOrder] = useState(() => String(defaultOrder))
   const [errors, setErrors] = useState<{
     logo?: string
     name?: string
     sortOrder?: string
   }>({})
+
+  const handleNameChange = useCallback((value: string) => {
+    nameRef.current = value
+    setErrors(prev => {
+      if (!prev.name || !value.trim()) return prev
+      return { ...prev, name: undefined }
+    })
+  }, [])
 
   /** 시안: * 1부터 N 사이의 숫자를 입력하세요. */
   const sortHelper = `* 1부터 ${maxOrder} 사이의 숫자를 입력하세요.`
@@ -191,6 +241,7 @@ function CorporatePartnerFormBody({
   }, [])
 
   const handleSubmit = useCallback(() => {
+    const name = nameRef.current
     const nextErrors: typeof errors = {}
     if (!logoUrl.trim()) {
       nextErrors.logo = '로고 이미지를 등록해 주세요.'
@@ -215,7 +266,7 @@ function CorporatePartnerFormBody({
       name: name.trim(),
       sortOrder: orderNum,
     })
-  }, [isPublic, logoFile, logoFileName, logoUrl, maxOrder, name, onSubmit, sortOrder])
+  }, [isPublic, logoFile, logoFileName, logoUrl, maxOrder, onSubmit, sortOrder])
 
   const title = mode === 'edit' ? '후원사 수정' : '후원사 등록'
   const confirmLabel = mode === 'edit' ? '저장' : '등록'
@@ -322,25 +373,11 @@ function CorporatePartnerFormBody({
             required
             view={null}
             edit={
-              <div>
-                <CmsInput
-                  inputSize="large"
-                  width="100%"
-                  placeholder="기업명을 입력하세요"
-                  value={name}
-                  onChange={e => {
-                    setName(e.target.value)
-                    if (e.target.value.trim()) {
-                      setErrors(prev => ({ ...prev, name: undefined }))
-                    }
-                  }}
-                />
-                {errors.name ? (
-                  <p className="corporate-partner-form-modal__field-error" role="alert">
-                    {errors.name}
-                  </p>
-                ) : null}
-              </div>
+              <PartnerNameField
+                initialValue={initialName}
+                error={errors.name}
+                onValueChange={handleNameChange}
+              />
             }
           />
         </DetailInfoForm.Row>

@@ -17,6 +17,8 @@ export { renderContentModalDescription } from './content-modal-description'
 
 export { CmsInput } from './cms-input'
 export type { CmsInputProps, CmsInputSize } from './cms-input'
+export { AdminFilterTextInput } from './admin-filter-text-input'
+export type { AdminFilterTextInputProps } from './admin-filter-text-input'
 export type { CmsControlSize } from './cms-control-size'
 
 export { CmsTextArea } from './cms-textarea'

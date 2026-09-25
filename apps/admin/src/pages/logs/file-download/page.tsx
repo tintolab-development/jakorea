@@ -38,7 +38,7 @@ import {
   type PendingDateRange,
   type UrlDateRangePendingSyncRef,
 } from '@/shared/lib/url-date-range-pending-sync'
-import { CmsButton, CmsDateRangePicker, CmsInput, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsDateRangePicker, AdminFilterTextInput, useCmsAlert } from '@/shared/ui'
 
 import '@/features/logs/shared/ui/log-list-layout.css'
 
@@ -114,6 +114,7 @@ export function FileDownloadLogPage() {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
     patchSearchParams,
@@ -237,27 +238,23 @@ export function FileDownloadLogPage() {
         <div className="admin-filter-area">
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <span className="admin-filter-area__label">파일명</span>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="파일명을 입력하세요"
               value={pendingFilters.fileName}
-              onChange={e =>
-                setPendingFilters(prev => ({ ...prev, fileName: e.target.value }))
-              }
+              onChange={value => patchPendingFilters(prev => ({ ...prev, fileName: value }))}
               onPressEnter={applySearch}
             />
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <span className="admin-filter-area__label">사용자명</span>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="사용자명을 입력하세요"
               value={pendingFilters.userName}
-              onChange={e =>
-                setPendingFilters(prev => ({ ...prev, userName: e.target.value }))
-              }
+              onChange={value => patchPendingFilters(prev => ({ ...prev, userName: value }))}
               onPressEnter={applySearch}
             />
           </div>

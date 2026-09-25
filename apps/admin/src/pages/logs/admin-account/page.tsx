@@ -44,7 +44,7 @@ import {
 import {
   CmsButton,
   CmsDateRangePicker,
-  CmsInput,
+  AdminFilterTextInput,
   CmsSelect,
   useCmsAlert,
 } from '@/shared/ui'
@@ -146,6 +146,7 @@ export function AdminAccountLogPage() {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
     patchSearchParams,
@@ -279,27 +280,23 @@ export function AdminAccountLogPage() {
         <div className="admin-filter-area">
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <span className="admin-filter-area__label">관리자명</span>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="관리자명을 입력하세요"
               value={pendingFilters.name}
-              onChange={e =>
-                setPendingFilters(prev => ({ ...prev, name: e.target.value }))
-              }
+              onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
               onPressEnter={applySearch}
             />
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <span className="admin-filter-area__label">아이디</span>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="아이디를 입력하세요"
               value={pendingFilters.loginId}
-              onChange={e =>
-                setPendingFilters(prev => ({ ...prev, loginId: e.target.value }))
-              }
+              onChange={value => patchPendingFilters(prev => ({ ...prev, loginId: value }))}
               onPressEnter={applySearch}
             />
           </div>

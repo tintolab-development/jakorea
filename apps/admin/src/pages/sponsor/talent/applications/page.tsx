@@ -49,6 +49,7 @@ import {
 import {
   CmsButton,
   CmsDateRangePicker,
+  AdminFilterTextInput,
   CmsInput,
   CmsSelect,
   ConfirmModal,
@@ -195,6 +196,7 @@ export function TalentDonationApplicationsPage() {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
   } = useListFilterUrl<ApplicationPendingFilters, TalentDonationApplicationListFilter>({
@@ -528,14 +530,12 @@ export function TalentDonationApplicationsPage() {
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">신청자명</p>
-              <CmsInput
+              <AdminFilterTextInput
                 inputSize="large"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.applicantName}
                 placeholder="신청자명을 입력하세요."
-                onChange={e =>
-                  setPendingFilters(prev => ({ ...prev, applicantName: e.target.value }))
-                }
+                onChange={value => patchPendingFilters(prev => ({ ...prev, applicantName: value }))}
                 onPressEnter={handleSearch}
               />
             </div>
@@ -566,12 +566,12 @@ export function TalentDonationApplicationsPage() {
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">이메일</p>
-              <CmsInput
+              <AdminFilterTextInput
                 inputSize="large"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.email}
                 placeholder="이메일을 입력하세요."
-                onChange={e => setPendingFilters(prev => ({ ...prev, email: e.target.value }))}
+                onChange={value => patchPendingFilters(prev => ({ ...prev, email: value }))}
                 onPressEnter={handleSearch}
               />
             </div>

@@ -38,7 +38,7 @@ import {
   type PendingDateRange,
   type UrlDateRangePendingSyncRef,
 } from '@/shared/lib/url-date-range-pending-sync'
-import { CmsButton, CmsDateRangePicker, CmsInput, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsDateRangePicker, AdminFilterTextInput, useCmsAlert } from '@/shared/ui'
 
 import '@/features/logs/shared/ui/log-list-layout.css'
 
@@ -126,6 +126,7 @@ export function PiiAccessLogPage() {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
     patchSearchParams,
@@ -266,46 +267,34 @@ export function PiiAccessLogPage() {
         <div className="admin-filter-area">
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <span className="admin-filter-area__label">조회 대상</span>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="조회 대상을 입력하세요"
               value={pendingFilters.targetName}
-              onChange={e =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  targetName: e.target.value,
-                }))
-              }
+              onChange={value => patchPendingFilters(prev => ({ ...prev, targetName: value }))}
               onPressEnter={applySearch}
             />
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <span className="admin-filter-area__label">조회 목적</span>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="조회 목적을 입력하세요"
               value={pendingFilters.purpose}
-              onChange={e =>
-                setPendingFilters(prev => ({ ...prev, purpose: e.target.value }))
-              }
+              onChange={value => patchPendingFilters(prev => ({ ...prev, purpose: value }))}
               onPressEnter={applySearch}
             />
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <span className="admin-filter-area__label">조회자명</span>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="조회자명을 입력하세요"
               value={pendingFilters.accessorName}
-              onChange={e =>
-                setPendingFilters(prev => ({
-                  ...prev,
-                  accessorName: e.target.value,
-                }))
-              }
+              onChange={value => patchPendingFilters(prev => ({ ...prev, accessorName: value }))}
               onPressEnter={applySearch}
             />
           </div>

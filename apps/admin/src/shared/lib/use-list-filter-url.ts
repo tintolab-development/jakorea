@@ -32,6 +32,11 @@ export type UseListFilterUrlReturn<TPending extends Record<string, unknown>, TAp
   setSearchParams: TableSearchSetSearchParams
   pendingFilters: TPending
   setPendingFilters: Dispatch<SetStateAction<TPending>>
+  /**
+   * 텍스트 필터 타이핑용. React state 없이 ref만 갱신해 테이블 리렌더를 막는다.
+   * Select/Date·조회 버튼의 setPendingFilters / applySearch는 ref를 SSOT로 본다.
+   */
+  patchPendingFilters: Dispatch<SetStateAction<TPending>>
   /** 조회 후 리스트 필터 — searchParams 파생 */
   applied: TApplied
   applySearch: () => void
@@ -48,9 +53,39 @@ export function useListFilterUrl<TPending extends Record<string, unknown>, TAppl
   const [searchParams, setSearchParams] = useSearchParams()
   const searchParamsKey = searchParams.toString()
 
-  const [pendingFilters, setPendingFilters] = useState<TPending>(initialPending)
+  const [pendingFilters, setPendingFiltersState] = useState<TPending>(initialPending)
   const pendingFiltersRef = useRef(pendingFilters)
-  pendingFiltersRef.current = pendingFilters
+
+  const resolvePending = useCallback((action: SetStateAction<TPending>): TPending => {
+    const base = pendingFiltersRef.current
+    return typeof action === 'function'
+      ? (action as (prevState: TPending) => TPending)(base)
+      : action
+  }, [])
+
+  /**
+   * applySearch / Enter는 같은 틱에서 setState 직후 ref를 읽는다.
+   * 렌더 때만 ref를 맞추면 연속 입력이 stale pending을 조회에 실을 수 있다.
+   * 텍스트 patchPendingFilters 이후 Select 등이 호출해도 ref를 base로 써서 입력을 보존한다.
+   */
+  const setPendingFilters = useCallback(
+    (action: SetStateAction<TPending>) => {
+      setPendingFiltersState(() => {
+        const next = resolvePending(action)
+        pendingFiltersRef.current = next
+        return next
+      })
+    },
+    [resolvePending]
+  )
+
+  const patchPendingFilters = useCallback(
+    (action: SetStateAction<TPending>) => {
+      const next = resolvePending(action)
+      pendingFiltersRef.current = next
+    },
+    [resolvePending]
+  )
 
   const syncRef = useRef(syncPendingFromUrl)
   syncRef.current = syncPendingFromUrl
@@ -62,7 +97,7 @@ export function useListFilterUrl<TPending extends Record<string, unknown>, TAppl
     })
     // URL 내용은 searchParamsKey로만 감지 (참조 불안정 방지)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
-  }, [searchParamsKey])
+  }, [searchParamsKey, setPendingFilters])
 
   const applied = useMemo(
     () => parseApplied(searchParams),
@@ -93,6 +128,7 @@ export function useListFilterUrl<TPending extends Record<string, unknown>, TAppl
     setSearchParams,
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied,
     applySearch,
     patchSearchParams,

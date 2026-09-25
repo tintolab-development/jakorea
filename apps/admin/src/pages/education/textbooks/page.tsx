@@ -52,7 +52,7 @@ import {
 import {
   CmsButton,
   CmsDateRangePicker,
-  CmsInput,
+  AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
@@ -203,6 +203,7 @@ export function EducationTextbooksPage() {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
   } = useListFilterUrl<TextbookPendingFilters, EducationTextbookListFilter>({
@@ -556,14 +557,12 @@ export function EducationTextbooksPage() {
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <p className="admin-filter-area__label">교재명</p>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               value={pendingFilters.title}
               placeholder="교재명을 입력하세요"
-              onChange={e =>
-                setPendingFilters(prev => ({ ...prev, title: e.target.value }))
-              }
+              onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
               onPressEnter={handleSearch}
             />
           </div>

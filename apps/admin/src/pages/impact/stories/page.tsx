@@ -52,7 +52,7 @@ import {
 import {
   CmsButton,
   CmsDateRangePicker,
-  CmsInput,
+  AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
@@ -165,6 +165,7 @@ export function ImpactStoriesPage() {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
   } = useListFilterUrl<StoryPendingFilters, ImpactStoryListFilter>({
@@ -485,27 +486,23 @@ export function ImpactStoriesPage() {
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">제목</p>
-              <CmsInput
+              <AdminFilterTextInput
                 inputSize="large"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.title}
                 placeholder="제목을 입력하세요"
-                onChange={e =>
-                  setPendingFilters(prev => ({ ...prev, title: e.target.value }))
-                }
+                onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
                 onPressEnter={handleSearch}
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">작성자명</p>
-              <CmsInput
+              <AdminFilterTextInput
                 inputSize="large"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.authorName}
                 placeholder="작성자명을 입력하세요"
-                onChange={e =>
-                  setPendingFilters(prev => ({ ...prev, authorName: e.target.value }))
-                }
+                onChange={value => patchPendingFilters(prev => ({ ...prev, authorName: value }))}
                 onPressEnter={handleSearch}
               />
             </div>

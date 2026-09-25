@@ -50,7 +50,7 @@ import {
 import {
   CmsButton,
   CmsDateRangePicker,
-  CmsInput,
+  AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
@@ -163,6 +163,7 @@ export function StripBannersPage() {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
   } = useListFilterUrl<StripBannerPendingFilters, StripBannerListFilter>({
@@ -459,12 +460,12 @@ export function StripBannersPage() {
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <p className="admin-filter-area__label">배너 문구</p>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="배너 문구를 입력하세요"
               value={pendingFilters.text}
-              onChange={e => setPendingFilters(prev => ({ ...prev, text: e.target.value }))}
+              onChange={value => patchPendingFilters(prev => ({ ...prev, text: value }))}
               onPressEnter={handleSearch}
             />
           </div>
