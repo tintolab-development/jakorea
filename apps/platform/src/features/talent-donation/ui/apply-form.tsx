@@ -1,4 +1,6 @@
 import { type ChangeEvent, type FormEvent, useRef, useState } from 'react'
+import axios from 'axios'
+import { Link } from 'react-router-dom'
 import { getSidoOptions, getSigunguOptions } from '@jakorea/location/sido-sigungu'
 import {
   buildRequiredConsentDisagreeAlertMessage,
@@ -17,6 +19,9 @@ import {
   PFText,
   PFTextInput,
 } from '@/shared/ui'
+import { toApiDate } from '@/shared/lib/public-text'
+import { useCreatePublicTalentApplication } from '../api/hooks'
+import { TALENT_DONATION_PATH } from '../lib/constants'
 import {
   EMPTY_TALENT_APPLY_FORM_VALUES,
   GENDER_OPTIONS,
@@ -47,6 +52,17 @@ type AlertState = {
   title: string
   description?: string
 } | null
+
+function messageFromError(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data
+    if (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string') {
+      const message = data.message.trim()
+      if (message) return message
+    }
+  }
+  return '신청 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+}
 
 function FieldLabel({
   htmlFor,
@@ -120,7 +136,10 @@ export function TalentDonationApplyForm() {
   const [errors, setErrors] = useState<TalentApplyFieldErrors>({})
   const [alert, setAlert] = useState<AlertState>(null)
   const [attachedFileName, setAttachedFileName] = useState('')
+  const [attachedFile, setAttachedFile] = useState<File | null>(null)
+  const [submitted, setSubmitted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const mutation = useCreatePublicTalentApplication()
 
   const sidoOptions = getSidoOptions()
   const sigunguOptions = getSigunguOptions(values.sido)
@@ -159,8 +178,9 @@ export function TalentDonationApplyForm() {
   }
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const file = event.target.files?.[0] ?? null
     event.target.value = ''
+    setAttachedFile(file)
     setAttachedFileName(file?.name ?? '')
   }
 
@@ -188,7 +208,49 @@ export function TalentDonationApplyForm() {
       return
     }
 
-    // TODO: 재능기부 신청 API가 준비되면 이 지점에서 mutation/service를 연결한다.
+    mutation.mutate(
+      {
+        body: {
+          name: values.name.trim(),
+          birthDate: toApiDate(values.birthDate),
+          gender: values.gender as 'male' | 'female',
+          phone: values.phone.trim(),
+          email: values.email.trim(),
+          affiliation: values.affiliation.trim(),
+          sido: values.sido.trim(),
+          sigungu: values.sigungu.trim(),
+          periodStart: toApiDate(values.periodStart),
+          periodEnd: toApiDate(values.periodEnd),
+          bio: values.bio.trim(),
+          talentIntro: values.talentIntro.trim(),
+          motivation: values.motivation.trim(),
+          jaParticipation: values.jaParticipation as 'yes' | 'no',
+          privacyAgreed: true,
+        },
+        attachmentFile: attachedFile,
+      },
+      {
+        onSuccess: () => setSubmitted(true),
+        onError: error =>
+          setAlert({
+            title: '안내',
+            description: messageFromError(error),
+          }),
+      },
+    )
+  }
+
+  if (submitted) {
+    return (
+      <div className={styles.success}>
+        <PFText as="p" typo="bd-lg-rg" color="black">
+          재능기부 신청이 접수되었습니다.
+        </PFText>
+        <Link to={TALENT_DONATION_PATH} className={styles.backLink}>
+          재능기부로 돌아가기
+        </Link>
+      </div>
+    )
   }
 
   return (
@@ -593,8 +655,8 @@ export function TalentDonationApplyForm() {
         </section>
 
         <div className={styles.submit}>
-          <PFButton type="submit" size="xlarge" width="100%">
-            {TALENT_APPLY_SUBMIT_LABEL}
+          <PFButton type="submit" size="xlarge" width="100%" disabled={mutation.isPending}>
+            {mutation.isPending ? '접수 중' : TALENT_APPLY_SUBMIT_LABEL}
           </PFButton>
         </div>
       </form>

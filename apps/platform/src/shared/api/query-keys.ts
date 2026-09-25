@@ -152,6 +152,19 @@ export const platformQueryKeys = {
     textbooks: () => [...platformQueryKeys.education.all(), 'textbooks'] as const,
   },
 
+  sponsorship: {
+    all: () => [...platformQueryKeys.all, 'sponsorship'] as const,
+    /** 공개 개인후원 — GET /api/public/sponsorship/personal (Class D) */
+    personal: () => [...platformQueryKeys.sponsorship.all(), 'personal'] as const,
+    /** 공개 기업후원 안내 — GET /api/public/sponsorship/corporate (Class D) */
+    corporate: () => [...platformQueryKeys.sponsorship.all(), 'corporate'] as const,
+    /** 공개 기업후원 후원사 — GET /api/public/sponsorship/corporate/sponsors (Class C) */
+    corporateSponsors: () =>
+      [...platformQueryKeys.sponsorship.all(), 'corporate', 'sponsors'] as const,
+    /** 공개 재능기부 소개 — GET /api/public/sponsorship/talent (Class D) */
+    talent: () => [...platformQueryKeys.sponsorship.all(), 'talent'] as const,
+  },
+
   mypage: {
     all: () => [...platformQueryKeys.all, 'mypage'] as const,
     /** 내 강사 권한 신청 상태 — GET /api/portal/me/instructor-role-requests/current */

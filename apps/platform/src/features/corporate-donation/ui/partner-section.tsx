@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
 import { HOME_PARTNER_LOGO_ROWS, type HomePartnerLogo } from '@/features/home'
 import homePartnerStyles from '@/features/home/ui/partner-marquee-section.module.css'
 import { PFText } from '@/shared/ui'
+import { usePublicCorporatePartnerRows } from '../api/hooks'
 import { PARTNER_SECTION_TITLE } from '../lib/constants'
 import styles from './partner-section.module.css'
 
@@ -22,10 +22,9 @@ function LogoChips({ logos, hidden }: { logos: readonly HomePartnerLogo[]; hidde
 }
 
 export function PartnerSection() {
-  const flatLogos = useMemo(
-    () => HOME_PARTNER_LOGO_ROWS.flatMap(row => [...row]),
-    [],
-  )
+  const { rows } = usePublicCorporatePartnerRows()
+  const partnerRows = rows.length > 0 ? rows : HOME_PARTNER_LOGO_ROWS
+  const flatLogos = partnerRows.flatMap(row => [...row])
 
   return (
     <section className={styles.section} aria-labelledby="corporate-donation-partner-title">
@@ -53,7 +52,7 @@ export function PartnerSection() {
         </ul>
 
         <div className={homePartnerStyles.marqueeArea} aria-label="함께해준 기업 로고">
-          {HOME_PARTNER_LOGO_ROWS.map((row, rowIndex) => (
+          {partnerRows.map((row, rowIndex) => (
             <div className={homePartnerStyles.marqueeRow} key={rowIndex}>
               <div
                 className={[

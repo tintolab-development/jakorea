@@ -41,6 +41,25 @@
   gap: var(--spacing-4);
 }
 
+.actionLink {
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 160px;
+  height: 53px;
+  padding: 13px var(--spacing-28);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white);
+  color: var(--color-neutral-black);
+  text-decoration: none;
+}
+
+.actionLink:hover {
+  border-color: var(--color-primary-500);
+  color: var(--color-primary-500);
+}
+
 .actionIcon {
   display: block;
   flex-shrink: 0;

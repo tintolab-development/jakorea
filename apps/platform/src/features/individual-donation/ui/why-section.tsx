@@ -1,9 +1,11 @@
 import { Fragment } from 'react'
+import { Link } from 'react-router-dom'
+import { TRANSPARENCY_PATH } from '@/features/transparency'
 import arrowDiagonalBlackUrl from '@/shared/assets/icons/arrow-diagonal-black.svg'
 import arrowDiagonalMintUrl from '@/shared/assets/icons/arrow-diagonal-mint.svg'
-import { PFButton, PFCategoryBadge, PFText } from '@/shared/ui'
+import { PFCategoryBadge, PFText, remoteCopyClassName } from '@/shared/ui'
+import { usePublicPersonalSponsorshipView } from '../api/hooks'
 import {
-  WHY_CARDS,
   WHY_SECTION_ACTION_BUTTON_LABEL,
   WHY_SECTION_ACTION_DESCRIPTION,
   WHY_SECTION_TITLE,
@@ -30,7 +32,7 @@ function WhyCard({ card }: { card: WhyCardContent }) {
           <div className={styles.cardMessage}>
             <PFText as="h3" typo="hd-md" color="black" className={styles.cardTitle}>
               {card.titleLines.map((line, index) => (
-                <Fragment key={line}>
+                <Fragment key={`${line}-${index}`}>
                   {index > 0 ? <br /> : null}
                   {line}
                 </Fragment>
@@ -62,9 +64,16 @@ function WhyCard({ card }: { card: WhyCardContent }) {
 }
 
 export function WhySection() {
+  const { whyCards, isPending } = usePublicPersonalSponsorshipView()
+  const copyClass = remoteCopyClassName(isPending)
+
   return (
-    <section className={styles.section} aria-labelledby="individual-donation-why-title">
-      <div className={styles.content}>
+    <section
+      className={styles.section}
+      aria-labelledby="individual-donation-why-title"
+      aria-busy={isPending || undefined}
+    >
+      <div className={[styles.content, copyClass].join(' ')}>
         <div className={styles.sectionHeader}>
           <PFText
             as="h2"
@@ -85,12 +94,9 @@ export function WhySection() {
             >
               {WHY_SECTION_ACTION_DESCRIPTION}
             </PFText>
-            {/* TODO: 투명경영 페이지 경로 연결 */}
-            <PFButton
-              type="button"
-              size="xlarge"
-              variant="tertiary"
-              className={styles.actionButton}
+            <Link
+              to={TRANSPARENCY_PATH}
+              className={[styles.actionButton, styles.actionLink, 'typo-bd-lg-sb'].join(' ')}
             >
               <span>{WHY_SECTION_ACTION_BUTTON_LABEL}</span>
               <img
@@ -109,12 +115,12 @@ export function WhySection() {
                 width={24}
                 height={24}
               />
-            </PFButton>
+            </Link>
           </div>
         </div>
 
         <div className={styles.cardList}>
-          {WHY_CARDS.map(card => (
+          {whyCards.map(card => (
             <WhyCard key={card.id} card={card} />
           ))}
         </div>

@@ -52,6 +52,9 @@ export const CTA_SECTION_TITLE_LINES = [
 
 export const CTA_SECTION_BUTTON_LABEL = '성장 후원하기'
 
+/** 개인후원 「성장 후원하기」 외부 결제 링크 (새 탭). API donationUrl이 없을 때 폴백. */
+export const CTA_SECTION_DONATION_URL = 'https://online.mrm.or.kr/WJEP4tK'
+
 export const IMPACT_SECTION_TITLE = '후원이 만드는 변화를 확인해 보세요'
 
 export const IMPACT_SLIDER_VISIBLE_COUNT = 3

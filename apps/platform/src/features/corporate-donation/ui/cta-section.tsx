@@ -1,7 +1,9 @@
 import { Fragment } from 'react'
+import { Link } from 'react-router-dom'
 import jaArrowCtaMintUrl from '@/features/home/image/icon/ja-arrow-cta-mint.svg'
 import { PFText } from '@/shared/ui'
 import {
+  CORPORATE_DONATION_INQUIRY_PATH,
   CTA_SECTION_BUTTON_LABEL,
   CTA_SECTION_EYEBROW,
   CTA_SECTION_TITLE_LINES,
@@ -35,8 +37,7 @@ export function CtaSection() {
             </PFText>
           </div>
           <div className={styles.actionButtonWrap}>
-            {/* TODO: 기업후원 문의하기 경로·기능 연결 */}
-            <button type="button" className={styles.actionButton}>
+            <Link to={CORPORATE_DONATION_INQUIRY_PATH} className={styles.actionButton}>
               <PFText as="span" typo="hl-lg" color="white" className={styles.actionLabel}>
                 {CTA_SECTION_BUTTON_LABEL}
               </PFText>
@@ -48,7 +49,7 @@ export function CtaSection() {
                 width={32}
                 height={32}
               />
-            </button>
+            </Link>
           </div>
         </div>
 

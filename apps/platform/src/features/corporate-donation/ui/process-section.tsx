@@ -1,8 +1,8 @@
 import { Fragment } from 'react'
-import { PFText } from '@/shared/ui'
+import { PFText, remoteCopyClassName } from '@/shared/ui'
+import { usePublicCorporateSponsorshipView } from '../api/hooks'
 import {
   PROCESS_SECTION_TITLE_LINES,
-  PROCESS_STEPS,
   type ProcessStep,
 } from '../lib/constants'
 import styles from './process-section.module.css'
@@ -55,9 +55,16 @@ function ProcessStepItem({ step }: { step: ProcessStep }) {
 }
 
 export function ProcessSection() {
+  const { processSteps, isPending } = usePublicCorporateSponsorshipView()
+  const copyClass = remoteCopyClassName(isPending)
+
   return (
-    <section className={styles.section} aria-labelledby="corporate-donation-process-title">
-      <div className={styles.content}>
+    <section
+      className={styles.section}
+      aria-labelledby="corporate-donation-process-title"
+      aria-busy={isPending || undefined}
+    >
+      <div className={[styles.content, copyClass].join(' ')}>
         <PFText
           as="h2"
           id="corporate-donation-process-title"
@@ -74,7 +81,7 @@ export function ProcessSection() {
         </PFText>
 
         <ol className={styles.list}>
-          {PROCESS_STEPS.map(step => (
+          {processSteps.map(step => (
             <ProcessStepItem key={step.number} step={step} />
           ))}
         </ol>

@@ -71,6 +71,7 @@ import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transpa
 import { DesignSystemPage } from '@/pages/design-system'
 import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
 import { CorporateDonationPage } from '@/pages/support/corporate'
+import { CorporateDonationInquiryPage } from '@/pages/support/corporate/inquiry'
 import { IndividualDonationPage } from '@/pages/support/individual'
 import { TalentDonationPage } from '@/pages/support/talent'
 import { TalentDonationApplyPage } from '@/pages/support/talent/apply'
@@ -79,7 +80,7 @@ import { EDUCATION_CAREER_PATH } from '@/features/education-career'
 import { EDUCATION_DIGITAL_LITERACY_PATH } from '@/features/education-digital-literacy'
 import { EDUCATION_ENTREPRENEURSHIP_PATH } from '@/features/education-entrepreneurship'
 import { EDUCATION_FINANCE_PATH } from '@/features/education-finance'
-import { CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
+import { CORPORATE_DONATION_INQUIRY_PATH, CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
 import { IMPACT_STORIES_PATH } from '@/features/impact-story'
 import { INTRODUCTION_PATH } from '@/features/introduction'
 import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
@@ -142,6 +143,7 @@ export const router = createBrowserRouter([
     children: [
       { path: INDIVIDUAL_DONATION_PATH, element: <IndividualDonationPage /> },
       { path: CORPORATE_DONATION_PATH, element: <CorporateDonationPage /> },
+      { path: CORPORATE_DONATION_INQUIRY_PATH, element: <CorporateDonationInquiryPage /> },
       { path: TALENT_DONATION_PATH, element: <TalentDonationPage /> },
       { path: TALENT_DONATION_APPLY_PATH, element: <TalentDonationApplyPage /> },
     ],

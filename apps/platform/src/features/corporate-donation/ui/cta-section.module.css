@@ -74,7 +74,9 @@
   border: 0;
   border-radius: var(--radius-999);
   background: var(--color-gradient-primary-01);
+  color: inherit;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .actionButton:focus-visible {
