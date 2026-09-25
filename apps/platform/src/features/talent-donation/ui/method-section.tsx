@@ -75,8 +75,11 @@ function StoryBlock({
             color="neutral-cool-700"
             className={styles.storyDescription}
           >
-            {story.descriptionLines.map(line => (
-              <Fragment key={line}>{line}</Fragment>
+            {story.descriptionLines.map((line, index) => (
+              <Fragment key={`${line}-${index}`}>
+                {index > 0 ? <br /> : null}
+                {line}
+              </Fragment>
             ))}
           </PFText>
         </div>
