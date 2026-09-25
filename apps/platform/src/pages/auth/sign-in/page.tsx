@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { SocialProvider } from '@jakorea/social-auth'
 import { SocialAuthApiError } from '@jakorea/social-auth'
 import {
+  clearAdminRegisteredPasswordChangeRequired,
   requiresAdminRegisteredOnboarding,
   resolveAdminProvisionedOnboardingEntryPath,
   syncAdminRegisteredOnboardingSession,
@@ -160,6 +161,7 @@ export function SignInPage() {
         return
       }
 
+      clearAdminRegisteredPasswordChangeRequired()
       completeLoginSession({
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,

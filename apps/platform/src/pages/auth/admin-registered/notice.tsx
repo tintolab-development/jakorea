@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
+  clearAdminRegisteredPasswordChangeRequired,
   getAdminRegisteredSignUpChangePasswordPath,
   getAdminRegisteredWizardState,
   isAdminRegisteredSignUpEntry,
@@ -41,15 +42,17 @@ function AdminRegisteredFirstLoginNotice() {
     if (!remote) return
     if (isLoadingMe) return
 
-    if (me?.email?.trim()) {
-      syncAdminRegisteredOnboardingSession(me.email, me, 'first-login')
-    }
-
     if (me) {
       if (!requiresAdminRegisteredOnboarding(me)) {
+        clearAdminRegisteredPasswordChangeRequired()
         navigate('/', { replace: true })
         return
       }
+
+      if (me.email?.trim()) {
+        syncAdminRegisteredOnboardingSession(me.email, me, 'first-login')
+      }
+
       const next = resolveAdminProvisionedNoticeCta(me)
       if (next) {
         navigate(next.path, { replace: true })
@@ -65,6 +68,12 @@ function AdminRegisteredFirstLoginNotice() {
 
   const handleContinue = () => {
     if (isLoadingMe) return
+
+    if (me && !requiresAdminRegisteredOnboarding(me)) {
+      clearAdminRegisteredPasswordChangeRequired()
+      navigate('/')
+      return
+    }
 
     if (me?.email?.trim()) {
       syncAdminRegisteredOnboardingSession(me.email, me, 'first-login')
@@ -86,11 +95,6 @@ function AdminRegisteredFirstLoginNotice() {
         return
       }
       navigate(next.path)
-      return
-    }
-
-    if (me && !requiresAdminRegisteredOnboarding(me)) {
-      navigate('/')
       return
     }
 

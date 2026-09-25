@@ -1,6 +1,7 @@
 export {
   portalAuthPaths,
   portalMePaths,
+  postPortalLogout,
   postPortalLogin,
   getPortalMe,
   getPortalProfile,

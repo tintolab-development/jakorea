@@ -1,5 +1,6 @@
 export { portalAuthPaths, portalMePaths } from './endpoints'
 export {
+  postPortalLogout,
   postPortalLogin,
   getPortalMe,
   getPortalProfile,

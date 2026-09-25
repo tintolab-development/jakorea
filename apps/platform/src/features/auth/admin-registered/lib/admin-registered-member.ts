@@ -46,8 +46,8 @@ export function canSkipAdminRegisteredBirthStep() {
 }
 
 /**
- * 관리자가 등록한 계정 안내 화면으로 보낼지.
- * `registeredByAdmin === true` 이고 본인 가입 온보딩이 아직 끝나지 않았을 때만 true.
+ * 관리자 등록 온보딩 위저드로 보낼지.
+ * `adminProvisionedOnboardingRequired === true` 이고 step 이 PROFILE | IDENTITY | PASSWORD | PROFILE_REVIEW 일 때만 true.
  */
 export function requiresAdminRegisteredOnboarding(flags: AdminProvisionedOnboardingFlags) {
   return shouldContinueAdminProvisionedOnboarding(flags)
@@ -60,12 +60,16 @@ export function setAdminRegisteredPasswordChangeRequired(
 ) {
   const entrySource =
     typeof entrySourceOrFlags === 'string' ? entrySourceOrFlags : maybeEntrySource
-  const flags: AdminProvisionedOnboardingFlags =
-    typeof entrySourceOrFlags === 'string'
-      ? { registeredByAdmin: true }
-      : entrySourceOrFlags
+  const isLegacyMockEntry = typeof entrySourceOrFlags === 'string'
+  const flags: AdminProvisionedOnboardingFlags = isLegacyMockEntry
+    ? { registeredByAdmin: true }
+    : entrySourceOrFlags
 
   syncAdminRegisteredOnboardingSession(email, flags, entrySource)
+  // 가입 mock 은 로그인 플래그 없이 안내 화면만 연다. API step 이 없으므로 위저드 판정은 false 다.
+  if (isLegacyMockEntry) {
+    setAdminOnboardingRequired(true)
+  }
 }
 
 export function getAdminRegisteredPasswordChangeRequired() {

@@ -1,4 +1,4 @@
-import { axiosClient } from '@/shared/api/axios-instance'
+import { axiosClient, postPortalAuthLogout } from '@/shared/api/axios-instance'
 import type { InternalAxiosRequestConfig } from 'axios'
 import { portalAuthPaths, portalMePaths } from './endpoints'
 import { parseAuthTokenResponse } from './parse-auth-token'
@@ -22,6 +22,11 @@ import type {
 type SkipAuthConfig = InternalAxiosRequestConfig & {
   skipAuth?: boolean
   skipRefresh?: boolean
+}
+
+/** POST /api/portal/auth/logout — body refreshToken, 204 */
+export async function postPortalLogout(refreshToken: string): Promise<void> {
+  await postPortalAuthLogout(refreshToken)
 }
 
 /** POST /api/portal/auth/login — PUBLIC */

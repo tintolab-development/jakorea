@@ -5,6 +5,7 @@ import { getAccessToken } from '@/shared/lib/auth-token'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import {
   resolveAdminProvisionedStepFromPathname,
+  shouldContinueAdminProvisionedOnboarding,
   shouldRedirectAdminProvisionedOnboardingStep,
   type AdminProvisionedOnboardingFlags,
 } from '../lib/onboarding-step'
@@ -15,8 +16,9 @@ function toOnboardingFlags(data: {
   email?: string
   registeredByAdmin?: boolean
   adminProvisionedOnboardingRequired?: boolean
-  adminProvisionedOnboardingStep?: string
+  adminProvisionedOnboardingStep?: string | null
   identitySelfSignupCompletedAfterAdminRegistration?: boolean
+  passwordChangeRequired?: boolean
 }): AdminProvisionedOnboardingFlags {
   return {
     registeredByAdmin: data.registeredByAdmin,
@@ -24,6 +26,7 @@ function toOnboardingFlags(data: {
     adminProvisionedOnboardingStep: data.adminProvisionedOnboardingStep,
     identitySelfSignupCompletedAfterAdminRegistration:
       data.identitySelfSignupCompletedAfterAdminRegistration,
+    passwordChangeRequired: data.passwordChangeRequired,
   }
 }
 
@@ -31,8 +34,9 @@ function ensureWizardFromMe(me: {
   email?: string
   registeredByAdmin?: boolean
   adminProvisionedOnboardingRequired?: boolean
-  adminProvisionedOnboardingStep?: string
+  adminProvisionedOnboardingStep?: string | null
   identitySelfSignupCompletedAfterAdminRegistration?: boolean
+  passwordChangeRequired?: boolean
 }) {
   const email = me.email?.trim()
   if (!email) return
@@ -53,12 +57,14 @@ export function useAdminProvisionedOnboardingStepGuard() {
 
   const meQuery = usePortalMeQuery({ enabled })
   const me = meQuery.data
+  const continuing = me ? shouldContinueAdminProvisionedOnboarding(toOnboardingFlags(me)) : false
 
-  if (me) {
+  if (me && continuing) {
     ensureWizardFromMe(me)
   }
 
   const isChecking = enabled && meQuery.isPending && !me
+  const leavingWizard = Boolean(me) && !continuing && pageStep !== 'DONE'
   const hasWizard = Boolean(getAdminRegisteredWizardState()?.email)
 
   useEffect(() => {
@@ -100,5 +106,5 @@ export function useAdminProvisionedOnboardingStepGuard() {
     remote,
   ])
 
-  return { isChecking, pageStep }
+  return { isChecking: isChecking || leavingWizard, pageStep }
 }

@@ -1,8 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { clearAdminRegisteredWizardState } from '@/features/auth/admin-registered'
+import { postPortalLogout } from '@/features/auth/sign-in'
 import { ScrollRestoration, useLocation, useNavigate } from 'react-router-dom'
 import { isTalentDonationApplyPath } from '@/features/talent-donation'
-import { postPortalAuthLogout } from '@/shared/api/axios-instance'
 import {
   DEV_AUTH_CHANGE_EVENT,
   clearAuthTokens,
@@ -63,7 +63,7 @@ export function AppLayout({
     void (async () => {
       if (refreshToken) {
         try {
-          await postPortalAuthLogout(refreshToken)
+          await postPortalLogout(refreshToken)
         } catch {
           // 로컬 세션은 항상 정리
         }
