@@ -256,6 +256,32 @@ function recruitmentTypeLabel(value: string | undefined): string {
   }
 }
 
+const SCHEDULE_KIND_LABEL: Record<string, string> = {
+  PRE_EDUCATION: '사전교육',
+  EDUCATION: '교육',
+  CLOSING: '수료·폐회',
+  SESSION: '회차',
+}
+
+const TERM_LABEL: Record<string, string> = {
+  FIRST_HALF: '전반',
+  SECOND_HALF: '후반',
+}
+
+function visibleSchedules(schedules: PortalSchedule[] | undefined): PortalSchedule[] {
+  return (schedules ?? []).filter(row => row.publiclyVisible !== false)
+}
+
+function scheduleTitle(schedule: PortalSchedule, index: number): string {
+  const kind = readString(schedule.scheduleKind)?.toUpperCase()
+  const kindLabel = kind ? SCHEDULE_KIND_LABEL[kind] : undefined
+  const term = readString(schedule.term)?.toUpperCase()
+  const termLabel = term ? TERM_LABEL[term] : undefined
+  const name = readString(schedule.scheduleName)
+  const parts = [kindLabel, termLabel, name].filter((value): value is string => Boolean(value))
+  return parts.join(' ') || `교육 일정 ${index + 1}`
+}
+
 function mapSessions(curricula: PortalCurriculum[] | undefined) {
   return (curricula ?? []).flatMap(curriculum =>
     (curriculum.sessions ?? []).map((session, index) => ({
@@ -267,15 +293,15 @@ function mapSessions(curricula: PortalCurriculum[] | undefined) {
 }
 
 function mapEventSchedules(schedules: PortalSchedule[] | undefined) {
-  return (schedules ?? []).map((schedule, index) => ({
+  return visibleSchedules(schedules).map((schedule, index) => ({
     scheduleLabel: `일정 ${schedule.sessionNo ?? index + 1}`,
-    name: readString(schedule.scheduleName) ?? `교육 일정 ${schedule.sessionNo ?? index + 1}`,
+    name: scheduleTitle(schedule, index),
     dateLabel: formatRange(toDate(schedule.startAt), toDate(schedule.endAt)),
   }))
 }
 
 function venueFromSchedules(schedules: PortalSchedule[] | undefined): string {
-  const first = (schedules ?? []).find(
+  const first = visibleSchedules(schedules).find(
     row => readString(row.locationName) || readString(row.address),
   )
   if (!first) return ''
@@ -283,6 +309,42 @@ function venueFromSchedules(schedules: PortalSchedule[] | undefined): string {
     .map(readString)
     .filter((value): value is string => Boolean(value))
   return parts.join(' ')
+}
+
+function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
+  return (recruitments ?? []).flatMap(row => {
+    const phases = [
+      {
+        label: recruitmentTypeLabel(row.recruitmentType),
+        value: formatCompactRange(toDate(row.startAt), toDate(row.endAt)),
+      },
+    ]
+    const interviewOff = row.interviewEnabled === false
+    const hasInterviewDates = Boolean(
+      readString(row.documentPassAnnouncementAt ?? undefined) ||
+        readString(row.interviewStartAt ?? undefined) ||
+        readString(row.interviewEndAt ?? undefined),
+    )
+    if (!interviewOff && (row.interviewEnabled === true || hasInterviewDates)) {
+      const documentAt = toDate(row.documentPassAnnouncementAt ?? undefined)
+      if (documentAt) {
+        phases.push({ label: '1차 서류 합격자 발표', value: formatYmdCompact(documentAt) })
+      }
+      const interviewStart = toDate(row.interviewStartAt ?? undefined)
+      const interviewEnd = toDate(row.interviewEndAt ?? undefined)
+      if (interviewStart || interviewEnd) {
+        phases.push({
+          label: '2차 면접 기간',
+          value: formatCompactRange(interviewStart, interviewEnd),
+        })
+      }
+    }
+    const finalAt = toDate(row.finalPassAnnouncementAt ?? undefined)
+    if (finalAt) {
+      phases.push({ label: '최종 합격자 발표', value: formatYmdCompact(finalAt) })
+    }
+    return phases
+  })
 }
 
 function contactValue(phone?: string, email?: string): string {
@@ -382,10 +444,7 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     sessions,
     eventSchedules,
     recruitmentPhaseGroupLabel: '모집 일정',
-    recruitmentPhases: (remote.recruitments ?? []).map(row => ({
-      label: recruitmentTypeLabel(row.recruitmentType),
-      value: formatCompactRange(toDate(row.startAt), toDate(row.endAt)),
-    })),
+    recruitmentPhases: mapRecruitmentPhases(remote.recruitments),
     educationSchedules: eventSchedules.map((item, index) => ({
       label: `교육 일정 ${index + 1}`,
       value: `${item.name} · ${item.dateLabel}`,
@@ -393,7 +452,7 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     extraSections,
     contactValue: contactValue(remote.contactPhone, remote.contactEmail),
     applicationMethodLabel: '지원방법',
-    applicationMethodValue: '',
+    applicationMethodValue: readString(remote.applicationMethod ?? undefined) ?? '',
     attachments: (remote.attachments ?? []).flatMap(file => {
       if (file.fileObjectId == null) return []
       return [

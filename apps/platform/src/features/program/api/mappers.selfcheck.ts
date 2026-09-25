@@ -120,4 +120,41 @@ const upcoming = mapPortalProgramListItem({
 assert.ok(upcoming)
 assert.equal(upcoming.recruitmentStatus, 'scheduled')
 
+const withSelection = mapPortalProgramDetail({
+  programId: 11,
+  title: '선발 일정',
+  applicationMethod: '홈페이지 온라인 신청',
+  recruitments: [
+    {
+      recruitmentType: 'PARTICIPANT',
+      startAt: '2026-09-01T00:00:00',
+      endAt: '2026-09-10T00:00:00',
+      interviewEnabled: false,
+      finalPassAnnouncementAt: '2026-10-01T00:00:00+09:00',
+    },
+  ],
+  schedules: [
+    { scheduleName: '비공개', publiclyVisible: false, startAt: '2026-09-01T00:00:00' },
+    {
+      scheduleName: '오리엔테이션',
+      scheduleKind: 'PRE_EDUCATION',
+      term: 'FIRST_HALF',
+      publiclyVisible: true,
+      startAt: '2026-09-12T00:00:00',
+    },
+  ],
+})
+assert.ok(withSelection)
+assert.equal(withSelection.applicationMethodValue, '홈페이지 온라인 신청')
+assert.equal(
+  withSelection.recruitmentPhases.some(phase => phase.label === '1차 서류 합격자 발표'),
+  false,
+)
+assert.equal(
+  withSelection.recruitmentPhases.some(phase => phase.label === '최종 합격자 발표'),
+  true,
+)
+assert.equal(withSelection.eventSchedules.length, 1)
+assert.equal(withSelection.eventSchedules[0]?.name, '사전교육 전반 오리엔테이션')
+
 console.log('program portal mappers.selfcheck: ok')

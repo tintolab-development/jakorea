@@ -12,6 +12,11 @@ export type PortalRecruitment = {
   endAt?: string
   applicationTypes?: string[]
   open?: boolean
+  interviewEnabled?: boolean | null
+  documentPassAnnouncementAt?: string | null
+  interviewStartAt?: string | null
+  interviewEndAt?: string | null
+  finalPassAnnouncementAt?: string | null
 }
 
 export type PortalSchedule = {
@@ -24,6 +29,9 @@ export type PortalSchedule = {
   locationName?: string
   address?: string
   addressDetail?: string
+  term?: string | null
+  scheduleKind?: string | null
+  publiclyVisible?: boolean | null
 }
 
 export type PortalCurriculumSession = {
@@ -127,6 +135,7 @@ export type PortalProgramDetail = {
   learningSupportContent?: string
   otherMatters?: string
   remarks?: string
+  applicationMethod?: string | null
   educationTarget?: string
   educationTargetDetail?: string
   recruitmentTargetDetail?: string
