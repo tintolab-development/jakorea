@@ -73,7 +73,7 @@ export async function getNoticeService(id: string): Promise<Notice | null> {
 export async function createNoticeService(input: NoticeCreateInput): Promise<Notice> {
   if (shouldUseNoticesRemoteApi()) {
     const attachmentAssetId = await resolveAttachmentAssetId(input.attachments)
-    const created = await jaKoreaApi().create5(toNoticeCreateRequest(input, attachmentAssetId))
+    const created = await jaKoreaApi().create6(toNoticeCreateRequest(input, attachmentAssetId))
     return mapNoticeResponseToDomain(created)
   }
   return createLocal(input)

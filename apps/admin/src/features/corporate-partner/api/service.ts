@@ -128,7 +128,7 @@ export async function createCorporatePartnerService(
     const name = input.name.trim()
     if (!name) throw new Error('NAME_REQUIRED')
     const logoAssetId = await resolveLogoAssetIdForCreate(input)
-    const created = await sponsorshipApi().create1(toSponsorCreateRequest(input, logoAssetId))
+    const created = await sponsorshipApi().create2(toSponsorCreateRequest(input, logoAssetId))
     const mapped = mapSponsorResponseToDomain(created)
     rememberLogoAssetId(mapped)
     return mapped

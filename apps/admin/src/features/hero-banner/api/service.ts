@@ -84,7 +84,7 @@ export async function createHeroBannerService(
 ): Promise<HeroBanner> {
   if (shouldUseHeroBannerRemoteApi()) {
     const imageAssetId = await resolveImageAssetIdForCreate(input)
-    const created = await mainApi().create4(toHeroCreateRequest(input, imageAssetId))
+    const created = await mainApi().create5(toHeroCreateRequest(input, imageAssetId))
     return mapHeroResponseToDomain(created)
   }
   return createLocal(input)

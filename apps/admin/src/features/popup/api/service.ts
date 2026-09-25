@@ -86,7 +86,7 @@ export async function listPopupsService(filter?: PopupListFilter): Promise<Popup
 export async function createPopupService(input: PopupCreateInput): Promise<Popup> {
   if (shouldUsePopupRemoteApi()) {
     const imageAssetId = await resolveImageAssetIdForCreate(input)
-    const created = await mainApi().create3(toPopupCreateRequest(input, imageAssetId))
+    const created = await mainApi().create4(toPopupCreateRequest(input, imageAssetId))
     return mapPopupResponseToDomain(created)
   }
   return createLocal(input)

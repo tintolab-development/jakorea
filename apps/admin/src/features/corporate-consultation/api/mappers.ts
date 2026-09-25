@@ -10,9 +10,10 @@ import type {
 import type { BulkRequest } from '@/shared/api/generated/sponsorship/schemas/bulkRequest'
 import type { ConsultationDetailResponse } from '@/shared/api/generated/sponsorship/schemas/consultationDetailResponse'
 import type { ConsultationListItem } from '@/shared/api/generated/sponsorship/schemas/consultationListItem'
-import type { List11Params } from '@/shared/api/generated/sponsorship/schemas/list11Params'
+import type { List12Params } from '@/shared/api/generated/sponsorship/schemas/list12Params'
 import type { StatusUpdateRequest } from '@/shared/api/generated/sponsorship/schemas/statusUpdateRequest'
 import { StatusUpdateRequestStatus } from '@/shared/api/generated/sponsorship/schemas/statusUpdateRequestStatus'
+import { List12Status } from '@/shared/api/generated/sponsorship/schemas/list12Status'
 
 export const LIST_PAGE_SIZE = 20
 
@@ -74,14 +75,14 @@ export function mapConsultationDetailToDomain(
 
 export function toConsultationListParams(
   filter: CorporateConsultationListFilter = {},
-): List11Params {
-  const params: List11Params = {
+): List12Params {
+  const params: List12Params = {
     page: 0,
     size: LIST_PAGE_SIZE,
   }
 
-  if (filter.status === 'pending') params.status = 'PENDING'
-  if (filter.status === 'confirmed') params.status = 'CONFIRMED'
+  if (filter.status === 'pending') params.status = List12Status.PENDING
+  if (filter.status === 'confirmed') params.status = List12Status.CONFIRMED
 
   const companyName = filter.companyName?.trim()
   if (companyName) params.companyName = companyName
