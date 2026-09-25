@@ -110,6 +110,12 @@
   padding-top: var(--spacing-100);
 }
 
+/* 짧은 서브페이지도 첫 화면에서 푸터가 보이지 않게 뷰포트를 채운다 */
+.shellSubpage {
+  box-sizing: border-box;
+  min-height: 100dvh;
+}
+
 /* ── PC compact · 1080~1599 ──
  * 좌우 패딩 80 고정
  * LNB 280 · 여백 40 · 내용영역 600~1220
