@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { SocialProvider } from '@jakorea/social-auth'
 import { SocialAuthApiError } from '@jakorea/social-auth'
 import {
+  clearSocialLinkReturn,
   isPortalSocialAuthLinkRemoteEnabled,
   platformSocialAuthClient,
 } from '@/features/auth/social-auth'
@@ -75,6 +76,7 @@ export function SignUpSocialConnectPage() {
   const SOCIAL_CONNECT_ERROR_PATH = '/auth/sign-up/social-connect/error'
 
   useEffect(() => {
+    clearSocialLinkReturn()
     if (!isPortalSocialAuthLinkRemoteEnabled()) {
       return
     }

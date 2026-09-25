@@ -1,3 +1,8 @@
+export {
+  clearSocialLinkReturn,
+  consumeSocialLinkReturn,
+  rememberSettingsSocialLinkReturn,
+} from './link-return'
 export { platformSocialAuthClient } from './platform-client'
 export { portalSocialAuthPaths } from './paths'
 export {

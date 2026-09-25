@@ -141,6 +141,16 @@ export interface PendingSocialLink {
   consent?: SocialLinkConsent
 }
 
+/** POST /api/admin/auth/sso/login/sessions/consume 200 — AdminMfaChallengeResponse */
+export interface SocialLoginMfaChallenge {
+  challengeUuid: string
+  mfaMethod?: string
+  expiresAt?: string
+  totpSecret?: string
+  otpauthUri?: string
+  qrDataUrl?: string
+}
+
 export type OAuthCallbackOutcome =
   | { kind: 'authenticated'; tokens: AuthTokenResult; user?: unknown }
   | {
@@ -152,7 +162,15 @@ export type OAuthCallbackOutcome =
     }
   | { kind: 'not_linked' }
   | { kind: 'already_linked' }
-  | { kind: 'mfa_required'; challengeUuid: string; mfaMethod?: string }
+  | {
+      kind: 'mfa_required'
+      challengeUuid: string
+      mfaMethod?: string
+      expiresAt?: string
+      totpSecret?: string
+      otpauthUri?: string
+      qrDataUrl?: string
+    }
   | { kind: 'failed'; message: string }
   | { kind: 'cancelled' }
 

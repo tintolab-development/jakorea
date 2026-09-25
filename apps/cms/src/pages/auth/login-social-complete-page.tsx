@@ -9,6 +9,7 @@ import {
 
 import { isSocialAuthLoginRemoteEnabled } from '@/features/auth/api/social-auth-remote-capabilities'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { runOAuthCallbackOnce } from '@/features/auth/social-auth/callback-once'
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { handleError } from '@/shared/utils/error-handler'
@@ -22,7 +23,7 @@ function isMfaRequiredLoginError(err: unknown): boolean {
 
 export function LoginSocialCompletePage() {
   const navigate = useNavigate()
-  const { applySocialAuthTokens } = useAuthStore()
+  const { applySocialAuthTokens, beginAdminMfaChallenge } = useAuthStore()
   const startedRef = useRef(false)
 
   useEffect(() => {
@@ -42,7 +43,13 @@ export function LoginSocialCompletePage() {
       }
 
       const params = new URLSearchParams(window.location.search)
-      const outcome = await processSocialLoginSessionReturn(cmsSocialAuthClient, params)
+      const sessionKey =
+        params.get('adminSsoSessionId') ??
+        params.get('socialLoginSessionId') ??
+        window.location.search
+      const outcome = await runOAuthCallbackOnce(sessionKey, () =>
+        processSocialLoginSessionReturn(cmsSocialAuthClient, params)
+      )
 
       switch (outcome.kind) {
         case 'cancelled':
@@ -63,13 +70,15 @@ export function LoginSocialCompletePage() {
           return
 
         case 'mfa_required': {
-          const mfaParams = new URLSearchParams({
+          beginAdminMfaChallenge({
             challengeUuid: outcome.challengeUuid,
+            mfaMethod: outcome.mfaMethod,
+            expiresAt: outcome.expiresAt,
+            totpSecret: outcome.totpSecret,
+            otpauthUri: outcome.otpauthUri,
+            qrDataUrl: outcome.qrDataUrl,
           })
-          if (outcome.mfaMethod) {
-            mfaParams.set('mfaMethod', outcome.mfaMethod)
-          }
-          navigate(`/auth/mfa?${mfaParams.toString()}`, { replace: true })
+          navigate('/login', { replace: true })
           return
         }
 
@@ -106,7 +115,7 @@ export function LoginSocialCompletePage() {
       handleError(err, { context: 'loginSocialCompletePage.unexpected' })
       navigate('/login', { replace: true })
     })
-  }, [applySocialAuthTokens, navigate])
+  }, [applySocialAuthTokens, beginAdminMfaChallenge, navigate])
 
   return (
     <div className="router-loading-fallback">

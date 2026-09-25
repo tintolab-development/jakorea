@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
   getSettingsLnbItems,
@@ -9,6 +9,7 @@ import {
   MYPAGE_SETTINGS_PATH,
   SettingsConsentsView,
   SettingsEditForm,
+  SettingsSocialAccountsView,
   SettingsView,
   showSettingsInstructorConsentDocuments,
   useMypageMember,
@@ -29,19 +30,33 @@ import { PFText } from '@/shared/ui'
 import { MypageLayout } from '@/widgets/mypage-layout'
 import styles from './page.module.css'
 
-type SettingsTab = 'profile' | 'consents'
+type SettingsTab = 'profile' | 'social' | 'consents'
 type SettingsMode = 'view' | 'edit-basic'
+
+function readSettingsTab(params: URLSearchParams): SettingsTab {
+  const tab = params.get('tab')
+  if (tab === 'social' || tab === 'consents') return tab
+  return 'profile'
+}
 
 function resolvePageTitle(tab: SettingsTab, mode: SettingsMode) {
   if (mode === 'edit-basic') return '회원정보 수정'
+  if (tab === 'social') return '소셜계정 연동'
   if (tab === 'consents') return '약관 및 정책 동의 관리'
   return '회원정보 설정'
 }
 
+function resolveLnbKey(tab: SettingsTab, mode: SettingsMode) {
+  if (mode === 'edit-basic' || tab === 'profile') return 'settingsProfile' as const
+  if (tab === 'social') return 'settingsSocial' as const
+  return 'settingsConsents' as const
+}
+
 export function MypageSettingsPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [isAuthReady, setIsAuthReady] = useState(false)
-  const [tab, setTab] = useState<SettingsTab>('profile')
+  const [tab, setTab] = useState<SettingsTab>(() => readSettingsTab(searchParams))
   const [mode, setMode] = useState<SettingsMode>('view')
   const [localProfile, setLocalProfile] = useState<SettingsProfileInput | null>(null)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
@@ -53,7 +68,7 @@ export function MypageSettingsPage() {
   const view = mapPortalProfileToSettingsView(effectiveProfile, guardian, {
     variant: isTeacher ? 'teacher' : 'individual',
   })
-  const lnbActiveKey = mode === 'edit-basic' || tab === 'profile' ? 'settingsProfile' : 'settingsConsents'
+  const lnbActiveKey = resolveLnbKey(tab, mode)
   const lnbItems = getSettingsLnbItems(lnbActiveKey)
   const pageTitle = resolvePageTitle(tab, mode)
 
@@ -76,15 +91,27 @@ export function MypageSettingsPage() {
     return null
   }
 
+  const selectTab = (next: SettingsTab) => {
+    setTab(next)
+    const params = new URLSearchParams(searchParams)
+    params.delete('socialError')
+    if (next === 'profile') {
+      params.delete('tab')
+    } else {
+      params.set('tab', next)
+    }
+    setSearchParams(params, { replace: true })
+  }
+
   const handleLnbItemSelect = (key: MypageLnbItemKey) => {
-    if (key === 'settingsConsents') {
+    if (key === 'settingsConsents' || key === 'settingsSocial') {
       if (mode === 'edit-basic') return
-      setTab('consents')
+      selectTab(key === 'settingsSocial' ? 'social' : 'consents')
       return
     }
 
     if (key === 'settingsProfile') {
-      setTab('profile')
+      selectTab('profile')
     }
   }
 
@@ -149,6 +176,12 @@ export function MypageSettingsPage() {
           setMode('view')
         }}
       />,
+    )
+  }
+
+  if (tab === 'social') {
+    return wrap(
+      <SettingsSocialAccountsView linkErrorReason={searchParams.get('socialError')} />,
     )
   }
 

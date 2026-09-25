@@ -13,7 +13,10 @@ export type MypageHomeLnbItemKey =
   | 'volunteer'
   | 'inquiries'
 
-export type MypageSettingsLnbItemKey = 'settingsProfile' | 'settingsConsents'
+export type MypageSettingsLnbItemKey =
+  | 'settingsProfile'
+  | 'settingsSocial'
+  | 'settingsConsents'
 
 export type MypageLnbItemKey = MypageHomeLnbItemKey | MypageSettingsLnbItemKey
 

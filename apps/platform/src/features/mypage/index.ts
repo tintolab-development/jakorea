@@ -146,6 +146,7 @@ export {
   mapPortalProfileToSettingsView,
   SettingsConsentsView,
   SettingsEditForm,
+  SettingsSocialAccountsView,
   SettingsView,
   showSettingsInstructorConsentDocuments,
   useSettingsView,

@@ -1,5 +1,10 @@
-import { unwrapApiData, unwrapAuthTokenResult, rethrowSocialAuthApiError } from '../api-unwrap'
-import { SocialAuthApiError } from '../errors'
+import {
+  readSocialLoginMfaChallenge,
+  unwrapApiData,
+  unwrapAuthTokenResult,
+  rethrowSocialAuthApiError,
+} from '../api-unwrap'
+import { SocialAuthApiError, SocialLoginMfaRequiredError } from '../errors'
 import { fromApiProviderCode, toApiProviderCode } from '../provider-map'
 import { isLinkedSocialAccount } from '../social-account-status'
 import type {
@@ -201,6 +206,7 @@ export function createAdminSsoAdapter(options: CreateAdminSsoAdapterOptions): So
           provider: toApiProviderCode(input.provider),
           redirectUri,
           returnUrl,
+          intent: 'login',
         })
 
         return resolveSsoAuthorizationStartResult(
@@ -224,6 +230,10 @@ export function createAdminSsoAdapter(options: CreateAdminSsoAdapterOptions): So
           const { data } = await http.post(paths.loginSessionConsume(), {
             adminSsoSessionId,
           })
+          const mfaChallenge = readSocialLoginMfaChallenge(data)
+          if (mfaChallenge) {
+            throw new SocialLoginMfaRequiredError(mfaChallenge)
+          }
           return unwrapAuthTokenResult(data)
         }
 
@@ -242,6 +252,9 @@ export function createAdminSsoAdapter(options: CreateAdminSsoAdapterOptions): So
           'adminSsoSessionId가 없어 소셜 로그인을 완료할 수 없습니다.'
         )
       } catch (err) {
+        if (err instanceof SocialLoginMfaRequiredError) {
+          throw err
+        }
         rethrowSocialAuthApiError(err, '소셜 로그인 처리에 실패했습니다.')
       }
     },

@@ -7,6 +7,7 @@ import {
   type SocialProvider,
 } from '@jakorea/social-auth'
 import {
+  consumeSocialLinkReturn,
   isPortalSocialAuthLinkRemoteEnabled,
   platformSocialAuthClient,
 } from '@/features/auth/social-auth'
@@ -38,9 +39,11 @@ export function SignUpSocialConnectCallbackPage() {
     }
     startedRef.current = true
 
+    const settingsReturn = consumeSocialLinkReturn()
+
     const execute = async () => {
       if (!isPortalSocialAuthLinkRemoteEnabled()) {
-        navigate(CONNECT_PATH, { replace: true })
+        navigate(settingsReturn ?? CONNECT_PATH, { replace: true })
         return
       }
 
@@ -51,12 +54,19 @@ export function SignUpSocialConnectCallbackPage() {
         const cancelled =
           params.get('error') === 'access_denied' || params.get('error') === 'user_cancelled'
         if (cancelled) {
-          navigate(CONNECT_PATH, { replace: true })
+          navigate(settingsReturn ?? CONNECT_PATH, { replace: true })
           return
         }
         const normalized = (params.get('error') ?? '').toUpperCase()
         const alreadyLinked =
           normalized.includes('ALREADY_LINKED') || normalized.includes('ALREADY_CONNECTED')
+        if (settingsReturn) {
+          navigate(
+            `${settingsReturn}&socialError=${alreadyLinked ? 'already-linked' : 'connection-failed'}`,
+            { replace: true }
+          )
+          return
+        }
         navigate(
           `${ERROR_PATH}?reason=${alreadyLinked ? 'already-linked' : 'connection-failed'}`,
           { replace: true }
@@ -77,11 +87,11 @@ export function SignUpSocialConnectCallbackPage() {
       )
 
       if (outcome.kind === 'linked') {
-        navigate(COMPLETE_PATH, { replace: true })
+        navigate(settingsReturn ?? COMPLETE_PATH, { replace: true })
         return
       }
       if (outcome.kind === 'cancelled') {
-        navigate(CONNECT_PATH, { replace: true })
+        navigate(settingsReturn ?? CONNECT_PATH, { replace: true })
         return
       }
 
@@ -91,7 +101,7 @@ export function SignUpSocialConnectCallbackPage() {
           const accounts = await platformSocialAuthClient.listAccounts()
           if (accounts.some(account => account.provider === provider)) {
             platformSocialAuthClient.state.addConnectedProvider(provider)
-            navigate(COMPLETE_PATH, { replace: true })
+            navigate(settingsReturn ?? COMPLETE_PATH, { replace: true })
             return
           }
         } catch {
@@ -103,18 +113,31 @@ export function SignUpSocialConnectCallbackPage() {
         const alreadyLinked =
           outcome.message.includes('이미 연결') ||
           outcome.message.toUpperCase().includes('ALREADY_LINKED')
+        const reason = alreadyLinked ? 'already-linked' : 'connection-failed'
         navigate(
-          `${ERROR_PATH}?reason=${alreadyLinked ? 'already-linked' : 'connection-failed'}`,
+          settingsReturn
+            ? `${settingsReturn}&socialError=${reason}`
+            : `${ERROR_PATH}?reason=${reason}`,
           { replace: true }
         )
         return
       }
 
-      navigate(`${ERROR_PATH}?reason=connection-failed`, { replace: true })
+      navigate(
+        settingsReturn
+          ? `${settingsReturn}&socialError=connection-failed`
+          : `${ERROR_PATH}?reason=connection-failed`,
+        { replace: true }
+      )
     }
 
     void execute().catch(() => {
-      navigate(`${ERROR_PATH}?reason=connection-failed`, { replace: true })
+      navigate(
+        settingsReturn
+          ? `${settingsReturn}&socialError=connection-failed`
+          : `${ERROR_PATH}?reason=connection-failed`,
+        { replace: true }
+      )
     })
   }, [navigate])
 

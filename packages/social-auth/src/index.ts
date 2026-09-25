@@ -19,9 +19,11 @@ export {
 export {
   SocialAccountNotLinkedError,
   SocialAccountAlreadyLinkedError,
+  SocialLoginMfaRequiredError,
   SocialAuthApiError,
   isSocialAccountNotLinkedError,
   isSocialAccountAlreadyLinkedError,
+  isSocialLoginMfaRequiredError,
   parseSocialAuthApiError,
 } from './errors'
 
@@ -51,7 +53,12 @@ export type {
 } from './adapters'
 export type { CreatePortalSsoAdapterOptions } from './adapters/portal-sso-adapter'
 
-export { unwrapApiData, unwrapAuthTokenResult, rethrowSocialAuthApiError } from './api-unwrap'
+export {
+  unwrapApiData,
+  unwrapAuthTokenResult,
+  readSocialLoginMfaChallenge,
+  rethrowSocialAuthApiError,
+} from './api-unwrap'
 
 export type {
   SocialProvider,
@@ -71,6 +78,7 @@ export type {
   LinkAccountInput,
   OAuthClientConfig,
   PendingSocialLink,
+  SocialLoginMfaChallenge,
   OAuthCallbackOutcome,
   OAuthLinkCallbackOutcome,
   SignupSocialReturnOutcome,
