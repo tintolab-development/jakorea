@@ -7,9 +7,9 @@
 | **값 SSOT** | 이 문서 |
 | **화면 출처** | Platform [`header-config.ts`](../../../platform/src/widgets/layout/app-layout/header/header-config.ts) · [`footer.tsx`](../../../platform/src/widgets/layout/app-layout/footer.tsx) |
 | **BE 스크립트** | `JAHOMEADMINBACK/scripts/seed_site_settings_local.sql` · `seed_gnb_menu_local.sql` · `seed_footer_local.sql` |
-| **전달 프롬프트** | [`site-management-platform-seed-backend-cursor-prompt-2026-09-23.md`](./site-management-platform-seed-backend-cursor-prompt-2026-09-23.md) |
+| **전달 프롬프트** | [`site-management-platform-seed-backend-cursor-prompt-2026-09-25.md`](./site-management-platform-seed-backend-cursor-prompt-2026-09-25.md) (이전: [`2026-09-23`](./site-management-platform-seed-backend-cursor-prompt-2026-09-23.md)) |
 
-Admin mock(`apps/admin/.../store.ts`)은 시드 SSOT가 아니다. mock은 `JA KOREA`, `기관 소개`, `진로·취업`, `PARTICIPATION_RESULT` 미사용, 주소 괄호를 그대로 둔다. 실 JWT 조회는 이 문서 값을 보여야 한다.
+Admin mock(`apps/admin/.../store.ts`)은 2026-09-25부터 이 문서와 같은 문구를 쓴다. mock은 SSOT가 아니다. 실 JWT 조회는 이 문서 값을 보여야 한다. DB에 옛 값(`JA KOREA`, `기관 소개`, `진로·취업`, `기업가정신`, 결과 확인 미사용, 주소 괄호)이 남아 있으면 위 프롬프트의 SQL을 다시 실행한다.
 
 구 문서 [`site-settings-dummy-seed-backend-request.md`](./site-settings-dummy-seed-backend-request.md) · [`gnb-menu-dummy-seed-backend-request.md`](./gnb-menu-dummy-seed-backend-request.md) · [`footer-dummy-seed-backend-request.md`](./footer-dummy-seed-backend-request.md)의 완료 기준(사이트명 `JA KOREA`, 결과 확인 미사용)은 쓰지 않는다.
 
@@ -146,4 +146,4 @@ Admin JWT:
 - [ ] `footer_partner` 1–3 enabled + logo, id 4 disabled + name/logo NULL
 - [ ] 스크립트 재실행 후 행 수가 늘지 않음
 
-**Last updated:** 2026-09-23
+**Last updated:** 2026-09-25
