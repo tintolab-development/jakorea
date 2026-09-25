@@ -3,9 +3,20 @@ import { useEffect, useMemo, useRef } from 'react'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { isHomepageApiConfigured } from '@/shared/lib/api-remote-env'
 import { shouldRetryQuery } from '@/shared/lib/query-retry'
-import { fetchPublicSiteFooter, fetchPublicSiteGnb, fetchPublicSiteSettings } from './client'
+import {
+  fetchPublicParticipationLinks,
+  fetchPublicSiteFooter,
+  fetchPublicSiteGnb,
+  fetchPublicSiteSettings,
+} from './client'
 import { mapPublicFooter, SITE_FOOTER_FALLBACK, type SiteFooterView } from '../lib/map-public-footer'
 import { mapPublicGnb, SITE_GNB_FALLBACK, type SiteGnbView } from '../lib/map-public-gnb'
+import {
+  applyParticipationLinksToFooter,
+  applyParticipationLinksToGnb,
+  EMPTY_PARTICIPATION_EXTERNAL_HREFS,
+  mapPublicParticipationLinks,
+} from '../lib/map-public-participation-links'
 import {
   mapPublicSettings,
   SITE_SETTINGS_FALLBACK,
@@ -45,6 +56,12 @@ export const siteFooterQueryOptions = queryOptions({
   queryFn: ({ signal }) => fetchPublicSiteFooter(signal),
 })
 
+export const siteParticipationLinksQueryOptions = queryOptions({
+  ...siteShellQueryDefaults,
+  queryKey: platformQueryKeys.site.participationLinks(),
+  queryFn: ({ signal }) => fetchPublicParticipationLinks(signal),
+})
+
 function useSiteShellErrorLog(scope: string, isError: boolean, error: unknown) {
   const logged = useRef(false)
   useEffect(() => {
@@ -52,6 +69,22 @@ function useSiteShellErrorLog(scope: string, isError: boolean, error: unknown) {
     logged.current = true
     console.error(`[site-shell] ${scope}`, error)
   }, [error, isError, scope])
+}
+
+function useParticipationExternalHrefs() {
+  const remote = isHomepageApiConfigured()
+  const query = useQuery({
+    ...siteParticipationLinksQueryOptions,
+    enabled: remote,
+  })
+  useSiteShellErrorLog('participation-links', query.isError, query.error)
+
+  return useMemo(() => {
+    if (!remote || query.isError || query.data === undefined) {
+      return EMPTY_PARTICIPATION_EXTERNAL_HREFS
+    }
+    return mapPublicParticipationLinks(query.data)
+  }, [query.data, query.isError, remote])
 }
 
 export function useSiteSettings(): SiteSettingsView {
@@ -73,6 +106,7 @@ export function useSiteSettings(): SiteSettingsView {
 
 export function useSiteGnb(): SiteGnbView {
   const remote = isHomepageApiConfigured()
+  const links = useParticipationExternalHrefs()
   const query = useQuery({
     ...siteGnbQueryOptions,
     enabled: remote,
@@ -80,16 +114,20 @@ export function useSiteGnb(): SiteGnbView {
   useSiteShellErrorLog('gnb', query.isError, query.error)
 
   return useMemo(() => {
-    if (!remote) return SITE_GNB_FALLBACK
-    if (query.data !== undefined) {
-      return mapPublicGnb(query.data) ?? SITE_GNB_FALLBACK
-    }
-    return SITE_GNB_FALLBACK
-  }, [query.data, remote])
+    const base = (() => {
+      if (!remote) return SITE_GNB_FALLBACK
+      if (query.data !== undefined) {
+        return mapPublicGnb(query.data) ?? SITE_GNB_FALLBACK
+      }
+      return SITE_GNB_FALLBACK
+    })()
+    return applyParticipationLinksToGnb(base, links)
+  }, [links, query.data, remote])
 }
 
 export function useSiteFooter(): SiteFooterView {
   const remote = isHomepageApiConfigured()
+  const links = useParticipationExternalHrefs()
   const query = useQuery({
     ...siteFooterQueryOptions,
     enabled: remote,
@@ -97,10 +135,13 @@ export function useSiteFooter(): SiteFooterView {
   useSiteShellErrorLog('footer', query.isError, query.error)
 
   return useMemo(() => {
-    if (!remote) return SITE_FOOTER_FALLBACK
-    if (query.data !== undefined) {
-      return mapPublicFooter(query.data) ?? SITE_FOOTER_FALLBACK
-    }
-    return SITE_FOOTER_FALLBACK
-  }, [query.data, remote])
+    const base = (() => {
+      if (!remote) return SITE_FOOTER_FALLBACK
+      if (query.data !== undefined) {
+        return mapPublicFooter(query.data) ?? SITE_FOOTER_FALLBACK
+      }
+      return SITE_FOOTER_FALLBACK
+    })()
+    return applyParticipationLinksToFooter(base, links)
+  }, [links, query.data, remote])
 }

@@ -55,6 +55,9 @@ export const platformQueryKeys = {
     gnb: () => [...platformQueryKeys.site.all(), 'gnb'] as const,
     /** GET /api/public/site/footer — Class B-shell */
     footer: () => [...platformQueryKeys.site.all(), 'footer'] as const,
+    /** GET /api/public/participation/links — Class B-shell (GNB·푸터 외부 URL) */
+    participationLinks: () =>
+      [...platformQueryKeys.site.all(), 'participation-links'] as const,
   },
 
   impactStory: {

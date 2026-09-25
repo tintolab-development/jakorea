@@ -35,3 +35,8 @@ export function fetchPublicSiteGnb(signal?: AbortSignal): Promise<unknown> {
 export function fetchPublicSiteFooter(signal?: AbortSignal): Promise<unknown> {
   return getPublic('/api/public/site/footer', signal)
 }
+
+/** Admin 참여하기 관리 외부 링크 — GET /api/public/participation/links */
+export function fetchPublicParticipationLinks(signal?: AbortSignal): Promise<unknown> {
+  return getPublic('/api/public/participation/links', signal)
+}
