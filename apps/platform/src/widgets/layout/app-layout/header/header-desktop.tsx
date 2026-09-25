@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { PFText } from '@/shared/ui'
 import logoUrl from '@/shared/assets/brand/ja-logo.svg'
@@ -25,9 +25,13 @@ type HeaderDesktopProps = {
 function NavigationSubMenuItem({
   item,
   onNavigate,
+  onHoverStart,
+  onHoverEnd,
 }: {
   item: NavigationSubItem
   onNavigate?: () => void
+  onHoverStart?: () => void
+  onHoverEnd?: () => void
 }) {
   const isDisabled = !item.href
   const itemClassName = [
@@ -62,6 +66,8 @@ function NavigationSubMenuItem({
           target="_blank"
           rel="noopener noreferrer"
           onClick={onNavigate}
+          onMouseEnter={onHoverStart}
+          onMouseLeave={onHoverEnd}
         >
           {content}
         </a>
@@ -69,14 +75,27 @@ function NavigationSubMenuItem({
     }
 
     return (
-      <Link className={itemClassName} to={item.href} role="menuitem" onClick={onNavigate}>
+      <Link
+        className={itemClassName}
+        to={item.href}
+        role="menuitem"
+        onClick={onNavigate}
+        onMouseEnter={onHoverStart}
+        onMouseLeave={onHoverEnd}
+      >
         {content}
       </Link>
     )
   }
 
   return (
-    <span className={itemClassName} role="menuitem" aria-disabled="true">
+    <span
+      className={itemClassName}
+      role="menuitem"
+      aria-disabled="true"
+      onMouseEnter={onHoverStart}
+      onMouseLeave={onHoverEnd}
+    >
       {content}
     </span>
   )
@@ -97,17 +116,41 @@ export function HeaderDesktop({
   )
   const [hoveredGroupCode, setHoveredGroupCode] = useState<string | null>(null)
   const [isNavOpen, setIsNavOpen] = useState(false)
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
-    setActiveGroupCode(getActiveNavigationGroupCode(pathname))
-    setHoveredGroupCode(null)
-    setIsNavOpen(false)
-  }, [pathname])
+  const cancelScheduledClose = () => {
+    if (closeTimerRef.current == null) return
+    clearTimeout(closeTimerRef.current)
+    closeTimerRef.current = null
+  }
 
   const closeNav = () => {
+    cancelScheduledClose()
     setIsNavOpen(false)
     setHoveredGroupCode(null)
   }
+
+  const scheduleClose = () => {
+    cancelScheduledClose()
+    closeTimerRef.current = setTimeout(() => {
+      closeTimerRef.current = null
+      setIsNavOpen(false)
+      setHoveredGroupCode(null)
+    }, 120)
+  }
+
+  const openGroup = (groupCode: string) => {
+    cancelScheduledClose()
+    setHoveredGroupCode(groupCode)
+    setIsNavOpen(true)
+  }
+
+  useEffect(() => {
+    setActiveGroupCode(getActiveNavigationGroupCode(pathname))
+    closeNav()
+  }, [pathname])
+
+  useEffect(() => () => cancelScheduledClose(), [])
 
   const headerClassName = [
     styles.header,
@@ -119,33 +162,19 @@ export function HeaderDesktop({
     .filter(Boolean)
     .join(' ')
 
-  const dropdownClassName = [styles.dropdownPanel, isNavOpen ? styles.dropdownPanelOpen : undefined]
-    .filter(Boolean)
-    .join(' ')
-
   const highlightedGroupCode = hoveredGroupCode ?? activeGroupCode
 
   return (
     <header
       className={headerClassName}
-      onMouseLeave={() => {
-        setIsNavOpen(false)
-        setHoveredGroupCode(null)
-      }}
+      onMouseLeave={closeNav}
     >
       <div className={styles.inner}>
         <Link className={styles.logoLink} to="/" aria-label="JA Korea 홈">
           <img className={styles.logo} src={logoUrl} alt="JA Korea" />
         </Link>
 
-        <nav
-          className={styles.navigation}
-          aria-label="주요 메뉴"
-          aria-expanded={isNavOpen}
-          onMouseEnter={() => {
-            setIsNavOpen(true)
-          }}
-        >
+        <nav className={styles.navigation} aria-label="주요 메뉴" aria-expanded={isNavOpen}>
           {groups.map(group => {
             const isHighlighted = group.groupCode === highlightedGroupCode
             const isRouteActive = group.groupCode === activeGroupCode
@@ -156,33 +185,50 @@ export function HeaderDesktop({
               .filter(Boolean)
               .join(' ')
 
+            const openThisGroup = () => {
+              openGroup(group.groupCode)
+            }
+
             return (
-              <button
-                className={buttonClassName}
-                type="button"
-                aria-pressed={isRouteActive}
-                key={group.groupCode}
-                onMouseEnter={() => {
-                  setHoveredGroupCode(group.groupCode)
-                }}
-                onClick={() => {
-                  setActiveGroupCode(group.groupCode)
-                  const href = 'href' in group ? group.href : undefined
-                  if (href) {
-                    closeNav()
-                    navigate(href)
-                  }
-                }}
-              >
-                <span className={styles.navigationButtonLabel}>
-                  <PFText
-                    typo="bd-lg-sb"
-                    color="inherit"
-                  >
-                    {group.label}
-                  </PFText>
-                </span>
-              </button>
+              <div className={styles.menuColumn} key={group.groupCode}>
+                <button
+                  className={buttonClassName}
+                  type="button"
+                  aria-pressed={isRouteActive}
+                  onMouseEnter={openThisGroup}
+                  onMouseLeave={scheduleClose}
+                  onClick={() => {
+                    setActiveGroupCode(group.groupCode)
+                    const href = 'href' in group ? group.href : undefined
+                    if (href) {
+                      closeNav()
+                      navigate(href)
+                    }
+                  }}
+                >
+                  <span className={styles.navigationButtonLabel}>
+                    <PFText typo="bd-lg-sb" color="inherit">
+                      {group.label}
+                    </PFText>
+                  </span>
+                </button>
+                <div
+                  className={styles.menuGroup}
+                  role="group"
+                  aria-label={group.label}
+                  aria-hidden={isNavOpen ? undefined : true}
+                >
+                  {group.children.map(item => (
+                    <NavigationSubMenuItem
+                      item={item}
+                      key={item.menuCode}
+                      onNavigate={closeNav}
+                      onHoverStart={openThisGroup}
+                      onHoverEnd={scheduleClose}
+                    />
+                  ))}
+                </div>
+              </div>
             )
           })}
         </nav>
@@ -233,40 +279,6 @@ export function HeaderDesktop({
         )}
       </div>
 
-      <div
-        className={dropdownClassName}
-        role="menu"
-        aria-label="주요 메뉴 하위"
-        onMouseEnter={() => {
-          setIsNavOpen(true)
-        }}
-      >
-        <div className={styles.dropdownInner}>
-          <div className={styles.dropdownLogoSpacer} aria-hidden="true" />
-          <div className={styles.dropdownColumns}>
-            {groups.map(group => (
-              <div
-                className={styles.menuGroup}
-                role="group"
-                aria-label={group.label}
-                key={group.groupCode}
-                onMouseEnter={() => {
-                  setHoveredGroupCode(group.groupCode)
-                }}
-              >
-                {group.children.map(item => (
-                  <NavigationSubMenuItem
-                    item={item}
-                    key={item.menuCode}
-                    onNavigate={closeNav}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-          <div className={styles.dropdownAuthSpacer} aria-hidden="true" />
-        </div>
-      </div>
     </header>
   )
 }

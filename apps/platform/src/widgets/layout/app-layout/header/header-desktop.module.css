@@ -48,10 +48,13 @@
 }
 
 .inner {
+  --header-logo-column: 195px;
+  --header-auth-column: 152px;
+
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: 195px 1fr 152px;
+  grid-template-columns: var(--header-logo-column) 1fr var(--header-auth-column);
   align-items: center;
   column-gap: var(--spacing-64);
   width: 100%;
@@ -63,8 +66,7 @@
 }
 
 @media (--bp-pc-compact) {
-  .inner,
-  .dropdownInner {
+  .inner {
     column-gap: var(--spacing-24);
     padding-inline: var(--spacing-24);
   }
@@ -74,16 +76,7 @@
   }
 
   .navigationButton {
-    width: 100px;
-    padding-inline: var(--spacing-12);
-  }
-
-  .dropdownColumns {
-    gap: var(--spacing-8);
-  }
-
-  .menuGroup {
-    width: 100px;
+    padding-inline: var(--spacing-8);
   }
 }
 
@@ -101,22 +94,48 @@
 }
 
 .navigation {
+  position: relative;
   display: flex;
-  height: 100%;
-  min-width: 0;
+  justify-self: center;
+  align-self: start;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  width: max-content;
+  max-width: 100%;
+  height: auto;
+  min-width: 0;
   gap: var(--spacing-16);
+}
+
+.headerNavOpen .navigation::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  top: var(--spacing-100);
+  bottom: 0;
+  /* 메뉴 묶음은 로고·계정 칸 너비 차이만큼 화면 중앙에서 벗어난다. */
+  left: calc(50% - 50vw - (var(--header-logo-column) - var(--header-auth-column)) / 2);
+  width: 100vw;
+  background: var(--color-neutral-white);
+  border-bottom: 1px solid var(--color-border-default);
+  pointer-events: none;
+}
+
+.menuColumn {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .navigationButton {
   display: flex;
-  width: 140px;
-  align-self: stretch;
+  width: max-content;
+  height: var(--spacing-100);
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  padding: 0;
+  padding-inline: var(--spacing-12);
   border: 0;
   background: transparent;
   cursor: pointer;
@@ -148,68 +167,36 @@
   background: var(--header-indicator-color);
 }
 
-.dropdownPanel {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  z-index: 1;
-  border-bottom: 1px solid var(--color-border-default);
-  background: var(--color-neutral-white);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition:
-    opacity 0.15s ease,
-    visibility 0.15s ease;
-}
-
-.dropdownPanelOpen {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-}
-
-.dropdownInner {
-  display: grid;
-  grid-template-columns: 195px 1fr 152px;
-  column-gap: var(--spacing-64);
-  width: 100%;
-  max-width: 1920px;
-  margin-inline: auto;
-  padding-inline: var(--spacing-60);
-}
-
-.dropdownLogoSpacer,
-.dropdownAuthSpacer {
-  min-width: 0;
-}
-
-.dropdownColumns {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: var(--spacing-16);
-  min-width: 0;
-}
-
 .menuGroup {
   display: flex;
-  width: 140px;
-  padding: var(--spacing-16) 0;
+  width: max-content;
+  height: 0;
+  padding: 0;
   flex-direction: column;
-  align-items: flex-start;
-  flex-shrink: 0;
+  align-items: center;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.headerNavOpen .menuGroup {
+  height: auto;
+  padding: var(--spacing-16) 0;
+  overflow: visible;
+  visibility: visible;
+}
+
+.headerNavOpen .menuItem {
+  pointer-events: auto;
 }
 
 .menuItem {
   display: flex;
   height: 60px;
-  padding: 10px;
+  padding: 10px var(--spacing-8);
   justify-content: center;
   align-items: center;
   gap: 10px;
-  align-self: stretch;
   border: 0;
   border-radius: var(--radius-8);
   background: transparent;
