@@ -2,7 +2,7 @@
  * 사이트 정보 관리 — 조회/수정 폼
  */
 
-import { useCallback, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { SiteInfo, SiteInfoSaveInput } from '@/entities/site-info/model/types'
@@ -108,9 +108,61 @@ function ImagePlaceholderIcon() {
   )
 }
 
-function TextView({ value }: { value: string }) {
-  return <span className="site-info-form__text-view">{value || '-'}</span>
-}
+const SiteInfoTextField = memo(function SiteInfoTextField({
+  sourceValue,
+  isEditing,
+  placeholder,
+  ariaLabel,
+  error,
+  onDraftChange,
+  onClearError,
+}: {
+  sourceValue: string
+  isEditing: boolean
+  placeholder: string
+  ariaLabel: string
+  error?: string
+  onDraftChange: (value: string) => void
+  onClearError?: () => void
+}) {
+  const [localValue, setLocalValue] = useState(sourceValue)
+
+  useEffect(() => {
+    if (isEditing) return
+    setLocalValue(sourceValue)
+  }, [isEditing, sourceValue])
+
+  return (
+    <div>
+      <CmsInput
+        className={
+          isEditing
+            ? 'site-info-inline-field site-info-inline-field--edit'
+            : 'site-info-inline-field site-info-inline-field--readonly'
+        }
+        inputSize="large"
+        width="100%"
+        placeholder={placeholder}
+        value={localValue}
+        readOnly={!isEditing}
+        tabIndex={isEditing ? 0 : -1}
+        aria-label={ariaLabel}
+        onChange={e => {
+          if (!isEditing) return
+          const next = e.target.value
+          setLocalValue(next)
+          onDraftChange(next)
+          if (error && next.trim()) onClearError?.()
+        }}
+      />
+      {error ? (
+        <p className="site-info-form__field-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  )
+})
 
 function ImageView({
   url,
@@ -226,15 +278,36 @@ export function SiteInfoFormCard({ data }: Props) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<DraftState>(() => cloneInfo(data))
   const [nameError, setNameError] = useState<string | undefined>()
+  const textDraftRef = useRef({ siteName: data.siteName, siteDescription: data.siteDescription })
+
+  useEffect(() => {
+    if (isEditing) return
+    textDraftRef.current = { siteName: data.siteName, siteDescription: data.siteDescription }
+  }, [data.siteDescription, data.siteName, isEditing])
 
   const handleEdit = useCallback(() => {
+    textDraftRef.current = { siteName: data.siteName, siteDescription: data.siteDescription }
     setDraft(cloneInfo(data))
     setNameError(undefined)
     setIsEditing(true)
   }, [data])
 
+  const handleSiteNameChange = useCallback((value: string) => {
+    textDraftRef.current = { ...textDraftRef.current, siteName: value }
+  }, [])
+
+  const handleSiteDescriptionChange = useCallback((value: string) => {
+    textDraftRef.current = { ...textDraftRef.current, siteDescription: value }
+  }, [])
+
+  const clearNameError = useCallback(() => {
+    setNameError(undefined)
+  }, [])
+
   const handleSave = useCallback(async () => {
-    if (!draft.siteName.trim()) {
+    const siteName = textDraftRef.current.siteName
+    const siteDescription = textDraftRef.current.siteDescription
+    if (!siteName.trim()) {
       setNameError('사이트명을 입력해 주세요.')
       showAlert({
         title: '필수 항목 누락',
@@ -244,7 +317,9 @@ export function SiteInfoFormCard({ data }: Props) {
     }
     setNameError(undefined)
     try {
-      await saveMutation.mutateAsync(toSaveInput(draft))
+      await saveMutation.mutateAsync(
+        toSaveInput({ ...draft, siteName, siteDescription }),
+      )
       setIsEditing(false)
     } catch (error) {
       if (error instanceof Error && error.message === 'SITE_NAME_REQUIRED') {
@@ -262,8 +337,7 @@ export function SiteInfoFormCard({ data }: Props) {
     setDraft(prev => ({ ...prev, ...patch }))
   }, [])
 
-  const mode = isEditing ? 'edit' : 'view'
-  const current = isEditing ? draft : data
+  const image = isEditing ? draft : data
 
   return (
     <div className="admin-list-card site-info-form-card">
@@ -298,46 +372,38 @@ export function SiteInfoFormCard({ data }: Props) {
         <DetailInfoForm
           title="사이트 정보"
           hideHeader
-          mode={mode}
+          mode="edit"
           className="site-info-form"
         >
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="사이트명"
               required
-              view={<TextView value={current.siteName} />}
+              view={null}
               edit={
-                <div>
-                  <CmsInput
-                    inputSize="large"
-                    width="100%"
-                    placeholder="사이트명을 입력하세요"
-                    value={draft.siteName}
-                    onChange={e => {
-                      updateDraft({ siteName: e.target.value })
-                      if (e.target.value.trim()) setNameError(undefined)
-                    }}
-                  />
-                  {nameError ? (
-                    <p className="site-info-form__field-error" role="alert">
-                      {nameError}
-                    </p>
-                  ) : null}
-                </div>
+                <SiteInfoTextField
+                  sourceValue={data.siteName}
+                  isEditing={isEditing}
+                  placeholder="사이트명을 입력하세요"
+                  ariaLabel="사이트명"
+                  error={nameError}
+                  onDraftChange={handleSiteNameChange}
+                  onClearError={clearNameError}
+                />
               }
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="사이트 소개글"
-              view={<TextView value={current.siteDescription} />}
+              view={null}
               edit={
-                <CmsInput
-                  inputSize="large"
-                  width="100%"
+                <SiteInfoTextField
+                  sourceValue={data.siteDescription}
+                  isEditing={isEditing}
                   placeholder="사이트 소개글을 입력하세요"
-                  value={draft.siteDescription}
-                  onChange={e => updateDraft({ siteDescription: e.target.value })}
+                  ariaLabel="사이트 소개글"
+                  onDraftChange={handleSiteDescriptionChange}
                 />
               }
             />
@@ -345,14 +411,9 @@ export function SiteInfoFormCard({ data }: Props) {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="링크 공유용 이미지"
-              view={
-                <ImageView
-                  url={current.ogImageUrl}
-                  fileName={current.ogImageFileName}
-                  alt="링크 공유용 이미지"
-                />
-              }
+              view={null}
               edit={
+                isEditing ? (
                 <ImageEditField
                   imageUrl={draft.ogImageUrl}
                   fileName={draft.ogImageFileName ?? ''}
@@ -374,21 +435,22 @@ export function SiteInfoFormCard({ data }: Props) {
                     })
                   }
                 />
+                ) : (
+                  <ImageView
+                    url={image.ogImageUrl}
+                    fileName={image.ogImageFileName}
+                    alt="링크 공유용 이미지"
+                  />
+                )
               }
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="브라우저탭 아이콘"
-              view={
-                <ImageView
-                  url={current.faviconUrl}
-                  fileName={current.faviconFileName}
-                  alt="브라우저탭 아이콘"
-                  variant="favicon"
-                />
-              }
+              view={null}
               edit={
+                isEditing ? (
                 <ImageEditField
                   imageUrl={draft.faviconUrl}
                   fileName={draft.faviconFileName ?? ''}
@@ -411,6 +473,14 @@ export function SiteInfoFormCard({ data }: Props) {
                     })
                   }
                 />
+                ) : (
+                  <ImageView
+                    url={image.faviconUrl}
+                    fileName={image.faviconFileName}
+                    alt="브라우저탭 아이콘"
+                    variant="favicon"
+                  />
+                )
               }
             />
           </DetailInfoForm.Row>

@@ -58,15 +58,29 @@
   vertical-align: middle;
 }
 
-.gnb-menu-form__name-text {
-  display: block;
-  width: 100%;
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
+.gnb-menu-form__name-input--readonly .cms-input__control {
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default;
+}
+
+.gnb-menu-form__name-input--readonly .cms-input__control:hover {
+  border-color: transparent !important;
+}
+
+.gnb-menu-form__name-input--readonly .ant-input {
+  cursor: default;
+  color: var(--main-BK, #3d3d3d) !important;
   font-weight: 500;
-  line-height: 150%;
   text-align: left;
+}
+
+.gnb-menu-form__name-input--edit .cms-input__control {
+  border-width: 1px;
+  border-style: solid;
 }
 
 /* 하위 메뉴명 열 — 셀 공통 패딩(12×20) 안쪽 가로 fill, 이중 패딩 없음 */

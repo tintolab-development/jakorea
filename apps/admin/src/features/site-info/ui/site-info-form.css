@@ -73,6 +73,36 @@
   min-width: 0;
 }
 
+.site-info-inline-field {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.site-info-inline-field .cms-input__control {
+  border-width: 1px;
+  border-style: solid;
+  box-sizing: border-box;
+}
+
+.site-info-form .site-info-inline-field--readonly .cms-input__control {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default;
+}
+
+.site-info-form .site-info-inline-field--readonly .cms-input__control:hover {
+  border-color: transparent !important;
+}
+
+.site-info-form .site-info-inline-field--readonly .ant-input {
+  cursor: default;
+  color: var(--default-BK, #3d3d3d) !important;
+  font-weight: 500;
+}
+
 .site-info-form__text-view {
   display: block;
   width: 100%;
