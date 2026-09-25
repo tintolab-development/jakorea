@@ -1,6 +1,7 @@
 /**
  * 재능기부 신청 상세 모달
- * 시안: 1400×880 · 셸 padding 26/30/34 · 타이틀↔본문 24 · 본문↔푸터 30
+ * 시안 폭 1400 · 셸 padding 26/30/34 · 타이틀↔본문 24 · 본문↔푸터 30
+ * 높이 920: 단일 행 기본·추가 정보가 880에서는 약 23px 넘어 본문 스크롤이 생김
  */
 
 .ant-modal-wrap:has(.ant-modal.teal-header-modal--large.talent-app-detail-modal) {
@@ -41,10 +42,10 @@
   padding: 26px 30px 34px !important;
   border-radius: 12px;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
-  height: min(880px, calc(100vh - 32px));
-  height: min(880px, calc(100dvh - 32px));
-  max-height: min(880px, calc(100vh - 32px));
-  max-height: min(880px, calc(100dvh - 32px));
+  height: min(920px, calc(100vh - 32px));
+  height: min(920px, calc(100dvh - 32px));
+  max-height: min(920px, calc(100vh - 32px));
+  max-height: min(920px, calc(100dvh - 32px));
   min-height: 0;
   overflow: hidden;
 }
