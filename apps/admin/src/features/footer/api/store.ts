@@ -106,7 +106,7 @@ function buildSeedTopMenus(): FooterTopMenu[] {
 function buildSeedOrgInfo(): FooterOrgInfo {
   return {
     name: '사단법인 제이에이코리아',
-    address: '서울특별시 강서구 마곡중앙로 171 (마곡나루역 프라이빗타워2차 714호)',
+    address: '서울특별시 강서구 마곡중앙로 171 마곡나루역 프라이빗타워2차 714호',
     zipCode: '07788',
     representative: '이은형',
     businessNumber: '107-82-10367',

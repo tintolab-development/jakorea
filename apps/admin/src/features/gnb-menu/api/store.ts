@@ -29,7 +29,7 @@ const SEED_GROUPS: ReadonlyArray<{
     id: 'ja_korea',
     label: 'JA Korea',
     items: [
-      { id: 'ja-intro', name: '기관 소개' },
+      { id: 'ja-intro', name: '기관소개' },
       { id: 'ja-transparency', name: '투명경영' },
       { id: 'ja-people', name: '함께하는 사람들' },
       { id: 'ja-directions', name: '오시는 길' },
@@ -47,9 +47,9 @@ const SEED_GROUPS: ReadonlyArray<{
     id: 'education',
     label: '교육 소개',
     items: [
-      { id: 'edu-career', name: '진로·취업' },
-      { id: 'edu-finance', name: '경제·금융' },
-      { id: 'edu-entrepreneur', name: '기업가정신' },
+      { id: 'edu-career', name: '진로취업' },
+      { id: 'edu-finance', name: '경제금융' },
+      { id: 'edu-entrepreneur', name: '기업가 정신' },
       { id: 'edu-literacy', name: '디지털 리터러시' },
       { id: 'edu-textbook', name: '교재 소개' },
     ],
@@ -59,7 +59,7 @@ const SEED_GROUPS: ReadonlyArray<{
     label: '참여하기',
     items: [
       { id: 'part-program', name: '프로그램 신청' },
-      { id: 'part-result', name: '결과 확인', isActive: false },
+      { id: 'part-result', name: '결과 확인', isActive: true },
       { id: 'part-online', name: '온라인 학습' },
       { id: 'part-alumni', name: 'Alumni' },
     ],
