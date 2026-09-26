@@ -14,7 +14,7 @@ import {
   type TransparencyReportType,
   type TransparencyReportsListParams,
 } from '@/features/transparency'
-import { useShouldUsePlatformMockData } from '@/shared/hooks'
+import { useDebouncedValue, useShouldUsePlatformMockData } from '@/shared/hooks'
 import { PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
@@ -43,6 +43,8 @@ const TAB_ITEMS = [
   { key: 'audit', label: '회계감사 보고서' },
 ] as const
 
+const SEARCH_DEBOUNCE_MS = 500
+
 export type TransparencyReportsPageProps = {
   type: TransparencyReportType
 }
@@ -53,25 +55,47 @@ export function TransparencyReportsPage({ type }: TransparencyReportsPageProps) 
   const config = PAGE_CONFIG[type]
   const reports = type === 'annual' ? getMockAnnualReports() : getMockAuditReports()
   const [params, setParams] = useState(readReportsListParams)
+  const [draftQ, setDraftQ] = useState(() => readReportsListParams().q)
+  const debouncedQ = useDebouncedValue(draftQ, SEARCH_DEBOUNCE_MS)
 
   // 탭 전환(라우트 변경) 시 URL 기준으로 검색어·페이지 재동기화
   const [prevType, setPrevType] = useState(type)
   if (prevType !== type) {
     setPrevType(type)
-    setParams(readReportsListParams())
+    const next = readReportsListParams()
+    setParams(next)
+    setDraftQ(next.q)
   }
 
   useEffect(() => {
     const onPopState = () => {
-      setParams(readReportsListParams())
+      const next = readReportsListParams()
+      setParams(next)
+      setDraftQ(next.q)
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
+  useEffect(() => {
+    setParams(prev => {
+      if (prev.q === debouncedQ) return prev
+      const merged: TransparencyReportsListParams = { ...prev, q: debouncedQ, page: 1 }
+      const nextPath = buildReportsListPath(config.path, merged)
+      const currentPath = `${window.location.pathname}${window.location.search}`
+      if (nextPath !== currentPath) {
+        window.history.pushState(null, '', nextPath)
+      }
+      return merged
+    })
+  }, [config.path, debouncedQ])
+
   const updateParams = (next: Partial<TransparencyReportsListParams>) => {
     const merged = { ...params, ...next }
     setParams(merged)
+    if (next.q !== undefined) {
+      setDraftQ(next.q)
+    }
     const nextPath = buildReportsListPath(config.path, merged)
     const currentPath = `${window.location.pathname}${window.location.search}`
     if (nextPath !== currentPath) {
@@ -129,8 +153,8 @@ export function TransparencyReportsPage({ type }: TransparencyReportsPageProps) 
               <PFSearchInput
                 className={styles.searchField}
                 variant="outlined"
-                value={params.q}
-                onValueChange={q => updateParams({ q, page: 1 })}
+                value={draftQ}
+                onValueChange={setDraftQ}
                 placeholder="제목, 내용으로 검색해 보세요"
               />
             </div>
