@@ -1,9 +1,9 @@
 /**
  * 채용공고 관리 목록
- * 등록·수정 모달은 시안이 오기 전까지 열지 않는다.
  */
 
 import { useCallback, useMemo, useState, type Key } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import type { Dayjs } from 'dayjs'
 import { Switch, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -15,19 +15,25 @@ import type {
 } from '@/entities/recruit-posting/model/types'
 import {
   useCanToggleRecruitPostingPublic,
+  useCreateRecruitPosting,
   useRecruitPostingsList,
   useRemoveRecruitPostings,
   useSetRecruitPostingPublic,
+  useUpdateRecruitPosting,
 } from '@/features/recruit-posting/api/hooks'
 import { recruitPostingQueryKeys } from '@/features/recruit-posting/api/query-keys'
 import { RECRUIT_POSTINGS_CHANGED_EVENT } from '@/features/recruit-posting/api/store'
+import {
+  RecruitPostingFormModal,
+  type RecruitPostingFormValues,
+} from '@/features/recruit-posting/ui/posting-form-modal'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
   FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { formatDateRangeDot, formatDateTimeDot, formatNumberDisplay } from '@/shared/lib/format-display'
+import { formatDateDot, formatDateRangeDot, formatDateTimeDot, formatNumberDisplay } from '@/shared/lib/format-display'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
@@ -163,6 +169,8 @@ function rangeAsPicker(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
 }
 
 export function RecruitPostingsPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
   const { showAlert } = useCmsAlert()
   const {
     pendingFilters,
@@ -214,6 +222,8 @@ export function RecruitPostingsPage() {
   const listQuery = useRecruitPostingsList(appliedFilter)
   const canTogglePublic = useCanToggleRecruitPostingPublic()
   const setPublicMutation = useSetRecruitPostingPublic()
+  const createMutation = useCreateRecruitPosting()
+  const updateMutation = useUpdateRecruitPosting()
   const removeMutation = useRemoveRecruitPostings()
 
   useInvalidateOnWindowEvent(RECRUIT_POSTINGS_CHANGED_EVENT, recruitPostingQueryKeys.all)
@@ -221,6 +231,9 @@ export function RecruitPostingsPage() {
   const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [formOpen, setFormOpen] = useState(false)
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
+  const [editing, setEditing] = useState<RecruitPosting | null>(null)
 
   const rowNoMap = useMemo(() => {
     const map = new Map<string, number>()
@@ -270,6 +283,69 @@ export function RecruitPostingsPage() {
       void listQuery.refetch()
     }
   }, [listQuery, removeMutation, selectedRowKeys, showAlert])
+
+  const openCreate = useCallback(() => {
+    setFormMode('create')
+    setEditing(null)
+    setFormOpen(true)
+  }, [])
+
+  const openEdit = useCallback((row: RecruitPosting) => {
+    setFormMode('edit')
+    setEditing(row)
+    setFormOpen(true)
+  }, [])
+
+  const goDetail = useCallback(
+    (row: RecruitPosting) => {
+      navigate(`/ja-korea/recruit/postings/${row.id}${location.search}`)
+    },
+    [navigate, location.search],
+  )
+
+  const closeForm = useCallback(() => {
+    setFormOpen(false)
+    setEditing(null)
+  }, [])
+
+  const handleFormSubmit = useCallback(
+    async (values: RecruitPostingFormValues) => {
+      try {
+        if (formMode === 'edit' && editing) {
+          await updateMutation.mutateAsync({ ...values, id: editing.id })
+        } else {
+          await createMutation.mutateAsync(values)
+        }
+        closeForm()
+      } catch (error) {
+        const message =
+          error instanceof Error && error.message
+            ? error.message
+            : '요청을 처리하지 못했습니다. 다시 시도해 주세요.'
+        showAlert({
+          title: formMode === 'edit' ? '저장 실패' : '등록 실패',
+          content: message,
+        })
+      }
+    },
+    [closeForm, createMutation, editing, formMode, showAlert, updateMutation],
+  )
+
+  const handleFormDelete = useCallback(async () => {
+    if (!editing) return
+    try {
+      await removeMutation.mutateAsync([editing.id])
+      closeForm()
+    } catch {
+      showAlert({
+        title: '삭제 실패',
+        content: '채용공고 삭제에 실패했습니다. 다시 시도해 주세요.',
+      })
+      void listQuery.refetch()
+    }
+  }, [closeForm, editing, listQuery, removeMutation, showAlert])
+
+  const formLoading = createMutation.isPending || updateMutation.isPending
 
   const columns: ColumnsType<RecruitPosting> = useMemo(
     () => [
@@ -335,12 +411,12 @@ export function RecruitPostingsPage() {
         render: (_, row) => formatDateRangeDot(row.recruitStart, row.recruitEnd),
       },
       {
-        title: '게시일시',
+        title: '게시일',
         dataIndex: 'publishedAt',
         key: 'publishedAt',
-        width: 160,
+        width: 140,
         align: 'center',
-        render: (value: string) => formatDateTimeDot(value),
+        render: (value: string) => formatDateDot(value),
       },
       {
         title: '작성일시',
@@ -355,7 +431,7 @@ export function RecruitPostingsPage() {
         key: 'actions',
         width: 120,
         align: 'center',
-        render: () => (
+        render: (_, row) => (
           <CmsButton
             variant="secondary"
             size="medium"
@@ -363,6 +439,7 @@ export function RecruitPostingsPage() {
             type="button"
             onClick={event => {
               event.stopPropagation()
+              openEdit(row)
             }}
           >
             수정
@@ -370,7 +447,7 @@ export function RecruitPostingsPage() {
         ),
       },
     ],
-    [canTogglePublic, handleTogglePublic, rowNoMap],
+    [canTogglePublic, handleTogglePublic, openEdit, rowNoMap],
   )
 
   return (
@@ -513,7 +590,7 @@ export function RecruitPostingsPage() {
             >
               선택 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" type="button">
+            <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
               공고 등록
             </CmsButton>
           </div>
@@ -532,15 +609,36 @@ export function RecruitPostingsPage() {
               onChange: keys => setSelectedRowKeys(keys),
               columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             }}
-            onRow={() => ({
+            onRow={record => ({
               onClick: event => {
                 if (isTableSelectionClick(event)) return
+                goDetail(record)
               },
+              style: { cursor: 'pointer' },
             })}
             scroll={{ x: true }}
           />
         </div>
       </div>
+
+      <RecruitPostingFormModal
+        open={formOpen}
+        mode={formMode}
+        initial={editing}
+        confirmLoading={formLoading}
+        deleteLoading={removeMutation.isPending}
+        onCancel={closeForm}
+        onSubmit={values => {
+          void handleFormSubmit(values)
+        }}
+        onDelete={
+          formMode === 'edit'
+            ? () => {
+                void handleFormDelete()
+              }
+            : undefined
+        }
+      />
 
       <ConfirmModal
         open={bulkDeleteOpen}

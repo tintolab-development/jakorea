@@ -1,12 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { RecruitPostingListFilter } from '@/entities/recruit-posting/model/types'
+import type {
+  RecruitPosting,
+  RecruitPostingCreateInput,
+  RecruitPostingListFilter,
+  RecruitPostingUpdateInput,
+} from '@/entities/recruit-posting/model/types'
 import { shouldUseRecruitPostingRemoteApi } from './capabilities'
 import { canToggleRecruitPostingVisibility } from './permissions'
 import { recruitPostingQueryKeys } from './query-keys'
 import {
+  createRecruitPostingService,
+  getRecruitPostingService,
   listRecruitPostingsService,
   removeRecruitPostingsService,
   setRecruitPostingPublicService,
+  updateRecruitPostingService,
 } from './service'
 
 function source(): 'remote' | 'local' {
@@ -37,6 +45,18 @@ export function useRecruitPostingsList(filter: RecruitPostingListFilter) {
   })
 }
 
+export function useRecruitPostingDetail(id: string | undefined, enabled = true) {
+  const dataSource = source()
+  return useQuery({
+    queryKey: recruitPostingQueryKeys.detail(dataSource, id ?? ''),
+    queryFn: () => getRecruitPostingService(id!),
+    enabled: Boolean(id) && enabled,
+    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
+    gcTime: 15 * 60_000,
+    retry: dataSource === 'remote' ? 1 : false,
+  })
+}
+
 export function useCanToggleRecruitPostingPublic() {
   const remote = shouldUseRecruitPostingRemoteApi()
   const query = useQuery({
@@ -58,6 +78,34 @@ export function useSetRecruitPostingPublic() {
       setRecruitPostingPublicService(id, isPublic, version),
     retry: false,
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: recruitPostingQueryKeys.lists() })
+    },
+  })
+}
+
+export function useCreateRecruitPosting() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: RecruitPostingCreateInput) => createRecruitPostingService(input),
+    retry: false,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: recruitPostingQueryKeys.lists() })
+    },
+  })
+}
+
+export function useUpdateRecruitPosting() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: RecruitPostingUpdateInput) => {
+      const cached = queryClient.getQueryData<RecruitPosting | null>(
+        recruitPostingQueryKeys.detail(source(), input.id),
+      )
+      return updateRecruitPostingService(input, cached ?? null)
+    },
+    retry: false,
+    onSuccess: data => {
+      queryClient.setQueryData(recruitPostingQueryKeys.detail(source(), data.id), data)
       void queryClient.invalidateQueries({ queryKey: recruitPostingQueryKeys.lists() })
     },
   })

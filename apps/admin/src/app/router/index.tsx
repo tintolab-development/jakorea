@@ -47,6 +47,7 @@ import { JaHistoryPage } from '@/pages/ja-korea/ja-history/page'
 import { RecruitApplicantsPage } from '@/pages/ja-korea/recruit/applicants/page'
 import { RecruitGuidePage } from '@/pages/ja-korea/recruit/guide/page'
 import { RecruitPostingsPage } from '@/pages/ja-korea/recruit/postings/page'
+import { RecruitPostingDetailPage } from '@/pages/ja-korea/recruit/postings/detail-page'
 import { PlaceholderPage } from '@/pages/placeholder/page'
 import { getLeafMenuPaths } from '@/shared/config/menu-config'
 
@@ -175,6 +176,7 @@ export const router = createBrowserRouter([
       },
       { path: 'ja-korea/recruit/guide', element: <RecruitGuidePage /> },
       { path: 'ja-korea/recruit/postings', element: <RecruitPostingsPage /> },
+      { path: 'ja-korea/recruit/postings/:id', element: <RecruitPostingDetailPage /> },
       { path: 'ja-korea/recruit/applicants', element: <RecruitApplicantsPage /> },
       {
         path: 'ja-korea/organization',
