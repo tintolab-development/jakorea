@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useDebouncedValue } from '@/shared/hooks'
 import { PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
 import {
   ACHIEVEMENT_RECORDS_PAGE_SIZE,
@@ -183,22 +184,27 @@ function RecordsContent({
   kind: RecordsKind
   items: readonly AchievementRecordItem[]
 }) {
-  const [query, setQuery] = useState('')
+  const [draftQ, setDraftQ] = useState('')
+  const debouncedQ = useDebouncedValue(draftQ, 500)
   const [currentPage, setCurrentPage] = useState(1)
+  const [prevDebouncedQ, setPrevDebouncedQ] = useState(debouncedQ)
   const columns = RECORDS_COLUMNS[kind]
 
-  const filtered = useMemo(() => filterAchievementRecords(items, query), [items, query])
+  if (prevDebouncedQ !== debouncedQ) {
+    setPrevDebouncedQ(debouncedQ)
+    setCurrentPage(1)
+  }
+
+  const filtered = useMemo(
+    () => filterAchievementRecords(items, debouncedQ),
+    [items, debouncedQ],
+  )
   const totalPages = Math.max(1, Math.ceil(filtered.length / ACHIEVEMENT_RECORDS_PAGE_SIZE))
   const safePage = Math.min(currentPage, totalPages)
   const pageItems = filtered.slice(
     (safePage - 1) * ACHIEVEMENT_RECORDS_PAGE_SIZE,
     safePage * ACHIEVEMENT_RECORDS_PAGE_SIZE,
   )
-
-  const handleSearch = (value: string) => {
-    setQuery(value)
-    setCurrentPage(1)
-  }
 
   return (
     <div className={styles.recordsLayout}>
@@ -209,8 +215,8 @@ function RecordsContent({
         <PFSearchInput
           className={styles.recordsSearch}
           variant="outlined"
-          value={query}
-          onValueChange={handleSearch}
+          value={draftQ}
+          onValueChange={setDraftQ}
           placeholder={ACHIEVEMENT_SEARCH_PLACEHOLDER}
           aria-label={ACHIEVEMENT_SEARCH_PLACEHOLDER}
         />
