@@ -1,5 +1,5 @@
 import { Fragment } from 'react'
-import { formatKrwAmount } from '../lib/mock-data'
+import { formatKrwAmount } from '../lib/format'
 import type { ExpenseDetailGroup } from '../model/types'
 import styles from './expense-table.module.css'
 

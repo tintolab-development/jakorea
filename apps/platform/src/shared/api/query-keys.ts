@@ -156,6 +156,29 @@ export const platformQueryKeys = {
     directions: () => [...platformQueryKeys.jaKorea.all(), 'directions'] as const,
     /** 공개 함께하는 사람들 — GET /api/public/ja-korea/people (Class B, 싱글톤) */
     people: () => [...platformQueryKeys.jaKorea.all(), 'people'] as const,
+    transparency: {
+      all: () => [...platformQueryKeys.jaKorea.all(), 'transparency'] as const,
+      /** 공개 투명경영 본문 — GET /api/public/ja-korea/transparency (Class B) */
+      page: () => [...platformQueryKeys.jaKorea.transparency.all(), 'page'] as const,
+      /**
+       * 공개 보고서 목록 — GET /api/public/ja-korea/transparency/reports/{type}
+       * Class C. `type`/`q`/`page`/`size` 가 바뀌면 다른 키.
+       */
+      reports: (params: {
+        type: string
+        q: string
+        page: number
+        size: number
+      }) =>
+        [
+          ...platformQueryKeys.jaKorea.transparency.all(),
+          'reports',
+          params.type,
+          params.q,
+          params.page,
+          params.size,
+        ] as const,
+    },
     notices: {
       all: () => [...platformQueryKeys.jaKorea.all(), 'notices'] as const,
       /**

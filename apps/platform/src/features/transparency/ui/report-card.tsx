@@ -1,3 +1,4 @@
+import { ANALYTICS_CLICK_METRICS, recordMetric } from '@/features/analytics'
 import { downloadAttachment } from '@/shared/lib/download-attachment'
 import { PFText } from '@/shared/ui'
 import downloadPrimary20Url from '../image/icon/download-primary-20.svg'
@@ -10,13 +11,26 @@ export type ReportCardProps = {
   variant: TransparencyReportType
 }
 
-function DownloadButton({ title, fileName }: { title: string; fileName: string }) {
+function DownloadButton({
+  title,
+  fileName,
+  downloadUrl,
+  metricCode,
+}: {
+  title: string
+  fileName: string
+  downloadUrl?: string
+  metricCode: string
+}) {
   return (
     <button
       type="button"
       className={styles.downloadButton}
       aria-label={`${title} 다운로드`}
-      onClick={() => downloadAttachment(fileName)}
+      onClick={() => {
+        recordMetric(metricCode)
+        void downloadAttachment(fileName, downloadUrl)
+      }}
     >
       <img
         className={styles.downloadIcon}
@@ -47,7 +61,12 @@ export function ReportCard({ report, variant }: ReportCardProps) {
             </PFText>
           </div>
           <div className={styles.auditDownload}>
-            <DownloadButton title={report.title} fileName={report.fileName} />
+            <DownloadButton
+              title={report.title}
+              fileName={report.fileName}
+              downloadUrl={report.downloadUrl}
+              metricCode={ANALYTICS_CLICK_METRICS.auditReportDownload}
+            />
           </div>
         </div>
 
@@ -68,7 +87,12 @@ export function ReportCard({ report, variant }: ReportCardProps) {
   return (
     <article className={[styles.card, styles.annual].join(' ')}>
       <div className={styles.cover} style={coverStyle}>
-        <DownloadButton title={report.title} fileName={report.fileName} />
+        <DownloadButton
+          title={report.title}
+          fileName={report.fileName}
+          downloadUrl={report.downloadUrl}
+          metricCode={ANALYTICS_CLICK_METRICS.annualReportDownload}
+        />
       </div>
 
       <div className={styles.meta}>

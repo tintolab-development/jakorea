@@ -3,6 +3,6 @@ import type { FinanceSection, FinanceViewKind } from '@/entities/income-expense/
 export const incomeExpenseQueryKeys = {
   all: ['income-expense'] as const,
   lists: () => [...incomeExpenseQueryKeys.all, 'list'] as const,
-  list: (source: 'remote' | 'local', section: FinanceSection, view: FinanceViewKind) =>
-    [...incomeExpenseQueryKeys.lists(), source, section, view] as const,
+  list: (section: FinanceSection, view: FinanceViewKind) =>
+    [...incomeExpenseQueryKeys.lists(), 'remote', section, view] as const,
 }

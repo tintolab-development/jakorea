@@ -6,7 +6,6 @@ import type {
   FinanceSection,
   FinanceViewKind,
 } from '@/entities/income-expense/model/types'
-import { shouldUseIncomeExpenseRemoteApi } from './capabilities'
 import { incomeExpenseQueryKeys } from './query-keys'
 import {
   createFinanceItemService,
@@ -16,17 +15,13 @@ import {
   updateFinanceItemsService,
 } from './service'
 
-function source(): 'remote' | 'local' {
-  return shouldUseIncomeExpenseRemoteApi() ? 'remote' : 'local'
-}
-
 function cachedList(
   queryClient: ReturnType<typeof useQueryClient>,
   section: FinanceSection,
   view: FinanceViewKind,
 ): FinanceItem[] | undefined {
   return queryClient.getQueryData<FinanceItem[]>(
-    incomeExpenseQueryKeys.list(source(), section, view),
+    incomeExpenseQueryKeys.list(section, view),
   )
 }
 
@@ -35,13 +30,12 @@ export function useFinanceItemsList(
   view: FinanceViewKind,
   enabled = true,
 ) {
-  const dataSource = source()
   return useQuery({
-    queryKey: incomeExpenseQueryKeys.list(dataSource, section, view),
+    queryKey: incomeExpenseQueryKeys.list(section, view),
     queryFn: () => listFinanceItemsService(section, view),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 30_000,
+    retry: 1,
   })
 }
 
@@ -52,9 +46,8 @@ export function useCreateFinanceItem(section: FinanceSection, view: FinanceViewK
       createFinanceItemService(section, view, input, cachedList(queryClient, section, view)),
     retry: false,
     onSuccess: () => {
-      // create는 단건 응답 — 해당 버킷만 invalidate 1회
       void queryClient.invalidateQueries({
-        queryKey: incomeExpenseQueryKeys.list(source(), section, view),
+        queryKey: incomeExpenseQueryKeys.list(section, view),
       })
     },
   })
@@ -67,7 +60,7 @@ export function useUpdateFinanceItems(section: FinanceSection, view: FinanceView
       updateFinanceItemsService(section, view, patches, cachedList(queryClient, section, view)),
     retry: false,
     onSuccess: rows => {
-      queryClient.setQueryData(incomeExpenseQueryKeys.list(source(), section, view), rows)
+      queryClient.setQueryData(incomeExpenseQueryKeys.list(section, view), rows)
     },
   })
 }
@@ -79,7 +72,7 @@ export function useRemoveFinanceItems(section: FinanceSection, view: FinanceView
       removeFinanceItemsService(section, view, ids, cachedList(queryClient, section, view)),
     retry: false,
     onSuccess: rows => {
-      queryClient.setQueryData(incomeExpenseQueryKeys.list(source(), section, view), rows)
+      queryClient.setQueryData(incomeExpenseQueryKeys.list(section, view), rows)
     },
   })
 }
@@ -91,7 +84,7 @@ export function useReorderFinanceItems(section: FinanceSection, view: FinanceVie
       reorderFinanceItemsService(section, view, orderedIds, cachedList(queryClient, section, view)),
     retry: false,
     onSuccess: rows => {
-      queryClient.setQueryData(incomeExpenseQueryKeys.list(source(), section, view), rows)
+      queryClient.setQueryData(incomeExpenseQueryKeys.list(section, view), rows)
     },
   })
 }

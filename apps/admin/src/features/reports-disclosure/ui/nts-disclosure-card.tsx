@@ -9,9 +9,6 @@ import {
   useNtsDisclosure,
   useSaveNtsDisclosure,
 } from '@/features/reports-disclosure/api/hooks'
-import { reportsDisclosureQueryKeys } from '@/features/reports-disclosure/api/query-keys'
-import { NTS_DISCLOSURE_CHANGED_EVENT } from '@/features/reports-disclosure/api/store'
-import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsButton, CmsInput, PageContentLoading, useCmsAlert } from '@/shared/ui'
 
 import './nts-disclosure-card.css'
@@ -27,8 +24,6 @@ export function NtsDisclosureCard() {
   const { showAlert } = useCmsAlert()
   const query = useNtsDisclosure()
   const saveMutation = useSaveNtsDisclosure()
-
-  useInvalidateOnWindowEvent(NTS_DISCLOSURE_CHANGED_EVENT, reportsDisclosureQueryKeys.nts())
 
   const data = query.data
   const [isEditing, setIsEditing] = useState(false)

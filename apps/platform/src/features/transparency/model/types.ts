@@ -63,6 +63,8 @@ export type TransparencyReport = {
   coverUrl?: string
   /** 다운로드 파일명 */
   fileName: string
+  /** 공개 API 다운로드 URL (없으면 fileName 빈 파일 폴백) */
+  downloadUrl?: string
 }
 
 export type TransparencyReportsListParams = {
