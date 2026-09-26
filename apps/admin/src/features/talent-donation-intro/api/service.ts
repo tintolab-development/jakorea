@@ -28,7 +28,7 @@ function sponsorshipApi() {
 }
 
 async function fetchRemoteDetail(): Promise<TalentDonationIntroData> {
-  return mapTalentAdminToDomain(await sponsorshipApi().get10())
+  return mapTalentAdminToDomain(await sponsorshipApi().get11())
 }
 
 async function resolvePrev(cached?: TalentDonationIntroData): Promise<TalentDonationIntroData> {

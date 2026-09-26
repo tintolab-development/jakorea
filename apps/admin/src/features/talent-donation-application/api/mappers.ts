@@ -8,13 +8,13 @@ import type {
   TalentDonationApplication,
   TalentDonationApplicationListFilter,
 } from '@/entities/talent-donation-application/model/types'
-import type { List11Params } from '@/shared/api/generated/sponsorship/schemas/list11Params'
+import type { List12Params } from '@/shared/api/generated/sponsorship/schemas/list12Params'
 import type { TalentApplicationDetailResponse } from '@/shared/api/generated/sponsorship/schemas/talentApplicationDetailResponse'
 import type { TalentApplicationListItem } from '@/shared/api/generated/sponsorship/schemas/talentApplicationListItem'
 import type { TalentApplicationStatusUpdateRequest } from '@/shared/api/generated/sponsorship/schemas/talentApplicationStatusUpdateRequest'
 import { TalentApplicationStatusUpdateRequestStatus } from '@/shared/api/generated/sponsorship/schemas/talentApplicationStatusUpdateRequestStatus'
-import { List11JaParticipation } from '@/shared/api/generated/sponsorship/schemas/list11JaParticipation'
-import { List11Status } from '@/shared/api/generated/sponsorship/schemas/list11Status'
+import { List12JaParticipation } from '@/shared/api/generated/sponsorship/schemas/list12JaParticipation'
+import { List12Status } from '@/shared/api/generated/sponsorship/schemas/list12Status'
 
 export const LIST_PAGE_SIZE = 20
 
@@ -93,13 +93,13 @@ export function mapTalentApplicationDetailToDomain(
 
 export function toTalentApplicationListParams(
   filter: TalentDonationApplicationListFilter = {},
-): List11Params {
-  const params: List11Params = {
+): List12Params {
+  const params: List12Params = {
     page: 0,
     size: LIST_PAGE_SIZE,
   }
-  if (filter.status === 'pending') params.status = List11Status.pending
-  if (filter.status === 'confirmed') params.status = List11Status.confirmed
+  if (filter.status === 'pending') params.status = List12Status.pending
+  if (filter.status === 'confirmed') params.status = List12Status.confirmed
   const applicantName = filter.applicantName?.trim()
   if (applicantName) params.applicantName = applicantName
   const phone = filter.phone?.trim()
@@ -107,9 +107,9 @@ export function toTalentApplicationListParams(
   const email = filter.email?.trim()
   if (email) params.email = email
   if (filter.jaProgramHistory === 'yes') {
-    params.jaParticipation = List11JaParticipation.yes
+    params.jaParticipation = List12JaParticipation.yes
   } else if (filter.jaProgramHistory === 'no') {
-    params.jaParticipation = List11JaParticipation.no
+    params.jaParticipation = List12JaParticipation.no
   }
   if (filter.appliedFrom) params.appliedFrom = filter.appliedFrom
   if (filter.appliedTo) params.appliedTo = filter.appliedTo

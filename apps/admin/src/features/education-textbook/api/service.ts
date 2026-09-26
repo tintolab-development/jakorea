@@ -79,7 +79,7 @@ export async function createEducationTextbookService(
 ): Promise<EducationTextbook> {
   if (shouldUseEducationTextbookRemoteApi()) {
     const thumbnailAssetId = await resolveThumbnailAssetId(input)
-    const created = await educationApi().create9(
+    const created = await educationApi().create10(
       toTextbookCreateRequest(input, thumbnailAssetId),
     )
     return mapTextbookResponseToDomain(created)

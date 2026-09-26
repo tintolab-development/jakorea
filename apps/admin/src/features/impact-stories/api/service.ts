@@ -87,7 +87,7 @@ async function saveCategoriesRemote(
       continue
     }
 
-    normalizeCategoryPayload(await api.create8(toCategoryCreateRequest(name)))
+    normalizeCategoryPayload(await api.create9(toCategoryCreateRequest(name)))
   }
 
   return listRemoteCategories()
@@ -206,7 +206,7 @@ export async function createStoryService(
   if (shouldUseImpactStoriesRemoteApi()) {
     try {
       const attachmentAssetId = await resolveAttachmentAssetId(input.attachments)
-      const created = await impactStoryApi().create7(
+      const created = await impactStoryApi().create8(
         toStoryCreateRequest(input, attachmentAssetId),
       )
       return mapStoryResponseToDomain(created)

@@ -53,7 +53,7 @@ export async function createStripBannerService(
   input: StripBannerCreateInput,
 ): Promise<StripBanner> {
   if (shouldUseStripBannerRemoteApi()) {
-    const created = await mainApi().create3(toStripCreateRequest(input))
+    const created = await mainApi().create4(toStripCreateRequest(input))
     return mapStripResponseToDomain(created)
   }
   return createLocal(input)

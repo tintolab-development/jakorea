@@ -41,6 +41,15 @@ import type {
   HistoryUpdateRequest,
   IntroductionResponse,
   IntroductionUpdateRequest,
+  JaHistoryPageCtaUpdateRequest,
+  JaHistoryPageErasUpdateRequest,
+  JaHistoryPageHeroUpdateRequest,
+  JaHistoryPageOriginUpdateRequest,
+  JaHistoryPagePhilosophyUpdateRequest,
+  JaHistoryPagePublicResponse,
+  JaHistoryPageResponse,
+  JaHistoryPageThriveUpdateRequest,
+  JaHistoryPageTimelineUpdateRequest,
   List10Params,
   List5Params,
   NoticeCreateRequest,
@@ -266,6 +275,94 @@ const update8 = (
       {url: `/api/admin/ja-korea/notices/${id}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: noticeUpdateRequest
+    },
+      options);
+    }
+
+const updateWorldTimeline = (
+    jaHistoryPageTimelineUpdateRequest: JaHistoryPageTimelineUpdateRequest,
+ options?: SecondParameter<typeof customInstance<JaHistoryPageResponse>>,) => {
+      return customInstance<JaHistoryPageResponse>(
+      {url: `/api/admin/ja-korea/ja-history/world-timeline`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: jaHistoryPageTimelineUpdateRequest
+    },
+      options);
+    }
+
+const updateThrive = (
+    jaHistoryPageThriveUpdateRequest: JaHistoryPageThriveUpdateRequest,
+ options?: SecondParameter<typeof customInstance<JaHistoryPageResponse>>,) => {
+      return customInstance<JaHistoryPageResponse>(
+      {url: `/api/admin/ja-korea/ja-history/thrive`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: jaHistoryPageThriveUpdateRequest
+    },
+      options);
+    }
+
+const updatePhilosophy = (
+    jaHistoryPagePhilosophyUpdateRequest: JaHistoryPagePhilosophyUpdateRequest,
+ options?: SecondParameter<typeof customInstance<JaHistoryPageResponse>>,) => {
+      return customInstance<JaHistoryPageResponse>(
+      {url: `/api/admin/ja-korea/ja-history/philosophy`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: jaHistoryPagePhilosophyUpdateRequest
+    },
+      options);
+    }
+
+const updateOrigin = (
+    jaHistoryPageOriginUpdateRequest: JaHistoryPageOriginUpdateRequest,
+ options?: SecondParameter<typeof customInstance<JaHistoryPageResponse>>,) => {
+      return customInstance<JaHistoryPageResponse>(
+      {url: `/api/admin/ja-korea/ja-history/origin`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: jaHistoryPageOriginUpdateRequest
+    },
+      options);
+    }
+
+const updateKoreaTimeline = (
+    jaHistoryPageTimelineUpdateRequest: JaHistoryPageTimelineUpdateRequest,
+ options?: SecondParameter<typeof customInstance<JaHistoryPageResponse>>,) => {
+      return customInstance<JaHistoryPageResponse>(
+      {url: `/api/admin/ja-korea/ja-history/korea-timeline`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: jaHistoryPageTimelineUpdateRequest
+    },
+      options);
+    }
+
+const updateHero = (
+    jaHistoryPageHeroUpdateRequest: JaHistoryPageHeroUpdateRequest,
+ options?: SecondParameter<typeof customInstance<JaHistoryPageResponse>>,) => {
+      return customInstance<JaHistoryPageResponse>(
+      {url: `/api/admin/ja-korea/ja-history/hero`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: jaHistoryPageHeroUpdateRequest
+    },
+      options);
+    }
+
+const updateEras = (
+    jaHistoryPageErasUpdateRequest: JaHistoryPageErasUpdateRequest,
+ options?: SecondParameter<typeof customInstance<JaHistoryPageResponse>>,) => {
+      return customInstance<JaHistoryPageResponse>(
+      {url: `/api/admin/ja-korea/ja-history/eras`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: jaHistoryPageErasUpdateRequest
+    },
+      options);
+    }
+
+const updateCta = (
+    jaHistoryPageCtaUpdateRequest: JaHistoryPageCtaUpdateRequest,
+ options?: SecondParameter<typeof customInstance<JaHistoryPageResponse>>,) => {
+      return customInstance<JaHistoryPageResponse>(
+      {url: `/api/admin/ja-korea/ja-history/cta`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: jaHistoryPageCtaUpdateRequest
     },
       options);
     }
@@ -515,7 +612,7 @@ const list5 = (
       options);
     }
 
-const create6 = (
+const create7 = (
     noticeCreateRequest: NoticeCreateRequest,
  options?: SecondParameter<typeof customInstance<NoticeResponse>>,) => {
       return customInstance<NoticeResponse>(
@@ -777,6 +874,15 @@ const list10 = (
       options);
     }
 
+const get10 = (
+
+ options?: SecondParameter<typeof customInstance<JaHistoryPagePublicResponse>>,) => {
+      return customInstance<JaHistoryPagePublicResponse>(
+      {url: `/api/public/ja-korea/ja-history`, method: 'GET'
+    },
+      options);
+    }
+
 const directions = (
 
  options?: SecondParameter<typeof customInstance<PublicDirectionsResponse>>,) => {
@@ -786,7 +892,16 @@ const directions = (
       options);
     }
 
-return {worldwide,updateWorldwide,report,updateReport,principles,updatePrinciples,finance,updateFinance,createFinance,disclosure,updateDisclosure,organizationChart,updateOrganizationChart,boardMembers,updateBoardMembers,createBoardMember,detail,update8,introduction,updateIntroduction,historyDetail,updateHistory,deleteHistory,globalValues,updateGlobalValues,get3,update9,certificationDetail,updateCertification,deleteCertification,bi,updateBi,awardDetail,updateAward,deleteAward,reports,createReport,deleteReports,deleteFinance,deleteBoardMembers,list5,create6,bulkDelete3,history,createHistory,deleteHistoryBulk,certifications,createCertification,deleteCertifications,awards,createAward,deleteAwards,toggleBoardMember,togglePublished,toggleHistory,toggleCertification,toggleAward,download,downloadHead,detail3,detailHead,transparency,reports1,people,organization,list10,directions}};
+const get14 = (
+
+ options?: SecondParameter<typeof customInstance<JaHistoryPageResponse>>,) => {
+      return customInstance<JaHistoryPageResponse>(
+      {url: `/api/admin/ja-korea/ja-history`, method: 'GET'
+    },
+      options);
+    }
+
+return {worldwide,updateWorldwide,report,updateReport,principles,updatePrinciples,finance,updateFinance,createFinance,disclosure,updateDisclosure,organizationChart,updateOrganizationChart,boardMembers,updateBoardMembers,createBoardMember,detail,update8,updateWorldTimeline,updateThrive,updatePhilosophy,updateOrigin,updateKoreaTimeline,updateHero,updateEras,updateCta,introduction,updateIntroduction,historyDetail,updateHistory,deleteHistory,globalValues,updateGlobalValues,get3,update9,certificationDetail,updateCertification,deleteCertification,bi,updateBi,awardDetail,updateAward,deleteAward,reports,createReport,deleteReports,deleteFinance,deleteBoardMembers,list5,create7,bulkDelete3,history,createHistory,deleteHistoryBulk,certifications,createCertification,deleteCertifications,awards,createAward,deleteAwards,toggleBoardMember,togglePublished,toggleHistory,toggleCertification,toggleAward,download,downloadHead,detail3,detailHead,transparency,reports1,people,organization,list10,get10,directions,get14}};
 export type WorldwideResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['worldwide']>>>
 export type UpdateWorldwideResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['updateWorldwide']>>>
 export type ReportResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['report']>>>
@@ -805,6 +920,14 @@ export type UpdateBoardMembersResult = NonNullable<Awaited<ReturnType<ReturnType
 export type CreateBoardMemberResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['createBoardMember']>>>
 export type DetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['detail']>>>
 export type Update8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['update8']>>>
+export type UpdateWorldTimelineResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['updateWorldTimeline']>>>
+export type UpdateThriveResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['updateThrive']>>>
+export type UpdatePhilosophyResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['updatePhilosophy']>>>
+export type UpdateOriginResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['updateOrigin']>>>
+export type UpdateKoreaTimelineResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['updateKoreaTimeline']>>>
+export type UpdateHeroResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['updateHero']>>>
+export type UpdateErasResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['updateEras']>>>
+export type UpdateCtaResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['updateCta']>>>
 export type IntroductionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['introduction']>>>
 export type UpdateIntroductionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['updateIntroduction']>>>
 export type HistoryDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['historyDetail']>>>
@@ -828,7 +951,7 @@ export type DeleteReportsResult = NonNullable<Awaited<ReturnType<ReturnType<type
 export type DeleteFinanceResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['deleteFinance']>>>
 export type DeleteBoardMembersResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['deleteBoardMembers']>>>
 export type List5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['list5']>>>
-export type Create6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['create6']>>>
+export type Create7Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['create7']>>>
 export type BulkDelete3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['bulkDelete3']>>>
 export type HistoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['history']>>>
 export type CreateHistoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['createHistory']>>>
@@ -853,4 +976,6 @@ export type Reports1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof ge
 export type PeopleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['people']>>>
 export type OrganizationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['organization']>>>
 export type List10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['list10']>>>
+export type Get10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['get10']>>>
 export type DirectionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['directions']>>>
+export type Get14Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIJAKoreaSubset>['get14']>>>

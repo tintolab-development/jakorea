@@ -25,7 +25,7 @@ function sponsorshipApi() {
 async function listRemote(
   filter: TalentDonationApplicationListFilter = {},
 ): Promise<TalentDonationApplicationListResult> {
-  const response = await sponsorshipApi().list11(toTalentApplicationListParams(filter))
+  const response = await sponsorshipApi().list12(toTalentApplicationListParams(filter))
   return {
     items: (response.items ?? []).map(mapTalentApplicationListItemToDomain),
     totalCount: response.totalCount ?? response.items?.length ?? 0,

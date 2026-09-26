@@ -142,7 +142,7 @@ const get8 = (
       options);
     }
 
-const get11 = (
+const get12 = (
 
  options?: SecondParameter<typeof customInstance<FooterAdminResponse>>,) => {
       return customInstance<FooterAdminResponse>(
@@ -151,7 +151,7 @@ const get11 = (
       options);
     }
 
-return {get1,update1,get2,update2,updatePartner,reorderPartners,updateOrganization,updateMenus,get6,get7,get8,get11}};
+return {get1,update1,get2,update2,updatePartner,reorderPartners,updateOrganization,updateMenus,get6,get7,get8,get12}};
 export type Get1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get1']>>>
 export type Update1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['update1']>>>
 export type Get2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get2']>>>
@@ -163,4 +163,4 @@ export type UpdateMenusResult = NonNullable<Awaited<ReturnType<ReturnType<typeof
 export type Get6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get6']>>>
 export type Get7Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get7']>>>
 export type Get8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get8']>>>
-export type Get11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get11']>>>
+export type Get12Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPISiteSubset>['get12']>>>

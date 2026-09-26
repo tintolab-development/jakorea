@@ -31,4 +31,5 @@ export default defineConfig({
   logs: domainConfig('logs'),
   assets: domainConfig('assets'),
   me: domainConfig('me'),
+  careers: domainConfig('careers'),
 })

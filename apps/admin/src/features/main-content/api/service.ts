@@ -37,7 +37,7 @@ function mainApi() {
 }
 
 async function fetchRemoteContents(): Promise<MainContents> {
-  const response = await mainApi().get12()
+  const response = await mainApi().get13()
   return mapAdminContentToDomain(response)
 }
 

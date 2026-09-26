@@ -133,7 +133,7 @@ const list8 = (
       options);
     }
 
-const create9 = (
+const create10 = (
     textbookCreateRequest: TextbookCreateRequest,
  options?: SecondParameter<typeof customInstance<TextbookResponse>>,) => {
       return customInstance<TextbookResponse>(
@@ -224,7 +224,7 @@ const programs1 = (
       options);
     }
 
-return {detail2,update12,targets,updateTargets,get4,update13,businessCatalog,updateBusinessCatalog,list8,create9,bulkDelete5,toggle4,textbooks,textbook,programs,programIntro,overview,programs1}};
+return {detail2,update12,targets,updateTargets,get4,update13,businessCatalog,updateBusinessCatalog,list8,create10,bulkDelete5,toggle4,textbooks,textbook,programs,programIntro,overview,programs1}};
 export type Detail2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['detail2']>>>
 export type Update12Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['update12']>>>
 export type TargetsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['targets']>>>
@@ -234,7 +234,7 @@ export type Update13Result = NonNullable<Awaited<ReturnType<ReturnType<typeof ge
 export type BusinessCatalogResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['businessCatalog']>>>
 export type UpdateBusinessCatalogResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['updateBusinessCatalog']>>>
 export type List8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['list8']>>>
-export type Create9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['create9']>>>
+export type Create10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['create10']>>>
 export type BulkDelete5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['bulkDelete5']>>>
 export type Toggle4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['toggle4']>>>
 export type TextbooksResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIEducationSubset>['textbooks']>>>
