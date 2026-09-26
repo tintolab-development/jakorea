@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
+import { recordMenuClick } from '@/features/analytics'
 import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
 import chevronUpBlackUrl from '@/shared/assets/icons/chevron-up-black-32.svg'
 import chevronLeftGrayUrl from '@/shared/assets/icons/chevron-left-gray.svg'
@@ -60,7 +61,10 @@ function MobileChildMenuItem({
           role="menuitem"
           target="_blank"
           rel="noopener noreferrer"
-          onClick={onNavigate}
+          onClick={() => {
+            if (item.external) recordMenuClick(item.menuCode)
+            onNavigate()
+          }}
         >
           {content}
         </a>

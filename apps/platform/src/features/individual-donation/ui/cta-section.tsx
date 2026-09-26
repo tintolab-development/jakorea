@@ -1,4 +1,5 @@
 import { Fragment } from 'react'
+import { ANALYTICS_CLICK_METRICS, recordMetric } from '@/features/analytics'
 import jaArrowCtaMintUrl from '@/features/home/image/icon/ja-arrow-cta-mint.svg'
 import { PFText, remoteCopyClassName } from '@/shared/ui'
 import { usePublicPersonalDonationCta } from '../api/hooks'
@@ -63,6 +64,7 @@ export function CtaSection() {
                 href={donation.href}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => recordMetric(ANALYTICS_CLICK_METRICS.donationOutbound)}
               >
                 {action}
               </a>

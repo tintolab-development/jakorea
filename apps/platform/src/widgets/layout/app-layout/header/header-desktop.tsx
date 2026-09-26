@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { recordMenuClick } from '@/features/analytics'
 import { PFText } from '@/shared/ui'
 import logoUrl from '@/shared/assets/brand/ja-logo.svg'
 import externalLinkIconUrl from '@/shared/assets/icons/arrow-diagonal-black.svg'
@@ -64,7 +65,10 @@ function NavigationSubMenuItem({
           role="menuitem"
           target="_blank"
           rel="noopener noreferrer"
-          onClick={onNavigate}
+          onClick={() => {
+            if (item.external) recordMenuClick(item.menuCode)
+            onNavigate?.()
+          }}
           onMouseEnter={onHoverStart}
         >
           {content}
@@ -199,6 +203,10 @@ export function HeaderDesktop({
                     if (!target) return
                     closeNav()
                     if (target.external) {
+                      const source = group.children.find(
+                        child => child.external && child.href === target.href,
+                      )
+                      if (source) recordMenuClick(source.menuCode)
                       window.open(target.href, '_blank', 'noopener,noreferrer')
                       return
                     }
