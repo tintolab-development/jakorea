@@ -27,12 +27,10 @@ function NavigationSubMenuItem({
   item,
   onNavigate,
   onHoverStart,
-  onHoverEnd,
 }: {
   item: NavigationSubItem
   onNavigate?: () => void
   onHoverStart?: () => void
-  onHoverEnd?: () => void
 }) {
   const isDisabled = !item.href
   const itemClassName = [
@@ -68,7 +66,6 @@ function NavigationSubMenuItem({
           rel="noopener noreferrer"
           onClick={onNavigate}
           onMouseEnter={onHoverStart}
-          onMouseLeave={onHoverEnd}
         >
           {content}
         </a>
@@ -82,7 +79,6 @@ function NavigationSubMenuItem({
         role="menuitem"
         onClick={onNavigate}
         onMouseEnter={onHoverStart}
-        onMouseLeave={onHoverEnd}
       >
         {content}
       </Link>
@@ -95,7 +91,6 @@ function NavigationSubMenuItem({
       role="menuitem"
       aria-disabled="true"
       onMouseEnter={onHoverStart}
-      onMouseLeave={onHoverEnd}
     >
       {content}
     </span>
@@ -168,7 +163,8 @@ export function HeaderDesktop({
   return (
     <header
       className={headerClassName}
-      onMouseLeave={closeNav}
+      onMouseEnter={cancelScheduledClose}
+      onMouseLeave={scheduleClose}
     >
       <div className={styles.inner}>
         <Link className={styles.logoLink} to="/" aria-label="JA Korea 홈">
@@ -197,7 +193,6 @@ export function HeaderDesktop({
                   type="button"
                   aria-pressed={isRouteActive}
                   onMouseEnter={openThisGroup}
-                  onMouseLeave={scheduleClose}
                   onClick={() => {
                     setActiveGroupCode(group.groupCode)
                     const target = getTopCategoryNavigationTarget(group)
@@ -228,7 +223,6 @@ export function HeaderDesktop({
                       key={item.menuCode}
                       onNavigate={closeNav}
                       onHoverStart={openThisGroup}
-                      onHoverEnd={scheduleClose}
                     />
                   ))}
                 </div>

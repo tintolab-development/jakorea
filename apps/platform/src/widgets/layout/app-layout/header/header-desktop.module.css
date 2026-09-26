@@ -55,7 +55,8 @@
   z-index: 2;
   display: grid;
   grid-template-columns: var(--header-logo-column) 1fr var(--header-auth-column);
-  align-items: center;
+  /* 메가메뉴가 행을 늘려도 로고·계정은 헤더 바 안에 둔다. */
+  align-items: start;
   column-gap: var(--spacing-64);
   width: 100%;
   max-width: 1920px;
@@ -85,7 +86,7 @@
   z-index: 2;
   display: inline-flex;
   width: 195px;
-  height: 60px;
+  height: var(--spacing-100);
   align-items: center;
   text-decoration: none;
 }
@@ -122,7 +123,8 @@
   width: 100vw;
   background: var(--color-neutral-white);
   border-bottom: 1px solid var(--color-border-default);
-  pointer-events: none;
+  /* 글자 밖 흰 패널도 호버 영역으로 잡아 메뉴가 닫히지 않게 한다. */
+  pointer-events: auto;
 }
 
 .menuColumn {
@@ -236,6 +238,7 @@
   z-index: 2;
   display: flex;
   width: 152px;
+  height: var(--spacing-100);
   align-items: center;
   justify-content: flex-end;
   gap: var(--spacing-40);
@@ -256,6 +259,7 @@
   z-index: 2;
   display: flex;
   width: 152px;
+  height: var(--spacing-100);
   align-items: center;
   justify-content: flex-end;
   gap: 28px;
