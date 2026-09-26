@@ -25,10 +25,10 @@ import './banner-form-modal.css'
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE_LINES = [
   '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 권장 배너 사이즈는 740*790입니다.',
+  '- 권장 배너 사이즈는 740*790px입니다.',
 ]
 
-const MODAL_DESCRIPTION = '채용 페이지의 상단 배너 이미지와 문구를 설정해 주세요.'
+const MODAL_DESCRIPTION = '채용 페이지의 상단 배너 이미지와 텍스트를 설정해 주세요.'
 
 function isAllowedImageFile(file: File): boolean {
   const type = file.type.toLowerCase()
@@ -263,7 +263,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   className="cms-textarea--fixed-rows"
                   inputSize="large"
                   width="100%"
-                  rows={2}
+                  rows={3}
                   placeholder="메인 텍스트를 입력하세요"
                   value={mainText}
                   onChange={e => {

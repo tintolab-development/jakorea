@@ -32,6 +32,8 @@ export type InterviewItem = {
   storyId: string
   title: string
   publishedYear: number
+  /** Platform 직무 인터뷰 커버. 목록 표에는 제목만 보인다. */
+  imageUrl?: string
 }
 
 export type RecruitGuideData = {
