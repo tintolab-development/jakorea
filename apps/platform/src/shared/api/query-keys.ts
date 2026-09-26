@@ -214,11 +214,14 @@ export const platformQueryKeys = {
 
   education: {
     all: () => [...platformQueryKeys.all, 'education'] as const,
-    /** 공개 프로그램 소개 — GET /api/public/education/program-intros/{fieldCode} (Class D) */
+    /** 공개 프로그램 소개 — GET /api/public/education/program-intros/{fieldCode} (Class B) */
     programIntro: (fieldCode: string) =>
       [...platformQueryKeys.education.all(), 'program-intro', fieldCode] as const,
     /** 공개 교재 목록 — GET /api/public/education/textbooks (Class C, items) */
     textbooks: () => [...platformQueryKeys.education.all(), 'textbooks'] as const,
+    /** 공개 교재 상세 — GET /api/public/education/textbooks/{id} (Class D) */
+    textbookDetail: (id: string) =>
+      [...platformQueryKeys.education.all(), 'textbooks', 'detail', id] as const,
   },
 
   sponsorship: {

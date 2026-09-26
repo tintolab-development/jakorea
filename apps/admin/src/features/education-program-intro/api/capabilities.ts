@@ -1,8 +1,6 @@
 /**
- * 프로그램 소개 — Homepage JWT면 OpenAPI program-intros
+ * 프로그램 소개 — Remote API only (localStorage mock 없음)
  */
-import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
-
 export function shouldUseEducationProgramIntroRemoteApi(): boolean {
-  return shouldUseHomepageRemoteApi()
+  return true
 }

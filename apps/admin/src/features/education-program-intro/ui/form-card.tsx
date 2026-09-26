@@ -11,7 +11,7 @@ import type {
   ProgramIntroItem,
 } from '@/entities/education-program-intro/model/types'
 import { useSaveProgramIntroCategory } from '@/features/education-program-intro/api/hooks'
-import { cloneProgramIntroDocument } from '@/features/education-program-intro/api/store'
+import { cloneProgramIntroDocument } from '@/features/education-program-intro/lib/clone-document'
 import {
   isAllowedProgramIntroImage,
   PROGRAM_INTRO_IMAGE_ACCEPT,

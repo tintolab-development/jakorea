@@ -11,11 +11,7 @@ import type {
   EducationTextbookListFilter,
 } from '@/entities/education-textbook/model/types'
 import { useEducationBusinessFieldsList } from '@/features/education-business-field/api/hooks'
-import { educationBusinessFieldQueryKeys } from '@/features/education-business-field/api/query-keys'
-import { EDUCATION_BUSINESS_FIELDS_CHANGED_EVENT } from '@/features/education-business-field/api/store'
 import { useEducationTargetsList } from '@/features/education-target/api/hooks'
-import { educationTargetQueryKeys } from '@/features/education-target/api/query-keys'
-import { EDUCATION_TARGETS_CHANGED_EVENT } from '@/features/education-target/api/store'
 import { EducationTargetsModal } from '@/features/education-target/ui/targets-modal'
 import {
   useCreateEducationTextbook,
@@ -24,8 +20,6 @@ import {
   useSetEducationTextbookActive,
   useUpdateEducationTextbook,
 } from '@/features/education-textbook/api/hooks'
-import { educationTextbookQueryKeys } from '@/features/education-textbook/api/query-keys'
-import { EDUCATION_TEXTBOOKS_CHANGED_EVENT } from '@/features/education-textbook/api/store'
 import {
   EducationTextbookFormModal,
   type TextbookFormMode,
@@ -39,7 +33,6 @@ import {
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
-import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
 import {
@@ -254,19 +247,6 @@ export function EducationTextbooksPage() {
   const updateMutation = useUpdateEducationTextbook()
   const removeMutation = useRemoveEducationTextbooks()
   const setActiveMutation = useSetEducationTextbookActive()
-
-  useInvalidateOnWindowEvent(
-    EDUCATION_TEXTBOOKS_CHANGED_EVENT,
-    educationTextbookQueryKeys.all
-  )
-  useInvalidateOnWindowEvent(
-    EDUCATION_BUSINESS_FIELDS_CHANGED_EVENT,
-    educationBusinessFieldQueryKeys.all
-  )
-  useInvalidateOnWindowEvent(
-    EDUCATION_TARGETS_CHANGED_EVENT,
-    educationTargetQueryKeys.all
-  )
 
   const businessFields = useMemo(() => fieldsQuery.data ?? [], [fieldsQuery.data])
   const educationTargets = useMemo(() => targetsQuery.data ?? [], [targetsQuery.data])

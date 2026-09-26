@@ -23,6 +23,8 @@ export type PublicTextbookListItem = {
   educationEffect?: string
   textbookName?: string
   description?: string
+  unitCount?: number
+  sessionDescription?: string
   createdAt?: string
 }
 

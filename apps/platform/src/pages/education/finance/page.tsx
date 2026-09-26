@@ -1,22 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  DEFAULT_EDUCATION_FINANCE_TAB,
   EDUCATION_FINANCE_HERO,
   ProgramSection,
   getEducationFinancePrograms,
   type FinanceProgramId,
 } from '@/features/education-finance'
 import { useEducationProgramIntroView } from '@/features/education-intro/api/hooks'
-import { PFTabs, PFText } from '@/shared/ui'
+import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function EducationFinancePage() {
-  const { titleLines, programs } = useEducationProgramIntroView({
+  const { titleLines, programs, isPending, isError, refetch } = useEducationProgramIntroView({
     fieldCode: 'ECONOMICS_FINANCE',
-    fallbackTitleLines: EDUCATION_FINANCE_HERO.titleLines,
-    fallbackPrograms: getEducationFinancePrograms(),
+    layoutTemplates: getEducationFinancePrograms(),
   })
-  const [activeTab, setActiveTab] = useState<FinanceProgramId>(DEFAULT_EDUCATION_FINANCE_TAB)
+  const [activeTab, setActiveTab] = useState<FinanceProgramId>('ujat')
 
   useEffect(() => {
     if (programs.some(section => section.id === activeTab)) return
@@ -54,6 +52,25 @@ export function EducationFinancePage() {
           </PFText>
         </header>
 
+        {isPending ? (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.status}>
+            프로그램 소개를 불러오는 중입니다.
+          </PFText>
+        ) : isError ? (
+          <div className={styles.status}>
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+              프로그램 소개를 불러오지 못했습니다.
+            </PFText>
+            <PFButton variant="tertiary" size="large" onClick={refetch}>
+              다시 시도
+            </PFButton>
+          </div>
+        ) : programs.length === 0 ? (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.status}>
+            등록된 프로그램이 없습니다.
+          </PFText>
+        ) : (
+          <>
         <div className={styles.tabs}>
           <PFTabs
             items={tabItems}
@@ -68,6 +85,8 @@ export function EducationFinancePage() {
         {programs.map((section, index) => (
           <ProgramSection key={section.id} section={section} isFirst={index === 0} />
         ))}
+          </>
+        )}
       </div>
     </section>
   )

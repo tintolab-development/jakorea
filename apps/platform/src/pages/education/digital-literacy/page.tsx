@@ -1,24 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  DEFAULT_EDUCATION_DIGITAL_LITERACY_TAB,
   EDUCATION_DIGITAL_LITERACY_HERO,
   ProgramSection,
   getEducationDigitalLiteracyPrograms,
   type DigitalLiteracyProgramId,
 } from '@/features/education-digital-literacy'
 import { useEducationProgramIntroView } from '@/features/education-intro/api/hooks'
-import { PFTabs, PFText } from '@/shared/ui'
+import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function EducationDigitalLiteracyPage() {
-  const { titleLines, programs } = useEducationProgramIntroView({
+  const { titleLines, programs, isPending, isError, refetch } = useEducationProgramIntroView({
     fieldCode: 'DIGITAL_LITERACY',
-    fallbackTitleLines: EDUCATION_DIGITAL_LITERACY_HERO.titleLines,
-    fallbackPrograms: getEducationDigitalLiteracyPrograms(),
+    layoutTemplates: getEducationDigitalLiteracyPrograms(),
   })
-  const [activeTab, setActiveTab] = useState<DigitalLiteracyProgramId>(
-    DEFAULT_EDUCATION_DIGITAL_LITERACY_TAB,
-  )
+  const [activeTab, setActiveTab] = useState<DigitalLiteracyProgramId>('ai-literacy')
 
   useEffect(() => {
     if (programs.some(section => section.id === activeTab)) return
@@ -56,6 +52,25 @@ export function EducationDigitalLiteracyPage() {
           </PFText>
         </header>
 
+        {isPending ? (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.status}>
+            프로그램 소개를 불러오는 중입니다.
+          </PFText>
+        ) : isError ? (
+          <div className={styles.status}>
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+              프로그램 소개를 불러오지 못했습니다.
+            </PFText>
+            <PFButton variant="tertiary" size="large" onClick={refetch}>
+              다시 시도
+            </PFButton>
+          </div>
+        ) : programs.length === 0 ? (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.status}>
+            등록된 프로그램이 없습니다.
+          </PFText>
+        ) : (
+          <>
         <div className={styles.tabs}>
           <PFTabs
             items={tabItems}
@@ -70,6 +85,8 @@ export function EducationDigitalLiteracyPage() {
         {programs.map((section, index) => (
           <ProgramSection key={section.id} section={section} isFirst={index === 0} />
         ))}
+          </>
+        )}
       </div>
     </section>
   )

@@ -8677,6 +8677,13 @@
           "description": {
             "type": "string"
           },
+          "unitCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sessionDescription": {
+            "type": "string"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"

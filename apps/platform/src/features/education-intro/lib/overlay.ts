@@ -1,84 +1,88 @@
-import type { PublicProgramIntroImage, PublicProgramIntroResponse, PublicProgramIntroSection } from '../api/types'
+import type {
+  PublicProgramIntroImage,
+  PublicProgramIntroResponse,
+  PublicProgramIntroSection,
+} from '../api/types'
 
-type OverlayImage = {
+type LayoutImage = {
   src: string
   alt: string
   width: number
   height: number
 }
 
-type OverlaySection = {
+type LayoutSection = {
   id: string
   title: string
   description: string
-  images: OverlayImage[]
+  images: LayoutImage[]
   programName?: string
   partnerName?: string
   programDescription?: string
 }
 
-export function heroTitleLinesFromIntro(
-  heroText: string | undefined,
-  fallback: readonly string[],
-): string[] {
-  const lines = (heroText ?? '')
+export function heroTitleLinesFromIntro(heroText: string | undefined): string[] {
+  return (heroText ?? '')
     .split('\n')
     .map(line => line.trim())
     .filter(Boolean)
-  return lines.length > 0 ? lines : [...fallback]
 }
 
-function overlayImages<T extends OverlayImage>(
-  fallback: readonly T[],
+function mapImages<T extends LayoutImage>(
+  layout: readonly T[],
   remote: PublicProgramIntroImage[] | undefined,
 ): T[] {
   const sorted = [...(remote ?? [])].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-  return fallback.map((image, index) => {
-    const row = sorted[index]
-    const src = row?.publicUrl?.trim()
-    if (!src) return { ...image }
-    return {
-      ...image,
+  const mapped: T[] = []
+  sorted.forEach((row, index) => {
+    const src = row.publicUrl?.trim()
+    const slot = layout[index] ?? layout[layout.length - 1]
+    if (!src || !slot) return
+    mapped.push({
+      ...slot,
       src,
-      alt: row.alt?.trim() || image.alt,
-      width: row.width ?? image.width,
-      height: row.height ?? image.height,
-    }
+      alt: row.alt?.trim() || '',
+      width: row.width && row.width > 0 ? row.width : slot.width,
+      height: row.height && row.height > 0 ? row.height : slot.height,
+    })
   })
+  return mapped
 }
 
-function overlaySection<T extends OverlaySection>(
-  fallback: T,
+function mapSection<T extends LayoutSection>(
+  layout: T,
   remote: PublicProgramIntroSection,
 ): T {
+  const programName = remote.representativeProgram?.trim() ?? ''
+  const partnerName = remote.sponsorName?.trim() ?? ''
+  const programDescription = remote.representativeDescription?.trim() ?? ''
   return {
-    ...fallback,
-    title: remote.programType?.trim() || fallback.title,
-    description: remote.typeDescription ?? fallback.description,
-    images: overlayImages(fallback.images, remote.images),
-    programName: remote.representativeProgram ?? fallback.programName,
-    partnerName: remote.sponsorName ?? fallback.partnerName,
-    programDescription: remote.representativeDescription ?? fallback.programDescription,
+    ...layout,
+    id: (remote.sectionKey?.trim() || layout.id) as T['id'],
+    title: remote.programType?.trim() || '',
+    description: remote.typeDescription?.trim() || '',
+    images: mapImages(layout.images, remote.images),
+    programName,
+    partnerName,
+    programDescription,
   }
 }
 
-export function overlayProgramIntroSections<T extends OverlaySection>(
-  fallback: readonly T[],
+export function mapProgramIntroSections<T extends LayoutSection>(
+  layoutTemplates: readonly T[],
   remote: PublicProgramIntroResponse | undefined,
 ): T[] {
   const sections = [...(remote?.sections ?? [])].sort(
     (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
   )
-  if (sections.length === 0) return fallback.map(item => ({ ...item, images: [...item.images] }))
-
   const mapped: T[] = []
-  for (const section of sections) {
+  sections.forEach((section, index) => {
     const key = section.sectionKey?.trim()
-    const match = key ? fallback.find(item => item.id === key) : undefined
-    if (!match) continue
-    mapped.push(overlaySection(match, section))
-  }
-  return mapped.length > 0
-    ? mapped
-    : fallback.map(item => ({ ...item, images: [...item.images] }))
+    const layout =
+      (key ? layoutTemplates.find(item => item.id === key) : undefined) ??
+      layoutTemplates[Math.min(index, Math.max(layoutTemplates.length - 1, 0))]
+    if (!layout) return
+    mapped.push(mapSection(layout, section))
+  })
+  return mapped
 }

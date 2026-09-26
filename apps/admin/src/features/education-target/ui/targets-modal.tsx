@@ -10,10 +10,7 @@ import {
   useEducationTargetsList,
   useSaveEducationTargets,
 } from '@/features/education-target/api/hooks'
-import { educationTargetQueryKeys } from '@/features/education-target/api/query-keys'
-import { EDUCATION_TARGETS_CHANGED_EVENT } from '@/features/education-target/api/store'
 import { IndexColorDot } from '@/features/education-target/ui/index-color-dot'
-import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsButton, CmsInput, ContentModal, useCmsAlert } from '@/shared/ui'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
@@ -31,8 +28,6 @@ export function EducationTargetsModal({ open, onCancel, onSaved }: Props) {
 
   const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
   const [draftNames, setDraftNames] = useState<Record<string, string>>({})
-
-  useInvalidateOnWindowEvent(EDUCATION_TARGETS_CHANGED_EVENT, educationTargetQueryKeys.lists())
 
   useEffect(() => {
     if (!open) return

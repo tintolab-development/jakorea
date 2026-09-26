@@ -6,12 +6,7 @@ import type {
   ProgramIntroSaveInput,
 } from '@/entities/education-program-intro/model/types'
 import { getJAKoreaHomepageAdminAPIEducationSubset } from '@/shared/api/generated/education/education-api'
-import { shouldUseEducationProgramIntroRemoteApi } from './capabilities'
 import { mapProgramIntroResponseToDomain, toProgramIntroUpdateRequest } from './mappers'
-import {
-  readProgramIntroCategory,
-  saveProgramIntroCategory as saveLocal,
-} from './store'
 import { uploadEducationProgramIntroImage } from './upload-intro-image'
 
 function educationApi() {
@@ -55,21 +50,15 @@ async function resolveSections(sections: ProgramIntroItem[]): Promise<ProgramInt
 export async function getProgramIntroCategoryService(
   fieldCode: ProgramIntroFieldCode,
 ): Promise<ProgramIntroCategoryDocument> {
-  if (shouldUseEducationProgramIntroRemoteApi()) {
-    const row = await educationApi().get4(fieldCode)
-    return mapProgramIntroResponseToDomain(row, fieldCode)
-  }
-  return readProgramIntroCategory(fieldCode)
+  const row = await educationApi().get4(fieldCode)
+  return mapProgramIntroResponseToDomain(row, fieldCode)
 }
 
 export async function saveProgramIntroCategoryService(
   input: ProgramIntroSaveInput,
 ): Promise<ProgramIntroCategoryDocument> {
-  if (shouldUseEducationProgramIntroRemoteApi()) {
-    const sections = await resolveSections(input.sections)
-    const body = toProgramIntroUpdateRequest({ ...input, sections })
-    const row = await educationApi().update13(input.fieldCode, body)
-    return mapProgramIntroResponseToDomain(row, input.fieldCode)
-  }
-  return saveLocal(input)
+  const sections = await resolveSections(input.sections)
+  const body = toProgramIntroUpdateRequest({ ...input, sections })
+  const row = await educationApi().update13(input.fieldCode, body)
+  return mapProgramIntroResponseToDomain(row, input.fieldCode)
 }

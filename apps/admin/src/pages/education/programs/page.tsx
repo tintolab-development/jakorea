@@ -7,15 +7,12 @@ import { Spin } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import type { ProgramIntroTabKey } from '@/entities/education-program-intro/model/types'
 import { useProgramIntroCategory } from '@/features/education-program-intro/api/hooks'
-import { educationProgramIntroQueryKeys } from '@/features/education-program-intro/api/query-keys'
-import { EDUCATION_PROGRAM_INTRO_CHANGED_EVENT } from '@/features/education-program-intro/api/store'
 import {
   PROGRAM_INTRO_TABS,
   fieldCodeForTab,
   parseProgramIntroTab,
 } from '@/features/education-program-intro/lib/field-codes'
 import { ProgramIntroFormCard } from '@/features/education-program-intro/ui/form-card'
-import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsTextTabs } from '@/shared/ui'
 
 import './page.css'
@@ -29,11 +26,6 @@ function ProgramIntroCategoryPanel({
 }) {
   const fieldCode = fieldCodeForTab(tab)
   const docQuery = useProgramIntroCategory(fieldCode)
-
-  useInvalidateOnWindowEvent(
-    EDUCATION_PROGRAM_INTRO_CHANGED_EVENT,
-    educationProgramIntroQueryKeys.all,
-  )
 
   if (docQuery.isLoading) {
     return (

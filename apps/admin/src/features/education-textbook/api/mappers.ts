@@ -16,7 +16,7 @@ import type { TextbookCreateRequest } from '@/shared/api/generated/education/sch
 import type { TextbookListItem } from '@/shared/api/generated/education/schemas/textbookListItem'
 import type { TextbookResponse } from '@/shared/api/generated/education/schemas/textbookResponse'
 import type { TextbookUpdateRequest } from '@/shared/api/generated/education/schemas/textbookUpdateRequest'
-import { DEFAULT_TEXTBOOK_THUMBNAIL } from './store'
+import { DEFAULT_TEXTBOOK_THUMBNAIL } from '../lib/defaults'
 
 /** list-page-size.mdc */
 export const LIST_PAGE_SIZE = 20

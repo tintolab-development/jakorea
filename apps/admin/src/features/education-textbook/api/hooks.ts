@@ -5,7 +5,6 @@ import type {
   EducationTextbookListFilter,
   EducationTextbookUpdateInput,
 } from '@/entities/education-textbook/model/types'
-import { shouldUseEducationTextbookRemoteApi } from './capabilities'
 import { educationTextbookQueryKeys } from './query-keys'
 import {
   createEducationTextbookService,
@@ -16,18 +15,9 @@ import {
   updateEducationTextbookService,
 } from './service'
 
-function source(): 'remote' | 'local' {
-  return shouldUseEducationTextbookRemoteApi() ? 'remote' : 'local'
-}
-
-function filterKey(filter: EducationTextbookListFilter): EducationTextbookListFilter {
-  return filter
-}
-
 /**
  * 필터별 list queryKey가 분리되어 있으므로 단건 패치만 하면
  * 다른 usage/필터 캐시가 갱신되지 않음 → lists invalidate로 통일.
- * (팝업 setPopupActive와 동일. 단건 응답 후 list invalidate 1회는 허용)
  */
 function invalidateTextbookLists(queryClient: ReturnType<typeof useQueryClient>) {
   void queryClient.invalidateQueries({ queryKey: educationTextbookQueryKeys.lists() })
@@ -37,24 +27,22 @@ export function useEducationTextbooksList(
   filter: EducationTextbookListFilter = {},
   enabled = true,
 ) {
-  const dataSource = source()
   return useQuery({
-    queryKey: educationTextbookQueryKeys.list(dataSource, filterKey(filter)),
+    queryKey: educationTextbookQueryKeys.list(filter),
     queryFn: () => listEducationTextbooksService(filter),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 30_000,
+    retry: 1,
   })
 }
 
 export function useEducationTextbookDetail(id: string | null, enabled = true) {
-  const dataSource = source()
   return useQuery({
-    queryKey: educationTextbookQueryKeys.detail(dataSource, id ?? ''),
+    queryKey: educationTextbookQueryKeys.detail(id ?? ''),
     queryFn: () => getEducationTextbookService(id!),
     enabled: Boolean(id) && enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 30_000,
+    retry: 1,
   })
 }
 
@@ -74,17 +62,13 @@ export function useUpdateEducationTextbook() {
   return useMutation({
     mutationFn: (input: EducationTextbookUpdateInput) => {
       const cached = queryClient.getQueryData<EducationTextbook | null>(
-        educationTextbookQueryKeys.detail(source(), input.id),
+        educationTextbookQueryKeys.detail(input.id),
       )
       return updateEducationTextbookService(input, cached)
     },
     retry: false,
     onSuccess: data => {
-      queryClient.setQueryData(
-        educationTextbookQueryKeys.detail(source(), data.id),
-        data,
-      )
-      // 사용여부·사업분야·교육대상 등 필터 조건이 바뀔 수 있음
+      queryClient.setQueryData(educationTextbookQueryKeys.detail(data.id), data)
       invalidateTextbookLists(queryClient)
     },
   })
@@ -108,7 +92,7 @@ export function useRemoveEducationTextbooks() {
       invalidateTextbookLists(queryClient)
       for (const id of ids) {
         queryClient.removeQueries({
-          queryKey: educationTextbookQueryKeys.detail(source(), id),
+          queryKey: educationTextbookQueryKeys.detail(id),
         })
       }
     },
@@ -120,7 +104,7 @@ export function useSetEducationTextbookActive() {
   return useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => {
       const cached = queryClient.getQueryData<EducationTextbook | null>(
-        educationTextbookQueryKeys.detail(source(), id),
+        educationTextbookQueryKeys.detail(id),
       )
       if (cached) {
         return setEducationTextbookActiveService(id, isActive, cached)
@@ -136,10 +120,7 @@ export function useSetEducationTextbookActive() {
     },
     retry: false,
     onSuccess: data => {
-      queryClient.setQueryData(
-        educationTextbookQueryKeys.detail(source(), data.id),
-        data,
-      )
+      queryClient.setQueryData(educationTextbookQueryKeys.detail(data.id), data)
       invalidateTextbookLists(queryClient)
     },
   })

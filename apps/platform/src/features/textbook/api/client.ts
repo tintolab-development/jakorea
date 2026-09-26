@@ -1,6 +1,6 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
-import type { PublicTextbookListPage } from './types'
+import type { PublicTextbookDetail, PublicTextbookListPage } from './types'
 
 type SkipAuthConfig = InternalAxiosRequestConfig & {
   skipAuth?: boolean
@@ -44,4 +44,16 @@ export async function fetchPublicTextbooks(signal?: AbortSignal): Promise<Public
     size: unwrapped.size,
     totalPages: unwrapped.totalPages,
   }
+}
+
+/** GET /api/public/education/textbooks/{id} — 인증 불필요 */
+export async function fetchPublicTextbook(
+  id: string,
+  signal?: AbortSignal,
+): Promise<PublicTextbookDetail> {
+  const { data } = await axiosClient.get<unknown>(`${TEXTBOOKS_PATH}/${id}`, {
+    ...SKIP_AUTH,
+    signal,
+  })
+  return unwrapEnvelope<PublicTextbookDetail>(data)
 }

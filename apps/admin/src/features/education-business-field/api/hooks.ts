@@ -3,7 +3,6 @@ import type {
   EducationBusinessFieldDocument,
   EducationBusinessFieldTextPatch,
 } from '@/entities/education-business-field/model/types'
-import { shouldUseEducationBusinessFieldRemoteApi } from './capabilities'
 import { educationBusinessFieldQueryKeys } from './query-keys'
 import {
   getEducationBusinessFieldDocumentService,
@@ -13,15 +12,11 @@ import {
   setEducationBusinessFieldActiveService,
 } from './service'
 
-function source(): 'remote' | 'local' {
-  return shouldUseEducationBusinessFieldRemoteApi() ? 'remote' : 'local'
-}
-
 function cachedDocument(
   queryClient: ReturnType<typeof useQueryClient>,
 ): EducationBusinessFieldDocument | undefined {
   return queryClient.getQueryData<EducationBusinessFieldDocument>(
-    educationBusinessFieldQueryKeys.document(source()),
+    educationBusinessFieldQueryKeys.document(),
   )
 }
 
@@ -29,29 +24,27 @@ function setDocumentCaches(
   queryClient: ReturnType<typeof useQueryClient>,
   doc: EducationBusinessFieldDocument,
 ) {
-  queryClient.setQueryData(educationBusinessFieldQueryKeys.document(source()), doc)
-  queryClient.setQueryData(educationBusinessFieldQueryKeys.list(source()), doc.fields)
+  queryClient.setQueryData(educationBusinessFieldQueryKeys.document(), doc)
+  queryClient.setQueryData(educationBusinessFieldQueryKeys.list(), doc.fields)
 }
 
 export function useEducationBusinessFieldsList(enabled = true) {
-  const dataSource = source()
   return useQuery({
-    queryKey: educationBusinessFieldQueryKeys.list(dataSource),
+    queryKey: educationBusinessFieldQueryKeys.list(),
     queryFn: () => listEducationBusinessFieldsService(),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 30_000,
+    retry: 1,
   })
 }
 
 export function useEducationBusinessFieldDocument(enabled = true) {
-  const dataSource = source()
   return useQuery({
-    queryKey: educationBusinessFieldQueryKeys.document(dataSource),
+    queryKey: educationBusinessFieldQueryKeys.document(),
     queryFn: () => getEducationBusinessFieldDocumentService(),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 30_000,
+    retry: 1,
   })
 }
 

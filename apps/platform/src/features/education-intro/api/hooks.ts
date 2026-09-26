@@ -5,10 +5,15 @@ import { isHomepageApiConfigured } from '@/shared/lib/api-remote-env'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import { fetchPublicProgramIntro } from './client'
 import type { PublicProgramIntroFieldCode } from './types'
-import { heroTitleLinesFromIntro, overlayProgramIntroSections } from '../lib/overlay'
+import { heroTitleLinesFromIntro, mapProgramIntroSections } from '../lib/overlay'
 
-const INTRO_STALE_MS = 2 * 60_000
-const INTRO_GC_MS = 15 * 60_000
+/**
+ * 공개 프로그램 소개.
+ * Class B: 관리자 수정은 드물고 로그인·사용자와 무관하다.
+ * Remote API only — mock 본문 fallback 없음. 갤러리 크롭·object-position 만 레이아웃 템플릿.
+ */
+const INTRO_STALE_MS = 5 * 60_000
+const INTRO_GC_MS = 30 * 60_000
 
 export function educationProgramIntroQueryOptions(fieldCode: PublicProgramIntroFieldCode) {
   return queryOptions({
@@ -23,26 +28,33 @@ export function educationProgramIntroQueryOptions(fieldCode: PublicProgramIntroF
   })
 }
 
-type OverlaySection = {
+type LayoutImage = {
+  src: string
+  alt: string
+  width: number
+  height: number
+}
+
+type LayoutSection = {
   id: string
   title: string
   description: string
-  images: Array<{ src: string; alt: string; width: number; height: number }>
+  images: LayoutImage[]
   programName?: string
   partnerName?: string
   programDescription?: string
 }
 
-export function useEducationProgramIntroView<T extends OverlaySection>(options: {
+export function useEducationProgramIntroView<T extends LayoutSection>(options: {
   fieldCode: PublicProgramIntroFieldCode
-  fallbackTitleLines: readonly string[]
-  fallbackPrograms: readonly T[]
+  layoutTemplates: readonly T[]
 }): {
   titleLines: string[]
   programs: T[]
   isRemoteEnabled: boolean
   isPending: boolean
   isError: boolean
+  refetch: () => void
 } {
   const remote = isHomepageApiConfigured()
   const query = useQuery({
@@ -50,25 +62,47 @@ export function useEducationProgramIntroView<T extends OverlaySection>(options: 
     enabled: remote,
   })
 
-  const titleLines = useMemo(() => {
-    if (!remote || query.isError || !query.data) {
-      return [...options.fallbackTitleLines]
+  return useMemo(() => {
+    const refetch = () => {
+      void query.refetch()
     }
-    return heroTitleLinesFromIntro(query.data.heroText, options.fallbackTitleLines)
-  }, [options.fallbackTitleLines, query.data, query.isError, remote])
-
-  const programs = useMemo(() => {
-    if (!remote || query.isError || !query.data) {
-      return overlayProgramIntroSections(options.fallbackPrograms, undefined)
+    if (!remote) {
+      return {
+        titleLines: [],
+        programs: [],
+        isRemoteEnabled: false,
+        isPending: false,
+        isError: true,
+        refetch,
+      }
     }
-    return overlayProgramIntroSections(options.fallbackPrograms, query.data)
-  }, [options.fallbackPrograms, query.data, query.isError, remote])
-
-  return {
-    titleLines,
-    programs,
-    isRemoteEnabled: remote,
-    isPending: remote && query.isPending,
-    isError: query.isError,
-  }
+    if (query.isPending) {
+      return {
+        titleLines: [],
+        programs: [],
+        isRemoteEnabled: true,
+        isPending: true,
+        isError: false,
+        refetch,
+      }
+    }
+    if (query.isError || !query.data) {
+      return {
+        titleLines: [],
+        programs: [],
+        isRemoteEnabled: true,
+        isPending: false,
+        isError: true,
+        refetch,
+      }
+    }
+    return {
+      titleLines: heroTitleLinesFromIntro(query.data.heroText),
+      programs: mapProgramIntroSections(options.layoutTemplates, query.data),
+      isRemoteEnabled: true,
+      isPending: false,
+      isError: false,
+      refetch,
+    }
+  }, [options.fieldCode, options.layoutTemplates, query, remote])
 }

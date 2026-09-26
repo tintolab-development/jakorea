@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   buildTextbooksListPath,
+  buildThemeSections,
   DetailModal,
   filterAndSortTextbooks,
   ContentListItem,
@@ -9,21 +10,25 @@ import {
   TEXTBOOKS_PAGE_SIZE,
   ThemeSection,
   TextbookSort,
-  useMockThemeSections,
   usePublicTextbookCatalog,
-  resolveTextbookContent,
+  usePublicTextbookDetail,
   type TextbookCategoryFilter,
   type TextbookSortKey,
   type TextbooksListParams,
 } from '@/features/textbook'
-import { PFPagination, PFTabs, PFText } from '@/shared/ui'
+import { PFButton, PFPagination, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function TextbooksPage() {
   const [params, setParams] = useState(readTextbooksListParams)
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const { items: contents } = usePublicTextbookCatalog()
-  const themeSections = useMockThemeSections()
+  const { items: contents, isPending, isError, refetch } = usePublicTextbookCatalog()
+  const themeSections = useMemo(() => buildThemeSections(contents), [contents])
+  const selectedBase = useMemo(
+    () => (selectedId ? contents.find(item => item.id === selectedId) ?? null : null),
+    [contents, selectedId],
+  )
+  const { content: selectedContent } = usePublicTextbookDetail(selectedId, selectedBase)
 
   useEffect(() => {
     const syncedPath = buildTextbooksListPath(params)
@@ -67,8 +72,6 @@ export function TextbooksPage() {
     ? params.category
     : 'all'
 
-  const selectedContent = resolveTextbookContent(selectedId, contents)
-
   const openDetail = (contentId: string) => {
     setSelectedId(contentId)
   }
@@ -87,6 +90,21 @@ export function TextbooksPage() {
           </PFText>
         </header>
 
+        {isPending ? (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.status}>
+            교육 콘텐츠를 불러오는 중입니다.
+          </PFText>
+        ) : isError ? (
+          <div className={styles.status}>
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+              교육 콘텐츠를 불러오지 못했습니다.
+            </PFText>
+            <PFButton variant="tertiary" size="large" onClick={refetch}>
+              다시 시도
+            </PFButton>
+          </div>
+        ) : (
+          <>
         <div className={styles.directory}>
           {themeSections.map(section => (
             <ThemeSection key={section.key} section={section} onRowClick={openDetail} />
@@ -143,6 +161,8 @@ export function TextbooksPage() {
             </div>
           ) : null}
         </div>
+          </>
+        )}
       </div>
 
       <DetailModal
