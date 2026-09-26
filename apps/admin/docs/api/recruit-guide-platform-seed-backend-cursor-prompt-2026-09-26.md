@@ -48,7 +48,7 @@ Flyway `V22__careers.sql` 과 기존 `scripts/seed_careers_local.sql` 은 이미
 - storage_key rename. 키는 `local/seed/careers-hero.png`, `local/seed/careers-story-metlife.png` 그대로.
 - 히어로 라벨 `인재채용`, `imageAlt`, `How We Thrive`, thrive `tone` / `column` / decoration SVG 5종, 인터뷰 `categoryLabel` `스토리`, `titleLines` 를 DB 컬럼으로 추가. Platform 고정 카피·번들 장식이다.
 - 페이지 배경 `careers-gradient.png`, 더보기 아이콘(`add.svg`·`close.svg`·chevron) 업로드.
-- 조직문화 `title`·`description` 에 화면 줄바꿈(`summaryLines` / `detailLines`)을 `\n` 으로 넣기. 그 필드는 **한 문장**이다.
+- 조직문화 `title`·`description` 에 Platform `summaryLines` / `detailLines` 와 같은 `\n` 줄바꿈을 넣는다. 공개·Admin 화면이 동일하게 개행을 쓴다.
 - 인터뷰 `year` 에 월·일(`2026년 08월 15일`)을 넣기. 연도 정수만. Platform 노출 일자는 프론트 전용이다.
 - 안내 `PUT` API, DTO, OpenAPI 변경.
 - 공고 29건, 지원자 `홍길동`.
@@ -123,29 +123,29 @@ Admin 대체 경로(해시 동일):
       "displayOrder": 1,
       "code": "MAKE_AN_IMPACT",
       "label": "Make an Impact",
-      "title": "청소년의 성장이라는 공동의 목적을 향해 함께 나아갑니다",
-      "description": "각자의 노력이 만드는 작은 변화가 더 큰 사회적 가치로 이어진다고 믿으며, 맡은 일에 책임감을 가지고 긍정적인 변화를 만들어갑니다."
+      "title": "청소년의 성장이라는\n공동의 목적을 향해 함께 나아갑니다",
+      "description": "각자의 노력이 만드는 작은 변화가 더 큰 사회적 가치로 이어진다고 믿으며, 맡은 일에 책임감을 가지고\n긍정적인 변화를 만들어갑니다."
     },
     {
       "displayOrder": 2,
       "code": "KEEP_LEARNING",
       "label": "Keep Learning",
       "title": "배움은 성장의 시작입니다",
-      "description": "호기심을 가지고 새로운 것에 도전하며 끊임없이 배우고 더 나은 방법을 함께 찾아갑니다."
+      "description": "호기심을 가지고 새로운 것에 도전하며 끊임없이\n배우고 더 나은 방법을 함께 찾아갑니다."
     },
     {
       "displayOrder": 3,
       "code": "SPEAK_OPENLY",
       "label": "Speak Openly",
-      "title": "좋은 아이디어는 열린 소통에서 시작됩니다",
-      "description": "신뢰와 정직을 바탕으로 자유롭게 의견을 나누며, 직급이나 역할에 관계없이 서로의 목소리에 귀 기울이고 더 나은 방향을 함께 만들어갑니다."
+      "title": "좋은 아이디어는\n열린 소통에서 시작됩니다",
+      "description": "신뢰와 정직을 바탕으로 자유롭게 의견을 나누며,\n직급이나 역할에 관계없이 서로의 목소리에\n귀 기울이고 더 나은 방향을 함께 만들어갑니다."
     },
     {
       "displayOrder": 4,
       "code": "READY_TO_HELP",
       "label": "Ready to Help",
-      "title": "협력은 서로를 존중하는 마음에서 시작됩니다",
-      "description": "다양한 의견에 귀 기울이고, 도움이 필요한 순간에는 기꺼이 손을 내밀며 함께 해결책을 찾아갑니다."
+      "title": "협력은 서로를 존중하는\n마음에서 시작됩니다",
+      "description": "다양한 의견에 귀 기울이고, 도움이 필요한 순간에는\n기꺼이 손을 내밀며 함께 해결책을 찾아갑니다."
     }
   ],
   "interviews": [
@@ -185,7 +185,7 @@ Platform에만 있고 DB에 넣지 않는 값:
 | `CAREERS_HERO.label` `인재채용` | 없음 |
 | `CAREERS_HERO.imageAlt` | 없음 |
 | `THRIVE_TITLE` `How We Thrive` + decoration SVG | 없음 |
-| `summaryLines` / `detailLines` | `title`·`description` 한 문장 |
+| `summaryLines` / `detailLines` | `title`·`description` 의 `\n` (동일 줄바꿈) |
 | `categoryLabel` `스토리`, `publishedAtLabel` 월·일 | `year` 정수만 |
 | 인터뷰 3건 이미지 | 같은 `careers-story-metlife.png` |
 
@@ -203,7 +203,8 @@ curl -sS http://localhost:8081/api/public/careers/guide
 - `subTextKo` 에 개행 1개.
 - `subTextEn` 은 한 줄. 개행 없음.
 - `cultureItems` 4. 순서 `MAKE_AN_IMPACT`, `KEEP_LEARNING`, `SPEAK_OPENLY`, `READY_TO_HELP`.
-- `cultureItems[0].title` 에 `\n` 없음.
+- `cultureItems[0].title` 에 개행 1개 (`청소년의 성장이라는` / `공동의 목적을…`).
+- `cultureItems[0].description` 에 개행 1개.
 - `interviews` 3. 첫 `storyKey` `story-metlife-2026`, `year` 숫자 `2026`.
 - 인터뷰 3건 `coverImageUrl` 이 같은 키 `local/seed/careers-story-metlife.png`.
 - 공고 건수·지원자 건수는 이 스크립트 전과 같다.

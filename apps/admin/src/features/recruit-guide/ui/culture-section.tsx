@@ -109,7 +109,7 @@ export function CultureSectionCard({ items }: Props) {
       {
         title: '항목',
         key: 'itemLabel',
-        width: 180,
+        width: 320,
         align: 'center',
         className: 'recruit-guide-col--label',
         render: (_value, record) => record.itemLabel,

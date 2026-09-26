@@ -364,7 +364,7 @@ export function BannerFormModal({
 
   return (
     <BannerFormBody
-      key={`${initial.imageUrl}-${initial.mainText}-${initial.subText01}`}
+      key={`${initial.imageAssetId ?? ''}-${initial.imageFileName ?? ''}-${initial.imageUrl}-${initial.mainText}-${initial.subText01}`}
       initial={initial}
       confirmLoading={confirmLoading}
       onCancel={onCancel}

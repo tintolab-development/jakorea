@@ -15,7 +15,7 @@ import type {
 import heroImageUrl from '@/assets/images/recruit/hero.png'
 import storyImageUrl from '@/assets/images/recruit/story-metlife.png'
 
-const STORAGE_KEY = 'admin.jakorea.recruitGuide.v1'
+const STORAGE_KEY = 'admin.jakorea.recruitGuide.v2'
 
 export const RECRUIT_GUIDE_CHANGED_EVENT = 'jakorea:recruit-guide-changed' as const
 
@@ -24,7 +24,7 @@ type GuideFile = {
   data: RecruitGuideData
 }
 
-/** Platform `THRIVE_VALUES` 순서·문장 */
+/** Platform `THRIVE_VALUES` summaryLines / detailLines — `\n` 이 화면 줄바꿈 */
 const FIXED_CULTURE: ReadonlyArray<{
   id: CultureItemId
   itemLabel: string
@@ -34,30 +34,30 @@ const FIXED_CULTURE: ReadonlyArray<{
   {
     id: 'make_an_impact',
     itemLabel: 'Make an Impact',
-    defaultTitle: '청소년의 성장이라는 공동의 목적을 향해 함께 나아갑니다',
+    defaultTitle: '청소년의 성장이라는\n공동의 목적을 향해 함께 나아갑니다',
     defaultDescription:
-      '각자의 노력이 만드는 작은 변화가 더 큰 사회적 가치로 이어진다고 믿으며, 맡은 일에 책임감을 가지고 긍정적인 변화를 만들어갑니다.',
+      '각자의 노력이 만드는 작은 변화가 더 큰 사회적 가치로 이어진다고 믿으며, 맡은 일에 책임감을 가지고\n긍정적인 변화를 만들어갑니다.',
   },
   {
     id: 'keep_learning',
     itemLabel: 'Keep Learning',
     defaultTitle: '배움은 성장의 시작입니다',
     defaultDescription:
-      '호기심을 가지고 새로운 것에 도전하며 끊임없이 배우고 더 나은 방법을 함께 찾아갑니다.',
+      '호기심을 가지고 새로운 것에 도전하며 끊임없이\n배우고 더 나은 방법을 함께 찾아갑니다.',
   },
   {
     id: 'speak_openly',
     itemLabel: 'Speak Openly',
-    defaultTitle: '좋은 아이디어는 열린 소통에서 시작됩니다',
+    defaultTitle: '좋은 아이디어는\n열린 소통에서 시작됩니다',
     defaultDescription:
-      '신뢰와 정직을 바탕으로 자유롭게 의견을 나누며, 직급이나 역할에 관계없이 서로의 목소리에 귀 기울이고 더 나은 방향을 함께 만들어갑니다.',
+      '신뢰와 정직을 바탕으로 자유롭게 의견을 나누며,\n직급이나 역할에 관계없이 서로의 목소리에\n귀 기울이고 더 나은 방향을 함께 만들어갑니다.',
   },
   {
     id: 'ready_to_help',
     itemLabel: 'Ready to Help',
-    defaultTitle: '협력은 서로를 존중하는 마음에서 시작됩니다',
+    defaultTitle: '협력은 서로를 존중하는\n마음에서 시작됩니다',
     defaultDescription:
-      '다양한 의견에 귀 기울이고, 도움이 필요한 순간에는 기꺼이 손을 내밀며 함께 해결책을 찾아갑니다.',
+      '다양한 의견에 귀 기울이고, 도움이 필요한 순간에는\n기꺼이 손을 내밀며 함께 해결책을 찾아갑니다.',
   },
 ]
 
@@ -245,7 +245,14 @@ export function readRecruitGuide(): RecruitGuideData {
   return file.data
 }
 
-export function saveBanner(input: BannerSaveInput): RecruitGuideData {
+type MutateOptions = {
+  /** remote GET 세션 캐시 기준값. 없으면 localStorage */
+  base?: RecruitGuideData
+  /** false면 localStorage에 쓰지 않는다 (저장 API 없는 remote 세션용) */
+  persist?: boolean
+}
+
+export function saveBanner(input: BannerSaveInput, options?: MutateOptions): RecruitGuideData {
   const imageUrl = input.imageUrl.trim()
   const mainText = input.mainText.trimEnd()
   const subText01 = input.subText01.trimEnd()
@@ -255,7 +262,7 @@ export function saveBanner(input: BannerSaveInput): RecruitGuideData {
   if (!subText01.trim()) throw new Error('BANNER_SUB_TEXT_01_REQUIRED')
   if (!subText02.trim()) throw new Error('BANNER_SUB_TEXT_02_REQUIRED')
 
-  const current = readRecruitGuide()
+  const current = options?.base ?? readRecruitGuide()
   const next: RecruitGuideData = {
     ...current,
     banner: {
@@ -269,12 +276,14 @@ export function saveBanner(input: BannerSaveInput): RecruitGuideData {
     },
     updatedAt: new Date().toISOString(),
   }
-  writeFile({ version: 1, data: next })
+  if (options?.persist !== false) {
+    writeFile({ version: 1, data: next })
+  }
   return next
 }
 
-export function saveCulture(items: CultureSaveItem[]): RecruitGuideData {
-  const current = readRecruitGuide()
+export function saveCulture(items: CultureSaveItem[], options?: MutateOptions): RecruitGuideData {
+  const current = options?.base ?? readRecruitGuide()
   const byId = new Map(items.map(item => [item.id, item]))
 
   const nextItems = FIXED_CULTURE.map(fixed => {
@@ -297,7 +306,9 @@ export function saveCulture(items: CultureSaveItem[]): RecruitGuideData {
     cultureItems: nextItems,
     updatedAt: new Date().toISOString(),
   }
-  writeFile({ version: 1, data: next })
+  if (options?.persist !== false) {
+    writeFile({ version: 1, data: next })
+  }
   return next
 }
 
@@ -309,8 +320,8 @@ function nextInterviewId(existing: InterviewItem[]): string {
   return `ri-${max + 1}`
 }
 
-export function addInterview(input: InterviewSaveItem): RecruitGuideData {
-  const current = readRecruitGuide()
+export function addInterview(input: InterviewSaveItem, options?: MutateOptions): RecruitGuideData {
+  const current = options?.base ?? readRecruitGuide()
   if (current.interviews.some(row => row.storyId === input.storyId)) {
     throw new Error('INTERVIEW_DUPLICATE')
   }
@@ -325,12 +336,18 @@ export function addInterview(input: InterviewSaveItem): RecruitGuideData {
     interviews: [...current.interviews, nextRow],
     updatedAt: new Date().toISOString(),
   }
-  writeFile({ version: 1, data: next })
+  if (options?.persist !== false) {
+    writeFile({ version: 1, data: next })
+  }
   return next
 }
 
-export function replaceInterview(id: string, input: InterviewSaveItem): RecruitGuideData {
-  const current = readRecruitGuide()
+export function replaceInterview(
+  id: string,
+  input: InterviewSaveItem,
+  options?: MutateOptions,
+): RecruitGuideData {
+  const current = options?.base ?? readRecruitGuide()
   const duplicate = current.interviews.find(
     row => row.storyId === input.storyId && row.id !== id
   )
@@ -354,19 +371,23 @@ export function replaceInterview(id: string, input: InterviewSaveItem): RecruitG
     interviews,
     updatedAt: new Date().toISOString(),
   }
-  writeFile({ version: 1, data: next })
+  if (options?.persist !== false) {
+    writeFile({ version: 1, data: next })
+  }
   return next
 }
 
-export function removeInterviews(ids: string[]): RecruitGuideData {
+export function removeInterviews(ids: string[], options?: MutateOptions): RecruitGuideData {
   if (ids.length === 0) throw new Error('INTERVIEW_NONE_SELECTED')
   const idSet = new Set(ids)
-  const current = readRecruitGuide()
+  const current = options?.base ?? readRecruitGuide()
   const next: RecruitGuideData = {
     ...current,
     interviews: current.interviews.filter(row => !idSet.has(row.id)),
     updatedAt: new Date().toISOString(),
   }
-  writeFile({ version: 1, data: next })
+  if (options?.persist !== false) {
+    writeFile({ version: 1, data: next })
+  }
   return next
 }

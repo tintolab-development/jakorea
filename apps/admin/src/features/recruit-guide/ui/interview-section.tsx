@@ -40,7 +40,7 @@ export function InterviewSectionCard({ items }: Props) {
       {
         title: 'No.',
         key: 'no',
-        width: TABLE_COLUMN_WIDTHS.index,
+        width: 100,
         align: 'center',
         className: CMS_TABLE_NO_COL_CLASS,
         render: (_value, _record, index) => index + 1,
@@ -55,13 +55,14 @@ export function InterviewSectionCard({ items }: Props) {
       {
         title: '관리',
         key: 'actions',
-        width: 120,
+        width: 140,
         align: 'center',
+        className: 'recruit-guide-col--actions',
         render: (_value, record) => (
           <CmsButton
             variant="secondary"
             size="medium"
-            width={88}
+            width={100}
             type="button"
             onClick={e => {
               e.stopPropagation()

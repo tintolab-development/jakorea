@@ -57,6 +57,20 @@
   margin-top: 4px;
 }
 
+.recruit-guide-interview-modal__table .ant-table-thead > tr > th.recruit-guide-interview-modal__year,
+.recruit-guide-interview-modal__table .ant-table-tbody > tr > td.recruit-guide-interview-modal__year {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+}
+
+.recruit-guide-interview-modal__table .ant-table-tbody > tr > td,
+.recruit-guide-interview-modal__table .ant-table-tbody > tr:hover > td {
+  height: auto !important;
+  min-height: 54px;
+  white-space: normal !important;
+}
+
 .recruit-guide-interview-modal__table .ant-table-tbody > tr.recruit-guide-interview-modal__row--selected > td {
   background: rgba(1, 161, 175, 0.08);
 }
@@ -102,14 +116,5 @@
 }
 
 .recruit-guide-interview-modal__pager-status strong {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  padding: 0 8px;
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 4px;
-  background: #fff;
   font-weight: 700;
 }

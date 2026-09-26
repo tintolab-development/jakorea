@@ -34,7 +34,7 @@ export function BannerSectionCard({ banner }: Props) {
       {
         title: '배너 이미지',
         key: 'image',
-        width: 160,
+        width: 200,
         align: 'center',
         className: 'recruit-guide-col--image',
         render: (_value, record) =>
@@ -50,6 +50,7 @@ export function BannerSectionCard({ banner }: Props) {
         title: '메인 텍스트',
         key: 'mainText',
         align: 'center',
+        className: 'recruit-guide-col--copy',
         render: (_value, record) => (
           <span className="recruit-guide-preline">{record.mainText || '-'}</span>
         ),
@@ -58,6 +59,7 @@ export function BannerSectionCard({ banner }: Props) {
         title: '서브 텍스트 01',
         key: 'subText01',
         align: 'center',
+        className: 'recruit-guide-col--copy',
         render: (_value, record) => (
           <span className="recruit-guide-preline">{record.subText01 || '-'}</span>
         ),
@@ -66,6 +68,7 @@ export function BannerSectionCard({ banner }: Props) {
         title: '서브 텍스트 02',
         key: 'subText02',
         align: 'center',
+        className: 'recruit-guide-col--copy',
         render: (_value, record) => (
           <span className="recruit-guide-preline">{record.subText02 || '-'}</span>
         ),
@@ -115,7 +118,6 @@ export function BannerSectionCard({ banner }: Props) {
         dataSource={rows}
         pagination={false}
         rowKey="key"
-        scroll={{ x: true }}
       />
 
       <BannerFormModal
