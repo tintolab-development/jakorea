@@ -80,11 +80,7 @@ export const menuItems: MenuItemConfig[] = [
           { key: '/ja-korea/reports-disclosure', label: '보고서 및 공시 관리' },
         ],
       },
-      {
-        key: 'ja-korea-history-group',
-        label: 'JA History',
-        children: [{ key: '/ja-korea/ja-history/resumes', label: '강사 이력서' }],
-      },
+      { key: '/ja-korea/ja-history', label: 'JA History' },
       {
         key: 'ja-korea-recruit-group',
         label: '채용',
@@ -269,7 +265,7 @@ const PAGE_TITLE_BY_PATH: Record<string, string> = {
   '/ja-korea/principles': '소개 및 운영원칙 관리',
   '/ja-korea/income-expense': '수입&지출 관리',
   '/ja-korea/reports-disclosure': '보고서 및 공시 관리',
-  '/ja-korea/ja-history/resumes': '강사 이력서',
+  '/ja-korea/ja-history': 'JA History',
   '/ja-korea/recruit/guide': '채용 안내 관리',
   '/ja-korea/recruit/postings': '채용공고 관리',
   '/ja-korea/recruit/applicants': '인재채용 관리',

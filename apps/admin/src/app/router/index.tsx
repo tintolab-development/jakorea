@@ -43,6 +43,7 @@ import { AdminAccountLogPage } from '@/pages/logs/admin-account/page'
 import { FileDownloadLogPage } from '@/pages/logs/file-download/page'
 import { PiiAccessLogPage } from '@/pages/logs/pii-access/page'
 import { BugIssueLogPage } from '@/pages/logs/bugs/page'
+import { JaHistoryPage } from '@/pages/ja-korea/ja-history/page'
 import { RecruitApplicantsPage } from '@/pages/ja-korea/recruit/applicants/page'
 import { RecruitGuidePage } from '@/pages/ja-korea/recruit/guide/page'
 import { RecruitPostingsPage } from '@/pages/ja-korea/recruit/postings/page'
@@ -66,6 +67,7 @@ const IMPLEMENTED_LEAF_PATHS = new Set([
   '/ja-korea/notices',
   '/ja-korea/directions',
   '/ja-korea/people',
+  '/ja-korea/ja-history',
   '/ja-korea/recruit/guide',
   '/ja-korea/recruit/postings',
   '/ja-korea/recruit/applicants',
@@ -166,6 +168,11 @@ export const router = createBrowserRouter([
       { path: 'ja-korea/notices/:id', element: <NoticeDetailPage /> },
       { path: 'ja-korea/directions', element: <DirectionsPage /> },
       { path: 'ja-korea/people', element: <PeoplePage /> },
+      { path: 'ja-korea/ja-history', element: <JaHistoryPage /> },
+      {
+        path: 'ja-korea/ja-history/resumes',
+        element: <Navigate to="/ja-korea/ja-history" replace />,
+      },
       { path: 'ja-korea/recruit/guide', element: <RecruitGuidePage /> },
       { path: 'ja-korea/recruit/postings', element: <RecruitPostingsPage /> },
       { path: 'ja-korea/recruit/applicants', element: <RecruitApplicantsPage /> },
