@@ -55,6 +55,22 @@ export function getLoggedInActionRoute(label: string) {
   return loggedInActionRoutes[label]
 }
 
+/** 상위 카테고리 클릭 시 이동 대상. 표시 순서의 첫 하위 메뉴를 쓴다. */
+export function getTopCategoryNavigationTarget(
+  group: NavigationGroup,
+): { href: string; external: boolean } | null {
+  const firstChild = group.children[0]
+  if (firstChild?.href) {
+    return { href: firstChild.href, external: Boolean(firstChild.external) }
+  }
+
+  if (group.href) {
+    return { href: group.href, external: false }
+  }
+
+  return null
+}
+
 export function getActiveNavigationGroupCode(pathname: string): string | null {
   const label = getActiveNavigationItem(pathname)
   if (!label) return null

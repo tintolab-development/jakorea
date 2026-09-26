@@ -6,6 +6,7 @@ import externalLinkIconUrl from '@/shared/assets/icons/arrow-diagonal-black.svg'
 import {
   getActiveNavigationGroupCode,
   getLoggedInActionRoute,
+  getTopCategoryNavigationTarget,
   guestUserActionRoutes,
   loggedInActions,
   type NavigationGroup,
@@ -199,11 +200,14 @@ export function HeaderDesktop({
                   onMouseLeave={scheduleClose}
                   onClick={() => {
                     setActiveGroupCode(group.groupCode)
-                    const href = 'href' in group ? group.href : undefined
-                    if (href) {
-                      closeNav()
-                      navigate(href)
+                    const target = getTopCategoryNavigationTarget(group)
+                    if (!target) return
+                    closeNav()
+                    if (target.external) {
+                      window.open(target.href, '_blank', 'noopener,noreferrer')
+                      return
                     }
+                    navigate(target.href)
                   }}
                 >
                   <span className={styles.navigationButtonLabel}>
