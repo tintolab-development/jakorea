@@ -44,7 +44,10 @@ function ThriveMoreButton({
       className={styles.more}
       aria-expanded={expanded}
       aria-label={expanded ? `${title} 상세 접기` : `${title} 상세 펼치기`}
-      onClick={onClick}
+      onClick={event => {
+        event.stopPropagation()
+        onClick()
+      }}
     >
       <img
         className={styles.moreIcon}
@@ -71,7 +74,15 @@ function ThriveCard({
 }) {
   return (
     <article
-      className={[styles.card, styles[value.tone], className].filter(Boolean).join(' ')}
+      className={[
+        styles.card,
+        styles[value.tone],
+        expanded ? styles.cardExpanded : null,
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      onClick={onToggle}
     >
       <img
         className={styles.decoration}
@@ -79,19 +90,16 @@ function ThriveCard({
         alt=""
         aria-hidden="true"
       />
-      <div className={[styles.cardBody, expanded ? styles.cardBodyExpanded : null].filter(Boolean).join(' ')}>
-        {expanded ? null : (
-          <h3 className={styles.cardTitle}>{value.title}</h3>
-        )}
-        {expanded ? (
-          <PFText as="p" typo="hd-lg" color="black" className={styles.cardSummaryExpanded}>
-            <CopyLines lines={value.summaryLines} />
-          </PFText>
-        ) : (
-          <PFText as="p" typo="hd-lg" color="inherit" className={styles.cardSummary}>
-            {value.summary}
-          </PFText>
-        )}
+      <div className={styles.cardBody}>
+        {expanded ? null : <h3 className={styles.cardTitle}>{value.title}</h3>}
+        <PFText
+          as="p"
+          typo={expanded ? 'hd-lg' : 'bd-md-md'}
+          color="black"
+          className={expanded ? styles.cardSummaryExpanded : styles.cardSummary}
+        >
+          <CopyLines lines={value.summaryLines} />
+        </PFText>
         {expanded ? (
           <PFText as="p" color="black" className={styles.cardDetail}>
             <CopyLines lines={value.detailLines} />

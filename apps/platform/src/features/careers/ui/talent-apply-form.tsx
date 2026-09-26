@@ -1,5 +1,7 @@
 import { type ChangeEvent, useRef, useState } from 'react'
+import axios from 'axios'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Link } from 'react-router-dom'
 import {
   buildRequiredConsentDisagreeAlertMessage,
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
@@ -15,12 +17,15 @@ import {
   PFTextInput,
   PFToggle,
 } from '@/shared/ui'
+import { useCreatePublicCareerTalentApplication } from '../api/hooks'
+import { CAREERS_PATH } from '../lib/constants'
 import {
   CAREERS_TALENT_APPLY_PLACEHOLDERS as PH,
   CAREERS_TALENT_APPLY_REQUIRED_INCOMPLETE_MESSAGE,
   CAREERS_TALENT_APPLY_STEP_TITLES,
+  CAREERS_TALENT_APPLY_SUBMIT_ERROR_MESSAGE,
   CAREERS_TALENT_APPLY_SUBMIT_LABEL,
-  CAREERS_TALENT_APPLY_SUBMIT_PENDING_MESSAGE,
+  CAREERS_TALENT_APPLY_SUBMIT_SUCCESS_MESSAGE,
   CAREERS_TALENT_CAREER_OPTIONS,
   CAREERS_TALENT_EDUCATION_LEVEL_OPTIONS,
   CAREERS_TALENT_JOB_OPTIONS,
@@ -44,6 +49,20 @@ type AlertState = {
   title: string
   description?: string
 } | null
+
+function messageFromError(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data
+    if (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string') {
+      const message = data.message.trim()
+      if (message) return message
+    }
+  }
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim()
+  }
+  return CAREERS_TALENT_APPLY_SUBMIT_ERROR_MESSAGE
+}
 
 function FieldLabel({
   htmlFor,
@@ -115,8 +134,11 @@ function CareerTypeRadioGroup({
 export function TalentApplyForm() {
   const [alert, setAlert] = useState<AlertState>(null)
   const [attachedFileName, setAttachedFileName] = useState('')
+  const [attachedFile, setAttachedFile] = useState<File | null>(null)
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const mutation = useCreatePublicCareerTalentApplication()
 
   const {
     control,
@@ -145,17 +167,25 @@ export function TalentApplyForm() {
   }
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const file = event.target.files?.[0] ?? null
     event.target.value = ''
+    setAttachedFile(file)
     setAttachedFileName(file?.name ?? '')
   }
 
-  const onValid = () => {
-    // TODO: 인재 채용 지원 API가 준비되면 이 지점에서 mutation/service를 연결한다.
-    setAlert({
-      title: '안내',
-      description: CAREERS_TALENT_APPLY_SUBMIT_PENDING_MESSAGE,
-    })
+  const onValid = (values: CareersTalentApplyFormInput) => {
+    const parsed = careersTalentApplyFormSchema.parse(values)
+    mutation.mutate(
+      { values: parsed, attachmentFile: attachedFile },
+      {
+        onSuccess: () => setSubmitted(true),
+        onError: error =>
+          setAlert({
+            title: '안내',
+            description: messageFromError(error),
+          }),
+      },
+    )
   }
 
   const onInvalid = (formErrors: FieldErrors<CareersTalentApplyFormInput>) => {
@@ -182,6 +212,19 @@ export function TalentApplyForm() {
     CAREERS_TALENT_JOB_OPTIONS.slice(2, 4),
     CAREERS_TALENT_JOB_OPTIONS.slice(4, 6),
   ]
+
+  if (submitted) {
+    return (
+      <div className={styles.success}>
+        <PFText as="p" typo="bd-lg-rg" color="black">
+          {CAREERS_TALENT_APPLY_SUBMIT_SUCCESS_MESSAGE}
+        </PFText>
+        <Link to={CAREERS_PATH} className={styles.backLink}>
+          인재채용으로 돌아가기
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -575,6 +618,7 @@ export function TalentApplyForm() {
                 <input
                   ref={fileInputRef}
                   type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                   className={styles.visuallyHiddenFile}
                   onChange={handleFileChange}
                 />
@@ -695,8 +739,13 @@ export function TalentApplyForm() {
           </div>
 
           <div className={styles.submit}>
-            <PFButton type="submit" size="xlarge" width="100%">
-              {CAREERS_TALENT_APPLY_SUBMIT_LABEL}
+            <PFButton
+              type="submit"
+              size="xlarge"
+              width="100%"
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? '접수 중' : CAREERS_TALENT_APPLY_SUBMIT_LABEL}
             </PFButton>
           </div>
         </section>

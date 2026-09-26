@@ -8,6 +8,31 @@ export type CareerJobListItem = {
   publishedAtLabel: string
 }
 
+export type CareerPostingAttachment = {
+  id: string
+  name: string
+  fileUrl?: string
+}
+
+/** 채용공고 상세. 조회수는 응답에 숫자가 있을 때만 표시한다. */
+export type CareerPostingDetail = CareerJobListItem & {
+  content: string
+  contentFormat: 'html'
+  /** 공개 상세는 publishedOn 날짜만. 예: 2026년 05월 08일 */
+  publishedAtDetailLabel: string
+  /** recruitStart·recruitEnd가 둘 다 있을 때만. 예: 2026년 04월 03일(금) ~ 2026년 11월 20일(금) */
+  recruitPeriodLabel: string
+  viewCount: number | null
+  attachments: CareerPostingAttachment[]
+}
+
+export type CareerPostingDetailStatus =
+  | 'loading'
+  | 'ready'
+  | 'not-found'
+  | 'error'
+  | 'unavailable'
+
 export type CareersListParams = {
   tab: 'openings' | 'talent'
   q: string

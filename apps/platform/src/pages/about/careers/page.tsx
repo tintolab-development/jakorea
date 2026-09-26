@@ -1,42 +1,70 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
-  CAREERS_HERO,
+  CAREERS_LIST_RETURN_STATE_KEY,
   CAREERS_PAGE_SIZE,
   CAREERS_TAB_ITEMS,
+  FallbackImage,
   FeaturedStoryCarousel,
   JobListItemRow,
   TalentApplyForm,
   ThriveSection,
   buildCareersListPath,
+  careerPostingDetailPath,
   filterCareerJobs,
-  getFeaturedStories,
-  getMockCareerJobs,
-  getThriveValues,
   readCareersListParams,
+  rememberCareersListReturnPath,
+  usePublicCareerGuide,
+  usePublicCareerPostings,
   type CareersListParams,
 } from '@/features/careers'
+import { useDebouncedValue } from '@/shared/hooks'
 import { PFDivider, PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 const TAB_ITEMS = CAREERS_TAB_ITEMS.map(item => ({ key: item.key, label: item.label }))
+const SEARCH_DEBOUNCE_MS = 500
 
 export function CareersPage() {
+  const navigate = useNavigate()
   const [params, setParams] = useState(readCareersListParams)
-  const jobs = getMockCareerJobs()
-  const thriveValues = getThriveValues()
-  const featuredStories = getFeaturedStories()
+  const [draftQ, setDraftQ] = useState(() => readCareersListParams().q)
+  const debouncedQ = useDebouncedValue(draftQ, SEARCH_DEBOUNCE_MS)
+  const { jobs } = usePublicCareerPostings()
+  const { view } = usePublicCareerGuide()
+  const thriveValues = view.thriveValues
+  const featuredStories = view.featuredStories
+  const hero = view.hero
 
   useEffect(() => {
     const onPopState = () => {
-      setParams(readCareersListParams())
+      const next = readCareersListParams()
+      setParams(next)
+      setDraftQ(next.q)
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
+  useEffect(() => {
+    setParams(prev => {
+      if (prev.q === debouncedQ) return prev
+      const merged: CareersListParams = { ...prev, q: debouncedQ, page: 1 }
+      const nextPath = buildCareersListPath(merged)
+      const currentPath = `${window.location.pathname}${window.location.search}`
+      if (nextPath !== currentPath) {
+        window.history.pushState(null, '', nextPath)
+      }
+      return merged
+    })
+  }, [debouncedQ])
+
   const updateParams = (next: Partial<CareersListParams>) => {
     const merged = { ...params, ...next }
     setParams(merged)
+    if (next.q !== undefined) {
+      setDraftQ(next.q)
+    }
     const nextPath = buildCareersListPath(merged)
     const currentPath = `${window.location.pathname}${window.location.search}`
     if (nextPath !== currentPath) {
@@ -63,10 +91,11 @@ export function CareersPage() {
       <div className={styles.content}>
         <header className={styles.hero}>
           <div className={styles.heroMedia}>
-            <img
+            <FallbackImage
               className={styles.heroImage}
-              src={CAREERS_HERO.imageUrl}
-              alt={CAREERS_HERO.imageAlt}
+              src={hero.imageUrl}
+              fallbackSrc={hero.imageFallbackUrl}
+              alt={hero.imageAlt}
               width={740}
               height={790}
             />
@@ -74,11 +103,11 @@ export function CareersPage() {
 
           <div className={styles.heroCopy}>
             <PFText as="span" typo="hl-lg" color="black" className={styles.heroLabel}>
-              {CAREERS_HERO.label}
+              {hero.label}
             </PFText>
 
             <PFText as="h1" typo="page-title-md" color="black" className={styles.heroTitle}>
-              {CAREERS_HERO.titleLines.map(line => (
+              {hero.titleLines.map(line => (
                 <span key={line} className={styles.heroTitleLine}>
                   {line}
                 </span>
@@ -87,14 +116,14 @@ export function CareersPage() {
 
             <div className={styles.heroDescription}>
               <PFText as="p" typo="bd-lg-rg" color="black" className={styles.heroKo}>
-                {CAREERS_HERO.descriptionKo.map(line => (
+                {hero.descriptionKo.map(line => (
                   <span key={line} className={styles.heroKoLine}>
                     {line}
                   </span>
                 ))}
               </PFText>
               <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.heroEn}>
-                {CAREERS_HERO.descriptionEn}
+                {hero.descriptionEn}
               </PFText>
             </div>
           </div>
@@ -153,8 +182,8 @@ export function CareersPage() {
                   <PFSearchInput
                     className={styles.searchField}
                     variant="outlined"
-                    value={params.q}
-                    onValueChange={q => updateParams({ q, page: 1 })}
+                    value={draftQ}
+                    onValueChange={setDraftQ}
                     placeholder="제목, 내용으로 검색해 보세요"
                   />
                 </div>
@@ -170,7 +199,19 @@ export function CareersPage() {
                     검색 결과가 없습니다.
                   </PFText>
                 ) : (
-                  pageItems.map(item => <JobListItemRow key={item.id} item={item} />)
+                  pageItems.map(item => (
+                    <JobListItemRow
+                      key={item.id}
+                      item={item}
+                      onClick={() => {
+                        const returnPath = `${window.location.pathname}${window.location.search}`
+                        rememberCareersListReturnPath(returnPath)
+                        navigate(careerPostingDetailPath(item.id), {
+                          state: { [CAREERS_LIST_RETURN_STATE_KEY]: returnPath },
+                        })
+                      }}
+                    />
+                  ))
                 )}
               </div>
 

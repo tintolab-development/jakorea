@@ -22,8 +22,10 @@ export const CAREERS_TALENT_APPLY_PLACEHOLDERS = {
 
 export const CAREERS_TALENT_APPLY_REQUIRED_INCOMPLETE_MESSAGE = '필수 항목을 모두 작성해주세요'
 
-export const CAREERS_TALENT_APPLY_SUBMIT_PENDING_MESSAGE =
-  '인재 채용 지원 접수는 준비 중입니다. 잠시 후 다시 이용해 주세요.'
+export const CAREERS_TALENT_APPLY_SUBMIT_SUCCESS_MESSAGE = '인재 정보 등록이 접수되었습니다.'
+
+export const CAREERS_TALENT_APPLY_SUBMIT_ERROR_MESSAGE =
+  '신청 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.'
 
 export type CareersTalentJobInterest =
   | 'managementPlanning'

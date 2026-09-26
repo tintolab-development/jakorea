@@ -62,7 +62,7 @@ import { EducationCareerPage } from '@/pages/education/career'
 import { EducationDigitalLiteracyPage } from '@/pages/education/digital-literacy'
 import { EducationEntrepreneurshipPage } from '@/pages/education/entrepreneurship'
 import { EducationFinancePage } from '@/pages/education/finance'
-import { CareersPage } from '@/pages/about/careers'
+import { CareerPostingDetailPage, CareersPage } from '@/pages/about/careers'
 import { DirectionsPage } from '@/pages/about/directions'
 import { HistoryPage } from '@/pages/about/history'
 import { IntroductionPage } from '@/pages/about/introduction'
@@ -99,6 +99,7 @@ export const router = createBrowserRouter([
       { path: '/programs', element: <ProgramsPage /> },
       { path: '/programs/:programId/apply/complete', element: <ProgramApplyCompletePage /> },
       { path: '/notices/:noticeId', element: <NoticeDetailPage /> },
+      { path: '/about/careers/:postingId', element: <CareerPostingDetailPage /> },
       { path: '/results/:resultId', element: <ResultDetailPage /> },
       { path: '/impact/:storyId', element: <ImpactStoryDetailPage /> },
     ],

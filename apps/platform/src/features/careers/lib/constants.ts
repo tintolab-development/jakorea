@@ -2,6 +2,8 @@ import type { CareersListParams } from '../model/types'
 
 export const CAREERS_PATH = '/about/careers'
 
+export const careerPostingDetailPath = (id: string) => `${CAREERS_PATH}/${id}`
+
 export const CAREERS_PAGE_SIZE = 10
 
 export const DEFAULT_CAREERS_LIST_PARAMS = {

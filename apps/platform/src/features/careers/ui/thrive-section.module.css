@@ -70,8 +70,8 @@
   font-family: Montserrat, var(--font-family-base);
   font-size: 32px;
   font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  line-height: 1.24;
+  letter-spacing: -0.96px;
   word-break: keep-all;
 }
 
@@ -83,10 +83,12 @@
   min-height: 280px;
   flex-direction: column;
   justify-content: space-between;
+  gap: var(--spacing-16);
   box-sizing: border-box;
   padding: var(--spacing-40) var(--spacing-40) var(--spacing-32);
   overflow: hidden;
   border-radius: var(--radius-24);
+  cursor: pointer;
 }
 
 .decoration {
@@ -122,31 +124,47 @@
 }
 
 .yellow {
-  background:
-    linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
-    linear-gradient(180deg, #eef170 0%, #f3f2b3 100%);
-  color: #5c6b1f;
+  background: linear-gradient(180deg, #eef170 0%, #f3f2b3 100%);
+  color: #868800;
 }
 
 .mint {
-  background:
-    linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
-    linear-gradient(180deg, #c1f6cb 0%, #ddf8e3 100%);
+  background: linear-gradient(180deg, #c1f6cb 0%, #ddf8e3 100%);
   color: #209182;
 }
 
 .sky {
-  background:
-    linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
-    linear-gradient(180deg, #b7f5f2 0%, #d9fbfa 100%);
+  background: linear-gradient(180deg, #b7f5f2 0%, #d9fbfa 100%);
   color: #007d88;
 }
 
 .lime {
+  background: linear-gradient(180deg, #aedb7b 0%, #d5efb8 100%);
+  color: #4e870c;
+}
+
+.cardExpanded.yellow {
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
+    linear-gradient(180deg, #eef170 0%, #f3f2b3 100%);
+}
+
+.cardExpanded.mint {
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
+    linear-gradient(180deg, #c1f6cb 0%, #ddf8e3 100%);
+}
+
+.cardExpanded.sky {
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
+    linear-gradient(180deg, #b7f5f2 0%, #d9fbfa 100%);
+}
+
+.cardExpanded.lime {
   background:
     linear-gradient(90deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 40%)),
     linear-gradient(180deg, #aedb7b 0%, #d5efb8 100%);
-  color: #3d6b28;
 }
 
 .cardBody {
@@ -156,12 +174,6 @@
   min-width: 0;
   flex-direction: column;
   gap: var(--spacing-20);
-  padding-right: var(--spacing-16);
-  padding-bottom: var(--spacing-48);
-}
-
-.cardBodyExpanded {
-  gap: var(--spacing-40);
 }
 
 .cardTitle {
@@ -170,36 +182,43 @@
   font-family: Montserrat, var(--font-family-base);
   font-size: 36px;
   font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  line-height: 1.44;
+  letter-spacing: -0.72px;
   word-break: keep-all;
 }
 
-.cardSummary,
-.cardSummaryExpanded,
-.cardDetail {
+.card .cardSummary,
+.card .cardSummaryExpanded,
+.card .cardDetail {
   display: flex;
   margin: 0;
   flex-direction: column;
+  color: var(--color-neutral-black);
   word-break: keep-all;
 }
 
-.cardSummary {
+.card .cardSummary {
+  font-family: var(--font-family-base);
   font-size: 22px;
   font-weight: 500;
-  line-height: 1.4;
-  letter-spacing: -0.02em;
+  line-height: 1.54;
+  letter-spacing: -0.44px;
 }
 
-.cardSummaryExpanded {
+.card .cardSummaryExpanded {
+  font-family: var(--font-family-base);
   font-size: 22px;
+  font-weight: 700;
+  line-height: 1.44;
+  letter-spacing: -0.44px;
 }
 
-.cardDetail {
+.card .cardDetail {
+  font-family: var(--font-family-base);
   font-size: 16px;
   font-weight: 500;
   line-height: 1.6;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.16px;
 }
 
 .copyLine {
@@ -268,27 +287,44 @@
 
   .titleText {
     font-size: 48px;
+    line-height: 1.24;
+    letter-spacing: -1.44px;
   }
 
   .card {
     flex: 1 1 auto;
-    padding: 74px 73px 48px;
+    padding: 74px 73px 54px;
+  }
+
+  .cardBody {
+    gap: 40px;
+    max-width: 540px;
   }
 
   .cardTitle {
     font-size: 60px;
+    line-height: 1.44;
+    letter-spacing: -1.2px;
   }
 
-  .cardSummary {
+  .card .cardSummary {
     font-size: 38px;
+    font-weight: 500;
+    line-height: 1.54;
+    letter-spacing: -0.76px;
   }
 
-  .cardSummaryExpanded {
+  .card .cardSummaryExpanded {
     font-size: 38px;
+    font-weight: 700;
+    line-height: 1.44;
+    letter-spacing: -0.76px;
   }
 
-  .cardDetail {
+  .card .cardDetail {
     font-size: 26px;
+    font-weight: 500;
+    line-height: 1.6;
     letter-spacing: -0.26px;
   }
 
