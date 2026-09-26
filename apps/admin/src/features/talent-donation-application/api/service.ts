@@ -25,7 +25,7 @@ function sponsorshipApi() {
 async function listRemote(
   filter: TalentDonationApplicationListFilter = {},
 ): Promise<TalentDonationApplicationListResult> {
-  const response = await sponsorshipApi().list12(toTalentApplicationListParams(filter))
+  const response = await sponsorshipApi().list13(toTalentApplicationListParams(filter))
   return {
     items: (response.items ?? []).map(mapTalentApplicationListItemToDomain),
     totalCount: response.totalCount ?? response.items?.length ?? 0,
@@ -51,7 +51,7 @@ export async function getTalentDonationApplicationService(
     const numericId = Number(id)
     if (!Number.isFinite(numericId) || numericId <= 0) return null
     try {
-      const row = await sponsorshipApi().detail5(numericId)
+      const row = await sponsorshipApi().detail7(numericId)
       return mapTalentApplicationDetailToDomain(row)
     } catch {
       return null
@@ -86,7 +86,7 @@ export async function removeTalentDonationApplicationsService(
       .map(id => Number(id))
       .filter(id => Number.isFinite(id) && id > 0)
     if (numericIds.length === 0) return
-    await sponsorshipApi().delete2(numericIds)
+    await sponsorshipApi().delete3(numericIds)
     return
   }
   removeLocal(ids)

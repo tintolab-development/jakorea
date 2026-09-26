@@ -11,6 +11,7 @@ export type StoriesParams = {
  * @exclusiveMinimum 0
  */
 categoryId?: number;
+q?: string;
 page?: number;
 size?: number;
 };

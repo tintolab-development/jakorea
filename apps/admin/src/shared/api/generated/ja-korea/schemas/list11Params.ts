@@ -7,6 +7,7 @@
  */
 
 export type List11Params = {
+q?: string;
 page?: number;
 size?: number;
 };

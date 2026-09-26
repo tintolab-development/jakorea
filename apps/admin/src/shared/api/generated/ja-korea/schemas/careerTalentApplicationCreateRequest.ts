@@ -59,4 +59,5 @@ export interface CareerTalentApplicationCreateRequest {
      */
   careerInfo?: string;
   privacyAgreed: boolean;
+  attachmentAssetId?: number;
 }

@@ -26,7 +26,7 @@ function sponsorshipApi() {
 async function listRemoteConsultations(
   filter: CorporateConsultationListFilter = {},
 ): Promise<CorporateConsultationListResult> {
-  const response = await sponsorshipApi().list13(toConsultationListParams(filter))
+  const response = await sponsorshipApi().list14(toConsultationListParams(filter))
   return {
     items: (response.items ?? []).map(mapConsultationListItemToDomain),
     totalCount: response.totalCount ?? response.items?.length ?? 0,
@@ -60,7 +60,7 @@ export async function getCorporateConsultationService(
     const numericId = Number(id)
     if (!Number.isFinite(numericId) || numericId <= 0) return null
     try {
-      const row = await sponsorshipApi().detail6(numericId)
+      const row = await sponsorshipApi().detail8(numericId)
       return mapConsultationDetailToDomain(row)
     } catch {
       return null

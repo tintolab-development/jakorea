@@ -12,6 +12,76 @@
     }
   ],
   "paths": {
+    "/api/admin/careers/postings/{id}": {
+      "get": {
+        "tags": [
+          "career-posting-admin-controller"
+        ],
+        "operationId": "detail_3",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerPostingAdminDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "career-posting-admin-controller"
+        ],
+        "operationId": "update_14",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareerPostingUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerPostingAdminDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/public/careers/talent-applications": {
       "post": {
         "tags": [
@@ -42,12 +112,227 @@
         }
       }
     },
+    "/api/public/careers/talent-applications/attachments/{assetId}/confirm": {
+      "post": {
+        "tags": [
+          "career-talent-application-attachment-public-controller"
+        ],
+        "operationId": "confirm_2",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfirmResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/public/careers/talent-applications/attachments/upload-requests": {
+      "post": {
+        "tags": [
+          "career-talent-application-attachment-public-controller"
+        ],
+        "operationId": "prepare_2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrepareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrepareResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/careers/postings": {
+      "get": {
+        "tags": [
+          "career-posting-admin-controller"
+        ],
+        "operationId": "list_9",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerPostingAdminListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "career-posting-admin-controller"
+        ],
+        "operationId": "create_11",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareerPostingCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerPostingAdminDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "career-posting-admin-controller"
+        ],
+        "operationId": "delete_2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int64"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/admin/careers/postings/attachments/{assetId}/confirm": {
+      "post": {
+        "tags": [
+          "career-posting-attachment-admin-controller"
+        ],
+        "operationId": "confirm_3",
+        "parameters": [
+          {
+            "name": "assetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/careers/postings/attachments/upload-requests": {
+      "post": {
+        "tags": [
+          "career-posting-attachment-admin-controller"
+        ],
+        "operationId": "prepare_3",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CareerPostingAttachmentPrepareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadPrepareResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/careers/talent-applications/{id}/confirm": {
       "patch": {
         "tags": [
           "career-talent-application-admin-controller"
         ],
-        "operationId": "confirm_2",
+        "operationId": "confirm_4",
         "parameters": [
           {
             "name": "id",
@@ -124,12 +409,73 @@
         }
       }
     },
+    "/api/public/careers/postings/{key}": {
+      "get": {
+        "tags": [
+          "career-posting-public-controller"
+        ],
+        "operationId": "detail_6",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerPostingPublicDetail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "head": {
+        "tags": [
+          "career-posting-public-controller"
+        ],
+        "operationId": "detailHead_2",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/public/careers/postings": {
       "get": {
         "tags": [
           "career-posting-public-controller"
         ],
-        "operationId": "list_11",
+        "operationId": "list_12",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -169,7 +515,7 @@
         "tags": [
           "career-talent-application-admin-controller"
         ],
-        "operationId": "list_14",
+        "operationId": "list_15",
         "parameters": [
           {
             "name": "status",
@@ -181,6 +527,94 @@
                 "PENDING",
                 "CONFIRMED"
               ]
+            }
+          },
+          {
+            "name": "jobInterest",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "MANAGEMENT_PLANNING",
+                "PR_DESIGN",
+                "ACCOUNTING",
+                "HR_ADMIN",
+                "EDUCATION_OPS",
+                "OTHER"
+              ]
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "phone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "careerType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "NEWBIE",
+                "EXPERIENCED"
+              ]
+            }
+          },
+          {
+            "name": "appliedFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "appliedTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "confirmedFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "confirmedTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
             }
           },
           {
@@ -221,7 +655,7 @@
         "tags": [
           "career-talent-application-admin-controller"
         ],
-        "operationId": "delete_3",
+        "operationId": "delete_4",
         "requestBody": {
           "content": {
             "application/json": {
@@ -243,47 +677,64 @@
         }
       }
     },
-    "/api/admin/careers/postings": {
+    "/api/admin/careers/talent-applications/{id}": {
       "get": {
         "tags": [
-          "career-posting-admin-controller"
+          "career-talent-application-admin-controller"
         ],
-        "operationId": "list_15",
+        "operationId": "detail_9",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/CareerPostingAdminListResponse"
+                  "$ref": "#/components/schemas/CareerTalentApplicationDetailResponse"
                 }
               }
             }
           }
         }
-      },
-      "delete": {
+      }
+    },
+    "/api/admin/careers/talent-applications/{id}/attachment-download": {
+      "get": {
         "tags": [
-          "career-posting-admin-controller"
+          "career-talent-application-admin-controller"
         ],
-        "operationId": "delete_4",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "type": "integer",
-                  "format": "int64"
+        "operationId": "attachmentDownload_2",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerTalentApplicationAttachmentDownloadResponse"
                 }
               }
             }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
           }
         }
       }
@@ -646,8 +1097,10 @@
               "SPONSOR_LOGO",
               "CORPORATE_CONSULTATION_ATTACHMENT",
               "TALENT_APPLICATION_ATTACHMENT",
+              "CAREER_TALENT_APPLICATION_ATTACHMENT",
               "CAREERS_HERO",
               "CAREERS_STORY",
+              "CAREERS_POSTING_ATTACHMENT",
               "JA_HISTORY_HERO_IMAGE",
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
@@ -4366,6 +4819,127 @@
           }
         }
       },
+      "CareerPostingUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 0
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 100000,
+            "minLength": 0
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "RECRUITING",
+              "RESULT",
+              "CLOSED"
+            ]
+          },
+          "publishedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "recruitStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "recruitEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "authorName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "attachmentAssetId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "authorName",
+          "body",
+          "isPublic",
+          "publishedOn",
+          "recruitEnd",
+          "recruitStart",
+          "status",
+          "title",
+          "version"
+        ]
+      },
+      "CareerPostingAdminDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "externalKey": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "RECRUITING",
+              "RESULT",
+              "CLOSED"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "publishedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "recruitStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "recruitEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "body": {
+            "type": "string"
+          },
+          "attachment": {
+            "$ref": "#/components/schemas/AssetResponse"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "TalentApplicationCreateRequest": {
         "type": "object",
         "properties": {
@@ -4751,6 +5325,10 @@
           },
           "privacyAgreed": {
             "type": "boolean"
+          },
+          "attachmentAssetId": {
+            "type": "integer",
+            "format": "int64"
           }
         },
         "required": [
@@ -5477,39 +6055,66 @@
           "items"
         ]
       },
-      "UploadPrepareRequest": {
+      "CareerPostingCreateRequest": {
         "type": "object",
         "properties": {
-          "purpose": {
+          "title": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 0
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 100000,
+            "minLength": 0
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "status": {
             "type": "string",
             "enum": [
-              "SITE_OG_IMAGE",
-              "SITE_FAVICON",
-              "FOOTER_LOGO",
-              "FOOTER_PARTNER_LOGO",
-              "MAIN_HERO_IMAGE",
-              "MAIN_POPUP_IMAGE",
-              "JA_ORGANIZATION_CHART_IMAGE",
-              "JA_REPORT_THUMBNAIL_IMAGE",
-              "JA_REPORT_PDF",
-              "JA_NOTICE_ATTACHMENT",
-              "JA_NOTICE_INLINE_IMAGE",
-              "IMPACT_STORY_ATTACHMENT",
-              "IMPACT_STORY_INLINE_IMAGE",
-              "EDUCATION_TEXTBOOK_THUMBNAIL",
-              "EDUCATION_PROGRAM_INTRO_IMAGE",
-              "SPONSORSHIP_BANNER_IMAGE",
-              "SPONSOR_LOGO",
-              "CORPORATE_CONSULTATION_ATTACHMENT",
-              "TALENT_APPLICATION_ATTACHMENT",
-              "CAREERS_HERO",
-              "CAREERS_STORY",
-              "JA_HISTORY_HERO_IMAGE",
-              "JA_HISTORY_WORLD_TIMELINE_IMAGE",
-              "JA_HISTORY_KOREA_TIMELINE_IMAGE",
-              "JA_HISTORY_LOCKED_MEDIA"
+              "RECRUITING",
+              "RESULT",
+              "CLOSED"
             ]
           },
+          "publishedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "recruitStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "recruitEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "authorName": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "attachmentAssetId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "authorName",
+          "body",
+          "isPublic",
+          "publishedOn",
+          "recruitEnd",
+          "recruitStart",
+          "status",
+          "title"
+        ]
+      },
+      "CareerPostingAttachmentPrepareRequest": {
+        "type": "object",
+        "properties": {
           "originalName": {
             "type": "string",
             "maxLength": 255,
@@ -5527,8 +6132,7 @@
         },
         "required": [
           "contentType",
-          "originalName",
-          "purpose"
+          "originalName"
         ]
       },
       "UploadPrepareResponse": {
@@ -5559,6 +6163,62 @@
             "format": "date-time"
           }
         }
+      },
+      "UploadPrepareRequest": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "SITE_OG_IMAGE",
+              "SITE_FAVICON",
+              "FOOTER_LOGO",
+              "FOOTER_PARTNER_LOGO",
+              "MAIN_HERO_IMAGE",
+              "MAIN_POPUP_IMAGE",
+              "JA_ORGANIZATION_CHART_IMAGE",
+              "JA_REPORT_THUMBNAIL_IMAGE",
+              "JA_REPORT_PDF",
+              "JA_NOTICE_ATTACHMENT",
+              "JA_NOTICE_INLINE_IMAGE",
+              "IMPACT_STORY_ATTACHMENT",
+              "IMPACT_STORY_INLINE_IMAGE",
+              "EDUCATION_TEXTBOOK_THUMBNAIL",
+              "EDUCATION_PROGRAM_INTRO_IMAGE",
+              "SPONSORSHIP_BANNER_IMAGE",
+              "SPONSOR_LOGO",
+              "CORPORATE_CONSULTATION_ATTACHMENT",
+              "TALENT_APPLICATION_ATTACHMENT",
+              "CAREER_TALENT_APPLICATION_ATTACHMENT",
+              "CAREERS_HERO",
+              "CAREERS_STORY",
+              "CAREERS_POSTING_ATTACHMENT",
+              "JA_HISTORY_HERO_IMAGE",
+              "JA_HISTORY_WORLD_TIMELINE_IMAGE",
+              "JA_HISTORY_KOREA_TIMELINE_IMAGE",
+              "JA_HISTORY_LOCKED_MEDIA"
+            ]
+          },
+          "originalName": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "contentType": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "contentType",
+          "originalName",
+          "purpose"
+        ]
       },
       "TalentApplicationStatusUpdateRequest": {
         "type": "object",
@@ -5795,6 +6455,13 @@
           },
           "email": {
             "type": "string"
+          },
+          "appliedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           },
           "version": {
             "type": "integer",
@@ -7504,6 +8171,58 @@
           }
         }
       },
+      "CareerPostingPublicDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "externalKey": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "RECRUITING",
+              "RESULT",
+              "CLOSED"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "publishedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "publishedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "recruitStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "recruitEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "body": {
+            "type": "string"
+          },
+          "attachment": {
+            "$ref": "#/components/schemas/AssetResponse"
+          },
+          "viewCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "CareerCultureItemResponse": {
         "type": "object",
         "properties": {
@@ -8677,8 +9396,10 @@
               "SPONSOR_LOGO",
               "CORPORATE_CONSULTATION_ATTACHMENT",
               "TALENT_APPLICATION_ATTACHMENT",
+              "CAREER_TALENT_APPLICATION_ATTACHMENT",
               "CAREERS_HERO",
               "CAREERS_STORY",
+              "CAREERS_POSTING_ATTACHMENT",
               "JA_HISTORY_HERO_IMAGE",
               "JA_HISTORY_WORLD_TIMELINE_IMAGE",
               "JA_HISTORY_KOREA_TIMELINE_IMAGE",
@@ -9088,6 +9809,129 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "CareerTalentApplicationDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "CONFIRMED"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "jobInterest": {
+            "type": "string",
+            "enum": [
+              "MANAGEMENT_PLANNING",
+              "PR_DESIGN",
+              "ACCOUNTING",
+              "HR_ADMIN",
+              "EDUCATION_OPS",
+              "OTHER"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "addressRoad": {
+            "type": "string"
+          },
+          "addressDetail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "educationLevel": {
+            "type": "string",
+            "enum": [
+              "HIGH_SCHOOL",
+              "COLLEGE",
+              "UNIVERSITY",
+              "MASTER",
+              "DOCTOR",
+              "OTHER"
+            ]
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "major": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "educationInfo": {
+            "type": "string"
+          },
+          "careerType": {
+            "type": "string",
+            "enum": [
+              "NEWBIE",
+              "EXPERIENCED"
+            ]
+          },
+          "careerInfo": {
+            "type": "string"
+          },
+          "privacyAgreed": {
+            "type": "boolean"
+          },
+          "appliedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "confirmedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "confirmedByName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "attachmentOriginalName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "CareerTalentApplicationAttachmentDownloadResponse": {
+        "type": "object",
+        "properties": {
+          "originalName": {
+            "type": "string"
+          },
+          "downloadUrl": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

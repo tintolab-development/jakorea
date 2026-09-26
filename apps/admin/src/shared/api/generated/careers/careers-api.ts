@@ -6,18 +6,32 @@
  * OpenAPI spec version: v1
  */
 import type {
+  AssetResponse,
   CareerGuideAdminResponse,
   CareerGuideResponse,
+  CareerPostingAdminDetail,
   CareerPostingAdminItem,
   CareerPostingAdminListResponse,
+  CareerPostingAttachmentPrepareRequest,
+  CareerPostingCreateRequest,
+  CareerPostingPublicDetail,
   CareerPostingPublicListResponse,
+  CareerPostingUpdateRequest,
   CareerPostingVisibilityRequest,
+  CareerTalentApplicationAttachmentDownloadResponse,
   CareerTalentApplicationConfirmRequest,
   CareerTalentApplicationCreateRequest,
   CareerTalentApplicationCreateResponse,
+  CareerTalentApplicationDetailResponse,
   CareerTalentApplicationListItem,
-  List14Params,
-  PageResponseCareerTalentApplicationListItem
+  ConfirmRequest,
+  ConfirmResponse,
+  List12Params,
+  List15Params,
+  PageResponseCareerTalentApplicationListItem,
+  PrepareRequest,
+  PrepareResponse,
+  UploadPrepareResponse
 } from './schemas';
 
 import { customInstance } from '../../orval-mutator';
@@ -27,6 +41,27 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
   export const getJAKoreaHomepageAdminAPICareersSubset = () => {
+const detail3 = (
+    id: number,
+ options?: SecondParameter<typeof customInstance<CareerPostingAdminDetail>>,) => {
+      return customInstance<CareerPostingAdminDetail>(
+      {url: `/api/admin/careers/postings/${id}`, method: 'GET'
+    },
+      options);
+    }
+
+const update14 = (
+    id: number,
+    careerPostingUpdateRequest: CareerPostingUpdateRequest,
+ options?: SecondParameter<typeof customInstance<CareerPostingAdminDetail>>,) => {
+      return customInstance<CareerPostingAdminDetail>(
+      {url: `/api/admin/careers/postings/${id}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: careerPostingUpdateRequest
+    },
+      options);
+    }
+
 const create2 = (
     careerTalentApplicationCreateRequest: CareerTalentApplicationCreateRequest,
  options?: SecondParameter<typeof customInstance<CareerTalentApplicationCreateResponse>>,) => {
@@ -39,6 +74,83 @@ const create2 = (
     }
 
 const confirm2 = (
+    assetId: number,
+    confirmRequest: ConfirmRequest,
+ options?: SecondParameter<typeof customInstance<ConfirmResponse>>,) => {
+      return customInstance<ConfirmResponse>(
+      {url: `/api/public/careers/talent-applications/attachments/${assetId}/confirm`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: confirmRequest
+    },
+      options);
+    }
+
+const prepare2 = (
+    prepareRequest: PrepareRequest,
+ options?: SecondParameter<typeof customInstance<PrepareResponse>>,) => {
+      return customInstance<PrepareResponse>(
+      {url: `/api/public/careers/talent-applications/attachments/upload-requests`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: prepareRequest
+    },
+      options);
+    }
+
+const list9 = (
+
+ options?: SecondParameter<typeof customInstance<CareerPostingAdminListResponse>>,) => {
+      return customInstance<CareerPostingAdminListResponse>(
+      {url: `/api/admin/careers/postings`, method: 'GET'
+    },
+      options);
+    }
+
+const create11 = (
+    careerPostingCreateRequest: CareerPostingCreateRequest,
+ options?: SecondParameter<typeof customInstance<CareerPostingAdminDetail>>,) => {
+      return customInstance<CareerPostingAdminDetail>(
+      {url: `/api/admin/careers/postings`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: careerPostingCreateRequest
+    },
+      options);
+    }
+
+const delete2 = (
+    delete2Body: number[],
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/admin/careers/postings`, method: 'DELETE',
+      headers: {'Content-Type': 'application/json', },
+      data: delete2Body
+    },
+      options);
+    }
+
+const confirm3 = (
+    assetId: number,
+    confirmRequest: ConfirmRequest,
+ options?: SecondParameter<typeof customInstance<AssetResponse>>,) => {
+      return customInstance<AssetResponse>(
+      {url: `/api/admin/careers/postings/attachments/${assetId}/confirm`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: confirmRequest
+    },
+      options);
+    }
+
+const prepare3 = (
+    careerPostingAttachmentPrepareRequest: CareerPostingAttachmentPrepareRequest,
+ options?: SecondParameter<typeof customInstance<UploadPrepareResponse>>,) => {
+      return customInstance<UploadPrepareResponse>(
+      {url: `/api/admin/careers/postings/attachments/upload-requests`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: careerPostingAttachmentPrepareRequest
+    },
+      options);
+    }
+
+const confirm4 = (
     id: number,
     careerTalentApplicationConfirmRequest: CareerTalentApplicationConfirmRequest,
  options?: SecondParameter<typeof customInstance<CareerTalentApplicationListItem>>,) => {
@@ -62,11 +174,30 @@ const changeVisibility = (
       options);
     }
 
-const list11 = (
+const detail6 = (
+    key: string,
+ options?: SecondParameter<typeof customInstance<CareerPostingPublicDetail>>,) => {
+      return customInstance<CareerPostingPublicDetail>(
+      {url: `/api/public/careers/postings/${key}`, method: 'GET'
+    },
+      options);
+    }
 
+const detailHead2 = (
+    key: string,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/public/careers/postings/${key}`, method: 'HEAD'
+    },
+      options);
+    }
+
+const list12 = (
+    params?: List12Params,
  options?: SecondParameter<typeof customInstance<CareerPostingPublicListResponse>>,) => {
       return customInstance<CareerPostingPublicListResponse>(
-      {url: `/api/public/careers/postings`, method: 'GET'
+      {url: `/api/public/careers/postings`, method: 'GET',
+        params
     },
       options);
     }
@@ -80,8 +211,8 @@ const guide = (
       options);
     }
 
-const list14 = (
-    params?: List14Params,
+const list15 = (
+    params?: List15Params,
  options?: SecondParameter<typeof customInstance<PageResponseCareerTalentApplicationListItem>>,) => {
       return customInstance<PageResponseCareerTalentApplicationListItem>(
       {url: `/api/admin/careers/talent-applications`, method: 'GET',
@@ -90,33 +221,31 @@ const list14 = (
       options);
     }
 
-const delete3 = (
-    delete3Body: number[],
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/api/admin/careers/talent-applications`, method: 'DELETE',
-      headers: {'Content-Type': 'application/json', },
-      data: delete3Body
-    },
-      options);
-    }
-
-const list15 = (
-
- options?: SecondParameter<typeof customInstance<CareerPostingAdminListResponse>>,) => {
-      return customInstance<CareerPostingAdminListResponse>(
-      {url: `/api/admin/careers/postings`, method: 'GET'
-    },
-      options);
-    }
-
 const delete4 = (
     delete4Body: number[],
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
-      {url: `/api/admin/careers/postings`, method: 'DELETE',
+      {url: `/api/admin/careers/talent-applications`, method: 'DELETE',
       headers: {'Content-Type': 'application/json', },
       data: delete4Body
+    },
+      options);
+    }
+
+const detail9 = (
+    id: number,
+ options?: SecondParameter<typeof customInstance<CareerTalentApplicationDetailResponse>>,) => {
+      return customInstance<CareerTalentApplicationDetailResponse>(
+      {url: `/api/admin/careers/talent-applications/${id}`, method: 'GET'
+    },
+      options);
+    }
+
+const attachmentDownload2 = (
+    id: number,
+ options?: SecondParameter<typeof customInstance<CareerTalentApplicationAttachmentDownloadResponse>>,) => {
+      return customInstance<CareerTalentApplicationAttachmentDownloadResponse>(
+      {url: `/api/admin/careers/talent-applications/${id}/attachment-download`, method: 'GET'
     },
       options);
     }
@@ -130,14 +259,25 @@ const guide1 = (
       options);
     }
 
-return {create2,confirm2,changeVisibility,list11,guide,list14,delete3,list15,delete4,guide1}};
+return {detail3,update14,create2,confirm2,prepare2,list9,create11,delete2,confirm3,prepare3,confirm4,changeVisibility,detail6,detailHead2,list12,guide,list15,delete4,detail9,attachmentDownload2,guide1}};
+export type Detail3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail3']>>>
+export type Update14Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['update14']>>>
 export type Create2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['create2']>>>
 export type Confirm2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['confirm2']>>>
+export type Prepare2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['prepare2']>>>
+export type List9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['list9']>>>
+export type Create11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['create11']>>>
+export type Delete2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['delete2']>>>
+export type Confirm3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['confirm3']>>>
+export type Prepare3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['prepare3']>>>
+export type Confirm4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['confirm4']>>>
 export type ChangeVisibilityResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['changeVisibility']>>>
-export type List11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['list11']>>>
+export type Detail6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail6']>>>
+export type DetailHead2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detailHead2']>>>
+export type List12Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['list12']>>>
 export type GuideResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['guide']>>>
-export type List14Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['list14']>>>
-export type Delete3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['delete3']>>>
 export type List15Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['list15']>>>
 export type Delete4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['delete4']>>>
+export type Detail9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['detail9']>>>
+export type AttachmentDownload2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['attachmentDownload2']>>>
 export type Guide1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPICareersSubset>['guide1']>>>

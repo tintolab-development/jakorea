@@ -18,5 +18,7 @@ export interface CareerTalentApplicationListItem {
   name?: string;
   phone?: string;
   email?: string;
+  /** @nullable */
+  appliedAt?: string | null;
   version?: number;
 }

@@ -138,7 +138,7 @@ const togglePublished1 = (
       options);
     }
 
-const detail4 = (
+const detail5 = (
     id: number,
  options?: SecondParameter<typeof customInstance<PublicStoryDetail>>,) => {
       return customInstance<PublicStoryDetail>(
@@ -175,7 +175,7 @@ const categories = (
       options);
     }
 
-return {detail1,update10,update11,_delete,list6,create8,bulkDelete4,list7,create9,togglePublished1,detail4,detailHead1,stories,categories}};
+return {detail1,update10,update11,_delete,list6,create8,bulkDelete4,list7,create9,togglePublished1,detail5,detailHead1,stories,categories}};
 export type Detail1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['detail1']>>>
 export type Update10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['update10']>>>
 export type Update11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['update11']>>>
@@ -186,7 +186,7 @@ export type BulkDelete4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof
 export type List7Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['list7']>>>
 export type Create9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['create9']>>>
 export type TogglePublished1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['togglePublished1']>>>
-export type Detail4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['detail4']>>>
+export type Detail5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['detail5']>>>
 export type DetailHead1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['detailHead1']>>>
 export type StoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['stories']>>>
 export type CategoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['categories']>>>
