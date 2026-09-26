@@ -146,6 +146,12 @@ export const platformQueryKeys = {
       [...platformQueryKeys.programResult.all(), 'detail', id, sort] as const,
   },
 
+  jaKorea: {
+    all: () => [...platformQueryKeys.all, 'ja-korea'] as const,
+    /** 공개 JA History — GET /api/public/ja-korea/ja-history (Class B, 싱글톤) */
+    history: () => [...platformQueryKeys.jaKorea.all(), 'history'] as const,
+  },
+
   education: {
     all: () => [...platformQueryKeys.all, 'education'] as const,
     /** 공개 프로그램 소개 — GET /api/public/education/program-intros/{fieldCode} (Class D) */

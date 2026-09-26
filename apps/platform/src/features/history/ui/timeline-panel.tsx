@@ -1,11 +1,12 @@
 import { useState, type KeyboardEvent } from 'react'
 import { PFText } from '@/shared/ui'
-import type { HistoryTimelinePeriod } from '../model/types'
+import type { HistoryTimelinePeriodView } from '../model/view'
+import { PreservedLines } from './preserved-lines'
 import styles from './timeline-panel.module.css'
 
 export type TimelinePanelProps = {
   theme: 'dark' | 'light'
-  periods: readonly HistoryTimelinePeriod[]
+  periods: readonly HistoryTimelinePeriodView[]
   ariaLabel: string
 }
 
@@ -69,29 +70,26 @@ export function TimelinePanel({ theme, periods, ariaLabel }: TimelinePanelProps)
       >
         {active.title ? (
           <PFText as="h3" typo="hd-sm" color={theme === 'dark' ? 'white' : 'black'} className={styles.title}>
-            {active.title}
+            <PreservedLines text={active.title} />
           </PFText>
         ) : null}
 
         {active.events.length > 0 ? (
           <ul className={styles.list}>
-            {active.events.map(event => (
-              <li key={`${active.id}-${event.year}-${event.lines[0]}`} className={styles.item}>
+            {active.events.map((event, index) => (
+              <li key={`${active.id}-${event.year}-${index}`} className={styles.item}>
                 <PFText as="span" typo="bd-md-sb" color={theme === 'dark' ? 'white' : 'black'} className={styles.year}>
                   {event.year}
                 </PFText>
                 <div className={styles.event}>
-                  {event.lines.map(line => (
-                    <PFText
-                      key={line}
-                      as="p"
-                      typo="bd-md-rg"
-                      color={theme === 'dark' ? 'white' : 'black'}
-                      className={styles.eventLine}
-                    >
-                      {line}
-                    </PFText>
-                  ))}
+                  <PFText
+                    as="p"
+                    typo="bd-md-rg"
+                    color={theme === 'dark' ? 'white' : 'black'}
+                    className={styles.eventLine}
+                  >
+                    <PreservedLines text={event.text} />
+                  </PFText>
                 </div>
               </li>
             ))}

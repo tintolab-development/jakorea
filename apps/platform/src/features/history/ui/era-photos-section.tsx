@@ -1,11 +1,23 @@
 import { PFText } from '@/shared/ui'
 import patternLeftUrl from '../image/illustration/pattern-era-left.svg'
 import patternRightUrl from '../image/illustration/pattern-era-right.svg'
-import { HISTORY_ERA_PHOTOS } from '../lib/mock-data'
-import { CopyLines } from './copy-break'
+import type { HistoryPageView } from '../model/view'
+import { PreservedLines } from './preserved-lines'
 import styles from './era-photos-section.module.css'
 
-export function EraPhotosSection() {
+type EraPhotosSectionProps = {
+  eras: HistoryPageView['eras']
+}
+
+function yearClass(year: string) {
+  if (year === '1920') return styles.y1920
+  if (year === '1950') return styles.y1950
+  if (year === '1960') return styles.y1960
+  if (year === '1980') return styles.y1980
+  return undefined
+}
+
+export function EraPhotosSection({ eras }: EraPhotosSectionProps) {
   return (
     <section className={styles.section} aria-label="연도별 JA 역사 사진">
       <img
@@ -26,20 +38,23 @@ export function EraPhotosSection() {
       />
 
       <div className={styles.list}>
-        {HISTORY_ERA_PHOTOS.map(item => (
-          <article key={item.year} className={`${styles.item} ${styles[item.align]} ${styles[`y${item.year}`]}`}>
+        {eras.map((item, index) => (
+          <article
+            key={`${item.year}-${index}`}
+            className={[styles.item, styles[item.align], yearClass(item.year)].filter(Boolean).join(' ')}
+          >
             <p className={styles.year} aria-hidden="true">
               {item.year}
             </p>
             <div className={styles.media}>
-              <img className={styles.photo} src={item.imageUrl} alt={item.alt} />
+              {item.image.url ? (
+                <img className={styles.photo} src={item.image.url} alt={item.image.alt} />
+              ) : (
+                <div className={styles.photo} role="img" aria-label={item.image.alt || undefined} />
+              )}
             </div>
             <PFText as="p" typo="bd-lg-rg" color="white" className={styles.caption}>
-              {item.captionLines ? (
-                <CopyLines pc={item.captionLines} mobile={[item.caption]} />
-              ) : (
-                item.caption
-              )}
+              <PreservedLines text={item.caption} />
             </PFText>
           </article>
         ))}

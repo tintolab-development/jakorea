@@ -97,10 +97,6 @@
   letter-spacing: -0.2px;
 }
 
-.emphasisBreak {
-  display: inline;
-}
-
 .media {
   position: relative;
   grid-area: media;
@@ -194,9 +190,5 @@
     max-width: 724px;
     justify-self: end;
     gap: var(--spacing-40);
-  }
-
-  .emphasisBreak {
-    display: none;
   }
 }

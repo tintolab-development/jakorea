@@ -1,68 +1,70 @@
 import { PFText } from '@/shared/ui'
-import { HISTORY_THRIVE_CARDS } from '../lib/mock-data'
+import { resolveSoftBreaks, THRIVE_CARD_SOFT_BREAKS } from '../lib/soft-breaks'
+import type { HistoryPageView } from '../model/view'
 import { CopyLines } from './copy-break'
+import { PreservedLines } from './preserved-lines'
 import styles from './thrive-section.module.css'
 
-export function ThriveSection() {
+type ThriveSectionProps = {
+  thrive: HistoryPageView['thrive']
+}
+
+function cardTone(id: string) {
+  if (id === 'empower') return styles.empower
+  if (id === 'digital') return styles.digital
+  if (id === 'partner') return styles.partner
+  if (id === 'enablers') return styles.enablers
+  return undefined
+}
+
+export function ThriveSection({ thrive }: ThriveSectionProps) {
+  const lines = thrive.title.split('\n')
+  const accent = lines[0] === 'Thrive:' ? lines[0] : ''
+  const rest = accent ? lines.slice(1).join('\n') : thrive.title
+
   return (
     <section className={styles.section} aria-labelledby="history-thrive-title">
       <div className={styles.header}>
         <h2 id="history-thrive-title" className={styles.title}>
-          <span className={styles.accent}>Thrive:</span>
-          <span className={styles.titleRest}>2050년을 향한 JA의 발걸음</span>
+          {accent ? <span className={styles.accent}>{accent}</span> : null}
+          <span className={styles.titleRest}>
+            <PreservedLines text={rest} />
+          </span>
         </h2>
         <PFText as="p" typo="bd-lg-rg" color="black" className={styles.lead}>
-          <CopyLines
-            pc={[
-              '기술이 빠르게 발전함에 따라 교육과 일의 방식이 달라지고 있습니다.',
-              'JA Worldwide는 2026-2028 글로벌 전략 Thrive를 기반으로 더 많은 청소년에게 교육의 기회를 제공하고,',
-              '디지털 기술을 적극적으로 활용하며, 파트너십을 통해 더 큰 임팩트를 만들어 갈 예정입니다',
-            ]}
-            mobile={[
-              '기술이 빠르게 발전함에 따라 교육과 일의 방식이 달라지고 있습니다.',
-              'JA Worldwide는 2026-2028 글로벌 전략 Thrive를 기반으로 더 많은 청소년에게 교육의 기회를 제공하고,',
-              '디지털 기술을 적극적으로 활용하며, 파트너십을 통해 더 큰 임팩트를 만들어 갈 예정입니다',
-            ]}
-          />
+          <PreservedLines text={thrive.lead} />
         </PFText>
       </div>
 
       <ul className={styles.cards}>
-        {HISTORY_THRIVE_CARDS.map(card => (
-          <li key={card.id} className={`${styles.card} ${styles[card.id]}`}>
-            <img
-              className={styles.decoration}
-              src={card.decorationUrl}
-              alt=""
-              aria-hidden="true"
-            />
-            <div className={styles.cardCopy}>
-              <h3 className={styles.cardTitle}>{card.titleLines.join(' ')}</h3>
-              <PFText as="p" typo="hl-lg" color="white" className={styles.cardBody}>
-                {card.descriptionPcLines && card.descriptionMobileLines ? (
-                  <CopyLines pc={card.descriptionPcLines} mobile={card.descriptionMobileLines} />
-                ) : (
-                  card.description
-                )}
-              </PFText>
-            </div>
-          </li>
-        ))}
+        {thrive.cards.map((card, index) => {
+          const description = resolveSoftBreaks(card.description, THRIVE_CARD_SOFT_BREAKS[card.id])
+
+          return (
+            <li key={`${card.id}-${index}`} className={[styles.card, cardTone(card.id)].filter(Boolean).join(' ')}>
+              {card.decoration.url ? (
+                <img
+                  className={styles.decoration}
+                  src={card.decoration.url}
+                  alt={card.decoration.alt}
+                  aria-hidden={card.decoration.alt ? undefined : true}
+                />
+              ) : null}
+              <div className={styles.cardCopy}>
+                <h3 className={styles.cardTitle}>
+                  <PreservedLines text={card.title} />
+                </h3>
+                <PFText as="p" typo="hl-lg" color="white" className={styles.cardBody}>
+                  <CopyLines pc={description.pc} mobile={description.mobile} />
+                </PFText>
+              </div>
+            </li>
+          )
+        })}
       </ul>
 
       <PFText as="p" typo="hl-lg" color="neutral-cool-500" className={styles.footnote}>
-        <CopyLines
-          pc={[
-            'JA는 2050년까지 청소년에게 연간 1억 건의 학습 경험을 제공하고, 측정 가능한 형태의 변화를 창출해 번영하는 공동체를 만드는 것을 장기 목표로 삼아 오늘도',
-            '전 세계 100여 개 국가에서 청소년을 교육하고 있습니다.',
-          ]}
-          mobile={[
-            'JA는 2050년까지 청소년에게 연간 1억 건의 학습 경험을',
-            '제공하고, 측정 가능한 형태의 변화를 창출해',
-            '번영하는 공동체를 만드는 것을 장기 목표로 삼아 오늘도',
-            '전 세계 100여 개 국가에서 청소년을 교육하고 있습니다.',
-          ]}
-        />
+        <PreservedLines text={thrive.footnote} />
       </PFText>
     </section>
   )
