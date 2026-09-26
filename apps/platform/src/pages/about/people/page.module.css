@@ -107,6 +107,14 @@
   border-top: 1px solid var(--color-border-default);
 }
 
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-16);
+  margin: 0;
+}
+
 @media (--bp-below-pc) {
   .pageBackground {
     display: none;
@@ -147,6 +155,10 @@
 
   .memberList {
     padding: 0 var(--spacing-16) var(--spacing-48);
+  }
+
+  .status {
+    padding-inline: var(--spacing-20);
   }
   .orgCard {
     border-radius: 0;

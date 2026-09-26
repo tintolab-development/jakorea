@@ -1,10 +1,22 @@
-import type { PeopleMember, PeopleMemberSection, PeopleSectionColumns } from './model/types'
-import { PEOPLE_PATH } from './lib/constants'
+import type {
+  PeopleMember,
+  PeopleMemberSection,
+  PeoplePageContent,
+  PeopleSectionColumns,
+} from './model/types'
+import { PEOPLE_HERO_LABEL, PEOPLE_HERO_TITLE, PEOPLE_PATH } from './lib/constants'
 import { isPeoplePath } from './lib/routes'
-import { MOCK_PEOPLE_SECTIONS, getMockPeopleSections } from './lib/mock-data'
+import { usePublicPeople } from './api/hooks'
 import { MemberCard } from './ui/member-card'
 import { MemberSection } from './ui/member-section'
-import orgChartUrl from './image/illustration/org-chart.svg'
 
-export type { PeopleMember, PeopleMemberSection, PeopleSectionColumns }
-export { PEOPLE_PATH, isPeoplePath, MOCK_PEOPLE_SECTIONS, getMockPeopleSections, MemberCard, MemberSection, orgChartUrl }
+export type { PeopleMember, PeopleMemberSection, PeoplePageContent, PeopleSectionColumns }
+export {
+  PEOPLE_HERO_LABEL,
+  PEOPLE_HERO_TITLE,
+  PEOPLE_PATH,
+  isPeoplePath,
+  usePublicPeople,
+  MemberCard,
+  MemberSection,
+}

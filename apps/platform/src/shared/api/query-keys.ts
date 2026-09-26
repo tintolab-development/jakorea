@@ -152,6 +152,8 @@ export const platformQueryKeys = {
     history: () => [...platformQueryKeys.jaKorea.all(), 'history'] as const,
     /** 공개 오시는 길 — GET /api/public/ja-korea/directions (Class B, 싱글톤) */
     directions: () => [...platformQueryKeys.jaKorea.all(), 'directions'] as const,
+    /** 공개 함께하는 사람들 — GET /api/public/ja-korea/people (Class B, 싱글톤) */
+    people: () => [...platformQueryKeys.jaKorea.all(), 'people'] as const,
     notices: {
       all: () => [...platformQueryKeys.jaKorea.all(), 'notices'] as const,
       /**
