@@ -3,7 +3,6 @@ import type {
   OperatingPrinciplesDoc,
   OperatingPrinciplesSavePayload,
 } from '@/entities/operating-principles/model/types'
-import { shouldUseOperatingPrinciplesRemoteApi } from './capabilities'
 import { operatingPrinciplesQueryKeys } from './query-keys'
 import {
   getOperatingPrinciplesService,
@@ -12,26 +11,21 @@ import {
   setPrincipleActiveService,
 } from './service'
 
-function source(): 'remote' | 'local' {
-  return shouldUseOperatingPrinciplesRemoteApi() ? 'remote' : 'local'
-}
-
 function cachedDoc(
   queryClient: ReturnType<typeof useQueryClient>,
 ): OperatingPrinciplesDoc | undefined {
   return queryClient.getQueryData<OperatingPrinciplesDoc>(
-    operatingPrinciplesQueryKeys.detail(source()),
+    operatingPrinciplesQueryKeys.detail(),
   )
 }
 
 export function useOperatingPrinciples(enabled = true) {
-  const dataSource = source()
   return useQuery({
-    queryKey: operatingPrinciplesQueryKeys.detail(dataSource),
+    queryKey: operatingPrinciplesQueryKeys.detail(),
     queryFn: () => getOperatingPrinciplesService(),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 30_000,
+    retry: 1,
   })
 }
 
@@ -42,7 +36,7 @@ export function useReorderOperatingPrinciples() {
       reorderOperatingPrinciplesService(orderedIds, cachedDoc(queryClient)),
     retry: false,
     onSuccess: data => {
-      queryClient.setQueryData(operatingPrinciplesQueryKeys.detail(source()), data)
+      queryClient.setQueryData(operatingPrinciplesQueryKeys.detail(), data)
     },
   })
 }
@@ -54,7 +48,7 @@ export function useSetPrincipleActive() {
       setPrincipleActiveService(id, isActive, cachedDoc(queryClient)),
     retry: false,
     onSuccess: data => {
-      queryClient.setQueryData(operatingPrinciplesQueryKeys.detail(source()), data)
+      queryClient.setQueryData(operatingPrinciplesQueryKeys.detail(), data)
     },
   })
 }
@@ -66,7 +60,7 @@ export function useSaveOperatingPrinciples() {
       saveOperatingPrinciplesService(payload, cachedDoc(queryClient)),
     retry: false,
     onSuccess: data => {
-      queryClient.setQueryData(operatingPrinciplesQueryKeys.detail(source()), data)
+      queryClient.setQueryData(operatingPrinciplesQueryKeys.detail(), data)
     },
   })
 }

@@ -12,9 +12,7 @@ import {
   useSaveOrganizationChart,
 } from '@/features/organization-chart/api/hooks'
 import { organizationChartQueryKeys } from '@/features/organization-chart/api/query-keys'
-import { ORGANIZATION_CHART_CHANGED_EVENT } from '@/features/organization-chart/api/store'
 import { OrgChartFormModal } from '@/features/organization-chart/ui/org-chart-form-modal'
-import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsButton, PageContentLoading, useCmsAlert } from '@/shared/ui'
 
 import './org-chart-panel.css'
@@ -25,11 +23,6 @@ export function OrganizationChartPanel() {
   const chartQuery = useOrganizationChart()
   const saveMutation = useSaveOrganizationChart()
   const [modalOpen, setModalOpen] = useState(false)
-
-  useInvalidateOnWindowEvent(
-    ORGANIZATION_CHART_CHANGED_EVENT,
-    organizationChartQueryKeys.all
-  )
 
   const data = chartQuery.data
 

@@ -1,10 +1,7 @@
 import { Fragment, type ReactNode } from 'react'
 import { PFText } from '@/shared/ui'
-import {
-  GLOBAL_VALUE_ITEMS,
-  GLOBAL_VALUE_SECTION_TITLE,
-  type GlobalValueItem,
-} from '../lib/global-value-data'
+import { GLOBAL_VALUE_SECTION_TITLE, type GlobalValueItem } from '../lib/global-value-data'
+import type { IntroductionWorldwideContent } from '../model/types'
 import styles from './global-value-section.module.css'
 import { JaWorldwideSection } from './ja-worldwide-section'
 
@@ -12,7 +9,7 @@ function EnglishLines({ lines }: { lines: readonly string[] }) {
   return (
     <>
       {lines.map((line, index) => (
-        <Fragment key={line}>
+        <Fragment key={`${index}-${line}`}>
           {index > 0 ? <br /> : null}
           {line}
         </Fragment>
@@ -66,10 +63,12 @@ function ValueItem({
 }
 
 function ValueListBlock({
+  items,
   activeValueIndex,
   isDesktopMotion,
   afterList,
 }: {
+  items: readonly GlobalValueItem[]
   activeValueIndex: number
   isDesktopMotion: boolean
   afterList?: ReactNode
@@ -79,7 +78,7 @@ function ValueListBlock({
       <h2 className={styles.title}>{GLOBAL_VALUE_SECTION_TITLE}</h2>
 
       <div className={styles.list}>
-        {GLOBAL_VALUE_ITEMS.map((item, index) => (
+        {items.map((item, index) => (
           <ValueItem
             key={item.id}
             item={item}
@@ -96,6 +95,8 @@ function ValueListBlock({
 }
 
 export type GlobalValuePanelProps = {
+  items: readonly GlobalValueItem[]
+  worldwide: IntroductionWorldwideContent
   activeValueIndex?: number
   isDesktopMotion: boolean
   /**
@@ -109,6 +110,8 @@ export type GlobalValuePanelProps = {
 
 /** JA Global Value 표현 단위 — 스크롤/accordion index는 IntroductionScroll이 소유 */
 export function GlobalValuePanel({
+  items,
+  worldwide,
   activeValueIndex = 0,
   isDesktopMotion,
   withWorldwide = false,
@@ -133,19 +136,21 @@ export function GlobalValuePanel({
             둘 다 같은 .panel 하위 → primary-700·그라데이션 연속.
           */}
           <ValueListBlock
+            items={items}
             activeValueIndex={activeValueIndex}
             isDesktopMotion={isDesktopMotion}
           />
-          <JaWorldwideSection />
+          <JaWorldwideSection worldwide={worldwide} />
         </>
       ) : (
         <ValueListBlock
+          items={items}
           activeValueIndex={activeValueIndex}
           isDesktopMotion={isDesktopMotion}
           afterList={
             withWorldwide ? (
               <div className={styles.worldwideSlot}>
-                <JaWorldwideSection />
+                <JaWorldwideSection worldwide={worldwide} />
               </div>
             ) : null
           }

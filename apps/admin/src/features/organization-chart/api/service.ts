@@ -3,12 +3,7 @@ import type {
   OrganizationChartSaveInput,
 } from '@/entities/organization-chart/model/types'
 import { getJAKoreaHomepageAdminAPIJAKoreaSubset } from '@/shared/api/generated/ja-korea/ja-korea-api'
-import { shouldUseOrganizationChartRemoteApi } from './capabilities'
 import { mapOrgChartResponseToDomain, toOrgChartUpdateRequest } from './mappers'
-import {
-  readOrganizationChart,
-  saveOrganizationChart as saveOrganizationChartLocal,
-} from './store'
 import { uploadOrgChartImageAsset } from './upload-org-chart-image'
 
 function jaKoreaApi() {
@@ -36,30 +31,24 @@ async function resolveImageAssetId(
 }
 
 export async function getOrganizationChartService(): Promise<OrganizationChartInfo> {
-  if (shouldUseOrganizationChartRemoteApi()) {
-    return mapOrgChartResponseToDomain(await jaKoreaApi().organizationChart())
-  }
-  return readOrganizationChart()
+  return mapOrgChartResponseToDomain(await jaKoreaApi().organizationChart())
 }
 
 export async function saveOrganizationChartService(
   input: OrganizationChartSaveInput,
   cached?: OrganizationChartInfo,
 ): Promise<OrganizationChartInfo> {
-  if (shouldUseOrganizationChartRemoteApi()) {
-    const current =
-      cached ?? mapOrgChartResponseToDomain(await jaKoreaApi().organizationChart())
-    const assetId = await resolveImageAssetId(current, input)
-    const updated = await jaKoreaApi().updateOrganizationChart(
-      toOrgChartUpdateRequest(
-        {
-          ...current,
-          mainTitle: input.mainTitle,
-        },
-        assetId,
-      ),
-    )
-    return mapOrgChartResponseToDomain(updated)
-  }
-  return saveOrganizationChartLocal(input)
+  const current =
+    cached ?? mapOrgChartResponseToDomain(await jaKoreaApi().organizationChart())
+  const assetId = await resolveImageAssetId(current, input)
+  const updated = await jaKoreaApi().updateOrganizationChart(
+    toOrgChartUpdateRequest(
+      {
+        ...current,
+        mainTitle: input.mainTitle,
+      },
+      assetId,
+    ),
+  )
+  return mapOrgChartResponseToDomain(updated)
 }
