@@ -21,12 +21,12 @@ export function mapDirectionsResponseToDomain(row: DirectionsResponse): Directio
 
 export function toDirectionsUpdateRequest(data: DirectionsInfo): DirectionsUpdateRequest {
   return {
-    koreanAddress: data.addressKo.trimEnd() || undefined,
-    englishAddress: data.addressEn.trimEnd() || undefined,
-    kakaoMapHtml: data.kakaoMapHtml.trimEnd() || undefined,
-    phone: data.phone.trimEnd() || undefined,
-    fax: data.fax.trimEnd() || undefined,
-    email: data.email.trimEnd() || undefined,
+    koreanAddress: data.addressKo.trimEnd(),
+    englishAddress: data.addressEn.trimEnd(),
+    kakaoMapHtml: data.kakaoMapHtml.trimEnd(),
+    phone: data.phone.trimEnd(),
+    fax: data.fax.trimEnd(),
+    email: data.email.trimEnd(),
     version: data.version,
   }
 }
