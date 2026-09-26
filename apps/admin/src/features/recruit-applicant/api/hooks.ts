@@ -4,6 +4,7 @@ import { shouldUseRecruitApplicantRemoteApi } from './capabilities'
 import { recruitApplicantQueryKeys } from './query-keys'
 import {
   confirmRecruitApplicantsService,
+  getRecruitApplicantService,
   listRecruitApplicantsService,
   removeRecruitApplicantsService,
   type RecruitApplicantConfirmInput,
@@ -39,13 +40,30 @@ export function useRecruitApplicantsList(filter: RecruitApplicantListFilter) {
   })
 }
 
+export function useRecruitApplicantDetail(id: string | null) {
+  const dataSource = source()
+  return useQuery({
+    queryKey: recruitApplicantQueryKeys.detail(dataSource, id ?? ''),
+    queryFn: () => getRecruitApplicantService(id ?? ''),
+    enabled: Boolean(id),
+    staleTime: dataSource === 'remote' ? 0 : Number.POSITIVE_INFINITY,
+    gcTime: dataSource === 'remote' ? 0 : 15 * 60_000,
+    retry: false,
+  })
+}
+
+function invalidateApplicantQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  void queryClient.invalidateQueries({ queryKey: recruitApplicantQueryKeys.lists() })
+  void queryClient.invalidateQueries({ queryKey: recruitApplicantQueryKeys.details() })
+}
+
 export function useConfirmRecruitApplicants() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (items: RecruitApplicantConfirmInput[]) => confirmRecruitApplicantsService(items),
     retry: false,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: recruitApplicantQueryKeys.lists() })
+      invalidateApplicantQueries(queryClient)
     },
   })
 }
@@ -56,7 +74,7 @@ export function useRemoveRecruitApplicants() {
     mutationFn: (ids: string[]) => removeRecruitApplicantsService(ids),
     retry: false,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: recruitApplicantQueryKeys.lists() })
+      invalidateApplicantQueries(queryClient)
     },
   })
 }

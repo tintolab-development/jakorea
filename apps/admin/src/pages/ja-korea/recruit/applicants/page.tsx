@@ -1,9 +1,9 @@
 /**
  * 인재채용 관리 목록
- * 상세·수정 모달은 시안이 오기 전까지 열지 않는다. 시드는 빈 목록이다.
+ * 행 클릭은 신청 상세 모달. 주소·학력·경력 본문은 상세 GET으로만 채운다.
  */
 
-import { useCallback, useMemo, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { Dayjs } from 'dayjs'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -17,9 +17,14 @@ import type {
 } from '@/entities/recruit-applicant/model/types'
 import {
   useConfirmRecruitApplicants,
+  useRecruitApplicantDetail,
   useRecruitApplicantsList,
   useRemoveRecruitApplicants,
 } from '@/features/recruit-applicant/api/hooks'
+import { shouldUseRecruitApplicantRemoteApi } from '@/features/recruit-applicant/api/capabilities'
+import { detailFromListItem } from '@/features/recruit-applicant/api/mappers'
+import { isRecruitApplicantNotFoundError } from '@/features/recruit-applicant/api/service'
+import { RecruitApplicantDetailModal } from '@/features/recruit-applicant/ui/detail-modal'
 import { recruitApplicantQueryKeys } from '@/features/recruit-applicant/api/query-keys'
 import { RECRUIT_APPLICANTS_CHANGED_EVENT } from '@/features/recruit-applicant/api/store'
 import { maskEmail, maskPhoneNumber } from '@/features/talent-donation-application/lib/mask'
@@ -267,18 +272,22 @@ export function RecruitApplicantsPage() {
 
   useInvalidateOnWindowEvent(RECRUIT_APPLICANTS_CHANGED_EVENT, recruitApplicantQueryKeys.all)
 
-  const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
+  const rows = useMemo(() => listQuery.data?.items ?? [], [listQuery.data])
+  const totalCount = listQuery.data?.totalCount ?? rows.length
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [detailId, setDetailId] = useState<string | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false)
+  const detailQuery = useRecruitApplicantDetail(detailId)
+  const remoteDetail = shouldUseRecruitApplicantRemoteApi()
 
   const rowNoMap = useMemo(() => {
     const map = new Map<string, number>()
     rows.forEach((row, index) => {
-      map.set(row.id, rows.length - index)
+      map.set(row.id, totalCount - index)
     })
     return map
-  }, [rows])
+  }, [rows, totalCount])
 
   const handleSearch = useCallback(() => {
     applySearch()
@@ -304,6 +313,56 @@ export function RecruitApplicantsPage() {
       void listQuery.refetch()
     }
   }, [listQuery, removeMutation, selectedRowKeys, showAlert])
+
+  const detailRow = useMemo(() => {
+    if (!detailId) return null
+    if (detailQuery.data) return detailQuery.data
+    if (remoteDetail) return null
+    const listed = rows.find(row => row.id === detailId)
+    return listed ? detailFromListItem(listed) : null
+  }, [detailId, detailQuery.data, remoteDetail, rows])
+
+  const closeDetail = useCallback(() => {
+    setDetailId(null)
+  }, [])
+
+  useEffect(() => {
+    if (!remoteDetail || !detailId || !detailQuery.isError) return
+    const notFound = isRecruitApplicantNotFoundError(detailQuery.error)
+    showAlert({
+      title: notFound ? '신청을 찾을 수 없음' : '조회 실패',
+      content: notFound
+        ? '신청 정보를 찾을 수 없습니다.'
+        : '신청 상세를 불러오지 못했습니다. 다시 시도해 주세요.',
+    })
+    setDetailId(null)
+  }, [detailId, detailQuery.error, detailQuery.isError, remoteDetail, showAlert])
+
+  const handleDetailConfirm = useCallback(async () => {
+    if (!detailRow) return
+    try {
+      await confirmMutation.mutateAsync([{ id: detailRow.id, version: detailRow.version }])
+    } catch {
+      showAlert({
+        title: '확인 실패',
+        content: '신청 확인에 실패했습니다. 다시 시도해 주세요.',
+      })
+    }
+  }, [confirmMutation, detailRow, showAlert])
+
+  const handleDetailDelete = useCallback(async () => {
+    if (!detailRow) return
+    try {
+      await removeMutation.mutateAsync([detailRow.id])
+      setSelectedRowKeys(prev => prev.filter(key => key !== detailRow.id))
+      closeDetail()
+    } catch {
+      showAlert({
+        title: '삭제 실패',
+        content: '신청 삭제에 실패했습니다. 다시 시도해 주세요.',
+      })
+    }
+  }, [closeDetail, detailRow, removeMutation, showAlert])
 
   const handleBulkConfirm = useCallback(async () => {
     try {
@@ -579,7 +638,7 @@ export function RecruitApplicantsPage() {
         <div className="admin-list-toolbar">
           <div className="table-header-title--wrapper">
             <span className="table-title">인재채용 신청 목록</span>
-            <span className="table-description">총 {formatNumberDisplay(rows.length)}건</span>
+            <span className="table-description">총 {formatNumberDisplay(totalCount)}건</span>
           </div>
           <div className="table-header-actions--wrapper">
             <CmsButton
@@ -620,15 +679,32 @@ export function RecruitApplicantsPage() {
               onChange: keys => setSelectedRowKeys(keys),
               columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             }}
-            onRow={() => ({
+            onRow={record => ({
               onClick: event => {
                 if (isTableSelectionClick(event)) return
+                setDetailId(record.id)
               },
+              style: { cursor: 'pointer' },
             })}
             scroll={{ x: true }}
           />
         </div>
       </div>
+
+      <RecruitApplicantDetailModal
+        open={detailId != null}
+        loading={remoteDetail && detailQuery.isPending}
+        data={detailRow}
+        confirmLoading={confirmMutation.isPending && detailId != null}
+        deleteLoading={removeMutation.isPending && detailId != null}
+        onCancel={closeDetail}
+        onConfirm={() => {
+          void handleDetailConfirm()
+        }}
+        onDelete={() => {
+          void handleDetailDelete()
+        }}
+      />
 
       <ConfirmModal
         open={bulkDeleteOpen}

@@ -124,7 +124,10 @@ function matchesFilter(row: RecruitApplicant, filter?: RecruitApplicantListFilte
 
   const appliedFrom = filter.appliedFrom?.trim() ?? ''
   const appliedTo = filter.appliedTo?.trim() ?? ''
-  if ((appliedFrom || appliedTo) && !inRange(row.appliedAt, appliedFrom, appliedTo)) return false
+  // appliedAt 이 비어 있으면(원격 목록 미제공) 신청일 필터를 적용하지 않는다.
+  if ((appliedFrom || appliedTo) && row.appliedAt) {
+    if (!inRange(row.appliedAt, appliedFrom, appliedTo)) return false
+  }
 
   const confirmedFrom = filter.confirmedFrom?.trim() ?? ''
   const confirmedTo = filter.confirmedTo?.trim() ?? ''

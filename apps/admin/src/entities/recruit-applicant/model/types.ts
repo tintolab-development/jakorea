@@ -15,6 +15,14 @@ export type RecruitJobInterest =
 
 export type RecruitCareerType = 'newbie' | 'experienced'
 
+export type RecruitEducationLevel =
+  | 'highSchool'
+  | 'college'
+  | 'university'
+  | 'master'
+  | 'doctor'
+  | 'other'
+
 export type RecruitApplicant = {
   id: string
   status: RecruitApplicantStatus
@@ -28,6 +36,20 @@ export type RecruitApplicant = {
   version: number
 }
 
+/** 상세 모달. 목록 item에 없는 주소·학력·경력·동의·첨부는 상세 GET으로만 채운다. */
+export type RecruitApplicantDetail = RecruitApplicant & {
+  addressRoad: string
+  addressDetail: string
+  educationLevel: RecruitEducationLevel | null
+  schoolName: string
+  major: string
+  educationInfo: string
+  careerInfo: string
+  privacyAgreed: boolean
+  attachmentFileName: string | null
+  confirmedByName: string | null
+}
+
 export type RecruitApplicantListFilter = {
   status?: RecruitApplicantStatus
   jobInterest?: RecruitJobInterest
@@ -39,4 +61,9 @@ export type RecruitApplicantListFilter = {
   appliedTo?: string
   confirmedFrom?: string
   confirmedTo?: string
+}
+
+export type RecruitApplicantListResult = {
+  items: RecruitApplicant[]
+  totalCount: number
 }
