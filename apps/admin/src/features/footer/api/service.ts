@@ -8,7 +8,6 @@ import type {
   FooterTopMenuPatch,
 } from '@/entities/footer/model/types'
 import { getJAKoreaHomepageAdminAPISiteSubset } from '@/shared/api/generated/site/site-api'
-import { shouldUseFooterRemoteApi } from './capabilities'
 import {
   mapFooterAdminResponseToDomain,
   mapFooterMenusToDomain,
@@ -20,18 +19,6 @@ import {
   toFooterPartnerOrderRequest,
   toFooterPartnerUpdateRequest,
 } from './mappers'
-import {
-  readFooterOrgInfo,
-  readFooterRelatedLogos,
-  readFooterTopMenus,
-  reorderFooterRelatedLogos as reorderRelatedLocal,
-  reorderFooterTopMenus as reorderTopLocal,
-  saveFooterOrgInfo as saveOrgLocal,
-  saveFooterRelatedLogo as saveRelatedLocal,
-  saveFooterTopMenus as saveTopLocal,
-  setFooterRelatedLogoActive as setRelatedActiveLocal,
-  setFooterTopMenuActive as setTopActiveLocal,
-} from './store'
 import { uploadFooterLogoAsset, uploadFooterPartnerLogoAsset } from './upload-footer-assets'
 
 function siteApi() {
@@ -39,14 +26,7 @@ function siteApi() {
 }
 
 export async function getFooterAdminService(): Promise<FooterAdminDoc> {
-  if (shouldUseFooterRemoteApi()) {
-    return mapFooterAdminResponseToDomain(await siteApi().get12())
-  }
-  return {
-    topMenus: readFooterTopMenus(),
-    orgInfo: readFooterOrgInfo(),
-    relatedLogos: readFooterRelatedLogos(),
-  }
+  return mapFooterAdminResponseToDomain(await siteApi().get12())
 }
 
 async function resolveCurrentMenus(cached?: FooterTopMenu[]): Promise<FooterTopMenu[]> {
@@ -103,13 +83,10 @@ export async function reorderFooterTopMenusService(
   orderedIds: string[],
   cachedRows?: FooterTopMenu[],
 ): Promise<FooterTopMenu[]> {
-  if (shouldUseFooterRemoteApi()) {
-    const current = await resolveCurrentMenus(cachedRows)
-    const next = orderMenusByIds(current, orderedIds)
-    const updated = await siteApi().updateMenus(toFooterMenusUpdateRequest(next))
-    return mapFooterMenusToDomain(updated)
-  }
-  return reorderTopLocal(orderedIds)
+  const current = await resolveCurrentMenus(cachedRows)
+  const next = orderMenusByIds(current, orderedIds)
+  const updated = await siteApi().updateMenus(toFooterMenusUpdateRequest(next))
+  return mapFooterMenusToDomain(updated)
 }
 
 export async function setFooterTopMenuActiveService(
@@ -117,38 +94,31 @@ export async function setFooterTopMenuActiveService(
   isActive: boolean,
   cachedRows?: FooterTopMenu[],
 ): Promise<FooterTopMenu[]> {
-  if (shouldUseFooterRemoteApi()) {
-    const current = await resolveCurrentMenus(cachedRows)
-    const index = current.findIndex(row => row.id === id)
-    if (index < 0) throw new Error(`Footer top menu not found: ${id}`)
-    const next = [...current]
-    next[index] = { ...next[index]!, isActive }
-    const updated = await siteApi().updateMenus(toFooterMenusUpdateRequest(next))
-    return mapFooterMenusToDomain(updated)
-  }
-  await setTopActiveLocal(id, isActive)
-  return readFooterTopMenus()
+  const current = await resolveCurrentMenus(cachedRows)
+  const index = current.findIndex(row => row.id === id)
+  if (index < 0) throw new Error(`Footer top menu not found: ${id}`)
+  const next = [...current]
+  next[index] = { ...next[index]!, isActive }
+  const updated = await siteApi().updateMenus(toFooterMenusUpdateRequest(next))
+  return mapFooterMenusToDomain(updated)
 }
 
 export async function saveFooterTopMenusService(
   patches: FooterTopMenuPatch[],
   cachedRows?: FooterTopMenu[],
 ): Promise<FooterTopMenu[]> {
-  if (shouldUseFooterRemoteApi()) {
-    const current = await resolveCurrentMenus(cachedRows)
-    const patchMap = new Map(patches.map(p => [p.id, p]))
-    const next = current.map(row => {
-      const patch = patchMap.get(row.id)
-      if (!patch) return row
-      return {
-        ...row,
-        linkUrl: row.isInternal ? row.linkUrl : patch.linkUrl.trim(),
-      }
-    })
-    const updated = await siteApi().updateMenus(toFooterMenusUpdateRequest(next))
-    return mapFooterMenusToDomain(updated)
-  }
-  return saveTopLocal(patches)
+  const current = await resolveCurrentMenus(cachedRows)
+  const patchMap = new Map(patches.map(p => [p.id, p]))
+  const next = current.map(row => {
+    const patch = patchMap.get(row.id)
+    if (!patch) return row
+    return {
+      ...row,
+      linkUrl: row.isInternal ? row.linkUrl : patch.linkUrl.trim(),
+    }
+  })
+  const updated = await siteApi().updateMenus(toFooterMenusUpdateRequest(next))
+  return mapFooterMenusToDomain(updated)
 }
 
 export async function getFooterOrgInfoService(): Promise<FooterOrgInfo> {
@@ -178,20 +148,12 @@ export async function saveFooterOrgInfoService(
   input: FooterOrgInfoSaveInput,
   cached?: FooterOrgInfo,
 ): Promise<FooterOrgInfo> {
-  if (shouldUseFooterRemoteApi()) {
-    const current = cached ?? (await getFooterAdminService()).orgInfo
-    const logoAssetId = await resolveOrgLogoAssetId(current, input)
-    const updated = await siteApi().updateOrganization(
-      toFooterOrganizationUpdateRequest(input, current.version, logoAssetId),
-    )
-    return mapFooterOrganizationToDomain(updated)
-  }
-  return saveOrgLocal({
-    ...input,
-    updatedAt: new Date().toISOString(),
-    version: cached?.version ?? 0,
-    logoAssetId: input.logoAssetId,
-  })
+  const current = cached ?? (await getFooterAdminService()).orgInfo
+  const logoAssetId = await resolveOrgLogoAssetId(current, input)
+  const updated = await siteApi().updateOrganization(
+    toFooterOrganizationUpdateRequest(input, current.version, logoAssetId),
+  )
+  return mapFooterOrganizationToDomain(updated)
 }
 
 export async function listFooterRelatedLogosService(): Promise<FooterRelatedLogo[]> {
@@ -202,13 +164,10 @@ export async function reorderFooterRelatedLogosService(
   orderedIds: string[],
   cachedRows?: FooterRelatedLogo[],
 ): Promise<FooterRelatedLogo[]> {
-  if (shouldUseFooterRemoteApi()) {
-    const current = await resolveCurrentPartners(cachedRows)
-    const next = orderPartnersByIds(current, orderedIds)
-    const updated = await siteApi().reorderPartners(toFooterPartnerOrderRequest(next))
-    return mapFooterPartnersToDomain(updated)
-  }
-  return reorderRelatedLocal(orderedIds)
+  const current = await resolveCurrentPartners(cachedRows)
+  const next = orderPartnersByIds(current, orderedIds)
+  const updated = await siteApi().reorderPartners(toFooterPartnerOrderRequest(next))
+  return mapFooterPartnersToDomain(updated)
 }
 
 export async function setFooterRelatedLogoActiveService(
@@ -216,22 +175,19 @@ export async function setFooterRelatedLogoActiveService(
   isActive: boolean,
   cachedRows?: FooterRelatedLogo[],
 ): Promise<FooterRelatedLogo> {
-  if (shouldUseFooterRemoteApi()) {
-    const current = await resolveCurrentPartners(cachedRows)
-    const row = current.find(item => item.id === id)
-    if (!row) throw new Error(`Footer partner not found: ${id}`)
-    if (isActive && (!row.name.trim() || !row.logoAssetId)) {
-      throw new Error('사용하려면 기관명과 로고가 필요합니다.')
-    }
-    const updated = await siteApi().updatePartner(
-      row.partnerId,
-      toFooterPartnerUpdateRequest({ ...row, isActive }, row.logoAssetId),
-    )
-    const mapped = mapFooterPartnerToDomain(updated)
-    if (!mapped) throw new Error('Footer partner response mapping failed')
-    return mapped
+  const current = await resolveCurrentPartners(cachedRows)
+  const row = current.find(item => item.id === id)
+  if (!row) throw new Error(`Footer partner not found: ${id}`)
+  if (isActive && (!row.name.trim() || !row.logoAssetId)) {
+    throw new Error('사용하려면 기관명과 로고가 필요합니다.')
   }
-  return setRelatedActiveLocal(id, isActive)
+  const updated = await siteApi().updatePartner(
+    row.partnerId,
+    toFooterPartnerUpdateRequest({ ...row, isActive }, row.logoAssetId),
+  )
+  const mapped = mapFooterPartnerToDomain(updated)
+  if (!mapped) throw new Error('Footer partner response mapping failed')
+  return mapped
 }
 
 async function resolvePartnerLogoAssetId(
@@ -257,27 +213,24 @@ export async function saveFooterRelatedLogoService(
   input: FooterRelatedLogoSaveInput,
   cachedRows?: FooterRelatedLogo[],
 ): Promise<FooterRelatedLogo> {
-  if (shouldUseFooterRemoteApi()) {
-    const current = await resolveCurrentPartners(cachedRows)
-    const row = current.find(item => item.id === input.id)
-    if (!row) throw new Error(`Footer partner not found: ${input.id}`)
-    const logoAssetId = await resolvePartnerLogoAssetId(row, input)
-    const next: FooterRelatedLogo = {
-      ...row,
-      isActive: input.isActive,
-      name: input.name,
-      logoUrl: input.logoUrl,
-      logoFileName: input.logoFileName,
-      logoAssetId,
-      hasContent: Boolean(input.name.trim() || input.logoUrl.trim()),
-    }
-    const updated = await siteApi().updatePartner(
-      row.partnerId,
-      toFooterPartnerUpdateRequest(next, logoAssetId),
-    )
-    const mapped = mapFooterPartnerToDomain(updated)
-    if (!mapped) throw new Error('Footer partner response mapping failed')
-    return mapped
+  const current = await resolveCurrentPartners(cachedRows)
+  const row = current.find(item => item.id === input.id)
+  if (!row) throw new Error(`Footer partner not found: ${input.id}`)
+  const logoAssetId = await resolvePartnerLogoAssetId(row, input)
+  const next: FooterRelatedLogo = {
+    ...row,
+    isActive: input.isActive,
+    name: input.name,
+    logoUrl: input.logoUrl,
+    logoFileName: input.logoFileName,
+    logoAssetId,
+    hasContent: Boolean(input.name.trim() || input.logoUrl.trim()),
   }
-  return saveRelatedLocal(input)
+  const updated = await siteApi().updatePartner(
+    row.partnerId,
+    toFooterPartnerUpdateRequest(next, logoAssetId),
+  )
+  const mapped = mapFooterPartnerToDomain(updated)
+  if (!mapped) throw new Error('Footer partner response mapping failed')
+  return mapped
 }

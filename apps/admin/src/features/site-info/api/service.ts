@@ -1,8 +1,6 @@
 import type { SiteInfo, SiteInfoSaveInput } from '@/entities/site-info/model/types'
 import { getJAKoreaHomepageAdminAPISiteSubset } from '@/shared/api/generated/site/site-api'
-import { shouldUseSiteInfoRemoteApi } from './capabilities'
 import { mapSiteSettingsResponseToDomain, toSiteSettingsUpdateRequest } from './mappers'
-import { readSiteInfo, saveSiteInfo as saveSiteInfoLocal } from './store'
 import { uploadSiteFaviconAsset, uploadSiteOgImageAsset } from './upload-site-assets'
 
 function siteApi() {
@@ -48,24 +46,18 @@ async function resolveFaviconAssetId(
 }
 
 export async function getSiteInfoService(): Promise<SiteInfo> {
-  if (shouldUseSiteInfoRemoteApi()) {
-    return mapSiteSettingsResponseToDomain(await siteApi().get1())
-  }
-  return readSiteInfo()
+  return mapSiteSettingsResponseToDomain(await siteApi().get1())
 }
 
 export async function saveSiteInfoService(
   input: SiteInfoSaveInput,
   cached?: SiteInfo,
 ): Promise<SiteInfo> {
-  if (shouldUseSiteInfoRemoteApi()) {
-    const current = cached ?? mapSiteSettingsResponseToDomain(await siteApi().get1())
-    const ogAssetId = await resolveOgAssetId(current, input)
-    const faviconAssetId = await resolveFaviconAssetId(current, input)
-    const updated = await siteApi().update1(
-      toSiteSettingsUpdateRequest(input, current.version, ogAssetId, faviconAssetId),
-    )
-    return mapSiteSettingsResponseToDomain(updated)
-  }
-  return saveSiteInfoLocal(input)
+  const current = cached ?? mapSiteSettingsResponseToDomain(await siteApi().get1())
+  const ogAssetId = await resolveOgAssetId(current, input)
+  const faviconAssetId = await resolveFaviconAssetId(current, input)
+  const updated = await siteApi().update1(
+    toSiteSettingsUpdateRequest(input, current.version, ogAssetId, faviconAssetId),
+  )
+  return mapSiteSettingsResponseToDomain(updated)
 }

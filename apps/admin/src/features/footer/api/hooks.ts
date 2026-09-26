@@ -8,7 +8,6 @@ import type {
   FooterTopMenu,
   FooterTopMenuPatch,
 } from '@/entities/footer/model/types'
-import { shouldUseFooterRemoteApi } from './capabilities'
 import { footerQueryKeys } from './query-keys'
 import {
   getFooterAdminService,
@@ -21,14 +20,8 @@ import {
   setFooterTopMenuActiveService,
 } from './service'
 
-function source(): 'remote' | 'local' {
-  return shouldUseFooterRemoteApi() ? 'remote' : 'local'
-}
-
-const localStale = Number.POSITIVE_INFINITY
-
 function adminKey() {
-  return footerQueryKeys.admin(source())
+  return footerQueryKeys.admin()
 }
 
 function patchAdminCache(
@@ -41,13 +34,15 @@ function patchAdminCache(
 }
 
 function useFooterAdminQuery(enabled = true) {
-  const dataSource = source()
   return useQuery({
-    queryKey: footerQueryKeys.admin(dataSource),
+    queryKey: footerQueryKeys.admin(),
     queryFn: () => getFooterAdminService(),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : localStale,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 30_000,
+    gcTime: 15 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    retry: 1,
   })
 }
 

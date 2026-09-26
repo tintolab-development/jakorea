@@ -12,7 +12,6 @@ import {
   useSaveFooterTopMenus,
   useSetFooterTopMenuActive,
 } from '@/features/footer/api/hooks'
-import { INTERNAL_LINK_LABEL } from '@/features/footer/api/store'
 import { FooterDragHandle, FooterSortableTable } from '@/features/footer/ui/sortable-table'
 import {
   CMS_TABLE_NO_COL_CLASS,
@@ -23,6 +22,8 @@ import {
 import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
+
+const INTERNAL_LINK_LABEL = '사이트 내부 연결'
 
 function buildLinkDraft(rows: FooterTopMenu[]): Record<string, string> {
   return Object.fromEntries(rows.map(row => [row.id, row.linkUrl]))

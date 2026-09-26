@@ -1,21 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { GnbMenuDoc } from '@/entities/gnb-menu/model/types'
-import { shouldUseGnbMenuRemoteApi } from './capabilities'
 import { gnbMenuQueryKeys } from './query-keys'
 import { getGnbMenuService, saveGnbMenuService } from './service'
 
-function source(): 'remote' | 'local' {
-  return shouldUseGnbMenuRemoteApi() ? 'remote' : 'local'
-}
-
 export function useGnbMenu(enabled = true) {
-  const dataSource = source()
   return useQuery({
-    queryKey: gnbMenuQueryKeys.detail(dataSource),
+    queryKey: gnbMenuQueryKeys.detail(),
     queryFn: () => getGnbMenuService(),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 30_000,
+    gcTime: 15 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    retry: 1,
   })
 }
 
@@ -26,7 +23,7 @@ export function useSaveGnbMenu() {
     retry: false,
     onSuccess: data => {
       // PUT이 전체 GNB 문서를 반환하므로 setQueryData만 — invalidate 금지
-      queryClient.setQueryData(gnbMenuQueryKeys.detail(source()), data)
+      queryClient.setQueryData(gnbMenuQueryKeys.detail(), data)
     },
   })
 }
