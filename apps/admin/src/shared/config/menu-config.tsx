@@ -90,11 +90,7 @@ export const menuItems: MenuItemConfig[] = [
           { key: '/ja-korea/recruit/applicants', label: '인재채용 관리' },
         ],
       },
-      {
-        key: 'ja-korea-notice-group',
-        label: '공지 관리',
-        children: [{ key: '/ja-korea/notices', label: '공지 관리' }],
-      },
+      { key: '/ja-korea/notices', label: '공지사항' },
       { key: '/ja-korea/directions', label: '오시는 길' },
       { key: '/ja-korea/people', label: '함께하는 사람들' },
     ],
