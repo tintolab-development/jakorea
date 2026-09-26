@@ -76,17 +76,19 @@ function PartnerLogoImage({
   const src = remoteSrc ?? localSrc
   if (!src) return null
 
+  const sizeClass = local?.logoClassName ?? (remoteSrc ? styles.partnerLogoRemote : undefined)
+
   return (
-    <img
-      className={[styles.partnerLogo, remoteSrc ? styles.partnerLogoRemote : local?.logoClassName]
-        .filter(Boolean)
-        .join(' ')}
-      src={src}
-      alt={partner.name}
-      onError={() => {
-        if (local) setFailed(true)
-      }}
-    />
+    <span className={styles.partnerLogoArea}>
+      <img
+        className={[styles.partnerLogo, sizeClass].filter(Boolean).join(' ')}
+        src={src}
+        alt={partner.name}
+        onError={() => {
+          if (local) setFailed(true)
+        }}
+      />
+    </span>
   )
 }
 
