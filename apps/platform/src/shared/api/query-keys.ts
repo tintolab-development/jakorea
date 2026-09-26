@@ -150,6 +150,37 @@ export const platformQueryKeys = {
     all: () => [...platformQueryKeys.all, 'ja-korea'] as const,
     /** 공개 JA History — GET /api/public/ja-korea/ja-history (Class B, 싱글톤) */
     history: () => [...platformQueryKeys.jaKorea.all(), 'history'] as const,
+    notices: {
+      all: () => [...platformQueryKeys.jaKorea.all(), 'notices'] as const,
+      /**
+       * 공개 목록 — GET /api/public/ja-korea/notices
+       * Class C. `q`/`page`/`size` 가 바뀌면 다른 키.
+       */
+      list: (params: { q: string; page: number; size: number }) =>
+        [
+          ...platformQueryKeys.jaKorea.notices.all(),
+          'list',
+          params.q,
+          params.page,
+          params.size,
+        ] as const,
+      /** 인접글용 preview (`size=100`, page 0, q 없음) */
+      preview: () => [...platformQueryKeys.jaKorea.notices.all(), 'preview'] as const,
+      /** 공개 상세 — GET /api/public/ja-korea/notices/{id} (Class D) */
+      detail: (id: string) =>
+        [...platformQueryKeys.jaKorea.notices.all(), 'detail', id] as const,
+    },
+  },
+
+  careers: {
+    all: () => [...platformQueryKeys.all, 'careers'] as const,
+    /** 공개 채용 안내 — GET /api/public/careers/guide (Class B, 싱글톤) */
+    guide: () => [...platformQueryKeys.careers.all(), 'guide'] as const,
+    /** 공개 채용공고 — GET /api/public/careers/postings (Class C, RECRUITING·RESULT) */
+    postings: () => [...platformQueryKeys.careers.all(), 'postings'] as const,
+    /** 공개 채용공고 상세 — GET /api/public/careers/postings/{key} (Class D) */
+    postingDetail: (id: string) =>
+      [...platformQueryKeys.careers.all(), 'postings', 'detail', id] as const,
   },
 
   education: {

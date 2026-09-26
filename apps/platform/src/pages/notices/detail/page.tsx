@@ -1,7 +1,6 @@
 import { ProgramBackButton } from '@/features/program'
 import {
   canNavigateBackInApp,
-  getAdjacentNotices,
   getNoticeIdFromPath,
   NoticeAdjacentNav,
   resolveNoticesListReturnPath,
@@ -28,7 +27,7 @@ export function NoticeDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const noticeId = getNoticeIdFromPath(location.pathname)
-  const { data: detail, status, refetch } = useNoticeDetail(noticeId)
+  const { data: detail, status, adjacent, refetch } = useNoticeDetail(noticeId)
   const listReturnPath = resolveNoticesListReturnPath(location.state)
 
   const handleBack = () => {
@@ -68,7 +67,6 @@ export function NoticeDetailPage() {
     fileName: file.name,
     href: file.fileUrl,
   }))
-  const adjacent = getAdjacentNotices(detail.id)
 
   return (
     <section className={styles.page}>

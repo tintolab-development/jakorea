@@ -61,7 +61,7 @@ export function toNoticeDetailView(detail: NoticeDetail): NoticeDetail {
   }
 }
 
-/** 추후 공개 API 연결 지점. 지금은 mock이 같은 화면 모델을 사용한다. */
+/** 공개 API `PublicNoticeDetail` → 화면 모델 */
 export function mapPublicNoticeDetailToView(
   source: PublicNoticeDetailSource,
   extras?: { no?: number; contentFormat?: NoticeContentFormat }

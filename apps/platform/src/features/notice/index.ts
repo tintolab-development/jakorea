@@ -19,10 +19,17 @@ export {
   getMockNotices,
   useMockNoticeDetail,
   useMockNoticesCatalog,
-  type AdjacentNotices,
   type NoticeCatalogItem,
 } from './lib/mock-notices'
-export { useNoticeDetail, type NoticeDetailQuery } from './lib/use-detail'
+export type { AdjacentNotices } from './lib/adjacent'
+export { getAdjacentFromNotices } from './lib/adjacent'
+export {
+  useNoticeDetail,
+  useNoticesList,
+  useNoticesPreview,
+  type NoticeDetailQuery,
+  type NoticesListQuery,
+} from './api/hooks'
 export {
   mapPublicNoticeDetailToView,
   toNoticeDetailView,

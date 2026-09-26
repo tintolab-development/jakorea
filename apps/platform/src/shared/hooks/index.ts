@@ -1,5 +1,6 @@
 /** 공유 hooks barrel */
 export { useShouldUsePlatformMockData } from './use-platform-mock-data'
+export { useDebouncedValue } from './use-debounced-value'
 export { useSearchFilters } from './use-search-filters'
 export type { SearchFilterBinding, UseSearchFiltersOptions } from './use-search-filters'
 export { useIntersectionObserver } from './use-intersection-observer'
