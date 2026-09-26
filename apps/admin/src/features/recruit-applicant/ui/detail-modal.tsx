@@ -241,87 +241,100 @@ export function RecruitApplicantDetailModal({
               >
                 기본 정보
               </h3>
-              <DetailInfoForm
-                title="기본 정보"
-                hideHeader
-                mode="view"
-                className="recruit-applicant-detail-modal__table"
-              >
-                <DetailInfoForm.Row type="double">
-                  <DetailInfoForm.Field
-                    label="신청일시"
-                    view={<span>{formatDateTimeWithWeekday(data.appliedAt)}</span>}
-                    edit={null}
-                    readOnlyDisplay
-                  />
-                  <DetailInfoForm.Field
-                    label="확인일시"
-                    view={confirmedView}
-                    edit={null}
-                    readOnlyDisplay
-                  />
-                </DetailInfoForm.Row>
-                <DetailInfoForm.Row type="double">
-                  <DetailInfoForm.Field
-                    label="처리 상태"
-                    view={
-                      <span
-                        className={
-                          data.status === 'pending'
-                            ? 'recruit-applicant-detail-modal__status recruit-applicant-detail-modal__status--pending'
-                            : 'recruit-applicant-detail-modal__status recruit-applicant-detail-modal__status--confirmed'
-                        }
-                      >
-                        {data.status === 'confirmed' ? '확인 완료' : '확인 대기'}
-                      </span>
-                    }
-                    edit={null}
-                    readOnlyDisplay
-                  />
-                  <DetailInfoForm.Field
-                    label="개인정보 수집·이용 동의"
-                    view={<span>{data.privacyAgreed ? '동의' : '-'}</span>}
-                    edit={null}
-                    readOnlyDisplay
-                  />
-                </DetailInfoForm.Row>
-                <DetailInfoForm.Row type="double">
-                  <DetailInfoForm.Field
-                    label="지원자명"
-                    view={<span>{data.applicantName || '-'}</span>}
-                    edit={null}
-                    readOnlyDisplay
-                  />
-                  <DetailInfoForm.Field
-                    label="관심 직무"
-                    view={<span>{JOB_LABEL[data.jobInterest] ?? '-'}</span>}
-                    edit={null}
-                    readOnlyDisplay
-                  />
-                </DetailInfoForm.Row>
-                <DetailInfoForm.Row type="double">
-                  <DetailInfoForm.Field
-                    label="연락처"
-                    view={<span>{data.phone || '-'}</span>}
-                    edit={null}
-                    readOnlyDisplay
-                  />
-                  <DetailInfoForm.Field
-                    label="이메일"
-                    view={<span>{data.email || '-'}</span>}
-                    edit={null}
-                    readOnlyDisplay
-                  />
-                </DetailInfoForm.Row>
-                <DetailInfoForm.Row type="single">
-                  <DetailInfoForm.Field
-                    label="자택 주소"
-                    view={<span>{joinParts([data.addressRoad, data.addressDetail], ', ') || '-'}</span>}
-                    edit={null}
-                    readOnlyDisplay
-                  />
-                </DetailInfoForm.Row>
-              </DetailInfoForm>
+              <div className="recruit-applicant-detail-modal__table-stack">
+                <DetailInfoForm
+                  title="신청 처리 정보"
+                  hideHeader
+                  mode="view"
+                  className="recruit-applicant-detail-modal__table"
+                >
+                  <DetailInfoForm.Row type="double">
+                    <DetailInfoForm.Field
+                      label="신청일시"
+                      view={<span>{formatDateTimeWithWeekday(data.appliedAt)}</span>}
+                      edit={null}
+                      readOnlyDisplay
+                    />
+                    <DetailInfoForm.Field
+                      label="확인일시"
+                      view={confirmedView}
+                      edit={null}
+                      readOnlyDisplay
+                    />
+                  </DetailInfoForm.Row>
+                  <DetailInfoForm.Row type="double">
+                    <DetailInfoForm.Field
+                      label="처리 상태"
+                      view={
+                        <span
+                          className={
+                            data.status === 'pending'
+                              ? 'recruit-applicant-detail-modal__status recruit-applicant-detail-modal__status--pending'
+                              : 'recruit-applicant-detail-modal__status recruit-applicant-detail-modal__status--confirmed'
+                          }
+                        >
+                          {data.status === 'confirmed' ? '확인 완료' : '확인 대기'}
+                        </span>
+                      }
+                      edit={null}
+                      readOnlyDisplay
+                    />
+                    <DetailInfoForm.Field
+                      label="개인정보 수집·이용 동의"
+                      view={<span>{data.privacyAgreed ? '동의' : '-'}</span>}
+                      edit={null}
+                      readOnlyDisplay
+                    />
+                  </DetailInfoForm.Row>
+                </DetailInfoForm>
+                <DetailInfoForm
+                  title="지원자 정보"
+                  hideHeader
+                  mode="view"
+                  className="recruit-applicant-detail-modal__table"
+                >
+                  <DetailInfoForm.Row type="double">
+                    <DetailInfoForm.Field
+                      label="지원자명"
+                      view={<span>{data.applicantName || '-'}</span>}
+                      edit={null}
+                      readOnlyDisplay
+                    />
+                    <DetailInfoForm.Field
+                      label="관심 직무"
+                      view={<span>{JOB_LABEL[data.jobInterest] ?? '-'}</span>}
+                      edit={null}
+                      readOnlyDisplay
+                    />
+                  </DetailInfoForm.Row>
+                  <DetailInfoForm.Row type="double">
+                    <DetailInfoForm.Field
+                      label="연락처"
+                      view={<span>{data.phone || '-'}</span>}
+                      edit={null}
+                      readOnlyDisplay
+                    />
+                    <DetailInfoForm.Field
+                      label="이메일"
+                      view={<span>{data.email || '-'}</span>}
+                      edit={null}
+                      readOnlyDisplay
+                    />
+                  </DetailInfoForm.Row>
+                  <DetailInfoForm.Row type="single">
+                    <DetailInfoForm.Field
+                      label="자택 주소"
+                      view={
+                        <span>
+                          {joinParts([data.addressRoad, data.addressDetail], ', ') || '-'}
+                        </span>
+                      }
+                      edit={null}
+                      readOnlyDisplay
+                    />
+                  </DetailInfoForm.Row>
+                </DetailInfoForm>
+              </div>
             </section>
 
             <section

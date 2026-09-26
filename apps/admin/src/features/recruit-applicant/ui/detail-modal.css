@@ -120,6 +120,14 @@
   min-width: 0;
 }
 
+.recruit-applicant-detail-modal__table-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
 .recruit-applicant-detail-modal__section-title {
   margin: 0;
   color: var(--default-BK, #3d3d3d);
