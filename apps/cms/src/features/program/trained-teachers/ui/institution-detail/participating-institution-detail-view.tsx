@@ -47,6 +47,7 @@ import {
 } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
@@ -162,12 +163,38 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     [mergedDetail.schoolName, row.schoolName]
   )
 
+  const revealInstitutionTeacherPersonalInfo = useCallback(
+    async (reason: string) => {
+      if (row.teacherMemberId == null) {
+        throw new Error('담당 교사 회원 ID가 없습니다.')
+      }
+      return fetchMemberRolePrivacyUnmask(row.teacherMemberId, reason, 'SCHOOL')
+    },
+    [row.teacherMemberId]
+  )
+
+  const applyInstitutionTeacherPersonalInfo = useCallback(
+    (payload: unknown) => {
+      if (payload == null || typeof payload !== 'object') return
+      const privacy = payload as { name?: unknown; phone?: unknown; email?: unknown }
+      onSaveBasicInfo?.({
+        id: detail.id,
+        ...(typeof privacy.name === 'string' ? { teacherName: privacy.name } : {}),
+        ...(typeof privacy.phone === 'string' ? { teacherPhone: privacy.phone } : {}),
+        ...(typeof privacy.email === 'string' ? { teacherEmail: privacy.email } : {}),
+      })
+    },
+    [detail.id, onSaveBasicInfo]
+  )
+
   const {
     personalInfoRevealed,
     onPrivacyControlClick: handlePrivacyToggleClick,
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolvePersonalInfoAccessItem,
+    revealPersonalInfo: revealInstitutionTeacherPersonalInfo,
+    onPrivacyUnmasked: applyInstitutionTeacherPersonalInfo,
     resetDeps: [detail.id],
     controlMode: 'toggleRemask',
   })
