@@ -139,8 +139,9 @@ export function pickUjatRecruitVolunteerOverlay(
   record: Record<string, unknown>
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {}
-  for (const key of Object.values(KEYS)) {
-    if (record[key] !== undefined) out[key] = record[key]
+  for (const [key, value] of Object.entries(record)) {
+    if (!key.startsWith('ujat.recruit.volunteer.') || value === undefined) continue
+    out[key] = value
   }
   return out
 }
@@ -211,7 +212,6 @@ export function applyUjatRecruitVolunteerOverlayOntoProgram(
   const attachmentFileNames = Array.isArray(attachments)
     ? attachments.filter((x): x is string => typeof x === 'string')
     : undefined
-  const publicTitle = overlayString(overlay, KEYS.publicTitle)
   const volunteerTargets = overlayStringList(overlay, KEYS.volunteerTargets)
   const announcementPublished = overlay[KEYS.announcementPublished]
   const noticeExposure = overlay[KEYS.noticeExposure]
@@ -278,7 +278,6 @@ export function applyUjatRecruitVolunteerOverlayOntoProgram(
     ),
     generalCommonInfo: {
       ...program.generalCommonInfo,
-      announcementTitle: publicTitle ?? program.generalCommonInfo?.announcementTitle,
       volunteerRecruitmentInfo: {
         ...program.generalCommonInfo?.volunteerRecruitmentInfo,
         announcementPublished:

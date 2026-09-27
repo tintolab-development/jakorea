@@ -18,7 +18,11 @@ import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-p
 import { handleError } from '@/shared/utils/error-handler'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { programToUjatRecruitTemplateFormValues } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
-import { resolveUjatRecruitDisplayProgram } from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import {
+  applyUjatRecruitAnnouncementTitleToDraft,
+  resolveUjatRecruitDisplayProgram,
+  type UjatRecruitDisplayKind,
+} from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import { applyUjatRegistrationOverlayToProgram } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import { syncUjatDetailEditFormKpiToOverlay } from '@/features/program/ujat/lib/detail-edit-form-kpi-to-overlay'
 import {
@@ -597,6 +601,7 @@ export function UjatProgramDetailFullPageModal({
     return base ? resolveUjatProgramDisplayProgram(base) : null
   }, [detailProgram, program, onUpdateProgram, externalLoading])
 
+  const volunteerRecruitKindRef = useRef<UjatRecruitDisplayKind>('volunteer_h1')
   const mapInstitutionRecruitmentEditValues = useCallback(
     (p: Program) =>
       programToUjatRecruitTemplateFormValues(
@@ -605,14 +610,30 @@ export function UjatProgramDetailFullPageModal({
       ),
     []
   )
-  const mapVolunteerRecruitmentEditValues = useCallback(
+  const mapVolunteerH1RecruitmentEditValues = useCallback(
     (p: Program) =>
       programToUjatRecruitTemplateFormValues(
-        resolveUjatRecruitDisplayProgram(p, 'volunteer'),
-        'volunteer'
+        resolveUjatRecruitDisplayProgram(p, 'volunteer_h1'),
+        'volunteer',
+        'h1'
       ),
     []
   )
+  const mapVolunteerH2RecruitmentEditValues = useCallback(
+    (p: Program) =>
+      programToUjatRecruitTemplateFormValues(
+        resolveUjatRecruitDisplayProgram(p, 'volunteer_h2'),
+        'volunteer',
+        'h2'
+      ),
+    []
+  )
+  const mapVolunteerRecruitmentEditValues = useCallback((p: Program) => {
+    const kind = volunteerRecruitKindRef.current
+    return kind === 'volunteer_h2'
+      ? mapVolunteerH2RecruitmentEditValues(p)
+      : mapVolunteerH1RecruitmentEditValues(p)
+  }, [mapVolunteerH1RecruitmentEditValues, mapVolunteerH2RecruitmentEditValues])
 
   const overlayHydrateStampRef = useRef<string | null>(null)
   useLayoutEffect(() => {
@@ -942,6 +963,8 @@ export function UjatProgramDetailFullPageModal({
 
   const activeRecruitTab: UjatRecruitTabKey | null =
     activeLnb === 'info' && isUjatRecruitTab(activeTab) ? (activeTab as UjatRecruitTabKey) : null
+  volunteerRecruitKindRef.current =
+    activeRecruitTab === 'recruit_volunteer_h2' ? 'volunteer_h2' : 'volunteer_h1'
 
   const surveyKeysJoined = surveyKeys.join('|')
 
@@ -1213,9 +1236,19 @@ export function UjatProgramDetailFullPageModal({
       displayProgram && updateProgram
         ? async (draft, patch) => {
             try {
-              const draftWithOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
+              const draftWithOverlay = applyUjatRecruitAnnouncementTitleToDraft({
+                draft: buildUjatProgramDraftWithSessionOverlay(draft),
+                existing: displayProgram,
+                title: institutionsForm.getValues().announcementTitle,
+                kind: 'institution',
+              })
+              const remotePatch = {
+                ...patch,
+                ujatRegistrationOverlay: draftWithOverlay.ujatRegistrationOverlay,
+                generalCommonInfo: draftWithOverlay.generalCommonInfo,
+              }
               if (onUpdateProgram) {
-                await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, patch)
+                await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, remotePatch)
               } else {
                 await updateProgram(draftWithOverlay.id, draftWithOverlay)
               }
@@ -1231,11 +1264,23 @@ export function UjatProgramDetailFullPageModal({
         : undefined,
   })
 
-  const volunteersForm = useProgramDetailEditForm({
+  const isEditModeRecruitVolunteerH1 =
+    isEditModeRecruitVolunteer && activeRecruitTab === 'recruit_volunteer_h1'
+  const isEditModeRecruitVolunteerH2 =
+    isEditModeRecruitVolunteer && activeRecruitTab === 'recruit_volunteer_h2'
+
+  const volunteersH1Form = useProgramDetailEditForm({
     program: displayProgram,
-    isEditMode: isEditModeRecruitVolunteer,
-    mapToValues: mapVolunteerRecruitmentEditValues,
+    isEditMode: isEditModeRecruitVolunteerH1,
+    mapToValues: mapVolunteerH1RecruitmentEditValues,
   })
+  const volunteersH2Form = useProgramDetailEditForm({
+    program: displayProgram,
+    isEditMode: isEditModeRecruitVolunteerH2,
+    mapToValues: mapVolunteerH2RecruitmentEditValues,
+  })
+  const volunteersForm =
+    activeRecruitTab === 'recruit_volunteer_h2' ? volunteersH2Form : volunteersH1Form
   const {
     triggerSave: volunteersTriggerSave,
     resetToProgram: volunteersResetToProgram,
@@ -1248,9 +1293,44 @@ export function UjatProgramDetailFullPageModal({
       displayProgram && updateProgram
         ? async (draft, patch) => {
             try {
-              const draftWithOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
+              const values = volunteersForm.getValues()
+              const draftWithOverlay = applyUjatRecruitAnnouncementTitleToDraft({
+                draft: buildUjatProgramDraftWithSessionOverlay(draft),
+                existing: displayProgram,
+                title: values.announcementTitle,
+                kind: volunteerRecruitKindRef.current,
+                values,
+              })
+              const remotePatch = {
+                ...patch,
+                ujatRegistrationOverlay: draftWithOverlay.ujatRegistrationOverlay,
+                generalCommonInfo: draftWithOverlay.generalCommonInfo,
+                startDate: draftWithOverlay.startDate,
+                endDate: draftWithOverlay.endDate,
+                volunteerTargets: draftWithOverlay.volunteerTargets,
+                volunteerTarget: draftWithOverlay.volunteerTarget,
+                volunteerTargetDetail: draftWithOverlay.volunteerTargetDetail,
+                volunteerApplicationStartDate: draftWithOverlay.volunteerApplicationStartDate,
+                volunteerApplicationEndDate: draftWithOverlay.volunteerApplicationEndDate,
+                documentPassAnnouncementDate: draftWithOverlay.documentPassAnnouncementDate,
+                documentPassAnnouncementMethod: draftWithOverlay.documentPassAnnouncementMethod,
+                interviewStartDate: draftWithOverlay.interviewStartDate,
+                interviewEndDate: draftWithOverlay.interviewEndDate,
+                interviewMethod: draftWithOverlay.interviewMethod,
+                finalPassAnnouncementDate: draftWithOverlay.finalPassAnnouncementDate,
+                finalPassAnnouncementMethod: draftWithOverlay.finalPassAnnouncementMethod,
+                contactPhone: draftWithOverlay.contactPhone,
+                contactEmail: draftWithOverlay.contactEmail,
+                managerName: draftWithOverlay.managerName,
+                otherNotes: draftWithOverlay.otherNotes,
+                description: draftWithOverlay.description,
+                recruitmentGuide: draftWithOverlay.recruitmentGuide,
+                applicationMethod: draftWithOverlay.applicationMethod,
+                additionalContentHtml: draftWithOverlay.additionalContentHtml,
+                rounds: draftWithOverlay.rounds,
+              }
               if (onUpdateProgram) {
-                await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, patch)
+                await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, remotePatch)
               } else {
                 await updateProgram(draftWithOverlay.id, draftWithOverlay)
               }
@@ -2136,6 +2216,7 @@ export function UjatProgramDetailFullPageModal({
                 }}
               />
               <UjatProgramRecruitmentPanels
+                key={activeRecruitTab}
                 program={displayProgram}
                 sponsorName={sponsorName}
                 activeRecruitTab={activeRecruitTab}

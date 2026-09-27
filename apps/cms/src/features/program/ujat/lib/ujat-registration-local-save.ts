@@ -180,10 +180,7 @@ function applyUjatRegistrationCreateOverlaysToProgram(
     generalCommonInfo: {
       ...withVolunteer.generalCommonInfo,
       detailedProgramName: withRegistration.generalCommonInfo?.detailedProgramName,
-      announcementTitle:
-        withVolunteer.generalCommonInfo?.announcementTitle ??
-        withInstitution.generalCommonInfo?.announcementTitle ??
-        withRegistration.generalCommonInfo?.announcementTitle,
+      announcementTitle: withRegistration.generalCommonInfo?.announcementTitle,
       kpi: withRegistration.generalCommonInfo?.kpi,
       paymentItems: withRegistration.generalCommonInfo?.paymentItems,
       deductionItems: withRegistration.generalCommonInfo?.deductionItems,

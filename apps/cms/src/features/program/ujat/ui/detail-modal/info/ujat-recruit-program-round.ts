@@ -24,8 +24,8 @@ export function resolveUjatVolunteerActivityTermDisplay(
   half: UjatVolunteerRecruitHalf
 ): string {
   const overlay = {
-    ...pickUjatRecruitVolunteerOverlay(readUjatRegistrationOverlayFromProgram(program)),
     ...(loadUjatRecruitVolunteerTemplateSave()?.overlay ?? {}),
+    ...pickUjatRecruitVolunteerOverlay(readUjatRegistrationOverlayFromProgram(program)),
   }
   return (
     resolveUjatVolunteerActivityTermFromOverlay(overlay, half) ||

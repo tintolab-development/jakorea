@@ -121,7 +121,6 @@ export function applyUjatRecruitInstitutionOverlayOntoProgram(
     ? attachments.filter((x): x is string => typeof x === 'string')
     : undefined
   const targetLevels = overlayStringList(overlay, OVERLAY_KEYS.targetLevels)
-  const publicTitle = overlayString(overlay, OVERLAY_KEYS.publicTitle)
   const district = overlayString(overlay, OVERLAY_KEYS.district)
   const notes = overlayString(overlay, OVERLAY_KEYS.notes)
   const announcementPublished = overlay[OVERLAY_KEYS.announcementPublished]
@@ -159,7 +158,6 @@ export function applyUjatRecruitInstitutionOverlayOntoProgram(
     attachmentFileNames: attachmentFileNames ?? program.attachmentFileNames,
     generalCommonInfo: {
       ...program.generalCommonInfo,
-      announcementTitle: publicTitle ?? program.generalCommonInfo?.announcementTitle,
       participantRecruitmentInfo: {
         ...program.generalCommonInfo?.participantRecruitmentInfo,
         announcementPublished:

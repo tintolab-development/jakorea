@@ -130,7 +130,8 @@ describe('buildUjatProgramListRowFromRegistrationSnapshot — overlay를 1차 �
 
     expect(program.title).toBe('우리 동네 소비와 저축 운영')
     expect(program.mainTitle).toBe('우리 동네 소비와 저축')
-    expect(program.generalCommonInfo?.announcementTitle).toBe(
+    expect(program.generalCommonInfo?.announcementTitle).toBeUndefined()
+    expect(program.ujatRegistrationOverlay?.['ujat.recruit.institution.publicTitle']).toBe(
       '우리 동네 소비와 저축 참여 기관 모집'
     )
     expect(program.managerName).toBe('정민재')

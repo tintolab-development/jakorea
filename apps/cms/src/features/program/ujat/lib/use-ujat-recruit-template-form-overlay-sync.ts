@@ -14,6 +14,10 @@ import {
   UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
 import {
+  resolveVolunteerOverlayForHalf,
+  type UjatVolunteerRecruitHalf,
+} from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
+import {
   coalesceUjatRecruitOverlay,
 } from '@/features/program/ujat/lib/ujat-recruit-overlay-coalesce'
 import {
@@ -124,7 +128,8 @@ function readOverlayRange(overlay: Record<string, unknown>, key: string) {
 /** 탭 복귀 시 공고용 프로그램명이 대표명 alias로 빠지지 않게 overlay 값을 우선한다. */
 export function programToUjatRecruitTemplateFormValues(
   program: Program,
-  kind: 'institution' | 'volunteer'
+  kind: 'institution' | 'volunteer',
+  volunteerHalf?: UjatVolunteerRecruitHalf
 ): ProgramDetailEditFormValues {
   const values = programToDetailEditValues(program)
   const persisted = program.ujatRegistrationOverlay ?? {}
@@ -134,17 +139,18 @@ export function programToUjatRecruitTemplateFormValues(
           ...pickUjatRecruitInstitutionOverlay(persisted),
           ...getUjatRecruitInstitutionOverlayRecord(),
         }
-      : {
-          ...pickUjatRecruitVolunteerOverlay(persisted),
-          ...getUjatRecruitVolunteerOverlayRecord(),
-        }
+      : resolveVolunteerOverlayForHalf(
+          {
+            ...getUjatRecruitVolunteerOverlayRecord(),
+            ...pickUjatRecruitVolunteerOverlay(persisted),
+          },
+          volunteerHalf ?? 'h1'
+        )
   const publicTitleKey =
     kind === 'institution' ? INSTITUTION_KEYS.publicTitle : VOLUNTEER_KEYS.publicTitle
   const publicTitle = overlay[publicTitleKey]
   const next = { ...values }
-  if (typeof publicTitle === 'string' && publicTitle.trim()) {
-    next.announcementTitle = publicTitle.trim()
-  }
+  next.announcementTitle = typeof publicTitle === 'string' ? publicTitle.trim() : ''
   if (kind === 'institution') {
     const contact = readOverlayContact(overlay, INSTITUTION_KEYS.contact)
     if (contact?.name?.trim()) next.recruitmentContactOrganizationName = contact.name

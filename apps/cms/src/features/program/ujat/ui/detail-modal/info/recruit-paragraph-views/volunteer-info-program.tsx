@@ -13,7 +13,10 @@ import {
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
-import { resolveUjatRecruitAnnouncementTitle } from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import {
+  resolveUjatRecruitAnnouncementTitle,
+  ujatRecruitDisplayKindFromVolunteerHalf,
+} from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import {
   getUjatVolunteerNoticeExposureReadLabel,
@@ -139,7 +142,10 @@ export function UjatRecruitVolunteerInfoProgramView({
         }
       : undefined
   )
-  const publicTitle = resolveUjatRecruitAnnouncementTitle(program, 'volunteer')
+  const publicTitle = resolveUjatRecruitAnnouncementTitle(
+    program,
+    ujatRecruitDisplayKindFromVolunteerHalf(volunteerHalf)
+  )
   const watchedTargets = isEdit && form ? form.watch('volunteerTargets') : undefined
   const volunteerTarget =
     (watchedTargets?.length ? watchedTargets.join(', ') : undefined) ??

@@ -8,6 +8,10 @@ import {
   replaceUjatRecruitInstitutionOverlay,
   resetUjatRecruitInstitutionOverlay,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
+import {
+  replaceUjatRecruitVolunteerOverlay,
+  resetUjatRecruitVolunteerOverlay,
+} from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   applyUjatRecruitInstitutionOverlayOntoProgram,
@@ -19,7 +23,11 @@ import {
   buildUjatRecruitVolunteerOverlayFromDetailEditValues,
   UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS as VOLUNTEER_KEYS,
 } from '@/features/program/ujat/lib/ujat-recruit-volunteer-template-merge'
-import { resolveUjatRecruitDisplayProgram } from '@/features/program/ujat/lib/ujat-recruit-display-program'
+import {
+  applyUjatRecruitAnnouncementTitleToDraft,
+  resolveUjatRecruitAnnouncementTitle,
+  resolveUjatRecruitDisplayProgram,
+} from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import { resolveUjatVolunteerActivityTermDisplay } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-program-round'
 import { UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/program/ujat/lib/ujat-institution-recruit-template-preview-program'
 import { UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/program/ujat/lib/ujat-volunteer-recruit-template-preview-program'
@@ -27,6 +35,7 @@ import { UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/prog
 describe('UJAT recruit form overlay', () => {
   afterEach(() => {
     resetUjatRecruitInstitutionOverlay()
+    resetUjatRecruitVolunteerOverlay()
   })
 
   it('학교 모집 문의처·공고명을 overlay에 넣고 다시 폼으로 복원한다', () => {
@@ -50,10 +59,19 @@ describe('UJAT recruit form overlay', () => {
       UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
       overlay
     )
-    expect(applied.generalCommonInfo?.announcementTitle).toBe('참여 기관 모집 공고')
+    expect(applied.generalCommonInfo?.announcementTitle).toBe(
+      UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM.generalCommonInfo?.announcementTitle
+    )
     expect(applied.mainTitle).toBe(UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM.mainTitle)
-    const restored = programToDetailEditValues(applied)
+    const restored = programToUjatRecruitTemplateFormValues(
+      {
+        ...applied,
+        ujatRegistrationOverlay: overlay,
+      },
+      'institution'
+    )
     expect(restored.announcementTitle).toBe('참여 기관 모집 공고')
+    expect(programToDetailEditValues(applied).announcementTitle).toBeUndefined()
     expect(restored.recruitmentContactOrganizationName).toBe('JA Korea 문의')
     expect(restored.contactPhone).toBe('02-6085-6028')
     expect(restored.district).toBe('서울 지역 초등학교')
@@ -85,8 +103,15 @@ describe('UJAT recruit form overlay', () => {
       UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
       overlay
     )
-    const restored = programToDetailEditValues(applied)
+    const restored = programToUjatRecruitTemplateFormValues(
+      {
+        ...applied,
+        ujatRegistrationOverlay: overlay,
+      },
+      'volunteer'
+    )
     expect(restored.announcementTitle).toBe('봉사자 모집 공고')
+    expect(programToDetailEditValues(applied).announcementTitle).toBeUndefined()
     expect(restored.volunteerRecruitmentContactOrganizationName).toBe('UJAT 운영팀')
     expect(restored.rounds?.[0]?.curriculum).toBe('3')
     expect(restored.volunteerTargetDetail).toBe('대학생')
@@ -144,6 +169,130 @@ describe('UJAT recruit form overlay', () => {
       kind: 'institution',
     })
     expect(merged[INSTITUTION_KEYS.publicTitle]).toBe('')
+  })
+
+  it('기관·봉사자 공고용 프로그램명은 서로·공통정보와 분리된다', () => {
+    const program = {
+      ...UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      generalCommonInfo: {
+        ...UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM.generalCommonInfo,
+        announcementTitle: '공통정보 제목',
+      },
+      ujatRegistrationOverlay: {
+        [INSTITUTION_KEYS.publicTitle]: '기관 공고',
+        [VOLUNTEER_KEYS.publicTitle]: '봉사자 공고',
+      },
+    }
+    expect(resolveUjatRecruitAnnouncementTitle(program, 'institution')).toBe('기관 공고')
+    expect(resolveUjatRecruitAnnouncementTitle(program, 'volunteer')).toBe('봉사자 공고')
+    expect(programToUjatRecruitTemplateFormValues(program, 'institution').announcementTitle).toBe(
+      '기관 공고'
+    )
+    expect(programToUjatRecruitTemplateFormValues(program, 'volunteer').announcementTitle).toBe(
+      '봉사자 공고'
+    )
+
+    const saved = applyUjatRecruitAnnouncementTitleToDraft({
+      draft: {
+        ...program,
+        generalCommonInfo: {
+          ...program.generalCommonInfo,
+          announcementTitle: '기관 공고 수정',
+        },
+      },
+      existing: program,
+      title: '기관 공고 수정',
+      kind: 'institution',
+    })
+    expect(saved.generalCommonInfo?.announcementTitle).toBe('공통정보 제목')
+    expect(saved.ujatRegistrationOverlay?.[INSTITUTION_KEYS.publicTitle]).toBe('기관 공고 수정')
+    expect(saved.ujatRegistrationOverlay?.[VOLUNTEER_KEYS.publicTitle]).toBe('봉사자 공고')
+  })
+
+  it('상반기 저장 시 공유 키만 있던 하반기 모집정보는 기존값을 유지한다', () => {
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      volunteerTargets: ['대학생'],
+      ujatRegistrationOverlay: {
+        [VOLUNTEER_KEYS.publicTitle]: '공유 공고',
+        [VOLUNTEER_KEYS.volunteerTargets]: ['대학생'],
+      },
+    }
+    const savedH1 = applyUjatRecruitAnnouncementTitleToDraft({
+      draft: program,
+      existing: program,
+      title: '상반기만 수정',
+      kind: 'volunteer_h1',
+      values: {
+        ...programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h1'),
+        announcementTitle: '상반기만 수정',
+        volunteerTargets: ['고등학생'],
+      },
+    })
+    expect(savedH1.ujatRegistrationOverlay?.['ujat.recruit.volunteer.h1.publicTitle']).toBe(
+      '상반기만 수정'
+    )
+    expect(savedH1.ujatRegistrationOverlay?.['ujat.recruit.volunteer.h2.publicTitle']).toBe(
+      '공유 공고'
+    )
+    expect(resolveUjatRecruitAnnouncementTitle(savedH1, 'volunteer_h1')).toBe('상반기만 수정')
+    expect(resolveUjatRecruitAnnouncementTitle(savedH1, 'volunteer_h2')).toBe('공유 공고')
+    expect(resolveUjatRecruitDisplayProgram(savedH1, 'volunteer_h2').volunteerTargets).toEqual([
+      '대학생',
+    ])
+    expect(resolveUjatRecruitDisplayProgram(savedH1, 'volunteer_h1').volunteerTargets).toEqual([
+      '고등학생',
+    ])
+  })
+
+  it('프로그램 반기 overlay가 템플릿 공유 공고명보다 우선한다', () => {
+    replaceUjatRecruitVolunteerOverlay({
+      [VOLUNTEER_KEYS.publicTitle]: '템플릿 공유 공고',
+    })
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      ujatRegistrationOverlay: {
+        'ujat.recruit.volunteer.h1.publicTitle': '상반기 프로그램 공고',
+        'ujat.recruit.volunteer.h2.publicTitle': '하반기 프로그램 공고',
+      },
+    }
+    expect(programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h1').announcementTitle).toBe(
+      '상반기 프로그램 공고'
+    )
+    expect(programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h2').announcementTitle).toBe(
+      '하반기 프로그램 공고'
+    )
+  })
+
+  it('상반기·하반기 봉사자 공고용 프로그램명은 서로 분리된다', () => {
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      ujatRegistrationOverlay: {
+        [VOLUNTEER_KEYS.publicTitle]: '레거시 공유 공고',
+        'ujat.recruit.volunteer.h1.publicTitle': '상반기 공고',
+        'ujat.recruit.volunteer.h2.publicTitle': '하반기 공고',
+      },
+    }
+    expect(resolveUjatRecruitAnnouncementTitle(program, 'volunteer_h1')).toBe('상반기 공고')
+    expect(resolveUjatRecruitAnnouncementTitle(program, 'volunteer_h2')).toBe('하반기 공고')
+
+    const savedH1 = applyUjatRecruitAnnouncementTitleToDraft({
+      draft: program,
+      existing: program,
+      title: '상반기 공고 수정',
+      kind: 'volunteer_h1',
+      values: {
+        ...programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h1'),
+        announcementTitle: '상반기 공고 수정',
+      },
+    })
+    expect(savedH1.ujatRegistrationOverlay?.['ujat.recruit.volunteer.h1.publicTitle']).toBe(
+      '상반기 공고 수정'
+    )
+    expect(savedH1.ujatRegistrationOverlay?.['ujat.recruit.volunteer.h2.publicTitle']).toBe(
+      '하반기 공고'
+    )
+    expect(resolveUjatRecruitAnnouncementTitle(savedH1, 'volunteer_h2')).toBe('하반기 공고')
   })
 
   it('프로그램 상세는 등록 overlay의 교육 대상을 view·edit 시드에 올린다', () => {
