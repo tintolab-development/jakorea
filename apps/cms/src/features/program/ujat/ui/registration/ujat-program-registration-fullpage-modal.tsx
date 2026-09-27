@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
@@ -23,6 +23,7 @@ import {
 } from '@/features/program/shared/lib/registration-draft-notice'
 import { RegistrationDraftOverwriteConfirmModal } from '@/features/program/shared/ui/registration/draft-overwrite-confirm-modal'
 import { RegistrationDraftSaveSuccessModal } from '@/features/program/shared/ui/registration/draft-save-success-modal'
+import { RegistrationCompleteSuccessModal } from '@/features/program/shared/ui/registration/registration-complete-success-modal'
 import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import { applyDevProgramRegistrationAutofill } from '@/features/program/shared/lib/apply-dev-program-registration-autofill'
 import { UjatRegistrationRequiredFieldsIncompleteError } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
@@ -59,6 +60,8 @@ export function UjatProgramRegistrationFullpageModal({
   const [overwriteTitle, setOverwriteTitle] = useState('')
   const [overwriteSaving, setOverwriteSaving] = useState(false)
   const [draftSaveSuccessOpen, setDraftSaveSuccessOpen] = useState(false)
+  const [completeSuccessOpen, setCompleteSuccessOpen] = useState(false)
+  const pendingCreatedProgramRef = useRef<Program | undefined>(undefined)
 
   // 안내 팝업에서 「이어서 작성」을 명시한 경우만 저장본을 복원한다.
   const skipDraftRestore = shouldSkipRegistrationDraftRestore(
@@ -97,14 +100,34 @@ export function UjatProgramRegistrationFullpageModal({
     setOverwriteTitle('')
     setOverwriteSaving(false)
     setDraftSaveSuccessOpen(false)
+    setCompleteSuccessOpen(false)
+    pendingCreatedProgramRef.current = undefined
   }, [open])
+
+  const handleRegistrationCreated = useCallback((program: Program) => {
+    pendingCreatedProgramRef.current = program
+    setCompleteSuccessOpen(true)
+  }, [])
 
   const flow = useUjatProgramRegistrationFlow(open, {
     initialStep,
-    onProgramRegistrationSaved,
+    onProgramRegistrationSaved: handleRegistrationCreated,
     onStepChange: syncStepToUrl,
     skipDraftRestore,
   })
+
+  const handleCompleteSuccessConfirm = useCallback(() => {
+    const created = pendingCreatedProgramRef.current
+    pendingCreatedProgramRef.current = undefined
+    setCompleteSuccessOpen(false)
+    void deleteRegistrationProgramDraftRemote('UJAT')
+    if (shouldRemoveSavedDraftAfterCompletion) {
+      void clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE)
+    }
+    if (created != null) {
+      onProgramRegistrationSaved?.(created)
+    }
+  }, [onProgramRegistrationSaved, shouldRemoveSavedDraftAfterCompletion])
 
   const handleClose = useCallback(() => {
     const next = new URLSearchParams(searchParams)
@@ -203,27 +226,20 @@ export function UjatProgramRegistrationFullpageModal({
           showArrow: false,
           disabled: flow.isCompletingRegistration,
           onClick: () => {
-            void flow
-              .handleCompleteRegistration()
-              .then(() => {
-                void deleteRegistrationProgramDraftRemote('UJAT')
-                if (!shouldRemoveSavedDraftAfterCompletion) return
-                void clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE)
+            void flow.handleCompleteRegistration().catch(error => {
+              if (error instanceof UjatRegistrationRequiredFieldsIncompleteError) return
+              console.debug('UJAT program registration completion failed', error)
+              showAlert({
+                title: '프로그램 등록 실패',
+                content: '입력 내용은 유지됩니다. 잠시 후 다시 시도해 주세요.',
               })
-              .catch(error => {
-                if (error instanceof UjatRegistrationRequiredFieldsIncompleteError) return
-                console.debug('UJAT program registration completion failed', error)
-                showAlert({
-                  title: '프로그램 등록 실패',
-                  content: '입력 내용은 유지됩니다. 잠시 후 다시 시도해 주세요.',
-                })
-              })
+            })
           },
         },
       ]
     }
     return undefined
-  }, [flow, shouldRemoveSavedDraftAfterCompletion, showAlert])
+  }, [flow, showAlert])
 
   return (
     <>
@@ -266,6 +282,10 @@ export function UjatProgramRegistrationFullpageModal({
       <RegistrationDraftSaveSuccessModal
         open={draftSaveSuccessOpen}
         onConfirm={() => setDraftSaveSuccessOpen(false)}
+      />
+      <RegistrationCompleteSuccessModal
+        open={completeSuccessOpen}
+        onConfirm={handleCompleteSuccessConfirm}
       />
     </>
   )

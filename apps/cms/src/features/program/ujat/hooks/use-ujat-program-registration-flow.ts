@@ -19,10 +19,7 @@ import {
   lookupTemplateRegistry,
   resolvePreviewHeaderTitle,
 } from '@/features/template/model/template-registry/template-registry'
-import {
-  collectParticipantOverlayForVariant,
-  useProgramParticipantApplicationEditor,
-} from '@/features/template/hooks/use-program-participant-application-editor'
+import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import { buildParticipantApplicationEditorState } from '@/features/template/lib/participant-application-editor-state'
 import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { toCreateRequest } from '@/features/program/ujat/api/adapters'
@@ -36,6 +33,8 @@ import type { TemplateEditorVm } from '@/features/template/ui/template-renderers
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 import { useUjatProgramRegistrationEditor } from '@/features/template/ui/form-set/registration-form/UJAT/use-ujat-program-registration-editor'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
+import { collectOperationalOverlayForCatalogId } from '@/features/program/general/lib/registration-operational-form-drafts'
+import { flushApplicationOperationalOverrides } from '@/features/program/general/lib/registration-wizard-session-drafts'
 import {
   hydrateRegistrationProgramDraft,
   syncRegistrationProgramDraftSession,
@@ -384,27 +383,26 @@ export function useUjatProgramRegistrationFlow(
           overlay: registrationOverlay,
         })
 
-        const operationalOverrides = []
-        if (isParticipantStep) {
-          const participantOverlay = collectParticipantOverlayForVariant(participantVariant)
-          const editorState = buildParticipantApplicationEditorState({
-            variant: participantVariant,
-            volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
-            ujatVolunteerApplicationType: participantVm.ujatVolunteerApplicationType,
-            ujatGradeApplicationBlockIds:
-              participantVm.ujatProgramApplicationGradeInfo?.applicationGradeBlockIds ?? [],
-            ujatApplicationGradeByBlockId:
-              participantVm.ujatProgramApplicationGradeInfo?.applicationGradeByBlockId ?? {},
-            ujatGradeClassTimeBlockIds:
-              participantVm.ujatProgramApplicationGradeClassTime?.classTimeBlockIds ?? [],
-          })
-          operationalOverrides.push({
-            templateCode: currentStepDef.templateId,
-            draft: participantVm.draft,
-            ...(participantOverlay != null ? { overlay: participantOverlay } : {}),
-            ...(editorState != null ? { editorState } : {}),
-          })
-        }
+        const operationalOverrides = flushApplicationOperationalOverrides({
+          current: isParticipantStep
+            ? {
+                templateCode: currentStepDef.templateId,
+                draft: participantVm.draft,
+                editorState: buildParticipantApplicationEditorState({
+                  variant: participantVariant,
+                  volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
+                  ujatVolunteerApplicationType: participantVm.ujatVolunteerApplicationType,
+                  ujatGradeApplicationBlockIds:
+                    participantVm.ujatProgramApplicationGradeInfo?.applicationGradeBlockIds ?? [],
+                  ujatApplicationGradeByBlockId:
+                    participantVm.ujatProgramApplicationGradeInfo?.applicationGradeByBlockId ?? {},
+                  ujatGradeClassTimeBlockIds:
+                    participantVm.ujatProgramApplicationGradeClassTime?.classTimeBlockIds ?? [],
+                }),
+              }
+            : undefined,
+          overlayForTemplateCode: collectOperationalOverlayForCatalogId,
+        })
 
         const { prepareRegistrationCreateFormBindings } = await import(
           '@/features/program/general/lib/prepare-registration-create-form-bindings'

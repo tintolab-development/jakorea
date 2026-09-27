@@ -16,8 +16,10 @@ import {
 } from '@/features/program/general/lib/operational-form-bindings'
 import {
   copyFormTemplateVersionRemote,
+  fetchFormTemplateVersionRemote,
   updateFormTemplateRemote,
 } from '@/features/template/api/form-templates-api-client'
+import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import {
   loadFormTemplateVersionDraftByVersionId,
   publishFormTemplateVersionById,
@@ -324,6 +326,104 @@ export async function resolveProgramOperationalFormLoadSource(
     bindings,
     catalogTemplateId: catalog?.templateId,
   })
+}
+
+/** 발행·보관 버전은 PUT 불가. DRAFT만 수정한다. */
+export function isProgramFormVersionMutable(versionStatus: string | null | undefined): boolean {
+  return versionStatus == null || versionStatus === 'DRAFT'
+}
+
+async function rebindProgramOperationalFormVersion(args: {
+  programId: string
+  templateCode: string
+  templateId: number
+  templateVersionId: number
+}): Promise<void> {
+  const spec = getOperationalFormSpec(args.templateCode)
+  const ids = { templateId: args.templateId, templateVersionId: args.templateVersionId }
+  rememberProgramOperationalFormBinding(args.programId, args.templateCode, ids)
+  if (spec == null) return
+
+  const catalog = await resolveFormTemplateCatalogIds(args.templateCode)
+  const bindings = await fetchGeneralProgramFormBindings(args.programId)
+  const existing = pickOperationalFormBinding(bindings, {
+    ...spec,
+    catalogTemplateId: catalog?.templateId,
+  })
+  const payload: ProgramFormBindingRequest = {
+    formType: existing?.formType ?? spec.formType,
+    templateId: ids.templateId,
+    templateVersionId: ids.templateVersionId,
+    targetType:
+      existing?.targetType ??
+      (spec.targetRole ? resolveFormBindingTargetType(spec.targetRole) : undefined),
+    targetRole: existing?.targetRole ?? spec.targetRole,
+    targetScope: existing?.targetScope,
+    targetScopeId: existing?.targetScopeId,
+    required: existing?.required ?? false,
+    active: true,
+    displayOrder: existing?.displayOrder,
+  }
+
+  if (existing?.bindingId == null) {
+    await createGeneralProgramFormBinding(args.programId, payload)
+    return
+  }
+  await updateGeneralProgramFormBinding(args.programId, String(existing.bindingId), payload)
+}
+
+/**
+ * 프로그램 상세 양식 저장.
+ * 바인딩이 PUBLISHED 버전을 가리키면 새 DRAFT에 저장한 뒤 발행하고 binding을 교체한다.
+ */
+export async function saveMutableProgramFormVersion(args: {
+  programId: string
+  templateCode: string
+  templateVersionId: number
+  draft: WritingFormDraft
+  overlay?: Record<string, unknown>
+  editorState?: Record<string, unknown>
+  settingsJson?: Record<string, unknown>
+}): Promise<number> {
+  const current = await fetchFormTemplateVersionRemote(args.templateVersionId)
+  let writeVersionId = args.templateVersionId
+  let templateId = current.templateId
+
+  if (!isProgramFormVersionMutable(current.versionStatus)) {
+    if (templateId == null) {
+      throw new Error('발행된 양식을 복사할 템플릿 ID가 없습니다.')
+    }
+    const copied = await copyFormTemplateVersionRemote(templateId, {
+      sourceVersionId: args.templateVersionId,
+      versionLabel: `program-${args.programId}-edit`,
+    })
+    if (copied.templateVersionId == null) {
+      throw new Error('수정용 양식 draft를 만들지 못했습니다.')
+    }
+    writeVersionId = copied.templateVersionId
+    templateId = copied.templateId ?? templateId
+  }
+
+  await saveFormTemplateVersionDraftByVersionId({
+    versionId: writeVersionId,
+    draft: args.draft,
+    overlay: args.overlay,
+    editorState: args.editorState,
+    settingsJson: args.settingsJson,
+    templateCode: args.templateCode,
+  })
+
+  const publishedVersionId = await publishFormTemplateVersionById(writeVersionId)
+  if (templateId == null) {
+    throw new Error('양식 템플릿 ID가 없습니다.')
+  }
+  await rebindProgramOperationalFormVersion({
+    programId: args.programId,
+    templateCode: args.templateCode,
+    templateId,
+    templateVersionId: publishedVersionId,
+  })
+  return publishedVersionId
 }
 
 /** catalog binding → program-scoped copy (양식 수정 모달·저장 SSOT) */

@@ -17,10 +17,7 @@ import {
   lookupTemplateRegistry,
   resolvePreviewHeaderTitle,
 } from '@/features/template/model/template-registry/template-registry'
-import {
-  collectParticipantOverlayForVariant,
-  useProgramParticipantApplicationEditor,
-} from '@/features/template/hooks/use-program-participant-application-editor'
+import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import { buildParticipantApplicationEditorState } from '@/features/template/lib/participant-application-editor-state'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
 import {
@@ -34,9 +31,14 @@ import type { Program } from '@/types/domain'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 import {
+  collectOperationalOverlayForCatalogId,
   hydrateRegistrationOperationalOverlaysFromLocalDrafts,
   persistRegistrationOperationalOverlaysToLocal,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
+import {
+  clearRegistrationWizardSessionDrafts,
+  flushApplicationOperationalOverrides,
+} from '@/features/program/general/lib/registration-wizard-session-drafts'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 import {
   hydrateRegistrationProgramDraft,
@@ -364,6 +366,7 @@ export function useGeneralProgramRegistrationFlow(
       resetGeneralRecruitOverlay()
       resetGeneralApplicationOverlay()
       resetProgramRegistrationOverlay()
+      clearRegistrationWizardSessionDrafts()
       return
     }
     patchInstitutionApplicationProgramBridge({
@@ -560,7 +563,35 @@ export function useGeneralProgramRegistrationFlow(
   }, [isProgramStep, registrationVm, participantVm])
 
   const handleCompleteRegistration = useCallback(() => {
+    const applicationOverrides = () =>
+      flushApplicationOperationalOverrides({
+        current: isParticipantStep
+          ? {
+              templateCode: currentStepDef.templateId,
+              draft: participantVm.draft,
+              editorState: buildParticipantApplicationEditorState({
+                variant: participantVariant,
+                volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
+                ujatVolunteerApplicationType: participantVm.ujatVolunteerApplicationType,
+                ujatGradeApplicationBlockIds:
+                  participantVm.ujatProgramApplicationGradeInfo?.applicationGradeBlockIds ?? [],
+                ujatApplicationGradeByBlockId:
+                  participantVm.ujatProgramApplicationGradeInfo?.applicationGradeByBlockId ?? {},
+                ujatGradeClassTimeBlockIds:
+                  participantVm.ujatProgramApplicationGradeClassTime?.classTimeBlockIds ?? [],
+              }),
+            }
+          : undefined,
+        overlayForTemplateCode: collectOperationalOverlayForCatalogId,
+      })
+
     if (isProgramStep) {
+      if (shouldUseRegistrationCreateFormBindings()) {
+        void registrationVm.handleCompleteRegistration({
+          operationalOverrides: applicationOverrides(),
+        })
+        return
+      }
       void registrationVm.handleCompleteRegistration()
       return
     }
@@ -584,31 +615,13 @@ export function useGeneralProgramRegistrationFlow(
         return
       }
 
-      const overlay = collectParticipantOverlayForVariant(participantVariant)
-      const editorState = buildParticipantApplicationEditorState({
-        variant: participantVariant,
-        volunteerExceptionScheduleCount: participantVm.volunteerExceptionScheduleCount,
-        ujatVolunteerApplicationType: participantVm.ujatVolunteerApplicationType,
-        ujatGradeApplicationBlockIds:
-          participantVm.ujatProgramApplicationGradeInfo?.applicationGradeBlockIds ?? [],
-        ujatApplicationGradeByBlockId:
-          participantVm.ujatProgramApplicationGradeInfo?.applicationGradeByBlockId ?? {},
-        ujatGradeClassTimeBlockIds:
-          participantVm.ujatProgramApplicationGradeClassTime?.classTimeBlockIds ?? [],
-      })
       void registrationVm.handleCompleteRegistration({
-        operationalOverrides: [
-          {
-            templateCode: currentStepDef.templateId,
-            draft: participantVm.draft,
-            ...(overlay != null ? { overlay } : {}),
-            ...(editorState != null ? { editorState } : {}),
-          },
-        ],
+        operationalOverrides: applicationOverrides(),
       })
     })()
   }, [
     currentStepDef.templateId,
+    isParticipantStep,
     isProgramStep,
     participantVariant,
     participantVm,

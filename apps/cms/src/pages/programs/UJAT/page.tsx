@@ -148,13 +148,10 @@ function UjatProgramListPageContent() {
     setSearchParams(next, { replace: true })
   }, [closeWritingUserPreview, pNorm, searchParams, setSearchParams])
 
-  const handleUjatProgramRegistrationSaved = useCallback((program: Program) => {
+  const handleUjatProgramRegistrationSaved = useCallback((_program: Program) => {
     void programsQuery.refetch()
-    closeWritingUserPreview()
-    navigate(getProgramAdminDetailUrlFromPathname(program.id, location.pathname), {
-      replace: true,
-    })
-  }, [closeWritingUserPreview, location.pathname, navigate, programsQuery])
+    handleCloseUjatProgramRegistrationFullpage()
+  }, [handleCloseUjatProgramRegistrationFullpage, programsQuery])
 
   const userPreviewSyncParams = useMemo(
     () => ({ userPreview: searchParams.get('userPreview') ?? undefined }),
