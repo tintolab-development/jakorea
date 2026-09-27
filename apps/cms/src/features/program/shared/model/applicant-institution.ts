@@ -42,8 +42,14 @@ export interface ApplicantInstitutionDetailExtend {
   totalHoursAndSessions?: string
   previousYearParticipation?: string
   affiliatedFinancialCompany?: string
-  /** 담당 교사 정보 (교사명 | Tel | M | E-mail) */
+  /** 담당 교사 정보 (교사명 | Tel | M | E-mail) — 레거시 조합 문자열 */
   teacherInfo?: string
+  /** 담당 교사 Tel (구조화 — teacherInfo보다 우선) */
+  teacherPhone?: string
+  /** 담당 교사 휴대폰 */
+  teacherMobile?: string
+  /** 담당 교사 이메일 */
+  teacherEmail?: string
   applicationReason?: string
   otherRequests?: string
   computerInSpace?: string
@@ -123,8 +129,10 @@ export interface ApplicantSchoolRow {
   approvalNotifyTiming?: ApplicantSchoolApprovalNotifyTiming
   /** 반려 알림 발송 예약 방식 */
   rejectionNotifyTiming?: ApplicantSchoolApprovalNotifyTiming
-  /** 승인/반려 알림 발송 일시 — 상세 승인 현황 행 표시 */
+  /** 승인/반려 알림 발송 일시 — 상세 승인 현황 행 표시 (`resultNotificationSentAt`) */
   approvalNotificationSentAt?: string
+  /** BE availableActions — 알림 재발송 등 헤더 CTA 게이트 */
+  availableActions?: string[]
   /** 신청 건별 관리자 코멘트 (회원 상세 adminComment와 별도) */
   adminComment?: string
 }

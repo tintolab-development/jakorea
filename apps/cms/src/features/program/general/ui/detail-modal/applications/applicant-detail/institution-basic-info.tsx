@@ -136,38 +136,52 @@ function buildTeacherInfoCell(
   institution: ApplicantSchoolRow,
   detail: ApplicantInstitutionDetailExtend | undefined
 ): ReactNode {
-  const raw = detail?.teacherInfo?.trim()
-  if (raw) {
-    const parts = raw
-      .split(' | ')
-      .map(s => s.trim())
-      .filter(Boolean)
-    if (parts.length === 0) return '-'
-    return (
-      <ProgramDetailTdSegmentWrap>
-        {parts.length === 1 ? parts[0] : withProgramDetailTdDivider(parts)}
-      </ProgramDetailTdSegmentWrap>
-    )
-  }
-
   const name = institution.teacherName?.trim()
-  const contact = institution.contact?.trim()
+  const phone =
+    detail?.teacherPhone?.trim() ||
+    detail?.teacherMobile?.trim() ||
+    institution.contact?.trim()
+  const mobile =
+    detail?.teacherMobile?.trim() &&
+    detail.teacherMobile.trim() !== phone
+      ? detail.teacherMobile.trim()
+      : undefined
+  const email = detail?.teacherEmail?.trim()
+
   const segments: string[] = []
   if (name) segments.push(`담당 교사 : ${name}`)
-  if (contact) {
-    // contact가 이미 Tel/M/E-mail 조합이면 그대로, 아니면 Tel로 표기
-    if (/Tel\s*:|M\s*:|E-mail\s*:/i.test(contact)) {
+  if (phone) {
+    if (/Tel\s*:|M\s*:|E-mail\s*:/i.test(phone)) {
       segments.push(
-        ...contact
+        ...phone
           .split('|')
           .map(s => s.trim())
           .filter(Boolean)
       )
     } else {
-      segments.push(`Tel : ${contact}`)
+      segments.push(`Tel : ${phone}`)
     }
   }
-  if (segments.length === 0) return '-'
+  if (mobile) segments.push(`M : ${mobile}`)
+  if (email) {
+    segments.push(/E-mail\s*:/i.test(email) ? email : `E-mail : ${email}`)
+  }
+
+  if (segments.length === 0) {
+    const raw = detail?.teacherInfo?.trim()
+    if (!raw) return '-'
+    const parts = raw
+      .split('|')
+      .map(s => s.trim())
+      .filter(Boolean)
+    if (parts.length === 0) return '-'
+    if (parts.length === 1) return parts[0]
+    return (
+      <ProgramDetailTdSegmentWrap>
+        {withProgramDetailTdDivider(parts)}
+      </ProgramDetailTdSegmentWrap>
+    )
+  }
   if (segments.length === 1) return segments[0]
   return (
     <ProgramDetailTdSegmentWrap>{withProgramDetailTdDivider(segments)}</ProgramDetailTdSegmentWrap>

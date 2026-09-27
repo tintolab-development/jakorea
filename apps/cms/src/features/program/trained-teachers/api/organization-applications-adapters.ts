@@ -1,12 +1,47 @@
-import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
-import type {
-  ApplicantPreferredScheduleBlock,
-  ApplicantPreferredScheduleSessionTime,
-} from '@/features/program/shared/model/applicant-institution'
 import { mapApiApplicationStatusToApprovalStatus } from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  formatApplicantSchoolApprovalNotificationSentAt,
+  type ApplicantPreferredScheduleBlock,
+  type ApplicantPreferredScheduleSessionTime,
+  type ApplicantSchoolRow,
+} from '@/features/program/shared/model/applicant-institution'
 import type { PreferredScheduleBlock } from '@/shared/api/generated/dashboard/schemas/preferredScheduleBlock'
 import type { PreferredScheduleSessionTime } from '@/shared/api/generated/dashboard/schemas/preferredScheduleSessionTime'
 import type { TrainedTeacherOrganizationApplicationResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationApplicationResponse'
+
+/** BE DTO는 OpenAPI 축소본보다 runtime 필드가 더 있을 수 있음 — 기존 투영 유지 */
+type TrainedTeacherOrganizationApplicationDto = TrainedTeacherOrganizationApplicationResponse & {
+  schoolName?: string | null
+  organizationName?: string | null
+  schoolId?: number
+  organizationId?: number
+  teacherMemberId?: number
+  teacherEmailMasked?: string | null
+  teacherEmail?: string | null
+  submittedAt?: string | null
+  createdAt?: string | null
+  approvedAt?: string | null
+  rejectedAt?: string | null
+  regionSido?: string | null
+  regionSigungu?: string | null
+  schoolSido?: string | null
+  schoolSigungu?: string | null
+  organizationSido?: string | null
+  organizationSigungu?: string | null
+  requestedClassCount?: number | null
+  requestedStudentCount?: number | null
+  addressDetail?: string | null
+  applicationReason?: string | null
+  otherRequests?: string | null
+}
+
+function formatResultNotificationSentAt(iso?: string | null): string | undefined {
+  const trimmed = iso?.trim()
+  if (!trimmed) return undefined
+  const parsed = new Date(trimmed)
+  if (Number.isNaN(parsed.getTime())) return undefined
+  return formatApplicantSchoolApprovalNotificationSentAt(parsed)
+}
 
 function toId(value: number | string | undefined): string {
   if (value == null) return ''
@@ -76,20 +111,25 @@ export function mapPreferredScheduleBlocks(
 
 /** TT organization-application DTO → ApplicantSchoolRow */
 export function mapTrainedTeacherOrganizationApplicationToRow(
-  dto: TrainedTeacherOrganizationApplicationResponse,
+  dto: TrainedTeacherOrganizationApplicationDto,
   index: number,
   programId: string
 ): ApplicantSchoolRow {
   const schoolName =
-    dto.schoolName?.trim() || dto.organizationName?.trim() || '기관명 없음'
+    dto.schoolName?.trim() || dto.organizationName?.trim() || dto.institutionName?.trim() || '기관명 없음'
   const memo = dto.desiredEducationScheduleMemo?.trim()
   const region =
     [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ') ||
     [dto.schoolSido, dto.schoolSigungu].filter(Boolean).join(' ') ||
     [dto.organizationSido, dto.organizationSigungu].filter(Boolean).join(' ') ||
+    dto.regionName?.trim() ||
     ''
   const preferredScheduleBlocks = mapPreferredScheduleBlocks(dto.preferredScheduleBlocks)
   const educationGrade = dto.educationGrade?.trim() || ''
+  const addressDetail = dto.addressDetail?.trim() || undefined
+  const applicationReason = dto.applicationReason?.trim() || undefined
+  /** BE 계약: otherRequests는 answers 투영만. memo로 덮지 않음 */
+  const otherRequests = dto.otherRequests?.trim() || undefined
   const lectureRound = dto.lectureRound?.trim() || undefined
   const progressLabel = dto.progressLabel?.trim() || undefined
   const textbookName = dto.textbookName?.trim() || undefined
@@ -104,6 +144,14 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
       : educationJournalCount != null
         ? educationJournalCount > 0
         : undefined
+  const teacherEmailMasked =
+    dto.teacherEmailMasked?.trim() || dto.teacherEmail?.trim() || undefined
+  const detailFields = {
+    ...(addressDetail ? { addressDetail } : {}),
+    ...(applicationReason ? { applicationReason } : {}),
+    ...(otherRequests ? { otherRequests } : {}),
+    ...(teacherEmailMasked ? { teacherEmail: teacherEmailMasked } : {}),
+  }
   return {
     id: toId(dto.applicationId),
     no: index + 1,
@@ -113,8 +161,9 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
     classCount: dto.classCount ?? dto.requestedClassCount ?? 0,
     studentCount: dto.studentCount ?? dto.requestedStudentCount ?? 0,
     teacherName: dto.teacherName?.trim() || '-',
+    teacherMemberId: dto.teacherMemberId,
     contact: dto.teacherPhoneMasked?.trim() || undefined,
-    appliedAt: dto.submittedAt ?? dto.createdAt,
+    appliedAt: dto.submittedAt ?? dto.createdAt ?? undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     programId: toId(dto.programId) || programId,
     desiredEducationPeriod: memo || undefined,
@@ -128,11 +177,9 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
     educationJournalCount,
     journalSubmitted,
     educationCompletionCount,
-    detail: memo
-      ? {
-          otherRequests: memo,
-        }
-      : undefined,
+    approvalNotificationSentAt: formatResultNotificationSentAt(dto.resultNotificationSentAt),
+    availableActions: dto.availableActions ?? [],
+    detail: Object.keys(detailFields).length > 0 ? detailFields : undefined,
   }
 }
 

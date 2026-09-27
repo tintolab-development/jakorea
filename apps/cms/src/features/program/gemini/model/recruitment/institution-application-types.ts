@@ -13,6 +13,9 @@ export type GeminiInstitutionApplicationRow = {
   studentCount: number
   teacherName: string
   programProgressStatus?: GeminiApprovedTrainingStatus
+  /** BE resultNotificationSentAt — 표시용 ISO 또는 포맷 문자열 */
+  resultNotificationSentAt?: string | null
+  availableActions?: string[]
 }
 
 /** @deprecated remote-only — 로컬 patch no-op */

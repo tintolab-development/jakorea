@@ -48,6 +48,8 @@ export interface ParticipatingSchoolRow {
   /** 참여 승인/반려 상태 (선택 승인·선택 반려 연동) */
   approvalStatus: ParticipatingSchoolApprovalStatusKey
   teacherName: string
+  /** 담당 교사 연락처 (마스킹 또는 해제값) */
+  contact?: string
   instructors: string
   /** 강의 회차 별 교육 진행 날짜 및 시간 (참여 기관 페이지 컬럼용) */
   sessions?: ParticipatingSchoolSession[]

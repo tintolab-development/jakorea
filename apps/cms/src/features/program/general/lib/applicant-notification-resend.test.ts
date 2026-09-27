@@ -34,10 +34,11 @@ describe('applicant-notification-resend', () => {
     expect(shouldShowApplicantNotificationResendReason('individual', 'approved')).toBe(false)
   })
 
-  it('개인 반려는 반려 알림 카피와 사유 입력을 사용한다', () => {
-    expect(buildApplicantNotificationResendMessage('individual', '김범수', 'rejected')).toBe(
-      '프로그램 승인 반려 알림을 재발송하시겠습니까?\n확인 시 입력하신 반려 사유와 함께 알림이 재발송됩니다.'
-    )
-    expect(shouldShowApplicantNotificationResendReason('individual', 'rejected')).toBe(true)
+  it('기관 반려는 사유 입력을 노출한다', () => {
+    expect(shouldShowApplicantNotificationResendReason('institution', 'rejected')).toBe(true)
+    expect(shouldShowApplicantNotificationResendReason('institution', 'approved')).toBe(false)
+    expect(
+      buildApplicantNotificationResendMessage('institution', '진월초', 'rejected')
+    ).toContain('입력하신 반려 사유와 함께')
   })
 })

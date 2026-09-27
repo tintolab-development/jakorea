@@ -38,6 +38,7 @@ import {
   rejectInstructorApplicationRemote,
   rejectOrganizationApplicationRemote,
   resendInstructorApplicationNotification,
+  resendOrganizationApplicationNotification,
   bulkIndividualDocumentResultsRemote,
   bulkVolunteerDocumentResultsRemote,
   bulkVolunteerFinalResultsRemote,
@@ -421,6 +422,19 @@ export async function resendGeneralInstructorApplicationNotification(
 ): Promise<void> {
   assertApplicationsRemoteReady()
   await resendInstructorApplicationNotification(applicationId, payload)
+}
+
+export async function resendGeneralOrganizationApplicationNotification(
+  applicationId: string,
+  payload: {
+    timing: 'IMMEDIATE' | 'SCHEDULED'
+    scheduledAt: string | null
+    reason: string | null
+  },
+  idempotencyKey: string
+): Promise<void> {
+  assertApplicationsRemoteReady()
+  await resendOrganizationApplicationNotification(applicationId, payload, idempotencyKey)
 }
 
 export async function bulkApproveGeneralInstructorApplications(

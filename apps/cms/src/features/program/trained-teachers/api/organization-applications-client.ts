@@ -66,3 +66,29 @@ export async function rejectTrainedTeacherOrganizationApplicationRemote(
     })
   )
 }
+
+export type TrainedTeacherOrganizationNotificationResendPayload = {
+  timing: 'IMMEDIATE' | 'SCHEDULED'
+  scheduledAt: string | null
+  reason: string | null
+}
+
+/** OpenAPI operationId: resendTrainedTeacherOrganizationApplicationNotification */
+export async function resendTrainedTeacherOrganizationApplicationNotificationRemote(
+  programId: string,
+  applicationId: string,
+  payload: TrainedTeacherOrganizationNotificationResendPayload,
+  idempotencyKey: string
+): Promise<void> {
+  await unwrapApiBody(
+    await customInstance({
+      url: `${listUrl(programId)}/${encodeURIComponent(applicationId)}/notifications/resend`,
+      method: 'POST',
+      data: payload,
+      headers: {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
+    })
+  )
+}

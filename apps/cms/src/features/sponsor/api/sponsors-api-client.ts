@@ -80,7 +80,7 @@ export async function bulkDeleteSponsorProgramHistoriesRemote(
     ) {
       throw new Error('삭제할 프로그램 ID 형식이 올바르지 않습니다.')
     }
-    // OpenAPI subset currently omits this operation; keep runtime path used by CMS sponsor UI.
+    // 생성 스펙에서 deprecated bulk-delete가 빠졌다. 후원사 화면이 쓰던 path는 유지한다.
     const result = unwrapApiBody<BulkActionResponse>(
       await customInstance({
         url: `/api/admin/sponsors/${pathId(sponsorId)}/program-histories/bulk-delete`,

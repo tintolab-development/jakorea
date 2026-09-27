@@ -100,6 +100,26 @@ describe('hydrateOrganizationApplicationRowFromForm', () => {
     expect(hydrated.sessions?.[0]?.date).toBe('2026.03.10(화) 오전')
   })
 
+  it('maps nested TT basic-info teacherEmail onto detail', () => {
+    const form = formWithAnswers([
+      {
+        questionKeySnapshot: 'program-application-trained-teachers-seed-basic-info',
+        answerValueJson: JSON.stringify({
+          teacherName: '이건희',
+          teacherMobile: '010-****-9470',
+          teacherEmail: '2k***@tinto.co.kr',
+        }),
+      },
+    ])
+    const hydrated = hydrateOrganizationApplicationRowFromForm({
+      row: baseRow,
+      formResponse: form,
+    })
+    expect(hydrated.detail?.teacherEmail).toBe('2k***@tinto.co.kr')
+    expect(hydrated.contact).toBe('010-****-9470')
+    expect(hydrated.teacherName).toBe('이건희')
+  })
+
   it('keeps list DTO fields when form answers are empty', () => {
     const hydrated = hydrateOrganizationApplicationRowFromForm({
       row: { ...baseRow, region: '서울', educationGrade: '중1' },

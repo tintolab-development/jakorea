@@ -9,13 +9,17 @@
 export interface GeminiOrganizationApplicationItem {
   applicationId?: number;
   programId?: number;
-  recruitmentId?: number;
-  organizationId?: number;
-  organizationName?: string;
+  recruitmentId?: number | null;
+  organizationId?: number | null;
+  organizationName?: string | null;
   applicationStatus?: string;
-  requestedStudentCount?: number;
-  requestedClassCount?: number;
-  submittedAt?: string;
-  approvedAt?: string;
-  rejectedAt?: string;
+  requestedStudentCount?: number | null;
+  requestedClassCount?: number | null;
+  submittedAt?: string | null;
+  approvedAt?: string | null;
+  rejectedAt?: string | null;
+  /** 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. */
+  resultNotificationSentAt?: string | null;
+  /** APPROVED 또는 REJECTED이면 RESEND_NOTIFICATION을 포함한다. 없거나 빈 배열은 []입니다. */
+  availableActions?: string[];
 }

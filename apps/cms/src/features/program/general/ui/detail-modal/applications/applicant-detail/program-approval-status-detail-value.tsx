@@ -28,8 +28,12 @@ export function ProgramApprovalStatusDetailValue({
     return (
       <div className="applicant-institution-basic-info__approval-status-row">
         <ApprovalStatusText status="approved" />
-        <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
-        <SendNotiButton mode="resend" onClick={onResendNotificationClick} />
+        {onResendNotificationClick ? (
+          <>
+            <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
+            <SendNotiButton mode="resend" onClick={onResendNotificationClick} />
+          </>
+        ) : null}
         {approvalNotificationSentAt ? (
           <>
             <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
@@ -49,8 +53,12 @@ export function ProgramApprovalStatusDetailValue({
         <ApprovalStatusText status="rejected" />
         <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
         <span>사유 : ({reason})</span>
-        <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
-        <SendNotiButton mode="resend" onClick={onResendNotificationClick} />
+        {onResendNotificationClick ? (
+          <>
+            <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />
+            <SendNotiButton mode="resend" onClick={onResendNotificationClick} />
+          </>
+        ) : null}
         {approvalNotificationSentAt ? (
           <>
             <span className="applicant-institution-basic-info__approval-status-vbar" aria-hidden />

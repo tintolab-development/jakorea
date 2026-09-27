@@ -42,6 +42,7 @@ import {
   basicInfoAnswerFromValues,
   basicInfoValuesFromDraftAnswer,
   emptyTrainedTeachersBasicInfo,
+  findIncompleteTrainedTeachersBasicInfoMessage,
   type ApplyTrainedTeachersBasicInfoValues,
 } from '@/features/program/ui/apply-trained-teachers-basic-info/apply-trained-teachers-basic-info'
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
@@ -104,6 +105,16 @@ export function ProgramApplyPage() {
     profileQuery.data?.schoolName?.trim() ||
     profileQuery.data?.affiliationName?.trim() ||
     ''
+  const profileRegionLabel = [
+    profileQuery.data?.regionSido?.trim(),
+    profileQuery.data?.regionSigungu?.trim(),
+  ]
+    .filter(Boolean)
+    .join(' ')
+  const profileTeacherName = profileQuery.data?.name?.trim() || ''
+  const profileTeacherMobile = profileQuery.data?.phone?.trim() || ''
+  const profileTeacherEmail = profileQuery.data?.email?.trim() || ''
+  const showPreferredEducationForm = program?.educationForm === 'participant_choice'
   const remoteForm = applicationFormQuery.bundle?.form
   const remoteFormKey =
     remoteApplyEnabled && applicationFormQuery.status === 'ready' && remoteForm
@@ -142,12 +153,14 @@ export function ProgramApplyPage() {
           const fromBasic = basicInfoValuesFromDraftAnswer(
             draftAnswers?.[PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo],
           )
-          setBasicInfo(
-            fromBasic ?? {
-              ...emptyTrainedTeachersBasicInfo(),
-              schoolName: profileSchool,
-            },
-          )
+          setBasicInfo({
+            ...(fromBasic ?? emptyTrainedTeachersBasicInfo()),
+            schoolName: fromBasic?.schoolName?.trim() || profileSchool,
+            regionLabel: fromBasic?.regionLabel?.trim() || profileRegionLabel,
+            teacherName: fromBasic?.teacherName?.trim() || profileTeacherName,
+            teacherMobile: fromBasic?.teacherMobile?.trim() || profileTeacherMobile,
+            teacherEmail: fromBasic?.teacherEmail?.trim() || profileTeacherEmail,
+          })
           return
         }
       }
@@ -167,6 +180,10 @@ export function ProgramApplyPage() {
       setBasicInfo({
         ...emptyTrainedTeachersBasicInfo(),
         schoolName: profileSchool,
+        regionLabel: profileRegionLabel,
+        teacherName: profileTeacherName,
+        teacherMobile: profileTeacherMobile,
+        teacherEmail: profileTeacherEmail,
       })
       return
     }
@@ -185,12 +202,36 @@ export function ProgramApplyPage() {
     remoteForm,
     remoteFormKey,
     profileSchool,
+    profileRegionLabel,
+    profileTeacherName,
+    profileTeacherMobile,
+    profileTeacherEmail,
   ])
 
   useEffect(() => {
-    if (!profileSchool) return
-    setBasicInfo(prev => (prev.schoolName.trim() ? prev : { ...prev, schoolName: profileSchool }))
-  }, [profileSchool])
+    setBasicInfo(prev => ({
+      ...prev,
+      schoolName: prev.schoolName.trim() ? prev.schoolName : profileSchool || prev.schoolName,
+      regionLabel: prev.regionLabel.trim()
+        ? prev.regionLabel
+        : profileRegionLabel || prev.regionLabel,
+      teacherName: prev.teacherName.trim()
+        ? prev.teacherName
+        : profileTeacherName || prev.teacherName,
+      teacherMobile: prev.teacherMobile.trim()
+        ? prev.teacherMobile
+        : profileTeacherMobile || prev.teacherMobile,
+      teacherEmail: prev.teacherEmail.trim()
+        ? prev.teacherEmail
+        : profileTeacherEmail || prev.teacherEmail,
+    }))
+  }, [
+    profileSchool,
+    profileRegionLabel,
+    profileTeacherName,
+    profileTeacherMobile,
+    profileTeacherEmail,
+  ])
 
   const updateParagraph = useCallback<FormUpdateParagraph>((id, updater) => {
     setDraft(prev => {
@@ -231,6 +272,14 @@ export function ProgramApplyPage() {
             value={basicInfo}
             onChange={setBasicInfo}
             schoolNameLocked={profileSchoolLocked}
+            showPreferredEducationForm={showPreferredEducationForm}
+            profile={{
+              schoolName: profileSchool,
+              regionLabel: profileRegionLabel,
+              teacherName: profileTeacherName,
+              teacherMobile: profileTeacherMobile,
+              teacherEmail: profileTeacherEmail,
+            }}
           />
         )
       }
@@ -382,7 +431,13 @@ export function ProgramApplyPage() {
       preferredBlocks,
       basicInfo,
       showTrainedTeachersApply,
+      showPreferredEducationForm,
       profileSchoolLocked,
+      profileSchool,
+      profileRegionLabel,
+      profileTeacherName,
+      profileTeacherMobile,
+      profileTeacherEmail,
       updateParagraph,
     ]
   )
@@ -432,8 +487,15 @@ export function ProgramApplyPage() {
       const basicAnswer = showTrainedTeachersApply
         ? basicInfoAnswerFromValues(basicInfo)
         : null
+      if (showTrainedTeachersApply) {
+        const basicError = findIncompleteTrainedTeachersBasicInfoMessage(basicInfo)
+        if (basicError) {
+          setSubmitError(basicError)
+          return
+        }
+      }
       if (showTrainedTeachersApply && !basicAnswer) {
-        setSubmitError('기본 정보(학교명)를 입력해 주세요.')
+        setSubmitError('기본 정보(신청 기관명)를 입력해 주세요.')
         return
       }
 

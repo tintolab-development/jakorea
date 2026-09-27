@@ -38,6 +38,8 @@ describe('general-applications-adapters', () => {
         requestedStudentCount: 40,
         applicationStatus: 'WAITING_REVIEW',
         submittedAt: '2026-04-01T00:00:00Z',
+        availableActions: ['VIEW'],
+        sessions: [],
       },
       0,
       '5001'
@@ -49,6 +51,26 @@ describe('general-applications-adapters', () => {
     expect(row.schoolName).toBe('서울초')
     expect(row.approvalStatus).toBe('pending')
     expect(row.programId).toBe('5001')
+    expect(row.availableActions).toEqual(['VIEW'])
+  })
+
+  it('maps organization resultNotificationSentAt and RESEND_NOTIFICATION', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1691123,
+        organizationName: '승인학교',
+        applicationStatus: 'APPROVED',
+        resultNotificationSentAt: '2026-09-27T05:00:00Z',
+        availableActions: ['VIEW', 'RESEND_NOTIFICATION', 'CANCEL_APPROVAL'],
+        sessions: [],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '168001'
+    )
+
+    expect(row.approvalStatus).toBe('approved')
+    expect(row.availableActions).toContain('RESEND_NOTIFICATION')
+    expect(row.approvalNotificationSentAt).toMatch(/2026\.\d{2}\.\d{2}/)
   })
 
   it('maps ORGANIZATION participant give-up fields to participating school row', () => {

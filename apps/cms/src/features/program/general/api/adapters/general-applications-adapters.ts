@@ -2,6 +2,7 @@ import type {
   ApplicantApprovalStatusKey,
   ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
+import { formatApplicantSchoolApprovalNotificationSentAt } from '@/features/program/shared/model/applicant-institution'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
@@ -42,8 +43,8 @@ import {
   resolveStoredAffiliation,
 } from '@/features/program/general/lib/affiliation-organization'
 
-function toId(value: number | string | undefined): string {
-  if (value == null) return ''
+function toId(value: number | string | null | undefined): string {
+  if (value == null || value === '') return ''
   return String(value)
 }
 
@@ -92,6 +93,25 @@ export function mapApprovalStatusToApiFilter(
   }
 }
 
+/**
+ * 일반 기관 목록·상세 스키마에는 아직 없고, TT·Gemini와 재발송 응답에만 있다.
+ * 스펙에 필드가 생기면 그대로 읽힌다.
+ */
+function readResultNotificationSentAt(dto: object): string | null | undefined {
+  const value = (dto as { resultNotificationSentAt?: string | null }).resultNotificationSentAt
+  return typeof value === 'string' ? value : undefined
+}
+
+function formatOrganizationResultNotificationSentAt(
+  iso?: string | null
+): string | undefined {
+  const trimmed = iso?.trim()
+  if (!trimmed) return undefined
+  const parsed = new Date(trimmed)
+  if (Number.isNaN(parsed.getTime())) return undefined
+  return formatApplicantSchoolApprovalNotificationSentAt(parsed)
+}
+
 export function mapOrganizationApplicationToApplicantSchoolRow(
   dto: OrganizationApplicationListItemResponse,
   index: number,
@@ -102,20 +122,27 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
 ): ApplicantSchoolRow {
   const sessions = mapRequestedSchedulesToSessions(options?.requestedSchedules)
   const desiredEducationPeriod = formatRequestedSchedulesPeriodLabel(options?.requestedSchedules)
+  const regionFromParts = [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' ').trim()
+  const region = regionFromParts || dto.region?.trim() || ''
 
   return {
     id: toId(dto.id),
     organizationId: dto.organizationId ?? undefined,
-    teacherMemberId: dto.teacherMemberId,
+    teacherMemberId: dto.teacherMemberId ?? undefined,
     no: index + 1,
     schoolName: dto.organizationName?.trim() || '기관명 없음',
-    region: [dto.regionSido, dto.regionSigungu].filter(Boolean).join(' '),
-    educationGrade: dto.grade?.trim() || '',
+    region,
+    educationGrade: dto.grade?.trim() || dto.educationGrade?.trim() || '',
     classCount: dto.requestedClassCount ?? 0,
     studentCount: dto.requestedStudentCount ?? 0,
     teacherName: dto.teacherName?.trim() || '-',
-    appliedAt: dto.submittedAt,
+    appliedAt: dto.submittedAt ?? undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    participationRejectionReason: dto.rejectReason?.trim() || undefined,
+    approvalNotificationSentAt: formatOrganizationResultNotificationSentAt(
+      readResultNotificationSentAt(dto)
+    ),
+    availableActions: dto.availableActions ?? [],
     programId,
     sessions,
     desiredEducationPeriod,
@@ -126,6 +153,8 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
   dto: OrganizationApplicationDetailResponse,
   base: ApplicantSchoolRow
 ): ApplicantSchoolRow {
+  const teacherPhone = dto.teacherPhone?.trim()
+  const teacherEmail = dto.teacherEmail?.trim()
   return {
     ...base,
     id: toId(dto.id) || base.id,
@@ -137,21 +166,67 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
     classCount: dto.requestedClassCount ?? base.classCount,
     studentCount: dto.requestedStudentCount ?? base.studentCount,
     teacherName: dto.teacherName?.trim() || base.teacherName,
-    contact: dto.teacherPhone?.trim() || base.contact,
+    contact: teacherPhone || base.contact,
     appliedAt: dto.submittedAt ?? base.appliedAt,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
     participationRejectionReason: dto.rejectReason?.trim() || base.participationRejectionReason,
+    approvalNotificationSentAt:
+      formatOrganizationResultNotificationSentAt(readResultNotificationSentAt(dto)) ??
+      base.approvalNotificationSentAt,
+    availableActions: dto.availableActions ?? base.availableActions,
     detail: {
       ...base.detail,
       addressDetail: dto.organizationAddressDetail?.trim() || base.detail?.addressDetail,
       educationType: dto.requestedEducationFormat?.trim() || base.detail?.educationType,
       textbookId: toId(dto.textbookId) || base.detail?.textbookId,
       textbookName: dto.textbookName?.trim() || base.detail?.textbookName,
-      teacherInfo:
-        [dto.teacherName, dto.teacherPhone, dto.teacherEmail]
-          .map(value => value?.trim())
-          .filter(Boolean)
-          .join(' | ') || base.detail?.teacherInfo,
+      ...(teacherPhone ? { teacherPhone } : {}),
+      ...(teacherEmail ? { teacherEmail } : {}),
+      teacherInfo: undefined,
+    },
+  }
+}
+
+/**
+ * TT 등 — 목록 SoT(학급·일정 블록)는 유지하고, 상세에만 있는 PII·부가 필드만 채운다.
+ * 빈 문자열로 목록 값을 덮지 않는다.
+ */
+export function softMergeOrganizationApplicationDetailOntoRow(
+  dto: OrganizationApplicationDetailResponse,
+  base: ApplicantSchoolRow
+): ApplicantSchoolRow {
+  const teacherPhone = dto.teacherPhone?.trim()
+  const teacherEmail = dto.teacherEmail?.trim()
+  const teacherName = dto.teacherName?.trim()
+  const addressDetail = dto.organizationAddressDetail?.trim()
+  const applicationReason = dto.applicationReason?.trim()
+  const otherRequests = dto.otherRequests?.trim()
+  const educationType = dto.requestedEducationFormat?.trim()
+  const textbookName = dto.textbookName?.trim()
+  const textbookId = toId(dto.textbookId)
+  const rejectReason = dto.rejectReason?.trim()
+
+  return {
+    ...base,
+    teacherMemberId: dto.teacherMemberId ?? base.teacherMemberId,
+    teacherName: teacherName || base.teacherName,
+    contact: teacherPhone || base.contact,
+    participationRejectionReason: rejectReason || base.participationRejectionReason,
+    approvalNotificationSentAt:
+      formatOrganizationResultNotificationSentAt(readResultNotificationSentAt(dto)) ??
+      base.approvalNotificationSentAt,
+    availableActions: dto.availableActions ?? base.availableActions,
+    detail: {
+      ...base.detail,
+      ...(addressDetail ? { addressDetail } : {}),
+      ...(educationType ? { educationType } : {}),
+      ...(textbookId ? { textbookId } : {}),
+      ...(textbookName ? { textbookName } : {}),
+      ...(teacherPhone ? { teacherPhone } : {}),
+      ...(teacherEmail ? { teacherEmail } : {}),
+      ...(applicationReason ? { applicationReason } : {}),
+      ...(otherRequests ? { otherRequests } : {}),
+      teacherInfo: undefined,
     },
   }
 }

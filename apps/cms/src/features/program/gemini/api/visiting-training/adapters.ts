@@ -173,6 +173,8 @@ export function mapGeminiOrganizationApplicationToRow(
     preferredLectureSchedule: '',
     studentCount: dto.requestedStudentCount ?? 0,
     teacherName: '-',
+    resultNotificationSentAt: dto.resultNotificationSentAt ?? null,
+    availableActions: dto.availableActions ?? [],
   }
 }
 

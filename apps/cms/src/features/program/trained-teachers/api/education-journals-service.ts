@@ -134,6 +134,8 @@ export function mapApplicantSchoolToParticipatingSchool(
     textbookStatus: 'not_applicable',
     approvalStatus: 'approved',
     teacherName: row.teacherName || '-',
+    teacherMemberId: row.teacherMemberId,
+    contact: row.contact,
     /** TT는 강사 Relation 없음 — 합성하지 않음 */
     instructors: '',
     programId: row.programId,
