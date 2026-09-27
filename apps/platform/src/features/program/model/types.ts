@@ -109,6 +109,15 @@ export type ProgramDetail = ProgramListItem & {
   educationVenueLabel: string
   /** 상세 케이스 (강사·봉사·UJAT·Gemini 등) */
   detailCase: ProgramDetailCase
+  /**
+   * Portal/CMS programType (예: TRAINED_TEACHER).
+   * 신청 양식 케이스 분기용. 시드·구 맵핑에서는 없을 수 있다.
+   */
+  programType?: string
+  /**
+   * CMS registrationKind. mock/CMS 스냅샷 연동 시 신청 양식 케이스에 사용.
+   */
+  registrationKind?: 'general' | 'economy' | 'trainedTeachers' | 'gemini' | 'ujat'
   /** CMS 일반 프로그램 대상 — 기관 / 개인. 봉사 배정 테이블 분기 */
   programAudience: 'organization' | 'individual'
   /**
