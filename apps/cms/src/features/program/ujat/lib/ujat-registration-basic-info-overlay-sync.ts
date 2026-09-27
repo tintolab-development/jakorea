@@ -3,7 +3,6 @@ import type { Program } from '@/types/domain'
 import {
   createUjatRegistrationBasicInfoOverlayDefaults,
   createUjatSurveyItemsDefault,
-  UJAT_BASIC_INFO_PUBLIC_TITLE_DEFAULT,
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
@@ -93,9 +92,6 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
     'ujat.basicInfo.repKo': program.mainTitle?.trim() || defaults.repKo,
     'ujat.basicInfo.repEn': program.titleEn?.trim() || defaults.repEn,
     'ujat.basicInfo.programManagementName': program.title?.trim() || defaults.programManagementName,
-    'ujat.basicInfo.publicProgramTitle':
-      program.generalCommonInfo?.announcementTitle?.trim() ||
-      UJAT_BASIC_INFO_PUBLIC_TITLE_DEFAULT,
     'ujat.basicInfo.detailedProgramId': detailedProgramId,
     'ujat.basicInfo.detailedProgramName': detailedProgramName,
     'ujat.basicInfo.operationRangeSeal': operationRangeSeal,

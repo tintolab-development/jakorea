@@ -15,7 +15,6 @@ export class UjatRegistrationRequiredFieldsIncompleteError extends Error {
 
 import {
   UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT,
-  UJAT_BASIC_INFO_PUBLIC_TITLE_DEFAULT,
   UJAT_BASIC_INFO_REP_EN_DEFAULT,
   UJAT_BASIC_INFO_REP_KO_DEFAULT,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
@@ -109,9 +108,6 @@ function findIncompleteUjatBasicInfoReason(overlay: Record<string, unknown>): st
   if (isEmptyText(readText(overlay, `${p}.repEn`, UJAT_BASIC_INFO_REP_EN_DEFAULT))) return 'basicInfo.repEn'
   if (isEmptyText(readText(overlay, `${p}.programManagementName`, UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT))) {
     return 'basicInfo.programManagementName'
-  }
-  if (isEmptyText(readText(overlay, `${p}.publicProgramTitle`, UJAT_BASIC_INFO_PUBLIC_TITLE_DEFAULT))) {
-    return 'basicInfo.publicProgramTitle'
   }
   if (isEmptyText(readText(overlay, `${p}.detailedProgramId`, UJAT_DETAILED_PROGRAM_UJAT_VALUE))) {
     return 'basicInfo.detailedProgramId'

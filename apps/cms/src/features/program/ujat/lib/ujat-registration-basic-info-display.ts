@@ -8,6 +8,7 @@ import {
   UJAT_SPONSOR_ALL_VALUE,
   type UjatSurveyRowId,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
+import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import {
   readUjatSurveyItems,
   resolveUjatSurveyItemsText,
@@ -73,6 +74,7 @@ function optionLabel(
 }
 
 function resolveDetailedProgramName(detailedProgramId: string): string {
+  if (detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) return '해당없음'
   if (detailedProgramId === UJAT_DETAILED_PROGRAM_UJAT_VALUE) return UJAT_DETAILED_PROGRAM_UJAT_LABEL
   return '-'
 }
@@ -333,9 +335,7 @@ export function applyUjatRegistrationOverlayToProgram(
   const paymentItemIds = readUjatWagePaymentItemValuesFromOverlay(overlayInput)
   const paymentItemsLabel = ujatPaymentItemLabelsFromIds(paymentItemIds)
   const deductionItemsLabel = resolveUjatWageDeductionLabel(paymentItemIds)
-  const announcementTitle =
-    overlayString(overlayInput, 'ujat.basicInfo.publicProgramTitle')?.trim() ||
-    program.generalCommonInfo?.announcementTitle?.trim()
+  const announcementTitle = program.generalCommonInfo?.announcementTitle?.trim()
   const sponsorManagerLine =
     overlayString(overlayInput, 'ujat.basicInfo.sponsorManagerName')?.trim() ||
     program.generalCommonInfo?.sponsorManagerLine
@@ -370,7 +370,7 @@ export function applyUjatRegistrationOverlayToProgram(
       detailedProgramName,
       paymentItems: paymentItemsLabel,
       deductionItems: deductionItemsLabel,
-      announcementTitle,
+      ...(announcementTitle ? { announcementTitle } : {}),
       sponsorManagerLine,
       kpi: {
         finalParticipants: overlayKpi.finalParticipants ?? prevKpi?.finalParticipants ?? 0,
@@ -383,7 +383,7 @@ export function applyUjatRegistrationOverlayToProgram(
   }
 }
 
-/** 모집 공고용 프로그램명 — 등록 폼 `공고용 프로그램명` 우선, 대표명 alias 제외 */
+/** 모집 공고용 프로그램명 — 모집 탭·저장된 announcementTitle (등록 폼에는 공고용 필드 없음) */
 export function resolveUjatAnnouncementTitle(program: Program): string {
   return (
     resolvePublicProgramTitle({

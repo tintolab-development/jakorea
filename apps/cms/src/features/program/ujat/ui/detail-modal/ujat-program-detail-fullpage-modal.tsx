@@ -18,6 +18,7 @@ import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-p
 import { handleError } from '@/shared/utils/error-handler'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { applyUjatRegistrationOverlayToProgram } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import { syncUjatDetailEditFormKpiToOverlay } from '@/features/program/ujat/lib/detail-edit-form-kpi-to-overlay'
 import {
   readUjatRegistrationBasicInfoOverlayForSave,
   seedUjatRegistrationBasicInfoOverlayFromProgram,
@@ -1124,6 +1125,7 @@ export function UjatProgramDetailFullPageModal({
 
   const handleInfoSave = useCallback(async () => {
     if (displayProgram) {
+      syncUjatDetailEditFormKpiToOverlay(infoForm.getValues())
       const overlay = touchUjatRegistrationOperationAnchorFromRangeSeal(
         readUjatRegistrationBasicInfoOverlayForSave()
       )
@@ -1136,9 +1138,10 @@ export function UjatProgramDetailFullPageModal({
   }, [displayProgram, infoForm, infoTriggerSave, setEditMode])
 
   const handleInfoCancel = useCallback(() => {
+    if (displayProgram) seedUjatRegistrationBasicInfoOverlayFromProgram(displayProgram)
     infoResetToProgram()
     setEditMode(null)
-  }, [infoResetToProgram, setEditMode])
+  }, [displayProgram, infoResetToProgram, setEditMode])
 
   const isEditModeRecruitParticipant =
     open &&
