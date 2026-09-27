@@ -1005,7 +1005,7 @@ export function detailEditValuesToProgramPatch(
     existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryEmail
 
   return {
-    title: existing.title,
+    title: values.title?.trim() || existing.title,
     textbookName: existing.textbookName,
     startDate,
     endDate,

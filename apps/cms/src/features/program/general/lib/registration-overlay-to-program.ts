@@ -297,14 +297,14 @@ function buildIpsTypeSummaryFull(
 function surveyKeysFromOverlay(overlay: Record<string, unknown>): GeneralProgramSurveyMenuKey[] {
   const raw = overlay[`${BASIC}.surveyItems`]
   if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) {
-    return ['survey', 'satisfaction', 'lecture_evaluation']
+    return []
   }
   const items = raw as Record<string, unknown>
   const keys: GeneralProgramSurveyMenuKey[] = []
   if (items.survey === true) keys.push('survey')
   if (items.satisfaction === true) keys.push('satisfaction')
   if (items.lecture_evaluation === true) keys.push('lecture_evaluation')
-  return keys.length > 0 ? keys : ['survey', 'satisfaction', 'lecture_evaluation']
+  return keys
 }
 
 function buildCurriculumSessions(

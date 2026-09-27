@@ -6,6 +6,7 @@ import type { Program } from '@/types/domain'
 import { parseCompanySchoolWageAmountFromPricing } from '@/features/program/shared/lib/company-school-wage-pricing'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { initialProgramRegistrationSurveyItems } from '@/features/template/lib/program-registration-survey-items'
+import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
@@ -198,10 +199,17 @@ export function buildEconomyRegistrationOverlayFromProgram(
 export function seedEconomyRegistrationOverlayFromProgram(program: Program): void {
   const fromProgram = buildEconomyRegistrationOverlayFromProgram(program)
   const saved = overlayFromProgram(program)
-  replaceProgramRegistrationOverlayPrefix(ECONOMY_REGISTRATION_OVERLAY_PREFIX, {
-    ...fromProgram,
-    ...saved,
+  const merged = { ...fromProgram, ...saved }
+  const surveyKeys = resolveProgramSurveyMenuKeys({
+    generalSurveyMenuKeys: program.generalSurveyMenuKeys,
+    registrationOverlay: merged,
   })
+  merged[`${BASIC}.surveyItems`] = {
+    survey: surveyKeys.includes('survey'),
+    satisfaction: surveyKeys.includes('satisfaction'),
+    lecture_evaluation: surveyKeys.includes('lecture_evaluation'),
+  }
+  replaceProgramRegistrationOverlayPrefix(ECONOMY_REGISTRATION_OVERLAY_PREFIX, merged)
 }
 
 export function readEconomyRegistrationOverlayForSave(): Record<string, unknown> {

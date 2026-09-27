@@ -150,7 +150,7 @@ function surveyKeysFromOverlay(
   if (items.survey === true) keys.push('survey')
   if (items.satisfaction === true) keys.push('satisfaction')
   if (items.lecture_evaluation === true) keys.push('lecture_evaluation')
-  return keys.length > 0 ? keys : undefined
+  return keys
 }
 
 function buildEconomyWageGradePricing(

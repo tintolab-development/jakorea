@@ -7,6 +7,7 @@ import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/gen
 import { parseCompanySchoolWageAmountFromPricing } from '@/features/program/shared/lib/company-school-wage-pricing'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { initialProgramRegistrationSurveyItems } from '@/features/template/lib/program-registration-survey-items'
+import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
@@ -192,10 +193,17 @@ export function buildGeneralRegistrationOverlayFromProgram(
 export function seedGeneralRegistrationOverlayFromProgram(program: Program): void {
   const fromProgram = buildGeneralRegistrationOverlayFromProgram(program)
   const saved = overlayFromProgram(program)
-  replaceProgramRegistrationOverlayPrefix(GENERAL_REGISTRATION_OVERLAY_PREFIX, {
-    ...fromProgram,
-    ...saved,
+  const merged = { ...fromProgram, ...saved }
+  const surveyKeys = resolveProgramSurveyMenuKeys({
+    generalSurveyMenuKeys: program.generalSurveyMenuKeys,
+    registrationOverlay: merged,
   })
+  merged[`${BASIC}.surveyItems`] = {
+    survey: surveyKeys.includes('survey'),
+    satisfaction: surveyKeys.includes('satisfaction'),
+    lecture_evaluation: surveyKeys.includes('lecture_evaluation'),
+  }
+  replaceProgramRegistrationOverlayPrefix(GENERAL_REGISTRATION_OVERLAY_PREFIX, merged)
   setGeneralRegistrationDetailEditExtras(extrasFromGeneralProgram(program))
 }
 

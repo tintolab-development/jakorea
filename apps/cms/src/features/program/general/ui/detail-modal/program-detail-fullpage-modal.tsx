@@ -360,11 +360,11 @@ export function ProgramDetailFullPageModal({
           ? progressTab
           : ''
       : ''
-  const activeSurveyChild: GeneralSurveyNavKey | '' =
+  const activeSurveyChild: GeneralSurveyNavKey | 'main' | '' =
     activeLnb === 'survey'
       ? surveyMenuItems.some(item => item.key === searchParams.get(TAB_PARAM))
         ? (searchParams.get(TAB_PARAM) as GeneralSurveyNavKey)
-        : (surveyMenuItems[0]?.key ?? '')
+        : (surveyMenuItems[0]?.key ?? 'main')
       : ''
 
   const APPLICANTS_TAB_KEYS: TabKey[] = ['institutions', 'instructors', 'volunteers']
@@ -461,15 +461,13 @@ export function ProgramDetailFullPageModal({
         if (currentLnb === 'survey') {
           const nextSurveyKey = surveyMenuItems.some(item => item.key === prev.get(TAB_PARAM))
             ? prev.get(TAB_PARAM)
-            : surveyMenuItems[0]?.key
-          if (nextSurveyKey) {
-            const next = new URLSearchParams(prev)
-            next.set(LNB_PARAM, 'survey')
-            next.set(TAB_PARAM, nextSurveyKey)
-            next.delete(EDIT_PARAM)
-            preserveGeneralProgramDetailProgramId(prev, next)
-            return next
-          }
+            : (surveyMenuItems[0]?.key ?? 'main')
+          const next = new URLSearchParams(prev)
+          next.set(LNB_PARAM, 'survey')
+          next.set(TAB_PARAM, nextSurveyKey ?? 'main')
+          next.delete(EDIT_PARAM)
+          preserveGeneralProgramDetailProgramId(prev, next)
+          return next
         }
 
         if (currentLnb === 'managers') return prev
@@ -676,11 +674,12 @@ export function ProgramDetailFullPageModal({
             else next.delete(SUB_TAB_PARAM)
           }
         } else if (key === 'survey') {
-          const tab = prev.get(TAB_PARAM)
-          const surveyTab = surveyMenuItems.some(item => item.key === tab)
-            ? tab
-            : surveyMenuItems[0]?.key
-          if (surveyTab) next.set(TAB_PARAM, surveyTab)
+          const tab = childTab ?? prev.get(TAB_PARAM)
+          const surveyTab =
+            tab != null && surveyMenuItems.some(item => item.key === tab)
+              ? tab
+              : (surveyMenuItems[0]?.key ?? 'main')
+          next.set(TAB_PARAM, surveyTab)
         }
         preserveGeneralProgramDetailProgramId(prev, next)
         if (next.toString() === prev.toString()) return prev
@@ -728,7 +727,7 @@ export function ProgramDetailFullPageModal({
     )
   }
 
-  const setSurveyChild = (tab: GeneralSurveyNavKey) => {
+  const setSurveyChild = (tab: GeneralSurveyNavKey | 'main') => {
     setSearchParams(
       prev => {
         if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
@@ -780,16 +779,20 @@ export function ProgramDetailFullPageModal({
                 },
               ]
             : []),
-          ...(!hideSurvey && surveyMenuItems.length > 0
+          ...(!hideSurvey
             ? [
                 {
                   key: 'survey',
                   label: '설문 관리',
                   icon: <GeneralLnbSurveyManagementIcon />,
-                  children: surveyMenuItems.map(item => ({
-                    key: item.key,
-                    label: item.label,
-                  })),
+                  ...(surveyMenuItems.length > 0
+                    ? {
+                        children: surveyMenuItems.map(item => ({
+                          key: item.key,
+                          label: item.label,
+                        })),
+                      }
+                    : {}),
                 },
               ]
             : []),
@@ -841,16 +844,20 @@ export function ProgramDetailFullPageModal({
                 },
               ]
             : []),
-          ...(!hideSurvey && surveyMenuItems.length > 0
+          ...(!hideSurvey
             ? [
                 {
                   key: 'survey',
                   label: '설문 관리',
                   icon: <GeneralLnbSurveyManagementIcon />,
-                  children: surveyMenuItems.map(item => ({
-                    key: item.key,
-                    label: item.label,
-                  })),
+                  ...(surveyMenuItems.length > 0
+                    ? {
+                        children: surveyMenuItems.map(item => ({
+                          key: item.key,
+                          label: item.label,
+                        })),
+                      }
+                    : {}),
                 },
               ]
             : []),
@@ -936,8 +943,7 @@ export function ProgramDetailFullPageModal({
             : 'institutions'
       )
     } else if (k === 'survey') {
-      if (activeSurveyChild) setSurveyChild(activeSurveyChild)
-      else setLnb('survey')
+      setSurveyChild(activeSurveyChild || 'main')
     } else {
       setLnb(k)
     }
@@ -1852,8 +1858,11 @@ export function ProgramDetailFullPageModal({
             </div>
           )}
 
-          {activeLnb === 'survey' && activeSurveyChild && (
-            <GeneralSurveyManagementView program={displayProgram} activeTab={activeSurveyChild} />
+          {activeLnb === 'survey' && displayProgram && (
+            <GeneralSurveyManagementView
+              program={displayProgram}
+              activeTab={activeSurveyChild || 'main'}
+            />
           )}
 
           {activeLnb === 'progress' && (

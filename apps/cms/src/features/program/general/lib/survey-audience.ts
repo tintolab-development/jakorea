@@ -6,7 +6,7 @@ import {
   GENERAL_SATISFACTION_EMPTY_COPY,
   GENERAL_STUDENT_SATISFACTION_EMPTY_COPY,
 } from '@/features/program/shared/lib/survey-management/survey-copy'
-import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
+import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 
 export type GeneralSatisfactionAudienceKey =
   | 'teacher'
@@ -124,7 +124,7 @@ export function getGeneralSatisfactionAudienceTabs(
 export function getEnabledGeneralSatisfactionAudienceTabs(
   program: Program
 ): ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>> {
-  const keys = normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys ?? [])
+  const keys = resolveProgramSurveyMenuKeys(program)
   if (!keys.includes('satisfaction')) {
     return []
   }

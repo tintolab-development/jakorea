@@ -4,6 +4,7 @@ import { isGeneralIndividualProgram } from '@/features/program/general/lib/surve
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
 import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 
 export const GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -340,10 +341,15 @@ export function parseGeneralProgramServiceDetailJson(
       isServiceDetailRecord(parsed.registration.overlay)
       ? parsed.registration.overlay
       : undefined
+    const normalized = normalizeGeneralProgramServiceDetailParsed(parsed)
 
     return {
-      ...normalizeGeneralProgramServiceDetailParsed(parsed),
+      ...normalized,
       ...(registrationOverlay ? { registrationOverlay } : {}),
+      generalSurveyMenuKeys: resolveGeneralSurveyMenuKeys({
+        keys: normalized.generalSurveyMenuKeys,
+        overlay: registrationOverlay,
+      }),
     }
   } catch {
     return {}
