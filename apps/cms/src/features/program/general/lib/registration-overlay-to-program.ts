@@ -442,7 +442,8 @@ function formatScheduleDateLabel(iso: string | null | undefined): string | undef
   return `${yy}년 ${d.month() + 1}월 ${d.date()}일(${WEEKDAY_KO[d.day()]})`
 }
 
-function buildEnrichedScheduleDetails(
+/** 상세 조회 — registration overlay → 일정형 scheduleDetails (저장본이 비어 있을 때) */
+export function buildEnrichedScheduleDetails(
   overlay: Record<string, unknown>,
   extras: GeneralRegistrationEditorExtras
 ): GeneralProgramScheduleDetailRow[] {

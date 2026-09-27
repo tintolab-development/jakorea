@@ -64,6 +64,7 @@ import {
   formatGeneralSurveyItemsSummary,
   resolveGeneralProgramCommonInfo,
   resolveGeneralProgramDetailedProgramNameDisplay,
+  resolveGeneralProgramScheduleDetailsForView,
 } from '@/features/program/general/lib/detail-common-info-display'
 import { resolvePublicProgramTitleDisplay } from '@/features/program/shared/lib/public-program-title'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
@@ -100,6 +101,7 @@ import {
   buildSessionIpsTypeSummary,
   resolveScheduleDetailIpsTypeSummaryForView,
   resolveScheduleDetailEducationFormLabelForView,
+  resolveScheduleDetailProgressTimeSummaryForView,
   overlayIpsIndexForScheduleDetail,
   resolveSponsorManagementIds,
   type GeneralProgramCommonInfoEditFormValues,
@@ -4329,7 +4331,9 @@ function ScheduleProgressSection({
 
   if (watchedStructure !== 'schedule') return null
 
-  const scheduleDetailsView = commonInfo.scheduleDetails ?? []
+  const scheduleDetailsView = isFormEdit
+    ? (commonInfo.scheduleDetails ?? [])
+    : resolveGeneralProgramScheduleDetailsForView(program, commonInfo)
   if (scheduleDetailsView.length === 0 && !isFormEdit) return null
 
   const scheduleMeta = PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleCurriculum
@@ -4424,7 +4428,14 @@ function ScheduleProgressSection({
             key={detail.scheduleLabel}
             scheduleLabel={detail.scheduleLabel}
             name={detail.name}
-            progressTimeSummary={detail.progressTimeSummary ?? '-'}
+            progressTimeSummary={
+              detail.progressTimeSummary?.trim() ||
+              resolveScheduleDetailProgressTimeSummaryForView({
+                overlay: program.registrationOverlay as Record<string, unknown> | undefined,
+                overlayIndex,
+              }) ||
+              '-'
+            }
             ipsPerSchedule={ipsPerSchedule}
             ipsTypeSummary={ipsTypeSummary}
           />

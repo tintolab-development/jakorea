@@ -8,6 +8,7 @@ import type {
   Program,
   ProgramCategory,
 } from '@/types/domain'
+import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import { resolveEducationScheduleLinesForView } from '@/features/program/general/lib/education-schedule-lines-display'
 import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/general/lib/wage-info-constants'
 import {
@@ -22,6 +23,13 @@ import {
   DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK,
   GENERAL_INTERVIEW_MOCK_TIME_SLOTS,
 } from '@/features/program/general/model/volunteer-interview-schedule'
+import { extrasFromGeneralProgram } from '@/features/program/general/lib/registration-overlay-sync'
+import { buildEnrichedScheduleDetails } from '@/features/program/general/lib/registration-overlay-to-program'
+import {
+  overlayIpsIndexForScheduleDetail,
+  resolveScheduleDetailProgressTimeSummaryForView,
+  resolveScheduleDetailScheduleDateLabelForView,
+} from '@/features/program/general/model/common-info-edit-schema'
 
 const PARTICIPANT_LABEL_BY_VALUE = Object.fromEntries(
   TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.map(o => [o.value, o.label])
@@ -606,6 +614,56 @@ function withResolvedEducationScheduleLines(
     return commonInfo
   }
   return { ...commonInfo, educationScheduleLines }
+}
+
+/** 일정형 교육 진행 — 조회 시 overlay 진행 시간·진행 일정 보완 (수정 모드는 등록 overlay SSOT) */
+export function resolveGeneralProgramScheduleDetailsForView(
+  program: Program,
+  commonInfo: NonNullable<Program['generalCommonInfo']>
+): GeneralProgramScheduleDetailRow[] {
+  const overlay =
+    program.registrationOverlay != null && typeof program.registrationOverlay === 'object'
+      ? (program.registrationOverlay as Record<string, unknown>)
+      : undefined
+  const fromCommon = commonInfo.scheduleDetails ?? []
+  const isSchedule =
+    resolveEffectiveGeneralProgramTypeFields({
+      generalProgramAudience: program.generalProgramAudience,
+      generalProgramEducationStructure: program.generalProgramEducationStructure,
+      generalProgramSessionRound: program.generalProgramSessionRound,
+      curriculumSessions: commonInfo.curriculumSessions,
+    }).educationStructure === 'schedule'
+
+  const fromOverlay =
+    isSchedule && overlay
+      ? buildEnrichedScheduleDetails(overlay, extrasFromGeneralProgram(program))
+      : []
+
+  const baseRows = fromCommon.length > 0 ? fromCommon : fromOverlay
+  if (baseRows.length === 0) return []
+
+  return baseRows.map((row, index) => {
+    const overlayIndex = overlayIpsIndexForScheduleDetail(baseRows, index)
+    const overlayRow = fromOverlay[index]
+    const progressTimeSummary =
+      resolveScheduleDetailProgressTimeSummaryForView({
+        progressTimeSummary: row.progressTimeSummary ?? overlayRow?.progressTimeSummary,
+        overlay,
+        overlayIndex,
+      }) ?? row.progressTimeSummary
+    const scheduleDateLabel =
+      resolveScheduleDetailScheduleDateLabelForView({
+        scheduleDateLabel: row.scheduleDateLabel ?? overlayRow?.scheduleDateLabel,
+        overlay,
+        overlayIndex,
+      }) ?? row.scheduleDateLabel
+
+    return {
+      ...row,
+      ...(progressTimeSummary ? { progressTimeSummary } : {}),
+      ...(scheduleDateLabel ? { scheduleDateLabel } : {}),
+    }
+  })
 }
 
 export function resolveGeneralProgramCommonInfo(

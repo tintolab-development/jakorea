@@ -2,7 +2,9 @@
  * 일반 프로그램 상세 — 공통 정보 「정보 수정」 전용 스키마·변환
  */
 
+import dayjs from 'dayjs'
 import { z } from 'zod'
+import { GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import type {
   GeneralProgramParticipantType,
   GeneralProgramSessionRoundKind,
@@ -1143,6 +1145,71 @@ const SCHEDULE_CURRICULUM_IPS_BY_DETAIL_KEY =
   'generalRegistration.educationScheduleCurriculum.ipsByDetailIndex'
 const SCHEDULE_EDUCATION_FORM_BY_DETAIL_KEY =
   'generalRegistration.educationScheduleCurriculum.educationFormByDetail'
+const SCHEDULE_DATE_BY_DETAIL_ISO_KEY =
+  'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso'
+
+function readOverlayIndexRecord<T>(
+  overlay: Record<string, unknown> | undefined,
+  key: string
+): Record<number, T> {
+  if (!overlay) return {}
+  const raw = overlay[key]
+  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return {}
+  const out: Record<number, T> = {}
+  for (const [k, value] of Object.entries(raw as Record<string, unknown>)) {
+    const n = Number(k)
+    if (Number.isFinite(n)) out[n] = value as T
+  }
+  return out
+}
+
+function formatScheduleDateLabelFromIso(iso: string | null | undefined): string | undefined {
+  if (!iso?.trim()) return undefined
+  const d = dayjs(iso)
+  if (!d.isValid()) return iso.trim()
+  const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
+  const yy = d.year() % 100
+  return `${yy}년 ${d.month() + 1}월 ${d.date()}일(${WEEKDAY_KO[d.day()]})`
+}
+
+function overlayGroupTimeSlotsAtIndex(
+  overlay: Record<string, unknown> | undefined,
+  overlayIndex: number
+): Array<{ startTime?: string; endTime?: string }> {
+  const map = readOverlayIndexRecord<Array<{ startTime?: string; endTime?: string } | null>>(
+    overlay,
+    GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY
+  )
+  const slots = map[overlayIndex] ?? []
+  return slots.filter((s): s is { startTime?: string; endTime?: string } => s != null)
+}
+
+/** 일정형 조회 — 행에 진행 시간 요약이 없으면 overlay groupTimes로 보완 */
+export function resolveScheduleDetailProgressTimeSummaryForView(input: {
+  progressTimeSummary?: string
+  overlay?: Record<string, unknown>
+  overlayIndex: number
+}): string | undefined {
+  const fromRow = input.progressTimeSummary?.trim()
+  if (fromRow) return fromRow
+  const slots = overlayGroupTimeSlotsAtIndex(input.overlay, input.overlayIndex).filter(
+    slot => slot.startTime?.trim() && slot.endTime?.trim()
+  )
+  if (slots.length === 0) return undefined
+  return buildScheduleProgressTimeSummary(slots)
+}
+
+/** 일정형 조회 — 행에 진행 일정 라벨이 없으면 overlay scheduleDateByDetailIso로 보완 */
+export function resolveScheduleDetailScheduleDateLabelForView(input: {
+  scheduleDateLabel?: string
+  overlay?: Record<string, unknown>
+  overlayIndex: number
+}): string | undefined {
+  const fromRow = input.scheduleDateLabel?.trim()
+  if (fromRow) return fromRow
+  const dates = readOverlayIndexRecord<string | null>(input.overlay, SCHEDULE_DATE_BY_DETAIL_ISO_KEY)
+  return formatScheduleDateLabelFromIso(dates[input.overlayIndex])
+}
 
 /** 등록 overlay `ipsByDetailIndex` — 사전 교육=0, 본 일정은 1부터 */
 export function overlayIpsIndexForScheduleDetail(
