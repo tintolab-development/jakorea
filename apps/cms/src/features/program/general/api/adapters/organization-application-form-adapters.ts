@@ -49,6 +49,41 @@ function pickAnswer(
   return undefined
 }
 
+/** paragraph id 단위 JSON answers → flat string map (TT basic-info 등) */
+function parseNestedObjectAnswerFields(
+  map: Record<string, string>,
+  paragraphId: string
+): Record<string, string> {
+  const raw = map[paragraphId]?.trim()
+  if (!raw) return {}
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    const out: Record<string, string> = {}
+    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+      if (value == null) continue
+      const text =
+        typeof value === 'string'
+          ? value.trim()
+          : typeof value === 'number' && Number.isFinite(value)
+            ? String(value)
+            : ''
+      if (text) out[key] = text
+    }
+    return out
+  } catch {
+    return {}
+  }
+}
+
+function pickAnswerWithNested(
+  map: Record<string, string>,
+  nested: Record<string, string>,
+  ...keys: string[]
+): string | undefined {
+  return pickAnswer(map, ...keys) ?? pickAnswer(nested, ...keys)
+}
+
 function parseGuidanceRows(map: Record<string, string>): {
   computer?: string
   waiting?: string
@@ -109,18 +144,27 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
 }): ApplicantSchoolRow {
   const { row, formResponse, adminComment } = input
   const map = buildFormAnswerMap(formResponse?.answers)
+  const ttBasic = parseNestedObjectAnswerFields(
+    map,
+    'program-application-trained-teachers-seed-basic-info'
+  )
   const guidance = parseGuidanceRows(map)
 
-  const textbookName = pickAnswer(map, 'textbookName')
+  const textbookName = pickAnswerWithNested(map, ttBasic, 'textbookName')
   const educationGrade =
-    pickAnswer(map, 'applicationGrade', 'grade') ?? row.educationGrade
+    pickAnswerWithNested(map, ttBasic, 'applicationGrade', 'educationGrade', 'grade') ??
+    row.educationGrade
   const region =
-    pickAnswer(map, 'organizationRegion') ?? row.region
+    pickAnswerWithNested(map, ttBasic, 'organizationRegion', 'regionLabel') ?? row.region
   const addressDetail =
-    pickAnswer(map, 'addressDetail') ??
-    pickAnswer(map, 'address', 'organizationAddress')
-  const applicationReason = pickAnswer(map, 'applicationReason')
-  const otherRequests = pickAnswer(map, 'otherRequests')
+    pickAnswerWithNested(map, ttBasic, 'addressDetail', 'detailAddress', 'address', 'organizationAddress')
+  const applicationReason = pickAnswerWithNested(map, ttBasic, 'applicationReason')
+  const otherRequests = pickAnswerWithNested(map, ttBasic, 'otherRequests')
+  const educationType = pickAnswerWithNested(map, ttBasic, 'educationFormat', 'educationType')
+  const teacherName = pickAnswerWithNested(map, ttBasic, 'teacherName')
+  const teacherMobile = pickAnswerWithNested(map, ttBasic, 'teacherMobile', 'teacherPhone')
+  const teacherTel = pickAnswerWithNested(map, ttBasic, 'teacherTel')
+  const teacherEmail = pickAnswerWithNested(map, ttBasic, 'teacherEmail')
   const sexOffenseCheckRequest = pickAnswer(
     map,
     'program-application-institution-seed-sex-offense-consent-submission'
@@ -137,6 +181,12 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
     ...(addressDetail ? { addressDetail } : {}),
     ...(applicationReason ? { applicationReason } : {}),
     ...(otherRequests ? { otherRequests } : {}),
+    ...(educationType ? { educationType } : {}),
+    /** 구조화 필드 우선 — `teacherInfo` 파이프 문자열에 의존하지 않음 */
+    ...(teacherTel ? { teacherPhone: teacherTel } : {}),
+    ...(teacherMobile ? { teacherMobile } : {}),
+    ...(teacherEmail ? { teacherEmail } : {}),
+    teacherInfo: undefined,
     ...(guidance.computer ? { computerInSpace: guidance.computer } : {}),
     ...(guidance.waiting
       ? { waitingPlaceGuide: guidance.waiting, waitingRoom: guidance.waiting }
@@ -153,10 +203,25 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
       ? row.sessions
       : sessionsFromDesiredEducationDate(desiredEducationDate)
 
+  const classCountRaw = pickAnswerWithNested(map, ttBasic, 'classCount')
+  const studentCountRaw = pickAnswerWithNested(map, ttBasic, 'studentCount', 'totalStudents')
+  const classCountParsed = classCountRaw ? Number.parseInt(classCountRaw, 10) : NaN
+  const studentCountParsed = studentCountRaw ? Number.parseInt(studentCountRaw, 10) : NaN
+
   return {
     ...row,
     educationGrade: educationGrade || row.educationGrade,
     region: region || row.region,
+    classCount:
+      Number.isFinite(classCountParsed) && classCountParsed > 0
+        ? classCountParsed
+        : row.classCount,
+    studentCount:
+      Number.isFinite(studentCountParsed) && studentCountParsed > 0
+        ? studentCountParsed
+        : row.studentCount,
+    teacherName: teacherName || row.teacherName,
+    contact: teacherMobile || row.contact,
     sessions,
     detail: Object.keys(detail).length > 0 ? detail : row.detail,
     adminComment: adminComment?.trim() || row.adminComment,

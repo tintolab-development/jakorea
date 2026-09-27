@@ -70,25 +70,56 @@ function buildTeacherInfoCell(
   institution: ApplicantSchoolRow,
   detail: ApplicantInstitutionDetailExtend | undefined
 ): ReactNode {
-  const raw = detail?.teacherInfo?.trim()
-  if (raw) {
+  const name = institution.teacherName?.trim()
+  const phone =
+    detail?.teacherPhone?.trim() ||
+    detail?.teacherMobile?.trim() ||
+    institution.contact?.trim()
+  const mobile =
+    detail?.teacherMobile?.trim() &&
+    detail.teacherMobile.trim() !== phone
+      ? detail.teacherMobile.trim()
+      : undefined
+  const email = detail?.teacherEmail?.trim()
+
+  const segments: string[] = []
+  if (name) segments.push(name)
+  if (phone) {
+    if (/Tel\s*:|M\s*:|E-mail\s*:/i.test(phone)) {
+      segments.push(
+        ...phone
+          .split('|')
+          .map(s => s.trim())
+          .filter(Boolean)
+      )
+    } else {
+      segments.push(`Tel : ${phone}`)
+    }
+  }
+  if (mobile) segments.push(`M : ${mobile}`)
+  if (email) {
+    segments.push(/E-mail\s*:/i.test(email) ? email : `E-mail : ${email}`)
+  }
+
+  if (segments.length === 0) {
+    const raw = detail?.teacherInfo?.trim()
+    if (!raw) return '-'
     const parts = raw
-      .split(' | ')
+      .split('|')
       .map(s => s.trim())
       .filter(Boolean)
     if (parts.length === 0) return '-'
+    if (parts.length === 1) return parts[0]
     return (
       <ProgramDetailTdSegmentWrap>
-        {parts.length === 1 ? parts[0] : withProgramDetailTdDivider(parts)}
+        {withProgramDetailTdDivider(parts)}
       </ProgramDetailTdSegmentWrap>
     )
   }
-  const parts = [institution.teacherName, institution.contact].filter(Boolean) as string[]
-  if (parts.length === 0) return '-'
-  if (parts.length === 1) return parts[0]
+  if (segments.length === 1) return segments[0]
   return (
     <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider(parts)}
+      {withProgramDetailTdDivider(segments)}
     </ProgramDetailTdSegmentWrap>
   )
 }

@@ -4,6 +4,7 @@ import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/genera
 import {
   mapInstructorApplicationDetailToApplicantRow,
   mapOrganizationApplicationDetailToApplicantSchoolRow,
+  softMergeOrganizationApplicationDetailOntoRow,
   mapVolunteerApplicationDetailToApplicantRow,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import {
@@ -27,6 +28,8 @@ import {
   hydrateInstructorApplicationRowFromForm,
   hydrateVolunteerApplicationRowFromForm,
 } from '@/features/program/general/api/adapters/application-form-detail-adapters'
+import { fetchTeacherMemberDetailRemote } from '@/features/user/api/members-api-client'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
@@ -111,8 +114,15 @@ function useApplicationFormAndComments(input: {
 /** 일반 기관 신청 상세 — form_response + admin_comment hydrate */
 export function useOrganizationApplicationDetailEnrichment(
   row: ApplicantSchoolRow | null | undefined,
-  options?: { enabled?: boolean; skipCanonicalDetail?: boolean }
+  options?: {
+    enabled?: boolean
+    skipCanonicalDetail?: boolean
+    /** TT — 상세 GET 하되 목록 SoT는 유지하고 PII·부가 필드만 soft-merge */
+    softMergeDetail?: boolean
+  }
 ): ApplicantSchoolRow | null {
+  const softMerge = options?.softMergeDetail === true
+  const skipDetail = options?.skipCanonicalDetail === true && !softMerge
   const programId = parseProgramId(row?.programId)
   const contextId = parseNumericId(row?.id)
   const detailQuery = useQuery({
@@ -120,7 +130,7 @@ export function useOrganizationApplicationDetailEnrichment(
     queryFn: () => fetchOrganizationApplicationDetailRemote(String(contextId)),
     enabled: Boolean(
       options?.enabled !== false &&
-        options?.skipCanonicalDetail !== true &&
+        !skipDetail &&
         row &&
         shouldUseGeneralApplicationsRemoteApi() &&
         contextId != null
@@ -136,19 +146,58 @@ export function useOrganizationApplicationDetailEnrichment(
     targetType: 'ORGANIZATION_APPLICATION',
   })
 
-  return useMemo(() => {
+  const hydrated = useMemo(() => {
     if (!row) return null
-    const canonical =
-      options?.skipCanonicalDetail !== true && detailQuery.data
-        ? mapOrganizationApplicationDetailToApplicantSchoolRow(detailQuery.data, row)
-        : row
+    const canonical = detailQuery.data
+      ? softMerge
+        ? softMergeOrganizationApplicationDetailOntoRow(detailQuery.data, row)
+        : skipDetail
+          ? row
+          : mapOrganizationApplicationDetailToApplicantSchoolRow(detailQuery.data, row)
+      : row
     if (!formResponse && !adminComment) return canonical
     return hydrateOrganizationApplicationRowFromForm({
       row: canonical,
       formResponse,
       adminComment,
     })
-  }, [row, detailQuery.data, formResponse, adminComment, options?.skipCanonicalDetail])
+  }, [row, detailQuery.data, formResponse, adminComment, softMerge, skipDetail])
+
+  const teacherMemberId = hydrated?.teacherMemberId
+  const needsMemberEmail =
+    softMerge &&
+    teacherMemberId != null &&
+    !(hydrated?.detail?.teacherEmail?.trim())
+
+  const memberEmailQuery = useQuery({
+    queryKey: ['organization-application-teacher-member-email', teacherMemberId],
+    queryFn: async () => {
+      const detail = await fetchTeacherMemberDetailRemote(teacherMemberId!)
+      return detail.member?.email?.trim() || null
+    },
+    enabled: Boolean(
+      options?.enabled !== false &&
+        needsMemberEmail &&
+        isMembersRemoteEnabled() &&
+        teacherMemberId != null
+    ),
+    staleTime: 60_000,
+    retry: false,
+  })
+
+  return useMemo(() => {
+    if (!hydrated) return null
+    const memberEmail = memberEmailQuery.data?.trim()
+    if (!memberEmail || hydrated.detail?.teacherEmail?.trim()) return hydrated
+    return {
+      ...hydrated,
+      detail: {
+        ...hydrated.detail,
+        teacherEmail: memberEmail,
+        teacherInfo: undefined,
+      },
+    }
+  }, [hydrated, memberEmailQuery.data])
 }
 
 /** 일반 강사 신청 상세 — form_response + admin_comment hydrate */

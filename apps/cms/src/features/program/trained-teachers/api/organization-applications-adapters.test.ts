@@ -33,6 +33,22 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     expect(row.preferredScheduleBlocks).toEqual([])
   })
 
+  it('maps teacherMemberId for privacy unmask', () => {
+    const row = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 42,
+        teacherMemberId: 190001,
+        teacherName: '김교사',
+        teacherPhoneMasked: '010-****-1234',
+        applicationStatus: 'WAITING_REVIEW',
+      },
+      0,
+      'p1'
+    )
+    expect(row.teacherMemberId).toBe(190001)
+    expect(row.contact).toBe('010-****-1234')
+  })
+
   it('falls back to organizationName and pending status', () => {
     const row = mapTrainedTeacherOrganizationApplicationToRow(
       {
@@ -49,7 +65,7 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     expect(row.programId).toBe('p1')
   })
 
-  it('maps preferredScheduleBlocks without parsing memo', () => {
+  it('maps preferredScheduleBlocks without putting memo into otherRequests', () => {
     const row = mapTrainedTeacherOrganizationApplicationToRow(
       {
         applicationId: 186311,
@@ -89,11 +105,36 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
       0,
       '186001'
     )
-    expect(row.detail?.otherRequests).toBe('레거시 메모는 blocks로 쓰지 않음')
+    expect(row.desiredEducationPeriod).toBe('레거시 메모는 blocks로 쓰지 않음')
+    expect(row.detail?.otherRequests).toBeUndefined()
     expect(row.preferredScheduleBlocks).toHaveLength(2)
     expect(row.preferredScheduleBlocks?.[0].preferenceRank).toBe(1)
     expect(row.preferredScheduleBlocks?.[0].date).toBe('2026-07-08')
     expect(row.preferredScheduleBlocks?.[0].sessionTimes[0].classPeriod).toBe('1교시')
+  })
+
+  it('maps portal basic-info projection fields onto detail', () => {
+    const row = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 1698006,
+        programId: 186013,
+        educationGrade: '3',
+        addressDetail: '송파구 ○○로 12',
+        applicationReason: '진로 교육 강화',
+        otherRequests: '주차 가능 여부 문의',
+        classCount: 1,
+        studentCount: 11,
+        desiredEducationScheduleMemo: null as unknown as undefined,
+      },
+      0,
+      '186013'
+    )
+    expect(row.educationGrade).toBe('3')
+    expect(row.detail?.addressDetail).toBe('송파구 ○○로 12')
+    expect(row.detail?.applicationReason).toBe('진로 교육 강화')
+    expect(row.detail?.otherRequests).toBe('주차 가능 여부 문의')
+    expect(row.classCount).toBe(1)
+    expect(row.studentCount).toBe(11)
   })
   it('maps progress completeness additive fields (0 is not missing)', () => {
     const row = mapTrainedTeacherOrganizationApplicationToRow(
@@ -123,6 +164,23 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     expect(row.educationJournalCount).toBe(0)
     expect(row.journalSubmitted).toBe(false)
     expect(row.educationCompletionCount).toBe(0)
+  })
+
+  it('maps resultNotificationSentAt and RESEND_NOTIFICATION', () => {
+    const row = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 186311,
+        programId: 186001,
+        schoolName: '서울초',
+        applicationStatus: 'APPROVED',
+        resultNotificationSentAt: '2026-09-27T05:00:00Z',
+        availableActions: ['VIEW', 'RESEND_NOTIFICATION'],
+      },
+      0,
+      'p1'
+    )
+    expect(row.availableActions).toContain('RESEND_NOTIFICATION')
+    expect(row.approvalNotificationSentAt).toBeTruthy()
   })
 })
 
