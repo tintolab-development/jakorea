@@ -26,7 +26,9 @@ import {
   fetchGeminiRecruitmentDetailRemote,
   fetchGeminiRecruitmentsRemotePage,
   rejectGeminiOrganizationApplicationRemote,
+  resendGeminiOrganizationApplicationNotificationRemote,
   updateGeminiRecruitmentRemote,
+  type GeminiOrganizationNotificationResendPayload,
   type GeminiRecruitmentRemoteFilters,
 } from './client'
 
@@ -185,4 +187,17 @@ export async function rejectGeminiOrganizationApplications(
     return
   }
   await bulkRejectGeminiOrganizationApplicationsRemote(numericIds, reason)
+}
+
+export async function resendGeminiOrganizationApplicationNotification(
+  applicationId: string,
+  payload: GeminiOrganizationNotificationResendPayload,
+  idempotencyKey: string
+): Promise<void> {
+  assertRemoteReady()
+  await resendGeminiOrganizationApplicationNotificationRemote(
+    applicationId,
+    payload,
+    idempotencyKey
+  )
 }

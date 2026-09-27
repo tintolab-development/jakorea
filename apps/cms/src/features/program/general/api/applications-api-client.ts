@@ -12,6 +12,8 @@ import type { InstructorApplicationListItemResponse } from '@/shared/api/generat
 import type { InstructorApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationDetailResponse'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
 import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
+import type { OrganizationApplicationNotificationResendRequest as OrganizationApplicationNotificationResendRequestDto } from '@/shared/api/generated/dashboard/schemas/organizationApplicationNotificationResendRequest'
+import type { OrganizationApplicationNotificationResendRequestTiming } from '@/shared/api/generated/dashboard/schemas/organizationApplicationNotificationResendRequestTiming'
 import type { OrganizationApplicationUpdateRequest } from '@/shared/api/generated/dashboard/schemas/organizationApplicationUpdateRequest'
 import type { PageResponseOrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseOrganizationApplicationListItemResponse'
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
@@ -554,6 +556,46 @@ export async function resendIndividualApplicationNotification(
         'Idempotency-Key': idempotencyKey,
       },
     })
+  )
+}
+
+/** OpenAPI `OrganizationApplicationNotificationResendRequest` — FE는 IMMEDIATE|SCHEDULED + nullables를 명시적으로 전송 */
+export type OrganizationApplicationNotificationResendRequest = {
+  timing: OrganizationApplicationNotificationResendRequestTiming
+  scheduledAt: string | null
+  reason: string | null
+}
+
+/**
+ * OpenAPI operationId: resendOrganizationApplicationNotification
+ * Idempotency-Key는 Orval 생성 함수 options로 전달 (헤더 병합).
+ * @see JABACK docs/frontend/general-organization-notification-resend-frontend-handoff-2026-09-27.md
+ */
+export async function resendOrganizationApplicationNotification(
+  applicationId: string,
+  payload: OrganizationApplicationNotificationResendRequest,
+  idempotencyKey: string
+): Promise<ApplicationDecisionResponse> {
+  const numericId = Number(applicationId)
+  if (!Number.isFinite(numericId)) {
+    throw new Error('기관 신청 ID를 확인할 수 없습니다.')
+  }
+  const body: OrganizationApplicationNotificationResendRequestDto = {
+    timing: payload.timing,
+    scheduledAt: payload.scheduledAt,
+    reason: payload.reason,
+  }
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await generalApplicationsDashboardApi.resendOrganizationApplicationNotification(
+      numericId,
+      body,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': idempotencyKey,
+        },
+      }
+    )
   )
 }
 

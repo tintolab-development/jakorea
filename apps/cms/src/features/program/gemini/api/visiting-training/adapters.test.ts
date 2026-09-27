@@ -44,6 +44,8 @@ describe('gemini visiting-training adapters', () => {
         organizationName: '학교',
         applicationStatus: 'APPROVED',
         requestedStudentCount: 30,
+        resultNotificationSentAt: '2026-09-27T05:00:00Z',
+        availableActions: ['RESEND_NOTIFICATION'],
       },
       2
     )
@@ -51,6 +53,8 @@ describe('gemini visiting-training adapters', () => {
     expect(app.no).toBe(3)
     expect(app.approvalStatus).toBe('APPROVED')
     expect(app.studentCount).toBe(30)
+    expect(app.availableActions).toContain('RESEND_NOTIFICATION')
+    expect(app.resultNotificationSentAt).toBe('2026-09-27T05:00:00Z')
   })
 
   it('maps approved list with gaps filled by defaults', () => {

@@ -19,6 +19,7 @@ import {
   rejectGeneralInstructorApplication,
   rejectGeneralOrganizationApplication,
   resendGeneralInstructorApplicationNotification,
+  resendGeneralOrganizationApplicationNotification,
   submitGeneralIndividualDocumentResult,
   submitGeneralIndividualDocumentResultBulk,
 } from '@/features/program/general/api/admin-applications-service'
@@ -185,6 +186,7 @@ export function useGeneralProgramApplicationsRemoteSync({
     cancelInstructorApproval: cancelGeneralInstructorApplicationApproval,
     cancelInstructorRejection: cancelGeneralInstructorApplicationRejection,
     resendInstructorNotification: resendGeneralInstructorApplicationNotification,
+    resendOrganizationNotification: resendGeneralOrganizationApplicationNotification,
     approveIndividual: approveGeneralIndividualApplication,
     rejectIndividual: rejectGeneralIndividualApplication,
     submitIndividualDocumentResult: submitGeneralIndividualDocumentResult,

@@ -7,6 +7,8 @@ import {
   fetchTrainedTeacherOrganizationApplicationRemote,
   fetchTrainedTeacherOrganizationApplicationsRemote,
   rejectTrainedTeacherOrganizationApplicationRemote,
+  resendTrainedTeacherOrganizationApplicationNotificationRemote,
+  type TrainedTeacherOrganizationNotificationResendPayload,
 } from './organization-applications-client'
 
 function assertRemoteReady(): void {
@@ -52,4 +54,19 @@ export async function rejectTrainedTeacherOrganizationApplication(
 ): Promise<void> {
   assertRemoteReady()
   await rejectTrainedTeacherOrganizationApplicationRemote(programId, applicationId, payload)
+}
+
+export async function resendTrainedTeacherOrganizationApplicationNotification(
+  programId: string,
+  applicationId: string,
+  payload: TrainedTeacherOrganizationNotificationResendPayload,
+  idempotencyKey: string
+): Promise<void> {
+  assertRemoteReady()
+  await resendTrainedTeacherOrganizationApplicationNotificationRemote(
+    programId,
+    applicationId,
+    payload,
+    idempotencyKey
+  )
 }
