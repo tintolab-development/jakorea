@@ -356,38 +356,22 @@ export function UjatBasicInfoParagraph({
             view="-"
           />
         </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="프로그램 관리명"
-            fullRow
             edit={
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 8,
-                  width: '100%',
-                }}
-              >
-                <CmsInput
-                  inputSize="medium"
-                  value={programManagementName}
-                  onChange={e => setProgramManagementName(e.target.value)}
-                  placeholder="프로그램 관리명을 입력하세요"
-                  width="100%"
-                />
-                <span className="form-editor-template-field-hint-text">
-                  UJAT 프로그램 목록에 노출될 프로그램명 작성 (모집 공고에 노출 X)
-                </span>
-              </div>
+              <CmsInput
+                inputSize="medium"
+                value={programManagementName}
+                onChange={e => setProgramManagementName(e.target.value)}
+                placeholder="프로그램 관리명을 입력하세요"
+                width="100%"
+              />
             }
             view="-"
           />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="세부 프로그램명"
-            fullRow
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect

@@ -3,6 +3,9 @@
  * (일반·1사1교 공통 3종과 분리. 만족도는 봉사단/학교로 나뉨)
  */
 
+import type { GeneralProgramSurveyMenuKey } from '@/types/domain'
+import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
+
 export const UJAT_REGISTRATION_SURVEY_ITEM_IDS = [
   'survey',
   'volunteer_satisfaction',
@@ -74,4 +77,42 @@ export function resolveUjatSurveyItemsText(
     id => UJAT_REGISTRATION_SURVEY_ITEM_LABELS[id]
   )
   return labels.length > 0 ? labels.join(', ') : '-'
+}
+
+const SATISFACTION_ALIASES = new Set([
+  'satisfaction',
+  'student_satisfaction',
+  'teacher_satisfaction',
+  'volunteer_satisfaction',
+  'school_satisfaction',
+])
+
+/** BE `generalSurveyMenuKeys` → UJAT overlay `ujat.basicInfo.surveyItems` */
+export function ujatSurveyItemsFromProgramKeys(
+  keys: readonly string[] | undefined
+): Record<UjatSurveyRowId, boolean> {
+  const set = new Set(keys ?? [])
+  const combinedSatisfaction = [...set].some(key => SATISFACTION_ALIASES.has(key))
+  return {
+    survey: set.has('survey'),
+    volunteer_satisfaction: set.has('volunteer_satisfaction') || combinedSatisfaction,
+    school_satisfaction: set.has('school_satisfaction') || combinedSatisfaction,
+    lecture_evaluation: set.has('lecture_evaluation'),
+  }
+}
+
+/** UJAT overlay 설문 체크 → PATCH `generalSurveyMenuKeys` (공통 3종 envelope) */
+export function ujatGeneralSurveyMenuKeysFromOverlay(
+  overlay: Record<string, unknown>
+): GeneralProgramSurveyMenuKey[] | undefined {
+  if (!Object.prototype.hasOwnProperty.call(overlay, 'ujat.basicInfo.surveyItems')) {
+    return undefined
+  }
+  const items = readUjatSurveyItems(overlay['ujat.basicInfo.surveyItems'], createUjatSurveyItemsDefault(false))
+  const rawKeys: string[] = []
+  if (items.survey) rawKeys.push('survey')
+  if (items.volunteer_satisfaction) rawKeys.push('volunteer_satisfaction')
+  if (items.school_satisfaction) rawKeys.push('school_satisfaction')
+  if (items.lecture_evaluation) rawKeys.push('lecture_evaluation')
+  return normalizeGeneralSurveyMenuKeys(rawKeys)
 }

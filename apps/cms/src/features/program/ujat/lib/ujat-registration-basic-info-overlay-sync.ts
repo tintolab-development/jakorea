@@ -2,10 +2,11 @@ import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
 import {
   createUjatRegistrationBasicInfoOverlayDefaults,
-  createUjatSurveyItemsDefault,
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
+import { ujatSurveyItemsFromProgramKeys } from '@/features/program/ujat/lib/registration-survey-items'
+import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import { buildUjatHalfEducationScheduleOverlayDefaults } from '@/features/program/ujat/lib/ujat-half-education-schedule-display'
 import { buildUjatEducationScheduleSettingsOverlayDefaults } from '@/features/program/ujat/lib/ujat-education-schedule-settings-display'
@@ -18,7 +19,10 @@ import {
   getUjatProgramRegistrationOverlayRecord,
   patchUjatProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
-import { TEMPLATE_FORM_BUSINESS_AREA_OPTIONS } from '@/features/template/lib/template-form-select-options'
+import {
+  TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
+  TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+} from '@/features/template/lib/template-form-select-options'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   isSponsorContactUnselected,
@@ -64,17 +68,22 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
   program: Program
 ): Record<string, unknown> {
   const defaults = createUjatRegistrationBasicInfoOverlayDefaults()
+  const topLevelDetailedName = program.generalCommonInfo?.detailedProgramName?.trim()
   const detailedProgramId =
     program.detailedProgramId?.trim() ||
-    (program.teamDivision?.trim() === UJAT_DETAILED_PROGRAM_UJAT_LABEL
-      ? UJAT_DETAILED_PROGRAM_UJAT_VALUE
-      : defaults.detailedProgramId)
+    (topLevelDetailedName === '해당없음'
+      ? TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+      : program.teamDivision?.trim() === UJAT_DETAILED_PROGRAM_UJAT_LABEL
+        ? UJAT_DETAILED_PROGRAM_UJAT_VALUE
+        : defaults.detailedProgramId)
   // id만 복원하고 name을 비워두면 편집 재개 시 세부 프로그램명이 어긋날 수 있다 — 항상 짝지어 복원한다.
   const detailedProgramName =
-    program.generalCommonInfo?.detailedProgramName?.trim() ||
-    (detailedProgramId === UJAT_DETAILED_PROGRAM_UJAT_VALUE
-      ? UJAT_DETAILED_PROGRAM_UJAT_LABEL
-      : undefined)
+    topLevelDetailedName ||
+    (detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+      ? '해당없음'
+      : detailedProgramId === UJAT_DETAILED_PROGRAM_UJAT_VALUE
+        ? UJAT_DETAILED_PROGRAM_UJAT_LABEL
+        : undefined)
 
   const operationRangeSeal =
     program.startDate && program.endDate
@@ -109,7 +118,7 @@ export function buildUjatRegistrationBasicInfoOverlayFromProgram(
     'ujat.basicInfo.participant.organization': defaults.participantOrganization,
     'ujat.basicInfo.participant.teacher': defaults.participantTeacher,
     'ujat.basicInfo.participant.volunteer': defaults.participantVolunteer,
-    'ujat.basicInfo.surveyItems': createUjatSurveyItemsDefault(),
+    'ujat.basicInfo.surveyItems': ujatSurveyItemsFromProgramKeys(program.generalSurveyMenuKeys),
     'ujat.kpi.participantCount': program.generalCommonInfo?.kpi?.finalParticipants ?? null,
     'ujat.kpi.instructor': null,
     'ujat.kpi.volunteer': program.generalCommonInfo?.kpi?.volunteerCount ?? null,
@@ -158,6 +167,136 @@ export function seedUjatRegistrationBasicInfoOverlayFromProgram(program: Program
 
 export function readUjatRegistrationBasicInfoOverlayForSave(): Record<string, unknown> {
   return { ...getUjatProgramRegistrationOverlayRecord() }
+}
+
+/** 상세·모집 저장 시 draft에 세션 overlay를 실어 serviceDetailJson round-trip에 반영 */
+export function buildUjatProgramDraftWithSessionOverlay(draft: Program): Program {
+  return {
+    ...draft,
+    ujatRegistrationOverlay: touchUjatRegistrationOperationAnchorFromRangeSeal(
+      readUjatRegistrationBasicInfoOverlayForSave()
+    ),
+  }
+}
+
+export type UjatApiOverlayReconcileInput = {
+  mainTitle?: string | null
+  titleEn?: string | null
+  title?: string | null
+  businessArea?: string | null
+  sponsorId?: string | null
+  educationProcess?: string | null
+  ipOwned?: string | null
+  courseDeliveredBy?: string | null
+  ips?: Program['ips']
+  partnerInvolvement?: boolean | null
+  startDate?: string | null
+  endDate?: string | null
+  detailedProgramName?: string | null
+  detailedProgramId?: string | number | null
+  generalSurveyMenuKeys?: readonly string[]
+  sponsorManagerContactIds?: readonly string[]
+  sponsorManagerLine?: string | null
+}
+
+/** GET 응답 top-level·envelope 값으로 stale registration.overlay 보정 */
+export function reconcileUjatRegistrationOverlayFromApi(
+  dto: UjatApiOverlayReconcileInput,
+  overlay: Record<string, unknown>
+): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...overlay }
+
+  if (dto.mainTitle?.trim()) {
+    next['ujat.basicInfo.repKo'] = dto.mainTitle.trim()
+  }
+  if (dto.titleEn?.trim()) {
+    next['ujat.basicInfo.repEn'] = dto.titleEn.trim()
+  }
+  if (dto.title?.trim()) {
+    next['ujat.basicInfo.programManagementName'] = dto.title.trim()
+  }
+  if (dto.detailedProgramName?.trim() === '해당없음') {
+    next['ujat.basicInfo.detailedProgramId'] = TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+    next['ujat.basicInfo.detailedProgramName'] = '해당없음'
+  }
+  if (dto.businessArea?.trim()) {
+    next['ujat.basicInfo.businessField'] = reverseBusinessField(dto.businessArea)
+  }
+  if (dto.sponsorId?.trim()) {
+    next['ujat.basicInfo.sponsorId'] = dto.sponsorId.trim()
+  }
+  if (dto.educationProcess?.trim()) {
+    next['ujat.basicInfo.educationCourse'] = dto.educationProcess.trim()
+  }
+  if (dto.ipOwned) {
+    next['ujat.basicInfo.ipOwned'] = reverseIpOwned(dto.ipOwned)
+  }
+  if (dto.courseDeliveredBy) {
+    next['ujat.basicInfo.courseDeliveredBy'] = reverseIpOwned(dto.courseDeliveredBy)
+  }
+  if (dto.ips) {
+    next['ujat.basicInfo.ipsCategory'] = reverseIps(dto.ips)
+  }
+  if (dto.partnerInvolvement != null) {
+    next['ujat.basicInfo.partnerInvolvement'] = reversePartnerInvolvement(dto.partnerInvolvement)
+  }
+  if (dto.startDate && dto.endDate) {
+    next['ujat.basicInfo.operationRangeSeal'] = {
+      start: String(dto.startDate),
+      end: String(dto.endDate),
+    }
+  }
+  if (dto.generalSurveyMenuKeys?.length) {
+    next['ujat.basicInfo.surveyItems'] = ujatSurveyItemsFromProgramKeys(dto.generalSurveyMenuKeys)
+  }
+  const managerLine = dto.sponsorManagerLine?.trim()
+  if (managerLine) {
+    next['ujat.basicInfo.sponsorManagerName'] = managerLine
+  }
+  if (dto.sponsorManagerContactIds?.length) {
+    const contactIds = resolveSponsorContactIdsForEdit({
+      ids: [...dto.sponsorManagerContactIds],
+      managerLine: managerLine ?? '',
+    })
+    next['ujat.basicInfo.sponsorContactIds'] = contactIds
+    next['ujat.basicInfo.sponsorContactId'] = contactIds[0] ?? ''
+  }
+
+  return next
+}
+
+/** ProgramResponse + serviceDetail 파싱 결과로 overlay reconcile */
+export function reconcileUjatRegistrationOverlayFromProgramResponse(
+  dto: ProgramResponse,
+  overlay: Record<string, unknown>,
+  extras?: {
+    generalSurveyMenuKeys?: readonly string[]
+    sponsorManagerContactIds?: readonly string[]
+    sponsorManagerLine?: string | null
+  }
+): Record<string, unknown> {
+  return reconcileUjatRegistrationOverlayFromApi(
+    {
+      mainTitle: dto.mainTitle,
+      titleEn: dto.titleEn,
+      title: dto.title,
+      businessArea: dto.businessArea,
+      sponsorId: dto.sponsorId,
+      educationProcess: dto.educationProcess,
+      ipOwned: dto.ipOwned,
+      courseDeliveredBy: dto.courseDeliveredBy,
+      ips: dto.ips as Program['ips'],
+      partnerInvolvement: dto.partnerInvolvement,
+      startDate: dto.startDate,
+      endDate: dto.endDate,
+      detailedProgramName: dto.detailedProgramName,
+      detailedProgramId: dto.detailedProgramId,
+      generalSurveyMenuKeys: extras?.generalSurveyMenuKeys,
+      sponsorManagerContactIds: extras?.sponsorManagerContactIds,
+      sponsorManagerLine: extras?.sponsorManagerLine,
+    },
+    overlay
+  )
 }
 
 /** 수정 저장 시 overlay 앵커 날짜 동기화 */

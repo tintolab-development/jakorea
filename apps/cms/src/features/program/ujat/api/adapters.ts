@@ -21,6 +21,7 @@ import {
 import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
+import { reconcileUjatRegistrationOverlayFromProgramResponse } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
 import {
   parseRegistrationOverlay,
   parseServiceDetail,
@@ -144,28 +145,10 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     periodStatus?: string
     remarks?: string
   }
-  const overlay = parseRegistrationOverlay(dto.serviceDetailJson)
-  const title =
-    overlayText(overlay, 'ujat.basicInfo.programManagementName') ||
-    dto.title?.trim() ||
-    dtoExt.nameKo?.trim() ||
-    overlayText(overlay, 'ujat.basicInfo.repKo') ||
-    dto.mainTitle?.trim() ||
-    '제목 없음'
+  const rawOverlay = parseRegistrationOverlay(dto.serviceDetailJson)
   const timestamp = now()
   const details = parseServiceDetail(dto.serviceDetailJson)
   const extras = parseUjatServiceDetailExtras(dto.serviceDetailJson)
-  const periodStatus = dtoExt.periodStatus
-  const ujatProgressStatus = resolveUjatProgressStatus({
-    ujatProgressStatus: details.ujatProgressStatus,
-    periodStatus,
-    primaryFallback: resolveUjatPrimaryProgressById(id),
-  })
-  const lifecycleStatus =
-    (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
-    mapPeriodStatusToLifecycle(periodStatus) ??
-    'planned'
-
   const surveyKeys =
     details.generalSurveyMenuKeys ??
     extras.surveyMenuKeys ??
@@ -176,6 +159,29 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
     dto.detailedProgramName?.trim()
       ? { ...details.generalCommonInfo, detailedProgramName: dto.detailedProgramName.trim() }
       : details.generalCommonInfo
+
+  const overlay = reconcileUjatRegistrationOverlayFromProgramResponse(dto, rawOverlay, {
+    generalSurveyMenuKeys: surveyKeys,
+    sponsorManagerContactIds: generalCommonInfo?.sponsorManagerContactIds,
+    sponsorManagerLine: generalCommonInfo?.sponsorManagerLine,
+  })
+  const title =
+    dto.title?.trim() ||
+    dtoExt.nameKo?.trim() ||
+    overlayText(overlay, 'ujat.basicInfo.programManagementName') ||
+    overlayText(overlay, 'ujat.basicInfo.repKo') ||
+    dto.mainTitle?.trim() ||
+    '제목 없음'
+  const periodStatus = dtoExt.periodStatus
+  const ujatProgressStatus = resolveUjatProgressStatus({
+    ujatProgressStatus: details.ujatProgressStatus,
+    periodStatus,
+    primaryFallback: resolveUjatPrimaryProgressById(id),
+  })
+  const lifecycleStatus =
+    (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
+    mapPeriodStatusToLifecycle(periodStatus) ??
+    'planned'
 
   const mapped = applyResolvedAnnouncementTitle(
     {
@@ -251,6 +257,10 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       attachmentFileNames: dto.attachmentFileNames,
       otherNotes: details.otherNotes ?? dtoExt.remarks,
       generalSurveyMenuKeys: surveyKeys as Program['generalSurveyMenuKeys'],
+      generalProgramEducationStructure:
+        String(dto.educationStructure ?? '').toUpperCase() === 'CURRICULUM'
+          ? 'curriculum'
+          : 'schedule',
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
     }),

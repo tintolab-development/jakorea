@@ -20,10 +20,12 @@ import { programToDetailEditValues } from '@/features/program/shared/model/progr
 import { applyUjatRegistrationOverlayToProgram } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import { syncUjatDetailEditFormKpiToOverlay } from '@/features/program/ujat/lib/detail-edit-form-kpi-to-overlay'
 import {
+  buildUjatProgramDraftWithSessionOverlay,
   readUjatRegistrationBasicInfoOverlayForSave,
   seedUjatRegistrationBasicInfoOverlayFromProgram,
   touchUjatRegistrationOperationAnchorFromRangeSeal,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
+import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 import { ProgramManagersTab } from '@/features/program/general/ui/detail-modal/managers/program-managers-tab'
 import { UjatInstitutionApplicationList } from './application-institution/list/list'
 import { UjatInstitutionApplicationDetailPage } from './application-institution/detail/detail-page'
@@ -1086,10 +1088,11 @@ export function UjatProgramDetailFullPageModal({
         displayProgram && updateProgram
           ? async (draft, patch) => {
               try {
+                const draftWithOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
                 if (onUpdateProgram) {
-                  await onUpdateProgram(draft.id, draft, patch)
+                  await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, patch)
                 } else {
-                  await updateProgram(draft.id, patch)
+                  await updateProgram(draftWithOverlay.id, draftWithOverlay)
                 }
                 const next = new URLSearchParams(searchParams)
                 next.delete(EDIT_PARAM)
@@ -1124,15 +1127,28 @@ export function UjatProgramDetailFullPageModal({
   }, [activeTab, displayProgram, infoResetToProgram, setEditMode])
 
   const handleInfoSave = useCallback(async () => {
-    if (displayProgram) {
-      syncUjatDetailEditFormKpiToOverlay(infoForm.getValues())
-      const overlay = touchUjatRegistrationOperationAnchorFromRangeSeal(
-        readUjatRegistrationBasicInfoOverlayForSave()
-      )
-      const mergedProgram = applyUjatRegistrationOverlayToProgram(displayProgram, overlay)
-      infoForm.reset(programToDetailEditValues(mergedProgram))
-    }
     if (!displayProgram) return
+    syncUjatDetailEditFormKpiToOverlay(infoForm.getValues())
+    let overlay = touchUjatRegistrationOperationAnchorFromRangeSeal(
+      readUjatRegistrationBasicInfoOverlayForSave()
+    )
+    // 일정형: 수정 UI와 동일하게 세부 프로그램명을「해당없음」으로 고정해 overlay·PATCH에 실는다.
+    if (displayProgram.generalProgramEducationStructure !== 'curriculum') {
+      overlay = {
+        ...overlay,
+        'ujat.basicInfo.detailedProgramId': TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+        'ujat.basicInfo.detailedProgramName': '해당없음',
+      }
+      patchUjatProgramRegistrationOverlay({
+        'ujat.basicInfo.detailedProgramId': TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+        'ujat.basicInfo.detailedProgramName': '해당없음',
+      })
+    }
+    const mergedProgram: Program = {
+      ...applyUjatRegistrationOverlayToProgram(displayProgram, overlay),
+      ujatRegistrationOverlay: overlay,
+    }
+    infoForm.reset(programToDetailEditValues(mergedProgram))
     const ok = await infoTriggerSave()
     if (ok) setEditMode(null)
   }, [displayProgram, infoForm, infoTriggerSave, setEditMode])
@@ -1174,11 +1190,12 @@ export function UjatProgramDetailFullPageModal({
       displayProgram && updateProgram
         ? async (draft, patch) => {
             try {
-                if (onUpdateProgram) {
-                  await onUpdateProgram(draft.id, draft, patch)
-                } else {
-                  await updateProgram(draft.id, patch)
-                }
+              const draftWithOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
+              if (onUpdateProgram) {
+                await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, patch)
+              } else {
+                await updateProgram(draftWithOverlay.id, draftWithOverlay)
+              }
               const next = new URLSearchParams(searchParams)
               next.delete(EDIT_PARAM)
               if (programId) next.set('programId', programId)
@@ -1206,11 +1223,12 @@ export function UjatProgramDetailFullPageModal({
       displayProgram && updateProgram
         ? async (draft, patch) => {
             try {
-                if (onUpdateProgram) {
-                  await onUpdateProgram(draft.id, draft, patch)
-                } else {
-                  await updateProgram(draft.id, patch)
-                }
+              const draftWithOverlay = buildUjatProgramDraftWithSessionOverlay(draft)
+              if (onUpdateProgram) {
+                await onUpdateProgram(draftWithOverlay.id, draftWithOverlay, patch)
+              } else {
+                await updateProgram(draftWithOverlay.id, draftWithOverlay)
+              }
               const next = new URLSearchParams(searchParams)
               next.delete(EDIT_PARAM)
               if (programId) next.set('programId', programId)

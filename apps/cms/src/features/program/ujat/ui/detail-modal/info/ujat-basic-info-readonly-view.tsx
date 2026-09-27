@@ -58,11 +58,9 @@ export function UjatBasicInfoReadonlyView({
           <DetailInfoForm.Field label="대표 프로그램명 (국문)" view={display.repKo} />
           <DetailInfoForm.Field label="대표 프로그램명 (영문)" view={display.repEn} />
         </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field label="프로그램 관리명" fullRow view={display.programManagementName} />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field label="세부 프로그램명" fullRow view={display.detailedProgramName} />
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field label="프로그램 관리명" view={display.programManagementName} />
+          <DetailInfoForm.Field label="세부 프로그램명" view={display.detailedProgramName} />
         </DetailInfoForm.Row>
       </DetailInfoForm>
 

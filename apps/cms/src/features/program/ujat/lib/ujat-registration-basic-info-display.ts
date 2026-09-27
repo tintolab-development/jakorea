@@ -12,9 +12,11 @@ import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/l
 import {
   readUjatSurveyItems,
   resolveUjatSurveyItemsText,
+  ujatGeneralSurveyMenuKeysFromOverlay,
   UJAT_REGISTRATION_SURVEY_ITEM_LABELS,
   UJAT_SURVEY_MENU_KEY_BY_ITEM,
 } from '@/features/program/ujat/lib/registration-survey-items'
+import { resolveSponsorContactIdsForEdit } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import {
   readUjatWagePaymentItemValuesFromOverlay,
   resolveUjatWageDeductionLabel,
@@ -252,12 +254,27 @@ export function resolveUjatRegistrationBasicInfoDisplay(
     program.generalCommonInfo?.sponsorManagerLine?.trim() ||
     '-'
 
+  // 일정형(UJAT 기본·수정 잠금과 동일): stale overlay의 봉사단 세부명을 무시하고「해당없음」.
+  // 커리큘럼형: BE top-level detailedProgramName / detailedProgramId를 overlay보다 우선.
+  const isScheduleStructure = program.generalProgramEducationStructure !== 'curriculum'
+  const topLevelDetailedName = program.generalCommonInfo?.detailedProgramName?.trim()
+  const detailedProgramName = (() => {
+    if (isScheduleStructure) return '해당없음'
+    if (topLevelDetailedName === '해당없음' || !program.detailedProgramId?.trim()) {
+      if (topLevelDetailedName === '해당없음') return '해당없음'
+    }
+    if (topLevelDetailedName && program.detailedProgramId?.trim()) {
+      return topLevelDetailedName
+    }
+    return resolveDetailedProgramName(detailedProgramId)
+  })()
+
   return {
     repKo,
     repEn,
     programManagementName,
     publicProgramTitle,
-    detailedProgramName: resolveDetailedProgramName(detailedProgramId),
+    detailedProgramName,
     operationRange: resolveOperationRange(operationSeal, program),
     participantTypes: resolveParticipantTypes(overlay, defaults),
     businessField: optionLabel(TEMPLATE_FORM_BUSINESS_AREA_OPTIONS, businessField),
@@ -330,7 +347,9 @@ export function applyUjatRegistrationOverlayToProgram(
   const teamDivision =
     detailedProgramId === UJAT_DETAILED_PROGRAM_UJAT_VALUE
       ? UJAT_DETAILED_PROGRAM_UJAT_LABEL
-      : program.teamDivision
+      : detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+        ? undefined
+        : program.teamDivision
 
   const paymentItemIds = readUjatWagePaymentItemValuesFromOverlay(overlayInput)
   const paymentItemsLabel = ujatPaymentItemLabelsFromIds(paymentItemIds)
@@ -339,6 +358,15 @@ export function applyUjatRegistrationOverlayToProgram(
   const sponsorManagerLine =
     overlayString(overlayInput, 'ujat.basicInfo.sponsorManagerName')?.trim() ||
     program.generalCommonInfo?.sponsorManagerLine
+  const sponsorContactIds = resolveSponsorContactIdsForEdit({
+    ids: Array.isArray(overlayInput['ujat.basicInfo.sponsorContactIds'])
+      ? (overlayInput['ujat.basicInfo.sponsorContactIds'] as unknown[]).map(String)
+      : undefined,
+    id: overlayString(overlayInput, 'ujat.basicInfo.sponsorContactId') ?? undefined,
+    managerLine: sponsorManagerLine ?? '',
+  })
+  const generalSurveyMenuKeys =
+    ujatGeneralSurveyMenuKeysFromOverlay(overlayInput) ?? program.generalSurveyMenuKeys
   const overlayKpi = {
     finalParticipants: overlayNullableNumber(overlayInput, 'ujat.kpi.participantCount'),
     instructorCount: overlayNullableNumber(overlayInput, 'ujat.kpi.instructor'),
@@ -365,6 +393,7 @@ export function applyUjatRegistrationOverlayToProgram(
     partnerInvolvement,
     startDate,
     endDate,
+    generalSurveyMenuKeys,
     generalCommonInfo: {
       ...program.generalCommonInfo,
       detailedProgramName,
@@ -372,6 +401,12 @@ export function applyUjatRegistrationOverlayToProgram(
       deductionItems: deductionItemsLabel,
       ...(announcementTitle ? { announcementTitle } : {}),
       sponsorManagerLine,
+      sponsorManagerContactIds:
+        sponsorContactIds.length > 0
+          ? sponsorContactIds
+          : program.generalCommonInfo?.sponsorManagerContactIds,
+      sponsorManagerContactId:
+        sponsorContactIds[0] ?? program.generalCommonInfo?.sponsorManagerContactId,
       kpi: {
         finalParticipants: overlayKpi.finalParticipants ?? prevKpi?.finalParticipants ?? 0,
         instructorCount: overlayKpi.instructorCount ?? prevKpi?.instructorCount ?? 0,
