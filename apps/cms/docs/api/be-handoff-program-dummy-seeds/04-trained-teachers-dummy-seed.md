@@ -19,6 +19,9 @@ VITE_TRAINED_TEACHER_PROGRAMS_REMOTE_ENABLED=true
 > **없음:** 강사 신청 LNB · 봉사자 · 일반 students/attendance 탭.  
 > **있음:** 기관 신청 · 참여 기관 · **교육일지** · performance-summary.
 
+**설문·만족도 LNB 전 케이스** (none / single / pair / full / nav-disable / 본문 empty·진행전·응답):  
+→ [trained-teacher-survey-lnb-cases-dummy-seed-backend-prompt-2026-09-27.md](../trained-teacher-survey-lnb-cases-dummy-seed-backend-prompt-2026-09-27.md) (`TT-S-01`~). 본 문서 TT-01~08은 공통정보·일지 중심이며 설문 매트릭스 SSOT가 아니다.
+
 BE local demo `164041`/`164042` 및 교육일지 PDF 2건이 있으면 TT 시드와 연결.
 
 ---
