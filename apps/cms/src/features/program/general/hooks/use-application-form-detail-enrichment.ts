@@ -111,7 +111,7 @@ function useApplicationFormAndComments(input: {
 /** 일반 기관 신청 상세 — form_response + admin_comment hydrate */
 export function useOrganizationApplicationDetailEnrichment(
   row: ApplicantSchoolRow | null | undefined,
-  options?: { enabled?: boolean }
+  options?: { enabled?: boolean; skipCanonicalDetail?: boolean }
 ): ApplicantSchoolRow | null {
   const programId = parseProgramId(row?.programId)
   const contextId = parseNumericId(row?.id)
@@ -120,6 +120,7 @@ export function useOrganizationApplicationDetailEnrichment(
     queryFn: () => fetchOrganizationApplicationDetailRemote(String(contextId)),
     enabled: Boolean(
       options?.enabled !== false &&
+        options?.skipCanonicalDetail !== true &&
         row &&
         shouldUseGeneralApplicationsRemoteApi() &&
         contextId != null
@@ -137,16 +138,17 @@ export function useOrganizationApplicationDetailEnrichment(
 
   return useMemo(() => {
     if (!row) return null
-    const canonical = detailQuery.data
-      ? mapOrganizationApplicationDetailToApplicantSchoolRow(detailQuery.data, row)
-      : row
+    const canonical =
+      options?.skipCanonicalDetail !== true && detailQuery.data
+        ? mapOrganizationApplicationDetailToApplicantSchoolRow(detailQuery.data, row)
+        : row
     if (!formResponse && !adminComment) return canonical
     return hydrateOrganizationApplicationRowFromForm({
       row: canonical,
       formResponse,
       adminComment,
     })
-  }, [row, detailQuery.data, formResponse, adminComment])
+  }, [row, detailQuery.data, formResponse, adminComment, options?.skipCanonicalDetail])
 }
 
 /** 일반 강사 신청 상세 — form_response + admin_comment hydrate */

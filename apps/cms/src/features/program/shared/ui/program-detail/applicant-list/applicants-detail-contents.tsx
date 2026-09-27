@@ -531,8 +531,12 @@ export function ApplicantsDetailContents({
 
   const institutionRow = isInstitution ? (data as ApplicantSchoolRow) : null
   const instructorRow = isInstructor ? (data as ApplicantInstructorRow) : null
+  const isCompanySchool = isCompanySchoolProgram(program)
+  const isTrainedTeachers = isTrainedTeachersDetailProgram(program ?? null)
   const institutionData = useOrganizationApplicationDetailEnrichment(institutionRow, {
     enabled: isGeneralDetail,
+    /** TT 목록 SoT(preferredScheduleBlocks·학급/인원)를 일반 기관 detail 로 덮지 않음 */
+    skipCanonicalDetail: isTrainedTeachers,
   })
   const instructorData = useInstructorApplicationDetailEnrichment(instructorRow, {
     enabled: isGeneralDetail,
@@ -571,14 +575,14 @@ export function ApplicantsDetailContents({
 
   const queryClient = useQueryClient()
   const programId = program?.id
-  const isCompanySchool = isCompanySchoolProgram(program)
-  const mergeGroupsQuery = useOrganizationMergeGroups(
-    programId,
+  /** 합반은 GENERAL_ORGANIZATION 전용 — TT·1사1교에서 호출하면 PROGRAM_TYPE_REQUIRED */
+  const mergeGroupsEnabled =
     isGeneralDetail &&
-      isInstitution &&
-      !isCompanySchool &&
-      shouldUseOrganizationMergeGroupsRemoteApi()
-  )
+    isInstitution &&
+    !isCompanySchool &&
+    !isTrainedTeachers &&
+    shouldUseOrganizationMergeGroupsRemoteApi()
+  const mergeGroupsQuery = useOrganizationMergeGroups(programId, mergeGroupsEnabled)
   const institutionMergeView = useMemo(() => {
     if (!institutionData || !mergeGroupsQuery.data?.length) return null
     return resolveCombinedClassMergeViewState(
@@ -630,7 +634,7 @@ export function ApplicantsDetailContents({
       onInstitutionDetailSaved?.(rows)
     },
     onSaveCombinedClass:
-      !isCompanySchool && shouldUseOrganizationMergeGroupsRemoteApi()
+      !isCompanySchool && !isTrainedTeachers && shouldUseOrganizationMergeGroupsRemoteApi()
         ? handleSaveInstitutionCombinedClass
         : undefined,
     combinedClassReadOnly: institutionMergeView?.isLead === false,

@@ -242,7 +242,10 @@ export function ParticipatingInstitutionsSection({
   const progressRemoteEnabled = useProgramProgressRemoteEnabledForSurface(resolvedProgramId)
   const mergeGroupsQuery = useOrganizationMergeGroups(
     resolvedProgramId,
-    progressRemoteEnabled && !isCompanySchool && shouldUseOrganizationMergeGroupsRemoteApi()
+    progressRemoteEnabled &&
+      !isCompanySchool &&
+      !isTrainedTeachersSurface &&
+      shouldUseOrganizationMergeGroupsRemoteApi()
   )
 
   /** URL schoolId로 선택된 학교 행 (인라인 상세 뷰용) */
@@ -261,7 +264,8 @@ export function ParticipatingInstitutionsSection({
       combinedClassApplication: '신청' | '미신청'
       combinedClassPartnerSchoolIds: string[]
     }) => {
-      if (!resolvedProgramId || !selectedRowFromUrl || isCompanySchool) return
+      if (!resolvedProgramId || !selectedRowFromUrl || isCompanySchool || isTrainedTeachersSurface)
+        return
       await saveOrganizationCombinedClassRemote({
         programId: resolvedProgramId,
         leadRow: selectedRowFromUrl,
@@ -553,7 +557,9 @@ export function ParticipatingInstitutionsSection({
             }))
           }}
           onSaveCombinedClass={
-            !isCompanySchool && shouldUseOrganizationMergeGroupsRemoteApi()
+            !isCompanySchool &&
+            !isTrainedTeachersSurface &&
+            shouldUseOrganizationMergeGroupsRemoteApi()
               ? handleSaveCombinedClass
               : undefined
           }
