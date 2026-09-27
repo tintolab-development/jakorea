@@ -14,6 +14,7 @@ export interface MemberDetailResponse {
   name?: string;
   phone?: string;
   birthDate?: string;
+  birthYear?: number;
   gender?: string;
   status?: string;
   loginEnabled?: boolean;

@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ApplicationGiveUpRequestFaultParty } from './applicationGiveUpRequestFaultParty';
 
 /**
  * 신청 포기 처리 요청
@@ -18,4 +19,6 @@ export interface ApplicationGiveUpRequest {
   reason: string;
   /** 선택한 회차부터 활동을 포기할 때의 기준 scheduleId. 생략하면 현재 시점 이후 회차부터 포기합니다. */
   stopScheduleId?: number;
+  /** 활동 포기 귀책 주체. USER만 회원 일정 변경/취소 횟수에 반영됩니다. 미전달 legacy 요청은 ADMIN으로 안전 처리합니다. */
+  faultParty?: ApplicationGiveUpRequestFaultParty;
 }

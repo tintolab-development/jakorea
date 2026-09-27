@@ -201,6 +201,7 @@ export * from './applicationFormResponse';
 export * from './applicationFormResponseDraftAnswers';
 export * from './applicationFormResponseForm';
 export * from './applicationGiveUpRequest';
+export * from './applicationGiveUpRequestFaultParty';
 export * from './applicationListItemResponse';
 export * from './applicationListItemResponseDisplayStatus';
 export * from './applicationOptionResponse';

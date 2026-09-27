@@ -1487,8 +1487,9 @@ const listSenderProfiles = (
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNMASKED_DEFAULT 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
  * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
@@ -1502,7 +1503,7 @@ const listSenderProfiles = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: V55 recipient contacts masked; outbox/provider outcome visible
+ * - 검토 메모: 2026-09-23 Notion send-history detail: recipient name/contact are unmasked and every successful detail read writes fixed-reason privacy audit; outbox/provider outcome visible.
  * @summary CMS 알림 실발송 배치 상세 조회
  */
 const detail3 = (
@@ -1590,8 +1591,9 @@ const listNotificationTemplateVariables = (
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNMASKED_DEFAULT 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
  * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
@@ -1605,7 +1607,7 @@ const listNotificationTemplateVariables = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Notion recipient popup alignment: accessible active program participants only; name/contact masked; raw contact resolved server-side at send time
+ * - 검토 메모: 2026-09-23 Notion recipient popup: accessible recipient name/contact are unmasked; every successful read writes fixed-reason privacy audit; raw contact remains server-resolved at send time.
  * @summary CMS 알림 발송 수신자 후보 조회
  */
 const recipientCandidates = (
@@ -1781,7 +1783,7 @@ const listNotificationDeliveries = (
 
 /**
  * ### 이 API가 하는 일
- * - 알림 조회
+ * - 알림톡/문자/메일 발송 이력 상세 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
@@ -1800,12 +1802,12 @@ const listNotificationDeliveries = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 필요 권한: NOTIFICATION_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 개인정보 노출 기준: UNMASKED_DEFAULT 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1821,8 +1823,8 @@ const listNotificationDeliveries = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
- * @summary 알림 조회
+ * - 검토 메모: 2026-09-23 Notion send-history detail: unmasked recipient identity/contact with automatic privacy access audit.
+ * @summary 알림톡/문자/메일 발송 이력 상세 조회
  */
 const getNotificationDelivery = (
     deliveryId: number,
