@@ -5,6 +5,17 @@
 import type { ApplyPreferredScheduleBlock } from '../ui/apply-preferred-schedule/apply-preferred-schedule'
 import type { PortalPreferredScheduleBlock } from '../api/application-types'
 
+function normalizeScheduleTime(raw: string): string {
+  const trimmed = raw.trim()
+  const match = trimmed.match(/^(\d{1,2}):(\d{2})$/)
+  if (!match) return trimmed
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return trimmed
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return trimmed
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
+
 export function toPortalPreferredScheduleBlocks(
   blocks: readonly ApplyPreferredScheduleBlock[],
 ): PortalPreferredScheduleBlock[] {
@@ -12,10 +23,11 @@ export function toPortalPreferredScheduleBlocks(
   let rank = 1
   for (const block of blocks) {
     const date = block.date.trim()
-    if (!date) continue
     const classPeriod = block.classPeriod.trim()
-    const startTime = block.startTime.trim()
-    const endTime = block.endTime.trim()
+    const startTime = normalizeScheduleTime(block.startTime)
+    const endTime = normalizeScheduleTime(block.endTime)
+    /** BE: date·classPeriod·startTime·endTime 모두 필수 */
+    if (!date || !classPeriod || !startTime || !endTime) continue
     out.push({
       preferenceRank: rank,
       date,
@@ -23,10 +35,10 @@ export function toPortalPreferredScheduleBlocks(
       sessionTimes: [
         {
           sessionIndex: 1,
-          classPeriod: classPeriod || undefined,
-          startTime: startTime || undefined,
-          endTime: endTime || undefined,
-          timeRange: startTime && endTime ? `${startTime}~${endTime}` : undefined,
+          classPeriod,
+          startTime,
+          endTime,
+          timeRange: `${startTime}~${endTime}`,
         },
       ],
     })
@@ -37,13 +49,35 @@ export function toPortalPreferredScheduleBlocks(
 
 /**
  * Submit answers 의 preferred-schedule 키용.
- * 빈 배열은 BE 필수값 누락으로 거절되므로, 블록이 있을 때만 반환한다.
+ * 빈 배열은 BE 필수값 누락으로 거절되므로, 완전 입력된 블록이 있을 때만 반환한다.
  */
 export function toPreferredScheduleAnswerValue(
   blocks: readonly ApplyPreferredScheduleBlock[],
 ): PortalPreferredScheduleBlock[] | null {
   const mapped = toPortalPreferredScheduleBlocks(blocks)
   return mapped.length > 0 ? mapped : null
+}
+
+/** 화면 검증 — 날짜만 있고 교시·시간이 비면 제출 차단 */
+export function findIncompletePreferredScheduleMessage(
+  blocks: readonly ApplyPreferredScheduleBlock[],
+): string | null {
+  const hasPartial = blocks.some(block => {
+    const date = block.date.trim()
+    const classPeriod = block.classPeriod.trim()
+    const startTime = normalizeScheduleTime(block.startTime)
+    const endTime = normalizeScheduleTime(block.endTime)
+    const any = Boolean(date || classPeriod || startTime || endTime)
+    const complete = Boolean(date && classPeriod && startTime && endTime)
+    return any && !complete
+  })
+  if (hasPartial) {
+    return '진행 희망 교육 일정에 날짜·교시·시작/종료 시간을 모두 입력해 주세요.'
+  }
+  if (toPortalPreferredScheduleBlocks(blocks).length === 0) {
+    return '진행 희망 교육 일정을 한 개 이상 입력해 주세요.'
+  }
+  return null
 }
 
 export function preferredScheduleBlocksFromDraftAnswers(
@@ -73,18 +107,20 @@ export function preferredScheduleBlocksFromDraftAnswers(
     blocks.push({
       date,
       classPeriod: typeof first?.classPeriod === 'string' ? first.classPeriod : '',
-      startTime:
+      startTime: normalizeScheduleTime(
         typeof first?.startTime === 'string'
           ? first.startTime
           : typeof first?.start === 'string'
             ? first.start
             : '',
-      endTime:
+      ),
+      endTime: normalizeScheduleTime(
         typeof first?.endTime === 'string'
           ? first.endTime
           : typeof first?.end === 'string'
             ? first.end
             : '',
+      ),
     })
   }
   return blocks.length > 0 ? blocks : null

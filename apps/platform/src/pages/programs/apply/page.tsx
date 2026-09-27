@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
@@ -31,6 +31,7 @@ import {
   preferredScheduleBlocksFromDraftAnswers,
   toPortalPreferredScheduleBlocks,
   toPreferredScheduleAnswerValue,
+  findIncompletePreferredScheduleMessage,
 } from '@/features/program/lib/preferred-schedule-blocks'
 import {
   ApplyPreferredSchedule,
@@ -90,6 +91,8 @@ export function ProgramApplyPage() {
     emptyTrainedTeachersBasicInfo,
   )
   const [submitError, setSubmitError] = useState<string | null>(null)
+  /** bundle 객체 참조가 바뀌어도 입력 mid-edit 을 덮어쓰지 않도록 수화 키로만 재초기화 */
+  const hydratedFormKeyRef = useRef<string | null>(null)
 
   const applyCase = program ? resolveProgramApplyFormCase(program) : null
   const showTrainedTeachersApply =
@@ -97,26 +100,40 @@ export function ProgramApplyPage() {
     program?.registrationKind === 'trainedTeachers' ||
     program?.programType === 'TRAINED_TEACHER'
 
+  const profileSchool =
+    profileQuery.data?.schoolName?.trim() ||
+    profileQuery.data?.affiliationName?.trim() ||
+    ''
+  const remoteForm = applicationFormQuery.bundle?.form
+  const remoteFormKey =
+    remoteApplyEnabled && applicationFormQuery.status === 'ready' && remoteForm
+      ? [
+          programId,
+          applicationFormQuery.bundle?.option.formBindingId,
+          remoteForm.templateVersionId,
+          remoteForm.draftApplicationId ?? 'none',
+          remoteForm.draftFormResponseId ?? 'none',
+        ].join(':')
+      : null
+
   useEffect(() => {
     if (!program) {
+      hydratedFormKeyRef.current = null
       setDraft(null)
       return
     }
 
-    const profileSchool =
-      profileQuery.data?.schoolName?.trim() ||
-      profileQuery.data?.affiliationName?.trim() ||
-      ''
-
     if (remoteApplyEnabled) {
-      if (applicationFormQuery.status === 'ready' && applicationFormQuery.bundle) {
+      if (applicationFormQuery.status === 'ready' && remoteForm && remoteFormKey) {
+        if (hydratedFormKeyRef.current === remoteFormKey) return
         const remoteDraft = writingFormDraftFromApplicationForm(
-          applicationFormQuery.bundle.form.form,
-          applicationFormQuery.bundle.form.draftAnswers,
+          remoteForm.form,
+          remoteForm.draftAnswers,
         )
         if (remoteDraft) {
+          hydratedFormKeyRef.current = remoteFormKey
           setDraft(remoteDraft)
-          const draftAnswers = applicationFormQuery.bundle.form.draftAnswers
+          const draftAnswers = remoteForm.draftAnswers
           const fromPreferred = preferredScheduleBlocksFromDraftAnswers(
             draftAnswers,
             PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule,
@@ -138,9 +155,13 @@ export function ProgramApplyPage() {
         applicationFormQuery.status === 'loading' ||
         applicationFormQuery.status === 'idle'
       ) {
+        hydratedFormKeyRef.current = null
         setDraft(null)
         return
       }
+      const mockKey = `mock-fallback:${program.id}`
+      if (hydratedFormKeyRef.current === mockKey) return
+      hydratedFormKeyRef.current = mockKey
       setDraft(getMockApplyFormDraft(program))
       setPreferredBlocks([createEmptyPreferredBlock()])
       setBasicInfo({
@@ -150,17 +171,26 @@ export function ProgramApplyPage() {
       return
     }
 
+    const mockKey = `mock:${program.id}`
+    if (hydratedFormKeyRef.current === mockKey) return
+    hydratedFormKeyRef.current = mockKey
     setDraft(getMockApplyFormDraft(program))
     setPreferredBlocks([createEmptyPreferredBlock()])
     setBasicInfo(emptyTrainedTeachersBasicInfo())
   }, [
     program,
+    programId,
     remoteApplyEnabled,
     applicationFormQuery.status,
-    applicationFormQuery.bundle,
-    profileQuery.data?.schoolName,
-    profileQuery.data?.affiliationName,
+    remoteForm,
+    remoteFormKey,
+    profileSchool,
   ])
+
+  useEffect(() => {
+    if (!profileSchool) return
+    setBasicInfo(prev => (prev.schoolName.trim() ? prev : { ...prev, schoolName: profileSchool }))
+  }, [profileSchool])
 
   const updateParagraph = useCallback<FormUpdateParagraph>((id, updater) => {
     setDraft(prev => {
@@ -385,6 +415,13 @@ export function ProgramApplyPage() {
       const preferredScheduleBlocks = showTrainedTeachersApply
         ? toPortalPreferredScheduleBlocks(preferredBlocks)
         : undefined
+      if (showTrainedTeachersApply) {
+        const preferredError = findIncompletePreferredScheduleMessage(preferredBlocks)
+        if (preferredError) {
+          setSubmitError(preferredError)
+          return
+        }
+      }
       const preferredAnswer = showTrainedTeachersApply
         ? toPreferredScheduleAnswerValue(preferredBlocks)
         : null

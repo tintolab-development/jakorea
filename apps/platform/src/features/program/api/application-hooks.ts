@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { getAccessToken } from '@/shared/lib/auth-token'
@@ -129,6 +130,11 @@ export function useProgramApplicationForm(
     void formQuery.refetch()
   }
 
+  const readyBundle = useMemo((): PortalApplicationFormBundle | null => {
+    if (!formQuery.data || !option) return null
+    return { option, form: formQuery.data }
+  }, [option, formQuery.data])
+
   if (!enabled) {
     return {
       status: 'idle',
@@ -189,7 +195,7 @@ export function useProgramApplicationForm(
     }
   }
 
-  if (formQuery.isError || !formQuery.data) {
+  if (formQuery.isError || !formQuery.data || !readyBundle) {
     const code = getApplicationApiErrorCode(formQuery.error)
     return {
       status: code && isRecruitmentWindowBlocked(code) ? 'unavailable' : 'error',
@@ -203,7 +209,7 @@ export function useProgramApplicationForm(
   return {
     status: 'ready',
     isRemoteEnabled: true,
-    bundle: { option, form: formQuery.data },
+    bundle: readyBundle,
     blockedReason: option.canApply === false ? (option.blockedReason ?? null) : null,
     refetch,
   }
