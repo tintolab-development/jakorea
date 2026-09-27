@@ -41,7 +41,7 @@ function readSettingsTab(params: URLSearchParams): SettingsTab {
 
 function resolvePageTitle(tab: SettingsTab, mode: SettingsMode) {
   if (mode === 'edit-basic') return '회원정보 수정'
-  if (tab === 'social') return '소셜계정 연동'
+  if (tab === 'social') return '소셜 계정 연동'
   if (tab === 'consents') return '약관 및 정책 동의 관리'
   return '회원정보 설정'
 }
@@ -151,7 +151,7 @@ export function MypageSettingsPage() {
     return wrap(
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
         회원 정보를 불러오는 중이에요…
-      </PFText>,
+      </PFText>
     )
   }
 
@@ -159,7 +159,7 @@ export function MypageSettingsPage() {
     return wrap(
       <PFText as="p" typo="bd-md-rg" color="error">
         회원 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
-      </PFText>,
+      </PFText>
     )
   }
 
@@ -175,21 +175,19 @@ export function MypageSettingsPage() {
           }
           setMode('view')
         }}
-      />,
+      />
     )
   }
 
   if (tab === 'social') {
-    return wrap(
-      <SettingsSocialAccountsView linkErrorReason={searchParams.get('socialError')} />,
-    )
+    return wrap(<SettingsSocialAccountsView linkErrorReason={searchParams.get('socialError')} />)
   }
 
   if (tab === 'consents') {
     return wrap(
       <SettingsConsentsView
         showInstructorDocuments={showSettingsInstructorConsentDocuments(member.profile)}
-      />,
+      />
     )
   }
 
@@ -198,6 +196,6 @@ export function MypageSettingsPage() {
       basicRows={view.basicRows}
       guardian={view.guardian}
       onEditBasic={() => setMode('edit-basic')}
-    />,
+    />
   )
 }
