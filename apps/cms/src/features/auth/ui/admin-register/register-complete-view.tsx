@@ -3,10 +3,9 @@ import { JaKoreaLogo } from '@/shared/ui/icons/JaKoreaLogo'
 
 interface RegisterCompleteViewProps {
   onGoLogin: () => void
-  onConnectSocial: () => void
 }
 
-export function RegisterCompleteView({ onGoLogin, onConnectSocial }: RegisterCompleteViewProps) {
+export function RegisterCompleteView({ onGoLogin }: RegisterCompleteViewProps) {
   return (
     <div className="register-complete">
       <div className="register-complete__body">
@@ -19,9 +18,6 @@ export function RegisterCompleteView({ onGoLogin, onConnectSocial }: RegisterCom
         <div className="auth-actions register-complete__actions">
           <LoadingButton type="primary" block className="auth-submit-btn" onClick={onGoLogin}>
             로그인하러 가기
-          </LoadingButton>
-          <LoadingButton type="default" block className="auth-secondary-btn" onClick={onConnectSocial}>
-            소셜계정 연결하기
           </LoadingButton>
         </div>
       </div>

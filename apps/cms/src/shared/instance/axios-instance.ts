@@ -226,14 +226,15 @@ function handleAuthFailure() {
     search
   )
 
-  // 비번변경→소셜 연결 중 401은 로그인으로 보내지 않는다 (화면 유지).
-  // logout은 하되 소셜 온보딩 잠금은 복구해 둔다.
-  useAuthStore.getState().logout()
-  if (typeof window === 'undefined') return
-
-  if (socialOnboarding || onPasswordChangeSocialConnect) {
+  // 비번변경→소셜 연결 중 401은 로그인으로 보내지 않는다.
+  // logout하면 access token이 지워져, 이어서 「연결하기」가 API를 호출하지 않고 끝난다.
+  const keepSocialConnectSession = socialOnboarding || onPasswordChangeSocialConnect
+  if (keepSocialConnectSession) {
     markPasswordChangeRequiredSocialOnboarding()
+  } else {
+    useAuthStore.getState().logout()
   }
+  if (typeof window === 'undefined') return
 
   const target = resolveSessionAuthFailureRedirect({
     pathname,
