@@ -390,6 +390,27 @@ describe('company-school adapters', () => {
     expect(request.rounds).toBeUndefined()
   })
 
+  it('common-info patch with registrationOverlay persists overlay in serviceDetailJson', () => {
+    const overlay = {
+      'economyRegistration.basicInfo.repKo': '디지털 리터러시 교실',
+      'economyRegistration.wageInfo.paymentItemValues': ['p-166201'],
+    }
+    const request = mapCompanySchoolToUpdateRequest(program, {
+      title: '디지털 리터러시 교실',
+      mainTitle: '디지털 리터러시 교실',
+      generalCommonInfo: program.generalCommonInfo,
+      registrationOverlay: overlay,
+    })
+
+    expect(request.serviceDetailJson).toBeTruthy()
+    const parsed = JSON.parse(request.serviceDetailJson ?? '{}') as {
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(parsed.registration?.overlay?.['economyRegistration.basicInfo.repKo']).toBe(
+      '디지털 리터러시 교실'
+    )
+  })
+
   it('common-info style patch does not dump rounds or masked manager fields', () => {
     const withNoise: Program = {
       ...program,

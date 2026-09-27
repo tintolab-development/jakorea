@@ -41,6 +41,7 @@ import { CmsButton } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { CompanySchoolCommonInfoRegistrationEdit } from '@/features/program/1c-1s/ui/common-info-registration-edit'
 
 type DetailForm = UseFormReturn<ProgramDetailEditFormValues>
 
@@ -302,6 +303,8 @@ export function ProjectInfoDetailPanels({
   forceCompanySchoolLayout = false,
 }: ProjectInfoDetailPanelsProps) {
   const companySchoolSections = forceCompanySchoolLayout || isCompanySchoolProgram(program)
+  const companySchoolRegistrationEdit =
+    isEditModeInfo && companySchoolSections && isCompanySchoolProgram(program)
   return (
     <>
       {!hideTabsRow ? (
@@ -337,6 +340,10 @@ export function ProjectInfoDetailPanels({
                 onCancel={onCancel}
                 onInfoSave={onInfoSave}
               />
+              {companySchoolRegistrationEdit ? (
+                <CompanySchoolCommonInfoRegistrationEdit program={program} />
+              ) : (
+                <>
               <BasicInfoSection // 기본 정보
                 program={program}
                 sponsorName={sponsorName}
@@ -373,6 +380,8 @@ export function ProjectInfoDetailPanels({
                 form={isEditModeInfo ? infoForm : undefined}
                 forceCompanySchoolLayout={companySchoolSections}
               />
+                </>
+              )}
             </div>
           )}
           {(activeTab === 'institutions' ||

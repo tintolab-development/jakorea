@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyCurriculumPreEducationBlock,
+  applyEducationStructureChangeToForm,
   applySchedulePreEducationBlock,
   buildDefaultCurriculumSessionsForEdit,
   buildDefaultScheduleDetailsForEdit,
@@ -16,6 +17,7 @@ import {
   shouldUseScheduleEventBlockLayout,
   type ScheduleEventBlockLayoutInput,
 } from './schedule-detail-form'
+import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 
 const COMMON: Pick<
   ScheduleEventBlockLayoutInput,
@@ -482,5 +484,50 @@ describe('inferScheduleDetailBlockKind', () => {
     expect(inferScheduleDetailBlockKind('사전 교육')).toBe('preEducation')
     expect(inferScheduleDetailBlockKind('행사 일정 01')).toBe('event')
     expect(inferScheduleDetailBlockKind('세부 일정 01')).toBe('sub')
+  })
+})
+
+describe('applyEducationStructureChangeToForm', () => {
+  it('일정형으로 바꾸면 세부 프로그램명을 해당없음으로 고정한다', () => {
+    const values: Record<string, unknown> = {
+      sessionRound: 'single',
+      scheduleGroupCount: 1,
+      educationFormScheduleDetail: 'common',
+      participationScheduleDetail: 'common',
+      ipsScheduleDetail: 'common',
+      participantOrganization: false,
+      detailedProgramId: '163006',
+      curriculumSessions: [{ id: 'c1' }],
+      scheduleDetails: [],
+    }
+    const setValue = (key: string, value: unknown) => {
+      values[key] = value
+    }
+    applyEducationStructureChangeToForm(
+      setValue as never,
+      (() => values) as never,
+      'schedule'
+    )
+    expect(values.detailedProgramId).toBe(TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE)
+    expect(values.curriculumSessions).toEqual([])
+  })
+
+  it('커리큘럼형으로 바꾸면 해당없음 센티널을 비운다', () => {
+    const values: Record<string, unknown> = {
+      sessionRound: 'single',
+      detailedProgramId: TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+      curriculumSessions: [],
+      scheduleDetails: [{ id: 's1' }],
+    }
+    const setValue = (key: string, value: unknown) => {
+      values[key] = value
+    }
+    applyEducationStructureChangeToForm(
+      setValue as never,
+      (() => values) as never,
+      'curriculum'
+    )
+    expect(values.detailedProgramId).toBe('')
+    expect(values.scheduleDetails).toEqual([])
   })
 })

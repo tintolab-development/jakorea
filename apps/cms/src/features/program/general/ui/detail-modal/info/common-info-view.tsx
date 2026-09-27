@@ -114,7 +114,10 @@ import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { formatNumberDisplay } from '@/shared/utils'
-import { TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS } from '@/features/template/lib/template-form-select-options'
+import {
+  TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
+  TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS,
+} from '@/features/template/lib/template-form-select-options'
 import {
   PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS,
   PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
@@ -155,6 +158,7 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
+import { GeneralProgramCommonInfoRegistrationEdit } from './common-info-registration-edit'
 import './common-info-view.css'
 
 const PROGRAM_PROGRESS_STATIC_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
@@ -307,16 +311,21 @@ function BasicInfoSection({
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
 }) {
   const isFormEdit = isEditMode && !!form
-  const isScheduleType = isGeneralProgramScheduleType(program)
+  // 등록 폼과 동일 — 저장된 program이 아니라 현재 교육 진행 구조로 세부 프로그램명 잠금
+  const watchedEducationStructure = isFormEdit ? form.watch('educationStructure') : undefined
+  const lockDetailedProgramToNone =
+    watchedEducationStructure === 'schedule' ||
+    (watchedEducationStructure == null && isGeneralProgramScheduleType(program))
   const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
   const detailedProgramOptions = useMemo(
     () =>
       getGeneralDetailedProgramSelectOptions(
         remoteDetailedProgramOptions.length > 0
           ? remoteDetailedProgramOptions.map(o => ({ id: o.value, name: o.label }))
-          : undefined
+          : undefined,
+        { includeNone: lockDetailedProgramToNone }
       ),
-    [remoteDetailedProgramOptions]
+    [lockDetailedProgramToNone, remoteDetailedProgramOptions]
   )
   const { options: sponsorOptions, data: sponsorRows = [] } = useSponsorSelectOptions(true)
   const viewSponsorContext = useMemo(
@@ -632,26 +641,29 @@ function BasicInfoSection({
           <DetailInfoForm.Field
             label="세부 프로그램명"
             view={detailedName}
-            readOnlyDisplay={isFormEdit && isScheduleType}
             edit={
-              isScheduleType ? (
-                '해당없음'
-              ) : (
-                <Controller
-                  name="detailedProgramId"
-                  control={editForm.control}
-                  render={({ field }) => (
+              <Controller
+                name="detailedProgramId"
+                control={editForm.control}
+                render={({ field }) => (
+                  <div className="detail-info-form-inputs-wrapper-no-gap">
                     <CmsSelect
                       withAllOption={false}
+                      inputSize="medium"
                       placeholder="세부 프로그램명을 선택하세요"
                       width="100%"
                       options={detailedProgramOptions}
-                      value={field.value || undefined}
+                      value={
+                        lockDetailedProgramToNone
+                          ? TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+                          : field.value || undefined
+                      }
                       onChange={v => field.onChange(String(v ?? ''))}
+                      disabled={lockDetailedProgramToNone}
                     />
-                  )}
-                />
-              )
+                  </div>
+                )}
+              />
             }
           />
         </DetailInfoForm.Row>
@@ -4723,6 +4735,10 @@ export function GeneralProgramDetailCommonInfoView({
         </div>
       )}
 
+      {isEditMode ? (
+        <GeneralProgramCommonInfoRegistrationEdit program={program} />
+      ) : (
+        <>
       <BasicInfoSection
         program={program}
         sponsorName={sponsorName}
@@ -4759,6 +4775,8 @@ export function GeneralProgramDetailCommonInfoView({
         isEditMode={isEditMode}
         form={form}
       />
+        </>
+      )}
     </div>
   )
 }

@@ -12,6 +12,7 @@ import type {
   GeneralProgramScheduleDetailFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { padScheduleDetailLabel } from '@/features/program/general/model/common-info-edit-schema'
+import { TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE } from '@/features/template/lib/template-form-select-options'
 
 type CommonInfoSetValue = UseFormSetValue<GeneralProgramCommonInfoEditFormValues>
 type CommonInfoGetValues = UseFormGetValues<GeneralProgramCommonInfoEditFormValues>
@@ -498,12 +499,18 @@ export function applyEducationStructureChangeToForm(
       participantOrganization: values.participantOrganization,
     }), { shouldDirty: true })
     setValue('curriculumSessions', [], { shouldDirty: true })
+    // 등록 폼과 동일 — 일정형은 세부 프로그램명「해당없음」고정
+    setValue('detailedProgramId', TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE, { shouldDirty: true })
     return
   }
   setValue('scheduleDetails', [], { shouldDirty: true })
   setValue('curriculumSessions', buildDefaultCurriculumSessionsForEdit(getValues().sessionRound), {
     shouldDirty: true,
   })
+  // 커리큘럼형 — 「해당없음」센티널 해제(등록 폼 lock 해제와 동일)
+  if (getValues().detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) {
+    setValue('detailedProgramId', '', { shouldDirty: true })
+  }
 }
 
 export function applySessionRoundChangeToForm(

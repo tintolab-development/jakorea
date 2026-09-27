@@ -543,4 +543,24 @@ describe('general-program-adapters', () => {
     expect(parsed.generalProgramSessionRound).toBe('single')
     expect(parsed.generalProgramAudience).toBe('individual')
   })
+
+  it('common-info patch with registrationOverlay persists overlay in serviceDetailJson', () => {
+    const request = mapGeneralProgramToUpdateRequest(sampleProgram, {
+      generalCommonInfo: {
+        announcementTitle: '공고명',
+      },
+      registrationOverlay: {
+        'generalRegistration.basicInfo.publicProgramTitle': '공고명',
+        'generalRegistration.basicInfo.detailedProgramId': '163006',
+      },
+    })
+
+    expect(request.serviceDetailJson).toBeTruthy()
+    const parsed = JSON.parse(request.serviceDetailJson!) as {
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(parsed.registration?.overlay?.['generalRegistration.basicInfo.publicProgramTitle']).toBe(
+      '공고명'
+    )
+  })
 })

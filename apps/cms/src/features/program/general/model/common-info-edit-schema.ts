@@ -1880,12 +1880,17 @@ export function generalCommonInfoEditValuesToProgramPatch(
   }
 }
 
+/**
+ * 등록 폼과 동일:
+ * - 일정형(`includeNone`) — 옵션 끝에「해당없음」
+ * - 커리큘럼형 — 마스터 목록만 (해당없음 미노출)
+ */
 export function getGeneralDetailedProgramSelectOptions(
-  catalog: readonly { id: string; name: string }[] = []
+  catalog: readonly { id: string; name: string }[] = [],
+  options?: { includeNone?: boolean }
 ) {
-  return withDetailedProgramNoneOption(
-    catalog.map(row => ({ value: row.id, label: row.name }))
-  )
+  const base = catalog.map(row => ({ value: row.id, label: row.name }))
+  return options?.includeNone ? withDetailedProgramNoneOption(base) : base
 }
 
 export const GENERAL_SURVEY_EDIT_FIELDS: {
