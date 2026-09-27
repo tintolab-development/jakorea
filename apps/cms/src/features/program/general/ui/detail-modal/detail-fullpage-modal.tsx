@@ -34,6 +34,7 @@ import {
   type GeneralSurveyMenuItem,
 } from '@/features/program/general/lib/detail-meta'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { seedGeneralRegistrationOverlayFromProgram } from '@/features/program/general/lib/registration-overlay-sync'
 import {
   defaultParticipantApplicationTab,
   isParticipantTabValid,
@@ -713,6 +714,7 @@ export function GeneralProgramDetailFullPageModal({
       })
       return
     }
+    seedGeneralRegistrationOverlayFromProgram(displayProgram)
     infoResetToProgram()
     setEditMode('info')
   }, [activeLnb, activeTab, displayProgram, infoResetToProgram, setEditMode, showAlert])
@@ -769,9 +771,10 @@ export function GeneralProgramDetailFullPageModal({
   }, [infoForm, infoTriggerSave, setEditMode, showAlert])
 
   const handleInfoCancel = useCallback(() => {
+    if (displayProgram) seedGeneralRegistrationOverlayFromProgram(displayProgram)
     infoResetToProgram()
     setEditMode(null)
-  }, [infoResetToProgram, setEditMode])
+  }, [displayProgram, infoResetToProgram, setEditMode])
 
   const recruitSubTab = useMemo((): GeneralRecruitTabKey => {
     if (activeLnb !== 'info' || activeTab !== 'recruitment') return 'institutions'

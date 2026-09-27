@@ -21,6 +21,8 @@ export interface ProgramListItemResponse {
   businessYear?: number;
   businessStartDate?: string;
   businessEndDate?: string;
+  operationStartDate?: string;
+  operationEndDate?: string;
   /** 운영 기간 축(period). 모집 배지와 섞지 않는다. */
   periodStatus?: string;
   /** 모집 축. OPEN/RECRUITING=모집 중, UPCOMING=모집 예정, CLOSED=모집 완료 */

@@ -8,7 +8,7 @@
 import type { StudentRosterRowRequest } from './studentRosterRowRequest';
 
 export interface StudentRosterCommitRequest {
-  sourceFileObjectId: number;
+  sourceFileObjectId?: number;
   /**
      * @minItems 0
      * @maxItems 500

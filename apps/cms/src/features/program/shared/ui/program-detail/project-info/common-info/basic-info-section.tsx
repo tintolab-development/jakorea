@@ -54,6 +54,7 @@ import {
   PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
   PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
 } from '@/features/template/lib/program-registration-survey-items'
+import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
   formatDate,
   formatDateRange,
@@ -167,17 +168,11 @@ function formatCompanySchoolParticipantTypes(program: Program): string {
 }
 
 function formatCompanySchoolSurveyItems(program: Program): string {
-  const keys = new Set<string>(program.generalSurveyMenuKeys ?? [])
+  const keys = resolveProgramSurveyMenuKeys(program)
   const labels: string[] = []
-  if (keys.has('survey')) labels.push('설문조사')
-  if (
-    keys.has('satisfaction') ||
-    keys.has('student_satisfaction') ||
-    keys.has('teacher_satisfaction')
-  ) {
-    labels.push('만족도조사')
-  }
-  if (keys.has('lecture_evaluation')) labels.push('강의평가')
+  if (keys.includes('survey')) labels.push('설문조사')
+  if (keys.includes('satisfaction')) labels.push('만족도조사')
+  if (keys.includes('lecture_evaluation')) labels.push('강의평가')
   return labels.length > 0 ? labels.join(', ') : '-'
 }
 

@@ -1,0 +1,24 @@
+/* 상세 공통정보 수정 — 섹션 간 32px, 섹션 내 블록 간 16px (조회 화면과 동일 규격) */
+
+.program-common-info-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  min-width: 0;
+}
+
+.program-common-info-edit__section {
+  width: 100%;
+  min-width: 0;
+}
+
+.program-common-info-edit__section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.program-common-info-edit__section-body > .detail-info-form {
+  margin: 0;
+}

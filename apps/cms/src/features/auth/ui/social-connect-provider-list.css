@@ -101,8 +101,6 @@
   gap: var(--Spacing-4, 4px) !important;
   border-radius: var(--Radius-8, 8px);
   border: 1px solid var(--Color-border-default, #d9d9d9) !important;
-  background: var(--Color-netural-white, #fff) !important;
-  color: var(--Color-netural-black, #3d3d3d) !important;
   text-align: center;
   font-family: Pretendard, system-ui, sans-serif;
   font-size: 13px;
@@ -110,6 +108,11 @@
   font-weight: 500;
   line-height: 140%;
   box-shadow: none !important;
+}
+
+.social-connect-provider-list__action-btn.cms-button.ant-btn:not(:disabled):not(.ant-btn-disabled) {
+  background: var(--Color-netural-white, #fff) !important;
+  color: var(--Color-netural-black, #3d3d3d) !important;
 }
 
 .social-connect-provider-list__action-btn.cms-button.ant-btn:not(:disabled):not(.ant-btn-disabled):hover,

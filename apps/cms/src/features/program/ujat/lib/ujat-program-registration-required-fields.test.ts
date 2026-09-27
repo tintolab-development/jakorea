@@ -36,7 +36,6 @@ function filledRegistration(): Record<string, unknown> {
     'ujat.basicInfo.repKo': '대학생경제교육봉사단',
     'ujat.basicInfo.repEn': 'University Students JA Team',
     'ujat.basicInfo.programManagementName': '관리명',
-    'ujat.basicInfo.publicProgramTitle': '공고용',
     'ujat.basicInfo.detailedProgramId': '__ujat_volunteer_core__',
     'ujat.basicInfo.operationRangeSeal': RANGE,
     'ujat.basicInfo.participant.organization': true,

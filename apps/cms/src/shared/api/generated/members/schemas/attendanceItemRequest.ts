@@ -11,4 +11,5 @@ export interface AttendanceItemRequest {
   status?: string;
   absenceReason?: string;
   arrivalTime?: string;
+  fileObjectIds?: number[];
 }

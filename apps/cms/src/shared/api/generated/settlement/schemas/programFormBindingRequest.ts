@@ -14,7 +14,7 @@ export interface ProgramFormBindingRequest {
   targetRole?: string;
   targetScope?: string;
   targetScopeId?: number;
-  /** Optional. Omitted or false stores required_yn=false. Create does not force true. */
+  /** 선택. 생략하거나 false면 required_yn=false로 저장합니다. 생성 시 true로 강제하지 않습니다. */
   required?: boolean;
   active?: boolean;
   completionRequired?: boolean;

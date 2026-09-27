@@ -18,8 +18,7 @@ import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
-const EMAIL_NOT_FOUND_MESSAGE =
-  '가입한 이메일을 찾지 못했어요. 입력한 정보를 다시 확인해 주세요.'
+const EMAIL_NOT_FOUND_MESSAGE = '가입한 이메일을 찾지 못했어요. 입력한 정보를 다시 확인해 주세요.'
 const IDENTITY_MISMATCH_MESSAGE = '본인인증 정보가 회원 정보와 일치하지 않습니다.'
 
 export function FindPasswordPage() {
@@ -53,7 +52,7 @@ export function FindPasswordPage() {
       })
       navigate('/auth/find-password/reset')
     },
-    [navigate, remoteApi],
+    [navigate, remoteApi]
   )
 
   const { verify, isVerifying, errorMessage, resetError } = useFindPasswordIdentityVerification({
@@ -123,8 +122,13 @@ export function FindPasswordPage() {
         <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
           비밀번호를 다시 설정할게요
         </PFText>
-        <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
-          가입한 이메일과 본인 인증이 필요해요.
+        <PFText
+          as="p"
+          typo="bd-lg-rg"
+          color="primary-800"
+          className={authPageCopyClass('description')}
+        >
+          가입한 이메일과 본인인증이 필요해요.
         </PFText>
       </div>
 

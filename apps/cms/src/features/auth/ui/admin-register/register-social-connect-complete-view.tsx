@@ -23,8 +23,13 @@ export function RegisterSocialConnectCompleteView({
           <LoadingButton type="primary" block className="auth-submit-btn" onClick={onGoLogin}>
             로그인하러 가기
           </LoadingButton>
-          <LoadingButton type="default" block className="auth-secondary-btn" onClick={onConnectMore}>
-            다른 소셜계정도 연결하기
+          <LoadingButton
+            type="default"
+            block
+            className="auth-secondary-btn"
+            onClick={onConnectMore}
+          >
+            다른 소셜 계정도 연결하기
           </LoadingButton>
         </div>
       </div>

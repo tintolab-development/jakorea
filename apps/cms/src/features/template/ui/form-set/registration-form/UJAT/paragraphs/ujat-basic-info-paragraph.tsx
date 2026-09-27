@@ -2,7 +2,7 @@
  * UJAT 프로그램 등록 폼 — 기본 정보
  * (1사 1교 프로그램 등록 폼 기본 정보와 동일하게 DetailInfoForm 3구역: 프로그램명 / 운영·설문 / 교육·IPS)
  */
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -25,6 +25,7 @@ import {
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
+  TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
   TEMPLATE_FORM_IP_OWNED_OPTIONS,
   TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS,
@@ -42,7 +43,6 @@ import '@/features/template/ui/form-set/registration-form/general/paragraphs/pro
 
 import {
   UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT,
-  UJAT_BASIC_INFO_PUBLIC_TITLE_DEFAULT,
   UJAT_BASIC_INFO_REP_EN_DEFAULT,
   UJAT_BASIC_INFO_REP_KO_DEFAULT,
   UJAT_DEFAULT_SPONSOR_ID,
@@ -77,16 +77,22 @@ const BLOCK_GAP_STYLE = { marginTop: 16 } as const
 
 type OperationRangeSeal = { start: string; end: string } | null
 
-export function UjatBasicInfoParagraph() {
+export type UjatBasicInfoParagraphProps = {
+  /**
+   * 일정형 — 세부 프로그램명 셀렉트를「해당없음」으로 고정 (일반 프로그램 등록·상세와 동일).
+   * 실적·조회에서는 일정명이 세부 프로그램명으로 반영된다.
+   */
+  lockDetailedProgramToNone?: boolean
+}
+
+export function UjatBasicInfoParagraph({
+  lockDetailedProgramToNone = false,
+}: UjatBasicInfoParagraphProps = {}) {
   const [repKo, setRepKo] = useUjatProgramRegistrationOverlayKv('ujat.basicInfo.repKo', UJAT_BASIC_INFO_REP_KO_DEFAULT)
   const [repEn, setRepEn] = useUjatProgramRegistrationOverlayKv('ujat.basicInfo.repEn', UJAT_BASIC_INFO_REP_EN_DEFAULT)
   const [programManagementName, setProgramManagementName] = useUjatProgramRegistrationOverlayKv(
     'ujat.basicInfo.programManagementName',
     UJAT_BASIC_INFO_PROGRAM_MANAGEMENT_DEFAULT
-  )
-  const [publicProgramTitle, setPublicProgramTitle] = useUjatProgramRegistrationOverlayKv(
-    'ujat.basicInfo.publicProgramTitle',
-    UJAT_BASIC_INFO_PUBLIC_TITLE_DEFAULT
   )
   const [detailedProgramId, setDetailedProgramId] = useUjatProgramRegistrationOverlayKv<string>(
     'ujat.basicInfo.detailedProgramId',
@@ -266,21 +272,42 @@ export function UjatBasicInfoParagraph() {
 
   const { options: remoteDetailedProgramOptions } = useDetailedProgramSelectOptions(true)
 
+  // 일반 일정형과 동일 — 잠금 시 「해당없음」만 유효. 잠금 해제(커리큘럼형)에서는 UJAT 고정 옵션+카탈로그.
   const detailedProgramOptions = useMemo(
-    () => [
-      DETAILED_PROGRAM_UJAT_OPTION,
-      ...withDetailedProgramNoneOption(remoteDetailedProgramOptions),
-    ],
-    [remoteDetailedProgramOptions]
+    () =>
+      lockDetailedProgramToNone
+        ? withDetailedProgramNoneOption(remoteDetailedProgramOptions)
+        : [DETAILED_PROGRAM_UJAT_OPTION, ...withDetailedProgramNoneOption(remoteDetailedProgramOptions)],
+    [lockDetailedProgramToNone, remoteDetailedProgramOptions]
   )
+
+  useEffect(() => {
+    if (!lockDetailedProgramToNone) return
+    if (detailedProgramId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) return
+    setDetailedProgramId(TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE)
+    setDetailedProgramName('해당없음')
+  }, [
+    detailedProgramId,
+    lockDetailedProgramToNone,
+    setDetailedProgramId,
+    setDetailedProgramName,
+  ])
 
   // id만 저장하고 name을 갱신하지 않으면 실제 반영되는 세부 프로그램명이 어긋날 수 있다 —
   // id 변경 시 라벨도 항상 함께 저장한다.
   const setDetailedProgramSelection = (nextId: string) => {
     setDetailedProgramId(nextId)
+    if (nextId === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE) {
+      setDetailedProgramName('해당없음')
+      return
+    }
     const label = detailedProgramOptions.find(o => o.value === nextId)?.label?.trim() || ''
     setDetailedProgramName(label)
   }
+
+  const detailedProgramSelectValue = lockDetailedProgramToNone
+    ? TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+    : detailedProgramId
 
   const toggleSurveyItem = (id: UjatSurveyRowId) => (e: CheckboxChangeEvent) => {
     updateUjatProgramRegistrationOverlayKey<Record<string, boolean>>(
@@ -344,23 +371,7 @@ export function UjatBasicInfoParagraph() {
             view="-"
           />
           <DetailInfoForm.Field
-            label="공고용 프로그램명"
-            edit={
-              <CmsInput
-                inputSize="medium"
-                value={publicProgramTitle}
-                onChange={e => setPublicProgramTitle(e.target.value)}
-                placeholder="모집 시 노출될 프로그램명을 입력하세요"
-                width="100%"
-              />
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
             label="세부 프로그램명"
-            fullRow
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
@@ -369,8 +380,9 @@ export function UjatBasicInfoParagraph() {
                   placeholder="세부 프로그램명을 선택하세요"
                   width="100%"
                   options={detailedProgramOptions}
-                  value={detailedProgramId}
+                  value={detailedProgramSelectValue}
                   onChange={v => setDetailedProgramSelection(String(v ?? ''))}
+                  disabled={lockDetailedProgramToNone}
                 />
               </div>
             }

@@ -60,7 +60,6 @@ describe('buildUjatProgramListRowFromRegistrationSnapshot — overlay를 1차 �
         'ujat.basicInfo.repKo': '우리 동네 소비와 저축',
         'ujat.basicInfo.repEn': 'Local Spending and Saving',
         'ujat.basicInfo.programManagementName': '우리 동네 소비와 저축 운영',
-        'ujat.basicInfo.publicProgramTitle': '초등 경제교육 학급 신청 안내',
         'ujat.basicInfo.detailedProgramId': '__ujat_volunteer_core__',
         'ujat.basicInfo.detailedProgramName': UJAT_DETAILED_PROGRAM_UJAT_LABEL,
         'ujat.basicInfo.businessField': 'digital_literacy',
@@ -87,7 +86,7 @@ describe('buildUjatProgramListRowFromRegistrationSnapshot — overlay를 1차 �
     expect(program.ips).toBe('Succeed')
     expect(program.teamDivision).toBe(UJAT_DETAILED_PROGRAM_UJAT_LABEL)
     expect(program.generalCommonInfo?.detailedProgramName).toBe(UJAT_DETAILED_PROGRAM_UJAT_LABEL)
-    expect(program.generalCommonInfo?.announcementTitle).toBe('초등 경제교육 학급 신청 안내')
+    expect(program.generalCommonInfo?.announcementTitle).toBeUndefined()
     expect(program.generalCommonInfo?.kpi).toEqual({
       finalParticipants: 61,
       instructorCount: 0,
@@ -103,7 +102,6 @@ describe('buildUjatProgramListRowFromRegistrationSnapshot — overlay를 1차 �
       overlay: {
         'ujat.basicInfo.repKo': '우리 동네 소비와 저축',
         'ujat.basicInfo.programManagementName': '우리 동네 소비와 저축 운영',
-        'ujat.basicInfo.publicProgramTitle': '초등 경제교육 학급 신청 안내',
         'ujat.basicInfo.operationRangeSeal': {
           start: '2026-11-09T15:00:00.000Z',
           end: '2026-12-06T15:00:00.000Z',
@@ -130,7 +128,7 @@ describe('buildUjatProgramListRowFromRegistrationSnapshot — overlay를 1차 �
 
     expect(program.title).toBe('우리 동네 소비와 저축 운영')
     expect(program.mainTitle).toBe('우리 동네 소비와 저축')
-    expect(program.generalCommonInfo?.announcementTitle).toBe('초등 경제교육 학급 신청 안내')
+    expect(program.generalCommonInfo?.announcementTitle).toBeUndefined()
     expect(program.managerName).toBe('정민재')
     expect(program.contactPhone).toBe('031-234-5678')
     expect(program.contactEmail).toBe('edu.team@jakorea.org')

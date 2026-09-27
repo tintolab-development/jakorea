@@ -205,6 +205,7 @@ import {
 } from '@/features/program/general/lib/instructor-application-available-schedule'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { resolveGeneralProgramVolunteerInterviewScheduleEditSeed } from '@/features/program/general/lib/volunteer-interview-schedule-display'
+import { rememberRegistrationWizardSessionDraft, clearRegistrationWizardSessionDrafts } from '@/features/program/general/lib/registration-wizard-session-drafts'
 import { getUjatVolunteerRound } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-program-round'
 import { resolveUjatVolunteerHiddenParagraphIds } from '@/features/template/lib/ujat-volunteer-application-form-visibility'
 import type { Program } from '@/types/domain'
@@ -876,6 +877,14 @@ export function useProgramParticipantApplicationEditor(
       if (draftRef.current.paragraphs.length === 0) return
       // 추가 내용 에디터는 키 입력마다 overlay에 안 쓴다. 단계 캐시보다 먼저 넣는다.
       flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
+      const editorState = buildParticipantApplicationEditorState({
+        variant,
+        volunteerExceptionScheduleCount: volunteerExceptionScheduleCountRef.current,
+        ujatVolunteerApplicationType: ujatVolunteerApplicationTypeRef.current,
+        ujatGradeApplicationBlockIds: ujatGradeApplicationBlockIdsRef.current,
+        ujatApplicationGradeByBlockId: ujatApplicationGradeByBlockIdRef.current,
+        ujatGradeClassTimeBlockIds: ujatGradeClassTimeBlockIdsRef.current,
+      })
       sessionDraftCacheRef.current.set(hydrateKey, {
         draft: draftRef.current,
         overlay:
@@ -884,15 +893,15 @@ export function useProgramParticipantApplicationEditor(
             : variant === 'ujat-recruit-volunteer'
               ? { ...getUjatRecruitVolunteerOverlayRecord() }
               : collectParticipantOverlayForVariant(variant),
-        editorState: buildParticipantApplicationEditorState({
-          variant,
-          volunteerExceptionScheduleCount: volunteerExceptionScheduleCountRef.current,
-          ujatVolunteerApplicationType: ujatVolunteerApplicationTypeRef.current,
-          ujatGradeApplicationBlockIds: ujatGradeApplicationBlockIdsRef.current,
-          ujatApplicationGradeByBlockId: ujatApplicationGradeByBlockIdRef.current,
-          ujatGradeClassTimeBlockIds: ujatGradeClassTimeBlockIdsRef.current,
-        }),
+        editorState,
       })
+      if (usesRegistrationWizardDraft) {
+        rememberRegistrationWizardSessionDraft({
+          templateCode: resolvePersistTemplateId(),
+          draft: draftRef.current,
+          editorState,
+        })
+      }
     }
   }, [
     active,
@@ -915,6 +924,7 @@ export function useProgramParticipantApplicationEditor(
     if (registrationWizardOpen !== false) return
     sessionDraftCacheRef.current.clear()
     storageHydratedTemplateIdsRef.current.clear()
+    clearRegistrationWizardSessionDrafts()
   }, [registrationWizardOpen])
 
   useEffect(() => {
@@ -1470,6 +1480,36 @@ export function useProgramParticipantApplicationEditor(
         : localOnlyDraftPersistence
           ? resolveLocalDraftStorageKey()
           : resolvePersistTemplateId()
+      const linkedProgram = editorOptions?.program
+      const persistBoundForm = async (payload: {
+        draft: typeof draft
+        overlay?: Record<string, unknown>
+        editorState?: Record<string, unknown>
+        localOnly: boolean
+      }) => {
+        if (!payload.localOnly && persistTemplateVersionId != null && linkedProgram?.id != null) {
+          const { saveProgramScopedOperationalFormVersion } = await import(
+            '@/features/program/general/lib/sync-registration-form-bindings'
+          )
+          await saveProgramScopedOperationalFormVersion({
+            program: linkedProgram,
+            templateCode: templateId,
+            versionId: persistTemplateVersionId,
+            draft: payload.draft,
+            overlay: payload.overlay,
+            editorState: payload.editorState,
+          })
+          return
+        }
+        await persistWritingFormTemplateDraft({
+          templateId,
+          draft: payload.draft,
+          overlay: payload.overlay,
+          editorState: payload.editorState,
+          localOnly: payload.localOnly,
+          templateVersionId: persistTemplateVersionId,
+        })
+      }
       if (usesRegistrationWizardDraft) {
         flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
         const editorState = buildParticipantApplicationEditorState({
@@ -1494,14 +1534,12 @@ export function useProgramParticipantApplicationEditor(
       } else if (variant === 'ujat-recruit-institution') {
         flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
         const overlay = collectParticipantOverlayForVariant(variant) ?? {}
-        await persistWritingFormTemplateDraft({
-          templateId,
+        await persistBoundForm({
           draft,
           overlay,
           localOnly:
             localOnlyDraftPersistence ||
             (preferLocalDraft && persistTemplateVersionId == null),
-          templateVersionId: persistTemplateVersionId,
         })
         if (localOnlyDraftPersistence) {
           persistUjatRecruitInstitutionTemplateSave({ draft, overlay })
@@ -1514,14 +1552,12 @@ export function useProgramParticipantApplicationEditor(
       } else if (variant === 'ujat-recruit-volunteer') {
         flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
         const overlay = collectParticipantOverlayForVariant(variant) ?? {}
-        await persistWritingFormTemplateDraft({
-          templateId,
+        await persistBoundForm({
           draft,
           overlay,
           localOnly:
             localOnlyDraftPersistence ||
             (preferLocalDraft && persistTemplateVersionId == null),
-          templateVersionId: persistTemplateVersionId,
         })
         if (localOnlyDraftPersistence) {
           persistUjatRecruitVolunteerTemplateSave({ draft, overlay })
@@ -1542,35 +1578,14 @@ export function useProgramParticipantApplicationEditor(
         })
         flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
         const overlay = collectParticipantOverlayForVariant(variant)
-        const linkedProgram = editorOptions?.program
-        if (
-          linkedProgram?.id != null &&
-          persistTemplateVersionId != null &&
-          !localOnlyDraftPersistence
-        ) {
-          const { saveProgramScopedOperationalFormVersion } = await import(
-            '@/features/program/general/lib/sync-registration-form-bindings'
-          )
-          await saveProgramScopedOperationalFormVersion({
-            program: linkedProgram,
-            templateCode: templateId,
-            versionId: persistTemplateVersionId,
-            draft,
-            editorState,
-            ...(overlay != null ? { overlay } : {}),
-          })
-        } else {
-          await persistWritingFormTemplateDraft({
-            templateId,
-            draft,
-            editorState,
-            ...(overlay != null ? { overlay } : {}),
-            localOnly:
-              localOnlyDraftPersistence ||
-              (preferLocalDraft && persistTemplateVersionId == null),
-            templateVersionId: persistTemplateVersionId,
-          })
-        }
+        await persistBoundForm({
+          draft,
+          editorState,
+          ...(overlay != null ? { overlay } : {}),
+          localOnly:
+            localOnlyDraftPersistence ||
+            (preferLocalDraft && persistTemplateVersionId == null),
+        })
       }
       if (options?.silent) return
       if (isTemplateManagementSave) {
@@ -1584,8 +1599,8 @@ export function useProgramParticipantApplicationEditor(
     }
   }, [
     draft,
-    isTemplateManagementSave,
     editorOptions?.program,
+    isTemplateManagementSave,
     localOnlyDraftPersistence,
     onTemplateDraftSaveConfirmed,
     persistTemplateVersionId,

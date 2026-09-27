@@ -23,8 +23,13 @@ export function SocialConnectCompleteView({
           <LoadingButton type="primary" block className="auth-submit-btn" onClick={onGoHome}>
             홈으로 이동하기
           </LoadingButton>
-          <LoadingButton type="default" block className="auth-secondary-btn" onClick={onConnectMore}>
-            다른 소셜계정도 연결하기
+          <LoadingButton
+            type="default"
+            block
+            className="auth-secondary-btn"
+            onClick={onConnectMore}
+          >
+            다른 소셜 계정도 연결하기
           </LoadingButton>
         </div>
       </div>

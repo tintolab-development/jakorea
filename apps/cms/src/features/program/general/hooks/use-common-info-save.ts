@@ -11,6 +11,11 @@ import {
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import { applyGeneralRegistrationOverlayToProgram } from '@/features/program/general/lib/registration-overlay-to-program'
+import {
+  getGeneralRegistrationDetailEditExtras,
+  readGeneralRegistrationOverlayForSave,
+} from '@/features/program/general/lib/registration-overlay-sync'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import { useDetailedProgramOptionsQuery } from '@/features/detailed-program/hooks/use-detailed-program-options-query'
 import { useProgramWagePaymentItemOptions } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
@@ -46,9 +51,24 @@ export function useGeneralProgramCommonInfoSave({
     }
     savingRef.current = true
     try {
-      const isValid = await form.trigger()
-      if (!isValid) return { ok: false, kind: 'validation' }
-      const values = form.getValues()
+      const overlay = readGeneralRegistrationOverlayForSave()
+      const extras = getGeneralRegistrationDetailEditExtras()
+      const applied = applyGeneralRegistrationOverlayToProgram(program, overlay, extras)
+      const withOverlay: Program = {
+        ...applied,
+        generalProgramEducationStructure: extras.programType,
+        generalProgramSessionRound: extras.sessionRoundType,
+        registrationOverlay: {
+          ...(program.registrationOverlay ?? {}),
+          ...overlay,
+        },
+        updatedAt: new Date().toISOString(),
+      }
+      const values = programToGeneralCommonInfoEditValues(
+        withOverlay,
+        sponsorContext,
+        detailedProgramCatalog
+      )
       const patch = generalCommonInfoEditValuesToProgramPatch(
         values,
         program,
@@ -58,16 +78,16 @@ export function useGeneralProgramCommonInfoSave({
       )
       const resolvedCommon = resolveGeneralProgramCommonInfo(program)
       const draftToSave: Program = {
-        ...program,
+        ...withOverlay,
         ...patch,
-        updatedAt: new Date().toISOString(),
+        registrationOverlay: withOverlay.registrationOverlay,
         generalCommonInfo: {
           ...resolvedCommon,
-          ...program.generalCommonInfo,
+          ...withOverlay.generalCommonInfo,
           ...patch.generalCommonInfo,
         },
       }
-      await onSaveEdit(draftToSave, patch)
+      await onSaveEdit(draftToSave, { ...patch, registrationOverlay: withOverlay.registrationOverlay })
       showUpdateCompletedAlert()
       return { ok: true }
     } catch (error) {
@@ -75,7 +95,7 @@ export function useGeneralProgramCommonInfoSave({
     } finally {
       savingRef.current = false
     }
-  }, [form, program, onSaveEdit, sponsorContext, detailedProgramCatalog, paymentItemOptions])
+  }, [program, onSaveEdit, sponsorContext, detailedProgramCatalog, paymentItemOptions])
 
   const resetToProgram = useCallback(() => {
     if (program) {

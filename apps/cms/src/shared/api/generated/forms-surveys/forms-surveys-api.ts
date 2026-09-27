@@ -9,11 +9,13 @@ import type {
   ApiResponseBulkDownloadJobResponse,
   FormAutoFillKeyResponse,
   FormResponseCreateRequest,
+  FormResponseDeleteRequest,
   FormResponseDocumentSnapshotResponse,
   FormResponseFeedbackCreateRequest,
   FormResponseFeedbackResponse,
   FormResponseProjectionResponse,
   FormResponseResponse,
+  FormResponseUpdateRequest,
   FormSubmissionBulkDownloadRequest,
   FormSubmissionFileDownloadResponse,
   FormTemplateCreateOptionResponse,
@@ -49,8 +51,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-template-versions/{versionId}`
  *
@@ -103,8 +105,8 @@ const getVersion = (
 /**
  * ### 이 API가 하는 일
  * - PUT /api/admin/form-template-versions/{versionId}
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `PUT /api/admin/form-template-versions/{versionId}`
  *
@@ -160,8 +162,8 @@ const updateVersion = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/programs/{programId}/form-bindings`
  *
@@ -214,8 +216,8 @@ const formBindings = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/programs/{programId}/form-bindings
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `POST /api/admin/programs/{programId}/form-bindings`
  *
@@ -271,8 +273,8 @@ const createFormBinding = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-templates`
  *
@@ -326,8 +328,8 @@ const listTemplates = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/form-templates
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `POST /api/admin/form-templates`
  *
@@ -382,8 +384,8 @@ const createTemplate2 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-templates/{templateId}/versions`
  *
@@ -436,8 +438,8 @@ const listVersions = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/form-templates/{templateId}/versions
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `POST /api/admin/form-templates/{templateId}/versions`
  *
@@ -493,8 +495,8 @@ const createVersion1 = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/form-templates/{templateId}/versions/copy
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `POST /api/admin/form-templates/{templateId}/versions/copy`
  *
@@ -550,8 +552,8 @@ const copyVersion = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/form-template-versions/{versionId}/publish
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `POST /api/admin/form-template-versions/{versionId}/publish`
  *
@@ -771,8 +773,8 @@ const createFeedback = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/form-responses/submit
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `POST /api/admin/form-responses/submit`
  *
@@ -827,8 +829,8 @@ const submitResponse = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `DELETE /api/admin/programs/{programId}/form-bindings/{bindingId}`
  *
@@ -882,8 +884,8 @@ const deactivateFormBinding = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `PATCH /api/admin/programs/{programId}/form-bindings/{bindingId}`
  *
@@ -940,8 +942,8 @@ const updateFormBinding = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-templates/{templateId}`
  *
@@ -994,8 +996,8 @@ const getTemplate1 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `DELETE /api/admin/form-templates/{templateId}`
  *
@@ -1048,8 +1050,8 @@ const deleteTemplate = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `PATCH /api/admin/form-templates/{templateId}`
  *
@@ -1098,6 +1100,174 @@ const updateTemplate = (
       {url: `/api/admin/form-templates/${templateId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: formTemplateUpdateRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 관리자 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
+ * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
+ * - 호출 방식: `GET /api/admin/form-responses/{responseId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
+ * - 프론트 조회 키: `get_admin_form-responses_responseId`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
+ */
+const getResponse = (
+    responseId: number,
+ options?: SecondParameter<typeof customInstance<FormResponseResponse>>,) => {
+      return customInstance<FormResponseResponse>(
+      {url: `/api/admin/form-responses/${responseId}`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 강의평가 응답 관리자 삭제
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
+ * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
+ * - 호출 방식: `DELETE /api/admin/form-responses/{responseId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 선택 응답 ID + 관리자 수정값
+ * - 응답 사용 위치: 수정/삭제 성공 후 응답 목록·상세 invalidate
+ * - 프론트 조회 키: `delete_api_admin_form-responses_responseId`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: LECTURE_EVALUATION_MUTATION_SMOKE
+ * - 목데이터 대체: 강의평가 로컬 patch 금지
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: FORM_RESPONSE_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Lecture-evaluation-only admin mutation; source response shell is retained for audit on delete.
+ * @summary 강의평가 응답 관리자 삭제
+ */
+const deleteResponse = (
+    responseId: number,
+    formResponseDeleteRequest?: FormResponseDeleteRequest,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/admin/form-responses/${responseId}`, method: 'DELETE',
+      headers: {'Content-Type': 'application/json', },
+      data: formResponseDeleteRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 강의평가 응답 관리자 수정
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
+ * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
+ * - 호출 방식: `PATCH /api/admin/form-responses/{responseId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 선택 응답 ID + 관리자 수정값
+ * - 응답 사용 위치: 수정/삭제 성공 후 응답 목록·상세 invalidate
+ * - 프론트 조회 키: `patch_api_admin_form-responses_responseId`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: LECTURE_EVALUATION_MUTATION_SMOKE
+ * - 목데이터 대체: 강의평가 로컬 patch 금지
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: FORM_RESPONSE_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Lecture-evaluation-only admin mutation; source response shell is retained for audit on delete.
+ * @summary 강의평가 응답 관리자 수정
+ */
+const updateResponse = (
+    responseId: number,
+    formResponseUpdateRequest: FormResponseUpdateRequest,
+ options?: SecondParameter<typeof customInstance<FormResponseResponse>>,) => {
+      return customInstance<FormResponseResponse>(
+      {url: `/api/admin/form-responses/${responseId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: formResponseUpdateRequest
     },
       options);
     }
@@ -1261,8 +1431,8 @@ const getTemplatePayloadByCode = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-template-versions/{versionId}/render`
  *
@@ -1315,8 +1485,8 @@ const render1 = (
 /**
  * ### 이 API가 하는 일
  * - 파일 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-submission-files/{submissionFileId}/download`
  *
@@ -1369,8 +1539,8 @@ const submissionFileDownload = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-responses`
  *
@@ -1417,60 +1587,6 @@ const listResponses = (
       return customInstance<PageResponseFormResponseResponse>(
       {url: `/api/admin/form-responses`, method: 'GET',
         params
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
- * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
- * - 호출 방식: `GET /api/admin/form-responses/{responseId}`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
- * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
- * - 프론트 조회 키: `get_admin_form-responses_responseId`
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
- * - 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
- * ### Swagger에서 확인할 때
- * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
- * @summary 관리자 조회
- */
-const getResponse = (
-    responseId: number,
- options?: SecondParameter<typeof customInstance<FormResponseResponse>>,) => {
-      return customInstance<FormResponseResponse>(
-      {url: `/api/admin/form-responses/${responseId}`, method: 'GET'
     },
       options);
     }
@@ -1583,8 +1699,8 @@ const listBusinessProjections = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 폼/템플릿/설문 (`SCR_FORM`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 폼/템플릿/설문 (`null`)
  * - 프론트 담당 영역: forms-surveys (`forms-surveys`)
  * - 호출 방식: `GET /api/admin/form-auto-fill-keys`
  *
@@ -1634,7 +1750,7 @@ const autoFillKeys = (
       options);
     }
 
-return {getVersion,updateVersion,formBindings,createFormBinding,listTemplates,createTemplate2,listVersions,createVersion1,copyVersion,publishVersion,formSubmissionFiles,revealDocument,createFeedback,submitResponse,deactivateFormBinding,updateFormBinding,getTemplate1,deleteTemplate,updateTemplate,createOptions,getPublishedTemplatePayloadByCode,getTemplatePayloadByCode,render1,submissionFileDownload,listResponses,getResponse,getDocumentSnapshot,listBusinessProjections,autoFillKeys}};
+return {getVersion,updateVersion,formBindings,createFormBinding,listTemplates,createTemplate2,listVersions,createVersion1,copyVersion,publishVersion,formSubmissionFiles,revealDocument,createFeedback,submitResponse,deactivateFormBinding,updateFormBinding,getTemplate1,deleteTemplate,updateTemplate,getResponse,deleteResponse,updateResponse,createOptions,getPublishedTemplatePayloadByCode,getTemplatePayloadByCode,render1,submissionFileDownload,listResponses,getDocumentSnapshot,listBusinessProjections,autoFillKeys}};
 export type GetVersionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['getVersion']>>>
 export type UpdateVersionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['updateVersion']>>>
 export type FormBindingsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['formBindings']>>>
@@ -1654,13 +1770,15 @@ export type UpdateFormBindingResult = NonNullable<Awaited<ReturnType<ReturnType<
 export type GetTemplate1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['getTemplate1']>>>
 export type DeleteTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['deleteTemplate']>>>
 export type UpdateTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['updateTemplate']>>>
+export type GetResponseResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['getResponse']>>>
+export type DeleteResponseResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['deleteResponse']>>>
+export type UpdateResponseResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['updateResponse']>>>
 export type CreateOptionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['createOptions']>>>
 export type GetPublishedTemplatePayloadByCodeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['getPublishedTemplatePayloadByCode']>>>
 export type GetTemplatePayloadByCodeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['getTemplatePayloadByCode']>>>
 export type Render1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['render1']>>>
 export type SubmissionFileDownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['submissionFileDownload']>>>
 export type ListResponsesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['listResponses']>>>
-export type GetResponseResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['getResponse']>>>
 export type GetDocumentSnapshotResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['getDocumentSnapshot']>>>
 export type ListBusinessProjectionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['listBusinessProjections']>>>
 export type AutoFillKeysResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['autoFillKeys']>>>

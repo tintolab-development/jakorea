@@ -74,7 +74,16 @@ export function UjatProgramDetailCommonInfoView({
           <>
             <UjatBasicInfoRegistrationAuditRow program={program} />
             <div className="ujat-program-detail-common-info-view__basic-info-edit-blocks">
-              <UjatBasicInfoParagraph />
+              {/*
+                UJAT create는 educationStructure 기본 SCHEDULE.
+                generalProgramEducationStructure가 비어 있어도 일정형으로 보고
+                세부 프로그램명을「해당없음」고정 (일반 일정형·상세와 동일).
+              */}
+              <UjatBasicInfoParagraph
+                lockDetailedProgramToNone={
+                  program.generalProgramEducationStructure !== 'curriculum'
+                }
+              />
             </div>
           </>
         ) : (

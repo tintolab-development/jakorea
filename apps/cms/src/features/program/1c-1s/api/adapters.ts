@@ -341,6 +341,7 @@ const SERVICE_DETAIL_PROGRAM_KEYS = [
   'generalVolunteers',
   'staffVolunteers',
   'returningVolunteers',
+  'registrationOverlay',
 ] as const satisfies ReadonlyArray<keyof Program>
 
 function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {

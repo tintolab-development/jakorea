@@ -29,4 +29,11 @@ export interface ProgramCalendarItemResponse {
   displayLabel?: string;
   colorKey?: string;
   counts?: ProgramCalendarItemResponseCounts;
+  eventType?: string;
+  eventKey?: string;
+  sourceType?: string;
+  sourceId?: number;
+  recruitmentType?: string;
+  formType?: string;
+  organizationName?: string;
 }

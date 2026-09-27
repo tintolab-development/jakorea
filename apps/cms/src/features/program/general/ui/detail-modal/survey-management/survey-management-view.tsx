@@ -44,6 +44,7 @@ import {
   GENERAL_SATISFACTION_NO_RESPONSE_COPY,
   GENERAL_SATISFACTION_SHARE_TOAST_COPY,
   GENERAL_SURVEY_POLL_ACTION_LABELS,
+  GENERAL_SURVEY_MENU_EMPTY_COPY,
   GENERAL_SURVEY_POLL_EMPTY_COPY,
   GENERAL_SURVEY_POLL_NO_RESPONSE_COPY,
   GENERAL_SURVEY_POLL_SHARE_TOAST_COPY,
@@ -102,6 +103,7 @@ import { buildTempMockSurveyShareUrl } from '@/features/program/general/lib/temp
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
+import '@/features/program/shared/ui/survey-management/survey-management.css'
 import './survey-management.css'
 
 type CreateModalKind = 'survey' | 'satisfaction' | 'lecture'
@@ -993,12 +995,16 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   }
 
   const renderEmptyMain = () => (
-    <SurveyEmptyState
-      title={GENERAL_SURVEY_POLL_EMPTY_COPY.title}
-      description={GENERAL_SURVEY_POLL_EMPTY_COPY.description}
-      registerButtonLabel={GENERAL_SURVEY_POLL_EMPTY_COPY.registerButton}
-      onRegisterClick={() => openCreateModal('survey')}
-    />
+    <div className="program-detail-fullpage-modal__info-tab survey-management__empty-main">
+      <div className="survey-management__empty-main-card">
+        <p className="survey-management__empty-main-title">
+          {GENERAL_SURVEY_MENU_EMPTY_COPY.title}
+        </p>
+        <p className="survey-management__empty-main-description">
+          {GENERAL_SURVEY_MENU_EMPTY_COPY.description}
+        </p>
+      </div>
+    </div>
   )
 
   const createTitle =

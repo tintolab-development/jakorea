@@ -14,8 +14,13 @@ export interface ApplicationFormResponse {
   applicationType?: string;
   formBindingId?: number;
   templateVersionId?: number;
+  /** 런타임 장식이 반영된 작성 양식 문서 객체입니다. schemaJson 문자열 래퍼가 아니며 paragraphs 배열이 있습니다. 문단 id는 템플릿에 저장된 id 그대로입니다. */
   form?: ApplicationFormResponseForm;
   draftApplicationId?: number;
   draftFormResponseId?: number;
+  /**
+     * 임시저장 답. 키 규칙은 SaveApplicationRequest.answers와 같습니다. 임시저장이 없으면 빈 객체입니다.
+     * @nullable
+     */
   draftAnswers?: ApplicationFormResponseDraftAnswers;
 }

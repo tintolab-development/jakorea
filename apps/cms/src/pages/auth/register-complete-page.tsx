@@ -34,14 +34,6 @@ function buildLoginPath(redirectPath?: string) {
   return `/login?redirect=${encodeURIComponent(safe)}`
 }
 
-function buildSocialConnectPath(redirectPath?: string) {
-  const safe = resolveSafeAppRedirect(redirectPath)
-  if (!safe) {
-    return '/register/social-connect'
-  }
-  return `/register/social-connect?redirect=${encodeURIComponent(safe)}`
-}
-
 export function RegisterCompletePage() {
   const navigate = useNavigate()
   const logout = useAuthStore(state => state.logout)
@@ -49,10 +41,12 @@ export function RegisterCompletePage() {
   const { params } = useQueryParams<{ redirect?: string }>()
 
   const loginPath = buildLoginPath(params.redirect)
-  const socialConnectPath = buildSocialConnectPath(params.redirect)
 
   return (
-    <AuthPageShell showLogo={false} cardClassName="auth-card--register-complete auth-card--register-signup-complete">
+    <AuthPageShell
+      showLogo={false}
+      cardClassName="auth-card--register-complete auth-card--register-signup-complete"
+    >
       <RegisterCompleteView
         onGoLogin={() => {
           clearPasswordChangeRequiredComplete()
@@ -61,7 +55,6 @@ export function RegisterCompletePage() {
           logout()
           navigate(loginPath, { replace: true })
         }}
-        onConnectSocial={() => navigate(socialConnectPath, { replace: true })}
       />
     </AuthPageShell>
   )

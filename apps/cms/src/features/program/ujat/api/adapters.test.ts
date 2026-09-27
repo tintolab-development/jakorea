@@ -170,6 +170,47 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
     expect(mapped.ujatRegistrationOverlay?.['ujat.kpi.participantCount']).toBe(61)
   })
 
+  it('BE top-level 대표·관리명·해당없음이 stale overlay보다 우선한다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      sponsorId: program.sponsorId,
+      title: '새 관리명',
+      mainTitle: '새 국문 대표명',
+      titleEn: 'New English Title',
+      detailedProgramName: '해당없음',
+      detailedProgramId: undefined,
+      educationStructure: 'SCHEDULE',
+      startDate: String(program.startDate),
+      endDate: String(program.endDate),
+      serviceDetailJson: JSON.stringify({
+        version: 1,
+        program: {},
+        registration: {
+          draft,
+          overlay: {
+            'ujat.basicInfo.repKo': '옛 국문',
+            'ujat.basicInfo.repEn': 'Old English',
+            'ujat.basicInfo.programManagementName': '옛 관리명',
+            'ujat.basicInfo.detailedProgramId': '__ujat_volunteer_core__',
+            'ujat.basicInfo.detailedProgramName': '대학생경제교육봉사단',
+          },
+        },
+      }),
+    })
+    expect(mapped.title).toBe('새 관리명')
+    expect(mapped.mainTitle).toBe('새 국문 대표명')
+    expect(mapped.titleEn).toBe('New English Title')
+    expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.repKo']).toBe('새 국문 대표명')
+    expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.repEn']).toBe('New English Title')
+    expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.programManagementName']).toBe(
+      '새 관리명'
+    )
+    expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.detailedProgramName']).toBe(
+      '해당없음'
+    )
+    expect(mapped.generalProgramEducationStructure).toBe('schedule')
+  })
+
   it('응답의 detailedProgramId·detailedProgramName을 Program에 round-trip 한다', () => {
     const mapped = fromDetail({
       id: program.id,

@@ -232,6 +232,24 @@ export function getProgramRegistrationOverlayRecord(): Record<string, unknown> {
   return overlayState
 }
 
+/** 상세 수정 seed/복원용 — 등록 위저드 동작은 바꾸지 않는다. */
+export function pickProgramRegistrationOverlayByPrefix(
+  prefix: string,
+  record: Record<string, unknown> = overlayState
+): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(record).filter(([key]) => key.startsWith(prefix)))
+}
+
+export function replaceProgramRegistrationOverlayPrefix(
+  prefix: string,
+  nextPrefixValues: Record<string, unknown>
+): void {
+  const kept = Object.fromEntries(
+    Object.entries(overlayState).filter(([key]) => !key.startsWith(prefix))
+  )
+  replaceProgramRegistrationOverlay({ ...kept, ...nextPrefixValues })
+}
+
 function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
   const raw = overlayState[key] as T | undefined
   return raw === undefined ? defaultValue : raw

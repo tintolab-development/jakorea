@@ -4,15 +4,20 @@ import type { SocialProvider } from '@jakorea/social-auth'
 import { isLinkedSocialAccount } from '@jakorea/social-auth'
 
 import { isSocialAdminSocialApiRemoteEnabled } from '@/features/auth/api/social-auth-remote-capabilities'
-import { getSocialConnectUnlinkConfirmContent } from '@/features/auth/lib/social-connect-unlink-copy'
 import {
   getConnectedProviders,
   setRegisterSocialLinkIntent,
+  shouldSkipUnauthenticatedSocialConnectStart,
 } from '@/features/auth/lib/register-social-connect-state'
 import { getSignupSocialLinkToken } from '@/features/auth/lib/signup-social-link-handoff'
+import { getSocialConnectUnlinkConfirmContent } from '@/features/auth/lib/social-connect-unlink-copy'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import { hasPasswordChangeRequiredSocialOnboarding } from '@/features/auth/password-change-required/wizard-state'
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
+import { isPasswordChangeRequiredSocialConnectPath } from '@/shared/utils/post-auth-redirect'
 import { handleError } from '@/shared/utils/error-handler'
 
 import { SocialConnectProviderIcon } from './admin-register/social-connect-provider-icon'
@@ -24,6 +29,24 @@ const SOCIAL_CONNECT_DISPLAY_NAME: Record<SocialProvider, string> = {
   google: 'Google',
   naver: '네이버',
   kakao: '카카오',
+}
+
+function isFirstLoginSocialConnectContext(): boolean {
+  if (typeof window === 'undefined') return false
+  return (
+    hasPasswordChangeRequiredSocialOnboarding() ||
+    isPasswordChangeRequiredSocialConnectPath(window.location.pathname, window.location.search)
+  )
+}
+
+function hasCmsAccessToken(): boolean {
+  if (cmsSocialAuthClient.hasAccessToken()) return true
+  return Boolean(useAuthStore.getState().token)
+}
+
+function socialConnectFailureMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) return error.message
+  return '소셜 계정 연결을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.'
 }
 
 function syncSessionConnectedProviders(providers: Set<SocialProvider>) {
@@ -92,19 +115,26 @@ export function SocialConnectProviderList({
     setRegisterSocialLinkIntent(redirectPath)
 
     const signupSocialLinkToken = getSignupSocialLinkToken()
-    const hasAccessToken = cmsSocialAuthClient.hasAccessToken()
+    const hasAccessToken = hasCmsAccessToken()
+    const firstLoginOnboarding = isFirstLoginSocialConnectContext()
     const startInput =
       remoteEnabled && !hasAccessToken && signupSocialLinkToken
         ? { provider, intent: 'link' as const, returnUrl: redirectPath, signupSocialLinkToken }
         : { provider, intent: 'link' as const, returnUrl: redirectPath }
 
-    if (remoteEnabled && !hasAccessToken && !signupSocialLinkToken) {
-      handleError(
-        new Error(
-          '가입 직후 소셜 연결 세션이 없거나 만료되었습니다. 로그인 후 [내 정보 수정]에서 연결해 주세요.'
-        ),
-        { context: 'socialConnectProviderList.connect' }
-      )
+    if (
+      shouldSkipUnauthenticatedSocialConnectStart({
+        remoteEnabled,
+        hasAccessToken,
+        hasSignupSocialLinkToken: Boolean(signupSocialLinkToken),
+        firstLoginOnboarding,
+      })
+    ) {
+      cmsAlertModal.show({
+        title: '소셜 계정 연결',
+        content:
+          '가입 직후 소셜 연결 세션이 없거나 만료되었습니다. 로그인 후 [내 정보 수정]에서 연결해 주세요.',
+      })
       setLoadingProvider(null)
       return
     }
@@ -116,6 +146,10 @@ export function SocialConnectProviderList({
       })
       .catch((error: unknown) => {
         handleError(error, { context: 'socialConnectProviderList.connect' })
+        cmsAlertModal.show({
+          title: '소셜 계정 연결',
+          content: socialConnectFailureMessage(error),
+        })
         setLoadingProvider(null)
       })
   }
@@ -213,7 +247,7 @@ export function SocialConnectProviderList({
                 size="small"
                 className="social-connect-provider-list__action-btn cms-button--no-label-ellipsis"
                 loading={isLoading}
-                disabled={(loadingProvider !== null && !isLoading) || loadingAccounts}
+                disabled={loadingProvider !== null && !isLoading}
                 onClick={() =>
                   isConnected ? handleDisconnectRequest(provider) : handleConnect(provider)
                 }

@@ -64,6 +64,19 @@ describe('resolveUjatRegistrationBasicInfoDisplay — 상세 overlay (세션 기
     })
     expect(display.publicProgramTitle).toBe('-')
   })
+  it('일정형이면 overlay에 남은 봉사단 세부명을 무시하고 해당없음으로 표시한다', () => {
+    const display = resolveUjatRegistrationBasicInfoDisplay({
+      ...baseProgram(),
+      generalProgramEducationStructure: 'schedule',
+      detailedProgramId: undefined,
+      generalCommonInfo: { detailedProgramName: '해당없음' },
+      ujatRegistrationOverlay: {
+        'ujat.basicInfo.detailedProgramId': UJAT_DETAILED_PROGRAM_UJAT_VALUE,
+        'ujat.basicInfo.detailedProgramName': UJAT_DETAILED_PROGRAM_UJAT_LABEL,
+      },
+    })
+    expect(display.detailedProgramName).toBe('해당없음')
+  })
 })
 
 describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 버그 수정 확인)', () => {
@@ -88,5 +101,33 @@ describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedP
     })
     expect(next.detailedProgramId).toBe('dp-1')
     expect(next.generalCommonInfo?.detailedProgramName).toBe('실제 선택한 세부 프로그램명')
+  })
+
+  it('일정형 해당없음이면 teamDivision을 비운다', () => {
+    const next = applyUjatRegistrationOverlayToProgram(
+      { ...baseProgram(), teamDivision: '대학생경제교육봉사단' },
+      {
+        'ujat.basicInfo.detailedProgramId': '__detailed_program_none__',
+        'ujat.basicInfo.detailedProgramName': '해당없음',
+      }
+    )
+    expect(next.teamDivision).toBeUndefined()
+  })
+
+  it('후원사 담당자·설문 overlay를 generalCommonInfo·generalSurveyMenuKeys에 반영한다', () => {
+    const next = applyUjatRegistrationOverlayToProgram(baseProgram(), {
+      'ujat.basicInfo.sponsorContactIds': ['contact-9'],
+      'ujat.basicInfo.sponsorContactId': 'contact-9',
+      'ujat.basicInfo.sponsorManagerName': '담당자A',
+      'ujat.basicInfo.surveyItems': {
+        survey: true,
+        volunteer_satisfaction: false,
+        school_satisfaction: true,
+        lecture_evaluation: true,
+      },
+    })
+    expect(next.generalCommonInfo?.sponsorManagerContactIds).toEqual(['contact-9'])
+    expect(next.generalCommonInfo?.sponsorManagerLine).toBe('담당자A')
+    expect(next.generalSurveyMenuKeys).toEqual(['survey', 'satisfaction', 'lecture_evaluation'])
   })
 })

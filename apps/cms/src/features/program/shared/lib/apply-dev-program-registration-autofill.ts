@@ -1242,7 +1242,6 @@ function buildUjatOverlay(
   return {
     'ujat.basicInfo.repKo': sample.titleKo,
     'ujat.basicInfo.repEn': sample.titleEn,
-    'ujat.basicInfo.publicProgramTitle': sample.publicTitle,
     'ujat.basicInfo.programManagementName': `${sample.titleKo} 운영`,
     'ujat.basicInfo.detailedProgramId': UJAT_DETAILED_PROGRAM_UJAT_VALUE,
     // id만 넣고 name을 비워두면 실제 저장되는 세부 프로그램명이 어긋날 수 있다 — 항상 짝지어 넣는다.

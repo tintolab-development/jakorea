@@ -8,6 +8,7 @@ import type { Program } from '@/types/domain'
 import { normalizeGeneralProgramServiceDetailParsed } from '@/features/program/general/lib/general-program-service-detail-json'
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
+import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 
 export const COMPANY_SCHOOL_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -423,10 +424,15 @@ export function parseCompanySchoolServiceDetailJson(raw?: unknown): Partial<Prog
       ) {
         return applyWageSidecar({}, wageSidecar)
       }
+      const fromProgram = companySchoolVolunteerOff(parsed.program as Partial<Program>)
       return applyWageSidecar(
         {
-          ...companySchoolVolunteerOff(parsed.program as Partial<Program>),
+          ...fromProgram,
           ...(registrationOverlay ? { registrationOverlay } : {}),
+          generalSurveyMenuKeys: resolveGeneralSurveyMenuKeys({
+            keys: fromProgram.generalSurveyMenuKeys,
+            overlay: registrationOverlay,
+          }),
         },
         wageSidecar
       )
@@ -445,10 +451,15 @@ export function parseCompanySchoolServiceDetailJson(raw?: unknown): Partial<Prog
     const normalized = normalizeGeneralProgramServiceDetailParsed(
       parsed as Parameters<typeof normalizeGeneralProgramServiceDetailParsed>[0]
     )
+    const fromNormalized = companySchoolVolunteerOff(normalized)
     return applyWageSidecar(
       {
-        ...companySchoolVolunteerOff(normalized),
+        ...fromNormalized,
         ...(registrationOverlay ? { registrationOverlay } : {}),
+        generalSurveyMenuKeys: resolveGeneralSurveyMenuKeys({
+          keys: fromNormalized.generalSurveyMenuKeys,
+          overlay: registrationOverlay,
+        }),
       },
       wageSidecar
     )
