@@ -11,7 +11,7 @@
 |---|------|------|
 | A | 상세에서 고친 대표 프로그램명(국문)이 목록에 안 나옴 | 일반 관측. UJAT · 1사1교 · 교육받은 교사도 동일 |
 | B | 사업 운영 기간을 1/1~12/31·같은 해로 강제하지 말 것. 선택값을 그대로 저장 | **전 유형 공통** |
-| C | 1사1교 등록 임금이 `settlementPolicy`에 안 남고 기본 50만원. JSON 루트 미러 | **`COMPANY_SCHOOL`만** · [company-school-wage-settlement-json-backend-handoff-2026-09-23.md](./company-school-wage-settlement-json-backend-handoff-2026-09-23.md) |
+| C | 1사1교 등록 round-trip (임금·정산 기본값, 회차·기간·공고명·JSON 미러) | **`COMPANY_SCHOOL`만** · [company-school-registration-roundtrip-backend-handoff-2026-09-27.md](./company-school-registration-roundtrip-backend-handoff-2026-09-27.md) |
 
 ---
 
