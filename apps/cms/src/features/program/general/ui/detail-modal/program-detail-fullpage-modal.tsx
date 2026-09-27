@@ -82,6 +82,10 @@ import {
 } from '@/features/program/1c-1s/lib/registration-overlay-sync'
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import {
+  programToRecruitmentTabEditValues,
+  resolveGeneralProgramForRecruitmentEdit,
+} from '@/features/program/general/lib/general-program-recruitment-edit-seed'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { useUpdateTrainedTeacherProgramInfoDetail } from '@/features/program/trained-teachers/api/hooks'
@@ -281,6 +285,22 @@ export function ProgramDetailFullPageModal({
     if (onUpdateProgram) return program ?? null
     return detailProgram ?? program ?? null
   }, [detailProgram, program, onUpdateProgram, externalLoading])
+  const recruitmentEditProgram = useMemo(
+    () => (displayProgram ? resolveGeneralProgramForRecruitmentEdit(displayProgram) : null),
+    [displayProgram]
+  )
+  const mapParticipantRecruitmentEditValues = useCallback(
+    (p: Program) => programToRecruitmentTabEditValues(p, 'participant'),
+    []
+  )
+  const mapInstructorRecruitmentEditValues = useCallback(
+    (p: Program) => programToRecruitmentTabEditValues(p, 'instructor'),
+    []
+  )
+  const mapVolunteerRecruitmentEditValues = useCallback(
+    (p: Program) => programToRecruitmentTabEditValues(p, 'volunteer'),
+    []
+  )
   const persistProgramPatch = async (draft: Program, patch: Partial<Program>) => {
     if (onUpdateProgram) {
       await onUpdateProgram(draft.id, draft, patch)
@@ -1350,9 +1370,10 @@ export function ProgramDetailFullPageModal({
   const isEditModeInstitutions =
     activeTab === 'institutions' && editTab === 'institutions' && !!displayProgram
   const institutionsForm = useProgramDetailEditForm({
-    program: displayProgram,
+    program: recruitmentEditProgram,
     isEditMode: isEditModeInstitutions,
     schema: programDetailInstitutionsEditSchema,
+    mapToValues: mapParticipantRecruitmentEditValues,
   })
   const {
     triggerSave: institutionsTriggerSave,
@@ -1360,7 +1381,8 @@ export function ProgramDetailFullPageModal({
     registerGetAdditionalContentHtml: registerInstitutionsAdditionalHtml,
   } = useProgramDetailInfoSave({
     form: institutionsForm,
-    program: displayProgram ?? ({} as Program),
+    program: recruitmentEditProgram ?? ({} as Program),
+    mapToValues: mapParticipantRecruitmentEditValues,
     // 모집 탭은 공통정보 필수값(설명·후원사 등) 검증 제외 — 일반 상세와 동일
     validateSchema: isTrainedTeachersDetail
       ? programTrainedTeachersRecruitmentSaveSchema
@@ -1383,8 +1405,9 @@ export function ProgramDetailFullPageModal({
     editTab === 'instructors' &&
     !!displayProgram
   const instructorsForm = useProgramDetailEditForm({
-    program: displayProgram,
+    program: recruitmentEditProgram,
     isEditMode: isEditModeInstructors,
+    mapToValues: mapInstructorRecruitmentEditValues,
   })
   const {
     triggerSave: instructorsTriggerSave,
@@ -1392,7 +1415,8 @@ export function ProgramDetailFullPageModal({
     registerGetAdditionalContentHtml: registerInstructorsAdditionalHtml,
   } = useProgramDetailInfoSave({
     form: instructorsForm,
-    program: displayProgram ?? ({} as Program),
+    program: recruitmentEditProgram ?? ({} as Program),
+    mapToValues: mapInstructorRecruitmentEditValues,
     validateSchema: programInstructorRecruitmentSaveSchema,
     onSaveEdit:
       displayProgram
@@ -1501,8 +1525,9 @@ export function ProgramDetailFullPageModal({
   const isEditModeVolunteers =
     activeTab === 'volunteers' && editTab === 'volunteers' && !!displayProgram
   const volunteersForm = useProgramDetailEditForm({
-    program: displayProgram,
+    program: recruitmentEditProgram,
     isEditMode: isEditModeVolunteers,
+    mapToValues: mapVolunteerRecruitmentEditValues,
   })
   const {
     triggerSave: volunteersTriggerSave,
@@ -1510,7 +1535,8 @@ export function ProgramDetailFullPageModal({
     registerGetAdditionalContentHtml: registerVolunteersAdditionalHtml,
   } = useProgramDetailInfoSave({
     form: volunteersForm,
-    program: displayProgram ?? ({} as Program),
+    program: recruitmentEditProgram ?? ({} as Program),
+    mapToValues: mapVolunteerRecruitmentEditValues,
     onSaveEdit:
       displayProgram
         ? async (draft, patch) => {
@@ -1657,7 +1683,7 @@ export function ProgramDetailFullPageModal({
         <>
           {activeLnb === 'info' && isCompanySchoolRecruitmentInfoTab && (
             <GeneralProgramRecruitmentView
-              program={displayProgram}
+              program={recruitmentEditProgram ?? displayProgram}
               activeRecruitTab={activeCompanySchoolRecruitTab}
               onRecruitTabChange={handleCompanySchoolRecruitTabChange}
               showInstructorTab={!isTrainedTeachersDetail}
