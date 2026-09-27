@@ -42,7 +42,7 @@ export const ADMIN_PERMISSION_CATEGORIES: AdminPermissionCategoryDef[] = [
       { id: 'pii_address', label: '주소지 확인' },
       { id: 'pii_contact_email', label: '연락처 및 이메일 확인' },
       { id: 'pii_school_info', label: '학력사항 확인' },
-      { id: 'pii_social', label: '연동 소셜계정 확인' },
+      { id: 'pii_social', label: '연동 소셜 계정 확인' },
       { id: 'pii_consent', label: '정보 동의 항목 확인' },
       { id: 'pii_consent_document', label: '정보 동의 항목 동의서 확인' },
     ],
