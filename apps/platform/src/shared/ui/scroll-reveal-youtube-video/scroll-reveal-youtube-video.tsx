@@ -23,6 +23,7 @@ export function ScrollRevealYoutubeVideo({
   const sectionRef = useRef<HTMLElement>(null)
   const prefersReducedMotion = usePrefersReducedMotion()
   const [hasAnimated, setHasAnimated] = useState(false)
+  const [embedReady, setEmbedReady] = useState(false)
 
   const videoId = useMemo(() => extractYouTubeVideoId(youtubeUrl), [youtubeUrl])
   const embedSrc = useMemo(
@@ -37,22 +38,17 @@ export function ScrollRevealYoutubeVideo({
   })
   const isNearView = useIntersectionObserver(sectionRef, {
     threshold: 0,
-    rootMargin: '480px 0px',
+    rootMargin: '800px 0px',
     enabled: Boolean(videoId),
   })
-  const [embedReady, setEmbedReady] = useState(false)
 
   useEffect(() => {
-    if (isInView) {
-      setHasAnimated(true)
-    }
+    if (isInView) setHasAnimated(true)
   }, [isInView])
 
   useEffect(() => {
-    if (isNearView) {
-      setEmbedReady(true)
-    }
-  }, [isNearView])
+    if (isNearView || isInView || prefersReducedMotion) setEmbedReady(true)
+  }, [isInView, isNearView, prefersReducedMotion])
 
   if (!videoId || !embedSrc) {
     return null
@@ -78,8 +74,8 @@ export function ScrollRevealYoutubeVideo({
 
       <div className={styles.maskTrack}>
         <div className={styles.mask}>
-          {embedReady ? (
-            <div className={styles.iframeWrap}>
+          <div className={styles.iframeWrap}>
+            {embedReady ? (
               <iframe
                 className={styles.iframe}
                 src={embedSrc}
@@ -88,8 +84,8 @@ export function ScrollRevealYoutubeVideo({
                 referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen
               />
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </div>
     </section>
