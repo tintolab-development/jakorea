@@ -13,7 +13,7 @@ import {
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
-import { resolveUjatAnnouncementTitle } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import { resolveUjatRecruitAnnouncementTitle } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import {
   getUjatVolunteerNoticeExposureReadLabel,
@@ -34,7 +34,10 @@ import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { UjatVolunteerRecruitHalf } from '../ujat-recruit-paragraph-props'
-import { getUjatVolunteerRecruitPeriod, getUjatVolunteerRound } from '../ujat-recruit-program-round'
+import {
+  getUjatVolunteerRecruitPeriod,
+  resolveUjatVolunteerActivityTermDisplay,
+} from '../ujat-recruit-program-round'
 import { UjatInlineDividedSegments } from '../../shared/ujat-inline-divided-segments'
 import {
   UJAT_RECRUIT_FORM_MAX_SUFFIX_CLASS,
@@ -80,8 +83,7 @@ function resolveInterviewMethodLabel(method: string | undefined): string {
 }
 
 function resolveActivityTermDisplay(program: Program, half: UjatVolunteerRecruitHalf): string {
-  const round = getUjatVolunteerRound(program, half)
-  return round?.curriculum?.trim() || '-'
+  return resolveUjatVolunteerActivityTermDisplay(program, half)
 }
 
 export function UjatRecruitVolunteerInfoProgramView({
@@ -137,13 +139,17 @@ export function UjatRecruitVolunteerInfoProgramView({
         }
       : undefined
   )
-  const publicTitle = resolveUjatAnnouncementTitle(program).trim() || '-'
+  const publicTitle = resolveUjatRecruitAnnouncementTitle(program, 'volunteer')
   const watchedTargets = isEdit && form ? form.watch('volunteerTargets') : undefined
   const volunteerTarget =
     (watchedTargets?.length ? watchedTargets.join(', ') : undefined) ??
+    (program.volunteerTargets?.length ? program.volunteerTargets.join(', ') : undefined) ??
     program.volunteerTarget ??
-    UJAT_VOLUNTEER_RECRUIT_DEFAULT_TARGET_LABELS.join(', ')
-  const volunteerTargetDetail = program.volunteerTargetDetail ?? '-'
+    (isTemplateAuthoring ? UJAT_VOLUNTEER_RECRUIT_DEFAULT_TARGET_LABELS.join(', ') : '-')
+  const volunteerTargetDetail =
+    program.volunteerTargetDetail?.trim() ||
+    program.generalCommonInfo?.volunteerRecruitmentInfo?.recruitmentTargetDetail?.trim() ||
+    '-'
   const notes = resolveVolunteerNotesDisplay(program)
   const activityTerm = resolveActivityTermDisplay(program, volunteerHalf)
   const noticeExposureSetting =
@@ -459,12 +465,18 @@ export function UjatRecruitVolunteerInfoProgramView({
                 <div className="program-detail-info-tab__contact-inputs program-detail-info-tab__contact-inputs--even">
                   <div className="program-detail-info-tab__contact-group">
                     <span className="program-detail-info-tab__contact-label">문의처</span>
-                    <CmsInput
-                      placeholder="담당 문의처"
-                      value={sponsorName ?? ''}
-                      readOnly
-                      inputSize="medium"
-                      className="program-detail-info-tab__contact-name-input"
+                    <Controller
+                      name="volunteerRecruitmentContactOrganizationName"
+                      control={form.control}
+                      render={({ field }) => (
+                        <CmsInput
+                          {...field}
+                          value={field.value ?? sponsorName ?? ''}
+                          placeholder="담당 문의처"
+                          inputSize="medium"
+                          className="program-detail-info-tab__contact-name-input"
+                        />
+                      )}
                     />
                   </div>
                   <DividerVertical

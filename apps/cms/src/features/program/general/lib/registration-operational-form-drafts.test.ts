@@ -59,6 +59,12 @@ describe('registration operational draft-owned helpers', () => {
     expect(economy).toContain('recruitment-economy')
     expect(economy).toContain('recruitment-instructor')
     expect(economy).not.toContain('recruitment-participant-school')
+    const ujat = listRegistrationOperationalFormDraftStorageKeys('ujat')
+    expect(ujat).toContain('recruitment-ujat-school')
+    expect(ujat).toContain('recruitment-ujat-volunteer')
+    expect(ujat).toContain('application-ujat-school')
+    expect(ujat).toContain('application-ujat-volunteer')
+    expect(ujat).toHaveLength(4)
   })
 
   it('resolveOperationalDraftStorageKey returns catalog id', () => {

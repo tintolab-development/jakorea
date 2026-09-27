@@ -123,12 +123,16 @@ describe('buildUjatProgramListRowFromRegistrationSnapshot — overlay를 1차 �
         'ujat.recruit.institution.district': '초등학교 4~6학년',
         'ujat.recruit.volunteer.volunteerTargets': ['고등학생', '중학생'],
         'ujat.recruit.volunteer.interviewMethod': '온라인',
+        'ujat.recruit.volunteer.h1.activityTerm': '3',
+        'ujat.recruit.volunteer.h2.activityTerm': '4',
       },
     })
 
     expect(program.title).toBe('우리 동네 소비와 저축 운영')
     expect(program.mainTitle).toBe('우리 동네 소비와 저축')
-    expect(program.generalCommonInfo?.announcementTitle).toBeUndefined()
+    expect(program.generalCommonInfo?.announcementTitle).toBe(
+      '우리 동네 소비와 저축 참여 기관 모집'
+    )
     expect(program.managerName).toBe('정민재')
     expect(program.contactPhone).toBe('031-234-5678')
     expect(program.contactEmail).toBe('edu.team@jakorea.org')
@@ -139,5 +143,8 @@ describe('buildUjatProgramListRowFromRegistrationSnapshot — overlay를 1차 �
     expect(program.interviewMethod).toBe('온라인')
     expect(program.rounds[0]?.startDate).toBe(program.startDate)
     expect(program.rounds[0]?.endDate).toBe(program.endDate)
+    expect(program.rounds[0]?.curriculum).toBe('3')
+    expect(program.ujatRegistrationOverlay?.['ujat.recruit.volunteer.h1.activityTerm']).toBe('3')
+    expect(program.ujatRegistrationOverlay?.['ujat.recruit.volunteer.h2.activityTerm']).toBe('4')
   })
 })

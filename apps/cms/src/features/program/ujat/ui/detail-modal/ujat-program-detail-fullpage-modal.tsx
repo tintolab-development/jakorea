@@ -17,6 +17,8 @@ import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-p
 import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-program-detail-info-save'
 import { handleError } from '@/shared/utils/error-handler'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { programToUjatRecruitTemplateFormValues } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
+import { resolveUjatRecruitDisplayProgram } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import { applyUjatRegistrationOverlayToProgram } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import { syncUjatDetailEditFormKpiToOverlay } from '@/features/program/ujat/lib/detail-edit-form-kpi-to-overlay'
 import {
@@ -80,6 +82,7 @@ import {
   type UjatSurveyMenuItem,
 } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import { resolveUjatProgramDisplayProgram } from '@/features/program/ujat/lib/ujat-program-display-program'
+import { hydrateUjatRecruitTemplatesForProgram } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import { resolveUjatProgramDisplayTitle } from '@/features/program/ujat/lib/ujat-program-list-display'
 import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
 import {
@@ -594,6 +597,23 @@ export function UjatProgramDetailFullPageModal({
     return base ? resolveUjatProgramDisplayProgram(base) : null
   }, [detailProgram, program, onUpdateProgram, externalLoading])
 
+  const mapInstitutionRecruitmentEditValues = useCallback(
+    (p: Program) =>
+      programToUjatRecruitTemplateFormValues(
+        resolveUjatRecruitDisplayProgram(p, 'institution'),
+        'institution'
+      ),
+    []
+  )
+  const mapVolunteerRecruitmentEditValues = useCallback(
+    (p: Program) =>
+      programToUjatRecruitTemplateFormValues(
+        resolveUjatRecruitDisplayProgram(p, 'volunteer'),
+        'volunteer'
+      ),
+    []
+  )
+
   const overlayHydrateStampRef = useRef<string | null>(null)
   useLayoutEffect(() => {
     if (!displayProgram) return
@@ -604,6 +624,7 @@ export function UjatProgramDetailFullPageModal({
     if (Object.keys(overlay).length === 0) return
     resetUjatProgramRegistrationOverlay()
     patchUjatProgramRegistrationOverlay(overlay)
+    void hydrateUjatRecruitTemplatesForProgram(displayProgram)
   }, [displayProgram])
 
   const interviewEnabled = displayProgram ? getUjatVolunteerInterviewEnabled(displayProgram) : true
@@ -1178,6 +1199,7 @@ export function UjatProgramDetailFullPageModal({
     program: displayProgram,
     isEditMode: isEditModeRecruitParticipant,
     schema: programDetailInstitutionsEditSchema,
+    mapToValues: mapInstitutionRecruitmentEditValues,
   })
   const {
     triggerSave: institutionsTriggerSave,
@@ -1186,6 +1208,7 @@ export function UjatProgramDetailFullPageModal({
   } = useProgramDetailInfoSave({
     form: institutionsForm,
     program: displayProgram ?? ({} as Program),
+    mapToValues: mapInstitutionRecruitmentEditValues,
     onSaveEdit:
       displayProgram && updateProgram
         ? async (draft, patch) => {
@@ -1211,6 +1234,7 @@ export function UjatProgramDetailFullPageModal({
   const volunteersForm = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeRecruitVolunteer,
+    mapToValues: mapVolunteerRecruitmentEditValues,
   })
   const {
     triggerSave: volunteersTriggerSave,
@@ -1219,6 +1243,7 @@ export function UjatProgramDetailFullPageModal({
   } = useProgramDetailInfoSave({
     form: volunteersForm,
     program: displayProgram ?? ({} as Program),
+    mapToValues: mapVolunteerRecruitmentEditValues,
     onSaveEdit:
       displayProgram && updateProgram
         ? async (draft, patch) => {

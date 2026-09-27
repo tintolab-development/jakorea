@@ -1,6 +1,10 @@
 import type { Program } from '@/types/domain'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import { UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/program/ujat/lib/ujat-institution-recruit-template-preview-program'
+import {
+  programToUjatRecruitTemplateFormValues,
+  useUjatRecruitTemplateFormOverlaySync,
+} from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
 import { useUjatRecruitTemplateProgram } from '@/features/program/ujat/lib/use-ujat-recruit-template-program'
 import type { UjatRecruitParagraphProps } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
 import {
@@ -14,11 +18,23 @@ function UjatRecruitParticipantInfoTemplateEditor() {
     UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
     'institution'
   )
-  return <UjatRecruitParticipantInfoTemplateEditorForm key={revision} program={program} />
+  return <UjatRecruitParticipantInfoTemplateEditorForm program={program} revision={revision} />
 }
 
-function UjatRecruitParticipantInfoTemplateEditorForm({ program }: { program: Program }) {
-  const form = useProgramDetailEditForm({ program, isEditMode: true })
+function UjatRecruitParticipantInfoTemplateEditorForm({
+  program,
+  revision,
+}: {
+  program: Program
+  revision: number
+}) {
+  const form = useProgramDetailEditForm({
+    program,
+    isEditMode: true,
+    resetOnProgramChange: false,
+    mapToValues: next => programToUjatRecruitTemplateFormValues(next, 'institution'),
+  })
+  useUjatRecruitTemplateFormOverlaySync(form, 'institution', program, revision)
 
   return (
     <UjatRecruitParticipantInfoProgramView

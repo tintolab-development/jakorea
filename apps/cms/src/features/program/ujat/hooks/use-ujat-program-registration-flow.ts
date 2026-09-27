@@ -21,9 +21,15 @@ import {
 } from '@/features/template/model/template-registry/template-registry'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import { buildParticipantApplicationEditorState } from '@/features/template/lib/participant-application-editor-state'
-import { getUjatProgramRegistrationOverlayRecord } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
+import {
+  getUjatProgramRegistrationOverlayRecord,
+  resetUjatProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { toCreateRequest } from '@/features/program/ujat/api/adapters'
-import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
+import {
+  buildUjatProgramListRowFromRegistrationSnapshot,
+  collectUjatRegistrationCreateOverlay,
+} from '@/features/program/ujat/lib/ujat-registration-local-save'
 import {
   formatRegistrationStepTransitionLabel,
   logProgramRegistrationCreatePayload,
@@ -33,8 +39,20 @@ import type { TemplateEditorVm } from '@/features/template/ui/template-renderers
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 import { useUjatProgramRegistrationEditor } from '@/features/template/ui/form-set/registration-form/UJAT/use-ujat-program-registration-editor'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
-import { collectOperationalOverlayForCatalogId } from '@/features/program/general/lib/registration-operational-form-drafts'
-import { flushApplicationOperationalOverrides } from '@/features/program/general/lib/registration-wizard-session-drafts'
+import {
+  collectOperationalOverlayForCatalogId,
+  hydrateRegistrationOperationalOverlaysFromLocalDrafts,
+  persistRegistrationOperationalOverlaysToLocal,
+} from '@/features/program/general/lib/registration-operational-form-drafts'
+import {
+  clearRegistrationWizardSessionDrafts,
+  flushApplicationOperationalOverrides,
+} from '@/features/program/general/lib/registration-wizard-session-drafts'
+import { resetGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { resetUjatRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/ujat-recruit-institution-overlay-sync'
+import { resetUjatRecruitVolunteerOverlay } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
+import { resetUjatApplicationInstitutionOverlay } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
+import { resetUjatApplicationVolunteerOverlay } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 import {
   hydrateRegistrationProgramDraft,
   syncRegistrationProgramDraftSession,
@@ -102,22 +120,29 @@ export function useUjatProgramRegistrationFlow(
     if (!open || skipDraftRestore) return
     if (continueHydratedRef.current) return
     continueHydratedRef.current = true
-    void hydrateRegistrationProgramDraft(programType)
-      .then(payload => {
-        if (payload?.activeStep == null) return
-        const restored = normalizeUjatProgramRegistrationStepKey(payload.activeStep)
-        setActiveStep(restored)
-        onStepChangeRef.current?.(restored)
-      })
-      .catch(error => {
-        console.warn('[registration-program-draft] UJAT hydrate failed', error)
-      })
+    void (async () => {
+      const payload = await hydrateRegistrationProgramDraft(programType)
+      await hydrateRegistrationOperationalOverlaysFromLocalDrafts(programType, 'ujat')
+      if (payload?.activeStep == null) return
+      const restored = normalizeUjatProgramRegistrationStepKey(payload.activeStep)
+      setActiveStep(restored)
+      onStepChangeRef.current?.(restored)
+    })().catch(error => {
+      console.warn('[registration-program-draft] UJAT hydrate failed', error)
+    })
   }, [open, skipDraftRestore, programType])
 
   useEffect(() => {
     if (open) return
     completionPromiseRef.current = null
     idempotencyKeyRef.current = createRegistrationIdempotencyKey()
+    resetUjatProgramRegistrationOverlay()
+    resetUjatRecruitInstitutionOverlay()
+    resetUjatRecruitVolunteerOverlay()
+    resetUjatApplicationInstitutionOverlay()
+    resetUjatApplicationVolunteerOverlay()
+    resetGeneralRecruitOverlay()
+    clearRegistrationWizardSessionDrafts()
   }, [open])
 
   useEffect(() => {
@@ -176,7 +201,6 @@ export function useUjatProgramRegistrationFlow(
       registrationWizardProgramType: programType,
       registrationWizardOpen: open,
       skipDraftRestore,
-      localOnlyDraftPersistence: true,
       /** UJAT 등록 위저드 — 단락 타이틀 옆 필수(*) */
       forceSeedParagraphsRequired: true,
     }
@@ -233,7 +257,9 @@ export function useUjatProgramRegistrationFlow(
       const fromPhase = getUjatProgramRegistrationPhase(activeStep)
       const toPhase = getUjatProgramRegistrationPhase(key)
       if (fromPhase !== toPhase) {
-        const registrationOverlay = { ...getUjatProgramRegistrationOverlayRecord() }
+        const registrationOverlay = collectUjatRegistrationCreateOverlay(
+          getUjatProgramRegistrationOverlayRecord()
+        )
         const program = buildUjatProgramListRowFromRegistrationSnapshot({
           id: 'debug',
           overlay: registrationOverlay,
@@ -322,6 +348,7 @@ export function useUjatProgramRegistrationFlow(
     if (!isProgramStep && isParticipantStep) {
       await participantVm.handleSave({ silent: true })
     }
+    await persistRegistrationOperationalOverlaysToLocal(programType, 'ujat')
     syncRegistrationProgramDraftSession({
       programType,
       registrationTemplateCode: PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
@@ -355,7 +382,9 @@ export function useUjatProgramRegistrationFlow(
       return Promise.reject(new UjatRegistrationRequiredFieldsIncompleteError())
     }
 
-    const registrationOverlayForLog = { ...getUjatProgramRegistrationOverlayRecord() }
+    const registrationOverlayForLog = collectUjatRegistrationCreateOverlay(
+      getUjatProgramRegistrationOverlayRecord()
+    )
     const programForLog = buildUjatProgramListRowFromRegistrationSnapshot({
       id: 'debug',
       overlay: registrationOverlayForLog,
@@ -371,7 +400,9 @@ export function useUjatProgramRegistrationFlow(
     })
 
     const completion = (async () => {
-      const registrationOverlay = { ...getUjatProgramRegistrationOverlayRecord() }
+      const registrationOverlay = collectUjatRegistrationCreateOverlay(
+        getUjatProgramRegistrationOverlayRecord()
+      )
       const registrationSnapshot = {
         draft: registrationVm.draft,
         overlay: registrationOverlay,

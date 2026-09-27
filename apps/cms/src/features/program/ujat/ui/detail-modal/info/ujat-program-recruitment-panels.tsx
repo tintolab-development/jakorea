@@ -79,7 +79,10 @@ export function UjatProgramRecruitmentPanels({
   registerVolunteersAdditionalHtml?: (getter: () => string) => void
 }) {
   const volunteerHalf = volunteerHalfFromRecruitTab(activeRecruitTab)
-  const recruitDisplayProgram = resolveUjatRecruitDisplayProgram(program)
+  const recruitDisplayProgram = resolveUjatRecruitDisplayProgram(
+    program,
+    activeRecruitTab === 'recruit_participant' ? 'institution' : 'volunteer'
+  )
   const [draftRevision, setDraftRevision] = useState(0)
 
   useEffect(() => {

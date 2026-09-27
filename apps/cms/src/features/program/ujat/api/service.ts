@@ -5,7 +5,10 @@ import {
   fetchAdminProgramsRemote,
   updateAdminProgramRemote,
 } from '@/features/program/general/api/programs-api-client'
-import { buildUjatProgramListRowFromRegistrationSnapshot } from '@/features/program/ujat/lib/ujat-registration-local-save'
+import {
+  buildUjatProgramListRowFromRegistrationSnapshot,
+  collectUjatRegistrationCreateOverlay,
+} from '@/features/program/ujat/lib/ujat-registration-local-save'
 import type { Program } from '@/types/domain'
 import { fromDetail, fromListItem, toCreateRequest, toUpdateRequest } from './adapters'
 import { shouldUseRemoteApi } from './capabilities'
@@ -76,14 +79,15 @@ export async function detail(programId: string): Promise<Program | null> {
 
 export async function create(input: CreateInput): Promise<Program> {
   assertRemoteReady()
+  const overlay = collectUjatRegistrationCreateOverlay(input.overlay)
   const pending = buildUjatProgramListRowFromRegistrationSnapshot({
     id: `ujat-pending-${input.idempotencyKey}`,
-    overlay: input.overlay,
+    overlay,
   })
   return fromDetail(
     await createAdminProgramRemoteWithRegistrationForms(
       pending,
-      toCreateRequest(pending, input),
+      toCreateRequest(pending, { ...input, overlay }),
       input.preparedFormBindings
     )
   )

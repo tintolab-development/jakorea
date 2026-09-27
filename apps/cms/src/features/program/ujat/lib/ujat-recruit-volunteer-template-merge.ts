@@ -1,5 +1,7 @@
 import type { Program } from '@/types/domain'
 import type { DateValue } from '@/types'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { announcementPublishedFromFormValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import {
   isUjatVolunteerNoticeExposureValue,
   type UjatVolunteerNoticeExposureValue,
@@ -66,6 +68,73 @@ function overlayStringList(overlay: Record<string, unknown>, key: string): strin
   return list.length > 0 ? list : undefined
 }
 
+function toRangeSeal(start?: string, end?: string): RangeSeal {
+  return {
+    start: start?.trim() ? start : null,
+    end: end?.trim() ? end : null,
+  }
+}
+
+/** 모집 정보 RHF → 봉사자 모집 overlay (상세정보·첨부는 건드리지 않음) */
+export function buildUjatRecruitVolunteerOverlayFromDetailEditValues(
+  values: ProgramDetailEditFormValues
+): Record<string, unknown> {
+  const h1 = values.rounds?.[0]
+  const h2 = values.rounds?.[1]
+  const noticeExposure = values.volunteerRecruitmentNoticeExposure
+  return {
+    [KEYS.announcementPublished]:
+      announcementPublishedFromFormValue(values.volunteerRecruitmentAnnouncementPublished) ??
+      true,
+    ...(isUjatVolunteerNoticeExposureValue(noticeExposure)
+      ? { [KEYS.noticeExposure]: noticeExposure }
+      : {}),
+    [KEYS.publicTitle]: values.announcementTitle?.trim() ?? '',
+    [KEYS.programRange]: toRangeSeal(values.startDate, values.endDate),
+    [KEYS.volunteerTargets]: values.volunteerTargets ?? [],
+    [KEYS.targetDetail]: values.volunteerTargetDetail?.trim() ?? '',
+    [KEYS.recruitRange]: toRangeSeal(
+      h1?.startDate ?? values.volunteerApplicationStartDate,
+      h1?.endDate ?? values.volunteerApplicationEndDate
+    ),
+    [KEYS.recruitRangeH1]: toRangeSeal(
+      h1?.startDate ?? values.volunteerApplicationStartDate,
+      h1?.endDate ?? values.volunteerApplicationEndDate
+    ),
+    [KEYS.recruitRangeH2]: toRangeSeal(h2?.startDate, h2?.endDate),
+    [KEYS.activityTermH1]: h1?.curriculum?.trim() ?? '',
+    [KEYS.activityTermH2]: h2?.curriculum?.trim() ?? '',
+    [KEYS.docAnnounce]: {
+      date: values.documentPassAnnouncementDate?.trim()
+        ? values.documentPassAnnouncementDate
+        : null,
+      method: values.documentPassAnnouncementMethod?.trim() ?? '',
+    },
+    [KEYS.interviewRange]: toRangeSeal(values.interviewStartDate, values.interviewEndDate),
+    [KEYS.interviewMethod]: values.interviewMethod?.trim() ?? '',
+    [KEYS.finalAnnounce]: {
+      date: values.finalPassAnnouncementDate?.trim()
+        ? values.finalPassAnnouncementDate
+        : values.resultAnnouncementDate?.trim()
+          ? values.resultAnnouncementDate
+          : null,
+      method:
+        values.finalPassAnnouncementMethod?.trim() ||
+        values.resultAnnouncementMethod?.trim() ||
+        '',
+    },
+    [KEYS.contact]: {
+      name: values.volunteerRecruitmentContactOrganizationName?.trim() ?? '',
+      phone: values.contactPhone?.trim() ?? '',
+      email: values.contactEmail?.trim() ?? '',
+    },
+    [KEYS.notes]:
+      values.volunteerRecruitmentNotesNotApplicable === 'not_applicable'
+        ? ''
+        : (values.otherNotes?.trim() ?? ''),
+  }
+}
+
 export function pickUjatRecruitVolunteerOverlay(
   record: Record<string, unknown>
 ): Record<string, unknown> {
@@ -94,6 +163,36 @@ function applyRoundOverlay(
   })
 }
 
+/** 운영 회차 기간은 유지하고 봉사자 활동 기수(curriculum)만 얹는다. */
+export function stampUjatVolunteerActivityTermsOnRounds(
+  rounds: Program['rounds'],
+  overlay: Record<string, unknown>,
+  options?: { preferExisting?: boolean }
+): Program['rounds'] {
+  if (!rounds?.length) return rounds
+  const preferExisting = options?.preferExisting === true
+  const h1 = overlayString(overlay, KEYS.activityTermH1)
+  const h2 = overlayString(overlay, KEYS.activityTermH2)
+  return rounds.map((round, index) => {
+    const incoming =
+      round.roundNumber === 2 || (round.roundNumber == null && index === 1) ? h2 : h1
+    const next =
+      preferExisting && round.curriculum?.trim()
+        ? round.curriculum
+        : incoming?.trim() || round.curriculum
+    if (next === round.curriculum) return round
+    return { ...round, curriculum: next }
+  })
+}
+
+export function resolveUjatVolunteerActivityTermFromOverlay(
+  overlay: Record<string, unknown>,
+  half: 'h1' | 'h2'
+): string | undefined {
+  const key = half === 'h1' ? KEYS.activityTermH1 : KEYS.activityTermH2
+  return overlayString(overlay, key)?.trim() || undefined
+}
+
 /** 오버레이에 값이 있으면 프로그램 필드를 덮어쓴다. */
 export function applyUjatRecruitVolunteerOverlayOntoProgram(
   program: Program,
@@ -120,8 +219,8 @@ export function applyUjatRecruitVolunteerOverlayOntoProgram(
     overlayString(overlay, KEYS.notes) ?? overlayString(overlay, KEYS.otherNotes)
   return {
     ...program,
-    mainTitle: publicTitle ?? program.mainTitle,
-    title: publicTitle ?? program.title,
+    mainTitle: program.mainTitle,
+    title: program.title,
     startDate: programRange?.start?.trim() ? programRange.start : program.startDate,
     endDate: programRange?.end?.trim() ? programRange.end : program.endDate,
     volunteerTarget: volunteerTargets?.join(', ') ?? program.volunteerTarget,
@@ -186,6 +285,9 @@ export function applyUjatRecruitVolunteerOverlayOntoProgram(
           typeof announcementPublished === 'boolean'
             ? announcementPublished
             : program.generalCommonInfo?.volunteerRecruitmentInfo?.announcementPublished,
+        contactOrganizationName:
+          contact?.name?.trim() ||
+          program.generalCommonInfo?.volunteerRecruitmentInfo?.contactOrganizationName,
         noticeExposureTiming: (() => {
           const raw = typeof noticeExposure === 'string' ? noticeExposure : undefined
           return isUjatVolunteerNoticeExposureValue(raw)
@@ -206,10 +308,13 @@ export function getUjatRecruitVolunteerNoticeExposureFromTemplate(): UjatVolunte
     : undefined
 }
 /** 저장된 봉사자 모집 템플릿 오버레이를 프로그램 필드에 병합(프로그램 값이 있으면 우선). */
-export function applyUjatRecruitVolunteerTemplateDefaults(program: Program): Program {
+export function applyUjatRecruitVolunteerTemplateDefaults(
+  program: Program,
+  extraOverlay?: Record<string, unknown>
+): Program {
   const saved = loadUjatRecruitVolunteerTemplateSave()
-  if (!saved?.overlay || Object.keys(saved.overlay).length === 0) return program
-  const overlay = saved.overlay
+  const overlay = { ...(extraOverlay ?? {}), ...(saved?.overlay ?? {}) }
+  if (Object.keys(overlay).length === 0) return program
   const programRange = readRangeSeal(overlay, KEYS.programRange)
   const recruitRange = readRangeSeal(overlay, KEYS.recruitRange)
   const interviewRange = readRangeSeal(overlay, KEYS.interviewRange)
@@ -226,6 +331,14 @@ export function applyUjatRecruitVolunteerTemplateDefaults(program: Program): Pro
     title: coalesceString(program.title, overlayString(overlay, KEYS.publicTitle)) ?? program.title,
     startDate: coalesceIsoDate(program.startDate, programRange?.start ?? undefined) ?? program.startDate,
     endDate: coalesceIsoDate(program.endDate, programRange?.end ?? undefined) ?? program.endDate,
+    volunteerTargets:
+      program.volunteerTargets?.length
+        ? program.volunteerTargets
+        : (overlayStringList(overlay, KEYS.volunteerTargets) ?? program.volunteerTargets),
+    volunteerTarget:
+      program.volunteerTarget?.trim() ||
+      overlayStringList(overlay, KEYS.volunteerTargets)?.join(', ') ||
+      program.volunteerTarget,
     volunteerTargetDetail: coalesceString(
       program.volunteerTargetDetail,
       overlayString(overlay, KEYS.targetDetail)
@@ -283,5 +396,9 @@ export function applyUjatRecruitVolunteerTemplateDefaults(program: Program): Pro
       overlayString(overlay, KEYS.additionalContentHtml)
     ),
     attachmentFileNames:
-      program.attachmentFileNames?.length ? program.attachmentFileNames : attachmentFileNames }
+      program.attachmentFileNames?.length ? program.attachmentFileNames : attachmentFileNames,
+    rounds: stampUjatVolunteerActivityTermsOnRounds(program.rounds, overlay, {
+      preferExisting: true,
+    }),
+  }
 }
