@@ -83,4 +83,33 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     const saved = readGeneralRegistrationOverlayForSave()
     expect(Object.keys(saved).every(key => key.startsWith('generalRegistration.'))).toBe(true)
   })
+
+  it('임금은 급수 라벨·지급 항목 라벨을 overlay에 시드한다', () => {
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        wageGradeRows: [
+          { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 120,000원' },
+          { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 240,000원' },
+        ],
+        paymentItems: '교통비, 숙박비',
+        deductionItems: '일용근로자 원천징수세액',
+      },
+      registrationOverlay: {
+        'generalRegistration.wageInfo.paymentItemValues': [],
+        'generalRegistration.wageInfo.grade1Fee': null,
+      },
+    }
+    const overlay = buildGeneralRegistrationOverlayFromProgram(program)
+    expect(overlay['generalRegistration.wageInfo.grade1Fee']).toBe(240_000)
+    expect(overlay['generalRegistration.wageInfo.grade2Fee']).toBeNull()
+    expect(overlay['generalRegistration.wageInfo.grade3Fee']).toBe(120_000)
+    expect(overlay['generalRegistration.wageInfo.paymentItemValues']).toEqual(['p-1', 'p-3'])
+
+    seedGeneralRegistrationOverlayFromProgram(program)
+    const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.wageInfo.grade1Fee']).toBe(240_000)
+    expect(saved['generalRegistration.wageInfo.paymentItemValues']).toEqual(['p-1', 'p-3'])
+  })
 })
