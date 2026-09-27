@@ -34,6 +34,7 @@ import type {
   DashboardWidgetLayoutSaveRequest,
   DashboardWidgetListResponse,
   DashboardWidgetProgramFiltersResponse,
+  GeminiOrganizationApplicationListResponse,
   IndividualApplicationDetailResponse,
   IndividualApplicationNotificationResendRequest,
   IndividualApplicationUpdateRequest,
@@ -49,6 +50,7 @@ import type {
   NotificationUnreadCountResponse,
   Notifications1Params,
   OrganizationApplicationDetailResponse,
+  OrganizationApplicationNotificationResendRequest,
   OrganizationApplicationUpdateRequest,
   OrganizationApplications1Params,
   OrganizationScheduleListResponse,
@@ -62,6 +64,7 @@ import type {
   PreferenceUpdateRequest,
   ScheduleChangeRequest,
   TemporaryScheduleSaveRequest,
+  TrainedTeacherOrganizationApplicationResponse,
   Update,
   VolunteerApplicationDetailResponse,
   VolunteerApplicationsParams,
@@ -906,6 +909,22 @@ const requestScheduleChange = (
       {url: `/api/admin/programs/${programId}/ujat/organization-applications/${applicationId}/schedule-change-request`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: scheduleChangeRequest
+    },
+      options);
+    }
+
+/**
+ * APPLICATION_WRITE 권한과 대상 프로그램의 APPLICATION_REVIEW capability가 필요합니다. 공통 path는 GENERAL 그룹, COMPANY_SCHOOL/ONE_COMPANY_ONE_SCHOOL, UJAT 그룹(UJAT·DGBONG·UJAT_DGBONG)의 APPROVED 또는 REJECTED 기관 신청만 허용합니다. TRAINED_TEACHER와 GEMINI/GEMINI_TRAINING은 403이며 각 전용 path를 사용합니다. AUTO_REJECTED를 포함한 그 외 상태는 409입니다. 신청 상태와 기존 반려 사유는 변경하지 않습니다. Idempotency-Key는 선택 사항이며 동일 키·동일 요청은 최초 응답을 재사용하고 동일 키·다른 요청은 409로 거절합니다. 반려 재발송의 reason만 rejection snapshot에 포함하고, 승인 재발송의 reason은 알림 본문에 넣지 않습니다. UJAT 반려 이벤트는 UJAT_ORGANIZATION_APPLICATION_REJECTED입니다.
+ * @summary 기관 신청 결과 알림 재발송
+ */
+const resendOrganizationApplicationNotification = (
+    applicationId: number,
+    organizationApplicationNotificationResendRequest: OrganizationApplicationNotificationResendRequest,
+ options?: SecondParameter<typeof customInstance<ApplicationDecisionResponse>>,) => {
+      return customInstance<ApplicationDecisionResponse>(
+      {url: `/api/admin/organization-applications/${applicationId}/notifications/resend`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: organizationApplicationNotificationResendRequest
     },
       options);
     }
@@ -1843,6 +1862,33 @@ const listAssignments = (
     }
 
 /**
+ * preferredScheduleBlocks는 항상 배열(없으면 []). desiredEducationScheduleMemo는 기타요청/레거시 자유문. 서버는 memo를 blocks로 파싱하지 않는다.
+ * @summary 교육받은 교사 참여 기관 신청 목록 조회
+ */
+const getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplications = (
+    programId: string,
+ options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse[]>>,) => {
+      return customInstance<TrainedTeacherOrganizationApplicationResponse[]>(
+      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * 목록과 동일 DTO. preferredScheduleBlocks가 희망 교육 일정 UI SoT.
+ * @summary 교육받은 교사 참여 기관 신청 상세 조회
+ */
+const getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationId = (
+    programId: string,
+    applicationId: string,
+ options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse>>,) => {
+      return customInstance<TrainedTeacherOrganizationApplicationResponse>(
+      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}`, method: 'GET'
+    },
+      options);
+    }
+
+/**
  * ### 이 API가 하는 일
  * - 프로그램 조회
  * - API 분류: 내부 처리 또는 보조 API
@@ -2223,6 +2269,19 @@ const getDashboardShortcutBadges = (
  options?: SecondParameter<typeof customInstance<DashboardShortcutBadgesResponse>>,) => {
       return customInstance<DashboardShortcutBadgesResponse>(
       {url: `/api/admin/me/dashboard-shortcut-badges`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * Gemini 기관 신청 목록. content[]에 resultNotificationSentAt(date-time 또는 null)과 availableActions를 포함합니다. APPROVED·REJECTED이면 availableActions에 RESEND_NOTIFICATION이 있습니다. 신청이 없으면 content는 [].
+ * @summary 프로그램 상세 조회
+ */
+const getApiAdminGeminiTrainingsRecruitmentsProgramIdOrganizationApplications = (
+    programId: string,
+ options?: SecondParameter<typeof customInstance<GeminiOrganizationApplicationListResponse>>,) => {
+      return customInstance<GeminiOrganizationApplicationListResponse>(
+      {url: `/api/admin/gemini/trainings/recruitments/${programId}/organization-applications`, method: 'GET'
     },
       options);
     }
@@ -2663,7 +2722,40 @@ const dashboardHome = (
       options);
     }
 
-return {recordVolunteerDocumentEvaluation,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list12,getDashboardShortcutBadges,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome}};
+/**
+ * programId와 신청의 TRAINED_TEACHER 프로그램이 일치할 때만 APPROVED·REJECTED 결과 알림을 재발송합니다. 불일치는 TRAINED_TEACHER_ORGANIZATION_APPLICATION_NOT_FOUND입니다. 공통 organization-applications 재발송 path는 403입니다. 신청 상태와 기존 반려 사유는 바꾸지 않습니다. AUTO_REJECTED를 포함한 그 외 상태는 409입니다.
+ * @summary 교육받은 교사 기관 신청 결과 알림 재발송
+ */
+const resendTrainedTeacherOrganizationApplicationNotification = (
+    programId: number,
+    applicationId: number,
+    organizationApplicationNotificationResendRequest: OrganizationApplicationNotificationResendRequest,
+ options?: SecondParameter<typeof customInstance<ApplicationDecisionResponse>>,) => {
+      return customInstance<ApplicationDecisionResponse>(
+      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}/notifications/resend`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: organizationApplicationNotificationResendRequest
+    },
+      options);
+    }
+
+/**
+ * GEMINI 또는 GEMINI_TRAINING(그룹 SEMINAR) 기관 신청의 APPROVED·REJECTED 결과만 재발송합니다. 공통 organization-applications 재발송 path는 403입니다. 신청 상태와 기존 반려 사유는 바꾸지 않습니다. AUTO_REJECTED를 포함한 그 외 상태는 409입니다.
+ * @summary Gemini 기관 신청 결과 알림 재발송
+ */
+const resendGeminiOrganizationApplicationNotification = (
+    applicationId: number,
+    organizationApplicationNotificationResendRequest: OrganizationApplicationNotificationResendRequest,
+ options?: SecondParameter<typeof customInstance<ApplicationDecisionResponse>>,) => {
+      return customInstance<ApplicationDecisionResponse>(
+      {url: `/api/admin/gemini/trainings/organization-applications/${applicationId}/notifications/resend`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: organizationApplicationNotificationResendRequest
+    },
+      options);
+    }
+
+return {recordVolunteerDocumentEvaluation,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,resendOrganizationApplicationNotification,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplications,getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationId,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list12,getDashboardShortcutBadges,getApiAdminGeminiTrainingsRecruitmentsProgramIdOrganizationApplications,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome,resendTrainedTeacherOrganizationApplicationNotification,resendGeminiOrganizationApplicationNotification}};
 export type RecordVolunteerDocumentEvaluationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['recordVolunteerDocumentEvaluation']>>>
 export type GetTemporaryScheduleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getTemporarySchedule']>>>
 export type SaveTemporaryScheduleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveTemporarySchedule']>>>
@@ -2679,6 +2771,7 @@ export type SaveDashboardShortcutVisibilityResult = NonNullable<Awaited<ReturnTy
 export type DashboardPreferencesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardPreferences']>>>
 export type SaveDashboardPreferences1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveDashboardPreferences1']>>>
 export type RequestScheduleChangeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['requestScheduleChange']>>>
+export type ResendOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendOrganizationApplicationNotification']>>>
 export type ReadDashboardShortcutBadgeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['readDashboardShortcutBadge']>>>
 export type UnmaskIndividualApplicationDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['unmaskIndividualApplicationDetail']>>>
 export type ResendIndividualApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendIndividualApplicationNotification']>>>
@@ -2696,6 +2789,8 @@ export type UpdateIndividualApplicationResult = NonNullable<Awaited<ReturnType<R
 export type VolunteerApplicationDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['volunteerApplicationDetail']>>>
 export type VolunteerApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['volunteerApplications']>>>
 export type ListAssignmentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['listAssignments']>>>
+export type GetApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplications']>>>
+export type GetApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationId']>>>
 export type OrganizationApplications1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['organizationApplications1']>>>
 export type InstructorApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['instructorApplications']>>>
 export type IndividualApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['individualApplications']>>>
@@ -2703,6 +2798,7 @@ export type Notifications1Result = NonNullable<Awaited<ReturnType<ReturnType<typ
 export type UnreadNotificationCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['unreadNotificationCount']>>>
 export type List12Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['list12']>>>
 export type GetDashboardShortcutBadgesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getDashboardShortcutBadges']>>>
+export type GetApiAdminGeminiTrainingsRecruitmentsProgramIdOrganizationApplicationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getApiAdminGeminiTrainingsRecruitmentsProgramIdOrganizationApplications']>>>
 export type DashboardWidgetsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardWidgets']>>>
 export type DashboardShortcutsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardShortcuts']>>>
 export type DashboardRecruitmentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardRecruitments']>>>
@@ -2711,3 +2807,5 @@ export type DashboardProgramInquiriesResult = NonNullable<Awaited<ReturnType<Ret
 export type DashboardNotificationCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardNotificationCount']>>>
 export type DashboardKpiProgressResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardKpiProgress']>>>
 export type DashboardHomeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardHome']>>>
+export type ResendTrainedTeacherOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendTrainedTeacherOrganizationApplicationNotification']>>>
+export type ResendGeminiOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendGeminiOrganizationApplicationNotification']>>>
