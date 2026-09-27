@@ -355,6 +355,48 @@ describe('program detail title edit fields', () => {
   })
 })
 
+describe('general recruitment contact edit', () => {
+  it('일반 프로그램도 문의처 기관명을 저장한다', () => {
+    const values = {
+      ...programToDetailEditValues(program),
+      recruitmentContactOrganizationName: 'JA Korea 문의',
+      contactPhone: '02-6085-6028',
+      contactEmail: 'recruit@jakorea.org',
+    }
+    const patch = detailEditValuesToProgramPatch(values, program)
+    expect(patch.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName).toBe(
+      'JA Korea 문의'
+    )
+    expect(patch.generalCommonInfo?.participantRecruitmentInfo?.inquiryTel).toBe('02-6085-6028')
+    expect(patch.generalCommonInfo?.participantRecruitmentInfo?.inquiryEmail).toBe(
+      'recruit@jakorea.org'
+    )
+  })
+
+  it('강사·봉사자 문의처는 각 RecruitmentInfo에 저장한다', () => {
+    const values = {
+      ...programToDetailEditValues(program),
+      instructorRecruitmentContactOrganizationName: '강사 문의처',
+      instructorContactPhone: '010-1111-2222',
+      instructorContactEmail: 'instructor@jakorea.org',
+      volunteerRecruitmentContactOrganizationName: '봉사자 문의처',
+      volunteerContactPhone: '010-3333-4444',
+      volunteerContactEmail: 'volunteer@jakorea.org',
+    }
+    const patch = detailEditValuesToProgramPatch(values, program)
+    expect(patch.generalCommonInfo?.instructorRecruitmentInfo?.contactOrganizationName).toBe(
+      '강사 문의처'
+    )
+    expect(patch.generalCommonInfo?.instructorRecruitmentInfo?.inquiryTel).toBe('010-1111-2222')
+    expect(patch.generalCommonInfo?.volunteerRecruitmentInfo?.contactOrganizationName).toBe(
+      '봉사자 문의처'
+    )
+    expect(patch.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryEmail).toBe(
+      'volunteer@jakorea.org'
+    )
+  })
+})
+
 describe('trained teachers recruitment edit round-trip', () => {
   const ttProgram = {
     ...program,

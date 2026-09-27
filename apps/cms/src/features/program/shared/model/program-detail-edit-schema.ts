@@ -281,6 +281,26 @@ const programDetailEditSchemaBase = z.object({
   educationTargetDetail: z.string().optional(),
   /** 참여자 모집 문의처 기관명 (nested contactOrganizationName) */
   recruitmentContactOrganizationName: z.string().optional(),
+  /** 강사 모집 문의처 */
+  instructorRecruitmentContactOrganizationName: z.string().optional(),
+  instructorContactPhone: z
+    .string()
+    .optional()
+    .refine(
+      value => !value?.trim() || isValidKoreanPhoneNumber(value),
+      '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'
+    ),
+  instructorContactEmail: z.string().optional(),
+  /** 봉사자 모집 문의처 */
+  volunteerRecruitmentContactOrganizationName: z.string().optional(),
+  volunteerContactPhone: z
+    .string()
+    .optional()
+    .refine(
+      value => !value?.trim() || isValidKoreanPhoneNumber(value),
+      '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'
+    ),
+  volunteerContactEmail: z.string().optional(),
   keyVisualImage: z.string().optional(),
   posterImage: z.string().optional(),
   description: z.string().min(1, '프로그램 설명을 입력해주세요'),
@@ -621,6 +641,42 @@ export function programToDetailEditValues(
     recruitmentContactOrganizationName:
       program.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName?.trim() ||
       undefined,
+    instructorRecruitmentContactOrganizationName:
+      program.generalCommonInfo?.instructorRecruitmentInfo?.contactOrganizationName?.trim() ||
+      undefined,
+    instructorContactPhone: (() => {
+      const info = program.generalCommonInfo?.instructorRecruitmentInfo
+      const raw =
+        info?.inquiryTel?.trim() || info?.tel?.trim() || info?.contactPhone?.trim()
+      return raw ? formatKoreanPhoneNumber(raw) : undefined
+    })(),
+    instructorContactEmail: (() => {
+      const info = program.generalCommonInfo?.instructorRecruitmentInfo
+      return (
+        info?.inquiryEmail?.trim() ||
+        info?.email?.trim() ||
+        info?.contactEmail?.trim() ||
+        undefined
+      )
+    })(),
+    volunteerRecruitmentContactOrganizationName:
+      program.generalCommonInfo?.volunteerRecruitmentInfo?.contactOrganizationName?.trim() ||
+      undefined,
+    volunteerContactPhone: (() => {
+      const info = program.generalCommonInfo?.volunteerRecruitmentInfo
+      const raw =
+        info?.inquiryTel?.trim() || info?.tel?.trim() || info?.contactPhone?.trim()
+      return raw ? formatKoreanPhoneNumber(raw) : undefined
+    })(),
+    volunteerContactEmail: (() => {
+      const info = program.generalCommonInfo?.volunteerRecruitmentInfo
+      return (
+        info?.inquiryEmail?.trim() ||
+        info?.email?.trim() ||
+        info?.contactEmail?.trim() ||
+        undefined
+      )
+    })(),
     venueKind: resolveVenueKind(program),
     venueDetail:
       program.generalCommonInfo?.venueDetail?.trim() ||
@@ -929,6 +985,24 @@ export function detailEditValuesToProgramPatch(
   const contactOrganizationName =
     values.recruitmentContactOrganizationName?.trim() ||
     existing.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName
+  const instructorContactOrganizationName =
+    values.instructorRecruitmentContactOrganizationName?.trim() ||
+    existing.generalCommonInfo?.instructorRecruitmentInfo?.contactOrganizationName
+  const instructorContactPhone =
+    values.instructorContactPhone ??
+    existing.generalCommonInfo?.instructorRecruitmentInfo?.inquiryTel
+  const instructorContactEmail =
+    values.instructorContactEmail ??
+    existing.generalCommonInfo?.instructorRecruitmentInfo?.inquiryEmail
+  const volunteerContactOrganizationName =
+    values.volunteerRecruitmentContactOrganizationName?.trim() ||
+    existing.generalCommonInfo?.volunteerRecruitmentInfo?.contactOrganizationName
+  const volunteerContactPhone =
+    values.volunteerContactPhone ??
+    existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryTel
+  const volunteerContactEmail =
+    values.volunteerContactEmail ??
+    existing.generalCommonInfo?.volunteerRecruitmentInfo?.inquiryEmail
 
   return {
     title: existing.title,
@@ -1235,6 +1309,11 @@ export function detailEditValuesToProgramPatch(
         announcementPublished:
           announcementPublishedFromFormValue(values.instructorRecruitmentAnnouncementPublished) ??
           existing.generalCommonInfo?.instructorRecruitmentInfo?.announcementPublished,
+        contactOrganizationName: instructorContactOrganizationName,
+        inquiryTel: instructorContactPhone?.trim() || undefined,
+        inquiryEmail: instructorContactEmail?.trim() || undefined,
+        contactPhone: instructorContactPhone?.trim() || undefined,
+        contactEmail: instructorContactEmail?.trim() || undefined,
       },
       volunteerRecruitmentInfo: {
         ...existing.generalCommonInfo?.volunteerRecruitmentInfo,
@@ -1245,6 +1324,11 @@ export function detailEditValuesToProgramPatch(
           values.volunteerRecruitmentNoticeExposure ??
           existing.generalCommonInfo?.volunteerRecruitmentInfo?.noticeExposureTiming,
         notesNotApplicable: values.volunteerRecruitmentNotesNotApplicable === 'not_applicable',
+        contactOrganizationName: volunteerContactOrganizationName,
+        inquiryTel: volunteerContactPhone?.trim() || undefined,
+        inquiryEmail: volunteerContactEmail?.trim() || undefined,
+        contactPhone: volunteerContactPhone?.trim() || undefined,
+        contactEmail: volunteerContactEmail?.trim() || undefined,
       },
     },
     generalVolunteerInterviewEnabled:

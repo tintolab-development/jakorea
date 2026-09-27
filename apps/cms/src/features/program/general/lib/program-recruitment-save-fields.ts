@@ -161,6 +161,18 @@ export const programInstructorRecruitmentSaveSchema = z.object({
   finalPassAnnouncementDate: optionalString,
   finalPassAnnouncementMethod: optionalString,
   instructorCapacity: optionalNonNegNumber,
+  instructorRecruitmentContactOrganizationName: optionalString,
+  instructorContactPhone: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .optional()
+      .refine(
+        value => !value?.trim() || isValidKoreanPhoneNumber(value),
+        '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'
+      )
+  ),
+  instructorContactEmail: optionalString,
   contactPhone: optionalString,
   contactEmail: optionalString,
   otherNotes: optionalString,
@@ -182,6 +194,18 @@ export const programVolunteerRecruitmentSaveSchema = z.object({
   endDate: optionalString,
   volunteerTargets: z.array(z.string()).nullish(),
   volunteerTargetDetail: optionalString,
+  volunteerRecruitmentContactOrganizationName: optionalString,
+  volunteerContactPhone: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .optional()
+      .refine(
+        value => !value?.trim() || isValidKoreanPhoneNumber(value),
+        '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'
+      )
+  ),
+  volunteerContactEmail: optionalString,
   contactPhone: optionalString,
   contactEmail: optionalString,
   oneLineIntroduction: optionalString,
