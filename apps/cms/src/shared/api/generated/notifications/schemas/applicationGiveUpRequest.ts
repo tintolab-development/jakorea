@@ -16,4 +16,6 @@ export interface ApplicationGiveUpRequest {
      * @maxLength 500
      */
   reason: string;
+  /** 선택한 회차부터 활동을 포기할 때의 기준 scheduleId. 생략하면 현재 시점 이후 회차부터 포기합니다. */
+  stopScheduleId?: number;
 }

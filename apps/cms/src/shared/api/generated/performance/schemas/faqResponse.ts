@@ -27,4 +27,6 @@ export interface FaqResponse {
   createdAt?: string;
   /** 최종 수정 시각 */
   updatedAt?: string;
+  /** 파일 업로드 ownerId로 쓰는 내부 숫자 ID */
+  resourceId?: number;
 }

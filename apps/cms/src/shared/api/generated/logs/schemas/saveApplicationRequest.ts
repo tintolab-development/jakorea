@@ -17,10 +17,11 @@ export interface SaveApplicationRequest {
      */
   applicationType: string;
   formBindingId: number;
+  /** 문단 답. 키는 schemaJson.paragraphs에 저장된 질문 키이며 추출 순서는 questionKey, fieldKey, key, name, id 입니다. 작성 양식은 문단 id를 그 키로 저장합니다. 값은 문자열, 문자열 배열, 또는 객체입니다. */
   answers?: SaveApplicationRequestAnswers;
   /**
      * @minItems 0
-     * @maxItems 2
+     * @maxItems 3
      */
   requestedSchedules?: RequestedScheduleRequest[];
   requestedClassCount?: number;

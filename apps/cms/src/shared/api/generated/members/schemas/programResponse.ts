@@ -88,6 +88,7 @@ export interface ProgramResponse {
   venueDetail?: string;
   venueKind?: string;
   studentListRequired?: string;
+  /** 유형별 config JSON 문자열. TRAINED_TEACHER: {schemaVersion, program}. Nested program.generalCommonInfo.participantRecruitmentInfo is the 모집 정보 display SSOT. remarks ≠ oneLineIntroduction. educationTargetDetail ≠ district. maxAssignableInstructors is always 0. instructorRecruitmentInfo/volunteerRecruitmentInfo omitted. */
   serviceDetailJson?: string;
   attachmentFileNames?: string[];
   adminAssignments?: ProgramAdminAssignmentResponse[];

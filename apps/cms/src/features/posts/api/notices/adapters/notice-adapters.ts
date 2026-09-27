@@ -29,7 +29,8 @@ function parseCategoryId(dto: NoticeResponse): number | undefined {
 }
 
 function parseResourceId(dto: NoticeResponse): number | undefined {
-  const raw = (dto as NoticeResponse & { resourceId?: number | string }).resourceId
+  // OpenAPI는 number만 선언하지만, 런타임 string id 호환을 위해 넓게 읽는다.
+  const raw = (dto as { resourceId?: number | string }).resourceId
   if (typeof raw === 'number' && Number.isFinite(raw) && raw >= 1) return raw
   if (typeof raw === 'string' && /^\d+$/.test(raw.trim())) {
     const parsed = Number(raw.trim())

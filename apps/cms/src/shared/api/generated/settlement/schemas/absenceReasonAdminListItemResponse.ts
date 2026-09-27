@@ -22,6 +22,7 @@ export interface AbsenceReasonAdminListItemResponse {
   revisionNo?: number;
   latestRevision?: boolean;
   fileObjectIds?: number[];
+  originalFileNames?: string[];
   submittedAt?: string;
   reviewedAt?: string;
   reviewedByAdminId?: number;

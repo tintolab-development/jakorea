@@ -27,8 +27,9 @@ function mapUiProcessingStatusToStatementStatus(
       return 'REAPPLICATION'
     case 'partial':
       return 'PARTIAL'
+    case 'pending':
     default:
-      return 'REQUESTED'
+      return 'WAITING_CONFIRM'
   }
 }
 

@@ -6,4 +6,8 @@
  * OpenAPI spec version: v9
  */
 
-export type ApplicationFormResponseDraftAnswers = {[key: string]: unknown};
+/**
+ * 임시저장 답. 키 규칙은 SaveApplicationRequest.answers와 같습니다. 임시저장이 없으면 빈 객체입니다.
+ * @nullable
+ */
+export type ApplicationFormResponseDraftAnswers = {[key: string]: unknown} | null;

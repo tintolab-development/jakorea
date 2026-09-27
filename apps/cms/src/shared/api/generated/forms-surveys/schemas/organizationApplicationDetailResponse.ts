@@ -5,6 +5,7 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { SessionResponse } from './sessionResponse';
 
 export interface OrganizationApplicationDetailResponse {
   id?: number;
@@ -39,4 +40,21 @@ export interface OrganizationApplicationDetailResponse {
   availableActions?: string[];
   privacyMaskingLevel?: string;
   canRevealPersonalInfo?: boolean;
+  participantId?: number;
+  regionSido?: string;
+  regionSigungu?: string;
+  applicationReason?: string;
+  otherRequests?: string;
+  computerInRoom?: string;
+  waitingRoomAvailable?: boolean;
+  waitingRoomLocation?: string;
+  mealProvided?: boolean;
+  mealNotice?: string;
+  parkingInfo?: string;
+  textbookGrade?: string;
+  textbookKits?: number;
+  textbookQuantity?: number;
+  mergeGroupId?: number;
+  combinedClassYn?: boolean;
+  sessions?: SessionResponse[];
 }

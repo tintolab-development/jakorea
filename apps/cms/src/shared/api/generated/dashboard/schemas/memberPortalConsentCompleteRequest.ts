@@ -16,4 +16,6 @@ export interface MemberPortalConsentCompleteRequest {
   programEligible?: boolean;
   /** PORTRAIT_RIGHTS 작성 완료 WritingFormDraft 전체 객체. FULL/PARTIAL 완료 시 필수입니다. */
   filledDocument?: FilledDocumentRequest;
+  /** CRIMINAL_HISTORY_CHECK_CONSENT 완료 시에만 필수인 회원 본인 CRIMINAL_HISTORY_EVIDENCE fileObjectId. 다른 consentType 에 있으면 400. */
+  evidenceFileObjectId?: number;
 }

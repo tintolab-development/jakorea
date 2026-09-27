@@ -5,6 +5,8 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ScheduleResponseScheduleKind } from './scheduleResponseScheduleKind';
+import type { ScheduleResponseTerm } from './scheduleResponseTerm';
 
 export interface ScheduleResponse {
   scheduleId?: number;
@@ -17,4 +19,19 @@ export interface ScheduleResponse {
   address?: string;
   addressDetail?: string;
   maxParticipantCount?: number;
+  /**
+     * UJAT 학기. FIRST_HALF 또는 SECOND_HALF. 그 외는 null입니다.
+     * @nullable
+     */
+  term?: ScheduleResponseTerm;
+  /**
+     * 일정 종류. PRE_EDUCATION, EDUCATION, CLOSING, SESSION. 없으면 null입니다.
+     * @nullable
+     */
+  scheduleKind?: ScheduleResponseScheduleKind;
+  /**
+     * false인 일정은 공개 상세 배열에 포함하지 않습니다. 미저장이면 null이고 배열에는 포함합니다.
+     * @nullable
+     */
+  publiclyVisible?: boolean | null;
 }
