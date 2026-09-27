@@ -264,6 +264,111 @@ async function promoteCatalogBindingToProgramScoped(args: {
   return ids
 }
 
+function isFormVersionMutable(versionStatus: string | null | undefined): boolean {
+  return versionStatus == null || versionStatus === 'DRAFT'
+}
+
+/**
+ * 프로그램 상세 신청 양식 저장.
+ * 바인딩된 버전은 PUBLISHED라 PUT이 409 FORM_VERSION_IMMUTABLE이다.
+ * 발행본이면 새 DRAFT로 복사한 뒤 저장·발행하고, 그 버전으로 바인딩을 교체한다.
+ */
+export async function saveProgramScopedOperationalFormVersion(args: {
+  program: Program
+  templateCode: string
+  versionId: number
+  draft: WritingFormDraft
+  overlay?: Record<string, unknown>
+  editorState?: Record<string, unknown>
+  settingsJson?: Record<string, unknown>
+}): Promise<RememberedBinding> {
+  const spec = getOperationalFormSpec(args.templateCode)
+  if (spec == null) {
+    throw new Error(`운영 양식 스펙을 찾을 수 없습니다: ${args.templateCode}`)
+  }
+
+  const current = await fetchFormTemplateVersionRemote(args.versionId)
+  const sourceTemplateId = current.templateId
+  if (sourceTemplateId == null) {
+    throw new Error('양식 버전의 템플릿 ID를 찾을 수 없습니다.')
+  }
+
+  let draftTemplateId = sourceTemplateId
+  let draftVersionId = args.versionId
+  if (!isFormVersionMutable(current.versionStatus)) {
+    const copied = await copyFormTemplateVersionRemote(sourceTemplateId, {
+      sourceVersionId: args.versionId,
+      versionLabel: `program-${args.program.id}`,
+    })
+    if (copied.templateVersionId == null) {
+      throw new Error('프로그램 전용 양식 초안을 만들지 못했습니다.')
+    }
+    draftTemplateId = copied.templateId ?? sourceTemplateId
+    draftVersionId = copied.templateVersionId
+  }
+
+  const baseline = await loadFormTemplateVersionDraftByVersionId(
+    args.templateCode,
+    draftVersionId
+  )
+  const draftForPut =
+    baseline?.draft != null
+      ? coalesceScopedFormDraftForPut(baseline.draft, args.draft)
+      : args.draft
+
+  await saveFormTemplateVersionDraftByVersionId({
+    versionId: draftVersionId,
+    draft: draftForPut,
+    overlay: args.overlay,
+    editorState: args.editorState,
+    settingsJson: args.settingsJson,
+    templateCode: args.templateCode,
+  })
+
+  const publishedVersionId = await publishFormTemplateVersionById(draftVersionId)
+  const catalog = await resolveFormTemplateCatalogIds(args.templateCode).catch(() => null)
+  if (catalog != null && draftTemplateId !== catalog.templateId) {
+    try {
+      await updateFormTemplateRemote(draftTemplateId, {
+        description: `program-scoped:${args.program.id}`,
+      })
+    } catch (error) {
+      console.warn('[program-form-bindings] label program-scoped template failed', error)
+    }
+  }
+
+  const ids = { templateId: draftTemplateId, templateVersionId: publishedVersionId }
+  const bindings = await fetchGeneralProgramFormBindings(args.program.id)
+  const existing = pickOperationalFormBinding(bindings, {
+    ...spec,
+    catalogTemplateId: catalog?.templateId,
+  })
+  const createPayload: ProgramFormBindingRequest = {
+    formType: spec.formType,
+    templateId: draftTemplateId,
+    templateVersionId: publishedVersionId,
+    active: true,
+    required: false,
+  }
+  if (spec.targetRole != null && spec.targetRole !== '') {
+    createPayload.targetRole = spec.targetRole
+    createPayload.targetType = resolveFormBindingTargetType(spec.targetRole)
+  }
+
+  const bindingInactive = existing?.active === false
+  if (existing?.bindingId == null || bindingInactive) {
+    await createGeneralProgramFormBinding(args.program.id, createPayload)
+  } else {
+    await updateGeneralProgramFormBinding(
+      args.program.id,
+      String(existing.bindingId),
+      bindingToUpdatePayload(existing, ids, spec)
+    )
+  }
+  rememberProgramOperationalFormBinding(args.program.id, args.templateCode, ids)
+  return ids
+}
+
 async function attachRegistrationFormDrafts(program: Program): Promise<void> {
   if (!shouldUseProgramFormBindingsRemoteApi() || !shouldUseFormsSurveysRemoteApi()) return
   const specs = listVisibleOperationalFormSpecs(program)

@@ -9,11 +9,13 @@ import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS } from '@jako
 import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-instructor-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
+import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import {
   ECONOMY_REGISTRATION_FIXTURES,
   GENERAL_REGISTRATION_FIXTURES,
   GEMINI_RECRUITMENT_FIXTURES,
+  TRAINED_TEACHERS_REGISTRATION_FIXTURES,
   UJAT_VOLUNTEER_FIXTURE,
 } from './cms-registration-fixtures.ts'
 import { mapCmsProgramToPlatformDetail } from './map-from-cms.ts'
@@ -30,6 +32,7 @@ function paragraphIds(programId: string, extra?: { participationMethod?: 'indivi
     GENERAL_REGISTRATION_FIXTURES.find(f => f.id === programId) ??
     ECONOMY_REGISTRATION_FIXTURES.find(f => f.id === programId) ??
     GEMINI_RECRUITMENT_FIXTURES.find(f => f.id === programId) ??
+    TRAINED_TEACHERS_REGISTRATION_FIXTURES.find(f => f.id === programId) ??
     (programId === UJAT_VOLUNTEER_FIXTURE.id ? UJAT_VOLUNTEER_FIXTURE : null)
   assert.ok(fixture, `fixture missing: ${programId}`)
   const detail = mapCmsProgramToPlatformDetail(fixture)
@@ -75,6 +78,10 @@ function testCaseToTemplateCode() {
   assert.equal(
     getApplicationTemplateCodeForApplyCase('instructor-gemini'),
     'application-gemini-visiting-training-instructor'
+  )
+  assert.equal(
+    getApplicationTemplateCodeForApplyCase('trained-teachers'),
+    'application-trained-teachers'
   )
 }
 
@@ -235,6 +242,45 @@ function testInstructorGemini() {
   ])
 }
 
+function testTrainedTeachers() {
+  const { applyCase, templateCode, ids, detail } = paragraphIds(
+    PROGRAM_APPLY_FORM_CASE_SSOT_IDS.trainedTeachers
+  )
+  assert.equal(detail.registrationKind, 'trainedTeachers')
+  assert.equal(detail.programType, 'TRAINED_TEACHER')
+  assert.equal(applyCase, 'trained-teachers')
+  assert.equal(templateCode, 'application-trained-teachers')
+  assert.deepEqual(ids, [
+    PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.personalInfoCollection,
+    PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.thirdPartyConsent,
+    PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo,
+    PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule,
+  ])
+  // instructor 시드(성범죄·강의 가능 일정)로 폴백되면 안 됨
+  assert.equal(
+    ids.some(id => id.includes('application-instructor')),
+    false,
+  )
+}
+
+function testTrainedTeachersProgramTypeRouting() {
+  const detail = mapCmsProgramToPlatformDetail(
+    TRAINED_TEACHERS_REGISTRATION_FIXTURES.find(
+      f => f.id === PROGRAM_APPLY_FORM_CASE_SSOT_IDS.trainedTeachers
+    )!
+  )
+  assert.equal(resolveProgramApplyFormCase(detail), 'trained-teachers')
+  assert.equal(
+    resolveProgramApplyFormCase({
+      id: '186012',
+      category: 'instructor',
+      detailCase: 'instructor',
+      programType: 'TRAINED_TEACHER',
+    }),
+    'trained-teachers'
+  )
+}
+
 function run() {
   testCaseToTemplateCode()
   testIndividualGeneral()
@@ -247,6 +293,8 @@ function run() {
   testInstitutionGemini()
   testGeminiDetailCaseRouting()
   testInstructorGemini()
+  testTrainedTeachers()
+  testTrainedTeachersProgramTypeRouting()
   console.log(
     'apply-form-drafts: all checks passed (apply cases × CMS templateCode seed paragraphs)'
   )

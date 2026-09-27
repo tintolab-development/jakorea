@@ -1480,21 +1480,21 @@ export function useProgramParticipantApplicationEditor(
         : localOnlyDraftPersistence
           ? resolveLocalDraftStorageKey()
           : resolvePersistTemplateId()
-      const linkedProgramId = editorOptions?.program?.id
+      const linkedProgram = editorOptions?.program
       const persistBoundForm = async (payload: {
         draft: typeof draft
         overlay?: Record<string, unknown>
         editorState?: Record<string, unknown>
         localOnly: boolean
       }) => {
-        if (!payload.localOnly && persistTemplateVersionId != null && linkedProgramId) {
-          const { saveMutableProgramFormVersion } = await import(
+        if (!payload.localOnly && persistTemplateVersionId != null && linkedProgram?.id != null) {
+          const { saveProgramScopedOperationalFormVersion } = await import(
             '@/features/program/general/lib/sync-registration-form-bindings'
           )
-          await saveMutableProgramFormVersion({
-            programId: linkedProgramId,
+          await saveProgramScopedOperationalFormVersion({
+            program: linkedProgram,
             templateCode: templateId,
-            templateVersionId: persistTemplateVersionId,
+            versionId: persistTemplateVersionId,
             draft: payload.draft,
             overlay: payload.overlay,
             editorState: payload.editorState,
@@ -1599,7 +1599,7 @@ export function useProgramParticipantApplicationEditor(
     }
   }, [
     draft,
-    editorOptions?.program?.id,
+    editorOptions?.program,
     isTemplateManagementSave,
     localOnlyDraftPersistence,
     onTemplateDraftSaveConfirmed,

@@ -55,6 +55,15 @@ export {
   usePortalProgramsList,
   useProgramDetail,
 } from './api/hooks'
+export {
+  useProgramApplicationForm,
+  useSubmitProgramApplication,
+} from './api/application-hooks'
+export type {
+  ProgramApplicationFormQuery,
+  ProgramApplicationFormStatus,
+} from './api/application-hooks'
+export { parsePortalProgramId } from './api/mappers'
 export type {
   HomePortalProgramsQuery,
   PortalProgramsListQuery,

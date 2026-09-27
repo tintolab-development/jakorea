@@ -16,6 +16,7 @@ import {
 } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { createProgramApplicationFormInstitutionDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import { createProgramApplicationFormInstructorDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-instructor-draft'
+import { createProgramApplicationFormTrainedTeachersDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
 import { createProgramApplicationFormVolunteerDraft } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import type { ProgramDetail, ProgramListItem } from '../model/types.ts'
@@ -68,6 +69,8 @@ function createSeedDraftForApplyCase(applyCase: ProgramApplyFormCase): WritingFo
       return createProgramApplicationFormInstructorDraft()
     case 'instructor-gemini':
       return createGeminiVisitingTrainingApplicationFormInstructorDraft()
+    case 'trained-teachers':
+      return createProgramApplicationFormTrainedTeachersDraft()
     default: {
       const _exhaustive: never = applyCase
       return _exhaustive
@@ -89,7 +92,11 @@ export function getMockApplyFormCase(
 export function getMockApplyFormDraft(
   program: Pick<ProgramListItem | ProgramDetail, 'category' | 'id'> &
     Partial<
-      Pick<ProgramDetail, 'detailCase' | 'participationMethod'> & ApplyScheduleProgramFields
+      Pick<
+        ProgramDetail,
+        'detailCase' | 'participationMethod' | 'programType' | 'registrationKind'
+      > &
+        ApplyScheduleProgramFields
     >
 ): WritingFormDraft {
   const applyCase = resolveProgramApplyFormCase(program)

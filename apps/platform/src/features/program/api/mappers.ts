@@ -364,6 +364,8 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
   const educationForm = mapEducationForm(remote.operationMethod)
   const targets = mapEducationTarget(remote.educationTarget)
   const roleLabel = ROLE_LABEL[detailCase]
+  const programType = readString(remote.programType)?.toUpperCase()
+  const isTrainedTeacher = programType === 'TRAINED_TEACHER'
   const opStart = toDate(remote.businessStartDate)
   const opEnd = toDate(remote.businessEndDate)
   const primaryRecruitment = remote.recruitments?.[0]
@@ -425,6 +427,8 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     educationTargetDetailLabel,
     educationVenueLabel,
     detailCase,
+    programType,
+    registrationKind: isTrainedTeacher ? 'trainedTeachers' : undefined,
     programAudience: remote.applicationTargetMode?.toUpperCase() === 'INDIVIDUAL' ? 'individual' : 'organization',
     participationMethod: 'individual',
     recruitmentRoleLabel: roleLabel,
@@ -440,7 +444,7 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     sessionRound: sessions.length > 1 || eventSchedules.length > 1 ? 'multi' : 'single',
     educationScheduleMode: 'period',
     educationScheduleLines: eventSchedules.map(item => item.dateLabel).filter(label => label !== '-'),
-    maxPreferredScheduleCount: 1,
+    maxPreferredScheduleCount: isTrainedTeacher ? 2 : 1,
     sessions,
     eventSchedules,
     recruitmentPhaseGroupLabel: '모집 일정',

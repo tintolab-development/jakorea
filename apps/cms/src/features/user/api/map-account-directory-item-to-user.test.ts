@@ -140,4 +140,44 @@ describe('mapAccountDirectoryItemToUser', () => {
 
     expect(user.registeredByAdmin).toBe(false)
   })
+
+  it('셀프 가입 ADMIN_ACCOUNT(createdByAdmin=false)는 직접 가입으로 매핑한다', () => {
+    const user = mapAccountDirectoryItemToUser({
+      accountType: AccountDirectoryItemResponseAccountType.ADMIN_ACCOUNT,
+      accountId: 165007,
+      adminAccountId: 165007,
+      uuid: 'admin-self-165007',
+      email: '2kunhe***@jakorea.org',
+      name: '이건희',
+      roles: ['MASTER'],
+      status: 'ACTIVE',
+      createdAt: '2026-09-27T01:47:05.536717Z',
+      createdByAdmin: false,
+      registeredByAdmin: false,
+      identitySelfSignupCompletedAfterAdminRegistration: false,
+      identityVerified: true,
+    })
+
+    expect(user.role).toBe('ADMIN')
+    expect(user.adminAccountId).toBe(165007)
+    expect(user.registeredByAdmin).toBe(false)
+  })
+
+  it('관리자 등록 ADMIN_ACCOUNT(createdByAdmin=true)는 관리자 등록으로 매핑한다', () => {
+    const user = mapAccountDirectoryItemToUser({
+      accountType: AccountDirectoryItemResponseAccountType.ADMIN_ACCOUNT,
+      accountId: 165006,
+      adminAccountId: 165006,
+      uuid: 'admin-provisioned-165006',
+      email: 'ji***@jakorea.org',
+      name: '최지웜',
+      roles: ['MASTER'],
+      status: 'ACTIVE',
+      createdAt: '2026-09-27T01:40:02.671936Z',
+      createdByAdmin: true,
+      registeredByAdmin: true,
+    })
+
+    expect(user.registeredByAdmin).toBe(true)
+  })
 })

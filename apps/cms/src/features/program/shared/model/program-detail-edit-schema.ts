@@ -517,6 +517,19 @@ function periodLabelFromRange(
   return label === '-' ? undefined : label
 }
 
+/** GET 마스킹(`010-****-1234`)은 하이픈 포맷·검증을 깨뜨리므로 수정 폼에 넣지 않는다. */
+function firstPlainKoreanPhoneForEdit(
+  ...candidates: Array<string | null | undefined>
+): string | undefined {
+  for (const candidate of candidates) {
+    const trimmed = candidate?.trim()
+    if (!trimmed || trimmed.includes('*')) continue
+    const formatted = formatKoreanPhoneNumber(trimmed)
+    if (formatted) return formatted
+  }
+  return undefined
+}
+
 function finalAnnouncementLabelFromParts(
   dateIso: string | Date | undefined,
   method: string | undefined
@@ -615,23 +628,38 @@ export function programToDetailEditValues(
     })[0],
     managerName: program.managerName ?? '',
     contactPhone: (() => {
-      if (
-        resolveSponsorContactIdsForEdit({
-          ids: program.generalCommonInfo?.sponsorManagerContactIds,
-          id: program.generalCommonInfo?.sponsorManagerContactId,
-          managerLine:
-            program.generalCommonInfo?.sponsorManagerLine?.trim() ||
-            program.managerName?.trim() ||
-            '',
-        }).some(isSponsorContactUnselected)
-      ) {
+      const recruitmentInfo = program.generalCommonInfo?.participantRecruitmentInfo as
+        | { inquiryTel?: string; tel?: string; contactPhone?: string }
+        | undefined
+      // 모집 문의처 SSOT (조회 display와 동일 우선순위). GET 마스킹(*)·후원사 미선택과 섞지 않음.
+      const fromRecruitment = firstPlainKoreanPhoneForEdit(
+        recruitmentInfo?.inquiryTel,
+        recruitmentInfo?.tel,
+        recruitmentInfo?.contactPhone
+      )
+      if (fromRecruitment) return fromRecruitment
+
+      const fromProgram = firstPlainKoreanPhoneForEdit(program.contactPhone)
+      const sponsorUnselected = resolveSponsorContactIdsForEdit({
+        ids: program.generalCommonInfo?.sponsorManagerContactIds,
+        id: program.generalCommonInfo?.sponsorManagerContactId,
+        managerLine:
+          program.generalCommonInfo?.sponsorManagerLine?.trim() ||
+          program.managerName?.trim() ||
+          '',
+      }).some(isSponsorContactUnselected)
+      if (sponsorUnselected) {
+        // TT: top-level contactPhone 이 모집 Tel 폴백 (participant-recruitment-display)
+        if (
+          fromProgram &&
+          program.id != null &&
+          looksLikeTrainedTeacherProgramId(String(program.id))
+        ) {
+          return fromProgram
+        }
         return undefined
       }
-      const raw =
-        program.contactPhone?.trim() ||
-        program.generalCommonInfo?.participantRecruitmentInfo?.inquiryTel?.trim() ||
-        program.generalCommonInfo?.participantRecruitmentInfo?.contactPhone?.trim()
-      return raw ? formatKoreanPhoneNumber(raw) : undefined
+      return fromProgram
     })(),
     contactEmail:
       program.contactEmail?.trim() ||

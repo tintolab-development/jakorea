@@ -15,29 +15,42 @@ function createEmptyBlock(): ApplyPreferredScheduleBlock {
 
 type ApplyPreferredScheduleProps = {
   maxBlocks: number
+  value?: ApplyPreferredScheduleBlock[]
+  onChange?: (blocks: ApplyPreferredScheduleBlock[]) => void
 }
 
-export function ApplyPreferredSchedule({ maxBlocks }: ApplyPreferredScheduleProps) {
+export function ApplyPreferredSchedule({
+  maxBlocks,
+  value,
+  onChange,
+}: ApplyPreferredScheduleProps) {
   const cap = Math.max(1, Math.min(maxBlocks, 10))
-  const [blocks, setBlocks] = useState<ApplyPreferredScheduleBlock[]>(() => [createEmptyBlock()])
+  const [uncontrolled, setUncontrolled] = useState<ApplyPreferredScheduleBlock[]>(() => [
+    createEmptyBlock(),
+  ])
+  const blocks = value ?? uncontrolled
+  const setBlocks = (next: ApplyPreferredScheduleBlock[]) => {
+    if (onChange) onChange(next)
+    else setUncontrolled(next)
+  }
 
   const displayBlocks = blocks.slice(0, cap)
 
   const patchBlock = (index: number, patch: Partial<ApplyPreferredScheduleBlock>) => {
-    setBlocks(current =>
-      current.map((block, i) => (i === index ? { ...block, ...patch } : block))
-    )
+    setBlocks(blocks.map((block, i) => (i === index ? { ...block, ...patch } : block)))
   }
 
   const removeBlock = (index: number) => {
-    setBlocks(current => {
-      if (current.length <= 1) return [createEmptyBlock()]
-      return current.filter((_, i) => i !== index)
-    })
+    if (blocks.length <= 1) {
+      setBlocks([createEmptyBlock()])
+      return
+    }
+    setBlocks(blocks.filter((_, i) => i !== index))
   }
 
   const addBlock = () => {
-    setBlocks(current => (current.length >= cap ? current : [...current, createEmptyBlock()]))
+    if (blocks.length >= cap) return
+    setBlocks([...blocks, createEmptyBlock()])
   }
 
   return (

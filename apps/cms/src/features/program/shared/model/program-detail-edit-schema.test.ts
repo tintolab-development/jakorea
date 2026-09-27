@@ -159,6 +159,74 @@ describe('program detail trained teachers boolean fields', () => {
   })
 })
 
+describe('programToDetailEditValues contactPhone (모집 문의처)', () => {
+  it('후원사 담당자 미선택이어도 nested inquiryTel 을 수정 폼에 채운다', () => {
+    const values = programToDetailEditValues({
+      ...program,
+      id: '186005',
+      managerName: '미선택',
+      contactPhone: undefined,
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        sponsorManagerContactIds: [SPONSOR_CONTACT_UNSELECTED_VALUE],
+        sponsorManagerLine: '미선택',
+        participantRecruitmentInfo: {
+          inquiryTel: '010-8681-6741',
+          inquiryEmail: 'bjh1234@tinto.co.kr',
+          contactOrganizationName: '로컬나눔은행',
+        },
+      },
+    } as Program)
+
+    expect(values.contactPhone).toBe('010-8681-6741')
+  })
+
+  it('top-level 마스킹 전화보다 nested 모집 Tel 을 우선한다', () => {
+    const values = programToDetailEditValues({
+      ...program,
+      id: '186005',
+      contactPhone: '010-****-7253',
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        participantRecruitmentInfo: {
+          inquiryTel: '02-6085-6028',
+        },
+      },
+    } as Program)
+
+    expect(values.contactPhone).toBe('02-6085-6028')
+  })
+
+  it('마스킹만 있으면 contactPhone 을 비워 잘못된 하이픈 포맷을 막는다', () => {
+    const values = programToDetailEditValues({
+      ...program,
+      contactPhone: '010-****-7253',
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        participantRecruitmentInfo: {},
+      },
+    } as Program)
+
+    expect(values.contactPhone).toBeUndefined()
+  })
+
+  it('TT 는 담당자 미선택·nested 비어 있어도 top-level 평문 Tel 폴백을 유지한다', () => {
+    const values = programToDetailEditValues({
+      ...program,
+      id: '186005',
+      managerName: '미선택',
+      contactPhone: '010-8681-6741',
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        sponsorManagerContactIds: [SPONSOR_CONTACT_UNSELECTED_VALUE],
+        participantRecruitmentInfo: {},
+      },
+    } as Program)
+
+    expect(values.contactPhone).toBe('010-8681-6741')
+  })
+})
+
 describe('programToDetailEditValues keeps stored common info in edit fields', () => {
   it('공고명·세부명·일정명·진행 시간·IPS 상세를 수정 폼에 채운다', () => {
     const values = programToDetailEditValues({

@@ -118,6 +118,27 @@ export const platformQueryKeys = {
     homePreview: () => [...platformQueryKeys.program.all(), 'home-preview'] as const,
     /** 공개 상세 — GET /api/portal/programs/{programId} (Class D, CMS 8080) */
     detail: (id: string) => [...platformQueryKeys.program.all(), 'detail', id] as const,
+    /** 신청 옵션 — GET /api/portal/programs/{programId}/application-options (Class D, 회원) */
+    applicationOptions: (programId: string) =>
+      [...platformQueryKeys.program.all(), 'application-options', programId] as const,
+    /**
+     * 신청 양식 — GET /api/portal/programs/{programId}/form-bindings/{bindingId}
+     * Class D. recruitmentId·applicationType·bindingId 가 바뀌면 다른 키.
+     */
+    applicationForm: (params: {
+      programId: string
+      bindingId: number
+      recruitmentId: number
+      applicationType: string
+    }) =>
+      [
+        ...platformQueryKeys.program.all(),
+        'application-form',
+        params.programId,
+        params.bindingId,
+        params.recruitmentId,
+        params.applicationType,
+      ] as const,
   },
 
   programResult: {

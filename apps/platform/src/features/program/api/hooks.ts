@@ -12,6 +12,7 @@ const LIST_STALE_MS = 30_000
 const LIST_GC_MS = 15 * 60_000
 const DETAIL_STALE_MS = 2 * 60_000
 const DETAIL_GC_MS = 15 * 60_000
+const DETAIL_FRESH_STALE_MS = 0
 const PROGRAMS_PAGE_SIZE = 10
 
 function shouldRetryDetail(failureCount: number, error: unknown): boolean {
@@ -183,19 +184,26 @@ export function usePortalProgramsList(params: ProgramsListParams): PortalProgram
  * 공개 프로그램 상세.
  * CMS 숫자 id만 GET /api/portal/programs/{programId}.
  * slug·비숫자·404는 mock을 되살리지 않는다.
+ *
+ * `fresh: true` — 신청 화면 등 CMS에서 모집 기간을 바꾼 직후 캐시를 쓰지 않는다.
  */
-export function useProgramDetail(programId: string | null | undefined): ProgramDetailQuery {
+export function useProgramDetail(
+  programId: string | null | undefined,
+  options?: { fresh?: boolean },
+): ProgramDetailQuery {
   const remote = isRemoteApiConfigured()
   const numericId = parsePortalProgramId(programId)
   const enabled = remote && numericId != null
+  const fresh = options?.fresh === true
 
   const detailQuery = useQuery({
     queryKey: platformQueryKeys.program.detail(String(numericId ?? '')),
     queryFn: ({ signal }) => fetchPortalProgramDetail(numericId!, signal),
     enabled,
-    staleTime: DETAIL_STALE_MS,
+    staleTime: fresh ? DETAIL_FRESH_STALE_MS : DETAIL_STALE_MS,
     gcTime: DETAIL_GC_MS,
-    refetchOnWindowFocus: false,
+    refetchOnMount: fresh ? 'always' : true,
+    refetchOnWindowFocus: fresh,
     refetchOnReconnect: true,
     retry: shouldRetryDetail,
     retryDelay: queryRetryDelay,
