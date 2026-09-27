@@ -460,9 +460,7 @@
   "paths": {
     "/api/admin/form-template-versions/{versionId}": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "관리자 조회",
         "description": "### 이 API가 하는 일\n- 관리자 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `GET /api/admin/form-template-versions/{versionId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_form-template-versions_versionId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "getVersion",
@@ -504,9 +502,7 @@
         }
       },
       "put": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "PUT /api/admin/form-template-versions/{versionId}",
         "description": "### 이 API가 하는 일\n- PUT /api/admin/form-template-versions/{versionId}\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `PUT /api/admin/form-template-versions/{versionId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `put_admin_form-template-versions_versionId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "updateVersion",
@@ -563,9 +559,7 @@
     },
     "/api/admin/programs/{programId}/form-bindings": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "프로그램 조회",
         "description": "### 이 API가 하는 일\n- 프로그램 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `GET /api/admin/programs/{programId}/form-bindings`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 프로그램 상세 선택값, 템플릿 유형, 일정형/커리큘럼형 대상 구간, 사용자 참여 context\n- 응답 사용 위치: 프로그램 상세 설문/만족도 바인딩 목록 조회 결과로 화면 목록/모달/응답 상태를 갱신\n- 프론트 조회 키: `get_programs_programId_form_bindings`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: STAGE178_SURVEY_SCREEN_MAPPING_SMOKE\n- 목데이터 대체: 프로그램 상세 신규 설문조사 등록 모달 및 사용자 설문 참여 화면을 API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "formBindings",
@@ -609,9 +603,7 @@
         }
       },
       "post": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "POST /api/admin/programs/{programId}/form-bindings",
         "description": "### 이 API가 하는 일\n- POST /api/admin/programs/{programId}/form-bindings\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `POST /api/admin/programs/{programId}/form-bindings`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 프로그램 상세 선택값, 템플릿 유형, 일정형/커리큘럼형 대상 구간, 사용자 참여 context\n- 응답 사용 위치: 프로그램 상세 설문/만족도 바인딩 등록 결과로 화면 목록/모달/응답 상태를 갱신\n- 프론트 조회 키: `post_programs_programId_form_bindings`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: STAGE178_SURVEY_SCREEN_MAPPING_SMOKE\n- 목데이터 대체: 프로그램 상세 신규 설문조사 등록 모달 및 사용자 설문 참여 화면을 API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "createFormBinding",
@@ -667,9 +659,7 @@
     },
     "/api/admin/form-templates": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "관리자 조회",
         "description": "### 이 API가 하는 일\n- 관리자 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `GET /api/admin/form-templates`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_form-templates`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "listTemplates",
@@ -681,12 +671,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "enum": [
-                "WRITING",
-                "ISSUANCE",
-                "SURVEY",
-                "CERTIFICATE"
-              ]
+              "enum": ["WRITING", "ISSUANCE", "SURVEY", "CERTIFICATE"]
             }
           },
           {
@@ -766,9 +751,7 @@
         }
       },
       "post": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "POST /api/admin/form-templates",
         "description": "### 이 API가 하는 일\n- POST /api/admin/form-templates\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `POST /api/admin/form-templates`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_form-templates`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "createTemplate_2",
@@ -813,9 +796,7 @@
     },
     "/api/admin/form-templates/{templateId}/versions": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "관리자 조회",
         "description": "### 이 API가 하는 일\n- 관리자 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `GET /api/admin/form-templates/{templateId}/versions`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_form-templates_templateId_versions`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "listVersions",
@@ -860,9 +841,7 @@
         }
       },
       "post": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "POST /api/admin/form-templates/{templateId}/versions",
         "description": "### 이 API가 하는 일\n- POST /api/admin/form-templates/{templateId}/versions\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `POST /api/admin/form-templates/{templateId}/versions`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_form-templates_templateId_versions`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "createVersion_1",
@@ -919,9 +898,7 @@
     },
     "/api/admin/form-templates/{templateId}/versions/copy": {
       "post": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "POST /api/admin/form-templates/{templateId}/versions/copy",
         "description": "### 이 API가 하는 일\n- POST /api/admin/form-templates/{templateId}/versions/copy\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `POST /api/admin/form-templates/{templateId}/versions/copy`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_form-templates_templateId_versions_copy`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "copyVersion",
@@ -978,9 +955,7 @@
     },
     "/api/admin/form-template-versions/{versionId}/publish": {
       "post": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "POST /api/admin/form-template-versions/{versionId}/publish",
         "description": "### 이 API가 하는 일\n- POST /api/admin/form-template-versions/{versionId}/publish\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `POST /api/admin/form-template-versions/{versionId}/publish`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_form-template-versions_versionId_publish`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "publishVersion",
@@ -1037,9 +1012,7 @@
     },
     "/api/admin/form-submission-files/bulk-download/jobs": {
       "post": {
-        "tags": [
-          "기타 API"
-        ],
+        "tags": ["기타 API"],
         "summary": "과제/설문 파일 제출물 일괄 Worker ZIP 생성",
         "description": "### 이 API가 하는 일\n- 과제/설문 파일 제출물 일괄 Worker ZIP 생성\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/form-submission-files/bulk-download/jobs`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FILE_DOWNLOAD 권한 필요\n- 접근 범위: PROGRAM_ASSIGNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Notion 파일형 과제 제출물 일괄 다운로드 Worker ZIP",
         "operationId": "formSubmissionFiles",
@@ -1084,9 +1057,7 @@
     },
     "/api/admin/form-responses/{responseId}/privacy-detail": {
       "post": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "POST /api/admin/form-responses/{responseId}/privacy-detail",
         "description": "### 이 API가 하는 일\n- POST /api/admin/form-responses/{responseId}/privacy-detail\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/form-responses/{responseId}/privacy-detail`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FORM_RESPONSE_READ 권한 필요\n- 접근 범위: OBJECT_SCOPED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: SOURCE_REVIEWED 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Route documented from Round5-8 controllers; whole-application runtime OpenAPI export not executed.",
         "operationId": "revealDocument",
@@ -1143,9 +1114,7 @@
     },
     "/api/admin/form-responses/{responseId}/feedback": {
       "post": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "폼 응답 피드백 등록 (과제·교육계획서·교육일지)",
         "description": "### 이 API가 하는 일\n- 폼 응답 피드백 등록 (과제·교육계획서·교육일지)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/form-responses/{responseId}/feedback`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FORM_RESPONSE_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Wave11 auto-send feedback producer; inserts form_response_feedback and publishes WEB notice",
         "operationId": "createFeedback",
@@ -1202,9 +1171,7 @@
     },
     "/api/admin/form-responses/submit": {
       "post": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "POST /api/admin/form-responses/submit",
         "description": "### 이 API가 하는 일\n- POST /api/admin/form-responses/submit\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `POST /api/admin/form-responses/submit`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_form-responses_submit`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "submitResponse",
@@ -1249,9 +1216,7 @@
     },
     "/api/admin/programs/{programId}/form-bindings/{bindingId}": {
       "delete": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "프로그램 삭제",
         "description": "### 이 API가 하는 일\n- 프로그램 삭제\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `DELETE /api/admin/programs/{programId}/form-bindings/{bindingId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 프로그램 상세 선택값, 템플릿 유형, 일정형/커리큘럼형 대상 구간, 사용자 참여 context\n- 응답 사용 위치: 프로그램 상세 설문/만족도 바인딩 비활성화 결과로 화면 목록/모달/응답 상태를 갱신\n- 프론트 조회 키: `delete_programs_programId_form_bindings_bindingId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: STAGE178_SURVEY_SCREEN_MAPPING_SMOKE\n- 목데이터 대체: 프로그램 상세 신규 설문조사 등록 모달 및 사용자 설문 참여 화면을 API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "deactivateFormBinding",
@@ -1302,9 +1267,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "프로그램 부분 수정",
         "description": "### 이 API가 하는 일\n- 프로그램 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `PATCH /api/admin/programs/{programId}/form-bindings/{bindingId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 프로그램 상세 선택값, 템플릿 유형, 일정형/커리큘럼형 대상 구간, 사용자 참여 context\n- 응답 사용 위치: 프로그램 상세 설문/만족도 바인딩 수정 결과로 화면 목록/모달/응답 상태를 갱신\n- 프론트 조회 키: `patch_programs_programId_form_bindings_bindingId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: STAGE178_SURVEY_SCREEN_MAPPING_SMOKE\n- 목데이터 대체: 프로그램 상세 신규 설문조사 등록 모달 및 사용자 설문 참여 화면을 API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "updateFormBinding",
@@ -1370,9 +1333,7 @@
     },
     "/api/admin/form-templates/{templateId}": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "관리자 조회",
         "description": "### 이 API가 하는 일\n- 관리자 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `GET /api/admin/form-templates/{templateId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_form-templates_templateId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "getTemplate_1",
@@ -1414,9 +1375,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "관리자 삭제",
         "description": "### 이 API가 하는 일\n- 관리자 삭제\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `DELETE /api/admin/form-templates/{templateId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `delete_admin_form-templates_templateId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "deleteTemplate",
@@ -1458,9 +1417,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "관리자 부분 수정",
         "description": "### 이 API가 하는 일\n- 관리자 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `PATCH /api/admin/form-templates/{templateId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `patch_admin_form-templates_templateId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "updateTemplate",
@@ -1517,9 +1474,7 @@
     },
     "/api/admin/form-responses/{responseId}": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "관리자 조회",
         "description": "### 이 API가 하는 일\n- 관리자 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `GET /api/admin/form-responses/{responseId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_form-responses_responseId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "getResponse",
@@ -1561,9 +1516,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "강의평가 응답 관리자 삭제",
         "description": "### 이 API가 하는 일\n- 강의평가 응답 관리자 삭제\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `DELETE /api/admin/form-responses/{responseId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 선택 응답 ID + 관리자 수정값\n- 응답 사용 위치: 수정/삭제 성공 후 응답 목록·상세 invalidate\n- 프론트 조회 키: `delete_api_admin_form-responses_responseId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: LECTURE_EVALUATION_MUTATION_SMOKE\n- 목데이터 대체: 강의평가 로컬 patch 금지\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FORM_RESPONSE_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Lecture-evaluation-only admin mutation; source response shell is retained for audit on delete.",
         "operationId": "deleteResponse",
@@ -1613,9 +1566,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "강의평가 응답 관리자 수정",
         "description": "### 이 API가 하는 일\n- 강의평가 응답 관리자 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `PATCH /api/admin/form-responses/{responseId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 선택 응답 ID + 관리자 수정값\n- 응답 사용 위치: 수정/삭제 성공 후 응답 목록·상세 invalidate\n- 프론트 조회 키: `patch_api_admin_form-responses_responseId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: LECTURE_EVALUATION_MUTATION_SMOKE\n- 목데이터 대체: 강의평가 로컬 patch 금지\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FORM_RESPONSE_WRITE 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Lecture-evaluation-only admin mutation; source response shell is retained for audit on delete.",
         "operationId": "updateResponse",
@@ -1672,9 +1623,7 @@
     },
     "/api/admin/form-templates/create-options": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "템플릿 신규 생성 옵션 조회",
         "description": "### 이 API가 하는 일\n- 템플릿 신규 생성 옵션 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/form-templates/create-options`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FORM_TEMPLATE_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Stage001 template creation option contract",
         "operationId": "createOptions",
@@ -1709,9 +1658,7 @@
     },
     "/api/admin/form-templates/by-code/{templateCode}/published-payload": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "프로그램 등록용 공용 템플릿 PUBLISHED 원본 조회",
         "description": "### 이 API가 하는 일\n- 프로그램 등록용 공용 템플릿 PUBLISHED 원본 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/form-templates/by-code/{templateCode}/published-payload`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FORM_TEMPLATE_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: General program registration seed endpoint; catalog DRAFT is never returned",
         "operationId": "getPublishedTemplatePayloadByCode",
@@ -1754,9 +1701,7 @@
     },
     "/api/admin/form-templates/by-code/{templateCode}/payload": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "템플릿 코드 기준 최신 schemaJson/extensionJson/settingsJson 조회",
         "description": "### 이 API가 하는 일\n- 템플릿 코드 기준 최신 schemaJson/extensionJson/settingsJson 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/form-templates/by-code/{templateCode}/payload`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FORM_TEMPLATE_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: FE templateCode contract for WritingFormDraft/settingsJson restore",
         "operationId": "getTemplatePayloadByCode",
@@ -1799,9 +1744,7 @@
     },
     "/api/admin/form-template-versions/{versionId}/render": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "관리자 조회",
         "description": "### 이 API가 하는 일\n- 관리자 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `GET /api/admin/form-template-versions/{versionId}/render`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_form-template-versions_versionId_render`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "render_1",
@@ -1846,9 +1789,7 @@
     },
     "/api/admin/form-submission-files/{submissionFileId}/download": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "파일 조회",
         "description": "### 이 API가 하는 일\n- 파일 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `GET /api/admin/form-submission-files/{submissionFileId}/download`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `get_admin_form-submission-files_submissionFileId_download`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: S3/KMS_FILE_SCAN_OR_DOCUMENT_RENDERER 연동 검증 필요\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "submissionFileDownload",
@@ -1892,9 +1833,7 @@
     },
     "/api/admin/form-responses": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "관리자 조회",
         "description": "### 이 API가 하는 일\n- 관리자 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `GET /api/admin/form-responses`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_form-responses`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "listResponses",
@@ -2008,9 +1947,7 @@
     },
     "/api/admin/form-responses/{responseId}/document-snapshot": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "제출 문서 원본/답변/projection 스냅샷 조회",
         "description": "### 이 API가 하는 일\n- 제출 문서 원본/답변/projection 스냅샷 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/form-responses/{responseId}/document-snapshot`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FORM_RESPONSE_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: FORM_RESPONSE_DOCUMENT 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Added for template-authored document snapshot/projection reuse flow.",
         "operationId": "getDocumentSnapshot",
@@ -2054,9 +1991,7 @@
     },
     "/api/admin/form-responses/business-projections": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "제출 문서 업무용 projection 목록 조회",
         "description": "### 이 API가 하는 일\n- 제출 문서 업무용 projection 목록 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/form-responses/business-projections`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FORM_RESPONSE_READ 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: FORM_RESPONSE_DOCUMENT 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Added for template-authored document snapshot/projection reuse flow.",
         "operationId": "listBusinessProjections",
@@ -2131,9 +2066,7 @@
     },
     "/api/admin/form-auto-fill-keys": {
       "get": {
-        "tags": [
-          "폼/설문"
-        ],
+        "tags": ["폼/설문"],
         "summary": "관리자 조회",
         "description": "### 이 API가 하는 일\n- 관리자 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 폼/템플릿/설문 (`null`)\n- 프론트 담당 영역: forms-surveys (`forms-surveys`)\n- 호출 방식: `GET /api/admin/form-auto-fill-keys`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_form-auto-fill-keys`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 forms-surveys API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "autoFillKeys",
@@ -2266,9 +2199,7 @@
             "minItems": 0
           }
         },
-        "required": [
-          "requestedDate"
-        ]
+        "required": ["requestedDate"]
       },
       "RequestedSessionTimeRequest": {
         "type": "object",
@@ -2286,10 +2217,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "endTime",
-          "startTime"
-        ]
+        "required": ["endTime", "startTime"]
       },
       "SaveApplicationRequest": {
         "type": "object",
@@ -2345,11 +2273,7 @@
             "minItems": 0
           }
         },
-        "required": [
-          "applicationType",
-          "formBindingId",
-          "recruitmentId"
-        ]
+        "required": ["applicationType", "formBindingId", "recruitmentId"]
       },
       "ApplicationSaveResponse": {
         "type": "object",
@@ -2403,10 +2327,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "fileObjectId",
-          "signatureType"
-        ]
+        "required": ["fileObjectId", "signatureType"]
       },
       "MemberPortalSignatureProfileResponse": {
         "type": "object",
@@ -2451,9 +2372,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reactionType"
-        ]
+        "required": ["reactionType"]
       },
       "NoticeReactionMutationResponse": {
         "type": "object",
@@ -2521,9 +2440,7 @@
             "minItems": 0
           }
         },
-        "required": [
-          "rows"
-        ]
+        "required": ["rows"]
       },
       "StudentRosterRowRequest": {
         "type": "object",
@@ -2581,13 +2498,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "birthDate",
-          "className",
-          "grade",
-          "studentName",
-          "studentNo"
-        ]
+        "required": ["birthDate", "className", "grade", "studentName", "studentNo"]
       },
       "StudentRosterItemResponse": {
         "type": "object",
@@ -2705,9 +2616,7 @@
             "format": "int64"
           }
         },
-        "required": [
-          "fileObjectId"
-        ]
+        "required": ["fileObjectId"]
       },
       "PortraitConsentResponse": {
         "type": "object",
@@ -2773,11 +2682,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "alimtalkEnabled",
-          "emailEnabled",
-          "smsEnabled"
-        ]
+        "required": ["alimtalkEnabled", "emailEnabled", "smsEnabled"]
       },
       "PreferenceResponse": {
         "type": "object",
@@ -2807,9 +2712,7 @@
             "pattern": "PASS|NEUTRAL|FAIL|UNREVIEWED"
           }
         },
-        "required": [
-          "evaluation"
-        ]
+        "required": ["evaluation"]
       },
       "VolunteerDocumentEvaluationResponse": {
         "type": "object",
@@ -3100,14 +3003,7 @@
           },
           "wageItemType": {
             "type": "string",
-            "enum": [
-              "TIER1",
-              "TIER2",
-              "TIER3",
-              "SPECIAL_LECTURE",
-              "OTHER_LABOR",
-              "GEMINI"
-            ]
+            "enum": ["TIER1", "TIER2", "TIER3", "SPECIAL_LECTURE", "OTHER_LABOR", "GEMINI"]
           },
           "itemName": {
             "type": "string"
@@ -3179,10 +3075,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -3208,26 +3101,17 @@
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "field": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "필드 단위 검증 오류인 경우 대상 필드",
             "example": "email"
           },
           "traceId": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "서버 로그 추적용 ID",
             "example": "8a0c72fa7d6c4ec19c3e13d2a1e54a1f"
           },
           "details": {
-            "type": [
-              "object",
-              "null"
-            ],
+            "type": ["object", "null"],
             "additionalProperties": {
               "type": "string"
             },
@@ -3406,14 +3290,7 @@
           },
           "wageItemType": {
             "type": "string",
-            "enum": [
-              "TIER1",
-              "TIER2",
-              "TIER3",
-              "SPECIAL_LECTURE",
-              "OTHER_LABOR",
-              "GEMINI"
-            ]
+            "enum": ["TIER1", "TIER2", "TIER3", "SPECIAL_LECTURE", "OTHER_LABOR", "GEMINI"]
           },
           "name": {
             "type": "string"
@@ -3487,10 +3364,7 @@
             "minItems": 1
           }
         },
-        "required": [
-          "educationRegionCode",
-          "slots"
-        ]
+        "required": ["educationRegionCode", "slots"]
       },
       "TemporaryScheduleSlotRequest": {
         "type": "object",
@@ -3515,12 +3389,7 @@
             "minimum": 0
           }
         },
-        "required": [
-          "className",
-          "grade",
-          "scheduleId",
-          "studentCount"
-        ]
+        "required": ["className", "grade", "scheduleId", "studentCount"]
       },
       "CapacityWarning": {
         "type": "object",
@@ -3681,10 +3550,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -3744,9 +3610,7 @@
             }
           }
         },
-        "required": [
-          "sponsors"
-        ]
+        "required": ["sponsors"]
       },
       "ApiResponseListProgramSponsorAssignmentResponse": {
         "type": "object",
@@ -3758,20 +3622,14 @@
             "example": false
           },
           "data": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": ["array", "null"],
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
             "items": {
               "$ref": "#/components/schemas/ProgramSponsorAssignmentResponse"
             }
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -3915,10 +3773,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -3962,9 +3817,7 @@
             }
           }
         },
-        "required": [
-          "fileObjectIds"
-        ]
+        "required": ["fileObjectIds"]
       },
       "ApiResponseListResponse": {
         "type": "object",
@@ -3976,20 +3829,14 @@
             "example": false
           },
           "data": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": ["array", "null"],
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
             "items": {
               "$ref": "#/components/schemas/Response"
             }
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -4053,9 +3900,7 @@
             }
           }
         },
-        "required": [
-          "fileObjectIds"
-        ]
+        "required": ["fileObjectIds"]
       },
       "ApiResponseProgramPostAttachmentListResponse": {
         "type": "object",
@@ -4072,10 +3917,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -4248,9 +4090,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "slots"
-        ]
+        "required": ["slots"]
       },
       "SlotRequest": {
         "type": "object",
@@ -4270,11 +4110,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "className",
-          "grade",
-          "scheduleId"
-        ]
+        "required": ["className", "grade", "scheduleId"]
       },
       "AssignmentResponse": {
         "type": "object",
@@ -4423,10 +4259,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -4617,9 +4450,7 @@
             "minimum": 0
           }
         },
-        "required": [
-          "scheduleId"
-        ]
+        "required": ["scheduleId"]
       },
       "EmployeeVolunteerCountReplaceRequest": {
         "type": "object",
@@ -4642,10 +4473,7 @@
             "minLength": 5
           }
         },
-        "required": [
-          "entries",
-          "reason"
-        ]
+        "required": ["entries", "reason"]
       },
       "ApiResponseEmployeeVolunteerCountSetResponse": {
         "type": "object",
@@ -4662,10 +4490,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -4748,9 +4573,7 @@
             }
           }
         },
-        "required": [
-          "fileObjectIds"
-        ]
+        "required": ["fileObjectIds"]
       },
       "ApiResponseListProgramAttachmentResponse": {
         "type": "object",
@@ -4762,20 +4585,14 @@
             "example": false
           },
           "data": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": ["array", "null"],
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
             "items": {
               "$ref": "#/components/schemas/ProgramAttachmentResponse"
             }
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -4988,10 +4805,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -5036,9 +4850,7 @@
             "format": "int64"
           }
         },
-        "required": [
-          "participantId"
-        ]
+        "required": ["participantId"]
       },
       "CapacityLimitRequest": {
         "type": "object",
@@ -5062,12 +4874,7 @@
             "minimum": 0
           }
         },
-        "required": [
-          "educationRegionCode",
-          "maxClassCount",
-          "maxVolunteerCount",
-          "semesterType"
-        ]
+        "required": ["educationRegionCode", "maxClassCount", "maxVolunteerCount", "semesterType"]
       },
       "CapacityUpsertRequest": {
         "type": "object",
@@ -5079,9 +4886,7 @@
             }
           }
         },
-        "required": [
-          "capacities"
-        ]
+        "required": ["capacities"]
       },
       "CapacityStatus": {
         "type": "object",
@@ -5162,9 +4967,7 @@
             }
           }
         },
-        "required": [
-          "estimates"
-        ]
+        "required": ["estimates"]
       },
       "PlanningEstimateStatus": {
         "type": "object",
@@ -5229,10 +5032,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -5277,9 +5077,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "status"
-        ]
+        "required": ["status"]
       },
       "StudentPortraitConsentResponse": {
         "type": "object",
@@ -5341,9 +5139,7 @@
             "minItems": 1
           }
         },
-        "required": [
-          "schedules"
-        ]
+        "required": ["schedules"]
       },
       "RequestedScheduleResponse": {
         "type": "object",
@@ -5455,10 +5251,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -5507,10 +5300,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -5598,10 +5388,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -5758,10 +5545,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -5823,9 +5607,7 @@
             "pattern": "PASS|NEUTRAL|FAIL|UNREVIEWED"
           }
         },
-        "required": [
-          "evaluation"
-        ]
+        "required": ["evaluation"]
       },
       "IndividualDocumentEvaluationResponse": {
         "type": "object",
@@ -5974,10 +5756,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -6051,9 +5830,7 @@
             }
           }
         },
-        "required": [
-          "fileObjectIds"
-        ]
+        "required": ["fileObjectIds"]
       },
       "ApiResponseListNoticeAttachmentResponse": {
         "type": "object",
@@ -6065,20 +5842,14 @@
             "example": false
           },
           "data": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": ["array", "null"],
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
             "items": {
               "$ref": "#/components/schemas/NoticeAttachmentResponse"
             }
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -6146,9 +5917,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "ApiResponseVoid": {
         "type": "object",
@@ -6164,10 +5933,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -6203,9 +5969,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "programId"
-        ]
+        "required": ["programId"]
       },
       "AdminProgramAssignmentResponse": {
         "type": "object",
@@ -6324,9 +6088,7 @@
             "additionalProperties": {}
           }
         },
-        "required": [
-          "answers"
-        ]
+        "required": ["answers"]
       },
       "PublicSurveySubmitResponse": {
         "type": "object",
@@ -6398,11 +6160,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "confirmationText",
-          "currentPassword",
-          "reason"
-        ]
+        "required": ["confirmationText", "currentPassword", "reason"]
       },
       "PortalWithdrawalResponse": {
         "type": "object",
@@ -6455,12 +6213,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "accessToken",
-          "provider",
-          "socialConsentAgreed",
-          "socialConsentVersion"
-        ]
+        "required": ["accessToken", "provider", "socialConsentAgreed", "socialConsentVersion"]
       },
       "SocialLinkResponse": {
         "type": "object",
@@ -6526,9 +6279,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "frontendReturnUrl"
-        ]
+        "required": ["frontendReturnUrl"]
       },
       "SocialOAuthStartResponse": {
         "type": "object",
@@ -6555,9 +6306,7 @@
             "minLength": 2
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "ApiResponseSettlementStatusChangeResponse": {
         "type": "object",
@@ -6574,10 +6323,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -6656,9 +6402,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "fileName"
-        ]
+        "required": ["fileName"]
       },
       "SettlementApplicationEvidenceAttachmentRequest": {
         "type": "object",
@@ -6733,10 +6477,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -6982,10 +6723,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -7061,9 +6799,7 @@
             "minimum": 1
           }
         },
-        "required": [
-          "programScheduleId"
-        ]
+        "required": ["programScheduleId"]
       },
       "ApiResponseEducationCompletionResponse": {
         "type": "object",
@@ -7080,10 +6816,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -7311,9 +7044,7 @@
             "minItems": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "AbsenceReasonSubmissionResponse": {
         "type": "object",
@@ -7369,10 +7100,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "documentId",
-          "documentVersion"
-        ]
+        "required": ["documentId", "documentVersion"]
       },
       "PaymentStatementConsentResponse": {
         "type": "object",
@@ -7429,9 +7157,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "content"
-        ]
+        "required": ["content"]
       },
       "NoticeCommentMutationResponse": {
         "type": "object",
@@ -7477,9 +7203,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "GiveUpApplicationResponse": {
         "type": "object",
@@ -7540,11 +7264,7 @@
             }
           }
         },
-        "required": [
-          "amount",
-          "expenseDate",
-          "expenseType"
-        ]
+        "required": ["amount", "expenseDate", "expenseType"]
       },
       "ExpenseReceiptFile": {
         "type": "object",
@@ -7640,9 +7360,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "CancelApplicationResponse": {
         "type": "object",
@@ -7672,9 +7390,7 @@
             "minLength": 2
           }
         },
-        "required": [
-          "purpose"
-        ]
+        "required": ["purpose"]
       },
       "MemberPortalFileDownloadResponse": {
         "type": "object",
@@ -7721,9 +7437,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "profileToken"
-        ]
+        "required": ["profileToken"]
       },
       "PhoneIdentityChangeResponse": {
         "type": "object",
@@ -7792,9 +7506,7 @@
             "format": "int64"
           }
         },
-        "required": [
-          "sourceFileObjectId"
-        ]
+        "required": ["sourceFileObjectId"]
       },
       "InstructorVerificationConsentUpsertRequest": {
         "type": "object",
@@ -8189,9 +7901,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "bankName"
-        ]
+        "required": ["bankName"]
       },
       "PaymentStatementBasicInfo": {
         "type": "object",
@@ -8304,11 +8014,7 @@
           "consentStatus": {
             "type": "string",
             "description": "PORTRAIT_RIGHTS 전용 부분동의 상태 힌트",
-            "enum": [
-              "FULL",
-              "PARTIAL",
-              "DISAGREED"
-            ]
+            "enum": ["FULL", "PARTIAL", "DISAGREED"]
           },
           "programEligible": {
             "type": "boolean",
@@ -8334,10 +8040,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "termsType",
-          "version"
-        ]
+        "required": ["termsType", "version"]
       },
       "InstructorRoleWorkflowResponse": {
         "type": "object",
@@ -8416,10 +8119,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -8544,11 +8244,7 @@
             "minItems": 0
           }
         },
-        "required": [
-          "category",
-          "content",
-          "title"
-        ]
+        "required": ["category", "content", "title"]
       },
       "MemberPortalInquiryAnswer": {
         "type": "object",
@@ -8716,10 +8412,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "contentType",
-          "fileSize"
-        ]
+        "required": ["contentType", "fileSize"]
       },
       "MemberPortalFileResponse": {
         "type": "object",
@@ -8793,12 +8486,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "contentType",
-          "filePurpose",
-          "fileSize",
-          "originalFileName"
-        ]
+        "required": ["contentType", "filePurpose", "fileSize", "originalFileName"]
       },
       "MemberPortalFileUploadResponse": {
         "type": "object",
@@ -8852,9 +8540,7 @@
             "format": "int64"
           }
         },
-        "required": [
-          "consentType"
-        ]
+        "required": ["consentType"]
       },
       "MemberPortalConsentDocumentResponse": {
         "type": "object",
@@ -9020,9 +8706,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "MemberPortalConsentMutationResponse": {
         "type": "object",
@@ -9062,10 +8746,7 @@
           "consentStatus": {
             "type": "string",
             "description": "PORTRAIT_RIGHTS 전용 부분동의 상태 힌트",
-            "enum": [
-              "FULL",
-              "PARTIAL"
-            ]
+            "enum": ["FULL", "PARTIAL"]
           },
           "programEligible": {
             "type": "boolean",
@@ -9102,17 +8783,10 @@
           "issueReason": {
             "type": "string",
             "description": "발급 사유 코드",
-            "enum": [
-              "INSTITUTION_SUBMISSION",
-              "EDUCATION_COMPLETION_PROOF",
-              "PERSONAL_ARCHIVE"
-            ]
+            "enum": ["INSTITUTION_SUBMISSION", "EDUCATION_COMPLETION_PROOF", "PERSONAL_ARCHIVE"]
           }
         },
-        "required": [
-          "participantId",
-          "programId"
-        ]
+        "required": ["participantId", "programId"]
       },
       "CertificateIssueResponse": {
         "type": "object",
@@ -9210,10 +8884,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "accessToken",
-          "provider"
-        ]
+        "required": ["accessToken", "provider"]
       },
       "AuthTokenResponse": {
         "type": "object",
@@ -9278,9 +8949,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "socialLoginSessionId"
-        ]
+        "required": ["socialLoginSessionId"]
       },
       "HomepageTeacherSignupRequest": {
         "type": "object",
@@ -9290,9 +8959,7 @@
             "$ref": "#/components/schemas/TeacherSignupRequest"
           }
         },
-        "required": [
-          "teacher"
-        ]
+        "required": ["teacher"]
       },
       "MemberSignupRequest": {
         "type": "object",
@@ -9341,7 +9008,7 @@
           },
           "identityVerified": {
             "type": "boolean",
-            "description": "본인 인증 완료 여부. 서버는 이 값을 신뢰하지 않고 identityVerificationSessionId를 검증합니다.",
+            "description": "본인인증 완료 여부. 서버는 이 값을 신뢰하지 않고 identityVerificationSessionId를 검증합니다.",
             "example": true
           },
           "identityVerificationSessionId": {
@@ -9424,11 +9091,7 @@
             }
           }
         },
-        "required": [
-          "email",
-          "name",
-          "password"
-        ]
+        "required": ["email", "name", "password"]
       },
       "PortalSchoolSelectionRequest": {
         "type": "object",
@@ -9512,9 +9175,7 @@
             "example": "EMPLOYED"
           }
         },
-        "required": [
-          "member"
-        ]
+        "required": ["member"]
       },
       "HomepageSignupResponse": {
         "type": "object",
@@ -9557,9 +9218,7 @@
             "$ref": "#/components/schemas/MemberSignupRequest"
           }
         },
-        "required": [
-          "member"
-        ]
+        "required": ["member"]
       },
       "RefreshTokenRequest": {
         "type": "object",
@@ -9573,9 +9232,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "refreshToken"
-        ]
+        "required": ["refreshToken"]
       },
       "PreRegisteredMemberMatchRequest": {
         "type": "object",
@@ -9652,10 +9309,7 @@
             "minLength": 8
           }
         },
-        "required": [
-          "currentPassword",
-          "newPassword"
-        ]
+        "required": ["currentPassword", "newPassword"]
       },
       "PasswordResetConfirmRequest": {
         "type": "object",
@@ -9722,10 +9376,7 @@
             "minLength": 8
           }
         },
-        "required": [
-          "email",
-          "password"
-        ]
+        "required": ["email", "password"]
       },
       "GuardianConsentRequest": {
         "type": "object",
@@ -9807,9 +9458,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "email"
-        ]
+        "required": ["email"]
       },
       "AccountEmailCheckResponse": {
         "type": "object",
@@ -9841,10 +9490,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "identityVerificationSessionId",
-          "profileToken"
-        ]
+        "required": ["identityVerificationSessionId", "profileToken"]
       },
       "EmailRecoveryAccountResponse": {
         "type": "object",
@@ -9902,10 +9548,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "identityVerificationSessionId",
-          "profileToken"
-        ]
+        "required": ["identityVerificationSessionId", "profileToken"]
       },
       "AdminProvisionedOnboardingResponse": {
         "type": "object",
@@ -10175,9 +9818,7 @@
             "example": 1001
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "Application": {
         "type": "object",
@@ -10464,9 +10105,7 @@
             "example": 12345
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "ApplicationDecisionResponse": {
         "type": "object",
@@ -10507,11 +10146,7 @@
           "result": {
             "type": "string",
             "description": "최종 결과. PASS/APPROVED, FAIL/REJECTED, RESERVE",
-            "enum": [
-              "PASS",
-              "FAIL",
-              "RESERVE"
-            ],
+            "enum": ["PASS", "FAIL", "RESERVE"],
             "example": "PASS"
           },
           "reserveRank": {
@@ -10535,9 +10170,7 @@
             "example": "ON_ANNOUNCEMENT"
           }
         },
-        "required": [
-          "result"
-        ]
+        "required": ["result"]
       },
       "DocumentResultRequest": {
         "type": "object",
@@ -10546,10 +10179,7 @@
           "result": {
             "type": "string",
             "description": "서류 결과. PASS/DOCUMENT_PASSED 또는 FAIL/REJECTED",
-            "enum": [
-              "PASS",
-              "FAIL"
-            ],
+            "enum": ["PASS", "FAIL"],
             "example": "PASS"
           },
           "reason": {
@@ -10565,9 +10195,7 @@
             "example": "ON_ANNOUNCEMENT"
           }
         },
-        "required": [
-          "result"
-        ]
+        "required": ["result"]
       },
       "ApplicationDecisionCancelRequest": {
         "type": "object",
@@ -10581,9 +10209,7 @@
             "minLength": 2
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "BulkResultRequest": {
         "type": "object",
@@ -10615,10 +10241,7 @@
             "description": "예비 합격 순위. 다건 요청에서는 모든 대상에 동일 순위를 적용하지 않으므로 현재 미지원"
           }
         },
-        "required": [
-          "ids",
-          "result"
-        ]
+        "required": ["ids", "result"]
       },
       "ApiResponseBulkActionResponse": {
         "type": "object",
@@ -10635,10 +10258,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -10903,11 +10523,7 @@
           "consentStatus": {
             "type": "string",
             "description": "PORTRAIT_RIGHTS 전용 상태",
-            "enum": [
-              "FULL",
-              "PARTIAL",
-              "DISAGREED"
-            ]
+            "enum": ["FULL", "PARTIAL", "DISAGREED"]
           },
           "programEligible": {
             "type": "boolean",
@@ -11069,10 +10685,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "currentPassword",
-          "reason"
-        ]
+        "required": ["currentPassword", "reason"]
       },
       "FilledDocumentResponse": {
         "type": "object",
@@ -11136,9 +10749,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "comment"
-        ]
+        "required": ["comment"]
       },
       "AdminCommentResponse": {
         "type": "object",
@@ -11308,10 +10919,7 @@
             "description": "JA 등급 평가 팝업에서 입력한 4개 평가항목. 총점/등급은 서버가 산정합니다."
           }
         },
-        "required": [
-          "email",
-          "name"
-        ]
+        "required": ["email", "name"]
       },
       "InstructorCertificationUpsertRequest": {
         "type": "object",
@@ -11346,9 +10954,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "certificationName"
-        ]
+        "required": ["certificationName"]
       },
       "InstructorJaEvaluationInput": {
         "type": "object",
@@ -11467,15 +11073,7 @@
             }
           }
         },
-        "required": [
-          "address",
-          "birthDate",
-          "email",
-          "enrollmentStatus",
-          "gender",
-          "name",
-          "phone"
-        ]
+        "required": ["address", "birthDate", "email", "enrollmentStatus", "gender", "name", "phone"]
       },
       "PreRegisterConflictResolveRequest": {
         "type": "object",
@@ -11514,11 +11112,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "currentPassword",
-          "ids",
-          "reason"
-        ]
+        "required": ["currentPassword", "ids", "reason"]
       },
       "UjatEducationRegionCreateRequest": {
         "type": "object",
@@ -11552,10 +11146,7 @@
             "$ref": "#/components/schemas/RoutePointRequest"
           }
         },
-        "required": [
-          "end",
-          "start"
-        ]
+        "required": ["end", "start"]
       },
       "RoutePointRequest": {
         "type": "object",
@@ -11587,10 +11178,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -11706,10 +11294,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -11765,11 +11350,7 @@
           "ids": {
             "type": "array",
             "description": "처리 대상 숫자 ID(최대 100). 중복 ID는 허용하지 않습니다.",
-            "example": [
-              101,
-              102,
-              103
-            ],
+            "example": [101, 102, 103],
             "items": {
               "type": "integer",
               "format": "int64"
@@ -11778,9 +11359,7 @@
             "minItems": 0
           }
         },
-        "required": [
-          "ids"
-        ]
+        "required": ["ids"]
       },
       "TextbookBusinessAreaRequest": {
         "type": "object",
@@ -11808,10 +11387,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -11896,11 +11472,7 @@
           "contentFormat": {
             "type": "string",
             "description": "본문 형식",
-            "enum": [
-              "HTML",
-              "MARKDOWN",
-              "TEXT"
-            ],
+            "enum": ["HTML", "MARKDOWN", "TEXT"],
             "example": "HTML"
           },
           "requiredYn": {
@@ -11924,13 +11496,7 @@
             "description": "적용 종료 시각"
           }
         },
-        "required": [
-          "content",
-          "requiredYn",
-          "termsType",
-          "title",
-          "version"
-        ]
+        "required": ["content", "requiredYn", "termsType", "title", "version"]
       },
       "ApiResponseTermsDocumentResponse": {
         "type": "object",
@@ -11947,10 +11513,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -12013,11 +11576,7 @@
           "contentFormat": {
             "type": "string",
             "description": "본문 형식. 현재 피그마 약관 모달은 HTML 렌더링 기준입니다.",
-            "enum": [
-              "HTML",
-              "MARKDOWN",
-              "TEXT"
-            ],
+            "enum": ["HTML", "MARKDOWN", "TEXT"],
             "example": "HTML"
           },
           "requiredYn": {
@@ -12118,21 +11677,13 @@
           "organizationKind": {
             "type": "string",
             "description": "구분. POST 등록 시 필수이며 corporate(기업) 또는 foundation(재단)을 사용합니다.",
-            "enum": [
-              "corporate",
-              "foundation"
-            ],
+            "enum": ["corporate", "foundation"],
             "example": "corporate"
           },
           "sponsorshipStatus": {
             "type": "string",
             "description": "후원 상태. POST 등록 시 필수. PATCH는 4값 양방향. 미지원 값은 400 SPONSOR_SPONSORSHIP_STATUS_UNSUPPORTED.",
-            "enum": [
-              "active",
-              "discussing",
-              "dormant",
-              "ended"
-            ],
+            "enum": ["active", "discussing", "dormant", "ended"],
             "example": "active"
           },
           "sponsorshipStartDate": {
@@ -12157,10 +11708,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -12209,12 +11757,7 @@
           },
           "sponsorshipStatus": {
             "type": "string",
-            "enum": [
-              "active",
-              "discussing",
-              "dormant",
-              "ended"
-            ],
+            "enum": ["active", "discussing", "dormant", "ended"],
             "example": "active"
           },
           "sponsorshipStartDate": {
@@ -12311,10 +11854,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -12391,9 +11931,7 @@
             "minItems": 1
           }
         },
-        "required": [
-          "sponsorIds"
-        ]
+        "required": ["sponsorIds"]
       },
       "ApiResponseBulkDownloadJobResponse": {
         "type": "object",
@@ -12410,10 +11948,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -12512,10 +12047,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -12568,11 +12100,7 @@
           "notificationType": {
             "type": "string",
             "description": "IMMEDIATE | ON_ANNOUNCEMENT | MANUAL",
-            "enum": [
-              "IMMEDIATE",
-              "ON_ANNOUNCEMENT",
-              "MANUAL"
-            ],
+            "enum": ["IMMEDIATE", "ON_ANNOUNCEMENT", "MANUAL"],
             "example": "IMMEDIATE"
           },
           "scheduledNotificationAt": {
@@ -12594,9 +12122,7 @@
             "example": "2026-09-15"
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "PaymentStatementRenderedFileRegisterRequest": {
         "type": "object",
@@ -12615,10 +12141,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "fileObjectId",
-          "payloadHash"
-        ]
+        "required": ["fileObjectId", "payloadHash"]
       },
       "SettlementCorrectionRequest": {
         "type": "object",
@@ -12639,9 +12162,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "ApiResponseSettlementCorrectionResponse": {
         "type": "object",
@@ -12658,10 +12179,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -12736,9 +12254,7 @@
           "statementIds": {
             "type": "array",
             "description": "지급조서 일괄 확인 대상 statementId 목록. FE는 이 필드만 사용합니다.",
-            "example": [
-              162602
-            ],
+            "example": [162602],
             "items": {
               "type": "integer",
               "format": "int64"
@@ -12749,9 +12265,7 @@
           "paymentIds": {
             "type": "array",
             "description": "이 API(bulk-confirm)에서는 사용하지 않습니다. 계좌 지급 bulk-paid 전용.",
-            "example": [
-              162603
-            ],
+            "example": [162603],
             "items": {
               "type": "integer",
               "format": "int64"
@@ -12779,9 +12293,7 @@
             "minLength": 2
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "ApiResponseSettlementBulkStatusChangeResponse": {
         "type": "object",
@@ -12798,10 +12310,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -12850,9 +12359,7 @@
             "minItems": 1
           }
         },
-        "required": [
-          "settlementIds"
-        ]
+        "required": ["settlementIds"]
       },
       "SettlementExportRequest": {
         "type": "object",
@@ -12941,10 +12448,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "businessPurpose",
-          "reason"
-        ]
+        "required": ["businessPurpose", "reason"]
       },
       "ProviderRetryActionResponse": {
         "type": "object",
@@ -13086,10 +12590,7 @@
           "educationStructure": {
             "type": "string",
             "description": "교육 진행 구조",
-            "enum": [
-              "CURRICULUM",
-              "SCHEDULE"
-            ]
+            "enum": ["CURRICULUM", "SCHEDULE"]
           },
           "titleEn": {
             "type": "string"
@@ -13361,11 +12862,7 @@
           "recruitmentType": {
             "type": "string",
             "description": "모집 유형",
-            "enum": [
-              "PARTICIPANT",
-              "INSTRUCTOR",
-              "VOLUNTEER"
-            ]
+            "enum": ["PARTICIPANT", "INSTRUCTOR", "VOLUNTEER"]
           },
           "targetType": {
             "type": "string",
@@ -13374,13 +12871,7 @@
           "status": {
             "type": "string",
             "description": "모집 상태",
-            "enum": [
-              "ACTIVE",
-              "OPEN",
-              "INACTIVE",
-              "CLOSED",
-              "CANCELLED"
-            ]
+            "enum": ["ACTIVE", "OPEN", "INACTIVE", "CLOSED", "CANCELLED"]
           },
           "startAt": {
             "type": "string"
@@ -13411,9 +12902,7 @@
             "description": "선발 방식 코드. 예: ADMIN_REVIEW"
           }
         },
-        "required": [
-          "recruitmentType"
-        ]
+        "required": ["recruitmentType"]
       },
       "ProgramRoundRequest": {
         "type": "object",
@@ -13561,10 +13050,7 @@
             "minLength": 2
           }
         },
-        "required": [
-          "reason",
-          "volunteerParticipantId"
-        ]
+        "required": ["reason", "volunteerParticipantId"]
       },
       "VolunteerAssignmentResponse": {
         "type": "object",
@@ -13651,9 +13137,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "TemporaryRejectionRequest": {
         "type": "object",
@@ -13672,10 +13156,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "applicationIds",
-          "reason"
-        ]
+        "required": ["applicationIds", "reason"]
       },
       "ApplicationRejectRequest": {
         "type": "object",
@@ -13689,9 +13170,7 @@
             "minLength": 2
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "EducationJournalExportRequest": {
         "type": "object",
@@ -13724,10 +13203,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -13863,10 +13339,7 @@
             "minimum": 1
           }
         },
-        "required": [
-          "organizationApplicationId",
-          "programScheduleId"
-        ]
+        "required": ["organizationApplicationId", "programScheduleId"]
       },
       "EducationCompletionCancelRequest": {
         "type": "object",
@@ -13876,9 +13349,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "SurveyShareLinkResponse": {
         "type": "object",
@@ -13976,10 +13447,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -14061,10 +13529,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -14128,10 +13593,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -14193,10 +13655,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -14256,10 +13715,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "leadApplicationId",
-          "members"
-        ]
+        "required": ["leadApplicationId", "members"]
       },
       "MergeMemberRequest": {
         "type": "object",
@@ -14274,10 +13730,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "grade",
-          "organizationApplicationId"
-        ]
+        "required": ["grade", "organizationApplicationId"]
       },
       "MergeGroupResponse": {
         "type": "object",
@@ -14370,10 +13823,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -14544,9 +13994,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "instructorMemberId"
-        ]
+        "required": ["instructorMemberId"]
       },
       "ProgramFormBindingResponse": {
         "type": "object",
@@ -14835,10 +14283,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "draftPayloadJson",
-          "programType"
-        ]
+        "required": ["draftPayloadJson", "programType"]
       },
       "ProgramPostRequest": {
         "type": "object",
@@ -14906,9 +14351,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "participantId"
-        ]
+        "required": ["participantId"]
       },
       "VolunteerUnavailabilityResponse": {
         "type": "object",
@@ -15049,9 +14492,7 @@
             "format": "int64"
           }
         },
-        "required": [
-          "participantId"
-        ]
+        "required": ["participantId"]
       },
       "DirectAssignmentResponse": {
         "type": "object",
@@ -15144,28 +14585,19 @@
             "example": 21001
           },
           "secondaryParticipantId": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64",
             "description": "상대 참가자 ID. 2인 배정이 불가능한 경우 null을 허용합니다.",
             "example": 21002
           },
           "attendanceManagerParticipantId": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64",
             "description": "출석 관리자 참가자 ID. 해당 교육일에 이미 출결 담당자가 있으면 null 허용",
             "example": 21003
           },
           "educationSlotId": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int64",
             "description": "확정된 UJAT 교육 학급 슬롯 ID",
             "example": 31001
@@ -15202,9 +14634,7 @@
             "minLength": 2
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "AttendanceBulkUpsertRequest": {
         "type": "object",
@@ -15235,9 +14665,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "decision"
-        ]
+        "required": ["decision"]
       },
       "AbsenceReasonReviewResponse": {
         "type": "object",
@@ -15301,9 +14729,7 @@
             "minLength": 2
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "LectureReportDecisionResponse": {
         "type": "object",
@@ -15366,9 +14792,7 @@
             "example": false
           }
         },
-        "required": [
-          "scheduleId"
-        ]
+        "required": ["scheduleId"]
       },
       "MemberPiiAnonymizeRequest": {
         "type": "object",
@@ -15379,9 +14803,7 @@
             "minLength": 5
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "PrivacyEnforcementMutationResponse": {
         "type": "object",
@@ -15473,11 +14895,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "exportDomain",
-          "exportFileObjectId",
-          "reason"
-        ]
+        "required": ["exportDomain", "exportFileObjectId", "reason"]
       },
       "PrivacyExportFileResponse": {
         "type": "object",
@@ -15566,9 +14984,7 @@
             "minLength": 5
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "PrivacyExportDownloadResponse": {
         "type": "object",
@@ -15679,10 +15095,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "exportDomain",
-          "reason"
-        ]
+        "required": ["exportDomain", "reason"]
       },
       "PrivacyExportClientSideCompleteResponse": {
         "type": "object",
@@ -15791,10 +15204,7 @@
             "minimum": 1
           }
         },
-        "required": [
-          "exportDomain",
-          "reason"
-        ]
+        "required": ["exportDomain", "reason"]
       },
       "PrivacyExportApprovalResponse": {
         "type": "object",
@@ -15903,9 +15313,7 @@
             "minLength": 5
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "DormantBulkRequest": {
         "type": "object",
@@ -15923,10 +15331,7 @@
             "minLength": 5
           }
         },
-        "required": [
-          "memberIds",
-          "reason"
-        ]
+        "required": ["memberIds", "reason"]
       },
       "BulkLifecycleResponse": {
         "type": "object",
@@ -15964,10 +15369,7 @@
             "minLength": 5
           }
         },
-        "required": [
-          "consentIds",
-          "reason"
-        ]
+        "required": ["consentIds", "reason"]
       },
       "PerformanceRuleUpsertRequest": {
         "type": "object",
@@ -16004,10 +15406,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -16061,10 +15460,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -16124,10 +15520,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -16320,10 +15713,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -16391,10 +15781,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -16436,11 +15823,7 @@
           "ids": {
             "type": "array",
             "description": "처리 대상 ID",
-            "example": [
-              101,
-              102,
-              103
-            ],
+            "example": [101, 102, 103],
             "items": {
               "type": "integer",
               "format": "int64"
@@ -16456,9 +15839,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "ids"
-        ]
+        "required": ["ids"]
       },
       "PerformanceClosingRequest": {
         "type": "object",
@@ -16491,10 +15872,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -16578,10 +15956,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "address",
-          "name"
-        ]
+        "required": ["address", "name"]
       },
       "SchoolOrganizationListItemResponse": {
         "type": "object",
@@ -16968,10 +16343,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -17024,10 +16396,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -17121,9 +16490,7 @@
             "description": "템플릿에 바인딩할 CLEAN 상태 file_object.id"
           }
         },
-        "required": [
-          "fileObjectId"
-        ]
+        "required": ["fileObjectId"]
       },
       "ApiResponseEmailAttachmentMutationResponse": {
         "type": "object",
@@ -17140,10 +16507,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -17303,9 +16667,7 @@
             }
           }
         },
-        "required": [
-          "templateCode"
-        ]
+        "required": ["templateCode"]
       },
       "TemplateSyncRequest": {
         "type": "object",
@@ -17334,10 +16696,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -17354,10 +16713,7 @@
           "resource": {
             "type": "string",
             "description": "동기화 대상 리소스",
-            "enum": [
-              "NOTIFICATION_TEMPLATE",
-              "SENDER_PROFILE"
-            ]
+            "enum": ["NOTIFICATION_TEMPLATE", "SENDER_PROFILE"]
           },
           "upsertedCount": {
             "type": "integer",
@@ -17398,9 +16754,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "ApiResponseCategoryMutationResponse": {
         "type": "object",
@@ -17417,10 +16771,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -17467,9 +16818,7 @@
             "format": "int64"
           }
         },
-        "required": [
-          "categoryId"
-        ]
+        "required": ["categoryId"]
       },
       "CreateRequest": {
         "type": "object",
@@ -17532,11 +16881,7 @@
             "description": "발송 시점 본문 스냅샷(SMS·EMAIL만). 등록 템플릿과 달라도 됨. 안의 #{키}는 variables/enrich로 치환.\n생략 시 등록 템플릿 content_template 사용. ALIMTALK 전달 시 거부.\n"
           }
         },
-        "required": [
-          "batchName",
-          "recipients",
-          "templateId"
-        ]
+        "required": ["batchName", "recipients", "templateId"]
       },
       "RecipientRequest": {
         "type": "object",
@@ -17564,9 +16909,7 @@
             "additionalProperties": {}
           }
         },
-        "required": [
-          "actorType"
-        ]
+        "required": ["actorType"]
       },
       "ApiResponseCreateResponse": {
         "type": "object",
@@ -17583,10 +16926,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -17639,10 +16979,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -17684,10 +17021,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -17736,10 +17070,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -17857,10 +17188,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -17915,10 +17243,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "currentPassword",
-          "targets"
-        ]
+        "required": ["currentPassword", "targets"]
       },
       "Target": {
         "type": "object",
@@ -17933,10 +17258,7 @@
             "format": "int64"
           }
         },
-        "required": [
-          "accountType",
-          "id"
-        ]
+        "required": ["accountType", "id"]
       },
       "AccountDirectoryBulkDeleteResponse": {
         "type": "object",
@@ -17982,10 +17304,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -18039,9 +17358,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "confirmationText"
-        ]
+        "required": ["confirmationText"]
       },
       "AdminSelfWithdrawalResponse": {
         "type": "object",
@@ -18074,10 +17391,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -18109,10 +17423,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "adminSsoSessionId",
-          "socialConsentVersion"
-        ]
+        "required": ["adminSsoSessionId", "socialConsentVersion"]
       },
       "AdminSocialAccountResponse": {
         "type": "object",
@@ -18192,9 +17503,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "provider"
-        ]
+        "required": ["provider"]
       },
       "DashboardShortcutBadgeReadRequest": {
         "type": "object",
@@ -18256,10 +17565,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -18335,10 +17641,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -18423,9 +17726,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "interviewSlotId"
-        ]
+        "required": ["interviewSlotId"]
       },
       "InterviewAssignmentResponse": {
         "type": "object",
@@ -18498,9 +17799,7 @@
             "minLength": 2
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "InstructorVerificationRequestCreateRequest": {
         "type": "object",
@@ -18702,12 +18001,7 @@
           "currentGrade": {
             "type": "string",
             "description": "서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음).",
-            "enum": [
-              "A",
-              "B",
-              "C",
-              "D"
-            ]
+            "enum": ["A", "B", "C", "D"]
           },
           "evaluatedAt": {
             "type": "string",
@@ -18745,9 +18039,7 @@
             "description": "승인 취소 결과 알림 예약 시각. null이면 즉시 발송"
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "InstructorRoleRequestDetailResponse": {
         "type": "object",
@@ -18885,9 +18177,7 @@
             "description": "일괄 결과 알림 예약 시각. null이면 즉시 발송"
           }
         },
-        "required": [
-          "ids"
-        ]
+        "required": ["ids"]
       },
       "InstructorFeePolicyUpsertRequest": {
         "type": "object",
@@ -19038,9 +18328,7 @@
             "$ref": "#/components/schemas/Notification"
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "AvailableScheduleSlot": {
         "type": "object",
@@ -19222,10 +18510,7 @@
             "$ref": "#/components/schemas/Notification"
           }
         },
-        "required": [
-          "assignments",
-          "feePolicy"
-        ]
+        "required": ["assignments", "feePolicy"]
       },
       "Assignment": {
         "type": "object",
@@ -19244,9 +18529,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "scheduleId"
-        ]
+        "required": ["scheduleId"]
       },
       "FeePolicy": {
         "type": "object",
@@ -19269,12 +18552,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "amount",
-          "basisType",
-          "instructorFeeGrade",
-          "measure"
-        ]
+        "required": ["amount", "basisType", "instructorFeeGrade", "measure"]
       },
       "CategoryRequest": {
         "type": "object",
@@ -19313,18 +18591,12 @@
             "example": false
           },
           "data": {
-            "type": [
-              "object",
-              "null"
-            ],
+            "type": ["object", "null"],
             "additionalProperties": {},
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -19371,10 +18643,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -19444,10 +18713,7 @@
             "type": "string"
           },
           "managerComment": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "Admin CMS 전용 최신 관리자 코멘트"
           },
           "updatedAt": {
@@ -19595,11 +18861,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "confirmedScheduleIds",
-          "expectedScopeRevision",
-          "reason"
-        ]
+        "required": ["confirmedScheduleIds", "expectedScopeRevision", "reason"]
       },
       "Result": {
         "type": "object",
@@ -19630,10 +18892,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reason",
-          "targets"
-        ]
+        "required": ["reason", "targets"]
       },
       "GeneratedFileJobRequest": {
         "type": "object",
@@ -19668,10 +18927,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -20050,10 +19306,7 @@
           "educationStructure": {
             "type": "string",
             "description": "교육 진행 구조",
-            "enum": [
-              "CURRICULUM",
-              "SCHEDULE"
-            ]
+            "enum": ["CURRICULUM", "SCHEDULE"]
           },
           "detailedProgramId": {
             "type": "integer",
@@ -20454,12 +19707,7 @@
           },
           "formType": {
             "type": "string",
-            "enum": [
-              "WRITING",
-              "ISSUANCE",
-              "SURVEY",
-              "CERTIFICATE"
-            ]
+            "enum": ["WRITING", "ISSUANCE", "SURVEY", "CERTIFICATE"]
           },
           "category": {
             "type": "string",
@@ -20590,11 +19838,7 @@
           },
           "versionStatus": {
             "type": "string",
-            "enum": [
-              "DRAFT",
-              "PUBLISHED",
-              "ARCHIVED"
-            ]
+            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
           },
           "responseCount": {
             "type": "integer",
@@ -20657,11 +19901,7 @@
           },
           "versionStatus": {
             "type": "string",
-            "enum": [
-              "DRAFT",
-              "PUBLISHED",
-              "ARCHIVED"
-            ]
+            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
           },
           "schemaJson": {
             "type": "string"
@@ -20766,9 +20006,7 @@
             "minItems": 0
           }
         },
-        "required": [
-          "programId"
-        ]
+        "required": ["programId"]
       },
       "RevealRequest": {
         "type": "object",
@@ -20779,9 +20017,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "FormResponseAnswerResponse": {
         "type": "object",
@@ -20937,9 +20173,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "content"
-        ]
+        "required": ["content"]
       },
       "FormResponseFeedbackResponse": {
         "type": "object",
@@ -21070,9 +20304,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "SensitiveFileDownloadResponse": {
         "type": "object",
@@ -21145,9 +20377,7 @@
             "minimum": 1
           }
         },
-        "required": [
-          "purpose"
-        ]
+        "required": ["purpose"]
       },
       "FileDownloadRequestResponse": {
         "type": "object",
@@ -21296,11 +20526,7 @@
             }
           }
         },
-        "required": [
-          "fileObjectId",
-          "ownerId",
-          "ownerType"
-        ]
+        "required": ["fileObjectId", "ownerId", "ownerType"]
       },
       "FileUploadConfirmRequest": {
         "type": "object",
@@ -21472,13 +20698,7 @@
             "minimum": 0
           }
         },
-        "required": [
-          "attachmentType",
-          "fileObjectId",
-          "ownerDomain",
-          "ownerId",
-          "ownerType"
-        ]
+        "required": ["attachmentType", "fileObjectId", "ownerDomain", "ownerId", "ownerType"]
       },
       "FileAttachmentResponse": {
         "type": "object",
@@ -21554,9 +20774,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "exportType"
-        ]
+        "required": ["exportType"]
       },
       "ApiResponseCommonExportJobResponse": {
         "type": "object",
@@ -21573,10 +20791,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -21641,10 +20856,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -21737,11 +20949,7 @@
           "status": {
             "type": "string",
             "description": "상태",
-            "enum": [
-              "published",
-              "임시저장",
-              "archived"
-            ],
+            "enum": ["published", "임시저장", "archived"],
             "example": "published"
           }
         }
@@ -21761,10 +20969,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -21833,11 +21038,7 @@
           "status": {
             "type": "string",
             "description": "공개 상태",
-            "enum": [
-              "published",
-              "임시저장",
-              "archived"
-            ],
+            "enum": ["published", "임시저장", "archived"],
             "example": "published"
           },
           "resourceId": {
@@ -21881,12 +21082,7 @@
           "status": {
             "type": "string",
             "description": "공개 여부/상태. 공개=published, 비공개=draft|임시저장. 미입력 시 DRAFT(비공개).",
-            "enum": [
-              "published",
-              "draft",
-              "임시저장",
-              "archived"
-            ],
+            "enum": ["published", "draft", "임시저장", "archived"],
             "example": "published"
           }
         }
@@ -21906,10 +21102,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -21952,11 +21145,7 @@
           "status": {
             "type": "string",
             "description": "공개 여부 매핑 상태. published=공개, 임시저장|draft=비공개, archived=보관.",
-            "enum": [
-              "published",
-              "임시저장",
-              "archived"
-            ],
+            "enum": ["published", "임시저장", "archived"],
             "example": "published"
           },
           "createdAt": {
@@ -21997,12 +21186,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "comment",
-          "screenCode",
-          "targetId",
-          "targetType"
-        ]
+        "required": ["comment", "screenCode", "targetId", "targetType"]
       },
       "CertificateDownloadLogRequest": {
         "type": "object",
@@ -22093,16 +21277,11 @@
           "issuanceSource": {
             "type": "string",
             "description": "발급 출처. 생략/PROGRAM=실발급, FORM_TEMPLATE=양식 관리 샘플",
-            "enum": [
-              "PROGRAM",
-              "FORM_TEMPLATE"
-            ],
+            "enum": ["PROGRAM", "FORM_TEMPLATE"],
             "example": "PROGRAM"
           }
         },
-        "required": [
-          "certificateType"
-        ]
+        "required": ["certificateType"]
       },
       "CertificateSerialAllocateResponse": {
         "type": "object",
@@ -22148,10 +21327,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "certificateType",
-          "participantIds"
-        ]
+        "required": ["certificateType", "participantIds"]
       },
       "AdminSsoStartRequest": {
         "type": "object",
@@ -22206,9 +21382,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "adminSsoSessionId"
-        ]
+        "required": ["adminSsoSessionId"]
       },
       "AdminMfaChallengeResponse": {
         "type": "object",
@@ -22343,9 +21517,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "signupSocialLinkToken"
-        ]
+        "required": ["signupSocialLinkToken"]
       },
       "AdminSignupSocialLinkCompleteResponse": {
         "type": "object",
@@ -22395,11 +21567,7 @@
           "gender": {
             "type": "string",
             "description": "성별",
-            "enum": [
-              "MALE",
-              "FEMALE",
-              "OTHER"
-            ],
+            "enum": ["MALE", "FEMALE", "OTHER"],
             "example": "MALE",
             "pattern": "^(MALE|FEMALE|OTHER)?$"
           },
@@ -22514,10 +21682,7 @@
             "pattern": "^[0-9]{6,8}$"
           }
         },
-        "required": [
-          "challengeUuid",
-          "verificationCode"
-        ]
+        "required": ["challengeUuid", "verificationCode"]
       },
       "AdminMfaSetupRequest": {
         "type": "object",
@@ -22660,10 +21825,7 @@
             "minLength": 8
           }
         },
-        "required": [
-          "email",
-          "password"
-        ]
+        "required": ["email", "password"]
       },
       "AdminAccountApprovalDecisionRequest": {
         "type": "object",
@@ -22732,10 +21894,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -22776,9 +21935,7 @@
             "description": "일괄 결과 알림 예약 시각. null이면 즉시 발송"
           }
         },
-        "required": [
-          "ids"
-        ]
+        "required": ["ids"]
       },
       "AdminPermissionRequestNotificationResponse": {
         "type": "object",
@@ -22817,10 +21974,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -22875,11 +22029,7 @@
             "minItems": 4
           }
         },
-        "required": [
-          "email",
-          "name",
-          "termsAgreements"
-        ]
+        "required": ["email", "name", "termsAgreements"]
       },
       "AdminTermsAgreementRequest": {
         "type": "object",
@@ -22888,12 +22038,7 @@
           "termsType": {
             "type": "string",
             "description": "관리자 계정 등록 약관 유형",
-            "enum": [
-              "SERVICE_TERMS",
-              "PRIVACY_COLLECTION",
-              "MFA_SETUP_CONSENT",
-              "MARKETING"
-            ],
+            "enum": ["SERVICE_TERMS", "PRIVACY_COLLECTION", "MFA_SETUP_CONSENT", "MARKETING"],
             "example": "SERVICE_TERMS",
             "minLength": 1
           },
@@ -22918,10 +22063,7 @@
             "description": "호환 입력 필드. 실제 스냅샷은 서버의 게시 약관 원장으로 생성합니다."
           }
         },
-        "required": [
-          "termsType",
-          "version"
-        ]
+        "required": ["termsType", "version"]
       },
       "AdminAccountVerificationRequest": {
         "type": "object",
@@ -22963,9 +22105,7 @@
             "minItems": 0
           }
         },
-        "required": [
-          "programIds"
-        ]
+        "required": ["programIds"]
       },
       "AdminAccountPrivacyResponse": {
         "type": "object",
@@ -23015,9 +22155,7 @@
             "description": "비밀번호 초기화 사유"
           }
         },
-        "required": [
-          "newPassword"
-        ]
+        "required": ["newPassword"]
       },
       "InstructorPortalEditableProfile": {
         "type": "object",
@@ -23328,10 +22466,7 @@
             "example": false
           },
           "data": {
-            "type": [
-              "object",
-              "null"
-            ],
+            "type": ["object", "null"],
             "additionalProperties": {
               "type": "integer",
               "format": "int32"
@@ -23339,10 +22474,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -23364,20 +22496,13 @@
           "gender": {
             "type": "string",
             "description": "성별. 저장 및 본인인증 비교 시 MALE/FEMALE/OTHER로 정규화됨",
-            "enum": [
-              "MALE",
-              "FEMALE",
-              "OTHER"
-            ],
+            "enum": ["MALE", "FEMALE", "OTHER"],
             "example": "FEMALE",
             "maxLength": 20,
             "minLength": 0
           }
         },
-        "required": [
-          "birthDate",
-          "gender"
-        ]
+        "required": ["birthDate", "gender"]
       },
       "AdminMemberBasicInfoUpdateRequest": {
         "type": "object",
@@ -23892,12 +23017,7 @@
           "instructorStatus": {
             "type": "string",
             "description": "강사 프로필 상태. 권한 박탈 회원은 REVOKED로 반환됩니다.",
-            "enum": [
-              "PENDING",
-              "ACTIVE",
-              "APPROVED",
-              "REVOKED"
-            ]
+            "enum": ["PENDING", "ACTIVE", "APPROVED", "REVOKED"]
           },
           "instructorRevokedAt": {
             "type": "string",
@@ -23922,10 +23042,7 @@
             "minLength": 5
           }
         },
-        "required": [
-          "externalId",
-          "reason"
-        ]
+        "required": ["externalId", "reason"]
       },
       "ExternalIdentifierResponse": {
         "type": "object",
@@ -23969,9 +23086,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "comment"
-        ]
+        "required": ["comment"]
       },
       "TeacherEmploymentStatusUpdateRequest": {
         "type": "object",
@@ -23981,9 +23096,7 @@
             "minLength": 1
           }
         },
-        "required": [
-          "employmentStatus"
-        ]
+        "required": ["employmentStatus"]
       },
       "UjatEducationRegionUpdateRequest": {
         "type": "object",
@@ -24043,10 +23156,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -24108,33 +23218,20 @@
           "pricingMode": {
             "type": "string",
             "description": "강사비 책정 방식",
-            "enum": [
-              "PROGRAM_STANDARD",
-              "SPECIAL_LECTURE",
-              "OTHER_LABOR"
-            ],
+            "enum": ["PROGRAM_STANDARD", "SPECIAL_LECTURE", "OTHER_LABOR"],
             "example": "PROGRAM_STANDARD",
             "minLength": 1
           },
           "wageItemType": {
             "type": "string",
             "description": "강사비 유형. PROGRAM_STANDARD일 때 TIER1/TIER2/TIER3 중 하나",
-            "enum": [
-              "TIER1",
-              "TIER2",
-              "TIER3",
-              "SPECIAL_LECTURE",
-              "OTHER_LABOR"
-            ],
+            "enum": ["TIER1", "TIER2", "TIER3", "SPECIAL_LECTURE", "OTHER_LABOR"],
             "example": "TIER2"
           },
           "calculationUnit": {
             "type": "string",
             "description": "특강/기타 인건비 지급 기준",
-            "enum": [
-              "PER_LECTURE",
-              "PER_HOUR"
-            ],
+            "enum": ["PER_LECTURE", "PER_HOUR"],
             "example": "PER_HOUR"
           },
           "unitAmount": {
@@ -24144,9 +23241,7 @@
             "example": 200000
           }
         },
-        "required": [
-          "pricingMode"
-        ]
+        "required": ["pricingMode"]
       },
       "SettlementApplicationAdminActionRequest": {
         "type": "object",
@@ -24157,9 +23252,7 @@
             "minLength": 2
           }
         },
-        "required": [
-          "reason"
-        ]
+        "required": ["reason"]
       },
       "ApiResponseSettlementApplicationAdminActionResponse": {
         "type": "object",
@@ -24176,10 +23269,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -24235,10 +23325,7 @@
             "minLength": 2
           }
         },
-        "required": [
-          "items",
-          "reason"
-        ]
+        "required": ["items", "reason"]
       },
       "SettlementApplicationItemAmountAdjustmentRequest": {
         "type": "object",
@@ -24257,10 +23344,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "applicationItemId",
-          "approvedAmount"
-        ]
+        "required": ["applicationItemId", "approvedAmount"]
       },
       "ProgramUpdateRequest": {
         "type": "object",
@@ -24329,10 +23413,7 @@
           "educationStructure": {
             "type": "string",
             "description": "교육 진행 구조",
-            "enum": [
-              "CURRICULUM",
-              "SCHEDULE"
-            ]
+            "enum": ["CURRICULUM", "SCHEDULE"]
           },
           "titleEn": {
             "type": "string"
@@ -24548,10 +23629,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -24571,9 +23649,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "educationRegionCode"
-        ]
+        "required": ["educationRegionCode"]
       },
       "TrainedTeacherProgramDetailRequest": {
         "type": "object",
@@ -24615,10 +23691,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -24672,10 +23745,7 @@
             "format": "date"
           }
         },
-        "required": [
-          "educationDate",
-          "scheduleId"
-        ]
+        "required": ["educationDate", "scheduleId"]
       },
       "ChangeRequest": {
         "type": "object",
@@ -24694,10 +23764,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "changes",
-          "reason"
-        ]
+        "required": ["changes", "reason"]
       },
       "ChangeResponse": {
         "type": "object",
@@ -24777,10 +23844,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -24966,10 +24030,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -25105,9 +24166,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "status"
-        ]
+        "required": ["status"]
       },
       "ApiResponseNotificationReadAllResponse": {
         "type": "object",
@@ -25124,10 +24183,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -25156,9 +24212,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "AdminMeUpdateRequest": {
         "type": "object",
@@ -25309,10 +24363,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -25385,10 +24436,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -25422,10 +24470,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -25511,10 +24556,7 @@
             "$ref": "#/components/schemas/Team"
           },
           "managerComment": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": ["string", "null"]
           },
           "updatedAt": {
             "type": "string",
@@ -25562,9 +24604,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "answers"
-        ]
+        "required": ["answers"]
       },
       "ExpenseReceiptReviewRequest": {
         "type": "object",
@@ -25580,9 +24620,7 @@
             "minLength": 0
           }
         },
-        "required": [
-          "decision"
-        ]
+        "required": ["decision"]
       },
       "ExpenseReceiptAdminItemResponse": {
         "type": "object",
@@ -25719,10 +24757,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -25887,10 +24922,7 @@
           "categoryName": {
             "type": "string",
             "description": "카테고리명",
-            "enum": [
-              "최종 합격 발표",
-              "서류 심사 결과"
-            ]
+            "enum": ["최종 합격 발표", "서류 심사 결과"]
           }
         }
       },
@@ -25913,10 +24945,7 @@
           "categoryName": {
             "type": "string",
             "description": "카테고리명",
-            "enum": [
-              "최종 합격 발표",
-              "서류 심사 결과"
-            ]
+            "enum": ["최종 합격 발표", "서류 심사 결과"]
           },
           "title": {
             "type": "string",
@@ -26012,10 +25041,7 @@
           },
           "categoryName": {
             "type": "string",
-            "enum": [
-              "최종 합격 발표",
-              "서류 심사 결과"
-            ]
+            "enum": ["최종 합격 발표", "서류 심사 결과"]
           },
           "title": {
             "type": "string"
@@ -26515,11 +25541,7 @@
           "portalCategories": {
             "type": "array",
             "description": "회원포탈 탭 유형",
-            "enum": [
-              "YOUTH_YOUNG",
-              "ORGANIZATION",
-              "INSTRUCTOR"
-            ],
+            "enum": ["YOUTH_YOUNG", "ORGANIZATION", "INSTRUCTOR"],
             "items": {
               "type": "string"
             }
@@ -26560,13 +25582,7 @@
           "recruitmentStatus": {
             "type": "string",
             "description": "모집 축. OPEN/RECRUITING=모집 중, UPCOMING=모집 예정, CLOSED=모집 완료",
-            "enum": [
-              "OPEN",
-              "UPCOMING",
-              "CLOSED",
-              "NONE",
-              "RECRUITING"
-            ]
+            "enum": ["OPEN", "UPCOMING", "CLOSED", "NONE", "RECRUITING"]
           },
           "recruitmentStartAt": {
             "type": "string",
@@ -26816,10 +25832,7 @@
             }
           },
           "applicationMethod": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "지원방법 안내 문장. applicationPathId와 별개이며 값이 없으면 null입니다."
           }
         }
@@ -26877,41 +25890,26 @@
             "type": "boolean"
           },
           "interviewEnabled": {
-            "type": [
-              "boolean",
-              "null"
-            ],
+            "type": ["boolean", "null"],
             "description": "false면 서류·면접 행을 만들지 않습니다. 저장값이 없으면 null입니다."
           },
           "documentPassAnnouncementAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time",
             "description": "1차 서류 합격자 발표 시각. interviewEnabled가 true일 때만 의미가 있습니다. 없으면 null입니다."
           },
           "interviewStartAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time",
             "description": "2차 면접 기간 시작. 없으면 null입니다."
           },
           "interviewEndAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time",
             "description": "2차 면접 기간 끝. 없으면 null입니다."
           },
           "finalPassAnnouncementAt": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date-time",
             "description": "최종 합격자 발표 시각. 면접이 없어도 값이 있으면 내려줍니다. 없으면 null입니다."
           }
@@ -26956,34 +25954,17 @@
             "format": "int32"
           },
           "term": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "UJAT 학기. FIRST_HALF 또는 SECOND_HALF. 그 외는 null입니다.",
-            "enum": [
-              "FIRST_HALF",
-              "SECOND_HALF"
-            ]
+            "enum": ["FIRST_HALF", "SECOND_HALF"]
           },
           "scheduleKind": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "일정 종류. PRE_EDUCATION, EDUCATION, CLOSING, SESSION. 없으면 null입니다.",
-            "enum": [
-              "PRE_EDUCATION",
-              "EDUCATION",
-              "CLOSING",
-              "SESSION"
-            ]
+            "enum": ["PRE_EDUCATION", "EDUCATION", "CLOSING", "SESSION"]
           },
           "publiclyVisible": {
-            "type": [
-              "boolean",
-              "null"
-            ],
+            "type": ["boolean", "null"],
             "description": "false인 일정은 공개 상세 배열에 포함하지 않습니다. 미저장이면 null이고 배열에는 포함합니다."
           }
         }
@@ -27024,10 +26005,7 @@
             "format": "int64"
           },
           "draftAnswers": {
-            "type": [
-              "object",
-              "null"
-            ],
+            "type": ["object", "null"],
             "additionalProperties": {},
             "description": "임시저장 답. 키 규칙은 SaveApplicationRequest.answers와 같습니다. 임시저장이 없으면 빈 객체입니다."
           }
@@ -27277,17 +26255,11 @@
             "example": false
           },
           "data": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -27344,20 +26316,14 @@
             "example": false
           },
           "data": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": ["array", "null"],
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
             "items": {
               "$ref": "#/components/schemas/SettlementApplicationListItemResponse"
             }
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -28600,10 +27566,7 @@
         "properties": {
           "consentType": {
             "type": "string",
-            "enum": [
-              "CRIMINAL_HISTORY_CHECK_CONSENT",
-              "ADMINISTRATIVE_INFO_CONSENT"
-            ]
+            "enum": ["CRIMINAL_HISTORY_CHECK_CONSENT", "ADMINISTRATIVE_INFO_CONSENT"]
           },
           "title": {
             "type": "string"
@@ -28872,10 +27835,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -30593,12 +29553,7 @@
           },
           "sponsorshipStatus": {
             "type": "string",
-            "enum": [
-              "active",
-              "discussing",
-              "dormant",
-              "ended"
-            ],
+            "enum": ["active", "discussing", "dormant", "ended"],
             "example": "active"
           },
           "sponsorshipStartDate": {
@@ -32269,15 +31224,9 @@
             "format": "int64"
           },
           "recruitHalf": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "상·하반기. VOLUNTEER 모집 시작일 순으로 FIRST_HALF|SECOND_HALF. 해당 없으면 null",
-            "enum": [
-              "FIRST_HALF",
-              "SECOND_HALF"
-            ]
+            "enum": ["FIRST_HALF", "SECOND_HALF"]
           },
           "memberId": {
             "type": "integer",
@@ -33687,15 +32636,9 @@
             "format": "int64"
           },
           "recruitHalf": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "상·하반기. 학교 모집은 연 1회라 null. 봉사 모집과 동일 규칙이 적용되는 경우만 FIRST_HALF|SECOND_HALF",
-            "enum": [
-              "FIRST_HALF",
-              "SECOND_HALF"
-            ]
+            "enum": ["FIRST_HALF", "SECOND_HALF"]
           },
           "organizationId": {
             "type": "integer",
@@ -33715,10 +32658,7 @@
             "type": "string"
           },
           "temporaryAssignmentStatus": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "UJAT 임시배정 워크플로 상태. TEMP_ASSIGNED|TEMP_REJECTED 등. 미사용 프로그램은 null"
           },
           "requestedStudentCount": {
@@ -33850,12 +32790,7 @@
           "allowedApplicationTargets": {
             "type": "array",
             "description": "허용 신청 대상. 일반 프로그램은 역할별 canonical program_recruitment를 우선 반영하고, 해당 역할 row가 없는 구데이터만 serviceDetailJson participant types를 fallback으로 사용합니다.",
-            "enum": [
-              "ORGANIZATION",
-              "INDIVIDUAL",
-              "INSTRUCTOR",
-              "VOLUNTEER"
-            ],
+            "enum": ["ORGANIZATION", "INDIVIDUAL", "INSTRUCTOR", "VOLUNTEER"],
             "items": {
               "type": "string"
             }
@@ -33891,20 +32826,14 @@
             "example": false
           },
           "data": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": ["array", "null"],
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
             "items": {
               "$ref": "#/components/schemas/ProgramMaterialCandidateResponse"
             }
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -33977,20 +32906,14 @@
             "example": false
           },
           "data": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "type": ["array", "null"],
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
             "items": {
               "$ref": "#/components/schemas/ProgramManagerResponse"
             }
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -34338,10 +33261,7 @@
             "type": "string"
           },
           "managerComment": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "Admin CMS 전용 최신 관리자 코멘트"
           },
           "documentStatus": {
@@ -34549,10 +33469,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -35186,10 +34103,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -36888,10 +35802,7 @@
             "example": "#{교육 진행 수업 시간}"
           },
           "description": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null"
           },
           "requiresProgram": {
@@ -37346,10 +36257,7 @@
           "accountType": {
             "type": "string",
             "description": "계정 도메인",
-            "enum": [
-              "MEMBER",
-              "ADMIN_ACCOUNT"
-            ],
+            "enum": ["MEMBER", "ADMIN_ACCOUNT"],
             "example": "MEMBER"
           },
           "accountId": {
@@ -37982,10 +36890,7 @@
           "status": {
             "type": "string",
             "description": "CMS 문의 답변 상태",
-            "enum": [
-              "PENDING",
-              "ANSWERED"
-            ],
+            "enum": ["PENDING", "ANSWERED"],
             "example": "ANSWERED"
           },
           "assignedAdminId": {
@@ -38821,11 +37726,7 @@
           },
           "versionStatus": {
             "type": "string",
-            "enum": [
-              "DRAFT",
-              "PUBLISHED",
-              "ARCHIVED"
-            ]
+            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
           },
           "schemaJson": {
             "type": "string"
@@ -39923,9 +38824,7 @@
           "blockingReasons": {
             "type": "array",
             "description": "발급 차단 사유 목록",
-            "example": [
-              "출석 기준 미달"
-            ],
+            "example": ["출석 기준 미달"],
             "items": {
               "type": "string"
             }
@@ -40407,10 +39306,7 @@
             "description": "내부 계좌 지급 처리 실패 여부. true여도 paymentStatus는 WAITING_PAYMENT입니다."
           },
           "paymentFailureReason": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "내부 계좌 지급 실패 사유. paymentFailureYn=true일 때만 노출합니다."
           },
           "instructorName": {
@@ -40431,10 +39327,7 @@
             "format": "int64"
           },
           "scheduledPaymentDate": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date",
             "description": "이체 예정일. 목록 필터와 캘린더 배치 기준입니다."
           },
@@ -40458,47 +39351,29 @@
             "format": "int64"
           },
           "programNameKo": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "프로그램명 (우선)"
           },
           "programName": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "호환 필드. programNameKo와 동일 값입니다."
           },
           "institutionName": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "참여 기관. 개인 프로그램은 null"
           },
           "sessionOrdinal": {
-            "type": [
-              "integer",
-              "null"
-            ],
+            "type": ["integer", "null"],
             "format": "int32",
             "description": "차시 번호. sessionLabel이 없으면 FE가 N차시로 표시합니다."
           },
           "sessionLabel": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "차시 표시. 예: 2 ~ 3차시. 개인은 null",
             "example": "2 ~ 3차시"
           },
           "lectureDate": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "format": "date",
             "description": "교육 진행 일자(표시용). 캘린더 배치는 scheduledPaymentDate(이체 예정일)입니다."
           },
@@ -40582,10 +39457,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -40626,10 +39498,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -40669,10 +39538,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -40707,10 +39573,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
@@ -40761,10 +39624,7 @@
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": ["string", "null"],
             "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
             "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
