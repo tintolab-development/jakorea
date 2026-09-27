@@ -24,6 +24,7 @@ import {
   GENERAL_INTERVIEW_MOCK_TIME_SLOTS,
 } from '@/features/program/general/model/volunteer-interview-schedule'
 import { extrasFromGeneralProgram } from '@/features/program/general/lib/registration-overlay-sync'
+import { applyRegistrationWageOverlayToCommonInfo } from '@/features/program/general/lib/wage-display'
 import { buildEnrichedScheduleDetails } from '@/features/program/general/lib/registration-overlay-to-program'
 import {
   overlayIpsIndexForScheduleDetail,
@@ -581,11 +582,18 @@ export function resolveScheduleTypeDetailedProgramNameFromDetails(
   return details.map((detail, index) => resolveScheduleDetailDisplayName(detail, index)).join(', ')
 }
 
-/** 공통 정보 — 세부 프로그램명 조회 표시 */
+/** 공통 정보 — 세부 프로그램명 조회 표시. 일정형은 등록·수정과 같이 해당없음 */
 export function resolveGeneralProgramDetailedProgramNameDisplay(
-  _program: Program,
+  program: Program,
   commonInfo: NonNullable<Program['generalCommonInfo']>
 ): string {
+  const educationStructure = resolveEffectiveGeneralProgramTypeFields({
+    generalProgramAudience: program.generalProgramAudience,
+    generalProgramEducationStructure: program.generalProgramEducationStructure,
+    generalProgramSessionRound: program.generalProgramSessionRound,
+    curriculumSessions: commonInfo.curriculumSessions,
+  }).educationStructure
+  if (educationStructure === 'schedule') return '해당없음'
   return commonInfo.detailedProgramName?.trim() || '-'
 }
 
@@ -669,9 +677,15 @@ export function resolveGeneralProgramScheduleDetailsForView(
 export function resolveGeneralProgramCommonInfo(
   program: Program
 ): NonNullable<Program['generalCommonInfo']> {
-  const overlay = program.registrationOverlay
+  const overlay =
+    program.registrationOverlay != null && typeof program.registrationOverlay === 'object'
+      ? (program.registrationOverlay as Record<string, unknown>)
+      : undefined
   if (program.generalCommonInfo) {
-    return withResolvedEducationScheduleLines(program.generalCommonInfo, program)
+    return applyRegistrationWageOverlayToCommonInfo(
+      withResolvedEducationScheduleLines(program.generalCommonInfo, program),
+      overlay
+    )
   }
 
   if (program.id === GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID) {
@@ -721,7 +735,7 @@ export function resolveGeneralProgramCommonInfo(
 
   const variant = resolveGeneralProgramVariantFromProgram(program)
 
-  return {
+  const fallback: NonNullable<Program['generalCommonInfo']> = {
     detailedProgramName: program.textbookName ?? program.teamDivision,
     educationFormLabel: program.type === 'online' ? '온라인' : '오프라인',
     ipsTypeSummary: program.ips ? `일정 공통 | ${program.ips} | 해당없음` : '-',
@@ -769,6 +783,7 @@ export function resolveGeneralProgramCommonInfo(
       },
     ],
   }
+  return applyRegistrationWageOverlayToCommonInfo(fallback, overlay)
 }
 
 export function isGeneralOrgScheduleSingleProgram(program: Program): boolean {
