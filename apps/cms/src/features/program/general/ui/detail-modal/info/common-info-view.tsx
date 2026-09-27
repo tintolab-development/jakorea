@@ -78,6 +78,13 @@ import {
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { mapSettlementDeductionTypeToLabel } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import {
+  parseWageGradeAmount,
+  pricingByWageGrade,
+  resolveWagePaymentItemIds,
+  resolveWagePaymentItemsView,
+  WAGE_GRADE_FIELDS,
+} from '@/features/program/general/lib/wage-display'
+import {
   isSponsorContactUnselected,
   isSponsorContactUnselectedLabel,
   normalizeSponsorContactUnselectedSelection,
@@ -1097,17 +1104,11 @@ function KpiSection({
   const hasVolunteer = isFormEdit
     ? editForm.watch('participantVolunteer')
     : getGeneralParticipantTypes(program).includes('volunteer')
-  const participantIndividual = isFormEdit ? editForm.watch('participantIndividual') : false
-  const participantOrganization = isFormEdit ? editForm.watch('participantOrganization') : false
-  const isIndividualTarget = isFormEdit
-    ? isGeneralIndividualParticipantTarget(program, participantIndividual, participantOrganization)
-    : isGeneralIndividualParticipantTarget(program)
-
   useEffect(() => {
-    if (!isFormEdit || !isIndividualTarget) return
+    if (!isFormEdit) return
     editForm.setValue('kpiFinalSchools', 0)
     editForm.setValue('kpiFinalClasses', 0)
-  }, [editForm, isFormEdit, isIndividualTarget])
+  }, [editForm, isFormEdit])
 
   useEffect(() => {
     if (!isFormEdit || hasInstructor) return
@@ -1121,9 +1122,9 @@ function KpiSection({
 
   if (!kpi && !isEditMode) return null
 
-  const dispatchedSchoolClassView = isIndividualTarget ? (
+  const dispatchedSchoolClassView = (
     <span className="detail-info-form--text">해당 없음</span>
-  ) : null
+  )
 
   const formMode = isFormEdit ? 'edit' : 'view'
 
@@ -1230,87 +1231,51 @@ function KpiSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="최종 파견 학교 수"
-            view={
-              isIndividualTarget ? (
-                dispatchedSchoolClassView
-              ) : (
-                <KpiBoldNumber value={kpi?.finalSchools ?? 0} />
-              )
-            }
+            view={dispatchedSchoolClassView}
             edit={
-              isIndividualTarget ? (
-                <CmsInput
-                  disabled
-                  inputSize="medium"
-                  placeholder="해당 없음"
-                  width={120}
-                  value=""
-                />
-              ) : (
-                <Controller
-                  name="kpiFinalSchools"
-                  control={editForm.control}
-                  render={({ field }) => (
-                    <CmsNumericInput
-                      {...field}
-                      mode="integer"
-                      min={0}
-                      value={field.value == null ? '' : String(field.value)}
-                      onValueChange={value =>
-                        field.onChange(value === '' ? undefined : Number(value))
-                      }
-                      inputSize="medium"
-                      placeholder="목표값 입력"
-                      width={120}
-                    />
-                  )}
-                />
-              )
+              <CmsInput
+                disabled
+                inputSize="medium"
+                placeholder="해당 없음"
+                width={120}
+                value=""
+              />
             }
           />
           <DetailInfoForm.Field
             label="최종 파견 학급 수"
-            view={
-              isIndividualTarget ? (
-                dispatchedSchoolClassView
-              ) : (
-                <KpiBoldNumber value={kpi?.finalClasses ?? 0} />
-              )
-            }
+            view={dispatchedSchoolClassView}
             edit={
-              isIndividualTarget ? (
-                <CmsInput
-                  disabled
-                  inputSize="medium"
-                  placeholder="해당 없음"
-                  width={120}
-                  value=""
-                />
-              ) : (
-                <Controller
-                  name="kpiFinalClasses"
-                  control={editForm.control}
-                  render={({ field }) => (
-                    <CmsNumericInput
-                      {...field}
-                      mode="integer"
-                      min={0}
-                      value={field.value == null ? '' : String(field.value)}
-                      onValueChange={value =>
-                        field.onChange(value === '' ? undefined : Number(value))
-                      }
-                      inputSize="medium"
-                      placeholder="목표값 입력"
-                      width={120}
-                    />
-                  )}
-                />
-              )
+              <CmsInput
+                disabled
+                inputSize="medium"
+                placeholder="해당 없음"
+                width={120}
+                value=""
+              />
             }
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
     </ProgramRegistrationDetailSection>
+  )
+}
+
+function WageGradeAmountView({
+  pricing,
+  maxHint,
+}: {
+  pricing: string | undefined
+  maxHint: string
+}) {
+  const amount = parseWageGradeAmount(pricing)
+  if (amount == null) return '-'
+  return (
+    <>
+      1시간 당
+      <DetailInfoForm.InputsSeparator />
+      {amount.toLocaleString('ko-KR')}원 (최대 {maxHint}원)
+    </>
   )
 }
 
@@ -1323,7 +1288,8 @@ function WageSection({
   isEditMode?: boolean
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
 }) {
-  const rows = commonInfo.wageGradeRows ?? []
+  const pricingByGrade = pricingByWageGrade(commonInfo.wageGradeRows)
+  const paymentItemIds = resolveWagePaymentItemIds(commonInfo.paymentItems)
   const isFormEdit = isEditMode && !!form
   const formMode = isFormEdit ? 'edit' : 'view'
   const paymentItemOptions = useProgramWagePaymentItemOptions()
@@ -1342,12 +1308,12 @@ function WageSection({
   const deductionLabel = isFormEdit
     ? resolveProgramWageDeductionLabel(watchedPaymentItemIds)
     : (mapSettlementDeductionTypeToLabel(commonInfo.deductionItems) ??
-      resolveProgramWageDeductionLabel([]))
+      resolveProgramWageDeductionLabel(paymentItemIds))
 
   const wageFields = [
-    { label: '1급 강사비', name: 'wageGrade1Amount' as const, max: 500_000, maxHint: '500,000' },
-    { label: '2급 강사비', name: 'wageGrade2Amount' as const, max: 400_000, maxHint: '400,000' },
-    { label: '3급 강사비', name: 'wageGrade3Amount' as const, max: 300_000, maxHint: '300,000' },
+    { label: WAGE_GRADE_FIELDS[0].label, name: 'wageGrade1Amount' as const, max: 500_000, maxHint: WAGE_GRADE_FIELDS[0].maxHint },
+    { label: WAGE_GRADE_FIELDS[1].label, name: 'wageGrade2Amount' as const, max: 400_000, maxHint: WAGE_GRADE_FIELDS[1].maxHint },
+    { label: WAGE_GRADE_FIELDS[2].label, name: 'wageGrade3Amount' as const, max: 300_000, maxHint: WAGE_GRADE_FIELDS[2].maxHint },
   ]
 
   return (
@@ -1358,48 +1324,45 @@ function WageSection({
       required
     >
       <DetailInfoForm title="임금 정보" hideHeader mode={formMode} className="program-registration-paragraph">
-        {wageFields.map(({ label, name, max, maxHint }, index) => {
-          const row = rows[index]
-          return (
-            <DetailInfoForm.Row key={label} type="single">
-              <DetailInfoForm.Field
-                label={label}
-                fullRow
-                view={row ? <PipeSeparatedInlineView text={row.pricing} /> : '-'}
-                edit={
-                  <div className="detail-info-form-inputs-wrapper">
-                    <span className="detail-info-form--text">1시간 당</span>
-                    <Controller
-                      name={name}
-                      control={editForm.control}
-                      render={({ field }) => (
-                        <CmsNumericInput
-                          mode="currency"
-                          min={0}
-                          max={max}
-                          allowNegative={false}
-                          inputSize="medium"
-                          placeholder="직접 입력"
-                          width={120}
-                          value={field.value ?? ''}
-                          onValueChange={field.onChange}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
-                        />
-                      )}
-                    />
-                    <span className="detail-info-form--text">원 (최대 {maxHint}원)</span>
-                  </div>
-                }
-              />
-            </DetailInfoForm.Row>
-          )
-        })}
+        {wageFields.map(({ label, name, max, maxHint }) => (
+          <DetailInfoForm.Row key={label} type="single">
+            <DetailInfoForm.Field
+              label={label}
+              fullRow
+              view={<WageGradeAmountView pricing={pricingByGrade[label]} maxHint={maxHint} />}
+              edit={
+                <div className="detail-info-form-inputs-wrapper">
+                  <span className="detail-info-form--text">1시간 당</span>
+                  <Controller
+                    name={name}
+                    control={editForm.control}
+                    render={({ field }) => (
+                      <CmsNumericInput
+                        mode="currency"
+                        min={0}
+                        max={max}
+                        allowNegative={false}
+                        inputSize="medium"
+                        placeholder="직접 입력"
+                        width={120}
+                        value={field.value ?? ''}
+                        onValueChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
+                    )}
+                  />
+                  <span className="detail-info-form--text">원 (최대 {maxHint}원)</span>
+                </div>
+              }
+            />
+          </DetailInfoForm.Row>
+        ))}
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="지급 항목"
-            view={commonInfo.paymentItems ?? '-'}
+            view={resolveWagePaymentItemsView(commonInfo.paymentItems)}
             edit={
               <Controller
                 name="wagePaymentItemIds"

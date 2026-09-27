@@ -381,6 +381,19 @@ describe('trained teacher schedule-type detailedProgramName (버그 수정)', ()
     expect(next.detailedProgramId).toBe('163006')
     expect(next.textbookName).toBeUndefined()
   })
+
+  it('참여자 extras가 모두 있으면 generalParticipantTypes를 등록과 같이 반영한다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(baseProgram(), {}, {
+      programType: 'curriculum',
+      sessionRoundType: 'single',
+      participantIndividual: false,
+      participantOrganization: true,
+      participantTeacherInstructor: true,
+      participantVolunteer: false,
+    })
+    expect(next.generalParticipantTypes).toEqual(['school_institution', 'teacher_instructor'])
+    expect(next.generalProgramAudience).toBe('organization')
+  })
 })
 
 describe('일정형 사전 교육 overlay 교육 형태', () => {

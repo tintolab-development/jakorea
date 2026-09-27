@@ -71,6 +71,22 @@ describe('hasIncompleteGeneralProgramRegistrationRequiredFields', () => {
     expect(hasIncompleteGeneralProgramRegistrationRequiredFields(filledOverlay(), ctx())).toBe(false)
   })
 
+  it('기관이어도 최종 파견 학교·학급 수 없이 완료이다', () => {
+    expect(
+      hasIncompleteGeneralProgramRegistrationRequiredFields(
+        filledOverlay(),
+        ctx({
+          participant: {
+            individual: false,
+            organization: true,
+            teacherInstructor: false,
+            volunteer: false,
+          },
+        })
+      )
+    ).toBe(false)
+  })
+
   it('대표 프로그램명(국문)이 비면 미완료이다', () => {
     expect(
       hasIncompleteGeneralProgramRegistrationRequiredFields(
