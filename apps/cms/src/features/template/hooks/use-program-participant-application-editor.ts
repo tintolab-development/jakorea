@@ -1542,16 +1542,35 @@ export function useProgramParticipantApplicationEditor(
         })
         flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
         const overlay = collectParticipantOverlayForVariant(variant)
-        await persistWritingFormTemplateDraft({
-          templateId,
-          draft,
-          editorState,
-          ...(overlay != null ? { overlay } : {}),
-          localOnly:
-            localOnlyDraftPersistence ||
-            (preferLocalDraft && persistTemplateVersionId == null),
-          templateVersionId: persistTemplateVersionId,
-        })
+        const linkedProgram = editorOptions?.program
+        if (
+          linkedProgram?.id != null &&
+          persistTemplateVersionId != null &&
+          !localOnlyDraftPersistence
+        ) {
+          const { saveProgramScopedOperationalFormVersion } = await import(
+            '@/features/program/general/lib/sync-registration-form-bindings'
+          )
+          await saveProgramScopedOperationalFormVersion({
+            program: linkedProgram,
+            templateCode: templateId,
+            versionId: persistTemplateVersionId,
+            draft,
+            editorState,
+            ...(overlay != null ? { overlay } : {}),
+          })
+        } else {
+          await persistWritingFormTemplateDraft({
+            templateId,
+            draft,
+            editorState,
+            ...(overlay != null ? { overlay } : {}),
+            localOnly:
+              localOnlyDraftPersistence ||
+              (preferLocalDraft && persistTemplateVersionId == null),
+            templateVersionId: persistTemplateVersionId,
+          })
+        }
       }
       if (options?.silent) return
       if (isTemplateManagementSave) {
@@ -1566,6 +1585,7 @@ export function useProgramParticipantApplicationEditor(
   }, [
     draft,
     isTemplateManagementSave,
+    editorOptions?.program,
     localOnlyDraftPersistence,
     onTemplateDraftSaveConfirmed,
     persistTemplateVersionId,
