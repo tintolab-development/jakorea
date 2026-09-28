@@ -1,12 +1,7 @@
-import type { FaqCategory, InquiryListParams, InquiryTab } from '../model/types'
-import {
-  DEFAULT_INQUIRY_LIST_PARAMS,
-  FAQ_CATEGORY_OPTIONS,
-  MYPAGE_INQUIRIES_BASE_PATH,
-} from './constants'
+import type { InquiryListParams, InquiryTab } from '../model/types'
+import { DEFAULT_INQUIRY_LIST_PARAMS, MYPAGE_INQUIRIES_BASE_PATH } from './constants'
 
 const VALID_TABS = new Set<InquiryTab>(['faq', 'inquiry'])
-const VALID_CATEGORIES = new Set(FAQ_CATEGORY_OPTIONS.map(option => option.value))
 
 function parsePositiveInt(value: string | null, fallback: number) {
   if (!value) {
@@ -25,11 +20,9 @@ function parseTab(value: string | null): InquiryTab {
   return DEFAULT_INQUIRY_LIST_PARAMS.tab
 }
 
-function parseCategory(value: string | null): FaqCategory | '전체' {
-  if (value && VALID_CATEGORIES.has(value as FaqCategory | '전체')) {
-    return value as FaqCategory | '전체'
-  }
-
+function parseCategory(value: string | null): string {
+  const trimmed = value?.trim()
+  if (trimmed) return trimmed
   return DEFAULT_INQUIRY_LIST_PARAMS.category
 }
 

@@ -1,0 +1,129 @@
+import { axiosClient } from '@/shared/api/axios-instance'
+
+const PUBLIC_FAQS_PATH = '/api/portal/public/faqs'
+const INQUIRIES_PATH = '/api/portal/me/inquiries'
+
+function unwrapEnvelope<T>(payload: unknown): T {
+  if (payload && typeof payload === 'object') {
+    const record = payload as Record<string, unknown>
+    if (record.success === true && 'data' in record) {
+      return unwrapEnvelope<T>(record.data)
+    }
+  }
+  return payload as T
+}
+
+export type PublicFaqItem = {
+  faqId?: number
+  categoryId?: number
+  categoryName?: string
+  title?: string
+  content?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type PublicFaqList = {
+  items?: PublicFaqItem[]
+}
+
+export type PortalInquiryListItem = {
+  inquiryId?: number
+  category?: string
+  programId?: number
+  programName?: string
+  title?: string
+  status?: string
+  displayStatus?: string
+  inquiredAt?: string
+  answeredAt?: string
+}
+
+export type PortalInquiryPage = {
+  items?: PortalInquiryListItem[]
+  totalElements?: number
+}
+
+export type PortalInquiryAnswer = {
+  answerId?: number
+  content?: string
+  answeredAt?: string
+}
+
+export type PortalInquiryDetail = PortalInquiryListItem & {
+  content?: string
+  answers?: PortalInquiryAnswer[]
+}
+
+export type PortalInquiryCategoryOption = {
+  categoryId?: number
+  category?: string
+}
+
+export type PortalInquiryProgramOption = {
+  programId?: number
+  programName?: string
+  programType?: string
+}
+
+export type PortalInquiryCreateBody = {
+  category: string
+  programId?: number
+  title: string
+  content: string
+}
+
+export async function fetchPublicFaqs(signal?: AbortSignal): Promise<PublicFaqItem[]> {
+  const { data } = await axiosClient.get<unknown>(PUBLIC_FAQS_PATH, { signal })
+  const unwrapped = unwrapEnvelope<PublicFaqList | PublicFaqItem[]>(data)
+  if (Array.isArray(unwrapped)) return unwrapped
+  return unwrapped.items ?? []
+}
+
+export async function fetchMyInquiries(signal?: AbortSignal): Promise<PortalInquiryListItem[]> {
+  const { data } = await axiosClient.get<unknown>(INQUIRIES_PATH, {
+    signal,
+    params: { page: 0, size: 100 },
+  })
+  const unwrapped = unwrapEnvelope<PortalInquiryPage | PortalInquiryListItem[]>(data)
+  if (Array.isArray(unwrapped)) return unwrapped
+  return unwrapped.items ?? []
+}
+
+export async function fetchMyInquiryDetail(
+  inquiryId: string,
+  signal?: AbortSignal,
+): Promise<PortalInquiryDetail> {
+  const { data } = await axiosClient.get<unknown>(`${INQUIRIES_PATH}/${inquiryId}`, { signal })
+  return unwrapEnvelope<PortalInquiryDetail>(data)
+}
+
+export async function fetchInquiryCategoryOptions(
+  signal?: AbortSignal,
+): Promise<PortalInquiryCategoryOption[]> {
+  const { data } = await axiosClient.get<unknown>(`${INQUIRIES_PATH}/category-options`, { signal })
+  const unwrapped = unwrapEnvelope<PortalInquiryCategoryOption[] | { items?: PortalInquiryCategoryOption[] }>(
+    data,
+  )
+  if (Array.isArray(unwrapped)) return unwrapped
+  return unwrapped.items ?? []
+}
+
+export async function fetchInquiryProgramOptions(
+  signal?: AbortSignal,
+): Promise<PortalInquiryProgramOption[]> {
+  const { data } = await axiosClient.get<unknown>(`${INQUIRIES_PATH}/program-options`, { signal })
+  const unwrapped = unwrapEnvelope<PortalInquiryProgramOption[] | { items?: PortalInquiryProgramOption[] }>(
+    data,
+  )
+  if (Array.isArray(unwrapped)) return unwrapped
+  return unwrapped.items ?? []
+}
+
+export async function createMyInquiry(body: PortalInquiryCreateBody): Promise<void> {
+  await axiosClient.post(INQUIRIES_PATH, body)
+}
+
+export async function deleteMyInquiry(inquiryId: string): Promise<void> {
+  await axiosClient.delete(`${INQUIRIES_PATH}/${inquiryId}`)
+}

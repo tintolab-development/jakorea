@@ -4,7 +4,7 @@ export type InquiryTab = 'faq' | 'inquiry'
 
 export type FaqItem = {
   id: string
-  category: FaqCategory
+  category: string
   title: string
   question: string
   answer: string
@@ -13,7 +13,7 @@ export type FaqItem = {
 
 export type InquiryListParams = {
   tab: InquiryTab
-  category: FaqCategory | '전체'
+  category: string
   page: number
 }
 
@@ -21,7 +21,7 @@ export type OneToOneInquiryStatus = 'pending' | 'answered'
 
 export type OneToOneInquiryItem = {
   id: string
-  category: FaqCategory
+  category: string
   title: string
   status: OneToOneInquiryStatus
   createdAt: string
@@ -34,7 +34,7 @@ export type OneToOneInquiryItem = {
 export type OneToOneInquiryWritePayload = {
   programValue: string
   programName: string
-  category: FaqCategory
+  category: string
   title: string
   content: string
 }
