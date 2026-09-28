@@ -1,8 +1,12 @@
 /**
  * 일반 프로그램 등록 폼 — 카드 헤더(제목·설명).
- * 시드(`program-registration-draft`)·상세 공통 정보 수정 모드에서 동일 문구 사용.
+ * 기본 정보 설명은 일반 등록 폼만 사용. 1사1교·교육받은 교사·UJAT는 비움.
  */
 export const PROGRAM_REGISTRATION_GENERAL_SECTION_META = {
+  basicInfo: {
+    title: '기본 정보',
+    editDescription: '참여자 유형은 프로그램 등록 이후 항목 수정이 불가합니다.',
+  },
   typeSettings: {
     title: '프로그램 유형 설정',
     editDescription:

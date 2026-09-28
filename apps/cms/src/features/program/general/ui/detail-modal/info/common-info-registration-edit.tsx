@@ -114,6 +114,7 @@ export function GeneralProgramCommonInfoRegistrationEdit({ program }: { program:
       <ProgramCommonInfoEditSection title="기본 정보" required>
         <ProgramCommonInfoEditRegistrationAuditForm program={program} />
         <ProgramRegistrationBasicInfoParagraph
+          lockParticipantTypes
           participant={participant}
           onIndividualChange={checked => {
             const nextAudience = applyGeneralParticipantAudienceSelection('individual', checked)

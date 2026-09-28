@@ -10,20 +10,23 @@ export type GeneralParticipantAudienceCheckboxGroupProps = {
   organization: boolean
   onIndividualChange: (checked: boolean) => void
   onOrganizationChange: (checked: boolean) => void
+  disabled?: boolean
 }
 
-/** 참여자 유형 [개인]/[기관] — 상호 배타, disabled 없음 */
+/** 참여자 유형 [개인]/[기관] — 상호 배타. 프로그램 상세 수정에서는 disabled */
 export function GeneralParticipantAudienceCheckboxGroup({
   individual,
   organization,
   onIndividualChange,
   onOrganizationChange,
+  disabled = false,
 }: GeneralParticipantAudienceCheckboxGroupProps) {
   return (
     <>
       <CmsCheckbox
         checkboxSize="large"
         checked={individual}
+        disabled={disabled}
         onChange={event => onIndividualChange(event.target.checked)}
       >
         {participantAudienceLabel('individual')}
@@ -31,6 +34,7 @@ export function GeneralParticipantAudienceCheckboxGroup({
       <CmsCheckbox
         checkboxSize="large"
         checked={organization}
+        disabled={disabled}
         onChange={event => onOrganizationChange(event.target.checked)}
       >
         {participantAudienceLabel('school_institution')}

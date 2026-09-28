@@ -69,6 +69,8 @@ type ProgramRegistrationBasicInfoParagraphProps = {
   includeFooterIpsType?: boolean
   /** 참여자 유형 편집 슬롯 — 지정 시 기본 체크박스 그룹 대신 렌더 (교육받은 교사 잠금 UI) */
   participantTypesEdit?: ReactNode
+  /** 프로그램 상세 공통 정보 수정 — 참여자 유형 체크는 노출만, 변경 불가 */
+  lockParticipantTypes?: boolean
   /** controlled — 부모(editor)에서 등록 완료 스냅샷으로 전달 */
   sponsorId?: string
   onSponsorIdChange?: (sponsorId: string) => void
@@ -92,6 +94,7 @@ export function ProgramRegistrationBasicInfoParagraph({
   hideEducationPlace = false,
   includeFooterIpsType = false,
   participantTypesEdit,
+  lockParticipantTypes = false,
   sponsorId: sponsorIdProp,
   onSponsorIdChange,
   sponsorContactId: sponsorContactIdProp,
@@ -257,10 +260,12 @@ export function ProgramRegistrationBasicInfoParagraph({
                     organization={participant.organization}
                     onIndividualChange={onIndividualChange}
                     onOrganizationChange={onOrganizationChange}
+                    disabled={lockParticipantTypes}
                   />
                   <CmsCheckbox
                     checkboxSize="large"
                     checked={participant.teacherInstructor === true}
+                    disabled={lockParticipantTypes}
                     onChange={e => onTeacherInstructorChange(e.target.checked)}
                   >
                     {participantTypeLabel('teacher_instructor')}
@@ -268,6 +273,7 @@ export function ProgramRegistrationBasicInfoParagraph({
                   <CmsCheckbox
                     checkboxSize="large"
                     checked={participant.volunteer === true}
+                    disabled={lockParticipantTypes}
                     onChange={e => onVolunteerChange(e.target.checked)}
                   >
                     {participantTypeLabel('volunteer')}
