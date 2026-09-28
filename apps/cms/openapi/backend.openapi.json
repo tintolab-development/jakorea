@@ -59347,6 +59347,102 @@
           }
         }
       }
+    },
+    "/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/give-up": {
+      "post": {
+        "summary": "교육받은 교사 기관 활동 포기",
+        "description": "승인 상태를 유지하고 활동 포기 시각만 기록합니다. stopScheduleId는 해당 프로그램 일정이어야 합니다. 이미 포기하면 409 TRAINED_TEACHER_ACTIVITY_ALREADY_GIVEN_UP. 교육일지와 완료 증빙은 삭제하지 않습니다.",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainedTeacherOrganizationApplicationResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrainedTeacherOrganizationActivityGiveUpRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/remove-from-progress": {
+      "post": {
+        "summary": "교육받은 교사 진행 현황에서 기관 제외",
+        "description": "활동 포기가 아닙니다. applicationStatus를 APPROVAL_CANCELLED로 바꿔 APPROVED 목록에서 제외합니다. 교육일지 또는 COMPLETED 완료 증빙이 있으면 409 TRAINED_TEACHER_PROGRESS_EVIDENCE_EXISTS. 물리 삭제하지 않고 PENDING으로 되돌리지 않습니다.",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainedTeacherOrganizationApplicationResponse"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrainedTeacherOrganizationProgressRemovalRequest"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -70318,7 +70414,9 @@
             "type": "string"
           },
           "targetLevel": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "교육 대상 첫 값. targetLevels가 있으면 그 첫 원소와 같다."
           },
           "institutionType": {
             "type": "string"
@@ -70475,6 +70573,21 @@
             "description": "프로그램 등록과 같은 트랜잭션에서 publish/bind할 program-scoped form bindings. GENERAL / TRAINED_TEACHER / COMPANY_SCHOOL / UJAT에서 허용. 공용 카탈로그 version id는 거부하고 draft-owned COPY만 받는다.",
             "items": {
               "$ref": "#/components/schemas/ProgramFormBindingRequest"
+            }
+          },
+          "targetLevels": {
+            "type": "array",
+            "nullable": true,
+            "description": "교육 대상 복수. elementary|middle|high|university|adult. 빈 배열은 교육 대상을 지운다. serviceDetailJson.program.targetLevels와 동기화된다.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "elementary",
+                "middle",
+                "high",
+                "university",
+                "adult"
+              ]
             }
           }
         }
@@ -77343,7 +77456,9 @@
             "type": "string"
           },
           "targetLevel": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "교육 대상 첫 값. targetLevels[0]과 같다."
           },
           "institutionType": {
             "type": "string"
@@ -77525,6 +77640,20 @@
           "businessYear": {
             "type": "integer",
             "format": "int32"
+          },
+          "targetLevels": {
+            "type": "array",
+            "description": "교육 대상 코드 배열. 값이 없으면 생략된다.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "elementary",
+                "middle",
+                "high",
+                "university",
+                "adult"
+              ]
+            }
           }
         }
       },
@@ -81619,7 +81748,9 @@
             "type": "string"
           },
           "targetLevel": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "교육 대상 첫 값. targetLevels가 있으면 그 첫 원소와 같다."
           },
           "institutionType": {
             "type": "string"
@@ -81792,6 +81923,21 @@
             "description": "PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지",
             "items": {
               "type": "string"
+            }
+          },
+          "targetLevels": {
+            "type": "array",
+            "nullable": true,
+            "description": "교육 대상 복수. elementary|middle|high|university|adult. 빈 배열은 교육 대상을 지운다. serviceDetailJson.program.targetLevels와 동기화된다.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "elementary",
+                "middle",
+                "high",
+                "university",
+                "adult"
+              ]
             }
           }
         }
@@ -89863,7 +90009,7 @@
           "textbookName": {
             "type": "string",
             "nullable": true,
-            "description": "program_material에 연결된 첫 교재명. 없으면 TT config fallback."
+            "description": "신청에 지정한 textbook_id의 교재명. 없으면 프로그램 교재, 그다음 TT config fallback. 교재 배송 상태는 없습니다."
           },
           "educationJournalCount": {
             "type": "integer",
@@ -89886,6 +90032,22 @@
             "format": "date-time",
             "nullable": true,
             "description": "가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다."
+          },
+          "activityWithdrawn": {
+            "type": "boolean",
+            "description": "활동 포기 여부. true여도 applicationStatus는 APPROVED입니다."
+          },
+          "giveUpAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "활동 포기 시각. 포기하지 않았으면 null."
+          },
+          "giveUpStopScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "description": "활동 포기 기준 일정 id. 포기하지 않았으면 null."
           }
         }
       },
@@ -98205,6 +98367,41 @@
           "assignmentStatus": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "TrainedTeacherOrganizationActivityGiveUpRequest": {
+        "type": "object",
+        "required": [
+          "stopScheduleId",
+          "reason"
+        ],
+        "properties": {
+          "stopScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "활동 중단 기준 프로그램 일정 id"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "description": "활동 포기 사유"
+          }
+        }
+      },
+      "TrainedTeacherOrganizationProgressRemovalRequest": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "description": "진행 현황 제외 사유"
           }
         }
       }

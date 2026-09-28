@@ -1,4 +1,4 @@
-import type { ProgramCreateRequest } from '@/shared/api/generated/forms-surveys/schemas/programCreateRequest'
+import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { Program } from '@/types/domain'
 import {
   buildRegistrationCreateFormBindings,

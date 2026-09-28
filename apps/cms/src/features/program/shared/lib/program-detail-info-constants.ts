@@ -227,6 +227,13 @@ export function normalizeProgramBusinessAreaValue(value: string | undefined | nu
   return matched?.value ?? trimmed
 }
 
+/** 셀렉트·PATCH에 실을 수 있는 마스터명. 목록에 없으면 빈 문자열 */
+export function resolveStoredBusinessArea(value: string | undefined | null): string {
+  const normalized = normalizeProgramBusinessAreaValue(value)
+  if (!normalized) return ''
+  return BUSINESS_AREA_OPTIONS.some(option => option.value === normalized) ? normalized : ''
+}
+
 export const TYPE_LABEL: Record<string, string> = {
   online: '온라인',
   offline: '오프라인',
@@ -330,8 +337,8 @@ export function normalizeTargetLevelValue(raw: unknown): TargetLevel | undefined
 }
 
 export function resolveProgramTargetLevels(program: {
-  targetLevels?: Array<TargetLevel | string>
-  targetLevel?: TargetLevel | string
+  targetLevels?: Array<TargetLevel | string | null | undefined> | null
+  targetLevel?: TargetLevel | string | null
 }): TargetLevel[] {
   const raw =
     program.targetLevels?.length

@@ -11,6 +11,7 @@ import type { ProgramResponseEducationStructure } from './programResponseEducati
 import type { ProgramResponseLifecycleStatus } from './programResponseLifecycleStatus';
 import type { ProgramResponsePeriodStatus } from './programResponsePeriodStatus';
 import type { ProgramResponseProgramType } from './programResponseProgramType';
+import type { ProgramResponseTargetLevelsItem } from './programResponseTargetLevelsItem';
 import type { ProgramRoundResponse } from './programRoundResponse';
 import type { ProgramScheduleResponse } from './programScheduleResponse';
 import type { ProgramSettlementPolicyResponse } from './programSettlementPolicyResponse';
@@ -47,7 +48,8 @@ export interface ProgramResponse {
   schoolId?: string;
   district?: string;
   ips?: string;
-  targetLevel?: string;
+  /** 교육 대상 첫 값. targetLevels[0]과 같다. */
+  targetLevel?: string | null;
   institutionType?: string;
   ipOwned?: string;
   courseDeliveredBy?: string;
@@ -100,4 +102,6 @@ export interface ProgramResponse {
   businessStartDate?: string;
   businessEndDate?: string;
   businessYear?: number;
+  /** 교육 대상 코드 배열. 값이 없으면 생략된다. */
+  targetLevels?: ProgramResponseTargetLevelsItem[];
 }

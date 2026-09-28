@@ -38,6 +38,8 @@ const DASHBOARD_EXACT_PATHS = new Set([
   '/api/admin/programs/{programId}/volunteer-applications',
   '/api/admin/programs/{programId}/trained-teacher/organization-applications',
   '/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}',
+  '/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/give-up',
+  '/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/remove-from-progress',
   '/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/notifications/resend',
   '/api/admin/gemini/trainings/organization-applications/{applicationId}/notifications/resend',
   '/api/admin/gemini/trainings/recruitments/{programId}/organization-applications',
