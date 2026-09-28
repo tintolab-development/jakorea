@@ -39,6 +39,60 @@ const BASIC = 'generalRegistration.basicInfo' as const
 const KPI = 'generalRegistration.kpi' as const
 const WAGE = 'generalRegistration.wageInfo' as const
 const TYPE = 'generalRegistration.typeSettings' as const
+const CURRICULUM_EDUCATION_FORM_BY_SESSION_KEY =
+  'generalRegistration.educationCurriculum.educationFormBySession' as const
+const SCHEDULE_EDUCATION_FORM_BY_DETAIL_KEY =
+  'generalRegistration.educationScheduleCurriculum.educationFormByDetail' as const
+
+function educationFormValueFromLabel(label: string | undefined): string | undefined {
+  const text = label?.trim() ?? ''
+  if (!text) return undefined
+  if (text.includes('참여자')) return 'participant_selection'
+  if (text.includes('온/오프') || text.includes('하이브리드')) return 'hybrid'
+  if (text.includes('오프라인')) return 'offline'
+  if (text.includes('온라인')) return 'online'
+  return undefined
+}
+
+function overlayIndexFromRowLabel(label: string | undefined, fallback: number): number {
+  if (!label) return fallback
+  if (label.includes('사전') || label.includes('연수')) return 0
+  const match = label.match(/(\d+)/)
+  return match ? Number(match[1]) : fallback
+}
+
+function isEmptyEducationFormMap(value: unknown): boolean {
+  return value == null || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length === 0
+}
+
+/** GET에 남은 행 라벨로 일정별 교육 형태를 되돌린다. overlay 맵이 이미 있으면 그대로 둔다. */
+function fillPerScheduleEducationFormMaps(
+  merged: Record<string, unknown>,
+  program: Program
+): void {
+  const common = program.generalCommonInfo
+  if ((common?.educationFormScheduleDetail ?? 'common') !== 'perSchedule') return
+
+  if (isEmptyEducationFormMap(merged[CURRICULUM_EDUCATION_FORM_BY_SESSION_KEY])) {
+    const map: Record<number, string> = {}
+    ;(common?.curriculumSessions ?? []).forEach((row, index) => {
+      const value = educationFormValueFromLabel(row.educationFormLabel)
+      if (!value) return
+      map[overlayIndexFromRowLabel(row.sessionLabel, index + 1)] = value
+    })
+    if (Object.keys(map).length > 0) merged[CURRICULUM_EDUCATION_FORM_BY_SESSION_KEY] = map
+  }
+
+  if (isEmptyEducationFormMap(merged[SCHEDULE_EDUCATION_FORM_BY_DETAIL_KEY])) {
+    const map: Record<number, string> = {}
+    ;(common?.scheduleDetails ?? []).forEach((row, index) => {
+      const value = educationFormValueFromLabel(row.educationFormLabel)
+      if (!value) return
+      map[overlayIndexFromRowLabel(row.scheduleLabel, index + 1)] = value
+    })
+    if (Object.keys(map).length > 0) merged[SCHEDULE_EDUCATION_FORM_BY_DETAIL_KEY] = map
+  }
+}
 
 function overlayFromProgram(program: Program): Record<string, unknown> {
   return pickProgramRegistrationOverlayByPrefix(
@@ -269,6 +323,7 @@ export function seedGeneralRegistrationOverlayFromProgram(program: Program): voi
     satisfaction: surveyKeys.includes('satisfaction'),
     lecture_evaluation: surveyKeys.includes('lecture_evaluation'),
   }
+  fillPerScheduleEducationFormMaps(merged, program)
   replaceProgramRegistrationOverlayPrefix(GENERAL_REGISTRATION_OVERLAY_PREFIX, merged)
   setGeneralRegistrationDetailEditExtras(extrasFromGeneralProgram(program))
 }

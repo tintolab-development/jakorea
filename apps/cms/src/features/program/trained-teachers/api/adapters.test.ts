@@ -613,6 +613,51 @@ describe('mapTrainedTeacherToUpdateRequest KPI / venue wire', () => {
     expect(request.serviceDetailJson).not.toContain('구 차시')
   })
 
+  it('부분 generalCommonInfo가 이전 공고·모집 정보를 지우지 않는다', () => {
+    const program = {
+      id: '186009',
+      sponsorId: '163302',
+      title: 'TT',
+      type: 'offline' as const,
+      format: 'workshop' as const,
+      category: 'school' as const,
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending' as const,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      generalCommonInfo: {
+        announcementTitle: '기존 공고',
+        participantRecruitmentInfo: {
+          announcementPublished: true,
+          inquiryTel: '02-000-0000',
+        },
+        curriculumSessions: [{ sessionLabel: '1차시', title: '구 차시', description: '' }],
+      },
+    } as Program
+    const request = mapTrainedTeacherToUpdateRequest(program, {
+      generalCommonInfo: {
+        curriculumSessions: [{ sessionLabel: '1차시', title: '신 차시', description: '새 내용' }],
+      },
+    })
+    const detail = JSON.parse(String(request.serviceDetailJson)) as {
+      program?: { generalCommonInfo?: Record<string, unknown> }
+    }
+    const common = detail.program?.generalCommonInfo
+    expect(common?.announcementTitle).toBe('기존 공고')
+    expect(common?.participantRecruitmentInfo).toEqual({
+      announcementPublished: true,
+      inquiryTel: '02-000-0000',
+      maxAssignableInstructors: 0,
+      preEducationNoticeRequired: false,
+    })
+    expect(common?.curriculumSessions).toEqual([
+      { sessionLabel: '1차시', title: '신 차시', description: '새 내용' },
+    ])
+  })
+
   it('keeps announcement and schedule time when nested common info was previously stripped', () => {
     const program = {
       id: '186034',

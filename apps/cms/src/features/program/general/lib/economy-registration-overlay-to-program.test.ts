@@ -71,6 +71,7 @@ describe('applyEconomyRegistrationOverlayToProgram', () => {
     expect(result.generalCommonInfo?.educationScheduleLines).toEqual([
       '2026. 05. 01 ~ 2026. 11. 30',
     ])
+    expect(result.generalCommonInfo?.educationScheduleMode).toBe('period')
 
     expect(result.generalCommonInfo?.wageGradeRows?.[0].pricing).toContain('111,111원')
     expect(result.generalCommonInfo?.wageGradeRows?.[0].pricing).toContain('222,222원')

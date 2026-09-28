@@ -19,6 +19,12 @@ import {
   resolveUjatProgressStatus,
 } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
 import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
+import {
+  buildProgramSponsorAssignmentsWire,
+  encodeSponsorManagerContactRef,
+  normalizeSponsorManagerContactIds,
+} from '@/features/program/general/model/common-info-edit-schema'
+import { isSponsorContactUnselected } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
@@ -58,6 +64,30 @@ function overlayText(overlay: Record<string, unknown>, key: string): string | un
 
 function dateValue(value: Date | string | undefined): string | undefined {
   return value instanceof Date ? value.toISOString() : value
+}
+
+function programIps(value: string | null | undefined): Program['ips'] | undefined {
+  if (value === 'Inspire' || value === 'Succeed' || value === 'Prepare') return value
+  return undefined
+}
+
+/** 공통정보 후원사·담당자 → sponsors[] (1사1교와 같은 배정 계약) */
+function mapUjatSponsorAssignments(program: Program) {
+  const sponsorId =
+    program.generalCommonInfo?.sponsorManagementIds?.[0] ??
+    program.generalCommonInfo?.sponsorManagementId ??
+    program.sponsorId
+  if (!sponsorId || sponsorId === DEFAULT_SPONSOR_ID) return []
+  const sponsorIds = [String(sponsorId).trim()].filter(Boolean)
+  const contactRefs = normalizeSponsorManagerContactIds({
+    ids: program.generalCommonInfo?.sponsorManagerContactIds,
+    id: program.generalCommonInfo?.sponsorManagerContactId,
+  })
+    .filter(id => id !== '__all__' && !isSponsorContactUnselected(id))
+    .map(id =>
+      id.includes('::') ? id : encodeSponsorManagerContactRef(String(sponsorId), id)
+    )
+  return buildProgramSponsorAssignmentsWire(sponsorIds, contactRefs)
 }
 
 /** UJAT는 상·하반기 교육 일정 구조. BE create는 educationStructure 필수. */
@@ -163,6 +193,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       ? { ...details.generalCommonInfo, detailedProgramName: dto.detailedProgramName.trim() }
       : details.generalCommonInfo
 
+  const ips = programIps(dto.ips)
   const overlay = reconcileUjatRegistrationOverlayFromProgramResponse(dto, rawOverlay, {
     generalSurveyMenuKeys: surveyKeys,
     sponsorManagerContactIds: generalCommonInfo?.sponsorManagerContactIds,
@@ -232,6 +263,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       ipOwned: dto.ipOwned,
       courseDeliveredBy: dto.courseDeliveredBy as Program['courseDeliveredBy'],
       partnerInvolvement: dto.partnerInvolvement,
+      ...(ips ? { ips } : {}),
       programCategory: dto.programCategory,
       programChannel: dto.programChannel,
       educationTime: dto.educationTime,
@@ -328,6 +360,7 @@ function coreRequest(
     ipOwned: program.ipOwned,
     courseDeliveredBy: program.courseDeliveredBy,
     partnerInvolvement: program.partnerInvolvement,
+    ips: program.ips,
     programCategory: program.programCategory ?? undefined,
     programChannel: program.programChannel ?? undefined,
     educationTime: program.educationTime,
@@ -378,8 +411,19 @@ function patchRequest(
   const body: ProgramUpdateRequest = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
 
-  if (has('sponsorId')) {
-    body.sponsorId = merged.sponsorId != null ? String(merged.sponsorId) : undefined
+  if (has('sponsorId') || has('generalCommonInfo')) {
+    const sponsors = mapUjatSponsorAssignments(merged)
+    if (has('sponsorId')) {
+      body.sponsorId =
+        sponsors.find(row => row.sponsorContactId)?.sponsorId ||
+        sponsors[0]?.sponsorId ||
+        (merged.sponsorId != null ? String(merged.sponsorId) : undefined)
+    }
+    if (sponsors.length > 0) body.sponsors = sponsors
+  }
+  if (has('ips')) body.ips = merged.ips
+  if (has('generalProgramEducationStructure') || has('generalCommonInfo')) {
+    body.educationStructure = resolveUjatEducationStructure(merged)
   }
   if (has('title')) body.title = merged.title
   if (has('type')) body.type = merged.type

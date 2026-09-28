@@ -305,6 +305,7 @@ export function applyEconomyRegistrationOverlayToProgram(
       detailedProgramName,
       curriculumSessions,
       educationScheduleLines,
+      educationScheduleMode: 'period',
       wageGradeRows,
       paymentItems,
       deductionItems,

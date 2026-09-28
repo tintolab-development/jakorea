@@ -93,6 +93,63 @@ describe('UJAT program adapters', () => {
     expect(updated.managerName).toBeUndefined()
   })
 
+  it('부분 수정에 educationStructure를 싣고 지역 정원 overlay를 재조회한다', () => {
+    const capacity = {
+      h1: { 서울: { classCount: '2', volunteerCount: '4' } },
+    }
+    const created = toCreateRequest(
+      { ...program, generalProgramEducationStructure: 'curriculum' },
+      {
+        draft,
+        overlay: { 'ujat.capacity.byRegion': capacity },
+      }
+    )
+    const registration = parseRegistrationSnapshot(created.serviceDetailJson)
+    const updated = toUpdateRequest(
+      { ...program, generalProgramEducationStructure: 'curriculum' },
+      { generalProgramEducationStructure: 'curriculum', title: '수정된 UJAT' },
+      registration
+    )
+    expect(updated.educationStructure).toBe('CURRICULUM')
+
+    const mapped = fromDetail({
+      id: program.id,
+      title: '수정된 UJAT',
+      educationStructure: 'CURRICULUM',
+      serviceDetailJson: updated.serviceDetailJson,
+    })
+    expect(mapped.generalProgramEducationStructure).toBe('curriculum')
+    expect(mapped.ujatRegistrationOverlay?.['ujat.capacity.byRegion']).toEqual(capacity)
+  })
+
+  it('부분 수정에 ips와 후원 담당자 sponsors를 싣고 재조회한다', () => {
+    const updated = toUpdateRequest(
+      {
+        ...program,
+        sponsorId: '163388',
+        ips: 'Inspire',
+        generalCommonInfo: { sponsorManagerContactIds: ['1627253'] },
+      },
+      {
+        ips: 'Inspire',
+        sponsorId: '163388',
+        generalCommonInfo: { sponsorManagerContactIds: ['1627253'] },
+      }
+    )
+    expect(updated.ips).toBe('Inspire')
+    expect(updated.sponsors).toEqual([{ sponsorId: '163388', sponsorContactId: '1627253' }])
+
+    const mapped = fromDetail({
+      id: program.id,
+      title: program.title,
+      sponsorId: '163388',
+      ips: 'Inspire',
+      serviceDetailJson: updated.serviceDetailJson,
+    })
+    expect(mapped.ips).toBe('Inspire')
+    expect(mapped.ujatRegistrationOverlay?.['ujat.basicInfo.ipsCategory']).toBe('inspire')
+  })
+
   it('상세 사업 기간은 businessStartDate/EndDate를 쓴다', () => {
     const mapped = fromDetail({
       id: program.id,

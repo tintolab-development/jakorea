@@ -829,7 +829,7 @@ export function buildProgramSponsorAssignmentsWire(
     if (!decoded?.sponsorManagementId || !decoded.contactId) continue
     const sponsorId = decoded.sponsorManagementId.trim()
     const contactId = decoded.contactId.trim()
-    if (!sponsorId || !contactId) continue
+    if (!sponsorId || !/^\d+$/.test(contactId)) continue
     const list = contactsBySponsor.get(sponsorId) ?? []
     if (!list.includes(contactId)) list.push(contactId)
     contactsBySponsor.set(sponsorId, list)
@@ -1749,8 +1749,8 @@ export function generalCommonInfoEditValuesToProgramPatch(
 
   const representativeTitleKo = values.mainTitle.trim()
   return {
-    title: existing.title,
-    mainTitle: representativeTitleKo,
+    title: representativeTitleKo || existing.title,
+    mainTitle: representativeTitleKo || existing.mainTitle,
     titleEn: values.titleEn?.trim() || undefined,
     startDate: values.startDate,
     endDate: values.endDate,

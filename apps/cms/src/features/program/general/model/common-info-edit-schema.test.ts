@@ -87,12 +87,12 @@ const sponsorContext: GeneralProgramSponsorEditContext = {
 }
 
 describe('generalCommonInfoEditValuesToProgramPatch', () => {
-  it('대표 프로그램명 변경은 mainTitle만 바꾸고 관리명(title)은 유지한다', () => {
+  it('대표 프로그램명 변경은 title과 mainTitle에 함께 반영한다', () => {
     const program = baseProgram()
     const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
     values.mainTitle = '수정1'
     const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
-    expect(patch.title).toBe('테스트 프로그램')
+    expect(patch.title).toBe('수정1')
     expect(patch.mainTitle).toBe('수정1')
   })
 

@@ -74,6 +74,7 @@ import '@/features/template/ui/form-set/registration-form/general/paragraphs/pro
 import '@/features/template/ui/shared/paragraph-date-picker.css'
 import '@/features/template/ui/shared/paragraph-time-picker.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
+import { stampTrainedTeachersSessionFields } from '@/features/program/trained-teachers/lib/stamp-session-fields'
 import { validateTrainedTeachersCommonInfoDraft } from '@/features/program/trained-teachers/lib/validate-trained-teachers-common-info-draft'
 import './common-info-view.css'
 
@@ -1889,7 +1890,16 @@ export function TrainedTeachersCommonInfoView({
           })
         }
 
-        const scheduleDetails =
+        const formPatchForRows = form
+          ? detailEditValuesToProgramPatch(form.getValues(), program)
+          : undefined
+        const rowFields = {
+          educationFormScheduleDetail: form?.getValues('educationFormScheduleDetail'),
+          ipsScheduleDetail: form?.getValues('ipsScheduleDetail'),
+          educationFormLabel: formPatchForRows?.generalCommonInfo?.educationFormLabel,
+          ipsTypeSummary: formPatchForRows?.generalCommonInfo?.ipsTypeSummary,
+        }
+        const scheduleDetails = stampTrainedTeachersSessionFields(
           draft && educationStructure === 'schedule'
             ? draft.scheduleDetails.map((detail, index) => ({
                 ...detail,
@@ -1900,13 +1910,17 @@ export function TrainedTeachersCommonInfoView({
               }))
             : draft
               ? commonInfo.scheduleDetails
-              : undefined
-        const curriculumSessions =
+              : undefined,
+          rowFields
+        )
+        const curriculumSessions = stampTrainedTeachersSessionFields(
           draft && educationStructure === 'curriculum'
             ? draft.curriculumSessions
             : draft
               ? commonInfo.curriculumSessions
-              : undefined
+              : undefined,
+          rowFields
+        )
 
         if (draft) {
           const draftValidationMessage = validateTrainedTeachersCommonInfoDraft({

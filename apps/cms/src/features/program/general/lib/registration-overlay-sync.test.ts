@@ -112,4 +112,48 @@ describe('buildGeneralRegistrationOverlayFromProgram → apply', () => {
     expect(saved['generalRegistration.wageInfo.grade1Fee']).toBe(240_000)
     expect(saved['generalRegistration.wageInfo.paymentItemValues']).toEqual(['p-1', 'p-3'])
   })
+
+  it('일정별 교육 형태는 저장된 행 라벨로 다시 연다', () => {
+    const program = {
+      ...baseProgram(),
+      generalProgramSessionRound: 'multi' as const,
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        educationFormScheduleDetail: 'perSchedule' as const,
+        curriculumSessions: [
+          { sessionLabel: '1회차', title: '1회차', description: '', educationFormLabel: '오프라인' },
+          { sessionLabel: '2회차', title: '2회차', description: '', educationFormLabel: '온라인' },
+        ],
+      },
+    }
+    seedGeneralRegistrationOverlayFromProgram(program)
+    const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationCurriculum.educationFormBySession']).toEqual({
+      1: 'offline',
+      2: 'online',
+    })
+  })
+
+  it('일정별 교육 형태 overlay가 있으면 행 라벨로 덮지 않는다', () => {
+    const program = {
+      ...baseProgram(),
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        educationFormScheduleDetail: 'perSchedule' as const,
+        curriculumSessions: [
+          { sessionLabel: '1회차', title: '1회차', description: '', educationFormLabel: '오프라인' },
+        ],
+      },
+      registrationOverlay: {
+        'generalRegistration.educationCurriculum.educationFormBySession': {
+          1: 'hybrid',
+        },
+      },
+    }
+    seedGeneralRegistrationOverlayFromProgram(program)
+    const saved = readGeneralRegistrationOverlayForSave()
+    expect(saved['generalRegistration.educationCurriculum.educationFormBySession']).toEqual({
+      1: 'hybrid',
+    })
+  })
 })

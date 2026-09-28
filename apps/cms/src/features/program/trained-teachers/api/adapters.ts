@@ -469,11 +469,22 @@ function mapRounds(program: Program): ProgramUpdateRequest['rounds'] {
   }))
 }
 
+function mergeTrainedTeacherUpdateProgram(program: Program, patch: Partial<Program>): Program {
+  const merged: Program = { ...program, ...patch }
+  if (patch.generalCommonInfo) {
+    merged.generalCommonInfo = {
+      ...program.generalCommonInfo,
+      ...patch.generalCommonInfo,
+    }
+  }
+  return merged
+}
+
 export function mapTrainedTeacherToUpdateRequest(
   program: Program,
   patch?: Partial<Program>
 ): ProgramUpdateRequest {
-  const merged = patch ? { ...program, ...patch } : program
+  const merged = patch ? mergeTrainedTeacherUpdateProgram(program, patch) : program
   const educationStructure = mapDomainEducationStructureToApi(
     merged.generalProgramEducationStructure
   )
