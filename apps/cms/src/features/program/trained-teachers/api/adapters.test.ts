@@ -68,6 +68,39 @@ describe('mapTrainedTeacherListItemToProgram periodStatus', () => {
     expect(mapped.participatingStudentCount).toBe(240)
   })
 
+  it('maps a multi-value targetLevels list ahead of the first targetLevel', () => {
+    const mapped = mapTrainedTeacherListItemToProgram({
+      id: 186010,
+      title: '우리 동네 소비와 저축',
+      targetLevel: 'university',
+      targetLevels: ['university', 'middle', 'high'],
+    })
+    expect(mapped.targetLevel).toBe('university')
+    expect(mapped.targetLevels).toEqual(['university', 'middle', 'high'])
+  })
+
+  it('sends the full targetLevels array on update, with targetLevel as the first code', () => {
+    const request = mapTrainedTeacherToUpdateRequest({
+      id: '186010',
+      sponsorId: 'sponsor-1',
+      title: '우리 동네 소비와 저축',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending',
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      targetLevel: 'university',
+      targetLevels: ['university', 'middle', 'high'],
+    } as Program)
+    expect(request.targetLevels).toEqual(['university', 'middle', 'high'])
+    expect(request.targetLevel).toBe('university')
+  })
+
   it('does not use organizationApplicationCount as participatingSchoolCount', () => {
     const mapped = mapTrainedTeacherListItemToProgram({
       id: 186006,
@@ -133,6 +166,7 @@ describe('mapTrainedTeacherDetailToProgram educationStructure', () => {
     })
     expect(mapped.startDate).toBe('2026-10-14')
     expect(mapped.endDate).toBe('2026-11-07')
+    expect(mapped.backendProgramType).toBe('TRAINED_TEACHER')
   })
 
   it('prefers API educationStructure over serviceDetailJson', () => {
@@ -953,5 +987,59 @@ describe('mapTrainedTeacherDetailToProgram recruitment columns (BE 2026-09-23 ha
     expect(mapped.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName).toBe(
       '수정문의처'
     )
+  })
+})
+
+describe('trained teacher businessArea', () => {
+  it('normalizes the column and falls back to serviceDetailJson when the column is empty', () => {
+    const fromColumn = mapTrainedTeacherDetailToProgram({
+      id: '186005',
+      title: 'TT',
+      sponsorId: 'sponsor-1',
+      businessArea: 'economy_finance',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: { businessArea: '진로취업' },
+      }),
+    })
+    expect(fromColumn.businessArea).toBe('경제금융')
+
+    const fromJson = mapTrainedTeacherDetailToProgram({
+      id: '186005',
+      title: 'TT',
+      sponsorId: 'sponsor-1',
+      serviceDetailJson: JSON.stringify({
+        schemaVersion: 1,
+        program: { businessArea: '디지털 리터러시' },
+      }),
+    })
+    expect(fromJson.businessArea).toBe('디지털리터러시')
+  })
+
+  it('sends the master name on the column and in serviceDetailJson, not inside generalCommonInfo', () => {
+    const program = {
+      id: '186005',
+      sponsorId: 'sponsor-1',
+      title: 'TT',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      rounds: [],
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      status: 'pending',
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      businessArea: 'career_employment',
+      generalCommonInfo: { businessArea: '경제금융', detailedProgramName: '세부' },
+    } as Program
+    const request = mapTrainedTeacherToUpdateRequest(program)
+    expect(request.businessArea).toBe('진로취업')
+    const envelope = JSON.parse(String(request.serviceDetailJson)) as {
+      program?: { businessArea?: string; generalCommonInfo?: Record<string, unknown> }
+    }
+    expect(envelope.program?.businessArea).toBe('진로취업')
+    expect(envelope.program?.generalCommonInfo).not.toHaveProperty('businessArea')
   })
 })

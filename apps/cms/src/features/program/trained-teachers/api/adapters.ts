@@ -26,7 +26,10 @@ import {
   omitIfDetailedProgramNameAlias,
   parseDetailedProgramMasterId,
 } from '@/features/program/general/lib/detailed-program-request-id'
-import { resolveProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  resolveProgramTargetLevels,
+  resolveStoredBusinessArea,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   parseTrainedTeacherServiceDetailJson,
   serializeTrainedTeacherServiceDetailJson,
@@ -227,6 +230,7 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
       : undefined,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
+    backendProgramType: item.programType ?? TRAINED_TEACHER_PROGRAM_API_TYPE,
   })
 }
 
@@ -297,6 +301,8 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
           ? ('other' as const)
           : undefined)
 
+  const jsonBusinessArea =
+    typeof detailFields.businessArea === 'string' ? detailFields.businessArea : undefined
   const mapped = baseProgram({
     ...detailFields,
     id,
@@ -326,8 +332,13 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
-    lifecycleStatus: toTypedProgramLifecycleStatus(dto.lifecycleStatus),
-    businessArea: dto.businessArea,
+    lifecycleStatus:
+      toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
+      toTypedProgramLifecycleStatus(dto.periodStatus),
+    businessArea:
+      resolveStoredBusinessArea(dto.businessArea) ||
+      resolveStoredBusinessArea(jsonBusinessArea) ||
+      undefined,
     titleEn: dto.titleEn,
     textbookName: dto.textbookName,
     textbookNameEn: dto.textbookNameEn,
@@ -430,6 +441,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     }),
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
+    backendProgramType: dto.programType ?? TRAINED_TEACHER_PROGRAM_API_TYPE,
   })
   return applyResolvedAnnouncementTitle(mapped, {
     serviceDetailJson: dto.serviceDetailJson,
@@ -499,7 +511,7 @@ export function mapTrainedTeacherToUpdateRequest(
     businessEndDate: toDate(merged.endDate),
     applicationStartDate: toDate(merged.applicationStartDate),
     applicationEndDate: toDate(merged.applicationEndDate),
-    businessArea: merged.businessArea,
+    businessArea: resolveStoredBusinessArea(merged.businessArea) || undefined,
     // 일정형은 id 를 생략한다. 커리큘럼형은 숫자 마스터 id 만 보낸다.
     // 교재명·팀구분에 detailedProgramName 을 복제한 값이면 omit.
     educationStructure,
@@ -515,6 +527,12 @@ export function mapTrainedTeacherToUpdateRequest(
     schoolId: merged.schoolId,
     district: merged.district,
     ips: merged.ips,
+    targetLevels:
+      merged.targetLevels != null
+        ? [...merged.targetLevels]
+        : merged.targetLevel
+          ? [merged.targetLevel]
+          : undefined,
     targetLevel: merged.targetLevels?.[0] ?? merged.targetLevel,
     institutionType: merged.institutionType,
     ipOwned: merged.ipOwned,

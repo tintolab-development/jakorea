@@ -142,7 +142,13 @@ import {
   resolveProgramParticipantMaxClassCount,
 } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
+import {
+  canParticipatingInstitutionApplicationInfoEdit,
+  getParticipatingInstitutionApplicationInfoEditBlockedAlertMessage,
+} from '@/features/program/general/lib/participating-institution-application-edit-policy'
 import { isCombinedClassProgramEligible } from '@/features/program/general/lib/combined-class-edit-policy'
+import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
+import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import { type CombinedClassLeadTeacherCandidate } from '@/features/program/general/lib/combined-class-lead-teacher'
 import { InstitutionCombinedClassLeadTeacherModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-lead-teacher-modal'
 import { InstitutionCombinedClassCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-complete-modal'
@@ -671,6 +677,37 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     mergedDetail.programProgressStatus ??
     resolveProgramEnrollmentDisplayStatusFromLabel(mergedDetail.programProgressLabel) ??
     getProgramProgressDisplayStatus(program)
+
+  const canEditApplicationInfo = canParticipatingInstitutionApplicationInfoEdit({
+    program,
+    enrollmentStatus: programProgressStatus,
+  })
+
+  useEffect(() => {
+    if (isApplicationInfoEditing && !canEditApplicationInfo) {
+      cancelApplicationInfoEdit()
+    }
+  }, [canEditApplicationInfo, cancelApplicationInfoEdit, isApplicationInfoEditing])
+
+  const handleEnterApplicationInfoEdit = useCallback(() => {
+    if (!canEditApplicationInfo) {
+      void showAlert({
+        title: '안내',
+        content: getParticipatingInstitutionApplicationInfoEditBlockedAlertMessage({
+          program,
+          enrollmentStatus: programProgressStatus,
+        }),
+      })
+      return
+    }
+    enterApplicationInfoEdit()
+  }, [
+    canEditApplicationInfo,
+    enterApplicationInfoEdit,
+    program,
+    programProgressStatus,
+    showAlert,
+  ])
 
   const resolvePersonalInfoAccessItem = useCallback(
     () => mergedDetail.schoolName ?? row.schoolName ?? '학교 상세 정보',
@@ -1763,10 +1800,11 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     )
 
   const hasSelectedTextbook =
-    (mergedDetail.textbookId?.trim() ?? '') !== '' ||
-    (mergedDetail.textbookName?.trim() ?? '') !== ''
-  const textbookNameView =
-    isCompanySchool && !hasSelectedTextbook ? '미정' : textbookDisplay.textbookName
+    ((mergedDetail.textbookId?.trim() ?? '') !== '' &&
+      mergedDetail.textbookId?.trim() !== TEXTBOOK_NOT_USED_OPTION_VALUE) ||
+    ((mergedDetail.textbookName?.trim() ?? '') !== '' &&
+      mergedDetail.textbookName?.trim() !== '해당 없음')
+  const textbookNameView = !hasSelectedTextbook ? '해당 없음' : textbookDisplay.textbookName
   const kitsAndQty =
     hasSelectedTextbook && textbookDisplay.textbookKits > 0
       ? `${textbookDisplay.textbookKits}키트 (${textbookDisplay.textbookQuantity}권)`
@@ -1779,7 +1817,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
           className="institution-basic-info__full-width-control"
           inputSize="large"
           placeholder="교재명 선택"
-          value={applicationInfoDraft.textbookId || undefined}
+          withAllOption={false}
+          value={applicationInfoDraft.textbookId || TEXTBOOK_NOT_USED_OPTION_VALUE}
           options={textbookOptions.map(option => ({
             label: option.label,
             value: option.value,
@@ -1885,7 +1924,8 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               <ProgramEditInfoActions
                 isEditing={isApplicationInfoEditing}
                 idleVariant="secondary"
-                onEdit={enterApplicationInfoEdit}
+                disabled={!isApplicationInfoEditing && !canEditApplicationInfo}
+                onEdit={handleEnterApplicationInfoEdit}
                 onCancel={cancelApplicationInfoEdit}
                 onSave={() => {
                   void saveApplicationInfoEdit()
@@ -1936,7 +1976,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               combinedClassCell={combinedClassCell}
               usesTextbook={isCompanySchool || usesTextbook}
               textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
-              hideCombinedClass={isCompanySchool}
+              hideCombinedClass={!isGeneralOrganizationProgram(program)}
               schoolName={
                 isApplicationDetailEditing ? (
                   <InstitutionReadonlyInput value={mergedDetail.schoolName ?? ''} />

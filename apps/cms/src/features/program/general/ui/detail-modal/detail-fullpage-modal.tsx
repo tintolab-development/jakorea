@@ -1812,6 +1812,7 @@ export function GeneralProgramDetailFullPageModal({
                 isEditMode={isEditModeInfo}
                 form={infoForm}
                 canWrite={canWrite}
+                editDisabled={!canEditCommonInfo}
                 onEdit={handleInfoEdit}
                 onCancel={handleInfoCancel}
                 onSave={handleInfoSave}

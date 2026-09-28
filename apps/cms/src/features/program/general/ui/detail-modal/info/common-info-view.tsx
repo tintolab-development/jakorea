@@ -4702,6 +4702,8 @@ export interface GeneralProgramDetailCommonInfoViewProps {
   isEditMode?: boolean
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
   canWrite?: boolean
+  /** 프로그램 진행 중/완료 등 — 「정보 수정」 비활성 */
+  editDisabled?: boolean
   onEdit?: () => void
   onCancel?: () => void
   onSave?: () => void
@@ -4713,6 +4715,7 @@ export function GeneralProgramDetailCommonInfoView({
   isEditMode = false,
   form,
   canWrite = false,
+  editDisabled = false,
   onEdit,
   onCancel,
   onSave,
@@ -4728,6 +4731,7 @@ export function GeneralProgramDetailCommonInfoView({
           <ProgramEditInfoActions
             isEditing={isEditMode}
             idleVariant="secondary"
+            disabled={editDisabled}
             onEdit={onEdit ?? (() => {})}
             onCancel={onCancel ?? (() => {})}
             onSave={onSave ?? (() => {})}
