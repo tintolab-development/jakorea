@@ -124,7 +124,10 @@ import {
   buildParticipantApplicationEditorState,
 } from '@/features/template/lib/participant-application-editor-state'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
-import { isWritingFormTemplateStructureLocked } from '@/features/template/lib/form-template-delete-policy'
+import {
+  canReorderParticipantApplicationParagraphs,
+  isWritingFormTemplateStructureLocked,
+} from '@/features/template/lib/form-template-delete-policy'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
 import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
 import { forceParagraphTitleRequired } from '@/features/template/lib/paragraph-required-mark'
@@ -987,7 +990,14 @@ export function useProgramParticipantApplicationEditor(
 
   const onReorderMiddle = useCallback(
     (dragId: string, overId: string) => {
-      if (isStructureLocked) return
+      if (
+        !canReorderParticipantApplicationParagraphs({
+          structureLocked: isStructureLocked,
+          recruitmentForm: isRecruitmentEditorVariant(variant),
+        })
+      ) {
+        return
+      }
       setDraft(prev => ({
         ...prev,
         paragraphs: (() => {
@@ -1002,7 +1012,7 @@ export function useProgramParticipantApplicationEditor(
         })(),
       }))
     },
-    [isStructureLocked]
+    [isStructureLocked, variant]
   )
 
   const onTitleNumberingChange = useCallback(
@@ -1034,12 +1044,19 @@ export function useProgramParticipantApplicationEditor(
   const effectiveStructureLockedParagraphIds = isStructureLocked ? seedParagraphIds : undefined
   const allowAddAfterStructureLockedParagraphs =
     isStructureLocked && !isRecruitmentEditorVariant(variant)
+  const allowReorderWhenStructureLocked = canReorderParticipantApplicationParagraphs({
+    structureLocked: isStructureLocked,
+    recruitmentForm: isRecruitmentEditorVariant(variant),
+  })
 
-/**
- * 프로그램 등록 위저드 신청 양식 — 시드 단락은 사용자 작성 영역이므로
- * 동의/객관식 선택·신청자 fill 인풋은 막고, 타이틀·본문·텍스트형 TD는 템플릿 관리와 동일하게 편집.
- * (모집 양식·양식 관리·프로그램 상세 수정은 기존 동작 유지)
- */
+  /**
+   * 신청 양식 시드 fill 잠금 — 등록 위저드·템플릿 관리·프로그램 상세 수정 공통.
+   * 동의/객관식 선택·신청자 입력은 막고, 타이틀·본문·텍스트형 TD는 편집.
+   * 모집은 구조만 잠그고 운영 값(기간·상세·표 셀)은 입력 가능.
+   */
+  const isApplicationSeedFillLocked =
+    isStructureLocked && !isRecruitmentEditorVariant(variant)
+  /** 등록 위저드에서만 프로그램 연동 미리보기를 끈다. */
   const isRegistrationApplicationStructureEdit =
     localOnlyDraftPersistence && !isRecruitmentEditorVariant(variant)
 
@@ -1355,13 +1372,15 @@ export function useProgramParticipantApplicationEditor(
       if (!active) return INACTIVE_LEFT_PANEL_PARAGRAPH_BODY_OPTIONS
       return {
       structureLockedParagraphIds: effectiveStructureLockedParagraphIds,
-      structureLockedAuthoringChoicePreview: isRegistrationApplicationStructureEdit
+      structureLockedAuthoringChoicePreview: isApplicationSeedFillLocked
         ? false
         : isStructureLocked
           ? true
           : undefined,
-      seedApplicantFillLocked: isRegistrationApplicationStructureEdit ? true : undefined,
-      structureLockedChoiceDisplayOnly: isRegistrationApplicationStructureEdit
+      structureLockedAuthoringOperationalFill:
+        isStructureLocked && isRecruitmentEditorVariant(variant) ? true : undefined,
+      seedApplicantFillLocked: isApplicationSeedFillLocked ? true : undefined,
+      structureLockedChoiceDisplayOnly: isApplicationSeedFillLocked
         ? true
         : undefined,
       programApplicationFormInstitution: variant === 'institution',
@@ -1460,6 +1479,7 @@ export function useProgramParticipantApplicationEditor(
       institutionApplicationBridge,
       institutionApplicationFormVisibilityVersion,
       institutionApplicationHiddenParagraphIds,
+      isApplicationSeedFillLocked,
       isRegistrationApplicationStructureEdit,
       linkedProgram,
       localOnlyDraftPersistence,
@@ -1658,6 +1678,7 @@ export function useProgramParticipantApplicationEditor(
     singleItemListActiveItemId,
     structureLockedParagraphIds: effectiveStructureLockedParagraphIds,
     allowAddAfterStructureLockedParagraphs,
+    allowReorderWhenStructureLocked,
     pinnedTop,
     sortableMiddle,
     pinnedBottom,
