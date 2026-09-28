@@ -156,19 +156,14 @@ describe('mapIndividualMemberDetailToUser', () => {
 
 describe('mapInstructorMemberDetailToUser', () => {
   it('member.listMetrics.settlementStatusLabel을 User에 매핑한다', () => {
-    const user = mapInstructorMemberDetailToUser(
-      baseInstructorDetail({
-        member: {
-          memberId: 101,
-          uuid: 'instructor-uuid',
-          email: 'teacher@example.com',
-          name: '김강사',
-          roles: ['INSTRUCTOR'],
-          status: 'ACTIVE',
-          listMetrics: { settlementStatusLabel: '확인 대기 중' },
-        },
-      })
-    )
+    const detail = baseInstructorDetail()
+    const user = mapInstructorMemberDetailToUser({
+      ...detail,
+      member: {
+        ...detail.member,
+        listMetrics: { settlementStatusLabel: '확인 대기 중' },
+      } as typeof detail.member,
+    })
 
     expect(user.listMetrics?.settlementStatusLabel).toBe('확인 대기 중')
   })
