@@ -142,6 +142,7 @@ import {
   resolveProgramParticipantMaxClassCount,
 } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
+import { shouldShowInstitutionApplicationEducationFormatField } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import {
   canParticipatingInstitutionApplicationInfoEdit,
   getParticipatingInstitutionApplicationInfoEditBlockedAlertMessage,
@@ -682,6 +683,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     program,
     enrollmentStatus: programProgressStatus,
   })
+  const showEducationFormatField = shouldShowInstitutionApplicationEducationFormatField(program)
 
   useEffect(() => {
     if (isApplicationInfoEditing && !canEditApplicationInfo) {
@@ -2013,7 +2015,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               }
               classAndCount={classAndCountDisplay}
               educationFormat={
-                isApplicationDetailEditing ? (
+                isApplicationDetailEditing && showEducationFormatField ? (
                   <InstitutionEducationFormatRadios
                     value={applicationInfoDraft.educationFormat}
                     onChange={value => updateApplicationInfoDraft({ educationFormat: value })}
