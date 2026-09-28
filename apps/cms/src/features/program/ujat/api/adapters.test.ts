@@ -116,6 +116,25 @@ describe('UJAT program adapters', () => {
     expect(updated.businessStartDate).toBe('2026-10-14')
     expect(updated.businessEndDate).toBe('2026-11-07')
   })
+
+  it('사업 기간은 연도를 넘어도 선택한 날짜를 그대로 보낸다', () => {
+    const span: Program = {
+      ...program,
+      startDate: '2025-03-31T15:00:00.000Z',
+      endDate: '2027-08-23T14:59:59.999Z',
+    }
+    const created = toCreateRequest(span)
+    const updated = toUpdateRequest(span, {
+      startDate: span.startDate,
+      endDate: span.endDate,
+    })
+    expect(created.startDate).toBe(span.startDate)
+    expect(created.endDate).toBe(span.endDate)
+    expect(created.businessStartDate).toBe(span.startDate)
+    expect(created.businessEndDate).toBe(span.endDate)
+    expect(updated.businessStartDate).toBe(span.startDate)
+    expect(updated.businessEndDate).toBe(span.endDate)
+  })
 })
 
 describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 버그 수정 확인)', () => {

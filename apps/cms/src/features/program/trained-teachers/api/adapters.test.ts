@@ -788,6 +788,41 @@ describe('mapTrainedTeacherToCreateRequest BE registration contract', () => {
   })
 })
 
+describe('mapTrainedTeacher business period', () => {
+  it('사업 기간은 연도를 넘어도 선택한 날짜를 그대로 보낸다', () => {
+    const program: Program = {
+      id: 'tmp',
+      sponsorId: '1627251',
+      title: 'TT create',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      description: '',
+      startDate: '2025-03-31T15:00:00.000Z',
+      endDate: '2027-08-23T14:59:59.999Z',
+      status: 'pending',
+      lifecycleStatus: 'recruiting_students',
+      generalParticipantTypes: ['school_institution'],
+      generalProgramAudience: 'organization',
+      generalProgramEducationStructure: 'curriculum',
+      rounds: [],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    }
+    const created = mapTrainedTeacherToCreateRequest(program)
+    const updated = mapTrainedTeacherToUpdateRequest(program, {
+      startDate: program.startDate,
+      endDate: program.endDate,
+    })
+    expect(created.startDate).toBe(program.startDate)
+    expect(created.endDate).toBe(program.endDate)
+    expect(created.businessStartDate).toBe(program.startDate)
+    expect(created.businessEndDate).toBe(program.endDate)
+    expect(updated.businessStartDate).toBe(program.startDate)
+    expect(updated.businessEndDate).toBe(program.endDate)
+  })
+})
+
 describe('serializeTrainedTeacherServiceDetailJson recruitment constraints', () => {
   it('forces maxAssignableInstructors 0 and hides pre-education on write', () => {
     const json = serializeTrainedTeacherServiceDetailJson({

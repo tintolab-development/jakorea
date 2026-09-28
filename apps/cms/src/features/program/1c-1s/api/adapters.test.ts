@@ -7,7 +7,6 @@ import {
   mapCompanySchoolListItemToProgram,
   mapCompanySchoolToCreateRequest,
   mapCompanySchoolToUpdateRequest,
-  resolveCompanySchoolBusinessCalendarYearPeriod,
 } from './adapters'
 import {
   parseCompanySchoolServiceDetailJson,
@@ -56,26 +55,24 @@ const program: Program = {
 }
 
 describe('company-school adapters', () => {
-  it('creates with COMPANY_SCHOOL type and calendar-year business period', () => {
+  it('creates with COMPANY_SCHOOL type', () => {
     const request = mapCompanySchoolToCreateRequest(program)
-    const year = resolveCompanySchoolBusinessCalendarYearPeriod(program)
 
     expect(request.programType).toBe(COMPANY_SCHOOL_PROGRAM_API_TYPE)
     expect(request.startDate).toBe(program.startDate)
     expect(request.endDate).toBe(program.endDate)
-    expect(request.businessStartDate).toBe(year.start)
-    expect(request.businessEndDate).toBe(year.end)
+    expect(request.businessStartDate).toBe(program.startDate)
+    expect(request.businessEndDate).toBe(program.endDate)
     expect(request.generalVolunteers).toBe(0)
     expect(request.autoApplyDefaultFormBindings).toBe(true)
   })
 
-  it('등록·수정 사업 기간은 달력연도(1/1~12/31, Seoul)를 businessStartDate/EndDate로 보낸다', () => {
+  it('등록·수정 사업 기간은 연도를 넘어도 선택한 startDate/endDate를 그대로 보낸다', () => {
     const partial: Program = {
       ...program,
-      startDate: '2026-11-25T15:00:00.000Z',
-      endDate: '2026-12-17T14:59:59.999Z',
+      startDate: '2025-03-31T15:00:00.000Z',
+      endDate: '2027-08-23T14:59:59.999Z',
     }
-    const year = resolveCompanySchoolBusinessCalendarYearPeriod(partial)
     const created = mapCompanySchoolToCreateRequest(partial)
     const updated = mapCompanySchoolToUpdateRequest(partial, {
       startDate: partial.startDate,
@@ -84,15 +81,13 @@ describe('company-school adapters', () => {
 
     expect(created.startDate).toBe(partial.startDate)
     expect(created.endDate).toBe(partial.endDate)
-    expect(created.businessStartDate).toBe(year.start)
-    expect(created.businessEndDate).toBe(year.end)
-    expect(updated.businessStartDate).toBe(year.start)
-    expect(updated.businessEndDate).toBe(year.end)
-    expect(year.start).toBe('2025-12-31T15:00:00.000Z')
-    expect(year.end).toBe('2026-12-31T14:59:59.999Z')
+    expect(created.businessStartDate).toBe(partial.startDate)
+    expect(created.businessEndDate).toBe(partial.endDate)
+    expect(updated.businessStartDate).toBe(partial.startDate)
+    expect(updated.businessEndDate).toBe(partial.endDate)
   })
 
-  it('상세 운영 기간은 startDate/endDate를 쓰고 business(달력연도)로 덮지 않는다', () => {
+  it('상세 운영 기간은 startDate/endDate를 쓰고 business로 덮지 않는다', () => {
     const mapped = mapCompanySchoolDetailToProgram({
       id: '186100',
       startDate: '2026-10-21',

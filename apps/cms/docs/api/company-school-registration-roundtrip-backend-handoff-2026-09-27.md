@@ -100,7 +100,7 @@ JSON / overlay:
 
 루트 운영 기간도 요청과 다르다. 요청은 `startDate`/`endDate`를 서울 **10/11~11/09**로, `businessStartDate`/`businessEndDate`만 **1/1~12/31**로 나눠 보냈다. 응답 루트 `startDate`/`endDate`는 `2026-01-01`~`2026-12-31`로 바뀌어 `business*`와 같아졌다. 회차 instant는 짧은 기간이 남아 있다.
 
-1사1교는 사업 기간이 그해 1/1~12/31이 아니면 `COMPANY_SCHOOL_BUSINESS_PERIOD_MUST_BE_CALENDAR_YEAR`로 거절하거나, 들어온 기간을 달력연도로 고친다. `186026`은 거절 대신 **운영 `startDate`/`endDate`를 사업 연도로 덮은 경우**다. 둘 다 하지 말 것. 클라이언트가 보낸 `startDate`/`endDate`와 `businessStartDate`/`businessEndDate`를 각각 그대로 저장한다. 시작 ≤ 종료만 검사한다. 1/1~12/31 강제, 연도가 다르다는 이유의 거절, 응답에서 기간을 다시 쓰는 것 모두 금지.
+1사1교는 사업 기간이 그해 1/1~12/31이 아니면 `COMPANY_SCHOOL_BUSINESS_PERIOD_MUST_BE_CALENDAR_YEAR`로 거절하거나, 들어온 기간을 달력연도로 고친다. `186026`은 거절 대신 **운영 `startDate`/`endDate`를 사업 연도로 덮은 경우**다. 둘 다 하지 말 것. 클라이언트가 보낸 `startDate`/`endDate`와 `businessStartDate`/`businessEndDate`를 각각 그대로 저장한다. 시작 ≤ 종료만 검사한다. 1/1~12/31 강제, 연도가 다르다는 이유의 거절, 응답에서 기간을 다시 쓰는 것 모두 금지. **현재 SSOT:** [`program-business-period-any-dates-backend-request-2026-09-28.md`](./program-business-period-any-dates-backend-request-2026-09-28.md) (`2025.04.01 ~ 2027.08.23` 포함 아무 날짜).
 
 그 덮어쓰기 때문에 상태도 어긋난다. 응답 시각은 `2026-09-27`인데 `periodStatus=IN_PROGRESS`, `lifecycleStatus=in_progress`, `status=active`다. 교육 시작이 10/11이면 이날은 **시작 전**이다. 루트 `startDate`를 1/1로 두면 9월에도 진행 중이 된다.
 

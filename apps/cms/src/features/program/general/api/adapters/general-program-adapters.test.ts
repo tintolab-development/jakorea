@@ -455,6 +455,18 @@ describe('general-program-adapters', () => {
     expect(request.businessEndDate).toBe('2026-11-07')
   })
 
+  it('사업 기간은 연도를 넘어도 선택한 날짜를 그대로 보낸다', () => {
+    const request = mapGeneralProgramToCreateRequest({
+      ...sampleProgram,
+      startDate: '2025-03-31T15:00:00.000Z',
+      endDate: '2027-08-23T14:59:59.999Z',
+    })
+    expect(request.startDate).toBe('2025-03-31T15:00:00.000Z')
+    expect(request.endDate).toBe('2027-08-23T14:59:59.999Z')
+    expect(request.businessStartDate).toBe('2025-03-31T15:00:00.000Z')
+    expect(request.businessEndDate).toBe('2027-08-23T14:59:59.999Z')
+  })
+
   it('maps Program patch to update request with only patched keys', () => {
     const request = mapGeneralProgramToUpdateRequest(sampleProgram, {
       title: '수정된 제목',
