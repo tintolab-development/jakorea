@@ -14,6 +14,62 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
+/**
+ * 제출 시 백엔드는 runtime hidden 문항 키가 answers에 있으면
+ * "Hidden runtime form question cannot be submitted" → OPERATION_NOT_ALLOWED.
+ * 렌더 장식은 단락을 지우지 않고 hidden / runtimeHidden, runtimeContext.hiddenQuestionKeys 만 찍는다.
+ */
+function isRuntimeHiddenParagraph(paragraph: object): boolean {
+  const row = paragraph as Record<string, unknown>
+  return row.hidden === true || row.runtimeHidden === true
+}
+
+function addStringList(target: Set<string>, value: unknown) {
+  if (!Array.isArray(value)) return
+  for (const item of value) {
+    if (typeof item === 'string' && item.trim()) target.add(item.trim())
+  }
+}
+
+export function collectRuntimeHiddenAnswerKeys(form: unknown): Set<string> {
+  const hidden = new Set<string>()
+  const document = coerceApplicationFormDocument(form)
+  if (!document) return hidden
+
+  const runtime = document.runtimeContext
+  if (isRecord(runtime)) {
+    addStringList(hidden, runtime.hiddenQuestionKeys)
+    const audience = runtime.audienceApplication
+    if (isRecord(audience)) addStringList(hidden, audience.hiddenQuestionKeys)
+  }
+
+  const paragraphs = document.paragraphs
+  if (!Array.isArray(paragraphs)) return hidden
+  for (const paragraph of paragraphs) {
+    if (!isRecord(paragraph) || !isRuntimeHiddenParagraph(paragraph)) continue
+    const key = resolveApplicationAnswerKey(paragraph)
+    if (key) hidden.add(key)
+    if (typeof paragraph.id === 'string' && paragraph.id.trim()) hidden.add(paragraph.id.trim())
+  }
+  return hidden
+}
+
+function withoutRuntimeHiddenParagraphs(
+  document: Record<string, unknown>,
+): Record<string, unknown> {
+  const hidden = collectRuntimeHiddenAnswerKeys(document)
+  if (hidden.size === 0 || !Array.isArray(document.paragraphs)) return document
+  return {
+    ...document,
+    paragraphs: document.paragraphs.filter(paragraph => {
+      if (!isRecord(paragraph)) return true
+      const key = resolveApplicationAnswerKey(paragraph)
+      const id = typeof paragraph.id === 'string' ? paragraph.id.trim() : ''
+      return !(key && hidden.has(key)) && !(id && hidden.has(id))
+    }),
+  }
+}
+
 function hasParagraphs(value: unknown): value is { paragraphs: unknown[] } {
   return isRecord(value) && Array.isArray(value.paragraphs)
 }
@@ -96,7 +152,8 @@ export function writingFormDraftFromApplicationForm(
 ): WritingFormDraft | null {
   const document = coerceApplicationFormDocument(form)
   if (!document) return null
-  const normalized = normalizeWritingFormDraft(document as unknown as WritingFormDraft)
+  const visible = withoutRuntimeHiddenParagraphs(document)
+  const normalized = normalizeWritingFormDraft(visible as unknown as WritingFormDraft)
   if (!draftAnswers || Object.keys(draftAnswers).length === 0) {
     return normalized
   }
@@ -158,6 +215,7 @@ export function buildApplicationAnswersFromDraft(
   for (const paragraph of draft.paragraphs) {
     const key = resolveApplicationAnswerKey(paragraph)
     if (!key) continue
+    if (isRuntimeHiddenParagraph(paragraph)) continue
     if (omit?.has(key) || omit?.has(paragraph.id)) continue
     if (overrides && key in overrides) {
       answers[key] = overrides[key]

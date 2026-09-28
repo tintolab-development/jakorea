@@ -23,6 +23,7 @@ import {
   buildApplicationAnswersFromDraft,
   writingFormDraftFromApplicationForm,
 } from '@/features/program/lib/application-form-draft'
+import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
 import {
   isApplyScheduleChoiceParagraphId,
   shouldShowApplyPreferredSchedule,
@@ -104,6 +105,10 @@ export function ProgramApplyPage() {
     applyCase === 'trained-teachers' ||
     program?.registrationKind === 'trainedTeachers' ||
     program?.programType === 'TRAINED_TEACHER'
+  /** 일반 프로그램 기간 지정 — 지망 UI는 보이지만 찾아가는 연수 전용 body 필드는 보내지 않는다. */
+  const showGeneralPreferredSchedule =
+    program?.detailCase === 'general' && shouldShowApplyPreferredSchedule(program)
+  const showPreferredScheduleInput = showTrainedTeachersApply || showGeneralPreferredSchedule
 
   const profileDefaults = useMemo(
     () => trainedTeachersProfileDefaults(profileQuery.data),
@@ -256,9 +261,7 @@ export function ProgramApplyPage() {
 
       if (
         isTrainedPreferred ||
-        (program.detailCase === 'general' &&
-          isApplyScheduleChoiceParagraphId(paragraph.id) &&
-          shouldShowApplyPreferredSchedule(program))
+        (showGeneralPreferredSchedule && isApplyScheduleChoiceParagraphId(paragraph.id))
       ) {
         return (
           <ApplyPreferredSchedule
@@ -397,6 +400,7 @@ export function ProgramApplyPage() {
       preferredBlocks,
       basicInfo,
       showTrainedTeachersApply,
+      showGeneralPreferredSchedule,
       showPreferredEducationForm,
       profileSchoolLocked,
       profileSchool,
@@ -436,17 +440,17 @@ export function ProgramApplyPage() {
       const preferredScheduleBlocks = showTrainedTeachersApply
         ? toPortalPreferredScheduleBlocks(preferredBlocks)
         : undefined
-      if (showTrainedTeachersApply) {
+      if (showPreferredScheduleInput) {
         const preferredError = findIncompletePreferredScheduleMessage(preferredBlocks)
         if (preferredError) {
           setSubmitError(preferredError)
           return
         }
       }
-      const preferredAnswer = showTrainedTeachersApply
+      const preferredAnswer = showPreferredScheduleInput
         ? toPreferredScheduleAnswerValue(preferredBlocks)
         : null
-      if (showTrainedTeachersApply && !preferredAnswer) {
+      if (showPreferredScheduleInput && !preferredAnswer) {
         setSubmitError('진행 희망 교육 일정을 한 개 이상 입력해 주세요.')
         return
       }
@@ -467,8 +471,15 @@ export function ProgramApplyPage() {
 
       const overrides: Record<string, unknown> = {}
       if (preferredAnswer != null) {
-        overrides[PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule] =
-          preferredAnswer
+        const scheduleParagraph = draft.paragraphs.find(
+          paragraph =>
+            paragraph.id === PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule ||
+            isApplyScheduleChoiceParagraphId(paragraph.id),
+        )
+        const scheduleKey = scheduleParagraph
+          ? resolveApplicationAnswerKey(scheduleParagraph)
+          : ''
+        if (scheduleKey) overrides[scheduleKey] = preferredAnswer
       }
       if (basicAnswer != null) {
         overrides[PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo] = basicAnswer
