@@ -1,4 +1,4 @@
-import type { ProgramCreateRequest } from '@/shared/api/generated/forms-surveys/schemas/programCreateRequest'
+import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { mapGeneralProgramToCreateRequest } from '@/features/program/general/api/adapters/general-program-adapters'
 import { mapCompanySchoolToCreateRequest } from '@/features/program/1c-1s/api/adapters'

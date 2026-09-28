@@ -12186,7 +12186,9 @@
             "type": "string"
           },
           "targetLevel": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "교육 대상 첫 값. targetLevels가 있으면 그 첫 원소와 같다."
           },
           "institutionType": {
             "type": "string"
@@ -12343,6 +12345,21 @@
             "description": "프로그램 등록과 같은 트랜잭션에서 publish/bind할 program-scoped form bindings. GENERAL / TRAINED_TEACHER / COMPANY_SCHOOL / UJAT에서 허용. 공용 카탈로그 version id는 거부하고 draft-owned COPY만 받는다.",
             "items": {
               "$ref": "#/components/schemas/ProgramFormBindingRequest"
+            }
+          },
+          "targetLevels": {
+            "type": "array",
+            "nullable": true,
+            "description": "교육 대상 복수. elementary|middle|high|university|adult. 빈 배열은 교육 대상을 지운다. serviceDetailJson.program.targetLevels와 동기화된다.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "elementary",
+                "middle",
+                "high",
+                "university",
+                "adult"
+              ]
             }
           }
         }
@@ -19211,7 +19228,9 @@
             "type": "string"
           },
           "targetLevel": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "교육 대상 첫 값. targetLevels[0]과 같다."
           },
           "institutionType": {
             "type": "string"
@@ -19393,6 +19412,20 @@
           "businessYear": {
             "type": "integer",
             "format": "int32"
+          },
+          "targetLevels": {
+            "type": "array",
+            "description": "교육 대상 코드 배열. 값이 없으면 생략된다.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "elementary",
+                "middle",
+                "high",
+                "university",
+                "adult"
+              ]
+            }
           }
         }
       },
@@ -23487,7 +23520,9 @@
             "type": "string"
           },
           "targetLevel": {
-            "type": "string"
+            "type": "string",
+            "nullable": true,
+            "description": "교육 대상 첫 값. targetLevels가 있으면 그 첫 원소와 같다."
           },
           "institutionType": {
             "type": "string"
@@ -23660,6 +23695,21 @@
             "description": "PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지",
             "items": {
               "type": "string"
+            }
+          },
+          "targetLevels": {
+            "type": "array",
+            "nullable": true,
+            "description": "교육 대상 복수. elementary|middle|high|university|adult. 빈 배열은 교육 대상을 지운다. serviceDetailJson.program.targetLevels와 동기화된다.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "elementary",
+                "middle",
+                "high",
+                "university",
+                "adult"
+              ]
             }
           }
         }

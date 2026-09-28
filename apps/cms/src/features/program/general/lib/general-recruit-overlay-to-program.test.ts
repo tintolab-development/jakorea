@@ -61,6 +61,27 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(next.description).toBe('모집 양식 프로그램 설명')
   })
 
+  it('maps trainedTeachers detailInfo thumb and attachments into program', () => {
+    const overlay: Record<string, unknown> = {
+      'trainedTeachersRecruit.detailInfo.thumbContentUrl': '/api/admin/files/55/content',
+      'trainedTeachersRecruit.detailInfo.attachmentFileNames': [
+        'TCH-05_운영안내.pdf',
+        'TCH-05_교재활용가이드.pdf',
+      ],
+    }
+
+    const next = applyGeneralRecruitOverlayToProgram(baseProgram(), overlay, {
+      preferOverlay: true,
+    })
+
+    expect(next.keyVisualImage).toBe('/api/admin/files/55/content')
+    expect(next.posterImage).toBe('/api/admin/files/55/content')
+    expect(next.attachmentFileNames).toEqual([
+      'TCH-05_운영안내.pdf',
+      'TCH-05_교재활용가이드.pdf',
+    ])
+  })
+
   it('maps instructor and volunteer recruit overlays', () => {
     const keys = GENERAL_RECRUIT_OVERLAY_KEYS
     const overlay: Record<string, unknown> = {

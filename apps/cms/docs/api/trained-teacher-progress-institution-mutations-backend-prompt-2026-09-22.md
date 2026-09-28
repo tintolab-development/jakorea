@@ -70,7 +70,7 @@ PATCH /api/admin/organization-applications/{applicationId}
   "organizationAddressDetail": "본관 3층",
   "requestedClassCount": 2,
   "requestedStudentCount": 40,
-  "requestedEducationFormat": "offline",
+  "requestedEducationFormat": "OFFLINE",
   "teacherMemberId": 1001,
   "teacherPhone": "02-000-0000",
   "teacherEmail": "teacher@school.kr",
@@ -103,11 +103,18 @@ PATCH /api/admin/organization-applications/{applicationId}
 
 ### 실패
 
+- **실측 2026-09-28:** TRAINED_TEACHER 승인 신청 `1691187` 에
+  `PATCH /api/admin/organization-applications/{id}` 를 보내면
+  `ORGANIZATION_APPLICATION_EDIT_PROGRAM_TYPE_UNSUPPORTED`
+  (`현재 프로그램 유형에서는 기관 신청을 수정할 수 없습니다.`) 로 거절된다.
+  FE 는 이미 이 공통 PATCH 를 호출한다. **유형 가드를 열어** TRAINED_TEACHER 도
+  GENERAL 과 동일하게 수정되게 할 것. 새 전용 경로를 FE 에 강제하지 말 것.
 - TRAINED_TEACHER 신청 id 에 PATCH 가 404 / 403 / “일반 프로그램만 가능”
 - 승인된 신청은 수정 불가라며 거절하면서, 거절 코드·메시지 없이 200 과 무변경
 - `textbookId` 를 저장했는데 GET `textbookName` 이 비거나 이전 이름
 - PATCH 가 `preferredScheduleBlocks` · `educationJournalCount` · `educationCompletionCount` 를 지움
 - 없는 필드를 보내면 500. 무시하거나 400 + 필드명을 돌려준다
+- `requestedEducationFormat` 은 `ONLINE` | `OFFLINE` | `HYBRID` 만 받는다. 한글(`온라인`)은 400.
 
 ### 성공
 
@@ -405,3 +412,14 @@ POST /api/admin/programs/{programId}/trained-teacher/education-journals/bulk-dow
 - 섹션 4 배송 상태를 제공할지
 - 섹션 5 에서 summary 와 `educationCompletionCount` 중 집계 SSOT
 - 섹션 1 PATCH 가 TRAINED_TEACHER 승인 건에 이미 되는지, 안 되면 막힌 이유
+
+---
+
+## FE 수용 (2026-09-28)
+
+BE 핸드오프: [trained-teacher-progress-institution-mutations-frontend-handoff-2026-09-28.md](./trained-teacher-progress-institution-mutations-frontend-handoff-2026-09-28.md)
+
+- 활동 포기 **B** 경로 연동: `POST …/trained-teacher/organization-applications/{id}/give-up` + `{ stopScheduleId, reason }`
+- 학교 삭제(진행 현황 제외): `POST …/remove-from-progress` + `{ reason }` · 409 `TRAINED_TEACHER_PROGRESS_EVIDENCE_EXISTS` 안내
+- 신청 정보 수정: 공통 `PATCH /organization-applications/{id}` (TRAINED_TEACHER 허용 — CMS 재기동 후 재검증)
+- OpenAPI: give-up / remove-from-progress 경로 + requestBody 스키마 반영, dashboard codegen 재생성

@@ -161,6 +161,8 @@
 | [programs-ujat-education-regions-api-backend-handoff.md](api/programs-ujat-education-regions-api-backend-handoff.md) | UJAT 교육 지역 BE 계약 (Cat3) |
 | [programs-ujat-education-regions-api-conversion-status.md](api/programs-ujat-education-regions-api-conversion-status.md) | UJAT 교육 지역 Phase SSOT (Cat3) |
 | [programs-trained-teachers-api-backend-handoff.md](api/programs-trained-teachers-api-backend-handoff.md) | 교육받은 교사 BE 계약 (Cat4) |
+| [trained-teacher-progress-institution-mutations-frontend-handoff-2026-09-28.md](api/trained-teacher-progress-institution-mutations-frontend-handoff-2026-09-28.md) | TT 진행 현황 수정·포기·제외 FE 핸드오프 (2026-09-28) |
+| [**program-attachments-education-targets-multi-backend-prompt-2026-09-28.md**](api/program-attachments-education-targets-multi-backend-prompt-2026-09-28.md) | 프로그램 상세 첨부 포털 노출 · 교육 대상 복수 (2026-09-28) |
 | [programs-trained-teachers-api-conversion-status.md](api/programs-trained-teachers-api-conversion-status.md) | 교육받은 교사 Phase SSOT (Cat4) |
 | [trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md](api/trained-teachers-detail-unconfirmed-api-backend-request-2026-09-16.md) | 교육받은 교사 상세 미확인 API BE 요청 |
 | [programs-gemini-visiting-training-api-backend-handoff.md](api/programs-gemini-visiting-training-api-backend-handoff.md) | Gemini 찾아가는 연수 BE 계약 (Cat5) |

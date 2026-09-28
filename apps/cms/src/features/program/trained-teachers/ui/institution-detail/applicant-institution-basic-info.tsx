@@ -10,15 +10,10 @@ import type {
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/program-approval-status-detail-value'
 import type { ApplicantInstitutionEditDraft } from '@/features/program/general/lib/applicant-institution-detail-edit'
-import type {
-  SameSchoolGradeOption,
-  TextbookSelectOption,
-} from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import {
   formatInstitutionApplicationGradeDisplay,
   type InstitutionAffiliatedTeacherOption,
 } from '@/features/program/general/lib/institution-application-detail-edit-policy'
-import { CmsSelect } from '@/shared/ui/cms-select'
 import {
   InstitutionAddressDetailEdit,
   InstitutionClassAndStudentCountEdit,
@@ -54,8 +49,6 @@ export interface TrainedTeachersApplicantInstitutionBasicInfoProps {
   mode?: 'view' | 'edit'
   draft?: ApplicantInstitutionEditDraft
   onDraftChange?: (partial: Partial<ApplicantInstitutionEditDraft>) => void
-  textbookOptions?: TextbookSelectOption[]
-  sameSchoolGradeOptions?: SameSchoolGradeOption[]
   classCountOptions?: Array<{ value: string; label: string }>
   teacherOptions?: InstitutionAffiliatedTeacherOption[]
   isTeacherOptionsLoading?: boolean
@@ -134,7 +127,6 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
   mode = 'view',
   draft,
   onDraftChange,
-  textbookOptions = [],
   classCountOptions = [],
   teacherOptions = [],
   isTeacherOptionsLoading = false,
@@ -201,38 +193,6 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
       />
     ) : (
       buildTeacherInfoCell(institution, detail)
-    )
-
-  const textbookViewValue = detail?.textbookName?.trim() || '미정'
-
-  const textbookEditValue =
-    isEditMode && draft && onDraftChange ? (
-      <div className="institution-basic-info__field-stack">
-        <CmsSelect
-          className="institution-basic-info__full-width-control"
-          inputSize="large"
-          placeholder="교재명 선택"
-          value={draft.textbookId || undefined}
-          options={textbookOptions.map(option => ({
-            label: option.label,
-            value: option.value,
-          }))}
-          onChange={value => {
-            const selected = textbookOptions.find(option => option.value === value)
-            onDraftChange({
-              textbookId: selected?.value ?? String(value ?? ''),
-              textbookName: selected?.textbookName ?? '',
-            })
-          }}
-        />
-        {validationErrors?.textbookId || validationErrors?.textbookName ? (
-          <span className="institution-basic-info__field-error">
-            {validationErrors.textbookId ?? validationErrors.textbookName}
-          </span>
-        ) : null}
-      </div>
-    ) : (
-      textbookViewValue
     )
 
   const addressDetailValue =
@@ -318,7 +278,6 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
                     />
                   }
                 />
-                <InstitutionApplicationTableRowFullWidth label="교재명" value={textbookEditValue} />
               </tbody>
             </table>
           </div>

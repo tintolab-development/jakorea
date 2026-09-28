@@ -108,6 +108,7 @@ describe('general-program-adapters', () => {
     })
     expect(program.category).toBe('school')
     expect(program.generalProgramAudience).toBe('organization')
+    expect(program.backendProgramType).toBe('GENERAL_ORGANIZATION')
   })
 
   it('prefers programType over category school for individual detail', () => {
@@ -277,6 +278,16 @@ describe('general-program-adapters', () => {
     expect(filterGeneralProgramsByOverviewStatus(programs, 'completed')).toHaveLength(1)
   })
 
+  it('maps list targetLevels array ahead of singular targetLevel', () => {
+    const program = mapAdminProgramListItemToProgram({
+      id: 1,
+      targetLevel: 'elementary',
+      targetLevels: ['university', 'middle', 'high'],
+    })
+    expect(program.targetLevels).toEqual(['university', 'middle', 'high'])
+    expect(program.targetLevel).toBe('university')
+  })
+
   it('maps Program to create request with core fields', () => {
     const request = mapGeneralProgramToCreateRequest(sampleProgram)
     const create = request as import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest & {
@@ -286,6 +297,7 @@ describe('general-program-adapters', () => {
     expect(create.title).toBe('테스트 프로그램')
     expect(create.type).toBe('offline')
     expect(create.targetLevel).toBe('elementary')
+    expect(create.targetLevels).toEqual(['elementary'])
     expect(create.rounds).toHaveLength(1)
     // audience 미설정 → ORGANIZATION → GENERAL_ORGANIZATION
     expect(create.programType).toBe('GENERAL_ORGANIZATION')
@@ -347,6 +359,34 @@ describe('general-program-adapters', () => {
         }),
       ])
     )
+  })
+
+  it('sends targetLevels array on create and update (not only targetLevel[0])', () => {
+    const multi: Program = {
+      ...sampleProgram,
+      targetLevel: 'elementary',
+      targetLevels: ['university', 'middle', 'high'],
+    }
+    const create = mapGeneralProgramToCreateRequest(multi)
+    expect(create.targetLevels).toEqual(['university', 'middle', 'high'])
+    expect(create.targetLevel).toBe('university')
+
+    const update = mapGeneralProgramToUpdateRequest(multi, {
+      targetLevels: ['university', 'middle', 'high'],
+    })
+    expect(update.targetLevels).toEqual(['university', 'middle', 'high'])
+    expect(update.targetLevel).toBe('university')
+  })
+
+  it('hydrates detail targetLevels from ProgramResponse top-level array', () => {
+    const program = mapAdminProgramDetailToProgram({
+      id: '99',
+      title: '상세',
+      targetLevel: 'elementary',
+      targetLevels: ['high', 'adult'],
+    } as unknown as ProgramResponse)
+    expect(program.targetLevels).toEqual(['high', 'adult'])
+    expect(program.targetLevel).toBe('high')
   })
 
   it('sends detailedProgramId and does not alias the name as textbookName', () => {

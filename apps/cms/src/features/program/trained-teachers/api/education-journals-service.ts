@@ -14,6 +14,7 @@ import {
   fetchTrainedTeacherEducationJournalsRemote,
 } from './education-journals-client'
 import { listTrainedTeacherOrganizationApplications } from './organization-applications-service'
+import { mapPreferredScheduleBlocksToSessions } from './organization-applications-adapters'
 import type { EducationJournalCreateRequest } from '@/shared/api/generated/dashboard/schemas/educationJournalCreateRequest'
 
 function assertRemoteReady(): void {
@@ -135,20 +136,35 @@ export function mapApplicantSchoolToParticipatingSchool(
     approvalStatus: 'approved',
     teacherName: row.teacherName || '-',
     teacherMemberId: row.teacherMemberId,
+    organizationId: row.organizationId,
     contact: row.contact,
     /** TT는 강사 Relation 없음 — 합성하지 않음 */
     instructors: '',
     programId: row.programId,
-    sessions: row.sessions,
+    sessions:
+      row.sessions?.length
+        ? row.sessions
+        : mapPreferredScheduleBlocksToSessions(row.preferredScheduleBlocks),
     preferredScheduleBlocks: row.preferredScheduleBlocks,
     educationTarget: row.educationTarget,
     progressLabel: row.progressLabel,
     totalEducationRoundCount: row.totalEducationRoundCount,
     completedEducationRoundCount: row.completedEducationRoundCount,
     textbookName: row.textbookName,
+    textbookId: row.detail?.textbookId,
+    teacherPhone: row.contact,
+    teacherMobile: row.contact,
+    teacherEmail: row.detail?.teacherEmail,
+    addressDetail: row.detail?.addressDetail,
+    educationFormat: row.detail?.educationType,
+    applicationReason: row.detail?.applicationReason,
+    otherRequests: row.detail?.otherRequests,
     educationJournalCount: row.educationJournalCount,
     journalSubmitted: row.journalSubmitted,
     educationCompletionCount: row.educationCompletionCount,
+    activityWithdrawn: row.activityWithdrawn === true,
+    giveUpAt: row.giveUpAt,
+    giveUpStopScheduleId: row.giveUpStopScheduleId,
   }
 }
 

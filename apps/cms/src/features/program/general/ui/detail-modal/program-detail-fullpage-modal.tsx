@@ -1274,7 +1274,18 @@ export function ProgramDetailFullPageModal({
     isCompanySchoolRecruitmentInfoTab && activeCompanySchoolRecruitTab === 'instructors'
 
   /** 공통정보 탭 수정 모드: 이 때만 `infoForm` 을 자식에 넘김 (RHF + Zod 단일 스키마) */
-  const isEditModeInfo = activeTab === 'info' && editTab === 'info' && !!displayProgram
+  const isEditModeInfo =
+    activeTab === 'info' &&
+    editTab === 'info' &&
+    !!displayProgram &&
+    (!isTrainedTeachersDetail || canGeneralProgramCommonInfoEdit(displayProgram))
+
+  useEffect(() => {
+    if (!displayProgram || editTab !== 'info' || !isTrainedTeachersDetail) return
+    if (canGeneralProgramCommonInfoEdit(displayProgram)) return
+    setEditMode(null)
+  }, [displayProgram, editTab, isTrainedTeachersDetail])
+
   const commonInfoEditSchema = useMemo(
     () =>
       isTrainedTeachersDetail

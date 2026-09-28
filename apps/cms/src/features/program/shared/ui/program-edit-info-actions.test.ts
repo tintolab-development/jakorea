@@ -55,7 +55,7 @@ describe('ProgramEditInfoActions', () => {
     fireEvent.click(screen.getByRole('button', { name: '정보 수정' }))
 
     expect(onEdit).toHaveBeenCalledOnce()
-    expect(screen.getByRole('button', { name: '정보 수정' }).dataset.variant).toBe('primary')
+    expect(screen.getByRole('button', { name: '정보 수정' }).dataset.variant).toBe('secondary')
   })
 
   it('편집 상태에서 같은 정보 수정 버튼으로 저장한다', () => {

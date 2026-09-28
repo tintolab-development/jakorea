@@ -44,9 +44,15 @@ describe('canGeneralProgramCommonInfoEdit', () => {
       )
     ).toBe(false)
     expect(
+      canGeneralProgramCommonInfoEdit(baseProgram({ lifecycleStatus: 'in_progress' }))
+    ).toBe(false)
+    expect(
       canGeneralProgramCommonInfoEdit(
         baseProgram({ lifecycleStatus: 'education_completed' })
       )
+    ).toBe(false)
+    expect(
+      canGeneralProgramCommonInfoEdit(baseProgram({ lifecycleStatus: 'completed' }))
     ).toBe(false)
   })
 })

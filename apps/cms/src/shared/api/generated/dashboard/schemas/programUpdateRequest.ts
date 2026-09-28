@@ -13,6 +13,7 @@ import type { ProgramScheduleRequest } from './programScheduleRequest';
 import type { ProgramSettlementPaymentItemRequest } from './programSettlementPaymentItemRequest';
 import type { ProgramSponsorAssignmentRequest } from './programSponsorAssignmentRequest';
 import type { ProgramUpdateRequestEducationStructure } from './programUpdateRequestEducationStructure';
+import type { ProgramUpdateRequestTargetLevelsItem } from './programUpdateRequestTargetLevelsItem';
 import type { ProgramWagePolicyRequest } from './programWagePolicyRequest';
 
 /**
@@ -47,7 +48,8 @@ export interface ProgramUpdateRequest {
   schoolId?: string;
   district?: string;
   ips?: string;
-  targetLevel?: string;
+  /** 교육 대상 첫 값. targetLevels가 있으면 그 첫 원소와 같다. */
+  targetLevel?: string | null;
   institutionType?: string;
   ipOwned?: string;
   courseDeliveredBy?: string;
@@ -96,4 +98,6 @@ export interface ProgramUpdateRequest {
   serviceDetailJson?: string;
   /** PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지 */
   clearFields?: string[];
+  /** 교육 대상 복수. elementary|middle|high|university|adult. 빈 배열은 교육 대상을 지운다. serviceDetailJson.program.targetLevels와 동기화된다. */
+  targetLevels?: ProgramUpdateRequestTargetLevelsItem[] | null;
 }

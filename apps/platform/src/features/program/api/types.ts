@@ -81,6 +81,7 @@ export type PortalProgramListItem = {
   canApply?: boolean
   thumbnailFileObjectId?: number
   educationTarget?: string
+  educationTargets?: string[]
   featuredOnHome?: boolean
   homeDisplayOrder?: number
 }
@@ -137,6 +138,8 @@ export type PortalProgramDetail = {
   remarks?: string
   applicationMethod?: string | null
   educationTarget?: string
+  /** 복수 교육 대상 (BE 확장 시). 없으면 `educationTarget` 단수·콤마 구분 fallback */
+  educationTargets?: string[]
   educationTargetDetail?: string
   recruitmentTargetDetail?: string
   thumbnailFileObjectId?: number

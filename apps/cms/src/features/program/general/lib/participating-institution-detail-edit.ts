@@ -8,6 +8,7 @@ import {
   calculateParticipatingTextbookKitQuantity,
   resolveTextbookFieldsFromSelection,
 } from '@/features/program/general/lib/participating-institution-textbook'
+import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
 import type { InstitutionApplicationDetailEditFields } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 import { buildInstitutionApplicationEditFieldsFromParticipatingDetail } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 
@@ -130,27 +131,43 @@ export function participatingInstitutionEditDraftToDetailPatch(
     context.studentCount
   )
 
-  const selectedTextbook = parsed.data.textbookId
-    ? context.catalog?.find(row => row.id === parsed.data.textbookId)
-    : undefined
-  const shouldPersistSelectedTextbook =
-    context.requiresTextbook &&
-    selectedTextbook != null &&
-    (isApplied || context.allowTextbookSelectionWithoutCombinedClass === true)
+  const textbookIdRaw = parsed.data.textbookId?.trim() ?? ''
+  const textbookNameRaw = parsed.data.textbookName?.trim() ?? ''
+  const isTextbookNotUsed =
+    textbookIdRaw === TEXTBOOK_NOT_USED_OPTION_VALUE ||
+    textbookNameRaw === '해당 없음' ||
+    !textbookIdRaw
 
-  const textbookFields =
-    shouldPersistSelectedTextbook
-      ? resolveTextbookFieldsFromSelection(
-          context.program,
-          selectedTextbook,
-          context.studentCount
-        )
-      : context.requiresTextbook
-        ? {
-            textbookKits: kitQuantity.textbookKits,
-            textbookQuantity: kitQuantity.textbookQuantity,
-          }
-        : {}
+  const selectedTextbook =
+    !isTextbookNotUsed && textbookIdRaw
+      ? context.catalog?.find(row => row.id === textbookIdRaw)
+      : undefined
+  const canPersistTextbookChoice =
+    isApplied || context.allowTextbookSelectionWithoutCombinedClass === true
+
+  let textbookFields: Partial<SchoolDetailForModal> = {}
+  if (canPersistTextbookChoice && context.requiresTextbook) {
+    if (isTextbookNotUsed || selectedTextbook == null) {
+      textbookFields = {
+        textbookId: undefined,
+        textbookName: '해당 없음',
+        textbookGrade: undefined,
+        textbookKits: 0,
+        textbookQuantity: 0,
+      }
+    } else {
+      textbookFields = resolveTextbookFieldsFromSelection(
+        context.program,
+        selectedTextbook,
+        context.studentCount
+      )
+    }
+  } else if (context.requiresTextbook) {
+    textbookFields = {
+      textbookKits: kitQuantity.textbookKits,
+      textbookQuantity: kitQuantity.textbookQuantity,
+    }
+  }
 
   return {
     adminComment: adminTrimmed || undefined,

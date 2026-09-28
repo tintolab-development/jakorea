@@ -162,7 +162,7 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
     teacherMemberId: dto.teacherMemberId ?? base.teacherMemberId,
     schoolName: dto.organizationName?.trim() || base.schoolName,
     region: dto.organizationAddress?.trim() || base.region,
-    educationGrade: dto.requestedGrade?.trim() || base.educationGrade,
+    educationGrade: formatApplicantGradeLabel(dto.requestedGrade) || base.educationGrade,
     classCount: dto.requestedClassCount ?? base.classCount,
     studentCount: dto.requestedStudentCount ?? base.studentCount,
     teacherName: dto.teacherName?.trim() || base.teacherName,
@@ -177,7 +177,8 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
     detail: {
       ...base.detail,
       addressDetail: dto.organizationAddressDetail?.trim() || base.detail?.addressDetail,
-      educationType: dto.requestedEducationFormat?.trim() || base.detail?.educationType,
+      educationType:
+        formatRequestedEducationFormat(dto.requestedEducationFormat) || base.detail?.educationType,
       textbookId: toId(dto.textbookId) || base.detail?.textbookId,
       textbookName: dto.textbookName?.trim() || base.detail?.textbookName,
       ...(teacherPhone ? { teacherPhone } : {}),
@@ -185,6 +186,74 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
       teacherInfo: undefined,
     },
   }
+}
+
+function formatApplicantGradeLabel(raw: string | null | undefined): string {
+  const trimmed = raw?.trim() ?? ''
+  if (!trimmed) return ''
+  if (trimmed.endsWith('학년')) return trimmed
+  if (/^\d+$/.test(trimmed)) return `${trimmed}학년`
+  return trimmed
+}
+
+/** 상세 희망 교육 형태. API는 ONLINE/OFFLINE/HYBRID, 화면 라디오는 한글 값. */
+export function formatRequestedEducationFormat(raw: string | null | undefined): string {
+  const trimmed = raw?.trim() ?? ''
+  if (!trimmed) return ''
+  if (trimmed === '온라인' || trimmed === '오프라인' || trimmed === '온/오프라인') return trimmed
+  switch (trimmed.toUpperCase()) {
+    case 'ONLINE':
+      return '온라인'
+    case 'OFFLINE':
+      return '오프라인'
+    case 'HYBRID':
+      return '온/오프라인'
+    default:
+      return ''
+  }
+}
+
+/** PATCH 요청용. 화면 한글 → API enum. 이미 enum이면 그대로. */
+export function toRequestedEducationFormatApiValue(
+  raw: string | null | undefined
+): 'ONLINE' | 'OFFLINE' | 'HYBRID' | undefined {
+  const trimmed = raw?.trim() ?? ''
+  if (!trimmed) return undefined
+  switch (trimmed) {
+    case '온라인':
+    case 'ONLINE':
+      return 'ONLINE'
+    case '오프라인':
+    case 'OFFLINE':
+      return 'OFFLINE'
+    case '온/오프라인':
+    case 'HYBRID':
+      return 'HYBRID'
+    default:
+      return undefined
+  }
+}
+
+/** 기관 신청 상세의 기본정보 4칸. 폼 답으로 채우지 않는다. */
+export function readOrganizationApplicationBasicInfoFields(
+  dto: Pick<
+    OrganizationApplicationDetailResponse,
+    | 'organizationAddressDetail'
+    | 'requestedEducationFormat'
+    | 'applicationReason'
+    | 'otherRequests'
+  >
+): {
+  addressDetail?: string
+  educationFormat?: string
+  applicationReason?: string
+  otherRequests?: string
+} {
+  const addressDetail = dto.organizationAddressDetail?.trim() || undefined
+  const educationFormat = formatRequestedEducationFormat(dto.requestedEducationFormat) || undefined
+  const applicationReason = dto.applicationReason?.trim() || undefined
+  const otherRequests = dto.otherRequests?.trim() || undefined
+  return { addressDetail, educationFormat, applicationReason, otherRequests }
 }
 
 /**
@@ -199,15 +268,18 @@ export function softMergeOrganizationApplicationDetailOntoRow(
   const teacherEmail = dto.teacherEmail?.trim()
   const teacherName = dto.teacherName?.trim()
   const addressDetail = dto.organizationAddressDetail?.trim()
+  /** 상세 학년은 requestedGrade만. 목록 educationGrade(프로그램 대상 학년)를 다시 넣지 않는다. */
+  const requestedGrade = formatApplicantGradeLabel(dto.requestedGrade)
   const applicationReason = dto.applicationReason?.trim()
   const otherRequests = dto.otherRequests?.trim()
-  const educationType = dto.requestedEducationFormat?.trim()
+  const educationType = formatRequestedEducationFormat(dto.requestedEducationFormat)
   const textbookName = dto.textbookName?.trim()
   const textbookId = toId(dto.textbookId)
   const rejectReason = dto.rejectReason?.trim()
 
   return {
     ...base,
+    educationGrade: requestedGrade,
     teacherMemberId: dto.teacherMemberId ?? base.teacherMemberId,
     teacherName: teacherName || base.teacherName,
     contact: teacherPhone || base.contact,

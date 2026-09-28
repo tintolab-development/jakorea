@@ -6,9 +6,13 @@ import {
   approveTrainedTeacherOrganizationApplicationRemote,
   fetchTrainedTeacherOrganizationApplicationRemote,
   fetchTrainedTeacherOrganizationApplicationsRemote,
+  giveUpTrainedTeacherOrganizationApplicationRemote,
   rejectTrainedTeacherOrganizationApplicationRemote,
+  removeTrainedTeacherOrganizationApplicationFromProgressRemote,
   resendTrainedTeacherOrganizationApplicationNotificationRemote,
+  type TrainedTeacherOrganizationActivityGiveUpPayload,
   type TrainedTeacherOrganizationNotificationResendPayload,
+  type TrainedTeacherOrganizationProgressRemovalPayload,
 } from './organization-applications-client'
 
 function assertRemoteReady(): void {
@@ -68,5 +72,27 @@ export async function resendTrainedTeacherOrganizationApplicationNotification(
     applicationId,
     payload,
     idempotencyKey
+  )
+}
+
+export async function giveUpTrainedTeacherOrganizationApplication(
+  programId: string,
+  applicationId: string,
+  payload: TrainedTeacherOrganizationActivityGiveUpPayload
+) {
+  assertRemoteReady()
+  return giveUpTrainedTeacherOrganizationApplicationRemote(programId, applicationId, payload)
+}
+
+export async function removeTrainedTeacherOrganizationApplicationFromProgress(
+  programId: string,
+  applicationId: string,
+  payload: TrainedTeacherOrganizationProgressRemovalPayload
+) {
+  assertRemoteReady()
+  return removeTrainedTeacherOrganizationApplicationFromProgressRemote(
+    programId,
+    applicationId,
+    payload
   )
 }

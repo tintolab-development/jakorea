@@ -539,6 +539,11 @@ export interface Program {
   generalSurveyMenuKeys?: GeneralProgramSurveyMenuKey[]
   /** 일반 프로그램 유형 — 대분류 (기관/개인) */
   generalProgramAudience?: GeneralProgramAudienceKind
+  /**
+   * BE `programType` (GENERAL_ORGANIZATION, TRAINED_TEACHER, …).
+   * 합반 API는 `GENERAL_ORGANIZATION` 일 때만 호출한다.
+   */
+  backendProgramType?: string
   /** 일반 프로그램 유형 — 중분류 (커리큘럼형/일정형) */
   generalProgramEducationStructure?: GeneralProgramEducationStructure
   /** 일반 프로그램 유형 — 소분류 (단일/복수 회차) */

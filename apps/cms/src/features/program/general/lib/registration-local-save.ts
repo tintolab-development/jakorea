@@ -39,6 +39,10 @@ import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/
 import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import {
+  awaitRecruitDetailMediaUploads,
+  bindRecruitDetailMediaAfterProgramCreate,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
@@ -616,6 +620,8 @@ export async function persistGeneralProgramRegistration(args: {
   }
 
   const variant = args.variant ?? 'general'
+  // 썸네일·첨부 업로드가 끝나기 전에 스냅샷하지 않음
+  await awaitRecruitDetailMediaUploads()
   const id =
     variant === 'economy'
       ? newCompanySchoolLocalProgramId()
@@ -636,18 +642,29 @@ export async function persistGeneralProgramRegistration(args: {
     editorExtras: args.editorExtras,
   })
 
+  // 생성 요청 전에 스냅샷 — create 후 overlay 초기화돼도 썸네일·첨부 바인딩 가능
+  const recruitMediaOverlay = { ...getGeneralRecruitOverlayRecord() }
+
   if (variant === 'economy' && shouldUseCompanySchoolRemoteApi()) {
     const { createCompanySchoolProgram } = await import(
       '@/features/program/1c-1s/api/service'
     )
-    return createCompanySchoolProgram(program, args.preparedFormBindings)
+    const created = await createCompanySchoolProgram(program, args.preparedFormBindings)
+    await bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay).catch(error => {
+      console.error('[registration] bind recruit detail media failed', created.id, error)
+    })
+    return created
   }
 
   if (variant === 'trainedTeachers' && shouldUseTrainedTeacherProgramsRemoteApi()) {
     const { createTrainedTeacherProgram } = await import(
       '@/features/program/trained-teachers/api/service'
     )
-    return createTrainedTeacherProgram(program, args.preparedFormBindings)
+    const created = await createTrainedTeacherProgram(program, args.preparedFormBindings)
+    await bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay).catch(error => {
+      console.error('[registration] bind recruit detail media failed', created.id, error)
+    })
+    return created
   }
 
   if (
@@ -656,6 +673,9 @@ export async function persistGeneralProgramRegistration(args: {
     shouldUseGeneralProgramsRemoteApi()
   ) {
     const created = await createGeneralProgram(program, args.preparedFormBindings)
+    await bindRecruitDetailMediaAfterProgramCreate(created.id, recruitMediaOverlay).catch(error => {
+      console.error('[registration] bind recruit detail media failed', created.id, error)
+    })
     return created
   }
 

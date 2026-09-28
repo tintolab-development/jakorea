@@ -342,20 +342,20 @@ export function GeneralParticipantApplicantDetailView({
       try {
         const response = await updateIndividualApplication(applicant.id, {
           textbookId:
-            payload.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE
+            payload.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE || !payload.textbookId?.trim()
               ? null
-              : payload.textbookId
-                ? Number(payload.textbookId)
-                : undefined,
+              : Number(payload.textbookId),
           teamName: payload.teamName?.trim() || null,
           teamMemberCount: payload.teamMemberCount,
         })
         const responseRow = mergeApplicationUpdateResponse(applicant, response)
         const updated =
-          payload.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE
+          payload.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE ||
+          !payload.textbookId?.trim() ||
+          response.textbook == null
             ? {
                 ...responseRow,
-                textbookId: TEXTBOOK_NOT_USED_OPTION_VALUE,
+                textbookId: undefined,
                 textbookName: '해당 없음',
                 textbookKits: 0,
                 textbookQuantity: 0,

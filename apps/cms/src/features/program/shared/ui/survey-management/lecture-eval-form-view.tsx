@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { CmsButton } from '@/shared/ui/cms-button'
 import type {
   WritingFormDraft,
@@ -27,25 +27,42 @@ export function LectureEvalFormView({
   onDraftChange,
   onSubmitClick,
 }: LectureEvalFormViewProps) {
+  const [localDraft, setLocalDraft] = useState(draft)
+  const onDraftChangeRef = useRef(onDraftChange)
+  onDraftChangeRef.current = onDraftChange
+
+  useEffect(() => {
+    setLocalDraft(draft)
+    onDraftChangeRef.current(draft)
+  }, [draft])
+
   const updateParagraph = useCallback(
     (id: string, updater: (p: WritingFormParagraph) => WritingFormParagraph) => {
-      onDraftChange({
-        ...draft,
-        paragraphs: draft.paragraphs.map(p => (p.id === id ? updater(p) : p)),
+      setLocalDraft(prev => {
+        const next = {
+          ...prev,
+          paragraphs: prev.paragraphs.map(paragraph =>
+            paragraph.id === id ? updater(paragraph) : paragraph
+          ),
+        }
+        onDraftChangeRef.current(next)
+        return next
       })
     },
-    [draft, onDraftChange]
+    []
   )
+  const handleSelectCard = useCallback(() => {}, [])
+  const handleReorderMiddle = useCallback(() => {}, [])
 
   return (
     <div className="ujat-lecture-eval-form">
       <div className="ujat-lecture-eval-form__scroll">
         <FormEditorLeftPanel
-          paragraphs={draft.paragraphs}
-          titleNumbering={draft.formSettings.titleNumbering}
+          paragraphs={localDraft.paragraphs}
+          titleNumbering={localDraft.formSettings.titleNumbering}
           selectedCardId={null}
-          onSelectCard={() => {}}
-          onReorderMiddle={() => {}}
+          onSelectCard={handleSelectCard}
+          onReorderMiddle={handleReorderMiddle}
           updateParagraph={updateParagraph}
           editorKind="survey"
           paragraphInteractionMode="user"

@@ -6,15 +6,29 @@ import {
 } from '@/features/program/general/lib/combined-class-edit-policy'
 
 describe('combined-class-edit-policy', () => {
-  it('단일 회차 프로그램에서만 합반 신청 가능', () => {
+  it('GENERAL_ORGANIZATION 단일 회차에서만 합반 신청 가능', () => {
     expect(
       isCombinedClassProgramEligible({
+        backendProgramType: 'GENERAL_ORGANIZATION',
         generalProgramSessionRound: 'single',
       } as Program)
     ).toBe(true)
     expect(
       isCombinedClassProgramEligible({
+        backendProgramType: 'GENERAL_ORGANIZATION',
         generalProgramSessionRound: 'multi',
+      } as Program)
+    ).toBe(false)
+    expect(
+      isCombinedClassProgramEligible({
+        backendProgramType: 'TRAINED_TEACHER',
+        generalProgramSessionRound: 'single',
+      } as Program)
+    ).toBe(false)
+    expect(
+      isCombinedClassProgramEligible({
+        backendProgramType: 'GENERAL',
+        generalProgramSessionRound: 'single',
       } as Program)
     ).toBe(false)
     expect(isCombinedClassProgramEligible({} as Program)).toBe(false)

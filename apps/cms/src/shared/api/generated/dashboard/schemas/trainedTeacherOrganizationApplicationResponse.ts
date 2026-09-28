@@ -42,7 +42,7 @@ export interface TrainedTeacherOrganizationApplicationResponse {
   educationGrade?: string | null;
   /** TT 프로그램 config의 교육 회차 표시값. */
   lectureRound?: string | null;
-  /** program_material에 연결된 첫 교재명. 없으면 TT config fallback. */
+  /** 신청에 지정한 textbook_id의 교재명. 없으면 프로그램 교재, 그다음 TT config fallback. 교재 배송 상태는 없습니다. */
   textbookName?: string | null;
   /** @minimum 0 */
   educationJournalCount?: number;
@@ -52,4 +52,10 @@ export interface TrainedTeacherOrganizationApplicationResponse {
   availableActions?: string[];
   /** 가장 최근 기관 승인/반려 결과 알림의 발송 시각. 즉시 발송은 요청 시각, 예약 발송은 scheduledAt. 알림이 없으면 null. 재발송해도 approvedAt·rejectedAt·applicationStatus는 바뀌지 않습니다. */
   resultNotificationSentAt?: string | null;
+  /** 활동 포기 여부. true여도 applicationStatus는 APPROVED입니다. */
+  activityWithdrawn?: boolean;
+  /** 활동 포기 시각. 포기하지 않았으면 null. */
+  giveUpAt?: string | null;
+  /** 활동 포기 기준 일정 id. 포기하지 않았으면 null. */
+  giveUpStopScheduleId?: number | null;
 }

@@ -6,6 +6,25 @@ import type {
 } from '@/features/program/shared/model/applicant-institution'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 
+function isJsonContainer(raw: string): boolean {
+  const trimmed = raw.trim()
+  if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return false
+  try {
+    const parsed: unknown = JSON.parse(trimmed)
+    return parsed != null && typeof parsed === 'object'
+  } catch {
+    return false
+  }
+}
+
+function formatApplicantGradeLabel(raw: string | undefined): string {
+  const trimmed = raw?.trim() ?? ''
+  if (!trimmed) return ''
+  if (trimmed.endsWith('학년')) return trimmed
+  if (/^\d+$/.test(trimmed)) return `${trimmed}학년`
+  return trimmed
+}
+
 function stripJsonQuotes(raw: string): string {
   const t = raw.trim()
   if (t.length >= 2 && t.startsWith('"') && t.endsWith('"')) {
@@ -26,12 +45,20 @@ export function buildFormAnswerMap(
   for (const answer of answers ?? []) {
     const key = answer.questionKeySnapshot?.trim()
     if (!key) continue
+    const valueJson = answer.answerValueJson?.trim()
+    /**
+     * 객체·배열 답의 displayText는 Java Map toString(`{a=b}`)이라 JSON이 아니다.
+     * 학년·사유는 answerValueJson에만 있으므로 그걸 우선한다.
+     */
+    if (valueJson && valueJson !== 'null' && isJsonContainer(valueJson)) {
+      map[key] = valueJson
+      continue
+    }
     const display = answer.answerDisplayText?.trim()
     if (display) {
       map[key] = display
       continue
     }
-    const valueJson = answer.answerValueJson?.trim()
     if (!valueJson || valueJson === 'null') continue
     map[key] = stripJsonQuotes(valueJson)
   }
@@ -47,33 +74,6 @@ function pickAnswer(
     if (v) return v
   }
   return undefined
-}
-
-/** paragraph id 단위 JSON answers → flat string map (TT basic-info 등) */
-function parseNestedObjectAnswerFields(
-  map: Record<string, string>,
-  paragraphId: string
-): Record<string, string> {
-  const raw = map[paragraphId]?.trim()
-  if (!raw) return {}
-  try {
-    const parsed: unknown = JSON.parse(raw)
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-    const out: Record<string, string> = {}
-    for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
-      if (value == null) continue
-      const text =
-        typeof value === 'string'
-          ? value.trim()
-          : typeof value === 'number' && Number.isFinite(value)
-            ? String(value)
-            : ''
-      if (text) out[key] = text
-    }
-    return out
-  } catch {
-    return {}
-  }
 }
 
 function pickAnswerWithNested(
@@ -144,16 +144,18 @@ export function hydrateOrganizationApplicationRowFromForm(input: {
 }): ApplicantSchoolRow {
   const { row, formResponse, adminComment } = input
   const map = buildFormAnswerMap(formResponse?.answers)
-  const ttBasic = parseNestedObjectAnswerFields(
-    map,
-    'program-application-trained-teachers-seed-basic-info'
-  )
+  /**
+   * basic-info 문단 객체는 열지 않는다. 학년·상세주소·사유·기타 요청·교육 형태·교사 연락처는
+   * 기관 신청 컬럼(`requestedGrade` 등)이 원본이다.
+   */
+  const ttBasic: Record<string, string> = {}
   const guidance = parseGuidanceRows(map)
 
   const textbookName = pickAnswerWithNested(map, ttBasic, 'textbookName')
-  const educationGrade =
+  const educationGrade = formatApplicantGradeLabel(
     pickAnswerWithNested(map, ttBasic, 'applicationGrade', 'educationGrade', 'grade') ??
-    row.educationGrade
+      row.educationGrade
+  )
   const region =
     pickAnswerWithNested(map, ttBasic, 'organizationRegion', 'regionLabel') ?? row.region
   const addressDetail =

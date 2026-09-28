@@ -155,6 +155,52 @@ function mapEducationTarget(value: string | undefined): {
   return { key: null, educationTargetLabel: '전체', educationTargetGroupLabel: '전체' }
 }
 
+/** Portal 복수 `educationTargets` 우선. 없을 때만 단수 `educationTarget`. */
+function mapEducationTargets(remote: {
+  educationTarget?: string
+  educationTargets?: string[]
+}): {
+  key: EducationTargetKey | null
+  educationTargetLabel: string
+  educationTargetGroupLabel: string
+} {
+  /** CMS `TARGET_LEVEL_LABEL` 과 동일 — 목록·상세 조인 표시 */
+  const CMS_TARGET_LEVEL_LABEL: Record<EducationTargetKey, string> = {
+    elementary: '초등학교',
+    middle: '중학교',
+    high: '고등학교',
+    university: '대학(원)생',
+    adult: '성인',
+  }
+
+  const fromArray = (remote.educationTargets ?? [])
+    .flatMap(item => String(item).split(/[,|/]/u))
+    .map(item => item.trim().toLowerCase())
+    .filter(Boolean)
+  const source =
+    fromArray.length > 0
+      ? fromArray
+      : (remote.educationTarget ?? '')
+          .split(/[,|/]/u)
+          .map(item => item.trim().toLowerCase())
+          .filter(Boolean)
+  const keys = [...new Set(source)].filter(
+    (key): key is EducationTargetKey => key in TARGET_LABELS
+  )
+  if (keys.length === 0) {
+    return mapEducationTarget(remote.educationTarget)
+  }
+  if (keys.length === 1) {
+    return mapEducationTarget(keys[0])
+  }
+  const joined = keys.map(key => CMS_TARGET_LEVEL_LABEL[key]).join(', ')
+  return {
+    key: keys[0] ?? null,
+    educationTargetLabel: joined,
+    educationTargetGroupLabel: joined,
+  }
+}
+
 function mapCategory(categories: string[] | undefined, programType: string | undefined) {
   const codes = (categories ?? []).map(item => item.trim().toUpperCase())
   if (codes.includes('INSTRUCTOR')) return 'instructor' as const
@@ -362,7 +408,7 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
   const category = mapCategory(remote.portalCategories, remote.programType)
   const detailCase = mapDetailCase(remote.programType, remote.portalCategories, remote.recruitments)
   const educationForm = mapEducationForm(remote.operationMethod)
-  const targets = mapEducationTarget(remote.educationTarget)
+  const targets = mapEducationTargets(remote)
   const roleLabel = ROLE_LABEL[detailCase]
   const programType = readString(remote.programType)?.toUpperCase()
   const isTrainedTeacher = programType === 'TRAINED_TEACHER'
@@ -458,11 +504,12 @@ export function mapPortalProgramDetail(remote: PortalProgramDetail): ProgramDeta
     applicationMethodLabel: '지원방법',
     applicationMethodValue: readString(remote.applicationMethod ?? undefined) ?? '',
     attachments: (remote.attachments ?? []).flatMap(file => {
-      if (file.fileObjectId == null) return []
+      const fileObjectId = Number(file.fileObjectId)
+      if (!Number.isFinite(fileObjectId) || fileObjectId <= 0) return []
       return [
         {
           name: readString(file.originalFileName) ?? '첨부파일',
-          url: portalPublicFileDownloadUrl(file.fileObjectId),
+          url: portalPublicFileDownloadUrl(fileObjectId),
         },
       ]
     }),
@@ -476,7 +523,7 @@ export function mapPortalProgramListItem(remote: PortalProgramListItem): Program
 
   const category = mapCategory(remote.portalCategories, remote.programType)
   const educationForm = mapEducationForm(remote.operationMethod)
-  const targets = mapEducationTarget(remote.educationTarget)
+  const targets = mapEducationTargets(remote)
   const opStart = toDate(remote.businessStartDate)
   const opEnd = toDate(remote.businessEndDate)
   const appStart = toDate(remote.recruitmentStartAt)

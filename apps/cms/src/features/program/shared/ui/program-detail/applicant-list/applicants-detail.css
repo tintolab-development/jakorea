@@ -31,19 +31,79 @@
   background-color: #fafafa !important;
 }
 
-/* 강의 회차 별 희망 교육 날짜 및 시간 셀 (모달 내부 col 겹침 방지) */
-.applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions {
-  width: 200px;
-  min-width: 200px;
-  white-space: normal;
-  padding: 12px 24px !important;
-  vertical-align: top;
+/*
+ * 교육받은 교사·1사1교 기관 목록 — 신청 학년/학급 수/총 학생 수/교사명.
+ * fluid(table-layout:auto)는 width만으로는 남는 폭을 나눠 먹으므로 max-width로 헤더 폭에 고정한다.
+ */
+.applicant-details .cms-data-table .ant-table-thead > tr > th.applicant-details__th-grade,
+.applicant-details .cms-data-table .ant-table-tbody > tr > td.applicant-details__td-grade {
+  width: 128px !important;
+  min-width: 128px !important;
+  max-width: 128px !important;
   box-sizing: border-box;
 }
 
-/* 강의 회차 컬럼: 헤더만 중앙정렬, 본문 셀은 좌측 정렬 */
+.applicant-details .cms-data-table .ant-table-thead > tr > th.applicant-details__th-class-count,
+.applicant-details .cms-data-table .ant-table-tbody > tr > td.applicant-details__td-class-count {
+  width: 148px !important;
+  min-width: 148px !important;
+  max-width: 148px !important;
+  box-sizing: border-box;
+}
+
+.applicant-details .cms-data-table .ant-table-thead > tr > th.applicant-details__th-student-count,
+.applicant-details .cms-data-table .ant-table-tbody > tr > td.applicant-details__td-student-count,
+.applicant-details .cms-data-table .ant-table-thead > tr > th.applicant-details__th-teacher,
+.applicant-details .cms-data-table .ant-table-tbody > tr > td.applicant-details__td-teacher {
+  width: 136px !important;
+  min-width: 136px !important;
+  max-width: 136px !important;
+  box-sizing: border-box;
+}
+
+/* 교육받은 교사·1사1교 기관 목록 — 일정 한 줄이 말줄임되지 않게 열 폭을 고정 */
+.applicant-details .cms-data-table .ant-table-thead > tr > th.applicant-details__th-sessions--schedule,
+.applicant-details .cms-data-table .ant-table-tbody > tr > td.applicant-details__td-sessions--schedule {
+  width: 400px !important;
+  min-width: 400px !important;
+  max-width: none !important;
+  overflow: visible;
+}
+
+.applicant-details__td-sessions--schedule .applicant-details__sessions-cell,
+.applicant-details__td-sessions--schedule .applicant-details__session-line--nowrap,
+.applicant-details__td-sessions--schedule .applicant-details__session-line--nowrap .program-detail-td-segment-wrap,
+.applicant-details__td-sessions--schedule
+  .applicant-details__session-line--nowrap
+  .program-detail-td-segment-wrap
+  > span {
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  flex-shrink: 0;
+}
+
+/* 진행 희망 교육 일정 셀 — 옆 열과 겹치지 않도록 overflow clip + 최소 너비 */
+.applicant-details .ant-table-thead > tr > th.applicant-details__th-sessions,
 .applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions {
+  min-width: 360px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions {
+  white-space: normal;
+  padding: 12px 16px !important;
+  vertical-align: middle;
   text-align: left;
+}
+
+.applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions--center {
+  text-align: center;
+}
+
+.applicant-details .ant-table-tbody > tr > td.applicant-details__td-sessions--center .applicant-details__sessions-cell {
+  align-items: center;
 }
 
 .applicant-details__sessions-cell {
@@ -55,9 +115,11 @@
   padding: 0;
   margin: 0;
   min-width: 0;
+  max-width: 100%;
   min-height: 0;
   box-sizing: border-box;
   line-height: 150%;
+  overflow: hidden;
 }
 
 .applicant-details__session-line {
@@ -72,6 +134,29 @@
   font-family: Pretendard, sans-serif;
   white-space: nowrap;
   box-sizing: border-box;
+}
+
+.applicant-details__session-line--nowrap,
+.applicant-details__session-line--nowrap .program-detail-td-segment-wrap {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.applicant-details__session-line--nowrap .program-detail-td-segment-wrap > span {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.applicant-details__session-line--nowrap .program-detail-td-divider {
+  flex-shrink: 0;
 }
 
 .applicant-details__session-round-tag {

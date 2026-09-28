@@ -64,7 +64,9 @@ import type {
   PreferenceUpdateRequest,
   ScheduleChangeRequest,
   TemporaryScheduleSaveRequest,
+  TrainedTeacherOrganizationActivityGiveUpRequest,
   TrainedTeacherOrganizationApplicationResponse,
+  TrainedTeacherOrganizationProgressRemovalRequest,
   Update,
   VolunteerApplicationDetailResponse,
   VolunteerApplicationsParams,
@@ -2755,7 +2757,41 @@ const resendGeminiOrganizationApplicationNotification = (
       options);
     }
 
-return {recordVolunteerDocumentEvaluation,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,resendOrganizationApplicationNotification,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplications,getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationId,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list12,getDashboardShortcutBadges,getApiAdminGeminiTrainingsRecruitmentsProgramIdOrganizationApplications,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome,resendTrainedTeacherOrganizationApplicationNotification,resendGeminiOrganizationApplicationNotification}};
+/**
+ * 승인 상태를 유지하고 활동 포기 시각만 기록합니다. stopScheduleId는 해당 프로그램 일정이어야 합니다. 이미 포기하면 409 TRAINED_TEACHER_ACTIVITY_ALREADY_GIVEN_UP. 교육일지와 완료 증빙은 삭제하지 않습니다.
+ * @summary 교육받은 교사 기관 활동 포기
+ */
+const postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdGiveUp = (
+    programId: number,
+    applicationId: number,
+    trainedTeacherOrganizationActivityGiveUpRequest: TrainedTeacherOrganizationActivityGiveUpRequest,
+ options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse>>,) => {
+      return customInstance<TrainedTeacherOrganizationApplicationResponse>(
+      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}/give-up`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: trainedTeacherOrganizationActivityGiveUpRequest
+    },
+      options);
+    }
+
+/**
+ * 활동 포기가 아닙니다. applicationStatus를 APPROVAL_CANCELLED로 바꿔 APPROVED 목록에서 제외합니다. 교육일지 또는 COMPLETED 완료 증빙이 있으면 409 TRAINED_TEACHER_PROGRESS_EVIDENCE_EXISTS. 물리 삭제하지 않고 PENDING으로 되돌리지 않습니다.
+ * @summary 교육받은 교사 진행 현황에서 기관 제외
+ */
+const postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdRemoveFromProgress = (
+    programId: number,
+    applicationId: number,
+    trainedTeacherOrganizationProgressRemovalRequest: TrainedTeacherOrganizationProgressRemovalRequest,
+ options?: SecondParameter<typeof customInstance<TrainedTeacherOrganizationApplicationResponse>>,) => {
+      return customInstance<TrainedTeacherOrganizationApplicationResponse>(
+      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}/remove-from-progress`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: trainedTeacherOrganizationProgressRemovalRequest
+    },
+      options);
+    }
+
+return {recordVolunteerDocumentEvaluation,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,resendOrganizationApplicationNotification,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplications,getApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationId,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list12,getDashboardShortcutBadges,getApiAdminGeminiTrainingsRecruitmentsProgramIdOrganizationApplications,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome,resendTrainedTeacherOrganizationApplicationNotification,resendGeminiOrganizationApplicationNotification,postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdGiveUp,postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdRemoveFromProgress}};
 export type RecordVolunteerDocumentEvaluationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['recordVolunteerDocumentEvaluation']>>>
 export type GetTemporaryScheduleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getTemporarySchedule']>>>
 export type SaveTemporaryScheduleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveTemporarySchedule']>>>
@@ -2809,3 +2845,5 @@ export type DashboardKpiProgressResult = NonNullable<Awaited<ReturnType<ReturnTy
 export type DashboardHomeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardHome']>>>
 export type ResendTrainedTeacherOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendTrainedTeacherOrganizationApplicationNotification']>>>
 export type ResendGeminiOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendGeminiOrganizationApplicationNotification']>>>
+export type PostApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdGiveUpResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdGiveUp']>>>
+export type PostApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdRemoveFromProgressResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['postApiAdminProgramsProgramIdTrainedTeacherOrganizationApplicationsApplicationIdRemoveFromProgress']>>>

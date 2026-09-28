@@ -11,8 +11,12 @@ import {
   instructorRecruitmentTableColumns,
   capacityTableColumnsEducation,
 } from '../constants/program-list-columns'
-import { categoryOptions, getProgramListTargetLevelLabel, getProgramListAudienceFilterLabel, resolveProgramListAudienceFilterValue, resolveProgramListParticipantTypeFilterValue } from '../constants/program-list-constants'
-import type { Program, ProgramCategory, TargetLevel } from '@/types/domain'
+import { categoryOptions, getProgramListAudienceFilterLabel, resolveProgramListAudienceFilterValue, resolveProgramListParticipantTypeFilterValue } from '../constants/program-list-constants'
+import {
+  formatTargetLevelsLabel,
+  resolveProgramTargetLevels,
+} from '@/features/program/shared/lib/program-detail-info-constants'
+import type { Program, ProgramCategory } from '@/types/domain'
 import type { ProgramListProgramMode } from '../../model/program-list-program-mode'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
@@ -57,6 +61,23 @@ function participantCountRender(_: unknown, record: Program) {
   return `${approved ?? 0}`
 }
 
+/** 교육받은 교사 — 모집 정원을 고르지 않으므로 승인 참여 인원만 표시 */
+function trainedTeachersParticipantCountRender(_: unknown, record: Program) {
+  const approved = record.approvedStudentCount
+  if (approved == null) return '-'
+  return `${approved}`
+}
+
+function withTrainedTeachersParticipantCount(
+  columns: ColumnsType<Program>
+): ColumnsType<Program> {
+  return columns.map(column =>
+    column.key === 'participantCapacity'
+      ? { ...column, render: trainedTeachersParticipantCountRender }
+      : column
+  )
+}
+
 function instructorRecruitRender(_: unknown, record: Program) {
   const cap = record.instructorCapacity
   const current = record.instructors ?? 0
@@ -91,6 +112,11 @@ function participantTypeColumnRender(_: unknown, record: Program) {
   return getProgramListAudienceFilterLabel(
     resolveProgramListParticipantTypeFilterValue(record)
   )
+}
+
+/** 목록「교육 대상」— `targetLevels` 전체. 없을 때만 `targetLevel`. */
+function educationTargetColumnRender(_: unknown, record: Program) {
+  return formatTargetLevelsLabel(resolveProgramTargetLevels(record))
 }
 
 export function resolveProgramListTableView(params: {
@@ -169,7 +195,7 @@ function createProgramListAllColumns() {
       minWidth: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
       className: 'program-list-table__col-target',
-      render: (value: TargetLevel | undefined) => getProgramListTargetLevelLabel(value),
+      render: educationTargetColumnRender,
     },
   ]
 }
@@ -218,7 +244,7 @@ function createProgramListScheduledColumns() {
       width: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
       className: 'program-list-table__col-target',
-      render: (value: TargetLevel | undefined) => getProgramListTargetLevelLabel(value),
+      render: educationTargetColumnRender,
     },
     {
       title: '사업 운영 기간',
@@ -313,7 +339,7 @@ function createProgramListInProgressColumns() {
       minWidth: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
       className: 'program-list-table__col-target',
-      render: (value: TargetLevel | undefined) => getProgramListTargetLevelLabel(value),
+      render: educationTargetColumnRender,
     },
   ]
 }
@@ -356,7 +382,7 @@ function createProgramListFallbackColumns() {
       dataIndex: 'targetLevel',
       key: 'targetLevel',
       align: 'center' as const,
-      render: (value: TargetLevel | undefined) => getProgramListTargetLevelLabel(value),
+      render: educationTargetColumnRender,
     },
   ]
 }
@@ -448,7 +474,7 @@ export function resolveEducationColumns(params: ResolveEducationColumnsParams) {
 
     const columns = resolveColumns() as ColumnsType<Program>
     if (columnPreset === 'trainedTeachers') {
-      return omitTrainedTeachersColumns(columns)
+      return withTrainedTeachersParticipantCount(omitTrainedTeachersColumns(columns))
     }
     return columns
   }

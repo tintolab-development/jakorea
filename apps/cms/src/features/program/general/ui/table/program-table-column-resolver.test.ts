@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { Program } from '@/types/domain'
 import { resolveEducationColumns } from './program-table-column-resolver'
 
 function columnKeys(
@@ -61,6 +62,36 @@ describe('resolveEducationColumns trainedTeachers preset', () => {
     ).toEqual(expected)
   })
 
+  it('교육 대상 컬럼은 targetLevels 전체를 조인한다', () => {
+    const columns = resolveEducationColumns({
+      isOverviewListPage: true,
+      listView: 'ALL',
+      columnPreset: 'trainedTeachers',
+    })
+    const column = columns.find(item => item.key === 'targetLevel')
+    const record = {
+      targetLevel: 'university',
+      targetLevels: ['university', 'middle', 'high'],
+    } as Program
+
+    expect(column?.render?.(undefined, record, 0)).toBe('대학(원)생, 중학교, 고등학교')
+  })
+
+  it('참여자 모집 인원은 정원 없이 승인 참여 인원만 표시한다', () => {
+    const columns = resolveEducationColumns({
+      isOverviewListPage: true,
+      listView: 'ALL',
+      columnPreset: 'trainedTeachers',
+    })
+    const column = columns.find(item => item.key === 'participantCapacity')
+    const record = {
+      approvedStudentCount: 1,
+      participantCapacity: 120,
+    } as Program
+
+    expect(column?.render?.(undefined, record, 0)).toBe('1')
+  })
+
   it('default preset은 참여자 유형·강사·봉사자 컬럼을 유지한다', () => {
     const keys = columnKeys(
       resolveEducationColumns({
@@ -71,5 +102,20 @@ describe('resolveEducationColumns trainedTeachers preset', () => {
     expect(keys).toContain('participantType')
     expect(keys).toContain('instructorRecruitment')
     expect(keys).toContain('volunteerRecruitment')
+  })
+
+  it('default preset 참여자 모집 인원은 승인 인원과 정원을 함께 표시한다', () => {
+    const columns = resolveEducationColumns({
+      isOverviewListPage: true,
+      listView: 'ALL',
+    })
+    const column = columns.find(item => item.key === 'participantCapacity')
+    const record = {
+      approvedStudentCount: 1,
+      participantCapacity: 120,
+      rounds: [],
+    } as unknown as Program
+
+    expect(column?.render?.(undefined, record, 0)).toBe('1 / 120')
   })
 })

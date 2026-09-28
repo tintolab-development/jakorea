@@ -1,4 +1,4 @@
-import type { ProgramCreateRequest } from '@/shared/api/generated/forms-surveys/schemas/programCreateRequest'
+import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import type { Program } from '@/types/domain'
 import { createAdminProgramRemote } from '@/features/program/general/api/programs-api-client'

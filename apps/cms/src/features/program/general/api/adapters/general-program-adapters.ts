@@ -13,6 +13,7 @@ import { ProgramRecruitmentRequestRecruitmentType } from '@/shared/api/generated
 import { ProgramRecruitmentRequestStatus } from '@/shared/api/generated/dashboard/schemas/programRecruitmentRequestStatus'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
+import type { ProgramUpdateRequestTargetLevelsItem } from '@/shared/api/generated/dashboard/schemas/programUpdateRequestTargetLevelsItem'
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
 import { programMatchesProgressPhase } from '@/features/program/general/ui/constants/program-list-constants'
 import {
@@ -33,14 +34,16 @@ import {
   normalizeSponsorManagerContactIds,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
+import { resolveProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import type { TargetLevel } from '@/types/domain'
 import {
   formatKoreanPhoneNumber,
   isValidKoreanPhoneNumber,
 } from '@jakorea/domain/shared/korean-phone'
 
 /**
- * BE `applicationTargetMode` — OpenAPI codegen에 아직 없음.
- * CMS `generalProgramAudience`(기관/개인)와 대응. BOTH는 BE 허용값이나 CMS 대분류는 상호 배타.
+ * BE `applicationTargetMode` — CMS `generalProgramAudience`(기관/개인)와 대응.
+ * BOTH는 BE 허용값이나 CMS 대분류는 상호 배타.
  */
 export type ProgramApplicationTargetMode = 'ORGANIZATION' | 'INDIVIDUAL' | 'BOTH'
 
@@ -176,40 +179,13 @@ function toOptionalNumber(value: unknown): number | undefined {
   return Number.isFinite(n) ? n : undefined
 }
 
-/** 목록 API `targetLevel` — enum 또는 한글 라벨 → 도메인 TargetLevel */
-function normalizeListTargetLevel(raw: string | undefined | null): Program['targetLevel'] | undefined {
-  if (raw == null) return undefined
-  const trimmed = String(raw).trim()
-  if (!trimmed) return undefined
-  const lower = trimmed.toLowerCase()
-  const byCode: Record<string, NonNullable<Program['targetLevel']>> = {
-    elementary: 'elementary',
-    middle: 'middle',
-    high: 'high',
-    university: 'university',
-    college: 'university',
-    adult: 'adult',
-  }
-  if (byCode[lower]) return byCode[lower]
-  const byLabel: Record<string, NonNullable<Program['targetLevel']>> = {
-    초등: 'elementary',
-    초등학생: 'elementary',
-    중등: 'middle',
-    중학생: 'middle',
-    고등: 'high',
-    고등학생: 'high',
-    대학생: 'university',
-    대학: 'university',
-    성인: 'adult',
-  }
-  return byLabel[trimmed]
-}
-
-function resolveListTargetLevel(dto: AdminProgramListItemDto): Program['targetLevel'] | undefined {
-  const fromArray = Array.isArray(dto.targetLevels)
-    ? dto.targetLevels.map(v => normalizeListTargetLevel(String(v))).find(Boolean)
-    : undefined
-  return fromArray ?? normalizeListTargetLevel(dto.targetLevel)
+function resolveListTargetLevels(dto: AdminProgramListItemDto): TargetLevel[] {
+  return resolveProgramTargetLevels({
+    targetLevels: Array.isArray(dto.targetLevels)
+      ? dto.targetLevels.map(v => String(v))
+      : undefined,
+    targetLevel: dto.targetLevel,
+  })
 }
 
 function toRequestDate(value: Date | string | undefined): string | undefined {
@@ -264,6 +240,8 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
   const listVolunteerKpi =
     toOptionalNumber(dto.volunteerCapacity) ?? toOptionalNumber(dto.volunteerRecruitmentCount)
 
+  const listTargetLevels = resolveListTargetLevels(dto)
+
   return baseProgramDefaults({
     id: toProgramId(dto.id ?? dto.uuid),
     title,
@@ -272,7 +250,8 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
     ...resolveBusinessPeriodDates(dto),
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus,
-    targetLevel: resolveListTargetLevel(dto),
+    targetLevel: listTargetLevels[0],
+    targetLevels: listTargetLevels.length > 0 ? listTargetLevels : undefined,
     approvedStudentCount:
       toOptionalNumber(dto.participantApprovedCount) ??
       toOptionalNumber(dto.approvedOrganizationApplicationCount) ??
@@ -313,6 +292,7 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
           generalProgramAudience: audienceFromApi.audience,
         }
       : {}),
+    backendProgramType: dto.programType,
   })
 }
 
@@ -362,6 +342,12 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     applicationTargetMode: dtoWithExtras.applicationTargetMode,
     participantTypes: serviceDetail.generalParticipantTypes,
     category: dto.category,
+  })
+  const detailTargetLevels = resolveProgramTargetLevels({
+    targetLevels: Array.isArray(dto.targetLevels)
+      ? dto.targetLevels.map(v => String(v))
+      : serviceDetail.targetLevels,
+    targetLevel: dto.targetLevel ?? serviceDetail.targetLevels?.[0],
   })
 
   const mapped = baseProgramDefaults({
@@ -435,7 +421,8 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
     generalCommonInfo,
     detailedProgramId:
       dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
-    targetLevel: serviceDetail.targetLevels?.[0] ?? (dto.targetLevel as Program['targetLevel']),
+    targetLevel: detailTargetLevels[0],
+    targetLevels: detailTargetLevels.length > 0 ? detailTargetLevels : undefined,
     // typed lifecycleStatus SSOT — serviceDetailJson 값으로 덮지 않음
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus: toTypedProgramLifecycleStatus(dto.lifecycleStatus) ?? undefined,
@@ -447,6 +434,7 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
             serviceDetail.generalProgramAudience ?? audienceFromApi.audience,
         }
       : {}),
+    backendProgramType: dto.programType,
   })
 
   return applyResolvedAnnouncementTitle(mapped, {
@@ -584,8 +572,22 @@ function toRequestPhone(value: string | null | undefined): string | undefined {
   return formatKoreanPhoneNumber(trimmed)
 }
 
+/** Admin create/update SSOT — `targetLevels` 배열. 단수만 있으면 길이 1 배열로 올린다. */
+function resolveRequestTargetLevels(
+  program: Program
+): ProgramUpdateRequestTargetLevelsItem[] | undefined {
+  if (program.targetLevels != null) {
+    return [...program.targetLevels] as ProgramUpdateRequestTargetLevelsItem[]
+  }
+  if (program.targetLevel) {
+    return [program.targetLevel as ProgramUpdateRequestTargetLevelsItem]
+  }
+  return undefined
+}
+
 function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBody {
-  const targetLevel = program.targetLevels?.[0] ?? program.targetLevel
+  const targetLevels = resolveRequestTargetLevels(program)
+  const targetLevel = targetLevels?.[0]
   const applicationTargetMode = mapAudienceToApplicationTargetMode(
     program.generalProgramAudience,
     program.generalParticipantTypes
@@ -626,6 +628,7 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     district: program.district,
     ips: program.ips,
     targetLevel,
+    targetLevels,
     institutionType: program.institutionType,
     ipOwned: program.ipOwned,
     courseDeliveredBy: program.courseDeliveredBy,
@@ -783,7 +786,9 @@ function mapProgramPatchFieldsToRequest(
   if (has('district')) body.district = merged.district
   if (has('ips')) body.ips = merged.ips
   if (has('targetLevel') || has('targetLevels')) {
-    body.targetLevel = merged.targetLevels?.[0] ?? merged.targetLevel
+    const targetLevels = resolveRequestTargetLevels(merged) ?? []
+    body.targetLevels = targetLevels
+    body.targetLevel = targetLevels[0]
   }
   if (has('institutionType') || has('generalCommonInfo')) {
     body.institutionType = merged.institutionType

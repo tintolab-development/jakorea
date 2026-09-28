@@ -7,7 +7,9 @@
 
 import type { Program } from '@/types/domain'
 import { normalizeGeneralProgramServiceDetailParsed } from '@/features/program/general/lib/general-program-service-detail-json'
+import { syncSurveyItemsIntoRegistrationOverlay } from '@/features/program/general/lib/general-survey-menu-keys'
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
+import { resolveStoredBusinessArea } from '@/features/program/shared/lib/program-detail-info-constants'
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
 
 export const TRAINED_TEACHER_SERVICE_DETAIL_JSON_VERSION = 1 as const
@@ -153,7 +155,9 @@ function sanitizeTrainedTeacherCommonInfo(
 }
 
 function trainedTeacherDetails(program: Program): Partial<Program> {
+  const businessArea = resolveStoredBusinessArea(program.businessArea) || undefined
   return trainedTeacherConstraints({
+    ...(businessArea ? { businessArea } : {}),
     posterImage: program.posterImage,
     targetLevels: program.targetLevels,
     approvedStudentCount: program.approvedStudentCount,
@@ -185,9 +189,12 @@ function trainedTeacherDetails(program: Program): Partial<Program> {
 }
 
 export function serializeTrainedTeacherServiceDetailJson(program: Program): string {
-  const registrationOverlay = persistScheduleEducationFormByDetailOverlay(
-    buildRegistrationOverlayForPersist(program),
-    program.generalCommonInfo?.scheduleDetails
+  const registrationOverlay = syncSurveyItemsIntoRegistrationOverlay(
+    persistScheduleEducationFormByDetailOverlay(
+      buildRegistrationOverlayForPersist(program),
+      program.generalCommonInfo?.scheduleDetails
+    ),
+    program.generalSurveyMenuKeys
   )
   const payload: TrainedTeacherServiceDetailJsonV1 = {
     schemaVersion: TRAINED_TEACHER_SERVICE_DETAIL_JSON_VERSION,
@@ -217,9 +224,14 @@ export function parseTrainedTeacherServiceDetailJson(raw?: string | null): Parti
       ) {
         return {}
       }
+      const programPartial = trainedTeacherConstraints(parsed.program as Partial<Program>)
+      const reconciledOverlay = syncSurveyItemsIntoRegistrationOverlay(
+        registrationOverlay,
+        programPartial.generalSurveyMenuKeys
+      )
       return {
-        ...trainedTeacherConstraints(parsed.program as Partial<Program>),
-        ...(registrationOverlay ? { registrationOverlay } : {}),
+        ...programPartial,
+        ...(reconciledOverlay ? { registrationOverlay: reconciledOverlay } : {}),
       }
     }
 

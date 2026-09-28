@@ -1,12 +1,11 @@
 /**
  * 일반 프로그램 상세 — 공통·모집 정보 「정보 수정」 가능 여부
- * 기획: 프로그램 진행 전(진행 예정 lifecycle)까지만 가능
+ * 기획: 프로그램 진행 전(진행 예정)까지만 가능
+ * 표시 라벨(프로그램 진행 중/완료)과 동일 UI 버킷을 SSOT로 쓴다.
  */
 
-import {
-  getProgramProgressPhase,
-  type ProgramProgressPhaseKey,
-} from '@/shared/constants/status'
+import { getProgramProgressPhase, type ProgramProgressPhaseKey } from '@/shared/constants/status'
+import { getProgramProgressUiBucket } from '@/shared/lib/program-typed-lifecycle'
 import type { Program } from '@/types/domain'
 
 export type GeneralProgramInfoEditBlockReason =
@@ -27,10 +26,9 @@ export function resolveGeneralProgramInfoEditBlockReason(
   program: Program | null | undefined
 ): GeneralProgramInfoEditBlockReason | null {
   if (!program) return 'missing'
-  const phase = resolveGeneralProgramCommonInfoEditPhase(program)
-  if (phase === 'inProgress') return 'phase_in_progress'
-  if (phase === 'completed') return 'phase_completed'
-  if (phase !== 'scheduled') return 'phase_other'
+  const bucket = getProgramProgressUiBucket(program.lifecycleStatus)
+  if (bucket === 'IN_PROGRESS') return 'phase_in_progress'
+  if (bucket === 'COMPLETED') return 'phase_completed'
   return null
 }
 

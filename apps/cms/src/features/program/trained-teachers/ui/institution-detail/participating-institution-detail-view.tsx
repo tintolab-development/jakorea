@@ -3,6 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { CmsButton } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -27,12 +28,16 @@ import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/features/program/general/model/pa
 import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
 import {
-  getParticipatingInstitutionActivityWithdrawScheduleOptions,
-  resolveParticipatingInstitutionActivityWithdrawPatch,
-} from '@/features/program/general/lib/participating-institution-activity-withdraw'
+  canParticipatingInstitutionApplicationInfoEdit,
+  getParticipatingInstitutionApplicationInfoEditBlockedAlertMessage,
+} from '@/features/program/general/lib/participating-institution-application-edit-policy'
+import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
+import { resolveParticipatingInstitutionActivityWithdrawPatch } from '@/features/program/general/lib/participating-institution-activity-withdraw'
 import {
   InstitutionAddressDetailEdit,
+  InstitutionClassAndStudentCountEdit,
   InstitutionEducationFormatRadios,
+  InstitutionGradeSelectEdit,
   InstitutionMultilineEdit,
   InstitutionTeacherEdit,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
@@ -42,6 +47,10 @@ import {
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import {
+  buildInstitutionClassCountOptions,
+  resolveProgramParticipantMaxClassCount,
+} from '@/features/template/lib/participant-recruitment-institution-limits'
+import {
   ActivityWithdrawScheduleModal,
   type ActivityWithdrawScheduleModalPayload,
 } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
@@ -50,6 +59,19 @@ import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-inf
 import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import { giveUpTrainedTeacherOrganizationApplication } from '@/features/program/trained-teachers/api/organization-applications-service'
+import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
+import {
+  buildTrainedTeacherActivityWithdrawScheduleOptions,
+  parseTrainedTeacherStopScheduleId,
+} from '@/features/program/trained-teachers/lib/organization-activity-withdraw-schedules'
+import { fetchAdminProgramSchedulesRemote } from '@/features/program/general/api/program-schedules-api-client'
+import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
+import axios from 'axios'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { fetchOrganizationApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
+import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { mapOrganizationApplicationDetailToParticipatingEditFields } from '@/features/program/general/lib/organization-application-detail-edit-fields'
 import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
 import {
   buildProgramApiUnavailableSaveContent,
@@ -85,6 +107,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   const currentUser = useAuthStore(state => state.user)
   const showAdminCommentSection = isCmsAdminUser(currentUser)
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
   const [internalTab, setInternalTab] =
     useState<TrainedTeachersInstitutionDetailTabKey>('application')
   const visibleDetailTabs = useMemo(
@@ -107,13 +130,72 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
 
   const [textbookStatusDropdownOpen, setTextbookStatusDropdownOpen] = useState(false)
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
+  const [activityWithdrawSubmitting, setActivityWithdrawSubmitting] = useState(false)
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
 
+  const programId = String(program?.id ?? row.programId ?? '')
+  const ttRemoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi() && programId !== ''
+
+  const programSchedulesQuery = useQuery({
+    queryKey: trainedTeacherQueryKeys.programSchedules(programId),
+    queryFn: () => fetchAdminProgramSchedulesRemote(programId),
+    enabled: ttRemoteEnabled && activityWithdrawModalOpen,
+    staleTime: 60_000,
+    retry: false,
+  })
+
+  const applicationDetailId = Number.isFinite(Number(row.id)) ? row.id : ''
+  const canFetchApplicationDetail =
+    applicationDetailId !== '' &&
+    (shouldUseGeneralApplicationsRemoteApi() || shouldUseTrainedTeacherProgramsRemoteApi())
+  const applicationDetailQuery = useQuery({
+    queryKey: generalApplicationsQueryKeys.organizationDetail(applicationDetailId),
+    queryFn: () => fetchOrganizationApplicationDetailRemote(applicationDetailId),
+    enabled: canFetchApplicationDetail,
+    staleTime: 30_000,
+    retry: false,
+  })
+  const applicationBasicInfo = useMemo(
+    () =>
+      applicationDetailQuery.data
+        ? mapOrganizationApplicationDetailToParticipatingEditFields(applicationDetailQuery.data)
+        : null,
+    [applicationDetailQuery.data]
+  )
+
   useEffect(() => {
-    setTextbookStatusDropdownOpen(false)
-  }, [detail.id])
+    if (!activityWithdrawModalOpen || !ttRemoteEnabled) return
+    if (programSchedulesQuery.isLoading || programSchedulesQuery.isFetching) return
+    if (programSchedulesQuery.isError) {
+      void showAlert({
+        title: '안내',
+        content: '프로그램 일정을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      })
+      setActivityWithdrawModalOpen(false)
+      return
+    }
+    if (
+      programSchedulesQuery.isSuccess &&
+      (programSchedulesQuery.data?.length ?? 0) === 0
+    ) {
+      void showAlert({
+        title: '안내',
+        content: '활동 포기에 사용할 프로그램 일정이 없습니다.',
+      })
+      setActivityWithdrawModalOpen(false)
+    }
+  }, [
+    activityWithdrawModalOpen,
+    programSchedulesQuery.data?.length,
+    programSchedulesQuery.isError,
+    programSchedulesQuery.isFetching,
+    programSchedulesQuery.isLoading,
+    programSchedulesQuery.isSuccess,
+    showAlert,
+    ttRemoteEnabled,
+  ])
 
   useEffect(() => {
     setAdminCommentModalOpen(false)
@@ -122,13 +204,18 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     setActivityWithdrawModalOpen(false)
   }, [detail.id, detail.adminComment, savedBasicPatches[detail.id]?.adminComment])
 
-  const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
+  const savedBasicPatch = savedBasicPatches[detail.id]
+  const mergedDetail = {
+    ...detail,
+    ...(applicationBasicInfo ?? {}),
+    ...savedBasicPatch,
+  }
   const sessions = row.sessions ?? []
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
 
   const activityWithdrawScheduleOptions = useMemo(
-    () => getParticipatingInstitutionActivityWithdrawScheduleOptions(program, sessions),
-    [program, sessions]
+    () => buildTrainedTeacherActivityWithdrawScheduleOptions(programSchedulesQuery.data ?? []),
+    [programSchedulesQuery.data]
   )
 
   const applicationInfoEdit = useParticipatingInstitutionDetailEdit({
@@ -157,6 +244,37 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     mergedDetail.programProgressStatus ??
     resolveProgramEnrollmentDisplayStatusFromLabel(mergedDetail.programProgressLabel) ??
     getProgramProgressDisplayStatus(program)
+
+  const canEditApplicationInfo = canParticipatingInstitutionApplicationInfoEdit({
+    program,
+    enrollmentStatus: programProgressStatus,
+  })
+
+  useEffect(() => {
+    if (isApplicationInfoEditing && !canEditApplicationInfo) {
+      cancelApplicationInfoEdit()
+    }
+  }, [canEditApplicationInfo, cancelApplicationInfoEdit, isApplicationInfoEditing])
+
+  const handleEnterApplicationInfoEdit = useCallback(() => {
+    if (!canEditApplicationInfo) {
+      void showAlert({
+        title: '안내',
+        content: getParticipatingInstitutionApplicationInfoEditBlockedAlertMessage({
+          program,
+          enrollmentStatus: programProgressStatus,
+        }),
+      })
+      return
+    }
+    enterApplicationInfoEdit()
+  }, [
+    canEditApplicationInfo,
+    enterApplicationInfoEdit,
+    program,
+    programProgressStatus,
+    showAlert,
+  ])
 
   const resolvePersonalInfoAccessItem = useCallback(
     () => mergedDetail.schoolName ?? row.schoolName ?? '학교 상세 정보',
@@ -268,7 +386,64 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   }, [isActivityWithdrawn, isApplicationInfoEditing, showAlert])
 
   const handleConfirmActivityWithdraw = useCallback(
-    (payload: ActivityWithdrawScheduleModalPayload) => {
+    async (payload: ActivityWithdrawScheduleModalPayload) => {
+      const stopScheduleId = parseTrainedTeacherStopScheduleId(payload.stopSessionKey)
+      if (stopScheduleId == null) {
+        void showAlert({
+          title: '안내',
+          content: '중단할 교육 일정을 선택해 주세요.',
+        })
+        return
+      }
+
+      const reason =
+        [mergedDetail.schoolName, payload.stopScheduleLabel].filter(Boolean).join(' · ') ||
+        payload.stopScheduleLabel ||
+        '활동 포기'
+
+      if (ttRemoteEnabled) {
+        setActivityWithdrawSubmitting(true)
+        try {
+          await giveUpTrainedTeacherOrganizationApplication(programId, detail.id, {
+            stopScheduleId,
+            reason,
+          })
+          await queryClient.invalidateQueries({
+            queryKey: trainedTeacherQueryKeys.participatingInstitutions(programId),
+          })
+          await queryClient.invalidateQueries({
+            queryKey: trainedTeacherQueryKeys.organizationApplicationsRoot(),
+          })
+          await queryClient.invalidateQueries({
+            queryKey: trainedTeacherQueryKeys.performanceSummary(programId),
+          })
+          onSaveBasicInfo?.({
+            id: detail.id,
+            activityWithdrawn: true,
+            activityWithdrawStopSessionKey: payload.stopSessionKey,
+            activityWithdrawStopScheduleLabel: payload.stopScheduleLabel,
+          })
+          setActivityWithdrawModalOpen(false)
+          void showAlert({
+            title: '활동 포기',
+            content: `${mergedDetail.schoolName ?? '기관'}이 활동 포기 처리되었습니다.`,
+          })
+        } catch (error) {
+          const responseData = axios.isAxiosError(error) ? error.response?.data : undefined
+          const httpStatus = axios.isAxiosError(error) ? error.response?.status : undefined
+          void showAlert({
+            title: '활동 포기 실패',
+            content: extractApiErrorMessage(responseData, {
+              httpStatus,
+              fallback: '활동 포기 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+            }),
+          })
+        } finally {
+          setActivityWithdrawSubmitting(false)
+        }
+        return
+      }
+
       const patch = resolveParticipatingInstitutionActivityWithdrawPatch(
         program,
         sessions,
@@ -278,7 +453,17 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       onSaveBasicInfo?.({ id: detail.id, ...patch })
       setActivityWithdrawModalOpen(false)
     },
-    [detail.id, onSaveBasicInfo, program, sessions]
+    [
+      detail.id,
+      mergedDetail.schoolName,
+      onSaveBasicInfo,
+      program,
+      programId,
+      queryClient,
+      sessions,
+      showAlert,
+      ttRemoteEnabled,
+    ]
   )
 
   const teacherDisplaySegments = [
@@ -307,9 +492,11 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     )
 
   const hasSelectedTextbook =
-    (mergedDetail.textbookId?.trim() ?? '') !== '' || (mergedDetail.textbookName?.trim() ?? '') !== ''
-  const textbookNameView =
-    !hasSelectedTextbook ? '미정' : textbookDisplay.textbookName
+    ((mergedDetail.textbookId?.trim() ?? '') !== '' &&
+      mergedDetail.textbookId?.trim() !== TEXTBOOK_NOT_USED_OPTION_VALUE) ||
+    ((mergedDetail.textbookName?.trim() ?? '') !== '' &&
+      mergedDetail.textbookName?.trim() !== '해당 없음')
+  const textbookNameView = !hasSelectedTextbook ? '해당 없음' : textbookDisplay.textbookName
   const kitsAndQty =
     hasSelectedTextbook && textbookDisplay.textbookKits > 0
       ? `${textbookDisplay.textbookKits}키트 (${textbookDisplay.textbookQuantity}권)`
@@ -322,7 +509,8 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
           className="institution-basic-info__full-width-control"
           inputSize="large"
           placeholder="교재명 선택"
-          value={applicationInfoDraft.textbookId || undefined}
+          withAllOption={false}
+          value={applicationInfoDraft.textbookId || TEXTBOOK_NOT_USED_OPTION_VALUE}
           options={textbookOptions.map(option => ({
             label: option.label,
             value: option.value,
@@ -354,8 +542,21 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   const isApplicationDetailEditing =
     isApplicationInfoEditing && applicationInfoDraft != null
 
-  const classAndCountDisplay = withProgramDetailTdDivider(
-    formatClassStudentCountSegments(mergedDetail.classCount, mergedDetail.studentCount)
+  const classCountOptions = useMemo(
+    () => buildInstitutionClassCountOptions(resolveProgramParticipantMaxClassCount(program)),
+    [program]
+  )
+  const classAndCountDisplay = isApplicationDetailEditing ? (
+    <InstitutionClassAndStudentCountEdit
+      classCount={applicationInfoDraft.classCount}
+      studentCount={applicationInfoDraft.studentCount}
+      classCountOptions={classCountOptions}
+      onChange={patch => updateApplicationInfoDraft(patch)}
+    />
+  ) : (
+    withProgramDetailTdDivider(
+      formatClassStudentCountSegments(mergedDetail.classCount, mergedDetail.studentCount)
+    )
   )
 
   return (
@@ -382,7 +583,14 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               </CmsButton>
               <ProgramEditInfoActions
                 isEditing={isApplicationInfoEditing}
-                onEdit={enterApplicationInfoEdit}
+                idleVariant="secondary"
+                disabled={
+                  isApplicationInfoEditing
+                    ? false
+                    : !canEditApplicationInfo ||
+                      (canFetchApplicationDetail && applicationDetailQuery.isLoading)
+                }
+                onEdit={handleEnterApplicationInfoEdit}
                 onCancel={cancelApplicationInfoEdit}
                 onSave={() => {
                   void saveApplicationInfoEdit()
@@ -428,7 +636,16 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               institutionId={row.id}
               preferredScheduleBlocks={row.preferredScheduleBlocks}
               schoolName={mergedDetail.schoolName}
-              educationGrade={mergedDetail.educationGrade}
+              educationGrade={
+                isApplicationDetailEditing ? (
+                  <InstitutionGradeSelectEdit
+                    value={applicationInfoDraft.educationGrade}
+                    onChange={value => updateApplicationInfoDraft({ educationGrade: value })}
+                  />
+                ) : (
+                  mergedDetail.educationGrade
+                )
+              }
               region={mergedDetail.region}
               addressDetail={
                 isApplicationDetailEditing ? (
@@ -514,7 +731,11 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       <ActivityWithdrawScheduleModal
         open={activityWithdrawModalOpen}
         scheduleOptions={activityWithdrawScheduleOptions}
-        onCancel={() => setActivityWithdrawModalOpen(false)}
+        confirming={activityWithdrawSubmitting}
+        onCancel={() => {
+          if (activityWithdrawSubmitting) return
+          setActivityWithdrawModalOpen(false)
+        }}
         onConfirm={handleConfirmActivityWithdraw}
       />
       <MemberAdminCommentModal

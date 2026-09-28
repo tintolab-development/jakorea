@@ -56,6 +56,28 @@ assert.equal(mapped.recruitmentStatus, 'recruiting')
 assert.equal(mapped.educationForm, 'online')
 assert.equal(mapped.educationTargetKey, 'university')
 assert.equal(mapped.educationTargetLabel, '대학(원)생')
+
+const multi = mapPortalProgramDetail({
+  programId: 186013,
+  title: '복수 교육대상',
+  programType: 'TRAINED_TEACHER',
+  educationTarget: 'university',
+  educationTargets: ['university', 'middle', 'high'],
+})
+assert.ok(multi)
+assert.equal(multi.educationTargetLabel, '대학(원)생, 중학교, 고등학교')
+assert.equal(multi.educationTargetGroupLabel, '대학(원)생, 중학교, 고등학교')
+
+const multiPrefersArray = mapPortalProgramDetail({
+  programId: 186014,
+  title: '배열 우선',
+  educationTarget: 'elementary',
+  educationTargets: ['middle', 'high'],
+})
+assert.ok(multiPrefersArray)
+assert.equal(multiPrefersArray.educationTargetLabel, '중학교, 고등학교')
+assert.equal(multiPrefersArray.educationTargetKey, 'middle')
+
 assert.equal(mapped.sponsor, '현대 자동차')
 assert.equal(mapped.detailCase, 'general')
 assert.equal(mapped.educationStructure, 'curriculum')

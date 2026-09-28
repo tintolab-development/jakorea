@@ -17,6 +17,7 @@ import {
 } from '@/features/program/general/api/general-applications-query-keys'
 import { applyCombinedClassMergeToApplicantDetail } from '@/features/program/general/lib/apply-combined-class-merge-state'
 import { resolveCombinedClassMergeViewState } from '@/features/program/general/lib/organization-merge-groups-mapper'
+import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
 import { type CombinedClassLeadTeacherCandidate } from '@/features/program/general/lib/combined-class-lead-teacher'
 import { InstitutionCombinedClassLeadTeacherModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-lead-teacher-modal'
 import { InstitutionCombinedClassCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-combined-class-complete-modal'
@@ -65,7 +66,6 @@ import {
   PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
-import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { TrainedTeachersApplicantInstitutionDetailContents } from '@/features/program/trained-teachers/ui/institution-detail/applicant-institution-detail-contents'
 
@@ -532,7 +532,6 @@ export function ApplicantsDetailContents({
 
   const institutionRow = isInstitution ? (data as ApplicantSchoolRow) : null
   const instructorRow = isInstructor ? (data as ApplicantInstructorRow) : null
-  const isCompanySchool = isCompanySchoolProgram(program)
   const isTrainedTeachers = isTrainedTeachersDetailProgram(program ?? null)
   const institutionData = useOrganizationApplicationDetailEnrichment(institutionRow, {
     enabled: isGeneralDetail,
@@ -579,14 +578,15 @@ export function ApplicantsDetailContents({
 
   const queryClient = useQueryClient()
   const programId = program?.id
-  /** 합반은 GENERAL_ORGANIZATION 전용 — TT·1사1교에서 호출하면 PROGRAM_TYPE_REQUIRED */
+  /** 합반 GET/POST/DELETE는 programType === GENERAL_ORGANIZATION 일 때만 */
+  const mergeGroupsAllowed = isGeneralOrganizationProgram(program)
   const mergeGroupsEnabled =
-    isGeneralDetail &&
-    isInstitution &&
-    !isCompanySchool &&
-    !isTrainedTeachers &&
-    shouldUseOrganizationMergeGroupsRemoteApi()
-  const mergeGroupsQuery = useOrganizationMergeGroups(programId, mergeGroupsEnabled)
+    mergeGroupsAllowed && isGeneralDetail && isInstitution && shouldUseOrganizationMergeGroupsRemoteApi()
+  const mergeGroupsQuery = useOrganizationMergeGroups(
+    programId,
+    program?.backendProgramType,
+    mergeGroupsEnabled
+  )
   const institutionMergeView = useMemo(() => {
     if (!institutionData || !mergeGroupsQuery.data?.length) return null
     return resolveCombinedClassMergeViewState(
@@ -601,9 +601,10 @@ export function ApplicantsDetailContents({
       combinedClassApplication: '신청' | '미신청'
       combinedClassPartnerApplicantIds: string[]
     }) => {
-      if (!programId || !institutionData || isCompanySchool) return
+      if (!programId || !institutionData || !mergeGroupsAllowed) return
       await saveOrganizationCombinedClassRemote({
         programId,
+        programType: program?.backendProgramType,
         leadRow: institutionData,
         allRows: institutionList,
         combinedClassApplication: params.combinedClassApplication,
@@ -617,8 +618,9 @@ export function ApplicantsDetailContents({
     [
       institutionData,
       institutionList,
-      isCompanySchool,
+      mergeGroupsAllowed,
       mergeGroupsQuery.data,
+      program,
       programId,
       queryClient,
     ]
@@ -638,7 +640,7 @@ export function ApplicantsDetailContents({
       onInstitutionDetailSaved?.(rows)
     },
     onSaveCombinedClass:
-      !isCompanySchool && !isTrainedTeachers && shouldUseOrganizationMergeGroupsRemoteApi()
+      mergeGroupsAllowed && shouldUseOrganizationMergeGroupsRemoteApi()
         ? handleSaveInstitutionCombinedClass
         : undefined,
     combinedClassReadOnly: institutionMergeView?.isLead === false,
@@ -1136,9 +1138,7 @@ export function ApplicantsDetailContents({
   const institutionInfoPanel = useMemo(() => {
     if (!isInstitution || !displayedInstitutionData) return null
     const d = displayedInstitutionData
-    /** 1사1교·교육받은 교사 — 합반 신청 케이스 없음(신청 불가) */
-    const isCombinedClassHidden =
-      isCompanySchoolProgram(program) || isTrainedTeachersDetailProgram(program ?? null)
+    const isCombinedClassHidden = !isGeneralOrganizationProgram(program)
     if (isGeneralDetail) {
       const detailWithMerge = applyCombinedClassMergeToApplicantDetail(
         d.detail,
@@ -1155,9 +1155,6 @@ export function ApplicantsDetailContents({
           mode={institutionDetailEdit.isEditing ? 'edit' : 'view'}
           draft={institutionDetailEdit.draft ?? undefined}
           onDraftChange={institutionDetailEdit.updateDraft}
-          textbookOptions={institutionDetailEdit.textbookOptions}
-          textbookDisplayLabel={institutionDetailEdit.textbookDisplayLabel}
-          isTextbookCatalogLoading={institutionDetailEdit.isTextbookCatalogLoading}
           sameSchoolGradeOptions={institutionDetailEdit.sameSchoolGradeOptions}
           classCountOptions={institutionDetailEdit.classCountOptions}
           teacherOptions={institutionDetailEdit.teacherOptions}

@@ -61,6 +61,7 @@ import {
   CATEGORY_LABEL,
   CATEGORY_OPTIONS,
   BUSINESS_AREA_OPTIONS,
+  resolveStoredBusinessArea,
   EDUCATION_PROCESS_OPTIONS,
   IP_OWNED_OPTIONS,
   COURSE_DELIVERED_BY_OPTIONS,
@@ -766,16 +767,26 @@ export function BasicInfoSection({
             />
             <DetailInfoForm.Field
               label="사업 분야"
-              view={program.businessArea ?? '-'}
+              view={optionLabel(
+                BUSINESS_AREA_OPTIONS,
+                resolveStoredBusinessArea(program.businessArea) || program.businessArea
+              )}
               edit={
                 <Controller
                   name="businessArea"
                   control={commonInfoForm.control}
                   render={({ field }) => (
                     <CmsSelect
-                      value={field.value ?? undefined}
-                      options={BUSINESS_AREA_OPTIONS}
-                      onChange={v => field.onChange(v ?? undefined)}
+                      withAllOption={false}
+                      placeholder="사업 분야를 선택하세요"
+                      value={resolveStoredBusinessArea(field.value) || undefined}
+                      options={[...BUSINESS_AREA_OPTIONS]}
+                      onChange={next => {
+                        const resolved = resolveStoredBusinessArea(
+                          next == null ? '' : String(next)
+                        )
+                        field.onChange(resolved || undefined)
+                      }}
                       width="100%"
                     />
                   )}
@@ -1315,16 +1326,24 @@ export function BasicInfoSection({
         <DetailInfoForm.Field
           label="사업 분야"
           required
-          view={program.businessArea ?? '-'}
+          view={optionLabel(
+            BUSINESS_AREA_OPTIONS,
+            resolveStoredBusinessArea(program.businessArea) || program.businessArea
+          )}
           edit={
             <Controller
               name="businessArea"
               control={commonInfoForm.control}
               render={({ field }) => (
                 <CmsSelect
-                  value={field.value ?? undefined}
-                  options={BUSINESS_AREA_OPTIONS}
-                  onChange={v => field.onChange(v ?? undefined)}
+                  withAllOption={false}
+                  placeholder="사업 분야를 선택하세요"
+                  value={resolveStoredBusinessArea(field.value) || undefined}
+                  options={[...BUSINESS_AREA_OPTIONS]}
+                  onChange={next => {
+                    const resolved = resolveStoredBusinessArea(next == null ? '' : String(next))
+                    field.onChange(resolved || undefined)
+                  }}
                   width={'100%'}
                 />
               )}

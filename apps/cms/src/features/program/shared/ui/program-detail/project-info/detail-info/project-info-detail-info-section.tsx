@@ -14,12 +14,15 @@ import { FileSelectField } from '@/shared/ui/file-select-field'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TextAreaFieldRow } from '@/shared/ui/text-area-field-row'
 import {
-  ADMIN_FILE_PURPOSE,
-  createFileAttachment,
   parseFileObjectId,
-  programFileOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
+import {
+  fetchProgramAttachments,
+  programDetailAttachmentOwner,
+  programThumbnailOwner,
+  putProgramAttachments,
+} from '@/features/program/shared/api/program-attachments'
 import {
   fetchProgramThumbnail,
   loadProgramThumbnailPreviewUrl,
@@ -154,9 +157,38 @@ function useDetailInfoEditorBlock(
   }, [isEditMode, onRegisterGetAdditionalContentHtml])
 
   const isFormEdit = Boolean(isEditMode && form)
+  const [linkedAttachmentNames, setLinkedAttachmentNames] = useState<string[] | null>(null)
   const displayFileNames = isFormEdit
     ? (form!.watch('attachmentFileNames') ?? [])
-    : (program.attachmentFileNames ?? [])
+    : (linkedAttachmentNames ?? program.attachmentFileNames ?? [])
+
+  useEffect(() => {
+    const programId = parseFileObjectId(program.id)
+    if (programId == null) {
+      setLinkedAttachmentNames([])
+      return
+    }
+    let cancelled = false
+    void fetchProgramAttachments(programId)
+      .then(items => {
+        if (cancelled) return
+        const names = items
+          .map(item => item.originalFileName?.trim() || '')
+          .filter(Boolean)
+        setLinkedAttachmentNames(names)
+        if (form) {
+          form.setValue('attachmentFileNames', names, { shouldDirty: false })
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLinkedAttachmentNames(program.attachmentFileNames ?? [])
+      })
+    return () => {
+      cancelled = true
+    }
+    // form identity는 렌더마다 바뀔 수 있어 program.id 기준으로만 동기화
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync from attachments API SSOT
+  }, [program.id])
 
   useEffect(() => {
     const programId = parseFileObjectId(program.id)
@@ -329,12 +361,7 @@ function ThumbnailImageRow({
                           }
                           const uploaded = await uploadAdminFileMaybeMock({
                             file,
-                            owner: {
-                              ownerDomain: 'PROGRAM_CONTENT',
-                              ownerType: 'PROGRAM',
-                              ownerId: programId,
-                              filePurpose: ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL,
-                            },
+                            owner: programThumbnailOwner(programId),
                           })
                           await putProgramThumbnail(programId, uploaded.fileObjectId)
                           let previewUrl = blobUrl
@@ -505,35 +532,56 @@ function AttachmentRowStandard({
             onFilesChange={
               isFormEdit
                 ? async files => {
-                    const programId = parseFileObjectId(program.id) ?? 1
-                    const owner = programFileOwner(
-                      programId,
-                      ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT
-                    )
-                    const current = form!.getValues('attachmentFileNames') ?? []
-                    const uploadedNames: string[] = []
+                    const programId = parseFileObjectId(program.id)
+                    if (programId == null) return
+                    const owner = programDetailAttachmentOwner(programId)
+                    const uploadedIds: number[] = []
                     for (const file of files) {
                       const uploaded = await uploadAdminFileMaybeMock({ file, owner })
-                      await createFileAttachment({
-                        fileObjectId: uploaded.fileObjectId,
-                        owner,
-                        attachmentType: ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT,
-                        displayOrder: current.length + uploadedNames.length + 1,
-                      }).catch(() => undefined)
-                      uploadedNames.push(file.name)
+                      uploadedIds.push(uploaded.fileObjectId)
                     }
-                    form!.setValue('attachmentFileNames', [...current, ...uploadedNames])
+                    if (uploadedIds.length === 0) return
+                    const existing = await fetchProgramAttachments(programId).catch(() => [])
+                    const existingIds = existing
+                      .map(item => item.fileObjectId)
+                      .filter((id): id is number => typeof id === 'number' && id > 0)
+                    const linked = await putProgramAttachments(programId, [
+                      ...existingIds,
+                      ...uploadedIds,
+                    ])
+                    const names = linked
+                      .map(item => item.originalFileName?.trim() || '')
+                      .filter(Boolean)
+                    form!.setValue('attachmentFileNames', names)
                   }
                 : undefined
             }
             onRemoveFile={
               isFormEdit
                 ? index => {
-                    const list = form!.getValues('attachmentFileNames') ?? []
-                    form!.setValue(
-                      'attachmentFileNames',
-                      list.filter((_, i) => i !== index)
-                    )
+                    const programId = parseFileObjectId(program.id)
+                    if (programId == null) {
+                      const list = form!.getValues('attachmentFileNames') ?? []
+                      form!.setValue(
+                        'attachmentFileNames',
+                        list.filter((_, i) => i !== index)
+                      )
+                      return
+                    }
+                    void (async () => {
+                      const existing = await fetchProgramAttachments(programId).catch(() => [])
+                      const remainingIds = existing
+                        .map(item => item.fileObjectId)
+                        .filter((id): id is number => typeof id === 'number' && id > 0)
+                        .filter((_, i) => i !== index)
+                      const linked = await putProgramAttachments(programId, remainingIds).catch(
+                        () => [] as Awaited<ReturnType<typeof putProgramAttachments>>
+                      )
+                      const names = linked
+                        .map(item => item.originalFileName?.trim() || '')
+                        .filter(Boolean)
+                      form!.setValue('attachmentFileNames', names)
+                    })()
                   }
                 : undefined
             }
@@ -1014,35 +1062,58 @@ export function VolunteerDetailInfoSection({
                   onFilesChange={
                     isFormEdit
                       ? async files => {
-                          const programId = parseFileObjectId(program.id) ?? 1
-                          const owner = programFileOwner(
-                            programId,
-                            ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT
-                          )
-                          const current = f!.getValues('attachmentFileNames') ?? []
-                          const uploadedNames: string[] = []
+                          const programId = parseFileObjectId(program.id)
+                          if (programId == null) return
+                          const owner = programDetailAttachmentOwner(programId)
+                          const uploadedIds: number[] = []
                           for (const file of files) {
                             const uploaded = await uploadAdminFileMaybeMock({ file, owner })
-                            await createFileAttachment({
-                              fileObjectId: uploaded.fileObjectId,
-                              owner,
-                              attachmentType: ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT,
-                              displayOrder: current.length + uploadedNames.length + 1,
-                            }).catch(() => undefined)
-                            uploadedNames.push(file.name)
+                            uploadedIds.push(uploaded.fileObjectId)
                           }
-                          f!.setValue('attachmentFileNames', [...current, ...uploadedNames])
+                          if (uploadedIds.length === 0) return
+                          const existing = await fetchProgramAttachments(programId).catch(() => [])
+                          const existingIds = existing
+                            .map(item => item.fileObjectId)
+                            .filter((id): id is number => typeof id === 'number' && id > 0)
+                          const linked = await putProgramAttachments(programId, [
+                            ...existingIds,
+                            ...uploadedIds,
+                          ])
+                          const names = linked
+                            .map(item => item.originalFileName?.trim() || '')
+                            .filter(Boolean)
+                          f!.setValue('attachmentFileNames', names)
                         }
                       : undefined
                   }
                   onRemoveFile={
                     isFormEdit
                       ? index => {
-                          const list = f!.getValues('attachmentFileNames') ?? []
-                          f!.setValue(
-                            'attachmentFileNames',
-                            list.filter((_, i) => i !== index)
-                          )
+                          const programId = parseFileObjectId(program.id)
+                          if (programId == null) {
+                            const list = f!.getValues('attachmentFileNames') ?? []
+                            f!.setValue(
+                              'attachmentFileNames',
+                              list.filter((_, i) => i !== index)
+                            )
+                            return
+                          }
+                          void (async () => {
+                            const existing = await fetchProgramAttachments(programId).catch(
+                              () => []
+                            )
+                            const remainingIds = existing
+                              .map(item => item.fileObjectId)
+                              .filter((id): id is number => typeof id === 'number' && id > 0)
+                              .filter((_, i) => i !== index)
+                            const linked = await putProgramAttachments(programId, remainingIds).catch(
+                              () => [] as Awaited<ReturnType<typeof putProgramAttachments>>
+                            )
+                            const names = linked
+                              .map(item => item.originalFileName?.trim() || '')
+                              .filter(Boolean)
+                            f!.setValue('attachmentFileNames', names)
+                          })()
                         }
                       : undefined
                   }

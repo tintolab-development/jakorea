@@ -149,6 +149,20 @@ describe('program detail trained teachers boolean fields', () => {
     expect(result.success).toBe(true)
   })
 
+  it('사업 분야 코드는 마스터명으로 정규화해 수정 폼에 채운다', () => {
+    const values = programToDetailEditValues({
+      ...program,
+      businessArea: 'digital_literacy',
+    })
+    expect(values.businessArea).toBe('디지털리터러시')
+
+    const patch = detailEditValuesToProgramPatch(
+      { ...values, businessArea: 'career_employment' },
+      program
+    )
+    expect(patch.businessArea).toBe('진로취업')
+  })
+
   it('programToDetailEditValues 는 partnerInvolvement null 을 false 로 정규화한다', () => {
     const values = programToDetailEditValues({
       ...program,
