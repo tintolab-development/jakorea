@@ -3,7 +3,7 @@ import { STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components/status-dropd
 import { ProgramLifecycleStatusTableCell } from '@/shared/components/program-lifecycle-status-table-cell'
 import { ProgramListOverviewProgressCell } from '@/shared/components/program-list-overview-progress-cell'
 import { formatDateRange } from '../../hooks/use-format-date'
-import { getCapacity } from '../../lib/program-helpers'
+import { formatRecruitmentHeadcount } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { resolveGeneralProgramListTitle } from '../../lib/detail-common-info-display'
 import {
   optionalColumns,
@@ -53,29 +53,9 @@ const WIDTH_TARGET_LEVEL = 160
 const WIDTH_OPERATION_PERIOD = 320
 const WIDTH_PARTICIPATION_COUNT = 160
 
+/** 전 유형 공통. 회차 합·학생 수·봉사 수로 다시 세지 않는다. */
 function participantCountRender(_: unknown, record: Program) {
-  const cap = getCapacity(record)
-  const approved = record.approvedStudentCount
-  if (cap == null && approved == null) return '-'
-  if (cap != null) return `${approved ?? 0} / ${cap}`
-  return `${approved ?? 0}`
-}
-
-/** 교육받은 교사 — 모집 정원을 고르지 않으므로 승인 참여 인원만 표시 */
-function trainedTeachersParticipantCountRender(_: unknown, record: Program) {
-  const approved = record.approvedStudentCount
-  if (approved == null) return '-'
-  return `${approved}`
-}
-
-function withTrainedTeachersParticipantCount(
-  columns: ColumnsType<Program>
-): ColumnsType<Program> {
-  return columns.map(column =>
-    column.key === 'participantCapacity'
-      ? { ...column, render: trainedTeachersParticipantCountRender }
-      : column
-  )
+  return formatRecruitmentHeadcount(record.participantApprovedCount, record.participantCapacity)
 }
 
 function instructorRecruitRender(_: unknown, record: Program) {
@@ -474,7 +454,7 @@ export function resolveEducationColumns(params: ResolveEducationColumnsParams) {
 
     const columns = resolveColumns() as ColumnsType<Program>
     if (columnPreset === 'trainedTeachers') {
-      return withTrainedTeachersParticipantCount(omitTrainedTeachersColumns(columns))
+      return omitTrainedTeachersColumns(columns)
     }
     return columns
   }

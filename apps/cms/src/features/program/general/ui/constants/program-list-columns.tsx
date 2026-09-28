@@ -1,5 +1,6 @@
 import { formatDateRange } from '../../hooks/use-format-date'
 import { formatNumberDisplay } from '@/shared/utils'
+import { formatRecruitmentHeadcount } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { getCapacity, getApplicationCountByProgram } from '../../lib/program-helpers'
 import { resolveGeneralProgramListTitle } from '../../lib/detail-common-info-display'
 import { SponsorNameById } from '@/features/sponsor/ui/sponsor-name-by-id'
@@ -253,15 +254,8 @@ export const capacityTableColumnsOverview = {
   key: 'participantCapacity',
   width: 120,
   align: 'center' as const,
-  render: (_: unknown, record: Program) => {
-    const cap = getCapacity(record)
-    const approved = record.approvedStudentCount
-    if (cap == null && approved == null) return '-'
-    if (cap != null) {
-      return `${formatNumberDisplay(approved ?? 0)} / ${formatNumberDisplay(cap)}`
-    }
-    return formatNumberDisplay(approved ?? 0)
-  },
+  render: (_: unknown, record: Program) =>
+    formatRecruitmentHeadcount(record.participantApprovedCount, record.participantCapacity),
 }
 
 export const capacityTableColumnsEducation = [

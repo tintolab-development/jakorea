@@ -53,6 +53,22 @@ describe('filterTextbooksForApplicant', () => {
     expect(rows).toHaveLength(0)
   })
 
+  it('중학교 전학년 교재는 신청 학년 3학년에 포함한다', () => {
+    const program = {
+      businessArea: '경제금융',
+      targetLevel: 'middle',
+    } as Program
+    const rows = filterTextbooksForApplicant(program, '3학년', [
+      makeTextbook({
+        id: '186981',
+        educationTarget: '중학교',
+        grade: '전학년',
+        textbookName: '경제금융(중학교재)',
+      }),
+    ])
+    expect(rows.map(row => row.id)).toEqual(['186981'])
+  })
+
   it('복수 targetLevels면 해당 교육대상 교재를 모두 포함한다', () => {
     const program = {
       businessArea: '경제금융',

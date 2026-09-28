@@ -142,9 +142,10 @@ export function buildCombinedClassTextbookSelectOptions(
 
 /**
  * 진행 현황 참여 기관 교재 셀렉.
- * 1) 사업분야+교육대상+신청학년 matches
+ * 1) 사업분야+교육대상+신청학년 matches (전학년 교재 포함)
  * 2) 학년 매칭이 비면 사업분야(+교육대상) 프로그램 교재로 폴백
- * materials가 비어 있으면 교집합하지 않는다.
+ * materials와 겹치는 교재가 있을 때만 교집합한다.
+ * 배정 교재가 교육대상·학년과 안 맞아 교집합이 비면 matches를 그대로 쓴다.
  */
 export function buildParticipatingInstitutionTextbookSelectOptions(params: {
   program: Program
@@ -181,12 +182,9 @@ export function buildParticipatingInstitutionTextbookSelectOptions(params: {
     rows = filterTextbooksForCombinedClassEdit(program, fallbackSource)
   }
 
-  const materialFilter =
-    programMaterialTextbookIds != null && programMaterialTextbookIds.size > 0
-      ? programMaterialTextbookIds
-      : null
-  if (materialFilter) {
-    rows = rows.filter(row => materialFilter.has(row.id))
+  if (programMaterialTextbookIds != null && programMaterialTextbookIds.size > 0) {
+    const assigned = rows.filter(row => programMaterialTextbookIds.has(row.id))
+    if (assigned.length > 0) rows = assigned
   }
 
   return [

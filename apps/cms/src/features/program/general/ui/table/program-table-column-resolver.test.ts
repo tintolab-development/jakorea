@@ -77,7 +77,7 @@ describe('resolveEducationColumns trainedTeachers preset', () => {
     expect(column?.render?.(undefined, record, 0)).toBe('대학(원)생, 중학교, 고등학교')
   })
 
-  it('참여자 모집 인원은 정원 없이 승인 참여 인원만 표시한다', () => {
+  it('교육받은 교사도 참여자 모집 인원은 승인 건수와 정원을 함께 표시한다', () => {
     const columns = resolveEducationColumns({
       isOverviewListPage: true,
       listView: 'ALL',
@@ -85,11 +85,14 @@ describe('resolveEducationColumns trainedTeachers preset', () => {
     })
     const column = columns.find(item => item.key === 'participantCapacity')
     const record = {
-      approvedStudentCount: 1,
+      approvedStudentCount: 99,
+      participatingStudentCount: 240,
+      participatingSchoolCount: 12,
+      participantApprovedCount: 1,
       participantCapacity: 120,
     } as Program
 
-    expect(column?.render?.(undefined, record, 0)).toBe('1')
+    expect(column?.render?.(undefined, record, 0)).toBe('1 / 120')
   })
 
   it('default preset은 참여자 유형·강사·봉사자 컬럼을 유지한다', () => {
@@ -111,11 +114,30 @@ describe('resolveEducationColumns trainedTeachers preset', () => {
     })
     const column = columns.find(item => item.key === 'participantCapacity')
     const record = {
-      approvedStudentCount: 1,
+      approvedStudentCount: 9,
+      participantApprovedCount: 1,
       participantCapacity: 120,
-      rounds: [],
+      rounds: [{ capacity: 40 }],
     } as unknown as Program
 
     expect(column?.render?.(undefined, record, 0)).toBe('1 / 120')
+  })
+
+  it('정원이 없으면 유형과 관계없이 승인 건수 / - 로 표시한다', () => {
+    for (const columnPreset of [undefined, 'trainedTeachers' as const]) {
+      const columns = resolveEducationColumns({
+        isOverviewListPage: true,
+        listView: 'ALL',
+        columnPreset,
+      })
+      const column = columns.find(item => item.key === 'participantCapacity')
+      const record = {
+        participantApprovedCount: 4,
+        participantCapacity: undefined,
+        generalVolunteers: 80,
+      } as Program
+
+      expect(column?.render?.(undefined, record, 0)).toBe('4 / -')
+    }
   })
 })
