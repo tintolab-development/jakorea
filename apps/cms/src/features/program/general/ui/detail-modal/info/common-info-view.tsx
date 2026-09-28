@@ -27,6 +27,7 @@ import {
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
+import { SponsorManagerLineInlineView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import {
   applyCurriculumPreEducationBlock,
@@ -843,9 +844,7 @@ function BasicInfoSection({
           />
           <DetailInfoForm.Field
             label="후원사 담당자"
-            view={
-              <PipeSeparatedInlineView text={sponsorManagerViewText} />
-            }
+            view={<SponsorManagerLineInlineView text={sponsorManagerViewText} />}
             edit={
               <Controller
                 name="sponsorManagerContactIds"

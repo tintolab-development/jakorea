@@ -20,11 +20,9 @@ import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-co
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import {
-  DetailInfoForm,
-  DetailInfoFormTdDivider,
-} from '@/shared/components/detail-info-form/detail-info-form'
+import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { SponsorManagerPartsInlineView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import {
@@ -251,12 +249,7 @@ function SponsorManagerView({
             key={parts.join('-')}
             style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}
           >
-            {parts.map((part, partIndex) => (
-              <span key={`${part}-${partIndex}`}>
-                {partIndex > 0 ? <DetailInfoFormTdDivider /> : null}
-                {part}
-              </span>
-            ))}
+            <SponsorManagerPartsInlineView parts={parts} />
           </div>
         ))}
       </div>
@@ -269,7 +262,7 @@ function SponsorManagerView({
       {managerName}
       {program.contactPhone ? (
         <>
-          <DetailInfoForm.InputsSeparator />
+          {'\u00A0'}
           <span>{program.contactPhone}</span>
         </>
       ) : null}
@@ -954,7 +947,7 @@ export function BasicInfoSection({
                                 {manager.name}
                                 {manager.phone ? (
                                   <>
-                                    <DetailInfoForm.InputsSeparator />
+                                    {'\u00A0'}
                                     <span>{manager.phone}</span>
                                   </>
                                 ) : null}
@@ -1404,7 +1397,7 @@ export function BasicInfoSection({
                 {program.managerName}
                 {program.contactPhone ? (
                   <>
-                    <DetailInfoForm.InputsSeparator />
+                    {'\u00A0'}
                     <span>{program.contactPhone}</span>
                   </>
                 ) : null}
@@ -1489,7 +1482,7 @@ export function BasicInfoSection({
                         }}
                       />
                       <div>
-                        <DetailInfoForm.InputsSeparator />
+                        <span>{'\u00A0'}</span>
                         <span>{commonInfoForm.watch('contactPhone') || '-'}</span>
                       </div>
                     </div>
