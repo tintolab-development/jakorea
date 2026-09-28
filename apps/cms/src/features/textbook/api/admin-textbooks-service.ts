@@ -19,7 +19,9 @@ import {
 } from '@/features/textbook/api/textbooks-api-client'
 import {
   buildTextbookMatchesParamsForApplicant,
+  buildIndividualTextbookMatchesParams,
   listMockTextbookCatalogForProgram,
+  listMockTextbookCatalogForIndividualApplicant,
 } from '@/features/textbook/api/textbook-program-catalog'
 import type { TextbookCreateInput, TextbookRow } from '@/features/textbook/model/textbook.types'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
@@ -88,4 +90,17 @@ export async function getProgramTextbookCatalog(
     return getTextbookMatches(params)
   }
   return listMockTextbookCatalogForProgram(program, educationGrade)
+}
+
+/** 개인 참여자 — `businessArea` + `grade`만으로 matches 조회 */
+export async function getIndividualApplicantTextbookCatalog(
+  program: Program,
+  educationGrade?: string
+): Promise<TextbookRow[]> {
+  const params = buildIndividualTextbookMatchesParams(program, educationGrade)
+  if (!params) return []
+  if (shouldUseTextbooksRemoteApi()) {
+    return getTextbookMatches(params)
+  }
+  return listMockTextbookCatalogForIndividualApplicant(program, educationGrade)
 }
