@@ -5,6 +5,9 @@ import {
   fetchProgramThumbnail,
   loadProgramThumbnailPreviewUrl,
 } from '@/features/program/shared/api/program-thumbnail'
+import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { readRecruitDetailMediaFromOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import { PlatformPreviewFooter } from './platform-shell/footer'
 import { PlatformPreviewHeader } from './platform-shell/header'
 import './platform-shell/platform-preview-tokens.css'
@@ -62,19 +65,63 @@ function readablePosterUrl(value: string | null | undefined): string | undefined
   return undefined
 }
 
+function fileObjectIdFromAdminFileUrl(value: string | null | undefined): number | null {
+  const trimmed = value?.trim()
+  if (!trimmed) return null
+  const match = trimmed.match(/\/(?:api\/admin\/)?files\/(\d+)/i)
+  if (!match) return null
+  const id = Number(match[1])
+  return Number.isFinite(id) && id >= 1 ? id : null
+}
+
+function resolveRecruitmentPreviewPosterSeed(program: Program): {
+  displayUrl?: string
+  fileObjectId?: number
+} {
+  const overlay = {
+    ...getApplicantRecruitInstitutionOverlayRecord(),
+    ...getGeneralRecruitOverlayRecord(),
+  }
+  const media = readRecruitDetailMediaFromOverlay(overlay)
+  const displayUrl =
+    readablePosterUrl(media.thumbObjectUrl) ??
+    readablePosterUrl(program.keyVisualImage || program.posterImage)
+  const fileObjectId =
+    media.thumbFileObjectId ??
+    fileObjectIdFromAdminFileUrl(program.keyVisualImage) ??
+    fileObjectIdFromAdminFileUrl(program.posterImage) ??
+    fileObjectIdFromAdminFileUrl(media.keyVisualImage) ??
+    undefined
+  return { displayUrl, fileObjectId }
+}
+
 function useRecruitmentPosterUrl(program: Program): string | undefined {
-  const legacyUrl = readablePosterUrl(program.keyVisualImage || program.posterImage)
-  const [posterImageUrl, setPosterImageUrl] = useState<string | undefined>(legacyUrl)
+  const seed = resolveRecruitmentPreviewPosterSeed(program)
+  const [posterImageUrl, setPosterImageUrl] = useState<string | undefined>(seed.displayUrl)
 
   useEffect(() => {
-    setPosterImageUrl(legacyUrl)
+    const nextSeed = resolveRecruitmentPreviewPosterSeed(program)
+    setPosterImageUrl(nextSeed.displayUrl)
     const programId = parseFileObjectId(program.id)
-    if (programId == null) return
+    const fileObjectId = nextSeed.fileObjectId
 
     let cancelled = false
     let objectUrl: string | null = null
+
     void (async () => {
       try {
+        if (nextSeed.displayUrl?.startsWith('blob:')) return
+        if (fileObjectId != null) {
+          const nextUrl = await loadProgramThumbnailPreviewUrl(fileObjectId)
+          if (cancelled) {
+            if (nextUrl.startsWith('blob:')) URL.revokeObjectURL(nextUrl)
+            return
+          }
+          objectUrl = nextUrl.startsWith('blob:') ? nextUrl : null
+          setPosterImageUrl(nextUrl)
+          return
+        }
+        if (programId == null) return
         const thumbnail = await fetchProgramThumbnail(programId)
         if (cancelled || thumbnail.fileObjectId == null) return
         const nextUrl = await loadProgramThumbnailPreviewUrl(thumbnail.fileObjectId)
@@ -85,7 +132,7 @@ function useRecruitmentPosterUrl(program: Program): string | undefined {
         objectUrl = nextUrl.startsWith('blob:') ? nextUrl : null
         setPosterImageUrl(nextUrl)
       } catch {
-        if (!cancelled) setPosterImageUrl(legacyUrl)
+        if (!cancelled) setPosterImageUrl(nextSeed.displayUrl)
       }
     })()
 
@@ -93,7 +140,7 @@ function useRecruitmentPosterUrl(program: Program): string | undefined {
       cancelled = true
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
-  }, [legacyUrl, program.id])
+  }, [program.id, program.keyVisualImage, program.posterImage])
 
   return posterImageUrl
 }

@@ -52,7 +52,7 @@ export type ParticipantRecruitmentUserViewModel = {
   applicationPeriodLabel: string
   attachmentFileNames: string[]
   contactLines: string[]
-  /** 대표 이미지. 없으면 기본 포스터 */
+  /** 대표 이미지. 없으면 사이드바에 회색 영역 */
   posterImageUrl?: string
 }
 

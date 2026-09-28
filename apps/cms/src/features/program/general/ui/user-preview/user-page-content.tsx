@@ -92,21 +92,17 @@ function toneClassName(tone: RecruitmentUserSpecRow['tone']) {
 }
 
 function Poster({ imageUrl, title }: { imageUrl?: string; title: string }) {
-  if (!imageUrl) {
-    return (
-      <div className="user-page-content__poster-placeholder" aria-hidden>
-        <div className="user-page-content__poster-placeholder-inner">
-          <span className="user-page-content__poster-placeholder-title">FedEx-JA</span>
-          <span className="user-page-content__poster-placeholder-sub">
-            International Trade Challenge 2026
-          </span>
-        </div>
-      </div>
-    )
-  }
+  const hasImage = Boolean(imageUrl)
 
   return (
-    <img className="user-page-content__poster" src={imageUrl} alt={title} />
+    <div
+      className={[
+        'user-page-content__poster',
+        hasImage ? 'user-page-content__poster--has-image' : 'user-page-content__poster--empty',
+      ].join(' ')}
+    >
+      {hasImage ? <img src={imageUrl} alt={title} /> : null}
+    </div>
   )
 }
 

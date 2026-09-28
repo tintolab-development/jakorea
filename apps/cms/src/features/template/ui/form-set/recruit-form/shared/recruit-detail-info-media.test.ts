@@ -40,12 +40,14 @@ describe('readRecruitDetailMediaFromOverlay', () => {
     expect(media.attachmentFileObjectIds).toEqual([101, 102])
   })
 
-  it('ignores blob preview urls', () => {
+  it('ignores blob preview urls for keyVisualImage but keeps thumbObjectUrl', () => {
     const media = readRecruitDetailMediaFromOverlay({
       'recruit.detailInfo.thumbContentUrl': 'blob:http://localhost/preview',
+      'recruit.detailInfo.thumbObjectUrl': 'blob:http://localhost/preview',
       'recruit.detailInfo.thumbFileObjectId': 9,
     })
     expect(media.keyVisualImage).toBeUndefined()
+    expect(media.thumbObjectUrl).toBe('blob:http://localhost/preview')
     expect(media.thumbFileObjectId).toBe(9)
   })
 })
