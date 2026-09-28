@@ -8,7 +8,10 @@ import type { ProgramRegistrationFormVariant } from '@/features/template/model/p
 import {
   GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY,
   normalizeGeneralProgramRegistrationStepKey,
+  recruitmentPreviewAudienceFromRegistrationStep,
 } from '@/features/program/general/model/registration-flow'
+import { ParticipantRecruitmentPreviewModal } from '@/features/program/general/ui/detail-modal/info/participant-recruitment-preview-modal'
+import type { RecruitmentUserPreviewAudience } from '@/features/program/general/ui/user-preview'
 import { useGeneralProgramRegistrationFlow } from '@/features/program/general/hooks/use-registration-flow'
 import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general/ui/registration/registration-body-header'
 import {
@@ -32,6 +35,7 @@ import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/regi
 import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import { useCmsAlert } from '@/shared/ui'
 import { isLocalStorageQuotaExceededError } from '@/features/template/lib/writing-form-template-local-save'
+import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
@@ -69,6 +73,10 @@ export function GeneralProgramRegistrationFullpageModal({
   const [overwriteSaving, setOverwriteSaving] = useState(false)
   const [draftSaveSuccessOpen, setDraftSaveSuccessOpen] = useState(false)
   const [completeSuccessOpen, setCompleteSuccessOpen] = useState(false)
+  const [recruitmentPreviewOpen, setRecruitmentPreviewOpen] = useState(false)
+  const [recruitmentPreviewProgram, setRecruitmentPreviewProgram] = useState<Program | null>(null)
+  const [recruitmentPreviewAudience, setRecruitmentPreviewAudience] =
+    useState<RecruitmentUserPreviewAudience>('institutions')
   const pendingCreatedProgramRef = useRef<Program | undefined>(undefined)
 
   // 안내 팝업에서 「이어서 작성」을 명시한 경우만 복원한다.
@@ -123,6 +131,8 @@ export function GeneralProgramRegistrationFullpageModal({
     setOverwriteSaving(false)
     setDraftSaveSuccessOpen(false)
     setCompleteSuccessOpen(false)
+    setRecruitmentPreviewOpen(false)
+    setRecruitmentPreviewProgram(null)
     pendingCreatedProgramRef.current = undefined
   }, [open])
 
@@ -130,6 +140,8 @@ export function GeneralProgramRegistrationFullpageModal({
     pendingCreatedProgramRef.current = program
     setCompleteSuccessOpen(true)
   }, [])
+
+  const recruitmentPreviewSponsorName = useSponsorNameById(recruitmentPreviewProgram?.sponsorId)
 
   const flow = useGeneralProgramRegistrationFlow(open, {
     initialStep,
@@ -149,6 +161,14 @@ export function GeneralProgramRegistrationFullpageModal({
   }, [onClose, searchParams, setSearchParams])
 
   const handlePreview = useCallback(() => {
+    if (flow.phase === 'recruitment') {
+      setRecruitmentPreviewProgram(flow.registrationVm.buildCurrentProgramSnapshot())
+      setRecruitmentPreviewAudience(
+        recruitmentPreviewAudienceFromRegistrationStep(flow.activeStep)
+      )
+      setRecruitmentPreviewOpen(true)
+      return
+    }
     const next = new URLSearchParams(searchParams)
     next.set('userPreview', TEMPLATE_USER_PREVIEW_ACTIVE)
     setSearchParams(next, { replace: false })
@@ -218,6 +238,11 @@ export function GeneralProgramRegistrationFullpageModal({
     registrationFormVariant,
     shouldRemoveSavedDraftAfterCompletion,
   ])
+
+  /** 공통·모집: 우측 커스텀 필드 숨김. 신청 정보 단계는 유지 */
+  const hideCustomFieldNav = flow.phase === 'program' || flow.phase === 'recruitment'
+  /** 공통 정보에서만 미리보기 버튼 제거 */
+  const showPreview = flow.phase !== 'program'
 
   const footerActions = useMemo((): TemplateFullpageModalFooterAction[] | undefined => {
     if (flow.phase === 'program') {
@@ -303,6 +328,7 @@ export function GeneralProgramRegistrationFullpageModal({
         templateTabType="writing"
         registrationUserMode
         onPreview={handlePreview}
+        showPreview={showPreview}
         onSave={handleSaveClick}
         bodyHeaderLeading={
           <GeneralProgramRegistrationBodyHeader
@@ -319,7 +345,9 @@ export function GeneralProgramRegistrationFullpageModal({
         }
         footerActions={footerActions}
         leftContent={flow.isDraftLoading ? <FormDraftLoading /> : flow.panels.leftContent}
-        rightNavigation={flow.isDraftLoading ? null : flow.panels.rightNavigation}
+        rightNavigation={
+          flow.isDraftLoading || hideCustomFieldNav ? null : flow.panels.rightNavigation
+        }
       />
       <RegistrationDraftOverwriteConfirmModal
         open={overwriteOpen}
@@ -339,6 +367,18 @@ export function GeneralProgramRegistrationFullpageModal({
         open={completeSuccessOpen}
         onConfirm={handleCompleteSuccessConfirm}
       />
+      {recruitmentPreviewProgram ? (
+        <ParticipantRecruitmentPreviewModal
+          open={recruitmentPreviewOpen}
+          onClose={() => {
+            setRecruitmentPreviewOpen(false)
+            setRecruitmentPreviewProgram(null)
+          }}
+          program={recruitmentPreviewProgram}
+          sponsorName={recruitmentPreviewSponsorName}
+          audience={recruitmentPreviewAudience}
+        />
+      ) : null}
     </>
   )
 }
