@@ -517,23 +517,54 @@ export function parseScheduleProgressTimeSummary(
 ): Array<{ startTime: string; endTime: string }> {
   if (!summary?.trim()) return [{ startTime: '', endTime: '' }]
   return summary.split(/\s*\|\s*/).map(part => {
-    const match = part
-      .trim()
-      .match(/그룹\s+[A-Z]\s*:\s*(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)
-    return { startTime: match?.[1] ?? '', endTime: match?.[2] ?? '' }
+    const trimmed = part.trim()
+    const withGroup = trimmed.match(/그룹\s+[A-Z]\s*:\s*(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})/)
+    if (withGroup) {
+      return { startTime: withGroup[1], endTime: withGroup[2] }
+    }
+    const plain = trimmed.match(/^(\d{1,2}:\d{2})\s*~\s*(\d{1,2}:\d{2})$/)
+    if (plain) {
+      return { startTime: plain[1], endTime: plain[2] }
+    }
+    return { startTime: '', endTime: '' }
   })
+}
+
+function scheduleProgressTimeRangeLabel(start: string, end: string): string {
+  if (!start || !end) return '-'
+  return `${start} ~ ${end}`
+}
+
+/** 조회 — 진행 그룹 1개면 `09:30 ~ 10:00`, 2개 이상이면 `그룹 A : … | 그룹 B : …` */
+export function formatScheduleProgressTimeSummaryForView(summary: string | undefined): string {
+  const trimmed = summary?.trim()
+  if (!trimmed || trimmed === '-') return '-'
+  const segments = trimmed
+    .split(/\s*\|\s*/)
+    .map(part => part.replace(/^그룹\s+\S+\s*:\s*/, '').trim())
+  const filled = segments.filter(Boolean)
+  if (filled.length === 0) return '-'
+  if (filled.length === 1) return filled[0]
+  return filled
+    .map((range, index) => {
+      const letter = String.fromCharCode('A'.charCodeAt(0) + index)
+      return `그룹 ${letter} : ${range}`
+    })
+    .join(' | ')
 }
 
 export function buildScheduleProgressTimeSummary(
   groupTimes: Array<{ startTime?: string; endTime?: string }>
 ): string {
+  const useGroupLabels = groupTimes.length >= 2
   return groupTimes
     .map((gt, gi) => {
-      const letter = String.fromCharCode('A'.charCodeAt(0) + gi)
       const start = gt.startTime?.trim() ?? ''
       const end = gt.endTime?.trim() ?? ''
-      if (!start || !end) return `그룹 ${letter} : -`
-      return `그룹 ${letter} : ${start} ~ ${end}`
+      const range = scheduleProgressTimeRangeLabel(start, end)
+      if (!useGroupLabels) return range
+      const letter = String.fromCharCode('A'.charCodeAt(0) + gi)
+      return `그룹 ${letter} : ${range}`
     })
     .join(' | ')
 }

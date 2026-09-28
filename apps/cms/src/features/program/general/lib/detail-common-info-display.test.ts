@@ -132,3 +132,19 @@ describe('resolveGeneralProgramCommonInfo 임금', () => {
     expect(parseWageGradeAmount(common.wageGradeRows?.[2]?.pricing)).toBe(60_000)
   })
 })
+
+describe('resolveGeneralProgramCommonInfo 교육 형태', () => {
+  it('generalCommonInfo 라벨이 없으면 registration overlay 일정 공통 값을 조회 라벨로 쓴다', () => {
+    const common = resolveGeneralProgramCommonInfo(
+      baseProgram({
+        generalCommonInfo: {
+          educationFormScheduleDetail: 'common',
+        },
+        registrationOverlay: {
+          'generalRegistration.typeSettings.singleEducationForm': 'offline',
+        },
+      })
+    )
+    expect(common.educationFormLabel).toBe('오프라인')
+  })
+})

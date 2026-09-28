@@ -12,7 +12,10 @@ import { useDetailedProgramSelectOptions } from '@/features/detailed-program/hoo
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import {
+  programToDetailEditValues,
+  resolveStoredEducationFormLabel,
+} from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   BUSINESS_AREA_OPTIONS,
   COURSE_DELIVERED_BY_OPTIONS,
@@ -109,6 +112,7 @@ import {
   resolveScheduleDetailIpsTypeSummaryForView,
   resolveScheduleDetailEducationFormLabelForView,
   resolveScheduleDetailProgressTimeSummaryForView,
+  formatScheduleProgressTimeSummaryForView,
   overlayIpsIndexForScheduleDetail,
   resolveSponsorManagementIds,
   type GeneralProgramCommonInfoEditFormValues,
@@ -1565,6 +1569,7 @@ function TypeSettingsSection({
   form?: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
 }) {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
+  const educationFormLabelView = resolveStoredEducationFormLabel(commonInfo).trim() || '-'
   const effectiveTypeFields = resolveEffectiveGeneralProgramTypeFields({
     generalProgramAudience: program.generalProgramAudience,
     generalProgramEducationStructure: program.generalProgramEducationStructure,
@@ -1757,7 +1762,7 @@ function TypeSettingsSection({
             <DetailInfoForm.Field
               label="교육 형태"
               fullRow={isOrganization}
-              view={commonInfo.educationFormLabel ?? '-'}
+              view={educationFormLabelView}
               edit={
                 <Controller
                   name="educationForm"
@@ -1868,7 +1873,7 @@ function TypeSettingsSection({
               editForm={editForm}
               formMode={formMode}
               perScheduleHint={schedulePerScheduleHint}
-              commonDetailView={commonInfo.educationFormLabel ?? '-'}
+              commonDetailView={educationFormLabelView}
               commonDetailEdit={
                 <Controller
                   name="educationForm"
@@ -2973,7 +2978,11 @@ function ScheduleDetailViewBlock({
             <DetailInfoForm.Field
               label="진행 시간"
               fullRow
-              view={<PipeSeparatedInlineView text={progressTimeSummary ?? '-'} />}
+              view={
+                <PipeSeparatedInlineView
+                  text={formatScheduleProgressTimeSummaryForView(progressTimeSummary)}
+                />
+              }
             />
           </DetailInfoForm.Row>
           {ipsPerSchedule ? (

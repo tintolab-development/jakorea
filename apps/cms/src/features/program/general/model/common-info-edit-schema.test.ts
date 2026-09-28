@@ -14,6 +14,8 @@ import {
   resolveScheduleDetailIpsTypeSummaryForView,
   resolveScheduleDetailProgressTimeSummaryForView,
   resolveScheduleDetailScheduleDateLabelForView,
+  buildScheduleProgressTimeSummary,
+  formatScheduleProgressTimeSummaryForView,
   type GeneralProgramSponsorEditContext,
 } from './common-info-edit-schema'
 
@@ -661,6 +663,19 @@ describe('일정형 일정별 IPS 조회 표시', () => {
     ).toBe('그룹 A : 09:30 ~ 10:40 | 그룹 B : 13:00 ~ 14:10')
   })
 
+  it('overlay groupTimes가 1개면 그룹 라벨 없이 진행 시간을 만든다', () => {
+    expect(
+      resolveScheduleDetailProgressTimeSummaryForView({
+        overlay: {
+          'generalRegistration.educationScheduleCurriculum.groupTimesByDetail': {
+            0: [{ startTime: '15:43', endTime: '16:43' }],
+          },
+        },
+        overlayIndex: 0,
+      })
+    ).toBe('15:43 ~ 16:43')
+  })
+
   it('진행 일정 라벨이 없으면 overlay scheduleDateByDetailIso로 보완한다', () => {
     expect(
       resolveScheduleDetailScheduleDateLabelForView({
@@ -698,5 +713,28 @@ describe('일정형 일정별 IPS 조회 표시', () => {
       0: 'offline',
       1: 'online',
     })
+  })
+})
+
+describe('진행 시간 요약 표기', () => {
+  it('buildScheduleProgressTimeSummary — 그룹 1개는 시간만', () => {
+    expect(
+      buildScheduleProgressTimeSummary([{ startTime: '09:30', endTime: '10:40' }])
+    ).toBe('09:30 ~ 10:40')
+  })
+
+  it('buildScheduleProgressTimeSummary — 그룹 2개 이상은 A/B 라벨', () => {
+    expect(
+      buildScheduleProgressTimeSummary([
+        { startTime: '09:30', endTime: '10:40' },
+        { startTime: '13:00', endTime: '14:10' },
+      ])
+    ).toBe('그룹 A : 09:30 ~ 10:40 | 그룹 B : 13:00 ~ 14:10')
+  })
+
+  it('formatScheduleProgressTimeSummaryForView — 저장값에 그룹 A 1개만 있어도 라벨 제거', () => {
+    expect(formatScheduleProgressTimeSummaryForView('그룹 A : 15:43 ~ 16:43')).toBe(
+      '15:43 ~ 16:43'
+    )
   })
 })

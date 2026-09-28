@@ -26,6 +26,8 @@ import {
 import { extrasFromGeneralProgram } from '@/features/program/general/lib/registration-overlay-sync'
 import { applyRegistrationWageOverlayToCommonInfo } from '@/features/program/general/lib/wage-display'
 import { buildEnrichedScheduleDetails } from '@/features/program/general/lib/registration-overlay-to-program'
+import { resolveStoredEducationFormLabel } from '@/features/program/shared/model/program-detail-edit-schema'
+import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import {
   overlayIpsIndexForScheduleDetail,
   resolveScheduleDetailProgressTimeSummaryForView,
@@ -674,6 +676,54 @@ export function resolveGeneralProgramScheduleDetailsForView(
   })
 }
 
+const REGISTRATION_OVERLAY_COMMON_EDUCATION_FORM_KEYS = [
+  'generalRegistration.typeSettings.multiCommonEducationForm',
+  'generalRegistration.typeSettings.singleEducationForm',
+  'generalRegistration.typeSettings.educationForm',
+] as const
+
+function overlayRegistrationEducationFormValue(
+  overlay: Record<string, unknown>
+): string | undefined {
+  for (const key of REGISTRATION_OVERLAY_COMMON_EDUCATION_FORM_KEYS) {
+    const raw = overlay[key]
+    if (typeof raw === 'string' && raw.trim()) return raw.trim()
+  }
+  return undefined
+}
+
+function educationFormLabelFromRegistrationValue(value: string): string {
+  const options = getProgramRegistrationEducationFormOptions(true)
+  return options.find(option => option.value === value)?.label ?? value
+}
+
+/** 조회 — `generalCommonInfo.educationFormLabel`·overlay·행 값을 등록 폼·수정 모드와 동일하게 맞춘다. */
+function applyRegistrationEducationFormLabelToCommonInfo<
+  T extends NonNullable<Program['generalCommonInfo']>,
+>(common: T, overlay: Record<string, unknown> | undefined): T {
+  const fromStored = resolveStoredEducationFormLabel({
+    educationFormLabel: common.educationFormLabel,
+    scheduleDetails: common.scheduleDetails,
+    curriculumSessions: common.curriculumSessions,
+  }).trim()
+  if (fromStored) {
+    if (common.educationFormLabel?.trim()) return common
+    return { ...common, educationFormLabel: fromStored }
+  }
+
+  if ((common.educationFormScheduleDetail ?? 'common') !== 'common' || !overlay) {
+    return common
+  }
+
+  const overlayValue = overlayRegistrationEducationFormValue(overlay)
+  if (!overlayValue) return common
+
+  const label = educationFormLabelFromRegistrationValue(overlayValue).trim()
+  if (!label) return common
+
+  return { ...common, educationFormLabel: label }
+}
+
 export function resolveGeneralProgramCommonInfo(
   program: Program
 ): NonNullable<Program['generalCommonInfo']> {
@@ -682,8 +732,11 @@ export function resolveGeneralProgramCommonInfo(
       ? (program.registrationOverlay as Record<string, unknown>)
       : undefined
   if (program.generalCommonInfo) {
-    return applyRegistrationWageOverlayToCommonInfo(
-      withResolvedEducationScheduleLines(program.generalCommonInfo, program),
+    return applyRegistrationEducationFormLabelToCommonInfo(
+      applyRegistrationWageOverlayToCommonInfo(
+        withResolvedEducationScheduleLines(program.generalCommonInfo, program),
+        overlay
+      ),
       overlay
     )
   }
@@ -783,7 +836,10 @@ export function resolveGeneralProgramCommonInfo(
       },
     ],
   }
-  return applyRegistrationWageOverlayToCommonInfo(fallback, overlay)
+  return applyRegistrationEducationFormLabelToCommonInfo(
+    applyRegistrationWageOverlayToCommonInfo(fallback, overlay),
+    overlay
+  )
 }
 
 export function isGeneralOrgScheduleSingleProgram(program: Program): boolean {
