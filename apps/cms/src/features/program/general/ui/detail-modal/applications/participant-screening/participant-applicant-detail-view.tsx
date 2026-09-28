@@ -35,12 +35,12 @@ import {
 import {
   ParticipantApproveModal,
   ParticipantApprovalCompleteModal,
-  ParticipantRejectModal,
   ParticipantRejectCompleteModal,
   ParticipantCancelRejectModal,
   ParticipantCancelRejectCompleteModal,
 } from '@/features/program/shared/ui/detail-modal/components/participant-application-flow-modals'
 import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
+import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 import {
   ApplicantsDetailContents,
 } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-contents'
@@ -681,9 +681,12 @@ export function GeneralParticipantApplicantDetailView({
         participantName={approveComplete?.participantName ?? ''}
         onClose={() => setApproveComplete(null)}
       />
-      <ParticipantRejectModal
+      <ProgramApplicationRejectModal
         open={rejectTarget != null}
-        participantName={rejectTarget?.name ?? ''}
+        audience="member"
+        variant="single"
+        subjectName={rejectTarget?.name ?? ''}
+        zIndex={2500}
         onCancel={() => {
           if (decisionBusy) return
           setRejectTarget(null)
