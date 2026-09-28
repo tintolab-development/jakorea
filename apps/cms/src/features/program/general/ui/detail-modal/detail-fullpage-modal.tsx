@@ -588,10 +588,6 @@ export function GeneralProgramDetailFullPageModal({
     () => getVisibleGeneralProgressMenuItems(progressMenuItems, disabledLnbKeys.has('progress')),
     [disabledLnbKeys, progressMenuItems]
   )
-  const surveyItemsFiltered = useMemo(
-    () => (disabledLnbKeys.has('survey') ? [] : surveyItems),
-    [disabledLnbKeys, surveyItems]
-  )
   const participantApplicationsLnbLabel = useMemo(
     () =>
       displayProgram
@@ -1820,7 +1816,7 @@ export function GeneralProgramDetailFullPageModal({
               participantInterviewEnabled={participantInterviewEnabled}
               volunteerInterviewEnabled={volunteerInterviewEnabled}
               progressMenuItems={progressMenuItemsFiltered}
-              surveyItems={surveyItemsFiltered}
+              surveyItems={surveyItems}
               onSelectChildTab={setLnbTab}
             />
           ) : null

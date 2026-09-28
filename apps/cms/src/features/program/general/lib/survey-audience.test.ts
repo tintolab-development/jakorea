@@ -251,6 +251,33 @@ describe('general survey audience', () => {
     expect(getGeneralSurveyMenuItems(org).map(item => item.key)).toEqual(['survey', 'satisfaction'])
   })
 
+  it('설문 진행 항목이 없으면 2depth 메뉴가 없다', () => {
+    const org = program({
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution'],
+      generalSurveyMenuKeys: [],
+    })
+
+    expect(getGeneralSurveyMenuItems(org)).toEqual([])
+  })
+
+  it('overlay에서 0개 선택이면 컬럼 키가 있어도 2depth가 없다', () => {
+    const org = program({
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution'],
+      generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
+      registrationOverlay: {
+        'generalRegistration.basicInfo.surveyItems': {
+          survey: false,
+          satisfaction: false,
+          lecture_evaluation: false,
+        },
+      },
+    })
+
+    expect(getGeneralSurveyMenuItems(org)).toEqual([])
+  })
+
   it('봉사자 포함 프로그램은 학생 만족도 대신 상·하반기 봉사자 탭을 제공한다', () => {
     const volunteerProgram = program({
       generalProgramAudience: 'organization',

@@ -774,7 +774,6 @@ export function ProgramDetailFullPageModal({
       if (isTrainedTeachersDetail) {
         const hideApplicants = disabledLnbKeys.has('institution_applications')
         const hideProgress = disabledLnbKeys.has('progress')
-        const hideSurvey = disabledLnbKeys.has('survey')
         const hideManagers = disabledLnbKeys.has('managers')
         return [
           {
@@ -799,23 +798,19 @@ export function ProgramDetailFullPageModal({
                 },
               ]
             : []),
-          ...(!hideSurvey
-            ? [
-                {
-                  key: 'survey',
-                  label: '설문 관리',
-                  icon: <GeneralLnbSurveyManagementIcon />,
-                  ...(surveyMenuItems.length > 0
-                    ? {
-                        children: surveyMenuItems.map(item => ({
-                          key: item.key,
-                          label: item.label,
-                        })),
-                      }
-                    : {}),
-                },
-              ]
-            : []),
+          {
+            key: 'survey',
+            label: '설문 관리',
+            icon: <GeneralLnbSurveyManagementIcon />,
+            ...(surveyMenuItems.length > 0
+              ? {
+                  children: surveyMenuItems.map(item => ({
+                    key: item.key,
+                    label: item.label,
+                  })),
+                }
+              : {}),
+          },
           ...(!hideManagers
             ? [{ key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> }]
             : []),
@@ -826,7 +821,6 @@ export function ProgramDetailFullPageModal({
         const hideApplicants = disabledLnbKeys.has('institution_applications')
         const hideInstructorApps = disabledLnbKeys.has('instructor_applications')
         const hideProgress = disabledLnbKeys.has('progress')
-        const hideSurvey = disabledLnbKeys.has('survey')
         const hideManagers = disabledLnbKeys.has('managers')
         return [
           {
@@ -864,23 +858,19 @@ export function ProgramDetailFullPageModal({
                 },
               ]
             : []),
-          ...(!hideSurvey
-            ? [
-                {
-                  key: 'survey',
-                  label: '설문 관리',
-                  icon: <GeneralLnbSurveyManagementIcon />,
-                  ...(surveyMenuItems.length > 0
-                    ? {
-                        children: surveyMenuItems.map(item => ({
-                          key: item.key,
-                          label: item.label,
-                        })),
-                      }
-                    : {}),
-                },
-              ]
-            : []),
+          {
+            key: 'survey',
+            label: '설문 관리',
+            icon: <GeneralLnbSurveyManagementIcon />,
+            ...(surveyMenuItems.length > 0
+              ? {
+                  children: surveyMenuItems.map(item => ({
+                    key: item.key,
+                    label: item.label,
+                  })),
+                }
+              : {}),
+          },
           ...(!hideManagers
             ? [{ key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> }]
             : []),
