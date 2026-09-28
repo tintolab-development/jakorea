@@ -7,6 +7,7 @@ import {
   mapInstructorApplicationToApplicantInstructorRow,
   mapMaterialAssignmentStatusToTextbookStatus,
   mapOrganizationApplicationToApplicantSchoolRow,
+  softMergeOrganizationApplicationDetailOntoRow,
   mapParticipantToParticipatingIndividualRow,
   mapParticipantToParticipatingInstructorRow,
   mapParticipantToParticipatingSchoolRow,
@@ -20,6 +21,56 @@ import {
 import type { Program } from '@/types/domain'
 
 describe('general-applications-adapters', () => {
+  it('maps requested grade onto the applicant grade cell', () => {
+    const row = softMergeOrganizationApplicationDetailOntoRow(
+      {
+        requestedGrade: '2',
+        organizationAddressDetail: '3층 교무실',
+        applicationReason: '금융 교육',
+        otherRequests: '주차',
+        requestedEducationFormat: 'ONLINE',
+      },
+      {
+        id: '1691187',
+        no: 1,
+        schoolName: 'JA서울미래초등학교',
+        region: '서울특별시 종로구',
+        educationGrade: '',
+        classCount: 2,
+        studentCount: 111,
+        teacherName: '교사',
+        approvalStatus: 'pending',
+        programId: '186010',
+        detail: { addressDetail: '본관' },
+      }
+    )
+    expect(row.educationGrade).toBe('2학년')
+    expect(row.detail?.addressDetail).toBe('3층 교무실')
+    expect(row.detail?.applicationReason).toBe('금융 교육')
+    expect(row.detail?.otherRequests).toBe('주차')
+    expect(row.detail?.educationType).toBe('온라인')
+  })
+
+  it('does not show the program grade range when the application has no requested grade', () => {
+    const row = softMergeOrganizationApplicationDetailOntoRow(
+      { requestedEducationFormat: 'HYBRID' },
+      {
+        id: '1',
+        no: 1,
+        schoolName: '학교',
+        region: '서울',
+        educationGrade: '3~6학년',
+        classCount: 1,
+        studentCount: 10,
+        teacherName: '교사',
+        approvalStatus: 'pending',
+        programId: '186010',
+      }
+    )
+    expect(row.educationGrade).toBe('')
+    expect(row.detail?.educationType).toBe('온/오프라인')
+  })
+
   it('maps API application status to approval status', () => {
     expect(mapApiApplicationStatusToApprovalStatus('APPROVED')).toBe('approved')
     expect(mapApiApplicationStatusToApprovalStatus('WAITING_REVIEW')).toBe('pending')

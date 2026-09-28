@@ -37,10 +37,10 @@ import {
   buildInstitutionClassCountOptions,
   resolveProgramParticipantMaxClassCount,
 } from '@/features/template/lib/participant-recruitment-institution-limits'
-import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
+import { useIndividualApplicantTextbookOptions } from '@/features/textbook/hooks/use-individual-applicant-textbook-options'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { updateOrganizationApplicationRemote } from '@/features/program/general/api/applications-api-client'
-import { mapOrganizationApplicationDetailToApplicantSchoolRow } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { mapOrganizationApplicationDetailToApplicantSchoolRow, toRequestedEducationFormatApiValue } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 
 /**
@@ -101,8 +101,11 @@ export function useApplicantInstitutionDetailEdit({
       : undefined
   }, [draft?.educationGrade, institution?.educationGrade, isEditing])
 
-  const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
-    useProgramTextbookCatalog(program, applicantEducationGrade)
+  const {
+    catalog: textbookCatalog,
+    isLoading: isTextbookCatalogLoading,
+    materialIds: programMaterialTextbookIds,
+  } = useIndividualApplicantTextbookOptions(program, applicantEducationGrade)
 
   const resetEditState = useCallback(() => {
     setIsEditing(false)
@@ -218,9 +221,10 @@ export function useApplicantInstitutionDetailEdit({
     return buildApplicantInstitutionTextbookOptions(
       program,
       applicantEducationGrade,
-      textbookCatalog
+      textbookCatalog,
+      programMaterialTextbookIds
     )
-  }, [applicantEducationGrade, program, textbookCatalog])
+  }, [applicantEducationGrade, program, programMaterialTextbookIds, textbookCatalog])
 
   const textbookDisplayLabel = useMemo(() => {
     if (!institution) return undefined
@@ -325,7 +329,7 @@ export function useApplicantInstitutionDetailEdit({
           requestedClassCount: savePayload.classCount,
           requestedStudentCount: savePayload.studentCount,
           requestedEducationFormat: showEducationFormatField
-            ? normalizedDraft.educationFormat.trim() || undefined
+            ? toRequestedEducationFormatApiValue(normalizedDraft.educationFormat)
             : undefined,
           teacherMemberId:
             teacherMemberId != null && Number.isFinite(teacherMemberId)

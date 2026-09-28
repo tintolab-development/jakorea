@@ -80,11 +80,26 @@ export interface ParticipatingSchoolRow {
   completedEducationRoundCount?: number
   /** TT 교재명 */
   textbookName?: string
+  /** TT 교재 마스터 id (상세 GET 병합 시) */
+  textbookId?: string
+  /** 담당 교사 전화(마스킹 가능) — contact와 동일 출처일 수 있음 */
+  teacherPhone?: string
+  teacherMobile?: string
+  teacherEmail?: string
+  /** 신청 상세 주소 */
+  addressDetail?: string
+  /** 희망 교육 형태 (온라인/오프라인/온·오프라인) */
+  educationFormat?: string
+  /** 신청 사유 */
+  applicationReason?: string
+  /** 기타 요청사항 */
+  otherRequests?: string
   /** TT 교육일지 수. 최소 0. */
   educationJournalCount?: number
   journalSubmitted?: boolean
   /** TT 교육 완료 건수. 최소 0. */
   educationCompletionCount?: number
+  giveUpStopScheduleId?: number
 }
 
 export const TEXTBOOK_STATUS_LABELS: Record<TextbookStatusKey, string> = {

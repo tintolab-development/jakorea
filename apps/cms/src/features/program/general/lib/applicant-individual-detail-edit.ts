@@ -45,11 +45,24 @@ export function rowToIndividualEditDraft(
 
   return {
     adminComment: row.adminComment ?? '',
-    textbookId: row.textbookId ?? '',
-    textbookName: row.textbookName ?? '',
+    textbookId:
+      !row.textbookId?.trim() || row.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE
+        ? TEXTBOOK_NOT_USED_OPTION_VALUE
+        : row.textbookId,
+    textbookName:
+      !row.textbookId?.trim() ||
+      row.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE ||
+      row.textbookName === '해당 없음'
+        ? '해당 없음'
+        : (row.textbookName ?? ''),
     textbookKits: kitQuantity.textbookKits,
     textbookQuantity: kitQuantity.textbookQuantity,
-    textbookStatus: row.textbookStatus ?? 'not_applicable',
+    textbookStatus:
+      !row.textbookId?.trim() ||
+      row.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE ||
+      row.textbookName === '해당 없음'
+        ? 'not_applicable'
+        : (row.textbookStatus ?? 'preparing'),
     teamName: row.detail?.teamName ?? '',
     teamMemberCountSelect: row.detail?.teamMemberCountSelect ?? '1',
     teamMemberCount: row.detail?.teamMemberCount ?? 1,

@@ -119,6 +119,10 @@ export interface ApplicantSchoolRow {
   journalSubmitted?: boolean
   /** TT 교육 완료 건수. 최소 0. */
   educationCompletionCount?: number
+  /** TT 활동 포기 — applicationStatus는 APPROVED 유지 */
+  activityWithdrawn?: boolean
+  giveUpAt?: string
+  giveUpStopScheduleId?: number
   /** 담당 강사(들) — 신청 단계에서는 미배정일 수 있음 */
   assignedInstructorNames?: string
   /** 기본 정보·안내 사항 상세 (mock 시안용) */

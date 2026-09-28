@@ -24,7 +24,25 @@ import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/p
 
 const GENERAL_DETAIL_INSTITUTION_TEXT_COL_MIN_WIDTH = 185
 const GENERAL_DETAIL_INSTITUTION_SESSIONS_COL_MIN_WIDTH = 360
-const COMPANY_SCHOOL_INSTITUTION_SESSIONS_COL_MIN_WIDTH = 320
+/**
+ * `2026.11.13(금) 07:10 ~ 08:15 | 12차시` 한 줄(Pretendard 16/500 + 디바이더 + 셀 패딩).
+ * fluid 테이블이 이 열을 줄여 말줄임하지 않도록 CSS min-width와 쌍으로 둔다.
+ */
+const COMPANY_SCHOOL_INSTITUTION_SESSIONS_COL_MIN_WIDTH = 400
+/** 헤더 16px/700 + 좌우 패딩 20px. fluid 테이블이 남는 폭을 나눠 먹지 않도록 max-width와 쌍으로 둔다. */
+const COMPANY_SCHOOL_GRADE_COL_WIDTH = 128
+const COMPANY_SCHOOL_CLASS_COUNT_COL_WIDTH = 148
+const COMPANY_SCHOOL_STUDENT_COUNT_COL_WIDTH = 136
+const COMPANY_SCHOOL_TEACHER_COL_WIDTH = 136
+
+/** `duration: "N차시"`(1사1교·TT)가 차시 수 SoT. classNum은 교시 라벨이라 parseInt 금지. */
+function resolveCompanySchoolSessionCount(
+  session: NonNullable<ApplicantSchoolRow['sessions']>[number]
+): number {
+  const fromDuration = /^(\d+)\s*차시/.exec(session.duration?.trim() ?? '')
+  if (fromDuration) return Math.max(1, Number.parseInt(fromDuration[1]!, 10))
+  return 1
+}
 
 function formatCompanySchoolPreferredSchedule(sessions: ApplicantSchoolRow['sessions']): string {
   if (!sessions?.length) return '-'
@@ -32,10 +50,10 @@ function formatCompanySchoolPreferredSchedule(sessions: ApplicantSchoolRow['sess
   const last = sessions[sessions.length - 1]
   const startTime = first.timeRange?.split('~')[0]?.trim()
   const endTime = last.timeRange?.split('~')[1]?.trim()
-  const totalSessions = sessions.reduce((sum, session) => {
-    const parsed = Number.parseInt(session.classNum ?? '', 10)
-    return sum + (Number.isFinite(parsed) ? parsed : 1)
-  }, 0)
+  const totalSessions = sessions.reduce(
+    (sum, session) => sum + resolveCompanySchoolSessionCount(session),
+    0
+  )
   const dateLabel = [first.date, first.dayOfWeek ? `(${first.dayOfWeek})` : ''].join('')
   const timeLabel = startTime && endTime ? `${startTime} ~ ${endTime}` : (first.timeRange ?? '-')
   return `${dateLabel} ${timeLabel} | ${totalSessions}차시`
@@ -77,12 +95,12 @@ export function useInstitutionApplicantColumns(params: {
       if (isCompanySchool) {
         const maxClassCount = programBridge?.maxClassCount
         const columns: ColumnsType<ApplicantSchoolRow> = [
-          { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
+          { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
           {
             title: '신청 기관명',
             dataIndex: 'schoolName',
             key: 'schoolName',
-            width: 180,
+            width: 150,
             align: 'center',
             ellipsis: true,
             render: (text: string, record) => (
@@ -98,7 +116,7 @@ export function useInstitutionApplicantColumns(params: {
             title: '기관 소재지',
             dataIndex: 'region',
             key: 'region',
-            width: 200,
+            width: 140,
             align: 'center',
             ellipsis: true,
           },
@@ -106,7 +124,7 @@ export function useInstitutionApplicantColumns(params: {
             title: '프로그램 승인 현황',
             dataIndex: 'approvalStatus',
             key: 'approvalStatus',
-            width: 160,
+            width: 120,
             align: 'center',
             render: (status: ApprovalStatusKey) =>
               status ? <ApprovalStatusText status={status} /> : '-',
@@ -117,24 +135,44 @@ export function useInstitutionApplicantColumns(params: {
             width: COMPANY_SCHOOL_INSTITUTION_SESSIONS_COL_MIN_WIDTH,
             minWidth: COMPANY_SCHOOL_INSTITUTION_SESSIONS_COL_MIN_WIDTH,
             align: 'center',
-            render: (_: unknown, record: ApplicantSchoolRow) =>
-              renderProgramDetailPipeSeparated(
-                formatCompanySchoolPreferredSchedule(record.sessions)
-              ),
+            className: 'applicant-details__th-sessions applicant-details__th-sessions--schedule',
+            onHeaderCell: () => ({
+              className: 'applicant-details__th-sessions applicant-details__th-sessions--schedule',
+            }),
+            onCell: () => ({
+              className:
+                'applicant-details__td-sessions applicant-details__td-sessions--center applicant-details__td-sessions--schedule',
+            }),
+            render: (_: unknown, record: ApplicantSchoolRow) => (
+              <div className="applicant-details__sessions-cell">
+                <div className="applicant-details__session-line applicant-details__session-line--nowrap">
+                  {renderProgramDetailPipeSeparated(
+                    formatCompanySchoolPreferredSchedule(record.sessions)
+                  )}
+                </div>
+              </div>
+            ),
           },
           {
             title: '신청 학년',
             dataIndex: 'educationGrade',
             key: 'educationGrade',
-            width: 110,
+            width: COMPANY_SCHOOL_GRADE_COL_WIDTH,
             align: 'center',
+            ellipsis: true,
+            className: 'applicant-details__th-grade',
+            onHeaderCell: () => ({ className: 'applicant-details__th-grade' }),
+            onCell: () => ({ className: 'applicant-details__td-grade' }),
           },
           {
             title: '신청 학급 수',
             dataIndex: 'classCount',
             key: 'classCount',
-            width: 120,
+            width: COMPANY_SCHOOL_CLASS_COUNT_COL_WIDTH,
             align: 'center',
+            className: 'applicant-details__th-class-count',
+            onHeaderCell: () => ({ className: 'applicant-details__th-class-count' }),
+            onCell: () => ({ className: 'applicant-details__td-class-count' }),
             render: (v: number) => {
               const next = maxClassCount != null ? Math.min(v, maxClassCount) : v
               return next != null ? `${next}개` : '-'
@@ -144,16 +182,23 @@ export function useInstitutionApplicantColumns(params: {
             title: '총 학생 수',
             dataIndex: 'studentCount',
             key: 'studentCount',
-            width: 110,
+            width: COMPANY_SCHOOL_STUDENT_COUNT_COL_WIDTH,
             align: 'center',
+            className: 'applicant-details__th-student-count',
+            onHeaderCell: () => ({ className: 'applicant-details__th-student-count' }),
+            onCell: () => ({ className: 'applicant-details__td-student-count' }),
             render: (v: number) => (v != null ? `${v}명` : '-'),
           },
           {
             title: '신청 교사명',
             dataIndex: 'teacherName',
             key: 'teacherName',
-            width: 120,
+            width: COMPANY_SCHOOL_TEACHER_COL_WIDTH,
             align: 'center',
+            ellipsis: true,
+            className: 'applicant-details__th-teacher',
+            onHeaderCell: () => ({ className: 'applicant-details__th-teacher' }),
+            onCell: () => ({ className: 'applicant-details__td-teacher' }),
           },
         ]
 

@@ -2,15 +2,14 @@
  * 신청자 상세 편집 — remote ON 시 `updateIndividualApplication`, OFF 시 stub/안내.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { patchGeneralIndividualApplicantDetail } from '@/features/program/general/model/individual-applicant'
 import type {
   GeneralIndividualApplicantDetailSavePayload,
   GeneralIndividualApplicantRow,
 } from '@/features/program/general/model/individual-applicant'
 import type { Program } from '@/types/domain'
-import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
-import { buildIndividualApplicantTextbookOptions } from '@/features/program/general/lib/individual-applicant-textbook'
+import { useIndividualApplicantTextbookOptions } from '@/features/textbook/hooks/use-individual-applicant-textbook-options'
 import {
   draftToIndividualSavePayload,
   parseApplicantIndividualEditDraft,
@@ -40,16 +39,12 @@ export function useApplicantIndividualDetailEdit({
   const [draft, setDraft] = useState<ApplicantIndividualEditDraft | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
-  const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
+  const applicantEducationGrade =
+    applicant?.educationGrade ?? applicant?.detail?.affiliationGrade ?? ''
 
-  const textbookOptions = useMemo(
-    () =>
-      buildIndividualApplicantTextbookOptions(
-        program,
-        applicant?.educationGrade ?? applicant?.detail?.affiliationGrade ?? '',
-        textbookCatalog
-      ),
-    [applicant?.detail?.affiliationGrade, applicant?.educationGrade, program, textbookCatalog]
+  const { options: textbookOptions } = useIndividualApplicantTextbookOptions(
+    program,
+    applicantEducationGrade
   )
 
   const resetEditState = useCallback(() => {
@@ -64,6 +59,8 @@ export function useApplicantIndividualDetailEdit({
 
   const enterEdit = useCallback(() => {
     if (!applicant) return
+    // 승인 전 교재 PATCH는 APPLICATION_STATUS_CONFLICT
+    if (applicant.approvalStatus !== 'approved') return
     setDraft(rowToIndividualEditDraft(applicant, program))
     setValidationErrors({})
     setIsEditing(true)
@@ -80,6 +77,10 @@ export function useApplicantIndividualDetailEdit({
 
   const saveEdit = useCallback(async (): Promise<boolean> => {
     if (!applicant || !draft) return false
+    if (applicant.approvalStatus !== 'approved') {
+      setValidationErrors({ form: '승인 완료 후에만 교재를 변경할 수 있습니다.' })
+      return false
+    }
 
     const parsed = parseApplicantIndividualEditDraft(draft)
     if (!parsed.success) {

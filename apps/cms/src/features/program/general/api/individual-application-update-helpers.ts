@@ -38,10 +38,13 @@ export function mergeIndividualApplicationUpdateResponse(
         ? undefined
         : (response.managerComment ?? row.adminComment),
     textbookId: textbook?.id != null ? String(textbook.id) : undefined,
-    textbookName: textbook?.name,
-    textbookKits: textbook?.kits,
-    textbookQuantity: textbook?.quantity,
-    textbookStatus: textbook?.status?.toLowerCase() as GeneralIndividualApplicantRow['textbookStatus'],
+    textbookName: textbook == null ? '해당 없음' : textbook?.name,
+    textbookKits: textbook == null ? 0 : textbook?.kits,
+    textbookQuantity: textbook == null ? 0 : textbook?.quantity,
+    textbookStatus:
+      textbook == null
+        ? 'not_applicable'
+        : (textbook?.status?.toLowerCase() as GeneralIndividualApplicantRow['textbookStatus']),
     detail: {
       ...row.detail,
       teamName: team?.name ?? team?.teamName ?? row.detail?.teamName,
@@ -81,22 +84,25 @@ export async function saveIndividualApplicationDetailRemote(
   }
   const response = await updateIndividualApplication(applicationId, {
     textbookId:
-      payload.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE
+      payload.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE || !payload.textbookId?.trim()
         ? null
-        : payload.textbookId
-          ? Number(payload.textbookId)
-          : undefined,
+        : Number(payload.textbookId),
     teamName: payload.teamName?.trim() || null,
     teamMemberCount: payload.teamMemberCount,
   })
   const responseRow = mergeIndividualApplicationUpdateResponse(applicant, response)
-  if (payload.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE) {
+  if (
+    payload.textbookId === TEXTBOOK_NOT_USED_OPTION_VALUE ||
+    !payload.textbookId?.trim() ||
+    response.textbook == null
+  ) {
     return {
       ...responseRow,
-      textbookId: TEXTBOOK_NOT_USED_OPTION_VALUE,
+      textbookId: undefined,
       textbookName: '해당 없음',
       textbookKits: 0,
       textbookQuantity: 0,
+      textbookStatus: 'not_applicable',
     }
   }
   return responseRow

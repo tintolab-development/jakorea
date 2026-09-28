@@ -19,10 +19,8 @@ import { isCombinedClassProgramEligible } from '@/features/program/general/lib/c
 import { InstitutionCombinedClassEditCell } from './institution-combined-class-edit-cell'
 import type {
   SameSchoolGradeOption,
-  TextbookSelectOption,
 } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import type { InstitutionAffiliatedTeacherOption } from '@/features/program/general/lib/institution-application-detail-edit-policy'
-import { CmsSelect } from '@/shared/ui/cms-select'
 import {
   InstitutionAddressDetailEdit,
   InstitutionClassAndStudentCountEdit,
@@ -74,9 +72,6 @@ export interface ApplicantGeneralInstitutionBasicInfoProps {
   mode?: 'view' | 'edit'
   draft?: ApplicantInstitutionEditDraft
   onDraftChange?: (partial: Partial<ApplicantInstitutionEditDraft>) => void
-  textbookOptions?: TextbookSelectOption[]
-  textbookDisplayLabel?: string
-  isTextbookCatalogLoading?: boolean
   sameSchoolGradeOptions?: SameSchoolGradeOption[]
   classCountOptions?: Array<{ value: string; label: string }>
   teacherOptions?: InstitutionAffiliatedTeacherOption[]
@@ -232,9 +227,6 @@ export function ApplicantGeneralInstitutionBasicInfo({
   mode = 'view',
   draft,
   onDraftChange,
-  textbookOptions = [],
-  textbookDisplayLabel,
-  isTextbookCatalogLoading = false,
   sameSchoolGradeOptions = [],
   classCountOptions = [],
   teacherOptions = [],
@@ -263,8 +255,8 @@ export function ApplicantGeneralInstitutionBasicInfo({
     institutionApplicationBridge,
     institution
   )
-  /** 승인 완료 시에만 교재명·합반 신청 노출 (스펙·스크린샷) */
-  const showTextbookAndCombinedClass = institution.approvalStatus === 'approved'
+  /** 합반 신청 — 승인 완료 시 노출. 교재명은 프로그램 진행 현황(참여 기관 상세)에서만 */
+  const showCombinedClass = institution.approvalStatus === 'approved' && !hideCombinedClass
   const classAndCount: ReactNode =
     isEditMode && draft && onDraftChange ? (
       <InstitutionClassAndStudentCountEdit
@@ -310,10 +302,6 @@ export function ApplicantGeneralInstitutionBasicInfo({
   const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
   const sessions = institution.sessions ?? []
 
-  const textbookViewValue =
-    textbookDisplayLabel?.trim() ||
-    detail?.textbookName?.trim() ||
-    (hideCombinedClass ? '미정' : '-')
   const combinedClassViewValue = buildCombinedClassViewValue(detail, combinedClassProgramEligible)
 
   const addressDetailValue =
@@ -373,37 +361,6 @@ export function ApplicantGeneralInstitutionBasicInfo({
   const mealValue = detail?.mealInfo ?? '-'
   const otherNotesValue = detail?.otherSpecialNotes ?? detail?.parkingInfo ?? '-'
 
-  const textbookEditValue =
-    isEditMode && draft && onDraftChange ? (
-      <div className="institution-basic-info__field-stack">
-        <CmsSelect
-          className="institution-basic-info__full-width-control"
-          inputSize="large"
-          placeholder={isTextbookCatalogLoading ? '교재 목록 불러오는 중…' : '교재명 선택'}
-          loading={isTextbookCatalogLoading}
-          value={draft.textbookId || undefined}
-          options={textbookOptions.map(option => ({
-            label: option.label,
-            value: option.value,
-          }))}
-          onChange={value => {
-            const selected = textbookOptions.find(option => option.value === value)
-            onDraftChange({
-              textbookId: selected?.value ?? String(value ?? ''),
-              textbookName: selected?.textbookName ?? '',
-            })
-          }}
-        />
-        {validationErrors?.textbookId || validationErrors?.textbookName ? (
-          <span className="institution-basic-info__field-error">
-            {validationErrors.textbookId ?? validationErrors.textbookName}
-          </span>
-        ) : null}
-      </div>
-    ) : (
-      textbookViewValue
-    )
-
   const combinedClassEditValue =
     isEditMode && draft && onDraftChange ? (
       <InstitutionCombinedClassEditCell
@@ -456,20 +413,11 @@ export function ApplicantGeneralInstitutionBasicInfo({
                   label="프로그램 승인 현황"
                   value={<ProgramApprovalStatusValue institution={institution} onResendNotificationClick={onResendNotificationClick} />}
                 />
-                {showTextbookAndCombinedClass ? (
-                  hideCombinedClass ? (
-                    <InstitutionApplicationTableRowFullWidth
-                      label="교재명"
-                      value={textbookEditValue}
-                    />
-                  ) : (
-                    <InstitutionApplicationTableRowTwoCols
-                      label1="교재명"
-                      value1={textbookEditValue}
-                      label2="합반 신청 여부"
-                      value2={combinedClassEditValue}
-                    />
-                  )
+                {showCombinedClass ? (
+                  <InstitutionApplicationTableRowFullWidth
+                    label="합반 신청 여부"
+                    value={combinedClassEditValue}
+                  />
                 ) : null}
               </tbody>
             </table>

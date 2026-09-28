@@ -75,7 +75,7 @@ export interface GeneralIndividualApplicantRow {
   approvalNotificationSentAt?: string
   /** 신청 건별 관리자 코멘트 (회원 상세 adminComment와 별도) */
   adminComment?: string
-  /** 교재 배정 — 미선택 시 상세 '미정' */
+  /** 교재 배정 — 미선택 시 상세 '해당 없음' */
   textbookId?: string
   textbookName?: string
   textbookKits?: number
