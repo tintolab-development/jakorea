@@ -16,6 +16,7 @@ import {
   TrainedTeachersRegistrationEducationScheduleSettingsParagraph,
   TrainedTeachersRegistrationTypeSettingsParagraph,
 } from '@/features/template/ui/form-set/registration-form/trained-teachers'
+import { TrainedTeachersEducationJournalSettingsRow } from '@/features/template/ui/form-set/registration-form/trained-teachers/paragraphs/education-journal-settings-row'
 import { ProgramRegistrationBasicInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph'
 import { ProgramRegistrationBusinessKpiParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/business-kpi-paragraph'
 import { ProgramRegistrationEducationCurriculumParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-curriculum-paragraph'
@@ -23,6 +24,7 @@ import { ProgramRegistrationEducationScheduleCurriculumParagraph } from '@/featu
 import { ProgramRegistrationEducationScheduleSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-schedule-settings-paragraph'
 import { ProgramRegistrationTypeSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/type-settings-paragraph'
 import { ProgramRegistrationWageInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/wage-info-paragraph'
+import { resolveGeneralRegistrationKpiFieldAvailability } from '@/features/program/general/lib/participant-audience-selection'
 import {
   shouldDisableEducationSchedulePeriodMode,
   shouldLockEducationScheduleCalendarToggles,
@@ -46,6 +48,25 @@ export interface ProgramRegistrationParticipantState {
   organization: boolean
   teacherInstructor?: boolean
   volunteer?: boolean
+}
+
+function generalBusinessKpiParagraphProps(participant: ProgramRegistrationParticipantState) {
+  const kpi = resolveGeneralRegistrationKpiFieldAvailability({
+    individual: participant.individual === true,
+    organization: participant.organization === true,
+    teacherInstructor: participant.teacherInstructor === true,
+    volunteer: participant.volunteer === true,
+  })
+  return {
+    instructorDisabled: kpi.instructorDisabled,
+    instructorPlaceholder: kpi.instructorDisabled ? '해당 없음' : '목표값 입력',
+    volunteerDisabled: kpi.volunteerDisabled,
+    volunteerPlaceholder: kpi.volunteerDisabled ? '해당 없음' : '목표값 입력',
+    dispatchedSchoolDisabled: kpi.dispatchedSchoolDisabled,
+    dispatchedSchoolPlaceholder: kpi.dispatchedSchoolDisabled ? '해당 없음' : '목표값 입력',
+    dispatchedClassDisabled: kpi.dispatchedClassDisabled,
+    dispatchedClassPlaceholder: kpi.dispatchedClassDisabled ? '해당 없음' : '목표값 입력',
+  }
 }
 
 export interface ProgramRegistrationParagraphBodyOptions {
@@ -89,7 +110,7 @@ export interface ProgramRegistrationParagraphBodyOptions {
   /** 카드 헤더 — 사전 교육 토글 (일정형·커리큘럼형) */
   scheduleCurriculumPreEducation: boolean
   onScheduleCurriculumPreEducationChange: (checked: boolean) => void
-  /** 교육받은 교사 — 카드 헤더 교사 연수 토글 */
+  /** 교육받은 교사 — 카드 헤더 교육 연수 토글 */
   trainedTeachersTeacherTrainingEnabled: boolean
   onTrainedTeachersTeacherTrainingEnabledChange: (checked: boolean) => void
   educationScheduleMode: ProgramRegistrationEducationScheduleMode
@@ -144,26 +165,13 @@ export function renderProgramRegistrationParagraphBody(
       )
     case PROGRAM_REGISTRATION_IDS.businessKpi:
       if (options?.programRegistrationFormVariant === 'trainedTeachers') return null
-      return options?.programRegistrationFormVariant === 'economy' ? (
-        <OneCOneSRegistrationBusinessKpiParagraph />
-      ) : (
+      if (options?.programRegistrationFormVariant === 'economy') {
+        return <OneCOneSRegistrationBusinessKpiParagraph />
+      }
+      if (options == null) return null
+      return (
         <ProgramRegistrationBusinessKpiParagraph
-          instructorDisabled={options?.participant.teacherInstructor !== true}
-          instructorPlaceholder={
-            options?.participant.teacherInstructor === true ? '목표값 입력' : '해당 없음'
-          }
-          volunteerDisabled={options?.participant.volunteer !== true}
-          volunteerPlaceholder={
-            options?.participant.volunteer === true ? '목표값 입력' : '해당 없음'
-          }
-          dispatchedSchoolDisabled={options?.participant.individual === true}
-          dispatchedSchoolPlaceholder={
-            options?.participant.individual === true ? '해당 없음' : '목표값 입력'
-          }
-          dispatchedClassDisabled={options?.participant.individual === true}
-          dispatchedClassPlaceholder={
-            options?.participant.individual === true ? '해당 없음' : '목표값 입력'
-          }
+          {...generalBusinessKpiParagraphProps(options.participant)}
         />
       )
     case PROGRAM_REGISTRATION_IDS.wageInfo:
@@ -205,21 +213,26 @@ export function renderProgramRegistrationParagraphBody(
       return options == null ? null : options.programRegistrationFormVariant ===
         'trainedTeachers' ? (
         options.programType === 'schedule' ? (
-          <ProgramRegistrationEducationScheduleCurriculumParagraph
-            key={`tt-schedule-curriculum-${options.sessionRoundType}-${options.educationFormScheduleDetail}-${options.ipsScheduleDetail}`}
-            scheduleDetailCount={options.scheduleCurriculumDetailCount}
-            onDeleteScheduleCurriculumDetail={options.onDeleteScheduleCurriculumDetail}
-            scheduleGroupCount={options.scheduleCurriculumGroupCount}
-            onDeleteScheduleCurriculumGroup={options.onDeleteScheduleCurriculumGroup}
-            ipsPerSchedule={options.ipsScheduleDetail === 'perSchedule'}
-            sessionRoundType={options.sessionRoundType}
-            participantOrganization={options.participant.organization}
-            educationFormScheduleDetail={options.educationFormScheduleDetail}
-            participationScheduleDetail={options.participationScheduleDetail}
-            ipsScheduleDetail={options.ipsScheduleDetail}
-            scheduleCurriculumPreEducation={options.trainedTeachersTeacherTrainingEnabled}
-            preEducationBlockLabel="교사 연수"
-          />
+          <>
+            <TrainedTeachersEducationJournalSettingsRow />
+            <ProgramRegistrationEducationScheduleCurriculumParagraph
+              key={`tt-schedule-curriculum-${options.sessionRoundType}-${options.educationFormScheduleDetail}-${options.ipsScheduleDetail}`}
+              scheduleDetailCount={options.scheduleCurriculumDetailCount}
+              onDeleteScheduleCurriculumDetail={options.onDeleteScheduleCurriculumDetail}
+              scheduleGroupCount={options.scheduleCurriculumGroupCount}
+              onDeleteScheduleCurriculumGroup={options.onDeleteScheduleCurriculumGroup}
+              ipsPerSchedule={options.ipsScheduleDetail === 'perSchedule'}
+              sessionRoundType={options.sessionRoundType}
+              participantOrganization={options.participant.organization}
+              educationFormScheduleDetail={options.educationFormScheduleDetail}
+              participationScheduleDetail={options.participationScheduleDetail}
+              ipsScheduleDetail={options.ipsScheduleDetail}
+              scheduleCurriculumPreEducation={options.trainedTeachersTeacherTrainingEnabled}
+              preEducationBlockLabel="교육 연수"
+              preEducationDisplayMode="replaceFirst"
+              hideAssignmentSettings
+            />
+          </>
         ) : (
           <TrainedTeachersRegistrationEducationCurriculumParagraph
             teacherTrainingEnabled={options.trainedTeachersTeacherTrainingEnabled}
@@ -286,13 +299,12 @@ export function renderProgramRegistrationParagraphBody(
           />
         )
       }
+      /** 교육받은 교사 — 시안처럼 일정 설정 단락을 항상 노출. 일반 일정형+복수는 위에서 숨김 */
       return options.programRegistrationFormVariant === 'trainedTeachers' ? (
-        options.programType === 'schedule' && options.sessionRoundType === 'multi' ? null : (
-          <TrainedTeachersRegistrationEducationScheduleSettingsParagraph
-            educationScheduleMode={options.educationScheduleMode}
-            onEducationScheduleModeChange={options.onEducationScheduleModeChange}
-          />
-        )
+        <TrainedTeachersRegistrationEducationScheduleSettingsParagraph
+          educationScheduleMode={options.educationScheduleMode}
+          onEducationScheduleModeChange={options.onEducationScheduleModeChange}
+        />
       ) : options.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationEducationScheduleSettingsParagraph
           educationScheduleMode={options.educationScheduleMode}

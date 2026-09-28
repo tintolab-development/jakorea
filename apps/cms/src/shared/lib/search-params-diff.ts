@@ -33,3 +33,26 @@ export function searchWithUpdatesDiffersFromLocation(
   const current = new URLSearchParams(search)
   return applySearchParamUpdates(current, updates) !== current.toString()
 }
+
+export function locationSearchParams(
+  search: string = typeof window !== 'undefined' ? window.location.search : ''
+): URLSearchParams {
+  const normalized = search.startsWith('?') ? search.slice(1) : search
+  return new URLSearchParams(normalized)
+}
+
+/**
+ * 주소창 쿼리를 기준으로 recipe를 적용한다.
+ * 결과가 같으면 null — react-router는 값이 같아도 replaceState를 실행하므로
+ * 함수형 updater가 stale `prev`(programId 없음)를 그대로 반환하면
+ * 진행 중인 PUSH를 덮어 쿼리가 생겼다가 사라진다.
+ */
+export function nextSearchParamsIfChanged(
+  recipe: (prev: URLSearchParams) => URLSearchParams,
+  search: string = typeof window !== 'undefined' ? window.location.search : ''
+): URLSearchParams | null {
+  const current = locationSearchParams(search)
+  const next = recipe(new URLSearchParams(current))
+  if (next.toString() === current.toString()) return null
+  return next
+}

@@ -3,7 +3,7 @@ import { STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components/status-dropd
 import { ProgramLifecycleStatusTableCell } from '@/shared/components/program-lifecycle-status-table-cell'
 import { ProgramListOverviewProgressCell } from '@/shared/components/program-list-overview-progress-cell'
 import { formatDateRange } from '../../hooks/use-format-date'
-import { getCapacity } from '../../lib/program-helpers'
+import { formatRecruitmentHeadcount } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { resolveGeneralProgramListTitle } from '../../lib/detail-common-info-display'
 import {
   optionalColumns,
@@ -11,8 +11,12 @@ import {
   instructorRecruitmentTableColumns,
   capacityTableColumnsEducation,
 } from '../constants/program-list-columns'
-import { categoryOptions, getProgramListTargetLevelLabel, getProgramListAudienceFilterLabel, resolveProgramListAudienceFilterValue, resolveProgramListParticipantTypeFilterValue } from '../constants/program-list-constants'
-import type { Program, ProgramCategory, TargetLevel } from '@/types/domain'
+import { categoryOptions, getProgramListAudienceFilterLabel, resolveProgramListAudienceFilterValue, resolveProgramListParticipantTypeFilterValue } from '../constants/program-list-constants'
+import {
+  formatTargetLevelsLabel,
+  resolveProgramTargetLevels,
+} from '@/features/program/shared/lib/program-detail-info-constants'
+import type { Program, ProgramCategory } from '@/types/domain'
 import type { ProgramListProgramMode } from '../../model/program-list-program-mode'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
@@ -32,8 +36,14 @@ export interface ResolveEducationColumnsParams {
   columnPreset?: ProgramListColumnPreset
 }
 
-function removeInstructorRecruitmentColumn(columns: ColumnsType<Program>): ColumnsType<Program> {
-  return columns.filter(column => column.key !== 'instructorRecruitment')
+const TRAINED_TEACHERS_OMITTED_COLUMN_KEYS = new Set([
+  'participantType',
+  'instructorRecruitment',
+  'volunteerRecruitment',
+])
+
+function omitTrainedTeachersColumns(columns: ColumnsType<Program>): ColumnsType<Program> {
+  return columns.filter(column => !TRAINED_TEACHERS_OMITTED_COLUMN_KEYS.has(String(column.key)))
 }
 
 const WIDTH_NO = TABLE_COLUMN_WIDTHS.index
@@ -43,11 +53,9 @@ const WIDTH_TARGET_LEVEL = 160
 const WIDTH_OPERATION_PERIOD = 320
 const WIDTH_PARTICIPATION_COUNT = 160
 
+/** 전 유형 공통. 회차 합·학생 수·봉사 수로 다시 세지 않는다. */
 function participantCountRender(_: unknown, record: Program) {
-  const cap = getCapacity(record)
-  const approved = record.approvedStudentCount ?? 0
-  if (cap !== undefined) return `${approved} / ${cap}`
-  return `${approved}`
+  return formatRecruitmentHeadcount(record.participantApprovedCount, record.participantCapacity)
 }
 
 function instructorRecruitRender(_: unknown, record: Program) {
@@ -84,6 +92,11 @@ function participantTypeColumnRender(_: unknown, record: Program) {
   return getProgramListAudienceFilterLabel(
     resolveProgramListParticipantTypeFilterValue(record)
   )
+}
+
+/** 목록「교육 대상」— `targetLevels` 전체. 없을 때만 `targetLevel`. */
+function educationTargetColumnRender(_: unknown, record: Program) {
+  return formatTargetLevelsLabel(resolveProgramTargetLevels(record))
 }
 
 export function resolveProgramListTableView(params: {
@@ -162,7 +175,7 @@ function createProgramListAllColumns() {
       minWidth: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
       className: 'program-list-table__col-target',
-      render: (value: TargetLevel | undefined) => getProgramListTargetLevelLabel(value),
+      render: educationTargetColumnRender,
     },
   ]
 }
@@ -211,7 +224,7 @@ function createProgramListScheduledColumns() {
       width: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
       className: 'program-list-table__col-target',
-      render: (value: TargetLevel | undefined) => getProgramListTargetLevelLabel(value),
+      render: educationTargetColumnRender,
     },
     {
       title: '사업 운영 기간',
@@ -306,7 +319,7 @@ function createProgramListInProgressColumns() {
       minWidth: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
       className: 'program-list-table__col-target',
-      render: (value: TargetLevel | undefined) => getProgramListTargetLevelLabel(value),
+      render: educationTargetColumnRender,
     },
   ]
 }
@@ -349,7 +362,7 @@ function createProgramListFallbackColumns() {
       dataIndex: 'targetLevel',
       key: 'targetLevel',
       align: 'center' as const,
-      render: (value: TargetLevel | undefined) => getProgramListTargetLevelLabel(value),
+      render: educationTargetColumnRender,
     },
   ]
 }
@@ -441,7 +454,7 @@ export function resolveEducationColumns(params: ResolveEducationColumnsParams) {
 
     const columns = resolveColumns() as ColumnsType<Program>
     if (columnPreset === 'trainedTeachers') {
-      return removeInstructorRecruitmentColumn(columns)
+      return omitTrainedTeachersColumns(columns)
     }
     return columns
   }

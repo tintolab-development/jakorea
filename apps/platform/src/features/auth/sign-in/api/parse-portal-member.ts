@@ -2,6 +2,7 @@ import type {
   HomepageMeResponse,
   PhoneIdentityChangeResponse,
   PortalProfileResponse,
+  PortalTeacherOrganizationResponse,
 } from './types'
 
 function unwrapData(payload: unknown): Record<string, unknown> | null {
@@ -23,6 +24,25 @@ function optionalNumber(value: unknown) {
 
 function optionalBoolean(value: unknown) {
   return typeof value === 'boolean' ? value : undefined
+}
+
+function parseTeacherOrganization(value: unknown): PortalTeacherOrganizationResponse | undefined {
+  if (!value || typeof value !== 'object') return undefined
+  const org = value as Record<string, unknown>
+  return {
+    organizationId: optionalNumber(org.organizationId),
+    organizationName: optionalString(org.organizationName),
+    neisCode: optionalString(org.neisCode),
+    organizationCategory: optionalString(org.organizationCategory),
+    address: optionalString(org.address),
+    addressDetail: optionalString(org.addressDetail),
+    zipCode: optionalString(org.zipCode),
+    regionSido: optionalString(org.regionSido),
+    regionSigungu: optionalString(org.regionSigungu),
+    employmentStatus: optionalString(org.employmentStatus),
+    affiliationStatus: optionalString(org.affiliationStatus),
+    affiliationStartedAt: optionalString(org.affiliationStartedAt),
+  }
 }
 
 export function parseHomepageMeResponse(payload: unknown): HomepageMeResponse {
@@ -79,6 +99,7 @@ export function parsePortalProfileResponse(payload: unknown): PortalProfileRespo
     affiliationName: optionalString(root.affiliationName),
     schoolEnrollmentStatus: optionalString(root.schoolEnrollmentStatus),
     teacherEmploymentStatus: optionalString(root.teacherEmploymentStatus),
+    teacherOrganization: parseTeacherOrganization(root.teacherOrganization),
     external1365Id: optionalString(root.external1365Id),
     accountStatus: optionalString(root.accountStatus),
     joinedAt: optionalString(root.joinedAt),

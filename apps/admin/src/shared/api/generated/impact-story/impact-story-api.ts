@@ -10,7 +10,7 @@ import type {
   CategoryCreateRequest,
   CategoryResponse,
   CategoryUpdateRequest,
-  List7Params,
+  List6Params,
   PageResponsePublicStoryListItem,
   PageResponseStoryListItem,
   PublicCategoryResponse,
@@ -74,8 +74,8 @@ const _delete = (
       options);
     }
 
-const list7 = (
-    params?: List7Params,
+const list6 = (
+    params?: List6Params,
  options?: SecondParameter<typeof customInstance<PageResponseStoryListItem>>,) => {
       return customInstance<PageResponseStoryListItem>(
       {url: `/api/admin/impact-story/stories`, method: 'GET',
@@ -84,7 +84,7 @@ const list7 = (
       options);
     }
 
-const create6 = (
+const create8 = (
     storyCreateRequest: StoryCreateRequest,
  options?: SecondParameter<typeof customInstance<StoryResponse>>,) => {
       return customInstance<StoryResponse>(
@@ -106,7 +106,7 @@ const bulkDelete4 = (
       options);
     }
 
-const list8 = (
+const list7 = (
 
  options?: SecondParameter<typeof customInstance<CategoryResponse[]>>,) => {
       return customInstance<CategoryResponse[]>(
@@ -115,7 +115,7 @@ const list8 = (
       options);
     }
 
-const create7 = (
+const create9 = (
     categoryCreateRequest: CategoryCreateRequest,
  options?: SecondParameter<typeof customInstance<CategoryResponse>>,) => {
       return customInstance<CategoryResponse>(
@@ -138,7 +138,7 @@ const togglePublished1 = (
       options);
     }
 
-const detail4 = (
+const detail5 = (
     id: number,
  options?: SecondParameter<typeof customInstance<PublicStoryDetail>>,) => {
       return customInstance<PublicStoryDetail>(
@@ -175,18 +175,18 @@ const categories = (
       options);
     }
 
-return {detail1,update10,update11,_delete,list7,create6,bulkDelete4,list8,create7,togglePublished1,detail4,detailHead1,stories,categories}};
+return {detail1,update10,update11,_delete,list6,create8,bulkDelete4,list7,create9,togglePublished1,detail5,detailHead1,stories,categories}};
 export type Detail1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['detail1']>>>
 export type Update10Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['update10']>>>
 export type Update11Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['update11']>>>
 export type _DeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['_delete']>>>
-export type List7Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['list7']>>>
-export type Create6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['create6']>>>
+export type List6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['list6']>>>
+export type Create8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['create8']>>>
 export type BulkDelete4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['bulkDelete4']>>>
-export type List8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['list8']>>>
-export type Create7Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['create7']>>>
+export type List7Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['list7']>>>
+export type Create9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['create9']>>>
 export type TogglePublished1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['togglePublished1']>>>
-export type Detail4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['detail4']>>>
+export type Detail5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['detail5']>>>
 export type DetailHead1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['detailHead1']>>>
 export type StoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['stories']>>>
 export type CategoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIImpactStorySubset>['categories']>>>

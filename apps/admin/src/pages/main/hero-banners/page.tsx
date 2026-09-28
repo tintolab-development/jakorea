@@ -14,6 +14,7 @@ import {
   useSetHeroBannerActive,
   useUpdateHeroBanner,
 } from '@/features/hero-banner/api/hooks'
+import { heroBannerMutationFailureAlert } from '@/features/hero-banner/lib/mutation-failure-alert'
 import { heroBannerQueryKeys } from '@/features/hero-banner/api/query-keys'
 import { HERO_BANNERS_CHANGED_EVENT } from '@/features/hero-banner/api/store'
 import {
@@ -28,6 +29,11 @@ import { HeroBannerTextLinkCell } from '@/features/hero-banner/ui/text-link-cell
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsButton, ConfirmModal, useCmsAlert } from '@/shared/ui'
 import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  isLastActiveToggleOff,
+  minActiveRequiredAlert,
+  wouldRemoveLastActive,
+} from '@/shared/lib/min-active-guard'
 
 import './page.css'
 export function HeroBannersPage() {
@@ -38,6 +44,7 @@ export function HeroBannersPage() {
   const removeMutation = useRemoveHeroBanners()
   const reorderMutation = useReorderHeroBanners()
   const setActiveMutation = useSetHeroBannerActive()
+  const listBusy = setActiveMutation.isPending || reorderMutation.isPending
 
   const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
@@ -50,11 +57,14 @@ export function HeroBannersPage() {
 
   const handleRowsReorder = useCallback(
     (reorderedRows: HeroBanner[]) => {
-      void reorderMutation.mutateAsync(reorderedRows.map(row => row.id)).catch(() => {
-        showAlert({
-          title: '순서 변경 실패',
-          content: '배너 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
-        })
+      void reorderMutation.mutateAsync(reorderedRows.map(row => row.id)).catch(error => {
+        showAlert(
+          heroBannerMutationFailureAlert(
+            error,
+            '배너 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
+            '순서 변경 실패',
+          ),
+        )
         void listQuery.refetch()
       })
     },
@@ -63,15 +73,22 @@ export function HeroBannersPage() {
 
   const handleToggleActive = useCallback(
     (id: string, isActive: boolean) => {
-      void setActiveMutation.mutateAsync({ id, isActive }).catch(() => {
-        showAlert({
-          title: '사용 여부 변경 실패',
-          content: '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
-        })
+      if (isLastActiveToggleOff(rows, id, isActive)) {
+        showAlert(minActiveRequiredAlert('히어로 배너는'))
+        return
+      }
+      void setActiveMutation.mutateAsync({ id, isActive }).catch(error => {
+        showAlert(
+          heroBannerMutationFailureAlert(
+            error,
+            '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
+            '사용 여부 변경 실패',
+          ),
+        )
         void listQuery.refetch()
       })
     },
-    [listQuery, setActiveMutation, showAlert]
+    [listQuery, rows, setActiveMutation, showAlert]
   )
 
   const openCreate = useCallback(() => {
@@ -88,6 +105,15 @@ export function HeroBannersPage() {
 
   const handleFormSubmit = useCallback(
     async (values: HeroBannerFormValues) => {
+      if (
+        formMode === 'edit' &&
+        editingBanner &&
+        values.isActive === false &&
+        isLastActiveToggleOff(rows, editingBanner.id, false)
+      ) {
+        showAlert(minActiveRequiredAlert('히어로 배너는'))
+        return
+      }
       try {
         if (formMode === 'edit' && editingBanner) {
           await updateMutation.mutateAsync({ id: editingBanner.id, patch: values })
@@ -96,17 +122,19 @@ export function HeroBannersPage() {
         }
         setFormOpen(false)
         setEditingBanner(null)
-      } catch {
-        showAlert({
-          title: formMode === 'edit' ? '수정 실패' : '등록 실패',
-          content:
+      } catch (error) {
+        showAlert(
+          heroBannerMutationFailureAlert(
+            error,
             formMode === 'edit'
               ? '배너 수정에 실패했습니다. 다시 시도해 주세요.'
               : '배너 등록에 실패했습니다. 다시 시도해 주세요.',
-        })
+            formMode === 'edit' ? '수정 실패' : '등록 실패',
+          ),
+        )
       }
     },
-    [createMutation, editingBanner, formMode, showAlert, updateMutation]
+    [createMutation, editingBanner, formMode, rows, showAlert, updateMutation]
   )
 
   const handleDeleteClick = useCallback(() => {
@@ -117,8 +145,12 @@ export function HeroBannersPage() {
       })
       return
     }
+    if (wouldRemoveLastActive(rows, selectedRowKeys.map(String))) {
+      showAlert(minActiveRequiredAlert('히어로 배너는'))
+      return
+    }
     setDeleteConfirmOpen(true)
-  }, [selectedRowKeys.length, showAlert])
+  }, [rows, selectedRowKeys, showAlert])
 
   const handleDeleteConfirm = useCallback(async () => {
     const ids = selectedRowKeys.map(String)
@@ -126,11 +158,14 @@ export function HeroBannersPage() {
       await removeMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '배너 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(
+        heroBannerMutationFailureAlert(
+          error,
+          '배너 삭제에 실패했습니다. 다시 시도해 주세요.',
+          '삭제 실패',
+        ),
+      )
     }
   }, [removeMutation, selectedRowKeys, showAlert])
 
@@ -161,6 +196,7 @@ export function HeroBannersPage() {
         render: (_value, record) => (
           <Switch
             checked={record.isActive}
+            disabled={listBusy}
             onChange={checked => handleToggleActive(record.id, checked)}
             aria-label={`${record.mainTitle || '배너'} 사용 여부`}
           />
@@ -208,7 +244,7 @@ export function HeroBannersPage() {
         ),
       },
     ],
-    [handleToggleActive, openEdit]
+    [handleToggleActive, listBusy, openEdit]
   )
 
   const totalCount = rows.length
@@ -244,6 +280,7 @@ export function HeroBannersPage() {
             rows={rows}
             columns={columns}
             loading={listQuery.isLoading}
+            dragDisabled={listBusy}
             onRowsReorder={handleRowsReorder}
             rowSelection={{
               selectedRowKeys,

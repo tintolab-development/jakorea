@@ -8,15 +8,40 @@ import { useCallback, useRef, useSyncExternalStore } from 'react'
 let overlayState: Record<string, unknown> = {}
 let overlayVersion = 0
 const overlayListeners = new Set<() => void>()
+const overlayKeyListeners = new Map<string, Set<() => void>>()
 
-function emitOverlay() {
+function notifyOverlayListeners(changedKeys?: Iterable<string>) {
   overlayVersion += 1
-  overlayListeners.forEach(l => l())
+  const notified = new Set<() => void>()
+  if (changedKeys != null) {
+    for (const key of changedKeys) {
+      overlayKeyListeners.get(key)?.forEach(listener => notified.add(listener))
+    }
+  } else {
+    overlayKeyListeners.forEach(listeners => listeners.forEach(listener => notified.add(listener)))
+  }
+  overlayListeners.forEach(listener => notified.add(listener))
+  notified.forEach(listener => listener())
 }
 
 export function subscribeGeneralRecruitOverlay(listener: () => void): () => void {
   overlayListeners.add(listener)
   return () => overlayListeners.delete(listener)
+}
+
+export function subscribeGeneralRecruitOverlayKey(key: string, listener: () => void): () => void {
+  let listeners = overlayKeyListeners.get(key)
+  if (listeners == null) {
+    listeners = new Set()
+    overlayKeyListeners.set(key, listeners)
+  }
+  listeners.add(listener)
+  return () => {
+    listeners?.delete(listener)
+    if (listeners != null && listeners.size === 0) {
+      overlayKeyListeners.delete(key)
+    }
+  }
 }
 
 export function getGeneralRecruitOverlayVersion(): number {
@@ -27,17 +52,22 @@ export function getGeneralRecruitOverlayRecord(): Record<string, unknown> {
   return overlayState
 }
 
+function readOverlayKeyValue<T>(key: string, defaultValue: T): T {
+  const raw = overlayState[key] as T | undefined
+  return raw === undefined ? defaultValue : raw
+}
+
 export function patchGeneralRecruitOverlay(partial: Record<string, unknown>): void {
-  let changed = false
-  for (const [key, next] of Object.entries(partial)) {
-    if (!Object.is(overlayState[key], next)) {
-      changed = true
-      break
-    }
+  const changedKeys: string[] = []
+  const next: Record<string, unknown> = { ...overlayState }
+  for (const [key, value] of Object.entries(partial)) {
+    if (Object.is(overlayState[key], value)) continue
+    next[key] = value
+    changedKeys.push(key)
   }
-  if (!changed) return
-  overlayState = { ...overlayState, ...partial }
-  emitOverlay()
+  if (changedKeys.length === 0) return
+  overlayState = next
+  notifyOverlayListeners(changedKeys)
 }
 
 export function updateGeneralRecruitOverlayKey<T>(
@@ -48,34 +78,39 @@ export function updateGeneralRecruitOverlayKey<T>(
   const next = updater(prev)
   if (Object.is(prev, next)) return
   overlayState = { ...overlayState, [key]: next }
-  emitOverlay()
+  notifyOverlayListeners([key])
 }
 
 export function replaceGeneralRecruitOverlay(next: Record<string, unknown>): void {
   overlayState = { ...next }
-  emitOverlay()
+  notifyOverlayListeners()
 }
 
 export function resetGeneralRecruitOverlay(): void {
   if (Object.keys(overlayState).length === 0) return
   overlayState = {}
-  emitOverlay()
+  notifyOverlayListeners()
 }
 
-/** `useSyncExternalStore`용 — 버전만 구독하고 렌더 시 record로 값을 읽는다. */
+/**
+ * `useSyncExternalStore`용 — 변경된 overlay 키만 구독한다.
+ *
+ * 상세 정보 단락처럼 인풋과 WYSIWYG가 한 화면에 있을 때, 전역 version 구독이면
+ * 키 입력마다 에디터까지 리렌더되어 버벅인다.
+ */
 export function useGeneralRecruitOverlayKv<T>(
   key: string,
   defaultValue: T
 ): [T, (next: T) => void] {
   const defaultRef = useRef(defaultValue)
-  const version = useSyncExternalStore(
-    subscribeGeneralRecruitOverlay,
-    getGeneralRecruitOverlayVersion,
-    getGeneralRecruitOverlayVersion
+  const getSnapshot = useCallback(() => readOverlayKeyValue(key, defaultRef.current), [key])
+
+  const value = useSyncExternalStore(
+    listener => subscribeGeneralRecruitOverlayKey(key, listener),
+    getSnapshot,
+    getSnapshot
   )
-  void version
-  const record = getGeneralRecruitOverlayRecord()
-  const value = (record[key] as T | undefined) ?? defaultRef.current
+
   const setValue = useCallback(
     (next: T) => {
       patchGeneralRecruitOverlay({ [key]: next })

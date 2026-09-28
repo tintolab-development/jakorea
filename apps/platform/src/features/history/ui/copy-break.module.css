@@ -1,0 +1,33 @@
+.pc {
+  display: none;
+}
+
+.mobile {
+  display: inline;
+}
+
+.pcBlock {
+  display: none;
+}
+
+.mobileBlock {
+  display: inline;
+}
+
+@media (--bp-pc-up) {
+  .pc {
+    display: inline;
+  }
+
+  .mobile {
+    display: none;
+  }
+
+  .pcBlock {
+    display: inline;
+  }
+
+  .mobileBlock {
+    display: none;
+  }
+}

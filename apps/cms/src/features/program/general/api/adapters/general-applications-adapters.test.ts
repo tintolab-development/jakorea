@@ -7,6 +7,7 @@ import {
   mapInstructorApplicationToApplicantInstructorRow,
   mapMaterialAssignmentStatusToTextbookStatus,
   mapOrganizationApplicationToApplicantSchoolRow,
+  softMergeOrganizationApplicationDetailOntoRow,
   mapParticipantToParticipatingIndividualRow,
   mapParticipantToParticipatingInstructorRow,
   mapParticipantToParticipatingSchoolRow,
@@ -20,6 +21,56 @@ import {
 import type { Program } from '@/types/domain'
 
 describe('general-applications-adapters', () => {
+  it('maps requested grade onto the applicant grade cell', () => {
+    const row = softMergeOrganizationApplicationDetailOntoRow(
+      {
+        requestedGrade: '2',
+        organizationAddressDetail: '3층 교무실',
+        applicationReason: '금융 교육',
+        otherRequests: '주차',
+        requestedEducationFormat: 'ONLINE',
+      },
+      {
+        id: '1691187',
+        no: 1,
+        schoolName: 'JA서울미래초등학교',
+        region: '서울특별시 종로구',
+        educationGrade: '',
+        classCount: 2,
+        studentCount: 111,
+        teacherName: '교사',
+        approvalStatus: 'pending',
+        programId: '186010',
+        detail: { addressDetail: '본관' },
+      }
+    )
+    expect(row.educationGrade).toBe('2학년')
+    expect(row.detail?.addressDetail).toBe('3층 교무실')
+    expect(row.detail?.applicationReason).toBe('금융 교육')
+    expect(row.detail?.otherRequests).toBe('주차')
+    expect(row.detail?.educationType).toBe('온라인')
+  })
+
+  it('does not show the program grade range when the application has no requested grade', () => {
+    const row = softMergeOrganizationApplicationDetailOntoRow(
+      { requestedEducationFormat: 'HYBRID' },
+      {
+        id: '1',
+        no: 1,
+        schoolName: '학교',
+        region: '서울',
+        educationGrade: '3~6학년',
+        classCount: 1,
+        studentCount: 10,
+        teacherName: '교사',
+        approvalStatus: 'pending',
+        programId: '186010',
+      }
+    )
+    expect(row.educationGrade).toBe('')
+    expect(row.detail?.educationType).toBe('온/오프라인')
+  })
+
   it('maps API application status to approval status', () => {
     expect(mapApiApplicationStatusToApprovalStatus('APPROVED')).toBe('approved')
     expect(mapApiApplicationStatusToApprovalStatus('WAITING_REVIEW')).toBe('pending')
@@ -38,6 +89,8 @@ describe('general-applications-adapters', () => {
         requestedStudentCount: 40,
         applicationStatus: 'WAITING_REVIEW',
         submittedAt: '2026-04-01T00:00:00Z',
+        availableActions: ['VIEW'],
+        sessions: [],
       },
       0,
       '5001'
@@ -49,6 +102,26 @@ describe('general-applications-adapters', () => {
     expect(row.schoolName).toBe('서울초')
     expect(row.approvalStatus).toBe('pending')
     expect(row.programId).toBe('5001')
+    expect(row.availableActions).toEqual(['VIEW'])
+  })
+
+  it('maps organization resultNotificationSentAt and RESEND_NOTIFICATION', () => {
+    const row = mapOrganizationApplicationToApplicantSchoolRow(
+      {
+        id: 1691123,
+        organizationName: '승인학교',
+        applicationStatus: 'APPROVED',
+        resultNotificationSentAt: '2026-09-27T05:00:00Z',
+        availableActions: ['VIEW', 'RESEND_NOTIFICATION', 'CANCEL_APPROVAL'],
+        sessions: [],
+      } as Parameters<typeof mapOrganizationApplicationToApplicantSchoolRow>[0],
+      0,
+      '168001'
+    )
+
+    expect(row.approvalStatus).toBe('approved')
+    expect(row.availableActions).toContain('RESEND_NOTIFICATION')
+    expect(row.approvalNotificationSentAt).toMatch(/2026\.\d{2}\.\d{2}/)
   })
 
   it('maps ORGANIZATION participant give-up fields to participating school row', () => {
@@ -301,7 +374,7 @@ describe('general-applications-adapters', () => {
       {
         id: 55,
         programId: 5001,
-        affiliationOrganizationId: null,
+        affiliationOrganizationId: undefined,
         memberName: '김봉사',
         documentStatus: 'PASS',
         interviewStatus: 'ASSIGNED',
@@ -320,7 +393,7 @@ describe('general-applications-adapters', () => {
     )
 
     expect(row.id).toBe('55')
-    expect(row.affiliationOrganizationId).toBeNull()
+    expect(row.affiliationOrganizationId).toBeUndefined()
     expect(row.name).toBe('김봉사')
     expect(row.documentScreeningStatus).toBe('pass')
     expect(row.interviewAssignmentStatus).toBe('assigned')

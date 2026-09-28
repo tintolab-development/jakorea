@@ -3,6 +3,7 @@ import {
   createUjatRegistrationBasicInfoOverlayDefaults,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
 import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import { readUjatRegistrationOverlayFromProgram } from '@/features/program/ujat/api/service-detail'
 
 export type UjatBusinessKpiDisplay = {
   finalParticipants: number
@@ -29,7 +30,10 @@ export function resolveUjatBusinessKpiDisplay(
   program: Program,
   overlayInput?: Record<string, unknown>
 ): UjatBusinessKpiDisplay {
-  const overlay = overlayInput ?? resolveUjatRegistrationBasicInfoOverlay()
+  const overlay = resolveUjatRegistrationBasicInfoOverlay({
+    ...readUjatRegistrationOverlayFromProgram(program),
+    ...overlayInput,
+  })
   const kpi = program.generalCommonInfo?.kpi
   const overlayNumber = (key: string): number | undefined => {
     const v = overlay[key]

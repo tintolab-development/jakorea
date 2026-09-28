@@ -1,12 +1,15 @@
+@property --youtube-reveal-inset {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+
 .section {
   --reveal-radius: 18px;
   --reveal-mask-width: clamp(320px, 72vw, 960px);
   --reveal-mask-height: clamp(160px, 18vw, 280px);
   --reveal-duration: 3200ms;
   --reveal-easing: cubic-bezier(0.22, 1, 0.36, 1);
-  /* opacity는 짧게 — 커튼(width)이 보이도록 */
-  --reveal-fade-duration: 480ms;
-
   display: flex;
   flex-direction: column;
   gap: 40px;
@@ -36,8 +39,9 @@
 }
 
 /*
- * clip-path inset(... round)는 브라우저에서 보간이 깨져 fade만 남음.
- * 트랙은 최종 크기 고정, 마스크 width 0→100% 로 중앙 커튼 + border-radius 유지.
+ * width 애니메이션은 iframe 을 전환이 끝날 때까지 검은색으로 둔다.
+ * 플레이어 크기는 고정하고, 보이는 창만 가운데에서 연다.
+ * opacity: 0 은 유튜브가 프레임을 그리지 않게 하므로 쓰지 않는다.
  */
 .maskTrack {
   position: relative;
@@ -48,27 +52,19 @@
 
 .mask {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 0;
+  inset: 0;
   overflow: hidden;
   border-radius: var(--reveal-radius);
-  background: var(--color-neutral-black);
-  opacity: 0;
-  transform: translateX(-50%);
-  transition:
-    width var(--reveal-duration) var(--reveal-easing),
-    opacity var(--reveal-fade-duration) var(--reveal-easing);
+  --youtube-reveal-inset: 50%;
+  clip-path: inset(
+    0% var(--youtube-reveal-inset) 0% var(--youtube-reveal-inset) round var(--reveal-radius)
+  );
+  transition: --youtube-reveal-inset var(--reveal-duration) var(--reveal-easing);
 }
 
 .iframeWrap {
   position: absolute;
-  top: 0;
-  left: 50%;
-  width: var(--reveal-mask-width);
-  height: 100%;
-  transform: translateX(-50%);
+  inset: 0;
 }
 
 .iframe {
@@ -90,8 +86,7 @@
 }
 
 .isInView .mask {
-  width: 100%;
-  opacity: 1;
+  --youtube-reveal-inset: 0%;
 }
 
 .reducedMotion .title {
@@ -101,8 +96,7 @@
 }
 
 .reducedMotion .mask {
-  width: 100%;
-  opacity: 1;
+  --youtube-reveal-inset: 0%;
   transition: none;
 }
 

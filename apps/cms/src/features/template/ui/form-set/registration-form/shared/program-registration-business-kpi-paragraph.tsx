@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import { resolveKpiFieldValueForParticipantAvailability } from '@/features/template/ui/form-set/registration-form/shared/program-registration-kpi-participant-sync'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 export type ProgramRegistrationOverlayKvHook = <T>(
@@ -133,6 +135,37 @@ export function ProgramRegistrationBusinessKpiParagraph({
     `${overlayKeyPrefix}.dispatchedClass`,
     null
   )
+
+  // 참여자 유형 해제 등으로 필드가 비활성(해당 없음)이 되면 작성값을 리셋한다.
+  useEffect(() => {
+    const next = resolveKpiFieldValueForParticipantAvailability(instructorDisabled, instructor)
+    if (next === instructor) return
+    setInstructor(next)
+  }, [instructor, instructorDisabled, setInstructor])
+
+  useEffect(() => {
+    const next = resolveKpiFieldValueForParticipantAvailability(volunteerDisabled, volunteer)
+    if (next === volunteer) return
+    setVolunteer(next)
+  }, [setVolunteer, volunteer, volunteerDisabled])
+
+  useEffect(() => {
+    const next = resolveKpiFieldValueForParticipantAvailability(
+      dispatchedSchoolDisabled,
+      dispatchedSchool
+    )
+    if (next === dispatchedSchool) return
+    setDispatchedSchool(next)
+  }, [dispatchedSchool, dispatchedSchoolDisabled, setDispatchedSchool])
+
+  useEffect(() => {
+    const next = resolveKpiFieldValueForParticipantAvailability(
+      dispatchedClassDisabled,
+      dispatchedClass
+    )
+    if (next === dispatchedClass) return
+    setDispatchedClass(next)
+  }, [dispatchedClass, dispatchedClassDisabled, setDispatchedClass])
 
   const progressItems =
     educationProgressItems ??

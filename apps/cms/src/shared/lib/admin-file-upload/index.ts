@@ -22,6 +22,9 @@ export {
 export {
   createFileAttachment,
   deleteFileObject,
+  downloadAdminFile,
+  loadAdminFileBlob,
+  loadSensitiveAdminFileBlob,
   fetchFileContentBlob,
   getFileContentPath,
   getFileDownload,

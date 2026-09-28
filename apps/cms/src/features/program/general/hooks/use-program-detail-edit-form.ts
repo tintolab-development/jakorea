@@ -31,15 +31,24 @@ export interface UseProgramDetailEditFormOptions {
    * 참여자/TT 등 완화 스키마는 preprocess·optional 확장으로 _input 타입이 달라질 수 있어 ZodTypeAny 허용
    */
   schema?: z.ZodTypeAny
+  /**
+   * program 참조가 바뀔 때 reset 할지. 기본 true.
+   * 템플릿 작성처럼 입력 → overlay → program 재계산 루프가 있으면 false.
+   */
+  resetOnProgramChange?: boolean
+  /** 기본값 매핑. 없으면 `programToDetailEditValues` */
+  mapToValues?: (program: Program) => ProgramDetailEditFormValues
 }
 
 export function useProgramDetailEditForm({
   program,
   isEditMode,
   schema = programDetailEditSchema,
+  resetOnProgramChange = true,
+  mapToValues,
 }: UseProgramDetailEditFormOptions): UseFormReturn<ProgramDetailEditFormValues> {
   const defaultValues = useMemo<ProgramDetailEditFormValues>(() => {
-    if (program) return programToDetailEditValues(program)
+    if (program) return (mapToValues ?? programToDetailEditValues)(program)
     return {
       title: '',
       category: 'school',
@@ -54,7 +63,7 @@ export function useProgramDetailEditForm({
       resultAnnouncementDate: '',
       resultAnnouncementMethod: '',
     }
-  }, [program])
+  }, [mapToValues, program])
 
   const form = useForm<ProgramDetailEditFormValues>({
     resolver: zodResolver(schema),
@@ -65,18 +74,22 @@ export function useProgramDetailEditForm({
   const { reset } = form
 
   // program 변경 시 폼 값 동기화 (defaultValues까지 갱신해 디폴트 누락 방지)
+  const mapValues = mapToValues ?? programToDetailEditValues
+
   useEffect(() => {
+    if (!resetOnProgramChange) return
     if (program) {
-      reset(programToDetailEditValues(program), { keepDefaultValues: false })
+      reset(mapValues(program), { keepDefaultValues: false })
     }
-  }, [program, reset])
+  }, [program, reset, resetOnProgramChange, mapValues])
 
   // 수정 모드 진입 시 폼을 최신 program 값으로 채움 (useLayoutEffect로 페인트 전 실행)
   useLayoutEffect(() => {
+    if (!resetOnProgramChange) return
     if (isEditMode && program) {
-      reset(programToDetailEditValues(program), { keepDefaultValues: false })
+      reset(mapValues(program), { keepDefaultValues: false })
     }
-  }, [isEditMode, program, reset])
+  }, [isEditMode, program, reset, resetOnProgramChange, mapValues])
 
   return form
 }

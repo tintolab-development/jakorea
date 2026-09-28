@@ -1,15 +1,16 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { HOME_PARTNER_LOGO_ROWS, type HomePartnerLogo } from '@/features/home'
 import homePartnerStyles from '@/features/home/ui/partner-marquee-section.module.css'
 import { PFText } from '@/shared/ui'
+import { usePublicCorporatePartnerRows } from '../api/hooks'
 import { PARTNER_SECTION_TITLE } from '../lib/constants'
 import styles from './partner-section.module.css'
 
 function LogoChips({ logos, hidden }: { logos: readonly HomePartnerLogo[]; hidden?: boolean }) {
   return (
     <ul className={homePartnerStyles.logoGroup} aria-hidden={hidden || undefined}>
-      {logos.map(logo => (
-        <li className={homePartnerStyles.logoChip} key={logo.name}>
+      {logos.map((logo, index) => (
+        <li className={homePartnerStyles.logoChip} key={`${logo.name}-${index}`}>
           {logo.logoUrl ? (
             <img className={homePartnerStyles.logoImage} src={logo.logoUrl} alt={logo.name} />
           ) : (
@@ -22,10 +23,26 @@ function LogoChips({ logos, hidden }: { logos: readonly HomePartnerLogo[]; hidde
 }
 
 export function PartnerSection() {
+  const { rows } = usePublicCorporatePartnerRows()
+  const partnerRows = rows.length > 0 ? rows : HOME_PARTNER_LOGO_ROWS
   const flatLogos = useMemo(
-    () => HOME_PARTNER_LOGO_ROWS.flatMap(row => [...row]),
-    [],
+    () => partnerRows.flatMap(row => [...row]),
+    [partnerRows],
   )
+  const [marqueeNode, setMarqueeNode] = useState<HTMLDivElement | null>(null)
+  const [marqueeInView, setMarqueeInView] = useState(false)
+
+  useEffect(() => {
+    if (!marqueeNode) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setMarqueeInView(entry?.isIntersecting ?? false)
+      },
+      { threshold: 0, rootMargin: '120px 0px' },
+    )
+    observer.observe(marqueeNode)
+    return () => observer.disconnect()
+  }, [marqueeNode])
 
   return (
     <section className={styles.section} aria-labelledby="corporate-donation-partner-title">
@@ -41,8 +58,8 @@ export function PartnerSection() {
 
       <div className={styles.visual}>
         <ul className={homePartnerStyles.logoGrid} aria-label="함께해준 기업 로고">
-          {flatLogos.map(logo => (
-            <li className={homePartnerStyles.logoChip} key={logo.name}>
+          {flatLogos.map((logo, index) => (
+            <li className={homePartnerStyles.logoChip} key={`${logo.name}-${index}`}>
               {logo.logoUrl ? (
                 <img className={homePartnerStyles.logoImage} src={logo.logoUrl} alt={logo.name} />
               ) : (
@@ -52,8 +69,17 @@ export function PartnerSection() {
           ))}
         </ul>
 
-        <div className={homePartnerStyles.marqueeArea} aria-label="함께해준 기업 로고">
-          {HOME_PARTNER_LOGO_ROWS.map((row, rowIndex) => (
+        <div
+          ref={setMarqueeNode}
+          className={[
+            homePartnerStyles.marqueeArea,
+            marqueeInView ? homePartnerStyles.marqueePlaying : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          aria-label="함께해준 기업 로고"
+        >
+          {partnerRows.map((row, rowIndex) => (
             <div className={homePartnerStyles.marqueeRow} key={rowIndex}>
               <div
                 className={[

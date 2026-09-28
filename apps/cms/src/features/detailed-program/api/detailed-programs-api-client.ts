@@ -30,7 +30,7 @@ export async function fetchDetailedProgramRemote(
 export async function createDetailedProgramRemote(
   body: DetailedProgramRequest
 ): Promise<DetailedProgramResponse> {
-  // POST /api/admin/detailed-programs (Orval create10 — material-kits create9과 혼동 금지)
+  // POST /api/admin/detailed-programs (Orval create10 — create9는 material-kits POST, 혼동 금지)
   return unwrapApiBody(await dmApi.create10(body))
 }
 

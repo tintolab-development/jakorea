@@ -67,7 +67,13 @@ export function GeneralProgramApplicationTemplateEditModal({
 
   useEffect(() => {
     if (!open) return
-    if (variant !== 'institution' && variant !== 'trained-teachers-application-institution') return
+    if (
+      variant !== 'institution' &&
+      variant !== 'economy-application-institution' &&
+      variant !== 'trained-teachers-application-institution'
+    ) {
+      return
+    }
     patchInstitutionApplicationProgramBridge(resolveInstitutionApplicationProgramBridge(program))
     return () => {
       resetInstitutionApplicationProgramBridge()
@@ -75,7 +81,7 @@ export function GeneralProgramApplicationTemplateEditModal({
   }, [open, program, variant])
 
   const formSource = useProgramApplicationFormLoadSource(program, variant, {
-    attachLocalDrafts: open,
+    ensureScopedBinding: open,
   })
 
   const vm = useProgramParticipantApplicationEditor(
@@ -84,12 +90,14 @@ export function GeneralProgramApplicationTemplateEditModal({
     variant,
     {
     participantOrganization: variant === 'institution',
-    programLinkedInstitutionApplicationForm: variant === 'institution',
+    programLinkedInstitutionApplicationForm:
+      variant === 'institution' || variant === 'economy-application-institution',
     program,
     programLinkedApplicationFormPreview:
       variant === 'institution' ||
       variant === 'instructor' ||
       variant === 'volunteer' ||
+      variant === 'economy-application-institution' ||
       variant === 'trained-teachers-application-institution',
     templateVersionId: formSource.templateVersionId,
     preferLocalDraft: formSource.preferLocalDraft,
@@ -124,10 +132,14 @@ export function GeneralProgramApplicationTemplateEditModal({
     [registryEntry, editorVm]
   )
 
-  const handleSave = useCallback(() => {
-    vm.handleSave()
-    showAlert({ title: '안내', content: '양식이 저장되었습니다.' })
-    onSaved?.()
+  const handleSave = useCallback(async () => {
+    try {
+      await vm.handleSave()
+      showAlert({ title: '안내', content: '양식이 저장되었습니다.' })
+      onSaved?.()
+    } catch {
+      // useProgramParticipantApplicationEditor / form-template-save-feedback에서 안내
+    }
   }, [onSaved, showAlert, vm])
 
   if (registryEntry == null) return null

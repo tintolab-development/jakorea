@@ -88,7 +88,13 @@ export function createProgramRegistrationDraft(
   variant: ProgramRegistrationFormVariant = 'general'
 ): WritingFormDraft {
   const paragraphs: HorizontalTableParagraph[] = [
-    createSeedParagraph(PROGRAM_REGISTRATION_IDS.basicInfo, '기본 정보'),
+    createSeedParagraph(
+      PROGRAM_REGISTRATION_IDS.basicInfo,
+      PROGRAM_REGISTRATION_GENERAL_SECTION_META.basicInfo.title,
+      variant === 'general'
+        ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.basicInfo.editDescription
+        : ''
+    ),
   ]
   if (variant !== 'trainedTeachers') {
     paragraphs.push(createSeedParagraph(PROGRAM_REGISTRATION_IDS.businessKpi, '사업 KPI 목표'))

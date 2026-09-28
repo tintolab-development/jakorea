@@ -110,6 +110,7 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
     expect(next.businessArea).toBe('진로취업')
     expect(next.partnerInvolvement).toBe(true)
     expect(next.institutionType).toBe('outside_school')
+    expect(next.generalCommonInfo?.venueKind).toBe('outside')
     expect(next.generalCommonInfo?.venueDetail).toBe('강의실 A')
     expect(next.partnerInvolvement).toBe(true)
     expect(next.generalCommonInfo?.paymentItems).toBe('해당없음')
@@ -137,9 +138,36 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
       description: '내용1',
     })
     expect(next.generalCommonInfo?.educationFormLabel).toBeTruthy()
-    expect(next.generalCommonInfo?.participationMethod).toBe('team')
+    expect(next.generalCommonInfo?.participationMethod).toBeUndefined()
     expect(next.type).toBe('offline')
     expect(next.ips).toBe('Prepare')
+    expect(next.generalCommonInfo?.educationScheduleLines).toEqual([
+      '26년 9월 16일(수) 9:22 ~ 10:22',
+      '26년 9월 24일(목) 9:19 ~ 10:19',
+    ])
+  })
+
+  it('keeps participationMethod for individual audience programs', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      {
+        ...baseProgram(),
+        generalProgramAudience: 'individual',
+        generalParticipantTypes: ['individual'],
+      },
+      {
+        'generalRegistration.typeSettings.singleParticipation': 'team',
+      },
+      {
+        programType: 'curriculum',
+        sessionRoundType: 'single',
+        educationFormScheduleDetail: 'common',
+        participationScheduleDetail: 'common',
+        ipsScheduleDetail: 'common',
+        curriculumChartSessionCount: 1,
+        participantOrganization: false,
+      }
+    )
+    expect(next.generalCommonInfo?.participationMethod).toBe('team')
   })
 
   it('defaults partner yes and payment 해당없음 when overlay keys are missing', () => {
@@ -175,6 +203,8 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
     expect(next.textbookName).toBeUndefined()
     expect(next.generalCommonInfo?.paymentItems).toBe('교통비(일반), 숙박비')
     expect(next.generalCommonInfo?.sponsorManagerLine).toBe('김담당 팀장 | 010-1234-5678')
+    expect(next.generalCommonInfo?.sponsorManagerContactIds).toEqual(['1627251::1627253'])
+    expect(next.generalCommonInfo?.sponsorManagerContactId).toBe('1627251::1627253')
   })
 
   it('does not store contact ref as sponsorManagerLine', () => {
@@ -190,6 +220,33 @@ describe('applyGeneralRegistrationOverlayToProgram', () => {
       }
     )
     expect(next.generalCommonInfo?.sponsorManagerLine).toBeUndefined()
+    expect(next.generalCommonInfo?.sponsorManagerContactIds).toEqual(['1627251::1627253'])
+  })
+
+  it('maps multiple manager contact refs from overlay array', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      baseProgram(),
+      {
+        'generalRegistration.basicInfo.localSponsorIds': ['1627251', '163302'],
+        'generalRegistration.basicInfo.localManagerContactIds': [
+          '1627251::1627253',
+          '163302::111',
+        ],
+        'generalRegistration.basicInfo.sponsorManagerLine':
+          '김담당 팀장 | 010-1234-5678, 이담당 책임 | 010-9999-0000',
+      },
+      {
+        programType: 'curriculum',
+        sessionRoundType: 'single',
+        curriculumChartSessionCount: 1,
+      }
+    )
+    expect(next.generalCommonInfo?.sponsorManagementIds).toEqual(['1627251', '163302'])
+    expect(next.generalCommonInfo?.sponsorManagerContactIds).toEqual([
+      '1627251::1627253',
+      '163302::111',
+    ])
+    expect(next.generalCommonInfo?.sponsorManagerContactId).toBe('1627251::1627253')
   })
 })
 
@@ -215,6 +272,157 @@ describe('normalizeRegistrationOverlayForApply', () => {
       '1사1교 경제금융교육'
     )
     expect(normalized['generalRegistration.typeSettings.educationForm']).toBe('offline')
+    expect(normalized['generalRegistration.typeSettings.singleEducationForm']).toBe('offline')
     expect(normalized['generalRegistration.basicInfo.localSponsorIds']).toEqual(['42'])
+    expect(normalized['generalRegistration.basicInfo.localManagerContactIds']).toEqual(['99'])
+  })
+})
+
+describe('trained teacher curriculum overlay', () => {
+  it('prepends 교육 연수 without replacing 1차시', () => {
+    const overlay = normalizeRegistrationOverlayForApply(
+      {
+        'trainedTeachersRegistration.educationCurriculum.preEducationScheduleName': '교육 연수',
+        'trainedTeachersRegistration.educationCurriculum.preEducationScheduleLine':
+          '26년 4월 20일(월) 9:30 ~ 12:20',
+        'trainedTeachersRegistration.educationCurriculum.teacherTrainingEducationForm': 'offline',
+        'trainedTeachersRegistration.educationCurriculum.unitNameBySession': {
+          1: '단원1',
+          2: '단원2',
+        },
+        'trainedTeachersRegistration.educationCurriculum.unitContentBySession': {
+          1: '내용1',
+          2: '내용2',
+        },
+      },
+      'trainedTeachers'
+    )
+    const next = applyGeneralRegistrationOverlayToProgram(baseProgram(), overlay, {
+      programType: 'curriculum',
+      sessionRoundType: 'single',
+      curriculumChartSessionCount: 2,
+      scheduleCurriculumPreEducation: true,
+      teacherTrainingEnabled: true,
+      participantOrganization: true,
+    })
+
+    expect(next.generalCommonInfo?.teacherTrainingEnabled).toBe(true)
+    expect(next.generalCommonInfo?.curriculumSessions).toEqual([
+      expect.objectContaining({
+        sessionLabel: '교육 연수',
+        title: '교육 연수',
+        scheduleDateLabel: '26년 4월 20일(월) 9:30 ~ 12:20',
+        educationFormLabel: '오프라인',
+      }),
+      expect.objectContaining({ sessionLabel: '1차시', title: '단원1', description: '내용1' }),
+      expect.objectContaining({ sessionLabel: '2차시', title: '단원2', description: '내용2' }),
+    ])
+  })
+})
+
+describe('trained teacher schedule-type detailedProgramName (버그 수정)', () => {
+  it('일정형이어도 사용자가 선택한 세부 프로그램명을 스케줄 상세명으로 덮어쓰지 않는다', () => {
+    const overlay = normalizeRegistrationOverlayForApply(
+      {
+        'trainedTeachersRegistration.basicInfo.detailedProgramId': '163006',
+        'trainedTeachersRegistration.basicInfo.detailedProgramName': '실제 선택한 세부 프로그램명',
+        'trainedTeachersRegistration.educationScheduleSettings.scheduleLines': [
+          '삭제 가능 샘플',
+        ],
+      },
+      'trainedTeachers'
+    )
+
+    const next = applyGeneralRegistrationOverlayToProgram(baseProgram(), overlay, {
+      programType: 'schedule',
+      sessionRoundType: 'single',
+      scheduleCurriculumDetailCount: 1,
+      isTrainedTeachers: true,
+    })
+
+    expect(next.generalCommonInfo?.detailedProgramName).toBe('실제 선택한 세부 프로그램명')
+    expect(next.detailedProgramId).toBe('163006')
+  })
+
+  it('(대조군) 일반 일정형은 여전히 세부 프로그램명이 스케줄 상세명으로 잠긴다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      baseProgram(),
+      {
+        'generalRegistration.basicInfo.detailedProgramId': '163006',
+        'generalRegistration.basicInfo.detailedProgramName': '실제 선택한 세부 프로그램명',
+      },
+      {
+        programType: 'schedule',
+        sessionRoundType: 'single',
+        scheduleCurriculumDetailCount: 1,
+      }
+    )
+
+    expect(next.generalCommonInfo?.detailedProgramName).not.toBe('실제 선택한 세부 프로그램명')
+    expect(next.detailedProgramId).toBeUndefined()
+  })
+
+  it('커리큘럼형 — 수동 선택한 세부 프로그램명이 그대로 반영된다', () => {
+    const overlay = normalizeRegistrationOverlayForApply(
+      {
+        'trainedTeachersRegistration.basicInfo.detailedProgramId': '163006',
+        'trainedTeachersRegistration.basicInfo.detailedProgramName': '실제 선택한 세부 프로그램명',
+      },
+      'trainedTeachers'
+    )
+
+    const next = applyGeneralRegistrationOverlayToProgram(baseProgram(), overlay, {
+      programType: 'curriculum',
+      sessionRoundType: 'single',
+      isTrainedTeachers: true,
+    })
+
+    expect(next.generalCommonInfo?.detailedProgramName).toBe('실제 선택한 세부 프로그램명')
+    expect(next.detailedProgramId).toBe('163006')
+    expect(next.textbookName).toBeUndefined()
+  })
+
+  it('참여자 extras가 모두 있으면 generalParticipantTypes를 등록과 같이 반영한다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(baseProgram(), {}, {
+      programType: 'curriculum',
+      sessionRoundType: 'single',
+      participantIndividual: false,
+      participantOrganization: true,
+      participantTeacherInstructor: true,
+      participantVolunteer: false,
+    })
+    expect(next.generalParticipantTypes).toEqual(['school_institution', 'teacher_instructor'])
+    expect(next.generalProgramAudience).toBe('organization')
+  })
+})
+
+describe('일정형 사전 교육 overlay 교육 형태', () => {
+  it('educationFormByDetail 0을 사전 교육 행에 넣는다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      baseProgram(),
+      {
+        'generalRegistration.educationScheduleCurriculum.preEducationName': '사전 교육',
+        'generalRegistration.educationScheduleCurriculum.educationFormByDetail': {
+          0: 'offline',
+        },
+        'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+          1: '오리엔테이션',
+        },
+      },
+      {
+        programType: 'schedule',
+        sessionRoundType: 'single',
+        scheduleCurriculumPreEducation: true,
+        scheduleCurriculumDetailCount: 1,
+        educationFormScheduleDetail: 'common',
+      }
+    )
+
+    expect(next.generalCommonInfo?.scheduleDetails?.[0]).toEqual(
+      expect.objectContaining({
+        scheduleLabel: '사전 교육',
+        educationFormLabel: '오프라인',
+      })
+    )
   })
 })

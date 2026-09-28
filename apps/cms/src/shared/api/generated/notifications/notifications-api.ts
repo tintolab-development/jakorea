@@ -31,7 +31,7 @@ import type {
   CategoryUpdateRequest,
   CreateRequest,
   EmailAttachmentBindRequest,
-  List5Params,
+  List6Params,
   ListNotificationDeliveriesParams,
   ListNotificationTemplateVariablesParams,
   ListNotificationTemplatesParams,
@@ -68,7 +68,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * ### 이 API가 하는 일
  * - PUT /api/admin/notification-event-catalog/{eventType}
  * - API 분류: 시스템 진단/운영 검증 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PUT /api/admin/notification-event-catalog/{eventType}`
  *
@@ -180,8 +180,8 @@ const upsertNotificationEventChannelTemplate = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notification-templates`
  *
@@ -235,8 +235,8 @@ const listNotificationTemplates = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/notification-templates
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `POST /api/admin/notification-templates`
  *
@@ -711,8 +711,8 @@ const syncSenderProfiles = (
  * - 검토 메모: V55 batch aggregate state derived from outbox/delivery
  * @summary CMS 알림 실발송 배치 목록 조회
  */
-const list5 = (
-    params?: List5Params,
+const list6 = (
+    params?: List6Params,
  options?: SecondParameter<typeof customInstance<BatchPageResponse>>,) => {
       return customInstance<BatchPageResponse>(
       {url: `/api/admin/notification-send-batches`, method: 'GET',
@@ -764,7 +764,7 @@ const list5 = (
  * - 검토 메모: V55 active provider-configured template + required Idempotency-Key + actor/direct recipient snapshot + durable outbox; direct AD blocked
  * @summary CMS 알림 실발송 배치 생성
  */
-const create8 = (
+const create9 = (
     createRequest: CreateRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseCreateResponse>>,) => {
       return customInstance<ApiResponseCreateResponse>(
@@ -986,8 +986,8 @@ const cancelNotificationDelivery = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/notification-deliveries/test-send
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `POST /api/admin/notification-deliveries/test-send`
  *
@@ -1147,8 +1147,8 @@ const archiveNotificationTemplate = (
 /**
  * ### 이 API가 하는 일
  * - 알림 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `PATCH /api/admin/notification-templates/{templateId}`
  *
@@ -1487,8 +1487,9 @@ const listSenderProfiles = (
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNMASKED_DEFAULT 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
  * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
@@ -1502,7 +1503,7 @@ const listSenderProfiles = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: V55 recipient contacts masked; outbox/provider outcome visible
+ * - 검토 메모: 2026-09-23 Notion send-history detail: recipient name/contact are unmasked and every successful detail read writes fixed-reason privacy audit; outbox/provider outcome visible.
  * @summary CMS 알림 실발송 배치 상세 조회
  */
 const detail3 = (
@@ -1515,46 +1516,8 @@ const detail3 = (
     }
 
 /**
- * ### 이 API가 하는 일
- * - 알림 발송 자동입력 변수 카탈로그
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `GET /api/admin/notification-send-batches/template-variables`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: NOTIFICATION_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
- * - 감사로그 저장: 필수 아님
- *
- * ### 상태값/화면 배지 기준
- * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
- * ### Swagger에서 확인할 때
- * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: V78 AlimTalk CMS catalog / Notion alignment
- * @summary 알림 발송 자동입력 변수 카탈로그
+ * 메일·문자 템플릿 편집/발송 화면 우측 자동입력(변수값) 리스트 + 알림톡 발송 피커 변수 SSOT. Notion 사용 가능 항목과 CMS 수동 발송 불가(시스템 이벤트 전용) 키를 카테고리별로 반환(enabled=false 항목도 목록 유지). enabled=삽입·알림톡 피커(프로그램 지정 시) 사용 허용 SSOT(값 존재와 무관). FE는 enabled를 재계산하지 않는다. 축 분리: 카카오 승인(approved) ≠ CMS 변수 가능(catalog membership + enabled). 알림톡 발송 피커 Option A(프로그램 지정 시): 본문 #{키} ⊆ catalog && 모든 키 enabled=true. 예: 로그인 실패 횟수/마지막 로그인 실패일시 → catalog 등재 + enabled=false. requiresProgram=true 이고 programId 미전달이면 enabled=false. programId/participantType/memberType을 넘기면 enabled가 프로그램·모집·참여·회원 유형에 맞게 계산된다. participantType·memberType 둘 다 없으면 유형 특화 변수는 enabled=false. 실발송(EMAIL/SMS/ALIMTALK) 시 본문 #{키} 값이 비면 provider 전 NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING:{키}[,{키2}…] fail-closed(프로바이더 원문「변수처리실패」에 의존하지 않음).
+ * @summary 자동입력 변수 카탈로그 조회
  */
 const listNotificationTemplateVariables = (
     params?: ListNotificationTemplateVariablesParams,
@@ -1590,8 +1553,9 @@ const listNotificationTemplateVariables = (
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNMASKED_DEFAULT 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
  * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
@@ -1605,7 +1569,7 @@ const listNotificationTemplateVariables = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Notion recipient popup alignment: accessible active program participants only; name/contact masked; raw contact resolved server-side at send time
+ * - 검토 메모: 2026-09-23 Notion recipient popup: accessible recipient name/contact are unmasked; every successful read writes fixed-reason privacy audit; raw contact remains server-resolved at send time.
  * @summary CMS 알림 발송 수신자 후보 조회
  */
 const recipientCandidates = (
@@ -1622,7 +1586,7 @@ const recipientCandidates = (
  * ### 이 API가 하는 일
  * - 알림 조회
  * - API 분류: 시스템 진단/운영 검증 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notification-event-catalog`
  *
@@ -1727,8 +1691,8 @@ const notificationEventChannelTemplates = (
 /**
  * ### 이 API가 하는 일
  * - 알림 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notification-deliveries`
  *
@@ -1781,9 +1745,9 @@ const listNotificationDeliveries = (
 
 /**
  * ### 이 API가 하는 일
- * - 알림 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - 알림톡/문자/메일 발송 이력 상세 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 알림/발송관리 (`null`)
  * - 프론트 담당 영역: notifications (`notifications`)
  * - 호출 방식: `GET /api/admin/notification-deliveries/{deliveryId}`
  *
@@ -1800,12 +1764,12 @@ const listNotificationDeliveries = (
  *
  * ### 권한/보안
  * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 필요 권한: NOTIFICATION_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 개인정보 노출 기준: UNMASKED_DEFAULT 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1821,8 +1785,8 @@ const listNotificationDeliveries = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
- * @summary 알림 조회
+ * - 검토 메모: 2026-09-23 Notion send-history detail: unmasked recipient identity/contact with automatic privacy access audit.
+ * @summary 알림톡/문자/메일 발송 이력 상세 조회
  */
 const getNotificationDelivery = (
     deliveryId: number,
@@ -1886,7 +1850,7 @@ const unbindEmailAttachment = (
       options);
     }
 
-return {updateNotificationEventCatalog,upsertNotificationEventChannelTemplate,listNotificationTemplates,createNotificationTemplate,moveTemplate,bindEmailAttachment,syncTemplates,bulkArchiveNotificationTemplates,createCategory,moveCategory,syncSenderProfiles,list5,create8,retryFailed,cancel3,confirmNotificationDelivery,cancelNotificationDelivery,testSendNotification,getTemplate,archiveNotificationTemplate,updateNotificationTemplate,deleteCategory,updateCategory,previewTemplate,categoryTree,listSenderProfiles,detail3,listNotificationTemplateVariables,recipientCandidates,notificationEventCatalog,notificationEventChannelTemplates,listNotificationDeliveries,getNotificationDelivery,unbindEmailAttachment}};
+return {updateNotificationEventCatalog,upsertNotificationEventChannelTemplate,listNotificationTemplates,createNotificationTemplate,moveTemplate,bindEmailAttachment,syncTemplates,bulkArchiveNotificationTemplates,createCategory,moveCategory,syncSenderProfiles,list6,create9,retryFailed,cancel3,confirmNotificationDelivery,cancelNotificationDelivery,testSendNotification,getTemplate,archiveNotificationTemplate,updateNotificationTemplate,deleteCategory,updateCategory,previewTemplate,categoryTree,listSenderProfiles,detail3,listNotificationTemplateVariables,recipientCandidates,notificationEventCatalog,notificationEventChannelTemplates,listNotificationDeliveries,getNotificationDelivery,unbindEmailAttachment}};
 export type UpdateNotificationEventCatalogResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['updateNotificationEventCatalog']>>>
 export type UpsertNotificationEventChannelTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['upsertNotificationEventChannelTemplate']>>>
 export type ListNotificationTemplatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['listNotificationTemplates']>>>
@@ -1898,8 +1862,8 @@ export type BulkArchiveNotificationTemplatesResult = NonNullable<Awaited<ReturnT
 export type CreateCategoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['createCategory']>>>
 export type MoveCategoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['moveCategory']>>>
 export type SyncSenderProfilesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['syncSenderProfiles']>>>
-export type List5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['list5']>>>
-export type Create8Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['create8']>>>
+export type List6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['list6']>>>
+export type Create9Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['create9']>>>
 export type RetryFailedResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['retryFailed']>>>
 export type Cancel3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['cancel3']>>>
 export type ConfirmNotificationDeliveryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPINotificationsSubset>['confirmNotificationDelivery']>>>

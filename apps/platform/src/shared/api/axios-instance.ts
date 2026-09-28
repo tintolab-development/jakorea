@@ -11,6 +11,7 @@ import axios, {
   type HeadersDefaults,
   type InternalAxiosRequestConfig,
 } from 'axios'
+import { portalAuthPaths } from '@/features/auth/sign-in/api/endpoints'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { isAdminOnboardingRequired } from '@/shared/lib/admin-onboarding-session'
 import {
@@ -49,7 +50,6 @@ const HOMEPAGE_AUTH_PREFIX = '/api/homepage/auth'
 const PORTAL_AUTH_PREFIX = '/api/portal/auth'
 const PORTAL_ORGANIZATIONS_SCHOOLS = '/api/portal/organizations/schools'
 const DEFAULT_REFRESH_PATH = `${PORTAL_AUTH_PREFIX}/refresh`
-const DEFAULT_LOGOUT_PATH = `${PORTAL_AUTH_PREFIX}/logout`
 
 export { getApiBaseUrl, isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
@@ -60,7 +60,7 @@ function getRefreshPath(): string {
 }
 
 function getLogoutPath(): string {
-  return DEFAULT_LOGOUT_PATH
+  return portalAuthPaths.logout()
 }
 
 function getErrorCode(data: unknown): string | undefined {
@@ -230,14 +230,26 @@ function parseExpiresInFromRefreshBody(payload: unknown): number | undefined {
   return undefined
 }
 
-function handleAuthFailure() {
+let authFailureHandled = false
+
+async function handleAuthFailure() {
   const onAdminRegisteredOnboarding =
     isAdminOnboardingRequired() &&
     typeof window !== 'undefined' &&
     window.location.pathname.startsWith('/auth/admin-registered')
 
-  if (onAdminRegisteredOnboarding) {
+  if (onAdminRegisteredOnboarding || authFailureHandled) {
     return
+  }
+  authFailureHandled = true
+
+  const refreshToken = getRefreshToken()
+  if (refreshToken) {
+    try {
+      await postPortalAuthLogout(refreshToken)
+    } catch {
+      // refresh 폐기 실패여도 로컬 세션은 종료
+    }
   }
 
   clearAuthTokens()

@@ -180,6 +180,34 @@
   vertical-align: middle;
 }
 
+/* 긴 텍스트 열만 상단 — 아이콘·스위치·순서 등은 middle 유지 */
+.principles-form-card--editing
+  .principles-sortable-table
+  .ant-table-tbody
+  > tr
+  > td.principles-sortable-table__col--title,
+.principles-form-card--editing
+  .principles-sortable-table
+  .ant-table-tbody
+  > tr
+  > td.principles-sortable-table__col--subText {
+  vertical-align: top;
+}
+
+.principles-form-card--editing
+  .principles-sortable-table
+  .principles-title-field.principles-inline-field--edit
+  .cms-textarea__inner
+  textarea.ant-input {
+  min-height: 72px;
+  line-height: 150%;
+}
+
+.principles-sortable-table .ant-table-tbody > tr > td.principles-sortable-table__col--icon {
+  vertical-align: middle !important;
+  text-align: center;
+}
+
 /* 수정 모드 전환 시 행 transition 점프 방지 */
 .principles-sortable-table .ant-table-tbody > tr {
   transition: none;

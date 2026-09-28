@@ -49,7 +49,7 @@ export type StripBannerListFilter = {
   periodEnd?: string
 }
 
-/** 동시 사용(노출) 가능 최대 개수 */
+/** 동시 사용(노출) 가능 최대 개수. 0건 사용은 허용한다. */
 export const MAX_ACTIVE_STRIP_BANNERS = 2
 
 export class StripBannerActiveLimitError extends Error {

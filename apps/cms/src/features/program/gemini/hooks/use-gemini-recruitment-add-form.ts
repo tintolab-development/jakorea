@@ -78,7 +78,11 @@ function isPeriodComplete(dates: [Dayjs | null, Dayjs | null] | null): boolean {
   return dates?.[0] != null && dates[1] != null
 }
 
-export function useGeminiRecruitmentAddForm(open: boolean) {
+export function useGeminiRecruitmentAddForm(
+  open: boolean,
+  options?: { skipDraftRestore?: boolean }
+) {
+  const skipDraftRestore = options?.skipDraftRestore === true
   const [hydrated, setHydrated] = useState(false)
   const [title, setTitle] = useState('')
   const [announcementPublished, setAnnouncementPublished] =
@@ -143,14 +147,18 @@ export function useGeminiRecruitmentAddForm(open: boolean) {
       return
     }
 
-    const saved = loadGeminiRecruitmentAddDraft()
-    if (saved?.form) {
-      applyFormState(saved.form)
-    } else {
+    if (skipDraftRestore) {
       applyFormState(createDefaultGeminiRecruitmentAddFormSnapshot())
+    } else {
+      const saved = loadGeminiRecruitmentAddDraft()
+      if (saved?.form) {
+        applyFormState(saved.form)
+      } else {
+        applyFormState(createDefaultGeminiRecruitmentAddFormSnapshot())
+      }
     }
     setHydrated(true)
-  }, [applyFormState, open])
+  }, [applyFormState, open, skipDraftRestore])
 
   const editorOpen = open && hydrated
   const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(

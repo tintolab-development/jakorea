@@ -14,13 +14,33 @@
   box-shadow: 0 var(--spacing-80) 0 0 var(--color-neutral-cool-50, #f5f7f7);
 }
 
-.inner {
+.inner,
+.layoutWithList {
   display: flex;
   width: 100%;
   max-width: 100%;
+  min-width: 0;
+  padding-top: var(--spacing-60);
+}
+
+.inner {
   flex-direction: column;
   gap: var(--spacing-32);
-  padding-top: var(--spacing-60);
+}
+
+/* 2건 이상: 좌 목록 240 고정 · 우 본문 flex shrink · 간격 60 */
+.layoutWithList {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--spacing-60);
+}
+
+.body {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: var(--spacing-32);
 }
 
 .actions {
@@ -32,10 +52,29 @@
 
 @media (--bp-below-pc) {
   .shell {
-    padding: 0 20px calc(80px + var(--spacing-80));
+    /* 홈 content와 동일 거터·하단 · page padding-bottom(48)까지 bg 연장 */
+    padding: 0 var(--page-padding-x) var(--spacing-48);
+    margin-bottom: calc(-1 * var(--spacing-48));
+    box-shadow: 0 var(--spacing-48) 0 0 var(--color-neutral-cool-50, #f5f7f7);
   }
 
-  .inner {
+  .inner,
+  .layoutWithList {
+    padding-top: var(--spacing-16);
+  }
+
+  /* 모바일 목록 UI는 후속 — 당분간 본문만 */
+  .layoutWithList {
+    flex-direction: column;
+    gap: var(--spacing-16);
+  }
+
+  .layoutWithList > :first-child {
+    display: none;
+  }
+
+  .inner,
+  .body {
     gap: var(--spacing-16);
   }
 }

@@ -3,18 +3,13 @@
  */
 
 import { useOperatingPrinciples } from '@/features/operating-principles/api/hooks'
-import { operatingPrinciplesQueryKeys } from '@/features/operating-principles/api/query-keys'
-import { OPERATING_PRINCIPLES_CHANGED_EVENT } from '@/features/operating-principles/api/store'
 import { PrinciplesFormCard } from '@/features/operating-principles/ui/principles-form-card'
-import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { PageContentLoading } from '@/shared/ui'
 
 import './page.css'
 
 export function PrinciplesPage() {
   const query = useOperatingPrinciples()
-
-  useInvalidateOnWindowEvent(OPERATING_PRINCIPLES_CHANGED_EVENT, operatingPrinciplesQueryKeys.all)
 
   const data = query.data
 

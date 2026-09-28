@@ -4,7 +4,6 @@ import {
 } from '@/features/program/general/lib/registration-local-save'
 import {
   bulkDeleteAdminProgramsRemote,
-  createAdminProgramRemote,
   deleteAdminProgramRemote,
   fetchAdminProgramByIdRemote,
   fetchAdminProgramsRemote,
@@ -160,9 +159,19 @@ export async function getCompanySchoolProgram(programId: string): Promise<Progra
   return mapCompanySchoolDetailToProgram(await fetchAdminProgramByIdRemote(programId))
 }
 
-export async function createCompanySchoolProgram(program: Program): Promise<Program> {
+export async function createCompanySchoolProgram(
+  program: Program,
+  prepared?: import('@/features/program/general/lib/build-registration-create-form-bindings').RegistrationCreateFormBindingsPayload | null
+): Promise<Program> {
   assertRemoteReady()
-  const dto = await createAdminProgramRemote(mapCompanySchoolToCreateRequest(program))
+  const { createAdminProgramRemoteWithRegistrationForms } = await import(
+    '@/features/program/general/api/create-admin-program-remote-with-registration-forms'
+  )
+  const dto = await createAdminProgramRemoteWithRegistrationForms(
+    program,
+    mapCompanySchoolToCreateRequest(program),
+    prepared
+  )
   return mapCompanySchoolDetailToProgram(dto)
 }
 
@@ -172,12 +181,15 @@ export async function updateCompanySchoolProgram(
   patch?: Partial<Program>
 ): Promise<Program> {
   assertRemoteReady()
-  const mergedPatch = patch ?? program
+  const merged = { ...program, ...(patch ?? {}), id: programId }
   // 등록 중 로컬 임시저장 키와 충돌하지 않도록 remote 성공 후 로컬 잔여만 정리
-  updateCompanySchoolRegistrationLocalSaveProgram(programId, mergedPatch)
+  updateCompanySchoolRegistrationLocalSaveProgram(programId, patch ?? program)
   const dto = await updateAdminProgramRemote(
     programId,
-    mapCompanySchoolToUpdateRequest({ ...program, ...mergedPatch, id: programId })
+    mapCompanySchoolToUpdateRequest(
+      merged,
+      patch && Object.keys(patch).length > 0 ? patch : undefined
+    )
   )
   return mapCompanySchoolDetailToProgram(dto)
 }

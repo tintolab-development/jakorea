@@ -41,6 +41,7 @@ export function MultipleChoice({
   isBodyInteractive,
   paragraphInteractionMode = 'authoring',
   preservePreviewSelectionOnCardBlur = false,
+  choiceDisplayOnly = false,
   itemsEditActive,
   onActivateItemsEditor,
   resolveItemDisplayLabel,
@@ -53,6 +54,11 @@ export function MultipleChoice({
   isBodyInteractive: boolean
   /** 단락 카드 비선택으로 미리보기 선택값을 초기화하지 않음 (user·구조 잠금 동의 미리체크) */
   preservePreviewSelectionOnCardBlur?: boolean
+  /**
+   * true면 disabled 스킨 없이 미선택·입력 불가(프로그램 등록 신청 양식 시드).
+   * `isBodyInteractive`와 무관하게 선택은 반영하지 않는다.
+   */
+  choiceDisplayOnly?: boolean
   /** user일 때는 카드 비선택으로 미리보기 선택값을 초기화하지 않음 */
   paragraphInteractionMode?: ParagraphBodyInteractionMode
   /** 항목 영역(라디오/체크박스 바디) 포커스 — 단락 카드만 선택된 상태와 구분 */
@@ -69,6 +75,7 @@ export function MultipleChoice({
   useEffect(() => {
     if (
       preservePreviewSelectionOnCardBlur ||
+      choiceDisplayOnly ||
       paragraphInteractionMode !== 'authoring' ||
       !prevCardSelected.current ||
       isCardSelected
@@ -86,6 +93,7 @@ export function MultipleChoice({
     )
     prevCardSelected.current = isCardSelected
   }, [
+    choiceDisplayOnly,
     isCardSelected,
     onChange,
     paragraphInteractionMode,
@@ -99,13 +107,15 @@ export function MultipleChoice({
     !allowMultiple &&
     (isUjatProgramApplicationVolunteerPreferredRegionMultipleChoiceSeed(paragraph.id) ||
       isUjatProgramApplicationInstitutionApplicationRegionMultipleChoiceSeed(paragraph.id))
-  const singleId = paragraph.selectedPreviewSingleId ?? null
-  const multiIds = paragraph.selectedPreviewMultipleIds ?? []
+  const singleId = choiceDisplayOnly ? null : (paragraph.selectedPreviewSingleId ?? null)
+  const multiIds = choiceDisplayOnly ? [] : (paragraph.selectedPreviewMultipleIds ?? [])
   const isPreviewReadonly = isFormPreviewReadonlyMode(paragraphInteractionMode)
-  const controlDisabled = !isBodyInteractive && !isPreviewReadonly
+  /** displayOnly: 일반 스킨 유지. preview: 동일. 그 외 비interactive는 disabled 스킨 */
+  const controlDisabled =
+    choiceDisplayOnly || isPreviewReadonly ? false : !isBodyInteractive
 
   const patch = (partial: Partial<MultipleChoiceParagraph>) => {
-    if (!isBodyInteractive) return
+    if (choiceDisplayOnly || !isBodyInteractive) return
     onChange(mergeParagraph(paragraph, partial))
   }
 
@@ -117,7 +127,7 @@ export function MultipleChoice({
     .join(' ')
 
   const handleBodyClick = (event: ReactMouseEvent<HTMLDivElement>) => {
-    if (!isBodyInteractive || !onActivateItemsEditor) return
+    if (choiceDisplayOnly || !isBodyInteractive || !onActivateItemsEditor) return
     event.stopPropagation()
     onActivateItemsEditor()
   }
@@ -131,7 +141,12 @@ export function MultipleChoice({
     }
 
     return (
-      <div role="presentation" className={bodyClass} onClick={handleBodyClick}>
+      <div
+        role="presentation"
+        className={bodyClass}
+        onClick={handleBodyClick}
+        style={choiceDisplayOnly ? { pointerEvents: 'none' } : undefined}
+      >
         <MultipleChoiceBodyDescription paragraph={paragraph} />
         {items.map(item => (
           <div key={item.id} role="presentation" className="multiple-choice-row">
@@ -150,7 +165,12 @@ export function MultipleChoice({
   }
 
   return (
-    <div role="presentation" className={bodyClass} onClick={handleBodyClick}>
+    <div
+      role="presentation"
+      className={bodyClass}
+      onClick={handleBodyClick}
+      style={choiceDisplayOnly ? { pointerEvents: 'none' } : undefined}
+    >
       <MultipleChoiceBodyDescription paragraph={paragraph} />
       <CmsRadioGroup
         className={[

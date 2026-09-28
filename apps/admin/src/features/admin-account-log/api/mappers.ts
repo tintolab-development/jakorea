@@ -9,12 +9,13 @@ import type {
   AdminAccountLog,
 } from '@/entities/admin-account-log/model/types'
 import { ADMIN_ACCOUNT_ACTION_TYPES } from '@/entities/admin-account-log/model/types'
+import { LOG_LIST_PAGE_SIZE } from '@/features/logs/shared/lib/list-page'
 import type { AdminAccountActionLogItem } from '@/shared/api/generated/logs/schemas/adminAccountActionLogItem'
 import type { AdminAccountActionsParams } from '@/shared/api/generated/logs/schemas/adminAccountActionsParams'
 import type { ExportAdminAccountActionsParams } from '@/shared/api/generated/logs/schemas/exportAdminAccountActionsParams'
 import type { PageResponseAdminAccountActionLogItem } from '@/shared/api/generated/logs/schemas/pageResponseAdminAccountActionLogItem'
 
-export const LIST_PAGE_SIZE = 20
+export const LIST_PAGE_SIZE = LOG_LIST_PAGE_SIZE
 
 function parseActionType(raw: string | undefined): AdminAccountActionType {
   if (raw && (ADMIN_ACCOUNT_ACTION_TYPES as readonly string[]).includes(raw)) {
@@ -27,7 +28,7 @@ export function toAdminAccountActionsParams(
   filter: AdminAccountListFilter,
 ): AdminAccountActionsParams {
   const params: AdminAccountActionsParams = {
-    page: 0,
+    page: filter.page ?? 0,
     size: LIST_PAGE_SIZE,
   }
   const name = filter.name?.trim()

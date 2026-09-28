@@ -7,6 +7,7 @@ import {
   resolveWorldwideRevealProgress,
   type IntroductionScrollState,
 } from '../lib/introduction-scroll-phase'
+import type { IntroductionPageContent } from '../model/types'
 import { GlobalValuePanel } from './global-value-section'
 import { HeroStage } from './hero-section'
 import heroStyles from './hero-section.module.css'
@@ -24,7 +25,7 @@ const INITIAL_STATE: IntroductionScrollState = {
  * Accordion 후 hold 구간에서 panel을 translateY 해 Worldwide를 연속 노출.
  * Mobile·reduced-motion 은 정적 스택 (.list 다음 Worldwide).
  */
-export function IntroductionScroll() {
+export function IntroductionScroll({ view }: { view: IntroductionPageContent }) {
   const trackRef = useRef<HTMLElement>(null)
   const valueContentRef = useRef<HTMLDivElement>(null)
   const prefersReducedMotion = usePrefersReducedMotion()
@@ -33,6 +34,7 @@ export function IntroductionScroll() {
   const [scrollState, setScrollState] = useState<IntroductionScrollState>(INITIAL_STATE)
   const scrollStateRef = useRef<IntroductionScrollState>(INITIAL_STATE)
   const [worldwideRevealPx, setWorldwideRevealPx] = useState(0)
+  const valueCount = Math.max(1, view.globalValues.length)
 
   useEffect(() => {
     setMediaReady(true)
@@ -70,7 +72,7 @@ export function IntroductionScroll() {
       frameId = 0
       const scrollRange = Math.max(1, track.offsetHeight - window.innerHeight)
       const scrollPx = Math.max(0, window.scrollY)
-      const next = resolveIntroductionScrollState(scrollPx, scrollRange)
+      const next = resolveIntroductionScrollState(scrollPx, scrollRange, valueCount)
       const prev = scrollStateRef.current
       if (
         next.heroPhase !== prev.heroPhase ||
@@ -105,7 +107,7 @@ export function IntroductionScroll() {
       window.removeEventListener('resize', handleScroll)
       if (frameId !== 0) window.cancelAnimationFrame(frameId)
     }
-  }, [isDesktopMotion])
+  }, [isDesktopMotion, valueCount])
 
   const showMessage = activePhase !== 'intro'
   const showSplit =
@@ -128,6 +130,7 @@ export function IntroductionScroll() {
         activeValueIndex,
       },
       scrollRange,
+      valueCount,
     )
     if (top == null) return
     window.scrollTo({
@@ -155,11 +158,20 @@ export function IntroductionScroll() {
           aria-label="기관소개 소개"
         >
           <div className={styles.stageBody}>
-            <HeroStage activePhase={activePhase} isDesktopMotion={false} />
+            <HeroStage
+              hero={view.hero}
+              activePhase={activePhase}
+              isDesktopMotion={false}
+            />
           </div>
         </section>
         <section className={styles.valueStage} aria-label="JA Global Value">
-          <GlobalValuePanel isDesktopMotion={false} withWorldwide />
+          <GlobalValuePanel
+            items={view.globalValues}
+            worldwide={view.worldwide}
+            isDesktopMotion={false}
+            withWorldwide
+          />
         </section>
       </div>
     )
@@ -183,6 +195,7 @@ export function IntroductionScroll() {
               .join(' ')}
           >
             <HeroStage
+              hero={view.hero}
               activePhase={activePhase}
               isDesktopMotion={isDesktopMotion}
               showArrow={showArrow}
@@ -206,6 +219,8 @@ export function IntroductionScroll() {
                 }}
               >
                 <GlobalValuePanel
+                  items={view.globalValues}
+                  worldwide={view.worldwide}
                   activeValueIndex={activeValueIndex}
                   isDesktopMotion
                   withWorldwide

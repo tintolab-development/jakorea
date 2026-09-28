@@ -1,5 +1,7 @@
-import type { SocialLink, SocialLinkUrlPatch } from '@/entities/social-link/model/types'
+import { SocialLinkMinActiveError, type SocialLink, type SocialLinkUrlPatch } from '@/entities/social-link/model/types'
 import { getJAKoreaHomepageAdminAPIMainSubset } from '@/shared/api/generated/main/main-api'
+import type { SocialResponse } from '@/shared/api/generated/main/schemas/socialResponse'
+import { isLastActiveToggleOff } from '@/shared/lib/min-active-guard'
 import { shouldUseSocialLinkRemoteApi } from './capabilities'
 import { mapSocialResponseToDomain, toSocialUpdateRequest } from './mappers'
 import {
@@ -21,7 +23,7 @@ async function listRemoteSocialLinks(): Promise<SocialLink[]> {
 }
 
 async function putRemoteSocialLinks(rows: SocialLink[]): Promise<SocialLink[]> {
-  const updated = await mainApi().update5(toSocialUpdateRequest(rows))
+  const updated = (await mainApi().update5(toSocialUpdateRequest(rows))) as SocialResponse[]
   return (updated ?? [])
     .map(mapSocialResponseToDomain)
     .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -79,6 +81,9 @@ export async function setSocialLinkActiveService(
     const index = current.findIndex(row => row.id === id)
     if (index < 0) {
       throw new Error(`Social link not found: ${id}`)
+    }
+    if (isLastActiveToggleOff(current, id, isActive)) {
+      throw new SocialLinkMinActiveError()
     }
     const next = current.map((row, i) => (i === index ? { ...row, isActive } : row))
     return putRemoteSocialLinks(next)

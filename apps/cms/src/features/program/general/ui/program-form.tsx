@@ -26,12 +26,6 @@ import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-op
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import { programService } from '@/entities/program/api/program-service'
 import type { FormFieldDef } from '@/types/form-template'
-import {
-  ADMIN_FILE_PURPOSE,
-  contentUrlForFileObjectId,
-  programFileOwner,
-  uploadAdminFileMaybeMock,
-} from '@/shared/lib/admin-file-upload'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { FormFieldEditor } from './form-field-editor'
@@ -462,21 +456,7 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
               onChange={info => {
                 const file = info.file.originFileObj
                 if (!file) return
-                void (async () => {
-                  try {
-                    const uploaded = await uploadAdminFileMaybeMock({
-                      file,
-                      owner: programFileOwner(1, ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL),
-                    })
-                    setValue(
-                      'keyVisualImage',
-                      contentUrlForFileObjectId(uploaded.fileObjectId),
-                      { shouldValidate: true }
-                    )
-                  } catch {
-                    setValue('keyVisualImage', URL.createObjectURL(file), { shouldValidate: true })
-                  }
-                })()
+                setValue('keyVisualImage', URL.createObjectURL(file), { shouldValidate: true })
               }}
             >
               <Button icon={<UploadOutlined />}>이미지 업로드</Button>

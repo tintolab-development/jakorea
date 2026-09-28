@@ -17,6 +17,7 @@ export type {
   EducationWithdrawalPhase,
   EducationActivitySection,
   EducationDetailTabItem,
+  ApplicationRole,
   EducationInProgressFile,
   EducationInProgressNotice,
   EducationNoticeComment,
@@ -25,6 +26,8 @@ export type {
   EducationScheduleItem,
   EducationScheduleProgressStatus,
   EducationSurveyEmptyKind,
+  MypageApplicationScope,
+  ProgramApplicationType,
 } from './education'
 export {
   getFirstNoticeAttachment,
@@ -41,9 +44,10 @@ export {
   MYPAGE_SETTINGS_PATH,
   MYPAGE_EDUCATION_PATH,
   MYPAGE_VOLUNTEER_PATH,
+  MYPAGE_LECTURE_PATH,
   educationApplicationDetailPath,
-  educationGuidanceEditPath,
   volunteerApplicationDetailPath,
+  lectureApplicationDetailPath,
 } from './lib/constants'
 export { navigateMypageLnb } from './lib/navigate-lnb'
 export {
@@ -53,6 +57,7 @@ export {
   getMockMypageProgramStats,
 } from './home'
 export {
+  APPLICATION_TYPES_BY_SCOPE,
   EDUCATION_APPLICATION_TAB_ITEMS,
   MOCK_EDUCATION_APPLICATIONS,
   cancelMockEducationApplication,
@@ -60,10 +65,13 @@ export {
   getMockEducationApplications,
   getMockEducationApplicationsVersion,
   subscribeMockEducationApplications,
-  updateMockTeacherApplicationGuidance,
   filterEducationStatusApplications,
+  filterLectureStatusApplications,
   filterVolunteerStatusApplications,
-  isGeneralVolunteerApplication,
+  isInstructorRoleApplication,
+  isParticipantRoleApplication,
+  isVolunteerRoleApplication,
+  resolveApplicationRole,
   getMockEducationInProgressFiles,
   getMockEducationInProgressNotices,
   compareEducationApplicationItems,
@@ -91,6 +99,9 @@ export {
   buildEducationApplicationListPath,
   readEducationApplicationListParams,
   resolveEducationListBackPath,
+  useCancelMyProgramApplicationMutation,
+  useMyProgramApplicationDetail,
+  useMyProgramApplications,
   EducationApplicationListItemRow,
   EducationApplicationContent,
   TeacherApplicationContent,
@@ -133,10 +144,15 @@ export {
   resolveVolunteerListBackPath,
 } from './volunteer'
 export {
+  buildLectureApplicationListPath,
+  resolveLectureListBackPath,
+} from './lecture'
+export {
   getSettingsLnbItems,
   mapPortalProfileToSettingsView,
   SettingsConsentsView,
   SettingsEditForm,
+  SettingsSocialAccountsView,
   SettingsView,
   showSettingsInstructorConsentDocuments,
   useSettingsView,

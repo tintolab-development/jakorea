@@ -19,6 +19,12 @@ function toFaqRequestStatus(status: AdminFaq['status'] | undefined): FaqRequest[
   return FaqRequestStatus.임시저장
 }
 
+function parseResourceId(dto: FaqResponse): number | undefined {
+  const raw = (dto as FaqResponse & { resourceId?: number | string }).resourceId
+  const parsed = typeof raw === 'number' ? raw : Number(raw)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
+}
+
 export function mapFaqResponse(dto: FaqResponse): AdminFaq {
   const createdAt = dto.createdAt ?? new Date().toISOString()
   const updatedAt =
@@ -27,6 +33,7 @@ export function mapFaqResponse(dto: FaqResponse): AdminFaq {
       : createdAt
   return {
     id: dto.id ?? '',
+    resourceId: parseResourceId(dto),
     category: dto.category ?? '',
     question: dto.question ?? '',
     answer: dto.answer ?? '',

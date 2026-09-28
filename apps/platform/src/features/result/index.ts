@@ -29,6 +29,12 @@ export {
   useMockResultsCatalog,
 } from './lib/mock-results'
 export type { AdjacentResults } from './lib/mock-results'
+export { useProgramResultDetail, useProgramResultsList } from './api/hooks'
+export type {
+  ProgramResultDetailQuery,
+  ProgramResultDetailStatus,
+  ProgramResultsListQuery,
+} from './api/hooks'
 export { filterAndSortResults } from './lib/filter-results'
 export {
   buildResultsListPath,

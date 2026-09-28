@@ -7,16 +7,17 @@ import type {
   FileDownloadListResult,
   FileDownloadLog,
 } from '@/entities/file-download-log/model/types'
+import { LOG_LIST_PAGE_SIZE } from '@/features/logs/shared/lib/list-page'
 import type { ExportFileDownloadsParams } from '@/shared/api/generated/logs/schemas/exportFileDownloadsParams'
 import type { FileDownloadLogItem } from '@/shared/api/generated/logs/schemas/fileDownloadLogItem'
 import type { FileDownloadsParams } from '@/shared/api/generated/logs/schemas/fileDownloadsParams'
 import type { PageResponseFileDownloadLogItem } from '@/shared/api/generated/logs/schemas/pageResponseFileDownloadLogItem'
 
-export const LIST_PAGE_SIZE = 20
+export const LIST_PAGE_SIZE = LOG_LIST_PAGE_SIZE
 
 export function toFileDownloadsParams(filter: FileDownloadListFilter): FileDownloadsParams {
   const params: FileDownloadsParams = {
-    page: 0,
+    page: filter.page ?? 0,
     size: LIST_PAGE_SIZE,
   }
   const adminName = filter.userName?.trim()

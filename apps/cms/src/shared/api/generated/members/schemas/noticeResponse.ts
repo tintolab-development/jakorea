@@ -33,4 +33,6 @@ export interface NoticeResponse {
   author?: string;
   /** 공개 상태 */
   status?: NoticeResponseStatus;
+  /** 파일 업로드 ownerId로 쓰는 내부 숫자 ID */
+  resourceId?: number;
 }

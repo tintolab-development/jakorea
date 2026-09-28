@@ -45,9 +45,7 @@ export function ApplicationFormPreviewPanel({
     () => getTemplateIdForParticipantApplicationVariant(variant),
     [variant]
   )
-  const formSource = useProgramApplicationFormLoadSource(program, variant, {
-    attachLocalDrafts: active,
-  })
+  const formSource = useProgramApplicationFormLoadSource(program, variant)
   const [editorActive, setEditorActive] = useState(false)
 
   useEffect(() => {
@@ -71,13 +69,24 @@ export function ApplicationFormPreviewPanel({
 
   useEffect(() => {
     if (!active) return
-    if (variant === 'institution' || variant === 'individual') {
+    if (
+      variant === 'institution' ||
+      variant === 'individual' ||
+      variant === 'economy-application-institution'
+    ) {
       patchInstitutionApplicationProgramBridge(resolveInstitutionApplicationProgramBridge(program))
     }
   }, [active, program, variant])
 
   const vm = useProgramParticipantApplicationEditor(editorActive, templateName, variant, {
     participantOrganization: variant === 'institution',
+    program,
+    programLinkedApplicationFormPreview:
+      variant === 'institution' ||
+      variant === 'individual' ||
+      variant === 'economy-application-institution' ||
+      variant === 'instructor' ||
+      variant === 'volunteer',
     templateVersionId: formSource.templateVersionId,
     preferLocalDraft: formSource.preferLocalDraft,
   })
@@ -116,7 +125,9 @@ export function ApplicationFormPreviewPanel({
         institutionBridge,
         instructorScheduleSlots,
         programLinkedApplicationFormPreview:
-          variant === 'institution' || variant === 'individual',
+          variant === 'institution' ||
+          variant === 'individual' ||
+          variant === 'economy-application-institution',
       }),
     [
       variant,

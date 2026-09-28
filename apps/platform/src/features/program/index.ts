@@ -51,6 +51,26 @@ export {
 export { mergeSeedAndCatalogPrograms } from './lib/merge-seed-catalog'
 export { useMockProgramById, useMockProgramsCatalog } from './lib/use-mock-programs-catalog'
 export {
+  useHomePortalPrograms,
+  usePortalProgramsList,
+  useProgramDetail,
+} from './api/hooks'
+export {
+  useProgramApplicationForm,
+  useSubmitProgramApplication,
+} from './api/application-hooks'
+export type {
+  ProgramApplicationFormQuery,
+  ProgramApplicationFormStatus,
+} from './api/application-hooks'
+export { parsePortalProgramId } from './api/mappers'
+export type {
+  HomePortalProgramsQuery,
+  PortalProgramsListQuery,
+  ProgramDetailQuery,
+  ProgramDetailStatus,
+} from './api/hooks'
+export {
   mapBasicInfoFields,
   mapApplicationWindowToRecruitmentStatus,
   mapCmsProgramToPlatformDetail,
@@ -61,6 +81,10 @@ export {
 } from './lib/map-from-cms'
 export {
   CMS_PLATFORM_PROGRAM_FIXTURES,
+  ECONOMY_INSTRUCTOR_STATUS_FIXTURES,
+  ECONOMY_INSTRUCTOR_STATUS_IDS,
+  GENERAL_INSTRUCTOR_STATUS_FIXTURES,
+  GENERAL_INSTRUCTOR_STATUS_IDS,
   GENERAL_VOLUNTEER_STATUS_FIXTURES,
   GENERAL_VOLUNTEER_STATUS_IDS,
   ECONOMY_REGISTRATION_FIXTURE,

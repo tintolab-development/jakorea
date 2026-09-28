@@ -107,6 +107,19 @@
   min-width: var(--table-usage-column-width, 100px) !important;
   max-width: var(--table-usage-column-width, 100px) !important;
   box-sizing: border-box !important;
+  overflow: hidden;
+  vertical-align: middle !important;
+}
+
+/* Switch 토글·disabled 시 열 폭/행 높이 점프 방지 */
+.cms-data-table td.cms-table-col--usage .ant-switch {
+  min-width: 44px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.cms-data-table td.cms-table-col--usage .ant-switch.ant-switch-disabled {
+  opacity: 1;
 }
 
 /* 순서 열: `className: CMS_TABLE_SORT_COL_CLASS` — 80px 고정 */

@@ -25,6 +25,16 @@ describe('extractApiErrorMessage', () => {
     ).toBe('ADMIN_EMAIL_ALREADY_EXISTS')
   })
 
+  it('수정 가능 기간 코드는 서버 문구 대신 구분된 안내를 쓴다', () => {
+    expect(
+      extractApiErrorMessage({
+        success: false,
+        message: 'raw',
+        error: { code: 'PROGRAM_VOLUNTEER_RECRUITMENT_EDIT_PERIOD_ENDED', message: 'raw' },
+      })
+    ).toContain('모집·신청')
+  })
+
   it('Alert 본문에 traceId를 붙이지 않는다', () => {
     expect(
       formatApiErrorAlertContent({

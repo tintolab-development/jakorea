@@ -1,17 +1,25 @@
 import { formatDateRange } from '../../hooks/use-format-date'
 import { formatNumberDisplay } from '@/shared/utils'
+import { formatRecruitmentHeadcount } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { getCapacity, getApplicationCountByProgram } from '../../lib/program-helpers'
 import { resolveGeneralProgramListTitle } from '../../lib/detail-common-info-display'
 import { SponsorNameById } from '@/features/sponsor/ui/sponsor-name-by-id'
-import type { Program, ProgramCategory, TargetLevel } from '@/types/domain'
+import type { Program, ProgramCategory } from '@/types/domain'
 import {
   programTypes,
   businessAreaOptions,
-  targetLevelOptions,
   categoryOptions,
 } from './program-list-constants'
+import {
+  formatTargetLevelsLabel,
+  resolveProgramTargetLevels,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import { ProgramLifecycleStatusTableCell } from '@/shared/components/program-lifecycle-status-table-cell'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+
+function renderEducationTargetCell(_: unknown, record: Program): string {
+  return formatTargetLevelsLabel(resolveProgramTargetLevels(record))
+}
 
 export const studentRecruitmentTableColumns = [
   {
@@ -79,12 +87,11 @@ export const studentRecruitmentTableColumns = [
   },
   {
     title: '교육 대상',
-    dataIndex: 'targetLevel',
-    key: 'targetLevel',
-    width: 100,
+    key: 'targetLevels',
+    width: 160,
     align: 'center' as const,
-    render: (value: TargetLevel | undefined) =>
-      value ? (targetLevelOptions.find(o => o.value === value)?.label ?? value) : '-',
+    ellipsis: true,
+    render: renderEducationTargetCell,
   },
   {
     title: '진행 방식',
@@ -195,12 +202,11 @@ export const instructorRecruitmentTableColumns = [
   },
   {
     title: '교육 대상',
-    dataIndex: 'targetLevel',
-    key: 'targetLevel',
-    width: 100,
+    key: 'targetLevels',
+    width: 160,
     align: 'center' as const,
-    render: (value: TargetLevel | undefined) =>
-      value ? (targetLevelOptions.find(o => o.value === value)?.label ?? value) : '-',
+    ellipsis: true,
+    render: renderEducationTargetCell,
   },
   {
     title: '진행 방식',
@@ -248,12 +254,8 @@ export const capacityTableColumnsOverview = {
   key: 'participantCapacity',
   width: 120,
   align: 'center' as const,
-  render: (_: unknown, record: Program) => {
-    const cap = getCapacity(record)
-    const approved = record.approvedStudentCount ?? 0
-    if (cap !== undefined) return `${formatNumberDisplay(approved)} / ${formatNumberDisplay(cap)}`
-    return formatNumberDisplay(approved)
-  },
+  render: (_: unknown, record: Program) =>
+    formatRecruitmentHeadcount(record.participantApprovedCount, record.participantCapacity),
 }
 
 export const capacityTableColumnsEducation = [
@@ -295,12 +297,11 @@ export const optionalColumns = [
   },
   {
     title: '교육 대상',
-    dataIndex: 'targetLevel',
-    key: 'targetLevel',
-    width: 100,
+    key: 'targetLevels',
+    width: 160,
     align: 'center' as const,
-    render: (value: TargetLevel | undefined) =>
-      value ? (targetLevelOptions.find(o => o.value === value)?.label ?? value) : '-',
+    ellipsis: true,
+    render: renderEducationTargetCell,
   },
   {
     title: '진행 방식',

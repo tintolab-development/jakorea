@@ -57,25 +57,36 @@ function buildNameDraftMap(doc: GnbMenuDoc): NameDraftMap {
 const GnbInlineNameField = memo(function GnbInlineNameField({
   itemId,
   sourceValue,
+  isEditing,
+  resetKey,
   onDraftChange,
 }: {
   itemId: string
   sourceValue: string
+  isEditing: boolean
+  resetKey: number
   onDraftChange: (itemId: string, value: string) => void
 }) {
   const [localValue, setLocalValue] = useState(sourceValue)
 
   useEffect(() => {
     setLocalValue(sourceValue)
-  }, [sourceValue])
+  }, [resetKey, sourceValue])
 
   return (
     <CmsInput
-      className="gnb-menu-form__name-input"
+      className={
+        isEditing
+          ? 'gnb-menu-form__name-input gnb-menu-form__name-input--edit'
+          : 'gnb-menu-form__name-input gnb-menu-form__name-input--readonly'
+      }
       inputSize="medium"
       width="100%"
       value={localValue}
+      readOnly={!isEditing}
+      tabIndex={isEditing ? 0 : -1}
       onChange={e => {
+        if (!isEditing) return
         const next = e.target.value
         setLocalValue(next)
         onDraftChange(itemId, next)
@@ -93,6 +104,7 @@ export function GnbMenuFormCard({ data }: Props) {
   /** 순서용. 메뉴명 타이핑은 nameDraftRef만 갱신. 사용 여부는 조회 모드에서 즉시 저장 */
   const [draft, setDraft] = useState<GnbMenuDoc>(() => cloneDoc(data))
   const nameDraftRef = useRef<NameDraftMap>({})
+  const [nameResetKey, setNameResetKey] = useState(0)
 
   useEffect(() => {
     if (isEditing) return
@@ -110,6 +122,7 @@ export function GnbMenuFormCard({ data }: Props) {
     nameDraftRef.current = {}
     setDraft(cloneDoc(data))
     setIsEditing(false)
+    setNameResetKey(key => key + 1)
   }, [data])
 
   /** 타이핑 중 부모 setState 금지 — ref만 갱신 */
@@ -235,19 +248,20 @@ export function GnbMenuFormCard({ data }: Props) {
         className: 'gnb-menu-table__name-col',
         onCell: () => ({ className: 'gnb-menu-table__name-col' }),
         onHeaderCell: () => ({ className: 'gnb-menu-table__name-col' }),
-        render: (_value, record) =>
-          isEditing ? (
-            <GnbInlineNameField
-              itemId={record.id}
-              sourceValue={nameDraftRef.current[record.id] ?? record.name}
-              onDraftChange={handleNameDraftChange}
-            />
-          ) : (
-            <span className="gnb-menu-form__name-text">{record.name}</span>
-          ),
+        render: (_value, record) => (
+          <GnbInlineNameField
+            itemId={record.id}
+            sourceValue={
+              isEditing ? (nameDraftRef.current[record.id] ?? record.name) : record.name
+            }
+            isEditing={isEditing}
+            resetKey={nameResetKey}
+            onDraftChange={handleNameDraftChange}
+          />
+        ),
       },
     ],
-    [handleNameDraftChange, handleToggleActive, isEditing, saveMutation.isPending]
+    [handleNameDraftChange, handleToggleActive, isEditing, nameResetKey, saveMutation.isPending]
   )
 
   /** displayGroups(토글/순서)에 묶지 않음 — columns 재생성으로 인풋 remount 방지 */

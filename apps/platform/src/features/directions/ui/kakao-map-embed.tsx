@@ -6,15 +6,50 @@ type KakaoMapEmbedProps = {
   className?: string
 }
 
-function loadExternalScript(host: HTMLElement, sourceScript: HTMLScriptElement) {
+type DaumRoughmapConfig = {
+  phase?: string
+  cdn?: string
+  url_protocal?: string
+  Lander?: new (options: Record<string, string>) => { render: () => void }
+}
+
+type DaumRoughmapWindow = Window & {
+  daum?: {
+    roughmap?: DaumRoughmapConfig
+  }
+}
+
+function findLoadedScript(src: string): HTMLScriptElement | undefined {
+  for (const node of document.querySelectorAll('script[src]')) {
+    if (!(node instanceof HTMLScriptElement)) continue
+    const raw = node.getAttribute('src')
+    if (node.src === src || raw === src) return node
+  }
+  return undefined
+}
+
+function loadScript(src: string, host: HTMLElement, attrs?: NamedNodeMap) {
   return new Promise<void>((resolve, reject) => {
+    if (findLoadedScript(src)) {
+      // 이미 로드된 스크립트면 onload를 다시 기다리지 않는다.
+      resolve()
+      return
+    }
+
     const script = document.createElement('script')
-    Array.from(sourceScript.attributes).forEach(attr => {
-      script.setAttribute(attr.name, attr.value)
-    })
+    if (attrs) {
+      Array.from(attrs).forEach(attr => {
+        if (attr.name !== 'src') {
+          script.setAttribute(attr.name, attr.value)
+        }
+      })
+    } else {
+      script.charset = 'UTF-8'
+    }
+    script.src = src
     script.async = false
     script.onload = () => resolve()
-    script.onerror = () => reject(new Error(`Failed to load ${sourceScript.src}`))
+    script.onerror = () => reject(new Error(`Failed to load ${src}`))
     host.appendChild(script)
   })
 }
@@ -30,11 +65,76 @@ function appendInlineScript(host: HTMLElement, sourceScript: HTMLScriptElement) 
   host.appendChild(script)
 }
 
+function isKakaoRoughmapLoader(src: string): boolean {
+  return /roughmapLoader\.js/i.test(src)
+}
+
+function getRoughmapLander(): DaumRoughmapConfig['Lander'] | undefined {
+  return (window as DaumRoughmapWindow).daum?.roughmap?.Lander
+}
+
+/**
+ * roughmapLoader.js 는 SPA에서 비동기로 붙이면 document.write 가 실패한다.
+ * loader 가 세팅한 phase/cdn 으로 lander 스크립트를 직접 로드한다.
+ */
+function resolveRoughmapLanderSrc(): string | null {
+  const rm = (window as DaumRoughmapWindow).daum?.roughmap
+  if (!rm?.cdn || !rm?.phase) return null
+  const protocol =
+    rm.url_protocal || (location.protocol === 'https:' ? 'https:' : 'http:')
+  return `${protocol}//t1.kakaocdn.net/kakaomapweb/roughmap/place/${rm.phase}/${rm.cdn}/roughmapLander.js`
+}
+
+function waitForKakaoRoughmapLander(
+  isActive: () => boolean,
+  timeoutMs = 8_000,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const started = Date.now()
+    const tick = () => {
+      if (!isActive()) {
+        reject(new Error('Kakao Roughmap mount cancelled'))
+        return
+      }
+      if (typeof getRoughmapLander() === 'function') {
+        resolve()
+        return
+      }
+      if (Date.now() - started >= timeoutMs) {
+        reject(new Error('Kakao Roughmap Lander was not ready'))
+        return
+      }
+      window.setTimeout(tick, 50)
+    }
+    tick()
+  })
+}
+
+async function ensureKakaoRoughmapLander(
+  host: HTMLElement,
+  isActive: () => boolean,
+) {
+  if (typeof getRoughmapLander() === 'function') return
+
+  const landerSrc = resolveRoughmapLanderSrc()
+  if (landerSrc) {
+    await loadScript(landerSrc, host)
+  }
+
+  if (!isActive()) return
+  await waitForKakaoRoughmapLander(isActive)
+}
+
 /**
  * link/div를 먼저 붙인 뒤 script는 src → inline 순서로 실행한다.
- * (Leaflet 등 외부 SDK 로드 후 초기화 스크립트가 돌도록)
+ * Roughmap loader 의 document.write 실패를 lander 직접 로드로 보완한다.
  */
-async function mountEmbedHtml(host: HTMLElement, html: string, trackedLinks: HTMLLinkElement[]) {
+async function mountEmbedHtml(
+  host: HTMLElement,
+  html: string,
+  trackedLinks: HTMLLinkElement[],
+  isActive: () => boolean,
+) {
   const template = document.createElement('template')
   template.innerHTML = html.trim()
 
@@ -59,15 +159,43 @@ async function mountEmbedHtml(host: HTMLElement, html: string, trackedLinks: HTM
       return
     }
 
+    if (!isActive()) return
     host.appendChild(node.cloneNode(true))
   })
 
   for (const sourceScript of scripts) {
+    if (!isActive()) return
     if (sourceScript.src) {
-      await loadExternalScript(host, sourceScript)
+      const restoreWrite = isKakaoRoughmapLoader(sourceScript.src)
+        ? installDocumentWriteNoop()
+        : null
+      try {
+        await loadScript(sourceScript.src, host, sourceScript.attributes)
+      } finally {
+        restoreWrite?.()
+      }
+      if (!isActive()) return
+      if (isKakaoRoughmapLoader(sourceScript.src)) {
+        await ensureKakaoRoughmapLander(host, isActive)
+      }
     } else {
+      if (typeof getRoughmapLander() !== 'function') {
+        await ensureKakaoRoughmapLander(host, isActive)
+      }
+      if (!isActive()) return
       appendInlineScript(host, sourceScript)
     }
+  }
+}
+
+/** SPA에서 roughmapLoader 의 document.write 경고를 막는다. lander 는 별도 로드. */
+function installDocumentWriteNoop(): () => void {
+  const original = document.write.bind(document)
+  document.write = () => {
+    // no-op: lander 는 ensureKakaoRoughmapLander 에서 직접 로드
+  }
+  return () => {
+    document.write = original
   }
 }
 
@@ -84,19 +212,18 @@ export function KakaoMapEmbed({ html, className }: KakaoMapEmbedProps) {
 
     host.replaceChildren()
     const trackedLinks: HTMLLinkElement[] = []
-    let cancelled = false
+    let active = true
+    const isActive = () => active
 
     const trimmed = html.trim()
     if (!trimmed) return
 
-    void mountEmbedHtml(host, trimmed, trackedLinks).catch(() => {
-      if (!cancelled) {
-        // 지도 스크립트/HTML 오류 시 UI는 유지하고 빈 영역만 둔다
-      }
+    void mountEmbedHtml(host, trimmed, trackedLinks, isActive).catch(() => {
+      // 취소·로드 실패 시 UI는 유지하고 빈 영역만 둔다
     })
 
     return () => {
-      cancelled = true
+      active = false
       host.replaceChildren()
       trackedLinks.forEach(link => {
         link.remove()

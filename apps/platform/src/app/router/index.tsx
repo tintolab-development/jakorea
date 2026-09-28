@@ -28,8 +28,10 @@ import {
   FindEmailIdentityMockNicePage,
   SignUpSocialConnectCompletePage,
   SignUpSocialConnectErrorPage,
+  SignUpSocialConnectCallbackPage,
   SignUpSocialConnectPage,
   SocialErrorPage,
+  SocialLoginCompletePage,
 } from '@/pages/auth'
 import { HomePage } from '@/pages/home'
 import {
@@ -39,11 +41,12 @@ import {
   MypageInquiriesPage,
   MypageEducationPage,
   MypageEducationDetailPage,
-  MypageEducationGuidanceEditPage,
   MypageEducationSettlementConfirmPage,
   MypageEducationSettlementWritePage,
   MypageVolunteerPage,
   MypageVolunteerDetailPage,
+  MypageLecturePage,
+  MypageLectureDetailPage,
   MypageSettingsPage,
 } from '@/pages/mypage'
 import {
@@ -55,30 +58,34 @@ import {
 import { NoticeDetailPage, NoticesPage } from '@/pages/notices'
 import { ResultDetailPage, ResultsPage } from '@/pages/results'
 import { TextbooksPage } from '@/pages/education/textbooks'
+import { EducationCareerPage } from '@/pages/education/career'
+import { EducationDigitalLiteracyPage } from '@/pages/education/digital-literacy'
+import { EducationEntrepreneurshipPage } from '@/pages/education/entrepreneurship'
+import { EducationFinancePage } from '@/pages/education/finance'
+import { CareerPostingDetailPage, CareersPage } from '@/pages/about/careers'
 import { DirectionsPage } from '@/pages/about/directions'
+import { HistoryPage } from '@/pages/about/history'
 import { IntroductionPage } from '@/pages/about/introduction'
 import { PeoplePage } from '@/pages/about/people'
 import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transparency'
 import { DesignSystemPage } from '@/pages/design-system'
 import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
 import { CorporateDonationPage } from '@/pages/support/corporate'
+import { CorporateDonationInquiryPage } from '@/pages/support/corporate/inquiry'
 import { IndividualDonationPage } from '@/pages/support/individual'
 import { TalentDonationPage } from '@/pages/support/talent'
 import { TalentDonationApplyPage } from '@/pages/support/talent/apply'
-import { TemporaryPage } from '@/pages/temporary'
-import { CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
+import { CAREERS_PATH } from '@/features/careers'
+import { EDUCATION_CAREER_PATH } from '@/features/education-career'
+import { EDUCATION_DIGITAL_LITERACY_PATH } from '@/features/education-digital-literacy'
+import { EDUCATION_ENTREPRENEURSHIP_PATH } from '@/features/education-entrepreneurship'
+import { EDUCATION_FINANCE_PATH } from '@/features/education-finance'
+import { CORPORATE_DONATION_INQUIRY_PATH, CORPORATE_DONATION_PATH } from '@/features/corporate-donation'
 import { IMPACT_STORIES_PATH } from '@/features/impact-story'
 import { INTRODUCTION_PATH } from '@/features/introduction'
 import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
 import { TALENT_DONATION_APPLY_PATH, TALENT_DONATION_PATH } from '@/features/talent-donation'
-import {
-  ABOUT_CAREERS_PATH,
-  ABOUT_HISTORY_PATH,
-  EDUCATION_CAREER_PATH,
-  EDUCATION_DIGITAL_LITERACY_PATH,
-  EDUCATION_ENTREPRENEURSHIP_PATH,
-  EDUCATION_FINANCE_PATH,
-} from '@/shared/config/gnb-temporary-paths'
+import { ABOUT_HISTORY_PATH } from '@/shared/config/gnb-temporary-paths'
 import { AppLayoutRoute } from './app-layout-route'
 
 export const router = createBrowserRouter([
@@ -92,6 +99,7 @@ export const router = createBrowserRouter([
       { path: '/programs', element: <ProgramsPage /> },
       { path: '/programs/:programId/apply/complete', element: <ProgramApplyCompletePage /> },
       { path: '/notices/:noticeId', element: <NoticeDetailPage /> },
+      { path: '/about/careers/:postingId', element: <CareerPostingDetailPage /> },
       { path: '/results/:resultId', element: <ResultDetailPage /> },
       { path: '/impact/:storyId', element: <ImpactStoryDetailPage /> },
     ],
@@ -102,10 +110,10 @@ export const router = createBrowserRouter([
       { path: '/results', element: <ResultsPage /> },
       { path: '/notices', element: <NoticesPage /> },
       { path: '/education/textbooks', element: <TextbooksPage /> },
-      { path: EDUCATION_CAREER_PATH, element: <TemporaryPage /> },
-      { path: EDUCATION_FINANCE_PATH, element: <TemporaryPage /> },
-      { path: EDUCATION_ENTREPRENEURSHIP_PATH, element: <TemporaryPage /> },
-      { path: EDUCATION_DIGITAL_LITERACY_PATH, element: <TemporaryPage /> },
+      { path: EDUCATION_CAREER_PATH, element: <EducationCareerPage /> },
+      { path: EDUCATION_FINANCE_PATH, element: <EducationFinancePage /> },
+      { path: EDUCATION_ENTREPRENEURSHIP_PATH, element: <EducationEntrepreneurshipPage /> },
+      { path: EDUCATION_DIGITAL_LITERACY_PATH, element: <EducationDigitalLiteracyPage /> },
       { path: '/about/people', element: <PeoplePage /> },
       { path: '/about/directions', element: <DirectionsPage /> },
       { path: '/about/transparency', element: <TransparencyPage /> },
@@ -117,10 +125,14 @@ export const router = createBrowserRouter([
         path: '/about/transparency/audit-reports',
         element: <TransparencyReportsPage type="audit" />,
       },
-      { path: ABOUT_HISTORY_PATH, element: <TemporaryPage /> },
-      { path: ABOUT_CAREERS_PATH, element: <TemporaryPage /> },
+      { path: CAREERS_PATH, element: <CareersPage /> },
       { path: IMPACT_STORIES_PATH, element: <ImpactStoriesPage /> },
     ],
+  },
+  {
+    /* 어두운 히어로 위 inverse Header — 페이지 pathname 분기 없이 theme만 선언 */
+    element: <AppLayoutRoute layout="hero" headerTheme="inverse" />,
+    children: [{ path: ABOUT_HISTORY_PATH, element: <HistoryPage /> }],
   },
   {
     /* 기관소개 — ContentShell 없는 풀블리드 (support와 동일 계열) */
@@ -132,6 +144,7 @@ export const router = createBrowserRouter([
     children: [
       { path: INDIVIDUAL_DONATION_PATH, element: <IndividualDonationPage /> },
       { path: CORPORATE_DONATION_PATH, element: <CorporateDonationPage /> },
+      { path: CORPORATE_DONATION_INQUIRY_PATH, element: <CorporateDonationInquiryPage /> },
       { path: TALENT_DONATION_PATH, element: <TalentDonationPage /> },
       { path: TALENT_DONATION_APPLY_PATH, element: <TalentDonationApplyPage /> },
     ],
@@ -146,6 +159,7 @@ export const router = createBrowserRouter([
       { path: '/mypage/settings', element: <MypageSettingsPage /> },
       { path: '/mypage/education', element: <MypageEducationPage /> },
       { path: '/mypage/volunteer', element: <MypageVolunteerPage /> },
+      { path: '/mypage/lectures', element: <MypageLecturePage /> },
       { path: '/mypage/inquiries', element: <MypageInquiriesPage /> },
     ],
   },
@@ -179,10 +193,15 @@ export const router = createBrowserRouter([
       { path: '/auth/sign-up/complete', element: <SignUpCompletePage /> },
       { path: '/auth/sign-up/social-connect', element: <SignUpSocialConnectPage /> },
       {
+        path: '/auth/sign-up/social-connect/callback',
+        element: <SignUpSocialConnectCallbackPage />,
+      },
+      {
         path: '/auth/sign-up/social-connect/complete',
         element: <SignUpSocialConnectCompletePage />,
       },
       { path: '/auth/sign-up/social-connect/error', element: <SignUpSocialConnectErrorPage /> },
+      { path: '/auth/social/complete', element: <SocialLoginCompletePage /> },
       { path: '/auth/social/error', element: <SocialErrorPage /> },
     ],
   },
@@ -217,8 +236,12 @@ export const router = createBrowserRouter([
       },
       { path: '/programs/:programId', element: <ProgramDetailPage /> },
       { path: '/programs/:programId/apply', element: <ProgramApplyPage /> },
+      { path: '/mypage/education/:applicationType/:applicationId', element: <MypageEducationDetailPage /> },
       { path: '/mypage/education/:applicationId', element: <MypageEducationDetailPage /> },
+      { path: '/mypage/volunteer/:applicationType/:applicationId', element: <MypageVolunteerDetailPage /> },
       { path: '/mypage/volunteer/:applicationId', element: <MypageVolunteerDetailPage /> },
+      { path: '/mypage/lectures/:applicationType/:applicationId', element: <MypageLectureDetailPage /> },
+      { path: '/mypage/lectures/:applicationId', element: <MypageLectureDetailPage /> },
       { path: '/mypage/instructor-apply', element: <MypageInstructorApplyPage /> },
       {
         path: '/mypage/instructor-apply/consent/:consentKey',
@@ -231,10 +254,6 @@ export const router = createBrowserRouter([
       {
         path: '/mypage/education/:applicationId/settlement/confirm',
         element: <MypageEducationSettlementConfirmPage />,
-      },
-      {
-        path: '/mypage/education/:applicationId/guidance/edit',
-        element: <MypageEducationGuidanceEditPage />,
       },
       { path: '/design-system', element: <DesignSystemPage /> },
     ],

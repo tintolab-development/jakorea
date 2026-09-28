@@ -15,7 +15,7 @@ import Underline from '@tiptap/extension-underline'
 import { Markdown } from '@tiptap/markdown'
 import StarterKit from '@tiptap/starter-kit'
 import { RichTextEmoji } from './emoji-extension'
-import { RichTextFileHandler } from './file-handler-extension'
+import { createRichTextFileHandler } from './file-handler-extension'
 import { FontSize } from './font-size-extension'
 import { LineHeight } from './line-height-extension'
 import {
@@ -32,7 +32,13 @@ import type { CreateRichTextExtensionsOptions } from './types'
 export function createRichTextExtensions(
   options: CreateRichTextExtensionsOptions = {}
 ): Extensions {
-  const { placeholder, openLinksOnClick = false, preset = 'full', extraExtensions } = options
+  const {
+    placeholder,
+    openLinksOnClick = false,
+    preset = 'full',
+    extraExtensions,
+    getResolveImageSrc,
+  } = options
   const isFull = preset === 'full'
 
   const extensions: Extensions = [
@@ -77,7 +83,11 @@ export function createRichTextExtensions(
   ]
 
   if (isFull) {
-    extensions.push(RichTextSuperscript, RichTextEmoji, RichTextFileHandler)
+    extensions.push(
+      RichTextSuperscript,
+      RichTextEmoji,
+      createRichTextFileHandler(getResolveImageSrc),
+    )
   }
 
   if (placeholder?.trim()) {

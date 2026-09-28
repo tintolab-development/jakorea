@@ -1,9 +1,11 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { customInstance } from '@/shared/api/orval-mutator'
 import { getJAKoreaCMSBackendAPIPostsSubset } from '@/shared/api/generated/posts/posts-api'
 import type {
   ApiResponseMapStringObjectData,
   CategoryRequest,
   NoticeCategoriesParams,
+  NoticeAttachmentResponse,
   NoticeRequest,
   NoticeResponse,
   NoticesParams,
@@ -40,6 +42,40 @@ export async function updateNoticeRemote(
 
 export async function deleteNoticeRemote(id: string): Promise<void> {
   await postsApi.deleteNotice(pathId(id))
+}
+
+function noticeAttachmentPath(noticeId: string): string {
+  return `/api/admin/content/notices/${encodeURIComponent(noticeId)}/attachments`
+}
+
+function attachmentRows(payload: unknown): NoticeAttachmentResponse[] {
+  const body = unwrapApiBody<NoticeAttachmentResponse[] | { items?: NoticeAttachmentResponse[] }>(payload)
+  if (Array.isArray(body)) return body
+  return body?.items ?? []
+}
+
+export async function fetchNoticeAttachmentsRemote(
+  noticeId: string
+): Promise<NoticeAttachmentResponse[]> {
+  return attachmentRows(
+    await customInstance({
+      url: noticeAttachmentPath(noticeId),
+      method: 'GET',
+    })
+  )
+}
+
+export async function replaceNoticeAttachmentsRemote(
+  noticeId: string,
+  fileObjectIds: number[]
+): Promise<NoticeAttachmentResponse[]> {
+  return attachmentRows(
+    await customInstance({
+      url: noticeAttachmentPath(noticeId),
+      method: 'PUT',
+      data: { fileObjectIds },
+    })
+  )
 }
 
 export async function fetchNoticeCategoriesRemote(

@@ -3,18 +3,13 @@
  */
 
 import { useGnbMenu } from '@/features/gnb-menu/api/hooks'
-import { gnbMenuQueryKeys } from '@/features/gnb-menu/api/query-keys'
-import { GNB_MENU_CHANGED_EVENT } from '@/features/gnb-menu/api/store'
 import { GnbMenuFormCard } from '@/features/gnb-menu/ui/gnb-menu-form'
-import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { PageContentLoading } from '@/shared/ui'
 
 import './page.css'
 
 export function GnbMenuPage() {
   const query = useGnbMenu()
-
-  useInvalidateOnWindowEvent(GNB_MENU_CHANGED_EVENT, gnbMenuQueryKeys.all)
 
   const data = query.data
 

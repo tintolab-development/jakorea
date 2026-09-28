@@ -1,0 +1,67 @@
+export type CareerJobStatus = 'recruiting' | 'result' | 'closed'
+
+export type CareerJobListItem = {
+  id: string
+  title: string
+  status: CareerJobStatus
+  statusLabel: string
+  publishedAtLabel: string
+}
+
+export type CareerPostingAttachment = {
+  id: string
+  name: string
+  fileUrl?: string
+}
+
+/** 채용공고 상세. 조회수는 응답에 숫자가 있을 때만 표시한다. */
+export type CareerPostingDetail = CareerJobListItem & {
+  content: string
+  contentFormat: 'html'
+  /** 공개 상세는 publishedOn 날짜만. 예: 2026년 05월 08일 */
+  publishedAtDetailLabel: string
+  /** recruitStart·recruitEnd가 둘 다 있을 때만. 예: 2026년 04월 03일(금) ~ 2026년 11월 20일(금) */
+  recruitPeriodLabel: string
+  viewCount: number | null
+  attachments: CareerPostingAttachment[]
+}
+
+export type CareerPostingDetailStatus =
+  | 'loading'
+  | 'ready'
+  | 'not-found'
+  | 'error'
+  | 'unavailable'
+
+export type CareersListParams = {
+  tab: 'openings' | 'talent'
+  q: string
+  page: number
+}
+
+export type ThriveValueId = 'impact' | 'speak' | 'learn' | 'help'
+
+export type ThriveValue = {
+  id: ThriveValueId
+  title: string
+  summary: string
+  /** PC 시안 줄바꿈. 모바일은 공백으로 이어 자연 개행 */
+  summaryLines: readonly string[]
+  detail: string
+  detailLines: readonly string[]
+  tone: 'yellow' | 'mint' | 'sky' | 'lime'
+  /** PC 비대칭 그리드 열: left | right */
+  column: 'left' | 'right'
+  /** 열 내 순서 */
+  order: number
+}
+
+export type CareersFeaturedStory = {
+  id: string
+  categoryLabel: string
+  title: string
+  /** PC 시안 줄바꿈. 없으면 title을 그대로 렌더 */
+  titleLines?: readonly string[]
+  publishedAtLabel: string
+  imageUrl: string
+}

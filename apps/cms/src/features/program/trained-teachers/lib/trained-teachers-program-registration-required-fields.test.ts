@@ -1,0 +1,143 @@
+import { describe, expect, it } from 'vitest'
+import {
+  describeIncompleteTrainedTeachersProgramRegistrationRequiredFields,
+  hasIncompleteTrainedTeachersProgramRegistrationRequiredFields,
+  type TrainedTeachersRegistrationRequiredFieldContext,
+} from './trained-teachers-program-registration-required-fields'
+
+const orgParticipant = {
+  individual: false,
+  organization: true,
+  teacherInstructor: false,
+  volunteer: false,
+} as const
+
+function ctx(
+  patch?: Partial<TrainedTeachersRegistrationRequiredFieldContext>
+): TrainedTeachersRegistrationRequiredFieldContext {
+  return {
+    participant: { ...orgParticipant },
+    programType: 'curriculum',
+    sessionRoundType: 'single',
+    educationFormScheduleDetail: 'common',
+    participationScheduleDetail: 'common',
+    ipsScheduleDetail: 'common',
+    curriculumSessionCount: 1,
+    curriculumChartSessionCount: 2,
+    scheduleCurriculumDetailCount: 1,
+    scheduleCurriculumGroupCount: 1,
+    teacherTrainingEnabled: false,
+    educationScheduleMode: 'date',
+    sponsorId: '',
+    sponsorContactId: '',
+    programTitleKo: '교육받은 교사 프로그램',
+    ...patch,
+  }
+}
+
+function filledOverlay(patch?: Record<string, unknown>): Record<string, unknown> {
+  return {
+    'trainedTeachersRegistration.basicInfo.programTitleEn': 'Trained Teachers',
+    'trainedTeachersRegistration.basicInfo.publicProgramTitle': '공고용 프로그램',
+    'trainedTeachersRegistration.basicInfo.detailedProgramId': '163006',
+    'trainedTeachersRegistration.basicInfo.operationRangeSeal': {
+      start: '2026-03-01T00:00:00.000Z',
+      end: '2026-12-31T00:00:00.000Z',
+    },
+    'trainedTeachersRegistration.basicInfo.businessField': 'economy',
+    'trainedTeachersRegistration.basicInfo.educationCourse': 'ja',
+    'trainedTeachersRegistration.basicInfo.ipOwned': 'ja',
+    'trainedTeachersRegistration.basicInfo.courseDeliveredBy': 'ja',
+    'trainedTeachersRegistration.typeSettings.ipsType': { category: 'prepare', detail: 'none' },
+    'trainedTeachersRegistration.educationCurriculum.unitNameBySession': {
+      1: '단원 1',
+      2: '단원 2',
+    },
+    'trainedTeachersRegistration.educationCurriculum.unitContentBySession': {
+      1: '교육 내용 1',
+      2: '교육 내용 2',
+    },
+    'trainedTeachersRegistration.educationScheduleSettings.scheduleLines': [
+      '2026-04-01 10:00-12:00',
+    ],
+    ...patch,
+  }
+}
+
+describe('hasIncompleteTrainedTeachersProgramRegistrationRequiredFields', () => {
+  it('빈 overlay면 미완료이다', () => {
+    expect(hasIncompleteTrainedTeachersProgramRegistrationRequiredFields({}, ctx())).toBe(true)
+  })
+
+  it('KPI·임금 없이도 필수값을 채우면 완료이다', () => {
+    expect(hasIncompleteTrainedTeachersProgramRegistrationRequiredFields(filledOverlay(), ctx())).toBe(
+      false
+    )
+  })
+
+  it('후원사 전체(빈 값)는 완료이다', () => {
+    expect(
+      hasIncompleteTrainedTeachersProgramRegistrationRequiredFields(
+        filledOverlay(),
+        ctx({ sponsorId: '', sponsorContactId: '' })
+      )
+    ).toBe(false)
+  })
+
+  it('커리큘럼·교육 연수 ON — 진행 일정이 없으면 미완료이다', () => {
+    expect(
+      describeIncompleteTrainedTeachersProgramRegistrationRequiredFields(
+        filledOverlay(),
+        ctx({ teacherTrainingEnabled: true })
+      )
+    ).toBe('curriculum.preEducationScheduleLine')
+  })
+
+  it('커리큘럼·교육 연수 ON — 진행 일정을 채우면 완료이다', () => {
+    expect(
+      hasIncompleteTrainedTeachersProgramRegistrationRequiredFields(
+        filledOverlay({
+          'trainedTeachersRegistration.educationCurriculum.preEducationScheduleLine':
+            '26년 4월 20일(월) 9:30 ~ 12:20',
+        }),
+        ctx({ teacherTrainingEnabled: true })
+      )
+    ).toBe(false)
+  })
+
+  it('일정형·복수회차·교육 연수 ON — 첫 세부 진행 일정이 없으면 미완료이다', () => {
+    expect(
+      describeIncompleteTrainedTeachersProgramRegistrationRequiredFields(
+        filledOverlay({
+          'trainedTeachersRegistration.educationScheduleCurriculum.eventNameByDetail': {
+            1: '교육 연수',
+          },
+        }),
+        ctx({
+          programType: 'schedule',
+          sessionRoundType: 'multi',
+          teacherTrainingEnabled: true,
+          scheduleCurriculumDetailCount: 1,
+        })
+      )
+    ).toBe('scheduleCurriculum.scheduleDate[1]')
+  })
+
+  it('일정형·복수회차·교육 연수 ON — 진행 일정을 채우면 완료이다', () => {
+    expect(
+      hasIncompleteTrainedTeachersProgramRegistrationRequiredFields(
+        filledOverlay({
+          'trainedTeachersRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': {
+            1: '2026-04-20 09:30-12:20',
+          },
+        }),
+        ctx({
+          programType: 'schedule',
+          sessionRoundType: 'multi',
+          teacherTrainingEnabled: true,
+          scheduleCurriculumDetailCount: 1,
+        })
+      )
+    ).toBe(false)
+  })
+})

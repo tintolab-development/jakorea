@@ -9,10 +9,16 @@ describe('resolveRegisteredByAdmin', () => {
     expect(resolveRegisteredByAdmin({ registeredByAdmin: true })).toBe(true)
   })
 
-  it('infers from adminAccountId for ADMIN role', () => {
+  it('does not treat ADMIN + adminAccountId as 관리자 등록', () => {
     expect(
-      resolveRegisteredByAdmin({ role: 'ADMIN', adminAccountId: 42 })
-    ).toBe(true)
+      resolveRegisteredByAdmin({
+        role: 'ADMIN',
+        adminAccountId: 165007,
+        createdByAdmin: false,
+        registeredByAdmin: false,
+      })
+    ).toBe(false)
+    expect(resolveRegisteredByAdmin({ role: 'ADMIN', adminAccountId: 42 })).toBe(false)
   })
 
   it('does not infer adminAccountId for non-ADMIN roles', () => {
@@ -24,6 +30,10 @@ describe('resolveRegisteredByAdmin', () => {
   it('infers from preRegistered / createdByAdmin', () => {
     expect(resolveRegisteredByAdmin({ preRegistered: true })).toBe(true)
     expect(resolveRegisteredByAdmin({ createdByAdmin: true })).toBe(true)
+  })
+
+  it('defaults to false when flags are missing', () => {
+    expect(resolveRegisteredByAdmin({})).toBe(false)
   })
 })
 

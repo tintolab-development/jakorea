@@ -8,7 +8,6 @@ import {
   type FinanceViewKind,
 } from '@/entities/income-expense/model/types'
 import { getJAKoreaHomepageAdminAPIJAKoreaSubset } from '@/shared/api/generated/ja-korea/ja-korea-api'
-import { shouldUseIncomeExpenseRemoteApi } from './capabilities'
 import {
   mapFinanceItemResponseToDomain,
   mapFinanceSummaryToDomain,
@@ -18,13 +17,6 @@ import {
   toFinanceBulkUpdateRequest,
   toFinanceCreateRequest,
 } from './mappers'
-import {
-  createFinanceItem as createLocal,
-  readFinanceItems,
-  removeFinanceItems as removeLocal,
-  reorderFinanceItems as reorderLocal,
-  updateFinanceItems as updateLocal,
-} from './store'
 
 function jaKoreaApi() {
   return getJAKoreaHomepageAdminAPIJAKoreaSubset()
@@ -76,14 +68,12 @@ function orderByIds(rows: FinanceItem[], orderedIds: string[]): FinanceItem[] {
   return ordered.map((row, index) => ({ ...row, sortOrder: index + 1 }))
 }
 
+/** GET /api/admin/ja-korea/transparency/finance/{section}/{view} */
 export async function listFinanceItemsService(
   section: FinanceSection,
   view: FinanceViewKind,
 ): Promise<FinanceItem[]> {
-  if (shouldUseIncomeExpenseRemoteApi()) {
-    return listRemote(section, view)
-  }
-  return readFinanceItems(section, view)
+  return listRemote(section, view)
 }
 
 export async function createFinanceItemService(
@@ -92,19 +82,16 @@ export async function createFinanceItemService(
   input: FinanceItemCreateInput,
   cached?: FinanceItem[],
 ): Promise<FinanceItem> {
-  if (shouldUseIncomeExpenseRemoteApi()) {
-    const current = await resolveBucket(section, view, cached)
-    if (view === 'graph' && current.length >= MAX_GRAPH_ITEMS) {
-      throw new GraphItemLimitError()
-    }
-    const created = await jaKoreaApi().createFinance(
-      toApiSection(section),
-      toApiView(view),
-      toFinanceCreateRequest(input),
-    )
-    return mapFinanceItemResponseToDomain(created)
+  const current = await resolveBucket(section, view, cached)
+  if (view === 'graph' && current.length >= MAX_GRAPH_ITEMS) {
+    throw new GraphItemLimitError()
   }
-  return createLocal(section, view, input)
+  const created = await jaKoreaApi().createFinance(
+    toApiSection(section),
+    toApiView(view),
+    toFinanceCreateRequest(input),
+  )
+  return mapFinanceItemResponseToDomain(created)
 }
 
 export async function updateFinanceItemsService(
@@ -113,24 +100,21 @@ export async function updateFinanceItemsService(
   patches: FinanceItemUpdatePatch[],
   cached?: FinanceItem[],
 ): Promise<FinanceItem[]> {
-  if (shouldUseIncomeExpenseRemoteApi()) {
-    const current = await resolveBucket(section, view, cached)
-    const patchMap = new Map(patches.map(p => [p.id, p]))
-    const next = current.map(row => {
-      const p = patchMap.get(row.id)
-      if (!p) return row
-      const category = p.category ?? row.category
-      return {
-        ...row,
-        name: p.name.trim(),
-        ratio: p.ratio,
-        amount: p.amount,
-        ...(category ? { category } : {}),
-      }
-    })
-    return putRemoteBucket(section, view, next)
-  }
-  return updateLocal(section, view, patches)
+  const current = await resolveBucket(section, view, cached)
+  const patchMap = new Map(patches.map(p => [p.id, p]))
+  const next = current.map(row => {
+    const p = patchMap.get(row.id)
+    if (!p) return row
+    const category = p.category ?? row.category
+    return {
+      ...row,
+      name: p.name.trim(),
+      ratio: p.ratio,
+      amount: p.amount,
+      ...(category ? { category } : {}),
+    }
+  })
+  return putRemoteBucket(section, view, next)
 }
 
 export async function removeFinanceItemsService(
@@ -139,22 +123,19 @@ export async function removeFinanceItemsService(
   ids: string[],
   cached?: FinanceItem[],
 ): Promise<FinanceItem[]> {
-  if (shouldUseIncomeExpenseRemoteApi()) {
-    if (ids.length === 0) {
-      return resolveBucket(section, view, cached)
-    }
-    const current = await resolveBucket(section, view, cached)
-    const idSet = new Set(ids)
-    const targets = current.filter(row => idSet.has(row.id))
-    if (targets.length === 0) return current
-    const response = await jaKoreaApi().deleteFinance(
-      toApiSection(section),
-      toApiView(view),
-      toFinanceBulkDeleteRequest(targets),
-    )
-    return mapFinanceSummaryToDomain(response)
+  if (ids.length === 0) {
+    return resolveBucket(section, view, cached)
   }
-  return removeLocal(section, view, ids)
+  const current = await resolveBucket(section, view, cached)
+  const idSet = new Set(ids)
+  const targets = current.filter(row => idSet.has(row.id))
+  if (targets.length === 0) return current
+  const response = await jaKoreaApi().deleteFinance(
+    toApiSection(section),
+    toApiView(view),
+    toFinanceBulkDeleteRequest(targets),
+  )
+  return mapFinanceSummaryToDomain(response)
 }
 
 export async function reorderFinanceItemsService(
@@ -163,9 +144,6 @@ export async function reorderFinanceItemsService(
   orderedIds: string[],
   cached?: FinanceItem[],
 ): Promise<FinanceItem[]> {
-  if (shouldUseIncomeExpenseRemoteApi()) {
-    const current = await resolveBucket(section, view, cached)
-    return putRemoteBucket(section, view, orderByIds(current, orderedIds))
-  }
-  return reorderLocal(section, view, orderedIds)
+  const current = await resolveBucket(section, view, cached)
+  return putRemoteBucket(section, view, orderByIds(current, orderedIds))
 }

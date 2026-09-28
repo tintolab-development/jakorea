@@ -207,13 +207,23 @@ export const BUSINESS_AREA_OPTIONS = [
   { value: '디지털리터러시', label: '디지털리터러시' },
 ]
 
-/** 등록 폼 코드·띄어쓰기 변형 → BE 마스터명 */
+/** 등록 폼 코드·띄어쓰기·레거시 약칭 → BE 마스터명 */
 const BUSINESS_AREA_VALUE_ALIASES: Record<string, string> = {
   economy_finance: '경제금융',
   career_employment: '진로취업',
   entrepreneurship: '기업가정신',
   digital_literacy: '디지털리터러시',
   '디지털 리터러시': '디지털리터러시',
+  // 등록 폼·시드 약칭 (PATCH 거절용 `경제`/`진로` 와 구분 — 조회 정규화만)
+  economy: '경제금융',
+  career: '진로취업',
+  // textbook / BE enum 스타일
+  ECONOMY: '경제금융',
+  ECONOMY_FINANCE: '경제금융',
+  CAREER: '진로취업',
+  CAREER_EMPLOYMENT: '진로취업',
+  ENTREPRENEURSHIP: '기업가정신',
+  DIGITAL_LITERACY: '디지털리터러시',
 }
 
 /** 폼·API 혼용값을 BE `textbook_business_area.name`으로 정규화 */
@@ -225,6 +235,13 @@ export function normalizeProgramBusinessAreaValue(value: string | undefined | nu
   if (aliased) return aliased
   const matched = BUSINESS_AREA_OPTIONS.find(o => o.value === trimmed || o.label === trimmed)
   return matched?.value ?? trimmed
+}
+
+/** 셀렉트·PATCH에 실을 수 있는 마스터명. 목록에 없으면 빈 문자열 */
+export function resolveStoredBusinessArea(value: string | undefined | null): string {
+  const normalized = normalizeProgramBusinessAreaValue(value)
+  if (!normalized) return ''
+  return BUSINESS_AREA_OPTIONS.some(option => option.value === normalized) ? normalized : ''
 }
 
 export const TYPE_LABEL: Record<string, string> = {
@@ -330,8 +347,8 @@ export function normalizeTargetLevelValue(raw: unknown): TargetLevel | undefined
 }
 
 export function resolveProgramTargetLevels(program: {
-  targetLevels?: Array<TargetLevel | string>
-  targetLevel?: TargetLevel | string
+  targetLevels?: Array<TargetLevel | string | null | undefined> | null
+  targetLevel?: TargetLevel | string | null
 }): TargetLevel[] {
   const raw =
     program.targetLevels?.length

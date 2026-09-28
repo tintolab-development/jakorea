@@ -197,3 +197,30 @@ export function createProgramParticipantApplicationDraft(): WritingFormDraft {
     paragraphs,
   })
 }
+
+const VOLUNTEER_INTERVIEW_SCHEDULE_PARAGRAPH_IDS = new Set([
+  'program-volunteer-application-seed-interview-schedule',
+  'ujat-program-application-volunteer-seed-interview-schedule',
+  'recruit-form-volunteer-seed-interview-schedule',
+  'ujat-recruit-form-volunteer-seed-interview-schedule',
+])
+
+/**
+ * 일반 참여자 신청 폼에는 면접 일정 단락이 없다.
+ * 원격 schema가 봉사자 단락으로 오염된 경우 제거한다.
+ */
+export function migrateProgramParticipantApplicationParagraphs(
+  draft: WritingFormDraft
+): WritingFormDraft {
+  const paragraphs = draft.paragraphs.filter(paragraph => {
+    if (VOLUNTEER_INTERVIEW_SCHEDULE_PARAGRAPH_IDS.has(paragraph.id)) return false
+    const title = 'paragraphTitle' in paragraph ? String(paragraph.paragraphTitle ?? '').trim() : ''
+    if (title === '면접 진행 가능 일정') return false
+    return true
+  })
+  if (paragraphs.length === draft.paragraphs.length) return draft
+  return normalizeWritingFormDraft({
+    ...draft,
+    paragraphs,
+  })
+}

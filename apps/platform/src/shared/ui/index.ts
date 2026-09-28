@@ -140,6 +140,7 @@ export { PFToggle } from './pf-toggle'
 export type { PFToggleProps, PFToggleVariant } from './pf-toggle'
 export { PFText } from './pf-text'
 export type { PFTextColor, PFTypography } from './pf-text'
+export { remoteCopyClassName } from './remote-copy/remote-copy-class-name'
 export { PFTextInput } from './pf-text-input'
 export { PFTextarea } from './pf-textarea'
 export type {

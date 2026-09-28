@@ -1,6 +1,7 @@
 import type {
   BugIssueListFilter,
   BugIssueListResult,
+  BugIssueLog,
 } from '@/entities/bug-issue-log/model/types'
 import {
   defaultXlsxFilename,
@@ -14,7 +15,7 @@ import {
   toSystemIssuesExportParams,
   toSystemIssuesParams,
 } from './mappers'
-import { listBugIssueLogs } from './store'
+import { listBugIssueLogs, listBugIssueLogsAll } from './store'
 
 function logsApi() {
   return getJAKoreaHomepageAdminAPILogsSubset()
@@ -32,8 +33,10 @@ export async function listBugIssueLogsService(
 
 export async function exportBugIssueLogsService(
   filter: BugIssueListFilter,
-): Promise<'remote-downloaded' | 'use-local-csv'> {
-  if (!shouldUseBugIssueLogRemoteApi()) return 'use-local-csv'
+): Promise<'remote-downloaded' | { source: 'local'; rows: BugIssueLog[] }> {
+  if (!shouldUseBugIssueLogRemoteApi()) {
+    return { source: 'local', rows: listBugIssueLogsAll(filter) }
+  }
 
   const response = await axiosInstance.get<ArrayBuffer>(
     '/api/admin/logs/system-issues/export',

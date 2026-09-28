@@ -1,7 +1,9 @@
 import type { TrainedTeachersEducationJournalEntry } from '@/features/program/trained-teachers/model/institution-detail'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
+import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { downloadFile } from '@/shared/lib/file-download'
+import { downloadBlob } from '@/shared/utils/file-download'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { mapEducationJournalResponseToEntry } from './education-journals-adapters'
 import {
@@ -12,6 +14,7 @@ import {
   fetchTrainedTeacherEducationJournalsRemote,
 } from './education-journals-client'
 import { listTrainedTeacherOrganizationApplications } from './organization-applications-service'
+import { mapPreferredScheduleBlocksToSessions } from './organization-applications-adapters'
 import type { EducationJournalCreateRequest } from '@/shared/api/generated/dashboard/schemas/educationJournalCreateRequest'
 
 function assertRemoteReady(): void {
@@ -22,12 +25,7 @@ function assertRemoteReady(): void {
 }
 
 function triggerBlobDownload(fileName: string, blob: Blob): void {
-  const objectUrl = URL.createObjectURL(blob)
-  try {
-    void downloadFile(fileName, objectUrl)
-  } finally {
-    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1_000)
-  }
+  void downloadBlob(blob, fileName)
 }
 
 async function downloadFromEndpoint(fileName: string, endpoint?: string): Promise<void> {
@@ -83,6 +81,10 @@ export async function downloadTrainedTeacherEducationJournal(
 ): Promise<void> {
   assertRemoteReady()
   const meta = await fetchTrainedTeacherEducationJournalDownloadRemote(programId, entry.id)
+  if (meta.fileObjectId != null && meta.fileObjectId > 0) {
+    await downloadAdminFile({ fileObjectId: meta.fileObjectId, fileName: entry.fileName })
+    return
+  }
   await downloadFromEndpoint(entry.fileName, meta.downloadEndpoint)
 }
 
@@ -133,19 +135,36 @@ export function mapApplicantSchoolToParticipatingSchool(
     textbookStatus: 'not_applicable',
     approvalStatus: 'approved',
     teacherName: row.teacherName || '-',
+    teacherMemberId: row.teacherMemberId,
+    organizationId: row.organizationId,
+    contact: row.contact,
     /** TT는 강사 Relation 없음 — 합성하지 않음 */
     instructors: '',
     programId: row.programId,
-    sessions: row.sessions,
+    sessions:
+      row.sessions?.length
+        ? row.sessions
+        : mapPreferredScheduleBlocksToSessions(row.preferredScheduleBlocks),
     preferredScheduleBlocks: row.preferredScheduleBlocks,
     educationTarget: row.educationTarget,
     progressLabel: row.progressLabel,
     totalEducationRoundCount: row.totalEducationRoundCount,
     completedEducationRoundCount: row.completedEducationRoundCount,
     textbookName: row.textbookName,
+    textbookId: row.detail?.textbookId,
+    teacherPhone: row.contact,
+    teacherMobile: row.contact,
+    teacherEmail: row.detail?.teacherEmail,
+    addressDetail: row.detail?.addressDetail,
+    educationFormat: row.detail?.educationType,
+    applicationReason: row.detail?.applicationReason,
+    otherRequests: row.detail?.otherRequests,
     educationJournalCount: row.educationJournalCount,
     journalSubmitted: row.journalSubmitted,
     educationCompletionCount: row.educationCompletionCount,
+    activityWithdrawn: row.activityWithdrawn === true,
+    giveUpAt: row.giveUpAt,
+    giveUpStopScheduleId: row.giveUpStopScheduleId,
   }
 }
 

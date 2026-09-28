@@ -6,6 +6,12 @@
   overflow: hidden;
 }
 
+.skeleton {
+  position: absolute;
+  inset: 0;
+  background: #0a1a20;
+}
+
 .slide {
   position: absolute;
   inset: 0;

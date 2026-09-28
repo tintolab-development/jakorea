@@ -4,9 +4,10 @@ import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   formatDateRange,
+  formatTargetLevelsLabel,
   getParticipantRecruitmentLifecycle,
   parseTargetLevelsSelectValue,
-  TARGET_LEVEL_LABEL,
+  resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   ANNOUNCEMENT_PUBLISHED_OPTIONS,
@@ -14,7 +15,7 @@ import {
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
-import { resolveUjatAnnouncementTitle } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import { resolveUjatRecruitAnnouncementTitle } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import { ProgramDetailContactReadRow } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -53,10 +54,14 @@ function resolveParticipantNotesDisplay(program: Program): string {
   return (program.oneLineIntroduction ?? '').trim() || '-'
 }
 
-function resolveEducationTargetLabel(program: Program): string {
-  const level = program.targetLevel ?? program.targetLevels?.[0]
-  if (!level) return '초등학교'
-  return TARGET_LEVEL_LABEL[level] ?? level
+function resolveEducationTargetLabel(program: Program, isTemplateAuthoring: boolean): string {
+  const fromLevels = formatTargetLevelsLabel(resolveProgramTargetLevels(program))
+  if (fromLevels !== '-') return fromLevels
+  const nested =
+    program.generalCommonInfo?.participantRecruitmentInfo?.educationTarget?.trim() ||
+    program.generalCommonInfo?.participantRecruitmentInfo?.recruitmentTarget?.trim()
+  if (nested) return nested
+  return isTemplateAuthoring ? '초등학교' : '-'
 }
 
 export function UjatRecruitParticipantInfoProgramView({
@@ -96,7 +101,7 @@ export function UjatRecruitParticipantInfoProgramView({
   ) : (
     '-'
   )
-  const publicTitle = resolveUjatAnnouncementTitle(program).trim() || '-'
+  const publicTitle = resolveUjatRecruitAnnouncementTitle(program, 'institution')
   const notes = resolveParticipantNotesDisplay(program)
   const announcementPublishedValue =
     (isEdit && form ? form.watch('participantRecruitmentAnnouncementPublished') : undefined) ??
@@ -146,12 +151,12 @@ export function UjatRecruitParticipantInfoProgramView({
           edit={
             isEdit && form ? (
               <Controller
-                name="mainTitle"
+                name="announcementTitle"
                 control={form.control}
                 render={({ field }) => (
                   <CmsInput
                     {...field}
-                    value={field.value ?? (isTemplateAuthoring ? '' : (program.title ?? ''))}
+                    value={field.value ?? (isTemplateAuthoring ? '' : '')}
                     inputSize="medium"
                     width="100%"
                     placeholder="공고용 프로그램명"
@@ -196,7 +201,7 @@ export function UjatRecruitParticipantInfoProgramView({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="교육 대상"
-          view={resolveEducationTargetLabel(program)}
+          view={resolveEducationTargetLabel(program, isTemplateAuthoring)}
           edit={
             isEdit && form ? (
               <Controller
@@ -292,12 +297,18 @@ export function UjatRecruitParticipantInfoProgramView({
               <div className="program-detail-info-tab__contact-inputs program-detail-info-tab__contact-inputs--even">
                 <div className="program-detail-info-tab__contact-group">
                   <span className="program-detail-info-tab__contact-label">문의처</span>
-                  <CmsInput
-                    placeholder="담당 문의처"
-                    value={sponsorName ?? ''}
-                    readOnly
-                    inputSize="medium"
-                    className="program-detail-info-tab__contact-name-input"
+                  <Controller
+                    name="recruitmentContactOrganizationName"
+                    control={form.control}
+                    render={({ field }) => (
+                      <CmsInput
+                        {...field}
+                        value={field.value ?? sponsorName ?? ''}
+                        placeholder="담당 문의처"
+                        inputSize="medium"
+                        className="program-detail-info-tab__contact-name-input"
+                      />
+                    )}
                   />
                 </div>
                 <DividerVertical

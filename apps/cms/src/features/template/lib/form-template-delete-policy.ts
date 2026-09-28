@@ -38,10 +38,61 @@ export function isDuplicateWritingTemplateCode(
   return /-copy(?:-\d+)?$/i.test(code)
 }
 
-/** 단락 구조·본문 편집 잠금 여부 — 고정 카탈로그 양식만 true (설문 양식 제외) */
+const PROGRAM_SCOPED_OPERATIONAL_CATEGORIES = new Set(['REGISTRATION'])
+
+/** 모집·신청 카탈로그 및 그 복사본 (`-copy`, `-copy-123`) */
+export function isRecruitmentOrApplicationWritingTemplateCode(
+  templateCode: string | undefined | null
+): boolean {
+  const raw = templateCode?.trim() ?? ''
+  if (raw === '') return false
+  const base = raw.replace(/-copy(?:-\d+)?$/i, '')
+  return base.startsWith('recruitment-') || base.startsWith('application-')
+}
+
+/**
+ * 등록·모집 시스템 양식 PUT — BE `FORM_SCHEMA_IMMUTABLE`.
+ * 일정형 제목 등 표시용 schema 변경은 보내지 않고 extensionJson만 갱신한다.
+ */
+export function shouldOmitImmutableFormSchemaJson(
+  templateCode: string | undefined | null
+): boolean {
+  const code = templateCode?.trim() ?? ''
+  if (code === '') return false
+  return code.startsWith('registration-') || code.startsWith('recruitment-')
+}
+
+/**
+ * 프로그램 등록 전용 운영 양식(등록 copy).
+ * 양식 관리 등록 섹션은 **카탈로그 고정 code만** 노출한다.
+ * 모집·신청 사용자 복제는 목록에 노출한다. 설문/동의 사용자 복제는 유지.
+ */
+export function isProgramScopedOperationalWritingTemplate(item: {
+  templateCode?: string | null
+  category?: string | null
+}): boolean {
+  const code = item.templateCode?.trim() ?? ''
+  if (code === '') return false
+  if (isCatalogFixedWritingFormTemplateCode(code)) return false
+
+  const category = (item.category ?? '').trim().toUpperCase()
+  const resolved =
+    category ||
+    (code.startsWith('registration-')
+      ? 'REGISTRATION'
+      : code.startsWith('recruitment-')
+        ? 'RECRUITMENT'
+        : code.startsWith('application-')
+          ? 'APPLICATION'
+          : '')
+  return PROGRAM_SCOPED_OPERATIONAL_CATEGORIES.has(resolved)
+}
+
+/** 단락 구조 잠금 — 모집·신청(복사본 포함)은 항상 잠금. 설문은 제외. 동의 복사는 해제. */
 export function isWritingFormTemplateStructureLocked(
   target: WritingFormTemplateStructureLockTarget
 ): boolean {
+  if (isRecruitmentOrApplicationWritingTemplateCode(target.templateCode)) return true
   if (target.forceUserEditable === true) return false
   const templateCode = target.templateCode?.trim()
   if (templateCode != null && templateCode !== '') {
@@ -52,6 +103,14 @@ export function isWritingFormTemplateStructureLocked(
   if (isDuplicateWritingTemplateCode(target.templateCode)) return false
   if (target.systemTemplate === true) return true
   return isCatalogFixedWritingFormTemplateCode(target.templateCode)
+}
+
+/** 신청은 lock이어도 순서 변경 가능. 모집은 lock이면 불가. */
+export function canReorderParticipantApplicationParagraphs(options: {
+  structureLocked: boolean
+  recruitmentForm: boolean
+}): boolean {
+  return !(options.recruitmentForm && options.structureLocked)
 }
 
 /** 목록 row 기준 — 사용자 생성(복제·직접 등록) 템플릿 */

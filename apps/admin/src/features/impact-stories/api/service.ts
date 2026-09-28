@@ -13,6 +13,10 @@ import {
   shouldUseImpactStoriesRemoteApi,
 } from './capabilities'
 import {
+  normalizeCategoryListPayload,
+  normalizeCategoryPayload,
+} from './category-payload'
+import {
   isPersistedCategoryId,
   mapCategoryResponseToDomain,
   mapStoryListItemToDomain,
@@ -45,8 +49,10 @@ function impactStoryApi() {
 }
 
 async function listRemoteCategories(): Promise<ImpactStoryCategory[]> {
-  const rows = await impactStoryApi().list8()
-  return (rows ?? []).map((row, i) => mapCategoryResponseToDomain(row, i))
+  const payload = await impactStoryApi().list7()
+  return normalizeCategoryListPayload(payload)
+    .map((row, i) => mapCategoryResponseToDomain(row, i))
+    .filter(row => isPersistedCategoryId(row.id) && row.name.trim() !== '')
 }
 
 async function saveCategoriesRemote(
@@ -61,38 +67,34 @@ async function saveCategoriesRemote(
 
   for (const row of current) {
     if (draftIds.has(row.id)) continue
+    if (!isPersistedCategoryId(row.id)) continue
     await api._delete(Number(row.id), { version: row.version ?? 0 })
   }
 
-  const result: ImpactStoryCategory[] = []
-  let sortOrder = 0
   for (const item of items) {
     const name = item.name.trim()
     if (!name) continue
 
     const existing = currentById.get(item.id)
     if (existing && isPersistedCategoryId(item.id)) {
-      if (existing.name.trim() === name) {
-        result.push({ ...existing, name, sortOrder: sortOrder++ })
-        continue
-      }
-      const updated = await api.update11(
-        Number(item.id),
-        toCategoryUpdateRequest(name, existing.version ?? 0),
+      if (existing.name.trim() === name) continue
+      normalizeCategoryPayload(
+        await api.update11(
+          Number(item.id),
+          toCategoryUpdateRequest(name, existing.version ?? 0),
+        ),
       )
-      result.push(mapCategoryResponseToDomain(updated, sortOrder++))
       continue
     }
 
-    const created = await api.create7(toCategoryCreateRequest(name))
-    result.push(mapCategoryResponseToDomain(created, sortOrder++))
+    normalizeCategoryPayload(await api.create9(toCategoryCreateRequest(name)))
   }
 
-  return result
+  return listRemoteCategories()
 }
 
 async function listRemoteStories(filter?: ImpactStoryListFilter): Promise<ImpactStory[]> {
-  const response = await impactStoryApi().list7(toStoryListParams(filter))
+  const response = await impactStoryApi().list6(toStoryListParams(filter))
   return (response.items ?? []).map(mapStoryListItemToDomain)
 }
 
@@ -157,7 +159,7 @@ export async function listStoriesPageService(
   const size = LIST_PAGE_SIZE
 
   if (shouldUseImpactStoriesRemoteApi()) {
-    const response = await impactStoryApi().list7(toStoryListParams(filter))
+    const response = await impactStoryApi().list6(toStoryListParams(filter))
     const items = (response.items ?? []).map(mapStoryListItemToDomain)
     const totalCount = response.totalCount ?? items.length
     const totalPages =
@@ -204,7 +206,7 @@ export async function createStoryService(
   if (shouldUseImpactStoriesRemoteApi()) {
     try {
       const attachmentAssetId = await resolveAttachmentAssetId(input.attachments)
-      const created = await impactStoryApi().create6(
+      const created = await impactStoryApi().create8(
         toStoryCreateRequest(input, attachmentAssetId),
       )
       return mapStoryResponseToDomain(created)

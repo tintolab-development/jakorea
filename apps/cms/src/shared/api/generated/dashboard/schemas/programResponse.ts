@@ -8,7 +8,10 @@
 import type { ProgramAdminAssignmentResponse } from './programAdminAssignmentResponse';
 import type { ProgramRecruitmentResponse } from './programRecruitmentResponse';
 import type { ProgramResponseEducationStructure } from './programResponseEducationStructure';
+import type { ProgramResponseLifecycleStatus } from './programResponseLifecycleStatus';
+import type { ProgramResponsePeriodStatus } from './programResponsePeriodStatus';
 import type { ProgramResponseProgramType } from './programResponseProgramType';
+import type { ProgramResponseTargetLevelsItem } from './programResponseTargetLevelsItem';
 import type { ProgramRoundResponse } from './programRoundResponse';
 import type { ProgramScheduleResponse } from './programScheduleResponse';
 import type { ProgramSettlementPolicyResponse } from './programSettlementPolicyResponse';
@@ -29,7 +32,10 @@ export interface ProgramResponse {
   applicationStartDate?: string;
   applicationEndDate?: string;
   status?: string;
-  lifecycleStatus?: string;
+  /** 프로그램 진행 단계(카드/필터 축). SCHEDULED·RECRUITING(예정)·IN_PROGRESS·COMPLETED는 상호 배타. */
+  periodStatus?: ProgramResponsePeriodStatus;
+  /** typed 진행 현황. periodStatus와 동일 UI 버킷을 가리킨다. */
+  lifecycleStatus?: ProgramResponseLifecycleStatus;
   businessArea?: string;
   /** 교육 진행 구조 */
   educationStructure?: ProgramResponseEducationStructure;
@@ -42,7 +48,8 @@ export interface ProgramResponse {
   schoolId?: string;
   district?: string;
   ips?: string;
-  targetLevel?: string;
+  /** 교육 대상 첫 값. targetLevels[0]과 같다. */
+  targetLevel?: string | null;
   institutionType?: string;
   ipOwned?: string;
   courseDeliveredBy?: string;
@@ -54,19 +61,14 @@ export interface ProgramResponse {
   educationProcess?: string;
   maleParticipants?: number;
   femaleParticipants?: number;
-  /** 참여자 최종 인원. dual-read totalParticipants|finalParticipants */
   totalParticipants?: number;
-  /** Write alias for totalParticipants (dual-read) */
-  finalParticipants?: number;
   generalVolunteers?: number;
   staffVolunteers?: number;
   returningVolunteers?: number;
   generalTeachers?: number;
   educatedTeachers?: number;
   instructors?: number;
-  /** 최종 파견 학교 수. dual-read root|kpi|generalCommonInfo.kpi */
   finalSchools?: number;
-  /** 최종 파견 학급 수. dual-read root|kpi|generalCommonInfo.kpi */
   finalClasses?: number;
   managerName?: string;
   venue?: string;
@@ -82,15 +84,13 @@ export interface ProgramResponse {
   recruitmentGuide?: string;
   learningSupportContent?: string;
   otherMatters?: string;
-  /** 모집 비고 SSOT. oneLineIntroduction과 분리. */
   remarks?: string;
   recruitmentTargetDetail?: string;
-  /** 모집/교육 대상 상세. district와 분리. */
   educationTargetDetail?: string;
-  /** 교육 장소 기타 직접입력. */
   venueDetail?: string;
-  /** 교육 장소 유형: inside | outside | other (legacy inside_school/outside_school) */
   venueKind?: string;
+  studentListRequired?: string;
+  /** 유형별 config JSON 문자열. TRAINED_TEACHER: {schemaVersion, program}. Nested program.generalCommonInfo.participantRecruitmentInfo is the 모집 정보 display SSOT. remarks ≠ oneLineIntroduction. educationTargetDetail ≠ district. maxAssignableInstructors is always 0. instructorRecruitmentInfo/volunteerRecruitmentInfo omitted. */
   serviceDetailJson?: string;
   attachmentFileNames?: string[];
   adminAssignments?: ProgramAdminAssignmentResponse[];
@@ -102,4 +102,6 @@ export interface ProgramResponse {
   businessStartDate?: string;
   businessEndDate?: string;
   businessYear?: number;
+  /** 교육 대상 코드 배열. 값이 없으면 생략된다. */
+  targetLevels?: ProgramResponseTargetLevelsItem[];
 }

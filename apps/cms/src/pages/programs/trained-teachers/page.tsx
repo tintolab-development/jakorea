@@ -11,17 +11,22 @@ import { ProgramDetailFullPageModal } from '@/features/program/general/ui/detail
 import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
 import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
 import {
-  peekRegistrationDraftNotice,
+  fetchRegistrationDraftNotice,
   PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE,
   REGISTRATION_DRAFT_MODE_CONTINUE,
   REGISTRATION_DRAFT_MODE_FRESH,
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
 } from '@/features/program/shared/lib/registration-draft-notice'
+import { assertRegistrationWizardRemoteReady } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 import {
   RegistrationDraftNoticeModal,
   type RegistrationDraftNoticeChoice,
 } from '@/features/program/shared/ui/registration/draft-notice-modal'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
+import {
+  clearGeneralProgramDetailQueryParams,
+  patchGeneralProgramDetailLnbTab,
+} from '@/features/program/general/lib/general-program-detail-route'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
 import { CmsButton, ConfirmModal } from '@/shared/ui'
@@ -78,6 +83,7 @@ function TrainedTeachersProgramPageContent() {
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
+    totalElements,
   } = useTrainedTeachersProgramListFilters()
 
   const infiniteResetKey = `${statusFilter ?? 'all'}:${listQueryFiltersKey}`
@@ -145,10 +151,12 @@ function TrainedTeachersProgramPageContent() {
       setSelectedProgramForFullPageModal(detailQuery.data)
       return
     }
+    // 목록 행은 rounds:[] 경량 — 상세 GET 전에 공통정보를 빈 일정처럼 덮지 않음
+    if (detailQuery.isFetching || detailQuery.isLoading) return
     if (filteredPrograms.length === 0) return
     const program = filteredPrograms.find(item => item.id === programIdFromUrl)
     if (program) setSelectedProgramForFullPageModal(program)
-  }, [detailQuery.data, filteredPrograms, programIdFromUrl, searchParams])
+  }, [detailQuery.data, detailQuery.isFetching, detailQuery.isLoading, filteredPrograms, programIdFromUrl, searchParams])
 
   useEffect(() => {
     if (!listQuery.isError || listQuery.isFetching) return
@@ -180,15 +188,20 @@ function TrainedTeachersProgramPageContent() {
 
   const setUserPreviewSyncParams = useCallback(
     (updates: { userPreview?: string }, options?: SetQueryParamsOptions) => {
-      const next = new URLSearchParams(searchParams)
-      if (updates.userPreview == null || updates.userPreview === '') {
-        next.delete('userPreview')
-      } else {
-        next.set('userPreview', updates.userPreview)
-      }
-      setSearchParams(next, { replace: options?.replace ?? true })
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          if (updates.userPreview == null || updates.userPreview === '') {
+            next.delete('userPreview')
+          } else {
+            next.set('userPreview', updates.userPreview)
+          }
+          return next
+        },
+        { replace: options?.replace ?? true }
+      )
     },
-    [searchParams, setSearchParams]
+    [setSearchParams]
   )
 
   useWritingUserPreviewUrlAuxiliarySync(
@@ -205,13 +218,18 @@ function TrainedTeachersProgramPageContent() {
   const handleCloseRegistrationFullpage = useCallback(() => {
     if (!isTrainedTeachersProgramListPath(normalizedPath)) return
     closeWritingUserPreview()
-    const next = new URLSearchParams(searchParams)
-    next.delete(TRAINED_TEACHERS_NEW_QUERY_KEY)
-    next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
-    next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
-    next.delete('userPreview')
-    setSearchParams(next, { replace: true })
-  }, [closeWritingUserPreview, normalizedPath, searchParams, setSearchParams])
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.delete(TRAINED_TEACHERS_NEW_QUERY_KEY)
+        next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+        next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+        next.delete('userPreview')
+        return next
+      },
+      { replace: true }
+    )
+  }, [closeWritingUserPreview, normalizedPath, setSearchParams])
 
   const handleRegistrationSaved = useCallback(() => {
     refetchPrograms()
@@ -220,34 +238,52 @@ function TrainedTeachersProgramPageContent() {
 
   const openNewRegistration = useCallback(
     (mode?: 'continue' | 'fresh') => {
-      const next = new URLSearchParams(searchParams)
-      next.set(TRAINED_TEACHERS_NEW_QUERY_KEY, '1')
-      next.set(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
-      next.delete('programId')
-      next.delete('lnb')
-      next.delete('tab')
-      if (mode === 'fresh') {
-        next.set(REGISTRATION_DRAFT_MODE_QUERY_KEY, REGISTRATION_DRAFT_MODE_FRESH)
-      } else if (mode === 'continue') {
-        next.set(REGISTRATION_DRAFT_MODE_QUERY_KEY, REGISTRATION_DRAFT_MODE_CONTINUE)
-      } else {
-        next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
-      }
-      setSearchParams(next, { replace: false })
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set(TRAINED_TEACHERS_NEW_QUERY_KEY, '1')
+          next.set(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
+          next.delete('programId')
+          next.delete('lnb')
+          next.delete('tab')
+          if (mode === 'fresh') {
+            next.set(REGISTRATION_DRAFT_MODE_QUERY_KEY, REGISTRATION_DRAFT_MODE_FRESH)
+          } else if (mode === 'continue') {
+            next.set(REGISTRATION_DRAFT_MODE_QUERY_KEY, REGISTRATION_DRAFT_MODE_CONTINUE)
+          } else {
+            next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+          }
+          return next
+        },
+        { replace: false }
+      )
     },
-    [searchParams, setSearchParams]
+    [setSearchParams]
   )
 
   const handleProgramCreateClick = useCallback(() => {
-    const draft = peekRegistrationDraftNotice(PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE)
-    if (draft != null) {
-      setDraftNoticeTitle(draft.title)
-      setDraftNoticeOpen(true)
-      return
-    }
-    // 안내할 임시저장본이 없으면 복원 조회 없이 항상 빈 신규 폼으로 시작
-    openNewRegistration('fresh')
-  }, [openNewRegistration])
+    void (async () => {
+      try {
+        assertRegistrationWizardRemoteReady()
+      } catch {
+        showAlert({
+          title: '프로그램 등록 불가',
+          content:
+            '프로그램 등록은 forms-surveys·programs remote API가 활성화된 환경에서만 이용할 수 있습니다.',
+        })
+        return
+      }
+      const draft = await fetchRegistrationDraftNotice(
+        PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE
+      )
+      if (draft != null) {
+        setDraftNoticeTitle(draft.title)
+        setDraftNoticeOpen(true)
+        return
+      }
+      openNewRegistration('fresh')
+    })()
+  }, [openNewRegistration, showAlert])
 
   const handleDraftNoticeConfirm = useCallback(
     (choice: RegistrationDraftNoticeChoice) => {
@@ -271,39 +307,45 @@ function TrainedTeachersProgramPageContent() {
       }
 
       setSelectedProgramForFullPageModal(program)
-      const nextParams = new URLSearchParams(searchParams)
-      nextParams.set('programId', program.id)
-      if (!nextParams.get('lnb')) nextParams.set('lnb', 'info')
-      if (!nextParams.get('tab')) nextParams.set('tab', 'info')
-      setSearchParams(nextParams, { replace: false })
+      setSearchParams(
+        prev => {
+          const next = patchGeneralProgramDetailLnbTab(prev, {
+            programId: program.id,
+            lnb: 'info',
+            tab: 'info',
+          })
+          next.delete('subTab')
+          return next
+        },
+        { replace: false }
+      )
     },
-    [isAuthenticated, location.pathname, navigate, searchParams, setSearchParams, user]
+    [isAuthenticated, location.pathname, navigate, setSearchParams, user]
   )
 
   const handleViewModeToggle = useCallback(() => {
     const nextViewMode = viewMode === 'list' ? 'calendar' : 'list'
     setViewMode(nextViewMode)
-    const nextParams = new URLSearchParams(searchParams)
-    nextParams.set('viewMode', nextViewMode)
-    setSearchParams(nextParams, { replace: true })
-  }, [searchParams, setSearchParams, viewMode])
+    setSearchParams(
+      prev => {
+        const nextParams = new URLSearchParams(prev)
+        nextParams.set('viewMode', nextViewMode)
+        return nextParams
+      },
+      { replace: true }
+    )
+  }, [setSearchParams, viewMode])
 
   const handleCloseFullPageModal = useCallback(() => {
     setSelectedProgramForFullPageModal(null)
-    const nextParams = clearSponsorDetailQueryStack(new URLSearchParams(searchParams))
-    nextParams.delete('programId')
-    nextParams.delete('lnb')
-    nextParams.delete('tab')
-    nextParams.delete('edit')
-    nextParams.delete('schoolId')
-    nextParams.delete('schoolTab')
-    nextParams.delete('instructorId')
-    nextParams.delete('instructorTab')
-    nextParams.delete('subTab')
-    nextParams.delete('applicantId')
-    nextParams.delete('detailTab')
-    setSearchParams(nextParams, { replace: true })
-  }, [searchParams, setSearchParams])
+    setSearchParams(
+      prev =>
+        clearGeneralProgramDetailQueryParams(
+          clearSponsorDetailQueryStack(new URLSearchParams(prev))
+        ),
+      { replace: true }
+    )
+  }, [setSearchParams])
 
   const handleBulkDeleteClick = useCallback(() => {
     const programsToDelete = filteredPrograms.filter(program => selectedRowKeys.includes(program.id))
@@ -386,13 +428,24 @@ function TrainedTeachersProgramPageContent() {
         .join(' ')}
     >
       <div className="program-progress-widget-container">
-        <ProgramStatusWidget title={null} />
+        <ProgramStatusWidget
+          title={null}
+          onBeforeStageChange={
+            programIdFromUrl || selectedProgramForFullPageModal
+              ? handleCloseFullPageModal
+              : undefined
+          }
+        />
       </div>
       <ProgramList
         data={filteredPrograms}
         loading={listQuery.isFetching && !listQuery.isFetchingNextPage}
         headerTitle={headerTitle}
+        headerCount={remoteEnabled ? totalElements : undefined}
         onView={handleView}
+        searchParams={searchParams}
+        setSearchParams={setSearchParams}
+        disableUrlSync={Boolean(programIdFromUrl) || Boolean(selectedProgramForFullPageModal)}
         onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
         selectedRowKeys={isScheduledFilter ? selectedRowKeys : undefined}
         showRowSelection={isScheduledFilter}
@@ -402,16 +455,20 @@ function TrainedTeachersProgramPageContent() {
         config={programListConfig}
         onDisplayCountChange={handleDisplayCountChange}
         toolbarActionsAfterExcel={programListToolbarActionsAfterExcel}
-        disableUrlSync={Boolean(programIdFromUrl) || Boolean(selectedProgramForFullPageModal)}
       >
         {programListToolbarActions}
       </ProgramList>
       <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
 
       <ProgramDetailFullPageModal
-        open={Boolean(programIdFromUrl) || Boolean(selectedProgramForFullPageModal)}
+        open={
+          Boolean(programIdFromUrl) &&
+          !searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)
+        }
         program={detailProgram}
         programVariant="trained-teachers"
+        searchParams={searchParams}
+        setSearchParams={setSearchParams}
         externalLoading={
           Boolean(programIdFromUrl) &&
           !detailData &&

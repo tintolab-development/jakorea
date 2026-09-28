@@ -11,6 +11,7 @@ import {
   includesIgnoreCase,
   isIsoInDateRange,
 } from '@/features/logs/shared/lib/filter-date-range'
+import { paginateLogRows } from '@/features/logs/shared/lib/list-page'
 
 const TARGETS = ['박틴토', '김회원', '이학생', '최부모', '정후원']
 const PURPOSES = [
@@ -55,9 +56,7 @@ function buildSeed(): PiiAccessLog[] {
 
 const SEED = buildSeed()
 
-export function listPiiAccessLogs(
-  filter: PiiAccessListFilter
-): PiiAccessListResult {
+function filterPiiAccessLogs(filter: PiiAccessListFilter): PiiAccessLog[] {
   let rows = [...SEED]
   if (filter.targetName) {
     rows = rows.filter(r =>
@@ -79,5 +78,15 @@ export function listPiiAccessLogs(
     (a, b) =>
       new Date(b.accessedAt).getTime() - new Date(a.accessedAt).getTime()
   )
-  return { rows, total: rows.length }
+  return rows
+}
+
+export function listPiiAccessLogsAll(filter: PiiAccessListFilter): PiiAccessLog[] {
+  return filterPiiAccessLogs(filter)
+}
+
+export function listPiiAccessLogs(
+  filter: PiiAccessListFilter
+): PiiAccessListResult {
+  return paginateLogRows(filterPiiAccessLogs(filter), filter.page ?? 0)
 }

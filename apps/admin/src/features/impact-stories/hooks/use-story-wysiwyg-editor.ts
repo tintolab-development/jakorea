@@ -1,5 +1,7 @@
 import type { Editor } from '@/shared/rich-text'
 import { useCallback, useRef } from 'react'
+import { shouldUseImpactStoriesRemoteApi } from '@/features/impact-stories/api/capabilities'
+import { uploadImpactStoryInlineImage } from '@/features/impact-stories/api/upload-story-attachment'
 import {
   useRichTextEditor,
   type RichTextContentFormat,
@@ -34,6 +36,9 @@ export function useStoryWysiwygEditor(
   const placeholder = options?.placeholder ?? DEFAULT_PLACEHOLDER
   const contentFormat = options?.contentFormat ?? 'markdown'
   const allowInlineMedia = options?.allowInlineMedia ?? true
+  const resolveImageSrc = useCallback((file: File) => {
+    return uploadImpactStoryInlineImage(file)
+  }, [])
 
   const { editor, api } = useRichTextEditor({
     enabled: open,
@@ -43,6 +48,7 @@ export function useStoryWysiwygEditor(
     placeholder,
     autofocus: false,
     preset: allowInlineMedia ? 'full' : 'basic',
+    resolveImageSrc: shouldUseImpactStoriesRemoteApi() ? resolveImageSrc : undefined,
     onReady: readyApi => {
       apiRef.current = readyApi
     },
@@ -65,5 +71,6 @@ export function useStoryWysiwygEditor(
     getHTML,
     contentFormat,
     allowInlineMedia,
+    resolveImageSrc: shouldUseImpactStoriesRemoteApi() ? resolveImageSrc : undefined,
   }
 }

@@ -1,5 +1,7 @@
 export const CORPORATE_DONATION_PATH = '/support/corporate'
 
+export const CORPORATE_DONATION_INQUIRY_PATH = `${CORPORATE_DONATION_PATH}/inquiry`
+
 export const HERO_LABEL = '기업후원'
 
 /** Desktop 시안 줄바꿈 */

@@ -20,21 +20,29 @@ export function HeroBannersSortableTable({
   columns,
   loading,
   rowSelection,
+  dragDisabled,
   onRowsReorder,
 }: {
   rows: HeroBanner[]
   columns: ColumnsType<HeroBanner>
   loading?: boolean
   rowSelection?: TableProps<HeroBanner>['rowSelection']
+  dragDisabled?: boolean
   onRowsReorder: (reorderedRows: HeroBanner[]) => void
 }) {
+  const disabled = Boolean(dragDisabled)
   const { items, rowIds, dndContextProps } = useAdminTableDndReorder({
     rows,
     onRowsReorder,
+    disabled,
   })
 
   return (
-    <AdminSortableDndShell rowIds={rowIds} dndContextProps={dndContextProps}>
+    <AdminSortableDndShell
+      rowIds={rowIds}
+      dndContextProps={dndContextProps}
+      dragDisabled={disabled}
+    >
       <Table<HeroBanner>
         className="cms-data-table hero-banner-table"
         rowKey="id"

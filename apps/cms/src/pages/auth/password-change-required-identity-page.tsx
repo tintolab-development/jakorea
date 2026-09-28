@@ -78,8 +78,6 @@ export function PasswordChangeRequiredIdentityPage() {
         errorMessage={errorMessage}
         verifiedName={wizardState?.verifiedName}
         verifiedPhone={wizardState?.verifiedPhone}
-        idleTitle="통신사 본인인증 모듈 영역"
-        idleDescription="수신: 이름·휴대폰번호·생년월일·CI/DI·인증토큰·인증일시"
       />
     </AuthPageShell>
   )

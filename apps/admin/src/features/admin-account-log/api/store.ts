@@ -13,6 +13,7 @@ import {
   includesIgnoreCase,
   isIsoInDateRange,
 } from '@/features/logs/shared/lib/filter-date-range'
+import { paginateLogRows } from '@/features/logs/shared/lib/list-page'
 
 const NAMES = [
   '홍길동',
@@ -56,9 +57,7 @@ function buildSeed(): AdminAccountLog[] {
 
 const SEED = buildSeed()
 
-export function listAdminAccountLogs(
-  filter: AdminAccountListFilter
-): AdminAccountListResult {
+function filterAdminAccountLogs(filter: AdminAccountListFilter): AdminAccountLog[] {
   let rows = [...SEED]
   if (filter.name) {
     rows = rows.filter(r => includesIgnoreCase(r.name, filter.name!))
@@ -77,5 +76,17 @@ export function listAdminAccountLogs(
     (a, b) =>
       new Date(b.processedAt).getTime() - new Date(a.processedAt).getTime()
   )
-  return { rows, total: rows.length }
+  return rows
+}
+
+export function listAdminAccountLogsAll(
+  filter: AdminAccountListFilter,
+): AdminAccountLog[] {
+  return filterAdminAccountLogs(filter)
+}
+
+export function listAdminAccountLogs(
+  filter: AdminAccountListFilter
+): AdminAccountListResult {
+  return paginateLogRows(filterAdminAccountLogs(filter), filter.page ?? 0)
 }

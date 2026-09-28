@@ -2,6 +2,7 @@ import type { SocialAuthClient } from './client'
 import {
   isSocialAccountAlreadyLinkedError,
   isSocialAccountNotLinkedError,
+  isSocialLoginMfaRequiredError,
   SocialAccountAlreadyLinkedError,
   SocialAccountNotLinkedError,
 } from './errors'
@@ -92,14 +93,13 @@ export async function processSocialLoginSessionReturn(
     }
   }
 
-  // OpenAPI AdminSsoSessionConsumeRequest: adminSsoSessionId.
-  // socialLoginSessionId는 구버전/포털 네이밍 하위 호환.
-  const adminSsoSessionId =
-    searchParams.get('adminSsoSessionId') ?? searchParams.get('socialLoginSessionId')
-  if (!adminSsoSessionId) {
+  // OpenAPI: Admin → adminSsoSessionId, Portal → socialLoginSessionId
+  const adminSsoSessionId = searchParams.get('adminSsoSessionId')
+  const socialLoginSessionId = searchParams.get('socialLoginSessionId')
+  if (!adminSsoSessionId && !socialLoginSessionId) {
     return {
       kind: 'failed',
-      message: 'adminSsoSessionId가 없어 로그인을 완료할 수 없습니다.',
+      message: '소셜 로그인 세션 ID가 없어 로그인을 완료할 수 없습니다.',
     }
   }
 
@@ -114,10 +114,22 @@ export async function processSocialLoginSessionReturn(
     const tokens = await client.completeCallback({
       provider,
       intent: 'login',
-      adminSsoSessionId,
+      adminSsoSessionId: adminSsoSessionId ?? undefined,
+      socialLoginSessionId: socialLoginSessionId ?? undefined,
     })
     return { kind: 'authenticated', tokens }
   } catch (err) {
+    if (isSocialLoginMfaRequiredError(err)) {
+      return {
+        kind: 'mfa_required',
+        challengeUuid: err.challenge.challengeUuid,
+        mfaMethod: err.challenge.mfaMethod,
+        expiresAt: err.challenge.expiresAt,
+        totpSecret: err.challenge.totpSecret,
+        otpauthUri: err.challenge.otpauthUri,
+        qrDataUrl: err.challenge.qrDataUrl,
+      }
+    }
     if (isSocialAccountNotLinkedError(err)) {
       return { kind: 'not_linked' }
     }
@@ -187,14 +199,16 @@ export async function processAdminSsoLinkReturn(
     searchParams.get('status')?.toUpperCase() === 'LINKED' ||
     searchParams.get('status')?.toUpperCase() === 'CONNECTED'
 
-  if (linkedFlag && resolvedProvider) {
-    client.state.addConnectedProvider(resolvedProvider)
-    return { kind: 'linked', provider: resolvedProvider, pending: false }
-  }
-
   const adminSsoSessionId = searchParams.get('adminSsoSessionId')
   const statusParam = searchParams.get('status')
+  // session id가 있으면 consume이 실제 저장이다. status=CONNECTED만으로 성공 처리하면
+  // 목록에는 연결된 것처럼 보여도 로그인 조회(admin_social_account)에는 없다.
   if (adminSsoSessionId && resolvedProvider) {
+    if (statusParam?.trim().toUpperCase() === 'LINKED') {
+      client.state.addConnectedProvider(resolvedProvider)
+      return { kind: 'linked', provider: resolvedProvider, pending: false }
+    }
+
     if (!consent) {
       return { kind: 'failed', message: '소셜 계정 연결 결과를 확인할 수 없습니다.' }
     }
@@ -224,6 +238,11 @@ export async function processAdminSsoLinkReturn(
       }
       return { kind: 'failed', message: '소셜 계정 연결을 완료하지 못했습니다.' }
     }
+  }
+
+  if (linkedFlag && resolvedProvider) {
+    client.state.addConnectedProvider(resolvedProvider)
+    return { kind: 'linked', provider: resolvedProvider, pending: false }
   }
 
   const code = searchParams.get('code')
@@ -440,4 +459,5 @@ export {
   SocialAccountAlreadyLinkedError,
   isSocialAccountNotLinkedError,
   isSocialAccountAlreadyLinkedError,
+  isSocialLoginMfaRequiredError,
 }

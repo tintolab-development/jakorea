@@ -31,7 +31,7 @@ export function PasswordChangeRequiredCompleteView({
           className="auth-secondary-btn"
           onClick={onConnectSocial}
         >
-          소셜계정 연결하기
+          소셜 계정 연결하기
         </LoadingButton>
       </div>
     </div>

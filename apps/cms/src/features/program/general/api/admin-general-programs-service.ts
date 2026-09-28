@@ -22,7 +22,6 @@ import {
   addAdminProgramManagerRemote,
   bulkDeleteAdminProgramsRemote,
   createAdminProgramFormBindingRemote,
-  createAdminProgramRemote,
   createAdminProgramPostRemote,
   deleteAdminProgramFormBindingRemote,
   deleteAdminProgramManagerRemote,
@@ -159,9 +158,19 @@ export async function fetchGeneralProgramRemoteById(programId: string): Promise<
   return mapAdminProgramDetailToProgram(dto)
 }
 
-export async function createGeneralProgram(program: Program): Promise<Program> {
+export async function createGeneralProgram(
+  program: Program,
+  prepared?: import('@/features/program/general/lib/build-registration-create-form-bindings').RegistrationCreateFormBindingsPayload | null
+): Promise<Program> {
   assertGeneralProgramsRemoteReady()
-  const dto = await createAdminProgramRemote(mapGeneralProgramToCreateRequest(program))
+  const { createAdminProgramRemoteWithRegistrationForms } = await import(
+    '@/features/program/general/api/create-admin-program-remote-with-registration-forms'
+  )
+  const dto = await createAdminProgramRemoteWithRegistrationForms(
+    program,
+    mapGeneralProgramToCreateRequest(program),
+    prepared
+  )
   return mapAdminProgramDetailToProgram(dto)
 }
 

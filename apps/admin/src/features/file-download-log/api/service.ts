@@ -1,6 +1,7 @@
 import type {
   FileDownloadListFilter,
   FileDownloadListResult,
+  FileDownloadLog,
 } from '@/entities/file-download-log/model/types'
 import {
   defaultXlsxFilename,
@@ -14,7 +15,7 @@ import {
   toFileDownloadsExportParams,
   toFileDownloadsParams,
 } from './mappers'
-import { listFileDownloadLogs } from './store'
+import { listFileDownloadLogs, listFileDownloadLogsAll } from './store'
 
 function logsApi() {
   return getJAKoreaHomepageAdminAPILogsSubset()
@@ -32,8 +33,10 @@ export async function listFileDownloadLogsService(
 
 export async function exportFileDownloadLogsService(
   filter: FileDownloadListFilter,
-): Promise<'remote-downloaded' | 'use-local-csv'> {
-  if (!shouldUseFileDownloadLogRemoteApi()) return 'use-local-csv'
+): Promise<'remote-downloaded' | { source: 'local'; rows: FileDownloadLog[] }> {
+  if (!shouldUseFileDownloadLogRemoteApi()) {
+    return { source: 'local', rows: listFileDownloadLogsAll(filter) }
+  }
 
   const response = await axiosInstance.get<ArrayBuffer>(
     '/api/admin/logs/file-downloads/export',

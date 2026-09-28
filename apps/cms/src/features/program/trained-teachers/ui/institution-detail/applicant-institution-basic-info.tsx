@@ -10,12 +10,10 @@ import type {
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/program-approval-status-detail-value'
 import type { ApplicantInstitutionEditDraft } from '@/features/program/general/lib/applicant-institution-detail-edit'
-import type {
-  SameSchoolGradeOption,
-  TextbookSelectOption,
-} from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
-import type { InstitutionAffiliatedTeacherOption } from '@/features/program/general/lib/institution-application-detail-edit-policy'
-import { CmsSelect } from '@/shared/ui/cms-select'
+import {
+  formatInstitutionApplicationGradeDisplay,
+  type InstitutionAffiliatedTeacherOption,
+} from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import {
   InstitutionAddressDetailEdit,
   InstitutionClassAndStudentCountEdit,
@@ -51,8 +49,6 @@ export interface TrainedTeachersApplicantInstitutionBasicInfoProps {
   mode?: 'view' | 'edit'
   draft?: ApplicantInstitutionEditDraft
   onDraftChange?: (partial: Partial<ApplicantInstitutionEditDraft>) => void
-  textbookOptions?: TextbookSelectOption[]
-  sameSchoolGradeOptions?: SameSchoolGradeOption[]
   classCountOptions?: Array<{ value: string; label: string }>
   teacherOptions?: InstitutionAffiliatedTeacherOption[]
   isTeacherOptionsLoading?: boolean
@@ -70,25 +66,56 @@ function buildTeacherInfoCell(
   institution: ApplicantSchoolRow,
   detail: ApplicantInstitutionDetailExtend | undefined
 ): ReactNode {
-  const raw = detail?.teacherInfo?.trim()
-  if (raw) {
+  const name = institution.teacherName?.trim()
+  const phone =
+    detail?.teacherPhone?.trim() ||
+    detail?.teacherMobile?.trim() ||
+    institution.contact?.trim()
+  const mobile =
+    detail?.teacherMobile?.trim() &&
+    detail.teacherMobile.trim() !== phone
+      ? detail.teacherMobile.trim()
+      : undefined
+  const email = detail?.teacherEmail?.trim()
+
+  const segments: string[] = []
+  if (name) segments.push(name)
+  if (phone) {
+    if (/Tel\s*:|M\s*:|E-mail\s*:/i.test(phone)) {
+      segments.push(
+        ...phone
+          .split('|')
+          .map(s => s.trim())
+          .filter(Boolean)
+      )
+    } else {
+      segments.push(`Tel : ${phone}`)
+    }
+  }
+  if (mobile) segments.push(`M : ${mobile}`)
+  if (email) {
+    segments.push(/E-mail\s*:/i.test(email) ? email : `E-mail : ${email}`)
+  }
+
+  if (segments.length === 0) {
+    const raw = detail?.teacherInfo?.trim()
+    if (!raw) return '-'
     const parts = raw
-      .split(' | ')
+      .split('|')
       .map(s => s.trim())
       .filter(Boolean)
     if (parts.length === 0) return '-'
+    if (parts.length === 1) return parts[0]
     return (
       <ProgramDetailTdSegmentWrap>
-        {parts.length === 1 ? parts[0] : withProgramDetailTdDivider(parts)}
+        {withProgramDetailTdDivider(parts)}
       </ProgramDetailTdSegmentWrap>
     )
   }
-  const parts = [institution.teacherName, institution.contact].filter(Boolean) as string[]
-  if (parts.length === 0) return '-'
-  if (parts.length === 1) return parts[0]
+  if (segments.length === 1) return segments[0]
   return (
     <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider(parts)}
+      {withProgramDetailTdDivider(segments)}
     </ProgramDetailTdSegmentWrap>
   )
 }
@@ -100,7 +127,6 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
   mode = 'view',
   draft,
   onDraftChange,
-  textbookOptions = [],
   classCountOptions = [],
   teacherOptions = [],
   isTeacherOptionsLoading = false,
@@ -169,38 +195,6 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
       buildTeacherInfoCell(institution, detail)
     )
 
-  const textbookViewValue = detail?.textbookName?.trim() || '미정'
-
-  const textbookEditValue =
-    isEditMode && draft && onDraftChange ? (
-      <div className="institution-basic-info__field-stack">
-        <CmsSelect
-          className="institution-basic-info__full-width-control"
-          inputSize="large"
-          placeholder="교재명 선택"
-          value={draft.textbookId || undefined}
-          options={textbookOptions.map(option => ({
-            label: option.label,
-            value: option.value,
-          }))}
-          onChange={value => {
-            const selected = textbookOptions.find(option => option.value === value)
-            onDraftChange({
-              textbookId: selected?.value ?? String(value ?? ''),
-              textbookName: selected?.textbookName ?? '',
-            })
-          }}
-        />
-        {validationErrors?.textbookId || validationErrors?.textbookName ? (
-          <span className="institution-basic-info__field-error">
-            {validationErrors.textbookId ?? validationErrors.textbookName}
-          </span>
-        ) : null}
-      </div>
-    ) : (
-      textbookViewValue
-    )
-
   const addressDetailValue =
     isEditMode && draft && onDraftChange ? (
       <InstitutionAddressDetailEdit
@@ -240,7 +234,7 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
         error={validationErrors?.educationGrade}
       />
     ) : (
-      institution.educationGrade ?? '-'
+      formatInstitutionApplicationGradeDisplay(institution.educationGrade ?? '') || '-'
     )
 
   const regionValue =
@@ -284,7 +278,6 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
                     />
                   }
                 />
-                <InstitutionApplicationTableRowFullWidth label="교재명" value={textbookEditValue} />
               </tbody>
             </table>
           </div>

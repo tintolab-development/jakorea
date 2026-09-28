@@ -3,14 +3,7 @@ import type {
   OperatingPrinciplesSavePayload,
 } from '@/entities/operating-principles/model/types'
 import { getJAKoreaHomepageAdminAPIJAKoreaSubset } from '@/shared/api/generated/ja-korea/ja-korea-api'
-import { shouldUseOperatingPrinciplesRemoteApi } from './capabilities'
 import { mapPrincipleManagementToDomain, toPrincipleUpdateRequest } from './mappers'
-import {
-  readOperatingPrinciples,
-  reorderOperatingPrinciples as reorderLocal,
-  saveOperatingPrinciplesContent as saveLocal,
-  setPrincipleActive as setActiveLocal,
-} from './store'
 
 function jaKoreaApi() {
   return getJAKoreaHomepageAdminAPIJAKoreaSubset()
@@ -56,21 +49,15 @@ function orderByIds(doc: OperatingPrinciplesDoc, orderedIds: string[]): Operatin
 }
 
 export async function getOperatingPrinciplesService(): Promise<OperatingPrinciplesDoc> {
-  if (shouldUseOperatingPrinciplesRemoteApi()) {
-    return getRemoteDoc()
-  }
-  return readOperatingPrinciples()
+  return getRemoteDoc()
 }
 
 export async function reorderOperatingPrinciplesService(
   orderedIds: string[],
   cached?: OperatingPrinciplesDoc,
 ): Promise<OperatingPrinciplesDoc> {
-  if (shouldUseOperatingPrinciplesRemoteApi()) {
-    const current = await resolveDoc(cached)
-    return putRemoteDoc(orderByIds(current, orderedIds))
-  }
-  return reorderLocal(orderedIds)
+  const current = await resolveDoc(cached)
+  return putRemoteDoc(orderByIds(current, orderedIds))
 }
 
 export async function setPrincipleActiveService(
@@ -78,40 +65,34 @@ export async function setPrincipleActiveService(
   isActive: boolean,
   cached?: OperatingPrinciplesDoc,
 ): Promise<OperatingPrinciplesDoc> {
-  if (shouldUseOperatingPrinciplesRemoteApi()) {
-    const current = await resolveDoc(cached)
-    const principles = current.principles.map(row =>
-      row.id === id ? { ...row, isActive } : row,
-    )
-    return putRemoteDoc({ ...current, principles })
-  }
-  return setActiveLocal(id, isActive)
+  const current = await resolveDoc(cached)
+  const principles = current.principles.map(row =>
+    row.id === id ? { ...row, isActive } : row,
+  )
+  return putRemoteDoc({ ...current, principles })
 }
 
 export async function saveOperatingPrinciplesService(
   payload: OperatingPrinciplesSavePayload,
   cached?: OperatingPrinciplesDoc,
 ): Promise<OperatingPrinciplesDoc> {
-  if (shouldUseOperatingPrinciplesRemoteApi()) {
-    const current = await resolveDoc(cached)
-    const patchById = new Map(payload.principles.map(p => [p.id, p]))
-    const principles = current.principles.map(row => {
-      const patch = patchById.get(row.id)
-      if (!patch) return row
-      return {
-        ...row,
-        title: patch.title,
-        subText: patch.subText,
-      }
-    })
-    return putRemoteDoc({
-      ...current,
-      intro: {
-        topSubText: payload.intro.topSubText.trim(),
-        mainText: payload.intro.mainText.trimEnd(),
-      },
-      principles,
-    })
-  }
-  return saveLocal(payload)
+  const current = await resolveDoc(cached)
+  const patchById = new Map(payload.principles.map(p => [p.id, p]))
+  const principles = current.principles.map(row => {
+    const patch = patchById.get(row.id)
+    if (!patch) return row
+    return {
+      ...row,
+      title: patch.title,
+      subText: patch.subText,
+    }
+  })
+  return putRemoteDoc({
+    ...current,
+    intro: {
+      topSubText: payload.intro.topSubText.trim(),
+      mainText: payload.intro.mainText.trimEnd(),
+    },
+    principles,
+  })
 }

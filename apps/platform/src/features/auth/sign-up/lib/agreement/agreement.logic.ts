@@ -21,6 +21,15 @@ export function toggleAgreementState(
   return { ...agreements, [key]: !agreements[key] }
 }
 
+export function setAgreementState(
+  agreements: AgreementState,
+  key: AgreementKey,
+  agreed: boolean,
+): AgreementState {
+  if (agreements[key] === agreed) return agreements
+  return { ...agreements, [key]: agreed }
+}
+
 export function toggleAllAgreementState(
   agreements: AgreementState,
   items: AgreementItem[] = agreementItems,

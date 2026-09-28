@@ -40,6 +40,7 @@
 /* 본문 타이포 16px 통일 (PermissionModal 기본 라벨 14px 보정) */
 .instructor-bulk-approve-modal.permission-modal .permission-modal__message,
 .instructor-bulk-reject-modal.permission-modal .permission-modal__message,
+.program-application-reject-modal.permission-modal .permission-modal__message,
 .participant-approve-modal.permission-modal .permission-modal__message,
 .participant-reject-modal.permission-modal .permission-modal__message,
 .participant-cancel-approval-modal.permission-modal .permission-modal__message,
@@ -51,13 +52,15 @@
 }
 
 .instructor-bulk-approve-modal.permission-modal .permission-modal__manual-summary,
-.instructor-bulk-reject-modal.permission-modal .permission-modal__manual-summary {
+.instructor-bulk-reject-modal.permission-modal .permission-modal__manual-summary,
+.program-application-reject-modal.permission-modal .permission-modal__manual-summary {
   font-size: 16px;
   line-height: 150%;
 }
 
 .instructor-bulk-approve-modal.permission-modal .permission-modal__field-error,
-.instructor-bulk-reject-modal.permission-modal .permission-modal__field-error {
+.instructor-bulk-reject-modal.permission-modal .permission-modal__field-error,
+.program-application-reject-modal.permission-modal .permission-modal__field-error {
   font-size: 16px;
   line-height: 150%;
 }
@@ -68,6 +71,9 @@
 .instructor-bulk-reject-modal.permission-modal .app-radio-group--large,
 .instructor-bulk-reject-modal.permission-modal .app-radio-group--large .ant-radio-wrapper,
 .instructor-bulk-reject-modal.permission-modal .app-radio--large.ant-radio-wrapper,
+.program-application-reject-modal.permission-modal .app-radio-group--large,
+.program-application-reject-modal.permission-modal .app-radio-group--large .ant-radio-wrapper,
+.program-application-reject-modal.permission-modal .app-radio--large.ant-radio-wrapper,
 .applicant-notification-resend-modal.permission-modal .app-radio-group--large,
 .applicant-notification-resend-modal.permission-modal .app-radio-group--large .ant-radio-wrapper,
 .applicant-notification-resend-modal.permission-modal .app-radio--large.ant-radio-wrapper,

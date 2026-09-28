@@ -5,7 +5,7 @@ import { clearMockProgramCatalogCache } from './mock-program-catalog-client'
 import { getMockProgramById, getMockPrograms, loadMockProgramById, loadMockPrograms } from './mock-programs'
 
 /**
- * 시드를 즉시 보여 준 뒤, mock 로그인이면 catalog merge 로 hydrate.
+ * 시드를 즉시 보여 준 뒤, DEV 비실세션이면 catalog merge 로 hydrate.
  * catalog fetch 는 mock-program-catalog-client 모듈 캐시로 StrictMode 이중 effect를 합친다.
  */
 export function useMockProgramsCatalog(): ProgramDetail[] {

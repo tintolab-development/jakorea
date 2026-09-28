@@ -1,8 +1,8 @@
 /**
- * 홈 섹션 mock 데이터 — 실제 에셋·API 연동 시 이 파일만 교체.
+ * 홈 섹션 mock 데이터 — 공개 API(`GET /api/public/main`) 실패·빈 필드의 fallback SSOT.
+ * 연동 시 `lib/map-public-main.ts`가 이 값을 기본으로 쓰고, 원격 값만 덮어쓴다.
  */
 
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
 import partnerLogo01Url from '@/features/corporate-donation/image/partner-logo-01.svg'
 import partnerLogo02Url from '@/features/corporate-donation/image/partner-logo-02.svg'
 import partnerLogo03Url from '@/features/corporate-donation/image/partner-logo-03.svg'
@@ -15,7 +15,7 @@ import partnerLogo09Url from '@/features/corporate-donation/image/partner-logo-0
 import partnerLogo10Url from '@/features/corporate-donation/image/partner-logo-10.svg'
 import partnerLogo11Url from '@/features/corporate-donation/image/partner-logo-11.svg'
 import partnerLogo12Url from '@/features/corporate-donation/image/partner-logo-12.svg'
-import heroClassroomUrl from '../image/background/hero-classroom.png'
+import heroClassroomUrl from '../image/background/hero-classroom.jpg'
 
 export type HomeHeroSlide = {
   id: string
@@ -109,12 +109,11 @@ export const HOME_PARTNER_LOGO_ROWS: readonly (readonly HomePartnerLogo[])[] = [
   ],
 ]
 
+/** 홈 Achievements — 마케팅 정적 카피(API 무관). remote 세션에서도 영역·수치 유지 */
 export function getHomeAchievementStats(): readonly HomeAchievementStat[] {
-  if (!shouldUsePlatformMockData()) return []
   return HOME_ACHIEVEMENT_STATS
 }
 
 export function getHomeAchievementHighlight(): HomeAchievementStat | null {
-  if (!shouldUsePlatformMockData()) return null
   return HOME_ACHIEVEMENT_HIGHLIGHT
 }

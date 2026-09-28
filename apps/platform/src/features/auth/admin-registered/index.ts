@@ -29,10 +29,11 @@ export {
   normalizeAdminProvisionedOnboardingStep,
   resolveAdminProvisionedOnboardingEntryPath,
   resolveAdminProvisionedOnboardingPath,
+  resolveAdminProvisionedNoticeCta,
   resolveAdminProvisionedStepFromPathname,
   shouldContinueAdminProvisionedOnboarding,
 } from './lib/onboarding-step'
-export type { AdminProvisionedOnboardingStep } from './lib/onboarding-step'
+export type { AdminProvisionedNoticeCta, AdminProvisionedOnboardingStep } from './lib/onboarding-step'
 export {
   buildAdminRegisteredConfirmationRows,
   isAdminRegisteredEditValid,
@@ -43,7 +44,6 @@ export {
   getAdminRegisteredSignUpChangePasswordPath,
   getAdminRegisteredPasswordChangeRequired,
   isMockAdminRegisteredEmail,
-  isMockAdminRegisteredFirstLogin,
   isMockAdminRegisteredIdentityMatch,
   requiresAdminRegisteredOnboarding,
   requiresAdminRegisteredPasswordChange,
@@ -72,6 +72,7 @@ export { useAdminProvisionedCompleteMutation } from './hooks/use-admin-provision
 export { mapPortalProfileToAdminRegisteredWizardPartial } from './lib/map-portal-profile-to-wizard'
 export { mapAdminRegisteredEditToPortalProfileUpdate } from './lib/map-profile-update'
 export { mapAdminProvisionedProfileRequest } from './lib/map-admin-provisioned-profile'
+export { canStartAdminProvisionedIdentityVerification } from './lib/can-start-identity-verification'
 export {
   clearAdminProvisionedIdentityConfirmPending,
   consumeAdminProvisionedIdentityConfirmPending,

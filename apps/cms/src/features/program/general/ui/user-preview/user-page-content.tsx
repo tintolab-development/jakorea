@@ -91,16 +91,22 @@ function toneClassName(tone: RecruitmentUserSpecRow['tone']) {
   }
 }
 
-function PosterPlaceholder() {
-  return (
-    <div className="user-page-content__poster-placeholder" aria-hidden>
-      <div className="user-page-content__poster-placeholder-inner">
-        <span className="user-page-content__poster-placeholder-title">FedEx-JA</span>
-        <span className="user-page-content__poster-placeholder-sub">
-          International Trade Challenge 2026
-        </span>
+function Poster({ imageUrl, title }: { imageUrl?: string; title: string }) {
+  if (!imageUrl) {
+    return (
+      <div className="user-page-content__poster-placeholder" aria-hidden>
+        <div className="user-page-content__poster-placeholder-inner">
+          <span className="user-page-content__poster-placeholder-title">FedEx-JA</span>
+          <span className="user-page-content__poster-placeholder-sub">
+            International Trade Challenge 2026
+          </span>
+        </div>
       </div>
-    </div>
+    )
+  }
+
+  return (
+    <img className="user-page-content__poster" src={imageUrl} alt={title} />
   )
 }
 
@@ -221,7 +227,7 @@ export function ParticipantRecruitmentUserPageContent({
         </div>
 
         <aside className="user-page-content__sidebar">
-          <PosterPlaceholder />
+          <Poster imageUrl={viewModel.posterImageUrl} title={viewModel.title} />
 
           <button type="button" className="user-page-content__apply-btn" tabIndex={-1}>
             <span className="user-page-content__apply-btn-text">

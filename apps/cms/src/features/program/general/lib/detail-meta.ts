@@ -16,7 +16,7 @@ import {
 import { getTempMockOrgProgramIfId } from '@/features/program/general/lib/temp-mock-org-program'
 import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
-import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
+import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import type { GeneralProgressTabKey } from '@/features/program/general/lib/progress-tabs'
 import {
   programHasGeneralSatisfactionSurvey,
@@ -102,7 +102,7 @@ export function getGeneralVolunteerInterviewEnabled(program: Program): boolean {
 }
 
 export function getGeneralSurveyMenuItems(program: Program): GeneralSurveyMenuItem[] {
-  const keys = normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys ?? [])
+  const keys = resolveProgramSurveyMenuKeys(program)
   const items: GeneralSurveyMenuItem[] = []
 
   if (keys.includes('survey')) {

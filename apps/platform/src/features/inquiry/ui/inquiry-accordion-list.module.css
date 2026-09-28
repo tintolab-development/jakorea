@@ -4,6 +4,7 @@
   width: 100%;
   min-width: 0;
   border-top: 2px solid var(--color-border-strong);
+  border-bottom: 1px solid var(--color-border-default);
 }
 
 .item {
@@ -199,6 +200,16 @@
 }
 
 @media (--bp-below-pc) {
+  .title {
+    color: var(--color-neutral-black);
+    font-family: var(--font-family-base);
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 145%;
+    letter-spacing: 0;
+  }
+
   .panelRow {
     padding: var(--spacing-40) var(--spacing-32) var(--spacing-40) var(--spacing-56);
   }

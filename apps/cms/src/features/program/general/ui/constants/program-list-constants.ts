@@ -180,9 +180,24 @@ export const programListTargetLevelOptions = [
   { value: 'elementary', label: '초등학생' },
   { value: 'middle', label: '중학생' },
   { value: 'high', label: '고등학생' },
+  { value: 'university', label: '대학생' },
   { value: 'college', label: '대학생' },
   { value: 'adult', label: '성인' },
 ]
+
+/** 목록「교육 대상」필터 — `targetLevels` 중 하나 또는 단일 `targetLevel`과 일치 */
+export function programMatchesTargetLevelFilter(
+  program: Pick<Program, 'targetLevel' | 'targetLevels'>,
+  filter: string
+): boolean {
+  if (!filter) return true
+  const levels = program.targetLevels?.length
+    ? program.targetLevels
+    : program.targetLevel
+      ? [program.targetLevel]
+      : []
+  return levels.includes(filter as TargetLevel)
+}
 
 /** 프로그램 목록 교육 대상 표기 (필터 옵션과 동일, `초등` 등 단축 라벨과 구분) */
 export function getProgramListTargetLevelLabel(value: string | undefined): string {
@@ -193,6 +208,8 @@ export function getProgramListTargetLevelLabel(value: string | undefined): strin
     초: '초등학생',
     중: '중학생',
     고: '고등학생',
+    university: '대학생',
+    college: '대학생',
   }
   return legacyShort[value] ?? value
 }

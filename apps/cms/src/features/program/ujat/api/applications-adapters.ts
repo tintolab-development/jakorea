@@ -110,10 +110,7 @@ export function mapOrganizationApplicationToUjatInstitutionRow(
     regionKey,
     no: index + 1,
     institutionName: dto.organizationName?.trim() || '기관명 없음',
-    tempAssignmentStatus: mapOrgStatusToTempAssignment(
-      dto.applicationStatus,
-      dto.temporaryAssignmentStatus
-    ),
+    tempAssignmentStatus: mapOrgStatusToTempAssignment(dto.applicationStatus),
     gradeClassCounts,
     totalClassCount: sumGradeClassCounts(gradeClassCounts) || classCount,
     scheduleSlots: buildEmptyScheduleSlots(),
@@ -327,7 +324,7 @@ export function mapVolunteerApplicationToUjatApplicantRow(
         ? 'assigned'
         : projection.interviewAssignmentStatus,
     programId: toId(dto.programId) || programId,
-    half: fromUjatRecruitHalfApi(dto.recruitHalf, half),
+    half: fromUjatRecruitHalfApi(undefined, half),
     englishName: '',
     id1365: '',
     gender: '',

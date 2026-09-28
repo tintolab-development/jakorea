@@ -14,6 +14,8 @@ interface TemplateFullpageModalProps {
   description?: ReactNode
   templateTabType: 'writing' | 'issuance'
   onPreview?: () => void
+  /** false면 헤더 「미리보기」 버튼을 숨긴다. 기본 true */
+  showPreview?: boolean
   onSave?: () => void
   /** 사용자 추가 생성 템플릿 — 시안: 삭제 | 미리보기 | 저장 */
   showDeleteButton?: boolean
@@ -45,6 +47,11 @@ interface TemplateFullpageModalProps {
   subHeader?: ReactNode
   /** `full-page-modal__body-header` 좌측(닫기·미리보기·임시저장과 동일 행) */
   bodyHeaderLeading?: ReactNode
+  /**
+   * writing 헤더 액션(닫기/미리보기/임시저장) **앞**에 붙는 슬롯.
+   * 프로그램 등록 개발용 자동입력 등.
+   */
+  headerActionsLeading?: ReactNode
   /** 프로그램 상세 등 다른 풀페이지 모달 위에 겹칠 때 스택 순서 */
   zIndex?: number
 }
@@ -79,6 +86,7 @@ export function TemplateFullpageModal({
   description,
   templateTabType,
   onPreview,
+  showPreview = true,
   onSave,
   showDeleteButton = false,
   onDelete,
@@ -96,6 +104,7 @@ export function TemplateFullpageModal({
   footerActions,
   subHeader,
   bodyHeaderLeading,
+  headerActionsLeading,
   zIndex,
 }: TemplateFullpageModalProps) {
   const resolvedFooterActions =
@@ -103,6 +112,7 @@ export function TemplateFullpageModal({
   const rootClassName = [
     'full-page-modal',
     registrationUserMode ? 'full-page-modal--registration-user-mode' : '',
+    rightNavigation == null ? 'full-page-modal--no-right-nav' : '',
     className,
   ]
     .filter(Boolean)
@@ -121,6 +131,7 @@ export function TemplateFullpageModal({
   const headerActions =
     templateTabType === 'writing' ? (
       <>
+        {headerActionsLeading}
         {showDeleteButton ? (
           <CmsButton variant="delete" onClick={onDelete} loading={deleteLoading} disabled={deleteLoading}>
             삭제
@@ -130,15 +141,18 @@ export function TemplateFullpageModal({
             닫기
           </CmsButton>
         )}
-        <CmsButton variant="secondary" onClick={onPreview}>
-          미리보기
-        </CmsButton>
+        {showPreview ? (
+          <CmsButton variant="secondary" onClick={onPreview}>
+            미리보기
+          </CmsButton>
+        ) : null}
         <CmsButton onClick={() => onSave?.()} disabled={deleteLoading}>
           {resolvedSaveLabel}
         </CmsButton>
       </>
     ) : (
       <>
+        {headerActionsLeading}
         <CmsButton
           variant="secondary"
           icon={<DownloadOutlined />}
@@ -149,9 +163,11 @@ export function TemplateFullpageModal({
         >
           문서 다운로드
         </CmsButton>
-        <CmsButton variant="secondary" onClick={onPreview}>
-          미리보기
-        </CmsButton>
+        {showPreview ? (
+          <CmsButton variant="secondary" onClick={onPreview}>
+            미리보기
+          </CmsButton>
+        ) : null}
         <CmsButton onClick={() => onSave?.()}>{resolvedSaveLabel}</CmsButton>
       </>
     )
@@ -254,9 +270,11 @@ export function TemplateFullpageModal({
 
           <div className="full-page-modal__contents">
             <div className="full-page-modal__left">{leftContent}</div>
-            <aside className="full-page-modal__right-wrap">
-              <div className="full-page-modal__right">{rightNavigation}</div>
-            </aside>
+            {rightNavigation != null ? (
+              <aside className="full-page-modal__right-wrap">
+                <div className="full-page-modal__right">{rightNavigation}</div>
+              </aside>
+            ) : null}
           </div>
           {resolvedFooterActions != null && resolvedFooterActions.length > 0 ? (
             <div

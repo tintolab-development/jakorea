@@ -139,7 +139,7 @@
 .notice-form-modal__filter-inner {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: flex-start;
   gap: 16px;
   width: 100%;
@@ -167,6 +167,10 @@
 .notice-form-modal__filter-field--radio {
   width: 200px;
   max-width: 200px;
+}
+
+.notice-form-modal__filter-field--radio .app-radio-group {
+  min-height: 44px;
 }
 
 /* 제목 → 내용 24px */

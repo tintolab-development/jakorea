@@ -79,6 +79,55 @@ describe('모집 정보 display — 공통정보 폴백 금지', () => {
     expect(detail.learningSupportContent).toBeUndefined()
   })
 
+  it('최종 합격자 발표 — 날짜/방법 중 하나만 있어도 -로 사라지지 않는다', () => {
+    // 회귀: resultAnnouncementDate가 없으면 resultAnnouncementMethod가 있어도
+    // 전체 라벨이 undefined → '-' 로 노출되던 버그
+    const methodOnly: Program = {
+      ...commonOnlyProgram(),
+      resultAnnouncementMethod: '홈페이지 공지 및 담당교사 개별 안내',
+    }
+    expect(
+      resolveGeneralProgramParticipantRecruitmentDisplay(methodOnly).finalAnnouncementLabel
+    ).toBe('홈페이지 공지 및 담당교사 개별 안내')
+
+    const dateOnly: Program = {
+      ...commonOnlyProgram(),
+      resultAnnouncementDate: '2026-01-26T00:00:00.000Z',
+    }
+    expect(
+      resolveGeneralProgramParticipantRecruitmentDisplay(dateOnly).finalAnnouncementLabel
+    ).not.toBe('-')
+
+    const both: Program = {
+      ...commonOnlyProgram(),
+      resultAnnouncementDate: '2026-01-26T00:00:00.000Z',
+      resultAnnouncementMethod: '홈페이지 공지',
+    }
+    expect(
+      resolveGeneralProgramParticipantRecruitmentDisplay(both).finalAnnouncementLabel
+    ).toContain('홈페이지 공지')
+
+    expect(
+      resolveGeneralProgramParticipantRecruitmentDisplay(commonOnlyProgram())
+        .finalAnnouncementLabel
+    ).toBe('-')
+  })
+
+  it('교육받은 교사 — nested 라벨이 없으면 컬럼으로 조회를 복원한다', () => {
+    const program: Program = {
+      ...commonOnlyProgram(),
+      id: '186005',
+      generalParticipantTypes: ['school_institution'],
+      generalProgramAudience: 'organization',
+    }
+    const display = resolveGeneralProgramParticipantRecruitmentDisplay(program)
+    expect(display.targetLabel).toBe('초등학교')
+    expect(display.recruitmentPeriodLabel).not.toBe('-')
+    expect(display.operationPeriodLabel).not.toBe('-')
+    expect(display.contactPhone).toBe('02-0000-0000')
+    expect(display.contactEmail).toBe('common@jakorea.org')
+  })
+
   it('강사·봉사자도 공통 폴백 없이 -', () => {
     const program = commonOnlyProgram()
     expect(resolveGeneralProgramInstructorRecruitmentDisplay(program).instructorTargetLabel).toBe(

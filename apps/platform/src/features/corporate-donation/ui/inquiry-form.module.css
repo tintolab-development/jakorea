@@ -1,0 +1,29 @@
+.form {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.success {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-24);
+}
+
+.error {
+  margin: 0;
+}
+
+.backLink {
+  color: var(--color-primary-500);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}

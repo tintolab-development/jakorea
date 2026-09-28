@@ -32,7 +32,7 @@ function jaKoreaApi() {
 }
 
 async function listRemoteNotices(filter?: NoticeListFilter): Promise<Notice[]> {
-  const response = await jaKoreaApi().list6(toNoticeListParams(filter))
+  const response = await jaKoreaApi().list5(toNoticeListParams(filter))
   return (response.items ?? []).map(mapNoticeResponseToDomain)
 }
 
@@ -73,7 +73,7 @@ export async function getNoticeService(id: string): Promise<Notice | null> {
 export async function createNoticeService(input: NoticeCreateInput): Promise<Notice> {
   if (shouldUseNoticesRemoteApi()) {
     const attachmentAssetId = await resolveAttachmentAssetId(input.attachments)
-    const created = await jaKoreaApi().create5(toNoticeCreateRequest(input, attachmentAssetId))
+    const created = await jaKoreaApi().create7(toNoticeCreateRequest(input, attachmentAssetId))
     return mapNoticeResponseToDomain(created)
   }
   return createLocal(input)

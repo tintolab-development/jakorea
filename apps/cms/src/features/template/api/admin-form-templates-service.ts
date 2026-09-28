@@ -11,7 +11,10 @@ import {
   writingFormDraftToSchemaJson,
 } from '@/features/template/api/adapters/form-template-draft-adapters'
 import { ISSUANCE_FORM_TYPE, WRITING_FORM_TYPE } from '@/features/template/api/form-template-catalog'
-import { buildLocalDuplicateWritingTemplateCode } from '@/features/template/lib/form-template-delete-policy'
+import {
+  buildLocalDuplicateWritingTemplateCode,
+  shouldOmitImmutableFormSchemaJson,
+} from '@/features/template/lib/form-template-delete-policy'
 import {
   getFormTemplateVersionCacheEntry,
   removeFormTemplateVersionCacheEntry,
@@ -32,6 +35,10 @@ import {
 } from '@/features/template/api/form-templates-api-client'
 import { normalizeWritingFormDraftFromApi } from '@/features/template/lib/form-template-seed-registry'
 import {
+  forgetUserCreatedWritingTemplate,
+  rememberUserCreatedWritingTemplate,
+} from '@/features/template/lib/user-created-writing-template-catalog'
+import {
   isFormTemplateLocalFallbackEnabled,
   shouldUseRemoteDraftApiForTemplateCode,
 } from '@/features/template/lib/form-template-remote-draft'
@@ -50,6 +57,10 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import type {
+  FormTemplateListItemResponse,
+  ListTemplatesParams,
+} from '@/shared/api/generated/forms-surveys/schemas'
 
 function shouldUseRemoteDraftApiForTemplate(templateCode: string): boolean {
   return (
@@ -80,15 +91,36 @@ export function shouldUseFormsSurveysRemoteApi(): boolean {
   return isRealApiModuleEnabled('formsSurveys') && hasRemoteAdminJwt()
 }
 
+const FORM_TEMPLATE_LIST_PAGE_SIZE = 100
+const FORM_TEMPLATE_LIST_MAX_PAGES = 20
+
+async function fetchAllFormTemplateListItems(
+  params: Omit<ListTemplatesParams, 'page' | 'size'>
+): Promise<FormTemplateListItemResponse[]> {
+  const items: FormTemplateListItemResponse[] = []
+  let page = 0
+  let totalPages = 1
+  while (page < totalPages && page < FORM_TEMPLATE_LIST_MAX_PAGES) {
+    const result = await fetchFormTemplatesRemote({
+      ...params,
+      page,
+      size: FORM_TEMPLATE_LIST_PAGE_SIZE,
+    })
+    const pageItems = result.items ?? []
+    items.push(...pageItems)
+    totalPages = result.totalPages ?? page + 1
+    if (pageItems.length === 0) break
+    page += 1
+  }
+  return items
+}
+
 export async function getWritingFormSectionsRemote(): Promise<TemplateSection[]> {
   assertFormsSurveysRemoteReady()
-  const page = await fetchFormTemplatesRemote({
+  const items = await fetchAllFormTemplateListItems({
     formType: WRITING_FORM_TYPE,
-    page: 0,
-    size: 50,
     useYn: true,
   })
-  const items = page.items ?? []
   upsertFormTemplateVersionCacheFromListItems(items)
   return buildWritingFormSectionsFromApiItems(items)
 }
@@ -99,13 +131,10 @@ export function getMockWritingFormSections(): TemplateSection[] {
 
 export async function getIssuanceFormSectionsRemote(): Promise<TemplateSection[]> {
   assertFormsSurveysRemoteReady()
-  const page = await fetchFormTemplatesRemote({
+  const items = await fetchAllFormTemplateListItems({
     formType: ISSUANCE_FORM_TYPE,
-    page: 0,
-    size: 50,
     useYn: true,
   })
-  const items = page.items ?? []
   upsertFormTemplateVersionCacheFromListItems(items)
   return buildIssuanceFormSectionsFromApiItems(items)
 }
@@ -206,12 +235,14 @@ const EMPTY_SCHEMA_DRAFT: WritingFormDraft = normalizeWritingFormDraft({
   paragraphs: [],
 })
 
-function buildSaveRecordFromVersionResponse(args: {
+export function buildSaveRecordFromVersionResponse(args: {
   templateCode: string
   schemaJson?: string | Record<string, unknown> | null
   extensionJson?: string | Record<string, unknown> | null
   settingsJson?: string | Record<string, unknown> | null
   updatedAt?: string
+  /** program-scoped version GET — seed migration으로 PUT diff 유발 방지 */
+  skipSeedMigration?: boolean
 }): WritingFormTemplateSaveRecord | null {
   const extension = extensionJsonToExtensionPayload(args.extensionJson)
   const settings = settingsJsonToSettingsPayload(args.settingsJson)
@@ -220,6 +251,8 @@ function buildSaveRecordFromVersionResponse(args: {
   if (draft == null) {
     if (settings == null) return null
     draft = EMPTY_SCHEMA_DRAFT
+  } else if (args.skipSeedMigration) {
+    draft = normalizeWritingFormDraft(draft)
   } else {
     draft = normalizeWritingFormDraftFromApi(args.templateCode, draft)
   }
@@ -299,6 +332,7 @@ export async function loadFormTemplateVersionDraftByVersionId(
     extensionJson: version.extensionJson,
     settingsJson: version.settingsJson,
     updatedAt: version.updatedAt,
+    skipSeedMigration: true,
   })
 }
 
@@ -308,17 +342,20 @@ function buildVersionUpdateBody(args: {
   editorState?: Record<string, unknown>
   uiState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
+  omitSchemaJson?: boolean
 }): {
-  schemaJson: string
+  schemaJson?: string
   extensionJson?: string
   settingsJson?: string
 } {
   const body: {
-    schemaJson: string
+    schemaJson?: string
     extensionJson?: string
     settingsJson?: string
-  } = {
-    schemaJson: writingFormDraftToSchemaJson(args.draft),
+  } = {}
+
+  if (args.omitSchemaJson !== true) {
+    body.schemaJson = writingFormDraftToSchemaJson(args.draft)
   }
 
   if (
@@ -348,9 +385,18 @@ export async function saveFormTemplateVersionDraftByVersionId(args: {
   editorState?: Record<string, unknown>
   uiState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
+  templateCode?: string
+  omitSchemaJson?: boolean
 }): Promise<void> {
   assertFormsSurveysRemoteReady()
-  await updateFormTemplateVersionRemote(args.versionId, buildVersionUpdateBody(args))
+  await updateFormTemplateVersionRemote(
+    args.versionId,
+    buildVersionUpdateBody({
+      ...args,
+      omitSchemaJson:
+        args.omitSchemaJson === true || shouldOmitImmutableFormSchemaJson(args.templateCode),
+    })
+  )
 }
 
 /**
@@ -376,7 +422,13 @@ export async function saveFormTemplateVersionDraft(args: {
     throw new Error('저장할 템플릿 버전 ID를 찾을 수 없습니다. 작성 양식 목록을 먼저 조회해 주세요.')
   }
 
-  await updateFormTemplateVersionRemote(versionId, buildVersionUpdateBody(args))
+  await updateFormTemplateVersionRemote(
+    versionId,
+    buildVersionUpdateBody({
+      ...args,
+      omitSchemaJson: shouldOmitImmutableFormSchemaJson(args.templateCode),
+    })
+  )
 }
 
 export async function publishFormTemplateVersion(templateCode: string): Promise<void> {
@@ -406,9 +458,13 @@ export async function duplicateFormTemplateVersionRemote(args: {
   templateName?: string
 }): Promise<string> {
   assertFormsSurveysRemoteReady()
-  const cached = getFormTemplateVersionCacheEntry(args.sourceTemplateCode)
+  let cached = getFormTemplateVersionCacheEntry(args.sourceTemplateCode)
   if (cached?.templateId == null) {
-    throw new Error('복제할 템플릿 ID를 찾을 수 없습니다. 목록을 먼저 조회해 주세요.')
+    await resolveFormTemplateCatalogIds(args.sourceTemplateCode)
+    cached = getFormTemplateVersionCacheEntry(args.sourceTemplateCode)
+  }
+  if (cached?.templateId == null) {
+    throw new Error('복제할 템플릿 ID를 찾을 수 없습니다. 양식 관리에서 템플릿을 확인해 주세요.')
   }
 
   const sourceVersionId = await resolveTemplateVersionId(args.sourceTemplateCode)
@@ -421,15 +477,24 @@ export async function duplicateFormTemplateVersionRemote(args: {
   if (newCode === args.sourceTemplateCode) {
     newCode = buildLocalDuplicateWritingTemplateCode(args.sourceTemplateCode)
   }
-  if (copied.templateId != null && copied.templateVersionId != null) {
-    upsertFormTemplateVersionCacheEntry({
-      templateCode: newCode,
-      templateId: copied.templateId,
-      templateVersionId: copied.templateVersionId,
-      latestVersionId: copied.templateVersionId,
-      latestVersionNo: copied.versionNo,
-    })
+  const copiedTemplateId = copied.templateId ?? cached.templateId
+  let copiedVersionId = copied.templateVersionId
+  if (copiedVersionId == null) {
+    const versions = await fetchFormTemplateVersionsRemote(copiedTemplateId)
+    const latest =
+      versions.find(version => version.versionStatus === 'DRAFT') ?? versions.at(-1)
+    copiedVersionId = latest?.templateVersionId
   }
+  if (copiedVersionId == null) {
+    throw new Error('복제된 템플릿 버전 ID를 찾지 못했습니다.')
+  }
+  upsertFormTemplateVersionCacheEntry({
+    templateCode: newCode,
+    templateId: copiedTemplateId,
+    templateVersionId: copiedVersionId,
+    latestVersionId: copiedVersionId,
+    latestVersionNo: copied.versionNo,
+  })
 
   const nextName = args.templateName?.trim()
   if (nextName != null && nextName !== '' && copied.templateId != null) {
@@ -486,6 +551,13 @@ export async function createWritingFormTemplateRemote(args: {
     })
   }
 
+  rememberUserCreatedWritingTemplate({
+    templateCode: newCode,
+    templateName,
+    sectionKey: args.target,
+    createdAt: new Date().toISOString(),
+  })
+
   return newCode
 }
 
@@ -533,15 +605,17 @@ export async function renameFormTemplateByCode(
 }
 
 export async function deleteFormTemplate(templateCode: string): Promise<void> {
-  assertFormsSurveysRemoteReady()
-
   const cached = getFormTemplateVersionCacheEntry(templateCode)
   const templateId = cached?.templateId
   if (templateId == null) {
-    throw new Error('삭제할 템플릿 ID를 찾을 수 없습니다. 목록을 먼저 조회해 주세요.')
+    forgetUserCreatedWritingTemplate(templateCode)
+    removeWritingFormTemplateSave(templateCode)
+    return
   }
 
+  assertFormsSurveysRemoteReady()
   await deleteFormTemplateRemote(templateId)
+  forgetUserCreatedWritingTemplate(templateCode)
   removeFormTemplateVersionCacheEntry(templateCode)
   removeWritingFormTemplateSave(templateCode)
 }

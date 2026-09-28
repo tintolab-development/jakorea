@@ -3,10 +3,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
-import {
-  getDataManagementApiErrorMessage,
-  getDetailedProgramBusinessAreaFieldError,
-} from '@/features/data-management/api/get-data-management-api-error'
+import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { isDataManagementListLoading } from '@/features/data-management/lib/is-list-query-loading'
 import { useDetailedProgramListQuery } from '@/features/detailed-program/hooks/use-detailed-program-list-query'
 import { useDetailedProgramMutations } from '@/features/detailed-program/hooks/use-detailed-program-mutations'
@@ -24,17 +21,9 @@ import {
   EMPTY_TABLE_PAGE_CONTEXT,
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
-import {
-  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
-  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
-} from '@/shared/constants'
-import {
-  CMS_TABLE_NO_COL_CLASS,
-  TABLE_COLUMN_WIDTHS,
-} from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
-  buildDomainEntityDeleteMessageLines,
   CmsButton,
   CmsInput,
   CmsRadio,
@@ -42,6 +31,7 @@ import {
   ContentModal,
   DeleteGuideModal,
   cmsAlertModal,
+  showRegisterCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -54,6 +44,21 @@ const USAGE_RADIO_OPTIONS = [
   { label: '사용', value: true },
   { label: '미사용', value: false },
 ] as const
+
+const DETAILED_PROGRAM_DELETE_GUIDE_TITLE = '세부 프로그램 삭제'
+
+const DETAILED_PROGRAM_DELETE_GUIDE_LINES_SINGLE = [
+  '해당 세부 프로그램을 삭제하시겠습니까?',
+  '삭제된 정보는 되돌릴 수 없습니다.',
+] as const
+
+function detailedProgramDeleteGuideLines(selectedCount: number): string[] {
+  if (selectedCount <= 1) return [...DETAILED_PROGRAM_DELETE_GUIDE_LINES_SINGLE]
+  return [
+    `선택한 ${selectedCount}개의 세부 프로그램을 삭제하시겠습니까?`,
+    DETAILED_PROGRAM_DELETE_GUIDE_LINES_SINGLE[1],
+  ]
+}
 
 /** 사용 여부 열 — 시안 240px (수정 모드 라디오 2개 가로 배치) */
 const USAGE_COL_WIDTH = 240
@@ -108,7 +113,6 @@ export default function DetailedProgramPage() {
   const draftByIdRef = useRef<Record<string, DetailedProgramDraft>>({})
   const [addItemModalOpen, setAddItemModalOpen] = useState(false)
   const [addItemModalKey, setAddItemModalKey] = useState(0)
-  const [addItemBusinessAreaError, setAddItemBusinessAreaError] = useState<string | null>(null)
   const [viewDeleteModalOpen, setViewDeleteModalOpen] = useState(false)
   const [viewDeleteModalLines, setViewDeleteModalLines] = useState<string[]>([])
   const viewDeletePendingIdsRef = useRef<string[]>([])
@@ -217,19 +221,13 @@ export default function DetailedProgramPage() {
       return
     }
 
-    const baseLines = buildDomainEntityDeleteMessageLines(
-      selectedRows.map(r => r.name),
-      '세부 프로그램'
-    )
-
     viewDeletePendingIdsRef.current = selectedRows.map(r => r.id)
-    setViewDeleteModalLines(baseLines)
+    setViewDeleteModalLines(detailedProgramDeleteGuideLines(selectedRows.length))
     setViewDeleteModalOpen(true)
   }, [canWrite, isEditMode, rows, selectedRowKeys, showAlert])
 
   const handleAddClick = useCallback(() => {
     if (!canWrite) return
-    setAddItemBusinessAreaError(null)
     setAddItemModalKey(k => k + 1)
     setAddItemModalOpen(true)
   }, [canWrite])
@@ -237,20 +235,14 @@ export default function DetailedProgramPage() {
   const handleAddItemSubmit = useCallback(
     async (values: DetailedProgramAddItemValues) => {
       if (!canWrite) return
-      setAddItemBusinessAreaError(null)
       try {
         await createMutation.mutateAsync({
           name: values.name,
           active: values.active,
-          businessArea: values.businessArea,
         })
         setAddItemModalOpen(false)
+        showRegisterCompletedAlert()
       } catch (error) {
-        const fieldError = getDetailedProgramBusinessAreaFieldError(error)
-        if (fieldError) {
-          setAddItemBusinessAreaError(fieldError)
-          return
-        }
         cmsAlertModal.show({
           title: '등록 실패',
           content: getDataManagementApiErrorMessage(error, '등록에 실패했습니다.'),
@@ -383,23 +375,13 @@ export default function DetailedProgramPage() {
         contentLoading={isInitialListLoading}
         actions={
           <>
-            <CmsButton
-              variant="delete"
-              onClick={handleBulkDelete}
-            >
+            <CmsButton variant="delete" onClick={handleBulkDelete}>
               항목 삭제
             </CmsButton>
-            <CmsButton
-              variant="secondary"
-              onClick={isEditMode ? handleSave : enterEditMode}
-            >
+            <CmsButton variant="secondary" onClick={isEditMode ? handleSave : enterEditMode}>
               {isEditMode ? '수정 완료' : '정보 수정'}
             </CmsButton>
-            <CmsButton
-              variant="primary"
-              onClick={handleAddClick}
-              disabled={isEditMode}
-            >
+            <CmsButton variant="primary" onClick={handleAddClick} disabled={isEditMode}>
               신규 등록
             </CmsButton>
           </>
@@ -436,13 +418,8 @@ export default function DetailedProgramPage() {
       <DetailedProgramAddItemModal
         key={addItemModalKey}
         open={addItemModalOpen}
-        onCancel={() => {
-          setAddItemBusinessAreaError(null)
-          setAddItemModalOpen(false)
-        }}
+        onCancel={() => setAddItemModalOpen(false)}
         onSubmit={handleAddItemSubmit}
-        businessAreaError={addItemBusinessAreaError}
-        onBusinessAreaChange={() => setAddItemBusinessAreaError(null)}
       />
 
       <ContentModal
@@ -452,8 +429,8 @@ export default function DetailedProgramPage() {
         width={600}
         description={
           deleteBlockedSelectedCount <= 1
-            ? '해당 세부 프로그램은 실적 관리에서 사용 중입니다.\n사용 중인 세부 프로그램은 삭제할 수 없습니다.'
-            : `선택한 **${deleteBlockedSelectedCount}**개의 세부 프로그램 중 실적 관리에서 사용 중인 항목이 있습니다.\n사용 중인 세부 프로그램은 삭제할 수 없습니다.`
+            ? '해당 세부 프로그램은 프로그램에서 사용 중입니다.\n사용 중인 세부 프로그램은 삭제가 불가합니다.'
+            : `선택한 **${deleteBlockedSelectedCount}**개의 세부 프로그램 중 프로그램에서 사용 중인 항목이 있습니다.\n사용 중인 세부 프로그램은 삭제할 수 없습니다.`
         }
         footer={
           <CmsButton
@@ -471,12 +448,10 @@ export default function DetailedProgramPage() {
 
       <DeleteGuideModal
         open={viewDeleteModalOpen}
-        title="세부 프로그램 삭제"
+        title={DETAILED_PROGRAM_DELETE_GUIDE_TITLE}
         lines={viewDeleteModalLines}
         confirmText="삭제"
         confirmVariant="delete"
-        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
-        confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
         confirmLoading={deleteMutation.isPending}
         onCancel={() => setViewDeleteModalOpen(false)}
         onConfirm={async () => {

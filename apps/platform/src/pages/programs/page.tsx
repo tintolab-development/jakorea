@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ProgramCategory, ProgramsListParams } from '@/features/program'
 import {
   buildProgramsListPath,
   DEFAULT_PROGRAMS_LIST_PARAMS,
-  filterAndSortPrograms,
   getProgramsListReturnPath,
   PROGRAM_CATEGORY_ITEMS,
   PROGRAM_FILTER_KEYS,
@@ -11,7 +10,7 @@ import {
   ProgramListItemRow,
   ProgramSort,
   readProgramsListParams,
-  useMockProgramsCatalog,
+  usePortalProgramsList,
 } from '@/features/program'
 import {
   educationFormFilterOptions,
@@ -19,7 +18,7 @@ import {
   recruitmentStatusFilterOptions,
   recruitmentTargetFilterOptions,
 } from '@/shared/lib/filter-options'
-import { useSearchFilters } from '@/shared/hooks'
+import { useDebouncedValue, useSearchFilters } from '@/shared/hooks'
 import {
   PFPagination,
   PFSearchDateFilter,
@@ -33,9 +32,8 @@ import { SearchListLayout } from '@/widgets/search-list-layout'
 import styles from './page.module.css'
 import { useNavigate } from 'react-router-dom'
 
-const PAGE_SIZE = 10
-
 const AUDIENCE_VALUES = new Set<ProgramCategory>(['all', 'youth', 'institution', 'instructor'])
+const SEARCH_DEBOUNCE_MS = 500
 
 function parseAudienceValue(value: string): ProgramCategory {
   return AUDIENCE_VALUES.has(value as ProgramCategory)
@@ -46,20 +44,41 @@ function parseAudienceValue(value: string): ProgramCategory {
 export function ProgramsPage() {
   const navigate = useNavigate()
   const [params, setParams] = useState(readProgramsListParams)
-  const programs = useMockProgramsCatalog()
+  const [draftQ, setDraftQ] = useState(() => readProgramsListParams().q)
+  const debouncedQ = useDebouncedValue(draftQ, SEARCH_DEBOUNCE_MS)
+  const { items: pageItems, totalCount, totalPages, currentPage, isPending, isError } =
+    usePortalProgramsList(params)
 
-  /** 탭·필터는 soft navigation — full reload 없이 URL·state만 동기화 (카탈로그 재요청 방지) */
+  /** 탭·필터는 soft navigation — URL·state만 동기화 */
   useEffect(() => {
     const onPopState = () => {
-      setParams(readProgramsListParams())
+      const next = readProgramsListParams()
+      setParams(next)
+      setDraftQ(next.q)
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
+  useEffect(() => {
+    setParams(prev => {
+      if (prev.q === debouncedQ) return prev
+      const merged: ProgramsListParams = { ...prev, q: debouncedQ, page: 1 }
+      const nextPath = buildProgramsListPath(merged)
+      const currentPath = `${window.location.pathname}${window.location.search}`
+      if (nextPath !== currentPath) {
+        window.history.pushState(null, '', nextPath)
+      }
+      return merged
+    })
+  }, [debouncedQ])
+
   const updateParams = (next: Partial<ProgramsListParams>) => {
     const merged = { ...params, ...next }
     setParams(merged)
+    if (next.q !== undefined) {
+      setDraftQ(next.q)
+    }
     const nextPath = buildProgramsListPath(merged)
     const currentPath = `${window.location.pathname}${window.location.search}`
     if (nextPath !== currentPath) {
@@ -89,15 +108,6 @@ export function ProgramsPage() {
     })
   }
 
-  const filteredPrograms = useMemo(
-    () => filterAndSortPrograms(programs, params),
-    [programs, params]
-  )
-
-  const totalPages = Math.max(1, Math.ceil(filteredPrograms.length / PAGE_SIZE))
-  const currentPage = Math.min(params.page, totalPages)
-  const pageItems = filteredPrograms.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
-
   return (
     <section className={styles.page}>
       <header className={styles.hero}>
@@ -123,8 +133,8 @@ export function ProgramsPage() {
       <SearchListLayout
         search={
           <PFSearchInput
-            value={params.q}
-            onValueChange={q => updateParams({ q, page: 1 })}
+            value={draftQ}
+            onValueChange={setDraftQ}
             placeholder="프로그램 검색 (예: 기업가 정신, 금융 문해력)"
           />
         }
@@ -157,7 +167,7 @@ export function ProgramsPage() {
           </>
         }
         onFilterReset={reset}
-        toolbarTitle={`총 ${filteredPrograms.length}개 프로그램`}
+        toolbarTitle={`총 ${totalCount}개 프로그램`}
         sort={<ProgramSort {...bindSort('sort')} />}
         pagination={
           <PFPagination
@@ -168,15 +178,29 @@ export function ProgramsPage() {
         }
       >
         <div className={styles.list}>
-          {pageItems.map(program => (
-            <ProgramListItemRow
-              key={program.id}
-              program={program}
-              onClick={() =>
-                navigate(programDetailPath(program.id, getProgramsListReturnPath()))
-              }
-            />
-          ))}
+          {isPending ? (
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
+              프로그램을 불러오는 중입니다.
+            </PFText>
+          ) : isError ? (
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
+              프로그램을 불러오지 못했습니다.
+            </PFText>
+          ) : pageItems.length === 0 ? (
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
+              등록된 프로그램이 없습니다.
+            </PFText>
+          ) : (
+            pageItems.map(program => (
+              <ProgramListItemRow
+                key={program.id}
+                program={program}
+                onClick={() =>
+                  navigate(programDetailPath(program.id, getProgramsListReturnPath()))
+                }
+              />
+            ))
+          )}
         </div>
       </SearchListLayout>
     </section>

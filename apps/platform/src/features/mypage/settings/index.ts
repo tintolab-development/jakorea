@@ -5,6 +5,8 @@ export { showSettingsInstructorConsentDocuments } from './lib/consent-visibility
 export { SettingsView } from './ui/view'
 export type { SettingsViewProps } from './ui/view'
 export { SettingsConsentsView } from './ui/consents-view'
+export { SettingsSocialAccountsView } from './ui/social-accounts-view'
+export type { SettingsSocialAccountsViewProps } from './ui/social-accounts-view'
 export type { SettingsConsentsViewProps } from './ui/consents-view'
 export { SettingsEditForm } from './ui/edit-form'
 export type { SettingsEditFormProps } from './ui/edit-form'

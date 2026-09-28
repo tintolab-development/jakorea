@@ -17,6 +17,7 @@ import {
 } from '@/features/impact-stories/api/hooks'
 import { impactStoriesQueryKeys } from '@/features/impact-stories/api/query-keys'
 import { IMPACT_STORIES_CHANGED_EVENT } from '@/features/impact-stories/api/store'
+import { impactStoryMutationFailureAlert } from '@/features/impact-stories/lib/mutation-failure-alert'
 import { isPinLimitError } from '@/features/impact-stories/lib/pin-limits'
 import {
   StoryFormModal,
@@ -97,10 +98,12 @@ export function ImpactStoryDetailPage() {
           })
           return
         }
-        showAlert({
-          title: '저장 실패',
-          content: '게시글 저장에 실패했습니다. 다시 시도해 주세요.',
-        })
+        showAlert(
+          impactStoryMutationFailureAlert(
+            error,
+            '게시글 저장에 실패했습니다. 다시 시도해 주세요.',
+          ),
+        )
       }
     },
     [detailQuery, id, showAlert, updateMutation]

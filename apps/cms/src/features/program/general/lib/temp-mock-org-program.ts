@@ -1056,7 +1056,18 @@ function buildProgressVolunteers(): ParticipatingVolunteerRow[] {
   })
 }
 
-const PROGRAM = buildProgram()
+/**
+ * detail-common-info-display ↔ common-info-edit-schema ↔ detail-meta ↔ 이 파일
+ * 순환 import 때문에 모듈 최상단에서 buildProgram()을 돌리면
+ * GENERAL_PROGRAM_ORG_CURRICULUM_MULTI_COMMON_INFO_MOCK TDZ 에러가 난다.
+ * getter 호출 시점(모든 모듈 init 이후)에만 생성한다.
+ */
+let cachedProgram: Program | null = null
+function getCachedProgram(): Program {
+  if (cachedProgram == null) cachedProgram = buildProgram()
+  return cachedProgram
+}
+
 const APPLICANT_SCHOOLS = buildApplicantSchools()
 /** QA admin-accounts — 165001(PM) · 165002(파트너) · 165003(뷰어) */
 function buildProgramManagers(): ProgramManagerRow[] {
@@ -1109,12 +1120,12 @@ const PROGRESS_VOLUNTEERS = buildProgressVolunteers()
 
 export function getTempMockOrgProgram(): Program | null {
   if (!isGeneralProgramTempMockEnabled()) return null
-  return cloneJson(PROGRAM)
+  return cloneJson(getCachedProgram())
 }
 
 export function getTempMockOrgProgramIfId(programId?: string | null): Program | null {
   if (!isGeneralProgramTempMockProgramId(programId)) return null
-  return cloneJson(PROGRAM)
+  return cloneJson(getCachedProgram())
 }
 
 export function getTempMockOrgApplicantSchools(programId?: string | null): ApplicantSchoolRow[] {

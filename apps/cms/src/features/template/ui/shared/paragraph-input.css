@@ -37,6 +37,7 @@
   align-items: center;
   align-self: flex-start;
   flex-shrink: 0;
+  margin-left: 4px;
   color: var(--paragraph-input-red);
   font-family: Pretendard, sans-serif;
   font-size: 18px;
@@ -44,6 +45,19 @@
   font-weight: 700;
   line-height: 120%;
   pointer-events: none;
+}
+
+/* 단락 타이틀 옆 필수(*) — 타이틀 크기와 맞추고 잘리지 않게 */
+.paragraph-input--title .paragraph-input__required {
+  align-self: baseline;
+  font-size: 20px;
+  line-height: 150%;
+}
+
+.paragraph-input.paragraph-input-explanation-title.paragraph-input--title
+  .paragraph-input__required {
+  font-size: 24px;
+  line-height: 140%;
 }
 
 .paragraph-input__leading {
@@ -56,6 +70,17 @@
   gap: 0;
   min-width: 0;
   max-width: 100%;
+}
+
+.paragraph-input--title .paragraph-input__main {
+  /* 타이틀 본문이 늘어나도 * 가 flex 밖으로 밀려 잘리지 않도록 */
+  width: 100%;
+}
+
+.paragraph-input--title .paragraph-input__view-text {
+  /* grow 금지 — 짧은 타이틀에서 * 가 카드 우측으로 밀리지 않게 */
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 /* 타이틀 번호 접두(Q1, 1. …) — 본문이 비어 있어도 항상 본문색(#3d3d3d) */
@@ -88,8 +113,14 @@
   border-bottom-color: var(--paragraph-input-mint);
 }
 
-/* 단행 타이틀 — JS 폭 측정 대신 브라우저 intrinsic sizing (키입력 레이아웃 스래싱 방지) */
+/* 단행 타이틀·설명 — JS 폭 측정 대신 브라우저 intrinsic sizing (키입력 레이아웃 스래싱 방지)
+ * 설명글 제목형 하단 설명(개행 없음)도 타이틀과 동일하게 텍스트 길이에 맞춰 최대 100%까지 확장 */
 .paragraph-input--edit.paragraph-input--title:not(.paragraph-input--description-multiline)
+  .paragraph-input__shell
+  .ant-input,
+.paragraph-input--edit.paragraph-input--description:not(.paragraph-input--description-multiline):not(
+    .paragraph-input--explanation-body-multiline
+  )
   .paragraph-input__shell
   .ant-input {
   width: auto;
@@ -215,6 +246,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* flex 형제(*)가 잘리지 않도록 폭을 본문에만 제한 */
+  max-width: 100%;
+  width: auto;
 }
 
 /* view + 비입력: 타이틀 본문·플레이스홀더만 회색(번호 접두는 위 규칙으로 본문색) */

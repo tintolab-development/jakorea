@@ -52,6 +52,6 @@
   --width-popup-md: 600px;
   --width-popup-lg: 960px;
 
-  /* auth layout (login / sign-up / find-* ) */
+  /* auth layout — 전 구간 20 고정(PC에서도 --page-padding-x 32로 올라가지 않음) */
   --auth-page-padding-x: var(--spacing-20);
 }

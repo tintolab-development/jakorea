@@ -19,8 +19,23 @@ import {
 } from '@/features/auth/api/social-auth-remote-capabilities'
 import { resolveBackendApiOrigin } from '@/features/auth/lib/oauth-backend-origin'
 import { resolveOAuthRedirectOrigin } from '@/features/auth/lib/oauth-redirect-origin'
+import type { InternalAxiosRequestConfig } from 'axios'
+
 import { axiosClient } from '@/shared/api'
 import { adminSocialAuthPaths } from '@/shared/config/social-auth-paths'
+
+type PublicSsoRequestConfig = InternalAxiosRequestConfig & {
+  skipRefresh?: boolean
+  skipAuth?: boolean
+  skipGlobalErrorAlert?: boolean
+}
+
+function isPublicAdminSsoUrl(url: string): boolean {
+  return (
+    url.includes('/api/admin/auth/sso/login') ||
+    url.includes('/api/admin/auth/signup/sso/link/')
+  )
+}
 
 const oauthConfig = {
   clientIds: {
@@ -42,7 +57,18 @@ const storagePrefix = 'cms_admin_oauth'
 const socialAuthState = createSocialAuthState({ storagePrefix })
 
 const httpClient = {
-  post: (url: string, body?: unknown) => axiosClient.post(url, body),
+  post: (url: string, body?: unknown) =>
+    axiosClient.post(
+      url,
+      body,
+      isPublicAdminSsoUrl(url)
+        ? ({
+            skipRefresh: true,
+            skipAuth: true,
+            skipGlobalErrorAlert: true,
+          } as PublicSsoRequestConfig)
+        : undefined
+    ),
   get: (url: string) => axiosClient.get(url),
   delete: (url: string) => axiosClient.delete(url),
 }

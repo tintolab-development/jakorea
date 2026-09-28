@@ -38,6 +38,14 @@
   margin: 0;
 }
 
+/* Admin `\n` / Figma soft-break → FE <br> 문단. 자동 줄바꿈은 폭에 맞춤 */
+.description {
+  max-width: 1102px;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 /* Figma PC: 34px / 600 — typo-hd-md는 700이라 스펙에 맞춰 조정 */
 .title {
   font-weight: 600;

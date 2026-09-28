@@ -20,21 +20,29 @@ export function StripBannersSortableTable({
   columns,
   loading,
   rowSelection,
+  dragDisabled,
   onRowsReorder,
 }: {
   rows: StripBanner[]
   columns: ColumnsType<StripBanner>
   loading?: boolean
   rowSelection?: TableProps<StripBanner>['rowSelection']
+  dragDisabled?: boolean
   onRowsReorder: (reorderedRows: StripBanner[]) => void
 }) {
+  const disabled = Boolean(dragDisabled)
   const { items, rowIds, dndContextProps } = useAdminTableDndReorder({
     rows,
     onRowsReorder,
+    disabled,
   })
 
   return (
-    <AdminSortableDndShell rowIds={rowIds} dndContextProps={dndContextProps}>
+    <AdminSortableDndShell
+      rowIds={rowIds}
+      dndContextProps={dndContextProps}
+      dragDisabled={disabled}
+    >
       <Table<StripBanner>
         className="cms-data-table strip-banner-table"
         rowKey="id"

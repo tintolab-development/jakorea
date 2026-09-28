@@ -542,6 +542,11 @@ function mapEducationScheduleLines(program: CmsProgramLike): string[] {
 }
 
 function mapMaxPreferredScheduleCount(program: CmsProgramLike): number {
+  if (program.registrationKind === 'trainedTeachers') {
+    const raw = program.generalCommonInfo?.maxScheduleCount
+    if (raw != null && raw >= 1) return Math.min(raw, 10)
+    return 2
+  }
   const raw = program.generalCommonInfo?.maxScheduleCount
   if (raw == null || raw < 1) return 3
   return Math.min(raw, 10)
@@ -820,6 +825,17 @@ export function mapCmsProgramToPlatformDetail(
     educationTargetDetailLabel: targets.educationTargetDetailLabel,
     educationVenueLabel,
     detailCase,
+    programType:
+      program.registrationKind === 'trainedTeachers'
+        ? 'TRAINED_TEACHER'
+        : program.registrationKind === 'gemini'
+          ? 'GEMINI'
+          : program.registrationKind === 'ujat'
+            ? 'UJAT'
+            : program.registrationKind === 'economy'
+              ? 'ECONOMY'
+              : undefined,
+    registrationKind: program.registrationKind,
     programAudience:
       program.generalProgramAudience === 'individual' ? 'individual' : 'organization',
     participationMethod:

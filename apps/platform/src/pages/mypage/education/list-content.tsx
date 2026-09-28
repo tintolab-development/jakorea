@@ -9,6 +9,7 @@ import {
   getMockEducationApplicationsVersion,
   listEducationApplications,
   subscribeMockEducationApplications,
+  useMyProgramApplications,
   type EducationApplicationListParams,
 } from '@/features/mypage'
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
@@ -22,6 +23,7 @@ type EducationListContentProps = {
 
 export function EducationListContent({ params, onParamsChange }: EducationListContentProps) {
   const navigate = useNavigate()
+  const remoteApplications = useMyProgramApplications('education')
   const applicationsVersion = useSyncExternalStore(
     subscribeMockEducationApplications,
     getMockEducationApplicationsVersion,
@@ -29,18 +31,27 @@ export function EducationListContent({ params, onParamsChange }: EducationListCo
   )
   const mockEnabled = useShouldUsePlatformMockData()
 
-  const { items, totalPages, currentPage, totalElements } = useMemo(
-    () =>
-      listEducationApplications(
-        filterEducationStatusApplications(getMockEducationApplications()),
-        {
-          tab: params.tab,
-          page: params.page,
-          pageSize: EDUCATION_APPLICATION_PAGE_SIZE,
-        },
-      ),
-    [applicationsVersion, mockEnabled, params.page, params.tab],
-  )
+  const { items, totalPages, currentPage, totalElements } = useMemo(() => {
+    const sourceItems = remoteApplications.isRemoteEnabled
+      ? remoteApplications.items
+      : filterEducationStatusApplications(getMockEducationApplications())
+    return listEducationApplications(sourceItems, {
+      tab: params.tab,
+      page: params.page,
+      pageSize: EDUCATION_APPLICATION_PAGE_SIZE,
+    })
+  }, [
+    applicationsVersion,
+    mockEnabled,
+    params.page,
+    params.tab,
+    remoteApplications.isRemoteEnabled,
+    remoteApplications.items,
+  ])
+
+  if (remoteApplications.isRemoteEnabled && remoteApplications.isLoading) {
+    return null
+  }
 
   return (
     <>
@@ -48,10 +59,10 @@ export function EducationListContent({ params, onParamsChange }: EducationListCo
         <div className={styles.list}>
           {items.map(item => (
             <EducationApplicationListItemRow
-              key={item.id}
+              key={`${item.applicationType ?? 'mock'}:${item.id}`}
               item={item}
               onClick={() =>
-                navigate(educationApplicationDetailPath(item.id), {
+                navigate(educationApplicationDetailPath(item.id, item.applicationType), {
                   state: {
                     educationListPath: `${window.location.pathname}${window.location.search}`,
                   },

@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import type { DateValue } from '@/types'
 import type { Program } from '@/types/domain'
 import type { CalendarItem, CalendarMainEventInput } from '@/shared/components/calendar'
+import { resolveGeneralProgramListTitle } from '@/features/program/general/lib/detail-common-info-display'
 
 export type GeneralProgramCalendarView = 'ALL' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED'
 
@@ -67,7 +68,7 @@ function createEvent(program: Program, seed: CalendarEventSeed): GeneralProgramC
   const endDate = dateTimeForEvent(seed.date, seed.endTime, true)
   if (!startDate || !endDate) return null
 
-  const programTitle = program.title?.trim() || '프로그램 상세'
+  const programTitle = resolveGeneralProgramListTitle(program)
   return {
     id: `${program.id}:${seed.id}`,
     title: programTitle,

@@ -5,35 +5,47 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { Session } from './session';
+import type { OrganizationApplicationListItemResponseRecruitHalf } from './organizationApplicationListItemResponseRecruitHalf';
+import type { OrganizationApplicationSession } from './organizationApplicationSession';
 
+/**
+ * 기관 신청 목록 항목. GENERAL 유형은 확정 일정·학급·합반 정보를 함께 제공합니다.
+ */
 export interface OrganizationApplicationListItemResponse {
   id?: number;
   programId?: number;
   programName?: string;
   programType?: string;
-  recruitmentId?: number;
-  organizationId?: number;
-  organizationName?: string;
-  teacherMemberId?: number;
-  teacherName?: string;
+  recruitmentId?: number | null;
+  organizationId?: number | null;
+  organizationName?: string | null;
+  teacherMemberId?: number | null;
+  teacherName?: string | null;
   applicationStatus?: string;
-  requestedStudentCount?: number;
-  requestedClassCount?: number;
-  submittedAt?: string;
-  approvedAt?: string;
-  rejectedAt?: string;
-  rejectReason?: string;
-  availableActions?: string[];
-  defaultScheduleId?: number;
-  defaultScheduleName?: string;
-  ujatPartnerAssignmentsPath?: string;
-  ujatPartnerRecommendationPath?: string;
-  grade?: string;
-  regionSido?: string;
-  regionSigungu?: string;
-  sessions?: Session[];
-  mergeGroupId?: number;
-  mergeStatus?: string;
-  mergeLead?: boolean;
+  requestedStudentCount?: number | null;
+  requestedClassCount?: number | null;
+  educationGrade?: string | null;
+  region?: string | null;
+  mergeGroupId?: number | null;
+  combinedClassPartnerGrades?: string[];
+  submittedAt?: string | null;
+  approvedAt?: string | null;
+  rejectedAt?: string | null;
+  rejectReason?: string | null;
+  availableActions: string[];
+  defaultScheduleId?: number | null;
+  defaultScheduleName?: string | null;
+  ujatPartnerAssignmentsPath?: string | null;
+  ujatPartnerRecommendationPath?: string | null;
+  grade?: string | null;
+  regionSido?: string | null;
+  regionSigungu?: string | null;
+  /** 확정된 일정·학급 배정. 미배정이면 [] */
+  sessions: OrganizationApplicationSession[];
+  mergeStatus?: string | null;
+  mergeLead?: boolean | null;
+  /** 학교 모집은 연 1회라 보통 null */
+  recruitHalf?: OrganizationApplicationListItemResponseRecruitHalf;
+  /** UJAT 임시배정 워크플로. TEMP_ASSIGNED|TEMP_REJECTED 등 */
+  temporaryAssignmentStatus?: string | null;
 }

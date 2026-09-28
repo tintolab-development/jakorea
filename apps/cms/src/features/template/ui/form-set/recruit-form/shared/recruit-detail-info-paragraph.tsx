@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import { RichTextEditor } from '@/shared/rich-text'
 import { ProgramThumbnailPlaceholder } from '@/features/program/shared/ui/program-thumbnail-placeholder'
@@ -7,6 +7,8 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import {
+  getGeneralRecruitOverlayRecord,
+  patchGeneralRecruitOverlay,
   useGeneralRecruitOverlayKv,
   updateGeneralRecruitOverlayKey,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
@@ -15,18 +17,39 @@ import {
   RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
   RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-attachment'
+import {
+  recruitDetailAdditionalContentOverlayKey,
+  registerRecruitDetailAdditionalContentHtml,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import {
+  RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID,
+  recruitDetailAttachmentFileNamesKey,
+  recruitDetailAttachmentFileObjectIdsKey,
+  recruitDetailThumbContentUrlKey,
+  recruitDetailThumbFileNameKey,
+  recruitDetailThumbFileObjectIdKey,
+  recruitDetailThumbObjectUrlKey,
+  trackRecruitDetailMediaUpload,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 import { resolveRecruitDetailTextFieldOverlayKey } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-text-field-keys'
 import {
-  ADMIN_FILE_PURPOSE,
-  programFileOwner,
+  contentUrlForFileObjectId,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
+import {
+  programDetailAttachmentOwner,
+  programThumbnailOwner,
+} from '@/features/program/shared/api/program-attachments'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './recruit-detail-info-paragraph.css'
 
 const THUMB_UPLOAD_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
 const DEFAULT_OVERLAY_KEY_PREFIX = 'recruit.detailInfo'
+const DETAIL_INFO_WYSIWYG_OPTIONS = {
+  placeholder: '내용을 작성하세요',
+  contentFormat: 'html' as const,
+}
 
 type RecruitDetailInfoTextField = {
   label: string
@@ -108,6 +131,74 @@ function RecruitDetailInfoTextFieldRows({
   )
 }
 
+function readOverlayAdditionalContentHtml(overlayKey: string): string {
+  const raw = getGeneralRecruitOverlayRecord()[overlayKey]
+  return typeof raw === 'string' ? raw : ''
+}
+
+const RecruitDetailAdditionalContentEditor = memo(function RecruitDetailAdditionalContentEditor({
+  wysiwygResetKey,
+  additionalContentKey,
+}: {
+  wysiwygResetKey: string
+  additionalContentKey: string
+}) {
+  const initialAdditionalHtmlRef = useRef(readOverlayAdditionalContentHtml(additionalContentKey))
+  const { editor, editorMinHeight, getHTML } = useNoticeWysiwygEditor(
+    true,
+    initialAdditionalHtmlRef.current,
+    wysiwygResetKey,
+    DETAIL_INFO_WYSIWYG_OPTIONS
+  )
+
+  const getHtmlRef = useRef(getHTML)
+  getHtmlRef.current = getHTML
+  const latestHtmlRef = useRef(initialAdditionalHtmlRef.current)
+
+  useEffect(() => {
+    if (editor == null) return
+    const remember = () => {
+      latestHtmlRef.current = editor.getHTML()
+    }
+    remember()
+    editor.on('update', remember)
+    return () => {
+      remember()
+      editor.off('update', remember)
+    }
+  }, [editor])
+
+  useEffect(() => {
+    const readHtml = () => latestHtmlRef.current || getHtmlRef.current()
+    registerRecruitDetailAdditionalContentHtml(additionalContentKey, readHtml)
+    return () => {
+      const html = readHtml()
+      if (typeof html === 'string') {
+        patchGeneralRecruitOverlay({ [additionalContentKey]: html })
+      }
+      registerRecruitDetailAdditionalContentHtml(additionalContentKey, null)
+    }
+  }, [additionalContentKey])
+
+  const [overlayAdditionalHtml] = useGeneralRecruitOverlayKv<string>(additionalContentKey, '')
+  useEffect(() => {
+    if (editor == null) return
+    const incoming = overlayAdditionalHtml.trim()
+    if (incoming === '') return
+    const current = getHtmlRef.current().replace(/<p><\/p>/gi, '').trim()
+    if (current !== '') return
+    editor.commands.setContent(incoming, { emitUpdate: false, contentType: 'html' })
+  }, [editor, overlayAdditionalHtml])
+
+  return (
+    <div className="notice-register-modal__section notice-register-modal__section--editor">
+      <div className="notice-register-modal__editor-host">
+        <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+      </div>
+    </div>
+  )
+})
+
 export function RecruitDetailInfoParagraph({
   wysiwygResetKey,
   textFields,
@@ -117,9 +208,13 @@ export function RecruitDetailInfoParagraph({
   attachmentGuideLines = RECRUIT_DETAIL_ATTACHMENT_GUIDE_LINES,
   textFieldControl = 'textarea',
 }: RecruitDetailInfoParagraphProps) {
-  const thumbObjectUrlKey = `${overlayKeyPrefix}.thumbObjectUrl`
-  const thumbFileNameKey = `${overlayKeyPrefix}.thumbFileName`
-  const attachmentFileNamesKey = `${overlayKeyPrefix}.attachmentFileNames`
+  const thumbObjectUrlKey = recruitDetailThumbObjectUrlKey(overlayKeyPrefix)
+  const thumbFileNameKey = recruitDetailThumbFileNameKey(overlayKeyPrefix)
+  const thumbFileObjectIdKey = recruitDetailThumbFileObjectIdKey(overlayKeyPrefix)
+  const thumbContentUrlKey = recruitDetailThumbContentUrlKey(overlayKeyPrefix)
+  const attachmentFileNamesKey = recruitDetailAttachmentFileNamesKey(overlayKeyPrefix)
+  const attachmentFileObjectIdsKey = recruitDetailAttachmentFileObjectIdsKey(overlayKeyPrefix)
+  const additionalContentKey = recruitDetailAdditionalContentOverlayKey(overlayKeyPrefix)
 
   const [thumbObjectUrl, setThumbObjectUrl] = useGeneralRecruitOverlayKv<string | null>(
     thumbObjectUrlKey,
@@ -130,29 +225,116 @@ export function RecruitDetailInfoParagraph({
     null
   )
   const [attachmentFileNames] = useGeneralRecruitOverlayKv<string[]>(attachmentFileNamesKey, [])
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false)
+  const [uploadingAttachments, setUploadingAttachments] = useState(false)
 
   const revokeThumb = useCallback((url: string | null) => {
-    if (url) URL.revokeObjectURL(url)
+    if (url?.startsWith('blob:')) URL.revokeObjectURL(url)
   }, [])
 
   const handleThumbnailFiles = useCallback(
     (files: File[]) => {
       const image = files.find(f => /^image\//u.test(f.type)) ?? files[0]
       if (!image) return
+      const previousPreview = thumbObjectUrl
+      const blobUrl = URL.createObjectURL(image)
       setThumbFileName(image.name)
-      setThumbObjectUrl(URL.createObjectURL(image))
-      void uploadAdminFileMaybeMock({
-        file: image,
-        owner: programFileOwner(1, ADMIN_FILE_PURPOSE.PROGRAM_THUMBNAIL),
-      }).catch(() => undefined)
+      setThumbObjectUrl(blobUrl)
+      setUploadingThumbnail(true)
+      trackRecruitDetailMediaUpload(
+        (async () => {
+          try {
+            const uploaded = await uploadAdminFileMaybeMock({
+              file: image,
+              owner: programThumbnailOwner(RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID),
+            })
+            patchGeneralRecruitOverlay({
+              [thumbFileObjectIdKey]: uploaded.fileObjectId,
+              [thumbContentUrlKey]: contentUrlForFileObjectId(uploaded.fileObjectId),
+            })
+            revokeThumb(previousPreview)
+          } catch {
+            patchGeneralRecruitOverlay({
+              [thumbFileObjectIdKey]: null,
+              [thumbContentUrlKey]: null,
+            })
+          } finally {
+            setUploadingThumbnail(false)
+          }
+        })()
+      )
     },
-    [setThumbFileName, setThumbObjectUrl]
+    [
+      revokeThumb,
+      setThumbFileName,
+      setThumbObjectUrl,
+      thumbContentUrlKey,
+      thumbFileObjectIdKey,
+      thumbObjectUrl,
+    ]
   )
 
   const handleRemoveThumbnail = useCallback(() => {
+    revokeThumb(thumbObjectUrl)
     setThumbFileName(null)
     setThumbObjectUrl(null)
-  }, [setThumbFileName, setThumbObjectUrl])
+    patchGeneralRecruitOverlay({
+      [thumbFileObjectIdKey]: null,
+      [thumbContentUrlKey]: null,
+    })
+  }, [
+    revokeThumb,
+    setThumbFileName,
+    setThumbObjectUrl,
+    thumbContentUrlKey,
+    thumbFileObjectIdKey,
+    thumbObjectUrl,
+  ])
+
+  const handleAttachmentFiles = useCallback(
+    (files: File[]) => {
+      if (files.length === 0) return
+      setUploadingAttachments(true)
+      trackRecruitDetailMediaUpload(
+        (async () => {
+          const owner = programDetailAttachmentOwner(RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID)
+          const uploadedNames: string[] = []
+          const uploadedIds: number[] = []
+          try {
+            for (const file of files) {
+              const uploaded = await uploadAdminFileMaybeMock({ file, owner })
+              uploadedNames.push(file.name)
+              uploadedIds.push(uploaded.fileObjectId)
+            }
+            if (uploadedNames.length === 0) return
+            updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev => [
+              ...(prev ?? []),
+              ...uploadedNames,
+            ])
+            updateGeneralRecruitOverlayKey<number[]>(attachmentFileObjectIdsKey, prev => [
+              ...(prev ?? []),
+              ...uploadedIds,
+            ])
+          } finally {
+            setUploadingAttachments(false)
+          }
+        })()
+      )
+    },
+    [attachmentFileNamesKey, attachmentFileObjectIdsKey]
+  )
+
+  const handleRemoveAttachment = useCallback(
+    (index: number) => {
+      updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev =>
+        (prev ?? []).filter((_, i) => i !== index)
+      )
+      updateGeneralRecruitOverlayKey<number[]>(attachmentFileObjectIdsKey, prev =>
+        (prev ?? []).filter((_, i) => i !== index)
+      )
+    },
+    [attachmentFileNamesKey, attachmentFileObjectIdsKey]
+  )
 
   useEffect(
     () => () => {
@@ -160,10 +342,6 @@ export function RecruitDetailInfoParagraph({
     },
     [revokeThumb, thumbObjectUrl]
   )
-
-  const { editor, editorMinHeight } = useNoticeWysiwygEditor(true, '', wysiwygResetKey, {
-    placeholder: '내용을 작성하세요',
-  })
 
   return (
     <div className="recruit-detail-info-paragraph__forms">
@@ -185,8 +363,8 @@ export function RecruitDetailInfoParagraph({
                   style={{ marginLeft: 16 }}
                   guideLines={RECRUIT_DETAIL_THUMBNAIL_GUIDE_LINES}
                   fileNames={thumbFileName ? [thumbFileName] : []}
-                  onFilesChange={handleThumbnailFiles}
-                  onRemoveFile={handleRemoveThumbnail}
+                  onFilesChange={uploadingThumbnail ? undefined : handleThumbnailFiles}
+                  onRemoveFile={uploadingThumbnail ? undefined : handleRemoveThumbnail}
                 />
               </div>
             }
@@ -205,11 +383,10 @@ export function RecruitDetailInfoParagraph({
             label="추가 내용"
             fullRow
             edit={
-              <div className="notice-register-modal__section notice-register-modal__section--editor">
-                <div className="notice-register-modal__editor-host">
-                  <RichTextEditor editor={editor} minHeight={editorMinHeight} />
-                </div>
-              </div>
+              <RecruitDetailAdditionalContentEditor
+                wysiwygResetKey={wysiwygResetKey}
+                additionalContentKey={additionalContentKey}
+              />
             }
             view="-"
           />
@@ -233,23 +410,8 @@ export function RecruitDetailInfoParagraph({
                 guideLines={attachmentGuideLines}
                 multiple
                 fileNames={attachmentFileNames}
-                onFilesChange={(files: File[]) => {
-                  updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev => [
-                    ...(prev ?? []),
-                    ...files.map(file => file.name),
-                  ])
-                  const owner = programFileOwner(1, ADMIN_FILE_PURPOSE.PROGRAM_DETAIL_ATTACHMENT)
-                  void (async () => {
-                    for (const file of files) {
-                      await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
-                    }
-                  })()
-                }}
-                onRemoveFile={(index: number) =>
-                  updateGeneralRecruitOverlayKey<string[]>(attachmentFileNamesKey, prev =>
-                    (prev ?? []).filter((_, i) => i !== index)
-                  )
-                }
+                onFilesChange={uploadingAttachments ? undefined : handleAttachmentFiles}
+                onRemoveFile={uploadingAttachments ? undefined : handleRemoveAttachment}
               />
             }
             view="-"

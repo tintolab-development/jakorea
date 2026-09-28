@@ -8,9 +8,11 @@
 
 export interface TrainedTeacherProgramDetailRequest {
   teacherTrainingEnabled?: boolean;
+  /** 교육 연수 일정명. teacherTrainingEnabled=false 이고 빈 문자열이거나 생략이면 빈 값으로 clear. true이면 기본 '교육 연수'. */
   teacherTrainingScheduleName?: string;
   educationJournalEnabled?: boolean;
   educationJournalRequired?: boolean;
   journalSubmissionLimitType?: string;
+  /** TT detail 전용 opaque JSON. programs serviceDetailJson 통짜 복사가 아님. */
   configJson?: string;
 }

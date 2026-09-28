@@ -28,12 +28,7 @@ export function FindEmailForm({
       />
 
       <div className="auth-form find-email-step__form">
-        <RegisterIdentityStatusPanel
-          status={status}
-          errorMessage={errorMessage}
-          idleTitle="통신사 본인인증 모듈 영역"
-          idleDescription="수신: 이름·휴대폰번호·생년월일·CI/DI·인증토큰·인증일시"
-        />
+        <RegisterIdentityStatusPanel status={status} errorMessage={errorMessage} />
 
         <div className="auth-actions find-email-step__actions">
           <LoadingButton

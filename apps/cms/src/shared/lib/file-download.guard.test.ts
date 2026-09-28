@@ -1,5 +1,38 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+vi.hoisted(() => {
+  if (typeof globalThis.localStorage?.getItem === 'function') return
+  const store = new Map<string, string>()
+  const memoryStorage: Storage = {
+    get length() {
+      return store.size
+    },
+    clear: () => {
+      store.clear()
+    },
+    getItem: key => store.get(key) ?? null,
+    key: index => [...store.keys()][index] ?? null,
+    removeItem: key => {
+      store.delete(key)
+    },
+    setItem: (key, value) => {
+      store.set(key, String(value))
+    },
+  }
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: memoryStorage,
+    configurable: true,
+    writable: true,
+  })
+  if (typeof window !== 'undefined') {
+    Object.defineProperty(window, 'localStorage', {
+      value: memoryStorage,
+      configurable: true,
+      writable: true,
+    })
+  }
+})
 import { saveAs } from 'file-saver'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'

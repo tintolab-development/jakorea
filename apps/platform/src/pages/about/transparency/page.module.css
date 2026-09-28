@@ -103,6 +103,28 @@
 }
 
 @media (--bp-below-pc) {
+  .pageBackground {
+    display: none;
+  }
+  .content {
+    padding-inline: 0;
+    margin-top: calc(-1 * var(--spacing-40));
+  }
+  .hero {
+    background-color: transparent;
+    background-image: url('/src/assets/background_gradient/transparency-gradient.png');
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: cover;
+    padding: var(--spacing-40) var(--spacing-20);
+    margin-bottom: var(--spacing-32);
+  }
+  .principles {
+    padding: 0 var(--spacing-16) var(--spacing-32);
+  }
+  .financeArea {
+    padding: var(--spacing-32) var(--spacing-16)
+  }
 
   .heroLabel {
     font-size: 14px;

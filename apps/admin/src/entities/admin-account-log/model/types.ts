@@ -36,6 +36,8 @@ export type AdminAccountListFilter = {
   actionType?: AdminAccountActionType | ''
   from?: string | null
   to?: string | null
+  /** 0-based. omit/0 = 첫 페이지 */
+  page?: number
 }
 
 export type AdminAccountListResult = {

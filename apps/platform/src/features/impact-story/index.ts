@@ -1,8 +1,10 @@
 export type {
   ImpactStoriesListParams,
+  ImpactStoryBodyFormat,
   ImpactStoryCategoryKey,
   ImpactStoryContentBlock,
   ImpactStoryDetail,
+  ImpactStoryDetailStatus,
   ImpactStoryListCategory,
   ImpactStoryListItem,
 } from './model/types'
@@ -11,10 +13,14 @@ export {
   DEFAULT_IMPACT_STORIES_LIST_PARAMS,
   IMPACT_STORIES_PAGE_SIZE,
   IMPACT_STORIES_PATH,
+  IMPACT_STORIES_PREVIEW_SIZE,
   IMPACT_STORY_CATEGORY_TAB_ITEMS,
+  categoryIdFromKey,
+  categoryKeyFromName,
   getImpactStoryCategoryTabItems,
   impactStoryDetailPath,
   isImpactStoryListCategory,
+  parsePublicStoryId,
 } from './lib/constants'
 export {
   buildImpactStoriesListPath,
@@ -30,7 +36,7 @@ export {
   useMockImpactStories,
   useMockImpactStoryDetail,
 } from './lib/mock-stories'
-export type { AdjacentImpactStories } from './lib/mock-stories'
+export type { AdjacentImpactStories } from './lib/adjacent'
 export {
   getImpactStoryIdFromPath,
   isImpactStoriesPath,
@@ -38,6 +44,19 @@ export {
   type ImpactStoryRouteName,
   type ParsedImpactStoryRoute,
 } from './lib/routes'
+
+export {
+  useFeaturedImpactStories,
+  useHomeImpactSubStories,
+  useImpactStoriesList,
+  useImpactStoriesPreview,
+  useImpactStoryDetail,
+} from './api/hooks'
+export type {
+  ImpactStoriesListQuery,
+  ImpactStoriesPreviewQuery,
+  ImpactStoryDetailQuery,
+} from './api/hooks'
 
 export { FeaturedCarousel } from './ui/featured-carousel'
 export type { FeaturedCarouselProps } from './ui/featured-carousel'

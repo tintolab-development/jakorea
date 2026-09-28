@@ -18,6 +18,4 @@ export interface InstructorVerificationRequestCreateRequest {
      * @maxLength 40
      */
   requestStatus?: string;
-  resultSummary?: string;
-  resultOriginalFileId?: number;
 }

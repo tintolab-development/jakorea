@@ -1,13 +1,17 @@
 import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
 import type { DateValue } from '@/types'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { announcementPublishedFromFormValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { loadUjatRecruitInstitutionTemplateSave } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 type RangeSeal = { start: string | null; end: string | null }
 type ResultSeal = { date: string | null; method: string }
 type ContactSeal = { name: string; phone: string; email: string }
-const OVERLAY_KEYS = {
+export const UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS = {
+  announcementPublished: 'ujat.recruit.institution.announcementPublished',
   publicTitle: 'ujat.recruit.institution.publicTitle',
   programRange: 'ujat.recruit.institution.programRange',
+  targetLevels: 'ujat.recruit.institution.targetLevels',
   district: 'ujat.recruit.institution.district',
   recruitRange: 'ujat.recruit.institution.recruitRange',
   resultAnnounce: 'ujat.recruit.institution.resultAnnounce',
@@ -17,7 +21,10 @@ const OVERLAY_KEYS = {
   recruitmentGuide: 'ujat.recruit.institution.recruitmentGuide',
   learningSupportContent: 'ujat.recruit.institution.learningSupportContent',
   additionalContentHtml: 'ujat.recruit.institution.additionalContentHtml',
-  attachmentFileNames: 'ujat.recruit.institution.attachmentFileNames' } as const
+  attachmentFileNames: 'ujat.recruit.institution.attachmentFileNames',
+} as const
+
+const OVERLAY_KEYS = UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS
 function overlayString(overlay: Record<string, unknown>, key: string): string | undefined {
   const v = overlay[key]
   return typeof v === 'string' ? v : undefined
@@ -42,6 +49,130 @@ function readRangeSeal(overlay: Record<string, unknown>, key: string): RangeSeal
   const o = v as RangeSeal
   return o
 }
+
+function overlayStringList(overlay: Record<string, unknown>, key: string): string[] | undefined {
+  const v = overlay[key]
+  if (!Array.isArray(v)) return undefined
+  const list = v.filter((item): item is string => typeof item === 'string' && item.trim() !== '')
+  return list.length > 0 ? list : undefined
+}
+
+function toRangeSeal(start?: string, end?: string): RangeSeal {
+  return {
+    start: start?.trim() ? start : null,
+    end: end?.trim() ? end : null,
+  }
+}
+
+/** 모집 정보 RHF → 학교 모집 overlay (상세정보·첨부는 건드리지 않음) */
+export function buildUjatRecruitInstitutionOverlayFromDetailEditValues(
+  values: ProgramDetailEditFormValues
+): Record<string, unknown> {
+  return {
+    [OVERLAY_KEYS.announcementPublished]:
+      announcementPublishedFromFormValue(values.participantRecruitmentAnnouncementPublished) ??
+      true,
+    [OVERLAY_KEYS.publicTitle]: values.announcementTitle?.trim() ?? '',
+    [OVERLAY_KEYS.programRange]: toRangeSeal(values.startDate, values.endDate),
+    [OVERLAY_KEYS.targetLevels]: values.targetLevels ?? [],
+    [OVERLAY_KEYS.district]: values.district?.trim() ?? '',
+    [OVERLAY_KEYS.recruitRange]: toRangeSeal(
+      values.applicationStartDate,
+      values.applicationEndDate
+    ),
+    [OVERLAY_KEYS.resultAnnounce]: {
+      date: values.resultAnnouncementDate?.trim() ? values.resultAnnouncementDate : null,
+      method: values.resultAnnouncementMethod?.trim() ?? '',
+    },
+    [OVERLAY_KEYS.contact]: {
+      name: values.recruitmentContactOrganizationName?.trim() ?? '',
+      phone: values.contactPhone?.trim() ?? '',
+      email: values.contactEmail?.trim() ?? '',
+    },
+    [OVERLAY_KEYS.notes]:
+      values.participantRecruitmentNotesNotApplicable === 'not_applicable'
+        ? ''
+        : (values.oneLineIntroduction?.trim() ?? ''),
+  }
+}
+
+export function pickUjatRecruitInstitutionOverlay(
+  record: Record<string, unknown>
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const key of Object.values(OVERLAY_KEYS)) {
+    if (record[key] !== undefined) out[key] = record[key]
+  }
+  return out
+}
+
+/** 오버레이에 값이 있으면 프로그램 필드를 덮어쓴다. */
+export function applyUjatRecruitInstitutionOverlayOntoProgram(
+  program: Program,
+  overlay: Record<string, unknown>
+): Program {
+  if (Object.keys(overlay).length === 0) return program
+  const programRange = readRangeSeal(overlay, OVERLAY_KEYS.programRange)
+  const recruitRange = readRangeSeal(overlay, OVERLAY_KEYS.recruitRange)
+  const result = overlay[OVERLAY_KEYS.resultAnnounce] as ResultSeal | undefined
+  const contact = overlay[OVERLAY_KEYS.contact] as ContactSeal | undefined
+  const attachments = overlay[OVERLAY_KEYS.attachmentFileNames]
+  const attachmentFileNames = Array.isArray(attachments)
+    ? attachments.filter((x): x is string => typeof x === 'string')
+    : undefined
+  const targetLevels = overlayStringList(overlay, OVERLAY_KEYS.targetLevels)
+  const district = overlayString(overlay, OVERLAY_KEYS.district)
+  const notes = overlayString(overlay, OVERLAY_KEYS.notes)
+  const announcementPublished = overlay[OVERLAY_KEYS.announcementPublished]
+  return {
+    ...program,
+    mainTitle: program.mainTitle,
+    title: program.title,
+    startDate: programRange?.start?.trim() ? programRange.start : program.startDate,
+    endDate: programRange?.end?.trim() ? programRange.end : program.endDate,
+    targetLevel: (targetLevels?.[0] as Program['targetLevel']) ?? program.targetLevel,
+    targetLevels: (targetLevels as Program['targetLevels']) ?? program.targetLevels,
+    district: district ?? program.district,
+    applicationStartDate: recruitRange?.start?.trim()
+      ? recruitRange.start
+      : program.applicationStartDate,
+    applicationEndDate: recruitRange?.end?.trim() ? recruitRange.end : program.applicationEndDate,
+    resultAnnouncementDate: result?.date?.trim() ? result.date : program.resultAnnouncementDate,
+    resultAnnouncementMethod: result?.method?.trim()
+      ? result.method
+      : program.resultAnnouncementMethod,
+    managerName: contact?.name?.trim() ? contact.name : program.managerName,
+    contactPhone: contact?.phone?.trim() ? contact.phone : program.contactPhone,
+    contactEmail: contact?.email?.trim() ? contact.email : program.contactEmail,
+    oneLineIntroduction: notes ?? program.oneLineIntroduction,
+    description:
+      overlayString(overlay, OVERLAY_KEYS.description) ?? program.description,
+    recruitmentGuide:
+      overlayString(overlay, OVERLAY_KEYS.recruitmentGuide) ?? program.recruitmentGuide,
+    learningSupportContent:
+      overlayString(overlay, OVERLAY_KEYS.learningSupportContent) ??
+      program.learningSupportContent,
+    additionalContentHtml:
+      overlayString(overlay, OVERLAY_KEYS.additionalContentHtml) ??
+      program.additionalContentHtml,
+    attachmentFileNames: attachmentFileNames ?? program.attachmentFileNames,
+    generalCommonInfo: {
+      ...program.generalCommonInfo,
+      participantRecruitmentInfo: {
+        ...program.generalCommonInfo?.participantRecruitmentInfo,
+        announcementPublished:
+          typeof announcementPublished === 'boolean'
+            ? announcementPublished
+            : program.generalCommonInfo?.participantRecruitmentInfo?.announcementPublished,
+        contactOrganizationName:
+          contact?.name?.trim() ||
+          program.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName,
+        notesNotApplicable: false,
+      },
+    },
+  }
+}
+
 /** 저장된 학교 모집 템플릿 오버레이를 프로그램 필드에 병합(프로그램 값이 있으면 우선). */
 export function applyUjatRecruitInstitutionTemplateDefaults(program: Program): Program {
   const saved = loadUjatRecruitInstitutionTemplateSave()
@@ -61,6 +192,15 @@ export function applyUjatRecruitInstitutionTemplateDefaults(program: Program): P
     title: coalesceString(program.title, overlayString(overlay, OVERLAY_KEYS.publicTitle)) ?? program.title,
     startDate: coalesceIsoDate(program.startDate, programRange?.start ?? undefined) ?? program.startDate,
     endDate: coalesceIsoDate(program.endDate, programRange?.end ?? undefined) ?? program.endDate,
+    targetLevels:
+      program.targetLevels?.length
+        ? program.targetLevels
+        : ((overlayStringList(overlay, OVERLAY_KEYS.targetLevels) as Program['targetLevels']) ??
+          program.targetLevels),
+    targetLevel:
+      program.targetLevel ??
+      ((overlayStringList(overlay, OVERLAY_KEYS.targetLevels)?.[0] as Program['targetLevel']) ??
+        program.targetLevel),
     district: coalesceString(program.district, overlayString(overlay, OVERLAY_KEYS.district)),
     applicationStartDate: coalesceIsoDate(
       program.applicationStartDate,

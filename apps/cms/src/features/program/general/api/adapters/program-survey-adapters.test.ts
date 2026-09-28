@@ -79,6 +79,23 @@ describe('classifyFormBindingByTemplateId', () => {
     expect(classifyFormBindingByTemplateId({ templateId: 99, templateName: '일반 설문' })).toBe('poll')
   })
 
+  it('keeps a SURVEY slot on the poll list even when the template name is satisfaction or lecture', () => {
+    expect(
+      classifyFormBindingByTemplateId({
+        formType: 'SURVEY',
+        templateName: '만족도조사 (학생용)',
+        templateId: 42,
+      })
+    ).toBe('poll')
+    expect(
+      classifyFormBindingByTemplateId({
+        formType: 'LECTURE_EVALUATION',
+        templateName: '설문조사',
+        templateId: 43,
+      })
+    ).toBe('lecture_evaluation')
+  })
+
   it('resolves audience from targetRole', () => {
     expect(
       resolveSatisfactionAudienceFromBinding({ templateId: 1, targetRole: 'TEACHER' })
@@ -222,6 +239,24 @@ describe('classifyProgramFormBindings / mergeSurveysWithBindings', () => {
       title: '신규 설문조사 1',
       templateId: '200',
     })
+  })
+
+  it('lists a SURVEY binding on the poll tab when the template name looks like satisfaction', () => {
+    const rows = mergeSurveysWithBindings(
+      [],
+      [
+        {
+          bindingId: 9,
+          templateId: 42,
+          templateVersionId: 420,
+          formType: 'SURVEY',
+          templateName: '만족도조사 (학생용)',
+          active: true,
+        },
+      ]
+    )
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.title).toBe('만족도조사 (학생용)')
   })
 })
 

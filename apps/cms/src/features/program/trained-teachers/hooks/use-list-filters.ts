@@ -7,6 +7,7 @@ import type { ProgramListConfig } from '@/features/program/general/ui/program-li
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { useTrainedTeacherPrograms } from '@/features/program/trained-teachers/api/hooks'
 import { trainedTeacherListParamsFromOverviewStatus } from '@/features/program/trained-teachers/api/list-params'
+import { resolveTrainedTeachersListFilterFields } from '@/features/program/trained-teachers/lib/list-filter-fields'
 
 export type TrainedTeachersOverviewStatusFilter = 'scheduled' | 'in_progress' | 'completed'
 
@@ -15,6 +16,10 @@ export interface TrainedTeachersListQueryParams extends Record<string, string | 
   status?: TrainedTeachersOverviewStatusFilter
   title?: string
   businessYear?: string
+  targetLevel?: string
+  lifecycleStatus?: string
+  operationStartDate?: string
+  operationEndDate?: string
 }
 
 const overviewStatusValues = ['scheduled', 'in_progress', 'completed'] as const
@@ -68,11 +73,29 @@ export function useTrainedTeachersProgramListFilters() {
 
   const tableFilters = useMemo(() => {
     const title = params.title?.trim() || undefined
+    const targetLevel = params.targetLevel?.trim() || undefined
+    const lifecycleStatus = params.lifecycleStatus?.trim() || undefined
+    const operationStartDate = params.operationStartDate?.trim() || undefined
+    const operationEndDate = params.operationEndDate?.trim() || undefined
     const yearRaw = params.businessYear
     const businessYear =
       yearRaw && /^\d{4}$/.test(yearRaw) ? Number.parseInt(yearRaw, 10) : undefined
-    return { title, businessYear }
-  }, [params.businessYear, params.title])
+    return {
+      title,
+      businessYear,
+      targetLevel,
+      lifecycleStatus,
+      operationStartDate,
+      operationEndDate,
+    }
+  }, [
+    params.businessYear,
+    params.lifecycleStatus,
+    params.operationEndDate,
+    params.operationStartDate,
+    params.targetLevel,
+    params.title,
+  ])
 
   const listFilters = useMemo(
     () => trainedTeacherListParamsFromOverviewStatus(statusFilter, tableFilters),
@@ -99,10 +122,15 @@ export function useTrainedTeachersProgramListFilters() {
 
   const listQueryFiltersKey = useMemo(() => JSON.stringify(listFilters), [listFilters])
 
+  const totalElements = useMemo(() => {
+    if (!remoteEnabled) return filteredPrograms.length
+    return listQuery.data?.pages[0]?.totalElements ?? filteredPrograms.length
+  }, [filteredPrograms.length, listQuery.data, remoteEnabled])
+
   const headerTitle = useMemo(() => {
-    if (statusFilter === 'scheduled') return '예정 프로그램'
+    if (statusFilter === 'scheduled') return '진행 예정 프로그램'
     if (statusFilter === 'in_progress') return '진행 중인 프로그램'
-    if (statusFilter === 'completed') return '완료 프로그램'
+    if (statusFilter === 'completed') return '진행 완료된 프로그램'
     return '전체 프로그램'
   }, [statusFilter])
 
@@ -121,12 +149,15 @@ export function useTrainedTeachersProgramListFilters() {
       view: listView,
       lifecycleStatus: undefined,
       columnPreset: 'trainedTeachers',
+      filterFields: resolveTrainedTeachersListFilterFields(listView),
+      serverSideOverviewFilters: remoteEnabled,
     }
-  }, [statusFilter])
+  }, [remoteEnabled, statusFilter])
 
   return {
     statusFilter,
     filteredPrograms,
+    totalElements,
     headerTitle,
     programListConfig,
     params,

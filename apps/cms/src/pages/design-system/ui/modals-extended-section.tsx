@@ -4,18 +4,26 @@ import { PermissionButton } from '@/shared/components/permission-button'
 import { ActionResultModal } from '@/shared/ui/action-result-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { TermsViewModal } from '@/features/auth/ui/terms-view-modal'
+import {
+  TERMS_VIEW_LIST_LABELS,
+  TERMS_VIEW_TYPES,
+  type TermsViewType,
+} from '@/features/auth/lib/terms-view-config'
 import { DsDemo, DsSection } from './section'
 
 export function ModalsExtendedSection() {
   const [approveOpen, setApproveOpen] = useState(false)
   const [contentOpen, setContentOpen] = useState(false)
   const [resultOpen, setResultOpen] = useState(false)
+  const [termsViewType, setTermsViewType] = useState<TermsViewType | null>(null)
+  const [termsAgreed, setTermsAgreed] = useState(false)
 
   return (
     <DsSection
       id="modals-extended"
       title="Modals (extended)"
-      description="권한 액션·결과 모달입니다. 표준 카드형은 ContentModal 섹션을 보세요."
+      description="권한 액션·결과 모달·가입 약관 보기 모달입니다. 표준 카드형은 ContentModal 섹션을 보세요."
     >
       <p className="ds-note">
         표준 카드형 →{' '}
@@ -54,6 +62,30 @@ export function ModalsExtendedSection() {
           <CmsButton variant="primary" onClick={() => setResultOpen(true)}>
             등록 완료
           </CmsButton>
+        </div>
+      </DsDemo>
+
+      <DsDemo label="TermsViewModal — 약관 보기 (유형별)">
+        <p className="ds-note" style={{ marginTop: 0 }}>
+          가입 약관 「보기」 팝업을 <strong>유형별로</strong> 엽니다. 본문 편집 SSOT:{' '}
+          <code>features/auth/lib/terms-content/documents.ts</code> (
+          <code>TERMS_OF_SERVICE_CONTENT</code> · <code>PRIVACY_POLICY_CONTENT</code> ·{' '}
+          <code>MFA_SETUP_CONTENT</code> · <code>MARKETING_CONSENT_CONTENT</code>).
+        </p>
+        <div className="ds-demo__row ds-demo__row--fluid" style={{ flexWrap: 'wrap', gap: 8 }}>
+          {TERMS_VIEW_TYPES.map(type => (
+            <CmsButton
+              key={type}
+              variant="secondary"
+              size="medium"
+              onClick={() => {
+                setTermsAgreed(false)
+                setTermsViewType(type)
+              }}
+            >
+              {TERMS_VIEW_LIST_LABELS[type]}
+            </CmsButton>
+          ))}
         </div>
       </DsDemo>
 
@@ -108,6 +140,16 @@ export function ModalsExtendedSection() {
         title="등록 완료"
         body="[데모 항목] 등록이 완료되었습니다."
       />
+
+      {termsViewType != null ? (
+        <TermsViewModal
+          open
+          type={termsViewType}
+          agreed={termsAgreed}
+          onAgreedChange={setTermsAgreed}
+          onClose={() => setTermsViewType(null)}
+        />
+      ) : null}
     </DsSection>
   )
 }

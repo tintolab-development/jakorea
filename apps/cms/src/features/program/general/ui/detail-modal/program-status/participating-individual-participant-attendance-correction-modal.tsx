@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ContentModal, CmsButton, CmsInput, CmsSelect, FileSelectField, useCmsAlert } from '@/shared/ui'
 import {
   PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS,
+  parseAttendanceScheduleOwnerId,
   type ProgramAttendanceCorrectionStatus,
 } from '@/features/program/shared/lib/attendance-correction-types'
 import {
@@ -117,12 +118,29 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
 
               void (async () => {
                 let evidenceFileObjectIds: number[] | undefined
-                if (status === 'excused_absence' && evidenceFiles.length > 0) {
+                if (status === 'excused_absence' && evidenceFiles.length > 5) {
+                showAlert({
+                  title: '안내',
+                  content: '증빙 서류는 최대 5개까지 첨부할 수 있습니다.',
+                })
+                return
+              }
+              if (status === 'excused_absence' && evidenceFiles.length > 0) {
+                  const scheduleOwnerId = parseAttendanceScheduleOwnerId(
+                    selectedOption.row.scheduleId
+                  )
+                  if (scheduleOwnerId == null) {
+                    showAlert({
+                      title: '안내',
+                      content: '일정 번호가 없어 증빙 서류를 첨부할 수 없습니다.',
+                    })
+                    return
+                  }
                   setUploadingEvidence(true)
                   try {
                     const owner = buildAdminFileOwner(
                       ADMIN_FILE_OWNER.ATTENDANCE,
-                      1,
+                      scheduleOwnerId,
                       ADMIN_FILE_PURPOSE.ABSENCE_EVIDENCE
                     )
                     evidenceFileObjectIds = []

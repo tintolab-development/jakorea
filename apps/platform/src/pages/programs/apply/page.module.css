@@ -121,3 +121,16 @@
   display: flex;
   justify-content: center;
 }
+
+.submitError {
+  margin: 0;
+  text-align: center;
+  color: var(--color-error, #d92d20);
+}
+
+.blockedNotice {
+  margin: 0 0 var(--spacing-24);
+  padding: var(--spacing-12) var(--spacing-16);
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-cool-100, #e6e9eb);
+}

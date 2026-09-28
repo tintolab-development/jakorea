@@ -16,82 +16,89 @@ function baseProgram(overrides: Partial<Program> = {}): Program {
     format: 'workshop',
     category: 'school',
     startDate: '2026-01-01',
-    endDate: '2027-12-31',
+    endDate: '2026-12-31',
     status: 'active',
     lifecycleStatus: 'recruiting_students',
     ...overrides,
   } as Program
 }
 
+const duringBusiness = new Date('2026-06-01T12:00:00+09:00')
+const afterBusinessEnd = new Date('2027-01-01T00:00:00+09:00')
+
 describe('canGeneralProgramCommonInfoEdit', () => {
-  it('프로그램 진행 예정이면 사업 시작일 경과와 무관하게 수정 가능', () => {
+  it('사업 종료일 당일까지는 진행 단계와 무관하게 수정 가능', () => {
     expect(
       canGeneralProgramCommonInfoEdit(
-        baseProgram({ lifecycleStatus: 'recruiting_students', startDate: '2026-01-01' })
+        baseProgram({ lifecycleStatus: 'education_in_progress', endDate: '2026-12-31' }),
+        duringBusiness
       )
     ).toBe(true)
     expect(
       resolveGeneralProgramInfoEditBlockReason(
-        baseProgram({ lifecycleStatus: 'recruiting_students', startDate: '2026-01-01' })
+        baseProgram({ lifecycleStatus: 'education_completed', endDate: '2026-12-31' }),
+        duringBusiness
       )
     ).toBeNull()
   })
 
-  it('프로그램 진행 중·완료 단계에서는 수정 불가', () => {
+  it('사업 종료일 다음 날부터 수정 불가', () => {
     expect(
       canGeneralProgramCommonInfoEdit(
-        baseProgram({ lifecycleStatus: 'education_in_progress' })
+        baseProgram({ lifecycleStatus: 'recruiting_students', endDate: '2026-12-31' }),
+        afterBusinessEnd
       )
     ).toBe(false)
     expect(
-      canGeneralProgramCommonInfoEdit(
-        baseProgram({ lifecycleStatus: 'education_completed' })
+      resolveGeneralProgramInfoEditBlockReason(
+        baseProgram({ endDate: '2026-12-31' }),
+        afterBusinessEnd
       )
-    ).toBe(false)
+    ).toBe('period_ended')
   })
 })
 
 describe('getGeneralProgramCommonInfoEditBlockedAlertMessage', () => {
-  it('진행 중·완료에 따라 안내 문구를 반환한다', () => {
+  it('사업 종료 안내를 반환한다', () => {
     expect(
-      getGeneralProgramCommonInfoEditBlockedAlertMessage(
-        baseProgram({ lifecycleStatus: 'education_after_textbook' })
-      )
-    ).toContain('진행 중')
-    expect(
-      getGeneralProgramCommonInfoEditBlockedAlertMessage(
-        baseProgram({ lifecycleStatus: 'document_processing_completed' })
-      )
-    ).toContain('완료')
+      getGeneralProgramCommonInfoEditBlockedAlertMessage(baseProgram())
+    ).toContain('공통 정보')
   })
 })
 
 describe('canGeneralProgramRecruitmentInfoEdit', () => {
-  it('공통 정보와 동일하게 lifecycle 가드만 적용한다', () => {
+  it('operationStartDate가 지나도 startAt이 미래면 수정 가능', () => {
+    const program = baseProgram({
+      lifecycleStatus: 'education_in_progress',
+      programRecruitments: [
+        { recruitmentType: 'PARTICIPANT', startAt: '2099-01-01T00:00:00+09:00' },
+      ],
+    })
     expect(
-      canGeneralProgramRecruitmentInfoEdit(
-        baseProgram({ lifecycleStatus: 'recruiting_students', startDate: '2026-01-01' })
-      )
+      canGeneralProgramRecruitmentInfoEdit(program, 'PARTICIPANT', duringBusiness)
     ).toBe(true)
+  })
+
+  it('startAt이 지난 유형만 수정 불가', () => {
+    const program = baseProgram({
+      programRecruitments: [
+        { recruitmentType: 'PARTICIPANT', startAt: '2020-01-01T00:00:00+09:00' },
+        { recruitmentType: 'INSTRUCTOR', startAt: null },
+      ],
+    })
     expect(
-      canGeneralProgramRecruitmentInfoEdit(
-        baseProgram({ lifecycleStatus: 'education_in_progress' })
-      )
+      canGeneralProgramRecruitmentInfoEdit(program, 'PARTICIPANT', duringBusiness)
     ).toBe(false)
+    expect(
+      canGeneralProgramRecruitmentInfoEdit(program, 'INSTRUCTOR', duringBusiness)
+    ).toBe(true)
   })
 })
 
 describe('getGeneralProgramRecruitmentInfoEditBlockedAlertMessage', () => {
-  it('진행 중·완료에 따라 모집 정보 안내 문구를 반환한다', () => {
+  it('모집 시작 이후 안내를 반환한다', () => {
     expect(
-      getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(
-        baseProgram({ lifecycleStatus: 'education_after_textbook' })
-      )
-    ).toContain('모집 정보')
-    expect(
-      getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(
-        baseProgram({ lifecycleStatus: 'document_processing_completed' })
-      )
-    ).toContain('모집 정보')
+      getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(baseProgram())
+    ).toContain('모집·신청')
   })
 })

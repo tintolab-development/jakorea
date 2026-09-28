@@ -9,6 +9,11 @@ import { Fragment, type ReactNode, useEffect, useMemo } from 'react'
 import { Controller } from 'react-hook-form'
 import { useKpiAchievementList } from '@/features/dashboard/hooks/use-kpi-achievement-list'
 import type { ProgramKpiItem } from '@/features/dashboard/api/admin-dashboard-service'
+import {
+  hasProgramKpiTargets,
+  resolveProgramKpiTargets,
+} from '@/features/program/shared/lib/resolve-program-kpi-targets'
+import type { Program } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
@@ -19,6 +24,8 @@ import './program-kpi-target-section.css'
 
 export interface ProgramKpiTargetSectionProps {
   programId: string
+  /** 대시보드 KPI API가 비어 있을 때 serviceDetailJson·top-level KPI 목표 표시용 */
+  program?: Program | null
   showVolunteerKpi?: boolean
   isEditMode?: boolean
   form?: UseFormReturn<ProgramDetailEditFormValues>
@@ -102,6 +109,7 @@ function formatEducationInstructorTargets(
 
 export function ProgramKpiTargetSection({
   programId,
+  program,
   showVolunteerKpi = true,
   isEditMode = false,
   form,
@@ -111,41 +119,73 @@ export function ProgramKpiTargetSection({
   const kpiItem = kpiList.find(p => p.programId === programId) ?? null
   const isFormEdit = isEditMode && form
   const kpis = kpiItem?.kpis ?? null
+  const programKpi = useMemo(() => resolveProgramKpiTargets(program), [program])
 
-  // 수정 모드 진입 시 API에서 받은 KPI 값으로 폼 시드 (한 번만)
+  // 수정 모드 진입 시 API → program KPI 순으로 폼 시드 (한 번만)
   useEffect(() => {
-    if (!isFormEdit || !kpis?.length || !form) return
-    const participantsRow = kpis.find(k => k.key === 'finalParticipants')
-    const schoolsRow = kpis.find(k => k.key === 'finalSchools')
-    const classesRow = kpis.find(k => k.key === 'finalClasses')
+    if (!isFormEdit || !form) return
+    const participantsRow = kpis?.find(k => k.key === 'finalParticipants')
+    const schoolsRow = kpis?.find(k => k.key === 'finalSchools')
+    const classesRow = kpis?.find(k => k.key === 'finalClasses')
     const instructorTarget = kpiItem?.educationInstructorTargets?.instructors
     const current = form.getValues()
     if (participantsRow?.target != null && current.kpiFinalParticipants == null) {
       form.setValue('kpiFinalParticipants', Number(participantsRow.target))
+    } else if (
+      programKpi.finalParticipants != null &&
+      current.kpiFinalParticipants == null
+    ) {
+      form.setValue('kpiFinalParticipants', programKpi.finalParticipants)
     }
     if (schoolsRow?.target != null && current.kpiFinalSchools == null) {
       form.setValue('kpiFinalSchools', Number(schoolsRow.target))
+    } else if (programKpi.finalSchools != null && current.kpiFinalSchools == null) {
+      form.setValue('kpiFinalSchools', programKpi.finalSchools)
     }
     if (classesRow?.target != null && current.kpiFinalClasses == null) {
       form.setValue('kpiFinalClasses', Number(classesRow.target))
+    } else if (programKpi.finalClasses != null && current.kpiFinalClasses == null) {
+      form.setValue('kpiFinalClasses', programKpi.finalClasses)
     }
     if (instructorTarget != null && current.kpiInstructorCount == null) {
       form.setValue('kpiInstructorCount', Number(instructorTarget))
+    } else if (programKpi.instructorCount != null && current.kpiInstructorCount == null) {
+      form.setValue('kpiInstructorCount', programKpi.instructorCount)
     }
     if (!showVolunteerKpi && current.kpiVolunteerCount == null) {
       form.setValue('kpiVolunteerCount', 0)
+    } else if (
+      showVolunteerKpi &&
+      programKpi.volunteerCount != null &&
+      current.kpiVolunteerCount == null
+    ) {
+      form.setValue('kpiVolunteerCount', programKpi.volunteerCount)
     }
-  }, [isFormEdit, kpis, kpiItem, showVolunteerKpi, form])
+  }, [isFormEdit, kpis, kpiItem, programKpi, showVolunteerKpi, form])
 
   const participantsRow = kpis?.find(k => k.key === 'finalParticipants')
   const schoolsRow = kpis?.find(k => k.key === 'finalSchools')
   const classesRow = kpis?.find(k => k.key === 'finalClasses')
-  const educationInstructorTargets = kpiItem?.educationInstructorTargets
+  const participantsTarget = participantsRow?.target ?? programKpi.finalParticipants
+  const schoolsTarget = schoolsRow?.target ?? programKpi.finalSchools
+  const classesTarget = classesRow?.target ?? programKpi.finalClasses
+  const educationInstructorTargets =
+    kpiItem?.educationInstructorTargets ??
+    (programKpi.instructorCount != null || programKpi.volunteerCount != null
+      ? {
+          instructors: programKpi.instructorCount ?? 0,
+          volunteers: programKpi.volunteerCount ?? 0,
+        }
+      : undefined)
   const instructorDisplay = formatEducationInstructorTargets(
     educationInstructorTargets,
     showVolunteerKpi,
     Boolean(isFormEdit)
   )
+  const hasKpiData =
+    Boolean(isFormEdit) ||
+    (kpis != null && kpis.length > 0) ||
+    hasProgramKpiTargets(programKpi)
 
   return (
     <DetailInfoForm
@@ -153,7 +193,7 @@ export function ProgramKpiTargetSection({
       mode={isFormEdit ? 'edit' : 'view'}
       className="detail-info-form--gap"
     >
-      {!isFormEdit && (!kpis || kpis.length === 0) ? (
+      {!hasKpiData ? (
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field label="안내" view="KPI 목표 데이터가 없습니다." />
         </DetailInfoForm.Row>
@@ -163,7 +203,7 @@ export function ProgramKpiTargetSection({
             <DetailInfoForm.Field
               label="참여자 최종 인원"
               required
-              view={formatKpiValueWithBoldNumbers(participantsRow?.target)}
+              view={formatKpiValueWithBoldNumbers(participantsTarget)}
               edit={
                 form ? (
                   <>
@@ -247,7 +287,7 @@ export function ProgramKpiTargetSection({
             <DetailInfoForm.Field
               label="최종 파견 학교 수"
               required
-              view={formatKpiValueWithBoldNumbers(schoolsRow?.target)}
+              view={formatKpiValueWithBoldNumbers(schoolsTarget)}
               edit={
                 form ? (
                   <>
@@ -274,7 +314,7 @@ export function ProgramKpiTargetSection({
             <DetailInfoForm.Field
               label="최종 파견 학급 수"
               required
-              view={formatKpiValueWithBoldNumbers(classesRow?.target)}
+              view={formatKpiValueWithBoldNumbers(classesTarget)}
               edit={
                 form ? (
                   <>

@@ -16,7 +16,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-editor/form-editor.css'
 export function UjatRecruitParticipantInfoProgramEdit({
-  program,
+  program: _program,
   form,
   sectionTitle = '참여자 모집 정보' }: {
   program: Program
@@ -32,12 +32,12 @@ export function UjatRecruitParticipantInfoProgramEdit({
           fullRow
           edit={
             <Controller
-              name="mainTitle"
+              name="announcementTitle"
               control={form.control}
               render={({ field }) => (
                 <CmsInput
                   {...field}
-                  value={field.value ?? program.title ?? ''}
+                  value={field.value ?? ''}
                   inputSize="medium"
                   width="100%"
                   placeholder="프로그램명을 입력하세요"

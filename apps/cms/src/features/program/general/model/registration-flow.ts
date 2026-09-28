@@ -1,4 +1,5 @@
 import type { ProgramParticipantApplicationEditorVariant } from '@/features/template/hooks/use-program-participant-application-editor'
+import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
 
 /** 일반 프로그램 전용 — UJAT·1사1교·Gemini 템플릿 제외 */
 export const GENERAL_PROGRAM_REGISTRATION_STEP_KEYS = [
@@ -287,6 +288,15 @@ export function isParticipantRegistrationStep(
   key: GeneralProgramRegistrationStepKey
 ): key is Exclude<GeneralProgramRegistrationStepKey, 'program'> {
   return key !== 'program'
+}
+
+/** 등록 위저드 모집 탭 → 상세와 동일한 사용자 플랫폼 미리보기 audience */
+export function recruitmentPreviewAudienceFromRegistrationStep(
+  step: GeneralProgramRegistrationStepKey
+): GeneralRecruitTabKey {
+  if (step === 'recruit-instructor') return 'instructors'
+  if (step === 'recruit-volunteer') return 'volunteers'
+  return 'institutions'
 }
 
 /** @deprecated 플래그 기반 `getDefaultGeneralProgramRecruitStep` 사용 */

@@ -18,3 +18,19 @@
   flex: 0 0 auto;
   margin-left: auto;
 }
+
+@media (--bp-below-pc) {
+  .bar {
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .filters {
+    flex: 0 1 auto;
+    flex-wrap: nowrap;
+  }
+
+  .resetButton {
+    margin-left: 0;
+  }
+}

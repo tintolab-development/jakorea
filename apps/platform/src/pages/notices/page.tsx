@@ -1,52 +1,66 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   buildNoticesListPath,
-  filterAndSortNotices,
   noticeDetailPath,
   NoticeListItemRow,
-  NOTICES_PAGE_SIZE,
+  NOTICES_LIST_RETURN_STATE_KEY,
   readNoticesListParams,
-  useMockNoticesCatalog,
+  rememberNoticesListReturnPath,
+  useNoticesList,
   type NoticesListParams,
 } from '@/features/notice'
+import { useDebouncedValue } from '@/shared/hooks'
 import { PFDivider, PFPagination, PFSearchInput, PFText } from '@/shared/ui'
 import styles from './page.module.css'
-import { useNavigate } from 'react-router-dom'
+
+const SEARCH_DEBOUNCE_MS = 500
 
 export function NoticesPage() {
   const navigate = useNavigate()
   const [params, setParams] = useState(readNoticesListParams)
-  const notices = useMockNoticesCatalog()
+  const [draftQ, setDraftQ] = useState(() => readNoticesListParams().q)
+  const debouncedQ = useDebouncedValue(draftQ, SEARCH_DEBOUNCE_MS)
+  const list = useNoticesList(params)
 
   useEffect(() => {
+    rememberNoticesListReturnPath()
     const onPopState = () => {
-      setParams(readNoticesListParams())
+      const next = readNoticesListParams()
+      setParams(next)
+      setDraftQ(next.q)
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
+  useEffect(() => {
+    setParams(prev => {
+      if (prev.q === debouncedQ) return prev
+      const merged: NoticesListParams = { ...prev, q: debouncedQ, page: 1 }
+      const nextPath = buildNoticesListPath(merged)
+      const currentPath = `${window.location.pathname}${window.location.search}`
+      if (nextPath !== currentPath) {
+        window.history.pushState(null, '', nextPath)
+      }
+      rememberNoticesListReturnPath(nextPath)
+      return merged
+    })
+  }, [debouncedQ])
+
   const updateParams = (next: Partial<NoticesListParams>) => {
     const merged = { ...params, ...next }
     setParams(merged)
+    if (next.q !== undefined) {
+      setDraftQ(next.q)
+    }
     const nextPath = buildNoticesListPath(merged)
     const currentPath = `${window.location.pathname}${window.location.search}`
     if (nextPath !== currentPath) {
       window.history.pushState(null, '', nextPath)
     }
+    rememberNoticesListReturnPath(nextPath)
   }
-
-  const filteredNotices = useMemo(
-    () => filterAndSortNotices(notices, params),
-    [notices, params]
-  )
-
-  const totalPages = Math.max(1, Math.ceil(filteredNotices.length / NOTICES_PAGE_SIZE))
-  const currentPage = Math.min(params.page, totalPages)
-  const pageItems = filteredNotices.slice(
-    (currentPage - 1) * NOTICES_PAGE_SIZE,
-    currentPage * NOTICES_PAGE_SIZE
-  )
 
   return (
     <section className={styles.page}>
@@ -61,14 +75,14 @@ export function NoticesPage() {
 
         <div className={styles.toolbar}>
           <PFText as="span" typo="hd-sm" color="black" className={styles.count}>
-            {`총 ${filteredNotices.length}건`}
+            {`총 ${list.totalCount}건`}
           </PFText>
           <div className={styles.search}>
             <PFSearchInput
               className={styles.searchField}
               variant="outlined"
-              value={params.q}
-              onValueChange={q => updateParams({ q, page: 1 })}
+              value={draftQ}
+              onValueChange={setDraftQ}
               placeholder="제목, 내용으로 검색해 보세요"
             />
           </div>
@@ -79,16 +93,26 @@ export function NoticesPage() {
         </div>
 
         <div className={styles.list}>
-          {pageItems.length === 0 ? (
+          {list.isPending ? (
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
+              공지사항을 불러오는 중입니다.
+            </PFText>
+          ) : list.items.length === 0 ? (
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
               검색 결과가 없습니다.
             </PFText>
           ) : (
-            pageItems.map(item => (
+            list.items.map(item => (
               <NoticeListItemRow
                 key={item.id}
                 item={item}
-                onClick={() => navigate(noticeDetailPath(item.id))}
+                onClick={() => {
+                  const returnPath = `${window.location.pathname}${window.location.search}`
+                  rememberNoticesListReturnPath(returnPath)
+                  navigate(noticeDetailPath(item.id), {
+                    state: { [NOTICES_LIST_RETURN_STATE_KEY]: returnPath },
+                  })
+                }}
               />
             ))
           )}
@@ -96,8 +120,8 @@ export function NoticesPage() {
 
         <div className={styles.pagination}>
           <PFPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
+            currentPage={list.currentPage}
+            totalPages={list.totalPages}
             onPageChange={page => updateParams({ page })}
           />
         </div>

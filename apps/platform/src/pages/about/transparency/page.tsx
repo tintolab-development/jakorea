@@ -6,24 +6,43 @@ import {
   PrincipleList,
   ReportLinks,
   RevenueTable,
-  TRANSPARENCY_HERO_TITLE,
-  getMockExpenseDetailGroups,
-  getMockExpenseSummary,
-  getMockRevenueSummary,
-  getMockRevenueTableOrder,
-  getMockTransparencyPrinciples,
+  usePublicTransparency,
 } from '@/features/transparency'
-import { useShouldUsePlatformMockData } from '@/shared/hooks'
-import { PFText } from '@/shared/ui'
+import { PFButton, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function TransparencyPage() {
-  useShouldUsePlatformMockData()
-  const principles = getMockTransparencyPrinciples()
-  const revenueSummary = getMockRevenueSummary()
-  const expenseSummary = getMockExpenseSummary()
-  const revenueOrder = getMockRevenueTableOrder()
-  const expenseGroups = getMockExpenseDetailGroups()
+  const { view, isPending, isError, refetch } = usePublicTransparency()
+
+  if (isPending) {
+    return (
+      <section className={styles.page}>
+        <div className={styles.content}>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            투명경영 정보를 불러오는 중입니다.
+          </PFText>
+        </div>
+      </section>
+    )
+  }
+
+  if (isError || !view) {
+    return (
+      <section className={styles.page}>
+        <div className={styles.content}>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            투명경영 정보를 불러오지 못했습니다.
+          </PFText>
+          <PFButton variant="tertiary" size="large" onClick={refetch}>
+            다시 시도
+          </PFButton>
+        </div>
+      </section>
+    )
+  }
+
+  const heroLines = view.heroTitle.split('\n')
+
   return (
     <section className={styles.page}>
       <div
@@ -34,12 +53,14 @@ export function TransparencyPage() {
 
       <div className={styles.content}>
         <header className={styles.hero}>
-          <PFText as="span" typo="hl-lg" color="primary-700" className={styles.heroLabel}>
-            투명한 운영으로 신뢰를 이어갑니다.
-          </PFText>
+          {view.heroLabel ? (
+            <PFText as="span" typo="hl-lg" color="primary-700" className={styles.heroLabel}>
+              {view.heroLabel}
+            </PFText>
+          ) : null}
           <PFText as="h1" typo="page-title-md" color="black" className={styles.heroTitle}>
-            {TRANSPARENCY_HERO_TITLE.split('\n').map((line, index) => (
-              <Fragment key={line}>
+            {heroLines.map((line, index) => (
+              <Fragment key={`${line}-${index}`}>
                 {index > 0 ? <br /> : null}
                 {line}
               </Fragment>
@@ -48,7 +69,7 @@ export function TransparencyPage() {
         </header>
 
         <div className={styles.principles}>
-          <PrincipleList principles={principles} />
+          <PrincipleList principles={view.principles} />
         </div>
 
         <div className={styles.financeArea}>
@@ -63,15 +84,12 @@ export function TransparencyPage() {
               수익총계
             </PFText>
             <FinanceDonutChart
-              summary={revenueSummary}
-              height={700}
+              summary={view.revenueSummary}
+              height={725}
               ariaLabel="수익총계 도넛 차트"
             />
             <div className={styles.financeTable}>
-              <RevenueTable
-                summary={revenueSummary}
-                order={revenueOrder}
-              />
+              <RevenueTable summary={view.revenueSummary} order={view.revenueOrder} />
             </div>
           </section>
 
@@ -86,19 +104,19 @@ export function TransparencyPage() {
               지출총계
             </PFText>
             <FinanceDonutChart
-              summary={expenseSummary}
-              height={900}
+              summary={view.expenseSummary}
+              height={735}
               ariaLabel="지출총계 도넛 차트"
             />
             <div className={styles.financeTable}>
               <ExpenseTable
-                groups={expenseGroups}
-                totalAmount={expenseSummary.totalAmount}
+                groups={view.expenseGroups}
+                totalAmount={view.expenseSummary.totalAmount}
               />
             </div>
           </section>
 
-          <ReportLinks />
+          <ReportLinks disclosureUrl={view.disclosureUrl} />
         </div>
       </div>
     </section>

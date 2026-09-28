@@ -18,10 +18,9 @@ import type { ApplicantIndividualEditDraft } from '@/features/program/general/li
 import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import {
   TEXTBOOK_NOT_USED_OPTION_VALUE,
-  individualApplicantUsesTextbook,
   resolveIndividualApplicantTextbookDisplay,
 } from '@/features/program/general/lib/individual-applicant-textbook'
-import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
+import { useIndividualApplicantTextbookOptions } from '@/features/textbook/hooks/use-individual-applicant-textbook-options'
 import {
   shouldShowIndividualApplicantPreferredScheduleSection,
   shouldShowIndividualApplicantTeamSection,
@@ -412,12 +411,13 @@ export function ApplicantGeneralIndividualBasicInfo({
   const shouldMask = maskSensitive && applicant.privacyMaskingLevel == null
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
   const showAdminComment = isProgressContext || applicant.approvalStatus === 'approved'
+  const applicantEducationGrade =
+    applicant.educationGrade?.trim() || detail?.affiliationGrade?.trim() || ''
   const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
-    useProgramTextbookCatalog(program)
+    useIndividualApplicantTextbookOptions(program, applicantEducationGrade || undefined)
+  /** 승인 완료 후에만 교재명 노출. 미지정은 「해당 없음」 */
   const showTextbookField =
-    screeningStage === 'main' &&
-    applicant.approvalStatus === 'approved' &&
-    (isTextbookCatalogLoading || individualApplicantUsesTextbook(program, textbookCatalog))
+    screeningStage === 'main' && applicant.approvalStatus === 'approved'
 
   const showTeamSection = shouldShowIndividualApplicantTeamSection(program, detail)
   const showManagerEvaluation = shouldShowIndividualManagerEvaluationSection(
@@ -492,21 +492,23 @@ export function ApplicantGeneralIndividualBasicInfo({
   const id1365Cell =
     !shouldMask && id1365Raw ? <IndividualApplicantId1365Cell id1365={id1365Raw} /> : id1365Display
 
-  const textbookDisplay = resolveIndividualApplicantTextbookDisplay(program, applicant)
-  const textbookViewValue =
-    textbookDisplay.isUndecided ||
-    textbookDisplay.name === '해당 없음' ||
-    !textbookDisplay.name ? (
-      textbookDisplay.name
-    ) : (
-      <ProgramDetailTdSegmentWrap>
-        {withProgramDetailTdDivider([
-          textbookDisplay.name,
-          textbookDisplay.kitsLabel,
-          textbookDisplay.status ? <TextbookStatusBadge status={textbookDisplay.status} /> : '-',
-        ])}
-      </ProgramDetailTdSegmentWrap>
-    )
+  const textbookDisplay = resolveIndividualApplicantTextbookDisplay(
+    program,
+    applicant,
+    textbookCatalog
+  )
+  const textbookNotUsedView = <TextbookStatusBadge status="not_applicable" />
+  const textbookViewValue = textbookDisplay.isUnspecified ? (
+    textbookNotUsedView
+  ) : (
+    <ProgramDetailTdSegmentWrap>
+      {withProgramDetailTdDivider([
+        textbookDisplay.name,
+        textbookDisplay.kitsLabel,
+        textbookDisplay.status ? <TextbookStatusBadge status={textbookDisplay.status} /> : '-',
+      ])}
+    </ProgramDetailTdSegmentWrap>
+  )
 
   const textbookEditValue =
     isEditMode && draft && onDraftChange ? (
@@ -514,17 +516,37 @@ export function ApplicantGeneralIndividualBasicInfo({
         <CmsSelect
           className="institution-basic-info__full-width-control"
           inputSize="large"
-          placeholder="교재명 선택"
-          value={draft.textbookId || undefined}
-          options={textbookOptions.map(option => ({
+          placeholder={isTextbookCatalogLoading ? '교재 목록 불러오는 중…' : '교재명 선택'}
+          loading={isTextbookCatalogLoading}
+          value={draft.textbookId || TEXTBOOK_NOT_USED_OPTION_VALUE}
+          options={(textbookOptions.length > 0
+            ? textbookOptions
+            : [
+                {
+                  value: TEXTBOOK_NOT_USED_OPTION_VALUE,
+                  label: '해당 없음',
+                  textbookName: '해당 없음',
+                },
+              ]
+          ).map(option => ({
             label: option.label,
             value: option.value,
           }))}
           onChange={value => {
-            const selected = textbookOptions.find(option => option.value === value)
+            const options =
+              textbookOptions.length > 0
+                ? textbookOptions
+                : [
+                    {
+                      value: TEXTBOOK_NOT_USED_OPTION_VALUE,
+                      label: '해당 없음',
+                      textbookName: '해당 없음',
+                    },
+                  ]
+            const selected = options.find(option => option.value === value)
             const isNotUsed = value === TEXTBOOK_NOT_USED_OPTION_VALUE
             onDraftChange({
-              textbookId: String(value ?? ''),
+              textbookId: isNotUsed ? TEXTBOOK_NOT_USED_OPTION_VALUE : String(value ?? ''),
               textbookName: isNotUsed ? '해당 없음' : (selected?.textbookName ?? ''),
               textbookStatus: isNotUsed ? 'not_applicable' : 'preparing',
             })

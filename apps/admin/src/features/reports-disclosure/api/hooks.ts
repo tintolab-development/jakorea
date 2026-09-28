@@ -7,7 +7,6 @@ import type {
   ReportUpdateInput,
   TransparencyReport,
 } from '@/entities/reports-disclosure/model/types'
-import { shouldUseReportsDisclosureRemoteApi } from './capabilities'
 import { reportsDisclosureQueryKeys } from './query-keys'
 import {
   createReportService,
@@ -17,10 +16,6 @@ import {
   saveNtsDisclosureService,
   updateReportService,
 } from './service'
-
-function source(): 'remote' | 'local' {
-  return shouldUseReportsDisclosureRemoteApi() ? 'remote' : 'local'
-}
 
 function filterKey(filter: ReportListFilter): string {
   return JSON.stringify({
@@ -45,13 +40,12 @@ function collectCachedReports(
 }
 
 export function useReportsList(kind: ReportKind, filter: ReportListFilter, enabled = true) {
-  const dataSource = source()
   return useQuery({
-    queryKey: reportsDisclosureQueryKeys.reportList(kind, dataSource, filterKey(filter)),
+    queryKey: reportsDisclosureQueryKeys.reportList(kind, filterKey(filter)),
     queryFn: () => listReportsService(kind, filter),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 30_000,
+    retry: 1,
   })
 }
 
@@ -105,13 +99,12 @@ export function useRemoveReports(kind: ReportKind) {
 }
 
 export function useNtsDisclosure(enabled = true) {
-  const dataSource = source()
   return useQuery({
-    queryKey: reportsDisclosureQueryKeys.ntsDetail(dataSource),
+    queryKey: reportsDisclosureQueryKeys.ntsDetail(),
     queryFn: () => getNtsDisclosureService(),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 30_000,
+    retry: 1,
   })
 }
 
@@ -120,13 +113,13 @@ export function useSaveNtsDisclosure() {
   return useMutation({
     mutationFn: (linkUrl: string) => {
       const cached = queryClient.getQueryData<NtsDisclosure>(
-        reportsDisclosureQueryKeys.ntsDetail(source()),
+        reportsDisclosureQueryKeys.ntsDetail(),
       )
       return saveNtsDisclosureService(linkUrl, cached)
     },
     retry: false,
     onSuccess: data => {
-      queryClient.setQueryData(reportsDisclosureQueryKeys.ntsDetail(source()), data)
+      queryClient.setQueryData(reportsDisclosureQueryKeys.ntsDetail(), data)
     },
   })
 }

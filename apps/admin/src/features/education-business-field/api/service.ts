@@ -4,18 +4,10 @@ import type {
   EducationBusinessFieldTextPatch,
 } from '@/entities/education-business-field/model/types'
 import { getJAKoreaHomepageAdminAPIEducationSubset } from '@/shared/api/generated/education/education-api'
-import { shouldUseEducationBusinessFieldRemoteApi } from './capabilities'
 import {
   mapBusinessCatalogToDocument,
   toBusinessCatalogUpdateRequest,
 } from './mappers'
-import {
-  readEducationBusinessFieldDocument,
-  readEducationBusinessFields,
-  reorderEducationBusinessFields as reorderLocal,
-  saveEducationBusinessFieldDocument as saveLocal,
-  setEducationBusinessFieldActive as setActiveLocal,
-} from './store'
 
 function educationApi() {
   return getJAKoreaHomepageAdminAPIEducationSubset()
@@ -42,30 +34,19 @@ async function putRemoteDocument(
 }
 
 export async function listEducationBusinessFieldsService(): Promise<EducationBusinessField[]> {
-  if (shouldUseEducationBusinessFieldRemoteApi()) {
-    return (await getRemoteDocument()).fields
-  }
-  return readEducationBusinessFields()
+  return (await getRemoteDocument()).fields
 }
 
 export async function getEducationBusinessFieldDocumentService(): Promise<EducationBusinessFieldDocument> {
-  if (shouldUseEducationBusinessFieldRemoteApi()) {
-    return getRemoteDocument()
-  }
-  return readEducationBusinessFieldDocument()
+  return getRemoteDocument()
 }
 
 export async function reorderEducationBusinessFieldsService(
   orderedIds: string[],
   cached?: EducationBusinessFieldDocument | null,
 ): Promise<EducationBusinessFieldDocument> {
-  if (shouldUseEducationBusinessFieldRemoteApi()) {
-    const doc = cached ?? (await getRemoteDocument())
-    return putRemoteDocument(doc, { orderedIds })
-  }
-  const fields = reorderLocal(orderedIds)
-  const local = readEducationBusinessFieldDocument()
-  return { intro: local.intro, fields }
+  const doc = cached ?? (await getRemoteDocument())
+  return putRemoteDocument(doc, { orderedIds })
 }
 
 export async function setEducationBusinessFieldActiveService(
@@ -73,12 +54,8 @@ export async function setEducationBusinessFieldActiveService(
   isActive: boolean,
   cached?: EducationBusinessFieldDocument | null,
 ): Promise<EducationBusinessFieldDocument> {
-  if (shouldUseEducationBusinessFieldRemoteApi()) {
-    const doc = cached ?? (await getRemoteDocument())
-    return putRemoteDocument(doc, { activePatch: { id, isActive } })
-  }
-  setActiveLocal(id, isActive)
-  return readEducationBusinessFieldDocument()
+  const doc = cached ?? (await getRemoteDocument())
+  return putRemoteDocument(doc, { activePatch: { id, isActive } })
 }
 
 export async function saveEducationBusinessFieldDocumentService(
@@ -88,9 +65,6 @@ export async function saveEducationBusinessFieldDocumentService(
   },
   cached?: EducationBusinessFieldDocument | null,
 ): Promise<EducationBusinessFieldDocument> {
-  if (shouldUseEducationBusinessFieldRemoteApi()) {
-    const doc = cached ?? (await getRemoteDocument())
-    return putRemoteDocument(doc, input)
-  }
-  return saveLocal(input)
+  const doc = cached ?? (await getRemoteDocument())
+  return putRemoteDocument(doc, input)
 }

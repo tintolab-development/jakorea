@@ -32,25 +32,10 @@ describe('detailed-program-adapters', () => {
     expect(mapDetailedProgramResponse({ id: 1, nameKo: 'A' }).inUse).toBe(false)
   })
 
-  it('maps UI input to API request', () => {
+  it('maps UI input to API request without businessArea', () => {
     expect(toDetailedProgramRequest({ name: '테스트', active: false })).toEqual({
       nameKo: '테스트',
-      businessArea: '경제금융',
       useYn: false,
-    })
-  })
-
-  it('uses selected businessArea master name (never GENERAL)', () => {
-    expect(
-      toDetailedProgramRequest({
-        name: '테스트',
-        active: true,
-        businessArea: '디지털리터러시',
-      })
-    ).toEqual({
-      nameKo: '테스트',
-      businessArea: '디지털리터러시',
-      useYn: true,
     })
   })
 
@@ -58,7 +43,6 @@ describe('detailed-program-adapters', () => {
     expect(toDetailedProgramRequest({ name: '테스트', active: true, nameEn: '  Test  ' })).toEqual({
       nameKo: '테스트',
       nameEn: 'Test',
-      businessArea: '경제금융',
       useYn: true,
     })
   })

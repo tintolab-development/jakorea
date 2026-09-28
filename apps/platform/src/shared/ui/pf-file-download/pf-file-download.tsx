@@ -32,7 +32,9 @@ export function PFFileDownload({
       download={fileName}
       onClick={event => {
         event.preventDefault()
-        downloadAttachment(fileName, href)
+        void downloadAttachment(fileName, href).catch(() => {
+          window.alert('첨부파일을 내려받지 못했습니다. 잠시 후 다시 시도해 주세요.')
+        })
       }}
       {...props}
     >

@@ -9,6 +9,10 @@ import { CMS_MULTI_SELECT_TAG_COLORS } from '@/shared/ui/cms-select'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import { useCmsAlert } from '@/shared/ui'
 import {
+  extractApiErrorMessage,
+  getApiErrorHttpStatus,
+} from '@/shared/lib/extract-api-error-message'
+import {
   institutionFilterFields,
   instructorFilterFields,
   volunteerFilterFields,
@@ -238,6 +242,23 @@ export function useApplicantsDetail({
     [showAlert]
   )
 
+  const notifyNotificationResendFailure = useCallback(
+    (error: unknown) => {
+      const responseData =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: unknown } }).response?.data
+          : undefined
+      showAlert({
+        title: '알림 재발송 실패',
+        content: extractApiErrorMessage(responseData, {
+          httpStatus: getApiErrorHttpStatus(error),
+          fallback: '알림을 재발송하지 못했습니다. 다시 시도해 주세요.',
+        }),
+      })
+    },
+    [showAlert]
+  )
+
   const applyRemoteInstitutionDecision = useCallback(
     async (
       ids: string[],
@@ -417,6 +438,7 @@ export function useApplicantsDetail({
       searchParams,
       setSearchParams,
       context: EMPTY_TABLE_PAGE_CONTEXT,
+      disableUrlSync: true,
     }
   )
 
@@ -1069,6 +1091,54 @@ export function useApplicantsDetail({
     }
   }
 
+  const resendOrganizationNotification = async (
+    id: string,
+    payload: {
+      timing: 'IMMEDIATE' | 'SCHEDULED'
+      scheduledAt: string | null
+      reason: string | null
+    },
+    idempotencyKey: string
+  ) => {
+    if (isTrainedTeachersSurface) {
+      if (!trainedTeacherApplicationsRemote.remoteEnabled) {
+        showAlert({
+          title: '알림 재발송 불가',
+          content: '교육받은 교사 기관 신청 API가 활성화되지 않았습니다.',
+        })
+        return false
+      }
+      try {
+        await trainedTeacherApplicationsRemote.resendOrganizationNotification(
+          id,
+          payload,
+          idempotencyKey
+        )
+        await trainedTeacherApplicationsRemote.invalidateApplications()
+        return true
+      } catch (error) {
+        notifyNotificationResendFailure(error)
+        return false
+      }
+    }
+    // GENERAL · COMPANY_SCHOOL · UJAT 그룹 — 공통 path
+    if (!applicationsRemote.remoteEnabled) {
+      showAlert({
+        title: '알림 재발송 불가',
+        content: '기관 신청 알림 재발송 API를 사용할 수 없습니다.',
+      })
+      return false
+    }
+    try {
+      await applicationsRemote.resendOrganizationNotification(id, payload, idempotencyKey)
+      await applicationsRemote.invalidateApplications()
+      return true
+    } catch (error) {
+      notifyNotificationResendFailure(error)
+      return false
+    }
+  }
+
   const handleCancelRejectInstitution = (id: string) => {
     void applyRemoteInstitutionCancelRejection(id, '반려 취소')
   }
@@ -1206,10 +1276,15 @@ export function useApplicantsDetail({
     individualRemoteEnabled: applicationsRemote.individualRemoteEnabled,
     instructorRemoteEnabled: applicationsRemote.instructorRemoteEnabled,
     institutionRemoteEnabled: institutionApplicationsRemote.remoteEnabled,
+    /** 기관 결과 알림 재발송 — TT는 전용 path, 그 외(GENERAL·1사1교·UJAT)는 공통 path */
+    organizationNotificationResendRemoteEnabled: isTrainedTeachersSurface
+      ? trainedTeacherApplicationsRemote.remoteEnabled
+      : applicationsRemote.remoteEnabled,
     handleCancelApproval,
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,
     resendInstructorNotification,
+    resendOrganizationNotification,
     handleCancelRejectInstitution,
     handleCancelApprovalIndividual,
     handleCancelRejectIndividual,

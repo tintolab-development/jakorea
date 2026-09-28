@@ -66,7 +66,8 @@ function computeListboxStyle(field: HTMLElement): CSSProperties {
   const viewportHeight = window.innerHeight
   const spaceBelow = Math.max(0, viewportHeight - rect.bottom - LISTBOX_GAP_PX)
   const spaceAbove = Math.max(0, rect.top - LISTBOX_GAP_PX)
-  const openUpward = spaceAbove > spaceBelow
+  // 기본은 하단 오픈. 아래가 최소 높이도 못 담고 위가 더 넓을 때만 상단으로 연다.
+  const openUpward = spaceBelow < LISTBOX_MIN_HEIGHT_PX && spaceAbove > spaceBelow
   const availableHeight = openUpward ? spaceAbove : spaceBelow
   const maxHeight = Math.min(
     LISTBOX_MAX_HEIGHT_PX,

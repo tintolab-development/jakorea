@@ -13,9 +13,36 @@ export interface RecruitmentResponse {
   status?: string;
   startAt?: string;
   endAt?: string;
+  operationStartDate?: string;
+  operationEndDate?: string;
   minCount?: number;
   maxCount?: number;
   selectionMethod?: string;
   applicationTypes?: string[];
   open?: boolean;
+  /**
+     * false면 서류·면접 행을 만들지 않습니다. 저장값이 없으면 null입니다.
+     * @nullable
+     */
+  interviewEnabled?: boolean | null;
+  /**
+     * 1차 서류 합격자 발표 시각. interviewEnabled가 true일 때만 의미가 있습니다. 없으면 null입니다.
+     * @nullable
+     */
+  documentPassAnnouncementAt?: string | null;
+  /**
+     * 2차 면접 기간 시작. 없으면 null입니다.
+     * @nullable
+     */
+  interviewStartAt?: string | null;
+  /**
+     * 2차 면접 기간 끝. 없으면 null입니다.
+     * @nullable
+     */
+  interviewEndAt?: string | null;
+  /**
+     * 최종 합격자 발표 시각. 면접이 없어도 값이 있으면 내려줍니다. 없으면 null입니다.
+     * @nullable
+     */
+  finalPassAnnouncementAt?: string | null;
 }

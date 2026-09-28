@@ -19,6 +19,8 @@ export type InstructorAssignmentCreateBody = Omit<
 
 /** list enrich (P0) */
 export type InstructorAssignmentListItemEnriched = InstructorAssignmentListItemResponse & {
+  /** OpenAPI는 number|undefined지만 BE는 개인 출강지일 때 null */
+  organizationId?: number | null
   lectureDate?: string
   instructorName?: string
   organizationName?: string

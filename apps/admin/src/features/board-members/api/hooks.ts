@@ -5,7 +5,6 @@ import type {
   BoardMemberTextPatch,
   BoardRoleGroup,
 } from '@/entities/board-members/model/types'
-import { shouldUseBoardMembersRemoteApi } from './capabilities'
 import { boardMembersQueryKeys } from './query-keys'
 import {
   bulkUpdateBoardMembersService,
@@ -16,19 +15,15 @@ import {
   setBoardMemberPublicService,
 } from './service'
 
-function source(): 'remote' | 'local' {
-  return shouldUseBoardMembersRemoteApi() ? 'remote' : 'local'
-}
-
 function cachedList(queryClient: ReturnType<typeof useQueryClient>): BoardMember[] | undefined {
-  return queryClient.getQueryData<BoardMember[]>(boardMembersQueryKeys.list(source()))
+  return queryClient.getQueryData<BoardMember[]>(boardMembersQueryKeys.list())
 }
 
 function patchListRow(
   queryClient: ReturnType<typeof useQueryClient>,
   row: BoardMember,
 ): void {
-  const key = boardMembersQueryKeys.list(source())
+  const key = boardMembersQueryKeys.list()
   const current = queryClient.getQueryData<BoardMember[]>(key)
   if (!current) return
   queryClient.setQueryData(
@@ -38,13 +33,12 @@ function patchListRow(
 }
 
 export function useBoardMembersList(enabled = true) {
-  const dataSource = source()
   return useQuery({
-    queryKey: boardMembersQueryKeys.list(dataSource),
+    queryKey: boardMembersQueryKeys.list(),
     queryFn: () => listBoardMembersService(),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 30_000,
+    retry: 1,
   })
 }
 
@@ -66,7 +60,7 @@ export function useBulkUpdateBoardMembers() {
       bulkUpdateBoardMembersService(patches, cachedList(queryClient)),
     retry: false,
     onSuccess: rows => {
-      queryClient.setQueryData(boardMembersQueryKeys.list(source()), rows)
+      queryClient.setQueryData(boardMembersQueryKeys.list(), rows)
     },
   })
 }
@@ -78,7 +72,7 @@ export function useRemoveBoardMembers() {
       removeBoardMembersService(ids, cachedList(queryClient)),
     retry: false,
     onSuccess: rows => {
-      queryClient.setQueryData(boardMembersQueryKeys.list(source()), rows)
+      queryClient.setQueryData(boardMembersQueryKeys.list(), rows)
     },
   })
 }
@@ -95,7 +89,7 @@ export function useReorderBoardMembersInGroup() {
     }) => reorderBoardMembersInGroupService(roleGroup, orderedIds, cachedList(queryClient)),
     retry: false,
     onSuccess: rows => {
-      queryClient.setQueryData(boardMembersQueryKeys.list(source()), rows)
+      queryClient.setQueryData(boardMembersQueryKeys.list(), rows)
     },
   })
 }

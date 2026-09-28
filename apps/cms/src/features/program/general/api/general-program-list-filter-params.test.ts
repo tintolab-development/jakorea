@@ -3,7 +3,7 @@ import {
   clientFilterGeneralPrograms,
   generalProgramListParamsFromFilters,
 } from '@/features/program/general/api/general-program-list-filter-params'
-import type { Program } from '@/types/domain'
+import type { Program, TargetLevel } from '@/types/domain'
 
 const baseProgram: Program = {
   id: '1',
@@ -44,6 +44,17 @@ describe('general-program-list-filter-params', () => {
     expect(
       clientFilterGeneralPrograms(programs, { targetLevel: 'elementary' })
     ).toHaveLength(1)
+  })
+
+  it('matches 교육 대상 when only targetLevels[] is set', () => {
+    const programs = [
+      { ...baseProgram, id: '1', targetLevel: undefined, targetLevels: ['elementary', 'middle'] as TargetLevel[] },
+      { ...baseProgram, id: '2', targetLevel: undefined, targetLevels: ['high'] as TargetLevel[] },
+    ]
+
+    expect(
+      clientFilterGeneralPrograms(programs, { targetLevel: 'middle' }).map(p => p.id)
+    ).toEqual(['1'])
   })
 
   it('treats overview lifecycleStatus as progress phase, not exact lifecycle match', () => {

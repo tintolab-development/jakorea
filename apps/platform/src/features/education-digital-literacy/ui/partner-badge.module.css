@@ -1,0 +1,20 @@
+.badge {
+  flex-shrink: 1;
+  max-width: 100%;
+}
+
+.content {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-8);
+  min-width: 0;
+}
+
+.divider {
+  display: block;
+  width: 1px;
+  height: 10px;
+  flex-shrink: 0;
+  background: var(--color-neutral-cool-400);
+}

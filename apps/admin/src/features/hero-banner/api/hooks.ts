@@ -103,6 +103,20 @@ export function useSetHeroBannerActive() {
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       setHeroBannerActiveService(id, isActive, cachedList(queryClient)),
     retry: false,
+    onMutate: async ({ id, isActive }) => {
+      const key = heroBannerQueryKeys.list(source())
+      await queryClient.cancelQueries({ queryKey: key })
+      const previous = queryClient.getQueryData<HeroBanner[]>(key)
+      queryClient.setQueryData<HeroBanner[]>(key, old =>
+        old?.map(row => (row.id === id ? { ...row, isActive } : row)),
+      )
+      return { previous }
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(heroBannerQueryKeys.list(source()), context.previous)
+      }
+    },
     onSuccess: data => {
       patchHeroInList(queryClient, data)
     },

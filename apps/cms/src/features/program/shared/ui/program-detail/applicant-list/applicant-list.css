@@ -217,17 +217,34 @@
   cursor: pointer;
 }
 
-/* 강의 회차 td: 비율 열 너비는 컬럼 %에 따름. 최소 너비만 두어 좁은 뷰에서도 내용 가독성 유지 */
+/* 진행 희망 교육 일정 셀 — 옆 열과 겹치지 않도록 overflow clip + 최소 너비 */
+.applicant-details__table .ant-table-thead > tr > th.applicant-details__th-sessions,
 .applicant-details__table .ant-table-tbody > tr > td.applicant-details__td-sessions {
-  min-width: 280px;
+  min-width: 360px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.applicant-details__table .ant-table-tbody > tr > td.applicant-details__td-sessions {
   white-space: normal;
   padding-top: 10px !important;
   padding-bottom: 10px !important;
-  padding-left: 24px !important;
-  padding-right: 24px !important;
-  vertical-align: top;
-  box-sizing: border-box;
-  overflow: hidden;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  vertical-align: middle;
+  text-align: left;
+}
+
+.applicant-details__table .ant-table-tbody > tr > td.applicant-details__td-sessions--center {
+  text-align: center;
+}
+
+.applicant-details__table
+  .ant-table-tbody
+  > tr
+  > td.applicant-details__td-sessions--center
+  .applicant-details__sessions-cell {
+  align-items: center;
 }
 
 .applicant-details__sessions-cell {
@@ -257,6 +274,30 @@
   font-family: Pretendard, sans-serif;
   white-space: nowrap;
   box-sizing: border-box;
+}
+
+/* 진행 희망 교육 일정: 한 줄 유지, 셀 밖으로 넘치지 않음 */
+.applicant-details__session-line--nowrap,
+.applicant-details__session-line--nowrap .program-detail-td-segment-wrap {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.applicant-details__session-line--nowrap .program-detail-td-segment-wrap > span {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.applicant-details__session-line--nowrap .program-detail-td-divider {
+  flex-shrink: 0;
 }
 
 .applicant-details__session-round-tag {

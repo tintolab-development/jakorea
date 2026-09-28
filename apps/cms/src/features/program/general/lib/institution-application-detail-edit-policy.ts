@@ -24,6 +24,10 @@ export function normalizeInstitutionApplicationGradeForSelect(grade?: string): s
 export function formatInstitutionApplicationGradeDisplay(gradeValue: string): string {
   const trimmed = gradeValue.trim()
   if (!trimmed) return ''
+  const withGrade = trimmed.match(/(\d+)\s*학년/)
+  if (withGrade?.[1]) return `${withGrade[1]}학년`
+  const onlyNum = trimmed.match(/^(\d+)$/)
+  if (onlyNum?.[1]) return `${onlyNum[1]}학년`
   if (trimmed.endsWith('학년')) return trimmed
   return `${trimmed}학년`
 }

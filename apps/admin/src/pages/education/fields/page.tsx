@@ -14,13 +14,10 @@ import {
   useSaveEducationBusinessFieldDocument,
   useSetEducationBusinessFieldActive,
 } from '@/features/education-business-field/api/hooks'
-import { educationBusinessFieldQueryKeys } from '@/features/education-business-field/api/query-keys'
-import { EDUCATION_BUSINESS_FIELDS_CHANGED_EVENT } from '@/features/education-business-field/api/store'
 import {
   EducationBusinessFieldDragHandle,
   EducationBusinessFieldsSortableTable,
 } from '@/features/education-business-field/ui/sortable-table'
-import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsButton, CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
 import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
@@ -64,11 +61,6 @@ export function EducationFieldsPage() {
 
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<DraftState | null>(null)
-
-  useInvalidateOnWindowEvent(
-    EDUCATION_BUSINESS_FIELDS_CHANGED_EVENT,
-    educationBusinessFieldQueryKeys.all
-  )
 
   const displayMainText = isEditing && draft ? draft.mainText : introMainText
 

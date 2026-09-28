@@ -8,6 +8,18 @@ export type AdminProgramsListQuery = {
   programType?: string
   periodStatus?: string
   businessYear?: number
+  /** 교육 대상 — `elementary` \| `middle` \| `high` \| `university` \| `adult` */
+  targetLevel?: string
+  /**
+   * 전체 탭「프로그램 진행 현황」3버킷.
+   * `periodStatus`(4카드)와 별축 — 전체 탭에서만 붙이고 periodStatus는 생략.
+   */
+  progressPhase?: string
+  /** `progressPhase` 별칭. 둘 다 있으면 BE는 progressPhase 우선 */
+  lifecycleStatus?: string
+  /** 예정 탭 사업 운영 기간 overlap (YYYY-MM-DD) */
+  operationStartDate?: string
+  operationEndDate?: string
   page?: number
   size?: number
 }
@@ -28,9 +40,12 @@ export interface AdminProgramListItemDto {
   status?: string
   /** OpenAPI 예시 필드 — 일부 BE는 미설정 */
   nameKo?: string
-  /** 실제 목록 응답에서 주로 사용 (ProgramResponse와 동일) */
+  /** 실제 목록 응답에서 주로 사용 (ProgramResponse와 동일). 생성/관리명 */
   title?: string
+  /** 상세와 같은 대표 프로그램명(국문). 없으면 title로 폴백 */
   mainTitle?: string
+  /** 상세와 같은 대표 프로그램명(영문) */
+  titleEn?: string
   /**
    * typed 테이블「프로그램 진행 현황」축.
    * BE는 `periodStatus`와 동일 UI 버킷으로 내려줌.
@@ -47,6 +62,23 @@ export interface AdminProgramListItemDto {
   approvedOrganizationApplicationCount?: number
   instructorApplicantCount?: number
   applicantCount?: number
+  /** 교육 대상 — enum 또는 한글 라벨 */
+  targetLevel?: string
+  targetLevels?: string[]
+  /** 참여자 모집 정원 (BE: `participantRecruitmentCount` 또는 handoff `participantCapacity`) */
+  participantRecruitmentCount?: number | null
+  participantCapacity?: number | null
+  participantApprovedCount?: number | null
+  instructorRecruitmentCount?: number | null
+  instructorCapacity?: number | null
+  instructorApprovedCount?: number | null
+  volunteerRecruitmentCount?: number | null
+  volunteerCapacity?: number | null
+  volunteerApprovedCount?: number | null
+  /** 총 참여 학교/기관 수 */
+  participatingOrganizationCount?: number | null
+  participatingSchoolCount?: number | null
+  participatingStudentCount?: number | null
   createdAt?: string
   updatedAt?: string
 }

@@ -245,6 +245,26 @@ function buildMailTemplateUpsertBody(input: {
   }
 }
 
+async function rethrowAfterRollback(error: unknown, rollback: () => Promise<unknown>): Promise<never> {
+  try {
+    await rollback()
+  } catch {
+    // 되돌리기 실패보다 첨부 업로드 실패를 전달한다.
+  }
+  throw error
+}
+
+function mailTemplateUpsertFromItem(item: MailTemplateItem): NotificationTemplateUpsertRequest {
+  return buildMailTemplateUpsertBody({
+    templateName: item.templateName || item.name,
+    senderName: item.senderName,
+    senderEmail: item.senderEmail,
+    subject: item.subject,
+    bodyHtml: item.bodyHtml,
+    categoryId: item.categoryId,
+  })
+}
+
 export async function createMailTemplate(input: {
   templateName: string
   senderName: string
@@ -266,7 +286,11 @@ export async function createMailTemplate(input: {
     throw new Error('템플릿 생성 응답에 ID가 없습니다.')
   }
   if (input.newFiles && input.newFiles.length > 0) {
-    await uploadAndBindMailTemplateAttachments(templateId, input.newFiles)
+    try {
+      await uploadAndBindMailTemplateAttachments(templateId, input.newFiles)
+    } catch (error) {
+      return rethrowAfterRollback(error, () => deleteNotificationTemplateRemote(templateId))
+    }
   }
   return { templateId: String(templateId) }
 }
@@ -285,6 +309,10 @@ export async function updateMailTemplate(input: {
   assertMailTemplatesRemoteReady()
   const templateId = Number(input.templateId)
   if (!Number.isFinite(templateId)) throw new Error('템플릿 ID가 올바르지 않습니다.')
+  const newFiles = input.newFiles ?? []
+  const removedAttachmentIds = input.removedAttachmentIds ?? []
+  const syncsAttachments = newFiles.length > 0 || removedAttachmentIds.length > 0
+  const previous = syncsAttachments ? await getMailTemplateDetail(input.templateId) : null
   await updateNotificationTemplateRemote(
     templateId,
     buildMailTemplateUpsertBody({
@@ -296,11 +324,19 @@ export async function updateMailTemplate(input: {
       categoryId: input.categoryId,
     })
   )
-  await syncMailTemplateAttachments({
-    templateId,
-    newFiles: input.newFiles ?? [],
-    removedAttachmentIds: input.removedAttachmentIds ?? [],
-  })
+  if (!syncsAttachments) return { templateId: String(templateId) }
+  try {
+    await syncMailTemplateAttachments({
+      templateId,
+      newFiles,
+      removedAttachmentIds,
+    })
+  } catch (error) {
+    return rethrowAfterRollback(error, async () => {
+      if (!previous) return
+      await updateNotificationTemplateRemote(templateId, mailTemplateUpsertFromItem(previous))
+    })
+  }
   return { templateId: String(templateId) }
 }
 

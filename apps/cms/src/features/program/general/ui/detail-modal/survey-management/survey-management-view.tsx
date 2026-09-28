@@ -6,11 +6,16 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { handleError } from '@/shared/utils/error-handler'
+import { loadFormTemplateVersionDraftByVersionId } from '@/features/template/api/admin-form-templates-service'
 import { duplicateWritingTemplate } from '@/features/template/api/duplicate-writing-template'
 import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
+import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import { useClipboard } from '@/features/template/hooks/use-clipboard'
-import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
-import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
+import {
+  useTemplateWritingPreview,
+  type TemplateWritingUserPreviewSession,
+} from '@/features/template/context/template-writing-preview-context'
+import { usePushUserPreviewHistoryWhenOpen } from '@/features/template/hooks/use-push-user-preview-history-when-open'
 import {
   isSurveyRegistryEntry,
   lookupTemplateRegistry,
@@ -18,6 +23,10 @@ import {
 } from '@/features/template/model/template-registry/template-registry'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { getSurveyWritingTemplateSelectOptions } from '@/features/program/shared/lib/survey-management/survey-template-options'
+import {
+  findWritingTemplateRowByDefinitionId,
+  getWritingTemplateRowsByCategory,
+} from '@/features/template/lib/writing-template-create-helpers'
 import {
   buildLectureEvalFormDraft,
   canEditLectureEvalResponse,
@@ -44,6 +53,7 @@ import {
   GENERAL_SATISFACTION_NO_RESPONSE_COPY,
   GENERAL_SATISFACTION_SHARE_TOAST_COPY,
   GENERAL_SURVEY_POLL_ACTION_LABELS,
+  GENERAL_SURVEY_MENU_EMPTY_COPY,
   GENERAL_SURVEY_POLL_EMPTY_COPY,
   GENERAL_SURVEY_POLL_NO_RESPONSE_COPY,
   GENERAL_SURVEY_POLL_SHARE_TOAST_COPY,
@@ -53,6 +63,8 @@ import type {
   SurveyPollRawResponse,
 } from '@/features/program/shared/lib/survey-management/survey-management-types'
 import { resolveSurveyWritingDraft } from '@/features/program/shared/lib/survey-management/survey-writing-draft'
+import { resolvePublishedDuplicatedSurveyBinding } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
+import { resolveLectureEvalBindingTarget } from '@/features/program/shared/lib/survey-management/resolve-lecture-eval-binding-target'
 import { SurveyEmptyState } from '@/features/program/shared/ui/survey-management/survey-empty-state'
 import { SurveyNoResponseState } from '@/features/program/shared/ui/survey-management/survey-no-response-state'
 import { SurveyPollResultsView } from '@/features/program/shared/ui/survey-management/survey-poll-results-view'
@@ -96,12 +108,15 @@ import {
   resolveSurveyCreateBindingTemplateCode,
   resolveSurveyShareClipboardUrl,
 } from '@/features/program/general/api/adapters/program-survey-adapters'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import { getGeneralSurveyMenuItems } from '@/features/program/general/lib/detail-meta'
 import { isGeneralProgramTempMockProgramId } from '@/features/program/general/api/temp-mock-capabilities'
 import { buildTempMockSurveyShareUrl } from '@/features/program/general/lib/temp-mock-local-actions'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
+import '@/features/program/shared/ui/survey-management/survey-management.css'
 import './survey-management.css'
 
 type CreateModalKind = 'survey' | 'satisfaction' | 'lecture'
@@ -112,18 +127,44 @@ export type GeneralSurveyManagementViewProps = {
   activeTab: string
 }
 
-async function buildPreviewSession(templateId: string, onEditForm?: () => void) {
-  const row = findWritingTemplateRowByDefinitionId(templateId)
-  if (row == null) return null
-  const entry = lookupTemplateRegistry(row.id)
-  if (entry == null || !isSurveyRegistryEntry(entry)) return null
-  const draft = await resolveSurveyWritingDraft(templateId, { templateName: row.templateName })
+async function buildPreviewSession(args: {
+  templateId: string
+  title?: string
+  versionId?: string
+  lecture?: boolean
+  onEditForm?: () => void
+  paragraphBodyOptions?: TemplateWritingUserPreviewSession['paragraphBodyOptions']
+}): Promise<TemplateWritingUserPreviewSession | null> {
+  const row = findWritingTemplateRowByDefinitionId(args.templateId)
+  if (row != null) {
+    const entry = lookupTemplateRegistry(row.id)
+    if (entry == null || !isSurveyRegistryEntry(entry)) return null
+    const draft = args.lecture
+      ? await buildLectureEvalFormDraft(row.id)
+      : await resolveSurveyWritingDraft(args.templateId, { templateName: row.templateName })
+    return {
+      draft,
+      updateParagraph: () => {},
+      headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
+      editorKind: 'survey',
+      ...(args.paragraphBodyOptions != null
+        ? { paragraphBodyOptions: args.paragraphBodyOptions }
+        : {}),
+      ...(args.onEditForm != null ? { onEditForm: args.onEditForm } : {}),
+    }
+  }
+
+  const versionId = Number(args.versionId)
+  if (!Number.isFinite(versionId) || versionId <= 0) return null
+  const record = await loadFormTemplateVersionDraftByVersionId(args.templateId, Math.trunc(versionId))
+  if (record?.draft == null) return null
   return {
-    draft,
+    draft: record.draft,
     updateParagraph: () => {},
-    headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
-    editorKind: 'survey' as const,
-    ...(onEditForm != null ? { onEditForm } : {}),
+    headerTitle: args.title?.trim() || '설문조사',
+    editorKind: 'survey',
+    ...(args.paragraphBodyOptions != null ? { paragraphBodyOptions: args.paragraphBodyOptions } : {}),
+    ...(args.onEditForm != null ? { onEditForm: args.onEditForm } : {}),
   }
 }
 
@@ -131,6 +172,20 @@ function buildSurveyPollResultsPdfFileName(programTitle: string, surveyTitle: st
   const safeProgram = programTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '프로그램'
   const safeSurvey = surveyTitle.trim().replace(/[\\/:*?"<>|]/g, '_') || '설문조사'
   return `${safeProgram}_${safeSurvey}_설문조사결과.pdf`
+}
+
+function pickRegisteredSurveyTemplateId(
+  preferredId: string,
+  rows: { id: string; templateName: string }[],
+  nameIncludes?: string
+): string {
+  const exact = rows.find(row => row.id === preferredId)
+  if (exact) return exact.id
+  if (nameIncludes) {
+    const named = rows.find(row => row.templateName.includes(nameIncludes))
+    if (named) return named.id
+  }
+  return preferredId
 }
 
 function buildSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: string): string {
@@ -148,8 +203,18 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     loading: surveysLoading,
     isRemoteDataSource: surveysRemote,
   } = useGeneralProgramSurveys(program.id)
-  const { createBinding, deleteBinding, isMutating: bindingMutating } =
-    useGeneralProgramSurveyFormBindingMutations(program.id)
+  const {
+    createBinding,
+    deleteBinding,
+    invalidateSurveyCaches,
+    isMutating: bindingMutating,
+  } = useGeneralProgramSurveyFormBindingMutations(program.id)
+  const { sections: writingFormSections, isRemote: writingFormsRemote } = useWritingFormSections()
+  const remoteSurveyRows = useMemo(
+    () =>
+      writingFormsRemote ? getWritingTemplateRowsByCategory('survey', writingFormSections) : [],
+    [writingFormSections, writingFormsRemote]
+  )
   const [registeredSurveys, setRegisteredSurveys] = useState(() =>
     surveysRemote ? [] : initialMock.registeredSurveys
   )
@@ -171,6 +236,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     () => (surveysRemote ? false : initialMock.lectureEvalSubmitted)
   )
   const [lectureEvalFormDraft, setLectureEvalFormDraft] = useState<WritingFormDraft | null>(null)
+  const lectureEvalDraftRef = useRef<WritingFormDraft | null>(null)
   const [lectureEvalResponses, setLectureEvalResponses] = useState<SurveyPollRawResponse[]>(() =>
     surveysRemote ? [] : initialMock.lectureEvalResponses
   )
@@ -199,10 +265,12 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const pollResultsExportRef = useRef<HTMLDivElement>(null)
   const satisfactionResultsExportRef = useRef<HTMLDivElement>(null)
   const shareToastTimerRef = useRef<number | null>(null)
-  const { openWritingUserPreview } = useTemplateWritingPreview()
+  const { openWritingUserPreview, isWritingUserPreviewOpen } = useTemplateWritingPreview()
+  const requestPreviewHistoryPush = usePushUserPreviewHistoryWhenOpen(isWritingUserPreviewOpen)
   const { copyText } = useClipboard()
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
+  const surveyMenuEmpty = getGeneralSurveyMenuItems(program).length === 0
 
   const activeSatisfactionSurveyId =
     satisfactionSurveysByAudience[activeSatisfactionAudience]?.id ?? undefined
@@ -262,9 +330,11 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     if (!surveysRemote || !classifiedBindings) return
     const nextSatisfaction: Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>> = {}
     let nextLecture: RegisteredSurvey | null = null
+    const fallbackSatisfactionAudience = getDefaultGeneralSatisfactionAudience(program)
     for (const item of classifiedBindings) {
-      if (item.kind === 'satisfaction' && item.satisfactionAudience) {
-        nextSatisfaction[item.satisfactionAudience] = item.survey
+      if (item.kind === 'satisfaction') {
+        const audience = item.satisfactionAudience ?? fallbackSatisfactionAudience
+        nextSatisfaction[audience] = item.survey
       }
       if (item.kind === 'lecture_evaluation') {
         nextLecture = item.survey
@@ -272,7 +342,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     }
     setSatisfactionSurveysByAudience(nextSatisfaction)
     setLectureEvalSurvey(nextLecture)
-  }, [classifiedBindings, surveysRemote])
+  }, [classifiedBindings, program, surveysRemote])
 
   useEffect(() => {
     if (!isGeneralSatisfactionSurveyNavTab(activeTab)) return
@@ -289,7 +359,15 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     }
   }, [])
 
-  const surveyTemplateOptions = useMemo(() => getSurveyWritingTemplateSelectOptions(), [])
+  const surveyTemplateOptions = useMemo(() => {
+    if (remoteSurveyRows.length > 0) {
+      return remoteSurveyRows.map(row => ({
+        label: row.templateName,
+        value: row.id,
+      }))
+    }
+    return getSurveyWritingTemplateSelectOptions()
+  }, [remoteSurveyRows])
   const activeRegisteredSurvey = useMemo(
     () => registeredSurveys.find(item => item.id === activeRegisteredSurveyId) ?? null,
     [registeredSurveys, activeRegisteredSurveyId]
@@ -339,6 +417,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   useEffect(() => {
     if (lectureEvalSurvey == null) {
+      lectureEvalDraftRef.current = null
       setLectureEvalFormDraft(null)
       if (!lectureResponsesRemote) {
         setLectureEvalResponses([])
@@ -349,11 +428,29 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     }
     if (lectureEvalSurvey.status === 'in_progress' || lectureEvalSurvey.status === 'finished') {
       let cancelled = false
-      void buildLectureEvalFormDraft(lectureEvalSurvey.templateId).then(draft => {
-        if (!cancelled) {
-          setLectureEvalFormDraft(prev => prev ?? draft)
+      const versionId = Number(lectureEvalSurvey.id)
+      const loadDraft = async () => {
+        if (
+          findWritingTemplateRowByDefinitionId(lectureEvalSurvey.templateId) == null &&
+          Number.isFinite(versionId) &&
+          versionId > 0
+        ) {
+          const record = await loadFormTemplateVersionDraftByVersionId(
+            lectureEvalSurvey.templateId,
+            Math.trunc(versionId)
+          )
+          if (record?.draft != null) return record.draft
         }
-      })
+        return buildLectureEvalFormDraft(lectureEvalSurvey.templateId)
+      }
+      void loadDraft()
+        .catch(() => buildLectureEvalFormDraft(lectureEvalSurvey.templateId))
+        .then(draft => {
+          if (!cancelled) {
+            lectureEvalDraftRef.current = lectureEvalDraftRef.current ?? draft
+            setLectureEvalFormDraft(prev => prev ?? draft)
+          }
+        })
       return () => {
         cancelled = true
       }
@@ -380,11 +477,9 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   function buildFormBindingPayload(
     kind: CreateModalKind,
-    templateCode: string,
+    ids: { templateId: number; templateVersionId?: number },
     audience?: GeneralSatisfactionAudienceKey | null
-  ): ProgramFormBindingRequest | null {
-    const ids = resolveBindingIds(templateCode)
-    if (ids.templateId == null) return null
+  ): ProgramFormBindingRequest {
     const formType =
       kind === 'satisfaction' ? 'SATISFACTION' : kind === 'lecture' ? 'LECTURE_EVALUATION' : 'SURVEY'
     const targetRole =
@@ -412,14 +507,50 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   }
 
   const openTemplatePreview = useCallback(
-    (templateId: string, options?: { allowEdit?: boolean }) => {
+    (
+      survey: Pick<RegisteredSurvey, 'id' | 'templateId' | 'title'>,
+      options?: {
+        allowEdit?: boolean
+        lecture?: boolean
+        paragraphBodyOptions?: TemplateWritingUserPreviewSession['paragraphBodyOptions']
+      }
+    ) => {
+      const catalogRow = findWritingTemplateRowByDefinitionId(survey.templateId)
       const onEditForm =
-        options?.allowEdit === true ? () => setTemplateEditId(templateId) : undefined
-      void buildPreviewSession(templateId, onEditForm).then(session => {
-        if (session != null) openWritingUserPreview(session)
+        options?.allowEdit === true && catalogRow != null
+          ? () => setTemplateEditId(survey.templateId)
+          : undefined
+      void buildPreviewSession({
+        templateId: survey.templateId,
+        title: survey.title,
+        versionId: survey.id,
+        lecture: options?.lecture,
+        onEditForm,
+        paragraphBodyOptions: options?.paragraphBodyOptions,
       })
+        .then(session => {
+          if (session == null) {
+            void showAlert({
+              title: '양식 보기',
+              content: '설문 양식을 불러오지 못했습니다. 다시 시도해 주세요.',
+            })
+            return
+          }
+          requestPreviewHistoryPush()
+          openWritingUserPreview(session)
+        })
+        .catch(error => {
+          handleError(error, { context: 'generalSurveyManagement.preview' })
+          void showAlert({
+            title: '양식 보기',
+            content: getGeneralProgramApiErrorMessage(
+              error,
+              '설문 양식을 불러오지 못했습니다. 다시 시도해 주세요.'
+            ),
+          })
+        })
     },
-    [openWritingUserPreview]
+    [openWritingUserPreview, requestPreviewHistoryPush, showAlert]
   )
 
   const showShareCopyToast = useCallback(
@@ -442,18 +573,48 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       setSubmitting(false)
       if (kind === 'satisfaction' && satisfactionAudience != null) {
         setPendingSatisfactionAudience(satisfactionAudience)
-        setSelectedTemplateId(GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE[satisfactionAudience])
+        setSelectedTemplateId(
+          pickRegisteredSurveyTemplateId(
+            GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE[satisfactionAudience],
+            remoteSurveyRows,
+            '만족도'
+          )
+        )
       } else if (kind === 'lecture') {
         setPendingSatisfactionAudience(null)
-        setSelectedTemplateId(LECTURE_EVAL_TEMPLATE_ID)
+        setSelectedTemplateId(
+          pickRegisteredSurveyTemplateId(LECTURE_EVAL_TEMPLATE_ID, remoteSurveyRows, '강의평가')
+        )
       } else {
         setPendingSatisfactionAudience(null)
         setSelectedTemplateId(null)
       }
       setCreateModalKind(kind)
     },
-    []
+    [remoteSurveyRows]
   )
+
+  useEffect(() => {
+    if (createModalKind == null || remoteSurveyRows.length === 0) return
+    setSelectedTemplateId(prev => {
+      if (prev != null && remoteSurveyRows.some(row => row.id === prev)) return prev
+      if (createModalKind === 'lecture') {
+        return pickRegisteredSurveyTemplateId(
+          LECTURE_EVAL_TEMPLATE_ID,
+          remoteSurveyRows,
+          '강의평가'
+        )
+      }
+      if (createModalKind === 'satisfaction' && pendingSatisfactionAudience != null) {
+        return pickRegisteredSurveyTemplateId(
+          GENERAL_SATISFACTION_TEMPLATE_BY_AUDIENCE[pendingSatisfactionAudience],
+          remoteSurveyRows,
+          '만족도'
+        )
+      }
+      return prev
+    })
+  }, [createModalKind, pendingSatisfactionAudience, remoteSurveyRows])
 
   const closeCreateModal = useCallback(() => {
     if (submitting) return
@@ -475,12 +636,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       })
 
       if (surveysRemote) {
-        const payload = buildFormBindingPayload(
-          createModalKind,
-          templateCode,
-          pendingSatisfactionAudience
-        )
-        if (payload == null) {
+        const resolved = await resolvePublishedDuplicatedSurveyBinding(templateCode)
+        if (resolved == null) {
           void showAlert({
             title: '등록 실패',
             content:
@@ -488,8 +645,27 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           })
           return
         }
+        const payload = buildFormBindingPayload(
+          createModalKind,
+          resolved,
+          pendingSatisfactionAudience
+        )
+        if (createModalKind === 'lecture') {
+          const lectureTarget = await resolveLectureEvalBindingTarget(String(program.id))
+          if (lectureTarget == null) {
+            void showAlert({
+              title: '등록 실패',
+              content:
+                '강의평가는 교육 일정(회차)에 연결해야 합니다. 프로그램 일정을 먼저 등록한 뒤 다시 시도해 주세요.',
+            })
+            return
+          }
+          payload.targetScope = lectureTarget.targetScope
+          payload.targetScopeId = lectureTarget.targetScopeId
+        }
         const result = await createBinding(payload)
         if (!result.ok) {
+          await invalidateSurveyCaches()
           void showAlert({ title: '등록 실패', content: result.message })
           return
         }
@@ -548,15 +724,24 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       setCreateModalKind(null)
     } catch (error) {
       handleError(error, { context: 'generalSurveyManagement.createSurvey' })
+      void showAlert({
+        title: '등록 실패',
+        content: getGeneralProgramApiErrorMessage(
+          error,
+          '설문 등록에 실패했습니다. 다시 시도해 주세요.'
+        ),
+      })
     } finally {
       setSubmitting(false)
     }
   }, [
     createBinding,
     createModalKind,
+    invalidateSurveyCaches,
     individualProgram,
     isTempMockProgram,
     pendingSatisfactionAudience,
+    program.id,
     program.totalParticipants,
     registeredSurveys.length,
     selectedTemplateId,
@@ -792,7 +977,12 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     [activeRegisteredSurvey, pollResponses, program.title, showAlert]
   )
 
+  const handleLectureEvalDraftChange = useCallback((draft: WritingFormDraft) => {
+    lectureEvalDraftRef.current = draft
+  }, [])
+
   const handleLectureEvalSubmit = useCallback(async () => {
+    const lectureEvalFormDraft = lectureEvalDraftRef.current
     if (lectureEvalSurvey == null || lectureEvalFormDraft == null) return
     const validation = validateLectureEvalFormDraft(lectureEvalFormDraft)
     if (!validation.valid) {
@@ -800,14 +990,26 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       return
     }
 
+    setLectureEvalFormDraft(lectureEvalFormDraft)
     const pollResponse = draftToLectureEvalPollResponse(lectureEvalFormDraft)
-    const bindingIds = resolveBindingIds(lectureEvalSurvey.templateId)
+    const surveyVersionId = Number(lectureEvalSurvey.id)
+    const templateVersionId =
+      Number.isFinite(surveyVersionId) && surveyVersionId > 0
+        ? Math.trunc(surveyVersionId)
+        : resolveBindingIds(lectureEvalSurvey.templateId).templateVersionId
     const programIdNum = Number(program.id)
 
-    if (bindingIds.templateVersionId != null && Number.isFinite(programIdNum)) {
+    if (surveysRemote) {
+      if (templateVersionId == null || !Number.isFinite(programIdNum)) {
+        void showAlert({
+          title: '제출 실패',
+          content: '강의평가 양식 버전을 찾지 못했습니다. 다시 시도해 주세요.',
+        })
+        return
+      }
       try {
         await submitGeneralProgramFormResponse({
-          templateVersionId: bindingIds.templateVersionId,
+          templateVersionId,
           programId: programIdNum,
           contextType: 'PROGRAM',
           answers: pollResponse.answers,
@@ -815,7 +1017,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         await queryClient.invalidateQueries({
           queryKey: generalProgramQueryKeys.surveyResponses(
             String(program.id),
-            String(bindingIds.templateVersionId)
+            String(templateVersionId)
           ),
         })
       } catch (error) {
@@ -843,7 +1045,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         participantTotal: Math.max(prev.participantTotal, 1),
       }
     })
-  }, [lectureEvalFormDraft, lectureEvalSurvey, program.id, queryClient, showAlert])
+  }, [lectureEvalSurvey, program.id, queryClient, showAlert, surveysRemote])
 
   const handleLectureEvalTabChange = useCallback(
     (tab: LectureEvalTabKey) => {
@@ -858,23 +1060,12 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   const handleLectureEvalPreview = useCallback(() => {
     if (lectureEvalSurvey == null) return
-    const row = findWritingTemplateRowByDefinitionId(lectureEvalSurvey.templateId)
-    if (row == null) return
-    const entry = lookupTemplateRegistry(row.id)
-    if (entry == null || !isSurveyRegistryEntry(entry)) return
-    void buildLectureEvalFormDraft(row.id).then(draft => {
-      openWritingUserPreview({
-        draft,
-        updateParagraph: () => {},
-        headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
-        editorKind: 'survey',
-        paragraphBodyOptions: LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
-        ...(lectureEvalSurvey.status === 'before_start'
-          ? { onEditForm: () => setTemplateEditId(row.id) }
-          : {}),
-      })
+    openTemplatePreview(lectureEvalSurvey, {
+      allowEdit: lectureEvalSurvey.status === 'before_start',
+      lecture: true,
+      paragraphBodyOptions: LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
     })
-  }, [lectureEvalSurvey, openWritingUserPreview])
+  }, [lectureEvalSurvey, openTemplatePreview])
 
   const handleDownloadLectureEvalResults = useCallback(
     async (format: SurveyResultsDownloadFormat) => {
@@ -947,7 +1138,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
                 onShareClick={() => shareRegisteredSurveyUrl(activeRegisteredSurvey)}
                 onAddClick={() => openCreateModal('survey')}
                 onOpenTemplatePreview={() =>
-                  openTemplatePreview(activeRegisteredSurvey.templateId, {
+                  openTemplatePreview(activeRegisteredSurvey, {
                     allowEdit: activeRegisteredSurvey.status === 'before_start',
                   })
                 }
@@ -974,7 +1165,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               setDeleteModalKind('survey')
             }}
             onOpenTemplatePreview={() =>
-              openTemplatePreview(activeRegisteredSurvey.templateId, { allowEdit: true })
+              openTemplatePreview(activeRegisteredSurvey, { allowEdit: true })
             }
           />
         ) : activeRegisteredSurvey != null ? (
@@ -993,12 +1184,16 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   }
 
   const renderEmptyMain = () => (
-    <SurveyEmptyState
-      title={GENERAL_SURVEY_POLL_EMPTY_COPY.title}
-      description={GENERAL_SURVEY_POLL_EMPTY_COPY.description}
-      registerButtonLabel={GENERAL_SURVEY_POLL_EMPTY_COPY.registerButton}
-      onRegisterClick={() => openCreateModal('survey')}
-    />
+    <div className="program-detail-fullpage-modal__info-tab survey-management__empty-main">
+      <div className="survey-management__empty-main-card">
+        <p className="survey-management__empty-main-title">
+          {GENERAL_SURVEY_MENU_EMPTY_COPY.title}
+        </p>
+        <p className="survey-management__empty-main-description">
+          {GENERAL_SURVEY_MENU_EMPTY_COPY.description}
+        </p>
+      </div>
+    </div>
   )
 
   const createTitle =
@@ -1047,7 +1242,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       onOpenTemplatePreview={() => {
         const survey = satisfactionSurveysByAudience[activeSatisfactionAudience]
         if (survey != null) {
-          openTemplatePreview(survey.templateId, {
+          openTemplatePreview(survey, {
             allowEdit: survey.status === 'before_start',
           })
         }
@@ -1061,11 +1256,14 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   return (
     <>
-      {activeTab === 'survey' ? renderPoll() : null}
-      {isGeneralSatisfactionSurveyNavTab(activeTab) && satisfactionAudienceTabs.length > 0
+      {surveyMenuEmpty || activeTab === 'main' ? renderEmptyMain() : null}
+      {!surveyMenuEmpty && activeTab === 'survey' ? renderPoll() : null}
+      {!surveyMenuEmpty &&
+      isGeneralSatisfactionSurveyNavTab(activeTab) &&
+      satisfactionAudienceTabs.length > 0
         ? renderSatisfactionView()
         : null}
-      {activeTab === 'lecture_evaluation' ? (
+      {!surveyMenuEmpty && activeTab === 'lecture_evaluation' ? (
         surveysRemote && surveysLoading ? (
           <div className="survey-management-loading" role="status">
             <Spin size="large" />
@@ -1086,7 +1284,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           onTabChange={handleLectureEvalTabChange}
           onRegisterClick={() => openCreateModal('lecture')}
           onOpenTemplatePreview={handleLectureEvalPreview}
-          onFormDraftChange={setLectureEvalFormDraft}
+          onFormDraftChange={handleLectureEvalDraftChange}
           onSubmitClick={handleLectureEvalSubmit}
           onEditResponseClick={() => {
             if (
@@ -1100,7 +1298,6 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         />
         )
       ) : null}
-      {activeTab === 'main' ? renderEmptyMain() : null}
 
       <ContentModal
         open={createModalKind != null}

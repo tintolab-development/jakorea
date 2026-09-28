@@ -1,6 +1,6 @@
 /**
- * members / admin-accounts API 응답 → CMS `registeredByAdmin`·`identitySelfSignupCompletedAfterAdminRegistration` 정규화.
- * admin-accounts로 생성된 관리자는 members API에 preRegistered가 없을 수 있음(adminAccountId로 보완).
+ * members / admin-accounts / account-directory API 응답 → CMS `registeredByAdmin` 정규화.
+ * 가입 유형 SoT는 `createdByAdmin`·`registeredByAdmin`(동치). role·adminAccountId로 추론하지 않는다.
  */
 
 export type MemberRegistrationFlagSource = {
@@ -13,13 +13,11 @@ export type MemberRegistrationFlagSource = {
   identityVerified?: boolean
 }
 
+/** `createdByAdmin === true` (또는 동치 호환 필드)일 때만 관리자 등록. 없으면 false. */
 export function resolveRegisteredByAdmin(source: MemberRegistrationFlagSource): boolean {
   if (source.registeredByAdmin === true) return true
-  if (source.preRegistered === true) return true
   if (source.createdByAdmin === true) return true
-  const role = source.role?.trim().toUpperCase()
-  const adminAccountId = source.adminAccountId
-  if (role === 'ADMIN' && adminAccountId != null && adminAccountId > 0) return true
+  if (source.preRegistered === true) return true
   return false
 }
 

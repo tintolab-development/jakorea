@@ -1,3 +1,5 @@
+import { programEditWindowErrorMessage } from '@/shared/lib/program-edit-window-error-message'
+
 /** 백엔드 공통 에러 envelope (`success: false`, `error: { code, message, traceId }`) */
 export type ApiErrorEnvelope = {
   success?: boolean
@@ -24,6 +26,9 @@ export function extractApiErrorMessage(
   data: unknown,
   options?: { httpStatus?: number | null; fallback?: string }
 ): string {
+  const mapped = programEditWindowErrorMessage(extractApiErrorCode(data))
+  if (mapped) return mapped
+
   const envelope = asEnvelope(data)
   if (envelope) {
     const top = envelope.message?.trim()

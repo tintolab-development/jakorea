@@ -1,31 +1,17 @@
 import { Fragment } from 'react'
 import { PFText } from '@/shared/ui'
-import {
-  EXPERIENCE_DESCRIPTION,
-  EXPERIENCE_TITLE_LINES,
-  HERO_INTRO_LINES,
-  HERO_INTRO_MOBILE,
-  HERO_MESSAGE_LINES,
-  INSPIRING_DESCRIPTION_LINES,
-  INSPIRING_TITLE_LINES,
-  MISSION_BODY_LINES,
-  MISSION_EYEBROW_LINES,
-  MISSION_LABEL,
-  NETWORK_DESCRIPTION,
-  NETWORK_TITLE_LINES,
-  VISION_BODY_LINES,
-  VISION_EYEBROW_LINES,
-  VISION_LABEL,
-} from '../lib/hero-copy'
+import { MISSION_LABEL, VISION_LABEL } from '../lib/hero-copy'
 import { HERO_ARROW_URL, HERO_BG_URL } from '../lib/hero-image'
 import { isHeroPhaseAtLeast, type HeroPhase } from '../lib/hero-phase'
+import type { IntroductionHeroContent } from '../model/types'
 import styles from './hero-section.module.css'
 
 function Lines({ lines }: { lines: readonly string[] }) {
+  if (lines.length === 0) return null
   return (
     <>
       {lines.map((line, index) => (
-        <Fragment key={line}>
+        <Fragment key={`${index}-${line}`}>
           {index > 0 ? <br className={styles.pcOnly} /> : null}
           {line}
         </Fragment>
@@ -35,6 +21,7 @@ function Lines({ lines }: { lines: readonly string[] }) {
 }
 
 export type HeroStageProps = {
+  hero: IntroductionHeroContent
   activePhase: HeroPhase
   isDesktopMotion: boolean
   showArrow?: boolean
@@ -43,6 +30,7 @@ export type HeroStageProps = {
 
 /** Hero Motion 1·2 표현 단위 — 스크롤/phase는 IntroductionScroll이 소유 */
 export function HeroStage({
+  hero,
   activePhase,
   isDesktopMotion,
   showArrow = false,
@@ -69,15 +57,15 @@ export function HeroStage({
         <div className={styles.openingText}>
           <h1 className={styles.intro}>
             <span className={styles.introDesktop}>
-              <Lines lines={HERO_INTRO_LINES} />
+              <Lines lines={hero.introLines} />
             </span>
-            <span className={styles.introMobile}>{HERO_INTRO_MOBILE}</span>
+            <span className={styles.introMobile}>{hero.introMobile}</span>
           </h1>
           <p
             className={styles.message}
             aria-hidden={isDesktopMotion && !showMessage ? true : undefined}
           >
-            <Lines lines={HERO_MESSAGE_LINES} />
+            <Lines lines={hero.messageLines} />
           </p>
         </div>
       </div>
@@ -99,7 +87,7 @@ export function HeroStage({
             <div className={styles.brandSlide}>
               <div className={styles.inspiringLead}>
                 <p className={styles.inspiringTitle}>
-                  <Lines lines={INSPIRING_TITLE_LINES} />
+                  <Lines lines={hero.inspiringTitleLines} />
                 </p>
                 <PFText
                   as="p"
@@ -107,7 +95,7 @@ export function HeroStage({
                   color="primary-800"
                   className={styles.inspiringDescription}
                 >
-                  <Lines lines={INSPIRING_DESCRIPTION_LINES} />
+                  <Lines lines={hero.inspiringDescriptionLines} />
                 </PFText>
               </div>
             </div>
@@ -146,7 +134,7 @@ export function HeroStage({
               <div className={styles.inspiringBlocks}>
                 <article className={styles.infoBlock}>
                   <PFText as="h2" typo="hd-md" color="black" className={styles.infoTitle}>
-                    <Lines lines={NETWORK_TITLE_LINES} />
+                    <Lines lines={hero.networkTitleLines} />
                   </PFText>
                   <PFText
                     as="p"
@@ -154,12 +142,12 @@ export function HeroStage({
                     color="neutral-cool-700"
                     className={styles.infoDescription}
                   >
-                    <Lines lines={NETWORK_DESCRIPTION} />
+                    <Lines lines={hero.networkDescriptionLines} />
                   </PFText>
                 </article>
                 <article className={styles.infoBlock}>
                   <PFText as="h2" typo="hd-md" color="black" className={styles.infoTitle}>
-                    <Lines lines={EXPERIENCE_TITLE_LINES} />
+                    <Lines lines={hero.experienceTitleLines} />
                   </PFText>
                   <PFText
                     as="p"
@@ -167,7 +155,7 @@ export function HeroStage({
                     color="neutral-cool-700"
                     className={styles.infoDescription}
                   >
-                    <Lines lines={EXPERIENCE_DESCRIPTION} />
+                    <Lines lines={hero.experienceDescriptionLines} />
                   </PFText>
                 </article>
               </div>
@@ -186,10 +174,10 @@ export function HeroStage({
                     color="primary-600"
                     className={styles.statementEyebrow}
                   >
-                    <Lines lines={VISION_EYEBROW_LINES} />
+                    <Lines lines={hero.visionEyebrowLines} />
                   </PFText>
                   <PFText as="p" typo="hd-lg" color="black" className={styles.statementBody}>
-                    <Lines lines={VISION_BODY_LINES} />
+                    <Lines lines={hero.visionBodyLines} />
                   </PFText>
                 </article>
                 <article
@@ -204,10 +192,10 @@ export function HeroStage({
                     color="primary-600"
                     className={styles.statementEyebrow}
                   >
-                    <Lines lines={MISSION_EYEBROW_LINES} />
+                    <Lines lines={hero.missionEyebrowLines} />
                   </PFText>
                   <PFText as="p" typo="hd-lg" color="black" className={styles.statementBody}>
-                    <Lines lines={MISSION_BODY_LINES} />
+                    <Lines lines={hero.missionBodyLines} />
                   </PFText>
                 </article>
               </div>

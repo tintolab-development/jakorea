@@ -19,10 +19,11 @@ import { isCombinedClassProgramEligible } from '@/features/program/general/lib/c
 import { InstitutionCombinedClassEditCell } from './institution-combined-class-edit-cell'
 import type {
   SameSchoolGradeOption,
-  TextbookSelectOption,
 } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
-import type { InstitutionAffiliatedTeacherOption } from '@/features/program/general/lib/institution-application-detail-edit-policy'
-import { CmsSelect } from '@/shared/ui/cms-select'
+import {
+  formatInstitutionApplicationGradeDisplay,
+  type InstitutionAffiliatedTeacherOption,
+} from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import {
   InstitutionAddressDetailEdit,
   InstitutionClassAndStudentCountEdit,
@@ -74,9 +75,6 @@ export interface ApplicantGeneralInstitutionBasicInfoProps {
   mode?: 'view' | 'edit'
   draft?: ApplicantInstitutionEditDraft
   onDraftChange?: (partial: Partial<ApplicantInstitutionEditDraft>) => void
-  textbookOptions?: TextbookSelectOption[]
-  textbookDisplayLabel?: string
-  isTextbookCatalogLoading?: boolean
   sameSchoolGradeOptions?: SameSchoolGradeOption[]
   classCountOptions?: Array<{ value: string; label: string }>
   teacherOptions?: InstitutionAffiliatedTeacherOption[]
@@ -136,38 +134,52 @@ function buildTeacherInfoCell(
   institution: ApplicantSchoolRow,
   detail: ApplicantInstitutionDetailExtend | undefined
 ): ReactNode {
-  const raw = detail?.teacherInfo?.trim()
-  if (raw) {
-    const parts = raw
-      .split(' | ')
-      .map(s => s.trim())
-      .filter(Boolean)
-    if (parts.length === 0) return '-'
-    return (
-      <ProgramDetailTdSegmentWrap>
-        {parts.length === 1 ? parts[0] : withProgramDetailTdDivider(parts)}
-      </ProgramDetailTdSegmentWrap>
-    )
-  }
-
   const name = institution.teacherName?.trim()
-  const contact = institution.contact?.trim()
+  const phone =
+    detail?.teacherPhone?.trim() ||
+    detail?.teacherMobile?.trim() ||
+    institution.contact?.trim()
+  const mobile =
+    detail?.teacherMobile?.trim() &&
+    detail.teacherMobile.trim() !== phone
+      ? detail.teacherMobile.trim()
+      : undefined
+  const email = detail?.teacherEmail?.trim()
+
   const segments: string[] = []
   if (name) segments.push(`담당 교사 : ${name}`)
-  if (contact) {
-    // contact가 이미 Tel/M/E-mail 조합이면 그대로, 아니면 Tel로 표기
-    if (/Tel\s*:|M\s*:|E-mail\s*:/i.test(contact)) {
+  if (phone) {
+    if (/Tel\s*:|M\s*:|E-mail\s*:/i.test(phone)) {
       segments.push(
-        ...contact
+        ...phone
           .split('|')
           .map(s => s.trim())
           .filter(Boolean)
       )
     } else {
-      segments.push(`Tel : ${contact}`)
+      segments.push(`Tel : ${phone}`)
     }
   }
-  if (segments.length === 0) return '-'
+  if (mobile) segments.push(`M : ${mobile}`)
+  if (email) {
+    segments.push(/E-mail\s*:/i.test(email) ? email : `E-mail : ${email}`)
+  }
+
+  if (segments.length === 0) {
+    const raw = detail?.teacherInfo?.trim()
+    if (!raw) return '-'
+    const parts = raw
+      .split('|')
+      .map(s => s.trim())
+      .filter(Boolean)
+    if (parts.length === 0) return '-'
+    if (parts.length === 1) return parts[0]
+    return (
+      <ProgramDetailTdSegmentWrap>
+        {withProgramDetailTdDivider(parts)}
+      </ProgramDetailTdSegmentWrap>
+    )
+  }
   if (segments.length === 1) return segments[0]
   return (
     <ProgramDetailTdSegmentWrap>{withProgramDetailTdDivider(segments)}</ProgramDetailTdSegmentWrap>
@@ -218,9 +230,6 @@ export function ApplicantGeneralInstitutionBasicInfo({
   mode = 'view',
   draft,
   onDraftChange,
-  textbookOptions = [],
-  textbookDisplayLabel,
-  isTextbookCatalogLoading = false,
   sameSchoolGradeOptions = [],
   classCountOptions = [],
   teacherOptions = [],
@@ -249,8 +258,8 @@ export function ApplicantGeneralInstitutionBasicInfo({
     institutionApplicationBridge,
     institution
   )
-  /** 승인 완료 시에만 교재명·합반 신청 노출 (스펙·스크린샷) */
-  const showTextbookAndCombinedClass = institution.approvalStatus === 'approved'
+  /** 합반 신청 — 승인 완료 시 노출. 교재명은 프로그램 진행 현황(참여 기관 상세)에서만 */
+  const showCombinedClass = institution.approvalStatus === 'approved' && !hideCombinedClass
   const classAndCount: ReactNode =
     isEditMode && draft && onDraftChange ? (
       <InstitutionClassAndStudentCountEdit
@@ -296,10 +305,6 @@ export function ApplicantGeneralInstitutionBasicInfo({
   const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
   const sessions = institution.sessions ?? []
 
-  const textbookViewValue =
-    textbookDisplayLabel?.trim() ||
-    detail?.textbookName?.trim() ||
-    (hideCombinedClass ? '미정' : '-')
   const combinedClassViewValue = buildCombinedClassViewValue(detail, combinedClassProgramEligible)
 
   const addressDetailValue =
@@ -344,7 +349,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
         error={validationErrors?.educationGrade}
       />
     ) : (
-      institution.educationGrade ?? '-'
+      formatInstitutionApplicationGradeDisplay(institution.educationGrade ?? '') || '-'
     )
 
   const regionValue =
@@ -358,37 +363,6 @@ export function ApplicantGeneralInstitutionBasicInfo({
   const waitingPlaceValue = detail?.waitingPlaceGuide ?? detail?.waitingRoom ?? '-'
   const mealValue = detail?.mealInfo ?? '-'
   const otherNotesValue = detail?.otherSpecialNotes ?? detail?.parkingInfo ?? '-'
-
-  const textbookEditValue =
-    isEditMode && draft && onDraftChange ? (
-      <div className="institution-basic-info__field-stack">
-        <CmsSelect
-          className="institution-basic-info__full-width-control"
-          inputSize="large"
-          placeholder={isTextbookCatalogLoading ? '교재 목록 불러오는 중…' : '교재명 선택'}
-          loading={isTextbookCatalogLoading}
-          value={draft.textbookId || undefined}
-          options={textbookOptions.map(option => ({
-            label: option.label,
-            value: option.value,
-          }))}
-          onChange={value => {
-            const selected = textbookOptions.find(option => option.value === value)
-            onDraftChange({
-              textbookId: selected?.value ?? String(value ?? ''),
-              textbookName: selected?.textbookName ?? '',
-            })
-          }}
-        />
-        {validationErrors?.textbookId || validationErrors?.textbookName ? (
-          <span className="institution-basic-info__field-error">
-            {validationErrors.textbookId ?? validationErrors.textbookName}
-          </span>
-        ) : null}
-      </div>
-    ) : (
-      textbookViewValue
-    )
 
   const combinedClassEditValue =
     isEditMode && draft && onDraftChange ? (
@@ -442,20 +416,11 @@ export function ApplicantGeneralInstitutionBasicInfo({
                   label="프로그램 승인 현황"
                   value={<ProgramApprovalStatusValue institution={institution} onResendNotificationClick={onResendNotificationClick} />}
                 />
-                {showTextbookAndCombinedClass ? (
-                  hideCombinedClass ? (
-                    <InstitutionApplicationTableRowFullWidth
-                      label="교재명"
-                      value={textbookEditValue}
-                    />
-                  ) : (
-                    <InstitutionApplicationTableRowTwoCols
-                      label1="교재명"
-                      value1={textbookEditValue}
-                      label2="합반 신청 여부"
-                      value2={combinedClassEditValue}
-                    />
-                  )
+                {showCombinedClass ? (
+                  <InstitutionApplicationTableRowFullWidth
+                    label="합반 신청 여부"
+                    value={combinedClassEditValue}
+                  />
                 ) : null}
               </tbody>
             </table>

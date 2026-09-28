@@ -27,6 +27,7 @@ export function toSiteSettingsUpdateRequest(
 ): SiteSettingsUpdateRequest {
   return {
     siteName: input.siteName.trim(),
+    // 빈 소개글·없는 asset id는 요청에서 빠진다. 서버는 생략을 null로 받아 기존 값을 지운다.
     seoMetaDescription: input.siteDescription.trimEnd() || undefined,
     ogAssetId,
     faviconAssetId,

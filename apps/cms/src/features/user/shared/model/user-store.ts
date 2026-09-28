@@ -91,7 +91,7 @@ interface UserStore {
       role?: UserRole
       email?: string
       reason?: string
-      confirmationText?: string
+      currentPassword?: string
     }
   ) => Promise<void>
   changeUserRole: (

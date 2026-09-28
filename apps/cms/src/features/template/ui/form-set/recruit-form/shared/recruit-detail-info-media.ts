@@ -1,0 +1,150 @@
+/**
+ * 모집 상세 정보(썸네일·첨부) overlay 키·생성 후 프로그램 바인딩.
+ * 등록 중에는 staging owner 로 업로드하고, 생성 직후 실제 programId 에 연결한다.
+ */
+
+import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
+import { putProgramAttachments } from '@/features/program/shared/api/program-attachments'
+import { putProgramThumbnail } from '@/features/program/shared/api/program-thumbnail'
+import { getGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { RECRUIT_DETAIL_INFO_OVERLAY_PREFIX } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-overlay'
+
+/** 등록 전 업로드용 임시 PROGRAM ownerId (상세 수정의 `?? 1` 과 동일 관례) */
+export const RECRUIT_DETAIL_STAGING_PROGRAM_OWNER_ID = 1
+
+let pendingRecruitDetailMediaUploads: Promise<unknown> = Promise.resolve()
+
+/** 등록 저장 전에 썸네일·첨부 업로드가 끝나도록 추적 */
+export function trackRecruitDetailMediaUpload(task: Promise<unknown>): void {
+  pendingRecruitDetailMediaUploads = pendingRecruitDetailMediaUploads
+    .then(() => task)
+    .catch(() => undefined)
+}
+
+export async function awaitRecruitDetailMediaUploads(): Promise<void> {
+  await pendingRecruitDetailMediaUploads
+}
+
+/** canonical + 유형별 참여자 상세 정보 prefix (general-recruit-overlay 별칭과 정렬) */
+export const PARTICIPANT_DETAIL_INFO_PREFIXES = [
+  RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.institution,
+  RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.economy,
+  RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.trainedTeachers,
+  RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.ujatInstitution,
+  RECRUIT_DETAIL_INFO_OVERLAY_PREFIX.volunteer,
+  'recruitInstructor.detailInfo',
+  'geminiRecruit.detailInfo',
+] as const
+
+export function recruitDetailThumbFileObjectIdKey(prefix: string): string {
+  return `${prefix}.thumbFileObjectId`
+}
+
+export function recruitDetailThumbContentUrlKey(prefix: string): string {
+  return `${prefix}.thumbContentUrl`
+}
+
+export function recruitDetailThumbFileNameKey(prefix: string): string {
+  return `${prefix}.thumbFileName`
+}
+
+export function recruitDetailThumbObjectUrlKey(prefix: string): string {
+  return `${prefix}.thumbObjectUrl`
+}
+
+export function recruitDetailAttachmentFileNamesKey(prefix: string): string {
+  return `${prefix}.attachmentFileNames`
+}
+
+export function recruitDetailAttachmentFileObjectIdsKey(prefix: string): string {
+  return `${prefix}.attachmentFileObjectIds`
+}
+
+function readFiniteNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value
+  if (typeof value === 'string' && value.trim()) {
+    const n = Number(value)
+    if (Number.isFinite(n) && n > 0) return n
+  }
+  return undefined
+}
+
+function readStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const out = value.map(String).map(s => s.trim()).filter(Boolean)
+  return out.length > 0 ? out : undefined
+}
+
+function readNumberArray(value: unknown): number[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const out = value
+    .map(readFiniteNumber)
+    .filter((n): n is number => n != null)
+  return out.length > 0 ? out : undefined
+}
+
+export type RecruitDetailMediaFromOverlay = {
+  keyVisualImage?: string
+  thumbFileObjectId?: number
+  attachmentFileNames?: string[]
+  attachmentFileObjectIds?: number[]
+}
+
+/** canonical `recruit.detailInfo.*` + 유형별 prefix 별칭에서 미디어 필드 수집 */
+export function readRecruitDetailMediaFromOverlay(
+  overlay: Record<string, unknown>
+): RecruitDetailMediaFromOverlay {
+  let keyVisualImage: string | undefined
+  let thumbFileObjectId: number | undefined
+  let attachmentFileNames: string[] | undefined
+  let attachmentFileObjectIds: number[] | undefined
+
+  for (const prefix of PARTICIPANT_DETAIL_INFO_PREFIXES) {
+    if (!keyVisualImage) {
+      const url = overlay[recruitDetailThumbContentUrlKey(prefix)]
+      if (typeof url === 'string' && url.trim() && !url.startsWith('blob:')) {
+        keyVisualImage = url.trim()
+      }
+    }
+    if (thumbFileObjectId == null) {
+      thumbFileObjectId = readFiniteNumber(overlay[recruitDetailThumbFileObjectIdKey(prefix)])
+    }
+    if (!attachmentFileNames) {
+      attachmentFileNames = readStringArray(overlay[recruitDetailAttachmentFileNamesKey(prefix)])
+    }
+    if (!attachmentFileObjectIds) {
+      attachmentFileObjectIds = readNumberArray(
+        overlay[recruitDetailAttachmentFileObjectIdsKey(prefix)]
+      )
+    }
+  }
+
+  return {
+    ...(keyVisualImage ? { keyVisualImage } : {}),
+    ...(thumbFileObjectId != null ? { thumbFileObjectId } : {}),
+    ...(attachmentFileNames ? { attachmentFileNames } : {}),
+    ...(attachmentFileObjectIds ? { attachmentFileObjectIds } : {}),
+  }
+}
+
+/**
+ * 프로그램 생성 직후 — staging 업로드 파일을 실제 programId 에 연결.
+ * 첨부는 PUT /programs/{id}/attachments (포털 GENERAL 첨부 SSOT).
+ * 실패해도 생성 자체는 유지 (호출부에서 catch).
+ */
+export async function bindRecruitDetailMediaAfterProgramCreate(
+  programId: string,
+  overlay: Record<string, unknown> = getGeneralRecruitOverlayRecord()
+): Promise<void> {
+  const numericId = parseFileObjectId(programId)
+  if (numericId == null) return
+
+  const media = readRecruitDetailMediaFromOverlay(overlay)
+  if (media.thumbFileObjectId != null) {
+    await putProgramThumbnail(numericId, media.thumbFileObjectId)
+  }
+
+  const attachmentIds = media.attachmentFileObjectIds ?? []
+  if (attachmentIds.length === 0) return
+  await putProgramAttachments(numericId, attachmentIds)
+}

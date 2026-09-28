@@ -26,59 +26,65 @@ export function useRecruitGuide(enabled = true) {
     queryKey: recruitGuideQueryKeys.detail(dataSource),
     queryFn: () => getRecruitGuideService(),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
+    // remote는 저장 API가 없어 세션 캐시 수정을 유지한다. 새로고침 시 서버 GET으로 복원.
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnWindowFocus: false,
     retry: dataSource === 'remote' ? 1 : false,
   })
 }
 
-function useSetGuideCache() {
+function useGuideCacheHelpers() {
   const queryClient = useQueryClient()
-  return (data: RecruitGuideData) => {
-    queryClient.setQueryData(recruitGuideQueryKeys.detail(source()), data)
+  const key = recruitGuideQueryKeys.detail(source())
+  return {
+    getCached: () => queryClient.getQueryData<RecruitGuideData>(key),
+    setCache: (data: RecruitGuideData) => {
+      queryClient.setQueryData(key, data)
+    },
   }
 }
 
 export function useSaveRecruitBanner() {
-  const setCache = useSetGuideCache()
+  const { getCached, setCache } = useGuideCacheHelpers()
   return useMutation({
-    mutationFn: (input: BannerSaveInput) => saveBannerService(input),
+    mutationFn: (input: BannerSaveInput) => saveBannerService(input, getCached()),
     retry: false,
     onSuccess: data => setCache(data),
   })
 }
 
 export function useSaveRecruitCulture() {
-  const setCache = useSetGuideCache()
+  const { getCached, setCache } = useGuideCacheHelpers()
   return useMutation({
-    mutationFn: (items: CultureSaveItem[]) => saveCultureService(items),
+    mutationFn: (items: CultureSaveItem[]) => saveCultureService(items, getCached()),
     retry: false,
     onSuccess: data => setCache(data),
   })
 }
 
 export function useAddRecruitInterview() {
-  const setCache = useSetGuideCache()
+  const { getCached, setCache } = useGuideCacheHelpers()
   return useMutation({
-    mutationFn: (input: InterviewSaveItem) => addInterviewService(input),
+    mutationFn: (input: InterviewSaveItem) => addInterviewService(input, getCached()),
     retry: false,
     onSuccess: data => setCache(data),
   })
 }
 
 export function useReplaceRecruitInterview() {
-  const setCache = useSetGuideCache()
+  const { getCached, setCache } = useGuideCacheHelpers()
   return useMutation({
     mutationFn: (payload: { id: string; input: InterviewSaveItem }) =>
-      replaceInterviewService(payload.id, payload.input),
+      replaceInterviewService(payload.id, payload.input, getCached()),
     retry: false,
     onSuccess: data => setCache(data),
   })
 }
 
 export function useRemoveRecruitInterviews() {
-  const setCache = useSetGuideCache()
+  const { getCached, setCache } = useGuideCacheHelpers()
   return useMutation({
-    mutationFn: (ids: string[]) => removeInterviewsService(ids),
+    mutationFn: (ids: string[]) => removeInterviewsService(ids, getCached()),
     retry: false,
     onSuccess: data => setCache(data),
   })

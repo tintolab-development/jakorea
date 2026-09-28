@@ -15,7 +15,7 @@ import type {
 import { DEFAULT_AUTHOR } from '@/features/notices/api/store'
 import { shouldUseNoticesRemoteApi } from '@/features/notices/api/capabilities'
 import { useNoticeWysiwygEditor } from '@/features/notices/hooks/use-notice-wysiwyg-editor'
-import { RichTextEditor } from '@/shared/rich-text'
+import { getRemoteRichTextBodyError, RichTextEditor } from '@/shared/rich-text'
 import {
   CmsButton,
   CmsDatePicker,
@@ -122,7 +122,7 @@ export function NoticeFormModal({
     [open, mode, initial?.id, editorContentFormat]
   )
 
-  const { editor, editorMinHeight, getMarkdown, getHTML } = useNoticeWysiwygEditor(
+  const { editor, editorMinHeight, getMarkdown, getHTML, resolveImageSrc } = useNoticeWysiwygEditor(
     open,
     initialMarkdown,
     editorResetKey,
@@ -230,6 +230,13 @@ export function NoticeFormModal({
     if (!contentMarkdown) {
       showAlert({ title: '입력 확인', content: '공지사항 내용을 입력해 주세요.' })
       return
+    }
+    if (shouldUseNoticesRemoteApi()) {
+      const bodyError = getRemoteRichTextBodyError(contentMarkdown)
+      if (bodyError) {
+        showAlert({ title: '입력 확인', content: bodyError })
+        return
+      }
     }
     onSubmit({
       title: t,
@@ -372,6 +379,7 @@ export function NoticeFormModal({
                 editor={editor}
                 minHeight={editorMinHeight}
                 allowInlineMedia
+                resolveImageSrc={resolveImageSrc}
               />
             </div>
           </div>

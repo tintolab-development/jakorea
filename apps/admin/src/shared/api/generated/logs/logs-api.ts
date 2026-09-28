@@ -43,6 +43,10 @@ const systemIssues = (
       options);
     }
 
+/**
+ * Internal ingest for collectors (JA CMS / Platform / Homepage services). Admin log list screens must not POST. Writes are append-only. Homepage 5xx failures are also appended internally by GlobalExceptionHandler. Not used by Admin list UI. Detail PATCH is out of scope.
+ * @summary Ingest Homepage system-issue evidence
+ */
 const createSystemIssue = (
     systemIssueCreateRequest: SystemIssueCreateRequest,
  options?: SecondParameter<typeof customInstance<void>>,) => {
@@ -64,6 +68,10 @@ const memberLogins = (
       options);
     }
 
+/**
+ * Internal ingest for collectors (JA CMS / Platform / Homepage services). Admin log list screens must not POST. Writes are append-only. Homepage Admin JWT success is also appended internally (audience=ADMIN). Use this POST for Platform USER logins (and tests). Not used by Admin list UI.
+ * @summary Ingest member/admin login evidence
+ */
 const createMemberLogin = (
     memberLoginCreateRequest: MemberLoginCreateRequest,
  options?: SecondParameter<typeof customInstance<void>>,) => {
@@ -85,6 +93,10 @@ const adminAccountActions = (
       options);
     }
 
+/**
+ * Internal ingest for collectors (JA CMS / Platform / Homepage services). Admin log list screens must not POST. Writes are append-only. Homepage does not own account APIs; JA CMS should POST after create/deactivate/profile/permission/password changes. Not used by Admin list UI.
+ * @summary Ingest admin account-processing evidence
+ */
 const createAdminAccountAction = (
     adminAccountActionCreateRequest: AdminAccountActionCreateRequest,
  options?: SecondParameter<typeof customInstance<void>>,) => {

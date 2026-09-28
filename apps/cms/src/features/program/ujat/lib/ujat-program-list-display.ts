@@ -32,7 +32,18 @@ export function formatUjatVolunteerHalfRecruitment(program: Program, half: 'h1' 
   return formatCurrentTotal(current, cap)
 }
 
-/** 프로그램 관리명 — 목록 「프로그램명」 컬럼 */
-export function formatUjatProgramManagementName(program: Program): string {
-  return program.title?.trim() || '-'
+function overlayText(program: Program, key: string): string | undefined {
+  const value = program.ujatRegistrationOverlay?.[key]
+  return typeof value === 'string' ? value.trim() || undefined : undefined
 }
+
+/** 목록·상세 모달 타이틀 — 대표 프로그램명 (국문) */
+export function resolveUjatProgramDisplayTitle(program: Program): string {
+  return (
+    program.mainTitle?.trim() ||
+    overlayText(program, 'ujat.basicInfo.repKo') ||
+    program.title?.trim() ||
+    '프로그램 상세'
+  )
+}
+

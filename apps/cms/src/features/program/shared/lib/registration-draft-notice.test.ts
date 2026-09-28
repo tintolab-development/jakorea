@@ -1,34 +1,34 @@
 /** @vitest-environment jsdom */
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
-  loadWritingFormTemplateSave,
-  persistWritingFormTemplateSave,
-} from '@/features/template/lib/writing-form-template-local-save'
-import { createProgramRegistrationDraft } from '@/features/template/model/program-registration-draft'
-import {
-  clearRegistrationDraftForFreshStart,
+  fetchRegistrationDraftNotice,
   REGISTRATION_DRAFT_MODE_CONTINUE,
   REGISTRATION_DRAFT_MODE_FRESH,
   PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
+  clearRegistrationDraftForFreshStart,
   shouldRemoveRegistrationDraftAfterCompletion,
   shouldSkipRegistrationDraftRestore,
 } from './registration-draft-notice'
+import {
+  peekRegistrationProgramDraftPayload,
+  syncRegistrationProgramDraftSession,
+} from '@/features/program/general/lib/registration-program-draft-session'
 
 describe('clearRegistrationDraftForFreshStart', () => {
   beforeEach(() => {
     localStorage.clear()
   })
 
-  it('removes only the local draft synchronously', () => {
-    persistWritingFormTemplateSave({
-      templateId: PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
-      draft: createProgramRegistrationDraft('general'),
-      editorState: { programTitleKo: '임시 프로그램' },
+  it('deletes only the local program draft', async () => {
+    syncRegistrationProgramDraftSession({
+      programType: 'GENERAL',
+      registrationTemplateCode: PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
+      activeStep: 'program',
     })
 
-    clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
+    await clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
 
-    expect(loadWritingFormTemplateSave(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)).toBeNull()
+    expect(peekRegistrationProgramDraftPayload('GENERAL')).toBeUndefined()
   })
 })
 
@@ -49,5 +49,33 @@ describe('shouldRemoveRegistrationDraftAfterCompletion', () => {
       false
     )
     expect(shouldRemoveRegistrationDraftAfterCompletion(null)).toBe(false)
+  })
+})
+
+describe('fetchRegistrationDraftNotice', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it('treats program-step temp save as user draft', async () => {
+    syncRegistrationProgramDraftSession({
+      programType: 'GENERAL',
+      registrationTemplateCode: 'registration-general',
+      activeStep: 'program',
+    })
+
+    const notice = await fetchRegistrationDraftNotice(
+      PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
+    )
+
+    expect(notice?.templateCode).toBe(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
+    expect(notice?.title).toBe('제목 없음')
+    expect(notice?.savedAt).toBeTruthy()
+  })
+
+  it('returns null without a local temp save', async () => {
+    await expect(
+      fetchRegistrationDraftNotice(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
+    ).resolves.toBeNull()
   })
 })

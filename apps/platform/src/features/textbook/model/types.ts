@@ -45,6 +45,10 @@ export type TextbookContent = {
   unitCount: number
   /** 목록 우측 차시 상세 — 예: 30분 수업기준 4차시 교육 */
   unitSessionText?: string
+  /** 공개 상세 `unitIntroHtml`. 있으면 모달 단원 소개 */
+  unitIntroHtml?: string
+  /** 사업분야 설명 — 디렉터리 문단 */
+  fieldDescription?: string
   units: TextbookUnit[]
 }
 

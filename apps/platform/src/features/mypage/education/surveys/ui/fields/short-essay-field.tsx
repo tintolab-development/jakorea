@@ -17,6 +17,7 @@ export function SurveyShortEssayField({ paragraph, onUpdateParagraph }: SurveySh
       <div className={styles.surveyFields}>
         <PFTextarea
           variant="formPage"
+          rows={1}
           placeholder={placeholder}
           value={paragraph.bodyText}
           onValueChange={next => {
@@ -38,6 +39,7 @@ export function SurveyShortEssayField({ paragraph, onUpdateParagraph }: SurveySh
         <PFTextarea
           key={item.id}
           variant="formPage"
+          rows={1}
           placeholder={item.placeholder || placeholder}
           value={item.bodyText}
           onValueChange={next => {

@@ -109,7 +109,7 @@ export function CultureSectionCard({ items }: Props) {
       {
         title: '항목',
         key: 'itemLabel',
-        width: 180,
+        width: 320,
         align: 'center',
         className: 'recruit-guide-col--label',
         render: (_value, record) => record.itemLabel,
@@ -126,7 +126,7 @@ export function CultureSectionCard({ items }: Props) {
               className={fieldClass(isEditing)}
               inputSize="medium"
               width="100%"
-              rows={1}
+              rows={2}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -149,7 +149,7 @@ export function CultureSectionCard({ items }: Props) {
               className={fieldClass(isEditing)}
               inputSize="medium"
               width="100%"
-              rows={2}
+              rows={3}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}

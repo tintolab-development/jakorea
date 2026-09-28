@@ -204,6 +204,86 @@
   opacity: 0.5;
 }
 
+/* ── Mobile · ~1079 ── */
+@media (--bp-below-pc) {
+  /*
+   * PC는 최장 옵션·min-width 163으로 폭을 잡고 space-between.
+   * 모바일은 라벨↔값 gap 6(flex-start)이라 그 폭을 쓰면 오른쪽에 빈 칸이 생김
+   * → 선택값 기준으로 폭을 줄이고, 열린 메뉴만 더 넓어질 수 있게 함.
+   */
+  .root {
+    min-width: 0;
+  }
+
+  .widthSizerOption {
+    display: none;
+  }
+
+  .widthSizerTrigger {
+    justify-content: flex-start;
+    gap: var(--spacing-6);
+    height: 30px;
+    padding: 8px 10px 8px 12px;
+  }
+
+  .trigger {
+    justify-content: flex-start;
+    gap: var(--spacing-6);
+    height: 30px;
+    padding: 8px 10px 8px 12px;
+  }
+
+  .open .trigger {
+    border-radius: var(--radius-12) var(--radius-12) 0 0;
+  }
+
+  .label {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 140%;
+    letter-spacing: 0;
+  }
+
+  .trailing {
+    gap: var(--spacing-4);
+  }
+
+  .value {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 140%;
+    letter-spacing: 0;
+  }
+
+  .chevron {
+    width: 11.2px;
+    height: 11.2px;
+    object-fit: contain;
+  }
+
+  .menuWrapper {
+    right: auto;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .menu {
+    border-radius: 0 0 var(--radius-12) var(--radius-12);
+  }
+
+  .option {
+    padding: 8px 10px 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 140%;
+    letter-spacing: 0;
+  }
+
+  .option.selected {
+    font-weight: 600;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .chevron,
   .menu {

@@ -11,6 +11,7 @@ import {
   includesIgnoreCase,
   isIsoInDateRange,
 } from '@/features/logs/shared/lib/filter-date-range'
+import { paginateLogRows } from '@/features/logs/shared/lib/list-page'
 
 const MESSAGES = [
   '[503] Service Unavailable - Database connection failed',
@@ -39,7 +40,7 @@ function buildSeed(): BugIssueLog[] {
 
 const SEED = buildSeed()
 
-export function listBugIssueLogs(filter: BugIssueListFilter): BugIssueListResult {
+function filterBugIssueLogs(filter: BugIssueListFilter): BugIssueLog[] {
   let rows = [...SEED]
   if (filter.userName) {
     rows = rows.filter(r => includesIgnoreCase(r.userName, filter.userName!))
@@ -51,5 +52,13 @@ export function listBugIssueLogs(filter: BugIssueListFilter): BugIssueListResult
     (a, b) =>
       new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
   )
-  return { rows, total: rows.length }
+  return rows
+}
+
+export function listBugIssueLogsAll(filter: BugIssueListFilter): BugIssueLog[] {
+  return filterBugIssueLogs(filter)
+}
+
+export function listBugIssueLogs(filter: BugIssueListFilter): BugIssueListResult {
+  return paginateLogRows(filterBugIssueLogs(filter), filter.page ?? 0)
 }

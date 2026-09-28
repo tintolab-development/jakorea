@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { normalizeTargetLevelValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import type { TargetLevel } from '@/types/domain'
 
@@ -68,13 +69,81 @@ export const programParticipantRecruitmentSaveSchema = z.object({
   endDate: optionalString,
   targetLevels: targetLevelsSaveSchema,
   district: optionalString,
-  contactPhone: optionalString,
+  contactPhone: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .optional()
+      .refine(
+        value => !value?.trim() || isValidKoreanPhoneNumber(value),
+        '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'
+      )
+  ),
   contactEmail: optionalString,
   oneLineIntroduction: optionalString,
   remarks: optionalString,
   educationTargetDetail: optionalString,
   participantRecruitmentNotesNotApplicable: notesApplicableEnum,
+  recruitmentContactOrganizationName: optionalString,
 })
+
+const requiredText = (message: string) =>
+  z.preprocess(emptyToUndefined, z.string().min(1, message))
+
+const requiredEnumMessage = <T extends [string, ...string[]]>(
+  values: T,
+  message: string
+) => z.preprocess(emptyToUndefined, z.enum(values, { required_error: message }))
+
+const requiredNonNeg = (message: string) =>
+  z.preprocess(
+    emptyToUndefined,
+    z.number({ required_error: message, invalid_type_error: message }).min(0, message)
+  )
+
+/** 교육받은 교사 모집 정보 수정 — 화면에 열린 필수 필드만 */
+export const programTrainedTeachersRecruitmentSaveSchema =
+  programParticipantRecruitmentSaveSchema.extend({
+    participantRecruitmentAnnouncementPublished: requiredEnumMessage(
+      ['published', 'unpublished'],
+      '공고 게시 여부를 선택해주세요'
+    ),
+    studentListRequired: requiredEnumMessage(
+      ['required', 'not_required'],
+      '학생 명단 제출 여부를 선택해주세요'
+    ),
+    participantRecruitmentMaxClassCount: requiredNonNeg('신청 가능 최대 학급 수를 입력해주세요'),
+    participantRecruitmentMaxScheduleCount: requiredNonNeg(
+      '신청 가능 최대 일정 수를 입력해주세요'
+    ),
+    participantRecruitmentMaxSessionsPerDay: requiredNonNeg(
+      '신청 가능 1일 최대 차시를 입력해주세요'
+    ),
+    startDate: requiredText('프로그램 운영 시작일을 선택해주세요'),
+    endDate: requiredText('프로그램 운영 종료일을 선택해주세요'),
+    applicationStartDate: requiredText('참여자 모집 시작일을 선택해주세요'),
+    applicationEndDate: requiredText('참여자 모집 종료일을 선택해주세요'),
+    targetLevels: z.preprocess(
+      coerceTargetLevels,
+      z.array(targetLevelEnum).min(1, '교육 대상을 선택해주세요')
+    ),
+    educationTargetDetail: requiredText('교육 대상 상세를 입력해주세요'),
+    resultAnnouncementDate: requiredText('합격자 발표일을 선택해주세요'),
+    resultAnnouncementMethod: requiredText('발표 방법을 입력해주세요'),
+    recruitmentContactOrganizationName: requiredText('문의처를 입력해주세요'),
+    contactPhone: z.preprocess(
+      emptyToUndefined,
+      z
+        .string({ required_error: '문의처 전화번호를 입력해주세요' })
+        .min(1, '문의처 전화번호를 입력해주세요')
+        .refine(
+          value => isValidKoreanPhoneNumber(value),
+          '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'
+        )
+    ),
+    contactEmail: requiredText('문의처 이메일을 입력해주세요'),
+    remarks: requiredText('비고를 입력해주세요'),
+  })
 
 export const programInstructorRecruitmentSaveSchema = z.object({
   instructorRecruitmentAnnouncementPublished: publishedEnum,
@@ -92,6 +161,18 @@ export const programInstructorRecruitmentSaveSchema = z.object({
   finalPassAnnouncementDate: optionalString,
   finalPassAnnouncementMethod: optionalString,
   instructorCapacity: optionalNonNegNumber,
+  instructorRecruitmentContactOrganizationName: optionalString,
+  instructorContactPhone: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .optional()
+      .refine(
+        value => !value?.trim() || isValidKoreanPhoneNumber(value),
+        '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'
+      )
+  ),
+  instructorContactEmail: optionalString,
   contactPhone: optionalString,
   contactEmail: optionalString,
   otherNotes: optionalString,
@@ -113,6 +194,18 @@ export const programVolunteerRecruitmentSaveSchema = z.object({
   endDate: optionalString,
   volunteerTargets: z.array(z.string()).nullish(),
   volunteerTargetDetail: optionalString,
+  volunteerRecruitmentContactOrganizationName: optionalString,
+  volunteerContactPhone: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .optional()
+      .refine(
+        value => !value?.trim() || isValidKoreanPhoneNumber(value),
+        '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'
+      )
+  ),
+  volunteerContactEmail: optionalString,
   contactPhone: optionalString,
   contactEmail: optionalString,
   oneLineIntroduction: optionalString,

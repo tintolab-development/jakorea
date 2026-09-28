@@ -1,7 +1,4 @@
-import {
-  getUjatVolunteerPreferredRegionLabels,
-  UJAT_DEFAULT_EDUCATION_REGIONS,
-} from '@/features/program/ujat/lib/ujat-education-regions'
+import { getUjatVolunteerPreferredRegionLabels } from '@/features/program/ujat/lib/ujat-education-regions'
 import { resolveUjatRegistrationBasicInfoOverlay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
 import {
   type UjatRegionCapacityBySemesterState,
@@ -13,32 +10,16 @@ import {
 } from '@/features/program/ujat/lib/ujat-region-capacity-types'
 import { formatNumberDisplay } from '@/shared/utils'
 
-const DEFAULT_CLASS_COUNTS: Record<string, string> = Object.fromEntries(
-  UJAT_DEFAULT_EDUCATION_REGIONS.map(row => {
-    const counts: Record<string, string> = {
-      서울: '50',
-      '경기(남부)': '60',
-      인천: '40',
-      대전: '46',
-      대구: '52',
-      부산: '54',
-      광주: '46',
-      '전북(전주)': '44',
-    }
-    return [row.label, counts[row.label] ?? '']
-  })
-)
-
-const DEFAULT_VOLUNTEER_COUNTS: Record<string, string> = { ...DEFAULT_CLASS_COUNTS }
-
+// 버그 수정: 신규 등록 폼 진입 시 지역별 학급·봉사단 수에 목업 숫자가 미리 채워져
+// 노출되던 문제 — 기본값은 빈 값으로 두고, 실제 사용자가 입력한 값만 반영한다.
 function buildDefaultSemesterValues(): UjatRegionCapacitySemesterValues {
   const labels = getUjatVolunteerPreferredRegionLabels()
   return Object.fromEntries(
     labels.map(label => [
       label,
       {
-        classCount: DEFAULT_CLASS_COUNTS[label] ?? '',
-        volunteerCount: DEFAULT_VOLUNTEER_COUNTS[label] ?? '',
+        classCount: '',
+        volunteerCount: '',
       },
     ])
   ) as UjatRegionCapacitySemesterValues

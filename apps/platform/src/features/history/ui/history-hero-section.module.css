@@ -1,0 +1,130 @@
+.hero {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 220px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-top: calc(-1 * var(--spacing-40));
+  background-color: var(--color-primary-800);
+  color: var(--color-neutral-white);
+}
+
+.background,
+.gradient {
+  position: absolute;
+  pointer-events: none;
+}
+
+.background {
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: calc(1498 / 1200 * 100%);
+  transform: translate(-50%, -50%);
+  mix-blend-mode: hard-light;
+  opacity: 0.2;
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.gradient {
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 44px;
+  background: linear-gradient(180deg, rgb(34 64 77 / 0%) 0%, var(--color-primary-800) 100%);
+}
+
+.inner {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  width: 100%;
+  max-width: var(--content-shell-max-width);
+  min-width: 0;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-12);
+  padding: 0 var(--page-padding-x);
+  text-align: center;
+}
+
+.eyebrow,
+.title {
+  margin: 0;
+  max-width: 100%;
+  font-family: 'Montserrat', sans-serif;
+}
+
+@media (--bp-below-pc) {
+  /* 시안: 736×460 데스크탑 히어로를 375×220 상단에 크롭 */
+  .background {
+    top: calc((460 - 1498 * 460 / 1200) / 2 / 220 * 100%);
+    width: calc(736 / 375 * 100%);
+    height: calc(1498 * 460 / 1200 / 220 * 100%);
+    transform: translateX(-50%);
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 150%;
+    letter-spacing: -0.12px;
+  }
+
+  .title {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 125%;
+    letter-spacing: -0.96px;
+  }
+}
+
+@media (--bp-pc-up) {
+  .hero {
+    min-height: 100vh;
+    margin-top: calc(-1 * (var(--app-header-height) + var(--content-padding-block)));
+  }
+
+  .gradient {
+    height: 240px;
+  }
+
+  .inner {
+    gap: var(--spacing-32);
+  }
+
+  .eyebrow {
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 150%;
+    letter-spacing: -0.28px;
+  }
+
+  .title {
+    font-size: 72px;
+    font-weight: 700;
+    line-height: 125%;
+    letter-spacing: -2.88px;
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .hero {
+    min-height: 1200px;
+  }
+}

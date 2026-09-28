@@ -15,16 +15,19 @@
   text-align: center;
 }
 
+.recruit-guide-section .table-title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
 .recruit-guide-thumb {
-  width: 120px;
-  height: 128px;
+  width: 168px;
+  height: 179px;
   flex-shrink: 0;
-  aspect-ratio: 740 / 790;
   margin: 0 auto;
-  border-radius: 4px;
   overflow: hidden;
-  background: var(--color-bg-secondary, #f7f7f7);
-  border: 1px solid var(--table-line, #e0e0e0);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -37,6 +40,9 @@
 }
 
 .recruit-guide-thumb--empty {
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 4px;
+  background: var(--color-bg-secondary, #f7f7f7);
   color: var(--color-text-tertiary, #9e9e9e);
   font-size: 12px;
   font-weight: 500;
@@ -48,26 +54,59 @@
   vertical-align: middle;
 }
 
+.recruit-guide-section .cms-data-table .ant-table-tbody > tr > td,
+.recruit-guide-section .cms-data-table .ant-table-tbody > tr:hover > td {
+  height: auto !important;
+  min-height: 54px;
+}
+
+.recruit-guide-banner-table .ant-table-tbody > tr > td,
+.recruit-guide-banner-table .ant-table-tbody > tr:hover > td,
+.recruit-guide-culture-table .ant-table-tbody > tr > td,
+.recruit-guide-culture-table .ant-table-tbody > tr:hover > td {
+  white-space: normal !important;
+}
+
+.recruit-guide-banner-table table,
+.recruit-guide-culture-table table {
+  table-layout: fixed !important;
+  width: 100% !important;
+}
+
+.recruit-guide-banner-table colgroup > col:first-child,
 .recruit-guide-banner-table .ant-table-thead > tr > th.recruit-guide-col--image,
 .recruit-guide-banner-table .ant-table-tbody > tr > td.recruit-guide-col--image {
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+}
+
+.recruit-guide-banner-table .ant-table-thead > tr > th.recruit-guide-col--copy,
+.recruit-guide-banner-table .ant-table-tbody > tr > td.recruit-guide-col--copy {
+  width: calc((100% - 200px) / 3) !important;
 }
 
 .recruit-guide-culture-table .ant-table-thead > tr > th.recruit-guide-col--label,
 .recruit-guide-culture-table .ant-table-tbody > tr > td.recruit-guide-col--label {
-  width: 180px !important;
-  min-width: 160px !important;
-  max-width: 220px !important;
+  width: 320px !important;
+  min-width: 320px !important;
+  max-width: 320px !important;
 }
 
-.recruit-guide-culture-table .ant-table-tbody > tr > td.recruit-guide-col--text {
-  text-align: left !important;
+.recruit-guide-interview-table.cms-data-table col.ant-table-selection-col + col,
+.recruit-guide-interview-table.cms-data-table .ant-table-thead > tr > th.cms-table-col--no,
+.recruit-guide-interview-table.cms-data-table .ant-table-tbody > tr > td.cms-table-col--no {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
 }
 
-.recruit-guide-section .recruit-guide-col--text .recruit-guide-inline-field--readonly textarea.ant-input {
-  text-align: left;
+.recruit-guide-interview-table.cms-data-table col.ant-table-selection-col + col + col + col,
+.recruit-guide-interview-table .ant-table-thead > tr > th.recruit-guide-col--actions,
+.recruit-guide-interview-table .ant-table-tbody > tr > td.recruit-guide-col--actions {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
 }
 
 .recruit-guide-section .recruit-guide-inline-field {
@@ -94,18 +133,27 @@
 }
 
 .recruit-guide-section .recruit-guide-inline-field--readonly .ant-input,
-.recruit-guide-section .recruit-guide-inline-field--readonly textarea.ant-input {
-  cursor: default;
+.recruit-guide-section .recruit-guide-inline-field--readonly textarea.ant-input,
+.recruit-guide-section .recruit-guide-inline-field--edit textarea.ant-input {
   color: var(--default-BK, #3d3d3d) !important;
   font-weight: 500;
   text-align: center;
-  white-space: pre-line;
+  white-space: pre-wrap !important;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
-.recruit-guide-section .recruit-guide-inline-field--edit .cms-textarea--fixed-rows
-  .cms-textarea__inner
-  textarea.ant-input {
+.recruit-guide-section .recruit-guide-inline-field.cms-textarea--fixed-rows textarea.ant-input {
   resize: none !important;
+}
+
+.recruit-guide-section .recruit-guide-inline-field--readonly .ant-input,
+.recruit-guide-section .recruit-guide-inline-field--readonly textarea.ant-input {
+  cursor: default;
+  overflow: hidden !important;
+}
+
+.recruit-guide-section .recruit-guide-inline-field--edit.cms-textarea--fixed-rows textarea.ant-input {
   overflow-y: auto;
 }
 

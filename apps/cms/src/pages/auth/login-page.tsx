@@ -114,6 +114,12 @@ export function LoginPage() {
     : '/register'
 
   useEffect(() => {
+    if (requiresMfa && !isAuthenticated) {
+      setMfaModalOpen(true)
+    }
+  }, [requiresMfa, isAuthenticated])
+
+  useEffect(() => {
     // 세션 만료로 login?next=/register/social-connect?flow=... 에 떨어진 경우 → 소셜 연결 화면 복귀
     if (nextPath?.startsWith('/')) {
       const nextUrl = new URL(nextPath, 'http://local.invalid')

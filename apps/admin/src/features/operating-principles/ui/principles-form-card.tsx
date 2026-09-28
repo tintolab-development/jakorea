@@ -28,7 +28,7 @@ import {
   PrincipleDragHandle,
   PrinciplesSortableTable,
 } from '@/features/operating-principles/ui/sortable-table'
-import { CmsButton, CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
 import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 import './principles-form-card.css'
@@ -215,19 +215,22 @@ export function PrinciplesFormCard({ data }: Props) {
         key: 'icon',
         width: 88,
         align: 'center',
-        render: (_value, record) => <PrincipleIcon iconKey={record.iconKey} size={40} />,
+        className: 'principles-sortable-table__col--icon',
+        render: (_value, record) => <PrincipleIcon iconKey={record.iconKey} size={48} />,
       },
       {
         title: '타이틀',
         key: 'title',
         width: 280,
+        className: 'principles-sortable-table__col--title',
         render: (_value, record) => {
           const value = draftTexts[record.id]?.title ?? record.title
           return (
-            <CmsInput
-              className={fieldClass(isEditing)}
+            <CmsTextArea
+              className={fieldClass(isEditing, 'cms-textarea--fixed-rows', 'principles-title-field')}
               inputSize="medium"
               width="100%"
+              rows={2}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -244,6 +247,7 @@ export function PrinciplesFormCard({ data }: Props) {
       {
         title: '서브 텍스트',
         key: 'subText',
+        className: 'principles-sortable-table__col--subText',
         render: (_value, record) => {
           const value = draftTexts[record.id]?.subText ?? record.subText
           return (
@@ -259,7 +263,7 @@ export function PrinciplesFormCard({ data }: Props) {
                 if (!isEditing) return
                 handleDraftTextChange(record.id, 'subText', e.target.value)
               }}
-              placeholder="서브 텍스트를 입력하세요"
+              placeholder="서브 텍스트를 입력하세요 (Enter=문단 줄바꿈, Platform에 그대로 반영)"
               aria-label={`서브 텍스트 ${record.sortOrder}`}
             />
           )
@@ -360,7 +364,9 @@ export function PrinciplesFormCard({ data }: Props) {
                       if (!isEditing) return
                       setDraftIntro(prev => ({ ...prev, mainText: e.target.value }))
                     }}
-                    placeholder="메인 텍스트를 입력하세요"
+                    placeholder={
+                      'JA Korea는 … NGO로서\n신뢰를 바탕으로 … 운영합니다. (줄바꿈=화면 개행)'
+                    }
                   />
                 }
               />

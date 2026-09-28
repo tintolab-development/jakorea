@@ -14,6 +14,7 @@ import {
 } from '@/features/social-link/api/hooks'
 import { socialLinkQueryKeys } from '@/features/social-link/api/query-keys'
 import { SOCIAL_LINKS_CHANGED_EVENT } from '@/features/social-link/api/store'
+import { socialLinkMutationFailureAlert } from '@/features/social-link/lib/mutation-failure-alert'
 import {
   findInvalidHttpLinkChannels,
   socialLinkUrlFormatAlert,
@@ -26,6 +27,7 @@ import {
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
 import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { isLastActiveToggleOff, minActiveRequiredAlert } from '@/shared/lib/min-active-guard'
 
 import './page.css'
 function buildDraftUrls(rows: SocialLink[]): Record<string, string> {
@@ -47,11 +49,14 @@ export function SocialLinksPage() {
 
   const handleRowsReorder = useCallback(
     (reorderedRows: SocialLink[]) => {
-      void reorderMutation.mutateAsync(reorderedRows.map(row => row.id)).catch(() => {
-        showAlert({
-          title: '순서 변경 실패',
-          content: '소셜 링크 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
-        })
+      void reorderMutation.mutateAsync(reorderedRows.map(row => row.id)).catch(error => {
+        showAlert(
+          socialLinkMutationFailureAlert(
+            error,
+            '소셜 링크 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
+            '순서 변경 실패',
+          ),
+        )
         void listQuery.refetch()
       })
     },
@@ -60,6 +65,10 @@ export function SocialLinksPage() {
 
   const handleToggleActive = useCallback(
     (id: string, isActive: boolean) => {
+      if (isLastActiveToggleOff(rows, id, isActive)) {
+        showAlert(minActiveRequiredAlert('소셜 링크는'))
+        return
+      }
       if (isActive) {
         const row = rows.find(item => item.id === id)
         if (!row) return
@@ -75,11 +84,14 @@ export function SocialLinksPage() {
         }
       }
 
-      void setActiveMutation.mutateAsync({ id, isActive }).catch(() => {
-        showAlert({
-          title: '사용 여부 변경 실패',
-          content: '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
-        })
+      void setActiveMutation.mutateAsync({ id, isActive }).catch(error => {
+        showAlert(
+          socialLinkMutationFailureAlert(
+            error,
+            '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
+            '사용 여부 변경 실패',
+          ),
+        )
         void listQuery.refetch()
       })
     },
@@ -129,11 +141,13 @@ export function SocialLinksPage() {
       )
       setDraftUrls({})
       setIsEditing(false)
-    } catch {
-      showAlert({
-        title: '저장 실패',
-        content: '소셜 링크 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(
+        socialLinkMutationFailureAlert(
+          error,
+          '소셜 링크 저장에 실패했습니다. 다시 시도해 주세요.',
+        ),
+      )
     }
   }, [draftUrls, rows, saveMutation, showAlert])
 

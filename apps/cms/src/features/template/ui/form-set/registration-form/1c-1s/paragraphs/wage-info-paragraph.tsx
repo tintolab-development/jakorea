@@ -2,8 +2,8 @@
  * 1사 1교 프로그램 등록 폼 — 임금 정보
  * (강사비 | 강사 장거리비 2열 × 3행 + 지급/공제 1행 — 스크린 구성)
  */
-import { useMemo } from 'react'
-import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
+import { useEffect, useMemo } from 'react'
+import { useTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
@@ -13,9 +13,12 @@ import '@/features/template/ui/form-set/registration-form/general/paragraphs/pro
 
 const DEDUCTION_VIEW = '일용근로자 원천징수세액'
 
-/** 스크린 표기: 카탈로그 `강사 교통비`(p-1)·`숙박비 (1사1교)`(p-7), 라벨만 화면 문구에 맞춤 */
-const PAYMENT_ID_TRANSPORT_1C1S = 'p-1'
-const PAYMENT_ID_LODGING_1C1S = 'p-7'
+/** 화면 라벨 — 카탈로그 원문과 매칭해 실제 마스터 id 를 고른다 (mock `p-1`/`p-7` 은 remote 옵션에 없음). */
+const PAYMENT_LABEL_TRANSPORT_CATALOG = '강사 교통비'
+const PAYMENT_LABEL_LODGING_CATALOG = '숙박비 (1사1교)'
+const PAYMENT_LABEL_TRANSPORT_1C1S = '교통비(일사일교)'
+const PAYMENT_LABEL_LODGING_1C1S = '숙박비(일사일교)'
+const LEGACY_PAYMENT_IDS = new Set(['p-1', 'p-7'])
 
 const WAGE_FEE_ROWS = [
   {
@@ -84,20 +87,41 @@ function HourlyFeeInput({
 export function OneCOneSRegistrationWageInfoParagraph() {
   const [paymentItemValues, setPaymentItemValues] = useProgramRegistrationOverlayKv<string[]>(
     'economyRegistration.wageInfo.paymentItemValues',
-    [PAYMENT_ID_TRANSPORT_1C1S, PAYMENT_ID_LODGING_1C1S]
+    []
   )
 
+  const remotePaymentOptions = useTemplateRegistrationPaymentItemOptions()
   const paymentItemOptions = useMemo((): CmsSelectMultipleOption[] => {
-    return getTemplateRegistrationPaymentItemOptions().map(opt => {
-      if (opt.value === PAYMENT_ID_TRANSPORT_1C1S) {
-        return { ...opt, label: '교통비(일사일교)' }
+    return remotePaymentOptions.map(opt => {
+      const label = opt.label.trim()
+      if (label === PAYMENT_LABEL_TRANSPORT_CATALOG) {
+        return { ...opt, label: PAYMENT_LABEL_TRANSPORT_1C1S }
       }
-      if (opt.value === PAYMENT_ID_LODGING_1C1S) {
-        return { ...opt, label: '숙박비(일사일교)' }
+      if (label === PAYMENT_LABEL_LODGING_CATALOG) {
+        return { ...opt, label: PAYMENT_LABEL_LODGING_1C1S }
       }
       return opt
     })
-  }, [])
+  }, [remotePaymentOptions])
+
+  useEffect(() => {
+    if (remotePaymentOptions.length === 0) return
+    const current = paymentItemValues.map(id => id.trim()).filter(Boolean)
+    const known = new Set(remotePaymentOptions.map(opt => opt.value))
+    const allKnown = current.length > 0 && current.every(id => known.has(id))
+    if (allKnown) return
+    const shouldReplace =
+      current.length === 0 || current.every(id => LEGACY_PAYMENT_IDS.has(id) || !known.has(id))
+    if (!shouldReplace) return
+    const transport = remotePaymentOptions.find(
+      opt => opt.label.trim() === PAYMENT_LABEL_TRANSPORT_CATALOG
+    )
+    const lodging = remotePaymentOptions.find(
+      opt => opt.label.trim() === PAYMENT_LABEL_LODGING_CATALOG
+    )
+    const next = [transport?.value, lodging?.value].filter((id): id is string => Boolean(id))
+    if (next.length > 0) setPaymentItemValues(next)
+  }, [paymentItemValues, remotePaymentOptions, setPaymentItemValues])
 
   return (
     <DetailInfoForm title="임금 정보" hideHeader mode="edit" className="program-registration-paragraph">

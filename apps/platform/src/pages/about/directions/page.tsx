@@ -1,16 +1,14 @@
 import directionsGradientUrl from '@/assets/background_gradient/directions-gradient.png'
 import {
   DirectionsInfoSection,
-  getMockDirections,
   KakaoMapEmbed,
+  usePublicDirections,
 } from '@/features/directions'
-import { useShouldUsePlatformMockData } from '@/shared/hooks'
-import { PFText } from '@/shared/ui'
+import { PFButton, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function DirectionsPage() {
-  useShouldUsePlatformMockData()
-  const info = getMockDirections()
+  const { info, isPending, isError, refetch } = usePublicDirections()
 
   return (
     <section className={styles.page}>
@@ -27,19 +25,36 @@ export function DirectionsPage() {
           </PFText>
         </header>
 
-        <div className={styles.mapSection}>
-          {info ? <KakaoMapEmbed html={info.kakaoMapHtml} /> : null}
-        </div>
-
-        <div className={styles.infoSection}>
-          {info ? (
-            <DirectionsInfoSection info={info} />
-          ) : (
+        {isPending ? (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            오시는 길 정보를 불러오는 중입니다.
+          </PFText>
+        ) : isError ? (
+          <div className={styles.status}>
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-              등록된 정보가 없습니다.
+              오시는 길 정보를 불러오지 못했습니다.
             </PFText>
-          )}
-        </div>
+            <PFButton variant="tertiary" size="large" onClick={refetch}>
+              다시 시도
+            </PFButton>
+          </div>
+        ) : (
+          <>
+            <div className={styles.mapSection}>
+              {info?.kakaoMapHtml.trim() ? <KakaoMapEmbed html={info.kakaoMapHtml} /> : null}
+            </div>
+
+            <div className={styles.infoSection}>
+              {info ? (
+                <DirectionsInfoSection info={info} />
+              ) : (
+                <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                  등록된 정보가 없습니다.
+                </PFText>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </section>
   )

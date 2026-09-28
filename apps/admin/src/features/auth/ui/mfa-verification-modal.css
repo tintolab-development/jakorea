@@ -1,11 +1,18 @@
 /**
- * MFA 인증 모달 스타일
+ * MFA 인증 모달 스타일 (CMS mfa-verification-modal.css 정합)
  */
+
+/* 뷰포트보다 길 때 상·하단 잘림 방지 — wrap 스크롤 */
+.mfa-verification-modal-wrap {
+  overflow-y: auto;
+}
 
 .mfa-verification-modal .ant-modal-content {
   border-radius: var(--radius-16, 16px);
   background: #fff;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
 }
 
 .mfa-verification-modal .ant-modal-close {
@@ -39,9 +46,10 @@
   display: flex;
   width: 600px;
   max-width: 100%;
+  padding: 24px 30px 34px 30px;
   flex-direction: column;
   align-items: stretch;
-  gap: 32px;
+  gap: 30px;
   flex-shrink: 0;
   box-sizing: border-box;
 }
@@ -50,7 +58,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
   width: 100%;
 }
 
@@ -82,8 +90,6 @@
 
 .mfa-verification-modal__qr {
   display: flex;
-  width: 220px;
-  height: 220px;
   margin-inline: auto;
   justify-content: center;
   align-items: center;
@@ -92,8 +98,8 @@
 
 .mfa-verification-modal__qr-image {
   display: block;
-  width: 220px;
-  height: 220px;
+  width: 160px;
+  height: 160px;
   object-fit: contain;
 }
 
@@ -112,9 +118,9 @@
 .mfa-otp-status__hint {
   margin: 0;
   color: var(--color-mint-01, #01a1af);
-  font-family: Pretendard, system-ui, sans-serif;
+  font-family: Pretendard;
   font-size: 14px;
   font-style: normal;
-  font-weight: 400;
-  line-height: 150%;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
 }

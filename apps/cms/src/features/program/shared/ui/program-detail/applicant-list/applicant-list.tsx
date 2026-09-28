@@ -35,11 +35,9 @@ import {
 import {
   ParticipantApproveModal,
   ParticipantApprovalCompleteModal,
-  ParticipantRejectModal,
   ParticipantRejectCompleteModal,
   ParticipantBulkApproveModal,
   ParticipantBulkApproveCompleteModal,
-  ParticipantBulkRejectModal,
   ParticipantBulkRejectCompleteModal,
   ParticipantCancelApprovalModal,
   ParticipantCancelApprovalCompleteModal,
@@ -85,18 +83,15 @@ import {
 import { InstructorBulkApproveModal } from '@/features/program/shared/ui/detail-modal/components/instructor-bulk-approve-modal'
 import { InstructorBulkApproveCompleteModal } from '@/features/program/shared/ui/detail-modal/components/instructor-bulk-approve-complete-modal'
 import { InstructorBulkRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/instructor-bulk-reject-complete-modal'
-import { InstructorBulkRejectModal } from '@/features/program/shared/ui/detail-modal/components/instructor-bulk-reject-modal'
 import { InstructorRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/instructor-reject-complete-modal'
-import { InstructorRejectModal } from '@/features/program/shared/ui/detail-modal/components/instructor-reject-modal'
 import { countAssignedInstructors } from '@/features/program/general/lib/institution-assigned-instructor-count'
 import { InstitutionBulkApproveModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-approve-modal'
 import { InstitutionBulkApproveCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-approve-complete-modal'
-import { InstitutionBulkRejectModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-reject-modal'
 import { InstitutionBulkRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-bulk-reject-complete-modal'
 import { InstitutionApproveModal } from '@/features/program/shared/ui/detail-modal/components/institution-approve-modal'
 import { InstitutionApprovalCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-approval-complete-modal'
-import { InstitutionRejectModal } from '@/features/program/shared/ui/detail-modal/components/institution-reject-modal'
 import { InstitutionRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-reject-complete-modal'
+import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 import { InstitutionCancelApprovalModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-modal'
 import { InstitutionCancelApprovalCompleteModal } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-approval-complete-modal'
 import {
@@ -188,10 +183,12 @@ export function ApplicantList({
     applyRemoteInstitutionCancelRejection,
     individualRemoteEnabled,
     instructorRemoteEnabled,
+    organizationNotificationResendRemoteEnabled,
     handleCancelApproval,
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,
     resendInstructorNotification,
+    resendOrganizationNotification,
     handleCancelRejectInstitution,
     handleCancelApprovalIndividual,
     handleCancelRejectIndividual,
@@ -536,6 +533,30 @@ export function ApplicantList({
     return institutionList.find(row => row.id === id) ?? null
   }, [selectedRowKeys, institutionList])
 
+  const resolveSingleSelectedInstructor = useCallback((): ApplicantInstructorRow | null => {
+    if (selectedRowKeys.length !== 1) return null
+    const id = String(selectedRowKeys[0])
+    return instructorList.find(row => row.id === id) ?? null
+  }, [selectedRowKeys, instructorList])
+
+  const firstSelectedInstitutionName = useMemo(() => {
+    const id = selectedRowKeys[0]
+    if (id == null) return ''
+    return institutionList.find(row => row.id === String(id))?.schoolName ?? ''
+  }, [institutionList, selectedRowKeys])
+
+  const firstSelectedInstructorName = useMemo(() => {
+    const id = selectedRowKeys[0]
+    if (id == null) return ''
+    return instructorList.find(row => row.id === String(id))?.instructorName ?? ''
+  }, [instructorList, selectedRowKeys])
+
+  const firstSelectedParticipantName = useMemo(() => {
+    const id = selectedRowKeys[0]
+    if (id == null) return ''
+    return individualList.find(row => row.id === String(id))?.applicantName ?? ''
+  }, [individualList, selectedRowKeys])
+
   const handleBulkRejectClick = () => {
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
@@ -561,6 +582,11 @@ export function ApplicantList({
       return
     }
     if (useGeneralInstructorBulkActionModal) {
+      const single = resolveSingleSelectedInstructor()
+      if (single) {
+        setInstructorRejectTarget({ id: single.id, name: single.instructorName })
+        return
+      }
       setInstructorBulkRejectOpen(true)
       return
     }
@@ -642,6 +668,19 @@ export function ApplicantList({
     return handleCancelRejectInstitution
   }
 
+  const canResendInstitutionNotification = (() => {
+    if (menu !== 'institutions' || !selectedItem || !('schoolName' in selectedItem)) return false
+    const row = selectedItem as ApplicantSchoolRow
+    if (row.approvalStatus !== 'approved' && row.approvalStatus !== 'rejected') return false
+    // 기관 목록 remote(TT)와 재발송 API는 유형별로 분리 — remote 꺼지면 숨김
+    if (!organizationNotificationResendRemoteEnabled) return detailVariant !== 'general'
+    // BE가 availableActions를 주면 RESEND_NOTIFICATION만 허용. 비어 있으면 승인/반려 재발송 허용(투영 누락 호환)
+    if (row.availableActions != null && row.availableActions.length > 0) {
+      return row.availableActions.includes('RESEND_NOTIFICATION')
+    }
+    return true
+  })()
+
   const handleOpenNotificationResend = () => {
     const item = selectedItem
     if (!item) return
@@ -659,10 +698,29 @@ export function ApplicantList({
     }
 
     if (menu === 'institutions' && 'schoolName' in item) {
-      notifyProgramApiUnavailable(
-        'general-org-application-notification-resend',
-        '일반 프로그램 · 기관 신청 알림 재발송'
-      )
+      const row = item as ApplicantSchoolRow
+      if (row.approvalStatus !== 'approved' && row.approvalStatus !== 'rejected') return
+      if (
+        organizationNotificationResendRemoteEnabled &&
+        row.availableActions != null &&
+        row.availableActions.length > 0 &&
+        !row.availableActions.includes('RESEND_NOTIFICATION')
+      ) {
+        return
+      }
+      if (detailVariant === 'general' && !organizationNotificationResendRemoteEnabled) {
+        notifyProgramApiUnavailable(
+          'organization-application-notification-resend',
+          '기관 신청 알림 재발송'
+        )
+        return
+      }
+      setNotificationResendTarget({
+        id: row.id,
+        name: row.schoolName,
+        subjectKind: 'institution',
+        approvalStatus: row.approvalStatus,
+      })
       return
     }
 
@@ -759,7 +817,9 @@ export function ApplicantList({
             }
             resolveCancelReject()(id)
           }}
-          onResendNotification={handleOpenNotificationResend}
+          onResendNotification={
+            canResendInstitutionNotification ? handleOpenNotificationResend : undefined
+          }
         />
       ) : showIndividualDetail && individualScreeningStage === 'doc1' && program ? (
         <GeneralParticipantApplicantDetailView
@@ -932,8 +992,11 @@ export function ApplicantList({
           }}
         />
       ) : null}
-      <InstructorBulkRejectModal
+      <ProgramApplicationRejectModal
         open={instructorBulkRejectOpen}
+        audience="member"
+        variant="bulk"
+        subjectName={firstSelectedInstructorName}
         selectionCount={selectedRowKeys.length}
         onCancel={() => setInstructorBulkRejectOpen(false)}
         onConfirm={payload => {
@@ -948,8 +1011,11 @@ export function ApplicantList({
         selectionCount={instructorBulkRejectCompleteCount ?? 0}
         onClose={() => setInstructorBulkRejectCompleteCount(null)}
       />
-      <InstitutionBulkRejectModal
+      <ProgramApplicationRejectModal
         open={institutionBulkRejectOpen}
+        audience="institution"
+        variant="bulk"
+        subjectName={firstSelectedInstitutionName}
         selectionCount={selectedRowKeys.length}
         onCancel={() => setInstitutionBulkRejectOpen(false)}
         onConfirm={payload => {
@@ -1032,9 +1098,11 @@ export function ApplicantList({
         assignedInstructorCount={institutionApprovalComplete?.assignedInstructorCount ?? 0}
         onClose={() => setInstitutionApprovalComplete(null)}
       />
-      <InstitutionRejectModal
+      <ProgramApplicationRejectModal
         open={institutionRejectTarget != null}
-        schoolName={institutionRejectTarget?.name ?? ''}
+        audience="institution"
+        variant="single"
+        subjectName={institutionRejectTarget?.name ?? ''}
         onCancel={() => setInstitutionRejectTarget(null)}
         onConfirm={payload => {
           if (!institutionRejectTarget) return
@@ -1129,8 +1197,11 @@ export function ApplicantList({
         schoolName={institutionCancelRejectComplete?.schoolName ?? ''}
         onClose={() => setInstitutionCancelRejectComplete(null)}
       />
-      <ParticipantBulkRejectModal
+      <ProgramApplicationRejectModal
         open={participantBulkRejectOpen}
+        audience="member"
+        variant="bulk"
+        subjectName={firstSelectedParticipantName}
         selectionCount={selectedRowKeys.length}
         onCancel={() => setParticipantBulkRejectOpen(false)}
         onConfirm={payload => {
@@ -1233,9 +1304,11 @@ export function ApplicantList({
         participantName={participantApprovalComplete?.participantName ?? ''}
         onClose={() => setParticipantApprovalComplete(null)}
       />
-      <ParticipantRejectModal
+      <ProgramApplicationRejectModal
         open={participantRejectTarget != null}
-        participantName={participantRejectTarget?.name ?? ''}
+        audience="member"
+        variant="single"
+        subjectName={participantRejectTarget?.name ?? ''}
         onCancel={() => setParticipantRejectTarget(null)}
         onConfirm={payload => {
           if (!participantRejectTarget) return
@@ -1374,9 +1447,11 @@ export function ApplicantList({
         participantName={participantCancelRejectComplete?.participantName ?? ''}
         onClose={() => setParticipantCancelRejectComplete(null)}
       />
-      <InstructorRejectModal
+      <ProgramApplicationRejectModal
         open={instructorRejectTarget != null}
-        instructorName={instructorRejectTarget?.name ?? ''}
+        audience="member"
+        variant="single"
+        subjectName={instructorRejectTarget?.name ?? ''}
         onCancel={() => setInstructorRejectTarget(null)}
         onConfirm={payload => {
           if (!instructorRejectTarget) return
@@ -1541,9 +1616,54 @@ export function ApplicantList({
         onCancel={() => setNotificationResendTarget(null)}
         onConfirm={payload => {
           if (!notificationResendTarget) return
-          const { id, subjectKind } = notificationResendTarget
+          const { id, subjectKind, approvalStatus } = notificationResendTarget
           const notifyOptions = toApplicantNotificationResendNotifyOptions(payload)
           const sentAt = resolveApplicantNotificationResendSentAt(notifyOptions)
+
+          if (subjectKind === 'institution') {
+            if (detailVariant === 'general' && organizationNotificationResendRemoteEnabled) {
+              if (
+                payload.notifyTiming === 'manual' &&
+                (!payload.manualNotifyAt || !payload.manualNotifyAt.isAfter(new Date()))
+              ) {
+                void showAlert({
+                  title: '예약 발송 일시 확인',
+                  content: '예약 발송 일시는 현재 시각보다 이후로 설정해 주세요.',
+                })
+                return
+              }
+              if (approvalStatus === 'rejected' && !payload.reason.trim()) {
+                void showAlert({
+                  title: '반려 사유 확인',
+                  content: '반려 알림 재발송 시 사유를 입력해 주세요.',
+                })
+                return
+              }
+              void (async () => {
+                const ok = await resendOrganizationNotification(
+                  id,
+                  {
+                    timing: notifyOptions.notifyTiming === 'manual' ? 'SCHEDULED' : 'IMMEDIATE',
+                    scheduledAt:
+                      notifyOptions.notifyTiming === 'manual'
+                        ? (notifyOptions.manualNotifyAt?.toISOString() ?? null)
+                        : null,
+                    reason: approvalStatus === 'rejected' ? payload.reason.trim() : null,
+                  },
+                  `org-${id}-${crypto.randomUUID()}`
+                )
+                if (ok) setNotificationResendTarget(null)
+              })()
+              return
+            }
+            setNotificationResendTarget(null)
+            notifyProgramApiUnavailable(
+              'organization-application-notification-resend',
+              '기관 신청 알림 재발송'
+            )
+            return
+          }
+
           setNotificationResendTarget(null)
 
           if (subjectKind === 'instructor') {
@@ -1571,14 +1691,6 @@ export function ApplicantList({
               return next
             })
             updateApplicantInstructorNotificationResend(id, notifyOptions)
-            return
-          }
-
-          if (subjectKind === 'institution') {
-            notifyProgramApiUnavailable(
-              'general-org-application-notification-resend',
-              '일반 프로그램 · 기관 신청 알림 재발송'
-            )
             return
           }
 

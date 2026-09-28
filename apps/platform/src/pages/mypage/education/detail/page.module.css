@@ -15,6 +15,13 @@
   margin-bottom: var(--spacing-56);
 }
 
+@media (--bp-below-pc) {
+  .tabs {
+    margin-top: var(--spacing-20);
+    margin-bottom: var(--spacing-32);
+  }
+}
+
 .empty {
   margin: var(--spacing-40) 0 var(--spacing-24);
 }
@@ -38,11 +45,14 @@
   }
 }
 
+/* 모바일 — 패딩이 있는 .page 하나에만 480 (부모 패딩 없음 → 거터 한 겹) */
 @media (--bp-below-pc) {
   .page {
+    box-sizing: border-box;
     width: 100%;
-    min-width: 375px;
-    max-width: 480px;
+    max-width: var(--width-page-sm);
     margin-inline: auto;
+    padding-top: var(--spacing-40);
+    padding-bottom: var(--spacing-48);
   }
 }

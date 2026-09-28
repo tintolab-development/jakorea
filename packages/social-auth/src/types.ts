@@ -21,8 +21,12 @@ export interface SocialAuthPaths {
   /** 가입 직후 public 소셜 연결 session consume */
   signupSsoLinkSessionConsume?: () => string
   ssoError?: () => string
-  /** 회원(Platform) 확장용 */
+  /**
+   * Portal SSO login start — `POST /api/portal/auth/sso/login/{provider}/start`
+   * provider path segment는 보통 소문자(kakao|naver|google)
+   */
   loginStart?: (provider: string) => string
+  /** @deprecated Portal은 createPortalSsoAdapter + loginStart / socialAccounts 사용 */
   memberSocialLogin?: () => string
   memberSocialAccounts?: () => string
   memberSocialAccount?: (providerCode: string) => string
@@ -137,6 +141,16 @@ export interface PendingSocialLink {
   consent?: SocialLinkConsent
 }
 
+/** POST /api/admin/auth/sso/login/sessions/consume 200 — AdminMfaChallengeResponse */
+export interface SocialLoginMfaChallenge {
+  challengeUuid: string
+  mfaMethod?: string
+  expiresAt?: string
+  totpSecret?: string
+  otpauthUri?: string
+  qrDataUrl?: string
+}
+
 export type OAuthCallbackOutcome =
   | { kind: 'authenticated'; tokens: AuthTokenResult; user?: unknown }
   | {
@@ -148,7 +162,15 @@ export type OAuthCallbackOutcome =
     }
   | { kind: 'not_linked' }
   | { kind: 'already_linked' }
-  | { kind: 'mfa_required'; challengeUuid: string; mfaMethod?: string }
+  | {
+      kind: 'mfa_required'
+      challengeUuid: string
+      mfaMethod?: string
+      expiresAt?: string
+      totpSecret?: string
+      otpauthUri?: string
+      qrDataUrl?: string
+    }
   | { kind: 'failed'; message: string }
   | { kind: 'cancelled' }
 

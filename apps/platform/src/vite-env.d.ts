@@ -13,13 +13,23 @@ interface ImportMetaEnv {
   readonly VITE_CAREEAR_NET_API_KEY?: string
   /** 브라우저에서 직접 호출할 백엔드 오리진 (크로스 오리진). 로컬 프록시 쓸 때는 비움. */
   readonly VITE_API_BASE_URL?: string
-  /** 로컬 Vite가 `/api` → 이 오리진으로 프록시. CMS와 동일. */
+  /** 로컬 Vite `/api/portal`, `/api/auth` → CMS(8080) 로그인·회원·NICE */
   readonly VITE_API_SERVER?: string
+  /** 로컬 Vite `/api` → JAHOMEADMINBACK(8081). 미설정 시 http://localhost:8081 */
+  readonly VITE_HOMEPAGE_API_SERVER?: string
   readonly VITE_DEV_PROXY_TARGET?: string
   readonly VITE_NGROK_SERVER?: string
   readonly VITE_NGROK_SKIP_BROWSER_WARNING?: string
   /** 리프레시 토큰 POST 경로. 기본 `/api/portal/auth/refresh` */
   readonly VITE_AUTH_REFRESH_PATH?: string
+  /** OAuth frontendReturnUrl origin (로그인 완료·가입 연결 복귀) */
+  readonly VITE_OAUTH_REDIRECT_ORIGIN?: string
+  /** IdP redirect_uri용 백엔드 public origin */
+  readonly VITE_OAUTH_BACKEND_ORIGIN?: string
+  /** mock 전용 — remote Portal SSO는 BE가 client 보유 */
+  readonly VITE_GOOGLE_CLIENT_ID?: string
+  readonly VITE_KAKAO_CLIENT_ID?: string
+  readonly VITE_NAVER_CLIENT_ID?: string
 }
 
 interface ImportMeta {
@@ -47,6 +57,16 @@ declare module '*.svg?raw' {
 }
 
 declare module '*.png' {
+  const src: string
+  export default src
+}
+
+declare module '*.jpg' {
+  const src: string
+  export default src
+}
+
+declare module '*.jpeg' {
   const src: string
   export default src
 }

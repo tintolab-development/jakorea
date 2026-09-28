@@ -1,4 +1,5 @@
 import type { TextbookContent, TextbookTag } from '../model/types'
+import { RichTextViewer } from '@/shared/rich-text'
 import { PFCategoryBadge, PFModal, PFText } from '@/shared/ui'
 import badgeCategoryIconUrl from '../image/icon/badge-category.svg'
 import badgeSkillIconUrl from '../image/icon/badge-skill.svg'
@@ -114,6 +115,13 @@ export function DetailModal({ open, content, onClose }: DetailModalProps) {
               단원 소개
             </PFText>
             <dd className={styles.detailValue}>
+              {content.unitIntroHtml ? (
+                <RichTextViewer
+                  content={content.unitIntroHtml}
+                  contentFormat="html"
+                  maxHeight="none"
+                />
+              ) : (
               <ul className={styles.units}>
                 {content.units.map(unit => (
                   <li key={`${unit.unitLabel ?? ''}-${unit.title}`} className={styles.unit}>
@@ -138,6 +146,7 @@ export function DetailModal({ open, content, onClose }: DetailModalProps) {
                   </li>
                 ))}
               </ul>
+              )}
             </dd>
           </div>
         </dl>

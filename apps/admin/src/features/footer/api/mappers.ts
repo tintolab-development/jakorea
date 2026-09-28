@@ -80,6 +80,7 @@ export function toFooterMenusUpdateRequest(menus: FooterTopMenu[]): FooterMenusU
       menuCode: toApiFooterMenuCode(row.id),
       enabled: row.isActive,
       displayOrder: row.sortOrder,
+      // 내부 메뉴는 URL을 보내지 않는다. 외부 메뉴의 빈 문자열도 생략되어 서버에서 null로 지워진다.
       externalUrl: row.isInternal ? undefined : trimmed.length > 0 ? trimmed : undefined,
       version: row.version,
     }
@@ -100,6 +101,7 @@ export function mapFooterOrganizationToDomain(
     phone: row?.phone ?? '',
     fax: row?.fax ?? '',
     email: row?.email ?? '',
+    organizationDescription: row?.organizationDescription?.trim() || undefined,
     logoUrl: logo?.publicUrl ?? '',
     logoFileName: logo?.originalName,
     logoAssetId: logo?.assetId,
@@ -113,8 +115,11 @@ export function toFooterOrganizationUpdateRequest(
   version: number,
   logoAssetId: number | undefined,
 ): FooterOrganizationUpdateRequest {
+  const description = input.organizationDescription?.trim()
   return {
     organizationName: input.name.trim(),
+    // 생략된 optional 문자열·asset id는 Jackson이 null로 읽고, 서버는 null을 삭제로 저장한다.
+    organizationDescription: description || undefined,
     address: input.address.trim() || undefined,
     postalCode: input.zipCode.trim() || undefined,
     representativeName: input.representative.trim() || undefined,

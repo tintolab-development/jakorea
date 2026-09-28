@@ -931,7 +931,7 @@ export function ProgramScheduleWidget({
   return (
     <Card
       ref={cardRef}
-      bordered={false}
+      variant="borderless"
       title={
         <div className="program-schedule-widget__head-row">
           <div className="program-schedule-widget__head-left">

@@ -12,10 +12,21 @@ import type {
 import type { Status } from '@/types'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
 import {
+  derivedTextbookNameAliases,
+  omitIfDetailedProgramNameAlias,
+  parseDetailedProgramMasterId,
+} from '@/features/program/general/lib/detailed-program-request-id'
+import {
+  extractCompanySchoolWageSidecar,
   parseCompanySchoolServiceDetailJson,
   serializeCompanySchoolServiceDetailJson,
+  serializeCompanySchoolServiceDetailJsonForUpdatePatch,
 } from './service-detail-json'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
+import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
+import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
+import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
+import { applyResolvedVenueKindToCommonInfo } from '@/features/program/general/model/common-info-edit-schema'
 
 export const COMPANY_SCHOOL_PROGRAM_API_TYPE = 'COMPANY_SCHOOL'
 
@@ -24,6 +35,22 @@ const DEFAULT_SPONSOR_ID = 'sponsor-default'
 function toDate(value: Date | string | undefined): string | undefined {
   if (value instanceof Date) return value.toISOString()
   return value
+}
+
+/**
+ * GET — 화면 운영 기간은 요청이 보낸 start/end.
+ * 서버가 business* 를 연도로 바꿔도 그 값으로 덮지 않는다.
+ */
+function resolveCompanySchoolOperationDates(dto: {
+  startDate?: string | null
+  endDate?: string | null
+  businessStartDate?: string | null
+  businessEndDate?: string | null
+}): { startDate: string | undefined; endDate: string | undefined } {
+  return {
+    startDate: dto.startDate ?? dto.businessStartDate ?? undefined,
+    endDate: dto.endDate ?? dto.businessEndDate ?? undefined,
+  }
 }
 
 function resolveCompanySchoolListLifecycle(
@@ -61,21 +88,23 @@ function baseProgram(
 }
 
 export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto): Program {
-  const title =
-    dto.nameKo?.trim() || dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
+  const title = dto.title?.trim() || dto.nameKo?.trim() || '제목 없음'
+  const mainTitle = dto.mainTitle?.trim() || title
   return baseProgram({
     id: dto.id == null ? '' : String(dto.id),
     title,
-    mainTitle: dto.mainTitle?.trim() || title,
-    startDate: dto.businessStartDate ?? dto.startDate,
-    endDate: dto.businessEndDate ?? dto.endDate,
+    mainTitle,
+    titleEn: dto.titleEn?.trim() || undefined,
+    ...resolveCompanySchoolOperationDates(dto),
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus: resolveCompanySchoolListLifecycle(dto),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
+    ...mapListParticipantRecruitment(dto),
     instructors: dto.instructorApplicantCount,
     participatingSchoolCount: dto.organizationApplicationCount,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
+    backendProgramType: dto.programType ?? COMPANY_SCHOOL_PROGRAM_API_TYPE,
   })
 }
 
@@ -102,9 +131,39 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
   } = details
   void _serviceDetailLifecycle
   void _serviceDetailStatus
-  const generalCommonInfo = applySettlementPolicyToCommonInfo(
-    details.generalCommonInfo,
-    dto.settlementPolicy
+  const wageSidecar = extractCompanySchoolWageSidecar(dto.serviceDetailJson)
+  const fromJson = {
+    ...details.generalCommonInfo,
+    ...(wageSidecar?.wageGradeRows?.length ? { wageGradeRows: wageSidecar.wageGradeRows } : {}),
+    ...(wageSidecar?.paymentItems?.trim() ? { paymentItems: wageSidecar.paymentItems } : {}),
+    ...(wageSidecar?.deductionItems?.trim() ? { deductionItems: wageSidecar.deductionItems } : {}),
+  }
+  const mergedSettlement = applySettlementPolicyToCommonInfo(fromJson, dto.settlementPolicy)
+  // 등록 시 넣은 serviceDetailJson 임금이 있으면 그걸 화면 SSOT로 쓴다.
+  // settlementPolicy 기본값(500,000 등)이 JSON을 덮어 상세와 GET body가 달라지는 것을 막는다.
+  const generalCommonInfoWithSettlement = mergedSettlement
+    ? {
+        ...mergedSettlement,
+        wageGradeRows: fromJson.wageGradeRows?.length
+          ? fromJson.wageGradeRows
+          : mergedSettlement.wageGradeRows,
+        paymentItems: fromJson.paymentItems?.trim()
+          ? fromJson.paymentItems
+          : mergedSettlement.paymentItems,
+        deductionItems: fromJson.deductionItems?.trim()
+          ? fromJson.deductionItems
+          : mergedSettlement.deductionItems,
+      }
+    : fromJson
+  // BE가 숫자 id로 조회해 내려주는 detailedProgramName을 우선 — serviceDetailJson 캐시가
+  // 낡았을 때도(id만 바뀌고 상세 JSON이 안 갱신된 경우 등) 화면에 최신 이름이 보이게 한다.
+  const generalCommonInfo = applyResolvedVenueKindToCommonInfo(
+    {
+      ...generalCommonInfoWithSettlement,
+      detailedProgramName:
+        dto.detailedProgramName?.trim() || generalCommonInfoWithSettlement?.detailedProgramName,
+    },
+    { institutionType: dto.institutionType as Program['institutionType'], venue: dto.venue }
   )
   const otherNotes =
     dtoExt.otherMatters?.trim() ||
@@ -118,7 +177,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     toTypedProgramLifecycleStatus(periodStatus) ??
     undefined
 
-  return baseProgram({
+  const mapped = baseProgram({
     ...detailFields,
     id,
     sponsorId: dto.sponsorId ?? DEFAULT_SPONSOR_ID,
@@ -141,13 +200,14 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
         curriculum: round.curriculum,
         deliveryType: round.deliveryType as Program['rounds'][number]['deliveryType'],
       })) ?? [],
-    startDate: dto.startDate ?? dto.businessStartDate,
-    endDate: dto.endDate ?? dto.businessEndDate,
+    ...resolveCompanySchoolOperationDates(dto),
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus,
     businessArea: dto.businessArea,
+    // 세부 프로그램 마스터 id — 일반 프로그램 어댑터와 동일하게 top-level 필드로 읽어온다.
+    detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
     titleEn: dto.titleEn,
     textbookName: dto.textbookName,
     textbookNameEn: dto.textbookNameEn,
@@ -193,8 +253,15 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     generalCommonInfo,
     generalSurveyMenuKeys: details.generalSurveyMenuKeys,
     generalProgramAudience: details.generalProgramAudience ?? 'organization',
+    registrationOverlay: details.registrationOverlay,
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
+    backendProgramType: dto.programType ?? COMPANY_SCHOOL_PROGRAM_API_TYPE,
+    programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
+  })
+  return applyResolvedAnnouncementTitle(mapped, {
+    serviceDetailJson: dto.serviceDetailJson,
+    overlay: details.registrationOverlay,
   })
 }
 
@@ -256,6 +323,7 @@ const SERVICE_DETAIL_PROGRAM_KEYS = [
   'generalVolunteers',
   'staffVolunteers',
   'returningVolunteers',
+  'registrationOverlay',
 ] as const satisfies ReadonlyArray<keyof Program>
 
 function patchHasKey(patch: Partial<Program>, key: keyof Program): boolean {
@@ -269,6 +337,10 @@ function looksMaskedProgramPii(value: string | null | undefined): boolean {
 }
 
 function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateRequest {
+  // 버그 수정: 1사1교는 등록 폼에서 고른 「세부 프로그램명」이 요청에 전혀 실리지 않고 무시됐다 —
+  // 일반 프로그램 어댑터와 동일하게 detailedProgramId(숫자 마스터 id)로 보낸다. textbookName(교재명)에
+  // 이름을 강제로 밀어넣는 방식은 general 어댑터의 계약과 달랐다(중복되면 omit).
+  const detailedProgramName = program.generalCommonInfo?.detailedProgramName
   return {
     sponsorId: program.sponsorId,
     title: program.title,
@@ -278,12 +350,20 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     description: program.description,
     startDate: toDate(program.startDate),
     endDate: toDate(program.endDate),
+    /** 화면에서 고른 기간 그대로. 연도·1/1~12/31 합성 금지. */
+    businessStartDate: toDate(program.startDate),
+    businessEndDate: toDate(program.endDate),
     applicationStartDate: toDate(program.applicationStartDate),
     applicationEndDate: toDate(program.applicationEndDate),
     businessArea: program.businessArea,
+    detailedProgramId: parseDetailedProgramMasterId(program.detailedProgramId),
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,
-    textbookName: program.textbookName,
+    textbookName: omitIfDetailedProgramNameAlias(
+      program.textbookName,
+      detailedProgramName,
+      derivedTextbookNameAliases(program)
+    ),
     textbookNameEn: program.textbookNameEn,
     schoolId: program.schoolId,
     district: program.district,
@@ -296,7 +376,7 @@ function mapCompanySchoolCoreFieldsToRequest(program: Program): ProgramUpdateReq
     programCategory: program.programCategory ?? undefined,
     programChannel: program.programChannel ?? undefined,
     educationTime: program.educationTime,
-    teamDivision: program.teamDivision,
+    teamDivision: omitIfDetailedProgramNameAlias(program.teamDivision, detailedProgramName),
     educationProcess: program.educationProcess,
     maleParticipants: program.maleParticipants,
     femaleParticipants: program.femaleParticipants,
@@ -344,8 +424,12 @@ function mapCompanySchoolPatchFieldsToRequest(
   if (has('format')) body.format = merged.format
   if (has('category')) body.category = merged.category
   if (has('description')) body.description = merged.description
-  if (has('startDate')) body.startDate = toDate(merged.startDate)
-  if (has('endDate')) body.endDate = toDate(merged.endDate)
+  if (has('startDate') || has('endDate')) {
+    body.startDate = toDate(merged.startDate)
+    body.endDate = toDate(merged.endDate)
+    body.businessStartDate = toDate(merged.startDate)
+    body.businessEndDate = toDate(merged.endDate)
+  }
   if (has('applicationStartDate')) {
     body.applicationStartDate = toDate(merged.applicationStartDate)
   }
@@ -353,9 +437,21 @@ function mapCompanySchoolPatchFieldsToRequest(
     body.applicationEndDate = toDate(merged.applicationEndDate)
   }
   if (has('businessArea')) body.businessArea = merged.businessArea
+  if (has('detailedProgramId') || has('generalCommonInfo')) {
+    body.detailedProgramId = parseDetailedProgramMasterId(merged.detailedProgramId)
+  }
   if (has('titleEn')) body.titleEn = merged.titleEn
   if (has('mainTitle')) body.mainTitle = merged.mainTitle ?? merged.title
-  if (has('textbookName')) body.textbookName = merged.textbookName
+  if (has('textbookName') || has('generalCommonInfo')) {
+    // 버그 수정: 세부 프로그램명 patch는 generalCommonInfo.detailedProgramName으로 들어오므로
+    // textbookName 키 유무만 보면 갱신이 누락된다 — generalCommonInfo 변경 시에도 동기화한다.
+    // (교재명에 세부 프로그램명을 그대로 복제한 값이면 omit — general 어댑터와 동일 계약)
+    body.textbookName = omitIfDetailedProgramNameAlias(
+      merged.textbookName,
+      merged.generalCommonInfo?.detailedProgramName,
+      derivedTextbookNameAliases(merged)
+    )
+  }
   if (has('textbookNameEn')) body.textbookNameEn = merged.textbookNameEn
   if (has('schoolId')) body.schoolId = merged.schoolId
   if (has('district')) body.district = merged.district
@@ -363,14 +459,21 @@ function mapCompanySchoolPatchFieldsToRequest(
   if (has('targetLevel') || has('targetLevels')) {
     body.targetLevel = merged.targetLevels?.[0] ?? merged.targetLevel
   }
-  if (has('institutionType')) body.institutionType = merged.institutionType
+  if (has('institutionType') || has('generalCommonInfo')) {
+    body.institutionType = merged.institutionType
+  }
   if (has('ipOwned')) body.ipOwned = merged.ipOwned
   if (has('courseDeliveredBy')) body.courseDeliveredBy = merged.courseDeliveredBy
   if (has('partnerInvolvement')) body.partnerInvolvement = merged.partnerInvolvement
   if (has('programCategory')) body.programCategory = merged.programCategory ?? undefined
   if (has('programChannel')) body.programChannel = merged.programChannel ?? undefined
   if (has('educationTime')) body.educationTime = merged.educationTime
-  if (has('teamDivision')) body.teamDivision = merged.teamDivision
+  if (has('teamDivision')) {
+    body.teamDivision = omitIfDetailedProgramNameAlias(
+      merged.teamDivision,
+      merged.generalCommonInfo?.detailedProgramName
+    )
+  }
   if (has('educationProcess')) body.educationProcess = merged.educationProcess
   if (has('maleParticipants')) body.maleParticipants = merged.maleParticipants
   if (has('femaleParticipants')) body.femaleParticipants = merged.femaleParticipants
@@ -384,7 +487,7 @@ function mapCompanySchoolPatchFieldsToRequest(
   if (has('managerName') && !looksMaskedProgramPii(merged.managerName)) {
     body.managerName = merged.managerName
   }
-  if (has('venue')) body.venue = merged.venue
+  if (has('venue') || has('generalCommonInfo')) body.venue = merged.venue
   if (has('curriculum')) body.curriculum = merged.curriculum
   if (has('contactEmail') && !looksMaskedProgramPii(merged.contactEmail)) {
     body.contactEmail = merged.contactEmail
@@ -410,7 +513,7 @@ function mapCompanySchoolPatchFieldsToRequest(
 
   const touchesServiceDetail = SERVICE_DETAIL_PROGRAM_KEYS.some(key => has(key))
   if (touchesServiceDetail) {
-    body.serviceDetailJson = serializeCompanySchoolServiceDetailJson(merged)
+    body.serviceDetailJson = serializeCompanySchoolServiceDetailJsonForUpdatePatch(merged, patch)
   }
 
   return body

@@ -1,3 +1,5 @@
+import type { SocialLoginMfaChallenge } from './types'
+
 export class SocialAccountNotLinkedError extends Error {
   constructor(message = '연결된 소셜 계정이 없습니다.') {
     super(message)
@@ -10,6 +12,22 @@ export class SocialAccountAlreadyLinkedError extends Error {
     super(message)
     this.name = 'SocialAccountAlreadyLinkedError'
   }
+}
+
+export class SocialLoginMfaRequiredError extends Error {
+  readonly challenge: SocialLoginMfaChallenge
+
+  constructor(challenge: SocialLoginMfaChallenge) {
+    super('MFA 인증이 필요합니다.')
+    this.name = 'SocialLoginMfaRequiredError'
+    this.challenge = challenge
+  }
+}
+
+export function isSocialLoginMfaRequiredError(
+  error: unknown
+): error is SocialLoginMfaRequiredError {
+  return error instanceof SocialLoginMfaRequiredError
 }
 
 export class SocialAuthApiError extends Error {

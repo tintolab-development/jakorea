@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
   getSettingsLnbItems,
@@ -9,6 +9,7 @@ import {
   MYPAGE_SETTINGS_PATH,
   SettingsConsentsView,
   SettingsEditForm,
+  SettingsSocialAccountsView,
   SettingsView,
   showSettingsInstructorConsentDocuments,
   useMypageMember,
@@ -17,40 +18,57 @@ import {
   type SettingsProfileInput,
 } from '@/features/mypage'
 import { ProgramBackButton } from '@/features/program'
+import { useMediaQuery } from '@/shared/hooks'
 import {
   getAccessToken,
   getDevAuthLoggedIn,
   isRemoteApiConfigured,
+  platformMediaQueries,
   resolveLoginRequiredPath,
 } from '@/shared/lib'
 import { PFText } from '@/shared/ui'
 import { MypageLayout } from '@/widgets/mypage-layout'
 import styles from './page.module.css'
 
-type SettingsTab = 'profile' | 'consents'
+type SettingsTab = 'profile' | 'social' | 'consents'
 type SettingsMode = 'view' | 'edit-basic'
+
+function readSettingsTab(params: URLSearchParams): SettingsTab {
+  const tab = params.get('tab')
+  if (tab === 'social' || tab === 'consents') return tab
+  return 'profile'
+}
 
 function resolvePageTitle(tab: SettingsTab, mode: SettingsMode) {
   if (mode === 'edit-basic') return '회원정보 수정'
+  if (tab === 'social') return '소셜 계정 연동'
   if (tab === 'consents') return '약관 및 정책 동의 관리'
   return '회원정보 설정'
 }
 
+function resolveLnbKey(tab: SettingsTab, mode: SettingsMode) {
+  if (mode === 'edit-basic' || tab === 'profile') return 'settingsProfile' as const
+  if (tab === 'social') return 'settingsSocial' as const
+  return 'settingsConsents' as const
+}
+
 export function MypageSettingsPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [isAuthReady, setIsAuthReady] = useState(false)
-  const [tab, setTab] = useState<SettingsTab>('profile')
+  const [tab, setTab] = useState<SettingsTab>(() => readSettingsTab(searchParams))
   const [mode, setMode] = useState<SettingsMode>('view')
   const [localProfile, setLocalProfile] = useState<SettingsProfileInput | null>(null)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const { isRemoteSession, isLoading, isError, profile, guardian } = useSettingsView()
   const member = useMypageMember()
+  const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
   const effectiveProfile = localProfile ?? profile
   const isTeacher = isSchoolTeacherMypageProfile(member.profile)
   const view = mapPortalProfileToSettingsView(effectiveProfile, guardian, {
     variant: isTeacher ? 'teacher' : 'individual',
   })
-  const lnbActiveKey = mode === 'edit-basic' || tab === 'profile' ? 'settingsProfile' : 'settingsConsents'
+  const lnbActiveKey = resolveLnbKey(tab, mode)
   const lnbItems = getSettingsLnbItems(lnbActiveKey)
   const pageTitle = resolvePageTitle(tab, mode)
 
@@ -73,36 +91,57 @@ export function MypageSettingsPage() {
     return null
   }
 
+  const selectTab = (next: SettingsTab) => {
+    setTab(next)
+    const params = new URLSearchParams(searchParams)
+    params.delete('socialError')
+    if (next === 'profile') {
+      params.delete('tab')
+    } else {
+      params.set('tab', next)
+    }
+    setSearchParams(params, { replace: true })
+  }
+
   const handleLnbItemSelect = (key: MypageLnbItemKey) => {
-    if (key === 'settingsConsents') {
+    if (key === 'settingsConsents' || key === 'settingsSocial') {
       if (mode === 'edit-basic') return
-      setTab('consents')
+      selectTab(key === 'settingsSocial' ? 'social' : 'consents')
       return
     }
 
     if (key === 'settingsProfile') {
-      setTab('profile')
+      selectTab('profile')
     }
   }
+
+  const pageHeader = (
+    <>
+      <div className={styles.backLink}>
+        <ProgramBackButton
+          size="small"
+          label="마이페이지로"
+          onClick={() => navigate(MYPAGE_PATH)}
+        />
+      </div>
+      <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
+        {pageTitle}
+      </PFText>
+    </>
+  )
 
   const wrap = (children: ReactNode) => (
     <MypageLayout
       variant="subpage"
+      mobileStack={isBelowPc ? 'headingFirst' : 'default'}
       lnbItems={lnbItems}
+      lnbAppearance={isBelowPc ? 'category' : undefined}
       lnbAriaLabel="회원정보 설정 메뉴"
+      contentHeading={isBelowPc ? pageHeader : undefined}
       onLnbItemSelect={handleLnbItemSelect}
     >
       <div className={styles.body}>
-        <div className={styles.backLink}>
-          <ProgramBackButton
-            size="small"
-            label="마이페이지로"
-            onClick={() => navigate(MYPAGE_PATH)}
-          />
-        </div>
-        <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
-          {pageTitle}
-        </PFText>
+        {isBelowPc ? null : pageHeader}
         {children}
       </div>
     </MypageLayout>
@@ -112,7 +151,7 @@ export function MypageSettingsPage() {
     return wrap(
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
         회원 정보를 불러오는 중이에요…
-      </PFText>,
+      </PFText>
     )
   }
 
@@ -120,7 +159,7 @@ export function MypageSettingsPage() {
     return wrap(
       <PFText as="p" typo="bd-md-rg" color="error">
         회원 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
-      </PFText>,
+      </PFText>
     )
   }
 
@@ -136,15 +175,19 @@ export function MypageSettingsPage() {
           }
           setMode('view')
         }}
-      />,
+      />
     )
+  }
+
+  if (tab === 'social') {
+    return wrap(<SettingsSocialAccountsView linkErrorReason={searchParams.get('socialError')} />)
   }
 
   if (tab === 'consents') {
     return wrap(
       <SettingsConsentsView
         showInstructorDocuments={showSettingsInstructorConsentDocuments(member.profile)}
-      />,
+      />
     )
   }
 
@@ -153,6 +196,6 @@ export function MypageSettingsPage() {
       basicRows={view.basicRows}
       guardian={view.guardian}
       onEditBasic={() => setMode('edit-basic')}
-    />,
+    />
   )
 }

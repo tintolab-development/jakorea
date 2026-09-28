@@ -1,5 +1,5 @@
 /** 공유 유틸 barrel */
-export { getApiBaseUrl, isRemoteApiConfigured } from './api-remote-env'
+export { getApiBaseUrl, isHomepageApiConfigured, isRemoteApiConfigured } from './api-remote-env'
 export {
   PLATFORM_AUTH_EXPIRES_AT_KEY,
   PLATFORM_AUTH_REFRESH_TOKEN_KEY,
@@ -22,7 +22,9 @@ export {
   DEV_AUTH_CHANGE_EVENT,
   getDevAuthLoggedIn,
   setDevAuthLoggedIn,
+  shouldUsePlatformContentSeed,
   shouldUsePlatformMockData,
+  withPlatformContentSeed,
   withPlatformMockData,
 } from './dev-auth'
 export {

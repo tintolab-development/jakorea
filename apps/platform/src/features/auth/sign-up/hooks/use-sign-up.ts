@@ -25,6 +25,7 @@ import {
   createInitialAgreementState,
   getAgreementDerived,
   getAgreementItems,
+  setAgreementState,
   toggleAgreementState,
   toggleAllAgreementState,
 } from '../lib/agreement/agreement.logic'
@@ -32,6 +33,7 @@ import {
   createInitialGuardianAgreementState,
   getGuardianAgreementDerived,
   guardianAgreementItems,
+  setGuardianAgreementState,
   toggleAllGuardianAgreementState,
   toggleGuardianAgreementState,
 } from '../lib/agreement/guardian-agreement.logic'
@@ -356,12 +358,20 @@ export function useSignUp() {
     setAgreements(prev => toggleAgreementState(prev, key))
   }
 
+  const setAgreement = (key: AgreementKey, agreed: boolean) => {
+    setAgreements(prev => setAgreementState(prev, key, agreed))
+  }
+
   const toggleAllAgreements = () => {
     setAgreements(prev => toggleAllAgreementState(prev, visibleAgreementItems))
   }
 
   const toggleGuardianAgreement = (key: GuardianAgreementKey) => {
     setGuardianAgreements(prev => toggleGuardianAgreementState(prev, key))
+  }
+
+  const setGuardianAgreement = (key: GuardianAgreementKey, agreed: boolean) => {
+    setGuardianAgreements(prev => setGuardianAgreementState(prev, key, agreed))
   }
 
   const toggleAllGuardianAgreements = () => {
@@ -694,6 +704,7 @@ export function useSignUp() {
         isAllAgreed: guardianAgreementDerived.isAllAgreed,
         isRequiredAgreed: guardianAgreementDerived.isRequiredAgreed,
         toggle: toggleGuardianAgreement,
+        set: setGuardianAgreement,
         toggleAll: toggleAllGuardianAgreements,
         continue: handleGuardianAgreementContinue,
       },
@@ -743,6 +754,7 @@ export function useSignUp() {
       isAllAgreed: agreementDerived.isAllAgreed,
       isRequiredAgreed: agreementDerived.isRequiredAgreed,
       toggle: toggleAgreement,
+      set: setAgreement,
       toggleAll: toggleAllAgreements,
       continue: handleAgreementContinue,
       termsLoading: termsQuery.isFetching,

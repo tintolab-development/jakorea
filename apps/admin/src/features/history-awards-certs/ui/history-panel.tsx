@@ -50,7 +50,7 @@ import {
 import {
   CmsButton,
   CmsDateRangePicker,
-  CmsInput,
+  AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
@@ -170,6 +170,7 @@ export function HistoryPanel() {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
     patchSearchParams,
@@ -452,12 +453,12 @@ export function HistoryPanel() {
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <p className="admin-filter-area__label">내용</p>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="검색어를 입력하세요"
               value={pendingFilters.content}
-              onChange={e => setPendingFilters(prev => ({ ...prev, content: e.target.value }))}
+              onChange={value => patchPendingFilters(prev => ({ ...prev, content: value }))}
               onPressEnter={handleSearch}
             />
           </div>

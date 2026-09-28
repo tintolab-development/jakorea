@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
-import { PFCategoryBadge, PFText } from '@/shared/ui'
-import { WHY_CARDS, type WhyCardContent } from '../lib/constants'
+import { PFCategoryBadge, PFText, remoteCopyClassName } from '@/shared/ui'
+import { usePublicCorporateSponsorshipView } from '../api/hooks'
+import { type WhyCardContent } from '../lib/constants'
 import { WHY_CARD_IMAGE_URLS } from '../lib/why-card-images'
 import styles from './why-section.module.css'
 
@@ -51,11 +52,18 @@ function WhyCard({ card }: { card: WhyCardContent }) {
 }
 
 export function WhySection() {
+  const { whyCards, isPending } = usePublicCorporateSponsorshipView()
+  const copyClass = remoteCopyClassName(isPending)
+
   return (
-    <section className={styles.section} aria-label="기업후원 강점">
-      <div className={styles.content}>
+    <section
+      className={styles.section}
+      aria-label="기업후원 강점"
+      aria-busy={isPending || undefined}
+    >
+      <div className={[styles.content, copyClass].join(' ')}>
         <div className={styles.cardList}>
-          {WHY_CARDS.map(card => (
+          {whyCards.map(card => (
             <WhyCard key={card.id} card={card} />
           ))}
         </div>

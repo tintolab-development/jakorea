@@ -6,6 +6,8 @@ import type {
   EducationTeacherApplicationGuidance,
 } from '../model/types'
 import {
+  ECONOMY_INSTRUCTOR_STATUS_IDS,
+  GENERAL_INSTRUCTOR_STATUS_IDS,
   GENERAL_VOLUNTEER_STATUS_IDS,
   getMockProgramById,
   getMockPrograms,
@@ -74,12 +76,6 @@ function createMockTeacherApplicationContent(): EducationTeacherApplicationConte
       otherNotes:
         "본교 주차장이 협소한 관계로 학교 바로 옆 '운남동 공영주차장' 이용 부탁드립니다!",
       sexOffenseConsentMethod: '온라인 제출 | ID: tinto | 검증번호: 940412',
-      sexOffenseConsent: {
-        inquiryMethod: 'criminal_record_site',
-        siteSubmission: 'online',
-        orgId: 'tinto',
-        verificationCode: '940412',
-      },
     },
     preferredSchedules: [
       {
@@ -104,12 +100,7 @@ export function updateMockTeacherApplicationGuidance(
   guidance: EducationTeacherApplicationGuidance,
 ): void {
   if (!shouldUsePlatformMockData()) return
-  teacherGuidanceOverrides.set(applicationId, {
-    ...guidance,
-    sexOffenseConsent: guidance.sexOffenseConsent
-      ? { ...guidance.sexOffenseConsent }
-      : undefined,
-  })
+  teacherGuidanceOverrides.set(applicationId, { ...guidance })
   emitMockEducationApplicationsChange()
 }
 
@@ -180,6 +171,21 @@ const VOLUNTEER_DISPLAY_STATUS_BY_PROGRAM_ID: Record<string, EducationDisplaySta
   [GENERAL_VOLUNTEER_STATUS_IDS.indRejected]: 'rejected',
 }
 
+/** 강의현황 mock — 프로그램의 lifecycleStatus는 role 판정용 고정값(recruiting_instructors)만 쓰고, 표시 상태는 여기서 별도 오버라이드 */
+const INSTRUCTOR_DISPLAY_STATUS_BY_PROGRAM_ID: Record<string, EducationDisplayStatus> = {
+  [GENERAL_INSTRUCTOR_STATUS_IDS.applied]: 'waiting_result',
+  [GENERAL_INSTRUCTOR_STATUS_IDS.progress]: 'in_progress',
+  [GENERAL_INSTRUCTOR_STATUS_IDS.done]: 'completed',
+  [GENERAL_INSTRUCTOR_STATUS_IDS.rejected]: 'rejected',
+  [ECONOMY_INSTRUCTOR_STATUS_IDS.progress]: 'in_progress',
+  [ECONOMY_INSTRUCTOR_STATUS_IDS.done]: 'completed',
+}
+
+const ROLE_DISPLAY_STATUS_BY_PROGRAM_ID: Record<string, EducationDisplayStatus> = {
+  ...VOLUNTEER_DISPLAY_STATUS_BY_PROGRAM_ID,
+  ...INSTRUCTOR_DISPLAY_STATUS_BY_PROGRAM_ID,
+}
+
 function educationApplicationId(programId: string) {
   return `edu-app:${programId}`
 }
@@ -190,7 +196,7 @@ function toEducationApplication(
 ): EducationApplicationListItem {
   const detail = getMockProgramById(program.id)
   const displayStatus =
-    VOLUNTEER_DISPLAY_STATUS_BY_PROGRAM_ID[program.id] ??
+    ROLE_DISPLAY_STATUS_BY_PROGRAM_ID[program.id] ??
     DISPLAY_STATUS_CYCLE[index % DISPLAY_STATUS_CYCLE.length]!
   const item: EducationApplicationListItem = {
     id: educationApplicationId(program.id),
@@ -284,12 +290,7 @@ function buildEducationApplications(): EducationApplicationListItem[] {
         const content = createMockTeacherApplicationContent()
         const guidanceOverride = teacherGuidanceOverrides.get(item.id)
         if (guidanceOverride) {
-          content.guidance = {
-            ...guidanceOverride,
-            sexOffenseConsent: guidanceOverride.sexOffenseConsent
-              ? { ...guidanceOverride.sexOffenseConsent }
-              : undefined,
-          }
+          content.guidance = { ...guidanceOverride }
         }
         item.teacherApplicationContent = content
       }

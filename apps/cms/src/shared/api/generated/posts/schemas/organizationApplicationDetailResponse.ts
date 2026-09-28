@@ -5,38 +5,63 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { OrganizationApplicationDetailResponsePrivacyMaskingLevel } from './organizationApplicationDetailResponsePrivacyMaskingLevel';
+import type { OrganizationApplicationSessionResponse } from './organizationApplicationSessionResponse';
 
+/**
+ * Admin CMS용 기관/학교 프로그램 신청 상세. 담당 교사 개인정보는 기본 마스킹되며 latestFormResponseId로 동적 신청답변을 연결합니다.
+ */
 export interface OrganizationApplicationDetailResponse {
   id?: number;
   programId?: number;
   programName?: string;
   programType?: string;
-  recruitmentId?: number;
-  organizationId?: number;
-  organizationName?: string;
-  organizationAddress?: string;
-  organizationAddressDetail?: string;
-  requestedGrade?: string;
-  requestedEducationFormat?: string;
-  textbookId?: number;
-  textbookName?: string;
-  teacherMemberId?: number;
-  teacherName?: string;
-  teacherPhone?: string;
-  teacherEmail?: string;
+  recruitmentId?: number | null;
+  organizationId?: number | null;
+  organizationName?: string | null;
+  organizationAddress?: string | null;
+  organizationAddressDetail?: string | null;
+  requestedGrade?: string | null;
+  requestedEducationFormat?: string | null;
+  textbookId?: number | null;
+  textbookName?: string | null;
+  teacherMemberId?: number | null;
+  teacherName?: string | null;
+  teacherPhone?: string | null;
+  teacherEmail?: string | null;
   applicationStatus?: string;
-  requestedStudentCount?: number;
-  requestedMaleCount?: number;
-  requestedFemaleCount?: number;
-  requestedClassCount?: number;
-  requestedScheduleMemo?: string;
-  submittedAt?: string;
-  approvedAt?: string;
-  rejectedAt?: string;
-  cancelledAt?: string;
-  rejectReason?: string;
-  latestFormResponseId?: number;
+  requestedStudentCount?: number | null;
+  requestedMaleCount?: number | null;
+  requestedFemaleCount?: number | null;
+  requestedClassCount?: number | null;
+  requestedScheduleMemo?: string | null;
+  submittedAt?: string | null;
+  approvedAt?: string | null;
+  rejectedAt?: string | null;
+  cancelledAt?: string | null;
+  rejectReason?: string | null;
+  /** 동적 신청 답변 조회 시 기존 form-response 개인정보 경계를 재사용하기 위한 최신 제출 응답 ID */
+  latestFormResponseId?: number | null;
   availableActions?: string[];
-  privacyMaskingLevel?: string;
+  privacyMaskingLevel?: OrganizationApplicationDetailResponsePrivacyMaskingLevel;
   canRevealPersonalInfo?: boolean;
+  participantId?: number | null;
+  regionSido?: string | null;
+  regionSigungu?: string | null;
+  applicationReason?: string | null;
+  otherRequests?: string | null;
+  computerInRoom?: string | null;
+  waitingRoomAvailable?: boolean | null;
+  waitingRoomLocation?: string | null;
+  mealProvided?: boolean | null;
+  mealNotice?: string | null;
+  parkingInfo?: string | null;
+  textbookGrade?: string | null;
+  /** @minimum 0 */
+  textbookKits?: number | null;
+  /** @minimum 0 */
+  textbookQuantity?: number | null;
+  mergeGroupId?: number | null;
+  combinedClassYn?: boolean | null;
+  sessions?: OrganizationApplicationSessionResponse[];
 }

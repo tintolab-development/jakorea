@@ -1,6 +1,7 @@
 import type {
   MemberLoginListFilter,
   MemberLoginListResult,
+  MemberLoginLog,
 } from '@/entities/member-login-log/model/types'
 import {
   defaultXlsxFilename,
@@ -14,7 +15,7 @@ import {
   toMemberLoginsExportParams,
   toMemberLoginsParams,
 } from './mappers'
-import { listMemberLoginLogs } from './store'
+import { listMemberLoginLogs, listMemberLoginLogsAll } from './store'
 
 function logsApi() {
   return getJAKoreaHomepageAdminAPILogsSubset()
@@ -32,8 +33,10 @@ export async function listMemberLoginLogsService(
 
 export async function exportMemberLoginLogsService(
   filter: MemberLoginListFilter,
-): Promise<'remote-downloaded' | 'use-local-csv'> {
-  if (!shouldUseMemberLoginLogRemoteApi()) return 'use-local-csv'
+): Promise<'remote-downloaded' | { source: 'local'; rows: MemberLoginLog[] }> {
+  if (!shouldUseMemberLoginLogRemoteApi()) {
+    return { source: 'local', rows: listMemberLoginLogsAll(filter) }
+  }
 
   const response = await axiosInstance.get<ArrayBuffer>(
     '/api/admin/logs/member-logins/export',

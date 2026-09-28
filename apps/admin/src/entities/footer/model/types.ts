@@ -32,6 +32,11 @@ export type FooterOrgInfo = {
   phone: string
   fax: string
   email: string
+  /**
+   * API `organizationDescription`. 화면 입력은 없다.
+   * PUT에서 빼면 서버가 null로 지우므로 조회값을 저장 요청에 그대로 실어 유지한다.
+   */
+  organizationDescription?: string
   logoUrl: string
   logoFileName?: string
   logoAssetId?: number
@@ -48,6 +53,8 @@ export type FooterOrgInfoSaveInput = {
   phone: string
   fax: string
   email: string
+  /** 화면 미편집. 저장 시 조회값을 그대로 전달해 서버 삭제를 막는다. */
+  organizationDescription?: string
   logoUrl: string
   logoFileName?: string
   logoAssetId?: number

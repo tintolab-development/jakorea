@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { ANALYTICS_CLICK_METRICS, recordMetric } from '@/features/analytics'
 import { PFButton } from '@/shared/ui'
 import arrowDiagonalBlack24Url from '../image/icon/arrow-diagonal-black-24.svg'
 import {
@@ -7,11 +8,17 @@ import {
 } from '../lib/constants'
 import styles from './report-links.module.css'
 
+type ReportLinksProps = {
+  /** 국세청 공시 외부 URL — 없으면 버튼은 비활성 */
+  disclosureUrl?: string
+}
+
 /**
- * 보고서 액션 — 국세청 공시 외부 링크는 추후 연결.
+ * 보고서 액션 — 연차·회계감사 내부 이동, 국세청 공시는 disclosureUrl.
  */
-export function ReportLinks() {
+export function ReportLinks({ disclosureUrl }: ReportLinksProps) {
   const navigate = useNavigate()
+  const ntsUrl = disclosureUrl?.trim() ?? ''
 
   return (
     <div className={styles.actions}>
@@ -31,7 +38,17 @@ export function ReportLinks() {
       >
         회계감사 보고서
       </PFButton>
-      <PFButton size="xlarge" variant="tertiary" className={styles.ntsButton}>
+      <PFButton
+        size="xlarge"
+        variant="tertiary"
+        className={styles.ntsButton}
+        disabled={!ntsUrl}
+        onClick={() => {
+          if (!ntsUrl) return
+          recordMetric(ANALYTICS_CLICK_METRICS.disclosureOutbound)
+          window.open(ntsUrl, '_blank', 'noopener,noreferrer')
+        }}
+      >
         <span className={styles.ntsLabel}>국세청 공시</span>
         <img
           className={styles.ntsIcon}

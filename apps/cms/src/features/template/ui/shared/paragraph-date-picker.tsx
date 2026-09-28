@@ -15,6 +15,7 @@ import {
 import {
   dayjsTimeParts,
   findNextEnabledDate,
+  toValidDayjsOrNull,
 } from '@/shared/components/date-time-picker-shared'
 import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import type { CmsControlSize } from '@/shared/ui/cms-control-size'
@@ -30,10 +31,11 @@ function formatParagraphDatePickerTriggerDisplay(
   surfaceRange: [Dayjs, Dayjs] | null,
   surfaceAppliedWithTime: boolean
 ): string | null {
-  const empty = value == null && surfaceRange == null && !surfaceAppliedWithTime
+  const resolvedValue = toValidDayjsOrNull(value)
+  const empty = resolvedValue == null && surfaceRange == null && !surfaceAppliedWithTime
   if (empty) return null
 
-  const eff = value ?? dayjs()
+  const eff = resolvedValue ?? dayjs()
 
   if (surfaceRange != null && surfaceAppliedWithTime) {
     const [a, b] = surfaceRange
@@ -147,7 +149,9 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
    */
   showTimeToggle?: boolean
   /**
-   * false면 푸터 「기간」 토글 숨김 (`periodOn` 고정 false).
+   * false면 푸터 「기간」 토글 숨김.
+   * `presetMode: 'period'`이면 토글만 숨기고 **기간(range) 모드는 ON 고정**.
+   * 그 외 preset에서는 기간 모드 OFF.
    * `presetMode: 'schedule'`이어도 기간 선택 UI를 숨길 때 사용.
    * 기본 true.
    */
@@ -159,7 +163,7 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
   lockTimeToggleOn?: boolean
   /**
    * true면 「기간」을 ON으로 고정하고 조작 불가 토글은 숨김.
-   * `showPeriodToggle`이 false면 무시.
+   * `showPeriodToggle`이 false여도 `presetMode: 'period'`이면 기간 모드는 유지.
    * 기본 false.
    */
   lockPeriodToggleOn?: boolean
@@ -235,6 +239,7 @@ function ParagraphDatePickerSingleInner({
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
+  const resolvedValue = toValidDayjsOrNull(value)
 
   const [open, setOpen] = useState(false)
   const onOpenChangeRef = useRef(onOpenChange)
@@ -243,21 +248,32 @@ function ParagraphDatePickerSingleInner({
   useEffect(() => {
     onOpenChangeRef.current?.(open)
   }, [open])
-  const [draft, setDraft] = useState<Dayjs>(() => findNextEnabledDate(value ?? dayjs(), disabledDate))
-  const [calendarMonth, setCalendarMonth] = useState<Dayjs>(() =>
-    findNextEnabledDate(value ?? dayjs(), disabledDate).startOf('month')
+  const [draft, setDraft] = useState<Dayjs>(() =>
+    findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate)
   )
-  const [periodOn, setPeriodOn] = useState(lockPeriodToggleOn && showPeriodToggle)
+  const [calendarMonth, setCalendarMonth] = useState<Dayjs>(() =>
+    findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate).startOf('month')
+  )
+  const [periodOn, setPeriodOn] = useState(
+    presetMode === 'period' || (lockPeriodToggleOn && showPeriodToggle)
+  )
 
   useEffect(() => {
+    if (presetMode === 'period') {
+      setPeriodOn(true)
+      return
+    }
     if (showPeriodToggle) return
     setPeriodOn(false)
-  }, [showPeriodToggle])
+  }, [showPeriodToggle, presetMode])
   const [rangeStart, setRangeStart] = useState<Dayjs>(() =>
-    findNextEnabledDate(value ?? dayjs(), disabledDate)
+    findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate)
   )
   const [rangeEnd, setRangeEnd] = useState<Dayjs>(() =>
-    findNextEnabledDate(findNextEnabledDate(value ?? dayjs(), disabledDate).add(1, 'day'), disabledDate)
+    findNextEnabledDate(
+      findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate).add(1, 'day'),
+      disabledDate
+    )
   )
   const [rangeFocus, setRangeFocus] = useState<'start' | 'end'>('start')
   /** [설정]으로 확정된 기간 — 트리거에 시작/종료 UI 표시 */
@@ -266,7 +282,8 @@ function ParagraphDatePickerSingleInner({
   const [surfaceAppliedWithTime, setSurfaceAppliedWithTime] = useState(false)
   const [timeOn, setTimeOn] = useState(lockTimeToggleOn && showTimeToggle)
   const timeToggleLocked = lockTimeToggleOn && showTimeToggle
-  const periodToggleLocked = lockPeriodToggleOn && showPeriodToggle
+  const periodToggleLocked =
+    presetMode === 'period' || (lockPeriodToggleOn && showPeriodToggle)
   const effectiveTimeOn = showTimeToggle ? timeOn : false
   const [invalidTimeRange, setInvalidTimeRange] = useState(false)
   const [singleHour, setSingleHour] = useState('12')
@@ -280,7 +297,8 @@ function ParagraphDatePickerSingleInner({
   const [endMer, setEndMer] = useState<'AM' | 'PM'>('AM')
 
   const showPeriodToggleInFooter =
-    (showPeriodToggle && (customizable || presetMode === 'schedule')) || periodToggleLocked
+    (showPeriodToggle && (customizable || presetMode === 'schedule')) ||
+    (lockPeriodToggleOn && showPeriodToggle)
 
   useEffect(() => {
     if (!timeToggleLocked) return
@@ -292,11 +310,12 @@ function ParagraphDatePickerSingleInner({
     setPeriodOn(true)
   }, [periodToggleLocked])
 
+  /** `presetMode: 'period'` — 토글 숨김이어도 기간(range) 캘린더 고정 */
   const isRangeCalendarMode = useMemo(() => {
+    if (presetMode === 'period') return true
     if (!showPeriodToggle) return false
     if (customizable) return periodOn
     if (presetMode === 'date') return false
-    if (presetMode === 'period') return true
     return periodOn
   }, [customizable, presetMode, periodOn, showPeriodToggle])
 
@@ -306,22 +325,22 @@ function ParagraphDatePickerSingleInner({
    * `suppressAutoTodayWhenEmpty`면 null 유지.
    */
   useEffect(() => {
-    if (value != null) return
+    if (resolvedValue != null) return
     if (presetMode === 'period' && !customizable) return
     if (suppressAutoTodayWhenEmpty) return
     onChange(dayjs())
-  }, [value, onChange, presetMode, customizable, suppressAutoTodayWhenEmpty])
+  }, [resolvedValue, onChange, presetMode, customizable, suppressAutoTodayWhenEmpty])
 
   const hasExternalSurfaceControl = appliedSurfaceRange !== undefined
 
   /** 교육 진행 일정 등 — 추가 후 부모가 value를 null로 비우면 트리거 표면도 초기화 */
   useEffect(() => {
-    if (value != null) return
+    if (resolvedValue != null) return
     if (!suppressAutoTodayWhenEmpty) return
     if (hasExternalSurfaceControl) return
     setSurfaceRange(null)
     setSurfaceAppliedWithTime(false)
-  }, [value, suppressAutoTodayWhenEmpty, hasExternalSurfaceControl])
+  }, [resolvedValue, suppressAutoTodayWhenEmpty, hasExternalSurfaceControl])
 
   const appliedSurfaceSyncKey = useMemo(() => {
     if (!hasExternalSurfaceControl) return 'uncontrolled'
@@ -371,7 +390,7 @@ function ParagraphDatePickerSingleInner({
   const effectivePlaceholder = placeholder ?? PARAGRAPH_DATE_PRESET_PLACEHOLDERS[presetMode]
 
   const triggerDisplayText = formatParagraphDatePickerTriggerDisplay(
-    value,
+    resolvedValue,
     surfaceRange,
     surfaceAppliedWithTime
   )
@@ -396,7 +415,7 @@ function ParagraphDatePickerSingleInner({
       surfaceRange &&
       allowSurfaceRestore &&
       !surfaceHasDisabledDate &&
-      showPeriodToggle
+      (showPeriodToggle || presetMode === 'period')
     )
 
     if (presetMode === 'date' && !customizable) {
@@ -409,7 +428,7 @@ function ParagraphDatePickerSingleInner({
       setTimeOn(false)
     }
 
-    const d = findNextEnabledDate(value ?? dayjs(), disabledDate)
+    const d = findNextEnabledDate(resolvedValue ?? dayjs(), disabledDate)
     setDraft(d)
     setCalendarMonth(d.startOf('month'))
 
@@ -760,7 +779,8 @@ function ParagraphDatePickerRangeBridge({
   const valueRef = useRef(value)
   valueRef.current = value
 
-  const [start, end] = value
+  const start = toValidDayjsOrNull(value[0])
+  const end = toValidDayjsOrNull(value[1])
   const anchor = start ?? end ?? null
   const appliedSurfaceRange =
     start != null && end != null && start.isValid() && end.isValid()

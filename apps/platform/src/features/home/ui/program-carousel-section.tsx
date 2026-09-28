@@ -1,12 +1,9 @@
+import { useHomeMain } from '../api/use-home-main'
+import { FALLBACK_EDUCATION_TITLE, HOME_PROGRAM_CARD_LIMIT, type HomeProgramCard } from '../lib/view'
 import { useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
-import {
-  PROGRAMS_PATH,
-  programDetailPath,
-  type ProgramListItem,
-  useMockProgramsCatalog,
-} from '@/features/program'
+import { PROGRAMS_PATH, programDetailPath, useHomePortalPrograms } from '@/features/program'
 import { RECRUITMENT_STATUS_TONE_MAP } from '@/features/program/lib/badge-config'
 import { platformMediaQueries } from '@/shared/lib/breakpoints'
 import { useMediaQuery } from '@/shared/hooks'
@@ -14,8 +11,6 @@ import { PFArrowButton, PFStateBadge, PFText } from '@/shared/ui'
 import chevronRightUrl from '../image/icon/chevron-right-black-12.svg'
 import viewAllChevronUrl from '../image/icon/chevron-right-black-18.svg'
 import styles from './program-carousel-section.module.css'
-
-const MAX_ITEMS = 8
 
 /** 홈 카드 상태배지 — 시안 compact 라벨 */
 function homeRecruitmentStatusLabel(status: RecruitmentStatus) {
@@ -33,7 +28,7 @@ function formatClassificationLabel(label: string) {
     .join(' · ')
 }
 
-function ProgramCard({ program }: { program: ProgramListItem }) {
+function ProgramCard({ program }: { program: HomeProgramCard }) {
   return (
     <Link
       className={styles.card}
@@ -61,9 +56,11 @@ function ProgramCard({ program }: { program: ProgramListItem }) {
           {program.title}
         </PFText>
 
-        <PFText as="p" typo="bd-lg-sb" color="neutral-cool-700" className={styles.cardTarget}>
-          {formatClassificationLabel(program.educationTargetLabel)}
-        </PFText>
+        {program.educationTargetLabel ? (
+          <PFText as="p" typo="bd-lg-sb" color="neutral-cool-700" className={styles.cardTarget}>
+            {formatClassificationLabel(program.educationTargetLabel)}
+          </PFText>
+        ) : null}
 
         <PFArrowButton
           className={styles.cardArrow}
@@ -76,18 +73,50 @@ function ProgramCard({ program }: { program: ProgramListItem }) {
   )
 }
 
+function EducationTitle({ title }: { title: string }) {
+  if (title === FALLBACK_EDUCATION_TITLE) {
+    return (
+      <h2 className={styles.title}>
+        새로운 배움이
+        <br className={styles.titleBreak} />
+        기다리고 있어요
+      </h2>
+    )
+  }
+
+  const lines = title.split(/\r?\n/).filter(Boolean)
+  return (
+    <h2 className={styles.title}>
+      {lines.map((line, index) => (
+        <span key={`${line}-${index}`}>
+          {index > 0 ? <br /> : null}
+          {line}
+        </span>
+      ))}
+    </h2>
+  )
+}
+
 export function ProgramCarouselSection() {
+  const { educationTitle } = useHomeMain()
+  const { items, isPending, isError } = useHomePortalPrograms()
   const isPcUp = useMediaQuery(platformMediaQueries.pcUp)
   /** PC: 아이템 617px × 3 + gap → 약 3장 노출 · 모바일은 네이티브 가로 스크롤 */
   const visibleCount = isPcUp ? 3 : 1
   const [index, setIndex] = useState(0)
 
-  const programs = useMockProgramsCatalog().slice(0, MAX_ITEMS)
-  const maxIndex = Math.max(0, programs.length - visibleCount)
+  const cards: HomeProgramCard[] = items.slice(0, HOME_PROGRAM_CARD_LIMIT).map(program => ({
+    id: program.id,
+    title: program.title,
+    recruitmentStatus: program.recruitmentStatus,
+    educationTargetLabel: program.educationTargetLabel,
+    thumbnailUrl: program.thumbnailUrl,
+  }))
+  const maxIndex = Math.max(0, cards.length - visibleCount)
   /* 브레이크포인트 전환으로 index가 범위를 벗어나면 렌더 시점에 클램프 */
   const clampedIndex = Math.min(index, maxIndex)
 
-  if (programs.length === 0) {
+  if (!isPending && (isError || cards.length === 0)) {
     return null
   }
 
@@ -100,11 +129,7 @@ export function ProgramCarouselSection() {
       <div className={styles.inner}>
         <div className={styles.content}>
           <div className={styles.header}>
-            <h2 className={styles.title}>
-              새로운 배움이
-              <br className={styles.titleBreak} />
-              기다리고 있어요
-            </h2>
+            <EducationTitle title={educationTitle} />
             <Link className={styles.viewAllLink} to={PROGRAMS_PATH}>
               전체보기
               <img
@@ -118,18 +143,20 @@ export function ProgramCarouselSection() {
             </Link>
           </div>
 
-          <div className={styles.viewport}>
-            <ul className={styles.track} style={trackStyle}>
-              {programs.map(program => (
-                <li className={styles.slide} key={program.id}>
-                  <ProgramCard program={program} />
-                </li>
-              ))}
-            </ul>
-          </div>
+          {cards.length > 0 ? (
+            <div className={styles.viewport}>
+              <ul className={styles.track} style={trackStyle}>
+                {cards.map(program => (
+                  <li className={styles.slide} key={program.id}>
+                    <ProgramCard program={program} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
 
-        {isPcUp ? (
+        {isPcUp && cards.length > visibleCount ? (
           <div className={styles.controls}>
             <button
               className={styles.pageButton}

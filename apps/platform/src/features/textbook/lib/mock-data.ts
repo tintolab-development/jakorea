@@ -1,4 +1,4 @@
-import { shouldUsePlatformMockData } from '@/shared/lib/dev-auth'
+import { shouldUsePlatformContentSeed } from '@/shared/lib/dev-auth'
 import { useShouldUsePlatformMockData } from '@/shared/hooks'
 import type {
   TextbookCategoryFilter,
@@ -244,7 +244,7 @@ export const MOCK_THEME_SECTIONS: TextbookThemeSection[] = [
   {
     key: 'career',
     title: '진로취업',
-    description: '미래 진로를 탐색하고 직업 세계를 이해하는 교육 콘텐츠입니다.',
+    description: '진로 탐색부터 직업 세계 준비까지 미래를 설계하는 역량을 키웁니다.',
     rows: [
       {
         id: 'dir-career-1',
@@ -269,7 +269,7 @@ export const MOCK_THEME_SECTIONS: TextbookThemeSection[] = [
   {
     key: 'economy',
     title: '경제금융',
-    description: '생활 속 경제 개념과 금융 리터러시를 키우는 교육 콘텐츠입니다.',
+    description: '생활 속 경제 개념부터 개인 금융 관리까지 단계별 역량을 키웁니다.',
     rows: [
       {
         id: 'dir-economy-1',
@@ -294,7 +294,7 @@ export const MOCK_THEME_SECTIONS: TextbookThemeSection[] = [
   {
     key: 'entrepreneurship',
     title: '기업가정신',
-    description: '문제 해결과 도전 정신을 키우는 기업가정신 교육 콘텐츠입니다.',
+    description: '아이디어를 실행으로 옮기는 도전 정신과 창엽 역량을 경험합니다.',
     rows: [
       {
         id: 'dir-entre-1',
@@ -313,7 +313,7 @@ export const MOCK_THEME_SECTIONS: TextbookThemeSection[] = [
   {
     key: 'digital',
     title: '디지털 리터러시',
-    description: '디지털 시민으로서 필요한 소양과 비판적 사고력을 기릅니다.',
+    description: '소프트웨어와 디지털 도구를 이해하고 활용하는 힘을 기릅니다.',
     rows: [
       {
         id: 'dir-digital-1',
@@ -332,7 +332,7 @@ export const MOCK_THEME_SECTIONS: TextbookThemeSection[] = [
 ]
 
 export function getMockTextbookById(id: string): TextbookContent | undefined {
-  if (!shouldUsePlatformMockData()) return undefined
+  if (!shouldUsePlatformContentSeed()) return undefined
   return MOCK_TEXTBOOK_CONTENTS.find(item => item.id === id)
 }
 
@@ -357,12 +357,12 @@ export function filterAndSortTextbooks(
 
 export function useMockTextbookCatalog() {
   useShouldUsePlatformMockData()
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return MOCK_TEXTBOOK_CONTENTS
 }
 
 export function useMockThemeSections() {
   useShouldUsePlatformMockData()
-  if (!shouldUsePlatformMockData()) return []
+  if (!shouldUsePlatformContentSeed()) return []
   return MOCK_THEME_SECTIONS
 }

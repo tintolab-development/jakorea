@@ -11,5 +11,7 @@ export interface PublicPopupResponse {
   displayOrder?: number;
   imageUrl?: string;
   altText?: string;
+  displayStartDate?: string;
+  displayEndDate?: string;
   linkUrl?: string;
 }

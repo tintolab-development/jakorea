@@ -3,6 +3,8 @@ import {
   createUjatSurveyItemsDefault,
   readUjatSurveyItems,
   resolveUjatSurveyItemsText,
+  ujatGeneralSurveyMenuKeysFromOverlay,
+  ujatSurveyItemsFromProgramKeys,
   UJAT_REGISTRATION_SURVEY_ITEM_IDS,
   UJAT_SURVEY_MENU_KEY_BY_ITEM,
 } from './registration-survey-items'
@@ -52,6 +54,21 @@ describe('readUjatSurveyItems', () => {
       school_satisfaction: true,
       lecture_evaluation: true,
     })
+  })
+})
+
+describe('ujatSurveyItemsFromProgramKeys / ujatGeneralSurveyMenuKeysFromOverlay', () => {
+  it('program keys → overlay items → envelope keys', () => {
+    const items = ujatSurveyItemsFromProgramKeys(['survey', 'satisfaction', 'lecture_evaluation'])
+    expect(items.volunteer_satisfaction).toBe(true)
+    expect(items.school_satisfaction).toBe(true)
+    expect(
+      ujatGeneralSurveyMenuKeysFromOverlay({ 'ujat.basicInfo.surveyItems': items })
+    ).toEqual(['survey', 'satisfaction', 'lecture_evaluation'])
+  })
+
+  it('overlay에 surveyItems 키가 없으면 envelope 변환을 하지 않는다', () => {
+    expect(ujatGeneralSurveyMenuKeysFromOverlay({})).toBeUndefined()
   })
 })
 

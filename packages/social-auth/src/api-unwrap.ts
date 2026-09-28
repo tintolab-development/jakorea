@@ -1,5 +1,5 @@
 import { SocialAuthApiError } from './errors'
-import type { AuthTokenResult } from './types'
+import type { AuthTokenResult, SocialLoginMfaChallenge } from './types'
 
 export function unwrapApiData<T>(payload: unknown): T {
   if (payload && typeof payload === 'object') {
@@ -9,6 +9,47 @@ export function unwrapApiData<T>(payload: unknown): T {
     }
   }
   return payload as T
+}
+
+function readOptionalString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+/** 로그인 session consume은 JWT가 아니라 MFA challenge를 반환한다. */
+export function readSocialLoginMfaChallenge(payload: unknown): SocialLoginMfaChallenge | null {
+  const data = unwrapApiData<unknown>(payload)
+  if (!data || typeof data !== 'object') return null
+  const o = data as Record<string, unknown>
+  if (typeof o.accessToken === 'string' && typeof o.refreshToken === 'string') {
+    return null
+  }
+  const challengeUuid = readOptionalString(o.challengeUuid) ?? readOptionalString(o.mfaChallengeUuid)
+  if (!challengeUuid) return null
+  return {
+    challengeUuid,
+    mfaMethod: readOptionalString(o.mfaMethod),
+    expiresAt: readOptionalString(o.expiresAt),
+    totpSecret:
+      readOptionalString(o.totpSecret) ??
+      readOptionalString(o.secretKey) ??
+      readOptionalString(o.secret),
+    otpauthUri: readOptionalString(o.otpauthUri),
+    qrDataUrl:
+      readOptionalString(o.qrDataUrl) ??
+      readOptionalString(o.qrCodeDataUrl) ??
+      readOptionalString(o.qrCodeUrl) ??
+      readOptionalString(o.qrCode),
+  }
+}
+
+function messageLooksLikeAccountNotLinked(message: string): boolean {
+  const normalized = message.toUpperCase()
+  return (
+    normalized.includes('NOT_LINKED') ||
+    normalized.includes('ADMIN_SOCIAL_ACCOUNT_NOT_LINKED') ||
+    message.includes('연결된 소셜 계정이 없') ||
+    message.includes('소셜 계정이 연결되지')
+  )
 }
 
 export function unwrapAuthTokenResult(payload: unknown): AuthTokenResult {
@@ -60,10 +101,8 @@ function SocialAuthApiErrorFromStatus(
       return new SocialAuthApiError(String(explicitCode), message)
     }
     if (status === 404) {
-      const looksNotLinked =
-        message.includes('연결') || message.includes('NOT_LINKED') || message.includes('소셜')
       return new SocialAuthApiError(
-        looksNotLinked ? 'SOCIAL_ACCOUNT_NOT_LINKED' : 'NOT_FOUND',
+        messageLooksLikeAccountNotLinked(message) ? 'SOCIAL_ACCOUNT_NOT_LINKED' : 'NOT_FOUND',
         message
       )
     }

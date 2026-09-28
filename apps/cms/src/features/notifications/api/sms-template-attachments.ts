@@ -50,7 +50,7 @@ export async function uploadAndBindSmsTemplateAttachments(
       owner,
       attachmentType: ADMIN_FILE_PURPOSE.MMS_IMAGE,
       displayOrder: index + 1,
-    }).catch(() => undefined)
+    })
   }
 }
 

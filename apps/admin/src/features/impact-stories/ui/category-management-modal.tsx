@@ -14,6 +14,7 @@ import {
   hasDuplicateCategoryName,
 } from '@/features/impact-stories/lib/category-domain'
 import { CategoryDeleteBlockedModal } from '@/features/impact-stories/ui/category-delete-blocked-modal'
+import { impactStoryCategoryMutationFailureAlert } from '@/features/impact-stories/lib/mutation-failure-alert'
 import { CmsButton, CmsInput, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
 
 import './category-management-modal.css'
@@ -169,11 +170,8 @@ export function CategoryManagementModal({
         title: '저장 완료',
         content: '카테고리가 저장되었습니다.',
       })
-    } catch {
-      showAlert({
-        title: '저장 실패',
-        content: '카테고리 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(impactStoryCategoryMutationFailureAlert(error))
     }
   }, [draft, editingId, onSave, showAlert])
 

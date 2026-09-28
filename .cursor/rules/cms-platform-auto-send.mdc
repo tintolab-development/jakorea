@@ -1,0 +1,22 @@
+---
+description: CMS·Platform 알림톡·메일·문자 자동발송 케이스 경계. 신청·심사·가입·인박스·수동 발송을 건드릴 때 읽는다.
+globs:
+  - docs/notifications/cms-platform-auto-send.md
+  - apps/cms/src/features/notifications/**/*.{ts,tsx}
+  - apps/cms/src/features/dashboard/**/*notification*
+  - apps/cms/src/features/program/**/*notification*
+  - apps/platform/src/pages/programs/**/*.{ts,tsx}
+  - apps/platform/src/features/program/**/*.{ts,tsx}
+  - apps/platform/src/widgets/layout/app-layout/header/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# CMS · Platform 자동발송
+
+알림톡·메일·문자 **자동발송**을 CMS와 Platform에 걸쳐 다루기 전에 [docs/notifications/cms-platform-auto-send.md](../../docs/notifications/cms-platform-auto-send.md)를 읽는다.
+
+- 자동발송 path·스케줄러·채널 bind는 백엔드 소유다. FE에서 만들지 않는다.
+- CMS 수동 발송 UI와 자동발송을 한 축으로 합치지 않는다.
+- `eventType` 한글은 `apps/cms/src/features/dashboard/model/notification-event-type-labels.ts` 만 쓴다. Platform 인박스도 같은 키를 쓰고, 없는 코드는 `알림` 으로 둔다.
+- `ADMIN_*` 는 CMS 관리자 알림이다. 회원 이벤트와 라벨을 합치지 않는다.
+- 프로그램 신청 접수 전용 eventType은 라벨 맵에 없다. 신청 API를 붙일 때 알림 키를 새로 짓지 않는다.

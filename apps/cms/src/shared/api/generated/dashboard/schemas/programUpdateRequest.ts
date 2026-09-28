@@ -13,6 +13,7 @@ import type { ProgramScheduleRequest } from './programScheduleRequest';
 import type { ProgramSettlementPaymentItemRequest } from './programSettlementPaymentItemRequest';
 import type { ProgramSponsorAssignmentRequest } from './programSponsorAssignmentRequest';
 import type { ProgramUpdateRequestEducationStructure } from './programUpdateRequestEducationStructure';
+import type { ProgramUpdateRequestTargetLevelsItem } from './programUpdateRequestTargetLevelsItem';
 import type { ProgramWagePolicyRequest } from './programWagePolicyRequest';
 
 /**
@@ -47,7 +48,8 @@ export interface ProgramUpdateRequest {
   schoolId?: string;
   district?: string;
   ips?: string;
-  targetLevel?: string;
+  /** 교육 대상 첫 값. targetLevels가 있으면 그 첫 원소와 같다. */
+  targetLevel?: string | null;
   institutionType?: string;
   ipOwned?: string;
   courseDeliveredBy?: string;
@@ -59,42 +61,25 @@ export interface ProgramUpdateRequest {
   educationProcess?: string;
   maleParticipants?: number;
   femaleParticipants?: number;
-  /** 참여자 최종 인원. Mirrored to kpi.finalParticipants + generalCommonInfo */
   totalParticipants?: number;
-  /** Write alias for totalParticipants */
-  finalParticipants?: number;
   generalVolunteers?: number;
   staffVolunteers?: number;
   returningVolunteers?: number;
   generalTeachers?: number;
   educatedTeachers?: number;
   instructors?: number;
-  /** 최종 파견 학교 수. Mirrored to kpi + generalCommonInfo.kpi */
   finalSchools?: number;
-  /** Write alias for finalSchools */
-  schoolCount?: number;
-  /** 최종 파견 학급 수. Mirrored to kpi + generalCommonInfo.kpi */
   finalClasses?: number;
-  /** Write alias for finalClasses */
-  classCount?: number;
   managerName?: string;
-  /** 교육 장소. Always mirrored to generalCommonInfo.venue */
   venue?: string;
   curriculum?: string;
   contactEmail?: string;
   contactPhone?: string;
   oneLineIntroduction?: string;
-  /** Write alias for oneLineIntroduction */
-  summary?: string;
-  /** 모집 비고 SSOT (≠ oneLineIntroduction) */
   remarks?: string;
-  /** 모집/교육 대상 상세. district와 분리. */
   educationTargetDetail?: string;
-  /** 교육 장소 기타 직접입력. */
   venueDetail?: string;
-  /** 교육 장소 유형: inside | outside | other (legacy inside_school/outside_school) */
   venueKind?: string;
-  /** 명단 제출 필요 여부 등 (serviceDetail / 모집 설정) */
   studentListRequired?: string;
   keyVisualImage?: string;
   settlementRuleId?: string;
@@ -109,7 +94,10 @@ export interface ProgramUpdateRequest {
   schedules?: ProgramScheduleRequest[];
   wagePolicies?: ProgramWagePolicyRequest[];
   paymentItems?: ProgramSettlementPaymentItemRequest[];
+  /** 양성교사: 요청 봉투를 저장된 config에 키 단위로 덮어씁니다. 보낸 키는 교체, 생략한 키는 유지. participantRecruitmentInfo는 보내면 교체(라벨+컬럼 동시 반영), 생략하면 유지. RFC-7396 깊은 병합 없음. 루트 generalCommonInfo는 제거. 일반 프로그램은 기존 RFC-7396 병합. */
   serviceDetailJson?: string;
   /** PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지 */
   clearFields?: string[];
+  /** 교육 대상 복수. elementary|middle|high|university|adult. 빈 배열은 교육 대상을 지운다. serviceDetailJson.program.targetLevels와 동기화된다. */
+  targetLevels?: ProgramUpdateRequestTargetLevelsItem[] | null;
 }

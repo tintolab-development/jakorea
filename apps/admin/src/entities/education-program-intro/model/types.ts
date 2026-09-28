@@ -1,19 +1,37 @@
 /**
- * 교육 소개 · 프로그램 소개 도메인
- * 탭(분야) 3종 고정 — 탭 명칭 수정 불가
+ * 교육 소개 · 프로그램 소개
+ * fieldCode 4종 — 섹션 수는 분야별 가변 (진로·경제·기업가 3, 디지털 2)
  */
 
-export type ProgramIntroCategoryKey = 'career' | 'economy' | 'digital'
+export const PROGRAM_INTRO_FIELD_CODES = [
+  'CAREER_EMPLOYMENT',
+  'ECONOMICS_FINANCE',
+  'ENTREPRENEURSHIP',
+  'DIGITAL_LITERACY',
+] as const
+
+export type ProgramIntroFieldCode = (typeof PROGRAM_INTRO_FIELD_CODES)[number]
+
+/** URL `?tab=` 슬러그 */
+export type ProgramIntroTabKey = 'career' | 'economy' | 'entrepreneurship' | 'digital'
 
 export type ProgramIntroImage = {
   fileName: string
   fileUrl: string
+  alt: string
+  sortOrder: number
+  width?: number
+  height?: number
+  assetId?: number
+  /** remote 저장 시 업로드할 신규 파일 */
+  file?: File
 } | null
 
 export type ProgramIntroItem = {
+  sectionKey: string
+  sortOrder: number
   programType: string
   typeDescription: string
-  /** P01:2, P02:1, P03:3 */
   images: ProgramIntroImage[]
   representativeProgram: string
   sponsorName: string
@@ -21,14 +39,16 @@ export type ProgramIntroItem = {
 }
 
 export type ProgramIntroCategoryDocument = {
-  categoryKey: ProgramIntroCategoryKey
+  fieldCode: ProgramIntroFieldCode
   mainText: string
-  programs: [ProgramIntroItem, ProgramIntroItem, ProgramIntroItem]
+  version: number
+  sections: ProgramIntroItem[]
   updatedAt: string
 }
 
 export type ProgramIntroSaveInput = {
-  categoryKey: ProgramIntroCategoryKey
+  fieldCode: ProgramIntroFieldCode
   mainText: string
-  programs: [ProgramIntroItem, ProgramIntroItem, ProgramIntroItem]
+  version: number
+  sections: ProgramIntroItem[]
 }

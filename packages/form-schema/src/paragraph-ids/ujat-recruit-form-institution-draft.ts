@@ -54,8 +54,7 @@ export function createUjatRecruitFormInstitutionDraft(): WritingFormDraft {
     createSeedHorizontalTable(
       UJAT_RECRUIT_FORM_INSTITUTION_IDS.detailInfo,
       '상세 정보',
-      '공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.',
-      { required: false }
+      '공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.'
     ),
   ]
   return normalizeWritingFormDraft({

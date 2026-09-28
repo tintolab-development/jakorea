@@ -7,16 +7,17 @@ import type {
   BugIssueListResult,
   BugIssueLog,
 } from '@/entities/bug-issue-log/model/types'
+import { LOG_LIST_PAGE_SIZE } from '@/features/logs/shared/lib/list-page'
 import type { ExportSystemIssuesParams } from '@/shared/api/generated/logs/schemas/exportSystemIssuesParams'
 import type { PageResponseSystemIssueLogItem } from '@/shared/api/generated/logs/schemas/pageResponseSystemIssueLogItem'
 import type { SystemIssueLogItem } from '@/shared/api/generated/logs/schemas/systemIssueLogItem'
 import type { SystemIssuesParams } from '@/shared/api/generated/logs/schemas/systemIssuesParams'
 
-export const LIST_PAGE_SIZE = 20
+export const LIST_PAGE_SIZE = LOG_LIST_PAGE_SIZE
 
 export function toSystemIssuesParams(filter: BugIssueListFilter): SystemIssuesParams {
   const params: SystemIssuesParams = {
-    page: 0,
+    page: filter.page ?? 0,
     size: LIST_PAGE_SIZE,
   }
   const userName = filter.userName?.trim()

@@ -21,6 +21,8 @@ import {
 import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { canGeneralProgramRecruitmentInfoEdit } from '@/features/program/general/lib/common-info-edit-policy'
+import { recruitmentEditTypeForDetailTab } from '@/features/program/shared/lib/program-edit-window'
 import { GeneralProgramParticipantRecruitmentInfoView } from './participant-recruitment-info-view'
 import { GeneralProgramInstructorRecruitmentInfoView } from './instructor-recruitment-info-view'
 import { GeneralProgramVolunteerRecruitmentInfoView } from './volunteer-recruitment-info-view'
@@ -76,10 +78,15 @@ export function GeneralProgramRecruitmentView({
     onOpenRecruitmentPreview?.(activeRecruitTab)
   }, [activeRecruitTab, onOpenRecruitmentPreview])
 
+  const recruitmentEditable = canGeneralProgramRecruitmentInfoEdit(
+    program,
+    recruitmentEditTypeForDetailTab(activeRecruitTab)
+  )
   const isEditMode =
-    (activeRecruitTab === 'institutions' && isEditModeInstitutions) ||
-    (activeRecruitTab === 'instructors' && isEditModeInstructors) ||
-    (activeRecruitTab === 'volunteers' && isEditModeVolunteers)
+    recruitmentEditable &&
+    ((activeRecruitTab === 'institutions' && isEditModeInstitutions) ||
+      (activeRecruitTab === 'instructors' && isEditModeInstructors) ||
+      (activeRecruitTab === 'volunteers' && isEditModeVolunteers))
 
   let recruitment: ReactNode
   let detail: ReactNode
@@ -89,15 +96,15 @@ export function GeneralProgramRecruitmentView({
       recruitment = (
         <GeneralProgramParticipantRecruitmentInfoView
           program={program}
-          isEdit={isEditModeInstitutions}
-          form={isEditModeInstitutions ? institutionsForm : undefined}
+          isEdit={isEditModeInstitutions && recruitmentEditable}
+          form={isEditModeInstitutions && recruitmentEditable ? institutionsForm : undefined}
         />
       )
       detail = (
         <DetailInfoSection
           program={resolveGeneralRecruitDetailDisplayProgram(program, 'participant')}
-          isEditMode={isEditModeInstitutions}
-          form={isEditModeInstitutions ? institutionsForm : undefined}
+          isEditMode={isEditModeInstitutions && recruitmentEditable}
+          form={isEditModeInstitutions && recruitmentEditable ? institutionsForm : undefined}
           onRegisterGetAdditionalContentHtml={registerInstitutionsAdditionalHtml}
           showThumbnail
           showRecruitmentMethod={showParticipantRecruitmentMethod}
@@ -110,15 +117,15 @@ export function GeneralProgramRecruitmentView({
       recruitment = (
         <GeneralProgramInstructorRecruitmentInfoView
           program={program}
-          isEdit={isEditModeInstructors}
-          form={isEditModeInstructors ? instructorsForm : undefined}
+          isEdit={isEditModeInstructors && recruitmentEditable}
+          form={isEditModeInstructors && recruitmentEditable ? instructorsForm : undefined}
         />
       )
       detail = (
         <InstructorDetailInfoSection
           program={resolveGeneralRecruitDetailDisplayProgram(program, 'instructor')}
-          isEditMode={isEditModeInstructors}
-          form={isEditModeInstructors ? instructorsForm : undefined}
+          isEditMode={isEditModeInstructors && recruitmentEditable}
+          form={isEditModeInstructors && recruitmentEditable ? instructorsForm : undefined}
           onRegisterGetAdditionalContentHtml={registerInstructorsAdditionalHtml}
           emptyReadDisplay="dash"
         />
@@ -136,16 +143,16 @@ export function GeneralProgramRecruitmentView({
         <>
           <VolunteerDetailInfoSection
             program={resolveGeneralRecruitDetailDisplayProgram(program, 'volunteer')}
-            isEditMode={isEditModeVolunteers}
-            form={isEditModeVolunteers ? volunteersForm : undefined}
+            isEditMode={isEditModeVolunteers && recruitmentEditable}
+            form={isEditModeVolunteers && recruitmentEditable ? volunteersForm : undefined}
             onRegisterGetAdditionalContentHtml={registerVolunteersAdditionalHtml}
             emptyReadDisplay="dash"
           />
           <div className="detail-info-form--gap">
             <GeneralProgramVolunteerInterviewScheduleSection
               program={program}
-              isEdit={isEditModeVolunteers}
-              form={isEditModeVolunteers ? volunteersForm : undefined}
+              isEdit={isEditModeVolunteers && recruitmentEditable}
+              form={isEditModeVolunteers && recruitmentEditable ? volunteersForm : undefined}
             />
           </div>
         </>
@@ -180,6 +187,8 @@ export function GeneralProgramRecruitmentView({
                 {canWrite || isEditMode ? (
                   <ProgramEditInfoActions
                     isEditing={isEditMode}
+                    idleVariant="secondary"
+                    disabled={!recruitmentEditable}
                     onEdit={onEdit}
                     onCancel={onCancel}
                     onSave={onSave}

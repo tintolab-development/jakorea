@@ -9,9 +9,8 @@ import {
 } from '@/shared/lib/detail-fullpage-query-stack'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
-import { MESSAGES } from '@/shared/constants/messages'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import {
   LnbIconManagers,
@@ -178,10 +177,7 @@ export function GeminiRecruitmentDetailFullPageModal({
     if (!isEditModeInfo || infoDraft == null) return
     try {
       await handleInfoSave()
-      showAlert({
-        title: '안내',
-        content: MESSAGES.success.saved,
-      })
+      showUpdateCompletedAlert()
     } catch {
       showAlert({
         title: '안내',
@@ -225,6 +221,7 @@ export function GeminiRecruitmentDetailFullPageModal({
                   {canWrite ? (
                     <ProgramEditInfoActions
                       isEditing={isEditModeInfo}
+                      idleVariant="secondary"
                       onEdit={handleInfoEditClick}
                       onCancel={handleInfoCancel}
                       onSave={handleInfoSaveClick}

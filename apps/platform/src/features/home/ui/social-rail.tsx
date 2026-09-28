@@ -1,33 +1,15 @@
-import { useEffect, useState, type CSSProperties } from 'react'
-import snsFacebookUrl from '@/shared/assets/icons/sns-facebook.svg'
-import snsInstagramUrl from '@/shared/assets/icons/sns-instagram.svg'
-import snsLinkedinUrl from '@/shared/assets/icons/sns-linkedin.svg'
-import snsMailUrl from '@/shared/assets/icons/sns-mail.svg'
-import snsNaverBlogUrl from '@/shared/assets/icons/sns-naver-blog.svg'
-import snsYoutubeUrl from '@/shared/assets/icons/sns-youtube.svg'
+import { useEffect, useRef, useState } from 'react'
+import { useHomeMain } from '../api/use-home-main'
 import styles from './social-rail.module.css'
-
-/** 우측 고정 소셜 링크 — URL은 실제 채널 주소 수급 후 교체 */
-const socialLinks = [
-  { label: 'JA Korea 인스타그램', href: 'https://www.instagram.com/', iconUrl: snsInstagramUrl },
-  { label: 'JA Korea 페이스북', href: 'https://www.facebook.com/', iconUrl: snsFacebookUrl },
-  { label: 'JA Korea 링크드인', href: 'https://www.linkedin.com/', iconUrl: snsLinkedinUrl },
-  { label: 'JA Korea 네이버 블로그', href: 'https://blog.naver.com/', iconUrl: snsNaverBlogUrl },
-  { label: 'JA Korea 이메일', href: 'mailto:jakorea@jakorea.org', iconUrl: snsMailUrl },
-  { label: 'JA Korea 유튜브', href: 'https://www.youtube.com/', iconUrl: snsYoutubeUrl },
-] as const
 
 /** 히어로 이탈 시 다크 배경 보간 거리(px) */
 const LEAVE_FADE_PX = 220
 /** 초기 투명 유지용 스크롤 임계값 */
 const SCROLL_CHROME_PX = 8
 
-type RailSurface = {
-  topPx: number
-  /** 스크롤 전 초기 — 배경·보더·그림자 완전 비표시 */
+type RailChrome = {
   isInitial: boolean
-  /** 0 = 히어로 · 1 = 이탈 후 다크 카드 배경 */
-  leave: number
+  showBlur: boolean
 }
 
 function clamp01(value: number) {
@@ -35,35 +17,56 @@ function clamp01(value: number) {
 }
 
 export function SocialRail() {
-  const [rail, setRail] = useState<RailSurface>({
-    topPx: typeof window === 'undefined' ? 0 : window.innerHeight / 2,
-    isInitial: true,
-    leave: 0,
-  })
+  const { socialLinks } = useHomeMain()
+  const railRef = useRef<HTMLElement>(null)
+  const chromeRef = useRef<RailChrome>({ isInitial: true, showBlur: false })
+  const [chrome, setChrome] = useState<RailChrome>(chromeRef.current)
 
   useEffect(() => {
+    if (socialLinks.length === 0) return
+    const rail = railRef.current
+    if (!rail) return
+
     const hero = document.querySelector('[data-home-hero]')
     let frame = 0
+    let lastTransform = ''
+    let lastLeave = ''
 
     const measure = () => {
       const viewportMidY = window.innerHeight / 2
       const isInitial = window.scrollY <= SCROLL_CHROME_PX
 
-      if (!hero) {
-        setRail({ topPx: viewportMidY, isInitial: false, leave: 1 })
-        return
+      let topPx = viewportMidY
+      let leave = 1
+
+      if (hero) {
+        const rect = hero.getBoundingClientRect()
+        const heroMidY = rect.top + rect.height / 2
+        // 시작: 히어로 세로 중앙 → 스크롤 후 뷰포트 중앙 스티키
+        topPx = Math.max(heroMidY, viewportMidY)
+        // 초기(스크롤 전)는 항상 투명 · 이탈은 히어로 하단이 뷰포트 중앙을 지날 때
+        leave = isInitial ? 0 : clamp01((viewportMidY - rect.bottom) / LEAVE_FADE_PX)
       }
 
-      const rect = hero.getBoundingClientRect()
-      const heroMidY = rect.top + rect.height / 2
-      // 시작: 히어로 세로 중앙 → 스크롤 후 뷰포트 중앙 스티키
-      const topPx = Math.max(heroMidY, viewportMidY)
-      // 초기(스크롤 전)는 항상 투명 · 이탈은 히어로 하단이 뷰포트 중앙을 지날 때
-      const leave = isInitial
-        ? 0
-        : clamp01((viewportMidY - rect.bottom) / LEAVE_FADE_PX)
+      const transform = `translate3d(0, calc(${topPx}px - 50%), 0)`
+      const leaveValue = leave.toFixed(3)
+      const showBlur = !isInitial && leave > 0
 
-      setRail({ topPx, isInitial, leave })
+      if (transform !== lastTransform) {
+        rail.style.transform = transform
+        lastTransform = transform
+      }
+      if (leaveValue !== lastLeave) {
+        rail.style.setProperty('--rail-leave', leaveValue)
+        lastLeave = leaveValue
+      }
+
+      const prev = chromeRef.current
+      if (prev.isInitial !== isInitial || prev.showBlur !== showBlur) {
+        const next = { isInitial, showBlur }
+        chromeRef.current = next
+        setChrome(next)
+      }
     }
 
     const onScrollOrResize = () => {
@@ -80,35 +83,35 @@ export function SocialRail() {
       window.removeEventListener('scroll', onScrollOrResize)
       window.removeEventListener('resize', onScrollOrResize)
     }
-  }, [])
+  }, [socialLinks.length])
 
-  const railClassName = [styles.rail, rail.isInitial ? styles.railInitial : undefined]
+  if (socialLinks.length === 0) return null
+
+  const railClassName = [
+    styles.rail,
+    chrome.isInitial ? styles.railInitial : undefined,
+    chrome.showBlur ? styles.railBlur : undefined,
+  ]
     .filter(Boolean)
     .join(' ')
 
   return (
-    <nav
-      className={railClassName}
-      aria-label="JA Korea 소셜 미디어"
-      style={
-        {
-          top: rail.topPx,
-          '--rail-leave': String(rail.leave),
-        } as CSSProperties
-      }
-    >
-      {socialLinks.map(({ label, href, iconUrl }) => (
-        <a
-          className={styles.link}
-          href={href}
-          target={href.startsWith('mailto:') ? undefined : '_blank'}
-          rel={href.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
-          aria-label={label}
-          key={label}
-        >
-          <img className={styles.icon} src={iconUrl} alt="" aria-hidden="true" />
-        </a>
-      ))}
+    <nav ref={railRef} className={railClassName} aria-label="JA Korea 소셜 미디어">
+      {socialLinks.map(({ label, href, iconUrl, channelCode }) => {
+        const isMail = href.startsWith('mailto:')
+        return (
+          <a
+            className={styles.link}
+            href={href}
+            target={isMail ? undefined : '_blank'}
+            rel={isMail ? undefined : 'noopener noreferrer'}
+            aria-label={label}
+            key={channelCode}
+          >
+            <img className={styles.icon} src={iconUrl} alt="" aria-hidden="true" />
+          </a>
+        )
+      })}
     </nav>
   )
 }

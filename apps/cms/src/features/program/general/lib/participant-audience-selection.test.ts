@@ -1,8 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { Program } from '@/types/domain'
 import {
   applyGeneralParticipantAudienceSelection,
   applyGeneralParticipantAudienceSelectToEditForm,
+  generalParticipantTypesFromFlags,
+  participantFlagsFromGeneralProgram,
   resolveGeneralParticipantAudienceSelectValue,
+  resolveGeneralRegistrationKpiFieldAvailability,
   shouldResetParticipationScheduleDetailForAudience,
 } from './participant-audience-selection'
 
@@ -75,5 +79,59 @@ describe('applyGeneralParticipantAudienceSelectToEditForm', () => {
     expect(next).toEqual({ individual: true, organization: false })
     expect(setValue).toHaveBeenCalledWith('participantIndividual', true, expect.any(Object))
     expect(setValue).toHaveBeenCalledWith('participantOrganization', false, expect.any(Object))
+  })
+})
+
+describe('resolveGeneralRegistrationKpiFieldAvailability', () => {
+  it('등록과 같이 개인 대분류면 파견 학교·학급을 비활성한다', () => {
+    expect(
+      resolveGeneralRegistrationKpiFieldAvailability({
+        individual: true,
+        organization: false,
+        teacherInstructor: false,
+        volunteer: false,
+      })
+    ).toEqual({
+      instructorDisabled: true,
+      volunteerDisabled: true,
+      dispatchedSchoolDisabled: true,
+      dispatchedClassDisabled: true,
+    })
+  })
+
+  it('기관 + 강사·봉사자여도 파견 학교·학급은 해당 없음이다', () => {
+    expect(
+      resolveGeneralRegistrationKpiFieldAvailability({
+        individual: false,
+        organization: true,
+        teacherInstructor: true,
+        volunteer: true,
+      })
+    ).toEqual({
+      instructorDisabled: false,
+      volunteerDisabled: false,
+      dispatchedSchoolDisabled: true,
+      dispatchedClassDisabled: true,
+    })
+  })
+})
+
+describe('participantFlagsFromGeneralProgram', () => {
+  it('개인/기관이 동시에 있으면 audience 기준으로 하나만 남긴다', () => {
+    const program = {
+      id: 'general-1',
+      category: 'school',
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['individual', 'school_institution', 'teacher_instructor'],
+    } as Program
+    expect(participantFlagsFromGeneralProgram(program)).toEqual({
+      individual: false,
+      organization: true,
+      teacherInstructor: true,
+      volunteer: false,
+    })
+    expect(
+      generalParticipantTypesFromFlags(participantFlagsFromGeneralProgram(program))
+    ).toEqual(['school_institution', 'teacher_instructor'])
   })
 })

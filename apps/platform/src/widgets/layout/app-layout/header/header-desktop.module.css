@@ -1,4 +1,10 @@
 .header {
+  --header-text-color: var(--color-neutral-black);
+  --header-active-color: var(--color-primary-500);
+  --header-indicator-color: var(--color-border-focus);
+  --header-utility-color: var(--color-neutral-cool-600);
+  --header-icon-color: var(--color-neutral-black);
+
   position: relative;
   z-index: 100;
   display: none;
@@ -22,9 +28,18 @@
   background: transparent;
 }
 
-/* 어두운 히어로 위 — 로고·아이콘 흰색 반전 (전용 흰색 에셋 수급 전 임시 filter) */
+/* 홈 등 기존 inverse — 기본 텍스트/아이콘만 흰색, active는 primary 유지 */
 .headerInverse {
+  --header-text-color: var(--color-neutral-white);
+  --header-utility-color: var(--color-neutral-white);
+  --header-icon-color: var(--color-neutral-white);
   border-bottom-color: transparent;
+}
+
+/* headerTheme=inverse — active/indicator까지 흰색 */
+.headerOnDark {
+  --header-active-color: var(--color-neutral-white);
+  --header-indicator-color: var(--color-neutral-white);
 }
 
 .headerInverse .logo,
@@ -33,11 +48,15 @@
 }
 
 .inner {
+  --header-logo-column: 195px;
+  --header-auth-column: 152px;
+
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: 195px 1fr 152px;
-  align-items: center;
+  grid-template-columns: var(--header-logo-column) 1fr var(--header-auth-column);
+  /* 메가메뉴가 행을 늘려도 로고·계정은 헤더 바 안에 둔다. */
+  align-items: start;
   column-gap: var(--spacing-64);
   width: 100%;
   max-width: 1920px;
@@ -48,8 +67,7 @@
 }
 
 @media (--bp-pc-compact) {
-  .inner,
-  .dropdownInner {
+  .inner {
     column-gap: var(--spacing-24);
     padding-inline: var(--spacing-24);
   }
@@ -59,23 +77,16 @@
   }
 
   .navigationButton {
-    width: 100px;
-    padding-inline: var(--spacing-12);
-  }
-
-  .dropdownColumns {
-    gap: var(--spacing-8);
-  }
-
-  .menuGroup {
-    width: 100px;
+    padding-inline: var(--spacing-8);
   }
 }
 
 .logoLink {
+  position: relative;
+  z-index: 2;
   display: inline-flex;
   width: 195px;
-  height: 60px;
+  height: var(--spacing-100);
   align-items: center;
   text-decoration: none;
 }
@@ -86,22 +97,51 @@
 }
 
 .navigation {
+  position: relative;
+  z-index: 0;
   display: flex;
-  height: 100%;
-  min-width: 0;
+  justify-self: center;
+  align-self: start;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  width: max-content;
+  max-width: 100%;
+  height: auto;
+  min-width: 0;
   gap: var(--spacing-16);
+}
+
+/* 메가메뉴 패널만 헤더 바 아래 풀블리드 — 상단 로고·아이콘 행 투명도/inverse는 유지 */
+.headerNavOpen .navigation::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  top: var(--spacing-100);
+  bottom: 0;
+  /* 메뉴 묶음은 로고·계정 칸 너비 차이만큼 화면 중앙에서 벗어난다. */
+  left: calc(50% - 50vw - (var(--header-logo-column) - var(--header-auth-column)) / 2);
+  width: 100vw;
+  background: var(--color-neutral-white);
+  border-bottom: 1px solid var(--color-border-default);
+  /* 글자 밖 흰 패널도 호버 영역으로 잡아 메뉴가 닫히지 않게 한다. */
+  pointer-events: auto;
+}
+
+.menuColumn {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .navigationButton {
   display: flex;
-  width: 140px;
-  align-self: stretch;
+  width: max-content;
+  height: var(--spacing-100);
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  padding: 0;
+  padding-inline: var(--spacing-12);
   border: 0;
   background: transparent;
   cursor: pointer;
@@ -112,6 +152,11 @@
   display: inline-flex;
   height: 100%;
   align-items: center;
+  color: var(--header-text-color);
+}
+
+.navigationButtonActive .navigationButtonLabel {
+  color: var(--header-active-color);
 }
 
 .navigationButtonLabel::after {
@@ -125,71 +170,39 @@
 }
 
 .navigationButtonActive .navigationButtonLabel::after {
-  background: var(--color-border-focus);
-}
-
-.dropdownPanel {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  z-index: 1;
-  border-bottom: 1px solid var(--color-border-default);
-  background: var(--color-neutral-white);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition:
-    opacity 0.15s ease,
-    visibility 0.15s ease;
-}
-
-.dropdownPanelOpen {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-}
-
-.dropdownInner {
-  display: grid;
-  grid-template-columns: 195px 1fr 152px;
-  column-gap: var(--spacing-64);
-  width: 100%;
-  max-width: 1920px;
-  margin-inline: auto;
-  padding-inline: var(--spacing-60);
-}
-
-.dropdownLogoSpacer,
-.dropdownAuthSpacer {
-  min-width: 0;
-}
-
-.dropdownColumns {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: var(--spacing-16);
-  min-width: 0;
+  background: var(--header-indicator-color);
 }
 
 .menuGroup {
   display: flex;
-  width: 140px;
-  padding: var(--spacing-16) 0;
+  width: max-content;
+  height: 0;
+  padding: 0;
   flex-direction: column;
-  align-items: flex-start;
-  flex-shrink: 0;
+  align-items: center;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.headerNavOpen .menuGroup {
+  height: auto;
+  padding: var(--spacing-16) 0;
+  overflow: visible;
+  visibility: visible;
+}
+
+.headerNavOpen .menuItem {
+  pointer-events: auto;
 }
 
 .menuItem {
   display: flex;
   height: 60px;
-  padding: 10px;
+  padding: 10px var(--spacing-8);
   justify-content: center;
   align-items: center;
   gap: 10px;
-  align-self: stretch;
   border: 0;
   border-radius: var(--radius-8);
   background: transparent;
@@ -221,8 +234,11 @@
 }
 
 .userActions {
+  position: relative;
+  z-index: 2;
   display: flex;
   width: 152px;
+  height: var(--spacing-100);
   align-items: center;
   justify-content: flex-end;
   gap: var(--spacing-40);
@@ -232,14 +248,18 @@
   padding: 0;
   border: 0;
   background: transparent;
+  color: var(--header-utility-color);
   text-align: right;
   white-space: nowrap;
   cursor: pointer;
 }
 
 .loggedInActions {
+  position: relative;
+  z-index: 2;
   display: flex;
   width: 152px;
+  height: var(--spacing-100);
   align-items: center;
   justify-content: flex-end;
   gap: 28px;

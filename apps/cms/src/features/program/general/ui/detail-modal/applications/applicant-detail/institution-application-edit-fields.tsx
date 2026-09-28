@@ -7,7 +7,14 @@ import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { InstitutionAffiliatedTeacherOption } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import { INSTITUTION_APPLICATION_GRADE_OPTIONS } from '@/features/program/general/lib/institution-application-detail-edit-policy'
-import { CmsInput, CmsNumericInput, CmsRadio, CmsRadioGroup, CmsTextArea } from '@/shared/ui'
+import {
+  CmsInput,
+  CmsNumericInput,
+  CmsPhoneInput,
+  CmsRadio,
+  CmsRadioGroup,
+  CmsTextArea,
+} from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 
 export const INSTITUTION_EDUCATION_FORMAT_OPTIONS = [
@@ -580,7 +587,7 @@ export function InstitutionTeacherEdit({
         )}
         <DetailInfoForm.InputsSeparator />
         <span style={nowrapSpanStyle}>Tel</span>
-        <CmsInput
+        <CmsPhoneInput
           inputSize="medium"
           width={170}
           placeholder="담당 교사의 내선 번호(직통 번호)"
@@ -589,7 +596,7 @@ export function InstitutionTeacherEdit({
         />
         <DetailInfoForm.InputsSeparator />
         <span style={nowrapSpanStyle}>M</span>
-        <CmsInput
+        <CmsPhoneInput
           inputSize="medium"
           width={160}
           placeholder="휴대폰"

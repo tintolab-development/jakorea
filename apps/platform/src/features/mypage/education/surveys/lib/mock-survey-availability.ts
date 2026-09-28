@@ -8,7 +8,12 @@ export type EducationSurveyMockAvailability = 'active' | 'empty'
 type SurveyAvailabilityOptions = {
   displayStatus: EducationDisplayStatus
   withdrawalPhase?: EducationWithdrawalPhase
-  /** 프로그램에 설문조사 미설정 시 false — 탭 비노출과 별도로 empty 처리 */
+  /**
+   * 프로그램에 설문/만족도 미설정 시 false.
+   * `surveyConfigured` / `satisfactionConfigured` 어느 쪽이든 이 키로 전달.
+   */
+  configured?: boolean
+  /** @deprecated `configured` 사용 — survey 탭 호환 */
   surveyConfigured?: boolean
 }
 
@@ -17,7 +22,8 @@ const ACTIVE_STATUSES = new Set<EducationDisplayStatus>(['in_progress', 'complet
 export function getEducationSurveyMockAvailability(
   options: SurveyAvailabilityOptions,
 ): EducationSurveyMockAvailability {
-  if (options.surveyConfigured === false) {
+  const configured = options.configured ?? options.surveyConfigured
+  if (configured === false) {
     return 'empty'
   }
 

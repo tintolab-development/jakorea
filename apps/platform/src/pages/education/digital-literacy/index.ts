@@ -1,0 +1,1 @@
+export { EducationDigitalLiteracyPage } from './page'

@@ -55,7 +55,7 @@ import {
 import {
   CmsButton,
   CmsDateRangePicker,
-  CmsInput,
+  AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
@@ -137,6 +137,7 @@ export function CorporatePartnersPage() {
   const {
     pendingFilters,
     setPendingFilters,
+    patchPendingFilters,
     applied: appliedFilter,
     applySearch,
   } = useListFilterUrl<PartnerPendingFilters, CorporatePartnerListFilter>({
@@ -430,12 +431,12 @@ export function CorporatePartnersPage() {
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <span className="admin-filter-area__label">기업명</span>
-            <CmsInput
+            <AdminFilterTextInput
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="기업명 검색"
               value={pendingFilters.name}
-              onChange={e => setPendingFilters(prev => ({ ...prev, name: e.target.value }))}
+              onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
               onPressEnter={handleSearch}
             />
           </div>
