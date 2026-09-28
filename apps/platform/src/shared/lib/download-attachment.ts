@@ -2,6 +2,9 @@
  * 첨부 파일 다운로드.
  * mock 등 실파일이 없을 때도 파일명의 확장자와 MIME을 유지한 빈 파일로 저장한다.
  * 실 URL은 앵커로 열지 않고 blob으로 받아 저장한다.
+ *
+ * Portal `GET /api/portal/public/files/{id}/download` 는 파일 바이트가 아니라
+ * `{ downloadUrl }` JSON(signed raw URL)을 주는 경우가 있다. 그 URL로 한 번 더 받는다.
  */
 
 import type { InternalAxiosRequestConfig } from 'axios'
@@ -51,18 +54,28 @@ export function needsEmptyAttachmentFallback(url: string | undefined): boolean {
 }
 
 /**
- * API base가 비어 있으면 `http(s)://host/api/...`를 페이지와 같은 `/api` 경로로 되돌린다.
- * 다른 출처 `<a download>`는 속성이 무시되고 이미지가 새 창에 열린다.
+ * absolute `http(s)://…/api/…` 또는 `/api/…` 를 Vite 프록시 경로로 맞춘다.
+ * `VITE_API_BASE_URL` 유무와 관계없이 same-origin `/api` 로 받는다.
  */
-function toSameOriginApiPath(downloadUrl: string, apiBaseUrl: string): string | null {
-  if (apiBaseUrl.trim() || !/^https?:\/\//i.test(downloadUrl)) return null
+export function toProxiedApiPath(downloadUrl: string): string | null {
+  const trimmed = downloadUrl.trim()
+  if (!trimmed) return null
+  if (trimmed.startsWith('/api/')) return trimmed
   try {
-    const url = new URL(downloadUrl)
+    const url = new URL(trimmed)
     if (!url.pathname.startsWith('/api/')) return null
     return `${url.pathname}${url.search}`
   } catch {
     return null
   }
+}
+
+/**
+ * @deprecated Prefer `toProxiedApiPath`. API base 비어 있을 때만 absolute→relative 변환하던 구버전.
+ */
+function toSameOriginApiPath(downloadUrl: string, apiBaseUrl: string): string | null {
+  if (apiBaseUrl.trim() || !/^https?:\/\//i.test(downloadUrl)) return null
+  return toProxiedApiPath(downloadUrl)
 }
 
 function saveBlob(fileName: string, blob: Blob) {
@@ -76,11 +89,29 @@ function saveBlob(fileName: string, blob: Blob) {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
 }
 
-async function fetchAttachmentBlob(url: string): Promise<Blob> {
-  const sameOriginPath = toSameOriginApiPath(url, getApiBaseUrl())
-  const apiPath = sameOriginPath ?? (url.startsWith('/api/') ? url : null)
-  if (apiPath) {
-    const { data } = await axiosClient.get<Blob>(apiPath, {
+function readDownloadUrlFromJsonBlob(blob: Blob): Promise<string | null> {
+  if (!/\bjson\b/i.test(blob.type) && blob.size > 8_192) return Promise.resolve(null)
+  return blob.text().then(text => {
+    const trimmed = text.trim()
+    if (!trimmed.startsWith('{')) return null
+    try {
+      const parsed = JSON.parse(trimmed) as { downloadUrl?: unknown; data?: { downloadUrl?: unknown } }
+      const nested =
+        parsed.data && typeof parsed.data === 'object'
+          ? (parsed.data as { downloadUrl?: unknown }).downloadUrl
+          : undefined
+      const raw = parsed.downloadUrl ?? nested
+      return typeof raw === 'string' && raw.trim() ? raw.trim() : null
+    } catch {
+      return null
+    }
+  })
+}
+
+async function fetchBlobOnce(url: string): Promise<Blob> {
+  const proxied = toProxiedApiPath(url) ?? toSameOriginApiPath(url, getApiBaseUrl())
+  if (proxied) {
+    const { data } = await axiosClient.get<Blob>(proxied, {
       responseType: 'blob',
       skipAuth: true,
       skipRefresh: true,
@@ -99,6 +130,13 @@ async function fetchAttachmentBlob(url: string): Promise<Blob> {
   return response.blob()
 }
 
+async function fetchAttachmentBlob(url: string): Promise<Blob> {
+  const first = await fetchBlobOnce(url)
+  const signedUrl = await readDownloadUrlFromJsonBlob(first)
+  if (!signedUrl) return first
+  return fetchBlobOnce(signedUrl)
+}
+
 /**
  * 첨부 다운로드. 실 URL은 blob으로 받아 파일명으로 저장한다.
  * 없거나 `#`이면 확장자에 맞는 MIME의 빈 Blob을 저장한다.
@@ -114,8 +152,15 @@ export async function downloadAttachment(fileName: string, url?: string): Promis
       return
     }
     const blob = await fetchAttachmentBlob(url!.trim())
+    // JSON 메타만 남은 경우(서명 URL 해석 실패)는 빈 파일로 속이지 않는다.
+    if (/\bjson\b/i.test(blob.type)) {
+      throw new Error('첨부파일 다운로드에 실패했습니다.')
+    }
     saveBlob(name, blob)
   } catch (error) {
     console.error('[attachment] download failed', error)
+    throw error instanceof Error
+      ? error
+      : new Error('첨부파일을 내려받지 못했습니다.')
   }
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-trained-teachers-draft'
@@ -45,6 +45,10 @@ import {
   findIncompleteTrainedTeachersBasicInfoMessage,
   type ApplyTrainedTeachersBasicInfoValues,
 } from '@/features/program/ui/apply-trained-teachers-basic-info/apply-trained-teachers-basic-info'
+import {
+  fillTrainedTeachersBasicInfoFromProfile,
+  trainedTeachersProfileDefaults,
+} from '@/features/program/ui/apply-trained-teachers-basic-info/profile-defaults'
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { getDevAuthLoggedIn, isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
@@ -101,19 +105,15 @@ export function ProgramApplyPage() {
     program?.registrationKind === 'trainedTeachers' ||
     program?.programType === 'TRAINED_TEACHER'
 
-  const profileSchool =
-    profileQuery.data?.schoolName?.trim() ||
-    profileQuery.data?.affiliationName?.trim() ||
-    ''
-  const profileRegionLabel = [
-    profileQuery.data?.regionSido?.trim(),
-    profileQuery.data?.regionSigungu?.trim(),
-  ]
-    .filter(Boolean)
-    .join(' ')
-  const profileTeacherName = profileQuery.data?.name?.trim() || ''
-  const profileTeacherMobile = profileQuery.data?.phone?.trim() || ''
-  const profileTeacherEmail = profileQuery.data?.email?.trim() || ''
+  const profileDefaults = useMemo(
+    () => trainedTeachersProfileDefaults(profileQuery.data),
+    [profileQuery.data],
+  )
+  const profileSchool = profileDefaults.schoolName
+  const profileRegionLabel = profileDefaults.regionLabel
+  const profileTeacherName = profileDefaults.teacherName
+  const profileTeacherMobile = profileDefaults.teacherMobile
+  const profileTeacherEmail = profileDefaults.teacherEmail
   const showPreferredEducationForm = program?.educationForm === 'participant_choice'
   const remoteForm = applicationFormQuery.bundle?.form
   const remoteFormKey =
@@ -153,14 +153,12 @@ export function ProgramApplyPage() {
           const fromBasic = basicInfoValuesFromDraftAnswer(
             draftAnswers?.[PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.basicInfo],
           )
-          setBasicInfo({
-            ...(fromBasic ?? emptyTrainedTeachersBasicInfo()),
-            schoolName: fromBasic?.schoolName?.trim() || profileSchool,
-            regionLabel: fromBasic?.regionLabel?.trim() || profileRegionLabel,
-            teacherName: fromBasic?.teacherName?.trim() || profileTeacherName,
-            teacherMobile: fromBasic?.teacherMobile?.trim() || profileTeacherMobile,
-            teacherEmail: fromBasic?.teacherEmail?.trim() || profileTeacherEmail,
-          })
+          setBasicInfo(
+            fillTrainedTeachersBasicInfoFromProfile(
+              fromBasic ?? emptyTrainedTeachersBasicInfo(),
+              profileDefaults,
+            ),
+          )
           return
         }
       }
@@ -177,14 +175,9 @@ export function ProgramApplyPage() {
       hydratedFormKeyRef.current = mockKey
       setDraft(getMockApplyFormDraft(program))
       setPreferredBlocks([createEmptyPreferredBlock()])
-      setBasicInfo({
-        ...emptyTrainedTeachersBasicInfo(),
-        schoolName: profileSchool,
-        regionLabel: profileRegionLabel,
-        teacherName: profileTeacherName,
-        teacherMobile: profileTeacherMobile,
-        teacherEmail: profileTeacherEmail,
-      })
+      setBasicInfo(
+        fillTrainedTeachersBasicInfoFromProfile(emptyTrainedTeachersBasicInfo(), profileDefaults),
+      )
       return
     }
 
@@ -201,37 +194,12 @@ export function ProgramApplyPage() {
     applicationFormQuery.status,
     remoteForm,
     remoteFormKey,
-    profileSchool,
-    profileRegionLabel,
-    profileTeacherName,
-    profileTeacherMobile,
-    profileTeacherEmail,
+    profileDefaults,
   ])
 
   useEffect(() => {
-    setBasicInfo(prev => ({
-      ...prev,
-      schoolName: prev.schoolName.trim() ? prev.schoolName : profileSchool || prev.schoolName,
-      regionLabel: prev.regionLabel.trim()
-        ? prev.regionLabel
-        : profileRegionLabel || prev.regionLabel,
-      teacherName: prev.teacherName.trim()
-        ? prev.teacherName
-        : profileTeacherName || prev.teacherName,
-      teacherMobile: prev.teacherMobile.trim()
-        ? prev.teacherMobile
-        : profileTeacherMobile || prev.teacherMobile,
-      teacherEmail: prev.teacherEmail.trim()
-        ? prev.teacherEmail
-        : profileTeacherEmail || prev.teacherEmail,
-    }))
-  }, [
-    profileSchool,
-    profileRegionLabel,
-    profileTeacherName,
-    profileTeacherMobile,
-    profileTeacherEmail,
-  ])
+    setBasicInfo(prev => fillTrainedTeachersBasicInfoFromProfile(prev, profileDefaults))
+  }, [profileDefaults])
 
   const updateParagraph = useCallback<FormUpdateParagraph>((id, updater) => {
     setDraft(prev => {
@@ -255,9 +223,7 @@ export function ProgramApplyPage() {
     applicationFormQuery.blockedReason == null &&
     applicationFormQuery.bundle.option.canApply !== false
 
-  const profileSchoolLocked = Boolean(
-    profileQuery.data?.schoolName?.trim() || profileQuery.data?.affiliationName?.trim(),
-  )
+  const profileSchoolLocked = Boolean(profileSchool)
 
   const renderParagraphSlot = useCallback(
     (paragraph: WritingFormParagraph) => {

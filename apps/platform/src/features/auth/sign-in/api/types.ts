@@ -83,6 +83,22 @@ export type UpdatePortalProfileRequest = {
   external1365Id?: string | null
 }
 
+/** GET /api/portal/me/profile — PortalTeacherOrganizationResponse */
+export type PortalTeacherOrganizationResponse = {
+  organizationId?: number
+  organizationName?: string
+  neisCode?: string
+  organizationCategory?: string
+  address?: string
+  addressDetail?: string
+  zipCode?: string
+  regionSido?: string
+  regionSigungu?: string
+  employmentStatus?: string
+  affiliationStatus?: string
+  affiliationStartedAt?: string
+}
+
 /** GET /api/portal/me/profile — PortalProfileResponse */
 export type PortalProfileResponse = {
   memberId?: number
@@ -109,6 +125,8 @@ export type PortalProfileResponse = {
   schoolEnrollmentStatus?: string
   /** API `ACTIVE` | `ON_LEAVE` | `EMPLOYED` 등 */
   teacherEmploymentStatus?: string
+  /** 교사회원 현재 학교. 기관 주소의 SSOT */
+  teacherOrganization?: PortalTeacherOrganizationResponse
   external1365Id?: string
   accountStatus?: string
   joinedAt?: string

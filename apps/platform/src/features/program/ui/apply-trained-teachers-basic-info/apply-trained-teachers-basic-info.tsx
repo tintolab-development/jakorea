@@ -1,3 +1,4 @@
+import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import {
   PFFormControlCluster,
   PFFormField,
@@ -280,9 +281,11 @@ export function ApplyTrainedTeachersBasicInfo({
                   variant="formPage"
                   size="large"
                   width={240}
+                  inputMode="tel"
+                  autoComplete="tel"
                   placeholder="담당 교사의 내선 번호(직통 번호)"
-                  value={value.teacherTel}
-                  onValueChange={next => patch({ teacherTel: next })}
+                  value={formatKoreanPhoneNumber(value.teacherTel)}
+                  onValueChange={next => patch({ teacherTel: formatKoreanPhoneNumber(next) })}
                 />
               </PFFormControlCluster>
             </PFFormInlineSegment>
@@ -292,9 +295,13 @@ export function ApplyTrainedTeachersBasicInfo({
                 variant="formPage"
                 size="large"
                 width={240}
+                inputMode="tel"
+                autoComplete="tel"
                 placeholder="담당 교사의 휴대폰 번호"
-                value={value.teacherMobile}
-                onValueChange={next => patch({ teacherMobile: next })}
+                value={formatKoreanPhoneNumber(value.teacherMobile)}
+                onValueChange={next =>
+                  patch({ teacherMobile: formatKoreanPhoneNumber(next) })
+                }
               />
             </PFFormInlineSegment>
             <PFFormInlineSeparator />
@@ -401,8 +408,12 @@ export function basicInfoAnswerFromValues(
       ? { educationPlaceDetail: values.educationPlaceDetail.trim() }
       : {}),
     ...(values.teacherName.trim() ? { teacherName: values.teacherName.trim() } : {}),
-    ...(values.teacherTel.trim() ? { teacherTel: values.teacherTel.trim() } : {}),
-    ...(values.teacherMobile.trim() ? { teacherMobile: values.teacherMobile.trim() } : {}),
+    ...(values.teacherTel.trim()
+      ? { teacherTel: formatKoreanPhoneNumber(values.teacherTel.trim()) }
+      : {}),
+    ...(values.teacherMobile.trim()
+      ? { teacherMobile: formatKoreanPhoneNumber(values.teacherMobile.trim()) }
+      : {}),
     ...(values.teacherEmail.trim() ? { teacherEmail: values.teacherEmail.trim() } : {}),
     ...(values.applicationReason.trim()
       ? { applicationReason: values.applicationReason.trim() }
@@ -434,8 +445,8 @@ export function basicInfoValuesFromDraftAnswer(
   const educationPlace = readStringField(row, 'educationPlace') || 'inside'
   const educationPlaceDetail = readStringField(row, 'educationPlaceDetail')
   const teacherName = readStringField(row, 'teacherName')
-  const teacherTel = readStringField(row, 'teacherTel')
-  const teacherMobile = readStringField(row, 'teacherMobile')
+  const teacherTel = formatKoreanPhoneNumber(readStringField(row, 'teacherTel'))
+  const teacherMobile = formatKoreanPhoneNumber(readStringField(row, 'teacherMobile'))
   const teacherEmail = readStringField(row, 'teacherEmail')
   const applicationReason = readStringField(row, 'applicationReason')
   const otherRequests = readStringField(row, 'otherRequests')
