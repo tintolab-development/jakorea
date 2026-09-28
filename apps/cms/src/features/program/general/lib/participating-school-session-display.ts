@@ -160,8 +160,12 @@ export function buildParticipatingSchoolPreferredScheduleLines(
     const ranges = group
       .map(session => parseTimeRangeMinutes(session.timeRange))
       .filter((range): range is NonNullable<typeof range> => range != null)
-    const totalSessions =
-      group.length === 1 && first.round > 0 ? first.round : Math.max(group.length, 1)
+    const fromDuration = group.reduce((sum, session) => {
+      const match = /^(\d+)\s*차시/.exec(session.duration?.trim() ?? '')
+      return sum + (match ? Number.parseInt(match[1]!, 10) : 0)
+    }, 0)
+    /** duration(N차시) 우선 — round는 지망순·sessionIndex일 수 있어 총 차시로 쓰지 않음 */
+    const totalSessions = fromDuration > 0 ? fromDuration : Math.max(group.length, 1)
 
     if (ranges.length === 0) {
       return `${datePart}(${first.dayOfWeek}) | ${totalSessions}차시`
