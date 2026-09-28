@@ -26,6 +26,10 @@ import {
 } from '@/features/template/ui/paragraph/explanation/text'
 import { ExplanationTitle } from '@/features/template/ui/paragraph/explanation/title'
 import { ExplanationSurveyPeriodReadonly } from '@/features/template/ui/paragraph/explanation/survey-period-readonly'
+import {
+  titlePeriodEndDisplayText,
+  titlePeriodStartDisplayText,
+} from '@/features/template/lib/title-with-period-settings'
 import { DateField } from '@/features/template/ui/paragraph/single-item/date'
 import { TimeField } from '@/features/template/ui/paragraph/single-item/time'
 import { Dropdown } from '@/features/template/ui/paragraph/single-item/dropdown'
@@ -303,6 +307,8 @@ export function renderFormParagraphBody(
           <ExplanationSurveyPeriodReadonly
             startAt={p.startAt}
             endAt={p.endAt}
+            startFallback={titlePeriodStartDisplayText(p)}
+            endFallback={titlePeriodEndDisplayText(p)}
             periodLabel="작성 기간"
           />
         )

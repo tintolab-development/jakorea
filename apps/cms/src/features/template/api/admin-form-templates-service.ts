@@ -53,6 +53,10 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import type {
+  FormTemplateListItemResponse,
+  ListTemplatesParams,
+} from '@/shared/api/generated/forms-surveys/schemas'
 
 function shouldUseRemoteDraftApiForTemplate(templateCode: string): boolean {
   return (
@@ -83,15 +87,36 @@ export function shouldUseFormsSurveysRemoteApi(): boolean {
   return isRealApiModuleEnabled('formsSurveys') && hasRemoteAdminJwt()
 }
 
+const FORM_TEMPLATE_LIST_PAGE_SIZE = 100
+const FORM_TEMPLATE_LIST_MAX_PAGES = 20
+
+async function fetchAllFormTemplateListItems(
+  params: Omit<ListTemplatesParams, 'page' | 'size'>
+): Promise<FormTemplateListItemResponse[]> {
+  const items: FormTemplateListItemResponse[] = []
+  let page = 0
+  let totalPages = 1
+  while (page < totalPages && page < FORM_TEMPLATE_LIST_MAX_PAGES) {
+    const result = await fetchFormTemplatesRemote({
+      ...params,
+      page,
+      size: FORM_TEMPLATE_LIST_PAGE_SIZE,
+    })
+    const pageItems = result.items ?? []
+    items.push(...pageItems)
+    totalPages = result.totalPages ?? page + 1
+    if (pageItems.length === 0) break
+    page += 1
+  }
+  return items
+}
+
 export async function getWritingFormSectionsRemote(): Promise<TemplateSection[]> {
   assertFormsSurveysRemoteReady()
-  const page = await fetchFormTemplatesRemote({
+  const items = await fetchAllFormTemplateListItems({
     formType: WRITING_FORM_TYPE,
-    page: 0,
-    size: 50,
     useYn: true,
   })
-  const items = page.items ?? []
   upsertFormTemplateVersionCacheFromListItems(items)
   return buildWritingFormSectionsFromApiItems(items)
 }
@@ -102,13 +127,10 @@ export function getMockWritingFormSections(): TemplateSection[] {
 
 export async function getIssuanceFormSectionsRemote(): Promise<TemplateSection[]> {
   assertFormsSurveysRemoteReady()
-  const page = await fetchFormTemplatesRemote({
+  const items = await fetchAllFormTemplateListItems({
     formType: ISSUANCE_FORM_TYPE,
-    page: 0,
-    size: 50,
     useYn: true,
   })
-  const items = page.items ?? []
   upsertFormTemplateVersionCacheFromListItems(items)
   return buildIssuanceFormSectionsFromApiItems(items)
 }
@@ -432,9 +454,13 @@ export async function duplicateFormTemplateVersionRemote(args: {
   templateName?: string
 }): Promise<string> {
   assertFormsSurveysRemoteReady()
-  const cached = getFormTemplateVersionCacheEntry(args.sourceTemplateCode)
+  let cached = getFormTemplateVersionCacheEntry(args.sourceTemplateCode)
   if (cached?.templateId == null) {
-    throw new Error('복제할 템플릿 ID를 찾을 수 없습니다. 목록을 먼저 조회해 주세요.')
+    await resolveFormTemplateCatalogIds(args.sourceTemplateCode)
+    cached = getFormTemplateVersionCacheEntry(args.sourceTemplateCode)
+  }
+  if (cached?.templateId == null) {
+    throw new Error('복제할 템플릿 ID를 찾을 수 없습니다. 양식 관리에서 템플릿을 확인해 주세요.')
   }
 
   const sourceVersionId = await resolveTemplateVersionId(args.sourceTemplateCode)
@@ -447,15 +473,24 @@ export async function duplicateFormTemplateVersionRemote(args: {
   if (newCode === args.sourceTemplateCode) {
     newCode = buildLocalDuplicateWritingTemplateCode(args.sourceTemplateCode)
   }
-  if (copied.templateId != null && copied.templateVersionId != null) {
-    upsertFormTemplateVersionCacheEntry({
-      templateCode: newCode,
-      templateId: copied.templateId,
-      templateVersionId: copied.templateVersionId,
-      latestVersionId: copied.templateVersionId,
-      latestVersionNo: copied.versionNo,
-    })
+  const copiedTemplateId = copied.templateId ?? cached.templateId
+  let copiedVersionId = copied.templateVersionId
+  if (copiedVersionId == null) {
+    const versions = await fetchFormTemplateVersionsRemote(copiedTemplateId)
+    const latest =
+      versions.find(version => version.versionStatus === 'DRAFT') ?? versions.at(-1)
+    copiedVersionId = latest?.templateVersionId
   }
+  if (copiedVersionId == null) {
+    throw new Error('복제된 템플릿 버전 ID를 찾지 못했습니다.')
+  }
+  upsertFormTemplateVersionCacheEntry({
+    templateCode: newCode,
+    templateId: copiedTemplateId,
+    templateVersionId: copiedVersionId,
+    latestVersionId: copiedVersionId,
+    latestVersionNo: copied.versionNo,
+  })
 
   const nextName = args.templateName?.trim()
   if (nextName != null && nextName !== '' && copied.templateId != null) {

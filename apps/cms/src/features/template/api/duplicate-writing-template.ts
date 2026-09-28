@@ -24,15 +24,11 @@ export async function duplicateWritingTemplate(
   params: DuplicateWritingTemplateParams
 ): Promise<DuplicateWritingTemplateResult> {
   if (shouldUseFormsSurveysRemoteApi()) {
-    try {
-      const newTemplateId = await duplicateFormTemplateVersionRemote({
-        sourceTemplateCode: params.sourceTemplateId,
-        templateName: params.templateName,
-      })
-      return { newTemplateId }
-    } catch (error) {
-      console.warn('[form-templates] remote duplicate failed; using stub fallback', error)
-    }
+    const newTemplateId = await duplicateFormTemplateVersionRemote({
+      sourceTemplateCode: params.sourceTemplateId,
+      templateName: params.templateName,
+    })
+    return { newTemplateId }
   }
 
   await new Promise<void>(resolve => {
