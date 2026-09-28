@@ -19,7 +19,9 @@ import {
 } from '@/features/program/general/lib/detail-meta'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import type { Program } from '@/types/domain'
-import { CmsButton, ConfirmModal } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal } from '@/shared/ui'
+import { resolveProgramDeleteGuideModalCopy } from '@/features/program/shared/lib/program-delete-guide'
+import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
 import { useProgramListActions } from '@/pages/programs/use-program-list-actions'
 import {
   TemplateWritingPreviewProvider,
@@ -178,6 +180,10 @@ export function GeneralProgramListPageContent() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
   const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
+  const programBulkDeleteGuide = useMemo(
+    () => resolveProgramDeleteGuideModalCopy(programsPendingBulkDelete.length),
+    [programsPendingBulkDelete.length]
+  )
 
   const isScheduledFilter = statusFilter === 'scheduled'
   const [, setHasListFilters] = useState(false)
@@ -274,14 +280,17 @@ export function GeneralProgramListPageContent() {
   const isAdmin = user?.role === 'ADMIN'
   const showCalendarView = isAdmin
 
+  const { showAlert } = useCmsAlert()
+
   const handleBulkDeleteClick = () => {
     const programsToDelete = filteredPrograms.filter(p => selectedRowKeys.includes(p.id))
-    if (programsToDelete.length === 0) return
+    if (programsToDelete.length === 0) {
+      showAlert(PROGRAM_LIST_NO_SELECTION_ALERT)
+      return
+    }
     setProgramsPendingBulkDelete(programsToDelete)
     setBulkDeleteModalOpen(true)
   }
-
-  const { showAlert } = useCmsAlert()
 
   const handleProgramCreateClick = useCallback(() => {
     void (async () => {
@@ -358,7 +367,6 @@ export function GeneralProgramListPageContent() {
           variant="delete"
           width={140}
           onClick={handleBulkDeleteClick}
-          disabled={selectedRowKeys.length === 0}
           className="program-list-page__bulk-delete-button"
         >
           선택 삭제
@@ -446,13 +454,11 @@ export function GeneralProgramListPageContent() {
         onCancel={() => setDraftNoticeOpen(false)}
       />
 
-      <ConfirmModal
+      <DeleteGuideModal
         open={bulkDeleteModalOpen}
-        title="선택 삭제"
-        content={`선택한 ${programsPendingBulkDelete.length}건을 삭제하시겠습니까?`}
+        title={programBulkDeleteGuide.title}
+        lines={programBulkDeleteGuide.lines}
         confirmText="삭제"
-        cancelText="취소"
-        danger
         onConfirm={async () => {
           if (isRemoteDataSource) {
             await deleteGeneralProgramsMutation.mutateAsync(

@@ -29,7 +29,9 @@ import {
 } from '@/features/program/general/lib/general-program-detail-route'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
-import { CmsButton, ConfirmModal } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal } from '@/shared/ui'
+import { resolveProgramDeleteGuideModalCopy } from '@/features/program/shared/lib/program-delete-guide'
+import { PROGRAM_LIST_NO_SELECTION_ALERT } from '@/features/program/shared/lib/program-list-no-selection-alert'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import {
@@ -101,6 +103,10 @@ function TrainedTeachersProgramPageContent() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
   const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
+  const programBulkDeleteGuide = useMemo(
+    () => resolveProgramDeleteGuideModalCopy(programsPendingBulkDelete.length),
+    [programsPendingBulkDelete.length]
+  )
   const [, setHasListFilters] = useState(false)
   const [draftNoticeOpen, setDraftNoticeOpen] = useState(false)
   const [draftNoticeTitle, setDraftNoticeTitle] = useState('')
@@ -349,10 +355,13 @@ function TrainedTeachersProgramPageContent() {
 
   const handleBulkDeleteClick = useCallback(() => {
     const programsToDelete = filteredPrograms.filter(program => selectedRowKeys.includes(program.id))
-    if (programsToDelete.length === 0) return
+    if (programsToDelete.length === 0) {
+      showAlert(PROGRAM_LIST_NO_SELECTION_ALERT)
+      return
+    }
     setProgramsPendingBulkDelete(programsToDelete)
     setBulkDeleteModalOpen(true)
-  }, [filteredPrograms, selectedRowKeys])
+  }, [filteredPrograms, selectedRowKeys, showAlert])
 
   const handleBulkDeleteConfirm = useCallback(async () => {
     if (remoteEnabled) {
@@ -394,7 +403,6 @@ function TrainedTeachersProgramPageContent() {
           variant="delete"
           width={140}
           onClick={handleBulkDeleteClick}
-          disabled={selectedRowKeys.length === 0}
           className="program-list-page__bulk-delete-button"
         >
           선택 삭제
@@ -500,13 +508,11 @@ function TrainedTeachersProgramPageContent() {
         onCancel={() => setDraftNoticeOpen(false)}
       />
 
-      <ConfirmModal
+      <DeleteGuideModal
         open={bulkDeleteModalOpen}
-        title="선택 삭제"
-        content={`선택한 ${programsPendingBulkDelete.length}건을 삭제하시겠습니까?`}
+        title={programBulkDeleteGuide.title}
+        lines={programBulkDeleteGuide.lines}
         confirmText="삭제"
-        cancelText="취소"
-        danger
         onConfirm={() => {
           void handleBulkDeleteConfirm()
         }}
