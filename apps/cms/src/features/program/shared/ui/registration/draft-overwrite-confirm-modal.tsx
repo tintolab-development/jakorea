@@ -7,9 +7,9 @@ import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import './draft-overwrite-confirm-modal.css'
 
 const OVERWRITE_DESCRIPTION = [
-  '아래 내용으로 작성된 임시 저장본이 있습니다.',
-  '현재 작성본을 임시 저장 시 기존의 임시 저장본은 삭제됩니다.',
-  '현재 내용으로 새롭게 임시 저장하시겠습니까?',
+  '이미 임시 저장된 작성본이 있습니다.',
+  '지금 임시 저장 시 아래의 기존 임시 저장본은 삭제됩니다.',
+  '현재 작성본으로 새로 임시 저장하시겠습니까?',
 ].join('\n')
 
 export type RegistrationDraftOverwriteConfirmModalProps = {
@@ -33,7 +33,7 @@ export function RegistrationDraftOverwriteConfirmModal({
   return (
     <ContentModal
       open={open}
-      title="임시 저장"
+      title="임시 저장본 덮어쓰기 안내"
       description={OVERWRITE_DESCRIPTION}
       width={600}
       zIndex={CMS_ALERT_MODAL_Z_INDEX}
