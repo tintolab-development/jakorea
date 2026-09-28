@@ -73,6 +73,7 @@ import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import {
   canGeneralProgramCommonInfoEdit,
   canGeneralProgramRecruitmentInfoEdit,
@@ -677,8 +678,16 @@ export function GeneralProgramDetailFullPageModal({
     [displayProgram]
   )
 
-  const canEditRecruitmentInfo = useMemo(
-    () => canGeneralProgramRecruitmentInfoEdit(displayProgram),
+  const canEditParticipantRecruitment = useMemo(
+    () => canGeneralProgramRecruitmentInfoEdit(displayProgram, 'PARTICIPANT'),
+    [displayProgram]
+  )
+  const canEditInstructorRecruitment = useMemo(
+    () => canGeneralProgramRecruitmentInfoEdit(displayProgram, 'INSTRUCTOR'),
+    [displayProgram]
+  )
+  const canEditVolunteerRecruitment = useMemo(
+    () => canGeneralProgramRecruitmentInfoEdit(displayProgram, 'VOLUNTEER'),
     [displayProgram]
   )
 
@@ -736,7 +745,13 @@ export function GeneralProgramDetailFullPageModal({
       return
     }
     if (activeLnb !== 'info' || activeTab !== 'recruitment') return
-    if (canGeneralProgramRecruitmentInfoEdit(displayProgram)) return
+    const recruitmentType =
+      editTab === 'instructors'
+        ? 'INSTRUCTOR'
+        : editTab === 'volunteers'
+          ? 'VOLUNTEER'
+          : 'PARTICIPANT'
+    if (canGeneralProgramRecruitmentInfoEdit(displayProgram, recruitmentType)) return
     setEditMode(null)
   }, [open, editTab, displayProgram, activeLnb, activeTab, setEditMode])
 
@@ -756,7 +771,7 @@ export function GeneralProgramDetailFullPageModal({
             content: message ?? '입력값을 확인해 주세요.',
           })
         }
-      } else {
+      } else if (!isGlobalApiErrorAlertShown(result.error)) {
         void showAlert({
           title: '저장 실패',
           content: getGeneralProgramApiErrorMessage(
@@ -863,7 +878,7 @@ export function GeneralProgramDetailFullPageModal({
     recruitSubTab === 'institutions' &&
     editTab === 'institutions' &&
     !!displayProgram &&
-    canEditRecruitmentInfo
+    canEditParticipantRecruitment
 
   const persistRecruitmentProgramDraft = persistGeneralProgramDraft
 
@@ -876,6 +891,7 @@ export function GeneralProgramDetailFullPageModal({
     triggerSave: institutionsTriggerSave,
     resetToProgram: institutionsResetToProgram,
     registerGetAdditionalContentHtml: registerInstitutionsAdditionalHtml,
+    takeSaveFailure: takeInstitutionsSaveFailure,
   } = useProgramDetailInfoSave({
     form: institutionsForm,
     program: displayProgram ?? null,
@@ -890,7 +906,7 @@ export function GeneralProgramDetailFullPageModal({
     recruitSubTab === 'instructors' &&
     editTab === 'instructors' &&
     !!displayProgram &&
-    canEditRecruitmentInfo
+    canEditInstructorRecruitment
 
   const instructorsForm = useProgramDetailEditForm({
     program: displayProgram,
@@ -900,6 +916,7 @@ export function GeneralProgramDetailFullPageModal({
     triggerSave: instructorsTriggerSave,
     resetToProgram: instructorsResetToProgram,
     registerGetAdditionalContentHtml: registerInstructorsAdditionalHtml,
+    takeSaveFailure: takeInstructorsSaveFailure,
   } = useProgramDetailInfoSave({
     form: instructorsForm,
     program: displayProgram ?? null,
@@ -914,7 +931,7 @@ export function GeneralProgramDetailFullPageModal({
     recruitSubTab === 'volunteers' &&
     editTab === 'volunteers' &&
     !!displayProgram &&
-    canEditRecruitmentInfo
+    canEditVolunteerRecruitment
 
   const volunteersForm = useProgramDetailEditForm({
     program: displayProgram,
@@ -924,6 +941,7 @@ export function GeneralProgramDetailFullPageModal({
     triggerSave: volunteersTriggerSave,
     resetToProgram: volunteersResetToProgram,
     registerGetAdditionalContentHtml: registerVolunteersAdditionalHtml,
+    takeSaveFailure: takeVolunteersSaveFailure,
   } = useProgramDetailInfoSave({
     form: volunteersForm,
     program: displayProgram ?? null,
@@ -933,7 +951,13 @@ export function GeneralProgramDetailFullPageModal({
 
   const handleRecruitmentEdit = useCallback(() => {
     if (activeLnb !== 'info' || activeTab !== 'recruitment' || !displayProgram) return
-    if (!canGeneralProgramRecruitmentInfoEdit(displayProgram)) {
+    const recruitmentType =
+      recruitSubTab === 'instructors'
+        ? 'INSTRUCTOR'
+        : recruitSubTab === 'volunteers'
+          ? 'VOLUNTEER'
+          : 'PARTICIPANT'
+    if (!canGeneralProgramRecruitmentInfoEdit(displayProgram, recruitmentType)) {
       showAlert({
         title: '안내',
         content: getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(displayProgram),
@@ -968,15 +992,21 @@ export function GeneralProgramDetailFullPageModal({
 
   const handleRecruitmentSave = useCallback(async () => {
     let saved = false
+    let failure: 'validation' | 'api' | null = null
     if (recruitSubTab === 'institutions') {
       saved = await institutionsTriggerSave()
+      failure = takeInstitutionsSaveFailure()
     } else if (recruitSubTab === 'instructors') {
       saved = await instructorsTriggerSave()
+      failure = takeInstructorsSaveFailure()
     } else if (recruitSubTab === 'volunteers') {
       saved = await volunteersTriggerSave()
+      failure = takeVolunteersSaveFailure()
     }
     if (!saved) {
-      void showAlert({ title: '입력 확인', content: '입력값을 확인해 주세요.' })
+      if (failure !== 'api') {
+        void showAlert({ title: '입력 확인', content: '입력값을 확인해 주세요.' })
+      }
       return
     }
     setEditMode(null)
@@ -985,6 +1015,9 @@ export function GeneralProgramDetailFullPageModal({
     institutionsTriggerSave,
     instructorsTriggerSave,
     volunteersTriggerSave,
+    takeInstitutionsSaveFailure,
+    takeInstructorsSaveFailure,
+    takeVolunteersSaveFailure,
     setEditMode,
     showAlert,
   ])

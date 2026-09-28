@@ -289,6 +289,20 @@ describe('UJAT create — overlay 1차 컬럼 반영 (버그 수정 확인)', ()
 
     expect(mapped.titleEn).toBe('Local Spending')
   })
+
+  it('목록 참여자 모집 인원은 봉사 정원을 쓰지 않는다', () => {
+    const mapped = fromListItem({
+      id: 182101,
+      title: 'UJAT',
+      participantApprovedCount: 2,
+      participantRecruitmentCount: 15,
+      volunteerRecruitmentCount: 40,
+      volunteerApprovedCount: 33,
+      applicantCount: 9,
+    })
+    expect(mapped.participantApprovedCount).toBe(2)
+    expect(mapped.participantCapacity).toBe(15)
+  })
 })
 
 describe('UJAT API policy', () => {

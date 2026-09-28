@@ -19,8 +19,10 @@ import {
   resolveUjatProgressStatus,
 } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
 import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
+import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
+import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
 import { reconcileUjatRegistrationOverlayFromProgramResponse } from '@/features/program/ujat/lib/ujat-registration-basic-info-overlay-sync'
 import {
   parseRegistrationOverlay,
@@ -127,6 +129,7 @@ export function fromListItem(dto: AdminProgramListItemDto): Program {
     lifecycleStatus,
     ujatProgressStatus,
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount ?? 0,
+    ...mapListParticipantRecruitment(dto),
     participatingSchoolCount: dto.organizationApplicationCount ?? 0,
     instructors: instructorCount,
     createdAt: dto.createdAt,
@@ -213,6 +216,7 @@ export function fromDetail(dto: ProgramResponse): UjatProgramWithExtras {
       ...resolveBusinessPeriodDates(dto),
       applicationStartDate: dto.applicationStartDate,
       applicationEndDate: dto.applicationEndDate,
+      programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
       status: (dto.status as Status | undefined) ?? 'pending',
       lifecycleStatus,
       ujatProgressStatus,

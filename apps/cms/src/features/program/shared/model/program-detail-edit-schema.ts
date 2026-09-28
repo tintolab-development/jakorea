@@ -1446,7 +1446,7 @@ export function detailEditValuesToProgramPatch(
 
 /**
  * 공통정보 탭 저장 — remote PATCH 에서 모집·회차 필드를 제외한다.
- * (모집 기간 종료 후 BE `PROGRAM_PARTICIPANT_RECRUITMENT_EDIT_PERIOD_ENDED` 충돌 방지)
+ * (모집 시작 후 BE `PROGRAM_PARTICIPANT_RECRUITMENT_EDIT_PERIOD_ENDED` 충돌 방지)
  */
 export function narrowProgramDetailPatchForCommonInfoSave(
   patch: Partial<import('@/types/domain').Program>

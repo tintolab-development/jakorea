@@ -23,6 +23,8 @@ import {
   serializeCompanySchoolServiceDetailJsonForUpdatePatch,
 } from './service-detail-json'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
+import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
+import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { applyResolvedVenueKindToCommonInfo } from '@/features/program/general/model/common-info-edit-schema'
 
@@ -121,6 +123,7 @@ export function mapCompanySchoolListItemToProgram(dto: AdminProgramListItemDto):
     status: (dto.status as Status | undefined) ?? 'pending',
     lifecycleStatus: resolveCompanySchoolListLifecycle(dto),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
+    ...mapListParticipantRecruitment(dto),
     instructors: dto.instructorApplicantCount,
     participatingSchoolCount: dto.organizationApplicationCount,
     createdAt: dto.createdAt,
@@ -278,6 +281,7 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
     backendProgramType: dto.programType ?? COMPANY_SCHOOL_PROGRAM_API_TYPE,
+    programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
   })
   return applyResolvedAnnouncementTitle(mapped, {
     serviceDetailJson: dto.serviceDetailJson,

@@ -30,6 +30,10 @@ import {
 import { coalesceScopedFormDraftForPut } from '@/features/program/general/lib/coalesce-scoped-form-draft-for-put'
 import { loadOperationalFormDraftForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { resolveFormBindingTargetType } from '@/features/program/general/lib/resolve-form-binding-target-type'
+import {
+  assertProgramFormBindingWritable,
+  isProgramFormBindingWriteLocked,
+} from '@/features/program/shared/lib/program-edit-window'
 import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 
 type RememberedBinding = { templateId: number; templateVersionId: number }
@@ -286,6 +290,11 @@ export async function saveProgramScopedOperationalFormVersion(args: {
   if (spec == null) {
     throw new Error(`운영 양식 스펙을 찾을 수 없습니다: ${args.templateCode}`)
   }
+  assertProgramFormBindingWritable(
+    args.program,
+    spec.targetRole ? resolveFormBindingTargetType(spec.targetRole) : undefined,
+    spec.targetRole
+  )
 
   const current = await fetchFormTemplateVersionRemote(args.versionId)
   const sourceTemplateId = current.templateId
@@ -541,6 +550,22 @@ export async function ensureProgramScopedOperationalBinding(
   }
   const spec = getOperationalFormSpec(templateCode)
   if (spec == null) return { preferLocalDraft: true }
+  if (
+    isProgramFormBindingWriteLocked(
+      program,
+      spec.targetRole ? resolveFormBindingTargetType(spec.targetRole) : undefined,
+      spec.targetRole
+    )
+  ) {
+    const bindings = await fetchGeneralProgramFormBindings(program.id)
+    const catalog = await resolveFormTemplateCatalogIds(templateCode).catch(() => null)
+    return resolveApplicationFormLoadSource({
+      programId: program.id,
+      templateCode,
+      bindings,
+      catalogTemplateId: catalog?.templateId,
+    })
+  }
 
   const catalog = await resolveFormTemplateCatalogIds(templateCode)
   const bindings = await fetchGeneralProgramFormBindings(program.id)

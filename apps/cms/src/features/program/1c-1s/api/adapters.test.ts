@@ -511,4 +511,18 @@ describe('company-school adapters', () => {
     expect(mapped.mainTitle).toBe('수정1')
     expect(mapped.titleEn).toBe('Revised')
   })
+
+  it('목록 참여자 모집 인원은 승인 건수와 정원만 매핑한다', () => {
+    const mapped = mapCompanySchoolListItemToProgram({
+      id: 170001,
+      title: '1사1교',
+      participantApprovedCount: 3,
+      participantCapacity: null,
+      applicantCount: 20,
+      instructorApplicantCount: 8,
+      organizationApplicationCount: 11,
+    })
+    expect(mapped.participantApprovedCount).toBe(3)
+    expect(mapped.participantCapacity).toBeUndefined()
+  })
 })

@@ -63,6 +63,7 @@ describe('mapTrainedTeacherListItemToProgram periodStatus', () => {
     expect(mapped.targetLevel).toBe('elementary')
     expect(mapped.targetLevels).toEqual(['elementary'])
     expect(mapped.approvedStudentCount).toBe(10)
+    expect(mapped.participantApprovedCount).toBe(10)
     expect(mapped.participantCapacity).toBe(30)
     expect(mapped.participatingSchoolCount).toBe(12)
     expect(mapped.participatingStudentCount).toBe(240)
@@ -1016,6 +1017,16 @@ describe('trained teacher businessArea', () => {
     expect(fromJson.businessArea).toBe('디지털리터러시')
   })
 
+  it('reads businessField alias when businessArea column is empty', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '186005',
+      title: 'TT',
+      sponsorId: 'sponsor-1',
+      businessField: '진로취업',
+    } as Parameters<typeof mapTrainedTeacherDetailToProgram>[0])
+    expect(mapped.businessArea).toBe('진로취업')
+  })
+
   it('sends the master name on the column and in serviceDetailJson, not inside generalCommonInfo', () => {
     const program = {
       id: '186005',
@@ -1036,6 +1047,7 @@ describe('trained teacher businessArea', () => {
     } as Program
     const request = mapTrainedTeacherToUpdateRequest(program)
     expect(request.businessArea).toBe('진로취업')
+    expect((request as { businessField?: string }).businessField).toBe('진로취업')
     const envelope = JSON.parse(String(request.serviceDetailJson)) as {
       program?: { businessArea?: string; generalCommonInfo?: Record<string, unknown> }
     }

@@ -10,6 +10,10 @@ import {
   getGeneralApplicationInstitutionsTabLabel,
   type GeneralApplicationTabKey,
 } from '@/features/program/general/lib/application-tabs'
+import { canGeneralProgramRecruitmentInfoEdit } from '@/features/program/general/lib/common-info-edit-policy'
+import { recruitmentEditTypeForDetailTab } from '@/features/program/shared/lib/program-edit-window'
+import { PROGRAM_RECRUITMENT_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { ApplicationFormPreviewPanel } from './application-form-preview-panel'
 import './application-view.css'
 
@@ -32,7 +36,23 @@ export function GeneralProgramApplicationView({
   onEditForm: () => void
   previewReloadKey?: number
 }) {
+  const { showAlert } = useCmsAlert()
   const institutionsLabel = getGeneralApplicationInstitutionsTabLabel(program)
+  const formWritable = canGeneralProgramRecruitmentInfoEdit(
+    program,
+    recruitmentEditTypeForDetailTab(activeApplicationTab)
+  )
+
+  const handleEditForm = () => {
+    if (!formWritable) {
+      showAlert({
+        title: '안내',
+        content: PROGRAM_RECRUITMENT_EDIT_PERIOD_ENDED_MESSAGE,
+      })
+      return
+    }
+    onEditForm()
+  }
 
   return (
     <div className="application-view program-detail-fullpage-modal__info-tab">
@@ -47,7 +67,12 @@ export function GeneralProgramApplicationView({
         })}
         trailing={
           canWrite ? (
-            <CmsButton variant="secondary" size="large" onClick={onEditForm}>
+            <CmsButton
+              variant="secondary"
+              size="large"
+              disabled={!formWritable}
+              onClick={handleEditForm}
+            >
               양식 수정
             </CmsButton>
           ) : null

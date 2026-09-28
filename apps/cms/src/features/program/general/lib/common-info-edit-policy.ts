@@ -1,72 +1,56 @@
 /**
  * 일반 프로그램 상세 — 공통·모집 정보 「정보 수정」 가능 여부
- * 기획: 프로그램 진행 전(진행 예정)까지만 가능
- * 표시 라벨(프로그램 진행 중/완료)과 동일 UI 버킷을 SSOT로 쓴다.
+ * 공통 정보: 사업 종료일(`endDate` = businessEndDate) 당일까지. 한국 시간 다음 날부터 불가.
+ * 모집 정보: 그 유형의 `recruitments[].startAt` 전. `operationStartDate`로 막지 않는다.
  */
 
-import { getProgramProgressPhase, type ProgramProgressPhaseKey } from '@/shared/constants/status'
-import { getProgramProgressUiBucket } from '@/shared/lib/program-typed-lifecycle'
 import type { Program } from '@/types/domain'
+import {
+  PROGRAM_COMMON_INFO_EDIT_PERIOD_ENDED_MESSAGE,
+  PROGRAM_RECRUITMENT_EDIT_PERIOD_ENDED_MESSAGE,
+} from '@/shared/lib/program-edit-window-error-message'
+import {
+  isCommonInfoEditPeriodOpen,
+  isProgramRecruitmentTypeLocked,
+  type ProgramRecruitmentEditType,
+} from '@/features/program/shared/lib/program-edit-window'
 
-export type GeneralProgramInfoEditBlockReason =
-  | 'missing'
-  | 'phase_in_progress'
-  | 'phase_completed'
-  | 'phase_other'
-
-export function resolveGeneralProgramCommonInfoEditPhase(
-  program: Program
-): ProgramProgressPhaseKey {
-  const status = program.lifecycleStatus
-  if (!status) return 'scheduled'
-  return getProgramProgressPhase(status)
-}
+export type GeneralProgramInfoEditBlockReason = 'missing' | 'period_ended'
 
 export function resolveGeneralProgramInfoEditBlockReason(
-  program: Program | null | undefined
+  program: Program | null | undefined,
+  now: Date = new Date()
 ): GeneralProgramInfoEditBlockReason | null {
   if (!program) return 'missing'
-  const bucket = getProgramProgressUiBucket(program.lifecycleStatus)
-  if (bucket === 'IN_PROGRESS') return 'phase_in_progress'
-  if (bucket === 'COMPLETED') return 'phase_completed'
+  if (!isCommonInfoEditPeriodOpen(program.endDate, now)) return 'period_ended'
   return null
 }
 
 export function canGeneralProgramCommonInfoEdit(
-  program: Program | null | undefined
+  program: Program | null | undefined,
+  now: Date = new Date()
 ): boolean {
-  return resolveGeneralProgramInfoEditBlockReason(program) == null
+  return resolveGeneralProgramInfoEditBlockReason(program, now) == null
 }
 
 export function getGeneralProgramCommonInfoEditBlockedAlertMessage(
-  program: Program
+  _program: Program
 ): string {
-  const reason = resolveGeneralProgramInfoEditBlockReason(program)
-  if (reason === 'phase_in_progress') {
-    return '프로그램 진행 중에는 공통 정보를 수정할 수 없습니다.'
-  }
-  if (reason === 'phase_completed') {
-    return '프로그램 진행이 완료된 경우 공통 정보를 수정할 수 없습니다.'
-  }
-  return '현재 상태에서는 공통 정보를 수정할 수 없습니다.'
+  return PROGRAM_COMMON_INFO_EDIT_PERIOD_ENDED_MESSAGE
 }
 
-/** 모집 정보 — 공통 정보와 동일 가드 */
+/** 모집 정보 — 유형별 `startAt`. 시작 시각이 없으면 수정 가능. */
 export function canGeneralProgramRecruitmentInfoEdit(
-  program: Program | null | undefined
+  program: Program | null | undefined,
+  recruitmentType: ProgramRecruitmentEditType,
+  now: Date = new Date()
 ): boolean {
-  return canGeneralProgramCommonInfoEdit(program)
+  if (!program) return false
+  return !isProgramRecruitmentTypeLocked(program, recruitmentType, now)
 }
 
 export function getGeneralProgramRecruitmentInfoEditBlockedAlertMessage(
-  program: Program
+  _program: Program
 ): string {
-  const reason = resolveGeneralProgramInfoEditBlockReason(program)
-  if (reason === 'phase_in_progress') {
-    return '프로그램 진행 중에는 모집 정보를 수정할 수 없습니다.'
-  }
-  if (reason === 'phase_completed') {
-    return '프로그램 진행이 완료된 경우 모집 정보를 수정할 수 없습니다.'
-  }
-  return '현재 상태에서는 모집 정보를 수정할 수 없습니다.'
+  return PROGRAM_RECRUITMENT_EDIT_PERIOD_ENDED_MESSAGE
 }

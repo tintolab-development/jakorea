@@ -21,8 +21,14 @@ import {
   serializeGeneralProgramServiceDetailJson,
 } from '@/features/program/general/lib/general-program-service-detail-json'
 import { applySettlementPolicyToCommonInfo } from '@/features/program/general/lib/settlement-policy-to-wage-rows'
+import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
+import {
+  isProgramRecruitmentTypeLocked,
+  toProgramRecruitmentWindows,
+  type ProgramRecruitmentEditType,
+} from '@/features/program/shared/lib/program-edit-window'
 import {
   derivedTextbookNameAliases,
   omitIfDetailedProgramNameAlias,
@@ -256,9 +262,7 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
       toOptionalNumber(dto.participantApprovedCount) ??
       toOptionalNumber(dto.approvedOrganizationApplicationCount) ??
       toOptionalNumber(dto.applicantCount),
-    participantCapacity:
-      toOptionalNumber(dto.participantCapacity) ??
-      toOptionalNumber(dto.participantRecruitmentCount),
+    ...mapListParticipantRecruitment(dto),
     instructors:
       toOptionalNumber(dto.instructorApprovedCount) ??
       toOptionalNumber(dto.instructorApplicantCount),
@@ -435,6 +439,7 @@ export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
         }
       : {}),
     backendProgramType: dto.programType,
+    programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
   })
 
   return applyResolvedAnnouncementTitle(mapped, {
@@ -723,9 +728,28 @@ function looksMaskedProgramPii(value: string | null | undefined): boolean {
  * 공통·모집 정보 등 **부분 수정**용 — `patch`에 있는 도메인 키만 UpdateRequest에 실음.
  * rounds·curriculum·담당자(미변경/마스킹) 등 화면 밖 필드는 보내지 않음.
  */
+function sameParticipantTypes(
+  left: Program['generalParticipantTypes'],
+  right: Program['generalParticipantTypes']
+): boolean {
+  const a = [...(left ?? [])].sort()
+  const b = [...(right ?? [])].sort()
+  return a.length === b.length && a.every((value, index) => value === b[index])
+}
+
+function recruitmentTypeOf(
+  recruitmentType: string | undefined
+): ProgramRecruitmentEditType | null {
+  if (recruitmentType === 'PARTICIPANT' || recruitmentType === 'INSTRUCTOR' || recruitmentType === 'VOLUNTEER') {
+    return recruitmentType
+  }
+  return null
+}
+
 function mapProgramPatchFieldsToRequest(
   merged: Program,
-  patch: Partial<Program>
+  patch: Partial<Program>,
+  existing: Program
 ): ProgramUpdateRequestBody {
   const body: ProgramUpdateRequestBody = {}
   const has = (key: keyof Program) => patchHasKey(patch, key)
@@ -749,24 +773,33 @@ function mapProgramPatchFieldsToRequest(
     body.businessStartDate = toRequestDate(merged.startDate)
     body.businessEndDate = toRequestDate(merged.endDate)
   }
-  if (has('applicationStartDate')) {
+  const participantLocked = isProgramRecruitmentTypeLocked(existing, 'PARTICIPANT')
+  const instructorLocked = isProgramRecruitmentTypeLocked(existing, 'INSTRUCTOR')
+  const volunteerLocked = isProgramRecruitmentTypeLocked(existing, 'VOLUNTEER')
+  const includeParticipantRecruitment =
+    (has('applicationStartDate') || has('applicationEndDate')) && !participantLocked
+  const includeInstructorRecruitment =
+    (has('instructorApplicationStartDate') || has('instructorApplicationEndDate')) &&
+    !instructorLocked
+  const includeVolunteerRecruitment =
+    (has('volunteerApplicationStartDate') || has('volunteerApplicationEndDate')) &&
+    !volunteerLocked
+
+  if (has('applicationStartDate') && !participantLocked) {
     body.applicationStartDate = toRequestDate(merged.applicationStartDate)
   }
-  if (has('applicationEndDate')) {
+  if (has('applicationEndDate') && !participantLocked) {
     body.applicationEndDate = toRequestDate(merged.applicationEndDate)
   }
-  if (
-    has('generalParticipantTypes') ||
-    has('generalProgramAudience') ||
-    has('applicationStartDate') ||
-    has('applicationEndDate') ||
-    has('instructorApplicationStartDate') ||
-    has('instructorApplicationEndDate') ||
-    has('volunteerApplicationStartDate') ||
-    has('volunteerApplicationEndDate') ||
-    has('generalCommonInfo')
-  ) {
-    body.recruitments = mapGeneralProgramRecruitmentsToRequest(merged)
+  if (includeParticipantRecruitment || includeInstructorRecruitment || includeVolunteerRecruitment) {
+    const rows = mapGeneralProgramRecruitmentsToRequest(merged)?.filter(row => {
+      const type = recruitmentTypeOf(row.recruitmentType)
+      if (type === 'PARTICIPANT') return includeParticipantRecruitment
+      if (type === 'INSTRUCTOR') return includeInstructorRecruitment
+      if (type === 'VOLUNTEER') return includeVolunteerRecruitment
+      return false
+    })
+    if (rows && rows.length > 0) body.recruitments = rows
   }
   if (has('businessArea')) body.businessArea = merged.businessArea
   if (has('detailedProgramId') || has('generalCommonInfo')) {
@@ -846,10 +879,20 @@ function mapProgramPatchFieldsToRequest(
   if (has('rounds')) body.rounds = mapProgramRoundsToRequest(merged)
 
   if (has('generalProgramAudience') || has('generalParticipantTypes')) {
-    body.applicationTargetMode = mapAudienceToApplicationTargetMode(
+    const nextMode = mapAudienceToApplicationTargetMode(
       merged.generalProgramAudience,
       merged.generalParticipantTypes
     )
+    const previousMode = mapAudienceToApplicationTargetMode(
+      existing.generalProgramAudience,
+      existing.generalParticipantTypes
+    )
+    const participantTypeUnchanged =
+      nextMode === previousMode &&
+      sameParticipantTypes(existing.generalParticipantTypes, merged.generalParticipantTypes)
+    if (!(participantLocked && participantTypeUnchanged)) {
+      body.applicationTargetMode = nextMode
+    }
   }
 
   const touchesServiceDetail = SERVICE_DETAIL_PROGRAM_KEYS.some(key => has(key))
@@ -869,7 +912,7 @@ export function mapGeneralProgramToUpdateRequest(
   patch?: Partial<Program>
 ): ProgramUpdateRequestBody {
   if (patch && Object.keys(patch).length > 0) {
-    return mapProgramPatchFieldsToRequest({ ...program, ...patch }, patch)
+    return mapProgramPatchFieldsToRequest({ ...program, ...patch }, patch, program)
   }
   return mapProgramCoreFieldsToRequest(program)
 }

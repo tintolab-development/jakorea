@@ -1,17 +1,10 @@
-import dayjs, { type Dayjs } from 'dayjs'
 import type { Program } from '@/types/domain'
+import { isProgramRecruitmentTypeLocked } from '@/features/program/shared/lib/program-edit-window'
 
 /**
  * 교육받은 교사 — 신청 양식 수정 가능 여부.
- * 기획: 모집 시작 전까지만 수정 가능, 기간이 지난 경우 버튼 비활성화.
+ * 참여자 모집 `startAt` 전까지만. `startAt`이 없으면 아직 시작 전.
  */
-export function isTrainedTeachersApplicationFormEditable(
-  program: Program | null,
-  now: Dayjs = dayjs()
-): boolean {
-  const start = program?.applicationStartDate
-  if (start == null) return true
-  const startDay = dayjs(start)
-  if (!startDay.isValid()) return true
-  return now.isBefore(startDay)
+export function isTrainedTeachersApplicationFormEditable(program: Program | null): boolean {
+  return !isProgramRecruitmentTypeLocked(program, 'PARTICIPANT')
 }

@@ -50,6 +50,7 @@ describe('general-program-adapters', () => {
       title: '기관 교사/봉사자 전체 포함',
       programType: 'GENERAL_ORGANIZATION',
       targetLevel: 'middle',
+      participantApprovedCount: 10,
       participantRecruitmentCount: 120,
       instructorRecruitmentCount: 51,
       volunteerRecruitmentCount: 24,
@@ -58,11 +59,26 @@ describe('general-program-adapters', () => {
     })
 
     expect(program.targetLevel).toBe('middle')
+    expect(program.participantApprovedCount).toBe(10)
     expect(program.participantCapacity).toBe(120)
     expect(program.instructorCapacity).toBe(51)
     expect(program.generalCommonInfo?.kpi?.volunteerCount).toBe(24)
     expect(program.participatingSchoolCount).toBe(2)
     expect(program.participatingStudentCount).toBe(48)
+  })
+
+  it('참여자 모집 인원 분자는 applicantCount·봉사 수로 대체하지 않는다', () => {
+    const program = mapAdminProgramListItemToProgram({
+      id: 168001,
+      title: '기관',
+      applicantCount: 15,
+      volunteerApprovedCount: 40,
+      volunteerRecruitmentCount: 50,
+      participatingStudentCount: 200,
+    })
+    expect(program.participantApprovedCount).toBeUndefined()
+    expect(program.participantCapacity).toBeUndefined()
+    expect(program.approvedStudentCount).toBe(15)
   })
 
   it('normalizes Korean targetLevel labels from list API', () => {
@@ -520,6 +536,51 @@ describe('general-program-adapters', () => {
     expect(request.mainTitle).toBe('제목만')
     expect(request.managerName).toBeUndefined()
     expect(request.contactPhone).toBeUndefined()
+  })
+
+  it('모집이 시작된 유형의 기간·recruitments는 빼고 아직 시작 전인 유형은 보낸다', () => {
+    const request = mapGeneralProgramToUpdateRequest(
+      {
+        ...sampleProgram,
+        generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+        instructorApplicationStartDate: '2099-01-01T00:00:00.000Z',
+        instructorApplicationEndDate: '2099-02-01T00:00:00.000Z',
+        programRecruitments: [
+          { recruitmentType: 'PARTICIPANT', startAt: '2020-01-01T00:00:00+09:00' },
+          { recruitmentType: 'INSTRUCTOR', startAt: '2099-01-01T00:00:00+09:00' },
+        ],
+      },
+      {
+        applicationStartDate: '2026-03-01T00:00:00.000Z',
+        applicationEndDate: '2026-03-31T00:00:00.000Z',
+        instructorApplicationStartDate: '2099-01-01T00:00:00.000Z',
+        instructorApplicationEndDate: '2099-02-01T00:00:00.000Z',
+      }
+    )
+
+    expect(request.applicationStartDate).toBeUndefined()
+    expect(request.recruitments?.map(row => row.recruitmentType)).toEqual(['INSTRUCTOR'])
+  })
+
+  it('공통 정보 패치는 같은 참여자 유형이면 applicationTargetMode를 모집 시작 후에 빼다', () => {
+    const request = mapGeneralProgramToUpdateRequest(
+      {
+        ...sampleProgram,
+        generalProgramAudience: 'organization',
+        generalParticipantTypes: ['school_institution'],
+        programRecruitments: [
+          { recruitmentType: 'PARTICIPANT', startAt: '2020-01-01T00:00:00+09:00' },
+        ],
+      },
+      {
+        title: '공통만',
+        generalProgramAudience: 'organization',
+        generalParticipantTypes: ['school_institution'],
+      }
+    )
+    expect(request.title).toBe('공통만')
+    expect(request.applicationTargetMode).toBeUndefined()
+    expect(request.recruitments).toBeUndefined()
   })
 
   it('includes serviceDetailJson and applicationTargetMode when audience patch is provided', () => {

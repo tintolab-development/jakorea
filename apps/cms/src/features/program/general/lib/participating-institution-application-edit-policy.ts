@@ -4,7 +4,7 @@
  */
 
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
-import { resolveGeneralProgramInfoEditBlockReason } from '@/features/program/general/lib/common-info-edit-policy'
+import { getProgramProgressUiBucket } from '@/shared/lib/program-typed-lifecycle'
 import type { Program } from '@/types/domain'
 
 export type ParticipatingInstitutionApplicationInfoEditBlockReason =
@@ -25,10 +25,9 @@ export function resolveParticipatingInstitutionApplicationInfoEditBlockReason(pa
   if (enrollmentStatus === 'EDUCATION_IN_PROGRESS') return 'enrollment_in_progress'
   if (enrollmentStatus === 'PROGRAM_ENDED') return 'enrollment_completed'
 
-  const programReason = resolveGeneralProgramInfoEditBlockReason(program)
-  if (programReason === 'phase_in_progress') return 'program_phase_in_progress'
-  if (programReason === 'phase_completed') return 'program_phase_completed'
-  if (programReason != null) return 'program_phase_other'
+  const bucket = getProgramProgressUiBucket(program.lifecycleStatus)
+  if (bucket === 'IN_PROGRESS') return 'program_phase_in_progress'
+  if (bucket === 'COMPLETED') return 'program_phase_completed'
   return null
 }
 

@@ -41,6 +41,7 @@ import {
   resolveStoredIpsTypeSummary,
   type ProgramDetailEditFormValues,
 } from '@/features/program/shared/model/program-detail-edit-schema'
+import { resolveStoredBusinessArea } from '@/features/program/shared/lib/program-detail-info-constants'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import {
@@ -1746,6 +1747,8 @@ export function TrainedTeachersCommonInfoView({
   const [savedOverride, setSavedOverride] = useState<{
     commonInfo: Partial<TrainedTeachersCommonInfo>
     educatedTeachers: number | undefined
+    /** programs PATCH 직후 GET echo 가 늦을 때 사업 분야 즉시 표시 */
+    businessArea?: string
   } | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -1758,12 +1761,19 @@ export function TrainedTeachersCommonInfoView({
       savedOverride
         ? {
             ...program,
+            ...(savedOverride.businessArea
+              ? { businessArea: savedOverride.businessArea }
+              : {}),
             educatedTeachers: savedOverride.educatedTeachers ?? program.educatedTeachers,
             generalCommonInfo: commonInfo,
           }
         : program,
     [program, savedOverride, commonInfo]
   )
+
+  useEffect(() => {
+    setSavedOverride(null)
+  }, [program.id])
 
   const resolvedTypeFields = resolveEffectiveGeneralProgramTypeFields({
     generalProgramAudience: program.generalProgramAudience,
@@ -1927,9 +1937,14 @@ export function TrainedTeachersCommonInfoView({
         }
 
         if (draft) {
-          const formCommonInfo = form
-            ? detailEditValuesToProgramPatch(form.getValues(), program).generalCommonInfo
+          const formPatch = form
+            ? detailEditValuesToProgramPatch(form.getValues(), program)
             : undefined
+          const formCommonInfo = formPatch?.generalCommonInfo
+          const savedBusinessArea =
+            resolveStoredBusinessArea(formPatch?.businessArea) ||
+            resolveStoredBusinessArea(program.businessArea) ||
+            undefined
           const commonInfoPayload: Partial<TrainedTeachersCommonInfo> = {
             ...commonInfo,
             ...formCommonInfo,
@@ -1967,9 +1982,20 @@ export function TrainedTeachersCommonInfoView({
               await onPersist({
                 commonInfo: commonInfoPayload as NonNullable<Program['generalCommonInfo']>,
               })
+              if (savedBusinessArea) {
+                setSavedOverride({
+                  educatedTeachers: draft.kpiEducatedTeachers,
+                  businessArea: savedBusinessArea,
+                  commonInfo: {
+                    ...commonInfoPayload,
+                    kpi: kpiOverride,
+                  },
+                })
+              }
             } else {
               setSavedOverride({
                 educatedTeachers: draft.kpiEducatedTeachers,
+                businessArea: savedBusinessArea,
                 commonInfo: {
                   ...commonInfoPayload,
                   kpi: kpiOverride,
@@ -1977,9 +2003,10 @@ export function TrainedTeachersCommonInfoView({
               })
             }
           } else {
-            // programs PATCH 만으로 KPI 저장 — 재조회 전 화면 즉시 반영
+            // programs PATCH 만으로 KPI·사업분야 저장 — 재조회 전 화면 즉시 반영
             setSavedOverride({
               educatedTeachers: draft.kpiEducatedTeachers,
+              businessArea: savedBusinessArea,
               commonInfo: {
                 ...commonInfo,
                 kpi: kpiOverride,

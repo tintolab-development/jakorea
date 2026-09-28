@@ -1268,13 +1268,13 @@ export function ProgramDetailFullPageModal({
     activeTab === 'info' &&
     editTab === 'info' &&
     !!displayProgram &&
-    (!isTrainedTeachersDetail || canGeneralProgramCommonInfoEdit(displayProgram))
+    canGeneralProgramCommonInfoEdit(displayProgram)
 
   useEffect(() => {
-    if (!displayProgram || editTab !== 'info' || !isTrainedTeachersDetail) return
+    if (!displayProgram || editTab !== 'info') return
     if (canGeneralProgramCommonInfoEdit(displayProgram)) return
     setEditMode(null)
-  }, [displayProgram, editTab, isTrainedTeachersDetail])
+  }, [displayProgram, editTab])
 
   const commonInfoEditSchema = useMemo(
     () =>
@@ -1428,11 +1428,8 @@ export function ProgramDetailFullPageModal({
           await handleInfoSave()
           return
         }
-        // 교육받은 교사 공통정보 — 진행 전(scheduled)까지만 수정 가능
-        if (
-          isTrainedTeachersDetail &&
-          !canGeneralProgramCommonInfoEdit(displayProgram)
-        ) {
+        // 공통 정보 — 사업 종료일 당일까지. 다음 날부터 저장 불가
+        if (!canGeneralProgramCommonInfoEdit(displayProgram)) {
           void showAlert({
             title: '안내',
             content: getGeneralProgramCommonInfoEditBlockedAlertMessage(displayProgram),

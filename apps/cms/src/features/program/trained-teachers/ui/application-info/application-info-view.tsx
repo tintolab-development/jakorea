@@ -13,6 +13,7 @@ import {
 import { useProgramApplicationFormLoadSource } from '@/features/program/general/hooks/use-application-form-load-source'
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
 import { isTrainedTeachersApplicationFormEditable } from '@/features/program/trained-teachers/lib/application-form-edit-policy'
+import { PROGRAM_RECRUITMENT_EDIT_PERIOD_ENDED_MESSAGE } from '@/shared/lib/program-edit-window-error-message'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
 import { WRITING_FORM_TEMPLATE_SAVE_EVENT } from '@/features/template/lib/writing-form-template-local-save'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
@@ -111,7 +112,7 @@ export function TrainedTeachersApplicationInfoView({
     if (!formEditable) {
       showAlert({
         title: '안내',
-        content: '모집 시작일 이후에는 신청 양식을 수정할 수 없습니다.',
+        content: PROGRAM_RECRUITMENT_EDIT_PERIOD_ENDED_MESSAGE,
       })
       return
     }
@@ -127,7 +128,12 @@ export function TrainedTeachersApplicationInfoView({
         items={[{ key: 'institutions', label: '참여 기관 신청 정보' }]}
         trailing={
           canWrite ? (
-            <CmsButton variant="secondary" size="large" onClick={handleEditFormClick}>
+            <CmsButton
+              variant="secondary"
+              size="large"
+              disabled={!formEditable}
+              onClick={handleEditFormClick}
+            >
               양식 수정
             </CmsButton>
           ) : null

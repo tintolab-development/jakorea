@@ -15,6 +15,7 @@ import type {
 } from '@/types/domain'
 import type { Status } from '@/types'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
+import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
 import {
   encodeSponsorManagerContactRef,
   buildProgramSponsorAssignmentsWire,
@@ -35,6 +36,7 @@ import {
   serializeTrainedTeacherServiceDetailJson,
 } from './service-detail-json'
 import { clearTeacherTrainingScheduleIfOff } from '../lib/teacher-training-schedule'
+import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
 import { applyResolvedAnnouncementTitle } from '@/features/program/shared/lib/public-program-title'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 
@@ -203,9 +205,7 @@ export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto)
       toOptionalNumber(item.participantApprovedCount) ??
       toOptionalNumber(item.approvedOrganizationApplicationCount) ??
       toOptionalNumber(item.applicantCount),
-    participantCapacity:
-      toOptionalNumber(item.participantCapacity) ??
-      toOptionalNumber(item.participantRecruitmentCount),
+    ...mapListParticipantRecruitment(item),
     participatingSchoolCount:
       toOptionalNumber(item.participatingSchoolCount) ??
       toOptionalNumber(item.participatingOrganizationCount),
@@ -303,6 +303,11 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
 
   const jsonBusinessArea =
     typeof detailFields.businessArea === 'string' ? detailFields.businessArea : undefined
+  // handoff alias — OpenAPI ProgramResponse 는 businessArea, 일부 echo 는 businessField
+  const dtoBusinessField =
+    typeof (dto as { businessField?: unknown }).businessField === 'string'
+      ? (dto as { businessField?: string }).businessField
+      : undefined
   const mapped = baseProgram({
     ...detailFields,
     id,
@@ -337,6 +342,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
       toTypedProgramLifecycleStatus(dto.periodStatus),
     businessArea:
       resolveStoredBusinessArea(dto.businessArea) ||
+      resolveStoredBusinessArea(dtoBusinessField) ||
       resolveStoredBusinessArea(jsonBusinessArea) ||
       undefined,
     titleEn: dto.titleEn,
@@ -442,6 +448,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
     backendProgramType: dto.programType ?? TRAINED_TEACHER_PROGRAM_API_TYPE,
+    programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
   })
   return applyResolvedAnnouncementTitle(mapped, {
     serviceDetailJson: dto.serviceDetailJson,
@@ -497,7 +504,8 @@ export function mapTrainedTeacherToUpdateRequest(
     sponsors.find(s => s.sponsorContactId)?.sponsorId ||
     sponsors[0]?.sponsorId ||
     merged.sponsorId
-  return {
+  const businessArea = resolveStoredBusinessArea(merged.businessArea) || undefined
+  const body: ProgramUpdateRequest & { businessField?: string } = {
     sponsorId: primarySponsorId,
     sponsors: sponsors.length > 0 ? sponsors : undefined,
     title: merged.title,
@@ -511,7 +519,9 @@ export function mapTrainedTeacherToUpdateRequest(
     businessEndDate: toDate(merged.endDate),
     applicationStartDate: toDate(merged.applicationStartDate),
     applicationEndDate: toDate(merged.applicationEndDate),
-    businessArea: resolveStoredBusinessArea(merged.businessArea) || undefined,
+    businessArea,
+    // handoff JsonAlias — codegen 미포함 시에도 BE 가 businessField 만 듣는 경로 대비
+    ...(businessArea ? { businessField: businessArea } : {}),
     // 일정형은 id 를 생략한다. 커리큘럼형은 숫자 마스터 id 만 보낸다.
     // 교재명·팀구분에 detailedProgramName 을 복제한 값이면 omit.
     educationStructure,
@@ -573,6 +583,7 @@ export function mapTrainedTeacherToUpdateRequest(
     rounds: mapRounds(merged),
     serviceDetailJson: serializeTrainedTeacherServiceDetailJson(merged),
   }
+  return body
 }
 
 export function mapTrainedTeacherToCreateRequest(program: Program): ProgramCreateRequest {

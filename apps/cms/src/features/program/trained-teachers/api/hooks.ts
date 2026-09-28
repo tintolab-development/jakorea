@@ -25,6 +25,7 @@ import {
   type TrainedTeacherProgramsRemoteListPage,
 } from './service'
 import type { TrainedTeachersCommonInfoSavePayload } from './info-detail-adapters'
+import { resolveStoredBusinessArea } from '@/features/program/shared/lib/program-detail-info-constants'
 
 function filtersKey(filters: TrainedTeacherListFilters, remoteEnabled: boolean): string {
   return JSON.stringify({ source: remoteEnabled ? 'remote' : 'mock', ...filters })
@@ -181,7 +182,18 @@ export function useUpdateTrainedTeacherProgramInfoDetail() {
     }) => updateTrainedTeacherProgramInfoDetail(programId, payload),
     retry: false,
     onSuccess: program => {
-      queryClient.setQueryData(trainedTeacherQueryKeys.detail(program.id), program)
+      const previous = queryClient.getQueryData<Program>(
+        trainedTeacherQueryKeys.detail(program.id)
+      )
+      const previousBusinessArea = resolveStoredBusinessArea(previous?.businessArea)
+      const nextBusinessArea = resolveStoredBusinessArea(program.businessArea)
+      // programs PATCH 직후 detail PATCH GET 이 사업 분야를 비우거나 구값으로 돌리면
+      // 방금 저장한 캐시 값을 유지한다.
+      const merged =
+        previousBusinessArea && previousBusinessArea !== nextBusinessArea
+          ? { ...program, businessArea: previousBusinessArea }
+          : program
+      queryClient.setQueryData(trainedTeacherQueryKeys.detail(program.id), merged)
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
       void queryClient.invalidateQueries({
         queryKey: generalProgramQueryKeys.navigation(program.id),

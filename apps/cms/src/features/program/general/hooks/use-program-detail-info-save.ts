@@ -48,22 +48,33 @@ export function useProgramDetailInfoSave({
   commonInfoPatchOnly = false,
 }: UseProgramDetailInfoSaveOptions) {
   const savingRef = useRef(false)
+  const saveFailureRef = useRef<'validation' | 'api' | null>(null)
   const getAdditionalContentHtmlRef = useRef<() => string>(() => '')
 
   const registerGetAdditionalContentHtml = useCallback((getter: () => string) => {
     getAdditionalContentHtmlRef.current = getter
   }, [])
 
+  const takeSaveFailure = useCallback(() => {
+    const kind = saveFailureRef.current
+    saveFailureRef.current = null
+    return kind
+  }, [])
+
   const triggerSave = useCallback(
     async (extraCommonInfo?: ProgramDetailInfoSaveExtraCommon): Promise<boolean> => {
       if (savingRef.current || !onSaveEdit || !program) return false
       savingRef.current = true
+      saveFailureRef.current = null
       try {
         const isValid =
           validateSchema != null
             ? validateSchema.safeParse(form.getValues()).success
             : await form.trigger()
-        if (!isValid) return false
+        if (!isValid) {
+          saveFailureRef.current = 'validation'
+          return false
+        }
         const values = form.getValues()
         const patch = detailEditValuesToProgramPatch(values, program)
         const html = getAdditionalContentHtmlRef.current?.()
@@ -98,6 +109,7 @@ export function useProgramDetailInfoSave({
         showUpdateCompletedAlert()
         return true
       } catch {
+        saveFailureRef.current = 'api'
         return false
       } finally {
         savingRef.current = false
@@ -112,5 +124,5 @@ export function useProgramDetailInfoSave({
     }
   }, [form, program])
 
-  return { triggerSave, resetToProgram, registerGetAdditionalContentHtml }
+  return { triggerSave, resetToProgram, registerGetAdditionalContentHtml, takeSaveFailure }
 }

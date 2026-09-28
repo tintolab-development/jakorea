@@ -33,6 +33,7 @@ import {
   type TrainedTeacherListFilters,
 } from './list-params'
 import { TRAINED_TEACHER_PROGRAM_API_TYPE } from './adapters'
+import { resolveStoredBusinessArea } from '@/features/program/shared/lib/program-detail-info-constants'
 
 /** remote list 스냅샷 — 상세 분기(isTrainedTeachersDetailProgram)용 */
 let remoteIdSnapshot: Set<string> | null = null
@@ -178,14 +179,20 @@ export async function updateTrainedTeacherProgram(
   patch?: Partial<Program>
 ): Promise<Program> {
   assertRemoteReady()
-  const dto = await updateAdminProgramRemote(
-    programId,
-    mapTrainedTeacherToUpdateRequest(program, patch)
-  )
+  const request = mapTrainedTeacherToUpdateRequest(program, patch)
+  const dto = await updateAdminProgramRemote(programId, request)
   const sponsors = await fetchAdminProgramSponsorsRemote(programId).catch(
     () => [] as Awaited<ReturnType<typeof fetchAdminProgramSponsorsRemote>>
   )
-  const mapped = mapTrainedTeacherDetailToProgram(dto)
+  let mapped = mapTrainedTeacherDetailToProgram(dto)
+  // PATCH echo 가 businessArea 를 빼거나 구값을 주면, 방금 보낸 마스터명을 유지한다.
+  const requestedBusinessArea = resolveStoredBusinessArea(request.businessArea)
+  if (
+    requestedBusinessArea &&
+    resolveStoredBusinessArea(mapped.businessArea) !== requestedBusinessArea
+  ) {
+    mapped = { ...mapped, businessArea: requestedBusinessArea }
+  }
   try {
     const infoDetail = await fetchTrainedTeacherInfoDetailRemote(programId)
     return mergeTrainedTeacherSponsorAssignments(
